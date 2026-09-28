@@ -25,7 +25,7 @@ import type {
   ProgramListView,
 } from './table/program-table-column-resolver'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { FilterTableLayout } from '@/shared/ui'
+import { FilterTableLayout, type FilterFieldConfig } from '@/shared/ui'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
@@ -41,6 +41,14 @@ export type ProgramListConfig = {
   tableType?: 'student' | 'instructor'
   lifecycleStatus?: ProgramLifecycleStatus | null
   columnPreset?: ProgramListColumnPreset
+  /** 지정 시 위젯별 기본 필터 필드 대신 사용 (교육받은 교사 등) */
+  filterFields?: FilterFieldConfig[]
+  /**
+   * overview 클라 보조 필터를 끈다.
+   * 교육받은 교사 원격 목록처럼 서버가 targetLevel·progressPhase·기간을 필터할 때.
+   * 생략 시 기존 클라 필터 유지 (일반·1사1교 기본).
+   */
+  serverSideOverviewFilters?: boolean
 }
 
 export interface ProgramListProps {
@@ -56,6 +64,8 @@ export interface ProgramListProps {
   viewMode?: 'list' | 'calendar'
   tableVariant?: ProgramListTableVariant
   onDisplayCountChange?: (count: number, hasActiveFilters: boolean) => void
+  /** 서버 `totalElements`. 있으면 헤더 건수로 사용 (무한스크롤 로드 건수와 구분) */
+  headerCount?: number
   config?: ProgramListConfig
   children?: React.ReactNode
   /** 엑셀 다운로드 버튼 우측 툴바 액션 (예: 프로그램 신규 등록) */
@@ -82,6 +92,7 @@ export function ProgramList({
   viewMode: externalViewMode,
   tableVariant: _tableVariant = 'general',
   onDisplayCountChange,
+  headerCount,
   config,
   children,
   toolbarActionsAfterExcel,
@@ -98,6 +109,7 @@ export function ProgramList({
   const mode = config?.mode ?? 'general'
   const effectiveLifecycleStatus = config?.lifecycleStatus
   const columnPreset = config?.columnPreset ?? 'default'
+  const serverSideOverviewFilters = config?.serverSideOverviewFilters === true
 
   const tableContext = useMemo<ProgramTableContext>(
     () => ({
@@ -106,13 +118,14 @@ export function ProgramList({
       tableType,
       effectiveLifecycleStatus,
       columnPreset,
+      serverSideOverviewFilters,
     }),
-    [mode, listView, tableType, effectiveLifecycleStatus, columnPreset]
+    [mode, listView, tableType, effectiveLifecycleStatus, columnPreset, serverSideOverviewFilters]
   )
 
   const tableConfig = useMemo(
     () => getProgramTablePageConfig(tableContext),
-    [mode, listView, tableType, effectiveLifecycleStatus, columnPreset]
+    [mode, listView, tableType, effectiveLifecycleStatus, columnPreset, serverSideOverviewFilters]
   )
 
   const {
@@ -186,7 +199,9 @@ export function ProgramList({
     },
     [externalSelectedRowKeys, onSelectionChange]
   )
+  const filterFieldsOverride = config?.filterFields
   const filterFieldsForLayout = useMemo(() => {
+    if (filterFieldsOverride) return filterFieldsOverride
     if (tableContext.mode === 'overview') {
       return resolveProgramListFilterFields({
         scheduledViewActive: listView === 'SCHEDULED',
@@ -195,7 +210,7 @@ export function ProgramList({
       })
     }
     return programListFilterFields
-  }, [tableContext.mode, listView])
+  }, [filterFieldsOverride, tableContext.mode, listView])
 
   /**
    * useTablePage.tableData를 사용한다.
@@ -203,6 +218,8 @@ export function ProgramList({
    * `getFilteredRowModel()`을 `[table]`만으로 메모하면 새로고침 직후 빈 목록이 고착된다.
    */
   const filteredRows = tableData
+
+  const countForHeader = headerCount ?? displayedCount
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
     columns: antdColumns,
@@ -224,7 +241,7 @@ export function ProgramList({
           onSearch={handleSearch}
           bordered={false}
           title={headerTitle}
-          description={`총 ${displayedCount.toLocaleString()}건`}
+          description={`총 ${countForHeader.toLocaleString()}건`}
           actions={children}
           actionsAfterExcel={toolbarActionsAfterExcel}
           className={filterTableLayoutClassName}
@@ -287,7 +304,7 @@ export function ProgramList({
                 <div className="table-header-actions">
                   <div className="table-header-title--wrapper">
                     <span className="table-title">{headerTitle}</span>
-                    <span className="table-description">{`총 ${displayedCount.toLocaleString()}건`}</span>
+                    <span className="table-description">{`총 ${countForHeader.toLocaleString()}건`}</span>
                   </div>
                   <div className="table-header-actions--wrapper">
                     {children}

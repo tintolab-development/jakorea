@@ -13,6 +13,7 @@ import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
   type ProgramAttendanceCorrectionConfirmPayload,
   type ProgramAttendanceCorrectionInitialValue,
+  parseAttendanceScheduleOwnerId,
   type ProgramAttendanceCorrectionStatus,
   type ProgramAttendanceCorrectionStatusOption,
 } from '@/features/program/shared/lib/attendance-correction-types'
@@ -48,6 +49,8 @@ export type ProgramAttendanceCorrectionModalProps = {
   subjectRoleNoun?: string
   /** 출결 상태 셀렉트 옵션 — 미지정 시 사유 불참 라벨 기본 */
   statusOptions?: ReadonlyArray<ProgramAttendanceCorrectionStatusOption>
+  /** 증빙 ownerId. 프로그램 id 나 1 이 아니다 */
+  evidenceScheduleId?: string | number | null
   onCancel: () => void
   onConfirm: (payload: ProgramAttendanceCorrectionConfirmPayload) => void
 }
@@ -59,6 +62,7 @@ export function ProgramAttendanceCorrectionModal({
   initialAttendance,
   subjectRoleNoun = '봉사자',
   statusOptions = PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
+  evidenceScheduleId,
   onCancel,
   onConfirm,
 }: ProgramAttendanceCorrectionModalProps) {
@@ -133,12 +137,27 @@ export function ProgramAttendanceCorrectionModal({
 
               void (async () => {
                 let evidenceFileObjectIds: number[] | undefined
+                if (showReasonTable && evidenceFiles.length > 5) {
+                  showAlert({
+                    title: '안내',
+                    content: '증빙 서류는 최대 5개까지 첨부할 수 있습니다.',
+                  })
+                  return
+                }
                 if (showReasonTable && evidenceFiles.length > 0) {
+                  const scheduleOwnerId = parseAttendanceScheduleOwnerId(evidenceScheduleId)
+                  if (scheduleOwnerId == null) {
+                    showAlert({
+                      title: '안내',
+                      content: '일정 번호가 없어 증빙 서류를 첨부할 수 없습니다.',
+                    })
+                    return
+                  }
                   setUploadingEvidence(true)
                   try {
                     const owner = buildAdminFileOwner(
                       ADMIN_FILE_OWNER.ATTENDANCE,
-                      1,
+                      scheduleOwnerId,
                       ADMIN_FILE_PURPOSE.ABSENCE_EVIDENCE
                     )
                     evidenceFileObjectIds = []

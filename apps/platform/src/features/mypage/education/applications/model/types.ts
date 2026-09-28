@@ -1,5 +1,6 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import type { EducationForm, ProgramDetailCase } from '@/features/program'
+import type { ProgramApplicationType } from '../api/types'
 
 export type EducationApplicationTab = 'all' | 'applied' | 'in_progress' | 'completed'
 
@@ -45,10 +46,14 @@ export type EducationTeacherAssignmentConsent = {
   id: string
   title: string
   fileUrl?: string
+  documentId?: number
+  originalFileName?: string
 }
 
 export type EducationTeacherAssignedInstructor = {
   id: string
+  /** 배정 강사 회원 번호. 동의서 download-requests 경로 */
+  instructorMemberId?: number
   name: string
   /**
    * 기관이 JA 시스템에서 동의서 확인을 요청한 경우에만 true.
@@ -74,6 +79,8 @@ export function hasTeacherAssignmentAsideContent(
 
 export type EducationApplicationListItem = {
   id: string
+  /** 포털 신청 건 역할 SoT. Mock/레거시 항목은 없을 수 있음. */
+  applicationType?: ProgramApplicationType
   programId: string
   categoryLabel: string
   title: string
@@ -123,27 +130,14 @@ export type EducationTeacherApplicationInstitution = {
   otherRequests: string
 }
 
-/** 교사회원 신청 내용 — 성범죄 동의서 조회 방식 */
-export type EducationTeacherSexOffenseInquiryMethod = 'ja_system' | 'criminal_record_site'
-export type EducationTeacherSexOffenseSiteSubmission = 'direct' | 'online'
-
-export type EducationTeacherSexOffenseConsent = {
-  inquiryMethod: EducationTeacherSexOffenseInquiryMethod
-  siteSubmission?: EducationTeacherSexOffenseSiteSubmission
-  orgId?: string
-  verificationCode?: string
-}
-
 /** 교사회원 신청 내용 — 안내사항 */
 export type EducationTeacherApplicationGuidance = {
   computerInRoom: string
   waitingPlace: string
   meal: string
   otherNotes: string
-  /** 성범죄 동의서 제출 요청 시에만 — 읽기 표시용 */
+  /** 성범죄 동의서 제출 요청 시에만 */
   sexOffenseConsentMethod?: string
-  /** 성범죄 동의서 제출 요청 시에만 — 편집용 구조화 */
-  sexOffenseConsent?: EducationTeacherSexOffenseConsent
 }
 
 export type EducationTeacherPreferredSchedule = {

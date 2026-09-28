@@ -501,7 +501,7 @@ export function ProgramApplicantsTab({
 
   return (
     <div className="program-applicants-tab">
-      <Card className="program-applicants-tab__card" bordered={false}>
+      <Card className="program-applicants-tab__card" variant="borderless">
         <div className="program-applicants-tab__top">
           <div className="program-applicants-tab__bar-inner">
             {showSubTabSwitcher && (

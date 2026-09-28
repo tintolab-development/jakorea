@@ -3,8 +3,10 @@
 | 항목 | 값 |
 |------|-----|
 | **작성일** | 2026-08-13 |
+| **갱신** | 2026-09-20 — FE SSOT를 Platform 홈으로 변경 (6건 placeholder → 3건 + 교실 PNG) |
 | **대상** | Homepage Admin `main_hero_banner` |
-| **FE SSOT** | [`apps/admin/src/features/hero-banner/api/store.ts`](../../src/features/hero-banner/api/store.ts) `SEED_ROWS` |
+| **FE SSOT** | Platform [`HOME_HERO_SLIDES`](../../../platform/src/features/home/lib/mock.ts) |
+| **요청서 요약** | [platform-home-public-main-seed-backend-request.md](./platform-home-public-main-seed-backend-request.md) |
 | **BE 스크립트** | `JAHOMEADMINBACK/scripts/seed_main_heroes_local.sql` |
 
 ## 실행 (로컬)
@@ -24,33 +26,35 @@ docker exec -i <postgres-container> \
 
 ## FE → API/DB 매핑
 
-| FE | API (`HeroCreateRequest`) | DB |
-|----|---------------------------|-----|
-| `isActive` | `enabled` | `enabled` |
-| `topText` / `mainTitle` / `bottomText` | 동일 | `top_text` / `main_title` / `bottom_text` |
-| `linkUrl` | `linkUrl` | `link_url` (빈 문자열 → `NULL`, `https?://`만 허용) |
-| `sortOrder` | `displayOrder` | `display_order` |
-| `imageUrl` (mock data URL) | `imageAssetId` | `image_asset_id` → shared `MAIN_HERO_IMAGE` placeholder |
+| FE (Platform) | API (`HeroCreateRequest`) | DB |
+|---------------|---------------------------|-----|
+| (항상 노출) | `enabled` | `enabled` |
+| `eyebrow` | `topText` | `top_text` |
+| `titleLines.join('\n')` | `mainTitle` | `main_title` |
+| `description` | `bottomText` | `bottom_text` |
+| 링크 없음 | `linkUrl` | `link_url` NULL |
+| `sort` = 배열 순서 | `displayOrder` | `display_order` |
+| `imageUrl` (`hero-classroom.png`) | `imageAssetId` | `image_asset_id` — 3행 동일 에셋 |
 
-## 시드 6건
+Admin localStorage mock(`apps/admin/.../hero-banner/api/store.ts` 6건 SVG)은 **DB 시드 SSOT가 아니다**.
+
+## 시드 3건
 
 | # | enabled | top_text | main_title | link |
 |---|---------|----------|------------|------|
-| 1 | true | JA KOREA | 청소년의 가능성이 더 넓은 세상과 만납니다 | Y https://www.instagram.com/ |
-| 2 | true | JA KOREA | 청소년의 가능성이 더 넓은 세상과 만납니다 | N |
-| 3 | true | JA KOREA | 청소년의 가능성이 더 넓은 세상과 만납니다 | Y https://www.instagram.com/ |
-| 4 | true | JA KOREA | 청소년의 가능성이 더 넓은 세상과 만납니다 | N |
-| 5 | true | JA KOREA | 청소년의 가능성이 더 넓은 세상과 만납니다 | Y https://www.instagram.com/ |
-| 6 | true | JA KOREA | 청소년의 가능성이 더 넓은 세상과 만납니다 | N |
+| 1 | true | JA KOREA | 청소년의 가능성이\n더 넓은 세상과 만납니다 | N |
+| 2 | true | JA KOREA | 경제교육으로 여는\n청소년의 내일 | N |
+| 3 | true | JA KOREA | 배움의 기회를\n모든 청소년에게 | N |
 
-공통 `bottom_text`: `JA Korea는 청소년들이 경제·금융·창업 교육을 통해 세상을 이해하고 미래를 준비할 수 있도록 돕습니다.`
+`bottom_text`는 슬라이드마다 다름 — Platform mock `description` 그대로.
 
-이미지: `homepage.homepage_asset`에 `local/seed/main-hero-placeholder.png` (`MAIN_HERO_IMAGE` / `READY`) 1건을 재사용.
+이미지: `homepage.homepage_asset`에 Platform `apps/platform/src/features/home/image/background/hero-classroom.png`를 `local/seed/main-hero-classroom.png` (`MAIN_HERO_IMAGE` / `READY`)로 1건 올리고 3행이 공유한다. 기존 SVG placeholder 재사용 중단.
 
 ## 완료 기준
 
-- [ ] `SELECT count(*) FROM homepage.main_hero_banner` = 6
-- [ ] `enabled=true` = 6
+- [ ] `SELECT count(*) FROM homepage.main_hero_banner` = 3
+- [ ] `enabled=true` = 3
+- [ ] 3행 `image_asset_id` 동일, placeholder SVG 아님
 - [ ] Admin API 로그인 후 `/main/hero-banners`에 동일 노출
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-09-20

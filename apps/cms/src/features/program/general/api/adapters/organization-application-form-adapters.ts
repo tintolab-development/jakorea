@@ -6,6 +6,25 @@ import type {
 } from '@/features/program/shared/model/applicant-institution'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 
+function isJsonContainer(raw: string): boolean {
+  const trimmed = raw.trim()
+  if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return false
+  try {
+    const parsed: unknown = JSON.parse(trimmed)
+    return parsed != null && typeof parsed === 'object'
+  } catch {
+    return false
+  }
+}
+
+function formatApplicantGradeLabel(raw: string | undefined): string {
+  const trimmed = raw?.trim() ?? ''
+  if (!trimmed) return ''
+  if (trimmed.endsWith('학년')) return trimmed
+  if (/^\d+$/.test(trimmed)) return `${trimmed}학년`
+  return trimmed
+}
+
 function stripJsonQuotes(raw: string): string {
   const t = raw.trim()
   if (t.length >= 2 && t.startsWith('"') && t.endsWith('"')) {
@@ -26,12 +45,20 @@ export function buildFormAnswerMap(
   for (const answer of answers ?? []) {
     const key = answer.questionKeySnapshot?.trim()
     if (!key) continue
+    const valueJson = answer.answerValueJson?.trim()
+    /**
+     * 객체·배열 답의 displayText는 Java Map toString(`{a=b}`)이라 JSON이 아니다.
+     * 학년·사유는 answerValueJson에만 있으므로 그걸 우선한다.
+     */
+    if (valueJson && valueJson !== 'null' && isJsonContainer(valueJson)) {
+      map[key] = valueJson
+      continue
+    }
     const display = answer.answerDisplayText?.trim()
     if (display) {
       map[key] = display
       continue
     }
-    const valueJson = answer.answerValueJson?.trim()
     if (!valueJson || valueJson === 'null') continue
     map[key] = stripJsonQuotes(valueJson)
   }
@@ -47,6 +74,14 @@ function pickAnswer(
     if (v) return v
   }
   return undefined
+}
+
+function pickAnswerWithNested(
+  map: Record<string, string>,
+  nested: Record<string, string>,
+  ...keys: string[]
+): string | undefined {
+  return pickAnswer(map, ...keys) ?? pickAnswer(nested, ...keys)
 }
 
 function parseGuidanceRows(map: Record<string, string>): {
@@ -109,18 +144,29 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
 }): ApplicantSchoolRow {
   const { row, formResponse, adminComment } = input
   const map = buildFormAnswerMap(formResponse?.answers)
+  /**
+   * basic-info 문단 객체는 열지 않는다. 학년·상세주소·사유·기타 요청·교육 형태·교사 연락처는
+   * 기관 신청 컬럼(`requestedGrade` 등)이 원본이다.
+   */
+  const ttBasic: Record<string, string> = {}
   const guidance = parseGuidanceRows(map)
 
-  const textbookName = pickAnswer(map, 'textbookName')
-  const educationGrade =
-    pickAnswer(map, 'applicationGrade', 'grade') ?? row.educationGrade
+  const textbookName = pickAnswerWithNested(map, ttBasic, 'textbookName')
+  const educationGrade = formatApplicantGradeLabel(
+    pickAnswerWithNested(map, ttBasic, 'applicationGrade', 'educationGrade', 'grade') ??
+      row.educationGrade
+  )
   const region =
-    pickAnswer(map, 'organizationRegion') ?? row.region
+    pickAnswerWithNested(map, ttBasic, 'organizationRegion', 'regionLabel') ?? row.region
   const addressDetail =
-    pickAnswer(map, 'addressDetail') ??
-    pickAnswer(map, 'address', 'organizationAddress')
-  const applicationReason = pickAnswer(map, 'applicationReason')
-  const otherRequests = pickAnswer(map, 'otherRequests')
+    pickAnswerWithNested(map, ttBasic, 'addressDetail', 'detailAddress', 'address', 'organizationAddress')
+  const applicationReason = pickAnswerWithNested(map, ttBasic, 'applicationReason')
+  const otherRequests = pickAnswerWithNested(map, ttBasic, 'otherRequests')
+  const educationType = pickAnswerWithNested(map, ttBasic, 'educationFormat', 'educationType')
+  const teacherName = pickAnswerWithNested(map, ttBasic, 'teacherName')
+  const teacherMobile = pickAnswerWithNested(map, ttBasic, 'teacherMobile', 'teacherPhone')
+  const teacherTel = pickAnswerWithNested(map, ttBasic, 'teacherTel')
+  const teacherEmail = pickAnswerWithNested(map, ttBasic, 'teacherEmail')
   const sexOffenseCheckRequest = pickAnswer(
     map,
     'program-application-institution-seed-sex-offense-consent-submission'
@@ -137,6 +183,12 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
     ...(addressDetail ? { addressDetail } : {}),
     ...(applicationReason ? { applicationReason } : {}),
     ...(otherRequests ? { otherRequests } : {}),
+    ...(educationType ? { educationType } : {}),
+    /** 구조화 필드 우선 — `teacherInfo` 파이프 문자열에 의존하지 않음 */
+    ...(teacherTel ? { teacherPhone: teacherTel } : {}),
+    ...(teacherMobile ? { teacherMobile } : {}),
+    ...(teacherEmail ? { teacherEmail } : {}),
+    teacherInfo: undefined,
     ...(guidance.computer ? { computerInSpace: guidance.computer } : {}),
     ...(guidance.waiting
       ? { waitingPlaceGuide: guidance.waiting, waitingRoom: guidance.waiting }
@@ -153,10 +205,25 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
       ? row.sessions
       : sessionsFromDesiredEducationDate(desiredEducationDate)
 
+  const classCountRaw = pickAnswerWithNested(map, ttBasic, 'classCount')
+  const studentCountRaw = pickAnswerWithNested(map, ttBasic, 'studentCount', 'totalStudents')
+  const classCountParsed = classCountRaw ? Number.parseInt(classCountRaw, 10) : NaN
+  const studentCountParsed = studentCountRaw ? Number.parseInt(studentCountRaw, 10) : NaN
+
   return {
     ...row,
     educationGrade: educationGrade || row.educationGrade,
     region: region || row.region,
+    classCount:
+      Number.isFinite(classCountParsed) && classCountParsed > 0
+        ? classCountParsed
+        : row.classCount,
+    studentCount:
+      Number.isFinite(studentCountParsed) && studentCountParsed > 0
+        ? studentCountParsed
+        : row.studentCount,
+    teacherName: teacherName || row.teacherName,
+    contact: teacherMobile || row.contact,
     sessions,
     detail: Object.keys(detail).length > 0 ? detail : row.detail,
     adminComment: adminComment?.trim() || row.adminComment,

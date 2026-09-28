@@ -1,5 +1,18 @@
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
+import featuredMetlifeUrl from '../image/illustration/featured-metlife.png'
+import cardMetlifeUrl from '../image/illustration/card-metlife.png'
+import cardMinjaeUrl from '../image/illustration/card-minjae.png'
+import cardDreamStageUrl from '../image/illustration/card-dream-stage.png'
+import cardArcheryUrl from '../image/illustration/card-archery.png'
+import cardKidsFinanceUrl from '../image/illustration/card-kids-finance.png'
+import cardMenteeSupporterUrl from '../image/illustration/card-mentee-supporter.png'
+import cardSamilClassUrl from '../image/illustration/card-samil-class.png'
+import cardSamilTeacherUrl from '../image/illustration/card-samil-teacher.png'
+import cardCoyUrl from '../image/illustration/card-coy.png'
+import { getAdjacentFromStories, type AdjacentImpactStories } from './adjacent'
+import { IMPACT_STORY_CATEGORY_LABEL, IMPACT_STORY_PLACEHOLDER_COLORS } from './constants'
+import { formatPublishedAtDetailLabel, formatPublishedAtLabel } from './format'
 import type {
   ImpactStoryCategoryKey,
   ImpactStoryContentBlock,
@@ -7,43 +20,25 @@ import type {
   ImpactStoryListItem,
 } from '../model/types'
 
-const CATEGORY_LABEL: Record<ImpactStoryCategoryKey, string> = {
-  story: '스토리',
-  press: '언론보도',
-  report: '보고서',
-  video: '영상',
-  newsletter: '뉴스레터',
+const STORY_IMAGE_URLS = [
+  cardMetlifeUrl,
+  cardMinjaeUrl,
+  cardDreamStageUrl,
+  cardArcheryUrl,
+  cardKidsFinanceUrl,
+  cardMenteeSupporterUrl,
+  cardSamilClassUrl,
+  cardSamilTeacherUrl,
+  cardCoyUrl,
+] as const
+
+const STORY_IMAGE_BY_ID: Partial<Record<string, string>> = {
+  'impact-1': cardMetlifeUrl,
+  'impact-2': cardMinjaeUrl,
 }
 
-const PLACEHOLDER_COLORS: Record<ImpactStoryCategoryKey, string> = {
-  story: '#c5e8eb',
-  press: '#c8d4e8',
-  report: '#d0d5e0',
-  video: '#c9dfe8',
-  newsletter: '#c5e0f0',
-}
-
-function formatPublishedAtLabel(iso: string): string {
-  const date = new Date(iso)
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}년 ${m}월 ${d}일`
-}
-
-/** 상세 메타용 — 예: 2026년 08월 15일 오전 12:00 */
-function formatPublishedAtDetailLabel(iso: string): string {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return '-'
-
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const hours24 = date.getHours()
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const period = hours24 < 12 ? '오전' : '오후'
-  const hours12 = hours24 % 12 || 12
-  return `${y}년 ${m}월 ${d}일 ${period} ${hours12}:${minutes}`
+const FEATURED_IMAGE_BY_ID: Partial<Record<string, string>> = {
+  'impact-1': featuredMetlifeUrl,
 }
 
 type SeedStory = {
@@ -200,25 +195,31 @@ const SEED: readonly SeedStory[] = [
   },
 ]
 
-function toListItem(seed: SeedStory): ImpactStoryListItem {
+function imageUrlForSeed(seed: SeedStory, index: number): string {
+  return STORY_IMAGE_BY_ID[seed.id] ?? STORY_IMAGE_URLS[index % STORY_IMAGE_URLS.length]
+}
+
+function toListItem(seed: SeedStory, index: number): ImpactStoryListItem {
   return {
     id: seed.id,
     category: seed.category,
-    categoryLabel: CATEGORY_LABEL[seed.category],
+    categoryLabel: IMPACT_STORY_CATEGORY_LABEL[seed.category],
     title: seed.title,
     summary: seed.summary,
     publishedAt: seed.publishedAt,
     publishedAtLabel: formatPublishedAtLabel(seed.publishedAt),
     isFeatured: seed.isFeatured ?? false,
-    placeholderColor: PLACEHOLDER_COLORS[seed.category],
+    placeholderColor: IMPACT_STORY_PLACEHOLDER_COLORS[seed.category],
+    imageUrl: imageUrlForSeed(seed, index),
+    featuredImageUrl: FEATURED_IMAGE_BY_ID[seed.id],
   }
 }
 
 const MOCK_STORIES: readonly ImpactStoryListItem[] = SEED.map(toListItem)
 
-function toDetail(seed: SeedStory): ImpactStoryDetail {
+function toDetail(seed: SeedStory, index: number): ImpactStoryDetail {
   return {
-    ...toListItem(seed),
+    ...toListItem(seed, index),
     publishedAtDetailLabel: formatPublishedAtDetailLabel(seed.publishedAt),
     viewCount: viewCountFromId(seed.id),
     blocks: buildDetailBlocks(seed),
@@ -228,12 +229,12 @@ function toDetail(seed: SeedStory): ImpactStoryDetail {
 const MOCK_DETAILS: readonly ImpactStoryDetail[] = SEED.map(toDetail)
 
 export function getMockImpactStories(): ImpactStoryListItem[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_STORIES.map(item => ({ ...item }))
 }
 
 export function getFeaturedImpactStories(): ImpactStoryListItem[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_STORIES.filter(item => item.isFeatured).map(item => ({ ...item }))
 }
 
@@ -243,12 +244,12 @@ export function useMockImpactStories(): ImpactStoryListItem[] {
 }
 
 export function getMockImpactStoryById(id: string): ImpactStoryListItem | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   return MOCK_STORIES.find(item => item.id === id) ?? null
 }
 
 export function getMockImpactStoryDetailById(id: string): ImpactStoryDetail | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   const detail = MOCK_DETAILS.find(item => item.id === id)
   return detail ? { ...detail, blocks: detail.blocks.map(block => ({ ...block })) } : null
 }
@@ -259,10 +260,7 @@ export function useMockImpactStoryDetail(id: string | null): ImpactStoryDetail |
   return getMockImpactStoryDetailById(id)
 }
 
-export type AdjacentImpactStories = {
-  previous: ImpactStoryListItem | null
-  next: ImpactStoryListItem | null
-}
+export type { AdjacentImpactStories }
 
 /**
  * 최신순(발행일 desc) 기준 인접 글.
@@ -270,15 +268,5 @@ export type AdjacentImpactStories = {
  * - next(다음글): 목록에서 위(더 최근) 글
  */
 export function getAdjacentImpactStories(id: string): AdjacentImpactStories {
-  const sorted = [...getMockImpactStories()].sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  )
-  const index = sorted.findIndex(item => item.id === id)
-  if (index < 0) {
-    return { previous: null, next: null }
-  }
-  return {
-    next: index > 0 ? (sorted[index - 1] ?? null) : null,
-    previous: index < sorted.length - 1 ? (sorted[index + 1] ?? null) : null,
-  }
+  return getAdjacentFromStories(getMockImpactStories(), id)
 }

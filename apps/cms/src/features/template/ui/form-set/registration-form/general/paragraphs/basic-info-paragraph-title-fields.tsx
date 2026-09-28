@@ -14,16 +14,13 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
   TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
-  TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION,
   TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE,
-  TRAINED_TEACHERS_REGISTRATION_REP_EN,
-  TRAINED_TEACHERS_REGISTRATION_REP_KO,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
 type ControlledTitleProps = {
   programTitleKo?: string
   onProgramTitleKoChange?: (title: string) => void
-  /** 교육받은 교사 등록 폼 — overlay 키·기본값 분리 */
+  /** 교육받은 교사 등록 폼 — overlay 키 분리. 신규는 빈 값+플레이스홀더, 수정은 overlay 복원 */
   trainedTeachersDefaults?: boolean
   /**
    * 일반 일정형 — 세부 프로그램명 셀렉트를「해당없음」으로 고정.
@@ -56,11 +53,11 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
 
   const [localProgramTitleKo, setLocalProgramTitleKo] = useProgramRegistrationOverlayKv(
     titleKoKey,
-    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_REP_KO : ''
+    ''
   )
   const [programTitleEn, setProgramTitleEn] = useProgramRegistrationOverlayKv(
     titleEnKey,
-    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_REP_EN : ''
+    ''
   )
   const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
     publicTitleKey,
@@ -68,7 +65,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
   )
   const [detailedProgramId, setDetailedProgramId] = useProgramRegistrationOverlayKv<string>(
     detailedIdKey,
-    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE : ''
+    ''
   )
 
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
@@ -81,19 +78,32 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
   }, [detailedNameKey, detailedProgramId, lockDetailedProgramToNone, setDetailedProgramId])
 
   useEffect(() => {
-    if (trainedTeachersDefaults && detailedProgramId === TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE) {
-      patchProgramRegistrationOverlay({
-        [detailedNameKey]: TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION.label,
-      })
-    }
-  }, [detailedNameKey, detailedProgramId, trainedTeachersDefaults])
+    if (lockDetailedProgramToNone) return
+    const isStaleNone = detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+    const isFakeTrainedTeachersId =
+      trainedTeachersDefaults &&
+      detailedProgramId === TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE
+    if (!isStaleNone && !isFakeTrainedTeachersId) return
+    // 커리큘럼형은 BE가 세부 프로그램 마스터 id(숫자)를 요구한다.
+    // 일정형에서 넘어온「해당없음」잔존값·1사1교용 가짜 id 는 비워서 재선택을 유도한다.
+    setDetailedProgramId('')
+    patchProgramRegistrationOverlay({ [detailedNameKey]: '' })
+  }, [
+    detailedNameKey,
+    detailedProgramId,
+    lockDetailedProgramToNone,
+    setDetailedProgramId,
+    trainedTeachersDefaults,
+  ])
 
-  const detailedProgramOptions = useMemo(() => {
-    const withNone = withDetailedProgramNoneOption(remoteDetailedProgramOptions)
-    return trainedTeachersDefaults
-      ? [TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION, ...withNone]
-      : withNone
-  }, [remoteDetailedProgramOptions, trainedTeachersDefaults])
+  // 「해당없음」은 일정형(잠금)에서만 유효 — 커리큘럼형·TT 옵션에는 노출하지 않는다.
+  const detailedProgramOptions = useMemo(
+    () =>
+      lockDetailedProgramToNone
+        ? withDetailedProgramNoneOption(remoteDetailedProgramOptions)
+        : remoteDetailedProgramOptions,
+    [lockDetailedProgramToNone, remoteDetailedProgramOptions]
+  )
 
   const setDetailedProgramSelection = (nextId: string) => {
     setDetailedProgramId(nextId)
@@ -147,7 +157,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
           edit={
             <CmsInput
               inputSize="medium"
-              placeholder="상세 프로그램명을 입력하세요"
+              placeholder="대표 프로그램명을 입력하세요"
               width="100%"
               value={programTitleEn}
               onChange={e => setProgramTitleEn(e.target.value)}

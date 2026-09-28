@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramListItemResponseRecruitmentStatus } from './programListItemResponseRecruitmentStatus';
 
 export interface ProgramListItemResponse {
   programId?: number;
@@ -20,13 +21,18 @@ export interface ProgramListItemResponse {
   businessYear?: number;
   businessStartDate?: string;
   businessEndDate?: string;
+  operationStartDate?: string;
+  operationEndDate?: string;
+  /** 운영 기간 축(period). 모집 배지와 섞지 않는다. */
   periodStatus?: string;
-  recruitmentStatus?: string;
+  /** 모집 축. OPEN/RECRUITING=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료 */
+  recruitmentStatus?: ProgramListItemResponseRecruitmentStatus;
   recruitmentStartAt?: string;
   recruitmentEndAt?: string;
   applicationTargetMode?: string;
   availableApplicationTypes?: string[];
   canApply?: boolean;
+  /** 썸네일 file_object id. 없으면 null. placeholder 금지 */
   thumbnailFileObjectId?: number;
   educationTarget?: string;
   targetGradeFrom?: string;

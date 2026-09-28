@@ -89,9 +89,17 @@ export function mapAdminAccountDetailToUser(
     registeredByAdmin: resolveRegisteredByAdmin({
       role,
       adminAccountId,
+      registeredByAdmin: detail.registeredByAdmin,
+      createdByAdmin: detail.createdByAdmin,
     }),
     identitySelfSignupCompletedAfterAdminRegistration:
-      resolveIdentitySelfSignupCompletedAfterAdminRegistration({ role, adminAccountId }),
+      resolveIdentitySelfSignupCompletedAfterAdminRegistration({
+        role,
+        adminAccountId,
+        registeredByAdmin: detail.registeredByAdmin,
+        createdByAdmin: detail.createdByAdmin,
+        identityVerified: detail.identityVerified,
+      }),
     permissionApprovalStatus,
     permissionApprovalHandledAt,
     listMetrics: permissionVariant ? { adminPermissionVariant: permissionVariant } : undefined,

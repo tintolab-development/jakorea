@@ -283,12 +283,18 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                   <div className="program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even">
                     <div className="program-detail-info-tab__contact-group">
                       <span className="program-detail-info-tab__contact-label">문의처</span>
-                      <CmsInput
-                        placeholder="담당 문의처"
-                        value={contactOrg}
-                        readOnly
-                        inputSize="medium"
-                        className="program-detail-info-tab__contact-name-input"
+                      <Controller
+                        name="instructorRecruitmentContactOrganizationName"
+                        control={form.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            {...field}
+                            value={field.value ?? ''}
+                            placeholder="담당 문의처"
+                            inputSize="medium"
+                            className="program-detail-info-tab__contact-name-input"
+                          />
+                        )}
                       />
                     </div>
                     <DividerVertical
@@ -298,7 +304,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                     <div className="program-detail-info-tab__contact-group">
                       <span className="program-detail-info-tab__contact-label">Tel</span>
                       <Controller
-                        name="contactPhone"
+                        name="instructorContactPhone"
                         control={form.control}
                         render={({ field }) => (
                           <CmsPhoneInput
@@ -318,7 +324,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                     <div className="program-detail-info-tab__contact-group">
                       <span className="program-detail-info-tab__contact-label">E-mail</span>
                       <Controller
-                        name="contactEmail"
+                        name="instructorContactEmail"
                         control={form.control}
                         render={({ field }) => (
                           <CmsInput

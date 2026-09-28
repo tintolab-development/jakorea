@@ -48,4 +48,9 @@ export interface ProgramDetailResponse {
   schedules?: ScheduleResponse[];
   curricula?: CurriculumResponse[];
   attachments?: AttachmentResponse[];
+  /**
+     * 지원방법 안내 문장. applicationPathId와 별개이며 값이 없으면 null입니다.
+     * @nullable
+     */
+  applicationMethod?: string | null;
 }

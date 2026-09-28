@@ -17,6 +17,7 @@ import {
 } from '@/features/notices/api/hooks'
 import { noticesQueryKeys } from '@/features/notices/api/query-keys'
 import { NOTICES_CHANGED_EVENT } from '@/features/notices/api/store'
+import { noticeMutationFailureAlert } from '@/features/notices/lib/mutation-failure-alert'
 import {
   NoticeFormModal,
   type NoticeFormValues,
@@ -43,7 +44,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
@@ -145,6 +146,7 @@ export function NoticesPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
   } = useListFilterUrl<NoticePendingFilters, NoticeListFilter>({
@@ -294,11 +296,14 @@ export function NoticesPage() {
         }
         setFormOpen(false)
         setEditing(null)
-      } catch {
-        showAlert({
-          title: formMode === 'edit' ? '저장 실패' : '등록 실패',
-          content: '요청을 처리하지 못했습니다. 다시 시도해 주세요.',
-        })
+      } catch (error) {
+        showAlert(
+          noticeMutationFailureAlert(
+            error,
+            '요청을 처리하지 못했습니다. 다시 시도해 주세요.',
+            formMode === 'edit' ? '저장 실패' : '등록 실패',
+          ),
+        )
       }
     },
     [createMutation, editing, formMode, showAlert, updateMutation]
@@ -417,27 +422,23 @@ export function NoticesPage() {
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">제목</p>
-              <CmsInput
+              <AdminFilterTextInput
                 inputSize="large"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.title}
                 placeholder="제목을 입력하세요"
-                onChange={e =>
-                  setPendingFilters(prev => ({ ...prev, title: e.target.value }))
-                }
+                onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
                 onPressEnter={handleSearch}
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">작성자명</p>
-              <CmsInput
+              <AdminFilterTextInput
                 inputSize="large"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.authorName}
                 placeholder="작성자명을 입력하세요"
-                onChange={e =>
-                  setPendingFilters(prev => ({ ...prev, authorName: e.target.value }))
-                }
+                onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
                 onPressEnter={handleSearch}
               />
             </div>

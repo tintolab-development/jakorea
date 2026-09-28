@@ -7,16 +7,17 @@ import type {
   PiiAccessListResult,
   PiiAccessLog,
 } from '@/entities/pii-access-log/model/types'
+import { LOG_LIST_PAGE_SIZE } from '@/features/logs/shared/lib/list-page'
 import type { ExportPrivacyAccessParams } from '@/shared/api/generated/logs/schemas/exportPrivacyAccessParams'
 import type { PageResponsePrivacyAccessLogItem } from '@/shared/api/generated/logs/schemas/pageResponsePrivacyAccessLogItem'
 import type { PrivacyAccessLogItem } from '@/shared/api/generated/logs/schemas/privacyAccessLogItem'
 import type { PrivacyAccessParams } from '@/shared/api/generated/logs/schemas/privacyAccessParams'
 
-export const LIST_PAGE_SIZE = 20
+export const LIST_PAGE_SIZE = LOG_LIST_PAGE_SIZE
 
 export function toPrivacyAccessParams(filter: PiiAccessListFilter): PrivacyAccessParams {
   const params: PrivacyAccessParams = {
-    page: 0,
+    page: filter.page ?? 0,
     size: LIST_PAGE_SIZE,
   }
   const targetName = filter.targetName?.trim()

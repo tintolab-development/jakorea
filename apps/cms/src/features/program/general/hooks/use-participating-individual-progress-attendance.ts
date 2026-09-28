@@ -119,6 +119,7 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
         attendanceStatus: ParticipatingIndividualProgressAttendanceStatus
         lateTime?: string
         remark?: string
+        evidenceFileObjectIds?: number[]
       }
     }) => {
       const session = remoteSessions?.find(s => s.id === payload.sessionId)
@@ -139,7 +140,11 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
               }
         return buildAttendanceItemRequest({
           participantId: row.participantId,
-          ...patch,
+          attendanceStatus: patch.attendanceStatus,
+          lateTime: patch.lateTime,
+          remark: patch.remark,
+          fileObjectIds:
+            row.id === payload.participantRowId ? payload.patch.evidenceFileObjectIds : undefined,
         })
       })
       await saveGeneralScheduleAttendances(payload.sessionId, requests)
@@ -174,6 +179,7 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
         attendanceStatus: ParticipatingIndividualProgressAttendanceStatus
         lateTime?: string
         remark?: string
+        evidenceFileObjectIds?: number[]
       }
     ) => {
       void saveMutation.mutateAsync({ sessionId, participantRowId, patch })

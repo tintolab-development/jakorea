@@ -150,6 +150,8 @@ export interface GeneralProgramCommonInfoExtension {
   sponsorManagerContactId?: string
   /** 후원사 담당자 선택 ref — 다중 선택 (후원사 멀티와 동일 UX) */
   sponsorManagerContactIds?: string[]
+  /** GET sponsors 의 담당자 표시명. ref → 이름. 저장 SSOT 아님 */
+  sponsorManagerContactNames?: Record<string, string>
   educationFormLabel?: string
   /** 참여 방식 — 개인 대상 · 일정 공통 (등록 폼·상세 조회 mock) */
   participationMethod?: 'individual' | 'team'
@@ -183,10 +185,26 @@ export interface GeneralProgramCommonInfoExtension {
   volunteerInterviewScheduleInfo?: GeneralProgramVolunteerInterviewScheduleInfo
   /** 교육 진행 일정 설정 — `date` 날짜 지정 · `period` 기간 지정(기획: 날짜 선택(기간)) */
   educationScheduleMode?: 'date' | 'period'
+  /**
+   * 기간 지정 — 신청 희망일 선택 가능 범위 (ISO start/end).
+   * TT: `trained-teacher/detail` configJson 안 · programs nested commonInfo.
+   */
+  educationScheduleRange?: { start: string; end: string }
   /** 교육받은 교사 — 교육일지 설정 (있음/없음) */
   educationJournalEnabled?: boolean
   /** 교육받은 교사 — 교육 연수 토글. ON이면 첫 진행 항목 타이틀·일정명이 교육 연수로 치환(IPS Prepare 고정) */
   teacherTrainingEnabled?: boolean
+  /** 교육받은 교사 — GET teacherTrainingScheduleName. OFF면 빈 문자열 */
+  teacherTrainingScheduleName?: string
+  /**
+   * 교육 과정 · IP Owned · Course Delivered By · Partner Involvement.
+   * TRAINED_TEACHER programs PATCH 는 올린 serviceDetailJson 으로 config 를 교체하고,
+   * 최상위 컬럼 미러를 JSON 에 다시 쓰지 않는다. 화면 값은 여기 둔다.
+   */
+  educationProcess?: string
+  ipOwned?: string
+  courseDeliveredBy?: 'JA' | 'Jointly' | 'Partner'
+  partnerInvolvement?: boolean
   /** 일반 프로그램 캘린더 — 설문조사 시작/종료 등 */
   calendarSurveySchedules?: GeneralProgramCalendarScheduleRow[]
   /** 일반 프로그램 캘린더 — 과제 제출 마감 등 */
@@ -283,6 +301,16 @@ export interface GeneralProgramVolunteerRecruitmentInfo {
   recruitmentPeriodLabel?: string
   finalAnnouncementLabel?: string
   resultAnnouncementLabel?: string
+  /** 서류 합격자 발표 (ISO / 방법) — serviceDetailJson nested SSOT */
+  documentPassAnnouncementDate?: string
+  documentPassAnnouncementMethod?: string
+  /** 2차 면접 기간·방법 */
+  interviewStartDate?: string
+  interviewEndDate?: string
+  interviewMethod?: string
+  /** 최종 합격자 발표 날짜·방법 (라벨과 별도) */
+  finalPassAnnouncementDate?: string
+  finalPassAnnouncementMethod?: string
   contactOrganizationName?: string
   inquiryTel?: string
   inquiryEmail?: string
@@ -368,6 +396,13 @@ export type UjatProgramProgressStatus =
   | 'PROGRAM_ENDED' // 프로그램 진행 완료
 
 // 프로그램
+/** 프로그램 모집 행 — 수정 잠금은 `startAt`만 본다. */
+export interface ProgramRecruitmentWindow {
+  recruitmentType?: string
+  targetType?: string
+  startAt?: string | null
+}
+
 export interface Program {
   id: UUID
   sponsorId: UUID
@@ -456,6 +491,10 @@ export interface Program {
   studentListRequired?: 'required' | 'not_required'
   /** 승인된 수강자 수 (표시: approvedStudentCount / capacity 건) */
   approvedStudentCount?: number
+  /** 목록 「참여자 모집 인원」분자 — `GET /api/admin/programs` `participantApprovedCount`. 없으면 표시 시 0 */
+  participantApprovedCount?: number
+  /** 목록 「참여자 모집 인원」분모 — `participantCapacity` / `participantRecruitmentCount`. 없으면 표시 시 `-` */
+  participantCapacity?: number
   /** 강사 모집 정원 (표시: instructors / instructorCapacity 건) */
   instructorCapacity?: number
   /** 총 참여 학교 수 (경제 교육 진행 중 목록 등) */
@@ -501,6 +540,11 @@ export interface Program {
   lectureReportFormTemplateId?: UUID // 강의보고서 폼 템플릿 ID
   /** 일반 프로그램 상세 — 등록 폼 참여자 유형 (복수, API 연동 전 mock) */
   generalParticipantTypes?: GeneralProgramParticipantType[]
+  /**
+   * GET `recruitments[]`. 모집·신청 잠금은 유형별 `startAt`.
+   * `operationStartDate`는 화면 표시용이며 잠금에 쓰지 않는다.
+   */
+  programRecruitments?: ProgramRecruitmentWindow[]
   /** 일반 프로그램 — 봉사자 선발 시 면접 단계 LNB 노출 여부 */
   generalVolunteerInterviewEnabled?: boolean
   /** 일반 프로그램 — 개인 참여자 선발 시 면접 단계 LNB 노출 여부 */
@@ -509,12 +553,21 @@ export interface Program {
   generalSurveyMenuKeys?: GeneralProgramSurveyMenuKey[]
   /** 일반 프로그램 유형 — 대분류 (기관/개인) */
   generalProgramAudience?: GeneralProgramAudienceKind
+  /**
+   * BE `programType` (GENERAL_ORGANIZATION, TRAINED_TEACHER, …).
+   * 합반 API는 `GENERAL_ORGANIZATION` 일 때만 호출한다.
+   */
+  backendProgramType?: string
   /** 일반 프로그램 유형 — 중분류 (커리큘럼형/일정형) */
   generalProgramEducationStructure?: GeneralProgramEducationStructure
   /** 일반 프로그램 유형 — 소분류 (단일/복수 회차) */
   generalProgramSessionRound?: GeneralProgramSessionRoundKind
   /** 일반 프로그램 상세 공통 정보 확장 필드 */
   generalCommonInfo?: GeneralProgramCommonInfoExtension
+  /** UJAT 등록 폼 overlay — 상세 화면 SSOT (`serviceDetailJson.registration.overlay`) */
+  ujatRegistrationOverlay?: Record<string, unknown>
+  /** 일반·1사1교·TT 등록 폼 overlay — 공고용명 등 SSOT (`serviceDetailJson.registration.overlay`) */
+  registrationOverlay?: Record<string, unknown>
   /** 일반 프로그램 캘린더 — 시간대 사용 여부 (false면 종일) */
   scheduleTimeEnabled?: boolean
   /** 일반 프로그램 캘린더 — 일정 시작·종료 시각 (HH:mm) */

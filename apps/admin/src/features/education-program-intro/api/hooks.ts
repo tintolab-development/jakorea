@@ -1,27 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
-  ProgramIntroCategoryKey,
+  ProgramIntroFieldCode,
   ProgramIntroSaveInput,
 } from '@/entities/education-program-intro/model/types'
-import { shouldUseEducationProgramIntroRemoteApi } from './capabilities'
 import { educationProgramIntroQueryKeys } from './query-keys'
 import {
   getProgramIntroCategoryService,
   saveProgramIntroCategoryService,
 } from './service'
 
-function source(): 'remote' | 'local' {
-  return shouldUseEducationProgramIntroRemoteApi() ? 'remote' : 'local'
-}
-
-export function useProgramIntroCategory(categoryKey: ProgramIntroCategoryKey, enabled = true) {
-  const dataSource = source()
+export function useProgramIntroCategory(fieldCode: ProgramIntroFieldCode, enabled = true) {
   return useQuery({
-    queryKey: educationProgramIntroQueryKeys.category(categoryKey, dataSource),
-    queryFn: () => getProgramIntroCategoryService(categoryKey),
+    queryKey: educationProgramIntroQueryKeys.detail(fieldCode),
+    queryFn: () => getProgramIntroCategoryService(fieldCode),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 
@@ -31,10 +25,7 @@ export function useSaveProgramIntroCategory() {
     mutationFn: (input: ProgramIntroSaveInput) => saveProgramIntroCategoryService(input),
     retry: false,
     onSuccess: doc => {
-      queryClient.setQueryData(
-        educationProgramIntroQueryKeys.category(doc.categoryKey, source()),
-        doc
-      )
+      queryClient.setQueryData(educationProgramIntroQueryKeys.detail(doc.fieldCode), doc)
       void queryClient.invalidateQueries({ queryKey: educationProgramIntroQueryKeys.all })
     },
   })

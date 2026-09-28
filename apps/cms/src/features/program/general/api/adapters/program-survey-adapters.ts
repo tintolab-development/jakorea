@@ -172,10 +172,16 @@ const SATISFACTION_TEMPLATE_TO_AUDIENCE = (() => {
 export function classifyFormBindingByTemplateId(
   binding: ProgramFormBindingResponse
 ): ClassifiedFormBindingKind {
+  // 등록 슬롯은 formType 기준이다. 템플릿 이름(만족도·강의평가)으로 빼면
+  // 설문조사 탭은 비는데 같은 SURVEY 슬롯 재등록은 서버가 거절한다.
+  const formType = normalizeProgramFormBindingType(binding.formType)
+  if (formType === 'LECTURE_EVALUATION') return 'lecture_evaluation'
+  if (formType === 'SATISFACTION') return 'satisfaction'
+  if (formType === 'SURVEY') return 'poll'
+
   const templateId = String(binding.templateId ?? '').trim()
   if (templateId === LECTURE_EVAL_TEMPLATE_ID) return 'lecture_evaluation'
   if (SATISFACTION_TEMPLATE_TO_AUDIENCE.has(templateId)) return 'satisfaction'
-  // code-style ids (survey-teacher 등) may arrive as numeric BE ids — also check templateName
   const name = (binding.templateName ?? '').toLowerCase()
   if (name.includes('강의평가') || name.includes('lecture')) return 'lecture_evaluation'
   if (name.includes('만족도') || name.includes('satisfaction')) return 'satisfaction'

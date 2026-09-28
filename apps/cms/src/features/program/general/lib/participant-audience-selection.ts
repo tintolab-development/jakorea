@@ -1,5 +1,8 @@
 import type { UseFormReturn } from 'react-hook-form'
 import type { GeneralProgramCommonInfoEditFormValues } from '@/features/program/general/model/common-info-edit-schema'
+import type { GeneralProgramParticipantType, Program } from '@/types/domain'
+import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
 
 export type GeneralParticipantAudienceKind = 'individual' | 'organization'
@@ -9,6 +12,12 @@ export type GeneralParticipantAudienceSelectValue = GeneralParticipantAudienceKi
 export type GeneralParticipantAudienceFlags = {
   individual: boolean
   organization: boolean
+}
+
+/** 등록 위저드 `participant`와 동일한 체크 상태 */
+export type GeneralParticipantRegistrationFlags = GeneralParticipantAudienceFlags & {
+  teacherInstructor: boolean
+  volunteer: boolean
 }
 
 const PARTICIPANT_AUDIENCE_LABEL_BY_KIND: Record<GeneralParticipantAudienceSelectValue, string> = {
@@ -100,4 +109,57 @@ export function applyGeneralParticipantAudienceSelectToEditForm(
       : { individual: false, organization: true }
   applyGeneralParticipantAudienceFlagsToEditForm(editForm, next)
   return next
+}
+
+/**
+ * 등록·상세 수정 KPI 비활성.
+ * 최종 파견 학교/학급 수는 개인·기관 모두 해당 없음(비활성).
+ */
+export function resolveGeneralRegistrationKpiFieldAvailability(
+  participant: GeneralParticipantRegistrationFlags
+): {
+  instructorDisabled: boolean
+  volunteerDisabled: boolean
+  dispatchedSchoolDisabled: boolean
+  dispatchedClassDisabled: boolean
+} {
+  return {
+    instructorDisabled: participant.teacherInstructor !== true,
+    volunteerDisabled: participant.volunteer !== true,
+    dispatchedSchoolDisabled: true,
+    dispatchedClassDisabled: true,
+  }
+}
+
+export function generalParticipantTypesFromFlags(
+  flags: GeneralParticipantRegistrationFlags
+): GeneralProgramParticipantType[] {
+  const types: GeneralProgramParticipantType[] = []
+  if (flags.individual) types.push('individual')
+  if (flags.organization) types.push('school_institution')
+  if (flags.teacherInstructor) types.push('teacher_instructor')
+  if (flags.volunteer) types.push('volunteer')
+  return types.length > 0 ? types : ['school_institution']
+}
+
+export function participantFlagsFromGeneralProgram(
+  program: Program
+): GeneralParticipantRegistrationFlags {
+  const types = new Set(getGeneralParticipantTypes(program))
+  let individual = types.has('individual')
+  let organization = types.has('school_institution')
+  if (individual && organization) {
+    if (isGeneralIndividualProgram(program)) organization = false
+    else individual = false
+  }
+  if (!individual && !organization) {
+    if (isGeneralIndividualProgram(program)) individual = true
+    else organization = true
+  }
+  return {
+    individual,
+    organization,
+    teacherInstructor: types.has('teacher_instructor'),
+    volunteer: types.has('volunteer'),
+  }
 }

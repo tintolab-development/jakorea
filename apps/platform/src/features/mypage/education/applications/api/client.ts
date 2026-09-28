@@ -1,0 +1,88 @@
+import { axiosClient } from '@/shared/api/axios-instance'
+import type {
+  PortalProgramApplicationDetail,
+  PortalProgramApplicationListPage,
+  PortalProgramApplicationListQuery,
+  ProgramApplicationType,
+} from './types'
+
+const MY_PROGRAM_APPLICATIONS_PATH = '/api/portal/me/program-applications'
+
+function unwrapEnvelope<T>(payload: unknown): T {
+  if (payload && typeof payload === 'object') {
+    const o = payload as Record<string, unknown>
+    if (o.success === true && 'data' in o) {
+      return unwrapEnvelope<T>(o.data)
+    }
+  }
+  return payload as T
+}
+
+function compactParams(query: PortalProgramApplicationListQuery): Record<string, string | number> {
+  const params: Record<string, string | number> = {
+    applicationType: query.applicationType,
+    page: query.page,
+    size: query.size,
+  }
+  if (query.statusGroup) params.statusGroup = query.statusGroup
+  if (query.status) params.status = query.status
+  if (query.programGroup) params.programGroup = query.programGroup
+  if (query.keyword) params.keyword = query.keyword
+  if (query.from) params.from = query.from
+  if (query.to) params.to = query.to
+  return params
+}
+
+function normalizeListPage(payload: unknown, fallbackSize: number): PortalProgramApplicationListPage {
+  const unwrapped = unwrapEnvelope<unknown>(payload)
+  if (Array.isArray(unwrapped)) {
+    return {
+      items: unwrapped,
+      page: 0,
+      size: fallbackSize,
+      totalElements: unwrapped.length,
+      totalPages: 1,
+    }
+  }
+  if (!unwrapped || typeof unwrapped !== 'object') {
+    return { items: [], page: 0, size: fallbackSize, totalElements: 0, totalPages: 0 }
+  }
+  const page = unwrapped as PortalProgramApplicationListPage
+  return {
+    items: Array.isArray(page.items) ? page.items : [],
+    page: page.page ?? 0,
+    size: page.size ?? fallbackSize,
+    totalElements: page.totalElements ?? 0,
+    totalPages: page.totalPages ?? 0,
+  }
+}
+
+export async function fetchMyProgramApplications(
+  query: PortalProgramApplicationListQuery,
+  signal?: AbortSignal,
+): Promise<PortalProgramApplicationListPage> {
+  const { data } = await axiosClient.get<unknown>(MY_PROGRAM_APPLICATIONS_PATH, {
+    signal,
+    params: compactParams(query),
+  })
+  return normalizeListPage(data, query.size)
+}
+
+export async function fetchMyProgramApplicationDetail(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  signal?: AbortSignal,
+): Promise<PortalProgramApplicationDetail> {
+  const { data } = await axiosClient.get<unknown>(
+    `${MY_PROGRAM_APPLICATIONS_PATH}/${applicationType}/${applicationId}`,
+    { signal },
+  )
+  return unwrapEnvelope<PortalProgramApplicationDetail>(data)
+}
+
+export async function cancelMyProgramApplication(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+): Promise<void> {
+  await axiosClient.post(`${MY_PROGRAM_APPLICATIONS_PATH}/${applicationType}/${applicationId}/cancel`)
+}

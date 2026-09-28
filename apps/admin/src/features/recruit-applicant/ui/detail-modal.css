@@ -1,0 +1,223 @@
+/**
+ * 인재채용 신청 상세 모달
+ * 시안 폭 1400. 본문이 길면 최대 920 안에서 스크롤한다.
+ */
+
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.recruit-applicant-detail-modal) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.recruit-applicant-detail-modal)
+  .ant-modal.teal-header-modal--large.recruit-applicant-detail-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(1400px, calc(100vw - 32px)) !important;
+  max-width: min(1400px, calc(100vw - 32px)) !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+.content-modal.recruit-applicant-detail-modal.teal-header-modal--large .ant-modal-content,
+.recruit-applicant-detail-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 30px 34px !important;
+  border-radius: 12px;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  height: auto;
+  max-height: min(920px, calc(100vh - 32px));
+  max-height: min(920px, calc(100dvh - 32px));
+  min-height: 0;
+  overflow: hidden;
+}
+
+.content-modal.recruit-applicant-detail-modal.teal-header-modal--large .ant-modal-body,
+.recruit-applicant-detail-modal.content-modal.teal-header-modal.ant-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.recruit-applicant-detail-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body,
+.recruit-applicant-detail-modal.content-modal .teal-header-modal__body {
+  padding-top: 24px !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.recruit-applicant-detail-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  margin-top: 30px !important;
+}
+
+.recruit-applicant-detail-modal .content-modal__footer-actions {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.recruit-applicant-detail-modal__footer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.recruit-applicant-detail-modal__footer-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.recruit-applicant-detail-modal__loading {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.recruit-applicant-detail-modal__scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+.recruit-applicant-detail-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.recruit-applicant-detail-modal__table-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.recruit-applicant-detail-modal__section-title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.recruit-applicant-detail-modal .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 180px !important;
+  grid-template-columns: 180px minmax(0, 1fr) !important;
+}
+
+.recruit-applicant-detail-modal .detail-info-form__field-label {
+  display: flex !important;
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  min-height: 48px;
+  padding: 10px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  align-self: stretch;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 140%;
+}
+
+.recruit-applicant-detail-modal .detail-info-form__field-content {
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+  min-width: 0;
+}
+
+.recruit-applicant-detail-modal__table--text
+  .detail-info-form__field-content:has(.recruit-applicant-detail-modal__content) {
+  align-items: flex-start;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.recruit-applicant-detail-modal__split {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.recruit-applicant-detail-modal__content {
+  white-space: pre-line;
+  word-break: break-word;
+  line-height: 150%;
+}
+
+.recruit-applicant-detail-modal__attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--default-BK, #3d3d3d);
+  text-decoration: none;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.recruit-applicant-detail-modal__attachment:hover {
+  color: var(--color-mint-01, #01a1af);
+}
+
+.recruit-applicant-detail-modal__file-icon {
+  flex-shrink: 0;
+  color: var(--color-mint-01, #01a1af);
+}
+
+.recruit-applicant-detail-modal__status--pending {
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 600;
+}
+
+.recruit-applicant-detail-modal__status--confirmed {
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+}

@@ -74,7 +74,7 @@ function buildSeedData(): IndividualDonationData {
     usageGuideItems: buildSeedUsageGuide(),
     donateCta: {
       buttonLabel: '후원하기',
-      linkUrl: 'https://online.mrm.or.kr/WJEP4tk',
+      linkUrl: 'https://online.mrm.or.kr/WJEP4tK',
       version: 0,
     },
     updatedAt: '2026-08-01T00:00:00.000Z',

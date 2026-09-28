@@ -2,7 +2,7 @@
  * 푸터 — 기관 정보
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { FooterOrgInfo, FooterOrgInfoSaveInput } from '@/entities/footer/model/types'
@@ -33,6 +33,67 @@ function fieldClass(isEditing: boolean) {
   ].join(' ')
 }
 
+type OrgTextKey =
+  | 'name'
+  | 'address'
+  | 'zipCode'
+  | 'representative'
+  | 'businessNumber'
+  | 'phone'
+  | 'fax'
+  | 'email'
+
+type OrgTextDraft = Record<OrgTextKey, string>
+
+function pickOrgText(source: FooterOrgInfoSaveInput): OrgTextDraft {
+  return {
+    name: source.name,
+    address: source.address,
+    zipCode: source.zipCode,
+    representative: source.representative,
+    businessNumber: source.businessNumber,
+    phone: source.phone,
+    fax: source.fax,
+    email: source.email,
+  }
+}
+
+const OrgInlineField = memo(function OrgInlineField({
+  sourceValue,
+  isEditing,
+  resetKey,
+  onDraftChange,
+}: {
+  sourceValue: string
+  isEditing: boolean
+  resetKey: number
+  onDraftChange: (value: string) => void
+}) {
+  const [localValue, setLocalValue] = useState(sourceValue)
+
+  useEffect(() => {
+    if (isEditing) return
+    setLocalValue(sourceValue)
+  }, [isEditing, resetKey, sourceValue])
+
+  return (
+    <CmsInput
+      className={fieldClass(isEditing)}
+      inputSize="medium"
+      width="100%"
+      value={localValue}
+      readOnly={!isEditing}
+      tabIndex={isEditing ? 0 : -1}
+      onChange={e => {
+        if (!isEditing) return
+        const next = e.target.value
+        setLocalValue(next)
+        onDraftChange(next)
+      }}
+    />
+  )
+})
+
 function cloneOrg(data: FooterOrgInfo): FooterOrgInfoSaveInput {
   return {
     name: data.name,
@@ -43,6 +104,7 @@ function cloneOrg(data: FooterOrgInfo): FooterOrgInfoSaveInput {
     phone: data.phone,
     fax: data.fax,
     email: data.email,
+    organizationDescription: data.organizationDescription,
     logoUrl: data.logoUrl,
     logoFileName: data.logoFileName,
     logoAssetId: data.logoAssetId,
@@ -97,35 +159,91 @@ export function FooterOrgInfoSection() {
 
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<FooterOrgInfoSaveInput | null>(null)
+  const [textResetKey, setTextResetKey] = useState(0)
+  const textDraftRef = useRef<OrgTextDraft | null>(null)
+
+  const syncTextDraft = useCallback((source: FooterOrgInfoSaveInput) => {
+    textDraftRef.current = pickOrgText(source)
+  }, [])
 
   useEffect(() => {
     if (!isEditing && data) {
-      setDraft(cloneOrg(data))
+      const next = cloneOrg(data)
+      setDraft(next)
+      syncTextDraft(next)
     }
-  }, [data, isEditing])
+  }, [data, isEditing, syncTextDraft])
 
   const handleEdit = useCallback(() => {
-    if (data) setDraft(cloneOrg(data))
+    if (data) {
+      const next = cloneOrg(data)
+      setDraft(next)
+      syncTextDraft(next)
+    }
     setIsEditing(true)
-  }, [data])
+  }, [data, syncTextDraft])
 
   const handleCancel = useCallback(() => {
-    if (data) setDraft(cloneOrg(data))
+    if (data) {
+      const next = cloneOrg(data)
+      setDraft(next)
+      syncTextDraft(next)
+    }
     setIsEditing(false)
-  }, [data])
+    setTextResetKey(key => key + 1)
+  }, [data, syncTextDraft])
+
+  const handleTextDraftChange = useCallback((field: OrgTextKey, value: string) => {
+    if (!textDraftRef.current) return
+    textDraftRef.current = { ...textDraftRef.current, [field]: value }
+  }, [])
+
+  const handleNameChange = useCallback(
+    (value: string) => handleTextDraftChange('name', value),
+    [handleTextDraftChange]
+  )
+  const handleAddressChange = useCallback(
+    (value: string) => handleTextDraftChange('address', value),
+    [handleTextDraftChange]
+  )
+  const handleZipCodeChange = useCallback(
+    (value: string) => handleTextDraftChange('zipCode', value),
+    [handleTextDraftChange]
+  )
+  const handleRepresentativeChange = useCallback(
+    (value: string) => handleTextDraftChange('representative', value),
+    [handleTextDraftChange]
+  )
+  const handleBusinessNumberChange = useCallback(
+    (value: string) => handleTextDraftChange('businessNumber', value),
+    [handleTextDraftChange]
+  )
+  const handlePhoneChange = useCallback(
+    (value: string) => handleTextDraftChange('phone', value),
+    [handleTextDraftChange]
+  )
+  const handleFaxChange = useCallback(
+    (value: string) => handleTextDraftChange('fax', value),
+    [handleTextDraftChange]
+  )
+  const handleEmailChange = useCallback(
+    (value: string) => handleTextDraftChange('email', value),
+    [handleTextDraftChange]
+  )
 
   const handleSave = useCallback(async () => {
-    if (!draft) return
-    if (!draft.name.trim()) {
+    const text = textDraftRef.current
+    if (!draft || !text) return
+    if (!text.name.trim()) {
       showAlert({ title: '입력 확인', content: '기관명을 입력해 주세요.' })
       return
     }
-    if (!draft.email.trim()) {
+    if (!text.email.trim()) {
       showAlert({ title: '입력 확인', content: '이메일을 입력해 주세요.' })
       return
     }
     try {
-      await saveMutation.mutateAsync(draft)
+      await saveMutation.mutateAsync({ ...draft, ...text })
       setIsEditing(false)
     } catch {
       showAlert({
@@ -195,11 +313,6 @@ export function FooterOrgInfoSection() {
     )
   }
 
-  const patch = (partial: Partial<FooterOrgInfoSaveInput>) => {
-    if (!isEditing) return
-    setDraft(prev => (prev ? { ...prev, ...partial } : prev))
-  }
-
   return (
     <section
       className={
@@ -256,14 +369,11 @@ export function FooterOrgInfoSection() {
               label="기관명"
               view={null}
               edit={
-                <CmsInput
-                  className={fieldClass(isEditing)}
-                  inputSize="medium"
-                  width="100%"
-                  value={draft.name}
-                  readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
-                  onChange={e => patch({ name: e.target.value })}
+                <OrgInlineField
+                  sourceValue={data.name}
+                  isEditing={isEditing}
+                  resetKey={textResetKey}
+                  onDraftChange={handleNameChange}
                 />
               }
             />
@@ -271,14 +381,11 @@ export function FooterOrgInfoSection() {
               label="기관 소재지"
               view={null}
               edit={
-                <CmsInput
-                  className={fieldClass(isEditing)}
-                  inputSize="medium"
-                  width="100%"
-                  value={draft.address}
-                  readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
-                  onChange={e => patch({ address: e.target.value })}
+                <OrgInlineField
+                  sourceValue={data.address}
+                  isEditing={isEditing}
+                  resetKey={textResetKey}
+                  onDraftChange={handleAddressChange}
                 />
               }
             />
@@ -288,14 +395,11 @@ export function FooterOrgInfoSection() {
               label="우편번호"
               view={null}
               edit={
-                <CmsInput
-                  className={fieldClass(isEditing)}
-                  inputSize="medium"
-                  width="100%"
-                  value={draft.zipCode}
-                  readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
-                  onChange={e => patch({ zipCode: e.target.value })}
+                <OrgInlineField
+                  sourceValue={data.zipCode}
+                  isEditing={isEditing}
+                  resetKey={textResetKey}
+                  onDraftChange={handleZipCodeChange}
                 />
               }
             />
@@ -303,14 +407,11 @@ export function FooterOrgInfoSection() {
               label="대표"
               view={null}
               edit={
-                <CmsInput
-                  className={fieldClass(isEditing)}
-                  inputSize="medium"
-                  width="100%"
-                  value={draft.representative}
-                  readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
-                  onChange={e => patch({ representative: e.target.value })}
+                <OrgInlineField
+                  sourceValue={data.representative}
+                  isEditing={isEditing}
+                  resetKey={textResetKey}
+                  onDraftChange={handleRepresentativeChange}
                 />
               }
             />
@@ -320,14 +421,11 @@ export function FooterOrgInfoSection() {
               label="사업자번호"
               view={null}
               edit={
-                <CmsInput
-                  className={fieldClass(isEditing)}
-                  inputSize="medium"
-                  width="100%"
-                  value={draft.businessNumber}
-                  readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
-                  onChange={e => patch({ businessNumber: e.target.value })}
+                <OrgInlineField
+                  sourceValue={data.businessNumber}
+                  isEditing={isEditing}
+                  resetKey={textResetKey}
+                  onDraftChange={handleBusinessNumberChange}
                 />
               }
             />
@@ -335,14 +433,11 @@ export function FooterOrgInfoSection() {
               label="대표전화"
               view={null}
               edit={
-                <CmsInput
-                  className={fieldClass(isEditing)}
-                  inputSize="medium"
-                  width="100%"
-                  value={draft.phone}
-                  readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
-                  onChange={e => patch({ phone: e.target.value })}
+                <OrgInlineField
+                  sourceValue={data.phone}
+                  isEditing={isEditing}
+                  resetKey={textResetKey}
+                  onDraftChange={handlePhoneChange}
                 />
               }
             />
@@ -352,14 +447,11 @@ export function FooterOrgInfoSection() {
               label="팩스"
               view={null}
               edit={
-                <CmsInput
-                  className={fieldClass(isEditing)}
-                  inputSize="medium"
-                  width="100%"
-                  value={draft.fax}
-                  readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
-                  onChange={e => patch({ fax: e.target.value })}
+                <OrgInlineField
+                  sourceValue={data.fax}
+                  isEditing={isEditing}
+                  resetKey={textResetKey}
+                  onDraftChange={handleFaxChange}
                 />
               }
             />
@@ -367,14 +459,11 @@ export function FooterOrgInfoSection() {
               label="이메일"
               view={null}
               edit={
-                <CmsInput
-                  className={fieldClass(isEditing)}
-                  inputSize="medium"
-                  width="100%"
-                  value={draft.email}
-                  readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
-                  onChange={e => patch({ email: e.target.value })}
+                <OrgInlineField
+                  sourceValue={data.email}
+                  isEditing={isEditing}
+                  resetKey={textResetKey}
+                  onDraftChange={handleEmailChange}
                 />
               }
             />

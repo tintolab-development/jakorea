@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import type { SchoolDetailForModal } from '@/features/program/general/model/school-detail-types'
@@ -20,16 +21,16 @@ import {
   toCombinedClassApplicationStatus,
 } from '@/features/program/general/lib/participating-institution-detail-edit'
 import {
-  filterTextbooksForApplicant,
-  resolveTextbookOptionLabel,
-} from '@/features/program/general/lib/filter-textbooks-for-applicant'
-import {
   filterTextbooksForCombinedClassEdit,
+  buildCombinedClassTextbookSelectOptions,
+  buildParticipatingInstitutionTextbookSelectOptions,
   programUsesTextbook,
   resolveParticipatingInstitutionTextbookDisplay,
   resolveTextbookFieldsFromSelection,
 } from '@/features/program/general/lib/participating-institution-textbook'
-import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib/get-same-school-participating-grades'
+import {
+  TEXTBOOK_NOT_USED_OPTION_VALUE,
+} from '@/features/program/general/lib/individual-applicant-textbook'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import type { CombinedClassApplicationStatus } from '@/features/program/general/lib/applicant-institution-detail-edit'
 import {
@@ -41,12 +42,44 @@ import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabi
 import { useAffiliatedTeachersQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { isSchoolAffiliatedTeacherRowSelectable } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
+import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
+import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib/get-same-school-participating-grades'
 import { useCmsAlert } from '@/shared/ui'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
+import { updateOrganizationApplicationRemote } from '@/features/program/general/api/applications-api-client'
+import {
+  shouldUseApplicationsHttpRemoteApi,
+  shouldUseGeneralApplicationsRemoteApi,
+} from '@/features/program/general/api/applications-remote-capabilities'
+import { shouldUseCompanySchoolApplicationsRemoteApi } from '@/features/program/1c-1s/api/capabilities'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import {
+  buildParticipatingInstitutionLocalSavePatch,
+  buildParticipatingInstitutionOrganizationUpdateRequest,
+  resolveParticipatingInstitutionApplicationId,
+} from '@/features/program/general/lib/participating-institution-organization-update'
+import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import axios from 'axios'
+
+function shouldUseParticipatingInstitutionApplicationPatchRemote(): boolean {
+  if (shouldUseGeneralApplicationsRemoteApi()) return true
+  if (shouldUseCompanySchoolApplicationsRemoteApi()) return true
+  if (shouldUseApplicationsHttpRemoteApi()) return true
+  return (
+    shouldUseTrainedTeacherProgramsRemoteApi() &&
+    isRealApiModuleEnabled('applications') &&
+    hasRemoteAdminJwt()
+  )
+}
 
 function isCompanySchoolProgram(program: Program): boolean {
   return (
@@ -88,10 +121,12 @@ export function useParticipatingInstitutionDetailEdit({
   row,
   program,
   participatingSchoolList,
+  onSaveBasicInfo,
   onSaveCombinedClass,
   combinedClassReadOnly = false,
   onCombinedClassApplied,
 }: UseParticipatingInstitutionDetailEditParams) {
+  const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [draft, setDraft] = useState<ReturnType<
@@ -100,16 +135,35 @@ export function useParticipatingInstitutionDetailEdit({
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const { showAlert } = useCmsAlert()
 
+  const educationGradeForTextbookOptions =
+    (isEditing ? draft?.educationGrade?.trim() : '') || row.educationGrade
   const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
     useProgramTextbookCatalog(program)
+  const { catalog: gradeTextbookCatalog, isLoading: isGradeTextbookCatalogLoading } =
+    useProgramTextbookCatalog(program, educationGradeForTextbookOptions)
+  const { materialIds: programMaterialTextbookIds } = useIndividualApplicantTextbookOptions(
+    program,
+    educationGradeForTextbookOptions
+  )
 
   const isCompanySchool = useMemo(() => isCompanySchoolProgram(program), [program])
 
   /** 카탈로그 로딩 중에는 필드를 숨기지 않음(새로고침 플래시 방지) */
   const usesTextbook = useMemo(
     () =>
-      isCompanySchool || isTextbookCatalogLoading || programUsesTextbook(program, textbookCatalog),
-    [isCompanySchool, isTextbookCatalogLoading, program, textbookCatalog]
+      isCompanySchool ||
+      isTextbookCatalogLoading ||
+      isGradeTextbookCatalogLoading ||
+      programUsesTextbook(program, textbookCatalog) ||
+      programUsesTextbook(program, gradeTextbookCatalog),
+    [
+      isCompanySchool,
+      isGradeTextbookCatalogLoading,
+      isTextbookCatalogLoading,
+      gradeTextbookCatalog,
+      program,
+      textbookCatalog,
+    ]
   )
 
   const isCombinedClassProgramEligibleFlag = useMemo(
@@ -154,18 +208,26 @@ export function useParticipatingInstitutionDetailEdit({
     row.schoolName,
   ])
 
+  const resolvedTextbookCatalog = useMemo(() => {
+    if (gradeTextbookCatalog === undefined && textbookCatalog === undefined) return undefined
+    const byId = new Map<string, NonNullable<typeof textbookCatalog>[number]>()
+    for (const rowItem of textbookCatalog ?? []) byId.set(rowItem.id, rowItem)
+    for (const rowItem of gradeTextbookCatalog ?? []) byId.set(rowItem.id, rowItem)
+    return [...byId.values()]
+  }, [gradeTextbookCatalog, textbookCatalog])
+
   const textbookDisplay = useMemo(
     () =>
       resolveParticipatingInstitutionTextbookDisplay({
         program,
-        educationGrade: row.educationGrade,
+        educationGrade: educationGradeForTextbookOptions,
         studentCount: row.studentCount,
         textbookId: detail.textbookId,
         textbookName: detail.textbookName,
         textbookGrade: detail.textbookGrade,
         textbookKits: detail.textbookKits,
         textbookQuantity: detail.textbookQuantity,
-        catalog: textbookCatalog,
+        catalog: resolvedTextbookCatalog,
       }),
     [
       detail.textbookGrade,
@@ -173,43 +235,50 @@ export function useParticipatingInstitutionDetailEdit({
       detail.textbookKits,
       detail.textbookName,
       detail.textbookQuantity,
+      educationGradeForTextbookOptions,
       program,
-      row.educationGrade,
+      resolvedTextbookCatalog,
       row.studentCount,
-      textbookCatalog,
     ]
   )
 
   const textbookOptions = useMemo((): TextbookSelectOption[] => {
     if (!usesTextbook) return []
 
-    const rows =
+    const isCombinedSelect =
       !isCompanySchool &&
       (draft?.combinedClassApplication === '신청' ||
         toCombinedClassApplicationStatus(detail.combinedClassApplication) === '신청')
-        ? filterTextbooksForCombinedClassEdit(program, textbookCatalog)
-        : filterTextbooksForApplicant(program, row.educationGrade, textbookCatalog)
 
-    return rows.map(textbookRow => ({
-      value: textbookRow.id,
-      label: resolveTextbookOptionLabel(textbookRow),
-      textbookName: textbookRow.textbookName,
-    }))
+    if (isCombinedSelect) {
+      return buildCombinedClassTextbookSelectOptions(
+        program,
+        textbookCatalog,
+        programMaterialTextbookIds
+      )
+    }
+
+    return buildParticipatingInstitutionTextbookSelectOptions({
+      program,
+      educationGrade: educationGradeForTextbookOptions,
+      gradeCatalog: gradeTextbookCatalog,
+      programCatalog: textbookCatalog,
+      programMaterialTextbookIds,
+    })
   }, [
     detail.combinedClassApplication,
     draft?.combinedClassApplication,
+    educationGradeForTextbookOptions,
+    gradeTextbookCatalog,
     isCompanySchool,
     program,
-    row.educationGrade,
-    usesTextbook,
+    programMaterialTextbookIds,
     textbookCatalog,
+    usesTextbook,
   ])
 
-  const canEditTextbook =
-    usesTextbook &&
-    (isCompanySchool
-      ? row.approvalStatus === 'approved'
-      : draft?.combinedClassApplication === '신청')
+  /** 프로그램 진행 현황 — 승인 완료 시 교재 수정·등록 (합반 여부와 무관) */
+  const canEditTextbook = usesTextbook && row.approvalStatus === 'approved'
 
   const sameSchoolGradeOptions = useMemo((): SameSchoolParticipatingGradeOption[] => {
     if (!isCombinedClassProgramEligibleFlag) return []
@@ -242,15 +311,27 @@ export function useParticipatingInstitutionDetailEdit({
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const enterEdit = useCallback(() => {
-    const textbookIdFallback =
-      resolveTextbookIdFromName(detail.textbookName, textbookOptions) ||
-      textbookDisplay.textbookId ||
-      ''
+    const hasTextbook =
+      Boolean(detail.textbookId?.trim()) ||
+      (Boolean(detail.textbookName?.trim()) && detail.textbookName?.trim() !== '해당 없음')
+    const textbookIdFallback = hasTextbook
+      ? resolveTextbookIdFromName(detail.textbookName, textbookOptions) ||
+        detail.textbookId ||
+        textbookDisplay.textbookId ||
+        ''
+      : TEXTBOOK_NOT_USED_OPTION_VALUE
     let nextDraft = detailToParticipatingInstitutionEditDraft(
       detail,
       textbookIdFallback,
       textbookDisplay.textbookGrade
     )
+    if (!hasTextbook) {
+      nextDraft = {
+        ...nextDraft,
+        textbookId: TEXTBOOK_NOT_USED_OPTION_VALUE,
+        textbookName: '해당 없음',
+      }
+    }
     if (!isCombinedClassProgramEligibleFlag) {
       nextDraft = {
         ...nextDraft,
@@ -279,8 +360,21 @@ export function useParticipatingInstitutionDetailEdit({
         if (!prev) return prev
         const next = { ...prev, ...partial }
         if (partial.textbookId != null && usesTextbook) {
+          if (
+            partial.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE ||
+            partial.textbookId === ''
+          ) {
+            return {
+              ...next,
+              textbookId: TEXTBOOK_NOT_USED_OPTION_VALUE,
+              textbookName: '해당 없음',
+              textbookGrade: '',
+            }
+          }
           const selected = textbookOptions.find(option => option.value === partial.textbookId)
-          const storeRow = filterTextbooksForCombinedClassEdit(program, textbookCatalog).find(
+          const storeRow = (resolvedTextbookCatalog ?? []).find(
+            rowItem => rowItem.id === partial.textbookId
+          ) ?? filterTextbooksForCombinedClassEdit(program, textbookCatalog).find(
             rowItem => rowItem.id === partial.textbookId
           )
           if (selected && storeRow) {
@@ -303,7 +397,14 @@ export function useParticipatingInstitutionDetailEdit({
       })
       setValidationErrors({})
     },
-    [program, row.studentCount, textbookCatalog, textbookOptions, usesTextbook]
+    [
+      program,
+      resolvedTextbookCatalog,
+      row.studentCount,
+      textbookCatalog,
+      textbookOptions,
+      usesTextbook,
+    ]
   )
 
   const saveEdit = useCallback(async (): Promise<boolean> => {
@@ -333,12 +434,17 @@ export function useParticipatingInstitutionDetailEdit({
       normalizedDraft.combinedClassPartnerSchoolIds,
       participatingSchoolList
     )
+    const draftStudentCount = Number(normalizedDraft.studentCount)
+    const studentCountForKits = Number.isFinite(draftStudentCount)
+      ? draftStudentCount
+      : row.studentCount
     const patch = participatingInstitutionEditDraftToDetailPatch(normalizedDraft, partnerGrades, {
       program,
-      studentCount: row.studentCount,
+      studentCount: studentCountForKits,
       requiresTextbook: usesTextbook,
-      allowTextbookSelectionWithoutCombinedClass: isCompanySchool,
-      catalog: textbookCatalog,
+      // 진행 현황 상세 — 합반 미신청이어도 교재 지정·해당 없음 저장 허용
+      allowTextbookSelectionWithoutCombinedClass: true,
+      catalog: resolvedTextbookCatalog,
     })
     if (Object.keys(patch).length === 0) {
       void showAlert({
@@ -401,16 +507,94 @@ export function useParticipatingInstitutionDetailEdit({
       }
 
       if (nonMergeChanged) {
-        notifyProgramApiUnavailable(
-          'general-participating-institution-detail-patch',
-          '일반 프로그램 · 참여 기관 신청 정보 수정'
-        )
-        if (!savedCombinedClass) return false
+        if (!shouldUseParticipatingInstitutionApplicationPatchRemote()) {
+          notifyProgramApiUnavailable(
+            'general-participating-institution-detail-patch',
+            '일반 프로그램 · 참여 기관 신청 정보 수정'
+          )
+          if (!savedCombinedClass) return false
+        } else {
+          const applicationId = resolveParticipatingInstitutionApplicationId({
+            organizationApplicationId: row.organizationApplicationId,
+            detailId: detail.id,
+            rowId: row.id,
+          })
+          if (!applicationId) {
+            void showAlert({
+              title: '안내',
+              content: '기관 신청 ID가 없어 저장할 수 없습니다.',
+            })
+            return false
+          }
+
+          const updateBody = buildParticipatingInstitutionOrganizationUpdateRequest({
+            draft: normalizedDraft,
+            teacherOptions,
+            fallbackTeacherMemberId: row.teacherMemberId,
+            textbookGrade: patch.textbookGrade,
+            textbookKits: patch.textbookKits,
+            textbookQuantity: patch.textbookQuantity,
+          })
+          await updateOrganizationApplicationRemote(applicationId, updateBody)
+
+          const programId = String(program.id ?? '')
+          void queryClient.invalidateQueries({
+            queryKey: generalApplicationsQueryKeys.organizationDetail(applicationId),
+          })
+          if (programId) {
+            void queryClient.invalidateQueries({
+              queryKey: generalApplicationsQueryKeys.organizationList(programId),
+            })
+            if (isTrainedTeachersDetailProgram(program)) {
+              void queryClient.invalidateQueries({
+                queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
+              })
+              void queryClient.invalidateQueries({
+                queryKey: trainedTeacherQueryKeys.participatingInstitutions(programId),
+              })
+              void queryClient.invalidateQueries({
+                queryKey: trainedTeacherQueryKeys.performanceSummary(programId),
+              })
+            }
+          }
+
+          onSaveBasicInfo?.(
+            buildParticipatingInstitutionLocalSavePatch({
+              detailId: detail.id,
+              draft: normalizedDraft,
+              patch: {
+                ...patch,
+                combinedClassApplication: normalizedDraft.combinedClassApplication,
+                combinedClassPartnerSchoolIds:
+                  normalizedDraft.combinedClassApplication === '신청'
+                    ? normalizedDraft.combinedClassPartnerSchoolIds
+                    : [],
+                combinedClassPartnerGrades:
+                  normalizedDraft.combinedClassApplication === '신청' ? partnerGrades : [],
+              },
+              fallbackClassCount: row.classCount,
+              fallbackStudentCount: row.studentCount,
+            })
+          )
+        }
       }
 
       if (!savedCombinedClass && !nonMergeChanged) {
         resetEditState()
         return true
+      }
+
+      if (savedCombinedClass && !nonMergeChanged) {
+        onSaveBasicInfo?.({
+          id: detail.id,
+          combinedClassApplication: normalizedDraft.combinedClassApplication,
+          combinedClassPartnerSchoolIds:
+            normalizedDraft.combinedClassApplication === '신청'
+              ? normalizedDraft.combinedClassPartnerSchoolIds
+              : [],
+          combinedClassPartnerGrades:
+            normalizedDraft.combinedClassApplication === '신청' ? partnerGrades : [],
+        })
       }
 
       resetEditState()
@@ -443,10 +627,15 @@ export function useParticipatingInstitutionDetailEdit({
       }
 
       return true
-    } catch {
+    } catch (error) {
+      const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
+      const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
       void showAlert({
         title: '안내',
-        content: '저장에 실패했습니다. 다시 시도해 주세요.',
+        content: extractApiErrorMessage(responseData, {
+          httpStatus,
+          fallback: '저장에 실패했습니다. 다시 시도해 주세요.',
+        }),
       })
       return false
     } finally {
@@ -458,15 +647,19 @@ export function useParticipatingInstitutionDetailEdit({
     draft,
     isCombinedClassProgramEligibleFlag,
     onCombinedClassApplied,
+    onSaveBasicInfo,
     onSaveCombinedClass,
     participatingSchoolList,
     program,
+    queryClient,
     resetEditState,
     row,
     row.studentCount,
-    isCompanySchool,
     showAlert,
-    textbookCatalog,
+    resolvedTextbookCatalog,
+    teacherOptions,
+    textbookDisplay.textbookGrade,
+    textbookDisplay.textbookId,
     usesTextbook,
   ])
 

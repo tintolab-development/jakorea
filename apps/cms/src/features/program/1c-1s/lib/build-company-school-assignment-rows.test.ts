@@ -110,7 +110,7 @@ describe('buildCompanySchoolAssignedInstructorRows', () => {
         {
           assignmentId: 2,
           organizationApplicationId: 9001,
-          organizationId: null,
+          organizationId: undefined,
           instructorMemberId: 170025,
           assignmentStatus: 'ASSIGNED',
         },
@@ -120,6 +120,6 @@ describe('buildCompanySchoolAssignedInstructorRows', () => {
     expect(rows).toHaveLength(2)
     expect(rows[0]?.organizationId).toBe(8801)
     expect(rows[0]?.organizationName).toBe('인천가온고등학교')
-    expect(rows[1]?.organizationId).toBeNull()
+    expect(rows[1]?.organizationId).toBeUndefined()
   })
 })

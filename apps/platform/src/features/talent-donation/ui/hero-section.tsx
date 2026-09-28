@@ -1,16 +1,20 @@
 import { Fragment } from 'react'
-import { PFText } from '@/shared/ui'
-import {
-  HERO_DESCRIPTION_LINES,
-  HERO_LABEL,
-  HERO_TITLE_LINES,
-} from '../lib/constants'
+import { PFText, remoteCopyClassName } from '@/shared/ui'
+import { usePublicTalentSponsorshipView } from '../api/hooks'
+import { HERO_LABEL } from '../lib/constants'
 import { HERO_BG_URL, HERO_IMAGE_URL } from '../lib/hero-image'
 import styles from './hero-section.module.css'
 
 export function HeroSection() {
+  const { titleLines, descriptionLines, isPending } = usePublicTalentSponsorshipView()
+  const copyClass = remoteCopyClassName(isPending)
+
   return (
-    <section className={styles.hero} aria-labelledby="talent-donation-hero-title">
+    <section
+      className={styles.hero}
+      aria-labelledby="talent-donation-hero-title"
+      aria-busy={isPending || undefined}
+    >
       <div
         className={styles.background}
         style={{ backgroundImage: `url(${HERO_BG_URL})` }}
@@ -19,7 +23,7 @@ export function HeroSection() {
 
       <div className={styles.content}>
         <div className={styles.textArea}>
-          <div className={styles.text}>
+          <div className={[styles.text, copyClass].join(' ')}>
             <PFText as="span" typo="hl-lg" className={styles.eyebrow}>
               {HERO_LABEL}
             </PFText>
@@ -31,8 +35,8 @@ export function HeroSection() {
               color="black"
               className={styles.title}
             >
-              {HERO_TITLE_LINES.map((line, index) => (
-                <Fragment key={line}>
+              {titleLines.map((line, index) => (
+                <Fragment key={`${line}-${index}`}>
                   {index > 0 ? <br className={styles.pcOnly} /> : null}
                   {line}
                 </Fragment>
@@ -40,9 +44,9 @@ export function HeroSection() {
             </PFText>
 
             <PFText as="p" typo="bd-lg-rg" color="neutral-cool-700" className={styles.description}>
-              {HERO_DESCRIPTION_LINES.map((line, index) => (
-                <Fragment key={line}>
-                  {index > 0 ? <br className={styles.pcOnly}/> : null}
+              {descriptionLines.map((line, index) => (
+                <Fragment key={`${line}-${index}`}>
+                  {index > 0 ? <br className={styles.pcOnly} /> : null}
                   {line}
                 </Fragment>
               ))}

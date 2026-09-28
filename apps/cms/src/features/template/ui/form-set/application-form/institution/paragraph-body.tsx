@@ -11,6 +11,8 @@ export type ProgramApplicationFormInstitutionBodyOptions = {
   readOnlyPreview?: boolean
   /** 템플릿 작성 모드 — 자동 반영 필드는 힌트만 표시 */
   isTemplateAuthoringMode?: boolean
+  /** 프로그램 등록 — disabled 스킨 없이 미선택·입력 불가 */
+  choiceDisplayOnly?: boolean
   paragraph?: HorizontalTableParagraph
   onParagraphChange?: (next: HorizontalTableParagraph) => void
 }
@@ -39,9 +41,17 @@ export function renderProgramApplicationFormInstitutionParagraphBody(
         />
       )
     case PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentSubmissionRequest:
-      return <ProgramApplicationFormInstitutionSexOffenseConsentSubmissionParagraph />
+      return (
+        <ProgramApplicationFormInstitutionSexOffenseConsentSubmissionParagraph
+          choiceDisplayOnly={resolvedOptions?.choiceDisplayOnly === true}
+        />
+      )
     case PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod:
-      return <ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagraph />
+      return (
+        <ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagraph
+          choiceDisplayOnly={resolvedOptions?.choiceDisplayOnly === true}
+        />
+      )
     default:
       return null
   }

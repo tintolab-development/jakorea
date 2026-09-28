@@ -14,7 +14,6 @@ export const UJAT_BASIC_INFO_REP_KO_DEFAULT = '대학생경제교육봉사단'
 export const UJAT_BASIC_INFO_REP_EN_DEFAULT = 'University Students JA Team'
 export const UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT =
   'JA Korea 초등 경제교육 대상 학교 및 대학생경제교육봉사단 모집'
-export const UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT = UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT
 
 export const UJAT_DETAILED_PROGRAM_UJAT_VALUE = '__ujat_volunteer_core__' as const
 export const UJAT_DETAILED_PROGRAM_UJAT_LABEL = '대학생경제교육봉사단'
@@ -33,7 +32,6 @@ export type UjatRegistrationBasicInfoOverlayDefaults = {
   repKo: string
   repEn: string
   programManagementName: string
-  publicProgramTitle: string
   detailedProgramId: string
   operationRangeSeal: { start: string; end: string } | null
   participantIndividual: boolean
@@ -59,7 +57,6 @@ export function createUjatRegistrationBasicInfoOverlayDefaults(
     repKo: UJAT_BASIC_INFO_REP_KO_DEFAULT,
     repEn: UJAT_BASIC_INFO_REP_EN_DEFAULT,
     programManagementName: UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
-    publicProgramTitle: UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT,
     detailedProgramId: UJAT_DETAILED_PROGRAM_UJAT_VALUE,
     operationRangeSeal: null,
     participantIndividual: false,

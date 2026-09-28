@@ -15,6 +15,10 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { CmsButton, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
+import {
+  RegistrationDraftNoticeModal,
+  type RegistrationDraftNoticeChoice,
+} from '@/features/program/shared/ui/registration/draft-notice-modal'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
 import { useGeminiRecruitmentRows } from '../../hooks/use-gemini-recruitment-rows'
 import { useToday } from '../../hooks/use-today'
@@ -27,6 +31,7 @@ import {
 import type { GeminiRecruitmentDisplayStatus, GeminiRecruitmentRow } from '../../model/recruitment/types'
 import { formatRecruitmentPeriodRange } from '../../lib/recruitment/format-period'
 import { resolveRecruitmentDisplayStatus } from '../../lib/recruitment/resolve-status'
+import { peekGeminiRecruitmentAddDraftOverwrite } from '../../lib/recruitment/add-local-save'
 import { useGeminiRecruitmentDetailUrl } from '../detail/fullpage-modal'
 import { useGeminiRecruitmentAddUrl } from './add-fullpage-modal'
 import '@/pages/programs/program-list-page.css'
@@ -88,6 +93,8 @@ export function GeminiRecruitmentList() {
   const searchParamsKey = searchParams.toString()
   const { recruitmentId, openDetail } = useGeminiRecruitmentDetailUrl()
   const { openAdd } = useGeminiRecruitmentAddUrl()
+  const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
+  const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
   const detailOpen = Boolean(recruitmentId)
   const queryFilters = useMemo(() => {
     const params = new URLSearchParams(searchParamsKey)
@@ -170,8 +177,26 @@ export function GeminiRecruitmentList() {
 
   const handleAddRecruitment = useCallback(() => {
     if (!canWrite) return
-    openAdd()
+    const draft = peekGeminiRecruitmentAddDraftOverwrite()
+    if (draft != null) {
+      setDraftNoticeTitle(draft.title)
+      setDraftNoticeOpen(true)
+      return
+    }
+    openAdd('fresh')
   }, [canWrite, openAdd])
+
+  const handleDraftNoticeConfirm = useCallback(
+    (choice: RegistrationDraftNoticeChoice) => {
+      setDraftNoticeOpen(false)
+      if (choice === 'fresh') {
+        openAdd('fresh')
+        return
+      }
+      openAdd('continue')
+    },
+    [openAdd]
+  )
 
   const columns: ColumnsType<GeminiRecruitmentRow> = useMemo(
     () => [
@@ -274,7 +299,7 @@ export function GeminiRecruitmentList() {
             onClick: (e: MouseEvent<HTMLElement>) => {
               if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
               if (record.isDraft) {
-                openAdd()
+                openAdd('continue')
                 return
               }
               openDetail(record.id)
@@ -307,6 +332,12 @@ export function GeminiRecruitmentList() {
         requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteModalOpen(false)}
+      />
+      <RegistrationDraftNoticeModal
+        open={draftNoticeOpen}
+        draftTitle={draftNoticeTitle}
+        onCancel={() => setDraftNoticeOpen(false)}
+        onConfirm={handleDraftNoticeConfirm}
       />
     </div>
   )

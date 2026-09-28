@@ -234,6 +234,18 @@
   );
 }
 
+.user-page-content__poster {
+  width: 361px;
+  height: 450px;
+  margin-bottom: var(--spacing-24, 24px);
+  border-radius: var(--radius-8, 8px);
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow:
+    0 0 12px 3px rgba(14, 42, 53, 0.08),
+    0 14px 23px 0 rgba(14, 42, 53, 0.1);
+}
+
 .user-page-content__poster-placeholder {
   width: 361px;
   height: 450px;

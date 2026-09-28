@@ -1,5 +1,7 @@
 # 함께하는 사람들 더미 시드 (FE mock → DB)
 
+> **내용 SSOT는 이 문서가 아니다.** Platform `/about/people` 기준 시드는 [people-platform-seed-backend-cursor-prompt-2026-09-26.md](./people-platform-seed-backend-cursor-prompt-2026-09-26.md) 를 쓴다. 아래 건수·컬럼 매핑만 참고한다.
+
 | 항목 | 값 |
 |------|-----|
 | **작성일** | 2026-08-13 |

@@ -2,19 +2,57 @@ import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-su
 import type { Program } from '@/types/domain'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import {
+  resolveProgramOperationalBindingKind,
+  type ProgramOperationalBindingKind,
+} from '@/features/program/general/lib/program-operational-binding-profile'
+import {
   GENERAL_PROGRAM_REGISTRATION_STEPS,
   isGeneralProgramRegistrationStepVisible,
   type GeneralProgramRegistrationParticipantFlags,
+  type GeneralProgramRegistrationTabVisibilityOptions,
 } from '@/features/program/general/model/registration-flow'
+import {
+  UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS,
+  UJAT_PROGRAM_REGISTRATION_STEPS,
+} from '@/features/program/ujat/model/ujat-program-registration-flow'
 
-export type OperationalFormType = 'APPLICATION' | 'RECRUITMENT'
+export type OperationalFormType = 'APPLICATION' | 'RECRUITMENT' | 'REGISTRATION'
 
 export type OperationalFormSpec = {
   templateCode: string
   formType: OperationalFormType
-  targetRole: string
+  targetRole?: string
   nameHints: readonly string[]
 }
+
+export type RegistrationCreateFormSpec = OperationalFormSpec & { formType: 'REGISTRATION' }
+
+const REGISTRATION_FORM_SPECS: readonly RegistrationCreateFormSpec[] = [
+  {
+    templateCode: 'registration-general',
+    formType: 'REGISTRATION',
+    nameHints: ['일반 프로그램 등록', '프로그램 등록'],
+  },
+  {
+    templateCode: 'registration-economy',
+    formType: 'REGISTRATION',
+    nameHints: ['1사1교 프로그램 등록', '프로그램 등록'],
+  },
+  {
+    templateCode: 'registration-trained-teachers',
+    formType: 'REGISTRATION',
+    nameHints: ['교육받은 교사 프로그램 등록', '프로그램 등록'],
+  },
+  {
+    templateCode: 'registration-ujat',
+    formType: 'REGISTRATION',
+    nameHints: ['UJAT 프로그램 등록', '프로그램 등록'],
+  },
+]
+
+const REGISTRATION_SPEC_BY_CODE = new Map(
+  REGISTRATION_FORM_SPECS.map(spec => [spec.templateCode, spec])
+)
 
 const OPERATIONAL_FORM_SPECS: readonly OperationalFormSpec[] = [
   {
@@ -65,6 +103,54 @@ const OPERATIONAL_FORM_SPECS: readonly OperationalFormSpec[] = [
     targetRole: 'VOLUNTEER',
     nameHints: ['봉사자 모집', '봉사 모집'],
   },
+  {
+    templateCode: 'recruitment-economy',
+    formType: 'RECRUITMENT',
+    targetRole: 'ORGANIZATION',
+    nameHints: ['기관 모집', '1사1교 모집', '참여 기관 모집'],
+  },
+  {
+    templateCode: 'application-economy',
+    formType: 'APPLICATION',
+    targetRole: 'ORGANIZATION',
+    nameHints: ['기관 신청', '1사1교 신청', '참여 기관 신청'],
+  },
+  {
+    templateCode: 'recruitment-trained-teachers',
+    formType: 'RECRUITMENT',
+    targetRole: 'ORGANIZATION',
+    nameHints: ['기관 모집', '교육받은 교사 모집', '참여 기관 모집'],
+  },
+  {
+    templateCode: 'application-trained-teachers',
+    formType: 'APPLICATION',
+    targetRole: 'ORGANIZATION',
+    nameHints: ['기관 신청', '교육받은 교사 신청', '참여 기관 신청'],
+  },
+  {
+    templateCode: 'recruitment-ujat-school',
+    formType: 'RECRUITMENT',
+    targetRole: 'ORGANIZATION',
+    nameHints: ['참여 기관 모집', 'UJAT 기관 모집', '학교 모집'],
+  },
+  {
+    templateCode: 'recruitment-ujat-volunteer',
+    formType: 'RECRUITMENT',
+    targetRole: 'VOLUNTEER',
+    nameHints: ['봉사자 모집', 'UJAT 봉사자 모집'],
+  },
+  {
+    templateCode: 'application-ujat-school',
+    formType: 'APPLICATION',
+    targetRole: 'ORGANIZATION',
+    nameHints: ['참여 기관 신청', 'UJAT 기관 신청', '학교 신청'],
+  },
+  {
+    templateCode: 'application-ujat-volunteer',
+    formType: 'APPLICATION',
+    targetRole: 'VOLUNTEER',
+    nameHints: ['봉사자 신청', 'UJAT 봉사자 신청'],
+  },
 ]
 
 const SPEC_BY_CODE = new Map(OPERATIONAL_FORM_SPECS.map(spec => [spec.templateCode, spec]))
@@ -85,21 +171,100 @@ export function generalProgramRegistrationFlagsFromProgram(
   }
 }
 
-export function listVisibleOperationalFormSpecs(program: Program): OperationalFormSpec[] {
+function tabVisibilityForBindingKind(
+  kind: ProgramOperationalBindingKind
+): GeneralProgramRegistrationTabVisibilityOptions | undefined {
+  if (kind === 'COMPANY_SCHOOL' || kind === 'TRAINED_TEACHER') {
+    return { hideVolunteer: true }
+  }
+  return undefined
+}
+
+function resolveOperationalTemplateCodeForStep(
+  kind: ProgramOperationalBindingKind,
+  stepTemplateId: string,
+  stepKey: string
+): string {
+  if (kind === 'COMPANY_SCHOOL') {
+    if (stepKey === 'recruit-participant-school') return 'recruitment-economy'
+    if (stepKey === 'application-participant-school') return 'application-economy'
+  }
+  if (kind === 'TRAINED_TEACHER') {
+    if (stepKey === 'recruit-participant-school') return 'recruitment-trained-teachers'
+    if (stepKey === 'application-participant-school') return 'application-trained-teachers'
+  }
+  return stepTemplateId
+}
+
+function listGeneralLikeOperationalTemplateCodes(
+  program: Program,
+  kind: ProgramOperationalBindingKind
+): string[] {
   const flags = generalProgramRegistrationFlagsFromProgram(program)
-  return GENERAL_PROGRAM_REGISTRATION_STEPS.flatMap(step => {
+  const tabVisibility = tabVisibilityForBindingKind(kind)
+  const codes = GENERAL_PROGRAM_REGISTRATION_STEPS.flatMap(step => {
     if (step.phase !== 'application' && step.phase !== 'recruitment') return []
-    if (!isGeneralProgramRegistrationStepVisible(step.key, flags)) return []
-    const spec = getOperationalFormSpec(step.templateId)
-    return spec != null ? [spec] : []
+    if (!isGeneralProgramRegistrationStepVisible(step.key, flags, tabVisibility)) return []
+    return [resolveOperationalTemplateCodeForStep(kind, step.templateId, step.key)]
   })
+  return [...new Set(codes)]
+}
+
+function listUjatOperationalTemplateCodes(): string[] {
+  const codes = UJAT_PROGRAM_REGISTRATION_STEPS.flatMap(step => {
+    if (step.phase === 'program') return []
+    return [step.templateId]
+  })
+  return [...new Set([...codes, ...UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS])]
+}
+
+export function listOperationalTemplateCodesForProgram(program: Program): string[] {
+  const kind = resolveProgramOperationalBindingKind(program)
+  if (kind === 'UJAT') {
+    return listUjatOperationalTemplateCodes()
+  }
+  if (kind === 'TRAINED_TEACHER') {
+    return listGeneralLikeOperationalTemplateCodes(program, kind)
+  }
+  if (kind === 'COMPANY_SCHOOL') {
+    return listGeneralLikeOperationalTemplateCodes(program, kind)
+  }
+  return listGeneralLikeOperationalTemplateCodes(program, 'GENERAL')
+}
+
+export function listVisibleOperationalFormSpecs(program: Program): OperationalFormSpec[] {
+  return listOperationalTemplateCodesForProgram(program)
+    .map(code => getOperationalFormSpec(code))
+    .filter((spec): spec is OperationalFormSpec => spec != null)
+}
+
+export function listRegistrationFormTemplateCodeForProgram(program: Program): string | null {
+  const kind = resolveProgramOperationalBindingKind(program)
+  if (kind === 'UJAT') return 'registration-ujat'
+  if (kind === 'COMPANY_SCHOOL') return 'registration-economy'
+  if (kind === 'TRAINED_TEACHER') return 'registration-trained-teachers'
+  return 'registration-general'
+}
+
+export function getRegistrationFormSpec(templateCode: string): RegistrationCreateFormSpec | undefined {
+  return REGISTRATION_SPEC_BY_CODE.get(templateCode)
+}
+
+/** create formBindings — REGISTRATION 1 + visible operational(recruit/application) */
+export function listAllRegistrationCreateFormSpecs(program: Program): OperationalFormSpec[] {
+  const registrationCode = listRegistrationFormTemplateCodeForProgram(program)
+  const registrationSpec =
+    registrationCode != null ? getRegistrationFormSpec(registrationCode) : undefined
+  const operational = listVisibleOperationalFormSpecs(program)
+  return registrationSpec != null ? [registrationSpec, ...operational] : operational
 }
 
 function normalizeBindingType(value: string | undefined): string {
   return value?.trim().toUpperCase() ?? ''
 }
 
-function roleMatches(binding: ProgramFormBindingResponse, targetRole: string): boolean {
+function roleMatches(binding: ProgramFormBindingResponse, targetRole: string | undefined): boolean {
+  if (targetRole == null || targetRole === '') return true
   const role = normalizeBindingType(binding.targetRole || binding.targetType)
   const expected = targetRole.toUpperCase()
   if (!role) return false

@@ -1,4 +1,4 @@
-import { ADMIN_REGISTERED_NOTICE_PATH } from './constants'
+import { ADMIN_REGISTERED_NOTICE_PATH } from './constants.ts'
 
 /** OpenAPI `AuthTokenResponse.adminProvisionedOnboardingStep` */
 export type AdminProvisionedOnboardingStep =
@@ -19,8 +19,10 @@ export const ADMIN_PROVISIONED_ONBOARDING_STEPS: AdminProvisionedOnboardingStep[
 export type AdminProvisionedOnboardingFlags = {
   registeredByAdmin?: boolean
   adminProvisionedOnboardingRequired?: boolean
+  /** 대상이 아니면 `null`. 빈 문자열·`DONE`으로 바꾸지 않는다. */
   adminProvisionedOnboardingStep?: string | null
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
+  passwordChangeRequired?: boolean
 }
 
 const STEP_PATH: Record<
@@ -70,37 +72,38 @@ export function resolveAdminProvisionedOnboardingPath(
   return STEP_PATH[step]
 }
 
+function isOpenAdminProvisionedOnboardingStep(
+  step: AdminProvisionedOnboardingStep | null,
+): step is Exclude<AdminProvisionedOnboardingStep, 'DONE'> {
+  return (
+    step === 'PROFILE' ||
+    step === 'IDENTITY' ||
+    step === 'PASSWORD' ||
+    step === 'PROFILE_REVIEW'
+  )
+}
+
+/**
+ * 온보딩 위저드는 서버가 대상이라고 한 경우에만 연다.
+ * `registeredByAdmin` · `identitySelfSignupCompletedAfterAdminRegistration === false` 만으로는 열지 않는다.
+ * PASSWORD 는 `passwordChangeRequired === true` 일 때만 임시 비밀번호 변경 화면으로 간다.
+ */
 export function shouldContinueAdminProvisionedOnboarding(
   flags: AdminProvisionedOnboardingFlags,
 ): boolean {
-  if (flags.registeredByAdmin !== true) return false
-  if (flags.identitySelfSignupCompletedAfterAdminRegistration === true) return false
+  if (flags.adminProvisionedOnboardingRequired !== true) return false
 
-  const step = resolveEffectiveAdminProvisionedOnboardingStep(flags)
-  return step != null && step !== 'DONE'
+  const step = normalizeAdminProvisionedOnboardingStep(flags.adminProvisionedOnboardingStep)
+  if (!isOpenAdminProvisionedOnboardingStep(step)) return false
+  if (step === 'PASSWORD' && flags.passwordChangeRequired !== true) return false
+  return true
 }
 
 export function resolveEffectiveAdminProvisionedOnboardingStep(
   flags: AdminProvisionedOnboardingFlags,
 ): AdminProvisionedOnboardingStep | null {
-  if (flags.identitySelfSignupCompletedAfterAdminRegistration === true) {
-    return 'DONE'
-  }
-
-  const fromApi = normalizeAdminProvisionedOnboardingStep(
-    flags.adminProvisionedOnboardingStep,
-  )
-  if (fromApi) return fromApi
-
-  if (
-    flags.registeredByAdmin === true &&
-    (flags.adminProvisionedOnboardingRequired === true ||
-      flags.identitySelfSignupCompletedAfterAdminRegistration === false)
-  ) {
-    return 'PROFILE'
-  }
-
-  return null
+  if (!shouldContinueAdminProvisionedOnboarding(flags)) return null
+  return normalizeAdminProvisionedOnboardingStep(flags.adminProvisionedOnboardingStep)
 }
 
 /** 로그인·마이페이지 진입 시 온보딩 첫 화면 (notice 생략, step 직행) */
@@ -113,6 +116,42 @@ export function resolveAdminProvisionedOnboardingEntryPath(
 
   const step = resolveEffectiveAdminProvisionedOnboardingStep(flags)
   return resolveAdminProvisionedOnboardingPath(step) ?? ADMIN_REGISTERED_NOTICE_PATH
+}
+
+export type AdminProvisionedNoticeCta = {
+  path: string
+  buttonLabel: string
+  description: string
+}
+
+/** notice CTA — 본인인증이 끝난 단계에서는 비밀번호·정보 확인만 안내한다. */
+export function resolveAdminProvisionedNoticeCta(
+  flags: AdminProvisionedOnboardingFlags,
+): AdminProvisionedNoticeCta | null {
+  const path = resolveAdminProvisionedOnboardingEntryPath(flags)
+  if (!path) return null
+
+  const step = resolveEffectiveAdminProvisionedOnboardingStep(flags)
+  if (step === 'PASSWORD') {
+    return {
+      path,
+      buttonLabel: '비밀번호 변경하기',
+      description: '안전한 이용을 위해 비밀번호를 변경해 주세요.',
+    }
+  }
+  if (step === 'PROFILE_REVIEW') {
+    return {
+      path,
+      buttonLabel: '가입 정보 확인하기',
+      description: '가입된 정보를 확인해 주세요.',
+    }
+  }
+
+  return {
+    path,
+    buttonLabel: '본인인증 후 비밀번호 변경하기',
+    description: '안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.',
+  }
 }
 
 export function shouldRedirectAdminProvisionedOnboardingStep(input: {

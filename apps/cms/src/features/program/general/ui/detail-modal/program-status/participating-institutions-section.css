@@ -145,6 +145,15 @@
   box-sizing: border-box;
 }
 
+.participating-institutions-section__session-line .program-detail-td-segment-wrap {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 외 n개의 교육 일정 텍스트: opacity 0.5 */
 .participating-institutions-section__session-more {
   overflow: hidden;

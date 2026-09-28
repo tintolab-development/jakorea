@@ -47,6 +47,24 @@ export function isPasswordChangeRequiredSocialConnectFlow(flow?: string): boolea
   return flow === SOCIAL_CONNECT_FLOW_PASSWORD_CHANGE_REQUIRED
 }
 
+/**
+ * 가입 직후 public handoff도, 로그인 세션도, 최초 로그인 소셜 온보딩도 없으면
+ * `POST /api/admin/me/sso/accounts`를 호출하지 않는다.
+ * 관리자 등록 회원 최초 로그인은 signupSocialLinkToken이 없다. 그 화면에서는 세션으로 연결을 시작한다.
+ */
+export function shouldSkipUnauthenticatedSocialConnectStart(input: {
+  remoteEnabled: boolean
+  hasAccessToken: boolean
+  hasSignupSocialLinkToken: boolean
+  firstLoginOnboarding: boolean
+}): boolean {
+  if (!input.remoteEnabled) return false
+  if (input.hasAccessToken || input.hasSignupSocialLinkToken || input.firstLoginOnboarding) {
+    return false
+  }
+  return true
+}
+
 /** 소셜 연결 완료·스킵 시 돌아가면 안 되는 인증/가입 플로우 경로 */
 export function isSocialConnectAuthFlowPath(path?: string): boolean {
   if (!path?.trim()) {

@@ -9,11 +9,17 @@ type PFAlertConfirmVariant = 'primary' | 'secondary' | 'tertiary'
 export type PFAlertModalProps = {
   open: boolean
   onConfirm: () => void
+  /** Escape 시. 없으면 onConfirm (기존 안내 팝업 호환) */
+  onDismiss?: () => void
   title: ReactNode
   description?: ReactNode
   confirmLabel?: string
   /** 확인 버튼 variant. 기본 tertiary */
   confirmVariant?: PFAlertConfirmVariant
+  confirmLoading?: boolean
+  confirmDisabled?: boolean
+  /** description 아래·확인 버튼 위 추가 컨텐츠 (예: 비밀번호 입력) */
+  children?: ReactNode
   className?: string
   ariaLabelledBy?: string
   ariaDescribedBy?: string
@@ -22,10 +28,14 @@ export type PFAlertModalProps = {
 export function PFAlertModal({
   open,
   onConfirm,
+  onDismiss,
   title,
   description,
   confirmLabel = '확인',
   confirmVariant = 'tertiary',
+  confirmLoading = false,
+  confirmDisabled = false,
+  children,
   className,
   ariaLabelledBy,
   ariaDescribedBy,
@@ -33,29 +43,46 @@ export function PFAlertModal({
   const fallbackTitleId = useId()
   const fallbackDescriptionId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
+  const wasOpenRef = useRef(false)
+  const onConfirmRef = useRef(onConfirm)
+  const onDismissRef = useRef(onDismiss)
   const titleId = ariaLabelledBy ?? fallbackTitleId
   const descriptionId = ariaDescribedBy ?? (description ? fallbackDescriptionId : undefined)
+  const isConfirmBlocked = confirmLoading || confirmDisabled
+
+  onConfirmRef.current = onConfirm
+  onDismissRef.current = onDismiss
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      wasOpenRef.current = false
+      return
+    }
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onConfirm()
+      if (event.key === 'Escape' && !confirmLoading) {
+        ;(onDismissRef.current ?? onConfirmRef.current)()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
-    panelRef.current?.focus()
+
+    // 열릴 때 한 번만 포커스 — children(인풋)이 있으면 패널 포커스로 입력 포커스를 뺏지 않음
+    if (!wasOpenRef.current) {
+      wasOpenRef.current = true
+      if (!children) {
+        panelRef.current?.focus()
+      }
+    }
 
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [open, onConfirm])
+  }, [open, confirmLoading, children])
 
   if (!open) return null
 
@@ -85,6 +112,7 @@ export function PFAlertModal({
               {description}
             </PFText>
           ) : null}
+          {children ? <div className={styles.extra}>{children}</div> : null}
         </div>
 
         <PFButton
@@ -92,9 +120,10 @@ export function PFAlertModal({
           variant={confirmVariant}
           size="xlarge"
           width="100%"
-          onClick={onConfirm}
+          disabled={isConfirmBlocked}
+          onClick={() => onConfirmRef.current()}
         >
-          {confirmLabel}
+          {confirmLoading ? '처리 중…' : confirmLabel}
         </PFButton>
       </div>
     </div>,

@@ -90,4 +90,24 @@ describe('mapAdminAccountDetailToUser', () => {
     })
     expect(rejectedVerification.permissionApprovalStatus).toBe('REJECTED')
   })
+
+  it('createdByAdmin boolean을 registeredByAdmin에 반영한다', () => {
+    const selfSignup = mapAdminAccountDetailToUser({
+      adminAccountId: 165007,
+      email: 'self@ja.org',
+      name: '셀프',
+      createdByAdmin: false,
+      registeredByAdmin: false,
+    })
+    expect(selfSignup.registeredByAdmin).toBe(false)
+
+    const provisioned = mapAdminAccountDetailToUser({
+      adminAccountId: 165006,
+      email: 'admin@ja.org',
+      name: '등록',
+      createdByAdmin: true,
+      registeredByAdmin: true,
+    })
+    expect(provisioned.registeredByAdmin).toBe(true)
+  })
 })

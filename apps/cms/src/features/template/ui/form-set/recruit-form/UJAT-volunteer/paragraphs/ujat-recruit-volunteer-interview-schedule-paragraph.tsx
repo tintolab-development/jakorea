@@ -13,11 +13,13 @@ export function UjatRecruitVolunteerInterviewScheduleParagraph({
   exceptionScheduleCount = 0,
   commonScheduleSeed,
   onCommonExclusionChange,
+  freezeUnavailableCalendar = false,
   ...props
 }: UjatRecruitParagraphProps & {
   exceptionScheduleCount?: number
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
+  freezeUnavailableCalendar?: boolean
 }) {
   if (isUjatRecruitProgramContext(props) && props.program) {
     const mode = resolveUjatRecruitParagraphMode(props)
@@ -38,6 +40,7 @@ export function UjatRecruitVolunteerInterviewScheduleParagraph({
       exceptionScheduleCount={exceptionScheduleCount}
       commonScheduleSeed={commonScheduleSeed}
       onCommonExclusionChange={onCommonExclusionChange}
+      freezeUnavailableCalendar={freezeUnavailableCalendar}
     />
   )
 }

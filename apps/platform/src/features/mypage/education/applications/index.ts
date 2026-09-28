@@ -32,9 +32,14 @@ export {
 } from './lib/mock-applications'
 export {
   filterEducationStatusApplications,
+  filterLectureStatusApplications,
   filterVolunteerStatusApplications,
-  isGeneralVolunteerApplication,
+  isInstructorRoleApplication,
+  isParticipantRoleApplication,
+  isVolunteerRoleApplication,
+  resolveApplicationRole,
 } from './lib/application-kind'
+export type { ApplicationRole } from './lib/application-kind'
 export {
   compareEducationApplicationItems,
   listEducationApplications,
@@ -91,3 +96,11 @@ export type {
   TeacherTextbookInfoCardProps,
 } from './ui/teacher-assignment'
 export { DocumentPassBanner, shouldShowDocumentPassBanner } from './ui/document-pass-banner'
+export {
+  APPLICATION_TYPES_BY_SCOPE,
+  useCancelMyProgramApplicationMutation,
+  useMyProgramApplicationDetail,
+  useMyProgramApplications,
+} from './api/hooks'
+export type { MypageApplicationScope } from './api/hooks'
+export type { ProgramApplicationType } from './api/types'

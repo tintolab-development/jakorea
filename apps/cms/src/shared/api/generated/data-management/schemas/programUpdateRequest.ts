@@ -66,12 +66,19 @@ export interface ProgramUpdateRequest {
   generalTeachers?: number;
   educatedTeachers?: number;
   instructors?: number;
+  finalSchools?: number;
+  finalClasses?: number;
   managerName?: string;
   venue?: string;
   curriculum?: string;
   contactEmail?: string;
   contactPhone?: string;
   oneLineIntroduction?: string;
+  remarks?: string;
+  educationTargetDetail?: string;
+  venueDetail?: string;
+  venueKind?: string;
+  studentListRequired?: string;
   keyVisualImage?: string;
   settlementRuleId?: string;
   applicationPathId?: string;
@@ -85,6 +92,7 @@ export interface ProgramUpdateRequest {
   schedules?: ProgramScheduleRequest[];
   wagePolicies?: ProgramWagePolicyRequest[];
   paymentItems?: ProgramSettlementPaymentItemRequest[];
+  /** 양성교사: 요청 봉투를 저장된 config에 키 단위로 덮어씁니다. 보낸 키는 교체, 생략한 키는 유지. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지. RFC-7396 깊은 병합 없음. 루트 generalCommonInfo는 제거. 일반 프로그램은 기존 RFC-7396 병합. */
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];

@@ -24,16 +24,6 @@
   border-bottom-color: var(--color-border-default);
 }
 
-.headerInverse {
-  border-bottom-color: var(--color-border-default);
-}
-
-/* inverse prop이 와도 모바일은 컬러 로고·아이콘 유지 */
-.headerInverse .logo,
-.headerInverse .menuIcon {
-  filter: none;
-}
-
 .logoLink {
   display: inline-flex;
   flex-shrink: 0;

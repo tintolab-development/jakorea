@@ -2,7 +2,7 @@
  * 푸터 — 상단 노출 메뉴
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { FooterTopMenu } from '@/entities/footer/model/types'
@@ -12,7 +12,6 @@ import {
   useSaveFooterTopMenus,
   useSetFooterTopMenuActive,
 } from '@/features/footer/api/hooks'
-import { INTERNAL_LINK_LABEL } from '@/features/footer/api/store'
 import { FooterDragHandle, FooterSortableTable } from '@/features/footer/ui/sortable-table'
 import {
   CMS_TABLE_NO_COL_CLASS,
@@ -24,13 +23,42 @@ import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
-type DraftRow = {
-  linkUrl: string
+const INTERNAL_LINK_LABEL = '사이트 내부 연결'
+
+function buildLinkDraft(rows: FooterTopMenu[]): Record<string, string> {
+  return Object.fromEntries(rows.map(row => [row.id, row.linkUrl]))
 }
 
-function buildDraft(rows: FooterTopMenu[]): Record<string, DraftRow> {
-  return Object.fromEntries(rows.map(row => [row.id, { linkUrl: row.linkUrl }]))
-}
+const FooterLinkField = memo(function FooterLinkField({
+  sourceValue,
+  ariaLabel,
+  onDraftChange,
+}: {
+  sourceValue: string
+  ariaLabel: string
+  onDraftChange: (value: string) => void
+}) {
+  const [localValue, setLocalValue] = useState(sourceValue)
+
+  useEffect(() => {
+    setLocalValue(sourceValue)
+  }, [sourceValue])
+
+  return (
+    <CmsInput
+      inputSize="medium"
+      width="100%"
+      value={localValue}
+      onChange={e => {
+        const next = e.target.value
+        setLocalValue(next)
+        onDraftChange(next)
+      }}
+      placeholder="연결 링크를 입력하세요"
+      aria-label={ariaLabel}
+    />
+  )
+})
 
 export function FooterTopMenuSection() {
   const { showAlert } = useCmsAlert()
@@ -41,7 +69,11 @@ export function FooterTopMenuSection() {
 
   const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const [isEditing, setIsEditing] = useState(false)
-  const [draft, setDraft] = useState<Record<string, DraftRow>>({})
+  const linkDraftRef = useRef<Record<string, string>>({})
+
+  const handleLinkDraftChange = useCallback((id: string, value: string) => {
+    linkDraftRef.current = { ...linkDraftRef.current, [id]: value }
+  }, [])
 
   const handleRowsReorder = useCallback(
     (reordered: FooterTopMenu[]) => {
@@ -70,27 +102,25 @@ export function FooterTopMenuSection() {
   )
 
   const handleStartEdit = useCallback(() => {
-    setDraft(buildDraft(rows))
+    linkDraftRef.current = buildLinkDraft(rows)
     setIsEditing(true)
   }, [rows])
 
   const handleCancelEdit = useCallback(() => {
-    setDraft({})
+    linkDraftRef.current = {}
     setIsEditing(false)
   }, [])
 
   const handleSave = useCallback(async () => {
     try {
+      const linkDraft = linkDraftRef.current
       await saveMutation.mutateAsync(
-        rows.map(row => {
-          const d = draft[row.id]
-          return {
-            id: row.id,
-            linkUrl: d?.linkUrl ?? row.linkUrl,
-          }
-        })
+        rows.map(row => ({
+          id: row.id,
+          linkUrl: linkDraft[row.id] ?? row.linkUrl,
+        }))
       )
-      setDraft({})
+      linkDraftRef.current = {}
       setIsEditing(false)
     } catch {
       showAlert({
@@ -98,7 +128,7 @@ export function FooterTopMenuSection() {
         content: '상단 노출 메뉴 저장에 실패했습니다. 다시 시도해 주세요.',
       })
     }
-  }, [draft, rows, saveMutation, showAlert])
+  }, [rows, saveMutation, showAlert])
 
   const columns = useMemo<ColumnsType<FooterTopMenu>>(
     () => [
@@ -149,20 +179,10 @@ export function FooterTopMenuSection() {
         render: (_v, record) => {
           if (isEditing && !record.isInternal) {
             return (
-              <CmsInput
-                inputSize="medium"
-                width="100%"
-                value={draft[record.id]?.linkUrl ?? record.linkUrl}
-                onChange={e =>
-                  setDraft(prev => ({
-                    ...prev,
-                    [record.id]: {
-                      linkUrl: e.target.value,
-                    },
-                  }))
-                }
-                placeholder="연결 링크를 입력하세요"
-                aria-label={`${record.name} 연결 링크`}
+              <FooterLinkField
+                sourceValue={linkDraftRef.current[record.id] ?? record.linkUrl}
+                ariaLabel={`${record.name} 연결 링크`}
+                onDraftChange={value => handleLinkDraftChange(record.id, value)}
               />
             )
           }
@@ -178,7 +198,7 @@ export function FooterTopMenuSection() {
         },
       },
     ],
-    [draft, handleToggleActive, isEditing]
+    [handleLinkDraftChange, handleToggleActive, isEditing]
   )
 
   return (

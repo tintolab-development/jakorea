@@ -1,14 +1,5 @@
-import type { SocialAuthAdapter } from './index'
-
 /**
- * Platform(회원) 확장용 스텁 — 백엔드 token 교환 전략 확정 후 구현합니다.
- * - `POST /api/auth/social/login` (accessToken 기반)
- * - 또는 BFF code exchange endpoint
+ * @deprecated Use {@link createPortalSsoAdapter} — Portal SSO OpenAPI가 확정됨.
+ * 이전 주석의 `POST /api/auth/social/login` 은 canonical이 아님.
  */
-export function createMemberTokenAdapterStub(): SocialAuthAdapter {
-  return {
-    async completeCallback() {
-      throw new Error('memberTokenAdapter는 아직 구현되지 않았습니다.')
-    },
-  }
-}
+export { createPortalSsoAdapter as createMemberTokenAdapterStub } from './portal-sso-adapter'

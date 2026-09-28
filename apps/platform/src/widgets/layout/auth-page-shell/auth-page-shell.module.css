@@ -16,10 +16,3 @@
   align-items: stretch;
   padding-block: var(--spacing-100);
 }
-
-@media (--bp-below-pc) {
-  .container {
-    padding-top: var(--spacing-40);
-    padding-bottom: var(--spacing-56);
-  }
-}

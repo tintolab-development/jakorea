@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
+import { postPortalLogout } from '@/features/auth/sign-in'
 import { ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
 import { isTalentDonationApplyPath } from '@/features/talent-donation'
-import { postPortalAuthLogout } from '@/shared/api/axios-instance'
 import {
   DEV_AUTH_CHANGE_EVENT,
   clearAuthTokens,
@@ -10,6 +10,8 @@ import {
   getRefreshToken,
   setDevAuthLoggedIn,
 } from '@/shared/lib'
+import { SiteDocumentHead } from '@/features/site-shell'
+import type { HeaderTheme } from '@/widgets/layout/header-theme'
 import type { LayoutVariant } from '@/widgets/layout/layout-variant'
 import { AuthPageShell } from '@/widgets/layout/auth-page-shell'
 import { ContentShell } from '@/widgets/layout/content-shell'
@@ -21,9 +23,14 @@ import { TopBannerStrip } from './top-banner-strip'
 type AppLayoutProps = {
   children: ReactNode
   layout?: LayoutVariant
+  headerTheme?: HeaderTheme
 }
 
-export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
+export function AppLayout({
+  children,
+  layout = 'default',
+  headerTheme = 'default',
+}: AppLayoutProps) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [isLoggedIn, setIsLoggedIn] = useState(getDevAuthLoggedIn)
@@ -39,8 +46,8 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const useContentShell = layout === 'default' || isHero
   const transparentHeader =
     isMypageHome || isHero || isHome || isSupportHero || isIntroduction
-  /* 홈 PC만 반전 — 모바일은 header-mobile CSS에서 불투명·컬러 로고로 덮음 */
-  const inverseHeader = isHome
+  /* 홈은 기존처럼 PC inverse. 그 외는 route의 headerTheme만 사용. 모바일 바는 theme 무관 */
+  const inverseHeader = headerTheme === 'inverse' || isHome
 
   useEffect(() => {
     const handleDevAuthChange = () => {
@@ -56,7 +63,7 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
     void (async () => {
       if (refreshToken) {
         try {
-          await postPortalAuthLogout(refreshToken)
+          await postPortalLogout(refreshToken)
         } catch {
           // 로컬 세션은 항상 정리
         }
@@ -89,6 +96,7 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
 
   return (
     <div className={styles.layout}>
+      <SiteDocumentHead />
       <ScrollRestoration />
       {isHome ? <TopBannerStrip /> : null}
       <Header
@@ -96,6 +104,7 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
         onLogout={handleLogout}
         transparent={transparentHeader}
         inverse={inverseHeader}
+        onDarkSurface={headerTheme === 'inverse'}
       />
       <main className={mainClassName}>{mainContent}</main>
       <Footer />

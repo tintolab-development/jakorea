@@ -1,0 +1,354 @@
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.board {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.leftColumn,
+.rightColumn {
+  display: contents;
+}
+
+.orderTitle {
+  order: 0;
+}
+
+.orderImpact {
+  order: 1;
+}
+
+.orderLearn {
+  order: 2;
+}
+
+.orderSpeak {
+  order: 3;
+}
+
+.orderHelp {
+  order: 4;
+}
+
+.titleCard {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 120px;
+  align-items: center;
+  box-sizing: border-box;
+  padding: var(--spacing-32) var(--spacing-40);
+  overflow: hidden;
+  border-radius: var(--radius-24);
+  background: #eef3f4;
+}
+
+.titleDecoration {
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  z-index: 0;
+  width: min(70%, 360px);
+  height: auto;
+  pointer-events: none;
+}
+
+.titleText {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--color-primary-700);
+  font-family: Montserrat, var(--font-family-base);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.24;
+  letter-spacing: -0.96px;
+  word-break: keep-all;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 280px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+  box-sizing: border-box;
+  padding: var(--spacing-40) var(--spacing-40) var(--spacing-32);
+  overflow: hidden;
+  border-radius: var(--radius-24);
+  cursor: pointer;
+}
+
+.decoration {
+  position: absolute;
+  z-index: 0;
+  max-width: none;
+  pointer-events: none;
+}
+
+.yellow .decoration {
+  right: -18%;
+  bottom: -28%;
+  width: 120%;
+}
+
+.mint .decoration {
+  right: -30%;
+  bottom: -20%;
+  width: 140%;
+}
+
+.sky .decoration {
+  left: -20%;
+  bottom: -40%;
+  width: 130%;
+}
+
+.lime .decoration {
+  inset: -10% -5%;
+  width: 110%;
+  height: 120%;
+  object-fit: cover;
+}
+
+.yellow {
+  background: linear-gradient(180deg, #eef170 0%, #f3f2b3 100%);
+  color: #868800;
+}
+
+.mint {
+  background: linear-gradient(180deg, #c1f6cb 0%, #ddf8e3 100%);
+  color: #209182;
+}
+
+.sky {
+  background: linear-gradient(180deg, #b7f5f2 0%, #d9fbfa 100%);
+  color: #007d88;
+}
+
+.lime {
+  background: linear-gradient(180deg, #aedb7b 0%, #d5efb8 100%);
+  color: #4e870c;
+}
+
+.cardExpanded.yellow {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #eef170 0%, #f3f2b3 100%);
+}
+
+.cardExpanded.mint {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #c1f6cb 0%, #ddf8e3 100%);
+}
+
+.cardExpanded.sky {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #b7f5f2 0%, #d9fbfa 100%);
+}
+
+.cardExpanded.lime {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #aedb7b 0%, #d5efb8 100%);
+}
+
+.cardBody {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-20);
+}
+
+.cardTitle {
+  margin: 0;
+  color: inherit;
+  font-family: Montserrat, var(--font-family-base);
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.44;
+  letter-spacing: -0.72px;
+  word-break: keep-all;
+}
+
+.card .cardSummary,
+.card .cardSummaryExpanded,
+.card .cardDetail {
+  display: flex;
+  margin: 0;
+  flex-direction: column;
+  color: var(--color-neutral-black);
+  word-break: keep-all;
+}
+
+.card .cardSummary {
+  font-family: var(--font-family-base);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.54;
+  letter-spacing: -0.44px;
+}
+
+.card .cardSummaryExpanded {
+  font-family: var(--font-family-base);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.44;
+  letter-spacing: -0.44px;
+}
+
+.card .cardDetail {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: -0.16px;
+}
+
+.copyLine {
+  display: inline;
+}
+
+.copyLine:not(:last-child)::after {
+  content: ' ';
+}
+
+.more {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  margin-top: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-neutral-white);
+  cursor: pointer;
+}
+
+.more:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.moreIcon {
+  display: block;
+  flex-shrink: 0;
+}
+
+@media (--bp-pc-up) {
+  .board {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-24);
+    align-items: stretch;
+  }
+
+  .leftColumn,
+  .rightColumn {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--spacing-24);
+  }
+
+  .orderTitle,
+  .orderImpact,
+  .orderLearn,
+  .orderSpeak,
+  .orderHelp {
+    order: unset;
+  }
+
+  .titleCard {
+    min-height: 150px;
+    padding: var(--spacing-40) 69px;
+  }
+
+  .titleText {
+    font-size: 48px;
+    line-height: 1.24;
+    letter-spacing: -1.44px;
+  }
+
+  .card {
+    flex: 1 1 auto;
+    padding: 74px 73px 54px;
+  }
+
+  .cardBody {
+    gap: 40px;
+    max-width: 540px;
+  }
+
+  .cardTitle {
+    font-size: 60px;
+    line-height: 1.44;
+    letter-spacing: -1.2px;
+  }
+
+  .card .cardSummary {
+    font-size: 38px;
+    font-weight: 500;
+    line-height: 1.54;
+    letter-spacing: -0.76px;
+  }
+
+  .card .cardSummaryExpanded {
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1.44;
+    letter-spacing: -0.76px;
+  }
+
+  .card .cardDetail {
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.6;
+    letter-spacing: -0.26px;
+  }
+
+  .copyLine {
+    display: block;
+  }
+
+  .copyLine:not(:last-child)::after {
+    content: none;
+  }
+
+  .yellow {
+    min-height: 550px;
+  }
+
+  .mint {
+    min-height: 614px;
+  }
+
+  .sky {
+    min-height: 420px;
+  }
+
+  .lime {
+    min-height: 530px;
+  }
+}

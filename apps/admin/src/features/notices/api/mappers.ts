@@ -12,7 +12,7 @@ import type {
 } from '@/entities/notices/model/types'
 import { markdownToHtml } from '@/shared/rich-text'
 import type { BulkDeleteRequest } from '@/shared/api/generated/ja-korea/schemas/bulkDeleteRequest'
-import type { List6Params } from '@/shared/api/generated/ja-korea/schemas/list6Params'
+import type { List5Params } from '@/shared/api/generated/ja-korea/schemas/list5Params'
 import type { NoticeCreateRequest } from '@/shared/api/generated/ja-korea/schemas/noticeCreateRequest'
 import type { NoticeResponse } from '@/shared/api/generated/ja-korea/schemas/noticeResponse'
 import type { NoticeUpdateRequest } from '@/shared/api/generated/ja-korea/schemas/noticeUpdateRequest'
@@ -64,8 +64,8 @@ export function mapNoticeResponseToDomain(row: NoticeResponse): Notice {
   }
 }
 
-export function toNoticeListParams(filter?: NoticeListFilter): List6Params {
-  const params: List6Params = {
+export function toNoticeListParams(filter?: NoticeListFilter): List5Params {
+  const params: List5Params = {
     page: 0,
     // BE: size must be between 1 and 100
     size: 100,

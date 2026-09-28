@@ -17,9 +17,8 @@ export interface ParticipantListItemResponse {
   sourceApplicationType?: string;
   sourceApplicationId?: number;
   organizationApplicationId?: number;
-  /** 기관 참여자는 기관 신청의 실제 기관 ID, 개인·강사·봉사자는 저장된 기존 소속 기관 ID. 소속이 없으면 null */
-  organizationId?: number | null;
-  organizationName?: string | null;
+  organizationId?: number;
+  organizationName?: string;
   participantStatus?: string;
   completionStatus?: string;
   certificateStatus?: string;
@@ -37,7 +36,19 @@ export interface ParticipantListItemResponse {
   studentCount?: number;
   teacherMemberId?: number;
   teacherName?: string;
+  phone?: string;
+  contact?: string;
+  email?: string;
+  textbookId?: number;
+  textbookName?: string;
   materialAssignmentStatus?: string;
+  homeAddressSummary?: string;
+  jaEvaluationGrade?: string;
+  lectureExperienceYears?: number;
+  settlementStatus?: string;
+  assignedOrganizationNames?: string[];
+  lectureReportSubmitted?: boolean;
+  external1365Id?: string;
   sessions?: SessionProgress[];
   assignmentInstructors?: AssignmentInstructor[];
   mergeGroupId?: number;

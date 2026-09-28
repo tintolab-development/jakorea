@@ -42,6 +42,7 @@ vi.mock('@/features/template/api/form-template-version-cache', () => ({
 import {
   loadFormTemplateVersionDraft,
   saveFormTemplateVersionDraft,
+  saveFormTemplateVersionDraftByVersionId,
 } from '@/features/template/api/admin-form-templates-service'
 
 const TEMPLATE_CODE = 'registration-general'
@@ -129,7 +130,55 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     ).resolves.toBeUndefined()
 
     expect(updateRemoteMock).toHaveBeenCalled()
+    expect(updateRemoteMock.mock.calls[0]?.[1]).not.toHaveProperty('schemaJson')
     expect(loadWritingFormTemplateSave(TEMPLATE_CODE)).toBeNull()
+  })
+
+  it('omits schemaJson on PUT for trained-teachers registration', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'registration-trained-teachers',
+      templateId: 1,
+      templateVersionId: 140,
+      latestVersionId: 140,
+    })
+    updateRemoteMock.mockResolvedValue({})
+    const draft = createProgramRegistrationDraft('trainedTeachers')
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'registration-trained-teachers',
+      draft,
+      overlay: { 'trainedTeachersRegistration.basicInfo.programTitleKo': '가나다' },
+      editorState: { programType: 'schedule' },
+    })
+
+    expect(updateRemoteMock).toHaveBeenCalledWith(
+      140,
+      expect.objectContaining({
+        extensionJson: expect.stringContaining('가나다'),
+      })
+    )
+    expect(updateRemoteMock.mock.calls[0]?.[1]).not.toHaveProperty('schemaJson')
+  })
+
+  it('omits schemaJson on version-id PUT when templateCode is registration', async () => {
+    updateRemoteMock.mockResolvedValue({})
+    const draft = createProgramRegistrationDraft('trainedTeachers')
+
+    await saveFormTemplateVersionDraftByVersionId({
+      versionId: 140,
+      draft,
+      overlay: { 'trainedTeachersRegistration.basicInfo.programTitleKo': '가나다' },
+      editorState: { programType: 'schedule' },
+      templateCode: 'registration-trained-teachers',
+    })
+
+    expect(updateRemoteMock).toHaveBeenCalledWith(
+      140,
+      expect.objectContaining({
+        extensionJson: expect.stringContaining('가나다'),
+      })
+    )
+    expect(updateRemoteMock.mock.calls[0]?.[1]).not.toHaveProperty('schemaJson')
   })
 
   it('returns remote draft and ignores localStorage by default', async () => {

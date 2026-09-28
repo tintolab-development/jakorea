@@ -41,6 +41,7 @@ import { CmsButton } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { CompanySchoolCommonInfoRegistrationEdit } from '@/features/program/1c-1s/ui/common-info-registration-edit'
 
 type DetailForm = UseFormReturn<ProgramDetailEditFormValues>
 
@@ -180,6 +181,7 @@ function ProjectInfoDetailTabsRow({
   const editInfoButton = (isEditing: boolean, onSave: () => void) => (
     <ProgramEditInfoActions
       isEditing={isEditing}
+      idleVariant="secondary"
       onEdit={onInfoEdit}
       onCancel={onCancel}
       onSave={onSave}
@@ -233,6 +235,7 @@ function ProjectInfoHiddenTabsInfoActions({
     <div className="project-info-detail__hidden-tabs-info-actions">
       <ProgramEditInfoActions
         isEditing={isEditModeInfo}
+        idleVariant="secondary"
         onEdit={onInfoEdit}
         onCancel={onCancel}
         onSave={onInfoSave}
@@ -268,6 +271,8 @@ export interface ProjectInfoDetailPanelsProps {
   onInstructorsSave: () => void
   onVolunteersSave: () => void
   onPreview: () => void
+  /** 1사1교 상세 — 원격 숫자 id·제목에 「1사1교」가 없어도 등록폼과 같은 공통정보 레이아웃 */
+  forceCompanySchoolLayout?: boolean
 }
 
 export function ProjectInfoDetailPanels({
@@ -295,7 +300,11 @@ export function ProjectInfoDetailPanels({
   onInstructorsSave,
   onVolunteersSave,
   onPreview,
+  forceCompanySchoolLayout = false,
 }: ProjectInfoDetailPanelsProps) {
+  const companySchoolSections = forceCompanySchoolLayout || isCompanySchoolProgram(program)
+  const companySchoolRegistrationEdit =
+    isEditModeInfo && companySchoolSections && isCompanySchoolProgram(program)
   return (
     <>
       {!hideTabsRow ? (
@@ -331,6 +340,10 @@ export function ProjectInfoDetailPanels({
                 onCancel={onCancel}
                 onInfoSave={onInfoSave}
               />
+              {companySchoolRegistrationEdit ? (
+                <CompanySchoolCommonInfoRegistrationEdit program={program} />
+              ) : (
+                <>
               <BasicInfoSection // 기본 정보
                 program={program}
                 sponsorName={sponsorName}
@@ -339,10 +352,12 @@ export function ProjectInfoDetailPanels({
                 lifecycleStatus={program.lifecycleStatus ?? undefined}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
+                forceCompanySchoolLayout={companySchoolSections}
               />
               <ProgramKpiTargetSection // 사업 KPI 목표
                 programId={program.id}
-                showVolunteerKpi={!isCompanySchoolProgram(program)}
+                program={program}
+                showVolunteerKpi={!companySchoolSections}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
               />
@@ -351,17 +366,22 @@ export function ProjectInfoDetailPanels({
                 program={program}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
+                forceCompanySchoolLayout={companySchoolSections}
               />
               <CurriculumSection // 교육 커리큘럼
                 program={program}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
+                forceCompanySchoolLayout={companySchoolSections}
               />
               <EducationScheduleSettingsSection
                 program={program}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
+                forceCompanySchoolLayout={companySchoolSections}
               />
+                </>
+              )}
             </div>
           )}
           {(activeTab === 'institutions' ||

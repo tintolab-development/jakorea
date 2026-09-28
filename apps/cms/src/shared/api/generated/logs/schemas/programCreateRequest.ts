@@ -8,6 +8,7 @@
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
 import type { ProgramCreateRequestEducationStructure } from './programCreateRequestEducationStructure';
 import type { ProgramCreateRequestProgramType } from './programCreateRequestProgramType';
+import type { ProgramCreateRequestTargetLevelsItem } from './programCreateRequestTargetLevelsItem';
 import type { ProgramFormBindingRequest } from './programFormBindingRequest';
 import type { ProgramPeriodRequest } from './programPeriodRequest';
 import type { ProgramRecruitmentRequest } from './programRecruitmentRequest';
@@ -51,7 +52,8 @@ export interface ProgramCreateRequest {
   schoolId?: string;
   district?: string;
   ips?: string;
-  targetLevel?: string;
+  /** 교육 대상 첫 값. targetLevels가 있으면 그 첫 원소와 같다. */
+  targetLevel?: string | null;
   institutionType?: string;
   ipOwned?: string;
   courseDeliveredBy?: string;
@@ -93,6 +95,8 @@ export interface ProgramCreateRequest {
   autoApplyDefaultFormBindings?: boolean;
   /** 프로그램 등록 중 사용한 관리자 draft ID. formBindings 지정 시 필수 */
   programDraftId?: number;
-  /** 일반 프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings */
+  /** 프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings. GENERAL / TRAINED_TEACHER / COMPANY_SCHOOL / UJAT에서 허용. 공용 카탈로그 version id는 거부하고 draft-owned COPY만 받는다. */
   formBindings?: ProgramFormBindingRequest[];
+  /** 교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. serviceDetailJson.program.targetLevels와 동기화된다. */
+  targetLevels?: ProgramCreateRequestTargetLevelsItem[] | null;
 }

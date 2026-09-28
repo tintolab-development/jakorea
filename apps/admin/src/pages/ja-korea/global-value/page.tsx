@@ -150,7 +150,7 @@ export function GlobalValuePage() {
         key: 'icon',
         width: 88,
         align: 'center',
-        render: (_value, record) => <ValueIcon iconKey={record.iconKey} size={40} />,
+        render: (_value, record) => <ValueIcon iconKey={record.iconKey} size={48} />,
       },
       {
         title: '메인 텍스트',

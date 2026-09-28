@@ -3,22 +3,16 @@ import type {
   EducationTarget,
   EducationTargetNamePatch,
 } from '@/entities/education-target/model/types'
-import { shouldUseEducationTargetRemoteApi } from './capabilities'
 import { educationTargetQueryKeys } from './query-keys'
 import { listEducationTargetsService, saveEducationTargetsService } from './service'
 
-function source(): 'remote' | 'local' {
-  return shouldUseEducationTargetRemoteApi() ? 'remote' : 'local'
-}
-
 export function useEducationTargetsList(enabled = true) {
-  const dataSource = source()
   return useQuery({
-    queryKey: educationTargetQueryKeys.list(dataSource),
+    queryKey: educationTargetQueryKeys.list(),
     queryFn: () => listEducationTargetsService(),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 
@@ -26,14 +20,12 @@ export function useSaveEducationTargets() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (patches: EducationTargetNamePatch[]) => {
-      const cached = queryClient.getQueryData<EducationTarget[]>(
-        educationTargetQueryKeys.list(source()),
-      )
+      const cached = queryClient.getQueryData<EducationTarget[]>(educationTargetQueryKeys.list())
       return saveEducationTargetsService(patches, cached)
     },
     retry: false,
     onSuccess: rows => {
-      queryClient.setQueryData(educationTargetQueryKeys.list(source()), rows)
+      queryClient.setQueryData(educationTargetQueryKeys.list(), rows)
     },
   })
 }

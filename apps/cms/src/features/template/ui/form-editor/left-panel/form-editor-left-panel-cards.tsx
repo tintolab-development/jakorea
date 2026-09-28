@@ -16,9 +16,11 @@ import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agre
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
 import { renderFormEditorParagraphBody } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-paragraph-body'
+import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
   isTitleWithPeriodParagraph,
   paragraphEditableHeading,
+  withInstitutionApplicationPreferredScheduleHeading,
   withProgramApplicationFormVolunteerTitleTrailing,
   withProgramRegistrationCurriculumTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
@@ -122,10 +124,13 @@ function PinnedFormCardInner({
   surveyWriteNumbering = false,
   userInfoWriteField,
 }: PinnedCardProps) {
+  useInstitutionApplicationProgramBridge()
   const isSelected = selectedCardId === paragraph.id
   const hideDragHandle =
     (hideDragHandleForParagraphIds?.has(paragraph.id) ?? false) ||
-    (editorKind === 'horizontal_table' && structureLockedParagraphIds != null)
+    (editorKind === 'horizontal_table' &&
+      structureLockedParagraphIds != null &&
+      !allowAddAfterStructureLockedParagraphs)
   const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
     withoutTitleRequired(
       withSurveyWriteTitleNumbering(
@@ -138,7 +143,8 @@ function PinnedFormCardInner({
             updateParagraph,
             editorKind,
             structureLockedParagraphIds,
-            headingDescriptionExtraClassName
+            headingDescriptionExtraClassName,
+            paragraphBodyOptions?.structureLockedAuthoringOperationalFill === true
           ),
           paragraph
         ),
@@ -153,11 +159,15 @@ function PinnedFormCardInner({
     !showEditorChrome
   )
   const editableHeading = withAgreementAdminProxyConfirmHeading(
-    withProgramApplicationFormVolunteerTitleTrailing(
-      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-          withProgramRegistrationCurriculumTitleTrailing(
-            editableHeadingBase as ParagraphCardEditableHeading,
+    withInstitutionApplicationPreferredScheduleHeading(
+      withProgramApplicationFormVolunteerTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+          withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+            withProgramRegistrationCurriculumTitleTrailing(
+              editableHeadingBase as ParagraphCardEditableHeading,
+              paragraph,
+              paragraphBodyOptions
+            ),
             paragraph,
             paragraphBodyOptions
           ),
@@ -174,6 +184,9 @@ function PinnedFormCardInner({
     paragraphBodyOptions
   )
   const adminProxyConfirmCard = isAgreementAdminProxyConfirmCard(paragraph, paragraphBodyOptions)
+  const seedFillLocked =
+    paragraphBodyOptions?.seedApplicantFillLocked === true &&
+    (structureLockedParagraphIds?.has(paragraph.id) ?? false)
 
   return (
     <ParagraphCard
@@ -187,6 +200,7 @@ function PinnedFormCardInner({
           ? 'paragraph-card--scale-type'
           : '',
         adminProxyConfirmCard ? 'agreement-admin-proxy-confirm-card' : '',
+        seedFillLocked ? 'paragraph-card--seed-fill-locked' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -294,9 +308,12 @@ function SortableMiddleFormCardInner({
   surveyWriteNumbering = false,
   userInfoWriteField,
 }: SortableMiddleCardProps) {
+  useInstitutionApplicationProgramBridge()
   const hideDragHandle =
     (hideDragHandleForParagraphIds?.has(paragraph.id) ?? false) ||
-    (editorKind === 'horizontal_table' && structureLockedParagraphIds != null)
+    (editorKind === 'horizontal_table' &&
+      structureLockedParagraphIds != null &&
+      !allowAddAfterStructureLockedParagraphs)
   const {
     attributes,
     listeners,
@@ -320,7 +337,8 @@ function SortableMiddleFormCardInner({
             updateParagraph,
             editorKind,
             structureLockedParagraphIds,
-            headingDescriptionExtraClassName
+            headingDescriptionExtraClassName,
+            paragraphBodyOptions?.structureLockedAuthoringOperationalFill === true
           ),
           paragraph
         ),
@@ -335,11 +353,15 @@ function SortableMiddleFormCardInner({
     !showEditorChrome
   )
   const editableHeading = withAgreementAdminProxyConfirmHeading(
-    withProgramApplicationFormVolunteerTitleTrailing(
-      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-          withProgramRegistrationCurriculumTitleTrailing(
-            editableHeadingBase as ParagraphCardEditableHeading,
+    withInstitutionApplicationPreferredScheduleHeading(
+      withProgramApplicationFormVolunteerTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+          withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+            withProgramRegistrationCurriculumTitleTrailing(
+              editableHeadingBase as ParagraphCardEditableHeading,
+              paragraph,
+              paragraphBodyOptions
+            ),
             paragraph,
             paragraphBodyOptions
           ),
@@ -356,6 +378,9 @@ function SortableMiddleFormCardInner({
     paragraphBodyOptions
   )
   const adminProxyConfirmCard = isAgreementAdminProxyConfirmCard(paragraph, paragraphBodyOptions)
+  const seedFillLocked =
+    paragraphBodyOptions?.seedApplicantFillLocked === true &&
+    (structureLockedParagraphIds?.has(paragraph.id) ?? false)
 
   return (
     <div
@@ -386,6 +411,7 @@ function SortableMiddleFormCardInner({
             ? 'paragraph-card--scale-type'
             : '',
           adminProxyConfirmCard ? 'agreement-admin-proxy-confirm-card' : '',
+          seedFillLocked ? 'paragraph-card--seed-fill-locked' : '',
         ]
           .filter(Boolean)
           .join(' ')}

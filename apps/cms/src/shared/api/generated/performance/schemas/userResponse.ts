@@ -65,6 +65,7 @@ export interface UserResponse {
   detailAddress?: string;
   zipCode?: string;
   birthDate?: string;
+  birthYear?: number;
   gender?: string;
   /**
      * [Deprecated compatibility] 학교/기관 소속은 organizationId 기반 affiliation DTO를 사용합니다.

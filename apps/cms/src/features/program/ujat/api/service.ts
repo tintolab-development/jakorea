@@ -1,11 +1,14 @@
+import { createAdminProgramRemoteWithRegistrationForms } from '@/features/program/general/api/create-admin-program-remote-with-registration-forms'
 import {
-  createAdminProgramRemote,
   deleteAdminProgramRemote,
   fetchAdminProgramByIdRemote,
   fetchAdminProgramsRemote,
   updateAdminProgramRemote,
 } from '@/features/program/general/api/programs-api-client'
-import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import {
+  buildUjatProgramListRowFromRegistrationSnapshot,
+  collectUjatRegistrationCreateOverlay,
+} from '@/features/program/ujat/lib/ujat-registration-local-save'
 import type { Program } from '@/types/domain'
 import { fromDetail, fromListItem, toCreateRequest, toUpdateRequest } from './adapters'
 import { shouldUseRemoteApi } from './capabilities'
@@ -16,11 +19,13 @@ import {
 } from './list-params'
 import {
   parseRegistrationSnapshot,
+  readUjatRegistrationOverlayFromProgram,
   type RegistrationSnapshot,
 } from './service-detail'
 
 export type CreateInput = RegistrationSnapshot & {
   idempotencyKey: string
+  preparedFormBindings?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
 }
 
 function assertRemoteReady(): void {
@@ -74,11 +79,18 @@ export async function detail(programId: string): Promise<Program | null> {
 
 export async function create(input: CreateInput): Promise<Program> {
   assertRemoteReady()
+  const overlay = collectUjatRegistrationCreateOverlay(input.overlay)
   const pending = buildUjatProgramListRowFromRegistrationSnapshot({
     id: `ujat-pending-${input.idempotencyKey}`,
-    overlay: input.overlay,
+    overlay,
   })
-  return fromDetail(await createAdminProgramRemote(toCreateRequest(pending, input)))
+  return fromDetail(
+    await createAdminProgramRemoteWithRegistrationForms(
+      pending,
+      toCreateRequest(pending, { ...input, overlay }),
+      input.preparedFormBindings
+    )
+  )
 }
 
 export async function update(
@@ -89,8 +101,21 @@ export async function update(
   assertRemoteReady()
   const current = await fetchAdminProgramByIdRemote(programId)
   const registration = parseRegistrationSnapshot(current.serviceDetailJson)
+  // 상세 수정 중 세션/드래프트 overlay를 registration에 합친다.
+  // GET 스냅샷만 쓰면 대표·관리명 등 overlay 편집이 serviceDetailJson에 반영되지 않는다.
+  const editedOverlay = readUjatRegistrationOverlayFromProgram(program)
+  const nextRegistration =
+    registration && Object.keys(editedOverlay).length > 0
+      ? {
+          ...registration,
+          overlay: {
+            ...registration.overlay,
+            ...editedOverlay,
+          },
+        }
+      : registration
   return fromDetail(
-    await updateAdminProgramRemote(programId, toUpdateRequest(program, patch, registration))
+    await updateAdminProgramRemote(programId, toUpdateRequest(program, patch, nextRegistration))
   )
 }
 

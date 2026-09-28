@@ -3,7 +3,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
 import { useMediaQuery } from '@/shared/hooks'
 import { platformMediaQueries } from '@/shared/lib'
 import { PFText } from '@/shared/ui'
-import { formatKrwAmount } from '../lib/mock-data'
+import { formatKrwAmount } from '../lib/format'
 import type { FinanceSlice, FinanceSummary } from '../model/types'
 import styles from './finance-donut-chart.module.css'
 
@@ -32,12 +32,21 @@ const RADIAL_LEN = 28
 const RAIL_GAP = 44
 /** 수평 선(타이틀·수치 기준선) 길이 */
 const H_LINE = 220
-/** 인접 라벨 간 최소 세로 간격 (타이틀 + 수치 2줄 높이) */
+/**
+ * 인접 라벨 최소 세로 간격.
+ * Figma 지출 콜아웃(좌측 5개) 간격 ≈ 70–81px — 밀집 시 68로 완화.
+ */
 const MIN_LABEL_GAP = 80
+const MIN_LABEL_GAP_DENSE = 68
 /** 라벨 텍스트와 도넛 사이 최소 가로 여백 */
 const TEXT_CLEARANCE = 16
-/** 퍼센트 ↔ 금액 tspan 간격 (dx) */
-const VALUE_TSPAN_GAP = 12
+/** 퍼센트 ↔ 금액 간격 — Figma gap 16px */
+const VALUE_TSPAN_GAP = 16
+/** 세그먼트 사이 흰 라이닝 (Figma pie stroke) */
+const SEGMENT_STROKE = '#ffffff'
+const SEGMENT_STROKE_WIDTH = 2
+/** 콜아웃 리더선 — Figma Vector ≈ 1px */
+const CALLOUT_STROKE_WIDTH = 1
 /** 콜아웃 여백을 포함한 기본 SVG 높이 */
 const DEFAULT_CHART_HEIGHT = 700
 const MOBILE_CHART_HEIGHT = 320
@@ -131,9 +140,10 @@ export function FinanceDonutChart({
         .filter(item => item.side === side)
         .sort((a, b) => a.desiredY - b.desiredY)
 
+      const gap = group.length >= 4 ? MIN_LABEL_GAP_DENSE : MIN_LABEL_GAP
       let prevY = Number.NEGATIVE_INFINITY
       for (const item of group) {
-        const labelYRel = Math.max(item.desiredY, prevY + MIN_LABEL_GAP)
+        const labelYRel = Math.max(item.desiredY, prevY + gap)
         prevY = labelYRel
         layouts.set(item.id, { side, labelYRel })
       }
@@ -212,21 +222,22 @@ export function FinanceDonutChart({
           points={`${anchorX},${anchorY} ${elbowX},${elbowY} ${railInnerX},${labelY} ${railOuterX},${labelY}`}
           fill="none"
           stroke={slice.color}
-          strokeWidth={1.5}
+          strokeWidth={CALLOUT_STROKE_WIDTH}
           strokeLinejoin="round"
           strokeLinecap="round"
         />
+        {/* Figma: 라벨명은 수평선 위, 비율·금액은 선 아래 */}
         <text
           x={textX}
-          y={labelY - 10}
+          y={labelY - 8}
           textAnchor={textAnchor}
           className={styles.calloutName}
         >
           {slice.label}
         </text>
-        <text x={textX} y={labelY + 28} textAnchor={textAnchor}>
+        <text x={textX} y={labelY + 30} textAnchor={textAnchor}>
           <tspan className={styles.calloutPercent}>{slice.percent}%</tspan>
-          <tspan dx={12} className={styles.calloutAmount}>
+          <tspan dx={VALUE_TSPAN_GAP} className={styles.calloutAmount}>
             {formatKrwAmount(slice.amount)}
           </tspan>
         </text>
@@ -250,11 +261,17 @@ export function FinanceDonutChart({
               isAnimationActive={false}
               labelLine={false}
               label={renderCallout}
-              stroke="none"
+              stroke={SEGMENT_STROKE}
+              strokeWidth={SEGMENT_STROKE_WIDTH}
               style={{ outline: 'none', cursor: 'default' }}
             >
               {slices.map(slice => (
-                <Cell key={slice.id} fill={slice.color} />
+                <Cell
+                  key={slice.id}
+                  fill={slice.color}
+                  stroke={SEGMENT_STROKE}
+                  strokeWidth={SEGMENT_STROKE_WIDTH}
+                />
               ))}
             </Pie>
           </PieChart>

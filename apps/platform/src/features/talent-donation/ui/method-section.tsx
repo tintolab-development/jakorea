@@ -1,10 +1,10 @@
 import { Fragment } from 'react'
-import { PFButton, PFText } from '@/shared/ui'
+import { Link } from 'react-router-dom'
+import { PFButton, PFText, remoteCopyClassName } from '@/shared/ui'
+import { usePublicTalentSponsorshipView } from '../api/hooks'
 import {
-  METHOD_CARDS,
   METHODS_SECTION_TITLE,
   STORIES_SECTION_EYEBROW,
-  TALENT_STORIES,
   type MethodCardContent,
   type MethodCardId,
   type StoryContent,
@@ -33,7 +33,7 @@ function MethodCard({ card }: { card: MethodCardContent }) {
             className={styles.methodDescription}
           >
             {card.descriptionLines.map((line, index) => (
-              <Fragment key={line}>
+              <Fragment key={`${line}-${index}`}>
                 {index > 0 ? <br /> : null}
                 {line}
               </Fragment>
@@ -45,7 +45,13 @@ function MethodCard({ card }: { card: MethodCardContent }) {
   )
 }
 
-function StoryBlock({ story }: { story: StoryContent }) {
+function StoryBlock({
+  story,
+  href,
+}: {
+  story: StoryContent
+  href: string | null
+}) {
   const imageUrl = STORY_IMAGE_URLS[story.id]
   const layoutClass =
     story.layout === 'mediaFirst' ? styles.storyMediaFirst : styles.storyTextFirst
@@ -56,7 +62,7 @@ function StoryBlock({ story }: { story: StoryContent }) {
         <div className={styles.storyText}>
           <PFText as="h3" typo="page-title-sm" color="black" className={styles.storyTitle}>
             {story.titleLines.map((line, index) => (
-              <Fragment key={line}>
+              <Fragment key={`${line}-${index}`}>
                 {index > 0 ? <br className={styles.pcOnly} /> : null}
                 {line}
               </Fragment>
@@ -69,18 +75,24 @@ function StoryBlock({ story }: { story: StoryContent }) {
             color="neutral-cool-700"
             className={styles.storyDescription}
           >
-            {story.descriptionLines.map((line) => (
-              <Fragment key={line}>
+            {story.descriptionLines.map((line, index) => (
+              <Fragment key={`${line}-${index}`}>
+                {index > 0 ? <br /> : null}
                 {line}
               </Fragment>
             ))}
           </PFText>
         </div>
 
-        {/* TODO: 스토리 상세 경로 연결 */}
-        <PFButton type="button" size="xlarge" variant="primary" className={styles.storyButton}>
-          {story.buttonLabel}
-        </PFButton>
+        {href ? (
+          <Link to={href} className={[styles.storyLink, styles.storyButton, 'typo-bd-lg-sb'].join(' ')}>
+            {story.buttonLabel}
+          </Link>
+        ) : (
+          <PFButton type="button" size="xlarge" variant="primary" className={styles.storyButton} disabled>
+            {story.buttonLabel}
+          </PFButton>
+        )}
       </div>
 
       <div className={styles.storyVisual}>
@@ -93,9 +105,16 @@ function StoryBlock({ story }: { story: StoryContent }) {
 }
 
 export function MethodSection() {
+  const { methodCards, stories, isPending } = usePublicTalentSponsorshipView()
+  const copyClass = remoteCopyClassName(isPending)
+
   return (
-    <section className={styles.section} aria-labelledby="talent-donation-methods-title">
-      <div className={styles.content}>
+    <section
+      className={styles.section}
+      aria-labelledby="talent-donation-methods-title"
+      aria-busy={isPending || undefined}
+    >
+      <div className={[styles.content, copyClass].join(' ')}>
         <div className={styles.methods}>
           <PFText
             as="h2"
@@ -108,7 +127,7 @@ export function MethodSection() {
           </PFText>
 
           <div className={styles.methodList}>
-            {METHOD_CARDS.map(card => (
+            {methodCards.map(card => (
               <MethodCard key={card.id} card={card} />
             ))}
           </div>
@@ -126,8 +145,8 @@ export function MethodSection() {
           </PFText>
 
           <div className={styles.storyList}>
-            {TALENT_STORIES.map(story => (
-              <StoryBlock key={story.id} story={story} />
+            {stories.map(story => (
+              <StoryBlock key={story.id} story={story} href={story.href} />
             ))}
           </div>
         </div>

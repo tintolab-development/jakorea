@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import {
   Controller,
   type FieldPath,
@@ -84,6 +84,14 @@ export function UjatRecruitFormPeriodDatePicker({
     return null
   }, [startIso, endIso])
   const [anchor, setAnchor] = useState<Dayjs | null>(() => appliedSurfaceRange?.[0] ?? null)
+  useEffect(() => {
+    const next = appliedSurfaceRange?.[0] ?? null
+    setAnchor(prev => {
+      if (next == null) return prev
+      if (prev != null && prev.isSame(next, 'day')) return prev
+      return next
+    })
+  }, [appliedSurfaceRange])
   const rangeWithTime = useMemo(
     () =>
       appliedSurfaceRange == null

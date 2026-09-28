@@ -1,62 +1,78 @@
 /**
- * CMS 일반 공지 mock 미러 + 스크린샷 샘플.
- * SSOT 참고: apps/cms/src/data/mock/notices.ts (`mockNotices`)
+ * 홈페이지 공개 공지 mock.
+ * 추후 어드민 PublicNoticeDetail 응답으로 교체 — 화면 모델은 map-detail 참고.
  */
 
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type { NoticeAttachment, NoticeDetail, NoticeListItem } from '../model/types'
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
+import digitalCrimePreventionImageUrl from '../image/illustration/digital-crime-prevention.png'
+import { getAdjacentFromNotices } from './adjacent'
 import { filterAndSortNotices } from './filter-notices'
+import {
+  formatNoticePublishedAtDetailLabel,
+  formatNoticePublishedAtLabel,
+} from './format'
 
 type CmsNoticeSeed = {
   id: string
   title: string
   content: string
+  contentIsHtml?: boolean
   createdAt: string
   isImportant: boolean
   viewCount: number
   author: string
   status: 'published' | 'draft' | 'archived'
-  attachments?: NoticeAttachment[]
+  attachments?: Array<Partial<NoticeAttachment> & { name: string }>
 }
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
-/** 목록용: 2026년 05월 08일 */
-function formatPublishedAtLabel(isoDate: string): string {
-  const date = new Date(isoDate)
-  if (Number.isNaN(date.getTime())) return '-'
-
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}년 ${m}월 ${d}일`
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
 }
 
-/** 상세 메타용: 2026년 05월 08일(월) */
-function formatPublishedAtDetailLabel(isoDate: string): string {
-  const date = new Date(isoDate)
-  if (Number.isNaN(date.getTime())) return '-'
-
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const w = WEEKDAY_KO[date.getDay()]
-  return `${y}년 ${m}월 ${d}일(${w})`
+function htmlFromPlain(text: string) {
+  return text
+    .split(/\n{2,}/)
+    .map(block => `<p>${escapeHtml(block.trim()).replace(/\n/g, '<br />')}</p>`)
+    .join('')
 }
 
-/** CMS mockNotices + 스크린샷·페이지네이션용 보강 시드 */
+function buildFeaturedNoticeHtml(imageSrc: string) {
+  return [
+    `<p><img src="${imageSrc}" alt="만화로 보는 디지털 범죄 예방법" width="600" style="width: 600px; max-width: 100%; height: auto; border-radius: 24px;" /></p>`,
+    '<p>아시아·태평양 지역 예비 기업가 청소년이 참여하는<br>국제 청소년 창업 경진대회,<br>2026 JA AP Company of the Year Competition이<br>10년 만에 대한민국 서울에서 개최됩니다.</p>',
+    '<p>※ Company of the Year Competition이란?<br>JA Company Program에 참여한 학생들의<br>창업 성과를 기념하고 축하하는<br>JA Worldwide의 대표적인 연례 대회입니다.<br>심사위원단의 평가를 통해 선발된 최종 수상팀은<br>\'올해의 JA 아시아·태평양 기업\'이라는 영예를 얻게 됩니다.</p>',
+    '<p>이번 대회는 Creating Value in Every Color라는 주제로<br>3월 9일(월)부터 3월 13일(금)까지<br>서울 영등포 일대에서 진행되며,</p>',
+    '<p>비즈니스 역량을 키울 수 있는 다양한 교육과<br>투자자를 직접 설득해보는<br>Business Presentation · Panel Interview 등<br>다채로운 프로그램으로 구성됐습니다.</p>',
+    '<p>특별히 3월 11일(수) 12:30~15:00<br>청소년들의 창업 아이템을 직접 만나볼 수 있는<br>\'Trade Fair\'가<br>서울 영등포 타임스퀘어 지하 2층<br>영등포아트스퀘어에서 열립니다.</p>',
+    '<p>2026 JA AP COYC에서<br>글로벌 비즈니스를 이끌어 갈<br>미래의 주역들을 만나볼 수 있는 기회를<br>놓치지 마세요!</p>',
+    '<p>JA Korea는 모든 청소년의 도전을 응원합니다.</p>',
+    '<p>Starts Here.<br>JA Korea</p>',
+  ].join('')
+}
+
 const CMS_NOTICE_SEED: readonly CmsNoticeSeed[] = [
   {
     id: 'notice-86',
     title: '2026 JA AP Company of the Year Competition 개최 안내',
-    content:
-      '2026 JA AP Company of the Year Competition 개최를 안내드립니다. 참가 신청 및 일정은 첨부 안내문을 확인해 주세요.',
-    createdAt: '2026-05-08T10:00:00',
+    content: buildFeaturedNoticeHtml(digitalCrimePreventionImageUrl),
+    contentIsHtml: true,
+    createdAt: '2026-01-15T15:00:00',
     isImportant: true,
-    viewCount: 1820,
+    viewCount: 1232,
     author: '운영팀',
     status: 'published',
+    attachments: [
+      { id: 'notice-86-file-1', name: '디지털 범죄예방 코믹북.pdf' },
+      {
+        id: 'notice-86-file-2',
+        name: '2026_JA_AP_COYC_프로그램_일정_및_참가안내_장파일명.pdf',
+      },
+    ],
   },
   {
     id: 'notice-85',
@@ -93,13 +109,21 @@ const CMS_NOTICE_SEED: readonly CmsNoticeSeed[] = [
   {
     id: 'notice-82',
     title: '2025년 1월 정산 신청 기간 및 방법 안내',
-    content: `안녕하세요. JA Korea입니다. 2025년 1월 정산 신청에 대해 안내드립니다.
-
-1. 신청 기간: 2025년 1월 20일 ~ 1월 25일
-2. 대상: 1월 중 교육/봉사 활동을 완료한 모든 분
-3. 방법: 마이페이지 > 정산 관리 > 정산 신청 메뉴를 통해 접수
-
-기한 내 신청하지 않을 경우 다음 달로 이월되오니 유의하시기 바랍니다.`,
+    content: `<p>안녕하세요. JA Korea입니다. 2025년 1월 정산 신청에 대해 안내드립니다.</p>
+<ul>
+<li>신청 기간: 2025년 1월 20일 ~ 1월 25일</li>
+<li>대상: 1월 중 교육/봉사 활동을 완료한 모든 분</li>
+<li>방법: 마이페이지 &gt; 정산 관리 &gt; 정산 신청 메뉴를 통해 접수</li>
+</ul>
+<table>
+<thead><tr><th>항목</th><th>내용</th></tr></thead>
+<tbody>
+<tr><td>신청 기간</td><td>2025년 1월 20일 ~ 1월 25일</td></tr>
+<tr><td>문의</td><td><a href="https://www.jakorea.org">www.jakorea.org</a></td></tr>
+</tbody>
+</table>
+<p>기한 내 신청하지 않을 경우 다음 달로 이월되오니 유의하시기 바랍니다.</p>`,
+    contentIsHtml: true,
     createdAt: '2025-01-15T10:00:00',
     isImportant: false,
     viewCount: 1250,
@@ -125,7 +149,7 @@ const CMS_NOTICE_SEED: readonly CmsNoticeSeed[] = [
       '보다 안정적인 서비스 제공을 위해 시스템 정기 점검이 진행될 예정입니다. 점검 시간 동안은 접속이 제한됩니다.',
     createdAt: '2025-01-18T09:00:00',
     isImportant: false,
-    viewCount: 420,
+    viewCount: 0,
     author: 'IT지원팀',
     status: 'published',
   },
@@ -291,12 +315,19 @@ function mapSeedToDetail(notice: CmsNoticeSeed, no: number): NoticeDetail | null
     title: notice.title,
     isPinned: notice.isImportant,
     publishedAt: notice.createdAt,
-    publishedAtLabel: formatPublishedAtLabel(notice.createdAt),
-    publishedAtDetailLabel: formatPublishedAtDetailLabel(notice.createdAt),
-    content: notice.content,
+    publishedAtLabel: formatNoticePublishedAtLabel(notice.createdAt),
+    publishedAtDetailLabel: formatNoticePublishedAtDetailLabel(notice.createdAt),
+    content: notice.contentIsHtml ? notice.content : htmlFromPlain(notice.content),
+    contentFormat: 'html',
     author: notice.author,
     viewCount: notice.viewCount,
-    attachments: (notice.attachments ?? []).map(file => ({ ...file })),
+    attachments: (notice.attachments ?? []).map((file, index) => ({
+      id: file.id ?? `${notice.id}-file-${index + 1}`,
+      name: file.name,
+      mime: file.mime,
+      size: file.size,
+      fileUrl: file.fileUrl,
+    })),
   }
 }
 
@@ -328,7 +359,7 @@ const MOCK_NOTICE_DETAILS: NoticeDetail[] = (() => {
 export type NoticeCatalogItem = NoticeListItem & { content: string }
 
 export function getMockNotices(): NoticeCatalogItem[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_NOTICE_DETAILS.map(detail => ({
     ...toListItem(detail),
     content: detail.content,
@@ -336,13 +367,13 @@ export function getMockNotices(): NoticeCatalogItem[] {
 }
 
 export function getMockNoticeById(id: string): NoticeListItem | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   const found = MOCK_NOTICE_DETAILS.find(item => item.id === id)
   return found ? toListItem(found) : null
 }
 
 export function getMockNoticeDetailById(id: string): NoticeDetail | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   const found = MOCK_NOTICE_DETAILS.find(item => item.id === id)
   return found
     ? {
@@ -363,24 +394,9 @@ export function useMockNoticeDetail(id: string | null): NoticeDetail | null {
   return getMockNoticeDetailById(id)
 }
 
-export type AdjacentNotices = {
-  previous: NoticeListItem | null
-  next: NoticeListItem | null
-}
-
 /**
- * 핀 상단 + 게시일 desc 기준 인접 글.
- * - previous(이전글): 목록에서 아래(더 오래된) 글
- * - next(다음글): 목록에서 위(더 최근) 글
+ * mock 카탈로그 기준 인접 글. remote는 `useNoticeDetail().adjacent` 를 쓴다.
  */
-export function getAdjacentNotices(id: string): AdjacentNotices {
-  const sorted = filterAndSortNotices(getMockNotices(), { q: '' })
-  const index = sorted.findIndex(item => item.id === id)
-  if (index < 0) {
-    return { previous: null, next: null }
-  }
-  return {
-    next: index > 0 ? (sorted[index - 1] ?? null) : null,
-    previous: index < sorted.length - 1 ? (sorted[index + 1] ?? null) : null,
-  }
+export function getAdjacentNotices(id: string) {
+  return getAdjacentFromNotices(filterAndSortNotices(getMockNotices(), { q: '' }), id)
 }

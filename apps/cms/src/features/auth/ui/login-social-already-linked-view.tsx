@@ -38,10 +38,10 @@ export function LoginSocialAlreadyLinkedView({
           className="login-submit-btn"
           onClick={onConnectOtherSocial}
         >
-          다른 소셜계정 연결하기
+          다른 소셜 계정 연결하기
         </LoadingButton>
         <LoadingButton block className="login-secondary-btn" onClick={onEmailLogin}>
-          이메일로 로그인
+          이메일로 로그인하기
         </LoadingButton>
       </div>
     </div>

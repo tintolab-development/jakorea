@@ -89,6 +89,15 @@
   overflow: hidden;
 }
 
+.featuredImage,
+.subCardImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
 @media (--bp-pc-up) {
   .featuredMedia {
     width: 44%;

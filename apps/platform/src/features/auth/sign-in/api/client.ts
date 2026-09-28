@@ -1,4 +1,4 @@
-import { axiosClient } from '@/shared/api/axios-instance'
+import { axiosClient, postPortalAuthLogout } from '@/shared/api/axios-instance'
 import type { InternalAxiosRequestConfig } from 'axios'
 import { portalAuthPaths, portalMePaths } from './endpoints'
 import { parseAuthTokenResponse } from './parse-auth-token'
@@ -14,12 +14,19 @@ import type {
   PhoneIdentityChangeResponse,
   PhoneIdentityConfirmRequest,
   PortalProfileResponse,
+  PortalWithdrawalRequest,
+  PortalWithdrawalResponse,
   UpdatePortalProfileRequest,
 } from './types'
 
 type SkipAuthConfig = InternalAxiosRequestConfig & {
   skipAuth?: boolean
   skipRefresh?: boolean
+}
+
+/** POST /api/portal/auth/logout — body refreshToken, 204 */
+export async function postPortalLogout(refreshToken: string): Promise<void> {
+  await postPortalAuthLogout(refreshToken)
 }
 
 /** POST /api/portal/auth/login — PUBLIC */
@@ -72,4 +79,25 @@ export async function postPortalPhoneIdentityConfirm(
 /** POST /api/portal/auth/password/change */
 export async function postPortalPasswordChange(body: PasswordChangeRequest): Promise<void> {
   await axiosClient.post(portalAuthPaths.passwordChange(), body)
+}
+
+/** POST /api/portal/me/withdrawals — 회원 탈퇴 및 개인정보 비식별화 */
+export async function postPortalWithdrawal(
+  body: PortalWithdrawalRequest,
+): Promise<PortalWithdrawalResponse> {
+  const { data } = await axiosClient.post<unknown>(portalMePaths.withdrawals(), body)
+  if (!data || typeof data !== 'object') {
+    return {}
+  }
+  const root = data as Record<string, unknown>
+  const payload =
+    root.success === true && root.data && typeof root.data === 'object'
+      ? (root.data as Record<string, unknown>)
+      : root
+  return {
+    memberId: typeof payload.memberId === 'number' ? payload.memberId : undefined,
+    status: typeof payload.status === 'string' ? payload.status : undefined,
+    withdrawnAt: typeof payload.withdrawnAt === 'string' ? payload.withdrawnAt : undefined,
+    message: typeof payload.message === 'string' ? payload.message : undefined,
+  }
 }

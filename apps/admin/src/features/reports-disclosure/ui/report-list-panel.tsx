@@ -17,8 +17,6 @@ import {
   useReportsList,
   useUpdateReport,
 } from '@/features/reports-disclosure/api/hooks'
-import { reportsDisclosureQueryKeys } from '@/features/reports-disclosure/api/query-keys'
-import { REPORTS_CHANGED_EVENT } from '@/features/reports-disclosure/api/store'
 import {
   ReportFormModal,
   type ReportFormValues,
@@ -29,7 +27,6 @@ import {
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
 import {
@@ -43,7 +40,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   ConfirmModal,
   useCmsAlert,
 } from '@/shared/ui'
@@ -136,6 +133,7 @@ export function ReportListPanel({ kind }: Props) {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
   } = useListFilterUrl<PendingFilters, ReportListFilter>({
@@ -173,8 +171,6 @@ export function ReportListPanel({ kind }: Props) {
   const createMutation = useCreateReport(kind)
   const updateMutation = useUpdateReport(kind)
   const removeMutation = useRemoveReports(kind)
-
-  useInvalidateOnWindowEvent(REPORTS_CHANGED_EVENT, reportsDisclosureQueryKeys.reports())
 
   const rows = listQuery.data ?? []
   const totalCount = rows.length
@@ -371,29 +367,22 @@ export function ReportListPanel({ kind }: Props) {
         <div className="admin-filter-area">
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <p className="admin-filter-area__label">제목</p>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               value={pendingFilters.title}
-              onChange={e =>
-                setPendingFilters(prev => ({ ...prev, title: e.target.value }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
               onPressEnter={() => applySearch()}
               placeholder="제목을 입력하세요"
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <p className="admin-filter-area__label">첨부파일명</p>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               value={pendingFilters.attachmentName}
-              onChange={e =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  attachmentName: e.target.value,
-                }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, attachmentName: value }))}
               onPressEnter={() => applySearch()}
               placeholder="첨부파일명을 입력하세요"
             />

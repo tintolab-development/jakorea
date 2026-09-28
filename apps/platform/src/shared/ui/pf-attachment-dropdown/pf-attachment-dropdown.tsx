@@ -11,6 +11,7 @@ import downloadIconUrl from '@/shared/assets/icons/file-download-gray.svg'
 import styles from './pf-attachment-dropdown.module.css'
 
 export type PFAttachmentDropdownItem = {
+  id?: string
   fileName: string
   /** 실파일 URL. 없거나 `#`이면 빈 파일 폴백 다운로드 */
   href?: string
@@ -108,8 +109,8 @@ export function PFAttachmentDropdown({
 
       {isOpen ? (
         <ul className={styles.panel} id={listboxId} role="listbox" aria-label={triggerLabel}>
-          {files.map(file => (
-            <li key={file.fileName} className={styles.panelItem} role="option">
+          {files.map((file, index) => (
+            <li key={file.id ?? `${file.fileName}-${index}`} className={styles.panelItem} role="option">
               <a
                 className={styles.fileLink}
                 href={file.href?.trim() || '#'}
@@ -119,7 +120,12 @@ export function PFAttachmentDropdown({
                   downloadAttachment(file.fileName, file.href)
                 }}
               >
-                <span className={`typo-bd-sm-md ${styles.fileName}`}>{file.fileName}</span>
+                <span
+                  className={`typo-bd-sm-md ${styles.fileName}`}
+                  title={file.fileName}
+                >
+                  {file.fileName}
+                </span>
                 <img
                   className={styles.downloadIcon}
                   src={downloadIconUrl}

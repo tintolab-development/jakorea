@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -18,6 +18,7 @@ import {
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
+import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
 import {
   PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE,
@@ -29,6 +30,27 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
+import {
+  collectOperationalOverlayForCatalogId,
+  hydrateRegistrationOperationalOverlaysFromLocalDrafts,
+  persistRegistrationOperationalOverlaysToLocal,
+} from '@/features/program/general/lib/registration-operational-form-drafts'
+import {
+  clearRegistrationWizardSessionDrafts,
+  flushApplicationOperationalOverrides,
+} from '@/features/program/general/lib/registration-wizard-session-drafts'
+import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+import {
+  hydrateRegistrationProgramDraft,
+  syncRegistrationProgramDraftSession,
+} from '@/features/program/general/lib/registration-program-draft-session'
+import {
+  registrationProgramTypeForTemplateCode,
+  type ProgramRegistrationDraftTemplateCode,
+} from '@/features/program/shared/lib/registration-draft-notice'
+import { hasIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
+import { hasIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { formatRegistrationStepTransitionLabel } from '@/features/program/shared/lib/log-program-registration-create-payload'
 
 /** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
 const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
@@ -64,17 +86,23 @@ function resolveStepTemplateName(templateId: string): string {
   )
 }
 
+/** 1사1교·교육받은 교사 — 봉사자 탭 미노출 */
+function tabVisibilityForVariant(
+  variant: ProgramRegistrationFormVariant
+): { hideVolunteer: true } | undefined {
+  if (variant === 'economy' || variant === 'trainedTeachers') {
+    return { hideVolunteer: true as const }
+  }
+  return undefined
+}
+
 function coerceRegistrationStepForVariant(
   step: GeneralProgramRegistrationStepKey,
   flags: GeneralProgramRegistrationParticipantFlags,
   variant: ProgramRegistrationFormVariant
 ): GeneralProgramRegistrationStepKey {
-  const recruitOptions =
-    variant === 'economy' ? ({ hideVolunteer: true } as const) : undefined
-  const coercedStep = coerceGeneralProgramRegistrationStep(step, flags, recruitOptions)
-  if (variant !== 'trainedTeachers') return coercedStep
-  if (coercedStep === 'program') return coercedStep
-  return 'application-participant-school'
+  // 교육받은 교사 전용 step 강제 리다이렉트 없음 — 참여자 플래그 + hideVolunteer만 적용
+  return coerceGeneralProgramRegistrationStep(step, flags, tabVisibilityForVariant(variant))
 }
 
 export function useGeneralProgramRegistrationFlow(
@@ -90,15 +118,23 @@ export function useGeneralProgramRegistrationFlow(
     : isTrainedTeachersRegistration
       ? 'registration-trained-teachers'
       : 'registration-general'
+  const skipDraftRestore = options?.skipDraftRestore === true
+  const programType = registrationProgramTypeForTemplateCode(
+    registrationTemplateId as ProgramRegistrationDraftTemplateCode
+  )
+
+  const onStepChangeRef = useRef(options?.onStepChange)
+  onStepChangeRef.current = options?.onStepChange
+  const continueHydratedRef = useRef(false)
+
   const registrationVm = useProgramRegistrationEditor(
     open,
     resolveStepTemplateName(registrationTemplateId),
     {
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
-      skipDraftRestore: options?.skipDraftRestore === true,
-      // 프로그램 임시저장 — remote 전환: docs/api/program-draft-local-storage-follow-up.md
-      localOnlyDraftPersistence: true,
+      skipDraftRestore,
+      registrationWizardProgramType: programType,
       templateCode:
         registrationFormVariant === 'general'
           ? PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
@@ -112,12 +148,11 @@ export function useGeneralProgramRegistrationFlow(
 
   const participantFlags: GeneralProgramRegistrationParticipantFlags = registrationVm.participant
 
-  const recruitTabVisibility = useMemo(
-    () => (isCompanySchoolRegistration ? { hideVolunteer: true as const } : undefined),
-    [isCompanySchoolRegistration]
+  /** 모집·신청 탭 공통 (1사1교·교육받은 교사 봉사자 숨김) */
+  const tabVisibility = useMemo(
+    () => tabVisibilityForVariant(registrationFormVariant),
+    [registrationFormVariant]
   )
-  /** 모집·신청 탭 공통 (1사1교 봉사자 숨김) */
-  const tabVisibility = recruitTabVisibility
 
   const [activeStep, setActiveStep] = useState<GeneralProgramRegistrationStepKey>(() => {
     const initial = options?.initialStep
@@ -128,6 +163,46 @@ export function useGeneralProgramRegistrationFlow(
       registrationFormVariant
     )
   })
+
+  useEffect(() => {
+    if (!open) continueHydratedRef.current = false
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    if (skipDraftRestore) return
+    if (continueHydratedRef.current) return
+    continueHydratedRef.current = true
+    void (async () => {
+      const payload = await hydrateRegistrationProgramDraft(programType)
+      await hydrateRegistrationOperationalOverlaysFromLocalDrafts(
+        programType,
+        registrationFormVariant
+      )
+      if (payload?.activeStep != null) {
+        const restored = coerceRegistrationStepForVariant(
+          normalizeGeneralProgramRegistrationStepKey(
+            payload.activeStep,
+            participantFlags,
+            tabVisibility
+          ),
+          participantFlags,
+          registrationFormVariant
+        )
+        setActiveStep(restored)
+        onStepChangeRef.current?.(restored)
+      }
+    })().catch(error => {
+      console.warn('[registration-program-draft] hydrate failed', error)
+    })
+  }, [
+    open,
+    skipDraftRestore,
+    programType,
+    registrationFormVariant,
+    participantFlags,
+    tabVisibility,
+  ])
 
   useEffect(() => {
     if (!open) return
@@ -149,20 +224,16 @@ export function useGeneralProgramRegistrationFlow(
     tabVisibility,
   ])
 
+  // 참여자 유형 플래그 기반 (TT는 organization 고정 → 참여 기관 모집/신청만 노출)
   const visibleRecruitTabKeys = useMemo(
-    () =>
-      isTrainedTeachersRegistration
-        ? []
-        : getVisibleGeneralProgramRecruitTabKeys(participantFlags, tabVisibility),
-    [isTrainedTeachersRegistration, participantFlags, tabVisibility]
+    () => getVisibleGeneralProgramRecruitTabKeys(participantFlags, tabVisibility),
+    [participantFlags, tabVisibility]
   )
 
   const visibleApplicationTabKeys = useMemo(
     (): GeneralProgramRegistrationApplicationTabKey[] =>
-      isTrainedTeachersRegistration
-        ? ['application-participant-school']
-        : getVisibleGeneralProgramApplicationTabKeys(participantFlags, tabVisibility),
-    [isTrainedTeachersRegistration, participantFlags, tabVisibility]
+      getVisibleGeneralProgramApplicationTabKeys(participantFlags, tabVisibility),
+    [participantFlags, tabVisibility]
   )
 
   const coercedActiveStep = useMemo(
@@ -190,6 +261,13 @@ export function useGeneralProgramRegistrationFlow(
       if (isTrainedTeachersRegistration) {
         if (base.key === 'program') {
           return { ...base, templateId: 'registration-trained-teachers' }
+        }
+        if (base.key === 'recruit-participant-school') {
+          return {
+            ...base,
+            templateId: 'recruitment-trained-teachers',
+            editorVariant: 'trained-teachers-recruit-institution' as const,
+          }
         }
         if (base.key === 'application-participant-school') {
           return {
@@ -238,7 +316,9 @@ export function useGeneralProgramRegistrationFlow(
     participantTemplateName,
     participantVariant,
     {
-      localOnlyDraftPersistence: true,
+      registrationWizardProgramType: programType,
+      registrationWizardOpen: open,
+      skipDraftRestore,
       participantOrganization: participantFlags.organization,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
       programLinkedInstitutionApplicationForm:
@@ -252,7 +332,11 @@ export function useGeneralProgramRegistrationFlow(
         participantVariant === 'volunteer' ||
         participantVariant === 'economy-application-institution' ||
         participantVariant === 'trained-teachers-application-institution',
-      applicantRecruitInstitutionLayoutVariant: isCompanySchoolRegistration ? 'economy' : undefined,
+      applicantRecruitInstitutionLayoutVariant: isCompanySchoolRegistration
+        ? 'economy'
+        : isTrainedTeachersRegistration
+          ? 'trainedTeachers'
+          : undefined,
       applicantRecruitInstitutionDefaults: isCompanySchoolRegistration
         ? {
             studentListRequired: 'none',
@@ -262,7 +346,16 @@ export function useGeneralProgramRegistrationFlow(
             maxScheduleCount: 2,
             maxSessionsPerDay: 2,
           }
-        : undefined,
+        : isTrainedTeachersRegistration
+          ? {
+              studentListRequired: 'need',
+              maxClassCount: 4,
+              maxScheduleCount: 3,
+              maxSessionsPerDay: 8,
+            }
+          : undefined,
+      /** 1사1교 — 단락 타이틀 옆 필수(*) (공유 강사 모집 상세 등 선택 시드 포함) */
+      forceSeedParagraphsRequired: isCompanySchoolRegistration,
     }
   )
 
@@ -273,6 +366,7 @@ export function useGeneralProgramRegistrationFlow(
       resetGeneralRecruitOverlay()
       resetGeneralApplicationOverlay()
       resetProgramRegistrationOverlay()
+      clearRegistrationWizardSessionDrafts()
       return
     }
     patchInstitutionApplicationProgramBridge({
@@ -332,13 +426,30 @@ export function useGeneralProgramRegistrationFlow(
     [registryEntry, editorVm]
   )
 
+  /** 「임시 저장」— 현재 양식과 메타를 localStorage에만 저장한다. */
   const persistDraftSilent = useCallback(async () => {
-    if (isProgramStep) {
-      await registrationVm.handleSave({ silent: true })
-      return
+    // 공통정보는 다른 단계에서도 React state에 유지되므로 항상 함께 저장한다.
+    await registrationVm.handleSave({ silent: true })
+    if (!isProgramStep && isParticipantStep) {
+      await participantVm.handleSave({ silent: true })
     }
-    await participantVm.handleSave({ silent: true })
-  }, [isProgramStep, registrationVm, participantVm])
+    await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
+    syncRegistrationProgramDraftSession({
+      programType,
+      registrationTemplateCode: registrationTemplateId,
+      activeStep: coercedActiveStep,
+      programTitleKo: registrationVm.resolveProgramTitleKo(),
+    })
+  }, [
+    coercedActiveStep,
+    isParticipantStep,
+    isProgramStep,
+    participantVm,
+    programType,
+    registrationFormVariant,
+    registrationTemplateId,
+    registrationVm,
+  ])
 
   const selectStep = useCallback(
     (key: GeneralProgramRegistrationStepKey) => {
@@ -348,32 +459,69 @@ export function useGeneralProgramRegistrationFlow(
         registrationFormVariant
       )
       if (next === coercedActiveStep) return
-      // 탭 전환은 편집 중 React state만 유지한다. 임시저장은 명시적 저장 버튼에서만 수행.
+      const fromPhase = getGeneralProgramRegistrationPhase(coercedActiveStep)
+      const toPhase = getGeneralProgramRegistrationPhase(next)
+      if (fromPhase !== toPhase) {
+        registrationVm.logCurrentRegistrationPayload(
+          formatRegistrationStepTransitionLabel(fromPhase, toPhase)
+        )
+      }
+      // 탭/단계 전환은 React state만 유지. 세션·서버 임시저장은 「임시 저장」버튼에서만.
       setActiveStep(next)
       options?.onStepChange?.(next)
     },
-    [
-      coercedActiveStep,
-      options,
-      participantFlags,
-      registrationFormVariant,
-    ]
+    [coercedActiveStep, options, participantFlags, registrationFormVariant, registrationVm]
   )
 
   const goToPhase = useCallback(
     (nextPhase: GeneralProgramRegistrationPhaseKey) => {
-      if (
+      const shouldCheckRequired =
         !SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK &&
-        registrationFormVariant === 'general' &&
+        (registrationFormVariant === 'general' ||
+          registrationFormVariant === 'economy' ||
+          registrationFormVariant === 'trainedTeachers')
+
+      if (
+        shouldCheckRequired &&
         nextPhase !== 'program' &&
         isProgramStep &&
         registrationVm.hasIncompleteRequiredFields()
       ) {
+        // 진단용 — 어떤 항목이 비어 있다고 판정됐는지 콘솔에서 즉시 확인 가능 (UI 문구에는 노출 안 함)
+        console.debug(
+          '[registration] 공통정보 필수항목 미입력:',
+          registrationVm.getIncompleteRequiredFieldsReason?.()
+        )
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
         })
         return
+      }
+      /** 모집→신청 필수 검사는 일반·1사1교만 — 교육받은 교사는 프로그램 단계 검사만 적용 */
+      if (
+        shouldCheckRequired &&
+        registrationFormVariant !== 'trainedTeachers' &&
+        phase === 'recruitment' &&
+        nextPhase === 'application'
+      ) {
+        const recruitIncomplete =
+          registrationFormVariant === 'economy'
+            ? hasIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
+            : hasIncompleteGeneralProgramRecruitmentRequiredFields({
+                participant: participantFlags,
+                programType: registrationVm.programType,
+                sessionRoundType: registrationVm.sessionRoundType,
+                educationScheduleMode: registrationVm.educationScheduleMode,
+                volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+              })
+        if (recruitIncomplete) {
+          showAlert({
+            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          })
+          return
+        }
       }
       if (nextPhase === 'program') {
         selectStep('program')
@@ -383,16 +531,13 @@ export function useGeneralProgramRegistrationFlow(
         selectStep(getDefaultGeneralProgramRecruitStep(participantFlags, tabVisibility))
         return
       }
-      selectStep(
-        isTrainedTeachersRegistration
-          ? 'application-participant-school'
-          : getDefaultGeneralProgramApplicationStep(participantFlags, tabVisibility)
-      )
+      selectStep(getDefaultGeneralProgramApplicationStep(participantFlags, tabVisibility))
     },
     [
       isProgramStep,
-      isTrainedTeachersRegistration,
       participantFlags,
+      participantVm.volunteerExceptionScheduleCount,
+      phase,
       registrationFormVariant,
       registrationVm,
       selectStep,
@@ -418,26 +563,71 @@ export function useGeneralProgramRegistrationFlow(
   }, [isProgramStep, registrationVm, participantVm])
 
   const handleCompleteRegistration = useCallback(() => {
+    const applicationOverrides = () =>
+      flushApplicationOperationalOverrides({
+        current: isParticipantStep
+          ? {
+              templateCode: currentStepDef.templateId,
+              draft: participantVm.draft,
+              editorState: buildParticipantApplicationEditorState({
+                variant: participantVariant,
+                volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+                ujatVolunteerApplicationType: participantVm.ujatVolunteerApplicationType,
+                ujatGradeApplicationBlockIds:
+                  participantVm.ujatProgramApplicationGradeInfo?.applicationGradeBlockIds ?? [],
+                ujatApplicationGradeByBlockId:
+                  participantVm.ujatProgramApplicationGradeInfo?.applicationGradeByBlockId ?? {},
+                ujatGradeClassTimeBlockIds:
+                  participantVm.ujatProgramApplicationGradeClassTime?.classTimeBlockIds ?? [],
+              }),
+            }
+          : undefined,
+        overlayForTemplateCode: collectOperationalOverlayForCatalogId,
+      })
+
     if (isProgramStep) {
-      void registrationVm.handleCompleteRegistration()
-      return
-    }
-    void (async () => {
-      try {
-        await participantVm.handleSave({ silent: true })
-      } catch (error) {
-        console.debug('generalProgramRegistration complete: participant draft save failed', error)
-        showAlert({
-          title: '임시 저장 실패',
-          content: isLocalStorageQuotaExceededError(error)
-            ? '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
-            : '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+      if (shouldUseRegistrationCreateFormBindings()) {
+        void registrationVm.handleCompleteRegistration({
+          operationalOverrides: applicationOverrides(),
         })
         return
       }
       void registrationVm.handleCompleteRegistration()
+      return
+    }
+    registrationVm.logCurrentRegistrationPayload('등록 완료')
+    void (async () => {
+      const completeWithBindings = shouldUseRegistrationCreateFormBindings()
+      if (!completeWithBindings) {
+        try {
+          await participantVm.handleSave({ silent: true })
+        } catch (error) {
+          console.debug('generalProgramRegistration complete: participant draft save failed', error)
+          showAlert({
+            title: '임시 저장 실패',
+            content: isLocalStorageQuotaExceededError(error)
+              ? '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+              : '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+          })
+          return
+        }
+        void registrationVm.handleCompleteRegistration()
+        return
+      }
+
+      void registrationVm.handleCompleteRegistration({
+        operationalOverrides: applicationOverrides(),
+      })
     })()
-  }, [isProgramStep, registrationVm, participantVm, showAlert])
+  }, [
+    currentStepDef.templateId,
+    isParticipantStep,
+    isProgramStep,
+    participantVariant,
+    participantVm,
+    registrationVm,
+    showAlert,
+  ])
 
   const hasRecruitmentPhase = visibleRecruitTabKeys.length > 0
   const hasApplicationPhase = visibleApplicationTabKeys.length > 0

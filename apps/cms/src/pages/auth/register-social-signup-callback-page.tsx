@@ -22,6 +22,7 @@ import {
   buildSignupCallbackKey,
   isSignupCallbackHandled,
   markSignupCallbackHandled,
+  runOAuthCallbackOnce,
 } from '@/features/auth/social-auth/callback-once'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -86,18 +87,14 @@ export function RegisterSocialSignupCallbackPage() {
         return
       }
 
-      const outcome = await processAdminSsoLinkReturn(
-        cmsSocialAuthClient,
-        providerFromQuery,
-        searchParams,
-        {
-          cancelled: abortController.signal.aborted,
+      const outcome = await runOAuthCallbackOnce(callbackKey, () =>
+        processAdminSsoLinkReturn(cmsSocialAuthClient, providerFromQuery, searchParams, {
           consent: {
             socialConsentVersion: ADMIN_REGISTER_TERMS_VERSION,
             socialConsentAgreed: true,
           },
           signupSocialLinkToken: isAuthenticated ? undefined : signupSocialLinkToken,
-        }
+        })
       )
 
       if (abortController.signal.aborted) {

@@ -5,3 +5,5 @@ export const GEMINI_RECRUITMENT_ADD_ACTIVE = '1'
 export function isGeminiRecruitmentAddOpen(raw: string | null): boolean {
   return raw === GEMINI_RECRUITMENT_ADD_ACTIVE
 }
+
+export type GeminiRecruitmentAddDraftMode = 'fresh' | 'continue'

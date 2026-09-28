@@ -12,7 +12,10 @@ import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hoo
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  programToDetailEditValues,
+  resolveStoredEducationFormLabel,
+} from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   BUSINESS_AREA_OPTIONS,
   COURSE_DELIVERED_BY_OPTIONS,
@@ -64,7 +67,9 @@ import {
   formatGeneralSurveyItemsSummary,
   resolveGeneralProgramCommonInfo,
   resolveGeneralProgramDetailedProgramNameDisplay,
+  resolveGeneralProgramScheduleDetailsForView,
 } from '@/features/program/general/lib/detail-common-info-display'
+import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import { applyGeneralParticipantAudienceToEditForm } from '@/features/program/general/lib/participant-audience-selection'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
@@ -75,6 +80,20 @@ import {
   useProgramWagePaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import {
+  parseWageGradeAmount,
+  pricingByWageGrade,
+  resolveWagePaymentItemIds,
+  resolveWagePaymentItemsView,
+  WAGE_GRADE_FIELDS,
+} from '@/features/program/general/lib/wage-display'
+import {
+  isSponsorContactUnselected,
+  isSponsorContactUnselectedLabel,
+  normalizeSponsorContactUnselectedSelection,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
+  withSponsorContactUnselectedOption,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS,
   GENERAL_PROGRAM_SESSION_ROUND_LABELS,
@@ -90,6 +109,11 @@ import {
   padScheduleDetailLabel,
   relabelScheduleDetailFormRows,
   buildSessionIpsTypeSummary,
+  resolveScheduleDetailIpsTypeSummaryForView,
+  resolveScheduleDetailEducationFormLabelForView,
+  resolveScheduleDetailProgressTimeSummaryForView,
+  formatScheduleProgressTimeSummaryForView,
+  overlayIpsIndexForScheduleDetail,
   resolveSponsorManagementIds,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
@@ -103,7 +127,10 @@ import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { formatNumberDisplay } from '@/shared/utils'
-import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
+import {
+  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+  TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
+} from '@/features/template/lib/template-form-select-options'
 import {
   PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS,
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
@@ -144,6 +171,7 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
+import { GeneralProgramCommonInfoRegistrationEdit } from './common-info-registration-edit'
 import './common-info-view.css'
 
 const PROGRAM_PROGRESS_STATIC_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
@@ -296,16 +324,21 @@ function BasicInfoSection({
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
   const isFormEdit = isEditMode && !!form
-  const isScheduleType = isGeneralProgramScheduleType(program)
+  // 등록 폼과 동일 — 저장된 program이 아니라 현재 교육 진행 구조로 세부 프로그램명 잠금
+  const watchedEducationStructure = isFormEdit ? form.watch('educationStructure') : undefined
+  const lockDetailedProgramToNone =
+    watchedEducationStructure === 'schedule' ||
+    (watchedEducationStructure == null && isGeneralProgramScheduleType(program))
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
   const detailedProgramOptions = useMemo(
     () =>
       getGeneralDetailedProgramSelectOptions(
         remoteDetailedProgramOptions.length > 0
           ? remoteDetailedProgramOptions.map(o => ({ id: o.value, name: o.label }))
-          : undefined
+          : undefined,
+        { includeNone: lockDetailedProgramToNone }
       ),
-    [remoteDetailedProgramOptions]
+    [lockDetailedProgramToNone, remoteDetailedProgramOptions]
   )
   const { options: sponsorOptions, data: sponsorRows = [] } = useSponsorSelectOptions(true)
   const viewSponsorContext = useMemo(
@@ -316,7 +349,10 @@ function BasicInfoSection({
     [sponsorRows]
   )
 
-  const announcementTitle = commonInfo.announcementTitle ?? program.title
+  const announcementTitle = resolvePublicProgramTitleDisplay({
+    ...program,
+    generalCommonInfo: commonInfo,
+  })
   const detailedName = resolveGeneralProgramDetailedProgramNameDisplay(program, commonInfo)
   const sponsorManagementIds = resolveSponsorManagementIds(program, viewSponsorContext)
   const sponsorDisplayEntries = sponsorManagementIds
@@ -396,8 +432,24 @@ function BasicInfoSection({
         })
       }
     }
+    if (
+      isFormEdit &&
+      watchedSponsorIds.length > 0 &&
+      watchedSponsorIds.every(
+        id =>
+          selectedSponsors.some(sponsor => sponsor.id === id) &&
+          sponsorEditContext.contactsBySponsorId[id] != null
+      )
+    ) {
+      return withSponsorContactUnselectedOption(options)
+    }
     return options
-  }, [selectedSponsors, sponsorEditContext.contactsBySponsorId])
+  }, [
+    isFormEdit,
+    selectedSponsors,
+    sponsorEditContext.contactsBySponsorId,
+    watchedSponsorIds,
+  ])
 
   const sponsorManagerViewText = useMemo(
     () =>
@@ -424,15 +476,26 @@ function BasicInfoSection({
       }
       return
     }
-    if (managerOptions.length === 0) {
-      if (currentIds.length > 0) {
-        editForm.setValue('sponsorManagerContactIds', [], { shouldValidate: false })
-        editForm.setValue('sponsorManagerContactId', '', { shouldValidate: false })
+    const contactsReady = watchedSponsorIds.every(
+      id => sponsorEditContext.contactsBySponsorId[id] != null
+    )
+    if (!contactsReady || managerOptions.length === 0) return
+    const optionValues = new Set(managerOptions.map(option => option.value))
+    const validIds = currentIds.filter(
+      id => optionValues.has(id) || isSponsorContactUnselected(id)
+    )
+    if (currentIds.length === 0) {
+      const storedLine = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
+      if (isSponsorContactUnselectedLabel(storedLine)) {
+        editForm.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
+          shouldValidate: false,
+        })
+        editForm.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
+          shouldValidate: false,
+        })
       }
       return
     }
-    const optionValues = new Set(managerOptions.map(option => option.value))
-    const validIds = currentIds.filter(id => optionValues.has(id))
     if (validIds.length !== currentIds.length) {
       editForm.setValue('sponsorManagerContactIds', validIds, {
         shouldValidate: validIds.length > 0,
@@ -445,7 +508,15 @@ function BasicInfoSection({
     } else if (validIds.length > 0) {
       editForm.clearErrors('sponsorManagerContactIds')
     }
-  }, [editForm, isFormEdit, managerOptions, watchedSponsorIds])
+  }, [
+    commonInfo.sponsorManagerLine,
+    editForm,
+    isFormEdit,
+    managerOptions,
+    program.managerName,
+    sponsorEditContext.contactsBySponsorId,
+    watchedSponsorIds,
+  ])
 
   const participantIndividual = isFormEdit ? editForm.watch('participantIndividual') : false
   const participantOrganization = isFormEdit ? editForm.watch('participantOrganization') : false
@@ -583,26 +654,29 @@ function BasicInfoSection({
           <DetailInfoForm.Field
             label="세부 프로그램명"
             view={detailedName}
-            readOnlyDisplay={isFormEdit && isScheduleType}
             edit={
-              isScheduleType ? (
-                '해당없음'
-              ) : (
-                <Controller
-                  name="detailedProgramId"
-                  control={editForm.control}
-                  render={({ field }) => (
+              <Controller
+                name="detailedProgramId"
+                control={editForm.control}
+                render={({ field }) => (
+                  <div className="detail-info-form-inputs-wrapper-no-gap">
                     <CmsSelect
                       withAllOption={false}
+                      inputSize="medium"
                       placeholder="세부 프로그램명을 선택하세요"
                       width="100%"
                       options={detailedProgramOptions}
-                      value={field.value || undefined}
+                      value={
+                        lockDetailedProgramToNone
+                          ? TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+                          : field.value || undefined
+                      }
                       onChange={v => field.onChange(String(v ?? ''))}
+                      disabled={lockDetailedProgramToNone}
                     />
-                  )}
-                />
-              )
+                  </div>
+                )}
+              />
             }
           />
         </DetailInfoForm.Row>
@@ -792,7 +866,10 @@ function BasicInfoSection({
                       value={selected}
                       disabled={watchedSponsorIds.length === 0 || managerOptions.length === 0}
                       onChange={v => {
-                        const ids = Array.isArray(v) ? v.map(String) : []
+                        const ids = normalizeSponsorContactUnselectedSelection(
+                          Array.isArray(v) ? v.map(String) : [],
+                          selected
+                        )
                         field.onChange(ids)
                         editForm.setValue('sponsorManagerContactId', ids[0] ?? '', {
                           shouldDirty: true,
@@ -1031,23 +1108,27 @@ function KpiSection({
   const hasVolunteer = isFormEdit
     ? editForm.watch('participantVolunteer')
     : getGeneralParticipantTypes(program).includes('volunteer')
-  const participantIndividual = isFormEdit ? editForm.watch('participantIndividual') : false
-  const participantOrganization = isFormEdit ? editForm.watch('participantOrganization') : false
-  const isIndividualTarget = isFormEdit
-    ? isGeneralIndividualParticipantTarget(program, participantIndividual, participantOrganization)
-    : isGeneralIndividualParticipantTarget(program)
-
   useEffect(() => {
-    if (!isFormEdit || !isIndividualTarget) return
+    if (!isFormEdit) return
     editForm.setValue('kpiFinalSchools', 0)
     editForm.setValue('kpiFinalClasses', 0)
-  }, [editForm, isFormEdit, isIndividualTarget])
+  }, [editForm, isFormEdit])
+
+  useEffect(() => {
+    if (!isFormEdit || hasInstructor) return
+    editForm.setValue('kpiInstructorCount', 0)
+  }, [editForm, hasInstructor, isFormEdit])
+
+  useEffect(() => {
+    if (!isFormEdit || hasVolunteer) return
+    editForm.setValue('kpiVolunteerCount', 0)
+  }, [editForm, hasVolunteer, isFormEdit])
 
   if (!kpi && !isEditMode) return null
 
-  const dispatchedSchoolClassView = isIndividualTarget ? (
+  const dispatchedSchoolClassView = (
     <span className="detail-info-form--text">해당 없음</span>
-  ) : null
+  )
 
   const formMode = isFormEdit ? 'edit' : 'view'
 
@@ -1084,10 +1165,18 @@ function KpiSection({
             view={
               <div className="detail-info-form-inputs-wrapper">
                 <span className="detail-info-form--text">강사 :</span>
-                <KpiBoldNumber value={kpi?.instructorCount ?? 0} />
+                {hasInstructor ? (
+                  <KpiBoldNumber value={kpi?.instructorCount ?? 0} />
+                ) : (
+                  <span className="detail-info-form--text">해당 없음</span>
+                )}
                 <DetailInfoForm.InputsSeparator />
                 <span className="detail-info-form--text">봉사자 :</span>
-                <KpiBoldNumber value={kpi?.volunteerCount ?? 0} />
+                {hasVolunteer ? (
+                  <KpiBoldNumber value={kpi?.volunteerCount ?? 0} />
+                ) : (
+                  <span className="detail-info-form--text">해당 없음</span>
+                )}
               </div>
             }
             edit={
@@ -1146,87 +1235,51 @@ function KpiSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="최종 파견 학교 수"
-            view={
-              isIndividualTarget ? (
-                dispatchedSchoolClassView
-              ) : (
-                <KpiBoldNumber value={kpi?.finalSchools ?? 0} />
-              )
-            }
+            view={dispatchedSchoolClassView}
             edit={
-              isIndividualTarget ? (
-                <CmsInput
-                  disabled
-                  inputSize="medium"
-                  placeholder="해당 없음"
-                  width={120}
-                  value=""
-                />
-              ) : (
-                <Controller
-                  name="kpiFinalSchools"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <CmsNumericInput
-                      {...field}
-                      mode="integer"
-                      min={0}
-                      value={field.value == null ? '' : String(field.value)}
-                      onValueChange={value =>
-                        field.onChange(value === '' ? undefined : Number(value))
-                      }
-                      inputSize="medium"
-                      placeholder="목표값 입력"
-                      width={120}
-                    />
-                  )}
-                />
-              )
+              <CmsInput
+                disabled
+                inputSize="medium"
+                placeholder="해당 없음"
+                width={120}
+                value=""
+              />
             }
           />
           <DetailInfoForm.Field
             label="최종 파견 학급 수"
-            view={
-              isIndividualTarget ? (
-                dispatchedSchoolClassView
-              ) : (
-                <KpiBoldNumber value={kpi?.finalClasses ?? 0} />
-              )
-            }
+            view={dispatchedSchoolClassView}
             edit={
-              isIndividualTarget ? (
-                <CmsInput
-                  disabled
-                  inputSize="medium"
-                  placeholder="해당 없음"
-                  width={120}
-                  value=""
-                />
-              ) : (
-                <Controller
-                  name="kpiFinalClasses"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <CmsNumericInput
-                      {...field}
-                      mode="integer"
-                      min={0}
-                      value={field.value == null ? '' : String(field.value)}
-                      onValueChange={value =>
-                        field.onChange(value === '' ? undefined : Number(value))
-                      }
-                      inputSize="medium"
-                      placeholder="목표값 입력"
-                      width={120}
-                    />
-                  )}
-                />
-              )
+              <CmsInput
+                disabled
+                inputSize="medium"
+                placeholder="해당 없음"
+                width={120}
+                value=""
+              />
             }
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     </ProgramRegistrationDetailSection>
+  )
+}
+
+function WageGradeAmountView({
+  pricing,
+  maxHint,
+}: {
+  pricing: string | undefined
+  maxHint: string
+}) {
+  const amount = parseWageGradeAmount(pricing)
+  if (amount == null) return '-'
+  return (
+    <>
+      1시간 당
+      <DetailInfoForm.InputsSeparator />
+      {amount.toLocaleString('ko-KR')}원 (최대 {maxHint}원)
+    </>
   )
 }
 
@@ -1239,7 +1292,8 @@ function WageSection({
   isEditMode?: boolean
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
-  const rows = commonInfo.wageGradeRows ?? []
+  const pricingByGrade = pricingByWageGrade(commonInfo.wageGradeRows)
+  const paymentItemIds = resolveWagePaymentItemIds(commonInfo.paymentItems)
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
   const paymentItemOptions = useProgramWagePaymentItemOptions()
@@ -1258,12 +1312,12 @@ function WageSection({
   const deductionLabel = isFormEdit
     ? resolveProgramWageDeductionLabel(watchedPaymentItemIds)
     : (mapSettlementDeductionTypeToLabel(commonInfo.deductionItems) ??
-      resolveProgramWageDeductionLabel([]))
+      resolveProgramWageDeductionLabel(paymentItemIds))
 
   const wageFields = [
-    { label: '1급 강사비', name: 'wageGrade1Amount' as const, max: 500_000, maxHint: '500,000' },
-    { label: '2급 강사비', name: 'wageGrade2Amount' as const, max: 400_000, maxHint: '400,000' },
-    { label: '3급 강사비', name: 'wageGrade3Amount' as const, max: 300_000, maxHint: '300,000' },
+    { label: WAGE_GRADE_FIELDS[0].label, name: 'wageGrade1Amount' as const, max: 500_000, maxHint: WAGE_GRADE_FIELDS[0].maxHint },
+    { label: WAGE_GRADE_FIELDS[1].label, name: 'wageGrade2Amount' as const, max: 400_000, maxHint: WAGE_GRADE_FIELDS[1].maxHint },
+    { label: WAGE_GRADE_FIELDS[2].label, name: 'wageGrade3Amount' as const, max: 300_000, maxHint: WAGE_GRADE_FIELDS[2].maxHint },
   ]
 
   return (
@@ -1274,48 +1328,45 @@ function WageSection({
       required
     >
       <DetailInfoForm title="임금 정보" hideHeader mode={formMode} className="program-registration-paragraph">
-        {wageFields.map(({ label, name, max, maxHint }, index) => {
-          const row = rows[index]
-          return (
-            <DetailInfoForm.Row key={label} type="single">
-              <DetailInfoForm.Field
-                label={label}
-                fullRow
-                view={row ? <PipeSeparatedInlineView text={row.pricing} /> : '-'}
-                edit={
-                  <div className="detail-info-form-inputs-wrapper">
-                    <span className="detail-info-form--text">1시간 당</span>
-                    <Controller
-                      name={name}
-                      control={editForm.control}
-                      render={({ field }) => (
-                        <CmsNumericInput
-                          mode="currency"
-                          min={0}
-                          max={max}
-                          allowNegative={false}
-                          inputSize="medium"
-                          placeholder="직접 입력"
-                          width={120}
-                          value={field.value ?? ''}
-                          onValueChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
-                        />
-                      )}
-                    />
-                    <span className="detail-info-form--text">원 (최대 {maxHint}원)</span>
-                  </div>
-                }
-              />
-            </DetailInfoForm.Row>
-          )
-        })}
+        {wageFields.map(({ label, name, max, maxHint }) => (
+          <DetailInfoForm.Row key={label} type="single">
+            <DetailInfoForm.Field
+              label={label}
+              fullRow
+              view={<WageGradeAmountView pricing={pricingByGrade[label]} maxHint={maxHint} />}
+              edit={
+                <div className="detail-info-form-inputs-wrapper">
+                  <span className="detail-info-form--text">1시간 당</span>
+                  <Controller
+                    name={name}
+                    control={editForm.control}
+                    render={({ field }) => (
+                      <CmsNumericInput
+                        mode="currency"
+                        min={0}
+                        max={max}
+                        allowNegative={false}
+                        inputSize="medium"
+                        placeholder="직접 입력"
+                        width={120}
+                        value={field.value ?? ''}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    )}
+                  />
+                  <span className="detail-info-form--text">원 (최대 {maxHint}원)</span>
+                </div>
+              }
+            />
+          </DetailInfoForm.Row>
+        ))}
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="지급 항목"
-            view={commonInfo.paymentItems ?? '-'}
+            view={resolveWagePaymentItemsView(commonInfo.paymentItems)}
             edit={
               <Controller
                 name="wagePaymentItemIds"
@@ -1518,6 +1569,7 @@ function TypeSettingsSection({
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const educationFormLabelView = resolveStoredEducationFormLabel(commonInfo).trim() || '-'
   const effectiveTypeFields = resolveEffectiveGeneralProgramTypeFields({
     generalProgramAudience: program.generalProgramAudience,
     generalProgramEducationStructure: program.generalProgramEducationStructure,
@@ -1710,7 +1762,7 @@ function TypeSettingsSection({
             <DetailInfoForm.Field
               label="교육 형태"
               fullRow={isOrganization}
-              view={commonInfo.educationFormLabel ?? '-'}
+              view={educationFormLabelView}
               edit={
                 <Controller
                   name="educationForm"
@@ -1821,7 +1873,7 @@ function TypeSettingsSection({
               editForm={editForm}
               formMode={formMode}
               perScheduleHint={schedulePerScheduleHint}
-              commonDetailView={commonInfo.educationFormLabel ?? '-'}
+              commonDetailView={educationFormLabelView}
               commonDetailEdit={
                 <Controller
                   name="educationForm"
@@ -2898,10 +2950,14 @@ function ScheduleDetailViewBlock({
   scheduleLabel,
   name,
   progressTimeSummary,
+  ipsPerSchedule = false,
+  ipsTypeSummary,
 }: {
   scheduleLabel: string
   name: string
   progressTimeSummary?: string
+  ipsPerSchedule?: boolean
+  ipsTypeSummary?: string
 }) {
   return (
     <div className="program-registration-schedule-curriculum__block">
@@ -2922,9 +2978,22 @@ function ScheduleDetailViewBlock({
             <DetailInfoForm.Field
               label="진행 시간"
               fullRow
-              view={<PipeSeparatedInlineView text={progressTimeSummary ?? '-'} />}
+              view={
+                <PipeSeparatedInlineView
+                  text={formatScheduleProgressTimeSummaryForView(progressTimeSummary)}
+                />
+              }
             />
           </DetailInfoForm.Row>
+          {ipsPerSchedule ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="IPS 유형"
+                fullRow
+                view={<PipeSeparatedInlineView text={ipsTypeSummary} />}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
         </DetailInfoForm>
       </div>
     </div>
@@ -4234,7 +4303,9 @@ function ScheduleProgressSection({
 
   if (watchedStructure !== 'schedule') return null
 
-  const scheduleDetailsView = commonInfo.scheduleDetails ?? []
+  const scheduleDetailsView = isFormEdit
+    ? (commonInfo.scheduleDetails ?? [])
+    : resolveGeneralProgramScheduleDetailsForView(program, commonInfo)
   if (scheduleDetailsView.length === 0 && !isFormEdit) return null
 
   const scheduleMeta = PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleCurriculum
@@ -4256,12 +4327,14 @@ function ScheduleProgressSection({
     )
   }
 
+  const ipsScheduleDetail =
+    commonInfo.ipsScheduleDetail ??
+    (commonInfo.ipsTypeSummary?.includes('별') ? 'perSchedule' : 'common')
+  const ipsPerSchedule = ipsScheduleDetail === 'perSchedule'
   const eventExtraPlan = getScheduleEventPerScheduleExtraPlan({
     educationFormScheduleDetail: commonInfo.educationFormScheduleDetail ?? 'common',
     participationScheduleDetail: commonInfo.participationScheduleDetail ?? 'common',
-    ipsScheduleDetail:
-      commonInfo.ipsScheduleDetail ??
-      (commonInfo.ipsTypeSummary?.includes('별') ? 'perSchedule' : 'common'),
+    ipsScheduleDetail,
     participantOrganization: program.generalProgramAudience === 'organization',
   })
   const useEventLayout = shouldUseScheduleEventBlockLayout({
@@ -4269,9 +4342,7 @@ function ScheduleProgressSection({
     participantOrganization: program.generalProgramAudience === 'organization',
     educationFormScheduleDetail: commonInfo.educationFormScheduleDetail ?? 'common',
     participationScheduleDetail: commonInfo.participationScheduleDetail ?? 'common',
-    ipsScheduleDetail:
-      commonInfo.ipsScheduleDetail ??
-      (commonInfo.ipsTypeSummary?.includes('별') ? 'perSchedule' : 'common'),
+    ipsScheduleDetail,
   })
 
   return (
@@ -4288,6 +4359,18 @@ function ScheduleProgressSection({
           .length
         const isEventSchedule =
           isPreEducationBlock || useEventLayout || detailBlockKind === 'event'
+        const overlayIndex = overlayIpsIndexForScheduleDetail(scheduleDetailsView, index)
+        const ipsTypeSummary = resolveScheduleDetailIpsTypeSummaryForView({
+          ipsPerSchedule,
+          ipsTypeSummary: detail.ipsTypeSummary,
+          overlay: program.registrationOverlay,
+          overlayIndex,
+        })
+        const educationFormLabel = resolveScheduleDetailEducationFormLabelForView({
+          educationFormLabel: detail.educationFormLabel,
+          overlay: program.registrationOverlay,
+          overlayIndex,
+        })
         if (isEventSchedule) {
           return (
             <ScheduleEventDetailViewBlock
@@ -4304,9 +4387,9 @@ function ScheduleProgressSection({
               assignmentEnabled={detail.assignmentEnabled}
               assignmentPeriod={detail.assignmentPeriod}
               extraPlan={eventExtraPlan}
-              educationFormLabel={detail.educationFormLabel}
+              educationFormLabel={educationFormLabel}
               participationMethodLabel={detail.participationMethodLabel}
-              ipsTypeSummary={detail.ipsTypeSummary}
+              ipsTypeSummary={ipsTypeSummary}
               showHeading={scheduleDetailsView.length > 1 || isPreEducationBlock}
               isPreEducationBlock={isPreEducationBlock}
             />
@@ -4317,7 +4400,16 @@ function ScheduleProgressSection({
             key={detail.scheduleLabel}
             scheduleLabel={detail.scheduleLabel}
             name={detail.name}
-            progressTimeSummary={detail.progressTimeSummary ?? '-'}
+            progressTimeSummary={
+              detail.progressTimeSummary?.trim() ||
+              resolveScheduleDetailProgressTimeSummaryForView({
+                overlay: program.registrationOverlay as Record<string, unknown> | undefined,
+                overlayIndex,
+              }) ||
+              '-'
+            }
+            ipsPerSchedule={ipsPerSchedule}
+            ipsTypeSummary={ipsTypeSummary}
           />
         )
       })}
@@ -4593,6 +4685,8 @@ export interface GeneralProgramDetailCommonInfoViewProps {
   isEditMode?: boolean
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   canWrite?: boolean
+  /** 프로그램 진행 중/완료 등 — 「정보 수정」 비활성 */
+  editDisabled?: boolean
   onEdit?: () => void
   onCancel?: () => void
   onSave?: () => void
@@ -4604,6 +4698,7 @@ export function GeneralProgramDetailCommonInfoView({
   isEditMode = false,
   form,
   canWrite = false,
+  editDisabled = false,
   onEdit,
   onCancel,
   onSave,
@@ -4618,6 +4713,8 @@ export function GeneralProgramDetailCommonInfoView({
         <div className="detail-common-info-view__header">
           <ProgramEditInfoActions
             isEditing={isEditMode}
+            idleVariant="secondary"
+            disabled={editDisabled}
             onEdit={onEdit ?? (() => {})}
             onCancel={onCancel ?? (() => {})}
             onSave={onSave ?? (() => {})}
@@ -4625,6 +4722,10 @@ export function GeneralProgramDetailCommonInfoView({
         </div>
       )}
 
+      {isEditMode ? (
+        <GeneralProgramCommonInfoRegistrationEdit program={program} />
+      ) : (
+        <>
       <BasicInfoSection
         program={program}
         sponsorName={sponsorName}
@@ -4661,6 +4762,8 @@ export function GeneralProgramDetailCommonInfoView({
         isEditMode={isEditMode}
         form={form}
       />
+        </>
+      )}
     </div>
   )
 }

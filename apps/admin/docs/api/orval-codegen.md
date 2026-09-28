@@ -51,12 +51,35 @@ Swagger UI: `{VITE_HOMEPAGE_API_SERVER}/swagger-ui/index.html`
 
 ---
 
+## sponsorship · 재능기부 (talent) OpenAPI
+
+| 상태 (2026-09-25) | 내용 |
+|-------------------|------|
+| Admin 스냅샷 | `openapi/sponsorship.openapi.json` 에 talent · talent-applications path 포함 (재 fetch 후) |
+| 백엔드 | `TalentApplication*` / `TalentSponsorship*` `@Schema` 로 corporate와 이름 분리 |
+| 상세 절차 | [`sponsorship-talent-openapi-update-2026-09-25.md`](./sponsorship-talent-openapi-update-2026-09-25.md) |
+| FE 연동 | [`sponsorship-talent-admin-frontend-cursor-prompt-2026-09-25.md`](./sponsorship-talent-admin-frontend-cursor-prompt-2026-09-25.md) |
+| Platform 시드 | [`sponsorship-talent-platform-seed-backend-cursor-prompt-2026-09-25.md`](./sponsorship-talent-platform-seed-backend-cursor-prompt-2026-09-25.md) |
+
+**필수 검증:** regenerate 후 corporate `StatusUpdateRequest`에 `version`이 남아 있어야 한다.  
+talent status body는 `TalentApplicationStatusUpdateRequest` (`status`만, version 없음).
+
+```bash
+pnpm --filter admin fetch:openapi && pnpm --filter admin generate:api
+# sponsorship.openapi.json 에 /talent, /talent-applications 존재 확인
+# schemas.StatusUpdateRequest.properties.version 존재 확인
+pnpm --filter admin typecheck
+```
+
+---
+
 ## PR 체크리스트
 
 - [ ] `pnpm --filter admin fetch:openapi && pnpm --filter admin generate:api` 실행 후 commit
 - [ ] `pnpm --filter admin typecheck` 통과
 - [ ] adapter/service mock·real 분기 (해당 시)
 - [ ] queryKey 팩토리와 Swagger 조회 키 정렬
+- [ ] (talent 포함 시) corporate `StatusUpdateRequest.version` 유지 · `TalentApplication*` / `TalentSponsorship*` schema 존재
 
 ---
 
@@ -65,4 +88,4 @@ Swagger UI: `{VITE_HOMEPAGE_API_SERVER}/swagger-ui/index.html`
 - Orval **axios client**로 함수 생성 → feature 훅에서 `@tanstack/react-query` `useQuery`/`useMutation` 래핑
 - generated react-query hooks는 RequestInit 타입 충돌을 피하기 위해 axios client 선택
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-09-25

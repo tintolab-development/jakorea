@@ -8,23 +8,34 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import {
   GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY,
   normalizeGeneralProgramRegistrationStepKey,
+  recruitmentPreviewAudienceFromRegistrationStep,
 } from '@/features/program/general/model/registration-flow'
+import { ParticipantRecruitmentPreviewModal } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
+import type { RecruitmentUserPreviewAudience } from '@/features/program/general/ui/user-preview'
 import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-registration-flow'
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
 import {
-  peekWritingFormDraftOverwrite,
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   clearRegistrationDraftForFreshStart,
+  peekRegistrationDraftNotice,
+  registrationProgramTypeForTemplateCode,
   shouldRemoveRegistrationDraftAfterCompletion,
   shouldSkipRegistrationDraftRestore,
   type ProgramRegistrationDraftTemplateCode,
 } from '@/features/program/shared/lib/registration-draft-notice'
+import {
+  assertRegistrationWizardRemoteReady,
+  shouldUseRegistrationCreateFormBindings,
+} from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+import { deleteRegistrationProgramDraftRemote } from '@/features/program/general/lib/registration-program-draft-session'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
+import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useCmsAlert } from '@/shared/ui'
-import { removeWritingFormTemplateSave, isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
+import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
+import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
@@ -62,6 +73,10 @@ export function GeneralProgramRegistrationFullpageModal({
   const [overwriteSaving, setOverwriteSaving] = useState(false)
   const [draftSaveSuccessOpen, setDraftSaveSuccessOpen] = useState(false)
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
+  const [recruitmentPreviewOpen, setRecruitmentPreviewOpen] = useState(false)
+  const [recruitmentPreviewProgram, setRecruitmentPreviewProgram] = useState<Program | null>(null)
+  const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
+    useState<RecruitmentUserPreviewAudience>('institutions')
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
 
   // 안내 팝업에서 「이어서 작성」을 명시한 경우만 복원한다.
@@ -90,6 +105,19 @@ export function GeneralProgramRegistrationFullpageModal({
 
   useEffect(() => {
     if (!open) return
+    if (!shouldUseRegistrationCreateFormBindings()) {
+      try {
+        assertRegistrationWizardRemoteReady()
+      } catch {
+        showAlert({
+          title: '프로그램 등록 불가',
+          content:
+            '프로그램 등록은 forms-surveys·programs remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+          onConfirm: onClose,
+        })
+      }
+      return
+    }
     if (searchParams.has(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)) return
     const next = new URLSearchParams(searchParams)
     next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
@@ -103,6 +131,8 @@ export function GeneralProgramRegistrationFullpageModal({
     setOverwriteSaving(false)
     setDraftSaveSuccessOpen(false)
     setCompleteSuccessOpen(false)
+    setRecruitmentPreviewOpen(false)
+    setRecruitmentPreviewProgram(null)
     pendingCreatedProgramRef.current = undefined
   }, [open])
 
@@ -110,6 +140,8 @@ export function GeneralProgramRegistrationFullpageModal({
     pendingCreatedProgramRef.current = program
     setCompleteSuccessOpen(true)
   }, [])
+
+  const recruitmentPreviewSponsorName = useSponsorNameById(recruitmentPreviewProgram?.sponsorId)
 
   const flow = useGeneralProgramRegistrationFlow(open, {
     initialStep,
@@ -129,6 +161,14 @@ export function GeneralProgramRegistrationFullpageModal({
   }, [onClose, searchParams, setSearchParams])
 
   const handlePreview = useCallback(() => {
+    if (flow.phase === 'recruitment') {
+      setRecruitmentPreviewProgram(flow.registrationVm.buildCurrentProgramSnapshot())
+      setRecruitmentPreviewAudience(
+        recruitmentPreviewAudienceFromRegistrationStep(flow.activeStep)
+      )
+      setRecruitmentPreviewOpen(true)
+      return
+    }
     const next = new URLSearchParams(searchParams)
     next.set('userPreview', TEMPLATE_USER_PREVIEW_ACTIVE)
     setSearchParams(next, { replace: false })
@@ -149,17 +189,16 @@ export function GeneralProgramRegistrationFullpageModal({
   }, [flow, showAlert])
 
   const handleSaveClick = useCallback(() => {
-    const templateId = flow.currentStepDef.templateId
-    const existing = peekWritingFormDraftOverwrite(templateId, {
-      titleFallbackTemplateIds: [flow.registrationTemplateId],
-    })
+    const existing = peekRegistrationDraftNotice(
+      flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
+    )
     if (existing != null) {
       setOverwriteTitle(existing.title)
       setOverwriteOpen(true)
       return
     }
     void runDraftSave()
-  }, [flow.currentStepDef.templateId, flow.registrationTemplateId, runDraftSave])
+  }, [flow.registrationTemplateId, runDraftSave])
 
   const handleOverwriteConfirm = useCallback(() => {
     void (async () => {
@@ -184,19 +223,26 @@ export function GeneralProgramRegistrationFullpageModal({
     const created = pendingCreatedProgramRef.current
     pendingCreatedProgramRef.current = undefined
     setCompleteSuccessOpen(false)
+    const registrationTemplateCode =
+      flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
+    void deleteRegistrationProgramDraftRemote(
+      registrationProgramTypeForTemplateCode(registrationTemplateCode)
+    )
     if (shouldRemoveSavedDraftAfterCompletion) {
-      const registrationTemplateCode =
-        flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
-      clearRegistrationDraftForFreshStart(registrationTemplateCode)
-      removeWritingFormTemplateSave(flow.currentStepDef.templateId)
+      void clearRegistrationDraftForFreshStart(registrationTemplateCode)
     }
     onProgramRegistrationSaved?.(created)
   }, [
-    flow.currentStepDef.templateId,
     flow.registrationTemplateId,
     onProgramRegistrationSaved,
+    registrationFormVariant,
     shouldRemoveSavedDraftAfterCompletion,
   ])
+
+  /** 공통·모집: 우측 커스텀 필드 숨김. 신청 정보 단계는 유지 */
+  const hideCustomFieldNav = flow.phase === 'program' || flow.phase === 'recruitment'
+  /** 공통 정보에서만 미리보기 버튼 제거 */
+  const showPreview = flow.phase !== 'program'
 
   const footerActions = useMemo((): TemplateFullpageModalFooterAction[] | undefined => {
     if (flow.phase === 'program') {
@@ -282,6 +328,7 @@ export function GeneralProgramRegistrationFullpageModal({
         templateTabType="writing"
         registrationUserMode
         onPreview={handlePreview}
+        showPreview={showPreview}
         onSave={handleSaveClick}
         bodyHeaderLeading={
           <GeneralProgramRegistrationBodyHeader
@@ -291,9 +338,16 @@ export function GeneralProgramRegistrationFullpageModal({
             onSelectStep={flow.selectStep}
           />
         }
+        headerActionsLeading={
+          <RegistrationDevAutofillButton
+            onClick={() => void flow.registrationVm.applyDevAutofill()}
+          />
+        }
         footerActions={footerActions}
         leftContent={flow.isDraftLoading ? <FormDraftLoading /> : flow.panels.leftContent}
-        rightNavigation={flow.isDraftLoading ? null : flow.panels.rightNavigation}
+        rightNavigation={
+          flow.isDraftLoading || hideCustomFieldNav ? null : flow.panels.rightNavigation
+        }
       />
       <RegistrationDraftOverwriteConfirmModal
         open={overwriteOpen}
@@ -313,6 +367,18 @@ export function GeneralProgramRegistrationFullpageModal({
         open={completeSuccessOpen}
         onConfirm={handleCompleteSuccessConfirm}
       />
+      {recruitmentPreviewProgram ? (
+        <ParticipantRecruitmentPreviewModal
+          open={recruitmentPreviewOpen}
+          onClose={() => {
+            setRecruitmentPreviewOpen(false)
+            setRecruitmentPreviewProgram(null)
+          }}
+          program={recruitmentPreviewProgram}
+          sponsorName={recruitmentPreviewSponsorName}
+          audience={recruitmentPreviewAudience}
+        />
+      ) : null}
     </>
   )
 }

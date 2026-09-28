@@ -16,6 +16,7 @@ export function renderUjatRecruitFormVolunteerParagraphBody(
   volunteerTemplateOptions?: {
     commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
     onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
+    freezeUnavailableCalendar?: boolean
   }
 ): ReactNode | null {
   if (!enabled) return null
@@ -27,10 +28,11 @@ export function renderUjatRecruitFormVolunteerParagraphBody(
     case UJAT_RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule:
       return (
         <UjatRecruitVolunteerInterviewScheduleParagraph
+          {...options}
           exceptionScheduleCount={options?.exceptionScheduleCount ?? 0}
           commonScheduleSeed={volunteerTemplateOptions?.commonScheduleSeed}
           onCommonExclusionChange={volunteerTemplateOptions?.onCommonExclusionChange}
-          {...options}
+          freezeUnavailableCalendar={volunteerTemplateOptions?.freezeUnavailableCalendar === true}
         />
       )
     default:

@@ -5,14 +5,13 @@ import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { PFText } from '@/shared/ui'
 import {
-  JA_WORLDWIDE_DESCRIPTION,
   JA_WORLDWIDE_EYEBROW,
   JA_WORLDWIDE_GLOBAL_LINK,
   JA_WORLDWIDE_GUIDE,
-  JA_WORLDWIDE_REGIONS,
   JA_WORLDWIDE_STAT,
   type JaWorldwideRegionId,
-} from '../lib/ja-worldwide-data'
+} from '../lib/ja-worldwide-layout'
+import type { IntroductionWorldwideContent } from '../model/types'
 import awardsImageUrl01 from '../image/worldwide-awards-01.svg?url'
 import awardsImageUrl02 from '../image/worldwide-awards-02.svg?url'
 import { JaWorldwideMap } from './ja-worldwide-map'
@@ -22,8 +21,13 @@ import styles from './ja-worldwide-section.module.css'
  * JA Global Value `.list` 다음 콘텐츠 블록.
  * sticky/스크롤 하이재킹 없음 — Global Value panel 연속 배경 안에서 일반 document scroll.
  */
-export function JaWorldwideSection() {
+export function JaWorldwideSection({
+  worldwide,
+}: {
+  worldwide: IntroductionWorldwideContent
+}) {
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
+  const regions = worldwide.regions
 
   /** Desktop hover / focus — Mobile selected와 분리 */
   const [hoveredRegionId, setHoveredRegionId] = useState<JaWorldwideRegionId | null>(null)
@@ -34,7 +38,7 @@ export function JaWorldwideSection() {
   const selectedRegion =
     selectedRegionId == null
       ? null
-      : (JA_WORLDWIDE_REGIONS.find(region => region.id === selectedRegionId) ?? null)
+      : (regions.find(region => region.id === selectedRegionId) ?? null)
 
   const activateHover = useCallback((id: JaWorldwideRegionId) => {
     setHoveredRegionId(id)
@@ -72,7 +76,7 @@ export function JaWorldwideSection() {
           </div>
           <a
             className={styles.globalLink}
-            href={JA_WORLDWIDE_GLOBAL_LINK.href}
+            href={worldwide.globalLinkHref || JA_WORLDWIDE_GLOBAL_LINK.href}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -95,7 +99,7 @@ export function JaWorldwideSection() {
         >
           <div className={styles.mapScroll}>
             <JaWorldwideMap
-              regions={JA_WORLDWIDE_REGIONS}
+              regions={regions}
               activeRegionId={activeRegionId}
               onRegionActivate={activateHover}
               selectOnClick={isBelowPc}
@@ -103,7 +107,7 @@ export function JaWorldwideSection() {
             />
 
             {/* Desktop: 지도 위 absolute CTA — Mobile에서는 CSS로 숨김 */}
-            {JA_WORLDWIDE_REGIONS.map(region => {
+            {regions.map(region => {
               const isActive = hoveredRegionId === region.id
               return (
                 <a
@@ -173,11 +177,11 @@ export function JaWorldwideSection() {
         </div>
       </div>
 
-      <div className={styles.description}>
-        <p className={styles.descriptionText}>
-          {JA_WORLDWIDE_DESCRIPTION}
-        </p>
-      </div>
+      {worldwide.description ? (
+        <div className={styles.description}>
+          <p className={styles.descriptionText}>{worldwide.description}</p>
+        </div>
+      ) : null}
     </section>
   )
 }

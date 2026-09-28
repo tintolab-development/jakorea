@@ -54,3 +54,14 @@ export async function uploadNoticeAttachmentAsset(file: File): Promise<number> {
 
   return assetId
 }
+
+export async function uploadNoticeInlineImage(file: File): Promise<string> {
+  const assetId = await uploadNoticeAttachmentAsset(file)
+  const assetsApi = getJAKoreaHomepageAdminAPIAssetsSubset()
+  const asset = await assetsApi.getAsset(assetId)
+  const url = asset.publicUrl?.trim()
+  if (!url) {
+    throw new Error('이미지 주소를 받지 못했습니다.')
+  }
+  return url
+}

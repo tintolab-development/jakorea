@@ -47,6 +47,7 @@
 
 .level {
   flex-shrink: 0;
+  padding: var(--spacing-8) var(--spacing-16);
   white-space: nowrap;
 }
 

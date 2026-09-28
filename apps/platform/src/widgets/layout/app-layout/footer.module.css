@@ -229,6 +229,13 @@
   gap: 21px;
 }
 
+.partnerLogoArea {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
 .partnerLogo {
   display: block;
   width: auto;
@@ -246,6 +253,13 @@
 
 .partnerLogoRights {
   width: 36px;
+}
+
+.partnerLogoRemote {
+  width: auto;
+  height: 28px;
+  max-width: 72px;
+  object-fit: contain;
 }
 
 .infoArea {
@@ -412,11 +426,26 @@
     gap: var(--spacing-48);
   }
 
+  .partnerLogoArea {
+    width: 100px;
+    height: 60px;
+  }
+
   .partnerLogoMinistry,
   .partnerLogoTax,
+  .partnerLogoRemote {
+    width: 57px;
+    height: 60px;
+    object-fit: contain;
+    object-position: center;
+  }
+
   .partnerLogoRights {
     width: auto;
     height: 60px;
+    max-width: 100px;
+    object-fit: contain;
+    object-position: center;
   }
 
   .companyInfoLine {

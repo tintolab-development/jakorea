@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
+import { forceParagraphTitleRequired } from '@/features/template/lib/paragraph-required-mark'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
 import {
@@ -10,8 +11,10 @@ import {
 } from '@/features/template/lib/writing-form-template-local-save'
 import {
   createUjatProgramRegistrationDraft,
+  UJAT_PROGRAM_REGISTRATION_IDS,
   UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/ujat-program-registration-draft'
+import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
 import {
   normalizeWritingFormDraft,
   type FormTitleNumberingStyle,
@@ -31,6 +34,30 @@ import {
 
 export const UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE = 'registration-ujat' as const
 
+/** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
+const LEGACY_UJAT_BASIC_INFO_LOCK_NOTICE =
+  '참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.'
+
+function withForcedUjatRegistrationSeedTitleRequired(draft: WritingFormDraft): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    let next = paragraph
+    if (
+      paragraph.id === UJAT_PROGRAM_REGISTRATION_IDS[0] &&
+      paragraph.paragraphDescription.trim() === LEGACY_UJAT_BASIC_INFO_LOCK_NOTICE
+    ) {
+      next = { ...next, paragraphDescription: UJAT_REGISTRATION_SECTION_META.basic.description }
+    }
+    if (UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(next.id)) {
+      const forced = forceParagraphTitleRequired(next)
+      if (forced !== next) next = forced
+    }
+    if (next !== paragraph) changed = true
+    return next
+  })
+  return changed ? { ...draft, paragraphs } : draft
+}
+
 export type UseUjatProgramRegistrationEditorOptions = {
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
   onTemplateDraftSaveConfirmed?: () => void
@@ -42,6 +69,8 @@ export type UseUjatProgramRegistrationEditorOptions = {
   skipDraftRestore?: boolean
   /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
+  /** 등록 위저드 — draft-owned form version PUT/GET (program-draft SSOT) */
+  registrationWizardProgramType?: string
 }
 
 export function useUjatProgramRegistrationEditor(
@@ -52,6 +81,9 @@ export function useUjatProgramRegistrationEditor(
   const onTemplateDraftSaveConfirmed = options?.onTemplateDraftSaveConfirmed
   const skipDraftRestore = options?.skipDraftRestore === true
   const localOnlyDraftPersistence = options?.localOnlyDraftPersistence === true
+  const registrationWizardProgramType = options?.registrationWizardProgramType
+  const usesRegistrationWizardDraft =
+    registrationWizardProgramType != null && registrationWizardProgramType !== ''
   const templateCode = options?.templateCode?.trim() || UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE
   const isStructureLocked = isWritingFormTemplateStructureLocked({
     templateCode,
@@ -75,7 +107,9 @@ export function useUjatProgramRegistrationEditor(
 
   const resetToSeed = useCallback(() => {
     resetUjatProgramRegistrationOverlay()
-    const next = normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
+    const next = withForcedUjatRegistrationSeedTitleRequired(
+      normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
+    )
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
@@ -100,16 +134,28 @@ export function useUjatProgramRegistrationEditor(
     setDraft(EMPTY_WRITING_FORM_DRAFT)
     setActiveParagraphId(null)
 
-    void loadWritingFormTemplateDraft(templateCode, {
-      localOnly: localOnlyDraftPersistence,
-    })
+      const loadDraft =
+        usesRegistrationWizardDraft && !localOnlyDraftPersistence
+          ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
+              m.loadRegistrationWizardFormDraft({
+                programType: registrationWizardProgramType!,
+                templateCode,
+              })
+            )
+          : loadWritingFormTemplateDraft(templateCode, {
+              localOnly: localOnlyDraftPersistence,
+            })
+
+    void loadDraft
       .then(saved => {
         if (cancelled) return
         if (saved?.draft) {
           if (saved.overlay && Object.keys(saved.overlay).length > 0) {
             patchUjatProgramRegistrationOverlay(saved.overlay)
           }
-          const next = normalizeWritingFormDraft(saved.draft)
+          const next = withForcedUjatRegistrationSeedTitleRequired(
+            normalizeWritingFormDraft(saved.draft)
+          )
           setDraft(next)
           setActiveParagraphId(next.paragraphs[0]?.id ?? null)
           setSingleItemListActiveItemId(null)
@@ -120,7 +166,9 @@ export function useUjatProgramRegistrationEditor(
         if (legacy?.overlay && Object.keys(legacy.overlay).length > 0) {
           patchUjatProgramRegistrationOverlay(legacy.overlay)
         }
-        const next = normalizeWritingFormDraft(legacy?.draft ?? createUjatProgramRegistrationDraft())
+        const next = withForcedUjatRegistrationSeedTitleRequired(
+          normalizeWritingFormDraft(legacy?.draft ?? createUjatProgramRegistrationDraft())
+        )
         setDraft(next)
         setActiveParagraphId(next.paragraphs[0]?.id ?? null)
         setSingleItemListActiveItemId(null)
@@ -132,7 +180,15 @@ export function useUjatProgramRegistrationEditor(
     return () => {
       cancelled = true
     }
-  }, [active, localOnlyDraftPersistence, resetToSeed, skipDraftRestore, templateCode])
+  }, [
+    active,
+    localOnlyDraftPersistence,
+    registrationWizardProgramType,
+    resetToSeed,
+    skipDraftRestore,
+    templateCode,
+    usesRegistrationWizardDraft,
+  ])
 
   useEffect(() => {
     if (!active) {
@@ -251,32 +307,62 @@ export function useUjatProgramRegistrationEditor(
 
   const persistDraft = useCallback(async () => {
     const overlay = { ...getUjatProgramRegistrationOverlayRecord() }
-    await persistWritingFormTemplateDraft({
-      templateId: templateCode,
-      draft,
-      overlay,
-      localOnly: localOnlyDraftPersistence,
-    })
     if (localOnlyDraftPersistence) {
+      await persistWritingFormTemplateDraft({
+        templateId: templateCode,
+        draft,
+        overlay,
+        localOnly: true,
+      })
       persistUjatRegistrationTemplateSave({ draft, overlay })
-    } else {
-      const { clearUjatRegistrationTemplateLocalStorage } = await import(
-        '@/features/program/ujat/lib/ujat-registration-template-local-save'
+      return { draft, overlay }
+    }
+    if (usesRegistrationWizardDraft) {
+      const { persistRegistrationWizardFormDraft } = await import(
+        '@/features/program/general/lib/registration-wizard-form-draft'
       )
-      clearUjatRegistrationTemplateLocalStorage()
+      await persistRegistrationWizardFormDraft({
+        programType: registrationWizardProgramType!,
+        templateCode,
+        draft,
+        overlay,
+      })
+    } else {
+      await persistWritingFormTemplateDraft({
+        templateId: templateCode,
+        draft,
+        overlay,
+        localOnly: localOnlyDraftPersistence,
+      })
+      if (localOnlyDraftPersistence) {
+        persistUjatRegistrationTemplateSave({ draft, overlay })
+      } else {
+        const { clearUjatRegistrationTemplateLocalStorage } = await import(
+          '@/features/program/ujat/lib/ujat-registration-template-local-save'
+        )
+        clearUjatRegistrationTemplateLocalStorage()
+      }
     }
     return { draft, overlay }
-  }, [draft, localOnlyDraftPersistence, templateCode])
+  }, [
+    draft,
+    localOnlyDraftPersistence,
+    registrationWizardProgramType,
+    templateCode,
+    usesRegistrationWizardDraft,
+  ])
 
-  const handleSave = useCallback(() => {
-    void (async () => {
+  const handleSave = useCallback((options?: { silent?: boolean }) => {
+    return (async () => {
       try {
         await persistDraft()
+        if (options?.silent) return
         if (isTemplateManagementSave) {
           showSaveSuccess(onTemplateDraftSaveConfirmed)
         }
       } catch (error) {
         console.debug('ujatProgramRegistrationEditor save failed', error)
+        if (options?.silent) throw error
         if (isTemplateManagementSave) {
           showSaveFailure(error)
         }

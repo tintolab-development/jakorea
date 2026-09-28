@@ -7,8 +7,9 @@ import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import './draft-save-success-modal.css'
 
 export const REGISTRATION_DRAFT_SAVE_SUCCESS_BODY = [
-  '작성 내용을 임시 저장하였습니다.',
-  '임시 저장본은 가장 최근에 저장한 1개의 항목만 유지됩니다.',
+  '작성 내용이 임시 저장되었습니다.',
+  '임시 저장본은 현재 브라우저에 최근 1개만 보관됩니다.',
+  '현재 사용 중인 브라우저에만 저장되며, 브라우저 데이터 삭제 시 함께 삭제됩니다.',
 ].join('\n')
 
 export type RegistrationDraftSaveSuccessModalProps = {
@@ -23,7 +24,7 @@ export function RegistrationDraftSaveSuccessModal({
   return (
     <ContentModal
       open={open}
-      title="임시 저장"
+      title="임시 저장 완료"
       width={600}
       zIndex={CMS_ALERT_MODAL_Z_INDEX}
       onCancel={onConfirm}

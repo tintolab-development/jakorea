@@ -1,7 +1,8 @@
 /**
  * UJAT 프로그램 신규 등록 POM
  *
- * 플로우: 공통 → 모집(참여자·상/하반기 봉사) → 신청(학교·봉사) → 등록 완료
+ * 플로우: 공통 → 모집(참여자·상/하반기 봉사) → 등록 완료
+ * 신청 양식은 고정 시드라 위저드에서 작성하지 않는다.
  */
 
 import { type Page, expect } from '@playwright/test'
@@ -158,7 +159,7 @@ export class UjatProgramRegistrationPage {
     await this.page.getByRole('button', { name: '모집 정보 작성하기' }).scrollIntoViewIfNeeded()
     await this.page.getByRole('button', { name: '모집 정보 작성하기' }).click()
     await expect(this.page).toHaveURL(/ujatStep=recruit-/)
-    await expect(this.page.getByRole('button', { name: '신청 정보 작성하기' })).toBeVisible({
+    await expect(this.page.getByRole('button', { name: '프로그램 등록 완료' })).toBeVisible({
       timeout: 30_000,
     })
   }
@@ -221,35 +222,6 @@ export class UjatProgramRegistrationPage {
     await fillByPlaceholderIfVisible(this.page, '모집 안내를 작성하세요', 'E2E UJAT 모집 안내입니다.')
     await fillVisibleFreeTextFields(this.page, 'E2E UJAT 모집 상세')
     await uploadTinyPngIfPresent(this.page)
-  }
-
-  async goToApplication() {
-    await this.page.getByRole('button', { name: '신청 정보 작성하기' }).click()
-    await expect(this.page).toHaveURL(/ujatStep=application-/)
-    await expect(this.page.getByRole('button', { name: '프로그램 등록 완료' })).toBeVisible({
-      timeout: 30_000,
-    })
-  }
-
-  async fillApplicationInfo() {
-    await this.fillApplicationConsentIfPresent()
-    await fillVisibleFreeTextFields(this.page, 'E2E UJAT 학교 신청')
-    await clickRegistrationTabIfVisible(this.page, '봉사자 신청 정보')
-    await this.fillApplicationConsentIfPresent()
-    await fillVisibleFreeTextFields(this.page, 'E2E UJAT 봉사자 신청')
-    await uploadTinyPngIfPresent(this.page)
-    await clickRegistrationTabIfVisible(this.page, '참여자 신청 정보')
-  }
-
-  private async fillApplicationConsentIfPresent() {
-    const checkboxes = this.page.getByRole('checkbox')
-    const count = await checkboxes.count()
-    for (let i = 0; i < count; i += 1) {
-      const box = checkboxes.nth(i)
-      if (!(await box.isVisible().catch(() => false))) continue
-      if (await box.isChecked().catch(() => false)) continue
-      await box.check({ force: true }).catch(() => undefined)
-    }
   }
 
   async completeRegistration(): Promise<UjatRegistrationCompleteResult> {

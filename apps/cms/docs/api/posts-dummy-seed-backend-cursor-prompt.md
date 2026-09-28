@@ -8,10 +8,10 @@
 
 CMS LNB 게시글 관리 3화면이 호출하는 API가 FE mock과 같게 나오도록, local/dev DB에 시드하고 비즈니스 규칙을 맞춰라.
 
-| 화면 | path | 모듈 |
-|------|------|------|
-| 공지사항 | `/admin/posts/notices` | `notices` |
-| FAQ | `/admin/posts/faq` | `faqs` |
+| 화면     | path                     | 모듈        |
+| -------- | ------------------------ | ----------- |
+| 공지사항 | `/admin/posts/notices`   | `notices`   |
+| FAQ      | `/admin/posts/faq`       | `faqs`      |
 | 문의내역 | `/admin/posts/inquiries` | `inquiries` |
 
 완료 조건:
@@ -68,18 +68,18 @@ notice_categories (8) → faq_categories (8) → inquiry_categories (9)
 
 ### 공지 `GET /api/admin/content/notices`
 
-| 시드 JSON | API |
-|---|---|
-| id | id (string) |
-| title | title |
-| content | content (상세에 필수. 목록에서 omit 가능) |
-| category | category (이름 문자열) |
-| createdAt | createdAt |
-| isImportant | isImportant |
-| viewCount | viewCount |
-| hasAttachment | hasAttachment |
-| author | author |
-| status | status (`published` / `임시저장` / `archived`) |
+| 시드 JSON     | API                                            |
+| ------------- | ---------------------------------------------- |
+| id            | id (string)                                    |
+| title         | title                                          |
+| content       | content (상세에 필수. 목록에서 omit 가능)      |
+| category      | category (이름 문자열)                         |
+| createdAt     | createdAt                                      |
+| isImportant   | isImportant                                    |
+| viewCount     | viewCount                                      |
+| hasAttachment | hasAttachment                                  |
+| author        | author                                         |
+| status        | status (`published` / `임시저장` / `archived`) |
 
 목록 기본 정렬: `isImportant DESC`, 그다음 `createdAt DESC`. 상단 고정 **개수 제한 없음**.
 
@@ -89,35 +89,35 @@ notice_categories (8) → faq_categories (8) → inquiry_categories (9)
 
 ### FAQ `GET /api/admin/content/faqs`
 
-| 시드 JSON | API |
-|---|---|
-| id | id |
-| category | category |
-| question | question |
-| answer | answer (상세에 필수) |
-| author | author |
-| status | status |
-| createdAt | createdAt |
+| 시드 JSON | API                  |
+| --------- | -------------------- |
+| id        | id                   |
+| category  | category             |
+| question  | question             |
+| answer    | answer (상세에 필수) |
+| author    | author               |
+| status    | status               |
+| createdAt | createdAt            |
 
 ### 문의 `GET /api/admin/inquiries`
 
-| 시드 JSON | API |
-|---|---|
-| suggestedNumericId | id (number) |
-| category | category |
-| programId | programId (nullable) |
-| programNameSnapshot | programNameSnapshot |
-| inquirerMemberId | inquirerMemberId |
-| inquirerName | inquirerName (**G2**, 없으면 FE가 `회원 #{id}`) |
-| inquirerPhone | inquirerPhone (**G2**) |
-| inquirerEmail | inquirerEmail (**G2**) |
-| title | title |
-| content | content (상세에 필수) |
-| status | `PENDING` \| `ANSWERED` (`COMPLETED`도 ANSWERED로 취급됨) |
-| assignedAdminId | assignedAdminId |
-| assignedAdminName | assignedAdminName (**G3**, 없으면 FE가 `관리자 #{id}`) |
-| answeredAt | answeredAt |
-| createdAt | createdAt |
+| 시드 JSON           | API                                                       |
+| ------------------- | --------------------------------------------------------- |
+| suggestedNumericId  | id (number)                                               |
+| category            | category                                                  |
+| programId           | programId (nullable)                                      |
+| programNameSnapshot | programNameSnapshot                                       |
+| inquirerMemberId    | inquirerMemberId                                          |
+| inquirerName        | inquirerName (**G2**, 없으면 FE가 `회원 #{id}`)           |
+| inquirerPhone       | inquirerPhone (**G2**)                                    |
+| inquirerEmail       | inquirerEmail (**G2**)                                    |
+| title               | title                                                     |
+| content             | content (상세에 필수)                                     |
+| status              | `PENDING` \| `ANSWERED` (`COMPLETED`도 ANSWERED로 취급됨) |
+| assignedAdminId     | assignedAdminId                                           |
+| assignedAdminName   | assignedAdminName (**G3**, 없으면 FE가 `관리자 #{id}`)    |
+| answeredAt          | answeredAt                                                |
+| createdAt           | createdAt                                                 |
 
 답변: `GET /api/admin/inquiries/{id}/answers` → ANSWERED 행은 `content` 1건. `answeredByAdminId` = JSON `answer.answeredByAdminId`.
 
@@ -230,9 +230,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
     "seedLabel": "posts-fe-mock-v1",
     "ssot": "apps/cms/src/features/posts/api/admin-notice-mock-store.ts",
     "categorySsot": "createInitialNoticeCategoryRows()",
-    "upsertKeys": [
-      "seedKey"
-    ],
+    "upsertKeys": ["seedKey"],
     "note": "필독 is a filter option in mock category rows, not a notice.category value. Keep it as a category row so the CMS modal matches mock.",
     "statusMap": {
       "published": "published",
@@ -317,9 +315,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "isImportant": true,
       "viewCount": 1250,
       "hasAttachment": true,
-      "attachmentNames": [
-        "(2026) JA Korea 경제금융교육 커리큘럼.pdf"
-      ],
+      "attachmentNames": ["(2026) JA Korea 경제금융교육 커리큘럼.pdf"],
       "author": "관리자",
       "status": "published"
     },
@@ -333,10 +329,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "isImportant": true,
       "viewCount": 867,
       "hasAttachment": true,
-      "attachmentNames": [
-        "(2026) JA Korea 경제금융교육 커리큘럼.pdf",
-        "JA Korea 공지 부록.pdf"
-      ],
+      "attachmentNames": ["(2026) JA Korea 경제금융교육 커리큘럼.pdf", "JA Korea 공지 부록.pdf"],
       "author": "운영팀",
       "status": "published"
     },
@@ -378,9 +371,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "isImportant": false,
       "viewCount": 68,
       "hasAttachment": true,
-      "attachmentNames": [
-        "(2026) JA Korea 경제금융교육 커리큘럼.pdf"
-      ],
+      "attachmentNames": ["(2026) JA Korea 경제금융교육 커리큘럼.pdf"],
       "author": "관리자",
       "status": "임시저장"
     },
@@ -408,9 +399,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "isImportant": false,
       "viewCount": 952,
       "hasAttachment": true,
-      "attachmentNames": [
-        "(2026) JA Korea 경제금융교육 커리큘럼.pdf"
-      ],
+      "attachmentNames": ["(2026) JA Korea 경제금융교육 커리큘럼.pdf"],
       "author": "운영팀",
       "status": "archived"
     },
@@ -452,10 +441,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "isImportant": false,
       "viewCount": 153,
       "hasAttachment": true,
-      "attachmentNames": [
-        "(2026) JA Korea 경제금융교육 커리큘럼.pdf",
-        "JA Korea 공지 부록.pdf"
-      ],
+      "attachmentNames": ["(2026) JA Korea 경제금융교육 커리큘럼.pdf", "JA Korea 공지 부록.pdf"],
       "author": "관리자",
       "status": "published"
     },
@@ -483,10 +469,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "isImportant": false,
       "viewCount": 1037,
       "hasAttachment": true,
-      "attachmentNames": [
-        "(2026) JA Korea 경제금융교육 커리큘럼.pdf",
-        "JA Korea 공지 부록.pdf"
-      ],
+      "attachmentNames": ["(2026) JA Korea 경제금융교육 커리큘럼.pdf", "JA Korea 공지 부록.pdf"],
       "author": "운영팀",
       "status": "published"
     },
@@ -500,9 +483,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "isImportant": false,
       "viewCount": 624,
       "hasAttachment": true,
-      "attachmentNames": [
-        "(2026) JA Korea 경제금융교육 커리큘럼.pdf"
-      ],
+      "attachmentNames": ["(2026) JA Korea 경제금융교육 커리큘럼.pdf"],
       "author": "IT지원팀",
       "status": "임시저장"
     },
@@ -631,9 +612,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "isImportant": false,
       "viewCount": 880,
       "hasAttachment": true,
-      "attachmentNames": [
-        "서류심사_안내.pdf"
-      ],
+      "attachmentNames": ["서류심사_안내.pdf"],
       "author": "강사운영팀",
       "status": "published"
     },
@@ -720,9 +699,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
     "seedLabel": "posts-fe-mock-v1",
     "ssot": "apps/cms/src/features/posts/api/admin-faq-mock-store.ts",
     "categorySsot": "apps/cms/src/data/mock/admin-faq-seeds.ts ADMIN_FAQ_CATEGORY_SEED_NAMES",
-    "upsertKeys": [
-      "seedKey"
-    ],
+    "upsertKeys": ["seedKey"],
     "statusMap": {
       "published": "published",
       "draft": "임시저장",
@@ -841,7 +818,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-5",
       "category": "활동",
       "question": "비밀번호를 잊어버렸어요.",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "IT지원팀",
       "status": "published",
       "createdAt": "2025-09-15T14:00:00"
@@ -911,7 +888,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-12",
       "category": "정산",
       "question": "비밀번호를 잊어버렸어요. (12)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "대외협력팀",
       "status": "published",
       "createdAt": "2025-09-15T21:00:00"
@@ -981,7 +958,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-19",
       "category": "회원 탈퇴",
       "question": "비밀번호를 잊어버렸어요. (19)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "홍길동",
       "status": "archived",
       "createdAt": "2025-09-16T04:00:00"
@@ -1051,7 +1028,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-26",
       "category": "프로그램",
       "question": "비밀번호를 잊어버렸어요. (26)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "이정재",
       "status": "published",
       "createdAt": "2025-09-16T11:00:00"
@@ -1121,7 +1098,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-33",
       "category": "회원가입",
       "question": "비밀번호를 잊어버렸어요. (33)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "관리자",
       "status": "published",
       "createdAt": "2025-09-16T18:00:00"
@@ -1191,7 +1168,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-40",
       "category": "안내",
       "question": "비밀번호를 잊어버렸어요. (40)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "운영팀",
       "status": "published",
       "createdAt": "2025-09-17T01:00:00"
@@ -1261,7 +1238,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-47",
       "category": "시스템",
       "question": "비밀번호를 잊어버렸어요. (47)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "IT지원팀",
       "status": "published",
       "createdAt": "2025-09-17T08:00:00"
@@ -1331,7 +1308,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-54",
       "category": "봉사시간",
       "question": "비밀번호를 잊어버렸어요. (54)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "대외협력팀",
       "status": "published",
       "createdAt": "2025-09-17T15:00:00"
@@ -1401,7 +1378,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-61",
       "category": "활동",
       "question": "비밀번호를 잊어버렸어요. (61)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "홍길동",
       "status": "published",
       "createdAt": "2025-09-17T22:00:00"
@@ -1471,7 +1448,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-68",
       "category": "정산",
       "question": "비밀번호를 잊어버렸어요. (68)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "이정재",
       "status": "published",
       "createdAt": "2025-09-18T05:00:00"
@@ -1541,7 +1518,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-75",
       "category": "회원 탈퇴",
       "question": "비밀번호를 잊어버렸어요. (75)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "관리자",
       "status": "published",
       "createdAt": "2025-09-18T12:00:00"
@@ -1611,7 +1588,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-82",
       "category": "프로그램",
       "question": "비밀번호를 잊어버렸어요. (82)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "운영팀",
       "status": "published",
       "createdAt": "2025-09-18T19:00:00"
@@ -1681,7 +1658,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-89",
       "category": "회원가입",
       "question": "비밀번호를 잊어버렸어요. (89)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "IT지원팀",
       "status": "published",
       "createdAt": "2025-09-19T02:00:00"
@@ -1751,7 +1728,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-96",
       "category": "안내",
       "question": "비밀번호를 잊어버렸어요. (96)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "대외협력팀",
       "status": "published",
       "createdAt": "2025-09-19T09:00:00"
@@ -1821,7 +1798,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-103",
       "category": "시스템",
       "question": "비밀번호를 잊어버렸어요. (103)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "홍길동",
       "status": "임시저장",
       "createdAt": "2025-09-19T16:00:00"
@@ -1891,7 +1868,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-110",
       "category": "봉사시간",
       "question": "비밀번호를 잊어버렸어요. (110)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "이정재",
       "status": "published",
       "createdAt": "2025-09-19T23:00:00"
@@ -1961,7 +1938,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-117",
       "category": "활동",
       "question": "비밀번호를 잊어버렸어요. (117)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "관리자",
       "status": "published",
       "createdAt": "2025-09-20T06:00:00"
@@ -2031,7 +2008,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
       "id": "faq-admin-124",
       "category": "정산",
       "question": "비밀번호를 잊어버렸어요. (124)",
-      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인인증 후 재설정하실 수 있습니다.",
       "author": "운영팀",
       "status": "published",
       "createdAt": "2025-09-20T13:00:00"
@@ -2109,9 +2086,7 @@ PENDING 문의 1건(예: id `2`) DELETE는 200/204 후 목록에서 사라져야
     "seedLabel": "posts-fe-mock-v1",
     "ssot": "apps/cms/src/features/posts/api/admin-inquiry-mock-store.ts",
     "categorySsot": "createInitialInquiryCategoryRows()",
-    "upsertKeys": [
-      "suggestedNumericId"
-    ],
+    "upsertKeys": ["suggestedNumericId"],
     "idMapNote": "FE mock id 1~7 stay numeric. inq-gen-N → 800000+N. API InquiryResponse.id is number.",
     "memberNote": "G2: persist inquirerName/phone/email on inquiry or member stub. FE currently falls back to 회원 #{id}."
   },

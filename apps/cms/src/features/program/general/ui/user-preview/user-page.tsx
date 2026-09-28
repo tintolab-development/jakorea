@@ -1,5 +1,10 @@
-import { forwardRef, useLayoutEffect, useRef, type CSSProperties, type MutableRefObject, type Ref } from 'react'
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MutableRefObject, type Ref } from 'react'
 import type { Program } from '@/types/domain'
+import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
+import {
+  fetchProgramThumbnail,
+  loadProgramThumbnailPreviewUrl,
+} from '@/features/program/shared/api/program-thumbnail'
 import { PlatformPreviewFooter } from './platform-shell/footer'
 import { PlatformPreviewHeader } from './platform-shell/header'
 import './platform-shell/platform-preview-tokens.css'
@@ -44,6 +49,55 @@ function TopIcon() {
   )
 }
 
+function readablePosterUrl(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim()
+  if (!trimmed || trimmed.includes('/api/admin/files/')) return undefined
+  if (
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('data:') ||
+    /^https?:\/\//i.test(trimmed)
+  ) {
+    return trimmed
+  }
+  return undefined
+}
+
+function useRecruitmentPosterUrl(program: Program): string | undefined {
+  const legacyUrl = readablePosterUrl(program.keyVisualImage || program.posterImage)
+  const [posterImageUrl, setPosterImageUrl] = useState<string | undefined>(legacyUrl)
+
+  useEffect(() => {
+    setPosterImageUrl(legacyUrl)
+    const programId = parseFileObjectId(program.id)
+    if (programId == null) return
+
+    let cancelled = false
+    let objectUrl: string | null = null
+    void (async () => {
+      try {
+        const thumbnail = await fetchProgramThumbnail(programId)
+        if (cancelled || thumbnail.fileObjectId == null) return
+        const nextUrl = await loadProgramThumbnailPreviewUrl(thumbnail.fileObjectId)
+        if (cancelled) {
+          if (nextUrl.startsWith('blob:')) URL.revokeObjectURL(nextUrl)
+          return
+        }
+        objectUrl = nextUrl.startsWith('blob:') ? nextUrl : null
+        setPosterImageUrl(nextUrl)
+      } catch {
+        if (!cancelled) setPosterImageUrl(legacyUrl)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [legacyUrl, program.id])
+
+  return posterImageUrl
+}
+
 function mergeRefs<T>(...refs: Array<Ref<T> | undefined>) {
   return (node: T | null) => {
     refs.forEach(refItem => {
@@ -65,7 +119,11 @@ export const ParticipantRecruitmentUserPage = forwardRef<
   ref
 ) {
   const rootRef = useRef<HTMLDivElement>(null)
-  const viewModel = mapProgramToRecruitmentUserView(audience, program, sponsorName)
+  const posterImageUrl = useRecruitmentPosterUrl(program)
+  const viewModel = {
+    ...mapProgramToRecruitmentUserView(audience, program, sponsorName),
+    posterImageUrl,
+  }
   const isFullscreenLayout = layoutMode === 'fullscreen'
 
   useLayoutEffect(() => {

@@ -4,7 +4,9 @@ import type {
   PopupListFilter,
   PopupUpdateInput,
 } from '@/entities/popup/model/types'
+import { customInstance } from '@/shared/api/orval-mutator'
 import { getJAKoreaHomepageAdminAPIMainSubset } from '@/shared/api/generated/main/main-api'
+import type { PopupListResponse } from '@/shared/api/generated/main/schemas/popupListResponse'
 import { shouldUsePopupRemoteApi } from './capabilities'
 import {
   applyClientAltTextFilter,
@@ -31,8 +33,13 @@ function mainApi() {
 }
 
 async function listRemotePopups(filter?: PopupListFilter): Promise<Popup[]> {
-  const response = await mainApi().list4(toPopupListParams(filter))
+  const response = await customInstance<PopupListResponse>({
+    url: '/api/admin/main/popups',
+    method: 'GET',
+    params: toPopupListParams(filter),
+  })
   const rows = (response.items ?? []).map(mapPopupResponseToDomain)
+  // altText는 List4Params에 없음 — BE query 추가 시 이 줄을 제거하고 toPopupListParams만 사용
   return applyClientAltTextFilter(rows, filter)
 }
 
@@ -79,7 +86,7 @@ export async function listPopupsService(filter?: PopupListFilter): Promise<Popup
 export async function createPopupService(input: PopupCreateInput): Promise<Popup> {
   if (shouldUsePopupRemoteApi()) {
     const imageAssetId = await resolveImageAssetIdForCreate(input)
-    const created = await mainApi().create3(toPopupCreateRequest(input, imageAssetId))
+    const created = await mainApi().create5(toPopupCreateRequest(input, imageAssetId))
     return mapPopupResponseToDomain(created)
   }
   return createLocal(input)

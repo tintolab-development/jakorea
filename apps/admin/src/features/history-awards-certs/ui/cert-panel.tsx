@@ -50,7 +50,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
@@ -153,6 +153,7 @@ export function CertPanel() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
     patchSearchParams,
@@ -429,25 +430,23 @@ export function CertPanel() {
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <p className="admin-filter-area__label">내용</p>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="내용을 입력하세요"
               value={pendingFilters.content}
-              onChange={e => setPendingFilters(prev => ({ ...prev, content: e.target.value }))}
+              onChange={value => patchPendingFilters(prev => ({ ...prev, content: value }))}
               onPressEnter={handleSearch}
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <p className="admin-filter-area__label">인증 기관명</p>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="인증 기관명을 입력하세요"
               value={pendingFilters.organization}
-              onChange={e =>
-                setPendingFilters(prev => ({ ...prev, organization: e.target.value }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, organization: value }))}
               onPressEnter={handleSearch}
             />
           </div>

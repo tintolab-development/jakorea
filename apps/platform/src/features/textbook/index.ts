@@ -19,15 +19,9 @@ export {
 } from './lib/constants'
 export { buildTextbooksListPath, readTextbooksListParams } from './lib/list-params'
 export { isTextbooksPath } from './lib/routes'
-export {
-  MOCK_TEXTBOOK_CONTENTS,
-  MOCK_THEME_SECTIONS,
-  filterAndSortTextbooks,
-  filterTextbooksByCategory,
-  getMockTextbookById,
-  useMockTextbookCatalog,
-  useMockThemeSections,
-} from './lib/mock-data'
+export { filterAndSortTextbooks, filterTextbooksByCategory } from './lib/mock-data'
+export { usePublicTextbookCatalog, usePublicTextbookDetail } from './api/hooks'
+export { buildThemeSections } from './api/mappers'
 export { DirectoryListItem } from './ui/directory-list-item'
 export { ThemeSection } from './ui/theme-section'
 export { ContentListItem } from './ui/content-list-item'

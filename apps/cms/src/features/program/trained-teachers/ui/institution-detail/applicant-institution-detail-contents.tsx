@@ -88,7 +88,6 @@ export function TrainedTeachersApplicantInstitutionDetailContents({
       mode={institutionDetailEdit.isEditing ? 'edit' : 'view'}
       draft={institutionDetailEdit.draft ?? undefined}
       onDraftChange={institutionDetailEdit.updateDraft}
-      textbookOptions={institutionDetailEdit.textbookOptions}
       classCountOptions={institutionDetailEdit.classCountOptions}
       teacherOptions={institutionDetailEdit.teacherOptions}
       isTeacherOptionsLoading={institutionDetailEdit.isTeacherOptionsLoading}

@@ -1,0 +1,28 @@
+.recruit-applicants-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.recruit-applicants-page__filter-card {
+  margin-bottom: var(--spacing-24, 24px);
+}
+
+.recruit-applicants-page__filter {
+  width: 100%;
+}
+
+.recruit-applicants-page__table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+}
+
+.recruit-applicants-page__status--pending {
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 600;
+}
+
+.recruit-applicants-page__status--confirmed {
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+}

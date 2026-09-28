@@ -11,7 +11,7 @@
 import type { ProgramDetail, ProgramListItem } from '../model/types.ts'
 import { PROGRAM_DETAIL_CASE_SSOT_IDS } from './detail-case.ts'
 
-/** 신청 폼 6케이스 (+ 강사 · Gemini 강사) */
+/** 신청 폼 케이스 (+ 강사 · Gemini 강사 · 교육받은 교사) */
 export type ProgramApplyFormCase =
   | 'individual-general'
   | 'individual-team'
@@ -21,6 +21,7 @@ export type ProgramApplyFormCase =
   | 'institution-gemini'
   | 'instructor'
   | 'instructor-gemini'
+  | 'trained-teachers'
 
 /** CMS APPLICATION templateCode (form-schema / CMS catalog SSOT) */
 export type ProgramApplicationTemplateCode =
@@ -31,9 +32,12 @@ export type ProgramApplicationTemplateCode =
   | 'application-gemini-visiting-training-school'
   | 'application-instructor'
   | 'application-gemini-visiting-training-instructor'
+  | 'application-trained-teachers'
 
 export type ProgramApplyFormCaseInput = Pick<ProgramListItem | ProgramDetail, 'category' | 'id'> &
-  Partial<Pick<ProgramDetail, 'detailCase' | 'participationMethod'>>
+  Partial<
+    Pick<ProgramDetail, 'detailCase' | 'participationMethod' | 'programType' | 'registrationKind'>
+  >
 
 /** QA·mock 고정 id → 신청 폼 케이스 */
 export const PROGRAM_APPLY_FORM_CASE_SSOT_IDS = {
@@ -44,6 +48,7 @@ export const PROGRAM_APPLY_FORM_CASE_SSOT_IDS = {
   institutionEconomy: 'economy-prog-001',
   institutionGemini: PROGRAM_DETAIL_CASE_SSOT_IDS.gemini,
   instructorGemini: PROGRAM_DETAIL_CASE_SSOT_IDS.instructor,
+  trainedTeachers: 'trained-teachers-prog-001',
 } as const satisfies Record<string, string>
 
 const APPLY_CASE_TO_TEMPLATE_CODE: Record<
@@ -58,6 +63,7 @@ const APPLY_CASE_TO_TEMPLATE_CODE: Record<
   'institution-gemini': 'application-gemini-visiting-training-school',
   instructor: 'application-instructor',
   'instructor-gemini': 'application-gemini-visiting-training-instructor',
+  'trained-teachers': 'application-trained-teachers',
 }
 
 const SSOT_ID_TO_APPLY_CASE: Record<string, ProgramApplyFormCase> = {
@@ -68,6 +74,7 @@ const SSOT_ID_TO_APPLY_CASE: Record<string, ProgramApplyFormCase> = {
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionEconomy]: 'institution-economy',
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionGemini]: 'institution-gemini',
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.instructorGemini]: 'instructor-gemini',
+  [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.trainedTeachers]: 'trained-teachers',
   [PROGRAM_DETAIL_CASE_SSOT_IDS.ujatParticipant]: 'institution-general',
 }
 
@@ -83,6 +90,14 @@ function isGeminiProgramId(id: string): boolean {
   return id.startsWith('gemini-prog-')
 }
 
+function isTrainedTeachersProgram(program: ProgramApplyFormCaseInput): boolean {
+  if (program.registrationKind === 'trainedTeachers') return true
+  if ((program.programType ?? '').trim().toUpperCase() === 'TRAINED_TEACHER') return true
+  return (
+    program.id.startsWith('trained-teachers-') || program.id.includes('trained-teachers')
+  )
+}
+
 /**
  * 프로그램 → 신청 폼 케이스.
  * id SSOT 우선, 그다음 detailCase / category / participationMethod.
@@ -93,6 +108,10 @@ export function resolveProgramApplyFormCase(
 ): ProgramApplyFormCase {
   const byId = SSOT_ID_TO_APPLY_CASE[program.id]
   if (byId) return byId
+
+  if (isTrainedTeachersProgram(program)) {
+    return 'trained-teachers'
+  }
 
   const detailCase = program.detailCase
   if (

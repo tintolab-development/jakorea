@@ -20,6 +20,10 @@ export type ImpactStoryListItem = {
   isFeatured: boolean
   /** 썸네일 플레이스홀더 배경색 */
   placeholderColor: string
+  /** 목록 카드 썸네일(461×256). 없으면 placeholderColor만 표시 */
+  imageUrl?: string
+  /** 피처드 캐러셀 전용 크롭(630×355). 없으면 imageUrl 사용 */
+  featuredImageUrl?: string
 }
 
 /** 본문 블록 — 이미지는 플레이스홀더만 (실제 에셋 없음) */
@@ -33,12 +37,20 @@ export type ImpactStoryContentBlock =
       heightPx?: number
     }
 
+export type ImpactStoryBodyFormat = 'html' | 'markdown'
+
 export type ImpactStoryDetail = ImpactStoryListItem & {
   /** 상세 메타용 — 예: 2026년 08월 15일 오전 12:00 */
   publishedAtDetailLabel: string
   viewCount: number
   blocks: ImpactStoryContentBlock[]
+  /** 공개 API `body`. 있으면 RichTextViewer로 렌더 */
+  body?: string
+  bodyFormat?: ImpactStoryBodyFormat
+  attachmentOriginalName?: string
 }
+
+export type ImpactStoryDetailStatus = 'loading' | 'ready' | 'not-found' | 'error'
 
 export type ImpactStoriesListParams = {
   category: ImpactStoryListCategory

@@ -22,8 +22,6 @@ import {
   useReorderFinanceItems,
   useUpdateFinanceItems,
 } from '@/features/income-expense/api/hooks'
-import { incomeExpenseQueryKeys } from '@/features/income-expense/api/query-keys'
-import { INCOME_EXPENSE_CHANGED_EVENT } from '@/features/income-expense/api/store'
 import {
   formatAmount,
   formatRatioDisplay,
@@ -37,7 +35,6 @@ import {
 } from '@/features/income-expense/ui/sortable-table'
 import { SummaryBar } from '@/features/income-expense/ui/summary-bar'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import {
   CmsButton,
   CmsInput,
@@ -120,8 +117,6 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
-
-  useInvalidateOnWindowEvent(INCOME_EXPENSE_CHANGED_EVENT, incomeExpenseQueryKeys.lists())
 
   const handleRowsReorder = useCallback(
     (reorderedRows: FinanceItem[]) => {

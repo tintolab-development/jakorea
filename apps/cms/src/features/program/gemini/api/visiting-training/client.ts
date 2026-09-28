@@ -228,6 +228,31 @@ export async function bulkRejectGeminiOrganizationApplicationsRemote(
   })
 }
 
+export type GeminiOrganizationNotificationResendPayload = {
+  timing: 'IMMEDIATE' | 'SCHEDULED'
+  scheduledAt: string | null
+  reason: string | null
+}
+
+/** OpenAPI operationId: resendGeminiOrganizationApplicationNotification */
+export async function resendGeminiOrganizationApplicationNotificationRemote(
+  applicationId: string,
+  payload: GeminiOrganizationNotificationResendPayload,
+  idempotencyKey: string
+): Promise<void> {
+  await unwrapApiBody(
+    await customInstance({
+      url: `${BASE}/organization-applications/${encodeURIComponent(applicationId)}/notifications/resend`,
+      method: 'POST',
+      data: payload,
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+    })
+  )
+}
+
 export async function approveGeminiInstructorApplicationRemote(
   applicationId: string
 ): Promise<void> {

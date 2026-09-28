@@ -1,3 +1,8 @@
 .general-detail-session-line .program-detail-td-divider {
   margin: 0 10px;
 }
+
+.general-detail-session-line .program-detail-td-segment-wrap {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}

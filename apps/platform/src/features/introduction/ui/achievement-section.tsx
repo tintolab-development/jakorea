@@ -1,19 +1,18 @@
 import { useMemo, useState } from 'react'
+import { useDebouncedValue } from '@/shared/hooks'
 import { PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import {
   ACHIEVEMENT_RECORDS_PAGE_SIZE,
   ACHIEVEMENT_SEARCH_PLACEHOLDER,
   ACHIEVEMENT_SECTION_TITLE,
   ACHIEVEMENT_TAB_ITEMS,
-  AWARD_DATA,
-  CERTIFICATION_DATA,
   DEFAULT_HISTORY_PERIOD_ID,
   DEFAULT_HISTORY_YEAR,
   filterAchievementRecords,
-  getHistoryYearData,
   HISTORY_PERIODS,
   type AchievementRecordItem,
   type AchievementTabKey,
+  type HistoryYearData,
 } from '../lib/achievement-data'
 import styles from './achievement-section.module.css'
 
@@ -121,8 +120,14 @@ function HistoryPeriodNav({
   )
 }
 
-function HistoryList({ year }: { year: number }) {
-  const data = getHistoryYearData(year)
+function HistoryList({
+  year,
+  historyByYear,
+}: {
+  year: number
+  historyByYear: Readonly<Record<number, HistoryYearData>>
+}) {
+  const data = historyByYear[year] ?? null
 
   if (!data) {
     return (
@@ -152,7 +157,11 @@ function HistoryList({ year }: { year: number }) {
   )
 }
 
-function HistoryContent() {
+function HistoryContent({
+  historyByYear,
+}: {
+  historyByYear: Readonly<Record<number, HistoryYearData>>
+}) {
   const [activePeriodId, setActivePeriodId] = useState(DEFAULT_HISTORY_PERIOD_ID)
   const [activeYear, setActiveYear] = useState(DEFAULT_HISTORY_YEAR)
 
@@ -171,7 +180,7 @@ function HistoryContent() {
         onPeriodSelect={handlePeriodSelect}
         onYearSelect={setActiveYear}
       />
-      <HistoryList year={activeYear} />
+      <HistoryList year={activeYear} historyByYear={historyByYear} />
     </div>
   )
 }
@@ -183,22 +192,27 @@ function RecordsContent({
   kind: RecordsKind
   items: readonly AchievementRecordItem[]
 }) {
-  const [query, setQuery] = useState('')
+  const [draftQ, setDraftQ] = useState('')
+  const debouncedQ = useDebouncedValue(draftQ, 500)
   const [currentPage, setCurrentPage] = useState(1)
+  const [prevDebouncedQ, setPrevDebouncedQ] = useState(debouncedQ)
   const columns = RECORDS_COLUMNS[kind]
 
-  const filtered = useMemo(() => filterAchievementRecords(items, query), [items, query])
+  if (prevDebouncedQ !== debouncedQ) {
+    setPrevDebouncedQ(debouncedQ)
+    setCurrentPage(1)
+  }
+
+  const filtered = useMemo(
+    () => filterAchievementRecords(items, debouncedQ),
+    [items, debouncedQ],
+  )
   const totalPages = Math.max(1, Math.ceil(filtered.length / ACHIEVEMENT_RECORDS_PAGE_SIZE))
   const safePage = Math.min(currentPage, totalPages)
   const pageItems = filtered.slice(
     (safePage - 1) * ACHIEVEMENT_RECORDS_PAGE_SIZE,
     safePage * ACHIEVEMENT_RECORDS_PAGE_SIZE,
   )
-
-  const handleSearch = (value: string) => {
-    setQuery(value)
-    setCurrentPage(1)
-  }
 
   return (
     <div className={styles.recordsLayout}>
@@ -209,8 +223,8 @@ function RecordsContent({
         <PFSearchInput
           className={styles.recordsSearch}
           variant="outlined"
-          value={query}
-          onValueChange={handleSearch}
+          value={draftQ}
+          onValueChange={setDraftQ}
           placeholder={ACHIEVEMENT_SEARCH_PLACEHOLDER}
           aria-label={ACHIEVEMENT_SEARCH_PLACEHOLDER}
         />
@@ -254,8 +268,18 @@ function RecordsContent({
   )
 }
 
+export type AchievementSectionProps = {
+  historyByYear: Readonly<Record<number, HistoryYearData>>
+  awards: readonly AchievementRecordItem[]
+  certifications: readonly AchievementRecordItem[]
+}
+
 /** 기관소개 — 걸어온 길과 성과 (정적 document flow, 모션 없음) */
-export function AchievementSection() {
+export function AchievementSection({
+  historyByYear,
+  awards,
+  certifications,
+}: AchievementSectionProps) {
   const [activeTab, setActiveTab] = useState<AchievementTabKey>('history')
 
   return (
@@ -276,10 +300,12 @@ export function AchievementSection() {
         </header>
 
         <div className={styles.tabContent}>
-          {activeTab === 'history' ? <HistoryContent /> : null}
-          {activeTab === 'award' ? <RecordsContent kind="award" items={AWARD_DATA} /> : null}
+          {activeTab === 'history' ? (
+            <HistoryContent historyByYear={historyByYear} />
+          ) : null}
+          {activeTab === 'award' ? <RecordsContent kind="award" items={awards} /> : null}
           {activeTab === 'certification' ? (
-            <RecordsContent kind="certification" items={CERTIFICATION_DATA} />
+            <RecordsContent kind="certification" items={certifications} />
           ) : null}
         </div>
       </div>

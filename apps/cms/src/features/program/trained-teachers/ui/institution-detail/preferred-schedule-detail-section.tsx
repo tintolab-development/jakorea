@@ -6,13 +6,13 @@ import {
 import { ProgramDetailTdSegmentWrap } from '@/features/program/shared/ui/program-detail-td-divider'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 
-function formatPreferredDateWithSession(block: TrainedTeachersPreferredScheduleBlock): string {
+function preferredDateSegments(block: TrainedTeachersPreferredScheduleBlock): string[] {
   const datePart = block.date.replace(/\./g, '. ').replace(/\s+/g, ' ').trim()
-  return `${datePart}(${block.dayOfWeek}) | ${block.sessionCount}차시`
+  return [`${datePart}(${block.dayOfWeek})`, `${block.sessionCount}차시`]
 }
 
-function formatSessionTimeValue(classPeriod: string, timeRange: string): string {
-  return `${classPeriod} | ${timeRange}`
+function preferredSessionTimeSegments(classPeriod: string, timeRange: string): string[] {
+  return [classPeriod, timeRange].map(s => s.trim()).filter(Boolean)
 }
 
 export function TrainedTeachersPreferredScheduleDetailSection({
@@ -46,7 +46,7 @@ export function TrainedTeachersPreferredScheduleDetailSection({
                     label="희망 교육일 및 차시"
                     value={
                       <ProgramDetailTdSegmentWrap>
-                        {withProgramDetailTdDivider(formatPreferredDateWithSession(block).split(' | '))}
+                        {withProgramDetailTdDivider(preferredDateSegments(block))}
                       </ProgramDetailTdSegmentWrap>
                     }
                   />
@@ -58,7 +58,7 @@ export function TrainedTeachersPreferredScheduleDetailSection({
                     value={
                       <ProgramDetailTdSegmentWrap>
                         {withProgramDetailTdDivider(
-                          formatSessionTimeValue(session.classPeriod, session.timeRange).split(' | ')
+                          preferredSessionTimeSegments(session.classPeriod, session.timeRange)
                         )}
                       </ProgramDetailTdSegmentWrap>
                     }

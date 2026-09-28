@@ -1,0 +1,118 @@
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  padding-top: var(--spacing-48);
+  padding-bottom: var(--spacing-80);
+  padding-inline: var(--page-padding-x);
+  scroll-margin-top: calc(var(--app-header-height) + var(--spacing-24));
+}
+
+.sectionFirst {
+  padding-top: var(--spacing-48);
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.titleCol,
+.descriptionCol {
+  min-width: 0;
+}
+
+.title,
+.description,
+.programName,
+.programDescription {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.description {
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.body {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.meta {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.programHead {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12) var(--spacing-16);
+}
+
+.programName {
+  min-width: 0;
+}
+
+.programDescription {
+  line-height: 1.6;
+}
+
+@media (--bp-pc-up) {
+  .section {
+    gap: var(--spacing-60);
+    padding-top: var(--spacing-80);
+    padding-bottom: var(--spacing-150);
+    padding-inline: 0;
+  }
+
+  .sectionFirst {
+    padding-top: var(--spacing-150);
+  }
+
+  .header {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0;
+  }
+
+  .titleCol,
+  .descriptionCol {
+    flex: 1 1 0;
+    padding-inline: var(--spacing-8);
+  }
+
+  .title {
+    font-size: 48px;
+  }
+
+  .description {
+    font-size: 20px;
+  }
+
+  .body {
+    gap: var(--spacing-48);
+  }
+
+  .meta {
+    width: 50%;
+    max-width: 720px;
+    gap: var(--spacing-20);
+    padding-inline: var(--spacing-8);
+  }
+}

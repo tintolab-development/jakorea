@@ -65,8 +65,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlement-configs/current`
  *
@@ -93,8 +93,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -146,8 +146,8 @@ const currentConfig = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -201,8 +201,8 @@ const updateCurrentConfig = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -228,8 +228,8 @@ const deleteCurrentConfig = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/{settlementId}/recalculate
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/{settlementId}/recalculate`
  *
@@ -256,8 +256,8 @@ const deleteCurrentConfig = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -286,8 +286,8 @@ const recalculate = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/{settlementId}/payment-statement/request
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/request`
  *
@@ -314,8 +314,8 @@ const recalculate = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -370,8 +370,8 @@ const requestPaymentStatement = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -426,8 +426,8 @@ const registerPaymentStatementRenderedFile = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -479,8 +479,8 @@ const requestPaymentStatementDownload = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -509,8 +509,8 @@ const recordPaymentStatementClientDownload = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/{settlementId}/correction-requests
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `POST /api/admin/settlements/{settlementId}/correction-requests`
  *
@@ -537,8 +537,8 @@ const recordPaymentStatementClientDownload = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -566,7 +566,7 @@ const requestCorrection = (
 
 /**
  * 선택된 지급조서를 일괄 CONFIRMED 처리합니다(all-or-nothing).
- * 확인 가능: WAITING_CONFIRM | REQUESTED | REAPPLICATION | ISSUED.
+ * 확인 가능: WAITING_CONFIRM | REAPPLICATION.
  * 409 PAYMENT_STATEMENT_STATUS_CONFLICT (details.statementId),
  * 404 PAYMENT_STATEMENT_NOT_FOUND,
  * 400 SCHEDULED_PAYMENT_DATE_REQUIRED.
@@ -612,8 +612,8 @@ const bulkConfirmPaymentStatements = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -641,8 +641,8 @@ const paymentStatements = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/exports/tax-report
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/exports/tax-report`
  *
@@ -669,8 +669,8 @@ const paymentStatements = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -698,8 +698,8 @@ const requestTaxReportExport = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/exports/bulk-transfer
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/exports/bulk-transfer`
  *
@@ -726,8 +726,8 @@ const requestTaxReportExport = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -781,8 +781,8 @@ const requestBulkTransferExport = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -835,8 +835,8 @@ const duplicateConfigItem = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -890,8 +890,8 @@ const duplicateCurrentConfig = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -920,8 +920,8 @@ const rejectPaymentStatement = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `PATCH /api/admin/settlements/statements/{statementId}/confirm`
  *
@@ -948,8 +948,8 @@ const rejectPaymentStatement = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -978,8 +978,8 @@ const confirmPaymentStatement = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `PATCH /api/admin/settlements/correction-requests/{correctionRequestId}/reject`
  *
@@ -1006,8 +1006,8 @@ const confirmPaymentStatement = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1036,8 +1036,8 @@ const rejectCorrection = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `PATCH /api/admin/settlements/correction-requests/{correctionRequestId}/approve`
  *
@@ -1064,8 +1064,8 @@ const rejectCorrection = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1094,8 +1094,8 @@ const approveCorrection = (
 /**
  * ### 이 API가 하는 일
  * - 개별 지급 완료
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/paid`
  *
@@ -1122,8 +1122,8 @@ const approveCorrection = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1152,8 +1152,8 @@ const markPaid = (
 /**
  * ### 이 API가 하는 일
  * - 개별 지급 실패
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/failed`
  *
@@ -1180,8 +1180,8 @@ const markPaid = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1236,8 +1236,8 @@ const markFailed = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1265,8 +1265,8 @@ const bulkPaid = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements`
  *
@@ -1293,8 +1293,8 @@ const bulkPaid = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1321,8 +1321,8 @@ const listSettlements = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}`
  *
@@ -1349,8 +1349,8 @@ const listSettlements = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1376,8 +1376,8 @@ const getSettlement = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}/revisions`
  *
@@ -1404,8 +1404,8 @@ const getSettlement = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1433,8 +1433,8 @@ const listSettlementRevisions = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}/revisions/{revisionId}`
  *
@@ -1461,8 +1461,8 @@ const listSettlementRevisions = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1515,8 +1515,8 @@ const getSettlementRevisionDetail = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1542,8 +1542,8 @@ const paymentStatementRenderData = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}/payment-statement/download`
  *
@@ -1570,8 +1570,8 @@ const paymentStatementRenderData = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1623,8 +1623,8 @@ const downloadPaymentStatement = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1650,8 +1650,8 @@ const getSettlementAvailableActions = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/transportation-snapshots`
  *
@@ -1678,8 +1678,8 @@ const getSettlementAvailableActions = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1732,8 +1732,8 @@ const listTransportationSnapshots = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1759,8 +1759,8 @@ const statusMappings = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/statements`
  *
@@ -1787,8 +1787,8 @@ const statusMappings = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1815,8 +1815,8 @@ const listPaymentStatements = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/open-questions`
  *
@@ -1843,8 +1843,8 @@ const listPaymentStatements = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1870,8 +1870,8 @@ const openQuestions = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/exports`
  *
@@ -1898,8 +1898,8 @@ const openQuestions = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1926,8 +1926,8 @@ const listExportHistories = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `GET /api/admin/settlements/correction-requests`
  *
@@ -1954,8 +1954,8 @@ const listExportHistories = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -1982,8 +1982,8 @@ const listCorrectionRequests = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/calendar`
  *
@@ -2010,8 +2010,8 @@ const listCorrectionRequests = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -2038,8 +2038,8 @@ const settlementCalendar = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/calendar/summary`
  *
@@ -2066,8 +2066,8 @@ const settlementCalendar = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -2094,8 +2094,8 @@ const settlementCalendarSummary = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/calendar/dates/{date}`
  *
@@ -2122,8 +2122,8 @@ const settlementCalendarSummary = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -2175,8 +2175,8 @@ const settlementCalendarDate = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -2229,8 +2229,8 @@ const budgetSummary = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -2257,8 +2257,8 @@ const listSettlementAggregates = (
 /**
  * ### 이 API가 하는 일
  * - 계좌 지급 확인 목록
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/account-payments`
  *
@@ -2285,8 +2285,8 @@ const listSettlementAggregates = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -2339,8 +2339,8 @@ const listAccountPayments = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
@@ -2392,8 +2392,8 @@ const getAccountPayment = (
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
  * ### Swagger에서 확인할 때
  * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
  * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.

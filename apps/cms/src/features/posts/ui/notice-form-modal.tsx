@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState, forwardRef } from 'react'
 import { Form, Select } from 'antd'
 import type { RefSelectProps } from 'antd/es/select'
-import type { Notice } from '@/data/mock/notices'
+import type { Notice, NoticeAttachment } from '@/data/mock/notices'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import {
-  noticeInitialAttachmentNames,
   noticeToFormValues,
   type NoticeFormFieldValues,
 } from '@/features/posts/model/notice-form-mapper'
@@ -103,7 +102,7 @@ export function NoticeFormModal({
   const categoriesQuery = useNoticeCategoriesQuery(open)
   const [form] = Form.useForm<FormValues>()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [existingAttachmentNames, setExistingAttachmentNames] = useState<string[]>([])
+  const [existingAttachments, setExistingAttachments] = useState<NoticeAttachment[]>([])
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
@@ -138,7 +137,7 @@ export function NoticeFormModal({
     if (!open) return
     if (mode === 'edit' && notice) {
       form.setFieldsValue(noticeToFormValues(notice))
-      setExistingAttachmentNames(noticeInitialAttachmentNames(notice))
+      setExistingAttachments(notice.attachments ?? [])
       setNewFiles([])
     } else {
       form.setFieldsValue({
@@ -147,7 +146,7 @@ export function NoticeFormModal({
         pinTop: 'off',
         title: '',
       })
-      setExistingAttachmentNames([])
+      setExistingAttachments([])
       setNewFiles([])
     }
   }, [open, mode, notice, form])
@@ -168,8 +167,8 @@ export function NoticeFormModal({
   }, [open, mode, notice, categoriesQuery.data, form])
 
   const attachmentDisplayNames = useMemo(
-    () => [...existingAttachmentNames, ...newFiles.map(f => f.name)],
-    [existingAttachmentNames, newFiles]
+    () => [...existingAttachments.map(item => item.name), ...newFiles.map(f => f.name)],
+    [existingAttachments, newFiles]
   )
 
   /** API 카테고리만 — label=name, value=id. 하드코딩 폴백 없음 */
@@ -183,7 +182,7 @@ export function NoticeFormModal({
 
   const handleCancel = () => {
     form.resetFields()
-    setExistingAttachmentNames([])
+    setExistingAttachments([])
     setNewFiles([])
     onCancel()
   }
@@ -216,9 +215,9 @@ export function NoticeFormModal({
   }
 
   const handleAttachmentRemove = (index: number) => {
-    const nExisting = existingAttachmentNames.length
+    const nExisting = existingAttachments.length
     if (index < nExisting) {
-      setExistingAttachmentNames(prev => prev.filter((_, i) => i !== index))
+      setExistingAttachments(prev => prev.filter((_, i) => i !== index))
     } else {
       const ni = index - nExisting
       setNewFiles(prev => prev.filter((_, i) => i !== ni))
@@ -245,7 +244,7 @@ export function NoticeFormModal({
     const categoryName =
       categorySelectOptions.find(opt => opt.value === categoryIdRaw)?.label?.trim() ?? ''
 
-    const attachmentNames = [...existingAttachmentNames, ...newFiles.map(f => f.name)]
+    const attachmentNames = attachmentDisplayNames
     const pinToTop = values.pinTop === 'on'
     const base = {
       title: values.title,
@@ -256,6 +255,9 @@ export function NoticeFormModal({
       pinToTop,
       attachmentNames,
       newFiles,
+      retainedFileObjectIds: existingAttachments.flatMap(item =>
+        item.fileObjectId != null ? [item.fileObjectId] : []
+      ),
       author: authorName,
     }
 
@@ -273,7 +275,7 @@ export function NoticeFormModal({
       }
       setErrorMessage(null)
       form.resetFields()
-      setExistingAttachmentNames([])
+      setExistingAttachments([])
       setNewFiles([])
       onCancel()
     } catch (error) {

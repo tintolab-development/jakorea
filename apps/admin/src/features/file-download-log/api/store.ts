@@ -11,6 +11,7 @@ import {
   includesIgnoreCase,
   isIsoInDateRange,
 } from '@/features/logs/shared/lib/filter-date-range'
+import { paginateLogRows } from '@/features/logs/shared/lib/list-page'
 
 const FILES = [
   '회원정보 테이블.xlsx',
@@ -50,9 +51,7 @@ function buildSeed(): FileDownloadLog[] {
 
 const SEED = buildSeed()
 
-export function listFileDownloadLogs(
-  filter: FileDownloadListFilter
-): FileDownloadListResult {
+function filterFileDownloadLogs(filter: FileDownloadListFilter): FileDownloadLog[] {
   let rows = [...SEED]
   if (filter.fileName) {
     rows = rows.filter(r => includesIgnoreCase(r.fileName, filter.fileName!))
@@ -67,5 +66,17 @@ export function listFileDownloadLogs(
     (a, b) =>
       new Date(b.downloadedAt).getTime() - new Date(a.downloadedAt).getTime()
   )
-  return { rows, total: rows.length }
+  return rows
+}
+
+export function listFileDownloadLogsAll(
+  filter: FileDownloadListFilter,
+): FileDownloadLog[] {
+  return filterFileDownloadLogs(filter)
+}
+
+export function listFileDownloadLogs(
+  filter: FileDownloadListFilter
+): FileDownloadListResult {
+  return paginateLogRows(filterFileDownloadLogs(filter), filter.page ?? 0)
 }

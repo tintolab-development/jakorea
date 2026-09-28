@@ -1,0 +1,1 @@
+export { EducationEntrepreneurshipPage } from './page'

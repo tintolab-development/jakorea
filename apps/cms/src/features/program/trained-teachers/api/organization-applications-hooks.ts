@@ -8,6 +8,7 @@ import {
   approveTrainedTeacherOrganizationApplication,
   listTrainedTeacherOrganizationApplications,
   rejectTrainedTeacherOrganizationApplication,
+  resendTrainedTeacherOrganizationApplicationNotification,
 } from './organization-applications-service'
 import {
   buildTrainedTeacherOrganizationApplicationsListQuery,
@@ -69,6 +70,21 @@ export function useTrainedTeacherOrganizationApplicationsRemoteSync({
       approveTrainedTeacherOrganizationApplication(programId!, applicationId),
     rejectOrganization: (applicationId: string, payload: ApplicationRejectRequest) =>
       rejectTrainedTeacherOrganizationApplication(programId!, applicationId, payload),
+    resendOrganizationNotification: (
+      applicationId: string,
+      payload: {
+        timing: 'IMMEDIATE' | 'SCHEDULED'
+        scheduledAt: string | null
+        reason: string | null
+      },
+      idempotencyKey: string
+    ) =>
+      resendTrainedTeacherOrganizationApplicationNotification(
+        programId!,
+        applicationId,
+        payload,
+        idempotencyKey
+      ),
     invalidateApplications,
   }
 }

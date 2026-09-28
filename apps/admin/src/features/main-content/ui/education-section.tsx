@@ -3,6 +3,7 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { EducationSection } from '@/entities/main-content/model/types'
 import { useSaveEducationSection } from '@/features/main-content/api/hooks'
+import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
 import { CmsInput, useCmsAlert } from '@/shared/ui'
 
@@ -30,11 +31,8 @@ export function EducationSectionCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: '교육 프로그램 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(mainContentSaveFailureAlert(error, '교육 프로그램'))
     }
   }, [draft, saveMutation, showAlert])
 

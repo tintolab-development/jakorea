@@ -159,11 +159,17 @@ export interface CurriculumSectionProps {
   isEditMode?: boolean
   /** 수정 모드일 때만 전달 */
   form?: UseFormReturn<ProgramDetailEditFormValues>
+  forceCompanySchoolLayout?: boolean
 }
 
-export function CurriculumSection({ program, isEditMode = false, form }: CurriculumSectionProps) {
+export function CurriculumSection({
+  program,
+  isEditMode = false,
+  form,
+  forceCompanySchoolLayout = false,
+}: CurriculumSectionProps) {
   const isFormEdit = isEditMode && form
-  const isCompanySchool = isCompanySchoolProgram(program)
+  const isCompanySchool = forceCompanySchoolLayout || isCompanySchoolProgram(program)
   const roundsFromForm = isFormEdit ? (form.watch('rounds') ?? []) : []
   const sortedRounds = (isFormEdit ? roundsFromForm : program.rounds)?.length
     ? [...(isFormEdit ? roundsFromForm : program.rounds!)].sort(
@@ -188,95 +194,63 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
 
   if (isCompanySchool) {
     const rows = resolveCompanySchoolCurriculumRows(program)
+    const formMode = isFormEdit ? 'edit' : 'view'
 
     return (
       <DetailInfoForm
         title="교육 진행 (커리큘럼)"
-        mode={isFormEdit ? 'edit' : 'view'}
-        className="detail-info-form--gap project-info-company-school-curriculum"
+        mode={formMode}
+        className="detail-info-form--gap program-registration-paragraph"
       >
-        {isFormEdit ? (
-          <>
-            {rows.map((row, index) => {
-              const fieldNames = getCompanySchoolCurriculumFieldNames(index)
-              return (
-                <DetailInfoForm.Row key={`company-school-curriculum-edit-${index}`} type="double">
-                  <DetailInfoForm.Field
-                    label={`${index + 1}차시 단원명`}
-                    edit={
-                      <Controller
-                        name={fieldNames.title}
-                        control={form.control}
-                        render={({ field }) => (
-                          <CmsInput
-                            inputSize="medium"
-                            placeholder="단원명을 입력하세요"
-                            width="100%"
-                            value={field.value ?? row.unitName}
-                            onChange={field.onChange}
-                          />
-                        )}
-                      />
-                    }
-                    view="-"
-                  />
-                  <DetailInfoForm.Field
-                    label={`${index + 1}차시 교육 내용`}
-                    edit={
-                      <Controller
-                        name={fieldNames.description}
-                        control={form.control}
-                        render={({ field }) => (
-                          <CmsInput
-                            inputSize="medium"
-                            placeholder="교육 내용을 작성하세요"
-                            width="100%"
-                            value={field.value ?? row.content}
-                            onChange={field.onChange}
-                          />
-                        )}
-                      />
-                    }
-                    view="-"
-                  />
-                </DetailInfoForm.Row>
-              )
-            })}
-          </>
-        ) : (
-          <div className="program-registration-curriculum__sessions">
-            {rows.map((row, index) => (
-              <div
-                key={`company-school-curriculum-${index}`}
-                className="program-registration-curriculum__session-block"
-              >
-                <div className="program-registration-curriculum__session-heading">
-                  ■ {index + 1}차시
-                </div>
-                <DetailInfoForm
-                  title={`${index + 1}차시`}
-                  hideHeader
-                  mode="view"
-                  className="program-registration-paragraph"
-                >
-                  <DetailInfoForm.Row type="single">
-                    <DetailInfoForm.Field
-                      label="단원명 및 교육 내용"
-                      fullRow
-                      view={
-                        <>
-                          {row.unitName}
-                          <DetailInfoForm.InputsSeparator />
-                          {row.content}
-                        </>
-                      }
+        {rows.map((row, index) => {
+          const fieldNames = getCompanySchoolCurriculumFieldNames(index)
+          return (
+            <DetailInfoForm.Row key={`company-school-curriculum-${index}`} type="double">
+              <DetailInfoForm.Field
+                label={`${index + 1}차시 단원명`}
+                view={row.unitName}
+                edit={
+                  isFormEdit && form ? (
+                    <Controller
+                      name={fieldNames.title}
+                      control={form.control}
+                      render={({ field }) => (
+                        <CmsInput
+                          inputSize="medium"
+                          placeholder="단원명을 입력하세요"
+                          width="100%"
+                          value={field.value ?? row.unitName}
+                          onChange={field.onChange}
+                        />
+                      )}
                     />
-                  </DetailInfoForm.Row>
-                </DetailInfoForm>
-              </div>
-            ))}
-          </div>
-        )}
+                  ) : undefined
+                }
+              />
+              <DetailInfoForm.Field
+                label={`${index + 1}차시 교육 내용`}
+                view={row.content}
+                edit={
+                  isFormEdit && form ? (
+                    <Controller
+                      name={fieldNames.description}
+                      control={form.control}
+                      render={({ field }) => (
+                        <CmsInput
+                          inputSize="medium"
+                          placeholder="교육 내용을 작성하세요"
+                          width="100%"
+                          value={field.value ?? row.content}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                  ) : undefined
+                }
+              />
+            </DetailInfoForm.Row>
+          )
+        })}
       </DetailInfoForm>
     )
   }
@@ -351,12 +325,14 @@ export function EducationScheduleSettingsSection({
   program,
   isEditMode = false,
   form,
+  forceCompanySchoolLayout = false,
 }: {
   program: Program
   isEditMode?: boolean
   form?: UseFormReturn<ProgramDetailEditFormValues>
+  forceCompanySchoolLayout?: boolean
 }) {
-  if (!isCompanySchoolProgram(program)) return null
+  if (!forceCompanySchoolLayout && !isCompanySchoolProgram(program)) return null
 
   const isFormEdit = isEditMode && form
   const formLines = isFormEdit ? form.watch('educationScheduleLines') : undefined
@@ -364,16 +340,6 @@ export function EducationScheduleSettingsSection({
     ? (formLines ?? resolveCompanySchoolEducationScheduleLines(program))
     : resolveCompanySchoolEducationScheduleLines(program)
   const scheduleRange = parseCompanySchoolScheduleLineToRange(lines[0])
-
-  const removeLine = (index: number) => {
-    if (!form) return
-    const current = form.getValues('educationScheduleLines') ?? []
-    form.setValue(
-      'educationScheduleLines',
-      current.filter((_, i) => i !== index),
-      { shouldDirty: true }
-    )
-  }
 
   const handleScheduleRangeChange = (range: [Dayjs | null, Dayjs | null]) => {
     if (!form) return
@@ -390,34 +356,37 @@ export function EducationScheduleSettingsSection({
       mode={isFormEdit ? 'edit' : 'view'}
       className="detail-info-form--gap"
     >
-      {isFormEdit ? (
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="교육 진행 일정 선택"
-            fullRow
-            edit={
-              <ParagraphDatePicker
-                mode="range"
-                value={scheduleRange}
-                onChange={handleScheduleRangeChange}
-                width={360}
-                placeholder={['진행 기간을 선택하세요', '진행 기간을 선택하세요']}
-              />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-      ) : null}
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="교육 진행 예정일"
+          label="교육 진행 일정 선택"
           fullRow
-          readOnlyDisplay
-          view={
-            <EducationSchedulePreviewLines
-              lines={lines}
-              onRemove={isFormEdit ? removeLine : undefined}
-            />
+          view={<EducationSchedulePreviewLines lines={lines} />}
+          edit={
+            <div className="detail-info-form-inputs-wrapper-no-gap">
+              <ParagraphDatePicker
+                mode="single"
+                presetMode="period"
+                customizable={false}
+                showTimeToggle={false}
+                suppressAutoTodayWhenEmpty
+                value={scheduleRange[0]}
+                appliedSurfaceRange={
+                  scheduleRange[0] && scheduleRange[1]
+                    ? [scheduleRange[0], scheduleRange[1]]
+                    : null
+                }
+                appliedSurfaceWithTime={false}
+                width={320}
+                placeholder="진행 기간을 선택하세요"
+                onRangeChange={range => handleScheduleRangeChange(range)}
+                onChange={next => {
+                  if (next == null) {
+                    if (!form) return
+                    form.setValue('educationScheduleLines', [], { shouldDirty: true })
+                  }
+                }}
+              />
+            </div>
           }
         />
       </DetailInfoForm.Row>

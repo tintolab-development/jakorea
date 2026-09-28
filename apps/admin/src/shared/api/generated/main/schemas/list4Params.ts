@@ -9,6 +9,10 @@
 export type List4Params = {
 enabled?: boolean;
 popupName?: string;
+/**
+ * Case-insensitive partial match on alternative text. Blank is ignored.
+ */
+altText?: string;
 periodStart?: string;
 periodEnd?: string;
 };

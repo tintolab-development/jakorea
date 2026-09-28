@@ -21,7 +21,7 @@ export function ProgramEditInfoActions({
   onSave,
   saving = false,
   disabled = false,
-  idleVariant = 'primary',
+  idleVariant = 'secondary',
 }: ProgramEditInfoActionsProps) {
   return (
     <CmsButton

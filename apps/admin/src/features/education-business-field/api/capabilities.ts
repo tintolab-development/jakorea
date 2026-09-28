@@ -1,8 +1,6 @@
 /**
- * 사업분야 — remote API opt-in
+ * 사업분야 — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseEducationBusinessFieldRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

@@ -47,3 +47,13 @@ export type HeroBannerUpdateInput = {
   bottomText?: string
   linkUrl?: string
 }
+
+/** 홈 히어로는 최소 1건 사용 */
+export const MIN_ACTIVE_HERO_BANNERS = 1
+
+export class HeroBannerMinActiveError extends Error {
+  constructor() {
+    super(`히어로 배너는 최소 ${MIN_ACTIVE_HERO_BANNERS}개 이상 사용해야 합니다.`)
+    this.name = 'HeroBannerMinActiveError'
+  }
+}

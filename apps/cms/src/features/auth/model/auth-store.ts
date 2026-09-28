@@ -63,6 +63,15 @@ interface AuthState {
   setMfaVerified: () => void // Phase 0.5.1: MFA 인증 완료 처리 (Mock TOTP)
   completeAdminAuth: (tokens: AuthTokenResponse) => void // 실 API MFA 검증 후 JWT 저장
   applySocialAuthTokens: (tokens: AuthTokenResponse) => void // 실 API 소셜 SSO 토큰 저장
+  /** 소셜 로그인 session consume이 MFA challenge를 반환했을 때 비밀번호 로그인과 같은 MFA 모달 상태로 전환 */
+  beginAdminMfaChallenge: (input: {
+    challengeUuid: string
+    mfaMethod?: string
+    expiresAt?: string
+    totpSecret?: string
+    otpauthUri?: string
+    qrDataUrl?: string
+  }) => void
   clearPasswordChangeRequired: () => void
   setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => void // Phase 0.1.3: 인증 상태 직접 설정
   refreshToken: () => Promise<boolean> // Phase 0.5: 토큰 갱신 Mock 로직
@@ -295,6 +304,45 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY)
       }
       set({ passwordChangeRequired: false })
+    },
+
+    beginAdminMfaChallenge: input => {
+      const now = new Date().toISOString()
+      const placeholderUser: Omit<User, 'password'> = {
+        id: 'social-sso-mfa-pending',
+        email: 'admin@social-login.local',
+        name: '관리자',
+        role: 'ADMIN',
+        roleCode: 'VIEWER',
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      }
+      set({
+        user: withSessionAdminRole(placeholderUser),
+        token: null,
+        expiresAt: null,
+        isAuthenticated: false,
+        loading: false,
+        error: null,
+        requiresMfa: true,
+        mfaState: {
+          method: 'totp',
+          isRequired: true,
+          isVerified: false,
+          accountLabel: '관리자',
+          lastSentAt: null,
+          failedAttempts: 0,
+          isLocked: false,
+          lockUntil: null,
+          challengeUuid: input.challengeUuid,
+          mfaMethod: input.mfaMethod,
+          challengeExpiresAt: input.expiresAt,
+          totpSecret: input.totpSecret,
+          otpauthUri: input.otpauthUri,
+          qrDataUrl: input.qrDataUrl,
+        },
+      })
     },
 
     applySocialAuthTokens: (tokens: AuthTokenResponse) => {

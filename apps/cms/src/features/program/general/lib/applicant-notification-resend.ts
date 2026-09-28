@@ -45,6 +45,9 @@ function resolveConfirmNotifyLine(
   if (subjectKind === 'instructor') {
     return `확인 시 강사님에게 ${kindLabel} 알림이 재발송됩니다.`
   }
+  if (approvalStatus === 'rejected') {
+    return '확인 시 입력하신 반려 사유와 함께 알림이 재발송됩니다.'
+  }
   return `확인 시 ${kindLabel} 알림이 재발송됩니다.`
 }
 
@@ -57,12 +60,15 @@ export function buildApplicantNotificationResendMessage(
   return `${resolveSubjectQuestionLine(subjectKind, trimmedName, approvalStatus)}\n${resolveConfirmNotifyLine(subjectKind, approvalStatus)}`
 }
 
-/** 반려 재발송 시 사유 입력 필드 노출 */
+/** 반려 재발송 시 사유 입력 필드 노출 — 개인·기관 REJECTED */
 export function shouldShowApplicantNotificationResendReason(
   subjectKind: ApplicantNotificationResendSubjectKind,
   approvalStatus: ApplicantNotificationResendApprovalStatus
 ): boolean {
-  return subjectKind === 'individual' && approvalStatus === 'rejected'
+  return (
+    (subjectKind === 'individual' || subjectKind === 'institution') &&
+    approvalStatus === 'rejected'
+  )
 }
 
 export function resolveApplicantNotificationResendSentAt(

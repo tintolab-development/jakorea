@@ -1,4 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { toSameOriginApiPath } from '@/shared/lib/admin-file-upload/attachments'
+import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import customInstance from '@/shared/api/orval-mutator'
 import type { EducationJournalBulkDownloadRequest } from '@/shared/api/generated/dashboard/schemas/educationJournalBulkDownloadRequest'
 import type { EducationJournalBulkDownloadResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalBulkDownloadResponse'
@@ -74,7 +76,7 @@ export async function fetchTrainedTeacherEducationJournalFileBlob(
   downloadEndpoint: string
 ): Promise<Blob> {
   return customInstance<Blob>({
-    url: downloadEndpoint,
+    url: toSameOriginApiPath(downloadEndpoint, getApiBaseUrl()) ?? downloadEndpoint,
     method: 'GET',
     responseType: 'blob',
   })

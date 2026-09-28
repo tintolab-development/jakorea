@@ -7,6 +7,7 @@
  */
 
 export type Reports1Params = {
+q?: string;
 page?: number;
 size?: number;
 };

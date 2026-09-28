@@ -14,13 +14,21 @@ import { FileSelectField } from '@/shared/ui/file-select-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
 import {
-  ADMIN_FILE_PURPOSE,
-  contentUrlForFileObjectId,
-  createFileAttachment,
   parseFileObjectId,
-  programFileOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import {
+  fetchProgramAttachments,
+  programDetailAttachmentOwner,
+  programThumbnailOwner,
+  putProgramAttachments,
+} from '@/features/program/shared/api/program-attachments'
+import {
+  fetchProgramThumbnail,
+  loadProgramThumbnailPreviewUrl,
+  putProgramThumbnail,
+} from '@/features/program/shared/api/program-thumbnail'
+import { useCmsAlert } from '@/shared/ui'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
@@ -44,12 +52,28 @@ const ATTACHMENT_GUIDE_LINES = [
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
-const PLACEHOLDER_ADDITIONAL_IMAGE =
-  'https://via.placeholder.com/600x200/f0f0f0/999?text=추가+내용+이미지'
 const FALLBACK_ADDITIONAL_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='200' viewBox='0 0 600 200'%3E%3Crect fill='%23f5f5f5' width='600' height='200'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='14'%3E추가 내용 이미지%3C/text%3E%3C/svg%3E"
 
 export type DetailInfoEmptyReadDisplay = 'mock-default' | 'dash'
+
+function revokeBlobUrl(url: string | null | undefined) {
+  if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+}
+
+/** `/content` 경로는 대표 이미지를 열지 못한다. http(s)·blob 만 미리보기로 쓴다. */
+function readableThumbnailUrl(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim()
+  if (!trimmed || trimmed.includes('/api/admin/files/')) return undefined
+  if (
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('data:') ||
+    /^https?:\/\//i.test(trimmed)
+  ) {
+    return trimmed
+  }
+  return undefined
+}
 
 function resolveTextReadContent(
   raw: string | undefined,
@@ -93,6 +117,10 @@ function useDetailInfoEditorBlock(
   const [editorOpen, setEditorOpen] = useState(false)
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
   const [thumbnailPreviewBlobUrl, setThumbnailPreviewBlobUrl] = useState<string | null>(null)
+  const [linkedThumbnail, setLinkedThumbnail] = useState<{
+    url: string
+    fileName: string
+  } | null>(null)
 
   useEffect(() => {
     if (!isEditMode) {
@@ -129,16 +157,97 @@ function useDetailInfoEditorBlock(
   }, [isEditMode, onRegisterGetAdditionalContentHtml])
 
   const isFormEdit = Boolean(isEditMode && form)
+  const [linkedAttachmentNames, setLinkedAttachmentNames] = useState<string[] | null>(null)
   const displayFileNames = isFormEdit
     ? (form!.watch('attachmentFileNames') ?? [])
-    : (program.attachmentFileNames ?? [])
+    : (linkedAttachmentNames ?? program.attachmentFileNames ?? [])
 
-  const thumbnailUrl =
-    isFormEdit && form
-      ? (form.watch('keyVisualImage') ?? form.watch('posterImage') ?? '') || undefined
-      : program.keyVisualImage || program.posterImage
-  const displayThumbnailUrl = thumbnailPreviewBlobUrl ?? thumbnailUrl
-  const thumbnailFilename = thumbnailUrl ? getThumbnailFilename(thumbnailUrl) : ''
+  useEffect(() => {
+    const programId = parseFileObjectId(program.id)
+    if (programId == null) {
+      setLinkedAttachmentNames([])
+      return
+    }
+    let cancelled = false
+    void fetchProgramAttachments(programId)
+      .then(items => {
+        if (cancelled) return
+        const names = items
+          .map(item => item.originalFileName?.trim() || '')
+          .filter(Boolean)
+        setLinkedAttachmentNames(names)
+        if (form) {
+          form.setValue('attachmentFileNames', names, { shouldDirty: false })
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLinkedAttachmentNames(program.attachmentFileNames ?? [])
+      })
+    return () => {
+      cancelled = true
+    }
+    // form identity는 렌더마다 바뀔 수 있어 program.id 기준으로만 동기화
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync from attachments API SSOT
+  }, [program.id])
+
+  useEffect(() => {
+    const programId = parseFileObjectId(program.id)
+    if (programId == null) {
+      setLinkedThumbnail(null)
+      return
+    }
+    let cancelled = false
+    let createdUrl: string | null = null
+    void (async () => {
+      const thumbnail = await fetchProgramThumbnail(programId)
+      if (cancelled || thumbnail.fileObjectId == null) {
+        if (!cancelled) {
+          setLinkedThumbnail(prev => {
+            revokeBlobUrl(prev?.url)
+            return null
+          })
+        }
+        return
+      }
+      const nextUrl = await loadProgramThumbnailPreviewUrl(thumbnail.fileObjectId)
+      if (cancelled) {
+        revokeBlobUrl(nextUrl)
+        return
+      }
+      createdUrl = nextUrl
+      setLinkedThumbnail(prev => {
+        if (prev?.url !== nextUrl) revokeBlobUrl(prev?.url)
+        return {
+          url: nextUrl,
+          fileName: thumbnail.originalFileName?.trim() || '',
+        }
+      })
+    })().catch(() => {
+      if (!cancelled) {
+        setLinkedThumbnail(prev => {
+          revokeBlobUrl(prev?.url)
+          return null
+        })
+      }
+    })
+    return () => {
+      cancelled = true
+      revokeBlobUrl(createdUrl)
+    }
+  }, [program.id])
+
+  const legacyThumbnailUrl = readableThumbnailUrl(
+    (isFormEdit && form
+      ? form.watch('keyVisualImage') || form.watch('posterImage')
+      : undefined) ||
+      program.keyVisualImage ||
+      program.posterImage
+  )
+  const displayThumbnailUrl =
+    thumbnailPreviewBlobUrl || linkedThumbnail?.url || legacyThumbnailUrl
+  const thumbnailFilename =
+    linkedThumbnail?.fileName ||
+    (legacyThumbnailUrl ? getThumbnailFilename(legacyThumbnailUrl) : '')
 
   return {
     editorOpen,
@@ -147,6 +256,7 @@ function useDetailInfoEditorBlock(
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
+    setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
     displayThumbnailUrl,
@@ -177,6 +287,7 @@ function ThumbnailImageRow({
   uploadingThumbnail,
   setUploadingThumbnail,
   setThumbnailPreviewBlobUrl,
+  setLinkedThumbnail,
   displayThumbnailUrl,
   thumbnailFilename,
   guideLines,
@@ -189,11 +300,15 @@ function ThumbnailImageRow({
   uploadingThumbnail: boolean
   setUploadingThumbnail: (v: boolean) => void
   setThumbnailPreviewBlobUrl: React.Dispatch<React.SetStateAction<string | null>>
+  setLinkedThumbnail: React.Dispatch<
+    React.SetStateAction<{ url: string; fileName: string } | null>
+  >
   displayThumbnailUrl: string | undefined
   thumbnailFilename: string
   guideLines: string[]
   showRequiredStar: boolean
 }) {
+  const { showAlert } = useCmsAlert()
   return (
     <tr>
       <th>
@@ -240,20 +355,34 @@ function ThumbnailImageRow({
                         setThumbnailPreviewBlobUrl(blobUrl)
                         setUploadingThumbnail(true)
                         try {
-                          const programId = parseFileObjectId(program.id) ?? 1
+                          const programId = parseFileObjectId(program.id)
+                          if (programId == null) {
+                            throw new Error('프로그램 번호가 없어 대표 이미지를 저장할 수 없습니다.')
+                          }
                           const uploaded = await uploadAdminFileMaybeMock({
                             file,
-                            owner: programFileOwner(
-                              programId,
-                              ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL
-                            ),
+                            owner: programThumbnailOwner(programId),
                           })
-                          const url = contentUrlForFileObjectId(uploaded.fileObjectId)
-                          form.setValue('keyVisualImage', url)
-                          form.setValue('posterImage', url)
-                        } catch (e) {
+                          await putProgramThumbnail(programId, uploaded.fileObjectId)
+                          let previewUrl = blobUrl
+                          try {
+                            previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
+                            if (previewUrl !== blobUrl) URL.revokeObjectURL(blobUrl)
+                          } catch {
+                            previewUrl = blobUrl
+                          }
+                          setLinkedThumbnail(prev => {
+                            if (prev?.url !== previewUrl) revokeBlobUrl(prev?.url)
+                            return { url: previewUrl, fileName: file.name }
+                          })
+                          setThumbnailPreviewBlobUrl(null)
+                        } catch {
                           URL.revokeObjectURL(blobUrl)
                           setThumbnailPreviewBlobUrl(null)
+                          showAlert({
+                            title: '안내',
+                            content: '대표 이미지를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                          })
                         } finally {
                           setUploadingThumbnail(false)
                         }
@@ -270,6 +399,19 @@ function ThumbnailImageRow({
                         if (form) {
                           form.setValue('keyVisualImage', undefined)
                           form.setValue('posterImage', undefined)
+                        }
+                        const programId = parseFileObjectId(program.id)
+                        setLinkedThumbnail(prev => {
+                          revokeBlobUrl(prev?.url)
+                          return null
+                        })
+                        if (programId != null) {
+                          void putProgramThumbnail(programId, null).catch(() => {
+                            showAlert({
+                              title: '안내',
+                              content: '대표 이미지를 지우지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                            })
+                          })
                         }
                       }
                     : undefined
@@ -328,15 +470,17 @@ function AdditionalContentRow({
           '-'
         ) : (
           <div className="program-detail-info-tab__additional-content">
-            <div className="program-detail-info-tab__additional-image-wrap">
-              <Image
-                src={program.keyVisualImage || program.posterImage || PLACEHOLDER_ADDITIONAL_IMAGE}
-                alt="추가 내용"
-                className="program-detail-info-tab__additional-image"
-                preview={{ mask: '확대 보기' }}
-                fallback={FALLBACK_ADDITIONAL_SVG}
-              />
-            </div>
+            {program.keyVisualImage || program.posterImage ? (
+              <div className="program-detail-info-tab__additional-image-wrap">
+                <Image
+                  src={program.keyVisualImage || program.posterImage}
+                  alt="추가 내용"
+                  className="program-detail-info-tab__additional-image"
+                  preview={{ mask: '확대 보기' }}
+                  fallback={FALLBACK_ADDITIONAL_SVG}
+                />
+              </div>
+            ) : null}
             <RichTextViewer
               content={resolveAdditionalContentHtml(program, emptyReadDisplay)}
               contentFormat="html"
@@ -388,35 +532,56 @@ function AttachmentRowStandard({
             onFilesChange={
               isFormEdit
                 ? async files => {
-                    const programId = parseFileObjectId(program.id) ?? 1
-                    const owner = programFileOwner(
-                      programId,
-                      ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT
-                    )
-                    const current = form!.getValues('attachmentFileNames') ?? []
-                    const uploadedNames: string[] = []
+                    const programId = parseFileObjectId(program.id)
+                    if (programId == null) return
+                    const owner = programDetailAttachmentOwner(programId)
+                    const uploadedIds: number[] = []
                     for (const file of files) {
                       const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                      await createFileAttachment({
-                        fileObjectId: uploaded.fileObjectId,
-                        owner,
-                        attachmentType: ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT,
-                        displayOrder: current.length + uploadedNames.length + 1,
-                      }).catch(() => undefined)
-                      uploadedNames.push(file.name)
+                      uploadedIds.push(uploaded.fileObjectId)
                     }
-                    form!.setValue('attachmentFileNames', [...current, ...uploadedNames])
+                    if (uploadedIds.length === 0) return
+                    const existing = await fetchProgramAttachments(programId).catch(() => [])
+                    const existingIds = existing
+                      .map(item => item.fileObjectId)
+                      .filter((id): id is number => typeof id === 'number' && id > 0)
+                    const linked = await putProgramAttachments(programId, [
+                      ...existingIds,
+                      ...uploadedIds,
+                    ])
+                    const names = linked
+                      .map(item => item.originalFileName?.trim() || '')
+                      .filter(Boolean)
+                    form!.setValue('attachmentFileNames', names)
                   }
                 : undefined
             }
             onRemoveFile={
               isFormEdit
                 ? index => {
-                    const list = form!.getValues('attachmentFileNames') ?? []
-                    form!.setValue(
-                      'attachmentFileNames',
-                      list.filter((_, i) => i !== index)
-                    )
+                    const programId = parseFileObjectId(program.id)
+                    if (programId == null) {
+                      const list = form!.getValues('attachmentFileNames') ?? []
+                      form!.setValue(
+                        'attachmentFileNames',
+                        list.filter((_, i) => i !== index)
+                      )
+                      return
+                    }
+                    void (async () => {
+                      const existing = await fetchProgramAttachments(programId).catch(() => [])
+                      const remainingIds = existing
+                        .map(item => item.fileObjectId)
+                        .filter((id): id is number => typeof id === 'number' && id > 0)
+                        .filter((_, i) => i !== index)
+                      const linked = await putProgramAttachments(programId, remainingIds).catch(
+                        () => [] as Awaited<ReturnType<typeof putProgramAttachments>>
+                      )
+                      const names = linked
+                        .map(item => item.originalFileName?.trim() || '')
+                        .filter(Boolean)
+                      form!.setValue('attachmentFileNames', names)
+                    })()
                   }
                 : undefined
             }
@@ -474,6 +639,7 @@ export function DetailInfoSection({
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
+    setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
     displayThumbnailUrl,
@@ -513,6 +679,7 @@ export function DetailInfoSection({
               uploadingThumbnail={uploadingThumbnail}
               setUploadingThumbnail={setUploadingThumbnail}
               setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+              setLinkedThumbnail={setLinkedThumbnail}
               displayThumbnailUrl={displayThumbnailUrl}
               thumbnailFilename={thumbnailFilename}
               guideLines={THUMBNAIL_GUIDE_LINES}
@@ -620,6 +787,7 @@ export function InstructorDetailInfoSection({
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
+    setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
     displayThumbnailUrl,
@@ -665,6 +833,7 @@ export function InstructorDetailInfoSection({
             uploadingThumbnail={uploadingThumbnail}
             setUploadingThumbnail={setUploadingThumbnail}
             setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+            setLinkedThumbnail={setLinkedThumbnail}
             displayThumbnailUrl={displayThumbnailUrl}
             thumbnailFilename={thumbnailFilename}
             guideLines={THUMBNAIL_GUIDE_LINES}
@@ -770,6 +939,7 @@ export function VolunteerDetailInfoSection({
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
+    setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
     displayThumbnailUrl,
@@ -817,6 +987,7 @@ export function VolunteerDetailInfoSection({
             uploadingThumbnail={uploadingThumbnail}
             setUploadingThumbnail={setUploadingThumbnail}
             setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+            setLinkedThumbnail={setLinkedThumbnail}
             displayThumbnailUrl={displayThumbnailUrl}
             thumbnailFilename={thumbnailFilename}
             guideLines={THUMBNAIL_GUIDE_LINES}
@@ -891,35 +1062,58 @@ export function VolunteerDetailInfoSection({
                   onFilesChange={
                     isFormEdit
                       ? async files => {
-                          const programId = parseFileObjectId(program.id) ?? 1
-                          const owner = programFileOwner(
-                            programId,
-                            ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT
-                          )
-                          const current = f!.getValues('attachmentFileNames') ?? []
-                          const uploadedNames: string[] = []
+                          const programId = parseFileObjectId(program.id)
+                          if (programId == null) return
+                          const owner = programDetailAttachmentOwner(programId)
+                          const uploadedIds: number[] = []
                           for (const file of files) {
                             const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                            await createFileAttachment({
-                              fileObjectId: uploaded.fileObjectId,
-                              owner,
-                              attachmentType: ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT,
-                              displayOrder: current.length + uploadedNames.length + 1,
-                            }).catch(() => undefined)
-                            uploadedNames.push(file.name)
+                            uploadedIds.push(uploaded.fileObjectId)
                           }
-                          f!.setValue('attachmentFileNames', [...current, ...uploadedNames])
+                          if (uploadedIds.length === 0) return
+                          const existing = await fetchProgramAttachments(programId).catch(() => [])
+                          const existingIds = existing
+                            .map(item => item.fileObjectId)
+                            .filter((id): id is number => typeof id === 'number' && id > 0)
+                          const linked = await putProgramAttachments(programId, [
+                            ...existingIds,
+                            ...uploadedIds,
+                          ])
+                          const names = linked
+                            .map(item => item.originalFileName?.trim() || '')
+                            .filter(Boolean)
+                          f!.setValue('attachmentFileNames', names)
                         }
                       : undefined
                   }
                   onRemoveFile={
                     isFormEdit
                       ? index => {
-                          const list = f!.getValues('attachmentFileNames') ?? []
-                          f!.setValue(
-                            'attachmentFileNames',
-                            list.filter((_, i) => i !== index)
-                          )
+                          const programId = parseFileObjectId(program.id)
+                          if (programId == null) {
+                            const list = f!.getValues('attachmentFileNames') ?? []
+                            f!.setValue(
+                              'attachmentFileNames',
+                              list.filter((_, i) => i !== index)
+                            )
+                            return
+                          }
+                          void (async () => {
+                            const existing = await fetchProgramAttachments(programId).catch(
+                              () => []
+                            )
+                            const remainingIds = existing
+                              .map(item => item.fileObjectId)
+                              .filter((id): id is number => typeof id === 'number' && id > 0)
+                              .filter((_, i) => i !== index)
+                            const linked = await putProgramAttachments(programId, remainingIds).catch(
+                              () => [] as Awaited<ReturnType<typeof putProgramAttachments>>
+                            )
+                            const names = linked
+                              .map(item => item.originalFileName?.trim() || '')
+                              .filter(Boolean)
+                            f!.setValue('attachmentFileNames', names)
+                          })()
                         }
                       : undefined
                   }

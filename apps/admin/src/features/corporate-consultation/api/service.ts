@@ -26,7 +26,7 @@ function sponsorshipApi() {
 async function listRemoteConsultations(
   filter: CorporateConsultationListFilter = {},
 ): Promise<CorporateConsultationListResult> {
-  const response = await sponsorshipApi().list12(toConsultationListParams(filter))
+  const response = await sponsorshipApi().list14(toConsultationListParams(filter))
   return {
     items: (response.items ?? []).map(mapConsultationListItemToDomain),
     totalCount: response.totalCount ?? response.items?.length ?? 0,
@@ -60,7 +60,7 @@ export async function getCorporateConsultationService(
     const numericId = Number(id)
     if (!Number.isFinite(numericId) || numericId <= 0) return null
     try {
-      const row = await sponsorshipApi().detail5(numericId)
+      const row = await sponsorshipApi().detail8(numericId)
       return mapConsultationDetailToDomain(row)
     } catch {
       return null
@@ -77,7 +77,7 @@ export async function downloadCorporateConsultationAttachmentService(
   }
   const numericId = Number(id)
   if (!Number.isFinite(numericId) || numericId <= 0) return null
-  const response = await sponsorshipApi().attachmentDownload(numericId)
+  const response = await sponsorshipApi().attachmentDownload1(numericId)
   if (!response.downloadUrl) return null
   return {
     downloadUrl: response.downloadUrl,
@@ -119,7 +119,7 @@ export async function confirmCorporateConsultationsService(
 
     if (rows.length === 1) {
       const row = rows[0]!
-      const updated = await sponsorshipApi().updateStatus(
+      const updated = await sponsorshipApi().updateStatus1(
         Number(row.id),
         toStatusUpdateRequest(row, 'confirmed'),
       )

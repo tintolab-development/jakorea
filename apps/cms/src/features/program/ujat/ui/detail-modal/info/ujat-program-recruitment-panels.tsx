@@ -10,13 +10,16 @@ import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template
 import {
   getUjatRecruitInstitutionDraft,
   getUjatRecruitVolunteerDraft,
-  hydrateAllUjatRecruitTemplatesFromRemote,
+  hydrateUjatRecruitTemplatesForProgram,
   UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT,
 } from './ujat-recruit-template-draft'
 import type { UjatRecruitParagraphProps } from './ujat-recruit-paragraph-props'
 import { resolveUjatRecruitParagraphMode } from './ujat-recruit-paragraph-props'
 import { volunteerHalfFromRecruitTab, volunteerRecruitInfoSectionTitle, type UjatRecruitTabKey } from './ujat-program-detail-recruitment-tabs'
-import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import {
+  resolveUjatRecruitDisplayProgram,
+  ujatRecruitDisplayKindFromVolunteerHalf,
+} from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './ujat-program-recruitment.css'
 
@@ -79,17 +82,22 @@ export function UjatProgramRecruitmentPanels({
   registerVolunteersAdditionalHtml?: (getter: () => string) => void
 }) {
   const volunteerHalf = volunteerHalfFromRecruitTab(activeRecruitTab)
-  const recruitDisplayProgram = resolveUjatRecruitDisplayProgram(program)
+  const recruitDisplayProgram = resolveUjatRecruitDisplayProgram(
+    program,
+    activeRecruitTab === 'recruit_participant'
+      ? 'institution'
+      : ujatRecruitDisplayKindFromVolunteerHalf(volunteerHalf ?? 'h1')
+  )
   const [draftRevision, setDraftRevision] = useState(0)
 
   useEffect(() => {
-    void hydrateAllUjatRecruitTemplatesFromRemote().then(() => {
+    void hydrateUjatRecruitTemplatesForProgram(program).then(() => {
       setDraftRevision(v => v + 1)
     })
     const onChanged = () => setDraftRevision(v => v + 1)
     window.addEventListener(UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT, onChanged)
     return () => window.removeEventListener(UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT, onChanged)
-  }, [])
+  }, [program])
 
   void draftRevision
 
@@ -137,7 +145,7 @@ export function UjatProgramRecruitmentPanels({
   }
 
   return (
-    <div className="ujat-program-recruitment-panels">
+    <div className="ujat-program-recruitment-panels" key={activeRecruitTab}>
       {draft.paragraphs.map(p => {
         if (p.kind !== 'single_item' || p.variant !== 'horizontal_table') return null
         const body = renderVolunteerParagraph(

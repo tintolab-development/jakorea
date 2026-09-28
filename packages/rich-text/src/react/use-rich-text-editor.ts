@@ -23,12 +23,21 @@ export function useRichTextEditor({
   extraExtensions,
   onReady,
   shouldRerenderOnTransaction = false,
+  resolveImageSrc,
 }: UseRichTextEditorOptions) {
   const onReadyRef = useRef(onReady)
   onReadyRef.current = onReady
+  const resolveImageSrcRef = useRef(resolveImageSrc)
+  resolveImageSrcRef.current = resolveImageSrc
 
   const extensions = useMemo(
-    () => createRichTextExtensions({ placeholder, preset, extraExtensions }),
+    () =>
+      createRichTextExtensions({
+        placeholder,
+        preset,
+        extraExtensions,
+        getResolveImageSrc: () => resolveImageSrcRef.current,
+      }),
     [placeholder, preset, extraExtensions]
   )
 

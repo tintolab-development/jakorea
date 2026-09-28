@@ -1,90 +1,32 @@
-import { isNoticesPath, NOTICES_PATH } from '@/features/notice'
-import { isDirectionsPath, DIRECTIONS_PATH } from '@/features/directions'
-import { IMPACT_STORIES_PATH, isImpactStoriesPath } from '@/features/impact-story'
-import { INTRODUCTION_PATH, isIntroductionPath } from '@/features/introduction'
-import { isPeoplePath, PEOPLE_PATH } from '@/features/people'
-import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
-import { isResultsPath, RESULTS_PATH } from '@/features/result'
-import { isTextbooksPath, TEXTBOOKS_PATH } from '@/features/textbook'
-import { isTransparencyPath, TRANSPARENCY_PATH } from '@/features/transparency'
-import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
-import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
-import { TALENT_DONATION_PATH } from '@/features/talent-donation'
+import { isCareersPath } from '@/features/careers'
+import { isHistoryPath } from '@/features/history'
+import { isNoticesPath } from '@/features/notice'
+import { isDirectionsPath } from '@/features/directions'
+import { isImpactStoriesPath } from '@/features/impact-story'
+import { isIntroductionPath } from '@/features/introduction'
+import { isPeoplePath } from '@/features/people'
+import { isProgramsPath } from '@/features/program'
+import { isResultsPath } from '@/features/result'
+import { isTextbooksPath } from '@/features/textbook'
+import { isTransparencyPath } from '@/features/transparency'
 import { MYPAGE_PATH } from '@/features/mypage'
 import {
-  ABOUT_CAREERS_PATH,
-  ABOUT_HISTORY_PATH,
-  EDUCATION_CAREER_PATH,
-  EDUCATION_DIGITAL_LITERACY_PATH,
-  EDUCATION_ENTREPRENEURSHIP_PATH,
-  EDUCATION_FINANCE_PATH,
-  isTemporaryPagePath,
-} from '@/shared/config/gnb-temporary-paths'
+  gnbFallbackGroups,
+  type GnbNavGroup,
+  type GnbNavItem,
+} from '@/features/site-shell/lib/menu-routes'
+import { isTemporaryPagePath } from '@/shared/config/gnb-temporary-paths'
 import { getDevAuthLoggedIn, resolveLoginRequiredPath } from '@/shared/lib'
 import logOutIconUrl from '../image/icon/log-out.svg'
 import notificationsIconUrl from '../image/icon/notifications.svg'
 import personIconUrl from '../image/icon/person.svg'
 
-export type NavigationSubItem = {
-  label: string
-  href?: string
-  external?: boolean
-}
+export type NavigationSubItem = GnbNavItem
 
-export type NavigationGroup = {
-  label: string
-  href?: string
-  children: NavigationSubItem[]
-}
+export type NavigationGroup = GnbNavGroup
 
-/** Notion GNB 기획(https://app.notion.com/p/380f3e2a77d0816ab479e7a3564fc0fc) 기준 */
-export const navigationGroups = [
-  {
-    label: 'JA Korea',
-    children: [
-      { label: '기관소개', href: INTRODUCTION_PATH },
-      { label: '투명경영', href: TRANSPARENCY_PATH },
-      { label: '함께하는 사람들', href: PEOPLE_PATH },
-      { label: '오시는 길', href: DIRECTIONS_PATH },
-      { label: '공지사항', href: NOTICES_PATH },
-      { label: 'JA History', href: ABOUT_HISTORY_PATH },
-      { label: '채용', href: ABOUT_CAREERS_PATH },
-    ],
-  },
-  {
-    label: '임팩트 스토리',
-    href: IMPACT_STORIES_PATH,
-    children: [{ label: '임팩트 스토리', href: IMPACT_STORIES_PATH }],
-  },
-  {
-    label: '교육 소개',
-    children: [
-      { label: '진로취업', href: EDUCATION_CAREER_PATH },
-      { label: '경제금융', href: EDUCATION_FINANCE_PATH },
-      { label: '기업가 정신', href: EDUCATION_ENTREPRENEURSHIP_PATH },
-      { label: '디지털 리터러시', href: EDUCATION_DIGITAL_LITERACY_PATH },
-      { label: '교재 소개', href: TEXTBOOKS_PATH },
-    ],
-  },
-  {
-    label: '참여하기',
-    children: [
-      { label: '프로그램 신청', href: PROGRAMS_PATH },
-      { label: '결과 확인', href: RESULTS_PATH },
-      // 외부 링크 URL은 추후 연결 예정
-      { label: '온라인 학습', external: true },
-      { label: 'Alumni', external: true },
-    ],
-  },
-  {
-    label: '후원하기',
-    children: [
-      { label: '개인후원', href: INDIVIDUAL_DONATION_PATH },
-      { label: '기업후원', href: CORPORATE_DONATION_PATH },
-      { label: '재능기부', href: TALENT_DONATION_PATH },
-    ],
-  },
-] as const satisfies readonly NavigationGroup[]
+/** Notion GNB 기획 기준 fallback. href는 `menu-routes`가 SSOT. */
+export const navigationGroups = gnbFallbackGroups
 
 export type NavigationItemLabel = (typeof navigationGroups)[number]['label']
 
@@ -113,6 +55,28 @@ export function getLoggedInActionRoute(label: string) {
   return loggedInActionRoutes[label]
 }
 
+/** 상위 카테고리 클릭 시 이동 대상. 표시 순서의 첫 하위 메뉴를 쓴다. */
+export function getTopCategoryNavigationTarget(
+  group: NavigationGroup,
+): { href: string; external: boolean } | null {
+  const firstChild = group.children[0]
+  if (firstChild?.href) {
+    return { href: firstChild.href, external: Boolean(firstChild.external) }
+  }
+
+  if (group.href) {
+    return { href: group.href, external: false }
+  }
+
+  return null
+}
+
+export function getActiveNavigationGroupCode(pathname: string): string | null {
+  const label = getActiveNavigationItem(pathname)
+  if (!label) return null
+  return navigationGroups.find(group => group.label === label)?.groupCode ?? null
+}
+
 export function getActiveNavigationItem(pathname: string): NavigationItemLabel | null {
   if (isProgramsPath(pathname) || isResultsPath(pathname)) {
     return '참여하기'
@@ -139,6 +103,8 @@ export function getActiveNavigationItem(pathname: string): NavigationItemLabel |
     isDirectionsPath(pathname) ||
     isTransparencyPath(pathname) ||
     isIntroductionPath(pathname) ||
+    isCareersPath(pathname) ||
+    isHistoryPath(pathname) ||
     isTemporaryPagePath(pathname)
   ) {
     return 'JA Korea'

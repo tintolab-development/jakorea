@@ -19,6 +19,9 @@ export const WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE = '탈퇴'
 export const WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER =
   '탈퇴하시려면 해당란에 [탈퇴]를 입력해 주세요.'
 
+/** 회원 삭제/탈퇴 안내 모달 — 관리자 비밀번호 확인 placeholder */
+export const DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER = '비밀번호를 입력해 주세요.'
+
 /**
  * 확인 입력 정규화 — trim + 전체가 `[값]` 형태면 대괄호 제거.
  * placeholder 강조(`[삭제]`)를 문자 그대로 입력한 경우도 통과시킨다.

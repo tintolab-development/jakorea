@@ -1,11 +1,12 @@
 import { ProgramBackButton } from '@/features/program'
 import {
-  getAdjacentImpactStories,
   getImpactStoryIdFromPath,
   IMPACT_STORIES_PATH,
   ImpactStoryAdjacentNav,
-  useMockImpactStoryDetail,
+  useImpactStoryDetail,
+  type ImpactStoryDetailStatus,
 } from '@/features/impact-story'
+import { RichTextViewer } from '@/shared/rich-text'
 import { PFButton, PFCategoryBadge, PFDivider, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
@@ -14,10 +15,16 @@ function formatViewCount(count: number) {
   return count.toLocaleString('ko-KR')
 }
 
+function statusMessage(status: ImpactStoryDetailStatus) {
+  if (status === 'loading') return '임팩트 스토리를 불러오는 중입니다.'
+  if (status === 'error') return '임팩트 스토리를 불러오지 못했습니다.'
+  return '임팩트 스토리를 찾을 수 없습니다.'
+}
+
 export function ImpactStoryDetailPage() {
   const navigate = useNavigate()
   const storyId = getImpactStoryIdFromPath()
-  const detail = useMockImpactStoryDetail(storyId)
+  const { data: detail, status, adjacent, refetch } = useImpactStoryDetail(storyId)
 
   const handleBackToList = () => {
     if (window.history.length > 1) {
@@ -31,20 +38,29 @@ export function ImpactStoryDetailPage() {
     navigate(IMPACT_STORIES_PATH)
   }
 
-  if (!detail) {
+  if (status !== 'ready' || !detail) {
     return (
       <section className={styles.page}>
-        <div className={styles.back}>
-          <ProgramBackButton label="이전으로" onClick={handleBackToList} />
+        <div className={styles.main}>
+          <div className={styles.back}>
+            <ProgramBackButton label="이전으로" onClick={handleBackToList} />
+          </div>
+          <div className={styles.status}>
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              {statusMessage(status === 'ready' ? 'not-found' : status)}
+            </PFText>
+            {status === 'error' ? (
+              <PFButton variant="tertiary" size="large" onClick={refetch}>
+                다시 시도
+              </PFButton>
+            ) : null}
+          </div>
         </div>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          임팩트 스토리를 찾을 수 없습니다.
-        </PFText>
       </section>
     )
   }
 
-  const adjacent = getAdjacentImpactStories(detail.id)
+  const body = detail.body?.trim() ?? ''
 
   return (
     <section className={styles.page}>
@@ -83,21 +99,31 @@ export function ImpactStoryDetailPage() {
           <PFDivider variant="focus" />
 
           <div className={styles.body}>
-            {detail.blocks
-              .filter(block => block.type === 'image')
-              .map((block, index) => (
-                <div
-                  key={`image-${index}`}
-                  className={styles.imagePlaceholder}
-                  style={{
-                    height: block.heightPx != null ? `${block.heightPx}px` : undefined,
-                    aspectRatio:
-                      block.heightPx != null ? undefined : (block.aspectRatio ?? '16 / 9'),
-                    backgroundColor: detail.placeholderColor,
-                  }}
-                  aria-hidden="true"
-                />
-              ))}
+            {body ? (
+              <RichTextViewer
+                key={detail.id}
+                content={body}
+                contentFormat={detail.bodyFormat ?? 'html'}
+                maxHeight="none"
+                className={styles.content}
+              />
+            ) : (
+              detail.blocks
+                .filter(block => block.type === 'image')
+                .map((block, index) => (
+                  <div
+                    key={`image-${index}`}
+                    className={styles.imagePlaceholder}
+                    style={{
+                      height: block.heightPx != null ? `${block.heightPx}px` : undefined,
+                      aspectRatio:
+                        block.heightPx != null ? undefined : (block.aspectRatio ?? '16 / 9'),
+                      backgroundColor: detail.placeholderColor,
+                    }}
+                    aria-hidden="true"
+                  />
+                ))
+            )}
           </div>
 
           <div className={styles.footerNav}>

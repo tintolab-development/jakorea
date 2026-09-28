@@ -1,22 +1,37 @@
+import { Link } from 'react-router-dom'
 import type { NoticeListItem } from '../model/types'
 import { noticeDetailPath } from '../lib/constants'
+import { NOTICES_LIST_RETURN_STATE_KEY } from '../lib/list-params'
 import { PFChevronButton, PFText } from '@/shared/ui'
 import styles from './adjacent-nav.module.css'
 
 type NoticeAdjacentNavProps = {
   previous: NoticeListItem | null
   next: NoticeListItem | null
+  listReturnPath?: string
 }
 
-export function NoticeAdjacentNav({ previous, next }: NoticeAdjacentNavProps) {
+function adjacentState(listReturnPath?: string) {
+  if (!listReturnPath) return undefined
+  return { [NOTICES_LIST_RETURN_STATE_KEY]: listReturnPath }
+}
+
+export function NoticeAdjacentNav({
+  previous,
+  next,
+  listReturnPath,
+}: NoticeAdjacentNavProps) {
   if (!previous && !next) return null
+
+  const linkState = adjacentState(listReturnPath)
 
   return (
     <nav className={styles.nav} aria-label="이전글 다음글">
       {previous ? (
-        <a
+        <Link
           className={styles.link}
-          href={noticeDetailPath(previous.id)}
+          to={noticeDetailPath(previous.id)}
+          state={linkState}
           data-pf-chevron-hover=""
         >
           <PFChevronButton direction="left" decorative />
@@ -29,19 +44,21 @@ export function NoticeAdjacentNav({ previous, next }: NoticeAdjacentNavProps) {
               typo="bd-md-md"
               color="neutral-cool-700"
               className={styles.linkTitle}
+              title={previous.title}
             >
               {previous.title}
             </PFText>
           </span>
-        </a>
+        </Link>
       ) : (
         <span className={styles.placeholder} aria-hidden="true" />
       )}
 
       {next ? (
-        <a
+        <Link
           className={[styles.link, styles.linkNext].join(' ')}
-          href={noticeDetailPath(next.id)}
+          to={noticeDetailPath(next.id)}
+          state={linkState}
           data-pf-chevron-hover=""
         >
           <span className={[styles.copy, styles.copyNext].join(' ')}>
@@ -53,12 +70,13 @@ export function NoticeAdjacentNav({ previous, next }: NoticeAdjacentNavProps) {
               typo="bd-md-md"
               color="neutral-cool-700"
               className={styles.linkTitle}
+              title={next.title}
             >
               {next.title}
             </PFText>
           </span>
           <PFChevronButton direction="right" decorative />
-        </a>
+        </Link>
       ) : (
         <span className={styles.placeholder} aria-hidden="true" />
       )}

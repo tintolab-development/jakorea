@@ -1,0 +1,134 @@
+.panel {
+  display: flex;
+  box-sizing: border-box;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-20);
+  padding: var(--spacing-32) var(--spacing-24);
+  border-radius: var(--radius-4);
+}
+
+.dark {
+  background: rgb(255 255 255 / 10%);
+  color: var(--color-neutral-white);
+}
+
+.light {
+  background: var(--color-neutral-cool-50);
+  color: var(--color-neutral-black);
+}
+
+.tabs {
+  display: flex;
+  min-width: 0;
+  gap: var(--spacing-24);
+  overflow-x: auto;
+  padding-bottom: var(--spacing-24);
+  border-bottom: 1px solid rgb(255 255 255 / 20%);
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.light .tabs {
+  border-bottom-color: rgb(40 95 116 / 50%);
+}
+
+.tab {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgb(255 255 255 / 20%);
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 144%;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 3px;
+}
+
+.tabActive {
+  color: var(--color-neutral-white);
+  font-weight: 700;
+}
+
+.light .tab {
+  color: rgb(40 95 116 / 50%);
+}
+
+.light .tabActive {
+  color: var(--color-primary-700);
+}
+
+.title {
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: start;
+  column-gap: var(--spacing-20);
+}
+
+.year {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.event {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.eventLine {
+  margin: 0;
+}
+
+.tabpanel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-20);
+}
+
+.tabpanel:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 3px;
+}
+
+@media (--bp-pc-up) {
+  .panel {
+    gap: 14px;
+    padding: var(--spacing-60);
+  }
+
+  .tab {
+    font-size: 20px;
+  }
+
+  .item {
+    grid-template-columns: 80px minmax(0, 1fr);
+    column-gap: var(--spacing-40);
+  }
+}

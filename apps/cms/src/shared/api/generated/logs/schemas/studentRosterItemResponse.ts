@@ -8,6 +8,7 @@
 
 export interface StudentRosterItemResponse {
   rosterId?: number;
+  memberId?: number;
   studentName?: string;
   gender?: string;
   birthDate?: string;
@@ -16,6 +17,12 @@ export interface StudentRosterItemResponse {
   studentNo?: number;
   maskedPhone?: string;
   maskedEmail?: string;
+  notes?: string;
   participantId?: number;
   revisionNo?: number;
+  portraitConsentId?: number;
+  /** 초상권 동의 상태: NOT_RECORDED | CONSENTED | REFUSED | WITHDRAWN */
+  portraitConsentStatus?: string;
+  portraitConsentSourceArtifactId?: number;
+  portraitConsentUpdatedAt?: string;
 }

@@ -1,7 +1,6 @@
 export { TALENT_DONATION_PATH, TALENT_DONATION_APPLY_PATH } from './lib/constants'
 export { TALENT_APPLY_PAGE_TITLE } from './lib/apply-form'
 export { isTalentDonationPath, isTalentDonationApplyPath } from './lib/routes'
-export { MOCK_TALENT_DONATION } from './lib/mock-data'
 export { HERO_BG_URL, HERO_IMAGE_URL } from './lib/hero-image'
 export { HeroSection } from './ui/hero-section'
 export { MethodSection } from './ui/method-section'

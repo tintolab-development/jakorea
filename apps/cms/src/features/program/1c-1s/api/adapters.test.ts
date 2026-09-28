@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
+import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import {
   COMPANY_SCHOOL_PROGRAM_API_TYPE,
   mapCompanySchoolDetailToProgram,
+  mapCompanySchoolListItemToProgram,
   mapCompanySchoolToCreateRequest,
   mapCompanySchoolToUpdateRequest,
 } from './adapters'
@@ -53,14 +55,165 @@ const program: Program = {
 }
 
 describe('company-school adapters', () => {
-  it('creates with COMPANY_SCHOOL type and a full-year business period', () => {
+  it('creates with COMPANY_SCHOOL type', () => {
     const request = mapCompanySchoolToCreateRequest(program)
 
     expect(request.programType).toBe(COMPANY_SCHOOL_PROGRAM_API_TYPE)
+    expect(request.startDate).toBe(program.startDate)
+    expect(request.endDate).toBe(program.endDate)
     expect(request.businessStartDate).toBe(program.startDate)
     expect(request.businessEndDate).toBe(program.endDate)
     expect(request.generalVolunteers).toBe(0)
     expect(request.autoApplyDefaultFormBindings).toBe(true)
+  })
+
+  it('등록·수정 사업 기간은 연도를 넘어도 선택한 startDate/endDate를 그대로 보낸다', () => {
+    const partial: Program = {
+      ...program,
+      startDate: '2025-03-31T15:00:00.000Z',
+      endDate: '2027-08-23T14:59:59.999Z',
+    }
+    const created = mapCompanySchoolToCreateRequest(partial)
+    const updated = mapCompanySchoolToUpdateRequest(partial, {
+      startDate: partial.startDate,
+      endDate: partial.endDate,
+    })
+
+    expect(created.startDate).toBe(partial.startDate)
+    expect(created.endDate).toBe(partial.endDate)
+    expect(created.businessStartDate).toBe(partial.startDate)
+    expect(created.businessEndDate).toBe(partial.endDate)
+    expect(updated.businessStartDate).toBe(partial.startDate)
+    expect(updated.businessEndDate).toBe(partial.endDate)
+  })
+
+  it('상세 운영 기간은 startDate/endDate를 쓰고 business로 덮지 않는다', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186100',
+      startDate: '2026-10-21',
+      endDate: '2026-11-01',
+      businessStartDate: '2026-01-01',
+      businessEndDate: '2026-12-31',
+    } as ProgramResponse)
+
+    expect(mapped.startDate).toBe('2026-10-21')
+    expect(mapped.endDate).toBe('2026-11-01')
+    expect(mapped.backendProgramType).toBe('COMPANY_SCHOOL')
+  })
+
+  it('상세 임금은 serviceDetailJson wageGradeRows를 쓰고 settlementPolicy 기본값으로 덮지 않는다', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186200',
+      title: '1사1교 임금 조회',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          generalCommonInfo: {
+            wageGradeRows: [
+              { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 120,000원 | 장거리 : 60,000원' },
+            ],
+            paymentItems: 'p-166201, p-166202',
+            deductionItems: '일용근로자 원천징수세액',
+          },
+        },
+      }),
+      settlementPolicy: {
+        wagePolicies: [
+          { feeGrade: 'GRADE_1', feeKind: 'NORMAL', amount: 500000 },
+          { feeGrade: 'GRADE_1', feeKind: 'LONG_DISTANCE', amount: 500000 },
+        ],
+        paymentItems: [{ itemType: 'TRANSPORTATION', useYn: true }],
+      },
+    } as ProgramResponse)
+
+    expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('120,000원')
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('p-166201, p-166202')
+  })
+
+  it('186014처럼 object serviceDetailJson + 루트 generalCommonInfo(임금 없음)여도 program 쪽 임금을 쓴다', () => {
+    const dualEnvelope = {
+      schemaVersion: 1,
+      program: {
+        generalCommonInfo: {
+          wageGradeRows: [
+            { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 170,000원 | 장거리 : 30,000원' },
+            { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 150,000원 | 장거리 : 20,000원' },
+            { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 130,000원 | 장거리 : 10,000원' },
+          ],
+          paymentItems: '교통비(일사일교), 숙박비(일사일교)',
+          deductionItems: '일용근로자 원천징수세액',
+        },
+      },
+      generalCommonInfo: {
+        title: '기업가정신 스타트업 체험',
+        sponsorId: '163384',
+      },
+    }
+
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186014',
+      title: '기업가정신 스타트업 체험',
+      serviceDetailJson: dualEnvelope as unknown as string,
+      settlementPolicy: {
+        wagePolicies: [
+          { feeGrade: 'GRADE_1', feeKind: 'NORMAL', amount: 500000, maxAmount: 500000 },
+          { feeGrade: 'GRADE_1', feeKind: 'LONG_DISTANCE', amount: 500000, maxAmount: 500000 },
+          { feeGrade: 'GRADE_2', feeKind: 'NORMAL', amount: 400000, maxAmount: 400000 },
+          { feeGrade: 'GRADE_2', feeKind: 'LONG_DISTANCE', amount: 400000, maxAmount: 400000 },
+          { feeGrade: 'GRADE_3', feeKind: 'NORMAL', amount: 300000, maxAmount: 300000 },
+          { feeGrade: 'GRADE_3', feeKind: 'LONG_DISTANCE', amount: 300000, maxAmount: 300000 },
+        ],
+        paymentItems: [
+          { itemType: 'TRANSPORTATION', useYn: true },
+          { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+          { itemType: 'LODGING', useYn: true },
+        ],
+      },
+    } as ProgramResponse)
+
+    expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('170,000원')
+    expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('30,000원')
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비(일사일교), 숙박비(일사일교)')
+    expect(mapped.generalCommonInfo?.paymentItems).not.toContain('LONG_DISTANCE')
+    expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).not.toContain('500,000')
+  })
+
+  it('186014 string serviceDetailJson + 루트 generalCommonInfo여도 program 쪽 임금을 쓴다', () => {
+    const dualEnvelope = {
+      schemaVersion: 1,
+      program: {
+        generalCommonInfo: {
+          wageGradeRows: [
+            { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 170,000원 | 장거리 : 30,000원' },
+          ],
+          paymentItems: '교통비(일사일교), 숙박비(일사일교)',
+          deductionItems: '일용근로자 원천징수세액',
+        },
+      },
+      generalCommonInfo: {
+        title: '기업가정신 스타트업 체험',
+      },
+    }
+
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186014',
+      title: '기업가정신 스타트업 체험',
+      serviceDetailJson: JSON.stringify(dualEnvelope),
+      settlementPolicy: {
+        wagePolicies: [
+          { feeGrade: 'GRADE_1', feeKind: 'NORMAL', amount: 500000, maxAmount: 500000 },
+          { feeGrade: 'GRADE_1', feeKind: 'LONG_DISTANCE', amount: 500000, maxAmount: 500000 },
+        ],
+        paymentItems: [
+          { itemType: 'TRANSPORTATION', useYn: true },
+          { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+          { itemType: 'LODGING', useYn: true },
+        ],
+      },
+    } as ProgramResponse)
+
+    expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('170,000원')
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비(일사일교), 숙박비(일사일교)')
   })
 
   it('round-trips school, instructor, wage and payment details without volunteers', () => {
@@ -161,6 +314,99 @@ describe('company-school adapters', () => {
     expect(request.contactEmail).toBeUndefined()
   })
 
+  it('common-info patch omits participant recruitment from serviceDetailJson', () => {
+    const withRecruitment: Program = {
+      ...program,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: {
+          recruitmentPeriodLabel: '2026. 10. 03 ~ 2026. 10. 07',
+          contactOrganizationName: '담당자',
+        },
+        instructorRecruitmentInfo: {
+          recruitmentTarget: '성인',
+        },
+        volunteerRecruitmentInfo: {
+          recruitmentTarget: '일반인',
+        },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(withRecruitment, {
+      mainTitle: '공통정보만',
+      generalCommonInfo: {
+        educationScheduleMode: 'period',
+        wageGradeRows: [{ grade: '1급 강사비', pricing: '기본 140,000원' }],
+      },
+    })
+
+    expect(request.mainTitle).toBe('공통정보만')
+    expect(request.serviceDetailJson).toBeTruthy()
+    const parsed = JSON.parse(request.serviceDetailJson!) as {
+      program?: {
+        generalCommonInfo?: Record<string, unknown>
+        studentListRequired?: string
+        resultAnnouncementDate?: string
+      }
+      registration?: unknown
+    }
+    expect(parsed.program?.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
+    expect(parsed.program?.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
+    expect(parsed.program?.generalCommonInfo?.volunteerRecruitmentInfo).toBeUndefined()
+    expect(parsed.program?.generalCommonInfo?.wageGradeRows).toBeTruthy()
+    expect(parsed.program?.studentListRequired).toBeUndefined()
+    expect(parsed.program?.resultAnnouncementDate).toBeUndefined()
+    expect(parsed.registration).toBeUndefined()
+  })
+
+  it('title-only common-info patch does not resend recruitment or registration overlay', () => {
+    const loaded: Program = {
+      ...program,
+      studentListRequired: 'required',
+      resultAnnouncementDate: '2026-10-06T15:00:00.000Z',
+      registrationOverlay: {
+        'economyRegistration.basicInfo.repKo': '등록 제목',
+        'economyRegistration.wageInfo.paymentItemValues': ['p-166201'],
+      },
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: {
+          recruitmentPeriodLabel: '2026. 10. 03 ~ 2026. 10. 07',
+          preEducationNoticeRequired: true,
+        },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(loaded, {
+      title: '우리 동네 소비와 저축11',
+      mainTitle: '우리 동네 소비와 저축11',
+    })
+
+    expect(request.title).toBe('우리 동네 소비와 저축11')
+    expect(request.applicationStartDate).toBeUndefined()
+    expect(request.serviceDetailJson).toBeUndefined()
+    expect(request.rounds).toBeUndefined()
+  })
+
+  it('common-info patch with registrationOverlay persists overlay in serviceDetailJson', () => {
+    const overlay = {
+      'economyRegistration.basicInfo.repKo': '디지털 리터러시 교실',
+      'economyRegistration.wageInfo.paymentItemValues': ['p-166201'],
+    }
+    const request = mapCompanySchoolToUpdateRequest(program, {
+      title: '디지털 리터러시 교실',
+      mainTitle: '디지털 리터러시 교실',
+      generalCommonInfo: program.generalCommonInfo,
+      registrationOverlay: overlay,
+    })
+
+    expect(request.serviceDetailJson).toBeTruthy()
+    const parsed = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(parsed.registration?.overlay?.['economyRegistration.basicInfo.repKo']).toBe(
+      '디지털 리터러시 교실'
+    )
+  })
+
   it('common-info style patch does not dump rounds or masked manager fields', () => {
     const withNoise: Program = {
       ...program,
@@ -193,6 +439,47 @@ describe('company-school adapters', () => {
     expect(request.oneLineIntroduction).toBeUndefined()
   })
 
+  it('세부 프로그램명 — detailedProgramId(숫자 마스터 id)로 보내고, textbookName엔 복제하지 않는다 (버그 수정 확인)', () => {
+    // 일반 프로그램 어댑터와 동일한 계약: 세부 프로그램명은 detailedProgramId(top-level, 숫자)로
+    // 전송하고, textbookName(교재명)은 별개 필드이므로 detailedProgramName과 같은 값이면 omit한다.
+    const withDetailedProgramName: Program = {
+      ...program,
+      detailedProgramId: '163010',
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        detailedProgramName: '실제 선택한 세부 프로그램명',
+      },
+    }
+
+    const createRequest = mapCompanySchoolToCreateRequest(withDetailedProgramName)
+    expect(createRequest.detailedProgramId).toBe(163010)
+    expect(createRequest.textbookName).toBeUndefined()
+
+    const fullUpdateRequest = mapCompanySchoolToUpdateRequest(withDetailedProgramName)
+    expect(fullUpdateRequest.detailedProgramId).toBe(163010)
+    expect(fullUpdateRequest.textbookName).toBeUndefined()
+
+    const patchRequest = mapCompanySchoolToUpdateRequest(withDetailedProgramName, {
+      detailedProgramId: withDetailedProgramName.detailedProgramId,
+      generalCommonInfo: withDetailedProgramName.generalCommonInfo,
+    })
+    expect(patchRequest.detailedProgramId).toBe(163010)
+
+    // textbookName이 detailedProgramName과 무관한 실제 교재명이면 그대로 보존된다.
+    const withRealTextbookName: Program = {
+      ...program,
+      detailedProgramId: '163010',
+      textbookName: '진짜 교재명',
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        detailedProgramName: '실제 선택한 세부 프로그램명',
+      },
+    }
+    const requestWithRealTextbook = mapCompanySchoolToCreateRequest(withRealTextbookName)
+    expect(requestWithRealTextbook.detailedProgramId).toBe(163010)
+    expect(requestWithRealTextbook.textbookName).toBe('진짜 교재명')
+  })
+
   it('maps typed lifecycleStatus from detail and ignores serviceDetailJson lifecycle', () => {
     const detail = mapCompanySchoolDetailToProgram({
       id: '170002',
@@ -206,5 +493,31 @@ describe('company-school adapters', () => {
     })
     expect(detail.lifecycleStatus).toBe('in_progress')
     expect(detail.status).toBe('active')
+  })
+
+  it('목록은 관리명(title)을 유지하고 대표명(mainTitle)·titleEn을 그대로 둔다', () => {
+    const mapped = mapCompanySchoolListItemToProgram({
+      id: 170010,
+      title: '생성 당시명',
+      mainTitle: '수정1',
+      titleEn: 'Revised',
+    })
+    expect(mapped.title).toBe('생성 당시명')
+    expect(mapped.mainTitle).toBe('수정1')
+    expect(mapped.titleEn).toBe('Revised')
+  })
+
+  it('목록 참여자 모집 인원은 승인 건수와 정원만 매핑한다', () => {
+    const mapped = mapCompanySchoolListItemToProgram({
+      id: 170001,
+      title: '1사1교',
+      participantApprovedCount: 3,
+      participantCapacity: null,
+      applicantCount: 20,
+      instructorApplicantCount: 8,
+      organizationApplicationCount: 11,
+    })
+    expect(mapped.participantApprovedCount).toBe(3)
+    expect(mapped.participantCapacity).toBeUndefined()
   })
 })

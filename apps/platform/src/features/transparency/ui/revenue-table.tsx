@@ -1,4 +1,4 @@
-import { formatKrwAmount } from '../lib/mock-data'
+import { formatKrwAmount } from '../lib/format'
 import type { FinanceSummary } from '../model/types'
 import styles from './revenue-table.module.css'
 

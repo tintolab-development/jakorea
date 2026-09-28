@@ -3,6 +3,9 @@
  * localStorage는 `localOnly`(프로그램 등록 임시저장) 전용. remote 경로에서는 키를 지운다.
  */
 import { shouldUseFormsSurveysRemoteApi } from '@/features/template/api/admin-form-templates-service'
+import type { Program } from '@/types/domain'
+import { replaceUjatApplicationInstitutionOverlay } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
+import { replaceUjatApplicationVolunteerOverlay } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
@@ -200,6 +203,84 @@ export async function hydrateAllUjatRecruitTemplatesFromRemote(): Promise<void> 
     hydrateUjatRecruitTemplateFromRemote(UJAT_RECRUIT_INSTITUTION_TEMPLATE_ID),
     hydrateUjatRecruitTemplateFromRemote(UJAT_RECRUIT_VOLUNTEER_TEMPLATE_ID),
   ])
+}
+
+/** UJAT 프로그램 상세 — binding version GET으로 미리보기 hydrate (PATCH 없음) */
+export async function hydrateUjatRecruitTemplatesForProgram(program: Program): Promise<void> {
+  const programOverlay = program.ujatRegistrationOverlay ?? {}
+  const applicationInstitution = pickOverlayByPrefix(programOverlay, 'ujatApplication.')
+  const applicationVolunteer = pickOverlayByPrefix(programOverlay, 'ujatVolunteerApplication.')
+  if (Object.keys(applicationInstitution).length > 0) {
+    replaceUjatApplicationInstitutionOverlay(applicationInstitution)
+  }
+  if (Object.keys(applicationVolunteer).length > 0) {
+    replaceUjatApplicationVolunteerOverlay(applicationVolunteer)
+  }
+
+  if (!shouldUseFormsSurveysRemoteApi()) return
+  const { resolveProgramOperationalFormLoadSource } = await import(
+    '@/features/program/general/lib/sync-registration-form-bindings'
+  )
+  const { loadFormTemplateVersionDraftByVersionId } = await import(
+    '@/features/template/api/admin-form-templates-service'
+  )
+
+  for (const templateId of [
+    UJAT_RECRUIT_INSTITUTION_TEMPLATE_ID,
+    UJAT_RECRUIT_VOLUNTEER_TEMPLATE_ID,
+  ]) {
+    try {
+      const source = await resolveProgramOperationalFormLoadSource(program, templateId)
+      if (source.templateVersionId == null) {
+        await hydrateUjatRecruitTemplateFromRemote(templateId)
+        continue
+      }
+      const saved = await loadFormTemplateVersionDraftByVersionId(
+        templateId,
+        source.templateVersionId
+      )
+      if (saved?.draft == null) continue
+      clearUjatRecruitTemplateLocalStorage()
+      rememberUjatRecruitTemplateSave(templateId, {
+        draft: saved.draft,
+        overlay: saved.overlay ?? {},
+      })
+    } catch (error) {
+      console.warn('[ujat-recruit-template] program-scoped hydrate failed', templateId, error)
+    }
+  }
+
+  for (const [templateId, apply] of [
+    ['application-ujat-school', replaceUjatApplicationInstitutionOverlay],
+    ['application-ujat-volunteer', replaceUjatApplicationVolunteerOverlay],
+  ] as const) {
+    try {
+      const source = await resolveProgramOperationalFormLoadSource(program, templateId)
+      if (source.templateVersionId == null) continue
+      const saved = await loadFormTemplateVersionDraftByVersionId(
+        templateId,
+        source.templateVersionId
+      )
+      if (saved?.overlay == null || Object.keys(saved.overlay).length === 0) continue
+      apply({
+        ...(templateId === 'application-ujat-school' ? applicationInstitution : applicationVolunteer),
+        ...saved.overlay,
+      })
+    } catch (error) {
+      console.warn('[ujat-application-template] program-scoped hydrate failed', templateId, error)
+    }
+  }
+}
+
+function pickOverlayByPrefix(
+  record: Record<string, unknown>,
+  prefix: string
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(record)) {
+    if (key.startsWith(prefix)) out[key] = value
+  }
+  return out
 }
 
 /** remote 경로 저장 — version PUT + 메모리. localStorage 미사용. */

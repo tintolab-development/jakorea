@@ -268,13 +268,22 @@ export function ApplicantRecruitParticipantInfoParagraph({
 
   useEffect(() => {
     patchInstitutionApplicationProgramBridge({
-      preEducationNoticeRequired: preguidanceRequired === 'need',
-      maxAssignableInstructors: maxInstructors,
+      // TT: 사전 안내 비정책 — 모집 UI에 없으므로 false. 일반은 라디오 값 반영
+      preEducationNoticeRequired: isTrainedTeachers ? false : preguidanceRequired === 'need',
+      // TT: BE ignore · UI 비노출 · echo/default 0 유지
+      maxAssignableInstructors: isTrainedTeachers ? 0 : maxInstructors,
       maxClassCount,
       maxScheduleCount,
       maxSessionsPerDay,
     })
-  }, [preguidanceRequired, maxInstructors, maxClassCount, maxScheduleCount, maxSessionsPerDay])
+  }, [
+    isTrainedTeachers,
+    preguidanceRequired,
+    maxInstructors,
+    maxClassCount,
+    maxScheduleCount,
+    maxSessionsPerDay,
+  ])
 
   if (layoutVariant === 'economy') {
     return (
@@ -531,21 +540,24 @@ export function ApplicantRecruitParticipantInfoParagraph({
 
         {showInstitutionApplicationLimits ? (
           <>
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="배정 가능 최대 강사 수"
-                edit={
-                  <NumberWithSuffixRow
-                    placeholder="최대값 입력"
-                    suffix="명"
-                    value={maxInstructorsInput}
-                    onChange={setMaxInstructors}
-                  />
-                }
-                view="-"
-              />
+            <DetailInfoForm.Row type={isTrainedTeachers ? 'single' : 'double'}>
+              {isTrainedTeachers ? null : (
+                <DetailInfoForm.Field
+                  label="배정 가능 최대 강사 수"
+                  edit={
+                    <NumberWithSuffixRow
+                      placeholder="최대값 입력"
+                      suffix="명"
+                      value={maxInstructorsInput}
+                      onChange={setMaxInstructors}
+                    />
+                  }
+                  view="-"
+                />
+              )}
               <DetailInfoForm.Field
                 label="신청 가능 최대 학급 수"
+                fullRow={isTrainedTeachers}
                 edit={
                   <NumberWithSuffixRow
                     placeholder="최대값 입력"

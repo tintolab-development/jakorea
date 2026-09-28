@@ -12,8 +12,10 @@ import type {
   RecruitGuideBanner,
   RecruitGuideData,
 } from '@/entities/recruit-guide/model/types'
+import heroImageUrl from '@/assets/images/recruit/hero.png'
+import storyImageUrl from '@/assets/images/recruit/story-metlife.png'
 
-const STORAGE_KEY = 'admin.jakorea.recruitGuide.v1'
+const STORAGE_KEY = 'admin.jakorea.recruitGuide.v2'
 
 export const RECRUIT_GUIDE_CHANGED_EVENT = 'jakorea:recruit-guide-changed' as const
 
@@ -22,6 +24,7 @@ type GuideFile = {
   data: RecruitGuideData
 }
 
+/** Platform `THRIVE_VALUES` summaryLines / detailLines — `\n` 이 화면 줄바꿈 */
 const FIXED_CULTURE: ReadonlyArray<{
   id: CultureItemId
   itemLabel: string
@@ -29,43 +32,41 @@ const FIXED_CULTURE: ReadonlyArray<{
   defaultDescription: string
 }> = [
   {
-    id: 'ready_to_help',
-    itemLabel: 'Ready to Help',
-    defaultTitle: '협업은 서로를 존중하는 마음에서 시작됩니다',
-    defaultDescription:
-      '서로의 의견을 경청하고, 필요한 순간 먼저 손을 내밀어 함께 해결책을 찾아갑니다.',
-  },
-  {
     id: 'make_an_impact',
     itemLabel: 'Make an Impact',
-    defaultTitle: '청소년의 성장이라는 공동의 목표를 향해 움직입니다',
+    defaultTitle: '청소년의 성장이라는\n공동의 목적을 향해 함께 나아갑니다',
     defaultDescription:
-      '개인의 노력이 모여 사회적 가치를 만들고, 그 변화가 더 많은 청소년에게 닿도록 책임을 다합니다.',
-  },
-  {
-    id: 'speak_openly',
-    itemLabel: 'Speak Openly',
-    defaultTitle: '좋은 아이디어는 열린 소통에서 시작됩니다',
-    defaultDescription:
-      '직급과 역할에 관계없이 의견을 나누고, 다른 생각을 존중하며 더 나은 방향을 함께 찾습니다.',
+      '각자의 노력이 만드는 작은 변화가 더 큰 사회적 가치로 이어진다고 믿으며, 맡은 일에 책임감을 가지고\n긍정적인 변화를 만들어갑니다.',
   },
   {
     id: 'keep_learning',
     itemLabel: 'Keep Learning',
     defaultTitle: '배움은 성장의 시작입니다',
     defaultDescription:
-      '새로운 것에 도전하고, 더 나은 방법을 끊임없이 탐구하며 함께 성장합니다.',
+      '호기심을 가지고 새로운 것에 도전하며 끊임없이\n배우고 더 나은 방법을 함께 찾아갑니다.',
+  },
+  {
+    id: 'speak_openly',
+    itemLabel: 'Speak Openly',
+    defaultTitle: '좋은 아이디어는\n열린 소통에서 시작됩니다',
+    defaultDescription:
+      '신뢰와 정직을 바탕으로 자유롭게 의견을 나누며,\n직급이나 역할에 관계없이 서로의 목소리에\n귀 기울이고 더 나은 방향을 함께 만들어갑니다.',
+  },
+  {
+    id: 'ready_to_help',
+    itemLabel: 'Ready to Help',
+    defaultTitle: '협력은 서로를 존중하는\n마음에서 시작됩니다',
+    defaultDescription:
+      '다양한 의견에 귀 기울이고, 도움이 필요한 순간에는\n기꺼이 손을 내밀며 함께 해결책을 찾아갑니다.',
   },
 ]
 
 function buildSeedBanner(): RecruitGuideBanner {
   return {
-    imageUrl:
-      'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=740&h=790&fit=crop',
-    imageFileName: 'recruit-banner.jpg',
-    mainText: '가능성을 믿는 사람들이 만드는 변화,\n우리는 청소년의 가능성을 믿습니다',
-    subText01:
-      '신뢰와 존중을 바탕으로 함께 배우고 성장하며,\n그 가능성을 현실로 만들어갑니다.',
+    imageUrl: heroImageUrl,
+    imageFileName: 'hero.png',
+    mainText: '가능성을 믿는 사람들이\n만드는 변화, 우리는 청소년의\n가능성을 믿습니다',
+    subText01: '신뢰와 존중을 바탕으로 함께 배우고 성장하며,\n그 가능성을 현실로 만들어갑니다.',
     subText02:
       'People who believe in young people, creating impact together through trust, partnership, and continuous learning.',
     version: 0,
@@ -82,25 +83,29 @@ function buildSeedCulture(): CultureItem[] {
   }))
 }
 
+/** Platform `FEATURED_STORIES` */
 function buildSeedInterviews(): InterviewItem[] {
   return [
     {
       id: 'ri-1',
-      storyId: 'is-112',
-      title: '14년 만에 심사위원으로! 민재님이 JA와 함께하는 이유',
+      storyId: 'story-metlife-2026',
+      title: '메트라이프생명 사회공헌재단과 JA Korea의 여름과 겨울',
       publishedYear: 2026,
+      imageUrl: storyImageUrl,
     },
     {
       id: 'ri-2',
-      storyId: 'is-111',
-      title: 'JA Korea - 시립은평청소년미래진로센터(궁리하다) 업무 협약',
-      publishedYear: 2026,
+      storyId: 'story-summer-camp',
+      title: '청소년과 함께한 JA Korea 여름 캠프 이야기',
+      publishedYear: 2025,
+      imageUrl: storyImageUrl,
     },
     {
       id: 'ri-3',
-      storyId: 'is-110',
-      title: '창업놀이 페스티벌 2022 최종 선정팀 결과발표',
-      publishedYear: 2026,
+      storyId: 'story-volunteer-day',
+      title: '임직원 봉사로 이어진 따뜻한 하루',
+      publishedYear: 2025,
+      imageUrl: storyImageUrl,
     },
   ]
 }
@@ -185,11 +190,13 @@ function normalizeInterview(raw: unknown, i: number): InterviewItem | null {
     typeof row.publishedYear === 'number' && Number.isFinite(row.publishedYear)
       ? row.publishedYear
       : 2026
+  const imageUrl = asString(row.imageUrl, '').trim()
   return {
     id: asString(row.id, `ri-${i + 1}`),
     storyId,
     title,
     publishedYear: year,
+    ...(imageUrl ? { imageUrl } : {}),
   }
 }
 
@@ -238,7 +245,14 @@ export function readRecruitGuide(): RecruitGuideData {
   return file.data
 }
 
-export function saveBanner(input: BannerSaveInput): RecruitGuideData {
+type MutateOptions = {
+  /** remote GET 세션 캐시 기준값. 없으면 localStorage */
+  base?: RecruitGuideData
+  /** false면 localStorage에 쓰지 않는다 (저장 API 없는 remote 세션용) */
+  persist?: boolean
+}
+
+export function saveBanner(input: BannerSaveInput, options?: MutateOptions): RecruitGuideData {
   const imageUrl = input.imageUrl.trim()
   const mainText = input.mainText.trimEnd()
   const subText01 = input.subText01.trimEnd()
@@ -248,7 +262,7 @@ export function saveBanner(input: BannerSaveInput): RecruitGuideData {
   if (!subText01.trim()) throw new Error('BANNER_SUB_TEXT_01_REQUIRED')
   if (!subText02.trim()) throw new Error('BANNER_SUB_TEXT_02_REQUIRED')
 
-  const current = readRecruitGuide()
+  const current = options?.base ?? readRecruitGuide()
   const next: RecruitGuideData = {
     ...current,
     banner: {
@@ -262,12 +276,14 @@ export function saveBanner(input: BannerSaveInput): RecruitGuideData {
     },
     updatedAt: new Date().toISOString(),
   }
-  writeFile({ version: 1, data: next })
+  if (options?.persist !== false) {
+    writeFile({ version: 1, data: next })
+  }
   return next
 }
 
-export function saveCulture(items: CultureSaveItem[]): RecruitGuideData {
-  const current = readRecruitGuide()
+export function saveCulture(items: CultureSaveItem[], options?: MutateOptions): RecruitGuideData {
+  const current = options?.base ?? readRecruitGuide()
   const byId = new Map(items.map(item => [item.id, item]))
 
   const nextItems = FIXED_CULTURE.map(fixed => {
@@ -290,7 +306,9 @@ export function saveCulture(items: CultureSaveItem[]): RecruitGuideData {
     cultureItems: nextItems,
     updatedAt: new Date().toISOString(),
   }
-  writeFile({ version: 1, data: next })
+  if (options?.persist !== false) {
+    writeFile({ version: 1, data: next })
+  }
   return next
 }
 
@@ -302,8 +320,8 @@ function nextInterviewId(existing: InterviewItem[]): string {
   return `ri-${max + 1}`
 }
 
-export function addInterview(input: InterviewSaveItem): RecruitGuideData {
-  const current = readRecruitGuide()
+export function addInterview(input: InterviewSaveItem, options?: MutateOptions): RecruitGuideData {
+  const current = options?.base ?? readRecruitGuide()
   if (current.interviews.some(row => row.storyId === input.storyId)) {
     throw new Error('INTERVIEW_DUPLICATE')
   }
@@ -318,12 +336,18 @@ export function addInterview(input: InterviewSaveItem): RecruitGuideData {
     interviews: [...current.interviews, nextRow],
     updatedAt: new Date().toISOString(),
   }
-  writeFile({ version: 1, data: next })
+  if (options?.persist !== false) {
+    writeFile({ version: 1, data: next })
+  }
   return next
 }
 
-export function replaceInterview(id: string, input: InterviewSaveItem): RecruitGuideData {
-  const current = readRecruitGuide()
+export function replaceInterview(
+  id: string,
+  input: InterviewSaveItem,
+  options?: MutateOptions,
+): RecruitGuideData {
+  const current = options?.base ?? readRecruitGuide()
   const duplicate = current.interviews.find(
     row => row.storyId === input.storyId && row.id !== id
   )
@@ -347,19 +371,23 @@ export function replaceInterview(id: string, input: InterviewSaveItem): RecruitG
     interviews,
     updatedAt: new Date().toISOString(),
   }
-  writeFile({ version: 1, data: next })
+  if (options?.persist !== false) {
+    writeFile({ version: 1, data: next })
+  }
   return next
 }
 
-export function removeInterviews(ids: string[]): RecruitGuideData {
+export function removeInterviews(ids: string[], options?: MutateOptions): RecruitGuideData {
   if (ids.length === 0) throw new Error('INTERVIEW_NONE_SELECTED')
   const idSet = new Set(ids)
-  const current = readRecruitGuide()
+  const current = options?.base ?? readRecruitGuide()
   const next: RecruitGuideData = {
     ...current,
     interviews: current.interviews.filter(row => !idSet.has(row.id)),
     updatedAt: new Date().toISOString(),
   }
-  writeFile({ version: 1, data: next })
+  if (options?.persist !== false) {
+    writeFile({ version: 1, data: next })
+  }
   return next
 }

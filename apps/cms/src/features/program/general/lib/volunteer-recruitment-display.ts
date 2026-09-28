@@ -22,6 +22,13 @@ type VolunteerRecruitmentInfoLoose = NonNullable<
   volunteerInterviewEnabledLabel?: string
   finalAnnouncementLabel?: string
   resultAnnouncementLabel?: string
+  documentPassAnnouncementDate?: string
+  documentPassAnnouncementMethod?: string
+  interviewStartDate?: string
+  interviewEndDate?: string
+  interviewMethod?: string
+  finalPassAnnouncementDate?: string
+  finalPassAnnouncementMethod?: string
   inquiryTel?: string
   inquiryEmail?: string
   tel?: string
@@ -94,8 +101,15 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
   const finalPassAnnouncementMethod = pickDisplayString(
     info?.finalAnnouncementLabel,
     info?.resultAnnouncementLabel,
+    info?.finalPassAnnouncementMethod,
     program.finalPassAnnouncementMethod
   )
+
+  const documentPassAnnouncementMethod = pickDisplayString(
+    info?.documentPassAnnouncementMethod,
+    program.documentPassAnnouncementMethod
+  )
+  const interviewMethod = pickDisplayString(info?.interviewMethod, program.interviewMethod)
 
   return {
     announcementPublishedLabel: pickDisplayString(
@@ -112,12 +126,15 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
     volunteerTargetLabel: pickDisplayString(info?.recruitmentTarget),
     volunteerTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),
     recruitmentPeriodLabel: pickDisplayString(info?.recruitmentPeriodLabel),
-    documentPassAnnouncementDate: program.documentPassAnnouncementDate,
-    documentPassAnnouncementMethod: program.documentPassAnnouncementMethod,
-    interviewStartDate: program.interviewStartDate,
-    interviewEndDate: program.interviewEndDate,
-    interviewMethod: program.interviewMethod,
-    finalPassAnnouncementDate: program.finalPassAnnouncementDate,
+    documentPassAnnouncementDate:
+      info?.documentPassAnnouncementDate ?? program.documentPassAnnouncementDate,
+    documentPassAnnouncementMethod:
+      documentPassAnnouncementMethod === '-' ? undefined : documentPassAnnouncementMethod,
+    interviewStartDate: info?.interviewStartDate ?? program.interviewStartDate,
+    interviewEndDate: info?.interviewEndDate ?? program.interviewEndDate,
+    interviewMethod: interviewMethod === '-' ? undefined : interviewMethod,
+    finalPassAnnouncementDate:
+      info?.finalPassAnnouncementDate ?? program.finalPassAnnouncementDate,
     finalPassAnnouncementMethod:
       finalPassAnnouncementMethod === '-' ? undefined : finalPassAnnouncementMethod,
     contactOrganizationName: pickDisplayString(info?.contactOrganizationName),

@@ -5,6 +5,7 @@ import {
   ResultAdjacentNav,
   RESULTS_PATH,
   useMockResultDetail,
+  useProgramResultDetail,
 } from '@/features/result'
 import { RichTextViewer } from '@/shared/rich-text'
 import {
@@ -24,7 +25,14 @@ function formatViewCount(count: number) {
 export function ResultDetailPage() {
   const navigate = useNavigate()
   const resultId = getResultIdFromPath()
-  const detail = useMockResultDetail(resultId)
+  const mockDetail = useMockResultDetail(resultId)
+  const remoteDetail = useProgramResultDetail(resultId)
+  const detail = remoteDetail.isRemoteEnabled ? remoteDetail.data : mockDetail
+  const adjacent = remoteDetail.isRemoteEnabled
+    ? { previous: remoteDetail.previous, next: remoteDetail.next }
+    : detail
+      ? getAdjacentResults(detail.id)
+      : { previous: null, next: null }
 
   const handleBackToList = () => {
     if (window.history.length > 1) {
@@ -38,6 +46,19 @@ export function ResultDetailPage() {
     navigate(RESULTS_PATH)
   }
 
+  if (remoteDetail.isRemoteEnabled && remoteDetail.status === 'loading') {
+    return (
+      <section className={styles.page}>
+        <div className={styles.back}>
+          <ProgramBackButton label="이전으로" onClick={handleBackToList} />
+        </div>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          결과를 불러오는 중이에요.
+        </PFText>
+      </section>
+    )
+  }
+
   if (!detail) {
     return (
       <section className={styles.page}>
@@ -45,7 +66,9 @@ export function ResultDetailPage() {
           <ProgramBackButton label="이전으로" onClick={handleBackToList} />
         </div>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          결과 발표를 찾을 수 없습니다.
+          {remoteDetail.status === 'error'
+            ? '결과를 불러오지 못했어요.'
+            : '결과 발표를 찾을 수 없습니다.'}
         </PFText>
       </section>
     )
@@ -55,7 +78,6 @@ export function ResultDetailPage() {
     fileName: file.name,
     href: file.fileUrl,
   }))
-  const adjacent = getAdjacentResults(detail.id)
 
   return (
     <section className={styles.page}>

@@ -1,8 +1,6 @@
 /**
- * 교육 대상 — remote API opt-in
+ * 교육 대상 — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseEducationTargetRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

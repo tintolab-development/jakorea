@@ -1,3 +1,5 @@
+import { toSameOriginApiPath } from '@/shared/lib/admin-file-upload/attachments'
+import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import customInstance from '@/shared/api/orval-mutator'
 import { downloadBlob, generateFilename } from '@/shared/utils/file-download'
 
@@ -22,9 +24,10 @@ export async function downloadFromBulkEndpoint(
   filenamePrefix: string,
   extension = 'zip'
 ): Promise<void> {
-  if (!downloadEndpoint?.trim()) {
+  const trimmed = downloadEndpoint?.trim()
+  if (!trimmed) {
     throw new Error('다운로드 URL이 없습니다.')
   }
-  const blob = await fetchBulkDownloadBlob(downloadEndpoint.trim())
+  const blob = await fetchBulkDownloadBlob(toSameOriginApiPath(trimmed, getApiBaseUrl()) ?? trimmed)
   await downloadBlob(blob, generateFilename(filenamePrefix, extension))
 }

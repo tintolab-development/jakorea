@@ -1,18 +1,46 @@
-import { useState, type CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
+import {
+  impactStoryDetailPath,
+  useImpactStoriesPreview,
+  type ImpactStoryCategoryKey,
+} from '@/features/impact-story'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
-import { useMediaQuery, useShouldUsePlatformMockData } from '@/shared/hooks'
+import { useMediaQuery } from '@/shared/hooks'
 import { PFCarouselButton, PFText } from '@/shared/ui'
 import {
   IMPACT_SECTION_TITLE,
   IMPACT_SLIDER_VISIBLE_COUNT,
 } from '../lib/constants'
-import { getDonationImpactItems } from '../lib/impact-mock'
+import type { DonationImpactCategory, DonationImpactItem } from '../lib/impact-mock'
 import { DonationImpactCard } from './donation-impact-card'
 import styles from './impact-section.module.css'
 
+const IMPACT_CARD_LIMIT = 6
+
+function donationCategory(category: ImpactStoryCategoryKey): DonationImpactCategory {
+  if (category === 'press' || category === 'report' || category === 'story') return category
+  return 'story'
+}
+
 export function ImpactSection() {
-  useShouldUsePlatformMockData()
-  const items = getDonationImpactItems()
+  const preview = useImpactStoriesPreview()
+  const items = useMemo(() => {
+    return preview.items.slice(0, IMPACT_CARD_LIMIT).flatMap((item): DonationImpactItem[] => {
+      if (!item.id) return []
+      return [
+        {
+          id: item.id,
+          category: donationCategory(item.category),
+          categoryLabel: item.categoryLabel,
+          title: item.title,
+          dateLabel: item.publishedAtLabel,
+          imageUrl: item.imageUrl ?? '',
+          href: impactStoryDetailPath(item.id),
+          placeholderColor: item.placeholderColor,
+        },
+      ]
+    })
+  }, [preview.items])
   const isPcUp = useMediaQuery(platformMediaQueries.pcUp)
   const [slideIndex, setSlideIndex] = useState(0)
 

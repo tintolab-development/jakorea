@@ -1,4 +1,4 @@
-import type { JaWorldwideRegion, JaWorldwideRegionId } from '../lib/ja-worldwide-data'
+import type { JaWorldwideRegion, JaWorldwideRegionId } from '../lib/ja-worldwide-layout'
 import africaSvg from '../image/illustration/ja-africa.svg?raw'
 import americasSvg from '../image/illustration/ja-americas-includes-canada.svg?raw'
 import asiaPacificSvg from '../image/illustration/ja-asia-pacific.svg?raw'

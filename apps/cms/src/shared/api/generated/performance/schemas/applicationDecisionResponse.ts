@@ -7,11 +7,11 @@
  */
 
 export interface ApplicationDecisionResponse {
-  applicationId?: number;
-  applicationType?: string;
-  fromStatus?: string;
-  toStatus?: string;
-  participantId?: number;
-  notificationEventId?: number;
-  availableActions?: string[];
+  applicationId: number;
+  applicationType: string;
+  fromStatus: string;
+  toStatus: string;
+  participantId: number | null;
+  notificationEventId: number;
+  availableActions: string[];
 }

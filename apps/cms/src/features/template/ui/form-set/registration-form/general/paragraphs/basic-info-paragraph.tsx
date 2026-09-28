@@ -81,6 +81,8 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   trainedTeachersDefaults?: boolean
   /** 일반 등록 — 교육 진행 구조(일정형이면 세부 프로그램명「해당없음」) */
   programType?: ProgramRegistrationType
+  /** 수정 화면 — 참여자 유형은 등록 후에 바꿀 수 없다 */
+  lockParticipantTypes?: boolean
 }
 
 export function ProgramRegistrationBasicInfoParagraph({
@@ -100,6 +102,7 @@ export function ProgramRegistrationBasicInfoParagraph({
   onProgramTitleKoChange,
   trainedTeachersDefaults = false,
   programType,
+  lockParticipantTypes = false,
 }: ProgramRegistrationBasicInfoParagraphProps) {
   const overlayPrefix = trainedTeachersDefaults
     ? TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX
@@ -209,7 +212,7 @@ export function ProgramRegistrationBasicInfoParagraph({
           programTitleKo={programTitleKoProp}
           onProgramTitleKoChange={onProgramTitleKoChange}
           trainedTeachersDefaults={trainedTeachersDefaults}
-          lockDetailedProgramToNone={!trainedTeachersDefaults && programType === 'schedule'}
+          lockDetailedProgramToNone={programType === 'schedule'}
         />
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -255,12 +258,14 @@ export function ProgramRegistrationBasicInfoParagraph({
                   <GeneralParticipantAudienceCheckboxGroup
                     individual={participant.individual}
                     organization={participant.organization}
+                    disabled={lockParticipantTypes}
                     onIndividualChange={onIndividualChange}
                     onOrganizationChange={onOrganizationChange}
                   />
                   <CmsCheckbox
                     checkboxSize="large"
                     checked={participant.teacherInstructor === true}
+                    disabled={lockParticipantTypes}
                     onChange={e => onTeacherInstructorChange(e.target.checked)}
                   >
                     {participantTypeLabel('teacher_instructor')}
@@ -268,6 +273,7 @@ export function ProgramRegistrationBasicInfoParagraph({
                   <CmsCheckbox
                     checkboxSize="large"
                     checked={participant.volunteer === true}
+                    disabled={lockParticipantTypes}
                     onChange={e => onVolunteerChange(e.target.checked)}
                   >
                     {participantTypeLabel('volunteer')}

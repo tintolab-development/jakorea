@@ -20,29 +20,48 @@ import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-co
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
+import {
+  DetailInfoForm,
+  DetailInfoFormTdDivider,
+} from '@/shared/components/detail-info-form/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
   decodeSponsorManagerContactRef,
   encodeSponsorManagerContactRef,
+  formatSponsorManagerPersonLabel,
   formatSponsorManagerSelectLabel,
   normalizeSponsorManagerContactIds,
   resolveVenueKind,
 } from '@/features/program/general/model/common-info-edit-schema'
-import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import type {
+  SponsorContactRow,
+  SponsorManagementRow,
+} from '@/features/sponsor/model/sponsor-management.types'
+import {
+  isSponsorContactUnselected,
+  isSponsorContactUnselectedLabel,
+  isProgramSponsorManagerUnselected,
+  normalizeSponsorContactUnselectedSelection,
+  SPONSOR_CONTACT_UNSELECTED_LABEL,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
+  withSponsorContactUnselectedOption,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
   PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
 } from '@/features/template/lib/program-registration-survey-items'
+import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
   formatDate,
   formatDateRange,
   CATEGORY_LABEL,
   CATEGORY_OPTIONS,
   BUSINESS_AREA_OPTIONS,
+  resolveStoredBusinessArea,
   EDUCATION_PROCESS_OPTIONS,
   IP_OWNED_OPTIONS,
   COURSE_DELIVERED_BY_OPTIONS,
@@ -54,6 +73,60 @@ import { ProgramLifecycleEnrollmentStatusText } from '@/shared/components/progra
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
+import {
+  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+  TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
+} from '@/features/template/lib/template-form-select-options'
+
+const ECONOMY_ALL_VALUE = '__all__'
+
+const ECONOMY_EDUCATION_PROCESS_OPTIONS = [
+  { value: ECONOMY_ALL_VALUE, label: '전체' },
+  ...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS.map(option => ({
+    value: option.label,
+    label: option.label,
+  })),
+]
+
+const ECONOMY_IP_OWNED_OPTIONS = [
+  { value: 'JA', label: 'JA' },
+  { value: 'Partner', label: 'Partner' },
+  { value: 'Jointly', label: 'Jointly' },
+]
+
+function LockedParticipantTypeCheckboxes({
+  organization = false,
+  teacherInstructor = false,
+}: {
+  organization?: boolean
+  teacherInstructor?: boolean
+}) {
+  return (
+    <div className="detail-info-form-inputs-wrapper">
+      <CmsCheckbox checkboxSize="large" checked={false} disabled>
+        개인
+      </CmsCheckbox>
+      <CmsCheckbox checkboxSize="large" checked={organization} disabled>
+        학교/기관
+      </CmsCheckbox>
+      <CmsCheckbox checkboxSize="large" checked={teacherInstructor} disabled>
+        강사
+      </CmsCheckbox>
+      <CmsCheckbox checkboxSize="large" checked={false} disabled>
+        봉사자
+      </CmsCheckbox>
+    </div>
+  )
+}
+
+function CompanySchoolFixedParticipantTypes() {
+  return <LockedParticipantTypeCheckboxes organization teacherInstructor />
+}
+
+function TrainedTeachersFixedParticipantTypes() {
+  return <LockedParticipantTypeCheckboxes organization />
+}
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
   return <ProgramLifecycleEnrollmentStatusText lifecycleStatus={status} />
@@ -73,6 +146,17 @@ export interface BasicInfoSectionProps {
    * 미지정 시 기존 id/타이틀 기반 판별 유지 — 다른 유형 동작 불변.
    */
   forceCompanySchoolLayout?: boolean
+  /**
+   * 교육받은 교사 공통정보 opt-in — IPS는 「프로그램 유형 설정」에서만 관리.
+   * 1사1교·일반 기본정보 IPS 행은 유지.
+   */
+  hideIpsTypeField?: boolean
+  /** 교육받은 교사 — 참여자 유형을 고정 라벨로 표시 (수정 UI 없음) */
+  fixedParticipantTypeLabel?: string
+  /** 교육받은 교사 — 대표 프로그램명(영문) Input 편집 */
+  enableTitleEnEdit?: boolean
+  /** 교육받은 교사 — 세부 프로그램명 Select (마스터 옵션) */
+  useDetailedProgramSelect?: boolean
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -99,18 +183,98 @@ function formatCompanySchoolParticipantTypes(program: Program): string {
 }
 
 function formatCompanySchoolSurveyItems(program: Program): string {
-  const keys = new Set<string>(program.generalSurveyMenuKeys ?? [])
+  const keys = resolveProgramSurveyMenuKeys(program)
   const labels: string[] = []
-  if (keys.has('survey')) labels.push('설문조사')
-  if (
-    keys.has('satisfaction') ||
-    keys.has('student_satisfaction') ||
-    keys.has('teacher_satisfaction')
-  ) {
-    labels.push('만족도조사')
-  }
-  if (keys.has('lecture_evaluation')) labels.push('강의평가')
+  if (keys.includes('survey')) labels.push('설문조사')
+  if (keys.includes('satisfaction')) labels.push('만족도조사')
+  if (keys.includes('lecture_evaluation')) labels.push('강의평가')
   return labels.length > 0 ? labels.join(', ') : '-'
+}
+
+function SponsorManagerView({
+  program,
+  sponsorRows,
+  contactsBySponsorId,
+}: {
+  program: Program
+  sponsorRows: readonly SponsorManagementRow[]
+  contactsBySponsorId: Record<string, readonly SponsorContactRow[] | undefined>
+}) {
+  if (
+    isProgramSponsorManagerUnselected({
+      sponsorManagerContactIds: program.generalCommonInfo?.sponsorManagerContactIds,
+      sponsorManagerContactId: program.generalCommonInfo?.sponsorManagerContactId,
+      managerLine: program.generalCommonInfo?.sponsorManagerLine,
+      managerName: program.managerName,
+    })
+  ) {
+    return <>{SPONSOR_CONTACT_UNSELECTED_LABEL}</>
+  }
+
+  const refs = program.generalCommonInfo?.sponsorManagerContactIds ?? []
+  const multi = refs.length > 1 || sponsorRows.length > 1
+  const lines: string[][] = []
+  for (const ref of refs) {
+    const decoded = decodeSponsorManagerContactRef(ref)
+    if (!decoded) continue
+    const sponsor = sponsorRows.find(row => row.id === decoded.sponsorManagementId)
+    const contact = contactsBySponsorId[decoded.sponsorManagementId]?.find(
+      row => row.id === decoded.contactId
+    )
+    const storedName = program.generalCommonInfo?.sponsorManagerContactNames?.[ref]?.trim()
+    const contactName = contact?.name?.trim() || storedName
+    if (!contactName) continue
+    const personLabel = formatSponsorManagerPersonLabel({
+      contactName,
+      position: contact?.position,
+    })
+    const parts = [
+      multi ? sponsor?.name?.trim() : '',
+      personLabel,
+      contact?.phone?.trim(),
+    ].filter((part): part is string => Boolean(part))
+    if (parts.length > 0) lines.push(parts)
+  }
+  if (lines.length > 0) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: 4,
+          width: '100%',
+        }}
+      >
+        {lines.map(parts => (
+          <div
+            key={parts.join('-')}
+            style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}
+          >
+            {parts.map((part, partIndex) => (
+              <span key={`${part}-${partIndex}`}>
+                {partIndex > 0 ? <DetailInfoFormTdDivider /> : null}
+                {part}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    )
+  }
+  const managerName = program.managerName?.trim()
+  if (!managerName || isSponsorContactUnselectedLabel(managerName)) return <>-</>
+  return (
+    <>
+      {managerName}
+      {program.contactPhone ? (
+        <>
+          <DetailInfoForm.InputsSeparator />
+          <span>{program.contactPhone}</span>
+        </>
+      ) : null}
+    </>
+  )
 }
 
 function formatCompanySchoolVenue(program: Program): string {
@@ -143,10 +307,22 @@ export function BasicInfoSection({
   isEditMode = false,
   form,
   forceCompanySchoolLayout = false,
+  hideIpsTypeField = false,
+  fixedParticipantTypeLabel,
+  enableTitleEnEdit = false,
+  useDetailedProgramSelect = false,
 }: BasicInfoSectionProps) {
   const isFormEdit = isEditMode && form
   const companySchoolLayout = forceCompanySchoolLayout || isCompanySchoolProgram(program)
+  /** 1사1교만. 교육받은 교사는 hideIpsTypeField / fixedParticipantTypeLabel 로 구분 */
+  const isEconomyCommonInfo =
+    companySchoolLayout && !hideIpsTypeField && !fixedParticipantTypeLabel
+  const enableEconomyTitleEn = enableTitleEnEdit || isEconomyCommonInfo
+  const enableEconomyDetailedProgramSelect = useDetailedProgramSelect || isEconomyCommonInfo
   const { options: sponsorOptions } = useSponsorSelectOptions(Boolean(isFormEdit || program.sponsorId))
+  const { options: detailedProgramOptions } = useDetailedProgramSelectOptions(
+    Boolean(isFormEdit && enableEconomyDetailedProgramSelect)
+  )
   const watchedSponsorId = isFormEdit ? form?.watch('sponsorId') : program.sponsorId
   const contactsQuery = useSponsorContactsQuery(watchedSponsorId, Boolean(isFormEdit))
   const managers = contactsQuery.data ?? []
@@ -163,14 +339,20 @@ export function BasicInfoSection({
         .filter((row): row is SponsorManagementRow => row != null),
     [sponsorEditContext.sponsors, sponsorManagementIds]
   )
-  const sponsorManagementOptions = useMemo(
-    () =>
-      sponsorEditContext.sponsors.map(row => ({
-        value: row.id,
-        label: row.name,
-      })),
-    [sponsorEditContext.sponsors]
-  )
+  const sponsorManagementOptions = useMemo(() => {
+    const options = sponsorEditContext.sponsors.map(row => ({
+      value: row.id,
+      label: row.name,
+    }))
+    for (const id of sponsorManagementIds) {
+      if (!id || options.some(option => option.value === id)) continue
+      options.push({
+        value: id,
+        label: (sponsorManagementIds.length === 1 ? sponsorName?.trim() : '') || id,
+      })
+    }
+    return options
+  }, [sponsorEditContext.sponsors, sponsorManagementIds, sponsorName])
   const sponsorManagerOptions = useMemo(() => {
     const options: Array<{
       value: string
@@ -198,27 +380,54 @@ export function BasicInfoSection({
         })
       }
     }
-    return options
-  }, [selectedSponsorManagementRows, sponsorEditContext.contactsBySponsorId])
+    const contactsReady =
+      sponsorManagementIds.length > 0 &&
+      sponsorManagementIds.every(
+        id =>
+          selectedSponsorManagementRows.some(row => row.id === id) &&
+          sponsorEditContext.contactsBySponsorId[id] != null
+      )
+    if (!contactsReady) return options
+    return withSponsorContactUnselectedOption(options, {
+      sponsorId: '',
+      contactId: '',
+      name: '',
+      phone: '',
+    })
+  }, [
+    selectedSponsorManagementRows,
+    sponsorEditContext.contactsBySponsorId,
+    sponsorManagementIds,
+  ])
 
   // 담당자 옵션 로드 후 — API/저장된 contactId[] 우선. 없는 사람 강제 선택 금지
   useEffect(() => {
     if (!isFormEdit || !form || sponsorManagerOptions.length === 0) return
 
     const optionValues = new Set(sponsorManagerOptions.map(o => o.value))
+    const loadedSponsorIds = new Set(
+      Object.entries(sponsorEditContext.contactsBySponsorId)
+        .filter(([, contacts]) => contacts.length > 0)
+        .map(([id]) => id)
+    )
     const currentIds = normalizeSponsorManagerContactIds({
       ids: form.getValues('sponsorManagerContactIds'),
       id: form.getValues('sponsorManagerContactId'),
     })
-    const validIds = currentIds.filter(id => optionValues.has(id))
+    const validIds = currentIds.filter(id => {
+      if (isSponsorContactUnselected(id)) return true
+      if (optionValues.has(id)) return true
+      const decoded = decodeSponsorManagerContactRef(id)
+      return decoded != null && !loadedSponsorIds.has(decoded.sponsorManagementId)
+    })
 
     if (validIds.length > 0) {
-      if (validIds.length !== currentIds.length) {
+      if (validIds.length !== currentIds.length || validIds.some((id, index) => id !== currentIds[index])) {
         form.setValue('sponsorManagerContactIds', validIds, { shouldDirty: false })
       }
       form.setValue('sponsorManagerContactId', validIds[0], { shouldDirty: false })
       const primary = sponsorManagerOptions.find(o => o.value === validIds[0])
-      if (primary) {
+      if (primary && !isSponsorContactUnselected(primary.value)) {
         form.setValue('managerName', primary.name, { shouldDirty: false })
         if (primary.phone) {
           form.setValue('contactPhone', primary.phone, { shouldDirty: false })
@@ -246,7 +455,18 @@ export function BasicInfoSection({
       return
     }
 
+    if (currentIds.length > 0) return
+
     const managerName = form.getValues('managerName')?.trim()
+    if (isSponsorContactUnselectedLabel(managerName)) {
+      form.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
+        shouldDirty: false,
+      })
+      form.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
+        shouldDirty: false,
+      })
+      return
+    }
     const phone = form.getValues('contactPhone')?.trim()
     const matched = sponsorManagerOptions.find(
       option =>
@@ -292,11 +512,18 @@ export function BasicInfoSection({
 
   if (companySchoolLayout) {
     const commonInfo = program.generalCommonInfo
-    const announcementTitle = commonInfo?.announcementTitle ?? program.title
-    const detailedProgramName =
-      commonInfo?.detailedProgramName ?? program.textbookName ?? program.title ?? '-'
-    const educationProcessLabel = optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
-    const ipOwnedLabel = optionLabel(IP_OWNED_OPTIONS, program.ipOwned ?? 'JA')
+    const announcementTitle = resolvePublicProgramTitleDisplay(program)
+    const detailedProgramName = commonInfo?.detailedProgramName?.trim() || '-'
+    const educationProcessLabel = isEconomyCommonInfo
+      ? optionLabel(
+          ECONOMY_EDUCATION_PROCESS_OPTIONS,
+          program.educationProcess?.trim() || ECONOMY_ALL_VALUE
+        )
+      : optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
+    const ipOwnedLabel = optionLabel(
+      isEconomyCommonInfo ? ECONOMY_IP_OWNED_OPTIONS : IP_OWNED_OPTIONS,
+      program.ipOwned ?? 'JA'
+    )
     const courseDeliveredByLabel = optionLabel(
       COURSE_DELIVERED_BY_OPTIONS,
       program.courseDeliveredBy ?? 'JA'
@@ -352,6 +579,22 @@ export function BasicInfoSection({
             <DetailInfoForm.Field
               label="대표 프로그램명 (영문)"
               view={program.titleEn ?? '-'}
+              edit={
+                enableEconomyTitleEn ? (
+                  <Controller
+                    name="titleEn"
+                    control={commonInfoForm.control}
+                    render={({ field }) => (
+                      <CmsInput
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder="대표 프로그램명을 입력하세요"
+                        width="100%"
+                      />
+                    )}
+                  />
+                ) : undefined
+              }
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="double">
@@ -377,18 +620,81 @@ export function BasicInfoSection({
               label="세부 프로그램명"
               view={detailedProgramName}
               edit={
-                <Controller
-                  name="detailedProgramName"
-                  control={commonInfoForm.control}
-                  render={({ field }) => (
-                    <CmsInput
-                      {...field}
-                      value={field.value ?? ''}
-                      placeholder="세부 프로그램명을 입력하세요"
-                      width="100%"
-                    />
-                  )}
-                />
+                enableEconomyDetailedProgramSelect ? (
+                  <Controller
+                    name="detailedProgramId"
+                    control={commonInfoForm.control}
+                    render={({ field }) => {
+                      const savedDetailedName = (
+                        commonInfoForm.watch('detailedProgramName')?.trim() ||
+                        (detailedProgramName && detailedProgramName !== '-'
+                          ? detailedProgramName.trim()
+                          : '')
+                      )
+                      const byName = detailedProgramOptions.find(o => o.label === savedDetailedName)
+                      const savedDetailedValue = savedDetailedName
+                        ? `__saved_detailed__:${savedDetailedName}`
+                        : undefined
+                      const selectOptions = [
+                        ...(isEconomyCommonInfo
+                          ? []
+                          : [
+                              {
+                                value: TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+                                label: '해당없음',
+                              },
+                            ]),
+                        ...detailedProgramOptions,
+                        ...(savedDetailedName && !byName && savedDetailedValue
+                          ? [{ value: savedDetailedValue, label: savedDetailedName }]
+                          : []),
+                      ]
+                      const knownId = selectOptions.some(option => option.value === field.value)
+                        ? field.value
+                        : undefined
+                      const value =
+                        knownId ||
+                        byName?.value ||
+                        (savedDetailedName ? savedDetailedValue : undefined)
+                      return (
+                        <CmsSelect
+                          withAllOption={false}
+                          placeholder="세부 프로그램명을 선택하세요"
+                          width="100%"
+                          showSearch
+                          optionFilterProp="label"
+                          options={selectOptions}
+                          value={value || undefined}
+                          onChange={next => {
+                            const id = next == null ? undefined : String(next)
+                            const isSavedLabel = id?.startsWith('__saved_detailed__:') === true
+                            field.onChange(isSavedLabel ? undefined : id)
+                            const label =
+                              selectOptions.find(o => o.value === id)?.label?.trim() || ''
+                            commonInfoForm.setValue(
+                              'detailedProgramName',
+                              id === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE ? '' : label,
+                              { shouldDirty: true }
+                            )
+                          }}
+                        />
+                      )
+                    }}
+                  />
+                ) : (
+                  <Controller
+                    name="detailedProgramName"
+                    control={commonInfoForm.control}
+                    render={({ field }) => (
+                      <CmsInput
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder="세부 프로그램명을 입력하세요"
+                        width="100%"
+                      />
+                    )}
+                  />
+                )
               }
             />
           </DetailInfoForm.Row>
@@ -444,20 +750,43 @@ export function BasicInfoSection({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="참여자 유형"
-              view={formatCompanySchoolParticipantTypes(program)}
+              view={
+                isEconomyCommonInfo ? (
+                  <CompanySchoolFixedParticipantTypes />
+                ) : (
+                  (fixedParticipantTypeLabel ?? formatCompanySchoolParticipantTypes(program))
+                )
+              }
+              edit={
+                isEconomyCommonInfo ? (
+                  <CompanySchoolFixedParticipantTypes />
+                ) : fixedParticipantTypeLabel != null ? (
+                  <TrainedTeachersFixedParticipantTypes />
+                ) : undefined
+              }
             />
             <DetailInfoForm.Field
               label="사업 분야"
-              view={program.businessArea ?? '-'}
+              view={optionLabel(
+                BUSINESS_AREA_OPTIONS,
+                resolveStoredBusinessArea(program.businessArea) || program.businessArea
+              )}
               edit={
                 <Controller
                   name="businessArea"
                   control={commonInfoForm.control}
                   render={({ field }) => (
                     <CmsSelect
-                      value={field.value ?? undefined}
-                      options={BUSINESS_AREA_OPTIONS}
-                      onChange={v => field.onChange(v ?? undefined)}
+                      withAllOption={false}
+                      placeholder="사업 분야를 선택하세요"
+                      value={resolveStoredBusinessArea(field.value) || undefined}
+                      options={[...BUSINESS_AREA_OPTIONS]}
+                      onChange={next => {
+                        const resolved = resolveStoredBusinessArea(
+                          next == null ? '' : String(next)
+                        )
+                        field.onChange(resolved || undefined)
+                      }}
                       width="100%"
                     />
                   )}
@@ -509,10 +838,22 @@ export function BasicInfoSection({
                       onChange={next => {
                         const ids = Array.isArray(next) ? next.map(String) : []
                         field.onChange(ids)
-                        commonInfoForm.setValue('sponsorManagerContactIds', [], {
+                        // 후원사 추가/변경 시 — 선택 해제된 후원사의 담당자만 제거하고 기존 선택은 유지
+                        const currentManagerIds = normalizeSponsorManagerContactIds({
+                          ids: commonInfoForm.getValues('sponsorManagerContactIds'),
+                          id: commonInfoForm.getValues('sponsorManagerContactId'),
+                        })
+                        const keptManagerIds = currentManagerIds.filter(ref => {
+                          const decoded = decodeSponsorManagerContactRef(ref)
+                          return decoded != null && ids.includes(decoded.sponsorManagementId)
+                        })
+                        commonInfoForm.setValue('sponsorManagerContactIds', keptManagerIds, {
                           shouldDirty: true,
                         })
-                        commonInfoForm.setValue('sponsorManagerContactId', undefined)
+                        commonInfoForm.setValue(
+                          'sponsorManagerContactId',
+                          keptManagerIds[0] ?? undefined
+                        )
                         if (ids[0]) {
                           commonInfoForm.setValue('sponsorId', ids[0], { shouldDirty: true })
                         }
@@ -525,51 +866,110 @@ export function BasicInfoSection({
             <DetailInfoForm.Field
               label="후원사 담당자"
               view={
-                program.managerName || program.contactPhone ? (
-                  <>
-                    {program.managerName ?? ''}
-                    {program.managerName && program.contactPhone ? (
-                      <DetailInfoForm.InputsSeparator />
-                    ) : null}
-                    {program.contactPhone ? <span>{program.contactPhone}</span> : null}
-                  </>
-                ) : (
-                  '-'
-                )
+                <SponsorManagerView
+                  program={program}
+                  sponsorRows={selectedSponsorManagementRows}
+                  contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
+                />
               }
               edit={
                 <Controller
                   name="sponsorManagerContactIds"
                   control={commonInfoForm.control}
-                  render={({ field }) => (
-                    <CmsSelect
-                      mode="multiple"
-                      withAllOption={false}
-                      placeholder="후원사 담당자를 선택하세요"
-                      width="100%"
-                      showSearch
-                      optionFilterProp="label"
-                      options={sponsorManagerOptions}
-                      value={field.value ?? []}
-                      disabled={sponsorManagerOptions.length === 0}
-                      onChange={next => {
-                        const ids = Array.isArray(next) ? next.map(String) : []
-                        field.onChange(ids)
-                        commonInfoForm.setValue('sponsorManagerContactId', ids[0], {
-                          shouldDirty: true,
-                        })
-                        const primary = sponsorManagerOptions.find(
-                          option => option.value === ids[0]
-                        )
-                        commonInfoForm.setValue('managerName', primary?.name ?? '')
-                        commonInfoForm.setValue('contactPhone', primary?.phone)
-                      }}
-                    />
-                  )}
+                  render={({ field }) => {
+                    const selectedIds = field.value ?? []
+                    const savedManagerName = program.managerName?.trim()
+                    const showSavedManager =
+                      selectedIds.length === 0 &&
+                      Boolean(savedManagerName) &&
+                      !isSponsorContactUnselectedLabel(savedManagerName)
+                    const savedManagerOption = showSavedManager
+                      ? {
+                          value: '__saved_manager__',
+                          label: [savedManagerName, program.contactPhone?.trim()]
+                            .filter(Boolean)
+                            .join(' · '),
+                          sponsorId: program.sponsorId ?? '',
+                          contactId: '',
+                          name: savedManagerName ?? '',
+                          phone: program.contactPhone ?? '',
+                        }
+                      : undefined
+                    const managerOptions = savedManagerOption
+                      ? [savedManagerOption, ...sponsorManagerOptions]
+                      : sponsorManagerOptions
+                    const selectedManagers = selectedIds
+                      .map(id => sponsorManagerOptions.find(option => option.value === id))
+                      .filter(
+                        (
+                          option
+                        ): option is (typeof sponsorManagerOptions)[number] =>
+                          option != null && !isSponsorContactUnselected(option.value)
+                      )
+                    return (
+                      <div className="detail-info-form-inputs-wrapper" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                        <CmsSelect
+                          mode="multiple"
+                          withAllOption={false}
+                          placeholder="후원사 담당자를 선택하세요"
+                          width="100%"
+                          showSearch
+                          optionFilterProp="label"
+                          options={managerOptions}
+                          value={showSavedManager ? ['__saved_manager__'] : selectedIds}
+                          disabled={managerOptions.length === 0}
+                          onChange={next => {
+                            const ids = normalizeSponsorContactUnselectedSelection(
+                              (Array.isArray(next) ? next.map(String) : []).filter(
+                                id => id !== '__saved_manager__'
+                              ),
+                              selectedIds
+                            )
+                            field.onChange(ids)
+                            commonInfoForm.setValue('sponsorManagerContactId', ids[0], {
+                              shouldDirty: true,
+                            })
+                            const primary = sponsorManagerOptions.find(
+                              option => option.value === ids[0]
+                            )
+                            const unselectedOnly =
+                              ids.length > 0 && ids.every(id => isSponsorContactUnselected(id))
+                            commonInfoForm.setValue(
+                              'managerName',
+                              unselectedOnly
+                                ? SPONSOR_CONTACT_UNSELECTED_LABEL
+                                : (primary?.name ?? '')
+                            )
+                            commonInfoForm.setValue(
+                              'contactPhone',
+                              unselectedOnly ? undefined : primary?.phone
+                            )
+                          }}
+                        />
+                        {selectedManagers.length > 0 ? (
+                          <div className="detail-info-form-inputs-wrapper">
+                            {selectedManagers.map((manager, index) => (
+                              <span key={manager.value}>
+                                {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
+                                {manager.name}
+                                {manager.phone ? (
+                                  <>
+                                    <DetailInfoForm.InputsSeparator />
+                                    <span>{manager.phone}</span>
+                                  </>
+                                ) : null}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    )
+                  }}
                 />
               }
             />
           </DetailInfoForm.Row>
+          {isEconomyCommonInfo ? null : (
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="교육 장소"
@@ -611,6 +1011,7 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
+          )}
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="설문 진행 항목"
@@ -659,10 +1060,22 @@ export function BasicInfoSection({
                     <CmsSelect
                       withAllOption={false}
                       placeholder="교육 과정을 선택하세요"
-                      width="100%"
-                      options={[...EDUCATION_PROCESS_OPTIONS]}
-                      value={field.value ?? undefined}
-                      onChange={next => field.onChange(next == null ? undefined : String(next))}
+                      width={240}
+                      options={
+                        isEconomyCommonInfo
+                          ? [...ECONOMY_EDUCATION_PROCESS_OPTIONS]
+                          : [...EDUCATION_PROCESS_OPTIONS]
+                      }
+                      value={
+                        isEconomyCommonInfo
+                          ? (field.value?.trim() || ECONOMY_ALL_VALUE)
+                          : (field.value ?? undefined)
+                      }
+                      onChange={next =>
+                        field.onChange(
+                          next == null || next === ECONOMY_ALL_VALUE ? undefined : String(next)
+                        )
+                      }
                     />
                   )}
                 />
@@ -678,9 +1091,13 @@ export function BasicInfoSection({
                   render={({ field }) => (
                     <CmsSelect
                       withAllOption={false}
-                      placeholder="IP Owned를 선택하세요"
-                      width="100%"
-                      options={[...IP_OWNED_OPTIONS]}
+                      placeholder="전체"
+                      width={240}
+                      options={
+                        isEconomyCommonInfo
+                          ? [...ECONOMY_IP_OWNED_OPTIONS]
+                          : [...IP_OWNED_OPTIONS]
+                      }
                       value={field.value ?? 'JA'}
                       onChange={next => field.onChange(next == null ? undefined : String(next))}
                     />
@@ -700,8 +1117,8 @@ export function BasicInfoSection({
                   render={({ field }) => (
                     <CmsSelect
                       withAllOption={false}
-                      placeholder="Course Delivered By를 선택하세요"
-                      width="100%"
+                      placeholder="전체"
+                      width={240}
                       options={[...COURSE_DELIVERED_BY_OPTIONS]}
                       value={field.value ?? 'JA'}
                       onChange={next =>
@@ -723,49 +1140,62 @@ export function BasicInfoSection({
                 <Controller
                   name="partnerInvolvement"
                   control={commonInfoForm.control}
-                  render={({ field }) => (
-                    <CmsSelect
-                      withAllOption={false}
-                      placeholder="Partner Involvement를 선택하세요"
-                      width="100%"
-                      options={PARTNER_INVOLVEMENT_SELECT_OPTIONS}
-                      value={field.value ? 'yes' : 'no'}
-                      onChange={next => field.onChange(next === 'yes')}
-                    />
-                  )}
+                  render={({ field }) =>
+                    isEconomyCommonInfo ? (
+                      <CmsRadio.Group
+                        size="large"
+                        value={field.value ? 'yes' : 'no'}
+                        onChange={event => field.onChange(event.target.value === 'yes')}
+                      >
+                        <CmsRadio value="yes">Yes</CmsRadio>
+                        <CmsRadio value="no">No</CmsRadio>
+                      </CmsRadio.Group>
+                    ) : (
+                      <CmsSelect
+                        withAllOption={false}
+                        placeholder="Partner Involvement를 선택하세요"
+                        width="100%"
+                        options={PARTNER_INVOLVEMENT_SELECT_OPTIONS}
+                        value={field.value ? 'yes' : 'no'}
+                        onChange={next => field.onChange(next === 'yes')}
+                      />
+                    )
+                  }
                 />
               }
             />
           </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="IPS 유형"
-              fullRow
-              view={ipsLabel}
-              edit={
-                <Controller
-                  name="ips"
-                  control={commonInfoForm.control}
-                  render={({ field }) => (
-                    <CmsSelect
-                      withAllOption={false}
-                      placeholder="IPS 유형을 선택하세요"
-                      width="100%"
-                      options={[...IPS_OPTIONS]}
-                      value={field.value ?? 'Prepare'}
-                      onChange={next =>
-                        field.onChange(
-                          next === 'Prepare' || next === 'Succeed' || next === 'Inspire'
-                            ? next
-                            : 'Prepare'
-                        )
-                      }
-                    />
-                  )}
-                />
-              }
-            />
-          </DetailInfoForm.Row>
+          {hideIpsTypeField ? null : (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="IPS 유형"
+                fullRow
+                view={ipsLabel}
+                edit={
+                  <Controller
+                    name="ips"
+                    control={commonInfoForm.control}
+                    render={({ field }) => (
+                      <CmsSelect
+                        withAllOption={false}
+                        placeholder="IPS 유형을 선택하세요"
+                        width="100%"
+                        options={[...IPS_OPTIONS]}
+                        value={field.value ?? 'Prepare'}
+                        onChange={next =>
+                          field.onChange(
+                            next === 'Prepare' || next === 'Succeed' || next === 'Inspire'
+                              ? next
+                              : 'Prepare'
+                          )
+                        }
+                      />
+                    )}
+                  />
+                }
+              />
+            </DetailInfoForm.Row>
+          )}
         </DetailInfoForm>
       </div>
     )
@@ -821,18 +1251,18 @@ export function BasicInfoSection({
         <DetailInfoForm.Field
           label="세부 프로그램명"
           required
-          view={program.title}
+          view={program.generalCommonInfo?.detailedProgramName?.trim() || '-'}
           edit={
             <>
               <Controller
-                name="title"
+                name="detailedProgramName"
                 control={commonInfoForm.control}
                 render={({ field }) => (
                   <CmsInput
                     {...field}
                     value={field.value ?? ''}
                     placeholder="세부 프로그램명"
-                    status={commonInfoForm.formState.errors.title ? 'error' : undefined}
+                    status={commonInfoForm.formState.errors.detailedProgramName ? 'error' : undefined}
                     width={'100%'}
                   />
                 )}
@@ -886,6 +1316,7 @@ export function BasicInfoSection({
                   {...field}
                   options={CATEGORY_OPTIONS}
                   width={'100%'}
+                  disabled
                   onChange={v => field.onChange(v ? v : undefined)}
                 />
               )}
@@ -895,16 +1326,24 @@ export function BasicInfoSection({
         <DetailInfoForm.Field
           label="사업 분야"
           required
-          view={program.businessArea ?? '-'}
+          view={optionLabel(
+            BUSINESS_AREA_OPTIONS,
+            resolveStoredBusinessArea(program.businessArea) || program.businessArea
+          )}
           edit={
             <Controller
               name="businessArea"
               control={commonInfoForm.control}
               render={({ field }) => (
                 <CmsSelect
-                  value={field.value ?? undefined}
-                  options={BUSINESS_AREA_OPTIONS}
-                  onChange={v => field.onChange(v ?? undefined)}
+                  withAllOption={false}
+                  placeholder="사업 분야를 선택하세요"
+                  value={resolveStoredBusinessArea(field.value) || undefined}
+                  options={[...BUSINESS_AREA_OPTIONS]}
+                  onChange={next => {
+                    const resolved = resolveStoredBusinessArea(next == null ? '' : String(next))
+                    field.onChange(resolved || undefined)
+                  }}
                   width={'100%'}
                 />
               )}
@@ -953,13 +1392,22 @@ export function BasicInfoSection({
           label="후원사 담당자"
           required
           view={
-            program.managerName || program.contactPhone ? (
+            isProgramSponsorManagerUnselected({
+              sponsorManagerContactIds: program.generalCommonInfo?.sponsorManagerContactIds,
+              sponsorManagerContactId: program.generalCommonInfo?.sponsorManagerContactId,
+              managerLine: program.generalCommonInfo?.sponsorManagerLine,
+              managerName: program.managerName,
+            }) ? (
+              SPONSOR_CONTACT_UNSELECTED_LABEL
+            ) : program.managerName?.trim() ? (
               <>
-                {program.managerName ?? ''}
-                {program.managerName && program.contactPhone ? (
-                  <DetailInfoForm.InputsSeparator />
+                {program.managerName}
+                {program.contactPhone ? (
+                  <>
+                    <DetailInfoForm.InputsSeparator />
+                    <span>{program.contactPhone}</span>
+                  </>
                 ) : null}
-                {program.contactPhone ? <span>{program.contactPhone}</span> : null}
               </>
             ) : (
               '-'
@@ -978,22 +1426,52 @@ export function BasicInfoSection({
                           const currentName = field.value ?? ''
                           const currentPhone = commonInfoForm.watch('contactPhone') ?? ''
                           const selectedIndex =
-                            managers.length > 0
-                              ? managers.findIndex(
-                                  m => m.name === currentName || m.phone === currentPhone
-                                )
-                              : -1
+                            currentName === SPONSOR_CONTACT_UNSELECTED_LABEL
+                              ? -1
+                              : managers.length > 0
+                                ? managers.findIndex(
+                                    m => m.name === currentName || m.phone === currentPhone
+                                  )
+                                : -1
+                          const contactOptions =
+                            contactsQuery.isSuccess || contactsQuery.isError
+                              ? [
+                                ...managers.map((m, i) => ({
+                                  value: i,
+                                  label: m.name,
+                                })),
+                                {
+                                  value: SPONSOR_CONTACT_UNSELECTED_VALUE,
+                                  label: SPONSOR_CONTACT_UNSELECTED_LABEL,
+                                },
+                              ]
+                            : managers.map((m, i) => ({
+                                value: i,
+                                label: m.name,
+                              }))
                           return (
                             <CmsSelect
                               placeholder="담당자 선택"
-                              value={selectedIndex >= 0 ? selectedIndex : undefined}
-                              options={managers.map((m, i) => ({
-                                value: i,
-                                label: m.name,
-                              }))}
+                              value={
+                                selectedIndex >= 0
+                                  ? selectedIndex
+                                  : currentName === SPONSOR_CONTACT_UNSELECTED_LABEL
+                                    ? SPONSOR_CONTACT_UNSELECTED_VALUE
+                                    : undefined
+                              }
+                              options={contactOptions}
+                              disabled={!watchedSponsorId || contactsQuery.isLoading}
                               onChange={idx => {
-                                if (idx === '' || idx == null) {
-                                  commonInfoForm.setValue('managerName', '')
+                                if (
+                                  idx === '' ||
+                                  idx == null ||
+                                  idx === SPONSOR_CONTACT_UNSELECTED_VALUE
+                                ) {
+                                  field.onChange(
+                                    idx === SPONSOR_CONTACT_UNSELECTED_VALUE
+                                      ? SPONSOR_CONTACT_UNSELECTED_LABEL
+                                      : ''
+                                  )
                                   commonInfoForm.setValue('contactPhone', undefined)
                                   return
                                 }

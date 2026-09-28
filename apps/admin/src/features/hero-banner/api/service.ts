@@ -3,7 +3,13 @@ import type {
   HeroBannerCreateInput,
   HeroBannerUpdateInput,
 } from '@/entities/hero-banner/model/types'
+import { HeroBannerMinActiveError } from '@/entities/hero-banner/model/types'
 import { getJAKoreaHomepageAdminAPIMainSubset } from '@/shared/api/generated/main/main-api'
+import type { HeroResponse } from '@/shared/api/generated/main/schemas/heroResponse'
+import {
+  isLastActiveToggleOff,
+  wouldRemoveLastActive,
+} from '@/shared/lib/min-active-guard'
 import { shouldUseHeroBannerRemoteApi } from './capabilities'
 import {
   mapHeroResponseToDomain,
@@ -28,7 +34,7 @@ function mainApi() {
 }
 
 async function listRemoteHeroBanners(): Promise<HeroBanner[]> {
-  const response = await mainApi().list5()
+  const response = await mainApi().list4()
   return (response.items ?? []).map(mapHeroResponseToDomain)
 }
 
@@ -78,7 +84,7 @@ export async function createHeroBannerService(
 ): Promise<HeroBanner> {
   if (shouldUseHeroBannerRemoteApi()) {
     const imageAssetId = await resolveImageAssetIdForCreate(input)
-    const created = await mainApi().create4(toHeroCreateRequest(input, imageAssetId))
+    const created = await mainApi().create6(toHeroCreateRequest(input, imageAssetId))
     return mapHeroResponseToDomain(created)
   }
   return createLocal(input)
@@ -95,12 +101,15 @@ export async function updateHeroBannerService(
     if (!current) {
       throw new Error(`HeroBanner not found: ${id}`)
     }
+    if (patch.isActive === false && isLastActiveToggleOff(rows, id, false)) {
+      throw new HeroBannerMinActiveError()
+    }
     const imageAssetId = await resolveImageAssetIdForUpdate(current, patch)
     const updated = await mainApi().update7(
       Number(id),
       toHeroUpdateRequest(current, patch, imageAssetId),
     )
-    return mapHeroResponseToDomain(updated)
+    return mapHeroResponseToDomain(updated as HeroResponse)
   }
   return updateLocal(id, patch)
 }
@@ -111,8 +120,12 @@ export async function removeHeroBannersService(
 ): Promise<void> {
   if (shouldUseHeroBannerRemoteApi()) {
     if (ids.length === 0) return
+    const currentRows = await resolveCurrentRows(cachedRows)
+    if (wouldRemoveLastActive(currentRows, ids)) {
+      throw new HeroBannerMinActiveError()
+    }
     const idSet = new Set(ids)
-    const rows = (await resolveCurrentRows(cachedRows)).filter(row => idSet.has(row.id))
+    const rows = currentRows.filter(row => idSet.has(row.id))
     if (rows.length === 0) return
     await mainApi().bulkDelete2(toBulkDeleteRequest(rows))
     return
@@ -138,7 +151,7 @@ export async function reorderHeroBannersService(
       ordered.push(row)
     }
     const updated = await mainApi().reorder2(toReorderRequest(ordered))
-    return updated.map(mapHeroResponseToDomain)
+    return (updated as HeroResponse[]).map(mapHeroResponseToDomain)
   }
   return reorderLocal(orderedIds)
 }
@@ -154,8 +167,11 @@ export async function setHeroBannerActiveService(
     if (!current) {
       throw new Error(`HeroBanner not found: ${id}`)
     }
+    if (isLastActiveToggleOff(rows, id, isActive)) {
+      throw new HeroBannerMinActiveError()
+    }
     const updated = await mainApi().toggle3(Number(id), toToggleRequest(current, isActive))
-    return mapHeroResponseToDomain(updated)
+    return mapHeroResponseToDomain(updated as HeroResponse)
   }
   return setActiveLocal(id, isActive)
 }

@@ -26,6 +26,10 @@ import {
 } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
 import { ExplanationSurveyPeriodReadonly } from '@/features/template/ui/paragraph/explanation/survey-period-readonly'
+import {
+  titlePeriodEndDisplayText,
+  titlePeriodStartDisplayText,
+} from '@/features/template/lib/title-with-period-settings'
 import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
@@ -212,6 +216,20 @@ export type RenderFormParagraphBodyOptions = {
    * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
    */
   structureLockedAuthoringChoicePreview?: boolean
+  /**
+   * 모집 양식 구조 잠금 — 단락 추가·삭제·유형 변경은 막고, 운영 값(기간·상세·표 셀)은 authoring에서 입력.
+   */
+  structureLockedAuthoringOperationalFill?: boolean
+  /**
+   * 프로그램 등록 위저드 신청 양식 — 시드 단락의 신청자 fill(DetailInfoForm·필드형 표 등)만 잠금.
+   * 타이틀·설명·텍스트형 TD는 템플릿 관리와 동일하게 편집 가능.
+   */
+  seedApplicantFillLocked?: boolean
+  /**
+   * 구조 잠금 시드 — 동의/객관식 라디오를 disabled 스킨 없이 미선택·입력 불가로 표시.
+   * (프로그램 등록 신청 양식)
+   */
+  structureLockedChoiceDisplayOnly?: boolean
   /** 초상권 동의 fill — 1번 표 성명·소속 응답 입력만 허용 */
   portraitConsentResponseFieldsInteractive?: boolean
   /**
@@ -258,8 +276,14 @@ export function renderFormParagraphBody(
   const consentFillParagraphInteractive =
     consentFillBodyReadOnly &&
     (options?.agreementConsentFillInteractiveParagraphIds?.has(p.id) ?? false)
+  const lockedAuthoringOperationalFill =
+    structureLocked &&
+    options?.structureLockedAuthoringOperationalFill === true &&
+    paragraphInteractionMode === 'authoring' &&
+    !isPreviewReadonly
   /**
    * 구조 잠금: 작성(authoring)에서는 카드 선택만으로는 본문 편집 불가.
+   * 모집 양식(`structureLockedAuthoringOperationalFill`): 운영 값 입력은 허용.
    * user + `agreementConsentFillReadOnlyBody`: 양식 본문만 잠금(동의서 작성).
    * user + interactive id 예외(대상자 본인 등): 응답 입력 허용.
    * user(일반): 잠긴 시드도 입력 가능. `preview`는 항상 비활성.
@@ -267,8 +291,9 @@ export function renderFormParagraphBody(
   const isBodyInteractive = isPreviewReadonly
     ? false
     : structureLocked
-      ? paragraphInteractionMode === 'user' &&
-        (!consentFillBodyReadOnly || consentFillParagraphInteractive)
+      ? lockedAuthoringOperationalFill ||
+        (paragraphInteractionMode === 'user' &&
+          (!consentFillBodyReadOnly || consentFillParagraphInteractive))
       : paragraphInteractionMode === 'user' || isParagraphSelected
   const structureLockedConsentChoiceInteractive =
     structureLocked &&
@@ -278,6 +303,11 @@ export function renderFormParagraphBody(
       (paragraphInteractionMode === 'user' && consentFillBodyReadOnly))
   const lockedAuthoringChoicePreview =
     structureLockedConsentChoiceInteractive && paragraphInteractionMode === 'authoring'
+  /** 프로그램 등록 신청 — 시드 선택 UI는 일반 스킨·미선택·입력 불가 */
+  const structureLockedChoiceDisplayOnly =
+    structureLocked &&
+    options?.structureLockedChoiceDisplayOnly === true &&
+    paragraphInteractionMode === 'authoring'
   switch (p.variant) {
     case 'survey_title_with_period':
       if (!isCardSelected && !isUserLikeVisible) return null
@@ -288,6 +318,8 @@ export function renderFormParagraphBody(
           <ExplanationSurveyPeriodReadonly
             startAt={p.startAt}
             endAt={p.endAt}
+            startFallback={titlePeriodStartDisplayText(p)}
+            endFallback={titlePeriodEndDisplayText(p)}
             periodLabel="작성 기간"
           />
         )
@@ -383,6 +415,7 @@ export function renderFormParagraphBody(
           isEditMode={isAgreementNoticeExplanationEditMode || isBodyInteractive}
           bodyDisplayMode={explanationBodyDisplayMode}
           bottomConsentInteractive={isBodyInteractive || structureLockedConsentChoiceInteractive}
+          bottomConsentDisplayOnly={structureLockedChoiceDisplayOnly}
           consentFillMode={consentFillBodyReadOnly}
         />
       )
@@ -408,6 +441,7 @@ export function renderFormParagraphBody(
       const isEditMode =
         isTextTableAuthoringEdit ||
         structureLockedPartialTextEdit ||
+        lockedAuthoringOperationalFill ||
         (!isPreviewReadonly &&
           (!structureLocked ||
             consentFillParagraphInteractive ||
@@ -436,6 +470,7 @@ export function renderFormParagraphBody(
             structureLockedPartialTextEdit && isStructureLockedPartialDisclaimerEdit(hp.id)
           }
           bottomConsentPreviewInAuthoring={structureLockedConsentChoiceInteractive}
+          bottomConsentDisplayOnly={structureLockedChoiceDisplayOnly}
           consentFillMode={consentFillBodyReadOnly}
           tableRowSelection={options?.horizontalTableRowSelection}
           onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
@@ -579,6 +614,7 @@ export function renderFormParagraphBody(
           }
           portraitSeedPresetLocked={structureLocked}
           bottomConsentInteractive={structureLockedConsentChoiceInteractive}
+          bottomConsentDisplayOnly={structureLockedChoiceDisplayOnly}
           consentFillMode={consentFillBodyReadOnly}
         />
       )
@@ -697,7 +733,10 @@ export function renderFormParagraphBody(
         isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed(p.id)
       ) {
         return (
-          <UjatProgramApplicationApplicationRegionParagraph readOnlyPreview={isPreviewReadonly} />
+          <UjatProgramApplicationApplicationRegionParagraph
+            readOnlyPreview={isPreviewReadonly}
+            choiceDisplayOnly={structureLockedChoiceDisplayOnly}
+          />
         )
       }
       const ujatVolunteerRecruitCohort =
@@ -742,6 +781,7 @@ export function renderFormParagraphBody(
           }
           paragraphInteractionMode={paragraphInteractionMode}
           preservePreviewSelectionOnCardBlur={structureLockedConsentChoiceInteractive}
+          choiceDisplayOnly={structureLockedChoiceDisplayOnly}
           itemsEditActive={itemsEditActive}
           onActivateItemsEditor={
             usesMcItemsFocus

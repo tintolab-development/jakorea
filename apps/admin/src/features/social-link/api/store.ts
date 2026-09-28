@@ -3,11 +3,13 @@
  * 고정 6채널 — 생성/삭제 없음
  */
 
-import type {
-  SocialLink,
-  SocialLinkChannel,
-  SocialLinkUrlPatch,
+import {
+  SocialLinkMinActiveError,
+  type SocialLink,
+  type SocialLinkChannel,
+  type SocialLinkUrlPatch,
 } from '@/entities/social-link/model/types'
+import { isLastActiveToggleOff } from '@/shared/lib/min-active-guard'
 
 const STORAGE_KEY = 'admin.jakorea.socialLinks.v1'
 
@@ -199,6 +201,9 @@ export function setSocialLinkActive(id: string, isActive: boolean): SocialLink {
   const index = items.findIndex(row => row.id === id)
   if (index < 0) {
     throw new Error(`Social link not found: ${id}`)
+  }
+  if (!isActive && isLastActiveToggleOff(items, id, false)) {
+    throw new SocialLinkMinActiveError()
   }
   const next: SocialLink = {
     ...items[index]!,

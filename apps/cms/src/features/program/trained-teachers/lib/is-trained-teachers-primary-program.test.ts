@@ -23,7 +23,7 @@ describe('is-trained-teachers-primary-program', () => {
     expect(resolveTrainedTeacherPrimaryCaseMeta('186005')?.periodStatus).toBe('SCHEDULED')
   })
 
-  it('uses 교사 연수 schedule name SoT', () => {
-    expect(TRAINED_TEACHER_TRAINING_SCHEDULE_NAME).toBe('교사 연수')
+  it('uses 교육 연수 schedule name SoT', () => {
+    expect(TRAINED_TEACHER_TRAINING_SCHEDULE_NAME).toBe('교육 연수')
   })
 })

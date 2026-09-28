@@ -11,7 +11,6 @@ import type {
   TransparencyReport,
 } from '@/entities/reports-disclosure/model/types'
 import { ThumbnailEmptyIcon } from '@/features/reports-disclosure/ui/thumbnail-empty-icon'
-import { shouldUseReportsDisclosureRemoteApi } from '@/features/reports-disclosure/api/capabilities'
 import {
   CmsButton,
   CmsInput,
@@ -206,33 +205,26 @@ export function ReportFormModal({
       showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
       return
     }
-    const useRemote = shouldUseReportsDisclosureRemoteApi()
     const hasExistingThumb =
-      useRemote &&
       !thumbCleared &&
       !pendingThumbFile &&
       Boolean(initial?.thumbnailAssetId) &&
       Boolean(thumbnailUrl.trim())
     const hasExistingAttach =
-      useRemote &&
       !attachCleared &&
       !pendingAttachFile &&
       Boolean(initial?.attachmentAssetId) &&
       Boolean(attachmentUrl.trim())
 
-    if (!thumbnailUrl || !thumbnailFileName) {
-      if (!(useRemote && hasExistingThumb)) {
-        showAlert({ title: '입력 확인', content: '썸네일 이미지를 등록해 주세요.' })
-        return
-      }
+    if ((!thumbnailUrl || !thumbnailFileName) && !hasExistingThumb) {
+      showAlert({ title: '입력 확인', content: '썸네일 이미지를 등록해 주세요.' })
+      return
     }
-    if (!attachmentUrl || !attachmentFileName) {
-      if (!(useRemote && hasExistingAttach)) {
-        showAlert({ title: '입력 확인', content: '첨부파일을 등록해 주세요.' })
-        return
-      }
+    if ((!attachmentUrl || !attachmentFileName) && !hasExistingAttach) {
+      showAlert({ title: '입력 확인', content: '첨부파일을 등록해 주세요.' })
+      return
     }
-    if (useRemote && mode === 'create' && (!pendingThumbFile || !pendingAttachFile)) {
+    if (mode === 'create' && (!pendingThumbFile || !pendingAttachFile)) {
       showAlert({
         title: '입력 확인',
         content: '썸네일과 첨부파일을 파일로 등록해 주세요.',

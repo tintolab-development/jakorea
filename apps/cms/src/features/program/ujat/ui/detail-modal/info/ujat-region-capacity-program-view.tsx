@@ -7,6 +7,7 @@ import { UjatRegionCapacitySection } from '@/features/program/ujat/ui/detail-mod
 import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-class-capacity-by-region-paragraph.css'
 
 export function UjatRegionCapacityProgramView({
+  program,
   isEdit = false,
   h1Values: h1ValuesInput,
   h2Values: h2ValuesInput,
@@ -16,8 +17,9 @@ export function UjatRegionCapacityProgramView({
   h1Values?: UjatRegionCapacitySemesterValues
   h2Values?: UjatRegionCapacitySemesterValues
 }) {
-  const h1Values = h1ValuesInput ?? resolveUjatRegionCapacitySemesterValues('h1')
-  const h2Values = h2ValuesInput ?? resolveUjatRegionCapacitySemesterValues('h2')
+  const overlay = program.ujatRegistrationOverlay
+  const h1Values = h1ValuesInput ?? resolveUjatRegionCapacitySemesterValues('h1', overlay)
+  const h2Values = h2ValuesInput ?? resolveUjatRegionCapacitySemesterValues('h2', overlay)
   const mode = isEdit ? 'edit' : 'view'
 
   return (

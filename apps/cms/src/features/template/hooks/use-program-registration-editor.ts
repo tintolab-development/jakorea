@@ -26,6 +26,7 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
+import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import type {
   ProgramRegistrationEducationScheduleMode,
   ProgramRegistrationScheduleDetailKind,
@@ -44,7 +45,15 @@ import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
-import { persistGeneralProgramRegistration } from '@/features/program/general/lib/registration-local-save'
+import {
+  buildGeneralProgramListRowFromRegistrationSnapshot,
+  registrationPendingSnapshotId,
+  persistGeneralProgramRegistration,
+} from '@/features/program/general/lib/registration-local-save'
+import {
+  logProgramRegistrationCreatePayload,
+  logRegistrationStepTransitionPayload,
+} from '@/features/program/shared/lib/log-program-registration-create-payload'
 import type { Program } from '@/types/domain'
 import {
   applyProgramRegistrationEditorState,
@@ -52,6 +61,7 @@ import {
   type ProgramRegistrationEditorState,
 } from '@/features/template/lib/program-registration-editor-state'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
+import { forceParagraphTitleRequired } from '@/features/template/lib/paragraph-required-mark'
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
@@ -68,9 +78,8 @@ import {
   patchProgramRegistrationOverlay,
   readGeneralRegistrationOverlayScheduleLines,
   readGeneralRegistrationOverlaySponsorIds,
-  readGeneralRegistrationOverlaySponsorId,
-  readGeneralRegistrationOverlaySponsorContactId,
   readRegistrationOverlayProgramTitleKo,
+  patchRegistrationOverlayProgramTitleKo,
   readRegistrationOverlaySponsorContactId,
   readRegistrationOverlaySponsorId,
   replaceProgramRegistrationOverlay,
@@ -80,7 +89,13 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { useCmsAlert } from '@/shared/ui'
-import { hasIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
+import { describeIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
+import { describeIncompleteTrainedTeachersProgramRegistrationRequiredFields } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
+import {
+  describeIncompleteEconomyProgramRegistrationRequiredFields,
+  hasIncompleteEconomyRegistrationFromStore,
+} from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
 
 export type ProgramRegistrationParticipantSelection = {
   individual: boolean
@@ -107,17 +122,58 @@ function getDefaultEducationScheduleMode(
   return variant === 'economy' ? 'period' : 'date'
 }
 
+const GENERAL_BASIC_INFO_LOCK_NOTICE =
+  PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.editDescription
+
+function withRegistrationBasicInfoDescriptionForVariant(
+  draft: WritingFormDraft,
+  variant: ProgramRegistrationFormVariant
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (paragraph.id !== PROGRAM_REGISTRATION_IDS.basicInfo) return paragraph
+    const current = paragraph.paragraphDescription.trim()
+    if (variant === 'general') {
+      if (current !== '') return paragraph
+      changed = true
+      return { ...paragraph, paragraphDescription: GENERAL_BASIC_INFO_LOCK_NOTICE }
+    }
+    if (current !== GENERAL_BASIC_INFO_LOCK_NOTICE) return paragraph
+    changed = true
+    return { ...paragraph, paragraphDescription: '' }
+  })
+  return changed ? { ...draft, paragraphs } : draft
+}
+
 function filterProgramRegistrationDraftForVariant(
   draft: WritingFormDraft,
   variant: ProgramRegistrationFormVariant
 ): WritingFormDraft {
-  if (variant !== 'trainedTeachers') return draft
-  return {
-    ...draft,
-    paragraphs: draft.paragraphs.filter(
-      paragraph => paragraph.id !== PROGRAM_REGISTRATION_IDS.businessKpi
-    ),
-  }
+  const filtered =
+    variant !== 'trainedTeachers'
+      ? draft
+      : {
+          ...draft,
+          paragraphs: draft.paragraphs.filter(
+            paragraph => paragraph.id !== PROGRAM_REGISTRATION_IDS.businessKpi
+          ),
+        }
+  return withRegistrationBasicInfoDescriptionForVariant(filtered, variant)
+}
+
+/** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
+function withForcedProgramRegistrationSeedTitleRequired(
+  draft: WritingFormDraft,
+  seedParagraphIds: ReadonlySet<string>
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (!seedParagraphIds.has(paragraph.id)) return paragraph
+    const next = forceParagraphTitleRequired(paragraph)
+    if (next !== paragraph) changed = true
+    return next
+  })
+  return changed ? { ...draft, paragraphs } : draft
 }
 
 function createDefaultRegistrationEditorState(
@@ -175,6 +231,8 @@ export type UseProgramRegistrationEditorOptions = {
   skipDraftRestore?: boolean
   /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
+  /** 등록 위저드 임시저장 — programType별 localStorage 격리 키 */
+  registrationWizardProgramType?: string
 }
 
 export function useProgramRegistrationEditor(
@@ -191,6 +249,9 @@ export function useProgramRegistrationEditor(
   const templateCode = editorOptions?.templateCode
   const skipDraftRestore = editorOptions?.skipDraftRestore === true
   const localOnlyDraftPersistence = editorOptions?.localOnlyDraftPersistence === true
+  const registrationWizardProgramType = editorOptions?.registrationWizardProgramType
+  const usesRegistrationWizardDraft =
+    registrationWizardProgramType != null && registrationWizardProgramType !== ''
   const isStructureLocked = isWritingFormTemplateStructureLocked({
     templateCode,
     systemTemplate: editorOptions?.systemTemplate,
@@ -276,7 +337,8 @@ export function useProgramRegistrationEditor(
       }
       if (programRegistrationFormVariant === 'trainedTeachers') {
         patchInstitutionApplicationProgramBridge({
-          preEducationNoticeRequired: trainedTeachersTeacherTrainingEnabled,
+          // TT: 사전 안내 단락 비정책 — 교육 연수 토글과 혼용 금지
+          preEducationNoticeRequired: false,
           educationStructure: programType,
           sessionRound: sessionRoundType,
           educationScheduleMode,
@@ -307,11 +369,26 @@ export function useProgramRegistrationEditor(
     programType,
     sessionRoundType,
     educationScheduleMode,
-    trainedTeachersTeacherTrainingEnabled,
   ])
 
   const applyEditorStateSnapshot = useCallback((state: ProgramRegistrationEditorState) => {
-    setParticipant(state.participant)
+    setParticipant(
+      programRegistrationFormVariant === 'trainedTeachers'
+        ? {
+            individual: false,
+            organization: true,
+            teacherInstructor: false,
+            volunteer: false,
+          }
+        : programRegistrationFormVariant === 'economy'
+          ? {
+              individual: false,
+              organization: true,
+              teacherInstructor: true,
+              volunteer: false,
+            }
+          : state.participant
+    )
     setProgramType(state.programType)
     setSessionRoundType(state.sessionRoundType)
     setEducationFormScheduleDetail(state.educationFormScheduleDetail)
@@ -352,14 +429,22 @@ export function useProgramRegistrationEditor(
       })
     }
     setProgramTitleKo(state.programTitleKo ?? '')
+    patchRegistrationOverlayProgramTitleKo(
+      programRegistrationFormVariant,
+      state.programTitleKo ?? ''
+    )
   }, [programRegistrationFormVariant])
 
   const resetRegistrationEditorToSeed = useCallback(() => {
     resetProgramRegistrationOverlay()
-    const next = filterProgramRegistrationDraftForVariant(
+    const seeded = filterProgramRegistrationDraftForVariant(
       normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant)),
       programRegistrationFormVariant
     )
+    const next =
+      programRegistrationFormVariant === 'economy'
+        ? withForcedProgramRegistrationSeedTitleRequired(seeded, seedParagraphIds)
+        : seeded
     startTransition(() => {
       setDraft(next)
       setActiveParagraphId(next.paragraphs[0]?.id ?? null)
@@ -368,7 +453,16 @@ export function useProgramRegistrationEditor(
         createDefaultRegistrationEditorState(programRegistrationFormVariant)
       )
     })
-  }, [applyEditorStateSnapshot, programRegistrationFormVariant])
+  }, [applyEditorStateSnapshot, programRegistrationFormVariant, seedParagraphIds])
+
+  // hydrate는 active·복원 옵션·유형이 바뀔 때만. 콜백/Set identity 변경으로
+  // overlay를 통째로 reset 하면 다른 단락 입력이 사라진다.
+  const applyEditorStateSnapshotRef = useRef(applyEditorStateSnapshot)
+  applyEditorStateSnapshotRef.current = applyEditorStateSnapshot
+  const resetRegistrationEditorToSeedRef = useRef(resetRegistrationEditorToSeed)
+  resetRegistrationEditorToSeedRef.current = resetRegistrationEditorToSeed
+  const seedParagraphIdsRef = useRef(seedParagraphIds)
+  seedParagraphIdsRef.current = seedParagraphIds
 
   useEffect(() => {
     if (!active) {
@@ -380,7 +474,7 @@ export function useProgramRegistrationEditor(
 
     if (skipDraftRestore) {
       setIsDraftLoading(false)
-      resetRegistrationEditorToSeed()
+      resetRegistrationEditorToSeedRef.current()
       return
     }
 
@@ -390,22 +484,39 @@ export function useProgramRegistrationEditor(
       setDraft(EMPTY_WRITING_FORM_DRAFT)
       setActiveParagraphId(null)
       const defaults = createDefaultRegistrationEditorState(programRegistrationFormVariant)
+      const variant = programRegistrationFormVariant
 
-      void loadWritingFormTemplateDraft(templateCode, {
-        localOnly: localOnlyDraftPersistence,
-      })
+      const loadDraft = usesRegistrationWizardDraft
+        ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
+            m.loadRegistrationWizardFormDraft({
+              programType: registrationWizardProgramType!,
+              templateCode,
+            })
+          )
+        : loadWritingFormTemplateDraft(templateCode, {
+            localOnly: localOnlyDraftPersistence,
+          })
+
+      void loadDraft
         .then(saved => {
           if (cancelled) return
           if (saved?.draft) {
             replaceProgramRegistrationOverlay(saved.overlay ?? {})
-            const normalized = filterProgramRegistrationDraftForVariant(
+            const normalizedBase = filterProgramRegistrationDraftForVariant(
               normalizeWritingFormDraft(saved.draft),
-              programRegistrationFormVariant
+              variant
             )
+            const normalized =
+              variant === 'economy'
+                ? withForcedProgramRegistrationSeedTitleRequired(
+                    normalizedBase,
+                    seedParagraphIdsRef.current
+                  )
+                : normalizedBase
             const restored = applyProgramRegistrationEditorState(saved.editorState, defaults)
             startTransition(() => {
               setDraft(normalized)
-              applyEditorStateSnapshot(restored)
+              applyEditorStateSnapshotRef.current(restored)
               setActiveParagraphId(
                 restored.activeParagraphId ?? normalized.paragraphs[0]?.id ?? null
               )
@@ -413,7 +524,7 @@ export function useProgramRegistrationEditor(
             })
             return
           }
-          resetRegistrationEditorToSeed()
+          resetRegistrationEditorToSeedRef.current()
         })
         .finally(() => {
           if (!cancelled) setIsDraftLoading(false)
@@ -425,16 +536,16 @@ export function useProgramRegistrationEditor(
     }
 
     setIsDraftLoading(false)
-    resetRegistrationEditorToSeed()
+    resetRegistrationEditorToSeedRef.current()
   }, [
     active,
-    applyEditorStateSnapshot,
     programRegistrationFormVariant,
-    resetRegistrationEditorToSeed,
     skipDraftRestore,
     templateCode,
     usesTemplateDraftApi,
     localOnlyDraftPersistence,
+    registrationWizardProgramType,
+    usesRegistrationWizardDraft,
   ])
 
   useEffect(() => {
@@ -517,6 +628,24 @@ export function useProgramRegistrationEditor(
 
   const onIndividualChange = useCallback(
     (checked: boolean) => {
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: false,
+          volunteer: false,
+        })
+        return
+      }
+      if (programRegistrationFormVariant === 'economy') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: true,
+          volunteer: false,
+        })
+        return
+      }
       const next = applyGeneralParticipantAudienceSelection('individual', checked)
       const nextParticipation = shouldResetParticipationScheduleDetailForAudience(next)
         ? 'common'
@@ -555,6 +684,27 @@ export function useProgramRegistrationEditor(
 
   const onOrganizationChange = useCallback(
     (checked: boolean) => {
+      // 교육받은 교사 — 학교/기관 고정 (해제·변경 불가)
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        setParticipant(prev => ({
+          ...prev,
+          individual: false,
+          organization: true,
+          teacherInstructor: false,
+          volunteer: false,
+        }))
+        return
+      }
+      // 1사1교 — 학교/기관·강사 고정 (해제·변경 불가)
+      if (programRegistrationFormVariant === 'economy') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: true,
+          volunteer: false,
+        })
+        return
+      }
       const next = applyGeneralParticipantAudienceSelection('organization', checked)
       const nextParticipation = shouldResetParticipationScheduleDetailForAudience(next)
         ? 'common'
@@ -591,13 +741,55 @@ export function useProgramRegistrationEditor(
     ]
   )
 
-  const onTeacherInstructorChange = useCallback((checked: boolean) => {
-    setParticipant(prev => ({ ...prev, teacherInstructor: checked }))
-  }, [])
+  const onTeacherInstructorChange = useCallback(
+    (checked: boolean) => {
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: false,
+          volunteer: false,
+        })
+        return
+      }
+      if (programRegistrationFormVariant === 'economy') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: true,
+          volunteer: false,
+        })
+        return
+      }
+      setParticipant(prev => ({ ...prev, teacherInstructor: checked }))
+    },
+    [programRegistrationFormVariant]
+  )
 
-  const onVolunteerChange = useCallback((checked: boolean) => {
-    setParticipant(prev => ({ ...prev, volunteer: checked }))
-  }, [])
+  const onVolunteerChange = useCallback(
+    (checked: boolean) => {
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: false,
+          volunteer: false,
+        })
+        return
+      }
+      if (programRegistrationFormVariant === 'economy') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: true,
+          volunteer: false,
+        })
+        return
+      }
+      setParticipant(prev => ({ ...prev, volunteer: checked }))
+    },
+    [programRegistrationFormVariant]
+  )
 
   const onSessionRoundTypeChange = useCallback(
     (value: ProgramRegistrationSessionRoundType) => {
@@ -778,9 +970,13 @@ export function useProgramRegistrationEditor(
     })
   }, [])
 
-  const onProgramTitleKoChange = useCallback((next: string) => {
-    setProgramTitleKo(next)
-  }, [])
+  const onProgramTitleKoChange = useCallback(
+    (next: string) => {
+      setProgramTitleKo(next)
+      patchRegistrationOverlayProgramTitleKo(programRegistrationFormVariant, next)
+    },
+    [programRegistrationFormVariant]
+  )
 
   const paragraphBodyOptions = useMemo(
     () =>
@@ -938,31 +1134,46 @@ export function useProgramRegistrationEditor(
       sponsorContactId.trim() ||
       readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     const resolvedProgramTitleKo = resolveProgramTitleKo()
-    await persistWritingFormTemplateDraft({
-      templateId: templateCode,
-      draft,
-      overlay: { ...getProgramRegistrationOverlayRecord() },
-      editorState: buildProgramRegistrationEditorState({
-        participant,
-        programType,
-        sessionRoundType,
-        educationFormScheduleDetail,
-        participationScheduleDetail,
-        ipsScheduleDetail,
-        curriculumSessionCount,
-        curriculumChartSessionCount,
-        scheduleCurriculumDetailCount,
-        scheduleCurriculumGroupCount,
-        scheduleCurriculumPreEducation,
-        trainedTeachersTeacherTrainingEnabled,
-        educationScheduleMode,
-        sponsorId: resolvedSponsorId,
-        sponsorContactId: resolvedContactId,
-        programTitleKo: resolvedProgramTitleKo,
-        activeParagraphId,
-      }),
-      localOnly: localOnlyDraftPersistence,
+    const overlay = { ...getProgramRegistrationOverlayRecord() }
+    const editorState = buildProgramRegistrationEditorState({
+      participant,
+      programType,
+      sessionRoundType,
+      educationFormScheduleDetail,
+      participationScheduleDetail,
+      ipsScheduleDetail,
+      curriculumSessionCount,
+      curriculumChartSessionCount,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      scheduleCurriculumPreEducation,
+      trainedTeachersTeacherTrainingEnabled,
+      educationScheduleMode,
+      sponsorId: resolvedSponsorId,
+      sponsorContactId: resolvedContactId,
+      programTitleKo: resolvedProgramTitleKo,
+      activeParagraphId,
     })
+    if (usesRegistrationWizardDraft) {
+      const { persistRegistrationWizardFormDraft } = await import(
+        '@/features/program/general/lib/registration-wizard-form-draft'
+      )
+      await persistRegistrationWizardFormDraft({
+        programType: registrationWizardProgramType!,
+        templateCode,
+        draft,
+        overlay,
+        editorState,
+      })
+    } else {
+      await persistWritingFormTemplateDraft({
+        templateId: templateCode,
+        draft,
+        overlay,
+        editorState,
+        localOnly: localOnlyDraftPersistence,
+      })
+    }
   }, [
     activeParagraphId,
     curriculumChartSessionCount,
@@ -986,6 +1197,8 @@ export function useProgramRegistrationEditor(
     programRegistrationFormVariant,
     usesTemplateDraftApi,
     localOnlyDraftPersistence,
+    registrationWizardProgramType,
+    usesRegistrationWizardDraft,
   ])
 
   /** 중간 저장 — template draft만. 프로그램 POST는 handleCompleteRegistration에서만. */
@@ -1031,8 +1244,140 @@ export function useProgramRegistrationEditor(
     ]
   )
 
+  /** 현재 공통·모집 overlay를 상세와 동일한 Program 스냅샷으로 만든다. */
+  const buildCurrentProgramSnapshot = useCallback(
+    (id = 'registration-preview'): Program => {
+      const variant = programRegistrationFormVariant
+      const resolvedSponsorId =
+        sponsorId.trim() || readRegistrationOverlaySponsorId(variant)
+      return buildGeneralProgramListRowFromRegistrationSnapshot({
+        id,
+        participant,
+        programType,
+        variant,
+        sponsorId: resolvedSponsorId || undefined,
+        title: resolveProgramTitleKo() || undefined,
+        sessionRoundType,
+        educationScheduleMode,
+        educationScheduleLines:
+          programType === 'schedule' && sessionRoundType === 'multi'
+            ? []
+            : readGeneralRegistrationOverlayScheduleLines(),
+        scheduleCurriculumDetailCount: scheduleCurriculumDetailCount,
+        editorExtras: {
+          educationFormScheduleDetail,
+          participationScheduleDetail,
+          ipsScheduleDetail,
+          curriculumSessionCount,
+          curriculumChartSessionCount,
+          scheduleCurriculumPreEducation:
+            variant === 'trainedTeachers'
+              ? trainedTeachersTeacherTrainingEnabled
+              : scheduleCurriculumPreEducation,
+          participantOrganization: participant.organization,
+          teacherTrainingEnabled:
+            variant === 'trainedTeachers'
+              ? trainedTeachersTeacherTrainingEnabled
+              : undefined,
+        },
+      })
+    },
+    [
+      curriculumChartSessionCount,
+      curriculumSessionCount,
+      educationFormScheduleDetail,
+      educationScheduleMode,
+      ipsScheduleDetail,
+      participant,
+      participationScheduleDetail,
+      programRegistrationFormVariant,
+      programType,
+      resolveProgramTitleKo,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumPreEducation,
+      sessionRoundType,
+      sponsorId,
+      trainedTeachersTeacherTrainingEnabled,
+    ]
+  )
+
+  /** 단계 전환 — base create payload (formBindings 미포함) */
+  const logCurrentRegistrationPayload = useCallback(
+    (stepLabel: string): void => {
+      const program = buildCurrentProgramSnapshot('debug')
+      logRegistrationStepTransitionPayload({
+        program,
+        variant: programRegistrationFormVariant,
+        stepLabel,
+      })
+    },
+    [buildCurrentProgramSnapshot, programRegistrationFormVariant]
+  )
+
+  /** 개발용 — 공통정보 overlay·controlled 필드 샘플 채움 (`import.meta.env.DEV`에서만 UI 노출) */
+  const applyDevAutofill = useCallback(async () => {
+    const patch = await applyDevProgramRegistrationAutofill(programRegistrationFormVariant, {
+      curriculumSessionCount,
+      curriculumChartSessionCount,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      participantOrganization: participant.organization,
+      programType,
+      sessionRoundType,
+    })
+    setProgramTitleKo(patch.programTitleKo)
+    if (patch.sponsorId) setSponsorId(patch.sponsorId)
+    if (patch.sponsorContactId) setSponsorContactId(patch.sponsorContactId)
+
+    const typeSettings = patch.typeSettings
+    if (typeSettings == null) return
+    const nextProgramType =
+      programRegistrationFormVariant === 'economy' ? 'curriculum' : typeSettings.programType
+    setProgramType(nextProgramType)
+    setSessionRoundType(typeSettings.sessionRoundType)
+    setEducationScheduleMode(typeSettings.educationScheduleMode)
+    setEducationFormScheduleDetail(typeSettings.educationFormScheduleDetail)
+    setParticipationScheduleDetail(typeSettings.participationScheduleDetail)
+    setIpsScheduleDetail(typeSettings.ipsScheduleDetail)
+    if (programRegistrationFormVariant === 'general' && nextProgramType === 'schedule') {
+      updateProgramRegistrationOverlayKey(
+        'generalRegistration.basicInfo.detailedProgramId',
+        () => TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+      )
+    }
+    setDraft(prev =>
+      patchEducationCurriculumParagraph(prev, {
+        paragraphTitle:
+          nextProgramType === 'schedule' ? '교육 진행 (일정형)' : '교육 진행 (커리큘럼)',
+        paragraphDescription:
+          nextProgramType === 'schedule'
+            ? resolveProgramRegistrationScheduleCurriculumEditDescription({
+                sessionRoundType: typeSettings.sessionRoundType,
+                participantOrganization: participant.organization,
+                educationFormScheduleDetail: typeSettings.educationFormScheduleDetail,
+                participationScheduleDetail: typeSettings.participationScheduleDetail,
+                ipsScheduleDetail: typeSettings.ipsScheduleDetail,
+              })
+            : programRegistrationFormVariant === 'general'
+              ? resolveProgramRegistrationCurriculumEditDescription(typeSettings.sessionRoundType)
+              : '차시 별 정보를 입력해 주세요',
+      })
+    )
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    participant.organization,
+    programRegistrationFormVariant,
+    programType,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount,
+    sessionRoundType,
+  ])
+
   /** 등록 완료 — 프로그램 생성 POST 1회 */
-  const handleCompleteRegistration = useCallback((): Promise<void> => {
+  const handleCompleteRegistration = useCallback((
+    options?: import('@/features/program/general/lib/prepare-registration-create-form-bindings').CompleteRegistrationBindingOptions
+  ): Promise<void> => {
     if (completionPromiseRef.current) return completionPromiseRef.current
     if (!onRegistrationSaved) {
       return Promise.resolve(handleSave())
@@ -1057,9 +1402,8 @@ export function useProgramRegistrationEditor(
     }
     const completion = (async () => {
       try {
-        await persistTemplateDraftIfNeeded()
-        const createdProgram = await persistGeneralProgramRegistration({
-          draft,
+        const registrationSnapshotArgs = {
+          id: registrationPendingSnapshotId(programRegistrationFormVariant),
           participant,
           programType,
           variant: programRegistrationFormVariant,
@@ -1078,14 +1422,106 @@ export function useProgramRegistrationEditor(
             ipsScheduleDetail,
             curriculumSessionCount,
             curriculumChartSessionCount,
-            scheduleCurriculumPreEducation,
+            scheduleCurriculumPreEducation:
+              programRegistrationFormVariant === 'trainedTeachers'
+                ? trainedTeachersTeacherTrainingEnabled
+                : scheduleCurriculumPreEducation,
             participantOrganization: participant.organization,
+            teacherTrainingEnabled:
+              programRegistrationFormVariant === 'trainedTeachers'
+                ? trainedTeachersTeacherTrainingEnabled
+                : undefined,
           },
+        } as const
+
+        const { shouldUseRegistrationCreateFormBindings } = await import(
+          '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+        )
+        const usesRemoteFormBindings =
+          shouldUseRegistrationCreateFormBindings() &&
+          (programRegistrationFormVariant === 'general' ||
+            programRegistrationFormVariant === 'trainedTeachers' ||
+            programRegistrationFormVariant === 'economy') &&
+          usesRegistrationWizardDraft &&
+          registrationWizardProgramType != null &&
+          isRemoteCreate
+
+        let preparedFormBindings:
+          | import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload
+          | null
+          | undefined
+
+        if (usesRemoteFormBindings && templateCode) {
+          const program = buildGeneralProgramListRowFromRegistrationSnapshot(registrationSnapshotArgs)
+          const overlay = { ...getProgramRegistrationOverlayRecord() }
+          const editorState = buildProgramRegistrationEditorState({
+            participant,
+            programType,
+            sessionRoundType,
+            educationFormScheduleDetail,
+            participationScheduleDetail,
+            ipsScheduleDetail,
+            curriculumSessionCount,
+            curriculumChartSessionCount,
+            scheduleCurriculumDetailCount,
+            scheduleCurriculumGroupCount,
+            scheduleCurriculumPreEducation,
+            trainedTeachersTeacherTrainingEnabled,
+            educationScheduleMode,
+            sponsorId: resolvedSponsorId,
+            sponsorContactId:
+              sponsorContactId.trim() ||
+              readRegistrationOverlaySponsorContactId(programRegistrationFormVariant),
+            programTitleKo: resolveProgramTitleKo(),
+            activeParagraphId,
+          })
+          const { prepareRegistrationCreateFormBindings } = await import(
+            '@/features/program/general/lib/prepare-registration-create-form-bindings'
+          )
+          preparedFormBindings = await prepareRegistrationCreateFormBindings({
+            program,
+            registration: { templateCode, draft, overlay, editorState },
+            operationalOverrides: options?.operationalOverrides,
+          })
+        } else {
+          await persistTemplateDraftIfNeeded()
+          if (usesRegistrationWizardDraft && registrationWizardProgramType) {
+            const program = buildGeneralProgramListRowFromRegistrationSnapshot(registrationSnapshotArgs)
+            const { persistRegistrationOperationalOverlaySnapshots } = await import(
+              '@/features/program/general/lib/registration-operational-form-drafts'
+            )
+            await persistRegistrationOperationalOverlaySnapshots(program)
+          }
+        }
+
+        const programForCreate = buildGeneralProgramListRowFromRegistrationSnapshot({
+          ...registrationSnapshotArgs,
+          id: registrationSnapshotArgs.id,
+        })
+        await logProgramRegistrationCreatePayload({
+          program: programForCreate,
+          variant: programRegistrationFormVariant,
+          preparedFormBindings: preparedFormBindings ?? null,
+          stepLabel: '등록 완료',
+        })
+
+        const createdProgram = await persistGeneralProgramRegistration({
+          draft,
+          participant,
+          programType,
+          variant: programRegistrationFormVariant,
+          sponsorId: resolvedSponsorId || undefined,
+          title: resolveProgramTitleKo() || undefined,
+          sessionRoundType,
+          educationScheduleMode,
+          educationScheduleLines: registrationSnapshotArgs.educationScheduleLines,
+          scheduleCurriculumDetailCount: scheduleCurriculumDetailCount,
+          editorExtras: registrationSnapshotArgs.editorExtras,
+          preparedFormBindings,
         })
         resetProgramRegistrationOverlay()
         onRegistrationSaved(createdProgram)
       } catch (error) {
-        console.debug('programRegistrationEditor complete registration failed', error)
         showAlert({
           title: '등록 실패',
           content: getGeneralProgramApiErrorMessage(
@@ -1116,10 +1552,16 @@ export function useProgramRegistrationEditor(
     resolveProgramTitleKo,
     scheduleCurriculumDetailCount,
     scheduleCurriculumPreEducation,
+    scheduleCurriculumGroupCount,
     sessionRoundType,
     showAlert,
-    programRegistrationFormVariant,
+    sponsorContactId,
     sponsorId,
+    activeParagraphId,
+    registrationWizardProgramType,
+    templateCode,
+    trainedTeachersTeacherTrainingEnabled,
+    usesRegistrationWizardDraft,
   ])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
@@ -1127,15 +1569,22 @@ export function useProgramRegistrationEditor(
     setSingleItemListActiveItemId(itemId)
   }, [])
 
-  const hasIncompleteRequiredFields = useCallback(() => {
-    if (programRegistrationFormVariant !== 'general') return false
+  /** 필수 필드 진단 reason — 콘솔 디버깅용 (`null`=완료, general·economy·trainedTeachers) */
+  const getIncompleteRequiredFieldsReason = useCallback((): string | null => {
+    if (programRegistrationFormVariant === 'economy') {
+      return describeIncompleteEconomyProgramRegistrationRequiredFields(
+        getProgramRegistrationOverlayRecord(),
+        participant
+      )
+    }
+    const overlay = getProgramRegistrationOverlayRecord()
     const resolvedSponsorId =
-      sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
+      sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
     const resolvedContactId =
-      sponsorContactId.trim() || readGeneralRegistrationOverlaySponsorContactId()
-    return hasIncompleteGeneralProgramRegistrationRequiredFields(
-      getProgramRegistrationOverlayRecord(),
-      {
+      sponsorContactId.trim() ||
+      readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
+    if (programRegistrationFormVariant === 'trainedTeachers') {
+      return describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(overlay, {
         participant,
         programType,
         sessionRoundType,
@@ -1146,13 +1595,31 @@ export function useProgramRegistrationEditor(
         curriculumChartSessionCount,
         scheduleCurriculumDetailCount,
         scheduleCurriculumGroupCount,
-        scheduleCurriculumPreEducation,
+        teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
         educationScheduleMode,
         sponsorId: resolvedSponsorId,
         sponsorContactId: resolvedContactId,
         programTitleKo: resolveProgramTitleKo(),
-      }
-    )
+      })
+    }
+    if (programRegistrationFormVariant !== 'general') return null
+    return describeIncompleteGeneralProgramRegistrationRequiredFields(overlay, {
+      participant,
+      programType,
+      sessionRoundType,
+      educationFormScheduleDetail,
+      participationScheduleDetail,
+      ipsScheduleDetail,
+      curriculumSessionCount,
+      curriculumChartSessionCount,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      scheduleCurriculumPreEducation,
+      educationScheduleMode,
+      sponsorId: resolvedSponsorId,
+      sponsorContactId: resolvedContactId,
+      programTitleKo: resolveProgramTitleKo(),
+    })
   }, [
     curriculumChartSessionCount,
     curriculumSessionCount,
@@ -1170,7 +1637,21 @@ export function useProgramRegistrationEditor(
     sessionRoundType,
     sponsorContactId,
     sponsorId,
+    trainedTeachersTeacherTrainingEnabled,
   ])
+
+  const hasIncompleteRequiredFields = useCallback(() => {
+    if (programRegistrationFormVariant === 'economy') {
+      return hasIncompleteEconomyRegistrationFromStore(participant)
+    }
+    if (
+      programRegistrationFormVariant !== 'general' &&
+      programRegistrationFormVariant !== 'trainedTeachers'
+    ) {
+      return false
+    }
+    return getIncompleteRequiredFieldsReason() != null
+  }, [getIncompleteRequiredFieldsReason, participant, programRegistrationFormVariant])
 
   return {
     draft,
@@ -1197,6 +1678,9 @@ export function useProgramRegistrationEditor(
     handlePreview,
     handleSave,
     handleCompleteRegistration,
+    buildCurrentProgramSnapshot,
+    logCurrentRegistrationPayload,
+    applyDevAutofill,
     onSelectSingleItemListItem,
     paragraphBodyOptions,
     participant,
@@ -1204,6 +1688,8 @@ export function useProgramRegistrationEditor(
     sessionRoundType,
     educationScheduleMode,
     hasIncompleteRequiredFields,
+    getIncompleteRequiredFieldsReason,
+    resolveProgramTitleKo,
   }
 }
 

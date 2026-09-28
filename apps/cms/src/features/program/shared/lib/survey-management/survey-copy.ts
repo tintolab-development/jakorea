@@ -57,6 +57,12 @@ export const GENERAL_SURVEY_POLL_EMPTY_COPY = {
   registerButton: '설문조사 등록',
 } as const satisfies SurveyEmptyCopy
 
+/** 공통 정보 > 설문 진행 항목 미선택 — LNB 1depth 「설문 관리」 본문 */
+export const GENERAL_SURVEY_MENU_EMPTY_COPY = {
+  title: '설문 진행 항목이 없습니다.',
+  description: '공통 정보에서 설문 진행 항목을 선택해 주세요.',
+} as const
+
 export const GENERAL_SURVEY_POLL_NO_RESPONSE_COPY = {
   title: '해당 설문조사는 아직 진행 전입니다.',
   description: '설문 진행 이후에 확인해 주세요.',

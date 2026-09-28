@@ -13,3 +13,23 @@
   height: 12px;
   flex-shrink: 0;
 }
+
+/* PC: 텍스트 뒤로가기 · 모바일: 원형 쉐브론 */
+.pcOnly {
+  display: inline-flex;
+}
+
+.mobileOnly {
+  display: none;
+}
+
+@media (--bp-below-pc) {
+  .pcOnly {
+    display: none;
+  }
+
+  .mobileOnly {
+    display: block;
+    width: fit-content;
+  }
+}

@@ -120,14 +120,7 @@ export function clearAdminRegisteredWizardState() {
 }
 
 export function requireAdminRegisteredWizardState() {
-  const state = readWizardState()
-
-  if (!state?.email) {
-    window.location.assign('/auth/admin-registered/notice')
-    return null
-  }
-
-  return state
+  return readWizardState()
 }
 
 const EMPTY_PROFILE_FALLBACK = {

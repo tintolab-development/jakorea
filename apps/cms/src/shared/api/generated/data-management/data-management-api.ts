@@ -283,8 +283,8 @@ const replaceGlobalCurrentConfig = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/textbooks`
  *
@@ -338,8 +338,8 @@ const textbooks = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/textbooks
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/textbooks`
  *
@@ -555,8 +555,8 @@ const create2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors`
  *
@@ -610,8 +610,8 @@ const sponsors = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/sponsors
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors`
  *
@@ -665,64 +665,9 @@ const create4 = (
 
 /**
  * ### 이 API가 하는 일
- * - 후원사 프로그램 진행 이력 일괄 연결 삭제
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/program-histories/bulk-delete`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: MASTER_DATA_WRITE 권한 필요
- * - 접근 범위: GLOBAL 범위 정책
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: NONE 개인정보 정책
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Notion 체크박스 기반 프로그램 진행 이력 삭제를 atomic bulk-delete로 정렬; performance_record 실적 원장은 보존
- * @summary 후원사 프로그램 진행 이력 일괄 연결 삭제
- */
-const bulkDeleteProgramHistories = (
-    sponsorId: number,
-    bulkIdsRequest: BulkIdsRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseBulkActionResponse>>,) => {
-      return customInstance<ApiResponseBulkActionResponse>(
-      {url: `/api/admin/sponsors/${sponsorId}/program-histories/bulk-delete`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: bulkIdsRequest
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
  * - POST /api/admin/sponsors/{sponsorId}/end
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/end`
  *
@@ -774,9 +719,9 @@ const end = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 후원사 담당자 목록
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/contacts`
  *
@@ -793,12 +738,12 @@ const end = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: MASTER_DATA_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -814,9 +759,8 @@ const end = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @deprecated
- * @summary 관리자 조회
+ * - 검토 메모: 2026-09-23 sponsor contacts are unmasked by spec; each successful view writes fixed-reason privacy audit.
+ * @summary 후원사 담당자 목록
  */
 const contacts = (
     sponsorId: number,
@@ -832,8 +776,8 @@ const contacts = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/sponsors/{sponsorId}/contacts
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/contacts`
  *
@@ -1051,8 +995,8 @@ const bulkDeleteSponsors = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits`
  *
@@ -1106,8 +1050,8 @@ const kits = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/material-kits
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/material-kits`
  *
@@ -1148,7 +1092,7 @@ const kits = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/material-kits
  */
-const create9 = (
+const create10 = (
     materialKitRequest: MaterialKitRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseMaterialKitResponse>>,) => {
       return customInstance<ApiResponseMaterialKitResponse>(
@@ -1162,8 +1106,8 @@ const create9 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}/versions`
  *
@@ -1216,8 +1160,8 @@ const versions = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/material-kits/{kitId}/versions
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/material-kits/{kitId}/versions`
  *
@@ -1273,8 +1217,8 @@ const createVersion = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/material-kits/versions/{versionId}/target-counts
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/material-kits/versions/{versionId}/target-counts`
  *
@@ -1330,8 +1274,8 @@ const addTargetCount = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/detailed-programs`
  *
@@ -1385,8 +1329,8 @@ const detailedPrograms = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/detailed-programs
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/detailed-programs`
  *
@@ -1427,7 +1371,7 @@ const detailedPrograms = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/detailed-programs
  */
-const create10 = (
+const create11 = (
     detailedProgramRequest: DetailedProgramRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseDetailedProgramResponse>>,) => {
       return customInstance<ApiResponseDetailedProgramResponse>(
@@ -1495,8 +1439,8 @@ const bulkDelete3 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/textbooks/{textbookId}`
  *
@@ -1549,8 +1493,8 @@ const textbook = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/textbooks/{textbookId}`
  *
@@ -1603,8 +1547,8 @@ const _delete = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/textbooks/{textbookId}`
  *
@@ -1818,9 +1762,9 @@ const update2 = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 후원사 상세
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}`
  *
@@ -1837,12 +1781,12 @@ const update2 = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: MASTER_DATA_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 개인정보 노출 기준: MIXED 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1858,8 +1802,8 @@ const update2 = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 관리자 조회
+ * - 검토 메모: 2026-09-23 sponsor detail includes unmasked contact data; successful contact exposure writes fixed-reason privacy audit.
+ * @summary 후원사 상세
  */
 const sponsor = (
     sponsorId: number,
@@ -1873,8 +1817,8 @@ const sponsor = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/sponsors/{sponsorId}`
  *
@@ -1927,8 +1871,8 @@ const delete2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/sponsors/{sponsorId}`
  *
@@ -1984,8 +1928,8 @@ const update4 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/sponsors/yearly-businesses/{yearlyBusinessId}`
  *
@@ -2041,8 +1985,8 @@ const updateYearlyBusiness = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/sponsors/contacts/{contactId}`
  *
@@ -2095,8 +2039,8 @@ const deleteContact = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/sponsors/contacts/{contactId}`
  *
@@ -2152,8 +2096,8 @@ const updateContact = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}`
  *
@@ -2206,8 +2150,8 @@ const kit = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data-material-kits (`master-data-material-kits`)
  * - 호출 방식: `DELETE /api/admin/material-kits/{kitId}`
  *
@@ -2260,8 +2204,8 @@ const delete3 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/material-kits/{kitId}`
  *
@@ -2317,8 +2261,8 @@ const update5 = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/detailed-programs/{detailedProgramId}`
  *
@@ -2371,8 +2315,8 @@ const detailedProgram = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/detailed-programs/{detailedProgramId}`
  *
@@ -2425,8 +2369,8 @@ const delete4 = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/detailed-programs/{detailedProgramId}`
  *
@@ -2482,8 +2426,8 @@ const update6 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/textbooks/matches`
  *
@@ -2537,8 +2481,8 @@ const matches = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/yearly-businesses`
  *
@@ -2591,8 +2535,8 @@ const yearlyBusinesses = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data-sponsors (`master-data-sponsors`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/program-histories`
  *
@@ -2647,8 +2591,8 @@ const programHistories = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}/versions/current/calculate`
  *
@@ -2703,8 +2647,8 @@ const currentKitCalculation = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}/calculate`
  *
@@ -2756,60 +2700,7 @@ const calculate1 = (
       options);
     }
 
-/**
- * ### 이 API가 하는 일
- * - 후원사 프로그램 진행 이력 연결 삭제
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `DELETE /api/admin/sponsors/{sponsorId}/program-histories/{programId}`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: MASTER_DATA_WRITE 권한 필요
- * - 접근 범위: GLOBAL 범위 정책
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: NONE 개인정보 정책
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization
- * @summary 후원사 프로그램 진행 이력 연결 삭제
- */
-const deleteProgramHistory1 = (
-    sponsorId: number,
-    programId: number,
- options?: SecondParameter<typeof customInstance<ApiResponseDeleteResponse>>,) => {
-      return customInstance<ApiResponseDeleteResponse>(
-      {url: `/api/admin/sponsors/${sponsorId}/program-histories/${programId}`, method: 'DELETE'
-    },
-      options);
-    }
-
-return {currentConfig1,replaceCurrentConfig,globalCurrentConfig,replaceGlobalCurrentConfig,textbooks,create1,bulkDelete,list1,create2,sponsors,create4,bulkDeleteProgramHistories,end,contacts,addContact,sponsorLogos,bulkDeleteContacts,bulkDeleteSponsors,kits,create9,versions,createVersion,addTargetCount,detailedPrograms,create10,bulkDelete3,textbook,_delete,update1,get2,delete1,update2,sponsor,delete2,update4,updateYearlyBusiness,deleteContact,updateContact,kit,delete3,update5,detailedProgram,delete4,update6,matches,yearlyBusinesses,programHistories,currentKitCalculation,calculate1,deleteProgramHistory1}};
+return {currentConfig1,replaceCurrentConfig,globalCurrentConfig,replaceGlobalCurrentConfig,textbooks,create1,bulkDelete,list1,create2,sponsors,create4,end,contacts,addContact,sponsorLogos,bulkDeleteContacts,bulkDeleteSponsors,kits,create10,versions,createVersion,addTargetCount,detailedPrograms,create11,bulkDelete3,textbook,_delete,update1,get2,delete1,update2,sponsor,delete2,update4,updateYearlyBusiness,deleteContact,updateContact,kit,delete3,update5,detailedProgram,delete4,update6,matches,yearlyBusinesses,programHistories,currentKitCalculation,calculate1}};
 export type CurrentConfig1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['currentConfig1']>>>
 export type ReplaceCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['replaceCurrentConfig']>>>
 export type GlobalCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['globalCurrentConfig']>>>
@@ -2821,7 +2712,6 @@ export type List1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJA
 export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create2']>>>
 export type SponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsors']>>>
 export type Create4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create4']>>>
-export type BulkDeleteProgramHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteProgramHistories']>>>
 export type EndResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['end']>>>
 export type ContactsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['contacts']>>>
 export type AddContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addContact']>>>
@@ -2829,12 +2719,12 @@ export type SponsorLogosResult = NonNullable<Awaited<ReturnType<ReturnType<typeo
 export type BulkDeleteContactsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteContacts']>>>
 export type BulkDeleteSponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteSponsors']>>>
 export type KitsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['kits']>>>
-export type Create9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create9']>>>
+export type Create10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create10']>>>
 export type VersionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['versions']>>>
 export type CreateVersionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['createVersion']>>>
 export type AddTargetCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addTargetCount']>>>
 export type DetailedProgramsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedPrograms']>>>
-export type Create10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create10']>>>
+export type Create11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create11']>>>
 export type BulkDelete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete3']>>>
 export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbook']>>>
 export type _DeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['_delete']>>>
@@ -2859,4 +2749,3 @@ export type YearlyBusinessesResult = NonNullable<Awaited<ReturnType<ReturnType<t
 export type ProgramHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['programHistories']>>>
 export type CurrentKitCalculationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['currentKitCalculation']>>>
 export type Calculate1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['calculate1']>>>
-export type DeleteProgramHistory1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['deleteProgramHistory1']>>>

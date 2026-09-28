@@ -2,7 +2,7 @@
  * UJAT 프로그램 상세 풀페이지 모달 — `/programs/ujat?programId=…&lnb=…&tab=…`
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -17,12 +17,21 @@ import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-p
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import { handleError } from '@/shared/utils/error-handler'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import {
+  applyUjatRecruitAnnouncementTitleToDraft,
+  resolveUjatRecruitDisplayProgram,
+  type UjatRecruitDisplayKind,
+} from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { syncUjatDetailEditFormKpiToOverlay } from '@/features/program/ujat/lib/detail-edit-form-kpi-to-overlay'
+import {
+  buildUjatProgramDraftWithSessionOverlay,
   readUjatRegistrationBasicInfoOverlayForSave,
   seedUjatRegistrationBasicInfoOverlayFromProgram,
   touchUjatRegistrationOperationAnchorFromRangeSeal,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatInstitutionApplicationList } from './application-institution/list/list'
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
@@ -77,6 +86,13 @@ import {
   type UjatSurveyMenuItem,
 } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/ujat-program-display-program'
+import { hydrateUjatRecruitTemplatesForProgram } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
+import { resolveUjatProgramDisplayTitle } from '@/features/program/ujat/lib/ujat-program-list-display'
+import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
+import {
+  patchUjatProgramRegistrationOverlay,
+  resetUjatProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
@@ -116,6 +132,7 @@ import {
   findWritingTemplateRowByDefinitionId,
 } from '@/features/template/lib/writing-template-create-helpers'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
+import { usePushUserPreviewHistoryWhenOpen } from '@/features/template/hooks/use-push-user-preview-history-when-open'
 import {
   isSurveyRegistryEntry,
   lookupTemplateRegistry,
@@ -188,7 +205,20 @@ import {
   useGeneralProgramSurveys,
   useGeneralProgramSurveySummary,
 } from '@/features/program/general/hooks/use-general-program-posts-surveys'
-import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
+import { resolvePublishedDuplicatedSurveyBinding } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
+import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
+import {
+  resolveSurveyCreateBindingTemplateCode,
+  resolveSurveyShareClipboardUrl,
+} from '@/features/program/general/api/adapters/program-survey-adapters'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  createGeneralProgramSurveyShareLink,
+  submitGeneralProgramFormResponse,
+} from '@/features/program/general/api/admin-general-programs-service'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { useQueryClient } from '@tanstack/react-query'
+import { loadFormTemplateVersionDraftByVersionId } from '@/features/template/api/admin-form-templates-service'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
@@ -222,24 +252,6 @@ const UJAT_REGISTERED_SURVEY_MOCK: UjatRegisteredSurvey[] = []
 const UJAT_SATISFACTION_SURVEY_MOCK: UjatSatisfactionSurveyByAudience = {}
 
 const UJAT_LECTURE_EVAL_SURVEY_MOCK: UjatRegisteredSurvey | null = null
-
-function resolveUjatSurveyBindingIds(templateCode: string): {
-  templateId?: number
-  templateVersionId?: number
-} {
-  const cached = getFormTemplateVersionCacheEntry(templateCode)
-  if (cached) {
-    return {
-      templateId: cached.templateId,
-      templateVersionId: cached.templateVersionId ?? cached.latestVersionId,
-    }
-  }
-  const numeric = Number(templateCode)
-  if (Number.isFinite(numeric) && numeric > 0) {
-    return { templateId: Math.trunc(numeric) }
-  }
-  return {}
-}
 
 function buildUjatSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: string): string {
   const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
@@ -555,6 +567,7 @@ export function UjatProgramDetailFullPageModal({
   onUpdateProgram,
 }: UjatProgramDetailFullPageModalProps) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const programId = program?.id ?? programIdHint ?? undefined
@@ -563,7 +576,8 @@ export function UjatProgramDetailFullPageModal({
     classifiedBindings,
     isRemoteDataSource: surveysRemote,
   } = useGeneralProgramSurveys(programId)
-  const { createBinding, deleteBinding } = useGeneralProgramSurveyFormBindingMutations(programId)
+  const { createBinding, deleteBinding, invalidateSurveyCaches } =
+    useGeneralProgramSurveyFormBindingMutations(programId)
 
   const {
     program: detailProgram,
@@ -584,6 +598,53 @@ export function UjatProgramDetailFullPageModal({
     const base = onUpdateProgram ? program : (program ?? detailProgram ?? null)
     return base ? resolveUjatProgramDisplayProgram(base) : null
   }, [detailProgram, program, onUpdateProgram, externalLoading])
+
+  const volunteerRecruitKindRef = useRef<UjatRecruitDisplayKind>('volunteer_h1')
+  const mapInstitutionRecruitmentEditValues = useCallback(
+    (p: Program) =>
+      programToUjatRecruitTemplateFormValues(
+        resolveUjatRecruitDisplayProgram(p, 'institution'),
+        'institution'
+      ),
+    []
+  )
+  const mapVolunteerH1RecruitmentEditValues = useCallback(
+    (p: Program) =>
+      programToUjatRecruitTemplateFormValues(
+        resolveUjatRecruitDisplayProgram(p, 'volunteer_h1'),
+        'volunteer',
+        'h1'
+      ),
+    []
+  )
+  const mapVolunteerH2RecruitmentEditValues = useCallback(
+    (p: Program) =>
+      programToUjatRecruitTemplateFormValues(
+        resolveUjatRecruitDisplayProgram(p, 'volunteer_h2'),
+        'volunteer',
+        'h2'
+      ),
+    []
+  )
+  const mapVolunteerRecruitmentEditValues = useCallback((p: Program) => {
+    const kind = volunteerRecruitKindRef.current
+    return kind === 'volunteer_h2'
+      ? mapVolunteerH2RecruitmentEditValues(p)
+      : mapVolunteerH1RecruitmentEditValues(p)
+  }, [mapVolunteerH1RecruitmentEditValues, mapVolunteerH2RecruitmentEditValues])
+
+  const overlayHydrateStampRef = useRef<string | null>(null)
+  useLayoutEffect(() => {
+    if (!displayProgram) return
+    const overlay = readUjatRegistrationOverlayFromProgram(displayProgram)
+    const stamp = `${displayProgram.id}:${Object.keys(overlay).length}`
+    if (overlayHydrateStampRef.current === stamp) return
+    overlayHydrateStampRef.current = stamp
+    if (Object.keys(overlay).length === 0) return
+    resetUjatProgramRegistrationOverlay()
+    patchUjatProgramRegistrationOverlay(overlay)
+    void hydrateUjatRecruitTemplatesForProgram(displayProgram)
+  }, [displayProgram])
 
   const interviewEnabled = displayProgram ? getUjatVolunteerInterviewEnabled(displayProgram) : true
   const surveyItems = useMemo(
@@ -632,6 +693,7 @@ export function UjatProgramDetailFullPageModal({
   )
   const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(false)
   const [lectureEvalFormDraft, setLectureEvalFormDraft] = useState<WritingFormDraft | null>(null)
+  const lectureEvalDraftRef = useRef<WritingFormDraft | null>(null)
   const [lectureEvalResponses, setLectureEvalResponses] = useState<UjatSurveyPollRawResponse[]>([])
   const [activeLectureEvalTab, setActiveLectureEvalTab] = useState<UjatLectureEvalTabKey>('eval')
   const [lectureEvalCreateModalOpen, setLectureEvalCreateModalOpen] = useState(false)
@@ -643,26 +705,56 @@ export function UjatProgramDetailFullPageModal({
   const [downloadingLectureEvalResults, setDownloadingLectureEvalResults] = useState(false)
   const [lectureEvalDownloadModalOpen, setLectureEvalDownloadModalOpen] = useState(false)
   const lectureEvalResultsExportRef = useRef<HTMLDivElement>(null)
-  const { openWritingUserPreview, closeWritingUserPreview } = useTemplateWritingPreview()
+  const { openWritingUserPreview, closeWritingUserPreview, isWritingUserPreviewOpen } =
+    useTemplateWritingPreview()
+  const requestPreviewHistoryPush = usePushUserPreviewHistoryWhenOpen(isWritingUserPreviewOpen)
   const { copyText } = useClipboard()
   const { showAlert } = useCmsAlert()
 
   const openUjatSurveyTemplatePreview = useCallback(
-    (templateId: string, options?: { allowEdit?: boolean }) => {
+    (
+      survey: { id: string; templateId: string; title: string },
+      options?: { allowEdit?: boolean }
+    ) => {
+      const catalogRow = findWritingTemplateRowByDefinitionId(survey.templateId)
       const allowEdit = options?.allowEdit ?? true
-      const onEditForm = allowEdit
-        ? () => {
-            closeWritingUserPreview()
-            setSurveyTemplateEditId(templateId)
-            setSurveyTemplateEditOpen(true)
-          }
-        : undefined
-      void buildUjatSurveyWritingPreviewSession(templateId, onEditForm).then(session => {
-        if (session == null) return
-        openWritingUserPreview(session)
+      const onEditForm =
+        allowEdit && catalogRow != null
+          ? () => {
+              closeWritingUserPreview()
+              setSurveyTemplateEditId(survey.templateId)
+              setSurveyTemplateEditOpen(true)
+            }
+          : undefined
+      void buildUjatSurveyWritingPreviewSession({
+        templateId: survey.templateId,
+        title: survey.title,
+        versionId: survey.id,
+        onEditForm,
       })
+        .then(session => {
+          if (session == null) {
+            void showAlert({
+              title: '양식 보기',
+              content: '설문 양식을 불러오지 못했습니다. 다시 시도해 주세요.',
+            })
+            return
+          }
+          requestPreviewHistoryPush()
+          openWritingUserPreview(session)
+        })
+        .catch(error => {
+          handleError(error, { context: 'ujatSurveyPreview' })
+          void showAlert({
+            title: '양식 보기',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              '설문 양식을 불러오지 못했습니다. 다시 시도해 주세요.'
+            ),
+          })
+        })
     },
-    [closeWritingUserPreview, openWritingUserPreview]
+    [closeWritingUserPreview, openWritingUserPreview, requestPreviewHistoryPush, showAlert]
   )
 
   const showShareCopyToast = useCallback(
@@ -900,6 +992,8 @@ export function UjatProgramDetailFullPageModal({
 
   const activeRecruitTab: UjatRecruitTabKey | null =
     activeLnb === 'info' && isUjatRecruitTab(activeTab) ? (activeTab as UjatRecruitTabKey) : null
+  volunteerRecruitKindRef.current =
+    activeRecruitTab === 'recruit_volunteer_h2' ? 'volunteer_h2' : 'volunteer_h1'
 
   const surveyKeysJoined = surveyKeys.join('|')
 
@@ -1067,10 +1161,11 @@ export function UjatProgramDetailFullPageModal({
         displayProgram && updateProgram
           ? async (draft, patch) => {
               try {
+                const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
                 if (onUpdateProgram) {
-                  await onUpdateProgram(draft.id, draft, patch)
+                  await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, patch)
                 } else {
-                  await updateProgram(draft.id, patch)
+                  await updateProgram(draftWithOverlay.id, draftWithOverlay)
                 }
                 const next = new URLSearchParams(searchParams)
                 next.delete(EDIT_PARAM)
@@ -1105,22 +1200,37 @@ export function UjatProgramDetailFullPageModal({
   }, [activeTab, displayProgram, infoResetToProgram, setEditMode])
 
   const handleInfoSave = useCallback(async () => {
-    if (displayProgram) {
-      const overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
-        readUjatRegistrationBasicInfoOverlayForSave()
-      )
-      const mergedProgram = applyUjatRegistrationOverlayToProgram(displayProgram, overlay)
-      infoForm.reset(programToDetailEditValues(mergedProgram))
-    }
     if (!displayProgram) return
+    syncUjatDetailEditFormKpiToOverlay(infoForm.getValues())
+    let overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
+      readUjatRegistrationBasicInfoOverlayForSave()
+    )
+    // 일정형: 수정 UI와 동일하게 세부 프로그램명을「해당없음」으로 고정해 overlay·PATCH에 실는다.
+    if (displayProgram.generalProgramEducationStructure !== 'curriculum') {
+      overlay = {
+        ...overlay,
+        'ujat.basicInfo.detailedProgramId': TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+        'ujat.basicInfo.detailedProgramName': '해당없음',
+      }
+      patchUjatProgramRegistrationOverlay({
+        'ujat.basicInfo.detailedProgramId': TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+        'ujat.basicInfo.detailedProgramName': '해당없음',
+      })
+    }
+    const mergedProgram: Program = {
+      ...applyUjatRegistrationOverlayToProgram(displayProgram, overlay),
+      ujatRegistrationOverlay: overlay,
+    }
+    infoForm.reset(programToDetailEditValues(mergedProgram))
     const ok = await infoTriggerSave()
     if (ok) setEditMode(null)
   }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
 
   const handleInfoCancel = useCallback(() => {
+    if (displayProgram) seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
     infoResetToProgram()
     setEditMode(null)
-  }, [infoResetToProgram, setEditMode])
+  }, [displayProgram, infoResetToProgram, setEditMode])
 
   const isEditModeRecruitParticipant =
     open &&
@@ -1141,6 +1251,7 @@ export function UjatProgramDetailFullPageModal({
     program: displayProgram,
     isEditMode: isEditModeRecruitParticipant,
     schema: programDetailInstitutionsEditSchema,
+    mapToValues: mapInstitutionRecruitmentEditValues,
   })
   const {
     triggerSave: institutionsTriggerSave,
@@ -1149,15 +1260,27 @@ export function UjatProgramDetailFullPageModal({
   } = useProgramDetailInfoSave({
     form: institutionsForm,
     program: displayProgram ?? ({} as Program),
+    mapToValues: mapInstitutionRecruitmentEditValues,
     onSaveEdit:
       displayProgram && updateProgram
         ? async (draft, patch) => {
             try {
-                if (onUpdateProgram) {
-                  await onUpdateProgram(draft.id, draft, patch)
-                } else {
-                  await updateProgram(draft.id, patch)
-                }
+              const draftWithOverlay = applyUjatRecruitAnnouncementTitleToDraft({
+                draft: buildUjatProgramDraftWithSessionOverlay(draft),
+                existing: displayProgram,
+                title: institutionsForm.getValues().announcementTitle,
+                kind: 'institution',
+              })
+              const remotePatch = {
+                ...patch,
+                ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
+                generalCommonInfo: draftWithOverlay.generalCommonInfo,
+              }
+              if (onUpdateProgram) {
+                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, remotePatch)
+              } else {
+                await updateProgram(draftWithOverlay.id, draftWithOverlay)
+              }
               const next = new URLSearchParams(searchParams)
               next.delete(EDIT_PARAM)
               if (programId) next.set('programId', programId)
@@ -1170,10 +1293,23 @@ export function UjatProgramDetailFullPageModal({
         : undefined,
   })
 
-  const volunteersForm = useProgramDetailEditForm({
+  const isEditModeRecruitVolunteerH1 =
+    isEditModeRecruitVolunteer && activeRecruitTab === 'recruit_volunteer_h1'
+  const isEditModeRecruitVolunteerH2 =
+    isEditModeRecruitVolunteer && activeRecruitTab === 'recruit_volunteer_h2'
+
+  const volunteersH1Form = useProgramDetailEditForm({
     program: displayProgram,
-    isEditMode: isEditModeRecruitVolunteer,
+    isEditMode: isEditModeRecruitVolunteerH1,
+    mapToValues: mapVolunteerH1RecruitmentEditValues,
   })
+  const volunteersH2Form = useProgramDetailEditForm({
+    program: displayProgram,
+    isEditMode: isEditModeRecruitVolunteerH2,
+    mapToValues: mapVolunteerH2RecruitmentEditValues,
+  })
+  const volunteersForm =
+    activeRecruitTab === 'recruit_volunteer_h2' ? volunteersH2Form : volunteersH1Form
   const {
     triggerSave: volunteersTriggerSave,
     resetToProgram: volunteersResetToProgram,
@@ -1181,15 +1317,52 @@ export function UjatProgramDetailFullPageModal({
   } = useProgramDetailInfoSave({
     form: volunteersForm,
     program: displayProgram ?? ({} as Program),
+    mapToValues: mapVolunteerRecruitmentEditValues,
     onSaveEdit:
       displayProgram && updateProgram
         ? async (draft, patch) => {
             try {
-                if (onUpdateProgram) {
-                  await onUpdateProgram(draft.id, draft, patch)
-                } else {
-                  await updateProgram(draft.id, patch)
-                }
+              const values = volunteersForm.getValues()
+              const draftWithOverlay = applyUjatRecruitAnnouncementTitleToDraft({
+                draft: buildUjatProgramDraftWithSessionOverlay(draft),
+                existing: displayProgram,
+                title: values.announcementTitle,
+                kind: volunteerRecruitKindRef.current,
+                values,
+              })
+              const remotePatch = {
+                ...patch,
+                ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
+                generalCommonInfo: draftWithOverlay.generalCommonInfo,
+                startDate: draftWithOverlay.startDate,
+                endDate: draftWithOverlay.endDate,
+                volunteerTargets: draftWithOverlay.volunteerTargets,
+                volunteerTarget: draftWithOverlay.volunteerTarget,
+                volunteerTargetDetail: draftWithOverlay.volunteerTargetDetail,
+                volunteerApplicationStartDate: draftWithOverlay.volunteerApplicationStartDate,
+                volunteerApplicationEndDate: draftWithOverlay.volunteerApplicationEndDate,
+                documentPassAnnouncementDate: draftWithOverlay.documentPassAnnouncementDate,
+                documentPassAnnouncementMethod: draftWithOverlay.documentPassAnnouncementMethod,
+                interviewStartDate: draftWithOverlay.interviewStartDate,
+                interviewEndDate: draftWithOverlay.interviewEndDate,
+                interviewMethod: draftWithOverlay.interviewMethod,
+                finalPassAnnouncementDate: draftWithOverlay.finalPassAnnouncementDate,
+                finalPassAnnouncementMethod: draftWithOverlay.finalPassAnnouncementMethod,
+                contactPhone: draftWithOverlay.contactPhone,
+                contactEmail: draftWithOverlay.contactEmail,
+                managerName: draftWithOverlay.managerName,
+                otherNotes: draftWithOverlay.otherNotes,
+                description: draftWithOverlay.description,
+                recruitmentGuide: draftWithOverlay.recruitmentGuide,
+                applicationMethod: draftWithOverlay.applicationMethod,
+                additionalContentHtml: draftWithOverlay.additionalContentHtml,
+                rounds: draftWithOverlay.rounds,
+              }
+              if (onUpdateProgram) {
+                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, remotePatch)
+              } else {
+                await updateProgram(draftWithOverlay.id, draftWithOverlay)
+              }
               const next = new URLSearchParams(searchParams)
               next.delete(EDIT_PARAM)
               if (programId) next.set('programId', programId)
@@ -1335,8 +1508,13 @@ export function UjatProgramDetailFullPageModal({
       const next = findWritingTemplateRowByDefinitionId(newTemplateId)
 
       if (surveysRemote) {
-        const ids = resolveUjatSurveyBindingIds(selectedSurveyTemplateId)
-        if (ids.templateId == null) {
+        const ids = await resolvePublishedDuplicatedSurveyBinding(
+          resolveSurveyCreateBindingTemplateCode({
+            duplicatedTemplateId: newTemplateId,
+            catalogTemplateCode: next?.id,
+          })
+        )
+        if (ids == null) {
           void showAlert({
             title: '등록 실패',
             content:
@@ -1353,6 +1531,7 @@ export function UjatProgramDetailFullPageModal({
         }
         const result = await createBinding(payload)
         if (!result.ok) {
+          await invalidateSurveyCaches()
           void showAlert({ title: '등록 실패', content: result.message })
           return
         }
@@ -1375,12 +1554,20 @@ export function UjatProgramDetailFullPageModal({
       }
       setSurveyCreateModalOpen(false)
     } catch (error) {
-      console.debug('ujat survey template create failed', error)
+      handleError(error, { context: 'ujatSurveyTemplate.create' })
+      void showAlert({
+        title: '등록 실패',
+        content: getGeneralProgramApiErrorMessage(
+          error,
+          '설문 등록에 실패했습니다. 다시 시도해 주세요.'
+        ),
+      })
     } finally {
       setSubmittingSurveyTemplate(false)
     }
   }, [
     createBinding,
+    invalidateSurveyCaches,
     registeredSurveys.length,
     selectedSurveyTemplateId,
     showAlert,
@@ -1427,17 +1614,51 @@ export function UjatProgramDetailFullPageModal({
 
   const handleOpenRegisteredSurveyTemplatePreview = useCallback(() => {
     if (!activeRegisteredSurvey) return
-    openUjatSurveyTemplatePreview(activeRegisteredSurvey.templateId, {
+    openUjatSurveyTemplatePreview(activeRegisteredSurvey, {
       allowEdit: activeRegisteredSurvey.status === 'before_start',
     })
   }, [activeRegisteredSurvey, openUjatSurveyTemplatePreview])
 
   const handleShareRegisteredSurvey = useCallback(() => {
     if (!activeRegisteredSurvey || programId == null) return
-    const shareUrl = `${window.location.origin}/programs/ujat/survey?programId=${programId}&surveyId=${activeRegisteredSurvey.id}`
-    void copyText(shareUrl)
-    showShareCopyToast(UJAT_SURVEY_POLL_SHARE_TOAST_COPY)
-  }, [activeRegisteredSurvey, copyText, programId, showShareCopyToast])
+    if (!surveysRemote) {
+      const shareUrl = `${window.location.origin}/programs/ujat/survey?programId=${programId}&surveyId=${activeRegisteredSurvey.id}`
+      void copyText(shareUrl)
+      showShareCopyToast(UJAT_SURVEY_POLL_SHARE_TOAST_COPY)
+      return
+    }
+    const bindingId = activeRegisteredSurvey.bindingId?.trim()
+    if (!bindingId) {
+      void showAlert({
+        title: '공유',
+        content: '공유할 설문 연결 정보를 찾지 못했습니다.',
+      })
+      return
+    }
+    void (async () => {
+      try {
+        const response = await createGeneralProgramSurveyShareLink(programId, bindingId)
+        const url = response
+          ? resolveSurveyShareClipboardUrl(response, window.location.origin)
+          : null
+        if (!url) {
+          void showAlert({
+            title: '공유',
+            content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          })
+          return
+        }
+        void copyText(url)
+        showShareCopyToast(UJAT_SURVEY_POLL_SHARE_TOAST_COPY)
+      } catch (error) {
+        handleError(error, { context: 'ujatSurveyShareLink' })
+        void showAlert({
+          title: '공유',
+          content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
+    })()
+  }, [activeRegisteredSurvey, copyText, programId, showAlert, showShareCopyToast, surveysRemote])
 
   const handleDownloadPollResults = useCallback(
     async (format: SurveyResultsDownloadFormat) => {
@@ -1451,7 +1672,10 @@ export function UjatProgramDetailFullPageModal({
           }
           await exportLectureEvalResultsPdf(
             root,
-            buildUjatSurveyPollResultsPdfFileName(displayProgram.title, activeRegisteredSurvey.title)
+            buildUjatSurveyPollResultsPdfFileName(
+              resolveUjatProgramDisplayTitle(displayProgram),
+              activeRegisteredSurvey.title
+            )
           )
         } else {
           await exportSurveyResultsExcel({
@@ -1500,8 +1724,13 @@ export function UjatProgramDetailFullPageModal({
       const next = findWritingTemplateRowByDefinitionId(newTemplateId)
 
       if (surveysRemote) {
-        const ids = resolveUjatSurveyBindingIds(selectedSatisfactionTemplateId)
-        if (ids.templateId == null) {
+        const ids = await resolvePublishedDuplicatedSurveyBinding(
+          resolveSurveyCreateBindingTemplateCode({
+            duplicatedTemplateId: newTemplateId,
+            catalogTemplateCode: next?.id,
+          })
+        )
+        if (ids == null) {
           void showAlert({
             title: '등록 실패',
             content:
@@ -1525,6 +1754,7 @@ export function UjatProgramDetailFullPageModal({
         }
         const result = await createBinding(payload)
         if (!result.ok) {
+          await invalidateSurveyCaches()
           void showAlert({ title: '등록 실패', content: result.message })
           return
         }
@@ -1550,13 +1780,21 @@ export function UjatProgramDetailFullPageModal({
       }
       setSatisfactionCreateModalOpen(false)
     } catch (error) {
-      console.debug('ujat satisfaction survey create failed', error)
+      handleError(error, { context: 'ujatSatisfactionSurvey.create' })
+      void showAlert({
+        title: '등록 실패',
+        content: getGeneralProgramApiErrorMessage(
+          error,
+          '만족도조사 등록에 실패했습니다. 다시 시도해 주세요.'
+        ),
+      })
     } finally {
       setSubmittingSatisfactionSurvey(false)
     }
   }, [
     activeSatisfactionAudience,
     createBinding,
+    invalidateSurveyCaches,
     selectedSatisfactionTemplateId,
     showAlert,
     surveysRemote,
@@ -1605,22 +1843,58 @@ export function UjatProgramDetailFullPageModal({
 
   const handleOpenSatisfactionTemplatePreview = useCallback(() => {
     if (!activeSatisfactionSurvey) return
-    openUjatSurveyTemplatePreview(activeSatisfactionSurvey.templateId, {
+    openUjatSurveyTemplatePreview(activeSatisfactionSurvey, {
       allowEdit: activeSatisfactionSurvey.status === 'before_start',
     })
   }, [activeSatisfactionSurvey, openUjatSurveyTemplatePreview])
 
   const handleShareSatisfactionSurvey = useCallback(() => {
     if (!activeSatisfactionSurvey || programId == null) return
-    const shareUrl = `${window.location.origin}/programs/ujat/satisfaction?programId=${programId}&audience=${activeSatisfactionAudience}`
-    void copyText(shareUrl)
-    showShareCopyToast()
+    if (!surveysRemote) {
+      const shareUrl = `${window.location.origin}/programs/ujat/satisfaction?programId=${programId}&audience=${activeSatisfactionAudience}`
+      void copyText(shareUrl)
+      showShareCopyToast()
+      return
+    }
+    const bindingId = activeSatisfactionSurvey.bindingId?.trim()
+    if (!bindingId) {
+      void showAlert({
+        title: '공유',
+        content: '공유할 만족도조사 연결 정보를 찾지 못했습니다.',
+      })
+      return
+    }
+    void (async () => {
+      try {
+        const response = await createGeneralProgramSurveyShareLink(programId, bindingId)
+        const url = response
+          ? resolveSurveyShareClipboardUrl(response, window.location.origin)
+          : null
+        if (!url) {
+          void showAlert({
+            title: '공유',
+            content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          })
+          return
+        }
+        void copyText(url)
+        showShareCopyToast()
+      } catch (error) {
+        handleError(error, { context: 'ujatSatisfactionShareLink' })
+        void showAlert({
+          title: '공유',
+          content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
+    })()
   }, [
-    activeSatisfactionSurvey,
     activeSatisfactionAudience,
+    activeSatisfactionSurvey,
     copyText,
     programId,
+    showAlert,
     showShareCopyToast,
+    surveysRemote,
   ])
 
   const handleDownloadSatisfactionResults = useCallback(
@@ -1636,7 +1910,7 @@ export function UjatProgramDetailFullPageModal({
           await exportLectureEvalResultsPdf(
             root,
             buildUjatSatisfactionResultsPdfFileName(
-              displayProgram.title,
+              resolveUjatProgramDisplayTitle(displayProgram),
               activeSatisfactionSurvey.title
             )
           )
@@ -1664,14 +1938,34 @@ export function UjatProgramDetailFullPageModal({
   )
 
   const ensureLectureEvalFormDraft = useCallback(() => {
-    const templateId = lectureEvalSurvey?.templateId ?? UJAT_LECTURE_EVAL_TEMPLATE_ID
-    void buildLectureEvalFormDraft(templateId).then(draft => {
-      setLectureEvalFormDraft(prev => prev ?? draft)
-    })
-  }, [lectureEvalSurvey?.templateId])
+    if (lectureEvalSurvey == null) return
+    const templateId = lectureEvalSurvey.templateId || UJAT_LECTURE_EVAL_TEMPLATE_ID
+    const versionId = Number(lectureEvalSurvey.id)
+    const loadDraft = async () => {
+      if (
+        findWritingTemplateRowByDefinitionId(templateId) == null &&
+        Number.isFinite(versionId) &&
+        versionId > 0
+      ) {
+        const record = await loadFormTemplateVersionDraftByVersionId(
+          templateId,
+          Math.trunc(versionId)
+        )
+        if (record?.draft != null) return record.draft
+      }
+      return buildLectureEvalFormDraft(templateId)
+    }
+    void loadDraft()
+      .catch(() => buildLectureEvalFormDraft(templateId))
+      .then(draft => {
+        lectureEvalDraftRef.current = lectureEvalDraftRef.current ?? draft
+        setLectureEvalFormDraft(prev => prev ?? draft)
+      })
+  }, [lectureEvalSurvey])
 
   useEffect(() => {
     if (lectureEvalSurvey == null) {
+      lectureEvalDraftRef.current = null
       setLectureEvalFormDraft(null)
       setLectureEvalResponses([])
       setLectureEvalSubmitted(false)
@@ -1708,12 +2002,27 @@ export function UjatProgramDetailFullPageModal({
       const next = findWritingTemplateRowByDefinitionId(newTemplateId)
 
       if (surveysRemote) {
-        const ids = resolveUjatSurveyBindingIds(selectedLectureEvalTemplateId)
-        if (ids.templateId == null) {
+        const ids = await resolvePublishedDuplicatedSurveyBinding(
+          resolveSurveyCreateBindingTemplateCode({
+            duplicatedTemplateId: newTemplateId,
+            catalogTemplateCode: next?.id,
+          })
+        )
+        if (ids == null) {
           void showAlert({
             title: '등록 실패',
             content:
               '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.',
+          })
+          return
+        }
+        const lectureTarget =
+          programId == null ? null : await resolveLectureEvalBindingTarget(String(programId))
+        if (lectureTarget == null) {
+          void showAlert({
+            title: '등록 실패',
+            content:
+              '강의평가는 교육 일정(회차)에 연결해야 합니다. 프로그램 일정을 먼저 등록한 뒤 다시 시도해 주세요.',
           })
           return
         }
@@ -1722,11 +2031,14 @@ export function UjatProgramDetailFullPageModal({
           templateId: ids.templateId,
           templateVersionId: ids.templateVersionId,
           targetRole: 'ADMIN',
+          targetScope: lectureTarget.targetScope,
+          targetScopeId: lectureTarget.targetScopeId,
           active: true,
           required: false,
         }
         const result = await createBinding(payload)
         if (!result.ok) {
+          await invalidateSurveyCaches()
           void showAlert({ title: '등록 실패', content: result.message })
           return
         }
@@ -1751,38 +2063,89 @@ export function UjatProgramDetailFullPageModal({
       }
       setLectureEvalCreateModalOpen(false)
     } catch (error) {
-      console.debug('ujat lecture eval register failed', error)
+      handleError(error, { context: 'ujatLectureEval.register' })
+      void showAlert({
+        title: '등록 실패',
+        content: getGeneralProgramApiErrorMessage(
+          error,
+          '강의평가 등록에 실패했습니다. 다시 시도해 주세요.'
+        ),
+      })
     } finally {
       setSubmittingLectureEvalSurvey(false)
     }
-  }, [createBinding, selectedLectureEvalTemplateId, showAlert, surveysRemote])
+  }, [
+    createBinding,
+    invalidateSurveyCaches,
+    programId,
+    selectedLectureEvalTemplateId,
+    showAlert,
+    surveysRemote,
+  ])
 
   const handleOpenLectureEvalPreview = useCallback(() => {
     if (!lectureEvalSurvey) return
     const row = findWritingTemplateRowByDefinitionId(lectureEvalSurvey.templateId)
-    if (!row) return
-    const entry = lookupTemplateRegistry(row.id)
-    if (entry == null || !isSurveyRegistryEntry(entry)) return
+    const onEditForm =
+      lectureEvalSurvey.status === 'before_start' && row != null
+        ? () => {
+            closeWritingUserPreview()
+            setSurveyTemplateEditId(row.id)
+            setSurveyTemplateEditOpen(true)
+          }
+        : undefined
 
-    void buildLectureEvalFormDraft(row.id).then(draft => {
-      openWritingUserPreview({
-        draft,
+    void (async () => {
+      if (row != null) {
+        const entry = lookupTemplateRegistry(row.id)
+        if (entry == null || !isSurveyRegistryEntry(entry)) return null
+        const draft = await buildLectureEvalFormDraft(row.id)
+        return {
+          draft,
+          updateParagraph: () => {},
+          headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
+          editorKind: 'survey' as const,
+          paragraphBodyOptions: UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
+          ...(onEditForm != null ? { onEditForm } : {}),
+        }
+      }
+      const versionId = Number(lectureEvalSurvey.id)
+      if (!Number.isFinite(versionId) || versionId <= 0) return null
+      const record = await loadFormTemplateVersionDraftByVersionId(
+        lectureEvalSurvey.templateId,
+        Math.trunc(versionId)
+      )
+      if (record?.draft == null) return null
+      return {
+        draft: record.draft,
         updateParagraph: () => {},
-        headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
-        editorKind: 'survey',
+        headerTitle: lectureEvalSurvey.title.trim() || '강의평가',
+        editorKind: 'survey' as const,
         paragraphBodyOptions: UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
-        ...(lectureEvalSurvey.status === 'before_start'
-          ? {
-              onEditForm: () => {
-                closeWritingUserPreview()
-                setSurveyTemplateEditId(row.id)
-                setSurveyTemplateEditOpen(true)
-              },
-            }
-          : {}),
+      }
+    })()
+      .then(session => {
+        if (session == null) {
+          void showAlert({
+            title: '양식 보기',
+            content: '강의평가 양식을 불러오지 못했습니다. 다시 시도해 주세요.',
+          })
+          return
+        }
+        requestPreviewHistoryPush()
+        openWritingUserPreview(session)
       })
-    })
-  }, [lectureEvalSurvey, closeWritingUserPreview, openWritingUserPreview])
+      .catch(error => {
+        handleError(error, { context: 'ujatLectureEvalPreview' })
+        void showAlert({
+          title: '양식 보기',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '강의평가 양식을 불러오지 못했습니다. 다시 시도해 주세요.'
+          ),
+        })
+      })
+  }, [lectureEvalSurvey, closeWritingUserPreview, openWritingUserPreview, requestPreviewHistoryPush, showAlert])
 
   const handleLectureEvalTabChange = useCallback(
     (tab: UjatLectureEvalTabKey) => {
@@ -1797,7 +2160,12 @@ export function UjatProgramDetailFullPageModal({
     [lectureEvalSurvey]
   )
 
-  const handleLectureEvalSubmit = useCallback(() => {
+  const handleLectureEvalDraftChange = useCallback((draft: WritingFormDraft) => {
+    lectureEvalDraftRef.current = draft
+  }, [])
+
+  const handleLectureEvalSubmit = useCallback(async () => {
+    const lectureEvalFormDraft = lectureEvalDraftRef.current
     if (!lectureEvalSurvey || lectureEvalFormDraft == null) return
     const validation = validateLectureEvalFormDraft(lectureEvalFormDraft)
     if (!validation.valid) {
@@ -1808,8 +2176,48 @@ export function UjatProgramDetailFullPageModal({
       return
     }
 
+    setLectureEvalFormDraft(lectureEvalFormDraft)
+    const pollResponse = draftToLectureEvalPollResponse(lectureEvalFormDraft)
+    if (surveysRemote) {
+      const versionId = Number(lectureEvalSurvey.id)
+      const programIdNum = Number(programId)
+      if (
+        programId == null ||
+        !Number.isFinite(versionId) ||
+        versionId <= 0 ||
+        !Number.isFinite(programIdNum)
+      ) {
+        void showAlert({
+          title: '제출 실패',
+          content: '강의평가 양식 버전을 찾지 못했습니다. 다시 시도해 주세요.',
+        })
+        return
+      }
+      try {
+        await submitGeneralProgramFormResponse({
+          templateVersionId: Math.trunc(versionId),
+          programId: programIdNum,
+          contextType: 'PROGRAM',
+          answers: pollResponse.answers,
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramQueryKeys.surveyResponses(
+            String(programId),
+            String(Math.trunc(versionId))
+          ),
+        })
+      } catch (error) {
+        handleError(error, { context: 'ujatLectureEvalSubmit' })
+        void showAlert({
+          title: '제출 실패',
+          content: '강의평가 제출 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        })
+        return
+      }
+    }
+
     setLectureEvalSubmitted(true)
-    setLectureEvalResponses([draftToLectureEvalPollResponse(lectureEvalFormDraft)])
+    setLectureEvalResponses([pollResponse])
     setLectureEvalSurvey(prev => {
       if (prev == null) return prev
       const nextStatus =
@@ -1823,7 +2231,7 @@ export function UjatProgramDetailFullPageModal({
         participantTotal: Math.max(prev.participantTotal, 1),
       }
     })
-  }, [lectureEvalSurvey, lectureEvalFormDraft, showAlert])
+  }, [lectureEvalSurvey, programId, queryClient, showAlert, surveysRemote])
 
   const handleLectureEvalEditResponse = useCallback(() => {
     if (!lectureEvalSurvey || lectureEvalFormDraft == null) return
@@ -1843,7 +2251,7 @@ export function UjatProgramDetailFullPageModal({
           }
           await exportLectureEvalResultsPdf(
             root,
-            buildLectureEvalResultsPdfFileName(displayProgram.title)
+            buildLectureEvalResultsPdfFileName(resolveUjatProgramDisplayTitle(displayProgram))
           )
         } else {
           await exportSurveyResultsExcel({
@@ -1908,7 +2316,9 @@ export function UjatProgramDetailFullPageModal({
 
   if (!open) return null
 
-  const programTitle = displayProgram?.title ?? '프로그램 상세'
+  const programTitle = displayProgram
+    ? resolveUjatProgramDisplayTitle(displayProgram)
+    : '프로그램 상세'
   const title =
     volAddMemberId
       ? '봉사자 추가 등록'
@@ -1977,7 +2387,7 @@ export function UjatProgramDetailFullPageModal({
         })
       : null
 
-    items.push(makeBreadcrumbItem(displayProgram.title, location.pathname, programParams))
+    items.push(makeBreadcrumbItem(programTitle, location.pathname, programParams))
 
     if (!childLabel) {
       items.push(
@@ -2034,6 +2444,7 @@ export function UjatProgramDetailFullPageModal({
                 <div className="program-detail-fullpage-modal__header-actions">
                   <ProgramEditInfoActions
                     isEditing={isEditModeInfo}
+                    idleVariant="secondary"
                     disabled={!canEditInfo && !isEditModeInfo}
                     onEdit={handleInfoEdit}
                     onCancel={handleInfoCancel}
@@ -2066,6 +2477,7 @@ export function UjatProgramDetailFullPageModal({
                 }}
               />
               <UjatProgramRecruitmentPanels
+                key={activeRecruitTab}
                 program={displayProgram}
                 sponsorName={sponsorName}
                 activeRecruitTab={activeRecruitTab}
@@ -2323,7 +2735,7 @@ export function UjatProgramDetailFullPageModal({
                 onTabChange={handleLectureEvalTabChange}
                 onRegisterClick={handleOpenLectureEvalCreateModal}
                 onOpenTemplatePreview={handleOpenLectureEvalPreview}
-                onFormDraftChange={setLectureEvalFormDraft}
+                onFormDraftChange={handleLectureEvalDraftChange}
                 onSubmitClick={handleLectureEvalSubmit}
                 onEditResponseClick={handleLectureEvalEditResponse}
                 onDownloadResultsClick={() => setLectureEvalDownloadModalOpen(true)}

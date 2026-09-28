@@ -38,10 +38,30 @@ import { readRegistrationOverlaySponsorId } from '@/features/template/ui/form-se
 import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import {
+  awaitRecruitDetailMediaUploads,
+  bindRecruitDetailMediaAfterProgramCreate,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
+import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
 export const TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'trained-teachers-local-'
+
+/**
+ * 등록 완료 직전 스냅샷 id.
+ * 유형 판별은 id prefix·제목 휴리스틱이라, 공통 id `pending-registration` + 제목에
+ * 「1사1교」가 없으면 GENERAL draft가 COMPANY_SCHOOL create에 붙어
+ * `PROGRAM_DRAFT_TYPE_MISMATCH`가 난다. variant별 prefix를 붙인다.
+ */
+export function registrationPendingSnapshotId(variant: ProgramRegistrationFormVariant): string {
+  if (variant === 'economy') return `${COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}pending`
+  if (variant === 'trainedTeachers') {
+    return `${TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}pending`
+  }
+  return 'pending-registration'
+}
 
 const STORAGE_KEY = 'cms.jakorea.generalRegistrationLocalSaves.v1'
 
@@ -173,7 +193,9 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const capacity = 30
   const overlaySponsorId = isTrainedTeachers
     ? readRegistrationOverlaySponsorId('trainedTeachers')
-    : readRegistrationOverlaySponsorId('general')
+    : isCompanySchool
+      ? readRegistrationOverlaySponsorId('economy')
+      : readRegistrationOverlaySponsorId('general')
   const sponsorId =
     args.sponsorId?.trim() || overlaySponsorId || (isTrainedTeachers ? '' : resolveDefaultSponsorId())
 
@@ -200,6 +222,11 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const studentListRequired: Program['studentListRequired'] =
     isCompanySchool || generalProgramAudience === 'individual' ? 'not_required' : 'required'
 
+  // 버그 수정: 교육받은 교사는 일정형이어도 「세부 프로그램명」select 잠금이 없어
+  // 사용자가 실제 값을 고를 수 있다 (basic-info-paragraph-title-fields.tsx
+  // lockDetailedProgramToNone과 동일 조건). 여기서 isGeneralSchedule에 TT를 포함시키면
+  // 아래 textbookName/teamDivision이 스케줄 상세명(세션 제목 등)으로 고정돼, 사용자가
+  // 고른 세부 프로그램명이 요청 시 다시 스케줄 상세명으로 덮어써진다.
   const isGeneralSchedule =
     !isCompanySchool && !isTrainedTeachers && args.programType === 'schedule'
   const scheduleDetails = isGeneralSchedule
@@ -211,14 +238,22 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const scheduleDetailedProgramName = isGeneralSchedule
     ? resolveScheduleTypeDetailedProgramNameFromDetails(scheduleDetails)
     : undefined
-  const sponsorManagementIds =
-    !isCompanySchool && !isTrainedTeachers
-      ? (() => {
-          const fromOverlay = readGeneralRegistrationOverlaySponsorIds()
-          if (fromOverlay.length > 0) return fromOverlay
+  const sponsorManagementIds = isCompanySchool
+    ? (sponsorId ? [sponsorId] : undefined)
+    : (() => {
+        if (isTrainedTeachers) {
+          const overlay = getProgramRegistrationOverlayRecord()
+          const raw = overlay['trainedTeachersRegistration.basicInfo.sponsorIds']
+          if (Array.isArray(raw)) {
+            const ids = raw.map(String).map(id => id.trim()).filter(Boolean)
+            if (ids.length > 0) return ids
+          }
           return sponsorId ? [sponsorId] : []
-        })()
-      : undefined
+        }
+        const fromOverlay = readGeneralRegistrationOverlaySponsorIds()
+        if (fromOverlay.length > 0) return fromOverlay
+        return sponsorId ? [sponsorId] : []
+      })()
 
   const base: Program = {
     id: args.id,
@@ -257,14 +292,14 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     startTime: '09:00',
     endTime: '18:00',
     studentListRequired,
-    textbookName: scheduleDetailedProgramName,
     teamDivision: scheduleDetailedProgramName,
     generalProgramAudience,
-    generalProgramEducationStructure:
-      isCompanySchool || isTrainedTeachers ? 'curriculum' : args.programType,
-    generalProgramSessionRound:
-      isCompanySchool || isTrainedTeachers ? undefined : (args.sessionRoundType ?? 'single'),
-    generalCommonInfo: isCompanySchool || isTrainedTeachers
+    // 교육받은 교사 — 일반과 동일하게 등록 UI의 교육 진행 구조·회차 유형 반영 (1사1교만 curriculum 고정)
+    generalProgramEducationStructure: isCompanySchool ? 'curriculum' : args.programType,
+    generalProgramSessionRound: isCompanySchool
+      ? undefined
+      : (args.sessionRoundType ?? 'single'),
+    generalCommonInfo: isCompanySchool
       ? {
           educationScheduleMode: 'period',
           curriculumSessions: [
@@ -283,27 +318,25 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
           educationScheduleLines: [
             `${dayjs(`${y}-03-01`).format('YYYY. MM. DD')} ~ ${dayjs(`${y}-12-31`).format('YYYY. MM. DD')}`,
           ],
-          wageGradeRows: isCompanySchool
-            ? [
-                {
-                  grade: '1급 강사비',
-                  pricing: '1시간 당 | 기본 : 500,000원 | 장거리 : 500,000원',
-                },
-                {
-                  grade: '2급 강사비',
-                  pricing: '1시간 당 | 기본 : 400,000원 | 장거리 : 400,000원',
-                },
-                {
-                  grade: '3급 강사비',
-                  pricing: '1시간 당 | 기본 : 300,000원 | 장거리 : 300,000원',
-                },
-              ]
-            : undefined,
-          paymentItems: isCompanySchool ? '교통비(일사일교), 숙박비(일사일교)' : undefined,
-          deductionItems: isCompanySchool ? '일용근로자 원천징수세액' : undefined,
+          wageGradeRows: [
+            {
+              grade: '1급 강사비',
+              pricing: '1시간 당 | 기본 : 500,000원 | 장거리 : 500,000원',
+            },
+            {
+              grade: '2급 강사비',
+              pricing: '1시간 당 | 기본 : 400,000원 | 장거리 : 400,000원',
+            },
+            {
+              grade: '3급 강사비',
+              pricing: '1시간 당 | 기본 : 300,000원 | 장거리 : 300,000원',
+            },
+          ],
+          paymentItems: '교통비(일사일교), 숙박비(일사일교)',
+          deductionItems: '일용근로자 원천징수세액',
           participantRecruitmentInfo: {
             preEducationNoticeRequired: true,
-            maxAssignableInstructors: isCompanySchool ? 2 : undefined,
+            maxAssignableInstructors: 2,
             maxClassCount: 4,
             maxScheduleCount: 2,
             maxSessionsPerDay: 2,
@@ -332,7 +365,27 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     updatedAt: now,
   }
 
-  if (isCompanySchool) return base
+  if (isCompanySchool) {
+    // 버그 수정: 예전엔 여기서 바로 `base`(하드코딩 목업 커리큘럼·강사비)를 반환해
+    // 등록 위저드 「공통정보」·「모집」에 실제로 입력한 값이 생성된 프로그램에 전혀 반영되지 않았다.
+    const registrationOverlay = getProgramRegistrationOverlayRecord()
+    const withEconomyRegistration = applyEconomyRegistrationOverlayToProgram(
+      base,
+      registrationOverlay
+    )
+    flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+    return {
+      ...applyGeneralRecruitOverlayToProgram(
+        withEconomyRegistration,
+        {
+          ...getApplicantRecruitInstitutionOverlayRecord(),
+          ...getGeneralRecruitOverlayRecord(),
+        },
+        { preferOverlay: true }
+      ),
+      registrationOverlay,
+    }
+  }
 
   const overlay = normalizeRegistrationOverlayForApply(
     getProgramRegistrationOverlayRecord(),
@@ -340,15 +393,17 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   )
 
   const withRegistration = applyGeneralRegistrationOverlayToProgram(base, overlay, {
-    programType: isTrainedTeachers ? 'curriculum' : args.programType,
-    sessionRoundType: isTrainedTeachers ? 'single' : (args.sessionRoundType ?? 'single'),
+    programType: args.programType,
+    sessionRoundType: args.sessionRoundType ?? 'single',
     educationScheduleMode: args.educationScheduleMode,
     scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
     participantOrganization: isTrainedTeachers ? true : args.participant.organization,
+    isTrainedTeachers,
     ...args.editorExtras,
   })
 
-  return applyGeneralRecruitOverlayToProgram(
+  flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+  const withRecruit = applyGeneralRecruitOverlayToProgram(
     withRegistration,
     {
       ...getApplicantRecruitInstitutionOverlayRecord(),
@@ -356,6 +411,53 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     },
     { preferOverlay: true }
   )
+
+  if (!isTrainedTeachers) {
+    return {
+      ...withRecruit,
+      registrationOverlay: getProgramRegistrationOverlayRecord(),
+    }
+  }
+
+  // BE 계약: teacherTrainingEnabled / educationJournalEnabled는 create 시 항상 명시
+  const journalRaw =
+    getProgramRegistrationOverlayRecord()[
+      'trainedTeachersRegistration.educationCurriculum.educationJournalEnabled'
+    ]
+  const educationJournalEnabled =
+    journalRaw === 'yes' || journalRaw === true
+      ? true
+      : journalRaw === 'no' || journalRaw === false
+        ? false
+        : (withRecruit.generalCommonInfo?.educationJournalEnabled ?? false)
+  const teacherTrainingEnabled =
+    args.editorExtras?.teacherTrainingEnabled ??
+    withRecruit.generalCommonInfo?.teacherTrainingEnabled ??
+    false
+
+  const recruitment = withRecruit.generalCommonInfo?.participantRecruitmentInfo
+  return {
+    ...withRecruit,
+    registrationOverlay: getProgramRegistrationOverlayRecord(),
+    generalParticipantTypes: ['school_institution'],
+    generalProgramAudience: 'organization',
+    generalCommonInfo: {
+      ...withRecruit.generalCommonInfo,
+      teacherTrainingEnabled,
+      educationJournalEnabled,
+      participantRecruitmentInfo: recruitment
+        ? {
+            ...recruitment,
+            // TT: 강사 배정 수 UI 미사용 — BE echo 0/null
+            maxAssignableInstructors: 0,
+            preEducationNoticeRequired: false,
+          }
+        : {
+            maxAssignableInstructors: 0,
+            preEducationNoticeRequired: false,
+          },
+    },
+  }
 }
 
 export function readGeneralRegistrationLocalSaveRecords(): GeneralRegistrationLocalSaveRecord[] {
@@ -509,8 +611,17 @@ export async function persistGeneralProgramRegistration(args: {
     GeneralRegistrationEditorExtras,
     'programType' | 'sessionRoundType' | 'educationScheduleMode' | 'scheduleCurriculumDetailCount'
   >
+  preparedFormBindings?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
 }): Promise<Program> {
+  const { shouldUseRegistrationCreateFormBindings, assertRegistrationWizardRemoteReady } =
+    await import('@/features/program/general/lib/registration-create-form-bindings-capabilities')
+  if (!shouldUseRegistrationCreateFormBindings()) {
+    assertRegistrationWizardRemoteReady()
+  }
+
   const variant = args.variant ?? 'general'
+  // 썸네일·첨부 업로드가 끝나기 전에 스냅샷하지 않음
+  await awaitRecruitDetailMediaUploads()
   const id =
     variant === 'economy'
       ? newCompanySchoolLocalProgramId()
@@ -531,18 +642,29 @@ export async function persistGeneralProgramRegistration(args: {
     editorExtras: args.editorExtras,
   })
 
+  // 생성 요청 전에 스냅샷 — create 후 overlay 초기화돼도 썸네일·첨부 바인딩 가능
+  const recruitMediaOverlay = { ...getGeneralRecruitOverlayRecord() }
+
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {
     const { createCompanySchoolProgram } = await import(
       '@/features/program/1c-1s/api/service'
     )
-    return createCompanySchoolProgram(program)
+    const created = await createCompanySchoolProgram(program, args.preparedFormBindings)
+    await bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay).catch(error => {
+      console.error('[registration] bind recruit detail media failed', created.id, error)
+    })
+    return created
   }
 
   if (variant === 'trainedTeachers' && shouldUseTrainedTeacherProgramsRemoteApi()) {
     const { createTrainedTeacherProgram } = await import(
       '@/features/program/trained-teachers/api/service'
     )
-    return createTrainedTeacherProgram(program)
+    const created = await createTrainedTeacherProgram(program, args.preparedFormBindings)
+    await bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay).catch(error => {
+      console.error('[registration] bind recruit detail media failed', created.id, error)
+    })
+    return created
   }
 
   if (
@@ -550,15 +672,10 @@ export async function persistGeneralProgramRegistration(args: {
     variant !== 'trainedTeachers' &&
     shouldUseGeneralProgramsRemoteApi()
   ) {
-    const created = await createGeneralProgram(program)
-    try {
-      const { attachRegistrationFormDraftsToProgram } = await import(
-        '@/features/program/general/lib/sync-registration-form-bindings'
-      )
-      await attachRegistrationFormDraftsToProgram(created)
-    } catch (error) {
-      console.warn('[general-program] attach registration form drafts failed', error)
-    }
+    const created = await createGeneralProgram(program, args.preparedFormBindings)
+    await bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay).catch(error => {
+      console.error('[registration] bind recruit detail media failed', created.id, error)
+    })
     return created
   }
 

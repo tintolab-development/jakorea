@@ -41,6 +41,9 @@ export function RecruitGuidePage() {
   return (
     <div className="recruit-guide-page">
       <div className="admin-list-card recruit-guide-card">
+        <div className="recruit-guide-card__heading">
+          <span className="table-title">채용 안내 관리</span>
+        </div>
         <BannerSectionCard banner={data.banner} />
         <CultureSectionCard items={data.cultureItems} />
         <InterviewSectionCard items={data.interviews} />

@@ -128,7 +128,7 @@ export function DashboardSection() {
           </div>
           <Card
             className="widget-card ds-dashboard-grid__full"
-            bordered={false}
+            variant="borderless"
             title={<DashboardWidgetTitle title="프로그램 진행 현황" />}
           >
             <ProgressStagesWidget
@@ -172,7 +172,7 @@ export function DashboardSection() {
       <DsDemo label="테이블형 위젯 셸 (widget-card + 더보기 + cms-data-table--widget)" className="ds-demo--table">
         <Card
           className="widget-card dashboard-widget-table dashboard-widget-table--recruitment"
-          bordered={false}
+          variant="borderless"
           title={<DashboardWidgetTitle title="모집 신청 현황" count={DASHBOARD_TABLE_ROWS.length} />}
           extra={
             <LoadingButton type="link" className="widget-more-button">

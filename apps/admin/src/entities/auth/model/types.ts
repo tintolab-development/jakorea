@@ -62,4 +62,6 @@ export interface OtpVerifyResponse {
   failedAttempts: number
   isLocked: boolean
   lockUntil: string | null
+  /** BE AuthException code (예: MFA_VERIFICATION_FAILED, ACCOUNT_LOCKED) */
+  errorCode?: string
 }

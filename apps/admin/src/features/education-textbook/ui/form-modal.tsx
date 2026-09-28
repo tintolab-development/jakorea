@@ -16,7 +16,7 @@ import type {
 import {
   DEFAULT_TEXTBOOK_AUTHOR,
   DEFAULT_TEXTBOOK_THUMBNAIL,
-} from '@/features/education-textbook/api/store'
+} from '@/features/education-textbook/lib/defaults'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {

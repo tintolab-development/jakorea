@@ -8,12 +8,13 @@ import type {
   MemberLoginListResult,
   MemberLoginLog,
 } from '@/entities/member-login-log/model/types'
+import { LOG_LIST_PAGE_SIZE } from '@/features/logs/shared/lib/list-page'
 import type { ExportMemberLoginsParams } from '@/shared/api/generated/logs/schemas/exportMemberLoginsParams'
 import type { MemberLoginLogItem } from '@/shared/api/generated/logs/schemas/memberLoginLogItem'
 import type { MemberLoginsParams } from '@/shared/api/generated/logs/schemas/memberLoginsParams'
 import type { PageResponseMemberLoginLogItem } from '@/shared/api/generated/logs/schemas/pageResponseMemberLoginLogItem'
 
-export const LIST_PAGE_SIZE = 20
+export const LIST_PAGE_SIZE = LOG_LIST_PAGE_SIZE
 
 function toApiAudience(audience: MemberLoginAudience): string {
   return audience === 'user' ? 'USER' : 'ADMIN'
@@ -26,7 +27,7 @@ function fromApiAudience(raw: string | undefined): MemberLoginAudience {
 export function toMemberLoginsParams(filter: MemberLoginListFilter): MemberLoginsParams {
   const params: MemberLoginsParams = {
     audience: toApiAudience(filter.audience),
-    page: 0,
+    page: filter.page ?? 0,
     size: LIST_PAGE_SIZE,
   }
   const name = filter.name?.trim()

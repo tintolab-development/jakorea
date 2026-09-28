@@ -1,31 +1,79 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
+import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import {
   getMockApplyFormDraft,
   getProgramIdFromPath,
+  parsePortalProgramId,
   ProgramBackButton,
   programApplyCompletePath,
   programDetailPath,
-  useMockProgramById,
+  resolveProgramApplyFormCase,
+  useProgramApplicationForm,
+  useProgramDetail,
+  useSubmitProgramApplication,
 } from '@/features/program'
+import { usePortalProfileQuery } from '@/features/auth/sign-in/hooks/use-portal-profile-query'
+import {
+  getProgramApplicationApiErrorMessage,
+  messageForApplicationBlockedReason,
+} from '@/features/program/lib/application-api-error'
+import {
+  buildApplicationAnswersFromDraft,
+  writingFormDraftFromApplicationForm,
+} from '@/features/program/lib/application-form-draft'
 import {
   isApplyScheduleChoiceParagraphId,
   shouldShowApplyPreferredSchedule,
 } from '@/features/program/lib/apply-form-schedule'
-import { ApplyPreferredSchedule } from '@/features/program/ui/apply-preferred-schedule/apply-preferred-schedule'
+import {
+  preferredScheduleBlocksFromDraftAnswers,
+  toPortalPreferredScheduleBlocks,
+  toPreferredScheduleAnswerValue,
+  findIncompletePreferredScheduleMessage,
+} from '@/features/program/lib/preferred-schedule-blocks'
+import {
+  ApplyPreferredSchedule,
+  type ApplyPreferredScheduleBlock,
+} from '@/features/program/ui/apply-preferred-schedule/apply-preferred-schedule'
+import {
+  ApplyTrainedTeachersBasicInfo,
+  basicInfoAnswerFromValues,
+  basicInfoValuesFromDraftAnswer,
+  emptyTrainedTeachersBasicInfo,
+  findIncompleteTrainedTeachersBasicInfoMessage,
+  type ApplyTrainedTeachersBasicInfoValues,
+} from '@/features/program/ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info'
+import {
+  fillTrainedTeachersBasicInfoFromProfile,
+  trainedTeachersProfileDefaults,
+} from '@/features/program/ui/apply-trained-teachers-basic-info/profile-defaults'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
-import { getDevAuthLoggedIn, resolveLoginRequiredPath, shouldUsePlatformMockData } from '@/shared/lib'
+import { getAccessToken } from '@/shared/lib/auth-token'
+import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
 import { PFButton, PFCheckbox, PFText, PFTextarea, PFTextInput } from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
 
+function createEmptyPreferredBlock(): ApplyPreferredScheduleBlock {
+  return { date: '', classPeriod: '', startTime: '', endTime: '' }
+}
+
 export function ProgramApplyPage() {
   const navigate = useNavigate()
   const [isReady, setIsReady] = useState(false)
   const programId = getProgramIdFromPath()
-  const { program, isLoading } = useMockProgramById(programId)
+  const { program, isLoading } = useProgramDetail(programId, { fresh: true })
+  const numericProgramId = parsePortalProgramId(programId)
+  const remoteApplyEnabled =
+    isRemoteApiConfigured() && numericProgramId != null && Boolean(getAccessToken())
+  const applicationFormQuery = useProgramApplicationForm(
+    remoteApplyEnabled ? programId : null,
+  )
+  const submitMutation = useSubmitProgramApplication(numericProgramId)
+  const profileQuery = usePortalProfileQuery({ enabled: remoteApplyEnabled })
 
   useEffect(() => {
     if (!programId) {
@@ -41,14 +89,117 @@ export function ProgramApplyPage() {
   }, [navigate, programId])
 
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
+  const [preferredBlocks, setPreferredBlocks] = useState<ApplyPreferredScheduleBlock[]>([
+    createEmptyPreferredBlock(),
+  ])
+  const [basicInfo, setBasicInfo] = useState<ApplyTrainedTeachersBasicInfoValues>(
+    emptyTrainedTeachersBasicInfo,
+  )
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
+  const hydratedFormKeyRef = useRef<string | null>(null)
+
+  const applyCase = program ? resolveProgramApplyFormCase(program) : null
+  const showTrainedTeachersApply =
+    applyCase === 'trained-teachers' ||
+    program?.registrationKind === 'trainedTeachers' ||
+    program?.programType === 'TRAINED_TEACHER'
+
+  const profileDefaults = useMemo(
+    () => trainedTeachersProfileDefaults(profileQuery.data),
+    [profileQuery.data],
+  )
+  const profileSchool = profileDefaults.schoolName
+  const profileRegionLabel = profileDefaults.regionLabel
+  const profileTeacherName = profileDefaults.teacherName
+  const profileTeacherMobile = profileDefaults.teacherMobile
+  const profileTeacherEmail = profileDefaults.teacherEmail
+  const showPreferredEducationForm = program?.educationForm === 'participant_choice'
+  const remoteForm = applicationFormQuery.bundle?.form
+  const remoteFormKey =
+    remoteApplyEnabled && applicationFormQuery.status === 'ready' && remoteForm
+      ? [
+          programId,
+          applicationFormQuery.bundle?.option.formBindingId,
+          remoteForm.templateVersionId,
+          remoteForm.draftApplicationId ?? 'none',
+          remoteForm.draftFormResponseId ?? 'none',
+        ].join(':')
+      : null
 
   useEffect(() => {
-    if (!program || !shouldUsePlatformMockData()) {
+    if (!program) {
+      hydratedFormKeyRef.current = null
       setDraft(null)
       return
     }
+
+    if (remoteApplyEnabled) {
+      if (applicationFormQuery.status === 'ready' && remoteForm && remoteFormKey) {
+        if (hydratedFormKeyRef.current === remoteFormKey) return
+        const remoteDraft = writingFormDraftFromApplicationForm(
+          remoteForm.form,
+          remoteForm.draftAnswers,
+        )
+        if (remoteDraft) {
+          hydratedFormKeyRef.current = remoteFormKey
+          setDraft(remoteDraft)
+          const draftAnswers = remoteForm.draftAnswers
+          const fromPreferred = preferredScheduleBlocksFromDraftAnswers(
+            draftAnswers,
+            PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
+          )
+          setPreferredBlocks(fromPreferred ?? [createEmptyPreferredBlock()])
+          const fromBasic = basicInfoValuesFromDraftAnswer(
+            draftAnswers?.[PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo],
+          )
+          setBasicInfo(
+            fillTrainedTeachersBasicInfoFromProfile(
+              fromBasic ?? emptyTrainedTeachersBasicInfo(),
+              profileDefaults,
+            ),
+          )
+          return
+        }
+      }
+      if (
+        applicationFormQuery.status === 'loading' ||
+        applicationFormQuery.status === 'idle'
+      ) {
+        hydratedFormKeyRef.current = null
+        setDraft(null)
+        return
+      }
+      const mockKey = `mock-fallback:${program.id}`
+      if (hydratedFormKeyRef.current === mockKey) return
+      hydratedFormKeyRef.current = mockKey
+      setDraft(getMockApplyFormDraft(program))
+      setPreferredBlocks([createEmptyPreferredBlock()])
+      setBasicInfo(
+        fillTrainedTeachersBasicInfoFromProfile(emptyTrainedTeachersBasicInfo(), profileDefaults),
+      )
+      return
+    }
+
+    const mockKey = `mock:${program.id}`
+    if (hydratedFormKeyRef.current === mockKey) return
+    hydratedFormKeyRef.current = mockKey
     setDraft(getMockApplyFormDraft(program))
-  }, [program])
+    setPreferredBlocks([createEmptyPreferredBlock()])
+    setBasicInfo(emptyTrainedTeachersBasicInfo())
+  }, [
+    program,
+    programId,
+    remoteApplyEnabled,
+    applicationFormQuery.status,
+    remoteForm,
+    remoteFormKey,
+    profileDefaults,
+  ])
+
+  useEffect(() => {
+    setBasicInfo(prev => fillTrainedTeachersBasicInfoFromProfile(prev, profileDefaults))
+  }, [profileDefaults])
 
   const updateParagraph = useCallback<FormUpdateParagraph>((id, updater) => {
     setDraft(prev => {
@@ -62,16 +213,60 @@ export function ProgramApplyPage() {
     })
   }, [])
 
+  const blockedMessage = messageForApplicationBlockedReason(
+    applicationFormQuery.blockedReason,
+  )
+  const canSubmitRemote =
+    remoteApplyEnabled &&
+    applicationFormQuery.status === 'ready' &&
+    applicationFormQuery.bundle != null &&
+    applicationFormQuery.blockedReason == null &&
+    applicationFormQuery.bundle.option.canApply !== false
+
+  const profileSchoolLocked = Boolean(profileSchool)
+
   const renderParagraphSlot = useCallback(
     (paragraph: WritingFormParagraph) => {
       if (program == null) return undefined
 
       if (
-        program.detailCase === 'general' &&
-        isApplyScheduleChoiceParagraphId(paragraph.id) &&
-        shouldShowApplyPreferredSchedule(program)
+        showTrainedTeachersApply &&
+        paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo
       ) {
-        return <ApplyPreferredSchedule maxBlocks={program.maxPreferredScheduleCount} />
+        return (
+          <ApplyTrainedTeachersBasicInfo
+            value={basicInfo}
+            onChange={setBasicInfo}
+            schoolNameLocked={profileSchoolLocked}
+            showPreferredEducationForm={showPreferredEducationForm}
+            profile={{
+              schoolName: profileSchool,
+              regionLabel: profileRegionLabel,
+              teacherName: profileTeacherName,
+              teacherMobile: profileTeacherMobile,
+              teacherEmail: profileTeacherEmail,
+            }}
+          />
+        )
+      }
+
+      const isTrainedPreferred =
+        showTrainedTeachersApply &&
+        paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
+
+      if (
+        isTrainedPreferred ||
+        (program.detailCase === 'general' &&
+          isApplyScheduleChoiceParagraphId(paragraph.id) &&
+          shouldShowApplyPreferredSchedule(program))
+      ) {
+        return (
+          <ApplyPreferredSchedule
+            maxBlocks={program.maxPreferredScheduleCount}
+            value={preferredBlocks}
+            onChange={setPreferredBlocks}
+          />
+        )
       }
 
       if (
@@ -197,10 +392,27 @@ export function ProgramApplyPage() {
         </div>
       )
     },
-    [program, updateParagraph]
+    [
+      program,
+      preferredBlocks,
+      basicInfo,
+      showTrainedTeachersApply,
+      showPreferredEducationForm,
+      profileSchoolLocked,
+      profileSchool,
+      profileRegionLabel,
+      profileTeacherName,
+      profileTeacherMobile,
+      profileTeacherEmail,
+      updateParagraph,
+    ]
   )
 
-  if (!isReady || isLoading || !program || !draft) {
+  const formLoading =
+    remoteApplyEnabled &&
+    (applicationFormQuery.status === 'loading' || applicationFormQuery.status === 'idle')
+
+  if (!isReady || isLoading || formLoading || !program || !draft) {
     return null
   }
 
@@ -208,8 +420,93 @@ export function ProgramApplyPage() {
     navigate(programDetailPath(program.id))
   }
 
-  const handleSubmit = () => {
-    // TODO: CMS 등록 신청 폼 draft 기준 검증 · POST program application API
+  const handleSubmit = async () => {
+    setSubmitError(null)
+    if (blockedMessage && !canSubmitRemote) {
+      setSubmitError(blockedMessage)
+      return
+    }
+    const bundle = applicationFormQuery.bundle
+    if (
+      canSubmitRemote &&
+      bundle?.option.recruitmentId != null &&
+      bundle.option.formBindingId != null &&
+      bundle.option.applicationType
+    ) {
+      const preferredScheduleBlocks = showTrainedTeachersApply
+        ? toPortalPreferredScheduleBlocks(preferredBlocks)
+        : undefined
+      if (showTrainedTeachersApply) {
+        const preferredError = findIncompletePreferredScheduleMessage(preferredBlocks)
+        if (preferredError) {
+          setSubmitError(preferredError)
+          return
+        }
+      }
+      const preferredAnswer = showTrainedTeachersApply
+        ? toPreferredScheduleAnswerValue(preferredBlocks)
+        : null
+      if (showTrainedTeachersApply && !preferredAnswer) {
+        setSubmitError('진행 희망 교육 일정을 한 개 이상 입력해 주세요.')
+        return
+      }
+      const basicAnswer = showTrainedTeachersApply
+        ? basicInfoAnswerFromValues(basicInfo)
+        : null
+      if (showTrainedTeachersApply) {
+        const basicError = findIncompleteTrainedTeachersBasicInfoMessage(basicInfo)
+        if (basicError) {
+          setSubmitError(basicError)
+          return
+        }
+      }
+      if (showTrainedTeachersApply && !basicAnswer) {
+        setSubmitError('기본 정보(신청 기관명)를 입력해 주세요.')
+        return
+      }
+
+      const overrides: Record<string, unknown> = {}
+      if (preferredAnswer != null) {
+        overrides[PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule] =
+          preferredAnswer
+      }
+      if (basicAnswer != null) {
+        overrides[PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo] = basicAnswer
+      }
+
+      const answers = buildApplicationAnswersFromDraft(draft, {
+        overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+      })
+
+      const classCount = Number.parseInt(basicInfo.classCount, 10)
+      const studentCount = Number.parseInt(basicInfo.studentCount, 10)
+
+      try {
+        await submitMutation.mutateAsync({
+          recruitmentId: bundle.option.recruitmentId,
+          applicationType: bundle.option.applicationType,
+          formBindingId: bundle.option.formBindingId,
+          answers,
+          preferredScheduleBlocks,
+          ...(Number.isFinite(classCount) && classCount > 0
+            ? { requestedClassCount: classCount }
+            : {}),
+          ...(Number.isFinite(studentCount) && studentCount > 0
+            ? { requestedStudentCount: studentCount }
+            : {}),
+        })
+        navigate(programApplyCompletePath(program.id))
+      } catch (error) {
+        setSubmitError(getProgramApplicationApiErrorMessage(error))
+      }
+      return
+    }
+    if (remoteApplyEnabled) {
+      setSubmitError(
+        blockedMessage ?? '신청을 제출할 수 없습니다. 모집 기간과 회원 자격을 확인해 주세요.',
+      )
+      return
+    }
     navigate(programApplyCompletePath(program.id))
   }
 
@@ -233,6 +530,12 @@ export function ProgramApplyPage() {
           </PFText>
         </div>
 
+        {blockedMessage ? (
+          <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.blockedNotice}>
+            {blockedMessage}
+          </PFText>
+        ) : null}
+
         <div className={styles.form}>
           <FormTemplateHost surface="platformUser">
             <FormTemplateRenderer
@@ -244,8 +547,22 @@ export function ProgramApplyPage() {
             />
           </FormTemplateHost>
 
+          {submitError ? (
+            <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
+              {submitError}
+            </PFText>
+          ) : null}
+
           <div className={styles.actions}>
-            <PFButton size="xlarge" width={240} type="button" onClick={handleSubmit}>
+            <PFButton
+              size="xlarge"
+              width={240}
+              type="button"
+              disabled={submitMutation.isPending || Boolean(blockedMessage && remoteApplyEnabled)}
+              onClick={() => {
+                void handleSubmit()
+              }}
+            >
               신청하기
             </PFButton>
           </div>

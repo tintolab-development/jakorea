@@ -20,21 +20,29 @@ export function PopupsSortableTable({
   columns,
   loading,
   rowSelection,
+  dragDisabled,
   onRowsReorder,
 }: {
   rows: Popup[]
   columns: ColumnsType<Popup>
   loading?: boolean
   rowSelection?: TableProps<Popup>['rowSelection']
+  dragDisabled?: boolean
   onRowsReorder: (reorderedRows: Popup[]) => void
 }) {
+  const disabled = Boolean(dragDisabled)
   const { items, rowIds, dndContextProps } = useAdminTableDndReorder({
     rows,
     onRowsReorder,
+    disabled,
   })
 
   return (
-    <AdminSortableDndShell rowIds={rowIds} dndContextProps={dndContextProps}>
+    <AdminSortableDndShell
+      rowIds={rowIds}
+      dndContextProps={dndContextProps}
+      dragDisabled={disabled}
+    >
       <Table<Popup>
         className="cms-data-table popup-table"
         rowKey="id"

@@ -8,19 +8,27 @@ import {
   UJAT_SPONSOR_ALL_VALUE,
   type UjatSurveyRowId,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import {
   readUjatSurveyItems,
   resolveUjatSurveyItemsText,
+  ujatGeneralSurveyMenuKeysFromOverlay,
   UJAT_REGISTRATION_SURVEY_ITEM_LABELS,
   UJAT_SURVEY_MENU_KEY_BY_ITEM,
 } from '@/features/program/ujat/lib/registration-survey-items'
+import { resolveSponsorContactIdsForEdit } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   readUjatWagePaymentItemValuesFromOverlay,
   resolveUjatWageDeductionLabel,
   ujatPaymentItemLabelsFromIds,
 } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import { formatDateRange } from '@/features/program/shared/lib/program-detail-info-constants'
+import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
+import {
+  formatDateRange,
+  normalizeProgramBusinessAreaValue,
+} from '@/features/program/shared/lib/program-detail-info-constants'
+import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
@@ -68,6 +76,7 @@ function optionLabel(
 }
 
 function resolveDetailedProgramName(detailedProgramId: string): string {
+  if (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) return '해당없음'
   if (detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE) return UJAT_DETAILED_PROGRAM_UJAT_LABEL
   return '-'
 }
@@ -200,7 +209,10 @@ export function resolveUjatRegistrationBasicInfoDisplay(
   sponsors: readonly SponsorManagementRow[] = []
 ): UjatRegistrationBasicInfoDisplay {
   const defaults = createUjatRegistrationBasicInfoOverlayDefaults(sponsors)
-  const overlay = resolveUjatRegistrationBasicInfoOverlay(overlayInput)
+  const overlay = resolveUjatRegistrationBasicInfoOverlay({
+    ...readUjatRegistrationOverlayFromProgram(program),
+    ...overlayInput,
+  })
 
   const repKo = overlayString(overlay, 'ujat.basicInfo.repKo')?.trim() || defaults.repKo
   const repEn = overlayString(overlay, 'ujat.basicInfo.repEn')?.trim() || defaults.repEn
@@ -208,8 +220,15 @@ export function resolveUjatRegistrationBasicInfoDisplay(
     overlayString(overlay, 'ujat.basicInfo.programManagementName')?.trim() ||
     defaults.programManagementName
   const publicProgramTitle =
-    overlayString(overlay, 'ujat.basicInfo.publicProgramTitle')?.trim() ||
-    defaults.publicProgramTitle
+    resolvePublicProgramTitle({
+      announcementTitle: program.generalCommonInfo?.announcementTitle,
+      overlay,
+      mainTitle:
+        overlayString(overlay, 'ujat.basicInfo.repKo')?.trim() || program.mainTitle,
+      title:
+        overlayString(overlay, 'ujat.basicInfo.programManagementName')?.trim() ||
+        program.title,
+    }) || '-'
   const detailedProgramId =
     overlayString(overlay, 'ujat.basicInfo.detailedProgramId') ?? defaults.detailedProgramId
   const businessField =
@@ -235,12 +254,27 @@ export function resolveUjatRegistrationBasicInfoDisplay(
     program.generalCommonInfo?.sponsorManagerLine?.trim() ||
     '-'
 
+  // 일정형(UJAT 기본·수정 잠금과 동일): stale overlay의 봉사단 세부명을 무시하고「해당없음」.
+  // 커리큘럼형: BE top-level detailedProgramName / detailedProgramId를 overlay보다 우선.
+  const isScheduleStructure = program.generalProgramEducationStructure !== 'curriculum'
+  const topLevelDetailedName = program.generalCommonInfo?.detailedProgramName?.trim()
+  const detailedProgramName = (() => {
+    if (isScheduleStructure) return '해당없음'
+    if (topLevelDetailedName === '해당없음' || !program.detailedProgramId?.trim()) {
+      if (topLevelDetailedName === '해당없음') return '해당없음'
+    }
+    if (topLevelDetailedName && program.detailedProgramId?.trim()) {
+      return topLevelDetailedName
+    }
+    return resolveDetailedProgramName(detailedProgramId)
+  })()
+
   return {
     repKo,
     repEn,
     programManagementName,
     publicProgramTitle,
-    detailedProgramName: resolveDetailedProgramName(detailedProgramId),
+    detailedProgramName,
     operationRange: resolveOperationRange(operationSeal, program),
     participantTypes: resolveParticipantTypes(overlay, defaults),
     businessField: optionLabel(TEMPLATE_FORM_BUSINESS_AREA_OPTIONS, businessField),
@@ -268,8 +302,9 @@ export function applyUjatRegistrationOverlayToProgram(
   const title =
     overlayString(overlayInput, 'ujat.basicInfo.programManagementName')?.trim() ||
     defaults.programManagementName
-  const businessArea =
+  const businessArea = normalizeProgramBusinessAreaValue(
     overlayString(overlayInput, 'ujat.basicInfo.businessField') ?? defaults.businessField
+  )
   const sponsorRaw = overlayString(overlayInput, 'ujat.basicInfo.sponsorId') ?? defaults.sponsorId
   const sponsorId = sponsorRaw && sponsorRaw !== UJAT_SPONSOR_ALL_VALUE ? sponsorRaw : program.sponsorId
   const ipOwned = overlayString(overlayInput, 'ujat.basicInfo.ipOwned') ?? defaults.ipOwned
@@ -303,21 +338,35 @@ export function applyUjatRegistrationOverlayToProgram(
 
   const detailedProgramId =
     overlayString(overlayInput, 'ujat.basicInfo.detailedProgramId') ?? defaults.detailedProgramId
+  // 버그 수정: id만 저장되고 name은 화면표시용으로만 파생되어 실제 Program 객체(요청 페이로드)에는
+  // 세부 프로그램명이 전혀 실리지 않았다 — id·name을 항상 짝지어 Program에 반영한다
+  // (다른 프로그램 유형과 동일한 detailedProgramId + generalCommonInfo.detailedProgramName 계약).
+  const detailedProgramName =
+    overlayString(overlayInput, 'ujat.basicInfo.detailedProgramName')?.trim() ||
+    resolveDetailedProgramName(detailedProgramId)
   const teamDivision =
     detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE
       ? UJAT_DETAILED_PROGRAM_UJAT_LABEL
-      : program.teamDivision
+      : detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+        ? undefined
+        : program.teamDivision
 
   const paymentItemIds = readUjatWagePaymentItemValuesFromOverlay(overlayInput)
   const paymentItemsLabel = ujatPaymentItemLabelsFromIds(paymentItemIds)
   const deductionItemsLabel = resolveUjatWageDeductionLabel(paymentItemIds)
-  const announcementTitle =
-    overlayString(overlayInput, 'ujat.basicInfo.publicProgramTitle')?.trim() ||
-    program.generalCommonInfo?.announcementTitle?.trim() ||
-    title
+  const announcementTitle = program.generalCommonInfo?.announcementTitle?.trim()
   const sponsorManagerLine =
     overlayString(overlayInput, 'ujat.basicInfo.sponsorManagerName')?.trim() ||
     program.generalCommonInfo?.sponsorManagerLine
+  const sponsorContactIds = resolveSponsorContactIdsForEdit({
+    ids: Array.isArray(overlayInput['ujat.basicInfo.sponsorContactIds'])
+      ? (overlayInput['ujat.basicInfo.sponsorContactIds'] as unknown[]).map(String)
+      : undefined,
+    id: overlayString(overlayInput, 'ujat.basicInfo.sponsorContactId') ?? undefined,
+    managerLine: sponsorManagerLine ?? '',
+  })
+  const generalSurveyMenuKeys =
+    ujatGeneralSurveyMenuKeysFromOverlay(overlayInput) ?? program.generalSurveyMenuKeys
   const overlayKpi = {
     finalParticipants: overlayNullableNumber(overlayInput, 'ujat.kpi.participantCount'),
     instructorCount: overlayNullableNumber(overlayInput, 'ujat.kpi.instructor'),
@@ -333,6 +382,8 @@ export function applyUjatRegistrationOverlayToProgram(
     titleEn: repEn,
     title,
     teamDivision,
+    // 무관 여부와 상관없이 id·name을 둘 다 Program에 반영 — 일반/TT/1사1교와 동일한 계약.
+    detailedProgramId,
     businessArea,
     sponsorId,
     ipOwned: ipOwnedValue,
@@ -342,12 +393,20 @@ export function applyUjatRegistrationOverlayToProgram(
     partnerInvolvement,
     startDate,
     endDate,
+    generalSurveyMenuKeys,
     generalCommonInfo: {
       ...program.generalCommonInfo,
+      detailedProgramName,
       paymentItems: paymentItemsLabel,
       deductionItems: deductionItemsLabel,
-      announcementTitle,
+      ...(announcementTitle ? { announcementTitle } : {}),
       sponsorManagerLine,
+      sponsorManagerContactIds:
+        sponsorContactIds.length > 0
+          ? sponsorContactIds
+          : program.generalCommonInfo?.sponsorManagerContactIds,
+      sponsorManagerContactId:
+        sponsorContactIds[0] ?? program.generalCommonInfo?.sponsorManagerContactId,
       kpi: {
         finalParticipants: overlayKpi.finalParticipants ?? prevKpi?.finalParticipants ?? 0,
         instructorCount: overlayKpi.instructorCount ?? prevKpi?.instructorCount ?? 0,
@@ -359,17 +418,24 @@ export function applyUjatRegistrationOverlayToProgram(
   }
 }
 
-/** 모집 공고용 프로그램명 — 등록 폼 `공고용 프로그램명` 우선 */
+/** 모집 공고용 프로그램명 — 모집 탭·저장된 announcementTitle (등록 폼에는 공고용 필드 없음) */
 export function resolveUjatAnnouncementTitle(program: Program): string {
   return (
-    program.generalCommonInfo?.announcementTitle?.trim() ||
-    program.mainTitle?.trim() ||
-    program.title
+    resolvePublicProgramTitle({
+      announcementTitle: program.generalCommonInfo?.announcementTitle,
+      overlay: resolveUjatRegistrationBasicInfoOverlay(
+        readUjatRegistrationOverlayFromProgram(program)
+      ),
+      mainTitle: program.mainTitle,
+      title: program.title,
+    }) || '-'
   )
 }
 
 export function applyUjatRegistrationTemplateDefaults(program: Program): Program {
-  const overlay = resolveUjatRegistrationBasicInfoOverlay()
+  const overlay = resolveUjatRegistrationBasicInfoOverlay(
+    readUjatRegistrationOverlayFromProgram(program)
+  )
   if (Object.keys(overlay).length === 0) return program
   return applyUjatRegistrationOverlayToProgram(program, overlay)
 }

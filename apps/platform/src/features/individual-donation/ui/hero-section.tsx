@@ -1,17 +1,21 @@
 import { Fragment } from 'react'
 import supportIndividualGradientUrl from '@/assets/background_gradient/support-individual-gradient.png'
-import { PFText } from '@/shared/ui'
-import {
-  HERO_DESCRIPTION_LINES,
-  HERO_LABEL,
-  HERO_TITLE_LINES,
-} from '../lib/constants'
-import { HERO_IMAGE_URL } from '../lib/hero-image'
+import { PFText, remoteCopyClassName } from '@/shared/ui'
+import { usePublicPersonalSponsorshipView } from '../api/hooks'
+import { HERO_LABEL } from '../lib/constants'
 import styles from './hero-section.module.css'
 
 export function HeroSection() {
+  const { titleLines, descriptionLines, heroImageUrl, isPending } =
+    usePublicPersonalSponsorshipView()
+  const copyClass = remoteCopyClassName(isPending)
+
   return (
-    <section className={styles.hero} aria-labelledby="individual-donation-hero-title">
+    <section
+      className={styles.hero}
+      aria-labelledby="individual-donation-hero-title"
+      aria-busy={isPending || undefined}
+    >
       <div
         className={styles.background}
         style={{ backgroundImage: `url(${supportIndividualGradientUrl})` }}
@@ -21,10 +25,10 @@ export function HeroSection() {
       <div className={styles.content}>
         <div className={styles.media}>
           <div className={styles.imageFrame}>
-            {HERO_IMAGE_URL ? (
+            {heroImageUrl ? (
               <img
                 className={styles.image}
-                src={HERO_IMAGE_URL}
+                src={heroImageUrl}
                 alt=""
                 width={960}
                 height={720}
@@ -35,7 +39,7 @@ export function HeroSection() {
           </div>
         </div>
         <div className={styles.textArea}>
-          <div className={styles.text}>
+          <div className={[styles.text, copyClass].join(' ')}>
             <PFText as="span" typo="hl-lg" className={styles.eyebrow}>
               {HERO_LABEL}
             </PFText>
@@ -47,8 +51,8 @@ export function HeroSection() {
               color="black"
               className={styles.title}
             >
-              {HERO_TITLE_LINES.map((line, index) => (
-                <Fragment key={line}>
+              {titleLines.map((line, index) => (
+                <Fragment key={`${line}-${index}`}>
                   {index > 0 ? <br /> : null}
                   {line}
                 </Fragment>
@@ -56,8 +60,9 @@ export function HeroSection() {
             </PFText>
 
             <PFText as="p" typo="bd-lg-rg" color="neutral-cool-700" className={styles.description}>
-              {HERO_DESCRIPTION_LINES.map((line) => (
-                <Fragment key={line}>
+              {descriptionLines.map((line, index) => (
+                <Fragment key={`${line}-${index}`}>
+                  {index > 0 ? <br /> : null}
                   {line}
                 </Fragment>
               ))}

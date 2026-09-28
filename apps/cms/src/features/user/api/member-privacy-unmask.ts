@@ -9,7 +9,7 @@ import {
   unmaskInstructorRoleRequestPrivacyRemote,
   unmaskMemberPrivacyRemote,
 } from '@/features/user/api/members-api-client'
-import type { UserRole } from '@/types/user'
+import type { InstructorMemberProfile, UserRole } from '@/types/user'
 import {
   PrivacyUnmaskApiError,
 } from '@/features/logs/api/privacy-unmask-fetcher'
@@ -54,14 +54,27 @@ export async function fetchInstructorRoleRequestPrivacyUnmask(
   }
 }
 
+export type MemberPrivacyUnmaskOptions = {
+  /**
+   * INSTRUCTOR UI 프로필. 상세 GET과 동일하게 `school_teacher`면 instructor unmask를 쓰지 않는다.
+   * (순수 교사는 강사 프로필이 없어 `INSTRUCTOR_PROFILE_NOT_FOUND`)
+   */
+  instructorMemberProfile?: InstructorMemberProfile | null
+}
+
 export async function fetchMemberRolePrivacyUnmask(
   memberId: number,
   reason: string,
-  role?: UserRole
+  role?: UserRole,
+  options?: MemberPrivacyUnmaskOptions
 ): Promise<unknown> {
   const body = { reason }
   try {
     if (role === 'INSTRUCTOR') {
+      // 상세: GET …/teacher. OpenAPI에 …/teacher/privacy/unmask 없음 → legacy member unmask.
+      if (options?.instructorMemberProfile === 'school_teacher') {
+        return await unmaskMemberPrivacyRemote(memberId, body)
+      }
       return await unmaskInstructorMemberPrivacyRemote(memberId, body)
     }
     if (role === 'INDIVIDUAL') {

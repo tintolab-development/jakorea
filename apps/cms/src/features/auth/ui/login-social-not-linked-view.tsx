@@ -28,7 +28,7 @@ export function LoginSocialNotLinkedView({
       </div>
 
       <LoadingButton type="primary" block className="login-submit-btn" onClick={onEmailLogin}>
-        이메일로 로그인
+        이메일로 로그인하기
       </LoadingButton>
 
       <LoginUtilityLinks registerPath={registerPath} />

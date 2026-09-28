@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildLocalDuplicateWritingTemplateCode,
+  canReorderParticipantApplicationParagraphs,
   isCatalogFixedWritingFormTemplateCode,
   isDuplicateWritingTemplateCode,
+  isProgramScopedOperationalWritingTemplate,
+  isRecruitmentOrApplicationWritingTemplateCode,
   isUserCreatedWritingFormTemplateRow,
   isWritingFormTemplateStructureLocked,
   resolveWritingFormTemplateDeletable,
+  shouldOmitImmutableFormSchemaJson,
   shouldShowWritingFormTemplateDeleteButton,
 } from '@/features/template/lib/form-template-delete-policy'
 import {
@@ -14,6 +18,14 @@ import {
 } from '@/features/template/model/template-registry/agreement-template-config-registry'
 
 describe('form-template-delete-policy', () => {
+  it('omits schemaJson for registration and recruitment PUT', () => {
+    expect(shouldOmitImmutableFormSchemaJson('registration-trained-teachers')).toBe(true)
+    expect(shouldOmitImmutableFormSchemaJson('registration-trained-teachers-copy-1')).toBe(true)
+    expect(shouldOmitImmutableFormSchemaJson('recruitment-participant-school')).toBe(true)
+    expect(shouldOmitImmutableFormSchemaJson('application-participant-school')).toBe(false)
+    expect(shouldOmitImmutableFormSchemaJson('agreement-portrait')).toBe(false)
+  })
+
   it('identifies catalog-fixed template codes', () => {
     expect(isCatalogFixedWritingFormTemplateCode('agreement-portrait')).toBe(true)
     expect(isCatalogFixedWritingFormTemplateCode('agreement-portrait-copy-01')).toBe(false)
@@ -46,6 +58,50 @@ describe('form-template-delete-policy', () => {
         templateCode: 'agreement-portrait-copy-1735689600123',
       })
     ).toBe(false)
+  })
+
+  it('keeps recruitment and application copies structure-locked', () => {
+    expect(isRecruitmentOrApplicationWritingTemplateCode('application-instructor')).toBe(true)
+    expect(isRecruitmentOrApplicationWritingTemplateCode('application-instructor-copy-99')).toBe(
+      true
+    )
+    expect(isRecruitmentOrApplicationWritingTemplateCode('recruitment-volunteer-copy')).toBe(true)
+    expect(isRecruitmentOrApplicationWritingTemplateCode('agreement-portrait-copy-1')).toBe(false)
+    expect(
+      isWritingFormTemplateStructureLocked({
+        templateCode: 'application-participant-individual-copy-1735689600123',
+        systemTemplate: false,
+        forceUserEditable: true,
+      })
+    ).toBe(true)
+    expect(
+      isWritingFormTemplateStructureLocked({
+        templateCode: 'recruitment-instructor-copy-1',
+        systemTemplate: false,
+        forceUserEditable: true,
+      })
+    ).toBe(true)
+  })
+
+  it('allows application reorder while locking recruitment reorder', () => {
+    expect(
+      canReorderParticipantApplicationParagraphs({
+        structureLocked: true,
+        recruitmentForm: false,
+      })
+    ).toBe(true)
+    expect(
+      canReorderParticipantApplicationParagraphs({
+        structureLocked: true,
+        recruitmentForm: true,
+      })
+    ).toBe(false)
+    expect(
+      canReorderParticipantApplicationParagraphs({
+        structureLocked: false,
+        recruitmentForm: true,
+      })
+    ).toBe(true)
   })
 
   it('never locks catalog survey templates', () => {
@@ -82,6 +138,39 @@ describe('form-template-delete-policy', () => {
     expect(buildLocalDuplicateWritingTemplateCode('agreement-portrait')).toMatch(
       /^agreement-portrait-copy-\d+$/
     )
+  })
+
+  it('hides only registration operational copies from template management', () => {
+    expect(
+      isProgramScopedOperationalWritingTemplate({
+        templateCode: 'registration-general-copy-1735689600123',
+        category: 'REGISTRATION',
+      })
+    ).toBe(true)
+    expect(
+      isProgramScopedOperationalWritingTemplate({
+        templateCode: 'application-participant-individual-copy-1735689600123',
+        category: 'APPLICATION',
+      })
+    ).toBe(false)
+    expect(
+      isProgramScopedOperationalWritingTemplate({
+        templateCode: 'recruitment-instructor-copy-1',
+        category: 'RECRUITMENT',
+      })
+    ).toBe(false)
+    expect(
+      isProgramScopedOperationalWritingTemplate({
+        templateCode: 'application-participant-individual',
+        category: 'APPLICATION',
+      })
+    ).toBe(false)
+    expect(
+      isProgramScopedOperationalWritingTemplate({
+        templateCode: 'survey-custom-20260824-01',
+        category: 'SURVEY',
+      })
+    ).toBe(false)
   })
   it('treats system templates as non-deletable', () => {
     expect(

@@ -1,4 +1,3 @@
-import { GLOBAL_VALUE_COUNT } from './global-value-data'
 import { resolveActiveValueIndex } from './global-value-phase'
 import {
   getHeroPhaseScrollY,
@@ -6,6 +5,9 @@ import {
   resolveHeroPhase,
   type HeroPhase,
 } from './hero-phase'
+
+/** Admin 고정 5항목. 응답 길이가 달라도 accordion 분모로 사용 */
+export const DEFAULT_GLOBAL_VALUE_COUNT = 5
 
 /**
  * Desktop 기관소개 sticky track 단일 오케스트레이션.
@@ -87,10 +89,17 @@ function valueAccordionScrollRange(totalScrollRange: number): number {
   )
 }
 
+function normalizeValueCount(valueCount?: number): number {
+  if (typeof valueCount === 'number' && valueCount > 0) return valueCount
+  return DEFAULT_GLOBAL_VALUE_COUNT
+}
+
 export function resolveIntroductionScrollState(
   scrollPx: number,
   totalScrollRange: number,
+  valueCount = DEFAULT_GLOBAL_VALUE_COUNT,
 ): IntroductionScrollState {
+  const count = normalizeValueCount(valueCount)
   const range = Math.max(1, totalScrollRange)
   const heroRange = heroScrollRange(range)
   const pushRange = pushScrollRange(range)
@@ -123,7 +132,7 @@ export function resolveIntroductionScrollState(
     return {
       heroPhase: 'exit',
       isFramePushed: true,
-      activeValueIndex: GLOBAL_VALUE_COUNT - 1,
+      activeValueIndex: count - 1,
     }
   }
 
@@ -132,14 +141,16 @@ export function resolveIntroductionScrollState(
   return {
     heroPhase: 'exit',
     isFramePushed: true,
-    activeValueIndex: resolveActiveValueIndex(valueProgress, GLOBAL_VALUE_COUNT),
+    activeValueIndex: resolveActiveValueIndex(valueProgress, count),
   }
 }
 
 export function getIntroductionScrollY(
   state: IntroductionScrollState,
   totalScrollRange: number,
+  valueCount = DEFAULT_GLOBAL_VALUE_COUNT,
 ): number {
+  const count = normalizeValueCount(valueCount)
   const range = Math.max(1, totalScrollRange)
   const heroRange = heroScrollRange(range)
   const pushRange = pushScrollRange(range)
@@ -154,8 +165,7 @@ export function getIntroductionScrollY(
   }
 
   const valueRange = valueAccordionScrollRange(range)
-  const count = Math.max(1, GLOBAL_VALUE_COUNT)
-  const progress = (state.activeValueIndex + 0.5) / count
+  const progress = (state.activeValueIndex + 0.5) / Math.max(1, count)
   return heroRange + pushRange + valueRange * progress
 }
 
@@ -166,6 +176,7 @@ export function getIntroductionScrollY(
 export function getNextIntroductionScrollY(
   state: IntroductionScrollState,
   totalScrollRange: number,
+  valueCount = DEFAULT_GLOBAL_VALUE_COUNT,
 ): number | null {
   if (state.isFramePushed || state.heroPhase === 'exit') return null
 
@@ -181,5 +192,6 @@ export function getNextIntroductionScrollY(
   return getIntroductionScrollY(
     { heroPhase: next, isFramePushed: false, activeValueIndex: 0 },
     totalScrollRange,
+    valueCount,
   )
 }

@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { mapApplicantSchoolToParticipatingSchool } from './education-journals-service'
+import { getSchoolDetailByRow } from '@/features/program/general/lib/school-detail'
 import {
   mapPreferredScheduleBlocks,
   mapTrainedTeacherOrganizationApplicationToRow,
@@ -33,6 +35,22 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.preferredScheduleBlocks).toEqual([])
   })
 
+  it('maps teacherMemberId for privacy unmask', () => {
+    const row = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 42,
+        teacherMemberId: 190001,
+        teacherName: '김교사',
+        teacherPhoneMasked: '010-****-1234',
+        applicationStatus: 'WAITING_REVIEW',
+      },
+      0,
+      'p1'
+    )
+    expect(row.teacherMemberId).toBe(190001)
+    expect(row.contact).toBe('010-****-1234')
+  })
+
   it('falls back to organizationName and pending status', () => {
     const row = mapTrainedTeacherOrganizationApplicationToRow(
       {
@@ -49,7 +67,7 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.programId).toBe('p1')
   })
 
-  it('maps preferredScheduleBlocks without parsing memo', () => {
+  it('maps preferredScheduleBlocks without putting memo into otherRequests', () => {
     const row = mapTrainedTeacherOrganizationApplicationToRow(
       {
         applicationId: 186311,
@@ -89,11 +107,58 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
       0,
       '186001'
     )
-    expect(row.detail?.otherRequests).toBe('레거시 메모는 blocks로 쓰지 않음')
+    expect(row.desiredEducationPeriod).toBe('레거시 메모는 blocks로 쓰지 않음')
+    expect(row.detail?.otherRequests).toBeUndefined()
     expect(row.preferredScheduleBlocks).toHaveLength(2)
     expect(row.preferredScheduleBlocks?.[0].preferenceRank).toBe(1)
     expect(row.preferredScheduleBlocks?.[0].date).toBe('2026-07-08')
     expect(row.preferredScheduleBlocks?.[0].sessionTimes[0].classPeriod).toBe('1교시')
+    expect(row.sessions).toEqual([
+      {
+        round: 1,
+        date: '2026.07.08',
+        dayOfWeek: '수',
+        duration: '1차시',
+        format: '',
+        classNum: '1교시',
+        timeRange: '10:00~11:00',
+      },
+      {
+        round: 2,
+        date: '2026.07.09',
+        dayOfWeek: '목',
+        duration: '1차시',
+        format: '',
+        classNum: '2교시',
+        timeRange: '11:00~12:00',
+      },
+    ])
+  })
+
+  it('maps portal basic-info projection fields onto detail', () => {
+    const row = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1698006,
+        programId: 186013,
+        educationGrade: '3',
+        addressDetail: '송파구 ○○로 12',
+        applicationReason: '진로 교육 강화',
+        otherRequests: '주차 가능 여부 문의',
+        requestedEducationFormat: 'ONLINE',
+        classCount: 1,
+        studentCount: 11,
+        desiredEducationScheduleMemo: null as unknown as undefined,
+      },
+      0,
+      '186013'
+    )
+    expect(row.educationGrade).toBe('3학년')
+    expect(row.detail?.addressDetail).toBe('송파구 ○○로 12')
+    expect(row.detail?.applicationReason).toBe('진로 교육 강화')
+    expect(row.detail?.otherRequests).toBe('주차 가능 여부 문의')
+    expect(row.detail?.educationType).toBe('온라인')
+    expect(row.classCount).toBe(1)
+    expect(row.studentCount).toBe(11)
   })
   it('maps progress completeness additive fields (0 is not missing)', () => {
     const row = mapTrainedTeacherOrganizationApplicationToRow(
@@ -124,9 +189,117 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.journalSubmitted).toBe(false)
     expect(row.educationCompletionCount).toBe(0)
   })
+
+  it('maps resultNotificationSentAt and RESEND_NOTIFICATION', () => {
+    const row = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 186311,
+        programId: 186001,
+        schoolName: '서울초',
+        applicationStatus: 'APPROVED',
+        resultNotificationSentAt: '2026-09-27T05:00:00Z',
+        availableActions: ['VIEW', 'RESEND_NOTIFICATION'],
+      },
+      0,
+      'p1'
+    )
+    expect(row.availableActions).toContain('RESEND_NOTIFICATION')
+    expect(row.approvalNotificationSentAt).toBeTruthy()
+  })
+})
+
+describe('mapApplicantSchoolToParticipatingSchool basic info', () => {
+  it('진행 현황 상세 표에 상세 주소·교육 형태·신청 사유·기타 요청을 넘긴다', () => {
+    const applicant = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1691187,
+        programId: 186010,
+        schoolName: 'JA서울미래초등학교',
+        addressDetail: '3층 교무실',
+        applicationReason: '금융 교육',
+        otherRequests: '주차',
+        requestedEducationFormat: 'OFFLINE',
+      },
+      0,
+      '186010'
+    )
+    const participating = mapApplicantSchoolToParticipatingSchool(applicant, 0)
+    const detail = getSchoolDetailByRow(participating)
+    expect(detail.addressDetail).toBe('3층 교무실')
+    expect(detail.educationFormat).toBe('오프라인')
+    expect(detail.applicationReason).toBe('금융 교육')
+    expect(detail.otherRequests).toBe('주차')
+    expect(detail.teacherEmail).toBeUndefined()
+  })
+
+  it('목록 행의 교재명·교사 연락처를 상세 draft에 넣는다', () => {
+    const detail = getSchoolDetailByRow({
+      id: '1691187',
+      no: 1,
+      schoolName: '부산다온초등학교',
+      region: '부산',
+      educationGrade: '1학년',
+      classCount: 1,
+      studentCount: 24,
+      lectureRound: '',
+      textbookStatus: 'not_applicable',
+      approvalStatus: 'approved',
+      teacherName: '윤석영',
+      contact: '010-****-1234',
+      teacherEmail: 'yoon@school.kr',
+      textbookName: '성공하는 경제생활',
+      textbookId: '55',
+      instructors: '',
+    })
+    expect(detail).toMatchObject({
+      teacherName: '윤석영',
+      teacherPhone: '010-****-1234',
+      teacherMobile: '010-****-1234',
+      teacherEmail: 'yoon@school.kr',
+      textbookName: '성공하는 경제생활',
+      textbookId: '55',
+    })
+  })
 })
 
 describe('mapPreferredScheduleBlocks', () => {
+  it('preferredScheduleBlocks를 sessions로 투영해 진행 희망 교육 일정이 비지 않는다', () => {
+    const applicant = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1691187,
+        programId: 186010,
+        schoolName: 'JA서울미래초등학교',
+        preferredScheduleBlocks: [
+          {
+            preferenceRank: 1,
+            date: '2026-07-08',
+            dayOfWeek: '수',
+            sessionCount: 1,
+            sessionTimes: [
+              { sessionIndex: 1, classPeriod: '1교시', timeRange: '10:00 ~ 11:00' },
+            ],
+          },
+        ],
+      },
+      0,
+      '186010'
+    )
+    const participating = mapApplicantSchoolToParticipatingSchool(applicant, 0)
+    expect(participating.sessions).toEqual([
+      {
+        round: 1,
+        date: '2026.07.08',
+        dayOfWeek: '수',
+        duration: '1차시',
+        format: '',
+        classNum: '1교시',
+        timeRange: '10:00~11:00',
+      },
+    ])
+  })
+})
+
+describe('mapPreferredScheduleBlocks normalize', () => {
   it('returns empty array for null/omit and builds timeRange from start/end', () => {
     expect(mapPreferredScheduleBlocks(null)).toEqual([])
     expect(mapPreferredScheduleBlocks(undefined)).toEqual([])

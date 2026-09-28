@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import type { ProgramDetail } from '@/features/program'
 import { EducationApplicationInfoModal } from '../../applications/ui/application-info-modal'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
+import { useDebouncedValue } from '@/shared/hooks'
 import type { EducationInProgressFile, EducationInProgressNotice } from '../model/types'
 import { downloadEducationNoticeFile } from '../lib/download-file'
 import {
@@ -14,6 +15,8 @@ import { EducationInProgressNoticeDetailModal } from './detail-modal'
 import { EducationProgramInfoModal } from './program-info-modal'
 import { PFAlertModal, PFButton, PFSearchInput, PFText } from '@/shared/ui'
 import styles from './panel.module.css'
+
+const SEARCH_DEBOUNCE_MS = 500
 
 type EducationInProgressNoticePanelProps = {
   program: ProgramDetail
@@ -33,7 +36,8 @@ export function EducationInProgressNoticePanel({
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
   const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
   const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
-  const [fileQuery, setFileQuery] = useState('')
+  const [draftFileQuery, setDraftFileQuery] = useState('')
+  const debouncedFileQuery = useDebouncedValue(draftFileQuery, SEARCH_DEBOUNCE_MS)
   const [notices, setNotices] = useState<EducationInProgressNotice[]>(() =>
     getMockEducationInProgressNotices(programId),
   )
@@ -42,10 +46,10 @@ export function EducationInProgressNoticePanel({
   const files = useMemo(() => getMockEducationInProgressFiles(programId), [programId])
 
   const filteredFiles = useMemo(() => {
-    const query = fileQuery.trim().toLowerCase()
+    const query = debouncedFileQuery.trim().toLowerCase()
     if (!query) return files
     return files.filter(file => file.fileName.toLowerCase().includes(query))
-  }, [files, fileQuery])
+  }, [files, debouncedFileQuery])
 
   const openComingSoon = () => {
     setIsComingSoonOpen(true)
@@ -77,7 +81,7 @@ export function EducationInProgressNoticePanel({
 
   const hasNotices = notices.length > 0
   const hasFiles = files.length > 0
-  const hasFileQuery = fileQuery.trim().length > 0
+  const hasFileQuery = debouncedFileQuery.trim().length > 0
 
   return (
     <div className={styles.shell}>
@@ -119,8 +123,8 @@ export function EducationInProgressNoticePanel({
           variant="outlined"
           placeholder="파일명으로 검색해 보세요."
           aria-label="파일명으로 검색해 보세요."
-          value={fileQuery}
-          onValueChange={setFileQuery}
+          value={draftFileQuery}
+          onValueChange={setDraftFileQuery}
         />
 
         {!hasFiles ? (

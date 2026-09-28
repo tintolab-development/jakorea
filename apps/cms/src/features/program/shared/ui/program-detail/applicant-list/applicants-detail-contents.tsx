@@ -17,6 +17,7 @@ import {
 } from '@/features/program/general/api/general-applications-query-keys'
 import { applyCombinedClassMergeToApplicantDetail } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { type CombinedClassLeadTeacherCandidate } from '@/features/program/general/lib/combined-class-lead-teacher'
 import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
 import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
@@ -57,6 +58,7 @@ import {
   PersonalInfoRevealButton,
   PERSONAL_INFO_REVEAL_BUTTON_LABEL,
 } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import './applicants-detail-contents.css'
 import {
@@ -64,7 +66,6 @@ import {
   PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
-import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersApplicantInstitutionDetailContents } from '@/features/program/trained-teachers/ui/institution-detail/applicant-institution-detail-contents'
 
@@ -531,8 +532,14 @@ export function ApplicantsDetailContents({
 
   const institutionRow = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorRow = isInstructor ? (data as ApplicantInstructorRow) : null
+  const isTrainedTeachers = isTrainedTeachersDetailProgram(program ?? null)
   const institutionData = useOrganizationApplicationDetailEnrichment(institutionRow, {
     enabled: isGeneralDetail,
+    /**
+     * TT: 목록 SoT(preferredScheduleBlocks·학급/인원)는 유지하고
+     * 마스킹 이메일 등 PII만 상세·회원 GET에서 soft-merge.
+     */
+    softMergeDetail: isTrainedTeachers,
   })
   const instructorData = useInstructorApplicationDetailEnrichment(instructorRow, {
     enabled: isGeneralDetail,
@@ -571,13 +578,14 @@ export function ApplicantsDetailContents({
 
   const queryClient = useQueryClient()
   const programId = program?.id
-  const isCompanySchool = isCompanySchoolProgram(program)
+  /** 합반 GET/POST/DELETE는 programType === GENERAL_ORGANIZATION 일 때만 */
+  const mergeGroupsAllowed = isGeneralOrganizationProgram(program)
+  const mergeGroupsEnabled =
+    mergeGroupsAllowed && isGeneralDetail && isInstitution && shouldUseOrganizationMergeGroupsRemoteApi()
   const mergeGroupsQuery = useOrganizationMergeGroups(
     programId,
-    isGeneralDetail &&
-      isInstitution &&
-      !isCompanySchool &&
-      shouldUseOrganizationMergeGroupsRemoteApi()
+    program?.backendProgramType,
+    mergeGroupsEnabled
   )
   const institutionMergeView = useMemo(() => {
     if (!institutionData || !mergeGroupsQuery.data?.length) return null
@@ -593,9 +601,10 @@ export function ApplicantsDetailContents({
       combinedClassApplication: '신청' | '미신청'
       combinedClassPartnerApplicantIds: string[]
     }) => {
-      if (!programId || !institutionData || isCompanySchool) return
+      if (!programId || !institutionData || !mergeGroupsAllowed) return
       await saveOrganizationCombinedClassRemote({
         programId,
+        programType: program?.backendProgramType,
         leadRow: institutionData,
         allRows: institutionList,
         combinedClassApplication: params.combinedClassApplication,
@@ -609,8 +618,9 @@ export function ApplicantsDetailContents({
     [
       institutionData,
       institutionList,
-      isCompanySchool,
+      mergeGroupsAllowed,
       mergeGroupsQuery.data,
+      program,
       programId,
       queryClient,
     ]
@@ -630,7 +640,7 @@ export function ApplicantsDetailContents({
       onInstitutionDetailSaved?.(rows)
     },
     onSaveCombinedClass:
-      !isCompanySchool && shouldUseOrganizationMergeGroupsRemoteApi()
+      mergeGroupsAllowed && shouldUseOrganizationMergeGroupsRemoteApi()
         ? handleSaveInstitutionCombinedClass
         : undefined,
     combinedClassReadOnly: institutionMergeView?.isLead === false,
@@ -935,6 +945,59 @@ export function ApplicantsDetailContents({
     instructorData?.instructorName,
   ])
 
+  const [institutionTeacherPrivacy, setInstitutionTeacherPrivacy] = useState<{
+    teacherName?: string
+    contact?: string
+    teacherEmail?: string
+  } | null>(null)
+
+  useEffect(() => {
+    setInstitutionTeacherPrivacy(null)
+  }, [applicantId])
+
+  const revealInstitutionTeacherPersonalInfo = useCallback(
+    async (reason: string) => {
+      const memberId = institutionData?.teacherMemberId
+      if (memberId == null) {
+        throw new Error('담당 교사 회원 ID가 없습니다.')
+      }
+      return fetchMemberRolePrivacyUnmask(memberId, reason, 'SCHOOL')
+    },
+    [institutionData?.teacherMemberId]
+  )
+
+  const applyInstitutionTeacherPersonalInfo = useCallback((payload: unknown) => {
+    if (payload == null || typeof payload !== 'object') return
+    const privacy = payload as { name?: unknown; phone?: unknown; email?: unknown }
+    setInstitutionTeacherPrivacy({
+      ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
+      ...(typeof privacy.phone === 'string' ? { contact: privacy.phone } : {}),
+      ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
+    })
+  }, [])
+
+  const displayedInstitutionData = useMemo(() => {
+    if (!institutionData) return null
+    if (!institutionTeacherPrivacy) return institutionData
+    return {
+      ...institutionData,
+      teacherName:
+        institutionTeacherPrivacy.teacherName ?? institutionData.teacherName,
+      /** 전화만 — Tel/E-mail 을 ` | `로 이어붙이지 않음(디바이더 셀에서 조립) */
+      contact: institutionTeacherPrivacy.contact ?? institutionData.contact,
+      detail: {
+        ...institutionData.detail,
+        teacherInfo: undefined,
+        ...(institutionTeacherPrivacy.contact
+          ? { teacherPhone: institutionTeacherPrivacy.contact }
+          : {}),
+        ...(institutionTeacherPrivacy.teacherEmail
+          ? { teacherEmail: institutionTeacherPrivacy.teacherEmail }
+          : {}),
+      },
+    }
+  }, [institutionData, institutionTeacherPrivacy])
+
   const {
     personalInfoRevealed,
     openPersonalInfoRevealConfirm: onRevealPersonalInfo,
@@ -946,17 +1009,29 @@ export function ApplicantsDetailContents({
       if (isInstructor && instructorData?.instructorMemberId != null) {
         return String(instructorData.instructorMemberId)
       }
+      if (isInstitution && institutionData?.teacherMemberId != null) {
+        return String(institutionData.teacherMemberId)
+      }
       return undefined
     },
     resolveMemberRole: () => {
       if (isIndividual) return 'INDIVIDUAL'
       if (isInstructor) return 'INSTRUCTOR'
+      if (isInstitution) return 'SCHOOL'
       return undefined
     },
-    revealPersonalInfo: onRevealIndividualPersonalInfo,
+    revealPersonalInfo: isIndividual
+      ? onRevealIndividualPersonalInfo
+      : isInstitution
+        ? revealInstitutionTeacherPersonalInfo
+        : undefined,
     onPrivacyUnmasked: payload => {
-      if (onRevealIndividualPersonalInfo) {
+      if (isIndividual && onRevealIndividualPersonalInfo) {
         onIndividualPrivacyUnmasked?.(payload as GeneralIndividualApplicantRow)
+        return
+      }
+      if (isInstitution) {
+        applyInstitutionTeacherPersonalInfo(payload)
       }
     },
     resetDeps: [applicantId],
@@ -1061,11 +1136,9 @@ export function ApplicantsDetailContents({
   const tabBarExtraContent = headerExtraContent
 
   const institutionInfoPanel = useMemo(() => {
-    if (!isInstitution || !institutionData) return null
-    const d = institutionData
-    /** 1사1교·교육받은 교사 — 합반 신청 케이스 없음(신청 불가) */
-    const isCombinedClassHidden =
-      isCompanySchoolProgram(program) || isTrainedTeachersDetailProgram(program ?? null)
+    if (!isInstitution || !displayedInstitutionData) return null
+    const d = displayedInstitutionData
+    const isCombinedClassHidden = !isGeneralOrganizationProgram(program)
     if (isGeneralDetail) {
       const detailWithMerge = applyCombinedClassMergeToApplicantDetail(
         d.detail,
@@ -1082,9 +1155,6 @@ export function ApplicantsDetailContents({
           mode={institutionDetailEdit.isEditing ? 'edit' : 'view'}
           draft={institutionDetailEdit.draft ?? undefined}
           onDraftChange={institutionDetailEdit.updateDraft}
-          textbookOptions={institutionDetailEdit.textbookOptions}
-          textbookDisplayLabel={institutionDetailEdit.textbookDisplayLabel}
-          isTextbookCatalogLoading={institutionDetailEdit.isTextbookCatalogLoading}
           sameSchoolGradeOptions={institutionDetailEdit.sameSchoolGradeOptions}
           classCountOptions={institutionDetailEdit.classCountOptions}
           teacherOptions={institutionDetailEdit.teacherOptions}
@@ -1111,7 +1181,7 @@ export function ApplicantsDetailContents({
     )
   }, [
     isInstitution,
-    institutionData,
+    displayedInstitutionData,
     isGeneralDetail,
     personalInfoRevealed,
     program,
@@ -1270,12 +1340,12 @@ export function ApplicantsDetailContents({
     isInstitution &&
     isGeneralDetail &&
     isTrainedTeachersDetailProgram(program ?? null) &&
-    institutionData
+    displayedInstitutionData
   ) {
     return (
       <>
         <TrainedTeachersApplicantInstitutionDetailContents
-          institution={institutionData}
+          institution={displayedInstitutionData}
           program={program}
           personalInfoRevealed={personalInfoRevealed}
           headerExtraContent={headerExtraContent}

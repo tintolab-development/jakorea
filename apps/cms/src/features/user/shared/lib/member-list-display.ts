@@ -98,5 +98,5 @@ export function matchesAllTabRoleFilter(
 export function getMemberSignupTypeLabel(
   user: Pick<User, 'registeredByAdmin'>
 ): '직접 가입' | '관리자 등록' {
-  return user.registeredByAdmin ? '관리자 등록' : '직접 가입'
+  return user.registeredByAdmin === true ? '관리자 등록' : '직접 가입'
 }

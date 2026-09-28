@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
-import type { EducationTeacherApplicationContent as TeacherApplicationContentModel } from '../../model/types'
+import type {
+  EducationTeacherApplicationContent as TeacherApplicationContentModel,
+  EducationTeacherApplicationGuidance,
+} from '../../model/types'
+import { updateMockTeacherApplicationGuidance } from '../../lib/mock-applications'
 import { GuidanceSection } from './guidance-section'
 import { InstitutionInfoTable } from './institution-info-table'
 import { PreferredSchedules } from './preferred-schedules'
@@ -20,12 +24,17 @@ export function TeacherApplicationContent({
     setGuidance(content.guidance)
   }, [applicationId, content.guidance])
 
+  const handleSaveGuidance = (next: EducationTeacherApplicationGuidance) => {
+    setGuidance(next)
+    updateMockTeacherApplicationGuidance(applicationId, next)
+  }
+
   return (
     <div className={styles.root}>
       <section className={styles.section} aria-label="신청 기관 정보">
         <InstitutionInfoTable institution={content.institution} />
       </section>
-      <GuidanceSection applicationId={applicationId} guidance={guidance} />
+      <GuidanceSection guidance={guidance} onSave={handleSaveGuidance} />
       <PreferredSchedules schedules={content.preferredSchedules} />
     </div>
   )

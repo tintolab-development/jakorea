@@ -1,0 +1,344 @@
+.page {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow: visible;
+}
+
+/**
+ * 채용 히어로 배경 — careers-gradient.png
+ * 헤더 영역까지 확장 (transparent header / layout: hero)
+ */
+.pageBackground {
+  position: absolute;
+  top: calc(-1 * (var(--app-header-height) + var(--content-padding-block)));
+  left: 50%;
+  z-index: 0;
+  width: 100vw;
+  height: 1000px;
+  pointer-events: none;
+  background-color: transparent;
+  background-image: url('../../../assets/background_gradient/careers-gradient.png');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  transform: translateX(-50%);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  padding-inline: var(--page-padding-x);
+}
+
+.hero {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  margin-bottom: var(--spacing-80);
+}
+
+.heroMedia {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--radius-24);
+  aspect-ratio: 740 / 790;
+}
+
+.heroImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+.heroCopy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-56);
+}
+
+.heroLabel,
+.heroTitle,
+.heroKo,
+.heroEn {
+  margin: 0;
+}
+
+.heroTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  word-break: keep-all;
+}
+
+.heroTitleLine {
+  display: block;
+}
+
+.heroDescription {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.heroKo {
+  display: flex;
+  flex-direction: column;
+  word-break: keep-all;
+}
+
+.heroKoLine {
+  display: block;
+}
+
+.heroEn {
+  font-family: Montserrat, var(--font-family-base);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: -0.22px;
+}
+
+.talentForm {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+}
+
+.thrive {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-100);
+}
+
+.featuredBleed {
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-bottom: var(--spacing-40);
+  background: linear-gradient(180deg, #fff 0%, #f7f8f9 100%);
+}
+
+.featuredInner {
+  width: 100%;
+  max-width: var(--content-max-width, 1440px);
+  margin-inline: auto;
+  padding-inline: var(--page-padding-x);
+  box-sizing: border-box;
+}
+
+.join {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  padding-bottom: var(--spacing-100);
+}
+
+.joinTitle {
+  margin: 0 0 var(--spacing-32);
+  text-align: center;
+  word-break: keep-all;
+}
+
+.joinTabs {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: var(--spacing-40);
+}
+
+.tabs {
+  width: auto;
+}
+
+.toolbar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-24);
+  margin-bottom: var(--spacing-24);
+}
+
+.count {
+  flex-shrink: 0;
+}
+
+.search {
+  width: 360px;
+  max-width: 100%;
+  min-width: 0;
+  height: 54px;
+}
+
+.searchField {
+  width: 100%;
+  height: 54px;
+}
+
+.divider {
+  width: 100%;
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.empty {
+  margin: var(--spacing-40) 0;
+  text-align: center;
+}
+
+.pagination {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--spacing-40);
+}
+
+@media (--bp-below-pc) {
+  .pageBackground {
+    display: none;
+  }
+
+  .content {
+    padding-inline: 0;
+    margin-top: calc(-1 * var(--spacing-40));
+  }
+
+  .hero {
+    background-color: transparent;
+    background-image: url('/src/assets/background_gradient/careers-gradient.png');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: cover;
+    padding: var(--spacing-40) var(--spacing-20);
+    margin-bottom: var(--spacing-48);
+    gap: var(--spacing-24);
+  }
+
+  .heroCopy {
+    gap: var(--spacing-24);
+  }
+
+  .heroLabel {
+    font-size: 14px;
+  }
+
+  .heroTitle {
+    font-size: 24px;
+  }
+
+  .heroTitleLine {
+    display: inline;
+  }
+
+  .heroTitleLine:not(:last-child)::after {
+    content: ' ';
+  }
+
+  .heroKoLine {
+    display: inline;
+  }
+
+  .heroKoLine:not(:last-child)::after {
+    content: ' ';
+  }
+
+  .thrive {
+    padding-inline: var(--spacing-16);
+    margin-bottom: var(--spacing-48);
+  }
+
+  .featuredBleed {
+    margin-bottom: var(--spacing-24);
+  }
+
+  .featuredInner {
+    padding-inline: var(--spacing-16);
+  }
+
+  .join {
+    padding-inline: var(--spacing-16);
+    padding-bottom: var(--spacing-48);
+  }
+
+  .joinTitle {
+    margin-bottom: var(--spacing-24);
+    font-size: 24px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-16);
+  }
+
+  .search {
+    width: 100%;
+  }
+
+  .pagination {
+    margin-top: var(--spacing-24);
+  }
+}
+
+@media (--bp-pc-up) {
+  .pageBackground:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgb(255 255 255 / 12%) 40%, #fff 92%);
+  }
+
+  .hero {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-80);
+    margin-bottom: var(--spacing-100);
+  }
+
+  .heroMedia {
+    width: min(100%, 740px);
+    flex-shrink: 0;
+    aspect-ratio: 740 / 790;
+  }
+
+  .heroCopy {
+    max-width: 580px;
+  }
+
+  .heroKo {
+    font-size: 26px;
+    line-height: 1.6;
+    letter-spacing: -0.26px;
+  }
+}

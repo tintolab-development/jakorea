@@ -21,6 +21,10 @@ export {
 export { RichTextViewer, useRichTextEditor } from '@jakorea/rich-text/react'
 export { CmsRichTextEditor as RichTextEditor } from './cms-rich-text-editor'
 export { RichTextToolbar } from './toolbar/rich-text-toolbar'
+export {
+  getRemoteRichTextBodyError,
+  REMOTE_RICH_TEXT_BODY_MAX_LENGTH,
+} from './lib/remote-body'
 export type { RichTextToolbarProps } from './toolbar/rich-text-toolbar'
 export type {
   CreateRichTextExtensionsOptions,

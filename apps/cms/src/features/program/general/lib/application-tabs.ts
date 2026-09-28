@@ -2,6 +2,7 @@
 
 import type { ProgramParticipantApplicationEditorVariant } from '@/features/template/hooks/use-program-participant-application-editor'
 import type { Program } from '@/types/domain'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
@@ -59,6 +60,8 @@ export function resolveGeneralApplicationEditorVariant(
 ): ProgramParticipantApplicationEditorVariant {
   if (tab === 'instructors') return 'instructor'
   if (tab === 'volunteers') return 'volunteer'
+
+  if (isCompanySchoolProgram(program)) return 'economy-application-institution'
 
   const types = getGeneralParticipantTypes(program)
   if (types.includes('school_institution')) return 'institution'

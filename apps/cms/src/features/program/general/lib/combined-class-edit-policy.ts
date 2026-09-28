@@ -1,8 +1,11 @@
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import type { Program } from '@/types/domain'
 
-/** 단일 회차 프로그램에서만 합반 신청 가능 */
+/** GENERAL_ORGANIZATION 이면서 단일 회차일 때만 합반 신청 가능 */
 export function isCombinedClassProgramEligible(program: Program | null | undefined): boolean {
-  return program?.generalProgramSessionRound === 'single'
+  return (
+    isGeneralOrganizationProgram(program) && program?.generalProgramSessionRound === 'single'
+  )
 }
 
 export type CombinedClassPartnerOption = {

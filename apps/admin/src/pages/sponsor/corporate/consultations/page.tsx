@@ -47,7 +47,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
@@ -179,6 +179,7 @@ export function CorporateConsultationsPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
   } = useListFilterUrl<ConsultationPendingFilters, CorporateConsultationListFilter>({
@@ -514,43 +515,34 @@ export function CorporateConsultationsPage() {
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">기업명</p>
-              <CmsInput
+              <AdminFilterTextInput
                 inputSize="large"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.companyName}
                 placeholder="기업명을 입력하세요"
-                onChange={e =>
-                  setPendingFilters(prev => ({ ...prev, companyName: e.target.value }))
-                }
+                onChange={value => patchPendingFilters(prev => ({ ...prev, companyName: value }))}
                 onPressEnter={handleSearch}
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">담당자명</p>
-              <CmsInput
+              <AdminFilterTextInput
                 inputSize="large"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.contactName}
                 placeholder="담당자명을 입력하세요"
-                onChange={e =>
-                  setPendingFilters(prev => ({ ...prev, contactName: e.target.value }))
-                }
+                onChange={value => patchPendingFilters(prev => ({ ...prev, contactName: value }))}
                 onPressEnter={handleSearch}
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">부서/직함명</p>
-              <CmsInput
+              <AdminFilterTextInput
                 inputSize="large"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.departmentTitle}
                 placeholder="부서/직함명을 입력하세요"
-                onChange={e =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    departmentTitle: e.target.value,
-                  }))
-                }
+                onChange={value => patchPendingFilters(prev => ({ ...prev, departmentTitle: value }))}
                 onPressEnter={handleSearch}
               />
             </div>

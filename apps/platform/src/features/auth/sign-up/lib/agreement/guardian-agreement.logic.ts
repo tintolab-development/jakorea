@@ -24,6 +24,15 @@ export function toggleGuardianAgreementState(
   return { ...agreements, [key]: !agreements[key] }
 }
 
+export function setGuardianAgreementState(
+  agreements: GuardianAgreementState,
+  key: GuardianAgreementKey,
+  agreed: boolean,
+): GuardianAgreementState {
+  if (agreements[key] === agreed) return agreements
+  return { ...agreements, [key]: agreed }
+}
+
 export function toggleAllGuardianAgreementState(
   agreements: GuardianAgreementState,
 ): GuardianAgreementState {

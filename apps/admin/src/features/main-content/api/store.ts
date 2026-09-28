@@ -67,11 +67,11 @@ function buildSeedContents(): MainContents {
       title: '더 많은 학생들이 배움의 기회를\n만날 수 있게 함께해 주세요',
       cta1: {
         label: '개인후원 시작하기',
-        linkUrl: 'https://online.mrm.or.kr/WJEP4tk',
+        linkUrl: 'https://online.mrm.or.kr/WJEP4tK',
       },
       cta2: {
         label: '기업후원 문의하기',
-        linkUrl: 'https://online.mrm.or.kr/WJEP4tk',
+        linkUrl: 'https://online.mrm.or.kr/WJEP4tK',
       },
       version: 0,
     },

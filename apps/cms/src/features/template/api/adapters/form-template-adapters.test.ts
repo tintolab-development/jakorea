@@ -40,6 +40,75 @@ describe('buildWritingFormSectionsFromApiItems', () => {
     expect(registration?.rows.some(row => row.id === 'registration-economy')).toBe(false)
     expect(registration?.rows).toHaveLength(1)
   })
+
+  it('shows user-created application/recruitment copies and hides registration copies', () => {
+    const sections = buildWritingFormSectionsFromApiItems([
+      listItem({
+        templateCode: 'application-participant-individual',
+        templateName: '참여자 신청 (카탈로그)',
+        category: 'APPLICATION',
+      }),
+      listItem({
+        templateCode: 'application-participant-individual-copy-99',
+        templateName: '참여자 신청 (복제)',
+        category: 'APPLICATION',
+        systemTemplate: false,
+      }),
+      listItem({
+        templateCode: 'recruitment-instructor-copy-1',
+        templateName: '강사 모집 (복제)',
+        category: 'RECRUITMENT',
+        systemTemplate: false,
+      }),
+      listItem({
+        templateCode: 'registration-general-copy-1',
+        templateName: '일반 등록 (복제)',
+        category: 'REGISTRATION',
+        systemTemplate: false,
+      }),
+      listItem({
+        templateCode: 'survey-custom-01',
+        templateName: '커스텀 설문',
+        category: 'SURVEY',
+        systemTemplate: false,
+      }),
+    ])
+
+    const applicationForm = sections.find(section => section.key === 'application_form')
+    const recruitment = sections.find(section => section.key === 'application')
+    const registration = sections.find(section => section.key === 'registration')
+    const survey = sections.find(section => section.key === 'survey')
+
+    expect(applicationForm?.rows.map(row => row.id)).toEqual([
+      'application-participant-individual',
+      'application-participant-individual-copy-99',
+    ])
+    expect(recruitment?.rows.some(row => row.id === 'recruitment-instructor-copy-1')).toBe(true)
+    expect(registration?.rows.some(row => row.id.includes('copy'))).toBe(false)
+    expect(survey?.rows.some(row => row.id === 'survey-custom-01')).toBe(true)
+  })
+
+  it('places copy codes into the catalog section even when API category is missing', () => {
+    const sections = buildWritingFormSectionsFromApiItems([
+      listItem({
+        templateCode: 'recruitment-instructor-copy-1735689600123',
+        templateName: '강사 모집 (신규)',
+        systemTemplate: false,
+      }),
+      listItem({
+        templateCode: 'application-instructor-copy',
+        templateName: '강사 신청 (신규)',
+        systemTemplate: false,
+      }),
+    ])
+
+    const recruitment = sections.find(section => section.key === 'application')
+    const applicationForm = sections.find(section => section.key === 'application_form')
+    expect(recruitment?.rows.some(row => row.id === 'recruitment-instructor-copy-1735689600123')).toBe(
+      true
+    )
+    expect(applicationForm?.rows.some(row => row.id === 'application-instructor-copy')).toBe(true)
+  })
 })
 
 describe('buildIssuanceFormSectionsFromApiItems', () => {

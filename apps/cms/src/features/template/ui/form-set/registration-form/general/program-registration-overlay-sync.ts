@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useRef, useSyncExternalStore } from 'react'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
@@ -15,6 +15,9 @@ export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY =
   'generalRegistration.basicInfo.localSponsorIds' as const
 export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
   'generalRegistration.basicInfo.localManagerContactId' as const
+/** 후원사 담당자 ref 다중 선택 (`sponsorManagementId::contactId`) */
+export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY =
+  'generalRegistration.basicInfo.localManagerContactIds' as const
 /** 후원사 담당자 표시 문구 (`직책 이름 | 연락처`) — create/상세 조회용 */
 export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY =
   'generalRegistration.basicInfo.sponsorManagerLine' as const
@@ -52,7 +55,17 @@ export function readGeneralRegistrationOverlaySponsorIds(): string[] {
 }
 
 export function readGeneralRegistrationOverlaySponsorContactId(): string {
-  return readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  const ids = readGeneralRegistrationOverlaySponsorContactIds()
+  return ids[0] ?? readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+}
+
+export function readGeneralRegistrationOverlaySponsorContactIds(): string[] {
+  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
+  if (Array.isArray(raw)) {
+    return [...new Set(raw.map(String).map(id => id.trim()).filter(Boolean))]
+  }
+  const primary = readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  return primary ? [primary] : []
 }
 
 export function readGeneralRegistrationOverlayProgramTitleKo(): string {
@@ -63,6 +76,8 @@ const TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
   'trainedTeachersRegistration.basicInfo.sponsorId' as const
 const TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
   'trainedTeachersRegistration.basicInfo.managerContactId' as const
+const TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY =
+  'trainedTeachersRegistration.basicInfo.managerContactIds' as const
 const TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY =
   'trainedTeachersRegistration.basicInfo.programTitleKo' as const
 
@@ -72,12 +87,40 @@ export function readTrainedTeachersRegistrationOverlaySponsorId(): string {
 }
 
 export function readTrainedTeachersRegistrationOverlaySponsorContactId(): string {
+  const ids = readTrainedTeachersRegistrationOverlaySponsorContactIds()
+  if (ids[0]) return ids[0]
   const raw = readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
   return raw === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE ? '' : raw
 }
 
+export function readTrainedTeachersRegistrationOverlaySponsorContactIds(): string[] {
+  const raw = overlayState[TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
+  if (Array.isArray(raw)) {
+    return [
+      ...new Set(
+        raw
+          .map(String)
+          .map(id => id.trim())
+          .filter(id => id && id !== TRAINED_TEACHERS_REGISTRATION_ALL_VALUE)
+      ),
+    ]
+  }
+  const primary = readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  if (!primary || primary === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE) return []
+  return [primary]
+}
+
 export function readTrainedTeachersRegistrationOverlayProgramTitleKo(): string {
   return readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
+}
+
+const ECONOMY_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
+  'economyRegistration.basicInfo.sponsorId' as const
+const ECONOMY_REGISTRATION_ALL_VALUE = '__all__'
+
+export function readEconomyRegistrationOverlaySponsorId(): string {
+  const raw = readOverlayString(ECONOMY_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
+  return !raw || raw === ECONOMY_REGISTRATION_ALL_VALUE ? '' : raw
 }
 
 export function readRegistrationOverlaySponsorId(
@@ -85,6 +128,9 @@ export function readRegistrationOverlaySponsorId(
 ): string {
   if (variant === 'trainedTeachers') {
     return readTrainedTeachersRegistrationOverlaySponsorId()
+  }
+  if (variant === 'economy') {
+    return readEconomyRegistrationOverlaySponsorId()
   }
   return readGeneralRegistrationOverlaySponsorId()
 }
@@ -98,6 +144,15 @@ export function readRegistrationOverlaySponsorContactId(
   return readGeneralRegistrationOverlaySponsorContactId()
 }
 
+export function readRegistrationOverlaySponsorContactIds(
+  variant: ProgramRegistrationFormVariant = 'general'
+): string[] {
+  if (variant === 'trainedTeachers') {
+    return readTrainedTeachersRegistrationOverlaySponsorContactIds()
+  }
+  return readGeneralRegistrationOverlaySponsorContactIds()
+}
+
 export function readRegistrationOverlayProgramTitleKo(
   variant: ProgramRegistrationFormVariant = 'general'
 ): string {
@@ -105,6 +160,22 @@ export function readRegistrationOverlayProgramTitleKo(
     return readTrainedTeachersRegistrationOverlayProgramTitleKo()
   }
   return readGeneralRegistrationOverlayProgramTitleKo()
+}
+
+/** controlled 제목 state → overlay 동기화 (임시저장 programTitleKo SSOT) */
+export function patchRegistrationOverlayProgramTitleKo(
+  variant: ProgramRegistrationFormVariant,
+  title: string
+): void {
+  if (variant === 'trainedTeachers') {
+    patchProgramRegistrationOverlay({
+      [TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]: title,
+    })
+    return
+  }
+  patchProgramRegistrationOverlay({
+    [GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]: title,
+  })
 }
 
 export function readGeneralRegistrationOverlayScheduleLines(): string[] {
@@ -161,6 +232,24 @@ export function getProgramRegistrationOverlayRecord(): Record<string, unknown> {
   return overlayState
 }
 
+/** 상세 수정 seed/복원용 — 등록 위저드 동작은 바꾸지 않는다. */
+export function pickProgramRegistrationOverlayByPrefix(
+  prefix: string,
+  record: Record<string, unknown> = overlayState
+): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(record).filter(([key]) => key.startsWith(prefix)))
+}
+
+export function replaceProgramRegistrationOverlayPrefix(
+  prefix: string,
+  nextPrefixValues: Record<string, unknown>
+): void {
+  const kept = Object.fromEntries(
+    Object.entries(overlayState).filter(([key]) => !key.startsWith(prefix))
+  )
+  replaceProgramRegistrationOverlay({ ...kept, ...nextPrefixValues })
+}
+
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
   const raw = overlayState[key] as T | undefined
   return raw === undefined ? defaultValue : raw
@@ -200,14 +289,21 @@ export function resetProgramRegistrationOverlay(): void {
   notifyOverlayListeners()
 }
 
-/** `useSyncExternalStore`용 — 변경된 overlay 키만 구독한다. */
+/**
+ * `useSyncExternalStore`용 — 변경된 overlay 키만 구독한다.
+ *
+ * `defaultValue`는 `useRef`로 고정한다. 호출부가 `[]` / `{}` / 매 렌더 새 객체를
+ * 넘기면 getSnapshot이 매번 다른 참조를 반환해 React가 store가 바뀐 것으로 오인하고
+ * 리렌더 루프·형제 단락 입력 소실이 난다 (모집/신청 overlay의 defaultRef 패턴과 동일).
+ */
 export function useProgramRegistrationOverlayKv<T>(
   key: string,
   defaultValue: T
 ): [T, (next: T) => void] {
+  const defaultRef = useRef(defaultValue)
   const getSnapshot = useCallback(
-    () => readOverlayKeyValue(key, defaultValue),
-    [defaultValue, key]
+    () => readOverlayKeyValue(key, defaultRef.current),
+    [key]
   )
 
   const value = useSyncExternalStore(

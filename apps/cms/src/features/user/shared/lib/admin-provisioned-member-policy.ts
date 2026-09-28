@@ -8,7 +8,10 @@ export const ADMIN_REGISTERED_MEMBER_DETAIL_CAPTION = '*관리자에 의해 등�
 /** 학교(기관) 상세 기본 정보 `DetailInfoForm` description에 붙는 문구 */
 export const ADMIN_REGISTERED_SCHOOL_DETAIL_CAPTION = '관리자에 의해 등록된 학교입니다'
 
-type UserLike = Pick<User, 'registeredByAdmin' | 'identitySelfSignupCompletedAfterAdminRegistration'>
+type UserLike = Pick<
+  User,
+  'registeredByAdmin' | 'identitySelfSignupCompletedAfterAdminRegistration'
+>
 type PermissionApprovalUserLike = Pick<User, 'permissionApprovalStatus' | 'role'>
 type CurrentUserLike = Pick<User, 'role' | 'adminLevel'>
 type AdminMemberEditTargetLike = UserLike & Pick<User, 'role'>
@@ -22,7 +25,7 @@ type SchoolUserLike = UserLike & {
 
 /**
  * 회원 등록 유형 — CMS에서 「관리자 등록」으로 보아 기본정보(읽기전용 제외)를 수정할 수 있는지.
- * - 관리자가 생성 후 사용자가 직접 가입(본인 인증 등)을 완료하면 **직접 등록**과 동일하게 취급 (`false`).
+ * - 관리자가 생성 후 사용자가 직접 가입(본인인증 등)을 완료하면 **직접 등록**과 동일하게 취급 (`false`).
  */
 export function shouldShowCmsMemberInfoEditButton(user: UserLike): boolean {
   return Boolean(user.registeredByAdmin && !user.identitySelfSignupCompletedAfterAdminRegistration)
@@ -49,9 +52,7 @@ export function isCmsInstructorFeeJaRestrictedEditTarget(
 export function shouldShowCmsSchoolInfoEditButton(user: SchoolUserLike): boolean {
   if (user.role !== 'SCHOOL') return false
   if (!shouldShowCmsMemberInfoEditButton(user)) return false
-  return !institutionHasRegisteredTeachers(
-    user as Pick<User, 'listMetrics' | 'schoolInfo'>
-  )
+  return !institutionHasRegisteredTeachers(user as Pick<User, 'listMetrics' | 'schoolInfo'>)
 }
 
 /** 전체 기본정보 수정 또는 강사·교사겸강사 강사비 등급 제한 수정 — 헤더 [정보 수정] 노출 */
@@ -64,9 +65,7 @@ export function shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(
   // 순수 교사: 수정 없음. 강사·겸직: 미본인인증=전체 / 본인인증 후=강사비·JA만.
   if (user.role === 'INSTRUCTOR') {
     if (resolveInstructorMemberProfile(user) === 'school_teacher') return false
-    return (
-      shouldShowCmsMemberInfoEditButton(user) || isCmsInstructorFeeJaRestrictedEditTarget(user)
-    )
+    return shouldShowCmsMemberInfoEditButton(user) || isCmsInstructorFeeJaRestrictedEditTarget(user)
   }
   return shouldShowCmsMemberInfoEditButton(user)
 }
@@ -137,7 +136,9 @@ export function isMasterAdminUser(currentUser: CurrentUserLike | null | undefine
  * **모든 CMS 관리자**가 접근·수정할 수 있는 범위의 게이트.
  * (성명·연락처 등 그 외 기본정보는 `canEditAdminMemberInfo`.)
  */
-export function canAccessAdminCommentInAdminDetail(currentUser: CurrentUserLike | null | undefined): boolean {
+export function canAccessAdminCommentInAdminDetail(
+  currentUser: CurrentUserLike | null | undefined
+): boolean {
   return isCmsAdminUser(currentUser)
 }
 
@@ -171,7 +172,9 @@ export function canStartAdminMemberProfileEdit(
 export function schoolHasAffiliatedTeacherLinkedAccount(user: SchoolUserLike): boolean {
   if (user.role !== 'SCHOOL') return false
   return Boolean(
-    user.schoolInfo?.affiliatedTeachers?.some(t => Boolean(t.linkedUserId && String(t.linkedUserId).trim()))
+    user.schoolInfo?.affiliatedTeachers?.some(t =>
+      Boolean(t.linkedUserId && String(t.linkedUserId).trim())
+    )
   )
 }
 
@@ -181,7 +184,8 @@ export function schoolHasAffiliatedTeacherLinkedAccount(user: SchoolUserLike): b
  */
 export function shouldShowAdminRegisteredSchoolDetailCaption(user: SchoolUserLike): boolean {
   if (user.role !== 'SCHOOL') return false
-  if (!user.registeredByAdmin || user.identitySelfSignupCompletedAfterAdminRegistration) return false
+  if (!user.registeredByAdmin || user.identitySelfSignupCompletedAfterAdminRegistration)
+    return false
   if (schoolHasAffiliatedTeacherLinkedAccount(user)) return false
   return true
 }

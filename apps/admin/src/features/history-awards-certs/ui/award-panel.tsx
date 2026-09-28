@@ -50,7 +50,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
@@ -153,6 +153,7 @@ export function AwardPanel() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
     patchSearchParams,
@@ -429,25 +430,23 @@ export function AwardPanel() {
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <p className="admin-filter-area__label">상명</p>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="상명을 입력하세요"
               value={pendingFilters.title}
-              onChange={e => setPendingFilters(prev => ({ ...prev, title: e.target.value }))}
+              onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
               onPressEnter={handleSearch}
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <p className="admin-filter-area__label">수여 기관명</p>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="수여 기관명을 입력하세요"
               value={pendingFilters.organization}
-              onChange={e =>
-                setPendingFilters(prev => ({ ...prev, organization: e.target.value }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, organization: value }))}
               onPressEnter={handleSearch}
             />
           </div>

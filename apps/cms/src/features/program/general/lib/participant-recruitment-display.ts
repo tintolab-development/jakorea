@@ -1,14 +1,19 @@
 /**
  * 일반 프로그램 상세 — 참여자 모집 정보 표시값
  * SSOT: serviceDetailJson.generalCommonInfo.participantRecruitmentInfo (모집 양식)
- * 교육 대상 / 모집 기간 / 문의처 — 공통정보 Program 폴백 없음. 빈값 '-'
+ * 일반·1사1교: 교육 대상 / 모집 기간 / 문의처 — 공통정보 Program 폴백 없음. 빈값 '-'
+ * 교육받은 교사: nested 라벨이 없으면 컬럼(applicationStartDate 등)으로 조회 복원
  */
 
 import type { Program } from '@/types/domain'
 import {
   formatDateOnly,
+  formatDateRange,
+  formatTargetLevelsLabel,
   getParticipantRecruitmentLifecycle,
+  resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
   resolveInstitutionApplicationProgramBridge,
@@ -155,12 +160,18 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
 
   const resultDate = program.resultAnnouncementDate
   const resultMethod = program.resultAnnouncementMethod?.trim()
+  // 날짜·방법 중 하나만 입력돼도 표시해야 함 — 날짜 없다고 방법까지 통째로 버리지 않는다.
+  // (버그: resultDate가 없으면 resultMethod가 있어도 전체가 undefined → '-' 로 노출되던 문제)
+  const finalAnnouncementLabelFromProgram = [
+    resultDate ? formatDateOnly(resultDate) : undefined,
+    resultMethod || undefined,
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join(' | ')
   const finalAnnouncementLabel = pickDisplayString(
     info?.finalAnnouncementLabel,
     info?.resultAnnouncementLabel,
-    resultDate
-      ? `${formatDateOnly(resultDate)}${resultMethod ? ` | ${resultMethod}` : ''}`
-      : undefined
+    finalAnnouncementLabelFromProgram || undefined
   )
 
   const certificateIssuanceLabel =
@@ -185,16 +196,23 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     labelBool(info?.announcementPublished, '게시', '미게시')
   )
 
-  /** 모집 양식만 — 공통 targetLevels / district 폴백 금지 */
-  const targetLabel = pickDisplayString(info?.educationTarget, info?.recruitmentTarget)
+  /** 일반·1사1교: 모집 양식만. 교육받은 교사: nested 라벨이 비면 컬럼 폴백(저장 라운드트립) */
+  const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
+  const targetFromLevels = formatTargetLevelsLabel(resolveProgramTargetLevels(program))
+  const targetLabel = pickDisplayString(
+    info?.educationTarget,
+    info?.recruitmentTarget,
+    isTrainedTeachers && targetFromLevels !== '-' ? targetFromLevels : undefined
+  )
   const targetDetailLabel = pickDisplayString(
     info?.educationTargetDetail,
-    info?.recruitmentTargetDetail
+    info?.recruitmentTargetDetail,
+    isTrainedTeachers ? program.educationTargetDetail : undefined
   )
 
   const notes = info?.notesNotApplicable
     ? '-'
-    : pickDisplayString(info?.remarks)
+    : pickDisplayString(info?.remarks, isTrainedTeachers ? program.remarks : undefined)
 
   const orgName = info?.contactOrganizationName?.trim()
   const personName = info?.contactName?.trim()
@@ -202,6 +220,13 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     orgName && personName
       ? `${orgName} / ${personName}`
       : pickDisplayString(orgName, personName)
+
+  const operationFromProgram = isTrainedTeachers
+    ? formatDateRange(program.startDate, program.endDate)
+    : undefined
+  const recruitmentFromProgram = isTrainedTeachers
+    ? formatDateRange(program.applicationStartDate, program.applicationEndDate)
+    : undefined
 
   return {
     interviewEnabledLabel,
@@ -216,14 +241,20 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     maxInstructorsLabel: formatCountLabel(info?.maxAssignableInstructors, '명'),
     maxSessionsPerDayLabel: formatCountLabel(info?.maxSessionsPerDay, '차시'),
     maxScheduleCountLabel: formatCountLabel(info?.maxScheduleCount, '개'),
-    /** 모집 양식 operationPeriodLabel만 — 공통 운영기간(start/end) 폴백 금지 */
-    operationPeriodLabel: pickDisplayString(info?.operationPeriodLabel),
+    operationPeriodLabel: pickDisplayString(
+      info?.operationPeriodLabel,
+      operationFromProgram && operationFromProgram !== '-' ? operationFromProgram : undefined
+    ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
     targetLabel,
     targetDetailLabel,
-    /** 모집 양식 recruitmentPeriodLabel만 — applicationStart/End(등록 기본값) 폴백 금지 */
-    recruitmentPeriodLabel: pickDisplayString(info?.recruitmentPeriodLabel),
+    recruitmentPeriodLabel: pickDisplayString(
+      info?.recruitmentPeriodLabel,
+      recruitmentFromProgram && recruitmentFromProgram !== '-'
+        ? recruitmentFromProgram
+        : undefined
+    ),
     documentPassAnnouncementDate: program.documentPassAnnouncementDate,
     documentPassAnnouncementMethod: program.documentPassAnnouncementMethod,
     interviewStartDate: program.interviewStartDate,
@@ -231,8 +262,18 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     interviewMethod: program.interviewMethod,
     finalAnnouncementLabel,
     contactOrganizationName,
-    contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
-    contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),
+    contactPhone: pickDisplayString(
+      info?.inquiryTel,
+      info?.tel,
+      info?.contactPhone,
+      isTrainedTeachers ? program.contactPhone : undefined
+    ),
+    contactEmail: pickDisplayString(
+      info?.inquiryEmail,
+      info?.email,
+      info?.contactEmail,
+      isTrainedTeachers ? program.contactEmail : undefined
+    ),
     notes,
   }
 }

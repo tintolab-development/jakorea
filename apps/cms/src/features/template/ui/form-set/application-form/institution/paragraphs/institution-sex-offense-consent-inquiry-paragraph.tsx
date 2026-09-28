@@ -26,7 +26,12 @@ const inlineRowStyle = {
 }
 
 /** 프로그램 참여자 신청 폼 (학교) — 성범죄 경력 조회 동의서 조회 방식 */
-export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagraph() {
+export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagraph({
+  choiceDisplayOnly = false,
+}: {
+  /** 프로그램 등록 — disabled 스킨 없이 미선택·입력 불가 */
+  choiceDisplayOnly?: boolean
+} = {}) {
   const [inquiryMethod, setInquiryMethod] = useGeneralApplicationOverlayKv<string>(
     'application.institution.sexOffense.inquiryMethod',
     'criminal_record_site'
@@ -62,9 +67,14 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
 
   const showSiteSubmissionFields = inquiryMethod === 'criminal_record_site'
   const showOnlineCredentials = showSiteSubmissionFields && siteSubmission === 'online'
+  const displayInquiryMethod = choiceDisplayOnly ? undefined : inquiryMethod
+  const displaySiteSubmission = choiceDisplayOnly ? undefined : siteSubmission
+  const displayInstitutionId = choiceDisplayOnly ? '' : institutionId
+  const displayVerificationNumber = choiceDisplayOnly ? '' : verificationNumber
+  const lockStyle = choiceDisplayOnly ? { pointerEvents: 'none' as const } : undefined
 
   return (
-    <div className="program-application-form-institution__paragraph">
+    <div className="program-application-form-institution__paragraph" style={lockStyle}>
       <DetailInfoForm title="" hideHeader mode="edit" className="program-registration-paragraph">
         {showSiteSubmissionFields ? (
           <DetailInfoForm.Row type="double">
@@ -73,8 +83,11 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
               edit={
                 <CmsRadioGroup
                   size="large"
-                  value={inquiryMethod}
-                  onChange={event => setInquiryMethod(event.target.value)}
+                  value={displayInquiryMethod}
+                  onChange={event => {
+                    if (choiceDisplayOnly) return
+                    setInquiryMethod(event.target.value)
+                  }}
                   style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
                 >
                   {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS.map(option => (
@@ -91,8 +104,11 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
               edit={
                 <CmsRadioGroup
                   size="large"
-                  value={siteSubmission}
-                  onChange={event => setSiteSubmission(event.target.value)}
+                  value={displaySiteSubmission}
+                  onChange={event => {
+                    if (choiceDisplayOnly) return
+                    setSiteSubmission(event.target.value)
+                  }}
                   style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
                 >
                   {INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS.map(option => (
@@ -113,8 +129,11 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
               edit={
                 <CmsRadioGroup
                   size="large"
-                  value={inquiryMethod}
-                  onChange={event => setInquiryMethod(event.target.value)}
+                  value={displayInquiryMethod}
+                  onChange={event => {
+                    if (choiceDisplayOnly) return
+                    setInquiryMethod(event.target.value)
+                  }}
                   style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
                 >
                   {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS.map(option => (
@@ -144,8 +163,12 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
                     inputSize="medium"
                     placeholder="기관 아이디"
                     width={120}
-                    value={institutionId}
-                    onChange={event => setInstitutionId(event.target.value)}
+                    value={displayInstitutionId}
+                    readOnly={choiceDisplayOnly}
+                    onChange={event => {
+                      if (choiceDisplayOnly) return
+                      setInstitutionId(event.target.value)
+                    }}
                   />
                   <DetailInfoForm.InputsSeparator />
                   <span style={nowrapSpanStyle}>검증번호</span>
@@ -153,8 +176,12 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
                     inputSize="medium"
                     placeholder="검증번호"
                     width={120}
-                    value={verificationNumber}
-                    onChange={event => setVerificationNumber(event.target.value)}
+                    value={displayVerificationNumber}
+                    readOnly={choiceDisplayOnly}
+                    onChange={event => {
+                      if (choiceDisplayOnly) return
+                      setVerificationNumber(event.target.value)
+                    }}
                   />
                 </div>
               }

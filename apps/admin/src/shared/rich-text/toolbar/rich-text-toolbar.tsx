@@ -59,6 +59,8 @@ export type RichTextToolbarProps = {
    * Homepage 공지 API는 body에서 img/iframe을 sanitize로 제거하므로 remote 공지는 false.
    */
   allowInlineMedia?: boolean
+  /** remote 저장 시 본문 data URL 대신 업로드 주소 */
+  resolveImageSrc?: (file: File) => Promise<string>
 }
 
 const EMPTY_TOOLBAR_STATE = {
@@ -113,6 +115,7 @@ function getActiveTextAlign(editor: Editor): TextAlignValue {
 export function RichTextToolbar({
   editor,
   allowInlineMedia = true,
+  resolveImageSrc,
 }: RichTextToolbarProps) {
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   const state =
@@ -317,9 +320,9 @@ export function RichTextToolbar({
       const file = event.target.files?.[0]
       event.target.value = ''
       if (!file || !editor) return
-      insertImageFromFile(editor, file)
+      insertImageFromFile(editor, file, resolveImageSrc)
     },
-    [editor]
+    [editor, resolveImageSrc]
   )
 
   if (!editor) return null

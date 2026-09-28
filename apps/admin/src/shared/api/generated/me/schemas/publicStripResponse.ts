@@ -10,5 +10,7 @@ export interface PublicStripResponse {
   id?: number;
   displayOrder?: number;
   bannerText?: string;
+  displayStartDate?: string;
+  displayEndDate?: string;
   linkUrl?: string;
 }

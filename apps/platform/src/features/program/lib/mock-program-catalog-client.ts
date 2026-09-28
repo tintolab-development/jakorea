@@ -1,12 +1,12 @@
 /**
  * Platform → 공유 mock program catalog 클라이언트.
- * DEV + mock 로그인 일 때만 네트워크 조회.
+ * DEV + 비실세션 일 때만 네트워크 조회.
  *
  * StrictMode 이중 effect / 동시 호출은 in-flight dedupe + 모듈 캐시로 1회 네트워크만 나간다.
  */
 
 import type { CmsProgramLike } from '../model/cms-program.types'
-import { getDevAuthLoggedIn, shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 
 /** tools/mock-program-catalog/constants 와 동일 */
 export const MOCK_PROGRAM_CATALOG_API_PATH = '/__dev__/mock-program-catalog'
@@ -52,11 +52,11 @@ async function requestMockProgramCatalog(): Promise<CmsProgramLike[]> {
 
 /**
  * CMS mock 등록 카탈로그.
- * DEV + mock 세션(비로그인·mock 로그인)에서만 조회. remote 실세션은 빈 배열.
+ * DEV + 비실세션에서만 조회. remote 실세션은 빈 배열.
  */
 export async function fetchMockProgramCatalog(): Promise<CmsProgramLike[]> {
   if (!import.meta.env.DEV) return []
-  if (!shouldUsePlatformMockData() || !getDevAuthLoggedIn()) {
+  if (!shouldUsePlatformMockData()) {
     clearMockProgramCatalogCache()
     return []
   }

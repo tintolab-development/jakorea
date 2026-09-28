@@ -1,7 +1,11 @@
-import { useMemo } from 'react'
+import type { Program } from '@/types/domain'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-institution-recruit-template-preview-program'
-import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import {
+  programToUjatRecruitTemplateFormValues,
+  useUjatRecruitTemplateFormOverlaySync,
+} from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
+import { useUjatRecruitTemplateProgram } from '@/features/program/ujat/lib/use-ujat-recruit-template-program'
 import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import {
   isUjatRecruitProgramContext,
@@ -10,15 +14,32 @@ import {
 import { UjatRecruitParticipantInfoProgramView } from '@/features/program/ujat/ui/detail-modal/info/recruit-paragraph-views/participant-info-program'
 
 function UjatRecruitParticipantInfoTemplateEditor() {
-  const previewProgram = useMemo(
-    () => resolveUjatRecruitDisplayProgram(UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM),
-    []
+  const { program, revision } = useUjatRecruitTemplateProgram(
+    UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+    'institution'
   )
-  const form = useProgramDetailEditForm({ program: previewProgram, isEditMode: true })
+  return <UjatRecruitParticipantInfoTemplateEditorForm program={program} revision={revision} />
+}
+
+function UjatRecruitParticipantInfoTemplateEditorForm({
+  program,
+  revision,
+}: {
+  program: Program
+  revision: number
+}) {
+  const form = useProgramDetailEditForm({
+    program,
+    isEditMode: true,
+    resetOnProgramChange: false,
+    mapToValues: next => programToUjatRecruitTemplateFormValues(next, 'institution'),
+  })
+  useUjatRecruitTemplateFormOverlaySync(form, 'institution', program, revision)
 
   return (
     <UjatRecruitParticipantInfoProgramView
-      program={previewProgram}
+      program={program}
+      sponsorName={program.managerName}
       form={form}
       isEdit
       hideSectionHeader

@@ -3,6 +3,7 @@ import type { MypageLnbItemKey } from '../model/types'
 import {
   MYPAGE_EDUCATION_PATH,
   MYPAGE_INQUIRIES_PATH,
+  MYPAGE_LECTURE_PATH,
   MYPAGE_PATH,
   MYPAGE_VOLUNTEER_PATH,
 } from './constants'
@@ -11,6 +12,9 @@ export function navigateMypageLnb(navigate: NavigateFunction, key: MypageLnbItem
   switch (key) {
     case 'home':
       navigate(MYPAGE_PATH)
+      return
+    case 'lectures':
+      navigate(MYPAGE_LECTURE_PATH)
       return
     case 'education':
       navigate(MYPAGE_EDUCATION_PATH)

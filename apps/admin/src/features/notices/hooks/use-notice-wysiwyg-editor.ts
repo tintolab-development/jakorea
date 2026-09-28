@@ -1,5 +1,7 @@
 import type { Editor } from '@/shared/rich-text'
 import { useCallback, useRef } from 'react'
+import { shouldUseNoticesRemoteApi } from '@/features/notices/api/capabilities'
+import { uploadNoticeInlineImage } from '@/features/notices/api/upload-notice-attachment'
 import {
   useRichTextEditor,
   type RichTextContentFormat,
@@ -34,6 +36,9 @@ export function useNoticeWysiwygEditor(
   const placeholder = options?.placeholder ?? DEFAULT_PLACEHOLDER
   const contentFormat = options?.contentFormat ?? 'markdown'
   const allowInlineMedia = options?.allowInlineMedia ?? true
+  const resolveImageSrc = useCallback((file: File) => {
+    return uploadNoticeInlineImage(file)
+  }, [])
 
   const { editor, api } = useRichTextEditor({
     enabled: open,
@@ -44,6 +49,7 @@ export function useNoticeWysiwygEditor(
     autofocus: false,
     // full: file paste 이미지 / basic: paste 이미지 비활성
     preset: allowInlineMedia ? 'full' : 'basic',
+    resolveImageSrc: shouldUseNoticesRemoteApi() ? resolveImageSrc : undefined,
     onReady: readyApi => {
       apiRef.current = readyApi
     },
@@ -66,5 +72,6 @@ export function useNoticeWysiwygEditor(
     getHTML,
     contentFormat,
     allowInlineMedia,
+    resolveImageSrc: shouldUseNoticesRemoteApi() ? resolveImageSrc : undefined,
   }
 }

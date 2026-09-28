@@ -44,6 +44,22 @@ export function programFileOwner(
   programId: number,
   filePurpose: AdminFilePurpose
 ): AdminFileUploadOwner {
+  // BE ProgramAttachmentService / ProgramThumbnailService 는 PROGRAM_CONTENT/PROGRAM 만 허용.
+  // ADMIN_FILE_OWNER.PROGRAM(domain=PROGRAM) 로 올리면 PUT attachments 가 OWNER_MISMATCH 로 거절된다.
+  if (
+    filePurpose === ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT ||
+    filePurpose === ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL ||
+    filePurpose === ADMIN_FILE_PURPOSE.PROGRAM_INLINE_IMAGE ||
+    filePurpose === ADMIN_FILE_PURPOSE.PROGRAM_POST_ATTACHMENT ||
+    filePurpose === ADMIN_FILE_PURPOSE.PROGRAM_POST_INLINE_IMAGE
+  ) {
+    return {
+      ownerDomain: 'PROGRAM_CONTENT',
+      ownerType: 'PROGRAM',
+      ownerId: programId,
+      filePurpose,
+    }
+  }
   return buildAdminFileOwner(ADMIN_FILE_OWNER.PROGRAM, programId, filePurpose)
 }
 

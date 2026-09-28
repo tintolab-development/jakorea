@@ -45,9 +45,8 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   overlayKeyPrefix = 'generalRegistration.educationScheduleSettings',
   autoFillFromScheduleGroupTimes = false,
   disablePeriodMode = false,
-  lockCalendarTogglesToScheduleMode: _lockCalendarTogglesToScheduleMode = false,
+  lockCalendarTogglesToScheduleMode = false,
 }: EducationScheduleSettingsProps) {
-  void _lockCalendarTogglesToScheduleMode
   const scheduleMode = educationScheduleMode
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
   const [singleDateIso, setSingleDateIso] = useProgramRegistrationOverlayKv<string | null>(
@@ -149,6 +148,8 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
     })
   }, [autoFillDatePicker, groupTimeSlotsKey, scheduleLinesKey])
 
+  const lockTimeOnDateMode = lockCalendarTogglesToScheduleMode || !autoFillDatePicker
+
   return (
     <DetailInfoForm
       title="교육 진행 일정 설정"
@@ -189,7 +190,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 customizable={false}
                 showPeriodToggle={false}
                 showTimeToggle={!autoFillDatePicker}
-                lockTimeToggleOn={!autoFillDatePicker}
+                lockTimeToggleOn={lockTimeOnDateMode && !autoFillDatePicker}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={handleDateApply}
@@ -203,6 +204,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 customizable={false}
                 showTimeToggle={false}
                 showPeriodToggle={false}
+                lockPeriodToggleOn={lockCalendarTogglesToScheduleMode}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}

@@ -70,6 +70,7 @@ import { generalProgramProgressQueryKeys } from '@/features/program/general/api/
 import type { GeneralProgramNavigationCapabilities } from '@/features/program/general/hooks/use-general-program-navigation'
 import { applyCombinedClassMergeToSchoolDetailWithList } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import './participating-institutions-section.css'
 
 function formatSessionLine(s: ParticipatingSchoolSession): string {
@@ -239,10 +240,12 @@ export function ParticipatingInstitutionsSection({
 
   const queryClient = useQueryClient()
   const isCompanySchool = isCompanySchoolProgram(program)
+  const mergeGroupsAllowed = isGeneralOrganizationProgram(program)
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(resolvedProgramId)
   const mergeGroupsQuery = useOrganizationMergeGroups(
     resolvedProgramId,
-    progressRemoteEnabled && !isCompanySchool && shouldUseOrganizationMergeGroupsRemoteApi()
+    program?.backendProgramType,
+    mergeGroupsAllowed && progressRemoteEnabled && shouldUseOrganizationMergeGroupsRemoteApi()
   )
 
   /** URL schoolId로 선택된 학교 행 (인라인 상세 뷰용) */
@@ -261,9 +264,10 @@ export function ParticipatingInstitutionsSection({
       combinedClassApplication: '신청' | '미신청'
       combinedClassPartnerSchoolIds: string[]
     }) => {
-      if (!resolvedProgramId || !selectedRowFromUrl || isCompanySchool) return
+      if (!resolvedProgramId || !selectedRowFromUrl || !mergeGroupsAllowed) return
       await saveOrganizationCombinedClassRemote({
         programId: resolvedProgramId,
+        programType: program?.backendProgramType,
         leadRow: selectedRowFromUrl,
         allRows: schoolList,
         combinedClassApplication: params.combinedClassApplication,
@@ -275,8 +279,9 @@ export function ParticipatingInstitutionsSection({
       })
     },
     [
-      isCompanySchool,
+      mergeGroupsAllowed,
       mergeGroupsQuery.data,
+      program,
       queryClient,
       resolvedProgramId,
       schoolList,
@@ -362,9 +367,10 @@ export function ParticipatingInstitutionsSection({
         }),
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
-          const sessionLines = isCompanySchool
-            ? buildParticipatingSchoolPreferredScheduleLines(record.sessions)
-            : (record.sessions ?? []).map(formatSessionLine)
+          const sessionLines =
+            isCompanySchool || isTrainedTeachersSurface
+              ? buildParticipatingSchoolPreferredScheduleLines(record.sessions)
+              : (record.sessions ?? []).map(formatSessionLine)
           const total = sessionLines.length
           const showCount = total <= 3 ? total : 2
           const displaySessions = sessionLines.slice(0, showCount)
@@ -553,7 +559,7 @@ export function ParticipatingInstitutionsSection({
             }))
           }}
           onSaveCombinedClass={
-            !isCompanySchool && shouldUseOrganizationMergeGroupsRemoteApi()
+            mergeGroupsAllowed && shouldUseOrganizationMergeGroupsRemoteApi()
               ? handleSaveCombinedClass
               : undefined
           }

@@ -693,11 +693,16 @@
 .program-list-card--program-list-overview.program-list-card--program-list-period-columns
   .program-list-table__col-recruitment,
 .program-list-card--program-list-overview.program-list-card--program-list-period-columns
-  .program-list-table__col-participant-type,
+  .program-list-table__col-participant-type {
+  min-width: 0;
+  width: 160px;
+}
+
 .program-list-card--program-list-overview.program-list-card--program-list-period-columns
   .program-list-table__col-target {
   min-width: 0;
-  width: 160px;
+  width: 240px;
+  white-space: normal;
 }
 
 .program-list-card--program-list-overview .program-list-table__col-period {
@@ -710,9 +715,13 @@
 
 .program-list-card--program-list-overview .program-list-table__col-recruitment,
 .program-list-card--program-list-overview .program-list-table__col-instructor-recruit,
-.program-list-card--program-list-overview .program-list-table__col-category,
-.program-list-card--program-list-overview .program-list-table__col-target {
+.program-list-card--program-list-overview .program-list-table__col-category {
   min-width: 160px;
+}
+
+.program-list-card--program-list-overview .program-list-table__col-target {
+  min-width: 240px;
+  white-space: normal;
 }
 
 /* 4탭 목록 · 「진행 중」「완료」 — 요청 min-width 합계 1554px (+행 선택 시 1622px) */

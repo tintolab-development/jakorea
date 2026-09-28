@@ -35,6 +35,7 @@ export function UjatProgramRecruitmentTabsRow({
       trailing={
         <ProgramEditInfoActions
           isEditing={isEditMode}
+          idleVariant="secondary"
           disabled={!canEdit && !isEditMode}
           onEdit={onEdit}
           onCancel={onCancel}

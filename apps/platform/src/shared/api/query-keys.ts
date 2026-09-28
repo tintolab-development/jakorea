@@ -41,6 +41,223 @@ export const platformQueryKeys = {
       ] as const,
   },
 
+  home: {
+    all: () => [...platformQueryKeys.all, 'home'] as const,
+    /** 공개 메인 화면 — GET /api/public/main (Class B + 홈 마운트 시 1분 재조회) */
+    publicMain: () => [...platformQueryKeys.home.all(), 'public-main'] as const,
+  },
+
+  site: {
+    all: () => [...platformQueryKeys.all, 'site'] as const,
+    /** GET /api/public/site/settings — Class B-shell */
+    settings: () => [...platformQueryKeys.site.all(), 'settings'] as const,
+    /** GET /api/public/site/gnb — Class B-shell */
+    gnb: () => [...platformQueryKeys.site.all(), 'gnb'] as const,
+    /** GET /api/public/site/footer — Class B-shell */
+    footer: () => [...platformQueryKeys.site.all(), 'footer'] as const,
+    /** GET /api/public/participation/links — Class B-shell (GNB·푸터 외부 URL) */
+    participationLinks: () =>
+      [...platformQueryKeys.site.all(), 'participation-links'] as const,
+  },
+
+  impactStory: {
+    all: () => [...platformQueryKeys.all, 'impact-story'] as const,
+    /** 공개 카테고리 — GET /api/public/impact-story/categories (Class B) */
+    categories: () => [...platformQueryKeys.impactStory.all(), 'categories'] as const,
+    /**
+     * 공개 목록 — GET /api/public/impact-story/stories
+     * Class C. `categoryId`/`q`/`page`/`size` 가 바뀌면 다른 키.
+     */
+    list: (params: { categoryId: number | null; q: string; page: number; size: number }) =>
+      [
+        ...platformQueryKeys.impactStory.all(),
+        'list',
+        params.categoryId,
+        params.q,
+        params.page,
+        params.size,
+      ] as const,
+    /** pinned 캐러셀·홈 서브카드·인접글용 preview (`size=20`, page 0) */
+    preview: () => [...platformQueryKeys.impactStory.all(), 'preview'] as const,
+    /** 공개 상세 — GET /api/public/impact-story/stories/{id} (Class D) */
+    detail: (id: string) => [...platformQueryKeys.impactStory.all(), 'detail', id] as const,
+  },
+
+  program: {
+    all: () => [...platformQueryKeys.all, 'program'] as const,
+    /** 공개 목록 — GET /api/portal/programs (Class C, CMS 8080) */
+    list: (params: {
+      keyword: string
+      portalTab: string
+      recruitmentStatus: string
+      recruitmentTarget: string
+      educationTarget: string
+      educationMethod: string
+      operatingFrom: string
+      operatingTo: string
+      sort: string
+      page: number
+      size: number
+    }) =>
+      [
+        ...platformQueryKeys.program.all(),
+        'list',
+        params.keyword,
+        params.portalTab,
+        params.recruitmentStatus,
+        params.recruitmentTarget,
+        params.educationTarget,
+        params.educationMethod,
+        params.operatingFrom,
+        params.operatingTo,
+        params.sort,
+        params.page,
+        params.size,
+      ] as const,
+    /** 홈 캐러셀 — GET /api/portal/programs?featuredOnHome=true&size=8 (Class C) */
+    homePreview: () => [...platformQueryKeys.program.all(), 'home-preview'] as const,
+    /** 공개 상세 — GET /api/portal/programs/{programId} (Class D, CMS 8080) */
+    detail: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,
+    /** 신청 옵션 — GET /api/portal/programs/{programId}/application-options (Class D, 회원) */
+    applicationOptions: (programId: string) =>
+      [...platformQueryKeys.program.all(), 'application-options', programId] as const,
+    /**
+     * 신청 양식 — GET /api/portal/programs/{programId}/form-bindings/{bindingId}
+     * Class D. recruitmentId·applicationType·bindingId 가 바뀌면 다른 키.
+     */
+    applicationForm: (params: {
+      programId: string
+      bindingId: number
+      recruitmentId: number
+      applicationType: string
+    }) =>
+      [
+        ...platformQueryKeys.program.all(),
+        'application-form',
+        params.programId,
+        params.bindingId,
+        params.recruitmentId,
+        params.applicationType,
+      ] as const,
+  },
+
+  programResult: {
+    all: () => [...platformQueryKeys.all, 'program-result'] as const,
+    /** 허용 카테고리 — 목록 응답 `categories` (Class B) */
+    categories: () => [...platformQueryKeys.programResult.all(), 'categories'] as const,
+    /** 공개 목록 — GET /api/portal/public/program-results (Class C) */
+    list: (params: {
+      categoryId: number | null
+      keyword: string
+      sort: string
+      page: number
+      size: number
+    }) =>
+      [
+        ...platformQueryKeys.programResult.all(),
+        'list',
+        params.categoryId,
+        params.keyword,
+        params.sort,
+        params.page,
+        params.size,
+      ] as const,
+    /** 공개 상세 — GET /api/portal/public/program-results/{resultId} (Class D) */
+    detail: (id: string, sort: string) =>
+      [...platformQueryKeys.programResult.all(), 'detail', id, sort] as const,
+  },
+
+  jaKorea: {
+    all: () => [...platformQueryKeys.all, 'ja-korea'] as const,
+    /** 공개 JA History — GET /api/public/ja-korea/ja-history (Class B, 싱글톤) */
+    history: () => [...platformQueryKeys.jaKorea.all(), 'history'] as const,
+    /** 공개 기관소개 — GET /api/public/ja-korea/organization (Class B, 싱글톤) */
+    organization: () => [...platformQueryKeys.jaKorea.all(), 'organization'] as const,
+    /** 공개 오시는 길 — GET /api/public/ja-korea/directions (Class B, 싱글톤) */
+    directions: () => [...platformQueryKeys.jaKorea.all(), 'directions'] as const,
+    /** 공개 함께하는 사람들 — GET /api/public/ja-korea/people (Class B, 싱글톤) */
+    people: () => [...platformQueryKeys.jaKorea.all(), 'people'] as const,
+    transparency: {
+      all: () => [...platformQueryKeys.jaKorea.all(), 'transparency'] as const,
+      /** 공개 투명경영 본문 — GET /api/public/ja-korea/transparency (Class B) */
+      page: () => [...platformQueryKeys.jaKorea.transparency.all(), 'page'] as const,
+      /**
+       * 공개 보고서 목록 — GET /api/public/ja-korea/transparency/reports/{type}
+       * Class C. `type`/`q`/`page`/`size` 가 바뀌면 다른 키.
+       */
+      reports: (params: {
+        type: string
+        q: string
+        page: number
+        size: number
+      }) =>
+        [
+          ...platformQueryKeys.jaKorea.transparency.all(),
+          'reports',
+          params.type,
+          params.q,
+          params.page,
+          params.size,
+        ] as const,
+    },
+    notices: {
+      all: () => [...platformQueryKeys.jaKorea.all(), 'notices'] as const,
+      /**
+       * 공개 목록 — GET /api/public/ja-korea/notices
+       * Class C. `q`/`page`/`size` 가 바뀌면 다른 키.
+       */
+      list: (params: { q: string; page: number; size: number }) =>
+        [
+          ...platformQueryKeys.jaKorea.notices.all(),
+          'list',
+          params.q,
+          params.page,
+          params.size,
+        ] as const,
+      /** 인접글용 preview (`size=100`, page 0, q 없음) */
+      preview: () => [...platformQueryKeys.jaKorea.notices.all(), 'preview'] as const,
+      /** 공개 상세 — GET /api/public/ja-korea/notices/{id} (Class D) */
+      detail: (id: string) =>
+        [...platformQueryKeys.jaKorea.notices.all(), 'detail', id] as const,
+    },
+  },
+
+  careers: {
+    all: () => [...platformQueryKeys.all, 'careers'] as const,
+    /** 공개 채용 안내 — GET /api/public/careers/guide (Class B, 싱글톤) */
+    guide: () => [...platformQueryKeys.careers.all(), 'guide'] as const,
+    /** 공개 채용공고 — GET /api/public/careers/postings (Class C, RECRUITING·RESULT) */
+    postings: () => [...platformQueryKeys.careers.all(), 'postings'] as const,
+    /** 공개 채용공고 상세 — GET /api/public/careers/postings/{key} (Class D) */
+    postingDetail: (id: string) =>
+      [...platformQueryKeys.careers.all(), 'postings', 'detail', id] as const,
+  },
+
+  education: {
+    all: () => [...platformQueryKeys.all, 'education'] as const,
+    /** 공개 프로그램 소개 — GET /api/public/education/program-intros/{fieldCode} (Class B) */
+    programIntro: (fieldCode: string) =>
+      [...platformQueryKeys.education.all(), 'program-intro', fieldCode] as const,
+    /** 공개 교재 목록 — GET /api/public/education/textbooks (Class C, items) */
+    textbooks: () => [...platformQueryKeys.education.all(), 'textbooks'] as const,
+    /** 공개 교재 상세 — GET /api/public/education/textbooks/{id} (Class D) */
+    textbookDetail: (id: string) =>
+      [...platformQueryKeys.education.all(), 'textbooks', 'detail', id] as const,
+  },
+
+  sponsorship: {
+    all: () => [...platformQueryKeys.all, 'sponsorship'] as const,
+    /** 공개 개인후원 — GET /api/public/sponsorship/personal (Class D) */
+    personal: () => [...platformQueryKeys.sponsorship.all(), 'personal'] as const,
+    /** 공개 기업후원 안내 — GET /api/public/sponsorship/corporate (Class D) */
+    corporate: () => [...platformQueryKeys.sponsorship.all(), 'corporate'] as const,
+    /** 공개 기업후원 후원사 — GET /api/public/sponsorship/corporate/sponsors (Class C) */
+    corporateSponsors: () =>
+      [...platformQueryKeys.sponsorship.all(), 'corporate', 'sponsors'] as const,
+    /** 공개 재능기부 소개 — GET /api/public/sponsorship/talent (Class D) */
+    talent: () => [...platformQueryKeys.sponsorship.all(), 'talent'] as const,
+  },
+
   mypage: {
     all: () => [...platformQueryKeys.all, 'mypage'] as const,
     /** 내 강사 권한 신청 상태 — GET /api/portal/me/instructor-role-requests/current */
@@ -49,5 +266,39 @@ export const platformQueryKeys = {
     /** 내 폼 응답 피드백 — GET /api/portal/me/form-responses/{id}/feedback (Class D) */
     formResponseFeedback: (formResponseId: number) =>
       [...platformQueryKeys.mypage.all(), 'form-response-feedback', formResponseId] as const,
+    /** 교사회원 배정 강사 동의서 — GET .../assigned-instructors (Class D) */
+    assignedInstructors: (applicationId: number) =>
+      [...platformQueryKeys.mypage.all(), 'assigned-instructors', 'ORGANIZATION', applicationId] as const,
+    programApplications: {
+      all: () => [...platformQueryKeys.mypage.all(), 'program-applications'] as const,
+      /**
+       * 내 신청 목록 — GET /api/portal/me/program-applications (Class C + member scoped)
+       * education은 INDIVIDUAL/ORGANIZATION 두 applicationType을 함께 조회하므로 배열을 키에 포함한다.
+       */
+      list: (params: {
+        applicationTypes: readonly string[]
+        statusGroup: string
+        keyword: string
+        page: number
+        size: number
+      }) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'list',
+          params.applicationTypes.join(','),
+          params.statusGroup,
+          params.keyword,
+          params.page,
+          params.size,
+        ] as const,
+      /** 내 신청 상세 — GET /api/portal/me/program-applications/{applicationType}/{applicationId} */
+      detail: (applicationType: string, applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'detail',
+          applicationType,
+          applicationId,
+        ] as const,
+    },
   },
 } as const

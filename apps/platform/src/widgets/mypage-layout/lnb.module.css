@@ -81,6 +81,15 @@
   margin-top: var(--spacing-8);
 }
 
+/* category PC: default LNB와 동일 색 (텍스트는 inherit) */
+.lnbCategory .item {
+  color: var(--color-neutral-cool-600);
+}
+
+.lnbCategory .itemActive {
+  color: var(--color-primary-700);
+}
+
 /* ── Mobile · ~1079 — 가로 스크롤 메뉴 ── */
 @media (--bp-below-pc) {
   .lnb {
@@ -126,5 +135,30 @@
 
   .ctaWrap {
     margin-top: 0;
+  }
+
+  /* category — 회원정보 설정 필 탭 (모바일만) */
+  .lnbCategory .item {
+    height: 30px;
+    padding: 0 14px;
+    justify-content: center;
+    gap: var(--spacing-6);
+    border-radius: var(--radius-999);
+    background-color: transparent;
+    color: var(--color-neutral-black-30);
+  }
+
+  .lnbCategory .itemActive {
+    gap: 5px;
+    background: var(--color-element-default-gray);
+    color: var(--color-primary-700);
+  }
+
+  .lnbCategory .label,
+  .lnbCategory .labelActive {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 160%;
+    letter-spacing: 0.14px;
   }
 }

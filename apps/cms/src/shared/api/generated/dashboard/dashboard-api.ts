@@ -34,6 +34,7 @@ import type {
   DashboardWidgetLayoutSaveRequest,
   DashboardWidgetListResponse,
   DashboardWidgetProgramFiltersResponse,
+  GeminiOrganizationApplicationListResponse,
   IndividualApplicationDetailResponse,
   IndividualApplicationNotificationResendRequest,
   IndividualApplicationUpdateRequest,
@@ -43,13 +44,17 @@ import type {
   IndividualDocumentEvaluationResponse,
   InstructorApplicationDetailResponse,
   InstructorApplicationsParams,
-  List10Params,
+  List12Params,
+  ListAssignmentsParams,
   NotificationCasePage,
   NotificationUnreadCountResponse,
   Notifications1Params,
   OrganizationApplicationDetailResponse,
+  OrganizationApplicationNotificationResendRequest,
   OrganizationApplicationUpdateRequest,
   OrganizationApplications1Params,
+  OrganizationScheduleListResponse,
+  OrganizationScheduleResponse,
   PageResponse,
   PageResponseIndividualApplicationListItemResponse,
   PageResponseInstructorApplicationListItemResponse,
@@ -57,6 +62,11 @@ import type {
   PageResponseVolunteerApplicationListItemResponse,
   PreferenceResponse,
   PreferenceUpdateRequest,
+  ScheduleChangeRequest,
+  TemporaryScheduleSaveRequest,
+  TrainedTeacherOrganizationActivityGiveUpRequest,
+  TrainedTeacherOrganizationApplicationResponse,
+  TrainedTeacherOrganizationProgressRemovalRequest,
   Update,
   VolunteerApplicationDetailResponse,
   VolunteerApplicationsParams,
@@ -125,6 +135,121 @@ const recordVolunteerDocumentEvaluation = (
       {url: `/api/admin/volunteer-applications/${applicationId}/document-evaluations/${managerSlot}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: volunteerDocumentEvaluationRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - UJAT 기관 임시배정 상세
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)
+ * - 프론트 담당 영역: 프로그램_execution (`program_execution`)
+ * - 호출 방식: `GET /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload
+ * - 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state
+ * - 프론트 조회 키: `get_api_admin_programs_programId_ujat_organization_applications_applicationId_temporary_schedule`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE
+ * - 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: ASSIGNMENT_READ 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.
+ * - `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure
+ * @summary UJAT 기관 임시배정 상세
+ */
+const getTemporarySchedule = (
+    programId: number,
+    applicationId: number,
+ options?: SecondParameter<typeof customInstance<OrganizationScheduleResponse>>,) => {
+      return customInstance<OrganizationScheduleResponse>(
+      {url: `/api/admin/programs/${programId}/ujat/organization-applications/${applicationId}/temporary-schedule`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - UJAT 신청기관 임시 일정/학급 배정 저장
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)
+ * - 프론트 담당 영역: 프로그램_execution (`program_execution`)
+ * - 호출 방식: `PUT /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload
+ * - 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state
+ * - 프론트 조회 키: `put_api_admin_programs_programId_ujat_organization_applications_applicationId_temporary_schedule`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE
+ * - 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: ASSIGNMENT_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.
+ * - `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure
+ * @summary UJAT 신청기관 임시 일정/학급 배정 저장
+ */
+const saveTemporarySchedule = (
+    programId: number,
+    applicationId: number,
+    temporaryScheduleSaveRequest: TemporaryScheduleSaveRequest,
+ options?: SecondParameter<typeof customInstance<OrganizationScheduleResponse>>,) => {
+      return customInstance<OrganizationScheduleResponse>(
+      {url: `/api/admin/programs/${programId}/ujat/organization-applications/${applicationId}/temporary-schedule`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: temporaryScheduleSaveRequest
     },
       options);
     }
@@ -401,8 +526,8 @@ const recordIndividualDocumentEvaluation = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/widgets/{widgetKey}/program-filters`
  *
@@ -455,8 +580,8 @@ const getWidgetProgramFilters = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/widgets/{widgetKey}/program-필터
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/widgets/{widgetKey}/program-filters`
  *
@@ -512,8 +637,8 @@ const saveWidgetProgramFilters = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/widgets/layout
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/widgets/layout`
  *
@@ -568,8 +693,8 @@ const saveDashboardWidgetLayout = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/shortcuts/visibility
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/shortcuts/visibility`
  *
@@ -624,8 +749,8 @@ const saveDashboardShortcutVisibility = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 관리자 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 관리자 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/preferences`
  *
@@ -678,8 +803,8 @@ const dashboardPreferences = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/preferences
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 관리자 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 관리자 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/preferences`
  *
@@ -727,6 +852,81 @@ const saveDashboardPreferences1 = (
       {url: `/api/admin/dashboard/preferences`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: dashboardPreferencesSaveRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - UJAT 기관 일정 수정 요청
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)
+ * - 프론트 담당 영역: 프로그램_execution (`program_execution`)
+ * - 호출 방식: `POST /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/schedule-change-request`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload
+ * - 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state
+ * - 프론트 조회 키: `post_api_admin_programs_programId_ujat_organization_applications_applicationId_schedule_change_request`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE
+ * - 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: ASSIGNMENT_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.
+ * - `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure
+ * @summary UJAT 기관 일정 수정 요청
+ */
+const requestScheduleChange = (
+    programId: number,
+    applicationId: number,
+    scheduleChangeRequest: ScheduleChangeRequest,
+ options?: SecondParameter<typeof customInstance<OrganizationScheduleResponse>>,) => {
+      return customInstance<OrganizationScheduleResponse>(
+      {url: `/api/admin/programs/${programId}/ujat/organization-applications/${applicationId}/schedule-change-request`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: scheduleChangeRequest
+    },
+      options);
+    }
+
+/**
+ * APPLICATION_WRITE 권한과 대상 프로그램의 APPLICATION_REVIEW capability가 필요합니다. 공통 path는 GENERAL 그룹, COMPANY_SCHOOL/ONE_COMPANY_ONE_SCHOOL, UJAT 그룹(UJAT·DGBONG·UJAT_DGBONG)의 APPROVED 또는 REJECTED 기관 신청만 허용합니다. TRAINED_TEACHER와 GEMINI/GEMINI_TRAINING은 403이며 각 전용 path를 사용합니다. AUTO_REJECTED를 포함한 그 외 상태는 409입니다. 신청 상태와 기존 반려 사유는 변경하지 않습니다. Idempotency-Key는 선택 사항이며 동일 키·동일 요청은 최초 응답을 재사용하고 동일 키·다른 요청은 409로 거절합니다. 반려 재발송의 reason만 rejection snapshot에 포함하고, 승인 재발송의 reason은 알림 본문에 넣지 않습니다. UJAT 반려 이벤트는 UJAT_ORGANIZATION_APPLICATION_REJECTED입니다.
+ * @summary 기관 신청 결과 알림 재발송
+ */
+const resendOrganizationApplicationNotification = (
+    applicationId: number,
+    organizationApplicationNotificationResendRequest: OrganizationApplicationNotificationResendRequest,
+ options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
+      return customInstance<ApplicationDecisionResponse>(
+      {url: `/api/admin/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationApplicationNotificationResendRequest
     },
       options);
     }
@@ -1065,8 +1265,8 @@ const updateOrganizationApplication = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/read`
  *
@@ -1119,8 +1319,8 @@ const markRead2 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/hidden`
  *
@@ -1173,8 +1373,8 @@ const hide1 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/clicked`
  *
@@ -1227,8 +1427,8 @@ const markClicked1 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/read-all`
  *
@@ -1552,8 +1752,8 @@ const volunteerApplicationDetail = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 봉사자/UJAT/면접 (`SCR_VOLUNTEER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 봉사자/UJAT/면접 (`null`)
  * - 프론트 담당 영역: volunteer-interviews (`volunteer-interviews`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/volunteer-applications`
  *
@@ -1608,9 +1808,93 @@ const volunteerApplications = (
 
 /**
  * ### 이 API가 하는 일
+ * - UJAT 기관 일정/학급 배정 목록
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)
+ * - 프론트 담당 영역: 프로그램_execution (`program_execution`)
+ * - 호출 방식: `GET /api/admin/programs/{programId}/ujat/organization-schedule-assignments`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload
+ * - 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state
+ * - 프론트 조회 키: `get_api_admin_programs_programId_ujat_organization_schedule_assignments`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE
+ * - 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: ASSIGNMENT_READ 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.
+ * - `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure
+ * @summary UJAT 기관 일정/학급 배정 목록
+ */
+const listAssignments = (
+    programId: number,
+    params?: ListAssignmentsParams,
+ options?: SecondParameter<typeof customInstance<OrganizationScheduleListResponse>>,) => {
+      return customInstance<OrganizationScheduleListResponse>(
+      {url: `/api/admin/programs/${programId}/ujat/organization-schedule-assignments`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * preferredScheduleBlocks는 항상 배열(없으면 []). desiredEducationScheduleMemo는 기타요청/레거시 자유문. 서버는 memo를 blocks로 파싱하지 않는다.
+ * @summary 교육받은 교사 참여 기관 신청 목록 조회
+ */
+const getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications = (
+    programId: string,
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse[]>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationResponse[]>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * 목록과 동일 DTO. preferredScheduleBlocks가 희망 교육 일정 UI SoT.
+ * @summary 교육받은 교사 참여 기관 신청 상세 조회
+ */
+const getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId = (
+    programId: string,
+    applicationId: string,
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 기관/개인/강사 신청 (`SCR_APPLICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 기관/개인/강사 신청 (`null`)
  * - 프론트 담당 영역: applications (`applications`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/organization-applications`
  *
@@ -1666,8 +1950,8 @@ const organizationApplications1 = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 기관/개인/강사 신청 (`SCR_APPLICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 기관/개인/강사 신청 (`null`)
  * - 프론트 담당 영역: applications (`applications`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/instructor-applications`
  *
@@ -1723,8 +2007,8 @@ const instructorApplications = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 기관/개인/강사 신청 (`SCR_APPLICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 기관/개인/강사 신청 (`null`)
  * - 프론트 담당 영역: applications (`applications`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/individual-applications`
  *
@@ -1780,8 +2064,8 @@ const individualApplications = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notifications`
  *
@@ -1835,8 +2119,8 @@ const notifications1 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notifications/unread-count`
  *
@@ -1929,8 +2213,8 @@ const unreadNotificationCount = (
  * - 검토 메모: 2026-08-22 CMS/portal/NEIS/Stibee cross-review aligned API
  * @summary 알림 발송 정책 케이스 목록 조회
  */
-const list10 = (
-    params?: List10Params,
+const list12 = (
+    params?: List12Params,
  options?: SecondParameter<typeof customInstance<NotificationCasePage>>,) => {
       return customInstance<NotificationCasePage>(
       {url: `/api/admin/notifications/cases`, method: 'GET',
@@ -1992,10 +2276,23 @@ const getDashboardShortcutBadges = (
     }
 
 /**
+ * Gemini 기관 신청 목록. content[]에 resultNotificationSentAt(date-time 또는 null)과 availableActions를 포함합니다. APPROVED·REJECTED이면 availableActions에 RESEND_NOTIFICATION이 있습니다. 신청이 없으면 content는 [].
+ * @summary 프로그램 상세 조회
+ */
+const getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications = (
+    programId: string,
+ options?: SecondParameter<typeof customInstance<GeminiOrganizationApplicationListResponse>>,) => {
+      return customInstance<GeminiOrganizationApplicationListResponse>(
+      {url: `/api/admin/gemini/trainings/recruitments/${programId}/organization-applications`, method: 'GET'
+    },
+      options);
+    }
+
+/**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/widgets`
  *
@@ -2048,8 +2345,8 @@ const dashboardWidgets = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/shortcuts`
  *
@@ -2102,8 +2399,8 @@ const dashboardShortcuts = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/recruitments`
  *
@@ -2157,8 +2454,8 @@ const dashboardRecruitments = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/program-schedules`
  *
@@ -2212,8 +2509,8 @@ const dashboardProgramSchedules = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/dashboard/program-inquiries`
  *
@@ -2267,8 +2564,8 @@ const dashboardProgramInquiries = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/dashboard/notifications/count`
  *
@@ -2321,8 +2618,8 @@ const dashboardNotificationCount = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/kpi-progress`
  *
@@ -2376,8 +2673,8 @@ const dashboardKpiProgress = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 대시보드 (`null`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/home`
  *
@@ -2427,8 +2724,77 @@ const dashboardHome = (
       options);
     }
 
-return {recordVolunteerDocumentEvaluation,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list10,getDashboardShortcutBadges,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
+/**
+ * programId와 신청의 TRAINED_TEACHER 프로그램이 일치할 때만 APPROVED·REJECTED 결과 알림을 재발송합니다. 불일치는 TRAINED_TEACHER_ORGANIZATION_APPLICATION_NOT_FOUND입니다. 공통 organization-applications 재발송 path는 403입니다. 신청 상태와 기존 반려 사유는 바꾸지 않습니다. AUTO_REJECTED를 포함한 그 외 상태는 409입니다.
+ * @summary 교육받은 교사 기관 신청 결과 알림 재발송
+ */
+const resendTrainedTeacherOrganizationApplicationNotification = (
+    programId: number,
+    applicationId: number,
+    organizationApplicationNotificationResendRequest: OrganizationApplicationNotificationResendRequest,
+ options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
+      return customInstance<ApplicationDecisionResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationApplicationNotificationResendRequest
+    },
+      options);
+    }
+
+/**
+ * GEMINI 또는 GEMINI_TRAINING(그룹 SEMINAR) 기관 신청의 APPROVED·REJECTED 결과만 재발송합니다. 공통 organization-applications 재발송 path는 403입니다. 신청 상태와 기존 반려 사유는 바꾸지 않습니다. AUTO_REJECTED를 포함한 그 외 상태는 409입니다.
+ * @summary Gemini 기관 신청 결과 알림 재발송
+ */
+const resendGeminiOrganizationApplicationNotification = (
+    applicationId: number,
+    organizationApplicationNotificationResendRequest: OrganizationApplicationNotificationResendRequest,
+ options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
+      return customInstance<ApplicationDecisionResponse>(
+      {url: `/api/admin/gemini/trainings/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationApplicationNotificationResendRequest
+    },
+      options);
+    }
+
+/**
+ * 승인 상태를 유지하고 활동 포기 시각만 기록합니다. stopScheduleId는 해당 프로그램 일정이어야 합니다. 이미 포기하면 409 TRAINED_TEACHER_ACTIVITY_ALREADY_GIVEN_UP. 교육일지와 완료 증빙은 삭제하지 않습니다.
+ * @summary 교육받은 교사 기관 활동 포기
+ */
+const postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUp = (
+    programId: number,
+    applicationId: number,
+    trainedTeacherOrganizationActivityGiveUpRequest: TrainedTeacherOrganizationActivityGiveUpRequest,
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/give-up`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: trainedTeacherOrganizationActivityGiveUpRequest
+    },
+      options);
+    }
+
+/**
+ * 활동 포기가 아닙니다. applicationStatus를 APPROVAL_CANCELLED로 바꿔 APPROVED 목록에서 제외합니다. 교육일지 또는 COMPLETED 완료 증빙이 있으면 409 TRAINED_TEACHER_PROGRESS_EVIDENCE_EXISTS. 물리 삭제하지 않고 PENDING으로 되돌리지 않습니다.
+ * @summary 교육받은 교사 진행 현황에서 기관 제외
+ */
+const postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgress = (
+    programId: number,
+    applicationId: number,
+    trainedTeacherOrganizationProgressRemovalRequest: TrainedTeacherOrganizationProgressRemovalRequest,
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/remove-from-progress`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: trainedTeacherOrganizationProgressRemovalRequest
+    },
+      options);
+    }
+
+return {recordVolunteerDocumentEvaluation,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications,getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list12,getDashboardShortcutBadges,getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome,resendTrainedTeacherOrganizationApplicationNotification,resendGeminiOrganizationApplicationNotification,postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUp,postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgress}};
 export type RecordVolunteerDocumentEvaluationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['recordVolunteerDocumentEvaluation']>>>
+export type GetTemporaryScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getTemporarySchedule']>>>
+export type SaveTemporaryScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveTemporarySchedule']>>>
 export type Preferences1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['preferences1']>>>
 export type UpdatePreferences1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['updatePreferences1']>>>
 export type GetDashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getDashboardPreferences']>>>
@@ -2440,6 +2806,8 @@ export type SaveDashboardWidgetLayoutResult = NonNullable<Awaited<ReturnType<Ret
 export type SaveDashboardShortcutVisibilityResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveDashboardShortcutVisibility']>>>
 export type DashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardPreferences']>>>
 export type SaveDashboardPreferences1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveDashboardPreferences1']>>>
+export type RequestScheduleChangeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['requestScheduleChange']>>>
+export type ResendOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendOrganizationApplicationNotification']>>>
 export type ReadDashboardShortcutBadgeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['readDashboardShortcutBadge']>>>
 export type UnmaskIndividualApplicationDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['unmaskIndividualApplicationDetail']>>>
 export type ResendIndividualApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendIndividualApplicationNotification']>>>
@@ -2456,13 +2824,17 @@ export type IndividualApplicationDetailResult = NonNullable<Awaited<ReturnType<R
 export type UpdateIndividualApplicationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['updateIndividualApplication']>>>
 export type VolunteerApplicationDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['volunteerApplicationDetail']>>>
 export type VolunteerApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['volunteerApplications']>>>
+export type ListAssignmentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['listAssignments']>>>
+export type GetApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications']>>>
+export type GetApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId']>>>
 export type OrganizationApplications1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['organizationApplications1']>>>
 export type InstructorApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['instructorApplications']>>>
 export type IndividualApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['individualApplications']>>>
 export type Notifications1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['notifications1']>>>
 export type UnreadNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['unreadNotificationCount']>>>
-export type List10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['list10']>>>
+export type List12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['list12']>>>
 export type GetDashboardShortcutBadgesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getDashboardShortcutBadges']>>>
+export type GetApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications']>>>
 export type DashboardWidgetsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardWidgets']>>>
 export type DashboardShortcutsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardShortcuts']>>>
 export type DashboardRecruitmentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardRecruitments']>>>
@@ -2471,3 +2843,7 @@ export type DashboardProgramInquiriesResult = NonNullable<Awaited<ReturnType<Ret
 export type DashboardNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardNotificationCount']>>>
 export type DashboardKpiProgressResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardKpiProgress']>>>
 export type DashboardHomeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardHome']>>>
+export type ResendTrainedTeacherOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendTrainedTeacherOrganizationApplicationNotification']>>>
+export type ResendGeminiOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendGeminiOrganizationApplicationNotification']>>>
+export type PostApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUpResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUp']>>>
+export type PostApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgressResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgress']>>>

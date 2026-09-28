@@ -26,15 +26,12 @@ import {
   useReorderBoardMembersInGroup,
   useSetBoardMemberPublic,
 } from '@/features/board-members/api/hooks'
-import { boardMembersQueryKeys } from '@/features/board-members/api/query-keys'
-import { BOARD_MEMBERS_CHANGED_EVENT } from '@/features/board-members/api/store'
 import { BoardMemberFormModal } from '@/features/board-members/ui/board-member-form-modal'
 import {
   BoardMemberDragHandle,
   BoardMembersSortableTable,
 } from '@/features/board-members/ui/sortable-table'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, CmsInput, ConfirmModal, PageContentLoading, useCmsAlert } from '@/shared/ui'
 
 import './board-panel.css'
@@ -151,8 +148,6 @@ export function BoardPanel() {
   const [selectedKeys, setSelectedKeys] = useState<Key[]>([])
   const [registerOpen, setRegisterOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-
-  useInvalidateOnWindowEvent(BOARD_MEMBERS_CHANGED_EVENT, boardMembersQueryKeys.lists())
 
   const groups = useMemo(() => {
     return BOARD_ROLE_GROUP_ORDER.map(roleGroup => ({

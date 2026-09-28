@@ -24,7 +24,7 @@
 | 영역 | 기능 | 현재 API | FE | 서버 보완 |
 |------|------|----------|-----|-----------|
 | 기관 신청 | 목록·승인/반려·일괄·승인/반려 취소 | ✅ | ✅ | — |
-| 기관 신청 | 알림 재발송 | — | unavailable | **보류** (BE 요청 제외) |
+| 기관 신청 | 알림 재발송 | ✅ `POST …/notifications/resend` | ✅ FE 연동 (2026-09-27) | [BE 검증 요청](./general-organization-application-notification-resend-backend-request-2026-09-27.md) · JABACK FE handoff 2026-09-27 |
 | 기관 신청/참여 | 상세 GET / 필드 PATCH | — | unavailable (합반 제외) | GET/PATCH 필요 |
 | 합반 | merge-groups CRUD | ✅ | ✅ | `leadTeacherMemberId` create 누락 |
 | 참여 기관 목록 | participants ORGANIZATION enrich | 부분 | adapter 빈값 다수 | 학년·교재·지역·`organizationApplicationId` |
@@ -66,7 +66,7 @@
 | 기관 신청 목록/상세 | 승인·반려 | `POST …/organization-applications/{id}/approve\|reject` | ✅ |
 | 기관 신청 목록 | 일괄 승인·반려 (≥2) | `POST …/organization-applications/bulk-approve\|bulk-reject` | ✅ |
 | 기관 신청 상세 | 승인 취소 · 반려 취소 | `POST …/cancel-approval\|cancel-rejection` | ✅ |
-| 기관 신청 상세 | 알림 재발송 | — | ⏸ 보류 |
+| 기관 신청 상세 | 알림 재발송 | ✅ path | ✅ FE 연동 (2026-09-27) |
 | 기관 신청 상세 | 상세 GET / 필드 PATCH | — | ❌ unavailable (합반 제외) |
 | 기관 신청/참여 상세 | 합반 | `GET/POST/DELETE …/organization-merge-groups` | ✅ |
 | 합반 | 담당 교사 `leadTeacherMemberId` create/update | — (응답에만 필드) | ❌ unavailable |
@@ -82,7 +82,7 @@
 - 합반 저장 후 파트너 학년 교재명 동기화 계약 없음
 - **`CreateMergeRequest`에 `leadTeacherMemberId` 누락**
 - 기관 신청 전용 unmask 부재
-- 알림 재발송 — **보류**
+- 알림 재발송 — ✅ FE 연동 (2026-09-27) · `RESEND_NOTIFICATION` · `resultNotificationSentAt`
 
 **프로그램 진행 현황 > 참여 기관**
 

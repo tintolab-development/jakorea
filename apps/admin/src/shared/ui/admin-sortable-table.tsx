@@ -46,6 +46,12 @@ type RowContextProps = {
 
 const AdminSortableRowContext = createContext<RowContextProps>({})
 
+/**
+ * DnD 잠금은 row 컴포넌트 identity를 바꾸지 말고 context로 전달한다.
+ * Ant Table `components.body.row`가 바뀌면 tbody가 remount되어 썸네일·스위치가 통째로 점프한다.
+ */
+const AdminSortableDragLockContext = createContext(false)
+
 const restrictToVerticalAxis: Modifier = ({ transform }) => ({
   ...transform,
   x: 0,
@@ -65,6 +71,8 @@ type SortableRowProps = React.HTMLAttributes<HTMLTableRowElement> & {
 export const AdminSortableTableRow: React.FC<
   SortableRowProps & { dragDisabled?: boolean }
 > = ({ dragDisabled = false, ...props }) => {
+  const lockFromShell = useContext(AdminSortableDragLockContext)
+  const isDragDisabled = dragDisabled || lockFromShell
   const rowId = String(props['data-row-key'] ?? '')
   const {
     attributes,
@@ -75,7 +83,7 @@ export const AdminSortableTableRow: React.FC<
     isDragging,
   } = useSortable({
     id: rowId,
-    disabled: dragDisabled,
+    disabled: isDragDisabled,
     transition: INSTANT_TRANSITION,
   })
 
@@ -99,10 +107,10 @@ export const AdminSortableTableRow: React.FC<
   const contextValue = useMemo<RowContextProps>(
     () => ({
       setActivatorNodeRef,
-      listeners: dragDisabled ? undefined : listeners,
-      disabled: dragDisabled,
+      listeners: isDragDisabled ? undefined : listeners,
+      disabled: isDragDisabled,
     }),
-    [setActivatorNodeRef, listeners, dragDisabled]
+    [setActivatorNodeRef, listeners, isDragDisabled]
   )
 
   return (
@@ -111,7 +119,7 @@ export const AdminSortableTableRow: React.FC<
         {...props}
         ref={setNodeRef}
         style={style}
-        {...(dragDisabled ? {} : attributes)}
+        {...(isDragDisabled ? {} : attributes)}
         data-dragging={isDragging ? 'true' : undefined}
       />
     </AdminSortableRowContext.Provider>
@@ -225,17 +233,21 @@ export function useAdminTableDndReorder<T extends AdminSortableRowId>({
 export function AdminSortableDndShell({
   rowIds,
   dndContextProps,
+  dragDisabled = false,
   children,
 }: {
   rowIds: string[]
   dndContextProps: ReturnType<typeof useAdminTableDndReorder>['dndContextProps']
+  dragDisabled?: boolean
   children: ReactNode
 }) {
   return (
-    <DndContext {...dndContextProps}>
-      <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
-        {children}
-      </SortableContext>
-    </DndContext>
+    <AdminSortableDragLockContext.Provider value={Boolean(dragDisabled)}>
+      <DndContext {...dndContextProps}>
+        <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
+          {children}
+        </SortableContext>
+      </DndContext>
+    </AdminSortableDragLockContext.Provider>
   )
 }

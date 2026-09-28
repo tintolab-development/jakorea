@@ -1,44 +1,31 @@
 /**
- * 프로그램 소개 — 진로·취업 / 경제·금융 / 디지털 리터러시 탭
+ * 프로그램 소개 — 진로·취업 / 경제·금융 / 기업가 정신 / 디지털 리터러시
  */
 
 import { useCallback, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
-import type { ProgramIntroCategoryKey } from '@/entities/education-program-intro/model/types'
+import type { ProgramIntroTabKey } from '@/entities/education-program-intro/model/types'
 import { useProgramIntroCategory } from '@/features/education-program-intro/api/hooks'
-import { educationProgramIntroQueryKeys } from '@/features/education-program-intro/api/query-keys'
-import { EDUCATION_PROGRAM_INTRO_CHANGED_EVENT } from '@/features/education-program-intro/api/store'
+import {
+  PROGRAM_INTRO_TABS,
+  fieldCodeForTab,
+  parseProgramIntroTab,
+} from '@/features/education-program-intro/lib/field-codes'
 import { ProgramIntroFormCard } from '@/features/education-program-intro/ui/form-card'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsTextTabs } from '@/shared/ui'
 
 import './page.css'
 
-const TAB_ITEMS = [
-  { key: 'career' as const, label: '진로·취업' },
-  { key: 'economy' as const, label: '경제·금융' },
-  { key: 'digital' as const, label: '디지털 리터러시' },
-]
-
-function parseTab(raw: string | null): ProgramIntroCategoryKey {
-  if (raw === 'economy' || raw === 'digital') return raw
-  return 'career'
-}
-
 function ProgramIntroCategoryPanel({
-  categoryKey,
+  tab,
   onEditingChange,
 }: {
-  categoryKey: ProgramIntroCategoryKey
+  tab: ProgramIntroTabKey
   onEditingChange: (isEditing: boolean) => void
 }) {
-  const docQuery = useProgramIntroCategory(categoryKey)
-
-  useInvalidateOnWindowEvent(
-    EDUCATION_PROGRAM_INTRO_CHANGED_EVENT,
-    educationProgramIntroQueryKeys.all
-  )
+  const fieldCode = fieldCodeForTab(tab)
+  const docQuery = useProgramIntroCategory(fieldCode)
 
   if (docQuery.isLoading) {
     return (
@@ -56,43 +43,43 @@ function ProgramIntroCategoryPanel({
     )
   }
 
-  return (
-    <ProgramIntroFormCard data={docQuery.data} onEditingChange={onEditingChange} />
-  )
+  return <ProgramIntroFormCard data={docQuery.data} onEditingChange={onEditingChange} />
 }
 
 export function EducationProgramsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeTab = useMemo(() => parseTab(searchParams.get('tab')), [searchParams])
+  const activeTab = useMemo(() => parseProgramIntroTab(searchParams.get('tab')), [searchParams])
   const [isEditing, setIsEditing] = useState(false)
 
   const handleTabChange = useCallback(
-    (key: ProgramIntroCategoryKey) => {
+    (key: string) => {
       if (isEditing) return
+      const next = parseProgramIntroTab(key)
       setIsEditing(false)
       setSearchParams(
         prev => {
-          const next = new URLSearchParams(prev.toString())
-          if (key === 'career') {
-            next.delete('tab')
+          const params = new URLSearchParams(prev.toString())
+          if (next === 'career') {
+            params.delete('tab')
           } else {
-            next.set('tab', key)
+            params.set('tab', next)
           }
-          return next
+          return params
         },
-        { replace: true }
+        { replace: true },
       )
     },
-    [isEditing, setSearchParams]
+    [isEditing, setSearchParams],
   )
 
   const tabItems = useMemo(
     () =>
-      TAB_ITEMS.map(item => ({
-        ...item,
+      PROGRAM_INTRO_TABS.map(item => ({
+        key: item.key,
+        label: item.label,
         disabled: isEditing,
       })),
-    [isEditing]
+    [isEditing],
   )
 
   return (
@@ -107,7 +94,7 @@ export function EducationProgramsPage() {
       />
       <ProgramIntroCategoryPanel
         key={activeTab}
-        categoryKey={activeTab}
+        tab={activeTab}
         onEditingChange={setIsEditing}
       />
     </div>

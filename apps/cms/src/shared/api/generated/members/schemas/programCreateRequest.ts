@@ -93,6 +93,6 @@ export interface ProgramCreateRequest {
   autoApplyDefaultFormBindings?: boolean;
   /** 프로그램 등록 중 사용한 관리자 draft ID. formBindings 지정 시 필수 */
   programDraftId?: number;
-  /** 일반 프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings */
+  /** 프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings. GENERAL / TRAINED_TEACHER / COMPANY_SCHOOL / UJAT에서 허용. 공용 카탈로그 version id는 거부하고 draft-owned COPY만 받는다. */
   formBindings?: ProgramFormBindingRequest[];
 }

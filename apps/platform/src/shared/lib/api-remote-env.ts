@@ -1,9 +1,10 @@
 /**
  * 백엔드 URL·프록시 여부 — axios·auth 레이어에서 사용.
- * CMS `apps/cms/src/shared/lib/api-remote-env.ts`와 동일 규칙.
+ * CMS `apps/cms/src/shared/lib/api-remote-env.ts`와 동일 규칙 + Homepage 이중 프록시.
  *
- * - `VITE_API_BASE_URL`: 브라우저가 직접 호출할 오리진 (배포·CORS)
- * - `VITE_API_SERVER`: 로컬은 Vite `/api` 프록시 타깃, 배포는 프록시가 없으므로 동일 오리진으로 사용
+ * - `VITE_API_BASE_URL`: 브라우저가 직접 호출할 오리진 (크로스 오리진 — 백엔드 CORS)
+ * - `VITE_API_SERVER`: 로컬 Vite `/api/portal`, `/api/auth` → CMS(8080) 로그인·회원·NICE
+ * - `VITE_HOMEPAGE_API_SERVER`: 로컬 Vite `/api` → JAHOMEADMINBACK(8081) 공개 홈
  */
 
 function backendOriginFromEnv(): string | undefined {
@@ -14,19 +15,31 @@ function backendOriginFromEnv(): string | undefined {
   return fromEnv || undefined
 }
 
+function homepageOriginFromEnv(): string | undefined {
+  const raw = import.meta.env.VITE_HOMEPAGE_API_SERVER?.trim()
+  return raw || undefined
+}
+
 export function getApiBaseUrl(): string {
   const raw = import.meta.env.VITE_API_BASE_URL?.trim()
   if (raw) return raw.replace(/\/$/, '')
-  if (import.meta.env.DEV && backendOriginFromEnv()) {
+  if (import.meta.env.DEV) {
     return ''
   }
-  const productionOrigin = backendOriginFromEnv()
+  const productionOrigin = backendOriginFromEnv() || homepageOriginFromEnv()
   if (productionOrigin) return productionOrigin.replace(/\/$/, '')
   return ''
 }
 
-/** 백엔드가 구성되어 있으면 true (직접 URL 또는 dev 프록시). */
+/** CMS/Portal(8080) — 로그인·회원가입·세션. */
 export function isRemoteApiConfigured(): boolean {
   if (import.meta.env.VITE_API_BASE_URL?.trim()) return true
   return !!backendOriginFromEnv()
+}
+
+/** Homepage Admin(8081) — `GET /api/public/main` 등. 로컬 Vite는 미설정 시 8081. */
+export function isHomepageApiConfigured(): boolean {
+  if (import.meta.env.VITE_API_BASE_URL?.trim()) return true
+  if (homepageOriginFromEnv()) return true
+  return import.meta.env.DEV
 }

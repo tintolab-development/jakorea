@@ -1,6 +1,7 @@
 import type {
   PiiAccessListFilter,
   PiiAccessListResult,
+  PiiAccessLog,
 } from '@/entities/pii-access-log/model/types'
 import {
   defaultXlsxFilename,
@@ -14,7 +15,7 @@ import {
   toPrivacyAccessExportParams,
   toPrivacyAccessParams,
 } from './mappers'
-import { listPiiAccessLogs } from './store'
+import { listPiiAccessLogs, listPiiAccessLogsAll } from './store'
 
 function logsApi() {
   return getJAKoreaHomepageAdminAPILogsSubset()
@@ -30,11 +31,13 @@ export async function listPiiAccessLogsService(
   return listPiiAccessLogs(filter)
 }
 
-/** remote: 서버 xlsx export / local: 호출측에서 CSV 유지 */
+/** remote: 서버 xlsx export / local: 필터 전체 CSV (페이지 무시) */
 export async function exportPiiAccessLogsService(
   filter: PiiAccessListFilter,
-): Promise<'remote-downloaded' | 'use-local-csv'> {
-  if (!shouldUsePiiAccessLogRemoteApi()) return 'use-local-csv'
+): Promise<'remote-downloaded' | { source: 'local'; rows: PiiAccessLog[] }> {
+  if (!shouldUsePiiAccessLogRemoteApi()) {
+    return { source: 'local', rows: listPiiAccessLogsAll(filter) }
+  }
 
   const response = await axiosInstance.get<ArrayBuffer>(
     '/api/admin/logs/privacy-access/export',

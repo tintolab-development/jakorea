@@ -15,6 +15,9 @@ export function useAdminProvisionedIdentityVerification(
     client: adminProvisionedIdentityVerificationClient,
     birthDate: options.birthDate,
     gender: options.gender ?? undefined,
+    /** start는 expected*를 보내지 않음. 로그인 직후 wizard에 생년월일이 없어도 팝업을 연다. */
+    requireBirthGender: false,
+    requireName: false,
     onSuccess: options.onSuccess,
   })
 }

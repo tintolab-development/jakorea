@@ -31,14 +31,23 @@
 .media {
   display: flex;
   width: 100%;
-  height: 335px;
+  height: 355px;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   aspect-ratio: 126 / 71;
   border-radius: var(--radius-16);
   background: #000;
   box-shadow: 0 0 140.4px 0 rgb(0 0 0 / 6%) inset;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .content {
@@ -49,8 +58,8 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-28);
-  /* 이미지 영역(335)과 맞춰 슬라이드 전환 시 높이 시프트 방지 */
-  min-height: 335px;
+  /* 이미지 영역(355)과 맞춰 슬라이드 전환 시 높이 시프트 방지 */
+  min-height: 355px;
 }
 
 .header {
@@ -133,6 +142,27 @@
   .media {
     width: 100%;
     height: auto;
+  }
+  .content {
+    min-height: auto;
+    gap: var(--spacing-16);
+  }
+  .carousel {
+    padding: var(--spacing-20) var(--spacing-16);
+  }
+  .title {
+    min-height: auto;
+    font-size: 20px;
+  }
+  .date {
+    font-size: 14px;
+  }
+  .summary {
+    min-height: auto;
+    font-size: 16px;
+  }
+  .controls {
+    margin-top: var(--spacing-16);
   }
 }
 

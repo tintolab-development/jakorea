@@ -344,3 +344,7 @@
   font-weight: 700;
   line-height: 155%;
 }
+
+.closingRemote {
+  white-space: pre-line;
+}

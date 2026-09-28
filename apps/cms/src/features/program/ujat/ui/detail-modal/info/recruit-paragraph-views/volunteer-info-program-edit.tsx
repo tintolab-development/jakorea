@@ -98,12 +98,12 @@ export function UjatRecruitVolunteerInfoProgramEdit({
             label="공고용 프로그램명"
             edit={
               <Controller
-                name="mainTitle"
+                name="announcementTitle"
                 control={form.control}
                 render={({ field }) => (
                   <CmsInput
                     {...field}
-                    value={field.value ?? program.title ?? ''}
+                    value={field.value ?? ''}
                     inputSize="medium"
                     width="100%"
                     placeholder="공고용 프로그램명을 입력하세요"

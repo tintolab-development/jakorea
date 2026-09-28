@@ -100,6 +100,34 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     expect(hydrated.sessions?.[0]?.date).toBe('2026.03.10(화) 오전')
   })
 
+  it('does not fill grade, address, or teacher contact from the TT basic-info form answer', () => {
+    const form = formWithAnswers([
+      {
+        questionKeySnapshot: 'program-application-trained-teachers-seed-basic-info',
+        answerDisplayText: '{schoolName=서울초, applicationGrade=2, applicationReason=사유}',
+        answerValueJson: JSON.stringify({
+          applicationGrade: '2',
+          addressDetail: '3층 교무실',
+          applicationReason: '금융 교육',
+          otherRequests: '주차',
+          teacherName: '이건희',
+          teacherMobile: '010-****-9470',
+          teacherEmail: '2k***@tinto.co.kr',
+        }),
+      },
+    ])
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: { ...baseRow, educationGrade: '3~6학년', detail: { addressDetail: '본관' } },
+      formResponse: form,
+    })
+    expect(hydrated.educationGrade).toBe('3~6학년')
+    expect(hydrated.detail?.addressDetail).toBe('본관')
+    expect(hydrated.detail?.applicationReason).toBeUndefined()
+    expect(hydrated.detail?.otherRequests).toBeUndefined()
+    expect(hydrated.detail?.teacherEmail).toBeUndefined()
+    expect(hydrated.teacherName).toBe('김교사')
+  })
+
   it('keeps list DTO fields when form answers are empty', () => {
     const hydrated = hydrateOrganizationApplicationRowFromForm({
       row: { ...baseRow, region: '서울', educationGrade: '중1' },

@@ -6,7 +6,7 @@
   justify-content: space-between;
   gap: var(--spacing-32);
   padding-block: var(--spacing-24) 0;
-  border-top: 1px solid var(--color-neutral-cool-200);
+  border-top: 2px solid var(--color-border-light);
 }
 
 .link {
@@ -35,7 +35,7 @@
   min-width: 0;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-2);
 }
 
 .copyNext {
@@ -55,4 +55,14 @@
 .placeholder {
   flex: 0 0 auto;
   width: 0;
+}
+
+@media (--bp-below-pc) {
+  .nav {
+    gap: var(--spacing-16);
+  }
+
+  .link {
+    gap: var(--spacing-12);
+  }
 }

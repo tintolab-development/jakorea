@@ -18,7 +18,7 @@ export interface TextbookCreateRequest {
      * @minLength 0
      * @maxLength 1000
      */
-  educationEffect: string;
+  educationEffect?: string;
   /**
      * @minLength 0
      * @maxLength 300

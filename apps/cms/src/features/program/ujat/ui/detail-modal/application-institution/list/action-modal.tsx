@@ -3,6 +3,7 @@ import {
   type PermissionModalPayload,
   type PermissionModalVariant,
 } from '@/shared/components/permission-modal'
+import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 
 /** 목록·신청 기관 상세 일괄/단건 반려 */
 export type UjatInstitutionApplicationRejectModalAction =
@@ -72,34 +73,6 @@ function getModalCopy(
     }
   }
 
-  if (action === 'application_reject') {
-    if (variant === 'single') {
-      return {
-        permissionVariant: 'reject',
-        title: '기관 반려 안내',
-        message: `**[${displayName}]**의 프로그램 참여를 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 담당 교사에게 전달되며, 알림이 발송됩니다.`,
-        confirmLabel: '반려',
-        confirmVariant: 'delete',
-        requireReason: true,
-        reasonLabel: '반려 사유',
-        reasonPlaceholder: '반려 사유를 입력해 주세요.',
-        reasonRequiredMessage: '반려 사유를 입력해 주세요.',
-      }
-    }
-
-    return {
-      permissionVariant: 'reject',
-      title: '기관 일괄 반려 안내',
-      message: `선택한 **${selectionCount}개**의 모든 기관의 프로그램 참여를 일괄 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 각 담당 교사에게 개별로 전달되며, 알림이 발송됩니다.`,
-      confirmLabel: '반려',
-      confirmVariant: 'delete',
-      requireReason: true,
-      reasonLabel: '반려 사유',
-      reasonPlaceholder: '반려 사유를 입력해 주세요.',
-      reasonRequiredMessage: '반려 사유를 입력해 주세요.',
-    }
-  }
-
   if (action === 'temp_reject') {
     if (variant === 'single') {
       return {
@@ -140,6 +113,20 @@ export function UjatInstitutionApplicationActionModal({
   onCancel,
   onConfirm,
 }: UjatInstitutionApplicationActionModalProps) {
+  if (action === 'application_reject') {
+    return (
+      <ProgramApplicationRejectModal
+        open={open}
+        audience="institution"
+        variant={variant}
+        subjectName={institutionName}
+        selectionCount={selectionCount}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />
+    )
+  }
+
   const copy = getModalCopy(action, variant, institutionName, selectionCount)
 
   return (

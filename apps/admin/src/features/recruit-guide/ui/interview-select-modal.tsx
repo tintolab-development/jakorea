@@ -102,8 +102,9 @@ export function InterviewSelectModal({ open, selectedStoryId, onCancel, onSelect
       {
         title: '진행년도',
         key: 'year',
-        width: 140,
+        width: 160,
         align: 'center',
+        className: 'recruit-guide-interview-modal__year',
         render: (_value, record) => `${storyYear(record)}년`,
       },
       {
@@ -172,7 +173,7 @@ export function InterviewSelectModal({ open, selectedStoryId, onCancel, onSelect
             총 {totalCount.toLocaleString('ko-KR')}건
           </p>
           <Table<ImpactStory>
-            className="cms-data-table recruit-guide-interview-modal__table"
+            className="cms-data-table cms-data-table--skip-auto-no-col recruit-guide-interview-modal__table"
             rowKey="id"
             loading={listQuery.isLoading}
             dataSource={rows}

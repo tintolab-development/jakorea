@@ -29,13 +29,17 @@ import {
 import {
   PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS,
   PROGRAM_REGISTRATION_IDS,
+  PROGRAM_REGISTRATION_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-economy-draft'
 import {
   PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
   shouldHideMultipleChoiceAllowMultipleTitleHint,
 } from '@/features/template/model/program-application-form-individual-draft'
-import { PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-institution-draft'
+import {
+  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
+  PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/program-application-form-institution-draft'
 import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import { ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/economy-recruit-form-institution-draft'
@@ -56,6 +60,15 @@ import {
   shouldUseScheduleEventBlockLayout,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { resolveProgramRegistrationScheduleCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
+import { getInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  resolveInstitutionPreferredScheduleDescription,
+  shouldUseInstitutionPreferredScheduleCardCopy,
+} from '@/features/template/lib/institution-application-schedule-copy'
+import {
+  InstitutionPreferredScheduleCardDescription,
+  InstitutionPreferredScheduleCardTitleTrailing,
+} from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-preferred-schedule-paragraph'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
 import {
@@ -190,6 +203,7 @@ function usesPlaceholderDescriptionValue(paragraphId: string): boolean {
     GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    PROGRAM_REGISTRATION_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
@@ -227,10 +241,12 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   if (pr.programRegistrationFormVariant === 'economy') {
     return heading
   }
+  const displayTitle =
+    pr.programType === 'schedule' ? '교육 진행 (일정형)' : '교육 진행 (커리큘럼)'
   if (pr.programRegistrationFormVariant === 'trainedTeachers') {
     const teacherTrainingToggle = (
       <CmsToggle
-        label="교사 연수"
+        label="교육 연수"
         checked={pr.trainedTeachersTeacherTrainingEnabled}
         onChange={pr.onTrainedTeachersTeacherTrainingEnabledChange}
       />
@@ -261,6 +277,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
 
       return {
         ...heading,
+        titleValue: displayTitle,
         descriptionValue: scheduleDescription,
         titleTrailing: (
           <div
@@ -323,6 +340,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
     return {
       ...heading,
+      titleValue: displayTitle,
       titleTrailing: (
         <div
           className="program-registration-paragraph__card-title-actions"
@@ -377,6 +395,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     if (isScheduleEventLayout) {
       return {
         ...heading,
+        titleValue: displayTitle,
         descriptionValue: scheduleDescription,
         titleTrailing: (
           <div
@@ -412,6 +431,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     if (pr.sessionRoundType === 'multi' || !allowProgressGroupAdd) {
       return {
         ...heading,
+        titleValue: displayTitle,
         descriptionValue: scheduleDescription,
         titleTrailing: (
           <div
@@ -441,6 +461,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
 
     return {
       ...heading,
+      titleValue: displayTitle,
       descriptionValue: scheduleDescription,
       titleTrailing: (
         <div
@@ -496,6 +517,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     !isMulti && pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
   return {
     ...heading,
+    titleValue: displayTitle,
     titleTrailing: (
       <div
         className="program-registration-paragraph__card-title-actions"
@@ -600,6 +622,34 @@ export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrai
         수업 진행 시간 추가
       </CmsButton>
     ),
+  }
+}
+
+/** 일반 참여 기관 신청 — 진행 희망 교육 일정(커리큘럼 복수+기간): 시안 설명·제목 줄 추가 버튼 */
+export function withInstitutionApplicationPreferredScheduleHeading(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  if (
+    paragraphBodyOptions?.programApplicationFormInstitution !== true ||
+    paragraph.id !== PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
+  ) {
+    return heading
+  }
+  const bridge = getInstitutionApplicationProgramBridge()
+  if (!shouldUseInstitutionPreferredScheduleCardCopy(bridge)) {
+    return heading
+  }
+  const description = resolveInstitutionPreferredScheduleDescription(bridge)
+  const readOnly = paragraphBodyOptions.paragraphInteractionMode === 'preview'
+  return {
+    ...heading,
+    descriptionValue: description,
+    descriptionIsEditMode: false,
+    showDescription: true,
+    descriptionViewContent: <InstitutionPreferredScheduleCardDescription />,
+    titleTrailing: <InstitutionPreferredScheduleCardTitleTrailing readOnly={readOnly} />,
   }
 }
 
@@ -873,12 +923,15 @@ export function paragraphEditableHeading(
   updateParagraph: FormEditorLeftPanelProps['updateParagraph'],
   editorKind: FormEditorKind,
   structureLockedParagraphIds?: ReadonlySet<string>,
-  headingDescriptionExtraClassName?: string
+  headingDescriptionExtraClassName?: string,
+  allowStructureLockedOperationalFill = false
 ) {
   const descCls = (base?: string) =>
     mergeHeadingDescriptionClassName(base, headingDescriptionExtraClassName)
   const prefix = getFormParagraphTitleNumberPrefix(paragraphs, paragraph, titleNumbering)
-  const locked = structureLockedParagraphIds?.has(paragraph.id) ?? false
+  const locked =
+    (structureLockedParagraphIds?.has(paragraph.id) ?? false) &&
+    !allowStructureLockedOperationalFill
 
   if (locked && EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS.has(paragraph.id)) {
     return buildEducatorFacilitatorPledgeLockedHeading(paragraph, prefix, descCls, editorKind)

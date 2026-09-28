@@ -4,6 +4,7 @@
 
 import {
   hydrateAllUjatRecruitTemplatesFromRemote,
+  hydrateUjatRecruitTemplatesForProgram,
   loadUjatRecruitInstitutionTemplateSave,
   loadUjatRecruitVolunteerTemplateSave,
   UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT,
@@ -15,7 +16,11 @@ import { normalizeWritingFormDraft, type WritingFormDraft } from '@/features/tem
 export const UJAT_RECRUIT_INSTITUTION_TEMPLATE_ID = 'recruitment-ujat-school' as const
 export const UJAT_RECRUIT_VOLUNTEER_TEMPLATE_ID = 'recruitment-ujat-volunteer' as const
 
-export { hydrateAllUjatRecruitTemplatesFromRemote, UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT }
+export {
+  hydrateAllUjatRecruitTemplatesFromRemote,
+  hydrateUjatRecruitTemplatesForProgram,
+  UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT,
+}
 
 export function getUjatRecruitInstitutionDraft(): WritingFormDraft {
   const saved = loadUjatRecruitInstitutionTemplateSave()

@@ -1,0 +1,32 @@
+.page {
+  position: relative;
+  display: flex;
+  width: 100vw;
+  min-width: 0;
+  flex-direction: column;
+  margin-left: calc(50% - 50vw);
+  overflow-x: clip;
+}
+
+.darkBand,
+.lightBand {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow-x: clip;
+}
+
+.darkBand {
+  background-color: var(--color-primary-800);
+  color: var(--color-neutral-white);
+}
+
+.eraTone {
+  background-image: linear-gradient(180deg, var(--color-primary-800) 0%, #375562 100%);
+}
+
+.lightBand {
+  background-color: var(--color-neutral-white);
+  color: var(--color-neutral-black);
+}

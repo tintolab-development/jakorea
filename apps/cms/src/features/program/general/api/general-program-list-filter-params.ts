@@ -3,6 +3,7 @@ import type { AdminProgramsListQuery } from '@/features/program/general/api/prog
 import {
   isProgramProgressPhaseFilter,
   programMatchesProgressPhase,
+  programMatchesTargetLevelFilter,
 } from '@/features/program/general/ui/constants/program-list-constants'
 import type { Program } from '@/types/domain'
 import dayjs from 'dayjs'
@@ -91,16 +92,11 @@ export function clientFilterGeneralPrograms(
         return false
       }
     }
-    if (tableFilters.targetLevel) {
-      const levels = program.targetLevels?.length
-        ? program.targetLevels
-        : program.targetLevel
-          ? [program.targetLevel]
-          : []
-      const filterLevel = tableFilters.targetLevel as NonNullable<Program['targetLevel']>
-      if (!levels.includes(filterLevel)) {
-        return false
-      }
+    if (
+      tableFilters.targetLevel &&
+      !programMatchesTargetLevelFilter(program, tableFilters.targetLevel)
+    ) {
+      return false
     }
     if (
       tableFilters.participantRecruitment &&

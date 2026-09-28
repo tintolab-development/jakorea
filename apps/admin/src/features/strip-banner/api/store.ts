@@ -2,15 +2,13 @@
  * 메인 상단 띠배너 — localStorage mock (API 연동 전)
  */
 
-import type {
-  StripBanner,
-  StripBannerCreateInput,
-  StripBannerListFilter,
-  StripBannerUpdateInput,
-} from '@/entities/strip-banner/model/types'
 import {
   MAX_ACTIVE_STRIP_BANNERS,
   StripBannerActiveLimitError,
+  type StripBanner,
+  type StripBannerCreateInput,
+  type StripBannerListFilter,
+  type StripBannerUpdateInput,
 } from '@/entities/strip-banner/model/types'
 
 const STORAGE_KEY = 'admin.jakorea.strip-banners.v1'
