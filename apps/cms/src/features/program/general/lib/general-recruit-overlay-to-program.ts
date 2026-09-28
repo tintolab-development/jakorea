@@ -15,6 +15,7 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { buildVolunteerInterviewOverlayKey } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import {
   buildRecurringUnavailableLabel,
@@ -1115,6 +1116,19 @@ export function applyGeneralRecruitOverlayToProgram(
         ? program.volunteerTargets
         : volunteerTargets
 
+  const detailMedia = readRecruitDetailMediaFromOverlay(overlay)
+  const keyVisualImage = coalesceString(
+    program.keyVisualImage ?? program.posterImage,
+    detailMedia.keyVisualImage,
+    preferOverlay
+  )
+  const attachmentFileNames =
+    preferOverlay && detailMedia.attachmentFileNames?.length
+      ? detailMedia.attachmentFileNames
+      : program.attachmentFileNames?.length
+        ? program.attachmentFileNames
+        : detailMedia.attachmentFileNames
+
   return {
     ...program,
     description: description ?? program.description,
@@ -1122,6 +1136,9 @@ export function applyGeneralRecruitOverlayToProgram(
     applicationMethod: applicationMethod ?? program.applicationMethod,
     learningSupportContent: learningSupportContent ?? program.learningSupportContent,
     additionalContentHtml: additionalContentHtml ?? program.additionalContentHtml,
+    keyVisualImage: keyVisualImage ?? program.keyVisualImage,
+    posterImage: keyVisualImage ?? program.posterImage,
+    attachmentFileNames: attachmentFileNames ?? program.attachmentFileNames,
     otherNotes: otherNotes ?? program.otherNotes,
     oneLineIntroduction: coalesceString(
       program.oneLineIntroduction,

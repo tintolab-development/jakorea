@@ -125,6 +125,7 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
     participatingSchoolCount: dto.organizationApplicationCount,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    backendProgramType: dto.programType ?? COMPANY_SCHOOL_PROGRAM_API_TYPE,
   })
 }
 
@@ -276,6 +277,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     registrationOverlay: details.registrationOverlay,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    backendProgramType: dto.programType ?? COMPANY_SCHOOL_PROGRAM_API_TYPE,
   })
   return applyResolvedAnnouncementTitle(mapped, {
     serviceDetailJson: dto.serviceDetailJson,

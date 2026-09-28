@@ -103,6 +103,7 @@ describe('company-school adapters', () => {
 
     expect(mapped.startDate).toBe('2026-10-21')
     expect(mapped.endDate).toBe('2026-11-01')
+    expect(mapped.backendProgramType).toBe('COMPANY_SCHOOL')
   })
 
   it('상세 임금은 serviceDetailJson wageGradeRows를 쓰고 settlementPolicy 기본값으로 덮지 않는다', () => {
