@@ -3,7 +3,10 @@
  * 일반·1사1교 등과 키를 섞지 않는다.
  */
 
-import { UJAT_PROGRAM_REGISTRATION_STEPS } from '@/features/program/ujat/model/ujat-program-registration-flow'
+import {
+  UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS,
+  UJAT_PROGRAM_REGISTRATION_STEPS,
+} from '@/features/program/ujat/model/ujat-program-registration-flow'
 import { removeWritingFormTemplateSave } from '@/features/template/lib/writing-form-template-local-save'
 
 export function listUjatRegistrationOperationalFormTemplateIds(): readonly string[] {
@@ -11,6 +14,9 @@ export function listUjatRegistrationOperationalFormTemplateIds(): readonly strin
   for (const step of UJAT_PROGRAM_REGISTRATION_STEPS) {
     if (step.phase === 'program') continue
     ids.add(step.templateId)
+  }
+  for (const templateId of UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS) {
+    ids.add(templateId)
   }
   return [...ids]
 }

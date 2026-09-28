@@ -7,10 +7,8 @@ import {
 import { useCreateProgram } from '@/features/program/ujat/api/queries'
 import {
   describeIncompleteUjatProgramRegistrationRequiredFields,
-  describeIncompleteUjatProgramRecruitmentRequiredFields,
   describeIncompleteUjatProgramRegistrationWizardRequiredFields,
   hasIncompleteUjatProgramRegistrationRequiredFields,
-  hasIncompleteUjatProgramRecruitmentRequiredFields,
   UjatRegistrationRequiredFieldsIncompleteError,
 } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import type { Program } from '@/types/domain'
@@ -20,7 +18,6 @@ import {
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
-import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
 import {
   getUjatProgramRegistrationOverlayRecord,
   resetUjatProgramRegistrationOverlay,
@@ -59,7 +56,6 @@ import {
 } from '@/features/program/general/lib/registration-program-draft-session'
 import { PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE } from '@/features/program/shared/lib/registration-draft-notice'
 import {
-  UJAT_PROGRAM_REGISTRATION_DEFAULT_APPLICATION_STEP,
   UJAT_PROGRAM_REGISTRATION_DEFAULT_RECRUIT_STEP,
   getUjatProgramRegistrationPhase,
   isParticipantRegistrationStep,
@@ -298,30 +294,11 @@ export function useUjatProgramRegistrationFlow(
         })
         return
       }
-      if (
-        phase === 'recruitment' &&
-        nextPhase === 'application' &&
-        hasIncompleteUjatProgramRecruitmentRequiredFields()
-      ) {
-        console.debug(
-          '[registration] UJAT 모집정보 필수항목 미입력:',
-          describeIncompleteUjatProgramRecruitmentRequiredFields()
-        )
-        showAlert({
-          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-        })
-        return
-      }
       if (nextPhase === 'program') {
         selectStep('program')
         return
       }
-      if (nextPhase === 'recruitment') {
-        selectStep(UJAT_PROGRAM_REGISTRATION_DEFAULT_RECRUIT_STEP)
-        return
-      }
-      selectStep(UJAT_PROGRAM_REGISTRATION_DEFAULT_APPLICATION_STEP)
+      selectStep(UJAT_PROGRAM_REGISTRATION_DEFAULT_RECRUIT_STEP)
     },
     [phase, selectStep, showAlert]
   )
@@ -415,23 +392,6 @@ export function useUjatProgramRegistrationFlow(
         })
 
         const operationalOverrides = flushApplicationOperationalOverrides({
-          current: isParticipantStep
-            ? {
-                templateCode: currentStepDef.templateId,
-                draft: participantVm.draft,
-                editorState: buildParticipantApplicationEditorState({
-                  variant: participantVariant,
-                  volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
-                  ujatVolunteerApplicationType: participantVm.ujatVolunteerApplicationType,
-                  ujatGradeApplicationBlockIds:
-                    participantVm.ujatProgramApplicationGradeInfo?.applicationGradeBlockIds ?? [],
-                  ujatApplicationGradeByBlockId:
-                    participantVm.ujatProgramApplicationGradeInfo?.applicationGradeByBlockId ?? {},
-                  ujatGradeClassTimeBlockIds:
-                    participantVm.ujatProgramApplicationGradeClassTime?.classTimeBlockIds ?? [],
-                }),
-              }
-            : undefined,
           overlayForTemplateCode: collectOperationalOverlayForCatalogId,
         })
 
@@ -495,10 +455,8 @@ export function useUjatProgramRegistrationFlow(
     return completion
   }, [
     createProgramMutation,
-    currentStepDef.templateId,
     isParticipantStep,
     options,
-    participantVariant,
     participantVm,
     registrationVm,
     showAlert,
