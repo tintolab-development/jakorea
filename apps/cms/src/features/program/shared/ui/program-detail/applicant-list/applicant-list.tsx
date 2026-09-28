@@ -58,7 +58,10 @@ import {
 } from '@/features/program/shared/ui/detail-modal/components/instructor-approval-complete-modal'
 import { InstructorLectureAssignModal } from '@/features/program/shared/ui/detail-modal/components/instructor-lecture-assign-modal'
 import { getGeneralParticipantInterviewEnabled } from '@/features/program/general/lib/detail-meta'
-import { buildApplicationProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
+import {
+  buildApplicationProcessedSelectionAlert,
+  isApplicationApprovalPendingForBulkSelect,
+} from '@/features/program/general/lib/application-processed-selection-alert'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
   resolveApplicantNotificationResendSentAt,
@@ -356,6 +359,11 @@ export function ApplicantList({
 
   const useGeneralParticipantActionModal =
     menu === 'individual-applications' && detailVariant === 'general'
+
+  const lockBulkCheckboxToPending =
+    useGeneralInstitutionActionModal ||
+    useGeneralInstructorBulkActionModal ||
+    useGeneralParticipantActionModal
 
   /** 개인 참여자 — 면접 불필요 시 캘린더 우측 목록 상단 multi select 미노출 */
   const showCalendarEntityFilter =
@@ -1993,6 +2001,11 @@ export function ApplicantList({
                   rowSelection={{
                     selectedRowKeys,
                     onChange: keys => setSelectedRowKeys(keys),
+                    getCheckboxProps: record => ({
+                      disabled:
+                        lockBulkCheckboxToPending &&
+                        !isApplicationApprovalPendingForBulkSelect(record.approvalStatus),
+                    }),
                   }}
                 />
               </div>

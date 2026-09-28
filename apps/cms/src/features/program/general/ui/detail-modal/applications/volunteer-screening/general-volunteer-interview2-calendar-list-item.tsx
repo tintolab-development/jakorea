@@ -1,5 +1,6 @@
 import { Checkbox } from 'antd'
 import type { GeneralVolunteerInterview2CalendarListRow } from '@/features/program/general/lib/general-volunteer-interview2-calendar-list-rows'
+import { isGeneralVolunteerInterview2EffectiveStatusSelectableForResult } from './general-volunteer-interview2-actions'
 import {
   formatSecondInterviewListScoreLabel,
   resolveSecondInterviewScreeningListBadgeLabel,
@@ -18,6 +19,9 @@ export function GeneralVolunteerInterview2CalendarListItem({
   onToggle: (key: string, checked: boolean) => void
 }) {
   const tone = resolveSecondInterviewScreeningTone(row.effectiveStatus)
+  const checkboxDisabled = !isGeneralVolunteerInterview2EffectiveStatusSelectableForResult(
+    row.effectiveStatus
+  )
 
   return (
     <div className="general-volunteer-interview2-calendar-list-item">
@@ -55,7 +59,11 @@ export function GeneralVolunteerInterview2CalendarListItem({
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
-        <Checkbox checked={checked} onChange={e => onToggle(row.id, e.target.checked)} />
+        <Checkbox
+          checked={checked}
+          disabled={checkboxDisabled}
+          onChange={e => onToggle(row.id, e.target.checked)}
+        />
       </div>
     </div>
   )

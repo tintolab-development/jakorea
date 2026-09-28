@@ -17,6 +17,7 @@ import { buildGeneralVolunteerDoc1FilterRows } from '@/features/program/general/
 import type { Program } from '@/types/domain'
 import { GENERAL_DOC_SCREENING_TABLE_SCROLL_X } from './doc-screening-columns'
 import { useGeneralVolunteerDocScreening } from './use-doc-screening'
+import { isDocumentScreeningPendingForBulkSelect } from '@/features/program/general/lib/application-processed-selection-alert'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
   useGeneralVolunteerApplicantDetail,
@@ -297,6 +298,11 @@ export function GeneralVolunteerDocScreeningSection({
                 columnWidth: 68,
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
+                getCheckboxProps: record => ({
+                  disabled: !isDocumentScreeningPendingForBulkSelect(
+                    record.documentScreeningStatus
+                  ),
+                }),
               }}
               onRow={record => ({
                 onClick: e => handleRowClick(record, e),
