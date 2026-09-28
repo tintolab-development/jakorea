@@ -396,6 +396,13 @@ export type UjatProgramProgressStatus =
   | 'PROGRAM_ENDED' // 프로그램 진행 완료
 
 // 프로그램
+/** 프로그램 모집 행 — 수정 잠금은 `startAt`만 본다. */
+export interface ProgramRecruitmentWindow {
+  recruitmentType?: string
+  targetType?: string
+  startAt?: string | null
+}
+
 export interface Program {
   id: UUID
   sponsorId: UUID
@@ -484,7 +491,9 @@ export interface Program {
   studentListRequired?: 'required' | 'not_required'
   /** 승인된 수강자 수 (표시: approvedStudentCount / capacity 건) */
   approvedStudentCount?: number
-  /** 참여자 모집 정원 — 목록 API `participantRecruitmentCount` / `participantCapacity` (`rounds` 비어 있을 때) */
+  /** 목록 「참여자 모집 인원」분자 — `GET /api/admin/programs` `participantApprovedCount`. 없으면 표시 시 0 */
+  participantApprovedCount?: number
+  /** 목록 「참여자 모집 인원」분모 — `participantCapacity` / `participantRecruitmentCount`. 없으면 표시 시 `-` */
   participantCapacity?: number
   /** 강사 모집 정원 (표시: instructors / instructorCapacity 건) */
   instructorCapacity?: number
@@ -531,6 +540,11 @@ export interface Program {
   lectureReportFormTemplateId?: UUID // 강의보고서 폼 템플릿 ID
   /** 일반 프로그램 상세 — 등록 폼 참여자 유형 (복수, API 연동 전 mock) */
   generalParticipantTypes?: GeneralProgramParticipantType[]
+  /**
+   * GET `recruitments[]`. 모집·신청 잠금은 유형별 `startAt`.
+   * `operationStartDate`는 화면 표시용이며 잠금에 쓰지 않는다.
+   */
+  programRecruitments?: ProgramRecruitmentWindow[]
   /** 일반 프로그램 — 봉사자 선발 시 면접 단계 LNB 노출 여부 */
   generalVolunteerInterviewEnabled?: boolean
   /** 일반 프로그램 — 개인 참여자 선발 시 면접 단계 LNB 노출 여부 */

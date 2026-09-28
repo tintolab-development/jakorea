@@ -78,6 +78,33 @@ describe('getGeneralProgramApiErrorMessage', () => {
     )
   })
 
+  it('수정 가능 기간 409 코드를 서로 다른 안내로 구분한다', () => {
+    const errorFor = (code: string) => ({
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          error: { code, message: 'raw' },
+        },
+      },
+    })
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED'),
+        'fallback'
+      )
+    ).toContain('공통 정보')
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('PROGRAM_PARTICIPANT_TYPE_IMMUTABLE'), 'fallback')
+    ).toContain('참여자 유형')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_INSTRUCTOR_RECRUITMENT_EDIT_PERIOD_ENDED'),
+        'fallback'
+      )
+    ).toContain('모집·신청')
+  })
+
   it('PREFERRED_SCHEDULE_* 서버 메시지가 있으면 그대로 쓴다', () => {
     const error = {
       response: {
