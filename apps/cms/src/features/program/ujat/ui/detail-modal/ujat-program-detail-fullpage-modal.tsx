@@ -11,6 +11,7 @@ import {
   buildSearchParams,
   makeBreadcrumbItem,
 } from '@/shared/lib/detail-fullpage-query-stack'
+import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
@@ -1464,6 +1465,7 @@ export function UjatProgramDetailFullPageModal({
 
   const handleClose = useCallback(() => {
     onClose()
+    if (tryNavigateMemberDetailReturn(navigate)) return
     const next = clearSponsorDetailQueryStack(new URLSearchParams(searchParams))
     next.delete('programId')
     next.delete(LNB_PARAM)

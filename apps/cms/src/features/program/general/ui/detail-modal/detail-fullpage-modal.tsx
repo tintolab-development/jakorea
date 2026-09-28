@@ -4,7 +4,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { useCmsAlert } from '@/shared/ui'
@@ -461,6 +462,7 @@ export function GeneralProgramDetailFullPageModal({
   searchParams: searchParamsProp,
   setSearchParams: setSearchParamsProp,
 }: GeneralProgramDetailFullPageModalProps) {
+  const navigate = useNavigate()
   const [routerSearchParams, internalSetSearchParams] = useSearchParams()
   const searchParams = searchParamsProp ?? routerSearchParams
   const setSearchParams = setSearchParamsProp ?? internalSetSearchParams
@@ -1118,6 +1120,10 @@ export function GeneralProgramDetailFullPageModal({
   const handleRequestClose = useCallback(() => {
     isClosingRef.current = true
     setOptimisticDetailRoute(null)
+    if (tryNavigateMemberDetailReturn(navigate)) {
+      onClose()
+      return
+    }
     // 부모 onClose와 별도로 상세 쿼리를 즉시 제거 — applySearch 등 클로저 레이스로
     // programId가 남는 경우에도 모달이 닫히도록 한다.
     setSearchParams(
@@ -1128,7 +1134,7 @@ export function GeneralProgramDetailFullPageModal({
       { replace: true }
     )
     onClose()
-  }, [onClose, setSearchParams])
+  }, [navigate, onClose, setSearchParams])
 
   const recruitmentPreviewAudienceFromUrl = useMemo(
     () => readOpenRecruitmentPreviewAudience(routerSearchParams),

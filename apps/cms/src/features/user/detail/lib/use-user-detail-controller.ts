@@ -50,6 +50,7 @@ import type { ApplicantInstructorRow } from '@/features/program/shared/model/app
 import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
+import { stashMemberDetailReturnForProgramNavigation } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import type {
   PatchUserBasicInfoInput,
   PatchUserBasicInfoOptions,
@@ -462,6 +463,7 @@ export function useUserDetailController({
     () => resolveUserDetailSubjectKey(displayUser),
     [displayUser?.id, displayUser?.memberId, displayUser?.adminAccountId]
   )
+  const displayUserRolesKey = displayUser?.roles?.join('|') ?? ''
 
   useUserDetailUrlSync({
     open,
@@ -563,7 +565,7 @@ export function useUserDetailController({
       displayUser?.id,
       displayUser?.memberId,
       displayUser?.role,
-      displayUser?.roles,
+      displayUserRolesKey,
       displayUser?.instructorMemberProfile,
       displayUser?.instructorRoleRequestId,
       displayUser?.adminAccountId,
@@ -820,6 +822,7 @@ export function useUserDetailController({
   )
 
   const prepareLeaveMemberDetailForProgramNavigation = useCallback(() => {
+    stashMemberDetailReturnForProgramNavigation()
     if (detailCloseIntentRef) detailCloseIntentRef.current = true
   }, [detailCloseIntentRef])
 

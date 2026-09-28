@@ -14,7 +14,8 @@
  */
 
 import { useMemo, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
-import { useLocation, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -249,6 +250,7 @@ export function ProgramDetailFullPageModal({
   onUpdateProgram,
 }: ProgramDetailFullPageModalProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const [routerSearchParams, routerSetSearchParams] = useSearchParams()
   const searchParams = searchParamsProp ?? routerSearchParams
   const rawSetSearchParams = setSearchParamsProp ?? routerSetSearchParams
@@ -635,6 +637,10 @@ export function ProgramDetailFullPageModal({
 
   const handleRequestClose = useCallback(() => {
     isClosingRef.current = true
+    if (tryNavigateMemberDetailReturn(navigate)) {
+      onClose()
+      return
+    }
     setSearchParams(
       prev => {
         if (!prev.get('programId')) return prev
@@ -643,7 +649,7 @@ export function ProgramDetailFullPageModal({
       { replace: true }
     )
     onClose()
-  }, [onClose, setSearchParams])
+  }, [navigate, onClose, setSearchParams])
 
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     setEditingTab(null)
