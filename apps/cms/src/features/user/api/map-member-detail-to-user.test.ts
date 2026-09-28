@@ -155,6 +155,24 @@ describe('mapIndividualMemberDetailToUser', () => {
 })
 
 describe('mapInstructorMemberDetailToUser', () => {
+  it('member.listMetrics.settlementStatusLabel을 User에 매핑한다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        member: {
+          memberId: 101,
+          uuid: 'instructor-uuid',
+          email: 'teacher@example.com',
+          name: '김강사',
+          roles: ['INSTRUCTOR'],
+          status: 'ACTIVE',
+          listMetrics: { settlementStatusLabel: '확인 대기 중' },
+        },
+      })
+    )
+
+    expect(user.listMetrics?.settlementStatusLabel).toBe('확인 대기 중')
+  })
+
   it('상세 termsAgreements를 User에 매핑한다', () => {
     const user = mapInstructorMemberDetailToUser(
       baseInstructorDetail({

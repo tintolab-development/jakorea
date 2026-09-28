@@ -7,10 +7,7 @@ import type {
   InstructorSettlementListRow,
   InstructorSettlementUiStatus,
 } from '@/features/user/detail/model/instructor-settlement-types'
-import {
-  mapPaymentStatusToAccountPaymentStatus,
-  mapStatementStatusToProcessingStatus,
-} from '@/features/settlement-management/api/shared/settlement-status-mappers'
+import { mapStatementStatusToProcessingStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
 import { mapSettlementFrontendItemTypeToLineKind } from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
 
@@ -20,6 +17,10 @@ function paymentOrderStatusToInstructorUiStatus(
   switch (s) {
     case 'pending':
       return 'awaiting_confirmation'
+    case 'reapplication':
+      return 'payment_statement_reapplication'
+    case 'partial':
+      return 'partial_confirmation'
     case 'confirmed':
       return 'payment_statement_verified'
     case 'correction':
@@ -31,18 +32,25 @@ function paymentOrderStatusToInstructorUiStatus(
   }
 }
 
+/** 강사 회원 상세 정산 탭·프로그램 참여 강사 — OpenAPI `statementStatus` + `paymentStatus` → 8종 UI key */
 export function resolveSettlementUiStatus(item: SettlementListItemResponse): InstructorSettlementUiStatus {
   const paymentStatus = item.paymentStatus?.toUpperCase()
+  const statementStatus = item.statementStatus?.toUpperCase()
+
   if (paymentStatus === 'PAID') {
     return 'account_paid'
   }
   if (paymentStatus === 'CORRECTION_REQUESTED') {
     return 'payment_correction_requested'
   }
+  if (statementStatus === 'CONFIRMED' && paymentStatus === 'WAITING_PAYMENT') {
+    return 'awaiting_confirmation'
+  }
   if (paymentStatus === 'CONFIRMED') {
-    return mapPaymentStatusToAccountPaymentStatus(item.paymentStatus) === 'partial_confirmation'
-      ? 'partial_confirmation'
-      : 'payment_statement_verified'
+    if (statementStatus === 'PARTIAL' || statementStatus === 'PARTIAL_CONFIRMED') {
+      return 'partial_confirmation'
+    }
+    return 'payment_statement_verified'
   }
   return paymentOrderStatusToInstructorUiStatus(
     mapStatementStatusToProcessingStatus(item.statementStatus)
@@ -132,7 +140,7 @@ export function mapSettlementItemToInstructorMemberRow(
     no: index + 1,
     programName,
     instructorName: item.instructorName?.trim(),
-    institutionName: '-',
+    institutionName: item.institutionName?.trim() || '-',
     lectureDateDisplay: calendarDate || '-',
     calendarDate: calendarDate || new Date().toISOString().slice(0, 10),
     status,

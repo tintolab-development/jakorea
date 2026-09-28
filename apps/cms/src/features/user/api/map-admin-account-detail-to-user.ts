@@ -13,7 +13,26 @@ import {
 import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import { mapMemberStatusToIsActive } from '@/features/user/api/map-member-role'
 import { resolveCanonicalUserDetailId } from '@/features/user/api/user-response-row-id'
-import type { User } from '@/types/user'
+import type { User, UserListRowMetrics } from '@/types/user'
+
+function buildAdminAccountDetailListMetrics(
+  detail: AdminAccountApprovalDetailResponse
+): UserListRowMetrics | undefined {
+  const metrics: UserListRowMetrics = {}
+  const permissionVariant = roleCodeToAdminPermissionVariant(detail.roleCode)
+  if (permissionVariant) {
+    metrics.adminPermissionVariant = permissionVariant
+  }
+  const total = detail.totalManagedProgramCount ?? detail.managedProgramCount
+  const inProgress = detail.activeManagedProgramCount
+  if (total != null && !Number.isNaN(total)) {
+    metrics.managedProgramCount = total
+  }
+  if (inProgress != null && !Number.isNaN(inProgress)) {
+    metrics.managedProgramInProgressCount = inProgress
+  }
+  return Object.keys(metrics).length > 0 ? metrics : undefined
+}
 
 function mapAdminTermsAgreementsToRows(
   rows: AdminTermsAgreementResponse[] | undefined
@@ -55,7 +74,6 @@ export function mapAdminAccountDetailToUser(
   }
 
   const now = new Date().toISOString()
-  const permissionVariant = roleCodeToAdminPermissionVariant(detail.roleCode)
   const role = 'ADMIN' as const
   const normalizedBirthDate = toApiBirthDate(detail.birthDate)
   const termsAgreements = mapAdminTermsAgreementsToRows(detail.termsAgreements)
@@ -102,7 +120,7 @@ export function mapAdminAccountDetailToUser(
       }),
     permissionApprovalStatus,
     permissionApprovalHandledAt,
-    listMetrics: permissionVariant ? { adminPermissionVariant: permissionVariant } : undefined,
+    listMetrics: buildAdminAccountDetailListMetrics(detail),
     ...(termsAgreements ? { termsAgreements } : {}),
   }
 }

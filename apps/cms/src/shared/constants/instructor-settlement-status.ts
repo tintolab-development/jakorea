@@ -183,3 +183,34 @@ export const INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS = [
     value,
   })),
 ] as const
+
+/**
+ * 강사 회원 목록 API `listMetrics.settlementStatusLabel` — canonical 8종 라벨과 다른 BE 표기
+ * (필터·색상 매핑용. 화면 문구는 API 라벨 그대로 노출할 수 있음)
+ */
+export const INSTRUCTOR_SETTLEMENT_MEMBER_LIST_LABEL_ALIASES: Partial<
+  Record<string, InstructorSettlementUiStatus>
+> = {
+  '계좌 지급 대기 중': 'awaiting_confirmation',
+  '재신청 검토 중': 'payment_statement_reapplication',
+}
+
+/** 회원 목록·필터 — `settlementStatusLabel` → UI status (exact canonical + BE alias) */
+export function resolveInstructorSettlementUiStatusFromListLabel(
+  statusLabel?: string | null
+): InstructorSettlementUiStatus | null {
+  const normalized = statusLabel?.trim()
+  if (!normalized || normalized === '-') return null
+
+  for (const status of INSTRUCTOR_SETTLEMENT_STATUS_ORDER) {
+    if (INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status] === normalized) return status
+  }
+
+  const aliased = INSTRUCTOR_SETTLEMENT_MEMBER_LIST_LABEL_ALIASES[normalized]
+  if (aliased) return aliased
+
+  // 구 mock·표기 호환
+  if (normalized === '확인 진행중') return 'partial_confirmation'
+
+  return null
+}

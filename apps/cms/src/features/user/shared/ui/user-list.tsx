@@ -24,13 +24,13 @@ import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { type MemberListKind, DEFAULT_MEMBER_LIST_KIND } from '@/shared/config/member-list-kinds'
-import { ManagedProgramCountDisplay } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
+import { formatAdminManagedProgramCountForList } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
-  INSTRUCTOR_SETTLEMENT_STATUS_ORDER,
-  type InstructorSettlementUiStatus,
+  getInstructorSettlementStatusTextClassName,
+  resolveInstructorSettlementUiStatusFromListLabel,
 } from '@/shared/constants/instructor-settlement-status'
 import {
   StatusDropdownCell,
@@ -78,17 +78,24 @@ function displayMetric(n: number | undefined | null) {
   return String(n)
 }
 
-function resolveSettlementUiStatus(
-  statusLabel?: string
-): InstructorSettlementUiStatus | null {
-  const normalized = statusLabel?.trim()
-  if (!normalized || normalized === '-') return null
-  for (const status of INSTRUCTOR_SETTLEMENT_STATUS_ORDER) {
-    if (INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status] === normalized) return status
+function renderInstructorSettlementStatusCell(labelRaw?: string) {
+  const label = labelRaw?.trim()
+  if (!label || label === '-') return '-'
+
+  const status = resolveInstructorSettlementUiStatusFromListLabel(label)
+  if (status) {
+    const canonical = INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]
+    if (canonical === label) {
+      return <InstructorSettlementStatusText status={status} />
+    }
+    return (
+      <span className={getInstructorSettlementStatusTextClassName(status)} role="status">
+        {label}
+      </span>
+    )
   }
-  // 구 mock·라벨 호환
-  if (normalized === '확인 진행중') return 'partial_confirmation'
-  return null
+
+  return <span>{label}</span>
 }
 
 const ADMIN_PERMISSION_OPTIONS: { value: AdminPermissionTagVariant; label: string }[] = [
@@ -263,11 +270,8 @@ function columnsForKind(
         title: '정산 현황',
         key: 'settlement',
         align: 'center',
-        render: (_: unknown, r: Row) => {
-          const status = resolveSettlementUiStatus(r.listMetrics?.settlementStatusLabel)
-          if (!status) return '-'
-          return <InstructorSettlementStatusText status={status} />
-        },
+        render: (_: unknown, r: Row) =>
+          renderInstructorSettlementStatusCell(r.listMetrics?.settlementStatusLabel),
       },
       {
         title: '가입일',
@@ -331,7 +335,7 @@ function columnsForKind(
         key: 'programCount',
         align: 'center',
         ellipsis: true,
-        render: (_: unknown, r: Row) => <ManagedProgramCountDisplay user={r} />,
+        render: (_: unknown, r: Row) => formatAdminManagedProgramCountForList(r),
       },
       {
         title: '가입일',

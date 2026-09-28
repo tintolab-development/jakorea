@@ -6,7 +6,22 @@ import {
   resolveRegisteredByAdmin,
   type MemberRegistrationFlagSource,
 } from '@/features/user/api/resolve-member-registration-flags'
-import type { User } from '@/types/user'
+import type { User, UserListRowMetrics } from '@/types/user'
+
+function buildAdminAccountListMetrics(item: {
+  roleCode?: string
+  managedProgramCount?: number
+}): UserListRowMetrics | undefined {
+  const metrics: UserListRowMetrics = {}
+  const permissionVariant = roleCodeToAdminPermissionVariant(item.roleCode)
+  if (permissionVariant) {
+    metrics.adminPermissionVariant = permissionVariant
+  }
+  if (item.managedProgramCount != null && !Number.isNaN(item.managedProgramCount)) {
+    metrics.managedProgramCount = item.managedProgramCount
+  }
+  return Object.keys(metrics).length > 0 ? metrics : undefined
+}
 
 function buildAdminListRegistrationFlagSource(
   item: AdminAccountListItemResponse,
@@ -30,7 +45,6 @@ export function mapAdminAccountListItemToUser(
     uuid ??
     (adminAccountId != null ? `admin-account-${adminAccountId}` : `admin-account-unknown-${crypto.randomUUID()}`)
   const now = new Date().toISOString()
-  const permissionVariant = roleCodeToAdminPermissionVariant(item.roleCode)
   const role = 'ADMIN' as const
 
   return {
@@ -51,7 +65,7 @@ export function mapAdminAccountListItemToUser(
       resolveIdentitySelfSignupCompletedAfterAdminRegistration(
         buildAdminListRegistrationFlagSource(item, adminAccountId)
       ),
-    listMetrics: permissionVariant ? { adminPermissionVariant: permissionVariant } : undefined,
+    listMetrics: buildAdminAccountListMetrics(item),
   }
 }
 
