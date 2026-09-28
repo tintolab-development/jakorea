@@ -27,6 +27,7 @@ import {
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
   resolveProgramVolunteerTargets,
+  resolveStoredBusinessArea,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   programPaymentItemLabelsFromIds,
@@ -51,8 +52,9 @@ import {
   PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { formatZodIssuesForUser } from '@/features/program/shared/lib/format-zod-validation-message'
+import { syncSurveyItemsIntoRegistrationOverlay } from '@/features/program/general/lib/general-survey-menu-keys'
 import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
-import type { TargetLevel } from '@/types/domain'
+import type { GeneralProgramSurveyMenuKey, TargetLevel } from '@/types/domain'
 
 const roundStatusEnum = z.enum(['active', 'inactive', 'pending', 'completed', 'cancelled'])
 
@@ -600,7 +602,7 @@ export function programToDetailEditValues(
     lifecycleStatus: program.lifecycleStatus ?? undefined,
     applicationStartDate: toStr(program.applicationStartDate),
     applicationEndDate: toStr(program.applicationEndDate),
-    businessArea: program.businessArea ?? undefined,
+    businessArea: resolveStoredBusinessArea(program.businessArea) || undefined,
     sponsorId: program.sponsorId ?? '',
     sponsorManagementIds:
       program.generalCommonInfo?.sponsorManagementIds?.length
@@ -1028,6 +1030,24 @@ export function detailEditValuesToProgramPatch(
   const volunteerContactPhone =
     values.volunteerContactPhone ??
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryTel
+  const surveyKeysTouched =
+    values.surveySurvey != null ||
+    values.surveySatisfaction != null ||
+    values.surveyLectureEvaluation != null
+  const generalSurveyMenuKeys = surveyKeysTouched
+    ? ([
+        ...(values.surveySurvey ? (['survey'] as const) : []),
+        ...(values.surveySatisfaction ? (['satisfaction'] as const) : []),
+        ...(values.surveyLectureEvaluation ? (['lecture_evaluation'] as const) : []),
+      ] as GeneralProgramSurveyMenuKey[])
+    : existing.generalSurveyMenuKeys
+  const registrationOverlay =
+    isTrainedTeacherProgram && surveyKeysTouched
+      ? syncSurveyItemsIntoRegistrationOverlay(
+          existing.registrationOverlay,
+          generalSurveyMenuKeys
+        )
+      : undefined
   const volunteerContactEmail =
     values.volunteerContactEmail ??
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail
@@ -1045,7 +1065,10 @@ export function detailEditValuesToProgramPatch(
     lifecycleStatus: values.lifecycleStatus ?? existing.lifecycleStatus,
     applicationStartDate,
     applicationEndDate,
-    businessArea: values.businessArea,
+    businessArea:
+      resolveStoredBusinessArea(values.businessArea) ||
+      resolveStoredBusinessArea(existing.businessArea) ||
+      undefined,
     sponsorId:
       values.sponsorId ||
       values.sponsorManagementIds?.[0] ||
@@ -1093,16 +1116,8 @@ export function detailEditValuesToProgramPatch(
     participatingSchoolCount: clampJavaInt(
       values.kpiFinalSchools ?? existing.participatingSchoolCount
     ),
-    generalSurveyMenuKeys:
-      values.surveySurvey != null ||
-      values.surveySatisfaction != null ||
-      values.surveyLectureEvaluation != null
-        ? [
-            ...(values.surveySurvey ? (['survey'] as const) : []),
-            ...(values.surveySatisfaction ? (['satisfaction'] as const) : []),
-            ...(values.surveyLectureEvaluation ? (['lecture_evaluation'] as const) : []),
-          ]
-        : existing.generalSurveyMenuKeys,
+    generalSurveyMenuKeys,
+    ...(registrationOverlay ? { registrationOverlay } : {}),
     generalCommonInfo: {
       ...existing.generalCommonInfo,
       announcementTitle:
