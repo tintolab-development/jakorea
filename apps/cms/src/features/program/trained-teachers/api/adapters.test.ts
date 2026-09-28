@@ -1090,3 +1090,62 @@ describe('trained teacher businessArea', () => {
     expect(envelope.program?.generalCommonInfo).not.toHaveProperty('businessArea')
   })
 })
+
+describe('mapTrainedTeacherToUpdateRequest sponsors', () => {
+  it('attaches sponsorContactId only to the contact owner sponsor', () => {
+    const program = {
+      id: '186005',
+      sponsorId: '163302',
+      title: 'TT',
+      type: 'online' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      managerName: '테스트 마스터 관리자',
+      generalCommonInfo: {
+        sponsorManagementIds: ['163302', '1627251'],
+        sponsorManagerContactIds: ['1627251::1627253'],
+        sponsorManagerContactId: '1627251::1627253',
+      },
+    }
+    const request = mapTrainedTeacherToUpdateRequest(program)
+    expect(request.sponsorId).toBe('1627251')
+    expect(request.sponsors).toEqual([
+      { sponsorId: '163302' },
+      { sponsorId: '1627251', sponsorContactId: '1627253' },
+    ])
+  })
+
+  it('supports multiple sponsor contacts', () => {
+    const program = {
+      id: '186005',
+      sponsorId: '163302',
+      title: 'TT',
+      type: 'online' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      generalCommonInfo: {
+        sponsorManagementIds: ['163302', '1627251'],
+        sponsorManagerContactIds: ['163302::111', '1627251::1627253'],
+      },
+    }
+    const request = mapTrainedTeacherToUpdateRequest(program)
+    expect(request.sponsors).toEqual([
+      { sponsorId: '163302', sponsorContactId: '111' },
+      { sponsorId: '1627251', sponsorContactId: '1627253' },
+    ])
+  })
+})
