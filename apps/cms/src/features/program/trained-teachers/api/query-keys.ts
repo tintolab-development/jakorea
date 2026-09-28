@@ -45,6 +45,8 @@ export const trainedTeacherQueryKeys = {
     ] as const,
   performanceSummary: (programId: string) =>
     [...trainedTeacherQueryKeys.all, 'performance-summary', programId] as const,
+  programSchedules: (programId: string) =>
+    [...trainedTeacherQueryKeys.all, 'program-schedules', programId] as const,
   mutations: {
     create: () => [...trainedTeacherQueryKeys.all, 'mutation', 'create'] as const,
     update: (programId: string) =>

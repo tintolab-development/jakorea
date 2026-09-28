@@ -92,3 +92,44 @@ export async function resendTrainedTeacherOrganizationApplicationNotificationRem
     })
   )
 }
+
+export type TrainedTeacherOrganizationActivityGiveUpPayload = {
+  stopScheduleId: number
+  reason: string
+}
+
+export type TrainedTeacherOrganizationProgressRemovalPayload = {
+  reason: string
+}
+
+/** POST …/trained-teacher/organization-applications/{id}/give-up — participant give-up 쓰지 않음 */
+export async function giveUpTrainedTeacherOrganizationApplicationRemote(
+  programId: string,
+  applicationId: string,
+  payload: TrainedTeacherOrganizationActivityGiveUpPayload
+): Promise<TrainedTeacherOrganizationApplicationResponse> {
+  return unwrapApiBody<TrainedTeacherOrganizationApplicationResponse>(
+    await customInstance({
+      url: `${listUrl(programId)}/${encodeURIComponent(applicationId)}/give-up`,
+      method: 'POST',
+      data: payload,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  )
+}
+
+/** POST …/trained-teacher/organization-applications/{id}/remove-from-progress */
+export async function removeTrainedTeacherOrganizationApplicationFromProgressRemote(
+  programId: string,
+  applicationId: string,
+  payload: TrainedTeacherOrganizationProgressRemovalPayload
+): Promise<TrainedTeacherOrganizationApplicationResponse> {
+  return unwrapApiBody<TrainedTeacherOrganizationApplicationResponse>(
+    await customInstance({
+      url: `${listUrl(programId)}/${encodeURIComponent(applicationId)}/remove-from-progress`,
+      method: 'POST',
+      data: payload,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  )
+}

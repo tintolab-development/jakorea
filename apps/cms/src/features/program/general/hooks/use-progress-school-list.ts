@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolApprovalStatusKey,
@@ -27,6 +27,8 @@ import {
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherParticipatingInstitutions } from '@/features/program/trained-teachers/api/education-journals-hooks'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import { removeTrainedTeacherOrganizationApplicationFromProgress } from '@/features/program/trained-teachers/api/organization-applications-service'
+import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
@@ -34,6 +36,9 @@ import {
 import type { Program } from '@/types/domain'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { getTempMockOrgParticipatingSchools } from '@/features/program/general/lib/temp-mock-org-program'
+import { extractApiErrorCode, extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import axios from 'axios'
 
 export interface UseProgressSchoolListOptions {
   appliedFilters: ProgressFilters
@@ -51,6 +56,8 @@ export function useProgressSchoolList({
   program: _program,
   enabled = true,
 }: UseProgressSchoolListOptions) {
+  const queryClient = useQueryClient()
+  const { showAlert } = useCmsAlert()
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
   const remoteEnabled =
@@ -216,12 +223,93 @@ export function useProgressSchoolList({
     setSchoolDeleteGuideOpen(true)
   }, [selectedSchoolRowKeys])
 
-  const handleSchoolDeleteConfirm = useCallback(() => {
-    const keysToDelete = new Set(selectedSchoolRowKeys.map(String))
-    setSchoolList(prev => prev.filter(row => !keysToDelete.has(row.id)))
+  const handleSchoolDeleteConfirm = useCallback(async () => {
+    const keysToDelete = selectedSchoolRowKeys.map(String)
+    if (keysToDelete.length === 0) return
+
+    if (isTrainedTeachersSurface) {
+      if (!ttRemoteEnabled || !programId) {
+        setSchoolDeleteGuideOpen(false)
+        notifyProgramApiUnavailable(
+          'trained-teacher-remove-from-progress',
+          '교육받은 교사 · 진행 현황 학교 제외'
+        )
+        return
+      }
+
+      const failures: string[] = []
+      for (const applicationId of keysToDelete) {
+        const schoolName =
+          schoolList.find(row => row.id === applicationId)?.schoolName?.trim() || applicationId
+        try {
+          await removeTrainedTeacherOrganizationApplicationFromProgress(programId, applicationId, {
+            reason: `${schoolName} 진행 현황 제외`,
+          })
+        } catch (error) {
+          const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
+          const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+          const code = extractApiErrorCode(responseData)
+          const details =
+            responseData &&
+            typeof responseData === 'object' &&
+            'error' in responseData &&
+            responseData.error &&
+            typeof responseData.error === 'object' &&
+            'details' in responseData.error
+              ? (responseData.error as { details?: Record<string, unknown> }).details
+              : undefined
+          if (code === 'TRAINED_TEACHER_PROGRESS_EVIDENCE_EXISTS') {
+            const journalCount = details?.journalCount
+            const completionCount = details?.educationCompletionCount
+            failures.push(
+              `${schoolName}: 교육일지(${journalCount ?? '-'}) 또는 완료 증빙(${completionCount ?? '-'})이 있어 제외할 수 없습니다.`
+            )
+          } else {
+            failures.push(
+              `${schoolName}: ${extractApiErrorMessage(responseData, {
+                httpStatus,
+                fallback: '진행 현황에서 제외하지 못했습니다.',
+              })}`
+            )
+          }
+        }
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: trainedTeacherQueryKeys.participatingInstitutions(programId),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: trainedTeacherQueryKeys.performanceSummary(programId),
+      })
+
+      setSelectedSchoolRowKeys([])
+      setSchoolDeleteGuideOpen(false)
+
+      if (failures.length > 0) {
+        void showAlert({
+          title: '학교 삭제 안내',
+          content: failures.join('\n'),
+        })
+      }
+      return
+    }
+
+    const keysSet = new Set(keysToDelete)
+    setSchoolList(prev => prev.filter(row => !keysSet.has(row.id)))
     setSelectedSchoolRowKeys([])
     setSchoolDeleteGuideOpen(false)
-  }, [selectedSchoolRowKeys])
+  }, [
+    isTrainedTeachersSurface,
+    programId,
+    queryClient,
+    schoolList,
+    selectedSchoolRowKeys,
+    showAlert,
+    ttRemoteEnabled,
+  ])
 
   /** 선택 삭제 확인 시: 선택된 참여 기관을 리스트에서 제거 */
   const handleBulkDeleteConfirm = useCallback(() => {
