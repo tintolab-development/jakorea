@@ -10,7 +10,10 @@ import type {
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
 import type { ApplicantInstitutionEditDraft } from '@/features/program/general/lib/applicant-institution-detail-edit'
-import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import {
+  formatInstitutionApplicationGradeDisplay,
+  type InstitutionAffiliatedTeacherOption,
+} from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import {
   InstitutionAddressDetailEdit,
   InstitutionClassAndStudentCountEdit,
@@ -231,7 +234,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
         error={validationErrors?.educationGrade}
       />
     ) : (
-      institution.educationGrade?.trim() || '-'
+      formatInstitutionApplicationGradeDisplay(institution.educationGrade ?? '') || '-'
     )
 
   const regionValue =

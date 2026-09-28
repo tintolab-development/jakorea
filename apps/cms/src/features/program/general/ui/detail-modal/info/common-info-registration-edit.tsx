@@ -1,14 +1,20 @@
 /**
  * 일반 프로그램 상세 공통정보 수정 — 등록 단락을 그대로 마운트 (등록 양식 변경 없음).
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Program } from '@/types/domain'
 import {
   extrasFromGeneralProgram,
   setGeneralRegistrationDetailEditExtras,
 } from '@/features/program/general/lib/registration-overlay-sync'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
-import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import {
+  applyGeneralParticipantAudienceSelection,
+  participantFlagsFromGeneralProgram,
+  resolveGeneralRegistrationKpiFieldAvailability,
+  shouldResetParticipationScheduleDetailForAudience,
+  type GeneralParticipantRegistrationFlags,
+} from '@/features/program/general/lib/participant-audience-selection'
 import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph'
 import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/business-kpi-paragraph'
 import { ProgramRegistrationEducationCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
@@ -31,15 +37,16 @@ import {
   ProgramCommonInfoEditSections,
 } from '@/features/program/shared/ui/program-detail/common-info-edit-section'
 
-function participantFromProgram(program: Program): ProgramRegistrationParticipantState {
-  const types = program.generalParticipantTypes ?? []
+function extrasWithParticipant(
+  extras: GeneralRegistrationEditorExtras,
+  participant: GeneralParticipantRegistrationFlags
+): GeneralRegistrationEditorExtras {
   return {
-    individual:
-      program.generalProgramAudience === 'individual' || types.includes('individual'),
-    organization:
-      program.generalProgramAudience === 'organization' || types.includes('school_institution'),
-    teacherInstructor: types.includes('teacher_instructor'),
-    volunteer: types.includes('volunteer'),
+    ...extras,
+    participantOrganization: participant.organization,
+    participantIndividual: participant.individual,
+    participantTeacherInstructor: participant.teacherInstructor,
+    participantVolunteer: participant.volunteer,
   }
 }
 
@@ -47,16 +54,43 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
   const [extras, setExtras] = useState<GeneralRegistrationEditorExtras>(() =>
     extrasFromGeneralProgram(program)
   )
-  const [participant, setParticipant] = useState(() => participantFromProgram(program))
+  const [participant, setParticipant] = useState(() =>
+    participantFlagsFromGeneralProgram(program)
+  )
+  const participantTypesKey = useMemo(
+    () => (program.generalParticipantTypes ?? []).join(','),
+    [program.generalParticipantTypes]
+  )
 
   useEffect(() => {
-    setGeneralRegistrationDetailEditExtras(extrasFromGeneralProgram(program))
-  }, [program.id])
+    const nextExtras = extrasFromGeneralProgram(program)
+    const nextParticipant = participantFlagsFromGeneralProgram(program)
+    setExtras(nextExtras)
+    setParticipant(nextParticipant)
+    setGeneralRegistrationDetailEditExtras(extrasWithParticipant(nextExtras, nextParticipant))
+    // program 객체 참조가 바뀌어도 참여자 유형이 같으면 수정 중 체크를 덮지 않는다.
+  }, [
+    program.id,
+    program.updatedAt,
+    program.generalProgramAudience,
+    program.category,
+    participantTypesKey,
+  ])
 
   const commitExtras = (next: GeneralRegistrationEditorExtras) => {
     setExtras(next)
     setGeneralRegistrationDetailEditExtras(next)
   }
+
+  const commitParticipant = (
+    next: GeneralParticipantRegistrationFlags,
+    extrasPatch?: Partial<GeneralRegistrationEditorExtras>
+  ) => {
+    setParticipant(next)
+    commitExtras(extrasWithParticipant({ ...extras, ...extrasPatch }, next))
+  }
+
+  const kpiAvailability = resolveGeneralRegistrationKpiFieldAvailability(participant)
 
   const hideScheduleSettings =
     extras.programType === 'schedule' && extras.sessionRoundType === 'multi'
@@ -82,37 +116,44 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
         <ProgramRegistrationBasicInfoParagraph
           lockParticipantTypes
           participant={participant}
-          onIndividualChange={checked =>
-            setParticipant(prev => ({ ...prev, individual: checked }))
-          }
+          onIndividualChange={checked => {
+            const nextAudience = applyGeneralParticipantAudienceSelection('individual', checked)
+            const extrasPatch = shouldResetParticipationScheduleDetailForAudience(nextAudience)
+              ? { participationScheduleDetail: 'common' as const }
+              : undefined
+            commitParticipant({ ...participant, ...nextAudience }, extrasPatch)
+          }}
           onOrganizationChange={checked => {
-            setParticipant(prev => ({ ...prev, organization: checked }))
-            commitExtras({ ...extras, participantOrganization: checked })
+            const nextAudience = applyGeneralParticipantAudienceSelection('organization', checked)
+            const extrasPatch = shouldResetParticipationScheduleDetailForAudience(nextAudience)
+              ? { participationScheduleDetail: 'common' as const }
+              : undefined
+            commitParticipant({ ...participant, ...nextAudience }, extrasPatch)
           }}
           onTeacherInstructorChange={checked =>
-            setParticipant(prev => ({ ...prev, teacherInstructor: checked }))
+            commitParticipant({ ...participant, teacherInstructor: checked })
           }
           onVolunteerChange={checked =>
-            setParticipant(prev => ({ ...prev, volunteer: checked }))
+            commitParticipant({ ...participant, volunteer: checked })
           }
           programType={extras.programType}
         />
       </ProgramCommonInfoEditSection>
       <ProgramCommonInfoEditSection title="사업 KPI 목표" required>
         <ProgramRegistrationBusinessKpiParagraph
-          instructorDisabled={participant.teacherInstructor !== true}
+          instructorDisabled={kpiAvailability.instructorDisabled}
           instructorPlaceholder={
-            participant.teacherInstructor === true ? '목표값 입력' : '해당 없음'
+            kpiAvailability.instructorDisabled ? '해당 없음' : '목표값 입력'
           }
-          volunteerDisabled={participant.volunteer !== true}
-          volunteerPlaceholder={participant.volunteer === true ? '목표값 입력' : '해당 없음'}
-          dispatchedSchoolDisabled={participant.individual === true}
+          volunteerDisabled={kpiAvailability.volunteerDisabled}
+          volunteerPlaceholder={kpiAvailability.volunteerDisabled ? '해당 없음' : '목표값 입력'}
+          dispatchedSchoolDisabled={kpiAvailability.dispatchedSchoolDisabled}
           dispatchedSchoolPlaceholder={
-            participant.individual === true ? '해당 없음' : '목표값 입력'
+            kpiAvailability.dispatchedSchoolDisabled ? '해당 없음' : '목표값 입력'
           }
-          dispatchedClassDisabled={participant.individual === true}
+          dispatchedClassDisabled={kpiAvailability.dispatchedClassDisabled}
           dispatchedClassPlaceholder={
-            participant.individual === true ? '해당 없음' : '목표값 입력'
+            kpiAvailability.dispatchedClassDisabled ? '해당 없음' : '목표값 입력'
           }
         />
       </ProgramCommonInfoEditSection>

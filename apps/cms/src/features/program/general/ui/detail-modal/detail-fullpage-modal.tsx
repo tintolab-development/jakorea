@@ -110,6 +110,10 @@ import {
 } from '@/features/program/general/lib/application-tabs'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
+import {
+  programToRecruitmentTabEditValues,
+  resolveGeneralProgramForRecruitmentEdit,
+} from '@/features/program/general/lib/general-program-recruitment-edit-seed'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import { ProgramManagersTab } from './managers/program-managers-tab'
@@ -498,6 +502,24 @@ export function GeneralProgramDetailFullPageModal({
     return applyGeneralProgramDetailSession(base)
   }, [detailProgram, program, programId, remoteEnabled])
 
+  const recruitmentEditProgram = useMemo(
+    () => (displayProgram ? resolveGeneralProgramForRecruitmentEdit(displayProgram) : null),
+    [displayProgram]
+  )
+
+  const mapParticipantRecruitmentEditValues = useCallback(
+    (p: Program) => programToRecruitmentTabEditValues(p, 'participant'),
+    []
+  )
+  const mapInstructorRecruitmentEditValues = useCallback(
+    (p: Program) => programToRecruitmentTabEditValues(p, 'instructor'),
+    []
+  )
+  const mapVolunteerRecruitmentEditValues = useCallback(
+    (p: Program) => programToRecruitmentTabEditValues(p, 'volunteer'),
+    []
+  )
+
   const persistGeneralProgramDraft = useCallback(
     async (draft: Program, patch?: Partial<Program>) => {
       if (remoteEnabled) {
@@ -566,10 +588,6 @@ export function GeneralProgramDetailFullPageModal({
   const progressMenuItemsFiltered = useMemo(
     () => getVisibleGeneralProgressMenuItems(progressMenuItems, disabledLnbKeys.has('progress')),
     [disabledLnbKeys, progressMenuItems]
-  )
-  const surveyItemsFiltered = useMemo(
-    () => (disabledLnbKeys.has('survey') ? [] : surveyItems),
-    [disabledLnbKeys, surveyItems]
   )
   const participantApplicationsLnbLabel = useMemo(
     () =>
@@ -883,9 +901,10 @@ export function GeneralProgramDetailFullPageModal({
   const persistRecruitmentProgramDraft = persistGeneralProgramDraft
 
   const institutionsForm = useProgramDetailEditForm({
-    program: displayProgram,
+    program: recruitmentEditProgram,
     isEditMode: isEditModeInstitutions,
     schema: programDetailInstitutionsEditSchema,
+    mapToValues: mapParticipantRecruitmentEditValues,
   })
   const {
     triggerSave: institutionsTriggerSave,
@@ -894,8 +913,9 @@ export function GeneralProgramDetailFullPageModal({
     takeSaveFailure: takeInstitutionsSaveFailure,
   } = useProgramDetailInfoSave({
     form: institutionsForm,
-    program: displayProgram ?? null,
-    onSaveEdit: displayProgram ? persistRecruitmentProgramDraft : undefined,
+    program: recruitmentEditProgram,
+    mapToValues: mapParticipantRecruitmentEditValues,
+    onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
     validateSchema: programParticipantRecruitmentSaveSchema,
   })
 
@@ -909,8 +929,9 @@ export function GeneralProgramDetailFullPageModal({
     canEditInstructorRecruitment
 
   const instructorsForm = useProgramDetailEditForm({
-    program: displayProgram,
+    program: recruitmentEditProgram,
     isEditMode: isEditModeInstructors,
+    mapToValues: mapInstructorRecruitmentEditValues,
   })
   const {
     triggerSave: instructorsTriggerSave,
@@ -919,8 +940,9 @@ export function GeneralProgramDetailFullPageModal({
     takeSaveFailure: takeInstructorsSaveFailure,
   } = useProgramDetailInfoSave({
     form: instructorsForm,
-    program: displayProgram ?? null,
-    onSaveEdit: displayProgram ? persistRecruitmentProgramDraft : undefined,
+    program: recruitmentEditProgram,
+    mapToValues: mapInstructorRecruitmentEditValues,
+    onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
     validateSchema: programInstructorRecruitmentSaveSchema,
   })
 
@@ -934,8 +956,9 @@ export function GeneralProgramDetailFullPageModal({
     canEditVolunteerRecruitment
 
   const volunteersForm = useProgramDetailEditForm({
-    program: displayProgram,
+    program: recruitmentEditProgram,
     isEditMode: isEditModeVolunteers,
+    mapToValues: mapVolunteerRecruitmentEditValues,
   })
   const {
     triggerSave: volunteersTriggerSave,
@@ -944,8 +967,9 @@ export function GeneralProgramDetailFullPageModal({
     takeSaveFailure: takeVolunteersSaveFailure,
   } = useProgramDetailInfoSave({
     form: volunteersForm,
-    program: displayProgram ?? null,
-    onSaveEdit: displayProgram ? persistRecruitmentProgramDraft : undefined,
+    program: recruitmentEditProgram,
+    mapToValues: mapVolunteerRecruitmentEditValues,
+    onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
     validateSchema: programVolunteerRecruitmentSaveSchema,
   })
 
@@ -1825,7 +1849,7 @@ export function GeneralProgramDetailFullPageModal({
               participantInterviewEnabled={participantInterviewEnabled}
               volunteerInterviewEnabled={volunteerInterviewEnabled}
               progressMenuItems={progressMenuItemsFiltered}
-              surveyItems={surveyItemsFiltered}
+              surveyItems={surveyItems}
               onSelectChildTab={setLnbTab}
             />
           ) : null
@@ -1852,7 +1876,7 @@ export function GeneralProgramDetailFullPageModal({
               />
             ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
               <GeneralProgramRecruitmentView
-                program={displayProgram}
+                program={recruitmentEditProgram ?? displayProgram}
                 activeRecruitTab={recruitSubTab}
                 onRecruitTabChange={handleRecruitSubTabChange}
                 showInstructorTab={showInstructorApplications}

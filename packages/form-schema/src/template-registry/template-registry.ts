@@ -307,7 +307,7 @@ export function resolveBaseTemplateCodeForRegistry(
   const code = templateCode.trim()
   if (code === '') return undefined
 
-  const copyMatch = code.match(/^(.*)-copy-\d+$/)
+  const copyMatch = code.match(/^(.*)-copy(?:-\d+)?$/i)
   if (copyMatch?.[1]) return copyMatch[1]
 
   if (/^survey-custom-/i.test(code)) return 'survey-default'

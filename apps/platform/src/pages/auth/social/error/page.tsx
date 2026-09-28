@@ -69,7 +69,9 @@ export function SocialErrorPage() {
         window.location.assign(url)
       })
       .catch(() => {
-        navigate('/auth/sign-in?socialError=' + encodeURIComponent('소셜 로그인을 시작하지 못했어요.'))
+        navigate(
+          '/auth/sign-in?socialError=' + encodeURIComponent('소셜 로그인을 시작하지 못했어요.')
+        )
       })
   }
 
@@ -80,7 +82,12 @@ export function SocialErrorPage() {
         <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
           {copy.title}
         </PFText>
-        <PFText as="p" typo="bd-lg-rg" color="primary-700" className={authPageCopyClass('description')}>
+        <PFText
+          as="p"
+          typo="bd-lg-rg"
+          color="primary-700"
+          className={authPageCopyClass('description')}
+        >
           {copy.description}
         </PFText>
       </div>
@@ -95,7 +102,7 @@ export function SocialErrorPage() {
 
       <div className={styles.actions}>
         <PFButton size="xlarge" className={styles.actionButton} onClick={handleSignIn}>
-          이메일로 로그인
+          이메일로 로그인하기
         </PFButton>
         <PFButton
           size="xlarge"

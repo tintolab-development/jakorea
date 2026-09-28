@@ -7,7 +7,15 @@ import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import {
   UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY,
   normalizeUjatProgramRegistrationStepKey,
+  recruitmentPreviewAudienceFromUjatRegistrationStep,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
+import {
+  buildUjatProgramListRowFromRegistrationSnapshot,
+  collectUjatRegistrationCreateOverlay,
+} from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { ParticipantRecruitmentPreviewModal } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
+import type { RecruitmentUserPreviewAudience } from '@/features/program/general/ui/user-preview'
 import { useUjatProgramRegistrationFlow } from '@/features/program/ujat/hooks/use-ujat-program-registration-flow'
 import { UjatProgramRegistrationBodyHeader } from '@/features/program/ujat/ui/registration/ujat-program-registration-body-header'
 import type { Program } from '@/types/domain'
@@ -28,6 +36,7 @@ import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/regi
 import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
 import { UjatRegistrationRequiredFieldsIncompleteError } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
+import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 
 const UJAT_REGISTRATION_MODAL_TITLE = 'UJAT 프로그램 등록'
 
@@ -61,6 +70,10 @@ export function UjatProgramRegistrationFullpageModal({
   const [overwriteSaving, setOverwriteSaving] = useState(false)
   const [draftSaveSuccessOpen, setDraftSaveSuccessOpen] = useState(false)
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
+  const [recruitmentPreviewOpen, setRecruitmentPreviewOpen] = useState(false)
+  const [recruitmentPreviewProgram, setRecruitmentPreviewProgram] = useState<Program | null>(null)
+  const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
+    useState<RecruitmentUserPreviewAudience>('institutions')
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
 
   // 안내 팝업에서 「이어서 작성」을 명시한 경우만 저장본을 복원한다.
@@ -101,6 +114,8 @@ export function UjatProgramRegistrationFullpageModal({
     setOverwriteSaving(false)
     setDraftSaveSuccessOpen(false)
     setCompleteSuccessOpen(false)
+    setRecruitmentPreviewOpen(false)
+    setRecruitmentPreviewProgram(null)
     pendingCreatedProgramRef.current = undefined
   }, [open])
 
@@ -108,6 +123,8 @@ export function UjatProgramRegistrationFullpageModal({
     pendingCreatedProgramRef.current = program
     setCompleteSuccessOpen(true)
   }, [])
+
+  const recruitmentPreviewSponsorName = useSponsorNameById(recruitmentPreviewProgram?.sponsorId)
 
   const flow = useUjatProgramRegistrationFlow(open, {
     initialStep,
@@ -139,6 +156,22 @@ export function UjatProgramRegistrationFullpageModal({
   }, [onClose, searchParams, setSearchParams])
 
   const handlePreview = useCallback(() => {
+    if (flow.phase === 'recruitment') {
+      const overlay = collectUjatRegistrationCreateOverlay(
+        getUjatProgramRegistrationOverlayRecord()
+      )
+      setRecruitmentPreviewProgram(
+        buildUjatProgramListRowFromRegistrationSnapshot({
+          id: 'registration-preview',
+          overlay,
+        })
+      )
+      setRecruitmentPreviewAudience(
+        recruitmentPreviewAudienceFromUjatRegistrationStep(flow.activeStep)
+      )
+      setRecruitmentPreviewOpen(true)
+      return
+    }
     const next = new URLSearchParams(searchParams)
     next.set('userPreview', TEMPLATE_USER_PREVIEW_ACTIVE)
     setSearchParams(next, { replace: false })
@@ -206,21 +239,6 @@ export function UjatProgramRegistrationFullpageModal({
           onClick: () => flow.goToPhase('program'),
         },
         {
-          label: '신청 정보 작성하기',
-          variant: 'primary',
-          showArrow: true,
-          onClick: () => flow.goToPhase('application'),
-        },
-      ]
-    }
-    if (flow.phase === 'application') {
-      return [
-        {
-          label: '모집 정보 돌아가기',
-          variant: 'secondary',
-          onClick: () => flow.goToPhase('recruitment'),
-        },
-        {
           label: '프로그램 등록 완료',
           variant: 'primary',
           showArrow: false,
@@ -251,6 +269,7 @@ export function UjatProgramRegistrationFullpageModal({
         templateTabType="writing"
         registrationUserMode
         onPreview={handlePreview}
+        showPreview={flow.phase !== 'program'}
         onSave={handleSaveClick}
         bodyHeaderLeading={
           <UjatProgramRegistrationBodyHeader
@@ -267,7 +286,7 @@ export function UjatProgramRegistrationFullpageModal({
         }
         footerActions={flow.isDraftLoading ? undefined : footerActions}
         leftContent={flow.isDraftLoading ? <FormDraftLoading /> : flow.panels.leftContent}
-        rightNavigation={flow.isDraftLoading ? null : flow.panels.rightNavigation}
+        rightNavigation={null} // 공통·모집만 있어 커스텀 필드 우측 패널 미노출
       />
       <RegistrationDraftOverwriteConfirmModal
         open={overwriteOpen}
@@ -287,6 +306,18 @@ export function UjatProgramRegistrationFullpageModal({
         open={completeSuccessOpen}
         onConfirm={handleCompleteSuccessConfirm}
       />
+      {recruitmentPreviewProgram ? (
+        <ParticipantRecruitmentPreviewModal
+          open={recruitmentPreviewOpen}
+          onClose={() => {
+            setRecruitmentPreviewOpen(false)
+            setRecruitmentPreviewProgram(null)
+          }}
+          program={recruitmentPreviewProgram}
+          sponsorName={recruitmentPreviewSponsorName}
+          audience={recruitmentPreviewAudience}
+        />
+      ) : null}
     </>
   )
 }

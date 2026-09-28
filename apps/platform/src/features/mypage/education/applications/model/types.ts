@@ -1,5 +1,6 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import type { EducationForm, ProgramDetailCase } from '@/features/program'
+import type { ProgramApplicationType } from '../api/types'
 
 export type EducationApplicationTab = 'all' | 'applied' | 'in_progress' | 'completed'
 
@@ -78,6 +79,8 @@ export function hasTeacherAssignmentAsideContent(
 
 export type EducationApplicationListItem = {
   id: string
+  /** 포털 신청 건 역할 SoT. Mock/레거시 항목은 없을 수 있음. */
+  applicationType?: ProgramApplicationType
   programId: string
   categoryLabel: string
   title: string

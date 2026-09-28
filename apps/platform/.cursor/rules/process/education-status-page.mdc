@@ -11,11 +11,16 @@ alwaysApply: false
 ## 목록 (`/mypage/education`)
 
 - 로그인 회원이 **신청한 교육 프로그램** 중 **수강(참여) 역할** 신청만 노출
-- **역할 기반 배타적 파티션** — 교육현황(수강) / 봉사현황(봉사) / 강의현황(강사, 강사·강사겸교사만)은 서로 **겹치지 않는다**. 봉사 역할(일반 봉사 + UJAT 봉사) 신청은 봉사현황에**만**, 강사 역할(Gemini 강사 모집 제외) 신청은 강의현황에**만** 노출된다. 역할 판정: `resolveApplicationRole` — 관련: [`volunteer-status-page.mdc`](volunteer-status-page.mdc), [`lecture-status-page.mdc`](lecture-status-page.mdc)
+- **역할 기반 배타적 파티션** — 교육현황(수강) / 봉사현황(봉사) / 강의현황(강사, 강사·강사겸교사만)은 서로 **겹치지 않는다**. 신청 건 역할 SoT는 프로그램 `detailCase`가 아니라 포털 API 신청 건의 `applicationType`.
+  - 교육현황: `applicationType=INDIVIDUAL` + `applicationType=ORGANIZATION`
+  - 봉사현황: `applicationType=VOLUNTEER`
+  - 강의현황: `applicationType=INSTRUCTOR`
+  - 관련: [`volunteer-status-page.mdc`](volunteer-status-page.mdc), [`lecture-status-page.mdc`](lecture-status-page.mdc)
   - **교육받은 교사**(`trainedTeachers`)는 본인이 학생을 대신 신청하고 본인이 가르치는 구조라도 강사 모집 절차가 없으므로 **교육현황에만** 노출(수강=참여 역할로 분류)
   - **일반(기관)**: 담당 교사가 학생을 대표로 신청하는 경우도 수강 역할로 분류되어 교육현황에 노출
-- API: `GET /api/portal/me/program-applications` (연동 시 `statusGroup`, `page`, `size`)
-- Mock: [`mock-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts) · 필터 `filterEducationStatusApplications`(`isParticipantRoleApplication`만 반환)
+- API: `GET /api/portal/me/program-applications?applicationType=INDIVIDUAL` + `?applicationType=ORGANIZATION`
+  - 현재 API는 applicationType 다중 필터를 지원하지 않으므로 FE 1차 연동은 두 요청을 `size=100`으로 가져와 합집합 후 클라이언트 페이지네이션한다. 타입별 100건 초과는 후속 서버/페이지 병합 지원 필요.
+- Mock: [`mock-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts) · remote 비활성화 fallback. Mock 역할 판정만 `filterEducationStatusApplications`(`isParticipantRoleApplication`) 사용.
 
 ### 정렬
 
@@ -308,6 +313,6 @@ alwaysApply: false
 - 안내사항: `EducationInProgressNoticePanel` · `EducationInProgressNoticeDetailModal` · `EducationNoticeStats` · `EducationProgramInfoModal` · `EducationApplicationInfoModal`
 - 교육일정: `EducationSchedulePanel` · `resolveEducationAssignmentGuide` · `filterItemsUpToLastParticipatedSession`
 - 설문·만족도: `EducationSurveyFillPanel` (active, CMS `createDefaultSurveyDraft` 시드) · `EducationSurveyEmptyPanel` (empty)
-- 역할 판정: [`application-kind.ts`](apps/platform/src/features/mypage/education/applications/lib/application-kind.ts) — `resolveApplicationRole` / `isParticipantRoleApplication` / `isVolunteerRoleApplication` / `isInstructorRoleApplication`
+- 역할 판정: remote API는 신청 건 `applicationType`이 SoT. [`application-kind.ts`](apps/platform/src/features/mypage/education/applications/lib/application-kind.ts)는 `applicationType` 우선, mock/레거시 항목만 `detailCase` fallback.
 
-**Last updated:** 2026-09-21 (교육/봉사/강의현황 역할 기반 배타적 파티션으로 재구조화 — 교육현황은 수강 역할만)
+**Last updated:** 2026-09-28 (포털 신청 API `applicationType` 기반 연동 — 교육현황은 INDIVIDUAL/ORGANIZATION 합집합)

@@ -236,8 +236,11 @@ export const router = createBrowserRouter([
       },
       { path: '/programs/:programId', element: <ProgramDetailPage /> },
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
+      { path: '/mypage/education/:applicationType/:applicationId', element: <MypageEducationDetailPage /> },
       { path: '/mypage/education/:applicationId', element: <MypageEducationDetailPage /> },
+      { path: '/mypage/volunteer/:applicationType/:applicationId', element: <MypageVolunteerDetailPage /> },
       { path: '/mypage/volunteer/:applicationId', element: <MypageVolunteerDetailPage /> },
+      { path: '/mypage/lectures/:applicationType/:applicationId', element: <MypageLectureDetailPage /> },
       { path: '/mypage/lectures/:applicationId', element: <MypageLectureDetailPage /> },
       { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       {

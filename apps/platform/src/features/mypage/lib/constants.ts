@@ -9,21 +9,33 @@ export const MYPAGE_INQUIRIES_PATH = '/mypage/inquiries'
 /** 마이페이지 — 교육현황 */
 export const MYPAGE_EDUCATION_PATH = '/mypage/education'
 
-export function educationApplicationDetailPath(applicationId: string): string {
+export function educationApplicationDetailPath(
+  applicationId: string,
+  applicationType?: string,
+): string {
+  if (applicationType) return `${MYPAGE_EDUCATION_PATH}/${applicationType}/${applicationId}`
   return `${MYPAGE_EDUCATION_PATH}/${applicationId}`
 }
 
 /** 마이페이지 — 봉사현황 */
 export const MYPAGE_VOLUNTEER_PATH = '/mypage/volunteer'
 
-export function volunteerApplicationDetailPath(applicationId: string): string {
+export function volunteerApplicationDetailPath(
+  applicationId: string,
+  applicationType?: string,
+): string {
+  if (applicationType) return `${MYPAGE_VOLUNTEER_PATH}/${applicationType}/${applicationId}`
   return `${MYPAGE_VOLUNTEER_PATH}/${applicationId}`
 }
 
 /** 마이페이지 — 강의현황(강사·강사겸교사 전용) */
 export const MYPAGE_LECTURE_PATH = '/mypage/lectures'
 
-export function lectureApplicationDetailPath(applicationId: string): string {
+export function lectureApplicationDetailPath(
+  applicationId: string,
+  applicationType?: string,
+): string {
+  if (applicationType) return `${MYPAGE_LECTURE_PATH}/${applicationType}/${applicationId}`
   return `${MYPAGE_LECTURE_PATH}/${applicationId}`
 }
 

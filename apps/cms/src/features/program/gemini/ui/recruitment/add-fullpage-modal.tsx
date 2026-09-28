@@ -31,7 +31,6 @@ import {
 } from '../../lib/recruitment/detail-url'
 import { GeminiRecruitmentAddCloseConfirmModal } from './add-close-confirm-modal'
 import { GeminiRecruitmentAddForm } from './add-form'
-import { GeminiRecruitmentAddFormSidebar } from './add-form-sidebar'
 import { GeminiRecruitmentAddPreviewModal } from './add-preview-modal'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/features/template/ui/modal/template-preview-modal.css'
@@ -168,7 +167,7 @@ export function GeminiRecruitmentAddFullpageModal({
         onPreview={handlePreview}
         onSave={handleDraftSave}
         leftContent={<GeminiRecruitmentAddForm form={form} />}
-        rightNavigation={<GeminiRecruitmentAddFormSidebar />}
+        rightNavigation={null}
         footerAction={{
           label: '프로그램 등록 완료',
           disabled: !form.isRegisterReady,

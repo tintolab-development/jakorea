@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getVisibleGeneralProgramApplicationTabKeys,
   getVisibleGeneralProgramRecruitTabKeys,
+  recruitmentPreviewAudienceFromRegistrationStep,
   type GeneralProgramRegistrationParticipantFlags,
 } from './registration-flow'
 
@@ -66,5 +67,20 @@ describe('general program registration tab visibility', () => {
       'application-participant-individual',
       'application-instructor',
     ])
+  })
+})
+
+describe('recruitmentPreviewAudienceFromRegistrationStep', () => {
+  it('maps recruit steps to the same audience keys as program detail preview', () => {
+    expect(recruitmentPreviewAudienceFromRegistrationStep('recruit-participant-school')).toBe(
+      'institutions'
+    )
+    expect(recruitmentPreviewAudienceFromRegistrationStep('recruit-participant-individual')).toBe(
+      'institutions'
+    )
+    expect(recruitmentPreviewAudienceFromRegistrationStep('recruit-instructor')).toBe(
+      'instructors'
+    )
+    expect(recruitmentPreviewAudienceFromRegistrationStep('recruit-volunteer')).toBe('volunteers')
   })
 })

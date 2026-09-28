@@ -39,9 +39,18 @@ describe('listAllRegistrationCreateFormSpecs', () => {
     expect(specs.some(spec => spec.templateCode.includes('-general'))).toBe(false)
   })
 
-  it('uses registration-ujat for UJAT', () => {
+  it('uses registration-ujat for UJAT and still binds fixed application templates', () => {
     const program = { id: '182101' } as Program
     const specs = listAllRegistrationCreateFormSpecs(program)
     expect(specs[0]?.templateCode).toBe('registration-ujat')
+    expect(specs.map(spec => spec.templateCode)).toEqual(
+      expect.arrayContaining([
+        'registration-ujat',
+        'recruitment-ujat-school',
+        'recruitment-ujat-volunteer',
+        'application-ujat-school',
+        'application-ujat-volunteer',
+      ])
+    )
   })
 })

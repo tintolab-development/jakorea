@@ -20,7 +20,10 @@ import { InstitutionCombinedClassEditCell } from './institution-combined-class-e
 import type {
   SameSchoolGradeOption,
 } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
-import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import {
+  formatInstitutionApplicationGradeDisplay,
+  type InstitutionAffiliatedTeacherOption,
+} from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import {
   InstitutionAddressDetailEdit,
   InstitutionClassAndStudentCountEdit,
@@ -346,7 +349,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
         error={validationErrors?.educationGrade}
       />
     ) : (
-      institution.educationGrade ?? '-'
+      formatInstitutionApplicationGradeDisplay(institution.educationGrade ?? '') || '-'
     )
 
   const regionValue =

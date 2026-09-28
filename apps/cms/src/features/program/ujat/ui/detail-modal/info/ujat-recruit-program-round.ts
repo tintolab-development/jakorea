@@ -1,5 +1,11 @@
 import type { DateValue } from '@/types'
 import type { Program, ProgramRound } from '@/types/domain'
+import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
+import {
+  pickUjatRecruitVolunteerOverlay,
+  resolveUjatVolunteerActivityTermFromOverlay,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import { loadUjatRecruitVolunteerTemplateSave } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import type { UjatVolunteerRecruitHalf } from './ujat-recruit-paragraph-props'
 
 export function getUjatVolunteerRound(
@@ -11,6 +17,21 @@ export function getUjatVolunteerRound(
   const byNumber = rounds.find(r => r.roundNumber === targetNumber)
   if (byNumber) return byNumber
   return half === 'h1' ? rounds[0] : rounds[1]
+}
+
+export function resolveUjatVolunteerActivityTermDisplay(
+  program: Program,
+  half: UjatVolunteerRecruitHalf
+): string {
+  const overlay = {
+    ...(loadUjatRecruitVolunteerTemplateSave()?.overlay ?? {}),
+    ...pickUjatRecruitVolunteerOverlay(readUjatRegistrationOverlayFromProgram(program)),
+  }
+  return (
+    resolveUjatVolunteerActivityTermFromOverlay(overlay, half) ||
+    getUjatVolunteerRound(program, half)?.curriculum?.trim() ||
+    '-'
+  )
 }
 
 export function getUjatVolunteerRecruitPeriod(

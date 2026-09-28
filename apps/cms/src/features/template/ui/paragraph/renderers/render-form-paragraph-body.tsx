@@ -217,6 +217,10 @@ export type RenderFormParagraphBodyOptions = {
    */
   structureLockedAuthoringChoicePreview?: boolean
   /**
+   * 모집 양식 구조 잠금 — 단락 추가·삭제·유형 변경은 막고, 운영 값(기간·상세·표 셀)은 authoring에서 입력.
+   */
+  structureLockedAuthoringOperationalFill?: boolean
+  /**
    * 프로그램 등록 위저드 신청 양식 — 시드 단락의 신청자 fill(DetailInfoForm·필드형 표 등)만 잠금.
    * 타이틀·설명·텍스트형 TD는 템플릿 관리와 동일하게 편집 가능.
    */
@@ -272,8 +276,14 @@ export function renderFormParagraphBody(
   const consentFillParagraphInteractive =
     consentFillBodyReadOnly &&
     (options?.agreementConsentFillInteractiveParagraphIds?.has(p.id) ?? false)
+  const lockedAuthoringOperationalFill =
+    structureLocked &&
+    options?.structureLockedAuthoringOperationalFill === true &&
+    paragraphInteractionMode === 'authoring' &&
+    !isPreviewReadonly
   /**
    * 구조 잠금: 작성(authoring)에서는 카드 선택만으로는 본문 편집 불가.
+   * 모집 양식(`structureLockedAuthoringOperationalFill`): 운영 값 입력은 허용.
    * user + `agreementConsentFillReadOnlyBody`: 양식 본문만 잠금(동의서 작성).
    * user + interactive id 예외(대상자 본인 등): 응답 입력 허용.
    * user(일반): 잠긴 시드도 입력 가능. `preview`는 항상 비활성.
@@ -281,8 +291,9 @@ export function renderFormParagraphBody(
   const isBodyInteractive = isPreviewReadonly
     ? false
     : structureLocked
-      ? paragraphInteractionMode === 'user' &&
-        (!consentFillBodyReadOnly || consentFillParagraphInteractive)
+      ? lockedAuthoringOperationalFill ||
+        (paragraphInteractionMode === 'user' &&
+          (!consentFillBodyReadOnly || consentFillParagraphInteractive))
       : paragraphInteractionMode === 'user' || isParagraphSelected
   const structureLockedConsentChoiceInteractive =
     structureLocked &&
@@ -430,6 +441,7 @@ export function renderFormParagraphBody(
       const isEditMode =
         isTextTableAuthoringEdit ||
         structureLockedPartialTextEdit ||
+        lockedAuthoringOperationalFill ||
         (!isPreviewReadonly &&
           (!structureLocked ||
             consentFillParagraphInteractive ||

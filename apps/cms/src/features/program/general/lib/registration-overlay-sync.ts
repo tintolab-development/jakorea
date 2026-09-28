@@ -4,7 +4,12 @@
  */
 import type { Program } from '@/types/domain'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
-import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
+import {
+  resolveWageGradeFee,
+  resolveWagePaymentItemIds,
+  WAGE_GRADE_FIELDS,
+} from '@/features/program/general/lib/wage-display'
+import { programPaymentItemLabelsFromIds } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { initialProgramRegistrationSurveyItems } from '@/features/template/lib/program-registration-survey-items'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
@@ -15,6 +20,7 @@ import {
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
+import { participantFlagsFromGeneralProgram } from '@/features/program/general/lib/participant-audience-selection'
 import {
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
@@ -76,11 +82,51 @@ function reverseIpsCategory(value: Program['ips']): string {
   return ''
 }
 
-function parseWageNumber(pricing: string | undefined): number | null {
-  const raw = parseCompanySchoolWageAmountFromPricing(pricing, 'regular')
-  if (!raw) return null
-  const n = Number(raw.replace(/,/g, ''))
-  return Number.isFinite(n) ? n : null
+function overlayString(overlay: Record<string, unknown>, key: string): string {
+  const value = overlay[key]
+  return typeof value === 'string' ? value : ''
+}
+
+function isEmptyWageFee(value: unknown): boolean {
+  return value == null || value === ''
+}
+
+function isEmptyPaymentItemValues(value: unknown): boolean {
+  return !Array.isArray(value) || value.length === 0
+}
+
+function isEmptyOverlayText(value: unknown): boolean {
+  return typeof value !== 'string' || value.trim() === ''
+}
+
+function preferFilled<T>(saved: T | undefined, fallback: T, isEmpty: (value: T) => boolean): T {
+  if (saved !== undefined && !isEmpty(saved)) return saved
+  return fallback
+}
+
+function wageOverlayFromProgram(program: Program): Record<string, unknown> {
+  const common = program.generalCommonInfo
+  const overlay = overlayFromProgram(program)
+  const overlayIds = overlay[`${WAGE}.paymentItemValues`]
+  const paymentItemValues =
+    Array.isArray(overlayIds) && overlayIds.length > 0
+      ? overlayIds.map(String)
+      : resolveWagePaymentItemIds(
+          overlayString(overlay, `${WAGE}.paymentItemLabels`) || common?.paymentItems
+        )
+  const paymentItemLabels =
+    overlayString(overlay, `${WAGE}.paymentItemLabels`) ||
+    programPaymentItemLabelsFromIds(paymentItemValues) ||
+    common?.paymentItems?.trim() ||
+    ''
+
+  return {
+    [`${WAGE}.grade1Fee`]: resolveWageGradeFee(overlay, common?.wageGradeRows, WAGE_GRADE_FIELDS[0]),
+    [`${WAGE}.grade2Fee`]: resolveWageGradeFee(overlay, common?.wageGradeRows, WAGE_GRADE_FIELDS[1]),
+    [`${WAGE}.grade3Fee`]: resolveWageGradeFee(overlay, common?.wageGradeRows, WAGE_GRADE_FIELDS[2]),
+    [`${WAGE}.paymentItemValues`]: paymentItemValues,
+    [`${WAGE}.paymentItemLabels`]: paymentItemLabels,
+  }
 }
 
 function surveyItemsFromProgram(program: Program): Record<string, boolean> {
@@ -105,9 +151,7 @@ export function extrasFromGeneralProgram(program: Program): GeneralRegistrationE
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: common?.curriculumSessions,
   })
-  const types = program.generalParticipantTypes ?? []
-  const organization =
-    program.generalProgramAudience === 'organization' || types.includes('school_institution')
+  const participant = participantFlagsFromGeneralProgram(program)
   return {
     programType: typeFields.educationStructure,
     sessionRoundType: typeFields.sessionRound,
@@ -119,7 +163,10 @@ export function extrasFromGeneralProgram(program: Program): GeneralRegistrationE
     curriculumChartSessionCount: Math.max(1, common?.curriculumSessions?.length ?? 1),
     scheduleCurriculumDetailCount: Math.max(1, common?.scheduleDetails?.length ?? 1),
     scheduleCurriculumPreEducation: common?.scheduleCurriculumPreEducation === true,
-    participantOrganization: organization,
+    participantOrganization: participant.organization,
+    participantIndividual: participant.individual,
+    participantTeacherInstructor: participant.teacherInstructor,
+    participantVolunteer: participant.volunteer,
   }
 }
 
@@ -129,7 +176,6 @@ export function buildGeneralRegistrationOverlayFromProgram(
   const extras = extrasFromGeneralProgram(program)
   const common = program.generalCommonInfo
   const kpi = common?.kpi
-  const rows = common?.wageGradeRows ?? []
   const sponsorIds =
     common?.sponsorManagementIds?.length
       ? common.sponsorManagementIds
@@ -173,16 +219,9 @@ export function buildGeneralRegistrationOverlayFromProgram(
     [`${KPI}.participantCount`]: kpi?.finalParticipants ?? null,
     [`${KPI}.instructor`]: kpi?.instructorCount ?? null,
     [`${KPI}.volunteer`]: kpi?.volunteerCount ?? null,
-    [`${KPI}.dispatchedSchool`]: kpi?.finalSchools ?? null,
-    [`${KPI}.dispatchedClass`]: kpi?.finalClasses ?? null,
-    [`${WAGE}.grade1Fee`]: parseWageNumber(rows[0]?.pricing),
-    [`${WAGE}.grade2Fee`]: parseWageNumber(rows[1]?.pricing),
-    [`${WAGE}.grade3Fee`]: parseWageNumber(rows[2]?.pricing),
-    [`${WAGE}.paymentItemValues`]: Array.isArray(
-      program.registrationOverlay?.[`${WAGE}.paymentItemValues`]
-    )
-      ? program.registrationOverlay?.[`${WAGE}.paymentItemValues`]
-      : [],
+    [`${KPI}.dispatchedSchool`]: null,
+    [`${KPI}.dispatchedClass`]: null,
+    ...wageOverlayFromProgram(program),
     [`${TYPE}.ipsType`]: {
       category: reverseIpsCategory(program.ips),
       detail: '',
@@ -194,6 +233,33 @@ export function seedGeneralRegistrationOverlayFromProgram(program: Program): voi
   const fromProgram = buildGeneralRegistrationOverlayFromProgram(program)
   const saved = overlayFromProgram(program)
   const merged = { ...fromProgram, ...saved }
+  merged[`${WAGE}.grade1Fee`] = preferFilled(
+    saved[`${WAGE}.grade1Fee`] as number | null | undefined,
+    fromProgram[`${WAGE}.grade1Fee`] as number | null,
+    isEmptyWageFee
+  )
+  merged[`${WAGE}.grade2Fee`] = preferFilled(
+    saved[`${WAGE}.grade2Fee`] as number | null | undefined,
+    fromProgram[`${WAGE}.grade2Fee`] as number | null,
+    isEmptyWageFee
+  )
+  merged[`${WAGE}.grade3Fee`] = preferFilled(
+    saved[`${WAGE}.grade3Fee`] as number | null | undefined,
+    fromProgram[`${WAGE}.grade3Fee`] as number | null,
+    isEmptyWageFee
+  )
+  merged[`${WAGE}.paymentItemValues`] = preferFilled(
+    saved[`${WAGE}.paymentItemValues`] as unknown[] | undefined,
+    fromProgram[`${WAGE}.paymentItemValues`] as unknown[],
+    isEmptyPaymentItemValues
+  )
+  merged[`${WAGE}.paymentItemLabels`] = preferFilled(
+    saved[`${WAGE}.paymentItemLabels`] as string | undefined,
+    String(fromProgram[`${WAGE}.paymentItemLabels`] ?? ''),
+    isEmptyOverlayText
+  )
+  merged[`${KPI}.dispatchedSchool`] = null
+  merged[`${KPI}.dispatchedClass`] = null
   const surveyKeys = resolveProgramSurveyMenuKeys({
     generalSurveyMenuKeys: program.generalSurveyMenuKeys,
     registrationOverlay: merged,

@@ -5,7 +5,7 @@
 **요청 대상:** Programs API · `POST /api/admin/programs` · `PATCH /api/admin/programs/{id}` · `GET /api/admin/programs` · `GET /api/admin/programs/{id}`  
 **이 문서만으로 구현·검수할 수 있다.**
 
-오늘 전달. **요청 A**는 목록 프로그램명. **요청 B**는 사업 운영 기간(달력연도 고정 제거 · 연도 걸침 허용 · 전 유형 공통). **요청 C**는 1사1교 임금↔정산 테이블 (별도 문서).
+오늘 전달. **요청 A**는 목록 프로그램명. **요청 B**는 사업 운영 기간 — **현재 SSOT는** [`program-business-period-any-dates-backend-request-2026-09-28.md`](./program-business-period-any-dates-backend-request-2026-09-28.md) (아무 날짜, `2025.04.01 ~ 2027.08.23` 포함). **요청 C**는 1사1교 임금↔정산 테이블 (별도 문서).
 
 | # | 요약 | 유형 |
 |---|------|------|

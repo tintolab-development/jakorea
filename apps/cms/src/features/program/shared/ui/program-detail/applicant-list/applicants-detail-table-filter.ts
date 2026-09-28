@@ -1,6 +1,7 @@
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { TabKey } from '@/features/program/general/ui/detail-modal/program-detail-nav-types'
+import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 
 export function filterApplicantsTableData(
   menu: TabKey | '',
@@ -38,7 +39,13 @@ export function filterApplicantsTableData(
         !item.region.includes(String(institutionSigungu))
       )
         return false
-      if (grade && grade !== 'all' && item.educationGrade !== grade) return false
+      if (
+        grade &&
+        grade !== 'all' &&
+        formatInstitutionApplicationGradeDisplay(item.educationGrade) !==
+          formatInstitutionApplicationGradeDisplay(String(grade))
+      )
+        return false
       if (teacherName && teacherName.trim() !== '' && !item.teacherName.includes(teacherName))
         return false
       if (approvalStatus && approvalStatus !== 'all' && item.approvalStatus !== approvalStatus)

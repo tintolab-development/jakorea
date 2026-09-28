@@ -11,7 +11,10 @@ import {
   type GeneralProgramRegistrationParticipantFlags,
   type GeneralProgramRegistrationTabVisibilityOptions,
 } from '@/features/program/general/model/registration-flow'
-import { UJAT_PROGRAM_REGISTRATION_STEPS } from '@/features/program/ujat/model/ujat-program-registration-flow'
+import {
+  UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS,
+  UJAT_PROGRAM_REGISTRATION_STEPS,
+} from '@/features/program/ujat/model/ujat-program-registration-flow'
 
 export type OperationalFormType = 'APPLICATION' | 'RECRUITMENT' | 'REGISTRATION'
 
@@ -212,7 +215,7 @@ function listUjatOperationalTemplateCodes(): string[] {
     if (step.phase === 'program') return []
     return [step.templateId]
   })
-  return [...new Set(codes)]
+  return [...new Set([...codes, ...UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS])]
 }
 
 export function listOperationalTemplateCodesForProgram(program: Program): string[] {

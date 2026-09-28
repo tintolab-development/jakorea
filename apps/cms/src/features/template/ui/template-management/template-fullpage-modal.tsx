@@ -14,6 +14,8 @@ interface TemplateFullpageModalProps {
   description?: ReactNode
   templateTabType: 'writing' | 'issuance'
   onPreview?: () => void
+  /** false면 헤더 「미리보기」 버튼을 숨긴다. 기본 true */
+  showPreview?: boolean
   onSave?: () => void
   /** 사용자 추가 생성 템플릿 — 시안: 삭제 | 미리보기 | 저장 */
   showDeleteButton?: boolean
@@ -84,6 +86,7 @@ export function TemplateFullpageModal({
   description,
   templateTabType,
   onPreview,
+  showPreview = true,
   onSave,
   showDeleteButton = false,
   onDelete,
@@ -109,6 +112,7 @@ export function TemplateFullpageModal({
   const rootClassName = [
     'full-page-modal',
     registrationUserMode ? 'full-page-modal--registration-user-mode' : '',
+    rightNavigation == null ? 'full-page-modal--no-right-nav' : '',
     className,
   ]
     .filter(Boolean)
@@ -137,9 +141,11 @@ export function TemplateFullpageModal({
             닫기
           </CmsButton>
         )}
-        <CmsButton variant="secondary" onClick={onPreview}>
-          미리보기
-        </CmsButton>
+        {showPreview ? (
+          <CmsButton variant="secondary" onClick={onPreview}>
+            미리보기
+          </CmsButton>
+        ) : null}
         <CmsButton onClick={() => onSave?.()} disabled={deleteLoading}>
           {resolvedSaveLabel}
         </CmsButton>
@@ -157,9 +163,11 @@ export function TemplateFullpageModal({
         >
           문서 다운로드
         </CmsButton>
-        <CmsButton variant="secondary" onClick={onPreview}>
-          미리보기
-        </CmsButton>
+        {showPreview ? (
+          <CmsButton variant="secondary" onClick={onPreview}>
+            미리보기
+          </CmsButton>
+        ) : null}
         <CmsButton onClick={() => onSave?.()}>{resolvedSaveLabel}</CmsButton>
       </>
     )
@@ -262,9 +270,11 @@ export function TemplateFullpageModal({
 
           <div className="full-page-modal__contents">
             <div className="full-page-modal__left">{leftContent}</div>
-            <aside className="full-page-modal__right-wrap">
-              <div className="full-page-modal__right">{rightNavigation}</div>
-            </aside>
+            {rightNavigation != null ? (
+              <aside className="full-page-modal__right-wrap">
+                <div className="full-page-modal__right">{rightNavigation}</div>
+              </aside>
+            ) : null}
           </div>
           {resolvedFooterActions != null && resolvedFooterActions.length > 0 ? (
             <div

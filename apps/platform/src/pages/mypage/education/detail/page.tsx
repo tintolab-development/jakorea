@@ -26,6 +26,7 @@ import {
   getMockEducationApplicationById,
   hasTeacherAssignmentAsideContent,
   isInstructorRoleApplication,
+  isParticipantRoleApplication,
   isSchoolTeacherMypageProfile,
   isVolunteerRoleApplication,
   isWithdrawnBeforeEducation,
@@ -38,11 +39,14 @@ import {
   shouldShowDocumentPassBanner,
   TeacherApplicationContent,
   TeacherEducationAssignmentAside,
+  useCancelMyProgramApplicationMutation,
+  useMyProgramApplicationDetail,
   useMypageMember,
   type EducationActivitySection,
   type EducationDisplayStatus,
+  type ProgramApplicationType,
 } from '@/features/mypage'
-import { ProgramInfoBody, useMockProgramById } from '@/features/program'
+import { ProgramInfoBody, useMockProgramById, useProgramDetail } from '@/features/program'
 import {
   getAccessToken,
   getDevAuthLoggedIn,
@@ -106,8 +110,21 @@ function readSection(search = window.location.search): DetailSection {
   return 'program'
 }
 
-function buildDetailPath(applicationId: string, section: DetailSection) {
-  const base = educationApplicationDetailPath(applicationId)
+const EDUCATION_APPLICATION_TYPES = new Set<ProgramApplicationType>(['INDIVIDUAL', 'ORGANIZATION'])
+
+function readEducationApplicationType(value: string | undefined): ProgramApplicationType | null {
+  if (value && EDUCATION_APPLICATION_TYPES.has(value as ProgramApplicationType)) {
+    return value as ProgramApplicationType
+  }
+  return null
+}
+
+function buildDetailPath(
+  applicationId: string,
+  section: DetailSection,
+  applicationType?: ProgramApplicationType,
+) {
+  const base = educationApplicationDetailPath(applicationId, applicationType)
   if (section === 'program' || section === 'notice') return base
   return `${base}?section=${section}`
 }
@@ -115,22 +132,36 @@ function buildDetailPath(applicationId: string, section: DetailSection) {
 export function MypageEducationDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { applicationId = '' } = useParams<{ applicationId: string }>()
+  const { applicationId = '', applicationType } = useParams<{
+    applicationId: string
+    applicationType?: string
+  }>()
+  const routeApplicationType = readEducationApplicationType(applicationType)
+  const remoteDetailEnabled = isRemoteApiConfigured() && routeApplicationType != null
   const [isAuthReady, setIsAuthReady] = useState(false)
   const [section, setSection] = useState(readSection)
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
+  const cancelMutation = useCancelMyProgramApplicationMutation()
   const member = useMypageMember()
   const isTeacher = isSchoolTeacherMypageProfile(member.profile)
 
   const mockEnabled = useShouldUsePlatformMockData()
-  const application = useMemo(
+  const mockApplication = useMemo(
     () => getMockEducationApplicationById(applicationId),
     [applicationId, mockEnabled],
   )
-  const { program, isLoading: isProgramLoading } = useMockProgramById(
-    application?.programId ?? '',
+  const remoteApplicationQuery = useMyProgramApplicationDetail(routeApplicationType, applicationId)
+  const application = remoteDetailEnabled ? remoteApplicationQuery.application : mockApplication
+  const mockProgramQuery = useMockProgramById(remoteDetailEnabled ? '' : (application?.programId ?? ''))
+  const remoteProgramQuery = useProgramDetail(
+    remoteDetailEnabled ? application?.programId : null,
+    { fresh: true },
   )
+  const program = remoteDetailEnabled ? remoteProgramQuery.program : mockProgramQuery.program
+  const isProgramLoading = remoteDetailEnabled
+    ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
+    : mockProgramQuery.isLoading
 
   const isWithdrawnBefore = application ? isWithdrawnBeforeEducation(application) : false
   const isWithdrawnDuring = application ? isWithdrawnDuringEducation(application) : false
@@ -183,27 +214,37 @@ export function MypageEducationDetailPage() {
     }
 
     if (!getDevAuthLoggedIn()) {
-      navigate(resolveLoginRequiredPath(educationApplicationDetailPath(applicationId || 'unknown')))
+      navigate(
+        resolveLoginRequiredPath(
+          educationApplicationDetailPath(applicationId || 'unknown', routeApplicationType ?? undefined),
+        ),
+      )
       return
     }
 
     setIsAuthReady(true)
-  }, [applicationId, navigate])
+  }, [applicationId, navigate, routeApplicationType])
 
   useEffect(() => {
     if (!application) return
     if (isVolunteerRoleApplication(application)) {
-      navigate(`${volunteerApplicationDetailPath(application.id)}${location.search}`, {
+      navigate(`${volunteerApplicationDetailPath(application.id, application.applicationType)}${location.search}`, {
         replace: true,
       })
       return
     }
     if (isInstructorRoleApplication(application)) {
-      navigate(`${lectureApplicationDetailPath(application.id)}${location.search}`, {
+      navigate(`${lectureApplicationDetailPath(application.id, application.applicationType)}${location.search}`, {
+        replace: true,
+      })
+      return
+    }
+    if (remoteDetailEnabled && !isParticipantRoleApplication(application)) {
+      navigate(`${MYPAGE_EDUCATION_PATH}${location.search}`, {
         replace: true,
       })
     }
-  }, [application, location.search, navigate])
+  }, [application, location.search, navigate, remoteDetailEnabled])
 
   useEffect(() => {
     const onPopState = () => {
@@ -262,7 +303,7 @@ export function MypageEducationDetailPage() {
       nextSection = next === 'application' ? 'application' : 'program'
     }
     setSection(nextSection)
-    const nextPath = buildDetailPath(applicationId, nextSection)
+    const nextPath = buildDetailPath(applicationId, nextSection, application?.applicationType)
     const currentPath = `${window.location.pathname}${window.location.search}`
     if (nextPath !== currentPath) {
       window.history.replaceState(null, '', nextPath)
@@ -270,6 +311,18 @@ export function MypageEducationDetailPage() {
   }
 
   const handleConfirmCancel = () => {
+    if (remoteDetailEnabled && application?.applicationType) {
+      cancelMutation.mutate(
+        { applicationType: application.applicationType, applicationId: application.id },
+        {
+          onSuccess: () => {
+            setIsCancelConfirmOpen(false)
+            navigate(MYPAGE_EDUCATION_PATH, { replace: true })
+          },
+        },
+      )
+      return
+    }
     cancelMockEducationApplication(applicationId)
     setIsCancelConfirmOpen(false)
     navigate(MYPAGE_EDUCATION_PATH, { replace: true })

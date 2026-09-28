@@ -108,44 +108,6 @@ export function ParticipantApprovalCompleteModal({
 
 // ——— 반려 ———
 
-export function buildParticipantRejectMessage(participantName: string): string {
-  const subject = formatModalBracketedSubjectName(participantName, '참여자')
-  return `${subject}의 프로그램 참여를 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 참여자에게 전달되며, 알림이 발송됩니다.`
-}
-
-export function ParticipantRejectModal({
-  open,
-  participantName,
-  onCancel,
-  onConfirm,
-  zIndex = FLOW_MODAL_Z,
-}: {
-  open: boolean
-  participantName: string
-  onCancel: () => void
-  onConfirm: (payload: PermissionModalPayload) => void
-  zIndex?: number
-}) {
-  return (
-    <PermissionModal
-      open={open}
-      variant="reject"
-      className="participant-reject-modal"
-      title="참여자 반려 안내"
-      message={buildParticipantRejectMessage(participantName)}
-      confirmLabel="반려"
-      confirmVariant="delete"
-      requireReason
-      reasonLabel="반려 사유"
-      reasonPlaceholder="반려 사유를 입력해 주세요."
-      reasonRequiredMessage="반려 사유를 입력해 주세요."
-      onCancel={onCancel}
-      onConfirm={onConfirm}
-      zIndex={zIndex}
-    />
-  )
-}
-
 export function buildParticipantRejectCompleteDescription(
   participantName: string,
   rejectionReason: string
@@ -246,39 +208,6 @@ export function ParticipantBulkApproveCompleteModal({
     >
       {null}
     </ContentModal>
-  )
-}
-
-export function ParticipantBulkRejectModal({
-  open,
-  selectionCount,
-  onCancel,
-  onConfirm,
-  zIndex = FLOW_MODAL_Z,
-}: {
-  open: boolean
-  selectionCount: number
-  onCancel: () => void
-  onConfirm: (payload: PermissionModalPayload) => void
-  zIndex?: number
-}) {
-  return (
-    <PermissionModal
-      open={open}
-      variant="reject"
-      className="participant-bulk-reject-modal"
-      title="참여자 일괄 반려 안내"
-      message={`선택한 **${selectionCount}개**의 모든 참여자의 프로그램 참여를 일괄 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 각 참여자에게 개별로 전달되며, 알림이 발송됩니다.`}
-      confirmLabel="반려"
-      confirmVariant="delete"
-      requireReason
-      reasonLabel="반려 사유"
-      reasonPlaceholder="반려 사유를 입력해 주세요."
-      reasonRequiredMessage="반려 사유를 입력해 주세요."
-      onCancel={onCancel}
-      onConfirm={onConfirm}
-      zIndex={zIndex}
-    />
   )
 }
 

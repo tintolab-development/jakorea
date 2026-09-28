@@ -1,6 +1,5 @@
 /**
  * UJAT 프로그램 등록 폼 — 카드 헤더(제목·설명).
- * - 기본 정보: 스크린샷에는 설명란이 비어 placeholder 「설명 입력」만 보임 → 시드는 빈 문자열.
  */
 export const UJAT_REGISTRATION_SECTION_META = {
   basic: {

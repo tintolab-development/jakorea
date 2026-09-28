@@ -110,6 +110,7 @@ import {
 } from '@/features/program/general/api/adapters/program-survey-adapters'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { getGeneralSurveyMenuItems } from '@/features/program/general/lib/detail-meta'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { buildTempMockSurveyShareUrl } from '@/features/program/general/lib/temp-mock-local-actions'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
@@ -269,6 +270,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const { copyText } = useClipboard()
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
+  const surveyMenuEmpty = getGeneralSurveyMenuItems(program).length === 0
 
   const activeSatisfactionSurveyId =
     satisfactionSurveysByAudience[activeSatisfactionAudience]?.id ?? undefined
@@ -1254,11 +1256,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   return (
     <>
-      {activeTab === 'survey' ? renderPoll() : null}
-      {isGeneralSatisfactionSurveyNavTab(activeTab) && satisfactionAudienceTabs.length > 0
+      {surveyMenuEmpty || activeTab === 'main' ? renderEmptyMain() : null}
+      {!surveyMenuEmpty && activeTab === 'survey' ? renderPoll() : null}
+      {!surveyMenuEmpty &&
+      isGeneralSatisfactionSurveyNavTab(activeTab) &&
+      satisfactionAudienceTabs.length > 0
         ? renderSatisfactionView()
         : null}
-      {activeTab === 'lecture_evaluation' ? (
+      {!surveyMenuEmpty && activeTab === 'lecture_evaluation' ? (
         surveysRemote && surveysLoading ? (
           <div className="survey-management-loading" role="status">
             <Spin size="large" />
@@ -1293,7 +1298,6 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         />
         )
       ) : null}
-      {activeTab === 'main' ? renderEmptyMain() : null}
 
       <ContentModal
         open={createModalKind != null}

@@ -11,8 +11,10 @@ import {
 } from '@/features/template/lib/writing-form-template-local-save'
 import {
   createUjatProgramRegistrationDraft,
+  UJAT_PROGRAM_REGISTRATION_IDS,
   UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/ujat-program-registration-draft'
+import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
 import {
   normalizeWritingFormDraft,
   type FormTitleNumberingStyle,
@@ -33,11 +35,23 @@ import {
 export const UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE = 'registration-ujat' as const
 
 /** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
+const LEGACY_UJAT_BASIC_INFO_LOCK_NOTICE =
+  '참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.'
+
 function withForcedUjatRegistrationSeedTitleRequired(draft: WritingFormDraft): WritingFormDraft {
   let changed = false
   const paragraphs = draft.paragraphs.map(paragraph => {
-    if (!UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(paragraph.id)) return paragraph
-    const next = forceParagraphTitleRequired(paragraph)
+    let next = paragraph
+    if (
+      paragraph.id === UJAT_PROGRAM_REGISTRATION_IDS[0] &&
+      paragraph.paragraphDescription.trim() === LEGACY_UJAT_BASIC_INFO_LOCK_NOTICE
+    ) {
+      next = { ...next, paragraphDescription: UJAT_REGISTRATION_SECTION_META.basic.description }
+    }
+    if (UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(next.id)) {
+      const forced = forceParagraphTitleRequired(next)
+      if (forced !== next) next = forced
+    }
     if (next !== paragraph) changed = true
     return next
   })

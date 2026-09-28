@@ -17,6 +17,12 @@ function isGeminiInstructorProgramId(programId: string): boolean {
  * - `participant`: 그 외 전부(일반 참여자, 기관/교사, UJAT 기관 등)
  */
 export function resolveApplicationRole(item: EducationApplicationListItem): ApplicationRole {
+  if (item.applicationType === 'VOLUNTEER') return 'volunteer'
+  if (item.applicationType === 'INSTRUCTOR') return 'instructor'
+  if (item.applicationType === 'INDIVIDUAL' || item.applicationType === 'ORGANIZATION') {
+    return 'participant'
+  }
+
   if (item.detailCase === 'volunteer' || item.detailCase === 'ujat-volunteer') {
     return 'volunteer'
   }

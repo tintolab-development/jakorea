@@ -74,6 +74,9 @@ import {
   patchUjatRecruitVolunteerOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 
+/** 등록 위저드 모집/신청 임시저장 목록 — UJAT는 일반과 동일하게 전 탭 overlay를 남긴다. */
+export type RegistrationOperationalDraftVariant = ProgramRegistrationFormVariant | 'ujat'
+
 /** 1사1교 전용 카탈로그 id (일반 모집/신청 id와 분리) */
 const ECONOMY_OWNED_OPERATIONAL_TEMPLATE_IDS = [
   'recruitment-economy',
@@ -86,10 +89,18 @@ const TRAINED_TEACHERS_OWNED_OPERATIONAL_TEMPLATE_IDS = [
   'application-trained-teachers',
 ] as const
 
+/** UJAT 모집/신청 카탈로그 id (상·하반기 봉사자는 동일 템플릿) */
+const UJAT_OWNED_OPERATIONAL_TEMPLATE_IDS = [
+  'recruitment-ujat-school',
+  'recruitment-ujat-volunteer',
+  'application-ujat-school',
+  'application-ujat-volunteer',
+] as const
+
 const REG_DRAFT_PREFIX = 'reg-draft:' as const
 
 export function resolveRegistrationOperationalDraftStorageKey(
-  _variant: ProgramRegistrationFormVariant,
+  _variant: RegistrationOperationalDraftVariant,
   templateId: string
 ): string {
   if (templateId.startsWith('registration-')) return templateId
@@ -97,7 +108,7 @@ export function resolveRegistrationOperationalDraftStorageKey(
 }
 
 export function listRegistrationOperationalFormDraftStorageKeys(
-  variant: ProgramRegistrationFormVariant
+  variant: RegistrationOperationalDraftVariant
 ): readonly string[] {
   if (variant === 'general') {
     return GENERAL_PROGRAM_REGISTRATION_STEPS.filter(s => s.phase !== 'program').map(
@@ -115,6 +126,9 @@ export function listRegistrationOperationalFormDraftStorageKeys(
   }
   if (variant === 'trainedTeachers') {
     return [...TRAINED_TEACHERS_OWNED_OPERATIONAL_TEMPLATE_IDS]
+  }
+  if (variant === 'ujat') {
+    return [...UJAT_OWNED_OPERATIONAL_TEMPLATE_IDS]
   }
   return []
 }
@@ -310,7 +324,7 @@ function applyOverlayRecord(
  */
 export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
   programType: string,
-  variant: ProgramRegistrationFormVariant
+  variant: RegistrationOperationalDraftVariant
 ): Promise<void> {
   const { loadRegistrationWizardFormDraft } = await import(
     '@/features/program/general/lib/registration-wizard-form-draft'
@@ -369,7 +383,7 @@ export async function persistRegistrationOperationalOverlaySnapshots(
  */
 export async function persistRegistrationOperationalOverlaysToLocal(
   programType: string,
-  variant: ProgramRegistrationFormVariant
+  variant: RegistrationOperationalDraftVariant
 ): Promise<void> {
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
   const { loadRegistrationWizardFormDraft, persistRegistrationWizardFormDraft } = await import(
@@ -396,7 +410,7 @@ export async function persistRegistrationOperationalOverlaysToLocal(
 }
 
 export function clearRegistrationOperationalFormDrafts(
-  _variant: ProgramRegistrationFormVariant
+  _variant: RegistrationOperationalDraftVariant
 ): void {
   // no-op — draft-owned versions는 program-draft DELETE/clearRegistrationProgramDraftSession에서 정리
 }

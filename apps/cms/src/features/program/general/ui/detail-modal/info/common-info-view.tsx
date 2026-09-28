@@ -12,7 +12,10 @@ import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hoo
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  programToDetailEditValues,
+  resolveStoredEducationFormLabel,
+} from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   BUSINESS_AREA_OPTIONS,
   COURSE_DELIVERED_BY_OPTIONS,
@@ -64,6 +67,7 @@ import {
   formatGeneralSurveyItemsSummary,
   resolveGeneralProgramCommonInfo,
   resolveGeneralProgramDetailedProgramNameDisplay,
+  resolveGeneralProgramScheduleDetailsForView,
 } from '@/features/program/general/lib/detail-common-info-display'
 import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
@@ -76,6 +80,13 @@ import {
   useProgramWagePaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import {
+  parseWageGradeAmount,
+  pricingByWageGrade,
+  resolveWagePaymentItemIds,
+  resolveWagePaymentItemsView,
+  WAGE_GRADE_FIELDS,
+} from '@/features/program/general/lib/wage-display'
 import {
   isSponsorContactUnselected,
   isSponsorContactUnselectedLabel,
@@ -100,6 +111,8 @@ import {
   buildSessionIpsTypeSummary,
   resolveScheduleDetailIpsTypeSummaryForView,
   resolveScheduleDetailEducationFormLabelForView,
+  resolveScheduleDetailProgressTimeSummaryForView,
+  formatScheduleProgressTimeSummaryForView,
   overlayIpsIndexForScheduleDetail,
   resolveSponsorManagementIds,
   type GeneralProgramCommonInfoEditFormValues,
@@ -1095,17 +1108,11 @@ function KpiSection({
   const hasVolunteer = isFormEdit
     ? editForm.watch('participantVolunteer')
     : getGeneralParticipantTypes(program).includes('volunteer')
-  const participantIndividual = isFormEdit ? editForm.watch('participantIndividual') : false
-  const participantOrganization = isFormEdit ? editForm.watch('participantOrganization') : false
-  const isIndividualTarget = isFormEdit
-    ? isGeneralIndividualParticipantTarget(program, participantIndividual, participantOrganization)
-    : isGeneralIndividualParticipantTarget(program)
-
   useEffect(() => {
-    if (!isFormEdit || !isIndividualTarget) return
+    if (!isFormEdit) return
     editForm.setValue('kpiFinalSchools', 0)
     editForm.setValue('kpiFinalClasses', 0)
-  }, [editForm, isFormEdit, isIndividualTarget])
+  }, [editForm, isFormEdit])
 
   useEffect(() => {
     if (!isFormEdit || hasInstructor) return
@@ -1119,9 +1126,9 @@ function KpiSection({
 
   if (!kpi && !isEditMode) return null
 
-  const dispatchedSchoolClassView = isIndividualTarget ? (
+  const dispatchedSchoolClassView = (
     <span className="detail-info-form--text">해당 없음</span>
-  ) : null
+  )
 
   const formMode = isFormEdit ? 'edit' : 'view'
 
@@ -1228,87 +1235,51 @@ function KpiSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="최종 파견 학교 수"
-            view={
-              isIndividualTarget ? (
-                dispatchedSchoolClassView
-              ) : (
-                <KpiBoldNumber value={kpi?.finalSchools ?? 0} />
-              )
-            }
+            view={dispatchedSchoolClassView}
             edit={
-              isIndividualTarget ? (
-                <CmsInput
-                  disabled
-                  inputSize="medium"
-                  placeholder="해당 없음"
-                  width={120}
-                  value=""
-                />
-              ) : (
-                <Controller
-                  name="kpiFinalSchools"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <CmsNumericInput
-                      {...field}
-                      mode="integer"
-                      min={0}
-                      value={field.value == null ? '' : String(field.value)}
-                      onValueChange={value =>
-                        field.onChange(value === '' ? undefined : Number(value))
-                      }
-                      inputSize="medium"
-                      placeholder="목표값 입력"
-                      width={120}
-                    />
-                  )}
-                />
-              )
+              <CmsInput
+                disabled
+                inputSize="medium"
+                placeholder="해당 없음"
+                width={120}
+                value=""
+              />
             }
           />
           <DetailInfoForm.Field
             label="최종 파견 학급 수"
-            view={
-              isIndividualTarget ? (
-                dispatchedSchoolClassView
-              ) : (
-                <KpiBoldNumber value={kpi?.finalClasses ?? 0} />
-              )
-            }
+            view={dispatchedSchoolClassView}
             edit={
-              isIndividualTarget ? (
-                <CmsInput
-                  disabled
-                  inputSize="medium"
-                  placeholder="해당 없음"
-                  width={120}
-                  value=""
-                />
-              ) : (
-                <Controller
-                  name="kpiFinalClasses"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <CmsNumericInput
-                      {...field}
-                      mode="integer"
-                      min={0}
-                      value={field.value == null ? '' : String(field.value)}
-                      onValueChange={value =>
-                        field.onChange(value === '' ? undefined : Number(value))
-                      }
-                      inputSize="medium"
-                      placeholder="목표값 입력"
-                      width={120}
-                    />
-                  )}
-                />
-              )
+              <CmsInput
+                disabled
+                inputSize="medium"
+                placeholder="해당 없음"
+                width={120}
+                value=""
+              />
             }
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     </ProgramRegistrationDetailSection>
+  )
+}
+
+function WageGradeAmountView({
+  pricing,
+  maxHint,
+}: {
+  pricing: string | undefined
+  maxHint: string
+}) {
+  const amount = parseWageGradeAmount(pricing)
+  if (amount == null) return '-'
+  return (
+    <>
+      1시간 당
+      <DetailInfoForm.InputsSeparator />
+      {amount.toLocaleString('ko-KR')}원 (최대 {maxHint}원)
+    </>
   )
 }
 
@@ -1321,7 +1292,8 @@ function WageSection({
   isEditMode?: boolean
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
-  const rows = commonInfo.wageGradeRows ?? []
+  const pricingByGrade = pricingByWageGrade(commonInfo.wageGradeRows)
+  const paymentItemIds = resolveWagePaymentItemIds(commonInfo.paymentItems)
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
   const paymentItemOptions = useProgramWagePaymentItemOptions()
@@ -1340,12 +1312,12 @@ function WageSection({
   const deductionLabel = isFormEdit
     ? resolveProgramWageDeductionLabel(watchedPaymentItemIds)
     : (mapSettlementDeductionTypeToLabel(commonInfo.deductionItems) ??
-      resolveProgramWageDeductionLabel([]))
+      resolveProgramWageDeductionLabel(paymentItemIds))
 
   const wageFields = [
-    { label: '1급 강사비', name: 'wageGrade1Amount' as const, max: 500_000, maxHint: '500,000' },
-    { label: '2급 강사비', name: 'wageGrade2Amount' as const, max: 400_000, maxHint: '400,000' },
-    { label: '3급 강사비', name: 'wageGrade3Amount' as const, max: 300_000, maxHint: '300,000' },
+    { label: WAGE_GRADE_FIELDS[0].label, name: 'wageGrade1Amount' as const, max: 500_000, maxHint: WAGE_GRADE_FIELDS[0].maxHint },
+    { label: WAGE_GRADE_FIELDS[1].label, name: 'wageGrade2Amount' as const, max: 400_000, maxHint: WAGE_GRADE_FIELDS[1].maxHint },
+    { label: WAGE_GRADE_FIELDS[2].label, name: 'wageGrade3Amount' as const, max: 300_000, maxHint: WAGE_GRADE_FIELDS[2].maxHint },
   ]
 
   return (
@@ -1356,48 +1328,45 @@ function WageSection({
       required
     >
       <DetailInfoForm title="임금 정보" hideHeader mode={formMode} className="program-registration-paragraph">
-        {wageFields.map(({ label, name, max, maxHint }, index) => {
-          const row = rows[index]
-          return (
-            <DetailInfoForm.Row key={label} type="single">
-              <DetailInfoForm.Field
-                label={label}
-                fullRow
-                view={row ? <PipeSeparatedInlineView text={row.pricing} /> : '-'}
-                edit={
-                  <div className="detail-info-form-inputs-wrapper">
-                    <span className="detail-info-form--text">1시간 당</span>
-                    <Controller
-                      name={name}
-                      control={editForm.control}
-                      render={({ field }) => (
-                        <CmsNumericInput
-                          mode="currency"
-                          min={0}
-                          max={max}
-                          allowNegative={false}
-                          inputSize="medium"
-                          placeholder="직접 입력"
-                          width={120}
-                          value={field.value ?? ''}
-                          onValueChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
-                        />
-                      )}
-                    />
-                    <span className="detail-info-form--text">원 (최대 {maxHint}원)</span>
-                  </div>
-                }
-              />
-            </DetailInfoForm.Row>
-          )
-        })}
+        {wageFields.map(({ label, name, max, maxHint }) => (
+          <DetailInfoForm.Row key={label} type="single">
+            <DetailInfoForm.Field
+              label={label}
+              fullRow
+              view={<WageGradeAmountView pricing={pricingByGrade[label]} maxHint={maxHint} />}
+              edit={
+                <div className="detail-info-form-inputs-wrapper">
+                  <span className="detail-info-form--text">1시간 당</span>
+                  <Controller
+                    name={name}
+                    control={editForm.control}
+                    render={({ field }) => (
+                      <CmsNumericInput
+                        mode="currency"
+                        min={0}
+                        max={max}
+                        allowNegative={false}
+                        inputSize="medium"
+                        placeholder="직접 입력"
+                        width={120}
+                        value={field.value ?? ''}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    )}
+                  />
+                  <span className="detail-info-form--text">원 (최대 {maxHint}원)</span>
+                </div>
+              }
+            />
+          </DetailInfoForm.Row>
+        ))}
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="지급 항목"
-            view={commonInfo.paymentItems ?? '-'}
+            view={resolveWagePaymentItemsView(commonInfo.paymentItems)}
             edit={
               <Controller
                 name="wagePaymentItemIds"
@@ -1600,6 +1569,7 @@ function TypeSettingsSection({
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const educationFormLabelView = resolveStoredEducationFormLabel(commonInfo).trim() || '-'
   const effectiveTypeFields = resolveEffectiveGeneralProgramTypeFields({
     generalProgramAudience: program.generalProgramAudience,
     generalProgramEducationStructure: program.generalProgramEducationStructure,
@@ -1792,7 +1762,7 @@ function TypeSettingsSection({
             <DetailInfoForm.Field
               label="교육 형태"
               fullRow={isOrganization}
-              view={commonInfo.educationFormLabel ?? '-'}
+              view={educationFormLabelView}
               edit={
                 <Controller
                   name="educationForm"
@@ -1903,7 +1873,7 @@ function TypeSettingsSection({
               editForm={editForm}
               formMode={formMode}
               perScheduleHint={schedulePerScheduleHint}
-              commonDetailView={commonInfo.educationFormLabel ?? '-'}
+              commonDetailView={educationFormLabelView}
               commonDetailEdit={
                 <Controller
                   name="educationForm"
@@ -3008,7 +2978,11 @@ function ScheduleDetailViewBlock({
             <DetailInfoForm.Field
               label="진행 시간"
               fullRow
-              view={<PipeSeparatedInlineView text={progressTimeSummary ?? '-'} />}
+              view={
+                <PipeSeparatedInlineView
+                  text={formatScheduleProgressTimeSummaryForView(progressTimeSummary)}
+                />
+              }
             />
           </DetailInfoForm.Row>
           {ipsPerSchedule ? (
@@ -4329,7 +4303,9 @@ function ScheduleProgressSection({
 
   if (watchedStructure !== 'schedule') return null
 
-  const scheduleDetailsView = commonInfo.scheduleDetails ?? []
+  const scheduleDetailsView = isFormEdit
+    ? (commonInfo.scheduleDetails ?? [])
+    : resolveGeneralProgramScheduleDetailsForView(program, commonInfo)
   if (scheduleDetailsView.length === 0 && !isFormEdit) return null
 
   const scheduleMeta = PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleCurriculum
@@ -4424,7 +4400,14 @@ function ScheduleProgressSection({
             key={detail.scheduleLabel}
             scheduleLabel={detail.scheduleLabel}
             name={detail.name}
-            progressTimeSummary={detail.progressTimeSummary ?? '-'}
+            progressTimeSummary={
+              detail.progressTimeSummary?.trim() ||
+              resolveScheduleDetailProgressTimeSummaryForView({
+                overlay: program.registrationOverlay as Record<string, unknown> | undefined,
+                overlayIndex,
+              }) ||
+              '-'
+            }
             ipsPerSchedule={ipsPerSchedule}
             ipsTypeSummary={ipsTypeSummary}
           />

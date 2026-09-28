@@ -50,6 +50,9 @@ export function RecruitFormVolunteerEditorRightColumn({
       selectedItemId={vm.activeParagraphId}
       onSelectItem={vm.handleSelectCard}
       onReorderMiddle={vm.onReorderMiddle}
+      hideSortableDragHandleForIds={
+        vm.allowReorderWhenStructureLocked ? undefined : vm.structureLockedParagraphIds
+      }
       fieldListBottomSlot={
         <FormEditorTitleNumberingField
           value={vm.draft.formSettings.titleNumbering}

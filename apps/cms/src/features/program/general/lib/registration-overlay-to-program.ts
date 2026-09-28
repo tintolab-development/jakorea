@@ -11,6 +11,10 @@ import type {
   GeneralProgramSurveyMenuKey,
   Program,
 } from '@/types/domain'
+import {
+  generalParticipantTypesFromFlags,
+  type GeneralParticipantRegistrationFlags,
+} from '@/features/program/general/lib/participant-audience-selection'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
@@ -83,6 +87,9 @@ export type GeneralRegistrationEditorExtras = {
   scheduleCurriculumDetailCount?: number
   scheduleCurriculumPreEducation?: boolean
   participantOrganization?: boolean
+  participantIndividual?: boolean
+  participantTeacherInstructor?: boolean
+  participantVolunteer?: boolean
   /** 교육받은 교사 — 교육 연수 ON/OFF (create 시 항상 명시) */
   teacherTrainingEnabled?: boolean
   /**
@@ -442,7 +449,8 @@ function formatScheduleDateLabel(iso: string | null | undefined): string | undef
   return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${WEEKDAY_KO[d.day()]})`
 }
 
-function buildEnrichedScheduleDetails(
+/** 상세 조회 — registration overlay → 일정형 scheduleDetails (저장본이 비어 있을 때) */
+export function buildEnrichedScheduleDetails(
   overlay: Record<string, unknown>,
   extras: GeneralRegistrationEditorExtras
 ): GeneralProgramScheduleDetailRow[] {
@@ -547,6 +555,33 @@ function buildEnrichedScheduleDetails(
   }
 
   return rows
+}
+
+function participantFlagsFromCompleteExtras(
+  extras: GeneralRegistrationEditorExtras
+): GeneralParticipantRegistrationFlags | null {
+  if (
+    extras.participantIndividual == null ||
+    extras.participantOrganization == null ||
+    extras.participantTeacherInstructor == null ||
+    extras.participantVolunteer == null
+  ) {
+    return null
+  }
+  return {
+    individual: extras.participantIndividual,
+    organization: extras.participantOrganization,
+    teacherInstructor: extras.participantTeacherInstructor,
+    volunteer: extras.participantVolunteer,
+  }
+}
+
+function audienceFromParticipantFlags(
+  flags: GeneralParticipantRegistrationFlags
+): Program['generalProgramAudience'] {
+  if (flags.individual && !flags.organization) return 'individual'
+  if (flags.organization && !flags.individual) return 'organization'
+  return undefined
 }
 
 /**
@@ -693,6 +728,7 @@ export function applyGeneralRegistrationOverlayToProgram(
     resolveGeneralRegistrationCommonEducationForm(overlay) ||
     overlayString(overlay, `${TYPE}.educationForm`) ||
     'online'
+  const participantFlags = participantFlagsFromCompleteExtras(extras)
   const hideParticipation = extras.participantOrganization === true
   const commonParticipation = hideParticipation
     ? undefined
@@ -788,6 +824,12 @@ export function applyGeneralRegistrationOverlayToProgram(
     generalVolunteers: kpi.volunteerCount,
     participatingSchoolCount: kpi.finalSchools,
     generalSurveyMenuKeys: surveyKeysFromOverlay(overlay),
+    ...(participantFlags
+      ? {
+          generalParticipantTypes: generalParticipantTypesFromFlags(participantFlags),
+          generalProgramAudience: audienceFromParticipantFlags(participantFlags),
+        }
+      : {}),
     rounds,
     generalCommonInfo: {
       ...program.generalCommonInfo,

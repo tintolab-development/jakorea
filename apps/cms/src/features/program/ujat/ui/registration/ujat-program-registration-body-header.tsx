@@ -1,14 +1,11 @@
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
-  UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS,
-  UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_LABELS,
   UJAT_PROGRAM_REGISTRATION_PHASE_HINT,
   UJAT_RECRUIT_TAB_KEYS,
   UJAT_RECRUIT_TAB_LABELS,
   getUjatProgramRegistrationPhase,
   recruitTabKeyFromRegistrationStep,
   registrationStepFromRecruitTab,
-  type UjatProgramRegistrationApplicationTabKey,
   type UjatProgramRegistrationStepKey,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import type { UjatRecruitTabKey } from '@/features/program/ujat/ui/detail-modal/info/ujat-program-detail-recruitment-tabs'
@@ -31,36 +28,18 @@ export function UjatProgramRegistrationBodyHeader({
     )
   }
 
-  if (phase === 'recruitment') {
-    const recruitTab = recruitTabKeyFromRegistrationStep(activeStep) ?? 'recruit_participant'
-    return (
-      <CmsTextTabs
-        className="registration-body-header__tabs"
-        variant="list"
-        activeKey={recruitTab}
-        onChange={(tab: UjatRecruitTabKey) => onSelectStep(registrationStepFromRecruitTab(tab))}
-        wrap
-        ariaLabel="UJAT 모집 정보"
-        items={UJAT_RECRUIT_TAB_KEYS.map(key => ({
-          key,
-          label: UJAT_RECRUIT_TAB_LABELS[key],
-        }))}
-      />
-    )
-  }
-
-  const applicationTab = activeStep as UjatProgramRegistrationApplicationTabKey
+  const recruitTab = recruitTabKeyFromRegistrationStep(activeStep) ?? 'recruit_participant'
   return (
     <CmsTextTabs
       className="registration-body-header__tabs"
       variant="list"
-      activeKey={applicationTab}
-      onChange={onSelectStep}
+      activeKey={recruitTab}
+      onChange={(tab: UjatRecruitTabKey) => onSelectStep(registrationStepFromRecruitTab(tab))}
       wrap
-      ariaLabel="UJAT 신청 정보"
-      items={UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS.map(key => ({
+      ariaLabel="UJAT 모집 정보"
+      items={UJAT_RECRUIT_TAB_KEYS.map(key => ({
         key,
-        label: UJAT_PROGRAM_REGISTRATION_APPLICATION_TAB_LABELS[key],
+        label: UJAT_RECRUIT_TAB_LABELS[key],
       }))}
     />
   )

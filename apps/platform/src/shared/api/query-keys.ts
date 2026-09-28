@@ -269,5 +269,36 @@ export const platformQueryKeys = {
     /** 교사회원 배정 강사 동의서 — GET .../assigned-instructors (Class D) */
     assignedInstructors: (applicationId: number) =>
       [...platformQueryKeys.mypage.all(), 'assigned-instructors', 'ORGANIZATION', applicationId] as const,
+    programApplications: {
+      all: () => [...platformQueryKeys.mypage.all(), 'program-applications'] as const,
+      /**
+       * 내 신청 목록 — GET /api/portal/me/program-applications (Class C + member scoped)
+       * education은 INDIVIDUAL/ORGANIZATION 두 applicationType을 함께 조회하므로 배열을 키에 포함한다.
+       */
+      list: (params: {
+        applicationTypes: readonly string[]
+        statusGroup: string
+        keyword: string
+        page: number
+        size: number
+      }) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'list',
+          params.applicationTypes.join(','),
+          params.statusGroup,
+          params.keyword,
+          params.page,
+          params.size,
+        ] as const,
+      /** 내 신청 상세 — GET /api/portal/me/program-applications/{applicationType}/{applicationId} */
+      detail: (applicationType: string, applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'detail',
+          applicationType,
+          applicationId,
+        ] as const,
+    },
   },
 } as const

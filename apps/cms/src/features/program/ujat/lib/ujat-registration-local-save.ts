@@ -14,7 +14,12 @@ import {
 import {
   applyUjatRecruitVolunteerOverlayOntoProgram,
   pickUjatRecruitVolunteerOverlay,
+  stampUjatVolunteerActivityTermsOnRounds,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import { getUjatRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
+import { getUjatRecruitVolunteerOverlayRecord } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
+import { getUjatApplicationInstitutionOverlayRecord } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
+import { getUjatApplicationVolunteerOverlayRecord } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 export const UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'ujat-local-'
 
 const STORAGE_KEY = 'cms.jakorea.ujatRegistrationLocalSaves.v1'
@@ -52,6 +57,19 @@ function cloneJson<T>(value: T): T {
 function newLocalProgramId(): string {
   const uuid = globalThis.crypto?.randomUUID?.()
   return `${UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}${uuid ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`
+}
+
+/** 등록 공통 + 모집·신청 탭 overlay. 상세·formBindings가 같은 스냅샷을 보게 한다. */
+export function collectUjatRegistrationCreateOverlay(
+  registrationOverlay: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    ...getUjatApplicationInstitutionOverlayRecord(),
+    ...getUjatApplicationVolunteerOverlayRecord(),
+    ...getUjatRecruitInstitutionOverlayRecord(),
+    ...getUjatRecruitVolunteerOverlayRecord(),
+    ...registrationOverlay,
+  }
 }
 
 export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
@@ -154,7 +172,11 @@ function applyUjatRegistrationCreateOverlaysToProgram(
     detailedProgramId: withRegistration.detailedProgramId,
     businessArea: withRegistration.businessArea,
     teamDivision: withRegistration.teamDivision,
-    rounds: withRegistration.rounds,
+    rounds: stampUjatVolunteerActivityTermsOnRounds(
+      withRegistration.rounds,
+      pickUjatRecruitVolunteerOverlay(overlay)
+    ),
+    ujatRegistrationOverlay: overlay,
     generalCommonInfo: {
       ...withVolunteer.generalCommonInfo,
       detailedProgramName: withRegistration.generalCommonInfo?.detailedProgramName,

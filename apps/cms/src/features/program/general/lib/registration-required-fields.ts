@@ -191,14 +191,6 @@ function findIncompleteKpiReason(
   ) {
     return 'kpi.volunteer'
   }
-  if (!ctx.participant.individual) {
-    if (isEmptyNumber(readOverlay(overlay, 'generalRegistration.kpi.dispatchedSchool'))) {
-      return 'kpi.dispatchedSchool'
-    }
-    if (isEmptyNumber(readOverlay(overlay, 'generalRegistration.kpi.dispatchedClass'))) {
-      return 'kpi.dispatchedClass'
-    }
-  }
   return null
 }
 

@@ -8,6 +8,7 @@ import type {
   Program,
   ProgramCategory,
 } from '@/types/domain'
+import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import { resolveEducationScheduleLinesForView } from '@/features/program/general/lib/education-schedule-lines-display'
 import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import {
@@ -22,6 +23,16 @@ import {
   DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK,
   GENERAL_INTERVIEW_MOCK_TIME_SLOTS,
 } from '@/features/program/general/model/volunteer-interview-schedule'
+import { extrasFromGeneralProgram } from '@/features/program/general/lib/registration-overlay-sync'
+import { applyRegistrationWageOverlayToCommonInfo } from '@/features/program/general/lib/wage-display'
+import { buildEnrichedScheduleDetails } from '@/features/program/general/lib/registration-overlay-to-program'
+import { resolveStoredEducationFormLabel } from '@/features/program/shared/model/program-detail-edit-schema'
+import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
+import {
+  overlayIpsIndexForScheduleDetail,
+  resolveScheduleDetailProgressTimeSummaryForView,
+  resolveScheduleDetailScheduleDateLabelForView,
+} from '@/features/program/general/model/common-info-edit-schema'
 
 const PARTICIPANT_LABEL_BY_VALUE = Object.fromEntries(
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.map(o => [o.value, o.label])
@@ -573,11 +584,18 @@ export function resolveScheduleTypeDetailedProgramNameFromDetails(
   return details.map((detail, index) => resolveScheduleDetailDisplayName(detail, index)).join(', ')
 }
 
-/** 공통 정보 — 세부 프로그램명 조회 표시 */
+/** 공통 정보 — 세부 프로그램명 조회 표시. 일정형은 등록·수정과 같이 해당없음 */
 export function resolveGeneralProgramDetailedProgramNameDisplay(
-  _program: Program,
+  program: Program,
   commonInfo: NonNullable<Program['generalCommonInfo']>
 ): string {
+  const educationStructure = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: commonInfo.curriculumSessions,
+  }).educationStructure
+  if (educationStructure === 'schedule') return '해당없음'
   return commonInfo.detailedProgramName?.trim() || '-'
 }
 
@@ -608,12 +626,119 @@ function withResolvedEducationScheduleLines(
   return { ...commonInfo, educationScheduleLines }
 }
 
+/** 일정형 교육 진행 — 조회 시 overlay 진행 시간·진행 일정 보완 (수정 모드는 등록 overlay SSOT) */
+export function resolveGeneralProgramScheduleDetailsForView(
+  program: Program,
+  commonInfo: NonNullable<Program['generalCommonInfo']>
+): GeneralProgramScheduleDetailRow[] {
+  const overlay =
+    program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
+      ? (program.registrationOverlay as Record<string, unknown>)
+      : undefined
+  const fromCommon = commonInfo.scheduleDetails ?? []
+  const isSchedule =
+    resolveEffectiveGeneralProgramTypeFields({
+      generalProgramAudience: program.generalProgramAudience,
+      generalProgramEducationStructure: program.generalProgramEducationStructure,
+      generalProgramSessionRound: program.generalProgramSessionRound,
+      curriculumSessions: commonInfo.curriculumSessions,
+    }).educationStructure === 'schedule'
+
+  const fromOverlay =
+    isSchedule && overlay
+      ? buildEnrichedScheduleDetails(overlay, extrasFromGeneralProgram(program))
+      : []
+
+  const baseRows = fromCommon.length > 0 ? fromCommon : fromOverlay
+  if (baseRows.length === 0) return []
+
+  return baseRows.map((row, index) => {
+    const overlayIndex = overlayIpsIndexForScheduleDetail(baseRows, index)
+    const overlayRow = fromOverlay[index]
+    const progressTimeSummary =
+      resolveScheduleDetailProgressTimeSummaryForView({
+        progressTimeSummary: row.progressTimeSummary ?? overlayRow?.progressTimeSummary,
+        overlay,
+        overlayIndex,
+      }) ?? row.progressTimeSummary
+    const scheduleDateLabel =
+      resolveScheduleDetailScheduleDateLabelForView({
+        scheduleDateLabel: row.scheduleDateLabel ?? overlayRow?.scheduleDateLabel,
+        overlay,
+        overlayIndex,
+      }) ?? row.scheduleDateLabel
+
+    return {
+      ...row,
+      ...(progressTimeSummary ? { progressTimeSummary } : {}),
+      ...(scheduleDateLabel ? { scheduleDateLabel } : {}),
+    }
+  })
+}
+
+const REGISTRATION_OVERLAY_COMMON_EDUCATION_FORM_KEYS = [
+  'generalRegistration.typeSettings.multiCommonEducationForm',
+  'generalRegistration.typeSettings.singleEducationForm',
+  'generalRegistration.typeSettings.educationForm',
+] as const
+
+function overlayRegistrationEducationFormValue(
+  overlay: Record<string, unknown>
+): string | undefined {
+  for (const key of REGISTRATION_OVERLAY_COMMON_EDUCATION_FORM_KEYS) {
+    const raw = overlay[key]
+    if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  }
+  return undefined
+}
+
+function educationFormLabelFromRegistrationValue(value: string): string {
+  const options = getProgramRegistrationEducationFormOptions(true)
+  return options.find(option => option.value === value)?.label ?? value
+}
+
+/** 조회 — `generalCommonInfo.educationFormLabel`·overlay·행 값을 등록 폼·수정 모드와 동일하게 맞춘다. */
+function applyRegistrationEducationFormLabelToCommonInfo<
+  T extends NonNullable<Program['generalCommonInfo']>,
+>(common: T, overlay: Record<string, unknown> | undefined): T {
+  const fromStored = resolveStoredEducationFormLabel({
+    educationFormLabel: common.educationFormLabel,
+    scheduleDetails: common.scheduleDetails,
+    curriculumSessions: common.curriculumSessions,
+  }).trim()
+  if (fromStored) {
+    if (common.educationFormLabel?.trim()) return common
+    return { ...common, educationFormLabel: fromStored }
+  }
+
+  if ((common.educationFormScheduleDetail ?? 'common') !== 'common' || !overlay) {
+    return common
+  }
+
+  const overlayValue = overlayRegistrationEducationFormValue(overlay)
+  if (!overlayValue) return common
+
+  const label = educationFormLabelFromRegistrationValue(overlayValue).trim()
+  if (!label) return common
+
+  return { ...common, educationFormLabel: label }
+}
+
 export function resolveGeneralProgramCommonInfo(
   program: Program
 ): NonNullable<Program['generalCommonInfo']> {
-  const overlay = program.registrationOverlay
+  const overlay =
+    program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
+      ? (program.registrationOverlay as Record<string, unknown>)
+      : undefined
   if (program.generalCommonInfo) {
-    return withResolvedEducationScheduleLines(program.generalCommonInfo, program)
+    return applyRegistrationEducationFormLabelToCommonInfo(
+      applyRegistrationWageOverlayToCommonInfo(
+        withResolvedEducationScheduleLines(program.generalCommonInfo, program),
+        overlay
+      ),
+      overlay
+    )
   }
 
   if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
@@ -663,7 +788,7 @@ export function resolveGeneralProgramCommonInfo(
 
   const variant = resolveGeneralProgramVariantFromProgram(program)
 
-  return {
+  const fallback: NonNullable<Program['generalCommonInfo']> = {
     detailedProgramName: program.textbookName ?? program.teamDivision,
     educationFormLabel: program.type === 'online' ? '온라인' : '오프라인',
     ipsTypeSummary: program.ips ? `일정 공통 | ${program.ips} | 해당없음` : '-',
@@ -711,6 +836,10 @@ export function resolveGeneralProgramCommonInfo(
       },
     ],
   }
+  return applyRegistrationEducationFormLabelToCommonInfo(
+    applyRegistrationWageOverlayToCommonInfo(fallback, overlay),
+    overlay
+  )
 }
 
 export function isGeneralOrgScheduleSingleProgram(program: Program): boolean {

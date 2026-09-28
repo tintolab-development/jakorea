@@ -28,6 +28,8 @@ import { showUpdateCompletedAlert } from '@/shared/ui'
 export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
   program: Program | null
+  /** resetToProgram 시 사용. 없으면 `programToDetailEditValues` */
+  mapToValues?: (program: Program) => ProgramDetailEditFormValues
   /** draft = 화면용 병합본, patch = remote PATCH에 실을 변경 키만 */
   onSaveEdit?: (draft: Program, patch: Partial<Program>) => Promise<void>
   /** 지정 시 해당 스키마로만 검증 — 모집 정보 탭 부분 저장용 */
@@ -43,6 +45,7 @@ export type ProgramDetailInfoSaveExtraCommon = Partial<
 export function useProgramDetailInfoSave({
   form,
   program,
+  mapToValues,
   onSaveEdit,
   validateSchema,
   commonInfoPatchOnly = false,
@@ -120,9 +123,9 @@ export function useProgramDetailInfoSave({
 
   const resetToProgram = useCallback(() => {
     if (program) {
-      form.reset(programToDetailEditValues(program), { keepDefaultValues: false })
+      form.reset((mapToValues ?? programToDetailEditValues)(program), { keepDefaultValues: false })
     }
-  }, [form, program])
+  }, [form, mapToValues, program])
 
   return { triggerSave, resetToProgram, registerGetAdditionalContentHtml, takeSaveFailure }
 }

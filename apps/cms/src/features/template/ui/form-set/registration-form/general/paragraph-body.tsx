@@ -24,6 +24,7 @@ import { ProgramRegistrationEducationScheduleCurriculumParagraph } from '@/featu
 import { ProgramRegistrationEducationScheduleSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-settings-paragraph'
 import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph'
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
+import { resolveGeneralRegistrationKpiFieldAvailability } from '@/features/program/general/lib/participant-audience-selection'
 import {
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
@@ -47,6 +48,25 @@ export interface ProgramRegistrationParticipantState {
   organization: boolean
   teacherInstructor?: boolean
   volunteer?: boolean
+}
+
+function generalBusinessKpiParagraphProps(participant: ProgramRegistrationParticipantState) {
+  const kpi = resolveGeneralRegistrationKpiFieldAvailability({
+    individual: participant.individual === true,
+    organization: participant.organization === true,
+    teacherInstructor: participant.teacherInstructor === true,
+    volunteer: participant.volunteer === true,
+  })
+  return {
+    instructorDisabled: kpi.instructorDisabled,
+    instructorPlaceholder: kpi.instructorDisabled ? '해당 없음' : '목표값 입력',
+    volunteerDisabled: kpi.volunteerDisabled,
+    volunteerPlaceholder: kpi.volunteerDisabled ? '해당 없음' : '목표값 입력',
+    dispatchedSchoolDisabled: kpi.dispatchedSchoolDisabled,
+    dispatchedSchoolPlaceholder: kpi.dispatchedSchoolDisabled ? '해당 없음' : '목표값 입력',
+    dispatchedClassDisabled: kpi.dispatchedClassDisabled,
+    dispatchedClassPlaceholder: kpi.dispatchedClassDisabled ? '해당 없음' : '목표값 입력',
+  }
 }
 
 export interface ProgramRegistrationParagraphBodyOptions {
@@ -145,26 +165,13 @@ export function renderProgramRegistrationParagraphBody(
       )
     case PROGRAM_REGISTRATION_IDS.businessKpi:
       if (options?.programRegistrationFormVariant === 'trainedTeachers') return null
-      return options?.programRegistrationFormVariant === 'economy' ? (
-        <OneCOneSRegistrationBusinessKpiParagraph />
-      ) : (
+      if (options?.programRegistrationFormVariant === 'economy') {
+        return <OneCOneSRegistrationBusinessKpiParagraph />
+      }
+      if (options == null) return null
+      return (
         <ProgramRegistrationBusinessKpiParagraph
-          instructorDisabled={options?.participant.teacherInstructor !== true}
-          instructorPlaceholder={
-            options?.participant.teacherInstructor === true ? '목표값 입력' : '해당 없음'
-          }
-          volunteerDisabled={options?.participant.volunteer !== true}
-          volunteerPlaceholder={
-            options?.participant.volunteer === true ? '목표값 입력' : '해당 없음'
-          }
-          dispatchedSchoolDisabled={options?.participant.individual === true}
-          dispatchedSchoolPlaceholder={
-            options?.participant.individual === true ? '해당 없음' : '목표값 입력'
-          }
-          dispatchedClassDisabled={options?.participant.individual === true}
-          dispatchedClassPlaceholder={
-            options?.participant.individual === true ? '해당 없음' : '목표값 입력'
-          }
+          {...generalBusinessKpiParagraphProps(options.participant)}
         />
       )
     case PROGRAM_REGISTRATION_IDS.wageInfo:

@@ -222,12 +222,30 @@ export const TEMPLATE_CODE_CATALOG: Record<string, TemplateCodeCatalogEntry> = {
   },
 }
 
+function writingFormCategoryFromPrefix(templateCode: string): WritingFormCategory | undefined {
+  const base = templateCode.replace(/-copy(?:-\d+)?$/i, '')
+  if (base.startsWith('registration-')) return 'REGISTRATION'
+  if (base.startsWith('recruitment-')) return 'RECRUITMENT'
+  if (base.startsWith('application-')) return 'APPLICATION'
+  if (base.startsWith('survey-')) return 'SURVEY'
+  if (base.startsWith('agreement-')) return 'AGREEMENT'
+  return undefined
+}
+
 export function resolveWritingFormCategory(
   templateCode: string,
   apiCategory?: string
 ): WritingFormCategory | undefined {
-  const fromCatalog = TEMPLATE_CODE_CATALOG[templateCode]?.category
+  const code = templateCode.trim()
+  const fromCatalog = TEMPLATE_CODE_CATALOG[code]?.category
   if (fromCatalog) return fromCatalog
+
+  const baseCode = code.replace(/-copy(?:-\d+)?$/i, '')
+  if (baseCode !== code) {
+    const fromBase = TEMPLATE_CODE_CATALOG[baseCode]?.category
+    if (fromBase) return fromBase
+  }
+
   if (
     apiCategory === 'REGISTRATION' ||
     apiCategory === 'RECRUITMENT' ||
@@ -237,7 +255,7 @@ export function resolveWritingFormCategory(
   ) {
     return apiCategory
   }
-  return undefined
+  return writingFormCategoryFromPrefix(code)
 }
 
 export type IssuanceFormCategory = 'REPORT' | 'DOCUMENT'

@@ -26,6 +26,7 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
+import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import type {
   ProgramRegistrationEducationScheduleMode,
   ProgramRegistrationScheduleDetailKind,
@@ -121,17 +122,43 @@ function getDefaultEducationScheduleMode(
   return variant === 'economy' ? 'period' : 'date'
 }
 
+const GENERAL_BASIC_INFO_LOCK_NOTICE =
+  PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.editDescription
+
+function withRegistrationBasicInfoDescriptionForVariant(
+  draft: WritingFormDraft,
+  variant: ProgramRegistrationFormVariant
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (paragraph.id !== PROGRAM_REGISTRATION_IDS.basicInfo) return paragraph
+    const current = paragraph.paragraphDescription.trim()
+    if (variant === 'general') {
+      if (current !== '') return paragraph
+      changed = true
+      return { ...paragraph, paragraphDescription: GENERAL_BASIC_INFO_LOCK_NOTICE }
+    }
+    if (current !== GENERAL_BASIC_INFO_LOCK_NOTICE) return paragraph
+    changed = true
+    return { ...paragraph, paragraphDescription: '' }
+  })
+  return changed ? { ...draft, paragraphs } : draft
+}
+
 function filterProgramRegistrationDraftForVariant(
   draft: WritingFormDraft,
   variant: ProgramRegistrationFormVariant
 ): WritingFormDraft {
-  if (variant !== 'trainedTeachers') return draft
-  return {
-    ...draft,
-    paragraphs: draft.paragraphs.filter(
-      paragraph => paragraph.id !== PROGRAM_REGISTRATION_IDS.businessKpi
-    ),
-  }
+  const filtered =
+    variant !== 'trainedTeachers'
+      ? draft
+      : {
+          ...draft,
+          paragraphs: draft.paragraphs.filter(
+            paragraph => paragraph.id !== PROGRAM_REGISTRATION_IDS.businessKpi
+          ),
+        }
+  return withRegistrationBasicInfoDescriptionForVariant(filtered, variant)
 }
 
 /** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
@@ -1217,57 +1244,75 @@ export function useProgramRegistrationEditor(
     ]
   )
 
-  /** 단계 전환 — base create payload (formBindings 미포함) */
-  const logCurrentRegistrationPayload = useCallback((stepLabel: string): void => {
-    const variant = programRegistrationFormVariant
-    const resolvedSponsorId =
-      sponsorId.trim() || readRegistrationOverlaySponsorId(variant)
-    const program = buildGeneralProgramListRowFromRegistrationSnapshot({
-      id: 'debug',
-      participant,
-      programType,
-      variant,
-      sponsorId: resolvedSponsorId || undefined,
-      title: resolveProgramTitleKo() || undefined,
-      sessionRoundType,
+  /** 현재 공통·모집 overlay를 상세와 동일한 Program 스냅샷으로 만든다. */
+  const buildCurrentProgramSnapshot = useCallback(
+    (id = 'registration-preview'): Program => {
+      const variant = programRegistrationFormVariant
+      const resolvedSponsorId =
+        sponsorId.trim() || readRegistrationOverlaySponsorId(variant)
+      return buildGeneralProgramListRowFromRegistrationSnapshot({
+        id,
+        participant,
+        programType,
+        variant,
+        sponsorId: resolvedSponsorId || undefined,
+        title: resolveProgramTitleKo() || undefined,
+        sessionRoundType,
+        educationScheduleMode,
+        educationScheduleLines:
+          programType === 'schedule' && sessionRoundType === 'multi'
+            ? []
+            : readGeneralRegistrationOverlayScheduleLines(),
+        scheduleCurriculumDetailCount: scheduleCurriculumDetailCount,
+        editorExtras: {
+          educationFormScheduleDetail,
+          participationScheduleDetail,
+          ipsScheduleDetail,
+          curriculumSessionCount,
+          curriculumChartSessionCount,
+          scheduleCurriculumPreEducation:
+            variant === 'trainedTeachers'
+              ? trainedTeachersTeacherTrainingEnabled
+              : scheduleCurriculumPreEducation,
+          participantOrganization: participant.organization,
+          teacherTrainingEnabled:
+            variant === 'trainedTeachers'
+              ? trainedTeachersTeacherTrainingEnabled
+              : undefined,
+        },
+      })
+    },
+    [
+      curriculumChartSessionCount,
+      curriculumSessionCount,
+      educationFormScheduleDetail,
       educationScheduleMode,
-      educationScheduleLines:
-        programType === 'schedule' && sessionRoundType === 'multi'
-          ? []
-          : readGeneralRegistrationOverlayScheduleLines(),
-      scheduleCurriculumDetailCount: scheduleCurriculumDetailCount,
-      editorExtras: {
-        educationFormScheduleDetail,
-        participationScheduleDetail,
-        ipsScheduleDetail,
-        curriculumSessionCount,
-        curriculumChartSessionCount,
-        scheduleCurriculumPreEducation,
-        participantOrganization: participant.organization,
-        teacherTrainingEnabled:
-          programRegistrationFormVariant === 'trainedTeachers'
-            ? trainedTeachersTeacherTrainingEnabled
-            : undefined,
-      },
-    })
-    logRegistrationStepTransitionPayload({ program, variant, stepLabel })
-  }, [
-    curriculumChartSessionCount,
-    curriculumSessionCount,
-    educationFormScheduleDetail,
-    educationScheduleMode,
-    ipsScheduleDetail,
-    participant,
-    participationScheduleDetail,
-    programRegistrationFormVariant,
-    programType,
-    resolveProgramTitleKo,
-    scheduleCurriculumDetailCount,
-    scheduleCurriculumPreEducation,
-    sessionRoundType,
-    sponsorId,
-    trainedTeachersTeacherTrainingEnabled,
-  ])
+      ipsScheduleDetail,
+      participant,
+      participationScheduleDetail,
+      programRegistrationFormVariant,
+      programType,
+      resolveProgramTitleKo,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumPreEducation,
+      sessionRoundType,
+      sponsorId,
+      trainedTeachersTeacherTrainingEnabled,
+    ]
+  )
+
+  /** 단계 전환 — base create payload (formBindings 미포함) */
+  const logCurrentRegistrationPayload = useCallback(
+    (stepLabel: string): void => {
+      const program = buildCurrentProgramSnapshot('debug')
+      logRegistrationStepTransitionPayload({
+        program,
+        variant: programRegistrationFormVariant,
+        stepLabel,
+      })
+    },
+    [buildCurrentProgramSnapshot, programRegistrationFormVariant]
+  )
 
   /** 개발용 — 공통정보 overlay·controlled 필드 샘플 채움 (`import.meta.env.DEV`에서만 UI 노출) */
   const applyDevAutofill = useCallback(async () => {
@@ -1633,6 +1678,7 @@ export function useProgramRegistrationEditor(
     handlePreview,
     handleSave,
     handleCompleteRegistration,
+    buildCurrentProgramSnapshot,
     logCurrentRegistrationPayload,
     applyDevAutofill,
     onSelectSingleItemListItem,

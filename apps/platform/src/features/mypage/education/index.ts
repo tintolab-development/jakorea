@@ -13,8 +13,11 @@ export type {
   EducationActivitySection,
   EducationDetailTabItem,
   ApplicationRole,
+  MypageApplicationScope,
+  ProgramApplicationType,
 } from './applications'
 export {
+  APPLICATION_TYPES_BY_SCOPE,
   EDUCATION_APPLICATION_PAGE_SIZE,
   EDUCATION_APPLICATION_TAB_ITEMS,
   EDUCATION_TEACHER_DELIVERY_STATUS_LABEL,
@@ -57,6 +60,9 @@ export {
   buildEducationApplicationListPath,
   readEducationApplicationListParams,
   resolveEducationListBackPath,
+  useCancelMyProgramApplicationMutation,
+  useMyProgramApplicationDetail,
+  useMyProgramApplications,
   EducationApplicationListItemRow,
   EducationApplicationContent,
   TeacherApplicationContent,

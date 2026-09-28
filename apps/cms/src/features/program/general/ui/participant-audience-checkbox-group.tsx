@@ -13,7 +13,7 @@ export type GeneralParticipantAudienceCheckboxGroupProps = {
   disabled?: boolean
 }
 
-/** 참여자 유형 [개인]/[기관] — 상호 배타. 수정 화면에서는 disabled. */
+/** 참여자 유형 [개인]/[기관] — 상호 배타. 프로그램 상세 수정에서는 disabled. */
 export function GeneralParticipantAudienceCheckboxGroup({
   individual,
   organization,

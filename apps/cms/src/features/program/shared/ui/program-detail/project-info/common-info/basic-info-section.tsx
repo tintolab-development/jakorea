@@ -95,16 +95,22 @@ const ECONOMY_IP_OWNED_OPTIONS = [
   { value: 'Jointly', label: 'Jointly' },
 ]
 
-function CompanySchoolFixedParticipantTypes() {
+function LockedParticipantTypeCheckboxes({
+  organization = false,
+  teacherInstructor = false,
+}: {
+  organization?: boolean
+  teacherInstructor?: boolean
+}) {
   return (
     <div className="detail-info-form-inputs-wrapper">
       <CmsCheckbox checkboxSize="large" checked={false} disabled>
         개인
       </CmsCheckbox>
-      <CmsCheckbox checkboxSize="large" checked disabled>
+      <CmsCheckbox checkboxSize="large" checked={organization} disabled>
         학교/기관
       </CmsCheckbox>
-      <CmsCheckbox checkboxSize="large" checked disabled>
+      <CmsCheckbox checkboxSize="large" checked={teacherInstructor} disabled>
         강사
       </CmsCheckbox>
       <CmsCheckbox checkboxSize="large" checked={false} disabled>
@@ -112,6 +118,14 @@ function CompanySchoolFixedParticipantTypes() {
       </CmsCheckbox>
     </div>
   )
+}
+
+function CompanySchoolFixedParticipantTypes() {
+  return <LockedParticipantTypeCheckboxes organization teacherInstructor />
+}
+
+function TrainedTeachersFixedParticipantTypes() {
+  return <LockedParticipantTypeCheckboxes organization />
 }
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
@@ -743,7 +757,13 @@ export function BasicInfoSection({
                   (fixedParticipantTypeLabel ?? formatCompanySchoolParticipantTypes(program))
                 )
               }
-              edit={isEconomyCommonInfo ? <CompanySchoolFixedParticipantTypes /> : undefined}
+              edit={
+                isEconomyCommonInfo ? (
+                  <CompanySchoolFixedParticipantTypes />
+                ) : fixedParticipantTypeLabel != null ? (
+                  <TrainedTeachersFixedParticipantTypes />
+                ) : undefined
+              }
             />
             <DetailInfoForm.Field
               label="사업 분야"
@@ -1296,6 +1316,7 @@ export function BasicInfoSection({
                   {...field}
                   options={CATEGORY_OPTIONS}
                   width={'100%'}
+                  disabled
                   onChange={v => field.onChange(v ? v : undefined)}
                 />
               )}
