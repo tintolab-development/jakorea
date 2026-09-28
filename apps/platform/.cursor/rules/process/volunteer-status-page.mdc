@@ -10,13 +10,14 @@ alwaysApply: false
 
 형제 SSOT: [`education-status-page.mdc`](education-status-page.mdc), [`lecture-status-page.mdc`](lecture-status-page.mdc)
 
-**교육현황과의 관계**: 교육현황(수강 역할) / 봉사현황(봉사 역할) / 강의현황(강사 역할)은 서로 **겹치지 않는 배타적 파티션**이다. 봉사 역할로 판정된 신청 건은 **봉사현황에만** 노출되고 교육현황에는 노출되지 않는다.
+**교육현황과의 관계**: 교육현황(수강 역할) / 봉사현황(봉사 역할) / 강의현황(강사 역할)은 서로 **겹치지 않는 배타적 파티션**이다. 신청 건 역할 SoT는 프로그램 `detailCase`가 아니라 포털 API 신청 건의 `applicationType`이며, 봉사현황은 `applicationType=VOLUNTEER`만 조회한다.
 
 ## 목록 (`/mypage/volunteer`)
 
-- 봉사 역할 신청 **통합** (`detailCase === 'volunteer'` **또는** `'ujat-volunteer'`). 역할 판정: `resolveApplicationRole` (`isVolunteerRoleApplication`)
+- 봉사 역할 신청 **통합** (`applicationType=VOLUNTEER`). Mock/레거시 fallback만 `detailCase === 'volunteer'` **또는** `'ujat-volunteer'` 사용.
 - 탭·정렬·페이지네이션은 교육현황과 동일
-- Mock: 교육 신청 스토어 + `filterVolunteerStatusApplications`
+- API: `GET /api/portal/me/program-applications?applicationType=VOLUNTEER`
+- Mock: 교육 신청 스토어 + `filterVolunteerStatusApplications` (remote 비활성화 fallback)
 - 시드: [`GENERAL_VOLUNTEER_STATUS_FIXTURES`](apps/platform/src/features/program/lib/cms-registration-fixtures.ts), UJAT 봉사는 [`UJAT_VOLUNTEER_FIXTURE`](apps/platform/src/features/program/lib/cms-registration-fixtures.ts)
 - 배정현황 확인용: 기관 `orgProgress`(진행중) · `orgDone`(종료) / 개인 `indProgress`(진행중) · `indDone`(종료)
 

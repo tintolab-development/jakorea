@@ -1,0 +1,81 @@
+export const PROGRAM_APPLICATION_TYPES = [
+  'INDIVIDUAL',
+  'ORGANIZATION',
+  'INSTRUCTOR',
+  'VOLUNTEER',
+] as const
+
+export type ProgramApplicationType = (typeof PROGRAM_APPLICATION_TYPES)[number]
+
+export type ProgramApplicationStatusGroup =
+  | 'WAITING'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED'
+
+export type PortalProgramApplicationListQuery = {
+  applicationType: ProgramApplicationType
+  statusGroup?: ProgramApplicationStatusGroup
+  status?: string
+  programGroup?: string
+  keyword?: string
+  from?: string
+  to?: string
+  page: number
+  size: number
+}
+
+export type PortalProgramApplicationListItem = {
+  applicationId?: number
+  applicationType?: string
+  programId?: number
+  programTitle?: string
+  programType?: string
+  programGroup?: string
+  recruitmentId?: number
+  recruitmentType?: string
+  applicationStatus?: string
+  submittedAt?: string
+  updatedAt?: string
+  cancellable?: boolean
+  thumbnailFileObjectId?: number | null
+  participationStatus?: string
+  displayStatus?: string
+  educationStartAt?: string | null
+  educationEndAt?: string | null
+  nextScheduleAt?: string | null
+  progressPercent?: number | null
+  unreadNoticeCount?: number
+  pendingAssignmentCount?: number
+  pendingSurveyCount?: number
+  certificateAvailable?: boolean
+  availableActions?: string[]
+  supplement?: unknown
+}
+
+export type PortalProgramApplicationListPage = {
+  items?: PortalProgramApplicationListItem[]
+  page?: number
+  size?: number
+  totalElements?: number
+  totalPages?: number
+}
+
+export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & {
+  resultReason?: string | null
+  formResponseId?: number
+  formBindingId?: number
+  templateVersionId?: number
+  formResponseStatus?: string
+  answers?: Record<string, unknown>
+  program?: {
+    programId?: number
+    title?: string
+    programType?: string
+    programGroup?: string
+    thumbnailFileObjectId?: number | null
+  }
+  participation?: unknown
+  summary?: unknown
+  capabilities?: unknown
+}

@@ -96,3 +96,11 @@ export type {
   TeacherTextbookInfoCardProps,
 } from './ui/teacher-assignment'
 export { DocumentPassBanner, shouldShowDocumentPassBanner } from './ui/document-pass-banner'
+export {
+  APPLICATION_TYPES_BY_SCOPE,
+  useCancelMyProgramApplicationMutation,
+  useMyProgramApplicationDetail,
+  useMyProgramApplications,
+} from './api/hooks'
+export type { MypageApplicationScope } from './api/hooks'
+export type { ProgramApplicationType } from './api/types'

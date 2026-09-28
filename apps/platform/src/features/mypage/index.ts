@@ -26,6 +26,8 @@ export type {
   EducationScheduleItem,
   EducationScheduleProgressStatus,
   EducationSurveyEmptyKind,
+  MypageApplicationScope,
+  ProgramApplicationType,
 } from './education'
 export {
   getFirstNoticeAttachment,
@@ -55,6 +57,7 @@ export {
   getMockMypageProgramStats,
 } from './home'
 export {
+  APPLICATION_TYPES_BY_SCOPE,
   EDUCATION_APPLICATION_TAB_ITEMS,
   MOCK_EDUCATION_APPLICATIONS,
   cancelMockEducationApplication,
@@ -96,6 +99,9 @@ export {
   buildEducationApplicationListPath,
   readEducationApplicationListParams,
   resolveEducationListBackPath,
+  useCancelMyProgramApplicationMutation,
+  useMyProgramApplicationDetail,
+  useMyProgramApplications,
   EducationApplicationListItemRow,
   EducationApplicationContent,
   TeacherApplicationContent,

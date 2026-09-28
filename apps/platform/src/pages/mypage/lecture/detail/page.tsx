@@ -27,11 +27,14 @@ import {
   MYPAGE_LECTURE_PATH,
   resolveEducationScheduleTabLabel,
   shouldShowDocumentPassBanner,
+  useCancelMyProgramApplicationMutation,
+  useMyProgramApplicationDetail,
   type EducationActivitySection,
   type EducationDisplayStatus,
+  type ProgramApplicationType,
 } from '@/features/mypage'
 import { resolveLectureListBackPath } from '@/features/mypage/lecture'
-import { ProgramInfoBody, useMockProgramById } from '@/features/program'
+import { ProgramInfoBody, useMockProgramById, useProgramDetail } from '@/features/program'
 import {
   getAccessToken,
   getDevAuthLoggedIn,
@@ -94,8 +97,16 @@ function readSection(search = window.location.search): DetailSection {
   return 'program'
 }
 
-function buildDetailPath(applicationId: string, section: DetailSection) {
-  const base = lectureApplicationDetailPath(applicationId)
+function readLectureApplicationType(value: string | undefined): ProgramApplicationType | null {
+  return value === 'INSTRUCTOR' ? 'INSTRUCTOR' : null
+}
+
+function buildDetailPath(
+  applicationId: string,
+  section: DetailSection,
+  applicationType?: ProgramApplicationType,
+) {
+  const base = lectureApplicationDetailPath(applicationId, applicationType)
   if (section === 'program' || section === 'notice') return base
   return `${base}?section=${section}`
 }
@@ -103,20 +114,34 @@ function buildDetailPath(applicationId: string, section: DetailSection) {
 export function MypageLectureDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { applicationId = '' } = useParams<{ applicationId: string }>()
+  const { applicationId = '', applicationType } = useParams<{
+    applicationId: string
+    applicationType?: string
+  }>()
+  const routeApplicationType = readLectureApplicationType(applicationType)
+  const remoteDetailEnabled = isRemoteApiConfigured() && routeApplicationType != null
   const [isAuthReady, setIsAuthReady] = useState(false)
   const [section, setSection] = useState(readSection)
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
+  const cancelMutation = useCancelMyProgramApplicationMutation()
 
   const mockEnabled = useShouldUsePlatformMockData()
-  const application = useMemo(
+  const mockApplication = useMemo(
     () => getMockEducationApplicationById(applicationId),
     [applicationId, mockEnabled],
   )
-  const { program, isLoading: isProgramLoading } = useMockProgramById(
-    application?.programId ?? '',
+  const remoteApplicationQuery = useMyProgramApplicationDetail(routeApplicationType, applicationId)
+  const application = remoteDetailEnabled ? remoteApplicationQuery.application : mockApplication
+  const mockProgramQuery = useMockProgramById(remoteDetailEnabled ? '' : (application?.programId ?? ''))
+  const remoteProgramQuery = useProgramDetail(
+    remoteDetailEnabled ? application?.programId : null,
+    { fresh: true },
   )
+  const program = remoteDetailEnabled ? remoteProgramQuery.program : mockProgramQuery.program
+  const isProgramLoading = remoteDetailEnabled
+    ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
+    : mockProgramQuery.isLoading
 
   const isWithdrawnBefore = application ? isWithdrawnBeforeEducation(application) : false
   const isWithdrawnDuring = application ? isWithdrawnDuringEducation(application) : false
@@ -165,16 +190,20 @@ export function MypageLectureDetailPage() {
     }
 
     if (!getDevAuthLoggedIn()) {
-      navigate(resolveLoginRequiredPath(lectureApplicationDetailPath(applicationId || 'unknown')))
+      navigate(
+        resolveLoginRequiredPath(
+          lectureApplicationDetailPath(applicationId || 'unknown', routeApplicationType ?? undefined),
+        ),
+      )
       return
     }
 
     setIsAuthReady(true)
-  }, [applicationId, navigate])
+  }, [applicationId, navigate, routeApplicationType])
 
   useEffect(() => {
     if (application && !isInstructorRoleApplication(application)) {
-      navigate(`${educationApplicationDetailPath(application.id)}${location.search}`, {
+      navigate(`${educationApplicationDetailPath(application.id, application.applicationType)}${location.search}`, {
         replace: true,
       })
     }
@@ -237,7 +266,7 @@ export function MypageLectureDetailPage() {
       nextSection = next === 'application' ? 'application' : 'program'
     }
     setSection(nextSection)
-    const nextPath = buildDetailPath(applicationId, nextSection)
+    const nextPath = buildDetailPath(applicationId, nextSection, application?.applicationType)
     const currentPath = `${window.location.pathname}${window.location.search}`
     if (nextPath !== currentPath) {
       window.history.replaceState(null, '', nextPath)
@@ -245,6 +274,18 @@ export function MypageLectureDetailPage() {
   }
 
   const handleConfirmCancel = () => {
+    if (remoteDetailEnabled && application?.applicationType) {
+      cancelMutation.mutate(
+        { applicationType: application.applicationType, applicationId: application.id },
+        {
+          onSuccess: () => {
+            setIsCancelConfirmOpen(false)
+            navigate(MYPAGE_LECTURE_PATH, { replace: true })
+          },
+        },
+      )
+      return
+    }
     cancelMockEducationApplication(applicationId)
     setIsCancelConfirmOpen(false)
     navigate(MYPAGE_LECTURE_PATH, { replace: true })
