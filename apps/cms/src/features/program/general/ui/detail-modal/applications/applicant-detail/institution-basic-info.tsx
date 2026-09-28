@@ -21,7 +21,10 @@ import type {
   SameSchoolGradeOption,
   TextbookSelectOption,
 } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
-import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import {
+  formatInstitutionApplicationGradeDisplay,
+  type InstitutionAffiliatedTeacherOption,
+} from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   InstitutionAddressDetailEdit,
@@ -358,7 +361,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
         error={validationErrors?.educationGrade}
       />
     ) : (
-      institution.educationGrade ?? '-'
+      formatInstitutionApplicationGradeDisplay(institution.educationGrade ?? '') || '-'
     )
 
   const regionValue =

@@ -21,6 +21,7 @@ import {
   shouldShowInstitutionApplicationSessionsColumn,
 } from '@/features/program/general/lib/institution-application-session-display'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 
 const GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH = 185
 const GENERAL_DETAIL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 360
@@ -128,6 +129,7 @@ export function useInstitutionApplicantColumns(params: {
             key: 'educationGrade',
             width: 110,
             align: 'center',
+            render: (value: string) => formatInstitutionApplicationGradeDisplay(value ?? '') || '-',
           },
           {
             title: '신청 학급 수',
@@ -294,6 +296,7 @@ export function useInstitutionApplicantColumns(params: {
         dataIndex: 'educationGrade',
         key: 'educationGrade',
         align: 'center',
+        render: (value: string) => formatInstitutionApplicationGradeDisplay(value ?? '') || '-',
       },
       {
         title: isGeneralDetail ? '신청 학급 수' : '대상 학급 수',
