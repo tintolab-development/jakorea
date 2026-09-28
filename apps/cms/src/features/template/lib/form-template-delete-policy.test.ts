@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildLocalDuplicateWritingTemplateCode,
+  canReorderParticipantApplicationParagraphs,
   isCatalogFixedWritingFormTemplateCode,
   isDuplicateWritingTemplateCode,
   isProgramScopedOperationalWritingTemplate,
+  isRecruitmentOrApplicationWritingTemplateCode,
   isUserCreatedWritingFormTemplateRow,
   isWritingFormTemplateStructureLocked,
   resolveWritingFormTemplateDeletable,
@@ -58,6 +60,50 @@ describe('form-template-delete-policy', () => {
     ).toBe(false)
   })
 
+  it('keeps recruitment and application copies structure-locked', () => {
+    expect(isRecruitmentOrApplicationWritingTemplateCode('application-instructor')).toBe(true)
+    expect(isRecruitmentOrApplicationWritingTemplateCode('application-instructor-copy-99')).toBe(
+      true
+    )
+    expect(isRecruitmentOrApplicationWritingTemplateCode('recruitment-volunteer-copy')).toBe(true)
+    expect(isRecruitmentOrApplicationWritingTemplateCode('agreement-portrait-copy-1')).toBe(false)
+    expect(
+      isWritingFormTemplateStructureLocked({
+        templateCode: 'application-participant-individual-copy-1735689600123',
+        systemTemplate: false,
+        forceUserEditable: true,
+      })
+    ).toBe(true)
+    expect(
+      isWritingFormTemplateStructureLocked({
+        templateCode: 'recruitment-instructor-copy-1',
+        systemTemplate: false,
+        forceUserEditable: true,
+      })
+    ).toBe(true)
+  })
+
+  it('allows application reorder while locking recruitment reorder', () => {
+    expect(
+      canReorderParticipantApplicationParagraphs({
+        structureLocked: true,
+        recruitmentForm: false,
+      })
+    ).toBe(true)
+    expect(
+      canReorderParticipantApplicationParagraphs({
+        structureLocked: true,
+        recruitmentForm: true,
+      })
+    ).toBe(false)
+    expect(
+      canReorderParticipantApplicationParagraphs({
+        structureLocked: false,
+        recruitmentForm: true,
+      })
+    ).toBe(true)
+  })
+
   it('never locks catalog survey templates', () => {
     expect(
       isWritingFormTemplateStructureLocked({
@@ -94,19 +140,25 @@ describe('form-template-delete-policy', () => {
     )
   })
 
-  it('hides program-scoped operational copies from template management', () => {
+  it('hides only registration operational copies from template management', () => {
+    expect(
+      isProgramScopedOperationalWritingTemplate({
+        templateCode: 'registration-general-copy-1735689600123',
+        category: 'REGISTRATION',
+      })
+    ).toBe(true)
     expect(
       isProgramScopedOperationalWritingTemplate({
         templateCode: 'application-participant-individual-copy-1735689600123',
         category: 'APPLICATION',
       })
-    ).toBe(true)
+    ).toBe(false)
     expect(
       isProgramScopedOperationalWritingTemplate({
         templateCode: 'recruitment-instructor-copy-1',
         category: 'RECRUITMENT',
       })
-    ).toBe(true)
+    ).toBe(false)
     expect(
       isProgramScopedOperationalWritingTemplate({
         templateCode: 'application-participant-individual',

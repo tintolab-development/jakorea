@@ -128,7 +128,9 @@ function PinnedFormCardInner({
   const isSelected = selectedCardId === paragraph.id
   const hideDragHandle =
     (hideDragHandleForParagraphIds?.has(paragraph.id) ?? false) ||
-    (editorKind === 'horizontal_table' && structureLockedParagraphIds != null)
+    (editorKind === 'horizontal_table' &&
+      structureLockedParagraphIds != null &&
+      !allowAddAfterStructureLockedParagraphs)
   const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
     withoutTitleRequired(
       withSurveyWriteTitleNumbering(
@@ -141,7 +143,8 @@ function PinnedFormCardInner({
             updateParagraph,
             editorKind,
             structureLockedParagraphIds,
-            headingDescriptionExtraClassName
+            headingDescriptionExtraClassName,
+            paragraphBodyOptions?.structureLockedAuthoringOperationalFill === true
           ),
           paragraph
         ),
@@ -308,7 +311,9 @@ function SortableMiddleFormCardInner({
   useInstitutionApplicationProgramBridge()
   const hideDragHandle =
     (hideDragHandleForParagraphIds?.has(paragraph.id) ?? false) ||
-    (editorKind === 'horizontal_table' && structureLockedParagraphIds != null)
+    (editorKind === 'horizontal_table' &&
+      structureLockedParagraphIds != null &&
+      !allowAddAfterStructureLockedParagraphs)
   const {
     attributes,
     listeners,
@@ -332,7 +337,8 @@ function SortableMiddleFormCardInner({
             updateParagraph,
             editorKind,
             structureLockedParagraphIds,
-            headingDescriptionExtraClassName
+            headingDescriptionExtraClassName,
+            paragraphBodyOptions?.structureLockedAuthoringOperationalFill === true
           ),
           paragraph
         ),

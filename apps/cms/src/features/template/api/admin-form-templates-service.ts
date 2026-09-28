@@ -35,6 +35,10 @@ import {
 } from '@/features/template/api/form-templates-api-client'
 import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-template-seed-registry'
 import {
+  forgetUserCreatedWritingTemplate,
+  rememberUserCreatedWritingTemplate,
+} from '@/features/template/lib/user-created-writing-template-catalog'
+import {
   isFormTemplateLocalFallbackEnabled,
   shouldUseRemoteDraftApiForTemplateCode,
 } from '@/features/template/lib/form-template-remote-draft'
@@ -512,6 +516,13 @@ export async function createWritingFormTemplateRemote(args: {
     })
   }
 
+  rememberUserCreatedWritingTemplate({
+    templateCode: newCode,
+    templateName,
+    sectionKey: args.target,
+    createdAt: new Date().toISOString(),
+  })
+
   return newCode
 }
 
@@ -559,15 +570,17 @@ export async function renameFormTemplateByCode(
 }
 
 export async function deleteFormTemplate(templateCode: string): Promise<void> {
-  assertFormsSurveysRemoteReady()
-
   const cached = getFormTemplateVersionCacheEntry(templateCode)
   const templateId = cached?.templateId
   if (templateId == null) {
-    throw new Error('삭제할 템플릿 ID를 찾을 수 없습니다. 목록을 먼저 조회해 주세요.')
+    forgetUserCreatedWritingTemplate(templateCode)
+    removeWritingFormTemplateSave(templateCode)
+    return
   }
 
+  assertFormsSurveysRemoteReady()
   await deleteFormTemplateRemote(templateId)
+  forgetUserCreatedWritingTemplate(templateCode)
   removeFormTemplateVersionCacheEntry(templateCode)
   removeWritingFormTemplateSave(templateCode)
 }

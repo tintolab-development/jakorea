@@ -923,12 +923,15 @@ export function paragraphEditableHeading(
   updateParagraph: FormEditorLeftPanelProps['updateParagraph'],
   editorKind: FormEditorKind,
   structureLockedParagraphIds?: ReadonlySet<string>,
-  headingDescriptionExtraClassName?: string
+  headingDescriptionExtraClassName?: string,
+  allowStructureLockedOperationalFill = false
 ) {
   const descCls = (base?: string) =>
     mergeHeadingDescriptionClassName(base, headingDescriptionExtraClassName)
   const prefix = getFormParagraphTitleNumberPrefix(paragraphs, paragraph, titleNumbering)
-  const locked = structureLockedParagraphIds?.has(paragraph.id) ?? false
+  const locked =
+    (structureLockedParagraphIds?.has(paragraph.id) ?? false) &&
+    !allowStructureLockedOperationalFill
 
   if (locked && EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS.has(paragraph.id)) {
     return buildEducatorFacilitatorPledgeLockedHeading(paragraph, prefix, descCls, editorKind)

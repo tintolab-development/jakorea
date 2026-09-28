@@ -265,6 +265,11 @@
   gap: 16px;
 }
 
+.full-page-modal--no-right-nav .full-page-modal__left {
+  max-width: none;
+  width: 100%;
+}
+
 .full-page-modal .form-editor-left {
   flex: none;
   width: 100%;

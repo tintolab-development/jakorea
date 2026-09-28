@@ -67,7 +67,7 @@ function groupItemsByCategory(
   for (const item of items) {
     const code = item.templateCode?.trim()
     if (code == null || code === '') continue
-    // 프로그램 종속 등록/모집/신청 copy — 양식 관리 비노출
+    // 프로그램 종속 등록 copy — 양식 관리 비노출. 모집·신청 사용자 복제는 노출.
     if (isProgramScopedOperationalWritingTemplate(item)) continue
     const category = resolveWritingFormCategory(code, item.category)
     if (category == null) continue
