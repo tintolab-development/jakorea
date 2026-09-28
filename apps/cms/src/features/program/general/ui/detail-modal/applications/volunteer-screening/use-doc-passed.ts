@@ -18,7 +18,7 @@ import { useGeneralVolunteerApplicationsRemote } from '@/features/program/genera
 import { assignGeneralIndividualInterview, assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockOrgVolunteerApplicants } from '@/features/program/general/lib/temp-mock-org-program'
+import { getTempMockShowcaseVolunteerApplicants } from '@/features/program/general/lib/temp-mock-program-resolve'
 import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
@@ -95,7 +95,7 @@ export function useGeneralVolunteerDocPassed({
   useEffect(() => {
     if (volunteerRemote.remoteEnabled) return
     if (isGeneralProgramTempMockProgramId(programId) && subjectKind !== 'participant') {
-      setList(getTempMockOrgVolunteerApplicants(programId, 'docPassed'))
+      setList(getTempMockShowcaseVolunteerApplicants(programId, 'docPassed'))
       return
     }
     setList([])

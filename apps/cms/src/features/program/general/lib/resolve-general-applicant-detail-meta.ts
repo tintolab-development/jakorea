@@ -8,7 +8,11 @@ import { getApplicantInstructorsByProgramId } from '@/features/program/shared/mo
 import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockOrgApplicantInstructors } from '@/features/program/general/lib/temp-mock-org-program'
+import {
+  isGeneralProgramTempMockIndividualProgramId,
+} from '@/features/program/general/api/temp-mock-capabilities'
+import { getTempMockShowcaseApplicantInstructors } from '@/features/program/general/lib/temp-mock-program-resolve'
+import { getTempMockIndividualApplicants } from '@/features/program/general/lib/temp-mock-individual-program'
 import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
 import { resolveGeneralParticipantApplicantDetailTitle } from '@/features/program/general/lib/screening-subject-kind'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
@@ -18,6 +22,12 @@ function findIndividualApplicant(
   activeTab: string,
   applicantId: string
 ) {
+  if (isGeneralProgramTempMockIndividualProgramId(programId)) {
+    return (
+      getTempMockIndividualApplicants(programId).find(row => row.id === applicantId) ??
+      null
+    )
+  }
   const rows =
     activeTab === 'part_doc1'
       ? getGeneralParticipantDoc1Applicants(programId)
@@ -48,7 +58,7 @@ export function resolveGeneralApplicantDetailMetaFromUrl(params: {
   }
 
   if (activeLnb === 'instructor_applications') {
-    const instructor = getTempMockOrgApplicantInstructors(programId)
+    const instructor = getTempMockShowcaseApplicantInstructors(programId)
       .concat(getApplicantInstructorsByProgramId(programId))
       .find(row => row.id === applicantId)
     if (!instructor) return null

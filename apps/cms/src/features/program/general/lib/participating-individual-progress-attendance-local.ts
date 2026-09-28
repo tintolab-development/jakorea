@@ -1,4 +1,6 @@
 import type { Program } from '@/types/domain'
+import { isGeneralProgramTempMockIndividualProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { buildTempMockIndividualProgressAttendanceSessions } from '@/features/program/general/lib/temp-mock-individual-progress-surfaces'
 import type {
   ParticipatingIndividualProgressAttendanceParticipantRow,
   ParticipatingIndividualProgressAttendanceSessionGroup,
@@ -14,17 +16,61 @@ type AttendancePatch = {
 /** programId → sessionId → participantRowId → patch (UI 세션 패치용) */
 const attendancePatchStore: Record<string, Record<string, Record<string, AttendancePatch>>> = {}
 
+const tempMockAttendanceSeedCache: Record<
+  string,
+  ParticipatingIndividualProgressAttendanceSessionGroup[]
+> = {}
+
+function tempMockAttendanceSessionsForProgram(
+  program: Program
+): ParticipatingIndividualProgressAttendanceSessionGroup[] {
+  if (!isGeneralProgramTempMockIndividualProgramId(program.id)) return []
+  if (!tempMockAttendanceSeedCache[program.id]) {
+    tempMockAttendanceSeedCache[program.id] =
+      buildTempMockIndividualProgressAttendanceSessions(program)
+  }
+  return tempMockAttendanceSeedCache[program.id]!
+}
+
+function withAttendancePatches(
+  programId: string,
+  sessions: ParticipatingIndividualProgressAttendanceSessionGroup[]
+): ParticipatingIndividualProgressAttendanceSessionGroup[] {
+  const programPatches = attendancePatchStore[programId]
+  if (!programPatches) return sessions
+  return sessions.map(session => {
+    const sessionPatches = programPatches[session.id]
+    if (!sessionPatches) return session
+    return {
+      ...session,
+      participants: session.participants.map(participant => {
+        const patch = sessionPatches[participant.id]
+        if (!patch) return participant
+        return {
+          ...participant,
+          attendanceStatus: patch.attendanceStatus,
+          lateTime: patch.lateTime,
+          remark: patch.remark,
+        }
+      }),
+    }
+  })
+}
+
 /** 개인 프로그램 진행 — 출결 (remote API 연동 전 빈 목록) */
 export function getParticipatingIndividualProgressAttendanceSessions(
-  _program: Program
+  program: Program
 ): ParticipatingIndividualProgressAttendanceSessionGroup[] {
-  return []
+  return withAttendancePatches(program.id, tempMockAttendanceSessionsForProgram(program))
 }
 
 export function getParticipatingIndividualProgressAttendanceEducationScheduleOptions(
-  _program: Program
+  program: Program
 ): Array<{ label: string; value: string }> {
-  return []
+  return tempMockAttendanceSessionsForProgram(program).map(session => ({
+    value: session.filterValue,
+    label: session.filterLabel,
+  }))
 }
 
 export function patchParticipatingIndividualProgressAttendanceParticipant(
@@ -43,8 +89,9 @@ export function patchParticipatingIndividualProgressAttendanceParticipant(
 }
 
 export function getParticipatingIndividualProgressAttendanceSessionParticipants(
-  _program: Program,
-  _sessionId: string
+  program: Program,
+  sessionId: string
 ): ParticipatingIndividualProgressAttendanceParticipantRow[] {
-  return []
+  const session = tempMockAttendanceSessionsForProgram(program).find(s => s.id === sessionId)
+  return session?.participants ?? []
 }

@@ -19,7 +19,7 @@ import {
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockOrgVolunteerApplicants } from '@/features/program/general/lib/temp-mock-org-program'
+import { getTempMockShowcaseVolunteerApplicants } from '@/features/program/general/lib/temp-mock-program-resolve'
 import { patchGeneralVolunteerDocumentScreeningStatus } from '@/features/program/general/model/volunteer-applicant'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import {
@@ -151,7 +151,7 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   useEffect(() => {
     if (volunteerRemote.remoteEnabled) return
     if (isGeneralProgramTempMockProgramId(programId)) {
-      setList(getTempMockOrgVolunteerApplicants(programId, 'doc1'))
+      setList(getTempMockShowcaseVolunteerApplicants(programId, 'doc1'))
       return
     }
     setList([])

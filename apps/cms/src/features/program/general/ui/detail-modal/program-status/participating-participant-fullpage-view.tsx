@@ -25,6 +25,8 @@ import {
 } from '@/features/program/general/api/individual-application-update-helpers'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { patchGeneralIndividualApplicantDetail } from '@/features/program/general/model/individual-applicant'
 import { useParticipatingIndividualApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
 import {
   buildProgramApiUnavailableSaveContent,
@@ -96,6 +98,7 @@ export function ParticipatingParticipantFullpageView({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const attendanceSectionRef = useRef<ParticipatingIndividualParticipantAttendanceSectionHandle>(null)
   const assignmentSectionRef = useRef<ParticipatingIndividualParticipantAssignmentSectionHandle>(null)
   const [participantPatches, setParticipantPatches] = useState<
@@ -185,6 +188,9 @@ export function ParticipatingParticipantFullpageView({
     program,
     onSaved: handleParticipantSaved,
     saveApplicant: async payload => {
+      if (isTempMockProgram) {
+        return patchGeneralIndividualApplicantDetail(mergedParticipant.id, payload)
+      }
       if (!shouldUseGeneralApplicationsRemoteApi() || !hasIndividualApplicationId) {
         return null
       }
@@ -248,21 +254,23 @@ export function ParticipatingParticipantFullpageView({
       const stopScheduleIdNum =
         stopScheduleIdRaw != null ? Number(stopScheduleIdRaw) : Number.NaN
 
-      if (progressRemoteEnabled) {
+      if (progressRemoteEnabled || isTempMockProgram) {
         setActivityWithdrawSubmitting(true)
         try {
-          await giveUpGeneralParticipatingInstitution(program.id, mergedParticipant.id, reason, {
-            stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
-          })
+          if (progressRemoteEnabled) {
+            await giveUpGeneralParticipatingInstitution(program.id, mergedParticipant.id, reason, {
+              stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
+            })
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramProgressQueryKeys.participants(program.id, 'INDIVIDUAL'),
+            })
+          }
           setParticipantPatches(prev => ({
             ...prev,
             activityWithdrawn: true,
             activityWithdrawStopSessionKey: payload.stopSessionKey,
             activityWithdrawStopScheduleLabel: payload.stopScheduleLabel,
           }))
-          await queryClient.invalidateQueries({
-            queryKey: generalProgramProgressQueryKeys.participants(program.id, 'INDIVIDUAL'),
-          })
           setActivityWithdrawModalOpen(false)
           showAlert({
             title: '활동 포기',
@@ -292,6 +300,7 @@ export function ParticipatingParticipantFullpageView({
       mergedParticipant.applicantName,
       mergedParticipant.id,
       program.id,
+      isTempMockProgram,
       progressRemoteEnabled,
       queryClient,
       sessions,
@@ -368,13 +377,19 @@ export function ParticipatingParticipantFullpageView({
         return
       }
     }
+    if (isTempMockProgram) {
+      setSavedAdminComment(trimmed)
+      setParticipantPatches(prev => ({ ...prev, adminComment: trimmed || undefined }))
+      setAdminCommentModalOpen(false)
+      return
+    }
     void showAlert({
       title: PROGRAM_API_UNAVAILABLE_TITLE,
       content: hasIndividualApplicationId
         ? buildProgramApiUnavailableSaveContent('참여자 관리자 코멘트')
         : '개인 신청 ID가 없어 코멘트를 저장할 수 없습니다. participants API에 sourceApplicationId 매핑이 필요합니다.',
     })
-  }, [adminCommentDraft, hasIndividualApplicationId, mergedParticipant, showAlert])
+  }, [adminCommentDraft, hasIndividualApplicationId, isTempMockProgram, mergedParticipant, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)

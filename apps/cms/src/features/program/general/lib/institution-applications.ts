@@ -1,4 +1,5 @@
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import { isGeneralProgramTempMockOrgProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { getTempMockOrgApplicantSchools } from '@/features/program/general/lib/temp-mock-org-program'
 
 /** 교육받은 교사 — 기관 신청 목록 (remote only) */
@@ -12,5 +13,6 @@ export function getTrainedTeachersInstitutionApplicationsForProgram(
 export function getGeneralInstitutionApplicationsForProgram(
   programId: string
 ): ApplicantSchoolRow[] {
+  if (!isGeneralProgramTempMockOrgProgramId(programId)) return []
   return getTempMockOrgApplicantSchools(programId)
 }

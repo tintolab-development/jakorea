@@ -590,10 +590,11 @@ export function useApplicantsDetail({
     }
   }, [individualScreeningStage])
 
-  /** 1차 서류 심사 — remote off이면 빈 목록 */
+  /** 1차 서류 심사 — remote off이면 빈 목록 (temp mock 개인 쇼케이스는 시드 유지) */
   useEffect(() => {
     if (menu !== 'individual-applications' || individualScreeningStage !== 'doc1') return
     if (applicationsRemote.individualRemoteEnabled) return
+    if (isGeneralProgramTempMockProgramId(programId)) return
     setIndividualList([])
     setPendingFilters({})
     setAppliedFilters({})
@@ -602,6 +603,7 @@ export function useApplicantsDetail({
     applicationsRemote.individualRemoteEnabled,
     individualScreeningStage,
     menu,
+    programId,
     setPendingFilters,
   ])
 
