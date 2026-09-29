@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { RichTextViewer } from '@/shared/rich-text'
 import type {
   ParticipantRecruitmentUserViewModel,
@@ -92,7 +92,9 @@ function toneClassName(tone: RecruitmentUserSpecRow['tone']) {
 }
 
 function Poster({ imageUrl, title }: { imageUrl?: string; title: string }) {
-  const hasImage = Boolean(imageUrl)
+  const [failedUrl, setFailedUrl] = useState<string | undefined>(undefined)
+  const activeUrl = imageUrl && imageUrl !== failedUrl ? imageUrl : undefined
+  const hasImage = Boolean(activeUrl)
 
   return (
     <div
@@ -101,7 +103,15 @@ function Poster({ imageUrl, title }: { imageUrl?: string; title: string }) {
         hasImage ? 'user-page-content__poster--has-image' : 'user-page-content__poster--empty',
       ].join(' ')}
     >
-      {hasImage ? <img src={imageUrl} alt={title} /> : null}
+      {hasImage ? (
+        <img
+          src={activeUrl}
+          alt={title}
+          onError={() => {
+            if (imageUrl) setFailedUrl(imageUrl)
+          }}
+        />
+      ) : null}
     </div>
   )
 }
