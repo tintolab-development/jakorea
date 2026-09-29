@@ -1,5 +1,4 @@
 import { isAdminOnboardingRequired } from './admin-onboarding-session'
-import { isRemoteApiConfigured } from './api-remote-env'
 import { getAccessToken, PLATFORM_AUTH_TOKEN_KEY } from './auth-token'
 import { DEV_AUTH_CHANGE_EVENT, emitDevAuthChange } from './auth-session-event'
 
@@ -20,17 +19,25 @@ export function getDevAuthLoggedIn() {
   return false
 }
 
+/** DEV mock 버튼으로 만든 세션만 true. 실세션 token이 있으면 mock 데이터는 절대 쓰지 않는다. */
+export function isPlatformMockLoginSession(): boolean {
+  if (typeof window === 'undefined') return false
+  if (!import.meta.env.DEV) return false
+  if (isAdminOnboardingRequired()) return false
+  if (window.localStorage.getItem(PLATFORM_AUTH_TOKEN_KEY) || getAccessToken()) return false
+  return window.localStorage.getItem(DEV_AUTH_STORAGE_KEY) === 'true'
+}
+
 /**
  * Platform mock 카탈로그를 쓸지.
- * remote API + access token(실세션)이면 false — 비로그인이면 true.
+ * Mock 로그인 세션에서만 true.
  * `getDevAuthLoggedIn()`은 토큰이 있어도 true라서 데이터 소스 가드로 쓰지 않는다.
  *
  * **마이페이지 개인 데이터**(신청·일정·정산·문의 등)에만 사용한다.
  * 공개 콘텐츠 시드는 `shouldUsePlatformContentSeed` 를 본다.
  */
 export function shouldUsePlatformMockData(): boolean {
-  if (typeof window === 'undefined') return true
-  return !(isRemoteApiConfigured() && Boolean(getAccessToken()))
+  return isPlatformMockLoginSession()
 }
 
 /**
