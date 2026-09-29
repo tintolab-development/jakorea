@@ -29,14 +29,21 @@
   margin: 0;
 }
 
-/* 공통 정보 탭 조회 — `.info-section-title { margin-bottom: 10px }` 와 동일 */
+/* 설명 없음 — 조회 `.detail-info-form__header` 와 동일 10px */
 .program-common-info-edit__section > .form-paragraph-section-header.detail-info-form__header {
   margin-bottom: 10px;
 }
 
+/* 설명 있음 — 등록 카드·detail-info-form 규격 16px (10px로 누르면 표와 설명이 붙음) */
 .program-common-info-edit__section
   > .form-paragraph-section-header.detail-info-form__header:has(
     .form-paragraph-section-header__description
   ) {
-  margin-bottom: 10px;
+  margin-bottom: 16px;
+}
+
+/* 일정형 교육 진행 — 조회와 같이 블록 간 16px (등록 CSS 20px margin 상쇄) */
+.program-common-info-edit__section-body--stacked
+  > .program-registration-schedule-curriculum__block {
+  margin-bottom: 0;
 }
