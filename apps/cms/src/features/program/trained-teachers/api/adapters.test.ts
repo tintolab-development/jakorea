@@ -265,7 +265,7 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
     expect(mapped.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
   })
 
-  it('display fields keep announcement/detailed names off title and textbookName', () => {
+  it('공고용명·세부명은 최신 top-level 컬럼을 stale JSON보다 우선한다', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
       ...baseDto,
       title: '교육받은교사(수정2)',
@@ -291,8 +291,8 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
         },
       }),
     })
-    expect(mapped.generalCommonInfo?.announcementTitle).toBe('구 공고')
-    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('UJAT 사전교육')
+    expect(mapped.generalCommonInfo?.announcementTitle).toBe('교육받은교사(수정2)')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
     expect(mapped.textbookName).toBe('사회공헌 프로젝트')
     expect(mapped.generalCommonInfo?.venueKind).toBe('other')
     expect(mapped.generalCommonInfo?.venueDetail).toBe('별관 301호')
@@ -613,6 +613,51 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
     expect(request.serviceDetailJson).not.toContain('구 차시')
   })
 
+  it('부분 generalCommonInfo가 이전 공고·모집 정보를 지우지 않는다', () => {
+    const program = {
+      id: '186009',
+      sponsorId: '163302',
+      title: 'TT',
+      type: 'offline' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      generalCommonInfo: {
+        announcementTitle: '기존 공고',
+        participantRecruitmentInfo: {
+          announcementPublished: true,
+          inquiryTel: '02-000-0000',
+        },
+        curriculumSessions: [{ sessionLabel: '1차시', title: '구 차시', description: '' }],
+      },
+    } as Program
+    const request = mapTrainedTeacherToUpdateRequest(program, {
+      generalCommonInfo: {
+        curriculumSessions: [{ sessionLabel: '1차시', title: '신 차시', description: '새 내용' }],
+      },
+    })
+    const detail = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: { generalCommonInfo?: Record<string, unknown> }
+    }
+    const common = detail.program?.generalCommonInfo
+    expect(common?.announcementTitle).toBe('기존 공고')
+    expect(common?.participantRecruitmentInfo).toEqual({
+      announcementPublished: true,
+      inquiryTel: '02-000-0000',
+      maxAssignableInstructors: 0,
+      preEducationNoticeRequired: false,
+    })
+    expect(common?.curriculumSessions).toEqual([
+      { sessionLabel: '1차시', title: '신 차시', description: '새 내용' },
+    ])
+  })
+
   it('keeps announcement and schedule time when nested common info was previously stripped', () => {
     const program = {
       id: '186034',
@@ -674,7 +719,7 @@ describe('mapTrainedTeacherToUpdateRequest detailedProgramId (일반 프로그�
     updatedAt: '2026-01-01',
   }
 
-  it('sends detailedProgramId as a real numeric master id and omits it from textbookName', () => {
+  it('sends detailedProgramId and mirrors the selected name to textbookName', () => {
     const program = {
       ...baseProgram,
       detailedProgramId: '163006',
@@ -682,12 +727,12 @@ describe('mapTrainedTeacherToUpdateRequest detailedProgramId (일반 프로그�
     }
     const request = mapTrainedTeacherToUpdateRequest(program)
     expect(request.detailedProgramId).toBe(163006)
-    expect(request.textbookName).toBeUndefined()
+    expect(request.textbookName).toBe('실제 선택한 세부 프로그램명')
     expect(request.teamDivision).toBeUndefined()
 
     const createRequest = mapTrainedTeacherToCreateRequest(program)
     expect(createRequest.detailedProgramId).toBe(163006)
-    expect(createRequest.textbookName).toBeUndefined()
+    expect(createRequest.textbookName).toBe('실제 선택한 세부 프로그램명')
   })
 
   it('detailedProgramId가 없거나 sentinel(해당없음)이면 null(undefined)로 보낸다', () => {
@@ -1082,7 +1127,7 @@ describe('trained teacher businessArea', () => {
     } as Program
     const request = mapTrainedTeacherToUpdateRequest(program)
     expect(request.businessArea).toBe('진로취업')
-    expect((request as { businessField?: string }).businessField).toBe('진로취업')
+    expect(request).not.toHaveProperty('businessField')
     const envelope = JSON.parse(String(request.serviceDetailJson)) as {
       program?: { businessArea?: string; generalCommonInfo?: Record<string, unknown> }
     }

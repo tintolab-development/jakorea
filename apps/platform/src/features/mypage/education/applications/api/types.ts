@@ -74,8 +74,17 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
     programType?: string
     programGroup?: string
     thumbnailFileObjectId?: number | null
+    recruitmentStartAt?: string | null
+    recruitmentEndAt?: string | null
+    educationStartAt?: string | null
+    educationEndAt?: string | null
   }
-  participation?: unknown
+  participation?: {
+    status?: string
+    completionStatus?: string
+  }
   summary?: unknown
-  capabilities?: unknown
+  capabilities?: {
+    canCancelApplication?: boolean
+  }
 }

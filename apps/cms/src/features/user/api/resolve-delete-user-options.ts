@@ -14,8 +14,11 @@ export type DeleteUserOptions = {
   /**
    * `POST …/users/{id}/delete` 등 회원 삭제 API — 현재 로그인 관리자 비밀번호.
    * 학교/관리자 계정 삭제 API에는 전달되지 않음.
+   * 목록 삭제는 비밀번호, 상세 회원 탈퇴는 `withdrawConfirmationText`.
    */
   currentPassword?: string
+  /** 상세·소속 교사 회원 탈퇴 — 확인 문구 `탈퇴` */
+  withdrawConfirmationText?: string
 }
 
 /** 목록·상세 User → deleteUser API 옵션 (memberId·adminAccountId·organizationId 힌트 보강) */

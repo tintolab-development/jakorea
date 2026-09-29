@@ -9,14 +9,17 @@ import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { getMypageProfileLabel } from '@/features/mypage/lib/member-profile'
 import { useSettingsView } from '@/features/mypage/settings/hooks/use-settings-view'
-import { PFAlertModal, PFButton } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import {
   createEducationSurveySeedDraft,
   EDUCATION_SURVEY_SEED_CREATED_AT,
   type EducationSatisfactionAudience,
   type EducationSurveySeedKind,
 } from '../lib/seed-survey-draft'
+import { useApplicationFormsQuery } from '../../applications/api/activity-hooks'
+import type { ProgramApplicationType } from '../../applications/api/types'
 import { getMockEducationSurveyList } from '../lib/mock-survey-list'
+import { EducationSurveyEmptyPanel } from './empty-panel'
 import {
   formatEducationPeriodLabel,
   resolveSurveyUserInfoValues,
@@ -39,6 +42,8 @@ export type EducationSurveyFillPanelProps = {
   educationGradeLabel?: string
   institutionName?: string
   institutionRegion?: string
+  applicationType?: ProgramApplicationType | null
+  applicationId?: string | null
 }
 
 export function EducationSurveyFillPanel({
@@ -50,8 +55,18 @@ export function EducationSurveyFillPanel({
   educationGradeLabel,
   institutionName,
   institutionRegion,
+  applicationType,
+  applicationId,
 }: EducationSurveyFillPanelProps) {
-  const surveyList = useMemo(() => getMockEducationSurveyList(kind), [kind])
+  const remoteForms = useApplicationFormsQuery(
+    applicationType,
+    applicationId,
+    kind === 'satisfaction' ? 'SATISFACTION' : 'SURVEY',
+  )
+  const surveyList = useMemo(
+    () => (remoteForms.enabled ? remoteForms.items : getMockEducationSurveyList(kind)),
+    [kind, remoteForms.enabled, remoteForms.items],
+  )
   const showList = surveyList.length >= 2
   const [selectedId, setSelectedId] = useState(() => surveyList[0]?.id ?? '')
 
@@ -171,6 +186,18 @@ export function EducationSurveyFillPanel({
 
   const handleSubmit = () => {
     setAlertOpen(true)
+  }
+
+  if (remoteForms.isLoading) return null
+  if (remoteForms.isError) {
+    return (
+      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+        {kind === 'satisfaction' ? '만족도조사를 불러오지 못했습니다.' : '설문조사를 불러오지 못했습니다.'}
+      </PFText>
+    )
+  }
+  if (remoteForms.enabled && surveyList.length === 0) {
+    return <EducationSurveyEmptyPanel kind={kind} />
   }
 
   const submitDescription =

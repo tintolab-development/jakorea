@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canGeneralProgramApplicationFormEdit,
   canGeneralProgramCommonInfoEdit,
   canGeneralProgramRecruitmentInfoEdit,
   getGeneralProgramCommonInfoEditBlockedAlertMessage,
@@ -67,23 +68,46 @@ describe('getGeneralProgramCommonInfoEditBlockedAlertMessage', () => {
 })
 
 describe('canGeneralProgramRecruitmentInfoEdit', () => {
-  it('operationStartDate가 지나도 startAt이 미래면 수정 가능', () => {
+  it('모집이 시작돼도 운영 시작일이 미래면 수정 가능', () => {
     const program = baseProgram({
       lifecycleStatus: 'education_in_progress',
       programRecruitments: [
-        { recruitmentType: 'PARTICIPANT', startAt: '2099-01-01T00:00:00+09:00' },
+        {
+          recruitmentType: 'PARTICIPANT',
+          startAt: '2020-01-01T00:00:00+09:00',
+          operationStartDate: '2099-01-01',
+        },
       ],
     })
     expect(
       canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)
     ).toBe(true)
+    expect(
+      canGeneralProgramApplicationFormEdit(program, 'PARTICIPANT', duringBusiness)
+    ).toBe(false)
   })
 
-  it('startAt이 지난 유형만 수정 불가', () => {
+  it('운영 시작일이 없는 유형은 모집 시작과 무관하게 수정 가능', () => {
     const program = baseProgram({
       programRecruitments: [
         { recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
-        { recruitmentType: 'INSTRUCTOR', startAt: null },
+        { recruitmentType: 'INSTRUCTOR', startAt: null, operationStartDate: null },
+      ],
+    })
+    expect(
+      canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)
+    ).toBe(true)
+    expect(
+      canGeneralProgramRecruitmentInfoEdit(program, 'INSTRUCTOR', duringBusiness)
+    ).toBe(true)
+  })
+
+  it('운영 시작일이 지난 유형만 모집정보 수정 불가', () => {
+    const program = baseProgram({
+      programRecruitments: [
+        { recruitmentType: 'PARTICIPANT', operationStartDate: '2020-01-01' },
+        { recruitmentType: 'INSTRUCTOR', operationStartDate: '2099-01-01' },
+        { recruitmentType: 'VOLUNTEER', startAt: '2020-01-01T00:00:00+09:00' },
       ],
     })
     expect(
@@ -92,13 +116,19 @@ describe('canGeneralProgramRecruitmentInfoEdit', () => {
     expect(
       canGeneralProgramRecruitmentInfoEdit(program, 'INSTRUCTOR', duringBusiness)
     ).toBe(true)
+    expect(
+      canGeneralProgramRecruitmentInfoEdit(program, 'VOLUNTEER', duringBusiness)
+    ).toBe(true)
+    expect(
+      canGeneralProgramApplicationFormEdit(program, 'VOLUNTEER', duringBusiness)
+    ).toBe(false)
   })
 })
 
 describe('getGeneralProgramRecruitmentInfoEditBlockedAlertMessage', () => {
-  it('모집 시작 이후 안내를 반환한다', () => {
+  it('운영 시작 이후 안내를 반환한다', () => {
     expect(
       getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(baseProgram())
-    ).toContain('모집·신청')
+    ).toBe('프로그램 운영이 시작된 이후에는 모집 정보를 수정할 수 없습니다.')
   })
 })

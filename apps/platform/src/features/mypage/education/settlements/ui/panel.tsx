@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react'
+import { PFText } from '@/shared/ui'
+import { useApplicationSettlementsQuery } from '../../applications/api/activity-hooks'
+import type { ProgramApplicationType } from '../../applications/api/types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SETTLEMENT_PAGE_SIZE } from '../model/types'
@@ -14,20 +17,25 @@ import styles from './panel.module.css'
 type EducationSettlementPanelProps = {
   programId: string
   applicationId: string
+  applicationType?: ProgramApplicationType | null
   lastParticipatedSession?: number
 }
 
 export function EducationSettlementPanel({
   programId,
   applicationId,
+  applicationType,
   lastParticipatedSession,
 }: EducationSettlementPanelProps) {
   const [page, setPage] = useState(1)
+  const remoteSettlements = useApplicationSettlementsQuery(applicationType, applicationId, programId)
 
   const allItems = useMemo(() => {
-    const items = getMockEducationSettlements(programId)
+    const items = remoteSettlements.enabled
+      ? remoteSettlements.items
+      : getMockEducationSettlements(programId)
     return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
-  }, [programId, lastParticipatedSession])
+  }, [lastParticipatedSession, programId, remoteSettlements.enabled, remoteSettlements.items])
 
   const totalElements = allItems.length
   const totalPages = Math.max(1, Math.ceil(totalElements / EDUCATION_SETTLEMENT_PAGE_SIZE))
@@ -39,6 +47,15 @@ export function EducationSettlementPanel({
     const start = (currentPage - 1) * EDUCATION_SETTLEMENT_PAGE_SIZE
     return allItems.slice(start, start + EDUCATION_SETTLEMENT_PAGE_SIZE)
   }, [allItems, currentPage])
+
+  if (remoteSettlements.isLoading) return null
+  if (remoteSettlements.isError) {
+    return (
+      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+        정산현황을 불러오지 못했습니다.
+      </PFText>
+    )
+  }
 
   return (
     <div className={styles.shell}>

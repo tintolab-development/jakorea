@@ -19,7 +19,9 @@ import {
 } from './list-params'
 import {
   parseRegistrationSnapshot,
+  parseRegistrationOverlay,
   readUjatRegistrationOverlayFromProgram,
+  type RegistrationPersistSnapshot,
   type RegistrationSnapshot,
 } from './service-detail'
 
@@ -101,17 +103,20 @@ export async function update(
   assertRemoteReady()
   const current = await fetchAdminProgramByIdRemote(programId)
   const registration = parseRegistrationSnapshot(current.serviceDetailJson)
+  const persistedOverlay = parseRegistrationOverlay(current.serviceDetailJson)
   // 상세 수정 중 세션/드래프트 overlay를 registration에 합친다.
   // GET 스냅샷만 쓰면 대표·관리명 등 overlay 편집이 serviceDetailJson에 반영되지 않는다.
   const editedOverlay = readUjatRegistrationOverlayFromProgram(program)
-  const nextRegistration =
-    registration && Object.keys(editedOverlay).length > 0
+  const mergedOverlay = {
+    ...persistedOverlay,
+    ...(registration?.overlay ?? {}),
+    ...editedOverlay,
+  }
+  const nextRegistration: RegistrationPersistSnapshot | undefined =
+    Object.keys(mergedOverlay).length > 0
       ? {
-          ...registration,
-          overlay: {
-            ...registration.overlay,
-            ...editedOverlay,
-          },
+          ...(registration?.draft ? { draft: registration.draft } : {}),
+          overlay: mergedOverlay,
         }
       : registration
   return fromDetail(

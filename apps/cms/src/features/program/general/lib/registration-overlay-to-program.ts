@@ -611,10 +611,12 @@ export function applyGeneralRegistrationOverlayToProgram(
   const businessField = overlayString(overlay, `${BASIC}.businessField`)
   const businessArea = businessAreaToProgramValue(businessField) || program.businessArea
 
-  const partnerRaw = overlayString(overlay, `${BASIC}.partnerInvolvement`)
-  // 등록 UI 기본값은 Yes — overlay에 키가 없으면(미터치) true로 전송
-  const partnerInvolvement =
-    partnerRaw === 'no' ? false : partnerRaw === 'yes' ? true : true
+  const partnerKey = `${BASIC}.partnerInvolvement`
+  const partnerRaw = overlayString(overlay, partnerKey)
+  // 등록 기본값은 Yes. 수정 저장에서 키가 없으면 저장된 값을 유지한다.
+  const partnerInvolvement = Object.prototype.hasOwnProperty.call(overlay, partnerKey)
+    ? partnerRaw !== 'no'
+    : (program.partnerInvolvement ?? true)
 
   const rawVenueKind = overlayString(overlay, `${BASIC}.educationVenueKind`)
   const venueKind =
@@ -666,12 +668,29 @@ export function applyGeneralRegistrationOverlayToProgram(
     (contactRef.includes('::') ? '' : contactRef) ||
     program.generalCommonInfo?.sponsorManagerLine
 
+  const prevKpi = program.generalCommonInfo?.kpi
+  const kpiNumber = (key: string, fallback: number | undefined) => {
+    if (!Object.prototype.hasOwnProperty.call(overlay, key)) return fallback ?? 0
+    return overlayNullableNumber(overlay, key) ?? fallback ?? 0
+  }
   const kpi = {
-    finalParticipants: overlayNullableNumber(overlay, `${KPI}.participantCount`) ?? 0,
-    instructorCount: overlayNullableNumber(overlay, `${KPI}.instructor`) ?? 0,
-    volunteerCount: overlayNullableNumber(overlay, `${KPI}.volunteer`) ?? 0,
-    finalSchools: overlayNullableNumber(overlay, `${KPI}.dispatchedSchool`) ?? 0,
-    finalClasses: overlayNullableNumber(overlay, `${KPI}.dispatchedClass`) ?? 0,
+    finalParticipants: kpiNumber(
+      `${KPI}.participantCount`,
+      prevKpi?.finalParticipants ?? program.approvedStudentCount
+    ),
+    instructorCount: kpiNumber(
+      `${KPI}.instructor`,
+      prevKpi?.instructorCount ?? program.instructors
+    ),
+    volunteerCount: kpiNumber(
+      `${KPI}.volunteer`,
+      prevKpi?.volunteerCount ?? program.generalVolunteers
+    ),
+    finalSchools: kpiNumber(
+      `${KPI}.dispatchedSchool`,
+      prevKpi?.finalSchools ?? program.participatingSchoolCount
+    ),
+    finalClasses: kpiNumber(`${KPI}.dispatchedClass`, prevKpi?.finalClasses),
   }
 
   const gradeFees = [

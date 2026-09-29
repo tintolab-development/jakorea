@@ -180,6 +180,33 @@ describe('trained-teacher info detail adapters', () => {
     ])
   })
 
+  it('A 저장 직후에는 stale detail config보다 programs 응답 테이블을 우선한다', () => {
+    const program = {
+      id: '186034',
+      title: 't',
+      generalCommonInfo: {
+        curriculumSessions: [{ sessionLabel: '1차시', title: 'A 최신 차시', description: '' }],
+        scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: 'A 최신 일정' }],
+      },
+    } as Program
+    const merged = mergeTrainedTeacherInfoDetailIntoProgram(
+      program,
+      {
+        teacherTrainingEnabled: false,
+        educationJournalEnabled: false,
+        configJson: serializeTrainedTeacherInfoConfigJson({
+          commonInfo: {
+            curriculumSessions: [{ sessionLabel: '1차시', title: 'B 구 차시', description: '' }],
+            scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: 'B 구 일정' }],
+          },
+        }),
+      },
+      { tablePreference: 'program' }
+    )
+    expect(merged.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('A 최신 차시')
+    expect(merged.generalCommonInfo?.scheduleDetails?.[0]?.name).toBe('A 최신 일정')
+  })
+
   it('prefers program.generalCommonInfo over stale root copy in configJson', () => {
     const parsed = parseTrainedTeacherInfoConfigJson(
       JSON.stringify({

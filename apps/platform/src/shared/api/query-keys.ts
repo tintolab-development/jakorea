@@ -263,6 +263,27 @@ export const platformQueryKeys = {
     /** 내 강사 권한 신청 상태 — GET /api/portal/me/instructor-role-requests/current */
     instructorRoleRequestCurrent: () =>
       [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current'] as const,
+    /** 마이페이지 홈 요약 — GET /api/portal/me/dashboard (Class E, member scoped) */
+    dashboard: () => [...platformQueryKeys.mypage.all(), 'dashboard'] as const,
+    /** 마이페이지 일정 — GET /api/portal/me/calendar (Class C, member scoped) */
+    calendar: (from: string, to: string) =>
+      [...platformQueryKeys.mypage.all(), 'calendar', from, to] as const,
+    /** 공개 FAQ — GET /api/portal/public/faqs (Class C) */
+    publicFaqs: () => [...platformQueryKeys.mypage.all(), 'public-faqs'] as const,
+    inquiries: {
+      all: () => [...platformQueryKeys.mypage.all(), 'inquiries'] as const,
+      /** 내 문의 목록 — GET /api/portal/me/inquiries (Class C, member scoped) */
+      list: () => [...platformQueryKeys.mypage.inquiries.all(), 'list'] as const,
+      /** 내 문의 상세 — GET /api/portal/me/inquiries/{inquiryId} (Class D) */
+      detail: (inquiryId: string) =>
+        [...platformQueryKeys.mypage.inquiries.all(), 'detail', inquiryId] as const,
+      /** 문의 카테고리 — GET .../category-options (Class A) */
+      categoryOptions: () =>
+        [...platformQueryKeys.mypage.inquiries.all(), 'category-options'] as const,
+      /** 문의 프로그램 — GET .../program-options (Class B) */
+      programOptions: () =>
+        [...platformQueryKeys.mypage.inquiries.all(), 'program-options'] as const,
+    },
     /** 내 폼 응답 피드백 — GET /api/portal/me/form-responses/{id}/feedback (Class D) */
     formResponseFeedback: (formResponseId: number) =>
       [...platformQueryKeys.mypage.all(), 'form-response-feedback', formResponseId] as const,
@@ -299,6 +320,50 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
         ] as const,
+      /** 안내 목록 — GET .../notices (Class C) */
+      notices: (applicationType: string, applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notices',
+          applicationType,
+          applicationId,
+        ] as const,
+      noticeDetail: (applicationType: string, applicationId: string, postId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notices',
+          applicationType,
+          applicationId,
+          postId,
+        ] as const,
+      /** 교육·봉사 일정 — GET .../schedules (Class C) */
+      schedules: (applicationType: string, applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'schedules',
+          applicationType,
+          applicationId,
+        ] as const,
+      /** 설문·만족도 — GET .../forms (Class C) */
+      forms: (applicationType: string, applicationId: string, formType: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'forms',
+          applicationType,
+          applicationId,
+          formType,
+        ] as const,
+      /** 영수증 — GET .../expense-receipts (Class C) */
+      expenseReceipts: (applicationType: string, applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'expense-receipts',
+          applicationType,
+          applicationId,
+        ] as const,
     },
+    /** 정산 신청 목록 — GET /api/portal/me/settlement-applications (Class C) */
+    settlementApplications: () =>
+      [...platformQueryKeys.mypage.all(), 'settlement-applications'] as const,
   },
 } as const

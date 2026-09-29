@@ -21,6 +21,7 @@ import {
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import {
   buildProgramSponsorAssignmentsWire,
+  encodeSponsorManagerContactRef,
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
@@ -33,12 +34,14 @@ import { mapListParticipantRecruitment } from '@/features/program/shared/lib/for
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
   parseRegistrationOverlay,
   parseServiceDetail,
   parseUjatServiceDetailExtras,
   serializeServiceDetail,
+  type RegistrationPersistSnapshot,
   type RegistrationSnapshot,
   type UjatServiceDetailExtras,
 } from './service-detail'
@@ -68,6 +71,30 @@ function overlayText(overlay: Record<string, unknown>, key: string): string | un
 
 function dateValue(value: Date | string | undefined): string | undefined {
   return value instanceof Date ? value.toISOString() : value
+}
+
+function programIps(value: string | null | undefined): Program['ips'] | undefined {
+  if (value === 'Inspire' || value === 'Succeed' || value === 'Prepare') return value
+  return undefined
+}
+
+/** 공통정보 후원사·담당자 → sponsors[] (1사1교와 같은 배정 계약) */
+function mapUjatSponsorAssignments(program: Program) {
+  const sponsorId =
+    program.generalCommonInfo?.sponsorManagementIds?.[0] ??
+    program.generalCommonInfo?.sponsorManagementId ??
+    program.sponsorId
+  if (!sponsorId || sponsorId === DEFAULT_SPONSOR_ID) return []
+  const sponsorIds = [String(sponsorId).trim()].filter(Boolean)
+  const contactRefs = normalizeSponsorManagerContactIds({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+  })
+    .filter(id => id !== '__all__' && !isSponsorContactUnselected(id))
+    .map(id =>
+      id.includes('::') ? id : encodeSponsorManagerContactRef(String(sponsorId), id)
+    )
+  return buildProgramSponsorAssignmentsWire(sponsorIds, contactRefs)
 }
 
 /** UJAT는 상·하반기 교육 일정 구조. BE create는 educationStructure 필수. */
@@ -157,6 +184,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     nameKo?: string
     periodStatus?: string
     remarks?: string
+    businessField?: string
   }
   const rawOverlay = parseRegistrationOverlay(dto.serviceDetailJson)
   const timestamp = now()
@@ -173,10 +201,12 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ? { ...details.generalCommonInfo, detailedProgramName: dto.detailedProgramName.trim() }
       : details.generalCommonInfo
 
+  const ips = programIps(dto.ips)
   const overlay = reconcileUjatRegistrationOverlayFromProgramResponse(dto, rawOverlay, {
     generalSurveyMenuKeys: surveyKeys,
     sponsorManagerContactIds: generalCommonInfo?.sponsorManagerContactIds,
     sponsorManagerLine: generalCommonInfo?.sponsorManagerLine,
+    kpi: generalCommonInfo?.kpi,
   })
   const title =
     dto.title?.trim() ||
@@ -230,7 +260,8 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       status: (dto.status as Status | undefined) ?? 'pending',
       lifecycleStatus,
       ujatProgressStatus,
-      businessArea: dto.businessArea,
+      businessArea:
+        normalizeProgramBusinessAreaValue(dto.businessArea || dtoExt.businessField) || undefined,
       detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
       titleEn: dto.titleEn,
       textbookName: dto.textbookName,
@@ -242,6 +273,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ipOwned: dto.ipOwned,
       courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
       partnerInvolvement: dto.partnerInvolvement,
+      ...(ips ? { ips } : {}),
       programCategory: dto.programCategory,
       programChannel: dto.programChannel,
       educationTime: dto.educationTime,
@@ -332,8 +364,8 @@ function mapUjatProgramSponsorAssignments(program: Program) {
 }
 
 function registrationSnapshotForApi(
-  registration?: RegistrationSnapshot
-): RegistrationSnapshot | undefined {
+  registration?: RegistrationPersistSnapshot
+): RegistrationPersistSnapshot | undefined {
   if (!registration) return undefined
   return {
     ...registration,
@@ -343,7 +375,7 @@ function registrationSnapshotForApi(
 
 function coreRequest(
   program: Program,
-  registration?: RegistrationSnapshot
+  registration?: RegistrationPersistSnapshot
 ): ProgramUpdateRequest {
   const targetLevels = resolveRequestTargetLevels(program)
   const sponsors = mapUjatProgramSponsorAssignments(program)
@@ -351,7 +383,7 @@ function coreRequest(
     sponsors.find(s => s.sponsorContactId)?.sponsorId ||
     sponsors[0]?.sponsorId ||
     (program.sponsorId != null ? String(program.sponsorId) : undefined)
-
+  const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
   return {
     sponsorId: primarySponsorId,
     sponsors: sponsors.length > 0 ? sponsors : undefined,
@@ -367,7 +399,7 @@ function coreRequest(
     educationStructure: resolveUjatEducationStructure(program),
     applicationStartDate: dateValue(program.applicationStartDate),
     applicationEndDate: dateValue(program.applicationEndDate),
-    businessArea: program.businessArea,
+    businessArea,
     // UJAT은 실제 카탈로그를 쓰지 않는 고정형이지만, 다른 유형과 동일하게 id·name을
     // 항상 함께 반영한다 (name은 teamDivision/generalCommonInfo.detailedProgramName에 실림).
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
@@ -383,6 +415,7 @@ function coreRequest(
     ipOwned: program.ipOwned,
     courseDeliveredBy: program.courseDeliveredBy,
     partnerInvolvement: program.partnerInvolvement,
+    ips: program.ips,
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
     educationTime: program.educationTime,
@@ -428,13 +461,24 @@ function coreRequest(
 function patchRequest(
   merged: Program,
   patch: Partial<Program>,
-  registration?: RegistrationSnapshot
+  registration?: RegistrationPersistSnapshot
 ): ProgramUpdateRequest {
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
 
-  if (has('sponsorId')) {
-    body.sponsorId = merged.sponsorId != null ? String(merged.sponsorId) : undefined
+  if (has('sponsorId') || has('generalCommonInfo')) {
+    const sponsors = mapUjatSponsorAssignments(merged)
+    if (has('sponsorId')) {
+      body.sponsorId =
+        sponsors.find(row => row.sponsorContactId)?.sponsorId ||
+        sponsors[0]?.sponsorId ||
+        (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
+    }
+    if (sponsors.length > 0) body.sponsors = sponsors
+  }
+  if (has('ips')) body.ips = merged.ips
+  if (has('generalProgramEducationStructure') || has('generalCommonInfo')) {
+    body.educationStructure = resolveUjatEducationStructure(merged)
   }
   if (has('title')) body.title = merged.title
   if (has('type')) body.type = merged.type
@@ -453,7 +497,10 @@ function patchRequest(
   if (has('applicationEndDate')) {
     body.applicationEndDate = dateValue(merged.applicationEndDate)
   }
-  if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('businessArea')) {
+    const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
+    body.businessArea = businessArea
+  }
   if (has('detailedProgramId') || has('generalCommonInfo')) {
     body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
   }
@@ -541,7 +588,7 @@ export function toCreateRequest(
 export function toUpdateRequest(
   program: Program,
   patch?: Partial<Program>,
-  registration?: RegistrationSnapshot
+  registration?: RegistrationPersistSnapshot
 ): ProgramUpdateRequest {
   if (patch && Object.keys(patch).length > 0) {
     return patchRequest({ ...program, ...patch }, patch, registration)

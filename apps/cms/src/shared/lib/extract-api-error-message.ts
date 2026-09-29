@@ -1,4 +1,7 @@
-import { programEditWindowErrorMessage } from '@/shared/lib/program-edit-window-error-message'
+import {
+  isProgramRecruitmentEditPeriodCode,
+  programEditWindowErrorMessage,
+} from '@/shared/lib/program-edit-window-error-message'
 
 /** 백엔드 공통 에러 envelope (`success: false`, `error: { code, message, traceId }`) */
 export type ApiErrorEnvelope = {
@@ -26,10 +29,20 @@ export function extractApiErrorMessage(
   data: unknown,
   options?: { httpStatus?: number | null; fallback?: string }
 ): string {
-  const mapped = programEditWindowErrorMessage(extractApiErrorCode(data))
+  const code = extractApiErrorCode(data)
+  const envelope = asEnvelope(data)
+  const serverMessage = envelope?.error?.message?.trim()
+  if (
+    isProgramRecruitmentEditPeriodCode(code) &&
+    serverMessage &&
+    serverMessage !== code
+  ) {
+    return serverMessage
+  }
+
+  const mapped = programEditWindowErrorMessage(code)
   if (mapped) return mapped
 
-  const envelope = asEnvelope(data)
   if (envelope) {
     const top = envelope.message?.trim()
     if (top) return top
@@ -37,8 +50,8 @@ export function extractApiErrorMessage(
     const nested = envelope.error?.message?.trim()
     if (nested) return nested
 
-    const code = envelope.error?.code?.trim()
-    if (code) return code
+    const nestedCode = envelope.error?.code?.trim()
+    if (nestedCode) return nestedCode
   }
 
   if (typeof data === 'string' && data.trim()) {

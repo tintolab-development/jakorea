@@ -15,8 +15,8 @@
  *    - `programToDetailEditValues` 에 Program(또는 mock)에서의 매핑 추가
  *    - API/도메인에 내려야 하면 `detailEditValuesToProgramPatch` 와 `Program` 타입에도 필드 추가
  * 2) 스키마 키 이름을 바꾸면 모든 `name="..."` / `setValue` / `watch` 호출부를 함께 수정
- * 3) 임금(`wage*`)·KPI(`kpi*`) 등은 현재 스키마·폼에는 있으나 `detailEditValuesToProgramPatch` 미반영.
- *    백엔드 저장이 필요하면 패치 함수와 `Program` 모델을 확장할 것 (그 전까지는 UI 상태만 유지)
+ * 3) 임금(`wage*`)·KPI(`kpi*`)는 `detailEditValuesToProgramPatch`에 반영된다.
+ *    새 공통정보 필드를 추가하면 패치 함수와 `Program` 모델도 함께 갱신할 것.
  */
 
 import {
@@ -1041,7 +1041,9 @@ export function detailEditValuesToProgramPatch(
     existing.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel
   const contactPhone = values.contactPhone ?? existing.contactPhone
   const contactEmail = values.contactEmail ?? existing.contactEmail
-  const isTrainedTeacherProgram = looksLikeTrainedTeacherProgramId(existing.id)
+  const isTrainedTeacherProgram =
+    existing.backendProgramType === 'TRAINED_TEACHER' ||
+    looksLikeTrainedTeacherProgramId(existing.id)
   const contactOrganizationName =
     values.recruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
@@ -1083,8 +1085,12 @@ export function detailEditValuesToProgramPatch(
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail
 
   return {
-    title: values.title?.trim() || existing.title,
-    textbookName: existing.textbookName,
+    title:
+      (isTrainedTeacherProgram ? values.announcementTitle?.trim() : values.title?.trim()) ||
+      existing.title,
+    textbookName:
+      (isTrainedTeacherProgram ? values.detailedProgramName?.trim() : undefined) ||
+      existing.textbookName,
     startDate,
     endDate,
     category: values.category,

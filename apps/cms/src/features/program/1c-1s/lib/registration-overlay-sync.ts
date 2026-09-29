@@ -199,7 +199,8 @@ export function buildEconomyRegistrationOverlayFromProgram(
 export function seedEconomyRegistrationOverlayFromProgram(program: Program): void {
   const fromProgram = buildEconomyRegistrationOverlayFromProgram(program)
   const saved = overlayFromProgram(program)
-  const merged = { ...fromProgram, ...saved }
+  // GET canonical 값이 저장된 과거 overlay보다 최신이다.
+  const merged = { ...saved, ...fromProgram }
   const surveyKeys = resolveProgramSurveyMenuKeys({
     generalSurveyMenuKeys: program.generalSurveyMenuKeys,
     registrationOverlay: merged,

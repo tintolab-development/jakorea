@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -15,6 +15,8 @@ import {
   EducationSchedulePreviewLines,
 } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { CmsButton } from '@/shared/ui'
+import { EducationScheduleChangeModal } from './education-schedule-change-modal'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { applyEducationScheduleModeLineSwap } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import {
@@ -44,6 +46,8 @@ type EducationScheduleSettingsProps = {
   disablePeriodMode?: boolean
   /** 일반 커리큘럼형 — 날짜 지정 시 시간 ON 고정, 기간 지정 시 기간 ON 고정 */
   lockCalendarTogglesToScheduleMode?: boolean
+  /** 상세 공통정보 수정에서만 일정 변경 팝업을 연다. 최초 등록에서는 숨긴다. */
+  showScheduleChangeAction?: boolean
 }
 
 export function ProgramRegistrationEducationScheduleSettingsParagraph({
@@ -53,6 +57,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   autoFillFromScheduleGroupTimes = false,
   disablePeriodMode = false,
   lockCalendarTogglesToScheduleMode = false,
+  showScheduleChangeAction = false,
 }: EducationScheduleSettingsProps) {
   const scheduleMode = educationScheduleMode
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
@@ -169,6 +174,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   }, [autoFillDatePicker, groupTimeSlotsKey, scheduleLinesKey])
 
   const lockTimeOnDateMode = lockCalendarTogglesToScheduleMode || !autoFillDatePicker
+  const [scheduleChangeOpen, setScheduleChangeOpen] = useState(false)
 
   return (
     <DetailInfoForm
@@ -249,7 +255,31 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
           fullRow
           readOnlyDisplay
           view={
-            <EducationSchedulePreviewLines lines={scheduleLines} onRemove={removeLine} />
+            <div className="program-registration-paragraph__schedule-lines">
+              {showScheduleChangeAction ? (
+                <CmsButton
+                  variant="secondary"
+                  size="small"
+                  type="button"
+                  disabled={scheduleLines.length === 0}
+                  onClick={() => setScheduleChangeOpen(true)}
+                >
+                  일정 변경
+                </CmsButton>
+              ) : null}
+              <EducationSchedulePreviewLines lines={scheduleLines} onRemove={removeLine} />
+              {showScheduleChangeAction ? (
+                <EducationScheduleChangeModal
+                  open={scheduleChangeOpen}
+                  lines={scheduleLines}
+                  onCancel={() => setScheduleChangeOpen(false)}
+                  onConfirm={nextLines => {
+                    updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, () => nextLines)
+                    setScheduleChangeOpen(false)
+                  }}
+                />
+              ) : null}
+            </div>
           }
         />
       </DetailInfoForm.Row>

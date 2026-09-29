@@ -236,3 +236,36 @@ export function educationScheduleLinesEqual(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false
   return a.every((line, index) => line === b[index])
 }
+
+export function seoulCalendarDateKey(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now)
+}
+
+/** 파싱된 시작일이 서울 오늘보다 이전이면 true. 읽지 못하면 false. */
+export function isEducationScheduleLineBeforeSeoulToday(
+  line: string,
+  now: Date = new Date()
+): boolean {
+  const range = parseEducationScheduleLineToRange(line)
+  if (!range) return false
+  return range[0].format('YYYY-MM-DD') < seoulCalendarDateKey(now)
+}
+
+/** 줄의 날짜를 옮기고 시각은 유지한다. 날짜를 읽지 못하면 선택한 날짜만 표기한다. */
+export function shiftEducationScheduleLineToDate(line: string, nextDate: Dayjs): string {
+  const range = parseEducationScheduleLineToRange(line)
+  if (!range) {
+    return formatEducationScheduleLineFromRange([nextDate.startOf('day'), nextDate.startOf('day')])
+  }
+  const [start, end] = range
+  const deltaDays = nextDate.startOf('day').diff(start.startOf('day'), 'day')
+  return formatEducationScheduleLineFromRange([
+    start.add(deltaDays, 'day'),
+    end.add(deltaDays, 'day'),
+  ])
+}

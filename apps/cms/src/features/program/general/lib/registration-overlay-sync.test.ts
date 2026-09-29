@@ -189,6 +189,91 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     expect(extrasFromGeneralProgram(program).curriculumSessionCount).toBe(2)
   })
 
+  it('일정별 교육 형태는 저장된 행 라벨로 다시 연다', () => {
+    const program = {
+      ...baseProgram(),
+      generalProgramSessionRound: 'multi' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        educationFormScheduleDetail: 'perSchedule' as const,
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: '1회차', description: '', educationFormLabel: '오프라인' },
+          { sessionLabel: '2회차', title: '2회차', description: '', educationFormLabel: '온라인' },
+        ],
+      },
+    }
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.educationFormBySession']).toEqual({
+      1: 'offline',
+      2: 'online',
+    })
+  })
+
+  it('일정별 교육 형태는 stale overlay보다 canonical 행 라벨을 우선한다', () => {
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        educationFormScheduleDetail: 'perSchedule' as const,
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: '1회차', description: '', educationFormLabel: '오프라인' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.educationFormBySession': {
+          1: 'hybrid',
+        },
+      },
+    }
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.educationFormBySession']).toEqual({
+      1: 'offline',
+    })
+  })
+
+  it('canonical 커리큘럼이 있으면 stale overlay 테이블 값보다 우선한다', () => {
+    const program = {
+      ...baseProgram(),
+      generalProgramSessionRound: 'single' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          {
+            sessionLabel: '1차시',
+            title: '최신 단원명',
+            description: '최신 교육 내용',
+            educationFormLabel: '오프라인',
+          },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.unitNameBySession': {
+          1: '구 단원명',
+        },
+        'generalRegistration.educationCurriculum.unitContentBySession': {
+          1: '구 교육 내용',
+        },
+        'generalRegistration.educationCurriculum.educationFormBySession': {
+          1: 'hybrid',
+        },
+      },
+    }
+
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.unitNameBySession']).toEqual({
+      1: '최신 단원명',
+    })
+    expect(saved['generalRegistration.educationCurriculum.unitContentBySession']).toEqual({
+      1: '최신 교육 내용',
+    })
+    expect(saved['generalRegistration.educationCurriculum.educationFormBySession']).toEqual({
+      1: 'offline',
+    })
+  })
+
   it('상세 수정 필수검사는 등록 overlay 빈 값을 막는다', () => {
     const extras = extrasFromGeneralProgram({
       ...baseProgram(),

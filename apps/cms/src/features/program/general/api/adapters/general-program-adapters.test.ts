@@ -177,6 +177,16 @@ describe('general-program-adapters', () => {
     expect(program.endDate).toBe('2026-11-07')
   })
 
+  it('상세 응답의 businessField alias도 사업 분야로 읽는다', () => {
+    const mapped = mapAdminProgramDetailToProgram({
+      id: '1',
+      title: '일반 프로그램',
+      businessField: 'digital_literacy',
+    } as ProgramResponse & { businessField?: string })
+
+    expect(mapped.businessArea).toBe('디지털리터러시')
+  })
+
   it('공고용명은 overlay를 쓰고 대표명 alias는 버린다', () => {
     const program = mapAdminProgramDetailToProgram({
       id: '168012',
@@ -502,6 +512,19 @@ describe('general-program-adapters', () => {
     expect(request.businessEndDate).toBe(sampleProgram.endDate)
   })
 
+  it('사업 분야는 공식 businessArea만 생성·수정 요청에 보낸다', () => {
+    const program = { ...sampleProgram, businessArea: 'digital_literacy' }
+    const create = mapGeneralProgramToCreateRequest(program)
+    const update = mapGeneralProgramToUpdateRequest(program, {
+      businessArea: 'digital_literacy',
+    })
+
+    expect(create.businessArea).toBe('디지털리터러시')
+    expect(create).not.toHaveProperty('businessField')
+    expect(update.businessArea).toBe('디지털리터러시')
+    expect(update).not.toHaveProperty('businessField')
+  })
+
   it('기간 수정 시 businessStartDate/EndDate를 같이 보낸다', () => {
     const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
       startDate: '2026-10-14',
@@ -550,7 +573,7 @@ describe('general-program-adapters', () => {
     expect(request.contactPhone).toBeUndefined()
   })
 
-  it('모집이 시작된 유형의 기간·recruitments는 빼고 아직 시작 전인 유형은 보낸다', () => {
+  it('운영이 시작된 유형의 기간·recruitments는 빼고 아직 시작 전인 유형은 보낸다', () => {
     const request = mapGeneralProgramToUpdateRequest(
       {
         ...sampleProgram,
@@ -558,8 +581,16 @@ describe('general-program-adapters', () => {
         instructorApplicationStartDate: '2099-01-01T00:00:00.000Z',
         instructorApplicationEndDate: '2099-02-01T00:00:00.000Z',
         programRecruitments: [
-          { recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
-          { recruitmentType: 'INSTRUCTOR', startAt: '2099-01-01T00:00:00+09:00' },
+          {
+            recruitmentType: 'PARTICIPANT',
+            startAt: '2020-01-01T00:00:00+09:00',
+            operationStartDate: '2020-01-01',
+          },
+          {
+            recruitmentType: 'INSTRUCTOR',
+            startAt: '2020-01-01T00:00:00+09:00',
+            operationStartDate: '2099-01-01',
+          },
         ],
       },
       {
@@ -572,6 +603,96 @@ describe('general-program-adapters', () => {
 
     expect(request.applicationStartDate).toBeUndefined()
     expect(request.recruitments?.map(row => row.recruitmentType)).toEqual(['INSTRUCTOR'])
+  })
+
+  it('공통 정보 패치는 모집 시작 후에도 모집 창·모집 정보를 요청에 넣지 않는다', () => {
+    const request = mapGeneralProgramToUpdateRequest(
+      {
+        ...sampleProgram,
+        applicationStartDate: '2026-09-25T00:00:00+09:00',
+        applicationEndDate: '2026-10-23T00:00:00+09:00',
+        instructorApplicationStartDate: '2026-09-25T00:00:00+09:00',
+        instructorApplicationEndDate: '2026-10-23T00:00:00+09:00',
+        resultAnnouncementDate: '2026-10-23T00:00:00+09:00',
+        generalParticipantInterviewEnabled: true,
+        generalProgramAudience: 'organization',
+        generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+        programRecruitments: [
+          { recruitmentType: 'PARTICIPANT', startAt: '2026-09-25T00:00:00+09:00' },
+          { recruitmentType: 'INSTRUCTOR', startAt: '2026-09-25T00:00:00+09:00' },
+        ],
+        generalCommonInfo: {
+          announcementTitle: '기존 공고',
+          participantRecruitmentInfo: { recruitmentPeriodLabel: '2026.09.25 ~ 2026.10.23' },
+          instructorRecruitmentInfo: { recruitmentPeriodLabel: '2026.09.25 ~ 2026.10.23' },
+        },
+      },
+      {
+        title: '수정된 대표명',
+        mainTitle: '수정된 대표명',
+        startDate: '2026-11-05',
+        endDate: '2026-12-05',
+        generalProgramAudience: 'organization',
+        generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+        generalCommonInfo: {
+          announcementTitle: '수정된 공고',
+          participantRecruitmentInfo: { recruitmentPeriodLabel: '2026.09.25 ~ 2026.10.23' },
+          instructorRecruitmentInfo: { recruitmentPeriodLabel: '2026.09.25 ~ 2026.10.23' },
+        },
+      }
+    )
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      announcementTitle?: string
+      instructorApplicationStartDate?: string
+      resultAnnouncementDate?: string
+      generalParticipantInterviewEnabled?: boolean
+      generalCommonInfo?: {
+        announcementTitle?: string
+        participantRecruitmentInfo?: unknown
+        instructorRecruitmentInfo?: unknown
+      }
+    }
+
+    expect(request.title).toBe('수정된 대표명')
+    expect(request.businessStartDate).toBe('2026-11-05')
+    expect(request.businessEndDate).toBe('2026-12-05')
+    expect(request.applicationStartDate).toBeUndefined()
+    expect(request.applicationEndDate).toBeUndefined()
+    expect(request.recruitments).toBeUndefined()
+    expect(request.applicationTargetMode).toBeUndefined()
+    expect(detail.instructorApplicationStartDate).toBeUndefined()
+    expect(detail.resultAnnouncementDate).toBeUndefined()
+    expect(detail.generalParticipantInterviewEnabled).toBeUndefined()
+    expect(detail.generalCommonInfo?.announcementTitle).toBe('수정된 공고')
+    expect(detail.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
+    expect(detail.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
+  })
+
+  it('모집 정보 패치는 모집 창을 serviceDetailJson에 남긴다', () => {
+    const request = mapGeneralProgramToUpdateRequest(
+      {
+        ...sampleProgram,
+        instructorApplicationStartDate: '2099-01-01T00:00:00.000Z',
+        programRecruitments: [
+          { recruitmentType: 'INSTRUCTOR', startAt: '2099-01-01T00:00:00+09:00' },
+        ],
+      },
+      {
+        instructorApplicationStartDate: '2099-01-01T00:00:00.000Z',
+        instructorApplicationEndDate: '2099-02-01T00:00:00.000Z',
+        generalCommonInfo: {
+          instructorRecruitmentInfo: { recruitmentPeriodLabel: '2099.01.01 ~ 2099.02.01' },
+        },
+      }
+    )
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      instructorApplicationStartDate?: string
+      generalCommonInfo?: { instructorRecruitmentInfo?: { recruitmentPeriodLabel?: string } }
+    }
+    expect(detail.instructorApplicationStartDate).toBe('2099-01-01T00:00:00.000Z')
+    expect(detail.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentPeriodLabel).toBe(
+      '2099.01.01 ~ 2099.02.01'
+    )
   })
 
   it('공통 정보 패치는 같은 참여자 유형이면 applicationTargetMode를 모집 시작 후에 빼다', () => {
@@ -595,14 +716,14 @@ describe('general-program-adapters', () => {
     expect(request.recruitments).toBeUndefined()
   })
 
-  it('includes serviceDetailJson and applicationTargetMode when audience patch is provided', () => {
+  it('등록 후 audience 패치는 applicationTargetMode를 바꾸지 않고 serviceDetailJson만 남긴다', () => {
     const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
       generalProgramAudience: 'individual',
       generalParticipantTypes: ['individual'],
     })
 
-    expect(request.applicationTargetMode).toBe('INDIVIDUAL')
-    expect(request.serviceDetailJson).toBeTruthy()
+    expect(request.applicationTargetMode).toBeUndefined()
+    expect(request.serviceDetailJson).toBeUndefined()
     expect(request.rounds).toBeUndefined()
   })
 
@@ -630,7 +751,7 @@ describe('general-program-adapters', () => {
 
     expect(request.mainTitle).toBe('공통정보만')
     expect(request.sponsorId).toBe('1627251')
-    expect(request.applicationTargetMode).toBe('ORGANIZATION')
+    expect(request.applicationTargetMode).toBeUndefined()
     expect(request.serviceDetailJson).toContain('announcementTitle')
     expect(request.rounds).toBeUndefined()
     expect(request.managerName).toBeUndefined()
@@ -654,7 +775,7 @@ describe('general-program-adapters', () => {
     }
     expect(parsed.generalProgramEducationStructure).toBe('schedule')
     expect(parsed.generalProgramSessionRound).toBe('single')
-    expect(parsed.generalProgramAudience).toBe('individual')
+    expect(parsed.generalProgramAudience).toBeUndefined()
   })
 
   it('common-info patch with registrationOverlay persists overlay in serviceDetailJson', () => {

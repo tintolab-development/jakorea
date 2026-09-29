@@ -178,7 +178,8 @@ export function mapTrainedTeacherInfoDetailToProgramPatch(
 
 export function mergeTrainedTeacherInfoDetailIntoProgram(
   program: Program,
-  dto: TrainedTeacherProgramDetailResponse
+  dto: TrainedTeacherProgramDetailResponse,
+  options?: { tablePreference?: 'program' | 'detail' }
 ): Program {
   const patch = mapTrainedTeacherInfoDetailToProgramPatch(dto)
   const programCommon = program.generalCommonInfo
@@ -197,14 +198,14 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
           programCommon?.educationJournalEnabled ??
           patchCommon?.educationJournalEnabled,
         // 한쪽 JSON이 일정명·진행 시간을 빼도 다른 쪽 값을 남긴다.
-        curriculumSessions: mergeDetailRows(
-          programCommon?.curriculumSessions,
-          patchCommon?.curriculumSessions
-        ),
-        scheduleDetails: mergeDetailRows(
-          programCommon?.scheduleDetails,
-          patchCommon?.scheduleDetails
-        ),
+        curriculumSessions:
+          options?.tablePreference === 'program'
+            ? mergeDetailRows(patchCommon?.curriculumSessions, programCommon?.curriculumSessions)
+            : mergeDetailRows(programCommon?.curriculumSessions, patchCommon?.curriculumSessions),
+        scheduleDetails:
+          options?.tablePreference === 'program'
+            ? mergeDetailRows(patchCommon?.scheduleDetails, programCommon?.scheduleDetails)
+            : mergeDetailRows(programCommon?.scheduleDetails, patchCommon?.scheduleDetails),
         educationScheduleLines:
           programCommon?.educationScheduleLines ?? patchCommon?.educationScheduleLines,
         educationScheduleMode:

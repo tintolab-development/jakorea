@@ -12,6 +12,7 @@ import {
   EducationCancelConfirm,
   EducationDetailBack,
   EducationDetailHeader,
+  EducationSchedulePanel,
   EducationSettlementPanel,
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
@@ -329,7 +330,8 @@ export function MypageVolunteerDetailPage() {
   }
 
   const showBanner = shouldShowDocumentPassBanner(application)
-  const showCancelCta = canCancelEducationApplication(application.displayStatus)
+  const showCancelCta =
+    application.cancellable ?? canCancelEducationApplication(application.displayStatus)
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection = isActivitySection(section)
     ? section
@@ -359,10 +361,25 @@ export function MypageVolunteerDetailPage() {
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
+          applicationType={routeApplicationType}
+          applicationId={application.id}
         />
       )
     }
     if (active === 'schedule') {
+      if (remoteDetailEnabled) {
+        return (
+          <EducationSchedulePanel
+            programId={program.id}
+            applicationType={routeApplicationType}
+            applicationId={application.id}
+            lastParticipatedSession={
+              isWithdrawnDuring ? application.lastParticipatedSession : undefined
+            }
+            listTitle="배정현황"
+          />
+        )
+      }
       return (
         <VolunteerAssignmentPanel
           programAudience={program.programAudience}
@@ -378,13 +395,15 @@ export function MypageVolunteerDetailPage() {
         withdrawalPhase: application.withdrawalPhase,
         configured: program.surveyConfigured,
       })
-      if (surveyAvailability === 'active') {
+      if (remoteDetailEnabled || surveyAvailability === 'active') {
         return (
           <EducationSurveyFillPanel
             kind="survey"
             programTitle={program.title}
             educationScheduleLines={program.educationScheduleLines}
             educationTargetLabel={program.educationTargetDetailLabel}
+            applicationType={routeApplicationType}
+            applicationId={application.id}
           />
         )
       }
@@ -396,7 +415,7 @@ export function MypageVolunteerDetailPage() {
         withdrawalPhase: application.withdrawalPhase,
         configured: program.satisfactionConfigured,
       })
-      if (satisfactionAvailability === 'active') {
+      if (remoteDetailEnabled || satisfactionAvailability === 'active') {
         return (
           <EducationSurveyFillPanel
             kind="satisfaction"
@@ -404,6 +423,8 @@ export function MypageVolunteerDetailPage() {
             programTitle={program.title}
             educationScheduleLines={program.educationScheduleLines}
             educationTargetLabel={program.educationTargetDetailLabel}
+            applicationType={routeApplicationType}
+            applicationId={application.id}
           />
         )
       }
@@ -413,6 +434,7 @@ export function MypageVolunteerDetailPage() {
       return (
         <EducationSettlementPanel
           programId={program.id}
+          applicationType={routeApplicationType}
           applicationId={application.id}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined

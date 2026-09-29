@@ -1324,9 +1324,15 @@ export function ProgramDetailFullPageModal({
                     ...(draft.registrationOverlay ?? {}),
                     ...overlay,
                   }
+                  const roundsChanged =
+                    JSON.stringify(merged.rounds ?? []) !== JSON.stringify(draft.rounds ?? [])
                   await persistProgramPatch(
                     { ...merged, registrationOverlay },
-                    { ...patch, registrationOverlay }
+                    {
+                      ...patch,
+                      registrationOverlay,
+                      ...(roundsChanged && merged.rounds ? { rounds: merged.rounds } : {}),
+                    }
                   )
                   return
                 }

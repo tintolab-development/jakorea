@@ -70,6 +70,36 @@ describe('buildParticipatingInstitutionOrganizationUpdateRequest', () => {
     })
   })
 
+  it('교육 형태가 그대로면 requestedEducationFormat을 보내지 않는다', () => {
+    const body = buildParticipatingInstitutionOrganizationUpdateRequest({
+      draft: baseDraft,
+      teacherOptions: [],
+      baselineEducationFormat: '오프라인',
+    })
+    expect(body.requestedEducationFormat).toBeUndefined()
+  })
+
+  it('참여자 선택이 아니면 교육 형태가 바뀌어도 requestedEducationFormat을 보내지 않는다', () => {
+    const body = buildParticipatingInstitutionOrganizationUpdateRequest({
+      draft: { ...baseDraft, educationFormat: '온라인' },
+      teacherOptions: [],
+      baselineEducationFormat: '오프라인',
+      allowEducationFormatChange: false,
+    })
+    expect(body.requestedEducationFormat).toBeUndefined()
+    expect(body.requestedGrade).toBe('3학년')
+  })
+
+  it('교육 형태가 바뀌었을 때만 requestedEducationFormat을 보낸다', () => {
+    expect(
+      buildParticipatingInstitutionOrganizationUpdateRequest({
+        draft: { ...baseDraft, educationFormat: '온라인' },
+        teacherOptions: [],
+        baselineEducationFormat: '오프라인',
+      }).requestedEducationFormat
+    ).toBe('ONLINE')
+  })
+
   it('신청 학년 숫자·교육 형태 한글을 API 형식으로 보낸다', () => {
     expect(
       buildParticipatingInstitutionOrganizationUpdateRequest({

@@ -46,6 +46,60 @@ function mapDisplayStatus(value: string | undefined): EducationDisplayStatus {
   return 'waiting_result'
 }
 
+function hasStatus(value: string, tokens: readonly string[]): boolean {
+  return tokens.includes(value)
+}
+
+/** 상세 응답에 displayStatus가 없을 때 applicationStatus·참여 상태로 목록과 같은 탭을 고른다. */
+export function resolvePortalDisplayStatus(
+  detail: PortalProgramApplicationDetail,
+): EducationDisplayStatus {
+  if (detail.displayStatus?.trim()) return mapDisplayStatus(detail.displayStatus)
+
+  const applicationStatus = (detail.applicationStatus ?? '').trim().toUpperCase()
+  const participationStatus = (detail.participation?.status ?? '').trim().toUpperCase()
+  const completionStatus = (detail.participation?.completionStatus ?? '').trim().toUpperCase()
+
+  if (hasStatus(applicationStatus, ['REJECTED', 'AUTO_REJECTED', 'FINAL_REJECTED', 'FINAL_FAILED', 'FAILED'])) {
+    return 'rejected'
+  }
+  if (hasStatus(applicationStatus, ['CANCELLED', 'CANCELED'])) return 'withdrawn'
+  if (
+    applicationStatus.startsWith('GIVE_UP') ||
+    applicationStatus === 'GIVEN_UP' ||
+    participationStatus.startsWith('GIVE_UP') ||
+    participationStatus === 'WITHDRAWN'
+  ) {
+    return 'withdrawn'
+  }
+  if (
+    completionStatus === 'COMPLETED' ||
+    participationStatus === 'COMPLETED' ||
+    applicationStatus === 'COMPLETED' ||
+    applicationStatus === 'FINISHED'
+  ) {
+    return 'completed'
+  }
+  if (
+    hasStatus(applicationStatus, ['FINAL_SELECTED', 'APPROVED', 'ASSIGNED', 'IN_PROGRESS', 'PARTICIPATING']) ||
+    hasStatus(participationStatus, ['IN_PROGRESS', 'ACTIVE', 'PARTICIPATING', 'ONGOING'])
+  ) {
+    return 'in_progress'
+  }
+  if (
+    hasStatus(applicationStatus, [
+      'DOCUMENT_PASSED',
+      'DOC_PASSED',
+      'INTERVIEW_WAITING',
+      'INTERVIEW_ASSIGNED',
+      'WAITING_ASSIGNMENT',
+    ])
+  ) {
+    return 'document_passed'
+  }
+  return 'waiting_result'
+}
+
 function mapDetailCase(
   applicationType: ProgramApplicationType,
   programGroup: string | undefined,
@@ -130,12 +184,28 @@ export function mapPortalProgramApplicationListItem(
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
 ): EducationApplicationListItem | null {
-  return mapPortalProgramApplicationListItem({
+  const displayStatus = resolvePortalDisplayStatus(detail)
+  const mapped = mapPortalProgramApplicationListItem({
     ...detail,
+    displayStatus:
+      detail.displayStatus ??
+      Object.entries(DISPLAY_STATUS_FROM_API).find(([, status]) => status === displayStatus)?.[0],
     programTitle: detail.programTitle ?? detail.program?.title,
     programId: detail.programId ?? detail.program?.programId,
     programType: detail.programType ?? detail.program?.programType,
     programGroup: detail.programGroup ?? detail.program?.programGroup,
     thumbnailFileObjectId: detail.thumbnailFileObjectId ?? detail.program?.thumbnailFileObjectId,
+    educationStartAt: detail.educationStartAt ?? detail.program?.educationStartAt,
+    educationEndAt: detail.educationEndAt ?? detail.program?.educationEndAt,
   })
+  if (!mapped) return null
+  mapped.displayStatus = displayStatus
+  mapped.recruitmentStatus = mapRecruitmentStatus(displayStatus)
+  mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
+  const recruitmentLabel = formatDateRange(
+    detail.program?.recruitmentStartAt,
+    detail.program?.recruitmentEndAt,
+  )
+  if (recruitmentLabel !== '-') mapped.recruitmentPeriodLabel = recruitmentLabel
+  return mapped
 }

@@ -50,7 +50,6 @@ import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared
 import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-user-list'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
-  DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
@@ -343,13 +342,10 @@ export function UserListPage() {
       resolvedMemberListKind
     )
     const title = deleteTargets.length >= 2 ? domain.bulkTitle : domain.singleTitle
-    const usesAdminPassword =
-      resolvedMemberListKind !== 'institutions' && resolvedMemberListKind !== 'admins'
     return {
       title,
       lines,
       confirmText: domain.confirmText,
-      confirmInputMode: usesAdminPassword ? ('password' as const) : ('phrase' as const),
     }
   }, [deleteTargets, resolvedMemberListKind])
 
@@ -1098,14 +1094,14 @@ export function UserListPage() {
 
   /** 회원 상세 > 탈퇴 확인 모달 확정 — 성공 시에만 상세 닫고 목록으로 */
   const handleWithdrawFromDetail = useCallback(
-    async (u: Omit<User, 'password'>, currentPassword?: string) => {
+    async (u: Omit<User, 'password'>, withdrawConfirmationText?: string) => {
       if (!guardAdminAction({ roleCode, action: 'delete' })) return
       setDeleteLoading(true)
       try {
         await deleteUser(u.id, {
           ...resolveDeleteUserOptions(u),
           reason: 'CMS 관리자 회원 탈퇴',
-          currentPassword,
+          withdrawConfirmationText,
         })
         setSelectedRowKeys(prev => prev.filter(key => key !== u.id))
         invalidateList()
@@ -1369,17 +1365,9 @@ export function UserListPage() {
           lines={memberDeleteGuide.lines}
           confirmText={memberDeleteGuide.confirmText}
           confirmVariant="delete"
-          confirmInputMode={memberDeleteGuide.confirmInputMode}
-          requiredConfirmInput={
-            memberDeleteGuide.confirmInputMode === 'phrase'
-              ? DELETE_GUIDE_TYPED_CONFIRM_VALUE
-              : undefined
-          }
-          confirmInputPlaceholder={
-            memberDeleteGuide.confirmInputMode === 'password'
-              ? DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER
-              : DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER
-          }
+          confirmInputMode="phrase"
+          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
           confirmLoading={deleteLoading}
         />
       )}

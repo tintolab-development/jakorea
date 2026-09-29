@@ -829,7 +829,7 @@ export function buildProgramSponsorAssignmentsWire(
     if (!decoded?.sponsorManagementId || !decoded.contactId) continue
     const sponsorId = decoded.sponsorManagementId.trim()
     const contactId = decoded.contactId.trim()
-    if (!sponsorId || !contactId) continue
+    if (!sponsorId || !/^\d+$/.test(contactId)) continue
     const list = contactsBySponsor.get(sponsorId) ?? []
     if (!list.includes(contactId)) list.push(contactId)
     contactsBySponsor.set(sponsorId, list)
@@ -1645,6 +1645,20 @@ function resolveDetailedProgramName(
   return catalog.find(row => row.id === detailedProgramId)?.name
 }
 
+function existingCommonWithoutRecruitment(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const {
+    participantRecruitmentInfo: _participantRecruitmentInfo,
+    instructorRecruitmentInfo: _instructorRecruitmentInfo,
+    volunteerRecruitmentInfo: _volunteerRecruitmentInfo,
+    volunteerInterviewScheduleInfo: _volunteerInterviewScheduleInfo,
+    ...rest
+  } = common
+  return rest
+}
+
 export function generalCommonInfoEditValuesToProgramPatch(
   values: GeneralProgramCommonInfoEditFormValues,
   existing: Program,
@@ -1749,8 +1763,8 @@ export function generalCommonInfoEditValuesToProgramPatch(
 
   const representativeTitleKo = values.mainTitle.trim()
   return {
-    title: existing.title,
-    mainTitle: representativeTitleKo,
+    title: representativeTitleKo || existing.title,
+    mainTitle: representativeTitleKo || existing.mainTitle,
     titleEn: values.titleEn?.trim() || undefined,
     startDate: values.startDate,
     endDate: values.endDate,
@@ -1788,7 +1802,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     ...(manager?.name && !manager.name.includes('*') ? { managerName: manager.name } : {}),
     ...(manager?.phone && !manager.phone.includes('*') ? { contactPhone: manager.phone } : {}),
     generalCommonInfo: {
-      ...existing.generalCommonInfo,
+      ...existingCommonWithoutRecruitment(existing.generalCommonInfo),
       announcementTitle: values.announcementTitle.trim(),
       detailedProgramName: detailedProgramName ?? existingCommon.detailedProgramName,
       sponsorDisplayName:

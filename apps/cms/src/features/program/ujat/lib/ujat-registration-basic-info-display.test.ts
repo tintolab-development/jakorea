@@ -10,6 +10,10 @@ import {
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
 } from './ujat-registration-basic-info-defaults'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import {
+  buildUjatRegistrationBasicInfoOverlayFromProgram,
+  reconcileUjatRegistrationOverlayFromApi,
+} from './ujat-registration-basic-info-overlay-sync'
 
 function baseProgram(): Program {
   return {
@@ -77,6 +81,36 @@ describe('resolveUjatRegistrationBasicInfoDisplay — 상세 overlay (세션 기
       },
     })
     expect(display.detailedProgramName).toBe('해당없음')
+  })
+})
+
+describe('UJAT 상세 공통정보 overlay 시드', () => {
+  it('API에 없는 일정·정원 목업 기본값을 수정 overlay에 주입하지 않는다', () => {
+    const overlay = buildUjatRegistrationBasicInfoOverlayFromProgram(baseProgram())
+    expect(overlay['ujat.h1.event.name']).toBeUndefined()
+    expect(overlay['ujat.h1.eduSchedule.unavailableDates']).toBeUndefined()
+    expect(overlay['ujat.capacity.byRegion']).toBeUndefined()
+  })
+
+  it('GET canonical KPI가 stale overlay 숫자를 교정한다', () => {
+    const overlay = reconcileUjatRegistrationOverlayFromApi(
+      {
+        kpi: {
+          finalParticipants: 20,
+          instructorCount: 0,
+          volunteerCount: 8,
+          finalSchools: 4,
+          finalClasses: 6,
+        },
+      },
+      {
+        'ujat.kpi.participantCount': 1,
+        'ujat.kpi.volunteer': 1,
+      }
+    )
+    expect(overlay['ujat.kpi.participantCount']).toBe(20)
+    expect(overlay['ujat.kpi.volunteer']).toBe(8)
+    expect(overlay['ujat.kpi.dispatchedClass']).toBe(6)
   })
 })
 

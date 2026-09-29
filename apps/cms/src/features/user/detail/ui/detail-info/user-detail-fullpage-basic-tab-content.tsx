@@ -53,7 +53,10 @@ import { deleteUser } from '@/entities/user/api/user-service'
 import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { buildMemberWithdrawMessageLines } from '@/features/user/shared/lib/member-withdraw-delete-guide'
-import { DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER } from '@/shared/constants'
+import {
+  WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -232,7 +235,7 @@ export function UserDetailFullpageBasicTabContent({
   }, [])
 
   const handleAffiliatedTeacherWithdrawConfirm = useCallback(
-    async (currentPassword?: string) => {
+    async (withdrawConfirmationText?: string) => {
       if (affiliatedTeacherWithdrawTargets.length === 0) return
       setAffiliatedTeacherWithdrawLoading(true)
       try {
@@ -241,7 +244,7 @@ export function UserDetailFullpageBasicTabContent({
           if (!userId) continue
           await deleteUser(userId, 'CMS 관리자 회원 탈퇴', {
             memberId: row.teacherMemberId,
-            currentPassword,
+            withdrawConfirmationText,
           })
         }
         if (user.memberId != null) {
@@ -489,8 +492,8 @@ export function UserDetailFullpageBasicTabContent({
           lines={affiliatedTeacherWithdrawGuideLines}
           confirmText="회원 탈퇴"
           confirmVariant="delete"
-          confirmInputMode="password"
-          confirmInputPlaceholder={DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER}
+          requiredConfirmInput={WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
           confirmLoading={affiliatedTeacherWithdrawLoading}
         />
       ) : null}

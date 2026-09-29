@@ -1,7 +1,7 @@
 /**
- * FAQ 등록/수정 모달 — Figma 셸
- * display:flex; width:800px; padding:26px 30px 34px 30px;
- * flex-direction:column; align-items:center; gap:30px; flex-shrink:0;
+ * FAQ 등록/수정 모달 — Figma `popup / multiple / w800 / FAQ 등록 및 수정`
+ * 셸 800 · padding 24/30/34 · radius 16 · 헤더·본문·푸터 gap 30
+ * (셸 padding·radius는 ContentModal 공통 스펙을 쓰고, 여기서는 레이아웃만 맞춤)
  */
 
 .faq-form-modal-wrap {
@@ -39,17 +39,13 @@
   box-sizing: border-box !important;
 }
 
-/* 셸: 시안 프레임 규격 — 높이는 콘텐츠에 맞춤(고정 680 제거) */
-.content-modal.faq-form-modal .ant-modal-content {
+/* 셸: ContentModal 공통(24/30/34 · radius 16) 유지. 높이는 콘텐츠에 맞춤 */
+.content-modal.faq-form-modal.teal-header-modal.ant-modal .ant-modal-content {
   display: flex;
   width: 100%;
-  padding: 26px 30px 34px 30px;
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
   height: auto;
   max-height: min(calc(100dvh - 48px), 900px);
   overflow: hidden;
@@ -104,7 +100,7 @@
   min-height: 0;
 }
 
-/* 필드 간 24px (레드라인) */
+/* 필드 간 24px (시안) */
 .faq-form-modal__fields {
   display: flex;
   flex-direction: column;
@@ -113,28 +109,34 @@
   min-height: 0;
 }
 
-/* 카테고리·공개 여부: 각 240px, 사이 40px, 상단 기준 정렬 */
+/* 카테고리 260 · 공개여부 hug · 사이 24px (시안) */
 .faq-form-modal__row-split {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 40px;
+  gap: 24px;
   width: 100%;
   flex-shrink: 0;
 }
 
-.faq-form-modal__row-split .faq-form-modal__field--category,
+.faq-form-modal__row-split .faq-form-modal__field--category {
+  flex: 0 0 260px;
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
+  margin-bottom: 0 !important;
+  box-sizing: border-box;
+}
+
 .faq-form-modal__row-split .faq-form-modal__field--visibility {
-  flex: 0 0 240px;
-  width: 240px;
-  min-width: 240px;
-  max-width: 240px;
+  flex: 0 0 auto;
+  width: auto;
   margin-bottom: 0 !important;
   box-sizing: border-box;
 }
 
 .faq-form-modal__row-split .faq-form-modal__field--visibility .ant-form-item-control-input-content {
-  width: 100%;
+  width: auto;
 }
 
 .faq-form-modal__fields > .ant-form-item {
@@ -158,6 +160,20 @@
 
 .faq-form-modal__fields .cms-textarea {
   width: 100%;
+}
+
+/* 내용(답변) — 시안 740×200 높이 고정, 세로 resize만 */
+.faq-form-modal__answer.cms-textarea,
+.faq-form-modal__answer.cms-textarea .cms-textarea__control,
+.faq-form-modal__answer.cms-textarea .cms-textarea__inner,
+.faq-form-modal__answer.cms-textarea .cms-textarea__inner textarea.ant-input {
+  height: 200px;
+  min-height: 200px;
+  box-sizing: border-box;
+}
+
+.faq-form-modal__answer.cms-textarea .cms-textarea__inner textarea.ant-input {
+  resize: vertical;
 }
 
 .faq-form-modal .content-modal__footer-actions {

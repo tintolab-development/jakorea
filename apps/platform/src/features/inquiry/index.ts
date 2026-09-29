@@ -24,6 +24,14 @@ export {
   MOCK_ONE_TO_ONE_INQUIRIES,
   useMockOneToOneInquiriesCatalog,
 } from './lib/mock-one-to-one-inquiries'
+export {
+  useCreateMyInquiryMutation,
+  useDeleteMyInquiryMutation,
+  useInquiryWriteOptionsQuery,
+  useMyInquiriesQuery,
+  useMyInquiryDetailQuery,
+  usePublicFaqsQuery,
+} from './api/hooks'
 export { FaqTabContent } from './ui/faq-tab-content'
 export { InquiryTabContent } from './ui/inquiry-tab-content'
 export { OneToOneInquiryWriteModal } from './ui/one-to-one-inquiry-write-modal'

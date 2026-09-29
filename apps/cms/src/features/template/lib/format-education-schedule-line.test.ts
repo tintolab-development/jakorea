@@ -5,9 +5,11 @@ import {
   countUniqueEducationScheduleCalendarDays,
   educationScheduleAppliedSurfaceRange,
   flattenGroupTimeSlotsByDetail,
+  isEducationScheduleLineBeforeSeoulToday,
   isEducationScheduleLineUpcoming,
   parseEducationScheduleLineToRange,
   rebuildEducationScheduleLinesFromGroupTimes,
+  shiftEducationScheduleLineToDate,
 } from '@/features/template/lib/format-education-schedule-line'
 
 const april20 = dayjs('2026-04-20')
@@ -127,6 +129,26 @@ describe('countUniqueEducationScheduleCalendarDays', () => {
   it('빈 목록은 0이다', () => {
     expect(countUniqueEducationScheduleCalendarDays([])).toBe(0)
     expect(countUniqueEducationScheduleCalendarDays(undefined)).toBe(0)
+  })
+})
+
+describe('isEducationScheduleLineBeforeSeoulToday', () => {
+  const now = new Date('2026-09-28T15:00:00+09:00')
+
+  it('어제 일정만 지났다고 보고, 오늘·읽지 못한 줄은 유지한다', () => {
+    expect(isEducationScheduleLineBeforeSeoulToday('26년 9월 27일(일)', now)).toBe(true)
+    expect(isEducationScheduleLineBeforeSeoulToday('26년 9월 28일(월) 9:00 ~ 12:00', now)).toBe(
+      false
+    )
+    expect(isEducationScheduleLineBeforeSeoulToday('일정 미정', now)).toBe(false)
+  })
+})
+
+describe('shiftEducationScheduleLineToDate', () => {
+  it('날짜만 옮기고 시각은 남긴다', () => {
+    expect(
+      shiftEducationScheduleLineToDate('26년 4월 20일(월) 9:30 ~ 12:20', dayjs('2026-05-01'))
+    ).toBe('26년 5월 1일(금) 9:30 ~ 12:20')
   })
 })
 

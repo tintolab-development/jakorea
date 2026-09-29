@@ -55,6 +55,11 @@ export type RegistrationSnapshot = {
   overlay: Record<string, unknown>
 }
 
+export type RegistrationPersistSnapshot = {
+  draft?: WritingFormDraft
+  overlay: Record<string, unknown>
+}
+
 /** FE write envelope + Primary flat config_jsonb extras (표시용, Program 필드 외) */
 export type UjatServiceDetailExtras = {
   /** FULL_YEAR — Semester 자식 없음 */
@@ -72,7 +77,7 @@ export type UjatServiceDetailExtras = {
 type ServiceDetailV1 = {
   version: typeof VERSION
   program: Partial<ServiceDetailProgram>
-  registration?: RegistrationSnapshot
+  registration?: RegistrationPersistSnapshot
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -119,7 +124,7 @@ function hydrateFromRecord(source: Record<string, unknown>): Partial<ServiceDeta
 
 export function serializeServiceDetail(
   program: Program,
-  registration?: RegistrationSnapshot
+  registration?: RegistrationPersistSnapshot
 ): string {
   const payload: ServiceDetailV1 = {
     version: VERSION,

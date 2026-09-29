@@ -26,7 +26,15 @@ import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecy
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
-import { applyResolvedVenueKindToCommonInfo } from '@/features/program/general/model/common-info-edit-schema'
+import {
+  applyResolvedVenueKindToCommonInfo,
+  buildProgramSponsorAssignmentsWire,
+  encodeSponsorManagerContactRef,
+  normalizeSponsorManagerContactIds,
+} from '@/features/program/general/model/common-info-edit-schema'
+import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
+import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
 
@@ -38,8 +46,8 @@ function toDate(value: Date | string | undefined): string | undefined {
 }
 
 /**
- * GET — 화면 운영 기간은 요청이 보낸 start/end.
- * 서버가 business* 를 연도로 바꿔도 그 값으로 덮지 않는다.
+ * GET — 화면 운영 기간은 서울 달력일.
+ * `businessStartDate`/`businessEndDate` 와 `startDate`/`endDate`/`rounds[0]` 이 같은 날짜다.
  */
 function resolveCompanySchoolOperationDates(dto: {
   startDate?: string | null
@@ -47,10 +55,7 @@ function resolveCompanySchoolOperationDates(dto: {
   businessStartDate?: string | null
   businessEndDate?: string | null
 }): { startDate: string | undefined; endDate: string | undefined } {
-  return {
-    startDate: dto.startDate ?? dto.businessStartDate ?? undefined,
-    endDate: dto.endDate ?? dto.businessEndDate ?? undefined,
-  }
+  return resolveBusinessPeriodDates(dto)
 }
 
 function resolveCompanySchoolListLifecycle(
@@ -115,6 +120,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     otherMatters?: string
     contactName?: string
     recruitmentTargetDetail?: string
+    businessField?: string
   }
   const title =
     dto.title?.trim() ||
@@ -205,7 +211,8 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,
-    businessArea: dto.businessArea,
+    businessArea:
+      normalizeProgramBusinessAreaValue(dto.businessArea || dtoExt.businessField) || undefined,
     // 세부 프로그램 마스터 id — 일반 프로그램 어댑터와 동일하게 top-level 필드로 읽어온다.
     detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     titleEn: dto.titleEn,
@@ -336,13 +343,38 @@ function looksMaskedProgramPii(value: string | null | undefined): boolean {
   return value.includes('*')
 }
 
+function mapCompanySchoolSponsorAssignments(program: Program) {
+  const sponsorId =
+    program.generalCommonInfo?.sponsorManagementIds?.[0] ??
+    program.generalCommonInfo?.sponsorManagementId ??
+    program.sponsorId
+  const sponsorIds = sponsorId ? [String(sponsorId).trim()].filter(Boolean) : []
+  const contactRefs = normalizeSponsorManagerContactIds({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+  })
+    .filter(id => id !== '__all__' && !isSponsorContactUnselected(id))
+    .map(id =>
+      id.includes('::') || !sponsorId
+        ? id
+        : encodeSponsorManagerContactRef(String(sponsorId), id)
+    )
+  return buildProgramSponsorAssignmentsWire(sponsorIds, contactRefs)
+}
+
 function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateRequest {
   // 버그 수정: 1사1교는 등록 폼에서 고른 「세부 프로그램명」이 요청에 전혀 실리지 않고 무시됐다 —
   // 일반 프로그램 어댑터와 동일하게 detailedProgramId(숫자 마스터 id)로 보낸다. textbookName(교재명)에
   // 이름을 강제로 밀어넣는 방식은 general 어댑터의 계약과 달랐다(중복되면 omit).
   const detailedProgramName = program.generalCommonInfo?.detailedProgramName
+  const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
+  const sponsors = mapCompanySchoolSponsorAssignments(program)
+  const primarySponsorId =
+    sponsors.find(row => row.sponsorContactId)?.sponsorId ||
+    sponsors[0]?.sponsorId ||
+    program.sponsorId
   return {
-    sponsorId: program.sponsorId,
+    sponsorId: primarySponsorId,
     title: program.title,
     type: program.type,
     format: program.format,
@@ -355,7 +387,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     businessEndDate: toDate(program.endDate),
     applicationStartDate: toDate(program.applicationStartDate),
     applicationEndDate: toDate(program.applicationEndDate),
-    businessArea: program.businessArea,
+    businessArea,
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
@@ -401,6 +433,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     learningSupportContent: program.learningSupportContent,
     attachmentFileNames: program.attachmentFileNames,
     rounds: mapRounds(program),
+    sponsors: sponsors.length > 0 ? sponsors : undefined,
     serviceDetailJson: serializeCompanySchoolServiceDetailJson(program),
   }
 }
@@ -416,8 +449,13 @@ function mapCompanySchoolPatchFieldsToRequest(
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
 
-  if (has('sponsorId')) {
-    body.sponsorId = merged.sponsorId != null ? String(merged.sponsorId) : undefined
+  if (has('sponsorId') || has('generalCommonInfo')) {
+    const sponsors = mapCompanySchoolSponsorAssignments(merged)
+    body.sponsorId =
+      sponsors.find(row => row.sponsorContactId)?.sponsorId ||
+      sponsors[0]?.sponsorId ||
+      (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
+    if (sponsors.length > 0) body.sponsors = sponsors
   }
   if (has('title')) body.title = merged.title
   if (has('type')) body.type = merged.type
@@ -436,7 +474,10 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('applicationEndDate')) {
     body.applicationEndDate = toDate(merged.applicationEndDate)
   }
-  if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('businessArea')) {
+    const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
+    body.businessArea = businessArea
+  }
   if (has('detailedProgramId') || has('generalCommonInfo')) {
     body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
   }
