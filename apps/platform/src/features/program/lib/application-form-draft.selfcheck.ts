@@ -37,6 +37,41 @@ assert.ok(
   }),
 )
 assert.equal(coerceApplicationFormDocument({ schemaJson: '{}' }), null)
+assert.ok(
+  coerceApplicationFormDocument({
+    schemaJson: formDoc,
+  }),
+)
+assert.ok(
+  coerceApplicationFormDocument({
+    form: { schemaJson: JSON.stringify(formDoc) },
+  }),
+)
+const fromEmptyOuter = coerceApplicationFormDocument({
+  paragraphs: [],
+  schemaJson: JSON.stringify(formDoc),
+})
+assert.ok(fromEmptyOuter && Array.isArray(fromEmptyOuter.paragraphs))
+assert.equal(fromEmptyOuter.paragraphs.length, 1)
+const wrappedExplanation = {
+  paragraphs: formDoc.paragraphs,
+  schemaJson: JSON.stringify({
+    ...formDoc,
+    paragraphs: [
+      ...formDoc.paragraphs,
+      {
+        id: 'program-participant-application-custom-explanation',
+        kind: 'single_item',
+        variant: 'agreement_explanation_text',
+        paragraphTitle: '이 내용이 꼭 있어야함',
+        bodyText: '이것으로 일정형 테스트',
+      },
+    ],
+  }),
+}
+const fromWrapped = coerceApplicationFormDocument(wrappedExplanation)
+assert.ok(fromWrapped && Array.isArray(fromWrapped.paragraphs))
+assert.equal(fromWrapped.paragraphs.length, 2)
 
 const draft = writingFormDraftFromApplicationForm(formDoc, {
   'program-application-trained-teachers-seed-personal-info': { bottomConsent: 'agree' },
@@ -65,12 +100,13 @@ assert.deepEqual(
 
 const hiddenScheduleId = 'program-participant-application-seed-schedule'
 const hiddenTeamId = 'program-participant-application-seed-team-info'
+const explanationId = 'program-participant-application-custom-explanation'
 const visibleId = 'program-participant-application-seed-personal-info'
 const runtimeForm = {
   schemaVersion: 1,
   formSettings: { titleNumbering: 'none' },
   runtimeContext: {
-    hiddenQuestionKeys: [hiddenScheduleId],
+    hiddenQuestionKeys: [hiddenScheduleId, explanationId],
     audienceApplication: { hiddenQuestionKeys: [hiddenTeamId] },
   },
   paragraphs: [
@@ -102,6 +138,15 @@ const runtimeForm = {
       runtimeHidden: true,
     },
     {
+      id: explanationId,
+      kind: 'single_item',
+      variant: 'agreement_explanation_text',
+      paragraphTitle: '이 내용이 꼭 있어야함',
+      bodyText: '이것으로 일정형 테스트',
+      hidden: true,
+      runtimeHidden: true,
+    },
+    {
       id: hiddenTeamId,
       kind: 'single_item',
       variant: 'horizontal_table',
@@ -122,11 +167,12 @@ const visibleDraft = writingFormDraftFromApplicationForm(runtimeForm)
 assert.ok(visibleDraft)
 assert.deepEqual(
   visibleDraft!.paragraphs.map(paragraph => paragraph.id),
-  [visibleId],
+  [visibleId, hiddenScheduleId, explanationId, hiddenTeamId],
 )
 const visibleAnswers = buildApplicationAnswersFromDraft(visibleDraft!)
 assert.deepEqual(Object.keys(visibleAnswers), [visibleId])
 assert.equal(hiddenScheduleId in visibleAnswers, false)
 assert.equal(hiddenTeamId in visibleAnswers, false)
+assert.equal(explanationId in visibleAnswers, false)
 
 console.log('application-form-draft.selfcheck: ok')

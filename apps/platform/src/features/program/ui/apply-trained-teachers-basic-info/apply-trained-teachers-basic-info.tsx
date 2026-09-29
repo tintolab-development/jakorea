@@ -67,6 +67,8 @@ type ApplyTrainedTeachersBasicInfoProps = {
   schoolNameLocked?: boolean
   /** 프로그램 교육 형태가 참여자 선택일 때만 희망 교육 형태 노출 (CMS와 동일) */
   showPreferredEducationForm?: boolean
+  /** 교육받은 교사·1사1교만. 일반 기관 신청 폼에는 없음 */
+  showEducationPlace?: boolean
   maxClassCount?: number
   profile?: ApplyTrainedTeachersBasicInfoProfile
 }
@@ -124,6 +126,7 @@ export function ApplyTrainedTeachersBasicInfo({
   onChange,
   schoolNameLocked = false,
   showPreferredEducationForm = false,
+  showEducationPlace = true,
   maxClassCount = DEFAULT_MAX_CLASS_COUNT,
   profile,
 }: ApplyTrainedTeachersBasicInfoProps) {
@@ -237,31 +240,33 @@ export function ApplyTrainedTeachersBasicInfo({
         ) : null}
       </PFFormFieldRow>
 
-      <PFFormFieldRow type="single">
-        <PFFormField label="교육 장소">
-          <PFFormInlineRow>
-            <PFFormInlineSegment>
-              <RadioGroup
-                name="tt-education-place"
-                value={value.educationPlace || 'inside'}
-                options={EDUCATION_PLACE_OPTIONS}
-                onChange={next => patch({ educationPlace: next })}
-              />
-            </PFFormInlineSegment>
-            <PFFormInlineSeparator />
-            <PFFormInlineSegment>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                width={240}
-                placeholder="교육이 진행될 상세 장소를 입력해 주세요"
-                value={value.educationPlaceDetail}
-                onValueChange={next => patch({ educationPlaceDetail: next })}
-              />
-            </PFFormInlineSegment>
-          </PFFormInlineRow>
-        </PFFormField>
-      </PFFormFieldRow>
+      {showEducationPlace ? (
+        <PFFormFieldRow type="single">
+          <PFFormField label="교육 장소">
+            <PFFormInlineRow>
+              <PFFormInlineSegment>
+                <RadioGroup
+                  name="tt-education-place"
+                  value={value.educationPlace || 'inside'}
+                  options={EDUCATION_PLACE_OPTIONS}
+                  onChange={next => patch({ educationPlace: next })}
+                />
+              </PFFormInlineSegment>
+              <PFFormInlineSeparator />
+              <PFFormInlineSegment>
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  width={240}
+                  placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+                  value={value.educationPlaceDetail}
+                  onValueChange={next => patch({ educationPlaceDetail: next })}
+                />
+              </PFFormInlineSegment>
+            </PFFormInlineRow>
+          </PFFormField>
+        </PFFormFieldRow>
+      ) : null}
 
       <PFFormFieldRow type="single">
         <PFFormField label="담당 교사 정보">
