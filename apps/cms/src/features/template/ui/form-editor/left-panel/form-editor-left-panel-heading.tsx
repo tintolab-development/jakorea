@@ -1,4 +1,4 @@
-import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined } from '@ant-design/icons'
 import { createElement, type ReactNode } from 'react'
 import type { ParagraphCardEditableHeading } from '@/features/template/ui/template-management/template-fullpage-modal'
 import {
@@ -53,12 +53,7 @@ import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_ID
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
 import { GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS } from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
 import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
-import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
-import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import {
-  shouldAllowScheduleProgressGroupAdd,
-  shouldUseScheduleEventBlockLayout,
-} from '@/features/program/general/lib/schedule-detail-form'
+import { ProgramRegistrationCurriculumTitleActions } from '@/features/program/shared/ui/program-registration-curriculum-title-actions'
 import { resolveProgramRegistrationScheduleCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { getInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
@@ -76,7 +71,6 @@ import {
   UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { CmsToggle } from '@/shared/ui/cms-toggle'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
 
 /** 발급용 등 — 단락 카드 제목의 필수(*) 표시 제거 */
@@ -243,310 +237,46 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   }
   const displayTitle =
     pr.programType === 'schedule' ? '교육 진행 (일정형)' : '교육 진행 (커리큘럼)'
-  if (pr.programRegistrationFormVariant === 'trainedTeachers') {
-    const teacherTrainingToggle = (
-      <CmsToggle
-        label="교육 연수"
-        checked={pr.trainedTeachersTeacherTrainingEnabled}
-        onChange={pr.onTrainedTeachersTeacherTrainingEnabledChange}
-      />
-    )
-
-    if (pr.programType === 'schedule') {
-      const isScheduleEventLayout = shouldUseScheduleEventBlockLayout({
-        sessionRound: pr.sessionRoundType,
-        participantOrganization: pr.participant.organization,
-        educationFormScheduleDetail: pr.educationFormScheduleDetail,
-        participationScheduleDetail: pr.participationScheduleDetail,
-        ipsScheduleDetail: pr.ipsScheduleDetail,
-      })
-      const scheduleDescription = resolveProgramRegistrationScheduleCurriculumEditDescription({
-        sessionRoundType: pr.sessionRoundType,
-        participantOrganization: pr.participant.organization,
-        educationFormScheduleDetail: pr.educationFormScheduleDetail,
-        participationScheduleDetail: pr.participationScheduleDetail,
-        ipsScheduleDetail: pr.ipsScheduleDetail,
-      })
-      const allowProgressGroupAdd = shouldAllowScheduleProgressGroupAdd({
-        sessionRound: pr.sessionRoundType,
-        educationScheduleMode: pr.educationScheduleMode,
-      })
-      const addScheduleLabel = isScheduleEventLayout
-        ? '강의 행사 일정 추가'
-        : '강의 세부 일정 추가'
-
-      return {
-        ...heading,
-        titleValue: displayTitle,
-        descriptionValue: scheduleDescription,
-        titleTrailing: (
-          <div
-            className="program-registration-paragraph__card-title-actions"
-            onClick={e => e.stopPropagation()}
-            onKeyDown={e => e.stopPropagation()}
-            role="presentation"
-          >
-            {teacherTrainingToggle}
-            {pr.sessionRoundType === 'multi' || !allowProgressGroupAdd || isScheduleEventLayout ? (
-              <CmsButton
-                type="button"
-                variant="secondary"
-                size="medium"
-                width={160}
-                icon={<PlusOutlined aria-hidden />}
-                onClick={e => {
-                  e.stopPropagation()
-                  pr.onAddScheduleCurriculumDetail()
-                }}
-              >
-                {addScheduleLabel}
-              </CmsButton>
-            ) : (
-              <>
-                <CmsButton
-                  type="button"
-                  variant="secondary"
-                  size="medium"
-                  width={160}
-                  icon={<PlusOutlined aria-hidden />}
-                  onClick={e => {
-                    e.stopPropagation()
-                    pr.onAddScheduleCurriculumDetail()
-                  }}
-                >
-                  {addScheduleLabel}
-                </CmsButton>
-                <CmsButton
-                  type="button"
-                  variant="secondary"
-                  size="medium"
-                  width={160}
-                  icon={<PlusOutlined aria-hidden />}
-                  onClick={e => {
-                    e.stopPropagation()
-                    pr.onAddScheduleCurriculumGroup()
-                  }}
-                >
-                  진행 그룹 추가
-                </CmsButton>
-              </>
-            )}
-          </div>
-        ),
-      }
-    }
-
-    const curriculumChartSessionAtMax =
-      pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
-    return {
-      ...heading,
-      titleValue: displayTitle,
-      titleTrailing: (
-        <div
-          className="program-registration-paragraph__card-title-actions"
-          onClick={e => e.stopPropagation()}
-          onKeyDown={e => e.stopPropagation()}
-          role="presentation"
-        >
-          {teacherTrainingToggle}
-          <CmsButton
-            type="button"
-            variant="secondary"
-            size="medium"
-            width={160}
-            disabled={curriculumChartSessionAtMax}
-            icon={<PlusOutlined aria-hidden />}
-            onClick={e => {
-              e.stopPropagation()
-              if (curriculumChartSessionAtMax) return
-              pr.onAddCurriculumChartSession()
-            }}
-          >
-            강의 진행 차시 추가
-          </CmsButton>
-        </div>
-      ),
-    }
-  }
-  if (pr.programType === 'schedule') {
-    const isScheduleEventLayout = shouldUseScheduleEventBlockLayout({
-      sessionRound: pr.sessionRoundType,
-      participantOrganization: pr.participant.organization,
-      educationFormScheduleDetail: pr.educationFormScheduleDetail,
-      participationScheduleDetail: pr.participationScheduleDetail,
-      ipsScheduleDetail: pr.ipsScheduleDetail,
-    })
-    const scheduleDescription = resolveProgramRegistrationScheduleCurriculumEditDescription({
-      sessionRoundType: pr.sessionRoundType,
-      participantOrganization: pr.participant.organization,
-      educationFormScheduleDetail: pr.educationFormScheduleDetail,
-      participationScheduleDetail: pr.participationScheduleDetail,
-      ipsScheduleDetail: pr.ipsScheduleDetail,
-    })
-
-    const preEducationToggle = (
-      <CmsToggle
-        label="사전 교육"
-        checked={pr.scheduleCurriculumPreEducation}
-        onChange={pr.onScheduleCurriculumPreEducationChange}
-      />
-    )
-
-    if (isScheduleEventLayout) {
-      return {
-        ...heading,
-        titleValue: displayTitle,
-        descriptionValue: scheduleDescription,
-        titleTrailing: (
-          <div
-            className="program-registration-paragraph__card-title-actions"
-            onClick={e => e.stopPropagation()}
-            onKeyDown={e => e.stopPropagation()}
-            role="presentation"
-          >
-            {preEducationToggle}
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="medium"
-              width={160}
-              icon={<PlusOutlined aria-hidden />}
-              onClick={e => {
-                e.stopPropagation()
-                pr.onAddScheduleCurriculumDetail()
-              }}
-            >
-              강의 행사 일정 추가
-            </CmsButton>
-          </div>
-        ),
-      }
-    }
-
-    const allowProgressGroupAdd = shouldAllowScheduleProgressGroupAdd({
-      sessionRound: pr.sessionRoundType,
-      educationScheduleMode: pr.educationScheduleMode,
-    })
-
-    if (pr.sessionRoundType === 'multi' || !allowProgressGroupAdd) {
-      return {
-        ...heading,
-        titleValue: displayTitle,
-        descriptionValue: scheduleDescription,
-        titleTrailing: (
-          <div
-            className="program-registration-paragraph__card-title-actions"
-            onClick={e => e.stopPropagation()}
-            onKeyDown={e => e.stopPropagation()}
-            role="presentation"
-          >
-            {preEducationToggle}
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="medium"
-              width={160}
-              icon={<PlusOutlined aria-hidden />}
-              onClick={e => {
-                e.stopPropagation()
-                pr.onAddScheduleCurriculumDetail()
-              }}
-            >
-              강의 세부 일정 추가
-            </CmsButton>
-          </div>
-        ),
-      }
-    }
-
-    return {
-      ...heading,
-      titleValue: displayTitle,
-      descriptionValue: scheduleDescription,
-      titleTrailing: (
-        <div
-          className="program-registration-paragraph__card-title-actions"
-          onClick={e => e.stopPropagation()}
-          onKeyDown={e => e.stopPropagation()}
-          role="presentation"
-        >
-          {preEducationToggle}
-          <CmsButton
-            type="button"
-            variant="secondary"
-            size="medium"
-            width={160}
-            disabled={
-              pr.scheduleCurriculumGroupCount >=
-              PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
-            }
-            icon={<ClockCircleOutlined aria-hidden />}
-            onClick={e => {
-              e.stopPropagation()
-              if (
-                pr.scheduleCurriculumGroupCount >=
-                PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
-              ) {
-                return
-              }
-              pr.onAddScheduleCurriculumGroup()
-            }}
-          >
-            진행 그룹 구분 추가
-          </CmsButton>
-          <CmsButton
-            type="button"
-            variant="secondary"
-            size="medium"
-            width={160}
-            icon={<PlusOutlined aria-hidden />}
-            onClick={e => {
-              e.stopPropagation()
-              pr.onAddScheduleCurriculumDetail()
-            }}
-          >
-            강의 세부 일정 추가
-          </CmsButton>
-        </div>
-      ),
-    }
-  }
-  const isMulti = pr.sessionRoundType === 'multi'
-  const curriculumAddDisabled = pr.restrictCurriculumSessionStructure === true
-  const curriculumChartSessionAtMax =
-    !isMulti && pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
+  const scheduleDescription =
+    pr.programType === 'schedule'
+      ? resolveProgramRegistrationScheduleCurriculumEditDescription({
+          sessionRoundType: pr.sessionRoundType,
+          participantOrganization: pr.participant.organization,
+          educationFormScheduleDetail: pr.educationFormScheduleDetail,
+          participationScheduleDetail: pr.participationScheduleDetail,
+          ipsScheduleDetail: pr.ipsScheduleDetail,
+        })
+      : undefined
   return {
     ...heading,
     titleValue: displayTitle,
+    ...(scheduleDescription != null ? { descriptionValue: scheduleDescription } : {}),
     titleTrailing: (
-      <div
-        className="program-registration-paragraph__card-title-actions"
-        onClick={e => e.stopPropagation()}
-        onKeyDown={e => e.stopPropagation()}
-        role="presentation"
-      >
-        <CmsToggle
-          label="사전 교육"
-          checked={pr.scheduleCurriculumPreEducation}
-          onChange={pr.onScheduleCurriculumPreEducationChange}
-        />
-        <CmsButton
-          type="button"
-          variant="secondary"
-          size="medium"
-          width={isMulti ? 160 : 180}
-          disabled={curriculumAddDisabled || curriculumChartSessionAtMax}
-          icon={<PlusOutlined aria-hidden />}
-          onClick={e => {
-            e.stopPropagation()
-            if (curriculumAddDisabled || curriculumChartSessionAtMax) return
-            if (isMulti) pr.onAddCurriculumSession()
-            else pr.onAddCurriculumChartSession()
-          }}
-        >
-          {isMulti ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
-        </CmsButton>
-      </div>
+      <ProgramRegistrationCurriculumTitleActions
+        variant={
+          pr.programRegistrationFormVariant === 'trainedTeachers' ? 'trainedTeachers' : 'general'
+        }
+        programType={pr.programType}
+        sessionRoundType={pr.sessionRoundType}
+        participantOrganization={pr.participant.organization}
+        educationFormScheduleDetail={pr.educationFormScheduleDetail}
+        participationScheduleDetail={pr.participationScheduleDetail}
+        ipsScheduleDetail={pr.ipsScheduleDetail}
+        educationScheduleMode={pr.educationScheduleMode}
+        scheduleCurriculumPreEducation={pr.scheduleCurriculumPreEducation}
+        onScheduleCurriculumPreEducationChange={pr.onScheduleCurriculumPreEducationChange}
+        curriculumChartSessionCount={pr.curriculumChartSessionCount}
+        restrictCurriculumSessionStructure={pr.restrictCurriculumSessionStructure}
+        onAddCurriculumSession={pr.onAddCurriculumSession}
+        onAddCurriculumChartSession={pr.onAddCurriculumChartSession}
+        onAddScheduleCurriculumDetail={pr.onAddScheduleCurriculumDetail}
+        onAddScheduleCurriculumGroup={pr.onAddScheduleCurriculumGroup}
+        scheduleCurriculumGroupCount={pr.scheduleCurriculumGroupCount}
+        trainedTeachersTeacherTrainingEnabled={pr.trainedTeachersTeacherTrainingEnabled}
+        onTrainedTeachersTeacherTrainingEnabledChange={
+          pr.onTrainedTeachersTeacherTrainingEnabledChange
+        }
+      />
     ),
   }
 }
