@@ -66,6 +66,32 @@ describe('UJAT program adapters', () => {
     expect(detail.registration?.overlay?.['ujat.basicInfo.sponsorContactId']).toBe('')
   })
 
+  it('create 요청은 programType·serviceDetailJson을 body 앞쪽에 둔다', () => {
+    const request = toCreateRequest(program, { draft, overlay: {} })
+    const keys = Object.keys(request)
+    expect(keys.indexOf('programType')).toBeLessThan(keys.indexOf('category'))
+    expect(keys.indexOf('serviceDetailJson')).toBeLessThan(keys.indexOf('rounds'))
+    expect(() => JSON.parse(request.serviceDetailJson ?? '')).not.toThrow()
+    expect(request.programType).toBe('UJAT')
+  })
+
+  it('registration overlay의 idempotencyKey·preparedFormBindings는 serviceDetailJson에 넣지 않는다', () => {
+    const request = toCreateRequest(program, {
+      draft,
+      overlay: {
+        idempotencyKey: 'test-key',
+        preparedFormBindings: { programDraftId: 9, formBindings: [] },
+        'ujat.basicInfo.repKo': 'rep',
+      },
+    })
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(detail.registration?.overlay?.idempotencyKey).toBeUndefined()
+    expect(detail.registration?.overlay?.preparedFormBindings).toBeUndefined()
+    expect(detail.registration?.overlay?.['ujat.basicInfo.repKo']).toBe('rep')
+  })
+
   it('create 요청에 UJAT 제안값과 versioned 상세를 넣는다', () => {
     const request = toCreateRequest(program, {
       draft,

@@ -30,6 +30,7 @@ import {
   stripUnselectedUjatSponsorContactsFromOverlay,
   ujatSponsorManagerContactIdsForApi,
 } from '@/features/program/ujat/lib/ujat-sponsor-contact-api-payload'
+import { stripRegistrationOverlayDebugKeys } from '@/features/program/shared/lib/program-create-service-detail-json'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
@@ -369,7 +370,9 @@ function registrationSnapshotForApi(
   if (!registration) return undefined
   return {
     ...registration,
-    overlay: stripUnselectedUjatSponsorContactsFromOverlay(registration.overlay),
+    overlay: stripRegistrationOverlayDebugKeys(
+      stripUnselectedUjatSponsorContactsFromOverlay(registration.overlay)
+    ),
   }
 }
 
@@ -576,9 +579,15 @@ export function toCreateRequest(
   program: Program,
   registration?: RegistrationSnapshot
 ): ProgramCreateRequest {
+  const apiRegistration = registrationSnapshotForApi(registration)
+  const core = coreRequest(program, apiRegistration)
+  const serviceDetailJson = core.serviceDetailJson
+  const { serviceDetailJson: _serviceDetailOmit, ...coreWithoutDetail } = core
+  // programType·serviceDetailJson을 앞에 — DevTools/문서 복사 시 detail 잘림·BE INVALID_VALUE 방지
   return {
-    ...coreRequest(program, registrationSnapshotForApi(registration)),
     programType: 'UJAT',
+    serviceDetailJson,
+    ...coreWithoutDetail,
     businessStartDate: dateValue(program.startDate),
     businessEndDate: dateValue(program.endDate),
     autoApplyDefaultFormBindings: true,
