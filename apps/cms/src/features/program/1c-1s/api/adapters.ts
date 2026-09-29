@@ -11,6 +11,7 @@ import type {
 } from '@/types/domain'
 import type { Status } from '@/types'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { coerceProgramPaymentItemsText } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import {
   derivedTextbookNameAliases,
   omitIfDetailedProgramNameAlias,
@@ -140,12 +141,16 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   void _serviceDetailLifecycle
   void _serviceDetailStatus
   const wageSidecar = extractCompanySchoolWageSidecar(dto.serviceDetailJson)
+  const sidecarPaymentItems = coerceProgramPaymentItemsText(wageSidecar?.paymentItems).trim()
   const fromJson = {
     ...details.generalCommonInfo,
     ...(wageSidecar?.wageGradeRows?.length ? { wageGradeRows: wageSidecar.wageGradeRows } : {}),
-    ...(wageSidecar?.paymentItems?.trim() ? { paymentItems: wageSidecar.paymentItems } : {}),
-    ...(wageSidecar?.deductionItems?.trim() ? { deductionItems: wageSidecar.deductionItems } : {}),
+    ...(sidecarPaymentItems ? { paymentItems: sidecarPaymentItems } : {}),
+    ...(typeof wageSidecar?.deductionItems === 'string' && wageSidecar.deductionItems.trim()
+      ? { deductionItems: wageSidecar.deductionItems }
+      : {}),
   }
+  const savedPaymentItems = coerceProgramPaymentItemsText(fromJson.paymentItems).trim()
   const mergedSettlement = applySettlementPolicyToCommonInfo(fromJson, dto.settlementPolicy)
   // 등록 시 넣은 serviceDetailJson 임금이 있으면 그걸 화면 SSOT로 쓴다.
   // settlementPolicy 기본값(500,000 등)이 JSON을 덮어 상세와 GET body가 달라지는 것을 막는다.
@@ -155,12 +160,11 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
         wageGradeRows: fromJson.wageGradeRows?.length
           ? fromJson.wageGradeRows
           : mergedSettlement.wageGradeRows,
-        paymentItems: fromJson.paymentItems?.trim()
-          ? fromJson.paymentItems
-          : mergedSettlement.paymentItems,
-        deductionItems: fromJson.deductionItems?.trim()
-          ? fromJson.deductionItems
-          : mergedSettlement.deductionItems,
+        paymentItems: savedPaymentItems || mergedSettlement.paymentItems,
+        deductionItems:
+          typeof fromJson.deductionItems === 'string' && fromJson.deductionItems.trim()
+            ? fromJson.deductionItems
+            : mergedSettlement.deductionItems,
       }
     : fromJson
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 — serviceDetailJson 캐시가

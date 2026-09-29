@@ -111,6 +111,33 @@ describe('company-school adapters', () => {
     expect(mapped.backendProgramType).toBe('COMPANY_SCHOOL')
   })
 
+  it('serviceDetailJson paymentItems가 id 배열이어도 상세 매핑이 깨지지 않는다', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186016',
+      title: '수정테스트용 1사1교',
+      mainTitle: '수정테스트용 1사1교',
+      createdAt: '2026-09-28T23:45:39.709Z',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          generalCommonInfo: {
+            paymentItems: ['p-166202', 'p-166204'],
+            detailedProgramName: '1사1교 경제금융교육',
+          },
+        },
+      }),
+      settlementPolicy: {
+        paymentItems: [{ itemType: 'TRANSPORTATION', useYn: true }],
+      },
+    } as ProgramResponse)
+
+    expect(mapped.title).toBe('수정테스트용 1사1교')
+    expect(mapped.createdAt).toBe('2026-09-28T23:45:39.709Z')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('1사1교 경제금융교육')
+    expect(typeof mapped.generalCommonInfo?.paymentItems).toBe('string')
+    expect(mapped.generalCommonInfo?.paymentItems).toContain('p-166202')
+  })
+
   it('상세 응답의 businessField alias도 사업 분야로 읽는다', () => {
     const mapped = mapCompanySchoolDetailToProgram({
       id: '1',

@@ -18,7 +18,10 @@ import {
   resolveWagePaymentItemIds,
   WAGE_GRADE_FIELDS,
 } from '@/features/program/general/lib/wage-display'
-import { programPaymentItemLabelsFromIds } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import {
+  coerceProgramPaymentItemsText,
+  programPaymentItemLabelsFromIds,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { initialProgramRegistrationSurveyItems } from '@/features/template/lib/program-registration-survey-items'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
@@ -400,7 +403,7 @@ function wageOverlayFromProgram(program: Program): Record<string, unknown> {
   const paymentItemLabels =
     overlayString(overlay, `${WAGE}.paymentItemLabels`) ||
     programPaymentItemLabelsFromIds(paymentItemValues) ||
-    common?.paymentItems?.trim() ||
+    coerceProgramPaymentItemsText(common?.paymentItems).trim() ||
     ''
 
   return {
