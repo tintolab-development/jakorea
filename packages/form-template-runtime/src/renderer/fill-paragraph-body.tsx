@@ -301,6 +301,25 @@ export function FillParagraphBody({
                 )
               }
         }
+        onFieldCellChange={
+          readonly
+            ? undefined
+            : (rowIndex, colIndex, value) => {
+                onUpdateParagraph?.(paragraph.id, current => {
+                  if (current.kind !== 'single_item' || current.variant !== 'horizontal_table') {
+                    return current
+                  }
+                  const fieldDataRows = (current.fieldDataRows ?? []).map((row, ri) =>
+                    row.map((cell, ci) => {
+                      if (ri !== rowIndex || ci !== colIndex) return cell
+                      if (cell.kind === 'multiple') return cell
+                      return { ...cell, value }
+                    }),
+                  )
+                  return { ...current, fieldDataRows }
+                })
+              }
+        }
       />
     )
   }

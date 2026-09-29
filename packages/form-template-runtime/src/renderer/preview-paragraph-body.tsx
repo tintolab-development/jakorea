@@ -67,7 +67,7 @@ export function PreviewParagraphBody({
     paragraph.kind === 'single_item' &&
     paragraph.variant === 'agreement_explanation_text'
   ) {
-    const body = 'body' in paragraph ? String(paragraph.body ?? '').trim() : ''
+    const body = String(paragraph.bodyText ?? '').trim()
     if (body) {
       return <div className="form-template-preview-text">{body}</div>
     }
