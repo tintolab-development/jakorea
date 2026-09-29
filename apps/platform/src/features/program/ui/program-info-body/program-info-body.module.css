@@ -119,6 +119,13 @@
   margin: 0;
 }
 
+.sessionMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  min-width: 0;
+}
+
 .sessionLabel {
   color: var(--color-primary-500);
 }

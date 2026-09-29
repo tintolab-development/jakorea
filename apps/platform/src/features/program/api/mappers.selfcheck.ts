@@ -81,8 +81,14 @@ assert.equal(multiPrefersArray.educationTargetKey, 'middle')
 assert.equal(mapped.sponsor, '현대 자동차')
 assert.equal(mapped.detailCase, 'general')
 assert.equal(mapped.educationStructure, 'curriculum')
-assert.equal(mapped.sessions.length, 1)
+assert.equal(mapped.sessions.length, 0)
 assert.equal(mapped.eventSchedules.length, 0)
+assert.equal(mapped.educationScheduleMode, 'date')
+assert.deepEqual(mapped.educationScheduleLines, [])
+assert.equal(
+  mapped.basicInfoFields.some(field => field.label === '교육 형태'),
+  false,
+)
 assert.equal(mapped.thumbnailUrl, portalPublicFileContentUrl(77))
 assert.equal(mapped.attachments[0]?.url, '/api/portal/public/files/88/download')
 assert.equal(mapped.contactValue, '02-6085-6028 · cc@jakorea.org')
@@ -178,5 +184,148 @@ assert.equal(
 )
 assert.equal(withSelection.eventSchedules.length, 1)
 assert.equal(withSelection.eventSchedules[0]?.name, '사전교육 전반 오리엔테이션')
+
+const generalCurriculum = mapPortalProgramDetail({
+  programId: 186021,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '필요와 욕구',
+  operationMethod: 'OFFLINE',
+  remarks: '일정은 학교 사정에 따라 조율할 수 있습니다.',
+  otherMatters: '기타 안내',
+  educationStructure: 'curriculum',
+  sessionRound: 'single',
+  educationFormScheduleDetail: 'common',
+  participationScheduleDetail: 'common',
+  ipsScheduleDetail: 'perSchedule',
+  educationFormLabel: '온라인',
+  participationMethod: 'individual',
+  ipsTypeSummary: null,
+  curricula: [
+    {
+      sessions: [{ sessionNo: 9, title: '운영 커리큘럼', content: '섞이면 안 됨' }],
+    },
+  ],
+  schedules: [
+    {
+      scheduleName: '운영 회차',
+      publiclyVisible: true,
+      startAt: '2026-10-04T00:00:00+09:00',
+      endAt: '2026-10-04T00:00:00+09:00',
+    },
+  ],
+  curriculumSessions: [
+    {
+      sessionLabel: '1차시',
+      title: '필요와 욕구, 현명한 소비',
+      description: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+      assignmentEnabled: false,
+      ipsTypeSummary: 'Succeed | Conference (컨퍼런스)',
+    },
+    { sessionLabel: '2차시', title: '', description: '' },
+  ],
+  scheduleDetails: [],
+  educationScheduleMode: 'date',
+  educationScheduleLines: [
+    '26년 10월 13일(화) 10:00 ~ 12:00',
+    '26년 10월 20일(화) 13:30 ~ 16:00',
+  ],
+  educationScheduleRange: null,
+})
+assert.ok(generalCurriculum)
+assert.equal(generalCurriculum.sessions.length, 2)
+assert.equal(generalCurriculum.sessions[0]?.title, '필요와 욕구, 현명한 소비')
+assert.equal(generalCurriculum.sessions[0]?.ipsTypeSummary, 'Succeed | Conference (컨퍼런스)')
+assert.equal(generalCurriculum.sessions[1]?.title, '')
+assert.equal(generalCurriculum.eventSchedules.length, 0)
+assert.deepEqual(generalCurriculum.educationScheduleLines, [
+  '26년 10월 13일(화) 10:00 ~ 12:00',
+  '26년 10월 20일(화) 13:30 ~ 16:00',
+])
+assert.deepEqual(
+  generalCurriculum.educationSchedules.map(item => item.value),
+  generalCurriculum.educationScheduleLines,
+)
+assert.equal(generalCurriculum.educationFormLabel, '온라인')
+assert.equal(generalCurriculum.participationMethod, 'individual')
+assert.equal(
+  generalCurriculum.basicInfoFields.find(field => field.label === '교육 형태')?.value,
+  '온라인',
+)
+assert.equal(
+  generalCurriculum.basicInfoFields.find(field => field.label === '참여 방식')?.value,
+  '개인',
+)
+assert.equal(
+  generalCurriculum.basicInfoFields.some(field => field.label === 'IPS 유형'),
+  false,
+)
+assert.equal(
+  generalCurriculum.extraSections.find(section => section.title === '비고')?.body,
+  '일정은 학교 사정에 따라 조율할 수 있습니다.',
+)
+assert.equal(
+  generalCurriculum.extraSections.find(section => section.title === '기타사항')?.body,
+  '기타 안내',
+)
+
+const scheduleMulti = mapPortalProgramDetail({
+  programId: 186017,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '일정형',
+  educationStructure: 'schedule',
+  sessionRound: 'multi',
+  educationScheduleLines: ['26년 9월 29일(화) 10:00 ~ 12:00'],
+  scheduleDetails: [
+    {
+      scheduleLabel: '사전 교육',
+      blockKind: 'preEducation',
+      name: '오리엔테이션',
+      scheduleDateLabel: '26년 9월 29일(화)',
+    },
+  ],
+})
+assert.ok(scheduleMulti)
+assert.equal(scheduleMulti.sessions.length, 0)
+assert.equal(scheduleMulti.eventSchedules[0]?.blockKind, 'preEducation')
+assert.equal(scheduleMulti.eventSchedules[0]?.dateLabel, '26년 9월 29일(화)')
+assert.equal(scheduleMulti.educationSchedules.length, 0)
+assert.deepEqual(scheduleMulti.educationScheduleLines, ['26년 9월 29일(화) 10:00 ~ 12:00'])
+
+const organization = mapPortalProgramDetail({
+  programId: 186011,
+  programType: 'GENERAL_ORGANIZATION',
+  title: '기관',
+  educationStructure: 'curriculum',
+  sessionRound: 'multi',
+  participationScheduleDetail: null,
+  participationMethod: null,
+  curriculumSessions: [{ sessionLabel: '사전 교육', title: '사전', description: '' }],
+})
+assert.ok(organization)
+assert.equal(organization.participationMethod, 'individual')
+assert.equal(
+  organization.basicInfoFields.some(field => field.label === '참여 방식'),
+  false,
+)
+assert.equal(organization.sessions[0]?.sessionLabel, '사전 교육')
+
+const trainedTeacher = mapPortalProgramDetail({
+  programId: 42,
+  programType: 'TRAINED_TEACHER',
+  title: '교육받은 교사',
+  educationStructure: null,
+  curriculumSessions: [],
+  scheduleDetails: [],
+  educationScheduleLines: [],
+  curricula: [
+    {
+      sessions: [{ sessionNo: 1, title: '오리엔테이션', content: '소개' }],
+    },
+  ],
+})
+assert.ok(trainedTeacher)
+assert.equal(trainedTeacher.sessions.length, 1)
+assert.equal(trainedTeacher.sessions[0]?.title, '오리엔테이션')
+assert.equal(trainedTeacher.educationScheduleMode, 'period')
 
 console.log('program portal mappers.selfcheck: ok')
