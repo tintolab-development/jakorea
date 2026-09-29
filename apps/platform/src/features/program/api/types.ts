@@ -10,6 +10,9 @@ export type PortalRecruitment = {
   status?: string
   startAt?: string
   endAt?: string
+  /** 모집 행 운영 기간. 없으면 상세는 사업 기간으로 떨어진다. */
+  operationStartDate?: string | null
+  operationEndDate?: string | null
   applicationTypes?: string[]
   open?: boolean
   interviewEnabled?: boolean | null
@@ -102,9 +105,17 @@ export type PortalProgramListItem = {
   title?: string
   summary?: string
   operationMethod?: string
+  /**
+   * 목록 교육 형태. `online` | `offline` | `hybrid` | `participant_choice`.
+   * 없으면 `operationMethod`. 목록에는 한글 라벨이 없다.
+   */
+  educationForm?: 'online' | 'offline' | 'hybrid' | 'participant_choice' | string | null
   businessYear?: number
   businessStartDate?: string
   businessEndDate?: string
+  /** 목록 운영 기간. 없으면 사업 기간. */
+  operationStartDate?: string | null
+  operationEndDate?: string | null
   periodStatus?: string
   recruitmentStatus?: string
   recruitmentStartAt?: string
@@ -169,8 +180,8 @@ export type PortalProgramDetail = {
   contactPhone?: string
   additionalContentHtml?: string
   recruitmentGuide?: string
-  learningSupportContent?: string
-  otherMatters?: string
+  learningSupportContent?: string | null
+  otherMatters?: string | null
   remarks?: string
   /**
    * 교육 진행 정보. 모든 유형에 키가 온다.
@@ -183,6 +194,12 @@ export type PortalProgramDetail = {
   educationFormScheduleDetail?: 'common' | 'perSchedule' | null
   participationScheduleDetail?: 'common' | 'perSchedule' | null
   ipsScheduleDetail?: 'common' | 'perSchedule' | null
+  /**
+   * 공통정보 교육 형태 코드. 없으면 `operationMethod`로 보정한다.
+   * perSchedule이면 루트 라벨은 null이고 행 `educationFormLabel`을 쓴다.
+   */
+  educationForm?: 'online' | 'offline' | 'hybrid' | 'participant_choice' | null
+  /** perSchedule이면 null */
   educationFormLabel?: string | null
   /** CMS 공통정보 참여 방식. `team`이면 개인 신청 팀 정보 노출. 미전달은 null */
   participationMethod?: 'individual' | 'team' | null

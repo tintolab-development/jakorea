@@ -252,12 +252,14 @@ function mapDetailCase(
   return 'general'
 }
 
+/**
+ * 모집 배지는 `recruitmentStatus`만 본다.
+ * `periodStatus`가 SCHEDULED여도 모집 예정으로 만들지 않는다.
+ */
 function mapRecruitmentStatus(
-  periodStatus: string | undefined,
   recruitmentStatus: string | undefined,
   recruitments: PortalRecruitment[] | undefined,
 ): RecruitmentStatus {
-  if ((recruitments ?? []).some(row => row.open === true)) return RECRUITMENT_STATUS.recruiting
   switch ((recruitmentStatus ?? '').trim().toUpperCase()) {
     case 'RECRUITING':
     case 'OPEN':
@@ -268,22 +270,12 @@ function mapRecruitmentStatus(
       return RECRUITMENT_STATUS.scheduled
     case 'CLOSED':
     case 'COMPLETED':
+    case 'NONE':
       return RECRUITMENT_STATUS.closed
     default:
       break
   }
-  switch ((periodStatus ?? '').trim().toUpperCase()) {
-    case 'SCHEDULED':
-    case 'PLANNED':
-      return RECRUITMENT_STATUS.scheduled
-    case 'RECRUITING':
-      return RECRUITMENT_STATUS.recruiting
-    case 'COMPLETED':
-    case 'CLOSED':
-      return RECRUITMENT_STATUS.closed
-    default:
-      break
-  }
+  if ((recruitments ?? []).some(row => row.open === true)) return RECRUITMENT_STATUS.recruiting
   const now = Date.now()
   const windows = (recruitments ?? []).flatMap(row => {
     const start = toDate(row.startAt)
@@ -447,25 +439,44 @@ function hasProjectedEducationProgress(remote: PortalProgramDetail): boolean {
   return remote.educationStructure === 'curriculum' || remote.educationStructure === 'schedule'
 }
 
-function educationFormFromDisplayLabel(label: string): EducationForm | null {
-  switch (label.trim()) {
-    case '온라인':
-      return 'online'
-    case '오프라인':
-      return 'offline'
-    case '온/오프라인':
-    case '온·오프라인':
-      return 'hybrid'
-    case '참여자 선택':
-      return 'participant_choice'
-    default:
-      return null
-  }
-}
-
 function optionalText(value: string | null | undefined): string | undefined {
   const text = value?.trim()
   return text ? text : undefined
+}
+
+/** `educationForm` 우선. 없을 때만 프로그램 컬럼 `operationMethod`. */
+function resolveEducationFormCode(
+  educationForm: string | null | undefined,
+  operationMethod: string | null | undefined,
+): EducationForm {
+  const code = optionalText(educationForm) ?? optionalText(operationMethod)
+  return mapEducationForm(code)
+}
+
+function resolveOperatingRange(args: {
+  operationStart?: string | null
+  operationEnd?: string | null
+  businessStart?: string | null
+  businessEnd?: string | null
+}): { start: Date | null; end: Date | null } {
+  const operationStart = toDate(args.operationStart ?? undefined)
+  const operationEnd = toDate(args.operationEnd ?? undefined)
+  if (operationStart || operationEnd) return { start: operationStart, end: operationEnd }
+  return {
+    start: toDate(args.businessStart ?? undefined),
+    end: toDate(args.businessEnd ?? undefined),
+  }
+}
+
+/** 상세 운영 기간은 모집 행 날짜. 없으면 사업 기간. */
+function recruitmentOperatingDates(recruitments: PortalRecruitment[] | undefined): {
+  start?: string | null
+  end?: string | null
+} {
+  const row = (recruitments ?? []).find(
+    item => optionalText(item.operationStartDate) || optionalText(item.operationEndDate),
+  )
+  return { start: row?.operationStartDate, end: row?.operationEndDate }
 }
 
 type EducationProgressRowVisibility = {
@@ -618,26 +629,33 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
 
   const category = mapCategory(remote.portalCategories, remote.programType)
   const detailCase = mapDetailCase(remote.programType, remote.portalCategories, remote.recruitments)
-  const educationForm = mapEducationForm(remote.operationMethod)
+  const perScheduleEducationForm = remote.educationFormScheduleDetail === 'perSchedule'
+  const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const targets = mapEducationTargets(remote)
   const roleLabel = ROLE_LABEL[detailCase]
   const programType = readString(remote.programType)?.toUpperCase()
   const isTrainedTeacher = programType === 'TRAINED_TEACHER'
-  const opStart = toDate(remote.businessStartDate)
-  const opEnd = toDate(remote.businessEndDate)
+  const recruitmentOperation = recruitmentOperatingDates(remote.recruitments)
+  const operating = resolveOperatingRange({
+    operationStart: recruitmentOperation.start,
+    operationEnd: recruitmentOperation.end,
+    businessStart: remote.businessStartDate,
+    businessEnd: remote.businessEndDate,
+  })
+  const opStart = operating.start
+  const opEnd = operating.end
   const primaryRecruitment = remote.recruitments?.[0]
   const appStart = toDate(primaryRecruitment?.startAt)
   const appEnd = toDate(primaryRecruitment?.endAt)
-  const recruitmentStatus = mapRecruitmentStatus(
-    remote.periodStatus,
-    remote.recruitmentStatus,
-    remote.recruitments,
-  )
-  const educationFormLabel = EDUCATION_FORM_LABEL[educationForm]
+  const recruitmentStatus = mapRecruitmentStatus(remote.recruitmentStatus, remote.recruitments)
+  const apiEducationFormLabel = perScheduleEducationForm
+    ? undefined
+    : optionalText(remote.educationFormLabel)
+  const educationFormLabel = apiEducationFormLabel ?? EDUCATION_FORM_LABEL[educationForm]
   const educationVenueLabel =
     formatPortalEducationVenue(remote.venue, remote.venueKind) ||
     venueFromSchedules(remote.schedules) ||
-    educationFormLabel
+    (perScheduleEducationForm ? '' : educationFormLabel)
   const businessFieldLabel = readString(remote.businessField) || '-'
   const educationTargetDetailLabel = mapEducationTargetDetailLabel(
     remote,
@@ -653,7 +671,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
   const legacyEventSchedules =
     legacySessions.length > 0 ? [] : mapEventSchedules(remote.schedules)
   const rowVisibility: EducationProgressRowVisibility = {
-    showEducationForm: !optionalText(remote.educationFormLabel),
+    showEducationForm: perScheduleEducationForm || !optionalText(remote.educationFormLabel),
     showParticipation:
       remote.participationMethod !== 'individual' && remote.participationMethod !== 'team',
     showIps: !optionalText(remote.ipsTypeSummary),
@@ -665,15 +683,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     ? mapPortalScheduleDetails(remote.scheduleDetails, remote.educationStructure, rowVisibility)
     : legacyEventSchedules
   const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
-  const apiEducationFormLabel = optionalText(remote.educationFormLabel)
-  const educationFormForDetail =
-    usesEducationProgressFields && apiEducationFormLabel
-      ? (educationFormFromDisplayLabel(apiEducationFormLabel) ?? educationForm)
-      : educationForm
-  const educationFormLabelForDetail =
-    usesEducationProgressFields && apiEducationFormLabel
-      ? apiEducationFormLabel
-      : EDUCATION_FORM_LABEL[educationForm]
+  const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
   const ipsTypeSummary = usesEducationProgressFields
     ? optionalText(remote.ipsTypeSummary)
     : undefined
@@ -701,12 +711,12 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetLabel: targets.educationTargetLabel,
-    educationForm: educationFormForDetail,
+    educationForm,
     educationFormLabel: educationFormLabelForDetail,
     thumbnailUrl,
     detailImageUrl: thumbnailUrl,
     sponsor: (remote.sponsorNames ?? []).map(readString).filter(Boolean).join(', ') || '-',
-    summary: readString(remote.summary) ?? readString(remote.description) ?? '',
+    summary: readString(remote.description) ?? readString(remote.summary) ?? '',
     isRecruiting: recruitmentStatus === RECRUITMENT_STATUS.recruiting,
     businessFieldLabel,
     educationTargetGroupLabel: targets.educationTargetGroupLabel,
@@ -722,9 +732,11 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
       usesEducationProgressFields,
       businessFieldLabel,
       roleLabel,
-      educationFormLabel: usesEducationProgressFields
-        ? (apiEducationFormLabel ?? '')
-        : educationFormLabel,
+      educationFormLabel: perScheduleEducationForm
+        ? ''
+        : usesEducationProgressFields
+          ? (apiEducationFormLabel ?? '')
+          : educationFormLabel,
       participationMethodLabel:
         usesEducationProgressFields &&
         (remote.participationMethod === 'individual' || remote.participationMethod === 'team')
@@ -791,17 +803,19 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
   if (programId == null || !title) return null
 
   const category = mapCategory(remote.portalCategories, remote.programType)
-  const educationForm = mapEducationForm(remote.operationMethod)
+  const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const targets = mapEducationTargets(remote)
-  const opStart = toDate(remote.businessStartDate)
-  const opEnd = toDate(remote.businessEndDate)
+  const operating = resolveOperatingRange({
+    operationStart: remote.operationStartDate,
+    operationEnd: remote.operationEndDate,
+    businessStart: remote.businessStartDate,
+    businessEnd: remote.businessEndDate,
+  })
+  const opStart = operating.start
+  const opEnd = operating.end
   const appStart = toDate(remote.recruitmentStartAt)
   const appEnd = toDate(remote.recruitmentEndAt)
-  const recruitmentStatus = mapRecruitmentStatus(
-    undefined,
-    remote.recruitmentStatus,
-    undefined,
-  )
+  const recruitmentStatus = mapRecruitmentStatus(remote.recruitmentStatus, undefined)
 
   return {
     id: String(programId),

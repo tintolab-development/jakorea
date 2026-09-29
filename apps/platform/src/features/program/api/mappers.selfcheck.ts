@@ -205,6 +205,7 @@ const generalCurriculum = mapPortalProgramDetail({
   programType: 'GENERAL_INDIVIDUAL',
   title: '필요와 욕구',
   operationMethod: 'OFFLINE',
+  educationForm: 'online',
   remarks: '일정은 학교 사정에 따라 조율할 수 있습니다.',
   otherMatters: '기타 안내',
   educationStructure: 'curriculum',
@@ -262,6 +263,7 @@ assert.deepEqual(
   generalCurriculum.educationSchedules.map(item => item.value),
   generalCurriculum.educationScheduleLines,
 )
+assert.equal(generalCurriculum.educationForm, 'online')
 assert.equal(generalCurriculum.educationFormLabel, '온라인')
 assert.equal(generalCurriculum.participationMethod, 'individual')
 assert.equal(
@@ -289,22 +291,42 @@ const scheduleMulti = mapPortalProgramDetail({
   programId: 186017,
   programType: 'GENERAL_INDIVIDUAL',
   title: '일정형',
+  operationMethod: 'OFFLINE',
+  educationForm: 'online',
+  educationFormScheduleDetail: 'perSchedule',
+  educationFormLabel: null,
   educationStructure: 'schedule',
   sessionRound: 'multi',
   educationScheduleLines: ['26년 9월 29일(화) 10:00 ~ 12:00'],
   scheduleDetails: [
     {
-      scheduleLabel: '사전 교육',
+      scheduleLabel: '세부 일정 01',
       blockKind: 'preEducation',
       name: '오리엔테이션',
       scheduleDateLabel: '26년 9월 29일(화)',
+      educationFormLabel: '온라인',
+    },
+    {
+      scheduleLabel: '세부 일정 02',
+      blockKind: 'sub',
+      name: '본 교육',
+      scheduleDateLabel: '26년 10월 6일(화)',
+      educationFormLabel: '오프라인',
     },
   ],
 })
 assert.ok(scheduleMulti)
 assert.equal(scheduleMulti.sessions.length, 0)
+assert.equal(scheduleMulti.educationForm, 'online')
+assert.equal(scheduleMulti.educationFormLabel, '')
+assert.equal(
+  scheduleMulti.basicInfoFields.some(field => field.label === '교육 형태'),
+  false,
+)
 assert.equal(scheduleMulti.eventSchedules[0]?.blockKind, 'preEducation')
+assert.equal(scheduleMulti.eventSchedules[0]?.educationFormLabel, '온라인')
 assert.equal(scheduleMulti.eventSchedules[0]?.dateLabel, '26년 9월 29일(화)')
+assert.equal(scheduleMulti.eventSchedules[1]?.educationFormLabel, '오프라인')
 assert.equal(scheduleMulti.educationSchedules.length, 0)
 assert.deepEqual(scheduleMulti.educationScheduleLines, ['26년 9월 29일(화) 10:00 ~ 12:00'])
 
@@ -331,6 +353,7 @@ const trainedTeacherProgress = mapPortalProgramDetail({
   programType: 'TRAINED_TEACHER',
   title: '수정3',
   operationMethod: 'OFFLINE',
+  educationForm: 'online',
   educationTarget: 'high',
   educationTargets: ['high', 'adult'],
   educationTargetDetail: '고등학교 1~2학년, 성인 일반',
@@ -379,10 +402,38 @@ assert.equal(trainedTeacherProgress.sessions.length, 1)
 assert.equal(trainedTeacherProgress.sessions[0]?.title, '수정3')
 assert.equal(trainedTeacherProgress.sessions[0]?.educationFormLabel, undefined)
 assert.equal(trainedTeacherProgress.sessions[0]?.ipsTypeSummary, 'Succeed | Workshop (워크숍)')
+assert.equal(trainedTeacherProgress.educationForm, 'online')
+assert.equal(trainedTeacherProgress.educationFormLabel, '온라인')
 assert.equal(
   trainedTeacherProgress.basicInfoFields.find(field => field.label === '교육 형태')?.value,
   '온라인',
 )
+
+const participantChoice = mapPortalProgramDetail({
+  programId: 186022,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '참여자 선택',
+  operationMethod: 'OFFLINE',
+  educationForm: 'participant_choice',
+  educationFormLabel: '참여자 선택',
+  educationFormScheduleDetail: 'common',
+})
+assert.ok(participantChoice)
+assert.equal(participantChoice.educationForm, 'participant_choice')
+assert.equal(participantChoice.educationFormLabel, '참여자 선택')
+assert.equal(
+  participantChoice.basicInfoFields.find(field => field.label === '교육 형태')?.value,
+  '참여자 선택',
+)
+
+const operationMethodFallback = mapPortalProgramDetail({
+  programId: 186023,
+  title: '컬럼만',
+  operationMethod: 'ONLINE',
+})
+assert.ok(operationMethodFallback)
+assert.equal(operationMethodFallback.educationForm, 'online')
+assert.equal(operationMethodFallback.educationFormLabel, '온라인')
 assert.equal(
   trainedTeacherProgress.basicInfoFields.some(field => field.label === '참여 방식'),
   false,
@@ -453,5 +504,112 @@ assert.equal(
   '기관 밖, 인근 구립도서관 강의실',
 )
 assert.equal(trainedTeacher.educationScheduleMode, 'period')
+
+const participantCatalog = mapPortalProgramDetail({
+  programId: 186030,
+  title: '참여자만',
+  summary: '프로그램 설명 컬럼',
+  description: '모집 상세에 적은 프로그램 설명',
+  periodStatus: 'SCHEDULED',
+  recruitmentStatus: 'OPEN',
+  businessStartDate: '2026-11-03',
+  businessEndDate: '2026-12-17',
+  learningSupportContent: '교재와 활동지를 제공합니다.',
+  otherMatters: null,
+  recruitments: [
+    {
+      recruitmentType: 'PARTICIPANT',
+      operationStartDate: '2026-11-12',
+      operationEndDate: '2026-12-17',
+      interviewEnabled: false,
+      documentPassAnnouncementAt: '2026-11-10T00:00:00Z',
+      interviewStartAt: '2026-11-11T00:00:00Z',
+      interviewEndAt: '2026-11-12T00:00:00Z',
+      finalPassAnnouncementAt: '2026-11-13T15:00:00Z',
+    },
+  ],
+})
+assert.ok(participantCatalog)
+assert.equal(participantCatalog.recruitmentStatus, 'recruiting')
+assert.equal(participantCatalog.summary, '모집 상세에 적은 프로그램 설명')
+assert.equal(participantCatalog.operatingPeriodStart, '2026-11-12')
+assert.equal(participantCatalog.operatingPeriodEnd, '2026-12-17')
+assert.equal(
+  participantCatalog.extraSections.some(section => section.title === '기타사항'),
+  false,
+)
+assert.equal(
+  participantCatalog.extraSections.find(section => section.title === '학습 지원 내용')?.body,
+  '교재와 활동지를 제공합니다.',
+)
+assert.equal(
+  participantCatalog.recruitmentPhases.some(phase => phase.label === '1차 서류 합격자 발표'),
+  false,
+)
+assert.equal(
+  participantCatalog.recruitmentPhases.some(phase => phase.label === '2차 면접 기간'),
+  false,
+)
+assert.equal(
+  participantCatalog.recruitmentPhases.some(phase => phase.label === '최종 합격자 발표'),
+  true,
+)
+
+const instructorOnly = mapPortalProgramDetail({
+  programId: 186031,
+  title: '강사만',
+  recruitmentStatus: 'OPEN',
+  learningSupportContent: null,
+  otherMatters: '강사 안내',
+  recruitments: [{ recruitmentType: 'INSTRUCTOR' }],
+})
+assert.ok(instructorOnly)
+assert.equal(
+  instructorOnly.extraSections.some(section => section.title === '학습 지원 내용'),
+  false,
+)
+assert.equal(
+  instructorOnly.extraSections.find(section => section.title === '기타사항')?.body,
+  '강사 안내',
+)
+
+const noRecruitmentBadge = mapPortalProgramDetail({
+  programId: 186032,
+  title: '모집 없음',
+  periodStatus: 'SCHEDULED',
+  recruitmentStatus: 'NONE',
+})
+assert.ok(noRecruitmentBadge)
+assert.equal(noRecruitmentBadge.recruitmentStatus, 'closed')
+
+const businessPeriodFallback = mapPortalProgramDetail({
+  programId: 186033,
+  title: '운영 기간 없음',
+  businessStartDate: '2026-11-03',
+  businessEndDate: '2026-12-17',
+  recruitments: [{ recruitmentType: 'PARTICIPANT' }],
+})
+assert.ok(businessPeriodFallback)
+assert.equal(businessPeriodFallback.operatingPeriodStart, '2026-11-03')
+assert.equal(businessPeriodFallback.operatingPeriodEnd, '2026-12-17')
+
+const listedEducationForm = mapPortalProgramListItem({
+  programId: 186034,
+  title: '목록 교육 형태',
+  operationMethod: 'OFFLINE',
+  educationForm: 'online',
+  recruitmentStatus: 'OPEN',
+  periodStatus: 'SCHEDULED',
+  businessStartDate: '2026-11-03',
+  businessEndDate: '2026-12-17',
+  operationStartDate: '2026-11-12',
+  operationEndDate: '2026-12-17',
+})
+assert.ok(listedEducationForm)
+assert.equal(listedEducationForm.educationForm, 'online')
+assert.equal(listedEducationForm.educationFormLabel, '온라인')
+assert.equal(listedEducationForm.recruitmentStatus, 'recruiting')
+assert.equal(listedEducationForm.operatingPeriodStart, '2026-11-12')
+assert.equal(listedEducationForm.operatingPeriodEnd, '2026-12-17')
 
 console.log('program portal mappers.selfcheck: ok')
