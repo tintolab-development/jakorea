@@ -61,13 +61,6 @@ export function ApplicationFormPreviewPanel({
   }, [active, variant, reloadKey, formSource.bindingsLoading, formSource.templateVersionId])
 
   useEffect(() => {
-    if (!active) {
-      resetInstitutionApplicationProgramBridge()
-      resetInstitutionApplicationFormVisibility()
-    }
-  }, [active])
-
-  useEffect(() => {
     if (!active) return
     if (
       variant === 'institution' ||
@@ -75,6 +68,10 @@ export function ApplicationFormPreviewPanel({
       variant === 'economy-application-institution'
     ) {
       patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
+    }
+    return () => {
+      resetInstitutionApplicationProgramBridge()
+      resetInstitutionApplicationFormVisibility()
     }
   }, [active, program, variant])
 
