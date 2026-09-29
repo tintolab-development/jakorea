@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { Program } from '@/types/domain'
 import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { fromDetail, fromListItem, toCreateRequest, toUpdateRequest } from './adapters'
 import { shouldRetryQuery } from './errors'
 import { toRemoteListParams } from './list-params'
@@ -38,6 +39,33 @@ const draft = {
 } as unknown as WritingFormDraft
 
 describe('UJAT program adapters', () => {
+  it('후원사 담당자 미선택 시 create body에 sentinel·contact id를 넣지 않는다', () => {
+    const pending = buildUjatProgramListRowFromRegistrationSnapshot({
+      id: 'ujat-pending-test',
+      overlay: {
+        'ujat.basicInfo.sponsorId': '163348',
+        'ujat.basicInfo.sponsorContactIds': [SPONSOR_CONTACT_UNSELECTED_VALUE],
+        'ujat.basicInfo.sponsorContactId': SPONSOR_CONTACT_UNSELECTED_VALUE,
+        'ujat.basicInfo.sponsorManagerName': '미선택',
+        'ujat.recruit.institution.targetLevels': ['university', 'elementary'],
+      },
+    })
+    const request = toCreateRequest(pending, {
+      draft,
+      overlay: pending.ujatRegistrationOverlay ?? {},
+    })
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      program?: { generalCommonInfo?: { sponsorManagerContactIds?: string[] } }
+      registration?: { overlay?: Record<string, unknown> }
+    }
+
+    expect(request.sponsors).toEqual([{ sponsorId: '163348' }])
+    expect(request.targetLevels).toEqual(['university', 'elementary'])
+    expect(detail.program?.generalCommonInfo?.sponsorManagerContactIds).toBeUndefined()
+    expect(detail.registration?.overlay?.['ujat.basicInfo.sponsorContactIds']).toEqual([])
+    expect(detail.registration?.overlay?.['ujat.basicInfo.sponsorContactId']).toBe('')
+  })
+
   it('create 요청에 UJAT 제안값과 versioned 상세를 넣는다', () => {
     const request = toCreateRequest(program, {
       draft,

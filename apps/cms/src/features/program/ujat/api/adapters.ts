@@ -19,6 +19,16 @@ import {
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
+import {
+  buildProgramSponsorAssignmentsWire,
+  normalizeSponsorManagerContactIds,
+} from '@/features/program/general/model/common-info-edit-schema'
+import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
+import {
+  stripUnselectedUjatSponsorContactsFromOverlay,
+  ujatSponsorManagerContactIdsForApi,
+} from '@/features/program/ujat/lib/ujat-sponsor-contact-api-payload'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
@@ -295,12 +305,56 @@ function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
   return Object.prototype.hasOwnProperty.call(patch, key)
 }
 
+function resolveRequestTargetLevels(
+  program: Program
+): ProgramUpdateRequestTargetLevelsItem[] | undefined {
+  if (program.targetLevels != null) {
+    return [...program.targetLevels] as ProgramUpdateRequestTargetLevelsItem[]
+  }
+  if (program.targetLevel) {
+    return [program.targetLevel as ProgramUpdateRequestTargetLevelsItem]
+  }
+  return undefined
+}
+
+function mapUjatProgramSponsorAssignments(program: Program) {
+  const sponsorId = program.sponsorId != null ? String(program.sponsorId).trim() : ''
+  const contactRefs = ujatSponsorManagerContactIdsForApi({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+    managerLine: program.generalCommonInfo?.sponsorManagerLine,
+  })
+  const normalized = normalizeSponsorManagerContactIds({
+    ids: contactRefs,
+    id: contactRefs[0],
+  }).filter(ref => !isSponsorContactUnselected(ref))
+  return buildProgramSponsorAssignmentsWire(sponsorId ? [sponsorId] : [], normalized)
+}
+
+function registrationSnapshotForApi(
+  registration?: RegistrationSnapshot
+): RegistrationSnapshot | undefined {
+  if (!registration) return undefined
+  return {
+    ...registration,
+    overlay: stripUnselectedUjatSponsorContactsFromOverlay(registration.overlay),
+  }
+}
+
 function coreRequest(
   program: Program,
   registration?: RegistrationSnapshot
 ): ProgramUpdateRequest {
+  const targetLevels = resolveRequestTargetLevels(program)
+  const sponsors = mapUjatProgramSponsorAssignments(program)
+  const primarySponsorId =
+    sponsors.find(s => s.sponsorContactId)?.sponsorId ||
+    sponsors[0]?.sponsorId ||
+    (program.sponsorId != null ? String(program.sponsorId) : undefined)
+
   return {
-    sponsorId: program.sponsorId,
+    sponsorId: primarySponsorId,
+    sponsors: sponsors.length > 0 ? sponsors : undefined,
     title: program.title,
     type: program.type,
     format: program.format,
@@ -323,7 +377,8 @@ function coreRequest(
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
     district: program.district,
-    targetLevel: program.targetLevels?.[0] ?? program.targetLevel,
+    targetLevel: targetLevels?.[0] ?? program.targetLevel,
+    targetLevels,
     institutionType: program.institutionType,
     ipOwned: program.ipOwned,
     courseDeliveredBy: program.courseDeliveredBy,
@@ -365,7 +420,7 @@ function coreRequest(
       curriculum: round.curriculum,
       deliveryType: round.deliveryType,
     })),
-    serviceDetailJson: serializeServiceDetail(program, registration),
+    serviceDetailJson: serializeServiceDetail(program, registrationSnapshotForApi(registration)),
   }
 }
 
@@ -466,7 +521,7 @@ function patchRequest(
   }
 
   // UJAT registration overlay 보존을 위해 patch 저장 시 serviceDetailJson은 항상 포함
-  body.serviceDetailJson = serializeServiceDetail(merged, registration)
+  body.serviceDetailJson = serializeServiceDetail(merged, registrationSnapshotForApi(registration))
   return body
 }
 
@@ -475,11 +530,10 @@ export function toCreateRequest(
   registration?: RegistrationSnapshot
 ): ProgramCreateRequest {
   return {
-    ...coreRequest(program),
+    ...coreRequest(program, registrationSnapshotForApi(registration)),
     programType: 'UJAT',
     businessStartDate: dateValue(program.startDate),
     businessEndDate: dateValue(program.endDate),
-    serviceDetailJson: serializeServiceDetail(program, registration),
     autoApplyDefaultFormBindings: true,
   }
 }

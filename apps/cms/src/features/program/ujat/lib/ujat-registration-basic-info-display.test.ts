@@ -9,6 +9,7 @@ import {
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
 } from './ujat-registration-basic-info-defaults'
+import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 function baseProgram(): Program {
   return {
@@ -112,6 +113,17 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
       }
     )
     expect(next.teamDivision).toBeUndefined()
+  })
+
+  it('후원사 담당자 미선택이면 generalCommonInfo에 sentinel을 넣지 않는다', () => {
+    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {
+      'ujat.basicInfo.sponsorContactIds': [SPONSOR_CONTACT_UNSELECTED_VALUE],
+      'ujat.basicInfo.sponsorContactId': SPONSOR_CONTACT_UNSELECTED_VALUE,
+      'ujat.basicInfo.sponsorManagerName': '미선택',
+    })
+    expect(next.generalCommonInfo?.sponsorManagerContactIds).toBeUndefined()
+    expect(next.generalCommonInfo?.sponsorManagerContactId).toBeUndefined()
+    expect(next.generalCommonInfo?.sponsorManagerLine).toBe('미선택')
   })
 
   it('후원사 담당자·설문 overlay를 generalCommonInfo·generalSurveyMenuKeys에 반영한다', () => {
