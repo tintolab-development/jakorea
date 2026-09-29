@@ -5,6 +5,7 @@ import assert from 'node:assert/strict'
 import {
   buildApplicationAnswersFromDraft,
   coerceApplicationFormDocument,
+  prepareIndividualApplicationDraft,
   writingFormDraftFromApplicationForm,
 } from './application-form-draft.ts'
 
@@ -174,5 +175,42 @@ assert.deepEqual(Object.keys(visibleAnswers), [visibleId])
 assert.equal(hiddenScheduleId in visibleAnswers, false)
 assert.equal(hiddenTeamId in visibleAnswers, false)
 assert.equal(explanationId in visibleAnswers, false)
+
+const prepared = prepareIndividualApplicationDraft({
+  ...visibleDraft!,
+  paragraphs: [
+    ...visibleDraft!.paragraphs,
+    {
+      id: 'program-participant-application-seed-interview-schedule',
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      paragraphTitle: '면접 진행 가능 일정',
+      paragraphDescription: '',
+      requiredMark: true,
+      participatesInTitleNumbering: true,
+      tableFlavor: 'text',
+      columnHeaders: ['면접 진행 가능일', ''],
+      dataRows: [['', '']],
+      columnFields: [],
+      fieldDataRows: [],
+      bottomText: '',
+      showBottomText: false,
+      showBottomConsent: false,
+      bottomConsent: 'agree',
+      answerRequired: true,
+    },
+  ],
+})
+assert.equal(
+  prepared.paragraphs.some(paragraph => paragraph.paragraphTitle === '면접 진행 가능 일정'),
+  false
+)
+const preparedTeam = prepared.paragraphs.find(paragraph => paragraph.id === hiddenTeamId)
+assert.ok(preparedTeam)
+assert.equal(preparedTeam.requiredMark, true)
+assert.equal(
+  'runtimeHidden' in preparedTeam ? (preparedTeam as { runtimeHidden?: boolean }).runtimeHidden : false,
+  false
+)
 
 console.log('application-form-draft.selfcheck: ok')

@@ -5,6 +5,7 @@ import type {
   ProgramDetail,
   ProgramDetailCase,
   ProgramListItem,
+  ProgramParticipationMethod,
 } from '../model/types'
 import type {
   PortalCurriculum,
@@ -393,6 +394,15 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
   })
 }
 
+function mapParticipationMethod(remote: PortalProgramDetail): ProgramParticipationMethod {
+  const raw = String(remote.participationMethod ?? '').trim().toLowerCase()
+  if (raw === 'team') return 'team'
+  if (raw === 'individual') return 'individual'
+  /** Portal GET에 아직 없으면 CMS 개인 신청 시드(팀 정보 단락)와 맞춤 */
+  if (remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL') return 'team'
+  return 'individual'
+}
+
 function contactValue(phone?: string, email?: string): string {
   const p = readString(phone)
   const e = readString(email)
@@ -476,7 +486,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     programType,
     registrationKind: isTrainedTeacher ? 'trainedTeachers' : undefined,
     programAudience: remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL' ? 'individual' : 'organization',
-    participationMethod: 'individual',
+    participationMethod: mapParticipationMethod(remote),
     recruitmentRoleLabel: roleLabel,
     basicInfoFields: [
       { label: '사업 분야', value: businessFieldLabel },

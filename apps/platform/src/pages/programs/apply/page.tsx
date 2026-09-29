@@ -10,6 +10,7 @@ import {
   programApplyCompletePath,
   programDetailPath,
   resolveProgramApplyFormCase,
+  shouldShowIndividualTeamInfoParagraph,
   useProgramApplicationForm,
   useProgramDetail,
   useSubmitProgramApplication,
@@ -21,6 +22,8 @@ import {
 } from '@/features/program/lib/application-api-error'
 import {
   buildApplicationAnswersFromDraft,
+  coerceApplicationFormDocument,
+  prepareIndividualApplicationDraft,
   writingFormDraftFromApplicationForm,
 } from '@/features/program/lib/application-form-draft'
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
@@ -34,8 +37,10 @@ import {
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
 import {
+  applyScheduleVisibilityFieldsFromRuntimeContext,
   isApplyScheduleChoiceParagraphId,
   shouldShowApplyPreferredSchedule,
+  shouldShowApplyScheduleParagraph,
 } from '@/features/program/lib/apply-form-schedule'
 import {
   preferredScheduleBlocksFromDraftAnswers,
@@ -215,7 +220,12 @@ export function ProgramApplyPage() {
         )
         if (remoteDraft) {
           hydratedFormKeyRef.current = remoteFormKey
-          setDraft(remoteDraft)
+          const applyCaseForDraft = resolveProgramApplyFormCase(program)
+          setDraft(
+            applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
+              ? prepareIndividualApplicationDraft(remoteDraft)
+              : remoteDraft,
+          )
           const draftAnswers = remoteForm.draftAnswers
           const preferredParagraph = findDraftParagraph(
             remoteDraft,
@@ -564,7 +574,21 @@ export function ProgramApplyPage() {
 
   const hiddenParagraphIds = useMemo(() => {
     const hidden = new Set<string>()
-    if (applyCase === 'individual-general' && draft) {
+    const runtimeFields = applyScheduleVisibilityFieldsFromRuntimeContext(
+      coerceApplicationFormDocument(remoteForm)?.runtimeContext,
+    )
+    const scheduleFields = {
+      educationStructure: runtimeFields?.educationStructure ?? program?.educationStructure,
+      sessionRound: runtimeFields?.sessionRound ?? program?.sessionRound,
+      educationScheduleMode: runtimeFields?.educationScheduleMode ?? program?.educationScheduleMode,
+      educationScheduleLines: program?.educationScheduleLines,
+    }
+    if (draft && !shouldShowApplyScheduleParagraph(scheduleFields)) {
+      for (const paragraph of draft.paragraphs) {
+        if (isApplyScheduleChoiceParagraphId(paragraph.id)) hidden.add(paragraph.id)
+      }
+    }
+    if (applyCase && !shouldShowIndividualTeamInfoParagraph(applyCase) && draft) {
       for (const paragraph of draft.paragraphs) {
         if (isApplicationTeamInfoParagraphId(paragraph.id)) hidden.add(paragraph.id)
       }
@@ -577,7 +601,7 @@ export function ProgramApplyPage() {
       }
     }
     return hidden
-  }, [applyCase, draft, sexOffense])
+  }, [applyCase, draft, program, remoteForm, sexOffense])
 
   const formLoading =
     remoteApplyEnabled &&
@@ -635,7 +659,9 @@ export function ProgramApplyPage() {
         }
       }
       const teamParagraph = findDraftParagraph(draft, isApplicationTeamInfoParagraphId)
-      if (teamParagraph) {
+      const showTeamInfo =
+        applyCase != null && shouldShowIndividualTeamInfoParagraph(applyCase)
+      if (showTeamInfo && teamParagraph) {
         const teamError = findIncompleteIndividualTeamInfoMessage(teamInfo)
         if (teamError) {
           setSubmitError(teamError)
@@ -669,7 +695,7 @@ export function ProgramApplyPage() {
       if (basicAnswer != null && basicParagraph) {
         overrides[resolveApplicationAnswerKey(basicParagraph)] = basicAnswer
       }
-      if (teamParagraph) {
+      if (showTeamInfo && teamParagraph) {
         overrides[resolveApplicationAnswerKey(teamParagraph)] = teamInfoAnswerFromValues(teamInfo)
       }
       const guidanceParagraph = findDraftParagraph(draft, isApplicationGuidanceParagraphId)
@@ -690,12 +716,25 @@ export function ProgramApplyPage() {
           sexOffenseInquiryAnswerFromValues(sexOffense)
       }
 
+      const omitParagraphIds = new Set<string>()
+      if (inquiryParagraph && !shouldShowSexOffenseInquiry(sexOffense)) {
+        omitParagraphIds.add(inquiryParagraph.id)
+        omitParagraphIds.add(resolveApplicationAnswerKey(inquiryParagraph))
+      }
+      if (!showTeamInfo && teamParagraph) {
+        omitParagraphIds.add(teamParagraph.id)
+        omitParagraphIds.add(resolveApplicationAnswerKey(teamParagraph))
+      }
+      for (const paragraph of draft.paragraphs) {
+        if (isApplyScheduleChoiceParagraphId(paragraph.id) && hiddenParagraphIds.has(paragraph.id)) {
+          omitParagraphIds.add(paragraph.id)
+          omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
+        }
+      }
+
       const answers = buildApplicationAnswersFromDraft(draft, {
         overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
-        omitParagraphIds:
-          inquiryParagraph && !shouldShowSexOffenseInquiry(sexOffense)
-            ? new Set([inquiryParagraph.id, resolveApplicationAnswerKey(inquiryParagraph)])
-            : undefined,
+        omitParagraphIds: omitParagraphIds.size > 0 ? omitParagraphIds : undefined,
       })
 
       const classCount = Number.parseInt(basicInfo.classCount, 10)

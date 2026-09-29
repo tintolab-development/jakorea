@@ -8,7 +8,9 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
+import { migrateProgramParticipantApplicationParagraphs } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { resolveApplicationAnswerKey } from './application-answer-key.ts'
+import { isApplicationTeamInfoParagraphId } from './apply-form-paragraph-ids.ts'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -176,6 +178,44 @@ function mergeAnswerIntoParagraph(
   return next
 }
 
+export function uniqueWritingFormParagraphsById(
+  paragraphs: readonly WritingFormParagraph[],
+): WritingFormParagraph[] {
+  const seen = new Set<string>()
+  const unique: WritingFormParagraph[] = []
+  for (const paragraph of paragraphs) {
+    if (seen.has(paragraph.id)) continue
+    seen.add(paragraph.id)
+    unique.push(paragraph)
+  }
+  return unique
+}
+
+function revealIndividualTeamInfoParagraph(paragraph: WritingFormParagraph): WritingFormParagraph {
+  if (!isApplicationTeamInfoParagraphId(paragraph.id)) return paragraph
+  return {
+    ...paragraph,
+    requiredMark: true,
+    answerRequired: true,
+    hidden: false,
+    runtimeHidden: false,
+  } as unknown as WritingFormParagraph
+}
+
+/**
+ * CMS 개인 신청 미리보기와 맞춤: 동일 id 중복 제거, 봉사자 면접 단락 제거, 팀 정보 숨김 플래그 해제.
+ */
+export function prepareIndividualApplicationDraft(draft: WritingFormDraft): WritingFormDraft {
+  const migrated = migrateProgramParticipantApplicationParagraphs({
+    ...draft,
+    paragraphs: uniqueWritingFormParagraphsById(draft.paragraphs),
+  })
+  return {
+    ...migrated,
+    paragraphs: migrated.paragraphs.map(revealIndividualTeamInfoParagraph),
+  }
+}
+
 export function writingFormDraftFromApplicationForm(
   form: unknown,
   draftAnswers?: Record<string, unknown> | null,
@@ -187,17 +227,18 @@ export function writingFormDraftFromApplicationForm(
    * runtime hidden 은 제출 키에서만 제외한다 (`buildApplicationAnswersFromDraft`).
    */
   const normalized = normalizeWritingFormDraft(document as unknown as WritingFormDraft)
-  if (!draftAnswers || Object.keys(draftAnswers).length === 0) {
-    return normalized
-  }
-  return {
-    ...normalized,
-    paragraphs: normalized.paragraphs.map(paragraph => {
-      const key = resolveApplicationAnswerKey(paragraph)
-      if (!key || !(key in draftAnswers)) return paragraph
-      return mergeAnswerIntoParagraph(paragraph, draftAnswers[key])
-    }),
-  }
+  const withAnswers =
+    !draftAnswers || Object.keys(draftAnswers).length === 0
+      ? normalized
+      : {
+          ...normalized,
+          paragraphs: normalized.paragraphs.map(paragraph => {
+            const key = resolveApplicationAnswerKey(paragraph)
+            if (!key || !(key in draftAnswers)) return paragraph
+            return mergeAnswerIntoParagraph(paragraph, draftAnswers[key])
+          }),
+        }
+  return withAnswers
 }
 
 function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {

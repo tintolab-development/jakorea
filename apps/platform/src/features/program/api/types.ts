@@ -126,6 +126,8 @@ export type PortalProgramDetail = {
   periodStatus?: string
   recruitmentStatus?: string
   applicationTargetMode?: string
+  /** CMS 공통정보 참여 방식. `team`이면 개인 신청 팀 정보 노출 */
+  participationMethod?: string
   businessField?: string
   venue?: string
   contactName?: string
