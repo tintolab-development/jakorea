@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { isEducationScheduleLineBeforeSeoulToday } from '@/features/template/lib/format-education-schedule-line'
 import './education-schedule-preview-lines.css'
 
 export const EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER =
@@ -45,7 +46,7 @@ export function EducationSchedulePreviewLines({
           {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
           <span className="education-schedule-preview-lines__item">
             <span className="detail-info-form--text nowrap">{line}</span>
-            {editable ? (
+            {editable && !isEducationScheduleLineBeforeSeoulToday(line) ? (
               <button
                 type="button"
                 className="education-schedule-preview-lines__remove"
