@@ -65,6 +65,7 @@ import { mergeInstructorGradesFromCreateRequestIntoUser } from '@/features/user/
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
   matchesDeleteGuideTypedConfirm,
 } from '@/shared/constants/delete-guide-modal'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
@@ -75,8 +76,6 @@ import {
 } from '@/features/user/api/map-member-role'
 import {
   bulkDeleteAdminsRemote,
-  bulkDeleteAllAccountsRemote,
-  bulkDeleteMembersRemote,
   bulkDeleteSchoolsRemote,
   changeAdminAccountRoleRemote,
   createAdminAccountRemote,
@@ -109,9 +108,7 @@ import {
 } from '@/features/user/api/apply-admin-permission-variant'
 import {
   collectAdminAccountIds,
-  collectMemberIds,
   collectOrganizationIds,
-  toAccountDirectoryBulkDeleteTargets,
 } from '@/features/user/api/partition-users-for-bulk-delete'
 import type { MemberListKind } from '@/shared/config/member-list-kinds'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
@@ -1610,8 +1607,12 @@ export async function deleteUser(
     organizationId?: number
     role?: UserRole
     email?: string
-    /** 회원(member) 삭제 API — 현재 로그인 관리자 비밀번호 */
+    /** 회원(member) 삭제 API — 현재 로그인 관리자 비밀번호 (목록 삭제) */
     currentPassword?: string
+    /** 상세 회원 탈퇴 — 확인 문구 `탈퇴` */
+    withdrawConfirmationText?: string
+    /** 목록 회원 삭제 — 확인 문구 `삭제` */
+    typedDeleteConfirm?: string
   }
 ): Promise<void> {
   if (isMembersRemoteEnabled()) {
@@ -1641,15 +1642,44 @@ export async function deleteUser(
       }
 
       const currentPassword = options?.currentPassword?.trim() ?? ''
-      if (!currentPassword) {
-        throw new Error('비밀번호를 입력해 주세요.')
+      const withdrawConfirmationText = options?.withdrawConfirmationText?.trim() ?? ''
+      const typedDeleteConfirm = options?.typedDeleteConfirm?.trim() ?? ''
+      const isPhraseWithdraw = matchesDeleteGuideTypedConfirm(
+        withdrawConfirmationText,
+        WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE
+      )
+      const isPhraseDelete = matchesDeleteGuideTypedConfirm(
+        typedDeleteConfirm,
+        DELETE_GUIDE_TYPED_CONFIRM_VALUE
+      )
+      const confirmationText = isPhraseWithdraw
+        ? WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE
+        : isPhraseDelete
+          ? DELETE_GUIDE_TYPED_CONFIRM_VALUE
+          : null
+      if (!confirmationText && !currentPassword) {
+        throw new Error(
+          options?.withdrawConfirmationText
+            ? '탈퇴 확인 문구를 입력해 주세요.'
+            : options?.typedDeleteConfirm
+              ? '삭제 확인 문구를 입력해 주세요.'
+              : '비밀번호를 입력해 주세요.'
+        )
       }
 
       const memberId = resolveMemberIdForApi(userId, options)
-      await deleteMemberRemote(memberId, {
-        reason,
-        currentPassword,
-      })
+      await deleteMemberRemote(
+        memberId,
+        confirmationText
+          ? {
+              reason,
+              confirmationText,
+            }
+          : {
+              reason,
+              currentPassword,
+            }
+      )
       return
     } catch (error) {
       throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))
@@ -1670,7 +1700,7 @@ const DEFAULT_DELETE_REASON = 'CMS 관리자 회원 삭제'
 
 /**
  * 목록 탭별 일괄·단건 삭제 (remote). mock에서는 단건 `deleteUser` 루프.
- * 회원/통합 삭제 API는 `currentPassword`(현재 로그인 관리자 비밀번호) 필수.
+ * 회원 삭제는 확인 문구 `삭제`로 진행한다.
  */
 export async function deleteUsersByListKind(
   users: Omit<User, 'password'>[],
@@ -1681,9 +1711,6 @@ export async function deleteUsersByListKind(
   if (users.length === 0) return
 
   const typedConfirm = confirmInput?.trim() ?? ''
-  const currentPassword = confirmInput?.trim() ?? ''
-
-  const usesAdminPassword = listKind !== 'institutions' && listKind !== 'admins'
 
   if (!isMembersRemoteEnabled()) {
     for (const u of users) {
@@ -1693,7 +1720,7 @@ export async function deleteUsersByListKind(
         adminAccountId: u.adminAccountId,
         organizationId: u.organizationId ?? parseOrganizationIdFromUserId(u.id),
         email: u.email,
-        currentPassword: usesAdminPassword ? currentPassword || undefined : undefined,
+        typedDeleteConfirm: typedConfirm || undefined,
       })
     }
     return
@@ -1701,14 +1728,19 @@ export async function deleteUsersByListKind(
 
   try {
     if (listKind === 'all') {
-      if (!currentPassword) {
-        throw new Error('비밀번호를 입력해 주세요.')
+      if (!matchesDeleteGuideTypedConfirm(typedConfirm, DELETE_GUIDE_TYPED_CONFIRM_VALUE)) {
+        throw new Error('삭제 확인 문구를 입력해 주세요.')
       }
-      await bulkDeleteAllAccountsRemote({
-        targets: toAccountDirectoryBulkDeleteTargets(users),
-        reason,
-        currentPassword,
-      })
+      for (const u of users) {
+        await deleteUser(u.id, reason, {
+          role: u.role,
+          memberId: u.memberId,
+          adminAccountId: u.adminAccountId,
+          organizationId: u.organizationId ?? parseOrganizationIdFromUserId(u.id),
+          email: u.email,
+          typedDeleteConfirm: typedConfirm,
+        })
+      }
       return
     }
 
@@ -1743,26 +1775,18 @@ export async function deleteUsersByListKind(
       return
     }
 
-    if (!currentPassword) {
-      throw new Error('비밀번호를 입력해 주세요.')
+    if (!matchesDeleteGuideTypedConfirm(typedConfirm, DELETE_GUIDE_TYPED_CONFIRM_VALUE)) {
+      throw new Error('삭제 확인 문구를 입력해 주세요.')
     }
 
-    if (users.length === 1) {
-      const u = users[0]
+    for (const u of users) {
       await deleteUser(u.id, reason, {
         role: u.role,
         memberId: u.memberId,
         email: u.email,
-        currentPassword,
+        typedDeleteConfirm: typedConfirm,
       })
-      return
     }
-
-    await bulkDeleteMembersRemote({
-      ids: collectMemberIds(users),
-      reason,
-      currentPassword,
-    })
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))
   }

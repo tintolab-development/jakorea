@@ -172,7 +172,7 @@ export interface UseUserDetailControllerParams {
   mode: UserDetailControllerModalMode
   programsChildQueryKey: string
   basicInfoEntrySource?: UserBasicInfoEntrySource
-  onWithdraw?: (user: Omit<User, 'password'>, currentPassword?: string) => void | Promise<void>
+  onWithdraw?: (user: Omit<User, 'password'>, confirmInput?: string) => void | Promise<void>
   modals: UseUserDetailModalsResult
   patchMemberBasicInfo?: (
     userId: string,
@@ -850,11 +850,11 @@ export function useUserDetailController({
   }, [])
 
   const handleWithdrawConfirm = useCallback(
-    async (currentPassword?: string) => {
+    async (confirmInput?: string) => {
       if (!displayUser || !onWithdraw) return
       setWithdrawConfirmLoading(true)
       try {
-        await onWithdraw(displayUser, currentPassword)
+        await onWithdraw(displayUser, confirmInput)
         setWithdrawConfirmOpen(false)
       } finally {
         setWithdrawConfirmLoading(false)

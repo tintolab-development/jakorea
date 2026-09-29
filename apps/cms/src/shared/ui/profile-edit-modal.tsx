@@ -349,8 +349,17 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
     setWithdrawModalOpen(false)
   }
 
-  const handleWithdraw = async (_confirmInput?: string) => {
+  const handleWithdraw = async (currentPassword?: string) => {
     if (!user) {
+      return
+    }
+
+    const password = currentPassword?.trim() ?? ''
+    if (!password) {
+      showAlert({
+        title: '안내',
+        content: '비밀번호를 입력해 주세요.',
+      })
       return
     }
 
@@ -359,6 +368,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
       if (isMembersRemoteEnabled()) {
         await withdrawAdminSelfRemote({
           confirmationText: '탈퇴',
+          currentPassword: password,
         })
       } else {
         updateUser({ isActive: false })
