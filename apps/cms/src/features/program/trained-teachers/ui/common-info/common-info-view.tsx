@@ -1999,9 +1999,9 @@ export function TrainedTeachersCommonInfoView({
         }
 
         if (draft) {
-          const formPatch = form
-            ? detailEditValuesToProgramPatch(form.getValues(), program)
-            : undefined
+          // onBeforePersist 가 상세 캐시를 갱신하면 폼이 구 program으로 reset될 수 있다.
+          // 저장 직전 스냅샷(formPatchForRows)을 화면 반영에 쓴다.
+          const formPatch = formPatchForRows
           const formCommonInfo = formPatch?.generalCommonInfo
           const savedBusinessArea =
             resolveStoredBusinessArea(formPatch?.businessArea) ||
@@ -2044,16 +2044,14 @@ export function TrainedTeachersCommonInfoView({
               await onPersist({
                 commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
               })
-              if (savedBusinessArea) {
-                setSavedOverride({
-                  educatedTeachers: draft.kpiEducatedTeachers,
-                  businessArea: savedBusinessArea,
-                  commonInfo: {
-                    ...commonInfoPayload,
-                    kpi: kpiOverride,
-                  },
-                })
-              }
+              setSavedOverride({
+                educatedTeachers: draft.kpiEducatedTeachers,
+                ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
+                commonInfo: {
+                  ...commonInfoPayload,
+                  kpi: kpiOverride,
+                },
+              })
             } else {
               setSavedOverride({
                 educatedTeachers: draft.kpiEducatedTeachers,
@@ -2068,9 +2066,9 @@ export function TrainedTeachersCommonInfoView({
             // programs PATCH 만으로 KPI·사업분야 저장 — 재조회 전 화면 즉시 반영
             setSavedOverride({
               educatedTeachers: draft.kpiEducatedTeachers,
-              businessArea: savedBusinessArea,
+              ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
               commonInfo: {
-                ...commonInfo,
+                ...commonInfoPayload,
                 kpi: kpiOverride,
                 curriculumSessions,
                 scheduleDetails,

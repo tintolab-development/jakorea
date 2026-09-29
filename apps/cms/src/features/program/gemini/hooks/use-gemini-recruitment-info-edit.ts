@@ -118,9 +118,10 @@ export function useGeminiRecruitmentInfoEdit(
     }
     if (remoteEnabled) {
       await updateGeminiRecruitment(recruitmentId, nextDraft)
-      await queryClient.invalidateQueries({
-        queryKey: geminiVisitingTrainingQueryKeys.recruitmentDetail(recruitmentId),
-      })
+      const detailKey = geminiVisitingTrainingQueryKeys.recruitmentDetail(recruitmentId)
+      await queryClient.cancelQueries({ queryKey: detailKey })
+      queryClient.setQueryData(detailKey, applyInfoEditDraft(detail, nextDraft))
+      await queryClient.invalidateQueries({ queryKey: detailKey })
       await queryClient.invalidateQueries({
         queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
       })
