@@ -21,6 +21,7 @@ import {
   isTitleWithPeriodParagraph,
   paragraphEditableHeading,
   withInstitutionApplicationPreferredScheduleHeading,
+  withProgramApplicationFixedScheduleHeading,
   withProgramApplicationFormVolunteerTitleTrailing,
   withProgramRegistrationCurriculumTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
@@ -159,12 +160,16 @@ function PinnedFormCardInner({
     !showEditorChrome
   )
   const editableHeading = withAgreementAdminProxyConfirmHeading(
-    withInstitutionApplicationPreferredScheduleHeading(
-      withProgramApplicationFormVolunteerTitleTrailing(
-        withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-          withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-            withProgramRegistrationCurriculumTitleTrailing(
-              editableHeadingBase as ParagraphCardEditableHeading,
+    withProgramApplicationFixedScheduleHeading(
+      withInstitutionApplicationPreferredScheduleHeading(
+        withProgramApplicationFormVolunteerTitleTrailing(
+          withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+            withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+              withProgramRegistrationCurriculumTitleTrailing(
+                editableHeadingBase as ParagraphCardEditableHeading,
+                paragraph,
+                paragraphBodyOptions
+              ),
               paragraph,
               paragraphBodyOptions
             ),
@@ -353,12 +358,16 @@ function SortableMiddleFormCardInner({
     !showEditorChrome
   )
   const editableHeading = withAgreementAdminProxyConfirmHeading(
-    withInstitutionApplicationPreferredScheduleHeading(
-      withProgramApplicationFormVolunteerTitleTrailing(
-        withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-          withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-            withProgramRegistrationCurriculumTitleTrailing(
-              editableHeadingBase as ParagraphCardEditableHeading,
+    withProgramApplicationFixedScheduleHeading(
+      withInstitutionApplicationPreferredScheduleHeading(
+        withProgramApplicationFormVolunteerTitleTrailing(
+          withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+            withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+              withProgramRegistrationCurriculumTitleTrailing(
+                editableHeadingBase as ParagraphCardEditableHeading,
+                paragraph,
+                paragraphBodyOptions
+              ),
               paragraph,
               paragraphBodyOptions
             ),

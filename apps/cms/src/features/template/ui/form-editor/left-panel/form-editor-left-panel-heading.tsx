@@ -37,6 +37,7 @@ import {
 } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-economy-draft'
 import {
+  PROGRAM_PARTICIPANT_APPLICATION_IDS,
   PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
   shouldHideMultipleChoiceAllowMultipleTitleHint,
 } from '@/features/template/model/program-application-form-individual-draft'
@@ -61,7 +62,9 @@ import { ProgramRegistrationCurriculumTitleActions } from '@/features/program/sh
 import { resolveProgramRegistrationScheduleCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { getInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
+  resolveInstitutionFixedScheduleDescription,
   resolveInstitutionPreferredScheduleDescription,
+  shouldUseInstitutionFixedScheduleCardCopy,
   shouldUseInstitutionPreferredScheduleCardCopy,
 } from '@/features/template/lib/institution-application-schedule-copy'
 import {
@@ -384,6 +387,45 @@ export function withInstitutionApplicationPreferredScheduleHeading(
     showDescription: true,
     descriptionViewContent: <InstitutionPreferredScheduleCardDescription />,
     titleTrailing: <InstitutionPreferredScheduleCardTitleTrailing readOnly={readOnly} />,
+  }
+}
+
+function isProgramApplicationScheduleChoiceParagraphId(paragraphId: string): boolean {
+  return (
+    paragraphId === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice ||
+    paragraphId === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
+  )
+}
+
+/** 날짜 지정 고정 일정 — 시드 placeholder 대신 배정 안내를 카드 설명 슬롯에 둔다 */
+export function withProgramApplicationFixedScheduleHeading(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  if (!isProgramApplicationScheduleChoiceParagraphId(paragraph.id)) return heading
+  if (
+    paragraphBodyOptions?.programApplicationFormInstitution !== true &&
+    paragraphBodyOptions?.programApplicationFormIndividual !== true
+  ) {
+    return heading
+  }
+  if (paragraphBodyOptions.paragraphInteractionMode === 'authoring') return heading
+  const bridge =
+    paragraphBodyOptions.institutionApplicationProgramBridge ??
+    getInstitutionApplicationProgramBridge()
+  if (shouldUseInstitutionPreferredScheduleCardCopy(bridge)) return heading
+  if (!shouldUseInstitutionFixedScheduleCardCopy(bridge)) return heading
+  const currentDescription = heading.descriptionValue?.trim() ?? ''
+  if (currentDescription && !isPlaceholderParagraphDescription(currentDescription)) {
+    return heading
+  }
+  const description = resolveInstitutionFixedScheduleDescription(bridge)
+  return {
+    ...heading,
+    descriptionValue: description,
+    descriptionIsEditMode: false,
+    showDescription: Boolean(description.trim()),
   }
 }
 
