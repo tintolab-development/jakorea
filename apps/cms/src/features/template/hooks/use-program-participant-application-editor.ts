@@ -1465,6 +1465,7 @@ export function useProgramParticipantApplicationEditor(
             }
           : programApplicationFormVolunteerOptions,
       programLinkedInstitutionApplicationForm,
+      programLinkedIndividualApplicationForm: variant === 'individual' && programLinkedPreview,
     }
     },
     [

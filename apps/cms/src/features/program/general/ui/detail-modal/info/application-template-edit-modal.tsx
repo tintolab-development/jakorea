@@ -68,6 +68,7 @@ export function GeneralProgramApplicationTemplateEditModal({
     if (!open) return
     if (
       variant !== 'institution' &&
+      variant !== 'individual' &&
       variant !== 'economy-application-institution' &&
       variant !== 'trained-teachers-application-institution'
     ) {
@@ -94,6 +95,7 @@ export function GeneralProgramApplicationTemplateEditModal({
     program,
     programLinkedApplicationFormPreview:
       variant === 'institution' ||
+      variant === 'individual' ||
       variant === 'instructor' ||
       variant === 'volunteer' ||
       variant === 'economy-application-institution' ||

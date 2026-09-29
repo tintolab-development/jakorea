@@ -1,5 +1,8 @@
 import { useMemo } from 'react'
-import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  useInstitutionApplicationProgramBridge,
+  type InstitutionApplicationProgramBridge,
+} from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveInstitutionFixedScheduleDescription } from '@/features/template/lib/institution-application-schedule-copy'
 import {
   useGeneralApplicationOverlayKv,
@@ -11,10 +14,13 @@ import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
 /** 날짜 지정 등 — 프로그램 등록 교육 진행 예정일 목록에서 선택 (미리보기·응답용) */
 export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
   readOnlyPreview = false,
+  programBridge,
 }: {
   readOnlyPreview?: boolean
+  programBridge?: InstitutionApplicationProgramBridge
 }) {
-  const bridge = useInstitutionApplicationProgramBridge()
+  const storeBridge = useInstitutionApplicationProgramBridge()
+  const bridge = programBridge ?? storeBridge
   const description = resolveInstitutionFixedScheduleDescription(bridge)
   const lines = useMemo(() => {
     const fromBridge = bridge.educationScheduleLines

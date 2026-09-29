@@ -190,6 +190,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
         title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.title}
         description={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription}
         required
+        bodyClassName="program-common-info-edit__section-body--stacked"
       >
         <ProgramRegistrationTypeSettingsParagraph
           programType={extras.programType}
@@ -217,6 +218,9 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
         title={curriculumTitle}
         description={curriculumDescription}
         required
+        bodyClassName={
+          isScheduleStructure ? 'program-common-info-edit__section-body--stacked' : undefined
+        }
         titleTrailing={
           <ProgramRegistrationCurriculumTitleActions
             programType={extras.programType}

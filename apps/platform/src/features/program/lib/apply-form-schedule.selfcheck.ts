@@ -5,6 +5,7 @@
 
 import assert from 'node:assert/strict'
 import {
+  applyScheduleVisibilityFieldsFromRuntimeContext,
   countUniqueEducationScheduleCalendarDays,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyScheduleParagraph,
@@ -108,4 +109,22 @@ function testScheduleParagraphVisibility() {
 
 testUniqueCalendarDays()
 testScheduleParagraphVisibility()
+
+const runtimeScheduleMulti = applyScheduleVisibilityFieldsFromRuntimeContext({
+  educationStructure: 'SCHEDULE',
+  sessionRound: 'MULTI',
+  scheduleMode: 'FIXED_DATE',
+})
+assert.ok(runtimeScheduleMulti)
+assert.equal(
+  shouldShowApplyScheduleParagraph({
+    ...runtimeScheduleMulti,
+    educationScheduleLines: [
+      '26년 4월 20일(일) 9:30 ~ 12:20',
+      '26년 4월 27일(월) 13:00 ~ 15:50',
+    ],
+  }),
+  false
+)
+
 console.log('apply-form-schedule.selfcheck: ok')

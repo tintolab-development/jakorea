@@ -43,6 +43,10 @@
     "./consent": {
       "types": "./dist/consent/index.d.ts",
       "import": "./dist/consent/index.js"
+    },
+    "./program-application": {
+      "types": "./dist/program-application/index.d.ts",
+      "import": "./dist/program-application/index.js"
     }
   },
   "devDependencies": {

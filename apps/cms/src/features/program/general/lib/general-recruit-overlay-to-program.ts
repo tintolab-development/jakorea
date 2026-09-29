@@ -1304,6 +1304,12 @@ export function resolveGeneralRecruitDetailDisplayProgram(
       ? undefined
       : info?.remarks?.trim() || undefined
 
+  const withPersistedRecruitMedia = applyGeneralRecruitOverlayToProgram(
+    program,
+    program.registrationOverlay ?? {},
+    { preferOverlay: false }
+  )
+
   return {
     ...program,
     description,
@@ -1313,5 +1319,9 @@ export function resolveGeneralRecruitDetailDisplayProgram(
     additionalContentHtml,
     otherNotes,
     oneLineIntroduction: otherNotes,
+    attachmentFileNames:
+      withPersistedRecruitMedia.attachmentFileNames ?? program.attachmentFileNames,
+    keyVisualImage: withPersistedRecruitMedia.keyVisualImage ?? program.keyVisualImage,
+    posterImage: withPersistedRecruitMedia.posterImage ?? program.posterImage,
   }
 }

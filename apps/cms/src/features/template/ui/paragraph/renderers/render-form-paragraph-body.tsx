@@ -16,6 +16,7 @@ import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agre
 import {
   getStructureLockedPartialLockedBodyColumnIndexes,
   isStructureLockedPartialDisclaimerEdit,
+  isStructureLockedPartialShortEssayParagraph,
   isStructureLockedPartialTextParagraph,
 } from '@/features/template/lib/structure-locked-paragraph-hint'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
@@ -56,6 +57,7 @@ import type { GeminiVisitingTrainingApplicationFormInstructorBodyOptions } from 
 import type { EconomyProgramApplicationParagraphBodyOptions } from '@/features/template/ui/form-set/application-form/1c-1s/paragraph-body'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
 import { ProgramApplicationFormIndividualScheduleParagraph } from '@/features/template/ui/form-set/application-form/individual/paragraphs/individual-schedule-paragraph'
+import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
   mergeSubjectiveFromShortEssayEdit,
   ShortEssay,
@@ -252,6 +254,10 @@ export type RenderFormParagraphBodyOptions = {
   programLinkedInstitutionApplicationForm?: boolean
   /** 프로그램 상세 신청 양식 수정·미리보기 — 개인 「진행 희망 교육 일정」 연동 */
   programLinkedIndividualApplicationForm?: boolean
+  /** 미리보기 등 — 전역 브리지 대신 프로그램에서 계산한 일정 연동값 */
+  institutionApplicationProgramBridge?: InstitutionApplicationProgramBridge
+  /** 카탈로그 snapshot — 일정 단락을 schema `items` 객관식으로 표시. 프로그램 상세 연동 미리보기에서는 끄고 공통정보 일정을 쓴다 */
+  applicationFormSchemaSnapshotPreview?: boolean
   /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트로 표시 */
   surveyPeriodReadonly?: boolean
   /** 강의보고서 프로그램 진행 정보 — 프로그램·배정 연동 미리보기(템플릿 안내 대신 실값) */
@@ -281,9 +287,17 @@ export function renderFormParagraphBody(
     options?.structureLockedAuthoringOperationalFill === true &&
     paragraphInteractionMode === 'authoring' &&
     !isPreviewReadonly
+  /** 신청 시드 주관식 — 표 partial 셀과 같이 선택 시 본문(안내 텍스트) 수정 */
+  const structureLockedPartialShortEssayEdit =
+    structureLocked &&
+    isStructureLockedPartialShortEssayParagraph(p.id) &&
+    paragraphInteractionMode === 'authoring' &&
+    !isPreviewReadonly &&
+    isParagraphSelected
   /**
    * 구조 잠금: 작성(authoring)에서는 카드 선택만으로는 본문 편집 불가.
    * 모집 양식(`structureLockedAuthoringOperationalFill`): 운영 값 입력은 허용.
+   * 신청 시드 주관식(`structureLockedPartialShortEssayEdit`): 안내 텍스트 수정 허용.
    * user + `agreementConsentFillReadOnlyBody`: 양식 본문만 잠금(동의서 작성).
    * user + interactive id 예외(대상자 본인 등): 응답 입력 허용.
    * user(일반): 잠긴 시드도 입력 가능. `preview`는 항상 비활성.
@@ -292,6 +306,7 @@ export function renderFormParagraphBody(
     ? false
     : structureLocked
       ? lockedAuthoringOperationalFill ||
+        structureLockedPartialShortEssayEdit ||
         (paragraphInteractionMode === 'user' &&
           (!consentFillBodyReadOnly || consentFillParagraphInteractive))
       : paragraphInteractionMode === 'user' || isParagraphSelected
@@ -677,6 +692,7 @@ export function renderFormParagraphBody(
           onChange={next => updateParagraph(p.id, () => next)}
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
+          authoringEditsPlaceholder={structureLockedPartialShortEssayEdit}
           paragraphInteractionMode={paragraphInteractionMode}
           activeItemId={isBodyInteractive ? options?.singleItemListActiveItemId : null}
           onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
@@ -701,30 +717,28 @@ export function renderFormParagraphBody(
       )
     case 'multiple_choice': {
       if (
+        options?.applicationFormSchemaSnapshotPreview !== true &&
         options?.programApplicationFormInstitution === true &&
         p.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
       ) {
         return (
           <ProgramApplicationFormInstitutionScheduleParagraph
             readOnlyPreview={isPreviewReadonly}
-            isTemplateAuthoringMode={
-              paragraphInteractionMode === 'authoring' &&
-              options?.programLinkedInstitutionApplicationForm !== true
-            }
+            isTemplateAuthoringMode={paragraphInteractionMode === 'authoring'}
+            programBridge={options?.institutionApplicationProgramBridge}
           />
         )
       }
       if (
+        options?.applicationFormSchemaSnapshotPreview !== true &&
         options?.programApplicationFormIndividual === true &&
         p.id === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
       ) {
         return (
           <ProgramApplicationFormIndividualScheduleParagraph
             readOnlyPreview={isPreviewReadonly}
-            isTemplateAuthoringMode={
-              paragraphInteractionMode === 'authoring' &&
-              options?.programLinkedIndividualApplicationForm !== true
-            }
+            isTemplateAuthoringMode={paragraphInteractionMode === 'authoring'}
+            programBridge={options?.institutionApplicationProgramBridge}
           />
         )
       }

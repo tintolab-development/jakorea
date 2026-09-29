@@ -5,9 +5,13 @@ import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/mod
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@/features/template/model/program-application-form-trained-teachers-draft'
+import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import {
   getStructureLockedPartialLockedBodyColumnIndexes,
   isStructureLockedPartialDisclaimerEdit,
+  isStructureLockedPartialHeadingParagraph,
+  isStructureLockedPartialShortEssayParagraph,
   isStructureLockedPartialTextParagraph,
   resolveStructureLockedParagraphHint,
 } from '@/features/template/lib/structure-locked-paragraph-hint'
@@ -68,6 +72,29 @@ describe('resolveStructureLockedParagraphHint', () => {
         PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.personalInfoCollection
       )
     ).toBe('* 해당 단락은 삭제 불가하며, 일부 텍스트만 수정이 가능합니다.')
+  })
+
+  it('참여자 신청 자기소개 주관식은 partial 안내를 쓴다', () => {
+    expect(
+      resolveStructureLockedParagraphHint(PROGRAM_PARTICIPANT_APPLICATION_IDS.selfIntro)
+    ).toBe('* 해당 단락은 삭제 불가하며, 일부 텍스트만 수정이 가능합니다.')
+    expect(
+      isStructureLockedPartialShortEssayParagraph(PROGRAM_PARTICIPANT_APPLICATION_IDS.selfIntro)
+    ).toBe(true)
+  })
+
+  it('진행 희망 교육 일정은 제목·설명 수정 partial 안내를 쓴다', () => {
+    expect(
+      resolveStructureLockedParagraphHint(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
+    ).toBe('* 해당 단락은 삭제 불가하며, 일부 텍스트만 수정이 가능합니다.')
+    expect(
+      isStructureLockedPartialHeadingParagraph(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
+    ).toBe(true)
+    expect(
+      isStructureLockedPartialHeadingParagraph(
+        PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
+      )
+    ).toBe(true)
   })
 })
 

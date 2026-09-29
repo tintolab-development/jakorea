@@ -92,7 +92,18 @@ assert.equal(
 assert.equal(mapped.thumbnailUrl, portalPublicFileContentUrl(77))
 assert.equal(mapped.attachments[0]?.url, '/api/portal/public/files/88/download')
 assert.equal(mapped.contactValue, '02-6085-6028 · cc@jakorea.org')
+assert.equal(mapped.participationMethod, 'team')
 assert.ok(mapped.extraSections.some(section => section.title === '추가 내용'))
+
+const individualOnly = mapPortalProgramDetail({
+  programId: 186015,
+  title: '개인 참여',
+  programType: 'GENERAL_INDIVIDUAL',
+  applicationTargetMode: 'INDIVIDUAL',
+  participationMethod: 'individual',
+})
+assert.ok(individualOnly)
+assert.equal(individualOnly.participationMethod, 'individual')
 
 const ujat = mapPortalProgramDetail({
   programId: 9,

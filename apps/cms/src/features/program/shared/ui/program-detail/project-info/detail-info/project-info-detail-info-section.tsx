@@ -52,9 +52,6 @@ const ATTACHMENT_GUIDE_LINES = [
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
-const FALLBACK_ADDITIONAL_SVG =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='200' viewBox='0 0 600 200'%3E%3Crect fill='%23f5f5f5' width='600' height='200'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='14'%3E추가 내용 이미지%3C/text%3E%3C/svg%3E"
-
 export type DetailInfoEmptyReadDisplay = 'mock-default' | 'dash'
 
 function revokeBlobUrl(url: string | null | undefined) {
@@ -73,6 +70,32 @@ function readableThumbnailUrl(value: string | null | undefined): string | undefi
     return trimmed
   }
   return undefined
+}
+
+function normalizeAttachmentFileNames(names: string[] | undefined | null): string[] {
+  return (names ?? []).map(name => name.trim()).filter(Boolean)
+}
+
+/** GET attachments API 결과 + program/상세 JSON fallback (빈 API 응답이 이름을 덮어쓰지 않게) */
+function resolveAttachmentFileNamesForDisplay({
+  isFormEdit,
+  formFileNames,
+  linkedAttachmentNames,
+  programFallback,
+}: {
+  isFormEdit: boolean
+  formFileNames: string[] | undefined
+  linkedAttachmentNames: string[] | null
+  programFallback: string[] | undefined
+}): string[] {
+  const fallback = normalizeAttachmentFileNames(programFallback)
+  if (isFormEdit) {
+    return normalizeAttachmentFileNames(formFileNames)
+  }
+  if (linkedAttachmentNames != null && linkedAttachmentNames.length > 0) {
+    return normalizeAttachmentFileNames(linkedAttachmentNames)
+  }
+  return fallback
 }
 
 function resolveTextReadContent(
@@ -158,14 +181,17 @@ function useDetailInfoEditorBlock(
 
   const isFormEdit = Boolean(isEditMode && form)
   const [linkedAttachmentNames, setLinkedAttachmentNames] = useState<string[] | null>(null)
-  const displayFileNames = isFormEdit
-    ? (form!.watch('attachmentFileNames') ?? [])
-    : (linkedAttachmentNames ?? program.attachmentFileNames ?? [])
+  const displayFileNames = resolveAttachmentFileNamesForDisplay({
+    isFormEdit,
+    formFileNames: isFormEdit ? form!.watch('attachmentFileNames') : undefined,
+    linkedAttachmentNames,
+    programFallback: program.attachmentFileNames,
+  })
 
   useEffect(() => {
     const programId = parseFileObjectId(program.id)
     if (programId == null) {
-      setLinkedAttachmentNames([])
+      setLinkedAttachmentNames(null)
       return
     }
     let cancelled = false
@@ -176,12 +202,12 @@ function useDetailInfoEditorBlock(
           .map(item => item.originalFileName?.trim() || '')
           .filter(Boolean)
         setLinkedAttachmentNames(names)
-        if (form) {
+        if (form && names.length > 0) {
           form.setValue('attachmentFileNames', names, { shouldDirty: false })
         }
       })
       .catch(() => {
-        if (!cancelled) setLinkedAttachmentNames(program.attachmentFileNames ?? [])
+        if (!cancelled) setLinkedAttachmentNames(null)
       })
     return () => {
       cancelled = true
@@ -470,17 +496,6 @@ function AdditionalContentRow({
           '-'
         ) : (
           <div className="program-detail-info-tab__additional-content">
-            {program.keyVisualImage || program.posterImage ? (
-              <div className="program-detail-info-tab__additional-image-wrap">
-                <Image
-                  src={program.keyVisualImage || program.posterImage}
-                  alt="추가 내용"
-                  className="program-detail-info-tab__additional-image"
-                  preview={{ mask: '확대 보기' }}
-                  fallback={FALLBACK_ADDITIONAL_SVG}
-                />
-              </div>
-            ) : null}
             <RichTextViewer
               content={resolveAdditionalContentHtml(program, emptyReadDisplay)}
               contentFormat="html"

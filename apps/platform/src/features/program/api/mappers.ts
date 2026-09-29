@@ -8,6 +8,7 @@ import type {
   ProgramEventSchedule,
   ProgramLabeledValue,
   ProgramListItem,
+  ProgramParticipationMethod,
   ProgramSession,
 } from '../model/types'
 import type {
@@ -399,6 +400,15 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
   })
 }
 
+function mapParticipationMethod(remote: PortalProgramDetail): ProgramParticipationMethod {
+  const raw = String(remote.participationMethod ?? '').trim().toLowerCase()
+  if (raw === 'team') return 'team'
+  if (raw === 'individual') return 'individual'
+  /** Portal GET에 아직 없으면 CMS 개인 신청 시드(팀 정보 단락)와 맞춤 */
+  if (remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL') return 'team'
+  return 'individual'
+}
+
 function contactValue(phone?: string, email?: string): string {
   const p = readString(phone)
   const e = readString(email)
@@ -604,8 +614,6 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     usesEducationProgressFields && apiEducationFormLabel
       ? apiEducationFormLabel
       : EDUCATION_FORM_LABEL[educationForm]
-  const participationMethod =
-    usesEducationProgressFields && remote.participationMethod === 'team' ? 'team' : 'individual'
   const ipsTypeSummary = usesEducationProgressFields
     ? optionalText(remote.ipsTypeSummary)
     : undefined
@@ -648,7 +656,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     programType,
     registrationKind: isTrainedTeacher ? 'trainedTeachers' : undefined,
     programAudience: remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL' ? 'individual' : 'organization',
-    participationMethod,
+    participationMethod: mapParticipationMethod(remote),
     recruitmentRoleLabel: roleLabel,
     basicInfoFields: buildPortalBasicInfoFields({
       usesEducationProgressFields,
@@ -658,7 +666,8 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
         ? (apiEducationFormLabel ?? '')
         : educationFormLabel,
       participationMethodLabel:
-        usesEducationProgressFields && remote.participationMethod
+        usesEducationProgressFields &&
+        (remote.participationMethod === 'individual' || remote.participationMethod === 'team')
           ? PARTICIPATION_METHOD_LABEL[remote.participationMethod]
           : '',
       ipsTypeSummary: ipsTypeSummary ?? '',

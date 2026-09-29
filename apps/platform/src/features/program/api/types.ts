@@ -181,6 +181,7 @@ export type PortalProgramDetail = {
   participationScheduleDetail?: 'common' | 'perSchedule' | null
   ipsScheduleDetail?: 'common' | 'perSchedule' | null
   educationFormLabel?: string | null
+  /** CMS 공통정보 참여 방식. `team`이면 개인 신청 팀 정보 노출. 미전달은 null */
   participationMethod?: 'individual' | 'team' | null
   ipsTypeSummary?: string | null
   curriculumSessions?: PortalEducationCurriculumSession[]
