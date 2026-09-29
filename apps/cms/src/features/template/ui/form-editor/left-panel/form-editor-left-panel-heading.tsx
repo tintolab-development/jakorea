@@ -6,6 +6,10 @@ import {
   getSurveyWriteFormTitleNumberPrefix,
 } from '@/features/template/lib/form-title-numbering'
 import {
+  isStructureLockedPartialHeadingParagraph,
+  isStructureLockedPartialShortEssayParagraph,
+} from '@/features/template/lib/structure-locked-paragraph-hint'
+import {
   formatUserInfoWriteQuestionTitle,
   isAgreementLockedSystemParagraph,
   isEducatorFacilitatorPledgeClauseParagraphId,
@@ -783,6 +787,13 @@ export function paragraphEditableHeading(
         isSelected &&
         p.variant === 'horizontal_table' &&
         editorKind === 'horizontal_table'
+      const shortEssayLockedHeaderEditable =
+        locked &&
+        isSelected &&
+        p.variant === 'short_essay' &&
+        isStructureLockedPartialShortEssayParagraph(p.id)
+      const headingLockedHeaderEditable =
+        locked && isSelected && isStructureLockedPartialHeadingParagraph(p.id)
       const lectureReportLockedHeaderEditable =
         isSelected && LECTURE_REPORT_SEED_PARAGRAPH_IDS.has(p.id)
       const lockedDescriptionEditable =
@@ -808,7 +819,11 @@ export function paragraphEditableHeading(
             PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(p.id) ||
             UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(p.id))) ||
         lectureReportLockedHeaderEditable
-      const titleIsEditMode = horizontalLockedHeaderEditable || lectureReportLockedHeaderEditable
+      const titleIsEditMode =
+        horizontalLockedHeaderEditable ||
+        shortEssayLockedHeaderEditable ||
+        headingLockedHeaderEditable ||
+        lectureReportLockedHeaderEditable
       /* 잠금 시드: 제목은 기존 예외만, 설명란은 카드 선택 시 공통 편집 가능 */
       const descriptionIsEditMode = isSelected || lockedDescriptionEditable
       return {

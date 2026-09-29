@@ -88,24 +88,14 @@ export function ShortEssayEditor({
                 (cur.variant !== 'short_essay' && cur.variant !== 'session_plan_short_essay')
               )
                 return cur
-              const items =
-                cur.items?.length && cur.items.length > 0
-                  ? cur.items
-                  : [
-                      {
-                        id:
-                          cur.variant === 'session_plan_short_essay'
-                            ? 'session-plan-item-1'
-                            : 'short-essay-item-1',
-                        label: 'Title 01',
-                        placeholder: cur.bodyPlaceholder,
-                        bodyText: cur.bodyText,
-                      },
-                    ]
+              const hasPersistedItems = (cur.items?.length ?? 0) > 0
+              if (!hasPersistedItems) {
+                return { ...cur, bodyPlaceholder: next }
+              }
               return {
                 ...cur,
                 bodyPlaceholder: next,
-                items: items.map(item =>
+                items: cur.items!.map(item =>
                   item.id === selectedShortEssayItem.id ? { ...item, placeholder: next } : item
                 ),
               }

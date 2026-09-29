@@ -4,6 +4,8 @@ import { ParagraphCustomFieldsFormShell, ParagraphCustomFieldsSection } from '@/
 import { ParagraphMetaSection } from '@/features/template/ui/form-editor/right-panel/sections/paragraph-meta-section'
 import { ParagraphSettingsSection } from '@/features/template/ui/form-editor/right-panel/sections/paragraph-settings-section'
 import { StructureLockedParagraphSection } from '@/features/template/ui/form-editor/right-panel/sections/structure-locked-section'
+import { isStructureLockedPartialShortEssayParagraph } from '@/features/template/lib/structure-locked-paragraph-hint'
+import { ShortEssayEditor } from '@/features/template/ui/form-editor/right-panel/editors/short-essay-editor'
 import { isTitleWithPeriodParagraph } from '@/features/template/lib/title-with-period-settings'
 import { useActiveParagraphState } from '@/features/template/ui/form-editor/right-panel/hooks/use-active-paragraph'
 import { useParagraphConversion } from '@/features/template/ui/form-editor/right-panel/hooks/use-paragraph-conversion'
@@ -86,11 +88,15 @@ export function FormEditorRightPanel({
     updateParagraph,
   })
 
-  const { activeShortEssay, selectedShortEssayItem, shortEssayShowItemTitle } =
+  const { activeShortEssay, selectedShortEssayItem, shortEssayShowItemTitle, shortEssayItems } =
     useShortEssayEditorState({ active, singleItemListActiveItemId })
 
   if (active != null && structureLockedActive) {
     const titleWithPeriodLocked = isTitleWithPeriodParagraph(active)
+    const partialShortEssay =
+      isStructureLockedPartialShortEssayParagraph(active.id) &&
+      activeShortEssay != null &&
+      (selectedShortEssayItem ?? shortEssayItems[0])
     return (
       <div className="form-editor-right-panel">
         {showTitleNumbering ? (
@@ -113,6 +119,19 @@ export function FormEditorRightPanel({
             className="form-editor-right-panel__form-items--after-structure-locked"
           >
             <ParagraphSettingsSection active={active} updateParagraph={updateParagraph} />
+          </ParagraphCustomFieldsFormShell>
+        ) : null}
+        {partialShortEssay && activeShortEssay ? (
+          <ParagraphCustomFieldsFormShell
+            active={active}
+            className="form-editor-right-panel__form-items--after-structure-locked"
+          >
+            <ShortEssayEditor
+              activeShortEssay={activeShortEssay}
+              selectedShortEssayItem={selectedShortEssayItem ?? shortEssayItems[0]!}
+              shortEssayShowItemTitle={shortEssayShowItemTitle}
+              updateParagraph={updateParagraph}
+            />
           </ParagraphCustomFieldsFormShell>
         ) : null}
       </div>
