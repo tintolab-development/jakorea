@@ -25,7 +25,7 @@ import type { TemplateEditorVm } from '@/features/template/ui/template-renderers
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
-import { useCmsAlert } from '@/shared/ui'
+import { showUpdateCompletedAlert } from '@/shared/ui'
 
 export function GeneralProgramApplicationTemplateEditModal({
   open,
@@ -43,7 +43,6 @@ export function GeneralProgramApplicationTemplateEditModal({
   onClose: () => void
   onSaved?: () => void
 }) {
-  const { showAlert } = useCmsAlert()
   const variant = useMemo(
     () => variantOverride ?? resolveGeneralApplicationEditorVariant(program, applicationTab),
     [variantOverride, program, applicationTab]
@@ -135,12 +134,12 @@ export function GeneralProgramApplicationTemplateEditModal({
   const handleSave = useCallback(async () => {
     try {
       await vm.handleSave()
-      showAlert({ title: '안내', content: '양식이 저장되었습니다.' })
       onSaved?.()
+      showUpdateCompletedAlert()
     } catch {
       // useProgramParticipantApplicationEditor / form-template-save-feedback에서 안내
     }
-  }, [onSaved, showAlert, vm])
+  }, [onSaved, vm])
 
   if (registryEntry == null) return null
 
