@@ -396,11 +396,16 @@ export type UjatProgramProgressStatus =
   | 'PROGRAM_ENDED' // 프로그램 진행 완료
 
 // 프로그램
-/** 프로그램 모집 행 — 수정 잠금은 `startAt`만 본다. */
+/**
+ * 프로그램 모집 행.
+ * 신청양식 잠금은 `startAt`, 모집정보 잠금은 `operationStartDate`.
+ */
 export interface ProgramRecruitmentWindow {
   recruitmentType?: string
   targetType?: string
   startAt?: string | null
+  /** 해당 모집 유형의 프로그램 운영 시작일. 없으면 모집정보를 잠그지 않는다. */
+  operationStartDate?: string | null
 }
 
 export interface Program {
@@ -541,8 +546,8 @@ export interface Program {
   /** 일반 프로그램 상세 — 등록 폼 참여자 유형 (복수, API 연동 전 mock) */
   generalParticipantTypes?: GeneralProgramParticipantType[]
   /**
-   * GET `recruitments[]`. 모집·신청 잠금은 유형별 `startAt`.
-   * `operationStartDate`는 화면 표시용이며 잠금에 쓰지 않는다.
+   * GET `recruitments[]`.
+   * 신청양식 잠금은 유형별 `startAt`, 모집정보 잠금은 유형별 `operationStartDate`.
    */
   programRecruitments?: ProgramRecruitmentWindow[]
   /** 일반 프로그램 — 봉사자 선발 시 면접 단계 LNB 노출 여부 */

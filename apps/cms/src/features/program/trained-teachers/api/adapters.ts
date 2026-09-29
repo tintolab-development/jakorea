@@ -23,7 +23,6 @@ import {
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { AdminProgramSponsorAssignmentDto } from '@/features/program/general/api/programs-api-client'
 import {
-  derivedTextbookNameAliases,
   omitIfDetailedProgramNameAlias,
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
@@ -251,9 +250,13 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   const educationStructure =
     mapApiEducationStructureToDomain(dto.educationStructure) ??
     details.generalProgramEducationStructure
-  const announcementTitle = details.generalCommonInfo?.announcementTitle?.trim()
+  // 교육받은 교사 공고용명은 top-level title 컬럼 SSOT. nested는 레거시 fallback.
+  const announcementTitle =
+    dto.title?.trim() || details.generalCommonInfo?.announcementTitle?.trim()
   const detailedProgramName =
-    dto.detailedProgramName?.trim() || details.generalCommonInfo?.detailedProgramName
+    dto.detailedProgramName?.trim() ||
+    dto.textbookName?.trim() ||
+    details.generalCommonInfo?.detailedProgramName
   const participantRemarks = (
     details.generalCommonInfo?.participantRecruitmentInfo as { remarks?: string } | undefined
   )?.remarks
@@ -516,7 +519,7 @@ export function mapTrainedTeacherToUpdateRequest(
     sponsors[0]?.sponsorId ||
     merged.sponsorId
   const businessArea = resolveStoredBusinessArea(merged.businessArea) || undefined
-  const body: ProgramUpdateRequest & { businessField?: string } = {
+  const body: ProgramUpdateRequest = {
     sponsorId: primarySponsorId,
     sponsors: sponsors.length > 0 ? sponsors : undefined,
     title: merged.title,
@@ -531,19 +534,14 @@ export function mapTrainedTeacherToUpdateRequest(
     applicationStartDate: toDate(merged.applicationStartDate),
     applicationEndDate: toDate(merged.applicationEndDate),
     businessArea,
-    // handoff JsonAlias — codegen 미포함 시에도 BE 가 businessField 만 듣는 경로 대비
-    ...(businessArea ? { businessField: businessArea } : {}),
     // 일정형은 id 를 생략한다. 커리큘럼형은 숫자 마스터 id 만 보낸다.
     // 교재명·팀구분에 detailedProgramName 을 복제한 값이면 omit.
     educationStructure,
     detailedProgramId,
     titleEn: merged.titleEn,
     mainTitle: merged.mainTitle ?? merged.title,
-    textbookName: omitIfDetailedProgramNameAlias(
-      merged.textbookName,
-      detailedProgramName,
-      derivedTextbookNameAliases(merged)
-    ),
+    // 교육받은 교사 상세 GET은 세부 프로그램명을 textbookName 컬럼에서도 복원한다.
+    textbookName: merged.textbookName ?? detailedProgramName,
     textbookNameEn: merged.textbookNameEn,
     schoolId: merged.schoolId,
     district: merged.district,

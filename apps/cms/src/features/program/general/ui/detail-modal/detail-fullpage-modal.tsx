@@ -72,9 +72,11 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
+import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/program-edit-window'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import {
+  canGeneralProgramApplicationFormEdit,
   canGeneralProgramCommonInfoEdit,
   canGeneralProgramRecruitmentInfoEdit,
   getGeneralProgramCommonInfoEditBlockedAlertMessage,
@@ -878,8 +880,30 @@ export function GeneralProgramDetailFullPageModal({
   )
 
   const handleApplicationEditForm = useCallback(() => {
+    if (
+      displayProgram &&
+      !canGeneralProgramApplicationFormEdit(
+        displayProgram,
+        recruitmentEditTypeForDetailTab(applicationSubTab)
+      )
+    ) {
+      return
+    }
     setApplicationTemplateEditOpen(true)
-  }, [])
+  }, [applicationSubTab, displayProgram])
+
+  useEffect(() => {
+    if (!applicationTemplateEditOpen || !displayProgram) return
+    if (
+      canGeneralProgramApplicationFormEdit(
+        displayProgram,
+        recruitmentEditTypeForDetailTab(applicationSubTab)
+      )
+    ) {
+      return
+    }
+    setApplicationTemplateEditOpen(false)
+  }, [applicationSubTab, applicationTemplateEditOpen, displayProgram])
 
   const handleApplicationTemplateEditClose = useCallback(() => {
     setApplicationTemplateEditOpen(false)

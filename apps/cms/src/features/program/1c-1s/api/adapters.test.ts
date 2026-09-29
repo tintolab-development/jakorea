@@ -111,6 +111,16 @@ describe('company-school adapters', () => {
     expect(mapped.backendProgramType).toBe('COMPANY_SCHOOL')
   })
 
+  it('상세 응답의 businessField alias도 사업 분야로 읽는다', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '1',
+      title: '1사1교 프로그램',
+      businessField: 'digital_literacy',
+    } as ProgramResponse & { businessField?: string })
+
+    expect(mapped.businessArea).toBe('디지털리터러시')
+  })
+
   it('GET educationScheduleMode period는 date로 바꾸지 않고, 키가 없으면 date를 심지 않는다', () => {
     const withPeriod = mapCompanySchoolDetailToProgram({
       id: '186100',
@@ -335,6 +345,19 @@ describe('company-school adapters', () => {
     expect(request.contactPhone).toBeUndefined()
     expect(request.curriculum).toBeUndefined()
     expect(request.serviceDetailJson).toBeUndefined()
+  })
+
+  it('사업 분야는 공식 businessArea만 생성·수정 요청에 보낸다', () => {
+    const changed = { ...program, businessArea: 'digital_literacy' }
+    const create = mapCompanySchoolToCreateRequest(changed)
+    const update = mapCompanySchoolToUpdateRequest(changed, {
+      businessArea: 'digital_literacy',
+    })
+
+    expect(create.businessArea).toBe('디지털리터러시')
+    expect(create).not.toHaveProperty('businessField')
+    expect(update.businessArea).toBe('디지털리터러시')
+    expect(update).not.toHaveProperty('businessField')
   })
 
   it('omits masked manager/contact from patch update request', () => {

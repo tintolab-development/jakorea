@@ -8,9 +8,6 @@ import {
 import { ujatSurveyItemsFromProgramKeys } from '@/features/program/ujat/lib/registration-survey-items'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
-import { buildUjatHalfEducationScheduleOverlayDefaults } from '@/features/program/ujat/lib/ujat-half-education-schedule-display'
-import { buildUjatEducationScheduleSettingsOverlayDefaults } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
-import { buildUjatRegionCapacityOverlayDefaults } from '@/features/program/ujat/lib/ujat-region-capacity-display'
 import {
   buildUjatWageOverlayPatchFromPaymentItemIds,
   resolveUjatPaymentItemIdsFromProgram,
@@ -125,11 +122,6 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     'ujat.kpi.dispatchedSchool': program.generalCommonInfo?.kpi?.finalSchools ?? null,
     'ujat.kpi.dispatchedClass': program.generalCommonInfo?.kpi?.finalClasses ?? null,
     ...buildUjatWageOverlayPatchFromPaymentItemIds(resolveUjatPaymentItemIdsFromProgram(program)),
-    ...buildUjatHalfEducationScheduleOverlayDefaults('h1'),
-    ...buildUjatHalfEducationScheduleOverlayDefaults('h2'),
-    ...buildUjatEducationScheduleSettingsOverlayDefaults('h1'),
-    ...buildUjatEducationScheduleSettingsOverlayDefaults('h2'),
-    ...buildUjatRegionCapacityOverlayDefaults(),
   }
 }
 
@@ -197,6 +189,7 @@ export type UjatApiOverlayReconcileInput = {
   generalSurveyMenuKeys?: readonly string[]
   sponsorManagerContactIds?: readonly string[]
   sponsorManagerLine?: string | null
+  kpi?: NonNullable<Program['generalCommonInfo']>['kpi']
 }
 
 /** GET 응답 top-level·envelope 값으로 stale registration.overlay 보정 */
@@ -261,6 +254,13 @@ export function reconcileUjatRegistrationOverlayFromApi(
     next['ujat.basicInfo.sponsorContactIds'] = contactIds
     next['ujat.basicInfo.sponsorContactId'] = contactIds[0] ?? ''
   }
+  if (dto.kpi) {
+    next['ujat.kpi.participantCount'] = dto.kpi.finalParticipants
+    next['ujat.kpi.instructor'] = dto.kpi.instructorCount
+    next['ujat.kpi.volunteer'] = dto.kpi.volunteerCount
+    next['ujat.kpi.dispatchedSchool'] = dto.kpi.finalSchools
+    next['ujat.kpi.dispatchedClass'] = dto.kpi.finalClasses
+  }
 
   return next
 }
@@ -273,6 +273,7 @@ export function reconcileUjatRegistrationOverlayFromProgramResponse(
     generalSurveyMenuKeys?: readonly string[]
     sponsorManagerContactIds?: readonly string[]
     sponsorManagerLine?: string | null
+    kpi?: NonNullable<Program['generalCommonInfo']>['kpi']
   }
 ): Record<string, unknown> {
   return reconcileUjatRegistrationOverlayFromApi(
@@ -294,6 +295,7 @@ export function reconcileUjatRegistrationOverlayFromProgramResponse(
       generalSurveyMenuKeys: extras?.generalSurveyMenuKeys,
       sponsorManagerContactIds: extras?.sponsorManagerContactIds,
       sponsorManagerLine: extras?.sponsorManagerLine,
+      kpi: extras?.kpi,
     },
     overlay
   )

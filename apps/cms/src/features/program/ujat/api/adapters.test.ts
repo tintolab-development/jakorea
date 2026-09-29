@@ -162,6 +162,16 @@ describe('UJAT program adapters', () => {
     expect(mapped.endDate).toBe('2026-11-07')
   })
 
+  it('상세 응답의 businessField alias도 사업 분야로 읽는다', () => {
+    const mapped = fromDetail({
+      id: '1',
+      title: 'UJAT 프로그램',
+      businessField: 'digital_literacy',
+    } as Parameters<typeof fromDetail>[0] & { businessField?: string })
+
+    expect(mapped.businessArea).toBe('디지털리터러시')
+  })
+
   it('등록·수정 사업 기간은 businessStartDate/EndDate로 보낸다', () => {
     const created = toCreateRequest(program)
     const updated = toUpdateRequest(program, {
@@ -172,6 +182,19 @@ describe('UJAT program adapters', () => {
     expect(created.businessEndDate).toBe(program.endDate)
     expect(updated.businessStartDate).toBe('2026-10-14')
     expect(updated.businessEndDate).toBe('2026-11-07')
+  })
+
+  it('사업 분야는 공식 businessArea만 생성·수정 요청에 보낸다', () => {
+    const changed = { ...program, businessArea: 'digital_literacy' }
+    const created = toCreateRequest(changed)
+    const updated = toUpdateRequest(changed, {
+      businessArea: 'digital_literacy',
+    })
+
+    expect(created.businessArea).toBe('디지털리터러시')
+    expect(created).not.toHaveProperty('businessField')
+    expect(updated.businessArea).toBe('디지털리터러시')
+    expect(updated).not.toHaveProperty('businessField')
   })
 
   it('사업 기간은 연도를 넘어도 선택한 날짜를 그대로 보낸다', () => {

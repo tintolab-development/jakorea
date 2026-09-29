@@ -1645,6 +1645,20 @@ function resolveDetailedProgramName(
   return catalog.find(row => row.id === detailedProgramId)?.name
 }
 
+function existingCommonWithoutRecruitment(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const {
+    participantRecruitmentInfo: _participantRecruitmentInfo,
+    instructorRecruitmentInfo: _instructorRecruitmentInfo,
+    volunteerRecruitmentInfo: _volunteerRecruitmentInfo,
+    volunteerInterviewScheduleInfo: _volunteerInterviewScheduleInfo,
+    ...rest
+  } = common
+  return rest
+}
+
 export function generalCommonInfoEditValuesToProgramPatch(
   values: GeneralProgramCommonInfoEditFormValues,
   existing: Program,
@@ -1788,7 +1802,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     ...(manager?.name && !manager.name.includes('*') ? { managerName: manager.name } : {}),
     ...(manager?.phone && !manager.phone.includes('*') ? { contactPhone: manager.phone } : {}),
     generalCommonInfo: {
-      ...existing.generalCommonInfo,
+      ...existingCommonWithoutRecruitment(existing.generalCommonInfo),
       announcementTitle: values.announcementTitle.trim(),
       detailedProgramName: detailedProgramName ?? existingCommon.detailedProgramName,
       sponsorDisplayName:

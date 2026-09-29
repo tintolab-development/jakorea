@@ -6,6 +6,11 @@ import {
   mapCompanySchoolToUpdateRequest,
 } from '@/features/program/1c-1s/api/adapters'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
+import {
+  readEconomyRegistrationOverlayForSave,
+  seedEconomyRegistrationOverlayFromProgram,
+} from './registration-overlay-sync'
+import { resetProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
 /** GET은 요청 instant의 서울 달력일 `yyyy-MM-dd` 를 돌려준다. */
 function seoulCalendarDate(value: string | undefined): string {
@@ -61,6 +66,29 @@ function baseProgram(): Program {
 }
 
 describe('1사1교 공통정보 저장 왕복', () => {
+  it('canonical 커리큘럼이 stale economy overlay보다 우선한다', () => {
+    resetProgramRegistrationOverlay()
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          { sessionLabel: '1차시', title: '최신 1차시', description: '최신 내용' },
+        ],
+      },
+      registrationOverlay: {
+        'economyRegistration.educationCurriculum.session1.title': '구 1차시',
+        'economyRegistration.educationCurriculum.session1.description': '구 내용',
+      },
+    }
+    seedEconomyRegistrationOverlayFromProgram(program)
+    const overlay = readEconomyRegistrationOverlayForSave()
+    expect(overlay['economyRegistration.educationCurriculum.session1.title']).toBe('최신 1차시')
+    expect(overlay['economyRegistration.educationCurriculum.session1.description']).toBe(
+      '최신 내용'
+    )
+  })
+
   it('기간·1회차·담당자·KPI가 요청과 재조회에 남고 봉사자는 0이다', () => {
     const existing = baseProgram()
     const applied = applyEconomyRegistrationOverlayToProgram(existing, {

@@ -10,9 +10,9 @@ import {
   getGeneralApplicationInstitutionsTabLabel,
   type GeneralApplicationTabKey,
 } from '@/features/program/general/lib/application-tabs'
-import { canGeneralProgramRecruitmentInfoEdit } from '@/features/program/general/lib/common-info-edit-policy'
+import { canGeneralProgramApplicationFormEdit } from '@/features/program/general/lib/common-info-edit-policy'
 import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/program-edit-window'
-import { PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
+import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { ApplicationFormPreviewPanel } from './application-form-preview-panel'
 import './application-view.css'
@@ -38,7 +38,7 @@ export function GeneralProgramApplicationView({
 }) {
   const { showAlert } = useCmsAlert()
   const institutionsLabel = getGeneralApplicationInstitutionsTabLabel(program)
-  const formWritable = canGeneralProgramRecruitmentInfoEdit(
+  const formWritable = canGeneralProgramApplicationFormEdit(
     program,
     recruitmentEditTypeForDetailTab(activeApplicationTab)
   )
@@ -47,7 +47,7 @@ export function GeneralProgramApplicationView({
     if (!formWritable) {
       showAlert({
         title: '안내',
-        content: PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE,
+        content: PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
       })
       return
     }

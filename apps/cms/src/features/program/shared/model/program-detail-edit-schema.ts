@@ -1011,7 +1011,9 @@ export function detailEditValuesToProgramPatch(
     existing.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel
   const contactPhone = values.contactPhone ?? existing.contactPhone
   const contactEmail = values.contactEmail ?? existing.contactEmail
-  const isTrainedTeacherProgram = looksLikeTrainedTeacherProgramId(existing.id)
+  const isTrainedTeacherProgram =
+    existing.backendProgramType === 'TRAINED_TEACHER' ||
+    looksLikeTrainedTeacherProgramId(existing.id)
   const contactOrganizationName =
     values.recruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
@@ -1053,8 +1055,12 @@ export function detailEditValuesToProgramPatch(
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail
 
   return {
-    title: values.title?.trim() || existing.title,
-    textbookName: existing.textbookName,
+    title:
+      (isTrainedTeacherProgram ? values.announcementTitle?.trim() : values.title?.trim()) ||
+      existing.title,
+    textbookName:
+      (isTrainedTeacherProgram ? values.detailedProgramName?.trim() : undefined) ||
+      existing.textbookName,
     startDate,
     endDate,
     category: values.category,

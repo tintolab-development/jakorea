@@ -1,12 +1,12 @@
 /**
  * 프로그램 수정 가능 기간.
  * 공통 정보는 `businessEndDate`(도메인 `endDate`) 당일까지, 한국 시간 다음 날 00:00부터 불가.
- * 모집·신청 잠금은 유형별 `recruitments[].startAt`. `operationStartDate`로 잠그지 않는다.
- * `startAt`이 없으면 아직 시작 전이다. `now`가 그 시각이 속한 분 이상이면 저장할 수 없다.
+ * 모집정보는 유형별 `operationStartDate` 전. 값이 없으면 잠그지 않고 `startAt`·사업 시작일로 대체하지 않는다.
+ * 신청양식은 유형별 `startAt`. `startAt`이 없으면 아직 시작 전이다.
  */
 
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
-import { PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
+import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 
 export type ProgramRecruitmentEditType = 'PARTICIPANT' | 'INSTRUCTOR' | 'VOLUNTEER'
 
@@ -19,6 +19,7 @@ export function toProgramRecruitmentWindows(
         recruitmentType?: string
         targetType?: string
         startAt?: string | null
+        operationStartDate?: string | null
       }>
     | null
     | undefined
@@ -28,6 +29,7 @@ export function toProgramRecruitmentWindows(
     recruitmentType: row.recruitmentType,
     targetType: row.targetType,
     startAt: row.startAt ?? null,
+    operationStartDate: row.operationStartDate ?? null,
   }))
 }
 
@@ -87,6 +89,32 @@ export function isProgramRecruitmentTypeLocked(
   return rows.some(row => isRecruitmentStartLocked(row.startAt, now))
 }
 
+/**
+ * 모집정보 — 운영 시작일(서울 달력) 당일부터 잠금. 날짜가 없으면 잠그지 않는다.
+ */
+export function isOperationStartDateLocked(
+  operationStartDate: string | null | undefined,
+  now: Date = new Date()
+): boolean {
+  if (operationStartDate == null || !operationStartDate.trim()) return false
+  const startKey = seoulCalendarDate(operationStartDate)
+  const todayKey = seoulCalendarDate(now)
+  if (!startKey || !todayKey) return false
+  return todayKey >= startKey
+}
+
+export function isProgramOperationStartLocked(
+  program: Program | null | undefined,
+  recruitmentType: ProgramRecruitmentEditType,
+  now: Date = new Date()
+): boolean {
+  const rows = (program?.programRecruitments ?? []).filter(
+    row => row.recruitmentType === recruitmentType
+  )
+  if (rows.length === 0) return false
+  return rows.some(row => isOperationStartDateLocked(row.operationStartDate, now))
+}
+
 export function recruitmentEditTypeForDetailTab(
   tab: 'institutions' | 'instructors' | 'volunteers'
 ): ProgramRecruitmentEditType {
@@ -137,5 +165,5 @@ export function assertProgramFormBindingWritable(
   now: Date = new Date()
 ): void {
   if (!isProgramFormBindingWriteLocked(program, targetType, targetRole, now)) return
-  throw new Error(PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE)
+  throw new Error(PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE)
 }

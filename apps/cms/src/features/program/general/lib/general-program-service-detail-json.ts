@@ -237,11 +237,48 @@ export function normalizeGeneralProgramServiceDetailParsed(
   }
 }
 
-export function serializeGeneralProgramServiceDetailJson(program: Program): string | undefined {
+const RECRUITMENT_WINDOW_JSON_KEYS = [
+  'instructorApplicationStartDate',
+  'instructorApplicationEndDate',
+  'volunteerApplicationStartDate',
+  'volunteerApplicationEndDate',
+  'resultAnnouncementDate',
+  'resultAnnouncementMethod',
+  'studentListRequired',
+  'generalParticipantInterviewEnabled',
+  'generalVolunteerInterviewEnabled',
+] as const satisfies ReadonlyArray<keyof GeneralProgramServiceDetailJsonV1>
+
+const NESTED_RECRUITMENT_INFO_KEYS = [
+  'participantRecruitmentInfo',
+  'instructorRecruitmentInfo',
+  'volunteerRecruitmentInfo',
+  'volunteerInterviewScheduleInfo',
+] as const
+
+/** 공통정보 저장 — 모집 창·모집 정보 객체는 이번 요청에 넣지 않는다. */
+function omitRecruitmentWindowFromCommonInfo(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const next = { ...common }
+  for (const key of NESTED_RECRUITMENT_INFO_KEYS) {
+    delete next[key]
+  }
+  return next
+}
+
+export function serializeGeneralProgramServiceDetailJson(
+  program: Program,
+  options?: { omitRecruitmentWindow?: boolean }
+): string | undefined {
   const isIndividual = isGeneralIndividualProgram(program)
-  const generalCommonInfo = isIndividual
+  const withAudienceRule = isIndividual
     ? stripIndividualStudentRosterFromCommonInfo(program.generalCommonInfo)
     : stripOrganizationParticipationFromCommonInfo(program.generalCommonInfo)
+  const generalCommonInfo = options?.omitRecruitmentWindow
+    ? omitRecruitmentWindowFromCommonInfo(withAudienceRule)
+    : withAudienceRule
   const persistedOverlay = persistScheduleEducationFormByDetailOverlay(
     buildRegistrationOverlayForPersist({
       ...program,
@@ -278,6 +315,11 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
     generalParticipantInterviewEnabled: program.generalParticipantInterviewEnabled,
     generalVolunteerInterviewEnabled: program.generalVolunteerInterviewEnabled,
     ...(registrationOverlay ? { registration: { overlay: registrationOverlay } } : {}),
+  }
+  if (options?.omitRecruitmentWindow) {
+    for (const key of RECRUITMENT_WINDOW_JSON_KEYS) {
+      delete payload[key]
+    }
   }
 
   const hasContent = Object.entries(payload).some(([key, value]) => {

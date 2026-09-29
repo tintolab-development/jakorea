@@ -158,4 +158,19 @@ describe('UJAT 공통정보 저장 왕복', () => {
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.ipsCategory']).toBe('succeed')
     expect(mapped.ujatRegistrationOverlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toEqual(capacity)
   })
+
+  it('registration draft가 없는 레거시 상세도 편집 overlay를 보존한다', () => {
+    const overlay = registrationOverlay()
+    const request = toUpdateRequest(
+      { ...baseProgram(), ujatRegistrationOverlay: overlay },
+      { ips: 'Succeed' },
+      { overlay }
+    )
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      registration?: { draft?: unknown; overlay?: Record<string, unknown> }
+    }
+    expect(detail.registration?.draft).toBeUndefined()
+    expect(detail.registration?.overlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toEqual(capacity)
+    expect(detail.registration?.overlay?.['ujat.h1.event.name']).toBe('상반기 본행사')
+  })
 })

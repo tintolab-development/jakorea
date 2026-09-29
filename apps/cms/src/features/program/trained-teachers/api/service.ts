@@ -196,7 +196,9 @@ export async function updateTrainedTeacherProgram(
   try {
     const infoDetail = await fetchTrainedTeacherInfoDetailRemote(programId)
     return mergeTrainedTeacherSponsorAssignments(
-      mergeTrainedTeacherInfoDetailIntoProgram(mapped, infoDetail),
+      mergeTrainedTeacherInfoDetailIntoProgram(mapped, infoDetail, {
+        tablePreference: 'program',
+      }),
       sponsors
     )
   } catch {

@@ -33,6 +33,7 @@ import {
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
@@ -119,6 +120,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     otherMatters?: string
     contactName?: string
     recruitmentTargetDetail?: string
+    businessField?: string
   }
   const title =
     dto.title?.trim() ||
@@ -209,7 +211,8 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,
-    businessArea: dto.businessArea,
+    businessArea:
+      normalizeProgramBusinessAreaValue(dto.businessArea || dtoExt.businessField) || undefined,
     // 세부 프로그램 마스터 id — 일반 프로그램 어댑터와 동일하게 top-level 필드로 읽어온다.
     detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     titleEn: dto.titleEn,
@@ -364,6 +367,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
   // 일반 프로그램 어댑터와 동일하게 detailedProgramId(숫자 마스터 id)로 보낸다. textbookName(교재명)에
   // 이름을 강제로 밀어넣는 방식은 general 어댑터의 계약과 달랐다(중복되면 omit).
   const detailedProgramName = program.generalCommonInfo?.detailedProgramName
+  const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
   const sponsors = mapCompanySchoolSponsorAssignments(program)
   const primarySponsorId =
     sponsors.find(row => row.sponsorContactId)?.sponsorId ||
@@ -383,7 +387,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     businessEndDate: toDate(program.endDate),
     applicationStartDate: toDate(program.applicationStartDate),
     applicationEndDate: toDate(program.applicationEndDate),
-    businessArea: program.businessArea,
+    businessArea,
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
@@ -470,7 +474,10 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('applicationEndDate')) {
     body.applicationEndDate = toDate(merged.applicationEndDate)
   }
-  if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('businessArea')) {
+    const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
+    body.businessArea = businessArea
+  }
   if (has('detailedProgramId') || has('generalCommonInfo')) {
     body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
   }

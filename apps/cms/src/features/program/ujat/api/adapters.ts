@@ -29,12 +29,14 @@ import { mapListParticipantRecruitment } from '@/features/program/shared/lib/for
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
   parseRegistrationOverlay,
   parseServiceDetail,
   parseUjatServiceDetailExtras,
   serializeServiceDetail,
+  type RegistrationPersistSnapshot,
   type RegistrationSnapshot,
   type UjatServiceDetailExtras,
 } from './service-detail'
@@ -177,6 +179,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     nameKo?: string
     periodStatus?: string
     remarks?: string
+    businessField?: string
   }
   const rawOverlay = parseRegistrationOverlay(dto.serviceDetailJson)
   const timestamp = now()
@@ -198,6 +201,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     generalSurveyMenuKeys: surveyKeys,
     sponsorManagerContactIds: generalCommonInfo?.sponsorManagerContactIds,
     sponsorManagerLine: generalCommonInfo?.sponsorManagerLine,
+    kpi: generalCommonInfo?.kpi,
   })
   const title =
     dto.title?.trim() ||
@@ -251,7 +255,8 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       status: (dto.status as Status | undefined) ?? 'pending',
       lifecycleStatus,
       ujatProgressStatus,
-      businessArea: dto.businessArea,
+      businessArea:
+        normalizeProgramBusinessAreaValue(dto.businessArea || dtoExt.businessField) || undefined,
       detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
       titleEn: dto.titleEn,
       textbookName: dto.textbookName,
@@ -329,8 +334,9 @@ function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
 
 function coreRequest(
   program: Program,
-  registration?: RegistrationSnapshot
+  registration?: RegistrationPersistSnapshot
 ): ProgramUpdateRequest {
+  const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
   return {
     sponsorId: program.sponsorId,
     title: program.title,
@@ -345,7 +351,7 @@ function coreRequest(
     educationStructure: resolveUjatEducationStructure(program),
     applicationStartDate: dateValue(program.applicationStartDate),
     applicationEndDate: dateValue(program.applicationEndDate),
-    businessArea: program.businessArea,
+    businessArea,
     // UJAT은 실제 카탈로그를 쓰지 않는 고정형이지만, 다른 유형과 동일하게 id·name을
     // 항상 함께 반영한다 (name은 teamDivision/generalCommonInfo.detailedProgramName에 실림).
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
@@ -406,7 +412,7 @@ function coreRequest(
 function patchRequest(
   merged: Program,
   patch: Partial<Program>,
-  registration?: RegistrationSnapshot
+  registration?: RegistrationPersistSnapshot
 ): ProgramUpdateRequest {
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
@@ -442,7 +448,10 @@ function patchRequest(
   if (has('applicationEndDate')) {
     body.applicationEndDate = dateValue(merged.applicationEndDate)
   }
-  if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('businessArea')) {
+    const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
+    body.businessArea = businessArea
+  }
   if (has('detailedProgramId') || has('generalCommonInfo')) {
     body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
   }
@@ -531,7 +540,7 @@ export function toCreateRequest(
 export function toUpdateRequest(
   program: Program,
   patch?: Partial<Program>,
-  registration?: RegistrationSnapshot
+  registration?: RegistrationPersistSnapshot
 ): ProgramUpdateRequest {
   if (patch && Object.keys(patch).length > 0) {
     return patchRequest({ ...program, ...patch }, patch, registration)
