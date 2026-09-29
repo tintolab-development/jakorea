@@ -35,6 +35,11 @@ import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/pu
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  applyProgramMissingCommonStringFieldsToUpdateRequest,
+  mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
+  resolveOtherNotesFromProgramResponse,
+} from '@/features/program/shared/lib/program-update-common-string-fields'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
   parseRegistrationOverlay,
@@ -196,10 +201,24 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     undefined
 
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 반영 (다른 유형과 동일 계약).
-  const generalCommonInfo =
+  const generalCommonInfoBase =
     dto.detailedProgramName?.trim()
       ? { ...details.generalCommonInfo, detailedProgramName: dto.detailedProgramName.trim() }
       : details.generalCommonInfo
+  const generalCommonInfo = generalCommonInfoBase
+    ? {
+        ...generalCommonInfoBase,
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          generalCommonInfoBase.participantRecruitmentInfo,
+          dto
+        ),
+      }
+    : {
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          undefined,
+          dto
+        ),
+      }
 
   const ips = programIps(dto.ips)
   const overlay = reconcileUjatRegistrationOverlayFromProgramResponse(dto, rawOverlay, {
@@ -291,6 +310,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       managerName: dto.managerName,
       venue: dto.venue,
       curriculum: dto.curriculum,
+      contactName: dto.contactName?.trim() || undefined,
       contactEmail: dto.contactEmail,
       contactPhone: dto.contactPhone,
       oneLineIntroduction: dto.oneLineIntroduction,
@@ -301,7 +321,12 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       recruitmentGuide: dto.recruitmentGuide,
       learningSupportContent: dto.learningSupportContent,
       attachmentFileNames: dto.attachmentFileNames,
-      otherNotes: details.otherNotes ?? dtoExt.remarks,
+      otherNotes:
+        resolveOtherNotesFromProgramResponse({
+          otherMatters: dto.otherMatters,
+          otherNotes: details.otherNotes,
+        }) || undefined,
+      recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
       generalSurveyMenuKeys: surveyKeys as Program['generalSurveyMenuKeys'],
       generalProgramEducationStructure:
         String(dto.educationStructure ?? '').toUpperCase() === 'CURRICULUM'
@@ -384,7 +409,7 @@ function coreRequest(
     sponsors[0]?.sponsorId ||
     (program.sponsorId != null ? String(program.sponsorId) : undefined)
   const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
-  return {
+  const body: ProgramUpdateRequest = {
     sponsorId: primarySponsorId,
     sponsors: sponsors.length > 0 ? sponsors : undefined,
     title: program.title,
@@ -455,13 +480,20 @@ function coreRequest(
     })),
     serviceDetailJson: serializeServiceDetail(program, registrationSnapshotForApi(registration)),
   }
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'full',
+    merged: program,
+    existing: program,
+  })
+  return body
 }
 
 /** patch 키만 직렬화 — rounds·마스킹 담당자 등 화면 밖 필드 미전송 */
 function patchRequest(
   merged: Program,
   patch: Partial<Program>,
-  registration?: RegistrationPersistSnapshot
+  registration: RegistrationPersistSnapshot | undefined,
+  existing: Program
 ): ProgramUpdateRequest {
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
@@ -569,6 +601,12 @@ function patchRequest(
 
   // UJAT registration overlay 보존을 위해 patch 저장 시 serviceDetailJson은 항상 포함
   body.serviceDetailJson = serializeServiceDetail(merged, registrationSnapshotForApi(registration))
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'patch',
+    merged,
+    existing,
+    patch,
+  })
   return body
 }
 
@@ -591,7 +629,7 @@ export function toUpdateRequest(
   registration?: RegistrationPersistSnapshot
 ): ProgramUpdateRequest {
   if (patch && Object.keys(patch).length > 0) {
-    return patchRequest({ ...program, ...patch }, patch, registration)
+    return patchRequest({ ...program, ...patch }, patch, registration, program)
   }
   return coreRequest(program, registration)
 }

@@ -21,6 +21,7 @@ import {
   buildProgramSponsorAssignmentsWire,
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
+import { SPONSOR_CONTACT_UNSELECTED_LABEL } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import type { AdminProgramSponsorAssignmentDto } from '@/features/program/general/api/programs-api-client'
 import {
   omitIfDetailedProgramNameAlias,
@@ -38,6 +39,11 @@ import { clearTeacherTrainingScheduleIfOff } from '../lib/teacher-training-sched
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
+import {
+  applyProgramMissingCommonStringFieldsToUpdateRequest,
+  mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
+  resolveOtherNotesFromProgramResponse,
+} from '@/features/program/shared/lib/program-update-common-string-fields'
 
 /** 목록 GET echo (상세와 동일 컬럼). 일반 프로그램 DTO에는 없을 수 있음. */
 type TrainedTeacherListItemDto = AdminProgramListItemDto & {
@@ -76,7 +82,10 @@ function toStudentListRequired(
   return value === 'required' || value === 'not_required' ? value : undefined
 }
 
-/** GET …/sponsors 배정을 Program 후원·담당자 필드로 병합 (contact∈sponsor 유지) */
+/** GET …/sponsors 배정을 Program 후원·담당자 필드로 병합 (contact∈sponsor 유지).
+ * `assignments` 가 빈 배열이면 서버 SSOT 해제로 보고 후원·담당자를 clear 한다.
+ * (fetch 실패 시에는 호출측에서 merge를 건너뛴다.)
+ */
 export function mergeTrainedTeacherSponsorAssignments(
   program: Program,
   assignments: readonly AdminProgramSponsorAssignmentDto[]
@@ -84,7 +93,24 @@ export function mergeTrainedTeacherSponsorAssignments(
   const valid = assignments.filter(
     row => row.sponsorId != null && String(row.sponsorId).trim() !== ''
   )
-  if (valid.length === 0) return program
+  if (valid.length === 0) {
+    // top-level sponsorId 는 Program 타입상 필수. 런타임 clear 후 unknown 단언.
+    // GET /sponsors [] 가 SSOT — 표시는 generalCommonInfo.sponsorManagementIds 빈 배열.
+    return {
+      ...program,
+      sponsorId: undefined,
+      managerName: undefined,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        sponsorManagementIds: [],
+        sponsorManagementId: undefined,
+        sponsorManagerContactIds: [],
+        sponsorManagerContactId: undefined,
+        sponsorManagerContactNames: {},
+        sponsorManagerLine: undefined,
+      },
+    } as unknown as Program
+  }
 
   const sponsorManagementIds = [
     ...new Set(valid.map(row => String(row.sponsorId).trim())),
@@ -99,8 +125,11 @@ export function mergeTrainedTeacherSponsorAssignments(
     const contactName = row.sponsorContactName?.trim()
     if (contactName) sponsorManagerContactNames[ref] = contactName
   }
-  const managerName =
-    Object.values(sponsorManagerContactNames)[0] || program.managerName
+  const hasContact = sponsorManagerContactIds.length > 0
+  // contact 없는 배정 = 담당자 미선택. 구 managerName 으로 되살리지 않는다.
+  const managerName = hasContact
+    ? Object.values(sponsorManagerContactNames)[0]
+    : SPONSOR_CONTACT_UNSELECTED_LABEL
 
   return {
     ...program,
@@ -109,9 +138,10 @@ export function mergeTrainedTeacherSponsorAssignments(
     generalCommonInfo: {
       ...program.generalCommonInfo,
       sponsorManagementIds,
-      sponsorManagerContactIds,
-      sponsorManagerContactId: sponsorManagerContactIds[0],
-      sponsorManagerContactNames,
+      sponsorManagerContactIds: hasContact ? sponsorManagerContactIds : [],
+      sponsorManagerContactId: hasContact ? sponsorManagerContactIds[0] : undefined,
+      sponsorManagerContactNames: hasContact ? sponsorManagerContactNames : {},
+      sponsorManagerLine: hasContact ? undefined : SPONSOR_CONTACT_UNSELECTED_LABEL,
     },
   }
 }
@@ -261,7 +291,13 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     details.generalCommonInfo?.participantRecruitmentInfo as { remarks?: string } | undefined
   )?.remarks
   /** otherNotes ≠ remarks — 모집 비고(remarks)와 분리 */
-  const otherNotes = dto.otherMatters?.trim() || details.otherNotes?.trim() || undefined
+  const otherNotes =
+    resolveOtherNotesFromProgramResponse({
+      otherMatters:
+        dto.otherMatters ??
+        (details as { otherMatters?: string | null }).otherMatters,
+      otherNotes: details.otherNotes,
+    }) || undefined
   const remarks = dto.remarks?.trim() || participantRemarks?.trim() || undefined
   const educationTargetDetail =
     dto.educationTargetDetail?.trim() ||
@@ -391,6 +427,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     managerName: dto.managerName,
     venue: dto.venue?.trim() || nestedVenueDetail || undefined,
     curriculum: dto.curriculum,
+    contactName: dto.contactName?.trim() || undefined,
     contactEmail:
       dto.contactEmail?.trim() ||
       (
@@ -427,6 +464,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
     otherNotes,
+    recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
     studentListRequired:
       toStudentListRequired(dto.studentListRequired) ??
       details.studentListRequired ??
@@ -442,11 +480,14 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
       ...(venueKind ? { venueKind } : {}),
       ...(venueDetail ? { venueDetail } : {}),
       kpi: resolvedKpi,
-      participantRecruitmentInfo: {
-        ...details.generalCommonInfo?.participantRecruitmentInfo,
-        ...(remarks ? { remarks } : {}),
-        ...(educationTargetDetail ? { educationTargetDetail } : {}),
-      },
+      participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+        {
+          ...details.generalCommonInfo?.participantRecruitmentInfo,
+          ...(remarks ? { remarks } : {}),
+          ...(educationTargetDetail ? { educationTargetDetail } : {}),
+        },
+        dto
+      ),
     }),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
@@ -592,6 +633,12 @@ export function mapTrainedTeacherToUpdateRequest(
     rounds: mapRounds(merged),
     serviceDetailJson: serializeTrainedTeacherServiceDetailJson(merged),
   }
+  // top-level 3필드가 stale serviceDetailJson 보다 우선 (BE handoff 2026-09-29)
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'full',
+    merged,
+    existing: program,
+  })
   return body
 }
 

@@ -235,6 +235,8 @@ export interface GeneralProgramParticipantRecruitmentInfo {
   finalAnnouncementLabel?: string
   resultAnnouncementLabel?: string
   contactOrganizationName?: string
+  /** 문의처 담당자 표시명 — BE top-level `contactName` SSOT */
+  contactName?: string
   inquiryTel?: string
   inquiryEmail?: string
   tel?: string
@@ -467,11 +469,13 @@ export interface Program {
   generalTeachers?: number // 일반담당교사
   educatedTeachers?: number // 교육받은교사
   instructors?: number // 강사 수
-  managerName?: string // 담당자명
+  managerName?: string // 담당자명 (후원 담당자 표시 — contactName과 분리)
   posterImage?: string // 포스터/키비주얼 이미지 URL
   // 프로그램 등록 추가 필드 (기획 요구사항)
   venue?: string // 진행 장소
   curriculum?: string // 커리큘럼
+  /** 문의처/담당자 표시명 — BE ProgramResponse.contactName (managerName과 분리) */
+  contactName?: string
   contactEmail?: string // 문의처 이메일
   contactPhone?: string // 문의처 연락처
   oneLineIntroduction?: string // 한 줄 소개
@@ -536,8 +540,10 @@ export interface Program {
   volunteerTargetDetail?: string
   /** 지원 방법 (강사/봉사자 상세정보 탭) */
   applicationMethod?: string
-  /** 기타사항 (강사/봉사자 상세정보 탭) */
+  /** 기타사항 (강사/봉사자 상세정보 탭) — BE otherMatters */
   otherNotes?: string
+  /** 모집 대상 상세 — BE recruitmentTargetDetail (educationTargetDetail과 별도 가능) */
+  recruitmentTargetDetail?: string
   // 프로그램별 폼 업로드 (기획 요구사항)
   applicationFormTemplateId?: UUID // 신청서 폼 템플릿 ID
   surveyFormTemplateId?: UUID // 설문 폼 템플릿 ID

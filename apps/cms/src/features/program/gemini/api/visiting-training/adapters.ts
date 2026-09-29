@@ -43,6 +43,10 @@ export function toGeminiNumericIds(ids: string[]): number[] {
 export function mapGeminiRecruitmentSnapshotToCreateRequest(
   snapshot: GeminiRecruitmentAddFormSnapshot
 ): ProgramCreateRequest {
+  const contactName = snapshot.inquiryContactName?.trim() || undefined
+  const otherMatters =
+    snapshot.notesNotApplicable ? undefined : snapshot.notes?.trim() || undefined
+  const recruitmentTargetDetail = snapshot.educationTargetDetail?.trim() || undefined
   return {
     programType: GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
     title: snapshot.title.trim() || undefined,
@@ -52,7 +56,7 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
     applicationStartDate: optionalDate(snapshot.applicationPeriodStart),
     applicationEndDate: optionalDate(snapshot.applicationPeriodEnd),
     totalParticipants: snapshot.minStudentCount ?? undefined,
-    managerName: snapshot.inquiryContactName || undefined,
+    managerName: contactName,
     contactPhone: snapshot.inquiryTel || undefined,
     contactEmail: snapshot.inquiryEmail || undefined,
     recruitmentGuide: snapshot.recruitmentGuide || undefined,
@@ -60,13 +64,38 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
     additionalContentHtml: snapshot.additionalContentMarkdown || undefined,
     attachmentFileNames: snapshot.attachmentFileNames,
     serviceDetailJson: JSON.stringify({ geminiRecruitment: snapshot }),
+    // CreateRequest OpenAPI에 없을 수 있음 — update와 동일 계약으로 실어 보냄
+    ...(contactName ? ({ contactName } as Partial<ProgramCreateRequest>) : {}),
+    ...(otherMatters ? ({ otherMatters } as Partial<ProgramCreateRequest>) : {}),
+    ...(recruitmentTargetDetail
+      ? ({ recruitmentTargetDetail } as Partial<ProgramCreateRequest>)
+      : {}),
   }
+}
+
+function wireGeminiNullableString(
+  body: ProgramUpdateRequest,
+  clearFields: string[],
+  apiField: 'contactName' | 'otherMatters' | 'recruitmentTargetDetail',
+  next: string | undefined
+): void {
+  if (next) {
+    body[apiField] = next
+    return
+  }
+  // Gemini draft는 full replace — 빈 값은 "" 대신 clearFields
+  clearFields.push(apiField)
 }
 
 export function mapGeminiRecruitmentDetailToUpdateRequest(
   draft: GeminiRecruitmentInfoEditDraft
 ): ProgramUpdateRequest {
-  return {
+  const contactName = draft.inquiryContactName?.trim() || undefined
+  const otherMatters =
+    draft.notesNotApplicable ? undefined : draft.notes?.trim() || undefined
+  const recruitmentTargetDetail = draft.educationTargetDetail?.trim() || undefined
+  const clearFields: string[] = []
+  const body: ProgramUpdateRequest = {
     title: draft.title.trim() || undefined,
     description: draft.programDescription || undefined,
     businessStartDate: optionalDate(draft.applicationPeriodStart),
@@ -74,7 +103,8 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     applicationStartDate: optionalDate(draft.applicationPeriodStart),
     applicationEndDate: optionalDate(draft.applicationPeriodEnd),
     totalParticipants: draft.minStudentCount ?? undefined,
-    managerName: draft.inquiryContactName || undefined,
+    // 문의처 표시명 → contactName (TT managerName/후원 담당자와 별개 — Gemini는 문의처 레거시용 managerName 병행)
+    managerName: contactName,
     contactPhone: draft.inquiryTel || undefined,
     contactEmail: draft.inquiryEmail || undefined,
     recruitmentGuide: draft.recruitmentGuide || undefined,
@@ -83,6 +113,16 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     attachmentFileNames: draft.attachmentFileNames,
     serviceDetailJson: JSON.stringify({ geminiRecruitment: draft }),
   }
+  wireGeminiNullableString(body, clearFields, 'contactName', contactName)
+  wireGeminiNullableString(body, clearFields, 'otherMatters', otherMatters)
+  wireGeminiNullableString(
+    body,
+    clearFields,
+    'recruitmentTargetDetail',
+    recruitmentTargetDetail
+  )
+  if (clearFields.length > 0) body.clearFields = clearFields
+  return body
 }
 
 export function mapGeminiRecruitmentItemToRow(
