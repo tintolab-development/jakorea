@@ -160,7 +160,10 @@ export type PortalProgramDetail = {
   recruitmentStatus?: string
   applicationTargetMode?: string
   businessField?: string
+  /** 교육 장소 상세 문장 */
   venue?: string
+  /** inside=기관 안, outside=기관 밖, other=기타. 없으면 상세만 표시 */
+  venueKind?: 'inside' | 'outside' | 'other' | null
   contactName?: string
   contactEmail?: string
   contactPhone?: string

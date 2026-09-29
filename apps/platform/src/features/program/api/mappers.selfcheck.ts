@@ -29,6 +29,7 @@ const mapped = mapPortalProgramDetail({
   venue: '온라인',
   contactEmail: 'cc@jakorea.org',
   contactPhone: '02-6085-6028',
+  recruitmentGuide: '모집 안내 본문',
   additionalContentHtml: '<p>추가 안내</p>',
   educationTarget: 'university',
   thumbnailFileObjectId: 77,
@@ -93,7 +94,10 @@ assert.equal(mapped.thumbnailUrl, portalPublicFileContentUrl(77))
 assert.equal(mapped.attachments[0]?.url, '/api/portal/public/files/88/download')
 assert.equal(mapped.contactValue, '02-6085-6028 · cc@jakorea.org')
 assert.equal(mapped.participationMethod, 'team')
-assert.ok(mapped.extraSections.some(section => section.title === '추가 내용'))
+assert.deepEqual(
+  mapped.extraSections.map(section => section.title),
+  ['모집 안내', '추가 내용'],
+)
 
 const individualOnly = mapPortalProgramDetail({
   programId: 186015,
@@ -230,6 +234,7 @@ const generalCurriculum = mapPortalProgramDetail({
       title: '필요와 욕구, 현명한 소비',
       description: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
       assignmentEnabled: false,
+      educationFormLabel: '온라인',
       ipsTypeSummary: 'Succeed | Conference (컨퍼런스)',
     },
     { sessionLabel: '2차시', title: '', description: '' },
@@ -245,6 +250,7 @@ const generalCurriculum = mapPortalProgramDetail({
 assert.ok(generalCurriculum)
 assert.equal(generalCurriculum.sessions.length, 2)
 assert.equal(generalCurriculum.sessions[0]?.title, '필요와 욕구, 현명한 소비')
+assert.equal(generalCurriculum.sessions[0]?.educationFormLabel, undefined)
 assert.equal(generalCurriculum.sessions[0]?.ipsTypeSummary, 'Succeed | Conference (컨퍼런스)')
 assert.equal(generalCurriculum.sessions[1]?.title, '')
 assert.equal(generalCurriculum.eventSchedules.length, 0)
@@ -320,6 +326,98 @@ assert.equal(
 )
 assert.equal(organization.sessions[0]?.sessionLabel, '사전 교육')
 
+const trainedTeacherProgress = mapPortalProgramDetail({
+  programId: 186018,
+  programType: 'TRAINED_TEACHER',
+  title: '수정3',
+  operationMethod: 'OFFLINE',
+  educationTarget: 'high',
+  educationTargets: ['high', 'adult'],
+  educationTargetDetail: '고등학교 1~2학년, 성인 일반',
+  otherMatters: '우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.',
+  remarks: '신청 전 학교 담당 교사 확인이 필요합니다.',
+  educationStructure: 'curriculum',
+  sessionRound: 'single',
+  educationFormScheduleDetail: 'common',
+  participationScheduleDetail: 'perSchedule',
+  ipsScheduleDetail: 'perSchedule',
+  educationFormLabel: '온라인',
+  participationMethod: null,
+  ipsTypeSummary: null,
+  curricula: [
+    {
+      sessions: [{ sessionNo: 1, title: '운영 커리큘럼', content: '섞이면 안 됨' }],
+    },
+  ],
+  curriculumSessions: [
+    {
+      sessionLabel: '1차시',
+      title: '수정3',
+      description: '수정3',
+      assignmentEnabled: false,
+      educationFormLabel: '온라인',
+      ipsTypeSummary: 'Succeed | Workshop (워크숍)',
+    },
+  ],
+  scheduleDetails: [],
+  educationScheduleMode: 'date',
+  educationScheduleLines: [
+    '26년 10월 13일(화) 10:00 ~ 12:00',
+    '26년 10월 20일(화) 13:30 ~ 16:00',
+  ],
+  venue: '서울시 강서구 가양 데시앙플렉스',
+  venueKind: 'inside',
+})
+assert.ok(trainedTeacherProgress)
+assert.equal(
+  trainedTeacherProgress.educationVenueLabel,
+  '기관 안, 서울시 강서구 가양 데시앙플렉스',
+)
+assert.equal(trainedTeacherProgress.detailCase, 'instructor')
+assert.equal(trainedTeacherProgress.educationStructure, 'curriculum')
+assert.equal(trainedTeacherProgress.sessions.length, 1)
+assert.equal(trainedTeacherProgress.sessions[0]?.title, '수정3')
+assert.equal(trainedTeacherProgress.sessions[0]?.educationFormLabel, undefined)
+assert.equal(trainedTeacherProgress.sessions[0]?.ipsTypeSummary, 'Succeed | Workshop (워크숍)')
+assert.equal(
+  trainedTeacherProgress.basicInfoFields.find(field => field.label === '교육 형태')?.value,
+  '온라인',
+)
+assert.equal(
+  trainedTeacherProgress.basicInfoFields.some(field => field.label === '참여 방식'),
+  false,
+)
+assert.equal(
+  trainedTeacherProgress.basicInfoFields.find(field => field.label === '교육 대상 상세')?.value,
+  '고등학교 1~2학년, 성인 일반',
+)
+assert.deepEqual(trainedTeacherProgress.educationScheduleLines, [
+  '26년 10월 13일(화) 10:00 ~ 12:00',
+  '26년 10월 20일(화) 13:30 ~ 16:00',
+])
+assert.equal(
+  trainedTeacherProgress.extraSections.find(section => section.title === '기타사항')?.body,
+  '우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.',
+)
+assert.equal(
+  trainedTeacherProgress.extraSections.find(section => section.title === '비고')?.body,
+  '신청 전 학교 담당 교사 확인이 필요합니다.',
+)
+
+const codedTargetDetail = mapPortalProgramDetail({
+  programId: 186019,
+  programType: 'COMPANY_SCHOOL',
+  title: '코드 상세',
+  educationTarget: 'high',
+  educationTargetDetail: 'high',
+  recruitmentTargetDetail: '고등학교 1~2학년, 성인 일반',
+  educationStructure: 'curriculum',
+  curriculumSessions: [{ sessionLabel: '1차시', title: '차시', description: '' }],
+})
+assert.ok(codedTargetDetail)
+assert.equal(codedTargetDetail.educationTargetDetailLabel, '고등학교 1~2학년, 성인 일반')
+assert.equal(codedTargetDetail.sessions[0]?.title, '차시')
+
 const trainedTeacher = mapPortalProgramDetail({
   programId: 42,
   programType: 'TRAINED_TEACHER',
@@ -337,6 +435,23 @@ const trainedTeacher = mapPortalProgramDetail({
 assert.ok(trainedTeacher)
 assert.equal(trainedTeacher.sessions.length, 1)
 assert.equal(trainedTeacher.sessions[0]?.title, '오리엔테이션')
+assert.equal(
+  mapPortalProgramDetail({
+    programId: 7,
+    title: '장소만',
+    venue: '상세내용',
+  })?.educationVenueLabel,
+  '상세내용',
+)
+assert.equal(
+  mapPortalProgramDetail({
+    programId: 8,
+    title: '기관 밖',
+    venueKind: 'outside',
+    venue: '인근 구립도서관 강의실',
+  })?.educationVenueLabel,
+  '기관 밖, 인근 구립도서관 강의실',
+)
 assert.equal(trainedTeacher.educationScheduleMode, 'period')
 
 console.log('program portal mappers.selfcheck: ok')
