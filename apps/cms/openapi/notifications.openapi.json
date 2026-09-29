@@ -24797,6 +24797,21 @@
             "items": {
               "type": "string"
             }
+          },
+          "contactName": {
+            "type": "string",
+            "description": "문의처/담당자 표시명. aliases: contactOrganizationName, contactPerson, inquiryName",
+            "nullable": true
+          },
+          "otherMatters": {
+            "type": "string",
+            "description": "기타 안내. aliases: otherInformation, etcContent",
+            "nullable": true
+          },
+          "recruitmentTargetDetail": {
+            "type": "string",
+            "description": "모집 대상 상세. alias: recruitmentAudienceDetail",
+            "nullable": true
           }
         }
       },

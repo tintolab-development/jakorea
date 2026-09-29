@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   mapGeminiOrganizationApplicationToRow,
   mapGeminiRecruitmentDetailToDetail,
+  mapGeminiRecruitmentDetailToUpdateRequest,
   mapGeminiRecruitmentItemToApprovedRow,
   mapGeminiRecruitmentItemToRow,
   mapGeminiRecruitmentSnapshotToCreateRequest,
@@ -78,7 +79,7 @@ describe('gemini visiting-training adapters', () => {
       title: '공고',
       announcementPublished: 'published',
       educationTargetLevels: [],
-      educationTargetDetail: '',
+      educationTargetDetail: '중학생',
       applicationPeriodStart: '2026-03-01',
       applicationPeriodEnd: '2026-03-31',
       trainingRequestPeriodStart: '2026-04-01',
@@ -88,8 +89,8 @@ describe('gemini visiting-training adapters', () => {
       inquiryContactName: '홍길동',
       inquiryTel: '010',
       inquiryEmail: 'a@b.c',
-      notesNotApplicable: true,
-      notes: '',
+      notesNotApplicable: false,
+      notes: '준비물',
       thumbnailFileName: null,
       programDescription: '설명',
       recruitmentGuide: '',
@@ -102,6 +103,44 @@ describe('gemini visiting-training adapters', () => {
     })
     expect(create.programType).toBe('GEMINI_TRAINING')
     expect(create.title).toBe('공고')
+    expect((create as { contactName?: string }).contactName).toBe('홍길동')
+    expect((create as { otherMatters?: string }).otherMatters).toBe('준비물')
+    expect((create as { recruitmentTargetDetail?: string }).recruitmentTargetDetail).toBe(
+      '중학생'
+    )
     expect(toGeminiNumericIds(['1', 'x', '2'])).toEqual([1, 2])
+  })
+
+  it('maps update request with clearFields when inquiry fields are empty', () => {
+    const update = mapGeminiRecruitmentDetailToUpdateRequest({
+      title: '공고',
+      announcementPublished: 'published',
+      educationTargetLevels: [],
+      educationTargetDetail: '',
+      applicationPeriodStart: '2026-03-01',
+      applicationPeriodEnd: '2026-03-31',
+      trainingRequestPeriodStart: '2026-04-01',
+      trainingRequestPeriodEnd: '2026-04-30',
+      minStudentCount: 15,
+      educationForm: 'offline',
+      inquiryContactName: '',
+      inquiryTel: '',
+      inquiryEmail: '',
+      notesNotApplicable: true,
+      notes: '',
+      thumbnailFileName: null,
+      programDescription: '설명',
+      recruitmentGuide: '',
+      applicationMethod: '',
+      learningSupportContent: '',
+      additionalContentMarkdown: '',
+      attachmentFileNames: [],
+    })
+    expect(update.contactName).toBeUndefined()
+    expect(update.otherMatters).toBeUndefined()
+    expect(update.recruitmentTargetDetail).toBeUndefined()
+    expect(update.clearFields).toEqual(
+      expect.arrayContaining(['contactName', 'otherMatters', 'recruitmentTargetDetail'])
+    )
   })
 })

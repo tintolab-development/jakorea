@@ -436,15 +436,8 @@ function BasicInfoSection({
         })
       }
     }
-    if (
-      isFormEdit &&
-      watchedSponsorIds.length > 0 &&
-      watchedSponsorIds.every(
-        id =>
-          selectedSponsors.some(sponsor => sponsor.id === id) &&
-          sponsorEditContext.contactsBySponsorId[id] != null
-      )
-    ) {
+    // 후원사 선택 즉시 미선택 노출 (전 후원사 contacts 로드 대기 금지)
+    if (isFormEdit && watchedSponsorIds.length > 0) {
       return withSponsorContactUnselectedOption(options)
     }
     return options

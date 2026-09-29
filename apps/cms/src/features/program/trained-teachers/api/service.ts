@@ -135,23 +135,25 @@ export async function fetchTrainedTeacherOverviewStages(): Promise<GeneralProgra
 
 export async function getTrainedTeacherProgram(programId: string): Promise<Program> {
   assertRemoteReady()
-  const [dto, sponsors] = await Promise.all([
+  const [dto, sponsorsResult] = await Promise.all([
     fetchAdminProgramByIdRemote(programId),
-    fetchAdminProgramSponsorsRemote(programId).catch(() => [] as Awaited<
-      ReturnType<typeof fetchAdminProgramSponsorsRemote>
-    >),
+    fetchAdminProgramSponsorsRemote(programId).then(
+      data => ({ ok: true as const, data }),
+      () => ({ ok: false as const, data: null })
+    ),
   ])
   const base = mapTrainedTeacherDetailToProgram(dto)
-  try {
-    const infoDetail = await fetchTrainedTeacherInfoDetailRemote(programId)
-    // sponsors API 가 후원·담당자 SSOT — info-detail configJson 보다 우선
-    return mergeTrainedTeacherSponsorAssignments(
-      mergeTrainedTeacherInfoDetailIntoProgram(base, infoDetail),
-      sponsors
-    )
-  } catch {
-    return mergeTrainedTeacherSponsorAssignments(base, sponsors)
-  }
+  const withInfo = await (async () => {
+    try {
+      const infoDetail = await fetchTrainedTeacherInfoDetailRemote(programId)
+      return mergeTrainedTeacherInfoDetailIntoProgram(base, infoDetail)
+    } catch {
+      return base
+    }
+  })()
+  // sponsors API 가 후원·담당자 SSOT — 실패 시 merge skip (빈 배열 clear 오인 방지)
+  if (!sponsorsResult.ok) return withInfo
+  return mergeTrainedTeacherSponsorAssignments(withInfo, sponsorsResult.data)
 }
 
 export async function createTrainedTeacherProgram(
@@ -181,8 +183,9 @@ export async function updateTrainedTeacherProgram(
   assertRemoteReady()
   const request = mapTrainedTeacherToUpdateRequest(program, patch)
   const dto = await updateAdminProgramRemote(programId, request)
-  const sponsors = await fetchAdminProgramSponsorsRemote(programId).catch(
-    () => [] as Awaited<ReturnType<typeof fetchAdminProgramSponsorsRemote>>
+  const sponsorsResult = await fetchAdminProgramSponsorsRemote(programId).then(
+    data => ({ ok: true as const, data }),
+    () => ({ ok: false as const, data: null })
   )
   let mapped = mapTrainedTeacherDetailToProgram(dto)
   // PATCH echo 가 businessArea 를 빼거나 구값을 주면, 방금 보낸 마스터명을 유지한다.
@@ -195,15 +198,14 @@ export async function updateTrainedTeacherProgram(
   }
   try {
     const infoDetail = await fetchTrainedTeacherInfoDetailRemote(programId)
-    return mergeTrainedTeacherSponsorAssignments(
-      mergeTrainedTeacherInfoDetailIntoProgram(mapped, infoDetail, {
-        tablePreference: 'program',
-      }),
-      sponsors
-    )
+    mapped = mergeTrainedTeacherInfoDetailIntoProgram(mapped, infoDetail, {
+      tablePreference: 'program',
+    })
   } catch {
-    return mergeTrainedTeacherSponsorAssignments(mapped, sponsors)
+    // info-detail 실패 시 program GET 매핑만 사용
   }
+  if (!sponsorsResult.ok) return mapped
+  return mergeTrainedTeacherSponsorAssignments(mapped, sponsorsResult.data)
 }
 
 /** 공통 정보 LNB — trained-teacher/detail PATCH */

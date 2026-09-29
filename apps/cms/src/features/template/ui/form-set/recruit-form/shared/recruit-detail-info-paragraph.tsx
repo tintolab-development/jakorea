@@ -336,12 +336,8 @@ export function RecruitDetailInfoParagraph({
     [attachmentFileNamesKey, attachmentFileObjectIdsKey]
   )
 
-  useEffect(
-    () => () => {
-      revokeThumb(thumbObjectUrl)
-    },
-    [revokeThumb, thumbObjectUrl]
-  )
+  // unmount 시 blob revoke 금지 — overlay 에 URL 이 남아 미리보기에서 깨짐 (StrictMode 포함).
+  // 교체·삭제 시에만 revokeThumb.
 
   return (
     <div className="recruit-detail-info-paragraph__forms">

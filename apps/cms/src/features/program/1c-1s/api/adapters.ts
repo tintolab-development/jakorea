@@ -35,6 +35,11 @@ import {
 import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
+import {
+  applyProgramMissingCommonStringFieldsToUpdateRequest,
+  mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
+  resolveOtherNotesFromProgramResponse,
+} from '@/features/program/shared/lib/program-update-common-string-fields'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
 
@@ -116,10 +121,6 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
 export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   const dtoExt = dto as ProgramResponse & {
     nameKo?: string
-    remarks?: string
-    otherMatters?: string
-    contactName?: string
-    recruitmentTargetDetail?: string
     businessField?: string
   }
   const title =
@@ -163,7 +164,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     : fromJson
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 — serviceDetailJson 캐시가
   // 낡았을 때도(id만 바뀌고 상세 JSON이 안 갱신된 경우 등) 화면에 최신 이름이 보이게 한다.
-  const generalCommonInfo = applyResolvedVenueKindToCommonInfo(
+  const generalCommonInfoBase = applyResolvedVenueKindToCommonInfo(
     {
       ...generalCommonInfoWithSettlement,
       detailedProgramName:
@@ -171,11 +172,26 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     },
     { institutionType: dto.institutionType as Program['institutionType'], venue: dto.venue }
   )
+  const generalCommonInfo = generalCommonInfoBase
+    ? {
+        ...generalCommonInfoBase,
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          generalCommonInfoBase.participantRecruitmentInfo,
+          dto
+        ),
+      }
+    : {
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          undefined,
+          dto
+        ),
+      }
+  /** otherNotes ≠ remarks — BE otherMatters 컬럼 우선 */
   const otherNotes =
-    dtoExt.otherMatters?.trim() ||
-    dtoExt.remarks?.trim() ||
-    details.otherNotes?.trim() ||
-    undefined
+    resolveOtherNotesFromProgramResponse({
+      otherMatters: dto.otherMatters,
+      otherNotes: details.otherNotes,
+    }) || undefined
 
   const periodStatus = (dto as ProgramResponse & { periodStatus?: string }).periodStatus
   const lifecycleStatus =
@@ -243,6 +259,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     managerName: dto.managerName,
     venue: dto.venue,
     curriculum: dto.curriculum,
+    contactName: dto.contactName?.trim() || undefined,
     contactEmail: dto.contactEmail,
     contactPhone: dto.contactPhone,
     oneLineIntroduction: dto.oneLineIntroduction,
@@ -255,6 +272,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
     otherNotes,
+    recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
     studentListRequired: details.studentListRequired ?? 'not_required',
     generalParticipantTypes: ['school_institution', 'teacher_instructor'],
     generalCommonInfo,
@@ -373,7 +391,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     sponsors.find(row => row.sponsorContactId)?.sponsorId ||
     sponsors[0]?.sponsorId ||
     program.sponsorId
-  return {
+  const body: ProgramUpdateRequest = {
     sponsorId: primarySponsorId,
     title: program.title,
     type: program.type,
@@ -436,6 +454,12 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     sponsors: sponsors.length > 0 ? sponsors : undefined,
     serviceDetailJson: serializeCompanySchoolServiceDetailJson(program),
   }
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'full',
+    merged: program,
+    existing: program,
+  })
+  return body
 }
 
 /**
@@ -444,7 +468,8 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
  */
 function mapCompanySchoolPatchFieldsToRequest(
   merged: Program,
-  patch: Partial<Program>
+  patch: Partial<Program>,
+  existing: Program
 ): ProgramUpdateRequest {
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
@@ -557,6 +582,13 @@ function mapCompanySchoolPatchFieldsToRequest(
     body.serviceDetailJson = serializeCompanySchoolServiceDetailJsonForUpdatePatch(merged, patch)
   }
 
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'patch',
+    merged,
+    existing,
+    patch,
+  })
+
   return body
 }
 
@@ -569,7 +601,7 @@ export function mapCompanySchoolToUpdateRequest(
   patch?: Partial<Program>
 ): ProgramUpdateRequest {
   if (patch && Object.keys(patch).length > 0) {
-    return mapCompanySchoolPatchFieldsToRequest({ ...program, ...patch }, patch)
+    return mapCompanySchoolPatchFieldsToRequest({ ...program, ...patch }, patch, program)
   }
   return mapCompanySchoolCoreFieldsToRequest(program)
 }

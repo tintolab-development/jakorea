@@ -1047,6 +1047,12 @@ export function detailEditValuesToProgramPatch(
   const contactOrganizationName =
     values.recruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
+  /** 문의처 표시명 — BE contactName (managerName/후원 담당자와 분리) */
+  const inquiryContactName =
+    values.recruitmentContactOrganizationName?.trim() ||
+    existing.contactName?.trim() ||
+    existing.generalCommonInfo?.participantRecruitmentInfo?.contactName?.trim() ||
+    undefined
   const instructorContactOrganizationName =
     values.instructorRecruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName
@@ -1110,6 +1116,7 @@ export function detailEditValuesToProgramPatch(
       values.sponsorManagementIds?.[0] ||
       existing.sponsorId,
     managerName: values.managerName,
+    contactName: inquiryContactName,
     contactPhone,
     contactEmail,
     institutionType:
@@ -1127,6 +1134,10 @@ export function detailEditValuesToProgramPatch(
         ? undefined
         : (values.remarks?.trim() || undefined),
     educationTargetDetail: values.educationTargetDetail?.trim() || undefined,
+    recruitmentTargetDetail:
+      values.educationTargetDetail?.trim() ||
+      existing.recruitmentTargetDetail ||
+      undefined,
     keyVisualImage: values.keyVisualImage,
     posterImage: values.posterImage,
     description: values.description,

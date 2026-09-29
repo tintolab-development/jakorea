@@ -387,6 +387,44 @@ describe('mergeTrainedTeacherSponsorAssignments', () => {
       '1627251::1627253': '박담당',
     })
   })
+
+  it('marks manager as 미선택 when sponsors have no contact ids', () => {
+    const program = {
+      id: '186034',
+      title: 'TT',
+      sponsorId: '163302',
+      managerName: '구담당',
+      generalCommonInfo: {
+        sponsorManagerContactIds: ['163302::111'],
+        sponsorManagerLine: '구담당',
+      },
+    } as Program
+    const merged = mergeTrainedTeacherSponsorAssignments(program, [
+      { sponsorId: '163302', sponsorContactId: null },
+    ])
+    expect(merged.generalCommonInfo?.sponsorManagementIds).toEqual(['163302'])
+    expect(merged.generalCommonInfo?.sponsorManagerContactIds).toEqual([])
+    expect(merged.managerName).toBe('미선택')
+    expect(merged.generalCommonInfo?.sponsorManagerLine).toBe('미선택')
+  })
+
+  it('clears sponsor fields when assignments are empty', () => {
+    const program = {
+      id: '186034',
+      title: 'TT',
+      sponsorId: '163302',
+      managerName: '김담당',
+      generalCommonInfo: {
+        sponsorManagementIds: ['163302'],
+        sponsorManagerContactIds: ['163302::111'],
+      },
+    } as Program
+    const merged = mergeTrainedTeacherSponsorAssignments(program, [])
+    expect(merged.sponsorId).toBeUndefined()
+    expect(merged.managerName).toBeUndefined()
+    expect(merged.generalCommonInfo?.sponsorManagementIds).toEqual([])
+    expect(merged.generalCommonInfo?.sponsorManagerContactIds).toEqual([])
+  })
 })
 
 describe('mapTrainedTeacherToUpdateRequest sponsors', () => {
@@ -472,6 +510,33 @@ describe('mapTrainedTeacherToUpdateRequest sponsors', () => {
       { sponsorId: '163302', sponsorContactId: '111' },
       { sponsorId: '163302', sponsorContactId: '222' },
     ])
+  })
+
+  it('omits contact ids when manager is 미선택', () => {
+    const program = {
+      id: '186005',
+      sponsorId: '163302',
+      title: 'TT',
+      type: 'online' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      managerName: '미선택',
+      generalCommonInfo: {
+        sponsorManagementIds: ['163302', '1627251'],
+        sponsorManagerContactIds: ['__sponsor_contact_unselected__'],
+        sponsorManagerContactId: '__sponsor_contact_unselected__',
+        sponsorManagerLine: '미선택',
+      },
+    }
+    const request = mapTrainedTeacherToUpdateRequest(program)
+    expect(request.sponsors).toEqual([{ sponsorId: '163302' }, { sponsorId: '1627251' }])
   })
 })
 

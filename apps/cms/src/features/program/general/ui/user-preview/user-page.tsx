@@ -83,14 +83,15 @@ function resolveRecruitmentPreviewPosterSeed(program: Program): {
     ...getGeneralRecruitOverlayRecord(),
   }
   const media = readRecruitDetailMediaFromOverlay(overlay)
+  // blob 은 즉시 placeholder 용. revoke 됐을 수 있으므로 fileObjectId 로드가 SSOT.
   const displayUrl =
     readablePosterUrl(media.thumbObjectUrl) ??
     readablePosterUrl(program.keyVisualImage || program.posterImage)
   const fileObjectId =
     media.thumbFileObjectId ??
+    fileObjectIdFromAdminFileUrl(media.keyVisualImage) ??
     fileObjectIdFromAdminFileUrl(program.keyVisualImage) ??
     fileObjectIdFromAdminFileUrl(program.posterImage) ??
-    fileObjectIdFromAdminFileUrl(media.keyVisualImage) ??
     undefined
   return { displayUrl, fileObjectId }
 }
@@ -101,6 +102,7 @@ function useRecruitmentPosterUrl(program: Program): string | undefined {
 
   useEffect(() => {
     const nextSeed = resolveRecruitmentPreviewPosterSeed(program)
+    // 새 업로드 blob 이 있으면 먼저 보여 주고, fileObjectId 로 안정 URL 을 덮어쓴다.
     setPosterImageUrl(nextSeed.displayUrl)
     const programId = parseFileObjectId(program.id)
     const fileObjectId = nextSeed.fileObjectId
@@ -110,7 +112,7 @@ function useRecruitmentPosterUrl(program: Program): string | undefined {
 
     void (async () => {
       try {
-        if (nextSeed.displayUrl?.startsWith('blob:')) return
+        // fileObjectId 우선 — overlay blob 은 StrictMode/단락 unmount 시 revoke 되어 깨질 수 있음
         if (fileObjectId != null) {
           const nextUrl = await loadProgramThumbnailPreviewUrl(fileObjectId)
           if (cancelled) {
@@ -121,6 +123,7 @@ function useRecruitmentPosterUrl(program: Program): string | undefined {
           setPosterImageUrl(nextUrl)
           return
         }
+        if (nextSeed.displayUrl) return
         if (programId == null) return
         const thumbnail = await fetchProgramThumbnail(programId)
         if (cancelled || thumbnail.fileObjectId == null) return
@@ -132,7 +135,13 @@ function useRecruitmentPosterUrl(program: Program): string | undefined {
         objectUrl = nextUrl.startsWith('blob:') ? nextUrl : null
         setPosterImageUrl(nextUrl)
       } catch {
-        if (!cancelled) setPosterImageUrl(nextSeed.displayUrl)
+        if (!cancelled) {
+          // blob 이 revoke 됐으면 undefined 로 두어 깨진 img 를 피한다
+          const fallback = nextSeed.displayUrl?.startsWith('blob:')
+            ? undefined
+            : nextSeed.displayUrl
+          setPosterImageUrl(fallback)
+        }
       }
     })()
 

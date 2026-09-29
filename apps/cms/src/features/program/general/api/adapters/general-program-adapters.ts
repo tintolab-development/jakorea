@@ -35,6 +35,11 @@ import {
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
 import {
+  applyProgramMissingCommonStringFieldsToUpdateRequest,
+  mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
+  resolveOtherNotesFromProgramResponse,
+} from '@/features/program/shared/lib/program-update-common-string-fields'
+import {
   applyResolvedVenueKindToCommonInfo,
   buildProgramSponsorAssignmentsWire,
   normalizeSponsorManagerContactIds,
@@ -306,10 +311,6 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
 export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const dtoWithExtras = dto as ProgramResponse & {
     nameKo?: string
-    contactName?: string
-    remarks?: string
-    otherMatters?: string
-    recruitmentTargetDetail?: string
     applicationTargetMode?: string
     businessField?: string
   }
@@ -322,7 +323,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const now = new Date().toISOString()
   const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
   const dtoDetailedProgramName = dto.detailedProgramName?.trim()
-  const generalCommonInfo = applyResolvedVenueKindToCommonInfo(
+  const generalCommonInfoBase = applyResolvedVenueKindToCommonInfo(
     applySettlementPolicyToCommonInfo(
       {
         ...serviceDetail.generalCommonInfo,
@@ -334,16 +335,26 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     ),
     { institutionType: dto.institutionType as Program['institutionType'], venue: dto.venue }
   )
-  const participantRemarks = (
-    serviceDetail.generalCommonInfo?.participantRecruitmentInfo as
-      | { remarks?: string }
-      | undefined
-  )?.remarks
+  const generalCommonInfo = generalCommonInfoBase
+    ? {
+        ...generalCommonInfoBase,
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          generalCommonInfoBase.participantRecruitmentInfo,
+          dto
+        ),
+      }
+    : {
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          undefined,
+          dto
+        ),
+      }
+  /** otherNotes ≠ remarks — 모집 비고와 분리 (BE otherMatters) */
   const otherNotes =
-    dtoWithExtras.otherMatters?.trim() ||
-    dtoWithExtras.remarks?.trim() ||
-    participantRemarks?.trim() ||
-    undefined
+    resolveOtherNotesFromProgramResponse({
+      otherMatters: dto.otherMatters,
+      otherNotes: serviceDetail.otherNotes,
+    }) || undefined
   const audienceFromApi = resolveAudienceFromApiFields({
     audience: serviceDetail.generalProgramAudience,
     programType: dto.programType,
@@ -414,6 +425,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     managerName: dto.managerName,
     venue: dto.venue,
     curriculum: dto.curriculum,
+    contactName: dto.contactName?.trim() || undefined,
     contactEmail: dto.contactEmail,
     contactPhone: dto.contactPhone,
     oneLineIntroduction: dto.oneLineIntroduction,
@@ -425,6 +437,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
     otherNotes: otherNotes?.trim() || undefined,
+    recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     ...serviceDetail,
@@ -611,7 +624,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     sponsors[0]?.sponsorId ||
     (program.sponsorId != null ? String(program.sponsorId) : undefined)
 
-  return {
+  const body: ProgramUpdateRequestBody = {
     sponsorId: primarySponsorId,
     sponsors: sponsors.length > 0 ? sponsors : undefined,
     title: program.title,
@@ -680,6 +693,12 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     rounds: mapProgramRoundsToRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
   }
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'full',
+    merged: program,
+    existing: program,
+  })
+  return body
 }
 
 export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreateRequestBody {
@@ -913,6 +932,13 @@ function mapProgramPatchFieldsToRequest(
       omitRecruitmentWindow: !patchIncludesRecruitmentWindow(patch),
     })
   }
+
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'patch',
+    merged,
+    existing,
+    patch,
+  })
 
   return body
 }
