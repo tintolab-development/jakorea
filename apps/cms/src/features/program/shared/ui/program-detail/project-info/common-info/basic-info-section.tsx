@@ -155,6 +155,11 @@ export interface BasicInfoSectionProps {
   enableTitleEnEdit?: boolean
   /** 교육받은 교사 — 세부 프로그램명 Select (마스터 옵션) */
   useDetailedProgramSelect?: boolean
+  /**
+   * 수정 모드에서 상위 섹션 헤더(필수 `*`)를 쓸 때 내부 `DetailInfoForm` 타이틀 숨김.
+   * 교육받은 교사 상세 수정 전용 — 1사1교·일반 조회 타이틀은 유지.
+   */
+  hideFormTitles?: boolean
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -304,6 +309,7 @@ export function BasicInfoSection({
   fixedParticipantTypeLabel,
   enableTitleEnEdit = false,
   useDetailedProgramSelect = false,
+  hideFormTitles = false,
 }: BasicInfoSectionProps) {
   const isFormEdit = isEditMode && form
   const companySchoolLayout = forceCompanySchoolLayout || isCompanySchoolProgram(program)
@@ -524,7 +530,7 @@ export function BasicInfoSection({
     const ipsLabel = optionLabel(IPS_OPTIONS, program.ips ?? 'Prepare')
     return (
       <div className="project-info-basic-info-section__company-school-forms">
-        <DetailInfoForm title="기본 정보" mode="view">
+        <DetailInfoForm title="기본 정보" hideHeader={hideFormTitles} mode="view">
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="최초 등록일"
@@ -891,14 +897,6 @@ export function BasicInfoSection({
                     const managerOptions = savedManagerOption
                       ? [savedManagerOption, ...sponsorManagerOptions]
                       : sponsorManagerOptions
-                    const selectedManagers = selectedIds
-                      .map(id => sponsorManagerOptions.find(option => option.value === id))
-                      .filter(
-                        (
-                          option
-                        ): option is (typeof sponsorManagerOptions)[number] =>
-                          option != null && !isSponsorContactUnselected(option.value)
-                      )
                     return (
                       <div className="detail-info-form-inputs-wrapper" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                         <CmsSelect
@@ -939,22 +937,6 @@ export function BasicInfoSection({
                             )
                           }}
                         />
-                        {selectedManagers.length > 0 ? (
-                          <div className="detail-info-form-inputs-wrapper">
-                            {selectedManagers.map((manager, index) => (
-                              <span key={manager.value}>
-                                {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
-                                {manager.name}
-                                {manager.phone ? (
-                                  <>
-                                    {'\u00A0'}
-                                    <span>{manager.phone}</span>
-                                  </>
-                                ) : null}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
                       </div>
                     )
                   }}

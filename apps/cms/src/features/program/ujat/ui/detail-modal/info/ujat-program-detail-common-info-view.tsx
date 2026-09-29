@@ -17,6 +17,8 @@ import { UjatEducationScheduleSettingsProgramView } from './ujat-education-sched
 import { UjatRegionCapacityProgramView } from './ujat-region-capacity-program-view'
 import { UjatBasicInfoReadonlyView } from './ujat-basic-info-readonly-view'
 import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
+import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
+import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './ujat-program-detail-common-info-view.css'
@@ -30,7 +32,7 @@ export interface UjatProgramDetailCommonInfoViewProps {
 
 function UjatBasicInfoRegistrationAuditRow({ program }: { program: Program }) {
   return (
-    <DetailInfoForm title="기본 정보" mode="view" className="program-registration-paragraph">
+    <DetailInfoForm title="기본 정보" hideHeader mode="view" className="program-registration-paragraph">
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최초 등록일"
@@ -69,9 +71,21 @@ export function UjatProgramDetailCommonInfoView({
 
   return (
     <div className="program-detail-fullpage-modal__info-tab">
-      <div className="ujat-program-detail-common-info-view__basic-info">
+      <div
+        className={
+          isEditMode
+            ? 'ujat-program-detail-common-info-view__basic-info ujat-program-detail-common-info-view__basic-info--edit'
+            : 'ujat-program-detail-common-info-view__basic-info'
+        }
+      >
         {isEditMode ? (
           <>
+            <FormParagraphSectionHeader
+              title={UJAT_REGISTRATION_SECTION_META.basic.title}
+              surface="responseEntry"
+              titleAligned
+              required
+            />
             <UjatBasicInfoRegistrationAuditRow program={program} />
             <div className="ujat-program-detail-common-info-view__basic-info-edit-blocks">
               {/*

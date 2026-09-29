@@ -8,6 +8,7 @@ import {
 import { createUjatRegistrationBasicInfoOverlayDefaults } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 import { useUjatProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { formatNumberDisplay } from '@/shared/utils'
@@ -46,7 +47,21 @@ export function UjatBusinessKpiProgramView({
   const hasVolunteerRecruitment = isFormEdit ? participantVolunteer : display.hasVolunteerRecruitment
 
   return (
-    <DetailInfoForm title="사업 KPI 목표" mode={formMode} className="detail-info-form--gap">
+    <section className="program-detail-fullpage-modal__info-tab-block">
+      {isFormEdit ? (
+        <FormParagraphSectionHeader
+          title="사업 KPI 목표"
+          surface="responseEntry"
+          titleAligned
+          required
+        />
+      ) : null}
+      <DetailInfoForm
+        title="사업 KPI 목표"
+        hideHeader={isFormEdit}
+        mode={formMode}
+        className={isFormEdit ? 'program-registration-paragraph' : undefined}
+      >
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="참여자 최종 인원"
@@ -189,6 +204,7 @@ export function UjatBusinessKpiProgramView({
           }
         />
       </DetailInfoForm.Row>
-    </DetailInfoForm>
+      </DetailInfoForm>
+    </section>
   )
 }
