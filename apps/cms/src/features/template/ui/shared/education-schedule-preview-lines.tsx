@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { isEducationScheduleLineUpcoming } from '@/features/template/lib/format-education-schedule-line'
 import './education-schedule-preview-lines.css'
 
 export const EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER =
@@ -40,7 +41,9 @@ export function EducationSchedulePreviewLines({
 
   return (
     <div className="education-schedule-preview-lines">
-      {lines.map((line, index) => (
+      {lines.map((line, index) => {
+        const canRemove = isEducationScheduleLineUpcoming(line)
+        return (
         <Fragment key={`${line}-${index}`}>
           {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
           <span className="education-schedule-preview-lines__item">
@@ -50,14 +53,19 @@ export function EducationSchedulePreviewLines({
                 type="button"
                 className="education-schedule-preview-lines__remove"
                 aria-label={`${line} 제거`}
-                onClick={() => onRemove(index)}
+                disabled={!canRemove}
+                onClick={() => {
+                  if (!canRemove) return
+                  onRemove(index)
+                }}
               >
                 <EducationSchedulePreviewRemoveIcon />
               </button>
             ) : null}
           </span>
         </Fragment>
-      ))}
+        )
+      })}
     </div>
   )
 }

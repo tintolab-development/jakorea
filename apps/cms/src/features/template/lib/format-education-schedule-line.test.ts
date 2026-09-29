@@ -5,6 +5,7 @@ import {
   countUniqueEducationScheduleCalendarDays,
   educationScheduleAppliedSurfaceRange,
   flattenGroupTimeSlotsByDetail,
+  isEducationScheduleLineUpcoming,
   parseEducationScheduleLineToRange,
   rebuildEducationScheduleLinesFromGroupTimes,
 } from '@/features/template/lib/format-education-schedule-line'
@@ -144,5 +145,28 @@ describe('flattenGroupTimeSlotsByDetail', () => {
       { startTime: '10:00', endTime: '11:00' },
       { startTime: '13:00', endTime: '15:00' },
     ])
+  })
+})
+
+describe('isEducationScheduleLineUpcoming', () => {
+  const now = dayjs('2026-09-29T09:00:00')
+
+  it('미래 날짜·시간은 예정이다', () => {
+    expect(isEducationScheduleLineUpcoming('26년 10월 12일(월) 10:00 ~ 12:00', now)).toBe(true)
+    expect(isEducationScheduleLineUpcoming('26년 10월 12일(월)', now)).toBe(true)
+  })
+
+  it('지난 날짜와 이미 시작한 일정은 예정이 아니다', () => {
+    expect(isEducationScheduleLineUpcoming('26년 9월 20일(일) 10:00 ~ 12:00', now)).toBe(false)
+    expect(isEducationScheduleLineUpcoming('26년 9월 29일(화) 8:00 ~ 10:00', now)).toBe(false)
+    expect(isEducationScheduleLineUpcoming('26년 9월 20일(일) ~ 26년 9월 27일(일)', now)).toBe(
+      false
+    )
+  })
+
+  it('기간이 이미 시작됐으면 예정이 아니다', () => {
+    expect(
+      isEducationScheduleLineUpcoming('26년 9월 20일(일) ~ 26년 10월 12일(월)', now)
+    ).toBe(false)
   })
 })

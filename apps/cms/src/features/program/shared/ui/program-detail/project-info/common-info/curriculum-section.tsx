@@ -19,6 +19,9 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
+import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
+import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
 
 const ROUND_DELIVERY_OPTIONS: { value: RoundDeliveryType; label: string }[] = [
   { value: 'online', label: '온라인' },
@@ -350,11 +353,14 @@ export function EducationScheduleSettingsSection({
     form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
   }
 
-  return (
+  const scheduleMeta = PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings
+
+  const scheduleForm = (
     <DetailInfoForm
-      title="교육 진행 일정 설정"
+      title={scheduleMeta.title}
+      hideHeader={Boolean(isFormEdit)}
       mode={isFormEdit ? 'edit' : 'view'}
-      className="detail-info-form--gap"
+      className={isFormEdit ? 'program-registration-paragraph' : 'detail-info-form--gap'}
     >
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
@@ -391,5 +397,32 @@ export function EducationScheduleSettingsSection({
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>
+  )
+
+  if (!isFormEdit) return scheduleForm
+
+  return (
+    <section className="detail-common-info-view__section" aria-label={scheduleMeta.title}>
+      <FormParagraphSectionHeader
+        title={scheduleMeta.title}
+        description={scheduleMeta.editDescription}
+        titleTrailing={
+          <EducationScheduleChangeTitleAction
+            scheduleLines={lines}
+            educationScheduleMode="period"
+            operationStart={program.startDate}
+            operationEnd={program.endDate}
+            onApply={nextLines => {
+              if (!form) return
+              form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
+            }}
+          />
+        }
+        surface="responseEntry"
+        titleAligned
+        required
+      />
+      <div className="detail-common-info-view__section-body">{scheduleForm}</div>
+    </section>
   )
 }

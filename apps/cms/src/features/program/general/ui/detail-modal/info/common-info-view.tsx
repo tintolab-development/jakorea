@@ -28,6 +28,8 @@ import {
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { SponsorManagerLineInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
+import { useEducationScheduleModeLineStash } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import {
   applyCurriculumPreEducationBlock,
@@ -52,6 +54,7 @@ import {
   scheduleDetailsPreEducationSyncEqual,
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
+  shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
 } from '@/features/program/general/lib/schedule-detail-form'
@@ -3571,12 +3574,16 @@ function ScheduleDetailEditBlock({
                 <Controller
                   name={`scheduleDetails.${index}.groupTimes.${groupIndex}`}
                   control={editForm.control}
-                  render={({ field }) => (
+                  render={({ field }) => {
+                    const start = scheduleTimeStringToDayjs(field.value?.startTime)
+                    const end = scheduleTimeStringToDayjs(field.value?.endTime)
+                    return (
                     <ParagraphTimePicker
                       endTimeAlwaysOn
                       placeholder="시간 선택"
                       width={200}
-                      value={scheduleTimeStringToDayjs(field.value?.startTime)}
+                      value={start}
+                      initialTimeRange={start && end ? [start, end] : null}
                       onTimeRangeChange={range => {
                         field.onChange({
                           startTime: range[0].format('HH:mm'),
@@ -3584,7 +3591,8 @@ function ScheduleDetailEditBlock({
                         })
                       }}
                     />
-                  )}
+                    )
+                  }}
                 />
                 {groupIndex > 0 ? (
                   <ItemDeleteButton
@@ -4423,6 +4431,7 @@ function ScheduleSettingsEditFields({
 }) {
   const [singleDate, setSingleDate] = useState<Dayjs | null>(null)
   const [periodDate, setPeriodDate] = useState<Dayjs | null>(null)
+  const swapScheduleLinesForMode = useEducationScheduleModeLineStash()
 
   const lines = form.watch('educationScheduleLines') ?? []
   const scheduleMode = form.watch('educationScheduleMode') ?? 'date'
@@ -4457,9 +4466,16 @@ function ScheduleSettingsEditFields({
 
   useEffect(() => {
     if (!lockDateMode) return
-    if (form.getValues('educationScheduleMode') === 'date') return
+    const currentMode = form.getValues('educationScheduleMode') ?? 'date'
+    if (currentMode === 'date') return
+    const nextLines = swapScheduleLinesForMode(
+      currentMode,
+      'date',
+      form.getValues('educationScheduleLines') ?? []
+    )
+    form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
     form.setValue('educationScheduleMode', 'date', { shouldDirty: true })
-  }, [lockDateMode, form])
+  }, [lockDateMode, form, swapScheduleLinesForMode])
 
   useEffect(() => {
     if (scheduleMode !== 'date') return
@@ -4542,8 +4558,17 @@ function ScheduleSettingsEditFields({
                     size="large"
                     value={lockDateMode ? 'date' : (field.value ?? 'date')}
                     onChange={e => {
-                      const next = e.target.value
+                      const next = e.target.value as 'date' | 'period'
                       if (lockDateMode && next === 'period') return
+                      const currentMode = (field.value ?? 'date') as 'date' | 'period'
+                      if (next !== currentMode) {
+                        const nextLines = swapScheduleLinesForMode(
+                          currentMode,
+                          next,
+                          form.getValues('educationScheduleLines') ?? []
+                        )
+                        form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
+                      }
                       field.onChange(next)
                     }}
                   >
@@ -4582,6 +4607,10 @@ function ScheduleSettingsEditFields({
                 customizable={false}
                 showTimeToggle={false}
                 showPeriodToggle={false}
+                lockPeriodToggleOn={shouldLockEducationScheduleCalendarToggles({
+                  participantOrganization: Boolean(participantOrganization),
+                  educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
+                })}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}
@@ -4655,6 +4684,34 @@ function ScheduleSettingsSection({
       isFormEdit={isFormEdit}
       editDescription={scheduleMeta.editDescription}
       required
+      titleTrailing={
+        isFormEdit ? (
+          <EducationScheduleChangeTitleAction
+            scheduleLines={lines}
+            educationScheduleMode={
+              isFormEdit
+                ? (editForm.watch('educationScheduleMode') ?? 'date')
+                : 'date'
+            }
+            autoFillFromScheduleGroupTimes={
+              educationStructure === 'schedule' &&
+              sessionRound === 'single' &&
+              !(isFormEdit && editForm.watch('participantOrganization'))
+            }
+            lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
+              participantOrganization: Boolean(
+                isFormEdit && editForm.watch('participantOrganization')
+              ),
+              educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
+            })}
+            operationStart={program.startDate}
+            operationEnd={program.endDate}
+            onApply={nextLines => {
+              editForm.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
+            }}
+          />
+        ) : undefined
+      }
     >
       {isFormEdit ? (
         <ScheduleSettingsEditFields form={editForm} />

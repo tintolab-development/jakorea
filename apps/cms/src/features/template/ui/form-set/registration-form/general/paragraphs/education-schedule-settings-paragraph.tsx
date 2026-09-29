@@ -16,6 +16,13 @@ import {
 } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { applyEducationScheduleModeLineSwap } from '@/features/program/shared/lib/education-schedule-mode-lines'
+import {
+  educationOperationRangeSealKeyFromSchedulePrefix,
+  isOutsideEducationOperationRange,
+  toEducationOperationDayjs,
+  type EducationOperationRangeSeal,
+} from '@/features/program/shared/lib/education-schedule-change'
 import {
   GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY,
   updateProgramRegistrationOverlayKey,
@@ -61,6 +68,14 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
     `${overlayKeyPrefix}.scheduleLines`,
     EMPTY_SCHEDULE_LINES
   )
+  const [operationRangeSeal] = useProgramRegistrationOverlayKv<EducationOperationRangeSeal>(
+    educationOperationRangeSealKeyFromSchedulePrefix(overlayKeyPrefix),
+    null
+  )
+  const operationStart = toEducationOperationDayjs(operationRangeSeal?.start)
+  const operationEnd = toEducationOperationDayjs(operationRangeSeal?.end)
+  const disableOutsideOperation = (date: Dayjs) =>
+    isOutsideEducationOperationRange(date, operationStart, operationEnd)
   const [groupTimesByDetail] = useProgramRegistrationOverlayKv<
     Record<number, Array<EducationScheduleGroupTimeSlot | null>>
   >(GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY, EMPTY_GROUP_TIMES)
@@ -131,8 +146,13 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   useEffect(() => {
     if (!lockDateMode) return
     if (scheduleMode === 'date') return
+    applyEducationScheduleModeLineSwap({
+      overlayKeyPrefix,
+      currentMode: scheduleMode,
+      nextMode: 'date',
+    })
     onEducationScheduleModeChange('date')
-  }, [lockDateMode, onEducationScheduleModeChange, scheduleMode])
+  }, [lockDateMode, onEducationScheduleModeChange, overlayKeyPrefix, scheduleMode])
 
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
   const groupTimeSlotsKey = JSON.stringify(flattenGroupTimeSlotsByDetail(groupTimesByDetail))
@@ -168,6 +188,11 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 onChange={e => {
                   const next = e.target.value as ProgramRegistrationEducationScheduleMode
                   if (lockDateMode && next === 'period') return
+                  applyEducationScheduleModeLineSwap({
+                    overlayKeyPrefix,
+                    currentMode: scheduleMode,
+                    nextMode: next,
+                  })
                   onEducationScheduleModeChange(next)
                 }}
               >
@@ -196,6 +221,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 onChange={handleDateApply}
                 onRangeChange={autoFillDatePicker ? undefined : handleScheduleRangeApply}
                 width={240}
+                disabledDate={disableOutsideOperation}
               />
             ) : (
               <ParagraphDatePicker
@@ -210,6 +236,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 onChange={setPeriodDate}
                 onRangeChange={handleScheduleRangeApply}
                 width={360}
+                disabledDate={disableOutsideOperation}
               />
             )
           }

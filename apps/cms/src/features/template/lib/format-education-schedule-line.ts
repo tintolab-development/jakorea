@@ -141,6 +141,18 @@ export function educationScheduleRangeHasClock(range: [Dayjs, Dayjs]): boolean {
   return start.hour() !== 0 || start.minute() !== 0 || end.hour() !== 0 || end.minute() !== 0
 }
 
+/** 아직 시작하지 않은 예정일만 true. 지난 날·당일 시작 후·기간 진행 중은 false. */
+export function isEducationScheduleLineUpcoming(
+  line: string,
+  now: Dayjs = dayjs()
+): boolean {
+  const range = parseEducationScheduleLineToRange(line)
+  if (!range) return false
+  const [start] = range
+  if (educationScheduleRangeHasClock(range)) return start.isAfter(now)
+  return start.isAfter(now, 'day')
+}
+
 /** 같은 날·시각 없음이면 피커 트리거에 `날짜 ~ 날짜`가 나오지 않도록 null */
 export function educationScheduleAppliedSurfaceRange(
   range: [Dayjs, Dayjs] | null
