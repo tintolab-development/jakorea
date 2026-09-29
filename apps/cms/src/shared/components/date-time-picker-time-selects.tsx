@@ -5,16 +5,14 @@ function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ')
 }
 
-const TIME_SELECT_FIELD_WIDTH_PX = 80
-
-const HOUR_OPTIONS = Array.from({ length: 12 }, (_, i) => {
-  const n = i + 1
-  return { value: String(n), label: String(n) }
-})
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => ({
+  value: String(i),
+  label: `${i}시`,
+}))
 
 const ALL_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => ({
   value: String(i),
-  label: String(i).padStart(2, '0'),
+  label: `${String(i).padStart(2, '0')}분`,
 }))
 
 function minuteOptionsForStep(minuteStep?: number) {
@@ -24,22 +22,18 @@ function minuteOptionsForStep(minuteStep?: number) {
   for (let minute = 0; minute < 60; minute += step) {
     options.push({
       value: String(minute),
-      label: String(minute).padStart(2, '0'),
+      label: `${String(minute).padStart(2, '0')}분`,
     })
   }
   return options
 }
-
-const MERIDIEM_OPTIONS = [
-  { value: 'AM', label: 'AM' },
-  { value: 'PM', label: 'PM' },
-] as const
 
 function to24h(h12: number, mer: 'AM' | 'PM'): number {
   if (mer === 'AM') return h12 === 12 ? 0 : h12
   return h12 === 12 ? 12 : h12 + 12
 }
 
+/** @deprecated 24h UI만 사용 — `buildTimeFrom24Hour` 권장 */
 export function from24h(h24: number): { h12: number; mer: 'AM' | 'PM' } {
   const mer: 'AM' | 'PM' = h24 >= 12 ? 'PM' : 'AM'
   let h12 = h24 % 12
@@ -47,9 +41,15 @@ export function from24h(h24: number): { h12: number; mer: 'AM' | 'PM' } {
   return { h12, mer }
 }
 
+/** @deprecated 24h draft state — `buildTimeFrom24Hour` 권장 */
 export function buildTime(base: Dayjs, h12: number, minute: number, mer: 'AM' | 'PM'): Dayjs {
-  const h24 = to24h(h12, mer)
-  return base.hour(h24).minute(minute).second(0).millisecond(0)
+  return buildTimeFrom24Hour(base, to24h(h12, mer), minute)
+}
+
+export function buildTimeFrom24Hour(base: Dayjs, hour24: number, minute: number): Dayjs {
+  const h = Math.min(23, Math.max(0, hour24))
+  const m = Math.min(59, Math.max(0, minute))
+  return base.hour(h).minute(m).second(0).millisecond(0)
 }
 
 export function parseNum(s: string, fallback: number): number {
@@ -60,10 +60,8 @@ export function parseNum(s: string, fallback: number): number {
 export interface DateTimePickerTimeInlineSelectsProps {
   hour: string
   minute: string
-  meridiem: 'AM' | 'PM'
   onHourChange: (v: string) => void
   onMinuteChange: (v: string) => void
-  onMeridiemChange: (v: 'AM' | 'PM') => void
   getPopupContainer: () => HTMLElement
   disabled?: boolean
   hourActive: boolean
@@ -73,14 +71,12 @@ export interface DateTimePickerTimeInlineSelectsProps {
   minuteStep?: number
 }
 
-/** 날짜·시간 팝오버 공용 시·분·AM/PM 셀렉트 행 */
+/** 날짜·시간 팝오버 공용 시·분 셀렉트 (24시간) */
 export function DateTimePickerTimeInlineSelects({
   hour,
   minute,
-  meridiem,
   onHourChange,
   onMinuteChange,
-  onMeridiemChange,
   getPopupContainer,
   disabled,
   hourActive,
@@ -111,44 +107,29 @@ export function DateTimePickerTimeInlineSelects({
     !invalid && 'date-time-picker-time-selects__wrap--muted'
   )
 
-  const endMer = rowPhase === 'end'
+  const endPhase = rowPhase === 'end'
 
   return (
-    <div className="date-time-picker-time-selects__row">
+    <div className="date-time-picker-time-selects__row date-time-picker-time-selects__row--24h">
       <CmsSelect
         {...selectCommon}
         className={wrapHour}
-        width={TIME_SELECT_FIELD_WIDTH_PX}
         placeholder="시"
         options={HOUR_OPTIONS}
         value={hour}
-        onChange={v => onHourChange(String(v ?? '12'))}
+        onChange={v => onHourChange(String(v ?? '0'))}
         disabled={disabled}
-        aria-label={endMer ? '종료 시' : '시'}
+        aria-label={endPhase ? '종료 시' : '시'}
       />
-      <span className="date-time-picker-time-selects__colon" aria-hidden>
-        :
-      </span>
       <CmsSelect
         {...selectCommon}
         className={wrapMuted}
-        width={TIME_SELECT_FIELD_WIDTH_PX}
         placeholder="분"
         options={minuteOptions}
         value={minute}
         onChange={v => onMinuteChange(String(v ?? minuteOptions[0]?.value ?? '0'))}
         disabled={disabled}
-        aria-label={endMer ? '종료 분' : '분'}
-      />
-      <CmsSelect
-        {...selectCommon}
-        className={wrapMuted}
-        width={TIME_SELECT_FIELD_WIDTH_PX}
-        options={[...MERIDIEM_OPTIONS]}
-        value={meridiem}
-        onChange={v => onMeridiemChange(v === 'PM' ? 'PM' : 'AM')}
-        disabled={disabled}
-        aria-label={endMer ? '종료 AM/PM' : 'AM/PM'}
+        aria-label={endPhase ? '종료 분' : '분'}
       />
     </div>
   )

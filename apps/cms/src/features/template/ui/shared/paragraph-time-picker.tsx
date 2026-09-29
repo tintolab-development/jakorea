@@ -5,8 +5,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
   ParagraphTimePickerPopover,
-  buildTime,
-  from24h,
+  buildTimeFrom24Hour,
   parseNum,
 } from '@/shared/components/date-time-picker-modal'
 import { toValidDayjsOrNull } from '@/shared/components/date-time-picker-shared'
@@ -17,6 +16,7 @@ import './paragraph-time-picker.css'
 export {
   ParagraphTimeInlineSelects,
   buildTime,
+  buildTimeFrom24Hour,
   from24h,
   parseNum,
 } from '@/shared/components/date-time-picker-modal'
@@ -69,13 +69,11 @@ export function ParagraphTimePicker({
   const [endTimeOn, setEndTimeOn] = useState(endTimeAlwaysOn)
   const [focusPhase, setFocusPhase] = useState<FocusPhase>('single')
 
-  const [sHour, setSHour] = useState('12')
+  const [sHour, setSHour] = useState('9')
   const [sMin, setSMin] = useState('0')
-  const [sMer, setSMer] = useState<'AM' | 'PM'>('AM')
 
-  const [eHour, setEHour] = useState('1')
+  const [eHour, setEHour] = useState('10')
   const [eMin, setEMin] = useState('0')
-  const [eMer, setEMer] = useState<'AM' | 'PM'>('PM')
 
   const [surfaceTimeRange, setSurfaceTimeRange] = useState<[Dayjs, Dayjs] | null>(null)
   const isEndTimeOn = endTimeAlwaysOn || endTimeOn
@@ -131,26 +129,18 @@ export function ParagraphTimePicker({
   }, [initialEndMs, initialStartMs, valueMs])
 
   const populateDraftFromInstant = useCallback((d: Dayjs) => {
-    const { h12, mer } = from24h(d.hour())
-    setSHour(String(h12))
+    setSHour(String(d.hour()))
     setSMin(String(d.minute()))
-    setSMer(mer)
     const dEnd = d.add(1, 'hour')
-    const endParts = from24h(dEnd.hour())
-    setEHour(String(endParts.h12))
+    setEHour(String(dEnd.hour()))
     setEMin(String(dEnd.minute()))
-    setEMer(endParts.mer)
   }, [])
 
   const populateDraftFromRange = useCallback((start: Dayjs, end: Dayjs) => {
-    const sh = from24h(start.hour())
-    setSHour(String(sh.h12))
+    setSHour(String(start.hour()))
     setSMin(String(start.minute()))
-    setSMer(sh.mer)
-    const eh = from24h(end.hour())
-    setEHour(String(eh.h12))
+    setEHour(String(end.hour()))
     setEMin(String(end.minute()))
-    setEMer(eh.mer)
   }, [])
 
   const handleOpen = () => {
@@ -169,9 +159,9 @@ export function ParagraphTimePicker({
 
   const handleApply = () => {
     const base = resolvedValue ?? dayjs()
-    const sh = parseNum(sHour, 12)
+    const sh = parseNum(sHour, 0)
     const sm = parseNum(sMin, 0)
-    const start = buildTime(base, sh, sm, sMer)
+    const start = buildTimeFrom24Hour(base, sh, sm)
 
     if (!isEndTimeOn) {
       setSurfaceTimeRange(null)
@@ -180,9 +170,9 @@ export function ParagraphTimePicker({
       return
     }
 
-    const eh = parseNum(eHour, 12)
+    const eh = parseNum(eHour, 0)
     const em = parseNum(eMin, 0)
-    let end = buildTime(base, eh, em, eMer)
+    let end = buildTimeFrom24Hour(base, eh, em)
     if (!end.isAfter(start)) {
       end = start.add(1, 'hour')
     }
@@ -194,15 +184,11 @@ export function ParagraphTimePicker({
 
   const handleEndTimeToggleOn = () => {
     const base = resolvedValue ?? dayjs()
-    const { h12, mer } = from24h(base.hour())
-    setSHour(String(h12))
+    setSHour(String(base.hour()))
     setSMin(String(base.minute()))
-    setSMer(mer)
     const dEnd = base.add(1, 'hour')
-    const ep = from24h(dEnd.hour())
-    setEHour(String(ep.h12))
+    setEHour(String(dEnd.hour()))
     setEMin(String(dEnd.minute()))
-    setEMer(ep.mer)
   }
 
   return (
@@ -262,16 +248,12 @@ export function ParagraphTimePicker({
         onFocusPhaseChange={setFocusPhase}
         sHour={sHour}
         sMin={sMin}
-        sMer={sMer}
         onSHourChange={setSHour}
         onSMinChange={setSMin}
-        onSMerChange={setSMer}
         eHour={eHour}
         eMin={eMin}
-        eMer={eMer}
         onEHourChange={setEHour}
         onEMinChange={setEMin}
-        onEMerChange={setEMer}
         onEndTimeOnChange={setEndTimeOn}
         onEndTimeToggleOn={handleEndTimeToggleOn}
         onApply={handleApply}
