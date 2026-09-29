@@ -25,6 +25,7 @@ import {
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
 import {
   stripUnselectedUjatSponsorContactsFromOverlay,
@@ -498,15 +499,13 @@ function patchRequest(
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
 
-  if (has('sponsorId') || has('generalCommonInfo')) {
+  if (has('sponsorId') || patchTouchesProgramSponsors(patch)) {
     const sponsors = mapUjatSponsorAssignments(merged)
-    if (has('sponsorId')) {
-      body.sponsorId =
-        sponsors.find(row => row.sponsorContactId)?.sponsorId ||
-        sponsors[0]?.sponsorId ||
-        (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
-    }
-    if (sponsors.length > 0) body.sponsors = sponsors
+    body.sponsorId =
+      sponsors.find(row => row.sponsorContactId)?.sponsorId ||
+      sponsors[0]?.sponsorId ||
+      (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
+    body.sponsors = sponsors
   }
   if (has('ips')) body.ips = merged.ips
   if (has('generalProgramEducationStructure') || has('generalCommonInfo')) {

@@ -44,6 +44,7 @@ import {
   buildProgramSponsorAssignmentsWire,
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
+import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
   normalizeProgramBusinessAreaValue,
@@ -790,13 +791,14 @@ function mapProgramPatchFieldsToRequest(
   const body: ProgramUpdateRequestBody = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
 
-  if (has('sponsorId') || has('generalCommonInfo')) {
+  if (has('sponsorId') || patchTouchesProgramSponsors(patch)) {
     const sponsors = mapProgramSponsorAssignments(merged)
     body.sponsorId =
       sponsors.find(s => s.sponsorContactId)?.sponsorId ||
       sponsors[0]?.sponsorId ||
       (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
-    if (sponsors.length > 0) body.sponsors = sponsors
+    // BE: sponsors 키 존재 = full replace. [] = 전체 해제. 후원 미수정 PATCH에서는 키 생략.
+    body.sponsors = sponsors
   }
   if (has('title')) body.title = merged.title
   if (has('type')) body.type = merged.type

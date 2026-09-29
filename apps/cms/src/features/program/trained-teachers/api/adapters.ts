@@ -17,12 +17,9 @@ import type { Status } from '@/types'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
 import {
-  encodeSponsorManagerContactRef,
   buildProgramSponsorAssignmentsWire,
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
-import { SPONSOR_CONTACT_UNSELECTED_LABEL } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
-import type { AdminProgramSponsorAssignmentDto } from '@/features/program/general/api/programs-api-client'
 import {
   omitIfDetailedProgramNameAlias,
   parseDetailedProgramMasterId,
@@ -82,69 +79,10 @@ function toStudentListRequired(
   return value === 'required' || value === 'not_required' ? value : undefined
 }
 
-/** GET …/sponsors 배정을 Program 후원·담당자 필드로 병합 (contact∈sponsor 유지).
- * `assignments` 가 빈 배열이면 서버 SSOT 해제로 보고 후원·담당자를 clear 한다.
- * (fetch 실패 시에는 호출측에서 merge를 건너뛴다.)
- */
-export function mergeTrainedTeacherSponsorAssignments(
-  program: Program,
-  assignments: readonly AdminProgramSponsorAssignmentDto[]
-): Program {
-  const valid = assignments.filter(
-    row => row.sponsorId != null && String(row.sponsorId).trim() !== ''
-  )
-  if (valid.length === 0) {
-    // top-level sponsorId 는 Program 타입상 필수. 런타임 clear 후 unknown 단언.
-    // GET /sponsors [] 가 SSOT — 표시는 generalCommonInfo.sponsorManagementIds 빈 배열.
-    return {
-      ...program,
-      sponsorId: undefined,
-      managerName: undefined,
-      generalCommonInfo: {
-        ...program.generalCommonInfo,
-        sponsorManagementIds: [],
-        sponsorManagementId: undefined,
-        sponsorManagerContactIds: [],
-        sponsorManagerContactId: undefined,
-        sponsorManagerContactNames: {},
-        sponsorManagerLine: undefined,
-      },
-    } as unknown as Program
-  }
-
-  const sponsorManagementIds = [
-    ...new Set(valid.map(row => String(row.sponsorId).trim())),
-  ]
-  const sponsorManagerContactIds: string[] = []
-  const sponsorManagerContactNames: Record<string, string> = {}
-  for (const row of valid) {
-    const contactId = row.sponsorContactId != null ? String(row.sponsorContactId).trim() : ''
-    if (!contactId) continue
-    const ref = encodeSponsorManagerContactRef(String(row.sponsorId).trim(), contactId)
-    if (!sponsorManagerContactIds.includes(ref)) sponsorManagerContactIds.push(ref)
-    const contactName = row.sponsorContactName?.trim()
-    if (contactName) sponsorManagerContactNames[ref] = contactName
-  }
-  const hasContact = sponsorManagerContactIds.length > 0
-  // contact 없는 배정 = 담당자 미선택. 구 managerName 으로 되살리지 않는다.
-  const managerName = hasContact
-    ? Object.values(sponsorManagerContactNames)[0]
-    : SPONSOR_CONTACT_UNSELECTED_LABEL
-
-  return {
-    ...program,
-    sponsorId: sponsorManagementIds[0] ?? program.sponsorId,
-    managerName,
-    generalCommonInfo: {
-      ...program.generalCommonInfo,
-      sponsorManagementIds,
-      sponsorManagerContactIds: hasContact ? sponsorManagerContactIds : [],
-      sponsorManagerContactId: hasContact ? sponsorManagerContactIds[0] : undefined,
-      sponsorManagerContactNames: hasContact ? sponsorManagerContactNames : {},
-      sponsorManagerLine: hasContact ? undefined : SPONSOR_CONTACT_UNSELECTED_LABEL,
-    },
-  }
-}
+/** @deprecated shared `mergeProgramSponsorAssignments` 사용. TT 기존 import 호환. */
+export {
+  mergeProgramSponsorAssignments as mergeTrainedTeacherSponsorAssignments,
+} from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 
 function toDate(value: Date | string | undefined): string | undefined {
   if (value instanceof Date) return value.toISOString()
@@ -562,7 +500,7 @@ export function mapTrainedTeacherToUpdateRequest(
   const businessArea = resolveStoredBusinessArea(merged.businessArea) || undefined
   const body: ProgramUpdateRequest = {
     sponsorId: primarySponsorId,
-    sponsors: sponsors.length > 0 ? sponsors : undefined,
+    sponsors,
     title: merged.title,
     type: merged.type,
     format: merged.format,

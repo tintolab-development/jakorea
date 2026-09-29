@@ -963,10 +963,9 @@ export function resolveSponsorManagementIds(
   if (program.sponsorId) {
     const byId = sponsors.find(row => row.id === program.sponsorId)
     if (byId) return [byId.id]
-    const sponsorName = commonInfo.sponsorDisplayName?.trim() || program.title
-    void sponsorName
   }
-  return sponsors[0] ? [sponsors[0].id] : []
+  // 배정·표시명이 없으면 목록 첫 후원사로 채우지 않는다 (미선택 유지).
+  return []
 }
 
 function resolveSponsorManagerContactIds(
@@ -988,6 +987,8 @@ function resolveSponsorManagerContactIds(
   }
 
   // 저장된 ref·미선택 라벨만 복원. 매칭 실패 시 contacts[0] 시드 금지.
+  // 후원사는 있는데 담당자 없으면 「미선택」이 기본.
+  if (_sponsorManagementIds.length > 0) return [SPONSOR_CONTACT_UNSELECTED_VALUE]
   return []
 }
 

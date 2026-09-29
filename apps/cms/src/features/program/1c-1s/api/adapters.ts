@@ -33,6 +33,7 @@ import {
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
@@ -474,13 +475,13 @@ function mapCompanySchoolPatchFieldsToRequest(
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
 
-  if (has('sponsorId') || has('generalCommonInfo')) {
+  if (has('sponsorId') || patchTouchesProgramSponsors(patch)) {
     const sponsors = mapCompanySchoolSponsorAssignments(merged)
     body.sponsorId =
       sponsors.find(row => row.sponsorContactId)?.sponsorId ||
       sponsors[0]?.sponsorId ||
       (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
-    if (sponsors.length > 0) body.sponsors = sponsors
+    body.sponsors = sponsors
   }
   if (has('title')) body.title = merged.title
   if (has('type')) body.type = merged.type

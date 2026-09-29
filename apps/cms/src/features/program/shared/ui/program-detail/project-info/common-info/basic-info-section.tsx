@@ -261,7 +261,9 @@ function SponsorManagerView({
     )
   }
   const managerName = program.managerName?.trim()
-  if (!managerName || isSponsorContactUnselectedLabel(managerName)) return <>-</>
+  if (!managerName || isSponsorContactUnselectedLabel(managerName)) {
+    return <>{sponsorRows.length > 0 ? SPONSOR_CONTACT_UNSELECTED_LABEL : '-'}</>
+  }
   return (
     <>
       {managerName}
@@ -456,6 +458,18 @@ export function BasicInfoSection({
       form.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
         shouldDirty: false,
       })
+      return
+    }
+
+    const selectedSponsors = form.getValues('sponsorManagementIds') ?? []
+    if (selectedSponsors.length > 0) {
+      form.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
+        shouldDirty: false,
+      })
+      form.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
+        shouldDirty: false,
+      })
+      form.setValue('managerName', SPONSOR_CONTACT_UNSELECTED_LABEL, { shouldDirty: false })
     }
     // 빈 ids + 이름/전화 자동매칭 제거 — 문의처 Tel·구 managerName 으로 담당자가 되살아남
   }, [isFormEdit, form, sponsorManagerOptions, sponsorEditContext.contactsBySponsorId])
@@ -838,8 +852,24 @@ export function BasicInfoSection({
                         if (ids[0]) {
                           commonInfoForm.setValue('sponsorId', ids[0], { shouldDirty: true })
                         }
-                        // 미선택만 남은 경우 managerName 유지
-                        if (
+                        // 후원사만 남고 담당자가 없으면 「미선택」이 기본
+                        if (ids.length > 0 && keptManagerIds.length === 0) {
+                          commonInfoForm.setValue(
+                            'sponsorManagerContactIds',
+                            [SPONSOR_CONTACT_UNSELECTED_VALUE],
+                            { shouldDirty: true }
+                          )
+                          commonInfoForm.setValue(
+                            'sponsorManagerContactId',
+                            SPONSOR_CONTACT_UNSELECTED_VALUE,
+                            { shouldDirty: true }
+                          )
+                          commonInfoForm.setValue(
+                            'managerName',
+                            SPONSOR_CONTACT_UNSELECTED_LABEL,
+                            { shouldDirty: true }
+                          )
+                        } else if (
                           keptManagerIds.length > 0 &&
                           keptManagerIds.every(id => isSponsorContactUnselected(id))
                         ) {
