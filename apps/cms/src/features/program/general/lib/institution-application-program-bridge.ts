@@ -10,9 +10,12 @@ import { shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph } fro
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import {
-  countUniqueEducationScheduleCalendarDays,
-  parseEducationScheduleLineToRange,
-} from '@/features/template/lib/format-education-schedule-line'
+  shouldShowApplicationMaxScheduleFields,
+  shouldShowApplicationMaxSessionsPerDayField,
+  shouldShowApplicationPreferredScheduleParagraph,
+  shouldShowApplicationScheduleParagraph,
+} from '@jakorea/form-schema/program-application'
+import { parseEducationScheduleLineToRange } from '@/features/template/lib/format-education-schedule-line'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import type {
   GeneralProgramEducationStructure,
@@ -245,10 +248,6 @@ export function shouldShowInstitutionApplicationGuidanceParagraph(
   return bridge.preEducationNoticeRequired !== false
 }
 
-function isDatePeriodSelection(bridge: InstitutionApplicationProgramBridge): boolean {
-  return bridge.educationScheduleMode === 'period'
-}
-
 /**
  * 템플릿 관리(유형·회차 미연동) 편집 컨텍스트.
  * 등록 위저드·프로그램 상세에서는 educationStructure/sessionRound가 채워진다.
@@ -263,48 +262,27 @@ export function isInstitutionApplicationBridgeTemplateAuthoring(
 export function shouldShowInstitutionApplicationMaxScheduleFields(
   bridge: InstitutionApplicationProgramBridge
 ): boolean {
-  if (!isDatePeriodSelection(bridge)) return false
-  const structure = bridge.educationStructure
-  const round = bridge.sessionRound
-  if (structure === 'curriculum' && (round === 'single' || round === 'multi')) return true
-  if (structure === 'schedule' && round === 'single') return true
-  return false
+  return shouldShowApplicationMaxScheduleFields(bridge)
 }
 
 /** 희망 차시 — 일정당 최대 차시 (커리큘럼형 + 복수 회차 + 기간 지정) */
 export function shouldShowInstitutionApplicationMaxSessionsPerDayField(
   bridge: InstitutionApplicationProgramBridge
 ): boolean {
-  return (
-    bridge.educationStructure === 'curriculum' &&
-    bridge.sessionRound === 'multi' &&
-    isDatePeriodSelection(bridge)
-  )
+  return shouldShowApplicationMaxSessionsPerDayField(bridge)
 }
 
 export function shouldShowInstitutionApplicationPreferredScheduleParagraph(
   bridge: InstitutionApplicationProgramBridge
 ): boolean {
-  if (!shouldShowInstitutionApplicationScheduleParagraph(bridge)) {
-    return false
-  }
-  return (
-    shouldShowInstitutionApplicationMaxScheduleFields(bridge) ||
-    shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)
-  )
+  return shouldShowApplicationPreferredScheduleParagraph(bridge)
 }
 
 /** 진행 희망 교육 일정 단락 카드 노출 — 일정형 + 복수 회차, 날짜 지정 고유 일자 ≤1일 숨김 */
 export function shouldShowInstitutionApplicationScheduleParagraph(
   bridge: InstitutionApplicationProgramBridge
 ): boolean {
-  if (bridge.educationStructure === 'schedule' && bridge.sessionRound === 'multi') {
-    return false
-  }
-  if (bridge.educationScheduleMode !== 'period') {
-    return countUniqueEducationScheduleCalendarDays(bridge.educationScheduleLines) > 1
-  }
-  return true
+  return shouldShowApplicationScheduleParagraph(bridge)
 }
 
 export function getInstitutionApplicationFormHiddenParagraphIds(
