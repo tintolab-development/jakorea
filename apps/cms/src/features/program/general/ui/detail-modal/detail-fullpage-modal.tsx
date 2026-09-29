@@ -66,10 +66,6 @@ import {
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
 import {
-  getGeneralCommonInfoEditValidationMessage,
-  PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE,
-} from '@/features/program/general/model/common-info-edit-schema'
-import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -779,18 +775,10 @@ export function GeneralProgramDetailFullPageModal({
     const result = await infoTriggerSave()
     if (!result.ok) {
       if (result.kind === 'validation') {
-        const message = getGeneralCommonInfoEditValidationMessage(infoForm.getValues())
-        if (message === PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE) {
-          void showAlert({
-            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-          })
-        } else {
-          void showAlert({
-            title: '입력 확인',
-            content: message ?? '입력값을 확인해 주세요.',
-          })
-        }
+        void showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
       } else if (!isGlobalApiErrorAlertShown(result.error)) {
         void showAlert({
           title: '저장 실패',
@@ -803,7 +791,7 @@ export function GeneralProgramDetailFullPageModal({
       return
     }
     setEditMode(null)
-  }, [infoForm, infoTriggerSave, setEditMode, showAlert])
+  }, [infoTriggerSave, setEditMode, showAlert])
 
   const handleInfoCancel = useCallback(() => {
     if (displayProgram) seedGeneralRegistrationOverlayFromProgram(displayProgram)

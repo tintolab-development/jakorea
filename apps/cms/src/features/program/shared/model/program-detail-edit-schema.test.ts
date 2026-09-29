@@ -143,6 +143,14 @@ describe('program detail trained teachers boolean fields', () => {
     const values = {
       ...programToDetailEditValues(program),
       partnerInvolvement: null,
+      mainTitle: '대표 프로그램명',
+      titleEn: 'Program Title',
+      announcementTitle: '공고용 프로그램명',
+      detailedProgramId: '1001',
+      businessArea: '경제금융',
+      educationProcess: 'elementary',
+      ipOwned: 'JA',
+      courseDeliveredBy: 'JA' as const,
     }
 
     const result = programDetailTrainedTeachersCommonInfoEditSchema.safeParse(values)

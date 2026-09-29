@@ -82,6 +82,7 @@ import {
   seedEconomyRegistrationOverlayFromProgram,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
+import { hasIncompleteEconomyProgramRegistrationRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   programToRecruitmentTabEditValues,
@@ -1341,6 +1342,20 @@ export function ProgramDetailFullPageModal({
   const handleInfoSave = useCallback(async () => {
     if (isCompanySchoolDetail && !isTrainedTeachersDetail && displayProgram) {
       const overlay = readEconomyRegistrationOverlayForSave()
+      if (
+        hasIncompleteEconomyProgramRegistrationRequiredFields(overlay, {
+          individual: false,
+          organization: true,
+          teacherInstructor: true,
+          volunteer: false,
+        })
+      ) {
+        void showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
       const merged = applyEconomyRegistrationOverlayToProgram(displayProgram, overlay)
       infoForm.reset(
         programToDetailEditValues({

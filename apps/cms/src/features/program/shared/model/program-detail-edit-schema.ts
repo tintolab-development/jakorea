@@ -444,10 +444,10 @@ export const programDetailInstitutionsEditSchema = programDetailEditSchemaBase.e
 })
 
 /**
- * 교육받은 교사 공통 정보 — 1사1교 레이아웃에 노출되는 필드만 필수.
- * 일반 스키마의 모집·설명·학습지원 필수값이 TT 화면에 없어 저장이 조용히 실패하던 것을 방지.
+ * 교육받은 교사·1사1교 공통 정보 — 공통정보 탭에 없는 모집 필수값 완화.
+ * 일반 스키마의 모집·설명·학습지원 필수값이 화면에 없어 저장이 조용히 실패하던 것을 방지.
  */
-export const programDetailTrainedTeachersCommonInfoEditSchema = programDetailEditSchemaBase
+const programDetailOverviewCommonInfoEditSchema = programDetailEditSchemaBase
   .extend({
     applicationStartDate: z.string().optional(),
     applicationEndDate: z.string().optional(),
@@ -471,9 +471,39 @@ export const programDetailTrainedTeachersCommonInfoEditSchema = programDetailEdi
     }
   })
 
-/** 1사1교 공통 정보 — 공통정보 탭에 없는 모집 필수값 완화 (교육받은 교사와 동일) */
+/** 1사1교 공통 정보 — overlay 등록 필수 검사가 별도로 있음 */
 export const programDetailCompanySchoolCommonInfoEditSchema =
-  programDetailTrainedTeachersCommonInfoEditSchema
+  programDetailOverviewCommonInfoEditSchema
+
+/**
+ * 교육받은 교사 공통 정보 — 등록 위저드와 동일한 기본 정보 필수.
+ */
+export const programDetailTrainedTeachersCommonInfoEditSchema =
+  programDetailOverviewCommonInfoEditSchema.superRefine((values, ctx) => {
+    const requireTrimmed = (value: string | undefined, path: string, message: string) => {
+      if (!value?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message, path: [path] })
+      }
+    }
+    requireTrimmed(values.mainTitle, 'mainTitle', '대표 프로그램명(국문)을 입력해주세요')
+    requireTrimmed(values.titleEn, 'titleEn', '대표 프로그램명(영문)을 입력해주세요')
+    requireTrimmed(values.announcementTitle, 'announcementTitle', '공고용 프로그램명을 입력해주세요')
+    if (values.educationStructure !== 'schedule') {
+      requireTrimmed(values.detailedProgramId, 'detailedProgramId', '세부 프로그램명을 선택해주세요')
+    }
+    requireTrimmed(values.startDate, 'startDate', '사업 운영 기간을 선택해주세요')
+    requireTrimmed(values.endDate, 'endDate', '사업 운영 기간을 선택해주세요')
+    requireTrimmed(values.businessArea, 'businessArea', '사업 분야를 선택해주세요')
+    requireTrimmed(values.educationProcess, 'educationProcess', '교육 과정을 선택해주세요')
+    requireTrimmed(values.ipOwned, 'ipOwned', 'IP Owned를 선택해주세요')
+    if (values.courseDeliveredBy == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Course Delivered By를 선택해주세요',
+        path: ['courseDeliveredBy'],
+      })
+    }
+  })
 
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
 

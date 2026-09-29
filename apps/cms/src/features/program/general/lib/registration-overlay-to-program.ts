@@ -85,6 +85,7 @@ export type GeneralRegistrationEditorExtras = {
   curriculumSessionCount?: number
   curriculumChartSessionCount?: number
   scheduleCurriculumDetailCount?: number
+  scheduleCurriculumGroupCount?: number
   scheduleCurriculumPreEducation?: boolean
   participantOrganization?: boolean
   participantIndividual?: boolean

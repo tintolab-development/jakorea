@@ -111,6 +111,11 @@ import {
   UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL,
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
+import { hasIncompleteUjatProgramRegistrationRequiredFields } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -1222,10 +1227,17 @@ export function UjatProgramDetailFullPageModal({
       ...applyUjatRegistrationOverlayToProgram(displayProgram, overlay),
       ujatRegistrationOverlay: overlay,
     }
+    if (hasIncompleteUjatProgramRegistrationRequiredFields(overlay)) {
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
     infoForm.reset(programToDetailEditValues(mergedProgram))
     const ok = await infoTriggerSave()
     if (ok) setEditMode(null)
-  }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
+  }, [displayProgram, infoForm, infoTriggerSave, setEditMode, showAlert])
 
   const handleInfoCancel = useCallback(() => {
     if (displayProgram) seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)

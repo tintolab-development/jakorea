@@ -14,6 +14,7 @@ import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/
 import { applyGeneralRegistrationOverlayToProgram } from '@/features/program/general/lib/registration-overlay-to-program'
 import {
   getGeneralRegistrationDetailEditExtras,
+  hasIncompleteGeneralProgramDetailEditRequiredFields,
   readGeneralRegistrationOverlayForSave,
 } from '@/features/program/general/lib/registration-overlay-sync'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
@@ -53,6 +54,9 @@ export function useGeneralProgramCommonInfoSave({
     try {
       const overlay = readGeneralRegistrationOverlayForSave()
       const extras = getGeneralRegistrationDetailEditExtras()
+      if (hasIncompleteGeneralProgramDetailEditRequiredFields(overlay, extras)) {
+        return { ok: false, kind: 'validation' }
+      }
       const applied = applyGeneralRegistrationOverlayToProgram(program, overlay, extras)
       const withOverlay: Program = {
         ...applied,

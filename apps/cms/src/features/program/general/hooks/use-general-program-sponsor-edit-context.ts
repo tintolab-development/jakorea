@@ -34,6 +34,8 @@ export function useGeneralProgramSponsorEditContext(
   const sponsorIdsKey = sponsorIds.join(',')
 
   // contactQueries / sponsorIds identity is unstable across renders; depend on stable keys.
+  const sponsorsDataUpdatedAt = sponsorsQuery.dataUpdatedAt
+
   return useMemo((): GeneralProgramSponsorEditContext => {
     const contactsBySponsorId: GeneralProgramSponsorEditContext['contactsBySponsorId'] = {}
     sponsorIds.forEach((id, index) => {
@@ -44,6 +46,6 @@ export function useGeneralProgramSponsorEditContext(
       )
     })
     return { sponsors, contactsBySponsorId }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by contactDataKey / sponsorIdsKey
-  }, [contactDataKey, sponsorIdsKey, sponsors])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by contactDataKey / sponsorIdsKey / sponsorsDataUpdatedAt
+  }, [contactDataKey, sponsorIdsKey, sponsorsDataUpdatedAt])
 }

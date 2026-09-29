@@ -2,8 +2,18 @@
  * 일반 프로그램 상세 수정 — Program → generalRegistration overlay 시드.
  * 등록 단락·키는 변경하지 않는다.
  */
-import type { Program } from '@/types/domain'
+import type {
+  GeneralProgramCurriculumSessionRow,
+  GeneralProgramScheduleDetailRow,
+  Program,
+} from '@/types/domain'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
+import { participantFlagsFromGeneralProgram } from '@/features/program/general/lib/participant-audience-selection'
+import {
+  isPreEducationCurriculumSession,
+  isPreEducationScheduleBlock,
+  PRE_EDUCATION_SCHEDULE_LABEL,
+} from '@/features/program/general/lib/schedule-detail-form'
 import {
   resolveWageGradeFee,
   resolveWagePaymentItemIds,
@@ -20,9 +30,14 @@ import {
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
-import { participantFlagsFromGeneralProgram } from '@/features/program/general/lib/participant-audience-selection'
+import {
+  hasIncompleteGeneralProgramRegistrationRequiredFields,
+  type GeneralProgramRegistrationRequiredFieldContext,
+} from '@/features/program/general/lib/registration-required-fields'
+import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
@@ -39,6 +54,146 @@ const BASIC = 'generalRegistration.basicInfo' as const
 const KPI = 'generalRegistration.kpi' as const
 const WAGE = 'generalRegistration.wageInfo' as const
 const TYPE = 'generalRegistration.typeSettings' as const
+const CURRICULUM = 'generalRegistration.educationCurriculum' as const
+const SCHEDULE_CURRICULUM = 'generalRegistration.educationScheduleCurriculum' as const
+
+/** 등록 단락 블록 수 — 사전 교육 행은 별도 토글 블록이므로 제외 */
+export function countRegularCurriculumSessions(
+  sessions: GeneralProgramCurriculumSessionRow[] | undefined
+): number {
+  return (sessions ?? []).filter(session => !isPreEducationCurriculumSession(session)).length
+}
+
+export function countRegularScheduleDetails(
+  details: GeneralProgramScheduleDetailRow[] | undefined
+): number {
+  return (details ?? []).filter(detail => !isPreEducationScheduleBlock(detail)).length
+}
+
+export function countScheduleCurriculumGroups(
+  details: GeneralProgramScheduleDetailRow[] | undefined
+): number {
+  const first = (details ?? []).find(detail => !isPreEducationScheduleBlock(detail))
+  const parts = first?.progressTimeSummary
+    ?.split(/\s*\|\s*/)
+    .map(part => part.trim())
+    .filter(Boolean)
+  return Math.max(1, parts?.length ?? 1)
+}
+
+function readOverlayText(overlay: Record<string, unknown>, key: string): string {
+  const raw = overlay[key]
+  if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+  return ''
+}
+
+function readOverlayIdList(overlay: Record<string, unknown>, key: string): string[] {
+  const raw = overlay[key]
+  if (!Array.isArray(raw)) return []
+  return [...new Set(raw.map(String).map(id => id.trim()).filter(Boolean))]
+}
+
+export function generalRegistrationRequiredFieldContextFromDetailEdit(
+  overlay: Record<string, unknown>,
+  extras: GeneralRegistrationEditorExtras
+): GeneralProgramRegistrationRequiredFieldContext {
+  const sponsorIds = readOverlayIdList(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY)
+  const contactIds = readOverlayIdList(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY)
+  const sponsorId =
+    readOverlayText(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY) || sponsorIds[0] || ''
+  const contactId =
+    readOverlayText(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY) ||
+    contactIds[0] ||
+    ''
+  return {
+    participant: {
+      individual: extras.participantIndividual === true,
+      organization: extras.participantOrganization === true,
+      teacherInstructor: extras.participantTeacherInstructor === true,
+      volunteer: extras.participantVolunteer === true,
+    },
+    programType: extras.programType,
+    sessionRoundType: extras.sessionRoundType,
+    educationFormScheduleDetail: extras.educationFormScheduleDetail ?? 'common',
+    participationScheduleDetail: extras.participationScheduleDetail ?? 'common',
+    ipsScheduleDetail: extras.ipsScheduleDetail ?? 'common',
+    curriculumSessionCount: extras.curriculumSessionCount ?? 1,
+    curriculumChartSessionCount: extras.curriculumChartSessionCount ?? 1,
+    scheduleCurriculumDetailCount: extras.scheduleCurriculumDetailCount ?? 1,
+    scheduleCurriculumGroupCount: extras.scheduleCurriculumGroupCount ?? 1,
+    scheduleCurriculumPreEducation: extras.scheduleCurriculumPreEducation === true,
+    educationScheduleMode: extras.educationScheduleMode ?? 'date',
+    sponsorId,
+    sponsorContactId: isSponsorContactUnselected(contactId) ? '' : contactId,
+    programTitleKo: readOverlayText(overlay, GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY),
+  }
+}
+
+export function hasIncompleteGeneralProgramDetailEditRequiredFields(
+  overlay: Record<string, unknown>,
+  extras: GeneralRegistrationEditorExtras
+): boolean {
+  return hasIncompleteGeneralProgramRegistrationRequiredFields(
+    overlay,
+    generalRegistrationRequiredFieldContextFromDetailEdit(overlay, extras)
+  )
+}
+
+function progressSessionFromTitle(title: string): string {
+  const trimmed = title.trim()
+  const named = trimmed.match(/^(\d+)\s*차시$/)
+  if (named) return named[1]
+  return trimmed.replace(/차시\s*$/, '').trim()
+}
+
+function educationProgressOverlayFromProgram(program: Program): Record<string, unknown> {
+  const common = program.generalCommonInfo
+  const sessions = common?.curriculumSessions ?? []
+  const regularSessions = sessions.filter(session => !isPreEducationCurriculumSession(session))
+  const preSession = sessions.find(session => isPreEducationCurriculumSession(session))
+  const details = common?.scheduleDetails ?? []
+  const regularDetails = details.filter(detail => !isPreEducationScheduleBlock(detail))
+  const preDetail = details.find(detail => isPreEducationScheduleBlock(detail))
+
+  const unitNameBySession: Record<number, string> = {}
+  const unitContentBySession: Record<number, string> = {}
+  const progressSessionByRound: Record<number, string> = {}
+  const roundContentByRound: Record<number, string> = {}
+  regularSessions.forEach((session, index) => {
+    const n = index + 1
+    unitNameBySession[n] = session.title?.trim() ?? ''
+    unitContentBySession[n] = session.description?.trim() ?? ''
+    progressSessionByRound[n] = progressSessionFromTitle(session.title ?? '')
+    roundContentByRound[n] = session.description?.trim() ?? ''
+  })
+
+  const eventNameByDetail: Record<number, string> = {}
+  regularDetails.forEach((detail, index) => {
+    eventNameByDetail[index + 1] = detail.name?.trim() ?? ''
+  })
+
+  const overlay: Record<string, unknown> = {
+    [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: common?.educationScheduleLines ?? [],
+    [`${CURRICULUM}.unitNameBySession`]: unitNameBySession,
+    [`${CURRICULUM}.unitContentBySession`]: unitContentBySession,
+    [`${CURRICULUM}.progressSessionByRound`]: progressSessionByRound,
+    [`${CURRICULUM}.roundContentByRound`]: roundContentByRound,
+    [`${SCHEDULE_CURRICULUM}.eventNameByDetail`]: eventNameByDetail,
+  }
+
+  if (preSession) {
+    overlay[`${CURRICULUM}.preEducationScheduleName`] =
+      preSession.title?.trim() || PRE_EDUCATION_SCHEDULE_LABEL
+    overlay[`${CURRICULUM}.preEducationScheduleLine`] = preSession.scheduleDateLabel?.trim() ?? ''
+  }
+  if (preDetail) {
+    overlay[`${SCHEDULE_CURRICULUM}.preEducationName`] =
+      preDetail.name?.trim() || PRE_EDUCATION_SCHEDULE_LABEL
+  }
+
+  return overlay
+}
 
 function overlayFromProgram(program: Program): Record<string, unknown> {
   return pickProgramRegistrationOverlayByPrefix(
@@ -159,9 +314,13 @@ export function extrasFromGeneralProgram(program: Program): GeneralRegistrationE
     educationFormScheduleDetail: common?.educationFormScheduleDetail ?? 'common',
     participationScheduleDetail: common?.participationScheduleDetail ?? 'common',
     ipsScheduleDetail: common?.ipsScheduleDetail ?? 'common',
-    curriculumSessionCount: Math.max(1, common?.curriculumSessions?.length ?? 1),
-    curriculumChartSessionCount: Math.max(1, common?.curriculumSessions?.length ?? 1),
-    scheduleCurriculumDetailCount: Math.max(1, common?.scheduleDetails?.length ?? 1),
+    curriculumSessionCount: Math.max(1, countRegularCurriculumSessions(common?.curriculumSessions)),
+    curriculumChartSessionCount: Math.max(
+      1,
+      countRegularCurriculumSessions(common?.curriculumSessions)
+    ),
+    scheduleCurriculumDetailCount: Math.max(1, countRegularScheduleDetails(common?.scheduleDetails)),
+    scheduleCurriculumGroupCount: countScheduleCurriculumGroups(common?.scheduleDetails),
     scheduleCurriculumPreEducation: common?.scheduleCurriculumPreEducation === true,
     participantOrganization: participant.organization,
     participantIndividual: participant.individual,
@@ -226,6 +385,7 @@ export function buildGeneralRegistrationOverlayFromProgram(
       category: reverseIpsCategory(program.ips),
       detail: '',
     },
+    ...educationProgressOverlayFromProgram(program),
   }
 }
 
@@ -260,6 +420,7 @@ export function seedGeneralRegistrationOverlayFromProgram(program: Program): voi
   )
   merged[`${KPI}.dispatchedSchool`] = null
   merged[`${KPI}.dispatchedClass`] = null
+  Object.assign(merged, educationProgressOverlayFromProgram(program))
   const surveyKeys = resolveProgramSurveyMenuKeys({
     generalSurveyMenuKeys: program.generalSurveyMenuKeys,
     registrationOverlay: merged,
