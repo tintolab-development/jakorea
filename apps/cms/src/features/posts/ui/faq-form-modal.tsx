@@ -35,6 +35,7 @@ export function FaqFormModal(props: FaqFormModalProps) {
         open={props.open}
         onCancel={props.onCancel}
         title={ctrl.modalTitle}
+        size="default"
         width={800}
         titleBodyGap="none"
         className="faq-form-modal"
@@ -51,12 +52,7 @@ export function FaqFormModal(props: FaqFormModalProps) {
         }
       >
         <Form form={ctrl.form} layout="vertical" requiredMark={false} className="faq-form-modal__form">
-          <FaqFormFields
-            categoryOptions={ctrl.categoryOptions}
-            editor={ctrl.editor}
-            editorMinHeight={ctrl.editorMinHeight}
-            fileUploadOwner={ctrl.fileUploadOwner}
-          />
+          <FaqFormFields categoryOptions={ctrl.categoryOptions} />
         </Form>
       </ContentModal>
     </>
