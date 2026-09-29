@@ -154,8 +154,9 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     if (isSponsorControlled) {
       onSponsorIdChange(primary)
     }
-    // 선택 해제된 후원사의 담당자만 제거하고 기존 선택은 유지
+    // 선택 해제된 후원사의 담당자만 제거하고 기존 선택은 유지 (미선택 sentinel 유지)
     const kept = managerContactIds.filter(ref => {
+      if (isSponsorContactUnselected(ref)) return true
       const decoded = decodeSponsorManagerContactRef(ref)
       return decoded != null && unique.includes(decoded.sponsorManagementId)
     })
@@ -250,12 +251,12 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   const managerSelectOptions = useMemo(() => {
     const sponsorChosen =
       isAllSponsor || (allowMultipleSponsors ? sponsorIds.length > 0 : Boolean(sponsorId))
-    if (!sponsorChosen || !managerContactsReady) return managerOptions
+    // 후원사만 고르면 미선택 노출. contacts 전부 로드될 때까지 기다리면 옵션이 빠져 보인다.
+    if (!sponsorChosen) return managerOptions
     return withSponsorContactUnselectedOption(managerOptions)
   }, [
     allowMultipleSponsors,
     isAllSponsor,
-    managerContactsReady,
     managerOptions,
     sponsorId,
     sponsorIds.length,
@@ -406,8 +407,8 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               value={managerContactIds}
               disabled={
                 allowMultipleSponsors
-                  ? sponsorIds.length === 0 || !managerContactsReady
-                  : !sponsorId || !managerContactsReady
+                  ? sponsorIds.length === 0
+                  : !sponsorId
               }
               onChange={v => {
                 const next = Array.isArray(v) ? v.map(String) : []

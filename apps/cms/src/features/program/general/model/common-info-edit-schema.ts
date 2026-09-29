@@ -971,8 +971,8 @@ export function resolveSponsorManagementIds(
 
 function resolveSponsorManagerContactIds(
   program: Program,
-  sponsorManagementIds: string[],
-  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
+  _sponsorManagementIds: string[],
+  _context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
 ): string[] {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const stored = resolveSponsorContactIdsForEdit({
@@ -987,22 +987,8 @@ function resolveSponsorManagerContactIds(
     return [SPONSOR_CONTACT_UNSELECTED_VALUE]
   }
 
-  // 후원사별 1명씩 시드 (이름·전화 매칭, 없으면 첫 연락처)
-  const refs: string[] = []
-  for (const sponsorId of sponsorManagementIds) {
-    const contacts = context.contactsBySponsorId[sponsorId] ?? []
-    if (contacts.length === 0) continue
-    const line = storedLine
-    const namePart = line.split('|')[0]?.trim() ?? line
-    const matched = line
-      ? contacts.find(
-          c => c.name === namePart || line.includes(c.name) || (c.phone && line.includes(c.phone))
-        )
-      : undefined
-    const contact = matched ?? contacts[0]
-    if (contact) refs.push(encodeSponsorManagerContactRef(sponsorId, contact.id))
-  }
-  return refs
+  // 저장된 ref·미선택 라벨만 복원. 매칭 실패 시 contacts[0] 시드 금지.
+  return []
 }
 
 function resolveManagerFromFormValues(

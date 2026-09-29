@@ -143,9 +143,7 @@ function findIncompleteBasicInfoReason(
     return 'basicInfo.businessField'
   }
   if (ctx.allowEmptySponsor) {
-    if (!isEmptyText(ctx.sponsorId) && isEmptyText(ctx.sponsorContactId)) {
-      return 'basicInfo.sponsorContactId'
-    }
+    // TT 등: 후원사·담당자 모두 선택 사항. 후원사만 고르고 담당자 미선택(빈 contact)도 허용.
   } else {
     if (isEmptyText(ctx.sponsorId)) return 'basicInfo.sponsorId'
     if (isEmptyText(ctx.sponsorContactId)) return 'basicInfo.sponsorContactId'

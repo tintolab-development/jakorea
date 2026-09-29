@@ -379,14 +379,9 @@ export function BasicInfoSection({
         })
       }
     }
-    const contactsReady =
-      sponsorManagementIds.length > 0 &&
-      sponsorManagementIds.every(
-        id =>
-          selectedSponsorManagementRows.some(row => row.id === id) &&
-          sponsorEditContext.contactsBySponsorId[id] != null
-      )
-    if (!contactsReady) return options
+    // 후원사만 고르면 미선택 노출. 전 후원사 contacts 로드를 기다리면
+    // 일부만 로드된 동안 담당자 옵션은 보이는데 미선택만 빠진다.
+    if (sponsorManagementIds.length === 0) return options
     return withSponsorContactUnselectedOption(options, {
       sponsorId: '',
       contactId: '',
@@ -399,15 +394,14 @@ export function BasicInfoSection({
     sponsorManagementIds,
   ])
 
-  // 담당자 옵션 로드 후 — API/저장된 contactId[] 우선. 없는 사람 강제 선택 금지
+  // 담당자 옵션 로드 후 — API/저장된 contactId[] 우선. 이름·전화로 강제 선택 금지
   useEffect(() => {
     if (!isFormEdit || !form || sponsorManagerOptions.length === 0) return
 
     const optionValues = new Set(sponsorManagerOptions.map(o => o.value))
+    // contacts API 가 [] 로 성공해도 "로드됨"으로 본다 (무효 ref 정리)
     const loadedSponsorIds = new Set(
-      Object.entries(sponsorEditContext.contactsBySponsorId)
-        .filter(([, contacts]) => contacts.length > 0)
-        .map(([id]) => id)
+      Object.keys(sponsorEditContext.contactsBySponsorId)
     )
     const currentIds = normalizeSponsorManagerContactIds({
       ids: form.getValues('sponsorManagerContactIds'),
@@ -417,6 +411,7 @@ export function BasicInfoSection({
       if (isSponsorContactUnselected(id)) return true
       if (optionValues.has(id)) return true
       const decoded = decodeSponsorManagerContactRef(id)
+      // 아직 contacts 미로드인 후원사 ref 는 유지
       return decoded != null && !loadedSponsorIds.has(decoded.sponsorManagementId)
     })
 
@@ -428,14 +423,12 @@ export function BasicInfoSection({
       const primary = sponsorManagerOptions.find(o => o.value === validIds[0])
       if (primary && !isSponsorContactUnselected(primary.value)) {
         form.setValue('managerName', primary.name, { shouldDirty: false })
-        if (primary.phone) {
-          form.setValue('contactPhone', primary.phone, { shouldDirty: false })
-        }
+        // contactPhone 은 문의처와 공유될 수 있어 담당자 전화로 덮지 않는다
       }
       return
     }
 
-    // 저장된 ref 가 옵션에 없으면 contactId 단위로 재매칭
+    // 저장된 ref 가 옵션에 없으면 contactId 단위로 재매칭 (이름/전화 폴백 금지)
     const rematched: string[] = []
     for (const ref of currentIds) {
       const decoded = decodeSponsorManagerContactRef(ref)
@@ -449,7 +442,6 @@ export function BasicInfoSection({
       const primary = sponsorManagerOptions.find(o => o.value === rematched[0])
       if (primary) {
         form.setValue('managerName', primary.name, { shouldDirty: false })
-        if (primary.phone) form.setValue('contactPhone', primary.phone, { shouldDirty: false })
       }
       return
     }
@@ -464,20 +456,9 @@ export function BasicInfoSection({
       form.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
         shouldDirty: false,
       })
-      return
     }
-    const phone = form.getValues('contactPhone')?.trim()
-    const matched = sponsorManagerOptions.find(
-      option =>
-        (managerName && option.name === managerName) ||
-        (phone && option.phone && option.phone === phone)
-    )
-    if (!matched) return
-    form.setValue('sponsorManagerContactIds', [matched.value], { shouldDirty: false })
-    form.setValue('sponsorManagerContactId', matched.value, { shouldDirty: false })
-    form.setValue('managerName', matched.name, { shouldDirty: false })
-    if (matched.phone) form.setValue('contactPhone', matched.phone, { shouldDirty: false })
-  }, [isFormEdit, form, sponsorManagerOptions])
+    // 빈 ids + 이름/전화 자동매칭 제거 — 문의처 Tel·구 managerName 으로 담당자가 되살아남
+  }, [isFormEdit, form, sponsorManagerOptions, sponsorEditContext.contactsBySponsorId])
 
   const categoryLabel = CATEGORY_LABEL[program.category] ?? program.category ?? '-'
 
@@ -843,6 +824,7 @@ export function BasicInfoSection({
                           id: commonInfoForm.getValues('sponsorManagerContactId'),
                         })
                         const keptManagerIds = currentManagerIds.filter(ref => {
+                          if (isSponsorContactUnselected(ref)) return true
                           const decoded = decodeSponsorManagerContactRef(ref)
                           return decoded != null && ids.includes(decoded.sponsorManagementId)
                         })
@@ -855,6 +837,17 @@ export function BasicInfoSection({
                         )
                         if (ids[0]) {
                           commonInfoForm.setValue('sponsorId', ids[0], { shouldDirty: true })
+                        }
+                        // 미선택만 남은 경우 managerName 유지
+                        if (
+                          keptManagerIds.length > 0 &&
+                          keptManagerIds.every(id => isSponsorContactUnselected(id))
+                        ) {
+                          commonInfoForm.setValue(
+                            'managerName',
+                            SPONSOR_CONTACT_UNSELECTED_LABEL,
+                            { shouldDirty: true }
+                          )
                         }
                       }}
                     />
@@ -931,10 +924,14 @@ export function BasicInfoSection({
                                 ? SPONSOR_CONTACT_UNSELECTED_LABEL
                                 : (primary?.name ?? '')
                             )
-                            commonInfoForm.setValue(
-                              'contactPhone',
-                              unselectedOnly ? undefined : primary?.phone
-                            )
+                            // 1사1교(economy)만 담당자 전화를 contactPhone 에 동기화.
+                            // TT 등 forceCompanySchoolLayout 은 contactPhone=문의처 와 공유한다.
+                            if (isEconomyCommonInfo) {
+                              commonInfoForm.setValue(
+                                'contactPhone',
+                                unselectedOnly ? undefined : primary?.phone
+                              )
+                            }
                           }}
                         />
                       </div>
