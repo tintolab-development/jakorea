@@ -31,6 +31,7 @@ import {
   formatSponsorManagerPersonLabel,
   formatSponsorManagerSelectLabel,
   normalizeSponsorManagerContactIds,
+  retainSponsorManagerContactIdsForSponsors,
   resolveVenueKind,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type {
@@ -399,6 +400,7 @@ export function BasicInfoSection({
   // 담당자 옵션 로드 후 — API/저장된 contactId[] 우선. 이름·전화로 강제 선택 금지
   useEffect(() => {
     if (!isFormEdit || !form || sponsorManagerOptions.length === 0) return
+    if ((form.getValues('sponsorManagementIds') ?? []).length === 0) return
 
     const optionValues = new Set(sponsorManagerOptions.map(o => o.value))
     // contacts API 가 [] 로 성공해도 "로드됨"으로 본다 (무효 ref 정리)
@@ -832,28 +834,37 @@ export function BasicInfoSection({
                       onChange={next => {
                         const ids = Array.isArray(next) ? next.map(String) : []
                         field.onChange(ids)
-                        // 후원사 추가/변경 시 — 선택 해제된 후원사의 담당자만 제거하고 기존 선택은 유지
                         const currentManagerIds = normalizeSponsorManagerContactIds({
                           ids: commonInfoForm.getValues('sponsorManagerContactIds'),
                           id: commonInfoForm.getValues('sponsorManagerContactId'),
                         })
-                        const keptManagerIds = currentManagerIds.filter(ref => {
-                          if (isSponsorContactUnselected(ref)) return true
-                          const decoded = decodeSponsorManagerContactRef(ref)
-                          return decoded != null && ids.includes(decoded.sponsorManagementId)
-                        })
+                        const keptManagerIds = retainSponsorManagerContactIdsForSponsors(
+                          ids,
+                          currentManagerIds
+                        )
+                        if (ids.length === 0) {
+                          commonInfoForm.setValue('sponsorId', '', { shouldDirty: true })
+                          commonInfoForm.setValue('sponsorManagerContactIds', [], {
+                            shouldDirty: true,
+                          })
+                          commonInfoForm.setValue('sponsorManagerContactId', '', {
+                            shouldDirty: true,
+                          })
+                          commonInfoForm.setValue('managerName', '', { shouldDirty: true })
+                          return
+                        }
+                        commonInfoForm.setValue('sponsorId', ids[0], { shouldDirty: true })
                         commonInfoForm.setValue('sponsorManagerContactIds', keptManagerIds, {
                           shouldDirty: true,
                         })
                         commonInfoForm.setValue(
                           'sponsorManagerContactId',
-                          keptManagerIds[0] ?? undefined
+                          keptManagerIds[0] ?? ''
                         )
-                        if (ids[0]) {
-                          commonInfoForm.setValue('sponsorId', ids[0], { shouldDirty: true })
-                        }
-                        // 후원사만 남고 담당자가 없으면 「미선택」이 기본
-                        if (ids.length > 0 && keptManagerIds.length === 0) {
+                        if (
+                          keptManagerIds.length === 0 ||
+                          keptManagerIds.every(id => isSponsorContactUnselected(id))
+                        ) {
                           commonInfoForm.setValue(
                             'sponsorManagerContactIds',
                             [SPONSOR_CONTACT_UNSELECTED_VALUE],
@@ -864,15 +875,6 @@ export function BasicInfoSection({
                             SPONSOR_CONTACT_UNSELECTED_VALUE,
                             { shouldDirty: true }
                           )
-                          commonInfoForm.setValue(
-                            'managerName',
-                            SPONSOR_CONTACT_UNSELECTED_LABEL,
-                            { shouldDirty: true }
-                          )
-                        } else if (
-                          keptManagerIds.length > 0 &&
-                          keptManagerIds.every(id => isSponsorContactUnselected(id))
-                        ) {
                           commonInfoForm.setValue(
                             'managerName',
                             SPONSOR_CONTACT_UNSELECTED_LABEL,
@@ -900,26 +902,6 @@ export function BasicInfoSection({
                   control={commonInfoForm.control}
                   render={({ field }) => {
                     const selectedIds = field.value ?? []
-                    const savedManagerName = program.managerName?.trim()
-                    const showSavedManager =
-                      selectedIds.length === 0 &&
-                      Boolean(savedManagerName) &&
-                      !isSponsorContactUnselectedLabel(savedManagerName)
-                    const savedManagerOption = showSavedManager
-                      ? {
-                          value: '__saved_manager__',
-                          label: [savedManagerName, program.contactPhone?.trim()]
-                            .filter(Boolean)
-                            .join(' · '),
-                          sponsorId: program.sponsorId ?? '',
-                          contactId: '',
-                          name: savedManagerName ?? '',
-                          phone: program.contactPhone ?? '',
-                        }
-                      : undefined
-                    const managerOptions = savedManagerOption
-                      ? [savedManagerOption, ...sponsorManagerOptions]
-                      : sponsorManagerOptions
                     return (
                       <div className="detail-info-form-inputs-wrapper" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                         <CmsSelect
@@ -929,14 +911,12 @@ export function BasicInfoSection({
                           width="100%"
                           showSearch
                           optionFilterProp="label"
-                          options={managerOptions}
-                          value={showSavedManager ? ['__saved_manager__'] : selectedIds}
-                          disabled={managerOptions.length === 0}
+                          options={sponsorManagerOptions}
+                          value={sponsorManagementIds.length === 0 ? [] : selectedIds}
+                          disabled={sponsorManagementIds.length === 0}
                           onChange={next => {
                             const ids = normalizeSponsorContactUnselectedSelection(
-                              (Array.isArray(next) ? next.map(String) : []).filter(
-                                id => id !== '__saved_manager__'
-                              ),
+                              Array.isArray(next) ? next.map(String) : [],
                               selectedIds
                             )
                             field.onChange(ids)

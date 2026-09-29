@@ -815,6 +815,23 @@ export function normalizeSponsorManagerContactIds(input: {
 }
 
 /**
+ * 남은 후원사에 속한 담당자만 남긴다.
+ * 후원사를 모두 지우면 미선택 토큰을 포함해 담당자 선택을 비운다.
+ */
+export function retainSponsorManagerContactIdsForSponsors(
+  sponsorIds: readonly string[],
+  managerIds: readonly string[]
+): string[] {
+  if (sponsorIds.length === 0) return []
+  const sponsorIdSet = new Set(sponsorIds)
+  return managerIds.filter(ref => {
+    if (isSponsorContactUnselected(ref)) return true
+    const decoded = decodeSponsorManagerContactRef(ref)
+    return decoded != null && sponsorIdSet.has(decoded.sponsorManagementId)
+  })
+}
+
+/**
  * 후원사 id + 담당자 ref[] → PATCH `sponsors[]`.
  * 후원사·담당자 모두 복수. 같은 후원사의 담당자가 여러 명이면 행을 나눈다.
  */
