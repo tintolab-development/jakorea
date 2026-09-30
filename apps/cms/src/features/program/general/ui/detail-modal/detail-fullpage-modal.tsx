@@ -934,6 +934,7 @@ export function GeneralProgramDetailFullPageModal({
     mapToValues: mapParticipantRecruitmentEditValues,
     onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
     validateSchema: programParticipantRecruitmentSaveSchema,
+    recruitmentAudience: 'participant',
   })
 
   const isEditModeInstructors =
@@ -961,6 +962,7 @@ export function GeneralProgramDetailFullPageModal({
     mapToValues: mapInstructorRecruitmentEditValues,
     onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
     validateSchema: programInstructorRecruitmentSaveSchema,
+    recruitmentAudience: 'instructor',
   })
 
   const isEditModeVolunteers =
@@ -988,6 +990,7 @@ export function GeneralProgramDetailFullPageModal({
     mapToValues: mapVolunteerRecruitmentEditValues,
     onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
     validateSchema: programVolunteerRecruitmentSaveSchema,
+    recruitmentAudience: 'volunteer',
   })
 
   const handleRecruitmentEdit = useCallback(() => {

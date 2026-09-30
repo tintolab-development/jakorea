@@ -1284,6 +1284,7 @@ export function UjatProgramDetailFullPageModal({
     form: institutionsForm,
     program: displayProgram ?? ({} as Program),
     mapToValues: mapInstitutionRecruitmentEditValues,
+    recruitmentAudience: 'participant',
     onSaveEdit:
       displayProgram && updateProgram
         ? async (draft, patch) => {
@@ -1341,6 +1342,7 @@ export function UjatProgramDetailFullPageModal({
     form: volunteersForm,
     program: displayProgram ?? ({} as Program),
     mapToValues: mapVolunteerRecruitmentEditValues,
+    recruitmentAudience: 'volunteer',
     onSaveEdit:
       displayProgram && updateProgram
         ? async (draft, patch) => {

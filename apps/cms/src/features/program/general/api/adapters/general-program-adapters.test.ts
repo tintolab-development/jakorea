@@ -8,6 +8,7 @@ import {
   mapGeneralProgramToUpdateRequest,
 } from '@/features/program/general/api/adapters/general-program-adapters'
 import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
+import { applyRecruitmentAdditionalContentHtml } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import type { Program } from '@/types/domain'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 
@@ -873,5 +874,40 @@ describe('general-program-adapters', () => {
     expect(parsed.registration?.overlay?.['generalRegistration.basicInfo.publicProgramTitle']).toBe(
       '공고명'
     )
+  })
+
+  it('모집 추가 내용 PATCH — 컬럼과 participantRecruitmentInfo에 같은 HTML을 싣는다', () => {
+    const html = '<p style="color: red;">신규 추가 내용 😀</p>'
+    const existing: Program = {
+      ...sampleProgram,
+      additionalContentHtml: html,
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          additionalContentHtml: '<p>중첩 옛본문</p>',
+        },
+      },
+    }
+    const patch = applyRecruitmentAdditionalContentHtml(
+      {
+        additionalContentHtml: html,
+        applicationStartDate: existing.applicationStartDate,
+        generalCommonInfo: existing.generalCommonInfo,
+      },
+      existing,
+      html,
+      'participant'
+    )
+    const request = mapGeneralProgramToUpdateRequest({ ...existing, ...patch }, patch)
+
+    expect(request.additionalContentHtml).toBe(html)
+    expect(request.serviceDetailJson).toBeTruthy()
+    const parsed = JSON.parse(request.serviceDetailJson!) as {
+      generalCommonInfo?: {
+        participantRecruitmentInfo?: { additionalContentHtml?: string }
+      }
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(parsed.generalCommonInfo?.participantRecruitmentInfo?.additionalContentHtml).toBe(html)
+    expect(parsed.registration?.overlay?.['recruit.detailInfo.additionalContentHtml']).toBe(html)
   })
 })
