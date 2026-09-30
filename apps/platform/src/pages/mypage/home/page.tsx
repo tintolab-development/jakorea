@@ -10,9 +10,8 @@ import {
   showInstructorApplyCta,
   useMypageMember,
   type MypageLnbItemKey,
-  type MypageProgramStats,
-  type MypageScheduleEvent,
 } from '@/features/mypage'
+import { usePortalCalendarQuery, usePortalDashboardQuery } from '@/features/mypage/home/api/hooks'
 import {
   getAccessToken,
   getDevAuthLoggedIn,
@@ -24,26 +23,24 @@ import { PFText } from '@/shared/ui'
 import { MypageHomeContent } from './home-content'
 import styles from './page.module.css'
 
-const EMPTY_PROGRAM_STATS: MypageProgramStats = {
+const EMPTY_PROGRAM_STATS = {
   applied: 0,
   inProgress: 0,
   completed: 0,
 }
-const EMPTY_SCHEDULE_EVENTS: MypageScheduleEvent[] = []
-
 export function MypageHomePage() {
   const navigate = useNavigate()
   const [isAuthReady, setIsAuthReady] = useState(false)
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date())
   const member = useMypageMember()
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile)
-  /** API 로그인 세션에서는 mock 통계·일정을 쓰지 않음 (실 API 연동 전 빈 값) */
+  const dashboard = usePortalDashboardQuery(member.isRemoteSession)
+  const calendar = usePortalCalendarQuery(calendarMonth, member.isRemoteSession)
   const programStats = member.isRemoteSession
-    ? EMPTY_PROGRAM_STATS
+    ? (dashboard.stats ?? EMPTY_PROGRAM_STATS)
     : getMockMypageProgramStats()
-  const scheduleEvents = member.isRemoteSession
-    ? EMPTY_SCHEDULE_EVENTS
-    : getMockMypageScheduleEvents()
+  const scheduleEvents = member.isRemoteSession ? calendar.events : getMockMypageScheduleEvents()
 
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -68,7 +65,7 @@ export function MypageHomePage() {
     return null
   }
 
-  if (member.isRemoteSession && member.isLoading) {
+  if (member.isRemoteSession && (member.isLoading || dashboard.isLoading)) {
     return (
       <MypageLayout
         lnbItems={lnbItems}
@@ -95,6 +92,7 @@ export function MypageHomePage() {
         programStats={programStats}
         scheduleEvents={scheduleEvents}
         useMockDemoMonth={!member.isRemoteSession}
+        onViewMonthChange={member.isRemoteSession ? setCalendarMonth : undefined}
       />
     </MypageLayout>
   )

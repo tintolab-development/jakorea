@@ -2,7 +2,7 @@
  * 일반 프로그램 상세 — 공통 정보 수정 폼 (RHF + Zod)
  */
 
-import { useEffect, useLayoutEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, type UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Program } from '@/types/domain'
@@ -12,6 +12,7 @@ import {
   programToGeneralCommonInfoEditValues,
   resolveSponsorManagementIds,
   type GeneralProgramCommonInfoEditFormValues,
+  type GeneralProgramSponsorEditContext,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useSponsorOptionsQuery } from '@/features/sponsor/hooks/use-sponsor-options-query'
@@ -21,6 +22,12 @@ export interface UseGeneralProgramCommonInfoEditFormOptions {
   program: Program | null
   isEditMode: boolean
 }
+
+const EMPTY_INTERIM_SPONSORS: GeneralProgramSponsorEditContext['sponsors'] = []
+const EMPTY_INTERIM_CONTACTS: GeneralProgramSponsorEditContext['contactsBySponsorId'] = {}
+const EMPTY_DETAILED_PROGRAM_CATALOG: NonNullable<
+  ReturnType<typeof useDetailedProgramOptionsQuery>['data']
+> = []
 
 const EMPTY_DEFAULTS: GeneralProgramCommonInfoEditFormValues = {
   mainTitle: '',
@@ -79,9 +86,9 @@ export function useGeneralProgramCommonInfoEditForm({
 }: UseGeneralProgramCommonInfoEditFormOptions): UseFormReturn<GeneralProgramCommonInfoEditFormValues> {
   const sponsorsQuery = useSponsorOptionsQuery(Boolean(program))
   const interimSponsorContext = useMemo(
-    () => ({
-      sponsors: sponsorsQuery.data ?? [],
-      contactsBySponsorId: {},
+    (): GeneralProgramSponsorEditContext => ({
+      sponsors: sponsorsQuery.data ?? EMPTY_INTERIM_SPONSORS,
+      contactsBySponsorId: EMPTY_INTERIM_CONTACTS,
     }),
     [sponsorsQuery.data]
   )
@@ -91,7 +98,31 @@ export function useGeneralProgramCommonInfoEditForm({
   )
   const sponsorContext = useGeneralProgramSponsorEditContext(initialSponsorIds)
   const detailedProgramsQuery = useDetailedProgramOptionsQuery(Boolean(program))
-  const detailedProgramCatalog = detailedProgramsQuery.data ?? []
+  const detailedProgramCatalog = useMemo(
+    () => detailedProgramsQuery.data ?? EMPTY_DETAILED_PROGRAM_CATALOG,
+    [detailedProgramsQuery.data]
+  )
+
+  const programSyncKey = useMemo(() => {
+    if (!program) return ''
+    return `${program.id}:${program.updatedAt ?? ''}`
+  }, [program])
+
+  const sponsorContextSyncKey = useMemo(() => {
+    const sponsorIds = sponsorContext.sponsors.map(row => row.id).join(',')
+    const contactIds = Object.entries(sponsorContext.contactsBySponsorId)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([sponsorId, contacts]) =>
+        `${sponsorId}=${(contacts ?? []).map(c => c.id).join('.')}`
+      )
+      .join(';')
+    return `${sponsorIds}|${contactIds}`
+  }, [sponsorContext])
+
+  const detailedCatalogSyncKey = useMemo(
+    () => detailedProgramCatalog.map(row => row.id).join(','),
+    [detailedProgramCatalog]
+  )
 
   const defaultValues = useMemo(() => {
     if (program) {
@@ -113,30 +144,17 @@ export function useGeneralProgramCommonInfoEditForm({
   const { reset } = form
 
   useEffect(() => {
-    if (program) {
-      reset(
-        programToGeneralCommonInfoEditValues(
-          program,
-          sponsorContext,
-          detailedProgramCatalog.length > 0 ? detailedProgramCatalog : undefined
-        ),
-        { keepDefaultValues: false }
-      )
-    }
-  }, [program, reset, sponsorContext, detailedProgramCatalog])
-
-  useLayoutEffect(() => {
-    if (isEditMode && program) {
-      reset(
-        programToGeneralCommonInfoEditValues(
-          program,
-          sponsorContext,
-          detailedProgramCatalog.length > 0 ? detailedProgramCatalog : undefined
-        ),
-        { keepDefaultValues: false }
-      )
-    }
-  }, [isEditMode, program, reset, sponsorContext, detailedProgramCatalog])
+    if (!program) return
+    reset(
+      programToGeneralCommonInfoEditValues(
+        program,
+        sponsorContext,
+        detailedProgramCatalog.length > 0 ? detailedProgramCatalog : undefined
+      ),
+      { keepDefaultValues: false }
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset when sync keys change; avoid unstable object refs
+  }, [programSyncKey, isEditMode, reset, sponsorContextSyncKey, detailedCatalogSyncKey])
 
   return form
 }

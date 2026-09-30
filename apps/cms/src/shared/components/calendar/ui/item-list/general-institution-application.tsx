@@ -56,7 +56,11 @@ export function CalendarListItemContentGeneralInstitutionApplication({
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
-        <Checkbox checked={checked} onChange={e => onToggle(row.id, e.target.checked)} />
+        <Checkbox
+          checked={checked}
+          disabled={row.approvalStatus !== 'pending'}
+          onChange={e => onToggle(row.id, e.target.checked)}
+        />
       </div>
     </div>
   )

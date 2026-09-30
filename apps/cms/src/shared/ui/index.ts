@@ -17,6 +17,8 @@ export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
 export { showDeleteCompletedAlert } from './show-delete-completed-alert'
 export { showRegisterCompletedAlert } from './show-register-completed-alert'
 export { showUpdateCompletedAlert } from './show-update-completed-alert'
+export { showApplicationApprovalCompletedAlert } from './show-application-approval-completed-alert'
+export { showApplicationRejectionCompletedAlert } from './show-application-rejection-completed-alert'
 export { CmsAlertModalProvider, useCmsAlert } from './cms-alert-modal-provider'
 export type { CmsAlertModalContextValue } from './cms-alert-modal-provider'
 export {

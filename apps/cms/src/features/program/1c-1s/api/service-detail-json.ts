@@ -9,6 +9,7 @@ import { normalizeGeneralProgramServiceDetailParsed } from '@/features/program/g
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 
 export const COMPANY_SCHOOL_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -113,7 +114,7 @@ function companySchoolVolunteerOff(partial: Partial<Program>): Partial<Program> 
 function companySchoolDetails(program: Program): Partial<Program> {
   return companySchoolVolunteerOff({
     posterImage: program.posterImage,
-    targetLevels: program.targetLevels,
+    targetLevels: resolvePersistedProgramTargetLevels(program),
     approvedStudentCount: program.approvedStudentCount,
     instructorCapacity: program.instructorCapacity,
     participatingSchoolCount: program.participatingSchoolCount,
@@ -342,6 +343,19 @@ function shouldIncludeProgramSliceKey(key: keyof Program, patch: Partial<Program
   return true
 }
 
+/** 공통정보 패치는 모집 블록을 빼고, 이번 패치가 건드린 모집 종류만 중첩 객체를 남긴다. */
+function includeRecruitmentCommonInfoKey(
+  key: keyof GeneralCommonInfo,
+  patch: Partial<Program>
+): boolean {
+  if (key === 'participantRecruitmentInfo') return patchTouchesParticipantRecruitment(patch)
+  if (key === 'instructorRecruitmentInfo') return patchTouchesInstructorRecruitment(patch)
+  if (key === 'volunteerRecruitmentInfo' || key === 'volunteerInterviewScheduleInfo') {
+    return patchTouchesVolunteerRecruitment(patch)
+  }
+  return false
+}
+
 function generalCommonInfoForUpdatePatch(
   merged: Program,
   patch: Partial<Program>
@@ -350,7 +364,12 @@ function generalCommonInfoForUpdatePatch(
 
   const next: Record<string, unknown> = {}
   for (const key of Object.keys(patch.generalCommonInfo) as (keyof GeneralCommonInfo)[]) {
-    if (RECRUITMENT_GENERAL_COMMON_INFO_KEYS.has(key)) continue
+    if (
+      RECRUITMENT_GENERAL_COMMON_INFO_KEYS.has(key) &&
+      !includeRecruitmentCommonInfoKey(key, patch)
+    ) {
+      continue
+    }
     const value = merged.generalCommonInfo?.[key] ?? patch.generalCommonInfo[key]
     if (value !== undefined) {
       next[key] = value

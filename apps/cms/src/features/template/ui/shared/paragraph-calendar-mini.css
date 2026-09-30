@@ -133,16 +133,38 @@
 
 .paragraph-calendar-mini .ant-picker-cell-disabled .calendar-mini-cell {
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .paragraph-calendar-mini .ant-picker-cell-disabled .calendar-mini-date {
-  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  color: inherit;
   text-align: center;
   font-family: Pretendard, system-ui, sans-serif;
   font-size: 15px;
   font-style: normal;
   font-weight: 500;
   line-height: 130%;
+}
+
+.paragraph-calendar-mini
+  .ant-picker-cell-disabled
+  .calendar-mini-cell:not(.calendar-mini-cell--saturday):not(.calendar-mini-cell--sunday)
+  .calendar-mini-date {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.paragraph-calendar-mini
+  .ant-picker-cell-disabled
+  .calendar-mini-cell--saturday
+  .calendar-mini-date {
+  color: #017eaf;
+}
+
+.paragraph-calendar-mini
+  .ant-picker-cell-disabled
+  .calendar-mini-cell--sunday
+  .calendar-mini-date {
+  color: #c32f4a;
 }
 
 /* 현재 클릭(선택) 중인 날짜 — schedule 보더보다 우선 */

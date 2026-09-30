@@ -11,6 +11,7 @@ import type {
 } from '@/types/domain'
 import type { Status } from '@/types'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { coerceProgramPaymentItemsText } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import {
   derivedTextbookNameAliases,
   omitIfDetailedProgramNameAlias,
@@ -26,7 +27,25 @@ import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecy
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
-import { applyResolvedVenueKindToCommonInfo } from '@/features/program/general/model/common-info-edit-schema'
+import {
+  applyResolvedVenueKindToCommonInfo,
+  buildProgramSponsorAssignmentsWire,
+  encodeSponsorManagerContactRef,
+  normalizeSponsorManagerContactIds,
+} from '@/features/program/general/model/common-info-edit-schema'
+import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
+import {
+  normalizeProgramBusinessAreaValue,
+  resolvePersistedProgramTargetLevels,
+} from '@/features/program/shared/lib/program-detail-info-constants'
+import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
+import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
+import {
+  applyProgramMissingCommonStringFieldsToUpdateRequest,
+  mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
+  resolveOtherNotesFromProgramResponse,
+} from '@/features/program/shared/lib/program-update-common-string-fields'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
 
@@ -38,8 +57,8 @@ function toDate(value: Date | string | undefined): string | undefined {
 }
 
 /**
- * GET — 화면 운영 기간은 요청이 보낸 start/end.
- * 서버가 business* 를 연도로 바꿔도 그 값으로 덮지 않는다.
+ * GET — 화면 운영 기간은 서울 달력일.
+ * `businessStartDate`/`businessEndDate` 와 `startDate`/`endDate`/`rounds[0]` 이 같은 날짜다.
  */
 function resolveCompanySchoolOperationDates(dto: {
   startDate?: string | null
@@ -47,10 +66,7 @@ function resolveCompanySchoolOperationDates(dto: {
   businessStartDate?: string | null
   businessEndDate?: string | null
 }): { startDate: string | undefined; endDate: string | undefined } {
-  return {
-    startDate: dto.startDate ?? dto.businessStartDate ?? undefined,
-    endDate: dto.endDate ?? dto.businessEndDate ?? undefined,
-  }
+  return resolveBusinessPeriodDates(dto)
 }
 
 function resolveCompanySchoolListLifecycle(
@@ -111,10 +127,7 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
 export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   const dtoExt = dto as ProgramResponse & {
     nameKo?: string
-    remarks?: string
-    otherMatters?: string
-    contactName?: string
-    recruitmentTargetDetail?: string
+    businessField?: string
   }
   const title =
     dto.title?.trim() ||
@@ -132,12 +145,16 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   void _serviceDetailLifecycle
   void _serviceDetailStatus
   const wageSidecar = extractCompanySchoolWageSidecar(dto.serviceDetailJson)
+  const sidecarPaymentItems = coerceProgramPaymentItemsText(wageSidecar?.paymentItems).trim()
   const fromJson = {
     ...details.generalCommonInfo,
     ...(wageSidecar?.wageGradeRows?.length ? { wageGradeRows: wageSidecar.wageGradeRows } : {}),
-    ...(wageSidecar?.paymentItems?.trim() ? { paymentItems: wageSidecar.paymentItems } : {}),
-    ...(wageSidecar?.deductionItems?.trim() ? { deductionItems: wageSidecar.deductionItems } : {}),
+    ...(sidecarPaymentItems ? { paymentItems: sidecarPaymentItems } : {}),
+    ...(typeof wageSidecar?.deductionItems === 'string' && wageSidecar.deductionItems.trim()
+      ? { deductionItems: wageSidecar.deductionItems }
+      : {}),
   }
+  const savedPaymentItems = coerceProgramPaymentItemsText(fromJson.paymentItems).trim()
   const mergedSettlement = applySettlementPolicyToCommonInfo(fromJson, dto.settlementPolicy)
   // 등록 시 넣은 serviceDetailJson 임금이 있으면 그걸 화면 SSOT로 쓴다.
   // settlementPolicy 기본값(500,000 등)이 JSON을 덮어 상세와 GET body가 달라지는 것을 막는다.
@@ -147,17 +164,16 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
         wageGradeRows: fromJson.wageGradeRows?.length
           ? fromJson.wageGradeRows
           : mergedSettlement.wageGradeRows,
-        paymentItems: fromJson.paymentItems?.trim()
-          ? fromJson.paymentItems
-          : mergedSettlement.paymentItems,
-        deductionItems: fromJson.deductionItems?.trim()
-          ? fromJson.deductionItems
-          : mergedSettlement.deductionItems,
+        paymentItems: savedPaymentItems || mergedSettlement.paymentItems,
+        deductionItems:
+          typeof fromJson.deductionItems === 'string' && fromJson.deductionItems.trim()
+            ? fromJson.deductionItems
+            : mergedSettlement.deductionItems,
       }
     : fromJson
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 — serviceDetailJson 캐시가
   // 낡았을 때도(id만 바뀌고 상세 JSON이 안 갱신된 경우 등) 화면에 최신 이름이 보이게 한다.
-  const generalCommonInfo = applyResolvedVenueKindToCommonInfo(
+  const generalCommonInfoBase = applyResolvedVenueKindToCommonInfo(
     {
       ...generalCommonInfoWithSettlement,
       detailedProgramName:
@@ -165,17 +181,43 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     },
     { institutionType: dto.institutionType as Program['institutionType'], venue: dto.venue }
   )
+  const generalCommonInfo = generalCommonInfoBase
+    ? {
+        ...generalCommonInfoBase,
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          generalCommonInfoBase.participantRecruitmentInfo,
+          dto
+        ),
+      }
+    : {
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          undefined,
+          dto
+        ),
+      }
+  /** otherNotes ≠ remarks — BE otherMatters 컬럼 우선 */
   const otherNotes =
-    dtoExt.otherMatters?.trim() ||
-    dtoExt.remarks?.trim() ||
-    details.otherNotes?.trim() ||
-    undefined
+    resolveOtherNotesFromProgramResponse({
+      otherMatters: dto.otherMatters,
+      otherNotes: details.otherNotes,
+    }) || undefined
 
   const periodStatus = (dto as ProgramResponse & { periodStatus?: string }).periodStatus
   const lifecycleStatus =
     toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
     toTypedProgramLifecycleStatus(periodStatus) ??
     undefined
+  const dtoTargetLevels = Array.isArray(
+    (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
+  )
+    ? (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
+    : undefined
+  const persistedTargetLevels = resolvePersistedProgramTargetLevels({
+    targetLevels: dtoTargetLevels ?? details.targetLevels,
+    targetLevel: dto.targetLevel ?? details.targetLevels?.[0],
+    registrationOverlay: details.registrationOverlay,
+    generalCommonInfo,
+  })
 
   const mapped = baseProgram({
     ...detailFields,
@@ -205,7 +247,8 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,
-    businessArea: dto.businessArea,
+    businessArea:
+      normalizeProgramBusinessAreaValue(dto.businessArea || dtoExt.businessField) || undefined,
     // 세부 프로그램 마스터 id — 일반 프로그램 어댑터와 동일하게 top-level 필드로 읽어온다.
     detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     titleEn: dto.titleEn,
@@ -214,7 +257,8 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     schoolId: dto.schoolId,
     district: dto.district,
     ips: dto.ips as Program['ips'],
-    targetLevel: details.targetLevels?.[0] ?? (dto.targetLevel as Program['targetLevel']),
+    targetLevel: persistedTargetLevels[0] ?? (dto.targetLevel as Program['targetLevel']),
+    targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
     institutionType: dto.institutionType as Program['institutionType'],
     ipOwned: dto.ipOwned,
     courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
@@ -236,6 +280,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     managerName: dto.managerName,
     venue: dto.venue,
     curriculum: dto.curriculum,
+    contactName: dto.contactName?.trim() || undefined,
     contactEmail: dto.contactEmail,
     contactPhone: dto.contactPhone,
     oneLineIntroduction: dto.oneLineIntroduction,
@@ -248,6 +293,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
     otherNotes,
+    recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
     studentListRequired: details.studentListRequired ?? 'not_required',
     generalParticipantTypes: ['school_institution', 'teacher_instructor'],
     generalCommonInfo,
@@ -265,8 +311,15 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   })
 }
 
+/** GET round id만 다시 보낸다. `186016-round-1` 같은 화면용 id를 넣으면 서버가 기존 일정을 삭제 후 재생성한다. */
+function persistedRoundId(id: string | undefined): string | undefined {
+  if (!id || !/^\d+$/.test(id)) return undefined
+  return id
+}
+
 function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {
   return program.rounds.map(round => ({
+    ...(persistedRoundId(round.id) ? { id: persistedRoundId(round.id) } : {}),
     roundNumber: round.roundNumber,
     startDate: toDate(round.startDate),
     endDate: toDate(round.endDate),
@@ -326,6 +379,19 @@ const SERVICE_DETAIL_PROGRAM_KEYS = [
   'registrationOverlay',
 ] as const satisfies ReadonlyArray<keyof Program>
 
+function resolveRequestTargetLevels(
+  program: Program,
+  fallback?: Program
+): ProgramUpdateRequestTargetLevelsItem[] | undefined {
+  const resolved = resolvePersistedProgramTargetLevels(program)
+  const fromFallback = fallback ? resolvePersistedProgramTargetLevels(fallback) : []
+  const richest = resolved.length >= fromFallback.length ? resolved : fromFallback
+  if (richest.length > 0) {
+    return [...richest] as ProgramUpdateRequestTargetLevelsItem[]
+  }
+  return undefined
+}
+
 function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
   return Object.prototype.hasOwnProperty.call(patch, key)
 }
@@ -336,13 +402,39 @@ function looksMaskedProgramPii(value: string | null | undefined): boolean {
   return value.includes('*')
 }
 
+function mapCompanySchoolSponsorAssignments(program: Program) {
+  const sponsorId =
+    program.generalCommonInfo?.sponsorManagementIds?.[0] ??
+    program.generalCommonInfo?.sponsorManagementId ??
+    program.sponsorId
+  const sponsorIds = sponsorId ? [String(sponsorId).trim()].filter(Boolean) : []
+  const contactRefs = normalizeSponsorManagerContactIds({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+  })
+    .filter(id => id !== '__all__' && !isSponsorContactUnselected(id))
+    .map(id =>
+      id.includes('::') || !sponsorId
+        ? id
+        : encodeSponsorManagerContactRef(String(sponsorId), id)
+    )
+  return buildProgramSponsorAssignmentsWire(sponsorIds, contactRefs)
+}
+
 function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateRequest {
   // 버그 수정: 1사1교는 등록 폼에서 고른 「세부 프로그램명」이 요청에 전혀 실리지 않고 무시됐다 —
   // 일반 프로그램 어댑터와 동일하게 detailedProgramId(숫자 마스터 id)로 보낸다. textbookName(교재명)에
   // 이름을 강제로 밀어넣는 방식은 general 어댑터의 계약과 달랐다(중복되면 omit).
+  const targetLevels = resolveRequestTargetLevels(program)
   const detailedProgramName = program.generalCommonInfo?.detailedProgramName
-  return {
-    sponsorId: program.sponsorId,
+  const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
+  const sponsors = mapCompanySchoolSponsorAssignments(program)
+  const primarySponsorId =
+    sponsors.find(row => row.sponsorContactId)?.sponsorId ||
+    sponsors[0]?.sponsorId ||
+    program.sponsorId
+  const body: ProgramUpdateRequest = {
+    sponsorId: primarySponsorId,
     title: program.title,
     type: program.type,
     format: program.format,
@@ -355,7 +447,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     businessEndDate: toDate(program.endDate),
     applicationStartDate: toDate(program.applicationStartDate),
     applicationEndDate: toDate(program.applicationEndDate),
-    businessArea: program.businessArea,
+    businessArea,
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
@@ -368,7 +460,8 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     schoolId: program.schoolId,
     district: program.district,
     ips: program.ips,
-    targetLevel: program.targetLevels?.[0] ?? program.targetLevel,
+    targetLevels,
+    targetLevel: targetLevels?.[0] ?? program.targetLevel,
     institutionType: program.institutionType,
     ipOwned: program.ipOwned,
     courseDeliveredBy: program.courseDeliveredBy,
@@ -401,8 +494,19 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     learningSupportContent: program.learningSupportContent,
     attachmentFileNames: program.attachmentFileNames,
     rounds: mapRounds(program),
-    serviceDetailJson: serializeCompanySchoolServiceDetailJson(program),
+    sponsors: sponsors.length > 0 ? sponsors : undefined,
+    serviceDetailJson: serializeCompanySchoolServiceDetailJson(
+      targetLevels?.length
+        ? { ...program, targetLevels, targetLevel: targetLevels[0] }
+        : program
+    ),
   }
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'full',
+    merged: program,
+    existing: program,
+  })
+  return body
 }
 
 /**
@@ -411,13 +515,19 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
  */
 function mapCompanySchoolPatchFieldsToRequest(
   merged: Program,
-  patch: Partial<Program>
+  patch: Partial<Program>,
+  existing: Program
 ): ProgramUpdateRequest {
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
 
-  if (has('sponsorId')) {
-    body.sponsorId = merged.sponsorId != null ? String(merged.sponsorId) : undefined
+  if (has('sponsorId') || patchTouchesProgramSponsors(patch)) {
+    const sponsors = mapCompanySchoolSponsorAssignments(merged)
+    body.sponsorId =
+      sponsors.find(row => row.sponsorContactId)?.sponsorId ||
+      sponsors[0]?.sponsorId ||
+      (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
+    body.sponsors = sponsors
   }
   if (has('title')) body.title = merged.title
   if (has('type')) body.type = merged.type
@@ -436,7 +546,10 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('applicationEndDate')) {
     body.applicationEndDate = toDate(merged.applicationEndDate)
   }
-  if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('businessArea')) {
+    const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
+    body.businessArea = businessArea
+  }
   if (has('detailedProgramId') || has('generalCommonInfo')) {
     body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
   }
@@ -457,7 +570,9 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('district')) body.district = merged.district
   if (has('ips')) body.ips = merged.ips
   if (has('targetLevel') || has('targetLevels')) {
-    body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
+    const targetLevels = resolveRequestTargetLevels(merged) ?? []
+    body.targetLevels = targetLevels
+    body.targetLevel = targetLevels[0]
   }
   if (has('institutionType') || has('generalCommonInfo')) {
     body.institutionType = merged.institutionType
@@ -513,8 +628,30 @@ function mapCompanySchoolPatchFieldsToRequest(
 
   const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
   if (touchesServiceDetail) {
-    body.serviceDetailJson = serializeCompanySchoolServiceDetailJsonForUpdatePatch(merged, patch)
+    const persistedTargetLevels =
+      has('targetLevel') || has('targetLevels')
+        ? resolveRequestTargetLevels(merged)
+        : resolveRequestTargetLevels(merged, existing)
+    const serializeSource =
+      persistedTargetLevels?.length
+        ? { ...merged, targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
+        : merged
+    body.serviceDetailJson = serializeCompanySchoolServiceDetailJsonForUpdatePatch(
+      serializeSource,
+      persistedTargetLevels?.length ? { ...patch, targetLevels: persistedTargetLevels } : patch
+    )
+    if (persistedTargetLevels?.length) {
+      body.targetLevels = persistedTargetLevels
+      body.targetLevel = persistedTargetLevels[0]
+    }
   }
+
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'patch',
+    merged,
+    existing,
+    patch,
+  })
 
   return body
 }
@@ -528,7 +665,7 @@ export function mapCompanySchoolToUpdateRequest(
   patch?: Partial<Program>
 ): ProgramUpdateRequest {
   if (patch && Object.keys(patch).length > 0) {
-    return mapCompanySchoolPatchFieldsToRequest({ ...program, ...patch }, patch)
+    return mapCompanySchoolPatchFieldsToRequest({ ...program, ...patch }, patch, program)
   }
   return mapCompanySchoolCoreFieldsToRequest(program)
 }

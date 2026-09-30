@@ -61,7 +61,7 @@ export interface UserDetailFullPageModalProps {
   open: boolean
   user: Omit<User, 'password'> | null
   onClose: () => void
-  onWithdraw?: (user: Omit<User, 'password'>, currentPassword?: string) => void | Promise<void>
+  onWithdraw?: (user: Omit<User, 'password'>, confirmInput?: string) => void | Promise<void>
   basicInfoEntrySource?: UserBasicInfoEntrySource
   mode?: UserDetailFullPageModalMode
   permissionRole?: UserDetailPermissionRole

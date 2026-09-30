@@ -24,7 +24,7 @@ import { mapGeneralVolunteerAssignedInterviewToCalendarEvents } from '@/features
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockOrgVolunteerApplicants } from '@/features/program/general/lib/temp-mock-org-program'
+import { getTempMockShowcaseVolunteerApplicants } from '@/features/program/general/lib/temp-mock-program-resolve'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import {
   notifyProgramApiUnavailable,
@@ -115,7 +115,7 @@ export function useGeneralVolunteerInterview2({
   useEffect(() => {
     if (volunteerRemote.remoteEnabled) return
     if (isGeneralProgramTempMockProgramId(programId) && subjectKind !== 'participant') {
-      setList(getTempMockOrgVolunteerApplicants(programId, 'interview2'))
+      setList(getTempMockShowcaseVolunteerApplicants(programId, 'interview2'))
       return
     }
     setList([])

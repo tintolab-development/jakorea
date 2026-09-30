@@ -40,12 +40,35 @@ export const PARTIAL_EDIT_ALL_BODY_COLUMNS_PARAGRAPH_IDS = new Set<string>([
   GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.portraitConsent,
 ])
 
+/** 구조 잠금이지만 주관식 본문(안내 텍스트)은 수정 가능 */
+export const PARTIAL_EDIT_STRUCTURE_LOCKED_SHORT_ESSAY_PARAGRAPH_IDS = new Set<string>([
+  PROGRAM_PARTICIPANT_APPLICATION_IDS.selfIntro,
+])
+
+/** 구조 잠금이지만 카드 제목·설명글은 수정 가능 (본문 일정 구조는 프로그램 등록값) */
+export const PARTIAL_EDIT_STRUCTURE_LOCKED_HEADING_PARAGRAPH_IDS = new Set<string>([
+  PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice,
+  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+  PROGRAM_APPLICATION_FORM_ECONOMY_IDS.preferredSchedule,
+  PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
+  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
+  GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
+])
+
 const STRUCTURE_LOCKED_HINT_FULL = '* 해당 단락은 수정 및 삭제가 불가합니다.'
 const STRUCTURE_LOCKED_HINT_PARTIAL_EDIT =
   '* 해당 단락은 삭제 불가하며, 일부 텍스트만 수정이 가능합니다.'
 
 export function isStructureLockedPartialTextParagraph(paragraphId: string): boolean {
   return PARTIAL_EDIT_STRUCTURE_LOCKED_PARAGRAPH_IDS.has(paragraphId)
+}
+
+export function isStructureLockedPartialShortEssayParagraph(paragraphId: string): boolean {
+  return PARTIAL_EDIT_STRUCTURE_LOCKED_SHORT_ESSAY_PARAGRAPH_IDS.has(paragraphId)
+}
+
+export function isStructureLockedPartialHeadingParagraph(paragraphId: string): boolean {
+  return PARTIAL_EDIT_STRUCTURE_LOCKED_HEADING_PARAGRAPH_IDS.has(paragraphId)
 }
 
 /** 개인정보·제3자 — 하단 안내 ParagraphInput 수정 허용 */
@@ -70,7 +93,9 @@ export function getStructureLockedPartialLockedBodyColumnIndexes(
 }
 
 export function resolveStructureLockedParagraphHint(paragraphId: string): string {
-  return isStructureLockedPartialTextParagraph(paragraphId)
+  return isStructureLockedPartialTextParagraph(paragraphId) ||
+    isStructureLockedPartialShortEssayParagraph(paragraphId) ||
+    isStructureLockedPartialHeadingParagraph(paragraphId)
     ? STRUCTURE_LOCKED_HINT_PARTIAL_EDIT
     : STRUCTURE_LOCKED_HINT_FULL
 }

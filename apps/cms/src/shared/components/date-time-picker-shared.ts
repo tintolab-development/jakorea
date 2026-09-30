@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { from24h } from '@/shared/components/date-time-picker-time-selects'
-
 export const DATE_TIME_PICKER_POPOVER_GAP = 6
 
-export function dayjsTimeParts(d: Dayjs): { h: string; m: string; mer: 'AM' | 'PM' } {
-  const { h12, mer } = from24h(d.hour())
-  return { h: String(h12), m: String(d.minute()), mer }
+/** 팝오버 시·분 draft state (0~23시, 0~59분) */
+export function dayjsTimeParts(d: Dayjs): { h: string; m: string } {
+  return { h: String(d.hour()), m: String(d.minute()) }
 }
 
 /** overlay JSON 왕복 등으로 Dayjs가 ISO string이 된 값을 복원한다. */

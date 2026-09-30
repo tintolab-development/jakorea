@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
+  resolveInstitutionFixedScheduleDescription,
   resolveInstitutionPreferredScheduleDescription,
   resolveInstitutionPreferredScheduleInitialBlockCount,
   resolveInstitutionPreferredScheduleMaxBlocks,
+  shouldUseInstitutionFixedScheduleCardCopy,
   shouldUseInstitutionPreferredScheduleCardCopy,
 } from './institution-application-schedule-copy'
 
@@ -44,6 +46,28 @@ describe('institution preferred schedule card copy', () => {
       educationScheduleLines: ['26년 4월 20일(월) 9:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
     }
     expect(shouldUseInstitutionPreferredScheduleCardCopy(bridge)).toBe(false)
+    expect(shouldUseInstitutionFixedScheduleCardCopy(bridge)).toBe(true)
+    expect(resolveInstitutionFixedScheduleDescription(bridge)).toBe(
+      'N차시*N회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+    )
     expect(resolveInstitutionPreferredScheduleInitialBlockCount(bridge)).toBe(1)
+  })
+
+  it('날짜 지정 + 단일 회차는 1타임 배정 안내를 카드 설명으로 쓴다', () => {
+    const bridge: InstitutionApplicationProgramBridge = {
+      preEducationNoticeRequired: true,
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      educationScheduleLines: [
+        '26년 10월 13일(화) 13:30 ~ 15:30',
+        '26년 10월 13일(화) 9:30 ~ 11:30',
+        '26년 10월 20일(화) 13:30 ~ 15:30',
+      ],
+    }
+    expect(shouldUseInstitutionFixedScheduleCardCopy(bridge)).toBe(true)
+    expect(resolveInstitutionFixedScheduleDescription(bridge)).toBe(
+      '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+    )
   })
 })

@@ -79,8 +79,15 @@ export function FormEditorLeftPanel({
 
   const hiddenParagraphIds = mergedParagraphBodyOptions.hiddenParagraphIds
   const displayParagraphs = useMemo(() => {
-    if (hiddenParagraphIds == null || hiddenParagraphIds.size === 0) return paragraphs
-    return paragraphs.filter(paragraph => !hiddenParagraphIds.has(paragraph.id))
+    const unique: typeof paragraphs = []
+    const seen = new Set<string>()
+    for (const paragraph of paragraphs) {
+      if (seen.has(paragraph.id)) continue
+      seen.add(paragraph.id)
+      unique.push(paragraph)
+    }
+    if (hiddenParagraphIds == null || hiddenParagraphIds.size === 0) return unique
+    return unique.filter(paragraph => !hiddenParagraphIds.has(paragraph.id))
   }, [paragraphs, hiddenParagraphIds])
 
   const paragraphOrderKey = useMemo(

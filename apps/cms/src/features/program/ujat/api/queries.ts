@@ -7,6 +7,10 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
+import {
+  programDetailCacheFromSave,
+  syncOpenProgramDetailCache,
+} from '@/features/program/shared/lib/program-detail-cache-after-save'
 import { shouldUseRemoteApi } from './capabilities'
 import { shouldRetryQuery } from './errors'
 import type { ListParams } from './list-params'
@@ -110,8 +114,18 @@ export function useUpdateProgram() {
       patch?: Partial<Program>
     }) => update(input.programId, input.program, input.patch),
     retry: false,
-    onSuccess: program => {
-      queryClient.setQueryData(queryKeys.detail(dataScope, program.id), program)
+    onSuccess: async (program, variables) => {
+      const detailKey = queryKeys.detail(dataScope, variables.programId)
+      await syncOpenProgramDetailCache(
+        queryClient,
+        detailKey,
+        programDetailCacheFromSave(
+          variables.programId,
+          program,
+          variables.program,
+          variables.patch
+        )
+      )
       void queryClient.invalidateQueries({ queryKey: queryKeys.lists() })
     },
   })

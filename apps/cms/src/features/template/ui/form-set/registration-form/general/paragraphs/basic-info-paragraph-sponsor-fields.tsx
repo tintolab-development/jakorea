@@ -30,6 +30,7 @@ import {
   isSponsorContactUnselected,
   normalizeSponsorContactUnselectedSelection,
   SPONSOR_CONTACT_UNSELECTED_LABEL,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
   withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
@@ -154,12 +155,15 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     if (isSponsorControlled) {
       onSponsorIdChange(primary)
     }
-    // 선택 해제된 후원사의 담당자만 제거하고 기존 선택은 유지
+    // 선택 해제된 후원사의 담당자만 제거하고 기존 선택은 유지 (미선택 sentinel 유지)
     const kept = managerContactIds.filter(ref => {
+      if (isSponsorContactUnselected(ref)) return true
       const decoded = decodeSponsorManagerContactRef(ref)
       return decoded != null && unique.includes(decoded.sponsorManagementId)
     })
-    setManagerContactIds(kept)
+    setManagerContactIds(
+      unique.length > 0 && kept.length === 0 ? [SPONSOR_CONTACT_UNSELECTED_VALUE] : kept
+    )
   }
 
   // 단일 후원사 레거시 → 다중 배열 동기화
@@ -187,6 +191,14 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
 
   const { options: sponsorApiOptions } = useSponsorSelectOptions()
   const isAllSponsor = trainedTeachersDefaults && sponsorId === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE
+
+  // 후원사는 있는데 담당자가 비면 수정 진입·후원사 변경 모두 미선택을 고른다.
+  useEffect(() => {
+    if (isAllSponsor) return
+    if (sponsorIds.length === 0) return
+    if (managerContactIds.length > 0) return
+    setManagerContactIds([SPONSOR_CONTACT_UNSELECTED_VALUE])
+  }, [isAllSponsor, managerContactIds.length, setManagerContactIds, sponsorIds.length])
 
   const multiSponsorContext = useGeneralProgramSponsorEditContext(
     allowMultipleSponsors ? sponsorIds : []
@@ -250,12 +262,12 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   const managerSelectOptions = useMemo(() => {
     const sponsorChosen =
       isAllSponsor || (allowMultipleSponsors ? sponsorIds.length > 0 : Boolean(sponsorId))
-    if (!sponsorChosen || !managerContactsReady) return managerOptions
+    // 후원사만 고르면 미선택 노출. contacts 전부 로드될 때까지 기다리면 옵션이 빠져 보인다.
+    if (!sponsorChosen) return managerOptions
     return withSponsorContactUnselectedOption(managerOptions)
   }, [
     allowMultipleSponsors,
     isAllSponsor,
-    managerContactsReady,
     managerOptions,
     sponsorId,
     sponsorIds.length,
@@ -406,8 +418,8 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               value={managerContactIds}
               disabled={
                 allowMultipleSponsors
-                  ? sponsorIds.length === 0 || !managerContactsReady
-                  : !sponsorId || !managerContactsReady
+                  ? sponsorIds.length === 0
+                  : !sponsorId
               }
               onChange={v => {
                 const next = Array.isArray(v) ? v.map(String) : []

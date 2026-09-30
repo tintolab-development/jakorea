@@ -15,7 +15,9 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
+  isSponsorContactUnselected,
   normalizeSponsorContactUnselectedSelection,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
   withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
@@ -204,16 +206,25 @@ export function OneCOneSRegistrationBasicInfoParagraph({
       value: c.id,
       label: c.name,
     }))
-    if (!contactsQuery.isSuccess && !contactsQuery.isError) return contacts
     return withSponsorContactUnselectedOption(contacts)
-  }, [contactsQuery.data, contactsQuery.isError, contactsQuery.isSuccess, sponsorId])
+  }, [contactsQuery.data, sponsorId])
 
   const selectedManagerContactIds = useMemo(() => {
     if (Array.isArray(managerContactIds) && managerContactIds.length > 0) {
-      return [...new Set(managerContactIds.map(String).map(id => id.trim()).filter(Boolean))]
+      const unique = [
+        ...new Set(managerContactIds.map(String).map(id => id.trim()).filter(Boolean)),
+      ]
+      if (unique.some(id => isSponsorContactUnselected(id))) {
+        return [SPONSOR_CONTACT_UNSELECTED_VALUE]
+      }
+      return unique
+    }
+    if (isSponsorContactUnselected(managerContactId)) {
+      return [SPONSOR_CONTACT_UNSELECTED_VALUE]
     }
     if (managerContactId && managerContactId !== ALL_VALUE) return [managerContactId]
     if (managerContactId === ALL_VALUE && sponsorId === ALL_VALUE) return [ALL_VALUE]
+    if (sponsorId && sponsorId !== ALL_VALUE) return [SPONSOR_CONTACT_UNSELECTED_VALUE]
     return []
   }, [managerContactId, managerContactIds, sponsorId])
 
@@ -222,6 +233,17 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     setManagerContactIds(unique)
     setManagerContactId(unique[0] ?? (sponsorId === ALL_VALUE ? ALL_VALUE : ''))
   }
+
+  useEffect(() => {
+    if (
+      selectedManagerContactIds.length === 1 &&
+      isSponsorContactUnselected(selectedManagerContactIds[0]) &&
+      (!Array.isArray(managerContactIds) || managerContactIds.length === 0) &&
+      !isSponsorContactUnselected(managerContactId)
+    ) {
+      applyManagerContactIds([SPONSOR_CONTACT_UNSELECTED_VALUE])
+    }
+  }, [managerContactId, managerContactIds, selectedManagerContactIds])
 
   const { options: remoteDetailedProgramOptions, isSuccess: detailedProgramOptionsLoaded } =
     useDetailedProgramSelectOptions(true)
@@ -440,10 +462,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   optionFilterProp="label"
                   options={managerOptions}
                   value={selectedManagerContactIds}
-                  disabled={
-                    !sponsorId ||
-                    (sponsorId !== ALL_VALUE && !contactsQuery.isSuccess && !contactsQuery.isError)
-                  }
+                  disabled={!sponsorId}
                   onChange={v => {
                     const next = Array.isArray(v) ? v.map(String) : []
                     applyManagerContactIds(next)

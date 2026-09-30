@@ -1,0 +1,31 @@
+.platform-preview-modal .platform-preview-modal__body {
+  overflow: hidden;
+}
+
+.platform-preview-modal__stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.platform-preview-modal__frame-box {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+}
+
+.platform-preview-modal__frame {
+  display: block;
+  border: 0;
+  transform-origin: top left;
+}
+
+.platform-preview-modal__failed {
+  align-self: center;
+  color: var(--text-secondary, #666);
+  font-size: 16px;
+}

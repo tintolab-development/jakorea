@@ -9,7 +9,10 @@ import type { Program } from '@/types/domain'
 import { normalizeGeneralProgramServiceDetailParsed } from '@/features/program/general/lib/general-program-service-detail-json'
 import { syncSurveyItemsIntoRegistrationOverlay } from '@/features/program/general/lib/general-survey-menu-keys'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
-import { resolveStoredBusinessArea } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  resolvePersistedProgramTargetLevels,
+  resolveStoredBusinessArea,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 
 export const TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION = 1 as const
@@ -159,7 +162,7 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
   return trainedTeacherConstraints({
     ...(businessArea ? { businessArea } : {}),
     posterImage: program.posterImage,
-    targetLevels: program.targetLevels,
+    targetLevels: resolvePersistedProgramTargetLevels(program),
     approvedStudentCount: program.approvedStudentCount,
     participatingSchoolCount: program.participatingSchoolCount,
     participatingStudentCount: program.participatingStudentCount,

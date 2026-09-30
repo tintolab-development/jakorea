@@ -4,6 +4,12 @@ import type { MemberPermissionApplicationStatus } from '@/types/member-permissio
 import { CmsButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
+import {
+  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
+  getInstructorSettlementStatusTextClassName,
+  resolveInstructorSettlementUiStatusFromListLabel,
+} from '@/shared/constants/instructor-settlement-status'
+import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 
 export function schoolTeacherEmploymentBadgeModifier(label: string): 'active' | 'muted' {
   const t = label.trim()
@@ -13,31 +19,36 @@ export function schoolTeacherEmploymentBadgeModifier(label: string): 'active' | 
   return 'muted'
 }
 
-function settlementStatusTextClass(statusLabel?: string) {
-  const normalized = statusLabel?.trim()
-  switch (normalized) {
-    case '확인 대기 중':
-      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--awaiting-confirmation'
-    case '확인 진행중':
-      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--partially-confirmed'
-    case '지급조서 확인 완료':
-      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--payment-statement-verified'
-    case '계좌 지급 완료':
-      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--account-paid'
-    case '해당 없음':
-      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--none'
-    case '신청 반려':
-      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--application-rejected'
-    case '지급 정정 요청':
-      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--payment-correction-requested'
-    default:
-      return 'user-basic-info-section__settlement-status'
-  }
-}
-
 export function settlementStatusView(user: Omit<User, 'password'>) {
-  const s = user.listMetrics?.settlementStatusLabel?.trim()
-  return <span className={settlementStatusTextClass(s)}>{s && s.length > 0 ? s : '-'}</span>
+  const label = user.listMetrics?.settlementStatusLabel?.trim()
+  if (!label || label === '-') {
+    return <span className="user-basic-info-section__settlement-status">-</span>
+  }
+
+  const status = resolveInstructorSettlementUiStatusFromListLabel(label)
+  if (status) {
+    const canonical = INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]
+    if (canonical === label) {
+      return (
+        <span className="user-basic-info-section__settlement-status">
+          <InstructorSettlementStatusText status={status} />
+        </span>
+      )
+    }
+    return (
+      <span
+        className={[
+          'user-basic-info-section__settlement-status',
+          getInstructorSettlementStatusTextClassName(status),
+        ].join(' ')}
+        role="status"
+      >
+        {label}
+      </span>
+    )
+  }
+
+  return <span className="user-basic-info-section__settlement-status">{label}</span>
 }
 
 export function normalizePermissionApprovalStatus(

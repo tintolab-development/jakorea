@@ -38,6 +38,13 @@ export function buildParticipatingInstitutionOrganizationUpdateRequest(params: {
   textbookQuantity?: number
   textbookKits?: number
   textbookGrade?: string
+  /** 저장 전 교육 형태. 같으면 PATCH에서 뺀다. */
+  baselineEducationFormat?: string | null
+  /**
+   * 프로그램 교육형태가 참여자 선택일 때만 true.
+   * false면 값이 달라도 requestedEducationFormat을 넣지 않는다.
+   */
+  allowEducationFormatChange?: boolean
 }): OrganizationApplicationUpdateRequestWithNullTextbook {
   const { draft, teacherOptions, fallbackTeacherMemberId } = params
   const selectedTeacher = teacherOptions.find(option => option.label === draft.teacherName)
@@ -64,6 +71,10 @@ export function buildParticipatingInstitutionOrganizationUpdateRequest(params: {
     : Number.isFinite(textbookIdNum)
       ? textbookIdNum
       : undefined
+  const requestedEducationFormat = toRequestedEducationFormatApiValue(draft.educationFormat)
+  const baselineEducationFormat = toRequestedEducationFormatApiValue(
+    params.baselineEducationFormat
+  )
   const body: Record<string, unknown> = {
     requestedGrade: gradeTrimmed
       ? formatInstitutionApplicationGradeDisplay(gradeTrimmed)
@@ -71,7 +82,11 @@ export function buildParticipatingInstitutionOrganizationUpdateRequest(params: {
     organizationAddressDetail: draft.addressDetail.trim() || undefined,
     requestedClassCount: Number.isFinite(classCount) ? classCount : undefined,
     requestedStudentCount: Number.isFinite(studentCount) ? studentCount : undefined,
-    requestedEducationFormat: toRequestedEducationFormatApiValue(draft.educationFormat),
+    ...(params.allowEducationFormatChange !== false &&
+    requestedEducationFormat &&
+    requestedEducationFormat !== baselineEducationFormat
+      ? { requestedEducationFormat }
+      : {}),
     teacherMemberId,
     teacherPhone:
       draft.teacherMobile.trim() || draft.teacherPhone.trim() || undefined,

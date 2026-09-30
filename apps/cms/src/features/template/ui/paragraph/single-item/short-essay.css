@@ -63,6 +63,16 @@
   box-shadow: none;
 }
 
+/* 입력창 안내 텍스트 — 선택·포커스·값 표시여도 동일 톤 */
+.short-essay-items .paragraph-label-input .cms-textarea__inner textarea.ant-input::placeholder,
+.short-essay-items .paragraph-label-input .cms-input input::placeholder,
+.short-essay-item--guide-text .cms-textarea__inner textarea.ant-input,
+.short-essay-item--guide-text .cms-input input {
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 1 !important;
+}
+
 .short-essay-item-delete {
   align-self: flex-start;
   margin-top: 40px;

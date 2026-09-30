@@ -4,7 +4,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { useCmsAlert } from '@/shared/ui'
@@ -35,6 +36,7 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { seedGeneralRegistrationOverlayFromProgram } from '@/features/program/general/lib/registration-overlay-sync'
+import { logGeneralProgramCommonInfoEditCurrentPayload } from '@/features/program/general/lib/common-info-edit-payload-log'
 import {
   defaultParticipantApplicationTab,
   isParticipantTabValid,
@@ -65,16 +67,14 @@ import {
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
 import {
-  getGeneralCommonInfoEditValidationMessage,
-  PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE,
-} from '@/features/program/general/model/common-info-edit-schema'
-import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
+import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/program-edit-window'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import {
+  canGeneralProgramApplicationFormEdit,
   canGeneralProgramCommonInfoEdit,
   canGeneralProgramRecruitmentInfoEdit,
   getGeneralProgramCommonInfoEditBlockedAlertMessage,
@@ -461,6 +461,7 @@ export function GeneralProgramDetailFullPageModal({
   searchParams: searchParamsProp,
   setSearchParams: setSearchParamsProp,
 }: GeneralProgramDetailFullPageModalProps) {
+  const navigate = useNavigate()
   const [routerSearchParams, internalSetSearchParams] = useSearchParams()
   const searchParams = searchParamsProp ?? routerSearchParams
   const setSearchParams = setSearchParamsProp ?? internalSetSearchParams
@@ -742,6 +743,7 @@ export function GeneralProgramDetailFullPageModal({
       return
     }
     seedGeneralRegistrationOverlayFromProgram(displayProgram)
+    logGeneralProgramCommonInfoEditCurrentPayload(displayProgram, 'enter')
     infoResetToProgram()
     setEditMode('info')
   }, [activeLnb, activeTab, displayProgram, infoResetToProgram, setEditMode, showAlert])
@@ -774,21 +776,14 @@ export function GeneralProgramDetailFullPageModal({
   }, [open, editTab, displayProgram, activeLnb, activeTab, setEditMode])
 
   const handleInfoSave = useCallback(async () => {
+    if (displayProgram) logGeneralProgramCommonInfoEditCurrentPayload(displayProgram, 'save')
     const result = await infoTriggerSave()
     if (!result.ok) {
       if (result.kind === 'validation') {
-        const message = getGeneralCommonInfoEditValidationMessage(infoForm.getValues())
-        if (message === PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE) {
-          void showAlert({
-            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-          })
-        } else {
-          void showAlert({
-            title: '입력 확인',
-            content: message ?? '입력값을 확인해 주세요.',
-          })
-        }
+        void showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
       } else if (!isGlobalApiErrorAlertShown(result.error)) {
         void showAlert({
           title: '저장 실패',
@@ -801,7 +796,7 @@ export function GeneralProgramDetailFullPageModal({
       return
     }
     setEditMode(null)
-  }, [infoForm, infoTriggerSave, setEditMode, showAlert])
+  }, [displayProgram, infoTriggerSave, setEditMode, showAlert])
 
   const handleInfoCancel = useCallback(() => {
     if (displayProgram) seedGeneralRegistrationOverlayFromProgram(displayProgram)
@@ -878,8 +873,30 @@ export function GeneralProgramDetailFullPageModal({
   )
 
   const handleApplicationEditForm = useCallback(() => {
+    if (
+      displayProgram &&
+      !canGeneralProgramApplicationFormEdit(
+        displayProgram,
+        recruitmentEditTypeForDetailTab(applicationSubTab)
+      )
+    ) {
+      return
+    }
     setApplicationTemplateEditOpen(true)
-  }, [])
+  }, [applicationSubTab, displayProgram])
+
+  useEffect(() => {
+    if (!applicationTemplateEditOpen || !displayProgram) return
+    if (
+      canGeneralProgramApplicationFormEdit(
+        displayProgram,
+        recruitmentEditTypeForDetailTab(applicationSubTab)
+      )
+    ) {
+      return
+    }
+    setApplicationTemplateEditOpen(false)
+  }, [applicationSubTab, applicationTemplateEditOpen, displayProgram])
 
   const handleApplicationTemplateEditClose = useCallback(() => {
     setApplicationTemplateEditOpen(false)
@@ -917,6 +934,7 @@ export function GeneralProgramDetailFullPageModal({
     mapToValues: mapParticipantRecruitmentEditValues,
     onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
     validateSchema: programParticipantRecruitmentSaveSchema,
+    recruitmentAudience: 'participant',
   })
 
   const isEditModeInstructors =
@@ -944,6 +962,7 @@ export function GeneralProgramDetailFullPageModal({
     mapToValues: mapInstructorRecruitmentEditValues,
     onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
     validateSchema: programInstructorRecruitmentSaveSchema,
+    recruitmentAudience: 'instructor',
   })
 
   const isEditModeVolunteers =
@@ -971,6 +990,7 @@ export function GeneralProgramDetailFullPageModal({
     mapToValues: mapVolunteerRecruitmentEditValues,
     onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
     validateSchema: programVolunteerRecruitmentSaveSchema,
+    recruitmentAudience: 'volunteer',
   })
 
   const handleRecruitmentEdit = useCallback(() => {
@@ -1118,6 +1138,10 @@ export function GeneralProgramDetailFullPageModal({
   const handleRequestClose = useCallback(() => {
     isClosingRef.current = true
     setOptimisticDetailRoute(null)
+    if (tryNavigateMemberDetailReturn(navigate)) {
+      onClose()
+      return
+    }
     // 부모 onClose와 별도로 상세 쿼리를 즉시 제거 — applySearch 등 클로저 레이스로
     // programId가 남는 경우에도 모달이 닫히도록 한다.
     setSearchParams(
@@ -1128,7 +1152,7 @@ export function GeneralProgramDetailFullPageModal({
       { replace: true }
     )
     onClose()
-  }, [onClose, setSearchParams])
+  }, [navigate, onClose, setSearchParams])
 
   const recruitmentPreviewAudienceFromUrl = useMemo(
     () => readOpenRecruitmentPreviewAudience(routerSearchParams),

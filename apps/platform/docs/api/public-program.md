@@ -26,8 +26,9 @@
 
 | Platform | query |
 |----------|-------|
-| 홈 카드 | `featuredOnHome=true` `size=8` `page=0`. `sort` 생략 → `homeDisplayOrder` 오름차순 |
+| 홈 카드 | `featuredOnHome=true` `size=8` `page=0`. `sort` 생략 → `homeDisplayOrder` 오름차순. 목록 행에 `featuredOnHome`·`homeDisplayOrder` 포함 |
 | 탭 청소년·기관·강사 | `portalTab=YOUTH_YOUNG\|ORGANIZATION\|INSTRUCTOR` |
+| Gemini 찾아가는 연수 | Portal `programType` SSOT = **`GEMINI_TRAINING`** (`GEMINI` alias 없음). 기관 모집만이면 `portalCategories=["ORGANIZATION"]` — 강사 탭 미노출이 정상 |
 | 검색 | `keyword` |
 | 모집 예정/중/완료 | `recruitmentStatus=UPCOMING\|OPEN\|CLOSED` |
 | 모집대상·교육대상 | `recruitmentTarget` / `educationTarget` (`elementary`…`adult`) |
@@ -64,4 +65,6 @@
 BE 핸드오프: `docs/frontend/portal-platform-programs-home-list-frontend-handoff-2026-09-20.md` (JABACK).  
 BE 요청 원문: [portal-platform-programs-backend-cursor-prompt-2026-09-20.md](../../../cms/docs/api/portal-platform-programs-backend-cursor-prompt-2026-09-20.md)
 
-**Last updated:** 2026-09-20
+**Last updated:** 2026-09-30
+
+Gemini Portal 노출 handoff: [gemini-portal-platform-visibility-backend-prompt-2026-09-30.md](./gemini-portal-platform-visibility-backend-prompt-2026-09-30.md) · BE FE handoff `JABACK/docs/frontend/gemini-portal-platform-visibility-frontend-handoff-2026-09-30.md`

@@ -3,25 +3,52 @@
  * 레이아웃: 정산 관리 > 계좌 지급 확인 — 탭(행 패딩 없음) + FilterTableLayout
  */
 
-import { useCallback } from 'react'
+import { lazy, Suspense, useCallback } from 'react'
+import { Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { GeminiRecruitmentList } from '@/features/program/gemini/ui/recruitment/list'
 import { GeminiApprovedTrainingList } from '@/features/program/gemini/ui/approved/list'
-import {
-  GeminiApprovedTrainingDetailFullPageModal,
-  useGeminiApprovedTrainingDetailUrl,
-} from '@/features/program/gemini/ui/approved/detail-fullpage-modal'
-import {
-  GeminiRecruitmentDetailFullPageModal,
-  useGeminiRecruitmentDetailUrl,
-} from '@/features/program/gemini/ui/detail/fullpage-modal'
-import {
-  GeminiRecruitmentAddFullpageModal,
-  useGeminiRecruitmentAddUrl,
-} from '@/features/program/gemini/ui/recruitment/add-fullpage-modal'
+import { useGeminiApprovedTrainingDetailUrl } from '@/features/program/gemini/ui/approved/approved-training-detail-url'
+import { useGeminiRecruitmentDetailUrl } from '@/features/program/gemini/ui/detail/recruitment-detail-url'
+import { useGeminiRecruitmentAddUrl } from '@/features/program/gemini/ui/recruitment/recruitment-add-url'
 import type { GeminiVisitingTrainingTabKey } from '@/features/program/gemini/model/recruitment/types'
 import '@/features/program/gemini/ui/page.css'
+
+const LazyGeminiApprovedTrainingDetailFullPageModal = lazy(() =>
+  import('@/features/program/gemini/ui/approved/detail-fullpage-modal').then(module => ({
+    default: module.GeminiApprovedTrainingDetailFullPageModal,
+  }))
+)
+const LazyGeminiRecruitmentDetailFullPageModal = lazy(() =>
+  import('@/features/program/gemini/ui/detail/fullpage-modal').then(module => ({
+    default: module.GeminiRecruitmentDetailFullPageModal,
+  }))
+)
+const LazyGeminiRecruitmentAddFullpageModal = lazy(() =>
+  import('@/features/program/gemini/ui/recruitment/add-fullpage-modal').then(module => ({
+    default: module.GeminiRecruitmentAddFullpageModal,
+  }))
+)
+
+function GeminiModalFallback() {
+  return (
+    <div
+      className="router-loading-fallback"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 2000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(255, 255, 255, 0.65)',
+      }}
+    >
+      <Spin size="large" />
+    </div>
+  )
+}
 
 const TAB_PARAM = 'tab'
 
@@ -73,15 +100,26 @@ export function GeminiVisitingTrainingPage() {
       ) : (
         <GeminiApprovedTrainingList />
       )}
-      {isAddOpen ? <GeminiRecruitmentAddFullpageModal open onClose={closeAdd} /> : null}
+      {isAddOpen ? (
+        <Suspense fallback={<GeminiModalFallback />}>
+          <LazyGeminiRecruitmentAddFullpageModal open onClose={closeAdd} />
+        </Suspense>
+      ) : null}
       {recruitmentId && !isAddOpen ? (
-        <GeminiRecruitmentDetailFullPageModal recruitmentId={recruitmentId} onClose={closeDetail} />
+        <Suspense fallback={<GeminiModalFallback />}>
+          <LazyGeminiRecruitmentDetailFullPageModal
+            recruitmentId={recruitmentId}
+            onClose={closeDetail}
+          />
+        </Suspense>
       ) : null}
       {approvedTrainingId && !isAddOpen ? (
-        <GeminiApprovedTrainingDetailFullPageModal
-          approvedTrainingId={approvedTrainingId}
-          onClose={closeApprovedDetail}
-        />
+        <Suspense fallback={<GeminiModalFallback />}>
+          <LazyGeminiApprovedTrainingDetailFullPageModal
+            approvedTrainingId={approvedTrainingId}
+            onClose={closeApprovedDetail}
+          />
+        </Suspense>
       ) : null}
     </div>
   )

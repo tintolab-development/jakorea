@@ -13,6 +13,7 @@ export type {
   EducationApplicationTab,
   EducationApplicationListItem,
   EducationDisplayStatus,
+  EducationDisplayStatusAudience,
   EducationDisplayStatusTone,
   EducationWithdrawalPhase,
   EducationActivitySection,

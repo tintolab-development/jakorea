@@ -178,6 +178,10 @@ function testScheduleSingleDateUsesRegisteredLines() {
     schedule.items.map(item => item.label),
     detail.educationScheduleLines
   )
+  assert.deepEqual(
+    schedule.items.map(item => item.id),
+    detail.educationScheduleLines.map((_, index) => `line:${index}`)
+  )
 }
 
 function testScheduleMultiHidesScheduleChoice() {

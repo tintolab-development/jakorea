@@ -20,7 +20,7 @@ import { parsePortalProgramId } from './mappers'
 const FORM_STALE_MS = 0
 const FORM_GC_MS = 15 * 60_000
 
-/** 모집 기간 밖이면 form-bindings 가 409 — 양식 GET 을 건너뛴다. */
+/** 모집 기간 밖 form-bindings 409 — retry 하지 않고 unavailable 로 본다. */
 function isRecruitmentWindowBlocked(reason: string | null | undefined): boolean {
   const code = (reason ?? '').trim().toUpperCase()
   return code === 'RECRUITMENT_NOT_STARTED' || code === 'RECRUITMENT_CLOSED'
@@ -60,7 +60,7 @@ export type ProgramApplicationFormQuery = {
  * Class D. remote + 숫자 programId + access token 일 때만 호출.
  *
  * BE: 모집 전이면 options 에 formBindingId 는 있고 canApply=false + RECRUITMENT_NOT_STARTED.
- * 그 상태에서 form-bindings 는 409 이므로 GET 하지 않는다.
+ * 양식 GET 은 그대로 시도한다. 409 면 unavailable, 200 이면 CMS 등록본을 미리보기한다.
  */
 export function useProgramApplicationForm(
   programId: string | null | undefined,
@@ -87,15 +87,15 @@ export function useProgramApplicationForm(
   const bindingId = option?.formBindingId ?? null
   const recruitmentId = option?.recruitmentId ?? null
   const applicationType = option?.applicationType?.trim() || null
-  /** 모집 창 밖이면 form-bindings 409 — GET 생략. 회원 자격 부족은 양식 미리보기 가능. */
-  const recruitmentBlocked = isRecruitmentWindowBlocked(option?.blockedReason)
-
+  /**
+   * 모집 창 밖이어도 바인딩이 있으면 양식 GET 을 시도한다.
+   * 미리보기(CMS 등록본)가 시드 폴백으로 바뀌지 않게 한다. 409 는 retry 하지 않는다.
+   */
   const formEnabled =
     enabled &&
     bindingId != null &&
     recruitmentId != null &&
-    applicationType != null &&
-    !recruitmentBlocked
+    applicationType != null
 
   const formQuery = useQuery({
     queryKey: platformQueryKeys.program.applicationForm({
@@ -171,16 +171,6 @@ export function useProgramApplicationForm(
       isRemoteEnabled: true,
       bundle: null,
       blockedReason: option?.blockedReason ?? 'APPLICATION_FORM_NOT_CONFIGURED',
-      refetch,
-    }
-  }
-
-  if (recruitmentBlocked) {
-    return {
-      status: 'unavailable',
-      isRemoteEnabled: true,
-      bundle: null,
-      blockedReason: option.blockedReason ?? 'RECRUITMENT_NOT_STARTED',
       refetch,
     }
   }

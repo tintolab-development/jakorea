@@ -11,6 +11,7 @@ import {
   buildSearchParams,
   makeBreadcrumbItem,
 } from '@/shared/lib/detail-fullpage-query-stack'
+import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
@@ -97,7 +98,10 @@ import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import { UjatProgramDetailCommonInfoView } from './info/ujat-program-detail-common-info-view'
-import { canUjatProgramInfoEdit } from './info/ujat-program-info-edit'
+import {
+  canUjatProgramInfoEdit,
+  canUjatRecruitmentInfoEdit,
+} from './info/ujat-program-info-edit'
 import {
   defaultEducationProgressTabForHalf,
   educationProgressScreenTitle,
@@ -110,6 +114,12 @@ import {
   UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL,
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
+import { hasIncompleteUjatProgramRegistrationRequiredFields } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
+import { PROGRAM_RECRUITMENT_INFO_OPERATION_STARTED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -120,6 +130,7 @@ import {
 } from './info/ujat-program-detail-recruitment-tabs'
 import { UjatProgramRecruitmentPanels } from './info/ujat-program-recruitment-panels'
 import { UjatProgramRecruitmentTabsRow } from './info/ujat-program-recruitment-tabs-row'
+import { ParticipantRecruitmentPreviewModal } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
 import { DocScreeningSection } from './application-volunteer/screening/doc-screening/section'
 import { DocPassedSection } from './application-volunteer/screening/doc-passed/section'
 import { Interview2Section } from './application-volunteer/screening/interview2/section'
@@ -1176,6 +1187,7 @@ export function UjatProgramDetailFullPageModal({
               }
             }
           : undefined,
+      commonInfoPatchOnly: true,
     })
 
   const setEditMode = useCallback(
@@ -1192,12 +1204,16 @@ export function UjatProgramDetailFullPageModal({
   const handleInfoEdit = useCallback(() => {
     if (activeTab !== 'info' || !displayProgram) return
     if (!canUjatProgramInfoEdit(displayProgram)) {
+      void showAlert({
+        title: '안내',
+        content: '사업 종료일 이후에는 공통 정보를 수정할 수 없습니다.',
+      })
       return
     }
     seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
     infoResetToProgram()
     setEditMode('info')
-  }, [activeTab, displayProgram, infoResetToProgram, setEditMode])
+  }, [activeTab, displayProgram, infoResetToProgram, setEditMode, showAlert])
 
   const handleInfoSave = useCallback(async () => {
     if (!displayProgram) return
@@ -1221,10 +1237,17 @@ export function UjatProgramDetailFullPageModal({
       ...applyUjatRegistrationOverlayToProgram(displayProgram, overlay),
       ujatRegistrationOverlay: overlay,
     }
+    if (hasIncompleteUjatProgramRegistrationRequiredFields(overlay)) {
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
     infoForm.reset(programToDetailEditValues(mergedProgram))
     const ok = await infoTriggerSave()
     if (ok) setEditMode(null)
-  }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
+  }, [displayProgram, infoForm, infoTriggerSave, setEditMode, showAlert])
 
   const handleInfoCancel = useCallback(() => {
     if (displayProgram) seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
@@ -1261,6 +1284,7 @@ export function UjatProgramDetailFullPageModal({
     form: institutionsForm,
     program: displayProgram ?? ({} as Program),
     mapToValues: mapInstitutionRecruitmentEditValues,
+    recruitmentAudience: 'participant',
     onSaveEdit:
       displayProgram && updateProgram
         ? async (draft, patch) => {
@@ -1318,6 +1342,7 @@ export function UjatProgramDetailFullPageModal({
     form: volunteersForm,
     program: displayProgram ?? ({} as Program),
     mapToValues: mapVolunteerRecruitmentEditValues,
+    recruitmentAudience: 'volunteer',
     onSaveEdit:
       displayProgram && updateProgram
         ? async (draft, patch) => {
@@ -1391,6 +1416,12 @@ export function UjatProgramDetailFullPageModal({
     [programId, searchParams, setSearchParams]
   )
 
+  const [recruitmentPreviewTab, setRecruitmentPreviewTab] = useState<UjatRecruitTabKey | null>(null)
+
+  useEffect(() => {
+    if (!open) setRecruitmentPreviewTab(null)
+  }, [open])
+
   useEffect(() => {
     if (!open || !displayProgram || !editTab) return
     if (editTab === 'info' && !canUjatProgramInfoEdit(displayProgram)) {
@@ -1407,7 +1438,10 @@ export function UjatProgramDetailFullPageModal({
     ] as const
     if (
       (recruitEditKeys as readonly string[]).includes(editTab) &&
-      !canUjatProgramInfoEdit(displayProgram)
+      !canUjatRecruitmentInfoEdit(
+        displayProgram,
+        editTab as 'recruit_participant' | 'recruit_volunteer_h1' | 'recruit_volunteer_h2'
+      )
     ) {
       const next = new URLSearchParams(searchParams)
       next.delete(EDIT_PARAM)
@@ -1418,7 +1452,11 @@ export function UjatProgramDetailFullPageModal({
 
   const handleRecruitmentEdit = useCallback(() => {
     if (!activeRecruitTab || !displayProgram) return
-    if (!canUjatProgramInfoEdit(displayProgram)) {
+    if (!canUjatRecruitmentInfoEdit(displayProgram, activeRecruitTab)) {
+      void showAlert({
+        title: '안내',
+        content: PROGRAM_RECRUITMENT_INFO_OPERATION_STARTED_MESSAGE,
+      })
       return
     }
     if (activeRecruitTab === 'recruit_participant') {
@@ -1433,6 +1471,7 @@ export function UjatProgramDetailFullPageModal({
     institutionsResetToProgram,
     volunteersResetToProgram,
     setEditMode,
+    showAlert,
   ])
 
   const handleRecruitmentSave = useCallback(async () => {
@@ -1464,6 +1503,7 @@ export function UjatProgramDetailFullPageModal({
 
   const handleClose = useCallback(() => {
     onClose()
+    if (tryNavigateMemberDetailReturn(navigate)) return
     const next = clearSponsorDetailQueryStack(new URLSearchParams(searchParams))
     next.delete('programId')
     next.delete(LNB_PARAM)
@@ -2475,6 +2515,7 @@ export function UjatProgramDetailFullPageModal({
                 onSave={() => {
                   void handleRecruitmentSave()
                 }}
+                onOpenPreview={setRecruitmentPreviewTab}
               />
               <UjatProgramRecruitmentPanels
                 key={activeRecruitTab}
@@ -3038,6 +3079,16 @@ export function UjatProgramDetailFullPageModal({
       />
     ) : null}
     <ProgramDetailSponsorDetailOverlay />
+    {displayProgram && recruitmentPreviewTab ? (
+      <ParticipantRecruitmentPreviewModal
+        open
+        onClose={() => setRecruitmentPreviewTab(null)}
+        program={displayProgram}
+        sponsorName={sponsorName}
+        audience={recruitmentPreviewTab === 'recruit_participant' ? 'institutions' : 'volunteers'}
+        programKind="ujat"
+      />
+    ) : null}
     </>
   )
 }

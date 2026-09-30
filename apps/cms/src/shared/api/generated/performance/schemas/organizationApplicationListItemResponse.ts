@@ -6,46 +6,50 @@
  * OpenAPI spec version: v9
  */
 import type { OrganizationApplicationListItemResponseRecruitHalf } from './organizationApplicationListItemResponseRecruitHalf';
-import type { OrganizationApplicationSession } from './organizationApplicationSession';
+import type { Session } from './session';
 
-/**
- * 기관 신청 목록 항목. GENERAL 유형은 확정 일정·학급·합반 정보를 함께 제공합니다.
- */
 export interface OrganizationApplicationListItemResponse {
   id?: number;
   programId?: number;
   programName?: string;
   programType?: string;
-  recruitmentId?: number | null;
-  organizationId?: number | null;
-  organizationName?: string | null;
-  teacherMemberId?: number | null;
-  teacherName?: string | null;
-  applicationStatus?: string;
-  requestedStudentCount?: number | null;
-  requestedClassCount?: number | null;
-  educationGrade?: string | null;
-  region?: string | null;
-  mergeGroupId?: number | null;
-  combinedClassPartnerGrades?: string[];
-  submittedAt?: string | null;
-  approvedAt?: string | null;
-  rejectedAt?: string | null;
-  rejectReason?: string | null;
-  availableActions: string[];
-  defaultScheduleId?: number | null;
-  defaultScheduleName?: string | null;
-  ujatPartnerAssignmentsPath?: string | null;
-  ujatPartnerRecommendationPath?: string | null;
-  grade?: string | null;
-  regionSido?: string | null;
-  regionSigungu?: string | null;
-  /** 확정된 일정·학급 배정. 미배정이면 [] */
-  sessions: OrganizationApplicationSession[];
-  mergeStatus?: string | null;
-  mergeLead?: boolean | null;
-  /** 학교 모집은 연 1회라 보통 null */
+  recruitmentId?: number;
+  /**
+     * 상·하반기. 학교 모집은 연 1회라 null. 봉사 모집과 동일 규칙이 적용되는 경우만 FIRST_HALF|SECOND_HALF
+     * @nullable
+     */
   recruitHalf?: OrganizationApplicationListItemResponseRecruitHalf;
-  /** UJAT 임시배정 워크플로. TEMP_ASSIGNED|TEMP_REJECTED 등 */
+  organizationId?: number;
+  organizationName?: string;
+  teacherMemberId?: number;
+  teacherName?: string;
+  applicationStatus?: string;
+  /**
+     * UJAT 임시배정 워크플로 상태. TEMP_ASSIGNED|TEMP_REJECTED 등. 미사용 프로그램은 null
+     * @nullable
+     */
   temporaryAssignmentStatus?: string | null;
+  requestedStudentCount?: number;
+  requestedClassCount?: number;
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  /**
+     * 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt은 바뀌지 않습니다.
+     * @nullable
+     */
+  resultNotificationSentAt?: string | null;
+  rejectReason?: string;
+  availableActions?: string[];
+  defaultScheduleId?: number;
+  defaultScheduleName?: string;
+  ujatPartnerAssignmentsPath?: string;
+  ujatPartnerRecommendationPath?: string;
+  grade?: string;
+  regionSido?: string;
+  regionSigungu?: string;
+  sessions?: Session[];
+  mergeGroupId?: number;
+  mergeStatus?: string;
+  mergeLead?: boolean;
 }

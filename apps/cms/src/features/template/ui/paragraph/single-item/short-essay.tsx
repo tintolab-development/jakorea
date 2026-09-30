@@ -29,6 +29,7 @@ function ShortEssayItemBody({
   isPhone,
   onSelectItem,
   onCommitBody,
+  guideTextTone = false,
 }: {
   itemId: string
   bodyText: string
@@ -45,6 +46,8 @@ function ShortEssayItemBody({
   isPhone: boolean
   onSelectItem: () => void
   onCommitBody: (itemId: string, bodyText: string) => void
+  /** 입력창 안내 텍스트를 값으로 보여줄 때 placeholder 톤 유지 */
+  guideTextTone?: boolean
 }) {
   const {
     value: editValue,
@@ -151,6 +154,7 @@ function ShortEssayItemBody({
         [
           isActive ? 'short-essay-item--active' : '',
           !isBodyInteractive ? 'short-essay-item--non-interactive' : '',
+          guideTextTone ? 'short-essay-item--guide-text' : '',
         ]
           .filter(Boolean)
           .join(' ') || undefined
@@ -227,6 +231,7 @@ export function ShortEssay({
   onChange,
   isCardSelected,
   isBodyInteractive,
+  authoringEditsPlaceholder = false,
   paragraphInteractionMode = 'authoring',
   activeItemId,
   onSelectItem,
@@ -236,6 +241,8 @@ export function ShortEssay({
   onChange: (next: ShortEssayParagraph) => void
   isCardSelected: boolean
   isBodyInteractive: boolean
+  /** 구조 잠금 시드 — 응답 값이 아니라 안내 텍스트(placeholder)를 수정 */
+  authoringEditsPlaceholder?: boolean
   paragraphInteractionMode?: ParagraphBodyInteractionMode
   activeItemId?: string | null
   onSelectItem?: (itemId: string | null) => void
@@ -247,6 +254,10 @@ export function ShortEssay({
 
   const prevCardSelected = useRef(isCardSelected)
   useEffect(() => {
+    if (authoringEditsPlaceholder) {
+      prevCardSelected.current = isCardSelected
+      return
+    }
     if (
       paragraphInteractionMode === 'authoring' &&
       prevCardSelected.current &&
@@ -274,7 +285,7 @@ export function ShortEssay({
       })
     }
     prevCardSelected.current = isCardSelected
-  }, [isCardSelected, onChange, paragraphInteractionMode])
+  }, [authoringEditsPlaceholder, isCardSelected, onChange, paragraphInteractionMode])
 
   const ph = paragraph.bodyPlaceholder.trim() || '답변을 입력해 주세요'
   const items =
@@ -310,6 +321,18 @@ export function ShortEssay({
               bodyText: p.bodyText,
             },
           ]
+    if (authoringEditsPlaceholder) {
+      const nextItems = currentItems.map(item =>
+        item.id === id ? { ...item, placeholder: bodyText } : item
+      )
+      onChange({
+        ...p,
+        items: p.items && p.items.length > 0 ? nextItems : undefined,
+        bodyPlaceholder: nextItems[0]?.placeholder ?? bodyText,
+        showItemTitle: nextItems.length >= 2 ? true : (p.showItemTitle ?? false),
+      })
+      return
+    }
     const nextItems = currentItems.map(item => (item.id === id ? { ...item, bodyText } : item))
     const nextShowItemTitle = nextItems.length >= 2 ? true : (p.showItemTitle ?? false)
     onChange({
@@ -380,8 +403,8 @@ export function ShortEssay({
           >
             <ShortEssayItemBody
               itemId={item.id}
-              bodyText={item.bodyText}
-              placeholder={item.placeholder ?? ph}
+              bodyText={authoringEditsPlaceholder ? (item.placeholder ?? ph) : item.bodyText}
+              placeholder={authoringEditsPlaceholder ? '텍스트를 작성해 주세요' : (item.placeholder ?? ph)}
               itemLabel={itemLabel}
               itemInputRows={itemInputRows}
               singleLineExpandable={singleLineExpandable}
@@ -394,6 +417,7 @@ export function ShortEssay({
               isPhone={item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone}
               onSelectItem={() => handleItemClick(item.id)}
               onCommitBody={updateItemBodyText}
+              guideTextTone={authoringEditsPlaceholder}
             />
             {isBodyInteractive &&
             isCardSelected &&

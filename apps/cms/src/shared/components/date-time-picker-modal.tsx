@@ -18,7 +18,7 @@ import {
 } from '@/shared/components/date-time-picker-shared'
 import {
   DateTimePickerTimeInlineSelects,
-  buildTime,
+  buildTimeFrom24Hour,
   parseNum,
 } from '@/shared/components/date-time-picker-time-selects'
 import { CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX } from '@/shared/constants/modal-z-index'
@@ -39,6 +39,7 @@ export {
   DateTimePickerTimeInlineSelects,
   ParagraphTimeInlineSelects,
   buildTime,
+  buildTimeFrom24Hour,
   from24h,
   parseNum,
 } from '@/shared/components/date-time-picker-time-selects'
@@ -104,7 +105,6 @@ export function DateTimePickerPopover({
   const [calendarMonth, setCalendarMonth] = useState(() => initialDate.startOf('month'))
   const [singleHour, setSingleHour] = useState(initialTimeParts.h)
   const [singleMinute, setSingleMinute] = useState(initialTimeParts.m)
-  const [singleMer, setSingleMer] = useState<'AM' | 'PM'>(initialTimeParts.mer)
 
   const { popoverRef, popoverStyle } = useDateTimePickerPopoverLayer({
     open,
@@ -130,13 +130,12 @@ export function DateTimePickerPopover({
     setCalendarMonth(next.startOf('month'))
     setSingleHour(timeParts.h)
     setSingleMinute(timeParts.m)
-    setSingleMer(timeParts.mer)
   }, [open, value, disabledDate, minuteStep])
 
   const buildDraftDateTime = useCallback(
-    (date: Dayjs, hour = singleHour, minute = singleMinute, mer = singleMer) =>
-      buildTime(date, parseNum(hour, 12), parseNum(minute, 0), mer),
-    [singleHour, singleMinute, singleMer]
+    (date: Dayjs, hour = singleHour, minute = singleMinute) =>
+      buildTimeFrom24Hour(date, parseNum(hour, 0), parseNum(minute, 0)),
+    [singleHour, singleMinute]
   )
 
   const lastEmittedAtRef = useRef<number | null>(null)
@@ -152,7 +151,7 @@ export function DateTimePickerPopover({
     if (lastEmittedAtRef.current === ts) return
     lastEmittedAtRef.current = ts
     onChange(next)
-  }, [open, onChange, draft, singleHour, singleMinute, singleMer, buildDraftDateTime, minuteStep])
+  }, [open, onChange, draft, singleHour, singleMinute, buildDraftDateTime, minuteStep])
 
   const handleCalendarSelect = (next: Dayjs) => {
     if (disabledDate?.(next)) return
@@ -211,10 +210,8 @@ export function DateTimePickerPopover({
               <DateTimePickerTimeInlineSelects
                 hour={singleHour}
                 minute={singleMinute}
-                meridiem={singleMer}
                 onHourChange={setSingleHour}
                 onMinuteChange={setSingleMinute}
-                onMeridiemChange={setSingleMer}
                 getPopupContainer={() => popoverRef.current ?? document.body}
                 disabled={disabled}
                 hourActive

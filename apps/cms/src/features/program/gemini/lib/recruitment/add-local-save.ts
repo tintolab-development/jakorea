@@ -4,7 +4,11 @@
  */
 
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
-import type { GeminiRecruitmentEducationForm } from './add-form-options'
+import {
+  GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE,
+  type GeminiRecruitmentEducationForm,
+  type GeminiRecruitmentEducationStructure,
+} from './add-form-options'
 
 const STORAGE_KEY = 'cms.jakorea.geminiRecruitmentAddDraft.v1'
 
@@ -32,6 +36,11 @@ export type GeminiRecruitmentAddFormSnapshot = {
   trainingRequestPeriodEnd: string | null
   minStudentCount: number | null
   educationForm: GeminiRecruitmentEducationForm
+  /**
+   * BE ProgramCreateRequest.educationStructure (top-level 필수).
+   * UI 셀렉트 없음 → SCHEDULE 고정. CURRICULUM은 detailedProgramId 동반 필요.
+   */
+  educationStructure: GeminiRecruitmentEducationStructure
   inquiryContactName: string
   inquiryTel: string
   inquiryEmail: string
@@ -46,6 +55,14 @@ export type GeminiRecruitmentAddFormSnapshot = {
   attachmentFileNames: string[]
   institutionSectionDescription: string
   detailSectionDescription: string
+}
+
+function normalizeEducationStructure(
+  value: string | null | undefined
+): GeminiRecruitmentEducationStructure {
+  const normalized = value?.trim().toUpperCase()
+  if (normalized === 'CURRICULUM') return 'CURRICULUM'
+  return GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE
 }
 
 export type GeminiRecruitmentAddDraftSaveRecord = {
@@ -72,6 +89,7 @@ export function createDefaultGeminiRecruitmentAddFormSnapshot(): GeminiRecruitme
     trainingRequestPeriodEnd: null,
     minStudentCount: 15,
     educationForm: 'online',
+    educationStructure: GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE,
     inquiryContactName: '',
     inquiryTel: '',
     inquiryEmail: '',
@@ -119,6 +137,7 @@ export function normalizeGeminiRecruitmentAddFormSnapshot(
         : defaults.minStudentCount,
     educationForm:
       legacy.educationForm === 'offline' ? 'offline' : defaults.educationForm,
+    educationStructure: normalizeEducationStructure(legacy.educationStructure),
     inquiryContactName: legacy.inquiryContactName ?? defaults.inquiryContactName,
     inquiryTel: legacy.inquiryTel ?? defaults.inquiryTel,
     inquiryEmail: legacy.inquiryEmail ?? defaults.inquiryEmail,

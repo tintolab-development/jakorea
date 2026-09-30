@@ -141,6 +141,23 @@ export function getManagedProgramMetricsParts(
   return { inProgress: inProgressLabel, total: totalLabel }
 }
 
+/** 관리자 회원 **목록** — 담당 프로그램 수 `N개` (진행 중/전체 분리 없음) */
+export function formatAdminManagedProgramCountForList(
+  user: Pick<User, 'listMetrics' | 'programRoles'>
+): string {
+  const lm = user.listMetrics
+  const explicitTotal = lm?.managedProgramCount
+  const roleKeyCount = user.programRoles ? Object.keys(user.programRoles).length : 0
+  const total =
+    explicitTotal != null && !Number.isNaN(explicitTotal)
+      ? explicitTotal
+      : roleKeyCount > 0
+        ? roleKeyCount
+        : null
+  if (total === null) return '-'
+  return `${total}개`
+}
+
 /** 회원 상세·목록 — `진행 중` / `전체` 사이는 `DetailInfoForm.Separator` */
 export function ManagedProgramCountDisplay({
   user,

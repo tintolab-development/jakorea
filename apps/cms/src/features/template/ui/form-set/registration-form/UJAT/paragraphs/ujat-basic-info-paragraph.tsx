@@ -225,9 +225,8 @@ export function UjatBasicInfoParagraph({
       value: c.id,
       label: c.name,
     }))
-    if (!contactsQuery.isSuccess && !contactsQuery.isError) return contacts
     return withSponsorContactUnselectedOption(contacts)
-  }, [contactsQuery.data, contactsQuery.isError, contactsQuery.isSuccess, sponsorId])
+  }, [contactsQuery.data, sponsorId])
 
   const selectedSponsorContactIds = useMemo(() => {
     const stored = [
@@ -251,6 +250,9 @@ export function UjatBasicInfoParagraph({
     if (sponsorContactId === UJAT_SPONSOR_ALL_VALUE && sponsorId === UJAT_SPONSOR_ALL_VALUE) {
       return [UJAT_SPONSOR_ALL_VALUE]
     }
+    if (sponsorId && sponsorId !== UJAT_SPONSOR_ALL_VALUE) {
+      return [SPONSOR_CONTACT_UNSELECTED_VALUE]
+    }
     return []
   }, [sponsorContactId, sponsorContactIds, sponsorId, sponsorManagerName])
 
@@ -269,6 +271,18 @@ export function UjatBasicInfoParagraph({
         : labels.join(', ')
     )
   }
+
+  useEffect(() => {
+    if (
+      selectedSponsorContactIds.length === 1 &&
+      isSponsorContactUnselected(selectedSponsorContactIds[0]) &&
+      (!Array.isArray(sponsorContactIds) || sponsorContactIds.length === 0) &&
+      !isSponsorContactUnselected(sponsorContactId) &&
+      !isSponsorContactUnselectedLabel(sponsorManagerName)
+    ) {
+      applySponsorContactIds([SPONSOR_CONTACT_UNSELECTED_VALUE])
+    }
+  }, [selectedSponsorContactIds, sponsorContactId, sponsorContactIds, sponsorManagerName])
 
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
 
@@ -526,12 +540,7 @@ export function UjatBasicInfoParagraph({
                   optionFilterProp="label"
                   options={managerOptions}
                   value={selectedSponsorContactIds}
-                  disabled={
-                    !sponsorId ||
-                    (sponsorId !== UJAT_SPONSOR_ALL_VALUE &&
-                      !contactsQuery.isSuccess &&
-                      !contactsQuery.isError)
-                  }
+                  disabled={!sponsorId}
                   onChange={v => {
                     const next = Array.isArray(v) ? v.map(String) : []
                     applySponsorContactIds(next)

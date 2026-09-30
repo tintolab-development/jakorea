@@ -95,6 +95,10 @@
     "./instructor/form-layout": {
       "types": "./dist/instructor/form-layout.d.ts",
       "import": "./dist/instructor/form-layout.js"
+    },
+    "./portal/program-detail": {
+      "types": "./dist/portal/program-detail.d.ts",
+      "import": "./dist/portal/program-detail.js"
     }
   },
   "devDependencies": {

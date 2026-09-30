@@ -14,11 +14,13 @@ import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/
 import { applyGeneralRegistrationOverlayToProgram } from '@/features/program/general/lib/registration-overlay-to-program'
 import {
   getGeneralRegistrationDetailEditExtras,
+  hasIncompleteGeneralProgramDetailEditRequiredFields,
   readGeneralRegistrationOverlayForSave,
 } from '@/features/program/general/lib/registration-overlay-sync'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useDetailedProgramOptionsQuery } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useProgramWagePaymentItemOptions } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import { showUpdateCompletedAlert } from '@/shared/ui'
 
 export type GeneralProgramCommonInfoSaveResult =
@@ -53,6 +55,9 @@ export function useGeneralProgramCommonInfoSave({
     try {
       const overlay = readGeneralRegistrationOverlayForSave()
       const extras = getGeneralRegistrationDetailEditExtras()
+      if (hasIncompleteGeneralProgramDetailEditRequiredFields(overlay, extras)) {
+        return { ok: false, kind: 'validation' }
+      }
       const applied = applyGeneralRegistrationOverlayToProgram(program, overlay, extras)
       const withOverlay: Program = {
         ...applied,
@@ -77,6 +82,7 @@ export function useGeneralProgramCommonInfoSave({
         paymentItemOptions
       )
       const resolvedCommon = resolveGeneralProgramCommonInfo(program)
+      const persistedTargetLevels = resolvePersistedProgramTargetLevels(program)
       const draftToSave: Program = {
         ...withOverlay,
         ...patch,
@@ -86,8 +92,15 @@ export function useGeneralProgramCommonInfoSave({
           ...withOverlay.generalCommonInfo,
           ...patch.generalCommonInfo,
         },
+        ...(persistedTargetLevels.length > 0
+          ? { targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
+          : {}),
       }
-      await onSaveEdit(draftToSave, { ...patch, registrationOverlay: withOverlay.registrationOverlay })
+      await onSaveEdit(draftToSave, {
+        ...patch,
+        registrationOverlay: withOverlay.registrationOverlay,
+        ...(persistedTargetLevels.length > 0 ? { targetLevels: persistedTargetLevels } : {}),
+      })
       showUpdateCompletedAlert()
       return { ok: true }
     } catch (error) {

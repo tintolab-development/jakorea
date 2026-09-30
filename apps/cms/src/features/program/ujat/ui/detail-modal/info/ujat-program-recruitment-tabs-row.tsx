@@ -1,10 +1,12 @@
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   UJAT_RECRUIT_TAB_KEYS,
   UJAT_RECRUIT_TAB_LABELS,
   type UjatRecruitTabKey,
 } from './ujat-program-detail-recruitment-tabs'
+import './ujat-program-recruitment.css'
 
 export function UjatProgramRecruitmentTabsRow({
   activeTab,
@@ -14,6 +16,7 @@ export function UjatProgramRecruitmentTabsRow({
   onEdit,
   onCancel,
   onSave,
+  onOpenPreview,
 }: {
   activeTab: UjatRecruitTabKey
   onSelectTab: (tab: UjatRecruitTabKey) => void
@@ -22,6 +25,7 @@ export function UjatProgramRecruitmentTabsRow({
   onEdit: () => void
   onCancel: () => void
   onSave: () => void
+  onOpenPreview?: (tab: UjatRecruitTabKey) => void
 }) {
   return (
     <CmsTextTabs
@@ -33,14 +37,26 @@ export function UjatProgramRecruitmentTabsRow({
         label: UJAT_RECRUIT_TAB_LABELS[key],
       }))}
       trailing={
-        <ProgramEditInfoActions
-          isEditing={isEditMode}
-          idleVariant="secondary"
-          disabled={!canEdit && !isEditMode}
-          onEdit={onEdit}
-          onCancel={onCancel}
-          onSave={onSave}
-        />
+        <div className="ujat-program-recruitment-tabs-row__actions">
+          <ProgramEditInfoActions
+            isEditing={isEditMode}
+            idleVariant="secondary"
+            disabled={!canEdit && !isEditMode}
+            onEdit={onEdit}
+            onCancel={onCancel}
+            onSave={onSave}
+          />
+          {onOpenPreview ? (
+            <CmsButton
+              type="button"
+              variant="primary"
+              size="large"
+              onClick={() => onOpenPreview(activeTab)}
+            >
+              미리보기
+            </CmsButton>
+          ) : null}
+        </div>
       }
     />
   )

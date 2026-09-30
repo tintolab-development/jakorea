@@ -9,7 +9,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
   ParagraphDatePickerPopover,
-  buildTime,
+  buildTimeFrom24Hour,
   parseNum,
 } from '@/shared/components/date-time-picker-modal'
 import {
@@ -167,6 +167,11 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    * 기본 false.
    */
   lockPeriodToggleOn?: boolean
+  /**
+   * 트리거 값은 비운 채, 모달을 열 때만 캘린더·시간 초안으로 쓴다.
+   * `value` / `appliedSurfaceRange`에는 영향을 주지 않는다.
+   */
+  initialPopoverRange?: [Dayjs, Dayjs] | null
 }
 
 export type ParagraphDatePickerProps =
@@ -209,6 +214,7 @@ interface ParagraphDatePickerSingleInnerProps {
   showPeriodToggle?: boolean
   lockTimeToggleOn?: boolean
   lockPeriodToggleOn?: boolean
+  initialPopoverRange?: [Dayjs, Dayjs] | null
 }
 
 function ParagraphDatePickerSingleInner({
@@ -236,6 +242,7 @@ function ParagraphDatePickerSingleInner({
   showPeriodToggle = true,
   lockTimeToggleOn = false,
   lockPeriodToggleOn = false,
+  initialPopoverRange = null,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
@@ -286,15 +293,12 @@ function ParagraphDatePickerSingleInner({
     presetMode === 'period' || (lockPeriodToggleOn && showPeriodToggle)
   const effectiveTimeOn = showTimeToggle ? timeOn : false
   const [invalidTimeRange, setInvalidTimeRange] = useState(false)
-  const [singleHour, setSingleHour] = useState('12')
+  const [singleHour, setSingleHour] = useState('9')
   const [singleMinute, setSingleMinute] = useState('0')
-  const [singleMer, setSingleMer] = useState<'AM' | 'PM'>('AM')
   const [startHour, setStartHour] = useState('9')
   const [startMinute, setStartMinute] = useState('0')
-  const [startMer, setStartMer] = useState<'AM' | 'PM'>('AM')
   const [endHour, setEndHour] = useState('10')
   const [endMinute, setEndMinute] = useState('0')
-  const [endMer, setEndMer] = useState<'AM' | 'PM'>('AM')
 
   const showPeriodToggleInFooter =
     (showPeriodToggle && (customizable || presetMode === 'schedule')) ||
@@ -318,6 +322,8 @@ function ParagraphDatePickerSingleInner({
     if (presetMode === 'date') return false
     return periodOn
   }, [customizable, presetMode, periodOn, showPeriodToggle])
+  /** 일정 + 시간 — ParagraphTimePicker(종료 시간 고정)와 같이 같은 날 시작·종료 */
+  const sameDayTimeRange = presetMode === 'schedule' && effectiveTimeOn && !isRangeCalendarMode
 
   /**
    * 기본값: 오늘 — 단일 날짜 모드에서만 부모 `value`가 null이면 동기화.
@@ -367,10 +373,8 @@ function ParagraphDatePickerSingleInner({
         const tb = dayjsTimeParts(appliedSurfaceRange[1])
         setStartHour(ta.h)
         setStartMinute(ta.m)
-        setStartMer(ta.mer)
         setEndHour(tb.h)
         setEndMinute(tb.m)
-        setEndMer(tb.mer)
       } else {
         setTimeOn(false)
       }
@@ -428,7 +432,15 @@ function ParagraphDatePickerSingleInner({
       setTimeOn(false)
     }
 
-    const d = findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate)
+    const initialRange =
+      initialPopoverRange != null &&
+      initialPopoverRange[0]?.isValid() &&
+      initialPopoverRange[1]?.isValid()
+        ? initialPopoverRange
+        : null
+    const d = initialRange
+      ? initialRange[0]
+      : findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate)
     setDraft(d)
     setCalendarMonth(d.startOf('month'))
 
@@ -441,11 +453,34 @@ function ParagraphDatePickerSingleInner({
       const tb = dayjsTimeParts(surfaceRange![1])
       setStartHour(ta.h)
       setStartMinute(ta.m)
-      setStartMer(ta.mer)
       setEndHour(tb.h)
       setEndMinute(tb.m)
-      setEndMer(tb.mer)
       setTimeOn(surfaceAppliedWithTime)
+    } else if (initialRange) {
+      setRangeStart(initialRange[0])
+      setRangeEnd(initialRange[1])
+      setRangeFocus('start')
+      const ta = dayjsTimeParts(initialRange[0])
+      const tb = dayjsTimeParts(initialRange[1])
+      setStartHour(ta.h)
+      setStartMinute(ta.m)
+      setEndHour(tb.h)
+      setEndMinute(tb.m)
+      setTimeOn(
+        initialRange[0].hour() !== 0 ||
+          initialRange[0].minute() !== 0 ||
+          initialRange[1].hour() !== 0 ||
+          initialRange[1].minute() !== 0
+      )
+
+      if (customizable) {
+        /* period/time already false above */
+      } else if (presetMode === 'period') {
+        setPeriodOn(true)
+        setTimeOn(false)
+      } else {
+        setPeriodOn(showPeriodToggle && presetMode === 'schedule' && preferPeriodModeInPopover)
+      }
     } else {
       setRangeStart(d)
       const nextEnd = findNextEnabledDate(d.add(1, 'day'), disabledDate)
@@ -455,10 +490,8 @@ function ParagraphDatePickerSingleInner({
       const tb = dayjsTimeParts(nextEnd)
       setStartHour(ta.h)
       setStartMinute(ta.m)
-      setStartMer(ta.mer)
       setEndHour(tb.h)
       setEndMinute(tb.m)
-      setEndMer(tb.mer)
 
       if (customizable) {
         /* period/time already false above */
@@ -471,10 +504,20 @@ function ParagraphDatePickerSingleInner({
       }
     }
 
-    const tSingle = dayjsTimeParts(d)
+    const tSingle = dayjsTimeParts(initialRange?.[0] ?? d)
     setSingleHour(tSingle.h)
     setSingleMinute(tSingle.m)
-    setSingleMer(tSingle.mer)
+    if (
+      presetMode === 'schedule' &&
+      !useSurface &&
+      !(initialRange != null && initialRange[0].isSame(initialRange[1], 'day'))
+    ) {
+      const tEnd = dayjsTimeParts((initialRange?.[0] ?? d).add(1, 'hour'))
+      setStartHour(tSingle.h)
+      setStartMinute(tSingle.m)
+      setEndHour(tEnd.h)
+      setEndMinute(tEnd.m)
+    }
 
     setInvalidTimeRange(false)
     if (timeToggleLocked) setTimeOn(true)
@@ -488,8 +531,8 @@ function ParagraphDatePickerSingleInner({
       const eDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeEnd : rangeStart
 
       if (effectiveTimeOn) {
-        const start = buildTime(sDay, parseNum(startHour, 12), parseNum(startMinute, 0), startMer)
-        const end = buildTime(eDay, parseNum(endHour, 12), parseNum(endMinute, 0), endMer)
+        const start = buildTimeFrom24Hour(sDay, parseNum(startHour, 0), parseNum(startMinute, 0))
+        const end = buildTimeFrom24Hour(eDay, parseNum(endHour, 0), parseNum(endMinute, 0))
         if (!end.isAfter(start)) {
           setInvalidTimeRange(true)
           return
@@ -507,12 +550,23 @@ function ParagraphDatePickerSingleInner({
         setSurfaceRange([s, e])
         setSurfaceAppliedWithTime(false)
       }
+    } else if (effectiveTimeOn && sameDayTimeRange) {
+      const start = buildTimeFrom24Hour(draft, parseNum(startHour, 0), parseNum(startMinute, 0))
+      const end = buildTimeFrom24Hour(draft, parseNum(endHour, 0), parseNum(endMinute, 0))
+      if (!end.isAfter(start)) {
+        setInvalidTimeRange(true)
+        return
+      }
+      setInvalidTimeRange(false)
+      onRangeChange?.([start, end])
+      onChange(start)
+      setSurfaceRange(null)
+      setSurfaceAppliedWithTime(true)
     } else if (effectiveTimeOn) {
-      const applied = buildTime(
+      const applied = buildTimeFrom24Hour(
         draft,
-        parseNum(singleHour, 12),
-        parseNum(singleMinute, 0),
-        singleMer
+        parseNum(singleHour, 0),
+        parseNum(singleMinute, 0)
       )
       onChange(applied)
       if (presetMode === 'schedule' && onRangeChange) {
@@ -647,6 +701,7 @@ function ParagraphDatePickerSingleInner({
         disabled={disabled}
         disabledDate={disabledDate}
         isRangeCalendarMode={isRangeCalendarMode}
+        sameDayTimeRange={sameDayTimeRange}
         timeOn={effectiveTimeOn}
         calendarMonth={calendarMonth}
         onCalendarMonthChange={setCalendarMonth}
@@ -658,7 +713,6 @@ function ParagraphDatePickerSingleInner({
         onCalendarSelect={handleCalendarSelect}
         singleHour={singleHour}
         singleMinute={singleMinute}
-        singleMer={singleMer}
         onSingleHourChange={v => {
           setSingleHour(v)
           setInvalidTimeRange(false)
@@ -667,13 +721,8 @@ function ParagraphDatePickerSingleInner({
           setSingleMinute(v)
           setInvalidTimeRange(false)
         }}
-        onSingleMerChange={v => {
-          setSingleMer(v)
-          setInvalidTimeRange(false)
-        }}
         startHour={startHour}
         startMinute={startMinute}
-        startMer={startMer}
         onStartHourChange={v => {
           setStartHour(v)
           setInvalidTimeRange(false)
@@ -682,23 +731,14 @@ function ParagraphDatePickerSingleInner({
           setStartMinute(v)
           setInvalidTimeRange(false)
         }}
-        onStartMerChange={v => {
-          setStartMer(v)
-          setInvalidTimeRange(false)
-        }}
         endHour={endHour}
         endMinute={endMinute}
-        endMer={endMer}
         onEndHourChange={v => {
           setEndHour(v)
           setInvalidTimeRange(false)
         }}
         onEndMinuteChange={v => {
           setEndMinute(v)
-          setInvalidTimeRange(false)
-        }}
-        onEndMerChange={v => {
-          setEndMer(v)
           setInvalidTimeRange(false)
         }}
         invalidTimeRange={invalidTimeRange}
@@ -727,10 +767,8 @@ function ParagraphDatePickerSingleInner({
             const t2 = dayjsTimeParts(nextEnd)
             setStartHour(t1.h)
             setStartMinute(t1.m)
-            setStartMer(t1.mer)
             setEndHour(t2.h)
             setEndMinute(t2.m)
-            setEndMer(t2.mer)
           }
         }}
         onTimeToggleOn={({ isRange, rangeStart: rs, draft: d }) => {
@@ -738,17 +776,23 @@ function ParagraphDatePickerSingleInner({
             const t1 = dayjsTimeParts(rs)
             setStartHour(t1.h)
             setStartMinute(t1.m)
-            setStartMer(t1.mer)
-            const plus = buildTime(rs, parseNum(t1.h, 12), parseNum(t1.m, 0), t1.mer).add(1, 'hour')
+            const plus = buildTimeFrom24Hour(rs, parseNum(t1.h, 0), parseNum(t1.m, 0)).add(
+              1,
+              'hour'
+            )
             const t2 = dayjsTimeParts(plus)
             setEndHour(t2.h)
             setEndMinute(t2.m)
-            setEndMer(t2.mer)
           } else {
             const t = dayjsTimeParts(d)
             setSingleHour(t.h)
             setSingleMinute(t.m)
-            setSingleMer(t.mer)
+            setStartHour(t.h)
+            setStartMinute(t.m)
+            const plus = d.add(1, 'hour')
+            const t2 = dayjsTimeParts(plus)
+            setEndHour(t2.h)
+            setEndMinute(t2.m)
           }
         }}
       />
@@ -880,6 +924,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           showPeriodToggle={props.mode === 'single' ? (props.showPeriodToggle ?? true) : true}
           lockTimeToggleOn={props.mode === 'single' ? Boolean(props.lockTimeToggleOn) : false}
           lockPeriodToggleOn={props.mode === 'single' ? Boolean(props.lockPeriodToggleOn) : false}
+          initialPopoverRange={props.mode === 'single' ? props.initialPopoverRange : null}
         />
       )}
     </div>

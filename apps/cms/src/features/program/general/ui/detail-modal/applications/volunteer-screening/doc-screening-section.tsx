@@ -3,20 +3,17 @@ import { Spin, Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
-import { GeneralVolunteerDocumentApproveCompleteModal } from './general-volunteer-document-approve-complete-modal'
 import { GeneralVolunteerDocumentApproveModal } from './general-volunteer-document-approve-modal'
-import { GeneralVolunteerDocumentBulkApproveCompleteModal } from './general-volunteer-document-bulk-approve-complete-modal'
 import { GeneralVolunteerDocumentBulkApproveModal } from './general-volunteer-document-bulk-approve-modal'
-import { GeneralVolunteerDocumentBulkRejectCompleteModal } from './general-volunteer-document-bulk-reject-complete-modal'
 import { GeneralVolunteerDocumentBulkRejectModal } from './general-volunteer-document-bulk-reject-modal'
 import { GeneralVolunteerDocumentCancelApprovalModal } from './general-volunteer-document-cancel-approval-modal'
 import { GeneralVolunteerDocumentCancelRejectModal } from './general-volunteer-document-cancel-reject-modal'
-import { GeneralVolunteerDocumentRejectCompleteModal } from './general-volunteer-document-reject-complete-modal'
 import { GeneralVolunteerDocumentRejectModal } from './general-volunteer-document-reject-modal'
 import { buildGeneralVolunteerDoc1FilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import type { Program } from '@/types/domain'
 import { GENERAL_DOC_SCREENING_TABLE_SCROLL_X } from './doc-screening-columns'
 import { useGeneralVolunteerDocScreening } from './use-doc-screening'
+import { isDocumentScreeningPendingForBulkSelect } from '@/features/program/general/lib/application-processed-selection-alert'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
   useGeneralVolunteerApplicantDetail,
@@ -58,14 +55,6 @@ export function GeneralVolunteerDocScreeningSection({
     closeBulkRejectModal,
     handleBulkApproveConfirm,
     handleBulkRejectConfirm,
-    bulkApproveCompleteCount,
-    bulkRejectCompleteCount,
-    closeBulkApproveCompleteModal,
-    closeBulkRejectCompleteModal,
-    approveCompleteVolunteerName,
-    closeApproveCompleteModal,
-    rejectCompleteVolunteer,
-    closeRejectCompleteModal,
     approveModalVolunteer,
     rejectModalVolunteer,
     closeApproveModal,
@@ -180,37 +169,10 @@ export function GeneralVolunteerDocScreeningSection({
     </>
   )
 
-  const completeModals = (
-    <>
-      <GeneralVolunteerDocumentApproveCompleteModal
-        open={approveCompleteVolunteerName != null}
-        volunteerName={approveCompleteVolunteerName ?? ''}
-        onClose={closeApproveCompleteModal}
-      />
-      <GeneralVolunteerDocumentRejectCompleteModal
-        open={rejectCompleteVolunteer != null}
-        volunteerName={rejectCompleteVolunteer?.name ?? ''}
-        rejectionReason={rejectCompleteVolunteer?.reason ?? ''}
-        onClose={closeRejectCompleteModal}
-      />
-      <GeneralVolunteerDocumentBulkApproveCompleteModal
-        open={bulkApproveCompleteCount != null}
-        selectionCount={bulkApproveCompleteCount ?? 0}
-        onClose={closeBulkApproveCompleteModal}
-      />
-      <GeneralVolunteerDocumentBulkRejectCompleteModal
-        open={bulkRejectCompleteCount != null}
-        selectionCount={bulkRejectCompleteCount ?? 0}
-        onClose={closeBulkRejectCompleteModal}
-      />
-    </>
-  )
-
   if (selectedApplicant) {
     return (
       <>
         {detailPermissionModals}
-        {completeModals}
         <GeneralVolunteerApplicantDetailView
           variant="doc_screening"
           applicant={selectedApplicant}
@@ -240,7 +202,6 @@ export function GeneralVolunteerDocScreeningSection({
     <>
       {approveRejectModals}
       {listBulkModals}
-      {completeModals}
       <div className="general-volunteer-screening applicant-details">
         <FilterTableLayout
           bordered={false}
@@ -297,6 +258,11 @@ export function GeneralVolunteerDocScreeningSection({
                 columnWidth: 68,
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
+                getCheckboxProps: record => ({
+                  disabled: !isDocumentScreeningPendingForBulkSelect(
+                    record.documentScreeningStatus
+                  ),
+                }),
               }}
               onRow={record => ({
                 onClick: e => handleRowClick(record, e),

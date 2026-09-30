@@ -24,7 +24,7 @@ import {
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { buildAssignedOrganizationNamesByMemberId } from '@/features/program/general/lib/participating-instructor-assigned-institutions'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockOrgProgressInstructors } from '@/features/program/general/lib/temp-mock-org-program'
+import { getTempMockShowcaseProgressInstructors } from '@/features/program/general/lib/temp-mock-program-resolve'
 import type { Program } from '@/types/domain'
 
 function mergeInstructorRowsWithAssignments(
@@ -95,7 +95,7 @@ export function useProgressInstructorList({
   }, [remoteQuery.data])
 
   const instructorList = useMemo(() => {
-    if (isTempMockProgram) return getTempMockOrgProgressInstructors(programId)
+    if (isTempMockProgram) return getTempMockShowcaseProgressInstructors(programId)
     if (!remoteEnabled) return []
     return mergeInstructorRowsWithAssignments(
       remoteInstructorRows,
@@ -188,7 +188,7 @@ export function useProgressInstructorList({
     (recordId: string, status: SettlementStatusKey) => {
       if (isTempMockProgram) {
         setTempMockInstructorList(prev =>
-          (prev ?? getTempMockOrgProgressInstructors(programId)).map(row =>
+          (prev ?? getTempMockShowcaseProgressInstructors(programId)).map(row =>
             row.id === recordId ? { ...row, settlementStatus: status } : row
           )
         )
@@ -218,7 +218,7 @@ export function useProgressInstructorList({
     if (isTempMockProgram) {
       const keysToDelete = new Set(selectedInstructorRowKeys.map(String))
       setTempMockInstructorList(prev =>
-        (prev ?? getTempMockOrgProgressInstructors(programId)).filter(
+        (prev ?? getTempMockShowcaseProgressInstructors(programId)).filter(
           row => !keysToDelete.has(row.id)
         )
       )

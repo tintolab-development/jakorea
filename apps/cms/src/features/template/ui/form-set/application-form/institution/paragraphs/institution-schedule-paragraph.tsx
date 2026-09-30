@@ -27,12 +27,15 @@ function hasInstitutionProgramScheduleContext(
 export function ProgramApplicationFormInstitutionScheduleParagraph({
   readOnlyPreview = false,
   isTemplateAuthoringMode = false,
+  programBridge,
 }: {
   readOnlyPreview?: boolean
   /** true: 템플릿 편집 — 설정값 안내 힌트. false: 프로그램 연동 본문 */
   isTemplateAuthoringMode?: boolean
+  programBridge?: InstitutionApplicationProgramBridge
 }) {
-  const bridge = useInstitutionApplicationProgramBridge()
+  const storeBridge = useInstitutionApplicationProgramBridge()
+  const bridge = programBridge ?? storeBridge
   if (isTemplateAuthoringMode || !hasInstitutionProgramScheduleContext(bridge)) {
     return (
       <ProgramApplicationScheduleTemplateHintParagraph
@@ -50,5 +53,10 @@ export function ProgramApplicationFormInstitutionScheduleParagraph({
       />
     )
   }
-  return <ProgramApplicationFormInstitutionFixedScheduleParagraph readOnlyPreview={readOnlyPreview} />
+  return (
+    <ProgramApplicationFormInstitutionFixedScheduleParagraph
+      readOnlyPreview={readOnlyPreview}
+      programBridge={bridge}
+    />
+  )
 }

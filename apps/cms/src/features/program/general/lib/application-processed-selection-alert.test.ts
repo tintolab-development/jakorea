@@ -3,6 +3,8 @@ import {
   applicationBulkSubjectLabel,
   buildApplicationProcessedSelectionAlert,
   buildInterview2ProcessedSelectionAlert,
+  isApplicationApprovalPendingForBulkSelect,
+  isDocumentScreeningPendingForBulkSelect,
 } from './application-processed-selection-alert'
 
 describe('application-processed-selection-alert', () => {
@@ -27,5 +29,14 @@ describe('application-processed-selection-alert', () => {
       title: '면접 처리 완료 안내',
       content: `이미 합격 또는 불합격 처리된 ${label}${particle} 포함되어 있습니다.\n면접 대기 중인 ${label}만 선택해 주세요.`,
     })
+  })
+
+  it('bulk checkbox helpers allow pending only', () => {
+    expect(isApplicationApprovalPendingForBulkSelect('pending')).toBe(true)
+    expect(isApplicationApprovalPendingForBulkSelect('approved')).toBe(false)
+    expect(isApplicationApprovalPendingForBulkSelect('rejected')).toBe(false)
+    expect(isDocumentScreeningPendingForBulkSelect('pending')).toBe(true)
+    expect(isDocumentScreeningPendingForBulkSelect('pass')).toBe(false)
+    expect(isDocumentScreeningPendingForBulkSelect('fail')).toBe(false)
   })
 })

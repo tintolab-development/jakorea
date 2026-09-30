@@ -14,7 +14,8 @@
  */
 
 import { useMemo, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
-import { useLocation, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -81,6 +82,7 @@ import {
   seedEconomyRegistrationOverlayFromProgram,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
+import { hasIncompleteEconomyProgramRegistrationRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   programToRecruitmentTabEditValues,
@@ -249,6 +251,7 @@ export function ProgramDetailFullPageModal({
   onUpdateProgram,
 }: ProgramDetailFullPageModalProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const [routerSearchParams, routerSetSearchParams] = useSearchParams()
   const searchParams = searchParamsProp ?? routerSearchParams
   const rawSetSearchParams = setSearchParamsProp ?? routerSetSearchParams
@@ -635,6 +638,10 @@ export function ProgramDetailFullPageModal({
 
   const handleRequestClose = useCallback(() => {
     isClosingRef.current = true
+    if (tryNavigateMemberDetailReturn(navigate)) {
+      onClose()
+      return
+    }
     setSearchParams(
       prev => {
         if (!prev.get('programId')) return prev
@@ -643,7 +650,7 @@ export function ProgramDetailFullPageModal({
       { replace: true }
     )
     onClose()
-  }, [onClose, setSearchParams])
+  }, [navigate, onClose, setSearchParams])
 
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     setEditingTab(null)
@@ -1317,9 +1324,25 @@ export function ProgramDetailFullPageModal({
                     ...(draft.registrationOverlay ?? {}),
                     ...overlay,
                   }
+                  const roundsChanged =
+                    JSON.stringify(merged.rounds ?? []) !== JSON.stringify(draft.rounds ?? [])
+                  const periodUnchanged =
+                    String(merged.startDate ?? '') === String(displayProgram.startDate ?? '') &&
+                    String(merged.endDate ?? '') === String(displayProgram.endDate ?? '')
+                  const patchForSave = periodUnchanged
+                    ? Object.fromEntries(
+                        Object.entries(patch).filter(
+                          ([key]) => key !== 'startDate' && key !== 'endDate'
+                        )
+                      )
+                    : patch
                   await persistProgramPatch(
                     { ...merged, registrationOverlay },
-                    { ...patch, registrationOverlay }
+                    {
+                      ...patchForSave,
+                      registrationOverlay,
+                      ...(roundsChanged && merged.rounds ? { rounds: merged.rounds } : {}),
+                    }
                   )
                   return
                 }
@@ -1335,6 +1358,20 @@ export function ProgramDetailFullPageModal({
   const handleInfoSave = useCallback(async () => {
     if (isCompanySchoolDetail && !isTrainedTeachersDetail && displayProgram) {
       const overlay = readEconomyRegistrationOverlayForSave()
+      if (
+        hasIncompleteEconomyProgramRegistrationRequiredFields(overlay, {
+          individual: false,
+          organization: true,
+          teacherInstructor: true,
+          volunteer: false,
+        })
+      ) {
+        void showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
       const merged = applyEconomyRegistrationOverlayToProgram(displayProgram, overlay)
       infoForm.reset(
         programToDetailEditValues({
@@ -1388,6 +1425,7 @@ export function ProgramDetailFullPageModal({
     validateSchema: isTrainedTeachersDetail
       ? programTrainedTeachersRecruitmentSaveSchema
       : programParticipantRecruitmentSaveSchema,
+    recruitmentAudience: 'participant',
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
@@ -1419,6 +1457,7 @@ export function ProgramDetailFullPageModal({
     program: recruitmentEditProgram ?? ({} as Program),
     mapToValues: mapInstructorRecruitmentEditValues,
     validateSchema: programInstructorRecruitmentSaveSchema,
+    recruitmentAudience: 'instructor',
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
@@ -1535,6 +1574,7 @@ export function ProgramDetailFullPageModal({
     form: volunteersForm,
     program: recruitmentEditProgram ?? ({} as Program),
     mapToValues: mapVolunteerRecruitmentEditValues,
+    recruitmentAudience: 'volunteer',
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {

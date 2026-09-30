@@ -31,8 +31,11 @@ import { useProgramListFilters } from './use-program-list-filters'
 import { useProgramListActions } from './use-program-list-actions'
 import { useSearchSync } from './use-search-sync'
 import { ProgramListModals } from './program-list-modals'
-import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal'
-import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
+import {
+  LazyGeneralProgramRegistrationFullpageModal,
+  LazyProgramDetailFullPageModal,
+  ProgramModalWhenOpen,
+} from '@/pages/programs/lazy-program-modals'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
   fetchRegistrationDraftNotice,
@@ -54,8 +57,9 @@ import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 
 import './program-list-page.css'
-import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants'
 import { CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { resolveProgramDeleteGuideModalCopy } from '@/features/program/shared/lib/program-delete-guide'
+import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
@@ -136,7 +140,6 @@ function ProgramListPageContent() {
     handleFormSubmit,
     handleConfirmDelete,
     handleBulkDelete,
-    getDeleteConfirmMessage,
     programToDelete,
     setProgramToDelete,
     deleteModalOpen,
@@ -150,6 +153,10 @@ function ProgramListPageContent() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
+  const programBulkDeleteGuide = useMemo(
+    () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
+    [programsPendingBulkDelete.length]
+  )
   const [, setHasListFilters] = useState(false)
   const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
   const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
@@ -239,11 +246,11 @@ function ProgramListPageContent() {
   const updateCompanySchoolMutation = useUpdateCompanySchoolProgram()
   const deleteCompanySchoolProgramsMutation = useDeleteCompanySchoolPrograms()
   const companySchoolDetailData = companySchoolDetailQuery.data ?? null
-  const companySchoolDetailProgram =
-    companySchoolDetailData ??
-    (companySchoolProgramIdFromUrl
-      ? ({ id: companySchoolProgramIdFromUrl } as Program)
-      : selectedProgramForFullPageModal)
+  // 상세가 없으면 id만 있는 빈 Program을 넘기지 않는다.
+  // 매핑이 실패해도 본문이 전부 '-'로 보이고, 오류 문구는 가려진다.
+  const companySchoolDetailProgram = isCompanySchoolPath
+    ? companySchoolDetailData
+    : (companySchoolDetailData ?? selectedProgramForFullPageModal)
 
   // 4. Effects
   useEffect(() => {
@@ -427,7 +434,10 @@ function ProgramListPageContent() {
 
   const handleBulkDeleteClick = () => {
     const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
-    if (programsToDelete.length === 0) return
+    if (programsToDelete.length === 0) {
+      showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
+      return
+    }
     setProgramsPendingBulkDelete(programsToDelete)
     setBulkDeleteModalOpen(true)
   }
@@ -586,7 +596,6 @@ function ProgramListPageContent() {
           variant="delete"
           width={140}
           onClick={handleBulkDeleteClick}
-          disabled={selectedRowKeys.length === 0}
           className="program-list-page__bulk-delete-button"
         >
           선택 삭제
@@ -627,7 +636,9 @@ function ProgramListPageContent() {
         data={filteredPrograms}
         loading={
           isCompanySchoolPath
-            ? companySchoolListQuery.isFetching && !companySchoolListQuery.isFetchingNextPage
+            ? companySchoolListQuery.isFetching &&
+              !companySchoolListQuery.isFetchingNextPage &&
+              filteredPrograms.length === 0
             : loading
         }
         headerTitle={headerTitle}
@@ -652,7 +663,14 @@ function ProgramListPageContent() {
         <div ref={companySchoolLoadMoreRef} aria-hidden style={{ height: 1 }} />
       ) : null}
 
-      <ProgramDetailFullPageModal
+      <ProgramModalWhenOpen
+        open={
+          isCompanySchoolPath
+            ? Boolean(companySchoolProgramIdFromUrl)
+            : !!selectedProgramForFullPageModal
+        }
+      >
+      <LazyProgramDetailFullPageModal
         open={
           isCompanySchoolPath
             ? Boolean(companySchoolProgramIdFromUrl)
@@ -664,6 +682,7 @@ function ProgramListPageContent() {
           isCompanySchoolPath
             ? Boolean(companySchoolProgramIdFromUrl) &&
               !companySchoolDetailData &&
+              !companySchoolDetailQuery.isError &&
               (companySchoolDetailQuery.isFetching || companySchoolDetailQuery.isLoading)
             : undefined
         }
@@ -686,13 +705,16 @@ function ProgramListPageContent() {
             : undefined
         }
       />
+      </ProgramModalWhenOpen>
 
-      <GeneralProgramRegistrationFullpageModal
+      <ProgramModalWhenOpen open={isCompanySchoolRegistrationOpen}>
+      <LazyGeneralProgramRegistrationFullpageModal
         open={isCompanySchoolRegistrationOpen}
         onClose={handleCloseCompanySchoolRegistrationFullpage}
         onProgramRegistrationSaved={handleCompanySchoolRegistrationSaved}
         registrationFormVariant="economy"
       />
+      </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal
         open={draftNoticeOpen}
@@ -729,7 +751,6 @@ function ProgramListPageContent() {
         onFormCancel={closeFormModal}
         formLoading={formLoading}
         deleteModalOpen={deleteModalOpen}
-        deleteConfirmMessage={getDeleteConfirmMessage(programToDelete)}
         onConfirmDelete={() =>
           handleConfirmDelete(programToDelete, () => {
             setDeleteModalOpen(false)
@@ -752,13 +773,9 @@ function ProgramListPageContent() {
 
       <DeleteGuideModal
         open={bulkDeleteModalOpen}
-        title="선택 삭제"
-        lines={[
-          `선택한 ${programsPendingBulkDelete.length}건의 프로그램을 삭제하시겠습니까?`,
-          '삭제된 프로그램은 복구할 수 없습니다.',
-        ]}
+        title={programBulkDeleteGuide.title}
+        lines={programBulkDeleteGuide.lines}
         confirmText="삭제"
-        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
         onConfirm={() => {
           void (async () => {
             try {

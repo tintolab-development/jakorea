@@ -7,8 +7,11 @@ import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
 import { ProgramList } from '@/features/program/general/ui/program-list'
-import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal'
-import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
+import {
+  LazyGeneralProgramRegistrationFullpageModal,
+  LazyProgramDetailFullPageModal,
+  ProgramModalWhenOpen,
+} from '@/pages/programs/lazy-program-modals'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
   fetchRegistrationDraftNotice,
@@ -29,7 +32,9 @@ import {
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
-import { CmsButton, ConfirmModal } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { resolveProgramDeleteGuideModalCopy } from '@/features/program/shared/lib/program-delete-guide'
+import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
@@ -101,6 +106,10 @@ function TrainedTeachersProgramPageContent() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
+  const programBulkDeleteGuide = useMemo(
+    () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
+    [programsPendingBulkDelete.length]
+  )
   const [, setHasListFilters] = useState(false)
   const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
   const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
@@ -349,10 +358,13 @@ function TrainedTeachersProgramPageContent() {
 
   const handleBulkDeleteClick = useCallback(() => {
     const programsToDelete = filteredPrograms.filter(program => selectedRowKeys.includes(program.id))
-    if (programsToDelete.length === 0) return
+    if (programsToDelete.length === 0) {
+      showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
+      return
+    }
     setProgramsPendingBulkDelete(programsToDelete)
     setBulkDeleteModalOpen(true)
-  }, [filteredPrograms, selectedRowKeys])
+  }, [filteredPrograms, selectedRowKeys, showAlert])
 
   const handleBulkDeleteConfirm = useCallback(async () => {
     if (remoteEnabled) {
@@ -394,7 +406,6 @@ function TrainedTeachersProgramPageContent() {
           variant="delete"
           width={140}
           onClick={handleBulkDeleteClick}
-          disabled={selectedRowKeys.length === 0}
           className="program-list-page__bulk-delete-button"
         >
           선택 삭제
@@ -439,7 +450,11 @@ function TrainedTeachersProgramPageContent() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={listQuery.isFetching && !listQuery.isFetchingNextPage}
+        loading={
+          listQuery.isFetching &&
+          !listQuery.isFetchingNextPage &&
+          filteredPrograms.length === 0
+        }
         headerTitle={headerTitle}
         headerCount={remoteEnabled ? totalElements : undefined}
         onView={handleView}
@@ -460,7 +475,10 @@ function TrainedTeachersProgramPageContent() {
       </ProgramList>
       <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
 
-      <ProgramDetailFullPageModal
+      <ProgramModalWhenOpen
+        open={Boolean(programIdFromUrl) && !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)}
+      >
+      <LazyProgramDetailFullPageModal
         open={
           Boolean(programIdFromUrl) &&
           !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)
@@ -485,13 +503,16 @@ function TrainedTeachersProgramPageContent() {
             : undefined
         }
       />
+      </ProgramModalWhenOpen>
 
-      <GeneralProgramRegistrationFullpageModal
+      <ProgramModalWhenOpen open={isTrainedTeachersRegistrationOpen}>
+      <LazyGeneralProgramRegistrationFullpageModal
         open={isTrainedTeachersRegistrationOpen}
         onClose={handleCloseRegistrationFullpage}
         onProgramRegistrationSaved={handleRegistrationSaved}
         registrationFormVariant="trainedTeachers"
       />
+      </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal
         open={draftNoticeOpen}
@@ -500,13 +521,11 @@ function TrainedTeachersProgramPageContent() {
         onCancel={() => setDraftNoticeOpen(false)}
       />
 
-      <ConfirmModal
+      <DeleteGuideModal
         open={bulkDeleteModalOpen}
-        title="선택 삭제"
-        content={`선택한 ${programsPendingBulkDelete.length}건을 삭제하시겠습니까?`}
+        title={programBulkDeleteGuide.title}
+        lines={programBulkDeleteGuide.lines}
         confirmText="삭제"
-        cancelText="취소"
-        danger
         onConfirm={() => {
           void handleBulkDeleteConfirm()
         }}

@@ -6,6 +6,8 @@ export type ApplicantSessionLineInput = {
   classNum: string
   timeRange: string
   round?: number
+  /** `line:N` 선택. 있으면 날짜·시간 조합 대신 이 문자열을 쓴다. */
+  scheduleLabel?: string
 }
 
 import type { SessionLinePreset } from './applicant-list-menu'
@@ -42,6 +44,8 @@ export function formatGeneralDetailSessionLine(
   s: ApplicantSessionLineInput,
   bridge?: InstitutionApplicationProgramBridge | null
 ): string {
+  const scheduleLabel = s.scheduleLabel?.trim()
+  if (scheduleLabel) return scheduleLabel
   const { datePart, durationPart, periodPart } = getSessionLineParts(s, 'general-detail', bridge)
   if (!periodPart) return `${datePart} ${durationPart}`
   return `${datePart} ${durationPart} | ${periodPart}`

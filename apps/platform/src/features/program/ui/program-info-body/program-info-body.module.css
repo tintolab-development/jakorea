@@ -119,6 +119,13 @@
   margin: 0;
 }
 
+.sessionMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  min-width: 0;
+}
+
 .sessionLabel {
   color: var(--color-primary-500);
 }
@@ -221,6 +228,14 @@
 .extraSectionBody {
   margin: 0;
   white-space: pre-line;
+}
+
+.extraSectionRichText {
+  --rt-content-font-size: 16px;
+  --rt-content-line-height: 150%;
+
+  overflow: visible;
+  padding: 0;
 }
 
 .contact {

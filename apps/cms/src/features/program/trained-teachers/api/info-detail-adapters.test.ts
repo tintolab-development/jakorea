@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  applyTrainedTeacherInfoDetailSaveToCache,
   mapTrainedTeacherInfoDetailToProgramPatch,
   mapTrainedTeacherInfoSaveToRequest,
   mergeTrainedTeacherInfoDetailIntoProgram,
@@ -180,6 +181,33 @@ describe('trained-teacher info detail adapters', () => {
     ])
   })
 
+  it('A 저장 직후에는 stale detail config보다 programs 응답 테이블을 우선한다', () => {
+    const program = {
+      id: '186034',
+      title: 't',
+      generalCommonInfo: {
+        curriculumSessions: [{ sessionLabel: '1차시', title: 'A 최신 차시', description: '' }],
+        scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: 'A 최신 일정' }],
+      },
+    } as Program
+    const merged = mergeTrainedTeacherInfoDetailIntoProgram(
+      program,
+      {
+        teacherTrainingEnabled: false,
+        educationJournalEnabled: false,
+        configJson: serializeTrainedTeacherInfoConfigJson({
+          commonInfo: {
+            curriculumSessions: [{ sessionLabel: '1차시', title: 'B 구 차시', description: '' }],
+            scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: 'B 구 일정' }],
+          },
+        }),
+      },
+      { tablePreference: 'program' }
+    )
+    expect(merged.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('A 최신 차시')
+    expect(merged.generalCommonInfo?.scheduleDetails?.[0]?.name).toBe('A 최신 일정')
+  })
+
   it('prefers program.generalCommonInfo over stale root copy in configJson', () => {
     const parsed = parseTrainedTeacherInfoConfigJson(
       JSON.stringify({
@@ -326,5 +354,41 @@ describe('trained-teacher info detail adapters', () => {
     expect(patch.generalCommonInfo?.teacherTrainingEnabled).toBe(false)
     expect(patch.generalCommonInfo?.teacherTrainingScheduleName).toBe('')
     expect(patch.generalCommonInfo?.scheduleDetails?.[0]?.name).toBe('')
+  })
+
+  it('keeps programs-patch venue when the detail GET echo is stale', () => {
+    const cached = {
+      id: '186018',
+      title: '수정3',
+      businessArea: '디지털리터러시',
+      generalCommonInfo: {
+        venueKind: 'inside',
+        venueDetail: '서울시 강서구 가양 데시앙플렉스',
+        announcementTitle: '수정3',
+        curriculumSessions: [{ sessionLabel: '1차시', title: '구 차시' }],
+      },
+    } as Program
+    const staleGet = {
+      id: '186018',
+      title: '구 제목',
+      businessArea: '경제금융',
+      generalCommonInfo: {
+        venueKind: 'outside',
+        venueDetail: '구 장소',
+        curriculumSessions: [{ sessionLabel: '1차시', title: '구 차시' }],
+      },
+    } as Program
+
+    const next = applyTrainedTeacherInfoDetailSaveToCache(cached, staleGet, '186018', {
+      venueKind: 'inside',
+      venueDetail: '서울시 강서구 가양 데시앙플렉스',
+      curriculumSessions: [{ sessionLabel: '1차시', title: '새 차시', description: '' }],
+    })
+
+    expect(next.id).toBe('186018')
+    expect(next.title).toBe('수정3')
+    expect(next.generalCommonInfo?.venueDetail).toBe('서울시 강서구 가양 데시앙플렉스')
+    expect(next.generalCommonInfo?.venueKind).toBe('inside')
+    expect(next.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('새 차시')
   })
 })

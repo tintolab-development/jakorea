@@ -35,6 +35,8 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { BasicInfoSection } from '@/features/program/shared/ui/program-detail/project-info/common-info/basic-info-section'
+import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
+import { useEducationScheduleModeLineStash } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import {
   detailEditValuesToProgramPatch,
   resolveStoredEducationFormLabel,
@@ -74,6 +76,7 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
+import { stampTrainedTeachersSessionFields } from '@/features/program/trained-teachers/lib/stamp-session-fields'
 import { validateTrainedTeachersCommonInfoDraft } from '@/features/program/trained-teachers/lib/validate-trained-teachers-common-info-draft'
 import './common-info-view.css'
 
@@ -246,20 +249,29 @@ function TrainedTeachersDetailSection({
   title,
   children,
   bodyClassName,
+  description,
   titleTrailing,
+  isFormEdit = false,
+  required = false,
 }: {
   title: string
   children: ReactNode
   bodyClassName?: string
+  description?: string
   titleTrailing?: ReactNode
+  isFormEdit?: boolean
+  /** 수정 모드 + 등록 위저드에서 필수인 단락일 때 타이틀 `*` */
+  required?: boolean
 }) {
   return (
     <section className="trained-teachers-common-info__section" aria-label={title}>
       <FormParagraphSectionHeader
         title={title}
+        description={description}
         titleTrailing={titleTrailing}
         surface="responseEntry"
         titleAligned
+        required={isFormEdit && required}
       />
       <div
         className={['trained-teachers-common-info__section-body', bodyClassName]
@@ -349,7 +361,12 @@ function TrainedTeachersTypeSettingsSection({
   return (
     <TrainedTeachersDetailSection
       title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.title}
+      description={
+        isFormEdit ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription : undefined
+      }
       bodyClassName="trained-teachers-common-info__section-body--type-settings"
+      isFormEdit={isFormEdit}
+      required
     >
       <DetailInfoForm
         title="프로그램 유형 설정"
@@ -1025,6 +1042,8 @@ function TrainedTeachersCurriculumSection({
     <TrainedTeachersDetailSection
       title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.title}
       bodyClassName="trained-teachers-common-info__section-body--curriculum"
+      isFormEdit={isFormEdit}
+      required
       titleTrailing={
         isFormEdit ? (
           <div className="trained-teachers-common-info__section-title-actions">
@@ -1477,6 +1496,8 @@ function TrainedTeachersScheduleSection({
     <TrainedTeachersDetailSection
       title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleCurriculum.title}
       bodyClassName="trained-teachers-common-info__section-body--schedule-curriculum"
+      isFormEdit={isFormEdit}
+      required
       titleTrailing={
         isFormEdit ? (
           <div className="trained-teachers-common-info__section-title-actions">
@@ -1562,6 +1583,7 @@ function TrainedTeachersScheduleSettingsSection({
 }) {
   const [singleDate, setSingleDate] = useState<Dayjs | null>(null)
   const [periodDate, setPeriodDate] = useState<Dayjs | null>(null)
+  const swapScheduleLinesForMode = useEducationScheduleModeLineStash()
 
   const isFormEdit = isEditMode && form != null
   const hideForScheduleMulti = educationStructure === 'schedule' && sessionRound === 'multi'
@@ -1598,9 +1620,25 @@ function TrainedTeachersScheduleSettingsSection({
   if (hideForScheduleMulti) return null
   if (!isFormEdit && lines.length === 0) return null
 
+  const scheduleMeta = PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings
+
   return (
     <TrainedTeachersDetailSection
-      title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.title}
+      title={scheduleMeta.title}
+      description={isFormEdit ? scheduleMeta.editDescription : undefined}
+      isFormEdit={isFormEdit}
+      required
+      titleTrailing={
+        isFormEdit && form ? (
+          <EducationScheduleChangeTitleAction
+            scheduleLines={lines}
+            educationScheduleMode={scheduleMode}
+            onApply={nextLines => {
+              form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
+            }}
+          />
+        ) : undefined
+      }
     >
       {isFormEdit && form ? (
         <DetailInfoForm
@@ -1620,7 +1658,19 @@ function TrainedTeachersScheduleSettingsSection({
                     <CmsRadioGroup
                       size="large"
                       value={field.value ?? 'date'}
-                      onChange={e => field.onChange(e.target.value)}
+                      onChange={e => {
+                        const next = e.target.value as 'date' | 'period'
+                        const currentMode = (field.value ?? 'date') as 'date' | 'period'
+                        if (next !== currentMode) {
+                          const nextLines = swapScheduleLinesForMode(
+                            currentMode,
+                            next,
+                            form.getValues('educationScheduleLines') ?? []
+                          )
+                          form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
+                        }
+                        field.onChange(next)
+                      }}
                     >
                       <CmsRadio value="date">날짜 지정</CmsRadio>
                       <CmsRadio value="period">기간 지정</CmsRadio>
@@ -1675,7 +1725,6 @@ function TrainedTeachersScheduleSettingsSection({
             <DetailInfoForm.Field
               label="교육 진행 예정일"
               fullRow
-              readOnlyDisplay
               view={
                 <EducationSchedulePreviewLines lines={lines} onRemove={removeLine} />
               }
@@ -1889,7 +1938,16 @@ export function TrainedTeachersCommonInfoView({
           })
         }
 
-        const scheduleDetails =
+        const formPatchForRows = form
+          ? detailEditValuesToProgramPatch(form.getValues(), program)
+          : undefined
+        const rowFields = {
+          educationFormScheduleDetail: form?.getValues('educationFormScheduleDetail'),
+          ipsScheduleDetail: form?.getValues('ipsScheduleDetail'),
+          educationFormLabel: formPatchForRows?.generalCommonInfo?.educationFormLabel,
+          ipsTypeSummary: formPatchForRows?.generalCommonInfo?.ipsTypeSummary,
+        }
+        const scheduleDetails = stampTrainedTeachersSessionFields(
           draft && educationStructure === 'schedule'
             ? draft.scheduleDetails.map((detail, index) => ({
                 ...detail,
@@ -1900,13 +1958,17 @@ export function TrainedTeachersCommonInfoView({
               }))
             : draft
               ? commonInfo.scheduleDetails
-              : undefined
-        const curriculumSessions =
+              : undefined,
+          rowFields
+        )
+        const curriculumSessions = stampTrainedTeachersSessionFields(
           draft && educationStructure === 'curriculum'
             ? draft.curriculumSessions
             : draft
               ? commonInfo.curriculumSessions
-              : undefined
+              : undefined,
+          rowFields
+        )
 
         if (draft) {
           const draftValidationMessage = validateTrainedTeachersCommonInfoDraft({
@@ -1937,9 +1999,9 @@ export function TrainedTeachersCommonInfoView({
         }
 
         if (draft) {
-          const formPatch = form
-            ? detailEditValuesToProgramPatch(form.getValues(), program)
-            : undefined
+          // onBeforePersist 가 상세 캐시를 갱신하면 폼이 구 program으로 reset될 수 있다.
+          // 저장 직전 스냅샷(formPatchForRows)을 화면 반영에 쓴다.
+          const formPatch = formPatchForRows
           const formCommonInfo = formPatch?.generalCommonInfo
           const savedBusinessArea =
             resolveStoredBusinessArea(formPatch?.businessArea) ||
@@ -1982,16 +2044,14 @@ export function TrainedTeachersCommonInfoView({
               await onPersist({
                 commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
               })
-              if (savedBusinessArea) {
-                setSavedOverride({
-                  educatedTeachers: draft.kpiEducatedTeachers,
-                  businessArea: savedBusinessArea,
-                  commonInfo: {
-                    ...commonInfoPayload,
-                    kpi: kpiOverride,
-                  },
-                })
-              }
+              setSavedOverride({
+                educatedTeachers: draft.kpiEducatedTeachers,
+                ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
+                commonInfo: {
+                  ...commonInfoPayload,
+                  kpi: kpiOverride,
+                },
+              })
             } else {
               setSavedOverride({
                 educatedTeachers: draft.kpiEducatedTeachers,
@@ -2006,9 +2066,9 @@ export function TrainedTeachersCommonInfoView({
             // programs PATCH 만으로 KPI·사업분야 저장 — 재조회 전 화면 즉시 반영
             setSavedOverride({
               educatedTeachers: draft.kpiEducatedTeachers,
-              businessArea: savedBusinessArea,
+              ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
               commonInfo: {
-                ...commonInfo,
+                ...commonInfoPayload,
                 kpi: kpiOverride,
                 curriculumSessions,
                 scheduleDetails,
@@ -2041,20 +2101,40 @@ export function TrainedTeachersCommonInfoView({
         />
       </div>
 
-      <BasicInfoSection
-        program={displayProgram}
-        sponsorName={sponsorName}
-        createdByName={program.createdByName}
-        updatedByName={program.updatedByName}
-        lifecycleStatus={program.lifecycleStatus ?? undefined}
-        forceCompanySchoolLayout
-        hideIpsTypeField
-        fixedParticipantTypeLabel="학교/기관"
-        enableTitleEnEdit
-        useDetailedProgramSelect
-        isEditMode={isEditMode}
-        form={form}
-      />
+      {isEditMode ? (
+        <TrainedTeachersDetailSection title="기본 정보" isFormEdit required>
+          <BasicInfoSection
+            program={displayProgram}
+            sponsorName={sponsorName}
+            createdByName={program.createdByName}
+            updatedByName={program.updatedByName}
+            lifecycleStatus={program.lifecycleStatus ?? undefined}
+            forceCompanySchoolLayout
+            hideIpsTypeField
+            hideFormTitles
+            fixedParticipantTypeLabel="학교/기관"
+            enableTitleEnEdit
+            useDetailedProgramSelect
+            isEditMode={isEditMode}
+            form={form}
+          />
+        </TrainedTeachersDetailSection>
+      ) : (
+        <BasicInfoSection
+          program={displayProgram}
+          sponsorName={sponsorName}
+          createdByName={program.createdByName}
+          updatedByName={program.updatedByName}
+          lifecycleStatus={program.lifecycleStatus ?? undefined}
+          forceCompanySchoolLayout
+          hideIpsTypeField
+          fixedParticipantTypeLabel="학교/기관"
+          enableTitleEnEdit
+          useDetailedProgramSelect
+          isEditMode={isEditMode}
+          form={form}
+        />
+      )}
 
       {/* 교육받은 교사 공통정보 기획 — 사업 KPI 목표 비노출 (다른 유형 KPI는 유지) */}
 

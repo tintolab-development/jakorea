@@ -41,6 +41,8 @@ const PLACEHOLDER_PARAGRAPH_DESCRIPTIONS = new Set([
   '노출할 항목을 선택합니다. (실제 응답 시 자동 매핑)',
   /** 강의보고서 프로그램 진행 정보 — CMS 연동 안내, 응답·미리보기에는 미노출 */
   '실제 응답 시 배정된 프로그램·기관·교육 일정 정보가 자동으로 반영됩니다.',
+  /** 신청 양식 일정 단락 — 템플릿 작성 안내, 프로그램 상세 미리보기에는 미노출 */
+  '프로그램 등록 시 노출되는 항목에 따라 설명글을 작성해 주세요.',
 ])
 
 export function isPlaceholderParagraphDescription(value: string | undefined | null): boolean {

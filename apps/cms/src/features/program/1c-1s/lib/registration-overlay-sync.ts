@@ -18,6 +18,7 @@ import {
   pickProgramRegistrationOverlayByPrefix,
   replaceProgramRegistrationOverlayPrefix,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { resolveSponsorContactIdsFromProgram } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 export const ECONOMY_REGISTRATION_OVERLAY_PREFIX = 'economyRegistration.' as const
 
@@ -148,7 +149,7 @@ export function buildEconomyRegistrationOverlayFromProgram(
     program.generalCommonInfo?.sponsorManagementId?.trim() ||
     program.generalCommonInfo?.sponsorManagementIds?.[0]?.trim() ||
     ALL_VALUE
-  const managerIds = program.generalCommonInfo?.sponsorManagerContactIds ?? []
+  const managerIds = resolveSponsorContactIdsFromProgram(program)
   const kpi = program.generalCommonInfo?.kpi
 
   return {
@@ -199,7 +200,8 @@ export function buildEconomyRegistrationOverlayFromProgram(
 export function seedEconomyRegistrationOverlayFromProgram(program: Program): void {
   const fromProgram = buildEconomyRegistrationOverlayFromProgram(program)
   const saved = overlayFromProgram(program)
-  const merged = { ...fromProgram, ...saved }
+  // GET canonical 값이 저장된 과거 overlay보다 최신이다.
+  const merged = { ...saved, ...fromProgram }
   const surveyKeys = resolveProgramSurveyMenuKeys({
     generalSurveyMenuKeys: program.generalSurveyMenuKeys,
     registrationOverlay: merged,

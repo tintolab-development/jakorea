@@ -8,6 +8,7 @@ import {
   EDUCATION_DISPLAY_STATUS_TONE_CLASS,
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,
+  type EducationDisplayStatusAudience,
 } from '../lib/display-status'
 import jaSendMintUrl from '@/shared/assets/icons/ja-send-mint.svg'
 import { PFText } from '@/shared/ui'
@@ -19,6 +20,7 @@ type EducationDetailHeaderProps = {
   educationTargetLabel: string
   educationForm: EducationForm
   educationFormLabel: string
+  statusAudience?: EducationDisplayStatusAudience
 }
 
 export function EducationDetailHeader({
@@ -27,10 +29,11 @@ export function EducationDetailHeader({
   educationTargetLabel,
   educationForm,
   educationFormLabel,
+  statusAudience = 'general',
 }: EducationDetailHeaderProps) {
   const tone = getEducationDisplayStatusTone(displayStatus)
   const statusToneClass = styles[EDUCATION_DISPLAY_STATUS_TONE_CLASS[tone]]
-  const statusLabel = getEducationDisplayStatusLabel(displayStatus)
+  const statusLabel = getEducationDisplayStatusLabel(displayStatus, { audience: statusAudience })
 
   return (
     <header className={styles.header}>
@@ -63,18 +66,20 @@ export function EducationDetailHeader({
             {educationTargetLabel}
           </PFText>
         </span>
-        <span className={styles.metaItem}>
-          <img
-            className={styles.metaIcon}
-            src={EDUCATION_FORM_ICON_MAP[educationForm]}
-            alt=""
-            width={14}
-            height={14}
-          />
-          <PFText as="span" typo="bd-md-sb" color="primary-700">
-            {educationFormLabel}
-          </PFText>
-        </span>
+        {educationFormLabel.trim() ? (
+          <span className={styles.metaItem}>
+            <img
+              className={styles.metaIcon}
+              src={EDUCATION_FORM_ICON_MAP[educationForm]}
+              alt=""
+              width={14}
+              height={14}
+            />
+            <PFText as="span" typo="bd-md-sb" color="primary-700">
+              {educationFormLabel}
+            </PFText>
+          </span>
+        ) : null}
       </div>
     </header>
   )

@@ -18,12 +18,17 @@ export function ProgramCommonInfoEditSection({
   title,
   description,
   required = false,
+  titleTrailing,
+  bodyClassName,
   children,
 }: {
   title: string
   /** 타이틀 하단 설명 — 등록 양식 카드와 동일 문구 */
   description?: string
   required?: boolean
+  titleTrailing?: ReactNode
+  /** 등록 단락이 2개 이상일 때 `program-common-info-edit__section-body--stacked` */
+  bodyClassName?: string
   children: ReactNode
 }) {
   return (
@@ -31,11 +36,18 @@ export function ProgramCommonInfoEditSection({
       <FormParagraphSectionHeader
         title={title}
         description={description}
+        titleTrailing={titleTrailing}
         surface="responseEntry"
         titleAligned
         required={required}
       />
-      <div className="program-common-info-edit__section-body">{children}</div>
+      <div
+        className={['program-common-info-edit__section-body', bodyClassName]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {children}
+      </div>
     </section>
   )
 }

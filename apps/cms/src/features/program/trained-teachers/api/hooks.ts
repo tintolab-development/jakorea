@@ -24,7 +24,14 @@ import {
   updateTrainedTeacherProgramInfoDetail,
   type TrainedTeacherProgramsRemoteListPage,
 } from './service'
-import type { TrainedTeachersCommonInfoSavePayload } from './info-detail-adapters'
+import {
+  applyTrainedTeacherInfoDetailSaveToCache,
+  type TrainedTeachersCommonInfoSavePayload,
+} from './info-detail-adapters'
+import {
+  programDetailCacheFromSave,
+  syncOpenProgramDetailCache,
+} from '@/features/program/shared/lib/program-detail-cache-after-save'
 import { resolveStoredBusinessArea } from '@/features/program/shared/lib/program-detail-info-constants'
 
 function filtersKey(filters: TrainedTeacherListFilters, remoteEnabled: boolean): string {
@@ -128,12 +135,22 @@ export function useUpdateTrainedTeacherProgram() {
       patch?: Partial<Program>
     }) => updateTrainedTeacherProgram(programId, program, patch),
     retry: false,
-    onSuccess: program => {
-      queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)
+    onSuccess: async (program, variables) => {
+      const detailKey = trainedTeacherQueryKeys.detail(variables.programId)
+      await syncOpenProgramDetailCache(
+        queryClient,
+        detailKey,
+        programDetailCacheFromSave(
+          variables.programId,
+          program,
+          variables.program,
+          variables.patch
+        )
+      )
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
       invalidateTrainedTeacherOverviewStages(queryClient)
       void queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.navigation(program.id),
+        queryKey: generalProgramQueryKeys.navigation(variables.programId),
       })
     },
   })
@@ -181,23 +198,29 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
       payload: TrainedTeachersCommonInfoSavePayload
     }) => updateTrainedTeacherProgramInfoDetail(programId, payload),
     retry: false,
-    onSuccess: program => {
-      const previous = queryClient.getQueryData<Program>(
-        trainedTeacherQueryKeys.detail(program.id)
+    onSuccess: async (program, variables) => {
+      const detailKey = trainedTeacherQueryKeys.detail(variables.programId)
+      await queryClient.cancelQueries({ queryKey: detailKey })
+      const previous = queryClient.getQueryData<Program>(detailKey)
+      const merged = applyTrainedTeacherInfoDetailSaveToCache(
+        previous,
+        program,
+        variables.programId,
+        variables.payload.commonInfo
       )
       const previousBusinessArea = resolveStoredBusinessArea(previous?.businessArea)
-      const nextBusinessArea = resolveStoredBusinessArea(program.businessArea)
-      // programs PATCH 직후 detail PATCH GET 이 사업 분야를 비우거나 구값으로 돌리면
-      // 방금 저장한 캐시 값을 유지한다.
-      const merged =
+      const nextBusinessArea = resolveStoredBusinessArea(merged.businessArea)
+      queryClient.setQueryData(
+        detailKey,
         previousBusinessArea && previousBusinessArea !== nextBusinessArea
-          ? { ...program, businessArea: previousBusinessArea }
-          : program
-      queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), merged)
+          ? { ...merged, businessArea: previousBusinessArea }
+          : merged
+      )
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
       void queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.navigation(program.id),
+        queryKey: generalProgramQueryKeys.navigation(variables.programId),
       })
+      await queryClient.invalidateQueries({ queryKey: detailKey })
     },
   })
 }

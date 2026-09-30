@@ -92,6 +92,8 @@ export type EducationApplicationListItem = {
   educationFormLabel: string
   thumbnailUrl?: string
   displayStatus: EducationDisplayStatus
+  /** 포털 상세 `cancellable`. 없으면 진행 상태로 취소 가능 여부를 판단한다. */
+  cancellable?: boolean
   /** 프로그램 상세 케이스 — 교육/봉사 목록 분리 */
   detailCase: ProgramDetailCase
   /** 면접 전형 포함 여부 — 서류 합격 배너 노출 조건 */

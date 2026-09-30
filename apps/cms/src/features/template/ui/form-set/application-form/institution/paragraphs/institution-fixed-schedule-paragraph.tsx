@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
-import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { resolveInstitutionFixedScheduleDescription } from '@/features/template/lib/institution-application-schedule-copy'
+import {
+  useInstitutionApplicationProgramBridge,
+  type InstitutionApplicationProgramBridge,
+} from '@/features/program/general/lib/institution-application-program-bridge'
 import {
   useGeneralApplicationOverlayKv,
   updateGeneralApplicationOverlayKey,
@@ -11,11 +13,13 @@ import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
 /** 날짜 지정 등 — 프로그램 등록 교육 진행 예정일 목록에서 선택 (미리보기·응답용) */
 export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
   readOnlyPreview = false,
+  programBridge,
 }: {
   readOnlyPreview?: boolean
+  programBridge?: InstitutionApplicationProgramBridge
 }) {
-  const bridge = useInstitutionApplicationProgramBridge()
-  const description = resolveInstitutionFixedScheduleDescription(bridge)
+  const storeBridge = useInstitutionApplicationProgramBridge()
+  const bridge = programBridge ?? storeBridge
   const lines = useMemo(() => {
     const fromBridge = bridge.educationScheduleLines
       ?.map(line => line.trim())
@@ -50,9 +54,6 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
 
   return (
     <div className="multiple-choice-body">
-      <p className="form-editor-template-field-hint-text institution-fixed-schedule-paragraph__hint">
-        {description}
-      </p>
       {lines.map(line => (
         <div key={line} role="presentation" className="multiple-choice-row">
           <CmsCheckbox

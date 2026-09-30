@@ -91,11 +91,7 @@ export function resolveUjatRecruitAnnouncementTitle(
   const overlay = mergedVolunteerOverlay(program)
   const half = volunteerHalfFromRecruitDisplayKind(kind)
   if (half) {
-    const halfTitle = overlayString(overlay, ujatVolunteerHalfOverlayKey(half, 'publicTitle'))
-    if (halfTitle) return halfTitle
-    const other: UjatVolunteerRecruitHalf = half === 'h1' ? 'h2' : 'h1'
-    const otherTitle = overlayString(overlay, ujatVolunteerHalfOverlayKey(other, 'publicTitle'))
-    if (otherTitle) return '-'
+    return overlayString(overlay, ujatVolunteerHalfOverlayKey(half, 'publicTitle')) || '-'
   }
   return overlayString(overlay, UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.publicTitle) || '-'
 }

@@ -6,6 +6,10 @@ import {
 } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import { UjatRecruitInterviewScheduleProgramView } from '@/features/program/ujat/ui/detail-modal/info/recruit-paragraph-views/interview-schedule-program'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+import {
+  ujatVolunteerRecruitInterviewNamespace,
+  ujatVolunteerRecruitInterviewRangeSealKey,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
 
 /** UJAT 프로그램 봉사자 모집 폼 — 면접 진행 가능 일정 */
@@ -34,13 +38,15 @@ export function UjatRecruitVolunteerInterviewScheduleParagraph({
     )
   }
 
-  // 양식 편집기: 카드 헤더(타이틀·설명·예외 일정 추가)는 LeftPanel이 담당 — 본문만 렌더
+  const half = props.volunteerHalf ?? 'h1'
   return (
     <RecruitFormVolunteerInterviewScheduleParagraph
       exceptionScheduleCount={exceptionScheduleCount}
       commonScheduleSeed={commonScheduleSeed}
       onCommonExclusionChange={onCommonExclusionChange}
       freezeUnavailableCalendar={freezeUnavailableCalendar}
+      overlayNamespace={ujatVolunteerRecruitInterviewNamespace(half)}
+      interviewRangeSealKey={ujatVolunteerRecruitInterviewRangeSealKey(half)}
     />
   )
 }

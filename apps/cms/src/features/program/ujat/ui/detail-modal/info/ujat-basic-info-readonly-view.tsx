@@ -4,6 +4,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatDate } from '@/features/program/shared/lib/program-detail-info-constants'
 import { UjatProgramListProgressCell } from '@/features/program/ujat/ui/list/ujat-program-list-progress-cell'
 import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
+import { SponsorManagerLineInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const BLOCK_GAP_STYLE = { marginTop: 16 } as const
@@ -90,7 +91,10 @@ export function UjatBasicInfoReadonlyView({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="후원사" view={display.sponsorName} />
-          <DetailInfoForm.Field label="후원사 담당자" view={display.sponsorManager} />
+          <DetailInfoForm.Field
+            label="후원사 담당자"
+            view={<SponsorManagerLineInlineView text={display.sponsorManager} />}
+          />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field label="설문 진행 항목" fullRow view={display.surveyItems} />

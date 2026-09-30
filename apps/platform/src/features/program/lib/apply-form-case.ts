@@ -36,7 +36,14 @@ export type ProgramApplicationTemplateCode =
 
 export type ProgramApplyFormCaseInput = Pick<ProgramListItem | ProgramDetail, 'category' | 'id'> &
   Partial<
-    Pick<ProgramDetail, 'detailCase' | 'participationMethod' | 'programType' | 'registrationKind'>
+    Pick<
+      ProgramDetail,
+      | 'detailCase'
+      | 'participationMethod'
+      | 'programType'
+      | 'registrationKind'
+      | 'programAudience'
+    >
   >
 
 /** QA·mock 고정 id → 신청 폼 케이스 */
@@ -145,12 +152,17 @@ export function resolveProgramApplyFormCase(
     return 'institution-general'
   }
 
-  if (program.category === 'institution') {
-    return 'institution-general'
-  }
-
   if (program.category === 'instructor') {
     return 'instructor'
+  }
+
+  /** CMS 개인 프로그램 — portal category 가 institution 이어도 개인 신청 양식을 쓴다. */
+  if (program.programAudience === 'individual') {
+    return program.participationMethod === 'team' ? 'individual-team' : 'individual-general'
+  }
+
+  if (program.category === 'institution') {
+    return 'institution-general'
   }
 
   // CMS: participationMethod === 'team' → teamInfo 노출

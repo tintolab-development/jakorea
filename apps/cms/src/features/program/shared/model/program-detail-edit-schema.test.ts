@@ -143,6 +143,14 @@ describe('program detail trained teachers boolean fields', () => {
     const values = {
       ...programToDetailEditValues(program),
       partnerInvolvement: null,
+      mainTitle: '대표 프로그램명',
+      titleEn: 'Program Title',
+      announcementTitle: '공고용 프로그램명',
+      detailedProgramId: '1001',
+      businessArea: '경제금융',
+      educationProcess: 'elementary',
+      ipOwned: 'JA',
+      courseDeliveredBy: 'JA' as const,
     }
 
     const result = programDetailTrainedTeachersCommonInfoEditSchema.safeParse(values)
@@ -246,6 +254,7 @@ describe('programToDetailEditValues keeps stored common info in edit fields', ()
     const values = programToDetailEditValues({
       ...program,
       id: '186034',
+      backendProgramType: 'TRAINED_TEACHER',
       title: '교육받은교사(수정4)',
       mainTitle: '대표명',
       textbookName: '사회공헌 프로젝트',
@@ -315,6 +324,22 @@ describe('programToDetailEditValues keeps stored common info in edit fields', ()
     expect(values.sponsorManagerContactIds).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
     expect(values.sponsorManagerContactId).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
   })
+
+  it('후원사만 있고 담당자 표시가 비어도 수정 폼에 미선택이 체크된다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      sponsorId: '1627251',
+      managerName: '',
+      generalCommonInfo: {
+        sponsorManagementIds: ['1627251'],
+        sponsorManagerContactIds: [],
+        sponsorManagerLine: '',
+      },
+    } as Program)
+
+    expect(values.sponsorManagerContactIds).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
+    expect(values.sponsorManagerContactId).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
+  })
 })
 
 describe('program detail title edit fields', () => {
@@ -343,6 +368,30 @@ describe('program detail title edit fields', () => {
     expect(patch.title).toBe('대표명')
     expect(patch.mainTitle).toBe('대표명')
     expect(patch.textbookName).toBe('진짜 교재명')
+    expect(patch.generalCommonInfo?.announcementTitle).toBe('수정 공고명')
+    expect(patch.generalCommonInfo?.detailedProgramName).toBe('수정 세부명')
+  })
+
+  it('교육받은 교사는 공고용명·세부명을 top-level 컬럼과 nested에 함께 저장한다', () => {
+    const existing = {
+      ...program,
+      id: '186034',
+      backendProgramType: 'TRAINED_TEACHER',
+      title: '기존 공고명',
+      textbookName: '기존 세부명',
+      generalCommonInfo: {
+        announcementTitle: '기존 공고명',
+        detailedProgramName: '기존 세부명',
+      },
+    } as Program
+    const values = {
+      ...programToDetailEditValues(existing),
+      announcementTitle: '수정 공고명',
+      detailedProgramName: '수정 세부명',
+    }
+    const patch = detailEditValuesToProgramPatch(values, existing)
+    expect(patch.title).toBe('수정 공고명')
+    expect(patch.textbookName).toBe('수정 세부명')
     expect(patch.generalCommonInfo?.announcementTitle).toBe('수정 공고명')
     expect(patch.generalCommonInfo?.detailedProgramName).toBe('수정 세부명')
   })

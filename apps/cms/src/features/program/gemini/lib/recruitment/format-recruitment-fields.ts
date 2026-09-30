@@ -55,5 +55,5 @@ export function formatAttachmentFileNames(names: string[]): string {
 
 export type GeminiRecruitmentFormFieldValues = Omit<
   GeminiRecruitmentAddFormSnapshot,
-  'institutionSectionDescription' | 'detailSectionDescription'
+  'institutionSectionDescription' | 'detailSectionDescription' | 'educationStructure'
 >

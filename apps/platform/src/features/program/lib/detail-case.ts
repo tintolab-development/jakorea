@@ -120,7 +120,7 @@ export function isInterviewCapableCase(detailCase: ProgramDetailCase): boolean {
 }
 
 /**
- * 면접 있는 경우에만 1차 서류·2차 면접 기간 노출.
+ * 면접 있는 경우에만 1차 합격자 발표일·면접 기간 노출.
  * - interviewEnabled === false | 'no' → 숨김
  * - interviewEnabled === true | 'yes' → 노출
  * - 미설정: 서류/면접 일정 필드가 하나라도 있을 때만 노출

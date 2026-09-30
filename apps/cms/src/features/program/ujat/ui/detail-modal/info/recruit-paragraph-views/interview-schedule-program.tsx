@@ -10,6 +10,10 @@ import {
 import { UjatVolunteerInterviewScheduleReadonly } from '@/features/program/ujat/ui/detail-modal/info/ujat-volunteer-interview-schedule-readonly'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+import {
+  ujatVolunteerRecruitInterviewNamespace,
+  ujatVolunteerRecruitInterviewRangeSealKey,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { CmsButton } from '@/shared/ui'
@@ -90,6 +94,12 @@ export function UjatRecruitInterviewScheduleProgramView({
             setExceptionScheduleAddDisabled(state.excludeNone)
           }
           freezeUnavailableCalendar={false}
+          overlayNamespace={
+            volunteerHalf ? ujatVolunteerRecruitInterviewNamespace(volunteerHalf) : undefined
+          }
+          interviewRangeSealKey={
+            volunteerHalf ? ujatVolunteerRecruitInterviewRangeSealKey(volunteerHalf) : undefined
+          }
         />
       ) : (
         <UjatVolunteerInterviewScheduleReadonly data={display} />

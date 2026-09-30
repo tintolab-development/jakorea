@@ -16,6 +16,32 @@ export const RECRUIT_DETAIL_INFO_OVERLAY_PREFIX = {
   volunteer: 'recruitVolunteer.detailInfo',
 } as const
 
+const UJAT_VOLUNTEER_RECRUIT_GENERAL_STORE_PREFIXES = [
+  RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer,
+  'recruitVolunteer.h1.detailInfo',
+  'recruitVolunteer.h2.detailInfo',
+  'recruit.volunteer.h1',
+  'recruit.volunteer.h2',
+] as const
+
+export function pickUjatVolunteerRecruitGeneralStoreSidecar(
+  record: Record<string, unknown> = getGeneralRecruitOverlayRecord()
+): Record<string, unknown> {
+  return UJAT_VOLUNTEER_RECRUIT_GENERAL_STORE_PREFIXES.reduce(
+    (acc, prefix) => ({ ...acc, ...pickOverlayKeysByPrefix(record, prefix) }),
+    {} as Record<string, unknown>
+  )
+}
+
+export function restoreUjatVolunteerRecruitGeneralStoreSidecar(
+  overlay: Record<string, unknown> | undefined
+): void {
+  if (overlay == null) return
+  const sidecar = pickUjatVolunteerRecruitGeneralStoreSidecar(overlay)
+  if (Object.keys(sidecar).length === 0) return
+  patchGeneralRecruitOverlay(sidecar)
+}
+
 export function recruitDetailInfoOverlayPrefixForCatalogId(
   catalogTemplateId: string
 ): string | null {

@@ -99,10 +99,38 @@ describe('getGeneralProgramApiErrorMessage', () => {
     ).toContain('참여자 유형')
     expect(
       getGeneralProgramApiErrorMessage(
-        errorFor('PROGRAM_INSTRUCTOR_RECRUITMENT_EDIT_PERIOD_ENDED'),
+        {
+          response: {
+            status: 409,
+            data: {
+              success: false,
+              error: {
+                code: 'PROGRAM_INSTRUCTOR_RECRUITMENT_EDIT_PERIOD_ENDED',
+                message: '프로그램 운영이 시작된 이후에는 모집 정보를 수정할 수 없습니다.',
+              },
+            },
+          },
+        },
         'fallback'
       )
-    ).toContain('모집·신청')
+    ).toBe('프로그램 운영이 시작된 이후에는 모집 정보를 수정할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            status: 409,
+            data: {
+              success: false,
+              error: {
+                code: 'PROGRAM_INSTRUCTOR_RECRUITMENT_EDIT_PERIOD_ENDED',
+                message: '모집 시작 이후에는 신청 양식을 수정할 수 없습니다.',
+              },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('모집 시작 이후에는 신청 양식을 수정할 수 없습니다.')
   })
 
   it('PREFERRED_SCHEDULE_* 서버 메시지가 있으면 그대로 쓴다', () => {

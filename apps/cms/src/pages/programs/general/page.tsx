@@ -9,8 +9,11 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramList } from '@/features/program/general/ui/program-list'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
-import { GeneralProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/detail-fullpage-modal'
-import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
+import {
+  LazyGeneralProgramDetailFullPageModal,
+  LazyGeneralProgramRegistrationFullpageModal,
+  ProgramModalWhenOpen,
+} from '@/pages/programs/lazy-program-modals'
 import { useDeleteGeneralPrograms } from '@/features/program/general/hooks/use-delete-general-program'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
@@ -19,7 +22,9 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import type { Program } from '@/types/domain'
-import { CmsButton, ConfirmModal } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { resolveProgramDeleteGuideModalCopy } from '@/features/program/shared/lib/program-delete-guide'
+import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
 import {
   TemplateWritingPreviewProvider,
@@ -178,6 +183,10 @@ export function GeneralProgramListPageContent() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
+  const programBulkDeleteGuide = useMemo(
+    () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
+    [programsPendingBulkDelete.length]
+  )
 
   const isScheduledFilter = statusFilter === 'scheduled'
   const [, setHasListFilters] = useState(false)
@@ -274,14 +283,17 @@ export function GeneralProgramListPageContent() {
   const isAdmin = user?.role === 'ADMIN'
   const showCalendarView = isAdmin
 
+  const { showAlert } = useCmsAlert()
+
   const handleBulkDeleteClick = () => {
     const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
-    if (programsToDelete.length === 0) return
+    if (programsToDelete.length === 0) {
+      showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
+      return
+    }
     setProgramsPendingBulkDelete(programsToDelete)
     setBulkDeleteModalOpen(true)
   }
-
-  const { showAlert } = useCmsAlert()
 
   const handleProgramCreateClick = useCallback(() => {
     void (async () => {
@@ -358,7 +370,6 @@ export function GeneralProgramListPageContent() {
           variant="delete"
           width={140}
           onClick={handleBulkDeleteClick}
-          disabled={selectedRowKeys.length === 0}
           className="program-list-page__bulk-delete-button"
         >
           선택 삭제
@@ -402,7 +413,7 @@ export function GeneralProgramListPageContent() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={listLoading}
+        loading={listLoading && filteredPrograms.length === 0}
         headerTitle={headerTitle}
         onView={handleView}
         searchParams={searchParams}
@@ -424,20 +435,24 @@ export function GeneralProgramListPageContent() {
         <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       ) : null}
 
-      <GeneralProgramDetailFullPageModal
-        open={generalDetailModalOpen}
-        program={generalDetailProgram}
-        programIdHint={programIdFromUrl}
-        searchParams={searchParams}
-        setSearchParams={setSearchParams}
-        onClose={handleCloseFullPageModal}
-      />
+      <ProgramModalWhenOpen open={generalDetailModalOpen}>
+        <LazyGeneralProgramDetailFullPageModal
+          open={generalDetailModalOpen}
+          program={generalDetailProgram}
+          programIdHint={programIdFromUrl}
+          searchParams={searchParams}
+          setSearchParams={setSearchParams}
+          onClose={handleCloseFullPageModal}
+        />
+      </ProgramModalWhenOpen>
 
-      <GeneralProgramRegistrationFullpageModal
-        open={isGeneralProgramNewRegistrationQuery}
-        onClose={handleCloseGeneralProgramRegistrationFullpage}
-        onProgramRegistrationSaved={handleGeneralProgramRegistrationSaved}
-      />
+      <ProgramModalWhenOpen open={isGeneralProgramNewRegistrationQuery}>
+        <LazyGeneralProgramRegistrationFullpageModal
+          open={isGeneralProgramNewRegistrationQuery}
+          onClose={handleCloseGeneralProgramRegistrationFullpage}
+          onProgramRegistrationSaved={handleGeneralProgramRegistrationSaved}
+        />
+      </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal
         open={draftNoticeOpen}
@@ -446,13 +461,11 @@ export function GeneralProgramListPageContent() {
         onCancel={() => setDraftNoticeOpen(false)}
       />
 
-      <ConfirmModal
+      <DeleteGuideModal
         open={bulkDeleteModalOpen}
-        title="선택 삭제"
-        content={`선택한 ${programsPendingBulkDelete.length}건을 삭제하시겠습니까?`}
+        title={programBulkDeleteGuide.title}
+        lines={programBulkDeleteGuide.lines}
         confirmText="삭제"
-        cancelText="취소"
-        danger
         onConfirm={async () => {
           if (isRemoteDataSource) {
             await deleteGeneralProgramsMutation.mutateAsync(

@@ -156,7 +156,14 @@ export async function fetchCompanySchoolOverviewStages(): Promise<CompanySchoolO
 
 export async function getCompanySchoolProgram(programId: string): Promise<Program> {
   assertRemoteReady()
-  return mapCompanySchoolDetailToProgram(await fetchAdminProgramByIdRemote(programId))
+  const mapped = mapCompanySchoolDetailToProgram(await fetchAdminProgramByIdRemote(programId))
+  const { withFetchedProgramSponsorAssignments } = await import(
+    '@/features/program/shared/lib/merge-program-sponsor-assignments'
+  )
+  const { fetchAdminProgramSponsorsRemote } = await import(
+    '@/features/program/general/api/programs-api-client'
+  )
+  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
 }
 
 export async function createCompanySchoolProgram(
@@ -191,7 +198,14 @@ export async function updateCompanySchoolProgram(
       patch && Object.keys(patch).length > 0 ? patch : undefined
     )
   )
-  return mapCompanySchoolDetailToProgram(dto)
+  const mapped = mapCompanySchoolDetailToProgram(dto)
+  const { withFetchedProgramSponsorAssignments } = await import(
+    '@/features/program/shared/lib/merge-program-sponsor-assignments'
+  )
+  const { fetchAdminProgramSponsorsRemote } = await import(
+    '@/features/program/general/api/programs-api-client'
+  )
+  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
 }
 
 export async function deleteCompanySchoolProgram(programId: string): Promise<void> {

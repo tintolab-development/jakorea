@@ -5,6 +5,7 @@
  * 교육받은 교사: nested 라벨이 없으면 컬럼(applicationStartDate 등)으로 조회 복원
  */
 
+import { formatKoreanPhoneNumber, isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type { Program } from '@/types/domain'
 import {
   formatDateOnly,
@@ -29,6 +30,40 @@ import {
   pickDisplayString,
   pickDisplayValue,
 } from '@/features/program/general/lib/detail-value-helpers'
+
+const INQUIRY_CONTACT_PREFIX_RE = /^문의처\s*[:：]\s*/i
+
+/**
+ * 문의처 표시명. BE는 contactOrganizationName·contactName 을 같은 필드 별칭으로 주기도 한다.
+ * 같으면 한 번만. 기관명/담당자가 다를 때만 ` / ` 로 붙인다.
+ */
+export function formatRecruitmentInquiryContactName(
+  orgName: string | undefined,
+  personName: string | undefined
+): string {
+  const org = stripInquiryContactPrefix(orgName)
+  const person = stripInquiryContactPrefix(personName)
+  if (!org && !person) return '-'
+  if (!org) return person
+  if (!person) return org
+  if (org === person) return org
+  const orgParts = org.split(/\s*\/\s*/).map(part => part.trim()).filter(Boolean)
+  if (orgParts.includes(person)) return org
+  return `${org} / ${person}`
+}
+
+function stripInquiryContactPrefix(value: string | undefined): string {
+  return value?.trim().replace(INQUIRY_CONTACT_PREFIX_RE, '').trim() ?? ''
+}
+
+/** 수정 폼이 버리는 잘린 번호(`03`)는 조회에도 올리지 않는다. 마스킹(`*`)은 그대로. */
+export function formatRecruitmentInquiryPhone(raw: string): string {
+  const value = raw.trim()
+  if (!value || value === '-') return '-'
+  if (value.includes('*')) return value
+  if (!isValidKoreanPhoneNumber(value)) return '-'
+  return formatKoreanPhoneNumber(value) || value
+}
 
 type ParticipantRecruitmentInfoLoose = NonNullable<
   NonNullable<Program['generalCommonInfo']>['participantRecruitmentInfo']
@@ -214,12 +249,10 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     ? '-'
     : pickDisplayString(info?.remarks, isTrainedTeachers ? program.remarks : undefined)
 
-  const orgName = info?.contactOrganizationName?.trim()
-  const personName = info?.contactName?.trim()
-  const contactOrganizationName =
-    orgName && personName
-      ? `${orgName} / ${personName}`
-      : pickDisplayString(orgName, personName)
+  const contactOrganizationName = formatRecruitmentInquiryContactName(
+    info?.contactOrganizationName,
+    info?.contactName
+  )
 
   const operationFromProgram = isTrainedTeachers
     ? formatDateRange(program.startDate, program.endDate)
@@ -262,11 +295,13 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     interviewMethod: program.interviewMethod,
     finalAnnouncementLabel,
     contactOrganizationName,
-    contactPhone: pickDisplayString(
-      info?.inquiryTel,
-      info?.tel,
-      info?.contactPhone,
-      isTrainedTeachers ? program.contactPhone : undefined
+    contactPhone: formatRecruitmentInquiryPhone(
+      pickDisplayString(
+        info?.inquiryTel,
+        info?.tel,
+        info?.contactPhone,
+        isTrainedTeachers ? program.contactPhone : undefined
+      )
     ),
     contactEmail: pickDisplayString(
       info?.inquiryEmail,

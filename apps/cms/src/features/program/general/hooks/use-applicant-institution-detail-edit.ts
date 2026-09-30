@@ -323,14 +323,21 @@ export function useApplicantInstitutionDetailEdit({
         )
         const teacherMemberId = selectedTeacher ? Number(selectedTeacher.value) : undefined
         const textbookId = Number(normalizedDraft.textbookId)
+        const nextEducationFormat = showEducationFormatField
+          ? toRequestedEducationFormatApiValue(normalizedDraft.educationFormat)
+          : undefined
+        const baselineEducationFormat = toRequestedEducationFormatApiValue(
+          baselineDraft.educationFormat
+        )
         const response = await updateOrganizationApplicationRemote(institution.id, {
           requestedGrade: normalizedDraft.educationGrade,
           organizationAddressDetail: normalizedDraft.addressDetail.trim() || undefined,
           requestedClassCount: savePayload.classCount,
           requestedStudentCount: savePayload.studentCount,
-          requestedEducationFormat: showEducationFormatField
-            ? toRequestedEducationFormatApiValue(normalizedDraft.educationFormat)
-            : undefined,
+          requestedEducationFormat:
+            nextEducationFormat && nextEducationFormat !== baselineEducationFormat
+              ? nextEducationFormat
+              : undefined,
           teacherMemberId:
             teacherMemberId != null && Number.isFinite(teacherMemberId)
               ? teacherMemberId

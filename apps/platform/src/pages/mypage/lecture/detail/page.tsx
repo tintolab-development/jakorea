@@ -328,7 +328,8 @@ export function MypageLectureDetailPage() {
   }
 
   const showBanner = shouldShowDocumentPassBanner(application)
-  const showCancelCta = canCancelEducationApplication(application.displayStatus)
+  const showCancelCta =
+    application.cancellable ?? canCancelEducationApplication(application.displayStatus)
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection = isActivitySection(section)
     ? section
@@ -355,6 +356,8 @@ export function MypageLectureDetailPage() {
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
           preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
         />
       )
     }
@@ -362,6 +365,8 @@ export function MypageLectureDetailPage() {
       return (
         <EducationSchedulePanel
           programId={program.id}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
@@ -375,13 +380,15 @@ export function MypageLectureDetailPage() {
         withdrawalPhase: application.withdrawalPhase,
         configured: program.surveyConfigured,
       })
-      if (surveyAvailability === 'active') {
+      if (remoteDetailEnabled || surveyAvailability === 'active') {
         return (
           <EducationSurveyFillPanel
             kind="survey"
             programTitle={program.title}
             educationScheduleLines={program.educationScheduleLines}
             educationTargetLabel={program.educationTargetDetailLabel}
+            applicationType={routeApplicationType}
+            applicationId={application.id}
           />
         )
       }
@@ -393,7 +400,7 @@ export function MypageLectureDetailPage() {
         withdrawalPhase: application.withdrawalPhase,
         configured: program.satisfactionConfigured,
       })
-      if (satisfactionAvailability === 'active') {
+      if (remoteDetailEnabled || satisfactionAvailability === 'active') {
         return (
           <EducationSurveyFillPanel
             kind="satisfaction"
@@ -401,6 +408,8 @@ export function MypageLectureDetailPage() {
             programTitle={program.title}
             educationScheduleLines={program.educationScheduleLines}
             educationTargetLabel={program.educationTargetDetailLabel}
+            applicationType={routeApplicationType}
+            applicationId={application.id}
           />
         )
       }
@@ -410,6 +419,7 @@ export function MypageLectureDetailPage() {
       return (
         <EducationSettlementPanel
           programId={program.id}
+          applicationType={routeApplicationType}
           applicationId={application.id}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined

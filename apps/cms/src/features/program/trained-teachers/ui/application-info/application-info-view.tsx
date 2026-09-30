@@ -13,7 +13,7 @@ import {
 import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
 import { isTrainedTeachersApplicationFormEditable } from '@/features/program/trained-teachers/lib/application-form-edit-policy'
-import { PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
+import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
@@ -112,7 +112,7 @@ export function TrainedTeachersApplicationInfoView({
     if (!formEditable) {
       showAlert({
         title: '안내',
-        content: PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE,
+        content: PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
       })
       return
     }

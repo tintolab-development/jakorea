@@ -1,23 +1,34 @@
 /**
- * 일반 프로그램 상세 — 모집 정보 사용자 미리보기 (참여자 / 강사 / 봉사자)
- * Platform 사용자 페이지 전체본을 A4 비율로 스케일 다운해 표시한다.
+ * 모집 정보 사용자 미리보기 (참여자 / 강사 / 봉사자) — Platform 실제 상세 화면
  */
 
-import { CloseOutlined } from '@ant-design/icons'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import type { Program } from '@/types/domain'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { CmsButton } from '@/shared/ui/cms-button'
-import { TemplatePreviewPageNavigator } from '@/features/template/ui/modal/template-preview-page-navigator'
+import { PlatformPreviewModal } from '@/features/program/shared/ui/platform-preview/platform-preview-modal'
 import {
-  ParticipantRecruitmentUserPage,
-  RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT,
-  recruitmentUserPreviewHeaderTitle,
-  type RecruitmentUserPreviewAudience,
-} from '@/features/program/general/ui/user-preview'
+  buildPlatformPreviewMessage,
+  toPreviewAttachments,
+} from '@/features/program/shared/lib/platform-preview/build-message'
+import { usePreviewPosterUrl } from '@/features/program/shared/lib/platform-preview/poster-url'
+import {
+  buildGeneralProgramPortalPreview,
+  type ProgramPreviewAudience,
+} from '@/features/program/general/lib/platform-preview-payload'
+import { buildUjatProgramPortalPreview } from '@/features/program/ujat/lib/platform-preview-payload'
 import { PARTICIPANT_RECRUITMENT_PREVIEW_MODAL_Z_INDEX } from '@/features/program/general/lib/general-program-modal-z-index'
-import '@/features/template/ui/modal/template-preview-modal.css'
-import './participant-recruitment-preview-modal.css'
+
+export type RecruitmentUserPreviewAudience = ProgramPreviewAudience
+
+export function recruitmentUserPreviewHeaderTitle(audience: RecruitmentUserPreviewAudience): string {
+  switch (audience) {
+    case 'instructors':
+      return '강사 모집 폼 미리보기'
+    case 'volunteers':
+      return '봉사자 모집 폼 미리보기'
+    default:
+      return '참여자 모집 폼 미리보기'
+  }
+}
 
 export function ParticipantRecruitmentPreviewModal({
   open,
@@ -25,136 +36,41 @@ export function ParticipantRecruitmentPreviewModal({
   program,
   sponsorName,
   audience = 'institutions',
+  programKind = 'general',
 }: {
   open: boolean
   onClose: () => void
   program: Program
   sponsorName?: string
   audience?: RecruitmentUserPreviewAudience
+  /** UJAT 등록·상세는 `ujat` — 학교/봉사단 모집 매핑 */
+  programKind?: 'general' | 'ujat'
 }) {
-  const pageContentRef = useRef<HTMLDivElement>(null)
-  const [contentHeight, setContentHeight] = useState(RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT)
-  const [currentPage, setCurrentPage] = useState(1)
+  const posterUrl = usePreviewPosterUrl(program, open)
 
-  const totalPages = Math.max(1, Math.ceil(contentHeight / RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT))
-  const headerTitle = recruitmentUserPreviewHeaderTitle(audience)
-
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page)
-  }, [])
-
-  useEffect(() => {
-    if (!open) {
-      setCurrentPage(1)
-    }
-  }, [open])
-
-  useLayoutEffect(() => {
-    if (!open) return
-
-    const node = pageContentRef.current
-    if (!node) return
-
-    const updateHeight = () => {
-      setContentHeight(node.getBoundingClientRect().height)
-    }
-
-    updateHeight()
-
-    const observer = new ResizeObserver(() => {
-      updateHeight()
+  const message = useMemo(() => {
+    if (!open) return null
+    const detail =
+      programKind === 'ujat'
+        ? buildUjatProgramPortalPreview({
+            program,
+            sponsorName,
+            audience: audience === 'volunteers' ? 'volunteers' : 'institutions',
+          })
+        : buildGeneralProgramPortalPreview({ program, sponsorName, audience })
+    return buildPlatformPreviewMessage(detail, {
+      thumbnailUrl: posterUrl,
+      attachments: toPreviewAttachments(program.attachmentFileNames),
     })
-    observer.observe(node)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [open, program.id, sponsorName, audience])
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages)
-    }
-  }, [currentPage, totalPages])
-
-  const pageOffset = (currentPage - 1) * RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT
+  }, [open, program, sponsorName, audience, programKind, posterUrl])
 
   return (
-    <TealHeaderModal
+    <PlatformPreviewModal
       open={open}
-      onCancel={onClose}
-      title=""
-      size="full"
-      hideHeader
-      className="template-preview-modal template-preview-modal--form-layout template-preview-modal--agreement-layout template-preview-modal--survey-layout teal-header-modal--full participant-recruitment-preview-modal"
+      onClose={onClose}
+      title={recruitmentUserPreviewHeaderTitle(audience)}
+      message={message}
       zIndex={PARTICIPANT_RECRUITMENT_PREVIEW_MODAL_Z_INDEX}
-    >
-      <div className="template-preview-modal__shell">
-        <header className="template-preview-modal__title-row">
-          <div className="template-preview-modal__title-left">
-            <span className="template-preview-modal__title-text">{headerTitle}</span>
-            <span className="template-preview-modal__badge">미리보기</span>
-          </div>
-          <button
-            type="button"
-            className="template-preview-modal__title-close"
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            <CloseOutlined />
-          </button>
-        </header>
-
-        <div className="template-preview-modal__body">
-          <div className="template-preview-modal__notice-wrap">
-            <div className="template-preview-modal__notice">
-              <span className="template-preview-modal__notice-text">
-                현재 화면은 미리보기 화면입니다.
-              </span>
-              <div className="template-preview-modal__notice-actions">
-                <CmsButton
-                  type="button"
-                  variant="secondary"
-                  size="large"
-                  width={140}
-                  className="template-preview-modal__notice-close-btn"
-                  onClick={onClose}
-                >
-                  미리보기 닫기
-                </CmsButton>
-              </div>
-            </div>
-          </div>
-
-          <div className="template-preview-modal__pages">
-            <div className="template-preview-modal__a4-stage">
-              <div className="template-preview-modal__a4-stack">
-                <div className="template-preview-modal__a4-frame">
-                  <div className="template-preview-modal__a4-scale-inner">
-                    <div
-                      className="participant-recruitment-preview-modal__page-shift"
-                      style={{ transform: `translateY(-${pageOffset}px)` }}
-                    >
-                      <ParticipantRecruitmentUserPage
-                        ref={pageContentRef}
-                        program={program}
-                        sponsorName={sponsorName}
-                        audience={audience}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <TemplatePreviewPageNavigator
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      </div>
-    </TealHeaderModal>
+    />
   )
 }

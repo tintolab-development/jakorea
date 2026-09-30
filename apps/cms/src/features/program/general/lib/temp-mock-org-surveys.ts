@@ -2,10 +2,7 @@
  * TODO(temp-mock): 열여라 참깨 — 설문 관리 LNB별 사전 등록 시드 (검증 후 삭제)
  */
 
-import {
-  isGeneralProgramTempMockProgramId,
-  TEMP_MOCK_ORG_PROGRAM_ID,
-} from '@/features/program/general/api/temp-mock-capabilities'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import type { GeneralSatisfactionAudienceKey } from '@/features/program/general/lib/survey-audience'
 import { getEnabledGeneralSatisfactionAudienceTabs } from '@/features/program/general/lib/survey-audience'
 import {
@@ -88,7 +85,7 @@ function buildSampleSurveyAnswers(index: number): Record<string, string> {
   }
 }
 
-function buildTempMockSurveyResponses(count: number): SurveyPollRawResponse[] {
+function buildTempMockSurveyResponses(programId: string, count: number): SurveyPollRawResponse[] {
   const names = [
     '김담당',
     '이교사',
@@ -104,7 +101,7 @@ function buildTempMockSurveyResponses(count: number): SurveyPollRawResponse[] {
     '오봉사',
   ]
   return Array.from({ length: count }, (_, index) => ({
-    respondentId: `${TEMP_MOCK_ORG_PROGRAM_ID}-survey-respondent-${index + 1}`,
+    respondentId: `${programId}-survey-respondent-${index + 1}`,
     respondentName: names[index % names.length] ?? `응답자 ${index + 1}`,
     addressRegion: ['서울', '경기', '인천'][index % 3] ?? '서울',
     answers: buildSampleSurveyAnswers(index),
@@ -130,6 +127,11 @@ function satisfactionCounts(audience: GeneralSatisfactionAudienceKey): {
     default:
       return { responseCount: 4, participantTotal: 8 }
   }
+}
+
+/** org · individual temp mock 공통 설문 시드 */
+export function buildTempMockSurveyState(program: Program): TempMockOrgSurveyState | null {
+  return buildTempMockOrgSurveyState(program)
 }
 
 export function buildTempMockOrgSurveyState(program: Program): TempMockOrgSurveyState | null {
@@ -178,6 +180,6 @@ export function buildTempMockOrgSurveyState(program: Program): TempMockOrgSurvey
     lectureEvalSubmitted: true,
     lectureEvalResponses,
     initialLectureEvalTab: 'results',
-    responses: buildTempMockSurveyResponses(12),
+    responses: buildTempMockSurveyResponses(program.id, 12),
   }
 }

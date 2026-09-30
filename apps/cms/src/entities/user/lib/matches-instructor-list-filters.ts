@@ -1,5 +1,6 @@
 import type { User } from '@/types/user'
 import { getMemberPermissionInstructorApplicationTypeLabel } from '@/features/user/permission-management/lib/member-permission-instructor-application-type'
+import { resolveInstructorSettlementUiStatusFromListLabel } from '@/shared/constants/instructor-settlement-status'
 
 type UserRow = Omit<User, 'password'>
 
@@ -28,6 +29,9 @@ export function matchesInstructorSettlementFilter(user: UserRow, selected: strin
   if (token === '해당 없음') {
     return label === '' || label === '-' || label === '해당 없음'
   }
+  const rowStatus = resolveInstructorSettlementUiStatusFromListLabel(label)
+  const filterStatus = resolveInstructorSettlementUiStatusFromListLabel(token)
+  if (rowStatus && filterStatus) return rowStatus === filterStatus
   return label === token
 }
 

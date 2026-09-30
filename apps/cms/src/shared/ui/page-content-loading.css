@@ -34,3 +34,41 @@
   font-size: 16px;
   line-height: 150%;
 }
+
+/**
+ * 영역 로딩 스피너.
+ * Ant Design 중첩 오버레이는 top/left 0 + max-height(약 400px)이고,
+ * 높이가 확정되지 않으면 점의 50% 좌표가 무시되어 좌상단에 남는다.
+ * 오버레이를 그 영역 전체에 붙이고 점을 가운데 둔다.
+ * 자식 없는 단독 Spin은 흐름 안에 두어, 감싼 flex 영역이 가운데 정렬할 수 있게 한다.
+ * 버튼 로딩 아이콘(.ant-btn-loading-icon)은 이 오버레이 선택자에 해당하지 않는다.
+ */
+.ant-table-wrapper:has(.ant-table-placeholder)
+  .ant-spin-nested-loading:has(> div > .ant-spin-spinning) {
+  min-height: 280px;
+}
+
+.ant-spin-nested-loading > div > .ant-spin.ant-spin-spinning {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 4;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 0 !important;
+}
+
+.ant-spin-nested-loading > div > .ant-spin.ant-spin-spinning .ant-spin-dot,
+.ant-spin-nested-loading > div > .ant-spin.ant-spin-spinning .ant-spin-dot-holder {
+  position: static !important;
+  top: auto !important;
+  inset-inline-start: auto !important;
+  margin: 0 !important;
+}
+
+.ant-spin.ant-spin-spinning {
+  position: relative;
+}

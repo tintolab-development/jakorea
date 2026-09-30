@@ -20,8 +20,10 @@ import {
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   mergeRecruitDetailInfoFromGeneralStore,
+  pickUjatVolunteerRecruitGeneralStoreSidecar,
   recruitDetailInfoOverlayPrefixForCatalogId,
   restoreRecruitDetailInfoIntoGeneralStore,
+  restoreUjatVolunteerRecruitGeneralStoreSidecar,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 import { createApplicantRecruitFormIndividualDraft } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/model/applicant-recruit-form-institution-draft'
@@ -266,7 +268,10 @@ function overlayRecordForKind(
   }
   if (kind === 'ujat-recruit-volunteer') {
     return mergeRecruitDetailInfoFromGeneralStore(
-      { ...getUjatRecruitVolunteerOverlayRecord() },
+      {
+        ...getUjatRecruitVolunteerOverlayRecord(),
+        ...pickUjatVolunteerRecruitGeneralStoreSidecar(),
+      },
       detailPrefix
     )
   }
@@ -310,6 +315,7 @@ function applyOverlayRecord(
   if (kind === 'ujat-recruit-volunteer') {
     patchUjatRecruitVolunteerOverlay(overlay)
     restoreRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
+    restoreUjatVolunteerRecruitGeneralStoreSidecar(overlay)
     return
   }
   if (kind === 'ujat-application-institution') {

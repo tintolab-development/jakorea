@@ -4,6 +4,7 @@ import {
   FAQ_PAGE_SIZE,
   filterFaqs,
   useMockFaqsCatalog,
+  usePublicFaqsQuery,
   type InquiryListParams,
 } from '@/features/inquiry'
 import {
@@ -21,7 +22,9 @@ type FaqTabContentProps = {
 }
 
 export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
-  const faqs = useMockFaqsCatalog()
+  const remoteFaqs = usePublicFaqsQuery()
+  const mockFaqs = useMockFaqsCatalog()
+  const faqs = remoteFaqs.enabled ? remoteFaqs.items : mockFaqs
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const filteredFaqs = useMemo(() => filterFaqs(faqs, params), [faqs, params])
@@ -41,10 +44,16 @@ export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
     answer: item.answer,
   }))
 
-  const categoryOptions = FAQ_CATEGORY_OPTIONS.map(option => ({
-    value: option.value,
-    label: option.label,
-  }))
+  const categoryOptions = useMemo(() => {
+    if (!remoteFaqs.enabled) {
+      return FAQ_CATEGORY_OPTIONS.map(option => ({
+        value: option.value,
+        label: option.label,
+      }))
+    }
+    const names = [...new Set(remoteFaqs.items.map(item => item.category))]
+    return [{ value: '전체', label: '전체' }, ...names.map(name => ({ value: name, label: name }))]
+  }, [remoteFaqs.enabled, remoteFaqs.items])
 
   const handleCategoryChange = (category: string) => {
     onParamsChange({
@@ -76,7 +85,9 @@ export function FaqTabContent({ params, onParamsChange }: FaqTabContentProps) {
         items={accordionItems}
         expandedId={expandedId}
         onExpandedChange={setExpandedId}
-        emptyMessage="선택한 카테고리에 등록된 FAQ가 없습니다."
+        emptyMessage={
+          remoteFaqs.isLoading ? 'FAQ를 불러오는 중입니다.' : '선택한 카테고리에 등록된 FAQ가 없습니다.'
+        }
       />
 
       {filteredFaqs.length > 0 ? (

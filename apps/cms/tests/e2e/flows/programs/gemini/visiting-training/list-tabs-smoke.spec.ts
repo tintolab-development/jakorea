@@ -42,6 +42,6 @@ test.describe('Gemini 찾아가는 연수 목록 탭', () => {
     await vt.expectListShell('approved')
 
     await vt.selectListTab('recruitment')
-    await expect(page.getByRole('button', { name: '모집 공고 추가' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '모집 공고 등록' })).toBeVisible()
   })
 })

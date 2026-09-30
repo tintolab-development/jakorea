@@ -5,6 +5,8 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramListItemResponseEducationForm } from './programListItemResponseEducationForm';
+import type { ProgramListItemResponseEducationTarget } from './programListItemResponseEducationTarget';
 import type { ProgramListItemResponseRecruitmentStatus } from './programListItemResponseRecruitmentStatus';
 
 export interface ProgramListItemResponse {
@@ -34,7 +36,18 @@ export interface ProgramListItemResponse {
   canApply?: boolean;
   /** 썸네일 file_object id. 없으면 null. placeholder 금지 */
   thumbnailFileObjectId?: number;
-  educationTarget?: string;
+  /**
+     * 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.
+     * @nullable
+     */
+  educationTarget?: ProgramListItemResponseEducationTarget;
+  /** 교육 대상 코드 배열. 없으면 필드를 생략한다. 목록 필터 educationTarget은 이 배열의 포함 여부로 매칭한다. */
+  educationTargets?: string[];
   targetGradeFrom?: string;
   targetGradeTo?: string;
+  /**
+     * 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice.
+     * @nullable
+     */
+  educationForm?: ProgramListItemResponseEducationForm;
 }

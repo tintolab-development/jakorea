@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react'
 import {
   INQUIRY_PAGE_SIZE,
+  useCreateMyInquiryMutation,
+  useDeleteMyInquiryMutation,
+  useInquiryWriteOptionsQuery,
   useMockOneToOneInquiriesCatalog,
+  useMyInquiriesQuery,
+  useMyInquiryDetailQuery,
   type InquiryListParams,
   type OneToOneInquiryItem,
   type OneToOneInquiryWritePayload,
@@ -40,10 +45,23 @@ function createInquiryItem(
 }
 
 export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentProps) {
+  const remoteInquiries = useMyInquiriesQuery()
   const catalog = useMockOneToOneInquiriesCatalog()
-  const [items, setItems] = useState<OneToOneInquiryItem[]>(() => [...catalog])
+  const [localItems, setLocalItems] = useState<OneToOneInquiryItem[]>(() => [...catalog])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false)
+  const remoteDetail = useMyInquiryDetailQuery(remoteInquiries.enabled ? expandedId : null)
+  const writeOptions = useInquiryWriteOptionsQuery(remoteInquiries.enabled)
+  const createInquiry = useCreateMyInquiryMutation()
+  const deleteInquiry = useDeleteMyInquiryMutation()
+
+  const items = useMemo(() => {
+    const source = remoteInquiries.enabled ? remoteInquiries.items : localItems
+    if (!remoteDetail.detail || !expandedId) return source
+    return source.map(item =>
+      item.id === expandedId ? { ...item, ...remoteDetail.detail } : item,
+    )
+  }, [expandedId, localItems, remoteDetail.detail, remoteInquiries.enabled, remoteInquiries.items])
 
   const sortedItems = useMemo(
     () => [...items].sort((left, right) => left.order - right.order),
@@ -58,15 +76,23 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   )
 
   const handleDelete = (id: string) => {
-    setItems(previous => previous.filter(item => item.id !== id))
+    if (remoteInquiries.enabled) {
+      deleteInquiry.mutate(id)
+    } else {
+      setLocalItems(previous => previous.filter(item => item.id !== id))
+    }
     if (expandedId === id) {
       setExpandedId(null)
     }
   }
 
   const handleCreateInquiry = (payload: OneToOneInquiryWritePayload) => {
-    const nextOrder = items.reduce((maxOrder, item) => Math.max(maxOrder, item.order), 0) + 1
-    setItems(previous => [createInquiryItem(payload, nextOrder), ...previous])
+    if (remoteInquiries.enabled) {
+      createInquiry.mutate(payload)
+    } else {
+      const nextOrder = localItems.reduce((maxOrder, item) => Math.max(maxOrder, item.order), 0) + 1
+      setLocalItems(previous => [createInquiryItem(payload, nextOrder), ...previous])
+    }
     onParamsChange({ page: 1 })
     setExpandedId(null)
   }
@@ -84,6 +110,9 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
         expandedId={expandedId}
         onExpandedChange={setExpandedId}
         onDelete={handleDelete}
+        emptyMessage={
+          remoteInquiries.isLoading ? '문의내역을 불러오는 중입니다.' : '등록된 1:1 문의가 없습니다.'
+        }
       />
 
       {sortedItems.length > 0 ? (
@@ -103,6 +132,12 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
         open={isWriteModalOpen}
         onClose={() => setIsWriteModalOpen(false)}
         onSubmit={handleCreateInquiry}
+        programOptions={writeOptions.enabled ? writeOptions.programOptions : undefined}
+        categoryOptions={
+          writeOptions.enabled && writeOptions.categoryOptions.length > 0
+            ? writeOptions.categoryOptions
+            : undefined
+        }
       />
     </div>
   )

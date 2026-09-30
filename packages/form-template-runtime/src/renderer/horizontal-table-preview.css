@@ -85,6 +85,11 @@
   align-items: center;
 }
 
+.form-template-horizontal-table__td-input {
+  width: 100%;
+  min-width: 0;
+}
+
 .form-template-horizontal-table__cell-text {
   flex: 1 1 auto;
   min-width: 0;

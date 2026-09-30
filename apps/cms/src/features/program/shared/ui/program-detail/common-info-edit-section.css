@@ -1,4 +1,4 @@
-/* 상세 공통정보 수정 — 섹션 간 32px, 섹션 내 블록 간 16px (조회 화면과 동일 규격) */
+/* 상세 공통정보 수정 — 섹션 간 32px (detail-common-info-view와 동일) */
 
 .program-common-info-edit {
   display: flex;
@@ -13,12 +13,37 @@
   min-width: 0;
 }
 
+/* 본문 블록 1개(등록 단락) — 타이틀↔테이블 간격은 헤더 margin-bottom만 (10px) */
 .program-common-info-edit__section-body {
   display: flex;
   flex-direction: column;
+  gap: 0;
+}
+
+/* 기본 정보 등 DetailInfoForm이 2개 이상일 때만 블록 간 16px */
+.program-common-info-edit__section-body--stacked {
   gap: 16px;
 }
 
 .program-common-info-edit__section-body > .detail-info-form {
   margin: 0;
+}
+
+/* 설명 없음 — 조회 `.detail-info-form__header` 와 동일 10px */
+.program-common-info-edit__section > .form-paragraph-section-header.detail-info-form__header {
+  margin-bottom: 10px;
+}
+
+/* 설명 있음 — 등록 카드·detail-info-form 규격 16px (10px로 누르면 표와 설명이 붙음) */
+.program-common-info-edit__section
+  > .form-paragraph-section-header.detail-info-form__header:has(
+    .form-paragraph-section-header__description
+  ) {
+  margin-bottom: 16px;
+}
+
+/* 일정형 교육 진행 — 조회와 같이 블록 간 16px (등록 CSS 20px margin 상쇄) */
+.program-common-info-edit__section-body--stacked
+  > .program-registration-schedule-curriculum__block {
+  margin-bottom: 0;
 }

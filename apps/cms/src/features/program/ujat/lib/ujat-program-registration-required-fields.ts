@@ -30,6 +30,12 @@ import {
   pickUjatRecruitVolunteerOverlay,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import {
+  resolveVolunteerOverlayForHalf,
+  ujatVolunteerRecruitInterviewNamespace,
+  type UjatVolunteerRecruitHalf,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import { pickUjatVolunteerRecruitGeneralStoreSidecar } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
+import {
   EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE,
   type UjatHalfMultiScheduleBundle,
   type UjatHalfSemesterKey,
@@ -224,6 +230,7 @@ export function getMergedUjatRecruitVolunteerOverlay(): Record<string, unknown> 
   return {
     ...pickUjatRecruitVolunteerOverlay(programOverlay),
     ...getUjatRecruitVolunteerOverlayRecord(),
+    ...pickUjatVolunteerRecruitGeneralStoreSidecar(),
   }
 }
 
@@ -252,29 +259,38 @@ function hasIncompleteUjatInstitutionRecruit(overlay: Record<string, unknown>): 
   return false
 }
 
-function hasIncompleteUjatVolunteerRecruit(overlay: Record<string, unknown>): boolean {
-  if (!isPublished(read(overlay, VOLUNTEER_KEYS.announcementPublished))) return true
-  if (isEmptyText(readText(overlay, VOLUNTEER_KEYS.noticeExposure, 'start-day'))) return true
-  if (isRangeSealIncomplete(read(overlay, VOLUNTEER_KEYS.programRange))) return true
-  if (isEmptyStringList(read(overlay, VOLUNTEER_KEYS.volunteerTargets))) return true
-  if (isEmptyText(read(overlay, VOLUNTEER_KEYS.targetDetail))) return true
-  if (isRangeSealIncomplete(read(overlay, VOLUNTEER_KEYS.recruitRangeH1))) return true
-  if (isRangeSealIncomplete(read(overlay, VOLUNTEER_KEYS.recruitRangeH2))) return true
-  if (isEmptyText(read(overlay, VOLUNTEER_KEYS.activityTermH1))) return true
-  if (isEmptyText(read(overlay, VOLUNTEER_KEYS.activityTermH2))) return true
-  const docAnnounce = read(overlay, VOLUNTEER_KEYS.docAnnounce)
+function hasIncompleteUjatVolunteerRecruitHalf(
+  overlay: Record<string, unknown>,
+  half: UjatVolunteerRecruitHalf
+): boolean {
+  const resolved = resolveVolunteerOverlayForHalf(overlay, half)
+  if (!isPublished(read(resolved, VOLUNTEER_KEYS.announcementPublished))) return true
+  if (half === 'h2' && isEmptyText(readText(resolved, VOLUNTEER_KEYS.noticeExposure, 'start-day'))) {
+    return true
+  }
+  if (isRangeSealIncomplete(read(resolved, VOLUNTEER_KEYS.programRange))) return true
+  if (isEmptyStringList(read(resolved, VOLUNTEER_KEYS.volunteerTargets))) return true
+  if (isEmptyText(read(resolved, VOLUNTEER_KEYS.targetDetail))) return true
+  const recruitKey = half === 'h1' ? VOLUNTEER_KEYS.recruitRangeH1 : VOLUNTEER_KEYS.recruitRangeH2
+  const activityKey = half === 'h1' ? VOLUNTEER_KEYS.activityTermH1 : VOLUNTEER_KEYS.activityTermH2
+  if (isRangeSealIncomplete(read(resolved, recruitKey))) return true
+  if (isEmptyText(read(resolved, activityKey))) return true
+  const docAnnounce = read(resolved, VOLUNTEER_KEYS.docAnnounce)
   if (docAnnounce == null || typeof docAnnounce !== 'object') return true
   const docRow = docAnnounce as { date?: unknown; method?: unknown }
   if (isEmptyText(docRow.date) || isEmptyText(docRow.method)) return true
-  const interviewMethod = readText(overlay, VOLUNTEER_KEYS.interviewMethod, 'no')
-  if (interviewMethod !== 'no' && isRangeSealIncomplete(read(overlay, VOLUNTEER_KEYS.interviewRange))) {
+  const interviewMethod = readText(resolved, VOLUNTEER_KEYS.interviewMethod, 'no')
+  if (
+    interviewMethod !== 'no' &&
+    isRangeSealIncomplete(read(resolved, VOLUNTEER_KEYS.interviewRange))
+  ) {
     return true
   }
-  const finalAnnounce = read(overlay, VOLUNTEER_KEYS.finalAnnounce)
+  const finalAnnounce = read(resolved, VOLUNTEER_KEYS.finalAnnounce)
   if (finalAnnounce == null || typeof finalAnnounce !== 'object') return true
   const finalRow = finalAnnounce as { date?: unknown; method?: unknown }
   if (isEmptyText(finalRow.date) || isEmptyText(finalRow.method)) return true
-  const contact = read(overlay, VOLUNTEER_KEYS.contact)
+  const contact = read(resolved, VOLUNTEER_KEYS.contact)
   if (contact == null || typeof contact !== 'object') return true
   const contactRow = contact as { name?: unknown; phone?: unknown; email?: unknown }
   if (
@@ -284,19 +300,49 @@ function hasIncompleteUjatVolunteerRecruit(overlay: Record<string, unknown>): bo
   ) {
     return true
   }
-  if (isEmptyText(read(overlay, VOLUNTEER_KEYS.notes))) return true
-  if (isEmptyText(read(overlay, VOLUNTEER_KEYS.otherNotes))) return true
+  if (isEmptyText(read(resolved, VOLUNTEER_KEYS.notes))) return true
+  if (isEmptyText(read(resolved, VOLUNTEER_KEYS.otherNotes))) return true
   return false
+}
+
+function isInterviewTimeRangeIncomplete(value: unknown): boolean {
+  if (value == null) return true
+  if (!Array.isArray(value) || value.length < 2) return true
+  return value[0] == null || value[1] == null
+}
+
+/** schema `requiredMark` — 면접 진행 가능 시간·선택 슬롯 */
+function hasIncompleteUjatVolunteerInterviewSchedule(
+  overlay: Record<string, unknown>,
+  half: UjatVolunteerRecruitHalf
+): boolean {
+  const ns = ujatVolunteerRecruitInterviewNamespace(half)
+  if (isInterviewTimeRangeIncomplete(read(overlay, `${ns}.interviewTimeRange`))) return true
+  const slots = read(overlay, `${ns}.selectedSlotKeys`)
+  if (!Array.isArray(slots) || slots.length === 0) return true
+  if (slots.every(slot => isEmptyText(slot))) return true
+  return false
+}
+
+function findIncompleteUjatVolunteerRecruitReason(
+  overlay: Record<string, unknown>
+): string | null {
+  for (const half of ['h1', 'h2'] as const) {
+    if (hasIncompleteUjatVolunteerRecruitHalf(overlay, half)) {
+      return `recruit.volunteer.${half}`
+    }
+    if (hasIncompleteUjatVolunteerInterviewSchedule(overlay, half)) {
+      return `recruit.volunteer.${half}.interviewSchedule`
+    }
+  }
+  return null
 }
 
 export function describeIncompleteUjatProgramRecruitmentRequiredFields(): string | null {
   if (hasIncompleteUjatInstitutionRecruit(getMergedUjatRecruitInstitutionOverlay())) {
     return 'recruit.institution'
   }
-  if (hasIncompleteUjatVolunteerRecruit(getMergedUjatRecruitVolunteerOverlay())) {
-    return 'recruit.volunteer'
-  }
-  return null
+  return findIncompleteUjatVolunteerRecruitReason(getMergedUjatRecruitVolunteerOverlay())
 }
 
 export function hasIncompleteUjatProgramRecruitmentRequiredFields(): boolean {

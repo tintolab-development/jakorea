@@ -1,0 +1,18 @@
+.education-schedule-change-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.education-schedule-change-modal__description {
+  margin: 0;
+  color: var(--gray-3d3d3d, #3d3d3d);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.education-schedule-change-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

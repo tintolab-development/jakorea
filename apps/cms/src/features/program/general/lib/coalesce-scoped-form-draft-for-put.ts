@@ -5,6 +5,29 @@ function paragraphMap(paragraphs: readonly WritingFormParagraph[]): Map<string, 
   return new Map(paragraphs.map(p => [p.id, p]))
 }
 
+/** baseline GET shape 유지 — 편집기가 시드 short_essay 등에 `items` 등을 붙여도 PUT에서 제거 */
+function mergeBaselineParagraphWithUserCopy(
+  baseParagraph: WritingFormParagraph,
+  userParagraph: WritingFormParagraph
+): WritingFormParagraph {
+  const merged = {
+    ...baseParagraph,
+    ...userParagraph,
+    id: baseParagraph.id,
+    kind: baseParagraph.kind,
+    variant: baseParagraph.variant,
+  } as WritingFormParagraph
+
+  const out = { ...merged } as unknown as Record<string, unknown>
+  const baseRecord = baseParagraph as unknown as Record<string, unknown>
+  for (const key of Object.keys(out)) {
+    if (!(key in baseRecord)) {
+      delete out[key]
+    }
+  }
+  return out as unknown as WritingFormParagraph
+}
+
 /**
  * program-scoped copy PUT — baseline(서버 copy GET) 위에 user draft를 merge.
  * protected seed paragraph id·variant·kind·순서는 baseline 유지, 카피성 필드만 user 반영.
@@ -26,13 +49,7 @@ export function coalesceScopedFormDraftForPut(
     if (baseParagraph.kind !== userParagraph.kind || baseParagraph.variant !== userParagraph.variant) {
       return baseParagraph
     }
-    return {
-      ...baseParagraph,
-      ...userParagraph,
-      id: baseParagraph.id,
-      kind: baseParagraph.kind,
-      variant: baseParagraph.variant,
-    } as WritingFormParagraph
+    return mergeBaselineParagraphWithUserCopy(baseParagraph, userParagraph)
   })
 
   // baseline id → mergedParagraphs 상 현재 index (신규 단락을 끼워 넣을 때마다 갱신)

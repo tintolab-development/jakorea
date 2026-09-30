@@ -25,10 +25,6 @@ const lazyLoad = <T extends React.ComponentType<any>>(importFunc: () => Promise<
   })
 }
 
-const ParticipantRecruitmentUserFullPage = lazyLoad(
-  () => import('@/pages/programs/general/participant-recruitment-user-full-page')
-)
-
 // 인증 관련 페이지 (즉시 로드)
 import { LoginPage } from '@/pages/auth/login-page'
 import { RegisterPage } from '@/pages/auth/register-page'
@@ -78,8 +74,6 @@ import TemplatesFormManagementOutlet from '@/pages/templates/templates-form-mana
 import { TemplatesRouteLayout } from '@/pages/templates/templates-route-layout'
 import { GeneralProgramListRouteShell } from '@/pages/programs/general/general-program-list-route-shell'
 import { RedirectLegacyTemplatesProgramForms } from '@/features/template/template-route-redirects'
-import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
-
 // 대시보드 (즉시 로드 - 첫 화면)
 import { IndexPage } from '@/pages/home/index-page'
 const MyLearningPage = lazyLoad(() => import('@/pages/my-learning/my-learning-page'))
@@ -326,23 +320,6 @@ export const router = createBrowserRouter([
   {
     path: '/oauth/naver',
     element: <OAuthCallbackPage provider="naver" />,
-  },
-  {
-    path: '/preview/programs/general/participant-recruitment',
-    element: (
-      <Navigate
-        to={`/preview/programs/general/${GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID}/participant-recruitment`}
-        replace
-      />
-    ),
-  },
-  {
-    path: '/preview/programs/general/:programId/participant-recruitment',
-    element: (
-      <ProtectedRoute>
-        <ParticipantRecruitmentUserFullPage />
-      </ProtectedRoute>
-    ),
   },
   {
     // 로그인·역할 없이 공개 접근 (쇼케이스/문서용)

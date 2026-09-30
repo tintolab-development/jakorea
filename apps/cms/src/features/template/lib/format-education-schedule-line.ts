@@ -141,6 +141,18 @@ export function educationScheduleRangeHasClock(range: [Dayjs, Dayjs]): boolean {
   return start.hour() !== 0 || start.minute() !== 0 || end.hour() !== 0 || end.minute() !== 0
 }
 
+/** 아직 시작하지 않은 예정일만 true. 지난 날·당일 시작 후·기간 진행 중은 false. */
+export function isEducationScheduleLineUpcoming(
+  line: string,
+  now: Dayjs = dayjs()
+): boolean {
+  const range = parseEducationScheduleLineToRange(line)
+  if (!range) return false
+  const [start] = range
+  if (educationScheduleRangeHasClock(range)) return start.isAfter(now)
+  return start.isAfter(now, 'day')
+}
+
 /** 같은 날·시각 없음이면 피커 트리거에 `날짜 ~ 날짜`가 나오지 않도록 null */
 export function educationScheduleAppliedSurfaceRange(
   range: [Dayjs, Dayjs] | null
@@ -161,22 +173,7 @@ export function parseStoredEducationScheduleRange(
   return parsed.isValid() ? [parsed, parsed] : null
 }
 
-/**
- * 교육 진행 예정일 줄의 고유 달력일 수.
- * 같은 날 AM/PM 슬롯은 하루로 보고, 기간 줄은 시작일만 센다.
- */
-export function countUniqueEducationScheduleCalendarDays(
-  lines: readonly string[] | undefined
-): number {
-  if (!lines?.length) return 0
-  const seen = new Set<string>()
-  for (const line of lines) {
-    const range = parseEducationScheduleLineToRange(line)
-    if (!range) continue
-    seen.add(range[0].format('YYYY-MM-DD'))
-  }
-  return seen.size
-}
+export { countUniqueEducationScheduleCalendarDays } from '@jakorea/form-schema/program-application'
 
 /** 같은 날 예정일 줄에서 날짜만 중복 없이 추출 (기간 지정 여러 날은 제외) */
 export function uniqueSameDayDatesFromScheduleLines(lines: string[]): Dayjs[] {
@@ -223,4 +220,37 @@ export function rebuildEducationScheduleLinesFromGroupTimes(
 export function educationScheduleLinesEqual(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false
   return a.every((line, index) => line === b[index])
+}
+
+export function seoulCalendarDateKey(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now)
+}
+
+/** 파싱된 시작일이 서울 오늘보다 이전이면 true. 읽지 못하면 false. */
+export function isEducationScheduleLineBeforeSeoulToday(
+  line: string,
+  now: Date = new Date()
+): boolean {
+  const range = parseEducationScheduleLineToRange(line)
+  if (!range) return false
+  return range[0].format('YYYY-MM-DD') < seoulCalendarDateKey(now)
+}
+
+/** 줄의 날짜를 옮기고 시각은 유지한다. 날짜를 읽지 못하면 선택한 날짜만 표기한다. */
+export function shiftEducationScheduleLineToDate(line: string, nextDate: Dayjs): string {
+  const range = parseEducationScheduleLineToRange(line)
+  if (!range) {
+    return formatEducationScheduleLineFromRange([nextDate.startOf('day'), nextDate.startOf('day')])
+  }
+  const [start, end] = range
+  const deltaDays = nextDate.startOf('day').diff(start.startOf('day'), 'day')
+  return formatEducationScheduleLineFromRange([
+    start.add(deltaDays, 'day'),
+    end.add(deltaDays, 'day'),
+  ])
 }

@@ -14,6 +14,15 @@ export const GEMINI_RECRUITMENT_EDUCATION_FORM_OPTIONS = getProgramRegistrationE
 
 export type GeminiRecruitmentEducationForm = 'online' | 'offline'
 
+/**
+ * Gemini 모집 공고 교육 진행 구조 (BE wire: CURRICULUM | SCHEDULE).
+ * UI 셀렉트 없음 → 기본 SCHEDULE. CURRICULUM은 detailedProgramId 필수.
+ */
+export type GeminiRecruitmentEducationStructure = 'CURRICULUM' | 'SCHEDULE'
+
+export const GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE: GeminiRecruitmentEducationStructure =
+  'SCHEDULE'
+
 export const GEMINI_RECRUITMENT_ADD_SECTION_IDS = {
   institution: 'gemini-recruitment-add-section-institution',
   detail: 'gemini-recruitment-add-section-detail',

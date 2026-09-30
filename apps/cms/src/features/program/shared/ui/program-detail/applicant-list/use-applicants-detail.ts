@@ -7,7 +7,11 @@ import {
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui/cms-select'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
-import { useCmsAlert } from '@/shared/ui'
+import {
+  showApplicationApprovalCompletedAlert,
+  showApplicationRejectionCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 import {
   extractApiErrorMessage,
   getApiErrorHttpStatus,
@@ -590,10 +594,11 @@ export function useApplicantsDetail({
     }
   }, [individualScreeningStage])
 
-  /** 1차 서류 심사 — remote off이면 빈 목록 */
+  /** 1차 서류 심사 — remote off이면 빈 목록 (temp mock 개인 쇼케이스는 시드 유지) */
   useEffect(() => {
     if (menu !== 'individual-applications' || individualScreeningStage !== 'doc1') return
     if (applicationsRemote.individualRemoteEnabled) return
+    if (isGeneralProgramTempMockProgramId(programId)) return
     setIndividualList([])
     setPendingFilters({})
     setAppliedFilters({})
@@ -602,6 +607,7 @@ export function useApplicantsDetail({
     applicationsRemote.individualRemoteEnabled,
     individualScreeningStage,
     menu,
+    programId,
     setPendingFilters,
   ])
 
@@ -770,12 +776,18 @@ export function useApplicantsDetail({
         )
         return
       }
-      if (remote === 'ok') setSelectedRowKeys([])
+      if (remote === 'ok') {
+        setSelectedRowKeys([])
+        showApplicationRejectionCompletedAlert()
+      }
       return
     } else if (menu === 'individual-applications') {
       const remote = await applyRemoteIndividualDecision(keys, 'reject')
       if (remote !== 'skipped') {
-        if (remote === 'ok') setSelectedRowKeys([])
+        if (remote === 'ok') {
+          setSelectedRowKeys([])
+          showApplicationRejectionCompletedAlert()
+        }
         return
       }
       setIndividualList(prev =>
@@ -786,7 +798,10 @@ export function useApplicantsDetail({
     } else if (menu === 'instructors') {
       const remote = await applyRemoteInstructorDecision(keys, 'reject')
       if (remote !== 'skipped') {
-        if (remote === 'ok') setSelectedRowKeys([])
+        if (remote === 'ok') {
+          setSelectedRowKeys([])
+          showApplicationRejectionCompletedAlert()
+        }
         return
       }
       setInstructorList(prev =>
@@ -798,6 +813,7 @@ export function useApplicantsDetail({
       return
     }
     setSelectedRowKeys([])
+    showApplicationRejectionCompletedAlert()
   }
 
   const toInstructorNotifyOptions = (
@@ -966,12 +982,18 @@ export function useApplicantsDetail({
         )
         return
       }
-      if (remote === 'ok') setSelectedRowKeys([])
+      if (remote === 'ok') {
+        setSelectedRowKeys([])
+        showApplicationApprovalCompletedAlert()
+      }
       return
     } else if (menu === 'individual-applications') {
       const remote = await applyRemoteIndividualDecision(keys, 'approve')
       if (remote !== 'skipped') {
-        if (remote === 'ok') setSelectedRowKeys([])
+        if (remote === 'ok') {
+          setSelectedRowKeys([])
+          showApplicationApprovalCompletedAlert()
+        }
         return
       }
       setIndividualList(prev =>
@@ -982,7 +1004,10 @@ export function useApplicantsDetail({
     } else if (menu === 'instructors') {
       const remote = await applyRemoteInstructorDecision(keys, 'approve')
       if (remote !== 'skipped') {
-        if (remote === 'ok') setSelectedRowKeys([])
+        if (remote === 'ok') {
+          setSelectedRowKeys([])
+          showApplicationApprovalCompletedAlert()
+        }
         return
       }
       setInstructorList(prev =>
@@ -994,6 +1019,7 @@ export function useApplicantsDetail({
       return
     }
     setSelectedRowKeys([])
+    showApplicationApprovalCompletedAlert()
   }
 
   const applyRemoteInstitutionCancelApproval = useCallback(

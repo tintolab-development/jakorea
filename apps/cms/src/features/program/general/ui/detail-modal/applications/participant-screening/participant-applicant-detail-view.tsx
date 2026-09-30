@@ -34,11 +34,13 @@ import {
 } from '@/features/program/general/lib/screening-subject-kind'
 import {
   ParticipantApproveModal,
-  ParticipantApprovalCompleteModal,
-  ParticipantRejectCompleteModal,
   ParticipantCancelRejectModal,
   ParticipantCancelRejectCompleteModal,
 } from '@/features/program/shared/ui/detail-modal/components/participant-application-flow-modals'
+import {
+  showApplicationApprovalCompletedAlert,
+  showApplicationRejectionCompletedAlert,
+} from '@/shared/ui'
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import {
@@ -274,12 +276,7 @@ export function GeneralParticipantApplicantDetailView({
   )
 
   const [approveTarget, setApproveTarget] = useState<{ id: string; name: string } | null>(null)
-  const [approveComplete, setApproveComplete] = useState<{ participantName: string } | null>(null)
   const [rejectTarget, setRejectTarget] = useState<{ id: string; name: string } | null>(null)
-  const [rejectComplete, setRejectComplete] = useState<{
-    participantName: string
-    rejectionReason: string
-  } | null>(null)
   const [cancelRejectTarget, setCancelRejectTarget] = useState<{ id: string; name: string } | null>(
     null
   )
@@ -671,15 +668,10 @@ export function GeneralParticipantApplicantDetailView({
                   )
             syncApplicant(patched)
             setApproveTarget(null)
-            setApproveComplete({ participantName: approveTarget.name })
+            showApplicationApprovalCompletedAlert()
           }
           void run()
         }}
-      />
-      <ParticipantApprovalCompleteModal
-        open={approveComplete != null}
-        participantName={approveComplete?.participantName ?? ''}
-        onClose={() => setApproveComplete(null)}
       />
       <ProgramApplicationRejectModal
         open={rejectTarget != null}
@@ -737,19 +729,10 @@ export function GeneralParticipantApplicantDetailView({
                   )
             syncApplicant(patched)
             setRejectTarget(null)
-            setRejectComplete({
-              participantName: rejectTarget.name,
-              rejectionReason: payload.reason,
-            })
+            showApplicationRejectionCompletedAlert()
           }
           void run()
         }}
-      />
-      <ParticipantRejectCompleteModal
-        open={rejectComplete != null}
-        participantName={rejectComplete?.participantName ?? ''}
-        rejectionReason={rejectComplete?.rejectionReason ?? ''}
-        onClose={() => setRejectComplete(null)}
       />
       <ParticipantCancelRejectModal
         open={cancelRejectTarget != null}

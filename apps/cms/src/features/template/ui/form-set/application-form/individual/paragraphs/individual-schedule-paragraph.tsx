@@ -1,6 +1,7 @@
 import {
   shouldShowInstitutionApplicationScheduleParagraph,
   useInstitutionApplicationProgramBridge,
+  type InstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { ProgramApplicationFormInstitutionFixedScheduleParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-fixed-schedule-paragraph'
 import {
@@ -12,12 +13,15 @@ import {
 export function ProgramApplicationFormIndividualScheduleParagraph({
   readOnlyPreview = false,
   isTemplateAuthoringMode = false,
+  programBridge,
 }: {
   readOnlyPreview?: boolean
   /** true: 템플릿 편집 — 설정값 안내 힌트. false: 프로그램 연동 본문 */
   isTemplateAuthoringMode?: boolean
+  programBridge?: InstitutionApplicationProgramBridge
 }) {
-  const bridge = useInstitutionApplicationProgramBridge()
+  const storeBridge = useInstitutionApplicationProgramBridge()
+  const bridge = programBridge ?? storeBridge
   if (isTemplateAuthoringMode) {
     return (
       <ProgramApplicationScheduleTemplateHintParagraph
@@ -28,5 +32,10 @@ export function ProgramApplicationFormIndividualScheduleParagraph({
   if (!shouldShowInstitutionApplicationScheduleParagraph(bridge)) {
     return null
   }
-  return <ProgramApplicationFormInstitutionFixedScheduleParagraph readOnlyPreview={readOnlyPreview} />
+  return (
+    <ProgramApplicationFormInstitutionFixedScheduleParagraph
+      readOnlyPreview={readOnlyPreview}
+      programBridge={bridge}
+    />
+  )
 }

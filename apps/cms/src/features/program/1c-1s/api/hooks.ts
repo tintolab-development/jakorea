@@ -9,6 +9,10 @@ import {
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import {
+  programDetailCacheFromSave,
+  syncOpenProgramDetailCache,
+} from '@/features/program/shared/lib/program-detail-cache-after-save'
 import { shouldUseCompanySchoolRemoteApi } from './capabilities'
 import { shouldRetryCompanySchoolQuery } from './errors'
 import type { CompanySchoolListFilters } from './list-params'
@@ -120,11 +124,21 @@ export function useUpdateCompanySchoolProgram() {
       patch?: Partial<Program>
     }) => updateCompanySchoolProgram(programId, program, patch),
     retry: false,
-    onSuccess: program => {
-      queryClient.setQueryData(companySchoolQueryKeys.detail(program.id), program)
+    onSuccess: async (program, variables) => {
+      const detailKey = companySchoolQueryKeys.detail(variables.programId)
+      await syncOpenProgramDetailCache(
+        queryClient,
+        detailKey,
+        programDetailCacheFromSave(
+          variables.programId,
+          program,
+          variables.program,
+          variables.patch
+        )
+      )
       invalidateCompanySchoolListCaches(queryClient)
       void queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.navigation(program.id),
+        queryKey: generalProgramQueryKeys.navigation(variables.programId),
       })
     },
   })

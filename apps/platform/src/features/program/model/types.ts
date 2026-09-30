@@ -41,14 +41,28 @@ export type ProgramSession = {
   description: string
   /** 복수 회차 과제기간 등 — 없으면 비노출 */
   dateLabel?: string
+  /** 공통 교육 형태가 없을 때 차시 행 값 */
+  educationFormLabel?: string
+  /** 공통 참여 방식이 없을 때 차시 행 값 */
+  participationMethodLabel?: string
+  /** 공통 IPS가 없을 때 차시 행 값 */
+  ipsTypeSummary?: string
+  assignmentPeriod?: string
 }
 
-/** 일정형 기본정보 — 세부 일정 / 행사 일정 */
+/** 일정형 기본정보 — 사전교육 / 세부 일정 / 행사 일정 */
+export type ProgramScheduleBlockKind = 'preEducation' | 'sub' | 'event'
+
 export type ProgramEventSchedule = {
   scheduleLabel: string
   name: string
   /** 일시·그룹 시간 요약 */
   dateLabel: string
+  blockKind?: ProgramScheduleBlockKind
+  educationFormLabel?: string
+  participationMethodLabel?: string
+  ipsTypeSummary?: string
+  assignmentPeriod?: string
 }
 
 export type ProgramLabeledValue = {
@@ -68,6 +82,7 @@ export type ProgramEducationScheduleMode = 'date' | 'period'
 export type ProgramExtraSection = {
   title: string
   body: string
+  bodyFormat?: 'text' | 'html'
 }
 
 export type ProgramAttachment = {

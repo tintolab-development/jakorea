@@ -49,6 +49,7 @@ export function GeminiRecruitmentInfoTab({
 }) {
   const resolvedDetail = useMemo((): GeminiRecruitmentDetail => {
     if (!isEditMode || draft == null) return detail
+    // 수정 모드: draft가 입력 SSOT. applyInfoEditDraft(updatedAt) 는 저장 시에만.
     return { ...detail, ...draft }
   }, [detail, draft, isEditMode])
 
@@ -180,6 +181,7 @@ export function GeminiRecruitmentInfoTab({
               mode="edit"
               values={fieldValues}
               showAnnouncementRow={false}
+              deferTextCommit
               applicationPeriod={applicationPeriod}
               onApplicationPeriodChange={dates =>
                 commitDateRange(dates, (start, end) =>
@@ -219,6 +221,7 @@ export function GeminiRecruitmentInfoTab({
         <GeminiRecruitmentDetailFields
           mode={contentMode}
           values={fieldValues}
+          deferTextCommit={contentMode === 'edit'}
           editor={editor}
           editorMinHeight={editorMinHeight}
           recruitmentIdForEditor={

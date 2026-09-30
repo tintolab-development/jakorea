@@ -25,14 +25,25 @@ describe('extractApiErrorMessage', () => {
     ).toBe('ADMIN_EMAIL_ALREADY_EXISTS')
   })
 
-  it('수정 가능 기간 코드는 서버 문구 대신 구분된 안내를 쓴다', () => {
+  it('같은 모집 기간 코드는 서버 error.message를 구분해서 쓴다', () => {
     expect(
       extractApiErrorMessage({
         success: false,
-        message: 'raw',
-        error: { code: 'PROGRAM_VOLUNTEER_RECRUITMENT_EDIT_PERIOD_ENDED', message: 'raw' },
+        error: {
+          code: 'PROGRAM_VOLUNTEER_RECRUITMENT_EDIT_PERIOD_ENDED',
+          message: '프로그램 운영이 시작된 이후에는 모집 정보를 수정할 수 없습니다.',
+        },
       })
-    ).toContain('모집·신청')
+    ).toBe('프로그램 운영이 시작된 이후에는 모집 정보를 수정할 수 없습니다.')
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        error: {
+          code: 'PROGRAM_VOLUNTEER_RECRUITMENT_EDIT_PERIOD_ENDED',
+          message: '모집 시작 이후에는 신청 양식을 수정할 수 없습니다.',
+        },
+      })
+    ).toBe('모집 시작 이후에는 신청 양식을 수정할 수 없습니다.')
   })
 
   it('Alert 본문에 traceId를 붙이지 않는다', () => {

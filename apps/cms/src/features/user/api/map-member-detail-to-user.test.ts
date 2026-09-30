@@ -155,6 +155,19 @@ describe('mapIndividualMemberDetailToUser', () => {
 })
 
 describe('mapInstructorMemberDetailToUser', () => {
+  it('member.listMetrics.settlementStatusLabel을 User에 매핑한다', () => {
+    const detail = baseInstructorDetail()
+    const user = mapInstructorMemberDetailToUser({
+      ...detail,
+      member: {
+        ...detail.member,
+        listMetrics: { settlementStatusLabel: '확인 대기 중' },
+      } as typeof detail.member,
+    })
+
+    expect(user.listMetrics?.settlementStatusLabel).toBe('확인 대기 중')
+  })
+
   it('상세 termsAgreements를 User에 매핑한다', () => {
     const user = mapInstructorMemberDetailToUser(
       baseInstructorDetail({

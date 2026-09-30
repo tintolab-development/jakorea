@@ -365,7 +365,8 @@ export function MypageEducationDetailPage() {
   }
 
   const showBanner = shouldShowDocumentPassBanner(application)
-  const showCancelCta = canCancelEducationApplication(application.displayStatus)
+  const showCancelCta =
+    application.cancellable ?? canCancelEducationApplication(application.displayStatus)
   const showTeacherAssignment =
     isTeacher && hasTeacherAssignmentAsideContent(application.teacherAssignment)
   const appliedSection = isAppliedSection(section) ? section : 'program'
@@ -401,6 +402,8 @@ export function MypageEducationDetailPage() {
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
           preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
         />
       )
     }
@@ -408,6 +411,8 @@ export function MypageEducationDetailPage() {
       return (
         <EducationSchedulePanel
           programId={program.id}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
@@ -430,13 +435,15 @@ export function MypageEducationDetailPage() {
         withdrawalPhase: application.withdrawalPhase,
         configured: program.surveyConfigured,
       })
-      if (surveyAvailability === 'active') {
+      if (remoteDetailEnabled || surveyAvailability === 'active') {
         return (
           <EducationSurveyFillPanel
             kind="survey"
             programTitle={program.title}
             educationScheduleLines={program.educationScheduleLines}
             educationTargetLabel={program.educationTargetDetailLabel}
+            applicationType={routeApplicationType}
+            applicationId={application.id}
           />
         )
       }
@@ -448,7 +455,7 @@ export function MypageEducationDetailPage() {
         withdrawalPhase: application.withdrawalPhase,
         configured: program.satisfactionConfigured,
       })
-      if (satisfactionAvailability === 'active') {
+      if (remoteDetailEnabled || satisfactionAvailability === 'active') {
         return (
           <EducationSurveyFillPanel
             kind="satisfaction"
@@ -456,6 +463,8 @@ export function MypageEducationDetailPage() {
             programTitle={program.title}
             educationScheduleLines={program.educationScheduleLines}
             educationTargetLabel={program.educationTargetDetailLabel}
+            applicationType={routeApplicationType}
+            applicationId={application.id}
           />
         )
       }
@@ -472,6 +481,7 @@ export function MypageEducationDetailPage() {
       return (
         <EducationSettlementPanel
           programId={program.id}
+          applicationType={routeApplicationType}
           applicationId={application.id}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
@@ -497,6 +507,7 @@ export function MypageEducationDetailPage() {
             educationTargetLabel={program.educationTargetLabel}
             educationForm={program.educationForm}
             educationFormLabel={program.educationFormLabel}
+            statusAudience={isTeacher ? 'teacher' : 'general'}
           />
         }
         aside={

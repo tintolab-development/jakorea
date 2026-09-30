@@ -25,7 +25,7 @@ import { mapListParticipantRecruitment } from '@/features/program/shared/lib/for
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
-  isProgramRecruitmentTypeLocked,
+  isProgramOperationStartLocked,
   toProgramRecruitmentWindows,
   type ProgramRecruitmentEditType,
 } from '@/features/program/shared/lib/program-edit-window'
@@ -35,12 +35,22 @@ import {
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
 import {
+  applyProgramMissingCommonStringFieldsToUpdateRequest,
+  mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
+  resolveOtherNotesFromProgramResponse,
+} from '@/features/program/shared/lib/program-update-common-string-fields'
+import {
   applyResolvedVenueKindToCommonInfo,
   buildProgramSponsorAssignmentsWire,
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
+import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
-import { resolveProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  normalizeProgramBusinessAreaValue,
+  resolvePersistedProgramTargetLevels,
+  resolveProgramTargetLevels,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import type { TargetLevel } from '@/types/domain'
 import {
   formatKoreanPhoneNumber,
@@ -303,11 +313,8 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
 export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const dtoWithExtras = dto as ProgramResponse & {
     nameKo?: string
-    contactName?: string
-    remarks?: string
-    otherMatters?: string
-    recruitmentTargetDetail?: string
     applicationTargetMode?: string
+    businessField?: string
   }
   const title =
     dto.title?.trim() ||
@@ -318,7 +325,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const now = new Date().toISOString()
   const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
   const dtoDetailedProgramName = dto.detailedProgramName?.trim()
-  const generalCommonInfo = applyResolvedVenueKindToCommonInfo(
+  const generalCommonInfoBase = applyResolvedVenueKindToCommonInfo(
     applySettlementPolicyToCommonInfo(
       {
         ...serviceDetail.generalCommonInfo,
@@ -330,16 +337,26 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     ),
     { institutionType: dto.institutionType as Program['institutionType'], venue: dto.venue }
   )
-  const participantRemarks = (
-    serviceDetail.generalCommonInfo?.participantRecruitmentInfo as
-      | { remarks?: string }
-      | undefined
-  )?.remarks
+  const generalCommonInfo = generalCommonInfoBase
+    ? {
+        ...generalCommonInfoBase,
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          generalCommonInfoBase.participantRecruitmentInfo,
+          dto
+        ),
+      }
+    : {
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          undefined,
+          dto
+        ),
+      }
+  /** otherNotes ≠ remarks — 모집 비고와 분리 (BE otherMatters) */
   const otherNotes =
-    dtoWithExtras.otherMatters?.trim() ||
-    dtoWithExtras.remarks?.trim() ||
-    participantRemarks?.trim() ||
-    undefined
+    resolveOtherNotesFromProgramResponse({
+      otherMatters: dto.otherMatters,
+      otherNotes: serviceDetail.otherNotes,
+    }) || undefined
   const audienceFromApi = resolveAudienceFromApiFields({
     audience: serviceDetail.generalProgramAudience,
     programType: dto.programType,
@@ -347,11 +364,22 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     participantTypes: serviceDetail.generalParticipantTypes,
     category: dto.category,
   })
-  const detailTargetLevels = resolveProgramTargetLevels({
-    targetLevels: Array.isArray(dto.targetLevels)
-      ? dto.targetLevels.map(v => String(v))
-      : serviceDetail.targetLevels,
-    targetLevel: dto.targetLevel ?? serviceDetail.targetLevels?.[0],
+  const dtoTargetLevels = Array.isArray(dto.targetLevels)
+    ? dto.targetLevels.map(v => String(v))
+    : undefined
+  const jsonTargetLevels = serviceDetail.targetLevels
+  const columnTargetLevels = resolveProgramTargetLevels({
+    targetLevels:
+      (dtoTargetLevels?.length ?? 0) >= (jsonTargetLevels?.length ?? 0)
+        ? (dtoTargetLevels ?? jsonTargetLevels)
+        : jsonTargetLevels,
+    targetLevel: dto.targetLevel ?? jsonTargetLevels?.[0],
+  })
+  const detailTargetLevels = resolvePersistedProgramTargetLevels({
+    targetLevels: columnTargetLevels,
+    targetLevel: dto.targetLevel ?? jsonTargetLevels?.[0],
+    registrationOverlay: serviceDetail.registrationOverlay,
+    generalCommonInfo,
   })
 
   const mapped = baseProgramDefaults({
@@ -380,7 +408,9 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     ...resolveBusinessPeriodDates(dto),
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
-    businessArea: dto.businessArea,
+    businessArea: normalizeProgramBusinessAreaValue(
+      dto.businessArea || dtoWithExtras.businessField
+    ) || undefined,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
     textbookNameEn: dto.textbookNameEn,
@@ -408,6 +438,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     managerName: dto.managerName,
     venue: dto.venue,
     curriculum: dto.curriculum,
+    contactName: dto.contactName?.trim() || undefined,
     contactEmail: dto.contactEmail,
     contactPhone: dto.contactPhone,
     oneLineIntroduction: dto.oneLineIntroduction,
@@ -419,6 +450,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
     otherNotes: otherNotes?.trim() || undefined,
+    recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     ...serviceDetail,
@@ -577,15 +609,16 @@ function toRequestPhone(value: string | null | undefined): string | undefined {
   return formatKoreanPhoneNumber(trimmed)
 }
 
-/** Admin create/update SSOT — `targetLevels` 배열. 단수만 있으면 길이 1 배열로 올린다. */
+/** Admin create/update SSOT — 모집 라벨·overlay가 더 길면 그 배열을 컬럼에 올린다. */
 function resolveRequestTargetLevels(
-  program: Program
+  program: Program,
+  fallback?: Program
 ): ProgramUpdateRequestTargetLevelsItem[] | undefined {
-  if (program.targetLevels != null) {
-    return [...program.targetLevels] as ProgramUpdateRequestTargetLevelsItem[]
-  }
-  if (program.targetLevel) {
-    return [program.targetLevel as ProgramUpdateRequestTargetLevelsItem]
+  const resolved = resolvePersistedProgramTargetLevels(program)
+  const fromFallback = fallback ? resolvePersistedProgramTargetLevels(fallback) : []
+  const richest = resolved.length >= fromFallback.length ? resolved : fromFallback
+  if (richest.length > 0) {
+    return [...richest] as ProgramUpdateRequestTargetLevelsItem[]
   }
   return undefined
 }
@@ -598,13 +631,14 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     program.generalParticipantTypes
   )
   const detailedProgramName = program.generalCommonInfo?.detailedProgramName
+  const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
   const sponsors = mapProgramSponsorAssignments(program)
   const primarySponsorId =
     sponsors.find(s => s.sponsorContactId)?.sponsorId ||
     sponsors[0]?.sponsorId ||
     (program.sponsorId != null ? String(program.sponsorId) : undefined)
 
-  return {
+  const body: ProgramUpdateRequestBody = {
     sponsorId: primarySponsorId,
     sponsors: sponsors.length > 0 ? sponsors : undefined,
     title: program.title,
@@ -619,7 +653,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     applicationStartDate: toRequestDate(program.applicationStartDate),
     applicationEndDate: toRequestDate(program.applicationEndDate),
     recruitments: mapGeneralProgramRecruitmentsToRequest(program),
-    businessArea: program.businessArea,
+    businessArea,
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
@@ -673,6 +707,12 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     rounds: mapProgramRoundsToRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
   }
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'full',
+    merged: program,
+    existing: program,
+  })
+  return body
 }
 
 export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreateRequestBody {
@@ -718,6 +758,25 @@ function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
   return Object.prototype.hasOwnProperty.call(patch, key)
 }
 
+const RECRUITMENT_WINDOW_PATCH_KEYS = [
+  'applicationStartDate',
+  'applicationEndDate',
+  'instructorApplicationStartDate',
+  'instructorApplicationEndDate',
+  'volunteerApplicationStartDate',
+  'volunteerApplicationEndDate',
+  'resultAnnouncementDate',
+  'resultAnnouncementMethod',
+  'studentListRequired',
+  'generalParticipantInterviewEnabled',
+  'generalVolunteerInterviewEnabled',
+] as const satisfies ReadonlyArray<keyof Program>
+
+/** 모집 탭 저장만 모집 창을 보낸다. 공통정보의 generalCommonInfo 복사본은 제외한다. */
+function patchIncludesRecruitmentWindow(patch: Partial<Program>): boolean {
+  return RECRUITMENT_WINDOW_PATCH_KEYS.some(key => patchHasKey(patch, key))
+}
+
 /** GET 마스킹 값(`김*원`, `010-****-1234`)을 PATCH로 되쓰지 않기 위함 */
 function looksMaskedProgramPii(value: string | null | undefined): boolean {
   if (value == null) return false
@@ -728,15 +787,6 @@ function looksMaskedProgramPii(value: string | null | undefined): boolean {
  * 공통·모집 정보 등 **부분 수정**용 — `patch`에 있는 도메인 키만 UpdateRequest에 실음.
  * rounds·curriculum·담당자(미변경/마스킹) 등 화면 밖 필드는 보내지 않음.
  */
-function sameParticipantTypes(
-  left: Program['generalParticipantTypes'],
-  right: Program['generalParticipantTypes']
-): boolean {
-  const a = [...(left ?? [])].sort()
-  const b = [...(right ?? [])].sort()
-  return a.length === b.length && a.every((value, index) => value === b[index])
-}
-
 function recruitmentTypeOf(
   recruitmentType: string | undefined
 ): ProgramRecruitmentEditType | null {
@@ -754,13 +804,14 @@ function mapProgramPatchFieldsToRequest(
   const body: ProgramUpdateRequestBody = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
 
-  if (has('sponsorId') || has('generalCommonInfo')) {
+  if (has('sponsorId') || patchTouchesProgramSponsors(patch)) {
     const sponsors = mapProgramSponsorAssignments(merged)
     body.sponsorId =
       sponsors.find(s => s.sponsorContactId)?.sponsorId ||
       sponsors[0]?.sponsorId ||
       (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
-    if (sponsors.length > 0) body.sponsors = sponsors
+    // BE: sponsors 키 존재 = full replace. [] = 전체 해제. 후원 미수정 PATCH에서는 키 생략.
+    body.sponsors = sponsors
   }
   if (has('title')) body.title = merged.title
   if (has('type')) body.type = merged.type
@@ -773,9 +824,9 @@ function mapProgramPatchFieldsToRequest(
     body.businessStartDate = toRequestDate(merged.startDate)
     body.businessEndDate = toRequestDate(merged.endDate)
   }
-  const participantLocked = isProgramRecruitmentTypeLocked(existing, 'PARTICIPANT')
-  const instructorLocked = isProgramRecruitmentTypeLocked(existing, 'INSTRUCTOR')
-  const volunteerLocked = isProgramRecruitmentTypeLocked(existing, 'VOLUNTEER')
+  const participantLocked = isProgramOperationStartLocked(existing, 'PARTICIPANT')
+  const instructorLocked = isProgramOperationStartLocked(existing, 'INSTRUCTOR')
+  const volunteerLocked = isProgramOperationStartLocked(existing, 'VOLUNTEER')
   const includeParticipantRecruitment =
     (has('applicationStartDate') || has('applicationEndDate')) && !participantLocked
   const includeInstructorRecruitment =
@@ -801,7 +852,10 @@ function mapProgramPatchFieldsToRequest(
     })
     if (rows && rows.length > 0) body.recruitments = rows
   }
-  if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('businessArea')) {
+    const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
+    body.businessArea = businessArea
+  }
   if (has('detailedProgramId') || has('generalCommonInfo')) {
     body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
   }
@@ -878,27 +932,45 @@ function mapProgramPatchFieldsToRequest(
   if (has('attachmentFileNames')) body.attachmentFileNames = merged.attachmentFileNames
   if (has('rounds')) body.rounds = mapProgramRoundsToRequest(merged)
 
-  if (has('generalProgramAudience') || has('generalParticipantTypes')) {
-    const nextMode = mapAudienceToApplicationTargetMode(
-      merged.generalProgramAudience,
-      merged.generalParticipantTypes
-    )
-    const previousMode = mapAudienceToApplicationTargetMode(
-      existing.generalProgramAudience,
-      existing.generalParticipantTypes
-    )
-    const participantTypeUnchanged =
-      nextMode === previousMode &&
-      sameParticipantTypes(existing.generalParticipantTypes, merged.generalParticipantTypes)
-    if (!(participantLocked && participantTypeUnchanged)) {
-      body.applicationTargetMode = nextMode
+  const detailSource =
+    has('generalProgramAudience') || has('generalParticipantTypes')
+      ? {
+          ...merged,
+          generalProgramAudience: existing.generalProgramAudience,
+          generalParticipantTypes: existing.generalParticipantTypes,
+        }
+      : merged
+
+  const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(
+    key =>
+      key !== 'generalProgramAudience' &&
+      key !== 'generalParticipantTypes' &&
+      has(key)
+  )
+  if (touchesServiceDetail) {
+    const persistedTargetLevels =
+      has('targetLevel') || has('targetLevels')
+        ? resolveRequestTargetLevels(merged)
+        : resolveRequestTargetLevels(detailSource, existing)
+    const serializeSource =
+      persistedTargetLevels?.length
+        ? { ...detailSource, targetLevels: persistedTargetLevels }
+        : detailSource
+    body.serviceDetailJson = serializeGeneralProgramServiceDetailJson(serializeSource, {
+      omitRecruitmentWindow: !patchIncludesRecruitmentWindow(patch),
+    })
+    if (persistedTargetLevels?.length) {
+      body.targetLevels = persistedTargetLevels
+      body.targetLevel = persistedTargetLevels[0]
     }
   }
 
-  const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
-  if (touchesServiceDetail) {
-    body.serviceDetailJson = serializeGeneralProgramServiceDetailJson(merged)
-  }
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'patch',
+    merged,
+    existing,
+    patch,
+  })
 
   return body
 }

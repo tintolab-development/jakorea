@@ -70,21 +70,23 @@ export function ProgramStatusBadges({
         {educationTargetLabel}
       </PFCategoryBadge>
 
-      <PFCategoryBadge
-        size="large"
-        iconVariant="secondary"
-        icon={
-          <img
-            src={EDUCATION_FORM_ICON_MAP[educationForm]}
-            alt=""
-            width={14}
-            height={14}
-            aria-hidden="true"
-          />
-        }
-      >
-        {educationFormLabel}
-      </PFCategoryBadge>
+      {educationFormLabel.trim() ? (
+        <PFCategoryBadge
+          size="large"
+          iconVariant="secondary"
+          icon={
+            <img
+              src={EDUCATION_FORM_ICON_MAP[educationForm]}
+              alt=""
+              width={14}
+              height={14}
+              aria-hidden="true"
+            />
+          }
+        >
+          {educationFormLabel}
+        </PFCategoryBadge>
+      ) : null}
     </div>
   )
 }
