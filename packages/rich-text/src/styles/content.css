@@ -25,6 +25,11 @@
   line-height: var(--rt-content-line-height, 170%);
 }
 
+/* 앱 reset(0) / 브라우저·Ant Design(1em)과 무관하게 에디터·뷰어 단락 간격을 같게 */
+.rich-text-content p {
+  margin: var(--rt-content-paragraph-margin, 0.5em) 0;
+}
+
 .rich-text-content h1,
 .rich-text-content h2,
 .rich-text-content h3 {

@@ -16,6 +16,26 @@ export interface GeminiRecruitmentItem {
   businessYear?: number;
   businessStartDate?: string;
   businessEndDate?: string;
+  /**
+     * 기관 모집 기간 시작. 연수 요청 가능기간(trainingRequest*)과 별개.
+     * @nullable
+     */
+  applicationStartDate?: string | null;
+  /**
+     * 기관 모집 기간 종료.
+     * @nullable
+     */
+  applicationEndDate?: string | null;
+  /**
+     * 연수 요청 가능기간 시작.
+     * @nullable
+     */
+  trainingRequestStartDate?: string | null;
+  /**
+     * 연수 요청 가능기간 종료.
+     * @nullable
+     */
+  trainingRequestEndDate?: string | null;
   organizationApplicationCount?: number;
   approvedOrganizationApplicationCount?: number;
   updatedAt?: string;

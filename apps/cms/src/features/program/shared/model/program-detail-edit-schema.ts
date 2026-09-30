@@ -1383,6 +1383,9 @@ export function detailEditValuesToProgramPatch(
         contactPhone: contactPhone?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.contactPhone,
         contactEmail: contactEmail?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.contactEmail,
         contactOrganizationName,
+        contactName:
+          values.recruitmentContactOrganizationName?.trim() ||
+          existing.generalCommonInfo?.participantRecruitmentInfo?.contactName,
       },
       instructorRecruitmentInfo: {
         ...existing.generalCommonInfo?.instructorRecruitmentInfo,

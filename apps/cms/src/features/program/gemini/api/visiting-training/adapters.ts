@@ -306,9 +306,9 @@ export function mapGeminiRecruitmentDetailToDetail(
     base ??
     mapGeminiRecruitmentItemToRow(
       {
-        programId: dto.programId,
+        programId: dto.programId ?? 0,
         programType: dto.programType ?? GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
-        nameKo: dto.nameKo,
+        nameKo: dto.nameKo ?? '',
         businessStartDate: dto.businessStartDate ?? undefined,
         businessEndDate: dto.businessEndDate ?? undefined,
         applicationStartDate: dto.applicationStartDate ?? undefined,
