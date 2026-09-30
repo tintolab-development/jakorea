@@ -665,6 +665,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                             }
                             placeholder="비고란을 작성하세요"
                             inputSize="medium"
+                            width="100%"
                             style={{ flex: '1 1 0', minWidth: 0 }}
                             className="program-detail-info-tab__notes-input"
                           />
@@ -681,6 +682,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                           value={field.value ?? ''}
                           placeholder="비고란을 작성하세요 (없으면 -로 입력)"
                           inputSize="medium"
+                          width="100%"
                           className="program-detail-info-tab__notes-input"
                         />
                       )}

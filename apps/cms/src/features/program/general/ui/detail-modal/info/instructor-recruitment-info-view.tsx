@@ -346,6 +346,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="비고"
+              fullRow
               view={display.notes}
               edit={
                 isEdit && form ? (
@@ -358,6 +359,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                         value={field.value ?? ''}
                         placeholder="비고란을 작성하세요 (없으면 -로 입력)"
                         inputSize="medium"
+                        width="100%"
                         className="program-detail-info-tab__notes-input"
                       />
                     )}
