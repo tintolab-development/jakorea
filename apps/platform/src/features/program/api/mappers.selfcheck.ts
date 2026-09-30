@@ -634,4 +634,29 @@ assert.equal(listedEducationForm.recruitmentStatus, 'recruiting')
 assert.equal(listedEducationForm.operatingPeriodStart, '2026-11-12')
 assert.equal(listedEducationForm.operatingPeriodEnd, '2026-12-17')
 
+/** Portal SSOT: GEMINI_TRAINING → detailCase gemini · category institution */
+const geminiTraining = mapPortalProgramDetail({
+  programId: 185003,
+  programType: 'GEMINI_TRAINING',
+  portalCategories: ['ORGANIZATION'],
+  title: '제미나이 아카데미 찾아가는 연수 모집',
+  recruitmentStatus: 'OPEN',
+})
+assert.ok(geminiTraining)
+assert.equal(geminiTraining.detailCase, 'gemini')
+assert.equal(geminiTraining.category, 'institution')
+
+const geminiTrainingListed = mapPortalProgramListItem({
+  programId: 185003,
+  programType: 'GEMINI_TRAINING',
+  portalCategories: ['ORGANIZATION'],
+  title: '제미나이 아카데미 찾아가는 연수 모집',
+  recruitmentStatus: 'UPCOMING',
+  featuredOnHome: true,
+  homeDisplayOrder: 1,
+})
+assert.ok(geminiTrainingListed)
+assert.equal(geminiTrainingListed.category, 'institution')
+assert.equal(geminiTrainingListed.recruitmentStatus, 'scheduled')
+
 console.log('program portal mappers.selfcheck: ok')

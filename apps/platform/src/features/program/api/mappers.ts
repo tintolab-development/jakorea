@@ -213,6 +213,7 @@ function mapCategory(categories: string[] | undefined, programType: string | und
       return 'instructor' as const
     case 'GENERAL_ORGANIZATION':
     case 'GEMINI':
+    case 'GEMINI_TRAINING':
     case 'COMPANY_SCHOOL':
     case 'ECONOMY':
       return 'institution' as const
@@ -228,8 +229,12 @@ function mapDetailCase(
 ): ProgramDetailCase {
   const type = (programType ?? '').trim().toUpperCase()
   const codes = (categories ?? []).map(item => item.trim().toUpperCase())
+  // Portal SSOT = GEMINI_TRAINING. GEMINI / VISITING_TRAINING 은 CMS preview·레거시 alias.
+  // programType이 Gemini면 portalCategories의 INSTRUCTOR보다 우선 (찾아가는 연수 상세 케이스 유지).
+  if (type === 'GEMINI_TRAINING' || type === 'GEMINI' || type === 'VISITING_TRAINING') {
+    return 'gemini'
+  }
   if (type === 'TRAINED_TEACHER' || codes.includes('INSTRUCTOR')) return 'instructor'
-  if (type === 'GEMINI' || type === 'VISITING_TRAINING') return 'gemini'
   if (type === 'UJAT') {
     const volunteer = (recruitments ?? []).some(
       row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER'
