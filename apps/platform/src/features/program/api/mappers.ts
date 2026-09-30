@@ -288,11 +288,11 @@ function mapRecruitmentStatus(
 function recruitmentTypeLabel(value: string | undefined): string {
   switch ((value ?? '').trim().toUpperCase()) {
     case 'INSTRUCTOR':
-      return '강사 모집'
+      return '강사 모집 기간'
     case 'VOLUNTEER':
-      return '봉사자 모집'
+      return '봉사자 모집 기간'
     default:
-      return '참여자 모집'
+      return '참여자 모집 기간'
   }
 }
 
@@ -368,13 +368,13 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
     if (!interviewOff && (row.interviewEnabled === true || hasInterviewDates)) {
       const documentAt = toDate(row.documentPassAnnouncementAt ?? undefined)
       if (documentAt) {
-        phases.push({ label: '1차 서류 합격자 발표', value: formatYmdCompact(documentAt) })
+        phases.push({ label: '1차 합격자 발표일', value: formatYmdCompact(documentAt) })
       }
       const interviewStart = toDate(row.interviewStartAt ?? undefined)
       const interviewEnd = toDate(row.interviewEndAt ?? undefined)
       if (interviewStart || interviewEnd) {
         phases.push({
-          label: '2차 면접 기간',
+          label: '면접 기간',
           value: formatCompactRange(interviewStart, interviewEnd),
         })
       }
@@ -406,17 +406,21 @@ const VENUE_KIND_LABEL: Record<string, string> = {
   other: '기타',
 }
 
-/** `기관 안, 서울시 강서구 …` — 구분과 상세를 쉼표로 붙인다. */
+/** 기타는 상세만, 기관 안/밖은 `구분 | 상세`로 표시한다. */
 export function formatPortalEducationVenue(
   venue: string | null | undefined,
   venueKind: string | null | undefined
 ): string {
   const detail = venue?.trim() ?? ''
-  const kindLabel = VENUE_KIND_LABEL[(venueKind ?? '').trim().toLowerCase()] ?? ''
+  const normalizedKind = (venueKind ?? '').trim().toLowerCase()
+  if (normalizedKind === 'other') return detail
+
+  const kindLabel = VENUE_KIND_LABEL[normalizedKind] ?? ''
   if (!kindLabel) return detail
   if (!detail || detail === kindLabel) return kindLabel
-  if (detail.startsWith(`${kindLabel},`) || detail.startsWith(`${kindLabel} |`)) return detail
-  return `${kindLabel}, ${detail}`
+
+  const detailWithoutKind = detail.replace(new RegExp(`^${kindLabel}\\s*(?:,|\\|)\\s*`), '').trim()
+  return detailWithoutKind ? `${kindLabel} | ${detailWithoutKind}` : kindLabel
 }
 
 function contactValue(phone?: string, email?: string): string {
@@ -753,7 +757,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     maxPreferredScheduleCount: isTrainedTeacher ? 2 : 1,
     sessions,
     eventSchedules,
-    recruitmentPhaseGroupLabel: '모집 일정',
+    recruitmentPhaseGroupLabel: '모집 및 선별 기간',
     recruitmentPhases: mapRecruitmentPhases(remote.recruitments),
     educationSchedules: usesEducationProgressFields
       ? mapPortalEducationScheduleCards(remote)
