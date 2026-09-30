@@ -7,6 +7,9 @@ export type {
   PortalAttachment,
   PortalCurriculum,
   PortalCurriculumSession,
+  PortalEducationCurriculumSession,
+  PortalEducationScheduleDetail,
+  PortalEducationScheduleRange,
   PortalProgramDetail,
   PortalRecruitment,
   PortalSchedule,
@@ -22,9 +25,17 @@ export type PortalProgramListItem = {
   title?: string
   summary?: string
   operationMethod?: string
+  /**
+   * 목록 교육 형태. `online` | `offline` | `hybrid` | `participant_choice`.
+   * 없으면 `operationMethod`. 목록에는 한글 라벨이 없다.
+   */
+  educationForm?: 'online' | 'offline' | 'hybrid' | 'participant_choice' | string | null
   businessYear?: number
   businessStartDate?: string
   businessEndDate?: string
+  /** 목록 운영 기간. 없으면 사업 기간. */
+  operationStartDate?: string | null
+  operationEndDate?: string | null
   periodStatus?: string
   recruitmentStatus?: string
   recruitmentStartAt?: string

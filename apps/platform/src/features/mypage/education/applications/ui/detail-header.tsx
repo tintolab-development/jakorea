@@ -63,18 +63,20 @@ export function EducationDetailHeader({
             {educationTargetLabel}
           </PFText>
         </span>
-        <span className={styles.metaItem}>
-          <img
-            className={styles.metaIcon}
-            src={EDUCATION_FORM_ICON_MAP[educationForm]}
-            alt=""
-            width={14}
-            height={14}
-          />
-          <PFText as="span" typo="bd-md-sb" color="primary-700">
-            {educationFormLabel}
-          </PFText>
-        </span>
+        {educationFormLabel.trim() ? (
+          <span className={styles.metaItem}>
+            <img
+              className={styles.metaIcon}
+              src={EDUCATION_FORM_ICON_MAP[educationForm]}
+              alt=""
+              width={14}
+              height={14}
+            />
+            <PFText as="span" typo="bd-md-sb" color="primary-700">
+              {educationFormLabel}
+            </PFText>
+          </span>
+        ) : null}
       </div>
     </header>
   )

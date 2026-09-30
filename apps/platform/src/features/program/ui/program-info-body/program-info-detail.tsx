@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { PFText } from '@/shared/ui'
-import type { ProgramDetail } from '../../model/types'
+import type { ProgramDetail, ProgramEventSchedule, ProgramSession } from '../../model/types'
 import { ProgramInfoPeriodSponsor } from './program-info-period-sponsor'
 import styles from './program-info-body.module.css'
 
@@ -11,6 +11,49 @@ type ProgramInfoDetailProps = {
   /** 교육·봉사현황 상세처럼 참여하기 header를 쓰지 않을 때 운영 기간·후원사 노출 */
   showPeriodSponsor?: boolean
   className?: string
+}
+
+function progressMetaLines(
+  row: Pick<
+    ProgramSession,
+    'educationFormLabel' | 'participationMethodLabel' | 'ipsTypeSummary' | 'assignmentPeriod'
+  >,
+) {
+  return [
+    row.educationFormLabel?.trim()
+      ? { label: '교육 형태', value: row.educationFormLabel.trim() }
+      : null,
+    row.participationMethodLabel?.trim()
+      ? { label: '참여 방식', value: row.participationMethodLabel.trim() }
+      : null,
+    row.ipsTypeSummary?.trim()
+      ? { label: 'IPS 유형', value: row.ipsTypeSummary.trim() }
+      : null,
+    row.assignmentPeriod?.trim()
+      ? { label: '과제 기간', value: row.assignmentPeriod.trim() }
+      : null,
+  ].filter((line): line is { label: string; value: string } => line != null)
+}
+
+function ProgressMeta({
+  row,
+}: {
+  row: Pick<
+    ProgramSession | ProgramEventSchedule,
+    'educationFormLabel' | 'participationMethodLabel' | 'ipsTypeSummary' | 'assignmentPeriod'
+  >
+}) {
+  const lines = progressMetaLines(row)
+  if (lines.length === 0) return null
+  return (
+    <div className={styles.sessionMeta}>
+      {lines.map(line => (
+        <PFText key={line.label} as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          {line.label} {line.value}
+        </PFText>
+      ))}
+    </div>
+  )
 }
 
 function resolveBasicInfoFields(program: ProgramDetail) {
@@ -88,8 +131,8 @@ export function ProgramInfoDetail({
                 {program.sessions.map(session => (
                   <li key={`${session.sessionLabel}-${session.title}`} className={styles.session}>
                     <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
-                      <span className={styles.sessionLabel}>{session.sessionLabel}</span>{' '}
-                      {session.title}
+                      <span className={styles.sessionLabel}>{session.sessionLabel}</span>
+                      {session.title.trim() ? ` ${session.title}` : ''}
                     </PFText>
                     {session.dateLabel ? (
                       <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
@@ -101,6 +144,7 @@ export function ProgramInfoDetail({
                         {session.description}
                       </PFText>
                     ) : null}
+                    <ProgressMeta row={session} />
                   </li>
                 ))}
               </ul>
@@ -127,6 +171,7 @@ export function ProgramInfoDetail({
                         {event.dateLabel}
                       </PFText>
                     ) : null}
+                    <ProgressMeta row={event} />
                   </li>
                 ))}
               </ul>

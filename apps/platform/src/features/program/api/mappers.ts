@@ -2,13 +2,19 @@ import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-
 import type {
   EducationForm,
   EducationTargetKey,
+  ProgramBasicInfoField,
   ProgramDetail,
   ProgramDetailCase,
+  ProgramEventSchedule,
+  ProgramLabeledValue,
   ProgramListItem,
   ProgramParticipationMethod,
+  ProgramSession,
 } from '../model/types'
 import type {
   PortalCurriculum,
+  PortalEducationCurriculumSession,
+  PortalEducationScheduleDetail,
   PortalProgramDetail,
   PortalProgramListItem,
   PortalRecruitment,
@@ -246,12 +252,14 @@ function mapDetailCase(
   return 'general'
 }
 
+/**
+ * 모집 배지는 `recruitmentStatus`만 본다.
+ * `periodStatus`가 SCHEDULED여도 모집 예정으로 만들지 않는다.
+ */
 function mapRecruitmentStatus(
-  periodStatus: string | undefined,
   recruitmentStatus: string | undefined,
   recruitments: PortalRecruitment[] | undefined,
 ): RecruitmentStatus {
-  if ((recruitments ?? []).some(row => row.open === true)) return RECRUITMENT_STATUS.recruiting
   switch ((recruitmentStatus ?? '').trim().toUpperCase()) {
     case 'RECRUITING':
     case 'OPEN':
@@ -262,22 +270,12 @@ function mapRecruitmentStatus(
       return RECRUITMENT_STATUS.scheduled
     case 'CLOSED':
     case 'COMPLETED':
+    case 'NONE':
       return RECRUITMENT_STATUS.closed
     default:
       break
   }
-  switch ((periodStatus ?? '').trim().toUpperCase()) {
-    case 'SCHEDULED':
-    case 'PLANNED':
-      return RECRUITMENT_STATUS.scheduled
-    case 'RECRUITING':
-      return RECRUITMENT_STATUS.recruiting
-    case 'COMPLETED':
-    case 'CLOSED':
-      return RECRUITMENT_STATUS.closed
-    default:
-      break
-  }
+  if ((recruitments ?? []).some(row => row.open === true)) return RECRUITMENT_STATUS.recruiting
   const now = Date.now()
   const windows = (recruitments ?? []).flatMap(row => {
     const start = toDate(row.startAt)
@@ -403,11 +401,225 @@ function mapParticipationMethod(remote: PortalProgramDetail): ProgramParticipati
   return 'individual'
 }
 
+const VENUE_KIND_LABEL: Record<string, string> = {
+  inside: '기관 안',
+  inside_school: '기관 안',
+  outside: '기관 밖',
+  outside_school: '기관 밖',
+  other: '기타',
+}
+
+/** `기관 안, 서울시 강서구 …` — 구분과 상세를 쉼표로 붙인다. */
+export function formatPortalEducationVenue(
+  venue: string | null | undefined,
+  venueKind: string | null | undefined,
+): string {
+  const detail = venue?.trim() ?? ''
+  const kindLabel = VENUE_KIND_LABEL[(venueKind ?? '').trim().toLowerCase()] ?? ''
+  if (!kindLabel) return detail
+  if (!detail || detail === kindLabel) return kindLabel
+  if (detail.startsWith(`${kindLabel},`) || detail.startsWith(`${kindLabel} |`)) return detail
+  return `${kindLabel}, ${detail}`
+}
+
 function contactValue(phone?: string, email?: string): string {
   const p = readString(phone)
   const e = readString(email)
   if (p && e) return `${p} · ${e}`
   return p || e || ''
+}
+
+function isGeneralEducationProgressProgram(programType: string | undefined): boolean {
+  const type = (programType ?? '').trim().toUpperCase()
+  return type === 'GENERAL_INDIVIDUAL' || type === 'GENERAL_ORGANIZATION'
+}
+
+/** 공통정보가 투영된 상세. 유형과 무관하게 교육 진행 컴포넌트를 쓴다. */
+function hasProjectedEducationProgress(remote: PortalProgramDetail): boolean {
+  return remote.educationStructure === 'curriculum' || remote.educationStructure === 'schedule'
+}
+
+function optionalText(value: string | null | undefined): string | undefined {
+  const text = value?.trim()
+  return text ? text : undefined
+}
+
+/** `educationForm` 우선. 없을 때만 프로그램 컬럼 `operationMethod`. */
+function resolveEducationFormCode(
+  educationForm: string | null | undefined,
+  operationMethod: string | null | undefined,
+): EducationForm {
+  const code = optionalText(educationForm) ?? optionalText(operationMethod)
+  return mapEducationForm(code)
+}
+
+function resolveOperatingRange(args: {
+  operationStart?: string | null
+  operationEnd?: string | null
+  businessStart?: string | null
+  businessEnd?: string | null
+}): { start: Date | null; end: Date | null } {
+  const operationStart = toDate(args.operationStart ?? undefined)
+  const operationEnd = toDate(args.operationEnd ?? undefined)
+  if (operationStart || operationEnd) return { start: operationStart, end: operationEnd }
+  return {
+    start: toDate(args.businessStart ?? undefined),
+    end: toDate(args.businessEnd ?? undefined),
+  }
+}
+
+/** 상세 운영 기간은 모집 행 날짜. 없으면 사업 기간. */
+function recruitmentOperatingDates(recruitments: PortalRecruitment[] | undefined): {
+  start?: string | null
+  end?: string | null
+} {
+  const row = (recruitments ?? []).find(
+    item => optionalText(item.operationStartDate) || optionalText(item.operationEndDate),
+  )
+  return { start: row?.operationStartDate, end: row?.operationEndDate }
+}
+
+type EducationProgressRowVisibility = {
+  /** 루트 교육 형태가 있으면 행 값은 반복하지 않는다. */
+  showEducationForm: boolean
+  showParticipation: boolean
+  showIps: boolean
+}
+
+function mapPortalCurriculumSessions(
+  sessions: PortalEducationCurriculumSession[] | undefined,
+  structure: PortalProgramDetail['educationStructure'],
+  rows: EducationProgressRowVisibility,
+): ProgramSession[] {
+  if (structure !== 'curriculum') return []
+  return (sessions ?? []).map(session => ({
+    sessionLabel: session.sessionLabel ?? '',
+    title: session.title ?? '',
+    description: session.description ?? '',
+    ...(optionalText(session.scheduleDateLabel)
+      ? { dateLabel: session.scheduleDateLabel?.trim() }
+      : {}),
+    ...(rows.showEducationForm && optionalText(session.educationFormLabel)
+      ? { educationFormLabel: session.educationFormLabel?.trim() }
+      : {}),
+    ...(rows.showParticipation && optionalText(session.participationMethodLabel)
+      ? { participationMethodLabel: session.participationMethodLabel?.trim() }
+      : {}),
+    ...(rows.showIps && optionalText(session.ipsTypeSummary)
+      ? { ipsTypeSummary: session.ipsTypeSummary?.trim() }
+      : {}),
+    ...(optionalText(session.assignmentPeriod)
+      ? { assignmentPeriod: session.assignmentPeriod?.trim() }
+      : {}),
+  }))
+}
+
+function formatGroupTimes(
+  times: PortalEducationScheduleDetail['groupTimes'],
+): string | undefined {
+  const labels = (times ?? [])
+    .map(slot => {
+      const start = slot.startTime?.trim() ?? ''
+      const end = slot.endTime?.trim() ?? ''
+      if (start && end) return `${start} ~ ${end}`
+      return start || end
+    })
+    .filter(label => label.length > 0)
+  return labels.length > 0 ? labels.join(', ') : undefined
+}
+
+function mapPortalScheduleDetails(
+  details: PortalEducationScheduleDetail[] | undefined,
+  structure: PortalProgramDetail['educationStructure'],
+  rows: EducationProgressRowVisibility,
+): ProgramEventSchedule[] {
+  if (structure !== 'schedule') return []
+  return (details ?? []).map(detail => {
+    const timeSummary = optionalText(detail.progressTimeSummary) ?? formatGroupTimes(detail.groupTimes)
+    const dateLabel = [optionalText(detail.scheduleDateLabel), timeSummary]
+      .filter((part): part is string => Boolean(part))
+      .join(' · ')
+    return {
+      scheduleLabel: detail.scheduleLabel ?? '',
+      name: detail.name ?? '',
+      dateLabel,
+      ...(detail.blockKind ? { blockKind: detail.blockKind } : {}),
+      ...(rows.showEducationForm && optionalText(detail.educationFormLabel)
+        ? { educationFormLabel: detail.educationFormLabel?.trim() }
+        : {}),
+      ...(rows.showParticipation && optionalText(detail.participationMethodLabel)
+        ? { participationMethodLabel: detail.participationMethodLabel?.trim() }
+        : {}),
+      ...(rows.showIps && optionalText(detail.ipsTypeSummary)
+        ? { ipsTypeSummary: detail.ipsTypeSummary?.trim() }
+        : {}),
+      ...(optionalText(detail.assignmentPeriod)
+        ? { assignmentPeriod: detail.assignmentPeriod?.trim() }
+        : {}),
+    }
+  })
+}
+
+const EDUCATION_TARGET_CODE = new Set(['elementary', 'middle', 'high', 'university', 'adult'])
+
+/** 교육 대상 상세 문장. `high` 같은 대상 코드는 설명으로 쓰지 않는다. */
+function mapEducationTargetDetailLabel(
+  remote: PortalProgramDetail,
+  fallbackLabel: string,
+): string {
+  const detail = readString(remote.educationTargetDetail)
+  if (detail && !EDUCATION_TARGET_CODE.has(detail.toLowerCase())) return detail
+  const recruitmentDetail = readString(remote.recruitmentTargetDetail)
+  if (recruitmentDetail && !EDUCATION_TARGET_CODE.has(recruitmentDetail.toLowerCase())) {
+    return recruitmentDetail
+  }
+  return fallbackLabel
+}
+
+/** 세부내용 「교육 일정 N」. 일정형 복수 회차는 배열이 있어도 카드를 숨긴다. */
+function mapPortalEducationScheduleCards(remote: PortalProgramDetail): ProgramLabeledValue[] {
+  if (remote.educationStructure === 'schedule' && remote.sessionRound === 'multi') return []
+  return (remote.educationScheduleLines ?? []).map((line, index) => ({
+    label: `교육 일정 ${index + 1}`,
+    value: line,
+  }))
+}
+
+const PARTICIPATION_METHOD_LABEL = {
+  individual: '개인',
+  team: '팀',
+} as const
+
+function buildPortalBasicInfoFields(args: {
+  usesEducationProgressFields: boolean
+  businessFieldLabel: string
+  roleLabel: string
+  educationFormLabel: string
+  participationMethodLabel: string
+  ipsTypeSummary: string
+  educationTargetGroupLabel: string
+  educationTargetDetailLabel: string
+  educationVenueLabel: string
+}): ProgramBasicInfoField[] {
+  const fields: ProgramBasicInfoField[] = [
+    { label: '사업 분야', value: args.businessFieldLabel },
+    { label: '모집 구분', value: args.roleLabel },
+  ]
+  if (!args.usesEducationProgressFields || args.educationFormLabel) {
+    fields.push({ label: '교육 형태', value: args.educationFormLabel })
+  }
+  if (args.participationMethodLabel) {
+    fields.push({ label: '참여 방식', value: args.participationMethodLabel })
+  }
+  if (args.ipsTypeSummary) {
+    fields.push({ label: 'IPS 유형', value: args.ipsTypeSummary })
+  }
+  fields.push(
+    { label: '교육 대상', value: args.educationTargetGroupLabel },
+    { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
+    { label: '교육 장소', value: args.educationVenueLabel },
+  )
+  return fields.filter(field => field.value.trim().length > 0 && field.value !== '-')
 }
 
 export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDetail | null {
@@ -417,40 +629,68 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
 
   const category = mapCategory(remote.portalCategories, remote.programType)
   const detailCase = mapDetailCase(remote.programType, remote.portalCategories, remote.recruitments)
-  const educationForm = mapEducationForm(remote.operationMethod)
+  const perScheduleEducationForm = remote.educationFormScheduleDetail === 'perSchedule'
+  const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const targets = mapEducationTargets(remote)
   const roleLabel = ROLE_LABEL[detailCase]
   const programType = readString(remote.programType)?.toUpperCase()
   const isTrainedTeacher = programType === 'TRAINED_TEACHER'
-  const opStart = toDate(remote.businessStartDate)
-  const opEnd = toDate(remote.businessEndDate)
+  const recruitmentOperation = recruitmentOperatingDates(remote.recruitments)
+  const operating = resolveOperatingRange({
+    operationStart: recruitmentOperation.start,
+    operationEnd: recruitmentOperation.end,
+    businessStart: remote.businessStartDate,
+    businessEnd: remote.businessEndDate,
+  })
+  const opStart = operating.start
+  const opEnd = operating.end
   const primaryRecruitment = remote.recruitments?.[0]
   const appStart = toDate(primaryRecruitment?.startAt)
   const appEnd = toDate(primaryRecruitment?.endAt)
-  const recruitmentStatus = mapRecruitmentStatus(
-    remote.periodStatus,
-    remote.recruitmentStatus,
-    remote.recruitments,
-  )
-  const educationFormLabel = EDUCATION_FORM_LABEL[educationForm]
+  const recruitmentStatus = mapRecruitmentStatus(remote.recruitmentStatus, remote.recruitments)
+  const apiEducationFormLabel = perScheduleEducationForm
+    ? undefined
+    : optionalText(remote.educationFormLabel)
+  const educationFormLabel = apiEducationFormLabel ?? EDUCATION_FORM_LABEL[educationForm]
   const educationVenueLabel =
-    readString(remote.venue) || venueFromSchedules(remote.schedules) || educationFormLabel
+    formatPortalEducationVenue(remote.venue, remote.venueKind) ||
+    venueFromSchedules(remote.schedules) ||
+    (perScheduleEducationForm ? '' : educationFormLabel)
   const businessFieldLabel = readString(remote.businessField) || '-'
-  const educationTargetDetailLabel =
-    readString(remote.educationTargetDetail) ||
-    readString(remote.recruitmentTargetDetail) ||
-    targets.educationTargetLabel
+  const educationTargetDetailLabel = mapEducationTargetDetailLabel(
+    remote,
+    targets.educationTargetLabel,
+  )
   const thumbnailUrl =
     remote.thumbnailFileObjectId != null
       ? portalPublicFileContentUrl(remote.thumbnailFileObjectId)
       : undefined
-  const sessions = mapSessions(remote.curricula)
-  const eventSchedules = sessions.length > 0 ? [] : mapEventSchedules(remote.schedules)
+  const usesEducationProgressFields =
+    hasProjectedEducationProgress(remote) || isGeneralEducationProgressProgram(programType)
+  const legacySessions = mapSessions(remote.curricula)
+  const legacyEventSchedules =
+    legacySessions.length > 0 ? [] : mapEventSchedules(remote.schedules)
+  const rowVisibility: EducationProgressRowVisibility = {
+    showEducationForm: perScheduleEducationForm || !optionalText(remote.educationFormLabel),
+    showParticipation:
+      remote.participationMethod !== 'individual' && remote.participationMethod !== 'team',
+    showIps: !optionalText(remote.ipsTypeSummary),
+  }
+  const sessions = usesEducationProgressFields
+    ? mapPortalCurriculumSessions(remote.curriculumSessions, remote.educationStructure, rowVisibility)
+    : legacySessions
+  const eventSchedules = usesEducationProgressFields
+    ? mapPortalScheduleDetails(remote.scheduleDetails, remote.educationStructure, rowVisibility)
+    : legacyEventSchedules
   const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
+  const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
+  const ipsTypeSummary = usesEducationProgressFields
+    ? optionalText(remote.ipsTypeSummary)
+    : undefined
 
   const extraSections = [
-    { title: '추가 내용', body: stripHtmlToText(readString(remote.additionalContentHtml) ?? '') },
     { title: '모집 안내', body: readString(remote.recruitmentGuide) ?? '' },
+    { title: '추가 내용', body: stripHtmlToText(readString(remote.additionalContentHtml) ?? '') },
     { title: '학습 지원 내용', body: readString(remote.learningSupportContent) ?? '' },
     { title: '기타사항', body: readString(remote.otherMatters) ?? '' },
     { title: '비고', body: readString(remote.remarks) ?? '' },
@@ -472,11 +712,11 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     educationTargetKey: targets.key,
     educationTargetLabel: targets.educationTargetLabel,
     educationForm,
-    educationFormLabel,
+    educationFormLabel: educationFormLabelForDetail,
     thumbnailUrl,
     detailImageUrl: thumbnailUrl,
     sponsor: (remote.sponsorNames ?? []).map(readString).filter(Boolean).join(', ') || '-',
-    summary: readString(remote.summary) ?? readString(remote.description) ?? '',
+    summary: readString(remote.description) ?? readString(remote.summary) ?? '',
     isRecruiting: recruitmentStatus === RECRUITMENT_STATUS.recruiting,
     businessFieldLabel,
     educationTargetGroupLabel: targets.educationTargetGroupLabel,
@@ -488,27 +728,58 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     programAudience: remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL' ? 'individual' : 'organization',
     participationMethod: mapParticipationMethod(remote),
     recruitmentRoleLabel: roleLabel,
-    basicInfoFields: [
-      { label: '사업 분야', value: businessFieldLabel },
-      { label: '모집 구분', value: roleLabel },
-      { label: '교육 형태', value: educationFormLabel },
-      { label: '교육 대상', value: targets.educationTargetGroupLabel },
-      { label: '교육 대상 상세', value: educationTargetDetailLabel },
-      { label: '교육 장소', value: educationVenueLabel },
-    ].filter(field => field.value.trim().length > 0 && field.value !== '-'),
-    educationStructure: sessions.length > 0 ? 'curriculum' : 'schedule',
-    sessionRound: sessions.length > 1 || eventSchedules.length > 1 ? 'multi' : 'single',
-    educationScheduleMode: 'period',
-    educationScheduleLines: eventSchedules.map(item => item.dateLabel).filter(label => label !== '-'),
+    basicInfoFields: buildPortalBasicInfoFields({
+      usesEducationProgressFields,
+      businessFieldLabel,
+      roleLabel,
+      educationFormLabel: perScheduleEducationForm
+        ? ''
+        : usesEducationProgressFields
+          ? (apiEducationFormLabel ?? '')
+          : educationFormLabel,
+      participationMethodLabel:
+        usesEducationProgressFields &&
+        (remote.participationMethod === 'individual' || remote.participationMethod === 'team')
+          ? PARTICIPATION_METHOD_LABEL[remote.participationMethod]
+          : '',
+      ipsTypeSummary: ipsTypeSummary ?? '',
+      educationTargetGroupLabel: targets.educationTargetGroupLabel,
+      educationTargetDetailLabel,
+      educationVenueLabel,
+    }),
+    educationStructure: usesEducationProgressFields
+      ? remote.educationStructure === 'schedule'
+        ? 'schedule'
+        : 'curriculum'
+      : sessions.length > 0
+        ? 'curriculum'
+        : 'schedule',
+    sessionRound: usesEducationProgressFields
+      ? remote.sessionRound === 'multi'
+        ? 'multi'
+        : 'single'
+      : sessions.length > 1 || eventSchedules.length > 1
+        ? 'multi'
+        : 'single',
+    educationScheduleMode: usesEducationProgressFields
+      ? remote.educationScheduleMode === 'period'
+        ? 'period'
+        : 'date'
+      : 'period',
+    educationScheduleLines: usesEducationProgressFields
+      ? [...(remote.educationScheduleLines ?? [])]
+      : eventSchedules.map(item => item.dateLabel).filter(label => label !== '-'),
     maxPreferredScheduleCount: isTrainedTeacher ? 2 : 1,
     sessions,
     eventSchedules,
     recruitmentPhaseGroupLabel: '모집 일정',
     recruitmentPhases: mapRecruitmentPhases(remote.recruitments),
-    educationSchedules: eventSchedules.map((item, index) => ({
-      label: `교육 일정 ${index + 1}`,
-      value: `${item.name} · ${item.dateLabel}`,
-    })),
+    educationSchedules: usesEducationProgressFields
+      ? mapPortalEducationScheduleCards(remote)
+      : eventSchedules.map((item, index) => ({
+          label: `교육 일정 ${index + 1}`,
+          value: `${item.name} · ${item.dateLabel}`,
+        })),
     extraSections,
     contactValue: contactValue(remote.contactPhone, remote.contactEmail),
     applicationMethodLabel: '지원방법',
@@ -532,17 +803,19 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
   if (programId == null || !title) return null
 
   const category = mapCategory(remote.portalCategories, remote.programType)
-  const educationForm = mapEducationForm(remote.operationMethod)
+  const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const targets = mapEducationTargets(remote)
-  const opStart = toDate(remote.businessStartDate)
-  const opEnd = toDate(remote.businessEndDate)
+  const operating = resolveOperatingRange({
+    operationStart: remote.operationStartDate,
+    operationEnd: remote.operationEndDate,
+    businessStart: remote.businessStartDate,
+    businessEnd: remote.businessEndDate,
+  })
+  const opStart = operating.start
+  const opEnd = operating.end
   const appStart = toDate(remote.recruitmentStartAt)
   const appEnd = toDate(remote.recruitmentEndAt)
-  const recruitmentStatus = mapRecruitmentStatus(
-    undefined,
-    remote.recruitmentStatus,
-    undefined,
-  )
+  const recruitmentStatus = mapRecruitmentStatus(remote.recruitmentStatus, undefined)
 
   return {
     id: String(programId),

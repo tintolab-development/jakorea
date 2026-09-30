@@ -100,7 +100,7 @@ function applyDateScheduleItems(
   lines: readonly string[]
 ): MultipleChoiceParagraph {
   const items = lines.map((line, index) => ({
-    id: `${paragraph.id}-line-${index}`,
+    id: `line:${index}`,
     label: line,
   }))
   return {
