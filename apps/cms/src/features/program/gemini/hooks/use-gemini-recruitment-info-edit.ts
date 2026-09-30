@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
+import { buildGeminiRecruitmentDevAutofillSnapshot } from '../lib/recruitment/dev-autofill'
 import {
   applyInfoEditDraft,
   detailToInfoEditDraft,
@@ -141,6 +142,41 @@ export function useGeminiRecruitmentInfoEdit(
     setDraft(prev => (prev == null ? prev : { ...prev, ...patch }))
   }, [])
 
+  /** 개발용 — 수정 중인 모집 정보만 채운다. 등록일·첨부·썸네일은 유지한다. */
+  const applyDevAutofill = useCallback(() => {
+    if (!import.meta.env.DEV) return
+    const snapshot = buildGeminiRecruitmentDevAutofillSnapshot()
+    setDraft(prev => {
+      if (prev == null) return prev
+      return {
+        ...prev,
+        title: snapshot.title,
+        announcementPublished: snapshot.announcementPublished,
+        educationTargetLevels: snapshot.educationTargetLevels,
+        educationTargetDetail: snapshot.educationTargetDetail,
+        applicationPeriodStart: snapshot.applicationPeriodStart ?? prev.applicationPeriodStart,
+        applicationPeriodEnd: snapshot.applicationPeriodEnd ?? prev.applicationPeriodEnd,
+        trainingRequestPeriodStart:
+          snapshot.trainingRequestPeriodStart ?? prev.trainingRequestPeriodStart,
+        trainingRequestPeriodEnd:
+          snapshot.trainingRequestPeriodEnd ?? prev.trainingRequestPeriodEnd,
+        minStudentCount: snapshot.minStudentCount,
+        educationForm: snapshot.educationForm,
+        educationStructure: snapshot.educationStructure,
+        inquiryContactName: snapshot.inquiryContactName,
+        inquiryTel: snapshot.inquiryTel,
+        inquiryEmail: snapshot.inquiryEmail,
+        notesNotApplicable: snapshot.notesNotApplicable,
+        notes: snapshot.notes,
+        programDescription: snapshot.programDescription,
+        recruitmentGuide: snapshot.recruitmentGuide,
+        applicationMethod: snapshot.applicationMethod,
+        learningSupportContent: snapshot.learningSupportContent,
+        additionalContentMarkdown: snapshot.additionalContentMarkdown,
+      }
+    })
+  }, [])
+
   const displayDetail = useMemo((): GeminiRecruitmentDetail | null => {
     if (detail == null) return null
     if (!isEditMode || draft == null) return detail
@@ -153,6 +189,7 @@ export function useGeminiRecruitmentInfoEdit(
     isEditMode,
     draft,
     patchDraft,
+    applyDevAutofill,
     handleEdit,
     handleCancel,
     handleSave,

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
+import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { useCmsAlert } from '@/shared/ui'
 import {
@@ -41,7 +42,7 @@ const ADD_MODAL_TITLE = '찾아가는 연수 모집 공고 추가'
 const DRAFT_SAVE_FAILURE_MESSAGE =
   '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
 
-const REGISTER_SUCCESS_MESSAGE = '모집 공고가 등록되었습니다.'
+const REGISTER_SUCCESS_MESSAGE = '등록되었습니다.'
 
 export function GeminiRecruitmentAddFullpageModal({
   open,
@@ -123,7 +124,7 @@ export function GeminiRecruitmentAddFullpageModal({
         queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
       })
       showAlert({
-        title: '안내',
+        title: '등록 완료',
         content: REGISTER_SUCCESS_MESSAGE,
       })
       onClose()
@@ -166,6 +167,9 @@ export function GeminiRecruitmentAddFullpageModal({
         registrationUserMode
         onPreview={handlePreview}
         onSave={handleDraftSave}
+        headerActionsLeading={
+          <RegistrationDevAutofillButton onClick={() => form.applyDevAutofill()} />
+        }
         leftContent={<GeminiRecruitmentAddForm form={form} />}
         rightNavigation={null}
         footerAction={{

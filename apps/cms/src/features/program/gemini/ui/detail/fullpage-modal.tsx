@@ -11,6 +11,7 @@ import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
 import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
   LnbIconManagers,
@@ -88,6 +89,7 @@ export function GeminiRecruitmentDetailFullPageModal({
     handleEdit: handleInfoEdit,
     handleCancel: handleInfoCancel,
     handleSave: handleInfoSave,
+    applyDevAutofill,
     registerGetAdditionalContentMarkdown,
     isDetailFetching,
   } = useGeminiRecruitmentInfoEdit(recruitmentId, todayKey)
@@ -218,6 +220,9 @@ export function GeminiRecruitmentDetailFullPageModal({
             {activeLnb === 'info' ? (
               <>
                 <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
+                  {canWrite && isEditModeInfo ? (
+                    <RegistrationDevAutofillButton onClick={applyDevAutofill} />
+                  ) : null}
                   {canWrite ? (
                     <ProgramEditInfoActions
                       isEditing={isEditModeInfo}

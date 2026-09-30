@@ -9,6 +9,7 @@ import {
   normalizeGeminiRecruitmentAddFormSnapshot,
   type GeminiRecruitmentAddFormSnapshot,
 } from '../lib/recruitment/add-local-save'
+import { buildGeminiRecruitmentDevAutofillSnapshot } from '../lib/recruitment/dev-autofill'
 
 const WYSIWYG_RESET_KEY = 'gemini-visiting-training-recruitment-add'
 
@@ -139,6 +140,33 @@ export function useGeminiRecruitmentAddForm(
     setInstitutionSectionDescription(next.institutionSectionDescription)
     setDetailSectionDescription(next.detailSectionDescription)
     baselineRef.current = JSON.stringify(normalizeGeminiRecruitmentAddFormSnapshot(snapshot))
+  }, [])
+
+  /** 개발용 — 텍스트·기간·케이스만 채운다. 이미 올린 썸네일·첨부는 유지한다. */
+  const applyDevAutofill = useCallback(() => {
+    if (!import.meta.env.DEV) return
+    const snapshot = buildGeminiRecruitmentDevAutofillSnapshot()
+    const next = snapshotToFormState(snapshot)
+    setTitle(next.title)
+    setAnnouncementPublished(next.announcementPublished)
+    setEducationTargetLevels(next.educationTargetLevels)
+    setEducationTargetDetail(next.educationTargetDetail)
+    setApplicationPeriod(next.applicationPeriod)
+    setTrainingRequestPeriod(next.trainingRequestPeriod)
+    setMinStudentCount(next.minStudentCount)
+    setEducationForm(next.educationForm)
+    setInquiryContactName(next.inquiryContactName)
+    setInquiryTel(next.inquiryTel)
+    setInquiryEmail(next.inquiryEmail)
+    setNotesNotApplicable(next.notesNotApplicable)
+    setNotes(next.notes)
+    setProgramDescription(next.programDescription)
+    setRecruitmentGuide(next.recruitmentGuide)
+    setApplicationMethod(next.applicationMethod)
+    setLearningSupportContent(next.learningSupportContent)
+    setAdditionalContentMarkdown(next.additionalContentMarkdown)
+    setInstitutionSectionDescription(next.institutionSectionDescription)
+    setDetailSectionDescription(next.detailSectionDescription)
   }, [])
 
   useEffect(() => {
@@ -307,5 +335,6 @@ export function useGeminiRecruitmentAddForm(
     isDirty,
     isRegisterReady,
     markSavedBaseline,
+    applyDevAutofill,
   }
 }
