@@ -177,6 +177,7 @@ export function useGeminiRecruitmentInfoEdit(
     })
   }, [])
 
+  // displayDetail는 미리보기/저장 merge용. 수정 타이핑 경로에서는 쓰지 않음.
   const displayDetail = useMemo((): GeminiRecruitmentDetail | null => {
     if (detail == null) return null
     if (!isEditMode || draft == null) return detail

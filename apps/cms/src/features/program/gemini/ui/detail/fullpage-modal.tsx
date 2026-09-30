@@ -22,7 +22,10 @@ import { LnbIconGeminiInstitutionApplications } from './gemini-recruitment-detai
 import { useGeminiRecruitmentInfoEdit } from '../../hooks/use-gemini-recruitment-info-edit'
 import { useToday } from '../../hooks/use-today'
 import { GEMINI_RECRUITMENT_ADD_PARAM } from '../../lib/recruitment/add-url'
-import { detailToAddFormSnapshot } from '../../model/recruitment/info-edit-draft'
+import {
+  applyInfoEditDraft,
+  detailToAddFormSnapshot,
+} from '../../model/recruitment/info-edit-draft'
 import {
   GEMINI_RECRUITMENT_EDIT_PARAM,
   GEMINI_RECRUITMENT_ID_PARAM,
@@ -82,7 +85,6 @@ export function GeminiRecruitmentDetailFullPageModal({
 
   const {
     detail,
-    displayDetail: resolvedDetail,
     isEditMode: isEditModeInfo,
     draft: infoDraft,
     patchDraft,
@@ -94,10 +96,16 @@ export function GeminiRecruitmentDetailFullPageModal({
     isDetailFetching,
   } = useGeminiRecruitmentInfoEdit(recruitmentId, todayKey)
 
-  const previewSnapshot =
-    resolvedDetail != null ? detailToAddFormSnapshot(resolvedDetail) : null
+  // 수정 중 타이핑으로 breadcrumb/title/preview 를 매 키마다 흔들지 않는다.
+  // 공고명은 blur(defer commit) 후 draft에 반영되면 그때 갱신.
+  const detailTitle = infoDraft?.title ?? detail?.title ?? '모집 공고 상세'
 
-  const detailTitle = resolvedDetail?.title ?? detail?.title ?? '모집 공고 상세'
+  const previewSnapshot = useMemo(() => {
+    if (!previewOpen || detail == null) return null
+    const source =
+      isEditModeInfo && infoDraft != null ? applyInfoEditDraft(detail, infoDraft) : detail
+    return detailToAddFormSnapshot(source)
+  }, [detail, infoDraft, isEditModeInfo, previewOpen])
 
   const headerBreadcrumbItems = useMemo(() => {
     const listParams = buildSearchParams(searchParams, {
@@ -105,7 +113,7 @@ export function GeminiRecruitmentDetailFullPageModal({
     })
     const items = [makeBreadcrumbItem('모집 공고', location.pathname, listParams)]
 
-    if (!resolvedDetail) {
+    if (!detail) {
       items.push({ label: '모집 공고 상세' })
       return items
     }
@@ -132,10 +140,10 @@ export function GeminiRecruitmentDetailFullPageModal({
   }, [
     activeLnb,
     activeLnbItem.label,
+    detail,
     detailTitle,
     location.pathname,
     recruitmentId,
-    resolvedDetail,
     searchParams,
   ])
 
@@ -168,6 +176,9 @@ export function GeminiRecruitmentDetailFullPageModal({
   )
 
   const handlePreview = useCallback(() => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
     setPreviewOpen(true)
   }, [])
 
@@ -177,6 +188,10 @@ export function GeminiRecruitmentDetailFullPageModal({
 
   const handleInfoSaveClick = useCallback(async () => {
     if (!isEditModeInfo || infoDraft == null) return
+    // deferred text commit flush — blur 전에 저장하면 마지막 키가 빠질 수 있음
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
     try {
       await handleInfoSave()
       showUpdateCompletedAlert()
@@ -196,9 +211,9 @@ export function GeminiRecruitmentDetailFullPageModal({
         open={open}
         onClose={onClose}
         title={detailTitle}
-        loading={isDetailFetching && !resolvedDetail}
+        loading={isDetailFetching && !detail}
         error={
-          !isDetailFetching && !resolvedDetail
+          !isDetailFetching && !detail
             ? '모집 공고 정보를 찾을 수 없습니다.'
             : null
         }
@@ -215,7 +230,7 @@ export function GeminiRecruitmentDetailFullPageModal({
           />
         }
       >
-        {resolvedDetail ? (
+        {detail ? (
           <>
             {activeLnb === 'info' ? (
               <>
@@ -243,7 +258,7 @@ export function GeminiRecruitmentDetailFullPageModal({
                   </CmsButton>
                 </div>
                 <GeminiRecruitmentInfoTab
-                  detail={resolvedDetail}
+                  detail={detail}
                   todayKey={todayKey}
                   isEditMode={isEditModeInfo}
                   draft={infoDraft}
