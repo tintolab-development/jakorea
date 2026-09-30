@@ -507,6 +507,7 @@ export function MypageEducationDetailPage() {
             educationTargetLabel={program.educationTargetLabel}
             educationForm={program.educationForm}
             educationFormLabel={program.educationFormLabel}
+            statusAudience={isTeacher ? 'teacher' : 'general'}
           />
         }
         aside={

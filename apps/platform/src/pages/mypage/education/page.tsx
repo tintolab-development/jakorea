@@ -10,6 +10,7 @@ import {
   readEducationApplicationListParams,
   showInstructorApplyCta,
   useMypageMember,
+  isSchoolTeacherMypageProfile,
   type EducationApplicationListParams,
   type EducationApplicationTab,
   type MypageLnbItemKey,
@@ -33,6 +34,9 @@ export function MypageEducationPage() {
   const member = useMypageMember()
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile, 'education')
+  const educationStatusAudience = isSchoolTeacherMypageProfile(member.profile)
+    ? ('teacher' as const)
+    : ('general' as const)
 
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -105,7 +109,11 @@ export function MypageEducationPage() {
         ariaLabel="교육현황 탭"
       />
 
-      <EducationListContent params={params} onParamsChange={updateParams} />
+      <EducationListContent
+        params={params}
+        onParamsChange={updateParams}
+        statusAudience={educationStatusAudience}
+      />
     </MypageLayout>
   )
 }
