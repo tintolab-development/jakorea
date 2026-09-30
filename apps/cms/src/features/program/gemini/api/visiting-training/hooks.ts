@@ -34,7 +34,7 @@ type GeminiApprovedTrainingListFilters = {
   trainingDateTo?: string
 }
 
-type GeminiOrganizationApplicationListFilters = {
+export type GeminiOrganizationApplicationListFilters = {
   institutionName?: string
   institutionSido?: string
   institutionSigungu?: string
@@ -127,9 +127,16 @@ export function useGeminiOrganizationApplicationsQuery(
     queryFn: ({ pageParam }) =>
       listGeminiOrganizationApplicationsPage(
         programId!,
-        filters.approvalStatus && filters.approvalStatus !== 'ALL'
-          ? filters.approvalStatus
-          : undefined,
+        {
+          status:
+            filters.approvalStatus && filters.approvalStatus !== 'ALL'
+              ? filters.approvalStatus
+              : undefined,
+          organizationName: filters.institutionName?.trim() || undefined,
+          regionSido: filters.institutionSido?.trim() || undefined,
+          regionSigungu: filters.institutionSigungu?.trim() || undefined,
+          teacherName: filters.teacherName?.trim() || undefined,
+        },
         pageParam as number
       ),
     initialPageParam: 0,

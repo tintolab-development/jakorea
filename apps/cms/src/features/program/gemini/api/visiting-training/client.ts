@@ -100,12 +100,22 @@ export async function fetchGeminiRecruitmentDetailRemote(
 
 export async function fetchGeminiOrganizationApplicationsRemote(
   programId: string,
-  status: string | undefined,
+  filters: {
+    status?: string
+    organizationName?: string
+    regionSido?: string
+    regionSigungu?: string
+    teacherName?: string
+  } = {},
   page = 0,
   size = GEMINI_VISITING_TRAINING_LIST_PAGE_SIZE
 ): Promise<PageEnvelope<GeminiOrganizationApplicationItem>> {
   const query = new URLSearchParams()
-  if (status) query.set('status', status)
+  if (filters.status) query.set('status', filters.status)
+  if (filters.organizationName) query.set('organizationName', filters.organizationName)
+  if (filters.regionSido) query.set('regionSido', filters.regionSido)
+  if (filters.regionSigungu) query.set('regionSigungu', filters.regionSigungu)
+  if (filters.teacherName) query.set('teacherName', filters.teacherName)
   appendPageParams(query, page, size)
   const body = await unwrapApiBody<
     GeminiOrganizationApplicationListResponse | GeminiOrganizationApplicationItem[]

@@ -14,13 +14,11 @@ import { createInstitutionAddressRegionFilterField } from '@/shared/config/insti
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
-import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../../api/visiting-training/capabilities'
 import { useGeminiOrganizationApplicationsQuery } from '../../api/visiting-training/hooks'
 import {
   approveGeminiOrganizationApplications,
   rejectGeminiOrganizationApplications,
-  resendGeminiOrganizationApplicationNotification,
 } from '../../api/visiting-training/service'
 import {
   patchGeminiInstitutionApplicationApprovalStatus,
@@ -28,8 +26,6 @@ import {
   type GeminiInstitutionApprovalStatus,
 } from '../../model/recruitment/institution-application-types'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
-import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
-import { toApplicantNotificationResendNotifyOptions } from '@/features/program/general/lib/applicant-notification-resend'
 import {
   GEMINI_INSTITUTION_APPROVAL_STATUS_OPTIONS,
   GeminiInstitutionApprovalStatusBadge,
@@ -85,7 +81,7 @@ const INITIAL_PENDING_FILTERS: PendingFilters = {
 }
 
 const TABLE_SCROLL_X =
-  TABLE_COLUMN_WIDTHS.checkbox + 72 + 150 + 170 + 220 + 420 + 100 + 120 + 48
+  TABLE_COLUMN_WIDTHS.checkbox + 72 + 150 + 170 + 140 + 420 + 100 + 120 + 48
 
 function toRegionText(row: GeminiInstitutionApplicationRow): string {
   return `${row.institutionSido} ${row.institutionSigungu}`.trim()
@@ -154,11 +150,6 @@ export function GeminiInstitutionApplicationTab({
   const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
   const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
   const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
-  const [resendTarget, setResendTarget] = useState<{
-    id: string
-    name: string
-    approvalStatus: 'approved' | 'rejected'
-  } | null>(null)
   const queryFilters = useMemo(
     () => ({
       institutionName: appliedFilters.institutionName || undefined,
@@ -323,81 +314,6 @@ export function GeminiInstitutionApplicationTab({
     [canWrite, refreshRows, remoteEnabled, showAlert, showRemoteMutationUnavailable]
   )
 
-  const handleOpenResend = useCallback(
-    (row: GeminiInstitutionApplicationRow) => {
-      if (!canWrite) return
-      if (!row.availableActions?.includes('RESEND_NOTIFICATION')) return
-      if (row.approvalStatus !== 'APPROVED' && row.approvalStatus !== 'REJECTED') return
-      setResendTarget({
-        id: row.id,
-        name: row.institutionName,
-        approvalStatus: row.approvalStatus === 'APPROVED' ? 'approved' : 'rejected',
-      })
-    },
-    [canWrite]
-  )
-
-  const handleConfirmResend = useCallback(
-    async (payload: import('@/shared/components/permission-modal').PermissionModalPayload) => {
-      if (!resendTarget) return
-      if (
-        payload.notifyTiming === 'manual' &&
-        (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
-      ) {
-        void showAlert({
-          title: '예약 발송 일시 확인',
-          content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
-        })
-        return
-      }
-      if (resendTarget.approvalStatus === 'rejected' && !payload.reason.trim()) {
-        void showAlert({
-          title: '반려 사유 확인',
-          content: '반려 알림 재발송 시 사유를 입력해 주세요.',
-        })
-        return
-      }
-      const notifyOptions = toApplicantNotificationResendNotifyOptions(payload)
-      try {
-        if (!remoteEnabled) {
-          showAlert({
-            title: '알림 재발송 불가',
-            content: 'Gemini 기관 신청 API가 활성화되지 않았습니다.',
-          })
-          return
-        }
-        await resendGeminiOrganizationApplicationNotification(
-          resendTarget.id,
-          {
-            timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
-            scheduledAt:
-              notifyOptions.notifyTiming === 'manual'
-                ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
-                : null,
-            reason:
-              resendTarget.approvalStatus === 'rejected' ? payload.reason.trim() : null,
-          },
-          `gemini-org-${resendTarget.id}-${crypto.randomUUID()}`
-        )
-        setResendTarget(null)
-        refreshRows()
-      } catch (error) {
-        const responseData =
-          error && typeof error === 'object' && 'response' in error
-            ? (error as { response?: { data?: unknown } }).response?.data
-            : undefined
-        showAlert({
-          title: '알림 재발송 실패',
-          content: extractApiErrorMessage(responseData, {
-            httpStatus: getApiErrorHttpStatus(error),
-            fallback: '알림을 재발송하지 못했습니다. 다시 시도해 주세요.',
-          }),
-        })
-      }
-    },
-    [refreshRows, remoteEnabled, resendTarget, showAlert]
-  )
-
   const columns = useMemo<ColumnsType<GeminiInstitutionApplicationRow>>(
     () => [
       {
@@ -425,14 +341,11 @@ export function GeminiInstitutionApplicationTab({
         title: '승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 220,
+        width: 140,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: GeminiInstitutionApprovalStatus, record) => (
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ display: 'inline-flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}
-          >
+          <div onClick={e => e.stopPropagation()}>
             <StatusDropdownCell<GeminiInstitutionApprovalStatus>
               status={status}
               statusOptions={GEMINI_INSTITUTION_APPROVAL_STATUS_OPTIONS}
@@ -444,15 +357,6 @@ export function GeminiInstitutionApplicationTab({
               isOpen={openApprovalDropdownId === record.id}
               onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
             />
-            {canWrite && record.availableActions?.includes('RESEND_NOTIFICATION') ? (
-              <CmsButton
-                variant="secondary"
-                size="small"
-                onClick={() => handleOpenResend(record)}
-              >
-                알림 재발송
-              </CmsButton>
-            ) : null}
           </div>
         ),
       },
@@ -483,7 +387,7 @@ export function GeminiInstitutionApplicationTab({
         align: 'center',
       },
     ],
-    [canWrite, handleApprovalStatusChange, handleOpenResend, openApprovalDropdownId]
+    [canWrite, handleApprovalStatusChange, openApprovalDropdownId]
   )
 
   const rejectTargetCount = selectedRows.filter(row => row.approvalStatus !== 'REJECTED').length
@@ -606,16 +510,6 @@ export function GeminiInstitutionApplicationTab({
         lines={buildBulkApproveMessageLines(approveTargetCount)}
         onCancel={() => setBulkApproveOpen(false)}
         onConfirm={confirmBulkApprove}
-      />
-      <ApplicantNotificationResendModal
-        open={resendTarget != null}
-        subjectKind="institution"
-        subjectName={resendTarget?.name ?? ''}
-        approvalStatus={resendTarget?.approvalStatus ?? 'approved'}
-        onCancel={() => setResendTarget(null)}
-        onConfirm={payload => {
-          void handleConfirmResend(payload)
-        }}
       />
     </>
   )

@@ -24,6 +24,7 @@ import {
   parseTargetLevelsFromDisplayLabel,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { GEMINI_VISITING_TRAINING_PROGRAM_TYPE } from './capabilities'
+import { resolveGeminiPreferredLectureSchedule } from './preferred-lecture-schedule'
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
@@ -33,6 +34,14 @@ function toId(value: number | string | undefined): string {
 function isDraftStatus(value?: string): boolean {
   const normalized = value?.trim().toUpperCase() ?? ''
   return normalized === 'DRAFT' || normalized === 'TEMPORARY' || normalized === 'TEMP'
+}
+
+function mapAnnouncementPublishedToDraftStatus(
+  value: GeminiRecruitmentAddFormSnapshot['announcementPublished'] | undefined
+): 'DRAFT' | 'PUBLISHED' | undefined {
+  if (value === 'unpublished') return 'DRAFT'
+  if (value === 'published') return 'PUBLISHED'
+  return undefined
 }
 
 function optionalDate(value: string | null | undefined): string | undefined {
@@ -75,8 +84,8 @@ function resolveGeminiEducationStructureWire(
 }
 
 /**
- * 교육 대상. 공유 enum 정규화 후 배열이 비면 상세 라벨에서 파싱한다.
- * 그래도 비면 빈 배열(대상 삭제). 첫 값이 있으면 targetLevel과 맞춘다.
+ * 교육 대상. 배열이 있으면(빈 배열 포함) 그 배열이 SSOT.
+ * 키가 없을 때만 상세 라벨에서 파싱한다. 첫 값이 있으면 targetLevel과 맞춘다.
  */
 function wireGeminiTargetLevels(
   levels: string[] | null | undefined,
@@ -85,12 +94,18 @@ function wireGeminiTargetLevels(
   targetLevels: string[]
   targetLevel?: string
 } {
-  const fromList = (levels ?? [])
-    .map(normalizeTargetLevelValue)
-    .filter((level): level is NonNullable<typeof level> => level != null)
-  const unique = [...new Set(fromList)]
-  const targetLevels =
-    unique.length > 0 ? unique : parseTargetLevelsFromDisplayLabel(detail)
+  if (Array.isArray(levels)) {
+    const unique = [
+      ...new Set(
+        levels
+          .map(normalizeTargetLevelValue)
+          .filter((level): level is NonNullable<typeof level> => level != null)
+      ),
+    ]
+    const targetLevel = unique[0]
+    return targetLevel ? { targetLevels: unique, targetLevel } : { targetLevels: unique }
+  }
+  const targetLevels = parseTargetLevelsFromDisplayLabel(detail)
   const targetLevel = targetLevels[0]
   return targetLevel ? { targetLevels, targetLevel } : { targetLevels }
 }
@@ -159,6 +174,7 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
     recruitmentTargetDetail,
     recruitmentGuide: snapshot.recruitmentGuide || undefined,
     applicationMethod,
+    draftStatus: mapAnnouncementPublishedToDraftStatus(snapshot.announcementPublished),
     learningSupportContent: snapshot.learningSupportContent || undefined,
     additionalContentHtml: snapshot.additionalContentMarkdown || undefined,
     attachmentFileNames: snapshot.attachmentFileNames,
@@ -239,6 +255,7 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     recruitmentGuide: draft.recruitmentGuide || undefined,
     learningSupportContent: draft.learningSupportContent || undefined,
     additionalContentHtml: draft.additionalContentMarkdown || undefined,
+    draftStatus: mapAnnouncementPublishedToDraftStatus(draft.announcementPublished),
     attachmentFileNames: draft.attachmentFileNames,
     serviceDetailJson: JSON.stringify({ geminiRecruitment: draft }),
   }
@@ -391,12 +408,12 @@ export function mapGeminiOrganizationApplicationToRow(
     id: toId(dto.applicationId),
     no: index + 1,
     institutionName: dto.organizationName?.trim() || '기관명 없음',
-    institutionSido: '',
-    institutionSigungu: '',
+    institutionSido: dto.regionSido?.trim() || '',
+    institutionSigungu: dto.regionSigungu?.trim() || '',
     approvalStatus: mapApplicationStatus(dto.applicationStatus),
-    preferredLectureSchedule: '',
+    preferredLectureSchedule: resolveGeminiPreferredLectureSchedule(dto),
     studentCount: dto.requestedStudentCount ?? 0,
-    teacherName: '-',
+    teacherName: dto.teacherName?.trim() || '-',
     resultNotificationSentAt: dto.resultNotificationSentAt ?? null,
     availableActions: dto.availableActions ?? [],
   }
