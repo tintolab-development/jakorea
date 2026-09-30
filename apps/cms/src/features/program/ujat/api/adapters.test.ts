@@ -83,12 +83,23 @@ describe('UJAT program adapters', () => {
         preparedFormBindings: { programDraftId: 9, formBindings: [] },
         'ujat.basicInfo.repKo': 'rep',
       },
+      // create()가 `{ ...input, overlay }`로 넘기는 메타 — registration 루트에 실리면 안 됨
+      ...({
+        idempotencyKey: 'cb585393-369e-414c-bf42-7bb1b0c43ac9',
+        preparedFormBindings: { programDraftId: 3, formBindings: [] },
+      } as object),
     })
     const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
-      registration?: { overlay?: Record<string, unknown> }
+      registration?: {
+        overlay?: Record<string, unknown>
+        idempotencyKey?: unknown
+        preparedFormBindings?: unknown
+      }
     }
     expect(detail.registration?.overlay?.idempotencyKey).toBeUndefined()
     expect(detail.registration?.overlay?.preparedFormBindings).toBeUndefined()
+    expect(detail.registration?.idempotencyKey).toBeUndefined()
+    expect(detail.registration?.preparedFormBindings).toBeUndefined()
     expect(detail.registration?.overlay?.['ujat.basicInfo.repKo']).toBe('rep')
   })
 

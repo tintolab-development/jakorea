@@ -394,8 +394,10 @@ function registrationSnapshotForApi(
   registration?: RegistrationPersistSnapshot
 ): RegistrationPersistSnapshot | undefined {
   if (!registration) return undefined
+  // create()가 `{ ...input, overlay }`로 넘기면 idempotencyKey·preparedFormBindings가
+  // registration에 섞인다. JSON.stringify가 그대로 실어 BE schema를 깨뜨린다.
   return {
-    ...registration,
+    ...(registration.draft != null ? { draft: registration.draft } : {}),
     overlay: stripRegistrationOverlayDebugKeys(
       stripUnselectedUjatSponsorContactsFromOverlay(registration.overlay)
     ),
