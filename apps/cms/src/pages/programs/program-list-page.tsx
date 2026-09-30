@@ -31,8 +31,11 @@ import { useProgramListFilters } from './use-program-list-filters'
 import { useProgramListActions } from './use-program-list-actions'
 import { useSearchSync } from './use-search-sync'
 import { ProgramListModals } from './program-list-modals'
-import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal'
-import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
+import {
+  LazyGeneralProgramRegistrationFullpageModal,
+  LazyProgramDetailFullPageModal,
+  ProgramModalWhenOpen,
+} from '@/pages/programs/lazy-program-modals'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
   fetchRegistrationDraftNotice,
@@ -633,7 +636,9 @@ function ProgramListPageContent() {
         data={filteredPrograms}
         loading={
           isCompanySchoolPath
-            ? companySchoolListQuery.isFetching && !companySchoolListQuery.isFetchingNextPage
+            ? companySchoolListQuery.isFetching &&
+              !companySchoolListQuery.isFetchingNextPage &&
+              filteredPrograms.length === 0
             : loading
         }
         headerTitle={headerTitle}
@@ -658,7 +663,14 @@ function ProgramListPageContent() {
         <div ref={companySchoolLoadMoreRef} aria-hidden style={{ height: 1 }} />
       ) : null}
 
-      <ProgramDetailFullPageModal
+      <ProgramModalWhenOpen
+        open={
+          isCompanySchoolPath
+            ? Boolean(companySchoolProgramIdFromUrl)
+            : !!selectedProgramForFullPageModal
+        }
+      >
+      <LazyProgramDetailFullPageModal
         open={
           isCompanySchoolPath
             ? Boolean(companySchoolProgramIdFromUrl)
@@ -693,13 +705,16 @@ function ProgramListPageContent() {
             : undefined
         }
       />
+      </ProgramModalWhenOpen>
 
-      <GeneralProgramRegistrationFullpageModal
+      <ProgramModalWhenOpen open={isCompanySchoolRegistrationOpen}>
+      <LazyGeneralProgramRegistrationFullpageModal
         open={isCompanySchoolRegistrationOpen}
         onClose={handleCloseCompanySchoolRegistrationFullpage}
         onProgramRegistrationSaved={handleCompanySchoolRegistrationSaved}
         registrationFormVariant="economy"
       />
+      </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal
         open={draftNoticeOpen}

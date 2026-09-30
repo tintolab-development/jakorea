@@ -11,6 +11,7 @@ import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
 import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
   LnbIconManagers,
@@ -88,6 +89,7 @@ export function GeminiRecruitmentDetailFullPageModal({
     handleEdit: handleInfoEdit,
     handleCancel: handleInfoCancel,
     handleSave: handleInfoSave,
+    applyDevAutofill,
     registerGetAdditionalContentMarkdown,
     isDetailFetching,
   } = useGeminiRecruitmentInfoEdit(recruitmentId, todayKey)
@@ -218,6 +220,9 @@ export function GeminiRecruitmentDetailFullPageModal({
             {activeLnb === 'info' ? (
               <>
                 <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
+                  {canWrite && isEditModeInfo ? (
+                    <RegistrationDevAutofillButton onClick={applyDevAutofill} />
+                  ) : null}
                   {canWrite ? (
                     <ProgramEditInfoActions
                       isEditing={isEditModeInfo}
@@ -265,39 +270,4 @@ export function GeminiRecruitmentDetailFullPageModal({
   )
 }
 
-export function useGeminiRecruitmentDetailUrl() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const recruitmentId = searchParams.get(GEMINI_RECRUITMENT_ID_PARAM)?.trim() || null
-
-  const openDetail = useCallback(
-    (id: string) => {
-      setSearchParams(
-        prev => {
-          const next = new URLSearchParams(prev)
-          next.set(GEMINI_RECRUITMENT_ID_PARAM, id)
-          next.delete(GEMINI_RECRUITMENT_LNB_PARAM)
-          next.delete(GEMINI_RECRUITMENT_ADD_PARAM)
-          return next
-        },
-        { replace: false }
-      )
-    },
-    [setSearchParams]
-  )
-
-  const closeDetail = useCallback(() => {
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete(GEMINI_RECRUITMENT_ID_PARAM)
-        next.delete(GEMINI_RECRUITMENT_LNB_PARAM)
-        next.delete(GEMINI_RECRUITMENT_ADD_PARAM)
-        next.delete(GEMINI_RECRUITMENT_EDIT_PARAM)
-        return next
-      },
-      { replace: true }
-    )
-  }, [setSearchParams])
-
-  return { recruitmentId, openDetail, closeDetail }
-}
+export { useGeminiRecruitmentDetailUrl } from './recruitment-detail-url'

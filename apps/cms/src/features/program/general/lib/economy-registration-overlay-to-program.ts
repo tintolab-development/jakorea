@@ -68,6 +68,32 @@ function overlayNullableNumber(overlay: Record<string, unknown>, key: string): n
   return undefined
 }
 
+function seoulCalendarDate(value: string | undefined): string | null {
+  if (!value?.trim()) return null
+  const dateOnly = value.trim().match(/^(\d{4}-\d{2}-\d{2})$/)
+  if (dateOnly) return dateOnly[1]
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const year = parts.find(part => part.type === 'year')?.value
+  const month = parts.find(part => part.type === 'month')?.value
+  const day = parts.find(part => part.type === 'day')?.value
+  if (!year || !month || !day) return null
+  return `${year}-${month}-${day}`
+}
+
+/** 날짜 피커는 선택일을 서울 자정으로 두고, 저장은 종료일을 23:59:59.999로 다시 쓴다. 달력일이 같으면 기존 instant를 유지해야 잠긴 교육 일정이 변경으로 보이지 않는다. */
+function sameSeoulCalendarDay(left: string | undefined, right: string | undefined): boolean {
+  const a = seoulCalendarDate(left)
+  const b = seoulCalendarDate(right)
+  return a != null && a === b
+}
+
 function readRangeSeal(
   overlay: Record<string, unknown>,
   key: string
@@ -250,14 +276,23 @@ export function applyEconomyRegistrationOverlayToProgram(
     base.ips
 
   const operationRange = readRangeSeal(overlay, `${BASIC}.operationRangeSeal`)
-  const startDate = operationRange
-    ? dayjs(operationRange.start).startOf('day').toISOString()
-    : base.startDate
-  const endDate = operationRange
-    ? dayjs(operationRange.end).endOf('day').toISOString()
-    : base.endDate
+  const startUnchanged =
+    operationRange != null && sameSeoulCalendarDay(String(base.startDate ?? ''), operationRange.start)
+  const endUnchanged =
+    operationRange != null && sameSeoulCalendarDay(String(base.endDate ?? ''), operationRange.end)
+  const startDate = !operationRange
+    ? base.startDate
+    : startUnchanged
+      ? base.startDate
+      : dayjs(operationRange.start).startOf('day').toISOString()
+  const endDate = !operationRange
+    ? base.endDate
+    : endUnchanged
+      ? base.endDate
+      : dayjs(operationRange.end).endOf('day').toISOString()
+  const periodChanged = operationRange != null && (!startUnchanged || !endUnchanged)
   const rounds =
-    operationRange && base.rounds?.length
+    periodChanged && base.rounds?.length
       ? base.rounds.map((round, index) =>
           index === 0 ? { ...round, startDate, endDate } : round
         )

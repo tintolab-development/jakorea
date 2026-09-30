@@ -7,8 +7,11 @@ import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
 import { ProgramList } from '@/features/program/general/ui/program-list'
-import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal'
-import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
+import {
+  LazyGeneralProgramRegistrationFullpageModal,
+  LazyProgramDetailFullPageModal,
+  ProgramModalWhenOpen,
+} from '@/pages/programs/lazy-program-modals'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
   fetchRegistrationDraftNotice,
@@ -447,7 +450,11 @@ function TrainedTeachersProgramPageContent() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={listQuery.isFetching && !listQuery.isFetchingNextPage}
+        loading={
+          listQuery.isFetching &&
+          !listQuery.isFetchingNextPage &&
+          filteredPrograms.length === 0
+        }
         headerTitle={headerTitle}
         headerCount={remoteEnabled ? totalElements : undefined}
         onView={handleView}
@@ -468,7 +475,10 @@ function TrainedTeachersProgramPageContent() {
       </ProgramList>
       <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
 
-      <ProgramDetailFullPageModal
+      <ProgramModalWhenOpen
+        open={Boolean(programIdFromUrl) && !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)}
+      >
+      <LazyProgramDetailFullPageModal
         open={
           Boolean(programIdFromUrl) &&
           !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)
@@ -493,13 +503,16 @@ function TrainedTeachersProgramPageContent() {
             : undefined
         }
       />
+      </ProgramModalWhenOpen>
 
-      <GeneralProgramRegistrationFullpageModal
+      <ProgramModalWhenOpen open={isTrainedTeachersRegistrationOpen}>
+      <LazyGeneralProgramRegistrationFullpageModal
         open={isTrainedTeachersRegistrationOpen}
         onClose={handleCloseRegistrationFullpage}
         onProgramRegistrationSaved={handleRegistrationSaved}
         registrationFormVariant="trainedTeachers"
       />
+      </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal
         open={draftNoticeOpen}

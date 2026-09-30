@@ -1,5 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE } from '../../lib/recruitment/add-form-options'
 import {
   resolveRecruitmentStatus,
   resolveRecruitmentUserPagePublicationState,
@@ -41,6 +42,7 @@ function buildDefaultOverlay(
     educationTargetDetail: '',
     minStudentCount: 15,
     educationForm: 'online',
+    educationStructure: GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE,
     inquiryContactName: '',
     inquiryTel: '',
     inquiryEmail: '',

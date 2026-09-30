@@ -6,7 +6,10 @@ import {
 } from './upload-column-spec'
 import type { GeminiPerformanceUploadRow } from '../../model/performance/types'
 
-export const GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE = '업로드 된 양식이 잘못되었습니다.'
+export const GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE = '양식 불일치 안내'
+
+export const GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE =
+  '업로드한 파일의 항목 구성이 연수 보고서 양식과 다릅니다.\n양식 항목을 다시 확인해 주세요.'
 
 type HeaderMap = Partial<Record<keyof typeof GEMINI_PERFORMANCE_UPLOAD_COLUMNS, number>>
 

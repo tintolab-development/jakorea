@@ -1326,10 +1326,20 @@ export function ProgramDetailFullPageModal({
                   }
                   const roundsChanged =
                     JSON.stringify(merged.rounds ?? []) !== JSON.stringify(draft.rounds ?? [])
+                  const periodUnchanged =
+                    String(merged.startDate ?? '') === String(displayProgram.startDate ?? '') &&
+                    String(merged.endDate ?? '') === String(displayProgram.endDate ?? '')
+                  const patchForSave = periodUnchanged
+                    ? Object.fromEntries(
+                        Object.entries(patch).filter(
+                          ([key]) => key !== 'startDate' && key !== 'endDate'
+                        )
+                      )
+                    : patch
                   await persistProgramPatch(
                     { ...merged, registrationOverlay },
                     {
-                      ...patch,
+                      ...patchForSave,
                       registrationOverlay,
                       ...(roundsChanged && merged.rounds ? { rounds: merged.rounds } : {}),
                     }

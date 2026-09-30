@@ -187,6 +187,33 @@ describe('applyEconomyRegistrationOverlayToProgram', () => {
     expect(result.rounds?.[0]?.startDate).toBe(result.startDate)
   })
 
+  it('서울 달력일이 같으면 종료 시각을 23:59:59.999로 다시 쓰지 않고 회차도 유지한다', () => {
+    const existing = {
+      ...baseProgram(),
+      startDate: '2026-05-14T15:00:00.000Z',
+      endDate: '2026-12-26T14:59:59.999Z',
+      rounds: [
+        {
+          id: '186592',
+          programId: '186016',
+          roundNumber: 1,
+          startDate: '2026-05-14T15:00:00.000Z',
+          endDate: '2026-12-26T14:59:59.999Z',
+          status: 'active' as const,
+        },
+      ],
+    }
+    const result = applyEconomyRegistrationOverlayToProgram(existing, {
+      'economyRegistration.basicInfo.operationRangeSeal': {
+        start: '2026-05-14T15:00:00.000Z',
+        end: '2026-12-25T15:00:00.000Z',
+      },
+    })
+    expect(result.startDate).toBe(existing.startDate)
+    expect(result.endDate).toBe(existing.endDate)
+    expect(result.rounds).toEqual(existing.rounds)
+  })
+
   it('후원사·담당자 overlay를 Program.sponsorId와 generalCommonInfo에 반영한다', () => {
     const overlay: Record<string, unknown> = {
       'economyRegistration.basicInfo.sponsorId': '163388',

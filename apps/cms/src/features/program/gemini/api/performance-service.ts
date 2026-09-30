@@ -6,6 +6,7 @@ import { queryClient } from '@/shared/lib/query-client'
 import { mapUploadToDisplayRow } from '../lib/performance/map-upload-to-display-row'
 import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
+  GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
   parseUploadExcel,
 } from '../lib/performance/parse-upload-excel'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
@@ -75,4 +76,7 @@ export const geminiPerformanceService = {
   },
 }
 
-export { GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE }
+export {
+  GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
+  GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
+}

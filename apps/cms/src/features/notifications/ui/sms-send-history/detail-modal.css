@@ -5,7 +5,13 @@
 }
 
 .sms-send-history-detail-modal__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 240px;
   padding: 48px 24px;
+  box-sizing: border-box;
   color: rgba(61, 61, 61, 0.7);
   font-size: 14px;
   text-align: center;
