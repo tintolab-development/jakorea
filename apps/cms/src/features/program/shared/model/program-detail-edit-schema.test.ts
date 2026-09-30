@@ -504,6 +504,29 @@ describe('general recruitment contact edit', () => {
     )
   })
 
+  it('문의처 수정 시 옛 contactName 별칭을 같은 값으로 맞춘다', () => {
+    const loaded = {
+      ...program,
+      contactName: '최수아',
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactOrganizationName: '최수아',
+          contactName: '최수아',
+        },
+      },
+    } as Program
+    const values = {
+      ...programToDetailEditValues(loaded),
+      recruitmentContactOrganizationName: '황유정',
+    }
+    const patch = detailEditValuesToProgramPatch(values, loaded)
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName).toBe(
+      '황유정'
+    )
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.contactName).toBe('황유정')
+    expect(patch.contactName).toBe('황유정')
+  })
+
   it('강사·봉사자 문의처는 각 RecruitmentInfo에 저장한다', () => {
     const values = {
       ...programToDetailEditValues(program),

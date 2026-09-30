@@ -495,8 +495,6 @@ export * from './geminiOrganizationApplicationItem';
 export * from './geminiOrganizationApplicationListResponse';
 export * from './geminiRecruitmentDetailResponse';
 export * from './geminiRecruitmentDetailResponseEducationForm';
-export * from './geminiRecruitmentDetailResponseProgramType';
-export * from './geminiRecruitmentDetailResponseTargetLevelsItem';
 export * from './geminiRecruitmentItem';
 export * from './geminiRecruitmentListResponse';
 export * from './geminiTrainingReportImportRequest';

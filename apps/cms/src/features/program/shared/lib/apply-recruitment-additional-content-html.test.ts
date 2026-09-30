@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
-import { applyRecruitmentAdditionalContentHtml } from './apply-recruitment-additional-content-html'
+import {
+  applyRecruitmentAdditionalContentHtml,
+  applyRecruitmentDetailInfoFields,
+} from './apply-recruitment-additional-content-html'
 import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { serializeGeneralProgramServiceDetailJson } from '@/features/program/general/lib/general-program-service-detail-json'
 
@@ -76,5 +79,19 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
     expect(patch.registrationOverlay?.['recruitInstructor.detailInfo.additionalContentHtml']).toBe(
       html
     )
+  })
+
+  it('참여자 모집 저장 — 프로그램 설명을 중첩 SSOT에 넣는다', () => {
+    const description = '수정된 프로그램 설명'
+    const patch = applyRecruitmentDetailInfoFields({}, existing, 'participant', { description })
+
+    expect(patch.description).toBe(description)
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.programDescription).toBe(
+      description
+    )
+    expect(patch.registrationOverlay?.['recruit.detailInfo.programDescription']).toBe(description)
+
+    const display = resolveGeneralRecruitDetailDisplayProgram({ ...existing, ...patch }, 'participant')
+    expect(display.description).toBe(description)
   })
 })

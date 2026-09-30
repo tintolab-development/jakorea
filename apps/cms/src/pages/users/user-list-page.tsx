@@ -621,27 +621,35 @@ export function UserListPage() {
             users: page.users.map(u =>
               u.id === updated.id ||
               (updated.memberId != null && u.memberId === updated.memberId) ||
-              (updated.organizationId != null && u.organizationId === updated.organizationId)
+              // 학교 목록만 orgId로 매칭. 교사·학교 공유 organizationId로
+              // 교사 상세 저장이 기관명을 교사명으로 덮지 않게 한다.
+              (updated.role === 'SCHOOL' &&
+                u.role === 'SCHOOL' &&
+                updated.organizationId != null &&
+                u.organizationId === updated.organizationId)
                 ? mergeListUserWithFetchedDetail(u, updated)
                 : u
             ),
           })),
         }
       }
-      // mock 목록 키
+      // mock 목록 키 — 역할과 무관하게 uuid/memberId 매칭만 하므로 유지
       queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
         { queryKey: ['users', 'list'] },
         patchListCache
       )
-      // remote 목록 키 (`['cms','members','list'|schoolsList', …]`)
-      queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
-        { queryKey: [...memberQueryKeys.all, 'list'] },
-        patchListCache
-      )
-      queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
-        { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
-        patchListCache
-      )
+      // remote: 학교 상세는 schoolsList만, 그 외(교사·강사·개인·관리자)는 list만
+      if (updated.role === 'SCHOOL') {
+        queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+          { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
+          patchListCache
+        )
+      } else {
+        queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+          { queryKey: [...memberQueryKeys.all, 'list'] },
+          patchListCache
+        )
+      }
     },
     [setDrawerUser, setDetailBridgeUser, queryClient]
   )
@@ -1032,12 +1040,9 @@ export function UserListPage() {
         { queryKey: ['users', 'list'] },
         patchListCache
       )
+      // 강사 등록은 members list만 — schoolsList에 prepend하면 학교 목록이 오염된다
       queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
         { queryKey: [...memberQueryKeys.all, 'list'] },
-        patchListCache
-      )
-      queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
-        { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
         patchListCache
       )
       closeInstructorRegisterModal()
@@ -1167,12 +1172,9 @@ export function UserListPage() {
           { queryKey: ['users', 'list'] },
           patchListCache
         )
+        // 관리자 권한 변경은 members list만 — schoolsList에 쓰지 않는다
         queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
           { queryKey: [...memberQueryKeys.all, 'list'] },
-          patchListCache
-        )
-        queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
-          { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
           patchListCache
         )
         if (drawerUser?.id === ctx.userId) {

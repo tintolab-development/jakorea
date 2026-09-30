@@ -271,10 +271,12 @@ function resolveSponsor(program: CmsProgramLike): string {
 }
 
 function resolveContactValue(program: CmsProgramLike): string {
+  const name = program.contactName?.trim()
   const phone = program.contactPhone?.trim()
   const email = program.contactEmail?.trim()
-  if (phone && email) return `${phone} · ${email}`
-  return phone || email || ''
+  return [name, phone ? `Tel : ${phone}` : '', email ? `E-mail : ${email}` : '']
+    .filter(Boolean)
+    .join(', ')
 }
 
 function resolveTargetLabels(program: CmsProgramLike): {

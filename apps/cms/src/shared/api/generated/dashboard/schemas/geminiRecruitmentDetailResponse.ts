@@ -6,54 +6,100 @@
  * OpenAPI spec version: v9
  */
 import type { GeminiRecruitmentDetailResponseEducationForm } from './geminiRecruitmentDetailResponseEducationForm';
-import type { GeminiRecruitmentDetailResponseProgramType } from './geminiRecruitmentDetailResponseProgramType';
-import type { GeminiRecruitmentDetailResponseTargetLevelsItem } from './geminiRecruitmentDetailResponseTargetLevelsItem';
 
 /**
- * Gemini 찾아가는 연수 모집 공고 상세. create/PATCH 저장 필드를 같은 이름으로 왕복한다. serviceDetailJson 원문은 노출하지 않는다.
+ * Gemini 찾아가는 연수 모집 공고 상세. create/PATCH로 저장한 모집 정보 필드를 같은 이름으로 왕복한다. serviceDetailJson 원문은 노출하지 않는다.
  */
 export interface GeminiRecruitmentDetailResponse {
-  programId: number;
-  programCode: string;
-  programType: GeminiRecruitmentDetailResponseProgramType;
-  draftStatus: string;
-  periodStatus: string;
-  nameKo: string;
-  summary?: string | null;
-  description?: string | null;
-  businessYear?: number | null;
-  businessStartDate?: string | null;
-  businessEndDate?: string | null;
-  /** 기관 모집 기간 시작 */
-  applicationStartDate?: string | null;
-  /** 기관 모집 기간 종료 */
-  applicationEndDate?: string | null;
-  /** 연수 요청 가능기간 시작 */
-  trainingRequestStartDate?: string | null;
-  /** 연수 요청 가능기간 종료 */
-  trainingRequestEndDate?: string | null;
-  minimumParticipantCount?: number | null;
-  certificateDisabled: boolean;
-  organizationApplicationCount?: number | null;
-  approvedOrganizationApplicationCount?: number | null;
-  /** 없으면 []. elementary|middle|high|university|adult */
-  targetLevels: GeminiRecruitmentDetailResponseTargetLevelsItem[];
+  programId?: number;
+  programCode?: string;
+  programType?: string;
+  draftStatus?: string;
+  periodStatus?: string;
+  nameKo?: string;
+  summary?: string;
+  description?: string;
+  businessYear?: number;
+  businessStartDate?: string;
+  businessEndDate?: string;
+  /** 기관 모집 기간 시작. 연수 요청 가능기간(trainingRequest*)과 별개. */
+  applicationStartDate?: string;
+  /** 기관 모집 기간 종료. */
+  applicationEndDate?: string;
+  /** 연수 요청 가능기간 시작. */
+  trainingRequestStartDate?: string;
+  /** 연수 요청 가능기간 종료. */
+  trainingRequestEndDate?: string;
+  minimumParticipantCount?: number;
+  certificateDisabled?: boolean;
+  organizationApplicationCount?: number;
+  approvedOrganizationApplicationCount?: number;
+  /** 교육 대상 코드. elementary|middle|high|university|adult. 없으면 []. */
+  targetLevels?: string[];
+  /**
+     * 교육 대상 상세
+     * @nullable
+     */
   recruitmentTargetDetail?: string | null;
+  /**
+     * 교육 형태. online|offline|hybrid
+     * @nullable
+     */
   educationForm?: GeminiRecruitmentDetailResponseEducationForm;
+  /**
+     * 문의처 이름
+     * @nullable
+     */
   contactName?: string | null;
+  /**
+     * 문의처 전화
+     * @nullable
+     */
   contactPhone?: string | null;
+  /**
+     * 문의처 이메일
+     * @nullable
+     */
   contactEmail?: string | null;
-  /** 비고. 해당없음이면 null */
+  /**
+     * 비고. 해당없음이면 null
+     * @nullable
+     */
   otherMatters?: string | null;
+  /**
+     * 섬네일 파일명
+     * @nullable
+     */
   thumbnailFileName?: string | null;
+  /**
+     * 모집 안내
+     * @nullable
+     */
   recruitmentGuide?: string | null;
+  /**
+     * 지원 방법
+     * @nullable
+     */
   applicationMethod?: string | null;
+  /**
+     * 학습 지원 내용
+     * @nullable
+     */
   learningSupportContent?: string | null;
+  /**
+     * 추가 내용 HTML/Markdown 저장분
+     * @nullable
+     */
   additionalContentHtml?: string | null;
-  /** 없으면 [] */
-  attachmentFileNames: string[];
-  createdAt?: string | null;
+  /** 첨부 파일명. 없으면 []. */
+  attachmentFileNames?: string[];
+  createdAt?: string;
+  /** @nullable */
   createdByName?: string | null;
-  updatedAt?: string | null;
+  updatedAt?: string;
+  /**
+     * program에 updated_by 컬럼이 없으면 null
+     * @nullable
+     */
   updatedByName?: string | null;
 }

@@ -50,4 +50,14 @@ export interface ProgramListItemResponse {
      * @nullable
      */
   educationForm?: ProgramListItemResponseEducationForm;
+  /**
+     * Platform 홈 캐러셀 노출 여부. featuredOnHome=true 필터와 동일 컬럼.
+     * @nullable
+     */
+  featuredOnHome?: boolean | null;
+  /**
+     * 홈 캐러셀 정렬 순서(오름차순). 미노출이면 null.
+     * @nullable
+     */
+  homeDisplayOrder?: number | null;
 }

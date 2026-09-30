@@ -25,7 +25,7 @@ import {
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import { showUpdateCompletedAlert } from '@/shared/ui'
 import {
-  applyRecruitmentAdditionalContentHtml,
+  applyRecruitmentDetailInfoFields,
   type ProgramDetailRecruitmentAudience,
 } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 
@@ -40,7 +40,7 @@ export interface UseProgramDetailInfoSaveOptions {
   validateSchema?: z.ZodType<unknown>
   /** true면 remote PATCH 에서 모집·회차 필드 제외 (1사1교·교육받은 교사 공통정보 탭) */
   commonInfoPatchOnly?: boolean
-  /** 모집 탭 저장 — 「추가 내용」HTML을 해당 *RecruitmentInfo SSOT에도 넣는다 */
+  /** 모집 탭 저장 — 프로그램 설명·추가 내용 등을 해당 *RecruitmentInfo SSOT에도 넣는다 */
   recruitmentAudience?: ProgramDetailRecruitmentAudience
 }
 
@@ -102,12 +102,19 @@ export function useProgramDetailInfoSave({
           ...(typeof html === 'string' ? { additionalContentHtml: html } : {}),
           ...(generalCommonInfo ? { generalCommonInfo } : {}),
         }
-        if (typeof html === 'string' && recruitmentAudience) {
-          remotePatch = applyRecruitmentAdditionalContentHtml(
+        if (recruitmentAudience) {
+          remotePatch = applyRecruitmentDetailInfoFields(
             remotePatch,
             program,
-            html,
-            recruitmentAudience
+            recruitmentAudience,
+            {
+              description: values.description,
+              recruitmentGuide: values.recruitmentGuide,
+              applicationMethod: values.applicationMethod,
+              learningSupportContent: values.learningSupportContent,
+              ...(typeof html === 'string' ? { additionalContentHtml: html } : {}),
+              otherNotes: values.otherNotes,
+            }
           )
         }
         if (commonInfoPatchOnly) {

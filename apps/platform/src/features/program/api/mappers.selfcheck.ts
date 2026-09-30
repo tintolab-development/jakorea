@@ -32,6 +32,7 @@ const mapped = mapPortalProgramDetail({
   applicationTargetMode: 'INDIVIDUAL',
   businessField: '진로교육',
   venue: '온라인',
+  contactName: 'JA Korea',
   contactEmail: 'cc@jakorea.org',
   contactPhone: '02-6085-6028',
   recruitmentGuide: '모집 안내 본문',
@@ -98,7 +99,7 @@ assert.equal(
 )
 assert.equal(mapped.thumbnailUrl, portalPublicFileContentUrl(77))
 assert.equal(mapped.attachments[0]?.url, '/api/portal/public/files/88/download')
-assert.equal(mapped.contactValue, '02-6085-6028 · cc@jakorea.org')
+assert.equal(mapped.contactValue, 'JA Korea, Tel : 02-6085-6028, E-mail : cc@jakorea.org')
 assert.equal(mapped.participationMethod, 'team')
 assert.deepEqual(
   mapped.extraSections.map(section => section.title),
@@ -251,6 +252,7 @@ const generalCurriculum = mapPortalProgramDetail({
       assignmentEnabled: false,
       educationFormLabel: '온라인',
       ipsTypeSummary: 'Succeed | Conference (컨퍼런스)',
+      assignmentPeriod: '26년 10월 14일(수) 10:00 ~ 12:00',
     },
     { sessionLabel: '2차시', title: '', description: '' },
   ],
@@ -263,7 +265,8 @@ assert.ok(generalCurriculum)
 assert.equal(generalCurriculum.sessions.length, 2)
 assert.equal(generalCurriculum.sessions[0]?.title, '필요와 욕구, 현명한 소비')
 assert.equal(generalCurriculum.sessions[0]?.educationFormLabel, undefined)
-assert.equal(generalCurriculum.sessions[0]?.ipsTypeSummary, 'Succeed | Conference (컨퍼런스)')
+assert.equal(generalCurriculum.sessions[0]?.ipsTypeSummary, undefined)
+assert.equal(generalCurriculum.sessions[0]?.assignmentPeriod, undefined)
 assert.equal(generalCurriculum.sessions[1]?.title, '')
 assert.equal(generalCurriculum.eventSchedules.length, 0)
 assert.deepEqual(generalCurriculum.educationScheduleLines, [
@@ -435,7 +438,7 @@ assert.equal(trainedTeacherProgress.educationStructure, 'curriculum')
 assert.equal(trainedTeacherProgress.sessions.length, 1)
 assert.equal(trainedTeacherProgress.sessions[0]?.title, '수정3')
 assert.equal(trainedTeacherProgress.sessions[0]?.educationFormLabel, undefined)
-assert.equal(trainedTeacherProgress.sessions[0]?.ipsTypeSummary, 'Succeed | Workshop (워크숍)')
+assert.equal(trainedTeacherProgress.sessions[0]?.ipsTypeSummary, undefined)
 assert.equal(trainedTeacherProgress.educationForm, 'online')
 assert.equal(trainedTeacherProgress.educationFormLabel, '온라인')
 assert.equal(

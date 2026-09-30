@@ -147,6 +147,7 @@ export type CmsProgramLike = {
   additionalContent?: string
   /** 참여자 모집 > 학습 지원 내용 */
   learningSupportContent?: string
+  contactName?: string
   contactPhone?: string
   contactEmail?: string
   rounds?: CmsProgramRound[]
