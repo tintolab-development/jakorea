@@ -1,8 +1,8 @@
 /** 강사 배정 승인 확인 모달 본문 */
 export function buildGeminiInstructorApproveMessageLines(instructorName: string): string[] {
   return [
-    `[${instructorName}] 강사를 승인하시겠습니까?`,
-    '승인 시, 다른 신청 강사들은 자동으로 반려 처리됩니다.',
+    `[${instructorName}] 님을 승인하시겠습니까?`,
+    '승인 시 다른 신청 강사들은 자동으로 반려 처리됩니다.',
   ]
 }
 
