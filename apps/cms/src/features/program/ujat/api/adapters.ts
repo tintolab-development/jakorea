@@ -3,6 +3,9 @@ import type {
 } from '@/features/program/general/api/programs-api-client'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
+import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
+import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
+import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import type {
@@ -78,6 +81,93 @@ function overlayText(overlay: Record<string, unknown>, key: string): string | un
 
 function dateValue(value: Date | string | undefined): string | undefined {
   return value instanceof Date ? value.toISOString() : value
+}
+
+function parsedMillis(value: string | undefined): number | undefined {
+  if (!value) return undefined
+  const ms = Date.parse(value)
+  return Number.isFinite(ms) ? ms : undefined
+}
+
+/**
+ * 레거시 application* 는 사업 기간 안에 있을 때만 보낸다.
+ * UJAT 기관·봉사 모집은 사업 시작 전이 정상 — 그때는 recruitments[]만 쓴다.
+ */
+function applicationDatesInsideBusiness(program: Program): {
+  applicationStartDate?: string
+  applicationEndDate?: string
+} {
+  const applicationStartDate = dateValue(program.applicationStartDate)
+  const applicationEndDate = dateValue(program.applicationEndDate)
+  const businessStart = parsedMillis(dateValue(program.startDate))
+  const businessEnd = parsedMillis(dateValue(program.endDate))
+  const applyStart = parsedMillis(applicationStartDate)
+  const applyEnd = parsedMillis(applicationEndDate)
+  if (!applicationStartDate || !applicationEndDate || applyStart == null || applyEnd == null) {
+    return {}
+  }
+  if (businessStart != null && applyEnd < businessStart) return {}
+  if (businessEnd != null && applyStart > businessEnd) return {}
+  return { applicationStartDate, applicationEndDate }
+}
+
+function recruitmentRow(input: {
+  recruitmentType: ProgramRecruitmentRequest['recruitmentType']
+  targetType: string
+  startAt?: string
+  endAt?: string
+  operationStartDate?: string
+  operationEndDate?: string
+  maxCount?: number
+}): ProgramRecruitmentRequest {
+  return {
+    recruitmentType: input.recruitmentType,
+    targetType: input.targetType,
+    status: ProgramRecruitmentRequestStatus.ACTIVE,
+    ...(input.startAt ? { startAt: input.startAt } : {}),
+    ...(input.endAt ? { endAt: input.endAt } : {}),
+    ...(input.operationStartDate ? { operationStartDate: input.operationStartDate } : {}),
+    ...(input.operationEndDate ? { operationEndDate: input.operationEndDate } : {}),
+    ...(input.maxCount != null && input.maxCount > 0 ? { maxCount: input.maxCount } : {}),
+    selectionMethod: 'ADMIN_REVIEW',
+  }
+}
+
+/**
+ * 기관 + 봉사자 formBindings targetType과 맞출 canonical 모집 row.
+ * BE `STRUCTURED_RECRUITMENTS_GENERAL_ONLY` 가 UJAT를 거절하면 서버에서 허용해야 한다.
+ */
+export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRecruitmentRequest[] {
+  const operationStartDate = dateValue(program.startDate)
+  const operationEndDate = dateValue(program.endDate)
+  const institutionStart = dateValue(program.applicationStartDate)
+  const institutionEnd = dateValue(program.applicationEndDate)
+  const volunteerStart = dateValue(
+    program.volunteerApplicationStartDate ?? program.applicationStartDate
+  )
+  const volunteerEnd = dateValue(
+    program.volunteerApplicationEndDate ?? program.applicationEndDate
+  )
+  return [
+    recruitmentRow({
+      recruitmentType: ProgramRecruitmentRequestRecruitmentType.PARTICIPANT,
+      targetType: 'ORGANIZATION',
+      startAt: institutionStart,
+      endAt: institutionEnd,
+      operationStartDate,
+      operationEndDate,
+      maxCount: program.participatingSchoolCount ?? program.approvedStudentCount,
+    }),
+    recruitmentRow({
+      recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
+      targetType: 'COLLEGE_STUDENT',
+      startAt: volunteerStart,
+      endAt: volunteerEnd,
+      operationStartDate,
+      operationEndDate,
+      maxCount: program.generalVolunteers ?? program.ujatFirstHalfVolunteerCount,
+    }),
+  ]
 }
 
 function programIps(value: string | null | undefined): Program['ips'] | undefined {
@@ -394,8 +484,10 @@ function registrationSnapshotForApi(
   registration?: RegistrationPersistSnapshot
 ): RegistrationPersistSnapshot | undefined {
   if (!registration) return undefined
+  // create()가 `{ ...input, overlay }`로 넘기면 idempotencyKey·preparedFormBindings가
+  // registration에 섞인다. JSON.stringify가 그대로 실어 BE schema를 깨뜨린다.
   return {
-    ...registration,
+    ...(registration.draft != null ? { draft: registration.draft } : {}),
     overlay: stripRegistrationOverlayDebugKeys(
       stripUnselectedUjatSponsorContactsFromOverlay(registration.overlay)
     ),
@@ -413,6 +505,7 @@ function coreRequest(
     sponsors[0]?.sponsorId ||
     (program.sponsorId != null ? String(program.sponsorId) : undefined)
   const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
+  const applicationDates = applicationDatesInsideBusiness(program)
   const body: ProgramUpdateRequest = {
     sponsorId: primarySponsorId,
     sponsors: sponsors.length > 0 ? sponsors : undefined,
@@ -426,8 +519,9 @@ function coreRequest(
     businessStartDate: dateValue(program.startDate),
     businessEndDate: dateValue(program.endDate),
     educationStructure: resolveUjatEducationStructure(program),
-    applicationStartDate: dateValue(program.applicationStartDate),
-    applicationEndDate: dateValue(program.applicationEndDate),
+    applicationStartDate: applicationDates.applicationStartDate,
+    applicationEndDate: applicationDates.applicationEndDate,
+    recruitments: mapUjatProgramRecruitmentsToRequest(program),
     businessArea,
     // UJAT은 실제 카탈로그를 쓰지 않는 고정형이지만, 다른 유형과 동일하게 id·name을
     // 항상 함께 반영한다 (name은 teamDivision/generalCommonInfo.detailedProgramName에 실림).
@@ -525,11 +619,16 @@ function patchRequest(
     body.businessStartDate = dateValue(merged.startDate)
     body.businessEndDate = dateValue(merged.endDate)
   }
-  if (has('applicationStartDate')) {
-    body.applicationStartDate = dateValue(merged.applicationStartDate)
-  }
-  if (has('applicationEndDate')) {
-    body.applicationEndDate = dateValue(merged.applicationEndDate)
+  if (
+    has('applicationStartDate') ||
+    has('applicationEndDate') ||
+    has('volunteerApplicationStartDate') ||
+    has('volunteerApplicationEndDate')
+  ) {
+    const applicationDates = applicationDatesInsideBusiness(merged)
+    body.applicationStartDate = applicationDates.applicationStartDate
+    body.applicationEndDate = applicationDates.applicationEndDate
+    body.recruitments = mapUjatProgramRecruitmentsToRequest(merged)
   }
   if (has('businessArea')) {
     const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined

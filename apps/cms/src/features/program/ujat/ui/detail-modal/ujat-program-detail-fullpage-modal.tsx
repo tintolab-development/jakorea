@@ -130,6 +130,7 @@ import {
 } from './info/ujat-program-detail-recruitment-tabs'
 import { UjatProgramRecruitmentPanels } from './info/ujat-program-recruitment-panels'
 import { UjatProgramRecruitmentTabsRow } from './info/ujat-program-recruitment-tabs-row'
+import { ParticipantRecruitmentPreviewModal } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
 import { DocScreeningSection } from './application-volunteer/screening/doc-screening/section'
 import { DocPassedSection } from './application-volunteer/screening/doc-passed/section'
 import { Interview2Section } from './application-volunteer/screening/interview2/section'
@@ -1413,6 +1414,12 @@ export function UjatProgramDetailFullPageModal({
     [programId, searchParams, setSearchParams]
   )
 
+  const [recruitmentPreviewTab, setRecruitmentPreviewTab] = useState<UjatRecruitTabKey | null>(null)
+
+  useEffect(() => {
+    if (!open) setRecruitmentPreviewTab(null)
+  }, [open])
+
   useEffect(() => {
     if (!open || !displayProgram || !editTab) return
     if (editTab === 'info' && !canUjatProgramInfoEdit(displayProgram)) {
@@ -2506,6 +2513,7 @@ export function UjatProgramDetailFullPageModal({
                 onSave={() => {
                   void handleRecruitmentSave()
                 }}
+                onOpenPreview={setRecruitmentPreviewTab}
               />
               <UjatProgramRecruitmentPanels
                 key={activeRecruitTab}
@@ -3069,6 +3077,16 @@ export function UjatProgramDetailFullPageModal({
       />
     ) : null}
     <ProgramDetailSponsorDetailOverlay />
+    {displayProgram && recruitmentPreviewTab ? (
+      <ParticipantRecruitmentPreviewModal
+        open
+        onClose={() => setRecruitmentPreviewTab(null)}
+        program={displayProgram}
+        sponsorName={sponsorName}
+        audience={recruitmentPreviewTab === 'recruit_participant' ? 'institutions' : 'volunteers'}
+        programKind="ujat"
+      />
+    ) : null}
     </>
   )
 }

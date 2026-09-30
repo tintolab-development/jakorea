@@ -36,6 +36,7 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { seedGeneralRegistrationOverlayFromProgram } from '@/features/program/general/lib/registration-overlay-sync'
+import { logGeneralProgramCommonInfoEditCurrentPayload } from '@/features/program/general/lib/common-info-edit-payload-log'
 import {
   defaultParticipantApplicationTab,
   isParticipantTabValid,
@@ -742,6 +743,7 @@ export function GeneralProgramDetailFullPageModal({
       return
     }
     seedGeneralRegistrationOverlayFromProgram(displayProgram)
+    logGeneralProgramCommonInfoEditCurrentPayload(displayProgram, 'enter')
     infoResetToProgram()
     setEditMode('info')
   }, [activeLnb, activeTab, displayProgram, infoResetToProgram, setEditMode, showAlert])
@@ -774,6 +776,7 @@ export function GeneralProgramDetailFullPageModal({
   }, [open, editTab, displayProgram, activeLnb, activeTab, setEditMode])
 
   const handleInfoSave = useCallback(async () => {
+    if (displayProgram) logGeneralProgramCommonInfoEditCurrentPayload(displayProgram, 'save')
     const result = await infoTriggerSave()
     if (!result.ok) {
       if (result.kind === 'validation') {
@@ -793,7 +796,7 @@ export function GeneralProgramDetailFullPageModal({
       return
     }
     setEditMode(null)
-  }, [infoTriggerSave, setEditMode, showAlert])
+  }, [displayProgram, infoTriggerSave, setEditMode, showAlert])
 
   const handleInfoCancel = useCallback(() => {
     if (displayProgram) seedGeneralRegistrationOverlayFromProgram(displayProgram)

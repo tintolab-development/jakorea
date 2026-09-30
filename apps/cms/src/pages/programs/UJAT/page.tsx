@@ -389,7 +389,7 @@ function UjatProgramListPageContent() {
     [navigate, location.pathname]
   )
 
-  const toolbarActions = (
+  const toolbarActionsAfterExcel = (
     <CmsButton width={180} onClick={handleProgramCreateClick}>
       프로그램 신규 등록
     </CmsButton>
@@ -405,7 +405,7 @@ function UjatProgramListPageContent() {
         bordered={false}
         title="전체 프로그램"
         description={`총 ${totalElements.toLocaleString()}건`}
-        actions={toolbarActions}
+        actionsAfterExcel={toolbarActionsAfterExcel}
         excelExport={{
           columns,
           data: filteredRows,

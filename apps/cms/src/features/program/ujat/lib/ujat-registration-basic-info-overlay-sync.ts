@@ -4,6 +4,7 @@ import {
   createUjatRegistrationBasicInfoOverlayDefaults,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
+  UJAT_SPONSOR_ALL_VALUE,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 import { ujatSurveyItemsFromProgramKeys } from '@/features/program/ujat/lib/registration-survey-items'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
@@ -25,6 +26,7 @@ import {
   isSponsorContactUnselected,
   isSponsorContactUnselectedLabel,
   resolveSponsorContactIdsForEdit,
+  resolveSponsorContactIdsFromProgram,
   SPONSOR_CONTACT_UNSELECTED_LABEL,
   SPONSOR_CONTACT_UNSELECTED_VALUE,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
@@ -88,11 +90,7 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
       : defaults.operationRangeSeal
   const sponsorManagerLine =
     program.generalCommonInfo?.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
-  const sponsorContactIds = resolveSponsorContactIdsForEdit({
-    ids: program.generalCommonInfo?.sponsorManagerContactIds,
-    id: program.generalCommonInfo?.sponsorManagerContactId,
-    managerLine: sponsorManagerLine,
-  })
+  const sponsorContactIds = resolveSponsorContactIdsFromProgram(program)
 
   return {
     'ujat.basicInfo.repKo': program.mainTitle?.trim() || defaults.repKo,
@@ -137,6 +135,10 @@ export function seedUjatRegistrationBasicInfoOverlayFromProgram(program: Program
     program.generalCommonInfo?.sponsorManagerLine?.trim() ||
     program.managerName?.trim() ||
     ''
+  const overlaySponsorId =
+    typeof merged['ujat.basicInfo.sponsorId'] === 'string'
+      ? merged['ujat.basicInfo.sponsorId'].trim()
+      : ''
   const restoredContacts = resolveSponsorContactIdsForEdit({
     ids: Array.isArray(merged['ujat.basicInfo.sponsorContactIds'])
       ? (merged['ujat.basicInfo.sponsorContactIds'] as unknown[]).map(String)
@@ -145,6 +147,9 @@ export function seedUjatRegistrationBasicInfoOverlayFromProgram(program: Program
       ? merged['ujat.basicInfo.sponsorContactId']
       : '',
     managerLine: overlayManagerLine,
+    hasSelectedSponsors: Boolean(
+      overlaySponsorId && overlaySponsorId !== UJAT_SPONSOR_ALL_VALUE
+    ),
   })
   if (
     restoredContacts.some(id => isSponsorContactUnselected(id)) ||

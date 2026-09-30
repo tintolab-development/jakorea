@@ -31,6 +31,11 @@ export function stripUnselectedUjatSponsorContactsFromOverlay(
         : undefined,
   })
   next[OVERLAY_SPONSOR_CONTACT_IDS] = apiIds
-  next[OVERLAY_SPONSOR_CONTACT_ID] = apiIds[0] ?? ''
+  if (apiIds[0]) {
+    next[OVERLAY_SPONSOR_CONTACT_ID] = apiIds[0]
+  } else {
+    // 빈 문자열은 BE가 Long으로 파싱하다 INVALID_VALUE가 난다
+    delete next[OVERLAY_SPONSOR_CONTACT_ID]
+  }
   return next
 }

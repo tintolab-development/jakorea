@@ -4,7 +4,7 @@
   "installCommand": "cd ../.. && HUSKY=0 pnpm install",
   "buildCommand": "cd ../.. && pnpm turbo run build --filter=cms",
   "outputDirectory": "dist",
-  "ignoreCommand": "cd ../.. && npx turbo-ignore cms --fallback=HEAD^1",
+  "ignoreCommand": "cd ../.. && git diff --quiet HEAD^1 HEAD -- apps/platform/src apps/platform/public apps/platform/preview.html apps/platform/vite.config.ts apps/platform/package.json && npx turbo-ignore cms --fallback=HEAD^1",
   "rewrites": [
     {
       "source": "/(.*)",

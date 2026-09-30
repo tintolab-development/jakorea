@@ -23,6 +23,6 @@ describe('ujat sponsor contact API payload', () => {
       'ujat.basicInfo.sponsorManagerName': '미선택',
     })
     expect(next['ujat.basicInfo.sponsorContactIds']).toEqual([])
-    expect(next['ujat.basicInfo.sponsorContactId']).toBe('')
+    expect(next['ujat.basicInfo.sponsorContactId']).toBeUndefined()
   })
 })

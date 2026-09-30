@@ -483,7 +483,7 @@ function BasicInfoSection({
     )
     if (currentIds.length === 0) {
       const storedLine = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
-      if (isSponsorContactUnselectedLabel(storedLine)) {
+      if (isSponsorContactUnselectedLabel(storedLine) || !storedLine) {
         editForm.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
           shouldValidate: false,
         })
@@ -494,14 +494,16 @@ function BasicInfoSection({
       return
     }
     if (validIds.length !== currentIds.length) {
-      editForm.setValue('sponsorManagerContactIds', validIds, {
-        shouldValidate: validIds.length > 0,
+      const nextIds =
+        validIds.length > 0 ? validIds : [SPONSOR_CONTACT_UNSELECTED_VALUE]
+      editForm.setValue('sponsorManagerContactIds', nextIds, {
+        shouldValidate: true,
         shouldDirty: true,
       })
-      editForm.setValue('sponsorManagerContactId', validIds[0] ?? '', {
+      editForm.setValue('sponsorManagerContactId', nextIds[0] ?? '', {
         shouldValidate: false,
       })
-      if (validIds.length > 0) editForm.clearErrors('sponsorManagerContactIds')
+      editForm.clearErrors('sponsorManagerContactIds')
     } else if (validIds.length > 0) {
       editForm.clearErrors('sponsorManagerContactIds')
     }
@@ -1570,6 +1572,7 @@ function TypeSettingsSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
@@ -2392,11 +2395,17 @@ function SingleRoundCurriculumSessionForm({
               label="단원명 및 교육 내용"
               fullRow
               view={
-                <>
-                  {session.title}
-                  <DetailInfoForm.InputsSeparator />
-                  {session.description}
-                </>
+                session.title?.trim() || session.description?.trim() ? (
+                  <>
+                    {session.title?.trim() ? session.title : null}
+                    {session.title?.trim() && session.description?.trim() ? (
+                      <DetailInfoForm.InputsSeparator />
+                    ) : null}
+                    {session.description?.trim() ? session.description : null}
+                  </>
+                ) : (
+                  '-'
+                )
               }
               edit={
                 <div className="detail-info-form-inputs-wrapper">
@@ -2598,6 +2607,7 @@ function CurriculumSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const watchedStructure = isFormEdit
     ? editForm.watch('educationStructure')
@@ -4296,6 +4306,7 @@ function ScheduleProgressSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const watchedStructure = isFormEdit
     ? form!.watch('educationStructure')
@@ -4644,6 +4655,7 @@ function ScheduleSettingsSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const educationStructure = isFormEdit
     ? (form!.watch('educationStructure') ?? effectiveTypeFields.educationStructure)

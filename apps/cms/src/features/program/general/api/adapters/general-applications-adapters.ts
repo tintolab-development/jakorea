@@ -124,8 +124,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
 ): ApplicantSchoolRow {
   const sessions = mapRequestedSchedulesToSessions(options?.requestedSchedules)
   const desiredEducationPeriod = formatRequestedSchedulesPeriodLabel(options?.requestedSchedules)
-  const regionFromParts = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
-  const region = regionFromParts || dto.region?.trim() || ''
+  const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
 
   return {
     id: toId(dto.id),
@@ -134,7 +133,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     no: index + 1,
     schoolName: dto.organizationName?.trim() || '기관명 없음',
     region,
-    educationGrade: dto.grade?.trim() || dto.educationGrade?.trim() || '',
+    educationGrade: dto.grade?.trim() || '',
     classCount: dto.requestedClassCount ?? 0,
     studentCount: dto.requestedStudentCount ?? 0,
     teacherName: dto.teacherName?.trim() || '-',
@@ -557,7 +556,7 @@ export function mapPreferredEducationSchedulesToSessions(
       classNum: '-',
       timeRange,
       ...(scheduleLabel ? { scheduleLabel } : {}),
-      requestedScheduleId: schedule.scheduleId,
+      ...(schedule.scheduleId != null ? { requestedScheduleId: schedule.scheduleId } : {}),
     }
   })
 }

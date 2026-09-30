@@ -35,4 +35,14 @@ export interface ApplicationListItemResponse {
   certificateAvailable?: boolean;
   availableActions?: string[];
   supplement?: ProgramApplicationSupplement;
+  /**
+     * 모집 시작 시각. 모집 일정이 없으면 null. 교육 진행 기간과 다른 값입니다.
+     * @nullable
+     */
+  recruitmentStartAt?: string | null;
+  /**
+     * 모집 종료 시각. 모집 일정이 없으면 null. 교육 진행 기간과 다른 값입니다.
+     * @nullable
+     */
+  recruitmentEndAt?: string | null;
 }

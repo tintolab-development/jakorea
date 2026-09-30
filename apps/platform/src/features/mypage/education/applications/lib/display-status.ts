@@ -6,9 +6,21 @@ import type {
   EducationWithdrawalPhase,
 } from '../model/types'
 
+export type EducationDisplayStatusAudience = 'general' | 'teacher'
+
 export const EDUCATION_DISPLAY_STATUS_LABEL: Record<EducationDisplayStatus, string> = {
   waiting_result: '결과 대기',
   document_passed: '서류 합격',
+  in_progress: '진행중',
+  completed: '진행 완료',
+  withdrawn: '활동 포기',
+  rejected: '신청 반려',
+}
+
+/** 교사회원 교육현황 — 승인 전 구간은 「승인대기」로 통일 */
+export const TEACHER_EDUCATION_DISPLAY_STATUS_LABEL: Record<EducationDisplayStatus, string> = {
+  waiting_result: '승인대기',
+  document_passed: '승인대기',
   in_progress: '진행중',
   completed: '진행 완료',
   withdrawn: '활동 포기',
@@ -61,7 +73,14 @@ export function resolveEducationApplicationTab(
   }
 }
 
-export function getEducationDisplayStatusLabel(status: EducationDisplayStatus): string {
+export function getEducationDisplayStatusLabel(
+  status: EducationDisplayStatus,
+  options?: { audience?: EducationDisplayStatusAudience },
+): string {
+  const audience = options?.audience ?? 'general'
+  if (audience === 'teacher') {
+    return TEACHER_EDUCATION_DISPLAY_STATUS_LABEL[status]
+  }
   return EDUCATION_DISPLAY_STATUS_LABEL[status]
 }
 

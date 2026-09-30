@@ -1,6 +1,6 @@
 /**
  * UJAT 봉사자 모집 — 상반기/하반기 overlay 분리
- * 공통 키는 두 반기 모두 키가 없을 때만 폴백. 저장은 반기 키만 쓰고 반대 반기는 스냅샷한다.
+ * 읽기는 해당 반기 키만 사용한다. 공유 키·반대 반기 값은 폴백하지 않는다.
  */
 
 import type { Program } from '@/types/domain'
@@ -80,35 +80,26 @@ export function snapshotVolunteerHalfFromLegacy(
 }
 
 /**
- * 현재 반기 값만 레거시 키로 옮긴다. 다른 반기 키는 넣지 않는다.
- * 같은 필드의 반기 키가 있으면 그걸 쓰고, 반대 반기만 있으면 공유 키를 쓰지 않는다.
+ * 현재 반기 키만 레거시 키로 옮긴다.
+ * 공유 키·반대 반기 값은 쓰지 않는다 (상·하반기는 별도 양식).
  */
 export function resolveVolunteerOverlayForHalf(
   overlay: Record<string, unknown>,
   half: UjatVolunteerRecruitHalf
 ): Record<string, unknown> {
   const resolved: Record<string, unknown> = {}
-  const other: UjatVolunteerRecruitHalf = half === 'h1' ? 'h2' : 'h1'
 
   for (const [field, legacyKey] of Object.entries(HALF_FIELD_TO_LEGACY)) {
     const typedField = field as keyof typeof HALF_FIELD_TO_LEGACY
     const halfKey = halfFieldKey(half, typedField)
-    const otherKey = halfFieldKey(other, typedField)
     if (isPresent(overlay[halfKey])) {
       resolved[legacyKey] = overlay[halfKey]
-    } else if (!isPresent(overlay[otherKey]) && isPresent(overlay[legacyKey])) {
-      resolved[legacyKey] = overlay[legacyKey]
     }
   }
 
   const recruitHalfKey = half === 'h1' ? KEYS.recruitRangeH1 : KEYS.recruitRangeH2
-  const recruitOtherKey = half === 'h1' ? KEYS.recruitRangeH2 : KEYS.recruitRangeH1
   if (isPresent(overlay[recruitHalfKey])) {
-    resolved[KEYS.recruitRange] = overlay[recruitHalfKey]
     resolved[recruitHalfKey] = overlay[recruitHalfKey]
-  } else if (!isPresent(overlay[recruitOtherKey]) && isPresent(overlay[KEYS.recruitRange])) {
-    resolved[KEYS.recruitRange] = overlay[KEYS.recruitRange]
-    resolved[recruitHalfKey] = overlay[KEYS.recruitRange]
   }
 
   const activityKey = half === 'h1' ? KEYS.activityTermH1 : KEYS.activityTermH2
@@ -117,6 +108,18 @@ export function resolveVolunteerOverlayForHalf(
   }
 
   return resolved
+}
+
+export function ujatVolunteerRecruitDetailInfoPrefix(half: UjatVolunteerRecruitHalf): string {
+  return `recruitVolunteer.${half}.detailInfo`
+}
+
+export function ujatVolunteerRecruitInterviewNamespace(half: UjatVolunteerRecruitHalf): string {
+  return `recruit.volunteer.${half}.interview`
+}
+
+export function ujatVolunteerRecruitInterviewRangeSealKey(half: UjatVolunteerRecruitHalf): string {
+  return `recruit.volunteer.${half}.interviewRangeSeal`
 }
 
 export function buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues(
@@ -142,6 +145,15 @@ export function buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues(
     [`${prefix}finalAnnounce`]: shared[KEYS.finalAnnounce],
     [`${prefix}contact`]: shared[KEYS.contact],
     [`${prefix}notes`]: shared[KEYS.notes],
+    [`${prefix}description`]: values.description?.trim() ?? shared[KEYS.description],
+    [`${prefix}recruitmentGuide`]: values.recruitmentGuide?.trim() ?? shared[KEYS.recruitmentGuide],
+    [`${prefix}applicationMethod`]: values.applicationMethod?.trim() ?? shared[KEYS.applicationMethod],
+    [`${prefix}otherNotes`]:
+      values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
+        ? ''
+        : (values.otherNotes?.trim() ?? shared[KEYS.otherNotes]),
+    [`${prefix}additionalContentHtml`]: shared[KEYS.additionalContentHtml],
+    [`${prefix}attachmentFileNames`]: shared[KEYS.attachmentFileNames],
     [recruitKey]: half === 'h1' ? shared[KEYS.recruitRangeH1] : shared[KEYS.recruitRangeH2],
     [activityKey]: shared[activityKey],
   }
@@ -172,8 +184,19 @@ export function blankUjatVolunteerRecruitProgramFields(program: Program): Progra
     recruitmentGuide: undefined,
     applicationMethod: undefined,
     additionalContentHtml: undefined,
+    attachmentFileNames: undefined,
+    managerName: undefined,
+    resultAnnouncementDate: undefined,
+    resultAnnouncementMethod: undefined,
+    rounds: (program.rounds ?? []).map(round => ({
+      ...round,
+      startDate: '',
+      endDate: '',
+      curriculum: '',
+    })),
     generalCommonInfo: {
       ...program.generalCommonInfo,
+      announcementTitle: undefined,
       volunteerRecruitmentInfo: {
         ...program.generalCommonInfo?.volunteerRecruitmentInfo,
         announcementPublished: undefined,
@@ -181,6 +204,7 @@ export function blankUjatVolunteerRecruitProgramFields(program: Program): Progra
         remarks: undefined,
         recruitmentTarget: undefined,
         recruitmentTargetDetail: undefined,
+        noticeExposureTiming: undefined,
       },
     },
   }

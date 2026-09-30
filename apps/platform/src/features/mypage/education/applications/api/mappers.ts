@@ -9,6 +9,8 @@ import type {
 
 const DISPLAY_STATUS_FROM_API: Record<string, EducationDisplayStatus> = {
   '결과 대기': 'waiting_result',
+  승인대기: 'waiting_result',
+  '승인 대기': 'waiting_result',
   '서류 합격': 'document_passed',
   '진행 중': 'in_progress',
   진행중: 'in_progress',

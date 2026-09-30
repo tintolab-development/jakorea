@@ -133,6 +133,54 @@ describe('resolveGeneralProgramCommonInfo 임금', () => {
   })
 })
 
+describe('resolveGeneralProgramCommonInfo 커리큘럼 복수', () => {
+  it('sessionRound가 single이어도 overlay 회차 맵으로 1회차를 조회한다', () => {
+    const common = resolveGeneralProgramCommonInfo(
+      baseProgram({
+        generalProgramAudience: 'individual',
+        generalProgramEducationStructure: 'curriculum',
+        generalProgramSessionRound: 'single',
+        generalCommonInfo: {
+          educationFormScheduleDetail: 'common',
+          participationScheduleDetail: 'common',
+          ipsScheduleDetail: 'perSchedule',
+          curriculumSessions: [
+            {
+              sessionLabel: '1차시',
+              title: '필요와 욕구, 현명한 소비',
+              description: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+              ipsTypeSummary: 'Succeed | Conference (컨퍼런스)',
+            },
+            { sessionLabel: '2차시', title: '', description: '' },
+          ],
+        },
+        registrationOverlay: {
+          'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+          'generalRegistration.educationCurriculum.roundContentByRound': {
+            1: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+          },
+          'generalRegistration.educationCurriculum.assignmentByRound': {
+            1: { enabled: true, period: '26년 10월 13일(화) 10:00 ~ 12:00' },
+          },
+          'generalRegistration.educationCurriculum.ipsBySession': {
+            1: { category: 'succeed', detail: 'conference' },
+          },
+        },
+      })
+    )
+    expect(common.curriculumSessions).toEqual([
+      expect.objectContaining({
+        sessionLabel: '1회차',
+        title: '1차시',
+        description: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+        assignmentEnabled: true,
+        assignmentPeriod: '26년 10월 13일(화) 10:00 ~ 12:00',
+      }),
+    ])
+    expect(common.curriculumSessions).toHaveLength(1)
+  })
+})
+
 describe('resolveGeneralProgramCommonInfo 교육 형태', () => {
   it('generalCommonInfo 라벨이 없으면 registration overlay 일정 공통 값을 조회 라벨로 쓴다', () => {
     const common = resolveGeneralProgramCommonInfo(

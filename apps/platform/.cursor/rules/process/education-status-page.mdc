@@ -64,6 +64,19 @@ alwaysApply: false
 | 진행 완료, 활동 포기 | 회색 `--color-neutral-cool-500` |
 | 신청 반려 | 빨강 `--color-status-error-default` |
 
+### 교사회원 (`school_teacher`) 진행 상태 라벨
+
+내부 enum·탭·정렬은 일반과 동일. **표시 문구만** [`display-status.ts`](apps/platform/src/features/mypage/education/applications/lib/display-status.ts) `audience: 'teacher'`.
+
+| 라벨 | 색 (톤) |
+|------|---------|
+| 승인대기 (`waiting_result` · `document_passed`) | 주황 `pending` |
+| 진행중 | 파랑 `progress` |
+| 진행 완료, 활동 포기 | 회색 `completed` |
+| 신청 반려 | 빨강 `rejected` |
+
+목록·상세: `isSchoolTeacherMypageProfile` 일 때 `statusAudience="teacher"`. 봉사·강의현황은 `general` 유지.
+
 ### 행 클릭
 
 - **`/mypage/education/:applicationId`** (`educationApplicationDetailPath`)

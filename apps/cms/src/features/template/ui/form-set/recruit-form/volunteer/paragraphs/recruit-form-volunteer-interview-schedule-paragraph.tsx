@@ -11,6 +11,8 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   onCommonExclusionChange,
   /** 템플릿 관리만 true — 프로그램 등록·상세 편집은 false */
   freezeUnavailableCalendar = false,
+  overlayNamespace,
+  interviewRangeSealKey,
 }: {
   exceptionScheduleCount?: number
   exceptionBlockKeys?: number[]
@@ -19,11 +21,15 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
   /** 템플릿 관리 화면 — 진행 불가일 모달 달력 샘플 고정 */
   freezeUnavailableCalendar?: boolean
+  overlayNamespace?: string
+  interviewRangeSealKey?: string
 }) {
   return (
     <VolunteerInterviewAvailableScheduleParagraph
       isTemplateAuthoringMode
       overlayStore="recruit"
+      overlayNamespace={overlayNamespace}
+      interviewRangeSealKey={interviewRangeSealKey}
       exceptionScheduleCount={exceptionScheduleCount}
       exceptionBlockKeys={exceptionBlockKeys}
       onRemoveExceptionBlock={onRemoveExceptionBlock}

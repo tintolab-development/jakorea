@@ -10,6 +10,7 @@ import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { MemberDetailResponse } from './memberDetailResponse';
 import type { TermsAgreementRow } from './termsAgreementRow';
+import type { UserListRowMetrics } from './userListRowMetrics';
 
 /**
  * CMS 강사 상세 응답. 강사 프로필과 현재 정산계좌를 구조화하여 중복 없이 반환합니다.
@@ -18,6 +19,7 @@ export interface InstructorMemberDetailResponse {
   member?: MemberDetailResponse;
   profile?: InstructorCmsProfile;
   settlement?: InstructorCmsSettlement;
+  listMetrics?: UserListRowMetrics;
   certifications?: InstructorCertificationResponse[];
   termsAgreements?: TermsAgreementRow[];
 }

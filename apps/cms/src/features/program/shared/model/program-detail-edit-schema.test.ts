@@ -324,6 +324,22 @@ describe('programToDetailEditValues keeps stored common info in edit fields', ()
     expect(values.sponsorManagerContactIds).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
     expect(values.sponsorManagerContactId).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
   })
+
+  it('후원사만 있고 담당자 표시가 비어도 수정 폼에 미선택이 체크된다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      sponsorId: '1627251',
+      managerName: '',
+      generalCommonInfo: {
+        sponsorManagementIds: ['1627251'],
+        sponsorManagerContactIds: [],
+        sponsorManagerLine: '',
+      },
+    } as Program)
+
+    expect(values.sponsorManagerContactIds).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
+    expect(values.sponsorManagerContactId).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
+  })
 })
 
 describe('program detail title edit fields', () => {

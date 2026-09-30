@@ -25,7 +25,10 @@ import {
 } from '@/features/program/general/model/volunteer-interview-schedule'
 import { extrasFromGeneralProgram } from '@/features/program/general/lib/registration-overlay-sync'
 import { applyRegistrationWageOverlayToCommonInfo } from '@/features/program/general/lib/wage-display'
-import { buildEnrichedScheduleDetails } from '@/features/program/general/lib/registration-overlay-to-program'
+import {
+  buildCurriculumSessionsFromRegistrationOverlay,
+  buildEnrichedScheduleDetails,
+} from '@/features/program/general/lib/registration-overlay-to-program'
 import { resolveStoredEducationFormLabel } from '@/features/program/shared/model/program-detail-edit-schema'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
@@ -697,6 +700,32 @@ function educationFormLabelFromRegistrationValue(value: string): string {
   return options.find(option => option.value === value)?.label ?? value
 }
 
+/** 커리큘럼 복수 — sessionRound가 single로 남아도 overlay 회차 맵으로 조회 행을 되돌린다. */
+function applyCurriculumSessionsFromRegistrationOverlay<
+  T extends NonNullable<Program['generalCommonInfo']>,
+>(common: T, program: Program, overlay: Record<string, unknown> | undefined): T {
+  if (!overlay) return common
+  const typeFields = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: common.curriculumSessions,
+    registrationOverlay: overlay,
+  })
+  if (typeFields.educationStructure !== 'curriculum' || typeFields.sessionRound !== 'multi') {
+    return common
+  }
+  if (program.generalProgramSessionRound === 'multi') return common
+  const extras = extrasFromGeneralProgram({
+    ...program,
+    generalCommonInfo: common,
+    registrationOverlay: overlay,
+  })
+  const built = buildCurriculumSessionsFromRegistrationOverlay(overlay, extras)
+  if (built.length === 0) return common
+  return { ...common, curriculumSessions: built }
+}
+
 /** 조회 — `generalCommonInfo.educationFormLabel`·overlay·행 값을 등록 폼·수정 모드와 동일하게 맞춘다. */
 function applyRegistrationEducationFormLabelToCommonInfo<
   T extends NonNullable<Program['generalCommonInfo']>,
@@ -732,9 +761,13 @@ export function resolveGeneralProgramCommonInfo(
       ? (program.registrationOverlay as Record<string, unknown>)
       : undefined
   if (program.generalCommonInfo) {
+    const withScheduleLines = withResolvedEducationScheduleLines(
+      program.generalCommonInfo,
+      program
+    )
     return applyRegistrationEducationFormLabelToCommonInfo(
       applyRegistrationWageOverlayToCommonInfo(
-        withResolvedEducationScheduleLines(program.generalCommonInfo, program),
+        applyCurriculumSessionsFromRegistrationOverlay(withScheduleLines, program, overlay),
         overlay
       ),
       overlay

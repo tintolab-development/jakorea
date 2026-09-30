@@ -327,7 +327,7 @@ function formatOptionalDate(iso: string | undefined): string {
 
 /**
  * 상세 케이스별 기본정보 그리드.
- * 스크린샷 식별 키(모집 구분·대상·지역 등)를 역할에 맞게 노출한다.
+ * 스크린샷 식별 키(대상·지역 등)를 역할에 맞게 노출한다.
  */
 export function mapBasicInfoFields(
   program: CmsProgramLike,
@@ -351,7 +351,6 @@ export function mapBasicInfoFields(
     case 'instructor':
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
-        { label: '모집 구분', value: args.roleLabel },
         { label: '대상', value: volunteerTarget || args.educationTargetGroupLabel },
         { label: '모집 지역', value: args.educationVenueLabel },
         ...(affiliation
@@ -361,7 +360,6 @@ export function mapBasicInfoFields(
     case 'volunteer':
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
-        { label: '모집 구분', value: args.roleLabel },
         {
           label: '대상',
           value: volunteerTarget || args.educationTargetDetailLabel,
@@ -372,7 +370,6 @@ export function mapBasicInfoFields(
     case 'ujat-volunteer':
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
-        { label: '모집 구분', value: args.roleLabel },
         {
           label: '대상',
           value: volunteerTarget || '대학(원)생',
@@ -388,7 +385,6 @@ export function mapBasicInfoFields(
     case 'ujat-participant':
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
-        { label: '모집 구분', value: args.roleLabel },
         {
           label: '대상',
           value: args.educationTargetDetailLabel || '초등학교',

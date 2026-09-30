@@ -582,8 +582,8 @@ export async function resendOrganizationApplicationNotification(
   }
   const body: OrganizationApplicationNotificationResendRequestDto = {
     timing: payload.timing,
-    scheduledAt: payload.scheduledAt,
-    reason: payload.reason,
+    ...(payload.scheduledAt != null ? { scheduledAt: payload.scheduledAt } : {}),
+    ...(payload.reason != null ? { reason: payload.reason } : {}),
   }
   return unwrapApiBody<ApplicationDecisionResponse>(
     await generalApplicationsDashboardApi.resendOrganizationApplicationNotification(

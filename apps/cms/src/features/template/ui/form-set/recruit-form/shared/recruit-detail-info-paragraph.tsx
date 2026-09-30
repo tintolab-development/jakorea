@@ -158,13 +158,20 @@ const RecruitDetailAdditionalContentEditor = memo(function RecruitDetailAddition
   useEffect(() => {
     if (editor == null) return
     const remember = () => {
-      latestHtmlRef.current = editor.getHTML()
+      if (editor.isDestroyed || editor.schema == null) return
+      try {
+        latestHtmlRef.current = editor.getHTML()
+      } catch {
+        // 탭 전환 시 TipTap이 먼저 destroy되면 getHTML이 schema.cached에서 실패한다.
+      }
     }
     remember()
     editor.on('update', remember)
     return () => {
       remember()
-      editor.off('update', remember)
+      if (!editor.isDestroyed) {
+        editor.off('update', remember)
+      }
     }
   }, [editor])
 
@@ -380,6 +387,7 @@ export function RecruitDetailInfoParagraph({
             fullRow
             edit={
               <RecruitDetailAdditionalContentEditor
+                key={additionalContentKey}
                 wysiwygResetKey={wysiwygResetKey}
                 additionalContentKey={additionalContentKey}
               />

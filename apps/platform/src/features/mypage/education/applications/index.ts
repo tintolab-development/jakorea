@@ -45,11 +45,13 @@ export {
   listEducationApplications,
   matchesEducationApplicationTab,
 } from './lib/list'
+export type { EducationDisplayStatusAudience } from './lib/display-status'
 export {
   EDUCATION_DISPLAY_STATUS_LABEL,
   EDUCATION_DISPLAY_STATUS_SORT_ORDER,
   EDUCATION_DISPLAY_STATUS_TONE,
   EDUCATION_DISPLAY_STATUS_TONE_CLASS,
+  TEACHER_EDUCATION_DISPLAY_STATUS_LABEL,
   canCancelEducationApplication,
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,

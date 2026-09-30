@@ -70,6 +70,13 @@ import {
   pickUjatRecruitVolunteerOverlay,
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import {
+  ujatVolunteerHalfOverlayKey,
+  ujatVolunteerRecruitDetailInfoPrefix,
+  ujatVolunteerRecruitInterviewNamespace,
+  ujatVolunteerRecruitInterviewRangeSealKey,
+  type UjatVolunteerRecruitHalf,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import { UJAT_VOLUNTEER_NOTICE_EXPOSURE_VALUES } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { patchUjatRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
 import { patchUjatRecruitVolunteerOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
@@ -218,6 +225,75 @@ type RangeIso = { start: string; end: string }
 
 function dayIso(date: Dayjs): string {
   return date.startOf('day').toISOString()
+}
+
+function clampDayjs(date: Dayjs, lo: Dayjs, hi: Dayjs): Dayjs {
+  if (date.isBefore(lo, 'day')) return lo
+  if (date.isAfter(hi, 'day')) return hi
+  return date
+}
+
+/** 사업 기간을 상·하반기로 나눈다. 두 구간 모두 bounds 안. */
+export function ujatAutofillHalfRanges(range: RangeIso): Record<
+  UjatHalfSemesterKey,
+  { start: Dayjs; end: Dayjs }
+> {
+  const start = dayjs(range.start).startOf('day')
+  const end = dayjs(range.end).startOf('day')
+  const lo = start.isAfter(end, 'day') ? end : start
+  const hi = start.isAfter(end, 'day') ? start : end
+  const span = Math.max(0, hi.diff(lo, 'day'))
+  if (span <= 1) {
+    return {
+      h1: { start: lo, end: lo },
+      h2: { start: hi, end: hi },
+    }
+  }
+  const mid = lo.add(Math.floor(span / 2), 'day')
+  return {
+    h1: { start: lo, end: mid },
+    h2: { start: mid.add(1, 'day'), end: hi },
+  }
+}
+
+/**
+ * UJAT 자동입력 날짜 SSOT.
+ * 프로그램·교육 일정 ⊆ 사업 기간. 모집·면접은 사업 시작 전~안으로만.
+ */
+export function alignUjatAutofillDatePlan(
+  plan: ReturnType<typeof buildRegistrationDatePlan>
+): ReturnType<typeof buildRegistrationDatePlan> {
+  const bizStart = dayjs(plan.business.start).startOf('day')
+  const bizEnd = dayjs(plan.business.end).startOf('day')
+  const lo = bizStart.isAfter(bizEnd, 'day') ? bizEnd : bizStart
+  const hi = bizStart.isAfter(bizEnd, 'day') ? bizStart : bizEnd
+
+  const program = { start: dayIso(lo), end: dayIso(hi) }
+
+  const recruitLead = pickInt(3, 14)
+  const recruitStart = lo.subtract(recruitLead, 'day')
+  const recruitEnd = lo.subtract(1, 'day')
+  const recruit =
+    recruitEnd.isBefore(recruitStart, 'day')
+      ? { start: dayIso(recruitStart), end: dayIso(recruitStart) }
+      : { start: dayIso(recruitStart), end: dayIso(recruitEnd) }
+
+  const rStart = dayjs(recruit.start)
+  const rEnd = dayjs(recruit.end)
+  const recruitDays = Math.max(0, rEnd.diff(rStart, 'day'))
+  const interviewStart = rStart.add(recruitDays <= 1 ? 0 : pickInt(0, recruitDays - 1), 'day')
+  const remain = Math.max(0, rEnd.diff(interviewStart, 'day'))
+  const interviewEnd = interviewStart.add(remain === 0 ? 0 : pickInt(0, remain), 'day')
+
+  return {
+    business: { start: dayIso(lo), end: dayIso(hi) },
+    program,
+    recruit,
+    interview: {
+      start: dayIso(clampDayjs(interviewStart, rStart, rEnd)),
+      end: dayIso(clampDayjs(interviewEnd, rStart, rEnd)),
+    },
+  }
 }
 
 /** 사업 운영(10~12월) → 프로그램 운영(±1주) → 모집(시작일부터 최대 2주) → 면접(모집 기간 안) */
@@ -500,33 +576,70 @@ function buildUjatRecruitInfoOverlay(
     [institutionKeys.recruitmentGuide]: '신청서 제출 후 담당자 확인을 거쳐 참여 학교를 확정합니다.',
     [institutionKeys.learningSupportContent]:
       '교재와 활동지를 제공하고, 수업 전 강사 사전 연수를 진행합니다.',
-    [volunteerKeys.announcementPublished]: true,
-    [volunteerKeys.noticeExposure]: pick(UJAT_VOLUNTEER_NOTICE_EXPOSURE_VALUES),
-    [volunteerKeys.publicTitle]: `${titleKo} 봉사자 모집`,
-    [volunteerKeys.programRange]: programSeal,
-    [volunteerKeys.volunteerTargets]: volunteerTargets.map(option => option.label),
-    [volunteerKeys.targetDetail]: volunteerTargets
-      .map(option => VOLUNTEER_TARGET_DETAIL[option.label] ?? `${option.label} 대상`)
-      .join(', '),
-    [volunteerKeys.recruitRange]: recruitSeal,
+    ...buildUjatVolunteerHalfRecruitOverlay('h1', titleKo, {
+      programSeal,
+      recruitSeal,
+      interviewSeal,
+      volunteerTargets,
+    }),
+    ...buildUjatVolunteerHalfRecruitOverlay('h2', titleKo, {
+      programSeal,
+      recruitSeal,
+      interviewSeal,
+      volunteerTargets,
+    }),
     [volunteerKeys.recruitRangeH1]: recruitSeal,
     [volunteerKeys.recruitRangeH2]: recruitSeal,
     [volunteerKeys.activityTermH1]: String(pickInt(1, 8)),
     [volunteerKeys.activityTermH2]: String(pickInt(9, 16)),
-    [volunteerKeys.docAnnounce]: { date: recruitSeal.start, method: pick(RECRUIT_ANNOUNCE_METHODS) },
-    [volunteerKeys.interviewRange]: interviewSeal,
-    [volunteerKeys.interviewMethod]: pick(['온라인', '오프라인'] as const),
-    [volunteerKeys.finalAnnounce]: { date: recruitSeal.end, method: announceMethod },
-    [volunteerKeys.contact]: {
+  }
+}
+
+function buildUjatVolunteerHalfRecruitOverlay(
+  half: UjatVolunteerRecruitHalf,
+  titleKo: string,
+  args: {
+    programSeal: { start: string; end: string }
+    recruitSeal: { start: string; end: string }
+    interviewSeal: { start: string; end: string }
+    volunteerTargets: { label: string; value: string }[]
+  }
+): Record<string, unknown> {
+  const halfLabel = half === 'h1' ? '상반기' : '하반기'
+  const announceMethod = pick(RECRUIT_ANNOUNCE_METHODS)
+  return {
+    [ujatVolunteerHalfOverlayKey(half, 'announcementPublished')]: true,
+    ...(half === 'h2'
+      ? { [ujatVolunteerHalfOverlayKey(half, 'noticeExposure')]: pick(UJAT_VOLUNTEER_NOTICE_EXPOSURE_VALUES) }
+      : {}),
+    [ujatVolunteerHalfOverlayKey(half, 'publicTitle')]: `${titleKo} ${halfLabel} 봉사자 모집`,
+    [ujatVolunteerHalfOverlayKey(half, 'programRange')]: args.programSeal,
+    [ujatVolunteerHalfOverlayKey(half, 'volunteerTargets')]: args.volunteerTargets.map(
+      option => option.label
+    ),
+    [ujatVolunteerHalfOverlayKey(half, 'targetDetail')]: args.volunteerTargets
+      .map(option => VOLUNTEER_TARGET_DETAIL[option.label] ?? `${option.label} 대상`)
+      .join(', '),
+    [ujatVolunteerHalfOverlayKey(half, 'docAnnounce')]: {
+      date: args.recruitSeal.start,
+      method: pick(RECRUIT_ANNOUNCE_METHODS),
+    },
+    [ujatVolunteerHalfOverlayKey(half, 'interviewRange')]: args.interviewSeal,
+    [ujatVolunteerHalfOverlayKey(half, 'interviewMethod')]: pick(['온라인', '오프라인'] as const),
+    [ujatVolunteerHalfOverlayKey(half, 'finalAnnounce')]: {
+      date: args.recruitSeal.end,
+      method: announceMethod,
+    },
+    [ujatVolunteerHalfOverlayKey(half, 'contact')]: {
       name: pick(RECRUIT_CONTACTS),
       phone: pick(RECRUIT_PHONES),
       email: pick(RECRUIT_EMAILS),
     },
-    [volunteerKeys.notes]: pick(RECRUIT_NOTES),
-    [volunteerKeys.otherNotes]: pick(RECRUIT_NOTES),
-    [volunteerKeys.description]: `${titleKo} 봉사단과 함께 학교 교육을 진행합니다.`,
-    [volunteerKeys.recruitmentGuide]: '서류 심사 후 면접을 진행합니다.',
-    [volunteerKeys.applicationMethod]: '온라인 신청서 작성 후 제출해 주세요.',
+    [ujatVolunteerHalfOverlayKey(half, 'notes')]: pick(RECRUIT_NOTES),
+    [ujatVolunteerHalfOverlayKey(half, 'otherNotes')]: pick(RECRUIT_NOTES),
+    [ujatVolunteerHalfOverlayKey(half, 'description')]: `${titleKo} ${halfLabel} 봉사단과 함께 학교 교육을 진행합니다.`,
+    [ujatVolunteerHalfOverlayKey(half, 'recruitmentGuide')]: `${halfLabel} 서류 심사 후 면접을 진행합니다.`,
+    [ujatVolunteerHalfOverlayKey(half, 'applicationMethod')]: `${halfLabel} 온라인 신청서 작성 후 제출해 주세요.`,
   }
 }
 
@@ -1189,9 +1302,9 @@ function buildUjatHalfSchedule(
   const keys = ujatHalfScheduleOverlayKeys(half)
   const settingsKeys = ujatEducationScheduleSettingsOverlayKeys(half)
   const delivery = pick(EDUCATION_DELIVERIES)
-  const shiftWeeks = half === 'h2' ? 20 : 0
-  const eventStart = dayjs(sample.periodRange.start).add(shiftWeeks, 'week')
-  const eventEnd = dayjs(sample.periodRange.end).add(shiftWeeks, 'week')
+  const halves = ujatAutofillHalfRanges(sample.operationRange)
+  const eventStart = halves[half].start
+  const eventEnd = halves[half].end
   const unavailable = buildUjatUnavailableSelection(eventStart, eventEnd)
   return {
     [keys.preName]: half === 'h1' ? '상반기 발대식' : '하반기 발대식',
@@ -1288,6 +1401,11 @@ export async function applyDevProgramRegistrationAutofill(
   layout: ProgramRegistrationDevAutofillLayout = DEFAULT_AUTOFILL_LAYOUT
 ): Promise<ProgramRegistrationDevAutofillEditorPatch> {
   const sample = buildDevAutofillSample()
+  if (variant === 'ujat') {
+    sample.recruitDates = alignUjatAutofillDatePlan(sample.recruitDates)
+    sample.operationRange = { ...sample.recruitDates.business }
+    sample.periodRange = { ...sample.recruitDates.business }
+  }
   patchRecruitDatePlan(sample.recruitDates, sample.titleKo)
   const typeSettings = finalizeTypeSettings(variant, layout)
   const educationScheduleLines = buildEducationSchedulePreviewLines(
@@ -1310,9 +1428,22 @@ export async function applyDevProgramRegistrationAutofill(
       dayjs(sample.recruitDates.interview.end)
     )
     patchGeneralRecruitOverlay({
-      'recruit.volunteer.interviewRangeSeal': { ...sample.recruitDates.interview },
-      'recruit.volunteer.interview.exclusionState': interviewUnavailable.exclusion,
-      'recruit.volunteer.interview.appliedUnavailableDates': interviewUnavailable.dates,
+      ...(['h1', 'h2'] as const).reduce((acc, half) => {
+        const interviewNs = ujatVolunteerRecruitInterviewNamespace(half)
+        const detailPrefix = ujatVolunteerRecruitDetailInfoPrefix(half)
+        return {
+          ...acc,
+          [ujatVolunteerRecruitInterviewRangeSealKey(half)]: { ...sample.recruitDates.interview },
+          [`${interviewNs}.exclusionState`]: interviewUnavailable.exclusion,
+          [`${interviewNs}.appliedUnavailableDates`]: interviewUnavailable.dates,
+          ...recruitDetailPatch(detailPrefix, [
+            'programDescription',
+            'recruitmentGuide',
+            'applicationMethod',
+            'otherNotes',
+          ], `${sample.titleKo} ${half === 'h1' ? '상반기' : '하반기'}`),
+        }
+      }, {} as Record<string, unknown>),
     })
     return {
       programTitleKo: sample.titleKo,

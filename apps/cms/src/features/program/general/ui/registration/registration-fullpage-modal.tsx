@@ -10,8 +10,10 @@ import {
   normalizeGeneralProgramRegistrationStepKey,
   recruitmentPreviewAudienceFromRegistrationStep,
 } from '@/features/program/general/model/registration-flow'
-import { ParticipantRecruitmentPreviewModal } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
-import type { RecruitmentUserPreviewAudience } from '@/features/program/general/ui/user-preview'
+import {
+  ParticipantRecruitmentPreviewModal,
+  type RecruitmentUserPreviewAudience,
+} from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
 import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-registration-flow'
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
 import {

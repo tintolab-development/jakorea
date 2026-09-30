@@ -16,6 +16,7 @@ export interface OrganizationApplicationUpdateRequest {
   requestedStudentCount?: number;
   requestedEducationFormat?: string;
   teacherMemberId?: number;
+  teacherName?: string;
   teacherPhone?: string;
   teacherEmail?: string;
   textbookId?: number;

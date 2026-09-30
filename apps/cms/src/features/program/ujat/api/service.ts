@@ -96,7 +96,7 @@ export async function create(input: CreateInput): Promise<Program> {
   return fromDetail(
     await createAdminProgramRemoteWithRegistrationForms(
       pending,
-      toCreateRequest(pending, { ...input, overlay }),
+      toCreateRequest(pending, { draft: input.draft, overlay }),
       input.preparedFormBindings
     )
   )

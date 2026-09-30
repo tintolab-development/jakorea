@@ -315,7 +315,7 @@ function surveyKeysFromOverlay(overlay: Record<string, unknown>): GeneralProgram
   return keys
 }
 
-function buildCurriculumSessions(
+export function buildCurriculumSessionsFromRegistrationOverlay(
   overlay: Record<string, unknown>,
   extras: GeneralRegistrationEditorExtras
 ): GeneralProgramCurriculumSessionRow[] {
@@ -768,7 +768,7 @@ export function applyGeneralRegistrationOverlayToProgram(
     ? buildEnrichedScheduleDetails(overlay, extras)
     : undefined
   const curriculumSessions = !isSchedule
-    ? buildCurriculumSessions(overlay, extras)
+    ? buildCurriculumSessionsFromRegistrationOverlay(overlay, extras)
     : undefined
 
   // 버그 수정: 일반 일정형은 「세부 프로그램명」select가 잠겨 있어(해당없음) 일정 상세명으로

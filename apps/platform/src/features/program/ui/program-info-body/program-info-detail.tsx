@@ -71,6 +71,16 @@ function resolveBasicInfoFields(program: ProgramDetail) {
   return fields.filter(field => field.value.trim().length > 0)
 }
 
+function curriculumSessionTitle(program: ProgramDetail, title: string): string {
+  const value = title.trim()
+  if (!value || program.educationStructure !== 'curriculum' || program.sessionRound !== 'multi') {
+    return value
+  }
+
+  const sessionNumber = value.replace(/차시\s*$/, '').trim()
+  return sessionNumber ? `${sessionNumber}차시` : ''
+}
+
 export function ProgramInfoDetail({
   program,
   header,
@@ -124,29 +134,29 @@ export function ProgramInfoDetail({
 
           {program.sessions.length > 0 ? (
             <div className={styles.curriculumBlock}>
-              <PFText as="h3" typo="bd-sm-rg" color="neutral-cool-600">
-                교육 커리큘럼
-              </PFText>
               <ul className={styles.sessions}>
-                {program.sessions.map(session => (
-                  <li key={`${session.sessionLabel}-${session.title}`} className={styles.session}>
-                    <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
-                      <span className={styles.sessionLabel}>{session.sessionLabel}</span>
-                      {session.title.trim() ? ` ${session.title}` : ''}
-                    </PFText>
-                    {session.dateLabel ? (
-                      <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-                        {session.dateLabel}
+                {program.sessions.map(session => {
+                  const sessionTitle = curriculumSessionTitle(program, session.title)
+                  return (
+                    <li key={`${session.sessionLabel}-${session.title}`} className={styles.session}>
+                      <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
+                        <span className={styles.sessionLabel}>{session.sessionLabel}</span>
+                        {sessionTitle ? ` ${sessionTitle}` : ''}
                       </PFText>
-                    ) : null}
-                    {session.description.trim() ? (
-                      <PFText as="p" typo="bd-md-rg" color="black">
-                        {session.description}
-                      </PFText>
-                    ) : null}
-                    <ProgressMeta row={session} />
-                  </li>
-                ))}
+                      {session.dateLabel ? (
+                        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+                          {session.dateLabel}
+                        </PFText>
+                      ) : null}
+                      {session.description.trim() ? (
+                        <PFText as="p" typo="bd-md-rg" color="black">
+                          {session.description}
+                        </PFText>
+                      ) : null}
+                      <ProgressMeta row={session} />
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ) : null}

@@ -18,6 +18,7 @@ import {
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import { getUjatRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
 import { getUjatRecruitVolunteerOverlayRecord } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
+import { pickUjatVolunteerRecruitGeneralStoreSidecar } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 import { getUjatApplicationInstitutionOverlayRecord } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 import { getUjatApplicationVolunteerOverlayRecord } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 export const UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'ujat-local-'
@@ -68,6 +69,7 @@ export function collectUjatRegistrationCreateOverlay(
     ...getUjatApplicationVolunteerOverlayRecord(),
     ...getUjatRecruitInstitutionOverlayRecord(),
     ...getUjatRecruitVolunteerOverlayRecord(),
+    ...pickUjatVolunteerRecruitGeneralStoreSidecar(),
     ...registrationOverlay,
   }
 }

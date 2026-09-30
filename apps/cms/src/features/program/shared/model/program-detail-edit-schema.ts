@@ -621,6 +621,24 @@ export function programToDetailEditValues(
   type DateValue = string | Date
   const toStr = (d: DateValue | undefined): string =>
     d == null ? '' : typeof d === 'string' ? d : ((d as Date).toISOString?.() ?? String(d))
+  const sponsorManagementIds =
+    program.generalCommonInfo?.sponsorManagementIds?.length
+      ? program.generalCommonInfo.sponsorManagementIds
+      : program.generalCommonInfo?.sponsorManagementId
+        ? [program.generalCommonInfo.sponsorManagementId]
+        : program.sponsorId
+          ? [program.sponsorId]
+          : []
+  const sponsorManagerLine =
+    program.generalCommonInfo?.sponsorManagerLine?.trim() ||
+    program.managerName?.trim() ||
+    ''
+  const sponsorManagerContactIds = resolveSponsorContactIdsForEdit({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+    managerLine: sponsorManagerLine,
+    hasSelectedSponsors: sponsorManagementIds.length > 0,
+  })
   return {
     title: program.title ?? '',
     startDate: toStr(program.startDate),
@@ -634,30 +652,9 @@ export function programToDetailEditValues(
     applicationEndDate: toStr(program.applicationEndDate),
     businessArea: resolveStoredBusinessArea(program.businessArea) || undefined,
     sponsorId: program.sponsorId ?? '',
-    sponsorManagementIds:
-      program.generalCommonInfo?.sponsorManagementIds?.length
-        ? program.generalCommonInfo.sponsorManagementIds
-        : program.generalCommonInfo?.sponsorManagementId
-          ? [program.generalCommonInfo.sponsorManagementId]
-          : program.sponsorId
-            ? [program.sponsorId]
-            : [],
-    sponsorManagerContactIds: resolveSponsorContactIdsForEdit({
-      ids: program.generalCommonInfo?.sponsorManagerContactIds,
-      id: program.generalCommonInfo?.sponsorManagerContactId,
-      managerLine:
-        program.generalCommonInfo?.sponsorManagerLine?.trim() ||
-        program.managerName?.trim() ||
-        '',
-    }),
-    sponsorManagerContactId: resolveSponsorContactIdsForEdit({
-      ids: program.generalCommonInfo?.sponsorManagerContactIds,
-      id: program.generalCommonInfo?.sponsorManagerContactId,
-      managerLine:
-        program.generalCommonInfo?.sponsorManagerLine?.trim() ||
-        program.managerName?.trim() ||
-        '',
-    })[0],
+    sponsorManagementIds,
+    sponsorManagerContactIds,
+    sponsorManagerContactId: sponsorManagerContactIds[0],
     managerName: program.managerName ?? '',
     contactPhone: (() => {
       const recruitmentInfo = program.generalCommonInfo?.participantRecruitmentInfo as
@@ -672,14 +669,7 @@ export function programToDetailEditValues(
       if (fromRecruitment) return fromRecruitment
 
       const fromProgram = firstPlainKoreanPhoneForEdit(program.contactPhone)
-      const sponsorUnselected = resolveSponsorContactIdsForEdit({
-        ids: program.generalCommonInfo?.sponsorManagerContactIds,
-        id: program.generalCommonInfo?.sponsorManagerContactId,
-        managerLine:
-          program.generalCommonInfo?.sponsorManagerLine?.trim() ||
-          program.managerName?.trim() ||
-          '',
-      }).some(isSponsorContactUnselected)
+      const sponsorUnselected = sponsorManagerContactIds.some(isSponsorContactUnselected)
       if (sponsorUnselected) {
         // TT: top-level contactPhone 이 모집 Tel 폴백 (participant-recruitment-display)
         if (

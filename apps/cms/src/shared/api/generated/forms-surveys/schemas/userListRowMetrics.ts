@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { UserListRowMetricsSettlementStatusLabel } from './userListRowMetricsSettlementStatusLabel';
 
 export interface UserListRowMetrics {
   institutionProgramApplicationCount?: number;
@@ -14,7 +15,8 @@ export interface UserListRowMetrics {
   instructorFeeGradeLabel?: string;
   permissionApplicationTypeLabel?: string;
   jaEvaluationGrade?: string;
-  settlementStatusLabel?: string;
+  /** 강사 정산 현황 canonical 라벨. 8종 외 임의 한글 라벨을 반환하지 않습니다. */
+  settlementStatusLabel?: UserListRowMetricsSettlementStatusLabel;
   managedProgramCount?: number;
   managedProgramInProgressCount?: number;
   adminPermissionVariant?: string;

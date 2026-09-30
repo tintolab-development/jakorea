@@ -1,7 +1,10 @@
 import type { Program } from '@/types/domain'
 import type { AdminProgramSponsorAssignmentDto } from '@/features/program/general/api/programs-api-client'
 import { encodeSponsorManagerContactRef } from '@/features/program/general/model/common-info-edit-schema'
-import { SPONSOR_CONTACT_UNSELECTED_LABEL } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import {
+  SPONSOR_CONTACT_UNSELECTED_LABEL,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 
 const SPONSOR_COMMON_INFO_KEYS = [
@@ -80,8 +83,12 @@ export function mergeProgramSponsorAssignments(
       ...program.generalCommonInfo,
       sponsorManagementIds,
       sponsorManagementId: sponsorManagementIds[0],
-      sponsorManagerContactIds: hasContact ? sponsorManagerContactIds : [],
-      sponsorManagerContactId: hasContact ? sponsorManagerContactIds[0] : undefined,
+      sponsorManagerContactIds: hasContact
+        ? sponsorManagerContactIds
+        : [SPONSOR_CONTACT_UNSELECTED_VALUE],
+      sponsorManagerContactId: hasContact
+        ? sponsorManagerContactIds[0]
+        : SPONSOR_CONTACT_UNSELECTED_VALUE,
       sponsorManagerContactNames: hasContact ? sponsorManagerContactNames : {},
       sponsorManagerLine: hasContact ? undefined : SPONSOR_CONTACT_UNSELECTED_LABEL,
     },
