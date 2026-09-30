@@ -32,10 +32,21 @@ import {
 } from '@/features/program/general/lib/detail-value-helpers'
 
 const INQUIRY_CONTACT_PREFIX_RE = /^문의처\s*[:：]\s*/i
+const INQUIRY_ORG_HINT_RE =
+  /은행|기관|센터|학교|재단|협회|회사|조합|교육청|구청|시청|주식회사|유한회사|\bJA\b/i
+const INQUIRY_PERSON_NAME_RE = /^[가-힣]{2,4}$/
+
+/** 한글 2~4자 성명. 문의처 한 칸 수정 후 남는 옛 contactName 별칭과 구분한다. */
+function looksLikeInquiryPersonName(value: string): boolean {
+  if (INQUIRY_ORG_HINT_RE.test(value)) return false
+  if (/[/,，\s]/.test(value)) return false
+  return INQUIRY_PERSON_NAME_RE.test(value)
+}
 
 /**
  * 문의처 표시명. BE는 contactOrganizationName·contactName 을 같은 필드 별칭으로 주기도 한다.
  * 같으면 한 번만. 기관명/담당자가 다를 때만 ` / ` 로 붙인다.
+ * 둘 다 사람 이름이면 수정된 문의처명(org)만 — 옛 담당자 별칭을 붙이지 않는다.
  */
 export function formatRecruitmentInquiryContactName(
   orgName: string | undefined,
@@ -49,6 +60,7 @@ export function formatRecruitmentInquiryContactName(
   if (org === person) return org
   const orgParts = org.split(/\s*\/\s*/).map(part => part.trim()).filter(Boolean)
   if (orgParts.includes(person)) return org
+  if (looksLikeInquiryPersonName(org) && looksLikeInquiryPersonName(person)) return org
   return `${org} / ${person}`
 }
 
