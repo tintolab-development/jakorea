@@ -90,14 +90,26 @@ export interface ProgramUpdateRequest {
   settlementRuleId?: string;
   /** 신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지. */
   applicationPathId?: string;
-  /** 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님. */
-  applicationMethod?: string;
-  /** 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용. */
+  /**
+     * 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님.
+     * @nullable
+     */
+  applicationMethod?: string | null;
+  /**
+     * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.
+     * @nullable
+     */
   educationForm?: ProgramUpdateRequestEducationForm;
-  /** 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개. */
-  trainingRequestStartDate?: string;
-  /** 연수 요청 가능기간 종료. */
-  trainingRequestEndDate?: string;
+  /**
+     * 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개.
+     * @nullable
+     */
+  trainingRequestStartDate?: string | null;
+  /**
+     * 연수 요청 가능기간 종료.
+     * @nullable
+     */
+  trainingRequestEndDate?: string | null;
   applicationTargetMode?: string;
   additionalContentHtml?: string;
   recruitmentGuide?: string;
@@ -110,7 +122,7 @@ export interface ProgramUpdateRequest {
   schedules?: ProgramScheduleRequest[];
   wagePolicies?: ProgramWagePolicyRequest[];
   paymentItems?: ProgramSettlementPaymentItemRequest[];
-  /** 양성교사: 요청 봉투를 저장된 config에 키 단위로 덮어씁니다. 보낸 키는 교체, 생략한 키는 유지. */
+  /** 양성교사: 요청 봉투를 저장된 config에 키 단위로 덮어씁니다. 보낸 키는 교체, 생략한 키는 유지. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지. RFC-7396 깊은 병합 없음. 루트 generalCommonInfo는 제거. 일반 프로그램은 기존 RFC-7396 병합. */
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];

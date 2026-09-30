@@ -229,6 +229,12 @@ export function mergeListUserWithFetchedDetail(
   listUser: Omit<User, 'password'>,
   fetched: Omit<User, 'password'>
 ): Omit<User, 'password'> {
+  // 학교 목록 행을 교사/개인 상세로 덮지 않는다.
+  // 교사·학교가 같은 organizationId를 쓰면 기관명이 교사명으로 오염된다.
+  if (listUser.role === 'SCHOOL' && fetched.role !== 'SCHOOL') {
+    return listUser
+  }
+
   const fetchedRevoked = isInstructorPermissionRevoked(fetched)
   const listRevoked = isInstructorPermissionRevoked(listUser)
   const role =

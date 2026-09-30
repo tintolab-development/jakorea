@@ -88,7 +88,10 @@ export function resolveMemberDetailRestoreHint(options: {
     user?.role ??
     urlCtx.role ??
     (urlCtx.instructorMemberProfile != null ? ('INSTRUCTOR' as const) : undefined) ??
-    (organizationId != null ? ('SCHOOL' as const) : undefined) ??
+    // 교사도 organizationId를 가질 수 있음 — organization-* id 또는 기관 목록일 때만 SCHOOL
+    (parseOrganizationIdFromUserId(userId) != null || listKind === 'institutions'
+      ? ('SCHOOL' as const)
+      : undefined) ??
     memberListKindToUserRole(listKind)
 
   return {
@@ -106,16 +109,18 @@ export type MemberDetailOpenIdentity = {
   memberId?: number
   organizationId?: number
   adminAccountId?: number
+  role?: UserRole
 }
 
 export function memberDetailOpenIdentityFromUser(
-  user: Pick<User, 'id' | 'memberId' | 'organizationId' | 'adminAccountId'>
+  user: Pick<User, 'id' | 'memberId' | 'organizationId' | 'adminAccountId' | 'role'>
 ): MemberDetailOpenIdentity {
   return {
     ids: [user.id],
     memberId: user.memberId,
     organizationId: user.organizationId,
     adminAccountId: user.adminAccountId,
+    role: user.role,
   }
 }
 
@@ -126,7 +131,7 @@ export function memberDetailOpenIdentityFromUser(
 export function isSameMemberDetailIdentity(
   open: MemberDetailOpenIdentity | null | undefined,
   targetId: string,
-  hint: Pick<MemberDetailRestoreHint, 'memberId' | 'organizationId' | 'adminAccountId'>
+  hint: Pick<MemberDetailRestoreHint, 'memberId' | 'organizationId' | 'adminAccountId' | 'role'>
 ): boolean {
   if (!open) return false
   const trimmed = targetId.trim()
@@ -140,7 +145,13 @@ export function isSameMemberDetailIdentity(
 
   const targetOrg = hint.organizationId ?? parseOrganizationIdFromUserId(trimmed)
   if (targetOrg != null && open.organizationId != null && targetOrg === open.organizationId) {
-    return true
+    // 교사·학교가 같은 organizationId를 공유해도 동일 상세로 보지 않는다
+    const openIsSchool =
+      open.role === 'SCHOOL' ||
+      (open.ids?.some(id => parseOrganizationIdFromUserId(id) != null) ?? false)
+    const targetIsSchool =
+      hint.role === 'SCHOOL' || parseOrganizationIdFromUserId(trimmed) != null
+    if (openIsSchool && targetIsSchool) return true
   }
 
   const targetMember = hint.memberId ?? parseMemberIdFromUserId(trimmed)

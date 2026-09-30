@@ -12,6 +12,7 @@ import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
 import type { ProgramSponsorAssignmentRequest } from './programSponsorAssignmentRequest';
+import type { ProgramUpdateRequestEducationForm } from './programUpdateRequestEducationForm';
 import type { ProgramUpdateRequestEducationStructure } from './programUpdateRequestEducationStructure';
 import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
 
@@ -84,7 +85,28 @@ export interface ProgramUpdateRequest {
   contactName?: string;
   keyVisualImage?: string;
   settlementRuleId?: string;
+  /** 신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지. */
   applicationPathId?: string;
+  /**
+     * 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님.
+     * @nullable
+     */
+  applicationMethod?: string | null;
+  /**
+     * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.
+     * @nullable
+     */
+  educationForm?: ProgramUpdateRequestEducationForm;
+  /**
+     * 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개.
+     * @nullable
+     */
+  trainingRequestStartDate?: string | null;
+  /**
+     * 연수 요청 가능기간 종료.
+     * @nullable
+     */
+  trainingRequestEndDate?: string | null;
   applicationTargetMode?: string;
   additionalContentHtml?: string;
   recruitmentGuide?: string;

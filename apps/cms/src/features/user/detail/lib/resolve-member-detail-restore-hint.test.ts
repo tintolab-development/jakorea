@@ -129,6 +129,7 @@ describe('isSameMemberDetailIdentity', () => {
     const open = memberDetailOpenIdentityFromUser({
       id: 'uuid-admin',
       adminAccountId: 171601,
+      role: 'ADMIN',
     })
     expect(
       isSameMemberDetailIdentity(open, 'admin-account-171601', { adminAccountId: 171601 })
@@ -139,10 +140,80 @@ describe('isSameMemberDetailIdentity', () => {
     const open = memberDetailOpenIdentityFromUser({
       id: 'uuid-school',
       organizationId: 12,
+      role: 'SCHOOL',
     })
     expect(
-      isSameMemberDetailIdentity(open, 'organization-12', { organizationId: 12 })
+      isSameMemberDetailIdentity(open, 'organization-12', {
+        organizationId: 12,
+        role: 'SCHOOL',
+      })
     ).toBe(true)
+  })
+
+  it('같은 organizationId여도 교사와 학교는 다른 상세로 본다', () => {
+    const schoolOpen = memberDetailOpenIdentityFromUser({
+      id: 'organization-9001',
+      organizationId: 9001,
+      role: 'SCHOOL',
+    })
+    expect(
+      isSameMemberDetailIdentity(schoolOpen, 'teacher-uuid', {
+        organizationId: 9001,
+        memberId: 501,
+        role: 'INSTRUCTOR',
+      })
+    ).toBe(false)
+
+    const teacherOpen = memberDetailOpenIdentityFromUser({
+      id: 'teacher-uuid',
+      organizationId: 9001,
+      memberId: 501,
+      role: 'INSTRUCTOR',
+    })
+    expect(
+      isSameMemberDetailIdentity(teacherOpen, 'organization-9001', {
+        organizationId: 9001,
+        role: 'SCHOOL',
+      })
+    ).toBe(false)
+  })
+})
+
+describe('resolveMemberDetailRestoreHint — teacher with organizationId', () => {
+  it('교사가 organizationId를 가져도 listKind=instructors면 INSTRUCTOR로 둔다', () => {
+    const hint = resolveMemberDetailRestoreHint({
+      userId: 'teacher-uuid',
+      urlCtx: {},
+      listKind: 'instructors',
+      storeUsersById: {},
+      listUsers: [
+        {
+          id: 'teacher-uuid',
+          memberId: 501,
+          organizationId: 9001,
+          email: 't@example.com',
+          name: '김성재',
+          role: 'INSTRUCTOR',
+          isActive: true,
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+        },
+      ],
+    })
+    expect(hint.role).toBe('INSTRUCTOR')
+    expect(hint.organizationId).toBe(9001)
+  })
+
+  it('user 없이 organizationId만 있고 일반 listKind면 SCHOOL로 강제하지 않는다', () => {
+    const hint = resolveMemberDetailRestoreHint({
+      userId: 'some-uuid',
+      urlCtx: {},
+      listKind: 'all',
+      storeUsersById: {},
+      listUsers: [],
+    })
+    // organizationId 없음 → listKind all의 기본 role (개별/전체 매핑)
+    expect(hint.role).not.toBe('SCHOOL')
   })
 })
 

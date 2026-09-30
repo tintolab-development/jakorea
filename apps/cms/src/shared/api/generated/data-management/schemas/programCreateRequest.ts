@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
+import type { ProgramCreateRequestEducationForm } from './programCreateRequestEducationForm';
 import type { ProgramCreateRequestEducationStructure } from './programCreateRequestEducationStructure';
 import type { ProgramCreateRequestProgramType } from './programCreateRequestProgramType';
 import type { ProgramFormBindingRequest } from './programFormBindingRequest';
@@ -77,14 +78,38 @@ export interface ProgramCreateRequest {
   curriculum?: string;
   contactEmail?: string;
   contactPhone?: string;
+  contactName?: string;
   oneLineIntroduction?: string;
   keyVisualImage?: string;
   settlementRuleId?: string;
+  /** 신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지. */
   applicationPathId?: string;
+  /**
+     * 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님.
+     * @nullable
+     */
+  applicationMethod?: string | null;
+  /**
+     * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.
+     * @nullable
+     */
+  educationForm?: ProgramCreateRequestEducationForm;
+  /**
+     * 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개.
+     * @nullable
+     */
+  trainingRequestStartDate?: string | null;
+  /**
+     * 연수 요청 가능기간 종료.
+     * @nullable
+     */
+  trainingRequestEndDate?: string | null;
   applicationTargetMode?: string;
   additionalContentHtml?: string;
   recruitmentGuide?: string;
   learningSupportContent?: string;
+  otherMatters?: string;
+  recruitmentTargetDetail?: string;
   attachmentFileNames?: string[];
   rounds?: ProgramRoundRequest[];
   adminAssignments?: ProgramAdminAssignmentRequest[];
