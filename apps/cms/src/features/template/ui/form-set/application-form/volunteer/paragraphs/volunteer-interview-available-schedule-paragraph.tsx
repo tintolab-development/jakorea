@@ -13,6 +13,7 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import {
+  persistMissingVolunteerInterviewOverlayDefaults,
   updateVolunteerInterviewOverlayKey,
   useVolunteerInterviewOverlayKv,
   type VolunteerInterviewOverlayStore,
@@ -198,6 +199,28 @@ function VolunteerInterviewScheduleBlock({
     () => coerceDayjsRange(interviewTimeRange) ?? initialTimeRange,
     [interviewTimeRange, initialTimeRange]
   )
+
+  useEffect(() => {
+    persistMissingVolunteerInterviewOverlayDefaults({
+      store: overlayStore,
+      namespace: overlayNamespace,
+      values: {
+        timeUnit,
+        exclusionState,
+        interviewTime: normalizedInterviewTime,
+        interviewTimeRange: normalizedInterviewTimeRange,
+        appliedUnavailableDates,
+      },
+    })
+  }, [
+    appliedUnavailableDates,
+    exclusionState,
+    normalizedInterviewTime,
+    normalizedInterviewTimeRange,
+    overlayNamespace,
+    overlayStore,
+    timeUnit,
+  ])
   const interviewTimeSlots = useMemo(
     () => buildInterviewTimeSlots(normalizedInterviewTimeRange, timeUnit),
     [normalizedInterviewTimeRange, timeUnit]

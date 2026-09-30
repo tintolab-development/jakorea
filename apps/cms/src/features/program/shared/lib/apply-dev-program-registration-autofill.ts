@@ -1427,6 +1427,9 @@ export async function applyDevProgramRegistrationAutofill(
       dayjs(sample.recruitDates.interview.start),
       dayjs(sample.recruitDates.interview.end)
     )
+    const interviewClockStart = dayjs().startOf('day').hour(10).minute(0).second(0).millisecond(0)
+    const interviewClockEnd = interviewClockStart.hour(12)
+    const firstSlotEnd = interviewClockStart.add(30, 'minute')
     patchGeneralRecruitOverlay({
       ...(['h1', 'h2'] as const).reduce((acc, half) => {
         const interviewNs = ujatVolunteerRecruitInterviewNamespace(half)
@@ -1434,6 +1437,15 @@ export async function applyDevProgramRegistrationAutofill(
         return {
           ...acc,
           [ujatVolunteerRecruitInterviewRangeSealKey(half)]: { ...sample.recruitDates.interview },
+          [`${interviewNs}.timeUnit`]: '30',
+          [`${interviewNs}.interviewTimeRange`]: [
+            interviewClockStart.toISOString(),
+            interviewClockEnd.toISOString(),
+          ],
+          [`${interviewNs}.interviewTime`]: interviewClockStart.toISOString(),
+          [`${interviewNs}.selectedSlotKeys`]: [
+            `${interviewClockStart.valueOf()}-${firstSlotEnd.valueOf()}`,
+          ],
           [`${interviewNs}.exclusionState`]: interviewUnavailable.exclusion,
           [`${interviewNs}.appliedUnavailableDates`]: interviewUnavailable.dates,
           ...recruitDetailPatch(detailPrefix, [

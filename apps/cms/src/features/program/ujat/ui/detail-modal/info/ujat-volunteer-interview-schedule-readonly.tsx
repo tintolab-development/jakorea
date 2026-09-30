@@ -7,20 +7,27 @@ import type {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './ujat-volunteer-interview-schedule-readonly.css'
+function displayDatePart(value: string): string {
+  const trimmed = value.trim()
+  return trimmed === '' || trimmed === '-' ? '' : trimmed
+}
+
 function UnavailableDatesCell({
   recurring,
   specific }: {
   recurring: string
   specific: string
 }) {
-  if (!recurring.trim() && !specific.trim()) return <>-</>
-  if (!specific.trim()) return <>{recurring}</>
-  if (!recurring.trim()) return <>{specific}</>
+  const recurringLabel = displayDatePart(recurring)
+  const specificLabel = displayDatePart(specific)
+  if (!recurringLabel && !specificLabel) return <>-</>
+  if (!specificLabel) return <>{recurringLabel}</>
+  if (!recurringLabel) return <>{specificLabel}</>
   return (
     <span className="ujat-volunteer-interview-schedule-readonly__inline">
-      <span>{recurring}</span>
+      <span>{recurringLabel}</span>
       <DetailInfoForm.InputsSeparator />
-      <span>{specific}</span>
+      <span>{specificLabel}</span>
     </span>
   )
 }
