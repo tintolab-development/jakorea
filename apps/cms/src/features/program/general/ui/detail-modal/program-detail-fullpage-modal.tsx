@@ -1425,6 +1425,7 @@ export function ProgramDetailFullPageModal({
     validateSchema: isTrainedTeachersDetail
       ? programTrainedTeachersRecruitmentSaveSchema
       : programParticipantRecruitmentSaveSchema,
+    recruitmentAudience: 'participant',
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
@@ -1456,6 +1457,7 @@ export function ProgramDetailFullPageModal({
     program: recruitmentEditProgram ?? ({} as Program),
     mapToValues: mapInstructorRecruitmentEditValues,
     validateSchema: programInstructorRecruitmentSaveSchema,
+    recruitmentAudience: 'instructor',
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
@@ -1572,6 +1574,7 @@ export function ProgramDetailFullPageModal({
     form: volunteersForm,
     program: recruitmentEditProgram ?? ({} as Program),
     mapToValues: mapVolunteerRecruitmentEditValues,
+    recruitmentAudience: 'volunteer',
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {

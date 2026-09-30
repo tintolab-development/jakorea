@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  describeIncompleteUjatProgramRecruitmentRequiredFields,
   describeIncompleteUjatProgramRegistrationRequiredFields,
   hasIncompleteUjatProgramRecruitmentRequiredFields,
   hasIncompleteUjatProgramRegistrationRequiredFields,
@@ -20,6 +21,10 @@ import {
 import { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS as IK } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS as VK } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import { snapshotVolunteerHalfFromLegacy } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import {
+  replaceGeneralRecruitOverlay,
+  resetGeneralRecruitOverlay,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 
 vi.mock('@/features/program/ujat/lib/ujat-education-regions', () => ({
   listUjatEducationRegionsActive: () => [{ key: 'seoul', label: '서울' }],
@@ -101,6 +106,21 @@ function filledVolunteerBothHalves(): Record<string, unknown> {
   }
 }
 
+function filledVolunteerInterviewSchedules(): Record<string, unknown> {
+  const timeRange = [
+    new Date('2026-09-18T09:00:00.000Z'),
+    new Date('2026-09-18T12:00:00.000Z'),
+  ]
+  return {
+    'recruit.volunteer.h1.interview.interviewTimeRange': timeRange,
+    'recruit.volunteer.h1.interview.timeUnit': '30',
+    'recruit.volunteer.h1.interview.selectedSlotKeys': ['09:00-09:30'],
+    'recruit.volunteer.h2.interview.interviewTimeRange': timeRange,
+    'recruit.volunteer.h2.interview.timeUnit': '30',
+    'recruit.volunteer.h2.interview.selectedSlotKeys': ['09:00-09:30'],
+  }
+}
+
 describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
   beforeEach(() => {
     resetUjatProgramRegistrationOverlay()
@@ -131,6 +151,7 @@ describe('hasIncompleteUjatProgramRecruitmentRequiredFields', () => {
     resetUjatProgramRegistrationOverlay()
     resetUjatRecruitInstitutionOverlay()
     resetUjatRecruitVolunteerOverlay()
+    resetGeneralRecruitOverlay()
   })
 
   it('기관·봉사 모집만 채우면 완료 (상세 정보·썸네일 미입력 허용)', () => {
@@ -145,6 +166,7 @@ describe('hasIncompleteUjatProgramRecruitmentRequiredFields', () => {
       [IK.notes]: '-',
     })
     replaceUjatRecruitVolunteerOverlay(filledVolunteerBothHalves())
+    replaceGeneralRecruitOverlay(filledVolunteerInterviewSchedules())
     expect(hasIncompleteUjatProgramRecruitmentRequiredFields()).toBe(false)
   })
 
@@ -160,6 +182,29 @@ describe('hasIncompleteUjatProgramRecruitmentRequiredFields', () => {
       [IK.notes]: '-',
     })
     replaceUjatRecruitVolunteerOverlay(filledVolunteerBothHalves())
+    replaceGeneralRecruitOverlay(filledVolunteerInterviewSchedules())
     expect(hasIncompleteUjatProgramRecruitmentRequiredFields()).toBe(false)
+  })
+
+  it('면접 진행 가능 일정 슬롯이 없으면 미완료', () => {
+    replaceUjatRecruitInstitutionOverlay({
+      [IK.announcementPublished]: true,
+      [IK.programRange]: RANGE,
+      [IK.targetLevels]: ['elementary'],
+      [IK.district]: '초등',
+      [IK.recruitRange]: RANGE,
+      [IK.resultAnnounce]: { date: '2026-10-01T00:00:00.000Z', method: '이메일' },
+      [IK.contact]: { name: '담당', phone: '010-0000-0000', email: 'a@b.com' },
+      [IK.notes]: '-',
+    })
+    replaceUjatRecruitVolunteerOverlay(filledVolunteerBothHalves())
+    replaceGeneralRecruitOverlay({
+      ...filledVolunteerInterviewSchedules(),
+      'recruit.volunteer.h2.interview.selectedSlotKeys': [],
+    })
+    expect(describeIncompleteUjatProgramRecruitmentRequiredFields()).toBe(
+      'recruit.volunteer.h2.interviewSchedule'
+    )
+    expect(hasIncompleteUjatProgramRecruitmentRequiredFields()).toBe(true)
   })
 })

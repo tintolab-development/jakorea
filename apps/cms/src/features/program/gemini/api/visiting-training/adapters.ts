@@ -19,6 +19,10 @@ import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/sche
 import { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import { ProgramUpdateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestEducationStructure'
+import {
+  normalizeTargetLevelValue,
+  parseTargetLevelsFromDisplayLabel,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { GEMINI_VISITING_TRAINING_PROGRAM_TYPE } from './capabilities'
 
 function toId(value: number | string | undefined): string {
@@ -70,68 +74,23 @@ function resolveGeminiEducationStructureWire(
   return ProgramCreateRequestEducationStructure.SCHEDULE
 }
 
-const GEMINI_TARGET_LEVEL_CODES = [
-  'elementary',
-  'middle',
-  'high',
-  'university',
-  'adult',
-] as const
-
-/** GET이 한글·대문자를 줘도 셀렉트 value(adult|university)와 맞춘다. */
-function toGeminiTargetLevelCode(value: string): string | null {
-  const normalized = value.trim().toLowerCase().replace(/[\s_-]+/g, '')
-  switch (normalized) {
-    case 'adult':
-    case '성인':
-      return 'adult'
-    case 'university':
-    case 'college':
-    case '대학':
-    case '대학생':
-      return 'university'
-    case 'elementary':
-    case 'elem':
-    case 'primary':
-    case '초등':
-    case '초등학생':
-      return 'elementary'
-    case 'middle':
-    case 'middleschool':
-    case 'junior':
-    case '중등':
-    case '중학생':
-      return 'middle'
-    case 'high':
-    case 'highschool':
-    case 'secondary':
-    case '고등':
-    case '고등학생':
-      return 'high'
-    default:
-      return GEMINI_TARGET_LEVEL_CODES.includes(
-        normalized as (typeof GEMINI_TARGET_LEVEL_CODES)[number]
-      )
-        ? normalized
-        : null
-  }
-}
-
-function normalizeGeminiTargetLevels(levels: string[] | null | undefined): string[] {
-  const out: string[] = []
-  for (const level of levels ?? []) {
-    const code = toGeminiTargetLevelCode(level)
-    if (code && !out.includes(code)) out.push(code)
-  }
-  return out
-}
-
-/** 교육 대상. 빈 배열은 대상 삭제. 첫 값이 있으면 targetLevel과 맞춘다. */
-function wireGeminiTargetLevels(levels: string[] | null | undefined): {
+/**
+ * 교육 대상. 공유 enum 정규화 후 배열이 비면 상세 라벨에서 파싱한다.
+ * 그래도 비면 빈 배열(대상 삭제). 첫 값이 있으면 targetLevel과 맞춘다.
+ */
+function wireGeminiTargetLevels(
+  levels: string[] | null | undefined,
+  detail?: string
+): {
   targetLevels: string[]
   targetLevel?: string
 } {
-  const targetLevels = normalizeGeminiTargetLevels(levels)
+  const fromList = (levels ?? [])
+    .map(normalizeTargetLevelValue)
+    .filter((level): level is NonNullable<typeof level> => level != null)
+  const unique = [...new Set(fromList)]
+  const targetLevels =
+    unique.length > 0 ? unique : parseTargetLevelsFromDisplayLabel(detail)
   const targetLevel = targetLevels[0]
   return targetLevel ? { targetLevels, targetLevel } : { targetLevels }
 }
@@ -173,7 +132,10 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
   const educationStructure = resolveGeminiEducationStructureWire(
     snapshot.educationStructure ?? GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE
   )
-  const { targetLevels, targetLevel } = wireGeminiTargetLevels(snapshot.educationTargetLevels)
+  const { targetLevels, targetLevel } = wireGeminiTargetLevels(
+    snapshot.educationTargetLevels,
+    recruitmentTargetDetail
+  )
   const requestBody: ProgramCreateRequest = {
     programType: GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
     title: snapshot.title.trim() || undefined,
@@ -254,7 +216,10 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     educationStructureWire === ProgramCreateRequestEducationStructure.CURRICULUM
       ? ProgramUpdateRequestEducationStructure.CURRICULUM
       : ProgramUpdateRequestEducationStructure.SCHEDULE
-  const { targetLevels, targetLevel } = wireGeminiTargetLevels(draft.educationTargetLevels)
+  const { targetLevels, targetLevel } = wireGeminiTargetLevels(
+    draft.educationTargetLevels,
+    recruitmentTargetDetail
+  )
   const body: ProgramUpdateRequest = {
     title: draft.title.trim() || undefined,
     description: draft.programDescription || undefined,
@@ -386,7 +351,10 @@ export function mapGeminiRecruitmentDetailToDetail(
     updatedAt: dto.updatedAt?.trim() || now,
     updatedByName: dto.updatedByName?.trim() || '-',
     announcementPublished: isDraftStatus(dto.draftStatus) ? 'unpublished' : 'published',
-    educationTargetLevels: normalizeGeminiTargetLevels(dto.targetLevels),
+    educationTargetLevels: wireGeminiTargetLevels(
+      dto.targetLevels,
+      dto.recruitmentTargetDetail ?? undefined
+    ).targetLevels,
     educationTargetDetail: trimmedOrEmpty(dto.recruitmentTargetDetail),
     minStudentCount: dto.minimumParticipantCount ?? 0,
     educationForm: mapEducationForm(dto.educationForm),

@@ -1,0 +1,92 @@
+import dayjs from 'dayjs'
+import { describe, expect, it } from 'vitest'
+import type { Program } from '@/types/domain'
+import {
+  resolveUjatVolunteerInterviewScheduleDisplay,
+  resolveUjatVolunteerInterviewScheduleEditSeed,
+} from './ujat-volunteer-interview-schedule-display'
+
+function slotLabel(startMs: number, endMs: number): string {
+  return `${dayjs(startMs).format('HH:mm')} ~ ${dayjs(endMs).format('HH:mm')}`
+}
+
+function programWithOverlay(overlay: Record<string, unknown>): Program {
+  return {
+    id: '186030',
+    ujatRegistrationOverlay: overlay,
+  } as Program
+}
+
+describe('resolveUjatVolunteerInterviewScheduleDisplay', () => {
+  it('등록 overlay의 하반기 면접 슬롯·불가일을 상세에 표시한다', () => {
+    const display = resolveUjatVolunteerInterviewScheduleDisplay(
+      programWithOverlay({
+        'recruit.volunteer.h2.interview.selectedSlotKeys': [
+          '1790743800000-1790744700000',
+          '1790744700000-1790745600000',
+          '1790745600000-1790746500000',
+        ],
+        'recruit.volunteer.h2.interview.timeUnit': '15',
+        'recruit.volunteer.h2.interview.interviewTimeRange': [
+          '2026-09-30T04:50:00.000Z',
+          '2026-09-30T05:50:00.000Z',
+        ],
+        'recruit.volunteer.h2.interview.exclusionState': {
+          excludeNone: false,
+          excludeSaturday: false,
+          excludeSunday: true,
+          excludeHoliday: false,
+        },
+        'recruit.volunteer.h2.interview.appliedUnavailableDates': [],
+      }),
+      'h2'
+    )
+
+    expect(display.common.recurringUnavailable).toBe('일요일')
+    expect(display.common.availableTimeSlots).toBe(
+      [
+        slotLabel(1790743800000, 1790744700000),
+        slotLabel(1790744700000, 1790745600000),
+        slotLabel(1790745600000, 1790746500000),
+      ].join(', ')
+    )
+  })
+
+  it('원격 프로그램은 overlay가 없으면 mock 대신 빈 표시를 쓴다', () => {
+    const display = resolveUjatVolunteerInterviewScheduleDisplay(programWithOverlay({}), 'h1')
+    expect(display.common.availableTimeSlots).toBe('-')
+    expect(display.common.recurringUnavailable).toBe('-')
+  })
+})
+
+describe('resolveUjatVolunteerInterviewScheduleEditSeed', () => {
+  it('하반기 timeUnit 15를 overlay에서 복원한다', () => {
+    const seed = resolveUjatVolunteerInterviewScheduleEditSeed(
+      programWithOverlay({
+        'recruit.volunteer.h2.interview.selectedSlotKeys': [
+          '1790743800000-1790744700000',
+          '1790744700000-1790745600000',
+        ],
+        'recruit.volunteer.h2.interview.timeUnit': '15',
+        'recruit.volunteer.h2.interview.interviewTimeRange': [
+          '2026-09-30T04:50:00.000Z',
+          '2026-09-30T05:50:00.000Z',
+        ],
+        'recruit.volunteer.h2.interview.exclusionState': {
+          excludeNone: false,
+          excludeSaturday: false,
+          excludeSunday: true,
+          excludeHoliday: false,
+        },
+      }),
+      'h2'
+    )
+
+    expect(seed?.timeUnit).toBe('15')
+    expect(seed?.excludeSunday).toBe(true)
+    expect(seed?.selectedTimeSlotLabels).toEqual([
+      slotLabel(1790743800000, 1790744700000),
+      slotLabel(1790744700000, 1790745600000),
+    ])
+  })
+})

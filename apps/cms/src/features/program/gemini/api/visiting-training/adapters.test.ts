@@ -215,6 +215,38 @@ describe('gemini visiting-training adapters', () => {
     expect(toGeminiNumericIds(['1', 'x', '2'])).toEqual([1, 2])
   })
 
+  it('maps create targetLevels from educationTargetDetail when levels are empty', () => {
+    const create = mapGeminiRecruitmentSnapshotToCreateRequest({
+      title: '공고',
+      announcementPublished: 'published',
+      educationTargetLevels: [],
+      educationTargetDetail: '중학생',
+      applicationPeriodStart: '2026-03-01',
+      applicationPeriodEnd: '2026-03-31',
+      trainingRequestPeriodStart: '2026-04-01',
+      trainingRequestPeriodEnd: '2026-04-30',
+      minStudentCount: 15,
+      educationForm: 'offline',
+      educationStructure: 'SCHEDULE',
+      inquiryContactName: '홍길동',
+      inquiryTel: '010',
+      inquiryEmail: 'a@b.c',
+      notesNotApplicable: false,
+      notes: '준비물',
+      thumbnailFileName: null,
+      programDescription: '설명',
+      recruitmentGuide: '',
+      applicationMethod: '',
+      learningSupportContent: '',
+      additionalContentMarkdown: '',
+      attachmentFileNames: [],
+      institutionSectionDescription: '',
+      detailSectionDescription: '',
+    })
+    expect(create.targetLevels).toEqual(['middle'])
+    expect(create.targetLevel).toBe('middle')
+  })
+
   it('maps update request with clearFields when inquiry fields are empty', () => {
     const update = mapGeminiRecruitmentDetailToUpdateRequest({
       title: '공고',

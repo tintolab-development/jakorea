@@ -35,7 +35,8 @@ const mapped = mapPortalProgramDetail({
   contactEmail: 'cc@jakorea.org',
   contactPhone: '02-6085-6028',
   recruitmentGuide: '모집 안내 본문',
-  additionalContentHtml: '<p>추가 안내</p>',
+  additionalContentHtml:
+    '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p>',
   educationTarget: 'university',
   thumbnailFileObjectId: 77,
   sponsorNames: ['현대 자동차'],
@@ -102,6 +103,14 @@ assert.equal(mapped.participationMethod, 'team')
 assert.deepEqual(
   mapped.extraSections.map(section => section.title),
   ['모집 안내', '추가 내용']
+)
+assert.deepEqual(
+  mapped.extraSections.find(section => section.title === '추가 내용'),
+  {
+    title: '추가 내용',
+    body: '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p>',
+    bodyFormat: 'html',
+  }
 )
 
 const individualOnly = mapPortalProgramDetail({
@@ -195,7 +204,7 @@ const withSelection = mapPortalProgramDetail({
 assert.ok(withSelection)
 assert.equal(withSelection.applicationMethodValue, '홈페이지 온라인 신청')
 assert.equal(
-  withSelection.recruitmentPhases.some(phase => phase.label === '1차 서류 합격자 발표'),
+  withSelection.recruitmentPhases.some(phase => phase.label === '1차 합격자 발표일'),
   false
 )
 assert.equal(
@@ -417,7 +426,10 @@ const trainedTeacherProgress = mapPortalProgramDetail({
   venueKind: 'inside',
 })
 assert.ok(trainedTeacherProgress)
-assert.equal(trainedTeacherProgress.educationVenueLabel, '기관 안, 서울시 강서구 가양 데시앙플렉스')
+assert.equal(
+  trainedTeacherProgress.educationVenueLabel,
+  '기관 안 | 서울시 강서구 가양 데시앙플렉스'
+)
 assert.equal(trainedTeacherProgress.detailCase, 'instructor')
 assert.equal(trainedTeacherProgress.educationStructure, 'curriculum')
 assert.equal(trainedTeacherProgress.sessions.length, 1)
@@ -523,7 +535,25 @@ assert.equal(
     venueKind: 'outside',
     venue: '인근 구립도서관 강의실',
   })?.educationVenueLabel,
-  '기관 밖, 인근 구립도서관 강의실'
+  '기관 밖 | 인근 구립도서관 강의실'
+)
+assert.equal(
+  mapPortalProgramDetail({
+    programId: 9,
+    title: '기타 장소',
+    venueKind: 'other',
+    venue: 'JA Korea 교육장',
+  })?.educationVenueLabel,
+  'JA Korea 교육장'
+)
+assert.equal(
+  mapPortalProgramDetail({
+    programId: 10,
+    title: '기존 쉼표 장소',
+    venueKind: 'inside',
+    venue: '기관 안, 본관 2층 교육장',
+  })?.educationVenueLabel,
+  '기관 안 | 본관 2층 교육장'
 )
 assert.equal(trainedTeacher.educationScheduleMode, 'period')
 
@@ -565,11 +595,11 @@ assert.equal(
   '교재와 활동지를 제공합니다.'
 )
 assert.equal(
-  participantCatalog.recruitmentPhases.some(phase => phase.label === '1차 서류 합격자 발표'),
+  participantCatalog.recruitmentPhases.some(phase => phase.label === '1차 합격자 발표일'),
   false
 )
 assert.equal(
-  participantCatalog.recruitmentPhases.some(phase => phase.label === '2차 면접 기간'),
+  participantCatalog.recruitmentPhases.some(phase => phase.label === '면접 기간'),
   false
 )
 assert.equal(

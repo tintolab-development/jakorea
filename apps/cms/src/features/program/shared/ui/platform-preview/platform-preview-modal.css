@@ -2,12 +2,6 @@
   overflow: hidden;
 }
 
-.platform-preview-modal__toolbar {
-  display: flex;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
 .platform-preview-modal__stage {
   flex: 1 1 auto;
   min-height: 0;

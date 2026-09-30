@@ -158,6 +158,26 @@ describe('UJAT program adapters', () => {
     expect(updated.managerName).toBeUndefined()
   })
 
+  it('공통정보 패치가 모집 라벨을 빼도 existing 라벨의 복수 targetLevels를 컬럼에 올린다', () => {
+    const existing: Program = {
+      ...program,
+      targetLevel: 'elementary',
+      targetLevels: ['elementary'],
+      generalCommonInfo: {
+        announcementTitle: '기존 공고',
+        participantRecruitmentInfo: {
+          educationTarget: '초등학교, 중학교, 대학(원)생',
+        },
+      },
+    }
+    const request = toUpdateRequest(existing, {
+      title: '수정된 UJAT',
+      generalCommonInfo: { announcementTitle: '수정된 공고' },
+    })
+    expect(request.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(request.targetLevel).toBe('elementary')
+  })
+
   it('부분 수정에 educationStructure를 싣고 지역 정원 overlay를 재조회한다', () => {
     const capacity = {
       h1: { 서울: { classCount: '2', volunteerCount: '4' } },

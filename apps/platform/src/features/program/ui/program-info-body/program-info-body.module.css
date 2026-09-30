@@ -230,6 +230,14 @@
   white-space: pre-line;
 }
 
+.extraSectionRichText {
+  --rt-content-font-size: 16px;
+  --rt-content-line-height: 150%;
+
+  overflow: visible;
+  padding: 0;
+}
+
 .contact {
   display: flex;
   width: 100%;

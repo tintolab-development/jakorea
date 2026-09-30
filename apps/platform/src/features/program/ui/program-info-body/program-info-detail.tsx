@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { RichTextViewer } from '@/shared/rich-text'
 import { PFText } from '@/shared/ui'
 import type { ProgramDetail, ProgramEventSchedule, ProgramSession } from '../../model/types'
 import { ProgramInfoPeriodSponsor } from './program-info-period-sponsor'
@@ -17,7 +18,7 @@ function progressMetaLines(
   row: Pick<
     ProgramSession,
     'educationFormLabel' | 'participationMethodLabel' | 'ipsTypeSummary' | 'assignmentPeriod'
-  >,
+  >
 ) {
   return [
     row.educationFormLabel?.trim()
@@ -26,9 +27,7 @@ function progressMetaLines(
     row.participationMethodLabel?.trim()
       ? { label: '참여 방식', value: row.participationMethodLabel.trim() }
       : null,
-    row.ipsTypeSummary?.trim()
-      ? { label: 'IPS 유형', value: row.ipsTypeSummary.trim() }
-      : null,
+    row.ipsTypeSummary?.trim() ? { label: 'IPS 유형', value: row.ipsTypeSummary.trim() } : null,
     row.assignmentPeriod?.trim()
       ? { label: '과제 기간', value: row.assignmentPeriod.trim() }
       : null,
@@ -239,14 +238,23 @@ export function ProgramInfoDetail({
                     <PFText as="h3" typo="bd-sm-rg" color="neutral-cool-600">
                       {section.title}
                     </PFText>
-                    <PFText
-                      as="p"
-                      typo="bd-md-md"
-                      color="black"
-                      className={styles.extraSectionBody}
-                    >
-                      {section.body}
-                    </PFText>
+                    {section.bodyFormat === 'html' ? (
+                      <RichTextViewer
+                        content={section.body}
+                        contentFormat="html"
+                        maxHeight="none"
+                        className={styles.extraSectionRichText}
+                      />
+                    ) : (
+                      <PFText
+                        as="p"
+                        typo="bd-md-md"
+                        color="black"
+                        className={styles.extraSectionBody}
+                      >
+                        {section.body}
+                      </PFText>
+                    )}
                   </section>
                 ))}
               </div>

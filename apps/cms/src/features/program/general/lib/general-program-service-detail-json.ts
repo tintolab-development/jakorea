@@ -5,6 +5,7 @@ import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -14,6 +15,8 @@ export interface GeneralProgramServiceDetailJsonV1 {
   generalParticipantTypes?: Program['generalParticipantTypes']
   generalSurveyMenuKeys?: Program['generalSurveyMenuKeys']
   targetLevels?: Program['targetLevels']
+  /** BE 컬럼 동기화용 봉투. 파서는 `program`을 루트로 끌어올린다. */
+  program?: { targetLevels?: Program['targetLevels'] }
   /** 교육 진행 구조 (커리큘럼형 / 일정형) — 탑레벨 API 필드 없음 → JSON 영속 */
   generalProgramEducationStructure?: Program['generalProgramEducationStructure']
   /** 수업 회차 유형 */
@@ -256,6 +259,17 @@ const NESTED_RECRUITMENT_INFO_KEYS = [
   'volunteerInterviewScheduleInfo',
 ] as const
 
+/** BE echo가 commonInfo에 심은 단수 컬럼. 루트 `targetLevels`와 충돌하면 서버가 1개만 남긴다. */
+function omitColumnTargetLevelsFromCommonInfo(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const next = { ...common } as Record<string, unknown>
+  delete next.targetLevels
+  delete next.targetLevel
+  return next as Program['generalCommonInfo']
+}
+
 /** 공통정보 저장 — 모집 창·모집 정보 객체는 이번 요청에 넣지 않는다. */
 function omitRecruitmentWindowFromCommonInfo(
   common: Program['generalCommonInfo']
@@ -276,9 +290,11 @@ export function serializeGeneralProgramServiceDetailJson(
   const withAudienceRule = isIndividual
     ? stripIndividualStudentRosterFromCommonInfo(program.generalCommonInfo)
     : stripOrganizationParticipationFromCommonInfo(program.generalCommonInfo)
-  const generalCommonInfo = options?.omitRecruitmentWindow
-    ? omitRecruitmentWindowFromCommonInfo(withAudienceRule)
-    : withAudienceRule
+  const generalCommonInfo = omitColumnTargetLevelsFromCommonInfo(
+    options?.omitRecruitmentWindow
+      ? omitRecruitmentWindowFromCommonInfo(withAudienceRule)
+      : withAudienceRule
+  )
   const persistedOverlay = persistScheduleEducationFormByDetailOverlay(
     buildRegistrationOverlayForPersist({
       ...program,
@@ -296,12 +312,15 @@ export function serializeGeneralProgramServiceDetailJson(
           [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: scheduleLines,
         }
       : persistedOverlay
+  const persistedTargetLevels = resolvePersistedProgramTargetLevels(program)
   const payload: GeneralProgramServiceDetailJsonV1 = {
     schemaVersion: GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,
     generalCommonInfo,
     generalParticipantTypes: program.generalParticipantTypes,
     generalSurveyMenuKeys: program.generalSurveyMenuKeys,
-    targetLevels: program.targetLevels,
+    targetLevels: persistedTargetLevels,
+    /** BE는 `serviceDetailJson.program.targetLevels`와 컬럼을 동기화한다. */
+    program: persistedTargetLevels.length > 0 ? { targetLevels: persistedTargetLevels } : undefined,
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     generalProgramAudience: program.generalProgramAudience,

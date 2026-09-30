@@ -31,8 +31,10 @@ import {
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import {
   resolveVolunteerOverlayForHalf,
+  ujatVolunteerRecruitInterviewNamespace,
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import { pickUjatVolunteerRecruitGeneralStoreSidecar } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 import {
   EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE,
   type UjatHalfMultiScheduleBundle,
@@ -228,6 +230,7 @@ export function getMergedUjatRecruitVolunteerOverlay(): Record<string, unknown> 
   return {
     ...pickUjatRecruitVolunteerOverlay(programOverlay),
     ...getUjatRecruitVolunteerOverlayRecord(),
+    ...pickUjatVolunteerRecruitGeneralStoreSidecar(),
   }
 }
 
@@ -302,21 +305,44 @@ function hasIncompleteUjatVolunteerRecruitHalf(
   return false
 }
 
-function hasIncompleteUjatVolunteerRecruit(overlay: Record<string, unknown>): boolean {
-  return (
-    hasIncompleteUjatVolunteerRecruitHalf(overlay, 'h1') ||
-    hasIncompleteUjatVolunteerRecruitHalf(overlay, 'h2')
-  )
+function isInterviewTimeRangeIncomplete(value: unknown): boolean {
+  if (value == null) return true
+  if (!Array.isArray(value) || value.length < 2) return true
+  return value[0] == null || value[1] == null
+}
+
+/** schema `requiredMark` — 면접 진행 가능 시간·선택 슬롯 */
+function hasIncompleteUjatVolunteerInterviewSchedule(
+  overlay: Record<string, unknown>,
+  half: UjatVolunteerRecruitHalf
+): boolean {
+  const ns = ujatVolunteerRecruitInterviewNamespace(half)
+  if (isInterviewTimeRangeIncomplete(read(overlay, `${ns}.interviewTimeRange`))) return true
+  const slots = read(overlay, `${ns}.selectedSlotKeys`)
+  if (!Array.isArray(slots) || slots.length === 0) return true
+  if (slots.every(slot => isEmptyText(slot))) return true
+  return false
+}
+
+function findIncompleteUjatVolunteerRecruitReason(
+  overlay: Record<string, unknown>
+): string | null {
+  for (const half of ['h1', 'h2'] as const) {
+    if (hasIncompleteUjatVolunteerRecruitHalf(overlay, half)) {
+      return `recruit.volunteer.${half}`
+    }
+    if (hasIncompleteUjatVolunteerInterviewSchedule(overlay, half)) {
+      return `recruit.volunteer.${half}.interviewSchedule`
+    }
+  }
+  return null
 }
 
 export function describeIncompleteUjatProgramRecruitmentRequiredFields(): string | null {
   if (hasIncompleteUjatInstitutionRecruit(getMergedUjatRecruitInstitutionOverlay())) {
     return 'recruit.institution'
   }
-  if (hasIncompleteUjatVolunteerRecruit(getMergedUjatRecruitVolunteerOverlay())) {
-    return 'recruit.volunteer'
-  }
-  return null
+  return findIncompleteUjatVolunteerRecruitReason(getMergedUjatRecruitVolunteerOverlay())
 }
 
 export function hasIncompleteUjatProgramRecruitmentRequiredFields(): boolean {

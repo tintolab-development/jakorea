@@ -24,6 +24,10 @@ import {
   programToDetailEditValues,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import { showUpdateCompletedAlert } from '@/shared/ui'
+import {
+  applyRecruitmentAdditionalContentHtml,
+  type ProgramDetailRecruitmentAudience,
+} from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 
 export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
@@ -36,6 +40,8 @@ export interface UseProgramDetailInfoSaveOptions {
   validateSchema?: z.ZodType<unknown>
   /** true면 remote PATCH 에서 모집·회차 필드 제외 (1사1교·교육받은 교사 공통정보 탭) */
   commonInfoPatchOnly?: boolean
+  /** 모집 탭 저장 — 「추가 내용」HTML을 해당 *RecruitmentInfo SSOT에도 넣는다 */
+  recruitmentAudience?: ProgramDetailRecruitmentAudience
 }
 
 export type ProgramDetailInfoSaveExtraCommon = Partial<
@@ -49,6 +55,7 @@ export function useProgramDetailInfoSave({
   onSaveEdit,
   validateSchema,
   commonInfoPatchOnly = false,
+  recruitmentAudience,
 }: UseProgramDetailInfoSaveOptions) {
   const savingRef = useRef(false)
   const saveFailureRef = useRef<'validation' | 'api' | null>(null)
@@ -81,8 +88,6 @@ export function useProgramDetailInfoSave({
         const values = form.getValues()
         const patch = detailEditValuesToProgramPatch(values, program)
         const html = getAdditionalContentHtmlRef.current?.()
-        const htmlPatch =
-          typeof html === 'string' ? { additionalContentHtml: html } : undefined
         const extraDefined = extraCommonInfo
           ? Object.fromEntries(
               Object.entries(extraCommonInfo).filter(([, value]) => value !== undefined)
@@ -94,8 +99,16 @@ export function useProgramDetailInfoSave({
             : patch.generalCommonInfo
         let remotePatch: Partial<Program> = {
           ...patch,
-          ...htmlPatch,
+          ...(typeof html === 'string' ? { additionalContentHtml: html } : {}),
           ...(generalCommonInfo ? { generalCommonInfo } : {}),
+        }
+        if (typeof html === 'string' && recruitmentAudience) {
+          remotePatch = applyRecruitmentAdditionalContentHtml(
+            remotePatch,
+            program,
+            html,
+            recruitmentAudience
+          )
         }
         if (commonInfoPatchOnly) {
           remotePatch = narrowProgramDetailPatchForCommonInfoSave(remotePatch)
@@ -118,7 +131,7 @@ export function useProgramDetailInfoSave({
         savingRef.current = false
       }
     },
-    [commonInfoPatchOnly, form, program, onSaveEdit, validateSchema]
+    [commonInfoPatchOnly, form, program, onSaveEdit, recruitmentAudience, validateSchema]
   )
 
   const resetToProgram = useCallback(() => {

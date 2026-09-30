@@ -67,6 +67,27 @@ describe('company-school adapters', () => {
     expect(request.autoApplyDefaultFormBindings).toBe(true)
   })
 
+  it('공통정보 패치가 모집 라벨을 빼도 existing 라벨의 복수 targetLevels를 컬럼에 올린다', () => {
+    const existing: Program = {
+      ...program,
+      targetLevel: 'elementary',
+      targetLevels: ['elementary'],
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        announcementTitle: '기존 공고',
+        participantRecruitmentInfo: {
+          educationTarget: '초등학교, 중학교, 대학(원)생',
+        },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(existing, {
+      title: '수정된 1사1교',
+      generalCommonInfo: { announcementTitle: '수정된 공고' },
+    })
+    expect(request.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(request.targetLevel).toBe('elementary')
+  })
+
   it('등록·수정 사업 기간은 연도를 넘어도 선택한 startDate/endDate를 그대로 보낸다', () => {
     const partial: Program = {
       ...program,

@@ -31,6 +31,7 @@ import {
   formatInstructorTargetsLabel,
   formatTargetLevelsLabel,
   formatVolunteerTargetsLabel,
+  resolvePersistedProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 
 type RangeSeal = { start?: string | null; end?: string | null }
@@ -1095,12 +1096,20 @@ export function applyGeneralRecruitOverlayToProgram(
     preferOverlay
   )
 
-  const nextTargetLevels =
-    preferOverlay && targetLevels?.length
-      ? targetLevels
-      : program.targetLevels?.length
-        ? program.targetLevels
-        : targetLevels
+  const nextTargetLevels = resolvePersistedProgramTargetLevels({
+    targetLevels: program.targetLevels,
+    targetLevel: program.targetLevel,
+    registrationOverlay: {
+      ...(program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
+        ? (program.registrationOverlay as Record<string, unknown>)
+        : {}),
+      ...overlay,
+    },
+    generalCommonInfo: {
+      ...common,
+      participantRecruitmentInfo: participantInfo,
+    },
+  })
 
   const nextInstructorTargets =
     preferOverlay && instructorTargets?.length

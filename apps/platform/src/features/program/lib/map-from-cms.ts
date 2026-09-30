@@ -277,17 +277,6 @@ function resolveContactValue(program: CmsProgramLike): string {
   return phone || email || ''
 }
 
-/** CMS HTML/plain 추가 내용 — 태그 제거 후 본문 텍스트 */
-function stripHtmlToText(value: string): string {
-  return value
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-}
-
 function resolveTargetLabels(program: CmsProgramLike): {
   educationTargetKey: EducationTargetKey | null
   educationTargetLabel: string
@@ -313,10 +302,7 @@ function resolveTargetLabels(program: CmsProgramLike): {
   }
 }
 
-function formatOptionalDateRange(
-  startIso: string | undefined,
-  endIso: string | undefined
-): string {
+function formatOptionalDateRange(startIso: string | undefined, endIso: string | undefined): string {
   return formatRecruitmentRangeLabel(toDate(startIso), toDate(endIso))
 }
 
@@ -341,10 +327,8 @@ export function mapBasicInfoFields(
     roleLabel: string
   }
 ): ProgramBasicInfoField[] {
-  const affiliation =
-    program.generalCommonInfo?.recruitmentAffiliationLabel?.trim() || ''
-  const volunteerTarget =
-    program.volunteerTarget?.trim() || args.educationTargetDetailLabel
+  const affiliation = program.generalCommonInfo?.recruitmentAffiliationLabel?.trim() || ''
+  const volunteerTarget = program.volunteerTarget?.trim() || args.educationTargetDetailLabel
   const sessionCount = program.generalCommonInfo?.sessionCountLabel?.trim()
 
   switch (detailCase) {
@@ -353,9 +337,7 @@ export function mapBasicInfoFields(
         { label: '사업 분야', value: args.businessFieldLabel },
         { label: '대상', value: volunteerTarget || args.educationTargetGroupLabel },
         { label: '모집 지역', value: args.educationVenueLabel },
-        ...(affiliation
-          ? [{ label: '모집 소속', value: affiliation }]
-          : []),
+        ...(affiliation ? [{ label: '모집 소속', value: affiliation }] : []),
       ]
     case 'volunteer':
       return [
@@ -378,9 +360,7 @@ export function mapBasicInfoFields(
           label: '교육 지역',
           value: args.educationVenueLabel,
         },
-        ...(affiliation
-          ? [{ label: '모집 소속', value: affiliation }]
-          : []),
+        ...(affiliation ? [{ label: '모집 소속', value: affiliation }] : []),
       ]
     case 'ujat-participant':
       return [
@@ -563,10 +543,7 @@ function mapEducationSchedules(
   const ujatRows = program.ujatPublicEducationSchedules?.filter(
     row => row.label.trim() && row.value.trim() && !isUnavailableScheduleLine(row.value)
   )
-  if (
-    ujatRows?.length &&
-    (detailCase === 'ujat-volunteer' || detailCase === 'ujat-participant')
-  ) {
+  if (ujatRows?.length && (detailCase === 'ujat-volunteer' || detailCase === 'ujat-participant')) {
     return ujatRows.map(row => ({
       label: row.label.trim(),
       value: row.value.trim(),
@@ -639,15 +616,12 @@ function mapRecruitmentPhases(
   if (shouldIncludeInterviewStages(detailCase, program)) {
     phases.push(
       {
-        label: '1차 서류 합격자 발표',
+        label: '1차 합격자 발표일',
         value: formatOptionalDate(program.documentPassAnnouncementDate),
       },
       {
-        label: '2차 면접 기간',
-        value: formatOptionalDateRange(
-          program.interviewStartDate,
-          program.interviewEndDate
-        ),
+        label: '면접 기간',
+        value: formatOptionalDateRange(program.interviewStartDate, program.interviewEndDate),
       }
     )
   }
@@ -676,18 +650,12 @@ function mapAttachments(program: CmsProgramLike): ProgramAttachment[] {
 
 function canShowOtherNotes(detailCase: ProgramDetailCase): boolean {
   return (
-    detailCase === 'instructor' ||
-    detailCase === 'volunteer' ||
-    detailCase === 'ujat-volunteer'
+    detailCase === 'instructor' || detailCase === 'volunteer' || detailCase === 'ujat-volunteer'
   )
 }
 
 function canShowLearningSupport(detailCase: ProgramDetailCase): boolean {
-  return (
-    detailCase === 'general' ||
-    detailCase === 'ujat-participant' ||
-    detailCase === 'gemini'
-  )
+  return detailCase === 'general' || detailCase === 'ujat-participant' || detailCase === 'gemini'
 }
 
 function mapExtraSections(
@@ -702,7 +670,7 @@ function mapExtraSections(
 
   const additional = program.additionalContent?.trim()
   if (additional) {
-    sections.push({ title: '추가 내용', body: stripHtmlToText(additional) })
+    sections.push({ title: '추가 내용', body: additional, bodyFormat: 'html' })
   }
 
   const learning = program.learningSupportContent?.trim()
@@ -715,8 +683,7 @@ function mapExtraSections(
     sections.push({ title: '기타사항', body: other })
   }
 
-  const notes =
-    program.notes?.trim() || program.generalCommonInfo?.notes?.trim() || ''
+  const notes = program.notes?.trim() || program.generalCommonInfo?.notes?.trim() || ''
   if (notes) {
     sections.push({ title: '비고', body: notes })
   }
@@ -730,9 +697,9 @@ export type MapCmsProgramOptions = {
   detailImageUrl?: string
 }
 
-export type ResolveProgramImages = (id: string) =>
-  | Pick<MapCmsProgramOptions, 'thumbnailUrl' | 'detailImageUrl'>
-  | undefined
+export type ResolveProgramImages = (
+  id: string
+) => Pick<MapCmsProgramOptions, 'thumbnailUrl' | 'detailImageUrl'> | undefined
 
 /**
  * CMS 프로그램 스냅샷 1건 → Platform 상세(목록 공통 필드 포함) 1건.
@@ -744,10 +711,7 @@ export function mapCmsProgramToPlatformDetail(
 ): ProgramDetail {
   const detailCase = resolveProgramDetailCase(program)
   const category = resolvePlatformCategory(program)
-  const educationForm = mapDeliveryType(
-    program.type,
-    program.generalCommonInfo?.educationFormLabel
-  )
+  const educationForm = mapDeliveryType(program.type, program.generalCommonInfo?.educationFormLabel)
   const targets = resolveTargetLabels(program)
   const roleLabel = recruitmentRoleLabelForCase(detailCase)
 
@@ -784,9 +748,7 @@ export function mapCmsProgramToPlatformDetail(
   const isRecruiting = recruitmentStatus === RECRUITMENT_STATUS.recruiting
   const recruitmentPeriodLabel = formatRecruitmentRangeLabel(appStart, appEnd)
   const applicationMethodValue = program.applicationMethod?.trim() ?? ''
-  const educationStructure = resolveEducationStructure(
-    program.generalProgramEducationStructure
-  )
+  const educationStructure = resolveEducationStructure(program.generalProgramEducationStructure)
   const businessFieldLabel = program.businessArea?.trim() || '-'
   const educationFormLabel = EDUCATION_FORM_LABEL_MAP[educationForm]
   const educationVenueLabel =

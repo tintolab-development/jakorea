@@ -19,11 +19,13 @@ import {
   buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues,
   resolveVolunteerOverlayForHalf,
   ujatVolunteerHalfOverlayKey,
+  ujatVolunteerRecruitInterviewRangeSealKey,
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import {
   coalesceUjatRecruitOverlay,
 } from '@/features/program/ujat/lib/ujat-recruit-overlay-coalesce'
+import { patchGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import {
   getUjatRecruitInstitutionOverlayRecord,
   patchUjatRecruitInstitutionOverlay,
@@ -217,7 +219,7 @@ export function programToUjatRecruitTemplateFormValues(
     const district = overlay[INSTITUTION_KEYS.district]
     if (typeof district === 'string' && district.trim()) next.district = district
     const targetLevels = readOverlayStringList(overlay, INSTITUTION_KEYS.targetLevels)
-    if ((!next.targetLevels || next.targetLevels.length === 0) && targetLevels) {
+    if (targetLevels && targetLevels.length > (next.targetLevels?.length ?? 0)) {
       next.targetLevels = targetLevels as ProgramDetailEditFormValues['targetLevels']
     }
     const programRange = readOverlayRange(overlay, INSTITUTION_KEYS.programRange)
@@ -288,6 +290,15 @@ function patchRecruitOverlayFromForm(
     return
   }
   patchUjatRecruitVolunteerOverlay(merged)
+  if (volunteerHalf == null) return
+  const interviewRange = merged[ujatVolunteerHalfOverlayKey(volunteerHalf, 'interviewRange')]
+  if (interviewRange == null || typeof interviewRange !== 'object') return
+  const start = (interviewRange as { start?: unknown }).start
+  const end = (interviewRange as { end?: unknown }).end
+  if (typeof start !== 'string' || typeof end !== 'string' || !start.trim() || !end.trim()) return
+  patchGeneralRecruitOverlay({
+    [ujatVolunteerRecruitInterviewRangeSealKey(volunteerHalf)]: { start, end },
+  })
 }
 
 /**
