@@ -176,6 +176,52 @@ export function mapTrainedTeacherInfoDetailToProgramPatch(
   }
 }
 
+/**
+ * 교육받은 교사 공통정보 저장 직후 캐시.
+ * programs PATCH가 넣어 둔 기본정보(장소·후원·공고)는 유지하고,
+ * 일지·연수·커리큘럼·일정은 이번 detail 저장 payload로 덮는다.
+ * detail 저장 뒤 programs GET이 구값이면 그 GET으로 캐시를 통째로 바꾸지 않는다.
+ */
+export function applyTrainedTeacherInfoDetailSaveToCache(
+  cached: Program | undefined,
+  saved: Program,
+  programId: string,
+  payloadCommon?: Partial<NonNullable<Program['generalCommonInfo']>>
+): Program {
+  const base = cached ?? saved
+  return {
+    ...base,
+    id: programId || base.id,
+    updatedAt: saved.updatedAt ?? base.updatedAt,
+    educatedTeachers: saved.educatedTeachers ?? base.educatedTeachers,
+    generalCommonInfo: {
+      ...base.generalCommonInfo,
+      ...payloadCommon,
+      kpi: base.generalCommonInfo?.kpi ?? payloadCommon?.kpi,
+      curriculumSessions:
+        payloadCommon?.curriculumSessions ??
+        saved.generalCommonInfo?.curriculumSessions ??
+        base.generalCommonInfo?.curriculumSessions,
+      scheduleDetails:
+        payloadCommon?.scheduleDetails ??
+        saved.generalCommonInfo?.scheduleDetails ??
+        base.generalCommonInfo?.scheduleDetails,
+      educationJournalEnabled:
+        payloadCommon?.educationJournalEnabled ??
+        saved.generalCommonInfo?.educationJournalEnabled ??
+        base.generalCommonInfo?.educationJournalEnabled,
+      teacherTrainingEnabled:
+        payloadCommon?.teacherTrainingEnabled ??
+        saved.generalCommonInfo?.teacherTrainingEnabled ??
+        base.generalCommonInfo?.teacherTrainingEnabled,
+      teacherTrainingScheduleName:
+        payloadCommon?.teacherTrainingScheduleName ??
+        saved.generalCommonInfo?.teacherTrainingScheduleName ??
+        base.generalCommonInfo?.teacherTrainingScheduleName,
+    },
+  }
+}
+
 export function mergeTrainedTeacherInfoDetailIntoProgram(
   program: Program,
   dto: TrainedTeacherProgramDetailResponse,
