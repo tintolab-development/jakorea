@@ -3,7 +3,6 @@
  */
 
 import { CloseOutlined } from '@ant-design/icons'
-import { Segmented } from 'antd'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   PLATFORM_PROGRAM_PREVIEW_PATH,
@@ -15,13 +14,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import '@/features/template/ui/modal/template-preview-modal.css'
 import './platform-preview-modal.css'
 
-const PREVIEW_VIEWPORTS = [
-  { value: 'desktop', label: 'PC', width: 1600 },
-  { value: 'laptop', label: 'PC 소형', width: 1280 },
-  { value: 'mobile', label: '모바일', width: 390 },
-] as const
-
-type PreviewViewport = (typeof PREVIEW_VIEWPORTS)[number]['value']
+const PREVIEW_VIEWPORT_WIDTH = 1600
 
 const READY_TIMEOUT_MS = 8000
 
@@ -39,23 +32,22 @@ export type PlatformPreviewModalProps = {
   zIndex?: number
 }
 
-function useElementSize<T extends HTMLElement>(enabled: boolean) {
-  const ref = useRef<T>(null)
+/** 모달 본문은 portal로 늦게 마운트되므로 callback ref로 노드가 붙는 시점에 측정한다. */
+function useElementSize<T extends HTMLElement>() {
+  const [node, setNode] = useState<T | null>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
   useLayoutEffect(() => {
-    if (!enabled) return
-    const node = ref.current
-    if (!node) return
-    const update = () => {
-      const rect = node.getBoundingClientRect()
-      setSize({ width: rect.width, height: rect.height })
+    if (!node) {
+      setSize({ width: 0, height: 0 })
+      return
     }
+    const update = () => setSize({ width: node.clientWidth, height: node.clientHeight })
     update()
     const observer = new ResizeObserver(update)
     observer.observe(node)
     return () => observer.disconnect()
-  }, [enabled])
-  return [ref, size] as const
+  }, [node])
+  return [setNode, size] as const
 }
 
 export function PlatformPreviewModal({
@@ -66,13 +58,10 @@ export function PlatformPreviewModal({
   zIndex = PLATFORM_PREVIEW_MODAL_Z_INDEX,
 }: PlatformPreviewModalProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [viewport, setViewport] = useState<PreviewViewport>('desktop')
   const [loadState, setLoadState] = useState<LoadState>('loading')
-  const [stageRef, stageSize] = useElementSize<HTMLDivElement>(open)
+  const [stageRef, stageSize] = useElementSize<HTMLDivElement>()
 
-  const viewportWidth =
-    PREVIEW_VIEWPORTS.find(item => item.value === viewport)?.width ?? PREVIEW_VIEWPORTS[0].width
-  const scale = stageSize.width > 0 ? Math.min(1, stageSize.width / viewportWidth) : 1
+  const scale = stageSize.width > 0 ? Math.min(1, stageSize.width / PREVIEW_VIEWPORT_WIDTH) : 1
   const frameHeight = stageSize.height > 0 ? stageSize.height / scale : 0
 
   const postPreview = useCallback(() => {
@@ -155,17 +144,6 @@ export function PlatformPreviewModal({
             </div>
           </div>
 
-          <div className="platform-preview-modal__toolbar">
-            <Segmented
-              value={viewport}
-              onChange={value => setViewport(value as PreviewViewport)}
-              options={PREVIEW_VIEWPORTS.map(item => ({
-                value: item.value,
-                label: `${item.label} (${item.width})`,
-              }))}
-            />
-          </div>
-
           <div ref={stageRef} className="platform-preview-modal__stage">
             {loadState === 'failed' ? (
               <div className="platform-preview-modal__failed" role="alert">
@@ -174,7 +152,7 @@ export function PlatformPreviewModal({
             ) : (
               <div
                 className="platform-preview-modal__frame-box"
-                style={{ width: viewportWidth * scale, height: stageSize.height }}
+                style={{ width: PREVIEW_VIEWPORT_WIDTH * scale, height: stageSize.height }}
               >
                 {open && frameHeight > 0 ? (
                   <iframe
@@ -183,7 +161,7 @@ export function PlatformPreviewModal({
                     src={PLATFORM_PROGRAM_PREVIEW_PATH}
                     className="platform-preview-modal__frame"
                     style={{
-                      width: viewportWidth,
+                      width: PREVIEW_VIEWPORT_WIDTH,
                       height: frameHeight,
                       transform: `scale(${scale})`,
                     }}
