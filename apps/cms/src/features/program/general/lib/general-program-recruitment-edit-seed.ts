@@ -221,7 +221,9 @@ export function resolveGeneralProgramForRecruitmentEdit(program: Program): Progr
     program.registrationOverlay ?? {},
     { preferOverlay: false }
   )
-  const withOverlay = resolveGeneralRecruitDisplayProgram(withPersistedOverlay)
+  const withOverlay = resolveGeneralRecruitDisplayProgram(withPersistedOverlay, {
+    preferOverlay: false,
+  })
   return enrichVolunteerRecruitmentScalars(
     enrichInstructorRecruitmentScalars(enrichParticipantRecruitmentScalars(withOverlay))
   )
@@ -234,6 +236,9 @@ export function programToRecruitmentTabEditValues(
   const merged = resolveGeneralProgramForRecruitmentEdit(program)
   const base = programToDetailEditValues(merged)
   const detail = resolveGeneralRecruitDetailDisplayProgram(merged, audience)
+  const participantInfo = merged.generalCommonInfo?.participantRecruitmentInfo
+  const instructorInfo = merged.generalCommonInfo?.instructorRecruitmentInfo
+  const volunteerInfo = merged.generalCommonInfo?.volunteerRecruitmentInfo
   return {
     ...base,
     description: detail.description ?? base.description,
@@ -241,6 +246,21 @@ export function programToRecruitmentTabEditValues(
     applicationMethod: detail.applicationMethod ?? base.applicationMethod,
     learningSupportContent: detail.learningSupportContent ?? base.learningSupportContent,
     additionalContentHtml: detail.additionalContentHtml ?? base.additionalContentHtml,
-    otherNotes: detail.otherNotes ?? base.otherNotes,
+    otherNotes:
+      audience === 'instructor'
+        ? (instructorInfo?.remarks?.trim() || undefined)
+        : base.otherNotes,
+    remarks:
+      audience === 'participant'
+        ? participantInfo?.notesNotApplicable
+          ? ''
+          : (participantInfo?.remarks?.trim() || base.remarks)
+        : base.remarks,
+    oneLineIntroduction:
+      audience === 'volunteer'
+        ? volunteerInfo?.notesNotApplicable
+          ? ''
+          : (volunteerInfo?.remarks?.trim() || base.oneLineIntroduction)
+        : base.oneLineIntroduction,
   }
 }

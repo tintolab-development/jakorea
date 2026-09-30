@@ -10,8 +10,11 @@ import {
   applyGeneralRegistrationOverlayToProgram,
   type GeneralRegistrationEditorExtras,
 } from './registration-overlay-to-program'
+import { resolveEffectiveGeneralProgramTypeFields } from './curriculum-display'
 import {
+  extrasFromGeneralProgram,
   readGeneralRegistrationOverlayForSave,
+  resyncGeneralRegistrationOverlayFromProgram,
   seedGeneralRegistrationOverlayFromProgram,
 } from './registration-overlay-sync'
 
@@ -194,5 +197,224 @@ describe('일반 공통정보 저장 왕복', () => {
       finalSchools: 6,
       finalClasses: 9,
     })
+  })
+
+  it('복수 회차 extras + 단원 맵 저장은 중첩 행과 overlay 맵이 같다', () => {
+    const overlay: Record<string, unknown> = {
+      'generalRegistration.educationCurriculum.unitNameBySession': {
+        1: '개인 커리큘럼 단일1',
+        2: '개인 커리큘럼 단일2',
+      },
+      'generalRegistration.educationCurriculum.unitContentBySession': {
+        1: '개인 커리큘럼 단일11',
+        2: '개인 커리큘럼 단일22',
+      },
+      'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+      'generalRegistration.educationCurriculum.roundContentByRound': {
+        1: '옛 본문',
+      },
+      'generalRegistration.educationCurriculum.educationFormBySession': { 1: 'offline' },
+      'generalRegistration.educationCurriculum.ipsBySession': {
+        1: { category: 'succeed', detail: 'competition' },
+        2: { category: 'prepare', detail: 'none' },
+      },
+    }
+    const multiExtras: GeneralRegistrationEditorExtras = {
+      ...extras,
+      sessionRoundType: 'multi',
+      ipsScheduleDetail: 'perSchedule',
+      curriculumSessionCount: 1,
+      curriculumChartSessionCount: 1,
+      participantOrganization: false,
+    }
+    const existing = {
+      ...baseProgram(),
+      generalProgramAudience: 'individual' as const,
+      generalParticipantTypes: ['individual' as const],
+      generalProgramSessionRound: 'multi' as const,
+      category: 'individual' as const,
+    }
+    const applied = applyGeneralRegistrationOverlayToProgram(existing, overlay, multiExtras)
+    const withType = {
+      ...applied,
+      generalProgramSessionRound: multiExtras.sessionRoundType,
+      registrationOverlay: overlay,
+    }
+    const synced = resyncGeneralRegistrationOverlayFromProgram(withType, overlay)
+    const request = mapGeneralProgramToUpdateRequest(existing, {
+      title: applied.title,
+      mainTitle: applied.mainTitle,
+      generalCommonInfo: applied.generalCommonInfo,
+      registrationOverlay: synced,
+      generalProgramSessionRound: 'multi',
+    })
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      generalCommonInfo?: {
+        curriculumSessions?: Array<{ title?: string; description?: string; sessionLabel?: string }>
+      }
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(detail.generalCommonInfo?.curriculumSessions).toEqual([
+      expect.objectContaining({
+        sessionLabel: '1회차',
+        title: '개인 커리큘럼 단일1',
+        description: '개인 커리큘럼 단일11',
+      }),
+      expect.objectContaining({
+        sessionLabel: '2회차',
+        title: '개인 커리큘럼 단일2',
+        description: '개인 커리큘럼 단일22',
+      }),
+    ])
+    expect(detail.registration?.overlay?.['generalRegistration.educationCurriculum.unitNameBySession']).toEqual({
+      1: '개인 커리큘럼 단일1',
+      2: '개인 커리큘럼 단일2',
+    })
+    expect(detail.registration?.overlay?.['generalRegistration.educationCurriculum.roundContentByRound']).toEqual({
+      1: '개인 커리큘럼 단일11',
+      2: '개인 커리큘럼 단일22',
+    })
+    expect(
+      detail.registration?.overlay?.['generalRegistration.educationCurriculum.educationFormBySession']
+    ).toEqual({})
+
+    const reloaded = reload(request)
+    seedGeneralRegistrationOverlayFromProgram(reloaded)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.unitNameBySession']).toEqual({
+      1: '개인 커리큘럼 단일1',
+      2: '개인 커리큘럼 단일2',
+    })
+    expect(saved['generalRegistration.educationCurriculum.unitContentBySession']).toEqual({
+      1: '개인 커리큘럼 단일11',
+      2: '개인 커리큘럼 단일22',
+    })
+  })
+
+  it('단수 extras 저장은 overlay 회차 맵이 생겨도 PATCH·GET sessionRound가 single이다', () => {
+    const overlay: Record<string, unknown> = {
+      'generalRegistration.educationCurriculum.unitNameBySession': {
+        1: '개인 커리큘럼 단일1',
+        2: '개인 커리큘럼 단일2',
+      },
+      'generalRegistration.educationCurriculum.unitContentBySession': {
+        1: '개인 커리큘럼 단일11',
+        2: '개인 커리큘럼 단일22',
+      },
+      'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+      'generalRegistration.educationCurriculum.roundContentByRound': {
+        1: '옛 본문',
+      },
+    }
+    const singleExtras: GeneralRegistrationEditorExtras = {
+      ...extras,
+      sessionRoundType: 'single',
+      curriculumChartSessionCount: 2,
+      curriculumSessionCount: 2,
+      participantOrganization: false,
+    }
+    const existing = {
+      ...baseProgram(),
+      generalProgramAudience: 'individual' as const,
+      generalParticipantTypes: ['individual' as const],
+      generalProgramSessionRound: 'multi' as const,
+      category: 'individual' as const,
+    }
+    const applied = applyGeneralRegistrationOverlayToProgram(existing, overlay, singleExtras)
+    const withType = {
+      ...applied,
+      generalProgramEducationStructure: singleExtras.programType,
+      generalProgramSessionRound: singleExtras.sessionRoundType,
+      registrationOverlay: overlay,
+    }
+    const synced = resyncGeneralRegistrationOverlayFromProgram(withType, overlay)
+    const withOverlay = { ...withType, registrationOverlay: synced }
+    expect(
+      resolveEffectiveGeneralProgramTypeFields({
+        generalProgramAudience: withOverlay.generalProgramAudience,
+        generalProgramEducationStructure: withOverlay.generalProgramEducationStructure,
+        generalProgramSessionRound: withOverlay.generalProgramSessionRound,
+        curriculumSessions: withOverlay.generalCommonInfo?.curriculumSessions,
+        registrationOverlay: synced,
+      }).sessionRound
+    ).toBe('single')
+
+    const request = mapGeneralProgramToUpdateRequest(existing, {
+      title: applied.title,
+      mainTitle: applied.mainTitle,
+      generalCommonInfo: applied.generalCommonInfo,
+      registrationOverlay: synced,
+      generalProgramEducationStructure: singleExtras.programType,
+      generalProgramSessionRound: singleExtras.sessionRoundType,
+    })
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      generalProgramSessionRound?: string
+      generalCommonInfo?: {
+        curriculumSessions?: Array<{ sessionLabel?: string }>
+      }
+    }
+    expect(detail.generalProgramSessionRound).toBe('single')
+    expect(detail.generalCommonInfo?.curriculumSessions).toEqual([
+      expect.objectContaining({ sessionLabel: '1차시' }),
+      expect.objectContaining({ sessionLabel: '2차시' }),
+    ])
+
+    const reloaded = reload(request)
+    expect(reloaded.generalProgramSessionRound).toBe('single')
+    expect(extrasFromGeneralProgram(reloaded).sessionRoundType).toBe('single')
+  })
+
+  it('커리큘럼에서 일정으로 바꾸면 안 쓰는 curriculumSessions는 빈 배열로 보낸다', () => {
+    const overlay: Record<string, unknown> = {
+      'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+        1: '오리엔테이션',
+      },
+    }
+    const scheduleExtras: GeneralRegistrationEditorExtras = {
+      ...extras,
+      programType: 'schedule',
+      sessionRoundType: 'single',
+      scheduleCurriculumDetailCount: 1,
+    }
+    const existing = {
+      ...baseProgram(),
+      generalProgramEducationStructure: 'curriculum' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          { sessionLabel: '1차시', title: '옛 단원', description: '옛 본문' },
+        ],
+        scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: '옛 일정' }],
+      },
+    }
+    const applied = applyGeneralRegistrationOverlayToProgram(existing, overlay, scheduleExtras)
+    expect(applied.generalCommonInfo?.curriculumSessions).toEqual([])
+    const synced = resyncGeneralRegistrationOverlayFromProgram(
+      {
+        ...applied,
+        generalProgramEducationStructure: 'schedule',
+        registrationOverlay: overlay,
+      },
+      overlay
+    )
+    const request = mapGeneralProgramToUpdateRequest(existing, {
+      generalCommonInfo: applied.generalCommonInfo,
+      registrationOverlay: synced,
+      generalProgramEducationStructure: 'schedule',
+    })
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      generalCommonInfo?: {
+        curriculumSessions?: unknown[]
+        scheduleDetails?: Array<{ name?: string }>
+      }
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(detail.generalCommonInfo?.curriculumSessions).toEqual([])
+    expect(detail.generalCommonInfo?.scheduleDetails).toEqual([
+      expect.objectContaining({ name: '오리엔테이션' }),
+    ])
+    expect(
+      detail.registration?.overlay?.['generalRegistration.educationCurriculum.unitNameBySession']
+    ).toEqual({})
   })
 })

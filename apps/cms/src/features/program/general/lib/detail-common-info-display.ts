@@ -8,7 +8,10 @@ import type {
   Program,
   ProgramCategory,
 } from '@/types/domain'
-import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
+import {
+  countGeneralCurriculumOverlaySessions,
+  resolveEffectiveGeneralProgramTypeFields,
+} from '@/features/program/general/lib/curriculum-display'
 import { resolveEducationScheduleLinesForView } from '@/features/program/general/lib/education-schedule-lines-display'
 import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import {
@@ -23,7 +26,10 @@ import {
   DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK,
   GENERAL_INTERVIEW_MOCK_TIME_SLOTS,
 } from '@/features/program/general/model/volunteer-interview-schedule'
-import { extrasFromGeneralProgram } from '@/features/program/general/lib/registration-overlay-sync'
+import {
+  countRegularCurriculumSessions,
+  extrasFromGeneralProgram,
+} from '@/features/program/general/lib/registration-overlay-sync'
 import { applyRegistrationWageOverlayToCommonInfo } from '@/features/program/general/lib/wage-display'
 import {
   buildCurriculumSessionsFromRegistrationOverlay,
@@ -700,7 +706,7 @@ function educationFormLabelFromRegistrationValue(value: string): string {
   return options.find(option => option.value === value)?.label ?? value
 }
 
-/** 커리큘럼 복수 — sessionRound가 single로 남아도 overlay 회차 맵으로 조회 행을 되돌린다. */
+/** 커리큘럼 — 중첩 행이 있으면 그대로. overlay 재적용은 중첩 regular 세션이 없을 때만. */
 function applyCurriculumSessionsFromRegistrationOverlay<
   T extends NonNullable<Program['generalCommonInfo']>,
 >(common: T, program: Program, overlay: Record<string, unknown> | undefined): T {
@@ -712,10 +718,10 @@ function applyCurriculumSessionsFromRegistrationOverlay<
     curriculumSessions: common.curriculumSessions,
     registrationOverlay: overlay,
   })
-  if (typeFields.educationStructure !== 'curriculum' || typeFields.sessionRound !== 'multi') {
-    return common
-  }
-  if (program.generalProgramSessionRound === 'multi') return common
+  if (typeFields.educationStructure !== 'curriculum') return common
+  if (countRegularCurriculumSessions(common.curriculumSessions) > 0) return common
+  if (countGeneralCurriculumOverlaySessions(overlay) === 0) return common
+
   const extras = extrasFromGeneralProgram({
     ...program,
     generalCommonInfo: common,

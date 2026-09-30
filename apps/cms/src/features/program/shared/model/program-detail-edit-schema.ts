@@ -22,7 +22,9 @@
 import {
   formatDateOnly,
   formatDateRange,
+  formatInstructorTargetsLabel,
   formatTargetLevelsLabel,
+  formatVolunteerTargetsLabel,
   normalizeTargetLevelValue,
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
@@ -1397,6 +1399,29 @@ export function detailEditValuesToProgramPatch(
         inquiryEmail: instructorContactEmail?.trim() || undefined,
         contactPhone: instructorContactPhone?.trim() || undefined,
         contactEmail: instructorContactEmail?.trim() || undefined,
+        recruitmentTarget:
+          values.instructorTargets?.length
+            ? formatInstructorTargetsLabel(values.instructorTargets)
+            : existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTarget,
+        recruitmentTargetDetail:
+          values.instructorTargetDetail?.trim() ||
+          existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTargetDetail,
+        recruitmentPeriodLabel:
+          periodLabelFromRange(
+            values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
+            values.instructorApplicationEndDate ?? existing.instructorApplicationEndDate
+          ) ?? existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentPeriodLabel,
+        operationPeriodLabel:
+          periodLabelFromRange(startDate, endDate) ??
+          existing.generalCommonInfo?.instructorRecruitmentInfo?.operationPeriodLabel,
+        resultAnnouncementLabel: finalAnnouncementLabelFromParts(
+          values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
+          values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod
+        ),
+        finalAnnouncementLabel: finalAnnouncementLabelFromParts(
+          values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
+          values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod
+        ),
       },
       volunteerRecruitmentInfo: {
         ...existing.generalCommonInfo?.volunteerRecruitmentInfo,
@@ -1412,6 +1437,21 @@ export function detailEditValuesToProgramPatch(
         inquiryEmail: volunteerContactEmail?.trim() || undefined,
         contactPhone: volunteerContactPhone?.trim() || undefined,
         contactEmail: volunteerContactEmail?.trim() || undefined,
+        recruitmentTarget:
+          values.volunteerTargets?.length
+            ? formatVolunteerTargetsLabel(values.volunteerTargets)
+            : existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTarget,
+        recruitmentTargetDetail:
+          values.volunteerTargetDetail?.trim() ||
+          existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail,
+        recruitmentPeriodLabel:
+          periodLabelFromRange(
+            values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
+            values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate
+          ) ?? existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentPeriodLabel,
+        operationPeriodLabel:
+          periodLabelFromRange(startDate, endDate) ??
+          existing.generalCommonInfo?.volunteerRecruitmentInfo?.operationPeriodLabel,
       },
     },
     generalVolunteerInterviewEnabled:

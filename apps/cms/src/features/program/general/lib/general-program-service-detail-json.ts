@@ -3,6 +3,8 @@ import { pickDisplayValue } from '@/features/program/general/lib/detail-value-he
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
+import { buildGeneralRegistrationOverlayFromProgram } from '@/features/program/general/lib/registration-overlay-sync'
+import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
 import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -295,10 +297,24 @@ export function serializeGeneralProgramServiceDetailJson(
       ? omitRecruitmentWindowFromCommonInfo(withAudienceRule)
       : withAudienceRule
   )
+  const nestedProgram: Program = {
+    ...program,
+    generalCommonInfo,
+  }
+  const fromNested = buildGeneralRegistrationOverlayFromProgram(nestedProgram)
+  const overlayForPersist = options?.omitRecruitmentWindow
+    ? {
+        ...(program.registrationOverlay ?? {}),
+        ...fromNested,
+      }
+    : resyncGeneralRecruitOverlayFromProgram(nestedProgram, {
+        ...(program.registrationOverlay ?? {}),
+        ...fromNested,
+      })
   const persistedOverlay = persistScheduleEducationFormByDetailOverlay(
     buildRegistrationOverlayForPersist({
-      ...program,
-      generalCommonInfo,
+      ...nestedProgram,
+      registrationOverlay: overlayForPersist,
     }),
     generalCommonInfo?.scheduleDetails
   )

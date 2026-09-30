@@ -109,16 +109,16 @@ describe('resolveGeneralProgramDetailedProgramNameDisplay', () => {
 })
 
 describe('resolveGeneralProgramCommonInfo 임금', () => {
-  it('wageGradeRows가 1원이어도 overlay 강사비를 조회에 쓴다', () => {
+  it('중첩 급수 행이 있으면 overlay 강사비보다 우선한다', () => {
     const common = resolveGeneralProgramCommonInfo(
       baseProgram({
         generalCommonInfo: {
           wageGradeRows: [
-            { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 1원' },
-            { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 1원' },
-            { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 1원' },
+            { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 240,000원' },
+            { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 120,000원' },
+            { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 90,000원' },
           ],
-          paymentItems: '학생 교통비, 강사 교통비',
+          paymentItems: '강사 교통비, 숙박비',
         },
         registrationOverlay: {
           'generalRegistration.wageInfo.grade1Fee': 100_000,
@@ -127,32 +127,23 @@ describe('resolveGeneralProgramCommonInfo 임금', () => {
         },
       })
     )
-    expect(parseWageGradeAmount(common.wageGradeRows?.[0]?.pricing)).toBe(100_000)
-    expect(parseWageGradeAmount(common.wageGradeRows?.[1]?.pricing)).toBe(80_000)
-    expect(parseWageGradeAmount(common.wageGradeRows?.[2]?.pricing)).toBe(60_000)
+    expect(parseWageGradeAmount(common.wageGradeRows?.[0]?.pricing)).toBe(240_000)
+    expect(parseWageGradeAmount(common.wageGradeRows?.[1]?.pricing)).toBe(120_000)
+    expect(parseWageGradeAmount(common.wageGradeRows?.[2]?.pricing)).toBe(90_000)
   })
 })
 
 describe('resolveGeneralProgramCommonInfo 커리큘럼 복수', () => {
-  it('sessionRound가 single이어도 overlay 회차 맵으로 1회차를 조회한다', () => {
+  it('중첩 행이 없으면 overlay 회차 맵으로 1회차를 조회한다', () => {
     const common = resolveGeneralProgramCommonInfo(
       baseProgram({
         generalProgramAudience: 'individual',
         generalProgramEducationStructure: 'curriculum',
-        generalProgramSessionRound: 'single',
+        generalProgramSessionRound: 'multi',
         generalCommonInfo: {
           educationFormScheduleDetail: 'common',
           participationScheduleDetail: 'common',
           ipsScheduleDetail: 'perSchedule',
-          curriculumSessions: [
-            {
-              sessionLabel: '1차시',
-              title: '필요와 욕구, 현명한 소비',
-              description: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
-              ipsTypeSummary: 'Succeed | Conference (컨퍼런스)',
-            },
-            { sessionLabel: '2차시', title: '', description: '' },
-          ],
         },
         registrationOverlay: {
           'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
@@ -178,6 +169,88 @@ describe('resolveGeneralProgramCommonInfo 커리큘럼 복수', () => {
       }),
     ])
     expect(common.curriculumSessions).toHaveLength(1)
+  })
+
+  it('중첩 행이 있으면 overlay 단원 맵이 더 많아도 중첩 행을 조회한다', () => {
+    const common = resolveGeneralProgramCommonInfo(
+      baseProgram({
+        generalProgramAudience: 'individual',
+        generalProgramEducationStructure: 'curriculum',
+        generalProgramSessionRound: 'multi',
+        generalCommonInfo: {
+          educationFormScheduleDetail: 'common',
+          participationScheduleDetail: 'common',
+          ipsScheduleDetail: 'perSchedule',
+          curriculumSessions: [
+            {
+              sessionLabel: '1회차',
+              title: '1차시',
+              description: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+              ipsTypeSummary: 'Succeed | Competition (대회+시상)',
+            },
+          ],
+        },
+        registrationOverlay: {
+          'generalRegistration.educationCurriculum.unitNameBySession': {
+            1: '개인 커리큘럼 단일1',
+            2: '개인 커리큘럼 단일2',
+          },
+          'generalRegistration.educationCurriculum.unitContentBySession': {
+            1: '개인 커리큘럼 단일11',
+            2: '개인 커리큘럼 단일22',
+          },
+        },
+      })
+    )
+    expect(common.curriculumSessions).toEqual([
+      expect.objectContaining({
+        sessionLabel: '1회차',
+        title: '1차시',
+        description: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+      }),
+    ])
+    expect(common.curriculumSessions).toHaveLength(1)
+  })
+
+  it('중첩 행이 없으면 overlay 단원 맵으로 교육 진행을 조회한다', () => {
+    const common = resolveGeneralProgramCommonInfo(
+      baseProgram({
+        generalProgramAudience: 'individual',
+        generalProgramEducationStructure: 'curriculum',
+        generalProgramSessionRound: 'multi',
+        generalCommonInfo: {
+          educationFormScheduleDetail: 'common',
+          participationScheduleDetail: 'common',
+          ipsScheduleDetail: 'perSchedule',
+        },
+        registrationOverlay: {
+          'generalRegistration.educationCurriculum.unitNameBySession': {
+            1: '개인 커리큘럼 단일1',
+            2: '개인 커리큘럼 단일2',
+          },
+          'generalRegistration.educationCurriculum.unitContentBySession': {
+            1: '개인 커리큘럼 단일11',
+            2: '개인 커리큘럼 단일22',
+          },
+          'generalRegistration.educationCurriculum.ipsBySession': {
+            1: { category: 'succeed', detail: 'competition' },
+            2: { category: 'prepare', detail: 'none' },
+          },
+        },
+      })
+    )
+    expect(common.curriculumSessions).toEqual([
+      expect.objectContaining({
+        sessionLabel: '1회차',
+        title: '개인 커리큘럼 단일1',
+        description: '개인 커리큘럼 단일11',
+      }),
+      expect.objectContaining({
+        sessionLabel: '2회차',
+        title: '개인 커리큘럼 단일2',
+        description: '개인 커리큘럼 단일22',
+      }),
+    ])
   })
 })
 

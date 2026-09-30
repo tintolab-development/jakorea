@@ -31,7 +31,9 @@ import {
   formatInstructorTargetsLabel,
   formatTargetLevelsLabel,
   formatVolunteerTargetsLabel,
+  parseTargetLevelsFromDisplayLabel,
   resolvePersistedProgramTargetLevels,
+  resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 
 type RangeSeal = { start?: string | null; end?: string | null }
@@ -754,10 +756,22 @@ export function applyGeneralRecruitOverlayToProgram(
       participantInfo.resultAnnouncementLabel = nextFinal
     }
   }
-  if (overlay[inst.notesNotApplicable] === true) {
-    participantInfo.notesNotApplicable = true
-  } else if (overlay[inst.notesNotApplicable] === false && preferOverlay) {
-    participantInfo.notesNotApplicable = false
+  const overlayParticipantNotesNA =
+    overlay[inst.notesNotApplicable] === true || overlay[keys.individual.notesNotApplicable] === true
+      ? true
+      : overlay[inst.notesNotApplicable] === false ||
+          overlay[keys.individual.notesNotApplicable] === false
+        ? false
+        : undefined
+  if (overlayParticipantNotesNA !== undefined) {
+    const nextNotesNA = coalesceBool(
+      participantInfo.notesNotApplicable,
+      overlayParticipantNotesNA,
+      preferOverlay
+    )
+    if (nextNotesNA !== undefined) {
+      participantInfo.notesNotApplicable = nextNotesNA
+    }
   }
 
   const instructorTargetLabel =
@@ -955,10 +969,21 @@ export function applyGeneralRecruitOverlayToProgram(
   if (volunteerRemarks) {
     volunteerInfo.remarks = coalesceString(volunteerInfo.remarks, volunteerRemarks, preferOverlay)
   }
-  if (overlay[keys.volunteer.notesNotApplicable] === true) {
-    volunteerInfo.notesNotApplicable = true
-  } else if (overlay[keys.volunteer.notesNotApplicable] === false && preferOverlay) {
-    volunteerInfo.notesNotApplicable = false
+  const overlayVolunteerNotesNA =
+    overlay[keys.volunteer.notesNotApplicable] === true
+      ? true
+      : overlay[keys.volunteer.notesNotApplicable] === false
+        ? false
+        : undefined
+  if (overlayVolunteerNotesNA !== undefined) {
+    const nextVolunteerNotesNA = coalesceBool(
+      volunteerInfo.notesNotApplicable,
+      overlayVolunteerNotesNA,
+      preferOverlay
+    )
+    if (nextVolunteerNotesNA !== undefined) {
+      volunteerInfo.notesNotApplicable = nextVolunteerNotesNA
+    }
   }
 
   const volunteerInterviewEnabled = overlayYesNoBool(overlay, keys.volunteer.interviewRequired)
@@ -1096,20 +1121,30 @@ export function applyGeneralRecruitOverlayToProgram(
     preferOverlay
   )
 
-  const nextTargetLevels = resolvePersistedProgramTargetLevels({
-    targetLevels: program.targetLevels,
-    targetLevel: program.targetLevel,
-    registrationOverlay: {
-      ...(program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
-        ? (program.registrationOverlay as Record<string, unknown>)
-        : {}),
-      ...overlay,
-    },
-    generalCommonInfo: {
-      ...common,
-      participantRecruitmentInfo: participantInfo,
-    },
-  })
+  const fromProgramLevels = resolveProgramTargetLevels(program)
+  const fromNestedLabel = parseTargetLevelsFromDisplayLabel(
+    participantInfo.educationTarget ?? participantInfo.recruitmentTarget
+  )
+  const nextTargetLevels = preferOverlay
+    ? resolvePersistedProgramTargetLevels({
+        targetLevels: program.targetLevels,
+        targetLevel: program.targetLevel,
+        registrationOverlay: {
+          ...(program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
+            ? (program.registrationOverlay as Record<string, unknown>)
+            : {}),
+          ...overlay,
+        },
+        generalCommonInfo: {
+          ...common,
+          participantRecruitmentInfo: participantInfo,
+        },
+      })
+    : fromProgramLevels.length > 0
+      ? fromProgramLevels
+      : fromNestedLabel.length > 0
+        ? fromNestedLabel
+        : (targetLevels ?? [])
 
   const nextInstructorTargets =
     preferOverlay && instructorTargets?.length
@@ -1297,8 +1332,7 @@ function firstRecruitDetailText(...values: Array<string | undefined>): string | 
 
 /**
  * 모집 정보 탭 상세정보(프로그램 설명·모집 안내 등).
- * BE는 모집 저장을 컬럼(`description` 등)에 두고 nested `*RecruitmentInfo`는 옛 값을 남긴다.
- * 참여자는 컬럼 → overlay → nested 순으로 읽는다.
+ * 중첩 `*RecruitmentInfo`가 정본. overlay는 중첩이 비었을 때만, 컬럼은 그 다음.
  */
 export function resolveGeneralRecruitDetailDisplayProgram(
   program: Program,
@@ -1317,98 +1351,98 @@ export function resolveGeneralRecruitDetailDisplayProgram(
   const description =
     audience === 'participant'
       ? firstRecruitDetailText(
-          program.description,
+          info?.programDescription,
           overlayParticipantDetailString(overlay, 'programDescription', keys.participantDescription),
-          info?.programDescription
+          program.description
         )
       : firstRecruitDetailText(
+          info?.programDescription,
           overlayString(
             overlay,
             audience === 'instructor' ? keys.instructorDescription : keys.volunteerDescription
-          ),
-          info?.programDescription
+          )
         )
   const recruitmentGuide =
     audience === 'participant'
       ? firstRecruitDetailText(
-          program.recruitmentGuide,
+          info?.recruitmentGuide,
           overlayParticipantDetailString(overlay, 'recruitmentGuide', keys.participantGuide),
-          info?.recruitmentGuide
+          program.recruitmentGuide
         )
       : firstRecruitDetailText(
+          info?.recruitmentGuide,
           overlayString(
             overlay,
             audience === 'instructor' ? keys.instructorGuide : keys.volunteerGuide
-          ),
-          info?.recruitmentGuide
+          )
         )
   const applicationMethod =
     audience === 'participant'
       ? firstRecruitDetailText(
-          program.applicationMethod,
+          info?.applicationMethod,
           overlayParticipantDetailString(overlay, 'applicationMethod', keys.participantMethod),
-          info?.applicationMethod
+          program.applicationMethod
         )
       : firstRecruitDetailText(
+          info?.applicationMethod,
           overlayString(
             overlay,
             audience === 'instructor' ? keys.instructorMethod : keys.volunteerMethod
-          ),
-          info?.applicationMethod
+          )
         )
   const learningSupportContent =
     audience === 'participant'
       ? firstRecruitDetailText(
-          program.learningSupportContent,
+          info?.learningSupportContent,
           overlayParticipantDetailString(
             overlay,
             'learningSupportContent',
             keys.participantLearningSupport
           ),
-          info?.learningSupportContent
+          program.learningSupportContent
         )
       : firstRecruitDetailText(
+          info?.learningSupportContent,
           overlayString(
             overlay,
             audience === 'instructor'
               ? keys.instructorLearningSupport
               : keys.volunteerLearningSupport
-          ),
-          info?.learningSupportContent
+          )
         )
   const additionalContentHtml =
     audience === 'participant'
       ? firstRecruitDetailText(
-          program.additionalContentHtml,
+          info?.additionalContentHtml,
           overlayParticipantDetailString(
             overlay,
             'additionalContentHtml',
             keys.participantAdditionalHtml
           ),
-          info?.additionalContentHtml
+          program.additionalContentHtml
         )
       : firstRecruitDetailText(
+          info?.additionalContentHtml,
           overlayString(
             overlay,
             audience === 'instructor' ? keys.instructorAdditionalHtml : keys.volunteerAdditionalHtml
-          ),
-          info?.additionalContentHtml
+          )
         )
   const otherNotes =
     info && 'notesNotApplicable' in info && info.notesNotApplicable
       ? undefined
       : audience === 'participant'
         ? firstRecruitDetailText(
-            program.otherNotes,
+            info?.remarks,
             overlayParticipantDetailString(overlay, 'otherNotes', keys.participantOtherNotes),
-            info?.remarks
+            program.otherNotes
           )
         : firstRecruitDetailText(
+            info?.remarks,
             overlayString(
               overlay,
               audience === 'instructor' ? keys.instructorOtherNotes : keys.volunteerOtherNotes
-            ),
-            info?.remarks
+            )
           )
 
   const withPersistedRecruitMedia = applyGeneralRecruitOverlayToProgram(

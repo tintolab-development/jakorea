@@ -43,9 +43,54 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
     const values = programToRecruitmentTabEditValues(program, 'participant')
     expect(values.targetLevels).toEqual(['high'])
     expect(values.educationTargetDetail).toBe('모집 상세')
-    expect(values.description).toBe('공통 설명')
+    expect(values.description).toBe('모집 전용 설명')
     expect(values.recruitmentContactOrganizationName).toBe('모집 문의처')
     expect(values.contactPhone).toBe('02-6085-6028')
+  })
+
+  it('참여자 모집 비고는 remarks에 넣고 otherNotes(기타 안내)와 섞지 않는다', () => {
+    const program = {
+      id: 'general-prog-notes',
+      title: '비고',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      otherNotes: '기타 안내',
+      remarks: '컬럼 비고',
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          remarks: '모집 비고',
+        },
+      },
+    } as Program
+
+    const values = programToRecruitmentTabEditValues(program, 'participant')
+    expect(values.remarks).toBe('모집 비고')
+    expect(values.otherNotes).toBe('기타 안내')
+  })
+
+  it('강사·봉사자 모집 비고는 각 nested remarks를 해당 폼 필드에 넣는다', () => {
+    const program = {
+      id: 'general-prog-audience-notes',
+      title: '비고',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      otherNotes: '기타 안내',
+      oneLineIntroduction: '한줄 소개',
+      generalCommonInfo: {
+        instructorRecruitmentInfo: { remarks: '강사 비고' },
+        volunteerRecruitmentInfo: { remarks: '봉사자 비고' },
+      },
+    } as Program
+
+    expect(programToRecruitmentTabEditValues(program, 'instructor').otherNotes).toBe('강사 비고')
+    expect(programToRecruitmentTabEditValues(program, 'volunteer').oneLineIntroduction).toBe(
+      '봉사자 비고'
+    )
+    expect(programToRecruitmentTabEditValues(program, 'volunteer').otherNotes).toBe('기타 안내')
   })
 
   it('강사 모집 대상 라벨을 instructorTargets로 복원한다', () => {
@@ -90,6 +135,31 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
     const values = programToRecruitmentTabEditValues(program, 'participant')
     expect(values.targetLevels).toEqual(['middle', 'high'])
     expect(values.educationTargetDetail).toBe('중고등 상세')
+  })
+
+  it('시드 leftover overlay가 중첩·컬럼보다 긴 배열이어도 이기지 않는다', () => {
+    const program = {
+      id: 'general-prog-leftover-levels',
+      title: 'leftover',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      targetLevel: 'high',
+      targetLevels: ['high'],
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          educationTarget: '고등학교',
+        },
+      },
+      registrationOverlay: {
+        'recruit.targetLevels': ['elementary', 'middle', 'high'],
+        'recruit.individual.targetLevels': ['elementary', 'middle', 'high'],
+      },
+    } as unknown as Program
+
+    const values = programToRecruitmentTabEditValues(program, 'participant')
+    expect(values.targetLevels).toEqual(['high'])
   })
 
   it('조회 라벨이 더 많은 교육 대상이면 수정 시드는 컬럼 1개를 덮는다', () => {

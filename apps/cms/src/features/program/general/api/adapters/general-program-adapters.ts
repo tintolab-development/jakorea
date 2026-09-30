@@ -873,7 +873,12 @@ function mapProgramPatchFieldsToRequest(
   if (has('district')) body.district = merged.district
   if (has('ips')) body.ips = merged.ips
   if (has('targetLevel') || has('targetLevels')) {
-    const targetLevels = resolveRequestTargetLevels(merged) ?? []
+    const formTargetLevels = merged.targetLevels?.filter(Boolean) ?? []
+    const targetLevels = patchIncludesRecruitmentWindow(patch)
+      ? formTargetLevels.length > 0
+        ? [...formTargetLevels]
+        : (resolveRequestTargetLevels(merged) ?? [])
+      : (resolveRequestTargetLevels(merged) ?? [])
     body.targetLevels = targetLevels
     body.targetLevel = targetLevels[0]
   }
@@ -950,7 +955,9 @@ function mapProgramPatchFieldsToRequest(
   if (touchesServiceDetail) {
     const persistedTargetLevels =
       has('targetLevel') || has('targetLevels')
-        ? resolveRequestTargetLevels(merged)
+        ? patchIncludesRecruitmentWindow(patch) && (merged.targetLevels?.length ?? 0) > 0
+          ? [...(merged.targetLevels ?? [])]
+          : resolveRequestTargetLevels(merged)
         : resolveRequestTargetLevels(detailSource, existing)
     const serializeSource =
       persistedTargetLevels?.length

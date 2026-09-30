@@ -8,9 +8,9 @@ import type {
   Program,
 } from '@/types/domain'
 import {
-  countGeneralCurriculumMultiRoundsFromOverlay,
+  countGeneralCurriculumOverlaySessions,
+  countGeneralCurriculumUnitSessionsFromOverlay,
   curriculumSessionHasRoundLabel,
-  hasGeneralCurriculumMultiRoundOverlay,
   resolveEffectiveGeneralProgramTypeFields,
 } from '@/features/program/general/lib/curriculum-display'
 import { participantFlagsFromGeneralProgram } from '@/features/program/general/lib/participant-audience-selection'
@@ -181,22 +181,32 @@ function isEmptyEducationFormMap(value: unknown): boolean {
   return value == null || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length === 0
 }
 
-/** GET에 남은 행 라벨로 일정별 교육 형태를 되돌린다. overlay 맵이 이미 있으면 그대로 둔다. */
+/** GET에 남은 행 라벨로 일정별 교육 형태를 되돌린다. 현재 유형 쪽 맵만 채운다. */
 function fillPerScheduleEducationFormMaps(
   merged: Record<string, unknown>,
   program: Program
 ): void {
   const common = program.generalCommonInfo
   if ((common?.educationFormScheduleDetail ?? 'common') !== 'perSchedule') return
+  const structure = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: common?.curriculumSessions,
+    registrationOverlay: merged,
+  }).educationStructure
 
-  if (isEmptyEducationFormMap(merged[CURRICULUM_EDUCATION_FORM_BY_SESSION_KEY])) {
-    const map: Record<number, string> = {}
-    ;(common?.curriculumSessions ?? []).forEach((row, index) => {
-      const value = educationFormValueFromLabel(row.educationFormLabel)
-      if (!value) return
-      map[overlayIndexFromRowLabel(row.sessionLabel, index + 1)] = value
-    })
-    if (Object.keys(map).length > 0) merged[CURRICULUM_EDUCATION_FORM_BY_SESSION_KEY] = map
+  if (structure === 'curriculum') {
+    if (isEmptyEducationFormMap(merged[CURRICULUM_EDUCATION_FORM_BY_SESSION_KEY])) {
+      const map: Record<number, string> = {}
+      ;(common?.curriculumSessions ?? []).forEach((row, index) => {
+        const value = educationFormValueFromLabel(row.educationFormLabel)
+        if (!value) return
+        map[overlayIndexFromRowLabel(row.sessionLabel, index + 1)] = value
+      })
+      if (Object.keys(map).length > 0) merged[CURRICULUM_EDUCATION_FORM_BY_SESSION_KEY] = map
+    }
+    return
   }
 
   if (isEmptyEducationFormMap(merged[SCHEDULE_EDUCATION_FORM_BY_DETAIL_KEY])) {
@@ -265,15 +275,6 @@ function isEmptyPaymentItemValues(value: unknown): boolean {
   return !Array.isArray(value) || value.length === 0
 }
 
-function isEmptyOverlayRecord(value: unknown): boolean {
-  return (
-    value == null ||
-    typeof value !== 'object' ||
-    Array.isArray(value) ||
-    Object.keys(value).length === 0
-  )
-}
-
 function isEmptyOverlayText(value: unknown): boolean {
   return typeof value !== 'string' || value.trim() === ''
 }
@@ -301,15 +302,8 @@ function ipsValueFromSummary(summary: string | undefined): { category: string; d
 }
 
 function curriculumOverlayFromProgram(program: Program): Record<string, unknown> {
-  const common = program.generalCommonInfo
-  const rows = common?.curriculumSessions ?? []
-  const saved = overlayFromProgram(program)
-  const sessionsAreRoundShaped = rows.some(row => curriculumSessionHasRoundLabel(row))
-  const savedIsMulti = hasGeneralCurriculumMultiRoundOverlay(saved)
-  if (rows.length === 0 && !savedIsMulti) return {}
-  const multi =
-    program.generalProgramSessionRound === 'multi' || sessionsAreRoundShaped || savedIsMulti
-  const keepSavedMultiMaps = savedIsMulti && !sessionsAreRoundShaped
+  const rows = program.generalCommonInfo?.curriculumSessions ?? []
+  if (rows.length === 0) return {}
   const unitNameBySession: Record<number, string> = {}
   const unitContentBySession: Record<number, string> = {}
   const progressSessionByRound: Record<number, string> = {}
@@ -329,50 +323,27 @@ function curriculumOverlayFromProgram(program: Program): Record<string, unknown>
     if (isPre) {
       preEducationScheduleName = row.title
       preEducationScheduleLine = row.scheduleDateLabel ?? null
-    } else if (multi && sessionsAreRoundShaped) {
-      progressSessionByRound[index] = row.title.replace(/\s*차시\s*$/, '').trim()
-      roundContentByRound[index] = row.description
-    } else if (!multi) {
-      unitNameBySession[index] = row.title
-      unitContentBySession[index] = row.description
+    } else {
+      const title = row.title?.trim() ?? ''
+      const description = row.description?.trim() ?? ''
+      unitNameBySession[index] = title
+      unitContentBySession[index] = description
+      progressSessionByRound[index] = title.replace(/\s*차시\s*$/, '').trim() || String(index)
+      roundContentByRound[index] = description
+      assignmentByRound[index] = {
+        enabled: row.assignmentEnabled === true,
+        period: row.assignmentPeriod ?? '',
+      }
     }
     const educationForm = educationFormValueFromLabel(row.educationFormLabel)
     if (educationForm) educationFormBySession[index] = educationForm
     if (!isPre && row.participationMethodLabel) {
       participationBySession[index] = participationValueFromLabel(row.participationMethodLabel)
     }
-    if (row.ipsTypeSummary && !keepSavedMultiMaps) {
+    if (row.ipsTypeSummary) {
       ipsBySession[index] = ipsValueFromSummary(row.ipsTypeSummary)
     }
-    if (!isPre && !keepSavedMultiMaps) {
-      assignmentByRound[index] = {
-        enabled: row.assignmentEnabled === true,
-        period: row.assignmentPeriod ?? '',
-      }
-    }
   })
-
-  if (savedIsMulti && !sessionsAreRoundShaped) {
-    const savedProgress = saved[`${CURRICULUM}.progressSessionByRound`]
-    const savedRoundContent = saved[`${CURRICULUM}.roundContentByRound`]
-    const savedAssignment = saved[`${CURRICULUM}.assignmentByRound`]
-    const savedIps = saved[`${CURRICULUM}.ipsBySession`]
-    if (!isEmptyOverlayRecord(savedProgress)) {
-      Object.assign(progressSessionByRound, savedProgress as Record<number, string>)
-    }
-    if (!isEmptyOverlayRecord(savedRoundContent)) {
-      Object.assign(roundContentByRound, savedRoundContent as Record<number, string>)
-    }
-    if (!isEmptyOverlayRecord(savedAssignment)) {
-      Object.assign(
-        assignmentByRound,
-        savedAssignment as Record<number, { enabled: boolean; period: string }>
-      )
-    }
-    if (!isEmptyOverlayRecord(savedIps)) {
-      Object.assign(ipsBySession, savedIps as Record<number, { category: string; detail: string }>)
-    }
-  }
 
   return {
     [`${CURRICULUM}.unitNameBySession`]: unitNameBySession,
@@ -441,20 +412,48 @@ function preferFilled<T>(saved: T | undefined, fallback: T, isEmpty: (value: T) 
   return fallback
 }
 
+function emptyCurriculumProgressOverlay(): Record<string, unknown> {
+  return {
+    [`${CURRICULUM}.unitNameBySession`]: {},
+    [`${CURRICULUM}.unitContentBySession`]: {},
+    [`${CURRICULUM}.progressSessionByRound`]: {},
+    [`${CURRICULUM}.roundContentByRound`]: {},
+    [`${CURRICULUM}.educationFormBySession`]: {},
+    [`${CURRICULUM}.participationBySession`]: {},
+    [`${CURRICULUM}.ipsBySession`]: {},
+    [`${CURRICULUM}.assignmentByRound`]: {},
+    [`${CURRICULUM}.preEducationScheduleName`]: '',
+    [`${CURRICULUM}.preEducationScheduleLine`]: null,
+  }
+}
+
+function emptyScheduleProgressOverlay(): Record<string, unknown> {
+  return {
+    'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {},
+    'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {},
+    [GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY]: {},
+    [SCHEDULE_EDUCATION_FORM_BY_DETAIL_KEY]: {},
+    'generalRegistration.educationScheduleCurriculum.participationByDetail': {},
+    'generalRegistration.educationScheduleCurriculum.ipsByDetailIndex': {},
+    'generalRegistration.educationScheduleCurriculum.assignmentByDetail': {},
+  }
+}
+
 function wageOverlayFromProgram(program: Program): Record<string, unknown> {
   const common = program.generalCommonInfo
   const overlay = overlayFromProgram(program)
+  const fromNestedIds = resolveWagePaymentItemIds(common?.paymentItems)
   const overlayIds = overlay[`${WAGE}.paymentItemValues`]
   const paymentItemValues =
-    Array.isArray(overlayIds) && overlayIds.length > 0
-      ? overlayIds.map(String)
-      : resolveWagePaymentItemIds(
-          overlayString(overlay, `${WAGE}.paymentItemLabels`) || common?.paymentItems
-        )
+    fromNestedIds.length > 0
+      ? fromNestedIds
+      : Array.isArray(overlayIds) && overlayIds.length > 0
+        ? overlayIds.map(String)
+        : resolveWagePaymentItemIds(overlayString(overlay, `${WAGE}.paymentItemLabels`))
   const paymentItemLabels =
+    coerceProgramPaymentItemsText(common?.paymentItems).trim() ||
     overlayString(overlay, `${WAGE}.paymentItemLabels`) ||
     programPaymentItemLabelsFromIds(paymentItemValues) ||
-    coerceProgramPaymentItemsText(common?.paymentItems).trim() ||
     ''
 
   return {
@@ -495,7 +494,8 @@ export function extrasFromGeneralProgram(program: Program): GeneralRegistrationE
   })
   const participant = participantFlagsFromGeneralProgram(program)
   const regularSessionCount = countRegularCurriculumSessions(common?.curriculumSessions)
-  const overlayRoundCount = countGeneralCurriculumMultiRoundsFromOverlay(overlay)
+  const overlaySessionCount = countGeneralCurriculumOverlaySessions(overlay)
+  const overlayUnitCount = countGeneralCurriculumUnitSessionsFromOverlay(overlay)
   const labeledRoundCount = (common?.curriculumSessions ?? []).filter(
     session =>
       !session.sessionLabel.includes('사전') &&
@@ -505,11 +505,11 @@ export function extrasFromGeneralProgram(program: Program): GeneralRegistrationE
   const curriculumSessionCount =
     typeFields.sessionRound === 'multi'
       ? labeledRoundCount > 0
-        ? labeledRoundCount
-        : overlayRoundCount > 0
-          ? overlayRoundCount
+        ? Math.max(labeledRoundCount, overlayUnitCount)
+        : overlaySessionCount > 0
+          ? overlaySessionCount
           : Math.max(1, regularSessionCount)
-      : Math.max(1, regularSessionCount)
+      : Math.max(1, regularSessionCount, overlayUnitCount)
   return {
     programType: typeFields.educationStructure,
     sessionRoundType: typeFields.sessionRound,
@@ -518,7 +518,7 @@ export function extrasFromGeneralProgram(program: Program): GeneralRegistrationE
     participationScheduleDetail: common?.participationScheduleDetail ?? 'common',
     ipsScheduleDetail: common?.ipsScheduleDetail ?? 'common',
     curriculumSessionCount,
-    curriculumChartSessionCount: Math.max(1, regularSessionCount),
+    curriculumChartSessionCount: Math.max(1, regularSessionCount, overlayUnitCount),
     scheduleCurriculumDetailCount: Math.max(1, countRegularScheduleDetails(common?.scheduleDetails)),
     scheduleCurriculumGroupCount: countScheduleCurriculumGroups(common?.scheduleDetails),
     scheduleCurriculumPreEducation: common?.scheduleCurriculumPreEducation === true,
@@ -596,67 +596,52 @@ export function buildGeneralRegistrationOverlayFromProgram(
     [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: [
       ...(common?.educationScheduleLines ?? []),
     ],
-    ...curriculumOverlayFromProgram(program),
-    ...scheduleOverlayFromProgram(program),
+    ...(extras.programType === 'schedule'
+      ? { ...emptyCurriculumProgressOverlay(), ...scheduleOverlayFromProgram(program) }
+      : { ...emptyScheduleProgressOverlay(), ...curriculumOverlayFromProgram(program) }),
   }
+}
+
+/** 저장 — 중첩 행에서 overlay를 다시 만들고, 편집 overlay의 중첩에 없는 키만 남긴다. */
+export function resyncGeneralRegistrationOverlayFromProgram(
+  program: Program,
+  editOverlay?: Record<string, unknown>
+): Record<string, unknown> {
+  const fromNested = buildGeneralRegistrationOverlayFromProgram(program)
+  const extra = editOverlay ?? overlayFromProgram(program)
+  return { ...extra, ...fromNested }
 }
 
 export function seedGeneralRegistrationOverlayFromProgram(program: Program): void {
   const fromProgram = buildGeneralRegistrationOverlayFromProgram(program)
   const saved = overlayFromProgram(program)
-  // canonical Program/GET 값을 우선한다. overlay는 canonical에 없는 레거시 입력만 보완한다.
+  // 중첩 행에서 만든 overlay가 진실. saved는 중첩에 없는 키만 남긴다.
   const merged = { ...saved, ...fromProgram }
   merged[`${WAGE}.grade1Fee`] = preferFilled(
-    saved[`${WAGE}.grade1Fee`] as number | null | undefined,
     fromProgram[`${WAGE}.grade1Fee`] as number | null,
+    saved[`${WAGE}.grade1Fee`] as number | null | undefined,
     isEmptyWageFee
   )
   merged[`${WAGE}.grade2Fee`] = preferFilled(
-    saved[`${WAGE}.grade2Fee`] as number | null | undefined,
     fromProgram[`${WAGE}.grade2Fee`] as number | null,
+    saved[`${WAGE}.grade2Fee`] as number | null | undefined,
     isEmptyWageFee
   )
   merged[`${WAGE}.grade3Fee`] = preferFilled(
-    saved[`${WAGE}.grade3Fee`] as number | null | undefined,
     fromProgram[`${WAGE}.grade3Fee`] as number | null,
+    saved[`${WAGE}.grade3Fee`] as number | null | undefined,
     isEmptyWageFee
   )
   merged[`${WAGE}.paymentItemValues`] = preferFilled(
-    saved[`${WAGE}.paymentItemValues`] as unknown[] | undefined,
     fromProgram[`${WAGE}.paymentItemValues`] as unknown[],
+    saved[`${WAGE}.paymentItemValues`] as unknown[] | undefined,
     isEmptyPaymentItemValues
   )
   merged[`${WAGE}.paymentItemLabels`] = preferFilled(
-    saved[`${WAGE}.paymentItemLabels`] as string | undefined,
     String(fromProgram[`${WAGE}.paymentItemLabels`] ?? ''),
+    saved[`${WAGE}.paymentItemLabels`] as string | undefined,
     isEmptyOverlayText
   )
-  // 차시 행만 있으면 overlay 회차 맵을 덮지 않는다. 회차 라벨 행이 있으면 조회 행을 우선한다.
-  const sessionsAreRoundShaped = (program.generalCommonInfo?.curriculumSessions ?? []).some(
-    session => curriculumSessionHasRoundLabel(session)
-  )
-  if (!sessionsAreRoundShaped && hasGeneralCurriculumMultiRoundOverlay(saved)) {
-    merged[`${CURRICULUM}.progressSessionByRound`] = preferFilled(
-      saved[`${CURRICULUM}.progressSessionByRound`] as Record<string, unknown> | undefined,
-      (fromProgram[`${CURRICULUM}.progressSessionByRound`] as Record<string, unknown>) ?? {},
-      isEmptyOverlayRecord
-    )
-    merged[`${CURRICULUM}.roundContentByRound`] = preferFilled(
-      saved[`${CURRICULUM}.roundContentByRound`] as Record<string, unknown> | undefined,
-      (fromProgram[`${CURRICULUM}.roundContentByRound`] as Record<string, unknown>) ?? {},
-      isEmptyOverlayRecord
-    )
-    merged[`${CURRICULUM}.assignmentByRound`] = preferFilled(
-      saved[`${CURRICULUM}.assignmentByRound`] as Record<string, unknown> | undefined,
-      (fromProgram[`${CURRICULUM}.assignmentByRound`] as Record<string, unknown>) ?? {},
-      isEmptyOverlayRecord
-    )
-    merged[`${CURRICULUM}.ipsBySession`] = preferFilled(
-      saved[`${CURRICULUM}.ipsBySession`] as Record<string, unknown> | undefined,
-      (fromProgram[`${CURRICULUM}.ipsBySession`] as Record<string, unknown>) ?? {},
-      isEmptyOverlayRecord
-    )
-  }
   // dispatched 학교/학급 수는 canonical KPI 조회 전까지 비운다.
   merged[`${KPI}.dispatchedSchool`] = null
   merged[`${KPI}.dispatchedClass`] = null

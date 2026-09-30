@@ -197,9 +197,18 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           onProgramTypeChange={value => commitExtras({ ...extras, programType: value })}
           participantOrganization={participant.organization}
           sessionRoundType={extras.sessionRoundType}
-          onSessionRoundTypeChange={value =>
-            commitExtras({ ...extras, sessionRoundType: value })
-          }
+          onSessionRoundTypeChange={value => {
+            const nextCount = Math.max(
+              extras.curriculumSessionCount ?? 1,
+              extras.curriculumChartSessionCount ?? 1
+            )
+            commitExtras({
+              ...extras,
+              sessionRoundType: value,
+              curriculumSessionCount: nextCount,
+              curriculumChartSessionCount: nextCount,
+            })
+          }}
           educationFormScheduleDetail={extras.educationFormScheduleDetail ?? 'common'}
           onEducationFormScheduleDetailChange={value =>
             commitExtras({ ...extras, educationFormScheduleDetail: value })

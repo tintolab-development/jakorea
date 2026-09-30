@@ -356,4 +356,30 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.additionalContentHtml).toBe(html)
     expect(next.generalCommonInfo?.participantRecruitmentInfo?.additionalContentHtml).toBe(html)
   })
+
+  it('preferOverlay false면 nested 비고·해당없음을 overlay 옛값으로 덮지 않는다', () => {
+    const inst = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          remarks: '수정된 비고',
+          notesNotApplicable: false,
+        },
+      },
+    } as Program
+    const next = applyGeneralRecruitOverlayToProgram(
+      program,
+      {
+        [inst.notesNotApplicable]: true,
+        [inst.notes]: 'overlay 옛 비고',
+        [GENERAL_RECRUIT_OVERLAY_KEYS.individual.notes]: 'overlay 옛 비고',
+        [GENERAL_RECRUIT_OVERLAY_KEYS.detailInfo.participantOtherNotes]: 'overlay 옛 비고',
+      },
+      { preferOverlay: false }
+    )
+
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.notesNotApplicable).toBe(false)
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('수정된 비고')
+  })
 })

@@ -4,7 +4,10 @@ import {
   applyRecruitmentAdditionalContentHtml,
   applyRecruitmentDetailInfoFields,
 } from './apply-recruitment-additional-content-html'
-import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import {
+  applyGeneralRecruitOverlayToProgram,
+  resolveGeneralRecruitDetailDisplayProgram,
+} from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { serializeGeneralProgramServiceDetailJson } from '@/features/program/general/lib/general-program-service-detail-json'
 
 const existing = {
@@ -93,5 +96,69 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
 
     const display = resolveGeneralRecruitDetailDisplayProgram({ ...existing, ...patch }, 'participant')
     expect(display.description).toBe(description)
+  })
+
+  it('참여자 모집 비고 — remarks를 쓰고 otherNotes(기타 안내)로 덮지 않는다', () => {
+    const withNotes = {
+      ...existing,
+      otherNotes: '기타 안내(otherMatters)',
+      remarks: '옛 비고',
+      registrationOverlay: {
+        'recruit.detailInfo.otherNotes': 'overlay 옛 비고',
+        'recruit.individual.notes': 'overlay 옛 비고',
+        'recruit.notes': 'overlay 옛 비고',
+      },
+      generalCommonInfo: {
+        ...existing.generalCommonInfo,
+        participantRecruitmentInfo: {
+          ...existing.generalCommonInfo?.participantRecruitmentInfo,
+          remarks: '옛 비고',
+        },
+      },
+    } as Program
+
+    const patch = applyRecruitmentDetailInfoFields(
+      { remarks: '옛 비고' },
+      withNotes,
+      'participant',
+      { remarks: '수정된 비고' }
+    )
+
+    expect(patch.otherNotes).toBeUndefined()
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('수정된 비고')
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.notesNotApplicable).toBe(false)
+    expect(patch.registrationOverlay?.['recruit.detailInfo.otherNotes']).toBe('수정된 비고')
+    expect(patch.registrationOverlay?.['recruit.individual.notes']).toBe('수정된 비고')
+    expect(patch.registrationOverlay?.['recruit.notes']).toBe('수정된 비고')
+
+    const draft = {
+      ...withNotes,
+      ...patch,
+      generalCommonInfo: {
+        ...withNotes.generalCommonInfo,
+        ...patch.generalCommonInfo,
+      },
+      registrationOverlay: patch.registrationOverlay,
+    } as Program
+    const remapped = applyGeneralRecruitOverlayToProgram(
+      draft,
+      draft.registrationOverlay ?? {},
+      { preferOverlay: false }
+    )
+    expect(remapped.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('수정된 비고')
+    expect(remapped.otherNotes).toBe('기타 안내(otherMatters)')
+  })
+
+  it('봉사자 모집 비고 — volunteerRecruitmentInfo.remarks만 갱신한다', () => {
+    const patch = applyRecruitmentDetailInfoFields({}, existing, 'volunteer', {
+      remarks: '봉사자 비고 신값',
+    })
+
+    expect(patch.generalCommonInfo?.volunteerRecruitmentInfo?.remarks).toBe('봉사자 비고 신값')
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBeUndefined()
+    expect(patch.registrationOverlay?.['recruitVolunteer.detailInfo.otherNotes']).toBe(
+      '봉사자 비고 신값'
+    )
+    expect(patch.otherNotes).toBeUndefined()
   })
 })

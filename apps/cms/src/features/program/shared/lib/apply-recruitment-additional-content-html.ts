@@ -2,6 +2,9 @@ import type { Program } from '@/types/domain'
 
 export type ProgramDetailRecruitmentAudience = 'participant' | 'instructor' | 'volunteer'
 
+/** 모집 탭 비고 폼 필드 — 일반 remarks / 강사 otherNotes / 봉사자·UJAT 참여자 oneLineIntroduction */
+export type ProgramDetailRecruitmentNotesField = 'remarks' | 'otherNotes' | 'oneLineIntroduction'
+
 const NESTED_RECRUITMENT_INFO_KEY = {
   participant: 'participantRecruitmentInfo',
   instructor: 'instructorRecruitmentInfo',
@@ -35,12 +38,32 @@ const RECRUIT_DETAIL_OVERLAY_KEYS = {
   },
 } as const
 
+const RECRUIT_NOTES_OVERLAY_KEYS = {
+  participant: [
+    'recruit.detailInfo.otherNotes',
+    'recruit.individual.notes',
+    'recruit.notes',
+  ],
+  instructor: ['recruitInstructor.detailInfo.otherNotes', 'recruit.instructor.notes'],
+  volunteer: ['recruitVolunteer.detailInfo.otherNotes', 'recruit.volunteer.notes'],
+} as const
+
+const RECRUIT_NOTES_NOT_APPLICABLE_OVERLAY_KEYS = {
+  participant: ['recruit.individual.notesNotApplicable', 'recruit.notesNotApplicable'],
+  instructor: [] as const,
+  volunteer: ['recruit.volunteer.notesNotApplicable'],
+} as const
+
 export type RecruitmentDetailInfoFields = {
   description?: string
   recruitmentGuide?: string
   applicationMethod?: string
   learningSupportContent?: string
   additionalContentHtml?: string
+  /** 모집 비고 — 기타 안내(`program.otherNotes` / otherMatters)와 분리 */
+  remarks?: string
+  notesNotApplicable?: boolean
+  /** @deprecated 비고는 `remarks`. 호환용 별칭 */
   otherNotes?: string
 }
 
@@ -88,9 +111,20 @@ export function applyRecruitmentDetailInfoFields(
     nestedPatch.additionalContentHtml = fields.additionalContentHtml
     overlayPatch[overlayKeys.additionalContentHtml] = fields.additionalContentHtml
   }
-  if (fields.otherNotes !== undefined) {
-    nestedPatch.remarks = fields.otherNotes
-    overlayPatch[overlayKeys.otherNotes] = fields.otherNotes
+
+  const remarks = fields.remarks !== undefined ? fields.remarks : fields.otherNotes
+  const notesNotApplicable = fields.notesNotApplicable === true
+  if (remarks !== undefined || fields.notesNotApplicable !== undefined) {
+    const nextRemarks = notesNotApplicable ? undefined : remarks?.trim() || undefined
+    nestedPatch.remarks = nextRemarks
+    nestedPatch.notesNotApplicable = notesNotApplicable
+    const overlayNotes = nextRemarks ?? ''
+    for (const key of RECRUIT_NOTES_OVERLAY_KEYS[audience]) {
+      overlayPatch[key] = overlayNotes
+    }
+    for (const key of RECRUIT_NOTES_NOT_APPLICABLE_OVERLAY_KEYS[audience]) {
+      overlayPatch[key] = notesNotApplicable
+    }
   }
 
   return {
@@ -108,7 +142,6 @@ export function applyRecruitmentDetailInfoFields(
     ...(fields.additionalContentHtml !== undefined
       ? { additionalContentHtml: fields.additionalContentHtml }
       : {}),
-    ...(fields.otherNotes !== undefined ? { otherNotes: fields.otherNotes } : {}),
     generalCommonInfo: {
       ...existing.generalCommonInfo,
       ...patch.generalCommonInfo,

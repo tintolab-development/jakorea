@@ -79,24 +79,27 @@ describe('모집 정보 display — 공통정보 폴백 금지', () => {
     expect(detail.learningSupportContent).toBe('공통 학습 지원')
   })
 
-  it('참여자 프로그램 설명 — GET 컬럼이 있으면 nested 옛 programDescription을 쓰지 않는다', () => {
+  it('참여자 프로그램 설명 — nested가 있으면 컬럼·overlay leftover보다 우선한다', () => {
     const program: Program = {
       ...commonOnlyProgram(),
       description: '바보도 들을 수 있음',
       recruitmentGuide: '바보들만 모집',
       learningSupportContent: '바보들에게 적극 지원',
+      registrationOverlay: {
+        [GENERAL_RECRUIT_OVERLAY_KEYS.detailInfo.participantDescription]: 'overlay leftover',
+      },
       generalCommonInfo: {
         participantRecruitmentInfo: {
-          programDescription: '중첩 옛본문',
-          recruitmentGuide: '옛 모집 안내',
-          learningSupportContent: '옛 학습 지원',
+          programDescription: '중첩 정본',
+          recruitmentGuide: '중첩 모집 안내',
+          learningSupportContent: '중첩 학습 지원',
         },
       },
     }
     const detail = resolveGeneralRecruitDetailDisplayProgram(program, 'participant')
-    expect(detail.description).toBe('바보도 들을 수 있음')
-    expect(detail.recruitmentGuide).toBe('바보들만 모집')
-    expect(detail.learningSupportContent).toBe('바보들에게 적극 지원')
+    expect(detail.description).toBe('중첩 정본')
+    expect(detail.recruitmentGuide).toBe('중첩 모집 안내')
+    expect(detail.learningSupportContent).toBe('중첩 학습 지원')
   })
 
   it('최종 합격자 발표 — 날짜/방법 중 하나만 있어도 -로 사라지지 않는다', () => {
