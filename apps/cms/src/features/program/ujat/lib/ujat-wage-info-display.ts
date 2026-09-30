@@ -6,6 +6,7 @@ import {
   PROGRAM_WAGE_DEDUCTION_LABEL,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE,
+  coerceProgramPaymentItemsText,
   programPaymentItemLabelsFromIds,
   resolveProgramPaymentItemIdsFromLabels,
   resolveProgramWageDeductionLabel,
@@ -56,7 +57,7 @@ export function resolveUjatPaymentItemIdsFromProgram(
   const fromOverlay = overlay ? readPaymentItemIdsFromOverlay(overlay) : undefined
   if (fromOverlay?.length) return fromOverlay
 
-  const labels = program.generalCommonInfo?.paymentItems?.trim() || ''
+  const labels = coerceProgramPaymentItemsText(program.generalCommonInfo?.paymentItems).trim()
   if (!labels) return [...UJAT_DEFAULT_PAYMENT_ITEM_VALUES]
 
   const fromLabels = resolveProgramPaymentItemIdsFromLabels(labels)

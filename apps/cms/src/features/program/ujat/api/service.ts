@@ -76,7 +76,14 @@ export async function list(params: ListParams = {}): Promise<Program[]> {
 
 export async function detail(programId: string): Promise<Program | null> {
   assertRemoteReady()
-  return fromDetail(await fetchAdminProgramByIdRemote(programId))
+  const mapped = fromDetail(await fetchAdminProgramByIdRemote(programId))
+  const { withFetchedProgramSponsorAssignments } = await import(
+    '@/features/program/shared/lib/merge-program-sponsor-assignments'
+  )
+  const { fetchAdminProgramSponsorsRemote } = await import(
+    '@/features/program/general/api/programs-api-client'
+  )
+  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
 }
 
 export async function create(input: CreateInput): Promise<Program> {
@@ -119,9 +126,18 @@ export async function update(
           overlay: mergedOverlay,
         }
       : registration
-  return fromDetail(
-    await updateAdminProgramRemote(programId, toUpdateRequest(program, patch, nextRegistration))
+  const dto = await updateAdminProgramRemote(
+    programId,
+    toUpdateRequest(program, patch, nextRegistration)
   )
+  const mapped = fromDetail(dto)
+  const { withFetchedProgramSponsorAssignments } = await import(
+    '@/features/program/shared/lib/merge-program-sponsor-assignments'
+  )
+  const { fetchAdminProgramSponsorsRemote } = await import(
+    '@/features/program/general/api/programs-api-client'
+  )
+  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
 }
 
 export async function remove(programId: string): Promise<void> {
