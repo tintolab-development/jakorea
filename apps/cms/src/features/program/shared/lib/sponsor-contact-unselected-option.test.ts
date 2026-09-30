@@ -70,4 +70,21 @@ describe('sponsor contact unselected option', () => {
       })
     ).toEqual(['1627251::1627253'])
   })
+
+  it('후원사만 있고 담당자 ref·표시명이 없으면 수정 폼에 미선택을 넣는다', () => {
+    expect(
+      resolveSponsorContactIdsForEdit({
+        ids: [],
+        managerLine: '',
+        hasSelectedSponsors: true,
+      })
+    ).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
+    expect(
+      resolveSponsorContactIdsForEdit({
+        ids: [],
+        managerLine: '',
+        hasSelectedSponsors: false,
+      })
+    ).toEqual([])
+  })
 })

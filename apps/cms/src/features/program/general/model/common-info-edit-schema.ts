@@ -30,7 +30,6 @@ import {
   isSponsorContactUnselected,
   resolveSponsorContactIdsForEdit,
   SPONSOR_CONTACT_UNSELECTED_LABEL,
-  SPONSOR_CONTACT_UNSELECTED_VALUE,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   isGeneralIndividualParticipantSelection,
@@ -987,26 +986,16 @@ export function resolveSponsorManagementIds(
 
 function resolveSponsorManagerContactIds(
   program: Program,
-  _sponsorManagementIds: string[],
+  sponsorManagementIds: string[],
   _context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
 ): string[] {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
-  const stored = resolveSponsorContactIdsForEdit({
+  return resolveSponsorContactIdsForEdit({
     ids: commonInfo.sponsorManagerContactIds,
     id: commonInfo.sponsorManagerContactId,
     managerLine: commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || '',
+    hasSelectedSponsors: sponsorManagementIds.length > 0,
   })
-  if (stored.length > 0) return stored
-
-  const storedLine = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
-  if (storedLine === SPONSOR_CONTACT_UNSELECTED_LABEL) {
-    return [SPONSOR_CONTACT_UNSELECTED_VALUE]
-  }
-
-  // 저장된 ref·미선택 라벨만 복원. 매칭 실패 시 contacts[0] 시드 금지.
-  // 후원사는 있는데 담당자 없으면 「미선택」이 기본.
-  if (_sponsorManagementIds.length > 0) return [SPONSOR_CONTACT_UNSELECTED_VALUE]
-  return []
 }
 
 function resolveManagerFromFormValues(

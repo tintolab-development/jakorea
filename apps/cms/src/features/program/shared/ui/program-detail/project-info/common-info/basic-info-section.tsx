@@ -450,27 +450,28 @@ export function BasicInfoSection({
       return
     }
 
-    if (currentIds.length > 0) return
-
-    const managerName = form.getValues('managerName')?.trim()
-    if (isSponsorContactUnselectedLabel(managerName)) {
-      form.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
-        shouldDirty: false,
-      })
-      form.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
-        shouldDirty: false,
-      })
+    const selectedSponsors = form.getValues('sponsorManagementIds') ?? []
+    if (selectedSponsors.length === 0) {
+      if (currentIds.length > 0) {
+        form.setValue('sponsorManagerContactIds', [], { shouldDirty: false })
+        form.setValue('sponsorManagerContactId', undefined, { shouldDirty: false })
+      }
       return
     }
 
-    const selectedSponsors = form.getValues('sponsorManagementIds') ?? []
-    if (selectedSponsors.length > 0) {
-      form.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
-        shouldDirty: false,
-      })
-      form.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
-        shouldDirty: false,
-      })
+    const managerName = form.getValues('managerName')?.trim()
+    const shouldUseUnselected =
+      currentIds.length === 0 ||
+      currentIds.every(id => !optionValues.has(id) && !isSponsorContactUnselected(id))
+    if (!shouldUseUnselected) return
+
+    form.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
+      shouldDirty: false,
+    })
+    form.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
+      shouldDirty: false,
+    })
+    if (!managerName || isSponsorContactUnselectedLabel(managerName)) {
       form.setValue('managerName', SPONSOR_CONTACT_UNSELECTED_LABEL, { shouldDirty: false })
     }
     // 빈 ids + 이름/전화 자동매칭 제거 — 문의처 Tel·구 managerName 으로 담당자가 되살아남

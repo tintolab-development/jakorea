@@ -19,6 +19,8 @@ export function resolveSponsorContactIdsForEdit(input: {
   ids?: readonly string[] | null
   id?: string | null
   managerLine?: string | null
+  /** 후원사가 선택된 상태에서 담당자 ref·표시명이 없으면 미선택 sentinel */
+  hasSelectedSponsors?: boolean
 }): string[] {
   const stored = [
     ...new Set(
@@ -31,7 +33,11 @@ export function resolveSponsorContactIdsForEdit(input: {
     return [SPONSOR_CONTACT_UNSELECTED_VALUE]
   }
   if (stored.length > 0) return stored
-  if (isSponsorContactUnselectedLabel(input.managerLine)) {
+  const managerLine = input.managerLine?.trim() ?? ''
+  if (isSponsorContactUnselectedLabel(managerLine)) {
+    return [SPONSOR_CONTACT_UNSELECTED_VALUE]
+  }
+  if (input.hasSelectedSponsors && !managerLine) {
     return [SPONSOR_CONTACT_UNSELECTED_VALUE]
   }
   return []

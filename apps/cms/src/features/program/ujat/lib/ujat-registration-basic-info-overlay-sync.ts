@@ -88,10 +88,12 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
       : defaults.operationRangeSeal
   const sponsorManagerLine =
     program.generalCommonInfo?.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
+  const hasSelectedSponsor = Boolean(program.sponsorId?.trim())
   const sponsorContactIds = resolveSponsorContactIdsForEdit({
     ids: program.generalCommonInfo?.sponsorManagerContactIds,
     id: program.generalCommonInfo?.sponsorManagerContactId,
     managerLine: sponsorManagerLine,
+    hasSelectedSponsors: hasSelectedSponsor,
   })
 
   return {

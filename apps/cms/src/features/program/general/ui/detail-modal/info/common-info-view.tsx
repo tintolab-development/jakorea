@@ -483,7 +483,7 @@ function BasicInfoSection({
     )
     if (currentIds.length === 0) {
       const storedLine = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
-      if (isSponsorContactUnselectedLabel(storedLine)) {
+      if (isSponsorContactUnselectedLabel(storedLine) || !storedLine) {
         editForm.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
           shouldValidate: false,
         })
@@ -494,14 +494,16 @@ function BasicInfoSection({
       return
     }
     if (validIds.length !== currentIds.length) {
-      editForm.setValue('sponsorManagerContactIds', validIds, {
-        shouldValidate: validIds.length > 0,
+      const nextIds =
+        validIds.length > 0 ? validIds : [SPONSOR_CONTACT_UNSELECTED_VALUE]
+      editForm.setValue('sponsorManagerContactIds', nextIds, {
+        shouldValidate: true,
         shouldDirty: true,
       })
-      editForm.setValue('sponsorManagerContactId', validIds[0] ?? '', {
+      editForm.setValue('sponsorManagerContactId', nextIds[0] ?? '', {
         shouldValidate: false,
       })
-      if (validIds.length > 0) editForm.clearErrors('sponsorManagerContactIds')
+      editForm.clearErrors('sponsorManagerContactIds')
     } else if (validIds.length > 0) {
       editForm.clearErrors('sponsorManagerContactIds')
     }
