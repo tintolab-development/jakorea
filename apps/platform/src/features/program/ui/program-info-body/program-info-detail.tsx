@@ -15,10 +15,7 @@ type ProgramInfoDetailProps = {
 }
 
 function progressMetaLines(
-  row: Pick<
-    ProgramSession,
-    'educationFormLabel' | 'participationMethodLabel' | 'ipsTypeSummary' | 'assignmentPeriod'
-  >
+  row: Pick<ProgramSession, 'educationFormLabel' | 'participationMethodLabel'>
 ) {
   return [
     row.educationFormLabel?.trim()
@@ -26,10 +23,6 @@ function progressMetaLines(
       : null,
     row.participationMethodLabel?.trim()
       ? { label: '참여 방식', value: row.participationMethodLabel.trim() }
-      : null,
-    row.ipsTypeSummary?.trim() ? { label: 'IPS 유형', value: row.ipsTypeSummary.trim() } : null,
-    row.assignmentPeriod?.trim()
-      ? { label: '과제 기간', value: row.assignmentPeriod.trim() }
       : null,
   ].filter((line): line is { label: string; value: string } => line != null)
 }
@@ -39,7 +32,7 @@ function ProgressMeta({
 }: {
   row: Pick<
     ProgramSession | ProgramEventSchedule,
-    'educationFormLabel' | 'participationMethodLabel' | 'ipsTypeSummary' | 'assignmentPeriod'
+    'educationFormLabel' | 'participationMethodLabel'
   >
 }) {
   const lines = progressMetaLines(row)

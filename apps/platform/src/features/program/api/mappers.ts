@@ -414,11 +414,11 @@ export function formatPortalEducationVenue(
   return detailWithoutKind ? `${kindLabel} | ${detailWithoutKind}` : kindLabel
 }
 
-function contactValue(phone?: string, email?: string): string {
+function contactValue(name?: string, phone?: string, email?: string): string {
+  const n = readString(name)
   const p = readString(phone)
   const e = readString(email)
-  if (p && e) return `${p} · ${e}`
-  return p || e || ''
+  return [n, p ? `Tel : ${p}` : '', e ? `E-mail : ${e}` : ''].filter(Boolean).join(', ')
 }
 
 function isGeneralEducationProgressProgram(programType: string | undefined): boolean {
@@ -474,7 +474,6 @@ function recruitmentOperatingDates(recruitments: PortalRecruitment[] | undefined
 type EducationProgressRowVisibility = {
   /** 루트 교육 형태가 있으면 행 값은 반복하지 않는다. */
   showEducationForm: boolean
-  showIps: boolean
 }
 
 function mapPortalCurriculumSessions(
@@ -492,12 +491,6 @@ function mapPortalCurriculumSessions(
       : {}),
     ...(rows.showEducationForm && optionalText(session.educationFormLabel)
       ? { educationFormLabel: session.educationFormLabel?.trim() }
-      : {}),
-    ...(rows.showIps && optionalText(session.ipsTypeSummary)
-      ? { ipsTypeSummary: session.ipsTypeSummary?.trim() }
-      : {}),
-    ...(optionalText(session.assignmentPeriod)
-      ? { assignmentPeriod: session.assignmentPeriod?.trim() }
       : {}),
   }))
 }
@@ -541,12 +534,6 @@ function mapPortalScheduleDetails(
       ...(rows.showEducationForm && optionalText(detail.educationFormLabel)
         ? { educationFormLabel: detail.educationFormLabel?.trim() }
         : {}),
-      ...(rows.showIps && optionalText(detail.ipsTypeSummary)
-        ? { ipsTypeSummary: detail.ipsTypeSummary?.trim() }
-        : {}),
-      ...(optionalText(detail.assignmentPeriod)
-        ? { assignmentPeriod: detail.assignmentPeriod?.trim() }
-        : {}),
     }
   })
 }
@@ -577,7 +564,6 @@ function buildPortalBasicInfoFields(args: {
   usesEducationProgressFields: boolean
   businessFieldLabel: string
   educationFormLabel: string
-  ipsTypeSummary: string
   educationTargetGroupLabel: string
   educationTargetDetailLabel: string
   educationVenueLabel: string
@@ -585,9 +571,6 @@ function buildPortalBasicInfoFields(args: {
   const fields: ProgramBasicInfoField[] = [{ label: '사업 분야', value: args.businessFieldLabel }]
   if (!args.usesEducationProgressFields || args.educationFormLabel) {
     fields.push({ label: '교육 형태', value: args.educationFormLabel })
-  }
-  if (args.ipsTypeSummary) {
-    fields.push({ label: 'IPS 유형', value: args.ipsTypeSummary })
   }
   fields.push(
     { label: '교육 대상', value: args.educationTargetGroupLabel },
@@ -646,7 +629,6 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
   const legacyEventSchedules = legacySessions.length > 0 ? [] : mapEventSchedules(remote.schedules)
   const rowVisibility: EducationProgressRowVisibility = {
     showEducationForm: perScheduleEducationForm || !optionalText(remote.educationFormLabel),
-    showIps: !optionalText(remote.ipsTypeSummary),
   }
   const sessions = usesEducationProgressFields
     ? mapPortalCurriculumSessions(
@@ -665,9 +647,6 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     : legacyEventSchedules
   const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
-  const ipsTypeSummary = usesEducationProgressFields
-    ? optionalText(remote.ipsTypeSummary)
-    : undefined
 
   const extraSections: ProgramExtraSection[] = [
     { title: '모집 안내', body: readString(remote.recruitmentGuide) ?? '' },
@@ -722,7 +701,6 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
         : usesEducationProgressFields
           ? (apiEducationFormLabel ?? '')
           : educationFormLabel,
-      ipsTypeSummary: ipsTypeSummary ?? '',
       educationTargetGroupLabel: targets.educationTargetGroupLabel,
       educationTargetDetailLabel,
       educationVenueLabel,
@@ -761,7 +739,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
           value: `${item.name} · ${item.dateLabel}`,
         })),
     extraSections,
-    contactValue: contactValue(remote.contactPhone, remote.contactEmail),
+    contactValue: contactValue(remote.contactName, remote.contactPhone, remote.contactEmail),
     applicationMethodLabel: '지원방법',
     applicationMethodValue: readString(remote.applicationMethod ?? undefined) ?? '',
     attachments: (remote.attachments ?? []).flatMap(file => {
