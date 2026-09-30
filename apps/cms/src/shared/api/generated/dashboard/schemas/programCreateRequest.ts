@@ -78,7 +78,8 @@ export interface ProgramCreateRequest {
   curriculum?: string;
   contactEmail?: string;
   contactPhone?: string;
-  contactName?: string;
+  /** 문의처 이름 */
+  contactName?: string | null;
   oneLineIntroduction?: string;
   keyVisualImage?: string;
   settlementRuleId?: string;
@@ -90,7 +91,7 @@ export interface ProgramCreateRequest {
      */
   applicationMethod?: string | null;
   /**
-     * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.
+     * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용. Gemini create/PATCH top-level.
      * @nullable
      */
   educationForm?: ProgramCreateRequestEducationForm;
@@ -108,8 +109,10 @@ export interface ProgramCreateRequest {
   additionalContentHtml?: string;
   recruitmentGuide?: string;
   learningSupportContent?: string;
-  otherMatters?: string;
-  recruitmentTargetDetail?: string;
+  /** 비고. 해당없음이면 null */
+  otherMatters?: string | null;
+  /** 교육 대상 상세 */
+  recruitmentTargetDetail?: string | null;
   attachmentFileNames?: string[];
   rounds?: ProgramRoundRequest[];
   adminAssignments?: ProgramAdminAssignmentRequest[];

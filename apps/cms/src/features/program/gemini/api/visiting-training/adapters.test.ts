@@ -14,10 +14,17 @@ describe('gemini visiting-training adapters', () => {
     const row = mapGeminiRecruitmentItemToRow(
       {
         programId: 12,
+        programType: 'GEMINI_TRAINING',
         nameKo: '찾아가는 연수',
         businessStartDate: '2026-03-01',
         businessEndDate: '2026-03-31',
+        applicationStartDate: '2026-03-01',
+        applicationEndDate: '2026-03-31',
+        trainingRequestStartDate: '2026-04-01',
+        trainingRequestEndDate: '2026-04-30',
         draftStatus: 'DRAFT',
+        organizationApplicationCount: null,
+        approvedOrganizationApplicationCount: null,
       },
       0
     )
@@ -25,6 +32,9 @@ describe('gemini visiting-training adapters', () => {
     expect(row.title).toBe('찾아가는 연수')
     expect(row.isDraft).toBe(true)
     expect(row.applicationPeriodStart).toBe('2026-03-01')
+    expect(row.applicationPeriodEnd).toBe('2026-03-31')
+    expect(row.trainingRequestPeriodStart).toBe('2026-04-01')
+    expect(row.trainingRequestPeriodEnd).toBe('2026-04-30')
     expect(row.organizationApplicationCount).toBe(0)
   })
 
@@ -32,6 +42,7 @@ describe('gemini visiting-training adapters', () => {
     const row = mapGeminiRecruitmentItemToRow(
       {
         programId: 4,
+        programType: 'GEMINI_TRAINING',
         nameKo: '신청 있는 공고',
         organizationApplicationCount: 2,
         approvedOrganizationApplicationCount: 1,
@@ -175,8 +186,8 @@ describe('gemini visiting-training adapters', () => {
       notes: '준비물',
       thumbnailFileName: null,
       programDescription: '설명',
-      recruitmentGuide: '',
-      applicationMethod: '',
+      recruitmentGuide: '모집 안내',
+      applicationMethod: '온라인 신청',
       learningSupportContent: '',
       additionalContentMarkdown: '',
       attachmentFileNames: [],
@@ -186,14 +197,21 @@ describe('gemini visiting-training adapters', () => {
     expect(create.programType).toBe('GEMINI_TRAINING')
     expect(create.title).toBe('공고')
     expect(create.educationStructure).toBe('SCHEDULE')
+    expect(create.educationForm).toBe('offline')
+    expect(create.trainingRequestStartDate).toBe('2026-04-01')
+    expect(create.trainingRequestEndDate).toBe('2026-04-30')
+    expect(create.applicationStartDate).toBe('2026-03-01')
+    expect(create.applicationEndDate).toBe('2026-03-31')
     expect(create.targetLevels).toEqual(['adult', 'university'])
     expect(create.targetLevel).toBe('adult')
+    expect(create.keyVisualImage).toBeUndefined()
+    expect(create.attachmentFileNames).toEqual([])
     expect(create.detailedProgramId).toBeUndefined()
-    expect((create as { contactName?: string }).contactName).toBe('홍길동')
-    expect((create as { otherMatters?: string }).otherMatters).toBe('준비물')
-    expect((create as { recruitmentTargetDetail?: string }).recruitmentTargetDetail).toBe(
-      '중학생'
-    )
+    expect(create.contactName).toBe('홍길동')
+    expect(create.otherMatters).toBe('준비물')
+    expect(create.recruitmentTargetDetail).toBe('중학생')
+    expect(create.applicationMethod).toBe('온라인 신청')
+    expect(create.applicationPathId).toBeUndefined()
     expect(toGeminiNumericIds(['1', 'x', '2'])).toEqual([1, 2])
   })
 
@@ -256,10 +274,15 @@ describe('gemini visiting-training adapters', () => {
       attachmentFileNames: [],
     })
     expect(update.educationStructure).toBe('SCHEDULE')
+    expect(update.educationForm).toBe('offline')
+    expect(update.trainingRequestStartDate).toBe('2026-04-01')
+    expect(update.trainingRequestEndDate).toBe('2026-04-30')
     expect(update.clearFields ?? []).not.toContain('educationStructure')
+    expect(update.clearFields ?? []).not.toContain('trainingRequestStartDate')
     expect(update.contactName).toBeUndefined()
     expect(update.otherMatters).toBeUndefined()
     expect(update.recruitmentTargetDetail).toBeUndefined()
+    expect(update.applicationMethod).toBeUndefined()
     expect(update.targetLevels).toEqual([])
     expect(update.targetLevel).toBeUndefined()
     expect(update.clearFields).toEqual(
@@ -267,8 +290,68 @@ describe('gemini visiting-training adapters', () => {
         'contactName',
         'otherMatters',
         'recruitmentTargetDetail',
+        'applicationMethod',
         'targetLevel',
       ])
     )
+    expect(update.keyVisualImage).toBeUndefined()
+    expect(update.clearFields ?? []).toContain('keyVisualImage')
+    expect(update.attachmentFileNames).toEqual([])
+  })
+
+  it('edit body carries every recruitment field the detail screen edits', () => {
+    const update = mapGeminiRecruitmentDetailToUpdateRequest({
+      title: '수정 공고',
+      announcementPublished: 'published',
+      educationTargetLevels: ['성인', 'university'],
+      educationTargetDetail: '성인·대학생',
+      applicationPeriodStart: '2026-10-07',
+      applicationPeriodEnd: '2026-10-28',
+      trainingRequestPeriodStart: '2026-10-30',
+      trainingRequestPeriodEnd: '2026-12-29',
+      minStudentCount: 20,
+      educationForm: 'online',
+      educationStructure: 'SCHEDULE',
+      inquiryContactName: '연수팀',
+      inquiryTel: '02-1234-5678',
+      inquiryEmail: 'gemini@jakorea.org',
+      notesNotApplicable: false,
+      notes: '교재 현장 배부',
+      thumbnailFileName: 'thumb.png',
+      programDescription: '프로그램 설명',
+      recruitmentGuide: '모집 안내',
+      applicationMethod: '온라인 신청',
+      learningSupportContent: '활동지 제공',
+      additionalContentMarkdown: '<p>추가</p>',
+      attachmentFileNames: ['안내.pdf', 'poster.png'],
+    })
+    expect(update.title).toBe('수정 공고')
+    expect(update.description).toBe('프로그램 설명')
+    expect(update.targetLevels).toEqual(['adult', 'university'])
+    expect(update.targetLevel).toBe('adult')
+    expect(update.recruitmentTargetDetail).toBe('성인·대학생')
+    expect(update.applicationStartDate).toBe('2026-10-07')
+    expect(update.applicationEndDate).toBe('2026-10-28')
+    expect(update.businessStartDate).toBe('2026-10-07')
+    expect(update.businessEndDate).toBe('2026-10-28')
+    expect(update.trainingRequestStartDate).toBe('2026-10-30')
+    expect(update.trainingRequestEndDate).toBe('2026-12-29')
+    expect(update.totalParticipants).toBe(20)
+    expect(update.educationForm).toBe('online')
+    expect(update.contactName).toBe('연수팀')
+    expect(update.contactPhone).toBe('02-1234-5678')
+    expect(update.contactEmail).toBe('gemini@jakorea.org')
+    expect(update.otherMatters).toBe('교재 현장 배부')
+    expect(update.keyVisualImage).toBe('thumb.png')
+    expect(update.recruitmentGuide).toBe('모집 안내')
+    expect(update.applicationMethod).toBe('온라인 신청')
+    expect(update.learningSupportContent).toBe('활동지 제공')
+    expect(update.additionalContentHtml).toBe('<p>추가</p>')
+    expect(update.attachmentFileNames).toEqual(['안내.pdf', 'poster.png'])
+    const snapshot = JSON.parse(update.serviceDetailJson ?? '{}') as {
+      geminiRecruitment?: { educationTargetLevels?: string[]; thumbnailFileName?: string }
+    }
+    expect(snapshot.geminiRecruitment?.educationTargetLevels).toEqual(['성인', 'university'])
+    expect(snapshot.geminiRecruitment?.thumbnailFileName).toBe('thumb.png')
   })
 })

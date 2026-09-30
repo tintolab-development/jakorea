@@ -4,6 +4,9 @@
  * JA Korea CMS Backend API — Dashboard subset
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
+ *
+ * Note: nested recruitments/rounds/… items are kept as typed DTOs (not additionalProperties
+ * object) so CMS adapters stay assignable after OpenAPI sync.
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
 import type { ProgramPeriodRequest } from './programPeriodRequest';
@@ -49,7 +52,7 @@ export interface ProgramUpdateRequest {
   district?: string;
   ips?: string;
   targetLevel?: string;
-  /** 교육 대상 복수. elementary|middle|high|university|adult. 있으면 targetLevel은 첫 값과 같고, serviceDetailJson.program.targetLevels와 동기화된다. 빈 배열은 교육 대상을 지운다. */
+  /** 교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. */
   targetLevels?: string[];
   institutionType?: string;
   ipOwned?: string;

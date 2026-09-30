@@ -75,7 +75,7 @@ function resolveGeminiEducationStructureWire(
 }
 
 /**
- * 교육 대상. enum 정규화 후 배열이 비면 상세 라벨에서 파싱한다.
+ * 교육 대상. 공유 enum 정규화 후 배열이 비면 상세 라벨에서 파싱한다.
  * 그래도 비면 빈 배열(대상 삭제). 첫 값이 있으면 targetLevel과 맞춘다.
  */
 function wireGeminiTargetLevels(
@@ -95,6 +95,20 @@ function wireGeminiTargetLevels(
   return targetLevel ? { targetLevels, targetLevel } : { targetLevels }
 }
 
+function wireGeminiThumbnail(
+  body: ProgramCreateRequest | ProgramUpdateRequest,
+  clearFields: string[] | null,
+  thumbnailFileName: string | null | undefined
+): void {
+  const name = thumbnailFileName?.trim()
+  if (name) {
+    body.keyVisualImage = name
+    return
+  }
+  // 상세 GET은 thumbnailFileName ← keyVisualImage. 지우면 clear.
+  if (clearFields) clearFields.push('keyVisualImage')
+}
+
 /** BulkIdsRequest 용 — 숫자로 파싱 가능한 id만 사용 */
 export function toGeminiNumericIds(ids: string[]): number[] {
   const out: number[] = []
@@ -112,6 +126,7 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
   const otherMatters =
     snapshot.notesNotApplicable ? undefined : snapshot.notes?.trim() || undefined
   const recruitmentTargetDetail = snapshot.educationTargetDetail?.trim() || undefined
+  const applicationMethod = snapshot.applicationMethod?.trim() || undefined
   // Gemini create: educationStructure는 ProgramCreateRequest top-level 비즈니스 필수.
   // UI 셀렉트 없음 → SCHEDULE. serviceDetailJson 안 값으로 top-level을 대체하지 않음.
   const educationStructure = resolveGeminiEducationStructureWire(
@@ -121,7 +136,7 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
     snapshot.educationTargetLevels,
     recruitmentTargetDetail
   )
-  return {
+  const requestBody: ProgramCreateRequest = {
     programType: GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
     title: snapshot.title.trim() || undefined,
     description: snapshot.programDescription || undefined,
@@ -129,31 +144,38 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
     businessEndDate: optionalDate(snapshot.applicationPeriodEnd),
     applicationStartDate: optionalDate(snapshot.applicationPeriodStart),
     applicationEndDate: optionalDate(snapshot.applicationPeriodEnd),
+    trainingRequestStartDate: optionalDate(snapshot.trainingRequestPeriodStart),
+    trainingRequestEndDate: optionalDate(snapshot.trainingRequestPeriodEnd),
     educationStructure,
+    educationForm: mapEducationForm(snapshot.educationForm),
     targetLevels,
     ...(targetLevel ? { targetLevel } : {}),
     totalParticipants: snapshot.minStudentCount ?? undefined,
     managerName: contactName,
+    contactName,
     contactPhone: snapshot.inquiryTel || undefined,
     contactEmail: snapshot.inquiryEmail || undefined,
+    otherMatters,
+    recruitmentTargetDetail,
     recruitmentGuide: snapshot.recruitmentGuide || undefined,
+    applicationMethod,
     learningSupportContent: snapshot.learningSupportContent || undefined,
     additionalContentHtml: snapshot.additionalContentMarkdown || undefined,
     attachmentFileNames: snapshot.attachmentFileNames,
     serviceDetailJson: JSON.stringify({ geminiRecruitment: snapshot }),
-    // CreateRequest OpenAPI에 없을 수 있음 — update와 동일 계약으로 실어 보냄
-    ...(contactName ? ({ contactName } as Partial<ProgramCreateRequest>) : {}),
-    ...(otherMatters ? ({ otherMatters } as Partial<ProgramCreateRequest>) : {}),
-    ...(recruitmentTargetDetail
-      ? ({ recruitmentTargetDetail } as Partial<ProgramCreateRequest>)
-      : {}),
   }
+  wireGeminiThumbnail(requestBody, null, snapshot.thumbnailFileName)
+  return requestBody
 }
 
 function wireGeminiNullableString(
   body: ProgramUpdateRequest,
   clearFields: string[],
-  apiField: 'contactName' | 'otherMatters' | 'recruitmentTargetDetail',
+  apiField:
+    | 'contactName'
+    | 'otherMatters'
+    | 'recruitmentTargetDetail'
+    | 'applicationMethod',
   next: string | undefined
 ): void {
   if (next) {
@@ -164,6 +186,19 @@ function wireGeminiNullableString(
   clearFields.push(apiField)
 }
 
+function wireGeminiOptionalDate(
+  body: ProgramUpdateRequest,
+  clearFields: string[],
+  apiField: 'trainingRequestStartDate' | 'trainingRequestEndDate',
+  next: string | undefined
+): void {
+  if (next) {
+    body[apiField] = next
+    return
+  }
+  clearFields.push(apiField)
+}
+
 export function mapGeminiRecruitmentDetailToUpdateRequest(
   draft: GeminiRecruitmentInfoEditDraft
 ): ProgramUpdateRequest {
@@ -171,6 +206,7 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
   const otherMatters =
     draft.notesNotApplicable ? undefined : draft.notes?.trim() || undefined
   const recruitmentTargetDetail = draft.educationTargetDetail?.trim() || undefined
+  const applicationMethod = draft.applicationMethod?.trim() || undefined
   const clearFields: string[] = []
   // PATCH에서 educationStructure를 null/clear하지 않음 — Gemini UI 없으면 SCHEDULE 유지
   const educationStructureWire = resolveGeminiEducationStructureWire(
@@ -192,6 +228,7 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     applicationStartDate: optionalDate(draft.applicationPeriodStart),
     applicationEndDate: optionalDate(draft.applicationPeriodEnd),
     educationStructure,
+    educationForm: mapEducationForm(draft.educationForm),
     targetLevels,
     ...(targetLevel ? { targetLevel } : {}),
     totalParticipants: draft.minStudentCount ?? undefined,
@@ -205,6 +242,7 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     attachmentFileNames: draft.attachmentFileNames,
     serviceDetailJson: JSON.stringify({ geminiRecruitment: draft }),
   }
+  wireGeminiThumbnail(body, clearFields, draft.thumbnailFileName)
   wireGeminiNullableString(body, clearFields, 'contactName', contactName)
   wireGeminiNullableString(body, clearFields, 'otherMatters', otherMatters)
   wireGeminiNullableString(
@@ -212,6 +250,19 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     clearFields,
     'recruitmentTargetDetail',
     recruitmentTargetDetail
+  )
+  wireGeminiNullableString(body, clearFields, 'applicationMethod', applicationMethod)
+  wireGeminiOptionalDate(
+    body,
+    clearFields,
+    'trainingRequestStartDate',
+    optionalDate(draft.trainingRequestPeriodStart)
+  )
+  wireGeminiOptionalDate(
+    body,
+    clearFields,
+    'trainingRequestEndDate',
+    optionalDate(draft.trainingRequestPeriodEnd)
   )
   if (!targetLevel) clearFields.push('targetLevel')
   if (clearFields.length > 0) body.clearFields = clearFields
@@ -222,17 +273,26 @@ export function mapGeminiRecruitmentItemToRow(
   dto: GeminiRecruitmentItem,
   index: number
 ): GeminiRecruitmentRow {
-  const start = dto.businessStartDate ?? ''
-  const end = dto.businessEndDate ?? ''
+  const applicationPeriodStart = firstNonEmptyDate(
+    dto.applicationStartDate,
+    dto.businessStartDate
+  )
+  const applicationPeriodEnd = firstNonEmptyDate(
+    dto.applicationEndDate,
+    dto.businessEndDate
+  )
+  // 연수 요청 기간은 기관 모집/business와 합치지 않는다.
+  const trainingRequestPeriodStart = trimmedOrEmpty(dto.trainingRequestStartDate)
+  const trainingRequestPeriodEnd = trimmedOrEmpty(dto.trainingRequestEndDate)
   return {
     id: toId(dto.programId),
     displayNo: index + 1,
     title: dto.nameKo?.trim() || '제목 없음',
-    applicationPeriodStart: start,
-    applicationPeriodEnd: end,
-    trainingRequestPeriodStart: start,
-    trainingRequestPeriodEnd: end,
-    isDraft: isDraftStatus(dto.draftStatus),
+    applicationPeriodStart,
+    applicationPeriodEnd,
+    trainingRequestPeriodStart,
+    trainingRequestPeriodEnd,
+    isDraft: isDraftStatus(dto.draftStatus ?? undefined),
     organizationApplicationCount: dto.organizationApplicationCount ?? 0,
     approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount ?? 0,
   }
@@ -246,14 +306,19 @@ export function mapGeminiRecruitmentDetailToDetail(
     base ??
     mapGeminiRecruitmentItemToRow(
       {
-        programId: dto.programId,
-        nameKo: dto.nameKo,
+        programId: dto.programId ?? 0,
+        programType: dto.programType ?? GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
+        nameKo: dto.nameKo ?? '',
         businessStartDate: dto.businessStartDate ?? undefined,
         businessEndDate: dto.businessEndDate ?? undefined,
+        applicationStartDate: dto.applicationStartDate ?? undefined,
+        applicationEndDate: dto.applicationEndDate ?? undefined,
+        trainingRequestStartDate: dto.trainingRequestStartDate ?? undefined,
+        trainingRequestEndDate: dto.trainingRequestEndDate ?? undefined,
         draftStatus: dto.draftStatus,
-        organizationApplicationCount: dto.organizationApplicationCount ?? undefined,
+        organizationApplicationCount: dto.organizationApplicationCount ?? null,
         approvedOrganizationApplicationCount:
-          dto.approvedOrganizationApplicationCount ?? undefined,
+          dto.approvedOrganizationApplicationCount ?? null,
       },
       0
     )
@@ -286,7 +351,10 @@ export function mapGeminiRecruitmentDetailToDetail(
     updatedAt: dto.updatedAt?.trim() || now,
     updatedByName: dto.updatedByName?.trim() || '-',
     announcementPublished: isDraftStatus(dto.draftStatus) ? 'unpublished' : 'published',
-    educationTargetLevels: Array.isArray(dto.targetLevels) ? [...dto.targetLevels] : [],
+    educationTargetLevels: wireGeminiTargetLevels(
+      dto.targetLevels,
+      dto.recruitmentTargetDetail ?? undefined
+    ).targetLevels,
     educationTargetDetail: trimmedOrEmpty(dto.recruitmentTargetDetail),
     minStudentCount: dto.minimumParticipantCount ?? 0,
     educationForm: mapEducationForm(dto.educationForm),

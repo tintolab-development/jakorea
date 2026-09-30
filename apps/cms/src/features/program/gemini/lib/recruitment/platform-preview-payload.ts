@@ -12,8 +12,8 @@ import {
 } from '@/features/program/shared/lib/platform-preview/portal-fields'
 import type { GeminiRecruitmentAddFormSnapshot } from './add-local-save'
 
-/** Platform 매퍼가 Gemini 상세 케이스로 인식하는 값 (CMS 등록 `GEMINI_TRAINING`과 다름) */
-const PORTAL_GEMINI_PROGRAM_TYPE = 'GEMINI'
+/** Portal 공개 programType SSOT — Admin·Portal 런타임과 동일 */
+const PORTAL_GEMINI_PROGRAM_TYPE = 'GEMINI_TRAINING'
 
 export function buildGeminiRecruitmentPortalPreview(
   snapshot: GeminiRecruitmentAddFormSnapshot,

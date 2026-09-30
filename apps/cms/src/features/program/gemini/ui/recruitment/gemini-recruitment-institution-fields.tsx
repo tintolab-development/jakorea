@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
+import { flushSync } from 'react-dom'
 import type { Dayjs } from 'dayjs'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import {
@@ -24,6 +25,10 @@ import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import {
+  GeminiDeferredCmsInput,
+  GeminiDeferredCmsPhoneInput,
+} from './gemini-recruitment-deferred-text-input'
 import { GeminiRecruitmentPeriodDatePicker } from './gemini-recruitment-period-date-picker'
 
 const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
@@ -42,13 +47,32 @@ function InquiryContactColumn({
   value,
   onChange,
   phone,
+  deferTextCommit,
 }: {
   label: string
   placeholder: string
   value: string
   onChange: (next: string) => void
   phone?: boolean
+  deferTextCommit?: boolean
 }) {
+  if (deferTextCommit) {
+    const Deferred = phone ? GeminiDeferredCmsPhoneInput : GeminiDeferredCmsInput
+    return (
+      <div style={inquiryColumnStyle}>
+        <span className="nowrap" style={{ flexShrink: 0 }}>
+          {label}
+        </span>
+        <Deferred
+          inputSize="medium"
+          width={240}
+          placeholder={placeholder}
+          value={value}
+          onCommit={onChange}
+        />
+      </div>
+    )
+  }
   const InputComponent = phone ? CmsPhoneInput : CmsInput
   return (
     <div style={inquiryColumnStyle}>
@@ -76,6 +100,8 @@ export type GeminiRecruitmentInstitutionFieldsProps = {
   trainingRequestPeriod?: [Dayjs | null, Dayjs | null] | null
   onTrainingRequestPeriodChange?: (dates: [Dayjs | null, Dayjs | null] | null) => void
   onMinStudentCountChange?: (value: string) => void
+  /** true면 텍스트 타이핑은 blur 때 draft commit (수정 모드 TipTap 격리) */
+  deferTextCommit?: boolean
 }
 
 export function GeminiRecruitmentInstitutionFields({
@@ -88,10 +114,18 @@ export function GeminiRecruitmentInstitutionFields({
   trainingRequestPeriod = null,
   onTrainingRequestPeriodChange,
   onMinStudentCountChange,
+  deferTextCommit = false,
 }: GeminiRecruitmentInstitutionFieldsProps) {
   const isEdit = mode === 'edit' && onChange != null
-  const minStudentCountInput =
+  const minStudentCountCommitted =
     values.minStudentCount != null ? String(values.minStudentCount) : ''
+  const [minStudentCountLocal, setMinStudentCountLocal] = useState(minStudentCountCommitted)
+  useEffect(() => {
+    setMinStudentCountLocal(minStudentCountCommitted)
+  }, [minStudentCountCommitted])
+  const minStudentCountInput = deferTextCommit
+    ? minStudentCountLocal
+    : minStudentCountCommitted
 
   return (
     <>
@@ -120,13 +154,23 @@ export function GeminiRecruitmentInstitutionFields({
           view={formatOptionalText(values.title)}
           edit={
             isEdit ? (
-              <CmsInput
-                inputSize="medium"
-                width="100%"
-                placeholder="대표 프로그램명(국문)을 입력하세요"
-                value={values.title}
-                onChange={e => onChange({ title: e.target.value })}
-              />
+              deferTextCommit ? (
+                <GeminiDeferredCmsInput
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="대표 프로그램명(국문)을 입력하세요"
+                  value={values.title}
+                  onCommit={next => onChange({ title: next })}
+                />
+              ) : (
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="대표 프로그램명(국문)을 입력하세요"
+                  value={values.title}
+                  onChange={e => onChange({ title: e.target.value })}
+                />
+              )
             ) : undefined
           }
         />
@@ -160,13 +204,23 @@ export function GeminiRecruitmentInstitutionFields({
           view={formatOptionalText(values.educationTargetDetail)}
           edit={
             isEdit ? (
-              <CmsInput
-                inputSize="medium"
-                width="100%"
-                placeholder="상세 교육 대상을 입력하세요"
-                value={values.educationTargetDetail}
-                onChange={e => onChange({ educationTargetDetail: e.target.value })}
-              />
+              deferTextCommit ? (
+                <GeminiDeferredCmsInput
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="상세 교육 대상을 입력하세요"
+                  value={values.educationTargetDetail}
+                  onCommit={next => onChange({ educationTargetDetail: next })}
+                />
+              ) : (
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="상세 교육 대상을 입력하세요"
+                  value={values.educationTargetDetail}
+                  onChange={e => onChange({ educationTargetDetail: e.target.value })}
+                />
+              )
             ) : undefined
           }
         />
@@ -225,7 +279,24 @@ export function GeminiRecruitmentInstitutionFields({
                   placeholder="최소 수강 인원을 입력하세요"
                   width={120}
                   value={minStudentCountInput}
-                  onValueChange={raw => onMinStudentCountChange(raw)}
+                  onValueChange={raw => {
+                    if (deferTextCommit) {
+                      setMinStudentCountLocal(raw)
+                      return
+                    }
+                    onMinStudentCountChange(raw)
+                  }}
+                  onBlur={
+                    deferTextCommit
+                      ? () => {
+                          if (minStudentCountLocal !== minStudentCountCommitted) {
+                            flushSync(() => {
+                              onMinStudentCountChange(minStudentCountLocal)
+                            })
+                          }
+                        }
+                      : undefined
+                  }
                 />
                 <span style={{ marginLeft: 6 }}>명</span>
               </div>
@@ -269,6 +340,7 @@ export function GeminiRecruitmentInstitutionFields({
                   placeholder="담당 문의처"
                   value={values.inquiryContactName}
                   onChange={next => onChange({ inquiryContactName: next })}
+                  deferTextCommit={deferTextCommit}
                 />
                 <DetailInfoForm.InputsSeparator />
                 <InquiryContactColumn
@@ -277,6 +349,7 @@ export function GeminiRecruitmentInstitutionFields({
                   value={values.inquiryTel}
                   onChange={next => onChange({ inquiryTel: next })}
                   phone
+                  deferTextCommit={deferTextCommit}
                 />
                 <DetailInfoForm.InputsSeparator />
                 <InquiryContactColumn
@@ -284,6 +357,7 @@ export function GeminiRecruitmentInstitutionFields({
                   placeholder="문의처 이메일"
                   value={values.inquiryEmail}
                   onChange={next => onChange({ inquiryEmail: next })}
+                  deferTextCommit={deferTextCommit}
                 />
               </div>
             ) : undefined
@@ -313,15 +387,27 @@ export function GeminiRecruitmentInstitutionFields({
                   해당 없음
                 </CmsCheckbox>
                 <DetailInfoForm.InputsSeparator />
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  style={{ flex: '1 1 0', minWidth: 0 }}
-                  placeholder="비고란을 작성하세요"
-                  value={values.notes}
-                  disabled={values.notesNotApplicable}
-                  onChange={e => onChange({ notes: e.target.value })}
-                />
+                {deferTextCommit ? (
+                  <GeminiDeferredCmsInput
+                    inputSize="medium"
+                    width="100%"
+                    style={{ flex: '1 1 0', minWidth: 0 }}
+                    placeholder="비고란을 작성하세요"
+                    value={values.notes}
+                    disabled={values.notesNotApplicable}
+                    onCommit={next => onChange({ notes: next })}
+                  />
+                ) : (
+                  <CmsInput
+                    inputSize="medium"
+                    width="100%"
+                    style={{ flex: '1 1 0', minWidth: 0 }}
+                    placeholder="비고란을 작성하세요"
+                    value={values.notes}
+                    disabled={values.notesNotApplicable}
+                    onChange={e => onChange({ notes: e.target.value })}
+                  />
+                )}
               </div>
             ) : undefined
           }

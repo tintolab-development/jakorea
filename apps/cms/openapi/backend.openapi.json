@@ -25219,121 +25219,160 @@
     },
     "/api/admin/gemini/trainings/recruitments": {
       "get": {
-        "tags": [
-          "기타 API"
-        ],
-        "summary": "관리자 조회",
-        "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/gemini/trainings/recruitments`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
-        "operationId": "recruitments",
-        "parameters": [
-          {
-            "name": "keyword",
-            "in": "query",
-            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "periodStatus",
-            "in": "query",
-            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          }
-        ],
+        "summary": "관리자 목록 조회",
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GeminiRecruitmentListResponse"
                 }
               }
             }
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
       },
       "post": {
-        "tags": [
-          "기타 API"
-        ],
         "summary": "Gemini 찾아가는 연수 모집 공고 등록",
-        "description": "### 이 API가 하는 일\n- Gemini 찾아가는 연수 모집 공고 등록\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/gemini/trainings/recruitments`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Cat5 M-01 canonical GEMINI_TRAINING recruitment create",
-        "operationId": "createRecruitment",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProgramCreateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProgramResponse"
+                "type": "object",
+                "description": "ProgramCreateRequest (Gemini 강제 programType=GEMINI_TRAINING). applicationMethod는 지원 방법 자유 텍스트이며 applicationPathId와 별개.",
+                "additionalProperties": true,
+                "properties": {
+                  "programType": {
+                    "type": "string",
+                    "description": "TRAINED_TEACHER is allowed with inline formBindings. (한글 계약 설명)"
+                  },
+                  "autoApplyDefaultFormBindings": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "programDraftId": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true
+                  },
+                  "formBindings": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "$ref": "#/components/schemas/ProgramFormBindingRequest"
+                    }
+                  },
+                  "title": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "educationStructure": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "applicationStartDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "applicationEndDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  },
+                  "trainingRequestStartDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true,
+                    "description": "연수 요청 가능기간 시작. Gemini."
+                  },
+                  "trainingRequestEndDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true,
+                    "description": "연수 요청 가능기간 종료. Gemini."
+                  },
+                  "educationForm": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "online",
+                      "offline",
+                      "hybrid"
+                    ]
+                  },
+                  "applicationPathId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "신청 경로/템플릿 ID. applicationMethod(지원 방법 문구)와 혼동 금지."
+                  },
+                  "applicationMethod": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "지원 방법 자유 텍스트. applicationPathId가 아님."
+                  },
+                  "contactName": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "contactPhone": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "contactEmail": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "otherMatters": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "recruitmentTargetDetail": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "recruitmentGuide": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "learningSupportContent": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "additionalContentHtml": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "targetLevels": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "totalParticipants": {
+                    "type": "integer",
+                    "format": "int32",
+                    "nullable": true
+                  },
+                  "serviceDetailJson": {
+                    "type": "string",
+                    "nullable": true
+                  }
                 }
               }
             }
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "409": {
-            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
       }
@@ -36478,59 +36517,30 @@
         }
       },
       "patch": {
-        "tags": [
-          "기타 API"
-        ],
         "summary": "Gemini 찾아가는 연수 모집 공고 수정",
-        "description": "### 이 API가 하는 일\n- Gemini 찾아가는 연수 모집 공고 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PATCH /api/admin/gemini/trainings/recruitments/{programId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Cat5 M-02 canonical GEMINI_TRAINING recruitment update",
-        "operationId": "updateRecruitment",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
         "parameters": [
           {
             "name": "programId",
             "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ProgramUpdateRequest"
               }
             }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProgramResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "409": {
-            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
       }
@@ -70702,7 +70712,9 @@
             "type": "string"
           },
           "contactName": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "문의처 이름"
           },
           "oneLineIntroduction": {
             "type": "string"
@@ -70722,6 +70734,7 @@
               "string",
               "null"
             ],
+            "nullable": true,
             "description": "지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님."
           },
           "educationForm": {
@@ -70729,7 +70742,8 @@
               "string",
               "null"
             ],
-            "description": "교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.",
+            "nullable": true,
+            "description": "교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용. Gemini create/PATCH top-level.",
             "enum": [
               "online",
               "offline",
@@ -70741,6 +70755,8 @@
               "string",
               "null"
             ],
+            "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개."
           },
           "trainingRequestEndDate": {
@@ -70748,6 +70764,8 @@
               "string",
               "null"
             ],
+            "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 종료."
           },
           "applicationTargetMode": {
@@ -70763,10 +70781,14 @@
             "type": "string"
           },
           "otherMatters": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "비고. 해당없음이면 null"
           },
           "recruitmentTargetDetail": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "교육 대상 상세"
           },
           "attachmentFileNames": {
             "type": "array",
@@ -82106,230 +82128,364 @@
       },
       "ProgramUpdateRequest": {
         "type": "object",
-        "description": "프론트 프로그램 수정 요청",
+        "description": "CMS 프로그램 수정 요청 (full PATCH shape). GENERAL keeps KPI/venue top-level mirrors into generalCommonInfo(+kpi). TRAINED_TEACHER overlays posted serviceDetailJson keys onto the stored snapshot (no RFC-7396 deep merge). Posted participantRecruitmentInfo replaces that object and is echoed on GET; omitted participantRecruitmentInfo is kept. Root generalCommonInfo is dropped.",
         "properties": {
           "sponsorId": {
-            "type": "string"
+            "type": "string",
+            "description": "Legacy single sponsor full replacement. Contact is cleared; no primary-contact autofill. Prefer sponsors[]. (한글 계약 설명)",
+            "nullable": true
           },
           "sponsors": {
             "type": "array",
+            "nullable": true,
+            "description": "When present, this array is the complete program sponsor assignment set. Omitted keeps assignments; [] clears all. Omitted/null/blank contact id means no selected contact and clears existing links.",
             "items": {
               "$ref": "#/components/schemas/ProgramSponsorAssignmentRequest"
             }
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "공고용/관리명. write aliases: announcementTitle, nameKo, publicNameKo",
+            "nullable": true
+          },
+          "announcementTitle": {
+            "type": "string",
+            "description": "Write alias for title (한글 계약 설명)",
+            "nullable": true
+          },
+          "nameKo": {
+            "type": "string",
+            "description": "Write alias for title (한글 계약 설명)",
+            "nullable": true
           },
           "type": {
-            "type": "string"
+            "type": "string",
+            "description": "delivery type wire: online|offline|hybrid (한글 계약 설명)",
+            "nullable": true
           },
           "format": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "category": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "startDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date",
+            "description": "Compatibility business start (한글 계약 설명)",
+            "nullable": true
           },
           "endDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date",
+            "description": "Compatibility business end (한글 계약 설명)",
+            "nullable": true
           },
           "businessStartDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date",
+            "nullable": true
           },
           "businessEndDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date",
+            "nullable": true
           },
           "businessPeriod": {
             "$ref": "#/components/schemas/ProgramPeriodRequest"
           },
           "applicationStartDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           },
           "applicationEndDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           },
           "recruitments": {
             "type": "array",
-            "description": "모집 유형별 canonical 설정. 지정 시 legacy applicationStartDate/applicationEndDate보다 우선",
+            "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/ProgramRecruitmentRequest"
+              "type": "object",
+              "additionalProperties": true
             }
           },
           "businessArea": {
-            "type": "string"
+            "type": "string",
+            "description": "Master business area name (경제금융|진로취업|기업가정신|디지털리터러시)",
+            "nullable": true
           },
           "detailedProgramId": {
             "type": "integer",
             "format": "int64",
-            "description": "세부 프로그램 마스터 ID. 일정형 등 해당없음인 경우 null"
+            "nullable": true
           },
           "educationStructure": {
             "type": "string",
-            "description": "교육 진행 구조",
-            "enum": [
-              "CURRICULUM",
-              "SCHEDULE"
-            ]
+            "description": "CURRICULUM|SCHEDULE (한글 계약 설명)",
+            "nullable": true
           },
           "titleEn": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
+          },
+          "nameEn": {
+            "type": "string",
+            "description": "Write alias for titleEn (한글 계약 설명)",
+            "nullable": true
           },
           "mainTitle": {
-            "type": "string"
+            "type": "string",
+            "description": "대표 프로그램명. aliases: representativeProgramNameKo, mainProgramNameKo",
+            "nullable": true
+          },
+          "representativeProgramNameKo": {
+            "type": "string",
+            "description": "Write alias for mainTitle (한글 계약 설명)",
+            "nullable": true
           },
           "textbookName": {
-            "type": "string"
+            "type": "string",
+            "description": "세부 프로그램명. alias: detailedProgramName",
+            "nullable": true
+          },
+          "detailedProgramName": {
+            "type": "string",
+            "description": "Write alias for textbookName (한글 계약 설명)",
+            "nullable": true
           },
           "textbookNameEn": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "schoolId": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "district": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "ips": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
+          },
+          "ipsType": {
+            "type": "string",
+            "description": "Write alias for ips (한글 계약 설명)",
+            "nullable": true
           },
           "targetLevel": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "교육 대상 첫 값. targetLevels가 있으면 그 첫 원소와 같다."
           },
           "targetLevels": {
             "type": "array",
-            "description": "교육 대상 복수. elementary|middle|high|university|adult. 있으면 targetLevel은 첫 값과 같고, serviceDetailJson.program.targetLevels와 동기화된다. 빈 배열은 교육 대상을 지운다.",
-            "enum": [
-              "elementary",
-              "middle",
-              "high",
-              "university",
-              "adult"
-            ],
+            "nullable": true,
+            "description": "교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. serviceDetailJson.program.targetLevels와 동기화된다.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "elementary",
+                "middle",
+                "high",
+                "university",
+                "adult"
+              ]
             }
           },
           "institutionType": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "ipOwned": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "courseDeliveredBy": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "partnerInvolvement": {
-            "type": "boolean"
+            "type": "boolean",
+            "nullable": true
           },
           "programCategory": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "programChannel": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "educationTime": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "teamDivision": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "educationProcess": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "maleParticipants": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "femaleParticipants": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "totalParticipants": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "참여자 최종 인원. Mirrored to kpi.finalParticipants + generalCommonInfo",
+            "nullable": true
+          },
+          "finalParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Write alias for totalParticipants (한글 계약 설명)",
+            "nullable": true
           },
           "generalVolunteers": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "staffVolunteers": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "returningVolunteers": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "generalTeachers": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "educatedTeachers": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "instructors": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "finalSchools": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "최종 파견 학교 수. Mirrored to kpi + generalCommonInfo.kpi",
+            "nullable": true
+          },
+          "schoolCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Write alias for finalSchools (한글 계약 설명)",
+            "nullable": true
           },
           "finalClasses": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "최종 파견 학급 수. Mirrored to kpi + generalCommonInfo.kpi",
+            "nullable": true
+          },
+          "classCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Write alias for finalClasses (한글 계약 설명)",
+            "nullable": true
           },
           "managerName": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "venue": {
-            "type": "string"
+            "type": "string",
+            "description": "교육 장소. Always mirrored to generalCommonInfo.venue",
+            "nullable": true
           },
           "curriculum": {
-            "type": "string"
-          },
-          "contactEmail": {
-            "type": "string"
-          },
-          "contactPhone": {
-            "type": "string"
-          },
-          "oneLineIntroduction": {
-            "type": "string"
-          },
-          "remarks": {
-            "type": "string"
-          },
-          "educationTargetDetail": {
-            "type": "string"
-          },
-          "venueDetail": {
-            "type": "string"
-          },
-          "venueKind": {
-            "type": "string"
-          },
-          "studentListRequired": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "contactName": {
-            "type": "string"
+            "type": "string",
+            "description": "문의처/담당자 표시명. aliases: contactOrganizationName, contactPerson, inquiryName",
+            "nullable": true
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "oneLineIntroduction": {
+            "type": "string",
+            "nullable": true
+          },
+          "summary": {
+            "type": "string",
+            "description": "Write alias for oneLineIntroduction (한글 계약 설명)",
+            "nullable": true
+          },
+          "remarks": {
+            "type": "string",
+            "description": "모집 비고 SSOT (≠ oneLineIntroduction)",
+            "nullable": true
+          },
+          "educationTargetDetail": {
+            "type": "string",
+            "nullable": true
+          },
+          "venueDetail": {
+            "type": "string",
+            "description": "교육 장소 기타 직접입력",
+            "nullable": true
+          },
+          "venueKind": {
+            "type": "string",
+            "description": "inside|outside|other or inside_school|outside_school|other (한글 계약 설명)",
+            "nullable": true
+          },
+          "studentListRequired": {
+            "type": "string",
+            "description": "required|not_required (한글 계약 설명)",
+            "nullable": true
           },
           "keyVisualImage": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "settlementRuleId": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "applicationPathId": {
             "type": "string",
+            "nullable": true,
             "description": "신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지."
           },
           "applicationMethod": {
@@ -82337,6 +82493,7 @@
               "string",
               "null"
             ],
+            "nullable": true,
             "description": "지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님."
           },
           "educationForm": {
@@ -82344,6 +82501,7 @@
               "string",
               "null"
             ],
+            "nullable": true,
             "description": "교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.",
             "enum": [
               "online",
@@ -82356,6 +82514,8 @@
               "string",
               "null"
             ],
+            "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개."
           },
           "trainingRequestEndDate": {
@@ -82363,69 +82523,92 @@
               "string",
               "null"
             ],
+            "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 종료."
           },
           "applicationTargetMode": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "additionalContentHtml": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "recruitmentGuide": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "learningSupportContent": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "otherMatters": {
-            "type": "string"
+            "type": "string",
+            "description": "기타 안내. aliases: otherInformation, etcContent",
+            "nullable": true
           },
           "recruitmentTargetDetail": {
-            "type": "string"
+            "type": "string",
+            "description": "모집 대상 상세. alias: recruitmentAudienceDetail",
+            "nullable": true
           },
           "attachmentFileNames": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             }
           },
           "rounds": {
             "type": "array",
+            "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/ProgramRoundRequest"
+              "type": "object",
+              "additionalProperties": true
             }
           },
           "adminAssignments": {
             "type": "array",
+            "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/ProgramAdminAssignmentRequest"
+              "type": "object",
+              "additionalProperties": true
             }
           },
           "schedules": {
             "type": "array",
+            "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/ProgramScheduleRequest"
+              "type": "object",
+              "additionalProperties": true
             }
           },
           "wagePolicies": {
             "type": "array",
+            "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/ProgramWagePolicyRequest"
+              "type": "object",
+              "additionalProperties": true
             }
           },
           "paymentItems": {
             "type": "array",
+            "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/ProgramSettlementPaymentItemRequest"
+              "type": "object",
+              "additionalProperties": true
             }
           },
           "serviceDetailJson": {
             "type": "string",
-            "description": "양성교사: 요청 봉투를 저장된 config에 키 단위로 덮어씁니다. 보낸 키는 교체, 생략한 키는 유지. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지. RFC-7396 깊은 병합 없음. 루트 generalCommonInfo는 제거. 일반 프로그램은 기존 RFC-7396 병합."
+            "description": "TRAINED_TEACHER: overlay FE envelope {schemaVersion, program}. Posted keys replace that key; omitted keys stay. program.generalCommonInfo.participantRecruitmentInfo is replaced when posted (top-level columns and nested labels echoed together) and kept when omitted so trained-teacher/detail overlay cannot wipe it. Nested aliases: announcementPublishedLabel, studentListRequiredLabel, maxClassCount, maxScheduleCount, maxSessionsPerDay, maxAssignableInstructors (always 0), preEducationNoticeRequired (always false), operationPeriodLabel, recruitmentPeriodLabel, educationTarget, educationTargetDetail, finalAnnouncementLabel, contactOrganizationName, inquiryTel, inquiryEmail, remarks. Do not copy remarks to oneLineIntroduction or educationTargetDetail to district. Root generalCommonInfo is dropped. GENERAL still RFC-7396 merges. (한글 계약 설명)",
+            "nullable": true
           },
           "clearFields": {
             "type": "array",
-            "description": "PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지",
+            "nullable": true,
+            "description": "PATCH explicit null clears (한글 계약 설명)",
             "items": {
               "type": "string"
             }
@@ -96291,37 +96474,51 @@
       },
       "GeminiRecruitmentItem": {
         "type": "object",
+        "description": "Gemini 찾아가는 연수 모집 공고 목록 행. 기관 모집 기간과 연수 요청 기간을 분리한다.",
+        "required": [
+          "programId",
+          "programType",
+          "nameKo",
+          "organizationApplicationCount",
+          "approvedOrganizationApplicationCount"
+        ],
         "properties": {
           "programId": {
             "type": "integer",
             "format": "int64"
           },
           "programCode": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "programType": {
             "type": "string"
           },
           "draftStatus": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "periodStatus": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "nameKo": {
             "type": "string"
           },
           "businessYear": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "businessStartDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "nullable": true
           },
           "businessEndDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "nullable": true
           },
           "applicationStartDate": {
             "type": [
@@ -96329,6 +96526,7 @@
               "null"
             ],
             "format": "date",
+            "nullable": true,
             "description": "기관 모집 기간 시작. 연수 요청 가능기간(trainingRequest*)과 별개."
           },
           "applicationEndDate": {
@@ -96337,6 +96535,7 @@
               "null"
             ],
             "format": "date",
+            "nullable": true,
             "description": "기관 모집 기간 종료."
           },
           "trainingRequestStartDate": {
@@ -96345,6 +96544,7 @@
               "null"
             ],
             "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 시작."
           },
           "trainingRequestEndDate": {
@@ -96353,19 +96553,23 @@
               "null"
             ],
             "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 종료."
           },
           "organizationApplicationCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "approvedOrganizationApplicationCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "updatedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           }
         }
       },

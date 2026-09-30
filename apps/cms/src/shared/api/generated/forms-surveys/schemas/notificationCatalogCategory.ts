@@ -8,7 +8,7 @@
 import type { NotificationCatalogVariableItem } from './notificationCatalogVariableItem';
 
 export interface NotificationCatalogCategory {
-  categoryCode?: string;
-  categoryLabel?: string;
-  variables?: NotificationCatalogVariableItem[];
+  categoryCode: string;
+  categoryLabel: string;
+  variables: NotificationCatalogVariableItem[];
 }

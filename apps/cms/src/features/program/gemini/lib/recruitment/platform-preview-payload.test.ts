@@ -20,7 +20,7 @@ describe('buildGeminiRecruitmentPortalPreview', () => {
 
     expect(detail).toMatchObject({
       programId: 0,
-      programType: 'GEMINI',
+      programType: 'GEMINI_TRAINING',
       title: '찾아가는 Gemini 연수',
       summary: '소개',
       operationMethod: 'ONLINE',
