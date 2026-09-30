@@ -4,6 +4,7 @@ import {
   GEMINI_PERFORMANCE_UPLOAD_COLUMNS,
   normalizeUploadHeader,
 } from './upload-column-spec'
+import { sanitizeXlsxBufferForExcelJs } from './sanitize-xlsx-for-exceljs'
 import type { GeminiPerformanceUploadRow } from '../../model/performance/types'
 
 export const GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE = '양식 불일치 안내'
@@ -78,7 +79,11 @@ export async function parseUploadExcel(file: File): Promise<GeminiPerformanceUpl
 
   const buffer = await file.arrayBuffer()
   const workbook = new ExcelJS.Workbook()
-  await workbook.xlsx.load(buffer)
+  try {
+    await workbook.xlsx.load(await sanitizeXlsxBufferForExcelJs(buffer))
+  } catch {
+    throw new Error(GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE)
+  }
 
   const worksheet = workbook.worksheets[0]
   if (!worksheet) {
