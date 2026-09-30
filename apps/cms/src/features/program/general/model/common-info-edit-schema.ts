@@ -714,6 +714,7 @@ export function isGeneralProgramScheduleType(program: Program): boolean {
       generalProgramEducationStructure: program.generalProgramEducationStructure,
       generalProgramSessionRound: program.generalProgramSessionRound,
       curriculumSessions: commonInfo.curriculumSessions,
+      registrationOverlay: program.registrationOverlay,
     }).educationStructure === 'schedule'
   )
 }
@@ -1449,6 +1450,7 @@ function resolveTypeSettingsFromProgram(program: Program): Pick<
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const ips = parseIpsTypeSummaryFromProgram(program, commonInfo.ipsTypeSummary)
 

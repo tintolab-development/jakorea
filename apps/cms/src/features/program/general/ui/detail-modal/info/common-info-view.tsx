@@ -1572,6 +1572,7 @@ function TypeSettingsSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
@@ -2394,11 +2395,17 @@ function SingleRoundCurriculumSessionForm({
               label="단원명 및 교육 내용"
               fullRow
               view={
-                <>
-                  {session.title}
-                  <DetailInfoForm.InputsSeparator />
-                  {session.description}
-                </>
+                session.title?.trim() || session.description?.trim() ? (
+                  <>
+                    {session.title?.trim() ? session.title : null}
+                    {session.title?.trim() && session.description?.trim() ? (
+                      <DetailInfoForm.InputsSeparator />
+                    ) : null}
+                    {session.description?.trim() ? session.description : null}
+                  </>
+                ) : (
+                  '-'
+                )
               }
               edit={
                 <div className="detail-info-form-inputs-wrapper">
@@ -2600,6 +2607,7 @@ function CurriculumSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const watchedStructure = isFormEdit
     ? editForm.watch('educationStructure')
@@ -4298,6 +4306,7 @@ function ScheduleProgressSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const watchedStructure = isFormEdit
     ? form!.watch('educationStructure')
@@ -4646,6 +4655,7 @@ function ScheduleSettingsSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const educationStructure = isFormEdit
     ? (form!.watch('educationStructure') ?? effectiveTypeFields.educationStructure)
