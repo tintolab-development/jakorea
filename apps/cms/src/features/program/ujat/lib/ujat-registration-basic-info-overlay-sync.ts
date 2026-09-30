@@ -22,6 +22,8 @@ import {
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
 } from '@/features/template/lib/template-form-select-options'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
+import { collectUjatRegistrationCreateOverlay } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { buildUjatRecruitInstitutionOverlayFromProgram } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import {
   isSponsorContactUnselected,
   isSponsorContactUnselectedLabel,
@@ -62,6 +64,22 @@ function reversePartnerInvolvement(value: boolean | undefined): 'yes' | 'no' {
   return value ? 'yes' : 'no'
 }
 
+function participantFlagsFromUjatProgram(program: Program): {
+  individual: boolean
+  organization: boolean
+  teacher: boolean
+  volunteer: boolean
+} {
+  const types = new Set(program.generalParticipantTypes ?? [])
+  const audience = program.generalProgramAudience
+  return {
+    individual: types.has('individual') || audience === 'individual',
+    organization: types.has('school_institution') || audience === 'organization',
+    teacher: types.has('teacher_instructor'),
+    volunteer: types.has('volunteer'),
+  }
+}
+
 /** 프로그램 mock → 등록 양식 overlay 키 (수정 모드 진입 시 시드) */
 export function buildUjatRegistrationBasicInfoOverlayFromProgram(
   program: Program
@@ -91,6 +109,7 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
   const sponsorManagerLine =
     program.generalCommonInfo?.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
   const sponsorContactIds = resolveSponsorContactIdsFromProgram(program)
+  const participantFlags = participantFlagsFromUjatProgram(program)
 
   return {
     'ujat.basicInfo.repKo': program.mainTitle?.trim() || defaults.repKo,
@@ -109,13 +128,14 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     'ujat.basicInfo.ipsCategory': reverseIps(program.ips),
     'ujat.basicInfo.educationCourse': program.educationProcess ?? defaults.educationCourse,
     'ujat.basicInfo.partnerInvolvement': reversePartnerInvolvement(program.partnerInvolvement),
-    'ujat.basicInfo.participant.individual': defaults.participantIndividual,
-    'ujat.basicInfo.participant.organization': defaults.participantOrganization,
-    'ujat.basicInfo.participant.teacher': defaults.participantTeacher,
-    'ujat.basicInfo.participant.volunteer': defaults.participantVolunteer,
+    'ujat.basicInfo.participant.individual': participantFlags.individual,
+    'ujat.basicInfo.participant.organization': participantFlags.organization,
+    'ujat.basicInfo.participant.teacher': participantFlags.teacher,
+    'ujat.basicInfo.participant.volunteer': participantFlags.volunteer,
     'ujat.basicInfo.surveyItems': ujatSurveyItemsFromProgramKeys(program.generalSurveyMenuKeys),
     'ujat.kpi.participantCount': program.generalCommonInfo?.kpi?.finalParticipants ?? null,
-    'ujat.kpi.instructor': null,
+    'ujat.kpi.instructor':
+      program.generalCommonInfo?.kpi?.instructorCount ?? program.instructors ?? null,
     'ujat.kpi.volunteer': program.generalCommonInfo?.kpi?.volunteerCount ?? null,
     'ujat.kpi.dispatchedSchool': program.generalCommonInfo?.kpi?.finalSchools ?? null,
     'ujat.kpi.dispatchedClass': program.generalCommonInfo?.kpi?.finalClasses ?? null,
@@ -126,8 +146,7 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
 export function seedUjatRegistrationBasicInfoOverlayFromProgram(program: Program): void {
   const saved = resolveUjatRegistrationBasicInfoOverlay(program.ujatRegistrationOverlay)
   const fromProgram = buildUjatRegistrationBasicInfoOverlayFromProgram(program)
-  // API overlay·세션 값이 1차 컬럼 기본값(일정·정원 목업)을 덮어쓴다.
-  const merged = { ...fromProgram, ...saved }
+  const merged = { ...saved, ...fromProgram }
   const overlayManagerLine =
     (typeof merged['ujat.basicInfo.sponsorManagerName'] === 'string'
       ? merged['ujat.basicInfo.sponsorManagerName'].trim()
@@ -166,13 +185,49 @@ export function readUjatRegistrationBasicInfoOverlayForSave(): Record<string, un
   return { ...getUjatProgramRegistrationOverlayRecord() }
 }
 
+/** apply 후 canonical에서 basicInfo / kpi / wage overlay를 재생성 */
+export function resyncUjatRegistrationOverlayFromProgram(
+  program: Program,
+  extra?: Record<string, unknown>
+): Record<string, unknown> {
+  return {
+    ...(extra ?? {}),
+    ...buildUjatRegistrationBasicInfoOverlayFromProgram(program),
+  }
+}
+
+/** 모집 저장 — 세션 모집 키를 합친 뒤 기관 모집은 중첩에서 다시 그린다 */
+export function resyncUjatPersistOverlayFromProgram(
+  program: Program,
+  extra?: Record<string, unknown>,
+  options?: { includeRecruit?: boolean }
+): Record<string, unknown> {
+  const registration = resyncUjatRegistrationOverlayFromProgram(program, extra)
+  const next = options?.includeRecruit
+    ? { ...registration, ...buildUjatRecruitInstitutionOverlayFromProgram(program) }
+    : registration
+  return touchUjatRegistrationOperationAnchorFromRangeSeal(next)
+}
+
 /** 상세·모집 저장 시 draft에 세션 overlay를 실어 serviceDetailJson round-trip에 반영 */
-export function buildUjatProgramDraftWithSessionOverlay(draft: Program): Program {
+export function buildUjatProgramDraftWithSessionOverlay(
+  draft: Program,
+  options?: { includeRecruitSession?: boolean }
+): Program {
+  const session = options?.includeRecruitSession
+    ? collectUjatRegistrationCreateOverlay({
+        ...(draft.ujatRegistrationOverlay ?? {}),
+        ...readUjatRegistrationBasicInfoOverlayForSave(),
+      })
+    : {
+        ...(draft.ujatRegistrationOverlay ?? {}),
+        ...readUjatRegistrationBasicInfoOverlayForSave(),
+      }
   return {
     ...draft,
-    ujatRegistrationOverlay: touchUjatRegistrationOperationAnchorFromRangeSeal(
-      readUjatRegistrationBasicInfoOverlayForSave()
-    ),
+    ujatRegistrationOverlay: resyncUjatPersistOverlayFromProgram(draft, session, {
+      includeRecruit: options?.includeRecruitSession === true,
+    }),
   }
 }
 

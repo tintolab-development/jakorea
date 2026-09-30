@@ -17,6 +17,7 @@ import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/
 import {
   buildUjatRegistrationBasicInfoOverlayFromProgram,
   reconcileUjatRegistrationOverlayFromApi,
+  resyncUjatPersistOverlayFromProgram,
   seedUjatRegistrationBasicInfoOverlayFromProgram,
 } from './ujat-registration-basic-info-overlay-sync'
 
@@ -204,5 +205,57 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
       SPONSOR_CONTACT_UNSELECTED_VALUE,
     ])
     expect(overlay['ujat.basicInfo.sponsorContactId']).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
+  })
+
+  it('시드 leftover overlay가 참여자 유형·KPI 강사보다 이기지 않는다', () => {
+    resetUjatProgramRegistrationOverlay()
+    seedUjatRegistrationBasicInfoOverlayFromProgram({
+      ...baseProgram(),
+      generalParticipantTypes: ['school_institution', 'volunteer'],
+      generalCommonInfo: {
+        kpi: {
+          finalParticipants: 10,
+          instructorCount: 7,
+          volunteerCount: 3,
+          finalSchools: 2,
+          finalClasses: 4,
+        },
+      },
+      ujatRegistrationOverlay: {
+        'ujat.basicInfo.participant.individual': true,
+        'ujat.basicInfo.participant.organization': false,
+        'ujat.kpi.instructor': 99,
+      },
+    })
+    const overlay = getUjatProgramRegistrationOverlayRecord()
+    expect(overlay['ujat.basicInfo.participant.individual']).toBe(false)
+    expect(overlay['ujat.basicInfo.participant.organization']).toBe(true)
+    expect(overlay['ujat.basicInfo.participant.volunteer']).toBe(true)
+    expect(overlay['ujat.kpi.instructor']).toBe(7)
+  })
+
+  it('기관 모집 leftover 기간이 중첩 기간보다 이기지 않는다', () => {
+    const program: Program = {
+      ...baseProgram(),
+      applicationStartDate: '2026-03-01T00:00:00.000Z',
+      applicationEndDate: '2026-03-31T00:00:00.000Z',
+      targetLevels: ['elementary'],
+    }
+    const overlay = resyncUjatPersistOverlayFromProgram(
+      program,
+      {
+        'ujat.recruit.institution.recruitRange': {
+          start: '2025-01-01T00:00:00.000Z',
+          end: '2025-01-31T00:00:00.000Z',
+        },
+        'ujat.recruit.institution.targetLevels': ['high', 'university'],
+      },
+      { includeRecruit: true }
+    )
+    expect(overlay['ujat.recruit.institution.recruitRange']).toEqual({
+      start: '2026-03-01T00:00:00.000Z',
+      end: '2026-03-31T00:00:00.000Z',
+    })
+    expect(overlay['ujat.recruit.institution.targetLevels']).toEqual(['elementary'])
   })
 })

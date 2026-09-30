@@ -1285,12 +1285,15 @@ export function UjatProgramDetailFullPageModal({
     program: displayProgram ?? ({} as Program),
     mapToValues: mapInstitutionRecruitmentEditValues,
     recruitmentAudience: 'participant',
+    recruitmentNotesField: 'oneLineIntroduction',
     onSaveEdit:
       displayProgram && updateProgram
         ? async (draft, patch) => {
             try {
               const draftWithOverlay = applyUjatRecruitAnnouncementTitleToDraft({
-                draft: buildUjatProgramDraftWithSessionOverlay(draft),
+                draft: buildUjatProgramDraftWithSessionOverlay(draft, {
+                  includeRecruitSession: true,
+                }),
                 existing: displayProgram,
                 title: institutionsForm.getValues().announcementTitle,
                 kind: 'institution',
@@ -1343,13 +1346,16 @@ export function UjatProgramDetailFullPageModal({
     program: displayProgram ?? ({} as Program),
     mapToValues: mapVolunteerRecruitmentEditValues,
     recruitmentAudience: 'volunteer',
+    recruitmentNotesField: 'otherNotes',
     onSaveEdit:
       displayProgram && updateProgram
         ? async (draft, patch) => {
             try {
               const values = volunteersForm.getValues()
               const draftWithOverlay = applyUjatRecruitAnnouncementTitleToDraft({
-                draft: buildUjatProgramDraftWithSessionOverlay(draft),
+                draft: buildUjatProgramDraftWithSessionOverlay(draft, {
+                  includeRecruitSession: true,
+                }),
                 existing: displayProgram,
                 title: values.announcementTitle,
                 kind: volunteerRecruitKindRef.current,
