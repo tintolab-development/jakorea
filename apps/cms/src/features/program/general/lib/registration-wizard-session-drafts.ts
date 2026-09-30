@@ -30,6 +30,16 @@ export function clearRegistrationWizardSessionDrafts(): void {
   sessionDrafts.clear()
 }
 
+export function peekRegistrationWizardSessionDrafts(): ReadonlyArray<{
+  templateCode: string
+  draft: WritingFormDraft
+}> {
+  return [...sessionDrafts.values()].map(entry => ({
+    templateCode: entry.templateCode,
+    draft: entry.draft,
+  }))
+}
+
 export function flushApplicationOperationalOverrides(args: {
   current?: RegistrationWizardSessionDraft
   overlayForTemplateCode?: (

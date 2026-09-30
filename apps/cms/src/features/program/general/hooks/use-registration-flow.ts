@@ -39,6 +39,7 @@ import {
   clearRegistrationWizardSessionDrafts,
   flushApplicationOperationalOverrides,
 } from '@/features/program/general/lib/registration-wizard-session-drafts'
+import { describeIncompleteApplicationFormThirdPartyRecipient } from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
   hydrateRegistrationProgramDraft,
@@ -563,6 +564,28 @@ export function useGeneralProgramRegistrationFlow(
   }, [isProgramStep, registrationVm, participantVm])
 
   const handleCompleteRegistration = useCallback(() => {
+    if (!SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK) {
+      const current =
+        isParticipantStep && currentStepDef.templateId.startsWith('application-')
+          ? {
+              templateCode: currentStepDef.templateId,
+              draft: participantVm.draft,
+            }
+          : undefined
+      const recipientReason = describeIncompleteApplicationFormThirdPartyRecipient({
+        program: registrationVm.buildCurrentProgramSnapshot(),
+        current,
+      })
+      if (recipientReason != null) {
+        console.debug('[registration] 신청 양식 제공받는 곳 미입력:', recipientReason)
+        showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
+    }
+
     const applicationOverrides = () =>
       flushApplicationOperationalOverrides({
         current: isParticipantStep
