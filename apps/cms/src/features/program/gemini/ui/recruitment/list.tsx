@@ -9,7 +9,6 @@ import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
-import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -31,6 +30,11 @@ import {
 import type { GeminiRecruitmentDisplayStatus, GeminiRecruitmentRow } from '../../model/recruitment/types'
 import { formatRecruitmentPeriodRange } from '../../lib/recruitment/format-period'
 import { resolveRecruitmentDisplayStatus } from '../../lib/recruitment/resolve-status'
+import {
+  geminiRecruitmentDeleteBlocked,
+  resolveGeminiDeleteBlockedAlert,
+  resolveGeminiDeleteGuideModalCopy,
+} from '../../lib/delete-guide'
 import { peekGeminiRecruitmentAddDraftOverwrite } from '../../lib/recruitment/add-local-save'
 import { useGeminiRecruitmentDetailUrl } from '../detail/fullpage-modal'
 import { useGeminiRecruitmentAddUrl } from './add-fullpage-modal'
@@ -161,8 +165,15 @@ export function GeminiRecruitmentList() {
       showNoSelectionAlert()
       return
     }
+    const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
+    const selectedRows = tableData.filter(row => selectedIds.has(row.id))
+    if (selectedRows.some(geminiRecruitmentDeleteBlocked)) {
+      const blocked = resolveGeminiDeleteBlockedAlert('공고', selectedRows.length)
+      showAlert(blocked)
+      return
+    }
     setDeleteModalOpen(true)
-  }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
+  }, [canWrite, selectedRowKeys, showAlert, showNoSelectionAlert, tableData])
 
   const handleConfirmDelete = useCallback(async () => {
     try {
@@ -277,7 +288,7 @@ export function GeminiRecruitmentList() {
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" onClick={handleAddRecruitment}>
-              모집 공고 추가
+              모집 공고 등록
             </CmsButton>
           </>
         }
@@ -323,13 +334,9 @@ export function GeminiRecruitmentList() {
 
       <DeleteGuideModal
         open={deleteModalOpen}
-        title="선택 삭제"
-        lines={[
-          `선택한 ${selectedRowKeys.length}건의 모집 공고를 삭제하시겠습니까?`,
-          '삭제된 모집 공고는 복구할 수 없습니다.',
-        ]}
+        title={resolveGeminiDeleteGuideModalCopy('공고', selectedRowKeys.length).title}
+        lines={resolveGeminiDeleteGuideModalCopy('공고', selectedRowKeys.length).lines}
         confirmText="삭제"
-        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteModalOpen(false)}
       />

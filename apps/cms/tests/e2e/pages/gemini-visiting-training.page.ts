@@ -44,7 +44,7 @@ export class GeminiVisitingTrainingPage {
 
   async expectListShell(tab: 'recruitment' | 'approved' = 'recruitment') {
     if (tab === 'recruitment') {
-      await expect(this.page.getByRole('button', { name: '모집 공고 추가' })).toBeVisible({
+      await expect(this.page.getByRole('button', { name: '모집 공고 등록' })).toBeVisible({
         timeout: 30_000,
       })
     } else {

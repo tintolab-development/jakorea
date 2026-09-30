@@ -3,13 +3,17 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { Alert, Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { CmsButton, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
 import { geminiApprovedTrainingService } from '../../api/approved-training-service'
+import {
+  geminiApprovedTrainingDeleteBlocked,
+  resolveGeminiDeleteBlockedAlert,
+  resolveGeminiDeleteGuideModalCopy,
+} from '../../lib/delete-guide'
 import {
   buildApprovedTrainingExcelRows,
   GEMINI_APPROVED_TRAINING_EXCEL_COLUMNS,
@@ -210,22 +214,29 @@ export function GeminiApprovedTrainingList() {
 
   const handleBulkDeleteClick = useCallback(() => {
     if (!canWrite) return
-    if (remoteEnabled) {
-      showRemoteMutationUnavailable()
-      return
-    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
+    const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
+    const selectedRows = filteredRows.filter(row => selectedIds.has(row.id))
+    if (selectedRows.some(geminiApprovedTrainingDeleteBlocked)) {
+      showAlert(resolveGeminiDeleteBlockedAlert('연수', selectedRows.length))
+      return
+    }
     setDeleteModalOpen(true)
-  }, [canWrite, remoteEnabled, selectedRowKeys.length, showNoSelectionAlert, showRemoteMutationUnavailable])
+  }, [canWrite, filteredRows, selectedRowKeys, showAlert, showNoSelectionAlert])
 
   const handleConfirmDelete = useCallback(() => {
+    if (remoteEnabled) {
+      setDeleteModalOpen(false)
+      showRemoteMutationUnavailable()
+      return
+    }
     geminiApprovedTrainingService.delete(selectedRowKeys.map(key => String(key)))
     setSelectedRowKeys([])
     setDeleteModalOpen(false)
-  }, [selectedRowKeys])
+  }, [remoteEnabled, selectedRowKeys, showRemoteMutationUnavailable])
 
   const columns: ColumnsType<GeminiApprovedTrainingRow> = useMemo(
     () => [
@@ -411,13 +422,9 @@ export function GeminiApprovedTrainingList() {
 
       <DeleteGuideModal
         open={deleteModalOpen}
-        title="선택 삭제"
-        lines={[
-          `선택한 ${selectedRowKeys.length}건의 승인 연수를 삭제하시겠습니까?`,
-          '삭제된 승인 연수는 복구할 수 없습니다.',
-        ]}
+        title={resolveGeminiDeleteGuideModalCopy('연수', selectedRowKeys.length).title}
+        lines={resolveGeminiDeleteGuideModalCopy('연수', selectedRowKeys.length).lines}
         confirmText="삭제"
-        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteModalOpen(false)}
       />
