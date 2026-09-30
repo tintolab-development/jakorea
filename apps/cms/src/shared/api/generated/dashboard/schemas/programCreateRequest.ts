@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
+import type { ProgramCreateRequestEducationForm } from './programCreateRequestEducationForm';
 import type { ProgramCreateRequestEducationStructure } from './programCreateRequestEducationStructure';
 import type { ProgramCreateRequestProgramType } from './programCreateRequestProgramType';
 import type { ProgramFormBindingRequest } from './programFormBindingRequest';
@@ -80,6 +81,7 @@ export interface ProgramCreateRequest {
   oneLineIntroduction?: string;
   keyVisualImage?: string;
   settlementRuleId?: string;
+  /** 신청 경로/템플릿 ID. applicationMethod(지원 방법 문구)와 혼동 금지. */
   applicationPathId?: string;
   applicationTargetMode?: string;
   additionalContentHtml?: string;
@@ -97,4 +99,18 @@ export interface ProgramCreateRequest {
   programDraftId?: number;
   /** 프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings. GENERAL / TRAINED_TEACHER / COMPANY_SCHOOL / UJAT에서 허용. 공용 카탈로그 version id는 거부하고 draft-owned COPY만 받는다. */
   formBindings?: ProgramFormBindingRequest[];
+  /** 연수 요청 가능기간 시작. Gemini. */
+  trainingRequestStartDate?: string | null;
+  /** 연수 요청 가능기간 종료. Gemini. */
+  trainingRequestEndDate?: string | null;
+  /** 교육 형태. Gemini create/PATCH top-level. */
+  educationForm?: ProgramCreateRequestEducationForm;
+  /** 지원 방법 자유 텍스트. applicationPathId가 아님. */
+  applicationMethod?: string | null;
+  /** 문의처 이름 */
+  contactName?: string | null;
+  /** 비고. 해당없음이면 null */
+  otherMatters?: string | null;
+  /** 교육 대상 상세 */
+  recruitmentTargetDetail?: string | null;
 }
