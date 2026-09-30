@@ -42,6 +42,30 @@ describe('mergeListUserWithFetchedDetail', () => {
     expect(merged.name).toBe('서울고등학교')
   })
 
+  it('학교 목록 행을 교사 상세(organizationId 공유)로 덮지 않는다', () => {
+    const list = baseUser({
+      organizationId: 9001,
+      name: 'QA제휴학교',
+      schoolInfo: { schoolName: 'QA제휴학교', address: '서울시' },
+    })
+    const fetched = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김성재',
+      organizationId: 9001,
+      instructorMemberProfile: 'school_teacher',
+      schoolInfo: undefined,
+      memberId: 501,
+    })
+
+    const merged = mergeListUserWithFetchedDetail(list, fetched)
+
+    expect(merged.role).toBe('SCHOOL')
+    expect(merged.name).toBe('QA제휴학교')
+    expect(merged.schoolInfo?.schoolName).toBe('QA제휴학교')
+    expect(merged.memberId).toBe(42)
+  })
+
   it('교사 drill-down 시 API name이 기관명이면 목록 교사명을 유지한다', () => {
     const list = baseUser({
       id: 'teacher-uuid',
