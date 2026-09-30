@@ -96270,6 +96270,18 @@
       },
       "GeminiRecruitmentDetailResponse": {
         "type": "object",
+        "description": "Gemini 찾아가는 연수 모집 공고 상세. create/PATCH 저장 필드를 같은 이름으로 왕복한다. serviceDetailJson 원문은 노출하지 않는다.",
+        "required": [
+          "programId",
+          "programCode",
+          "programType",
+          "draftStatus",
+          "periodStatus",
+          "nameKo",
+          "certificateDisabled",
+          "targetLevels",
+          "attachmentFileNames"
+        ],
         "properties": {
           "programId": {
             "type": "integer",
@@ -96279,7 +96291,10 @@
             "type": "string"
           },
           "programType": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "GEMINI_TRAINING"
+            ]
           },
           "draftStatus": {
             "type": "string"
@@ -96291,37 +96306,154 @@
             "type": "string"
           },
           "summary": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "businessYear": {
             "type": "integer",
-            "format": "int32"
+            "nullable": true
           },
           "businessStartDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "nullable": true
           },
           "businessEndDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "nullable": true
+          },
+          "applicationStartDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "기관 모집 기간 시작"
+          },
+          "applicationEndDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "기관 모집 기간 종료"
+          },
+          "trainingRequestStartDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "연수 요청 가능기간 시작"
+          },
+          "trainingRequestEndDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "연수 요청 가능기간 종료"
           },
           "minimumParticipantCount": {
             "type": "integer",
-            "format": "int32"
+            "nullable": true
           },
           "certificateDisabled": {
             "type": "boolean"
           },
           "organizationApplicationCount": {
             "type": "integer",
-            "format": "int32"
+            "nullable": true
           },
           "approvedOrganizationApplicationCount": {
             "type": "integer",
-            "format": "int32"
+            "nullable": true
+          },
+          "targetLevels": {
+            "type": "array",
+            "description": "없으면 []. elementary|middle|high|university|adult",
+            "items": {
+              "type": "string",
+              "enum": [
+                "elementary",
+                "middle",
+                "high",
+                "university",
+                "adult"
+              ]
+            }
+          },
+          "recruitmentTargetDetail": {
+            "type": "string",
+            "nullable": true
+          },
+          "educationForm": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "online",
+              "offline",
+              "hybrid"
+            ]
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "otherMatters": {
+            "type": "string",
+            "nullable": true,
+            "description": "비고. 해당없음이면 null"
+          },
+          "thumbnailFileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "recruitmentGuide": {
+            "type": "string",
+            "nullable": true
+          },
+          "applicationMethod": {
+            "type": "string",
+            "nullable": true
+          },
+          "learningSupportContent": {
+            "type": "string",
+            "nullable": true
+          },
+          "additionalContentHtml": {
+            "type": "string",
+            "nullable": true
+          },
+          "attachmentFileNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "없으면 []"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedByName": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
