@@ -243,11 +243,11 @@ function ProgramListPageContent() {
   const updateCompanySchoolMutation = useUpdateCompanySchoolProgram()
   const deleteCompanySchoolProgramsMutation = useDeleteCompanySchoolPrograms()
   const companySchoolDetailData = companySchoolDetailQuery.data ?? null
-  const companySchoolDetailProgram =
-    companySchoolDetailData ??
-    (companySchoolProgramIdFromUrl
-      ? ({ id: companySchoolProgramIdFromUrl } as Program)
-      : selectedProgramForFullPageModal)
+  // 상세가 없으면 id만 있는 빈 Program을 넘기지 않는다.
+  // 매핑이 실패해도 본문이 전부 '-'로 보이고, 오류 문구는 가려진다.
+  const companySchoolDetailProgram = isCompanySchoolPath
+    ? companySchoolDetailData
+    : (companySchoolDetailData ?? selectedProgramForFullPageModal)
 
   // 4. Effects
   useEffect(() => {
@@ -670,6 +670,7 @@ function ProgramListPageContent() {
           isCompanySchoolPath
             ? Boolean(companySchoolProgramIdFromUrl) &&
               !companySchoolDetailData &&
+              !companySchoolDetailQuery.isError &&
               (companySchoolDetailQuery.isFetching || companySchoolDetailQuery.isLoading)
             : undefined
         }
