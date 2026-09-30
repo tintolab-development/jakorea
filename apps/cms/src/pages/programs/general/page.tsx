@@ -9,8 +9,11 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramList } from '@/features/program/general/ui/program-list'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
-import { GeneralProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/detail-fullpage-modal'
-import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
+import {
+  LazyGeneralProgramDetailFullPageModal,
+  LazyGeneralProgramRegistrationFullpageModal,
+  ProgramModalWhenOpen,
+} from '@/pages/programs/lazy-program-modals'
 import { useDeleteGeneralPrograms } from '@/features/program/general/hooks/use-delete-general-program'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
@@ -410,7 +413,7 @@ export function GeneralProgramListPageContent() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={listLoading}
+        loading={listLoading && filteredPrograms.length === 0}
         headerTitle={headerTitle}
         onView={handleView}
         searchParams={searchParams}
@@ -432,20 +435,24 @@ export function GeneralProgramListPageContent() {
         <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       ) : null}
 
-      <GeneralProgramDetailFullPageModal
-        open={generalDetailModalOpen}
-        program={generalDetailProgram}
-        programIdHint={programIdFromUrl}
-        searchParams={searchParams}
-        setSearchParams={setSearchParams}
-        onClose={handleCloseFullPageModal}
-      />
+      <ProgramModalWhenOpen open={generalDetailModalOpen}>
+        <LazyGeneralProgramDetailFullPageModal
+          open={generalDetailModalOpen}
+          program={generalDetailProgram}
+          programIdHint={programIdFromUrl}
+          searchParams={searchParams}
+          setSearchParams={setSearchParams}
+          onClose={handleCloseFullPageModal}
+        />
+      </ProgramModalWhenOpen>
 
-      <GeneralProgramRegistrationFullpageModal
-        open={isGeneralProgramNewRegistrationQuery}
-        onClose={handleCloseGeneralProgramRegistrationFullpage}
-        onProgramRegistrationSaved={handleGeneralProgramRegistrationSaved}
-      />
+      <ProgramModalWhenOpen open={isGeneralProgramNewRegistrationQuery}>
+        <LazyGeneralProgramRegistrationFullpageModal
+          open={isGeneralProgramNewRegistrationQuery}
+          onClose={handleCloseGeneralProgramRegistrationFullpage}
+          onProgramRegistrationSaved={handleGeneralProgramRegistrationSaved}
+        />
+      </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal
         open={draftNoticeOpen}

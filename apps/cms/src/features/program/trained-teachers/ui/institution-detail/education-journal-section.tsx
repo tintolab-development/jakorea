@@ -295,7 +295,7 @@ export function TrainedTeachersEducationJournalSection({
       </div>
 
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+        <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
           <Spin />
         </div>
       ) : entries.length === 0 ? (

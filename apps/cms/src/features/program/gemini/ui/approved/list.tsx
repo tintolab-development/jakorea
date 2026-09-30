@@ -42,7 +42,7 @@ import type {
   GeminiApprovedTrainingStatus,
 } from '../../model/approved/types'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
-import { useGeminiApprovedTrainingDetailUrl } from './detail-fullpage-modal'
+import { useGeminiApprovedTrainingDetailUrl } from './approved-training-detail-url'
 import '@/pages/programs/program-list-page.css'
 import './list.css'
 
@@ -396,7 +396,7 @@ export function GeminiApprovedTrainingList() {
           scroll={{ x: TABLE_SCROLL_X }}
           columns={columns}
           dataSource={filteredRows}
-          loading={remoteEnabled && isFetching}
+          loading={remoteEnabled && isFetching && filteredRows.length === 0}
           pagination={false}
           onRow={record => ({
             onClick: (e: MouseEvent<HTMLElement>) => {

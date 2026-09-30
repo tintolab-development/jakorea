@@ -55,11 +55,14 @@ import {
 } from '@/features/template/context/template-writing-preview-context'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
-import { UjatProgramRegistrationFullpageModal } from '@/features/program/ujat/ui/registration/ujat-program-registration-fullpage-modal'
 import { UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
-import { UjatProgramDetailFullPageModal } from '@/features/program/ujat/ui/detail-modal/ujat-program-detail-fullpage-modal'
 import { UjatProgramListProgressCell } from '@/features/program/ujat/ui/list/ujat-program-list-progress-cell'
+import {
+  LazyUjatProgramDetailFullPageModal,
+  LazyUjatProgramRegistrationFullpageModal,
+  ProgramModalWhenOpen,
+} from '@/pages/programs/lazy-program-modals'
 
 import '@/pages/programs/program-list-page.css'
 import './ujat-program-list-page.css'
@@ -414,7 +417,7 @@ function UjatProgramListPageContent() {
         <Table<Program>
           className="cms-data-table"
           rowKey="id"
-          loading={loading}
+          loading={loading && filteredRows.length === 0}
           dataSource={filteredRows}
           columns={columns}
           pagination={false}
@@ -426,7 +429,8 @@ function UjatProgramListPageContent() {
         <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
-      <UjatProgramDetailFullPageModal
+      <ProgramModalWhenOpen open={ujatDetailModalOpen}>
+      <LazyUjatProgramDetailFullPageModal
         open={ujatDetailModalOpen}
         onClose={() => undefined}
         program={ujatDetailProgram}
@@ -441,12 +445,15 @@ function UjatProgramListPageContent() {
           updateProgramMutation.mutateAsync({ programId, program, patch })
         }
       />
+      </ProgramModalWhenOpen>
 
-      <UjatProgramRegistrationFullpageModal
+      <ProgramModalWhenOpen open={isUjatProgramNewRegistrationQuery}>
+      <LazyUjatProgramRegistrationFullpageModal
         open={isUjatProgramNewRegistrationQuery}
         onClose={handleCloseUjatProgramRegistrationFullpage}
         onProgramRegistrationSaved={handleUjatProgramRegistrationSaved}
       />
+      </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal
         open={draftNoticeOpen}

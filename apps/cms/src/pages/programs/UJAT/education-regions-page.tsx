@@ -434,7 +434,7 @@ export default function UjatEducationRegionsPage() {
         <UjatEducationRegionsSortableTable
           rows={filteredRows}
           columns={columns}
-          loading={listQuery.isFetching}
+          loading={listQuery.isFetching && filteredRows.length === 0}
           onRowsReorder={handleReorder}
         />
       </FilterTableLayout>

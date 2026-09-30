@@ -200,7 +200,15 @@ export function MfaPage() {
         )}
 
         {!isLocalTestMfa && (
-          <div style={{ textAlign: 'center', marginBottom: 24, minHeight: 220 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 24,
+              minHeight: 220,
+            }}
+          >
             {provisioningLoading ? (
               <Spin tip="QR 코드 생성 중…" />
             ) : provisioning ? (

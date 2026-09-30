@@ -469,7 +469,7 @@ export function GeminiPerformanceList() {
           scroll={{ x: tableScrollX }}
           columns={columns}
           dataSource={filteredRows}
-          loading={remoteEnabled && isFetching}
+          loading={remoteEnabled && isFetching && filteredRows.length === 0}
           pagination={false}
           rowSelection={
             showBulkDelete

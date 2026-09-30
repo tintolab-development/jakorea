@@ -36,8 +36,8 @@ import {
   resolveGeminiDeleteGuideModalCopy,
 } from '../../lib/delete-guide'
 import { peekGeminiRecruitmentAddDraftOverwrite } from '../../lib/recruitment/add-local-save'
-import { useGeminiRecruitmentDetailUrl } from '../detail/fullpage-modal'
-import { useGeminiRecruitmentAddUrl } from './add-fullpage-modal'
+import { useGeminiRecruitmentDetailUrl } from '../detail/recruitment-detail-url'
+import { useGeminiRecruitmentAddUrl } from './recruitment-add-url'
 import '@/pages/programs/program-list-page.css'
 import './list.css'
 
@@ -304,7 +304,7 @@ export function GeminiRecruitmentList() {
           scroll={{ x: RECRUITMENT_TABLE_SCROLL_X }}
           columns={columns}
           dataSource={tableData}
-          loading={remoteEnabled && isFetching}
+          loading={remoteEnabled && isFetching && tableData.length === 0}
           pagination={false}
           onRow={record => ({
             onClick: (e: MouseEvent<HTMLElement>) => {
