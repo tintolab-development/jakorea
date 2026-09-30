@@ -6,6 +6,10 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 교육 형태. online|offline|hybrid
+ * @nullable
+ */
 export type GeminiRecruitmentDetailResponseEducationForm = typeof GeminiRecruitmentDetailResponseEducationForm[keyof typeof GeminiRecruitmentDetailResponseEducationForm] | null;
 
 

@@ -14498,10 +14498,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -14772,6 +14772,9 @@
           "contactPhone": {
             "type": "string"
           },
+          "contactName": {
+            "type": "string"
+          },
           "oneLineIntroduction": {
             "type": "string"
           },
@@ -14782,7 +14785,41 @@
             "type": "string"
           },
           "applicationPathId": {
-            "type": "string"
+            "type": "string",
+            "description": "신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지."
+          },
+          "applicationMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님."
+          },
+          "educationForm": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.",
+            "enum": [
+              "online",
+              "offline",
+              "hybrid"
+            ]
+          },
+          "trainingRequestStartDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개."
+          },
+          "trainingRequestEndDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "연수 요청 가능기간 종료."
           },
           "applicationTargetMode": {
             "type": "string"
@@ -14794,6 +14831,12 @@
             "type": "string"
           },
           "learningSupportContent": {
+            "type": "string"
+          },
+          "otherMatters": {
+            "type": "string"
+          },
+          "recruitmentTargetDetail": {
             "type": "string"
           },
           "attachmentFileNames": {
@@ -26357,7 +26400,41 @@
             "type": "string"
           },
           "applicationPathId": {
-            "type": "string"
+            "type": "string",
+            "description": "신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지."
+          },
+          "applicationMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님."
+          },
+          "educationForm": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.",
+            "enum": [
+              "online",
+              "offline",
+              "hybrid"
+            ]
+          },
+          "trainingRequestStartDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개."
+          },
+          "trainingRequestEndDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "연수 요청 가능기간 종료."
           },
           "applicationTargetMode": {
             "type": "string"
@@ -28529,6 +28606,21 @@
               "hybrid",
               "participant_choice"
             ]
+          },
+          "featuredOnHome": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Platform 홈 캐러셀 노출 여부. featuredOnHome=true 필터와 동일 컬럼."
+          },
+          "homeDisplayOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "홈 캐러셀 정렬 순서(오름차순). 미노출이면 null."
           }
         }
       },
@@ -38933,12 +39025,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
+            "description": "카탈로그 key = #{…} 안쪽 라벨",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
+            "description": "본문 삽입용 토큰",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -38950,11 +39042,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true이면 programId 없이 enabled=false."
+            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
+            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
           },
           "programGroups": {
             "type": "array",
@@ -38972,14 +39064,14 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "description": "허용 참여 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
+            "description": "허용 회원 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
@@ -40302,6 +40394,38 @@
             "type": "string",
             "format": "date"
           },
+          "applicationStartDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "기관 모집 기간 시작. 연수 요청 가능기간(trainingRequest*)과 별개."
+          },
+          "applicationEndDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "기관 모집 기간 종료."
+          },
+          "trainingRequestStartDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "연수 요청 가능기간 시작."
+          },
+          "trainingRequestEndDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "연수 요청 가능기간 종료."
+          },
           "organizationApplicationCount": {
             "type": "integer",
             "format": "int32"
@@ -40341,18 +40465,7 @@
       },
       "GeminiRecruitmentDetailResponse": {
         "type": "object",
-        "description": "Gemini 찾아가는 연수 모집 공고 상세. create/PATCH 저장 필드를 같은 이름으로 왕복한다. serviceDetailJson 원문은 노출하지 않는다.",
-        "required": [
-          "programId",
-          "programCode",
-          "programType",
-          "draftStatus",
-          "periodStatus",
-          "nameKo",
-          "certificateDisabled",
-          "targetLevels",
-          "attachmentFileNames"
-        ],
+        "description": "Gemini 찾아가는 연수 모집 공고 상세. create/PATCH로 저장한 모집 정보 필드를 같은 이름으로 왕복한다. serviceDetailJson 원문은 노출하지 않는다.",
         "properties": {
           "programId": {
             "type": "integer",
@@ -40362,10 +40475,7 @@
             "type": "string"
           },
           "programType": {
-            "type": "string",
-            "enum": [
-              "GEMINI_TRAINING"
-            ]
+            "type": "string"
           },
           "draftStatus": {
             "type": "string"
@@ -40377,87 +40487,78 @@
             "type": "string"
           },
           "summary": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "businessYear": {
             "type": "integer",
-            "nullable": true
+            "format": "int32"
           },
           "businessStartDate": {
             "type": "string",
-            "format": "date",
-            "nullable": true
+            "format": "date"
           },
           "businessEndDate": {
             "type": "string",
-            "format": "date",
-            "nullable": true
+            "format": "date"
           },
           "applicationStartDate": {
             "type": "string",
             "format": "date",
-            "nullable": true,
-            "description": "기관 모집 기간 시작"
+            "description": "기관 모집 기간 시작. 연수 요청 가능기간(trainingRequest*)과 별개."
           },
           "applicationEndDate": {
             "type": "string",
             "format": "date",
-            "nullable": true,
-            "description": "기관 모집 기간 종료"
+            "description": "기관 모집 기간 종료."
           },
           "trainingRequestStartDate": {
             "type": "string",
             "format": "date",
-            "nullable": true,
-            "description": "연수 요청 가능기간 시작"
+            "description": "연수 요청 가능기간 시작."
           },
           "trainingRequestEndDate": {
             "type": "string",
             "format": "date",
-            "nullable": true,
-            "description": "연수 요청 가능기간 종료"
+            "description": "연수 요청 가능기간 종료."
           },
           "minimumParticipantCount": {
             "type": "integer",
-            "nullable": true
+            "format": "int32"
           },
           "certificateDisabled": {
             "type": "boolean"
           },
           "organizationApplicationCount": {
             "type": "integer",
-            "nullable": true
+            "format": "int32"
           },
           "approvedOrganizationApplicationCount": {
             "type": "integer",
-            "nullable": true
+            "format": "int32"
           },
           "targetLevels": {
             "type": "array",
-            "description": "없으면 []. elementary|middle|high|university|adult",
+            "description": "교육 대상 코드. elementary|middle|high|university|adult. 없으면 [].",
             "items": {
-              "type": "string",
-              "enum": [
-                "elementary",
-                "middle",
-                "high",
-                "university",
-                "adult"
-              ]
+              "type": "string"
             }
           },
           "recruitmentTargetDetail": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교육 대상 상세"
           },
           "educationForm": {
-            "type": "string",
-            "nullable": true,
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교육 형태. online|offline|hybrid",
             "enum": [
               "online",
               "offline",
@@ -40465,66 +40566,95 @@
             ]
           },
           "contactName": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "문의처 이름"
           },
           "contactPhone": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "문의처 전화"
           },
           "contactEmail": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "문의처 이메일"
           },
           "otherMatters": {
-            "type": "string",
-            "nullable": true,
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "비고. 해당없음이면 null"
           },
           "thumbnailFileName": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "섬네일 파일명"
           },
           "recruitmentGuide": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "모집 안내"
           },
           "applicationMethod": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "지원 방법"
           },
           "learningSupportContent": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "학습 지원 내용"
           },
           "additionalContentHtml": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "추가 내용 HTML/Markdown 저장분"
           },
           "attachmentFileNames": {
             "type": "array",
+            "description": "첨부 파일명. 없으면 [].",
             "items": {
               "type": "string"
-            },
-            "description": "없으면 []"
+            }
           },
           "createdAt": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "createdByName": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "updatedAt": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "updatedByName": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "program에 updated_by 컬럼이 없으면 null"
           }
         }
       },
