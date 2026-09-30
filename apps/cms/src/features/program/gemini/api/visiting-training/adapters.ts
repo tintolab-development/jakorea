@@ -5,6 +5,7 @@ import type {
 } from '@/features/program/gemini/model/recruitment/institution-application-types'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
 import type { GeminiRecruitmentAddFormSnapshot } from '@/features/program/gemini/lib/recruitment/add-local-save'
+import { GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE } from '@/features/program/gemini/lib/recruitment/add-form-options'
 import type { GeminiRecruitmentInfoEditDraft } from '@/features/program/gemini/model/recruitment/info-edit-draft'
 import type { GeminiRecruitmentRow } from '@/features/program/gemini/model/recruitment/types'
 import type { GeminiApprovedTrainingItem } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingItem'
@@ -12,7 +13,9 @@ import type { GeminiOrganizationApplicationItem } from '@/shared/api/generated/d
 import type { GeminiRecruitmentDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentDetailResponse'
 import type { GeminiRecruitmentItem } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentItem'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
+import { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
+import { ProgramUpdateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestEducationStructure'
 import { GEMINI_VISITING_TRAINING_PROGRAM_TYPE } from './capabilities'
 
 function toId(value: number | string | undefined): string {
@@ -28,6 +31,17 @@ function isDraftStatus(value?: string): boolean {
 function optionalDate(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim()
   return trimmed ? trimmed : undefined
+}
+
+/** Gemini wire — UI 셀렉트 없으면 SCHEDULE 고정. CURRICULUM은 detailedProgramId 필수. */
+function resolveGeminiEducationStructureWire(
+  value: string | null | undefined
+): typeof ProgramCreateRequestEducationStructure.SCHEDULE | typeof ProgramCreateRequestEducationStructure.CURRICULUM {
+  const normalized = value?.trim().toUpperCase()
+  if (normalized === ProgramCreateRequestEducationStructure.CURRICULUM) {
+    return ProgramCreateRequestEducationStructure.CURRICULUM
+  }
+  return ProgramCreateRequestEducationStructure.SCHEDULE
 }
 
 /** BulkIdsRequest 용 — 숫자로 파싱 가능한 id만 사용 */
@@ -47,6 +61,11 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
   const otherMatters =
     snapshot.notesNotApplicable ? undefined : snapshot.notes?.trim() || undefined
   const recruitmentTargetDetail = snapshot.educationTargetDetail?.trim() || undefined
+  // Gemini create: educationStructure는 ProgramCreateRequest top-level 비즈니스 필수.
+  // UI 셀렉트 없음 → SCHEDULE. serviceDetailJson 안 값으로 top-level을 대체하지 않음.
+  const educationStructure = resolveGeminiEducationStructureWire(
+    snapshot.educationStructure ?? GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE
+  )
   return {
     programType: GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
     title: snapshot.title.trim() || undefined,
@@ -55,6 +74,7 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
     businessEndDate: optionalDate(snapshot.applicationPeriodEnd),
     applicationStartDate: optionalDate(snapshot.applicationPeriodStart),
     applicationEndDate: optionalDate(snapshot.applicationPeriodEnd),
+    educationStructure,
     totalParticipants: snapshot.minStudentCount ?? undefined,
     managerName: contactName,
     contactPhone: snapshot.inquiryTel || undefined,
@@ -95,6 +115,14 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     draft.notesNotApplicable ? undefined : draft.notes?.trim() || undefined
   const recruitmentTargetDetail = draft.educationTargetDetail?.trim() || undefined
   const clearFields: string[] = []
+  // PATCH에서 educationStructure를 null/clear하지 않음 — Gemini UI 없으면 SCHEDULE 유지
+  const educationStructureWire = resolveGeminiEducationStructureWire(
+    draft.educationStructure ?? GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE
+  )
+  const educationStructure =
+    educationStructureWire === ProgramCreateRequestEducationStructure.CURRICULUM
+      ? ProgramUpdateRequestEducationStructure.CURRICULUM
+      : ProgramUpdateRequestEducationStructure.SCHEDULE
   const body: ProgramUpdateRequest = {
     title: draft.title.trim() || undefined,
     description: draft.programDescription || undefined,
@@ -102,6 +130,7 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     businessEndDate: optionalDate(draft.applicationPeriodEnd),
     applicationStartDate: optionalDate(draft.applicationPeriodStart),
     applicationEndDate: optionalDate(draft.applicationPeriodEnd),
+    educationStructure,
     totalParticipants: draft.minStudentCount ?? undefined,
     // 문의처 표시명 → contactName (TT managerName/후원 담당자와 별개 — Gemini는 문의처 레거시용 managerName 병행)
     managerName: contactName,
@@ -140,6 +169,8 @@ export function mapGeminiRecruitmentItemToRow(
     trainingRequestPeriodStart: start,
     trainingRequestPeriodEnd: end,
     isDraft: isDraftStatus(dto.draftStatus),
+    organizationApplicationCount: dto.organizationApplicationCount ?? 0,
+    approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount ?? 0,
   }
 }
 
@@ -177,6 +208,7 @@ export function mapGeminiRecruitmentDetailToDetail(
     educationTargetDetail: '',
     minStudentCount: dto.minimumParticipantCount ?? 0,
     educationForm: 'offline',
+    educationStructure: GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE,
     inquiryContactName: '',
     inquiryTel: '',
     inquiryEmail: '',

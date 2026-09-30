@@ -25,6 +25,21 @@ describe('gemini visiting-training adapters', () => {
     expect(row.title).toBe('찾아가는 연수')
     expect(row.isDraft).toBe(true)
     expect(row.applicationPeriodStart).toBe('2026-03-01')
+    expect(row.organizationApplicationCount).toBe(0)
+  })
+
+  it('maps application counts used to block recruitment delete', () => {
+    const row = mapGeminiRecruitmentItemToRow(
+      {
+        programId: 4,
+        nameKo: '신청 있는 공고',
+        organizationApplicationCount: 2,
+        approvedOrganizationApplicationCount: 1,
+      },
+      0
+    )
+    expect(row.organizationApplicationCount).toBe(2)
+    expect(row.approvedOrganizationApplicationCount).toBe(1)
   })
 
   it('maps detail and organization application', () => {
@@ -86,6 +101,7 @@ describe('gemini visiting-training adapters', () => {
       trainingRequestPeriodEnd: '2026-04-30',
       minStudentCount: 15,
       educationForm: 'offline',
+      educationStructure: 'SCHEDULE',
       inquiryContactName: '홍길동',
       inquiryTel: '010',
       inquiryEmail: 'a@b.c',
@@ -103,6 +119,8 @@ describe('gemini visiting-training adapters', () => {
     })
     expect(create.programType).toBe('GEMINI_TRAINING')
     expect(create.title).toBe('공고')
+    expect(create.educationStructure).toBe('SCHEDULE')
+    expect(create.detailedProgramId).toBeUndefined()
     expect((create as { contactName?: string }).contactName).toBe('홍길동')
     expect((create as { otherMatters?: string }).otherMatters).toBe('준비물')
     expect((create as { recruitmentTargetDetail?: string }).recruitmentTargetDetail).toBe(
@@ -123,6 +141,7 @@ describe('gemini visiting-training adapters', () => {
       trainingRequestPeriodEnd: '2026-04-30',
       minStudentCount: 15,
       educationForm: 'offline',
+      educationStructure: 'SCHEDULE',
       inquiryContactName: '',
       inquiryTel: '',
       inquiryEmail: '',
@@ -136,6 +155,8 @@ describe('gemini visiting-training adapters', () => {
       additionalContentMarkdown: '',
       attachmentFileNames: [],
     })
+    expect(update.educationStructure).toBe('SCHEDULE')
+    expect(update.clearFields ?? []).not.toContain('educationStructure')
     expect(update.contactName).toBeUndefined()
     expect(update.otherMatters).toBeUndefined()
     expect(update.recruitmentTargetDetail).toBeUndefined()
