@@ -16,24 +16,30 @@ import {
 
 export type VolunteerInterviewOverlayStore = 'application' | 'recruit'
 
-function getInterviewOverlayKeyPrefix(store: VolunteerInterviewOverlayStore): string {
+function getInterviewOverlayKeyPrefix(
+  store: VolunteerInterviewOverlayStore,
+  namespace?: string
+): string {
+  if (namespace?.trim()) return namespace.trim()
   return store === 'recruit' ? 'recruit.volunteer.interview' : 'application.volunteer.interview'
 }
 
 export function buildVolunteerInterviewOverlayKey(
   store: VolunteerInterviewOverlayStore,
-  suffix: string
+  suffix: string,
+  namespace?: string
 ): string {
-  return `${getInterviewOverlayKeyPrefix(store)}.${suffix}`
+  return `${getInterviewOverlayKeyPrefix(store, namespace)}.${suffix}`
 }
 
 export function useVolunteerInterviewOverlayKv<T>(
   store: VolunteerInterviewOverlayStore,
   suffix: string,
-  defaultValue: T
+  defaultValue: T,
+  namespace?: string
 ): [T, (next: T) => void] {
-  const applicationKey = buildVolunteerInterviewOverlayKey('application', suffix)
-  const recruitKey = buildVolunteerInterviewOverlayKey('recruit', suffix)
+  const applicationKey = buildVolunteerInterviewOverlayKey('application', suffix, namespace)
+  const recruitKey = buildVolunteerInterviewOverlayKey('recruit', suffix, namespace)
 
   const defaultRef = useRef(defaultValue)
   const applicationVersion = useSyncExternalStore(
@@ -73,9 +79,10 @@ export function useVolunteerInterviewOverlayKv<T>(
 export function updateVolunteerInterviewOverlayKey<T>(
   store: VolunteerInterviewOverlayStore,
   suffix: string,
-  updater: (prev: T | undefined) => T
+  updater: (prev: T | undefined) => T,
+  namespace?: string
 ): void {
-  const key = buildVolunteerInterviewOverlayKey(store, suffix)
+  const key = buildVolunteerInterviewOverlayKey(store, suffix, namespace)
   if (store === 'recruit') {
     updateGeneralRecruitOverlayKey<T>(key, updater)
     return

@@ -88,6 +88,8 @@ function VolunteerInterviewScheduleBlock({
   commonScheduleSeed,
   onCommonExclusionChange,
   overlayStore = 'application',
+  overlayNamespace,
+  interviewRangeSealKey = 'recruit.volunteer.interviewRangeSeal',
   freezeUnavailableCalendar = false,
 }: {
   /** 예외 일정이 있을 때만 공통 블록에 전달 */
@@ -96,6 +98,8 @@ function VolunteerInterviewScheduleBlock({
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
   overlayStore?: VolunteerInterviewOverlayStore
+  overlayNamespace?: string
+  interviewRangeSealKey?: string
   /** 템플릿 편집 — 진행 불가일 모달 달력 월 이동·선택 고정 */
   freezeUnavailableCalendar?: boolean
 }) {
@@ -108,7 +112,7 @@ function VolunteerInterviewScheduleBlock({
 
   /** 봉사자 모집 정보「2차 면접 기간」— 진행 불가일·예외 일정 선택 가능 범위 */
   const [interviewRangeSeal] = useGeneralRecruitOverlayKv<RecruitInterviewRangeSeal>(
-    'recruit.volunteer.interviewRangeSeal',
+    interviewRangeSealKey,
     null
   )
   const applyInterviewPeriodConstraint =
@@ -141,32 +145,38 @@ function VolunteerInterviewScheduleBlock({
   const [exceptionDate, setExceptionDate] = useVolunteerInterviewOverlayKv<Dayjs | null>(
     overlayStore,
     'exceptionDate',
-    null
+    null,
+    overlayNamespace
   )
   const [interviewTime, setInterviewTime] = useVolunteerInterviewOverlayKv<Dayjs | null>(
     overlayStore,
     'interviewTime',
-    initialTimeRange?.[0] ?? null
+    initialTimeRange?.[0] ?? null,
+    overlayNamespace
   )
   const [interviewTimeRange, setInterviewTimeRange] = useVolunteerInterviewOverlayKv<[Dayjs, Dayjs] | null>(
     overlayStore,
     'interviewTimeRange',
-    initialTimeRange
+    initialTimeRange,
+    overlayNamespace
   )
   const [timeUnit, setTimeUnit] = useVolunteerInterviewOverlayKv<InterviewTimeUnit>(
     overlayStore,
     'timeUnit',
-    seed?.timeUnit ?? '30'
+    seed?.timeUnit ?? '30',
+    overlayNamespace
   )
   const [selectedSlotKeys] = useVolunteerInterviewOverlayKv<string[]>(
     overlayStore,
     'selectedSlotKeys',
-    []
+    [],
+    overlayNamespace
   )
   const [appliedUnavailableDates, setAppliedUnavailableDates] = useVolunteerInterviewOverlayKv<string[]>(
     overlayStore,
     'appliedUnavailableDates',
-    seed?.appliedUnavailableDates ?? []
+    seed?.appliedUnavailableDates ?? [],
+    overlayNamespace
   )
   const [exclusionState, setExclusionState] = useVolunteerInterviewOverlayKv<UnavailableDatesExclusionState>(
     overlayStore,
@@ -178,7 +188,8 @@ function VolunteerInterviewScheduleBlock({
           excludeSunday: seed.excludeSunday,
           excludeHoliday: seed.excludeHoliday,
         }
-      : createDefaultUnavailableDatesExclusionState()
+      : createDefaultUnavailableDatesExclusionState(),
+    overlayNamespace
   )
   const seedSlotsAppliedRef = useRef(false)
   const normalizedInterviewTime = useMemo(() => coerceDayjs(interviewTime), [interviewTime])
@@ -193,7 +204,10 @@ function VolunteerInterviewScheduleBlock({
   )
 
   useEffect(() => {
-    updateVolunteerInterviewOverlayKey<string[]>(overlayStore, 'selectedSlotKeys', prev => {
+    updateVolunteerInterviewOverlayKey<string[]>(
+      overlayStore,
+      'selectedSlotKeys',
+      prev => {
         const availableKeys = new Set(interviewTimeSlots.map(slot => slot.key))
         const currentSlots = prev ?? []
         const filtered = currentSlots.filter(key => availableKeys.has(key))
@@ -226,8 +240,10 @@ function VolunteerInterviewScheduleBlock({
           return prev
         }
         return next
-      })
-  }, [interviewTimeSlots, overlayStore, seed])
+      },
+      overlayNamespace
+    )
+  }, [interviewTimeSlots, overlayNamespace, overlayStore, seed])
 
   const handleExclusionChange = (state: UnavailableDatesExclusionState) => {
     setExclusionState(state)
@@ -242,8 +258,14 @@ function VolunteerInterviewScheduleBlock({
   }, [exclusionState, onCommonExclusionChange, type])
 
   const toggleTimeSlot = (slotKey: string) => {
-    updateVolunteerInterviewOverlayKey<string[]>(overlayStore, 'selectedSlotKeys', prev =>
-      (prev ?? []).includes(slotKey) ? (prev ?? []).filter(key => key !== slotKey) : [...(prev ?? []), slotKey]
+    updateVolunteerInterviewOverlayKey<string[]>(
+      overlayStore,
+      'selectedSlotKeys',
+      prev =>
+        (prev ?? []).includes(slotKey)
+          ? (prev ?? []).filter(key => key !== slotKey)
+          : [...(prev ?? []), slotKey],
+      overlayNamespace
     )
   }
 
@@ -384,6 +406,8 @@ function VolunteerInterviewScheduleTemplateUi({
   commonScheduleSeed,
   onCommonExclusionChange,
   overlayStore = 'application',
+  overlayNamespace,
+  interviewRangeSealKey,
   freezeUnavailableCalendar = false,
 }: {
   exceptionScheduleCount?: number
@@ -392,6 +416,8 @@ function VolunteerInterviewScheduleTemplateUi({
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
   overlayStore?: VolunteerInterviewOverlayStore
+  overlayNamespace?: string
+  interviewRangeSealKey?: string
   freezeUnavailableCalendar?: boolean
 }) {
   const [internalBlockKeys, setInternalBlockKeys] = useState<number[]>([])
@@ -432,6 +458,8 @@ function VolunteerInterviewScheduleTemplateUi({
         commonScheduleSeed={commonScheduleSeed}
         onCommonExclusionChange={onCommonExclusionChange}
         overlayStore={overlayStore}
+        overlayNamespace={overlayNamespace}
+        interviewRangeSealKey={interviewRangeSealKey}
         freezeUnavailableCalendar={freezeUnavailableCalendar}
       />
       {blockKeys.map((key, index) => (
@@ -440,6 +468,8 @@ function VolunteerInterviewScheduleTemplateUi({
             title={`■ 예외 일정 ${String(index + 1).padStart(2, '0')}`}
             type="exception"
             overlayStore={overlayStore}
+            overlayNamespace={overlayNamespace}
+            interviewRangeSealKey={interviewRangeSealKey}
           />
           <div className="volunteer-interview-available-schedule__exception-delete-cell">
             <ItemDeleteButton
@@ -467,6 +497,8 @@ export function VolunteerInterviewAvailableScheduleParagraph({
   commonScheduleSeed,
   onCommonExclusionChange,
   overlayStore = 'application',
+  overlayNamespace,
+  interviewRangeSealKey,
   freezeUnavailableCalendar = false,
 }: {
   isTemplateAuthoringMode?: boolean
@@ -477,6 +509,8 @@ export function VolunteerInterviewAvailableScheduleParagraph({
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
   overlayStore?: VolunteerInterviewOverlayStore
+  overlayNamespace?: string
+  interviewRangeSealKey?: string
   /** 템플릿 관리 화면 — 진행 불가일 모달 달력 샘플 고정 */
   freezeUnavailableCalendar?: boolean
 }) {
@@ -489,6 +523,8 @@ export function VolunteerInterviewAvailableScheduleParagraph({
         commonScheduleSeed={commonScheduleSeed}
         onCommonExclusionChange={onCommonExclusionChange}
         overlayStore={overlayStore}
+        overlayNamespace={overlayNamespace}
+        interviewRangeSealKey={interviewRangeSealKey}
         freezeUnavailableCalendar={freezeUnavailableCalendar}
       />
     )
