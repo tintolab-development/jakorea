@@ -18,6 +18,13 @@
   margin-bottom: 16px;
 }
 
+.ujat-program-recruitment-tabs-row__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  flex-shrink: 0;
+}
+
 .ujat-detail-modal__recruitment-body {
   padding-top: 4px;
 }
