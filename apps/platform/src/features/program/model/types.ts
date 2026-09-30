@@ -82,6 +82,7 @@ export type ProgramEducationScheduleMode = 'date' | 'period'
 export type ProgramExtraSection = {
   title: string
   body: string
+  bodyFormat?: 'text' | 'html'
 }
 
 export type ProgramAttachment = {

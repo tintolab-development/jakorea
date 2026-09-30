@@ -35,7 +35,8 @@ const mapped = mapPortalProgramDetail({
   contactEmail: 'cc@jakorea.org',
   contactPhone: '02-6085-6028',
   recruitmentGuide: '모집 안내 본문',
-  additionalContentHtml: '<p>추가 안내</p>',
+  additionalContentHtml:
+    '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p>',
   educationTarget: 'university',
   thumbnailFileObjectId: 77,
   sponsorNames: ['현대 자동차'],
@@ -102,6 +103,14 @@ assert.equal(mapped.participationMethod, 'team')
 assert.deepEqual(
   mapped.extraSections.map(section => section.title),
   ['모집 안내', '추가 내용']
+)
+assert.deepEqual(
+  mapped.extraSections.find(section => section.title === '추가 내용'),
+  {
+    title: '추가 내용',
+    body: '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p>',
+    bodyFormat: 'html',
+  }
 )
 
 const individualOnly = mapPortalProgramDetail({

@@ -6,6 +6,7 @@ import type {
   ProgramDetail,
   ProgramDetailCase,
   ProgramEventSchedule,
+  ProgramExtraSection,
   ProgramLabeledValue,
   ProgramListItem,
   ProgramParticipationMethod,
@@ -122,16 +123,6 @@ function formatCompactRange(start: Date | null, end: Date | null): string {
   if (!start && end) return formatYmdCompact(end)
   if (!start || !end) return '-'
   return `${formatYmdCompact(start)} – ${formatYmdCompact(end)}`
-}
-
-function stripHtmlToText(value: string): string {
-  return value
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
 }
 
 function mapEducationForm(value: string | undefined): EducationForm {
@@ -678,9 +669,13 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     ? optionalText(remote.ipsTypeSummary)
     : undefined
 
-  const extraSections = [
+  const extraSections: ProgramExtraSection[] = [
     { title: '모집 안내', body: readString(remote.recruitmentGuide) ?? '' },
-    { title: '추가 내용', body: stripHtmlToText(readString(remote.additionalContentHtml) ?? '') },
+    {
+      title: '추가 내용',
+      body: readString(remote.additionalContentHtml) ?? '',
+      bodyFormat: 'html' as const,
+    },
     { title: '학습 지원 내용', body: readString(remote.learningSupportContent) ?? '' },
     { title: '기타사항', body: readString(remote.otherMatters) ?? '' },
     { title: '비고', body: readString(remote.remarks) ?? '' },
