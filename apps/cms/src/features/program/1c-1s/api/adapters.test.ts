@@ -352,6 +352,11 @@ describe('company-school adapters', () => {
         deliveryType: undefined,
       },
     ])
+    const withPersistedRound = mapCompanySchoolToUpdateRequest({
+      ...withContact,
+      rounds: [{ ...withContact.rounds[0], id: '186592' }],
+    })
+    expect(withPersistedRound.rounds?.[0]?.id).toBe('186592')
     expect(request.managerName).toBe('홍길동')
     expect(request.contactPhone).toBe('010-1234-5678')
     expect(request.curriculum).toBe('company-school-curriculum')
@@ -443,6 +448,82 @@ describe('company-school adapters', () => {
     expect(parsed.program?.studentListRequired).toBeUndefined()
     expect(parsed.program?.resultAnnouncementDate).toBeUndefined()
     expect(parsed.registration).toBeUndefined()
+  })
+
+  it('participant recruitment patch keeps participantRecruitmentInfo in serviceDetailJson', () => {
+    const withRecruitment: Program = {
+      ...program,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: {
+          contactOrganizationName: '구 문의처',
+          educationTargetDetail: '구 대상',
+        },
+        instructorRecruitmentInfo: { recruitmentTarget: '성인' },
+        volunteerRecruitmentInfo: { recruitmentTarget: '일반인' },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(withRecruitment, {
+      applicationStartDate: '2026-10-03T00:00:00.000Z',
+      applicationEndDate: '2026-10-07T00:00:00.000Z',
+      generalCommonInfo: {
+        educationScheduleMode: 'period',
+        participantRecruitmentInfo: {
+          contactOrganizationName: '새 문의처',
+          educationTargetDetail: '중학생',
+        },
+      },
+    })
+
+    const parsed = JSON.parse(request.serviceDetailJson!) as {
+      program?: {
+        generalCommonInfo?: {
+          participantRecruitmentInfo?: {
+            contactOrganizationName?: string
+            educationTargetDetail?: string
+          }
+          instructorRecruitmentInfo?: unknown
+          volunteerRecruitmentInfo?: unknown
+        }
+      }
+    }
+    expect(parsed.program?.generalCommonInfo?.participantRecruitmentInfo).toMatchObject({
+      contactOrganizationName: '새 문의처',
+      educationTargetDetail: '중학생',
+    })
+    expect(parsed.program?.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
+    expect(parsed.program?.generalCommonInfo?.volunteerRecruitmentInfo).toBeUndefined()
+  })
+
+  it('instructor recruitment patch keeps instructorRecruitmentInfo in serviceDetailJson', () => {
+    const withRecruitment: Program = {
+      ...program,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: { contactOrganizationName: '학교 문의' },
+        instructorRecruitmentInfo: { contactOrganizationName: '구 강사 문의' },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(withRecruitment, {
+      instructorApplicationStartDate: '2026-10-03T00:00:00.000Z',
+      instructorApplicationEndDate: '2026-10-07T00:00:00.000Z',
+      generalCommonInfo: {
+        instructorRecruitmentInfo: { contactOrganizationName: '새 강사 문의' },
+      },
+    })
+
+    const parsed = JSON.parse(request.serviceDetailJson!) as {
+      program?: {
+        generalCommonInfo?: {
+          participantRecruitmentInfo?: unknown
+          instructorRecruitmentInfo?: { contactOrganizationName?: string }
+        }
+      }
+    }
+    expect(parsed.program?.generalCommonInfo?.instructorRecruitmentInfo).toEqual({
+      contactOrganizationName: '새 강사 문의',
+    })
+    expect(parsed.program?.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
   })
 
   it('title-only common-info patch does not resend recruitment or registration overlay', () => {
