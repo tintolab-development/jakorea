@@ -7,7 +7,21 @@
  */
 import type { AttachmentResponse } from './attachmentResponse';
 import type { CurriculumResponse } from './curriculumResponse';
+import type { CurriculumSessionItem } from './curriculumSessionItem';
+import type { ProgramDetailResponseEducationForm } from './programDetailResponseEducationForm';
+import type { ProgramDetailResponseEducationFormScheduleDetail } from './programDetailResponseEducationFormScheduleDetail';
+import type { ProgramDetailResponseEducationScheduleMode } from './programDetailResponseEducationScheduleMode';
+import type { ProgramDetailResponseEducationStructure } from './programDetailResponseEducationStructure';
+import type { ProgramDetailResponseEducationTarget } from './programDetailResponseEducationTarget';
+import type { ProgramDetailResponseIpsScheduleDetail } from './programDetailResponseIpsScheduleDetail';
+import type { ProgramDetailResponseParticipationMethod } from './programDetailResponseParticipationMethod';
+import type { ProgramDetailResponseParticipationScheduleDetail } from './programDetailResponseParticipationScheduleDetail';
+import type { ProgramDetailResponseRecruitmentStatus } from './programDetailResponseRecruitmentStatus';
+import type { ProgramDetailResponseSessionRound } from './programDetailResponseSessionRound';
+import type { ProgramDetailResponseVenueKind } from './programDetailResponseVenueKind';
 import type { RecruitmentResponse } from './recruitmentResponse';
+import type { ScheduleDetailItem } from './scheduleDetailItem';
+import type { ScheduleRange } from './scheduleRange';
 import type { ScheduleResponse } from './scheduleResponse';
 
 export interface ProgramDetailResponse {
@@ -25,9 +39,19 @@ export interface ProgramDetailResponse {
   businessStartDate?: string;
   businessEndDate?: string;
   periodStatus?: string;
+  /**
+     * 모집 축. OPEN=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료, NONE=공개 모집 없음. periodStatus와 별개.
+     * @nullable
+     */
+  recruitmentStatus?: ProgramDetailResponseRecruitmentStatus;
   applicationTargetMode?: string;
   businessField?: string;
   venue?: string;
+  /**
+     * 교육 장소 구분. inside=기관 안, outside=기관 밖, other=기타. 없으면 null.
+     * @nullable
+     */
+  venueKind?: ProgramDetailResponseVenueKind;
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
@@ -37,7 +61,13 @@ export interface ProgramDetailResponse {
   learningSupportContent?: string;
   otherMatters?: string;
   remarks?: string;
-  educationTarget?: string;
+  /**
+     * 교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.
+     * @nullable
+     */
+  educationTarget?: ProgramDetailResponseEducationTarget;
+  /** 교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult. */
+  educationTargets?: string[];
   educationTargetDetail?: string;
   recruitmentTargetDetail?: string;
   targetGradeFrom?: string;
@@ -53,4 +83,70 @@ export interface ProgramDetailResponse {
      * @nullable
      */
   applicationMethod?: string | null;
+  /**
+     * 공통정보 교육 진행 구조. 프로그램 유형별 generalCommonInfo 저장값을 투영하며 값이 없으면 null.
+     * @nullable
+     */
+  educationStructure?: ProgramDetailResponseEducationStructure;
+  /**
+     * 수업 회차 유형. 프로그램 유형별 공통정보 저장값이 없으면 null.
+     * @nullable
+     */
+  sessionRound?: ProgramDetailResponseSessionRound;
+  /**
+     * 사전 교육 토글. 공통정보가 있으면 저장값이 없을 때 false, 공통정보가 없으면 null.
+     * @nullable
+     */
+  scheduleCurriculumPreEducation?: boolean | null;
+  /**
+     * 교육 형태 일정 공통/일정 별 상이.
+     * @nullable
+     */
+  educationFormScheduleDetail?: ProgramDetailResponseEducationFormScheduleDetail;
+  /**
+     * 참여 방식 일정 공통/일정 별 상이. GENERAL_ORGANIZATION이면 항상 null.
+     * @nullable
+     */
+  participationScheduleDetail?: ProgramDetailResponseParticipationScheduleDetail;
+  /**
+     * IPS 일정 공통/일정 별 상이.
+     * @nullable
+     */
+  ipsScheduleDetail?: ProgramDetailResponseIpsScheduleDetail;
+  /**
+     * 공통정보 교육 형태 코드. operationMethod와 별개. 없으면 null.
+     * @nullable
+     */
+  educationForm?: ProgramDetailResponseEducationForm;
+  /**
+     * 교육 형태 한글 라벨. educationFormScheduleDetail=perSchedule이면 null(행 라벨 사용).
+     * @nullable
+     */
+  educationFormLabel?: string | null;
+  /**
+     * 참여 방식. participationScheduleDetail=common일 때만 값이 있고 GENERAL_ORGANIZATION·perSchedule은 null.
+     * @nullable
+     */
+  participationMethod?: ProgramDetailResponseParticipationMethod;
+  /**
+     * IPS 표시 문자열. ipsScheduleDetail=perSchedule이면 null(행 값 사용).
+     * @nullable
+     */
+  ipsTypeSummary?: string | null;
+  /** 공통정보 차시/회차. educationStructure=curriculum일 때만 채우고 그 외는 []. curricula[]와 별개. */
+  curriculumSessions?: CurriculumSessionItem[];
+  /** 공통정보 사전교육·세부·행사 일정. educationStructure=schedule일 때만 채우고 그 외는 []. scheduleCurriculumPreEducation=true면 첫 원소 blockKind=preEducation. schedules[]와 별개. */
+  scheduleDetails?: ScheduleDetailItem[];
+  /**
+     * 교육 진행 예정일 지정 방식.
+     * @nullable
+     */
+  educationScheduleMode?: ProgramDetailResponseEducationScheduleMode;
+  /** 교육 진행 예정일 표시 문자열(공통정보 그대로, 순서 유지). 없으면 []. 신청폼 희망 교육 일정 선택지 line:N의 N은 이 배열의 0-based 인덱스. */
+  educationScheduleLines?: string[];
+  /**
+     * 기간 지정(period)일 때 {start,end}. date 모드이거나 값이 없으면 null.
+     * @nullable
+     */
+  educationScheduleRange?: ScheduleRange;
 }

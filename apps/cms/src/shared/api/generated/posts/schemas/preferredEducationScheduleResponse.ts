@@ -7,11 +7,29 @@
  */
 
 /**
- * 신청자가 해당 신청 건에서 선택한 교육 일정
+ * 신청자가 해당 신청 건에서 선택한 교육 일정. 운영 일정(program_schedule) 선택이면 scheduleId/round/startAt/endAt, 공통정보 교육 진행 예정일(line:N) 선택이면 label만 채운다.
  */
 export interface PreferredEducationScheduleResponse {
-  scheduleId?: number;
-  round?: number;
-  startAt?: string;
-  endAt?: string;
+  /**
+     * program_schedule id. line:N 선택이면 null.
+     * @nullable
+     */
+  scheduleId?: number | null;
+  /** @nullable */
+  round?: number | null;
+  /**
+     * line:N 선택이면 null.
+     * @nullable
+     */
+  startAt?: string | null;
+  /**
+     * line:N 선택이면 null.
+     * @nullable
+     */
+  endAt?: string | null;
+  /**
+     * 공통정보 educationScheduleLines 표시 문자열. program_schedule 선택이면 null.
+     * @nullable
+     */
+  label?: string | null;
 }

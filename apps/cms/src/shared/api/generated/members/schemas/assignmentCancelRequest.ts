@@ -11,9 +11,13 @@
  */
 export interface AssignmentCancelRequest {
   /**
-     * 취소 사유. 배정 이력과 후속 알림에 사용됩니다.
-     * @minLength 2
+     * 취소 사유. 이미 배정 알림이 발송된 경우 필수이며, 발송 전 취소에서는 생략할 수 있습니다.
+     * @minLength 0
      * @maxLength 500
      */
-  reason: string;
+  reason?: string;
+  /** 취소 알림 발송 방식. IMMEDIATE 또는 SCHEDULED. 이미 배정 알림이 발송된 경우에만 사용됩니다. */
+  timing?: string;
+  /** 취소 알림 직접 설정 시 예약 발송 시각. timing=SCHEDULED일 때 필수이며 미래 시각이어야 합니다. */
+  scheduledAt?: string;
 }
