@@ -155,9 +155,6 @@ export function ProgramInfoDetail({
 
           {program.eventSchedules.length > 0 ? (
             <div className={styles.curriculumBlock}>
-              <PFText as="h3" typo="bd-sm-rg" color="neutral-cool-600">
-                교육 커리큘럼
-              </PFText>
               <ul className={styles.sessions} aria-label="행사·세부 일정">
                 {program.eventSchedules.map(event => (
                   <li

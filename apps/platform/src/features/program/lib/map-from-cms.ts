@@ -481,7 +481,12 @@ function mapEventSchedules(program: CmsProgramLike): ProgramEventSchedule[] {
 
   return details.map((detail, index) => {
     const pad = String(index + 1).padStart(2, '0')
-    const scheduleLabel = detail.scheduleLabel?.trim() || `세부 일정 ${pad}`
+    const isMultiRound = program.generalProgramSessionRound === 'multi'
+    const rawScheduleLabel =
+      detail.scheduleLabel?.trim() || `${isMultiRound ? '행사 일정' : '세부 일정'} ${pad}`
+    const scheduleLabel = isMultiRound
+      ? rawScheduleLabel.replace(/^세부\s*일정/, '행사 일정')
+      : rawScheduleLabel
     const name = detail.name?.trim() || ''
     const dateParts = [detail.scheduleDateLabel?.trim(), detail.progressTimeSummary?.trim()].filter(
       Boolean

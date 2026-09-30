@@ -339,6 +339,7 @@ assert.equal(
   false
 )
 assert.equal(scheduleMulti.eventSchedules[0]?.blockKind, 'preEducation')
+assert.equal(scheduleMulti.eventSchedules[0]?.scheduleLabel, '행사 일정 01')
 assert.equal(scheduleMulti.eventSchedules[0]?.educationFormLabel, '온라인')
 assert.equal(scheduleMulti.eventSchedules[0]?.dateLabel, '26년 9월 29일(화)')
 assert.equal(scheduleMulti.eventSchedules[1]?.educationFormLabel, '오프라인')
@@ -365,6 +366,7 @@ const scheduleSingleWithGroups = mapPortalProgramDetail({
   ],
 })
 assert.ok(scheduleSingleWithGroups)
+assert.equal(scheduleSingleWithGroups.eventSchedules[0]?.scheduleLabel, '세부 일정 01')
 assert.equal(
   scheduleSingleWithGroups.eventSchedules[0]?.dateLabel,
   '그룹 A : 09:30 ~ 09:40 | 그룹 B : 13:00 ~ 13:10'

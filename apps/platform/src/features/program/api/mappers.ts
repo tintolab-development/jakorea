@@ -524,6 +524,11 @@ function mapPortalScheduleDetails(
 ): ProgramEventSchedule[] {
   if (structure !== 'schedule') return []
   return (details ?? []).map(detail => {
+    const rawScheduleLabel = detail.scheduleLabel?.trim() ?? ''
+    const scheduleLabel =
+      sessionRound === 'multi'
+        ? rawScheduleLabel.replace(/^세부\s*일정/, '행사 일정')
+        : rawScheduleLabel
     const timeSummary =
       optionalText(detail.progressTimeSummary) ?? formatGroupTimes(detail.groupTimes)
     const scheduleDateLabel = optionalText(detail.scheduleDateLabel)
@@ -532,7 +537,7 @@ function mapPortalScheduleDetails(
         ? [scheduleDateLabel, timeSummary].filter((part): part is string => Boolean(part)).join(' ')
         : (timeSummary ?? scheduleDateLabel ?? '')
     return {
-      scheduleLabel: detail.scheduleLabel ?? '',
+      scheduleLabel,
       name: detail.name ?? '',
       dateLabel,
       ...(detail.blockKind ? { blockKind: detail.blockKind } : {}),
