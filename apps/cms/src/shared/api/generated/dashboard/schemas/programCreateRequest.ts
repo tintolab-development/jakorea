@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
+import type { ProgramCreateRequestDraftStatus } from './programCreateRequestDraftStatus';
 import type { ProgramCreateRequestEducationForm } from './programCreateRequestEducationForm';
 import type { ProgramCreateRequestEducationStructure } from './programCreateRequestEducationStructure';
 import type { ProgramCreateRequestProgramType } from './programCreateRequestProgramType';
@@ -90,6 +91,12 @@ export interface ProgramCreateRequest {
      * @nullable
      */
   applicationMethod?: string | null;
+  /**
+   * Gemini 모집 공고 게시 상태. 생략 시 PUBLISHED.
+   * GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시된다.
+   * @nullable
+   */
+  draftStatus?: ProgramCreateRequestDraftStatus | null;
   /**
      * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용. Gemini create/PATCH top-level.
      * @nullable
