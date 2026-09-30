@@ -4,6 +4,7 @@ import { resetProgramRegistrationOverlay } from '@/features/template/ui/form-set
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 import {
   buildEconomyRegistrationOverlayFromProgram,
+  resyncEconomyRegistrationOverlayFromProgram,
   seedEconomyRegistrationOverlayFromProgram,
   readEconomyRegistrationOverlayForSave,
 } from './registration-overlay-sync'
@@ -96,5 +97,30 @@ describe('buildEconomyRegistrationOverlayFromProgram → apply', () => {
     expect(overlay['economyRegistration.basicInfo.managerContactId']).toBe(
       SPONSOR_CONTACT_UNSELECTED_VALUE
     )
+  })
+
+  it('임금 leftover overlay가 중첩 지급항목보다 이기지 않는다', () => {
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        paymentItems: '교통비(일사일교)',
+        curriculumSessions: [
+          { sessionLabel: '1차시', title: '최신 제목', description: '최신' },
+        ],
+      },
+      registrationOverlay: {
+        'economyRegistration.wageInfo.paymentItemValues': ['p-leftover'],
+        'economyRegistration.educationCurriculum.session1.title': '옛 제목',
+        'recruit.individual.notes': '일반 leftover',
+      },
+    } as Program
+    const overlay = resyncEconomyRegistrationOverlayFromProgram(
+      program,
+      program.registrationOverlay
+    )
+    expect(overlay['economyRegistration.educationCurriculum.session1.title']).toBe('최신 제목')
+    expect(overlay['economyRegistration.wageInfo.paymentItemValues']).not.toEqual(['p-leftover'])
+    expect(overlay['recruit.individual.notes']).toBeUndefined()
   })
 })

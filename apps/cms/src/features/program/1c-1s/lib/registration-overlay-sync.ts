@@ -19,6 +19,7 @@ import {
   replaceProgramRegistrationOverlayPrefix,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resolveSponsorContactIdsFromProgram } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { resolveProgramPaymentItemIdsFromLabels } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 
 export const ECONOMY_REGISTRATION_OVERLAY_PREFIX = 'economyRegistration.' as const
 
@@ -110,14 +111,6 @@ function surveyItemsFromProgram(program: Program): Record<string, boolean> {
 function dateRangeSealFromProgram(
   program: Program
 ): { start: string; end: string } | null {
-  const saved = program.registrationOverlay?.[`${SCHEDULE}.dateRangeSeal`]
-  if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
-    const start = (saved as { start?: unknown }).start
-    const end = (saved as { end?: unknown }).end
-    if (typeof start === 'string' && typeof end === 'string' && start && end) {
-      return { start, end }
-    }
-  }
   const line = program.generalCommonInfo?.educationScheduleLines?.[0]
   if (line?.trim()) {
     const [startText, endText] = line.split('~').map(part => part.trim())
@@ -189,11 +182,9 @@ export function buildEconomyRegistrationOverlayFromProgram(
     [`${WAGE}.grade2DistanceFee`]: parseWageNumber(grade(1), 'longDistance'),
     [`${WAGE}.grade3Fee`]: parseWageNumber(grade(2), 'regular'),
     [`${WAGE}.grade3DistanceFee`]: parseWageNumber(grade(2), 'longDistance'),
-    [`${WAGE}.paymentItemValues`]: Array.isArray(
-      program.registrationOverlay?.[`${WAGE}.paymentItemValues`]
-    )
-      ? program.registrationOverlay?.[`${WAGE}.paymentItemValues`]
-      : [],
+    [`${WAGE}.paymentItemValues`]: resolveProgramPaymentItemIdsFromLabels(
+      program.generalCommonInfo?.paymentItems
+    ),
   }
 }
 
@@ -212,6 +203,18 @@ export function seedEconomyRegistrationOverlayFromProgram(program: Program): voi
     lecture_evaluation: surveyKeys.includes('lecture_evaluation'),
   }
   replaceProgramRegistrationOverlayPrefix(ECONOMY_REGISTRATION_OVERLAY_PREFIX, merged)
+}
+
+export function resyncEconomyRegistrationOverlayFromProgram(
+  program: Program,
+  extra?: Record<string, unknown>
+): Record<string, unknown> {
+  const fromProgram = buildEconomyRegistrationOverlayFromProgram(program)
+  const leftover = pickProgramRegistrationOverlayByPrefix(
+    ECONOMY_REGISTRATION_OVERLAY_PREFIX,
+    extra ?? {}
+  )
+  return { ...leftover, ...fromProgram }
 }
 
 export function readEconomyRegistrationOverlayForSave(): Record<string, unknown> {

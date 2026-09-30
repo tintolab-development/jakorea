@@ -79,6 +79,7 @@ import {
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import {
   readEconomyRegistrationOverlayForSave,
+  resyncEconomyRegistrationOverlayFromProgram,
   seedEconomyRegistrationOverlayFromProgram,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
@@ -1320,10 +1321,10 @@ export function ProgramDetailFullPageModal({
                 if (isCompanySchoolDetail && !isTrainedTeachersDetail) {
                   const overlay = readEconomyRegistrationOverlayForSave()
                   const merged = applyEconomyRegistrationOverlayToProgram(draft, overlay)
-                  const registrationOverlay = {
+                  const registrationOverlay = resyncEconomyRegistrationOverlayFromProgram(merged, {
                     ...(draft.registrationOverlay ?? {}),
                     ...overlay,
-                  }
+                  })
                   const roundsChanged =
                     JSON.stringify(merged.rounds ?? []) !== JSON.stringify(draft.rounds ?? [])
                   const periodUnchanged =
