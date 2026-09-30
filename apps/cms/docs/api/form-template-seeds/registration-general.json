@@ -15,7 +15,7 @@
         "variant": "horizontal_table",
         "requiredMark": true,
         "paragraphTitle": "기본 정보",
-        "paragraphDescription": "",
+        "paragraphDescription": "참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

@@ -30,7 +30,6 @@ import {
   isSponsorContactUnselected,
   resolveSponsorContactIdsForEdit,
   SPONSOR_CONTACT_UNSELECTED_LABEL,
-  SPONSOR_CONTACT_UNSELECTED_VALUE,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   isGeneralIndividualParticipantSelection,
@@ -715,6 +714,7 @@ export function isGeneralProgramScheduleType(program: Program): boolean {
       generalProgramEducationStructure: program.generalProgramEducationStructure,
       generalProgramSessionRound: program.generalProgramSessionRound,
       curriculumSessions: commonInfo.curriculumSessions,
+      registrationOverlay: program.registrationOverlay,
     }).educationStructure === 'schedule'
   )
 }
@@ -815,6 +815,23 @@ export function normalizeSponsorManagerContactIds(input: {
 }
 
 /**
+ * 남은 후원사에 속한 담당자만 남긴다.
+ * 후원사를 모두 지우면 미선택 토큰을 포함해 담당자 선택을 비운다.
+ */
+export function retainSponsorManagerContactIdsForSponsors(
+  sponsorIds: readonly string[],
+  managerIds: readonly string[]
+): string[] {
+  if (sponsorIds.length === 0) return []
+  const sponsorIdSet = new Set(sponsorIds)
+  return managerIds.filter(ref => {
+    if (isSponsorContactUnselected(ref)) return true
+    const decoded = decodeSponsorManagerContactRef(ref)
+    return decoded != null && sponsorIdSet.has(decoded.sponsorManagementId)
+  })
+}
+
+/**
  * 후원사 id + 담당자 ref[] → PATCH `sponsors[]`.
  * 후원사·담당자 모두 복수. 같은 후원사의 담당자가 여러 명이면 행을 나눈다.
  */
@@ -829,7 +846,7 @@ export function buildProgramSponsorAssignmentsWire(
     if (!decoded?.sponsorManagementId || !decoded.contactId) continue
     const sponsorId = decoded.sponsorManagementId.trim()
     const contactId = decoded.contactId.trim()
-    if (!sponsorId || !contactId) continue
+    if (!sponsorId || !/^\d+$/.test(contactId)) continue
     const list = contactsBySponsor.get(sponsorId) ?? []
     if (!list.includes(contactId)) list.push(contactId)
     contactsBySponsor.set(sponsorId, list)
@@ -963,46 +980,23 @@ export function resolveSponsorManagementIds(
   if (program.sponsorId) {
     const byId = sponsors.find(row => row.id === program.sponsorId)
     if (byId) return [byId.id]
-    const sponsorName = commonInfo.sponsorDisplayName?.trim() || program.title
-    void sponsorName
   }
-  return sponsors[0] ? [sponsors[0].id] : []
+  // 배정·표시명이 없으면 목록 첫 후원사로 채우지 않는다 (미선택 유지).
+  return []
 }
 
 function resolveSponsorManagerContactIds(
   program: Program,
   sponsorManagementIds: string[],
-  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
+  _context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
 ): string[] {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
-  const stored = resolveSponsorContactIdsForEdit({
+  return resolveSponsorContactIdsForEdit({
     ids: commonInfo.sponsorManagerContactIds,
     id: commonInfo.sponsorManagerContactId,
     managerLine: commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || '',
+    hasSelectedSponsors: sponsorManagementIds.length > 0,
   })
-  if (stored.length > 0) return stored
-
-  const storedLine = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
-  if (storedLine === SPONSOR_CONTACT_UNSELECTED_LABEL) {
-    return [SPONSOR_CONTACT_UNSELECTED_VALUE]
-  }
-
-  // 후원사별 1명씩 시드 (이름·전화 매칭, 없으면 첫 연락처)
-  const refs: string[] = []
-  for (const sponsorId of sponsorManagementIds) {
-    const contacts = context.contactsBySponsorId[sponsorId] ?? []
-    if (contacts.length === 0) continue
-    const line = storedLine
-    const namePart = line.split('|')[0]?.trim() ?? line
-    const matched = line
-      ? contacts.find(
-          c => c.name === namePart || line.includes(c.name) || (c.phone && line.includes(c.phone))
-        )
-      : undefined
-    const contact = matched ?? contacts[0]
-    if (contact) refs.push(encodeSponsorManagerContactRef(sponsorId, contact.id))
-  }
-  return refs
 }
 
 function resolveManagerFromFormValues(
@@ -1456,6 +1450,7 @@ function resolveTypeSettingsFromProgram(program: Program): Pick<
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const ips = parseIpsTypeSummaryFromProgram(program, commonInfo.ipsTypeSummary)
 
@@ -1645,6 +1640,20 @@ function resolveDetailedProgramName(
   return catalog.find(row => row.id === detailedProgramId)?.name
 }
 
+function existingCommonWithoutRecruitment(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const {
+    participantRecruitmentInfo: _participantRecruitmentInfo,
+    instructorRecruitmentInfo: _instructorRecruitmentInfo,
+    volunteerRecruitmentInfo: _volunteerRecruitmentInfo,
+    volunteerInterviewScheduleInfo: _volunteerInterviewScheduleInfo,
+    ...rest
+  } = common
+  return rest
+}
+
 export function generalCommonInfoEditValuesToProgramPatch(
   values: GeneralProgramCommonInfoEditFormValues,
   existing: Program,
@@ -1749,8 +1758,8 @@ export function generalCommonInfoEditValuesToProgramPatch(
 
   const representativeTitleKo = values.mainTitle.trim()
   return {
-    title: existing.title,
-    mainTitle: representativeTitleKo,
+    title: representativeTitleKo || existing.title,
+    mainTitle: representativeTitleKo || existing.mainTitle,
     titleEn: values.titleEn?.trim() || undefined,
     startDate: values.startDate,
     endDate: values.endDate,
@@ -1788,7 +1797,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     ...(manager?.name && !manager.name.includes('*') ? { managerName: manager.name } : {}),
     ...(manager?.phone && !manager.phone.includes('*') ? { contactPhone: manager.phone } : {}),
     generalCommonInfo: {
-      ...existing.generalCommonInfo,
+      ...existingCommonWithoutRecruitment(existing.generalCommonInfo),
       announcementTitle: values.announcementTitle.trim(),
       detailedProgramName: detailedProgramName ?? existingCommon.detailedProgramName,
       sponsorDisplayName:

@@ -14,8 +14,10 @@ import {
   collectUjatRegistrationCreateOverlay,
 } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import { ParticipantRecruitmentPreviewModal } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
-import type { RecruitmentUserPreviewAudience } from '@/features/program/general/ui/user-preview'
+import {
+  ParticipantRecruitmentPreviewModal,
+  type RecruitmentUserPreviewAudience,
+} from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
 import { useUjatProgramRegistrationFlow } from '@/features/program/ujat/hooks/use-ujat-program-registration-flow'
 import { UjatProgramRegistrationBodyHeader } from '@/features/program/ujat/ui/registration/ujat-program-registration-body-header'
 import type { Program } from '@/types/domain'
@@ -316,6 +318,7 @@ export function UjatProgramRegistrationFullpageModal({
           program={recruitmentPreviewProgram}
           sponsorName={recruitmentPreviewSponsorName}
           audience={recruitmentPreviewAudience}
+          programKind="ujat"
         />
       ) : null}
     </>

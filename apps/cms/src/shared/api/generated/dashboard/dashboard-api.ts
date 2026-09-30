@@ -49,10 +49,13 @@ import type {
   NotificationCasePage,
   NotificationUnreadCountResponse,
   Notifications1Params,
+  OrganizationActivityGiveUpRequest,
   OrganizationApplicationDetailResponse,
   OrganizationApplicationNotificationResendRequest,
   OrganizationApplicationUpdateRequest,
   OrganizationApplications1Params,
+  OrganizationApplications2Params,
+  OrganizationProgressRemovalRequest,
   OrganizationScheduleListResponse,
   OrganizationScheduleResponse,
   PageResponse,
@@ -64,9 +67,7 @@ import type {
   PreferenceUpdateRequest,
   ScheduleChangeRequest,
   TemporaryScheduleSaveRequest,
-  TrainedTeacherOrganizationActivityGiveUpRequest,
   TrainedTeacherOrganizationApplicationResponse,
-  TrainedTeacherOrganizationProgressRemovalRequest,
   Update,
   VolunteerApplicationDetailResponse,
   VolunteerApplicationsParams,
@@ -916,7 +917,218 @@ const requestScheduleChange = (
     }
 
 /**
- * APPLICATION_WRITE 권한과 대상 프로그램의 APPLICATION_REVIEW capability가 필요합니다. 공통 path는 GENERAL 그룹, COMPANY_SCHOOL/ONE_COMPANY_ONE_SCHOOL, UJAT 그룹(UJAT·DGBONG·UJAT_DGBONG)의 APPROVED 또는 REJECTED 기관 신청만 허용합니다. TRAINED_TEACHER와 GEMINI/GEMINI_TRAINING은 403이며 각 전용 path를 사용합니다. AUTO_REJECTED를 포함한 그 외 상태는 409입니다. 신청 상태와 기존 반려 사유는 변경하지 않습니다. Idempotency-Key는 선택 사항이며 동일 키·동일 요청은 최초 응답을 재사용하고 동일 키·다른 요청은 409로 거절합니다. 반려 재발송의 reason만 rejection snapshot에 포함하고, 승인 재발송의 reason은 알림 본문에 넣지 않습니다. UJAT 반려 이벤트는 UJAT_ORGANIZATION_APPLICATION_REJECTED입니다.
+ * ### 이 API가 하는 일
+ * - 교육받은 교사 진행 현황에서 기관 제외
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/remove-from-progress`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: APPLICATION_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
+ * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Cancel approval when no journal or completion evidence exists
+ * @summary 교육받은 교사 진행 현황에서 기관 제외
+ */
+const removeOrganizationFromProgress = (
+    programId: number,
+    applicationId: number,
+    organizationProgressRemovalRequest: OrganizationProgressRemovalRequest,
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/remove-from-progress`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationProgressRemovalRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 교육받은 교사 기관 신청 결과 알림 재발송
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/notifications/resend`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: APPLICATION_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: REJECTION_REASON_SNAPSHOT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
+ * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 2026-09-27 trained teacher organization result notification resend
+ * @summary 교육받은 교사 기관 신청 결과 알림 재발송
+ */
+const resendTrainedTeacherOrganizationApplicationNotification = (
+    programId: number,
+    applicationId: number,
+    organizationApplicationNotificationResendRequest: OrganizationApplicationNotificationResendRequest,
+ options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
+      return customInstance<ApplicationDecisionResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationApplicationNotificationResendRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 교육받은 교사 기관 활동 포기
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/give-up`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: APPLICATION_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
+ * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Keep APPROVED and record activity give-up without deleting journals or completions
+ * @summary 교육받은 교사 기관 활동 포기
+ */
+const giveUpOrganizationActivity = (
+    programId: number,
+    applicationId: number,
+    organizationActivityGiveUpRequest: OrganizationActivityGiveUpRequest,
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/give-up`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationActivityGiveUpRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 기관 신청 결과 알림 재발송
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/organization-applications/{applicationId}/notifications/resend`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: APPLICATION_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: REJECTION_REASON_SNAPSHOT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
+ * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 2026-09-25 general organization application result notification resend contract
  * @summary 기관 신청 결과 알림 재발송
  */
 const resendOrganizationApplicationNotification = (
@@ -1149,6 +1361,62 @@ const bulkIndividualDocumentResult = (
       {url: `/api/admin/individual-applications/document-results/bulk`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: bulkResultRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - Gemini 기관 신청 결과 알림 재발송
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/gemini/trainings/organization-applications/{applicationId}/notifications/resend`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: APPLICATION_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: REJECTION_REASON_SNAPSHOT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
+ * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 2026-09-27 Gemini organization result notification resend
+ * @summary Gemini 기관 신청 결과 알림 재발송
+ */
+const resendGeminiOrganizationApplicationNotification = (
+    applicationId: number,
+    organizationApplicationNotificationResendRequest: OrganizationApplicationNotificationResendRequest,
+ options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
+      return customInstance<ApplicationDecisionResponse>(
+      {url: `/api/admin/gemini/trainings/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationApplicationNotificationResendRequest
     },
       options);
     }
@@ -1864,11 +2132,51 @@ const listAssignments = (
     }
 
 /**
- * preferredScheduleBlocks는 항상 배열(없으면 []). desiredEducationScheduleMemo는 기타요청/레거시 자유문. 서버는 memo를 blocks로 파싱하지 않는다.
+ * ### 이 API가 하는 일
+ * - 교육받은 교사 참여 기관 신청 목록 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/programs/{programId}/trained-teacher/organization-applications`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: PROGRAM_READ 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
+ * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Stage002 trained teacher organization applications contract
  * @summary 교육받은 교사 참여 기관 신청 목록 조회
  */
-const getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications = (
-    programId: string,
+const organizationApplications = (
+    programId: number,
  options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse[]>>,) => {
       return customInstance<TrainedTeacherOrganizationApplicationResponse[]>(
       {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications`, method: 'GET'
@@ -1877,12 +2185,52 @@ const getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications = (
     }
 
 /**
- * 목록과 동일 DTO. preferredScheduleBlocks가 희망 교육 일정 UI SoT.
+ * ### 이 API가 하는 일
+ * - 교육받은 교사 참여 기관 신청 상세 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: PROGRAM_READ 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
+ * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Stage002 trained teacher organization application detail contract
  * @summary 교육받은 교사 참여 기관 신청 상세 조회
  */
-const getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId = (
-    programId: string,
-    applicationId: string,
+const organizationApplication = (
+    programId: number,
+    applicationId: number,
  options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
       return customInstance<TrainedTeacherOrganizationApplicationResponse>(
       {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}`, method: 'GET'
@@ -2276,14 +2624,56 @@ const getDashboardShortcutBadges = (
     }
 
 /**
- * Gemini 기관 신청 목록. content[]에 resultNotificationSentAt(date-time 또는 null)과 availableActions를 포함합니다. APPROVED·REJECTED이면 availableActions에 RESEND_NOTIFICATION이 있습니다. 신청이 없으면 content는 [].
- * @summary 프로그램 상세 조회
+ * ### 이 API가 하는 일
+ * - 프로그램 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/gemini/trainings/recruitments/{programId}/organization-applications`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
+ * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 프로그램 조회
  */
-const getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications = (
-    programId: string,
+const organizationApplications2 = (
+    programId: number,
+    params?: OrganizationApplications2Params,
  options?: SecondParameter<typeof customInstance<GeminiOrganizationApplicationListResponse>>,) => {
       return customInstance<GeminiOrganizationApplicationListResponse>(
-      {url: `/api/admin/gemini/trainings/recruitments/${programId}/organization-applications`, method: 'GET'
+      {url: `/api/admin/gemini/trainings/recruitments/${programId}/organization-applications`, method: 'GET',
+        params
     },
       options);
     }
@@ -2724,74 +3114,7 @@ const dashboardHome = (
       options);
     }
 
-/**
- * programId와 신청의 TRAINED_TEACHER 프로그램이 일치할 때만 APPROVED·REJECTED 결과 알림을 재발송합니다. 불일치는 TRAINED_TEACHER_ORGANIZATION_APPLICATION_NOT_FOUND입니다. 공통 organization-applications 재발송 path는 403입니다. 신청 상태와 기존 반려 사유는 바꾸지 않습니다. AUTO_REJECTED를 포함한 그 외 상태는 409입니다.
- * @summary 교육받은 교사 기관 신청 결과 알림 재발송
- */
-const resendTrainedTeacherOrganizationApplicationNotification = (
-    programId: number,
-    applicationId: number,
-    organizationApplicationNotificationResendRequest: OrganizationApplicationNotificationResendRequest,
- options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
-      return customInstance<ApplicationDecisionResponse>(
-      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: organizationApplicationNotificationResendRequest
-    },
-      options);
-    }
-
-/**
- * GEMINI 또는 GEMINI_TRAINING(그룹 SEMINAR) 기관 신청의 APPROVED·REJECTED 결과만 재발송합니다. 공통 organization-applications 재발송 path는 403입니다. 신청 상태와 기존 반려 사유는 바꾸지 않습니다. AUTO_REJECTED를 포함한 그 외 상태는 409입니다.
- * @summary Gemini 기관 신청 결과 알림 재발송
- */
-const resendGeminiOrganizationApplicationNotification = (
-    applicationId: number,
-    organizationApplicationNotificationResendRequest: OrganizationApplicationNotificationResendRequest,
- options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
-      return customInstance<ApplicationDecisionResponse>(
-      {url: `/api/admin/gemini/trainings/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: organizationApplicationNotificationResendRequest
-    },
-      options);
-    }
-
-/**
- * 승인 상태를 유지하고 활동 포기 시각만 기록합니다. stopScheduleId는 해당 프로그램 일정이어야 합니다. 이미 포기하면 409 TRAINED_TEACHER_ACTIVITY_ALREADY_GIVEN_UP. 교육일지와 완료 증빙은 삭제하지 않습니다.
- * @summary 교육받은 교사 기관 활동 포기
- */
-const postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUp = (
-    programId: number,
-    applicationId: number,
-    trainedTeacherOrganizationActivityGiveUpRequest: TrainedTeacherOrganizationActivityGiveUpRequest,
- options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
-      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
-      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/give-up`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: trainedTeacherOrganizationActivityGiveUpRequest
-    },
-      options);
-    }
-
-/**
- * 활동 포기가 아닙니다. applicationStatus를 APPROVAL_CANCELLED로 바꿔 APPROVED 목록에서 제외합니다. 교육일지 또는 COMPLETED 완료 증빙이 있으면 409 TRAINED_TEACHER_PROGRESS_EVIDENCE_EXISTS. 물리 삭제하지 않고 PENDING으로 되돌리지 않습니다.
- * @summary 교육받은 교사 진행 현황에서 기관 제외
- */
-const postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgress = (
-    programId: number,
-    applicationId: number,
-    trainedTeacherOrganizationProgressRemovalRequest: TrainedTeacherOrganizationProgressRemovalRequest,
- options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
-      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
-      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/remove-from-progress`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: trainedTeacherOrganizationProgressRemovalRequest
-    },
-      options);
-    }
-
-return {recordVolunteerDocumentEvaluation,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications,getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list12,getDashboardShortcutBadges,getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome,resendTrainedTeacherOrganizationApplicationNotification,resendGeminiOrganizationApplicationNotification,postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUp,postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgress}};
+return {recordVolunteerDocumentEvaluation,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,removeOrganizationFromProgress,resendTrainedTeacherOrganizationApplicationNotification,giveUpOrganizationActivity,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,resendGeminiOrganizationApplicationNotification,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications,organizationApplication,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list12,getDashboardShortcutBadges,organizationApplications2,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
 export type RecordVolunteerDocumentEvaluationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['recordVolunteerDocumentEvaluation']>>>
 export type GetTemporaryScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getTemporarySchedule']>>>
 export type SaveTemporaryScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveTemporarySchedule']>>>
@@ -2807,11 +3130,15 @@ export type SaveDashboardShortcutVisibilityResult = NonNullable<Awaited<ReturnTy
 export type DashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardPreferences']>>>
 export type SaveDashboardPreferences1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveDashboardPreferences1']>>>
 export type RequestScheduleChangeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['requestScheduleChange']>>>
+export type RemoveOrganizationFromProgressResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['removeOrganizationFromProgress']>>>
+export type ResendTrainedTeacherOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendTrainedTeacherOrganizationApplicationNotification']>>>
+export type GiveUpOrganizationActivityResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['giveUpOrganizationActivity']>>>
 export type ResendOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendOrganizationApplicationNotification']>>>
 export type ReadDashboardShortcutBadgeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['readDashboardShortcutBadge']>>>
 export type UnmaskIndividualApplicationDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['unmaskIndividualApplicationDetail']>>>
 export type ResendIndividualApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendIndividualApplicationNotification']>>>
 export type BulkIndividualDocumentResultResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['bulkIndividualDocumentResult']>>>
+export type ResendGeminiOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendGeminiOrganizationApplicationNotification']>>>
 export type OrganizationApplicationDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['organizationApplicationDetail']>>>
 export type UpdateOrganizationApplicationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['updateOrganizationApplication']>>>
 export type MarkRead2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['markRead2']>>>
@@ -2825,8 +3152,8 @@ export type UpdateIndividualApplicationResult = NonNullable<Awaited<ReturnType<R
 export type VolunteerApplicationDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['volunteerApplicationDetail']>>>
 export type VolunteerApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['volunteerApplications']>>>
 export type ListAssignmentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['listAssignments']>>>
-export type GetApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications']>>>
-export type GetApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId']>>>
+export type OrganizationApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['organizationApplications']>>>
+export type OrganizationApplicationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['organizationApplication']>>>
 export type OrganizationApplications1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['organizationApplications1']>>>
 export type InstructorApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['instructorApplications']>>>
 export type IndividualApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['individualApplications']>>>
@@ -2834,7 +3161,7 @@ export type Notifications1Result = NonNullable<Awaited<ReturnType<ReturnType<typ
 export type UnreadNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['unreadNotificationCount']>>>
 export type List12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['list12']>>>
 export type GetDashboardShortcutBadgesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getDashboardShortcutBadges']>>>
-export type GetApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications']>>>
+export type OrganizationApplications2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['organizationApplications2']>>>
 export type DashboardWidgetsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardWidgets']>>>
 export type DashboardShortcutsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardShortcuts']>>>
 export type DashboardRecruitmentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardRecruitments']>>>
@@ -2843,7 +3170,3 @@ export type DashboardProgramInquiriesResult = NonNullable<Awaited<ReturnType<Ret
 export type DashboardNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardNotificationCount']>>>
 export type DashboardKpiProgressResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardKpiProgress']>>>
 export type DashboardHomeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardHome']>>>
-export type ResendTrainedTeacherOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendTrainedTeacherOrganizationApplicationNotification']>>>
-export type ResendGeminiOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendGeminiOrganizationApplicationNotification']>>>
-export type PostApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUpResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUp']>>>
-export type PostApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgressResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgress']>>>

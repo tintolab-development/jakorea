@@ -50,6 +50,21 @@ describe('mapAdminAccountDetailToUser', () => {
     ])
   })
 
+  it('담당 프로그램 수를 listMetrics에 매핑한다', () => {
+    const user = mapAdminAccountDetailToUser({
+      adminAccountId: 11,
+      email: 'admin@ja.org',
+      name: '관리자',
+      roleCode: 'PARTNER',
+      managedProgramCount: 3,
+      activeManagedProgramCount: 2,
+      totalManagedProgramCount: 5,
+    })
+
+    expect(user.listMetrics?.managedProgramCount).toBe(5)
+    expect(user.listMetrics?.managedProgramInProgressCount).toBe(2)
+  })
+
   it('status·verifiedAt를 permissionApprovalStatus·permissionApprovalHandledAt에 매핑한다', () => {
     const pending = mapAdminAccountDetailToUser({
       adminAccountId: 1,

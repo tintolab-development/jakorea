@@ -37,7 +37,9 @@ import {
   normalizeInstructorCmsSettlementFromApi,
   synthesizeLegacyInstructorProfileFromCms,
 } from '@/features/user/api/map-instructor-cms-profile'
+import { mapApiUserListRowMetrics } from '@/features/user/api/map-user-list-row-metrics'
 import { parseOrganizationNamesFromText } from '@/features/user/detail/lib/parse-instructor-affiliation-text'
+import type { UserListRowMetrics as ApiUserListRowMetrics } from '@/shared/api/generated/members/schemas/userListRowMetrics'
 import type {
   InstructorCmsMemberType,
   InstructorCmsProfileProposal,
@@ -674,6 +676,14 @@ export function mapInstructorMemberDetailToUser(
     fallbackRole: options?.fallbackRole ?? 'INSTRUCTOR',
   })
   user.role = 'INSTRUCTOR'
+
+  const detailListMetrics = mapApiUserListRowMetrics(
+    (member as MemberDetailResponse & { listMetrics?: ApiUserListRowMetrics }).listMetrics ??
+      looseDetail.listMetrics
+  )
+  if (detailListMetrics) {
+    user.listMetrics = assignDefinedListMetrics(user.listMetrics, detailListMetrics)
+  }
 
   const profileLoose = asInstructorProfileLoose(profile)
   const { homeAddress, homeAddressDetail } = resolveInstructorHomeAddressParts(

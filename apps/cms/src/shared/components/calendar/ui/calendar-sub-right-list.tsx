@@ -38,6 +38,7 @@ import {
   type CalendarVolunteerInterview2ListRow,
 } from './item-list/ujat-volunteer-interview2'
 import { settlementEventStatusColorPair } from './preview-tooltip/settlement'
+import { isApplicationApprovalPendingForBulkSelect } from '@/features/program/general/lib/application-processed-selection-alert'
 import {
   PROGRAM_DAY_SCHEDULE_STATUS_CONFIG,
   getProgramDayScheduleEventStatus,
@@ -313,13 +314,15 @@ export function CalendarSubRightGeneralInstitutionApplicationList({
   const handleToggle = useCallback(
     (key: string, checked: boolean) => {
       if (checked) {
+        const row = rows.find(item => item.id === key)
+        if (row && !isApplicationApprovalPendingForBulkSelect(row.approvalStatus)) return
         if (selectedSet.has(key)) return
         onSelectionChange([...selectedRowKeys, key])
       } else {
         onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
       }
     },
-    [onSelectionChange, selectedRowKeys, selectedSet]
+    [onSelectionChange, rows, selectedRowKeys, selectedSet]
   )
 
   return (
@@ -380,13 +383,15 @@ export function CalendarSubRightGeneralInstructorApplicationList({
   const handleToggle = useCallback(
     (key: string, checked: boolean) => {
       if (checked) {
+        const row = rows.find(item => item.id === key)
+        if (row && !isApplicationApprovalPendingForBulkSelect(row.approvalStatus)) return
         if (selectedSet.has(key)) return
         onSelectionChange([...selectedRowKeys, key])
       } else {
         onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
       }
     },
-    [onSelectionChange, selectedRowKeys, selectedSet]
+    [onSelectionChange, rows, selectedRowKeys, selectedSet]
   )
 
   return (
@@ -447,13 +452,15 @@ export function CalendarSubRightGeneralIndividualApplicationList({
   const handleToggle = useCallback(
     (key: string, checked: boolean) => {
       if (checked) {
+        const row = rows.find(item => item.id === key)
+        if (row && !isApplicationApprovalPendingForBulkSelect(row.approvalStatus)) return
         if (selectedSet.has(key)) return
         onSelectionChange([...selectedRowKeys, key])
       } else {
         onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
       }
     },
-    [onSelectionChange, selectedRowKeys, selectedSet]
+    [onSelectionChange, rows, selectedRowKeys, selectedSet]
   )
 
   return (

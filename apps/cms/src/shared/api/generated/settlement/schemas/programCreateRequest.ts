@@ -52,6 +52,8 @@ export interface ProgramCreateRequest {
   district?: string;
   ips?: string;
   targetLevel?: string;
+  /** 교육 대상 복수. elementary|middle|high|university|adult. 있으면 targetLevel은 첫 값과 같고, serviceDetailJson.program.targetLevels와 동기화된다. 빈 배열은 교육 대상을 지운다. */
+  targetLevels?: string[];
   institutionType?: string;
   ipOwned?: string;
   courseDeliveredBy?: string;

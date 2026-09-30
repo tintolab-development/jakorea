@@ -7,6 +7,7 @@
  */
 import type { ApplicationCapabilities } from './applicationCapabilities';
 import type { ApplicationDetailResponseAnswers } from './applicationDetailResponseAnswers';
+import type { ApplicationDetailResponseDisplayStatus } from './applicationDetailResponseDisplayStatus';
 import type { EducationScreenSummary } from './educationScreenSummary';
 import type { ParticipationSummary } from './participationSummary';
 import type { ProgramApplicationSupplement } from './programApplicationSupplement';
@@ -36,4 +37,6 @@ export interface ApplicationDetailResponse {
   summary?: EducationScreenSummary;
   capabilities?: ApplicationCapabilities;
   supplement?: ProgramApplicationSupplement;
+  /** 회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. */
+  displayStatus?: ApplicationDetailResponseDisplayStatus;
 }

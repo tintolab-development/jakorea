@@ -36,6 +36,10 @@ import {
   ProgramCommonInfoEditSection,
   ProgramCommonInfoEditSections,
 } from '@/features/program/shared/ui/program-detail/common-info-edit-section'
+import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
+import { ProgramRegistrationCurriculumTitleActions } from '@/features/program/shared/ui/program-registration-curriculum-title-actions'
+import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
+import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 
 function extrasWithParticipant(
   extras: GeneralRegistrationEditorExtras,
@@ -61,6 +65,17 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
     () => (program.generalParticipantTypes ?? []).join(','),
     [program.generalParticipantTypes]
   )
+  const educationProgressSyncKey = useMemo(() => {
+    const common = program.generalCommonInfo
+    const sessionLabels = (common?.curriculumSessions ?? [])
+      .map(session => session.sessionLabel)
+      .join('|')
+    const detailLabels = (common?.scheduleDetails ?? [])
+      .map(detail => detail.scheduleLabel)
+      .join('|')
+    const lines = (common?.educationScheduleLines ?? []).join('|')
+    return `${sessionLabels}::${detailLabels}::${lines}::${String(common?.scheduleCurriculumPreEducation)}`
+  }, [program.generalCommonInfo])
 
   useEffect(() => {
     const nextExtras = extrasFromGeneralProgram(program)
@@ -75,6 +90,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
     program.generalProgramAudience,
     program.category,
     participantTypesKey,
+    educationProgressSyncKey,
   ])
 
   const commitExtras = (next: GeneralRegistrationEditorExtras) => {
@@ -95,6 +111,8 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
   const hideScheduleSettings =
     extras.programType === 'schedule' && extras.sessionRoundType === 'multi'
 
+  const scheduleCurriculumGroupCount = extras.scheduleCurriculumGroupCount ?? 1
+
   const isScheduleStructure = extras.programType === 'schedule'
   const curriculumTitle = isScheduleStructure
     ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleCurriculum.title
@@ -111,7 +129,11 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
 
   return (
     <ProgramCommonInfoEditSections>
-      <ProgramCommonInfoEditSection title="기본 정보" required>
+      <ProgramCommonInfoEditSection
+        title="기본 정보"
+        required
+        bodyClassName="program-common-info-edit__section-body--stacked"
+      >
         <ProgramCommonInfoEditRegistrationAuditForm program={program} />
         <ProgramRegistrationBasicInfoParagraph
           lockParticipantTypes
@@ -168,6 +190,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
         title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.title}
         description={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription}
         required
+        bodyClassName="program-common-info-edit__section-body--stacked"
       >
         <ProgramRegistrationTypeSettingsParagraph
           programType={extras.programType}
@@ -195,6 +218,56 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
         title={curriculumTitle}
         description={curriculumDescription}
         required
+        bodyClassName={
+          isScheduleStructure ? 'program-common-info-edit__section-body--stacked' : undefined
+        }
+        titleTrailing={
+          <ProgramRegistrationCurriculumTitleActions
+            programType={extras.programType}
+            sessionRoundType={extras.sessionRoundType}
+            participantOrganization={participant.organization}
+            educationFormScheduleDetail={extras.educationFormScheduleDetail ?? 'common'}
+            participationScheduleDetail={extras.participationScheduleDetail ?? 'common'}
+            ipsScheduleDetail={extras.ipsScheduleDetail ?? 'common'}
+            educationScheduleMode={extras.educationScheduleMode ?? 'date'}
+            scheduleCurriculumPreEducation={extras.scheduleCurriculumPreEducation === true}
+            onScheduleCurriculumPreEducationChange={checked =>
+              commitExtras({ ...extras, scheduleCurriculumPreEducation: checked })
+            }
+            curriculumChartSessionCount={extras.curriculumChartSessionCount ?? 1}
+            onAddCurriculumSession={() =>
+              commitExtras({
+                ...extras,
+                curriculumSessionCount: (extras.curriculumSessionCount ?? 1) + 1,
+              })
+            }
+            onAddCurriculumChartSession={() =>
+              commitExtras({
+                ...extras,
+                curriculumChartSessionCount: Math.min(
+                  GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT,
+                  (extras.curriculumChartSessionCount ?? 1) + 1
+                ),
+              })
+            }
+            onAddScheduleCurriculumDetail={() =>
+              commitExtras({
+                ...extras,
+                scheduleCurriculumDetailCount: (extras.scheduleCurriculumDetailCount ?? 1) + 1,
+              })
+            }
+            onAddScheduleCurriculumGroup={() =>
+              commitExtras({
+                ...extras,
+                scheduleCurriculumGroupCount: Math.min(
+                  PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT,
+                  (extras.scheduleCurriculumGroupCount ?? 1) + 1
+                ),
+              })
+            }
+            scheduleCurriculumGroupCount={scheduleCurriculumGroupCount}
+          />
+        }
       >
         {isScheduleStructure ? (
           <ProgramRegistrationEducationScheduleCurriculumParagraph
@@ -209,8 +282,16 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
                 ),
               })
             }
-            scheduleGroupCount={1}
-            onDeleteScheduleCurriculumGroup={() => undefined}
+            scheduleGroupCount={scheduleCurriculumGroupCount}
+            onDeleteScheduleCurriculumGroup={() =>
+              commitExtras({
+                ...extras,
+                scheduleCurriculumGroupCount: Math.max(
+                  1,
+                  (extras.scheduleCurriculumGroupCount ?? 1) - 1
+                ),
+              })
+            }
             ipsPerSchedule={extras.ipsScheduleDetail === 'perSchedule'}
             sessionRoundType={extras.sessionRoundType}
             participantOrganization={participant.organization}
@@ -255,6 +336,23 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
             PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription
           }
           required
+          titleTrailing={
+            <EducationScheduleChangeTitleAction
+              overlayKeyPrefix="generalRegistration.educationScheduleSettings"
+              educationScheduleMode={extras.educationScheduleMode ?? 'date'}
+              autoFillFromScheduleGroupTimes={
+                extras.programType === 'schedule' &&
+                extras.sessionRoundType === 'single' &&
+                !participant.organization
+              }
+              lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
+                participantOrganization: participant.organization,
+                educationStructure: extras.programType,
+              })}
+              operationStart={program.startDate}
+              operationEnd={program.endDate}
+            />
+          }
         >
           <ProgramRegistrationEducationScheduleSettingsParagraph
             educationScheduleMode={extras.educationScheduleMode ?? 'date'}
@@ -274,6 +372,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
               participantOrganization: participant.organization,
               educationStructure: extras.programType,
             })}
+            showScheduleChangeAction
           />
         </ProgramCommonInfoEditSection>
       )}

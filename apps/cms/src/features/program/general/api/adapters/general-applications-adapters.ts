@@ -16,14 +16,16 @@ import type { OrganizationApplicationListItemResponse } from '@/shared/api/gener
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
-import type { IndividualApplicationListItemEnriched } from '@/features/program/general/api/individual-application-screening-api-types'
+import type {
+  IndividualApplicationListItemEnriched,
+  PreferredEducationSchedule,
+} from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import { mapParticipantSessionsToEducationSchedules } from '@/features/program/general/lib/map-participant-sessions-to-education-schedules'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import type { VolunteerApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationDetailResponse'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard/schemas/interviewAvailabilitySlot'
-import type { PreferredEducationScheduleResponse } from '@/shared/api/generated/dashboard/schemas/preferredEducationScheduleResponse'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
 import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
@@ -60,7 +62,7 @@ type IndividualApplicationDetailEnriched = Omit<
   }
   application?: NonNullable<IndividualApplicationDetailResponse['application']> & {
     selfIntroduction?: string
-    preferredEducationSchedules?: PreferredEducationScheduleResponse[]
+    preferredEducationSchedules?: PreferredEducationSchedule[]
   }
 }
 
@@ -122,8 +124,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
 ): ApplicantSchoolRow {
   const sessions = mapRequestedSchedulesToSessions(options?.requestedSchedules)
   const desiredEducationPeriod = formatRequestedSchedulesPeriodLabel(options?.requestedSchedules)
-  const regionFromParts = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
-  const region = regionFromParts || dto.region?.trim() || ''
+  const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
 
   return {
     id: toId(dto.id),
@@ -132,7 +133,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     no: index + 1,
     schoolName: dto.organizationName?.trim() || '기관명 없음',
     region,
-    educationGrade: dto.grade?.trim() || dto.educationGrade?.trim() || '',
+    educationGrade: dto.grade?.trim() || '',
     classCount: dto.requestedClassCount ?? 0,
     studentCount: dto.requestedStudentCount ?? 0,
     teacherName: dto.teacherName?.trim() || '-',
@@ -502,40 +503,62 @@ function formatPreferredScheduleDate(date: Date): { date: string; dayOfWeek: str
   }
 }
 
-export function mapPreferredEducationSchedulesToSessions(
-  schedules: PreferredEducationScheduleResponse[] | undefined
-): ParticipatingSchoolSession[] {
-  return [...(schedules ?? [])]
+function preferredScheduleLabel(schedule: PreferredEducationSchedule): string {
+  return typeof schedule.label === 'string' ? schedule.label.trim() : ''
+}
+
+/**
+ * 운영 일정(startAt 있음)을 시작 시각 순으로 두고, `line:N`(startAt 없음)은 응답 순서를 유지한다.
+ */
+function orderPreferredEducationSchedules(
+  schedules: PreferredEducationSchedule[]
+): PreferredEducationSchedule[] {
+  return schedules
+    .map((schedule, index) => ({ schedule, index }))
     .sort((a, b) => {
-      const byStart = (a.startAt ?? '').localeCompare(b.startAt ?? '')
-      return byStart || (a.scheduleId ?? 0) - (b.scheduleId ?? 0)
-    })
-    .map((schedule, index) => {
-      const start = schedule.startAt ? new Date(schedule.startAt) : null
-      const end = schedule.endAt ? new Date(schedule.endAt) : null
-      const validStart = start != null && !Number.isNaN(start.getTime())
-      const validEnd = end != null && !Number.isNaN(end.getTime())
-      const dateParts = validStart
-        ? formatPreferredScheduleDate(start)
-        : { date: '-', dayOfWeek: '-' }
-      const timeRange =
-        validStart && validEnd
-          ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
-          : '-'
-      const duration =
-        validStart && validEnd && end.getTime() > start.getTime()
-          ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
-          : '-'
-      return {
-        round: schedule.round ?? index + 1,
-        ...dateParts,
-        duration,
-        format: '-',
-        classNum: '-',
-        timeRange,
-        requestedScheduleId: schedule.scheduleId,
+      const aStart = a.schedule.startAt ?? ''
+      const bStart = b.schedule.startAt ?? ''
+      if (aStart && bStart) {
+        const byStart = aStart.localeCompare(bStart)
+        return byStart || (a.schedule.scheduleId ?? 0) - (b.schedule.scheduleId ?? 0)
       }
+      if (aStart || bStart) return aStart ? -1 : 1
+      return a.index - b.index
     })
+    .map(entry => entry.schedule)
+}
+
+export function mapPreferredEducationSchedulesToSessions(
+  schedules: PreferredEducationSchedule[] | undefined
+): ParticipatingSchoolSession[] {
+  return orderPreferredEducationSchedules([...(schedules ?? [])]).map((schedule, index) => {
+    const scheduleLabel = preferredScheduleLabel(schedule)
+    const start = schedule.startAt ? new Date(schedule.startAt) : null
+    const end = schedule.endAt ? new Date(schedule.endAt) : null
+    const validStart = start != null && !Number.isNaN(start.getTime())
+    const validEnd = end != null && !Number.isNaN(end.getTime())
+    const dateParts = validStart
+      ? formatPreferredScheduleDate(start)
+      : { date: '-', dayOfWeek: '-' }
+    const timeRange =
+      validStart && validEnd
+        ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
+        : '-'
+    const duration =
+      validStart && validEnd && end.getTime() > start.getTime()
+        ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
+        : '-'
+    return {
+      round: schedule.round ?? index + 1,
+      ...dateParts,
+      duration,
+      format: '-',
+      classNum: '-',
+      timeRange,
+      ...(scheduleLabel ? { scheduleLabel } : {}),
+      ...(schedule.scheduleId != null ? { requestedScheduleId: schedule.scheduleId } : {}),
+    }
+  })
 }
 
 function mapSessionProgressStatusToParticipating(

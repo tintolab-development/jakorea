@@ -5,6 +5,7 @@ import type { ApplicantSchoolRow } from '@/features/program/shared/model/applica
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
+import { isApplicationApprovalPendingForBulkSelect } from '@/features/program/general/lib/application-processed-selection-alert'
 import { getInstructorCalendarSessionSummary } from './applicant-instructor-calendar-session'
 import {
   getInstructorScheduleDispatchStats,
@@ -37,6 +38,13 @@ interface ApplicantScheduleListProps {
   /** 일반 프로그램 강사 캘린더 — 승인 배지·preferredSchool 회차 */
   showApprovalStatus?: boolean
   toolbar?: React.ReactNode
+}
+
+function isScheduleItemPendingForBulkSelect(item: unknown): boolean {
+  if (!item || typeof item !== 'object') return true
+  const status = (item as { approvalStatus?: unknown }).approvalStatus
+  if (typeof status !== 'string') return true
+  return isApplicationApprovalPendingForBulkSelect(status)
 }
 
 function parsePrimaryInstructorName(raw?: string): string {
@@ -111,12 +119,13 @@ export function ApplicantScheduleList({
     }
     return getSessionTimeSummary(schoolName, fallbackPeriod)
   }
-  const handleToggleSelection = (id: React.Key) => {
+  const handleToggleSelection = (id: React.Key, item?: unknown) => {
     if (selectedRowKeys.includes(id)) {
       onSelectionChange(selectedRowKeys.filter(k => k !== id))
-    } else {
-      onSelectionChange([...selectedRowKeys, id])
+      return
     }
+    if (!isScheduleItemPendingForBulkSelect(item)) return
+    onSelectionChange([...selectedRowKeys, id])
   }
 
   const listItems = events.map(event => {
@@ -132,6 +141,7 @@ export function ApplicantScheduleList({
                 <div key={event.id} className="applicant-schedule-list__institution-group">
                   {institutionRows.map(inst => {
                     const isInstSelected = selectedRowKeys.includes(inst.id)
+                    const instCheckboxDisabled = !isScheduleItemPendingForBulkSelect(inst)
                     const instructorName = inst.instructorName || '-'
                     const sessionSummary = resolveSessionSummary(inst, schoolName)
                     const distanceKm = getInstructorScheduleDistanceKm(
@@ -202,10 +212,11 @@ export function ApplicantScheduleList({
                           className="calendar-list-item__checkbox applicant-schedule-item-checkbox"
                           onClick={e => {
                             e.stopPropagation()
-                            handleToggleSelection(inst.id)
+                            if (instCheckboxDisabled) return
+                            handleToggleSelection(inst.id, inst)
                           }}
                         >
-                          <Checkbox checked={isInstSelected} />
+                          <Checkbox checked={isInstSelected} disabled={instCheckboxDisabled} />
                         </div>
                       </div>
                     )
@@ -220,6 +231,7 @@ export function ApplicantScheduleList({
               String(event.id)
             )
             const isSelected = selectedRowKeys.includes(selectionKey)
+            const checkboxDisabled = !isScheduleItemPendingForBulkSelect(originalItem)
             const isIndividualRow =
               originalItem != null && typeof originalItem === 'object' && 'applicantName' in originalItem
             const primaryTitle = resolveApplicantDisplayName(
@@ -328,10 +340,11 @@ export function ApplicantScheduleList({
                   className="calendar-list-item__checkbox applicant-schedule-item-checkbox"
                   onClick={e => {
                     e.stopPropagation()
-                    handleToggleSelection(selectionKey)
+                    if (checkboxDisabled) return
+                    handleToggleSelection(selectionKey, originalItem)
                   }}
                 >
-                  <Checkbox checked={isSelected} />
+                  <Checkbox checked={isSelected} disabled={checkboxDisabled} />
                 </div>
               </div>
             )

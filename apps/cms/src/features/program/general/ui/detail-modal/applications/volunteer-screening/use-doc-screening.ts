@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import {
+  showApplicationApprovalCompletedAlert,
+  showApplicationRejectionCompletedAlert,
+} from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
@@ -19,7 +23,7 @@ import {
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockOrgVolunteerApplicants } from '@/features/program/general/lib/temp-mock-org-program'
+import { getTempMockShowcaseVolunteerApplicants } from '@/features/program/general/lib/temp-mock-program-resolve'
 import { patchGeneralVolunteerDocumentScreeningStatus } from '@/features/program/general/model/volunteer-applicant'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import {
@@ -104,19 +108,10 @@ function toExportRow(row: GeneralVolunteerApplicantRow): Record<string, string |
 export function useGeneralVolunteerDocScreening({ programId }: { programId: string }) {
   const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
   const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
-  const [bulkApproveCompleteCount, setBulkApproveCompleteCount] = useState<number | null>(null)
-  const [bulkRejectCompleteCount, setBulkRejectCompleteCount] = useState<number | null>(null)
   const [approveModalVolunteer, setApproveModalVolunteer] =
     useState<GeneralVolunteerApplicantRow | null>(null)
   const [rejectModalVolunteer, setRejectModalVolunteer] =
     useState<GeneralVolunteerApplicantRow | null>(null)
-  const [approveCompleteVolunteerName, setApproveCompleteVolunteerName] = useState<string | null>(
-    null
-  )
-  const [rejectCompleteVolunteer, setRejectCompleteVolunteer] = useState<{
-    name: string
-    reason: string
-  } | null>(null)
   const [cancelApprovalTargetId, setCancelApprovalTargetId] = useState<string | null>(null)
   const [cancelRejectTargetId, setCancelRejectTargetId] = useState<string | null>(null)
   const remoteEnabled =
@@ -151,7 +146,7 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   useEffect(() => {
     if (volunteerRemote.remoteEnabled) return
     if (isGeneralProgramTempMockProgramId(programId)) {
-      setList(getTempMockOrgVolunteerApplicants(programId, 'doc1'))
+      setList(getTempMockShowcaseVolunteerApplicants(programId, 'doc1'))
       return
     }
     setList([])
@@ -240,22 +235,6 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     setRejectModalVolunteer(null)
   }, [])
 
-  const closeBulkApproveCompleteModal = useCallback(() => {
-    setBulkApproveCompleteCount(null)
-  }, [])
-
-  const closeBulkRejectCompleteModal = useCallback(() => {
-    setBulkRejectCompleteCount(null)
-  }, [])
-
-  const closeApproveCompleteModal = useCallback(() => {
-    setApproveCompleteVolunteerName(null)
-  }, [])
-
-  const closeRejectCompleteModal = useCallback(() => {
-    setRejectCompleteVolunteer(null)
-  }, [])
-
   const openApproveModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
     setApproveModalVolunteer(applicant)
   }, [])
@@ -284,11 +263,10 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     async (payload: PermissionModalPayload) => {
       const ids = selectedRowKeys.map(String)
       if (ids.length === 0) return
-      const approvedCount = ids.length
       await applyDocumentScreeningStatus(ids, 'pass', payload.notifyTiming)
       setSelectedRowKeys([])
       setBulkApproveOpen(false)
-      setBulkApproveCompleteCount(approvedCount)
+      showApplicationApprovalCompletedAlert()
     },
     [applyDocumentScreeningStatus, selectedRowKeys]
   )
@@ -297,11 +275,10 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     async (payload: PermissionModalPayload) => {
       const ids = selectedRowKeys.map(String)
       if (ids.length === 0) return
-      const rejectedCount = ids.length
       await applyDocumentScreeningStatus(ids, 'fail', payload.notifyTiming, payload.reason)
       setSelectedRowKeys([])
       setBulkRejectOpen(false)
-      setBulkRejectCompleteCount(rejectedCount)
+      showApplicationRejectionCompletedAlert()
     },
     [applyDocumentScreeningStatus, selectedRowKeys]
   )
@@ -309,11 +286,10 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   const handleApproveModalConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (!approveModalVolunteer) return
-      const volunteerName = approveModalVolunteer.name
       await applyDocumentScreeningStatus([approveModalVolunteer.id], 'pass', payload.notifyTiming)
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== approveModalVolunteer.id))
       setApproveModalVolunteer(null)
-      setApproveCompleteVolunteerName(volunteerName)
+      showApplicationApprovalCompletedAlert()
     },
     [applyDocumentScreeningStatus, approveModalVolunteer]
   )
@@ -321,11 +297,11 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   const handleRejectModalConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (!rejectModalVolunteer) return
-      const { name, id } = rejectModalVolunteer
+      const { id } = rejectModalVolunteer
       await applyDocumentScreeningStatus([id], 'fail', payload.notifyTiming, payload.reason)
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       setRejectModalVolunteer(null)
-      setRejectCompleteVolunteer({ name, reason: payload.reason })
+      showApplicationRejectionCompletedAlert()
     },
     [applyDocumentScreeningStatus, rejectModalVolunteer]
   )
@@ -428,14 +404,6 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     closeBulkRejectModal,
     handleBulkApproveConfirm,
     handleBulkRejectConfirm,
-    bulkApproveCompleteCount,
-    bulkRejectCompleteCount,
-    closeBulkApproveCompleteModal,
-    closeBulkRejectCompleteModal,
-    approveCompleteVolunteerName,
-    closeApproveCompleteModal,
-    rejectCompleteVolunteer,
-    closeRejectCompleteModal,
     approveModalVolunteer,
     rejectModalVolunteer,
     closeApproveModal,

@@ -24,6 +24,7 @@ import { SCHEDULE_COLORS, type ScheduleColorPair } from '@/features/program/shar
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
 import { renderGeneralVolunteerInterview2PreviewTooltipContent } from './general-volunteer-interview2-preview-tooltip'
 import { GeneralVolunteerInterview2CalendarListItem } from './general-volunteer-interview2-calendar-list-item'
+import { isGeneralVolunteerInterview2EffectiveStatusSelectableForResult } from './general-volunteer-interview2-actions'
 import {
   buildUjatVolunteerInterviewMonthCellRows,
   renderUjatVolunteerInterviewMonthEventContent,
@@ -58,13 +59,20 @@ function GeneralVolunteerInterview2CalendarRightList({
   const handleToggle = useCallback(
     (key: string, checked: boolean) => {
       if (checked) {
+        const row = rows.find(item => item.id === key)
+        if (
+          row &&
+          !isGeneralVolunteerInterview2EffectiveStatusSelectableForResult(row.effectiveStatus)
+        ) {
+          return
+        }
         if (selectedSet.has(key)) return
         onSelectionChange([...selectedRowKeys, key])
       } else {
         onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
       }
     },
-    [onSelectionChange, selectedRowKeys, selectedSet]
+    [onSelectionChange, rows, selectedRowKeys, selectedSet]
   )
 
   return (

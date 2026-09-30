@@ -3,6 +3,7 @@
  */
 import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
 import {
+  coerceProgramPaymentItemsText,
   programPaymentItemLabelsFromIds,
   resolveProgramPaymentItemIdsFromLabels,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
@@ -38,9 +39,10 @@ export function pricingByWageGrade(
   return Object.fromEntries((rows ?? []).map(row => [row.grade, row.pricing]))
 }
 
-export function resolveWagePaymentItemIds(paymentItems: string | undefined): string[] {
-  if (!paymentItems?.trim()) return []
-  const aliased = paymentItems
+export function resolveWagePaymentItemIds(paymentItems: unknown): string[] {
+  const text = coerceProgramPaymentItemsText(paymentItems)
+  if (!text.trim()) return []
+  const aliased = text
     .split(',')
     .map(part => part.trim())
     .filter(Boolean)
@@ -49,9 +51,10 @@ export function resolveWagePaymentItemIds(paymentItems: string | undefined): str
   return resolveProgramPaymentItemIdsFromLabels(aliased)
 }
 
-export function resolveWagePaymentItemsView(paymentItems: string | undefined): string {
-  const ids = resolveWagePaymentItemIds(paymentItems)
-  return programPaymentItemLabelsFromIds(ids) || paymentItems?.trim() || '-'
+export function resolveWagePaymentItemsView(paymentItems: unknown): string {
+  const text = coerceProgramPaymentItemsText(paymentItems)
+  const ids = resolveWagePaymentItemIds(text)
+  return programPaymentItemLabelsFromIds(ids) || text.trim() || '-'
 }
 
 const WAGE_OVERLAY = 'generalRegistration.wageInfo' as const
@@ -106,7 +109,9 @@ export function applyRegistrationWageOverlayToCommonInfo<
       pricing: amount != null ? formatWageGradePricing(amount) : (byGrade[field.label] ?? ''),
     }
   })
-  const paymentItems = resolveWagePaymentItemsFromOverlay(overlay) || common.paymentItems
+  const paymentItems =
+    resolveWagePaymentItemsFromOverlay(overlay) ||
+    coerceProgramPaymentItemsText(common.paymentItems).trim()
   return {
     ...common,
     wageGradeRows,

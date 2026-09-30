@@ -5,6 +5,7 @@ import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -14,6 +15,8 @@ export interface GeneralProgramServiceDetailJsonV1 {
   generalParticipantTypes?: Program['generalParticipantTypes']
   generalSurveyMenuKeys?: Program['generalSurveyMenuKeys']
   targetLevels?: Program['targetLevels']
+  /** BE 컬럼 동기화용 봉투. 파서는 `program`을 루트로 끌어올린다. */
+  program?: { targetLevels?: Program['targetLevels'] }
   /** 교육 진행 구조 (커리큘럼형 / 일정형) — 탑레벨 API 필드 없음 → JSON 영속 */
   generalProgramEducationStructure?: Program['generalProgramEducationStructure']
   /** 수업 회차 유형 */
@@ -237,11 +240,61 @@ export function normalizeGeneralProgramServiceDetailParsed(
   }
 }
 
-export function serializeGeneralProgramServiceDetailJson(program: Program): string | undefined {
+const RECRUITMENT_WINDOW_JSON_KEYS = [
+  'instructorApplicationStartDate',
+  'instructorApplicationEndDate',
+  'volunteerApplicationStartDate',
+  'volunteerApplicationEndDate',
+  'resultAnnouncementDate',
+  'resultAnnouncementMethod',
+  'studentListRequired',
+  'generalParticipantInterviewEnabled',
+  'generalVolunteerInterviewEnabled',
+] as const satisfies ReadonlyArray<keyof GeneralProgramServiceDetailJsonV1>
+
+const NESTED_RECRUITMENT_INFO_KEYS = [
+  'participantRecruitmentInfo',
+  'instructorRecruitmentInfo',
+  'volunteerRecruitmentInfo',
+  'volunteerInterviewScheduleInfo',
+] as const
+
+/** BE echo가 commonInfo에 심은 단수 컬럼. 루트 `targetLevels`와 충돌하면 서버가 1개만 남긴다. */
+function omitColumnTargetLevelsFromCommonInfo(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const next = { ...common } as Record<string, unknown>
+  delete next.targetLevels
+  delete next.targetLevel
+  return next as Program['generalCommonInfo']
+}
+
+/** 공통정보 저장 — 모집 창·모집 정보 객체는 이번 요청에 넣지 않는다. */
+function omitRecruitmentWindowFromCommonInfo(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const next = { ...common }
+  for (const key of NESTED_RECRUITMENT_INFO_KEYS) {
+    delete next[key]
+  }
+  return next
+}
+
+export function serializeGeneralProgramServiceDetailJson(
+  program: Program,
+  options?: { omitRecruitmentWindow?: boolean }
+): string | undefined {
   const isIndividual = isGeneralIndividualProgram(program)
-  const generalCommonInfo = isIndividual
+  const withAudienceRule = isIndividual
     ? stripIndividualStudentRosterFromCommonInfo(program.generalCommonInfo)
     : stripOrganizationParticipationFromCommonInfo(program.generalCommonInfo)
+  const generalCommonInfo = omitColumnTargetLevelsFromCommonInfo(
+    options?.omitRecruitmentWindow
+      ? omitRecruitmentWindowFromCommonInfo(withAudienceRule)
+      : withAudienceRule
+  )
   const persistedOverlay = persistScheduleEducationFormByDetailOverlay(
     buildRegistrationOverlayForPersist({
       ...program,
@@ -259,12 +312,15 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
           [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: scheduleLines,
         }
       : persistedOverlay
+  const persistedTargetLevels = resolvePersistedProgramTargetLevels(program)
   const payload: GeneralProgramServiceDetailJsonV1 = {
     schemaVersion: GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,
     generalCommonInfo,
     generalParticipantTypes: program.generalParticipantTypes,
     generalSurveyMenuKeys: program.generalSurveyMenuKeys,
-    targetLevels: program.targetLevels,
+    targetLevels: persistedTargetLevels,
+    /** BE는 `serviceDetailJson.program.targetLevels`와 컬럼을 동기화한다. */
+    program: persistedTargetLevels.length > 0 ? { targetLevels: persistedTargetLevels } : undefined,
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     generalProgramAudience: program.generalProgramAudience,
@@ -278,6 +334,11 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
     generalParticipantInterviewEnabled: program.generalParticipantInterviewEnabled,
     generalVolunteerInterviewEnabled: program.generalVolunteerInterviewEnabled,
     ...(registrationOverlay ? { registration: { overlay: registrationOverlay } } : {}),
+  }
+  if (options?.omitRecruitmentWindow) {
+    for (const key of RECRUITMENT_WINDOW_JSON_KEYS) {
+      delete payload[key]
+    }
   }
 
   const hasContent = Object.entries(payload).some(([key, value]) => {

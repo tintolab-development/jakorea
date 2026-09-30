@@ -6,9 +6,25 @@
 
 import {
   isGeneralProgramTempMockEnabled,
-  isGeneralProgramTempMockProgramId,
+  isGeneralProgramTempMockOrgProgramId,
   TEMP_MOCK_ORG_PROGRAM_ID,
 } from '@/features/program/general/api/temp-mock-capabilities'
+import {
+  buildTempMockProgramManagers,
+  cloneJson,
+  formatBirth,
+  formatPhone,
+  ageFromBirth,
+  TEMP_MOCK_CONTACT_EMAIL,
+  TEMP_MOCK_CONTACT_PHONE,
+  TEMP_MOCK_DETAILED_PROGRAM_NAME,
+  TEMP_MOCK_PRIMARY_SPONSOR_ID,
+  TEMP_MOCK_SECONDARY_SPONSOR_ID,
+  TEMP_MOCK_SPONSOR_DISPLAY_NAME,
+  TEMP_MOCK_SPONSOR_MANAGER_LINE,
+  TEMP_MOCK_TEXTBOOK_BUSINESS_AREA,
+  TEMP_MOCK_TEXTBOOK_ID,
+} from '@/features/program/general/lib/temp-mock-shared'
 import { GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_COMMON_INFO_MOCK } from '@/features/program/general/lib/detail-common-info-display'
 import { formatTargetLevelsLabel } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { ProgramManagerRow } from '@/features/program/general/model/program-managers'
@@ -272,26 +288,6 @@ const VOLUNTEERS: VolunteerSeed[] = [
   { memberId: 190076, name: '공하은', phone: '01012349535', email: 'qa.volunteer.gong.haeeun@tinto.co.kr', gender: '여성', birthDate: '1986-05-05', affiliationName: null },
 ]
 
-function formatPhone(raw: string): string {
-  const digits = raw.replace(/\D/g, '')
-  if (digits.length === 11) {
-    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
-  }
-  return raw
-}
-
-function ageFromBirth(iso: string): number {
-  return 2026 - Number(iso.slice(0, 4))
-}
-
-function formatBirth(iso: string): string {
-  return iso.replace(/-/g, '.')
-}
-
-function cloneJson<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T
-}
-
 function buildSessions(index: number): ParticipatingSchoolSession[] {
   const weekday = WEEKDAYS[index]
   return [1, 2, 3, 4].map(round => ({
@@ -324,28 +320,15 @@ function preferredSchoolsForInstructor(index: number): ApplicantInstructorPrefer
   }))
 }
 
-/** QA remote 후원사 — 로컬나눔은행(주), 스타벅스(부) */
-const TEMP_MOCK_PRIMARY_SPONSOR_ID = '1627251'
-const TEMP_MOCK_SECONDARY_SPONSOR_ID = '163302'
-const TEMP_MOCK_SPONSOR_DISPLAY_NAME = '로컬나눔은행, 스타벅스'
-const TEMP_MOCK_SPONSOR_MANAGER_LINE = '백진혁 | 010-8681-6741'
 const TEMP_MOCK_SPONSOR_CONTACT_ORG_NAME = '로컬나눔은행, 스타벅스'
 
-/** QA remote 세부 프로그램 (id=163006) — catalog nameKo 매칭 */
-const TEMP_MOCK_DETAILED_PROGRAM_NAME = '소비와 저축의 균형'
-
-/** QA remote 교재 (id=168032) */
-const TEMP_MOCK_TEXTBOOK_ID = '168032'
 const TEMP_MOCK_TEXTBOOK_NAME = '[기관] 커리큘럼형 복수회차 테스트 프로그램 교재'
 const TEMP_MOCK_TEXTBOOK_NAME_EN = '[기관] 커리큘럼형 복수회차 테스트 프로그램 교재'
-const TEMP_MOCK_TEXTBOOK_BUSINESS_AREA = '경제금융'
 
 const TEMP_MOCK_TARGET_LEVELS = ['elementary', 'middle', 'high'] as const
 const TEMP_MOCK_EDUCATION_TARGET = formatTargetLevelsLabel([...TEMP_MOCK_TARGET_LEVELS])
 const TEMP_MOCK_EDUCATION_TARGET_DETAIL =
   '초등 4~6학년, 중등 1~3학년, 고등 1~3학년'
-const TEMP_MOCK_CONTACT_PHONE = '02-6085-6028'
-const TEMP_MOCK_CONTACT_EMAIL = 'qa.temp-mock@tinto.co.kr'
 const TEMP_MOCK_OPERATION_PERIOD = '2026.10.12(월) ~ 2026.11.20(금)'
 const TEMP_MOCK_PARTICIPANT_RECRUITMENT_PERIOD = '2026.09.01(화) ~ 2026.09.30(수)'
 const TEMP_MOCK_INSTRUCTOR_RECRUITMENT_PERIOD = '2026.09.01(화) ~ 2026.09.20(일)'
@@ -1069,49 +1052,7 @@ function getCachedProgram(): Program {
 }
 
 const APPLICANT_SCHOOLS = buildApplicantSchools()
-/** QA admin-accounts — 165001(PM) · 165002(파트너) · 165003(뷰어) */
-function buildProgramManagers(): ProgramManagerRow[] {
-  return [
-    {
-      id: 'temp-mock-org-manager-165001',
-      no: 3,
-      name: '테스트 PM 관리자',
-      role: 'OWNER',
-      phone: '010-0000-5001',
-      email: 'pm@jakorea.org',
-      registeredAt: '2026-09-16',
-      adminId: 165001,
-      cmsRoleCode: 'MIDDLE',
-      removableYn: true,
-    },
-    {
-      id: 'temp-mock-org-manager-165002',
-      no: 2,
-      name: '테스트 파트너 관리자',
-      role: 'PARTNER',
-      phone: '010-0000-5002',
-      email: 'partner@jakorea.org',
-      registeredAt: '2026-09-16',
-      adminId: 165002,
-      cmsRoleCode: 'MIDDLE',
-      removableYn: true,
-    },
-    {
-      id: 'temp-mock-org-manager-165003',
-      no: 1,
-      name: '테스트 뷰어 관리자',
-      role: 'ASSISTANT',
-      phone: '010-0000-5003',
-      email: 'viewer@jakorea.org',
-      registeredAt: '2026-09-16',
-      adminId: 165003,
-      cmsRoleCode: 'VIEWER',
-      removableYn: true,
-    },
-  ]
-}
-
-const PROGRAM_MANAGERS = buildProgramManagers()
+const PROGRAM_MANAGERS = buildTempMockProgramManagers('temp-mock-org')
 const PARTICIPATING_SCHOOLS = buildParticipatingSchools()
 const APPLICANT_INSTRUCTORS = buildApplicantInstructors()
 const PROGRESS_INSTRUCTORS = buildProgressInstructors()
@@ -1124,33 +1065,33 @@ export function getTempMockOrgProgram(): Program | null {
 }
 
 export function getTempMockOrgProgramIfId(programId?: string | null): Program | null {
-  if (!isGeneralProgramTempMockProgramId(programId)) return null
+  if (!isGeneralProgramTempMockOrgProgramId(programId)) return null
   return cloneJson(getCachedProgram())
 }
 
 export function getTempMockOrgApplicantSchools(programId?: string | null): ApplicantSchoolRow[] {
-  if (!isGeneralProgramTempMockProgramId(programId)) return []
+  if (!isGeneralProgramTempMockOrgProgramId(programId)) return []
   return cloneJson(APPLICANT_SCHOOLS)
 }
 
 export function getTempMockOrgParticipatingSchools(
   programId?: string | null
 ): ParticipatingSchoolRow[] {
-  if (!isGeneralProgramTempMockProgramId(programId)) return []
+  if (!isGeneralProgramTempMockOrgProgramId(programId)) return []
   return cloneJson(PARTICIPATING_SCHOOLS)
 }
 
 export function getTempMockOrgApplicantInstructors(
   programId?: string | null
 ): ApplicantInstructorRow[] {
-  if (!isGeneralProgramTempMockProgramId(programId)) return []
+  if (!isGeneralProgramTempMockOrgProgramId(programId)) return []
   return cloneJson(APPLICANT_INSTRUCTORS)
 }
 
 export function getTempMockOrgProgressInstructors(
   programId?: string | null
 ): ParticipatingInstructorRow[] {
-  if (!isGeneralProgramTempMockProgramId(programId)) return []
+  if (!isGeneralProgramTempMockOrgProgramId(programId)) return []
   return cloneJson(PROGRESS_INSTRUCTORS)
 }
 
@@ -1158,7 +1099,7 @@ export function getTempMockOrgVolunteerApplicants(
   programId?: string | null,
   stage?: 'doc1' | 'docPassed' | 'interview2'
 ): GeneralVolunteerApplicantRow[] {
-  if (!isGeneralProgramTempMockProgramId(programId)) return []
+  if (!isGeneralProgramTempMockOrgProgramId(programId)) return []
   const rows = cloneJson(VOLUNTEER_APPLICANTS)
   if (stage === 'docPassed') {
     return rows.filter(row => row.documentScreeningStatus === 'pass')
@@ -1175,11 +1116,28 @@ export function getTempMockOrgVolunteerApplicants(
 export function getTempMockOrgProgressVolunteers(
   programId?: string | null
 ): ParticipatingVolunteerRow[] {
-  if (!isGeneralProgramTempMockProgramId(programId)) return []
+  if (!isGeneralProgramTempMockOrgProgramId(programId)) return []
   return cloneJson(PROGRESS_VOLUNTEERS)
 }
 
 export function getTempMockOrgProgramManagers(programId?: string | null): ProgramManagerRow[] {
-  if (!isGeneralProgramTempMockProgramId(programId)) return []
+  if (!isGeneralProgramTempMockOrgProgramId(programId)) return []
   return cloneJson(PROGRAM_MANAGERS)
+}
+
+/** 개인 쇼케이스 — 강사·봉사자 시드 remap용 (org 전용 id 검사 없음) */
+export function cloneTempMockOrgApplicantInstructorsSeed(): ApplicantInstructorRow[] {
+  return cloneJson(APPLICANT_INSTRUCTORS)
+}
+
+export function cloneTempMockOrgProgressInstructorsSeed(): ParticipatingInstructorRow[] {
+  return cloneJson(PROGRESS_INSTRUCTORS)
+}
+
+export function cloneTempMockOrgVolunteerApplicantsSeed(): GeneralVolunteerApplicantRow[] {
+  return cloneJson(VOLUNTEER_APPLICANTS)
+}
+
+export function cloneTempMockOrgProgressVolunteersSeed(): ParticipatingVolunteerRow[] {
+  return cloneJson(PROGRESS_VOLUNTEERS)
 }

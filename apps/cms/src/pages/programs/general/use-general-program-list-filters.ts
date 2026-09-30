@@ -15,6 +15,7 @@ import {
   clientFilterGeneralPrograms,
   type GeneralProgramListTableFilters,
 } from '@/features/program/general/api/general-program-list-filter-params'
+import { getTempMockIndividualProgram } from '@/features/program/general/lib/temp-mock-individual-program'
 import { getTempMockOrgProgram } from '@/features/program/general/lib/temp-mock-org-program'
 import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
 import { programMatchesProgressPhase } from '@/features/program/general/ui/constants/program-list-constants'
@@ -117,29 +118,33 @@ export function useGeneralProgramListFilters() {
     return remoteListQuery.data?.pages.flatMap(page => page.programs) ?? []
   }, [remoteEnabled, remoteListQuery.data])
 
-  // TODO(temp-mock): 열여라 참깨 — FE 전용 기관 프로그램 목록 주입. 원격 행과 섞지 않음.
-  const mockProgram = useMemo(() => {
-    if (!isGeneralProgramTempMockEnabled()) return null
-    const program = getTempMockOrgProgram()
-    if (!program) return null
-    if (statusFilter && !programMatchesProgressPhase(program, statusFilter)) return null
+  // TODO(temp-mock): 열여라 참깨 — FE 전용 기관·개인 쇼케이스 목록 주입. 원격 행과 섞지 않음.
+  const mockPrograms = useMemo(() => {
+    if (!isGeneralProgramTempMockEnabled()) return []
+    const seeds = [getTempMockOrgProgram(), getTempMockIndividualProgram()].filter(
+      (program): program is NonNullable<typeof program> => program != null
+    )
     const titleKeyword = tableFilters.title?.trim()
-    if (titleKeyword && !program.title.includes(titleKeyword)) return null
-    return clientFilterGeneralPrograms([program], tableFilters)[0] ?? null
+    return seeds.filter(program => {
+      if (statusFilter && !programMatchesProgressPhase(program, statusFilter)) return false
+      if (titleKeyword && !program.title.includes(titleKeyword)) return false
+      return clientFilterGeneralPrograms([program], tableFilters).length > 0
+    })
   }, [statusFilter, tableFilters])
 
   const filteredPrograms = useMemo(() => {
-    if (!mockProgram) return remotePrograms
-    if (remotePrograms.some(program => program.id === mockProgram.id)) return remotePrograms
-    return [mockProgram, ...remotePrograms]
-  }, [mockProgram, remotePrograms])
+    if (mockPrograms.length === 0) return remotePrograms
+    const mockIds = new Set(mockPrograms.map(program => program.id))
+    if (remotePrograms.some(program => mockIds.has(program.id))) return remotePrograms
+    return [...mockPrograms, ...remotePrograms]
+  }, [mockPrograms, remotePrograms])
 
   const totalElements = useMemo(() => {
     const remoteTotal = remoteEnabled
       ? (remoteListQuery.data?.pages[0]?.totalElements ?? remotePrograms.length)
       : 0
-    return remoteTotal + (mockProgram ? 1 : 0)
-  }, [mockProgram, remoteEnabled, remoteListQuery.data, remotePrograms.length])
+    return remoteTotal + mockPrograms.length
+  }, [mockPrograms.length, remoteEnabled, remoteListQuery.data, remotePrograms.length])
 
   const refetchPrograms = useCallback(() => {
     if (!remoteEnabled) return

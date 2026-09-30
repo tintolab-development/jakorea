@@ -1,13 +1,20 @@
 import { useCallback, useId, useState } from 'react'
 import { INQUIRY_CATEGORY_OPTIONS, INQUIRY_PROGRAM_OPTIONS } from '../lib/constants'
-import type { FaqCategory, OneToOneInquiryWritePayload } from '../model/types'
+import type { OneToOneInquiryWritePayload } from '../model/types'
 import { PFButton, PFModal, PFSelect, PFText, PFTextInput } from '@/shared/ui'
 import styles from './one-to-one-inquiry-write-modal.module.css'
+
+export type InquirySelectOption = {
+  value: string
+  label: string
+}
 
 export type OneToOneInquiryWriteModalProps = {
   open: boolean
   onClose: () => void
   onSubmit: (payload: OneToOneInquiryWritePayload) => void
+  programOptions?: readonly InquirySelectOption[]
+  categoryOptions?: readonly InquirySelectOption[]
 }
 
 const EMPTY_FORM = {
@@ -24,14 +31,16 @@ type FieldErrors = {
   content?: string
 }
 
-function resolveProgramName(programValue: string) {
-  return INQUIRY_PROGRAM_OPTIONS.find(option => option.value === programValue)?.label ?? ''
+function resolveProgramName(programValue: string, options: readonly InquirySelectOption[]) {
+  return options.find(option => option.value === programValue)?.label ?? ''
 }
 
 export function OneToOneInquiryWriteModal({
   open,
   onClose,
   onSubmit,
+  programOptions = INQUIRY_PROGRAM_OPTIONS,
+  categoryOptions = INQUIRY_CATEGORY_OPTIONS,
 }: OneToOneInquiryWriteModalProps) {
   const contentFieldId = useId()
   const [programValue, setProgramValue] = useState(EMPTY_FORM.programValue)
@@ -78,8 +87,8 @@ export function OneToOneInquiryWriteModal({
 
     onSubmit({
       programValue,
-      programName: resolveProgramName(programValue),
-      category: category as FaqCategory,
+      programName: resolveProgramName(programValue, programOptions),
+      category,
       title: trimmedTitle,
       content: trimmedContent,
     })
@@ -101,7 +110,7 @@ export function OneToOneInquiryWriteModal({
             size="xlarge"
             label="문의 프로그램명"
             placeholder="문의할 프로그램을 선택해 주세요."
-            options={[...INQUIRY_PROGRAM_OPTIONS]}
+            options={[...programOptions]}
             value={programValue}
             required
             error={Boolean(errors.program)}
@@ -122,7 +131,7 @@ export function OneToOneInquiryWriteModal({
             size="xlarge"
             label="카테고리"
             placeholder="문의하실 유형을 선택해 주세요"
-            options={[...INQUIRY_CATEGORY_OPTIONS]}
+            options={[...categoryOptions]}
             value={category}
             required
             error={Boolean(errors.category)}

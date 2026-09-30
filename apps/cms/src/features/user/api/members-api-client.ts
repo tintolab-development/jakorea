@@ -655,8 +655,11 @@ export async function unmaskInstructorRoleRequestPrivacyRemote(
   return unwrapApiBody(await membersApi.unmask(requestId, body))
 }
 
-export async function deleteMemberRemote(memberId: number, body: AdminMemberDeleteRequest) {
-  await membersApi.deleteAndAnonymize(memberId, body)
+export async function deleteMemberRemote(
+  memberId: number,
+  body: AdminMemberDeleteRequest | { reason: string; confirmationText: string }
+) {
+  await membersApi.deleteAndAnonymize(memberId, body as AdminMemberDeleteRequest)
 }
 
 export async function fetchInstructorRoleRequestsPageRemote(
@@ -878,7 +881,9 @@ export async function submitInstructorJaEvaluationRemote(
   return unwrapApiBody(await membersApi.submitJaEvaluation(instructorMemberId, body))
 }
 
-export async function withdrawAdminSelfRemote(body: AdminSelfWithdrawalRequest): Promise<void> {
+export async function withdrawAdminSelfRemote(
+  body: AdminSelfWithdrawalRequest & { currentPassword: string }
+): Promise<void> {
   await customInstance({
     url: '/api/admin/me/withdrawals',
     method: 'POST',

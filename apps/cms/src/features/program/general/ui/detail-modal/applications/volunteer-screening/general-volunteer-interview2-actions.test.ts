@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { buildInterview2ProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
 import {
+  isGeneralVolunteerInterview2EffectiveStatusSelectableForResult,
   isGeneralVolunteerInterview2SelectableForResult,
   requestGeneralVolunteerInterview2BulkFail,
   requestGeneralVolunteerInterview2BulkPass,
@@ -55,6 +56,10 @@ describe('general-volunteer-interview2-actions', () => {
     expect(isGeneralVolunteerInterview2SelectableForResult(waitingRow)).toBe(true)
     expect(isGeneralVolunteerInterview2SelectableForResult(completedRow)).toBe(false)
     expect(isGeneralVolunteerInterview2SelectableForResult(passedRow)).toBe(false)
+    expect(isGeneralVolunteerInterview2EffectiveStatusSelectableForResult('waiting')).toBe(true)
+    expect(isGeneralVolunteerInterview2EffectiveStatusSelectableForResult('pass')).toBe(false)
+    expect(isGeneralVolunteerInterview2EffectiveStatusSelectableForResult('withdrawn')).toBe(false)
+    expect(isGeneralVolunteerInterview2EffectiveStatusSelectableForResult('completed')).toBe(false)
   })
 
   it('blocks bulk pass when selection includes processed rows', () => {

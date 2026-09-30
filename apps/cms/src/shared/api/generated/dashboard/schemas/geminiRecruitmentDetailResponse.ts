@@ -5,21 +5,55 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { GeminiRecruitmentDetailResponseEducationForm } from './geminiRecruitmentDetailResponseEducationForm';
+import type { GeminiRecruitmentDetailResponseProgramType } from './geminiRecruitmentDetailResponseProgramType';
+import type { GeminiRecruitmentDetailResponseTargetLevelsItem } from './geminiRecruitmentDetailResponseTargetLevelsItem';
 
+/**
+ * Gemini 찾아가는 연수 모집 공고 상세. create/PATCH 저장 필드를 같은 이름으로 왕복한다. serviceDetailJson 원문은 노출하지 않는다.
+ */
 export interface GeminiRecruitmentDetailResponse {
-  programId?: number;
-  programCode?: string;
-  programType?: string;
-  draftStatus?: string;
-  periodStatus?: string;
-  nameKo?: string;
-  summary?: string;
-  description?: string;
-  businessYear?: number;
-  businessStartDate?: string;
-  businessEndDate?: string;
-  minimumParticipantCount?: number;
-  certificateDisabled?: boolean;
-  organizationApplicationCount?: number;
-  approvedOrganizationApplicationCount?: number;
+  programId: number;
+  programCode: string;
+  programType: GeminiRecruitmentDetailResponseProgramType;
+  draftStatus: string;
+  periodStatus: string;
+  nameKo: string;
+  summary?: string | null;
+  description?: string | null;
+  businessYear?: number | null;
+  businessStartDate?: string | null;
+  businessEndDate?: string | null;
+  /** 기관 모집 기간 시작 */
+  applicationStartDate?: string | null;
+  /** 기관 모집 기간 종료 */
+  applicationEndDate?: string | null;
+  /** 연수 요청 가능기간 시작 */
+  trainingRequestStartDate?: string | null;
+  /** 연수 요청 가능기간 종료 */
+  trainingRequestEndDate?: string | null;
+  minimumParticipantCount?: number | null;
+  certificateDisabled: boolean;
+  organizationApplicationCount?: number | null;
+  approvedOrganizationApplicationCount?: number | null;
+  /** 없으면 []. elementary|middle|high|university|adult */
+  targetLevels: GeminiRecruitmentDetailResponseTargetLevelsItem[];
+  recruitmentTargetDetail?: string | null;
+  educationForm?: GeminiRecruitmentDetailResponseEducationForm;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  /** 비고. 해당없음이면 null */
+  otherMatters?: string | null;
+  thumbnailFileName?: string | null;
+  recruitmentGuide?: string | null;
+  applicationMethod?: string | null;
+  learningSupportContent?: string | null;
+  additionalContentHtml?: string | null;
+  /** 없으면 [] */
+  attachmentFileNames: string[];
+  createdAt?: string | null;
+  createdByName?: string | null;
+  updatedAt?: string | null;
+  updatedByName?: string | null;
 }

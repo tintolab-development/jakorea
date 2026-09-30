@@ -1,5 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import type { ProgramDetail } from '@/features/program'
+import {
+  useApplicationNoticeDetailQuery,
+  useApplicationNoticesQuery,
+} from '../../applications/api/activity-hooks'
+import type { ProgramApplicationType } from '../../applications/api/types'
 import { EducationApplicationInfoModal } from '../../applications/ui/application-info-modal'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
 import { useDebouncedValue } from '@/shared/hooks'
@@ -24,6 +29,8 @@ type EducationInProgressNoticePanelProps = {
   preferredEducationScheduleLabel?: string
   /** 봉사현황 기관 안내사항 등 — 안내 목록 위 슬롯 */
   leading?: ReactNode
+  applicationType?: ProgramApplicationType | null
+  applicationId?: string | null
 }
 
 export function EducationInProgressNoticePanel({
@@ -31,6 +38,8 @@ export function EducationInProgressNoticePanel({
   selfIntroMotivation,
   preferredEducationScheduleLabel,
   leading,
+  applicationType,
+  applicationId,
 }: EducationInProgressNoticePanelProps) {
   const programId = program.id
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
@@ -38,12 +47,29 @@ export function EducationInProgressNoticePanel({
   const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
   const [draftFileQuery, setDraftFileQuery] = useState('')
   const debouncedFileQuery = useDebouncedValue(draftFileQuery, SEARCH_DEBOUNCE_MS)
-  const [notices, setNotices] = useState<EducationInProgressNotice[]>(() =>
+  const remoteNotices = useApplicationNoticesQuery(applicationType, applicationId)
+  const [localNotices, setLocalNotices] = useState<EducationInProgressNotice[]>(() =>
     getMockEducationInProgressNotices(programId),
   )
   const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(null)
+  const remoteDetail = useApplicationNoticeDetailQuery(
+    applicationType,
+    applicationId,
+    remoteNotices.enabled ? selectedNoticeId : null,
+  )
 
-  const files = useMemo(() => getMockEducationInProgressFiles(programId), [programId])
+  const notices = useMemo(() => {
+    const source = remoteNotices.enabled ? remoteNotices.items : localNotices
+    if (!remoteDetail.detail || !selectedNoticeId) return source
+    return source.map(notice =>
+      notice.id === selectedNoticeId ? { ...notice, ...remoteDetail.detail?.notice } : notice,
+    )
+  }, [localNotices, remoteDetail.detail, remoteNotices.enabled, remoteNotices.items, selectedNoticeId])
+
+  const files = useMemo(() => {
+    if (remoteNotices.enabled) return remoteDetail.detail?.files ?? []
+    return getMockEducationInProgressFiles(programId)
+  }, [programId, remoteDetail.detail?.files, remoteNotices.enabled])
 
   const filteredFiles = useMemo(() => {
     const query = debouncedFileQuery.trim().toLowerCase()
@@ -56,9 +82,11 @@ export function EducationInProgressNoticePanel({
   }
 
   const openNoticeDetail = (noticeId: string) => {
-    setNotices(prev =>
-      prev.map(notice => (notice.id === noticeId ? { ...notice, read: true } : notice)),
-    )
+    if (!remoteNotices.enabled) {
+      setLocalNotices(prev =>
+        prev.map(notice => (notice.id === noticeId ? { ...notice, read: true } : notice)),
+      )
+    }
     setSelectedNoticeId(noticeId)
   }
 
@@ -75,8 +103,19 @@ export function EducationInProgressNoticePanel({
   }
 
   const deleteNotice = (noticeId: string) => {
-    setNotices(prev => prev.filter(notice => notice.id !== noticeId))
+    if (!remoteNotices.enabled) {
+      setLocalNotices(prev => prev.filter(notice => notice.id !== noticeId))
+    }
     setSelectedNoticeId(null)
+  }
+
+  if (remoteNotices.isLoading) return null
+  if (remoteNotices.isError) {
+    return (
+      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+        안내사항을 불러오지 못했습니다.
+      </PFText>
+    )
   }
 
   const hasNotices = notices.length > 0
@@ -173,18 +212,22 @@ export function EducationInProgressNoticePanel({
         onNoticeChange={openNoticeDetail}
         onDelete={deleteNotice}
         onReactionCountChange={(noticeId, reactionCount) => {
-          setNotices(prev =>
-            prev.map(notice =>
-              notice.id === noticeId ? { ...notice, reactionCount } : notice,
-            ),
-          )
+          if (!remoteNotices.enabled) {
+            setLocalNotices(prev =>
+              prev.map(notice =>
+                notice.id === noticeId ? { ...notice, reactionCount } : notice,
+              ),
+            )
+          }
         }}
         onCommentCountChange={(noticeId, commentCount) => {
-          setNotices(prev =>
-            prev.map(notice =>
-              notice.id === noticeId ? { ...notice, commentCount } : notice,
-            ),
-          )
+          if (!remoteNotices.enabled) {
+            setLocalNotices(prev =>
+              prev.map(notice =>
+                notice.id === noticeId ? { ...notice, commentCount } : notice,
+              ),
+            )
+          }
         }}
       />
 

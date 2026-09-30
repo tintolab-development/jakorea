@@ -15,8 +15,8 @@
  *    - `programToDetailEditValues` 에 Program(또는 mock)에서의 매핑 추가
  *    - API/도메인에 내려야 하면 `detailEditValuesToProgramPatch` 와 `Program` 타입에도 필드 추가
  * 2) 스키마 키 이름을 바꾸면 모든 `name="..."` / `setValue` / `watch` 호출부를 함께 수정
- * 3) 임금(`wage*`)·KPI(`kpi*`) 등은 현재 스키마·폼에는 있으나 `detailEditValuesToProgramPatch` 미반영.
- *    백엔드 저장이 필요하면 패치 함수와 `Program` 모델을 확장할 것 (그 전까지는 UI 상태만 유지)
+ * 3) 임금(`wage*`)·KPI(`kpi*`)는 `detailEditValuesToProgramPatch`에 반영된다.
+ *    새 공통정보 필드를 추가하면 패치 함수와 `Program` 모델도 함께 갱신할 것.
  */
 
 import {
@@ -444,10 +444,10 @@ export const programDetailInstitutionsEditSchema = programDetailEditSchemaBase.e
 })
 
 /**
- * 교육받은 교사 공통 정보 — 1사1교 레이아웃에 노출되는 필드만 필수.
- * 일반 스키마의 모집·설명·학습지원 필수값이 TT 화면에 없어 저장이 조용히 실패하던 것을 방지.
+ * 교육받은 교사·1사1교 공통 정보 — 공통정보 탭에 없는 모집 필수값 완화.
+ * 일반 스키마의 모집·설명·학습지원 필수값이 화면에 없어 저장이 조용히 실패하던 것을 방지.
  */
-export const programDetailTrainedTeachersCommonInfoEditSchema = programDetailEditSchemaBase
+const programDetailOverviewCommonInfoEditSchema = programDetailEditSchemaBase
   .extend({
     applicationStartDate: z.string().optional(),
     applicationEndDate: z.string().optional(),
@@ -471,9 +471,39 @@ export const programDetailTrainedTeachersCommonInfoEditSchema = programDetailEdi
     }
   })
 
-/** 1사1교 공통 정보 — 공통정보 탭에 없는 모집 필수값 완화 (교육받은 교사와 동일) */
+/** 1사1교 공통 정보 — overlay 등록 필수 검사가 별도로 있음 */
 export const programDetailCompanySchoolCommonInfoEditSchema =
-  programDetailTrainedTeachersCommonInfoEditSchema
+  programDetailOverviewCommonInfoEditSchema
+
+/**
+ * 교육받은 교사 공통 정보 — 등록 위저드와 동일한 기본 정보 필수.
+ */
+export const programDetailTrainedTeachersCommonInfoEditSchema =
+  programDetailOverviewCommonInfoEditSchema.superRefine((values, ctx) => {
+    const requireTrimmed = (value: string | undefined, path: string, message: string) => {
+      if (!value?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message, path: [path] })
+      }
+    }
+    requireTrimmed(values.mainTitle, 'mainTitle', '대표 프로그램명(국문)을 입력해주세요')
+    requireTrimmed(values.titleEn, 'titleEn', '대표 프로그램명(영문)을 입력해주세요')
+    requireTrimmed(values.announcementTitle, 'announcementTitle', '공고용 프로그램명을 입력해주세요')
+    if (values.educationStructure !== 'schedule') {
+      requireTrimmed(values.detailedProgramId, 'detailedProgramId', '세부 프로그램명을 선택해주세요')
+    }
+    requireTrimmed(values.startDate, 'startDate', '사업 운영 기간을 선택해주세요')
+    requireTrimmed(values.endDate, 'endDate', '사업 운영 기간을 선택해주세요')
+    requireTrimmed(values.businessArea, 'businessArea', '사업 분야를 선택해주세요')
+    requireTrimmed(values.educationProcess, 'educationProcess', '교육 과정을 선택해주세요')
+    requireTrimmed(values.ipOwned, 'ipOwned', 'IP Owned를 선택해주세요')
+    if (values.courseDeliveredBy == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Course Delivered By를 선택해주세요',
+        path: ['courseDeliveredBy'],
+      })
+    }
+  })
 
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
 
@@ -591,6 +621,24 @@ export function programToDetailEditValues(
   type DateValue = string | Date
   const toStr = (d: DateValue | undefined): string =>
     d == null ? '' : typeof d === 'string' ? d : ((d as Date).toISOString?.() ?? String(d))
+  const sponsorManagementIds =
+    program.generalCommonInfo?.sponsorManagementIds?.length
+      ? program.generalCommonInfo.sponsorManagementIds
+      : program.generalCommonInfo?.sponsorManagementId
+        ? [program.generalCommonInfo.sponsorManagementId]
+        : program.sponsorId
+          ? [program.sponsorId]
+          : []
+  const sponsorManagerLine =
+    program.generalCommonInfo?.sponsorManagerLine?.trim() ||
+    program.managerName?.trim() ||
+    ''
+  const sponsorManagerContactIds = resolveSponsorContactIdsForEdit({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+    managerLine: sponsorManagerLine,
+    hasSelectedSponsors: sponsorManagementIds.length > 0,
+  })
   return {
     title: program.title ?? '',
     startDate: toStr(program.startDate),
@@ -604,30 +652,9 @@ export function programToDetailEditValues(
     applicationEndDate: toStr(program.applicationEndDate),
     businessArea: resolveStoredBusinessArea(program.businessArea) || undefined,
     sponsorId: program.sponsorId ?? '',
-    sponsorManagementIds:
-      program.generalCommonInfo?.sponsorManagementIds?.length
-        ? program.generalCommonInfo.sponsorManagementIds
-        : program.generalCommonInfo?.sponsorManagementId
-          ? [program.generalCommonInfo.sponsorManagementId]
-          : program.sponsorId
-            ? [program.sponsorId]
-            : [],
-    sponsorManagerContactIds: resolveSponsorContactIdsForEdit({
-      ids: program.generalCommonInfo?.sponsorManagerContactIds,
-      id: program.generalCommonInfo?.sponsorManagerContactId,
-      managerLine:
-        program.generalCommonInfo?.sponsorManagerLine?.trim() ||
-        program.managerName?.trim() ||
-        '',
-    }),
-    sponsorManagerContactId: resolveSponsorContactIdsForEdit({
-      ids: program.generalCommonInfo?.sponsorManagerContactIds,
-      id: program.generalCommonInfo?.sponsorManagerContactId,
-      managerLine:
-        program.generalCommonInfo?.sponsorManagerLine?.trim() ||
-        program.managerName?.trim() ||
-        '',
-    })[0],
+    sponsorManagementIds,
+    sponsorManagerContactIds,
+    sponsorManagerContactId: sponsorManagerContactIds[0],
     managerName: program.managerName ?? '',
     contactPhone: (() => {
       const recruitmentInfo = program.generalCommonInfo?.participantRecruitmentInfo as
@@ -642,14 +669,7 @@ export function programToDetailEditValues(
       if (fromRecruitment) return fromRecruitment
 
       const fromProgram = firstPlainKoreanPhoneForEdit(program.contactPhone)
-      const sponsorUnselected = resolveSponsorContactIdsForEdit({
-        ids: program.generalCommonInfo?.sponsorManagerContactIds,
-        id: program.generalCommonInfo?.sponsorManagerContactId,
-        managerLine:
-          program.generalCommonInfo?.sponsorManagerLine?.trim() ||
-          program.managerName?.trim() ||
-          '',
-      }).some(isSponsorContactUnselected)
+      const sponsorUnselected = sponsorManagerContactIds.some(isSponsorContactUnselected)
       if (sponsorUnselected) {
         // TT: top-level contactPhone 이 모집 Tel 폴백 (participant-recruitment-display)
         if (
@@ -1011,10 +1031,18 @@ export function detailEditValuesToProgramPatch(
     existing.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel
   const contactPhone = values.contactPhone ?? existing.contactPhone
   const contactEmail = values.contactEmail ?? existing.contactEmail
-  const isTrainedTeacherProgram = looksLikeTrainedTeacherProgramId(existing.id)
+  const isTrainedTeacherProgram =
+    existing.backendProgramType === 'TRAINED_TEACHER' ||
+    looksLikeTrainedTeacherProgramId(existing.id)
   const contactOrganizationName =
     values.recruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
+  /** 문의처 표시명 — BE contactName (managerName/후원 담당자와 분리) */
+  const inquiryContactName =
+    values.recruitmentContactOrganizationName?.trim() ||
+    existing.contactName?.trim() ||
+    existing.generalCommonInfo?.participantRecruitmentInfo?.contactName?.trim() ||
+    undefined
   const instructorContactOrganizationName =
     values.instructorRecruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName
@@ -1053,8 +1081,12 @@ export function detailEditValuesToProgramPatch(
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail
 
   return {
-    title: values.title?.trim() || existing.title,
-    textbookName: existing.textbookName,
+    title:
+      (isTrainedTeacherProgram ? values.announcementTitle?.trim() : values.title?.trim()) ||
+      existing.title,
+    textbookName:
+      (isTrainedTeacherProgram ? values.detailedProgramName?.trim() : undefined) ||
+      existing.textbookName,
     startDate,
     endDate,
     category: values.category,
@@ -1074,6 +1106,7 @@ export function detailEditValuesToProgramPatch(
       values.sponsorManagementIds?.[0] ||
       existing.sponsorId,
     managerName: values.managerName,
+    contactName: inquiryContactName,
     contactPhone,
     contactEmail,
     institutionType:
@@ -1091,6 +1124,10 @@ export function detailEditValuesToProgramPatch(
         ? undefined
         : (values.remarks?.trim() || undefined),
     educationTargetDetail: values.educationTargetDetail?.trim() || undefined,
+    recruitmentTargetDetail:
+      values.educationTargetDetail?.trim() ||
+      existing.recruitmentTargetDetail ||
+      undefined,
     keyVisualImage: values.keyVisualImage,
     posterImage: values.posterImage,
     description: values.description,

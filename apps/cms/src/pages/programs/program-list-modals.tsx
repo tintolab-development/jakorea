@@ -1,7 +1,10 @@
-import { ContentModal } from '@/shared/ui'
+import { ContentModal, DeleteGuideModal } from '@/shared/ui'
 import { ProgramForm } from '@/features/program/general/ui/program-form'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { EnrollmentStatusDetailModal } from '@/features/program/general/ui/enrollment-status-detail-modal'
+import {
+  PROGRAM_DELETE_GUIDE_TITLE,
+  buildProgramSingleDeleteGuideLines,
+} from '@/features/program/shared/lib/program-delete-guide'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import type { Program } from '@/types/domain'
 import type { ProgramFormData } from '@/entities/program/model/schema'
@@ -25,7 +28,6 @@ interface ProgramListModalsProps {
 
   // Delete Modal
   deleteModalOpen: boolean
-  deleteConfirmMessage: string
   onConfirmDelete: () => void
   onCancelDelete: () => void
 
@@ -42,7 +44,6 @@ export function ProgramListModals({
   onFormCancel,
   formLoading,
   deleteModalOpen,
-  deleteConfirmMessage,
   onConfirmDelete,
   onCancelDelete,
   selectedProgramForModal,
@@ -71,15 +72,13 @@ export function ProgramListModals({
         />
       </ContentModal>
 
-      <ConfirmModal
+      <DeleteGuideModal
         open={deleteModalOpen}
-        title="프로그램 삭제"
-        content={deleteConfirmMessage}
+        title={PROGRAM_DELETE_GUIDE_TITLE}
+        lines={buildProgramSingleDeleteGuideLines()}
+        confirmText="삭제"
         onConfirm={onConfirmDelete}
         onCancel={onCancelDelete}
-        confirmText="삭제"
-        cancelText="취소"
-        danger
       />
     </>
   )

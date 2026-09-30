@@ -35,6 +35,7 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
+import { isGeneralVolunteerInterview2SelectableForResult } from './general-volunteer-interview2-actions'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './volunteer-screening.css'
 import './interview2-section.css'
@@ -414,7 +415,7 @@ export function GeneralVolunteerInterview2Section({
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
                 getCheckboxProps: record => ({
-                  disabled: record.interviewAssignmentStatus === 'withdrawn',
+                  disabled: !isGeneralVolunteerInterview2SelectableForResult(record),
                 }),
               }}
               onRow={record => {

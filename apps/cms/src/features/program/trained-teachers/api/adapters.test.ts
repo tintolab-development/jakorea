@@ -102,6 +102,37 @@ describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
     expect(request.targetLevel).toBe('university')
   })
 
+  it('공통정보 패치가 모집 라벨을 빼도 existing 라벨의 복수 targetLevels를 컬럼에 올린다', () => {
+    const request = mapTrainedTeacherToUpdateRequest(
+      {
+        id: '186010',
+        sponsorId: 'sponsor-1',
+        title: '우리 동네 소비와 저축',
+        type: 'offline',
+        format: 'workshop',
+        category: 'school',
+        description: '',
+        rounds: [],
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        status: 'pending',
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+        targetLevel: 'elementary',
+        targetLevels: ['elementary'],
+        generalCommonInfo: {
+          announcementTitle: '기존 공고',
+          participantRecruitmentInfo: {
+            educationTarget: '초등학교, 중학교, 대학(원)생',
+          },
+        },
+      } as Program,
+      { generalCommonInfo: { announcementTitle: '수정된 공고' } }
+    )
+    expect(request.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(request.targetLevel).toBe('elementary')
+  })
+
   it('does not use organizationApplicationCount as participatingSchoolCount', () => {
     const mapped = mapTrainedTeacherListItemToProgram({
       id: 186006,
@@ -265,7 +296,7 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
     expect(mapped.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
   })
 
-  it('display fields keep announcement/detailed names off title and textbookName', () => {
+  it('공고용명·세부명은 최신 top-level 컬럼을 stale JSON보다 우선한다', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
       ...baseDto,
       title: '교육받은교사(수정2)',
@@ -291,8 +322,8 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
         },
       }),
     })
-    expect(mapped.generalCommonInfo?.announcementTitle).toBe('구 공고')
-    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('UJAT 사전교육')
+    expect(mapped.generalCommonInfo?.announcementTitle).toBe('교육받은교사(수정2)')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
     expect(mapped.textbookName).toBe('사회공헌 프로젝트')
     expect(mapped.generalCommonInfo?.venueKind).toBe('other')
     expect(mapped.generalCommonInfo?.venueDetail).toBe('별관 301호')
@@ -387,6 +418,46 @@ describe('mergeTrainedTeacherSponsorAssignments', () => {
       '1627251::1627253': '박담당',
     })
   })
+
+  it('marks manager as 미선택 when sponsors have no contact ids', () => {
+    const program = {
+      id: '186034',
+      title: 'TT',
+      sponsorId: '163302',
+      managerName: '구담당',
+      generalCommonInfo: {
+        sponsorManagerContactIds: ['163302::111'],
+        sponsorManagerLine: '구담당',
+      },
+    } as Program
+    const merged = mergeTrainedTeacherSponsorAssignments(program, [
+      { sponsorId: '163302', sponsorContactId: null },
+    ])
+    expect(merged.generalCommonInfo?.sponsorManagementIds).toEqual(['163302'])
+    expect(merged.generalCommonInfo?.sponsorManagerContactIds).toEqual([
+      '__sponsor_contact_unselected__',
+    ])
+    expect(merged.managerName).toBe('미선택')
+    expect(merged.generalCommonInfo?.sponsorManagerLine).toBe('미선택')
+  })
+
+  it('clears sponsor fields when assignments are empty', () => {
+    const program = {
+      id: '186034',
+      title: 'TT',
+      sponsorId: '163302',
+      managerName: '김담당',
+      generalCommonInfo: {
+        sponsorManagementIds: ['163302'],
+        sponsorManagerContactIds: ['163302::111'],
+      },
+    } as Program
+    const merged = mergeTrainedTeacherSponsorAssignments(program, [])
+    expect(merged.sponsorId).toBeUndefined()
+    expect(merged.managerName).toBeUndefined()
+    expect(merged.generalCommonInfo?.sponsorManagementIds).toEqual([])
+    expect(merged.generalCommonInfo?.sponsorManagerContactIds).toEqual([])
+  })
 })
 
 describe('mapTrainedTeacherToUpdateRequest sponsors', () => {
@@ -472,6 +543,33 @@ describe('mapTrainedTeacherToUpdateRequest sponsors', () => {
       { sponsorId: '163302', sponsorContactId: '111' },
       { sponsorId: '163302', sponsorContactId: '222' },
     ])
+  })
+
+  it('omits contact ids when manager is 미선택', () => {
+    const program = {
+      id: '186005',
+      sponsorId: '163302',
+      title: 'TT',
+      type: 'online' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      managerName: '미선택',
+      generalCommonInfo: {
+        sponsorManagementIds: ['163302', '1627251'],
+        sponsorManagerContactIds: ['__sponsor_contact_unselected__'],
+        sponsorManagerContactId: '__sponsor_contact_unselected__',
+        sponsorManagerLine: '미선택',
+      },
+    }
+    const request = mapTrainedTeacherToUpdateRequest(program)
+    expect(request.sponsors).toEqual([{ sponsorId: '163302' }, { sponsorId: '1627251' }])
   })
 })
 
@@ -613,6 +711,51 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
     expect(request.serviceDetailJson).not.toContain('구 차시')
   })
 
+  it('부분 generalCommonInfo가 이전 공고·모집 정보를 지우지 않는다', () => {
+    const program = {
+      id: '186009',
+      sponsorId: '163302',
+      title: 'TT',
+      type: 'offline' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      generalCommonInfo: {
+        announcementTitle: '기존 공고',
+        participantRecruitmentInfo: {
+          announcementPublished: true,
+          inquiryTel: '02-000-0000',
+        },
+        curriculumSessions: [{ sessionLabel: '1차시', title: '구 차시', description: '' }],
+      },
+    } as Program
+    const request = mapTrainedTeacherToUpdateRequest(program, {
+      generalCommonInfo: {
+        curriculumSessions: [{ sessionLabel: '1차시', title: '신 차시', description: '새 내용' }],
+      },
+    })
+    const detail = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: { generalCommonInfo?: Record<string, unknown> }
+    }
+    const common = detail.program?.generalCommonInfo
+    expect(common?.announcementTitle).toBe('기존 공고')
+    expect(common?.participantRecruitmentInfo).toEqual({
+      announcementPublished: true,
+      inquiryTel: '02-000-0000',
+      maxAssignableInstructors: 0,
+      preEducationNoticeRequired: false,
+    })
+    expect(common?.curriculumSessions).toEqual([
+      { sessionLabel: '1차시', title: '신 차시', description: '새 내용' },
+    ])
+  })
+
   it('keeps announcement and schedule time when nested common info was previously stripped', () => {
     const program = {
       id: '186034',
@@ -674,7 +817,7 @@ describe('mapTrainedTeacherToUpdateRequest detailedProgramId (일반 프로그�
     updatedAt: '2026-01-01',
   }
 
-  it('sends detailedProgramId as a real numeric master id and omits it from textbookName', () => {
+  it('sends detailedProgramId and mirrors the selected name to textbookName', () => {
     const program = {
       ...baseProgram,
       detailedProgramId: '163006',
@@ -682,12 +825,12 @@ describe('mapTrainedTeacherToUpdateRequest detailedProgramId (일반 프로그�
     }
     const request = mapTrainedTeacherToUpdateRequest(program)
     expect(request.detailedProgramId).toBe(163006)
-    expect(request.textbookName).toBeUndefined()
+    expect(request.textbookName).toBe('실제 선택한 세부 프로그램명')
     expect(request.teamDivision).toBeUndefined()
 
     const createRequest = mapTrainedTeacherToCreateRequest(program)
     expect(createRequest.detailedProgramId).toBe(163006)
-    expect(createRequest.textbookName).toBeUndefined()
+    expect(createRequest.textbookName).toBe('실제 선택한 세부 프로그램명')
   })
 
   it('detailedProgramId가 없거나 sentinel(해당없음)이면 null(undefined)로 보낸다', () => {
@@ -1082,70 +1225,11 @@ describe('trained teacher businessArea', () => {
     } as Program
     const request = mapTrainedTeacherToUpdateRequest(program)
     expect(request.businessArea).toBe('진로취업')
-    expect((request as { businessField?: string }).businessField).toBe('진로취업')
+    expect(request).not.toHaveProperty('businessField')
     const envelope = JSON.parse(String(request.serviceDetailJson)) as {
       program?: { businessArea?: string; generalCommonInfo?: Record<string, unknown> }
     }
     expect(envelope.program?.businessArea).toBe('진로취업')
     expect(envelope.program?.generalCommonInfo).not.toHaveProperty('businessArea')
-  })
-})
-
-describe('mapTrainedTeacherToUpdateRequest sponsors', () => {
-  it('attaches sponsorContactId only to the contact owner sponsor', () => {
-    const program = {
-      id: '186005',
-      sponsorId: '163302',
-      title: 'TT',
-      type: 'online' as const,
-      format: 'workshop' as const,
-      category: 'school' as const,
-      description: '',
-      rounds: [],
-      startDate: '2026-01-01',
-      endDate: '2026-12-31',
-      status: 'pending' as const,
-      createdAt: '2026-01-01',
-      updatedAt: '2026-01-01',
-      managerName: '테스트 마스터 관리자',
-      generalCommonInfo: {
-        sponsorManagementIds: ['163302', '1627251'],
-        sponsorManagerContactIds: ['1627251::1627253'],
-        sponsorManagerContactId: '1627251::1627253',
-      },
-    }
-    const request = mapTrainedTeacherToUpdateRequest(program)
-    expect(request.sponsorId).toBe('1627251')
-    expect(request.sponsors).toEqual([
-      { sponsorId: '163302' },
-      { sponsorId: '1627251', sponsorContactId: '1627253' },
-    ])
-  })
-
-  it('supports multiple sponsor contacts', () => {
-    const program = {
-      id: '186005',
-      sponsorId: '163302',
-      title: 'TT',
-      type: 'online' as const,
-      format: 'workshop' as const,
-      category: 'school' as const,
-      description: '',
-      rounds: [],
-      startDate: '2026-01-01',
-      endDate: '2026-12-31',
-      status: 'pending' as const,
-      createdAt: '2026-01-01',
-      updatedAt: '2026-01-01',
-      generalCommonInfo: {
-        sponsorManagementIds: ['163302', '1627251'],
-        sponsorManagerContactIds: ['163302::111', '1627251::1627253'],
-      },
-    }
-    const request = mapTrainedTeacherToUpdateRequest(program)
-    expect(request.sponsors).toEqual([
-      { sponsorId: '163302', sponsorContactId: '111' },
-      { sponsorId: '1627251', sponsorContactId: '1627253' },
-    ])
   })
 })

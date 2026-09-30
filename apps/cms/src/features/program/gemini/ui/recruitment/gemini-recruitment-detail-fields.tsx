@@ -13,6 +13,7 @@ import {
   programFileOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import { GeminiDeferredCmsTextArea } from './gemini-recruitment-deferred-text-input'
 import { GeminiRecruitmentAdditionalContentEditor } from './gemini-recruitment-additional-content-editor'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -35,6 +36,8 @@ export type GeminiRecruitmentDetailFieldsProps = {
   recruitmentIdForEditor?: string
   registerGetAdditionalContentMarkdown?: (getMarkdown: () => string) => void
   readOnlyUpload?: boolean
+  /** true면 textarea 타이핑은 blur 때 draft commit */
+  deferTextCommit?: boolean
 }
 
 export function GeminiRecruitmentDetailFields({
@@ -46,6 +49,7 @@ export function GeminiRecruitmentDetailFields({
   recruitmentIdForEditor,
   registerGetAdditionalContentMarkdown,
   readOnlyUpload = false,
+  deferTextCommit = false,
 }: GeminiRecruitmentDetailFieldsProps) {
   const isEdit = mode === 'edit' && onChange != null
   const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null)
@@ -156,14 +160,25 @@ export function GeminiRecruitmentDetailFields({
             }
             edit={
               isEdit ? (
-                <CmsTextArea
-                  inputSize="medium"
-                  width="100%"
-                  placeholder={field.placeholder}
-                  rows={field.key === 'recruitmentGuide' ? 6 : 3}
-                  value={textFieldValues[field.key]}
-                  onChange={e => onChange({ [field.key]: e.target.value })}
-                />
+                deferTextCommit ? (
+                  <GeminiDeferredCmsTextArea
+                    inputSize="medium"
+                    width="100%"
+                    placeholder={field.placeholder}
+                    rows={field.key === 'recruitmentGuide' ? 6 : 3}
+                    value={textFieldValues[field.key]}
+                    onCommit={next => onChange({ [field.key]: next })}
+                  />
+                ) : (
+                  <CmsTextArea
+                    inputSize="medium"
+                    width="100%"
+                    placeholder={field.placeholder}
+                    rows={field.key === 'recruitmentGuide' ? 6 : 3}
+                    value={textFieldValues[field.key]}
+                    onChange={e => onChange({ [field.key]: e.target.value })}
+                  />
+                )
               ) : undefined
             }
           />

@@ -164,7 +164,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
+  width: 100%;
+  min-height: 320px;
+  box-sizing: border-box;
 }
 
 /* 공통 정보 탭: 좌우는 공통 content 패딩 — 하단 32px만 */

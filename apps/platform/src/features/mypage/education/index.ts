@@ -3,6 +3,7 @@ export type {
   EducationApplicationTab,
   EducationApplicationListItem,
   EducationDisplayStatus,
+  EducationDisplayStatusAudience,
   EducationDisplayStatusTone,
   EducationTeacherAssignedInstructor,
   EducationTeacherAssignment,

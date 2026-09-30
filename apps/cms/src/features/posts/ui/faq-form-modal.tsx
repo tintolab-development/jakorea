@@ -35,6 +35,7 @@ export function FaqFormModal(props: FaqFormModalProps) {
         open={props.open}
         onCancel={props.onCancel}
         title={ctrl.modalTitle}
+        size="default"
         width={800}
         titleBodyGap="none"
         className="faq-form-modal"

@@ -12,6 +12,50 @@ export const PROGRAM_WAGE_DEDUCTION_LABEL = '일용근로자 원천징수세액'
 
 const PAYMENT_ITEM_CODE_RE = /^(p|w|d)-\d+$/i
 
+/** settlementPolicy 한글 라벨 → 등록 지급 항목 옵션명 */
+const PAYMENT_ITEM_LABEL_ALIASES: Record<string, string> = {
+  교통비: '강사 교통비',
+  식비: '식사비',
+}
+
+const SETTLEMENT_ITEM_TYPE_LABEL: Record<string, string> = {
+  TRANSPORTATION: '교통비',
+  LONG_DISTANCE_TRANSPORTATION: '장거리 교통비',
+  LODGING: '숙박비',
+  ACTIVITY: '활동비',
+  MEAL: '식비',
+}
+
+function labelFromPaymentItemEntry(item: unknown): string {
+  if (typeof item === 'string') return item.trim()
+  if (typeof item === 'number' && Number.isFinite(item)) return String(item)
+  if (!item || typeof item !== 'object') return ''
+  const record = item as Record<string, unknown>
+  if (record.useYn === false) return ''
+  if (typeof record.itemType === 'string' && record.itemType.trim()) {
+    const type = record.itemType.trim().toUpperCase()
+    return SETTLEMENT_ITEM_TYPE_LABEL[type] ?? record.itemType.trim()
+  }
+  for (const key of ['label', 'name', 'itemName'] as const) {
+    const raw = record[key]
+    if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  }
+  const code = record.value ?? record.code ?? record.id
+  if (typeof code === 'string' && code.trim()) return code.trim()
+  if (typeof code === 'number' && Number.isFinite(code)) return String(code)
+  return ''
+}
+
+/**
+ * 공통정보 `paymentItems`는 콤마 라벨 문자열이 기준이다.
+ * GET sidecar·정산 응답이 배열이면 같은 문자열로 맞춘다.
+ */
+export function coerceProgramPaymentItemsText(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (!Array.isArray(value)) return ''
+  return value.map(labelFromPaymentItemEntry).filter(Boolean).join(', ')
+}
+
 function isPaymentItemCode(text: string | undefined): boolean {
   return Boolean(text && PAYMENT_ITEM_CODE_RE.test(text.trim()))
 }
@@ -104,21 +148,23 @@ export function programPaymentItemLabelsFromIds(
 }
 
 export function resolveProgramPaymentItemIdsFromLabels(
-  paymentItems: string | undefined,
+  paymentItems: unknown,
   sections?: readonly SettlementItemSettingSection[]
 ): string[] {
-  if (!paymentItems?.trim()) return []
+  const text = coerceProgramPaymentItemsText(paymentItems)
+  if (!text.trim()) return []
   if (
-    paymentItems.trim() === PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL ||
-    paymentItems.includes('해당없음')
+    text.trim() === PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL ||
+    text.includes('해당없음')
   ) {
     return [PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE]
   }
   const options = getProgramWagePaymentItemOptions(sections)
-  return paymentItems
+  return text
     .split(',')
     .map(s => s.trim())
     .filter(Boolean)
+    .map(token => PAYMENT_ITEM_LABEL_ALIASES[token] ?? token)
     .map(token => {
       const byValue = options.find(o => o.value === token)
       if (byValue) return byValue.value

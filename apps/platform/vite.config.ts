@@ -1,7 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import type { ProxyOptions } from 'vite'
+import type { Plugin, ProxyOptions } from 'vite'
 import postcssCustomMedia from 'postcss-custom-media'
 import postcssGlobalData from '@csstools/postcss-global-data'
 import { mockProgramCatalogApiPlugin } from '../../tools/mock-program-catalog/vite-plugin'
@@ -23,6 +23,38 @@ function withNgrokSkip(
           proxyReq.setHeader('ngrok-skip-browser-warning', skipHeader || '69420')
         }
       })
+    },
+  }
+}
+
+const PLATFORM_PREVIEW_MODE = 'platform-preview'
+const PLATFORM_PREVIEW_DISABLED_ENV_KEYS = [
+  'VITE_API_BASE_URL',
+  'VITE_API_SERVER',
+  'VITE_DEV_PROXY_TARGET',
+  'VITE_NGROK_SERVER',
+  'VITE_HOMEPAGE_API_SERVER',
+] as const
+
+/** tree-shake로 빠진 모듈의 asset도 Vite는 방출하므로, 번들에서 참조되지 않는 파일을 지운다. */
+function dropUnreferencedAssetsPlugin(): Plugin {
+  return {
+    name: 'platform-preview-drop-unreferenced-assets',
+    apply: 'build',
+    enforce: 'post',
+    generateBundle(_options, bundle) {
+      const texts = Object.values(bundle).map(item =>
+        item.type === 'chunk'
+          ? item.code
+          : typeof item.source === 'string'
+            ? item.source
+            : '',
+      )
+      for (const [fileName, item] of Object.entries(bundle)) {
+        if (item.type !== 'asset' || fileName.endsWith('.html')) continue
+        const baseName = path.basename(fileName)
+        if (!texts.some(text => text.includes(baseName))) delete bundle[fileName]
+      }
     },
   }
 }
@@ -54,10 +86,35 @@ export default defineConfig(({ mode }) => {
     return entries
   })()
 
+  /** CMS 모집 미리보기 번들 — CMS `dist/platform-preview/`에 복사되어 같은 도메인 iframe으로 뜬다. */
+  const isProgramPreviewBuild = mode === PLATFORM_PREVIEW_MODE
+
   return {
+    ...(isProgramPreviewBuild
+      ? {
+          base: '/platform-preview/',
+          // 미리보기는 CMS가 보낸 데이터만 쓴다 — 원격 API 비활성(헤더·푸터 fallback)
+          define: Object.fromEntries(
+            PLATFORM_PREVIEW_DISABLED_ENV_KEYS.map(key => [`import.meta.env.${key}`, '""']),
+          ),
+          build: {
+            outDir: 'dist-preview',
+            emptyOutDir: true,
+            rollupOptions: {
+              input: path.resolve(__dirname, 'preview.html'),
+              // barrel(`@/shared/ui`, `@/features/*`)로 딸려오는 미사용 모듈·이미지 제거
+              treeshake: {
+                moduleSideEffects: (id: string) =>
+                  id.includes('node_modules') || /\.(css|scss)(\?|$)/.test(id),
+              },
+            },
+          },
+        }
+      : {}),
     plugins: [
       react(),
       mockProgramCatalogApiPlugin({ monorepoRoot: path.resolve(__dirname, '../..') }),
+      ...(isProgramPreviewBuild ? [dropUnreferencedAssetsPlugin()] : []),
     ],
     css: {
       postcss: {

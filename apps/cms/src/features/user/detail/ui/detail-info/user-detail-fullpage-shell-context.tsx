@@ -55,7 +55,7 @@ export interface UserDetailFullpageShellValue {
   ) => void | Promise<void>
   progressStatusReadOnly: boolean
   onWithdrawModalCancel: () => void
-  onWithdrawModalConfirm: (currentPassword?: string) => void | Promise<void>
+  onWithdrawModalConfirm: (confirmInput?: string) => void | Promise<void>
   basicInfoEditing: boolean
   basicInfoEditScope: BasicInfoEditScope
   basicInfoDraft: AdminProvisionedMemberBasicInfoDraft | null

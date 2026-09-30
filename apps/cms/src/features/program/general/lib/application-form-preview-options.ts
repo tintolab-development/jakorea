@@ -86,12 +86,19 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
     paragraphs: readonly WritingFormParagraph[]
     institutionBridge?: InstitutionApplicationProgramBridge
     instructorScheduleSlots?: readonly InstructorAvailableScheduleSlot[]
-    /** 프로그램 상세 양식 수정 — 등록·모집 설정 연동 일정 UI */
+    /** 프로그램 상세 양식 수정·미리보기 — 공통정보 교육 일정 연동 */
     programLinkedApplicationFormPreview?: boolean
+    /**
+     * 템플릿 카탈로그 등 — PUBLISHED schemaJson 객관식 items 그대로 표시.
+     * 프로그램 상세 신청 정보 미리보기에는 쓰지 않는다(공통정보 일정 연동).
+     */
+    applicationFormPublishedSchemaSnapshotPreview?: boolean
   }
 ): RenderFormParagraphBodyOptions {
   const { program, paragraphs, institutionBridge, instructorScheduleSlots } = params
-  const programLinkedPreview = params.programLinkedApplicationFormPreview === true
+  const schemaSnapshotPreview = params.applicationFormPublishedSchemaSnapshotPreview === true
+  const programLinkedPreview =
+    !schemaSnapshotPreview && params.programLinkedApplicationFormPreview === true
 
   const programApplicationFormInstructor =
     variant === 'instructor'
@@ -129,12 +136,14 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
         }
       : vm.programApplicationFormVolunteerOptions
 
-  const hiddenParagraphIds = resolveGeneralApplicationFormHiddenParagraphIds(variant, {
-    program,
-    paragraphs,
-    institutionBridge,
-    isTemplateAuthoringMode: !programLinkedPreview,
-  })
+  const hiddenParagraphIds = schemaSnapshotPreview
+    ? undefined
+    : resolveGeneralApplicationFormHiddenParagraphIds(variant, {
+        program,
+        paragraphs,
+        institutionBridge,
+        isTemplateAuthoringMode: !programLinkedPreview,
+      })
 
   const programApplicationFormEconomyInstitution =
     variant === 'economy-application-institution'
@@ -150,6 +159,7 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
   return {
     structureLockedParagraphIds: vm.structureLockedParagraphIds,
     structureLockedAuthoringChoicePreview: false,
+    structureLockedChoiceDisplayOnly: schemaSnapshotPreview ? true : undefined,
     programApplicationFormInstitution: variant === 'institution',
     programApplicationFormEconomyInstitution,
     programApplicationFormIndividual: variant === 'individual',
@@ -159,6 +169,8 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
       (variant === 'institution' || variant === 'economy-application-institution') &&
       programLinkedPreview,
     programLinkedIndividualApplicationForm: variant === 'individual' && programLinkedPreview,
+    applicationFormSchemaSnapshotPreview: schemaSnapshotPreview ? true : undefined,
+    institutionApplicationProgramBridge: institutionBridge,
     hiddenParagraphIds,
   }
 }

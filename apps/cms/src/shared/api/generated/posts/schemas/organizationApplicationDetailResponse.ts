@@ -5,63 +5,71 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { OrganizationApplicationDetailResponsePrivacyMaskingLevel } from './organizationApplicationDetailResponsePrivacyMaskingLevel';
-import type { OrganizationApplicationSessionResponse } from './organizationApplicationSessionResponse';
+import type { SessionResponse } from './sessionResponse';
 
-/**
- * Admin CMS용 기관/학교 프로그램 신청 상세. 담당 교사 개인정보는 기본 마스킹되며 latestFormResponseId로 동적 신청답변을 연결합니다.
- */
 export interface OrganizationApplicationDetailResponse {
   id?: number;
   programId?: number;
   programName?: string;
   programType?: string;
-  recruitmentId?: number | null;
-  organizationId?: number | null;
-  organizationName?: string | null;
-  organizationAddress?: string | null;
-  organizationAddressDetail?: string | null;
-  requestedGrade?: string | null;
-  requestedEducationFormat?: string | null;
-  textbookId?: number | null;
-  textbookName?: string | null;
-  teacherMemberId?: number | null;
-  teacherName?: string | null;
-  teacherPhone?: string | null;
-  teacherEmail?: string | null;
+  recruitmentId?: number;
+  organizationId?: number;
+  organizationName?: string;
+  organizationAddress?: string;
+  organizationAddressDetail?: string;
+  requestedGrade?: string;
+  requestedEducationFormat?: string;
+  textbookId?: number;
+  textbookName?: string;
+  /**
+     * 지정 교재의 교육대상. 교재가 없으면 null.
+     * @nullable
+     */
+  textbookEducationTarget?: string | null;
+  /**
+     * 교재명과 교육대상을 붙인 표시값. 교재가 없으면 null. 미지정 화면 문구는 해당 없음.
+     * @nullable
+     */
+  textbookDisplayLabel?: string | null;
+  teacherMemberId?: number;
+  teacherName?: string;
+  teacherPhone?: string;
+  teacherEmail?: string;
   applicationStatus?: string;
-  requestedStudentCount?: number | null;
-  requestedMaleCount?: number | null;
-  requestedFemaleCount?: number | null;
-  requestedClassCount?: number | null;
-  requestedScheduleMemo?: string | null;
-  submittedAt?: string | null;
-  approvedAt?: string | null;
-  rejectedAt?: string | null;
-  cancelledAt?: string | null;
-  rejectReason?: string | null;
-  /** 동적 신청 답변 조회 시 기존 form-response 개인정보 경계를 재사용하기 위한 최신 제출 응답 ID */
-  latestFormResponseId?: number | null;
+  requestedStudentCount?: number;
+  requestedMaleCount?: number;
+  requestedFemaleCount?: number;
+  requestedClassCount?: number;
+  requestedScheduleMemo?: string;
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  cancelledAt?: string;
+  /**
+     * 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다.
+     * @nullable
+     */
+  resultNotificationSentAt?: string | null;
+  rejectReason?: string;
+  latestFormResponseId?: number;
   availableActions?: string[];
-  privacyMaskingLevel?: OrganizationApplicationDetailResponsePrivacyMaskingLevel;
+  privacyMaskingLevel?: string;
   canRevealPersonalInfo?: boolean;
-  participantId?: number | null;
-  regionSido?: string | null;
-  regionSigungu?: string | null;
-  applicationReason?: string | null;
-  otherRequests?: string | null;
-  computerInRoom?: string | null;
-  waitingRoomAvailable?: boolean | null;
-  waitingRoomLocation?: string | null;
-  mealProvided?: boolean | null;
-  mealNotice?: string | null;
-  parkingInfo?: string | null;
-  textbookGrade?: string | null;
-  /** @minimum 0 */
-  textbookKits?: number | null;
-  /** @minimum 0 */
-  textbookQuantity?: number | null;
-  mergeGroupId?: number | null;
-  combinedClassYn?: boolean | null;
-  sessions?: OrganizationApplicationSessionResponse[];
+  participantId?: number;
+  regionSido?: string;
+  regionSigungu?: string;
+  applicationReason?: string;
+  otherRequests?: string;
+  computerInRoom?: string;
+  waitingRoomAvailable?: boolean;
+  waitingRoomLocation?: string;
+  mealProvided?: boolean;
+  mealNotice?: string;
+  parkingInfo?: string;
+  textbookGrade?: string;
+  textbookKits?: number;
+  textbookQuantity?: number;
+  mergeGroupId?: number;
+  combinedClassYn?: boolean;
+  sessions?: SessionResponse[];
 }

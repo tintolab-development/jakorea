@@ -235,6 +235,8 @@ export interface GeneralProgramParticipantRecruitmentInfo {
   finalAnnouncementLabel?: string
   resultAnnouncementLabel?: string
   contactOrganizationName?: string
+  /** 문의처 담당자 표시명 — BE top-level `contactName` SSOT */
+  contactName?: string
   inquiryTel?: string
   inquiryEmail?: string
   tel?: string
@@ -396,11 +398,16 @@ export type UjatProgramProgressStatus =
   | 'PROGRAM_ENDED' // 프로그램 진행 완료
 
 // 프로그램
-/** 프로그램 모집 행 — 수정 잠금은 `startAt`만 본다. */
+/**
+ * 프로그램 모집 행.
+ * 신청양식 잠금은 `startAt`, 모집정보 잠금은 `operationStartDate`.
+ */
 export interface ProgramRecruitmentWindow {
   recruitmentType?: string
   targetType?: string
   startAt?: string | null
+  /** 해당 모집 유형의 프로그램 운영 시작일. 없으면 모집정보를 잠그지 않는다. */
+  operationStartDate?: string | null
 }
 
 export interface Program {
@@ -462,11 +469,13 @@ export interface Program {
   generalTeachers?: number // 일반담당교사
   educatedTeachers?: number // 교육받은교사
   instructors?: number // 강사 수
-  managerName?: string // 담당자명
+  managerName?: string // 담당자명 (후원 담당자 표시 — contactName과 분리)
   posterImage?: string // 포스터/키비주얼 이미지 URL
   // 프로그램 등록 추가 필드 (기획 요구사항)
   venue?: string // 진행 장소
   curriculum?: string // 커리큘럼
+  /** 문의처/담당자 표시명 — BE ProgramResponse.contactName (managerName과 분리) */
+  contactName?: string
   contactEmail?: string // 문의처 이메일
   contactPhone?: string // 문의처 연락처
   oneLineIntroduction?: string // 한 줄 소개
@@ -531,8 +540,10 @@ export interface Program {
   volunteerTargetDetail?: string
   /** 지원 방법 (강사/봉사자 상세정보 탭) */
   applicationMethod?: string
-  /** 기타사항 (강사/봉사자 상세정보 탭) */
+  /** 기타사항 (강사/봉사자 상세정보 탭) — BE otherMatters */
   otherNotes?: string
+  /** 모집 대상 상세 — BE recruitmentTargetDetail (educationTargetDetail과 별도 가능) */
+  recruitmentTargetDetail?: string
   // 프로그램별 폼 업로드 (기획 요구사항)
   applicationFormTemplateId?: UUID // 신청서 폼 템플릿 ID
   surveyFormTemplateId?: UUID // 설문 폼 템플릿 ID
@@ -541,8 +552,8 @@ export interface Program {
   /** 일반 프로그램 상세 — 등록 폼 참여자 유형 (복수, API 연동 전 mock) */
   generalParticipantTypes?: GeneralProgramParticipantType[]
   /**
-   * GET `recruitments[]`. 모집·신청 잠금은 유형별 `startAt`.
-   * `operationStartDate`는 화면 표시용이며 잠금에 쓰지 않는다.
+   * GET `recruitments[]`.
+   * 신청양식 잠금은 유형별 `startAt`, 모집정보 잠금은 유형별 `operationStartDate`.
    */
   programRecruitments?: ProgramRecruitmentWindow[]
   /** 일반 프로그램 — 봉사자 선발 시 면접 단계 LNB 노출 여부 */

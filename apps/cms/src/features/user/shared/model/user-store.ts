@@ -92,6 +92,7 @@ interface UserStore {
       email?: string
       reason?: string
       currentPassword?: string
+      withdrawConfirmationText?: string
     }
   ) => Promise<void>
   changeUserRole: (

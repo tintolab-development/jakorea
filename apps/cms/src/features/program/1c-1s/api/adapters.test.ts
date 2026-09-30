@@ -67,6 +67,27 @@ describe('company-school adapters', () => {
     expect(request.autoApplyDefaultFormBindings).toBe(true)
   })
 
+  it('공통정보 패치가 모집 라벨을 빼도 existing 라벨의 복수 targetLevels를 컬럼에 올린다', () => {
+    const existing: Program = {
+      ...program,
+      targetLevel: 'elementary',
+      targetLevels: ['elementary'],
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        announcementTitle: '기존 공고',
+        participantRecruitmentInfo: {
+          educationTarget: '초등학교, 중학교, 대학(원)생',
+        },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(existing, {
+      title: '수정된 1사1교',
+      generalCommonInfo: { announcementTitle: '수정된 공고' },
+    })
+    expect(request.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(request.targetLevel).toBe('elementary')
+  })
+
   it('등록·수정 사업 기간은 연도를 넘어도 선택한 startDate/endDate를 그대로 보낸다', () => {
     const partial: Program = {
       ...program,
@@ -87,18 +108,92 @@ describe('company-school adapters', () => {
     expect(updated.businessEndDate).toBe(partial.endDate)
   })
 
-  it('상세 운영 기간은 startDate/endDate를 쓰고 business로 덮지 않는다', () => {
+  it('상세 운영 기간은 GET 서울 달력일을 쓴다', () => {
     const mapped = mapCompanySchoolDetailToProgram({
       id: '186100',
-      startDate: '2026-10-21',
-      endDate: '2026-11-01',
-      businessStartDate: '2026-01-01',
-      businessEndDate: '2026-12-31',
+      startDate: '2026-11-22',
+      endDate: '2026-12-23',
+      businessStartDate: '2026-11-22',
+      businessEndDate: '2026-12-23',
+      rounds: [
+        {
+          roundNumber: 1,
+          startDate: '2026-11-22',
+          endDate: '2026-12-23',
+          status: 'active',
+        },
+      ],
     } as ProgramResponse)
 
-    expect(mapped.startDate).toBe('2026-10-21')
-    expect(mapped.endDate).toBe('2026-11-01')
+    expect(mapped.startDate).toBe('2026-11-22')
+    expect(mapped.endDate).toBe('2026-12-23')
+    expect(mapped.rounds[0]?.startDate).toBe('2026-11-22')
+    expect(mapped.rounds[0]?.endDate).toBe('2026-12-23')
     expect(mapped.backendProgramType).toBe('COMPANY_SCHOOL')
+  })
+
+  it('serviceDetailJson paymentItems가 id 배열이어도 상세 매핑이 깨지지 않는다', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186016',
+      title: '수정테스트용 1사1교',
+      mainTitle: '수정테스트용 1사1교',
+      createdAt: '2026-09-28T23:45:39.709Z',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          generalCommonInfo: {
+            paymentItems: ['p-166202', 'p-166204'],
+            detailedProgramName: '1사1교 경제금융교육',
+          },
+        },
+      }),
+      settlementPolicy: {
+        paymentItems: [{ itemType: 'TRANSPORTATION', useYn: true }],
+      },
+    } as ProgramResponse)
+
+    expect(mapped.title).toBe('수정테스트용 1사1교')
+    expect(mapped.createdAt).toBe('2026-09-28T23:45:39.709Z')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('1사1교 경제금융교육')
+    expect(typeof mapped.generalCommonInfo?.paymentItems).toBe('string')
+    expect(mapped.generalCommonInfo?.paymentItems).toContain('p-166202')
+  })
+
+  it('상세 응답의 businessField alias도 사업 분야로 읽는다', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '1',
+      title: '1사1교 프로그램',
+      businessField: 'digital_literacy',
+    } as ProgramResponse & { businessField?: string })
+
+    expect(mapped.businessArea).toBe('디지털리터러시')
+  })
+
+  it('GET educationScheduleMode period는 date로 바꾸지 않고, 키가 없으면 date를 심지 않는다', () => {
+    const withPeriod = mapCompanySchoolDetailToProgram({
+      id: '186100',
+      title: '1사1교',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          generalCommonInfo: {
+            educationScheduleMode: 'period',
+            educationScheduleLines: ['2026. 11. 22 ~ 2026. 12. 23'],
+          },
+        },
+      }),
+    } as ProgramResponse)
+    expect(withPeriod.generalCommonInfo?.educationScheduleMode).toBe('period')
+
+    const withoutMode = mapCompanySchoolDetailToProgram({
+      id: '186100',
+      title: '1사1교',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: { generalCommonInfo: { educationScheduleLines: [] } },
+      }),
+    } as ProgramResponse)
+    expect(withoutMode.generalCommonInfo?.educationScheduleMode).toBeUndefined()
   })
 
   it('상세 임금은 serviceDetailJson wageGradeRows를 쓰고 settlementPolicy 기본값으로 덮지 않는다', () => {
@@ -278,6 +373,11 @@ describe('company-school adapters', () => {
         deliveryType: undefined,
       },
     ])
+    const withPersistedRound = mapCompanySchoolToUpdateRequest({
+      ...withContact,
+      rounds: [{ ...withContact.rounds[0], id: '186592' }],
+    })
+    expect(withPersistedRound.rounds?.[0]?.id).toBe('186592')
     expect(request.managerName).toBe('홍길동')
     expect(request.contactPhone).toBe('010-1234-5678')
     expect(request.curriculum).toBe('company-school-curriculum')
@@ -298,6 +398,19 @@ describe('company-school adapters', () => {
     expect(request.contactPhone).toBeUndefined()
     expect(request.curriculum).toBeUndefined()
     expect(request.serviceDetailJson).toBeUndefined()
+  })
+
+  it('사업 분야는 공식 businessArea만 생성·수정 요청에 보낸다', () => {
+    const changed = { ...program, businessArea: 'digital_literacy' }
+    const create = mapCompanySchoolToCreateRequest(changed)
+    const update = mapCompanySchoolToUpdateRequest(changed, {
+      businessArea: 'digital_literacy',
+    })
+
+    expect(create.businessArea).toBe('디지털리터러시')
+    expect(create).not.toHaveProperty('businessField')
+    expect(update.businessArea).toBe('디지털리터러시')
+    expect(update).not.toHaveProperty('businessField')
   })
 
   it('omits masked manager/contact from patch update request', () => {
@@ -358,6 +471,82 @@ describe('company-school adapters', () => {
     expect(parsed.registration).toBeUndefined()
   })
 
+  it('participant recruitment patch keeps participantRecruitmentInfo in serviceDetailJson', () => {
+    const withRecruitment: Program = {
+      ...program,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: {
+          contactOrganizationName: '구 문의처',
+          educationTargetDetail: '구 대상',
+        },
+        instructorRecruitmentInfo: { recruitmentTarget: '성인' },
+        volunteerRecruitmentInfo: { recruitmentTarget: '일반인' },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(withRecruitment, {
+      applicationStartDate: '2026-10-03T00:00:00.000Z',
+      applicationEndDate: '2026-10-07T00:00:00.000Z',
+      generalCommonInfo: {
+        educationScheduleMode: 'period',
+        participantRecruitmentInfo: {
+          contactOrganizationName: '새 문의처',
+          educationTargetDetail: '중학생',
+        },
+      },
+    })
+
+    const parsed = JSON.parse(request.serviceDetailJson!) as {
+      program?: {
+        generalCommonInfo?: {
+          participantRecruitmentInfo?: {
+            contactOrganizationName?: string
+            educationTargetDetail?: string
+          }
+          instructorRecruitmentInfo?: unknown
+          volunteerRecruitmentInfo?: unknown
+        }
+      }
+    }
+    expect(parsed.program?.generalCommonInfo?.participantRecruitmentInfo).toMatchObject({
+      contactOrganizationName: '새 문의처',
+      educationTargetDetail: '중학생',
+    })
+    expect(parsed.program?.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
+    expect(parsed.program?.generalCommonInfo?.volunteerRecruitmentInfo).toBeUndefined()
+  })
+
+  it('instructor recruitment patch keeps instructorRecruitmentInfo in serviceDetailJson', () => {
+    const withRecruitment: Program = {
+      ...program,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: { contactOrganizationName: '학교 문의' },
+        instructorRecruitmentInfo: { contactOrganizationName: '구 강사 문의' },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(withRecruitment, {
+      instructorApplicationStartDate: '2026-10-03T00:00:00.000Z',
+      instructorApplicationEndDate: '2026-10-07T00:00:00.000Z',
+      generalCommonInfo: {
+        instructorRecruitmentInfo: { contactOrganizationName: '새 강사 문의' },
+      },
+    })
+
+    const parsed = JSON.parse(request.serviceDetailJson!) as {
+      program?: {
+        generalCommonInfo?: {
+          participantRecruitmentInfo?: unknown
+          instructorRecruitmentInfo?: { contactOrganizationName?: string }
+        }
+      }
+    }
+    expect(parsed.program?.generalCommonInfo?.instructorRecruitmentInfo).toEqual({
+      contactOrganizationName: '새 강사 문의',
+    })
+    expect(parsed.program?.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
+  })
+
   it('title-only common-info patch does not resend recruitment or registration overlay', () => {
     const loaded: Program = {
       ...program,
@@ -407,6 +596,27 @@ describe('company-school adapters', () => {
     )
   })
 
+  it('공통정보 담당자 id를 sponsors[] 배정으로 보낸다', () => {
+    const withContact: Program = {
+      ...program,
+      sponsorId: '163388',
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        sponsorManagementIds: ['163388'],
+        sponsorManagerContactIds: ['1627253'],
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(withContact, {
+      sponsorId: '163388',
+      generalCommonInfo: withContact.generalCommonInfo,
+    })
+
+    expect(request.sponsorId).toBe('163388')
+    expect(request.sponsors).toEqual([
+      { sponsorId: '163388', sponsorContactId: '1627253' },
+    ])
+  })
+
   it('common-info style patch does not dump rounds or masked manager fields', () => {
     const withNoise: Program = {
       ...program,
@@ -430,6 +640,7 @@ describe('company-school adapters', () => {
 
     expect(request.mainTitle).toBe('공통정보만')
     expect(request.sponsorId).toBe('1627251')
+    expect(request.sponsors).toEqual([{ sponsorId: '1627251' }])
     expect(typeof request.sponsorId).toBe('string')
     expect(request.serviceDetailJson).toContain('paymentItems')
     expect(request.rounds).toBeUndefined()

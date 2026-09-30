@@ -50,6 +50,7 @@ import type { ApplicantInstructorRow } from '@/features/program/shared/model/app
 import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
+import { stashMemberDetailReturnForProgramNavigation } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import type {
   PatchUserBasicInfoInput,
   PatchUserBasicInfoOptions,
@@ -172,7 +173,7 @@ export interface UseUserDetailControllerParams {
   mode: UserDetailControllerModalMode
   programsChildQueryKey: string
   basicInfoEntrySource?: UserBasicInfoEntrySource
-  onWithdraw?: (user: Omit<User, 'password'>, currentPassword?: string) => void | Promise<void>
+  onWithdraw?: (user: Omit<User, 'password'>, confirmInput?: string) => void | Promise<void>
   modals: UseUserDetailModalsResult
   patchMemberBasicInfo?: (
     userId: string,
@@ -462,6 +463,7 @@ export function useUserDetailController({
     () => resolveUserDetailSubjectKey(displayUser),
     [displayUser?.id, displayUser?.memberId, displayUser?.adminAccountId]
   )
+  const displayUserRolesKey = displayUser?.roles?.join('|') ?? ''
 
   useUserDetailUrlSync({
     open,
@@ -563,7 +565,7 @@ export function useUserDetailController({
       displayUser?.id,
       displayUser?.memberId,
       displayUser?.role,
-      displayUser?.roles,
+      displayUserRolesKey,
       displayUser?.instructorMemberProfile,
       displayUser?.instructorRoleRequestId,
       displayUser?.adminAccountId,
@@ -820,6 +822,7 @@ export function useUserDetailController({
   )
 
   const prepareLeaveMemberDetailForProgramNavigation = useCallback(() => {
+    stashMemberDetailReturnForProgramNavigation()
     if (detailCloseIntentRef) detailCloseIntentRef.current = true
   }, [detailCloseIntentRef])
 
@@ -850,11 +853,11 @@ export function useUserDetailController({
   }, [])
 
   const handleWithdrawConfirm = useCallback(
-    async (currentPassword?: string) => {
+    async (confirmInput?: string) => {
       if (!displayUser || !onWithdraw) return
       setWithdrawConfirmLoading(true)
       try {
-        await onWithdraw(displayUser, currentPassword)
+        await onWithdraw(displayUser, confirmInput)
         setWithdrawConfirmOpen(false)
       } finally {
         setWithdrawConfirmLoading(false)

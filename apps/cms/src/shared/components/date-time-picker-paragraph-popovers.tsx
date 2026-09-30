@@ -12,6 +12,7 @@ import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
+import './date-time-picker-modal.css'
 
 const EMPTY_SCHEDULES = new Set<string>()
 
@@ -29,6 +30,8 @@ export type ParagraphDatePickerPopoverProps = {
   disabled?: boolean
   disabledDate?: (date: Dayjs) => boolean
   isRangeCalendarMode: boolean
+  /** 일정+시간 — 같은 날 시작·종료 (ParagraphTimePicker 종료 시간 고정과 동일) */
+  sameDayTimeRange?: boolean
   timeOn: boolean
   calendarMonth: Dayjs
   onCalendarMonthChange: (month: Dayjs) => void
@@ -40,22 +43,16 @@ export type ParagraphDatePickerPopoverProps = {
   onCalendarSelect: (date: Dayjs) => void
   singleHour: string
   singleMinute: string
-  singleMer: 'AM' | 'PM'
   onSingleHourChange: (v: string) => void
   onSingleMinuteChange: (v: string) => void
-  onSingleMerChange: (v: 'AM' | 'PM') => void
   startHour: string
   startMinute: string
-  startMer: 'AM' | 'PM'
   onStartHourChange: (v: string) => void
   onStartMinuteChange: (v: string) => void
-  onStartMerChange: (v: 'AM' | 'PM') => void
   endHour: string
   endMinute: string
-  endMer: 'AM' | 'PM'
   onEndHourChange: (v: string) => void
   onEndMinuteChange: (v: string) => void
-  onEndMerChange: (v: 'AM' | 'PM') => void
   invalidTimeRange: boolean
   showPeriodToggle: boolean
   showTimeToggle?: boolean
@@ -81,6 +78,7 @@ export function ParagraphDatePickerPopover({
   disabled,
   disabledDate,
   isRangeCalendarMode,
+  sameDayTimeRange = false,
   timeOn,
   calendarMonth,
   onCalendarMonthChange,
@@ -92,22 +90,16 @@ export function ParagraphDatePickerPopover({
   onCalendarSelect,
   singleHour,
   singleMinute,
-  singleMer,
   onSingleHourChange,
   onSingleMinuteChange,
-  onSingleMerChange,
   startHour,
   startMinute,
-  startMer,
   onStartHourChange,
   onStartMinuteChange,
-  onStartMerChange,
   endHour,
   endMinute,
-  endMer,
   onEndHourChange,
   onEndMinuteChange,
-  onEndMerChange,
   invalidTimeRange,
   showPeriodToggle,
   showTimeToggle = true,
@@ -125,7 +117,7 @@ export function ParagraphDatePickerPopover({
     onClose,
     anchorRef,
     dismissExcludeRef,
-    repositionDeps: [isRangeCalendarMode, timeOn],
+    repositionDeps: [isRangeCalendarMode, sameDayTimeRange, timeOn],
   })
   const showInteractivePeriodToggle =
     showPeriodToggle && !disabled && !periodToggleDisabled
@@ -210,10 +202,8 @@ export function ParagraphDatePickerPopover({
                       <DateTimePickerTimeInlineSelects
                         hour={startHour}
                         minute={startMinute}
-                        meridiem={startMer}
                         onHourChange={onStartHourChange}
                         onMinuteChange={onStartMinuteChange}
-                        onMeridiemChange={onStartMerChange}
                         getPopupContainer={() => popoverRef.current ?? document.body}
                         disabled={disabled}
                         hourActive={rangeFocus === 'start'}
@@ -259,10 +249,8 @@ export function ParagraphDatePickerPopover({
                       <DateTimePickerTimeInlineSelects
                         hour={endHour}
                         minute={endMinute}
-                        meridiem={endMer}
                         onHourChange={onEndHourChange}
                         onMinuteChange={onEndMinuteChange}
-                        onMeridiemChange={onEndMerChange}
                         getPopupContainer={() => popoverRef.current ?? document.body}
                         disabled={disabled}
                         hourActive={rangeFocus === 'end'}
@@ -271,6 +259,53 @@ export function ParagraphDatePickerPopover({
                       />
                     ) : null}
                   </div>
+                </div>
+              </div>
+            ) : timeOn && sameDayTimeRange ? (
+              <div className="date-time-picker-popover__fields">
+                <CmsInput
+                  className="date-time-picker-popover__input date-time-picker-popover__input--active"
+                  width="100%"
+                  inputSize="large"
+                  readOnly
+                  allowClear={false}
+                  tabIndex={-1}
+                  value={formatAppDatepickerDisplay(draft)}
+                  aria-label="선택한 날짜"
+                />
+                <div
+                  className="date-time-picker-popover__field"
+                  onClick={() => onRangeFocusChange('start')}
+                >
+                  <span className="date-time-picker-popover__field-label">시작 시간</span>
+                  <DateTimePickerTimeInlineSelects
+                    hour={startHour}
+                    minute={startMinute}
+                    onHourChange={onStartHourChange}
+                    onMinuteChange={onStartMinuteChange}
+                    getPopupContainer={() => popoverRef.current ?? document.body}
+                    disabled={disabled}
+                    hourActive={rangeFocus === 'start'}
+                    invalid={invalidTimeRange}
+                    rowPhase="start"
+                  />
+                </div>
+                <div
+                  className="date-time-picker-popover__field"
+                  onClick={() => onRangeFocusChange('end')}
+                >
+                  <span className="date-time-picker-popover__field-label">종료 시간</span>
+                  <DateTimePickerTimeInlineSelects
+                    hour={endHour}
+                    minute={endMinute}
+                    onHourChange={onEndHourChange}
+                    onMinuteChange={onEndMinuteChange}
+                    getPopupContainer={() => popoverRef.current ?? document.body}
+                    disabled={disabled}
+                    hourActive={rangeFocus === 'end'}
+                    invalid={invalidTimeRange}
+                    rowPhase="end"
+                  />
                 </div>
               </div>
             ) : timeOn ? (
@@ -288,10 +323,8 @@ export function ParagraphDatePickerPopover({
                 <DateTimePickerTimeInlineSelects
                   hour={singleHour}
                   minute={singleMinute}
-                  meridiem={singleMer}
                   onHourChange={onSingleHourChange}
                   onMinuteChange={onSingleMinuteChange}
-                  onMeridiemChange={onSingleMerChange}
                   getPopupContainer={() => popoverRef.current ?? document.body}
                   disabled={disabled}
                   hourActive
@@ -386,16 +419,12 @@ export type ParagraphTimePickerPopoverProps = {
   onFocusPhaseChange: (phase: 'single' | 'start' | 'end') => void
   sHour: string
   sMin: string
-  sMer: 'AM' | 'PM'
   onSHourChange: (v: string) => void
   onSMinChange: (v: string) => void
-  onSMerChange: (v: 'AM' | 'PM') => void
   eHour: string
   eMin: string
-  eMer: 'AM' | 'PM'
   onEHourChange: (v: string) => void
   onEMinChange: (v: string) => void
-  onEMerChange: (v: 'AM' | 'PM') => void
   onEndTimeOnChange: (next: boolean) => void
   onEndTimeToggleOn?: () => void
   onApply: () => void
@@ -416,16 +445,12 @@ export function ParagraphTimePickerPopover({
   onFocusPhaseChange,
   sHour,
   sMin,
-  sMer,
   onSHourChange,
   onSMinChange,
-  onSMerChange,
   eHour,
   eMin,
-  eMer,
   onEHourChange,
   onEMinChange,
-  onEMerChange,
   onEndTimeOnChange,
   onEndTimeToggleOn,
   onApply,
@@ -444,18 +469,14 @@ export function ParagraphTimePickerPopover({
     phase: 'single' | 'start' | 'end',
     h: string,
     m: string,
-    mer: 'AM' | 'PM',
     setH: (v: string) => void,
-    setM: (v: string) => void,
-    setMe: (v: 'AM' | 'PM') => void
+    setM: (v: string) => void
   ) => (
     <DateTimePickerTimeInlineSelects
       hour={h}
       minute={m}
-      meridiem={mer}
       onHourChange={setH}
       onMinuteChange={setM}
-      onMeridiemChange={setMe}
       getPopupContainer={() => popoverRef.current ?? document.body}
       disabled={disabled}
       hourActive={
@@ -487,7 +508,7 @@ export function ParagraphTimePickerPopover({
       >
         {!isEndTimeOn ? (
           <div className="date-time-picker-time-popover__section">
-            {renderTimeRow('single', sHour, sMin, sMer, onSHourChange, onSMinChange, onSMerChange)}
+            {renderTimeRow('single', sHour, sMin, onSHourChange, onSMinChange)}
           </div>
         ) : (
           <>
@@ -496,14 +517,14 @@ export function ParagraphTimePickerPopover({
               onMouseDown={() => onFocusPhaseChange('start')}
             >
               <span className="date-time-picker-time-popover__section-label">시작 시간</span>
-              {renderTimeRow('start', sHour, sMin, sMer, onSHourChange, onSMinChange, onSMerChange)}
+              {renderTimeRow('start', sHour, sMin, onSHourChange, onSMinChange)}
             </div>
             <div
               className="date-time-picker-time-popover__section"
               onMouseDown={() => onFocusPhaseChange('end')}
             >
               <span className="date-time-picker-time-popover__section-label">종료 시간</span>
-              {renderTimeRow('end', eHour, eMin, eMer, onEHourChange, onEMinChange, onEMerChange)}
+              {renderTimeRow('end', eHour, eMin, onEHourChange, onEMinChange)}
             </div>
           </>
         )}

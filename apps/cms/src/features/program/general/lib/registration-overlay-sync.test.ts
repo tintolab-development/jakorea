@@ -1,14 +1,19 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import { resetProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
-import { applyGeneralRegistrationOverlayToProgram } from './registration-overlay-to-program'
+import {
+  applyGeneralRegistrationOverlayToProgram,
+  type GeneralRegistrationEditorExtras,
+} from './registration-overlay-to-program'
 import {
   buildGeneralRegistrationOverlayFromProgram,
   extrasFromGeneralProgram,
+  hasIncompleteGeneralProgramDetailEditRequiredFields,
   readGeneralRegistrationOverlayForSave,
   seedGeneralRegistrationOverlayFromProgram,
 } from './registration-overlay-sync'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
+import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 function baseProgram(): Program {
   return {
@@ -84,6 +89,26 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     expect(Object.keys(saved).every(key => key.startsWith('generalRegistration.'))).toBe(true)
   })
 
+  it('후원사만 있고 담당자가 없으면 수정 overlay에 미선택을 시드한다', () => {
+    const overlay = buildGeneralRegistrationOverlayFromProgram({
+      ...baseProgram(),
+      sponsorId: '1627251',
+      managerName: '미선택',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        sponsorManagementIds: ['1627251'],
+        sponsorManagerContactIds: [],
+        sponsorManagerLine: '미선택',
+      },
+    })
+    expect(overlay['generalRegistration.basicInfo.localManagerContactIds']).toEqual([
+      SPONSOR_CONTACT_UNSELECTED_VALUE,
+    ])
+    expect(overlay['generalRegistration.basicInfo.localManagerContactId']).toBe(
+      SPONSOR_CONTACT_UNSELECTED_VALUE
+    )
+  })
+
   it('임금은 급수 라벨·지급 항목 라벨을 overlay에 시드한다', () => {
     const program = {
       ...baseProgram(),
@@ -111,5 +136,392 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     const saved = readGeneralRegistrationOverlayForSave()
     expect(saved['generalRegistration.wageInfo.grade1Fee']).toBe(240_000)
     expect(saved['generalRegistration.wageInfo.paymentItemValues']).toEqual(['p-1', 'p-3'])
+  })
+
+  it('sessionRound가 single이어도 overlay 회차 맵이면 extras는 복수 1회차다', () => {
+    const extras = extrasFromGeneralProgram({
+      ...baseProgram(),
+      generalProgramSessionRound: 'single',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          {
+            sessionLabel: '1차시',
+            title: '필요와 욕구, 현명한 소비',
+            description: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+          },
+          { sessionLabel: '2차시', title: '', description: '' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+        'generalRegistration.educationCurriculum.roundContentByRound': {
+          1: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+        },
+        'generalRegistration.educationCurriculum.assignmentByRound': {
+          1: { enabled: true, period: '26년 10월 13일(화) 10:00 ~ 12:00' },
+        },
+      },
+    })
+    expect(extras.sessionRoundType).toBe('multi')
+    expect(extras.curriculumSessionCount).toBe(1)
+  })
+
+  it('sessionRound가 multi여도 차시 행이면 extras 회차 수는 overlay다', () => {
+    const extras = extrasFromGeneralProgram({
+      ...baseProgram(),
+      generalProgramSessionRound: 'multi',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          { sessionLabel: '1차시', title: '필요와 욕구, 현명한 소비', description: '본문' },
+          { sessionLabel: '2차시', title: '', description: '' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+        'generalRegistration.educationCurriculum.roundContentByRound': { 1: '본문' },
+        'generalRegistration.educationCurriculum.assignmentByRound': {
+          1: { enabled: true, period: '26년 10월 13일(화) 10:00 ~ 12:00' },
+        },
+        'generalRegistration.educationCurriculum.ipsBySession': {
+          1: { category: 'succeed', detail: 'conference' },
+        },
+      },
+    })
+    expect(extras.sessionRoundType).toBe('multi')
+    expect(extras.curriculumSessionCount).toBe(1)
+  })
+
+  it('sessionRound가 single이어도 seed는 overlay 회차 맵을 유지한다', () => {
+    const program = {
+      ...baseProgram(),
+      generalProgramSessionRound: 'single' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          { sessionLabel: '1차시', title: '필요와 욕구, 현명한 소비', description: '본문' },
+          { sessionLabel: '2차시', title: '', description: '' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+        'generalRegistration.educationCurriculum.roundContentByRound': { 1: '본문' },
+        'generalRegistration.educationCurriculum.assignmentByRound': {
+          1: { enabled: true, period: '26년 10월 13일(화) 10:00 ~ 12:00' },
+        },
+      },
+    }
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.progressSessionByRound']).toEqual({
+      1: '1',
+    })
+    expect(saved['generalRegistration.educationCurriculum.roundContentByRound']).toEqual({
+      1: '본문',
+    })
+  })
+
+  it('sessionRound가 multi여도 차시 행이면 seed는 overlay 1회차만 연다', () => {
+    const program = {
+      ...baseProgram(),
+      generalProgramSessionRound: 'multi' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        ipsScheduleDetail: 'perSchedule' as const,
+        curriculumSessions: [
+          { sessionLabel: '1차시', title: '필요와 욕구, 현명한 소비', description: '본문' },
+          { sessionLabel: '2차시', title: '', description: '' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+        'generalRegistration.educationCurriculum.roundContentByRound': { 1: '본문' },
+        'generalRegistration.educationCurriculum.assignmentByRound': {
+          1: { enabled: true, period: '26년 10월 13일(화) 10:00 ~ 12:00' },
+        },
+        'generalRegistration.educationCurriculum.ipsBySession': {
+          1: { category: 'succeed', detail: 'conference' },
+        },
+      },
+    }
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.progressSessionByRound']).toEqual({
+      1: '1',
+    })
+    expect(saved['generalRegistration.educationCurriculum.roundContentByRound']).toEqual({
+      1: '본문',
+    })
+    expect(saved['generalRegistration.educationCurriculum.assignmentByRound']).toEqual({
+      1: { enabled: true, period: '26년 10월 13일(화) 10:00 ~ 12:00' },
+    })
+    expect(saved['generalRegistration.educationCurriculum.ipsBySession']).toEqual({
+      1: { category: 'succeed', detail: 'conference' },
+    })
+    expect(extrasFromGeneralProgram(program).curriculumSessionCount).toBe(1)
+  })
+
+  it('교육 진행 extras 회차 수는 사전 교육을 제외한다', () => {
+    const program = {
+      ...baseProgram(),
+      generalProgramSessionRound: 'multi' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        scheduleCurriculumPreEducation: true,
+        curriculumSessions: [
+          { sessionLabel: '사전 교육', title: '사전 교육', description: '' },
+          { sessionLabel: '1회차', title: '1차시', description: '첫 회차' },
+          { sessionLabel: '2회차', title: '2차시', description: '둘째 회차' },
+        ],
+        scheduleDetails: [
+          { scheduleLabel: '사전 교육', name: '사전 교육' },
+          { scheduleLabel: '세부 일정 01', name: '오전 세션' },
+          { scheduleLabel: '세부 일정 02', name: '오후 세션' },
+        ],
+      },
+    }
+    const extras = extrasFromGeneralProgram(program)
+    expect(extras.curriculumSessionCount).toBe(2)
+    expect(extras.curriculumChartSessionCount).toBe(2)
+    expect(extras.scheduleCurriculumDetailCount).toBe(2)
+    expect(extras.scheduleCurriculumPreEducation).toBe(true)
+  })
+
+  it('seed는 조회 커리큘럼·일정 줄을 우선하고 오래된 overlay 회차를 버린다', () => {
+    const program = {
+      ...baseProgram(),
+      generalProgramSessionRound: 'multi' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        scheduleCurriculumPreEducation: true,
+        educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20', '26년 4월 20일(월) 13:00 ~ 15:50'],
+        curriculumSessions: [
+          { sessionLabel: '사전 교육', title: '사전 교육', description: '' },
+          { sessionLabel: '1회차', title: '1차시', description: '첫 회차' },
+          { sessionLabel: '2회차', title: '2차시', description: '둘째 회차' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationScheduleSettings.scheduleLines': [
+          'stale-1',
+          'stale-2',
+          'stale-3',
+        ],
+        'generalRegistration.educationCurriculum.progressSessionByRound': {
+          1: '1',
+          2: '2',
+          3: '3',
+        },
+        'generalRegistration.educationCurriculum.roundContentByRound': {
+          1: 'old',
+          2: 'old',
+          3: 'extra',
+        },
+      },
+    }
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationScheduleSettings.scheduleLines']).toEqual([
+      '26년 4월 20일(월) 09:30 ~ 12:20',
+      '26년 4월 20일(월) 13:00 ~ 15:50',
+    ])
+    expect(saved['generalRegistration.educationCurriculum.progressSessionByRound']).toEqual({
+      1: '1',
+      2: '2',
+    })
+    expect(saved['generalRegistration.educationCurriculum.roundContentByRound']).toEqual({
+      1: '첫 회차',
+      2: '둘째 회차',
+    })
+    expect(extrasFromGeneralProgram(program).curriculumSessionCount).toBe(2)
+  })
+
+  it('일정별 교육 형태는 저장된 행 라벨로 다시 연다', () => {
+    const program = {
+      ...baseProgram(),
+      generalProgramSessionRound: 'multi' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        educationFormScheduleDetail: 'perSchedule' as const,
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: '1회차', description: '', educationFormLabel: '오프라인' },
+          { sessionLabel: '2회차', title: '2회차', description: '', educationFormLabel: '온라인' },
+        ],
+      },
+    }
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.educationFormBySession']).toEqual({
+      1: 'offline',
+      2: 'online',
+    })
+  })
+
+  it('일정별 교육 형태는 stale overlay보다 canonical 행 라벨을 우선한다', () => {
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        educationFormScheduleDetail: 'perSchedule' as const,
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: '1회차', description: '', educationFormLabel: '오프라인' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.educationFormBySession': {
+          1: 'hybrid',
+        },
+      },
+    }
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.educationFormBySession']).toEqual({
+      1: 'offline',
+    })
+  })
+
+  it('canonical 커리큘럼이 있으면 stale overlay 테이블 값보다 우선한다', () => {
+    const program = {
+      ...baseProgram(),
+      generalProgramSessionRound: 'single' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          {
+            sessionLabel: '1차시',
+            title: '최신 단원명',
+            description: '최신 교육 내용',
+            educationFormLabel: '오프라인',
+          },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.unitNameBySession': {
+          1: '구 단원명',
+        },
+        'generalRegistration.educationCurriculum.unitContentBySession': {
+          1: '구 교육 내용',
+        },
+        'generalRegistration.educationCurriculum.educationFormBySession': {
+          1: 'hybrid',
+        },
+      },
+    }
+
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.unitNameBySession']).toEqual({
+      1: '최신 단원명',
+    })
+    expect(saved['generalRegistration.educationCurriculum.unitContentBySession']).toEqual({
+      1: '최신 교육 내용',
+    })
+    expect(saved['generalRegistration.educationCurriculum.educationFormBySession']).toEqual({
+      1: 'offline',
+    })
+  })
+
+  it('상세 수정 필수검사는 등록 overlay 빈 값을 막는다', () => {
+    const extras = extrasFromGeneralProgram({
+      ...baseProgram(),
+      generalParticipantTypes: ['individual'],
+    })
+    expect(hasIncompleteGeneralProgramDetailEditRequiredFields({}, extras)).toBe(true)
+  })
+
+  it('상세 수정 필수검사는 등록과 같은 overlay를 채우면 통과한다', () => {
+    const extras = extrasFromGeneralProgram({
+      ...baseProgram(),
+      generalParticipantTypes: ['individual'],
+    })
+    const overlay = {
+      'generalRegistration.basicInfo.localProgramTitleKo': '청소년 경제',
+      'generalRegistration.basicInfo.programTitleEn': 'Youth Economy',
+      'generalRegistration.basicInfo.publicProgramTitle': '공고용 청소년 경제',
+      'generalRegistration.basicInfo.detailedProgramId': '163006',
+      'generalRegistration.basicInfo.operationRangeSeal': {
+        start: '2026-03-01T00:00:00.000Z',
+        end: '2026-11-30T00:00:00.000Z',
+      },
+      'generalRegistration.basicInfo.businessField': 'economy',
+      'generalRegistration.basicInfo.educationCourse': 'ja',
+      'generalRegistration.basicInfo.ipOwned': 'ja',
+      'generalRegistration.basicInfo.courseDeliveredBy': 'ja',
+      'generalRegistration.basicInfo.localSponsorId': 'sponsor-1',
+      'generalRegistration.basicInfo.localManagerContactId': 'contact-1',
+      'generalRegistration.kpi.participantCount': 20,
+      'generalRegistration.wageInfo.grade1Fee': 100000,
+      'generalRegistration.wageInfo.grade2Fee': 80000,
+      'generalRegistration.wageInfo.grade3Fee': 60000,
+      'generalRegistration.wageInfo.paymentItemValues': ['instructor_fee'],
+      'generalRegistration.typeSettings.ipsType': { category: 'prepare', detail: 'none' },
+      'generalRegistration.educationCurriculum.unitNameBySession': { 1: '단원 1' },
+      'generalRegistration.educationCurriculum.unitContentBySession': { 1: '교육 내용' },
+      'generalRegistration.educationScheduleSettings.scheduleLines': ['2026-04-01 10:00-12:00'],
+    }
+    expect(hasIncompleteGeneralProgramDetailEditRequiredFields(overlay, extras)).toBe(false)
+    expect(
+      hasIncompleteGeneralProgramDetailEditRequiredFields(
+        { ...overlay, 'generalRegistration.basicInfo.localProgramTitleKo': '' },
+        extras
+      )
+    ).toBe(true)
+  })
+
+  it('상세 수정 필수검사는 후원사 담당자 미선택·복수 회차 overlay를 통과한다', () => {
+    const extras: GeneralRegistrationEditorExtras = {
+      programType: 'curriculum',
+      sessionRoundType: 'multi',
+      educationScheduleMode: 'date',
+      educationFormScheduleDetail: 'common',
+      participationScheduleDetail: 'perSchedule',
+      ipsScheduleDetail: 'perSchedule',
+      curriculumSessionCount: 2,
+      curriculumChartSessionCount: 2,
+      participantIndividual: true,
+      participantOrganization: false,
+    }
+    const overlay = {
+      'generalRegistration.basicInfo.localProgramTitleKo': '개인 커리큘럼 복수 2회치',
+      'generalRegistration.basicInfo.programTitleEn': 'Entrepreneurship Startup Experience',
+      'generalRegistration.basicInfo.publicProgramTitle': '개인 커리큘럼 복수 2회치',
+      'generalRegistration.basicInfo.detailedProgramId': '163007',
+      'generalRegistration.basicInfo.operationRangeSeal': {
+        start: '2026-10-20',
+        end: '2026-12-17',
+      },
+      'generalRegistration.basicInfo.businessField': 'economy_finance',
+      'generalRegistration.basicInfo.educationVenueKind': 'other',
+      'generalRegistration.basicInfo.educationVenueDetail': '혼합 수업(교실 + 화상)',
+      'generalRegistration.basicInfo.educationCourse': 'traditional_paper',
+      'generalRegistration.basicInfo.ipOwned': 'ja',
+      'generalRegistration.basicInfo.courseDeliveredBy': 'jointly',
+      'generalRegistration.basicInfo.localSponsorId': '163342',
+      'generalRegistration.basicInfo.localManagerContactId': SPONSOR_CONTACT_UNSELECTED_VALUE,
+      'generalRegistration.kpi.participantCount': 24,
+      'generalRegistration.wageInfo.grade1Fee': 100000,
+      'generalRegistration.wageInfo.grade2Fee': 80000,
+      'generalRegistration.wageInfo.grade3Fee': 60000,
+      'generalRegistration.wageInfo.paymentItemValues': ['p-166201'],
+      'generalRegistration.typeSettings.multiCommonEducationForm': 'offline',
+      'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '3', 2: '6' },
+      'generalRegistration.educationCurriculum.roundContentByRound': {
+        1: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+        2: '용돈 사용 내역을 보고 한 달 저축 목표와 방법을 정합니다.',
+      },
+      'generalRegistration.educationCurriculum.assignmentByRound': {
+        1: { enabled: true, period: '26년 10월 14일(수) 10:00 ~ 12:00' },
+        2: { enabled: true, period: '26년 10월 21일(수) 13:30 ~ 16:00' },
+      },
+      'generalRegistration.educationCurriculum.ipsBySession': {
+        1: { category: 'succeed', detail: 'Scholarship (장학 프로그램)' },
+        2: { category: 'succeed', detail: 'Award (시상)' },
+      },
+      'generalRegistration.educationScheduleSettings.scheduleLines': [
+        '26년 10월 14일(수) 10:00 ~ 12:00',
+      ],
+    }
+    expect(hasIncompleteGeneralProgramDetailEditRequiredFields(overlay, extras)).toBe(false)
   })
 })

@@ -92,6 +92,7 @@ describe('trained-teacher Primary recruitment adapter', () => {
       contactName: '백진혁',
       contactEmail: 'bjh1234@tinto.co.kr',
       contactPhone: '010-8681-6741',
+      otherMatters: '기타 사항',
       recruitmentGuide: '참여자 모집 안내 — TCH-05',
       keyVisualImage: 'https://local.example/demo/trained-teacher-primary-case-05-key-visual.png',
       remarks: 'TCH-05 로컬 데모',
@@ -101,11 +102,14 @@ describe('trained-teacher Primary recruitment adapter', () => {
 
     expect(program.recruitmentGuide).toBe('참여자 모집 안내 — TCH-05')
     expect(program.keyVisualImage).toContain('trained-teacher-primary-case-05')
-    expect(program.otherNotes).toBe('TCH-05 로컬 데모')
+    // flat config `otherMatters` → domain otherNotes (remarks와 분리)
+    expect(program.otherNotes).toBe('기타 사항')
+    expect(program.remarks).toBe('TCH-05 로컬 데모')
     expect(program.studentListRequired).toBe('not_required')
     expect(program.generalProgramEducationStructure).toBe('schedule')
     expect(program.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
     expect(program.generalCommonInfo?.volunteerRecruitmentInfo).toBeUndefined()
+    expect(program.generalCommonInfo?.participantRecruitmentInfo?.contactName).toBe('백진혁')
 
     const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
     expect(display.announcementPublishedLabel).toBe('게시')

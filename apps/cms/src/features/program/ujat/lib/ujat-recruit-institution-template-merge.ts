@@ -192,11 +192,14 @@ export function applyUjatRecruitInstitutionTemplateDefaults(program: Program): P
     title: coalesceString(program.title, overlayString(overlay, OVERLAY_KEYS.publicTitle)) ?? program.title,
     startDate: coalesceIsoDate(program.startDate, programRange?.start ?? undefined) ?? program.startDate,
     endDate: coalesceIsoDate(program.endDate, programRange?.end ?? undefined) ?? program.endDate,
-    targetLevels:
-      program.targetLevels?.length
-        ? program.targetLevels
-        : ((overlayStringList(overlay, OVERLAY_KEYS.targetLevels) as Program['targetLevels']) ??
-          program.targetLevels),
+    targetLevels: (() => {
+      const fromOverlay = overlayStringList(overlay, OVERLAY_KEYS.targetLevels) as
+        | Program['targetLevels']
+        | undefined
+      const fromProgram = program.targetLevels
+      if ((fromOverlay?.length ?? 0) > (fromProgram?.length ?? 0)) return fromOverlay
+      return fromProgram?.length ? fromProgram : fromOverlay
+    })(),
     targetLevel:
       program.targetLevel ??
       ((overlayStringList(overlay, OVERLAY_KEYS.targetLevels)?.[0] as Program['targetLevel']) ??

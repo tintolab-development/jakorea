@@ -21,6 +21,15 @@ export function GeneralDetailSessionLine({
   session: ApplicantSessionLineInput
   bridge?: InstitutionApplicationProgramBridge | null
 }) {
+  const scheduleLabel = session.scheduleLabel?.trim()
+  if (scheduleLabel) {
+    return (
+      <div className="general-detail-session-line">
+        <span>{scheduleLabel}</span>
+      </div>
+    )
+  }
+
   const { datePart, durationPart, periodPart } = getSessionLineParts(session, 'general-detail', bridge)
   const schedulePart = `${datePart} ${durationPart}`
 

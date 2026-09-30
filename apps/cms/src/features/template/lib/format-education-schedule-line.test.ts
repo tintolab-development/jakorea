@@ -5,8 +5,11 @@ import {
   countUniqueEducationScheduleCalendarDays,
   educationScheduleAppliedSurfaceRange,
   flattenGroupTimeSlotsByDetail,
+  isEducationScheduleLineBeforeSeoulToday,
+  isEducationScheduleLineUpcoming,
   parseEducationScheduleLineToRange,
   rebuildEducationScheduleLinesFromGroupTimes,
+  shiftEducationScheduleLineToDate,
 } from '@/features/template/lib/format-education-schedule-line'
 
 const april20 = dayjs('2026-04-20')
@@ -129,6 +132,26 @@ describe('countUniqueEducationScheduleCalendarDays', () => {
   })
 })
 
+describe('isEducationScheduleLineBeforeSeoulToday', () => {
+  const now = new Date('2026-09-28T15:00:00+09:00')
+
+  it('어제 일정만 지났다고 보고, 오늘·읽지 못한 줄은 유지한다', () => {
+    expect(isEducationScheduleLineBeforeSeoulToday('26년 9월 27일(일)', now)).toBe(true)
+    expect(isEducationScheduleLineBeforeSeoulToday('26년 9월 28일(월) 9:00 ~ 12:00', now)).toBe(
+      false
+    )
+    expect(isEducationScheduleLineBeforeSeoulToday('일정 미정', now)).toBe(false)
+  })
+})
+
+describe('shiftEducationScheduleLineToDate', () => {
+  it('날짜만 옮기고 시각은 남긴다', () => {
+    expect(
+      shiftEducationScheduleLineToDate('26년 4월 20일(월) 9:30 ~ 12:20', dayjs('2026-05-01'))
+    ).toBe('26년 5월 1일(금) 9:30 ~ 12:20')
+  })
+})
+
 describe('flattenGroupTimeSlotsByDetail', () => {
   it('세부 일정 번호 순으로 그룹 슬롯을 펼친다', () => {
     expect(
@@ -144,5 +167,28 @@ describe('flattenGroupTimeSlotsByDetail', () => {
       { startTime: '10:00', endTime: '11:00' },
       { startTime: '13:00', endTime: '15:00' },
     ])
+  })
+})
+
+describe('isEducationScheduleLineUpcoming', () => {
+  const now = dayjs('2026-09-29T09:00:00')
+
+  it('미래 날짜·시간은 예정이다', () => {
+    expect(isEducationScheduleLineUpcoming('26년 10월 12일(월) 10:00 ~ 12:00', now)).toBe(true)
+    expect(isEducationScheduleLineUpcoming('26년 10월 12일(월)', now)).toBe(true)
+  })
+
+  it('지난 날짜와 이미 시작한 일정은 예정이 아니다', () => {
+    expect(isEducationScheduleLineUpcoming('26년 9월 20일(일) 10:00 ~ 12:00', now)).toBe(false)
+    expect(isEducationScheduleLineUpcoming('26년 9월 29일(화) 8:00 ~ 10:00', now)).toBe(false)
+    expect(isEducationScheduleLineUpcoming('26년 9월 20일(일) ~ 26년 9월 27일(일)', now)).toBe(
+      false
+    )
+  })
+
+  it('기간이 이미 시작됐으면 예정이 아니다', () => {
+    expect(
+      isEducationScheduleLineUpcoming('26년 9월 20일(일) ~ 26년 10월 12일(월)', now)
+    ).toBe(false)
   })
 })

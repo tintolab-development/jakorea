@@ -4,6 +4,8 @@ import {
   resolveUjatRegionCapacitySemesterValues,
 } from '@/features/program/ujat/lib/ujat-region-capacity-display'
 import { UjatRegionCapacitySection } from '@/features/program/ujat/ui/detail-modal/info/ujat-region-capacity-section'
+import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
+import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
 import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-class-capacity-by-region-paragraph.css'
 
 export function UjatRegionCapacityProgramView({
@@ -24,11 +26,21 @@ export function UjatRegionCapacityProgramView({
 
   return (
     <section className="ujat-region-capacity-program-view program-detail-fullpage-modal__info-tab-block">
-      <div className="ujat-region-capacity-program-view__header">
-        <h3 className="ujat-region-capacity-program-view__title">
-          지역 별 교육 진행 가능 학급 및 봉사단 수
-        </h3>
-      </div>
+      {isEdit ? (
+        <FormParagraphSectionHeader
+          title={UJAT_REGISTRATION_SECTION_META.educationClassCapacityByRegion.title}
+          description={UJAT_REGISTRATION_SECTION_META.educationClassCapacityByRegion.description}
+          surface="responseEntry"
+          titleAligned
+          required
+        />
+      ) : (
+        <div className="ujat-region-capacity-program-view__header">
+          <h3 className="ujat-region-capacity-program-view__title">
+            지역 별 교육 진행 가능 학급 및 봉사단 수
+          </h3>
+        </div>
+      )}
       <UjatRegionCapacitySection mode={mode} h1Values={h1Values} h2Values={h2Values} />
     </section>
   )

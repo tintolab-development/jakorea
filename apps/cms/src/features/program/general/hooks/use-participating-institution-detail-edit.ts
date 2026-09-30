@@ -36,6 +36,7 @@ import type { CombinedClassApplicationStatus } from '@/features/program/general/
 import {
   getInstitutionAffiliatedTeacherOptions,
   mergeInstitutionAffiliatedTeacherOptions,
+  shouldShowInstitutionApplicationEducationFormatField,
   type InstitutionAffiliatedTeacherOption,
 } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
@@ -534,6 +535,9 @@ export function useParticipatingInstitutionDetailEdit({
             textbookGrade: patch.textbookGrade,
             textbookKits: patch.textbookKits,
             textbookQuantity: patch.textbookQuantity,
+            baselineEducationFormat: baseline.educationFormat,
+            allowEducationFormatChange:
+              shouldShowInstitutionApplicationEducationFormatField(program),
           })
           await updateOrganizationApplicationRemote(applicationId, updateBody)
 

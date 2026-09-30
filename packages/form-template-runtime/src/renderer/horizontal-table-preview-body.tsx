@@ -51,6 +51,7 @@ export type HorizontalTablePreviewBodyProps = {
   interactionMode: ParagraphBodyInteractionMode
   onBottomConsentChange?: (value: TableBottomConsent) => void
   onIdTypeWithInputChange?: (next: IdTypeWithInputParagraph) => void
+  onFieldCellChange?: (rowIndex: number, colIndex: number, value: string) => void
 }
 
 export function HorizontalTablePreviewBody({
@@ -58,12 +59,17 @@ export function HorizontalTablePreviewBody({
   interactionMode,
   onBottomConsentChange,
   onIdTypeWithInputChange,
+  onFieldCellChange,
 }: HorizontalTablePreviewBodyProps) {
   const { colCount, headers, bodyRows } = resolveHorizontalTablePreviewLayout(paragraph)
   const isFieldTable = paragraph.tableFlavor === 'field'
   const idType = paragraph.idTypeWithInput
   const consentReadonly =
     isFormPreviewReadonlyMode(interactionMode) || onBottomConsentChange == null
+  const fieldInputEnabled =
+    isFieldTable &&
+    onFieldCellChange != null &&
+    !isFormPreviewReadonlyMode(interactionMode)
   const preConsentWrapClass = resolvePaymentPreConsentHorizontalTableWrapClass(paragraph.id)
 
   return (
@@ -92,6 +98,9 @@ export function HorizontalTablePreviewBody({
           <div key={`row-${rowIndex}`} className="form-template-horizontal-table__row" role="row">
             {Array.from({ length: colCount }, (_, colIndex) => {
               const cellValue = cells[colIndex] ?? ''
+              const fieldCell = paragraph.fieldDataRows?.[rowIndex]?.[colIndex]
+              const showSubjectiveInput =
+                fieldInputEnabled && fieldCell?.kind === 'subjective'
               return (
                 <div
                   key={`cell-${rowIndex}-${colIndex}`}
@@ -104,12 +113,25 @@ export function HorizontalTablePreviewBody({
                   role="gridcell"
                   data-label={headers[colIndex] ?? ''}
                 >
-                  <HorizontalTableCellText
-                    value={cellValue}
-                    placeholder=""
-                    variant="body"
-                    emphasized={isHorizontalTableEmphasizedBodyCell(paragraph.id, colIndex)}
-                  />
+                  {showSubjectiveInput ? (
+                    <Input.TextArea
+                      className="form-template-horizontal-table__td-input"
+                      size="large"
+                      autoSize={{ minRows: 2, maxRows: 6 }}
+                      value={fieldCell.kind === 'subjective' ? fieldCell.value : cellValue}
+                      placeholder="답변을 입력해 주세요"
+                      onChange={event =>
+                        onFieldCellChange?.(rowIndex, colIndex, event.target.value)
+                      }
+                    />
+                  ) : (
+                    <HorizontalTableCellText
+                      value={cellValue}
+                      placeholder=""
+                      variant="body"
+                      emphasized={isHorizontalTableEmphasizedBodyCell(paragraph.id, colIndex)}
+                    />
+                  )}
                 </div>
               )
             })}

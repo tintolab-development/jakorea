@@ -18,6 +18,16 @@ describe('지급 항목 선택 라벨', () => {
     expect(resolveProgramPaymentItemIdsFromLabels('숙박비, 강사 교통비')).toEqual(['p-3', 'p-1'])
   })
 
+  it('배열로 내려온 지급 항목도 선택 id로 되돌린다', () => {
+    expect(resolveProgramPaymentItemIdsFromLabels(['숙박비', '강사 교통비'])).toEqual(['p-3', 'p-1'])
+    expect(
+      resolveProgramPaymentItemIdsFromLabels([
+        { itemType: 'LODGING', useYn: true },
+        { itemType: 'TRANSPORTATION', useYn: true },
+      ])
+    ).toEqual(['p-3', 'p-1'])
+  })
+
   it('원격 옵션 라벨이 코드여도 mock 항목명을 유지한다', () => {
     const merged = mergeProgramWagePaymentItemOptions([
       { value: 'p-3', label: 'p-3' },

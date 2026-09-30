@@ -3,7 +3,13 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  CMS_ACTION_BUTTON_WIDTH,
+  showApplicationApprovalCompletedAlert,
+  showApplicationRejectionCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 import {
   patchApplicantSchoolForApprovalStatus,
   type ApplicantSchoolRow,
@@ -34,11 +40,7 @@ import {
 } from '@/features/program/general/lib/participant-cancel-rejection'
 import {
   ParticipantApproveModal,
-  ParticipantApprovalCompleteModal,
-  ParticipantRejectCompleteModal,
   ParticipantBulkApproveModal,
-  ParticipantBulkApproveCompleteModal,
-  ParticipantBulkRejectCompleteModal,
   ParticipantCancelApprovalModal,
   ParticipantCancelApprovalCompleteModal,
   ParticipantCancelRejectModal,
@@ -52,13 +54,12 @@ import { ApplicantsDetailContents, type ApplicantType } from './applicants-detai
 import { GeneralParticipantApplicantDetailView } from '@/features/program/general/ui/detail-modal/applications/participant-screening/participant-applicant-detail-view'
 import type { ApplicantDetailMeta } from './use-applicants-detail'
 import { InstructorFeeApprovalModal } from '@/features/program/shared/ui/detail-modal/components/instructor-fee-approval-modal'
-import {
-  countAssignedInstitutions,
-  InstructorApprovalCompleteModal,
-} from '@/features/program/shared/ui/detail-modal/components/instructor-approval-complete-modal'
 import { InstructorLectureAssignModal } from '@/features/program/shared/ui/detail-modal/components/instructor-lecture-assign-modal'
 import { getGeneralParticipantInterviewEnabled } from '@/features/program/general/lib/detail-meta'
-import { buildApplicationProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
+import {
+  buildApplicationProcessedSelectionAlert,
+  isApplicationApprovalPendingForBulkSelect,
+} from '@/features/program/general/lib/application-processed-selection-alert'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
   resolveApplicantNotificationResendSentAt,
@@ -81,16 +82,8 @@ import {
   type InstructorCancelRejectionConfirmPayload,
 } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-reject-modal'
 import { InstructorBulkApproveModal } from '@/features/program/shared/ui/detail-modal/components/instructor-bulk-approve-modal'
-import { InstructorBulkApproveCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-bulk-approve-complete-modal'
-import { InstructorBulkRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-bulk-reject-complete-modal'
-import { InstructorRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-reject-complete-modal'
-import { countAssignedInstructors } from '@/features/program/general/lib/institution-assigned-instructor-count'
 import { InstitutionBulkApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-modal'
-import { InstitutionBulkApproveCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-complete-modal'
-import { InstitutionBulkRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-reject-complete-modal'
 import { InstitutionApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-approve-modal'
-import { InstitutionApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-approval-complete-modal'
-import { InstitutionRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-reject-complete-modal'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { InstitutionCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-modal'
 import { InstitutionCancelApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-complete-modal'
@@ -228,24 +221,10 @@ export function ApplicantList({
     undefined
   )
   const [instructorBulkApproveOpen, setInstructorBulkApproveOpen] = useState(false)
-  const [instructorBulkApproveCompleteCount, setInstructorBulkApproveCompleteCount] = useState<
-    number | null
-  >(null)
   const [instructorBulkRejectOpen, setInstructorBulkRejectOpen] = useState(false)
-  const [instructorBulkRejectCompleteCount, setInstructorBulkRejectCompleteCount] = useState<
-    number | null
-  >(null)
-  const [instructorApprovalComplete, setInstructorApprovalComplete] = useState<{
-    instructorName: string
-    assignedInstitutionCount: number
-  } | null>(null)
   const [instructorRejectTarget, setInstructorRejectTarget] = useState<{
     id: string
     name: string
-  } | null>(null)
-  const [instructorRejectComplete, setInstructorRejectComplete] = useState<{
-    instructorName: string
-    rejectionReason: string
   } | null>(null)
   const [instructorCancelApprovalTarget, setInstructorCancelApprovalTarget] = useState<{
     id: string
@@ -269,28 +248,14 @@ export function ApplicantList({
     approvalStatus: ApplicantNotificationResendApprovalStatus
   } | null>(null)
   const [institutionBulkApproveOpen, setInstitutionBulkApproveOpen] = useState(false)
-  const [institutionBulkApproveCompleteCount, setInstitutionBulkApproveCompleteCount] = useState<
-    number | null
-  >(null)
   const [institutionBulkRejectOpen, setInstitutionBulkRejectOpen] = useState(false)
-  const [institutionBulkRejectCompleteCount, setInstitutionBulkRejectCompleteCount] = useState<
-    number | null
-  >(null)
   const [institutionApproveTarget, setInstitutionApproveTarget] = useState<{
     id: string
     name: string
   } | null>(null)
-  const [institutionApprovalComplete, setInstitutionApprovalComplete] = useState<{
-    schoolName: string
-    assignedInstructorCount: number
-  } | null>(null)
   const [institutionRejectTarget, setInstitutionRejectTarget] = useState<{
     id: string
     name: string
-  } | null>(null)
-  const [institutionRejectComplete, setInstitutionRejectComplete] = useState<{
-    schoolName: string
-    rejectionReason: string
   } | null>(null)
   const [institutionCancelApprovalTarget, setInstitutionCancelApprovalTarget] = useState<{
     id: string
@@ -308,27 +273,14 @@ export function ApplicantList({
     schoolName: string
   } | null>(null)
   const [participantBulkApproveOpen, setParticipantBulkApproveOpen] = useState(false)
-  const [participantBulkApproveCompleteCount, setParticipantBulkApproveCompleteCount] = useState<
-    number | null
-  >(null)
   const [participantBulkRejectOpen, setParticipantBulkRejectOpen] = useState(false)
-  const [participantBulkRejectCompleteCount, setParticipantBulkRejectCompleteCount] = useState<
-    number | null
-  >(null)
   const [participantApproveTarget, setParticipantApproveTarget] = useState<{
     id: string
     name: string
   } | null>(null)
-  const [participantApprovalComplete, setParticipantApprovalComplete] = useState<{
-    participantName: string
-  } | null>(null)
   const [participantRejectTarget, setParticipantRejectTarget] = useState<{
     id: string
     name: string
-  } | null>(null)
-  const [participantRejectComplete, setParticipantRejectComplete] = useState<{
-    participantName: string
-    rejectionReason: string
   } | null>(null)
   const [participantCancelApprovalTarget, setParticipantCancelApprovalTarget] = useState<{
     id: string
@@ -356,6 +308,11 @@ export function ApplicantList({
 
   const useGeneralParticipantActionModal =
     menu === 'individual-applications' && detailVariant === 'general'
+
+  const lockBulkCheckboxToPending =
+    useGeneralInstitutionActionModal ||
+    useGeneralInstructorBulkActionModal ||
+    useGeneralParticipantActionModal
 
   /** 개인 참여자 — 면접 불필요 시 캘린더 우측 목록 상단 multi select 미노출 */
   const showCalendarEntityFilter =
@@ -775,6 +732,7 @@ export function ApplicantList({
                 )
                 return
               }
+              showApplicationApprovalCompletedAlert()
               if (detailVariant !== 'general') {
                 setSelectedItem(null)
               }
@@ -796,6 +754,7 @@ export function ApplicantList({
                 )
                 return
               }
+              showApplicationRejectionCompletedAlert()
               if (detailVariant !== 'general') {
                 setSelectedItem(null)
               }
@@ -861,6 +820,7 @@ export function ApplicantList({
               )
             )
             updateGeneralIndividualApplicantApprovalStatus(id, 'approved')
+            showApplicationApprovalCompletedAlert()
           }}
           onReject={id => {
             const row = selectedItem
@@ -879,6 +839,7 @@ export function ApplicantList({
               )
             )
             updateGeneralIndividualApplicantApprovalStatus(id, 'rejected')
+            showApplicationRejectionCompletedAlert()
           }}
           onCancelApproval={id => {
             const row = selectedItem
@@ -955,6 +916,7 @@ export function ApplicantList({
               )
             )
             updateApplicantInstructorApprovalStatus(id, 'rejected')
+            showApplicationRejectionCompletedAlert()
           }}
           onCancelApproval={id => {
             const row = selectedItem
@@ -1000,16 +962,10 @@ export function ApplicantList({
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstructorBulkRejectOpen(false)}
         onConfirm={payload => {
-          const rejectedCount = selectedRowKeys.length
           confirmBulkInstructorReject(payload)
           setInstructorBulkRejectOpen(false)
-          setInstructorBulkRejectCompleteCount(rejectedCount)
+          showApplicationRejectionCompletedAlert()
         }}
-      />
-      <InstructorBulkRejectCompleteModal
-        open={instructorBulkRejectCompleteCount != null}
-        selectionCount={instructorBulkRejectCompleteCount ?? 0}
-        onClose={() => setInstructorBulkRejectCompleteCount(null)}
       />
       <ProgramApplicationRejectModal
         open={institutionBulkRejectOpen}
@@ -1019,32 +975,20 @@ export function ApplicantList({
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstitutionBulkRejectOpen(false)}
         onConfirm={payload => {
-          const rejectedCount = selectedRowKeys.length
           confirmBulkInstitutionReject(payload)
           setInstitutionBulkRejectOpen(false)
-          setInstitutionBulkRejectCompleteCount(rejectedCount)
+          showApplicationRejectionCompletedAlert()
         }}
-      />
-      <InstitutionBulkRejectCompleteModal
-        open={institutionBulkRejectCompleteCount != null}
-        selectionCount={institutionBulkRejectCompleteCount ?? 0}
-        onClose={() => setInstitutionBulkRejectCompleteCount(null)}
       />
       <InstitutionBulkApproveModal
         open={institutionBulkApproveOpen}
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstitutionBulkApproveOpen(false)}
         onConfirm={payload => {
-          const approvedCount = selectedRowKeys.length
           confirmBulkInstitutionApprove(payload)
           setInstitutionBulkApproveOpen(false)
-          setInstitutionBulkApproveCompleteCount(approvedCount)
+          showApplicationApprovalCompletedAlert()
         }}
-      />
-      <InstitutionBulkApproveCompleteModal
-        open={institutionBulkApproveCompleteCount != null}
-        selectionCount={institutionBulkApproveCompleteCount ?? 0}
-        onClose={() => setInstitutionBulkApproveCompleteCount(null)}
       />
       <InstitutionApproveModal
         open={institutionApproveTarget != null}
@@ -1052,7 +996,7 @@ export function ApplicantList({
         onCancel={() => setInstitutionApproveTarget(null)}
         onConfirm={payload => {
           if (!institutionApproveTarget) return
-          const { id, name } = institutionApproveTarget
+          const { id } = institutionApproveTarget
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
@@ -1082,21 +1026,10 @@ export function ApplicantList({
                 setSelectedItem(patchedRow)
               }
             }
-            setInstitutionApprovalComplete({
-              schoolName: name,
-              assignedInstructorCount: countAssignedInstructors(
-                patchedRow?.assignedInstructorNames
-              ),
-            })
+            showApplicationApprovalCompletedAlert()
           }
           void run()
         }}
-      />
-      <InstitutionApprovalCompleteModal
-        open={institutionApprovalComplete != null}
-        schoolName={institutionApprovalComplete?.schoolName ?? ''}
-        assignedInstructorCount={institutionApprovalComplete?.assignedInstructorCount ?? 0}
-        onClose={() => setInstitutionApprovalComplete(null)}
       />
       <ProgramApplicationRejectModal
         open={institutionRejectTarget != null}
@@ -1106,7 +1039,7 @@ export function ApplicantList({
         onCancel={() => setInstitutionRejectTarget(null)}
         onConfirm={payload => {
           if (!institutionRejectTarget) return
-          const { id, name } = institutionRejectTarget
+          const { id } = institutionRejectTarget
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
@@ -1136,19 +1069,10 @@ export function ApplicantList({
               }
               return next
             })
-            setInstitutionRejectComplete({
-              schoolName: name,
-              rejectionReason: payload.reason,
-            })
+            showApplicationRejectionCompletedAlert()
           }
           void run()
         }}
-      />
-      <InstitutionRejectCompleteModal
-        open={institutionRejectComplete != null}
-        schoolName={institutionRejectComplete?.schoolName ?? ''}
-        rejectionReason={institutionRejectComplete?.rejectionReason ?? ''}
-        onClose={() => setInstitutionRejectComplete(null)}
       />
       <InstitutionCancelApprovalModal
         open={institutionCancelApprovalTarget != null}
@@ -1205,32 +1129,20 @@ export function ApplicantList({
         selectionCount={selectedRowKeys.length}
         onCancel={() => setParticipantBulkRejectOpen(false)}
         onConfirm={payload => {
-          const rejectedCount = selectedRowKeys.length
           confirmBulkParticipantReject(payload)
           setParticipantBulkRejectOpen(false)
-          setParticipantBulkRejectCompleteCount(rejectedCount)
+          showApplicationRejectionCompletedAlert()
         }}
-      />
-      <ParticipantBulkRejectCompleteModal
-        open={participantBulkRejectCompleteCount != null}
-        selectionCount={participantBulkRejectCompleteCount ?? 0}
-        onClose={() => setParticipantBulkRejectCompleteCount(null)}
       />
       <ParticipantBulkApproveModal
         open={participantBulkApproveOpen}
         selectionCount={selectedRowKeys.length}
         onCancel={() => setParticipantBulkApproveOpen(false)}
         onConfirm={payload => {
-          const approvedCount = selectedRowKeys.length
           confirmBulkParticipantApprove(payload)
           setParticipantBulkApproveOpen(false)
-          setParticipantBulkApproveCompleteCount(approvedCount)
+          showApplicationApprovalCompletedAlert()
         }}
-      />
-      <ParticipantBulkApproveCompleteModal
-        open={participantBulkApproveCompleteCount != null}
-        selectionCount={participantBulkApproveCompleteCount ?? 0}
-        onClose={() => setParticipantBulkApproveCompleteCount(null)}
       />
       <ParticipantApproveModal
         open={participantApproveTarget != null}
@@ -1238,7 +1150,7 @@ export function ApplicantList({
         onCancel={() => setParticipantApproveTarget(null)}
         onConfirm={payload => {
           if (!participantApproveTarget) return
-          const { id, name } = participantApproveTarget
+          const { id } = participantApproveTarget
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
@@ -1267,7 +1179,7 @@ export function ApplicantList({
                     setSelectedItem(patchedRow)
                   }
                 }
-                setParticipantApprovalComplete({ participantName: name })
+                showApplicationApprovalCompletedAlert()
                 return
               }
             }
@@ -1294,15 +1206,10 @@ export function ApplicantList({
               return next
             })
             updateGeneralIndividualApplicantApprovalStatus(id, 'approved', notifyOptions)
-            setParticipantApprovalComplete({ participantName: name })
+            showApplicationApprovalCompletedAlert()
           }
           void run()
         }}
-      />
-      <ParticipantApprovalCompleteModal
-        open={participantApprovalComplete != null}
-        participantName={participantApprovalComplete?.participantName ?? ''}
-        onClose={() => setParticipantApprovalComplete(null)}
       />
       <ProgramApplicationRejectModal
         open={participantRejectTarget != null}
@@ -1312,7 +1219,7 @@ export function ApplicantList({
         onCancel={() => setParticipantRejectTarget(null)}
         onConfirm={payload => {
           if (!participantRejectTarget) return
-          const { id, name } = participantRejectTarget
+          const { id } = participantRejectTarget
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
@@ -1342,10 +1249,7 @@ export function ApplicantList({
                     setSelectedItem(patchedRow)
                   }
                 }
-                setParticipantRejectComplete({
-                  participantName: name,
-                  rejectionReason: payload.reason,
-                })
+                showApplicationRejectionCompletedAlert()
                 return
               }
             }
@@ -1364,19 +1268,10 @@ export function ApplicantList({
               return next
             })
             updateGeneralIndividualApplicantApprovalStatus(id, 'rejected', notifyOptions)
-            setParticipantRejectComplete({
-              participantName: name,
-              rejectionReason: payload.reason,
-            })
+            showApplicationRejectionCompletedAlert()
           }
           void run()
         }}
-      />
-      <ParticipantRejectCompleteModal
-        open={participantRejectComplete != null}
-        participantName={participantRejectComplete?.participantName ?? ''}
-        rejectionReason={participantRejectComplete?.rejectionReason ?? ''}
-        onClose={() => setParticipantRejectComplete(null)}
       />
       <ParticipantCancelApprovalModal
         open={participantCancelApprovalTarget != null}
@@ -1455,7 +1350,7 @@ export function ApplicantList({
         onCancel={() => setInstructorRejectTarget(null)}
         onConfirm={payload => {
           if (!instructorRejectTarget) return
-          const { id, name } = instructorRejectTarget
+          const { id } = instructorRejectTarget
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
@@ -1480,10 +1375,7 @@ export function ApplicantList({
                   }
                   return next
                 })
-                setInstructorRejectComplete({
-                  instructorName: name,
-                  rejectionReason: payload.reason,
-                })
+                showApplicationRejectionCompletedAlert()
                 return
               }
             }
@@ -1502,19 +1394,10 @@ export function ApplicantList({
               return next
             })
             updateApplicantInstructorApprovalStatus(id, 'rejected', notifyOptions)
-            setInstructorRejectComplete({
-              instructorName: name,
-              rejectionReason: payload.reason,
-            })
+            showApplicationRejectionCompletedAlert()
           }
           void run()
         }}
-      />
-      <InstructorRejectCompleteModal
-        open={instructorRejectComplete != null}
-        instructorName={instructorRejectComplete?.instructorName ?? ''}
-        rejectionReason={instructorRejectComplete?.rejectionReason ?? ''}
-        onClose={() => setInstructorRejectComplete(null)}
       />
       <InstructorCancelApprovalModal
         open={instructorCancelApprovalTarget != null}
@@ -1719,16 +1602,10 @@ export function ApplicantList({
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstructorBulkApproveOpen(false)}
         onConfirm={payload => {
-          const approvedCount = selectedRowKeys.length
           confirmBulkInstructorApprove(payload)
           setInstructorBulkApproveOpen(false)
-          setInstructorBulkApproveCompleteCount(approvedCount)
+          showApplicationApprovalCompletedAlert()
         }}
-      />
-      <InstructorBulkApproveCompleteModal
-        open={instructorBulkApproveCompleteCount != null}
-        selectionCount={instructorBulkApproveCompleteCount ?? 0}
-        onClose={() => setInstructorBulkApproveCompleteCount(null)}
       />
       {instructorApprovalTarget?.step === 'assign' &&
       instructorApprovalInstructor &&
@@ -1760,7 +1637,6 @@ export function ApplicantList({
         onConfirm={detail => {
           if (!instructorApprovalTarget || instructorApprovalTarget.step !== 'fee') return
           const { id, assignments } = instructorApprovalTarget
-          const instructorName = instructorApprovalTarget.name
           const notifyOptions = {
             notifyTiming: detail.notifyTiming,
             manualNotifyAt: detail.manualNotifyAt,
@@ -1854,29 +1730,17 @@ export function ApplicantList({
               if (remote === 'ok') {
                 setInstructorApprovalTarget(null)
                 applyLocalApproval()
-                setInstructorApprovalComplete({
-                  instructorName,
-                  assignedInstitutionCount: countAssignedInstitutions(assignments),
-                })
+                showApplicationApprovalCompletedAlert()
                 return
               }
             }
             setInstructorApprovalTarget(null)
             applyLocalApproval()
             updateApplicantInstructorApprovalStatus(id, 'approved', notifyOptions)
-            setInstructorApprovalComplete({
-              instructorName,
-              assignedInstitutionCount: countAssignedInstitutions(assignments),
-            })
+            showApplicationApprovalCompletedAlert()
           }
           void run()
         }}
-      />
-      <InstructorApprovalCompleteModal
-        open={instructorApprovalComplete != null}
-        instructorName={instructorApprovalComplete?.instructorName ?? ''}
-        assignedInstitutionCount={instructorApprovalComplete?.assignedInstitutionCount ?? 0}
-        onClose={() => setInstructorApprovalComplete(null)}
       />
       {!selectedItem && menu ? (
         <>
@@ -1993,6 +1857,11 @@ export function ApplicantList({
                   rowSelection={{
                     selectedRowKeys,
                     onChange: keys => setSelectedRowKeys(keys),
+                    getCheckboxProps: record => ({
+                      disabled:
+                        lockBulkCheckboxToPending &&
+                        !isApplicationApprovalPendingForBulkSelect(record.approvalStatus),
+                    }),
                   }}
                 />
               </div>

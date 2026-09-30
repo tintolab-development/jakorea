@@ -3,6 +3,9 @@ import type {
 } from '@/features/program/general/api/programs-api-client'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
+import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
+import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
+import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import type {
@@ -19,16 +22,39 @@ import {
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
+import {
+  buildProgramSponsorAssignmentsWire,
+  encodeSponsorManagerContactRef,
+  normalizeSponsorManagerContactIds,
+} from '@/features/program/general/model/common-info-edit-schema'
+import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
+import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
+import {
+  stripUnselectedUjatSponsorContactsFromOverlay,
+  ujatSponsorManagerContactIdsForApi,
+} from '@/features/program/ujat/lib/ujat-sponsor-contact-api-payload'
+import { stripRegistrationOverlayDebugKeys } from '@/features/program/shared/lib/program-create-service-detail-json'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
+import {
+  normalizeProgramBusinessAreaValue,
+  resolvePersistedProgramTargetLevels,
+} from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  applyProgramMissingCommonStringFieldsToUpdateRequest,
+  mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
+  resolveOtherNotesFromProgramResponse,
+} from '@/features/program/shared/lib/program-update-common-string-fields'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
   parseRegistrationOverlay,
   parseServiceDetail,
   parseUjatServiceDetailExtras,
   serializeServiceDetail,
+  type RegistrationPersistSnapshot,
   type RegistrationSnapshot,
   type UjatServiceDetailExtras,
 } from './service-detail'
@@ -58,6 +84,117 @@ function overlayText(overlay: Record<string, unknown>, key: string): string | un
 
 function dateValue(value: Date | string | undefined): string | undefined {
   return value instanceof Date ? value.toISOString() : value
+}
+
+function parsedMillis(value: string | undefined): number | undefined {
+  if (!value) return undefined
+  const ms = Date.parse(value)
+  return Number.isFinite(ms) ? ms : undefined
+}
+
+/**
+ * 레거시 application* 는 사업 기간 안에 있을 때만 보낸다.
+ * UJAT 기관·봉사 모집은 사업 시작 전이 정상 — 그때는 recruitments[]만 쓴다.
+ */
+function applicationDatesInsideBusiness(program: Program): {
+  applicationStartDate?: string
+  applicationEndDate?: string
+} {
+  const applicationStartDate = dateValue(program.applicationStartDate)
+  const applicationEndDate = dateValue(program.applicationEndDate)
+  const businessStart = parsedMillis(dateValue(program.startDate))
+  const businessEnd = parsedMillis(dateValue(program.endDate))
+  const applyStart = parsedMillis(applicationStartDate)
+  const applyEnd = parsedMillis(applicationEndDate)
+  if (!applicationStartDate || !applicationEndDate || applyStart == null || applyEnd == null) {
+    return {}
+  }
+  if (businessStart != null && applyEnd < businessStart) return {}
+  if (businessEnd != null && applyStart > businessEnd) return {}
+  return { applicationStartDate, applicationEndDate }
+}
+
+function recruitmentRow(input: {
+  recruitmentType: ProgramRecruitmentRequest['recruitmentType']
+  targetType: string
+  startAt?: string
+  endAt?: string
+  operationStartDate?: string
+  operationEndDate?: string
+  maxCount?: number
+}): ProgramRecruitmentRequest {
+  return {
+    recruitmentType: input.recruitmentType,
+    targetType: input.targetType,
+    status: ProgramRecruitmentRequestStatus.ACTIVE,
+    ...(input.startAt ? { startAt: input.startAt } : {}),
+    ...(input.endAt ? { endAt: input.endAt } : {}),
+    ...(input.operationStartDate ? { operationStartDate: input.operationStartDate } : {}),
+    ...(input.operationEndDate ? { operationEndDate: input.operationEndDate } : {}),
+    ...(input.maxCount != null && input.maxCount > 0 ? { maxCount: input.maxCount } : {}),
+    selectionMethod: 'ADMIN_REVIEW',
+  }
+}
+
+/**
+ * 기관 + 봉사자 formBindings targetType과 맞출 canonical 모집 row.
+ * BE `STRUCTURED_RECRUITMENTS_GENERAL_ONLY` 가 UJAT를 거절하면 서버에서 허용해야 한다.
+ */
+export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRecruitmentRequest[] {
+  const operationStartDate = dateValue(program.startDate)
+  const operationEndDate = dateValue(program.endDate)
+  const institutionStart = dateValue(program.applicationStartDate)
+  const institutionEnd = dateValue(program.applicationEndDate)
+  const volunteerStart = dateValue(
+    program.volunteerApplicationStartDate ?? program.applicationStartDate
+  )
+  const volunteerEnd = dateValue(
+    program.volunteerApplicationEndDate ?? program.applicationEndDate
+  )
+  return [
+    recruitmentRow({
+      recruitmentType: ProgramRecruitmentRequestRecruitmentType.PARTICIPANT,
+      targetType: 'ORGANIZATION',
+      startAt: institutionStart,
+      endAt: institutionEnd,
+      operationStartDate,
+      operationEndDate,
+      maxCount: program.participatingSchoolCount ?? program.approvedStudentCount,
+    }),
+    recruitmentRow({
+      recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
+      targetType: 'COLLEGE_STUDENT',
+      startAt: volunteerStart,
+      endAt: volunteerEnd,
+      operationStartDate,
+      operationEndDate,
+      maxCount: program.generalVolunteers ?? program.ujatFirstHalfVolunteerCount,
+    }),
+  ]
+}
+
+function programIps(value: string | null | undefined): Program['ips'] | undefined {
+  if (value === 'Inspire' || value === 'Succeed' || value === 'Prepare') return value
+  return undefined
+}
+
+/** 공통정보 후원사·담당자 → sponsors[] (1사1교와 같은 배정 계약) */
+function mapUjatSponsorAssignments(program: Program) {
+  const sponsorId =
+    program.generalCommonInfo?.sponsorManagementIds?.[0] ??
+    program.generalCommonInfo?.sponsorManagementId ??
+    program.sponsorId
+  if (!sponsorId || sponsorId === DEFAULT_SPONSOR_ID) return []
+  const sponsorIds = [String(sponsorId).trim()].filter(Boolean)
+  const contactRefs = normalizeSponsorManagerContactIds({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+  })
+    .filter(id => id !== '__all__' && !isSponsorContactUnselected(id))
+    .map(id =>
+      id.includes('::') ? id : encodeSponsorManagerContactRef(String(sponsorId), id)
+    )
+  return buildProgramSponsorAssignmentsWire(sponsorIds, contactRefs)
 }
 
 /** UJAT는 상·하반기 교육 일정 구조. BE create는 educationStructure 필수. */
@@ -147,6 +284,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     nameKo?: string
     periodStatus?: string
     remarks?: string
+    businessField?: string
   }
   const rawOverlay = parseRegistrationOverlay(dto.serviceDetailJson)
   const timestamp = now()
@@ -158,15 +296,31 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     undefined
 
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 반영 (다른 유형과 동일 계약).
-  const generalCommonInfo =
+  const generalCommonInfoBase =
     dto.detailedProgramName?.trim()
       ? { ...details.generalCommonInfo, detailedProgramName: dto.detailedProgramName.trim() }
       : details.generalCommonInfo
+  const generalCommonInfo = generalCommonInfoBase
+    ? {
+        ...generalCommonInfoBase,
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          generalCommonInfoBase.participantRecruitmentInfo,
+          dto
+        ),
+      }
+    : {
+        participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+          undefined,
+          dto
+        ),
+      }
 
+  const ips = programIps(dto.ips)
   const overlay = reconcileUjatRegistrationOverlayFromProgramResponse(dto, rawOverlay, {
     generalSurveyMenuKeys: surveyKeys,
     sponsorManagerContactIds: generalCommonInfo?.sponsorManagerContactIds,
     sponsorManagerLine: generalCommonInfo?.sponsorManagerLine,
+    kpi: generalCommonInfo?.kpi,
   })
   const title =
     dto.title?.trim() ||
@@ -185,6 +339,17 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
     mapPeriodStatusToLifecycle(periodStatus) ??
     'planned'
+  const dtoTargetLevels = Array.isArray(
+    (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
+  )
+    ? (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
+    : undefined
+  const persistedTargetLevels = resolvePersistedProgramTargetLevels({
+    targetLevels: dtoTargetLevels ?? details.targetLevels,
+    targetLevel: dto.targetLevel ?? details.targetLevels?.[0],
+    registrationOverlay: overlay,
+    generalCommonInfo,
+  })
 
   const mapped = applyResolvedAnnouncementTitle(
     {
@@ -220,18 +385,21 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       status: (dto.status as Status | undefined) ?? 'pending',
       lifecycleStatus,
       ujatProgressStatus,
-      businessArea: dto.businessArea,
+      businessArea:
+        normalizeProgramBusinessAreaValue(dto.businessArea || dtoExt.businessField) || undefined,
       detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
       titleEn: dto.titleEn,
       textbookName: dto.textbookName,
       textbookNameEn: dto.textbookNameEn,
       schoolId: dto.schoolId,
       district: dto.district,
-      targetLevel: dto.targetLevel as Program['targetLevel'],
+      targetLevel: persistedTargetLevels[0] ?? (dto.targetLevel as Program['targetLevel']),
+      targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
       institutionType: dto.institutionType as Program['institutionType'],
       ipOwned: dto.ipOwned,
       courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
       partnerInvolvement: dto.partnerInvolvement,
+      ...(ips ? { ips } : {}),
       programCategory: dto.programCategory,
       programChannel: dto.programChannel,
       educationTime: dto.educationTime,
@@ -249,6 +417,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       managerName: dto.managerName,
       venue: dto.venue,
       curriculum: dto.curriculum,
+      contactName: dto.contactName?.trim() || undefined,
       contactEmail: dto.contactEmail,
       contactPhone: dto.contactPhone,
       oneLineIntroduction: dto.oneLineIntroduction,
@@ -259,7 +428,12 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       recruitmentGuide: dto.recruitmentGuide,
       learningSupportContent: dto.learningSupportContent,
       attachmentFileNames: dto.attachmentFileNames,
-      otherNotes: details.otherNotes ?? dtoExt.remarks,
+      otherNotes:
+        resolveOtherNotesFromProgramResponse({
+          otherMatters: dto.otherMatters,
+          otherNotes: details.otherNotes,
+        }) || undefined,
+      recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
       generalSurveyMenuKeys: surveyKeys as Program['generalSurveyMenuKeys'],
       generalProgramEducationStructure:
         String(dto.educationStructure ?? '').toUpperCase() === 'CURRICULUM'
@@ -295,12 +469,86 @@ function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
   return Object.prototype.hasOwnProperty.call(patch, key)
 }
 
+function overlayForTargetLevels(program: Program): Record<string, unknown> | undefined {
+  const ujat = (program as UjatProgramWithExtras).ujatRegistrationOverlay
+  if (
+    (program.registrationOverlay == null || typeof program.registrationOverlay !== 'object') &&
+    (ujat == null || typeof ujat !== 'object')
+  ) {
+    return program.registrationOverlay ?? undefined
+  }
+  return {
+    ...(program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
+      ? program.registrationOverlay
+      : {}),
+    ...(ujat != null && typeof ujat === 'object' ? ujat : {}),
+  }
+}
+
+function resolveRequestTargetLevels(
+  program: Program,
+  fallback?: Program
+): ProgramUpdateRequestTargetLevelsItem[] | undefined {
+  const resolved = resolvePersistedProgramTargetLevels({
+    ...program,
+    registrationOverlay: overlayForTargetLevels(program),
+  })
+  const fromFallback = fallback
+    ? resolvePersistedProgramTargetLevels({
+        ...fallback,
+        registrationOverlay: overlayForTargetLevels(fallback),
+      })
+    : []
+  const richest = resolved.length >= fromFallback.length ? resolved : fromFallback
+  if (richest.length > 0) {
+    return [...richest] as ProgramUpdateRequestTargetLevelsItem[]
+  }
+  return undefined
+}
+
+function mapUjatProgramSponsorAssignments(program: Program) {
+  const sponsorId = program.sponsorId != null ? String(program.sponsorId).trim() : ''
+  const contactRefs = ujatSponsorManagerContactIdsForApi({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+    managerLine: program.generalCommonInfo?.sponsorManagerLine,
+  })
+  const normalized = normalizeSponsorManagerContactIds({
+    ids: contactRefs,
+    id: contactRefs[0],
+  }).filter(ref => !isSponsorContactUnselected(ref))
+  return buildProgramSponsorAssignmentsWire(sponsorId ? [sponsorId] : [], normalized)
+}
+
+function registrationSnapshotForApi(
+  registration?: RegistrationPersistSnapshot
+): RegistrationPersistSnapshot | undefined {
+  if (!registration) return undefined
+  // create()가 `{ ...input, overlay }`로 넘기면 idempotencyKey·preparedFormBindings가
+  // registration에 섞인다. JSON.stringify가 그대로 실어 BE schema를 깨뜨린다.
+  return {
+    ...(registration.draft != null ? { draft: registration.draft } : {}),
+    overlay: stripRegistrationOverlayDebugKeys(
+      stripUnselectedUjatSponsorContactsFromOverlay(registration.overlay)
+    ),
+  }
+}
+
 function coreRequest(
   program: Program,
-  registration?: RegistrationSnapshot
+  registration?: RegistrationPersistSnapshot
 ): ProgramUpdateRequest {
-  return {
-    sponsorId: program.sponsorId,
+  const targetLevels = resolveRequestTargetLevels(program)
+  const sponsors = mapUjatProgramSponsorAssignments(program)
+  const primarySponsorId =
+    sponsors.find(s => s.sponsorContactId)?.sponsorId ||
+    sponsors[0]?.sponsorId ||
+    (program.sponsorId != null ? String(program.sponsorId) : undefined)
+  const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
+  const applicationDates = applicationDatesInsideBusiness(program)
+  const body: ProgramUpdateRequest = {
+    sponsorId: primarySponsorId,
+    sponsors: sponsors.length > 0 ? sponsors : undefined,
     title: program.title,
     type: program.type,
     format: program.format,
@@ -311,9 +559,10 @@ function coreRequest(
     businessStartDate: dateValue(program.startDate),
     businessEndDate: dateValue(program.endDate),
     educationStructure: resolveUjatEducationStructure(program),
-    applicationStartDate: dateValue(program.applicationStartDate),
-    applicationEndDate: dateValue(program.applicationEndDate),
-    businessArea: program.businessArea,
+    applicationStartDate: applicationDates.applicationStartDate,
+    applicationEndDate: applicationDates.applicationEndDate,
+    recruitments: mapUjatProgramRecruitmentsToRequest(program),
+    businessArea,
     // UJAT은 실제 카탈로그를 쓰지 않는 고정형이지만, 다른 유형과 동일하게 id·name을
     // 항상 함께 반영한다 (name은 teamDivision/generalCommonInfo.detailedProgramName에 실림).
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
@@ -323,11 +572,13 @@ function coreRequest(
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
     district: program.district,
-    targetLevel: program.targetLevels?.[0] ?? program.targetLevel,
+    targetLevel: targetLevels?.[0] ?? program.targetLevel,
+    targetLevels,
     institutionType: program.institutionType,
     ipOwned: program.ipOwned,
     courseDeliveredBy: program.courseDeliveredBy,
     partnerInvolvement: program.partnerInvolvement,
+    ips: program.ips,
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
     educationTime: program.educationTime,
@@ -365,21 +616,42 @@ function coreRequest(
       curriculum: round.curriculum,
       deliveryType: round.deliveryType,
     })),
-    serviceDetailJson: serializeServiceDetail(program, registration),
+    serviceDetailJson: serializeServiceDetail(
+      targetLevels?.length
+        ? { ...program, targetLevels, targetLevel: targetLevels[0] }
+        : program,
+      registrationSnapshotForApi(registration)
+    ),
   }
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'full',
+    merged: program,
+    existing: program,
+  })
+  return body
 }
 
 /** patch 키만 직렬화 — rounds·마스킹 담당자 등 화면 밖 필드 미전송 */
 function patchRequest(
   merged: Program,
   patch: Partial<Program>,
-  registration?: RegistrationSnapshot
+  registration: RegistrationPersistSnapshot | undefined,
+  existing: Program
 ): ProgramUpdateRequest {
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
 
-  if (has('sponsorId')) {
-    body.sponsorId = merged.sponsorId != null ? String(merged.sponsorId) : undefined
+  if (has('sponsorId') || patchTouchesProgramSponsors(patch)) {
+    const sponsors = mapUjatSponsorAssignments(merged)
+    body.sponsorId =
+      sponsors.find(row => row.sponsorContactId)?.sponsorId ||
+      sponsors[0]?.sponsorId ||
+      (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
+    body.sponsors = sponsors
+  }
+  if (has('ips')) body.ips = merged.ips
+  if (has('generalProgramEducationStructure') || has('generalCommonInfo')) {
+    body.educationStructure = resolveUjatEducationStructure(merged)
   }
   if (has('title')) body.title = merged.title
   if (has('type')) body.type = merged.type
@@ -392,13 +664,21 @@ function patchRequest(
     body.businessStartDate = dateValue(merged.startDate)
     body.businessEndDate = dateValue(merged.endDate)
   }
-  if (has('applicationStartDate')) {
-    body.applicationStartDate = dateValue(merged.applicationStartDate)
+  if (
+    has('applicationStartDate') ||
+    has('applicationEndDate') ||
+    has('volunteerApplicationStartDate') ||
+    has('volunteerApplicationEndDate')
+  ) {
+    const applicationDates = applicationDatesInsideBusiness(merged)
+    body.applicationStartDate = applicationDates.applicationStartDate
+    body.applicationEndDate = applicationDates.applicationEndDate
+    body.recruitments = mapUjatProgramRecruitmentsToRequest(merged)
   }
-  if (has('applicationEndDate')) {
-    body.applicationEndDate = dateValue(merged.applicationEndDate)
+  if (has('businessArea')) {
+    const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
+    body.businessArea = businessArea
   }
-  if (has('businessArea')) body.businessArea = merged.businessArea
   if (has('detailedProgramId') || has('generalCommonInfo')) {
     body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
   }
@@ -409,7 +689,9 @@ function patchRequest(
   if (has('schoolId')) body.schoolId = merged.schoolId
   if (has('district')) body.district = merged.district
   if (has('targetLevel') || has('targetLevels')) {
-    body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
+    const targetLevels = resolveRequestTargetLevels(merged) ?? []
+    body.targetLevels = targetLevels
+    body.targetLevel = targetLevels[0]
   }
   if (has('institutionType')) body.institutionType = merged.institutionType
   if (has('ipOwned')) body.ipOwned = merged.ipOwned
@@ -466,7 +748,28 @@ function patchRequest(
   }
 
   // UJAT registration overlay 보존을 위해 patch 저장 시 serviceDetailJson은 항상 포함
-  body.serviceDetailJson = serializeServiceDetail(merged, registration)
+  const persistedTargetLevels =
+    has('targetLevel') || has('targetLevels')
+      ? resolveRequestTargetLevels(merged)
+      : resolveRequestTargetLevels(merged, existing)
+  const serializeSource =
+    persistedTargetLevels?.length
+      ? { ...merged, targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
+      : merged
+  body.serviceDetailJson = serializeServiceDetail(
+    serializeSource,
+    registrationSnapshotForApi(registration)
+  )
+  if (persistedTargetLevels?.length) {
+    body.targetLevels = persistedTargetLevels
+    body.targetLevel = persistedTargetLevels[0]
+  }
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'patch',
+    merged,
+    existing,
+    patch,
+  })
   return body
 }
 
@@ -474,12 +777,17 @@ export function toCreateRequest(
   program: Program,
   registration?: RegistrationSnapshot
 ): ProgramCreateRequest {
+  const apiRegistration = registrationSnapshotForApi(registration)
+  const core = coreRequest(program, apiRegistration)
+  const serviceDetailJson = core.serviceDetailJson
+  const { serviceDetailJson: _serviceDetailOmit, ...coreWithoutDetail } = core
+  // programType·serviceDetailJson을 앞에 — DevTools/문서 복사 시 detail 잘림·BE INVALID_VALUE 방지
   return {
-    ...coreRequest(program),
     programType: 'UJAT',
+    serviceDetailJson,
+    ...coreWithoutDetail,
     businessStartDate: dateValue(program.startDate),
     businessEndDate: dateValue(program.endDate),
-    serviceDetailJson: serializeServiceDetail(program, registration),
     autoApplyDefaultFormBindings: true,
   }
 }
@@ -487,10 +795,10 @@ export function toCreateRequest(
 export function toUpdateRequest(
   program: Program,
   patch?: Partial<Program>,
-  registration?: RegistrationSnapshot
+  registration?: RegistrationPersistSnapshot
 ): ProgramUpdateRequest {
   if (patch && Object.keys(patch).length > 0) {
-    return patchRequest({ ...program, ...patch }, patch, registration)
+    return patchRequest({ ...program, ...patch }, patch, registration, program)
   }
   return coreRequest(program, registration)
 }

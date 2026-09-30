@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
+import { RichTextViewer } from '@/shared/rich-text'
 import { PFText } from '@/shared/ui'
-import type { ProgramDetail } from '../../model/types'
+import type { ProgramDetail, ProgramEventSchedule, ProgramSession } from '../../model/types'
 import { ProgramInfoPeriodSponsor } from './program-info-period-sponsor'
 import styles from './program-info-body.module.css'
 
@@ -11,6 +12,47 @@ type ProgramInfoDetailProps = {
   /** 교육·봉사현황 상세처럼 참여하기 header를 쓰지 않을 때 운영 기간·후원사 노출 */
   showPeriodSponsor?: boolean
   className?: string
+}
+
+function progressMetaLines(
+  row: Pick<
+    ProgramSession,
+    'educationFormLabel' | 'participationMethodLabel' | 'ipsTypeSummary' | 'assignmentPeriod'
+  >
+) {
+  return [
+    row.educationFormLabel?.trim()
+      ? { label: '교육 형태', value: row.educationFormLabel.trim() }
+      : null,
+    row.participationMethodLabel?.trim()
+      ? { label: '참여 방식', value: row.participationMethodLabel.trim() }
+      : null,
+    row.ipsTypeSummary?.trim() ? { label: 'IPS 유형', value: row.ipsTypeSummary.trim() } : null,
+    row.assignmentPeriod?.trim()
+      ? { label: '과제 기간', value: row.assignmentPeriod.trim() }
+      : null,
+  ].filter((line): line is { label: string; value: string } => line != null)
+}
+
+function ProgressMeta({
+  row,
+}: {
+  row: Pick<
+    ProgramSession | ProgramEventSchedule,
+    'educationFormLabel' | 'participationMethodLabel' | 'ipsTypeSummary' | 'assignmentPeriod'
+  >
+}) {
+  const lines = progressMetaLines(row)
+  if (lines.length === 0) return null
+  return (
+    <div className={styles.sessionMeta}>
+      {lines.map(line => (
+        <PFText key={line.label} as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          {line.label} {line.value}
+        </PFText>
+      ))}
+    </div>
+  )
 }
 
 function resolveBasicInfoFields(program: ProgramDetail) {
@@ -26,6 +68,16 @@ function resolveBasicInfoFields(program: ProgramDetail) {
         ]
 
   return fields.filter(field => field.value.trim().length > 0)
+}
+
+function curriculumSessionTitle(program: ProgramDetail, title: string): string {
+  const value = title.trim()
+  if (!value || program.educationStructure !== 'curriculum' || program.sessionRound !== 'multi') {
+    return value
+  }
+
+  const sessionNumber = value.replace(/차시\s*$/, '').trim()
+  return sessionNumber ? `${sessionNumber}차시` : ''
 }
 
 export function ProgramInfoDetail({
@@ -81,28 +133,29 @@ export function ProgramInfoDetail({
 
           {program.sessions.length > 0 ? (
             <div className={styles.curriculumBlock}>
-              <PFText as="h3" typo="bd-sm-rg" color="neutral-cool-600">
-                교육 커리큘럼
-              </PFText>
               <ul className={styles.sessions}>
-                {program.sessions.map(session => (
-                  <li key={`${session.sessionLabel}-${session.title}`} className={styles.session}>
-                    <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
-                      <span className={styles.sessionLabel}>{session.sessionLabel}</span>{' '}
-                      {session.title}
-                    </PFText>
-                    {session.dateLabel ? (
-                      <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-                        {session.dateLabel}
+                {program.sessions.map(session => {
+                  const sessionTitle = curriculumSessionTitle(program, session.title)
+                  return (
+                    <li key={`${session.sessionLabel}-${session.title}`} className={styles.session}>
+                      <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
+                        <span className={styles.sessionLabel}>{session.sessionLabel}</span>
+                        {sessionTitle ? ` ${sessionTitle}` : ''}
                       </PFText>
-                    ) : null}
-                    {session.description.trim() ? (
-                      <PFText as="p" typo="bd-md-rg" color="black">
-                        {session.description}
-                      </PFText>
-                    ) : null}
-                  </li>
-                ))}
+                      {session.dateLabel ? (
+                        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+                          {session.dateLabel}
+                        </PFText>
+                      ) : null}
+                      {session.description.trim() ? (
+                        <PFText as="p" typo="bd-md-rg" color="black">
+                          {session.description}
+                        </PFText>
+                      ) : null}
+                      <ProgressMeta row={session} />
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ) : null}
@@ -127,6 +180,7 @@ export function ProgramInfoDetail({
                         {event.dateLabel}
                       </PFText>
                     ) : null}
+                    <ProgressMeta row={event} />
                   </li>
                 ))}
               </ul>
@@ -184,14 +238,23 @@ export function ProgramInfoDetail({
                     <PFText as="h3" typo="bd-sm-rg" color="neutral-cool-600">
                       {section.title}
                     </PFText>
-                    <PFText
-                      as="p"
-                      typo="bd-md-md"
-                      color="black"
-                      className={styles.extraSectionBody}
-                    >
-                      {section.body}
-                    </PFText>
+                    {section.bodyFormat === 'html' ? (
+                      <RichTextViewer
+                        content={section.body}
+                        contentFormat="html"
+                        maxHeight="none"
+                        className={styles.extraSectionRichText}
+                      />
+                    ) : (
+                      <PFText
+                        as="p"
+                        typo="bd-md-md"
+                        color="black"
+                        className={styles.extraSectionBody}
+                      >
+                        {section.body}
+                      </PFText>
+                    )}
                   </section>
                 ))}
               </div>

@@ -20,6 +20,10 @@ export type GeminiRecruitmentRow = {
   trainingRequestPeriodEnd: string
   /** 임시저장 공고 — 신청기간과 무관하게 [임시저장] 표시 */
   isDraft?: boolean
+  /** 신청 기관 수. 1 이상이면 공고 삭제 불가 */
+  organizationApplicationCount?: number
+  /** 승인된 기관 수. 교육 진행으로 이어진 이력으로 본다 */
+  approvedOrganizationApplicationCount?: number
 }
 
 export type GeminiVisitingTrainingTabKey = 'recruitment' | 'approved'

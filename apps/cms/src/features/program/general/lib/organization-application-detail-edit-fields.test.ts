@@ -40,7 +40,9 @@ describe('mapOrganizationApplicationDetailToParticipatingEditFields', () => {
       mapOrganizationApplicationDetailToParticipatingEditFields({
         textbookId: null,
         textbookName: null,
-      })
+      } as unknown as Parameters<
+        typeof mapOrganizationApplicationDetailToParticipatingEditFields
+      >[0])
     ).toMatchObject({
       textbookName: '해당 없음',
     })

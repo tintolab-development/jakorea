@@ -10,6 +10,13 @@ import {
 } from '@/features/template/lib/format-education-schedule-line'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/education-schedule-preview-lines'
+import { applyEducationScheduleModeLineSwap } from '@/features/program/shared/lib/education-schedule-mode-lines'
+import {
+  educationOperationRangeSealKeyFromSchedulePrefix,
+  isOutsideEducationOperationRange,
+  toEducationOperationDayjs,
+  type EducationOperationRangeSeal,
+} from '@/features/program/shared/lib/education-schedule-change'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
   updateProgramRegistrationOverlayKey,
@@ -60,6 +67,16 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
     `${overlayKeyPrefix}.scheduleLines`,
     EMPTY_SCHEDULE_LINES
   )
+  const [operationRangeSeal] = useProgramRegistrationOverlayKv<EducationOperationRangeSeal>(
+    educationOperationRangeSealKeyFromSchedulePrefix(overlayKeyPrefix),
+    null
+  )
+  const disableOutsideOperation = (date: Dayjs) =>
+    isOutsideEducationOperationRange(
+      date,
+      toEducationOperationDayjs(operationRangeSeal?.start),
+      toEducationOperationDayjs(operationRangeSeal?.end)
+    )
   const scheduleLinesKey = `${overlayKeyPrefix}.scheduleLines`
 
   const singleDate = singleDateIso ? dayjs(singleDateIso) : null
@@ -152,11 +169,15 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
             <CmsRadioGroup
               size="large"
               value={educationScheduleMode}
-              onChange={e =>
-                onEducationScheduleModeChange(
-                  e.target.value as ProgramRegistrationEducationScheduleMode
-                )
-              }
+              onChange={e => {
+                const next = e.target.value as ProgramRegistrationEducationScheduleMode
+                applyEducationScheduleModeLineSwap({
+                  overlayKeyPrefix,
+                  currentMode: educationScheduleMode,
+                  nextMode: next,
+                })
+                onEducationScheduleModeChange(next)
+              }}
             >
               <CmsRadio value="date">날짜 지정</CmsRadio>
               <CmsRadio value="period">기간 지정</CmsRadio>
@@ -180,6 +201,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 onRangeChange={handleScheduleRangeApply}
                 width={240}
                 placeholder="날짜를 선택하세요"
+                disabledDate={disableOutsideOperation}
               />
             ) : (
               <ParagraphDatePicker
@@ -193,6 +215,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 onRangeChange={handleScheduleRangeApply}
                 width={360}
                 placeholder="기간을 선택하세요"
+                disabledDate={disableOutsideOperation}
               />
             )
           }

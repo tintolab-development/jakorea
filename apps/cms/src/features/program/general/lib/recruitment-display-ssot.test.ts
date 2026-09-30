@@ -113,6 +113,39 @@ describe('모집 정보 display — 공통정보 폴백 금지', () => {
     ).toBe('-')
   })
 
+  it('문의처 — 같은 이름 별칭은 한 번만, 잘린 전화는 숨긴다', () => {
+    const program: Program = {
+      ...commonOnlyProgram(),
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactOrganizationName: '이하은',
+          contactName: '이하은',
+          inquiryTel: '03',
+          contactEmail: 'lee@example.com',
+        },
+      },
+    }
+    const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
+    expect(display.contactOrganizationName).toBe('이하은')
+    expect(display.contactPhone).toBe('-')
+    expect(display.contactEmail).toBe('lee@example.com')
+  })
+
+  it('문의처 — 기관명과 담당자가 다르면 / 로 붙인다', () => {
+    const program: Program = {
+      ...commonOnlyProgram(),
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactOrganizationName: '로컬나눔은행',
+          contactName: '백진혁',
+        },
+      },
+    }
+    expect(resolveGeneralProgramParticipantRecruitmentDisplay(program).contactOrganizationName).toBe(
+      '로컬나눔은행 / 백진혁'
+    )
+  })
+
   it('교육받은 교사 — nested 라벨이 없으면 컬럼으로 조회를 복원한다', () => {
     const program: Program = {
       ...commonOnlyProgram(),

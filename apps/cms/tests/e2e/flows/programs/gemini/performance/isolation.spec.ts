@@ -20,6 +20,6 @@ test.describe('Gemini 실적 관리 격리', () => {
 
     await expect(page).not.toHaveURL(/visiting-training/)
     await expect(page).not.toHaveURL(/recruitmentId=/)
-    await expect(page.getByRole('button', { name: '모집 공고 추가' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: '모집 공고 등록' })).toHaveCount(0)
   })
 })

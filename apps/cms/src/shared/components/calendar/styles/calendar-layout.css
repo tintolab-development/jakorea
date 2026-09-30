@@ -21,6 +21,15 @@
   overflow: visible;
 }
 
+.calendar-view--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 480px;
+  box-sizing: border-box;
+}
+
 .calendar-set {
   --calendar-set-sticky-top: calc(40px + var(--cms-layout-content-padding-top, 0px));
   /* 3열 좌측 하단 — CalendarSearch 프로그램명·체크 목록 */

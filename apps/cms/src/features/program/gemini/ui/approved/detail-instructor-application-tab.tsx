@@ -164,13 +164,6 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
       showNoSelectionAlert()
       return
     }
-    if (selectedRowKeys.length > 1) {
-      showAlert({
-        title: '배정 안내',
-        content: '프로그램에는 강사 1명만 배정할 수 있습니다.\n한 명만 선택한 뒤 다시 시도해 주세요.',
-      })
-      return
-    }
     const assigneeId = String(selectedRowKeys[0])
     const target = rows.find(row => row.id === assigneeId)
     if (!target) return
@@ -193,6 +186,10 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     if (!confirmModal) return
     if (confirmModal.mode === 'approve') {
       setRows(prev => applyGeminiInstructorAssignment(prev, confirmModal.target.id))
+      showAlert({
+        title: '승인 완료',
+        content: '승인되었습니다.',
+      })
       // TODO: 강사 배정 승인 API 연동
     } else {
       setRows(prev => resetGeminiInstructorAssignmentToPending(prev))
@@ -200,7 +197,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     }
     setSelectedRowKeys([])
     setConfirmModal(null)
-  }, [confirmModal])
+  }, [confirmModal, showAlert])
 
   const columns = useMemo<ColumnsType<GeminiInstructorApplicationRow>>(
     () => [
@@ -355,9 +352,10 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         rowSelection={
           canWrite
             ? {
+                type: 'radio',
                 columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
-                onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                onChange: keys => setSelectedRowKeys(keys.slice(0, 1).map(k => String(k))),
                 preserveSelectedRowKeys: false,
               }
             : undefined
@@ -369,7 +367,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
       open={confirmModal != null}
       onCancel={() => setConfirmModal(null)}
       onConfirm={handleConfirmModalOk}
-      title={confirmModal?.mode === 'change' ? '강사 변경' : '강사 승인'}
+      title={confirmModal?.mode === 'change' ? '강사 변경' : '강사 승인 안내'}
       lines={
         confirmModal?.mode === 'change'
           ? buildGeminiInstructorChangeMessageLines()

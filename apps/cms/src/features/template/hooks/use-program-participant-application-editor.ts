@@ -174,8 +174,10 @@ import {
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   mergeRecruitDetailInfoFromGeneralStore,
+  pickUjatVolunteerRecruitGeneralStoreSidecar,
   recruitDetailInfoOverlayPrefixForEditorVariant,
   restoreRecruitDetailInfoIntoGeneralStore,
+  restoreUjatVolunteerRecruitGeneralStoreSidecar,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 import { getRecruitVolunteerHiddenParagraphIds } from '@/features/template/ui/form-set/recruit-form/shared/recruit-volunteer-form-visibility'
 import {
@@ -508,6 +510,7 @@ export function collectParticipantOverlayForVariant(
       {
         ...pickUjatRecruitVolunteerOverlay(getUjatProgramRegistrationOverlayRecord()),
         ...getUjatRecruitVolunteerOverlayRecord(),
+        ...pickUjatVolunteerRecruitGeneralStoreSidecar(),
       },
       recruitDetailInfoOverlayPrefixForEditorVariant(variant)
     )
@@ -754,10 +757,15 @@ export function useProgramParticipantApplicationEditor(
         replaceUjatRecruitVolunteerOverlay(
           coalesceUjatRecruitOverlay(cached.overlay ?? {}, getUjatRecruitVolunteerOverlayRecord())
         )
+        const volunteerCached = coalesceUjatRecruitOverlay(
+          cached.overlay ?? {},
+          getGeneralRecruitOverlayRecord()
+        )
         restoreRecruitDetailInfoIntoGeneralStore(
-          coalesceUjatRecruitOverlay(cached.overlay ?? {}, getGeneralRecruitOverlayRecord()),
+          volunteerCached,
           recruitDetailInfoOverlayPrefixForEditorVariant(variant)
         )
+        restoreUjatVolunteerRecruitGeneralStoreSidecar(volunteerCached)
       } else {
         restoreParticipantOverlayForVariant(variant, cached.overlay)
         applyParticipantApplicationEditorState({
@@ -821,10 +829,15 @@ export function useProgramParticipantApplicationEditor(
                 getUjatRecruitVolunteerOverlayRecord()
               )
             )
+            const volunteerSaved = coalesceUjatRecruitOverlay(
+              saved.overlay ?? {},
+              getGeneralRecruitOverlayRecord()
+            )
             restoreRecruitDetailInfoIntoGeneralStore(
-              coalesceUjatRecruitOverlay(saved.overlay ?? {}, getGeneralRecruitOverlayRecord()),
+              volunteerSaved,
               recruitDetailInfoOverlayPrefixForEditorVariant(variant)
             )
+            restoreUjatVolunteerRecruitGeneralStoreSidecar(volunteerSaved)
           }
           storageHydratedTemplateIdsRef.current.add(hydrateKey)
           return
@@ -852,10 +865,17 @@ export function useProgramParticipantApplicationEditor(
               )
             )
           }
+          const volunteerLegacy = coalesceUjatRecruitOverlay(
+            legacy.overlay ?? {},
+            getGeneralRecruitOverlayRecord()
+          )
           restoreRecruitDetailInfoIntoGeneralStore(
-            coalesceUjatRecruitOverlay(legacy.overlay ?? {}, getGeneralRecruitOverlayRecord()),
+            volunteerLegacy,
             recruitDetailInfoOverlayPrefixForEditorVariant(variant)
           )
+          if (variant === 'ujat-recruit-volunteer') {
+            restoreUjatVolunteerRecruitGeneralStoreSidecar(volunteerLegacy)
+          }
         }
         storageHydratedTemplateIdsRef.current.add(hydrateKey)
       })
@@ -1465,6 +1485,7 @@ export function useProgramParticipantApplicationEditor(
             }
           : programApplicationFormVolunteerOptions,
       programLinkedInstitutionApplicationForm,
+      programLinkedIndividualApplicationForm: variant === 'individual' && programLinkedPreview,
     }
     },
     [

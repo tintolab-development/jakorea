@@ -158,13 +158,20 @@ const RecruitDetailAdditionalContentEditor = memo(function RecruitDetailAddition
   useEffect(() => {
     if (editor == null) return
     const remember = () => {
-      latestHtmlRef.current = editor.getHTML()
+      if (editor.isDestroyed || editor.schema == null) return
+      try {
+        latestHtmlRef.current = editor.getHTML()
+      } catch {
+        // 탭 전환 시 TipTap이 먼저 destroy되면 getHTML이 schema.cached에서 실패한다.
+      }
     }
     remember()
     editor.on('update', remember)
     return () => {
       remember()
-      editor.off('update', remember)
+      if (!editor.isDestroyed) {
+        editor.off('update', remember)
+      }
     }
   }, [editor])
 
@@ -336,12 +343,8 @@ export function RecruitDetailInfoParagraph({
     [attachmentFileNamesKey, attachmentFileObjectIdsKey]
   )
 
-  useEffect(
-    () => () => {
-      revokeThumb(thumbObjectUrl)
-    },
-    [revokeThumb, thumbObjectUrl]
-  )
+  // unmount 시 blob revoke 금지 — overlay 에 URL 이 남아 미리보기에서 깨짐 (StrictMode 포함).
+  // 교체·삭제 시에만 revokeThumb.
 
   return (
     <div className="recruit-detail-info-paragraph__forms">
@@ -384,6 +387,7 @@ export function RecruitDetailInfoParagraph({
             fullRow
             edit={
               <RecruitDetailAdditionalContentEditor
+                key={additionalContentKey}
                 wysiwygResetKey={wysiwygResetKey}
                 additionalContentKey={additionalContentKey}
               />

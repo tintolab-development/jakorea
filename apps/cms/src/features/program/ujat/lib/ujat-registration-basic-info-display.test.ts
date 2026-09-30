@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
-import { resetUjatProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import {
+  getUjatProgramRegistrationOverlayRecord,
+  resetUjatProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import {
   applyUjatRegistrationOverlayToProgram,
   resolveUjatRegistrationBasicInfoDisplay,
@@ -8,7 +11,14 @@ import {
 import {
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
+  UJAT_SPONSOR_ALL_VALUE,
 } from './ujat-registration-basic-info-defaults'
+import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import {
+  buildUjatRegistrationBasicInfoOverlayFromProgram,
+  reconcileUjatRegistrationOverlayFromApi,
+  seedUjatRegistrationBasicInfoOverlayFromProgram,
+} from './ujat-registration-basic-info-overlay-sync'
 
 function baseProgram(): Program {
   return {
@@ -79,6 +89,36 @@ describe('resolveUjatRegistrationBasicInfoDisplay — 상세 overlay (세션 기
   })
 })
 
+describe('UJAT 상세 공통정보 overlay 시드', () => {
+  it('API에 없는 일정·정원 목업 기본값을 수정 overlay에 주입하지 않는다', () => {
+    const overlay = buildUjatRegistrationBasicInfoOverlayFromProgram(baseProgram())
+    expect(overlay['ujat.h1.event.name']).toBeUndefined()
+    expect(overlay['ujat.h1.eduSchedule.unavailableDates']).toBeUndefined()
+    expect(overlay['ujat.capacity.byRegion']).toBeUndefined()
+  })
+
+  it('GET canonical KPI가 stale overlay 숫자를 교정한다', () => {
+    const overlay = reconcileUjatRegistrationOverlayFromApi(
+      {
+        kpi: {
+          finalParticipants: 20,
+          instructorCount: 0,
+          volunteerCount: 8,
+          finalSchools: 4,
+          finalClasses: 6,
+        },
+      },
+      {
+        'ujat.kpi.participantCount': 1,
+        'ujat.kpi.volunteer': 1,
+      }
+    )
+    expect(overlay['ujat.kpi.participantCount']).toBe(20)
+    expect(overlay['ujat.kpi.volunteer']).toBe(8)
+    expect(overlay['ujat.kpi.dispatchedClass']).toBe(6)
+  })
+})
+
 describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 버그 수정 확인)', () => {
   it('overlay가 비어 있으면 UJAT 고정값(id·name)이 그대로 Program에 반영된다', () => {
     const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {})
@@ -114,6 +154,17 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
     expect(next.teamDivision).toBeUndefined()
   })
 
+  it('후원사 담당자 미선택이면 generalCommonInfo에 sentinel을 넣지 않는다', () => {
+    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {
+      'ujat.basicInfo.sponsorContactIds': [SPONSOR_CONTACT_UNSELECTED_VALUE],
+      'ujat.basicInfo.sponsorContactId': SPONSOR_CONTACT_UNSELECTED_VALUE,
+      'ujat.basicInfo.sponsorManagerName': '미선택',
+    })
+    expect(next.generalCommonInfo?.sponsorManagerContactIds).toBeUndefined()
+    expect(next.generalCommonInfo?.sponsorManagerContactId).toBeUndefined()
+    expect(next.generalCommonInfo?.sponsorManagerLine).toBe('미선택')
+  })
+
   it('후원사 담당자·설문 overlay를 generalCommonInfo·generalSurveyMenuKeys에 반영한다', () => {
     const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {
       'ujat.basicInfo.sponsorContactIds': ['contact-9'],
@@ -129,5 +180,29 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
     expect(next.generalCommonInfo?.sponsorManagerContactIds).toEqual(['contact-9'])
     expect(next.generalCommonInfo?.sponsorManagerLine).toBe('담당자A')
     expect(next.generalSurveyMenuKeys).toEqual(['survey', 'satisfaction', 'lecture_evaluation'])
+  })
+
+  it('저장된 overlay가 담당자 전체 기본값이어도 수정 시드에 미선택을 넣는다', () => {
+    resetUjatProgramRegistrationOverlay()
+    seedUjatRegistrationBasicInfoOverlayFromProgram({
+      ...baseProgram(),
+      sponsorId: '1627251',
+      managerName: '미선택',
+      generalCommonInfo: {
+        sponsorManagementIds: ['1627251'],
+        sponsorManagerContactIds: [],
+        sponsorManagerLine: '미선택',
+      },
+      ujatRegistrationOverlay: {
+        'ujat.basicInfo.sponsorId': '1627251',
+        'ujat.basicInfo.sponsorContactId': UJAT_SPONSOR_ALL_VALUE,
+        'ujat.basicInfo.sponsorContactIds': [],
+      },
+    })
+    const overlay = getUjatProgramRegistrationOverlayRecord()
+    expect(overlay['ujat.basicInfo.sponsorContactIds']).toEqual([
+      SPONSOR_CONTACT_UNSELECTED_VALUE,
+    ])
+    expect(overlay['ujat.basicInfo.sponsorContactId']).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
   })
 })

@@ -16,7 +16,7 @@ import {
   UJAT_REGISTRATION_SURVEY_ITEM_LABELS,
   UJAT_SURVEY_MENU_KEY_BY_ITEM,
 } from '@/features/program/ujat/lib/registration-survey-items'
-import { resolveSponsorContactIdsForEdit } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { ujatSponsorManagerContactIdsForApi } from '@/features/program/ujat/lib/ujat-sponsor-contact-api-payload'
 import {
   readUjatWagePaymentItemValuesFromOverlay,
   resolveUjatWageDeductionLabel,
@@ -358,7 +358,7 @@ export function applyUjatRegistrationOverlayToProgram(
   const sponsorManagerLine =
     overlayString(overlayInput, 'ujat.basicInfo.sponsorManagerName')?.trim() ||
     program.generalCommonInfo?.sponsorManagerLine
-  const sponsorContactIds = resolveSponsorContactIdsForEdit({
+  const sponsorContactIds = ujatSponsorManagerContactIdsForApi({
     ids: Array.isArray(overlayInput['ujat.basicInfo.sponsorContactIds'])
       ? (overlayInput['ujat.basicInfo.sponsorContactIds'] as unknown[]).map(String)
       : undefined,
@@ -402,11 +402,8 @@ export function applyUjatRegistrationOverlayToProgram(
       ...(announcementTitle ? { announcementTitle } : {}),
       sponsorManagerLine,
       sponsorManagerContactIds:
-        sponsorContactIds.length > 0
-          ? sponsorContactIds
-          : program.generalCommonInfo?.sponsorManagerContactIds,
-      sponsorManagerContactId:
-        sponsorContactIds[0] ?? program.generalCommonInfo?.sponsorManagerContactId,
+        sponsorContactIds.length > 0 ? sponsorContactIds : undefined,
+      sponsorManagerContactId: sponsorContactIds[0],
       kpi: {
         finalParticipants: overlayKpi.finalParticipants ?? prevKpi?.finalParticipants ?? 0,
         instructorCount: overlayKpi.instructorCount ?? prevKpi?.instructorCount ?? 0,

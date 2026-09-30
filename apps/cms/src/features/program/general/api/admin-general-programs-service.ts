@@ -155,7 +155,14 @@ export async function fetchGeneralProgramOverviewStages(): Promise<GeneralProgra
 export async function fetchGeneralProgramRemoteById(programId: string): Promise<Program> {
   assertGeneralProgramsRemoteReady()
   const dto = await fetchAdminProgramByIdRemote(programId)
-  return mapAdminProgramDetailToProgram(dto)
+  const mapped = mapAdminProgramDetailToProgram(dto)
+  const { withFetchedProgramSponsorAssignments } = await import(
+    '@/features/program/shared/lib/merge-program-sponsor-assignments'
+  )
+  const { fetchAdminProgramSponsorsRemote } = await import(
+    '@/features/program/general/api/programs-api-client'
+  )
+  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
 }
 
 export async function createGeneralProgram(
@@ -184,7 +191,14 @@ export async function updateGeneralProgram(
     programId,
     mapGeneralProgramToUpdateRequest(program, patch)
   )
-  return mapAdminProgramDetailToProgram(dto)
+  const mapped = mapAdminProgramDetailToProgram(dto)
+  const { withFetchedProgramSponsorAssignments } = await import(
+    '@/features/program/shared/lib/merge-program-sponsor-assignments'
+  )
+  const { fetchAdminProgramSponsorsRemote } = await import(
+    '@/features/program/general/api/programs-api-client'
+  )
+  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
 }
 
 export async function deleteGeneralProgram(programId: string): Promise<void> {

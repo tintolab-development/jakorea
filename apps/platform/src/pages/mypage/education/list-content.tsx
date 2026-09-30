@@ -11,6 +11,7 @@ import {
   subscribeMockEducationApplications,
   useMyProgramApplications,
   type EducationApplicationListParams,
+  type EducationDisplayStatusAudience,
 } from '@/features/mypage'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFPagination, PFText } from '@/shared/ui'
@@ -19,9 +20,14 @@ import styles from './page.module.css'
 type EducationListContentProps = {
   params: EducationApplicationListParams
   onParamsChange: (next: Partial<EducationApplicationListParams>) => void
+  statusAudience?: EducationDisplayStatusAudience
 }
 
-export function EducationListContent({ params, onParamsChange }: EducationListContentProps) {
+export function EducationListContent({
+  params,
+  onParamsChange,
+  statusAudience = 'general',
+}: EducationListContentProps) {
   const navigate = useNavigate()
   const remoteApplications = useMyProgramApplications('education')
   const applicationsVersion = useSyncExternalStore(
@@ -61,6 +67,7 @@ export function EducationListContent({ params, onParamsChange }: EducationListCo
             <EducationApplicationListItemRow
               key={`${item.applicationType ?? 'mock'}:${item.id}`}
               item={item}
+              statusAudience={statusAudience}
               onClick={() =>
                 navigate(educationApplicationDetailPath(item.id, item.applicationType), {
                   state: {

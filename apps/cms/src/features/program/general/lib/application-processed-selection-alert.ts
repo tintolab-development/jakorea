@@ -29,6 +29,20 @@ function subjectCaseParticle(label: string): '이' | '가' {
   return label === '기관' ? '이' : '가'
 }
 
+/** 선택 승인/반려 체크박스 — 승인 대기만 */
+export function isApplicationApprovalPendingForBulkSelect(
+  approvalStatus: string | null | undefined
+): boolean {
+  return approvalStatus === 'pending'
+}
+
+/** 1차 서류 일괄 승인/반려 체크박스 — 서류 대기만 */
+export function isDocumentScreeningPendingForBulkSelect(
+  status: string | null | undefined
+): boolean {
+  return status === 'pending'
+}
+
 /** 승인/반려 목록 — 이미 처리된 행 포함 시 AlertModal */
 export function buildApplicationProcessedSelectionAlert(noun: ApplicationBulkSubjectNoun): {
   title: string

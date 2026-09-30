@@ -10,6 +10,7 @@ import {
   programApplyCompletePath,
   programDetailPath,
   resolveProgramApplyFormCase,
+  shouldShowIndividualTeamInfoParagraph,
   useProgramApplicationForm,
   useProgramDetail,
   useSubmitProgramApplication,
@@ -21,11 +22,25 @@ import {
 } from '@/features/program/lib/application-api-error'
 import {
   buildApplicationAnswersFromDraft,
+  coerceApplicationFormDocument,
+  prepareIndividualApplicationDraft,
   writingFormDraftFromApplicationForm,
 } from '@/features/program/lib/application-form-draft'
+import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
 import {
+  isApplicationBasicInfoParagraphId,
+  isApplicationGuidanceParagraphId,
+  isApplicationPreferredScheduleParagraphId,
+  isApplicationSexOffenseInquiryParagraphId,
+  isApplicationSexOffenseSubmissionParagraphId,
+  isApplicationTeamInfoParagraphId,
+  shouldShowEducationPlaceOnBasicInfo,
+} from '@/features/program/lib/apply-form-paragraph-ids'
+import {
+  applyScheduleVisibilityFieldsFromRuntimeContext,
   isApplyScheduleChoiceParagraphId,
   shouldShowApplyPreferredSchedule,
+  shouldShowApplyScheduleParagraph,
 } from '@/features/program/lib/apply-form-schedule'
 import {
   preferredScheduleBlocksFromDraftAnswers,
@@ -49,6 +64,32 @@ import {
   fillTrainedTeachersBasicInfoFromProfile,
   trainedTeachersProfileDefaults,
 } from '@/features/program/ui/apply-trained-teachers-basic-info/profile-defaults'
+import {
+  ApplyIndividualTeamInfo,
+  emptyIndividualTeamInfo,
+  findIncompleteIndividualTeamInfoMessage,
+  teamInfoAnswerFromValues,
+  teamInfoValuesFromDraftAnswer,
+  type ApplyIndividualTeamInfoValues,
+} from '@/features/program/ui/apply-individual-team-info/apply-individual-team-info'
+import {
+  ApplyInstitutionGuidance,
+  emptyInstitutionGuidanceAnswers,
+  guidanceAnswerFromValues,
+  guidanceValuesFromDraftAnswer,
+  type ApplyInstitutionGuidanceAnswers,
+} from '@/features/program/ui/apply-institution-guidance/apply-institution-guidance'
+import {
+  ApplyInstitutionSexOffenseInquiry,
+  ApplyInstitutionSexOffenseSubmission,
+  emptyInstitutionSexOffense,
+  findIncompleteSexOffenseMessage,
+  sexOffenseInquiryAnswerFromValues,
+  sexOffenseSubmissionAnswerFromValues,
+  sexOffenseValuesFromDraftAnswers,
+  shouldShowSexOffenseInquiry,
+  type ApplyInstitutionSexOffenseValues,
+} from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
@@ -59,6 +100,24 @@ import { useNavigate } from 'react-router-dom'
 
 function createEmptyPreferredBlock(): ApplyPreferredScheduleBlock {
   return { date: '', classPeriod: '', startTime: '', endTime: '' }
+}
+
+function findDraftParagraph(
+  draft: WritingFormDraft | null,
+  match: (id: string) => boolean,
+): WritingFormParagraph | undefined {
+  return draft?.paragraphs.find(paragraph => match(paragraph.id))
+}
+
+function draftAnswerForParagraph(
+  answers: Record<string, unknown> | null | undefined,
+  paragraph: WritingFormParagraph | undefined,
+): unknown {
+  if (!answers || !paragraph) return undefined
+  const key = resolveApplicationAnswerKey(paragraph)
+  if (key && key in answers) return answers[key]
+  if (paragraph.id in answers) return answers[paragraph.id]
+  return undefined
 }
 
 export function ProgramApplyPage() {
@@ -95,6 +154,13 @@ export function ProgramApplyPage() {
   const [basicInfo, setBasicInfo] = useState<ApplyTrainedTeachersBasicInfoValues>(
     emptyTrainedTeachersBasicInfo,
   )
+  const [teamInfo, setTeamInfo] = useState<ApplyIndividualTeamInfoValues>(emptyIndividualTeamInfo)
+  const [guidanceAnswers, setGuidanceAnswers] = useState<ApplyInstitutionGuidanceAnswers>(
+    emptyInstitutionGuidanceAnswers,
+  )
+  const [sexOffense, setSexOffense] = useState<ApplyInstitutionSexOffenseValues>(
+    emptyInstitutionSexOffense,
+  )
   const [submitError, setSubmitError] = useState<string | null>(null)
   /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
   const hydratedFormKeyRef = useRef<string | null>(null)
@@ -104,6 +170,17 @@ export function ProgramApplyPage() {
     applyCase === 'trained-teachers' ||
     program?.registrationKind === 'trainedTeachers' ||
     program?.programType === 'TRAINED_TEACHER'
+  /**
+   * CMS 개인 신청은 기간 지정 지망 UI가 없다 (institution-schedule 전용).
+   * 일반 기관 + 기간 지정일 때만 1·2지망을 덮어쓴다.
+   */
+  const showGeneralPreferredSchedule =
+    applyCase === 'institution-general' &&
+    program != null &&
+    shouldShowApplyPreferredSchedule(program)
+  const showEconomyPreferredSchedule = applyCase === 'institution-economy'
+  const showPreferredScheduleInput =
+    showTrainedTeachersApply || showGeneralPreferredSchedule || showEconomyPreferredSchedule
 
   const profileDefaults = useMemo(
     () => trainedTeachersProfileDefaults(profileQuery.data),
@@ -138,26 +215,67 @@ export function ProgramApplyPage() {
       if (applicationFormQuery.status === 'ready' && remoteForm && remoteFormKey) {
         if (hydratedFormKeyRef.current === remoteFormKey) return
         const remoteDraft = writingFormDraftFromApplicationForm(
-          remoteForm.form,
+          remoteForm.form ?? remoteForm,
           remoteForm.draftAnswers,
         )
         if (remoteDraft) {
           hydratedFormKeyRef.current = remoteFormKey
-          setDraft(remoteDraft)
+          const applyCaseForDraft = resolveProgramApplyFormCase(program)
+          setDraft(
+            applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
+              ? prepareIndividualApplicationDraft(remoteDraft)
+              : remoteDraft,
+          )
           const draftAnswers = remoteForm.draftAnswers
+          const preferredParagraph = findDraftParagraph(
+            remoteDraft,
+            id =>
+              isApplicationPreferredScheduleParagraphId(id) ||
+              isApplyScheduleChoiceParagraphId(id),
+          )
           const fromPreferred = preferredScheduleBlocksFromDraftAnswers(
             draftAnswers,
-            PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
+            preferredParagraph?.id ??
+              PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
           )
           setPreferredBlocks(fromPreferred ?? [createEmptyPreferredBlock()])
+          const basicParagraph = findDraftParagraph(remoteDraft, isApplicationBasicInfoParagraphId)
           const fromBasic = basicInfoValuesFromDraftAnswer(
-            draftAnswers?.[PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo],
+            draftAnswerForParagraph(draftAnswers, basicParagraph),
           )
           setBasicInfo(
             fillTrainedTeachersBasicInfoFromProfile(
               fromBasic ?? emptyTrainedTeachersBasicInfo(),
               profileDefaults,
             ),
+          )
+          const teamParagraph = findDraftParagraph(remoteDraft, isApplicationTeamInfoParagraphId)
+          setTeamInfo(
+            teamInfoValuesFromDraftAnswer(draftAnswerForParagraph(draftAnswers, teamParagraph)) ??
+              emptyIndividualTeamInfo(),
+          )
+          const guidanceParagraph = findDraftParagraph(
+            remoteDraft,
+            isApplicationGuidanceParagraphId,
+          )
+          setGuidanceAnswers(
+            guidanceValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, guidanceParagraph),
+            ) ?? emptyInstitutionGuidanceAnswers(),
+          )
+          const submissionParagraph = findDraftParagraph(
+            remoteDraft,
+            isApplicationSexOffenseSubmissionParagraphId,
+          )
+          const inquiryParagraph = findDraftParagraph(
+            remoteDraft,
+            isApplicationSexOffenseInquiryParagraphId,
+          )
+          setSexOffense(
+            sexOffenseValuesFromDraftAnswers(
+              draftAnswerForParagraph(draftAnswers, submissionParagraph),
+              draftAnswerForParagraph(draftAnswers, inquiryParagraph),
+            ) ?? emptyInstitutionSexOffense(),
           )
           return
         }
@@ -170,14 +288,8 @@ export function ProgramApplyPage() {
         setDraft(null)
         return
       }
-      const mockKey = `mock-fallback:${program.id}`
-      if (hydratedFormKeyRef.current === mockKey) return
-      hydratedFormKeyRef.current = mockKey
-      setDraft(getMockApplyFormDraft(program))
-      setPreferredBlocks([createEmptyPreferredBlock()])
-      setBasicInfo(
-        fillTrainedTeachersBasicInfoFromProfile(emptyTrainedTeachersBasicInfo(), profileDefaults),
-      )
+      hydratedFormKeyRef.current = null
+      setDraft(null)
       return
     }
 
@@ -187,6 +299,9 @@ export function ProgramApplyPage() {
     setDraft(getMockApplyFormDraft(program))
     setPreferredBlocks([createEmptyPreferredBlock()])
     setBasicInfo(emptyTrainedTeachersBasicInfo())
+    setTeamInfo(emptyIndividualTeamInfo())
+    setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
+    setSexOffense(emptyInstitutionSexOffense())
   }, [
     program,
     programId,
@@ -229,16 +344,14 @@ export function ProgramApplyPage() {
     (paragraph: WritingFormParagraph) => {
       if (program == null) return undefined
 
-      if (
-        showTrainedTeachersApply &&
-        paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo
-      ) {
+      if (isApplicationBasicInfoParagraphId(paragraph.id)) {
         return (
           <ApplyTrainedTeachersBasicInfo
             value={basicInfo}
             onChange={setBasicInfo}
             schoolNameLocked={profileSchoolLocked}
             showPreferredEducationForm={showPreferredEducationForm}
+            showEducationPlace={shouldShowEducationPlaceOnBasicInfo(paragraph.id)}
             profile={{
               schoolName: profileSchool,
               regionLabel: profileRegionLabel,
@@ -250,16 +363,52 @@ export function ProgramApplyPage() {
         )
       }
 
-      const isTrainedPreferred =
-        showTrainedTeachersApply &&
-        paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
+      if (isApplicationTeamInfoParagraphId(paragraph.id)) {
+        return <ApplyIndividualTeamInfo value={teamInfo} onChange={setTeamInfo} />
+      }
+
+      if (isApplicationGuidanceParagraphId(paragraph.id)) {
+        return (
+          <ApplyInstitutionGuidance value={guidanceAnswers} onChange={setGuidanceAnswers} />
+        )
+      }
+
+      if (isApplicationSexOffenseSubmissionParagraphId(paragraph.id)) {
+        return (
+          <ApplyInstitutionSexOffenseSubmission value={sexOffense} onChange={setSexOffense} />
+        )
+      }
+
+      if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
+        return (
+          <ApplyInstitutionSexOffenseInquiry value={sexOffense} onChange={setSexOffense} />
+        )
+      }
 
       if (
-        isTrainedPreferred ||
-        (program.detailCase === 'general' &&
-          isApplyScheduleChoiceParagraphId(paragraph.id) &&
-          shouldShowApplyPreferredSchedule(program))
+        paragraph.kind === 'single_item' &&
+        paragraph.variant === 'agreement_explanation_text'
       ) {
+        const body = String(paragraph.bodyText ?? '').trim()
+        if (!body) return <></>
+        return (
+          <PFText as="p" typo="bd-md-md" color="neutral-cool-700">
+            {body}
+          </PFText>
+        )
+      }
+
+      const isIndividualScheduleSlot =
+        (applyCase === 'individual-general' || applyCase === 'individual-team') &&
+        isApplyScheduleChoiceParagraphId(paragraph.id)
+
+      const isPreferredScheduleSlot =
+        isApplicationPreferredScheduleParagraphId(paragraph.id) ||
+        (showGeneralPreferredSchedule && isApplyScheduleChoiceParagraphId(paragraph.id)) ||
+        (showTrainedTeachersApply &&
+          paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
+
+      if (isPreferredScheduleSlot && showPreferredScheduleInput) {
         return (
           <ApplyPreferredSchedule
             maxBlocks={program.maxPreferredScheduleCount}
@@ -267,6 +416,15 @@ export function ProgramApplyPage() {
             onChange={setPreferredBlocks}
           />
         )
+      }
+
+      if (
+        isIndividualScheduleSlot &&
+        paragraph.kind === 'single_item' &&
+        paragraph.variant === 'multiple_choice' &&
+        paragraph.items.length === 0
+      ) {
+        return <></>
       }
 
       if (
@@ -396,7 +554,13 @@ export function ProgramApplyPage() {
       program,
       preferredBlocks,
       basicInfo,
+      teamInfo,
+      guidanceAnswers,
+      sexOffense,
+      applyCase,
       showTrainedTeachersApply,
+      showGeneralPreferredSchedule,
+      showPreferredScheduleInput,
       showPreferredEducationForm,
       profileSchoolLocked,
       profileSchool,
@@ -407,6 +571,37 @@ export function ProgramApplyPage() {
       updateParagraph,
     ]
   )
+
+  const hiddenParagraphIds = useMemo(() => {
+    const hidden = new Set<string>()
+    const runtimeFields = applyScheduleVisibilityFieldsFromRuntimeContext(
+      coerceApplicationFormDocument(remoteForm)?.runtimeContext,
+    )
+    const scheduleFields = {
+      educationStructure: runtimeFields?.educationStructure ?? program?.educationStructure,
+      sessionRound: runtimeFields?.sessionRound ?? program?.sessionRound,
+      educationScheduleMode: runtimeFields?.educationScheduleMode ?? program?.educationScheduleMode,
+      educationScheduleLines: program?.educationScheduleLines,
+    }
+    if (draft && !shouldShowApplyScheduleParagraph(scheduleFields)) {
+      for (const paragraph of draft.paragraphs) {
+        if (isApplyScheduleChoiceParagraphId(paragraph.id)) hidden.add(paragraph.id)
+      }
+    }
+    if (applyCase && !shouldShowIndividualTeamInfoParagraph(applyCase) && draft) {
+      for (const paragraph of draft.paragraphs) {
+        if (isApplicationTeamInfoParagraphId(paragraph.id)) hidden.add(paragraph.id)
+      }
+    }
+    if (!shouldShowSexOffenseInquiry(sexOffense) && draft) {
+      for (const paragraph of draft.paragraphs) {
+        if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
+          hidden.add(paragraph.id)
+        }
+      }
+    }
+    return hidden
+  }, [applyCase, draft, program, remoteForm, sexOffense])
 
   const formLoading =
     remoteApplyEnabled &&
@@ -433,49 +628,113 @@ export function ProgramApplyPage() {
       bundle.option.formBindingId != null &&
       bundle.option.applicationType
     ) {
-      const preferredScheduleBlocks = showTrainedTeachersApply
+      const preferredScheduleBlocks = showPreferredScheduleInput
         ? toPortalPreferredScheduleBlocks(preferredBlocks)
         : undefined
-      if (showTrainedTeachersApply) {
+      if (showPreferredScheduleInput) {
         const preferredError = findIncompletePreferredScheduleMessage(preferredBlocks)
         if (preferredError) {
           setSubmitError(preferredError)
           return
         }
       }
-      const preferredAnswer = showTrainedTeachersApply
+      const preferredAnswer = showPreferredScheduleInput
         ? toPreferredScheduleAnswerValue(preferredBlocks)
         : null
-      if (showTrainedTeachersApply && !preferredAnswer) {
+      if (showPreferredScheduleInput && !preferredAnswer) {
         setSubmitError('진행 희망 교육 일정을 한 개 이상 입력해 주세요.')
         return
       }
-      const basicAnswer = showTrainedTeachersApply
-        ? basicInfoAnswerFromValues(basicInfo)
-        : null
-      if (showTrainedTeachersApply) {
+      const basicParagraph = findDraftParagraph(draft, isApplicationBasicInfoParagraphId)
+      const basicAnswer = basicParagraph ? basicInfoAnswerFromValues(basicInfo) : null
+      if (basicParagraph) {
         const basicError = findIncompleteTrainedTeachersBasicInfoMessage(basicInfo)
         if (basicError) {
           setSubmitError(basicError)
           return
         }
+        if (!basicAnswer) {
+          setSubmitError('기본 정보(신청 기관명)를 입력해 주세요.')
+          return
+        }
       }
-      if (showTrainedTeachersApply && !basicAnswer) {
-        setSubmitError('기본 정보(신청 기관명)를 입력해 주세요.')
-        return
+      const teamParagraph = findDraftParagraph(draft, isApplicationTeamInfoParagraphId)
+      const showTeamInfo =
+        applyCase != null && shouldShowIndividualTeamInfoParagraph(applyCase)
+      if (showTeamInfo && teamParagraph) {
+        const teamError = findIncompleteIndividualTeamInfoMessage(teamInfo)
+        if (teamError) {
+          setSubmitError(teamError)
+          return
+        }
+      }
+      const sexOffenseParagraph = findDraftParagraph(
+        draft,
+        isApplicationSexOffenseSubmissionParagraphId,
+      )
+      if (sexOffenseParagraph) {
+        const sexOffenseError = findIncompleteSexOffenseMessage(sexOffense)
+        if (sexOffenseError) {
+          setSubmitError(sexOffenseError)
+          return
+        }
       }
 
       const overrides: Record<string, unknown> = {}
       if (preferredAnswer != null) {
-        overrides[PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule] =
-          preferredAnswer
+        const scheduleParagraph = draft.paragraphs.find(
+          paragraph =>
+            isApplicationPreferredScheduleParagraphId(paragraph.id) ||
+            isApplyScheduleChoiceParagraphId(paragraph.id),
+        )
+        const scheduleKey = scheduleParagraph
+          ? resolveApplicationAnswerKey(scheduleParagraph)
+          : ''
+        if (scheduleKey) overrides[scheduleKey] = preferredAnswer
       }
-      if (basicAnswer != null) {
-        overrides[PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo] = basicAnswer
+      if (basicAnswer != null && basicParagraph) {
+        overrides[resolveApplicationAnswerKey(basicParagraph)] = basicAnswer
+      }
+      if (showTeamInfo && teamParagraph) {
+        overrides[resolveApplicationAnswerKey(teamParagraph)] = teamInfoAnswerFromValues(teamInfo)
+      }
+      const guidanceParagraph = findDraftParagraph(draft, isApplicationGuidanceParagraphId)
+      if (guidanceParagraph) {
+        overrides[resolveApplicationAnswerKey(guidanceParagraph)] =
+          guidanceAnswerFromValues(guidanceAnswers)
+      }
+      if (sexOffenseParagraph) {
+        overrides[resolveApplicationAnswerKey(sexOffenseParagraph)] =
+          sexOffenseSubmissionAnswerFromValues(sexOffense)
+      }
+      const inquiryParagraph = findDraftParagraph(
+        draft,
+        isApplicationSexOffenseInquiryParagraphId,
+      )
+      if (inquiryParagraph && shouldShowSexOffenseInquiry(sexOffense)) {
+        overrides[resolveApplicationAnswerKey(inquiryParagraph)] =
+          sexOffenseInquiryAnswerFromValues(sexOffense)
+      }
+
+      const omitParagraphIds = new Set<string>()
+      if (inquiryParagraph && !shouldShowSexOffenseInquiry(sexOffense)) {
+        omitParagraphIds.add(inquiryParagraph.id)
+        omitParagraphIds.add(resolveApplicationAnswerKey(inquiryParagraph))
+      }
+      if (!showTeamInfo && teamParagraph) {
+        omitParagraphIds.add(teamParagraph.id)
+        omitParagraphIds.add(resolveApplicationAnswerKey(teamParagraph))
+      }
+      for (const paragraph of draft.paragraphs) {
+        if (isApplyScheduleChoiceParagraphId(paragraph.id) && hiddenParagraphIds.has(paragraph.id)) {
+          omitParagraphIds.add(paragraph.id)
+          omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
+        }
       }
 
       const answers = buildApplicationAnswersFromDraft(draft, {
         overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+        omitParagraphIds: omitParagraphIds.size > 0 ? omitParagraphIds : undefined,
       })
 
       const classCount = Number.parseInt(basicInfo.classCount, 10)
@@ -542,7 +801,9 @@ export function ProgramApplyPage() {
               draft={draft}
               interactionMode="user"
               surface="platformUser"
+              hiddenParagraphIds={hiddenParagraphIds}
               onUpdateParagraph={updateParagraph}
+              fillOptions={{ consentFillReadOnlyBody: true }}
               renderParagraphSlot={renderParagraphSlot}
             />
           </FormTemplateHost>

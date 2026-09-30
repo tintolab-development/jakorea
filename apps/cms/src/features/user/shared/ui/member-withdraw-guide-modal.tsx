@@ -21,8 +21,8 @@ export interface MemberWithdrawGuideModalProps {
   open: boolean
   onCancel: () => void
   /**
-   * member_withdraw(비밀번호 모드)에서는 입력한 비밀번호를 인자로 전달.
-   * school_delete / self_withdraw(문구 모드)는 확인 문구 또는 undefined.
+   * self_withdraw(비밀번호 모드)에서는 입력한 비밀번호를 인자로 전달.
+   * member_withdraw / school_delete(문구 모드)는 확인 문구 또는 undefined.
    */
   onConfirm: (confirmInput?: string) => void
   variant: MemberWithdrawGuideVariant
@@ -54,25 +54,25 @@ function resolveGuide(props: MemberWithdrawGuideModalProps): {
     }
   }
 
-  // Admin 본인 탈퇴 — confirmationText "탈퇴" (BE 변경 없음)
+  // CMS 본인 탈퇴 — 현재 비밀번호 확인
   if (variant === 'self_withdraw') {
     return {
       title: '회원 탈퇴 안내',
       lines: buildSelfWithdrawMessageLines(),
       confirmText: confirmTextOverride ?? '회원 탈퇴',
-      requiredConfirmInput: WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
-      confirmInputPlaceholder: WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
-      confirmInputMode: 'phrase',
+      confirmInputPlaceholder: DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER,
+      confirmInputMode: 'password',
     }
   }
 
-  // CMS 회원 탈퇴 처리 — 관리자 현재 비밀번호
+  // 회원 탈퇴 처리 — [탈퇴] 입력 확인
   return {
     title: '회원 탈퇴 처리 안내',
     lines: buildMemberWithdrawMessageLines({ displayName }),
     confirmText: confirmTextOverride ?? '회원 탈퇴',
-    confirmInputPlaceholder: DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER,
-    confirmInputMode: 'password',
+    requiredConfirmInput: WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
+    confirmInputPlaceholder: WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+    confirmInputMode: 'phrase',
   }
 }
 

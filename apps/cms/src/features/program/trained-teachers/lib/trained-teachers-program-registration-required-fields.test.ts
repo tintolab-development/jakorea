@@ -75,6 +75,15 @@ describe('hasIncompleteTrainedTeachersProgramRegistrationRequiredFields', () => 
     )
   })
 
+  it('후원사만 선택하고 담당자 미선택(빈 contact)이어도 완료이다', () => {
+    expect(
+      hasIncompleteTrainedTeachersProgramRegistrationRequiredFields(
+        filledOverlay(),
+        ctx({ sponsorId: '163302', sponsorContactId: '' })
+      )
+    ).toBe(false)
+  })
+
   it('후원사 전체(빈 값)는 완료이다', () => {
     expect(
       hasIncompleteTrainedTeachersProgramRegistrationRequiredFields(

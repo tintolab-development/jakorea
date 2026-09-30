@@ -164,8 +164,6 @@
   max-height: 403px;
   overflow-x: hidden;
   overflow-y: auto;
-  padding-left: 8px;
-  padding-right: 8px;
 }
 
 .rich-text-viewer .rich-text-content {

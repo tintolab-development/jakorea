@@ -27,6 +27,7 @@ import {
 import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/participating-schools'
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
+import { shouldShowInstitutionApplicationEducationFormatField } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import {
   canParticipatingInstitutionApplicationInfoEdit,
   getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage,
@@ -249,6 +250,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     program,
     enrollmentStatus: programProgressStatus,
   })
+  const showEducationFormatField = shouldShowInstitutionApplicationEducationFormatField(program)
 
   useEffect(() => {
     if (isApplicationInfoEditing && !canEditApplicationInfo) {
@@ -660,7 +662,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               }
               classAndCount={classAndCountDisplay}
               educationFormat={
-                isApplicationDetailEditing ? (
+                isApplicationDetailEditing && showEducationFormatField ? (
                   <InstitutionEducationFormatRadios
                     value={applicationInfoDraft.educationFormat}
                     onChange={value => updateApplicationInfoDraft({ educationFormat: value })}

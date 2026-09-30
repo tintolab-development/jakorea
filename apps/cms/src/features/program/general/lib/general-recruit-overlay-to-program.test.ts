@@ -61,6 +61,21 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.description).toBe('모집 양식 프로그램 설명')
   })
 
+  it('짧은 overlay 교육 대상이 프로그램의 복수 대상을 덮지 않는다', () => {
+    const inst = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
+    const program = {
+      ...baseProgram(),
+      targetLevels: ['middle', 'university'],
+      targetLevel: 'middle',
+    } as Program
+    const next = applyGeneralRecruitOverlayToProgram(
+      program,
+      { [inst.targetLevels]: ['middle'] },
+      { preferOverlay: true }
+    )
+    expect(next.targetLevels).toEqual(['middle', 'university'])
+  })
+
   it('maps trainedTeachers detailInfo thumb and attachments into program', () => {
     const overlay: Record<string, unknown> = {
       'trainedTeachersRecruit.detailInfo.thumbContentUrl': '/api/admin/files/55/content',

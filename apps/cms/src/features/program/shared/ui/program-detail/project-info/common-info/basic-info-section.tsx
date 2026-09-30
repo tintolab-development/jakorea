@@ -20,11 +20,9 @@ import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-co
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import {
-  DetailInfoForm,
-  DetailInfoFormTdDivider,
-} from '@/shared/components/detail-info-form/detail-info-form'
+import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { SponsorManagerPartsInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
@@ -33,6 +31,7 @@ import {
   formatSponsorManagerPersonLabel,
   formatSponsorManagerSelectLabel,
   normalizeSponsorManagerContactIds,
+  retainSponsorManagerContactIdsForSponsors,
   resolveVenueKind,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type {
@@ -157,6 +156,11 @@ export interface BasicInfoSectionProps {
   enableTitleEnEdit?: boolean
   /** 교육받은 교사 — 세부 프로그램명 Select (마스터 옵션) */
   useDetailedProgramSelect?: boolean
+  /**
+   * 수정 모드에서 상위 섹션 헤더(필수 `*`)를 쓸 때 내부 `DetailInfoForm` 타이틀 숨김.
+   * 교육받은 교사 상세 수정 전용 — 1사1교·일반 조회 타이틀은 유지.
+   */
+  hideFormTitles?: boolean
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -251,25 +255,22 @@ function SponsorManagerView({
             key={parts.join('-')}
             style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}
           >
-            {parts.map((part, partIndex) => (
-              <span key={`${part}-${partIndex}`}>
-                {partIndex > 0 ? <DetailInfoFormTdDivider /> : null}
-                {part}
-              </span>
-            ))}
+            <SponsorManagerPartsInlineView parts={parts} />
           </div>
         ))}
       </div>
     )
   }
   const managerName = program.managerName?.trim()
-  if (!managerName || isSponsorContactUnselectedLabel(managerName)) return <>-</>
+  if (!managerName || isSponsorContactUnselectedLabel(managerName)) {
+    return <>{sponsorRows.length > 0 ? SPONSOR_CONTACT_UNSELECTED_LABEL : '-'}</>
+  }
   return (
     <>
       {managerName}
       {program.contactPhone ? (
         <>
-          <DetailInfoForm.InputsSeparator />
+          {'\u00A0'}
           <span>{program.contactPhone}</span>
         </>
       ) : null}
@@ -311,6 +312,7 @@ export function BasicInfoSection({
   fixedParticipantTypeLabel,
   enableTitleEnEdit = false,
   useDetailedProgramSelect = false,
+  hideFormTitles = false,
 }: BasicInfoSectionProps) {
   const isFormEdit = isEditMode && form
   const companySchoolLayout = forceCompanySchoolLayout || isCompanySchoolProgram(program)
@@ -380,14 +382,9 @@ export function BasicInfoSection({
         })
       }
     }
-    const contactsReady =
-      sponsorManagementIds.length > 0 &&
-      sponsorManagementIds.every(
-        id =>
-          selectedSponsorManagementRows.some(row => row.id === id) &&
-          sponsorEditContext.contactsBySponsorId[id] != null
-      )
-    if (!contactsReady) return options
+    // 후원사만 고르면 미선택 노출. 전 후원사 contacts 로드를 기다리면
+    // 일부만 로드된 동안 담당자 옵션은 보이는데 미선택만 빠진다.
+    if (sponsorManagementIds.length === 0) return options
     return withSponsorContactUnselectedOption(options, {
       sponsorId: '',
       contactId: '',
@@ -400,15 +397,15 @@ export function BasicInfoSection({
     sponsorManagementIds,
   ])
 
-  // 담당자 옵션 로드 후 — API/저장된 contactId[] 우선. 없는 사람 강제 선택 금지
+  // 담당자 옵션 로드 후 — API/저장된 contactId[] 우선. 이름·전화로 강제 선택 금지
   useEffect(() => {
     if (!isFormEdit || !form || sponsorManagerOptions.length === 0) return
+    if ((form.getValues('sponsorManagementIds') ?? []).length === 0) return
 
     const optionValues = new Set(sponsorManagerOptions.map(o => o.value))
+    // contacts API 가 [] 로 성공해도 "로드됨"으로 본다 (무효 ref 정리)
     const loadedSponsorIds = new Set(
-      Object.entries(sponsorEditContext.contactsBySponsorId)
-        .filter(([, contacts]) => contacts.length > 0)
-        .map(([id]) => id)
+      Object.keys(sponsorEditContext.contactsBySponsorId)
     )
     const currentIds = normalizeSponsorManagerContactIds({
       ids: form.getValues('sponsorManagerContactIds'),
@@ -418,6 +415,7 @@ export function BasicInfoSection({
       if (isSponsorContactUnselected(id)) return true
       if (optionValues.has(id)) return true
       const decoded = decodeSponsorManagerContactRef(id)
+      // 아직 contacts 미로드인 후원사 ref 는 유지
       return decoded != null && !loadedSponsorIds.has(decoded.sponsorManagementId)
     })
 
@@ -429,14 +427,12 @@ export function BasicInfoSection({
       const primary = sponsorManagerOptions.find(o => o.value === validIds[0])
       if (primary && !isSponsorContactUnselected(primary.value)) {
         form.setValue('managerName', primary.name, { shouldDirty: false })
-        if (primary.phone) {
-          form.setValue('contactPhone', primary.phone, { shouldDirty: false })
-        }
+        // contactPhone 은 문의처와 공유될 수 있어 담당자 전화로 덮지 않는다
       }
       return
     }
 
-    // 저장된 ref 가 옵션에 없으면 contactId 단위로 재매칭
+    // 저장된 ref 가 옵션에 없으면 contactId 단위로 재매칭 (이름/전화 폴백 금지)
     const rematched: string[] = []
     for (const ref of currentIds) {
       const decoded = decodeSponsorManagerContactRef(ref)
@@ -450,35 +446,36 @@ export function BasicInfoSection({
       const primary = sponsorManagerOptions.find(o => o.value === rematched[0])
       if (primary) {
         form.setValue('managerName', primary.name, { shouldDirty: false })
-        if (primary.phone) form.setValue('contactPhone', primary.phone, { shouldDirty: false })
       }
       return
     }
 
-    if (currentIds.length > 0) return
-
-    const managerName = form.getValues('managerName')?.trim()
-    if (isSponsorContactUnselectedLabel(managerName)) {
-      form.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
-        shouldDirty: false,
-      })
-      form.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
-        shouldDirty: false,
-      })
+    const selectedSponsors = form.getValues('sponsorManagementIds') ?? []
+    if (selectedSponsors.length === 0) {
+      if (currentIds.length > 0) {
+        form.setValue('sponsorManagerContactIds', [], { shouldDirty: false })
+        form.setValue('sponsorManagerContactId', undefined, { shouldDirty: false })
+      }
       return
     }
-    const phone = form.getValues('contactPhone')?.trim()
-    const matched = sponsorManagerOptions.find(
-      option =>
-        (managerName && option.name === managerName) ||
-        (phone && option.phone && option.phone === phone)
-    )
-    if (!matched) return
-    form.setValue('sponsorManagerContactIds', [matched.value], { shouldDirty: false })
-    form.setValue('sponsorManagerContactId', matched.value, { shouldDirty: false })
-    form.setValue('managerName', matched.name, { shouldDirty: false })
-    if (matched.phone) form.setValue('contactPhone', matched.phone, { shouldDirty: false })
-  }, [isFormEdit, form, sponsorManagerOptions])
+
+    const managerName = form.getValues('managerName')?.trim()
+    const shouldUseUnselected =
+      currentIds.length === 0 ||
+      currentIds.every(id => !optionValues.has(id) && !isSponsorContactUnselected(id))
+    if (!shouldUseUnselected) return
+
+    form.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
+      shouldDirty: false,
+    })
+    form.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
+      shouldDirty: false,
+    })
+    if (!managerName || isSponsorContactUnselectedLabel(managerName)) {
+      form.setValue('managerName', SPONSOR_CONTACT_UNSELECTED_LABEL, { shouldDirty: false })
+    }
+    // 빈 ids + 이름/전화 자동매칭 제거 — 문의처 Tel·구 managerName 으로 담당자가 되살아남
+  }, [isFormEdit, form, sponsorManagerOptions, sponsorEditContext.contactsBySponsorId])
 
   const categoryLabel = CATEGORY_LABEL[program.category] ?? program.category ?? '-'
 
@@ -531,7 +528,7 @@ export function BasicInfoSection({
     const ipsLabel = optionLabel(IPS_OPTIONS, program.ips ?? 'Prepare')
     return (
       <div className="project-info-basic-info-section__company-school-forms">
-        <DetailInfoForm title="기본 정보" mode="view">
+        <DetailInfoForm title="기본 정보" hideHeader={hideFormTitles} mode="view">
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="최초 등록일"
@@ -838,24 +835,52 @@ export function BasicInfoSection({
                       onChange={next => {
                         const ids = Array.isArray(next) ? next.map(String) : []
                         field.onChange(ids)
-                        // 후원사 추가/변경 시 — 선택 해제된 후원사의 담당자만 제거하고 기존 선택은 유지
                         const currentManagerIds = normalizeSponsorManagerContactIds({
                           ids: commonInfoForm.getValues('sponsorManagerContactIds'),
                           id: commonInfoForm.getValues('sponsorManagerContactId'),
                         })
-                        const keptManagerIds = currentManagerIds.filter(ref => {
-                          const decoded = decodeSponsorManagerContactRef(ref)
-                          return decoded != null && ids.includes(decoded.sponsorManagementId)
-                        })
+                        const keptManagerIds = retainSponsorManagerContactIdsForSponsors(
+                          ids,
+                          currentManagerIds
+                        )
+                        if (ids.length === 0) {
+                          commonInfoForm.setValue('sponsorId', '', { shouldDirty: true })
+                          commonInfoForm.setValue('sponsorManagerContactIds', [], {
+                            shouldDirty: true,
+                          })
+                          commonInfoForm.setValue('sponsorManagerContactId', '', {
+                            shouldDirty: true,
+                          })
+                          commonInfoForm.setValue('managerName', '', { shouldDirty: true })
+                          return
+                        }
+                        commonInfoForm.setValue('sponsorId', ids[0], { shouldDirty: true })
                         commonInfoForm.setValue('sponsorManagerContactIds', keptManagerIds, {
                           shouldDirty: true,
                         })
                         commonInfoForm.setValue(
                           'sponsorManagerContactId',
-                          keptManagerIds[0] ?? undefined
+                          keptManagerIds[0] ?? ''
                         )
-                        if (ids[0]) {
-                          commonInfoForm.setValue('sponsorId', ids[0], { shouldDirty: true })
+                        if (
+                          keptManagerIds.length === 0 ||
+                          keptManagerIds.every(id => isSponsorContactUnselected(id))
+                        ) {
+                          commonInfoForm.setValue(
+                            'sponsorManagerContactIds',
+                            [SPONSOR_CONTACT_UNSELECTED_VALUE],
+                            { shouldDirty: true }
+                          )
+                          commonInfoForm.setValue(
+                            'sponsorManagerContactId',
+                            SPONSOR_CONTACT_UNSELECTED_VALUE,
+                            { shouldDirty: true }
+                          )
+                          commonInfoForm.setValue(
+                            'managerName',
+                            SPONSOR_CONTACT_UNSELECTED_LABEL,
+                            { shouldDirty: true }
+                          )
                         }
                       }}
                     />
@@ -878,34 +903,6 @@ export function BasicInfoSection({
                   control={commonInfoForm.control}
                   render={({ field }) => {
                     const selectedIds = field.value ?? []
-                    const savedManagerName = program.managerName?.trim()
-                    const showSavedManager =
-                      selectedIds.length === 0 &&
-                      Boolean(savedManagerName) &&
-                      !isSponsorContactUnselectedLabel(savedManagerName)
-                    const savedManagerOption = showSavedManager
-                      ? {
-                          value: '__saved_manager__',
-                          label: [savedManagerName, program.contactPhone?.trim()]
-                            .filter(Boolean)
-                            .join(' · '),
-                          sponsorId: program.sponsorId ?? '',
-                          contactId: '',
-                          name: savedManagerName ?? '',
-                          phone: program.contactPhone ?? '',
-                        }
-                      : undefined
-                    const managerOptions = savedManagerOption
-                      ? [savedManagerOption, ...sponsorManagerOptions]
-                      : sponsorManagerOptions
-                    const selectedManagers = selectedIds
-                      .map(id => sponsorManagerOptions.find(option => option.value === id))
-                      .filter(
-                        (
-                          option
-                        ): option is (typeof sponsorManagerOptions)[number] =>
-                          option != null && !isSponsorContactUnselected(option.value)
-                      )
                     return (
                       <div className="detail-info-form-inputs-wrapper" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                         <CmsSelect
@@ -915,14 +912,12 @@ export function BasicInfoSection({
                           width="100%"
                           showSearch
                           optionFilterProp="label"
-                          options={managerOptions}
-                          value={showSavedManager ? ['__saved_manager__'] : selectedIds}
-                          disabled={managerOptions.length === 0}
+                          options={sponsorManagerOptions}
+                          value={sponsorManagementIds.length === 0 ? [] : selectedIds}
+                          disabled={sponsorManagementIds.length === 0}
                           onChange={next => {
                             const ids = normalizeSponsorContactUnselectedSelection(
-                              (Array.isArray(next) ? next.map(String) : []).filter(
-                                id => id !== '__saved_manager__'
-                              ),
+                              Array.isArray(next) ? next.map(String) : [],
                               selectedIds
                             )
                             field.onChange(ids)
@@ -940,28 +935,16 @@ export function BasicInfoSection({
                                 ? SPONSOR_CONTACT_UNSELECTED_LABEL
                                 : (primary?.name ?? '')
                             )
-                            commonInfoForm.setValue(
-                              'contactPhone',
-                              unselectedOnly ? undefined : primary?.phone
-                            )
+                            // 1사1교(economy)만 담당자 전화를 contactPhone 에 동기화.
+                            // TT 등 forceCompanySchoolLayout 은 contactPhone=문의처 와 공유한다.
+                            if (isEconomyCommonInfo) {
+                              commonInfoForm.setValue(
+                                'contactPhone',
+                                unselectedOnly ? undefined : primary?.phone
+                              )
+                            }
                           }}
                         />
-                        {selectedManagers.length > 0 ? (
-                          <div className="detail-info-form-inputs-wrapper">
-                            {selectedManagers.map((manager, index) => (
-                              <span key={manager.value}>
-                                {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
-                                {manager.name}
-                                {manager.phone ? (
-                                  <>
-                                    <DetailInfoForm.InputsSeparator />
-                                    <span>{manager.phone}</span>
-                                  </>
-                                ) : null}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
                       </div>
                     )
                   }}
@@ -1404,7 +1387,7 @@ export function BasicInfoSection({
                 {program.managerName}
                 {program.contactPhone ? (
                   <>
-                    <DetailInfoForm.InputsSeparator />
+                    {'\u00A0'}
                     <span>{program.contactPhone}</span>
                   </>
                 ) : null}
@@ -1489,7 +1472,7 @@ export function BasicInfoSection({
                         }}
                       />
                       <div>
-                        <DetailInfoForm.InputsSeparator />
+                        <span>{'\u00A0'}</span>
                         <span>{commonInfoForm.watch('contactPhone') || '-'}</span>
                       </div>
                     </div>

@@ -35,11 +35,14 @@ type ScheduleSectionProps = {
   events?: readonly MypageScheduleEvent[]
   /** true면 mock 데모 월(2026-01)로 시작 — API 세션에서는 false */
   useMockDemoMonth?: boolean
+  /** 보이는 달이 바뀌면 캘린더 API 조회 범위를 맞춘다 */
+  onViewMonthChange?: (month: Date) => void
 }
 
 export function ScheduleSection({
   events = [],
   useMockDemoMonth = false,
+  onViewMonthChange,
 }: ScheduleSectionProps) {
   const [selectedDate, setSelectedDate] = useState(() =>
     useMockDemoMonth ? MOCK_DEMO_SELECTED : toDayStart(new Date()),
@@ -67,6 +70,7 @@ export function ScheduleSection({
     const monthStart = toMonthStart(nextMonth)
     setViewMonth(monthStart)
     setSelectedDate(prev => syncSelectedDateToMonth(monthStart, prev, scheduleEvents))
+    onViewMonthChange?.(monthStart)
   }
 
   return (

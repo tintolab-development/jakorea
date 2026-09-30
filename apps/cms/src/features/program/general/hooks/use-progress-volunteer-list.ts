@@ -9,24 +9,23 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { type ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import { fetchGeneralParticipatingVolunteersPage } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockOrgProgressVolunteers } from '@/features/program/general/lib/temp-mock-org-program'
+import { getTempMockShowcaseProgressVolunteers } from '@/features/program/general/lib/temp-mock-program-resolve'
 import type { Program } from '@/types/domain'
 
 export function useProgressVolunteerList(programId?: string, _program?: Program | null) {
   const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
-  const remoteEnabled =
-    shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId) && !isTempMockProgram
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
 
   const temporaryProgressVolunteers = useMemo(
-    () => (isTempMockProgram ? getTempMockOrgProgressVolunteers(programId) : []),
+    () => (isTempMockProgram ? getTempMockShowcaseProgressVolunteers(programId) : []),
     [isTempMockProgram, programId]
   )
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled && temporaryProgressVolunteers.length === 0,
+    !remoteEnabled && !isTempMockProgram,
     'general-progress-volunteers',
     '프로그램 진행 현황 · 봉사자'
   )

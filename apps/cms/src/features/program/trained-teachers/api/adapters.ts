@@ -17,17 +17,15 @@ import type { Status } from '@/types'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
 import {
-  encodeSponsorManagerContactRef,
   buildProgramSponsorAssignmentsWire,
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
-import type { AdminProgramSponsorAssignmentDto } from '@/features/program/general/api/programs-api-client'
 import {
-  derivedTextbookNameAliases,
   omitIfDetailedProgramNameAlias,
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
 import {
+  resolvePersistedProgramTargetLevels,
   resolveProgramTargetLevels,
   resolveStoredBusinessArea,
 } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -39,6 +37,11 @@ import { clearTeacherTrainingScheduleIfOff } from '../lib/teacher-training-sched
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
+import {
+  applyProgramMissingCommonStringFieldsToUpdateRequest,
+  mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
+  resolveOtherNotesFromProgramResponse,
+} from '@/features/program/shared/lib/program-update-common-string-fields'
 
 /** 목록 GET echo (상세와 동일 컬럼). 일반 프로그램 DTO에는 없을 수 있음. */
 type TrainedTeacherListItemDto = AdminProgramListItemDto & {
@@ -77,45 +80,10 @@ function toStudentListRequired(
   return value === 'required' || value === 'not_required' ? value : undefined
 }
 
-/** GET …/sponsors 배정을 Program 후원·담당자 필드로 병합 (contact∈sponsor 유지) */
-export function mergeTrainedTeacherSponsorAssignments(
-  program: Program,
-  assignments: readonly AdminProgramSponsorAssignmentDto[]
-): Program {
-  const valid = assignments.filter(
-    row => row.sponsorId != null && String(row.sponsorId).trim() !== ''
-  )
-  if (valid.length === 0) return program
-
-  const sponsorManagementIds = [
-    ...new Set(valid.map(row => String(row.sponsorId).trim())),
-  ]
-  const sponsorManagerContactIds: string[] = []
-  const sponsorManagerContactNames: Record<string, string> = {}
-  for (const row of valid) {
-    const contactId = row.sponsorContactId != null ? String(row.sponsorContactId).trim() : ''
-    if (!contactId) continue
-    const ref = encodeSponsorManagerContactRef(String(row.sponsorId).trim(), contactId)
-    if (!sponsorManagerContactIds.includes(ref)) sponsorManagerContactIds.push(ref)
-    const contactName = row.sponsorContactName?.trim()
-    if (contactName) sponsorManagerContactNames[ref] = contactName
-  }
-  const managerName =
-    Object.values(sponsorManagerContactNames)[0] || program.managerName
-
-  return {
-    ...program,
-    sponsorId: sponsorManagementIds[0] ?? program.sponsorId,
-    managerName,
-    generalCommonInfo: {
-      ...program.generalCommonInfo,
-      sponsorManagementIds,
-      sponsorManagerContactIds,
-      sponsorManagerContactId: sponsorManagerContactIds[0],
-      sponsorManagerContactNames,
-    },
-  }
-}
+/** @deprecated shared `mergeProgramSponsorAssignments` 사용. TT 기존 import 호환. */
+export {
+  mergeProgramSponsorAssignments as mergeTrainedTeacherSponsorAssignments,
+} from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 
 function toDate(value: Date | string | undefined): string | undefined {
   if (value instanceof Date) return value.toISOString()
@@ -251,14 +219,24 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   const educationStructure =
     mapApiEducationStructureToDomain(dto.educationStructure) ??
     details.generalProgramEducationStructure
-  const announcementTitle = details.generalCommonInfo?.announcementTitle?.trim()
+  // 교육받은 교사 공고용명은 top-level title 컬럼 SSOT. nested는 레거시 fallback.
+  const announcementTitle =
+    dto.title?.trim() || details.generalCommonInfo?.announcementTitle?.trim()
   const detailedProgramName =
-    dto.detailedProgramName?.trim() || details.generalCommonInfo?.detailedProgramName
+    dto.detailedProgramName?.trim() ||
+    dto.textbookName?.trim() ||
+    details.generalCommonInfo?.detailedProgramName
   const participantRemarks = (
     details.generalCommonInfo?.participantRecruitmentInfo as { remarks?: string } | undefined
   )?.remarks
   /** otherNotes ≠ remarks — 모집 비고(remarks)와 분리 */
-  const otherNotes = dto.otherMatters?.trim() || details.otherNotes?.trim() || undefined
+  const otherNotes =
+    resolveOtherNotesFromProgramResponse({
+      otherMatters:
+        dto.otherMatters ??
+        (details as { otherMatters?: string | null }).otherMatters,
+      otherNotes: details.otherNotes,
+    }) || undefined
   const remarks = dto.remarks?.trim() || participantRemarks?.trim() || undefined
   const educationTargetDetail =
     dto.educationTargetDetail?.trim() ||
@@ -308,6 +286,17 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     typeof (dto as { businessField?: unknown }).businessField === 'string'
       ? (dto as { businessField?: string }).businessField
       : undefined
+  const dtoTargetLevels = Array.isArray(
+    (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
+  )
+    ? (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
+    : undefined
+  const persistedTargetLevels = resolvePersistedProgramTargetLevels({
+    targetLevels: dtoTargetLevels ?? details.targetLevels,
+    targetLevel: details.targetLevels?.[0] ?? dto.targetLevel,
+    registrationOverlay: details.registrationOverlay,
+    generalCommonInfo: details.generalCommonInfo,
+  })
   const mapped = baseProgram({
     ...detailFields,
     id,
@@ -351,15 +340,8 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     schoolId: dto.schoolId,
     district: dto.district,
     ips: dto.ips as Program['ips'],
-    targetLevel:
-      resolveProgramTargetLevels({
-        targetLevels: details.targetLevels,
-        targetLevel: details.targetLevels?.[0] ?? dto.targetLevel,
-      })[0] ?? undefined,
-    targetLevels: resolveProgramTargetLevels({
-      targetLevels: details.targetLevels,
-      targetLevel: details.targetLevels?.[0] ?? dto.targetLevel,
-    }),
+    targetLevel: persistedTargetLevels[0] ?? undefined,
+    targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
     institutionType:
       venueKind === 'other'
         ? undefined
@@ -388,6 +370,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     managerName: dto.managerName,
     venue: dto.venue?.trim() || nestedVenueDetail || undefined,
     curriculum: dto.curriculum,
+    contactName: dto.contactName?.trim() || undefined,
     contactEmail:
       dto.contactEmail?.trim() ||
       (
@@ -424,6 +407,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
     otherNotes,
+    recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
     studentListRequired:
       toStudentListRequired(dto.studentListRequired) ??
       details.studentListRequired ??
@@ -439,11 +423,14 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
       ...(venueKind ? { venueKind } : {}),
       ...(venueDetail ? { venueDetail } : {}),
       kpi: resolvedKpi,
-      participantRecruitmentInfo: {
-        ...details.generalCommonInfo?.participantRecruitmentInfo,
-        ...(remarks ? { remarks } : {}),
-        ...(educationTargetDetail ? { educationTargetDetail } : {}),
-      },
+      participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+        {
+          ...details.generalCommonInfo?.participantRecruitmentInfo,
+          ...(remarks ? { remarks } : {}),
+          ...(educationTargetDetail ? { educationTargetDetail } : {}),
+        },
+        dto
+      ),
     }),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
@@ -469,11 +456,22 @@ function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {
   }))
 }
 
+function mergeTrainedTeacherUpdateProgram(program: Program, patch: Partial<Program>): Program {
+  const merged: Program = { ...program, ...patch }
+  if (patch.generalCommonInfo) {
+    merged.generalCommonInfo = {
+      ...program.generalCommonInfo,
+      ...patch.generalCommonInfo,
+    }
+  }
+  return merged
+}
+
 export function mapTrainedTeacherToUpdateRequest(
   program: Program,
   patch?: Partial<Program>
 ): ProgramUpdateRequest {
-  const merged = patch ? { ...program, ...patch } : program
+  const merged = patch ? mergeTrainedTeacherUpdateProgram(program, patch) : program
   const educationStructure = mapDomainEducationStructureToApi(
     merged.generalProgramEducationStructure
   )
@@ -505,9 +503,23 @@ export function mapTrainedTeacherToUpdateRequest(
     sponsors[0]?.sponsorId ||
     merged.sponsorId
   const businessArea = resolveStoredBusinessArea(merged.businessArea) || undefined
-  const body: ProgramUpdateRequest & { businessField?: string } = {
+  const fromMergedLevels = resolvePersistedProgramTargetLevels(merged)
+  const fromExistingLevels = patch ? resolvePersistedProgramTargetLevels(program) : []
+  const honorPatchLevels = Boolean(
+    patch && Object.prototype.hasOwnProperty.call(patch, 'targetLevels')
+  )
+  const persistedTargetLevels = honorPatchLevels
+    ? fromMergedLevels
+    : fromMergedLevels.length >= fromExistingLevels.length
+      ? fromMergedLevels
+      : fromExistingLevels
+  const serializeSource =
+    persistedTargetLevels.length > 0
+      ? { ...merged, targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
+      : merged
+  const body: ProgramUpdateRequest = {
     sponsorId: primarySponsorId,
-    sponsors: sponsors.length > 0 ? sponsors : undefined,
+    sponsors,
     title: merged.title,
     type: merged.type,
     format: merged.format,
@@ -520,30 +532,20 @@ export function mapTrainedTeacherToUpdateRequest(
     applicationStartDate: toDate(merged.applicationStartDate),
     applicationEndDate: toDate(merged.applicationEndDate),
     businessArea,
-    // handoff JsonAlias — codegen 미포함 시에도 BE 가 businessField 만 듣는 경로 대비
-    ...(businessArea ? { businessField: businessArea } : {}),
     // 일정형은 id 를 생략한다. 커리큘럼형은 숫자 마스터 id 만 보낸다.
     // 교재명·팀구분에 detailedProgramName 을 복제한 값이면 omit.
     educationStructure,
     detailedProgramId,
     titleEn: merged.titleEn,
     mainTitle: merged.mainTitle ?? merged.title,
-    textbookName: omitIfDetailedProgramNameAlias(
-      merged.textbookName,
-      detailedProgramName,
-      derivedTextbookNameAliases(merged)
-    ),
+    // 교육받은 교사 상세 GET은 세부 프로그램명을 textbookName 컬럼에서도 복원한다.
+    textbookName: merged.textbookName ?? detailedProgramName,
     textbookNameEn: merged.textbookNameEn,
     schoolId: merged.schoolId,
     district: merged.district,
     ips: merged.ips,
-    targetLevels:
-      merged.targetLevels != null
-        ? [...merged.targetLevels]
-        : merged.targetLevel
-          ? [merged.targetLevel]
-          : undefined,
-    targetLevel: merged.targetLevels?.[0] ?? merged.targetLevel,
+    targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
+    targetLevel: persistedTargetLevels[0] ?? merged.targetLevel,
     institutionType: merged.institutionType,
     ipOwned: merged.ipOwned,
     courseDeliveredBy: merged.courseDeliveredBy,
@@ -581,8 +583,14 @@ export function mapTrainedTeacherToUpdateRequest(
     learningSupportContent: merged.learningSupportContent,
     attachmentFileNames: merged.attachmentFileNames,
     rounds: mapRounds(merged),
-    serviceDetailJson: serializeTrainedTeacherServiceDetailJson(merged),
+    serviceDetailJson: serializeTrainedTeacherServiceDetailJson(serializeSource),
   }
+  // top-level 3필드가 stale serviceDetailJson 보다 우선 (BE handoff 2026-09-29)
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'full',
+    merged,
+    existing: program,
+  })
   return body
 }
 

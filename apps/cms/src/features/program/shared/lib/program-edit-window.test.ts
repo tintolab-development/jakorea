@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
   isCommonInfoEditPeriodOpen,
+  isOperationStartDateLocked,
   isProgramFormBindingWriteLocked,
+  isProgramOperationStartLocked,
   isProgramRecruitmentTypeLocked,
   isRecruitmentStartLocked,
   resolveRecruitmentTypeForFormBinding,
@@ -48,6 +50,35 @@ describe('isRecruitmentStartLocked', () => {
     expect(isRecruitmentStartLocked(startAt, new Date('2026-10-01T10:16:00+09:00'))).toBe(true)
     expect(isRecruitmentStartLocked(null, new Date('2026-10-01T10:16:00+09:00'))).toBe(false)
     expect(isRecruitmentStartLocked(undefined, new Date('2026-10-01T10:16:00+09:00'))).toBe(false)
+  })
+})
+
+describe('isProgramOperationStartLocked', () => {
+  it('운영 시작일 당일부터 잠그고, 날짜가 없으면 열어둡니다', () => {
+    expect(isOperationStartDateLocked('2026-09-28', new Date('2026-09-27T23:59:00+09:00'))).toBe(
+      false
+    )
+    expect(isOperationStartDateLocked('2026-09-28', new Date('2026-09-28T00:00:00+09:00'))).toBe(
+      true
+    )
+    expect(isOperationStartDateLocked(null, new Date('2026-09-28T12:00:00+09:00'))).toBe(false)
+  })
+
+  it('모집이 시작돼도 운영 시작일이 다른 유형은 따로 판단한다', () => {
+    const program = programWith([
+      {
+        recruitmentType: 'PARTICIPANT',
+        startAt: '2020-01-01T00:00:00+09:00',
+        operationStartDate: '2099-01-01',
+      },
+      { recruitmentType: 'INSTRUCTOR', operationStartDate: '2020-06-01' },
+      { recruitmentType: 'VOLUNTEER', startAt: '2020-01-01T00:00:00+09:00' },
+    ])
+    const now = new Date('2026-09-28T12:00:00+09:00')
+    expect(isProgramOperationStartLocked(program, 'PARTICIPANT', now)).toBe(false)
+    expect(isProgramOperationStartLocked(program, 'INSTRUCTOR', now)).toBe(true)
+    expect(isProgramOperationStartLocked(program, 'VOLUNTEER', now)).toBe(false)
+    expect(isProgramRecruitmentTypeLocked(program, 'VOLUNTEER', now)).toBe(true)
   })
 })
 

@@ -180,6 +180,44 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     expect(next.generalCommonInfo?.paymentItems).toBe('해당없음')
   })
 
+  it('keeps stored partner no and kpi when overlay keys are missing', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      {
+        ...baseProgram(),
+        partnerInvolvement: false,
+        approvedStudentCount: 40,
+        instructors: 3,
+        generalVolunteers: 2,
+        participatingSchoolCount: 6,
+        generalCommonInfo: {
+          ...baseProgram().generalCommonInfo,
+          kpi: {
+            finalParticipants: 40,
+            instructorCount: 3,
+            volunteerCount: 2,
+            finalSchools: 6,
+            finalClasses: 9,
+          },
+        },
+      },
+      {},
+      {
+        programType: 'curriculum',
+        sessionRoundType: 'single',
+        curriculumChartSessionCount: 1,
+      }
+    )
+    expect(next.partnerInvolvement).toBe(false)
+    expect(next.generalCommonInfo?.kpi).toEqual({
+      finalParticipants: 40,
+      instructorCount: 3,
+      volunteerCount: 2,
+      finalSchools: 6,
+      finalClasses: 9,
+    })
+    expect(next.approvedStudentCount).toBe(40)
+  })
+
   it('uses overlay detailedProgramName and paymentItemLabels', () => {
     const next = applyGeneralRegistrationOverlayToProgram(
       baseProgram(),

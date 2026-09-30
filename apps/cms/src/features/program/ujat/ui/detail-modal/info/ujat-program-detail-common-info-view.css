@@ -1,10 +1,45 @@
-/* UJAT 프로그램 상세 — 공통 정보 (영역 간격: detail-info-form--gap / program-detail-fullpage-modal__info-tab-block) */
+/* UJAT 프로그램 상세 — 공통 정보 (영역 간격: program-detail-fullpage-modal__info-tab-block) */
 
 /* 기본 정보 내부 블록 간격 (등록 양식과 동일 16px) */
 .ujat-program-detail-common-info-view__basic-info {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* 수정 모드 — 섹션 타이틀↔본문 10px (조회 h3·일반 상세 common-info-edit와 동일) */
+.program-detail-fullpage-modal__info-tab:has(.ujat-program-detail-common-info-view__basic-info)
+  .program-detail-fullpage-modal__info-tab-block
+  > .form-paragraph-section-header.detail-info-form__header {
+  margin-bottom: 10px;
+}
+
+.program-detail-fullpage-modal__info-tab:has(.ujat-program-detail-common-info-view__basic-info)
+  .program-detail-fullpage-modal__info-tab-block
+  > .form-paragraph-section-header.detail-info-form__header:has(
+    .form-paragraph-section-header__description
+  ) {
+  margin-bottom: 10px;
+}
+
+.ujat-program-detail-common-info-view__basic-info--edit {
+  gap: 0;
+}
+
+.ujat-program-detail-common-info-view__basic-info--edit
+  > .form-paragraph-section-header.detail-info-form__header {
+  margin-bottom: 10px;
+}
+
+.ujat-program-detail-common-info-view__basic-info--edit
+  > .detail-info-form.program-registration-paragraph {
+  margin-bottom: 16px;
+}
+
+.program-detail-fullpage-modal__info-tab:has(.ujat-program-detail-common-info-view__basic-info)
+  .program-detail-fullpage-modal__info-tab-block
+  > .detail-info-form {
+  margin-top: 0;
 }
 
 .ujat-program-detail-common-info-view__basic-info-edit-blocks {

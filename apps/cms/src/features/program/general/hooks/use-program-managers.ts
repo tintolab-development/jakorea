@@ -23,7 +23,7 @@ import type { ProgramManagerRow } from '@/features/program/general/model/program
 import { fetchAdminsPageRemote } from '@/features/user/api/members-api-client'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockOrgProgramManagers } from '@/features/program/general/lib/temp-mock-org-program'
+import { getTempMockShowcaseProgramManagers } from '@/features/program/general/lib/temp-mock-program-resolve'
 import {
   canAssignProgramRoleToCmsAdmin,
   CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
@@ -95,7 +95,7 @@ export function useProgramManagers(
 
   const managers = useMemo((): ProgramManagerRow[] => {
     if (!programId) return []
-    if (isTempMockProgram) return getTempMockOrgProgramManagers(programId)
+    if (isTempMockProgram) return getTempMockShowcaseProgramManagers(programId)
     if (!remoteEnabled) return []
     if (listQuery.isError) return []
     const rows = listQuery.data ?? []

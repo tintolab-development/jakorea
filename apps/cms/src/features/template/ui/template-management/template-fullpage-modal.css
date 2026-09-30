@@ -161,8 +161,8 @@
      패딩까지 덮어써서 하단 패딩이 안 보이는 문제 방지 */
   padding: var(--full-page-modal-padding-top) var(--full-page-modal-padding-x) 0;
   flex-direction: column;
-  /* 좌 52px body 패딩 기준 — 콘텐츠 밴드를 가운데로 밀지 않음 */
-  align-items: flex-start;
+  /* 1920 레이아웃 — 단락·헤더·설명 밴드를 뷰포트 가운데 */
+  align-items: center;
   gap: 16px;
   background: #f4f6f6;
   overflow-y: auto;
@@ -179,10 +179,10 @@
 
 .full-page-modal__body-header {
   display: flex;
-  align-self: flex-start;
+  align-self: center;
   width: 100%;
   max-width: var(--full-page-modal-contents-max-width);
-  margin-inline: 0;
+  margin-inline: auto;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -217,11 +217,11 @@
 .full-page-modal__contents {
   display: flex;
   flex: 0 0 auto;
-  align-self: flex-start;
+  align-self: center;
   min-height: auto;
   width: 100%;
   max-width: var(--full-page-modal-contents-max-width);
-  margin-inline: 0;
+  margin-inline: auto;
   align-items: stretch;
   gap: var(--full-page-modal-contents-gap);
   box-sizing: border-box;
@@ -265,9 +265,24 @@
   gap: 16px;
 }
 
+.full-page-modal--no-right-nav .full-page-modal__contents {
+  max-width: var(--full-page-modal-left-column-width);
+}
+
+.full-page-modal--no-right-nav .full-page-modal__body-header,
+.full-page-modal--no-right-nav .full-page-modal__footer-cta {
+  max-width: var(--full-page-modal-left-column-width);
+}
+
 .full-page-modal--no-right-nav .full-page-modal__left {
   max-width: none;
   width: 100%;
+}
+
+.full-page-modal--no-right-nav .form-editor-left {
+  max-width: var(--form-editor-paragraph-column-max-width, 1404px);
+  width: 100%;
+  margin-inline: auto;
 }
 
 .full-page-modal .form-editor-left {
@@ -522,7 +537,7 @@
 /* 하단 CTA — 양식 최하단 단락 아래 32px, 본문 스크롤 흐름(고정 float 없음) */
 .full-page-modal--registration-user-mode .full-page-modal__footer-cta {
   flex-shrink: 0;
-  align-self: flex-start;
+  align-self: center;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -530,7 +545,7 @@
   gap: 12px;
   width: 100%;
   max-width: var(--full-page-modal-contents-max-width);
-  margin-inline: 0;
+  margin-inline: auto;
   margin-top: 32px;
   box-sizing: border-box;
 }

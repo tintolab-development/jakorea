@@ -25,6 +25,15 @@
   animation: none !important;
 }
 
+.program-registration-paragraph__schedule-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
 .program-registration-paragraph__schedule-preview-placeholder {
   color: var(--gray-85969-d, #85969d);
   font-family: Pretendard, sans-serif;

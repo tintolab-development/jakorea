@@ -3,61 +3,17 @@
  * GET /api/portal/programs/{programId}
  */
 
-export type PortalRecruitment = {
-  recruitmentId?: number
-  recruitmentType?: string
-  targetType?: string
-  status?: string
-  startAt?: string
-  endAt?: string
-  applicationTypes?: string[]
-  open?: boolean
-  interviewEnabled?: boolean | null
-  documentPassAnnouncementAt?: string | null
-  interviewStartAt?: string | null
-  interviewEndAt?: string | null
-  finalPassAnnouncementAt?: string | null
-}
-
-export type PortalSchedule = {
-  scheduleId?: number
-  sessionNo?: number
-  scheduleName?: string
-  startAt?: string
-  endAt?: string
-  allDay?: boolean
-  locationName?: string
-  address?: string
-  addressDetail?: string
-  term?: string | null
-  scheduleKind?: string | null
-  publiclyVisible?: boolean | null
-}
-
-export type PortalCurriculumSession = {
-  sessionId?: number
-  scheduleId?: number
-  sessionNo?: number
-  title?: string
-  content?: string
-  durationMinutes?: number
-}
-
-export type PortalCurriculum = {
-  curriculumId?: number
-  title?: string
-  description?: string
-  sessions?: PortalCurriculumSession[]
-}
-
-export type PortalAttachment = {
-  attachmentId?: number
-  fileObjectId?: number
-  attachmentType?: string
-  originalFileName?: string
-  contentType?: string
-  fileSize?: number
-}
+export type {
+  PortalAttachment,
+  PortalCurriculum,
+  PortalCurriculumSession,
+  PortalEducationCurriculumSession,
+  PortalEducationScheduleDetail,
+  PortalEducationScheduleRange,
+  PortalProgramDetail,
+  PortalRecruitment,
+  PortalSchedule,
+} from '@jakorea/domain/portal/program-detail'
 
 /** GET /api/portal/programs 목록 행 (OpenAPI PortalProgramListItem) */
 export type PortalProgramListItem = {
@@ -69,9 +25,17 @@ export type PortalProgramListItem = {
   title?: string
   summary?: string
   operationMethod?: string
+  /**
+   * 목록 교육 형태. `online` | `offline` | `hybrid` | `participant_choice`.
+   * 없으면 `operationMethod`. 목록에는 한글 라벨이 없다.
+   */
+  educationForm?: 'online' | 'offline' | 'hybrid' | 'participant_choice' | string | null
   businessYear?: number
   businessStartDate?: string
   businessEndDate?: string
+  /** 목록 운영 기간. 없으면 사업 기간. */
+  operationStartDate?: string | null
+  operationEndDate?: string | null
   periodStatus?: string
   recruitmentStatus?: string
   recruitmentStartAt?: string
@@ -107,45 +71,4 @@ export type PortalProgramListQuery = {
   featuredOnHome?: boolean
   page: number
   size: number
-}
-
-export type PortalProgramDetail = {
-  programId?: number
-  programUuid?: string
-  programCode?: string
-  programType?: string
-  portalCategories?: string[]
-  title?: string
-  titleEn?: string
-  summary?: string
-  description?: string
-  operationMethod?: string
-  businessYear?: number
-  businessStartDate?: string
-  businessEndDate?: string
-  periodStatus?: string
-  recruitmentStatus?: string
-  applicationTargetMode?: string
-  businessField?: string
-  venue?: string
-  contactName?: string
-  contactEmail?: string
-  contactPhone?: string
-  additionalContentHtml?: string
-  recruitmentGuide?: string
-  learningSupportContent?: string
-  otherMatters?: string
-  remarks?: string
-  applicationMethod?: string | null
-  educationTarget?: string
-  /** 복수 교육 대상 (BE 확장 시). 없으면 `educationTarget` 단수·콤마 구분 fallback */
-  educationTargets?: string[]
-  educationTargetDetail?: string
-  recruitmentTargetDetail?: string
-  thumbnailFileObjectId?: number
-  sponsorNames?: string[]
-  recruitments?: PortalRecruitment[]
-  schedules?: PortalSchedule[]
-  curricula?: PortalCurriculum[]
-  attachments?: PortalAttachment[]
 }

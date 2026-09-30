@@ -11,6 +11,7 @@ import type { ProgramResponseEducationStructure } from './programResponseEducati
 import type { ProgramResponseLifecycleStatus } from './programResponseLifecycleStatus';
 import type { ProgramResponsePeriodStatus } from './programResponsePeriodStatus';
 import type { ProgramResponseProgramType } from './programResponseProgramType';
+import type { ProgramResponseTargetLevel } from './programResponseTargetLevel';
 import type { ProgramRoundResponse } from './programRoundResponse';
 import type { ProgramScheduleResponse } from './programScheduleResponse';
 import type { ProgramSettlementPolicyResponse } from './programSettlementPolicyResponse';
@@ -47,7 +48,13 @@ export interface ProgramResponse {
   schoolId?: string;
   district?: string;
   ips?: string;
-  targetLevel?: string;
+  /**
+     * 교육 대상 첫 값. targetLevels[0]과 같다. 없으면 null.
+     * @nullable
+     */
+  targetLevel?: ProgramResponseTargetLevel;
+  /** 교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult. */
+  targetLevels?: string[];
   institutionType?: string;
   ipOwned?: string;
   courseDeliveredBy?: string;

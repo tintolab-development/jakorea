@@ -4,6 +4,9 @@
  * JA Korea CMS Backend API — Dashboard subset
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
+ *
+ * Note: nested recruitments/rounds/… items are kept as typed DTOs (not additionalProperties
+ * object) so CMS adapters stay assignable after OpenAPI sync.
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
 import type { ProgramPeriodRequest } from './programPeriodRequest';
@@ -12,8 +15,8 @@ import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
 import type { ProgramSponsorAssignmentRequest } from './programSponsorAssignmentRequest';
+import type { ProgramUpdateRequestEducationForm } from './programUpdateRequestEducationForm';
 import type { ProgramUpdateRequestEducationStructure } from './programUpdateRequestEducationStructure';
-import type { ProgramUpdateRequestTargetLevelsItem } from './programUpdateRequestTargetLevelsItem';
 import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
 
 /**
@@ -48,8 +51,9 @@ export interface ProgramUpdateRequest {
   schoolId?: string;
   district?: string;
   ips?: string;
-  /** 교육 대상 첫 값. targetLevels가 있으면 그 첫 원소와 같다. */
-  targetLevel?: string | null;
+  targetLevel?: string;
+  /** 교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. */
+  targetLevels?: string[];
   institutionType?: string;
   ipOwned?: string;
   courseDeliveredBy?: string;
@@ -81,23 +85,33 @@ export interface ProgramUpdateRequest {
   venueDetail?: string;
   venueKind?: string;
   studentListRequired?: string;
+  contactName?: string;
   keyVisualImage?: string;
   settlementRuleId?: string;
+  /** 신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지. */
   applicationPathId?: string;
+  /** 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님. */
+  applicationMethod?: string;
+  /** 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용. */
+  educationForm?: ProgramUpdateRequestEducationForm;
+  /** 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개. */
+  trainingRequestStartDate?: string;
+  /** 연수 요청 가능기간 종료. */
+  trainingRequestEndDate?: string;
   applicationTargetMode?: string;
   additionalContentHtml?: string;
   recruitmentGuide?: string;
   learningSupportContent?: string;
+  otherMatters?: string;
+  recruitmentTargetDetail?: string;
   attachmentFileNames?: string[];
   rounds?: ProgramRoundRequest[];
   adminAssignments?: ProgramAdminAssignmentRequest[];
   schedules?: ProgramScheduleRequest[];
   wagePolicies?: ProgramWagePolicyRequest[];
   paymentItems?: ProgramSettlementPaymentItemRequest[];
-  /** 양성교사: 요청 봉투를 저장된 config에 키 단위로 덮어씁니다. 보낸 키는 교체, 생략한 키는 유지. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지. RFC-7396 깊은 병합 없음. 루트 generalCommonInfo는 제거. 일반 프로그램은 기존 RFC-7396 병합. */
+  /** 양성교사: 요청 봉투를 저장된 config에 키 단위로 덮어씁니다. 보낸 키는 교체, 생략한 키는 유지. */
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];
-  /** 교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. serviceDetailJson.program.targetLevels와 동기화된다. */
-  targetLevels?: ProgramUpdateRequestTargetLevelsItem[] | null;
 }

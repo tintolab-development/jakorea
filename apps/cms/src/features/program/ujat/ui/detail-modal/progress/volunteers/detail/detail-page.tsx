@@ -31,7 +31,7 @@ export function UjatEducationProgressVolunteerDetailPage({
 
   if (loading && !detail) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
         <Spin />
       </div>
     )

@@ -3,7 +3,10 @@
  */
 
 import { CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
-import { programEditWindowErrorMessage } from '@/shared/lib/program-edit-window-error-message'
+import {
+  isProgramRecruitmentEditPeriodCode,
+  programEditWindowErrorMessage,
+} from '@/shared/lib/program-edit-window-error-message'
 
 const BUSINESS_START_LOCK_PATTERN =
   /business_start_date|schedule lock|only be modified before/i
@@ -22,6 +25,10 @@ const PREFERRED_SCHEDULE_ERROR_MESSAGES: Record<string, string> = {
 
 export function getGeneralProgramApiErrorMessage(error: unknown, fallback: string): string {
   const code = extractApiErrorCode(error)
+  if (isProgramRecruitmentEditPeriodCode(code)) {
+    const recruitmentMessage = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (recruitmentMessage && recruitmentMessage !== code) return recruitmentMessage
+  }
   const editWindowMessage = programEditWindowErrorMessage(code)
   if (editWindowMessage) return editWindowMessage
   if (code === 'INVALID_PROGRAM_ASSIGNMENT_ROLE') {

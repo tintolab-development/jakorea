@@ -70,19 +70,6 @@ export function useProgramListActions() {
     }
   }
 
-  const getDeleteConfirmMessage = (program: Program | null): string => {
-    if (!program) return '정말 이 프로그램을 삭제하시겠습니까?'
-    const relatedData = checkProgramRelatedData(program.id)
-    const warnings: string[] = []
-    if (relatedData.hasApplications) warnings.push(`신청서 ${relatedData.applicationCount}건`)
-    if (relatedData.hasMatchings) warnings.push(`매칭 ${relatedData.matchingCount}건`)
-    if (relatedData.hasSchedules) warnings.push(`일정 ${relatedData.scheduleCount}건`)
-
-    return warnings.length > 0
-      ? `이 프로그램과 연결된 ${warnings.join(', ')}이(가) 있습니다. 삭제하면 관련 데이터도 함께 삭제됩니다. 정말 삭제하시겠습니까?`
-      : '정말 이 프로그램을 삭제하시겠습니까?'
-  }
-
   const handleConfirmDelete = async (
     program: Program | null,
     onSuccess: () => void
@@ -143,7 +130,6 @@ export function useProgramListActions() {
     handleConfirmDelete,
     handleBulkDelete,
     handleStatusChange,
-    getDeleteConfirmMessage,
     programToDelete,
     setProgramToDelete,
     deleteModalOpen,

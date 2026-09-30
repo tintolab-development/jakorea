@@ -6,21 +6,25 @@ import {
   EDUCATION_DISPLAY_STATUS_TONE_CLASS,
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,
+  type EducationDisplayStatusAudience,
 } from '../lib/display-status'
 import styles from './list-item.module.css'
 
 type EducationApplicationListItemRowProps = {
   item: EducationApplicationListItem
   onClick: () => void
+  /** 교사회원 교육현황 — 승인대기 등 라벨 분기 */
+  statusAudience?: EducationDisplayStatusAudience
 }
 
 export function EducationApplicationListItemRow({
   item,
   onClick,
+  statusAudience = 'general',
 }: EducationApplicationListItemRowProps) {
   const statusTone = getEducationDisplayStatusTone(item.displayStatus)
   const statusToneClass = styles[EDUCATION_DISPLAY_STATUS_TONE_CLASS[statusTone]]
-  const statusLabel = getEducationDisplayStatusLabel(item.displayStatus)
+  const statusLabel = getEducationDisplayStatusLabel(item.displayStatus, { audience: statusAudience })
 
   return (
     <MediaListRow

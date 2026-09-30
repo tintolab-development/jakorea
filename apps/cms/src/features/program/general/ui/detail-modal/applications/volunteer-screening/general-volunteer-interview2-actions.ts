@@ -2,12 +2,21 @@ import type { GeneralVolunteerApplicantRow } from '@/features/program/general/mo
 import {
   GENERAL_MANUAL_SECOND_INTERVIEW_SCREENING_STATUSES,
   resolveGeneralEffectiveSecondInterviewStatus,
+  type GeneralEffectiveSecondInterviewStatus,
 } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { buildInterview2ProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
 import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
 /** 선택 합격/불합격 가능 — 면접 대기만 (진행 완료·결과 확정·활동 포기 제외) */
+export function isGeneralVolunteerInterview2EffectiveStatusSelectableForResult(
+  status: GeneralEffectiveSecondInterviewStatus
+): boolean {
+  if (status === 'withdrawn') return false
+  if (GENERAL_MANUAL_SECOND_INTERVIEW_SCREENING_STATUSES.has(status)) return false
+  return status === 'waiting'
+}
+
 export function isGeneralVolunteerInterview2SelectableForResult(
   row: Pick<
     GeneralVolunteerApplicantRow,
@@ -17,10 +26,9 @@ export function isGeneralVolunteerInterview2SelectableForResult(
     | 'assignedInterviewTime'
   >
 ): boolean {
-  const status = resolveGeneralEffectiveSecondInterviewStatus(row)
-  if (status === 'withdrawn') return false
-  if (GENERAL_MANUAL_SECOND_INTERVIEW_SCREENING_STATUSES.has(status)) return false
-  return status === 'waiting'
+  return isGeneralVolunteerInterview2EffectiveStatusSelectableForResult(
+    resolveGeneralEffectiveSecondInterviewStatus(row)
+  )
 }
 
 function hasProcessedInterview2Selection(

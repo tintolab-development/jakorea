@@ -41,6 +41,11 @@
   height: 16px;
 }
 
+.education-schedule-preview-lines__remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
 /* 다줄 목록 — 값 셀·라벨 상단 정렬 */
 .detail-info-form__field:has(.education-schedule-preview-lines) {
   align-items: stretch;

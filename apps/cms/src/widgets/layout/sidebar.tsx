@@ -1,12 +1,16 @@
 /** LNB: `getMenuItemsByRole` 결과를 Ant Design Menu로 렌더링. 헤더는 상단 고정. */
 
-import { Layout, Menu } from 'antd'
+import { Layout, Menu, type MenuProps } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { invalidateMemberListQueries } from '@/features/user/api/invalidate-member-list-queries'
 import { getMenuItemsByRole } from '@/shared/config/menu-config'
+import {
+  isPrefetchableProgramListHref,
+  prefetchProgramListChunk,
+} from '@/pages/programs/prefetch-program-list-chunks'
 import {
   isMemberListMenuHref,
   memberListHref,
@@ -27,6 +31,34 @@ import { Header } from './header'
 
 const { Sider } = Layout
 
+type SidebarMenuItem = NonNullable<MenuProps['items']>[number]
+
+function withProgramListChunkPrefetch(items: SidebarMenuItem[] | undefined): SidebarMenuItem[] | undefined {
+  if (!items) return items
+  return items.map(item => {
+    if (!item || !('key' in item) || item.key == null) return item
+    const key = String(item.key)
+    const children =
+      'children' in item && item.children
+        ? withProgramListChunkPrefetch(item.children as SidebarMenuItem[])
+        : undefined
+    const next = children ? { ...item, children } : item
+    if (!isPrefetchableProgramListHref(key) || !('label' in next)) return next
+    const label = next.label
+    return {
+      ...next,
+      label: (
+        <span
+          onMouseEnter={() => prefetchProgramListChunk(key)}
+          onFocus={() => prefetchProgramListChunk(key)}
+        >
+          {label}
+        </span>
+      ),
+    }
+  })
+}
+
 export function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -35,7 +67,7 @@ export function Sidebar() {
   const roleCode = useSessionAdminRoleCode()
 
   const menuItems = useMemo(() => {
-    return getMenuItemsByRole(user?.role || null, user)
+    return withProgramListChunkPrefetch(getMenuItemsByRole(user?.role || null, user))
   }, [user?.role, user])
 
   const openKeys = useMemo(() => {

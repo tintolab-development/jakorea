@@ -30,6 +30,12 @@ describe('pricingByWageGrade', () => {
 describe('resolveWagePaymentItemIds', () => {
   it('정산 라벨 교통비를 강사 교통비 옵션 id로 되돌린다', () => {
     expect(resolveWagePaymentItemIds('교통비, 숙박비, 활동비')).toEqual(['p-1', 'p-3', 'p-6'])
+    expect(
+      resolveWagePaymentItemIds([
+        { itemType: 'TRANSPORTATION', useYn: true },
+        { itemType: 'LODGING', useYn: true },
+      ])
+    ).toEqual(['p-1', 'p-3'])
     expect(resolveWagePaymentItemsView('교통비, 숙박비, 활동비')).toBe(
       '강사 교통비, 숙박비, 활동비'
     )

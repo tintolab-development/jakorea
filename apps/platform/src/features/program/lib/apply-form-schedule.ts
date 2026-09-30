@@ -1,12 +1,13 @@
 /**
- * 일반 프로그램 신청 폼 — 진행 희망 교육 일정 (CMS institution-application-program-bridge 와 동일).
- *
- * - 일정형 + 복수 회차: 단락 숨김
- * - 날짜 지정 + 고유 달력일 ≤ 1: 단락 숨김 (같은 날 AM/PM은 하루)
- * - 기간 지정 + (커리큘럼형 또는 일정형 단일): 1지망·2지망 추가 UI
- * - 그 외(날짜 지정, 고유 일자 2일 이상): 등록된 교육 진행 예정일 체크박스
+ * 일반 프로그램 신청 폼 — 진행 희망 교육 일정.
+ * 노출 규칙 SSOT: `@jakorea/form-schema/program-application` (CMS와 공유)
  */
 
+import {
+  countUniqueEducationScheduleCalendarDays,
+  shouldShowApplicationPreferredScheduleParagraph,
+  shouldShowApplicationScheduleParagraph,
+} from '@jakorea/form-schema/program-application'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import type { MultipleChoiceParagraph, WritingFormDraft } from '@jakorea/form-schema/writing-form'
@@ -35,34 +36,7 @@ export type ApplyScheduleProgramFields = Pick<
   | 'maxPreferredScheduleCount'
 >
 
-const SCHEDULE_DATE_PART_RE = /(\d{2,4})년\s*(\d{1,2})월\s*(\d{1,2})일/
-
-function pad2(value: number): string {
-  return String(value).padStart(2, '0')
-}
-
-/**
- * CMS `countUniqueEducationScheduleCalendarDays` 와 동일 — 시작일 YYYY-MM-DD 집합 크기.
- * `26년` / `2026년` 표기, 기간 줄(시작일만), 같은 날 복수 슬롯을 처리한다.
- */
-export function countUniqueEducationScheduleCalendarDays(
-  lines: readonly string[] | undefined
-): number {
-  if (!lines?.length) return 0
-  const seen = new Set<string>()
-  for (const line of lines) {
-    const match = line.trim().match(SCHEDULE_DATE_PART_RE)
-    if (!match) continue
-    const yearRaw = Number(match[1])
-    const year = yearRaw < 100 ? 2000 + yearRaw : yearRaw
-    const month = Number(match[2])
-    const day = Number(match[3])
-    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) continue
-    if (month < 1 || month > 12 || day < 1 || day > 31) continue
-    seen.add(`${year}-${pad2(month)}-${pad2(day)}`)
-  }
-  return seen.size
-}
+export { countUniqueEducationScheduleCalendarDays }
 
 export type ApplyScheduleVisibilityFields = {
   educationStructure?: ProgramEducationStructure
@@ -72,33 +46,53 @@ export type ApplyScheduleVisibilityFields = {
 }
 
 export function shouldShowApplyScheduleParagraph(program: ApplyScheduleVisibilityFields): boolean {
-  if (program.educationStructure === 'schedule' && program.sessionRound === 'multi') {
-    return false
-  }
-  if (program.educationScheduleMode !== 'period') {
-    return countUniqueEducationScheduleCalendarDays(program.educationScheduleLines) > 1
-  }
-  return true
+  return shouldShowApplicationScheduleParagraph(program)
 }
 
-function isPeriodScheduleMode(mode: ProgramEducationScheduleMode | undefined): boolean {
-  return mode === 'period'
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-/** CMS `shouldShowInstitutionApplicationPreferredScheduleParagraph` */
-export function shouldShowApplyPreferredSchedule(program: {
-  educationStructure?: ProgramEducationStructure
-  sessionRound?: ProgramSessionRound
-  educationScheduleMode?: ProgramEducationScheduleMode
-  educationScheduleLines?: readonly string[]
-}): boolean {
-  if (!shouldShowApplyScheduleParagraph(program)) return false
-  if (!isPeriodScheduleMode(program.educationScheduleMode)) return false
-  const structure = program.educationStructure
-  const round = program.sessionRound
-  if (structure === 'curriculum' && (round === 'single' || round === 'multi')) return true
-  if (structure === 'schedule' && round === 'single') return true
-  return false
+function mapRuntimeEducationStructure(value: unknown): ProgramEducationStructure | undefined {
+  const raw = String(value ?? '').trim().toUpperCase()
+  if (raw === 'SCHEDULE') return 'schedule'
+  if (raw === 'CURRICULUM') return 'curriculum'
+  return undefined
+}
+
+function mapRuntimeSessionRound(value: unknown): ProgramSessionRound | undefined {
+  const raw = String(value ?? '').trim().toUpperCase()
+  if (raw === 'MULTI') return 'multi'
+  if (raw === 'SINGLE') return 'single'
+  return undefined
+}
+
+function mapRuntimeScheduleMode(value: unknown): ProgramEducationScheduleMode | undefined {
+  const raw = String(value ?? '').trim().toUpperCase()
+  if (raw === 'PERIOD' || raw === 'DATE_PERIOD') return 'period'
+  if (raw === 'DATE' || raw === 'FIXED_DATE') return 'date'
+  return undefined
+}
+
+/**
+ * form-bindings `runtimeContext` → CMS `shouldShowInstitutionApplicationScheduleParagraph` 입력.
+ * Portal 프로그램 GET 매퍼의 curricula/schedules 추론보다 신청 런타임 값을 우선한다.
+ */
+export function applyScheduleVisibilityFieldsFromRuntimeContext(
+  runtime: unknown
+): ApplyScheduleVisibilityFields | null {
+  if (!isRecord(runtime)) return null
+  const educationStructure = mapRuntimeEducationStructure(runtime.educationStructure)
+  const sessionRound = mapRuntimeSessionRound(runtime.sessionRound)
+  const educationScheduleMode = mapRuntimeScheduleMode(
+    runtime.educationScheduleMode ?? runtime.scheduleMode
+  )
+  if (!educationStructure && !sessionRound && !educationScheduleMode) return null
+  return { educationStructure, sessionRound, educationScheduleMode }
+}
+
+export function shouldShowApplyPreferredSchedule(program: ApplyScheduleVisibilityFields): boolean {
+  return shouldShowApplicationPreferredScheduleParagraph(program)
 }
 
 function applyDateScheduleItems(
@@ -106,7 +100,7 @@ function applyDateScheduleItems(
   lines: readonly string[]
 ): MultipleChoiceParagraph {
   const items = lines.map((line, index) => ({
-    id: `${paragraph.id}-line-${index}`,
+    id: `line:${index}`,
     label: line,
   }))
   return {

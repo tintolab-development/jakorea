@@ -15,6 +15,7 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import {
+  coerceProgramPaymentItemsText,
   getProgramWagePaymentItemOptions,
   programPaymentItemLabelsFromIds,
   resolveProgramPaymentItemIdsFromLabels,
@@ -163,11 +164,12 @@ function resolveCompanySchoolWageRows(program: Program | undefined) {
 }
 
 function formatCompanySchoolPaymentItemsView(
-  paymentItems: string | undefined,
+  paymentItems: unknown,
   options: CmsSelectMultipleOption[]
 ): string {
-  if (!paymentItems?.trim()) return '-'
-  const tokens = paymentItems
+  const text = coerceProgramPaymentItemsText(paymentItems)
+  if (!text.trim()) return '-'
+  const tokens = text
     .split(',')
     .map(part => part.trim())
     .filter(Boolean)
@@ -178,7 +180,7 @@ function formatCompanySchoolPaymentItemsView(
     if (token === 'LONG_DISTANCE_TRANSPORTATION') return '장거리 교통비'
     return token
   })
-  const resolvedIds = resolveProgramPaymentItemIdsFromLabels(paymentItems)
+  const resolvedIds = resolveProgramPaymentItemIdsFromLabels(text)
   if (labels.every(label => /^p-\d+$/i.test(label)) && resolvedIds.length > 0) {
     return programPaymentItemLabelsFromIds(resolvedIds) || labels.join(', ')
   }

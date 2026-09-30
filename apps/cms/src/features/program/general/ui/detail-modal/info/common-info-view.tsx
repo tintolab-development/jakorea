@@ -27,6 +27,9 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
+import { SponsorManagerLineInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
+import { useEducationScheduleModeLineStash } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import {
   applyCurriculumPreEducationBlock,
@@ -51,6 +54,7 @@ import {
   scheduleDetailsPreEducationSyncEqual,
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
+  shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
 } from '@/features/program/general/lib/schedule-detail-form'
@@ -432,15 +436,8 @@ function BasicInfoSection({
         })
       }
     }
-    if (
-      isFormEdit &&
-      watchedSponsorIds.length > 0 &&
-      watchedSponsorIds.every(
-        id =>
-          selectedSponsors.some(sponsor => sponsor.id === id) &&
-          sponsorEditContext.contactsBySponsorId[id] != null
-      )
-    ) {
+    // 후원사 선택 즉시 미선택 노출 (전 후원사 contacts 로드 대기 금지)
+    if (isFormEdit && watchedSponsorIds.length > 0) {
       return withSponsorContactUnselectedOption(options)
     }
     return options
@@ -486,7 +483,7 @@ function BasicInfoSection({
     )
     if (currentIds.length === 0) {
       const storedLine = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
-      if (isSponsorContactUnselectedLabel(storedLine)) {
+      if (isSponsorContactUnselectedLabel(storedLine) || !storedLine) {
         editForm.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
           shouldValidate: false,
         })
@@ -497,14 +494,16 @@ function BasicInfoSection({
       return
     }
     if (validIds.length !== currentIds.length) {
-      editForm.setValue('sponsorManagerContactIds', validIds, {
-        shouldValidate: validIds.length > 0,
+      const nextIds =
+        validIds.length > 0 ? validIds : [SPONSOR_CONTACT_UNSELECTED_VALUE]
+      editForm.setValue('sponsorManagerContactIds', nextIds, {
+        shouldValidate: true,
         shouldDirty: true,
       })
-      editForm.setValue('sponsorManagerContactId', validIds[0] ?? '', {
+      editForm.setValue('sponsorManagerContactId', nextIds[0] ?? '', {
         shouldValidate: false,
       })
-      if (validIds.length > 0) editForm.clearErrors('sponsorManagerContactIds')
+      editForm.clearErrors('sponsorManagerContactIds')
     } else if (validIds.length > 0) {
       editForm.clearErrors('sponsorManagerContactIds')
     }
@@ -843,9 +842,7 @@ function BasicInfoSection({
           />
           <DetailInfoForm.Field
             label="후원사 담당자"
-            view={
-              <PipeSeparatedInlineView text={sponsorManagerViewText} />
-            }
+            view={<SponsorManagerLineInlineView text={sponsorManagerViewText} />}
             edit={
               <Controller
                 name="sponsorManagerContactIds"
@@ -1575,6 +1572,7 @@ function TypeSettingsSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
@@ -2397,11 +2395,17 @@ function SingleRoundCurriculumSessionForm({
               label="단원명 및 교육 내용"
               fullRow
               view={
-                <>
-                  {session.title}
-                  <DetailInfoForm.InputsSeparator />
-                  {session.description}
-                </>
+                session.title?.trim() || session.description?.trim() ? (
+                  <>
+                    {session.title?.trim() ? session.title : null}
+                    {session.title?.trim() && session.description?.trim() ? (
+                      <DetailInfoForm.InputsSeparator />
+                    ) : null}
+                    {session.description?.trim() ? session.description : null}
+                  </>
+                ) : (
+                  '-'
+                )
               }
               edit={
                 <div className="detail-info-form-inputs-wrapper">
@@ -2603,6 +2607,7 @@ function CurriculumSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const watchedStructure = isFormEdit
     ? editForm.watch('educationStructure')
@@ -3572,12 +3577,16 @@ function ScheduleDetailEditBlock({
                 <Controller
                   name={`scheduleDetails.${index}.groupTimes.${groupIndex}`}
                   control={editForm.control}
-                  render={({ field }) => (
+                  render={({ field }) => {
+                    const start = scheduleTimeStringToDayjs(field.value?.startTime)
+                    const end = scheduleTimeStringToDayjs(field.value?.endTime)
+                    return (
                     <ParagraphTimePicker
                       endTimeAlwaysOn
                       placeholder="시간 선택"
                       width={200}
-                      value={scheduleTimeStringToDayjs(field.value?.startTime)}
+                      value={start}
+                      initialTimeRange={start && end ? [start, end] : null}
                       onTimeRangeChange={range => {
                         field.onChange({
                           startTime: range[0].format('HH:mm'),
@@ -3585,7 +3594,8 @@ function ScheduleDetailEditBlock({
                         })
                       }}
                     />
-                  )}
+                    )
+                  }}
                 />
                 {groupIndex > 0 ? (
                   <ItemDeleteButton
@@ -4296,6 +4306,7 @@ function ScheduleProgressSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const watchedStructure = isFormEdit
     ? form!.watch('educationStructure')
@@ -4424,6 +4435,7 @@ function ScheduleSettingsEditFields({
 }) {
   const [singleDate, setSingleDate] = useState<Dayjs | null>(null)
   const [periodDate, setPeriodDate] = useState<Dayjs | null>(null)
+  const swapScheduleLinesForMode = useEducationScheduleModeLineStash()
 
   const lines = form.watch('educationScheduleLines') ?? []
   const scheduleMode = form.watch('educationScheduleMode') ?? 'date'
@@ -4458,9 +4470,16 @@ function ScheduleSettingsEditFields({
 
   useEffect(() => {
     if (!lockDateMode) return
-    if (form.getValues('educationScheduleMode') === 'date') return
+    const currentMode = form.getValues('educationScheduleMode') ?? 'date'
+    if (currentMode === 'date') return
+    const nextLines = swapScheduleLinesForMode(
+      currentMode,
+      'date',
+      form.getValues('educationScheduleLines') ?? []
+    )
+    form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
     form.setValue('educationScheduleMode', 'date', { shouldDirty: true })
-  }, [lockDateMode, form])
+  }, [lockDateMode, form, swapScheduleLinesForMode])
 
   useEffect(() => {
     if (scheduleMode !== 'date') return
@@ -4543,8 +4562,17 @@ function ScheduleSettingsEditFields({
                     size="large"
                     value={lockDateMode ? 'date' : (field.value ?? 'date')}
                     onChange={e => {
-                      const next = e.target.value
+                      const next = e.target.value as 'date' | 'period'
                       if (lockDateMode && next === 'period') return
+                      const currentMode = (field.value ?? 'date') as 'date' | 'period'
+                      if (next !== currentMode) {
+                        const nextLines = swapScheduleLinesForMode(
+                          currentMode,
+                          next,
+                          form.getValues('educationScheduleLines') ?? []
+                        )
+                        form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
+                      }
                       field.onChange(next)
                     }}
                   >
@@ -4583,6 +4611,10 @@ function ScheduleSettingsEditFields({
                 customizable={false}
                 showTimeToggle={false}
                 showPeriodToggle={false}
+                lockPeriodToggleOn={shouldLockEducationScheduleCalendarToggles({
+                  participantOrganization: Boolean(participantOrganization),
+                  educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
+                })}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}
@@ -4623,6 +4655,7 @@ function ScheduleSettingsSection({
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
   })
   const educationStructure = isFormEdit
     ? (form!.watch('educationStructure') ?? effectiveTypeFields.educationStructure)
@@ -4656,6 +4689,34 @@ function ScheduleSettingsSection({
       isFormEdit={isFormEdit}
       editDescription={scheduleMeta.editDescription}
       required
+      titleTrailing={
+        isFormEdit ? (
+          <EducationScheduleChangeTitleAction
+            scheduleLines={lines}
+            educationScheduleMode={
+              isFormEdit
+                ? (editForm.watch('educationScheduleMode') ?? 'date')
+                : 'date'
+            }
+            autoFillFromScheduleGroupTimes={
+              educationStructure === 'schedule' &&
+              sessionRound === 'single' &&
+              !(isFormEdit && editForm.watch('participantOrganization'))
+            }
+            lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
+              participantOrganization: Boolean(
+                isFormEdit && editForm.watch('participantOrganization')
+              ),
+              educationStructure: educationStructure === 'curriculum' ? 'curriculum' : 'schedule',
+            })}
+            operationStart={program.startDate}
+            operationEnd={program.endDate}
+            onApply={nextLines => {
+              editForm.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
+            }}
+          />
+        ) : undefined
+      }
     >
       {isFormEdit ? (
         <ScheduleSettingsEditFields form={editForm} />
