@@ -1,5 +1,4 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { Editor } from '@/shared/rich-text'
 import { useCallback, useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
@@ -10,6 +9,10 @@ import {
 } from '../../lib/recruitment/resolve-recruitment-display'
 import { formatRecruitmentAuditDate } from '../../lib/recruitment/format-period'
 import type { GeminiRecruitmentDetail } from '../../model/recruitment/detail-types'
+import type {
+  GeminiRecruitmentRichTextGetter,
+  GeminiRecruitmentRichTextKey,
+} from '../../lib/recruitment/add-form-options'
 import type { GeminiRecruitmentInfoEditDraft } from '../../model/recruitment/info-edit-draft'
 import { toDateRangeValue } from '../../model/recruitment/info-edit-draft'
 import { GeminiRecruitmentInstitutionFields } from '../recruitment/gemini-recruitment-institution-fields'
@@ -34,18 +37,17 @@ export function GeminiRecruitmentInfoTab({
   isEditMode = false,
   draft = null,
   onDraftChange,
-  editor = null,
-  editorMinHeight,
-  registerGetAdditionalContentMarkdown,
+  registerRichTextGetter,
 }: {
   detail: GeminiRecruitmentDetail
   todayKey: string
   isEditMode?: boolean
   draft?: GeminiRecruitmentInfoEditDraft | null
   onDraftChange?: (patch: Partial<GeminiRecruitmentInfoEditDraft>) => void
-  editor?: Editor | null
-  editorMinHeight?: string | number
-  registerGetAdditionalContentMarkdown?: (getMarkdown: () => string) => void
+  registerRichTextGetter?: (
+    key: GeminiRecruitmentRichTextKey,
+    getter: GeminiRecruitmentRichTextGetter | null
+  ) => void
 }) {
   const resolvedDetail = useMemo((): GeminiRecruitmentDetail => {
     if (!isEditMode || draft == null) return detail
@@ -222,15 +224,9 @@ export function GeminiRecruitmentInfoTab({
           mode={contentMode}
           values={fieldValues}
           deferTextCommit={contentMode === 'edit'}
-          editor={editor}
-          editorMinHeight={editorMinHeight}
-          recruitmentIdForEditor={
-            contentMode === 'edit' && registerGetAdditionalContentMarkdown
-              ? detail.id
-              : undefined
-          }
-          registerGetAdditionalContentMarkdown={
-            contentMode === 'edit' ? registerGetAdditionalContentMarkdown : undefined
+          richTextResetKey={detail.id}
+          registerRichTextGetter={
+            contentMode === 'edit' ? registerRichTextGetter : undefined
           }
           readOnlyUpload={contentMode === 'view'}
           onChange={

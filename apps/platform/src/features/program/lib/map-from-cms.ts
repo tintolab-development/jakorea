@@ -35,6 +35,7 @@ import {
   resolveProgramDetailCase,
   shouldIncludeInterviewStages,
 } from './detail-case.ts'
+import { extraSection } from './html-body.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {
@@ -672,7 +673,7 @@ function mapExtraSections(
   const sections: ProgramExtraSection[] = []
   const guide = program.recruitmentGuide?.trim()
   if (guide) {
-    sections.push({ title: '모집안내', body: guide })
+    sections.push(extraSection('모집안내', guide))
   }
 
   const additional = program.additionalContent?.trim()
@@ -682,7 +683,7 @@ function mapExtraSections(
 
   const learning = program.learningSupportContent?.trim()
   if (learning && canShowLearningSupport(detailCase)) {
-    sections.push({ title: '학습 지원 내용', body: learning })
+    sections.push(extraSection('학습 지원 내용', learning))
   }
 
   const other = program.otherNotes?.trim()

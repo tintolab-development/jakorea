@@ -344,9 +344,14 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
   )
     ? (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
     : undefined
+  const columnSource = Array.isArray(dtoTargetLevels)
+    ? dtoTargetLevels
+    : Array.isArray(details.targetLevels)
+      ? details.targetLevels
+      : undefined
   const persistedTargetLevels = resolvePersistedProgramTargetLevels({
-    targetLevels: dtoTargetLevels ?? details.targetLevels,
-    targetLevel: dto.targetLevel ?? details.targetLevels?.[0],
+    targetLevels: columnSource,
+    targetLevel: dto.targetLevel,
     registrationOverlay: overlay,
     generalCommonInfo,
   })
@@ -393,8 +398,11 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       textbookNameEn: dto.textbookNameEn,
       schoolId: dto.schoolId,
       district: dto.district,
-      targetLevel: persistedTargetLevels[0] ?? (dto.targetLevel as Program['targetLevel']),
-      targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
+      targetLevel: persistedTargetLevels[0],
+      targetLevels:
+        columnSource !== undefined || persistedTargetLevels.length > 0
+          ? persistedTargetLevels
+          : undefined,
       institutionType: dto.institutionType as Program['institutionType'],
       ipOwned: dto.ipOwned,
       courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
@@ -489,19 +497,29 @@ function resolveRequestTargetLevels(
   program: Program,
   fallback?: Program
 ): ProgramUpdateRequestTargetLevelsItem[] | undefined {
-  const resolved = resolvePersistedProgramTargetLevels({
-    ...program,
-    registrationOverlay: overlayForTargetLevels(program),
+  const withOverlay = (source: Program) => ({
+    ...source,
+    registrationOverlay: overlayForTargetLevels(source),
   })
-  const fromFallback = fallback
-    ? resolvePersistedProgramTargetLevels({
-        ...fallback,
-        registrationOverlay: overlayForTargetLevels(fallback),
-      })
-    : []
-  const richest = resolved.length >= fromFallback.length ? resolved : fromFallback
-  if (richest.length > 0) {
-    return [...richest] as ProgramUpdateRequestTargetLevelsItem[]
+  if (Array.isArray(program.targetLevels)) {
+    return [
+      ...resolvePersistedProgramTargetLevels(withOverlay(program)),
+    ] as ProgramUpdateRequestTargetLevelsItem[]
+  }
+  const resolved = resolvePersistedProgramTargetLevels(withOverlay(program))
+  if (resolved.length > 0) {
+    return [...resolved] as ProgramUpdateRequestTargetLevelsItem[]
+  }
+  if (fallback) {
+    if (Array.isArray(fallback.targetLevels)) {
+      return [
+        ...resolvePersistedProgramTargetLevels(withOverlay(fallback)),
+      ] as ProgramUpdateRequestTargetLevelsItem[]
+    }
+    const fromFallback = resolvePersistedProgramTargetLevels(withOverlay(fallback))
+    if (fromFallback.length > 0) {
+      return [...fromFallback] as ProgramUpdateRequestTargetLevelsItem[]
+    }
   }
   return undefined
 }
@@ -572,7 +590,7 @@ function coreRequest(
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
     district: program.district,
-    targetLevel: targetLevels?.[0] ?? program.targetLevel,
+    targetLevel: targetLevels?.[0],
     targetLevels,
     institutionType: program.institutionType,
     ipOwned: program.ipOwned,
@@ -748,19 +766,26 @@ function patchRequest(
   }
 
   // UJAT registration overlay 보존을 위해 patch 저장 시 serviceDetailJson은 항상 포함
-  const persistedTargetLevels =
-    has('targetLevel') || has('targetLevels')
-      ? resolveRequestTargetLevels(merged)
-      : resolveRequestTargetLevels(merged, existing)
+  const touchesTargetLevels = has('targetLevel') || has('targetLevels')
+  const persistedTargetLevels = touchesTargetLevels
+    ? resolveRequestTargetLevels(merged)
+    : resolveRequestTargetLevels(merged, existing)
   const serializeSource =
-    persistedTargetLevels?.length
+    persistedTargetLevels != null
       ? { ...merged, targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
       : merged
   body.serviceDetailJson = serializeServiceDetail(
     serializeSource,
     registrationSnapshotForApi(registration)
   )
-  if (persistedTargetLevels?.length) {
+  if (touchesTargetLevels && persistedTargetLevels != null) {
+    body.targetLevels = persistedTargetLevels
+    body.targetLevel = persistedTargetLevels[0]
+  } else if (
+    !touchesTargetLevels &&
+    persistedTargetLevels != null &&
+    persistedTargetLevels.length > 0
+  ) {
     body.targetLevels = persistedTargetLevels
     body.targetLevel = persistedTargetLevels[0]
   }

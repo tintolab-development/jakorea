@@ -35,7 +35,9 @@ import {
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
 import {
+  applyParticipantRecruitmentColumnsFromResponse,
   applyProgramMissingCommonStringFieldsToUpdateRequest,
+  applyRecruitmentParticipantColumnFieldsToUpdateRequest,
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
@@ -368,16 +370,15 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     ? dto.targetLevels.map(v => String(v))
     : undefined
   const jsonTargetLevels = serviceDetail.targetLevels
-  const columnTargetLevels = resolveProgramTargetLevels({
-    targetLevels:
-      (dtoTargetLevels?.length ?? 0) >= (jsonTargetLevels?.length ?? 0)
-        ? (dtoTargetLevels ?? jsonTargetLevels)
-        : jsonTargetLevels,
-    targetLevel: dto.targetLevel ?? jsonTargetLevels?.[0],
-  })
+  // Admin 컬럼이 있으면(빈 배열 포함) SSOT. 키가 없을 때만 JSON·라벨 legacy hydrate.
+  const columnSource = Array.isArray(dtoTargetLevels)
+    ? dtoTargetLevels
+    : Array.isArray(jsonTargetLevels)
+      ? jsonTargetLevels
+      : undefined
   const detailTargetLevels = resolvePersistedProgramTargetLevels({
-    targetLevels: columnTargetLevels,
-    targetLevel: dto.targetLevel ?? jsonTargetLevels?.[0],
+    targetLevels: columnSource,
+    targetLevel: dto.targetLevel,
     registrationOverlay: serviceDetail.registrationOverlay,
     generalCommonInfo,
   })
@@ -458,7 +459,10 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     detailedProgramId:
       dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     targetLevel: detailTargetLevels[0],
-    targetLevels: detailTargetLevels.length > 0 ? detailTargetLevels : undefined,
+    targetLevels:
+      columnSource !== undefined || detailTargetLevels.length > 0
+        ? detailTargetLevels
+        : undefined,
     // typed lifecycleStatus SSOT — serviceDetailJson 값으로 덮지 않음
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: toTypedProgramLifecycleStatus(dto.lifecycleStatus) ?? undefined,
@@ -474,10 +478,13 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
 
-  return applyResolvedAnnouncementTitle(mapped, {
-    serviceDetailJson: dto.serviceDetailJson,
-    overlay: serviceDetail.registrationOverlay,
-  })
+  return applyResolvedAnnouncementTitle(
+    applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+    {
+      serviceDetailJson: dto.serviceDetailJson,
+      overlay: serviceDetail.registrationOverlay,
+    }
+  )
 }
 
 export function filterGeneralProgramsByOverviewStatus(
@@ -609,16 +616,30 @@ function toRequestPhone(value: string | null | undefined): string | undefined {
   return formatKoreanPhoneNumber(trimmed)
 }
 
-/** Admin create/update SSOT — 모집 라벨·overlay가 더 길면 그 배열을 컬럼에 올린다. */
+/** Admin create/update — 컬럼 `targetLevels`가 있으면 그대로. 없을 때만 legacy hydrate. */
 function resolveRequestTargetLevels(
   program: Program,
   fallback?: Program
 ): ProgramUpdateRequestTargetLevelsItem[] | undefined {
+  if (Array.isArray(program.targetLevels)) {
+    return [
+      ...resolvePersistedProgramTargetLevels(program),
+    ] as ProgramUpdateRequestTargetLevelsItem[]
+  }
   const resolved = resolvePersistedProgramTargetLevels(program)
-  const fromFallback = fallback ? resolvePersistedProgramTargetLevels(fallback) : []
-  const richest = resolved.length >= fromFallback.length ? resolved : fromFallback
-  if (richest.length > 0) {
-    return [...richest] as ProgramUpdateRequestTargetLevelsItem[]
+  if (resolved.length > 0) {
+    return [...resolved] as ProgramUpdateRequestTargetLevelsItem[]
+  }
+  if (fallback) {
+    if (Array.isArray(fallback.targetLevels)) {
+      return [
+        ...resolvePersistedProgramTargetLevels(fallback),
+      ] as ProgramUpdateRequestTargetLevelsItem[]
+    }
+    const fromFallback = resolvePersistedProgramTargetLevels(fallback)
+    if (fromFallback.length > 0) {
+      return [...fromFallback] as ProgramUpdateRequestTargetLevelsItem[]
+    }
   }
   return undefined
 }
@@ -953,25 +974,33 @@ function mapProgramPatchFieldsToRequest(
       has(key)
   )
   if (touchesServiceDetail) {
-    const persistedTargetLevels =
-      has('targetLevel') || has('targetLevels')
-        ? patchIncludesRecruitmentWindow(patch) && (merged.targetLevels?.length ?? 0) > 0
-          ? [...(merged.targetLevels ?? [])]
-          : resolveRequestTargetLevels(merged)
-        : resolveRequestTargetLevels(detailSource, existing)
+    const touchesTargetLevels = has('targetLevel') || has('targetLevels')
+    const persistedTargetLevels = touchesTargetLevels
+      ? patchIncludesRecruitmentWindow(patch) && (merged.targetLevels?.length ?? 0) > 0
+        ? [...(merged.targetLevels ?? [])]
+        : resolveRequestTargetLevels(merged)
+      : resolveRequestTargetLevels(detailSource, existing)
     const serializeSource =
-      persistedTargetLevels?.length
+      persistedTargetLevels != null
         ? { ...detailSource, targetLevels: persistedTargetLevels }
         : detailSource
     body.serviceDetailJson = serializeGeneralProgramServiceDetailJson(serializeSource, {
       omitRecruitmentWindow: !patchIncludesRecruitmentWindow(patch),
     })
-    if (persistedTargetLevels?.length) {
+    if (touchesTargetLevels && persistedTargetLevels != null) {
+      body.targetLevels = persistedTargetLevels
+      body.targetLevel = persistedTargetLevels[0]
+    } else if (
+      !touchesTargetLevels &&
+      persistedTargetLevels != null &&
+      persistedTargetLevels.length > 0
+    ) {
       body.targetLevels = persistedTargetLevels
       body.targetLevel = persistedTargetLevels[0]
     }
   }
 
+  applyRecruitmentParticipantColumnFieldsToUpdateRequest(body, { merged, existing, patch })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'patch',
     merged,

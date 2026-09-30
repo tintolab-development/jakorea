@@ -1,22 +1,26 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Editor } from '@/shared/rich-text'
 import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
-import { GEMINI_RECRUITMENT_DETAIL_TEXT_FIELDS } from '../../lib/recruitment/add-form-options'
+import {
+  GEMINI_RECRUITMENT_DETAIL_RICH_TEXT_FIELDS,
+  GEMINI_RECRUITMENT_PROGRAM_DESCRIPTION_FIELD,
+  type GeminiRecruitmentRichTextGetter,
+  type GeminiRecruitmentRichTextKey,
+} from '../../lib/recruitment/add-form-options'
 import type { GeminiRecruitmentFormFieldValues } from '../../lib/recruitment/format-recruitment-fields'
 import { formatOptionalText } from '../../lib/recruitment/format-recruitment-fields'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { RichTextEditor } from '@/shared/rich-text'
-import { CmsTextArea } from '@/shared/ui/cms-textarea'
+import { CmsInput } from '@/shared/ui/cms-input'
 import {
   ADMIN_FILE_PURPOSE,
   programFileOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
-import { GeminiDeferredCmsTextArea } from './gemini-recruitment-deferred-text-input'
-import { GeminiRecruitmentAdditionalContentEditor } from './gemini-recruitment-additional-content-editor'
+import { GeminiDeferredCmsInput } from './gemini-recruitment-deferred-text-input'
+import { GeminiRecruitmentRichTextEditor } from './gemini-recruitment-rich-text-editor'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
+import './gemini-recruitment-detail-fields.css'
 
 const THUMB_UPLOAD_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 
@@ -25,18 +29,40 @@ const ATTACHMENT_GUIDE_LINES = [
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
+const HTML_TAG_RE = /<\/?[a-z][^>]*>/i
+
+function isEmptyRichText(value: string): boolean {
+  const withoutTags = value.replace(/<[^>]+>/g, '').replace(/&nbsp;|&#160;/gi, ' ').trim()
+  return withoutTags.length === 0
+}
+
+function GeminiRecruitmentRichTextView({ content }: { content: string }) {
+  if (isEmptyRichText(content)) return '-'
+  if (!HTML_TAG_RE.test(content)) {
+    return <div className="gemini-recruitment-info-tab__multiline-text">{content}</div>
+  }
+  return (
+    <div
+      className="gemini-recruitment-info-tab__additional-content gemini-recruitment-detail-fields__rich-text-view rich-text-content"
+      dangerouslySetInnerHTML={{ __html: content }}
+    />
+  )
+}
+
 export type GeminiRecruitmentDetailFieldsProps = {
   mode: 'view' | 'edit'
   values: GeminiRecruitmentFormFieldValues
   onChange?: (patch: Partial<GeminiRecruitmentFormFieldValues>) => void
-  /** 추가 폼 등 — 이미 마운트된 TipTap 인스턴스를 넘길 때 */
-  editor?: Editor | null
-  editorMinHeight?: string | number
-  /** 모집 정보 수정 — 조회 모드에선 TipTap을 만들지 않도록 이 경로만 사용 */
-  recruitmentIdForEditor?: string
-  registerGetAdditionalContentMarkdown?: (getMarkdown: () => string) => void
+  /** 수정 중에만 에디터를 만들고, 프로그램이 바뀌면 다시 마운트 */
+  richTextResetKey?: string
+  registerRichTextGetter?: (
+    key: GeminiRecruitmentRichTextKey,
+    getter: GeminiRecruitmentRichTextGetter | null
+  ) => void
+  /** 에디터 첫 입력 — 등록 폼 dirty 판정용. 키마다 호출해도 부모는 한 번만 갱신한다. */
+  onRichTextEdit?: () => void
   readOnlyUpload?: boolean
-  /** true면 textarea 타이핑은 blur 때 draft commit */
+  /** true면 한 줄 입력 타이핑은 blur 때 draft commit */
   deferTextCommit?: boolean
 }
 
@@ -44,10 +70,9 @@ export function GeminiRecruitmentDetailFields({
   mode,
   values,
   onChange,
-  editor = null,
-  editorMinHeight,
-  recruitmentIdForEditor,
-  registerGetAdditionalContentMarkdown,
+  richTextResetKey = 'gemini-recruitment-detail',
+  registerRichTextGetter,
+  onRichTextEdit,
   readOnlyUpload = false,
   deferTextCommit = false,
 }: GeminiRecruitmentDetailFieldsProps) {
@@ -87,21 +112,7 @@ export function GeminiRecruitmentDetailFields({
     [revokeThumb, thumbObjectUrl]
   )
 
-  const textFieldValues = {
-    programDescription: values.programDescription,
-    recruitmentGuide: values.recruitmentGuide,
-    applicationMethod: values.applicationMethod,
-    learningSupportContent: values.learningSupportContent,
-  } as const
-
-  const additionalContentView = values.additionalContentMarkdown.trim() ? (
-    <div
-      className="gemini-recruitment-info-tab__additional-content"
-      dangerouslySetInnerHTML={{ __html: values.additionalContentMarkdown }}
-    />
-  ) : (
-    '-'
-  )
+  const programDescription = GEMINI_RECRUITMENT_PROGRAM_DESCRIPTION_FIELD
 
   return (
     <>
@@ -144,71 +155,56 @@ export function GeminiRecruitmentDetailFields({
         />
       </DetailInfoForm.Row>
 
-      {GEMINI_RECRUITMENT_DETAIL_TEXT_FIELDS.map(field => (
-        <DetailInfoForm.Row key={field.key} type="single">
-          <DetailInfoForm.Field
-            label={field.label}
-            fullRow
-            view={
-              field.key === 'recruitmentGuide' ? (
-                <div className="gemini-recruitment-info-tab__multiline-text">
-                  {formatOptionalText(textFieldValues[field.key])}
-                </div>
-              ) : (
-                formatOptionalText(textFieldValues[field.key])
-              )
-            }
-            edit={
-              isEdit ? (
-                deferTextCommit ? (
-                  <GeminiDeferredCmsTextArea
-                    inputSize="medium"
-                    width="100%"
-                    placeholder={field.placeholder}
-                    rows={field.key === 'recruitmentGuide' ? 6 : 3}
-                    value={textFieldValues[field.key]}
-                    onCommit={next => onChange({ [field.key]: next })}
-                  />
-                ) : (
-                  <CmsTextArea
-                    inputSize="medium"
-                    width="100%"
-                    placeholder={field.placeholder}
-                    rows={field.key === 'recruitmentGuide' ? 6 : 3}
-                    value={textFieldValues[field.key]}
-                    onChange={e => onChange({ [field.key]: e.target.value })}
-                  />
-                )
-              ) : undefined
-            }
-          />
-        </DetailInfoForm.Row>
-      ))}
-
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="추가 내용"
+          label={programDescription.label}
           fullRow
-          view={additionalContentView}
+          view={formatOptionalText(values.programDescription)}
           edit={
             isEdit ? (
-              recruitmentIdForEditor && registerGetAdditionalContentMarkdown ? (
-                <GeminiRecruitmentAdditionalContentEditor
-                  recruitmentId={recruitmentIdForEditor}
-                  initialMarkdown={values.additionalContentMarkdown}
-                  registerGetMarkdown={registerGetAdditionalContentMarkdown}
+              deferTextCommit ? (
+                <GeminiDeferredCmsInput
+                  inputSize="medium"
+                  width="100%"
+                  placeholder={programDescription.placeholder}
+                  value={values.programDescription}
+                  onCommit={next => onChange({ programDescription: next })}
                 />
               ) : (
-                <div className="notice-register-modal__section notice-register-modal__section--editor gemini-recruitment-info-tab__editor">
-                  <div className="notice-register-modal__editor-host">
-                    <RichTextEditor editor={editor} minHeight={editorMinHeight} />
-                  </div>
-                </div>
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  placeholder={programDescription.placeholder}
+                  value={values.programDescription}
+                  onChange={e => onChange({ programDescription: e.target.value })}
+                />
               )
             ) : undefined
           }
         />
       </DetailInfoForm.Row>
+
+      {GEMINI_RECRUITMENT_DETAIL_RICH_TEXT_FIELDS.map(field => (
+        <DetailInfoForm.Row key={field.key} type="single">
+          <DetailInfoForm.Field
+            label={field.label}
+            fullRow
+            view={<GeminiRecruitmentRichTextView content={values[field.key]} />}
+            edit={
+              isEdit && registerRichTextGetter ? (
+                <GeminiRecruitmentRichTextEditor
+                  fieldKey={field.key}
+                  resetKey={`${richTextResetKey}-${field.key}`}
+                  initialContent={values[field.key]}
+                  placeholder={field.placeholder}
+                  registerGetHtml={registerRichTextGetter}
+                  onEdit={onRichTextEdit}
+                />
+              ) : undefined
+            }
+          />
+        </DetailInfoForm.Row>
+      ))}
 
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field

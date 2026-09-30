@@ -25,7 +25,9 @@ function buildInstructor(row: GeminiApprovedTrainingRow): GeminiApprovedTraining
   }
 }
 
-function rowToDetail(row: GeminiApprovedTrainingRow): GeminiApprovedTrainingDetail {
+export function mapGeminiApprovedTrainingRowToDetail(
+  row: GeminiApprovedTrainingRow
+): GeminiApprovedTrainingDetail {
   return {
     id: row.id,
     recruitmentTitle: row.recruitmentTitle ?? '',
@@ -71,7 +73,7 @@ function rowToDetail(row: GeminiApprovedTrainingRow): GeminiApprovedTrainingDeta
 export function getGeminiApprovedTrainingDetail(rowId: string): GeminiApprovedTrainingDetail | null {
   const row = getGeminiApprovedTrainingRowsSnapshot().find(x => x.id === rowId)
   if (!row) return null
-  return rowToDetail(row)
+  return mapGeminiApprovedTrainingRowToDetail(row)
 }
 
 export function getGeminiApprovedTrainingRowById(rowId: string): GeminiApprovedTrainingRow | null {

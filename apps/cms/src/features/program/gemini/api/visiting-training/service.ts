@@ -94,11 +94,17 @@ export async function getGeminiRecruitmentDetail(
 
 export async function listGeminiOrganizationApplicationsPage(
   programId: string,
-  status: string | undefined,
+  filters: {
+    status?: string
+    organizationName?: string
+    regionSido?: string
+    regionSigungu?: string
+    teacherName?: string
+  } = {},
   pageParam = 0
 ): Promise<GeminiOrganizationApplicationsPage> {
   assertRemoteReady()
-  const page = await fetchGeminiOrganizationApplicationsRemote(programId, status, pageParam)
+  const page = await fetchGeminiOrganizationApplicationsRemote(programId, filters, pageParam)
   const baseNo = page.page * page.size
   return {
     rows: page.items.map((item, index) =>

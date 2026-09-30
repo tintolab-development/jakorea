@@ -89,7 +89,12 @@ export interface ProgramResponse {
   recruitmentGuide?: string;
   learningSupportContent?: string;
   otherMatters?: string;
-  remarks?: string;
+  remarks?: string | null;
+  /**
+   * 참여자 지원 방법. 강사·봉사자 nested와 별개. 없으면 null.
+   * @nullable
+   */
+  applicationMethod?: string | null;
   recruitmentTargetDetail?: string;
   educationTargetDetail?: string;
   venueDetail?: string;

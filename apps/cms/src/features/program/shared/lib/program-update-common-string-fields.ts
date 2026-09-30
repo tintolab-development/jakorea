@@ -180,3 +180,98 @@ export function resolveOtherNotesFromProgramResponse(dto: {
 }): string | undefined {
   return trimOrUndefined(dto.otherMatters ?? undefined) || trimOrUndefined(dto.otherNotes ?? undefined)
 }
+
+/** 참여자 모집 비고 — top-level remarks, 없으면 nested. otherNotes(otherMatters)와 분리. */
+export function resolveParticipantRecruitmentRemarks(program: Program): string | undefined {
+  return (
+    trimOrUndefined(program.remarks) ||
+    trimOrUndefined(program.generalCommonInfo?.participantRecruitmentInfo?.remarks)
+  )
+}
+
+type RecruitmentParticipantColumnBody = {
+  applicationMethod?: string | null
+  remarks?: string | null
+  clearFields?: string[] | null
+}
+
+/**
+ * 모집 탭 부분 PATCH — `applicationMethod`·`remarks` 컬럼.
+ * 키를 건드린 경우에만 싣고, 빈 값 삭제는 clearFields. otherNotes는 넣지 않는다.
+ */
+export function applyRecruitmentParticipantColumnFieldsToUpdateRequest(
+  body: RecruitmentParticipantColumnBody,
+  args: {
+    merged: Program
+    existing: Program
+    patch: Partial<Program>
+  }
+): void {
+  const clearFields = [...(body.clearFields ?? [])]
+
+  if (patchHasKey(args.patch, 'applicationMethod')) {
+    const next = trimOrUndefined(args.merged.applicationMethod)
+    const previous = trimOrUndefined(args.existing.applicationMethod)
+    if (next !== previous) {
+      if (next) body.applicationMethod = next
+      else if (previous) appendClearFieldName(clearFields, 'applicationMethod')
+    }
+  }
+
+  if (patchHasKey(args.patch, 'remarks')) {
+    const next = resolveParticipantRecruitmentRemarks(args.merged)
+    const previous = resolveParticipantRecruitmentRemarks(args.existing)
+    if (next !== previous) {
+      if (next) body.remarks = next
+      else if (previous) appendClearFieldName(clearFields, 'remarks')
+    }
+  }
+
+  if (clearFields.length > 0) body.clearFields = clearFields
+}
+
+function appendClearFieldName(clearFields: string[], field: string): void {
+  if (!clearFields.includes(field)) clearFields.push(field)
+}
+
+/**
+ * GET 참여자 컬럼이 있으면 nested보다 우선한다.
+ * 컬럼이 null/공백이면 참여자 nested의 같은 키를 비워 화면이 옛 값을 되살리지 않게 한다.
+ * 응답에 키가 없으면(구 페이로드) nested를 유지한다.
+ */
+export function applyParticipantRecruitmentColumnsFromResponse(
+  program: Program,
+  dto: { applicationMethod?: string | null; remarks?: string | null }
+): Program {
+  const hasMethod = Object.prototype.hasOwnProperty.call(dto, 'applicationMethod')
+  const hasRemarks = Object.prototype.hasOwnProperty.call(dto, 'remarks')
+  if (!hasMethod && !hasRemarks) return program
+
+  const method = hasMethod ? trimOrUndefined(dto.applicationMethod) : program.applicationMethod
+  const remarks = hasRemarks ? trimOrUndefined(dto.remarks) : program.remarks
+  const currentInfo = program.generalCommonInfo?.participantRecruitmentInfo
+  const clearMethod = hasMethod && !method && Boolean(currentInfo?.applicationMethod)
+  const clearRemarks = hasRemarks && !remarks && Boolean(currentInfo?.remarks)
+  const participantRecruitmentInfo =
+    clearMethod || clearRemarks
+      ? {
+          ...currentInfo,
+          ...(clearMethod ? { applicationMethod: undefined } : {}),
+          ...(clearRemarks ? { remarks: undefined } : {}),
+        }
+      : currentInfo
+
+  return {
+    ...program,
+    ...(hasMethod ? { applicationMethod: method } : {}),
+    ...(hasRemarks ? { remarks } : {}),
+    ...(clearMethod || clearRemarks
+      ? {
+          generalCommonInfo: {
+            ...program.generalCommonInfo,
+            participantRecruitmentInfo,
+          },
+        }
+      : {}),
+  }
+}

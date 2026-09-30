@@ -54,7 +54,7 @@ describe('gemini performance adapters', () => {
         instructorName: '김강사',
         assistantInstructorNames: '이보조',
         trainingFormat: '강의',
-        contact: '010',
+        contact: '01012345678',
         email: 'a@b.c',
         school: '학교',
         paymentDestination: '',
@@ -62,14 +62,20 @@ describe('gemini performance adapters', () => {
         trainingDate: '2026-04-01',
         trainingStartTime: '10:00',
         trainingEndTime: '11:00',
-        classCount: 1,
+        classCount: 2,
         participantCount: 10,
       },
       display
     )
     expect(importRow.instructorMemberId).toBe(42)
     expect(importRow.instructorEmail).toBe('a@b.c')
-    expect(importRow.trainingMinutes).toBe(60)
+    expect(importRow.instructorPhone).toBe('010-1234-5678')
+    expect(importRow.trainingDate).toBe('2026-04-01')
+    expect(importRow.trainingStartTime).toBe('10:00:00')
+    expect(importRow.trainingEndTime).toBe('11:00:00')
+    expect(importRow.trainingSessionCount).toBe(2)
+    expect(importRow.participantCount).toBe(10)
+    expect(importRow.trainingMinutes).toBeUndefined()
     expect(importRow.schoolOrOrganizationName).toBe('학교')
   })
 })

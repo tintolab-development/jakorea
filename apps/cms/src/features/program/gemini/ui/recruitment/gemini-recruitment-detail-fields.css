@@ -1,0 +1,44 @@
+.detail-info-form__field-content--edit > .gemini-recruitment-detail-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  margin-block: 0;
+}
+
+.gemini-recruitment-detail-editor {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.gemini-recruitment-detail-editor .notice-register-modal__editor-host {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 100%;
+  height: 200px;
+  min-height: 200px;
+}
+
+.gemini-recruitment-detail-editor .notice-register-modal__editor-host .rich-text-editor {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.gemini-recruitment-detail-editor .rich-text-editor__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}
+
+.gemini-recruitment-detail-fields__rich-text-view {
+  width: 100%;
+  min-width: 0;
+}

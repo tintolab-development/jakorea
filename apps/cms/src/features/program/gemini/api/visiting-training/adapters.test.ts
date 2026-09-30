@@ -131,6 +131,11 @@ describe('gemini visiting-training adapters', () => {
         organizationName: '학교',
         applicationStatus: 'APPROVED',
         requestedStudentCount: 30,
+        regionSido: '서울특별시',
+        regionSigungu: '강서구',
+        teacherName: '김교사',
+        preferredLectureScheduleText:
+          '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)',
         resultNotificationSentAt: '2026-09-27T05:00:00Z',
         availableActions: ['RESEND_NOTIFICATION'],
       },
@@ -140,8 +145,39 @@ describe('gemini visiting-training adapters', () => {
     expect(app.no).toBe(3)
     expect(app.approvalStatus).toBe('APPROVED')
     expect(app.studentCount).toBe(30)
+    expect(app.institutionSido).toBe('서울특별시')
+    expect(app.institutionSigungu).toBe('강서구')
+    expect(app.teacherName).toBe('김교사')
+    expect(app.preferredLectureSchedule).toBe(
+      '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)'
+    )
     expect(app.availableActions).toContain('RESEND_NOTIFICATION')
     expect(app.resultNotificationSentAt).toBe('2026-09-27T05:00:00Z')
+  })
+
+  it('maps preferredScheduleBlocks when preferredLectureScheduleText is absent', () => {
+    const app = mapGeminiOrganizationApplicationToRow(
+      {
+        applicationId: 10,
+        organizationName: '학교B',
+        applicationStatus: 'PENDING',
+        preferredScheduleBlocks: [
+          {
+            preferenceRank: 1,
+            date: '2026-01-09',
+            dayOfWeek: '금',
+            sessionCount: 2,
+            sessionTimes: [{ startTime: '15:30', endTime: '16:40' }],
+          },
+        ],
+      },
+      0
+    )
+    expect(app.preferredLectureSchedule).toBe(
+      '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)'
+    )
+    expect(app.teacherName).toBe('-')
+    expect(app.institutionSido).toBe('')
   })
 
   it('maps otherMatters into notes when present', () => {
@@ -224,11 +260,41 @@ describe('gemini visiting-training adapters', () => {
     expect(create.otherMatters).toBe('준비물')
     expect(create.recruitmentTargetDetail).toBe('중학생')
     expect(create.applicationMethod).toBe('온라인 신청')
+    expect(create.draftStatus).toBe('PUBLISHED')
+    expect(
+      mapGeminiRecruitmentSnapshotToCreateRequest({
+        title: '공고',
+        announcementPublished: 'unpublished',
+        educationTargetLevels: ['adult'],
+        educationTargetDetail: '',
+        applicationPeriodStart: '2026-03-01',
+        applicationPeriodEnd: '2026-03-31',
+        trainingRequestPeriodStart: '2026-04-01',
+        trainingRequestPeriodEnd: '2026-04-30',
+        minStudentCount: 15,
+        educationForm: 'offline',
+        educationStructure: 'SCHEDULE',
+        inquiryContactName: '',
+        inquiryTel: '',
+        inquiryEmail: '',
+        notesNotApplicable: true,
+        notes: '',
+        thumbnailFileName: null,
+        programDescription: '',
+        recruitmentGuide: '',
+        applicationMethod: '',
+        learningSupportContent: '',
+        additionalContentMarkdown: '',
+        attachmentFileNames: [],
+        institutionSectionDescription: '',
+        detailSectionDescription: '',
+      }).draftStatus
+    ).toBe('DRAFT')
     expect(create.applicationPathId).toBeUndefined()
     expect(toGeminiNumericIds(['1', 'x', '2'])).toEqual([1, 2])
   })
 
-  it('maps create targetLevels from educationTargetDetail when levels are empty', () => {
+  it('빈 educationTargetLevels는 상세 라벨로 되살리지 않는다', () => {
     const create = mapGeminiRecruitmentSnapshotToCreateRequest({
       title: '공고',
       announcementPublished: 'published',
@@ -256,8 +322,8 @@ describe('gemini visiting-training adapters', () => {
       institutionSectionDescription: '',
       detailSectionDescription: '',
     })
-    expect(create.targetLevels).toEqual(['middle'])
-    expect(create.targetLevel).toBe('middle')
+    expect(create.targetLevels).toEqual([])
+    expect(create.targetLevel).toBeUndefined()
   })
 
   it('maps update request with clearFields when inquiry fields are empty', () => {
@@ -287,6 +353,7 @@ describe('gemini visiting-training adapters', () => {
       attachmentFileNames: [],
     })
     expect(update.educationStructure).toBe('SCHEDULE')
+    expect(update.draftStatus).toBe('PUBLISHED')
     expect(update.educationForm).toBe('offline')
     expect(update.trainingRequestStartDate).toBe('2026-04-01')
     expect(update.trainingRequestEndDate).toBe('2026-04-30')

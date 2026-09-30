@@ -21,6 +21,7 @@ import type {
   PortalRecruitment,
   PortalSchedule,
 } from './types'
+import { extraSection } from '../lib/html-body.ts'
 
 const RECRUITMENT_STATUS = {
   scheduled: 'scheduled',
@@ -658,16 +659,15 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
   const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 
+  const recruitmentGuide = readString(remote.recruitmentGuide) ?? ''
+  const additionalContent = readString(remote.additionalContentHtml) ?? ''
+  const learningSupportContent = readString(remote.learningSupportContent) ?? ''
   const extraSections: ProgramExtraSection[] = [
-    { title: '모집 안내', body: readString(remote.recruitmentGuide) ?? '' },
-    {
-      title: '추가 내용',
-      body: readString(remote.additionalContentHtml) ?? '',
-      bodyFormat: 'html' as const,
-    },
-    { title: '학습 지원 내용', body: readString(remote.learningSupportContent) ?? '' },
-    { title: '기타사항', body: readString(remote.otherMatters) ?? '' },
-    { title: '비고', body: readString(remote.remarks) ?? '' },
+    extraSection('모집 안내', recruitmentGuide),
+    { title: '추가 내용', body: additionalContent, bodyFormat: 'html' as const },
+    extraSection('학습 지원 내용', learningSupportContent),
+    extraSection('기타사항', readString(remote.otherMatters) ?? ''),
+    extraSection('비고', readString(remote.remarks) ?? ''),
   ].filter(section => section.body.length > 0)
 
   return {

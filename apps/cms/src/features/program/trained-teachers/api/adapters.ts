@@ -291,9 +291,14 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   )
     ? (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
     : undefined
+  const columnSource = Array.isArray(dtoTargetLevels)
+    ? dtoTargetLevels
+    : Array.isArray(details.targetLevels)
+      ? details.targetLevels
+      : undefined
   const persistedTargetLevels = resolvePersistedProgramTargetLevels({
-    targetLevels: dtoTargetLevels ?? details.targetLevels,
-    targetLevel: details.targetLevels?.[0] ?? dto.targetLevel,
+    targetLevels: columnSource,
+    targetLevel: dto.targetLevel,
     registrationOverlay: details.registrationOverlay,
     generalCommonInfo: details.generalCommonInfo,
   })
@@ -340,8 +345,11 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     schoolId: dto.schoolId,
     district: dto.district,
     ips: dto.ips as Program['ips'],
-    targetLevel: persistedTargetLevels[0] ?? undefined,
-    targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
+    targetLevel: persistedTargetLevels[0],
+    targetLevels:
+      columnSource !== undefined || persistedTargetLevels.length > 0
+        ? persistedTargetLevels
+        : undefined,
     institutionType:
       venueKind === 'other'
         ? undefined
@@ -503,20 +511,12 @@ export function mapTrainedTeacherToUpdateRequest(
     sponsors[0]?.sponsorId ||
     merged.sponsorId
   const businessArea = resolveStoredBusinessArea(merged.businessArea) || undefined
-  const fromMergedLevels = resolvePersistedProgramTargetLevels(merged)
-  const fromExistingLevels = patch ? resolvePersistedProgramTargetLevels(program) : []
-  const honorPatchLevels = Boolean(
-    patch && Object.prototype.hasOwnProperty.call(patch, 'targetLevels')
-  )
-  const persistedTargetLevels = honorPatchLevels
-    ? fromMergedLevels
-    : fromMergedLevels.length >= fromExistingLevels.length
-      ? fromMergedLevels
-      : fromExistingLevels
-  const serializeSource =
-    persistedTargetLevels.length > 0
-      ? { ...merged, targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
-      : merged
+  const persistedTargetLevels = resolvePersistedProgramTargetLevels(merged)
+  const includeTargetLevels =
+    Array.isArray(merged.targetLevels) || persistedTargetLevels.length > 0
+  const serializeSource = includeTargetLevels
+    ? { ...merged, targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
+    : merged
   const body: ProgramUpdateRequest = {
     sponsorId: primarySponsorId,
     sponsors,
@@ -544,8 +544,8 @@ export function mapTrainedTeacherToUpdateRequest(
     schoolId: merged.schoolId,
     district: merged.district,
     ips: merged.ips,
-    targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
-    targetLevel: persistedTargetLevels[0] ?? merged.targetLevel,
+    targetLevels: includeTargetLevels ? persistedTargetLevels : undefined,
+    targetLevel: persistedTargetLevels[0],
     institutionType: merged.institutionType,
     ipOwned: merged.ipOwned,
     courseDeliveredBy: merged.courseDeliveredBy,

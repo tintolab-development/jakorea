@@ -15,6 +15,7 @@ import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
 import type { ProgramSponsorAssignmentRequest } from './programSponsorAssignmentRequest';
+import type { ProgramUpdateRequestDraftStatus } from './programUpdateRequestDraftStatus';
 import type { ProgramUpdateRequestEducationForm } from './programUpdateRequestEducationForm';
 import type { ProgramUpdateRequestEducationStructure } from './programUpdateRequestEducationStructure';
 import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
@@ -95,6 +96,12 @@ export interface ProgramUpdateRequest {
      * @nullable
      */
   applicationMethod?: string | null;
+  /**
+   * Gemini 모집 공고 게시 상태. 생략하면 기존 값을 유지한다.
+   * GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시된다.
+   * @nullable
+   */
+  draftStatus?: ProgramUpdateRequestDraftStatus | null;
   /**
      * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.
      * @nullable
