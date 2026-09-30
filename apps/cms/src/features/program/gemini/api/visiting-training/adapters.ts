@@ -119,70 +119,123 @@ export function toGeminiNumericIds(ids: string[]): number[] {
   return out
 }
 
+export function buildGeminiRecruitmentPersistSnapshot(
+  draft: GeminiRecruitmentAddFormSnapshot | GeminiRecruitmentInfoEditDraft
+): GeminiRecruitmentAddFormSnapshot {
+  const defaults = {
+    institutionSectionDescription: '',
+    detailSectionDescription: '',
+  }
+  const { targetLevels } = wireGeminiTargetLevels(
+    draft.educationTargetLevels,
+    draft.educationTargetDetail
+  )
+  return {
+    title: draft.title?.trim() ?? '',
+    announcementPublished: draft.announcementPublished,
+    educationTargetLevels: targetLevels,
+    educationTargetDetail: trimmedOrEmpty(draft.educationTargetDetail),
+    applicationPeriodStart: optionalDate(draft.applicationPeriodStart) ?? null,
+    applicationPeriodEnd: optionalDate(draft.applicationPeriodEnd) ?? null,
+    trainingRequestPeriodStart: optionalDate(draft.trainingRequestPeriodStart) ?? null,
+    trainingRequestPeriodEnd: optionalDate(draft.trainingRequestPeriodEnd) ?? null,
+    minStudentCount: draft.minStudentCount ?? null,
+    educationForm: mapEducationForm(draft.educationForm),
+    educationStructure: GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE,
+    inquiryContactName: trimmedOrEmpty(draft.inquiryContactName),
+    inquiryTel: trimmedOrEmpty(draft.inquiryTel),
+    inquiryEmail: trimmedOrEmpty(draft.inquiryEmail),
+    notesNotApplicable: draft.notesNotApplicable === true,
+    notes: draft.notesNotApplicable ? '' : trimmedOrEmpty(draft.notes),
+    thumbnailFileName: draft.thumbnailFileName?.trim() || null,
+    programDescription: draft.programDescription ?? '',
+    recruitmentGuide: draft.recruitmentGuide ?? '',
+    applicationMethod: draft.applicationMethod ?? '',
+    learningSupportContent: draft.learningSupportContent ?? '',
+    additionalContentMarkdown: draft.additionalContentMarkdown ?? '',
+    attachmentFileNames: [...(draft.attachmentFileNames ?? [])],
+    institutionSectionDescription:
+      'institutionSectionDescription' in draft
+        ? (draft.institutionSectionDescription ?? '')
+        : defaults.institutionSectionDescription,
+    detailSectionDescription:
+      'detailSectionDescription' in draft
+        ? (draft.detailSectionDescription ?? '')
+        : defaults.detailSectionDescription,
+  }
+}
+
 export function mapGeminiRecruitmentSnapshotToCreateRequest(
   snapshot: GeminiRecruitmentAddFormSnapshot
 ): ProgramCreateRequest {
-  const contactName = snapshot.inquiryContactName?.trim() || undefined
+  const persist = buildGeminiRecruitmentPersistSnapshot(snapshot)
+  const contactName = persist.inquiryContactName.trim() || undefined
   const otherMatters =
-    snapshot.notesNotApplicable ? undefined : snapshot.notes?.trim() || undefined
-  const recruitmentTargetDetail = snapshot.educationTargetDetail?.trim() || undefined
-  const applicationMethod = snapshot.applicationMethod?.trim() || undefined
+    persist.notesNotApplicable ? undefined : persist.notes.trim() || undefined
+  const recruitmentTargetDetail = persist.educationTargetDetail.trim() || undefined
+  const applicationMethod = persist.applicationMethod.trim() || undefined
   // Gemini create: educationStructure는 ProgramCreateRequest top-level 비즈니스 필수.
   // UI 셀렉트 없음 → SCHEDULE. serviceDetailJson 안 값으로 top-level을 대체하지 않음.
   const educationStructure = resolveGeminiEducationStructureWire(
-    snapshot.educationStructure ?? GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE
+    persist.educationStructure
   )
   const { targetLevels, targetLevel } = wireGeminiTargetLevels(
-    snapshot.educationTargetLevels,
+    persist.educationTargetLevels,
     recruitmentTargetDetail
   )
   const requestBody: ProgramCreateRequest = {
     programType: GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
-    title: snapshot.title.trim() || undefined,
-    description: snapshot.programDescription || undefined,
-    businessStartDate: optionalDate(snapshot.applicationPeriodStart),
-    businessEndDate: optionalDate(snapshot.applicationPeriodEnd),
-    applicationStartDate: optionalDate(snapshot.applicationPeriodStart),
-    applicationEndDate: optionalDate(snapshot.applicationPeriodEnd),
-    trainingRequestStartDate: optionalDate(snapshot.trainingRequestPeriodStart),
-    trainingRequestEndDate: optionalDate(snapshot.trainingRequestPeriodEnd),
+    title: persist.title.trim() || undefined,
+    description: persist.programDescription || undefined,
+    businessStartDate: optionalDate(persist.applicationPeriodStart),
+    businessEndDate: optionalDate(persist.applicationPeriodEnd),
+    applicationStartDate: optionalDate(persist.applicationPeriodStart),
+    applicationEndDate: optionalDate(persist.applicationPeriodEnd),
+    trainingRequestStartDate: optionalDate(persist.trainingRequestPeriodStart),
+    trainingRequestEndDate: optionalDate(persist.trainingRequestPeriodEnd),
     educationStructure,
-    educationForm: mapEducationForm(snapshot.educationForm),
+    educationForm: persist.educationForm,
     targetLevels,
     ...(targetLevel ? { targetLevel } : {}),
-    totalParticipants: snapshot.minStudentCount ?? undefined,
+    totalParticipants: persist.minStudentCount ?? undefined,
     managerName: contactName,
     contactName,
-    contactPhone: snapshot.inquiryTel || undefined,
-    contactEmail: snapshot.inquiryEmail || undefined,
+    contactPhone: persist.inquiryTel || undefined,
+    contactEmail: persist.inquiryEmail || undefined,
     otherMatters,
     recruitmentTargetDetail,
-    recruitmentGuide: snapshot.recruitmentGuide || undefined,
+    recruitmentGuide: persist.recruitmentGuide || undefined,
     applicationMethod,
-    learningSupportContent: snapshot.learningSupportContent || undefined,
-    additionalContentHtml: snapshot.additionalContentMarkdown || undefined,
-    attachmentFileNames: snapshot.attachmentFileNames,
-    serviceDetailJson: JSON.stringify({ geminiRecruitment: snapshot }),
+    learningSupportContent: persist.learningSupportContent || undefined,
+    additionalContentHtml: persist.additionalContentMarkdown || undefined,
+    attachmentFileNames: persist.attachmentFileNames,
+    serviceDetailJson: JSON.stringify({ geminiRecruitment: persist }),
   }
-  wireGeminiThumbnail(requestBody, null, snapshot.thumbnailFileName)
+  wireGeminiThumbnail(requestBody, null, persist.thumbnailFileName)
   return requestBody
 }
 
-function wireGeminiNullableString(
+function wireGeminiClearableString(
   body: ProgramUpdateRequest,
   clearFields: string[],
   apiField:
     | 'contactName'
     | 'otherMatters'
     | 'recruitmentTargetDetail'
-    | 'applicationMethod',
+    | 'applicationMethod'
+    | 'contactPhone'
+    | 'contactEmail'
+    | 'recruitmentGuide'
+    | 'learningSupportContent'
+    | 'additionalContentHtml'
+    | 'description'
+    | 'managerName',
   next: string | undefined
 ): void {
   if (next) {
     body[apiField] = next
     return
   }
-  // Gemini draft는 full replace — 빈 값은 "" 대신 clearFields
   clearFields.push(apiField)
 }
 
@@ -202,67 +255,66 @@ function wireGeminiOptionalDate(
 export function mapGeminiRecruitmentDetailToUpdateRequest(
   draft: GeminiRecruitmentInfoEditDraft
 ): ProgramUpdateRequest {
-  const contactName = draft.inquiryContactName?.trim() || undefined
+  const persist = buildGeminiRecruitmentPersistSnapshot(draft)
+  const contactName = persist.inquiryContactName.trim() || undefined
   const otherMatters =
-    draft.notesNotApplicable ? undefined : draft.notes?.trim() || undefined
-  const recruitmentTargetDetail = draft.educationTargetDetail?.trim() || undefined
-  const applicationMethod = draft.applicationMethod?.trim() || undefined
+    persist.notesNotApplicable ? undefined : persist.notes.trim() || undefined
+  const recruitmentTargetDetail = persist.educationTargetDetail.trim() || undefined
+  const applicationMethod = persist.applicationMethod.trim() || undefined
+  const programDescription = persist.programDescription.trim() || undefined
+  const recruitmentGuide = persist.recruitmentGuide.trim() || undefined
+  const learningSupportContent = persist.learningSupportContent.trim() || undefined
+  const additionalContentHtml = persist.additionalContentMarkdown.trim() || undefined
+  const inquiryTel = persist.inquiryTel.trim() || undefined
+  const inquiryEmail = persist.inquiryEmail.trim() || undefined
   const clearFields: string[] = []
   // PATCH에서 educationStructure를 null/clear하지 않음 — Gemini UI 없으면 SCHEDULE 유지
-  const educationStructureWire = resolveGeminiEducationStructureWire(
-    draft.educationStructure ?? GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE
-  )
+  const educationStructureWire = resolveGeminiEducationStructureWire(persist.educationStructure)
   const educationStructure =
     educationStructureWire === ProgramCreateRequestEducationStructure.CURRICULUM
       ? ProgramUpdateRequestEducationStructure.CURRICULUM
       : ProgramUpdateRequestEducationStructure.SCHEDULE
   const { targetLevels, targetLevel } = wireGeminiTargetLevels(
-    draft.educationTargetLevels,
+    persist.educationTargetLevels,
     recruitmentTargetDetail
   )
   const body: ProgramUpdateRequest = {
-    title: draft.title.trim() || undefined,
-    description: draft.programDescription || undefined,
-    businessStartDate: optionalDate(draft.applicationPeriodStart),
-    businessEndDate: optionalDate(draft.applicationPeriodEnd),
-    applicationStartDate: optionalDate(draft.applicationPeriodStart),
-    applicationEndDate: optionalDate(draft.applicationPeriodEnd),
+    title: persist.title.trim() || undefined,
+    businessStartDate: optionalDate(persist.applicationPeriodStart),
+    businessEndDate: optionalDate(persist.applicationPeriodEnd),
+    applicationStartDate: optionalDate(persist.applicationPeriodStart),
+    applicationEndDate: optionalDate(persist.applicationPeriodEnd),
     educationStructure,
-    educationForm: mapEducationForm(draft.educationForm),
+    educationForm: persist.educationForm,
     targetLevels,
     ...(targetLevel ? { targetLevel } : {}),
-    totalParticipants: draft.minStudentCount ?? undefined,
-    // 문의처 표시명 → contactName (TT managerName/후원 담당자와 별개 — Gemini는 문의처 레거시용 managerName 병행)
-    managerName: contactName,
-    contactPhone: draft.inquiryTel || undefined,
-    contactEmail: draft.inquiryEmail || undefined,
-    recruitmentGuide: draft.recruitmentGuide || undefined,
-    learningSupportContent: draft.learningSupportContent || undefined,
-    additionalContentHtml: draft.additionalContentMarkdown || undefined,
-    attachmentFileNames: draft.attachmentFileNames,
-    serviceDetailJson: JSON.stringify({ geminiRecruitment: draft }),
+    totalParticipants: persist.minStudentCount ?? undefined,
+    attachmentFileNames: persist.attachmentFileNames,
+    serviceDetailJson: JSON.stringify({ geminiRecruitment: persist }),
   }
-  wireGeminiThumbnail(body, clearFields, draft.thumbnailFileName)
-  wireGeminiNullableString(body, clearFields, 'contactName', contactName)
-  wireGeminiNullableString(body, clearFields, 'otherMatters', otherMatters)
-  wireGeminiNullableString(
-    body,
-    clearFields,
-    'recruitmentTargetDetail',
-    recruitmentTargetDetail
-  )
-  wireGeminiNullableString(body, clearFields, 'applicationMethod', applicationMethod)
+  wireGeminiThumbnail(body, clearFields, persist.thumbnailFileName)
+  wireGeminiClearableString(body, clearFields, 'description', programDescription)
+  wireGeminiClearableString(body, clearFields, 'contactName', contactName)
+  wireGeminiClearableString(body, clearFields, 'managerName', contactName)
+  wireGeminiClearableString(body, clearFields, 'otherMatters', otherMatters)
+  wireGeminiClearableString(body, clearFields, 'recruitmentTargetDetail', recruitmentTargetDetail)
+  wireGeminiClearableString(body, clearFields, 'applicationMethod', applicationMethod)
+  wireGeminiClearableString(body, clearFields, 'contactPhone', inquiryTel)
+  wireGeminiClearableString(body, clearFields, 'contactEmail', inquiryEmail)
+  wireGeminiClearableString(body, clearFields, 'recruitmentGuide', recruitmentGuide)
+  wireGeminiClearableString(body, clearFields, 'learningSupportContent', learningSupportContent)
+  wireGeminiClearableString(body, clearFields, 'additionalContentHtml', additionalContentHtml)
   wireGeminiOptionalDate(
     body,
     clearFields,
     'trainingRequestStartDate',
-    optionalDate(draft.trainingRequestPeriodStart)
+    optionalDate(persist.trainingRequestPeriodStart)
   )
   wireGeminiOptionalDate(
     body,
     clearFields,
     'trainingRequestEndDate',
-    optionalDate(draft.trainingRequestPeriodEnd)
+    optionalDate(persist.trainingRequestPeriodEnd)
   )
   if (!targetLevel) clearFields.push('targetLevel')
   if (clearFields.length > 0) body.clearFields = clearFields

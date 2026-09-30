@@ -157,8 +157,8 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import {
   getGeminiRecruitOverlayRecord,
-  replaceGeminiRecruitOverlay,
   resetGeminiRecruitOverlay,
+  restoreGeminiRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
 import {
   getApplicantRecruitInstitutionOverlayRecord,
@@ -434,12 +434,9 @@ function restoreParticipantOverlayForVariant(
   const resetIfMissing = options?.resetIfMissing === true
   if (variant === 'gemini-recruit') {
     if (overlay) {
-      replaceGeminiRecruitOverlay(overlay)
-      // 공유 general recruit 스토어는 탭 간 키를 유지하도록 merge
-      patchGeneralRecruitOverlay(overlay)
+      restoreGeminiRecruitOverlay(overlay)
     } else if (resetIfMissing) {
       resetGeminiRecruitOverlay()
-      resetGeneralRecruitOverlay()
     }
     return
   }
@@ -479,10 +476,7 @@ export function collectParticipantOverlayForVariant(
   variant: ProgramParticipantApplicationEditorVariant
 ): Record<string, unknown> | undefined {
   if (variant === 'gemini-recruit') {
-    return {
-      ...getGeneralRecruitOverlayRecord(),
-      ...getGeminiRecruitOverlayRecord(),
-    }
+    return { ...getGeminiRecruitOverlayRecord() }
   }
   if (isApplicantRecruitInstitutionVariant(variant)) {
     return mergeRecruitDetailInfoFromGeneralStore(
@@ -982,7 +976,6 @@ export function useProgramParticipantApplicationEditor(
         if (variant === 'ujat-recruit-volunteer') resetUjatRecruitVolunteerOverlay()
         if (variant === 'gemini-recruit') {
           resetGeminiRecruitOverlay()
-          resetGeneralRecruitOverlay()
         }
         if (variant === 'ujat-application-institution') resetUjatApplicationInstitutionOverlay()
         if (variant === 'ujat-application-volunteer') resetUjatApplicationVolunteerOverlay()

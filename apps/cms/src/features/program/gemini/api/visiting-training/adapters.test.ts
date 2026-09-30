@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildGeminiRecruitmentPersistSnapshot,
   mapGeminiOrganizationApplicationToRow,
   mapGeminiRecruitmentDetailToDetail,
   mapGeminiRecruitmentDetailToUpdateRequest,
@@ -8,6 +9,18 @@ import {
   mapGeminiRecruitmentSnapshotToCreateRequest,
   toGeminiNumericIds,
 } from './adapters'
+import {
+  GEMINI_RECRUIT_OVERLAY_KEYS,
+  pickGeminiRecruitOverlay,
+  restoreGeminiRecruitOverlay,
+  getGeminiRecruitOverlayRecord,
+  resetGeminiRecruitOverlay,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+import {
+  getGeneralRecruitOverlayRecord,
+  patchGeneralRecruitOverlay,
+  resetGeneralRecruitOverlay,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 
 describe('gemini visiting-training adapters', () => {
   it('maps recruitment list item', () => {
@@ -288,12 +301,20 @@ describe('gemini visiting-training adapters', () => {
     expect(update.clearFields).toEqual(
       expect.arrayContaining([
         'contactName',
+        'managerName',
         'otherMatters',
         'recruitmentTargetDetail',
         'applicationMethod',
+        'contactPhone',
+        'contactEmail',
+        'recruitmentGuide',
+        'learningSupportContent',
+        'additionalContentHtml',
         'targetLevel',
       ])
     )
+    expect(update.clearFields ?? []).not.toContain('announcementPublished')
+    expect(update).not.toHaveProperty('announcementPublished')
     expect(update.keyVisualImage).toBeUndefined()
     expect(update.clearFields ?? []).toContain('keyVisualImage')
     expect(update.attachmentFileNames).toEqual([])
@@ -351,7 +372,61 @@ describe('gemini visiting-training adapters', () => {
     const snapshot = JSON.parse(update.serviceDetailJson ?? '{}') as {
       geminiRecruitment?: { educationTargetLevels?: string[]; thumbnailFileName?: string }
     }
-    expect(snapshot.geminiRecruitment?.educationTargetLevels).toEqual(['성인', 'university'])
+    expect(snapshot.geminiRecruitment?.educationTargetLevels).toEqual(['adult', 'university'])
     expect(snapshot.geminiRecruitment?.thumbnailFileName).toBe('thumb.png')
+  })
+
+  it('persist snapshot 정규화는 컬럼과 같고 연수 요청 기간을 모집 기간과 합치지 않는다', () => {
+    const persist = buildGeminiRecruitmentPersistSnapshot({
+      title: '공고',
+      announcementPublished: 'published',
+      educationTargetLevels: ['성인', 'university'],
+      educationTargetDetail: '',
+      applicationPeriodStart: '2026-03-01',
+      applicationPeriodEnd: '2026-03-31',
+      trainingRequestPeriodStart: '2026-04-01',
+      trainingRequestPeriodEnd: '2026-04-30',
+      minStudentCount: 10,
+      educationForm: 'offline',
+      educationStructure: 'CURRICULUM',
+      inquiryContactName: '담당',
+      inquiryTel: '02-1',
+      inquiryEmail: 'a@b.c',
+      notesNotApplicable: false,
+      notes: '비고',
+      thumbnailFileName: null,
+      programDescription: '설명',
+      recruitmentGuide: '',
+      applicationMethod: '',
+      learningSupportContent: '',
+      additionalContentMarkdown: '<p>html</p>',
+      attachmentFileNames: [],
+    })
+    expect(persist.educationTargetLevels).toEqual(['adult', 'university'])
+    expect(persist.educationForm).toBe('offline')
+    expect(persist.educationStructure).toBe('SCHEDULE')
+    expect(persist.applicationPeriodStart).toBe('2026-03-01')
+    expect(persist.trainingRequestPeriodStart).toBe('2026-04-01')
+    const create = mapGeminiRecruitmentSnapshotToCreateRequest(persist)
+    expect(create.targetLevels).toEqual(['adult', 'university'])
+    expect(create.applicationStartDate).toBe('2026-03-01')
+    expect(create.trainingRequestStartDate).toBe('2026-04-01')
+    expect(create.applicationStartDate).not.toBe(create.trainingRequestStartDate)
+  })
+
+  it('gemini overlay restore는 일반 recruit.* 와 섞이지 않는다', () => {
+    resetGeminiRecruitOverlay()
+    resetGeneralRecruitOverlay()
+    patchGeneralRecruitOverlay({ 'recruit.individual.notes': '일반 leftover' })
+    restoreGeminiRecruitOverlay({
+      [GEMINI_RECRUIT_OVERLAY_KEYS.title]: '제미니 공고',
+      'recruit.individual.notes': '섞이면 안 됨',
+    })
+    expect(getGeminiRecruitOverlayRecord()[GEMINI_RECRUIT_OVERLAY_KEYS.title]).toBe('제미니 공고')
+    expect(getGeneralRecruitOverlayRecord()['recruit.individual.notes']).toBe('일반 leftover')
+    expect(pickGeminiRecruitOverlay({
+      [GEMINI_RECRUIT_OVERLAY_KEYS.title]: 'a',
+      'recruit.targetLevels': ['high'],
+    })).toEqual({ [GEMINI_RECRUIT_OVERLAY_KEYS.title]: 'a' })
   })
 })
