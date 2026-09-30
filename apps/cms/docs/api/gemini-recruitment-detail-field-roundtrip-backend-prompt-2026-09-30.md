@@ -9,9 +9,9 @@
 | 우선순위 | P0 |
 | 작성일 | 2026-09-30 |
 | 재확인 | **2026-09-30 13:45** CMS 상세 UI. 신규 등록 건에서도 동일 증상 |
-| 상태 | **BE 완료 · FE 매퍼 반영 (2026-09-30).** Orval `GeminiRecruitmentDetailResponse` 확장 + `mapGeminiRecruitmentDetailToDetail` top-level 매핑 |
-| FE | `serviceDetailJson` 파싱 없음. 상세 GET top-level만 사용 |
-| 실측 | (1) `programId` **186025**. (2) **13:45 UI** 공고명「제미나이 찾아가는 연수 모집 예정」. BE GET 확장 후 FE 상세 `-` 해소 대상 |
+| 상태 | **BE 완료 · FE create/PATCH·목록 매퍼 반영 (2026-09-30).** `educationForm` · `trainingRequest*` · `applicationMethod` top-level + 목록 기간 분리 |
+| FE | top-level이 정본. `serviceDetailJson`은 병행 전송만. `applicationMethod` ≠ `applicationPathId` |
+| 실측 QA | create echo · 목록 seed `185002` 기간 분리 · PATCH clearFields |
 
 **BE handoff:** `JABACK/docs/frontend/gemini-recruitment-detail-field-roundtrip-frontend-handoff-2026-09-30.md`
 

@@ -8,11 +8,10 @@
 | 프로그램 유형 | `GEMINI_TRAINING` 만. GENERAL / UJAT / 1사1교 / TRAINED_TEACHER 계약은 바꾸지 마라 |
 | 우선순위 | P1 (상세 GET 왕복은 완료. create wire·목록 기간 분리 후속) |
 | 작성일 | 2026-09-30 |
-| 선행 | 상세 GET DTO 확장 완료 (`GeminiRecruitmentDetailResponse`). FE 상세 매퍼·`targetLevels` create/PATCH top-level 전송 완료 |
-| 관련 FE 문서 | `apps/cms/docs/api/gemini-recruitment-detail-field-roundtrip-backend-prompt-2026-09-30.md` |
-| 관련 FE handoff | `JABACK/docs/frontend/gemini-recruitment-detail-field-roundtrip-frontend-handoff-2026-09-30.md` |
+| 상태 | **BE 완료 · FE 반영 (2026-09-30).** Orval + create/PATCH top-level + 목록 기간 분리 |
+| 관련 FE handoff | `JABACK/docs/frontend/gemini-recruitment-create-patch-toplevel-fields-frontend-handoff-2026-09-30.md` |
 
-프론트 레포를 이 작업으로 고치지 마라. **백엔드만** 고친다. OpenAPI 반영 후 FE가 Orval·create/PATCH 매퍼를 맞춘다.
+~~프론트 레포를 이 작업으로 고치지 마라. **백엔드만** 고친다.~~ → BE 배포 후 FE Orval·매퍼 반영 완료.
 
 ---
 
