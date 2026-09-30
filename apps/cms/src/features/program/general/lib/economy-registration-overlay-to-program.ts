@@ -11,6 +11,7 @@
 import dayjs from 'dayjs'
 import type { GeneralProgramSurveyMenuKey, Program } from '@/types/domain'
 import {
+  coerceProgramPaymentItemsText,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
   programPaymentItemLabelsFromIds,
   resolveProgramWageDeductionLabel,
@@ -214,7 +215,7 @@ export function applyEconomyRegistrationOverlayToProgram(
   const paymentItemsFromIds = paymentItemIds ? programPaymentItemLabelsFromIds(paymentItemIds) : ''
   const paymentItems =
     paymentItemsFromIds ||
-    baseCommon?.paymentItems ||
+    coerceProgramPaymentItemsText(baseCommon?.paymentItems).trim() ||
     PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
   const deductionItems = paymentItemIds
     ? resolveProgramWageDeductionLabel(paymentItemIds)

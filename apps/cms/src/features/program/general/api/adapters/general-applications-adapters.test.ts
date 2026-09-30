@@ -495,6 +495,38 @@ describe('general-applications-adapters', () => {
     ])
   })
 
+  it('shows line schedule labels and keeps them after operational schedules', () => {
+    const row = mapIndividualApplicationToApplicantRow(
+      {
+        id: 56,
+        programId: 186021,
+        memberName: '이참여자',
+        preferredEducationSchedules: [
+          { label: '26년 10월 20일(화) 13:30 ~ 16:00' },
+          {
+            scheduleId: 186597,
+            round: 1,
+            startAt: '2026-10-04T01:00:00Z',
+            endAt: '2026-10-04T02:00:00Z',
+          },
+          { label: '26년 10월 13일(화) 10:00 ~ 12:00' },
+        ],
+        applicationStatus: 'WAITING_REVIEW',
+      },
+      0,
+      '186021'
+    )
+
+    expect(row.sessions?.map(session => session.scheduleLabel ?? session.timeRange)).toEqual([
+      '10:00 ~ 11:00',
+      '26년 10월 20일(화) 13:30 ~ 16:00',
+      '26년 10월 13일(화) 10:00 ~ 12:00',
+    ])
+    expect(row.sessions?.[0]?.scheduleLabel).toBeUndefined()
+    expect(row.sessions?.[1]?.date).toBe('-')
+    expect(row.sessions?.[1]?.timeRange).toBe('-')
+  })
+
   it('keeps reviewed applications in the first document screening list', () => {
     const rows = [
       { id: '1', documentScreeningStatus: 'pending' },

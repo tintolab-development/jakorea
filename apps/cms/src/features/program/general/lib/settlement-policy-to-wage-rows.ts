@@ -8,6 +8,7 @@ import type { ProgramSettlementPolicyResponse } from '@/shared/api/generated/log
 import type { ProgramWagePolicyResponse } from '@/shared/api/generated/logs/schemas/programWagePolicyResponse'
 import type { Program } from '@/types/domain'
 import {
+  coerceProgramPaymentItemsText,
   PROGRAM_WAGE_DEDUCTION_LABEL,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
@@ -101,18 +102,41 @@ export function mapSettlementWagePoliciesToGradeRows(
 }
 
 export function mapSettlementPaymentItemsToLabel(
-  paymentItems: ProgramSettlementPaymentItemResponse[] | undefined
+  paymentItems: readonly unknown[] | undefined
 ): string | undefined {
   if (!paymentItems?.length) return undefined
   const labels = paymentItems
-    .filter(item => item.useYn !== false)
     .map(item => {
-      const type = (item.itemType ?? '').trim().toUpperCase()
-      return PAYMENT_ITEM_LABEL[type] ?? item.itemType?.trim()
+      if (typeof item === 'string') {
+        const token = item.trim()
+        if (!token) return undefined
+        return PAYMENT_ITEM_LABEL[token.toUpperCase().replace(/[\s-]+/g, '_')] ?? token
+      }
+      if (!item || typeof item !== 'object') return undefined
+      const record = item as ProgramSettlementPaymentItemResponse
+      if (record.useYn === false) return undefined
+      if (typeof record.itemType !== 'string') return undefined
+      const type = record.itemType.trim().toUpperCase()
+      if (!type) return undefined
+      return PAYMENT_ITEM_LABEL[type] ?? record.itemType.trim()
     })
     .filter((label): label is string => Boolean(label))
   if (labels.length === 0) return undefined
   return labels.join(', ')
+}
+
+function withStringPaymentItems(
+  commonInfo: Program['generalCommonInfo'] | undefined
+): Program['generalCommonInfo'] | undefined {
+  if (!commonInfo || commonInfo.paymentItems == null || typeof commonInfo.paymentItems === 'string') {
+    return commonInfo
+  }
+  const paymentItems = coerceProgramPaymentItemsText(commonInfo.paymentItems).trim()
+  if (!paymentItems) {
+    const { paymentItems: _drop, ...rest } = commonInfo
+    return rest
+  }
+  return { ...commonInfo, paymentItems }
 }
 
 export function mapSettlementDeductionTypeToLabel(
@@ -136,21 +160,23 @@ export function applySettlementPolicyToCommonInfo(
   commonInfo: Program['generalCommonInfo'] | undefined,
   settlementPolicy: ProgramSettlementPolicyResponse | undefined
 ): Program['generalCommonInfo'] | undefined {
-  if (!settlementPolicy) return commonInfo
+  const normalizedCommon = withStringPaymentItems(commonInfo)
+  if (!settlementPolicy) return normalizedCommon
 
   const wageGradeRows =
     mapSettlementWagePoliciesToGradeRows(settlementPolicy.wagePolicies) ??
-    commonInfo?.wageGradeRows
+    normalizedCommon?.wageGradeRows
   const paymentItems =
-    mapSettlementPaymentItemsToLabel(settlementPolicy.paymentItems) ?? commonInfo?.paymentItems
+    mapSettlementPaymentItemsToLabel(settlementPolicy.paymentItems) ??
+    (normalizedCommon?.paymentItems?.trim() || undefined)
   const deductionItems =
     mapSettlementDeductionTypeToLabel(settlementPolicy.deductionType) ??
-    commonInfo?.deductionItems
+    normalizedCommon?.deductionItems
 
-  if (!commonInfo && !wageGradeRows && !paymentItems && !deductionItems) return undefined
+  if (!normalizedCommon && !wageGradeRows && !paymentItems && !deductionItems) return undefined
 
   return {
-    ...commonInfo,
+    ...normalizedCommon,
     ...(wageGradeRows ? { wageGradeRows } : {}),
     ...(paymentItems ? { paymentItems } : {}),
     ...(deductionItems ? { deductionItems } : {}),

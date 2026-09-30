@@ -4,6 +4,7 @@ import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/
 import {
   displaySessionIpsTypeSummary,
   encodeSponsorManagerContactRef,
+  retainSponsorManagerContactIdsForSponsors,
   generalProgramCommonInfoEditSchema,
   generalCommonInfoEditValuesToProgramPatch,
   overlayIpsIndexForScheduleDetail,
@@ -128,6 +129,26 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     values.participationMethod = 'individual'
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
     expect(patch.generalCommonInfo?.participationMethod).toBeUndefined()
+  })
+
+  it('후원사를 모두 지우면 남아 있던 담당자 선택을 비운다', () => {
+    const kept = retainSponsorManagerContactIdsForSponsors(
+      [],
+      [
+        encodeSponsorManagerContactRef('sponsor-a', 'contact-1'),
+        SPONSOR_CONTACT_UNSELECTED_VALUE,
+      ]
+    )
+    expect(kept).toEqual([])
+  })
+
+  it('일부 후원사만 지우면 남은 후원사의 담당자는 유지한다', () => {
+    const keptRef = encodeSponsorManagerContactRef('sponsor-b', 'contact-2')
+    const kept = retainSponsorManagerContactIdsForSponsors(
+      ['sponsor-b'],
+      [encodeSponsorManagerContactRef('sponsor-a', 'contact-1'), keptRef]
+    )
+    expect(kept).toEqual([keptRef])
   })
 
   it('후원사 선택 시 sponsorId를 1순위 관리 id로 동기화한다', () => {

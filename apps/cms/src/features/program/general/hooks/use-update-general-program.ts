@@ -1,6 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateGeneralProgram } from '@/features/program/general/api/admin-general-programs-service'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import {
+  programDetailCacheFromSave,
+  syncOpenProgramDetailCache,
+} from '@/features/program/shared/lib/program-detail-cache-after-save'
 import type { Program } from '@/types/domain'
 
 export function useUpdateGeneralProgram() {
@@ -16,12 +20,20 @@ export function useUpdateGeneralProgram() {
       program: Program
       patch?: Partial<Program>
     }) => updateGeneralProgram(programId, program, patch),
-    onSuccess: (_data, variables) => {
+    onSuccess: async (updated, variables) => {
+      const detailKey = generalProgramQueryKeys.detail(variables.programId)
+      await syncOpenProgramDetailCache(
+        queryClient,
+        detailKey,
+        programDetailCacheFromSave(
+          variables.programId,
+          updated,
+          variables.program,
+          variables.patch
+        )
+      )
       void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.lists() })
       void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.overviewStages() })
-      void queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.detail(variables.programId),
-      })
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.navigation(variables.programId),
       })
