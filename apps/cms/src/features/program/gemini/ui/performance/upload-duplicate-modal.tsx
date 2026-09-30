@@ -20,7 +20,7 @@ export function UploadDuplicateModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="중복 데이터 안내"
+      title="데이터 중복 안내"
       width={600}
       footer={
         <>
@@ -37,7 +37,9 @@ export function UploadDuplicateModal({
       }
     >
       <p className="gemini-performance-upload-duplicate-modal__message">
-        중복 데이터가 있습니다. 어떻게 처리하시겠습니까?
+        이미 등록된 연수 보고서와 중복된 데이터가 있습니다.
+        <br />
+        처리 방법을 선택해 주세요.
       </p>
     </ContentModal>
   )

@@ -5,7 +5,6 @@ import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { resolveFilterTableExcelFilename } from '@/shared/components/filter-table-excel-filename'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -14,8 +13,10 @@ import { formatDateDot } from '@/shared/utils'
 import { CmsButton, DeleteGuideModal, ExcelButton, useCmsAlert } from '@/shared/ui'
 import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
+  GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
   geminiPerformanceService,
 } from '../../api/performance-service'
+import { resolveGeminiDeleteGuideModalCopy } from '../../lib/delete-guide'
 import {
   useGeminiPerformanceRows,
   useGeminiPerformanceRowsQueryState,
@@ -209,7 +210,13 @@ export function GeminiPerformanceList() {
             : error instanceof Error
               ? error.message
               : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
-        showAlert({ title: '안내', content: message })
+        showAlert({
+          title:
+            message === GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
+              ? GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE
+              : '안내',
+          content: message,
+        })
       }
     },
     [showAlert]
@@ -230,6 +237,10 @@ export function GeminiPerformanceList() {
         )
         setDuplicateModalOpen(false)
         clearPendingImport()
+        showAlert({
+          title: '덮어쓰기 완료',
+          content: '중복된 데이터를 새 데이터로 덮어썼습니다.',
+        })
       } catch (error) {
         showAlert({
           title: '안내',
@@ -252,6 +263,10 @@ export function GeminiPerformanceList() {
         )
         setDuplicateModalOpen(false)
         clearPendingImport()
+        showAlert({
+          title: '데이터 추가 완료',
+          content: '데이터가 추가되었습니다.',
+        })
       } catch (error) {
         showAlert({
           title: '안내',
@@ -369,6 +384,11 @@ export function GeminiPerformanceList() {
     ? TABLE_SCROLL_X - TABLE_COLUMN_WIDTHS.checkbox
     : TABLE_SCROLL_X
 
+  const performanceDeleteGuide = resolveGeminiDeleteGuideModalCopy(
+    '실적',
+    selectedRowKeys.length
+  )
+
   return (
     <div className="program-list-page">
       <input
@@ -468,13 +488,9 @@ export function GeminiPerformanceList() {
       {showBulkDelete ? (
         <DeleteGuideModal
           open={deleteModalOpen}
-          title="선택 삭제"
-          lines={[
-            `선택한 ${selectedRowKeys.length}건의 연수 실적을 삭제하시겠습니까?`,
-            '삭제된 실적은 복구할 수 없습니다.',
-          ]}
+          title={performanceDeleteGuide.title}
+          lines={performanceDeleteGuide.lines}
           confirmText="삭제"
-          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
           onConfirm={handleConfirmDelete}
           onCancel={() => setDeleteModalOpen(false)}
         />
