@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react'
-import { Typography } from 'antd'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -11,6 +10,7 @@ import {
   LnbIconManagers,
   LnbIconProjectInfo,
 } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
+import { useGeminiApprovedTrainingDetail } from '../../hooks/use-gemini-approved-training-detail'
 import { useToday } from '../../hooks/use-today'
 import { buildGeminiApprovedTrainingBreadcrumbItems } from '../../lib/approved/detail-breadcrumb'
 import {
@@ -19,7 +19,6 @@ import {
   type GeminiApprovedTrainingDetailLnbKey,
 } from '../../lib/approved/detail-url'
 import { formatTrainingDatetimeDisplay } from '../../lib/approved/format-display'
-import { getGeminiApprovedTrainingDetail } from '../../model/approved/approved-detail-resolver'
 import { GeminiApprovedTrainingDetailInstructorApplicationTab } from './detail-instructor-application-tab'
 import { GeminiApprovedTrainingDetailProgramInfoTab } from './detail-program-info-tab'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
@@ -44,7 +43,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     searchParams.get(GEMINI_APPROVED_TRAINING_LNB_PARAM)
   )
   const todayKey = useToday()
-  const detail = getGeminiApprovedTrainingDetail(approvedTrainingId)
+  const { detail, isLoading } = useGeminiApprovedTrainingDetail(approvedTrainingId)
 
   const detailTitle = detail
     ? detail.instructorAssigned
@@ -94,6 +93,8 @@ export function GeminiApprovedTrainingDetailFullPageModal({
       open={Boolean(approvedTrainingId)}
       onClose={onClose}
       title={detailTitle}
+      loading={isLoading}
+      error={!isLoading && !detail ? '승인 연수 정보를 찾을 수 없습니다.' : null}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="program-detail-fullpage-modal gemini-recruitment-detail-fullpage-modal"
       sidebar={
@@ -107,9 +108,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
           />
         }
       >
-        {!detail ? (
-          <Typography.Text type="secondary">승인 연수 정보를 찾을 수 없습니다.</Typography.Text>
-        ) : (
+        {detail ? (
           <>
             {activeLnb === 'info' ? (
               <GeminiApprovedTrainingDetailProgramInfoTab detail={detail} todayKey={todayKey} />
@@ -123,7 +122,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
               </div>
             )}
           </>
-        )}
+        ) : null}
     </DetailFullPageModal>
   )
 }
