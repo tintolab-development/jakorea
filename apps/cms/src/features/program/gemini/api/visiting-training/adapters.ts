@@ -13,6 +13,10 @@ import type { GeminiRecruitmentDetailResponse } from '@/shared/api/generated/das
 import type { GeminiRecruitmentItem } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentItem'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
+import {
+  normalizeTargetLevelValue,
+  parseTargetLevelsFromDisplayLabel,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { GEMINI_VISITING_TRAINING_PROGRAM_TYPE } from './capabilities'
 
 function toId(value: number | string | undefined): string {
@@ -28,6 +32,19 @@ function isDraftStatus(value?: string): boolean {
 function optionalDate(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim()
   return trimmed ? trimmed : undefined
+}
+
+function resolveGeminiTargetLevels(
+  levels: string[] | undefined,
+  detail?: string
+): NonNullable<ProgramCreateRequest['targetLevels']> | undefined {
+  const fromList = (levels ?? [])
+    .map(normalizeTargetLevelValue)
+    .filter((level): level is NonNullable<typeof level> => level != null)
+  const unique = [...new Set(fromList)]
+  if (unique.length > 0) return unique
+  const fromLabel = parseTargetLevelsFromDisplayLabel(detail)
+  return fromLabel.length > 0 ? fromLabel : undefined
 }
 
 /** BulkIdsRequest 용 — 숫자로 파싱 가능한 id만 사용 */
@@ -47,8 +64,14 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
   const otherMatters =
     snapshot.notesNotApplicable ? undefined : snapshot.notes?.trim() || undefined
   const recruitmentTargetDetail = snapshot.educationTargetDetail?.trim() || undefined
+  const targetLevels = resolveGeminiTargetLevels(
+    snapshot.educationTargetLevels,
+    recruitmentTargetDetail
+  )
   return {
     programType: GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
+    targetLevels,
+    targetLevel: targetLevels?.[0],
     title: snapshot.title.trim() || undefined,
     description: snapshot.programDescription || undefined,
     businessStartDate: optionalDate(snapshot.applicationPeriodStart),
@@ -94,8 +117,14 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
   const otherMatters =
     draft.notesNotApplicable ? undefined : draft.notes?.trim() || undefined
   const recruitmentTargetDetail = draft.educationTargetDetail?.trim() || undefined
+  const targetLevels = resolveGeminiTargetLevels(
+    draft.educationTargetLevels,
+    recruitmentTargetDetail
+  )
   const clearFields: string[] = []
   const body: ProgramUpdateRequest = {
+    targetLevels,
+    targetLevel: targetLevels?.[0],
     title: draft.title.trim() || undefined,
     description: draft.programDescription || undefined,
     businessStartDate: optionalDate(draft.applicationPeriodStart),

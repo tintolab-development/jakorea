@@ -404,6 +404,83 @@ describe('general-program-adapters', () => {
     expect(update.targetLevel).toBe('university')
   })
 
+  it('create/update는 모집 라벨의 복수 교육 대상을 targetLevels 컬럼에 올린다', () => {
+    const program: Program = {
+      ...sampleProgram,
+      targetLevel: 'elementary',
+      targetLevels: ['elementary'],
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          educationTarget: '초등학교, 중학교, 대학(원)생',
+        },
+      },
+    }
+    const create = mapGeneralProgramToCreateRequest(program)
+    expect(create.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(create.targetLevel).toBe('elementary')
+
+    const update = mapGeneralProgramToUpdateRequest(program, {
+      generalCommonInfo: program.generalCommonInfo,
+    })
+    expect(update.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(update.targetLevel).toBe('elementary')
+  })
+
+  it('공통정보 패치가 모집 라벨을 빼도 existing 라벨의 복수 targetLevels를 컬럼·JSON에 올린다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      targetLevel: 'elementary',
+      targetLevels: ['elementary'],
+      generalCommonInfo: {
+        announcementTitle: '기존 공고',
+        targetLevels: ['elementary'],
+        targetLevel: 'elementary',
+        participantRecruitmentInfo: {
+          educationTarget: '초등학교, 중학교, 대학(원)생',
+        },
+      } as Program['generalCommonInfo'],
+    }
+    const request = mapGeneralProgramToUpdateRequest(existing, {
+      title: '수정된 대표명',
+      generalCommonInfo: { announcementTitle: '수정된 공고' },
+    })
+    expect(request.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(request.targetLevel).toBe('elementary')
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      targetLevels?: string[]
+      program?: { targetLevels?: string[] }
+      generalCommonInfo?: {
+        participantRecruitmentInfo?: unknown
+        targetLevels?: string[]
+        targetLevel?: string
+      }
+    }
+    expect(detail.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(detail.program?.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(detail.generalCommonInfo?.targetLevels).toBeUndefined()
+    expect(detail.generalCommonInfo?.targetLevel).toBeUndefined()
+    expect(detail.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
+  })
+
+  it('상세 hydrate는 컬럼 1개여도 모집 라벨 복수를 targetLevels에 올린다', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '186023',
+      title: '개인 커리큘럼 복수 2회차',
+      targetLevel: 'elementary',
+      targetLevels: ['elementary'],
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        targetLevels: ['elementary'],
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            educationTarget: '초등학교, 중학교, 대학(원)생',
+          },
+        },
+      }),
+    } as unknown as ProgramResponse)
+    expect(program.targetLevels).toEqual(['elementary', 'middle', 'university'])
+  })
+
   it('hydrates detail targetLevels from ProgramResponse top-level array', () => {
     const program = mapAdminProgramDetailToProgram({
       id: '99',

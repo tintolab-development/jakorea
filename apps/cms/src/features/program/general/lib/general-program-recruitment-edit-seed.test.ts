@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   parseDisplayPeriodLabelToIsoRange,
   parseTargetLevelsFromDisplayLabel,
@@ -91,6 +92,30 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
     expect(values.educationTargetDetail).toBe('중고등 상세')
   })
 
+  it('조회 라벨이 더 많은 교육 대상이면 수정 시드는 컬럼 1개를 덮는다', () => {
+    const program = {
+      id: 'general-prog-multi-target',
+      title: '복수 대상',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      targetLevel: 'middle',
+      targetLevels: ['middle'],
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          educationTarget: '중학교 1~3학년, 대학교 1~2학년',
+        },
+      },
+      registrationOverlay: {
+        'recruit.individual.targetLevels': ['middle', 'university'],
+      },
+    } as unknown as Program
+
+    const values = programToRecruitmentTabEditValues(program, 'participant')
+    expect(values.targetLevels).toEqual(['middle', 'university'])
+  })
+
   it('기존 program 컬럼이 있으면 nested 라벨로 덮어쓰지 않는다', () => {
     const program = {
       id: 'general-prog-3',
@@ -118,9 +143,29 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
   })
 })
 
+describe('resolvePersistedProgramTargetLevels', () => {
+  it('컬럼 1개여도 모집 라벨 복수를 컬럼 배열로 올린다', () => {
+    expect(
+      resolvePersistedProgramTargetLevels({
+        targetLevel: 'elementary',
+        targetLevels: ['elementary'],
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            educationTarget: '초등학교, 중학교, 대학(원)생',
+          },
+        },
+      })
+    ).toEqual(['elementary', 'middle', 'university'])
+  })
+})
+
 describe('parse helpers', () => {
   it('parseTargetLevelsFromDisplayLabel', () => {
     expect(parseTargetLevelsFromDisplayLabel('초등, 중학교')).toEqual(['elementary', 'middle'])
+    expect(parseTargetLevelsFromDisplayLabel('중학교 1~3학년, 대학교 1~2학년')).toEqual([
+      'middle',
+      'university',
+    ])
   })
 
   it('parseDisplayPeriodLabelToIsoRange', () => {

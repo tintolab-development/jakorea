@@ -48,6 +48,7 @@ import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
   normalizeProgramBusinessAreaValue,
+  resolvePersistedProgramTargetLevels,
   resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { TargetLevel } from '@/types/domain'
@@ -363,11 +364,22 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     participantTypes: serviceDetail.generalParticipantTypes,
     category: dto.category,
   })
-  const detailTargetLevels = resolveProgramTargetLevels({
-    targetLevels: Array.isArray(dto.targetLevels)
-      ? dto.targetLevels.map(v => String(v))
-      : serviceDetail.targetLevels,
-    targetLevel: dto.targetLevel ?? serviceDetail.targetLevels?.[0],
+  const dtoTargetLevels = Array.isArray(dto.targetLevels)
+    ? dto.targetLevels.map(v => String(v))
+    : undefined
+  const jsonTargetLevels = serviceDetail.targetLevels
+  const columnTargetLevels = resolveProgramTargetLevels({
+    targetLevels:
+      (dtoTargetLevels?.length ?? 0) >= (jsonTargetLevels?.length ?? 0)
+        ? (dtoTargetLevels ?? jsonTargetLevels)
+        : jsonTargetLevels,
+    targetLevel: dto.targetLevel ?? jsonTargetLevels?.[0],
+  })
+  const detailTargetLevels = resolvePersistedProgramTargetLevels({
+    targetLevels: columnTargetLevels,
+    targetLevel: dto.targetLevel ?? jsonTargetLevels?.[0],
+    registrationOverlay: serviceDetail.registrationOverlay,
+    generalCommonInfo,
   })
 
   const mapped = baseProgramDefaults({
@@ -597,15 +609,16 @@ function toRequestPhone(value: string | null | undefined): string | undefined {
   return formatKoreanPhoneNumber(trimmed)
 }
 
-/** Admin create/update SSOT — `targetLevels` 배열. 단수만 있으면 길이 1 배열로 올린다. */
+/** Admin create/update SSOT — 모집 라벨·overlay가 더 길면 그 배열을 컬럼에 올린다. */
 function resolveRequestTargetLevels(
-  program: Program
+  program: Program,
+  fallback?: Program
 ): ProgramUpdateRequestTargetLevelsItem[] | undefined {
-  if (program.targetLevels != null) {
-    return [...program.targetLevels] as ProgramUpdateRequestTargetLevelsItem[]
-  }
-  if (program.targetLevel) {
-    return [program.targetLevel as ProgramUpdateRequestTargetLevelsItem]
+  const resolved = resolvePersistedProgramTargetLevels(program)
+  const fromFallback = fallback ? resolvePersistedProgramTargetLevels(fallback) : []
+  const richest = resolved.length >= fromFallback.length ? resolved : fromFallback
+  if (richest.length > 0) {
+    return [...richest] as ProgramUpdateRequestTargetLevelsItem[]
   }
   return undefined
 }
@@ -928,11 +941,28 @@ function mapProgramPatchFieldsToRequest(
         }
       : merged
 
-  const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
+  const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(
+    key =>
+      key !== 'generalProgramAudience' &&
+      key !== 'generalParticipantTypes' &&
+      has(key)
+  )
   if (touchesServiceDetail) {
-    body.serviceDetailJson = serializeGeneralProgramServiceDetailJson(detailSource, {
+    const persistedTargetLevels =
+      has('targetLevel') || has('targetLevels')
+        ? resolveRequestTargetLevels(merged)
+        : resolveRequestTargetLevels(detailSource, existing)
+    const serializeSource =
+      persistedTargetLevels?.length
+        ? { ...detailSource, targetLevels: persistedTargetLevels }
+        : detailSource
+    body.serviceDetailJson = serializeGeneralProgramServiceDetailJson(serializeSource, {
       omitRecruitmentWindow: !patchIncludesRecruitmentWindow(patch),
     })
+    if (persistedTargetLevels?.length) {
+      body.targetLevels = persistedTargetLevels
+      body.targetLevel = persistedTargetLevels[0]
+    }
   }
 
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {

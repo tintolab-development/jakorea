@@ -362,6 +362,91 @@ export function resolveProgramTargetLevels(program: {
   return [...new Set(levels)]
 }
 
+function parseTargetLevelFromDisplayPart(part: string): TargetLevel | undefined {
+  const trimmed = part.trim()
+  if (!trimmed) return undefined
+  const direct = normalizeTargetLevelValue(trimmed)
+  if (direct) return direct
+  for (const [code, display] of Object.entries(TARGET_LEVEL_LABEL)) {
+    if (trimmed.includes(display)) return code as TargetLevel
+  }
+  if (/대학/.test(trimmed)) return 'university'
+  if (/고등|고등학교/.test(trimmed)) return 'high'
+  if (/중등|중학교|중학/.test(trimmed)) return 'middle'
+  if (/초등|초등학교/.test(trimmed)) return 'elementary'
+  if (/성인/.test(trimmed)) return 'adult'
+  return normalizeTargetLevelValue(trimmed.split(/\s+/)[0])
+}
+
+/** 조회 라벨(초등, 중학교, 대학(원)생) → 컬럼용 enum 배열 */
+export function parseTargetLevelsFromDisplayLabel(label: string | undefined): TargetLevel[] {
+  if (!label?.trim() || label.trim() === '-') return []
+  const fromParts = label
+    .split(/[,，]/)
+    .map(part => parseTargetLevelFromDisplayPart(part))
+    .filter((level): level is TargetLevel => level != null)
+  if (fromParts.length > 0) return [...new Set(fromParts)]
+
+  const fromFullLabel: TargetLevel[] = []
+  for (const [code, display] of Object.entries(TARGET_LEVEL_LABEL)) {
+    if (label.includes(display)) {
+      fromFullLabel.push(code as TargetLevel)
+    }
+  }
+  if (/대학/.test(label) && !fromFullLabel.includes('university')) {
+    fromFullLabel.push('university')
+  }
+  return [...new Set(fromFullLabel)]
+}
+
+const RECRUIT_TARGET_LEVELS_OVERLAY_KEYS = [
+  'recruit.targetLevels',
+  'recruit.individual.targetLevels',
+  'ujat.recruit.institution.targetLevels',
+] as const
+
+function parseTargetLevelsFromRegistrationOverlay(
+  overlay?: Record<string, unknown> | null
+): TargetLevel[] {
+  if (!overlay) return []
+  for (const key of RECRUIT_TARGET_LEVELS_OVERLAY_KEYS) {
+    const raw = overlay[key]
+    if (!Array.isArray(raw)) continue
+    const levels = raw
+      .map(normalizeTargetLevelValue)
+      .filter((level): level is TargetLevel => level != null)
+    if (levels.length > 0) return [...new Set(levels)]
+  }
+  return []
+}
+
+function pickRichestTargetLevels(...lists: TargetLevel[][]): TargetLevel[] {
+  return lists.reduce((best, next) => (next.length > best.length ? next : best), [])
+}
+
+/**
+ * 컬럼·모집 overlay·조회 라벨 중 가장 긴 교육 대상.
+ * 저장 시 `targetLevels[]` 컬럼에 올린다. 라벨만 JSON에 남기지 않는다.
+ */
+export function resolvePersistedProgramTargetLevels(program: {
+  targetLevels?: Array<TargetLevel | string | null | undefined> | null
+  targetLevel?: TargetLevel | string | null
+  registrationOverlay?: Record<string, unknown> | null
+  generalCommonInfo?: {
+    participantRecruitmentInfo?: {
+      educationTarget?: string
+      recruitmentTarget?: string
+    } | null
+  } | null
+}): TargetLevel[] {
+  const info = program.generalCommonInfo?.participantRecruitmentInfo
+  return pickRichestTargetLevels(
+    parseTargetLevelsFromRegistrationOverlay(program.registrationOverlay),
+    parseTargetLevelsFromDisplayLabel(info?.educationTarget ?? info?.recruitmentTarget),
+    resolveProgramTargetLevels(program)
+  )
+}
+
 export function formatTargetLevelsLabel(
   levels: TargetLevel[],
   labels: Record<string, string> = TARGET_LEVEL_LABEL

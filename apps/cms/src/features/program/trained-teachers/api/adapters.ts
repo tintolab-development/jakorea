@@ -25,6 +25,7 @@ import {
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
 import {
+  resolvePersistedProgramTargetLevels,
   resolveProgramTargetLevels,
   resolveStoredBusinessArea,
 } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -285,6 +286,17 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     typeof (dto as { businessField?: unknown }).businessField === 'string'
       ? (dto as { businessField?: string }).businessField
       : undefined
+  const dtoTargetLevels = Array.isArray(
+    (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
+  )
+    ? (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
+    : undefined
+  const persistedTargetLevels = resolvePersistedProgramTargetLevels({
+    targetLevels: dtoTargetLevels ?? details.targetLevels,
+    targetLevel: details.targetLevels?.[0] ?? dto.targetLevel,
+    registrationOverlay: details.registrationOverlay,
+    generalCommonInfo: details.generalCommonInfo,
+  })
   const mapped = baseProgram({
     ...detailFields,
     id,
@@ -328,15 +340,8 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     schoolId: dto.schoolId,
     district: dto.district,
     ips: dto.ips as Program['ips'],
-    targetLevel:
-      resolveProgramTargetLevels({
-        targetLevels: details.targetLevels,
-        targetLevel: details.targetLevels?.[0] ?? dto.targetLevel,
-      })[0] ?? undefined,
-    targetLevels: resolveProgramTargetLevels({
-      targetLevels: details.targetLevels,
-      targetLevel: details.targetLevels?.[0] ?? dto.targetLevel,
-    }),
+    targetLevel: persistedTargetLevels[0] ?? undefined,
+    targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
     institutionType:
       venueKind === 'other'
         ? undefined
@@ -498,6 +503,20 @@ export function mapTrainedTeacherToUpdateRequest(
     sponsors[0]?.sponsorId ||
     merged.sponsorId
   const businessArea = resolveStoredBusinessArea(merged.businessArea) || undefined
+  const fromMergedLevels = resolvePersistedProgramTargetLevels(merged)
+  const fromExistingLevels = patch ? resolvePersistedProgramTargetLevels(program) : []
+  const honorPatchLevels = Boolean(
+    patch && Object.prototype.hasOwnProperty.call(patch, 'targetLevels')
+  )
+  const persistedTargetLevels = honorPatchLevels
+    ? fromMergedLevels
+    : fromMergedLevels.length >= fromExistingLevels.length
+      ? fromMergedLevels
+      : fromExistingLevels
+  const serializeSource =
+    persistedTargetLevels.length > 0
+      ? { ...merged, targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
+      : merged
   const body: ProgramUpdateRequest = {
     sponsorId: primarySponsorId,
     sponsors,
@@ -525,13 +544,8 @@ export function mapTrainedTeacherToUpdateRequest(
     schoolId: merged.schoolId,
     district: merged.district,
     ips: merged.ips,
-    targetLevels:
-      merged.targetLevels != null
-        ? [...merged.targetLevels]
-        : merged.targetLevel
-          ? [merged.targetLevel]
-          : undefined,
-    targetLevel: merged.targetLevels?.[0] ?? merged.targetLevel,
+    targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
+    targetLevel: persistedTargetLevels[0] ?? merged.targetLevel,
     institutionType: merged.institutionType,
     ipOwned: merged.ipOwned,
     courseDeliveredBy: merged.courseDeliveredBy,
@@ -569,7 +583,7 @@ export function mapTrainedTeacherToUpdateRequest(
     learningSupportContent: merged.learningSupportContent,
     attachmentFileNames: merged.attachmentFileNames,
     rounds: mapRounds(merged),
-    serviceDetailJson: serializeTrainedTeacherServiceDetailJson(merged),
+    serviceDetailJson: serializeTrainedTeacherServiceDetailJson(serializeSource),
   }
   // top-level 3필드가 stale serviceDetailJson 보다 우선 (BE handoff 2026-09-29)
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {

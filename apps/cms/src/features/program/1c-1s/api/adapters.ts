@@ -35,7 +35,11 @@ import {
 } from '@/features/program/general/model/common-info-edit-schema'
 import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
-import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  normalizeProgramBusinessAreaValue,
+  resolvePersistedProgramTargetLevels,
+} from '@/features/program/shared/lib/program-detail-info-constants'
+import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
   applyProgramMissingCommonStringFieldsToUpdateRequest,
@@ -203,6 +207,17 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
     toTypedProgramLifecycleStatus(periodStatus) ??
     undefined
+  const dtoTargetLevels = Array.isArray(
+    (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
+  )
+    ? (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
+    : undefined
+  const persistedTargetLevels = resolvePersistedProgramTargetLevels({
+    targetLevels: dtoTargetLevels ?? details.targetLevels,
+    targetLevel: dto.targetLevel ?? details.targetLevels?.[0],
+    registrationOverlay: details.registrationOverlay,
+    generalCommonInfo,
+  })
 
   const mapped = baseProgram({
     ...detailFields,
@@ -242,7 +257,8 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     schoolId: dto.schoolId,
     district: dto.district,
     ips: dto.ips as Program['ips'],
-    targetLevel: details.targetLevels?.[0] ?? (dto.targetLevel as Program['targetLevel']),
+    targetLevel: persistedTargetLevels[0] ?? (dto.targetLevel as Program['targetLevel']),
+    targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
     institutionType: dto.institutionType as Program['institutionType'],
     ipOwned: dto.ipOwned,
     courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
@@ -356,6 +372,19 @@ const SERVICE_DETAIL_PROGRAM_KEYS = [
   'registrationOverlay',
 ] as const satisfies ReadonlyArray<keyof Program>
 
+function resolveRequestTargetLevels(
+  program: Program,
+  fallback?: Program
+): ProgramUpdateRequestTargetLevelsItem[] | undefined {
+  const resolved = resolvePersistedProgramTargetLevels(program)
+  const fromFallback = fallback ? resolvePersistedProgramTargetLevels(fallback) : []
+  const richest = resolved.length >= fromFallback.length ? resolved : fromFallback
+  if (richest.length > 0) {
+    return [...richest] as ProgramUpdateRequestTargetLevelsItem[]
+  }
+  return undefined
+}
+
 function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
   return Object.prototype.hasOwnProperty.call(patch, key)
 }
@@ -389,6 +418,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
   // 버그 수정: 1사1교는 등록 폼에서 고른 「세부 프로그램명」이 요청에 전혀 실리지 않고 무시됐다 —
   // 일반 프로그램 어댑터와 동일하게 detailedProgramId(숫자 마스터 id)로 보낸다. textbookName(교재명)에
   // 이름을 강제로 밀어넣는 방식은 general 어댑터의 계약과 달랐다(중복되면 omit).
+  const targetLevels = resolveRequestTargetLevels(program)
   const detailedProgramName = program.generalCommonInfo?.detailedProgramName
   const businessArea = normalizeProgramBusinessAreaValue(program.businessArea) || undefined
   const sponsors = mapCompanySchoolSponsorAssignments(program)
@@ -423,7 +453,8 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     schoolId: program.schoolId,
     district: program.district,
     ips: program.ips,
-    targetLevel: program.targetLevels?.[0] ?? program.targetLevel,
+    targetLevels,
+    targetLevel: targetLevels?.[0] ?? program.targetLevel,
     institutionType: program.institutionType,
     ipOwned: program.ipOwned,
     courseDeliveredBy: program.courseDeliveredBy,
@@ -457,7 +488,11 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     attachmentFileNames: program.attachmentFileNames,
     rounds: mapRounds(program),
     sponsors: sponsors.length > 0 ? sponsors : undefined,
-    serviceDetailJson: serializeCompanySchoolServiceDetailJson(program),
+    serviceDetailJson: serializeCompanySchoolServiceDetailJson(
+      targetLevels?.length
+        ? { ...program, targetLevels, targetLevel: targetLevels[0] }
+        : program
+    ),
   }
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'full',
@@ -528,7 +563,9 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('district')) body.district = merged.district
   if (has('ips')) body.ips = merged.ips
   if (has('targetLevel') || has('targetLevels')) {
-    body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
+    const targetLevels = resolveRequestTargetLevels(merged) ?? []
+    body.targetLevels = targetLevels
+    body.targetLevel = targetLevels[0]
   }
   if (has('institutionType') || has('generalCommonInfo')) {
     body.institutionType = merged.institutionType
@@ -584,7 +621,22 @@ function mapCompanySchoolPatchFieldsToRequest(
 
   const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
   if (touchesServiceDetail) {
-    body.serviceDetailJson = serializeCompanySchoolServiceDetailJsonForUpdatePatch(merged, patch)
+    const persistedTargetLevels =
+      has('targetLevel') || has('targetLevels')
+        ? resolveRequestTargetLevels(merged)
+        : resolveRequestTargetLevels(merged, existing)
+    const serializeSource =
+      persistedTargetLevels?.length
+        ? { ...merged, targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
+        : merged
+    body.serviceDetailJson = serializeCompanySchoolServiceDetailJsonForUpdatePatch(
+      serializeSource,
+      persistedTargetLevels?.length ? { ...patch, targetLevels: persistedTargetLevels } : patch
+    )
+    if (persistedTargetLevels?.length) {
+      body.targetLevels = persistedTargetLevels
+      body.targetLevel = persistedTargetLevels[0]
+    }
   }
 
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {

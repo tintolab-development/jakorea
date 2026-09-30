@@ -108,6 +108,8 @@ describe('gemini visiting-training adapters', () => {
     expect((create as { recruitmentTargetDetail?: string }).recruitmentTargetDetail).toBe(
       '중학생'
     )
+    expect(create.targetLevels).toEqual(['middle'])
+    expect(create.targetLevel).toBe('middle')
     expect(toGeminiNumericIds(['1', 'x', '2'])).toEqual([1, 2])
   })
 

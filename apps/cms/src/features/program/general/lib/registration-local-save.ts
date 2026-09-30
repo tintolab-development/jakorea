@@ -44,6 +44,23 @@ import {
   bindRecruitDetailMediaAfterProgramCreate,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
+import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+
+function persistRegistrationAndRecruitOverlay(
+  generalOverlay: Record<string, unknown>
+): Record<string, unknown> {
+  return {
+    ...getApplicantRecruitInstitutionOverlayRecord(),
+    ...getGeneralRecruitOverlayRecord(),
+    ...generalOverlay,
+  }
+}
+
+function withPersistedTargetLevels(program: Program): Program {
+  const targetLevels = resolvePersistedProgramTargetLevels(program)
+  if (targetLevels.length === 0) return program
+  return { ...program, targetLevels, targetLevel: targetLevels[0] }
+}
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
@@ -374,17 +391,17 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
       registrationOverlay
     )
     flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-    return {
-      ...applyGeneralRecruitOverlayToProgram(
-        withEconomyRegistration,
-        {
-          ...getApplicantRecruitInstitutionOverlayRecord(),
-          ...getGeneralRecruitOverlayRecord(),
-        },
-        { preferOverlay: true }
-      ),
-      registrationOverlay,
+    const recruitOverlay = {
+      ...getApplicantRecruitInstitutionOverlayRecord(),
+      ...getGeneralRecruitOverlayRecord(),
     }
+    const persistedOverlay = persistRegistrationAndRecruitOverlay(registrationOverlay)
+    return withPersistedTargetLevels({
+      ...applyGeneralRecruitOverlayToProgram(withEconomyRegistration, recruitOverlay, {
+        preferOverlay: true,
+      }),
+      registrationOverlay: persistedOverlay,
+    })
   }
 
   const overlay = normalizeRegistrationOverlayForApply(
@@ -413,10 +430,12 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   )
 
   if (!isTrainedTeachers) {
-    return {
+    return withPersistedTargetLevels({
       ...withRecruit,
-      registrationOverlay: getProgramRegistrationOverlayRecord(),
-    }
+      registrationOverlay: persistRegistrationAndRecruitOverlay(
+        getProgramRegistrationOverlayRecord()
+      ),
+    })
   }
 
   // BE 계약: teacherTrainingEnabled / educationJournalEnabled는 create 시 항상 명시
@@ -436,9 +455,11 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     false
 
   const recruitment = withRecruit.generalCommonInfo?.participantRecruitmentInfo
-  return {
+  return withPersistedTargetLevels({
     ...withRecruit,
-    registrationOverlay: getProgramRegistrationOverlayRecord(),
+    registrationOverlay: persistRegistrationAndRecruitOverlay(
+      getProgramRegistrationOverlayRecord()
+    ),
     generalParticipantTypes: ['school_institution'],
     generalProgramAudience: 'organization',
     generalCommonInfo: {
@@ -457,7 +478,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
             preEducationNoticeRequired: false,
           },
     },
-  }
+  })
 }
 
 export function readGeneralRegistrationLocalSaveRecords(): GeneralRegistrationLocalSaveRecord[] {

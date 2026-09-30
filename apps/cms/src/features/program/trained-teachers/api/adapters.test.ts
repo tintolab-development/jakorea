@@ -102,6 +102,37 @@ describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
     expect(request.targetLevel).toBe('university')
   })
 
+  it('공통정보 패치가 모집 라벨을 빼도 existing 라벨의 복수 targetLevels를 컬럼에 올린다', () => {
+    const request = mapTrainedTeacherToUpdateRequest(
+      {
+        id: '186010',
+        sponsorId: 'sponsor-1',
+        title: '우리 동네 소비와 저축',
+        type: 'offline',
+        format: 'workshop',
+        category: 'school',
+        description: '',
+        rounds: [],
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        status: 'pending',
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+        targetLevel: 'elementary',
+        targetLevels: ['elementary'],
+        generalCommonInfo: {
+          announcementTitle: '기존 공고',
+          participantRecruitmentInfo: {
+            educationTarget: '초등학교, 중학교, 대학(원)생',
+          },
+        },
+      } as Program,
+      { generalCommonInfo: { announcementTitle: '수정된 공고' } }
+    )
+    expect(request.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(request.targetLevel).toBe('elementary')
+  })
+
   it('does not use organizationApplicationCount as participatingSchoolCount', () => {
     const mapped = mapTrainedTeacherListItemToProgram({
       id: 186006,

@@ -9,6 +9,7 @@ import { normalizeGeneralProgramServiceDetailParsed } from '@/features/program/g
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 
 export const COMPANY_SCHOOL_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -113,7 +114,7 @@ function companySchoolVolunteerOff(partial: Partial<Program>): Partial<Program> 
 function companySchoolDetails(program: Program): Partial<Program> {
   return companySchoolVolunteerOff({
     posterImage: program.posterImage,
-    targetLevels: program.targetLevels,
+    targetLevels: resolvePersistedProgramTargetLevels(program),
     approvedStudentCount: program.approvedStudentCount,
     instructorCapacity: program.instructorCapacity,
     participatingSchoolCount: program.participatingSchoolCount,

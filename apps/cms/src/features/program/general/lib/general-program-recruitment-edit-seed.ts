@@ -4,16 +4,17 @@
  */
 
 import dayjs from 'dayjs'
-import type { Program, TargetLevel } from '@/types/domain'
+import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
-  normalizeTargetLevelValue,
+  parseTargetLevelsFromDisplayLabel,
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
   resolveProgramVolunteerTargets,
-  TARGET_LEVEL_LABEL,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+
+export { parseTargetLevelsFromDisplayLabel }
 import {
   applyGeneralRecruitOverlayToProgram,
   resolveGeneralRecruitDetailDisplayProgram,
@@ -43,23 +44,6 @@ export function parseDisplayPeriodLabelToIsoRange(
     start: start.startOf('day').toISOString(),
     end: end.startOf('day').toISOString(),
   }
-}
-
-export function parseTargetLevelsFromDisplayLabel(label: string | undefined): TargetLevel[] {
-  if (!label?.trim() || label.trim() === '-') return []
-  const fromParts = label
-    .split(/[,，]/)
-    .map(part => normalizeTargetLevelValue(part.trim()))
-    .filter((level): level is TargetLevel => level != null)
-  if (fromParts.length > 0) return [...new Set(fromParts)]
-
-  const fromFullLabel: TargetLevel[] = []
-  for (const [code, display] of Object.entries(TARGET_LEVEL_LABEL)) {
-    if (label.includes(display)) {
-      fromFullLabel.push(code as TargetLevel)
-    }
-  }
-  return [...new Set(fromFullLabel)]
 }
 
 function parseMultiSelectFromDisplayLabel(
@@ -114,13 +98,13 @@ function enrichParticipantRecruitmentScalars(program: Program): Program {
 
   let next: Program = { ...program }
   const targetLevels = resolveProgramTargetLevels(next)
-  if (targetLevels.length === 0) {
-    const parsed = parseTargetLevelsFromDisplayLabel(
-      info.educationTarget ?? info.recruitmentTarget
-    )
-    if (parsed.length > 0) {
-      next = { ...next, targetLevels: parsed, targetLevel: parsed[0] }
-    }
+  const parsed = parseTargetLevelsFromDisplayLabel(
+    info.educationTarget ?? info.recruitmentTarget
+  )
+  if (parsed.length > targetLevels.length) {
+    next = { ...next, targetLevels: parsed, targetLevel: parsed[0] }
+  } else if (targetLevels.length === 0 && parsed.length > 0) {
+    next = { ...next, targetLevels: parsed, targetLevel: parsed[0] }
   }
 
   if (!next.educationTargetDetail?.trim() && !next.district?.trim()) {
