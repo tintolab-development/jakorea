@@ -232,7 +232,8 @@
 
 .extraSectionRichText {
   --rt-content-font-size: 16px;
-  --rt-content-line-height: 150%;
+  --rt-content-line-height: 1.6;
+  --rt-content-paragraph-margin: 0.5em;
 
   overflow: visible;
   padding: 0;
