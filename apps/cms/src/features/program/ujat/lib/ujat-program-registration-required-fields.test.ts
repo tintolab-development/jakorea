@@ -19,6 +19,7 @@ import {
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS as IK } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS as VK } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import { snapshotVolunteerHalfFromLegacy } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 
 vi.mock('@/features/program/ujat/lib/ujat-education-regions', () => ({
   listUjatEducationRegionsActive: () => [{ key: 'seoul', label: '서울' }],
@@ -74,6 +75,32 @@ function filledRegistration(): Record<string, unknown> {
   }
 }
 
+function filledVolunteerBothHalves(): Record<string, unknown> {
+  const shared = {
+    [VK.announcementPublished]: true,
+    [VK.noticeExposure]: 'before_recruit_end',
+    [VK.programRange]: RANGE,
+    [VK.volunteerTargets]: ['대학생'],
+    [VK.targetDetail]: '대학생',
+    [VK.recruitRange]: RANGE,
+    [VK.recruitRangeH1]: RANGE,
+    [VK.recruitRangeH2]: RANGE,
+    [VK.activityTermH1]: '1',
+    [VK.activityTermH2]: '2',
+    [VK.docAnnounce]: { date: '2026-09-05T00:00:00.000Z', method: '홈페이지' },
+    [VK.interviewMethod]: 'no',
+    [VK.finalAnnounce]: { date: '2026-10-01T00:00:00.000Z', method: '이메일' },
+    [VK.contact]: { name: '담당', phone: '010-0000-0000', email: 'a@b.com' },
+    [VK.notes]: '-',
+    [VK.otherNotes]: '-',
+  }
+  return {
+    ...shared,
+    ...snapshotVolunteerHalfFromLegacy(shared, 'h1'),
+    ...snapshotVolunteerHalfFromLegacy(shared, 'h2'),
+  }
+}
+
 describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
   beforeEach(() => {
     resetUjatProgramRegistrationOverlay()
@@ -117,23 +144,7 @@ describe('hasIncompleteUjatProgramRecruitmentRequiredFields', () => {
       [IK.contact]: { name: '담당', phone: '010-0000-0000', email: 'a@b.com' },
       [IK.notes]: '-',
     })
-    replaceUjatRecruitVolunteerOverlay({
-      [VK.announcementPublished]: true,
-      [VK.noticeExposure]: 'before_recruit_end',
-      [VK.programRange]: RANGE,
-      [VK.volunteerTargets]: ['대학생'],
-      [VK.targetDetail]: '대학생',
-      [VK.recruitRangeH1]: RANGE,
-      [VK.recruitRangeH2]: RANGE,
-      [VK.activityTermH1]: '1',
-      [VK.activityTermH2]: '2',
-      [VK.docAnnounce]: { date: '2026-09-05T00:00:00.000Z', method: '홈페이지' },
-      [VK.interviewMethod]: 'no',
-      [VK.finalAnnounce]: { date: '2026-10-01T00:00:00.000Z', method: '이메일' },
-      [VK.contact]: { name: '담당', phone: '010-0000-0000', email: 'a@b.com' },
-      [VK.notes]: '-',
-      [VK.otherNotes]: '-',
-    })
+    replaceUjatRecruitVolunteerOverlay(filledVolunteerBothHalves())
     expect(hasIncompleteUjatProgramRecruitmentRequiredFields()).toBe(false)
   })
 
@@ -148,23 +159,7 @@ describe('hasIncompleteUjatProgramRecruitmentRequiredFields', () => {
       [IK.contact]: { name: '담당', phone: '010-0000-0000', email: 'a@b.com' },
       [IK.notes]: '-',
     })
-    replaceUjatRecruitVolunteerOverlay({
-      [VK.announcementPublished]: true,
-      [VK.noticeExposure]: 'before_recruit_end',
-      [VK.programRange]: RANGE,
-      [VK.volunteerTargets]: ['대학생'],
-      [VK.targetDetail]: '대학생',
-      [VK.recruitRangeH1]: RANGE,
-      [VK.recruitRangeH2]: RANGE,
-      [VK.activityTermH1]: '1',
-      [VK.activityTermH2]: '2',
-      [VK.docAnnounce]: { date: '2026-09-05T00:00:00.000Z', method: '홈페이지' },
-      [VK.interviewMethod]: 'no',
-      [VK.finalAnnounce]: { date: '2026-10-01T00:00:00.000Z', method: '이메일' },
-      [VK.contact]: { name: '담당', phone: '010-0000-0000', email: 'a@b.com' },
-      [VK.notes]: '-',
-      [VK.otherNotes]: '-',
-    })
+    replaceUjatRecruitVolunteerOverlay(filledVolunteerBothHalves())
     expect(hasIncompleteUjatProgramRecruitmentRequiredFields()).toBe(false)
   })
 })

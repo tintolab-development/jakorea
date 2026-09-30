@@ -1,4 +1,5 @@
-import { RecruitFormVolunteerDetailInfoParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-detail-info-paragraph'
+import { RecruitDetailInfoParagraph } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-paragraph'
+import { ujatVolunteerRecruitDetailInfoPrefix } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import {
   isUjatRecruitProgramContext,
@@ -21,5 +22,17 @@ export function UjatRecruitVolunteerDetailInfoParagraph(props: UjatRecruitParagr
       />
     )
   }
-  return <RecruitFormVolunteerDetailInfoParagraph />
+  const half = props.volunteerHalf ?? 'h1'
+  return (
+    <RecruitDetailInfoParagraph
+      wysiwygResetKey={`ujat-recruit-volunteer-${half}-extra-body`}
+      overlayKeyPrefix={ujatVolunteerRecruitDetailInfoPrefix(half)}
+      textFields={[
+        { label: '프로그램 설명', placeholder: '프로그램 설명을 작성하세요' },
+        { label: '모집 안내', placeholder: '모집 안내를 작성하세요' },
+        { label: '지원 방법', placeholder: '지원 방법을 작성하세요' },
+        { label: '기타사항', placeholder: '기타 안내 사항을 작성하세요' },
+      ]}
+    />
+  )
 }

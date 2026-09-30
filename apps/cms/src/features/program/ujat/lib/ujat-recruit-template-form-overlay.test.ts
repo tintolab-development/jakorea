@@ -20,7 +20,6 @@ import {
 } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import {
   applyUjatRecruitVolunteerOverlayOntoProgram,
-  buildUjatRecruitVolunteerOverlayFromDetailEditValues,
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS as VOLUNTEER_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import {
@@ -28,6 +27,7 @@ import {
   resolveUjatRecruitAnnouncementTitle,
   resolveUjatRecruitDisplayProgram,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import { buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import { resolveUjatVolunteerActivityTermDisplay } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-program-round'
 import { UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-institution-recruit-template-preview-program'
 import { UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-volunteer-recruit-template-preview-program'
@@ -90,10 +90,10 @@ describe('UJAT recruit form overlay', () => {
         index === 0 ? { ...round, curriculum: '3' } : round
       ),
     }
-    const overlay = buildUjatRecruitVolunteerOverlayFromDetailEditValues(values)
-    expect(overlay[VOLUNTEER_KEYS.publicTitle]).toBe('봉사자 모집 공고')
+    const overlay = buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues(values, 'h1')
+    expect(overlay['ujat.recruit.volunteer.h1.publicTitle']).toBe('봉사자 모집 공고')
     expect(overlay[VOLUNTEER_KEYS.activityTermH1]).toBe('3')
-    expect(overlay[VOLUNTEER_KEYS.contact]).toEqual({
+    expect(overlay['ujat.recruit.volunteer.h1.contact']).toEqual({
       name: 'UJAT 운영팀',
       phone: '010-1234-5678',
       email: 'volunteer@jakorea.org',
@@ -108,7 +108,8 @@ describe('UJAT recruit form overlay', () => {
         ...applied,
         ujatRegistrationOverlay: overlay,
       },
-      'volunteer'
+      'volunteer',
+      'h1'
     )
     expect(restored.announcementTitle).toBe('봉사자 모집 공고')
     expect(programToDetailEditValues(applied).announcementTitle).toBeUndefined()
@@ -181,6 +182,7 @@ describe('UJAT recruit form overlay', () => {
       ujatRegistrationOverlay: {
         [INSTITUTION_KEYS.publicTitle]: '기관 공고',
         [VOLUNTEER_KEYS.publicTitle]: '봉사자 공고',
+        'ujat.recruit.volunteer.h1.publicTitle': '봉사자 공고',
       },
     }
     expect(resolveUjatRecruitAnnouncementTitle(program, 'institution')).toBe('기관 공고')
@@ -188,7 +190,7 @@ describe('UJAT recruit form overlay', () => {
     expect(programToUjatRecruitTemplateFormValues(program, 'institution').announcementTitle).toBe(
       '기관 공고'
     )
-    expect(programToUjatRecruitTemplateFormValues(program, 'volunteer').announcementTitle).toBe(
+    expect(programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1').announcementTitle).toBe(
       '봉사자 공고'
     )
 
@@ -346,5 +348,26 @@ describe('UJAT recruit form overlay', () => {
     }
     expect(resolveUjatVolunteerActivityTermDisplay(program, 'h1')).toBe('3')
     expect(resolveUjatVolunteerActivityTermDisplay(program, 'h2')).toBe('4')
+  })
+
+  it('상반기 입력은 하반기 공고용 프로그램명·대상에 연동되지 않는다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      ujatRegistrationOverlay: {
+        [INSTITUTION_KEYS.publicTitle]: '기관 공고용 프로그램명',
+        'ujat.recruit.volunteer.h1.publicTitle': '상반기 공고용 프로그램명',
+        'ujat.recruit.volunteer.h1.volunteerTargets': ['대학생'],
+        'ujat.recruit.volunteer.h1.targetDetail': '상반기 대상 상세',
+      },
+    }
+    const h1 = programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1')
+    const h2 = programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h2')
+    expect(h1.announcementTitle).toBe('상반기 공고용 프로그램명')
+    expect(h1.volunteerTargets).toEqual(['대학생'])
+    expect(h1.volunteerTargetDetail).toBe('상반기 대상 상세')
+    expect(h2.announcementTitle).toBe('')
+    expect(h2.volunteerTargets ?? []).toEqual([])
+    expect(h2.volunteerTargetDetail ?? '').toBe('')
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'volunteer_h2')).toBe('-')
   })
 })

@@ -9,12 +9,16 @@ import {
   UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import {
+  applyUjatRecruitVolunteerOverlayOntoProgram,
   buildUjatRecruitVolunteerOverlayFromDetailEditValues,
   pickUjatRecruitVolunteerOverlay,
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import {
+  blankUjatVolunteerRecruitProgramFields,
+  buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues,
   resolveVolunteerOverlayForHalf,
+  ujatVolunteerHalfOverlayKey,
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import {
@@ -75,20 +79,62 @@ const VOLUNTEER_DIRTY_FIELD_KEYS: Record<string, readonly string[]> = {
   volunteerRecruitmentNoticeExposure: [VOLUNTEER_KEYS.noticeExposure],
 }
 
+function remapVolunteerDirtyKeyToHalf(
+  key: string,
+  half: UjatVolunteerRecruitHalf
+): string {
+  const fieldByLegacy = Object.entries({
+    publicTitle: VOLUNTEER_KEYS.publicTitle,
+    announcementPublished: VOLUNTEER_KEYS.announcementPublished,
+    noticeExposure: VOLUNTEER_KEYS.noticeExposure,
+    programRange: VOLUNTEER_KEYS.programRange,
+    volunteerTargets: VOLUNTEER_KEYS.volunteerTargets,
+    targetDetail: VOLUNTEER_KEYS.targetDetail,
+    docAnnounce: VOLUNTEER_KEYS.docAnnounce,
+    interviewRange: VOLUNTEER_KEYS.interviewRange,
+    interviewMethod: VOLUNTEER_KEYS.interviewMethod,
+    finalAnnounce: VOLUNTEER_KEYS.finalAnnounce,
+    contact: VOLUNTEER_KEYS.contact,
+    notes: VOLUNTEER_KEYS.notes,
+    description: VOLUNTEER_KEYS.description,
+    recruitmentGuide: VOLUNTEER_KEYS.recruitmentGuide,
+    applicationMethod: VOLUNTEER_KEYS.applicationMethod,
+    otherNotes: VOLUNTEER_KEYS.otherNotes,
+  } as const).find(([, legacy]) => legacy === key)
+  if (fieldByLegacy) {
+    return ujatVolunteerHalfOverlayKey(
+      half,
+      fieldByLegacy[0] as Parameters<typeof ujatVolunteerHalfOverlayKey>[1]
+    )
+  }
+  if (
+    key === VOLUNTEER_KEYS.recruitRange ||
+    key === VOLUNTEER_KEYS.recruitRangeH1 ||
+    key === VOLUNTEER_KEYS.recruitRangeH2
+  ) {
+    return half === 'h1' ? VOLUNTEER_KEYS.recruitRangeH1 : VOLUNTEER_KEYS.recruitRangeH2
+  }
+  if (key === VOLUNTEER_KEYS.activityTermH1 || key === VOLUNTEER_KEYS.activityTermH2) {
+    return half === 'h1' ? VOLUNTEER_KEYS.activityTermH1 : VOLUNTEER_KEYS.activityTermH2
+  }
+  return key
+}
+
 function overlayKeysForDirtyFormField(
   kind: 'institution' | 'volunteer',
-  name: string
+  name: string,
+  volunteerHalf?: UjatVolunteerRecruitHalf
 ): readonly string[] {
   if (kind === 'institution') {
     return INSTITUTION_DIRTY_FIELD_KEYS[name] ?? []
   }
-  if (name.startsWith('rounds.0')) {
-    return [VOLUNTEER_KEYS.recruitRange, VOLUNTEER_KEYS.recruitRangeH1, VOLUNTEER_KEYS.activityTermH1]
-  }
-  if (name.startsWith('rounds.1')) {
-    return [VOLUNTEER_KEYS.recruitRangeH2, VOLUNTEER_KEYS.activityTermH2]
-  }
-  return VOLUNTEER_DIRTY_FIELD_KEYS[name] ?? []
+  const sharedKeys = name.startsWith('rounds.0')
+    ? [VOLUNTEER_KEYS.recruitRange, VOLUNTEER_KEYS.recruitRangeH1, VOLUNTEER_KEYS.activityTermH1]
+    : name.startsWith('rounds.1')
+      ? [VOLUNTEER_KEYS.recruitRangeH2, VOLUNTEER_KEYS.activityTermH2]
+      : (VOLUNTEER_DIRTY_FIELD_KEYS[name] ?? [])
+  if (volunteerHalf == null) return sharedKeys
+  return sharedKeys.map(key => remapVolunteerDirtyKeyToHalf(key, volunteerHalf))
 }
 
 /** 빈 폼 값으로 다른 필드를 지우지 않는다. 사용자가 고친 필드만 빈 값 허용. */
@@ -97,10 +143,15 @@ export function mergeUjatRecruitFormOverlayPatch(args: {
   next: Record<string, unknown>
   dirtyFormField?: string
   kind: 'institution' | 'volunteer'
+  volunteerHalf?: UjatVolunteerRecruitHalf
 }): Record<string, unknown> {
   const merged = coalesceUjatRecruitOverlay(args.existing, args.next)
   if (!args.dirtyFormField) return merged
-  for (const key of overlayKeysForDirtyFormField(args.kind, args.dirtyFormField)) {
+  for (const key of overlayKeysForDirtyFormField(
+    args.kind,
+    args.dirtyFormField,
+    args.volunteerHalf
+  )) {
     if (key in args.next) merged[key] = args.next[key]
   }
   return merged
@@ -131,7 +182,6 @@ export function programToUjatRecruitTemplateFormValues(
   kind: 'institution' | 'volunteer',
   volunteerHalf?: UjatVolunteerRecruitHalf
 ): ProgramDetailEditFormValues {
-  const values = programToDetailEditValues(program)
   const persisted = program.ujatRegistrationOverlay ?? {}
   const overlay =
     kind === 'institution'
@@ -146,6 +196,14 @@ export function programToUjatRecruitTemplateFormValues(
           },
           volunteerHalf ?? 'h1'
         )
+  const values = programToDetailEditValues(
+    kind === 'volunteer'
+      ? applyUjatRecruitVolunteerOverlayOntoProgram(
+          blankUjatVolunteerRecruitProgramFields(program),
+          overlay
+        )
+      : program
+  )
   const publicTitleKey =
     kind === 'institution' ? INSTITUTION_KEYS.publicTitle : VOLUNTEER_KEYS.publicTitle
   const publicTitle = overlay[publicTitleKey]
@@ -190,8 +248,9 @@ export function programToUjatRecruitTemplateFormValues(
   if (!next.startDate && programRange?.start?.trim()) next.startDate = programRange.start
   if (!next.endDate && programRange?.end?.trim()) next.endDate = programRange.end
   const recruitRange =
+    readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRange) ??
     readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRangeH1) ??
-    readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRange)
+    readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRangeH2)
   if (!next.volunteerApplicationStartDate && recruitRange?.start?.trim()) {
     next.volunteerApplicationStartDate = recruitRange.start
   }
@@ -204,12 +263,15 @@ export function programToUjatRecruitTemplateFormValues(
 function patchRecruitOverlayFromForm(
   kind: 'institution' | 'volunteer',
   values: ProgramDetailEditFormValues,
-  dirtyFormField?: string
+  dirtyFormField?: string,
+  volunteerHalf?: UjatVolunteerRecruitHalf
 ): void {
   const next =
     kind === 'institution'
       ? buildUjatRecruitInstitutionOverlayFromDetailEditValues(values)
-      : buildUjatRecruitVolunteerOverlayFromDetailEditValues(values)
+      : volunteerHalf != null
+        ? buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues(values, volunteerHalf)
+        : buildUjatRecruitVolunteerOverlayFromDetailEditValues(values)
   const existing =
     kind === 'institution'
       ? getUjatRecruitInstitutionOverlayRecord()
@@ -219,6 +281,7 @@ function patchRecruitOverlayFromForm(
     next,
     dirtyFormField,
     kind,
+    volunteerHalf,
   })
   if (kind === 'institution') {
     patchUjatRecruitInstitutionOverlay(merged)
@@ -236,7 +299,8 @@ export function useUjatRecruitTemplateFormOverlaySync(
   form: UseFormReturn<ProgramDetailEditFormValues>,
   kind: 'institution' | 'volunteer',
   program: Program,
-  _revision: number
+  _revision: number,
+  volunteerHalf?: UjatVolunteerRecruitHalf
 ): void {
   const readyRef = useRef(false)
   const programRef = useRef(program)
@@ -244,11 +308,11 @@ export function useUjatRecruitTemplateFormOverlaySync(
 
   useEffect(() => {
     readyRef.current = false
-    form.reset(programToUjatRecruitTemplateFormValues(programRef.current, kind), {
+    form.reset(programToUjatRecruitTemplateFormValues(programRef.current, kind, volunteerHalf), {
       keepDefaultValues: false,
     })
     readyRef.current = true
-  }, [form, kind])
+  }, [form, kind, volunteerHalf])
 
   useEffect(() => {
     const subscription = form.watch((values, info) => {
@@ -256,8 +320,13 @@ export function useUjatRecruitTemplateFormOverlaySync(
       if (info.name == null && info.type == null) return
       const dirtyFormField =
         info.type === 'change' || info.type === 'blur' ? info.name : undefined
-      patchRecruitOverlayFromForm(kind, values as ProgramDetailEditFormValues, dirtyFormField)
+      patchRecruitOverlayFromForm(
+        kind,
+        values as ProgramDetailEditFormValues,
+        dirtyFormField,
+        volunteerHalf
+      )
     })
     return () => subscription.unsubscribe()
-  }, [form, kind])
+  }, [form, kind, volunteerHalf])
 }

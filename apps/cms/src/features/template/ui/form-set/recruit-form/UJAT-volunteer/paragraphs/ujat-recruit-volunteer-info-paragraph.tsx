@@ -21,7 +21,8 @@ function UjatRecruitVolunteerInfoTemplateEditor({
 }) {
   const { program, revision } = useUjatRecruitTemplateProgram(
     UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
-    'volunteer'
+    'volunteer',
+    volunteerHalf
   )
   return (
     <UjatRecruitVolunteerInfoTemplateEditorForm
@@ -45,9 +46,9 @@ function UjatRecruitVolunteerInfoTemplateEditorForm({
     program,
     isEditMode: true,
     resetOnProgramChange: false,
-    mapToValues: next => programToUjatRecruitTemplateFormValues(next, 'volunteer'),
+    mapToValues: next => programToUjatRecruitTemplateFormValues(next, 'volunteer', volunteerHalf),
   })
-  useUjatRecruitTemplateFormOverlaySync(form, 'volunteer', program, revision)
+  useUjatRecruitTemplateFormOverlaySync(form, 'volunteer', program, revision, volunteerHalf)
 
   return (
     <UjatRecruitVolunteerInfoProgramView

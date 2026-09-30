@@ -2,6 +2,11 @@ import { useMemo, useSyncExternalStore } from 'react'
 import type { Program } from '@/types/domain'
 import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import {
+  blankUjatVolunteerRecruitProgramFields,
+  resolveVolunteerOverlayForHalf,
+  type UjatVolunteerRecruitHalf,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import {
   applyUjatRecruitInstitutionOverlayOntoProgram,
   pickUjatRecruitInstitutionOverlay,
 } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
@@ -27,7 +32,8 @@ import {
 
 export function useUjatRecruitTemplateProgram(
   preview: Program,
-  kind: 'institution' | 'volunteer'
+  kind: 'institution' | 'volunteer',
+  volunteerHalf: UjatVolunteerRecruitHalf = 'h1'
 ): { program: Program; revision: number } {
   const programVersion = useSyncExternalStore(
     subscribeUjatProgramRegistrationOverlay,
@@ -55,13 +61,17 @@ export function useUjatRecruitTemplateProgram(
       ...pickUjatRecruitVolunteerOverlay(programOverlay),
       ...getUjatRecruitVolunteerOverlayRecord(),
     }
-    let next = resolveUjatRecruitDisplayProgram(preview)
-    next = applyUjatRecruitInstitutionOverlayOntoProgram(next, institutionOverlay)
-    if (kind === 'volunteer') {
-      next = applyUjatRecruitVolunteerOverlayOntoProgram(next, volunteerOverlay)
+    if (kind === 'institution') {
+      return applyUjatRecruitInstitutionOverlayOntoProgram(
+        resolveUjatRecruitDisplayProgram(preview, 'institution'),
+        institutionOverlay
+      )
     }
-    return next
-  }, [kind, preview, programVersion, institutionVersion, volunteerVersion])
+    return applyUjatRecruitVolunteerOverlayOntoProgram(
+      blankUjatVolunteerRecruitProgramFields(preview),
+      resolveVolunteerOverlayForHalf(volunteerOverlay, volunteerHalf)
+    )
+  }, [kind, preview, programVersion, institutionVersion, volunteerVersion, volunteerHalf])
 
   return {
     program,
