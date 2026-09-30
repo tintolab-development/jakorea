@@ -92,7 +92,8 @@ export function GeminiRecruitmentDetailFullPageModal({
     handleCancel: handleInfoCancel,
     handleSave: handleInfoSave,
     applyDevAutofill,
-    registerGetAdditionalContentMarkdown,
+    registerRichTextGetter,
+    overlayRichText,
     isDetailFetching,
   } = useGeminiRecruitmentInfoEdit(recruitmentId, todayKey)
 
@@ -103,9 +104,11 @@ export function GeminiRecruitmentDetailFullPageModal({
   const previewSnapshot = useMemo(() => {
     if (!previewOpen || detail == null) return null
     const source =
-      isEditModeInfo && infoDraft != null ? applyInfoEditDraft(detail, infoDraft) : detail
+      isEditModeInfo && infoDraft != null
+        ? applyInfoEditDraft(detail, overlayRichText(infoDraft))
+        : detail
     return detailToAddFormSnapshot(source)
-  }, [detail, infoDraft, isEditModeInfo, previewOpen])
+  }, [detail, infoDraft, isEditModeInfo, overlayRichText, previewOpen])
 
   const headerBreadcrumbItems = useMemo(() => {
     const listParams = buildSearchParams(searchParams, {
@@ -263,7 +266,7 @@ export function GeminiRecruitmentDetailFullPageModal({
                   isEditMode={isEditModeInfo}
                   draft={infoDraft}
                   onDraftChange={patchDraft}
-                  registerGetAdditionalContentMarkdown={registerGetAdditionalContentMarkdown}
+                  registerRichTextGetter={registerRichTextGetter}
                 />
               </>
             ) : activeLnb === 'institutions' ? (

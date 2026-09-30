@@ -48,22 +48,22 @@ const RECRUITMENT_STATUS_LABEL: Record<GeminiRecruitmentDisplayStatus, string> =
   DRAFT: '임시저장',
 }
 
+/** Figma 찾아가는 연수 모집 공고 목록 — 공고명 710 · 기간 280 · 상태 120 */
 const RECRUITMENT_COL_WIDTH = {
   no: TABLE_COLUMN_WIDTHS.index,
-  title: 360,
+  title: 710,
   applicationPeriod: 280,
   trainingRequestPeriod: 280,
-  status: 100,
+  status: 120,
 } as const
 
 const RECRUITMENT_TABLE_SCROLL_X =
+  TABLE_COLUMN_WIDTHS.checkbox +
   RECRUITMENT_COL_WIDTH.no +
   RECRUITMENT_COL_WIDTH.title +
   RECRUITMENT_COL_WIDTH.applicationPeriod +
   RECRUITMENT_COL_WIDTH.trainingRequestPeriod +
-  RECRUITMENT_COL_WIDTH.status +
-  TABLE_COLUMN_WIDTHS.checkbox +
-  48
+  RECRUITMENT_COL_WIDTH.status
 
 function recruitmentStatusCell(status: GeminiRecruitmentDisplayStatus) {
   const base = 'gemini-recruitment-list__status'
@@ -223,12 +223,14 @@ export function GeminiRecruitmentList() {
         title: '공고명',
         dataIndex: 'title',
         key: 'title',
+        className: 'gemini-recruitment-list__col-title',
         width: RECRUITMENT_COL_WIDTH.title,
         ellipsis: { showTitle: true },
       },
       {
         title: '신청기간',
         key: 'applicationPeriod',
+        className: 'gemini-recruitment-list__col-period',
         width: RECRUITMENT_COL_WIDTH.applicationPeriod,
         align: 'center',
         render: (_: unknown, row: GeminiRecruitmentRow) =>
@@ -237,6 +239,7 @@ export function GeminiRecruitmentList() {
       {
         title: '연수 요청 가능기간',
         key: 'trainingRequestPeriod',
+        className: 'gemini-recruitment-list__col-period',
         width: RECRUITMENT_COL_WIDTH.trainingRequestPeriod,
         align: 'center',
         render: (_: unknown, row: GeminiRecruitmentRow) =>
@@ -245,6 +248,7 @@ export function GeminiRecruitmentList() {
       {
         title: '상태',
         key: 'status',
+        className: 'gemini-recruitment-list__col-status',
         width: RECRUITMENT_COL_WIDTH.status,
         align: 'center',
         render: (_: unknown, row: GeminiRecruitmentRow) =>

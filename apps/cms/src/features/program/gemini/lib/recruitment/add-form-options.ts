@@ -28,8 +28,14 @@ export const GEMINI_RECRUITMENT_ADD_SECTION_IDS = {
   detail: 'gemini-recruitment-add-section-detail',
 } as const
 
-export const GEMINI_RECRUITMENT_DETAIL_TEXT_FIELDS = [
-  { label: '프로그램 설명', placeholder: '프로그램 설명을 작성하세요', key: 'programDescription' as const },
+export const GEMINI_RECRUITMENT_PROGRAM_DESCRIPTION_FIELD = {
+  label: '프로그램 설명',
+  placeholder: '프로그램 설명을 작성하세요',
+  key: 'programDescription' as const,
+}
+
+/** 시안 — 모집 안내·지원 방법·학습 지원 내용·추가 내용은 WYSIWYG */
+export const GEMINI_RECRUITMENT_DETAIL_RICH_TEXT_FIELDS = [
   { label: '모집 안내', placeholder: '모집 안내를 작성하세요', key: 'recruitmentGuide' as const },
   { label: '지원 방법', placeholder: '지원 방법을 작성하세요', key: 'applicationMethod' as const },
   {
@@ -37,4 +43,29 @@ export const GEMINI_RECRUITMENT_DETAIL_TEXT_FIELDS = [
     placeholder: '학습 지원 내용을 작성하세요',
     key: 'learningSupportContent' as const,
   },
-]
+  { label: '추가 내용', placeholder: '내용을 작성하세요', key: 'additionalContentMarkdown' as const },
+] as const
+
+export type GeminiRecruitmentRichTextKey =
+  (typeof GEMINI_RECRUITMENT_DETAIL_RICH_TEXT_FIELDS)[number]['key']
+
+export type GeminiRecruitmentRichTextGetter = () => string
+
+export type GeminiRecruitmentRichTextGetterMap = Partial<
+  Record<GeminiRecruitmentRichTextKey, GeminiRecruitmentRichTextGetter>
+>
+
+const GEMINI_RECRUITMENT_RICH_TEXT_KEYS = GEMINI_RECRUITMENT_DETAIL_RICH_TEXT_FIELDS.map(
+  field => field.key
+)
+
+export function overlayGeminiRecruitmentRichText<
+  T extends Record<GeminiRecruitmentRichTextKey, string>,
+>(getters: GeminiRecruitmentRichTextGetterMap, values: T): T {
+  const next = { ...values }
+  for (const key of GEMINI_RECRUITMENT_RICH_TEXT_KEYS) {
+    const getter = getters[key]
+    if (getter) next[key] = getter()
+  }
+  return next
+}
