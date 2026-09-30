@@ -52,7 +52,12 @@ export function FaqFormModal(props: FaqFormModalProps) {
         }
       >
         <Form form={ctrl.form} layout="vertical" requiredMark={false} className="faq-form-modal__form">
-          <FaqFormFields categoryOptions={ctrl.categoryOptions} />
+          <FaqFormFields
+            categoryOptions={ctrl.categoryOptions}
+            editor={ctrl.editor}
+            editorMinHeight={ctrl.editorMinHeight}
+            fileUploadOwner={ctrl.fileUploadOwner}
+          />
         </Form>
       </ContentModal>
     </>
