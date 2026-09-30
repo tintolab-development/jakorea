@@ -144,11 +144,24 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
 })
 
 describe('resolvePersistedProgramTargetLevels', () => {
-  it('컬럼 1개여도 모집 라벨 복수를 컬럼 배열로 올린다', () => {
+  it('컬럼 배열이 있으면 모집 라벨로 확대하지 않는다', () => {
     expect(
       resolvePersistedProgramTargetLevels({
         targetLevel: 'elementary',
         targetLevels: ['elementary'],
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            educationTarget: '초등학교, 중학교, 대학(원)생',
+          },
+        },
+      })
+    ).toEqual(['elementary'])
+  })
+
+  it('컬럼 키가 없을 때만 모집 라벨로 hydrate한다', () => {
+    expect(
+      resolvePersistedProgramTargetLevels({
+        targetLevel: 'elementary',
         generalCommonInfo: {
           participantRecruitmentInfo: {
             educationTarget: '초등학교, 중학교, 대학(원)생',

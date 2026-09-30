@@ -158,7 +158,7 @@ describe('UJAT program adapters', () => {
     expect(updated.managerName).toBeUndefined()
   })
 
-  it('공통정보 패치가 모집 라벨을 빼도 existing 라벨의 복수 targetLevels를 컬럼에 올린다', () => {
+  it('공통정보 패치는 컬럼 targetLevels를 유지하고 모집 라벨로 키우지 않는다', () => {
     const existing: Program = {
       ...program,
       targetLevel: 'elementary',
@@ -174,7 +174,7 @@ describe('UJAT program adapters', () => {
       title: '수정된 UJAT',
       generalCommonInfo: { announcementTitle: '수정된 공고' },
     })
-    expect(request.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(request.targetLevels).toEqual(['elementary'])
     expect(request.targetLevel).toBe('elementary')
   })
 
