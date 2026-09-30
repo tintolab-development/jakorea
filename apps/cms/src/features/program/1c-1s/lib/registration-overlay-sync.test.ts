@@ -7,6 +7,7 @@ import {
   seedEconomyRegistrationOverlayFromProgram,
   readEconomyRegistrationOverlayForSave,
 } from './registration-overlay-sync'
+import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 function baseProgram(): Program {
   return {
@@ -75,5 +76,25 @@ describe('buildEconomyRegistrationOverlayFromProgram → apply', () => {
     const saved = readEconomyRegistrationOverlayForSave()
     expect(Object.keys(saved).every(key => key.startsWith('economyRegistration.'))).toBe(true)
     expect(saved['economyRegistration.basicInfo.repKo']).toBe('디지털 리터러시 교실')
+  })
+
+  it('후원사만 있고 담당자가 없으면 수정 overlay에 미선택을 시드한다', () => {
+    const overlay = buildEconomyRegistrationOverlayFromProgram({
+      ...baseProgram(),
+      sponsorId: '1627251',
+      managerName: '미선택',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        sponsorManagementIds: ['1627251'],
+        sponsorManagerContactIds: [],
+        sponsorManagerLine: '미선택',
+      },
+    })
+    expect(overlay['economyRegistration.basicInfo.managerContactIds']).toEqual([
+      SPONSOR_CONTACT_UNSELECTED_VALUE,
+    ])
+    expect(overlay['economyRegistration.basicInfo.managerContactId']).toBe(
+      SPONSOR_CONTACT_UNSELECTED_VALUE
+    )
   })
 })

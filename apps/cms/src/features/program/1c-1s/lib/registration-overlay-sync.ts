@@ -18,6 +18,7 @@ import {
   pickProgramRegistrationOverlayByPrefix,
   replaceProgramRegistrationOverlayPrefix,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { resolveSponsorContactIdsFromProgram } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 export const ECONOMY_REGISTRATION_OVERLAY_PREFIX = 'economyRegistration.' as const
 
@@ -148,7 +149,7 @@ export function buildEconomyRegistrationOverlayFromProgram(
     program.generalCommonInfo?.sponsorManagementId?.trim() ||
     program.generalCommonInfo?.sponsorManagementIds?.[0]?.trim() ||
     ALL_VALUE
-  const managerIds = program.generalCommonInfo?.sponsorManagerContactIds ?? []
+  const managerIds = resolveSponsorContactIdsFromProgram(program)
   const kpi = program.generalCommonInfo?.kpi
 
   return {

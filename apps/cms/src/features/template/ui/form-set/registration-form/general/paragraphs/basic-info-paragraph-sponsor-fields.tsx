@@ -30,6 +30,7 @@ import {
   isSponsorContactUnselected,
   normalizeSponsorContactUnselectedSelection,
   SPONSOR_CONTACT_UNSELECTED_LABEL,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
   withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
@@ -160,7 +161,9 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
       const decoded = decodeSponsorManagerContactRef(ref)
       return decoded != null && unique.includes(decoded.sponsorManagementId)
     })
-    setManagerContactIds(kept)
+    setManagerContactIds(
+      unique.length > 0 && kept.length === 0 ? [SPONSOR_CONTACT_UNSELECTED_VALUE] : kept
+    )
   }
 
   // 단일 후원사 레거시 → 다중 배열 동기화
@@ -188,6 +191,14 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
 
   const { options: sponsorApiOptions } = useSponsorSelectOptions()
   const isAllSponsor = trainedTeachersDefaults && sponsorId === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE
+
+  // 후원사는 있는데 담당자가 비면 수정 진입·후원사 변경 모두 미선택을 고른다.
+  useEffect(() => {
+    if (isAllSponsor) return
+    if (sponsorIds.length === 0) return
+    if (managerContactIds.length > 0) return
+    setManagerContactIds([SPONSOR_CONTACT_UNSELECTED_VALUE])
+  }, [isAllSponsor, managerContactIds.length, setManagerContactIds, sponsorIds.length])
 
   const multiSponsorContext = useGeneralProgramSponsorEditContext(
     allowMultipleSponsors ? sponsorIds : []

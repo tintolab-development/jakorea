@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
-import { resetUjatProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import {
+  getUjatProgramRegistrationOverlayRecord,
+  resetUjatProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import {
   applyUjatRegistrationOverlayToProgram,
   resolveUjatRegistrationBasicInfoDisplay,
@@ -8,11 +11,13 @@ import {
 import {
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
+  UJAT_SPONSOR_ALL_VALUE,
 } from './ujat-registration-basic-info-defaults'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   buildUjatRegistrationBasicInfoOverlayFromProgram,
   reconcileUjatRegistrationOverlayFromApi,
+  seedUjatRegistrationBasicInfoOverlayFromProgram,
 } from './ujat-registration-basic-info-overlay-sync'
 
 function baseProgram(): Program {
@@ -175,5 +180,29 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
     expect(next.generalCommonInfo?.sponsorManagerContactIds).toEqual(['contact-9'])
     expect(next.generalCommonInfo?.sponsorManagerLine).toBe('담당자A')
     expect(next.generalSurveyMenuKeys).toEqual(['survey', 'satisfaction', 'lecture_evaluation'])
+  })
+
+  it('저장된 overlay가 담당자 전체 기본값이어도 수정 시드에 미선택을 넣는다', () => {
+    resetUjatProgramRegistrationOverlay()
+    seedUjatRegistrationBasicInfoOverlayFromProgram({
+      ...baseProgram(),
+      sponsorId: '1627251',
+      managerName: '미선택',
+      generalCommonInfo: {
+        sponsorManagementIds: ['1627251'],
+        sponsorManagerContactIds: [],
+        sponsorManagerLine: '미선택',
+      },
+      ujatRegistrationOverlay: {
+        'ujat.basicInfo.sponsorId': '1627251',
+        'ujat.basicInfo.sponsorContactId': UJAT_SPONSOR_ALL_VALUE,
+        'ujat.basicInfo.sponsorContactIds': [],
+      },
+    })
+    const overlay = getUjatProgramRegistrationOverlayRecord()
+    expect(overlay['ujat.basicInfo.sponsorContactIds']).toEqual([
+      SPONSOR_CONTACT_UNSELECTED_VALUE,
+    ])
+    expect(overlay['ujat.basicInfo.sponsorContactId']).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
   })
 })

@@ -71,6 +71,15 @@ describe('hasIncompleteGeneralProgramRegistrationRequiredFields', () => {
     expect(hasIncompleteGeneralProgramRegistrationRequiredFields(filledOverlay(), ctx())).toBe(false)
   })
 
+  it('후원사 담당자 미선택 sentinel이면 완료이다', () => {
+    expect(
+      hasIncompleteGeneralProgramRegistrationRequiredFields(
+        filledOverlay(),
+        ctx({ sponsorContactId: '__sponsor_contact_unselected__' })
+      )
+    ).toBe(false)
+  })
+
   it('기관이어도 최종 파견 학교·학급 수 없이 완료이다', () => {
     expect(
       hasIncompleteGeneralProgramRegistrationRequiredFields(

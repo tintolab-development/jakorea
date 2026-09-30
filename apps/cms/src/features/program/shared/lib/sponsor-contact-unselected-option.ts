@@ -26,7 +26,7 @@ export function resolveSponsorContactIdsForEdit(input: {
     ...new Set(
       [...(input.ids ?? []), input.id ?? '']
         .map(value => value.trim())
-        .filter(Boolean)
+        .filter(id => id && id !== '__all__' && id !== 'ALL')
     ),
   ]
   if (stored.some(id => isSponsorContactUnselected(id))) {
@@ -41,6 +41,37 @@ export function resolveSponsorContactIdsForEdit(input: {
     return [SPONSOR_CONTACT_UNSELECTED_VALUE]
   }
   return []
+}
+
+/** Program 조회 스냅샷 → 수정 폼/overlay 담당자 값 */
+export function resolveSponsorContactIdsFromProgram(program: {
+  sponsorId?: string | null
+  managerName?: string | null
+  generalCommonInfo?: {
+    sponsorManagementIds?: readonly string[] | null
+    sponsorManagementId?: string | null
+    sponsorManagerContactIds?: readonly string[] | null
+    sponsorManagerContactId?: string | null
+    sponsorManagerLine?: string | null
+  } | null
+}): string[] {
+  const sponsorIds =
+    program.generalCommonInfo?.sponsorManagementIds?.length
+      ? program.generalCommonInfo.sponsorManagementIds
+      : program.generalCommonInfo?.sponsorManagementId
+        ? [program.generalCommonInfo.sponsorManagementId]
+        : program.sponsorId
+          ? [program.sponsorId]
+          : []
+  return resolveSponsorContactIdsForEdit({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+    managerLine:
+      program.generalCommonInfo?.sponsorManagerLine?.trim() ||
+      program.managerName?.trim() ||
+      '',
+    hasSelectedSponsors: sponsorIds.some(id => String(id).trim() !== ''),
+  })
 }
 
 export function withSponsorContactUnselectedOption<T extends { value: string; label: string }>(

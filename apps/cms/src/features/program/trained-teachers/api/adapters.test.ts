@@ -403,7 +403,9 @@ describe('mergeTrainedTeacherSponsorAssignments', () => {
       { sponsorId: '163302', sponsorContactId: null },
     ])
     expect(merged.generalCommonInfo?.sponsorManagementIds).toEqual(['163302'])
-    expect(merged.generalCommonInfo?.sponsorManagerContactIds).toEqual([])
+    expect(merged.generalCommonInfo?.sponsorManagerContactIds).toEqual([
+      '__sponsor_contact_unselected__',
+    ])
     expect(merged.managerName).toBe('미선택')
     expect(merged.generalCommonInfo?.sponsorManagerLine).toBe('미선택')
   })

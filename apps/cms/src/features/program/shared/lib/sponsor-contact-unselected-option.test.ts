@@ -3,6 +3,7 @@ import {
   isProgramSponsorManagerUnselected,
   normalizeSponsorContactUnselectedSelection,
   resolveSponsorContactIdsForEdit,
+  resolveSponsorContactIdsFromProgram,
   SPONSOR_CONTACT_UNSELECTED_VALUE,
   withSponsorContactUnselectedOption,
 } from './sponsor-contact-unselected-option'
@@ -86,5 +87,41 @@ describe('sponsor contact unselected option', () => {
         hasSelectedSponsors: false,
       })
     ).toEqual([])
+  })
+
+  it('후원사 전체(__all__) 담당자 기본값은 실제 담당자로 보지 않는다', () => {
+    expect(
+      resolveSponsorContactIdsForEdit({
+        ids: [],
+        id: '__all__',
+        managerLine: '',
+        hasSelectedSponsors: true,
+      })
+    ).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
+  })
+
+  it('Program 스냅샷에 후원사만 있으면 수정 폼에 미선택을 넣는다', () => {
+    expect(
+      resolveSponsorContactIdsFromProgram({
+        sponsorId: '1627251',
+        managerName: '',
+        generalCommonInfo: {
+          sponsorManagementIds: ['1627251'],
+          sponsorManagerContactIds: [],
+          sponsorManagerLine: '',
+        },
+      })
+    ).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
+    expect(
+      resolveSponsorContactIdsFromProgram({
+        sponsorId: '1627251',
+        managerName: '미선택',
+        generalCommonInfo: {
+          sponsorManagementIds: ['1627251'],
+          sponsorManagerContactIds: [],
+          sponsorManagerLine: '미선택',
+        },
+      })
+    ).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
   })
 })
