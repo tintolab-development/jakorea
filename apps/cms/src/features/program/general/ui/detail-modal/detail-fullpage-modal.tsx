@@ -974,6 +974,7 @@ export function GeneralProgramDetailFullPageModal({
     onSaveEdit: recruitmentEditProgram ? persistRecruitmentProgramDraft : undefined,
     validateSchema: programInstructorRecruitmentSaveSchema,
     recruitmentAudience: 'instructor',
+    recruitmentNotesField: 'instructorRecruitmentRemarks',
   })
 
   const isEditModeVolunteers =

@@ -864,8 +864,10 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
-  if (instructorRemarks) {
-    instructorInfo.remarks = coalesceString(instructorInfo.remarks, instructorRemarks, preferOverlay)
+  // 등록(preferOverlay)만 overlay notes → 비고. 조회는 nested remarks가 비고 SSOT.
+  // leftover overlay notes에 옛 기타사항이 남아 있어도 비고를 채우지 않는다. 값 비교로 건너뛰지 않는다.
+  if (preferOverlay && instructorRemarks) {
+    instructorInfo.remarks = coalesceString(instructorInfo.remarks, instructorRemarks, true)
   }
   if (instructorOtherMatters) {
     instructorInfo.otherMatters = coalesceString(
@@ -968,8 +970,8 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
-  if (volunteerRemarks) {
-    volunteerInfo.remarks = coalesceString(volunteerInfo.remarks, volunteerRemarks, preferOverlay)
+  if (preferOverlay && volunteerRemarks) {
+    volunteerInfo.remarks = coalesceString(volunteerInfo.remarks, volunteerRemarks, true)
   }
   if (volunteerOtherMatters) {
     volunteerInfo.otherMatters = coalesceString(

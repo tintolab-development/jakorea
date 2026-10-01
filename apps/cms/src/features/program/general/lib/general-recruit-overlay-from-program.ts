@@ -10,6 +10,7 @@ import {
   resolveProgramTargetLevels,
   resolveProgramVolunteerTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import { pickRecruitmentCopyRow } from '@/features/program/shared/lib/recruitment-row-copy'
 
 const inst = {
   targetLevels: 'recruit.targetLevels',
@@ -224,7 +225,10 @@ export function buildGeneralRecruitOverlayFromProgram(
     [keys.detailInfo.instructorMethod]: instructor?.applicationMethod?.trim() || '',
     [keys.detailInfo.instructorLearningSupport]: instructor?.learningSupportContent?.trim() || '',
     [keys.detailInfo.instructorAdditionalHtml]: instructor?.additionalContentHtml?.trim() || '',
-    [keys.detailInfo.instructorOtherNotes]: instructor?.otherMatters?.trim() || '',
+    [keys.detailInfo.instructorOtherNotes]:
+      pickRecruitmentCopyRow(program, 'instructor')?.otherMatters?.trim() ||
+      instructor?.otherMatters?.trim() ||
+      '',
     [keys.volunteer.volunteerTargets]: volunteerTargets,
     [keys.volunteer.volunteerTargetDetail]:
       program.volunteerTargetDetail?.trim() || volunteer?.recruitmentTargetDetail?.trim() || '',
@@ -239,7 +243,10 @@ export function buildGeneralRecruitOverlayFromProgram(
     [keys.detailInfo.volunteerMethod]: volunteer?.applicationMethod?.trim() || '',
     [keys.detailInfo.volunteerLearningSupport]: volunteer?.learningSupportContent?.trim() || '',
     [keys.detailInfo.volunteerAdditionalHtml]: volunteer?.additionalContentHtml?.trim() || '',
-    [keys.detailInfo.volunteerOtherNotes]: volunteer?.otherMatters?.trim() || '',
+    [keys.detailInfo.volunteerOtherNotes]:
+      pickRecruitmentCopyRow(program, 'volunteer')?.otherMatters?.trim() ||
+      volunteer?.otherMatters?.trim() ||
+      '',
   }
 
   const published = publishedOverlay(participant?.announcementPublished)

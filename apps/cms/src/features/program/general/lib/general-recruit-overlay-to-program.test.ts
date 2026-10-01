@@ -440,6 +440,49 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     )
     expect(next.otherNotes).toBeUndefined()
   })
+
+  it('강사 overlay notes는 비고, detailInfo.otherNotes는 기타사항이다', () => {
+    const html = '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const next = applyGeneralRecruitOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalCommonInfo: {
+          instructorRecruitmentInfo: { remarks: '신청 전 학교 담당 교사 확인이 필요합니다.' },
+        },
+      } as Program,
+      {
+        [keys.instructor.notes]: '신청 전 학교 담당 교사 확인이 필요합니다.',
+        [keys.detailInfo.instructorOtherNotes]: html,
+      },
+      { preferOverlay: false }
+    )
+
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.remarks).toBe(
+      '신청 전 학교 담당 교사 확인이 필요합니다.'
+    )
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.otherMatters).toBe(html)
+  })
+
+  it('조회 시 leftover overlay notes가 비어도 강사 비고를 기타사항으로 채우지 않는다', () => {
+    const html = '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const next = applyGeneralRecruitOverlayToProgram(
+      baseProgram(),
+      {
+        [keys.instructor.notes]: html,
+        [keys.detailInfo.instructorOtherNotes]: html,
+        [keys.volunteer.notes]: html,
+        [keys.detailInfo.volunteerOtherNotes]: '봉사자 기타',
+      },
+      { preferOverlay: false }
+    )
+
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.remarks).toBeUndefined()
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.otherMatters).toBe(html)
+    expect(next.generalCommonInfo?.volunteerRecruitmentInfo?.remarks).toBeUndefined()
+    expect(next.generalCommonInfo?.volunteerRecruitmentInfo?.otherMatters).toBe('봉사자 기타')
+  })
 })
 
 describe('resolveGeneralRecruitDetailDisplayProgram', () => {

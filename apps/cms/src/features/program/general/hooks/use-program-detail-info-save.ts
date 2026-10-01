@@ -34,9 +34,7 @@ import {
   type ProgramDetailRecruitmentNotesField,
 } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
-import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
-import { looksLikeUjatProgramId } from '@/features/program/ujat/lib/is-ujat-primary-program'
-import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { isGeneralRecruitmentRowProgram } from '@/features/program/general/lib/is-general-recruitment-row-program'
 
 export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
@@ -115,11 +113,7 @@ export function useProgramDetailInfoSave({
           ...(generalCommonInfo ? { generalCommonInfo } : {}),
         }
         if (recruitmentAudience) {
-          const writesRowFields =
-            !isCompanySchoolProgram(program) &&
-            !isTrainedTeachersDetailProgram(program) &&
-            program.backendProgramType !== 'UJAT' &&
-            !looksLikeUjatProgramId(program.id)
+          const writesRowFields = isGeneralRecruitmentRowProgram(program)
           const notesField =
             recruitmentNotesField ??
             (recruitmentAudience === 'instructor'
@@ -134,7 +128,7 @@ export function useProgramDetailInfoSave({
               ? values.participantRecruitmentNotesNotApplicable === 'not_applicable'
               : recruitmentAudience === 'volunteer'
                 ? values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
-                : false
+                : undefined
           const contact =
             recruitmentAudience === 'instructor'
               ? {
@@ -163,7 +157,10 @@ export function useProgramDetailInfoSave({
               applicationMethod: values.applicationMethod,
               learningSupportContent: values.learningSupportContent,
               ...(typeof html === 'string' ? { additionalContentHtml: html } : {}),
-              remarks: values[notesField],
+              remarks:
+                recruitmentAudience === 'instructor' && notesField !== 'otherNotes'
+                  ? values.instructorRecruitmentRemarks
+                  : values[notesField],
               notesNotApplicable,
               ...(writesRowFields
                 ? {
@@ -192,11 +189,7 @@ export function useProgramDetailInfoSave({
               },
             }
           }
-          const isGeneralRecruitProgram =
-            !isCompanySchoolProgram(program) &&
-            program.backendProgramType !== 'UJAT' &&
-            !looksLikeUjatProgramId(program.id)
-          if (isGeneralRecruitProgram) {
+          if (writesRowFields) {
             const draftForResync: Program = {
               ...program,
               ...remotePatch,

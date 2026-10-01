@@ -1524,6 +1524,7 @@ export function ProgramDetailFullPageModal({
     mapToValues: mapInstructorRecruitmentEditValues,
     validateSchema: programInstructorRecruitmentSaveSchema,
     recruitmentAudience: 'instructor',
+    recruitmentNotesField: 'instructorRecruitmentRemarks',
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
