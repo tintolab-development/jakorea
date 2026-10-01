@@ -1,21 +1,22 @@
 import { useMemo, type ReactNode } from 'react'
+import { Table } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { HomeAddressDisplay } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/instructor-basic-info-detail-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { formatCountLabel } from '@/features/program/general/lib/detail-value-helpers'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { buildGeminiApprovedManagerTableItems } from '../../lib/approved/build-manager-profile-fields'
 import {
   approvedTrainingStatusModifier,
   formatStatusLabel,
 } from '../../lib/approved/format-display'
 import { resolveApprovedTrainingStatus } from '../../lib/approved/resolve-status'
-import {
-  GeminiApprovedVerticalInfoTable,
-  type VerticalInfoTableItem,
-} from '../../lib/approved/vertical-info-table'
+import type { VerticalInfoTableItem } from '../../lib/approved/vertical-info-table'
 import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
 import type { GeminiApprovedTrainingStatus } from '../../model/approved/types'
+import '@/shared/components/detail-info-form/detail-info-form.css'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './detail-program-info-tab.css'
@@ -37,19 +38,62 @@ function formatDetailTrainingDatetime(detail: GeminiApprovedTrainingDetail): str
   return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]}) | ${detail.trainingTimeText}`
 }
 
-function ApprovedInfoSection({
-  title,
-  children,
-}: {
-  title: string
-  children: ReactNode
-}) {
-  return (
-    <section className="gemini-approved-training-detail-info__section">
-      <h3 className="program-detail-info-tab__section-title">{title}</h3>
-      {children}
-    </section>
-  )
+type AssignedInstructorRow = {
+  key: string
+  name: string
+  region: ReactNode
+  experience: string
+  grade: string
+  contact: string
+  email: string
+}
+
+const ASSIGNED_INSTRUCTOR_COLUMNS: ColumnsType<AssignedInstructorRow> = [
+  { title: '신청 강사명', dataIndex: 'name', key: 'name', width: 160, align: 'center' },
+  { title: '자택 주소지', dataIndex: 'region', key: 'region', width: 200, align: 'center' },
+  { title: 'JA 강의 경력', dataIndex: 'experience', key: 'experience', width: 160, align: 'center' },
+  { title: 'JA 평가 등급', dataIndex: 'grade', key: 'grade', width: 160, align: 'center' },
+  { title: '연락처', dataIndex: 'contact', key: 'contact', align: 'center' },
+  { title: '이메일', dataIndex: 'email', key: 'email', align: 'center' },
+]
+
+function DetailInfoRows({ items }: { items: VerticalInfoTableItem[] }) {
+  const rows: ReactNode[] = []
+  let index = 0
+
+  while (index < items.length) {
+    const item = items[index]
+    if (item.span === 2) {
+      rows.push(
+        <DetailInfoForm.Row key={item.key} type="single">
+          <DetailInfoForm.Field label={item.label} fullRow view={item.children} readOnlyDisplay />
+        </DetailInfoForm.Row>
+      )
+      index += 1
+      continue
+    }
+
+    const next = items[index + 1]
+    if (next && next.span !== 2) {
+      rows.push(
+        <DetailInfoForm.Row key={item.key} type="double">
+          <DetailInfoForm.Field label={item.label} view={item.children} readOnlyDisplay />
+          <DetailInfoForm.Field label={next.label} view={next.children} readOnlyDisplay />
+        </DetailInfoForm.Row>
+      )
+      index += 2
+      continue
+    }
+
+    rows.push(
+      <DetailInfoForm.Row key={item.key} type="single">
+        <DetailInfoForm.Field label={item.label} fullRow view={item.children} readOnlyDisplay />
+      </DetailInfoForm.Row>
+    )
+    index += 1
+  }
+
+  return <>{rows}</>
 }
 
 export function GeminiApprovedTrainingDetailProgramInfoTab({
@@ -150,68 +194,55 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
   const instructorEmail = detail.instructor.email.trim()
   const maskInstructorSensitive = !personalInfoRevealed
 
+  const assignedInstructorRows = useMemo<AssignedInstructorRow[]>(
+    () => [
+      {
+        key: detail.instructor.name,
+        name: detail.instructor.name,
+        region: (
+          <HomeAddressDisplay address={detail.instructor.region} mask={maskInstructorSensitive} />
+        ),
+        experience:
+          detail.instructor.experienceYears == null
+            ? '-'
+            : `${detail.instructor.experienceYears}년`,
+        grade: detail.instructor.grade,
+        contact: displayServerPiiAsIs(instructorContact),
+        email: displayServerPiiAsIs(instructorEmail),
+      },
+    ],
+    [detail.instructor, instructorContact, instructorEmail, maskInstructorSensitive]
+  )
+
   return (
     <div className="gemini-approved-training-detail-info">
-      <ApprovedInfoSection title="연수 정보">
-        <GeminiApprovedVerticalInfoTable items={trainingInfoItems} />
-      </ApprovedInfoSection>
+      <DetailInfoForm title="연수 정보" mode="view">
+        <DetailInfoRows items={trainingInfoItems} />
+      </DetailInfoForm>
 
-      <ApprovedInfoSection title="기관 정보">
-        <GeminiApprovedVerticalInfoTable items={institutionInfoItems} />
-      </ApprovedInfoSection>
+      <DetailInfoForm title="기관 정보" mode="view">
+        <DetailInfoRows items={institutionInfoItems} />
+      </DetailInfoForm>
 
-      <ApprovedInfoSection title="담당 교사 정보">
-        <GeminiApprovedVerticalInfoTable items={managerInfoItems} />
-      </ApprovedInfoSection>
+      <DetailInfoForm title="담당 교사 정보" mode="view">
+        <DetailInfoRows items={managerInfoItems} />
+      </DetailInfoForm>
 
       {detail.instructorAssigned ? (
         <>
-          <ApprovedInfoSection title="연수 담당 강사">
-            <div className="program-detail-info-tab__table-wrapper gemini-approved-training-detail-info__horizontal-table-wrap">
-              <table
-                className="program-detail-info-tab__table gemini-approved-training-detail-info__horizontal-table"
-                role="table"
-              >
-                <colgroup>
-                  <col className="gemini-approved-training-detail-info__horizontal-col-name" />
-                  <col className="gemini-approved-training-detail-info__horizontal-col-address" />
-                  <col className="gemini-approved-training-detail-info__horizontal-col-career" />
-                  <col className="gemini-approved-training-detail-info__horizontal-col-grade" />
-                  <col className="gemini-approved-training-detail-info__horizontal-col-contact" />
-                  <col className="gemini-approved-training-detail-info__horizontal-col-email" />
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th scope="col">신청 강사명</th>
-                    <th scope="col">자택 주소지</th>
-                    <th scope="col">JA 강의 경력</th>
-                    <th scope="col">JA 평가 등급</th>
-                    <th scope="col">연락처</th>
-                    <th scope="col">이메일</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>{detail.instructor.name}</td>
-                    <td>
-                      <HomeAddressDisplay
-                        address={detail.instructor.region}
-                        mask={maskInstructorSensitive}
-                      />
-                    </td>
-                    <td>{detail.instructor.experienceYears}년</td>
-                    <td>{detail.instructor.grade}</td>
-                    <td>{displayServerPiiAsIs(instructorContact)}</td>
-                    <td>{displayServerPiiAsIs(instructorEmail)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </ApprovedInfoSection>
+          <DetailInfoForm title="연수 담당 강사" mode="view">
+            <Table
+              className="cms-data-table gemini-approved-training-detail-info__instructor-table"
+              rowKey="key"
+              pagination={false}
+              columns={ASSIGNED_INSTRUCTOR_COLUMNS}
+              dataSource={assignedInstructorRows}
+            />
+          </DetailInfoForm>
 
-          <ApprovedInfoSection title="연수 공문">
-            <GeminiApprovedVerticalInfoTable items={officialDocumentItems} />
-          </ApprovedInfoSection>
+          <DetailInfoForm title="연수 공문" mode="view">
+            <DetailInfoRows items={officialDocumentItems} />
+          </DetailInfoForm>
         </>
       ) : null}
     </div>

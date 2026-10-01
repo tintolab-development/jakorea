@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildProgramBulkDeleteGuideLines,
+  buildProgramHardDeleteBlockedAlertContent,
   buildProgramSingleDeleteGuideLines,
+  ProgramHardDeleteBlockedError,
+  isProgramHardDeleteBlockedError,
   resolveProgramDeleteGuideModalCopy,
 } from './program-delete-guide'
 
@@ -16,6 +19,26 @@ describe('program-delete-guide', () => {
   it('일괄 본문 — 선택 건수만 ** 강조', () => {
     expect(buildProgramBulkDeleteGuideLines(3)[0]).toBe(
       '선택한 **3**개의 프로그램을 삭제하시겠습니까?'
+    )
+  })
+
+  it('삭제 불가 — 선택 건수 안내와 서버 message', () => {
+    expect(
+      buildProgramHardDeleteBlockedAlertContent(
+        1,
+        '교육 예정 신청자 또는 교육 진행 이력이 있는 프로그램은 삭제할 수 없습니다.'
+      )
+    ).toBe(
+      '선택한 1개의 항목 중 삭제가 불가한 항목이 포함되어 있습니다.\n교육 예정 신청자 또는 교육 진행 이력이 있는 프로그램은 삭제할 수 없습니다.'
+    )
+  })
+
+  it('삭제 불가 — message가 없으면 기획 문장으로 폴백', () => {
+    const error = new ProgramHardDeleteBlockedError(2, '  ')
+    expect(isProgramHardDeleteBlockedError(error)).toBe(true)
+    expect(error.message).toContain('선택한 2개의 항목 중 삭제가 불가한 항목이 포함되어 있습니다.')
+    expect(error.message).toContain(
+      '교육 예정 신청자 또는 교육 진행 이력이 있는 프로그램은 삭제할 수 없습니다.'
     )
   })
 

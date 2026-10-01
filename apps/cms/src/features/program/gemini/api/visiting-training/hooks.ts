@@ -5,6 +5,7 @@ import {
   useQuery,
   useQueryClient,
   type InfiniteData,
+  type QueryClient,
 } from '@tanstack/react-query'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import { geminiVisitingTrainingQueryKeys } from './query-keys'
@@ -248,17 +249,27 @@ export function useGeminiApprovedInstructorApplicationsQuery(
   })
 }
 
+async function invalidateGeminiInstructorApprovalQueries(
+  queryClient: QueryClient,
+  approvedTrainingId: string
+) {
+  await queryClient.invalidateQueries({
+    queryKey: geminiVisitingTrainingQueryKeys.approvedInstructorApplications(approvedTrainingId),
+  })
+  await queryClient.invalidateQueries({
+    queryKey: geminiVisitingTrainingQueryKeys.approvedDetail(approvedTrainingId),
+  })
+  await queryClient.invalidateQueries({
+    queryKey: geminiVisitingTrainingQueryKeys.approvedList(),
+  })
+}
+
 export function useApproveGeminiInstructorApplicationMutation(approvedTrainingId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (applicationId: string) => approveGeminiInstructorApplication(applicationId),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: geminiVisitingTrainingQueryKeys.approvedInstructorApplications(approvedTrainingId),
-      })
-      await queryClient.invalidateQueries({
-        queryKey: geminiVisitingTrainingQueryKeys.approvedDetail(approvedTrainingId),
-      })
+      await invalidateGeminiInstructorApprovalQueries(queryClient, approvedTrainingId)
     },
   })
 }
@@ -269,12 +280,7 @@ export function useRejectGeminiInstructorApplicationMutation(approvedTrainingId:
     mutationFn: ({ applicationId, reason }: { applicationId: string; reason?: string }) =>
       rejectGeminiInstructorApplication(applicationId, reason),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: geminiVisitingTrainingQueryKeys.approvedInstructorApplications(approvedTrainingId),
-      })
-      await queryClient.invalidateQueries({
-        queryKey: geminiVisitingTrainingQueryKeys.approvedDetail(approvedTrainingId),
-      })
+      await invalidateGeminiInstructorApprovalQueries(queryClient, approvedTrainingId)
     },
   })
 }

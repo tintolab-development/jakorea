@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { isProgramHardDeleteBlockedError } from '@/features/program/shared/lib/program-delete-guide'
 import {
   programDetailCacheFromSave,
   syncOpenProgramDetailCache,
@@ -171,6 +172,10 @@ export function useDeleteCompanySchoolPrograms() {
         await queryClient.cancelQueries({ queryKey: detailKey })
         queryClient.removeQueries({ queryKey: detailKey })
       }
+      invalidateCompanySchoolListCaches(queryClient)
+    },
+    onError: error => {
+      if (!isProgramHardDeleteBlockedError(error) || error.successCount < 1) return
       invalidateCompanySchoolListCaches(queryClient)
     },
   })
