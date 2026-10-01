@@ -18,9 +18,11 @@ import {
   RICH_TEXT_IMAGE_ACCEPT,
   TextSelection,
 } from '@jakorea/rich-text'
-import { contentUrlForFileObjectId, uploadAdminFile } from '@/shared/lib/admin-file-upload'
-import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
-import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import {
+  resolveRichTextInlineImageSrc,
+  shouldInsertRichTextImageLocally,
+  type AdminFileUploadOwner,
+} from '@/shared/lib/admin-file-upload'
 import {
   FONT_FAMILY_OPTIONS,
   FONT_SIZE_OPTIONS,
@@ -58,7 +60,7 @@ import './rich-text-toolbar.css'
 
 export type RichTextToolbarProps = {
   editor: Editor | null
-  /** prepare 연동용. 없으면 로컬 blob 삽입만 */
+  /** 본문 이미지 업로드 owner. 신규는 ownerId null */
   fileUploadOwner?: AdminFileUploadOwner | null
 }
 
@@ -276,7 +278,12 @@ export function RichTextToolbar({ editor, fileUploadOwner }: RichTextToolbarProp
         label: '이미지 (URL)',
         onClick: () => {
           const src = promptImageUrl()
-          if (src) run(ed => insertImageFromUrl(ed, src))
+          if (!src) return
+          if (src.trim().toLowerCase().startsWith('data:')) {
+            window.alert('본문 이미지는 파일로 업로드해 주세요.')
+            return
+          }
+          run(ed => insertImageFromUrl(ed, src))
         },
       },
       {
@@ -312,22 +319,17 @@ export function RichTextToolbar({ editor, fileUploadOwner }: RichTextToolbarProp
       const file = event.target.files?.[0]
       event.target.value = ''
       if (!file || !editor) return
-      if (!isRealApiModuleEnabled('files') || fileUploadOwner == null) {
+      if (shouldInsertRichTextImageLocally(fileUploadOwner)) {
         insertImageFromFile(editor, file)
         return
       }
-      void (async () => {
-        try {
-          const uploaded = await uploadAdminFile({
-            file,
-            owner: fileUploadOwner,
-            waitUntilAvailable: true,
-          })
-          insertImageFromUrl(editor, contentUrlForFileObjectId(uploaded.fileObjectId))
-        } catch {
-          insertImageFromFile(editor, file)
-        }
-      })()
+      if (fileUploadOwner == null) {
+        window.alert('이미지를 업로드할 수 없습니다. 다시 시도해 주세요.')
+        return
+      }
+      insertImageFromFile(editor, file, () =>
+        resolveRichTextInlineImageSrc(file, fileUploadOwner)
+      )
     },
     [editor, fileUploadOwner]
   )
