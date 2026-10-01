@@ -42,7 +42,7 @@ const existing = {
 } as Program
 
 describe('applyRecruitmentAdditionalContentHtml', () => {
-  it('참여자 모집 저장 — 중첩 SSOT·컬럼·overlay를 같은 HTML로 맞춘다', () => {
+  it('참여자 모집 저장 — 중첩 SSOT·overlay만 갱신하고 공통 컬럼은 건드리지 않는다', () => {
     const html = '<p style="color: red;">신규 추가 내용 😀</p>'
     const patch = applyRecruitmentAdditionalContentHtml(
       { additionalContentHtml: html },
@@ -51,7 +51,7 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
       'participant'
     )
 
-    expect(patch.additionalContentHtml).toBe(html)
+    expect(patch.additionalContentHtml).toBeUndefined()
     expect(patch.generalCommonInfo?.participantRecruitmentInfo?.additionalContentHtml).toBe(html)
     expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.additionalContentHtml).toBe(
       '<p>강사 옛본문</p>'
@@ -88,11 +88,12 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
     const description = '수정된 프로그램 설명'
     const patch = applyRecruitmentDetailInfoFields({}, existing, 'participant', { description })
 
-    expect(patch.description).toBe(description)
+    expect(patch.description).toBeUndefined()
     expect(patch.generalCommonInfo?.participantRecruitmentInfo?.programDescription).toBe(
       description
     )
     expect(patch.registrationOverlay?.['recruit.detailInfo.programDescription']).toBe(description)
+    expect(patch.recruitmentGuide).toBeUndefined()
 
     const display = resolveGeneralRecruitDetailDisplayProgram({ ...existing, ...patch }, 'participant')
     expect(display.description).toBe(description)

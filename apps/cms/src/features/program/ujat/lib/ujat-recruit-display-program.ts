@@ -2,6 +2,7 @@ import type { Program } from '@/types/domain'
 import {
   applyUjatRecruitInstitutionOverlayOntoProgram,
   applyUjatRecruitInstitutionTemplateDefaults,
+  buildUjatRecruitInstitutionOverlayFromDetailEditValues,
   pickUjatRecruitInstitutionOverlay,
   UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
@@ -113,10 +114,19 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
 }): Program {
   const half = volunteerHalfFromRecruitDisplayKind(args.kind)
   const existingOverlay = args.existing.ujatRegistrationOverlay ?? {}
+  const institutionHtml =
+    args.draft.generalCommonInfo?.participantRecruitmentInfo?.additionalContentHtml
   const halfOverlay =
     half && args.values
       ? buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues(args.values, half)
-      : { [ujatRecruitPublicTitleOverlayKey(args.kind)]: args.title?.trim() ?? '' }
+      : args.kind === 'institution' && args.values
+        ? {
+            ...buildUjatRecruitInstitutionOverlayFromDetailEditValues(args.values),
+            ...(typeof institutionHtml === 'string'
+              ? { [UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.additionalContentHtml]: institutionHtml }
+              : {}),
+          }
+        : { [ujatRecruitPublicTitleOverlayKey(args.kind)]: args.title?.trim() ?? '' }
   const otherHalf: UjatVolunteerRecruitHalf | null =
     half === 'h1' ? 'h2' : half === 'h2' ? 'h1' : null
   const otherSnapshot =

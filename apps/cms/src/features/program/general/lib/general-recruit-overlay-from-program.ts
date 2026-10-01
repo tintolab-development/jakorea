@@ -204,16 +204,12 @@ export function buildGeneralRecruitOverlayFromProgram(
     [keys.individual.notes]: participant?.remarks?.trim() || '',
     [inst.notesNotApplicable]: participant?.notesNotApplicable === true,
     [keys.individual.notesNotApplicable]: participant?.notesNotApplicable === true,
-    [keys.detailInfo.participantDescription]:
-      participant?.programDescription?.trim() || program.description?.trim() || '',
-    [keys.detailInfo.participantGuide]:
-      participant?.recruitmentGuide?.trim() || program.recruitmentGuide?.trim() || '',
-    [keys.detailInfo.participantMethod]:
-      participant?.applicationMethod?.trim() || program.applicationMethod?.trim() || '',
+    [keys.detailInfo.participantDescription]: participant?.programDescription?.trim() || '',
+    [keys.detailInfo.participantGuide]: participant?.recruitmentGuide?.trim() || '',
+    [keys.detailInfo.participantMethod]: participant?.applicationMethod?.trim() || '',
     [keys.detailInfo.participantLearningSupport]:
-      participant?.learningSupportContent?.trim() || program.learningSupportContent?.trim() || '',
-    [keys.detailInfo.participantAdditionalHtml]:
-      participant?.additionalContentHtml?.trim() || program.additionalContentHtml?.trim() || '',
+      participant?.learningSupportContent?.trim() || '',
+    [keys.detailInfo.participantAdditionalHtml]: participant?.additionalContentHtml?.trim() || '',
     [keys.detailInfo.participantOtherNotes]: participant?.remarks?.trim() || '',
     [keys.instructor.recruitTargets]: instructorTargets,
     [keys.instructor.recruitTargetDetail]:

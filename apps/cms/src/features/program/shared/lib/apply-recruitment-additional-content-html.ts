@@ -68,8 +68,9 @@ export type RecruitmentDetailInfoFields = {
 }
 
 /**
- * 모집 양식 상세정보 — 컬럼 + 모집 SSOT(`*RecruitmentInfo`) + overlay를 같이 갱신한다.
- * 조회는 nested `programDescription` 등을 읽으므로 컬럼만 올리면 상세가 옛 문구를 유지한다.
+ * 모집 양식 상세정보 — 해당 모집의 `*RecruitmentInfo`와 overlay만 갱신한다.
+ * 프로그램 공통 컬럼(description·recruitmentGuide 등)에는 쓰지 않는다.
+ * 공통 컬럼에 쓰면 다른 모집 탭이 같은 문구로 덮인다.
  */
 export function applyRecruitmentDetailInfoFields(
   patch: Partial<Program>,
@@ -127,21 +128,17 @@ export function applyRecruitmentDetailInfoFields(
     }
   }
 
+  const {
+    description: _sharedDescription,
+    recruitmentGuide: _sharedGuide,
+    applicationMethod: _sharedMethod,
+    learningSupportContent: _sharedLearning,
+    additionalContentHtml: _sharedAdditional,
+    ...audiencePatch
+  } = patch
+
   return {
-    ...patch,
-    ...(fields.description !== undefined ? { description: fields.description } : {}),
-    ...(fields.recruitmentGuide !== undefined
-      ? { recruitmentGuide: fields.recruitmentGuide }
-      : {}),
-    ...(fields.applicationMethod !== undefined
-      ? { applicationMethod: fields.applicationMethod }
-      : {}),
-    ...(fields.learningSupportContent !== undefined
-      ? { learningSupportContent: fields.learningSupportContent }
-      : {}),
-    ...(fields.additionalContentHtml !== undefined
-      ? { additionalContentHtml: fields.additionalContentHtml }
-      : {}),
+    ...audiencePatch,
     generalCommonInfo: {
       ...existing.generalCommonInfo,
       ...patch.generalCommonInfo,

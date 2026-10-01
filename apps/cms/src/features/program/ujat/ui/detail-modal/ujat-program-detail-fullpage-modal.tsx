@@ -1297,6 +1297,7 @@ export function UjatProgramDetailFullPageModal({
                 existing: displayProgram,
                 title: institutionsForm.getValues().announcementTitle,
                 kind: 'institution',
+                values: institutionsForm.getValues(),
               })
               const remotePatch = {
                 ...patch,
