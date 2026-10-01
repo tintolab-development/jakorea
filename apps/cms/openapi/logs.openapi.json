@@ -12776,6 +12776,20 @@
             ],
             "description": "담당자 이메일. null 유지, \"\" 비움"
           },
+          "otherMatters": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "강사·봉사자 기타사항. null 유지, \"\" 비움. 참여자 행에는 저장해도 포털 참여자 상세에는 내려가지 않는다."
+          },
+          "interviewEnabled": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "면접 여부. null 이면 기존 값 유지. false 여도 발표·면접 시각은 지우지 않는다."
+          },
           "clearFields": {
             "type": [
               "array",
@@ -19701,6 +19715,13 @@
               "null"
             ],
             "description": "이 모집 행의 비고. 비어 있으면 null."
+          },
+          "otherMatters": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "강사·봉사자 행 기타사항. 참여자·기관 행과 빈 값은 null. 프로그램 공통 기타사항으로 채우지 않는다."
           },
           "applicationType": {
             "type": "string",
@@ -27172,6 +27193,13 @@
               "null"
             ],
             "description": "이 모집 행의 비고. 비어 있으면 null."
+          },
+          "otherMatters": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "강사·봉사자 행 기타사항. 참여자·기관 행과 빈 값은 null."
           },
           "announcementTitle": {
             "type": [

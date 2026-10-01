@@ -97,6 +97,16 @@ export interface ProgramRecruitmentRequest {
      */
   contactEmail?: string | null;
   /**
+     * 강사·봉사자 기타사항. null 유지, "" 비움. 참여자 행에는 저장해도 포털 참여자 상세에는 내려가지 않는다.
+     * @nullable
+     */
+  otherMatters?: string | null;
+  /**
+     * 면접 여부. null 이면 기존 값 유지. false 여도 발표·면접 시각은 지우지 않는다.
+     * @nullable
+     */
+  interviewEnabled?: boolean | null;
+  /**
      * null 로 비울 필드 이름. 예: ["maxCount","remarks"]
      * @nullable
      */
