@@ -11,7 +11,9 @@ import type {
   ProgramListItem,
   ProgramParticipationMethod,
   ProgramSession,
+  ProgramTab,
 } from '../model/types'
+import { PROGRAM_TAB_LABEL, programTabLabels } from '../lib/constants.ts'
 import type {
   PortalCurriculum,
   PortalEducationCurriculumSession,
@@ -31,11 +33,14 @@ const RECRUITMENT_STATUS = {
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
-const CATEGORY_LABEL = {
-  youth: '청소년 · 청년',
-  institution: '기관',
-  instructor: '강사',
-} as const
+const PORTAL_CATEGORY_CODE: Record<string, ProgramTab> = {
+  INSTRUCTOR: 'instructor',
+  ORGANIZATION: 'institution',
+  YOUTH_YOUNG: 'youth',
+}
+
+/** 코드 오름차순: INSTRUCTOR, ORGANIZATION, YOUTH_YOUNG */
+const PORTAL_CATEGORY_ORDER = ['INSTRUCTOR', 'ORGANIZATION', 'YOUTH_YOUNG'] as const
 
 const EDUCATION_FORM_LABEL: Record<EducationForm, string> = {
   online: '온라인',
@@ -195,23 +200,40 @@ function mapEducationTargets(remote: { educationTarget?: string; educationTarget
   }
 }
 
-function mapCategory(categories: string[] | undefined, programType: string | undefined) {
-  const codes = (categories ?? []).map(item => item.trim().toUpperCase())
-  if (codes.includes('INSTRUCTOR')) return 'instructor' as const
-  if (codes.includes('ORGANIZATION')) return 'institution' as const
-  if (codes.includes('YOUTH_YOUNG')) return 'youth' as const
+function fallbackTab(programType: string | undefined): ProgramTab {
   switch ((programType ?? '').trim().toUpperCase()) {
     case 'TRAINED_TEACHER':
-      return 'instructor' as const
+      return 'instructor'
     case 'GENERAL_ORGANIZATION':
     case 'GEMINI':
     case 'GEMINI_TRAINING':
     case 'COMPANY_SCHOOL':
     case 'ECONOMY':
-      return 'institution' as const
+      return 'institution'
     default:
-      return 'youth' as const
+      return 'youth'
   }
+}
+
+/**
+ * 공개 모집 탭 배지.
+ * `portalCategories`가 오면 그 배열 전체를 쓴다. 진행 중 행 하나만 남기지 않는다.
+ * 필드가 없는 구 응답만 programType으로 탭 하나를 만든다.
+ */
+function mapPortalTabs(
+  categories: string[] | undefined,
+  programType: string | undefined
+): ProgramTab[] {
+  if (categories == null) return [fallbackTab(programType)]
+  const codes = new Set(categories.map(item => item.trim().toUpperCase()))
+  return PORTAL_CATEGORY_ORDER.flatMap(code => {
+    const tab = PORTAL_CATEGORY_CODE[code]
+    return codes.has(code) && tab ? [tab] : []
+  })
+}
+
+function mapCategory(categories: string[] | undefined, programType: string | undefined): ProgramTab {
+  return mapPortalTabs(categories, programType)[0] ?? fallbackTab(programType)
 }
 
 function mapDetailCase(
@@ -596,6 +618,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
   const title = readString(remote.title)
   if (programId == null || !title) return null
 
+  const categories = mapPortalTabs(remote.portalCategories, remote.programType)
   const category = mapCategory(remote.portalCategories, remote.programType)
   const detailCase = mapDetailCase(remote.programType, remote.portalCategories, remote.recruitments)
   const perScheduleEducationForm = remote.educationFormScheduleDetail === 'perSchedule'
@@ -673,7 +696,8 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
   return {
     id: String(programId),
     category,
-    categoryLabel: CATEGORY_LABEL[category],
+    categories,
+    categoryLabel: programTabLabels(categories),
     title,
     operatingPeriodLabel: formatRange(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
@@ -770,6 +794,7 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
   const title = readString(remote.title)
   if (programId == null || !title) return null
 
+  const categories = mapPortalTabs(remote.portalCategories, remote.programType)
   const category = mapCategory(remote.portalCategories, remote.programType)
   const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const targets = mapEducationTargets(remote)
@@ -788,7 +813,8 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
   return {
     id: String(programId),
     category,
-    categoryLabel: CATEGORY_LABEL[category],
+    categories,
+    categoryLabel: programTabLabels(categories),
     title,
     operatingPeriodLabel: formatRange(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
@@ -799,7 +825,7 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetLabel:
-      targets.key != null ? targets.educationTargetLabel : CATEGORY_LABEL[category],
+      targets.key != null ? targets.educationTargetLabel : PROGRAM_TAB_LABEL[category],
     educationForm,
     educationFormLabel: EDUCATION_FORM_LABEL[educationForm],
     thumbnailUrl:

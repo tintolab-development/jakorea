@@ -110,6 +110,7 @@ describe('gemini visiting-training adapters', () => {
     expect(detail.educationTargetLevels).toEqual(['adult'])
     expect(detail.educationTargetDetail).toBe('성인 학습자')
     expect(detail.educationForm).toBe('offline')
+    expect(detail.educationStructure).toBeNull()
     expect(detail.inquiryContactName).toBe('JA Korea 연수팀')
     expect(detail.inquiryTel).toBe('02-1234-5678')
     expect(detail.inquiryEmail).toBe('gemini@jakorea.org')
@@ -199,20 +200,41 @@ describe('gemini visiting-training adapters', () => {
     expect(detail.educationForm).toBe('online')
   })
 
-  it('maps approved list with gaps filled by defaults', () => {
-    const row = mapGeminiRecruitmentItemToApprovedRow(
+  it('maps approved list — 미매칭은 확정일/lastPreferredDate를 trainingDate로 위장하지 않는다', () => {
+    const unmatched = mapGeminiRecruitmentItemToApprovedRow(
       {
-        id: 3,
+        id: 185344,
         recruitmentTitle: '승인 연수',
         institutionName: '한국중학교',
         trainingDate: '2026-05-01',
+        trainingTimeText: '10:00~12:00',
+        instructorName: undefined,
       },
       0
     )
-    expect(row.id).toBe('3')
-    expect(row.institutionName).toBe('한국중학교')
-    expect(row.instructorName).toBe('미지정')
-    expect(row.trainingDate).toBe('2026-05-01')
+    expect(unmatched.id).toBe('185344')
+    expect(unmatched.instructorAssigned).toBe(false)
+    expect(unmatched.instructorName).toBe('미지정')
+    expect(unmatched.trainingDate).toBe('')
+    expect(unmatched.trainingTimeText).toBe('')
+    expect(unmatched.lastPreferredDate).toBe('')
+
+    const matched = mapGeminiRecruitmentItemToApprovedRow(
+      {
+        id: 185341,
+        institutionName: '서울고',
+        trainingDate: '2026-06-01',
+        trainingTimeText: '14:00~16:00',
+        instructorName: '김성재',
+        lastPreferredDate: '2026-05-20',
+        officialDocumentRequired: false,
+      },
+      1
+    )
+    expect(matched.instructorAssigned).toBe(true)
+    expect(matched.trainingDate).toBe('2026-06-01')
+    expect(matched.lastPreferredDate).toBe('2026-05-20')
+    expect(matched.officialDocumentRequired).toBe(false)
   })
 
   it('maps create request and numeric ids', () => {
@@ -385,6 +407,83 @@ describe('gemini visiting-training adapters', () => {
     expect(update.keyVisualImage).toBeUndefined()
     expect(update.clearFields ?? []).toContain('keyVisualImage')
     expect(update.attachmentFileNames).toEqual([])
+  })
+
+  it('GET educationStructure null이면 PATCH에 educationStructure를 넣지 않는다', () => {
+    const detail = mapGeminiRecruitmentDetailToDetail({
+      programId: 1,
+      nameKo: '공고',
+      educationStructure: null,
+      educationForm: 'hybrid',
+      draftStatus: 'PUBLISHED',
+    })
+    expect(detail.educationStructure).toBeNull()
+    expect(detail.educationForm).toBe('offline')
+
+    const update = mapGeminiRecruitmentDetailToUpdateRequest({
+      title: '공고',
+      announcementPublished: 'published',
+      educationTargetLevels: [],
+      educationTargetDetail: '',
+      applicationPeriodStart: '2026-03-01',
+      applicationPeriodEnd: '2026-03-31',
+      trainingRequestPeriodStart: '2026-04-01',
+      trainingRequestPeriodEnd: '2026-04-30',
+      minStudentCount: 15,
+      educationForm: 'offline',
+      educationStructure: null,
+      inquiryContactName: '담당',
+      inquiryTel: '02-1',
+      inquiryEmail: 'a@b.c',
+      notesNotApplicable: true,
+      notes: '',
+      thumbnailFileName: null,
+      programDescription: '설명',
+      recruitmentGuide: '',
+      applicationMethod: '',
+      learningSupportContent: '',
+      additionalContentMarkdown: '',
+      attachmentFileNames: [],
+    })
+    expect(update.educationStructure).toBeUndefined()
+    expect(update.clearFields ?? []).not.toContain('educationStructure')
+  })
+
+  it('GET educationStructure CURRICULUM이면 PATCH에 CURRICULUM을 왕복한다', () => {
+    const detail = mapGeminiRecruitmentDetailToDetail({
+      programId: 2,
+      nameKo: '공고',
+      educationStructure: 'CURRICULUM',
+      draftStatus: 'PUBLISHED',
+    })
+    expect(detail.educationStructure).toBe('CURRICULUM')
+
+    const update = mapGeminiRecruitmentDetailToUpdateRequest({
+      title: '공고',
+      announcementPublished: 'published',
+      educationTargetLevels: ['adult'],
+      educationTargetDetail: '',
+      applicationPeriodStart: '2026-03-01',
+      applicationPeriodEnd: '2026-03-31',
+      trainingRequestPeriodStart: '2026-04-01',
+      trainingRequestPeriodEnd: '2026-04-30',
+      minStudentCount: 15,
+      educationForm: 'offline',
+      educationStructure: 'CURRICULUM',
+      inquiryContactName: '담당',
+      inquiryTel: '02-1',
+      inquiryEmail: 'a@b.c',
+      notesNotApplicable: true,
+      notes: '',
+      thumbnailFileName: null,
+      programDescription: '설명',
+      recruitmentGuide: '',
+      applicationMethod: '',
+      learningSupportContent: '',
+      additionalContentMarkdown: '',
+      attachmentFileNames: [],
+    })
+    expect(update.educationStructure).toBe('CURRICULUM')
   })
 
   it('edit body carries every recruitment field the detail screen edits', () => {

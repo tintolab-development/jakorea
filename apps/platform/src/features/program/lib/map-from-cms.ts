@@ -35,6 +35,7 @@ import {
   resolveProgramDetailCase,
   shouldIncludeInterviewStages,
 } from './detail-case.ts'
+import { PROGRAM_TAB_LABEL } from './constants.ts'
 import { extraSection } from './html-body.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
@@ -63,11 +64,6 @@ const TARGET_LEVEL_LABELS: Record<
   adult: { educationTargetLabel: '성인', educationTargetGroupLabel: '성인' },
 }
 
-const CATEGORY_LABEL: Record<ProgramListItem['category'], string> = {
-  youth: '청소년 · 청년',
-  institution: '기관',
-  instructor: '강사',
-}
 
 const SCHEDULED_LIFECYCLES = new Set<CmsLifecycleStatus>([
   'planned',
@@ -767,7 +763,8 @@ export function mapCmsProgramToPlatformDetail(
   return {
     id: program.id,
     category,
-    categoryLabel: CATEGORY_LABEL[category],
+    categories: [category],
+    categoryLabel: PROGRAM_TAB_LABEL[category],
     title,
     operatingPeriodLabel: formatOperatingPeriodLabel(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
@@ -841,6 +838,7 @@ export function mapCmsProgramToPlatformListItem(
   return {
     id: detail.id,
     category: detail.category,
+    categories: detail.categories,
     categoryLabel: detail.categoryLabel,
     title: detail.title,
     operatingPeriodLabel: detail.operatingPeriodLabel,

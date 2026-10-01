@@ -5,58 +5,31 @@ import type { GapRow } from './types'
  * OpenAPI v9(2026-07-31 fetch · 528 paths) 기준으로 「API 없음」과 「FE 미배선」을 구분한다.
  */
 export const GAP_ROWS: readonly GapRow[] = [
-  // Gemini — OpenAPI mutation 존재, FE 미배선 (P0)
+  // Gemini — Primary 185xxx 연동 후 잔여
   {
     id: 'G-01',
     categoryId: 'gemini-visiting',
-    priority: 'P0',
-    title: '모집 POST — FE 미배선',
-    suggestedApi: 'OpenAPI: POST …/gemini/trainings/recruitments · FE client GET만',
-    relatedCases: ['165001'],
+    priority: 'P1',
+    title: '승인 목록 lastPreferredDate 미포함',
+    suggestedApi:
+      '목록 GeminiApprovedTrainingItem에 lastPreferredDate 추가 · 미매칭 미진행(GEM-04 D) 목록 배지',
+    relatedCases: ['GEM-04'],
   },
   {
     id: 'G-02',
     categoryId: 'gemini-visiting',
-    priority: 'P0',
-    title: '모집 PATCH/DELETE — FE 미배선',
-    suggestedApi: 'OpenAPI: PATCH/DELETE …/recruitments/{programId} · bulk-delete',
+    priority: 'P2',
+    title: '목록 officialDocumentRequired false 하드코딩 가능',
+    suggestedApi: '상세/config_jsonb SSOT · 목록 필터는 보조',
+    relatedCases: ['GEM-04'],
   },
   {
     id: 'G-03',
     categoryId: 'gemini-visiting',
-    priority: 'P0',
-    title: '기관 신청 승인/반려 — FE 미배선',
-    suggestedApi: 'OpenAPI: POST …/organization-applications/{id}/approve|reject (+ bulk)',
-    relatedCases: ['165002'],
-  },
-  {
-    id: 'G-04',
-    categoryId: 'gemini-visiting',
-    priority: 'P0',
-    title: '모집→승인 전이 UX',
-    suggestedApi: '승인 list/detail GET은 OpenAPI 존재 · 전이 플로우 FE 가드/배선',
-  },
-  {
-    id: 'G-05',
-    categoryId: 'gemini-visiting',
-    priority: 'P0',
-    title: '강사 신청 목록·승인 — FE 미배선',
-    suggestedApi:
-      'OpenAPI: GET …/instructor-applications + POST approve|reject · FE mock-only',
-  },
-  {
-    id: 'G-06',
-    categoryId: 'gemini-visiting',
-    priority: 'P1',
-    title: '승인 상세 DTO polish',
-    suggestedApi: 'OpenAPI: GET …/approved/{approvedTrainingId} · FE 상세 매핑 잔여',
-  },
-  {
-    id: 'G-07',
-    categoryId: 'gemini-visiting',
-    priority: 'P0',
-    title: 'GEMINI vs GEMINI_TRAINING enum SSOT',
-    suggestedApi: 'OpenAPI·시드·FE 단일값 확정',
+    priority: 'P2',
+    title: '모집 DRAFT 필터 — BE periodStatus 축 없음',
+    suggestedApi: 'draftStatus 쿼리 또는 FE 클라이언트 isDraft 필터(현재)',
+    relatedCases: ['GEM-01'],
   },
   {
     id: 'G-08',

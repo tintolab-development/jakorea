@@ -1,4 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs'
+import { GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE } from '../../lib/recruitment/add-form-options'
 import type { GeminiRecruitmentAddFormSnapshot } from '../../lib/recruitment/add-local-save'
 import type { GeminiRecruitmentDetail, GeminiRecruitmentDetailFields } from './detail-types'
 
@@ -31,6 +32,8 @@ export function detailToInfoEditDraft(detail: GeminiRecruitmentDetail): GeminiRe
 export function detailToAddFormSnapshot(detail: GeminiRecruitmentDetail): GeminiRecruitmentAddFormSnapshot {
   return {
     ...detailToInfoEditDraft(detail),
+    educationStructure:
+      detail.educationStructure ?? GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE,
     institutionSectionDescription: '',
     detailSectionDescription: '',
   }

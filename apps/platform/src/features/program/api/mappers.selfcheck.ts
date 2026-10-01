@@ -694,4 +694,55 @@ assert.ok(geminiTrainingListed)
 assert.equal(geminiTrainingListed.category, 'institution')
 assert.equal(geminiTrainingListed.recruitmentStatus, 'scheduled')
 
+const mixedTabs = mapPortalProgramListItem({
+  programId: 186040,
+  title: '기관 진행 · 강사 마감',
+  portalCategories: ['ORGANIZATION', 'INSTRUCTOR'],
+  recruitmentStatus: 'OPEN',
+})
+assert.ok(mixedTabs)
+assert.deepEqual(mixedTabs.categories, ['instructor', 'institution'])
+assert.equal(mixedTabs.categoryLabel, '강사 · 기관')
+assert.equal(mixedTabs.category, 'instructor')
+
+const closedInstructorStillListed = mapPortalProgramListItem({
+  programId: 186041,
+  title: '강사 마감 카드',
+  portalCategories: ['INSTRUCTOR', 'ORGANIZATION'],
+  recruitmentStatus: 'CLOSED',
+})
+assert.ok(closedInstructorStillListed)
+assert.deepEqual(closedInstructorStillListed.categories, ['instructor', 'institution'])
+assert.equal(closedInstructorStillListed.recruitmentStatus, 'closed')
+
+const noPublicRecruitment = mapPortalProgramListItem({
+  programId: 186042,
+  title: '공개 모집 없음',
+  programType: 'GENERAL_INDIVIDUAL',
+  portalCategories: [],
+  recruitmentStatus: 'CLOSED',
+})
+assert.ok(noPublicRecruitment)
+assert.deepEqual(noPublicRecruitment.categories, [])
+assert.equal(noPublicRecruitment.categoryLabel, '')
+
+const volunteerYouth = mapPortalProgramDetail({
+  programId: 186043,
+  title: '대학생 봉사',
+  programType: 'GENERAL_INDIVIDUAL',
+  portalCategories: ['YOUTH_YOUNG'],
+  recruitments: [{ recruitmentType: 'VOLUNTEER', targetType: 'COLLEGE_STUDENT' }],
+})
+assert.ok(volunteerYouth)
+assert.deepEqual(volunteerYouth.categories, ['youth'])
+assert.equal(volunteerYouth.detailCase, 'volunteer')
+
+const volunteerSchool = mapPortalProgramListItem({
+  programId: 186044,
+  title: '학교 봉사',
+  portalCategories: ['ORGANIZATION'],
+})
+assert.ok(volunteerSchool)
+assert.deepEqual(volunteerSchool.categories, ['institution'])
+
 console.log('program portal mappers.selfcheck: ok')

@@ -6,6 +6,7 @@ import {
   mapIndividualApplicationToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
   mapMaterialAssignmentStatusToTextbookStatus,
+  mapOrganizationApplicationDetailToApplicantSchoolRow,
   mapOrganizationApplicationToApplicantSchoolRow,
   softMergeOrganizationApplicationDetailOntoRow,
   mapParticipantToParticipatingIndividualRow,
@@ -49,6 +50,40 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.applicationReason).toBe('금융 교육')
     expect(row.detail?.otherRequests).toBe('주차')
     expect(row.detail?.educationType).toBe('온라인')
+  })
+
+  it('maps detail GET reason and guidance onto applicant school detail', () => {
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 101,
+        applicationReason: '기업가정신 교육',
+        otherRequests: '빔프로젝터',
+        computerInRoom: '노트북 2대',
+        waitingRoomLocation: '교무실 앞',
+        mealNotice: '급식 가능',
+        parkingInfo: '정문 주차',
+        requestedEducationFormat: 'OFFLINE',
+      },
+      {
+        id: '101',
+        no: 1,
+        schoolName: 'JA서대문혁신초등학교',
+        region: '서울',
+        educationGrade: '2학년',
+        classCount: 1,
+        studentCount: 11,
+        teacherName: '이교사',
+        approvalStatus: 'pending',
+        programId: '186016',
+      }
+    )
+    expect(row.detail?.applicationReason).toBe('기업가정신 교육')
+    expect(row.detail?.otherRequests).toBe('빔프로젝터')
+    expect(row.detail?.computerInSpace).toBe('노트북 2대')
+    expect(row.detail?.waitingPlaceGuide).toBe('교무실 앞')
+    expect(row.detail?.mealInfo).toBe('급식 가능')
+    expect(row.detail?.otherSpecialNotes).toBe('정문 주차')
+    expect(row.detail?.educationType).toBe('오프라인')
   })
 
   it('does not show the program grade range when the application has no requested grade', () => {

@@ -116,9 +116,13 @@ export function GeminiApprovedTrainingDetailFullPageModal({
               <GeminiApprovedTrainingDetailInstructorApplicationTab
                 approvedTrainingId={approvedTrainingId}
               />
+            ) : detail.programId ? (
+              <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
+                <ProgramManagersTab programId={detail.programId} maskSensitive />
+              </div>
             ) : (
               <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
-                <ProgramManagersTab programId={approvedTrainingId} maskSensitive />
+                담당자 조회를 위한 모집 프로그램 ID가 없습니다.
               </div>
             )}
           </>

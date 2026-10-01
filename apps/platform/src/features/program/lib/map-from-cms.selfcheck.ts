@@ -299,6 +299,7 @@ function makeStubDetail(id: string, title: string): ProgramDetail {
   return {
     id,
     category: 'youth',
+    categories: ['youth'],
     categoryLabel: '청소년 · 청년',
     title,
     operatingPeriodLabel: '-',

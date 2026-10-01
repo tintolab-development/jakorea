@@ -1,6 +1,23 @@
-import type { ProgramCategory, ProgramSort, ProgramsListParams } from '../model/types'
+import type { ProgramCategory, ProgramSort, ProgramTab, ProgramsListParams } from '../model/types'
 
 export const PROGRAMS_PATH = '/programs'
+
+/** 카드·상세 탭 배지. 목록 탭 메뉴 문구(`PROGRAM_CATEGORY_ITEMS`)와 다르다. */
+export const PROGRAM_TAB_LABEL: Record<ProgramTab, string> = {
+  youth: '청소년 · 청년',
+  institution: '기관',
+  instructor: '강사',
+}
+
+/** API `portalCategories` 코드 오름차순과 같다. */
+const PROGRAM_TAB_ORDER: readonly ProgramTab[] = ['instructor', 'institution', 'youth']
+
+export function programTabLabels(tabs: readonly ProgramTab[]): string {
+  return [...tabs]
+    .sort((a, b) => PROGRAM_TAB_ORDER.indexOf(a) - PROGRAM_TAB_ORDER.indexOf(b))
+    .map(tab => PROGRAM_TAB_LABEL[tab])
+    .join(' · ')
+}
 
 export const PROGRAM_CATEGORY_ITEMS: { key: ProgramCategory; label: string }[] = [
   { key: 'all', label: '전체 프로그램' },

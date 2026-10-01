@@ -1,5 +1,9 @@
 # Cursor prompt — Gemini 승인 연수 상세 GET · 강사 신청 목록 (JABACK)
 
+> **통합 SSOT (2026-10-01):** 모집·승인 상세 LNB 전체 카테고리 대조는  
+> [gemini-visiting-training-detail-category-api-field-mismatch-backend-prompt-2026-10-01.md](./gemini-visiting-training-detail-category-api-field-mismatch-backend-prompt-2026-10-01.md) 를 우선한다.  
+> 본 문서는 승인 상세·강사 목록 요구의 원본이다.
+
 | 항목 | 값 |
 |---|---|
 | 대상 레포 | **JABACK만** (프론트 `jakorea` 에서 이 문서로 화면을 고치지 마라) |

@@ -291,8 +291,34 @@ export function ProgramApplyPage() {
         setDraft(null)
         return
       }
-      hydratedFormKeyRef.current = null
-      setDraft(null)
+
+      // form-bindings 409(RECRUITMENT_NOT_STARTED 등) · options unavailable 이어도
+      // 빈 화면(return null) 대신 시드 draft로 골격 유지. 제출은 blockedMessage로 막는다.
+      const fallbackKey = [
+        'fallback',
+        program.id,
+        applicationFormQuery.status,
+        applicationFormQuery.blockedReason ?? '',
+      ].join(':')
+      if (hydratedFormKeyRef.current === fallbackKey) return
+      hydratedFormKeyRef.current = fallbackKey
+      const applyCaseForDraft = resolveProgramApplyFormCase(program)
+      const fallbackDraft = getMockApplyFormDraft(program)
+      setDraft(
+        applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
+          ? prepareIndividualApplicationDraft(fallbackDraft)
+          : fallbackDraft,
+      )
+      setPreferredBlocks([createEmptyPreferredBlock()])
+      setBasicInfo(
+        fillTrainedTeachersBasicInfoFromProfile(
+          emptyTrainedTeachersBasicInfo(),
+          profileDefaults,
+        ),
+      )
+      setTeamInfo(emptyIndividualTeamInfo())
+      setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
+      setSexOffense(emptyInstitutionSexOffense())
       return
     }
 
@@ -310,6 +336,7 @@ export function ProgramApplyPage() {
     programId,
     remoteApplyEnabled,
     applicationFormQuery.status,
+    applicationFormQuery.blockedReason,
     remoteForm,
     remoteFormKey,
     profileDefaults,
@@ -575,6 +602,27 @@ export function ProgramApplyPage() {
     ]
   )
 
+  const formLoading =
+    remoteApplyEnabled &&
+    (applicationFormQuery.status === 'loading' || applicationFormQuery.status === 'idle')
+
+  /** remote 양식 실패(모집 전 409 등) 시에도 시드 draft로 화면 골격 유지 */
+  const displayDraft = useMemo(() => {
+    if (draft != null) return draft
+    if (!program || !remoteApplyEnabled) return null
+    if (
+      applicationFormQuery.status !== 'unavailable' &&
+      applicationFormQuery.status !== 'error'
+    ) {
+      return null
+    }
+    const applyCaseForDraft = resolveProgramApplyFormCase(program)
+    const fallbackDraft = getMockApplyFormDraft(program)
+    return applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
+      ? prepareIndividualApplicationDraft(fallbackDraft)
+      : fallbackDraft
+  }, [applicationFormQuery.status, draft, program, remoteApplyEnabled])
+
   const hiddenParagraphIds = useMemo(() => {
     const hidden = new Set<string>()
     const runtimeFields = applyScheduleVisibilityFieldsFromRuntimeContext(
@@ -586,31 +634,27 @@ export function ProgramApplyPage() {
       educationScheduleMode: runtimeFields?.educationScheduleMode ?? program?.educationScheduleMode,
       educationScheduleLines: program?.educationScheduleLines,
     }
-    if (draft && !shouldShowApplyScheduleParagraph(scheduleFields)) {
-      for (const paragraph of draft.paragraphs) {
+    if (displayDraft && !shouldShowApplyScheduleParagraph(scheduleFields)) {
+      for (const paragraph of displayDraft.paragraphs) {
         if (isApplyScheduleChoiceParagraphId(paragraph.id)) hidden.add(paragraph.id)
       }
     }
-    if (applyCase && !shouldShowIndividualTeamInfoParagraph(applyCase) && draft) {
-      for (const paragraph of draft.paragraphs) {
+    if (applyCase && !shouldShowIndividualTeamInfoParagraph(applyCase) && displayDraft) {
+      for (const paragraph of displayDraft.paragraphs) {
         if (isApplicationTeamInfoParagraphId(paragraph.id)) hidden.add(paragraph.id)
       }
     }
-    if (!shouldShowSexOffenseInquiry(sexOffense) && draft) {
-      for (const paragraph of draft.paragraphs) {
+    if (!shouldShowSexOffenseInquiry(sexOffense) && displayDraft) {
+      for (const paragraph of displayDraft.paragraphs) {
         if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
           hidden.add(paragraph.id)
         }
       }
     }
     return hidden
-  }, [applyCase, draft, program, remoteForm, sexOffense])
+  }, [applyCase, displayDraft, program, remoteForm, sexOffense])
 
-  const formLoading =
-    remoteApplyEnabled &&
-    (applicationFormQuery.status === 'loading' || applicationFormQuery.status === 'idle')
-
-  if (!isReady || isLoading || formLoading || !program || !draft) {
+  if (!isReady || isLoading || formLoading || !program || !displayDraft) {
     return null
   }
 
@@ -648,7 +692,7 @@ export function ProgramApplyPage() {
         setSubmitError('진행 희망 교육 일정을 한 개 이상 입력해 주세요.')
         return
       }
-      const basicParagraph = findDraftParagraph(draft, isApplicationBasicInfoParagraphId)
+      const basicParagraph = findDraftParagraph(displayDraft, isApplicationBasicInfoParagraphId)
       const basicAnswer = basicParagraph ? basicInfoAnswerFromValues(basicInfo) : null
       if (basicParagraph) {
         const basicError = findIncompleteTrainedTeachersBasicInfoMessage(basicInfo)
@@ -661,7 +705,7 @@ export function ProgramApplyPage() {
           return
         }
       }
-      const teamParagraph = findDraftParagraph(draft, isApplicationTeamInfoParagraphId)
+      const teamParagraph = findDraftParagraph(displayDraft, isApplicationTeamInfoParagraphId)
       const showTeamInfo =
         applyCase != null && shouldShowIndividualTeamInfoParagraph(applyCase)
       if (showTeamInfo && teamParagraph) {
@@ -672,7 +716,7 @@ export function ProgramApplyPage() {
         }
       }
       const sexOffenseParagraph = findDraftParagraph(
-        draft,
+        displayDraft,
         isApplicationSexOffenseSubmissionParagraphId,
       )
       if (sexOffenseParagraph) {
@@ -685,7 +729,7 @@ export function ProgramApplyPage() {
 
       const overrides: Record<string, unknown> = {}
       if (preferredAnswer != null) {
-        const scheduleParagraph = draft.paragraphs.find(
+        const scheduleParagraph = displayDraft.paragraphs.find(
           paragraph =>
             isApplicationPreferredScheduleParagraphId(paragraph.id) ||
             isApplyScheduleChoiceParagraphId(paragraph.id),
@@ -701,7 +745,7 @@ export function ProgramApplyPage() {
       if (showTeamInfo && teamParagraph) {
         overrides[resolveApplicationAnswerKey(teamParagraph)] = teamInfoAnswerFromValues(teamInfo)
       }
-      const guidanceParagraph = findDraftParagraph(draft, isApplicationGuidanceParagraphId)
+      const guidanceParagraph = findDraftParagraph(displayDraft, isApplicationGuidanceParagraphId)
       if (guidanceParagraph) {
         overrides[resolveApplicationAnswerKey(guidanceParagraph)] =
           guidanceAnswerFromValues(guidanceAnswers)
@@ -711,7 +755,7 @@ export function ProgramApplyPage() {
           sexOffenseSubmissionAnswerFromValues(sexOffense)
       }
       const inquiryParagraph = findDraftParagraph(
-        draft,
+        displayDraft,
         isApplicationSexOffenseInquiryParagraphId,
       )
       if (inquiryParagraph && shouldShowSexOffenseInquiry(sexOffense)) {
@@ -728,14 +772,14 @@ export function ProgramApplyPage() {
         omitParagraphIds.add(teamParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(teamParagraph))
       }
-      for (const paragraph of draft.paragraphs) {
+      for (const paragraph of displayDraft.paragraphs) {
         if (isApplyScheduleChoiceParagraphId(paragraph.id) && hiddenParagraphIds.has(paragraph.id)) {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
         }
       }
 
-      const answers = buildApplicationAnswersFromDraft(draft, {
+      const answers = buildApplicationAnswersFromDraft(displayDraft, {
         overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
         omitParagraphIds: omitParagraphIds.size > 0 ? omitParagraphIds : undefined,
       })
@@ -801,7 +845,7 @@ export function ProgramApplyPage() {
         <div className={styles.form}>
           <FormTemplateHost surface="platformUser">
             <FormTemplateRenderer
-              draft={draft}
+              draft={displayDraft}
               interactionMode="user"
               surface="platformUser"
               hiddenParagraphIds={hiddenParagraphIds}

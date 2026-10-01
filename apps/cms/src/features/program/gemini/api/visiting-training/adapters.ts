@@ -8,6 +8,7 @@ import type { GeminiRecruitmentAddFormSnapshot } from '@/features/program/gemini
 import {
   GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE,
   type GeminiRecruitmentEducationForm,
+  type GeminiRecruitmentEducationStructure,
 } from '@/features/program/gemini/lib/recruitment/add-form-options'
 import type { GeminiRecruitmentInfoEditDraft } from '@/features/program/gemini/model/recruitment/info-edit-draft'
 import type { GeminiRecruitmentRow } from '@/features/program/gemini/model/recruitment/types'
@@ -63,7 +64,7 @@ function firstNonEmptyDate(
   return ''
 }
 
-/** BE: online|offline|hybrid|null. UI 셀렉트는 online|offline만. */
+/** BE: online|offline|hybrid|null. Gemini UI 셀렉트는 online|offline만 — hybrid·기타는 offline으로 표시(정책: UI 미지원). */
 function mapEducationForm(
   value: string | null | undefined
 ): GeminiRecruitmentEducationForm {
@@ -81,6 +82,16 @@ function resolveGeminiEducationStructureWire(
     return ProgramCreateRequestEducationStructure.CURRICULUM
   }
   return ProgramCreateRequestEducationStructure.SCHEDULE
+}
+
+/** GET 상세 educationStructure — null/미지이면 null 유지(SCHEDULE 하드코딩으로 PATCH 왜곡 금지). */
+function resolveGeminiEducationStructureFromDetail(
+  value: string | null | undefined
+): GeminiRecruitmentEducationStructure | null {
+  const normalized = value?.trim().toUpperCase()
+  if (normalized === 'CURRICULUM') return 'CURRICULUM'
+  if (normalized === 'SCHEDULE') return 'SCHEDULE'
+  return null
 }
 
 /**
@@ -284,12 +295,17 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
   const inquiryTel = persist.inquiryTel.trim() || undefined
   const inquiryEmail = persist.inquiryEmail.trim() || undefined
   const clearFields: string[] = []
-  // PATCH에서 educationStructure를 null/clear하지 않음 — Gemini UI 없으면 SCHEDULE 유지
-  const educationStructureWire = resolveGeminiEducationStructureWire(persist.educationStructure)
+  // GET educationStructure가 null이면 PATCH에 포함하지 않음(SCHEDULE로 채우면 왜곡).
+  // SCHEDULE|CURRICULUM이 있으면 그 값을 왕복. clearFields에도 넣지 않음.
+  const educationStructureFromDraft = resolveGeminiEducationStructureFromDetail(
+    draft.educationStructure
+  )
   const educationStructure =
-    educationStructureWire === ProgramCreateRequestEducationStructure.CURRICULUM
+    educationStructureFromDraft === 'CURRICULUM'
       ? ProgramUpdateRequestEducationStructure.CURRICULUM
-      : ProgramUpdateRequestEducationStructure.SCHEDULE
+      : educationStructureFromDraft === 'SCHEDULE'
+        ? ProgramUpdateRequestEducationStructure.SCHEDULE
+        : undefined
   const { targetLevels, targetLevel } = wireGeminiTargetLevels(
     persist.educationTargetLevels,
     recruitmentTargetDetail
@@ -300,7 +316,7 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     businessEndDate: optionalDate(persist.applicationPeriodEnd),
     applicationStartDate: optionalDate(persist.applicationPeriodStart),
     applicationEndDate: optionalDate(persist.applicationPeriodEnd),
-    educationStructure,
+    ...(educationStructure != null ? { educationStructure } : {}),
     educationForm: persist.educationForm,
     targetLevels,
     ...(targetLevel ? { targetLevel } : {}),
@@ -427,7 +443,7 @@ export function mapGeminiRecruitmentDetailToDetail(
     educationTargetDetail: trimmedOrEmpty(dto.recruitmentTargetDetail),
     minStudentCount: dto.minimumParticipantCount ?? 0,
     educationForm: mapEducationForm(dto.educationForm),
-    educationStructure: GEMINI_RECRUITMENT_DEFAULT_EDUCATION_STRUCTURE,
+    educationStructure: resolveGeminiEducationStructureFromDetail(dto.educationStructure),
     inquiryContactName: trimmedOrEmpty(dto.contactName),
     inquiryTel: trimmedOrEmpty(dto.contactPhone),
     inquiryEmail: trimmedOrEmpty(dto.contactEmail),
@@ -471,23 +487,36 @@ export function mapGeminiOrganizationApplicationToRow(
   }
 }
 
+/**
+ * 승인 연수 목록 행.
+ * Primary Case: 행별 예정/중/완료/미진행은 trainingDate+강사로 FE 파생.
+ * 목록 progressStatus는 program.period_status일 수 있어 배지에 쓰지 않는다.
+ * 확정일(trainingDate)과 3지망 마지막일(lastPreferredDate)을 섞지 않는다.
+ */
 export function mapGeminiRecruitmentItemToApprovedRow(
   dto: GeminiApprovedTrainingItem,
   index: number
 ): GeminiApprovedTrainingRow {
-  const instructorName = dto.instructorName?.trim() || '미지정'
+  const rawName = dto.instructorName?.trim()
+  const instructorAssigned = Boolean(rawName) && rawName !== '미지정'
+  const instructorName = instructorAssigned ? rawName! : '미지정'
+  // 미매칭이면 확정 연수일로 취급하지 않음(스케줄 잔여 날짜 위장 금지)
+  const trainingDate = instructorAssigned ? trimmedOrEmpty(dto.trainingDate) : ''
+  const trainingTimeText = instructorAssigned ? trimmedOrEmpty(dto.trainingTimeText) : ''
+  // 목록에 lastPreferredDate가 오면 사용. 없으면 빈 문자열(trainingDate 복사 금지)
+  const lastPreferredDate = trimmedOrEmpty(dto.lastPreferredDate)
   return {
-    id: toId(dto.id ?? dto.programId),
+    id: toId(dto.id ?? dto.organizationApplicationId ?? dto.programId),
     no: index + 1,
     recruitmentTitle: dto.recruitmentTitle?.trim() || undefined,
     institutionName: dto.institutionName?.trim() || '기관명 없음',
     institutionSido: dto.institutionSido?.trim() || '',
     institutionSigungu: dto.institutionSigungu?.trim() || '',
-    officialDocumentRequired: dto.officialDocumentRequired ?? false,
-    lastPreferredDate: dto.trainingDate ?? '',
-    instructorAssigned: instructorName !== '미지정',
-    trainingDate: dto.trainingDate ?? '',
-    trainingTimeText: dto.trainingTimeText ?? '',
+    officialDocumentRequired: dto.officialDocumentRequired === true,
+    lastPreferredDate,
+    instructorAssigned,
+    trainingDate,
+    trainingTimeText,
     studentCount: dto.studentCount ?? 0,
     instructorName,
     managerName: dto.managerName?.trim() || '-',

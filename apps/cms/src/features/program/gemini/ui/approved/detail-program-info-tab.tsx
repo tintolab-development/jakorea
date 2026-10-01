@@ -61,14 +61,16 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
   todayKey: string
   personalInfoRevealed?: boolean
 }) {
-  const status = resolveApprovedTrainingStatus(
-    {
-      instructorAssigned: detail.instructorAssigned,
-      lastPreferredDate: detail.lastPreferredDate,
-      trainingDate: detail.trainingDate,
-    },
-    dayjs(todayKey)
-  )
+  const status =
+    detail.progressStatus ??
+    resolveApprovedTrainingStatus(
+      {
+        instructorAssigned: detail.instructorAssigned,
+        lastPreferredDate: detail.lastPreferredDate,
+        trainingDate: detail.trainingDate,
+      },
+      dayjs(todayKey)
+    )
 
   const trainingInfoItems = useMemo<VerticalInfoTableItem[]>(
     () => [

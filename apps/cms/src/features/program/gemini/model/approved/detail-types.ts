@@ -1,3 +1,5 @@
+import type { GeminiApprovedTrainingStatus } from './types'
+
 export type GeminiApprovedTrainingEmploymentStatus = 'ACTIVE' | 'LEAVE' | 'TRANSFER'
 
 export type GeminiApprovedTrainingInstructorInfo = {
@@ -11,13 +13,15 @@ export type GeminiApprovedTrainingInstructorInfo = {
 
 export type GeminiApprovedTrainingDetail = {
   id: string
+  /** 모집 공고 programId — ProgramManagersTab 전용 */
+  programId: string
   recruitmentTitle: string
   institutionName: string
   trainingDate: string
   trainingTimeText: string
-  studentCount: number
-  recruitmentCount: number
-  completedRecruitmentCount: number
+  studentCount: number | null
+  recruitmentCount: number | null
+  completedRecruitmentCount: number | null
   institutionAddress: string
   joinedAt: string
   managerMemberId?: string
@@ -25,7 +29,8 @@ export type GeminiApprovedTrainingDetail = {
   managerScheduleChangeCount: number
   managerGender: string
   managerBirthDate: string
-  managerEmploymentStatus: GeminiApprovedTrainingEmploymentStatus
+  /** null이면 재직 배지/ ACTIVE 강제 금지 */
+  managerEmploymentStatus: GeminiApprovedTrainingEmploymentStatus | null
   managerContact: string
   managerEmail: string
   managerSchool: string
@@ -46,4 +51,6 @@ export type GeminiApprovedTrainingDetail = {
   instructorAssigned: boolean
   lastPreferredDate: string
   officialDocumentRequired: boolean
+  /** 서버 progressStatus. 없으면 UI가 날짜로 파생 */
+  progressStatus: GeminiApprovedTrainingStatus | null
 }

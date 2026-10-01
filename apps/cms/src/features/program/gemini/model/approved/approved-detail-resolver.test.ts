@@ -1,0 +1,106 @@
+import { describe, expect, it } from 'vitest'
+import {
+  mapGeminiApprovedTrainingDetailResponseToDetail,
+  mapGeminiInstructorApplicationItemToRow,
+} from './approved-detail-resolver'
+
+describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
+  it('maps P0 detail fields and keeps null counts/employment without defaults', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 185334,
+      programId: 184900,
+      organizationApplicationId: 185334,
+      recruitmentTitle: '제미나이 아카데미 찾아가는 연수 모집',
+      progressStatus: 'SCHEDULED',
+      trainingDate: null,
+      trainingTimeText: null,
+      lastPreferredDate: '2026-03-15',
+      studentCount: null,
+      institutionApplicationCount: null,
+      institutionCompletedTrainingCount: null,
+      institutionJoinedAt: '2025-11-01',
+      institutionName: '서울고',
+      institutionSido: '서울특별시',
+      institutionSigungu: '강남구',
+      institutionAddress: null,
+      teacherMemberId: 12001,
+      teacherName: '김교사',
+      teacherPhone: '010-1234-5678',
+      teacherEmail: 'kim@example.com',
+      teacherEmploymentStatus: null,
+      teacherScheduleChangeCount: null,
+      assignedInstructor: null,
+      officialDocumentRequired: false,
+    })
+
+    expect(detail.id).toBe('185334')
+    expect(detail.programId).toBe('184900')
+    expect(detail.recruitmentTitle).toBe('제미나이 아카데미 찾아가는 연수 모집')
+    expect(detail.trainingDate).toBe('')
+    expect(detail.studentCount).toBeNull()
+    expect(detail.recruitmentCount).toBeNull()
+    expect(detail.completedRecruitmentCount).toBeNull()
+    expect(detail.managerEmploymentStatus).toBeNull()
+    expect(detail.managerScheduleChangeCount).toBe(0)
+    expect(detail.managerNameKo).toBe('김교사')
+    expect(detail.managerMemberId).toBe('12001')
+    expect(detail.instructorAssigned).toBe(false)
+    expect(detail.officialDocumentType).toBe('필요 없음')
+    expect(detail.progressStatus).toBe('SCHEDULED')
+    expect(detail.lastPreferredDate).toBe('2026-03-15')
+  })
+
+  it('maps assignedInstructor when present', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 1,
+      programId: 2,
+      assignedInstructor: {
+        name: '이강사',
+        homeAddress: '부산 해운대',
+        experienceYears: 3,
+        grade: 'A등급',
+        phone: '010-****-0000',
+        email: 'lee***@example.com',
+      },
+      officialDocumentRequired: true,
+    })
+    expect(detail.instructorAssigned).toBe(true)
+    expect(detail.instructor).toEqual({
+      name: '이강사',
+      region: '부산 해운대',
+      experienceYears: 3,
+      grade: 'A등급',
+      contact: '010-****-0000',
+      email: 'lee***@example.com',
+    })
+    expect(detail.officialDocumentType).toBe('필요')
+  })
+})
+
+describe('mapGeminiInstructorApplicationItemToRow', () => {
+  it('maps instructor application list columns', () => {
+    const row = mapGeminiInstructorApplicationItemToRow(
+      {
+        applicationId: 190001,
+        instructorName: '이강사',
+        applicationStatus: 'PENDING',
+        homeSido: '부산광역시',
+        homeSigungu: '해운대구',
+        experienceYears: 3,
+        grade: 'A등급',
+        phone: '010-****-0000',
+        email: 'lee***@example.com',
+        monthlyAssignmentCount: 1,
+      },
+      '185334',
+      0
+    )
+    expect(row.id).toBe('190001')
+    expect(row.approvedTrainingId).toBe('185334')
+    expect(row.instructorName).toBe('이강사')
+    expect(row.homeSido).toBe('부산광역시')
+    expect(row.homeSigungu).toBe('해운대구')
+    expect(row.approvalStatus).toBe('PENDING')
+    expect(row.monthlyAssignmentCount).toBe(1)
+  })
+})

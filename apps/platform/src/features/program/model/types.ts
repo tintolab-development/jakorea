@@ -3,6 +3,9 @@ import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-
 
 export type ProgramCategory = 'all' | 'youth' | 'institution' | 'instructor'
 
+/** 목록·상세에 그리는 탭. `all`은 필터 값이라 카드 배지에 쓰지 않는다. */
+export type ProgramTab = Exclude<ProgramCategory, 'all'>
+
 export type ProgramSort = 'latest' | 'name' | 'closing-soon'
 
 export type EducationForm = 'online' | 'offline' | 'hybrid' | 'participant_choice'
@@ -11,7 +14,17 @@ export type EducationTargetKey = EducationTarget
 
 export type ProgramListItem = {
   id: string
-  category: Exclude<ProgramCategory, 'all'>
+  /**
+   * 신청 양식 등 단일 분기에 쓰는 대표 탭.
+   * 배지는 `categories` 전체를 그린다.
+   */
+  category: ProgramTab
+  /**
+   * `portalCategories`에 해당하는 탭 전부.
+   * 공개 모집이 없으면 빈 배열이다. 진행 중 행만 남기지 않는다.
+   */
+  categories: ProgramTab[]
+  /** `categories` 라벨을 ` · `로 이은 문자열. 배지가 없으면 빈 문자열. */
   categoryLabel: string
   title: string
   /** 운영 기간 표시용 라벨 */

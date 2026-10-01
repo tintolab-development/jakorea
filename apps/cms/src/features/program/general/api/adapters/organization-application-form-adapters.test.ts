@@ -100,7 +100,7 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     expect(hydrated.sessions?.[0]?.date).toBe('2026.03.10(화) 오전')
   })
 
-  it('does not fill grade, address, or teacher contact from the TT basic-info form answer', () => {
+  it('keeps list grade/address/teacher and fills empty reason from nested basic-info', () => {
     const form = formWithAnswers([
       {
         questionKeySnapshot: 'program-application-trained-teachers-seed-basic-info',
@@ -122,10 +122,48 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     })
     expect(hydrated.educationGrade).toBe('3~6학년')
     expect(hydrated.detail?.addressDetail).toBe('본관')
-    expect(hydrated.detail?.applicationReason).toBeUndefined()
-    expect(hydrated.detail?.otherRequests).toBeUndefined()
+    expect(hydrated.detail?.applicationReason).toBe('금융 교육')
+    expect(hydrated.detail?.otherRequests).toBe('주차')
     expect(hydrated.detail?.teacherEmail).toBeUndefined()
     expect(hydrated.teacherName).toBe('김교사')
+  })
+
+  it('maps Platform nested economy guidance and sex-offense answers', () => {
+    const form = formWithAnswers([
+      {
+        questionKeySnapshot: 'program-application-economy-seed-guidance',
+        answerValueJson: JSON.stringify({
+          'computer-in-room': '노트북 2대',
+          'waiting-place': '본관 2층 연구실',
+          meal: '급식실 이용 가능',
+          'other-notes': '정문 주차',
+        }),
+      },
+      {
+        questionKeySnapshot:
+          'program-application-economy-seed-sex-offense-consent-submission',
+        answerValueJson: JSON.stringify({ submissionRequest: 'request' }),
+      },
+      {
+        questionKeySnapshot:
+          'program-application-economy-seed-sex-offense-consent-inquiry',
+        answerValueJson: JSON.stringify({
+          inquiryMethod: 'ja_system',
+          siteSubmission: 'direct',
+        }),
+      },
+    ])
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: baseRow,
+      formResponse: form,
+    })
+    expect(hydrated.detail?.computerInSpace).toBe('노트북 2대')
+    expect(hydrated.detail?.waitingPlaceGuide).toBe('본관 2층 연구실')
+    expect(hydrated.detail?.mealInfo).toBe('급식실 이용 가능')
+    expect(hydrated.detail?.otherSpecialNotes).toBe('정문 주차')
+    expect(hydrated.detail?.sexOffenseCheckRequest).toBe(
+      '동의서 제출 요청 | JA 시스템 내에서 동의서 확인 | 직접 제출'
+    )
   })
 
   it('keeps list DTO fields when form answers are empty', () => {
