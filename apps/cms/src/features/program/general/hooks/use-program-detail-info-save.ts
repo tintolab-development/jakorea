@@ -32,6 +32,7 @@ import {
 import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { looksLikeUjatProgramId } from '@/features/program/ujat/lib/is-ujat-primary-program'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 
 export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
@@ -123,6 +124,29 @@ export function useProgramDetailInfoSave({
               : recruitmentAudience === 'volunteer'
                 ? values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
                 : false
+          const contact =
+            recruitmentAudience === 'instructor'
+              ? {
+                  contactName: values.instructorRecruitmentContactOrganizationName,
+                  contactPhone: values.instructorContactPhone,
+                  contactEmail: values.instructorContactEmail,
+                }
+              : recruitmentAudience === 'volunteer'
+                ? {
+                    contactName: values.volunteerRecruitmentContactOrganizationName,
+                    contactPhone: values.volunteerContactPhone,
+                    contactEmail: values.volunteerContactEmail,
+                  }
+                : {
+                    contactName: values.recruitmentContactOrganizationName,
+                    contactPhone: values.contactPhone,
+                    contactEmail: values.contactEmail,
+                  }
+          const writesRowFields =
+            !isCompanySchoolProgram(program) &&
+            !isTrainedTeachersDetailProgram(program) &&
+            program.backendProgramType !== 'UJAT' &&
+            !looksLikeUjatProgramId(program.id)
           remotePatch = applyRecruitmentDetailInfoFields(
             remotePatch,
             program,
@@ -135,6 +159,14 @@ export function useProgramDetailInfoSave({
               ...(typeof html === 'string' ? { additionalContentHtml: html } : {}),
               remarks: values[notesField],
               notesNotApplicable,
+              ...(writesRowFields
+                ? {
+                    announcementTitle: values.announcementTitle ?? '',
+                    contactName: contact.contactName ?? '',
+                    contactPhone: contact.contactPhone ?? '',
+                    contactEmail: contact.contactEmail ?? '',
+                  }
+                : {}),
             }
           )
           const isGeneralRecruitProgram =

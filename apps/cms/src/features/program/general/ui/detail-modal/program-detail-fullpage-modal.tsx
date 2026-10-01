@@ -307,7 +307,13 @@ export function ProgramDetailFullPageModal({
   )
   const persistProgramPatch = async (draft: Program, patch: Partial<Program>) => {
     if (onUpdateProgram) {
-      await onUpdateProgram(draft.id, draft, patch)
+      // 행 문구 diff는 저장 전 행과 비교해야 한다. draft는 이미 새 행을 갖고 있어 차이가 없다.
+      const baseline = displayProgram ?? draft
+      await onUpdateProgram(
+        draft.id,
+        { ...draft, programRecruitments: baseline.programRecruitments },
+        patch
+      )
       return
     }
     await updateProgram(draft.id, patch)

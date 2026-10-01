@@ -198,6 +198,53 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
     expect(instructor.description).toBe('강사 설명')
   })
 
+  it('일반 프로그램 공고명·문의처는 그 행에만 넣고 프로그램 공고명은 빼지 않는다', () => {
+    const withRows = {
+      ...existing,
+      backendProgramType: 'GENERAL_ORGANIZATION',
+      programRecruitments: [
+        {
+          id: 168241,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          announcementTitle: '1차 기관',
+          contactName: '기존 담당',
+        },
+        {
+          id: 168242,
+          recruitmentType: 'INSTRUCTOR',
+          applicationType: 'INSTRUCTOR',
+          announcementTitle: '강사 공고',
+          contactName: '강사 담당',
+        },
+      ],
+    } as Program
+    const patch = applyRecruitmentDetailInfoFields(
+      { generalCommonInfo: { announcementTitle: '1차 기관 수정' } },
+      { ...withRows, generalCommonInfo: { announcementTitle: '프로그램 공고' } },
+      'participant',
+      {
+        announcementTitle: '1차 기관 수정',
+        contactName: '새 담당',
+        contactPhone: '010-1111-2222',
+        contactEmail: 'org@example.com',
+      }
+    )
+    expect(patch.generalCommonInfo?.announcementTitle).toBe('프로그램 공고')
+    expect(patch.programRecruitments?.[0]).toMatchObject({
+      id: 168241,
+      announcementTitle: '1차 기관 수정',
+      contactName: '새 담당',
+      contactPhone: '010-1111-2222',
+      contactEmail: 'org@example.com',
+    })
+    expect(patch.programRecruitments?.[1]).toMatchObject({
+      id: 168242,
+      announcementTitle: '강사 공고',
+      contactName: '강사 담당',
+    })
+  })
+
   it('봉사자 모집 비고 — volunteerRecruitmentInfo.remarks만 갱신한다', () => {
     const patch = applyRecruitmentDetailInfoFields({}, existing, 'volunteer', {
       remarks: '봉사자 비고 신값',

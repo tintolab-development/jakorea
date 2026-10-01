@@ -66,6 +66,13 @@ export type RecruitmentDetailInfoFields = {
   notesNotApplicable?: boolean
   /** @deprecated 비고는 `remarks`. 호환용 별칭 */
   otherNotes?: string
+  /** 이 모집 행 공고 제목. 프로그램 공고명에는 쓰지 않는다. */
+  announcementTitle?: string
+  /** 이 모집 행 요약 */
+  summary?: string
+  contactName?: string
+  contactPhone?: string
+  contactEmail?: string
 }
 
 /**
@@ -139,6 +146,19 @@ export function applyRecruitmentDetailInfoFields(
   } = patch
 
   const programRecruitments = writeRecruitmentRowCopy(existing, audience, {
+    ...(fields.announcementTitle !== undefined
+      ? { announcementTitle: fields.announcementTitle.trim() || null }
+      : {}),
+    ...(fields.summary !== undefined ? { summary: fields.summary.trim() || null } : {}),
+    ...(fields.contactName !== undefined
+      ? { contactName: fields.contactName.trim() || null }
+      : {}),
+    ...(fields.contactPhone !== undefined
+      ? { contactPhone: fields.contactPhone.trim() || null }
+      : {}),
+    ...(fields.contactEmail !== undefined
+      ? { contactEmail: fields.contactEmail.trim() || null }
+      : {}),
     ...(fields.description !== undefined
       ? { programDescription: fields.description.trim() || null }
       : {}),
@@ -159,13 +179,18 @@ export function applyRecruitmentDetailInfoFields(
       : {}),
   })
 
+  const generalCommonInfo = {
+    ...existing.generalCommonInfo,
+    ...patch.generalCommonInfo,
+    [nestedKey]: nestedPatch as NonNullable<Program['generalCommonInfo']>[typeof nestedKey],
+  }
+  if (fields.announcementTitle !== undefined) {
+    generalCommonInfo.announcementTitle = existing.generalCommonInfo?.announcementTitle
+  }
+
   return {
     ...audiencePatch,
-    generalCommonInfo: {
-      ...existing.generalCommonInfo,
-      ...patch.generalCommonInfo,
-      [nestedKey]: nestedPatch as NonNullable<Program['generalCommonInfo']>[typeof nestedKey],
-    },
+    generalCommonInfo,
     registrationOverlay: overlayPatch,
     ...(programRecruitments ? { programRecruitments } : {}),
   }

@@ -276,5 +276,49 @@ export function programToRecruitmentTabEditValues(
           ? ''
           : (volunteerInfo?.remarks?.trim() || base.oneLineIntroduction)
         : base.oneLineIntroduction,
+    ...(isGeneralRowCopyProgram(merged)
+      ? generalRecruitmentRowFormSeed(recruitmentRow, audience)
+      : {}),
+  }
+}
+
+function isGeneralRowCopyProgram(program: Program): boolean {
+  const type = program.backendProgramType?.toUpperCase() ?? ''
+  return type === 'GENERAL' || type.startsWith('GENERAL_')
+}
+
+/** 일반 프로그램 모집 탭은 그 행의 공고명·문의처만 보여 준다. */
+function generalRecruitmentRowFormSeed(
+  row: ReturnType<typeof pickRecruitmentCopyRow>,
+  audience: GeneralRecruitDetailAudience
+): Partial<ProgramDetailEditFormValues> {
+  if (!row) return {}
+  const contact =
+    audience === 'instructor'
+      ? {
+          ...(row.contactName != null
+            ? { instructorRecruitmentContactOrganizationName: row.contactName }
+            : {}),
+          ...(row.contactPhone != null ? { instructorContactPhone: row.contactPhone } : {}),
+          ...(row.contactEmail != null ? { instructorContactEmail: row.contactEmail } : {}),
+        }
+      : audience === 'volunteer'
+        ? {
+            ...(row.contactName != null
+              ? { volunteerRecruitmentContactOrganizationName: row.contactName }
+              : {}),
+            ...(row.contactPhone != null ? { volunteerContactPhone: row.contactPhone } : {}),
+            ...(row.contactEmail != null ? { volunteerContactEmail: row.contactEmail } : {}),
+          }
+        : {
+            ...(row.contactName != null
+              ? { recruitmentContactOrganizationName: row.contactName }
+              : {}),
+            ...(row.contactPhone != null ? { contactPhone: row.contactPhone } : {}),
+            ...(row.contactEmail != null ? { contactEmail: row.contactEmail } : {}),
+          }
+  return {
+    announcementTitle: row.announcementTitle?.trim() ?? '',
+    ...contact,
   }
 }

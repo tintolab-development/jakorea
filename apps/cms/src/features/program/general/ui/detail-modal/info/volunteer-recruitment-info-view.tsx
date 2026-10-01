@@ -26,6 +26,7 @@ import {
   ProgramDetailInterviewReadRow,
 } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
+import { RecruitmentAnnouncementTitleField } from './recruitment-announcement-title-field'
 import {
   resolveGeneralProgramVolunteerRecruitmentDisplay,
   resolveVolunteerRecruitmentInterviewEnabled,
@@ -325,6 +326,12 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
         </DetailInfoForm>
 
         <DetailInfoForm title="봉사자 모집 정보" hideHeader mode={formMode} className={FORM_CLASS}>
+          <RecruitmentAnnouncementTitleField
+            program={program}
+            form={form}
+            isEdit={isEdit}
+            audience="volunteer"
+          />
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="프로그램 운영 기간"
