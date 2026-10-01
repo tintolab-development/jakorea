@@ -78,7 +78,7 @@ jobs:
               --paths '/*' \
               --query 'Invalidation.Id' \
               --output text
-          )
+          )"
 
           test -n "${INVALIDATION_ID}"
 
