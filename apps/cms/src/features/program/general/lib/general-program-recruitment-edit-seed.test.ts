@@ -86,7 +86,10 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
       },
     } as Program
 
-    expect(programToRecruitmentTabEditValues(program, 'instructor').otherNotes).toBe('강사 비고')
+    expect(programToRecruitmentTabEditValues(program, 'instructor').instructorRecruitmentRemarks).toBe(
+      '강사 비고'
+    )
+    expect(programToRecruitmentTabEditValues(program, 'instructor').otherNotes).toBe('기타 안내')
     expect(programToRecruitmentTabEditValues(program, 'volunteer').oneLineIntroduction).toBe(
       '봉사자 비고'
     )

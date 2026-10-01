@@ -434,6 +434,48 @@ describe('general-program-adapters', () => {
     )
   })
 
+  it('create 행 담당자·비고는 각 모집 탭 정보에서 가져오고 managerName·기타사항을 쓰지 않는다', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      managerName: '프로그램 담당자',
+      contactPhone: '010-0000-0000',
+      contactEmail: 'program@jakorea.org',
+      otherNotes: '우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'volunteer'],
+      volunteerApplicationStartDate: '2026-09-18T15:00:00.000Z',
+      volunteerApplicationEndDate: '2026-09-21T15:00:00.000Z',
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactOrganizationName: '최수아',
+          contactPhone: '02-512-3456',
+          contactEmail: 'edu.team@jakorea.org',
+          remarks: '참여기관 비고',
+        },
+        volunteerRecruitmentInfo: {
+          contactOrganizationName: '정민재',
+          contactPhone: '010-6234-7890',
+          remarks: '봉사자 비고',
+        },
+      },
+    })
+
+    const org = request.recruitments?.find(row => row.targetType === 'ORGANIZATION')
+    const volunteer = request.recruitments?.find(row => row.recruitmentType === 'VOLUNTEER')
+    expect(org).toMatchObject({
+      contactName: '최수아',
+      contactPhone: '02-512-3456',
+      contactEmail: 'edu.team@jakorea.org',
+      remarks: '참여기관 비고',
+    })
+    expect(volunteer).toMatchObject({
+      contactName: '정민재',
+      contactPhone: '010-6234-7890',
+      remarks: '봉사자 비고',
+    })
+    expect(volunteer?.contactEmail).toBeUndefined()
+  })
+
   it('sends targetLevels array on create and update (not only targetLevel[0])', () => {
     const multi: Program = {
       ...sampleProgram,
