@@ -59,6 +59,7 @@ export function UjatRecruitParticipantInfoParagraph(props: UjatRecruitParagraphP
         form={props.form}
         isEdit={mode === 'edit'}
         sectionTitle={props.sectionTitle}
+        highlightParagraphId={props.highlightParagraphId}
       />
     )
   }

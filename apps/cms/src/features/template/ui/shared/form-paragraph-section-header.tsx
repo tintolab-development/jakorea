@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useRegistrationWizardValidationHighlight } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import {
   FormParagraphSectionDescription,
   getVisibleParagraphDescription,
@@ -19,6 +20,11 @@ export type FormParagraphSectionHeaderProps = {
   required?: boolean
   /** 제목 요소 `id` — `aria-labelledby` 연결용 */
   headingId?: string
+  /**
+   * 등록 위저드와 같은 단락 id.
+   * 필수 누락 보고 시 제목을 빨간색으로 유지한다.
+   */
+  highlightParagraphId?: string
 }
 
 /**
@@ -33,11 +39,25 @@ export function FormParagraphSectionHeader({
   titleAligned = true,
   required = false,
   headingId,
+  highlightParagraphId,
 }: FormParagraphSectionHeaderProps) {
   const visibleDescription = getVisibleParagraphDescription(description ?? null)
+  const { isParagraphIncomplete } = useRegistrationWizardValidationHighlight()
+  const requiredIncomplete =
+    highlightParagraphId != null &&
+    highlightParagraphId !== '' &&
+    isParagraphIncomplete(highlightParagraphId)
 
   return (
-    <header className="detail-info-form__header form-paragraph-section-header">
+    <header
+      className={[
+        'detail-info-form__header form-paragraph-section-header',
+        requiredIncomplete ? 'form-paragraph-section-header--required-incomplete' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      data-paragraph-id={highlightParagraphId || undefined}
+    >
       <div className="detail-info-form__header-lead form-paragraph-section-header__lead">
         <h2 id={headingId} className="detail-info-form__title">
           {title}

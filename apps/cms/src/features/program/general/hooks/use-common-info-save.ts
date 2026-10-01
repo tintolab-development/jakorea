@@ -11,9 +11,10 @@ import {
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { applyGeneralRegistrationOverlayToProgram } from '@/features/program/general/lib/registration-overlay-to-program'
+import { listIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
 import {
+  generalRegistrationRequiredFieldContextFromDetailEdit,
   getGeneralRegistrationDetailEditExtras,
-  hasIncompleteGeneralProgramDetailEditRequiredFields,
   readGeneralRegistrationOverlayForSave,
   resyncGeneralRegistrationOverlayFromProgram,
 } from '@/features/program/general/lib/registration-overlay-sync'
@@ -25,7 +26,7 @@ import { showUpdateCompletedAlert } from '@/shared/ui'
 
 export type GeneralProgramCommonInfoSaveResult =
   | { ok: true }
-  | { ok: false; kind: 'validation' }
+  | { ok: false; kind: 'validation'; keys: readonly string[] }
   | { ok: false; kind: 'api'; error: unknown }
 
 export interface UseGeneralProgramCommonInfoSaveOptions {
@@ -49,14 +50,18 @@ export function useGeneralProgramCommonInfoSave({
 
   const triggerSave = useCallback(async (): Promise<GeneralProgramCommonInfoSaveResult> => {
     if (savingRef.current || !onSaveEdit || !program) {
-      return { ok: false, kind: 'validation' }
+      return { ok: false, kind: 'validation', keys: [] }
     }
     savingRef.current = true
     try {
       const overlay = readGeneralRegistrationOverlayForSave()
       const extras = getGeneralRegistrationDetailEditExtras()
-      if (hasIncompleteGeneralProgramDetailEditRequiredFields(overlay, extras)) {
-        return { ok: false, kind: 'validation' }
+      const incompleteKeys = listIncompleteGeneralProgramRegistrationRequiredFields(
+        overlay,
+        generalRegistrationRequiredFieldContextFromDetailEdit(overlay, extras)
+      )
+      if (incompleteKeys.length > 0) {
+        return { ok: false, kind: 'validation', keys: incompleteKeys }
       }
       const applied = applyGeneralRegistrationOverlayToProgram(program, overlay, extras)
       const withType: Program = {

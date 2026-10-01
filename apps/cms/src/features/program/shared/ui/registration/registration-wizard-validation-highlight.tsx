@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -151,6 +152,48 @@ export function RegistrationWizardValidationHighlightProvider({
       </FieldValidationHighlightContext.Provider>
     </RegistrationWizardValidationHighlightContext.Provider>
   )
+}
+
+export function useDetailEditRequiredHighlightRequest() {
+  const [request, setRequest] = useState<{ nonce: number; keys: readonly string[] }>({
+    nonce: 0,
+    keys: [],
+  })
+  const report = useCallback((keys: readonly string[]) => {
+    setRequest(prev => ({ nonce: prev.nonce + 1, keys: [...keys] }))
+  }, [])
+  const clear = useCallback(() => {
+    setRequest(prev => (prev.nonce === 0 ? prev : { nonce: 0, keys: [] }))
+  }, [])
+  return { request, report, clear }
+}
+
+/** Provider 안에서 상세 수정 저장 실패 키를 단락·필드 강조로 반영 */
+export function RegistrationWizardValidationHighlightSync({
+  nonce,
+  keys,
+  variant,
+}: {
+  nonce: number
+  keys: readonly string[]
+  variant: RegistrationWizardIncompleteMapVariant
+}) {
+  const { reportIncomplete, clearHighlight } = useRegistrationWizardValidationHighlight()
+  const keysFingerprint = keys.join('\0')
+
+  useEffect(() => {
+    if (nonce <= 0) {
+      clearHighlight()
+      return
+    }
+    const reported = keysFingerprint ? keysFingerprint.split('\0') : []
+    reportIncomplete(reported)
+    scrollToFirstRegistrationWizardIncompleteParagraph(
+      resolveRegistrationWizardIncompleteParagraphIds(reported, variant)
+    )
+  }, [clearHighlight, keysFingerprint, nonce, reportIncomplete, variant])
+
+  return null
 }
 
 /** 검증 실패 후 첫 미입력 단락으로 스크롤 */

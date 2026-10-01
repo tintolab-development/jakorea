@@ -71,6 +71,12 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
+import { listIncompleteDetailRecruitmentHighlightKeys } from '@/features/program/general/lib/detail-recruitment-required-highlight'
+import {
+  RegistrationWizardValidationHighlightProvider,
+  RegistrationWizardValidationHighlightSync,
+  useDetailEditRequiredHighlightRequest,
+} from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/program-edit-window'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
@@ -490,6 +496,7 @@ export function GeneralProgramDetailFullPageModal({
   const { disabledLnbKeys, capabilities: navigationCapabilities } =
     useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
+  const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
   const displayProgram = useMemo(() => {
     // remote(API id): 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
     // FE 시드(`general-prog-*`): remoteEnabled=false → resolve 폴백
@@ -781,6 +788,7 @@ export function GeneralProgramDetailFullPageModal({
     const result = await infoTriggerSave()
     if (!result.ok) {
       if (result.kind === 'validation') {
+        if (result.keys.length > 0) detailRequiredHighlight.report(result.keys)
         void showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -796,14 +804,16 @@ export function GeneralProgramDetailFullPageModal({
       }
       return
     }
+    detailRequiredHighlight.clear()
     setEditMode(null)
-  }, [displayProgram, infoTriggerSave, setEditMode, showAlert])
+  }, [detailRequiredHighlight, displayProgram, infoTriggerSave, setEditMode, showAlert])
 
   const handleInfoCancel = useCallback(() => {
     if (displayProgram) seedGeneralRegistrationOverlayFromProgram(displayProgram)
     infoResetToProgram()
+    detailRequiredHighlight.clear()
     setEditMode(null)
-  }, [displayProgram, infoResetToProgram, setEditMode])
+  }, [detailRequiredHighlight, displayProgram, infoResetToProgram, setEditMode])
 
   const recruitSubTab = useMemo((): GeneralRecruitTabKey => {
     if (activeLnb !== 'info' || activeTab !== 'recruitment') return 'institutions'
@@ -1036,6 +1046,33 @@ export function GeneralProgramDetailFullPageModal({
   ])
 
   const handleRecruitmentSave = useCallback(async () => {
+    if (displayProgram) {
+      const audience =
+        recruitSubTab === 'instructors'
+          ? 'instructor'
+          : recruitSubTab === 'volunteers'
+            ? 'volunteer'
+            : 'participant'
+      const form =
+        audience === 'instructor'
+          ? instructorsForm
+          : audience === 'volunteer'
+            ? volunteersForm
+            : institutionsForm
+      const incompleteKeys = listIncompleteDetailRecruitmentHighlightKeys({
+        program: displayProgram,
+        audience,
+        values: form.getValues(),
+      })
+      if (incompleteKeys.length > 0) {
+        detailRequiredHighlight.report(incompleteKeys)
+        void showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
+    }
     let saved = false
     let failure: 'validation' | 'api' | null = null
     if (recruitSubTab === 'institutions') {
@@ -1054,8 +1091,14 @@ export function GeneralProgramDetailFullPageModal({
       }
       return
     }
+    detailRequiredHighlight.clear()
     setEditMode(null)
   }, [
+    detailRequiredHighlight,
+    displayProgram,
+    institutionsForm,
+    instructorsForm,
+    volunteersForm,
     recruitSubTab,
     institutionsTriggerSave,
     instructorsTriggerSave,
@@ -1071,8 +1114,10 @@ export function GeneralProgramDetailFullPageModal({
     if (recruitSubTab === 'institutions') institutionsResetToProgram()
     else if (recruitSubTab === 'instructors') instructorsResetToProgram()
     else volunteersResetToProgram()
+    detailRequiredHighlight.clear()
     setEditMode(null)
   }, [
+    detailRequiredHighlight,
     recruitSubTab,
     institutionsResetToProgram,
     instructorsResetToProgram,
@@ -1858,6 +1903,12 @@ export function GeneralProgramDetailFullPageModal({
       : (applicantDetailModalTitle ?? defaultModalTitle)
 
   return (
+    <RegistrationWizardValidationHighlightProvider variant="general">
+    <RegistrationWizardValidationHighlightSync
+      nonce={detailRequiredHighlight.request.nonce}
+      keys={detailRequiredHighlight.request.keys}
+      variant="general"
+    />
     <>
       <DetailFullPageModal
         open={open}
@@ -2095,5 +2146,6 @@ export function GeneralProgramDetailFullPageModal({
       ) : null}
       <ProgramDetailSponsorDetailOverlay />
     </>
+    </RegistrationWizardValidationHighlightProvider>
   )
 }

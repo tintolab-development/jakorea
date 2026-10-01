@@ -20,6 +20,7 @@ export function ProgramCommonInfoEditSection({
   required = false,
   titleTrailing,
   bodyClassName,
+  highlightParagraphId,
   children,
 }: {
   title: string
@@ -29,6 +30,8 @@ export function ProgramCommonInfoEditSection({
   titleTrailing?: ReactNode
   /** 등록 단락이 2개 이상일 때 `program-common-info-edit__section-body--stacked` */
   bodyClassName?: string
+  /** 등록 시드 단락 id — 필수 누락 시 제목 강조 */
+  highlightParagraphId?: string
   children: ReactNode
 }) {
   return (
@@ -40,6 +43,7 @@ export function ProgramCommonInfoEditSection({
         surface="responseEntry"
         titleAligned
         required={required}
+        highlightParagraphId={highlightParagraphId}
       />
       <div
         className={['program-common-info-edit__section-body', bodyClassName]

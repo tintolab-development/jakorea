@@ -11,6 +11,7 @@ import {
   INSTRUCTOR_TARGET_OPTIONS,
   parseInstructorTargetsSelectValue,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import { RECRUIT_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/recruit-form-instructor-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -63,6 +64,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
         surface="responseEntry"
         titleAligned
         required={isEdit}
+        highlightParagraphId={RECRUIT_FORM_INSTRUCTOR_IDS.recruitInfo}
       />
       <div className="instructor-recruitment-info-view__forms">
         <DetailInfoForm
@@ -74,6 +76,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="공고 게시 여부"
+              validationKey="recruit.instructor.announcementPublished"
               fullRow
               view={display.announcementPublishedLabel}
               edit={
@@ -104,6 +107,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="프로그램 운영 기간"
+              validationKey="recruit.instructor.programRangeSeal"
               view={display.operationPeriodLabel}
               edit={
                 isEdit && form ? (
@@ -145,6 +149,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="모집 대상"
+              validationKey="recruit.instructor.recruitTargets"
               view={display.instructorTargetLabel}
               edit={
                 isEdit && form ? (
@@ -170,6 +175,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
             />
             <DetailInfoForm.Field
               label="모집 대상 상세"
+              validationKey="recruit.instructor.recruitTargetDetail"
               view={display.instructorTargetDetailLabel}
               edit={
                 isEdit && form ? (
@@ -195,6 +201,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="강사 모집 기간"
+              validationKey="recruit.instructor.recruitRangeSeal"
               view={display.recruitmentPeriodLabel}
               edit={
                 isEdit && form ? (
@@ -228,6 +235,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
             />
             <DetailInfoForm.Field
               label="최종 합격자 발표"
+              validationKey={['recruit.instructor.finalAnnounceIso', 'recruit.instructor.finalAnnounceMethod']}
               view={
                 <ProgramDetailDateMethodReadRow
                   dateIso={display.finalPassAnnouncementDate}
@@ -276,6 +284,11 @@ export function GeneralProgramInstructorRecruitmentInfoView({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="문의처"
+              validationKey={[
+                'recruit.instructor.inquiryContact',
+                'recruit.instructor.inquiryTel',
+                'recruit.instructor.inquiryEmail',
+              ]}
               fullRow
               view={
                 <ProgramDetailContactReadRow
@@ -353,6 +366,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="비고"
+              validationKey="recruit.instructor.notes"
               fullRow
               view={display.notes}
               edit={

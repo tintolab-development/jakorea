@@ -16,6 +16,9 @@ import {
   TARGET_LEVEL_LABEL,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS } from '@jakorea/form-schema/paragraph-ids/applicant-recruit-form-individual-draft'
+import { APPLICANT_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/applicant-recruit-form-institution-draft'
+import { ECONOMY_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/economy-recruit-form-institution-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
@@ -166,6 +169,12 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
   const isGeneralOrg = !isIndividual && !isCompanySchool && !isTrainedTeachers
   const recruitmentSectionTitle = isGeneralOrg ? '참여 기관 모집 정보' : '참여자 모집 정보'
+  const recruitKeyPrefix = isIndividual ? 'recruit.individual' : 'recruit.institution'
+  const recruitHighlightParagraphId = isCompanySchool
+    ? ECONOMY_RECRUIT_FORM_INSTITUTION_IDS.participantRecruitInfo
+    : isIndividual
+      ? APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS.participantRecruitInfo
+      : APPLICANT_RECRUIT_FORM_INSTITUTION_IDS.participantRecruitInfo
   // 교육받은 교사 등록 폼과 동일 — 최대 일정/1일 차시 상시 노출
   const showMaxScheduleCountField = display.showMaxScheduleCountField || isTrainedTeachers
   const showMaxSessionsPerDayField = display.showMaxSessionsPerDayField || isTrainedTeachers
@@ -183,6 +192,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const studentListField = (
     <DetailInfoForm.Field
       label="학생 명단 제출 여부"
+      validationKey={`${recruitKeyPrefix}.studentListRequired`}
       view={display.studentListLabel}
       edit={
         isEdit && form ? (
@@ -208,6 +218,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const recruitmentPeriodField = (
     <DetailInfoForm.Field
       label="참여자 모집 기간"
+      validationKey={`${recruitKeyPrefix}.recruitRangeSeal`}
       view={display.recruitmentPeriodLabel}
       edit={
         isEdit && form ? (
@@ -239,6 +250,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const finalPassField = (
     <DetailInfoForm.Field
       label="최종 합격자 발표"
+      validationKey={[`${recruitKeyPrefix}.finalAnnounceIso`, `${recruitKeyPrefix}.finalAnnounceMethod`]}
       view={
         isIndividual ? (
           <ProgramDetailDateMethodReadRow
@@ -295,6 +307,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
         surface="responseEntry"
         titleAligned
         required={isEdit}
+        highlightParagraphId={recruitHighlightParagraphId}
       />
       <div className="participant-recruitment-info-view__forms">
         <DetailInfoForm
@@ -306,6 +319,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           <DetailInfoForm.Row type={isTrainedTeachers ? 'double' : 'single'}>
             <DetailInfoForm.Field
               label="공고 게시 여부"
+              validationKey={`${recruitKeyPrefix}.announcementPublished`}
               fullRow={!isTrainedTeachers}
               view={display.announcementPublishedLabel}
               edit={
@@ -331,6 +345,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               {studentListField}
               <DetailInfoForm.Field
                 label="사전 안내 사항 작성 여부"
+                validationKey={`${recruitKeyPrefix}.preguidanceRequired`}
                 view={display.preEducationNoticeLabel}
                 edit={
                   isEdit && form ? (
@@ -360,6 +375,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                 {isTrainedTeachers ? null : (
                   <DetailInfoForm.Field
                     label="배정 가능 최대 강사 수"
+                    validationKey={`${recruitKeyPrefix}.maxAssignableInstructors`}
                     view={display.maxInstructorsLabel}
                     edit={
                       isEdit && form ? (
@@ -375,6 +391,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                 )}
                 <DetailInfoForm.Field
                   label="신청 가능 최대 학급 수"
+                  validationKey={`${recruitKeyPrefix}.maxClassCount`}
                   fullRow={isTrainedTeachers}
                   view={display.maxClassLabel}
                   edit={
@@ -399,6 +416,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                   {showMaxScheduleCountField ? (
                     <DetailInfoForm.Field
                       label="신청 가능 최대 일정 수"
+                      validationKey={`${recruitKeyPrefix}.maxScheduleCount`}
                       fullRow={!showMaxSessionsPerDayField}
                       view={display.maxScheduleCountLabel}
                       edit={
@@ -416,6 +434,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                   {showMaxSessionsPerDayField ? (
                     <DetailInfoForm.Field
                       label="신청 가능 1일 최대 차시"
+                      validationKey={`${recruitKeyPrefix}.maxSessionsPerDay`}
                       fullRow={!showMaxScheduleCountField}
                       view={display.maxSessionsPerDayLabel}
                       edit={
@@ -451,6 +470,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="프로그램 운영 기간"
+              validationKey={`${recruitKeyPrefix}.programRangeSeal`}
               view={display.operationPeriodLabel}
               edit={
                 isEdit && form ? (
@@ -494,6 +514,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="교육 대상"
+              validationKey={`${recruitKeyPrefix}.targetLevels`}
               view={display.targetLabel}
               edit={
                 isEdit && form ? (
@@ -519,6 +540,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             />
             <DetailInfoForm.Field
               label="교육 대상 상세"
+              validationKey={`${recruitKeyPrefix}.targetLevelDetail`}
               view={display.targetDetailLabel}
               edit={
                 isEdit && form ? (
@@ -556,6 +578,11 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="문의처"
+              validationKey={[
+                `${recruitKeyPrefix}.inquiryContact`,
+                `${recruitKeyPrefix}.inquiryTel`,
+                `${recruitKeyPrefix}.inquiryEmail`,
+              ]}
               fullRow
               view={
                 <ProgramDetailContactReadRow
@@ -633,6 +660,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="비고"
+              validationKey={`${recruitKeyPrefix}.notes`}
               fullRow
               view={display.notes}
               edit={

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
 import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
+import { UJAT_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-recruit-form-institution-draft'
 import { resolveRegistrationWizardIncompleteParagraphIds } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
 
 describe('resolveRegistrationWizardIncompleteParagraphIds', () => {
@@ -21,6 +22,15 @@ describe('resolveRegistrationWizardIncompleteParagraphIds', () => {
     expect(ids.has(UJAT_PROGRAM_REGISTRATION_IDS[3])).toBe(true)
     expect(ids.has(UJAT_PROGRAM_REGISTRATION_IDS[5])).toBe(true)
     expect(ids.has(UJAT_PROGRAM_REGISTRATION_IDS[6])).toBe(true)
+  })
+
+  it('maps UJAT recruitment keys onto recruit paragraphs', () => {
+    const ids = resolveRegistrationWizardIncompleteParagraphIds(
+      ['recruit.institution.announcementPublished', 'recruit.volunteer.h1.interviewSchedule'],
+      'ujat'
+    )
+    expect(ids.has(UJAT_RECRUIT_FORM_INSTITUTION_IDS.participantRecruitInfo)).toBe(true)
+    expect(ids.has('ujat-recruit-form-volunteer-seed-interview-schedule')).toBe(true)
   })
 
   it('maps third party application cell keys to paragraph id', () => {
