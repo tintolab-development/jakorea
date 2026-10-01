@@ -301,23 +301,43 @@ export function RecruitDetailInfoParagraph({
   const handleAttachmentFiles = useCallback(
     (files: File[]) => {
       if (files.length === 0) return
+      const incomingNames = files.map(file => file.name)
+      const previousCount = Array.isArray(getGeneralRecruitOverlayRecord()[attachmentFileNamesKey])
+        ? (getGeneralRecruitOverlayRecord()[attachmentFileNamesKey] as string[]).length
+        : 0
+      // 업로드 완료 전에 단계를 바꿔도 파일명이 남도록 먼저 기록한다.
+      updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => [
+        ...(prev ?? []),
+        ...incomingNames,
+      ])
       setUploadingAttachments(true)
       trackRecruitDetailMediaUpload(
         (async () => {
           const owner = programDetailAttachmentOwner(RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID)
-          const uploadedNames: string[] = []
           const uploadedIds: number[] = []
+          const failedIndexes = new Set<number>()
           try {
-            for (const file of files) {
-              const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-              uploadedNames.push(file.name)
-              uploadedIds.push(uploaded.fileObjectId)
+            for (let index = 0; index < files.length; index += 1) {
+              try {
+                const uploaded = await uploadAdminFileMaybeMock({ file: files[index], owner })
+                uploadedIds.push(uploaded.fileObjectId)
+              } catch {
+                failedIndexes.add(index)
+              }
             }
-            if (uploadedNames.length === 0) return
-            updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => [
-              ...(prev ?? []),
-              ...uploadedNames,
-            ])
+            if (failedIndexes.size > 0) {
+              const removeAt = [...failedIndexes]
+                .map(index => previousCount + index)
+                .sort((left, right) => right - left)
+              updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => {
+                const next = [...(prev ?? [])]
+                for (const index of removeAt) {
+                  if (next[index] === incomingNames[index - previousCount]) next.splice(index, 1)
+                }
+                return next
+              })
+            }
+            if (uploadedIds.length === 0) return
             updateGeneralRecruitOverlayKey<number[]>(attachmentFileObjectIdsKey, prev => [
               ...(prev ?? []),
               ...uploadedIds,

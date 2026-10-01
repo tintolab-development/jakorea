@@ -12,8 +12,10 @@ import {
 import { collectOperationalOverlayForCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
 import {
   mergeRecruitDetailInfoFromGeneralStore,
+  overlayEntriesAbsentFromLive,
   pickOverlayKeysByPrefix,
   restoreRecruitDetailInfoIntoGeneralStore,
+  restoreUjatVolunteerRecruitGeneralStoreSidecar,
 } from './recruit-detail-info-overlay'
 
 describe('recruit detail info overlay persist', () => {
@@ -67,13 +69,93 @@ describe('recruit detail info overlay persist', () => {
     expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.inquiryContact']).toBeUndefined()
   })
 
-  it('merge는 전용 overlay 값을 우선한다', () => {
-    patchGeneralRecruitOverlay({ 'recruit.detailInfo.programDescription': '스토어' })
+  it('merge는 편집 중인 general-recruit 값을 우선한다', () => {
+    patchGeneralRecruitOverlay({
+      'recruit.detailInfo.programDescription': '스토어',
+      'recruit.detailInfo.attachmentFileNames': ['방금첨부.pdf'],
+    })
+    expect(
+      mergeRecruitDetailInfoFromGeneralStore(
+        {
+          'recruit.detailInfo.programDescription': '저장본',
+          'recruit.detailInfo.attachmentFileNames': ['이전.pdf'],
+          'recruit.inquiryContact': '담당자',
+        },
+        'recruit.detailInfo'
+      )
+    ).toMatchObject({
+      'recruit.inquiryContact': '담당자',
+      'recruit.detailInfo.programDescription': '스토어',
+      'recruit.detailInfo.attachmentFileNames': ['방금첨부.pdf'],
+    })
+  })
+
+  it('merge는 general-recruit에 없는 상세 키는 전용 overlay 값을 유지한다', () => {
     expect(
       mergeRecruitDetailInfoFromGeneralStore(
         { 'recruit.detailInfo.programDescription': '저장본' },
         'recruit.detailInfo'
       )['recruit.detailInfo.programDescription']
     ).toBe('저장본')
+  })
+
+  it('다른 단계 스냅샷은 이미 있는 첨부 키를 덮지 않는다', () => {
+    const live = {
+      'recruit.detailInfo.attachmentFileNames': ['기관모집.pdf'],
+      'economyRecruit.detailInfo.attachmentFileNames': ['1사1교.pdf'],
+      'recruitInstructor.detailInfo.thumbFileName': '강사썸네일.png',
+      'recruitVolunteer.h1.detailInfo.attachmentFileNames': ['상반기.pdf'],
+    }
+    expect(
+      overlayEntriesAbsentFromLive(
+        {
+          'recruit.detailInfo.attachmentFileNames': [],
+          'economyRecruit.detailInfo.attachmentFileNames': ['이전.pdf'],
+          'recruitInstructor.detailInfo.thumbFileName': null,
+          'recruitVolunteer.h1.detailInfo.attachmentFileNames': [],
+          'recruitVolunteer.h2.detailInfo.attachmentFileNames': ['하반기.pdf'],
+          'application.volunteer.previousProgram.fileNames': ['증빙.pdf'],
+        },
+        live
+      )
+    ).toEqual({
+      'recruitVolunteer.h2.detailInfo.attachmentFileNames': ['하반기.pdf'],
+      'application.volunteer.previousProgram.fileNames': ['증빙.pdf'],
+    })
+  })
+
+  it('UJAT 봉사자 반기 첨부 복원은 편집 중인 파일명을 유지한다', () => {
+    patchGeneralRecruitOverlay({
+      'recruitVolunteer.h1.detailInfo.attachmentFileNames': ['상반기-유지.pdf'],
+    })
+    restoreUjatVolunteerRecruitGeneralStoreSidecar({
+      'recruitVolunteer.h1.detailInfo.attachmentFileNames': [],
+      'recruitVolunteer.h2.detailInfo.attachmentFileNames': ['하반기.pdf'],
+    })
+    expect(
+      getGeneralRecruitOverlayRecord()['recruitVolunteer.h1.detailInfo.attachmentFileNames']
+    ).toEqual(['상반기-유지.pdf'])
+    expect(
+      getGeneralRecruitOverlayRecord()['recruitVolunteer.h2.detailInfo.attachmentFileNames']
+    ).toEqual(['하반기.pdf'])
+  })
+
+  it('복원은 이미 편집 중인 첨부 파일명을 덮지 않는다', () => {
+    patchGeneralRecruitOverlay({
+      'trainedTeachersRecruit.detailInfo.attachmentFileNames': ['유지.pdf'],
+    })
+    restoreRecruitDetailInfoIntoGeneralStore(
+      {
+        'trainedTeachersRecruit.detailInfo.attachmentFileNames': [],
+        'trainedTeachersRecruit.detailInfo.learningSupportContent': '학습지원',
+      },
+      'trainedTeachersRecruit.detailInfo'
+    )
+    expect(
+      getGeneralRecruitOverlayRecord()['trainedTeachersRecruit.detailInfo.attachmentFileNames']
+    ).toEqual(['유지.pdf'])
+    expect(
+      getGeneralRecruitOverlayRecord()['trainedTeachersRecruit.detailInfo.learningSupportContent']
+    ).toBe('학습지원')
   })
 })
