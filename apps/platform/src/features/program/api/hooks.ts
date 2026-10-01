@@ -20,6 +20,11 @@ function shouldRetryDetail(failureCount: number, error: unknown): boolean {
   return shouldRetryQuery(failureCount, error)
 }
 
+/** 삭제·미존재(404)면 focus/reconnect 재요청을 막아 Network 노이즈를 줄인다. */
+function shouldRefetchProgramDetail(query: { state: { error: unknown } }): boolean {
+  return getQueryRetryHttpStatus(query.state.error) !== 404
+}
+
 function listKeyParams(query: PortalProgramListQuery) {
   return {
     keyword: query.keyword ?? '',
@@ -202,9 +207,12 @@ export function useProgramDetail(
     enabled,
     staleTime: fresh ? DETAIL_FRESH_STALE_MS : DETAIL_STALE_MS,
     gcTime: DETAIL_GC_MS,
-    refetchOnMount: fresh ? 'always' : true,
-    refetchOnWindowFocus: fresh,
-    refetchOnReconnect: true,
+    refetchOnMount: query => {
+      if (!shouldRefetchProgramDetail(query)) return false
+      return fresh ? 'always' : true
+    },
+    refetchOnWindowFocus: query => (shouldRefetchProgramDetail(query) ? fresh : false),
+    refetchOnReconnect: shouldRefetchProgramDetail,
     retry: shouldRetryDetail,
     retryDelay: queryRetryDelay,
   })

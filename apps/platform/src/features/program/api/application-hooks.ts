@@ -76,9 +76,10 @@ export function useProgramApplicationForm(
     enabled,
     staleTime: FORM_STALE_MS,
     gcTime: FORM_GC_MS,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    refetchOnMount: query =>
+      getQueryRetryHttpStatus(query.state.error) === 404 ? false : 'always',
+    refetchOnWindowFocus: query => getQueryRetryHttpStatus(query.state.error) !== 404,
+    refetchOnReconnect: query => getQueryRetryHttpStatus(query.state.error) !== 404,
     retry: shouldRetryQuery,
     retryDelay: queryRetryDelay,
   })
@@ -114,9 +115,19 @@ export function useProgramApplicationForm(
     enabled: formEnabled,
     staleTime: FORM_STALE_MS,
     gcTime: FORM_GC_MS,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    refetchOnMount: query => {
+      const status = getQueryRetryHttpStatus(query.state.error)
+      if (status === 404 || status === 409) return false
+      return 'always'
+    },
+    refetchOnWindowFocus: query => {
+      const status = getQueryRetryHttpStatus(query.state.error)
+      return status !== 404 && status !== 409
+    },
+    refetchOnReconnect: query => {
+      const status = getQueryRetryHttpStatus(query.state.error)
+      return status !== 404 && status !== 409
+    },
     retry: (failureCount, error) => {
       const status = getQueryRetryHttpStatus(error)
       if (status === 404 || status === 409) return false

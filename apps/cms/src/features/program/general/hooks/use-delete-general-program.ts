@@ -7,9 +7,13 @@ export function useDeleteGeneralPrograms() {
 
   return useMutation({
     mutationFn: (programIds: string[]) => deleteGeneralPrograms(programIds),
-    onSuccess: (_data, programIds) => {
+    onSuccess: async (_data, programIds) => {
+      // 상세 observer가 남아 있으면 removeQueries가 즉시 재fetch → 삭제된 id 404.
+      // cancel 후 remove하고, 목록은 invalidate로 맞춘다.
       for (const programId of programIds) {
-        queryClient.removeQueries({ queryKey: generalProgramQueryKeys.detail(programId) })
+        const detailKey = generalProgramQueryKeys.detail(programId)
+        await queryClient.cancelQueries({ queryKey: detailKey })
+        queryClient.removeQueries({ queryKey: detailKey })
       }
       void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.lists() })
       void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.overviewStages() })

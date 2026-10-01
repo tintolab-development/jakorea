@@ -467,10 +467,13 @@ export function GeneralProgramListPageContent() {
         lines={programBulkDeleteGuide.lines}
         confirmText="삭제"
         onConfirm={async () => {
+          const idsToDelete = programsPendingBulkDelete.map(program => program.id)
+          // 상세가 열려 있으면 먼저 닫아 detail observer를 끈 뒤 삭제한다.
+          if (programIdFromUrl && idsToDelete.includes(programIdFromUrl)) {
+            handleCloseFullPageModal()
+          }
           if (isRemoteDataSource) {
-            await deleteGeneralProgramsMutation.mutateAsync(
-              programsPendingBulkDelete.map(program => program.id)
-            )
+            await deleteGeneralProgramsMutation.mutateAsync(idsToDelete)
             refetchPrograms()
           } else {
             await handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))

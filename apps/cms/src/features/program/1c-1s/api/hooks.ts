@@ -150,8 +150,10 @@ export function useDeleteCompanySchoolProgram() {
     mutationKey: companySchoolQueryKeys.mutations.delete(''),
     mutationFn: deleteCompanySchoolProgram,
     retry: false,
-    onSuccess: (_data, programId) => {
-      queryClient.removeQueries({ queryKey: companySchoolQueryKeys.detail(programId) })
+    onSuccess: async (_data, programId) => {
+      const detailKey = companySchoolQueryKeys.detail(programId)
+      await queryClient.cancelQueries({ queryKey: detailKey })
+      queryClient.removeQueries({ queryKey: detailKey })
       invalidateCompanySchoolListCaches(queryClient)
     },
   })
@@ -163,9 +165,11 @@ export function useDeleteCompanySchoolPrograms() {
     mutationKey: [...companySchoolQueryKeys.all, 'mutation', 'bulk-delete'] as const,
     mutationFn: deleteCompanySchoolPrograms,
     retry: false,
-    onSuccess: (_data, programIds) => {
+    onSuccess: async (_data, programIds) => {
       for (const programId of programIds) {
-        queryClient.removeQueries({ queryKey: companySchoolQueryKeys.detail(programId) })
+        const detailKey = companySchoolQueryKeys.detail(programId)
+        await queryClient.cancelQueries({ queryKey: detailKey })
+        queryClient.removeQueries({ queryKey: detailKey })
       }
       invalidateCompanySchoolListCaches(queryClient)
     },
