@@ -294,7 +294,7 @@ function isGeneralRowCopyProgram(program: Program): boolean {
   return type === 'GENERAL' || type.startsWith('GENERAL_')
 }
 
-/** 일반 프로그램 모집 탭은 그 행의 공고명·문의처만 보여 준다. */
+/** 일반 프로그램 모집 탭은 그 행의 문의처만 보여 준다. 공고명은 공통정보를 본다. */
 function generalRecruitmentRowFormSeed(
   row: ReturnType<typeof pickRecruitmentCopyRow>,
   audience: GeneralRecruitDetailAudience
@@ -324,8 +324,5 @@ function generalRecruitmentRowFormSeed(
             ...(row.contactPhone != null ? { contactPhone: row.contactPhone } : {}),
             ...(row.contactEmail != null ? { contactEmail: row.contactEmail } : {}),
           }
-  return {
-    announcementTitle: row.announcementTitle?.trim() ?? '',
-    ...contact,
-  }
+  return contact
 }

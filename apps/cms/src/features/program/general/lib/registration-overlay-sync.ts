@@ -552,7 +552,13 @@ export function buildGeneralRegistrationOverlayFromProgram(
     [GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]:
       program.mainTitle?.trim() || program.title?.trim() || '',
     [`${BASIC}.programTitleEn`]: program.titleEn?.trim() || '',
-    [`${BASIC}.publicProgramTitle`]: common?.announcementTitle?.trim() || '',
+    [`${BASIC}.publicProgramTitle`]: (() => {
+      const fromCommon = common?.announcementTitle?.trim() || ''
+      if (fromCommon) return fromCommon
+      if (common?.announcementTitle != null) return ''
+      const stored = program.registrationOverlay?.[`${BASIC}.publicProgramTitle`]
+      return typeof stored === 'string' ? stored.trim() : ''
+    })(),
     [`${BASIC}.detailedProgramId`]: detailedId,
     [`${BASIC}.detailedProgramName`]:
       extras.programType === 'schedule'

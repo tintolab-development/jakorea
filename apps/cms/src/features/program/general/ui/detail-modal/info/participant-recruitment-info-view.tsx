@@ -41,7 +41,6 @@ import { isGeneralIndividualProgram } from '@/features/program/general/lib/surve
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
-import { RecruitmentAnnouncementTitleField } from './recruitment-announcement-title-field'
 import './participant-recruitment-info-view.css'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -461,12 +460,6 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           mode={formMode}
           className={FORM_CLASS}
         >
-          <RecruitmentAnnouncementTitleField
-            program={program}
-            form={form}
-            isEdit={isEdit}
-            audience="participant"
-          />
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="프로그램 운영 기간"

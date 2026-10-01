@@ -24,7 +24,6 @@ import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/pr
 import { resolveGeneralProgramInstructorRecruitmentDisplay } from '@/features/program/general/lib/instructor-recruitment-display'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
-import { RecruitmentAnnouncementTitleField } from './recruitment-announcement-title-field'
 import './instructor-recruitment-info-view.css'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -98,12 +97,6 @@ export function GeneralProgramInstructorRecruitmentInfoView({
         </DetailInfoForm>
 
         <DetailInfoForm title="강사 모집 정보" hideHeader mode={formMode} className={FORM_CLASS}>
-          <RecruitmentAnnouncementTitleField
-            program={program}
-            form={form}
-            isEdit={isEdit}
-            audience="instructor"
-          />
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="프로그램 운영 기간"
