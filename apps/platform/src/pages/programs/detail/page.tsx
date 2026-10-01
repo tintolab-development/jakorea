@@ -27,9 +27,9 @@ export function ProgramDetailPage() {
 
   if (!program) {
     return (
-      <section className={[shell.page, styles.page].join(' ')}>
-        <div className={shell.inner}>
-          <PFText as="p" typo="hd-md" color="black">
+      <section className={[shell.page, styles.emptyPage].join(' ')}>
+        <div className={[shell.inner, styles.emptyInner].join(' ')}>
+          <PFText as="p" typo="hd-md" color="black" className={styles.emptyTitle}>
             프로그램을 찾을 수 없어요
           </PFText>
           <PFButton variant="secondary" onClick={() => navigate(PROGRAMS_PATH)}>
