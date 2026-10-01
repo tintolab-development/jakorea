@@ -291,6 +291,7 @@ export function ProgramRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper">
                 <CmsSelect
                   inputSize="medium"
+                  withAllOption={false}
                   placeholder="사업 분야를 선택하세요"
                   width={240}
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
