@@ -14883,7 +14883,9 @@
             "type": "string"
           },
           "contactName": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "문의처 이름"
           },
           "oneLineIntroduction": {
             "type": "string"
@@ -14903,6 +14905,7 @@
               "string",
               "null"
             ],
+            "nullable": true,
             "description": "지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님."
           },
           "educationForm": {
@@ -14910,7 +14913,8 @@
               "string",
               "null"
             ],
-            "description": "교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.",
+            "nullable": true,
+            "description": "교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용. Gemini create/PATCH top-level.",
             "enum": [
               "online",
               "offline",
@@ -14922,6 +14926,8 @@
               "string",
               "null"
             ],
+            "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개."
           },
           "trainingRequestEndDate": {
@@ -14929,6 +14935,8 @@
               "string",
               "null"
             ],
+            "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 종료."
           },
           "applicationTargetMode": {
@@ -14944,10 +14952,14 @@
             "type": "string"
           },
           "otherMatters": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "비고. 해당없음이면 null"
           },
           "recruitmentTargetDetail": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "교육 대상 상세"
           },
           "attachmentFileNames": {
             "type": "array",
@@ -26779,6 +26791,7 @@
               "string",
               "null"
             ],
+            "nullable": true,
             "description": "지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님."
           },
           "educationForm": {
@@ -26786,6 +26799,7 @@
               "string",
               "null"
             ],
+            "nullable": true,
             "description": "교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.",
             "enum": [
               "online",
@@ -26798,6 +26812,8 @@
               "string",
               "null"
             ],
+            "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개."
           },
           "trainingRequestEndDate": {
@@ -26805,6 +26821,8 @@
               "string",
               "null"
             ],
+            "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 종료."
           },
           "applicationTargetMode": {
@@ -40930,6 +40948,7 @@
               "null"
             ],
             "format": "date",
+            "nullable": true,
             "description": "기관 모집 기간 시작. 연수 요청 가능기간(trainingRequest*)과 별개."
           },
           "applicationEndDate": {
@@ -40938,6 +40957,7 @@
               "null"
             ],
             "format": "date",
+            "nullable": true,
             "description": "기관 모집 기간 종료."
           },
           "trainingRequestStartDate": {
@@ -40946,6 +40966,7 @@
               "null"
             ],
             "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 시작."
           },
           "trainingRequestEndDate": {
@@ -40954,6 +40975,7 @@
               "null"
             ],
             "format": "date",
+            "nullable": true,
             "description": "연수 요청 가능기간 종료."
           },
           "organizationApplicationCount": {
