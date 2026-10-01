@@ -6,3 +6,53 @@
 .recruit-detail-info-paragraph__forms .detail-info-form {
   margin: 0;
 }
+
+.recruit-detail-info-paragraph__rich-text-editor {
+  --rt-body-min-height: 100px !important;
+  --rt-body-padding: 8px 16px;
+}
+
+.recruit-detail-info-paragraph__rich-text-row .detail-info-form__field {
+  min-height: 0 !important;
+}
+
+.recruit-detail-info-paragraph__rich-text-row .detail-info-form__field-label,
+.recruit-detail-info-paragraph__rich-text-row .detail-info-form__field-content {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.recruit-detail-info-paragraph__rich-text-row .detail-info-form__field-content--edit {
+  align-items: flex-start;
+}
+
+.recruit-detail-info-paragraph__rich-text-row .detail-info-form__field-content--edit > * {
+  display: block;
+  width: 100%;
+  margin-block: 0;
+}
+
+.recruit-detail-info-paragraph__editor-section {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+
+.recruit-detail-info-paragraph__editor-host {
+  width: 100%;
+  height: auto !important;
+  min-height: 100px !important;
+}
+
+.recruit-detail-info-paragraph__editor-host .rich-text-editor {
+  height: auto !important;
+  min-height: 100px !important;
+}
+
+.recruit-detail-info-paragraph__editor-host
+  .recruit-detail-info-paragraph__rich-text-editor
+  .rich-text-editor__body {
+  flex: 1 1 auto !important;
+  min-height: 100px !important;
+  height: auto !important;
+}
