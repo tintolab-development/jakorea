@@ -26,6 +26,10 @@ export type HomeDonationCta = {
 /** 홈 프로그램 카드. 신청 카탈로그(`/programs`) 상세 스키마와 분리한다. */
 export type HomeProgramCard = {
   id: string
+  /** 목록 행 식별 키(모집 행 단위) */
+  entryKey: string
+  /** 그 카드 모집 행으로 여는 상세 경로 */
+  detailPath: string
   title: string
   recruitmentStatus: RecruitmentStatus
   educationTargetLabel: string

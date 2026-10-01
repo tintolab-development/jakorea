@@ -507,7 +507,11 @@ export function formatPortalEducationVenue(
   return detailWithoutKind ? `${kindLabel} | ${detailWithoutKind}` : kindLabel
 }
 
-function contactValue(name?: string, phone?: string, email?: string): string {
+function contactValue(
+  name?: string | null,
+  phone?: string | null,
+  email?: string | null,
+): string {
   const n = readString(name)
   const p = readString(phone)
   const e = readString(email)

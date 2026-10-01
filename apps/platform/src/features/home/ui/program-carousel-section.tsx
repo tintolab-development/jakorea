@@ -3,7 +3,13 @@ import { FALLBACK_EDUCATION_TITLE, HOME_PROGRAM_CARD_LIMIT, type HomeProgramCard
 import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
-import { PROGRAMS_PATH, programDetailPath, useHomePortalPrograms } from '@/features/program'
+import {
+  focusFromListItem,
+  PROGRAMS_PATH,
+  programDetailPath,
+  programListEntryKey,
+  useHomePortalPrograms,
+} from '@/features/program'
 import { RECRUITMENT_STATUS_TONE_MAP } from '@/features/program/lib/badge-config'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { useMediaQuery } from '@/shared/hooks'
@@ -51,7 +57,7 @@ function ProgramCard({ program }: { program: HomeProgramCard }) {
   return (
     <Link
       className={styles.card}
-      to={programDetailPath(program.id)}
+      to={program.detailPath}
       aria-label={`${program.title} 상세 보기`}
     >
       <div className={styles.cardMedia}>
@@ -126,6 +132,8 @@ export function ProgramCarouselSection() {
 
   const cards: HomeProgramCard[] = items.slice(0, HOME_PROGRAM_CARD_LIMIT).map(program => ({
     id: program.id,
+    entryKey: programListEntryKey(program),
+    detailPath: programDetailPath(program.id, undefined, focusFromListItem(program, 'all')),
     title: program.title,
     recruitmentStatus: program.recruitmentStatus,
     educationTargetLabel: program.educationTargetLabel,
@@ -176,7 +184,7 @@ export function ProgramCarouselSection() {
             <div className={styles.viewport}>
               <ul className={styles.track} style={trackStyle}>
                 {cards.map(program => (
-                  <li className={styles.slide} key={program.id}>
+                  <li className={styles.slide} key={program.entryKey}>
                     <ProgramCard program={program} />
                   </li>
                 ))}

@@ -224,5 +224,12 @@ export function useSubmitProgramApplication(programId: number | null) {
         queryKey: platformQueryKeys.program.applicationOptions(String(programId)),
       })
     },
+    onError: error => {
+      if (programId == null) return
+      if (getApplicationApiErrorCode(error) !== 'RECRUITMENT_FORM_BINDING_MISMATCH') return
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.program.applicationOptions(String(programId)),
+      })
+    },
   })
 }
