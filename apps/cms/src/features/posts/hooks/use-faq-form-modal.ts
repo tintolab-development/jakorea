@@ -11,22 +11,13 @@ import type {
 } from '@/features/posts/model/faq-form-types'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
-  ADMIN_FILE_PURPOSE,
-  buildAdminFileOwner,
+  faqInlineImageOwner,
   type AdminFileUploadOwner,
 } from '@/shared/lib/admin-file-upload'
 import { parseOwnerResourceId } from '@/shared/lib/admin-file-upload/attachments'
 import type { Editor } from '@/shared/rich-text'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError } from '@/shared/utils/error-handler'
-
-function faqInlineImageOwner(faqId: number): AdminFileUploadOwner {
-  return buildAdminFileOwner(
-    { ownerDomain: 'CONTENT', ownerType: 'FAQ' },
-    faqId,
-    ADMIN_FILE_PURPOSE.FAQ_INLINE_IMAGE
-  )
-}
 
 export type UseFaqFormModalResult = {
   form: FormInstance<FaqFormFieldValues>
@@ -64,17 +55,20 @@ export function useFaqFormModal({
   const isEdit = mode === 'edit' && faq != null
   const isBroken = mode === 'edit' && open && !faq
   const editorResetKey = open ? `${mode}-${faq?.id ?? 'new'}` : 'closed'
+  const fileUploadOwner = useMemo(() => {
+    const ownerId = isEdit && faq ? (faq.resourceId ?? parseOwnerResourceId(faq.id)) : null
+    return faqInlineImageOwner(ownerId)
+  }, [faq, isEdit])
   const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
     open,
     open && isEdit && faq ? (faq.answer ?? '') : '',
     editorResetKey,
-    { height: '260px', placeholder: 'FAQ 내용을 입력하세요' }
+    {
+      height: '260px',
+      placeholder: 'FAQ 내용을 입력하세요',
+      fileUploadOwner,
+    }
   )
-  const fileUploadOwner = useMemo(() => {
-    if (!isEdit || !faq) return null
-    const ownerId = faq.resourceId ?? parseOwnerResourceId(faq.id)
-    return ownerId != null ? faqInlineImageOwner(ownerId) : null
-  }, [faq, isEdit])
 
   useEffect(() => {
     if (!open) return

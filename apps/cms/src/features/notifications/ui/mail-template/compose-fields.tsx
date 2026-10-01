@@ -3,6 +3,7 @@ import type { InputRef } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput, FileSelectField } from '@/shared/ui'
 import { RichTextEditor, type Editor } from '@/shared/rich-text'
+import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload'
 import { MAIL_ATTACHMENT_GUIDE_LINES } from '@/features/notifications/model/mail-template/attachments'
 import { SmsVariableTextField } from '@/features/notifications/ui/sms-template/variable-text-field'
 import './compose-fields.css'
@@ -20,6 +21,7 @@ type ComposeFieldsProps = {
   onAttachmentRemove: (index: number) => void
   /** 발송 화면: 저장된 템플릿 미리보기만 (제목/본문 override API 없음) */
   readOnly?: boolean
+  fileUploadOwner?: AdminFileUploadOwner | null
 }
 
 export const ComposeFields = memo(function ComposeFields({
@@ -34,6 +36,7 @@ export const ComposeFields = memo(function ComposeFields({
   onAttachmentAdd,
   onAttachmentRemove,
   readOnly = false,
+  fileUploadOwner,
 }: ComposeFieldsProps) {
   // 제목 타이핑은 로컬 state — 부모 setState 없이 입력 반응성 유지
   const [localSubject, setLocalSubject] = useState(subject)
@@ -109,7 +112,11 @@ export const ComposeFields = memo(function ComposeFields({
           view=""
           edit={
             <div className="mail-template-compose__editor-host">
-              <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+              <RichTextEditor
+                editor={editor}
+                minHeight={editorMinHeight}
+                fileUploadOwner={fileUploadOwner}
+              />
             </div>
           }
         />

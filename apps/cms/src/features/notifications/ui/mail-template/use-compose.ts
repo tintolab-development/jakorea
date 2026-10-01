@@ -2,6 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { InputRef } from 'antd'
 import type { Editor } from '@/shared/rich-text'
 import { useRichTextEditor, type RichTextEditorApi } from '@/shared/rich-text'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import {
+  mailTemplateInlineImageOwner,
+  parseFileObjectId,
+} from '@/shared/lib/admin-file-upload'
+import {
+  useHydrateRichTextInlineImages,
+  useRichTextInlineImageSrc,
+} from '@/shared/rich-text/use-rich-text-inline-image'
 import {
   insertMailVariableInEditor,
   insertMailVariableInText,
@@ -33,7 +42,12 @@ const EMPTY_COMPOSE: MailComposeInitial = {
   existingAttachments: [],
 }
 
-export function useMailCompose(open: boolean, resetKey: string, initial: MailComposeInitial) {
+export function useMailCompose(
+  open: boolean,
+  resetKey: string,
+  initial: MailComposeInitial,
+  templateId?: string | number | null
+) {
   const apiRef = useRef<RichTextEditorApi | null>(null)
   const subjectInputRef = useRef<InputRef>(null)
   const lastTargetRef = useRef<InsertTarget>('body')
@@ -60,6 +74,11 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
   removedAttachmentIdsRef.current = removedAttachmentIds
 
   const mailVariableExtensions = useMemo(() => [MailVariable], [])
+  const fileUploadOwner = useMemo(
+    () => mailTemplateInlineImageOwner(parseFileObjectId(templateId)),
+    [templateId]
+  )
+  const resolveImageSrc = useRichTextInlineImageSrc(fileUploadOwner)
 
   const { editor, api } = useRichTextEditor({
     enabled: open,
@@ -70,10 +89,15 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     autofocus: false,
     extraExtensions: mailVariableExtensions,
     shouldRerenderOnTransaction: false,
+    resolveImageSrc:
+      fileUploadOwner != null || isRealApiModuleEnabled('files')
+        ? resolveImageSrc
+        : undefined,
     onReady: readyApi => {
       apiRef.current = readyApi
     },
   })
+  useHydrateRichTextInlineImages(editor, resetKey)
 
   useEffect(() => {
     if (!open) return
@@ -230,6 +254,7 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     getPreviewAttachments,
     getNewFiles,
     getRemovedAttachmentIds,
+    fileUploadOwner,
   }
 }
 

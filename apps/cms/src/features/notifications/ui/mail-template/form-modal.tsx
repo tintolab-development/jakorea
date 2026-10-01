@@ -578,6 +578,7 @@ export function FormModal({
                       onRememberSubjectRange={form.rememberSubjectRange}
                       onAttachmentAdd={handleAttachmentAdd}
                       onAttachmentRemove={form.handleAttachmentRemove}
+                      fileUploadOwner={form.fileUploadOwner}
                     />
                   </DetailInfoForm>
                 </section>

@@ -76,7 +76,7 @@ export function useMailTemplateForm(
   const [senderNameSeed, setSenderNameSeed] = useState(initialDraft.senderName)
   const [senderNameEpoch, setSenderNameEpoch] = useState(0)
   const [senderEmail, setSenderEmail] = useState(initialDraft.senderEmail)
-  const compose = useMailCompose(open, resetKey, composeInitial)
+  const compose = useMailCompose(open, resetKey, composeInitial, template?.id)
 
   const setTemplateName = useCallback((value: string, options?: { composing?: boolean }) => {
     if (options?.composing) {
@@ -156,5 +156,6 @@ export function useMailTemplateForm(
     getDraft,
     getPreviewAttachments: compose.getPreviewAttachments,
     validateRequired,
+    fileUploadOwner: compose.fileUploadOwner,
   }
 }

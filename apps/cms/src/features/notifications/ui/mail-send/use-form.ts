@@ -37,7 +37,7 @@ export function useMailSendForm(open: boolean) {
   const [recipients, setRecipients] = useState<MailSendRecipient[]>([])
 
   const resetKey = open ? `send-${composeNonce}` : 'closed'
-  const compose = useMailCompose(open, resetKey, composeInitial)
+  const compose = useMailCompose(open, resetKey, composeInitial, templateId)
 
   const setSenderName = useCallback((value: string) => {
     senderNameRef.current = value
@@ -185,5 +185,6 @@ export function useMailSendForm(open: boolean) {
     getPreviewRecipient,
     getPreviewAt,
     validateRequired,
+    fileUploadOwner: compose.fileUploadOwner,
   }
 }

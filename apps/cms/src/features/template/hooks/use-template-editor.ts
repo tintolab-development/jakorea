@@ -4,6 +4,12 @@ import {
   useRichTextEditor,
   type RichTextEditorApi,
 } from '@/shared/rich-text'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload'
+import {
+  useHydrateRichTextInlineImages,
+  useRichTextInlineImageSrc,
+} from '@/shared/rich-text/use-rich-text-inline-image'
 
 const DEFAULT_MIN_HEIGHT = '420px'
 
@@ -15,7 +21,8 @@ export function useTemplateEditor(
   open: boolean,
   initialValue: string = '',
   /** HTML 초기값 */
-  initialHtml?: string
+  initialHtml?: string,
+  fileUploadOwner?: AdminFileUploadOwner | null
 ) {
   const apiRef = useRef<RichTextEditorApi | null>(null)
   const initialContent = initialHtml?.trim() ? initialHtml : initialValue
@@ -25,16 +32,22 @@ export function useTemplateEditor(
     [open, initialContent]
   )
 
+  const resolveImageSrc = useRichTextInlineImageSrc(fileUploadOwner)
   const { editor, api } = useRichTextEditor({
     enabled: open,
     initialContent,
     contentFormat: 'html',
     resetKey,
     autofocus: false,
+    resolveImageSrc:
+      fileUploadOwner != null || isRealApiModuleEnabled('files')
+        ? resolveImageSrc
+        : undefined,
     onReady: readyApi => {
       apiRef.current = readyApi
     },
   })
+  useHydrateRichTextInlineImages(editor, resetKey)
 
   const getHTML = useCallback(() => apiRef.current?.getHTML() ?? api?.getHTML() ?? '', [api])
 

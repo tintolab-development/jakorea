@@ -145,17 +145,17 @@ export function NoticeFormModal({
     [open, mode, notice?.id]
   )
 
+  const noticeInlineOwner = useMemo(() => {
+    const id = mode === 'edit' && notice ? parseNoticeOwnerId(notice.id) : null
+    return noticeInlineImageOwner(id)
+  }, [mode, notice])
+
   const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
     open,
     initialMarkdown,
-    editorResetKey
+    editorResetKey,
+    { fileUploadOwner: noticeInlineOwner }
   )
-
-  const noticeInlineOwner = useMemo(() => {
-    if (mode !== 'edit' || !notice) return null
-    const id = parseNoticeOwnerId(notice.id)
-    return id != null ? noticeInlineImageOwner(id) : null
-  }, [mode, notice])
 
   /* 모달이 열릴 때마다 폼·첨부 세션 초기화(등록↔수정·다른 공지 전환) */
   /* eslint-disable react-hooks/set-state-in-effect -- open/mode/notice 변경 시 의도적 초기화 */
