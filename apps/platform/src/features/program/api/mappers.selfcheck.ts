@@ -894,6 +894,34 @@ assert.equal(listOneToN[2]!.recruitmentId, 1003)
 assert.equal(listOneToN[0]!.applicationType, 'INDIVIDUAL')
 assert.equal(listOneToN[1]!.applicationType, 'ORGANIZATION')
 
+const nullGuide = mapPortalProgramDetail(
+  {
+    programId: 182102,
+    title: '프로그램 제목',
+    summary: '프로그램 요약',
+    description: '프로그램 공통 설명',
+    recruitmentGuide: null,
+    additionalContentHtml: null,
+    recruitmentStatus: 'CLOSED',
+    recruitments: [
+      {
+        recruitmentId: 182222,
+        recruitmentType: 'VOLUNTEER',
+        status: 'CLOSED',
+        applicationTypes: ['VOLUNTEER'],
+      },
+    ],
+  },
+  { recruitmentIds: [182222], applicationTypes: ['VOLUNTEER'], portalTab: 'YOUTH_YOUNG' },
+)
+assert.ok(nullGuide)
+assert.equal(nullGuide.recruitmentStatus, 'closed')
+assert.equal(nullGuide.summary, '프로그램 공통 설명')
+assert.equal(
+  nullGuide.extraSections.some(section => section.title === '모집 안내' || section.title === '추가 내용'),
+  false,
+)
+
 const orgTabTwoEntries = listOneToN.filter(row => row!.recruitmentId === 1002 || row!.applicationType === 'ORGANIZATION')
 assert.equal(orgTabTwoEntries.length, 1)
 

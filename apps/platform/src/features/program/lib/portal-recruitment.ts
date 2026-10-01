@@ -87,12 +87,16 @@ export function rowApplicationTypes(row: PortalRecruitment): string[] {
 
 /**
  * 목록 카드 React key.
- * recruitmentId가 있으면 programId+recruitmentId. 없으면 programId만 (현행 API).
+ * 같은 recruitmentId에 신청 유형이 둘이면 applicationType까지 붙인다.
  */
 export function programListEntryKey(
-  program: Pick<ProgramListItem, 'id' | 'recruitmentId'>,
+  program: Pick<ProgramListItem, 'id' | 'recruitmentId' | 'applicationType'>,
 ): string {
-  return program.recruitmentId != null ? `${program.id}:${program.recruitmentId}` : program.id
+  if (program.recruitmentId == null) return program.id
+  const applicationType = program.applicationType?.trim().toUpperCase()
+  return applicationType
+    ? `${program.id}:${program.recruitmentId}:${applicationType}`
+    : `${program.id}:${program.recruitmentId}`
 }
 
 /** 목록 행 → 상세/신청 focus. recruitmentId가 있으면 단일 id만 실는다. */

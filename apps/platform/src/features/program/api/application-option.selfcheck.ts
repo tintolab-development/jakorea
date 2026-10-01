@@ -65,9 +65,17 @@ const keys = [
   programListEntryKey({ id: '100', recruitmentId: 1001 }),
   programListEntryKey({ id: '100', recruitmentId: 1002 }),
   programListEntryKey({ id: '100' }),
+  programListEntryKey({ id: '186010', recruitmentId: 186050, applicationType: 'INDIVIDUAL' }),
+  programListEntryKey({ id: '186010', recruitmentId: 186050, applicationType: 'ORGANIZATION' }),
 ]
-assert.deepEqual(keys, ['100:1001', '100:1002', '100'])
-assert.equal(new Set(keys).size, 3)
+assert.deepEqual(keys, [
+  '100:1001',
+  '100:1002',
+  '100',
+  '186010:186050:INDIVIDUAL',
+  '186010:186050:ORGANIZATION',
+])
+assert.equal(new Set(keys).size, keys.length)
 
 const focus = focusFromListItem(
   {
