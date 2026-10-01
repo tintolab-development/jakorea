@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, forwardRef } from 'react'
+import { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
 import { Form, Select } from 'antd'
 import type { RefSelectProps } from 'antd/es/select'
 import type { Notice, NoticeAttachment } from '@/data/mock/notices'
@@ -10,7 +10,15 @@ import {
 import { useNoticeCategoriesQuery } from '@/features/posts/hooks/use-notice-categories-query'
 import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
-import { noticeInlineImageOwner, parseNoticeOwnerId } from '@/features/posts/api/notices/notice-attachments'
+import {
+  isAllowedNoticeAttachment,
+  NOTICE_ATTACHMENT_ACCEPT,
+  noticeInlineImageOwner,
+  parseNoticeOwnerId,
+  removeNoticeFileObjects,
+  uploadUnboundNoticeAttachment,
+} from '@/features/posts/api/notices/notice-attachments'
+import { dedupeFileObjectIds } from '@/features/posts/api/notices/notice-file-ids'
 import { RichTextEditor } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -87,8 +95,6 @@ type FormValues = NoticeFormFieldValues & {
   categoryId: string | undefined
 }
 
-const ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024
-
 export function NoticeFormModal({
   open,
   mode,
@@ -104,7 +110,10 @@ export function NoticeFormModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [existingAttachments, setExistingAttachments] = useState<NoticeAttachment[]>([])
   const [newFiles, setNewFiles] = useState<File[]>([])
+  const [uploadingAttachments, setUploadingAttachments] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  /** 신규 등록에서 claim 전인 첨부. 성공 후에는 비워서 취소 cleanup이 지우지 않게 한다. */
+  const unboundUploadsRef = useRef(new Map<File, number>())
 
   const authorName = user?.name?.trim() || '관리자'
 
@@ -149,6 +158,7 @@ export function NoticeFormModal({
       setExistingAttachments([])
       setNewFiles([])
     }
+    setUploadingAttachments(false)
   }, [open, mode, notice, form])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -180,7 +190,18 @@ export function NoticeFormModal({
     [categoriesQuery.data]
   )
 
+  const releaseUnclaimedUploads = () => {
+    const ids = dedupeFileObjectIds([...unboundUploadsRef.current.values()])
+    unboundUploadsRef.current.clear()
+    if (ids.length > 0) void removeNoticeFileObjects(ids)
+  }
+
+  const markUploadsClaimed = () => {
+    unboundUploadsRef.current.clear()
+  }
+
   const handleCancel = () => {
+    releaseUnclaimedUploads()
     form.resetFields()
     setExistingAttachments([])
     setNewFiles([])
@@ -205,12 +226,7 @@ export function NoticeFormModal({
   }
 
   const handleAttachmentAdd = (files: File[]) => {
-    const ok = files.filter(f => {
-      if (f.size > ATTACHMENT_MAX_BYTES) {
-        return false
-      }
-      return true
-    })
+    const ok = files.filter(isAllowedNoticeAttachment)
     setNewFiles(prev => [...prev, ...ok])
   }
 
@@ -218,10 +234,31 @@ export function NoticeFormModal({
     const nExisting = existingAttachments.length
     if (index < nExisting) {
       setExistingAttachments(prev => prev.filter((_, i) => i !== index))
-    } else {
-      const ni = index - nExisting
-      setNewFiles(prev => prev.filter((_, i) => i !== ni))
+      return
     }
+    const ni = index - nExisting
+    const removed = newFiles[ni]
+    if (removed) {
+      const uploadedId = unboundUploadsRef.current.get(removed)
+      unboundUploadsRef.current.delete(removed)
+      if (uploadedId != null) void removeNoticeFileObjects([uploadedId])
+    }
+    setNewFiles(prev => prev.filter((_, i) => i !== ni))
+  }
+
+  const fileObjectIdsForCreate = async (files: File[]): Promise<number[]> => {
+    const ids: number[] = []
+    for (const file of files) {
+      const known = unboundUploadsRef.current.get(file)
+      if (known != null) {
+        ids.push(known)
+        continue
+      }
+      const id = await uploadUnboundNoticeAttachment(file)
+      unboundUploadsRef.current.set(file, id)
+      ids.push(id)
+    }
+    return dedupeFileObjectIds(ids)
   }
 
   const handleFinish = async (values: FormValues) => {
@@ -246,24 +283,32 @@ export function NoticeFormModal({
 
     const attachmentNames = attachmentDisplayNames
     const pinToTop = values.pinTop === 'on'
-    const base = {
-      title: values.title,
-      contentMarkdown: md,
-      categoryId,
-      category: categoryName,
-      visibility: values.visibility,
-      pinToTop,
-      attachmentNames,
-      newFiles,
-      retainedFileObjectIds: existingAttachments.flatMap(item =>
-        item.fileObjectId != null ? [item.fileObjectId] : []
-      ),
-      author: authorName,
-    }
-
+    const uploadsOnSave = newFiles.length > 0
+    if (uploadsOnSave) setUploadingAttachments(true)
     try {
+      let createFileObjectIds: number[] | undefined
+      if (mode === 'create' && newFiles.length > 0) {
+        createFileObjectIds = await fileObjectIdsForCreate(newFiles)
+      }
+      const base = {
+        title: values.title,
+        contentMarkdown: md,
+        categoryId,
+        category: categoryName,
+        visibility: values.visibility,
+        pinToTop,
+        attachmentNames,
+        newFiles: mode === 'create' ? [] : newFiles,
+        fileObjectIds: createFileObjectIds,
+        retainedFileObjectIds: existingAttachments.flatMap(item =>
+          item.fileObjectId != null ? [item.fileObjectId] : []
+        ),
+        author: authorName,
+      }
+
       if (mode === 'create') {
         const created = await createMutation.mutateAsync(base)
+        markUploadsClaimed()
         onSuccess?.(created)
       } else {
         const updated = await updateMutation.mutateAsync({
@@ -280,6 +325,8 @@ export function NoticeFormModal({
       onCancel()
     } catch (error) {
       setErrorMessage(getPostsApiErrorMessage(error, '저장에 실패했습니다.'))
+    } finally {
+      if (uploadsOnSave) setUploadingAttachments(false)
     }
   }
 
@@ -418,15 +465,15 @@ export function NoticeFormModal({
                 className="notice-register-modal__file-field"
                 multiple
                 buttonLabel="파일 추가"
-                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.hwp,.hwpx,.ppt,.pptx"
+                accept={NOTICE_ATTACHMENT_ACCEPT}
                 fileNames={attachmentDisplayNames}
-                currentTotalBytes={newFiles.reduce((sum, file) => sum + file.size, 0)}
-                maxTotalBytes={ATTACHMENT_MAX_BYTES}
+                maxTotalBytes={0}
+                uploading={uploadingAttachments}
                 onFilesChange={handleAttachmentAdd}
                 onRemoveFile={handleAttachmentRemove}
                 guideLines={[
-                  '파일은 최대 20MB까지 업로드 가능하며,',
-                  'PDF, 이미지, 문서 파일 형식만 지원됩니다.',
+                  '파일은 개당 최대 20MB까지 업로드 가능하며,',
+                  'JPG, PNG, PDF, Word, Excel 파일 형식만 지원됩니다.',
                 ]}
               />
             </div>

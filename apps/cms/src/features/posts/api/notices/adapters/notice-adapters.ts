@@ -1,4 +1,5 @@
 import type { Notice } from '@/data/mock/notices'
+import { dedupeFileObjectIds } from '@/features/posts/api/notices/notice-file-ids'
 import type { BuildNoticeBodyParams } from '@/features/posts/model/notice-form-mapper'
 import type {
   NoticeRequest,
@@ -6,6 +7,11 @@ import type {
   PageResponseNoticeResponse,
 } from '@/shared/api/generated/posts/schemas'
 import { NoticeRequestStatus } from '@/shared/api/generated/posts/schemas/noticeRequestStatus'
+
+/** 생성 OpenAPI NoticeRequest에는 아직 없지만, 신규 공지 claim 계약 필드다. */
+export type NoticeWriteRequest = NoticeRequest & {
+  fileObjectIds?: number[]
+}
 
 function parseNoticeStatus(value: string | undefined): Notice['status'] {
   if (value === 'published' || value === 'archived') return value
@@ -78,17 +84,17 @@ export function mapNoticeListResponse(
     .filter(row => row.id.length > 0)
 }
 
-export function toNoticeRequestFromForm(params: BuildNoticeBodyParams): NoticeRequest {
-  const attachmentNames = params.attachmentNames.map(n => n.trim()).filter(Boolean)
+export function toNoticeRequestFromForm(params: BuildNoticeBodyParams): NoticeWriteRequest {
+  const fileObjectIds = dedupeFileObjectIds(params.fileObjectIds ?? [])
   return {
     title: params.title.trim(),
     content: params.contentMarkdown,
     categoryId: params.categoryId,
     isImportant: params.pinToTop,
     author: params.author,
-    hasAttachment: attachmentNames.length > 0,
     status:
       params.visibility === 'public' ? NoticeRequestStatus.published : NoticeRequestStatus.임시저장,
+    ...(fileObjectIds.length > 0 ? { fileObjectIds } : {}),
   }
 }
 

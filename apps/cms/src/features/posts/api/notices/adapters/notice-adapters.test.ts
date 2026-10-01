@@ -62,6 +62,37 @@ describe('notice-adapters', () => {
     expect(body.category).toBeUndefined()
   })
 
+  it('sends fileObjectIds and does not use hasAttachment as the attachment link', () => {
+    const body = toNoticeRequestFromForm({
+      title: '제목',
+      contentMarkdown: '본문',
+      categoryId: 3,
+      category: '일반',
+      visibility: 'public',
+      pinToTop: false,
+      attachmentNames: ['a.pdf', 'a.pdf'],
+      fileObjectIds: [11, 11, 12],
+      author: '관리자',
+    })
+    expect(body.fileObjectIds).toEqual([11, 12])
+    expect(body.hasAttachment).toBeUndefined()
+  })
+
+  it('omits fileObjectIds when there is no uploaded attachment', () => {
+    const body = toNoticeRequestFromForm({
+      title: '제목',
+      contentMarkdown: '본문',
+      categoryId: 3,
+      category: '일반',
+      visibility: 'public',
+      pinToTop: false,
+      attachmentNames: [],
+      author: '관리자',
+    })
+    expect(body.fileObjectIds).toBeUndefined()
+    expect(body.hasAttachment).toBeUndefined()
+  })
+
   it('maps private visibility to 임시저장 status', () => {
     expect(
       toNoticeRequestFromForm({

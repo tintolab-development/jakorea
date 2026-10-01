@@ -1,6 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { customInstance } from '@/shared/api/orval-mutator'
 import { getJAKoreaCMSBackendAPIPostsSubset } from '@/shared/api/generated/posts/posts-api'
+import type { NoticeWriteRequest } from '@/features/posts/api/notices/adapters/notice-adapters'
 import type {
   ApiResponseMapStringObjectData,
   CategoryRequest,
@@ -29,7 +30,7 @@ export async function fetchNoticeRemote(id: string): Promise<NoticeResponse> {
   return unwrapApiBody(await postsApi.notice(pathId(id)))
 }
 
-export async function createNoticeRemote(body: NoticeRequest): Promise<NoticeResponse> {
+export async function createNoticeRemote(body: NoticeWriteRequest): Promise<NoticeResponse> {
   return unwrapApiBody(await postsApi.createNotice(body))
 }
 
