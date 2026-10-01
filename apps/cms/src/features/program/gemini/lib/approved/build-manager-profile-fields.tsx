@@ -31,7 +31,10 @@ export function buildGeminiApprovedManagerTableItems(
   const mask = !personalInfoRevealed
   const contact = detail.managerContact.trim()
   const email = detail.managerEmail.trim()
-  const employmentStatus = mapEmploymentStatus(detail.managerEmploymentStatus)
+  const employmentStatus =
+    detail.managerEmploymentStatus != null
+      ? mapEmploymentStatus(detail.managerEmploymentStatus)
+      : null
 
   const nameCell =
     detail.managerScheduleChangeCount > 0 ? (
@@ -74,7 +77,9 @@ export function buildGeminiApprovedManagerTableItems(
       children: (
         <span className="gemini-approved-training-detail-info__affiliation-with-badge">
           {detail.managerSchool}
-          <SchoolTeacherEmploymentStatusBadge status={employmentStatus} />
+          {employmentStatus != null ? (
+            <SchoolTeacherEmploymentStatusBadge status={employmentStatus} />
+          ) : null}
         </span>
       ),
     },

@@ -3,8 +3,11 @@ import customInstance from '@/shared/api/orval-mutator'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
 import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
+import type { GeminiApprovedTrainingDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingDetailResponse'
 import type { GeminiApprovedTrainingItem } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingItem'
 import type { GeminiApprovedTrainingListResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingListResponse'
+import type { GeminiInstructorApplicationItem } from '@/shared/api/generated/dashboard/schemas/geminiInstructorApplicationItem'
+import type { GeminiInstructorApplicationListResponse } from '@/shared/api/generated/dashboard/schemas/geminiInstructorApplicationListResponse'
 import type { GeminiOrganizationApplicationItem } from '@/shared/api/generated/dashboard/schemas/geminiOrganizationApplicationItem'
 import type { GeminiOrganizationApplicationListResponse } from '@/shared/api/generated/dashboard/schemas/geminiOrganizationApplicationListResponse'
 import type { GeminiRecruitmentDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentDetailResponse'
@@ -141,6 +144,51 @@ export async function fetchGeminiApprovedTrainingsRemote(
   >(
     await customInstance({
       url: `${BASE}/approved?${query.toString()}`,
+      method: 'GET',
+    })
+  )
+  return toPageEnvelope(body, page, size)
+}
+
+export async function fetchGeminiApprovedTrainingDetailRemote(
+  approvedTrainingId: string
+): Promise<GeminiApprovedTrainingDetailResponse> {
+  return unwrapApiBody<GeminiApprovedTrainingDetailResponse>(
+    await customInstance({
+      url: `${BASE}/approved/${encodeURIComponent(approvedTrainingId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+export type GeminiInstructorApplicationRemoteFilters = {
+  status?: string
+  instructorName?: string
+  homeSido?: string
+  homeSigungu?: string
+  experienceYears?: string
+  grade?: string
+}
+
+export async function fetchGeminiApprovedInstructorApplicationsRemote(
+  approvedTrainingId: string,
+  filters: GeminiInstructorApplicationRemoteFilters = {},
+  page = 0,
+  size = GEMINI_VISITING_TRAINING_LIST_PAGE_SIZE
+): Promise<PageEnvelope<GeminiInstructorApplicationItem>> {
+  const query = new URLSearchParams()
+  if (filters.status) query.set('status', filters.status)
+  if (filters.instructorName) query.set('instructorName', filters.instructorName)
+  if (filters.homeSido) query.set('homeSido', filters.homeSido)
+  if (filters.homeSigungu) query.set('homeSigungu', filters.homeSigungu)
+  if (filters.experienceYears) query.set('experienceYears', filters.experienceYears)
+  if (filters.grade) query.set('grade', filters.grade)
+  appendPageParams(query, page, size)
+  const body = await unwrapApiBody<
+    GeminiInstructorApplicationListResponse | GeminiInstructorApplicationItem[]
+  >(
+    await customInstance({
+      url: `${BASE}/approved/${encodeURIComponent(approvedTrainingId)}/instructor-applications?${query.toString()}`,
       method: 'GET',
     })
   )

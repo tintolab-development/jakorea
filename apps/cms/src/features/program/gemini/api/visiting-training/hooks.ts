@@ -1,18 +1,25 @@
 import { useLayoutEffect, useMemo } from 'react'
 import {
   useInfiniteQuery,
+  useMutation,
   useQuery,
   useQueryClient,
   type InfiniteData,
 } from '@tanstack/react-query'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import { geminiVisitingTrainingQueryKeys } from './query-keys'
+import { mapGeminiRecruitmentUiStatusToPeriodStatusWire } from '../../lib/recruitment/map-period-status-wire'
 import {
+  approveGeminiInstructorApplication,
+  getGeminiApprovedTrainingDetail,
   getGeminiRecruitmentDetail,
+  listGeminiApprovedInstructorApplicationsPage,
   listGeminiApprovedTrainingsPage,
   listGeminiOrganizationApplicationsPage,
   listGeminiRecruitmentsPage,
+  rejectGeminiInstructorApplication,
   type GeminiApprovedTrainingsPage,
+  type GeminiInstructorApplicationsPage,
   type GeminiOrganizationApplicationsPage,
   type GeminiRecruitmentsPage,
 } from './service'
@@ -81,8 +88,7 @@ export function useGeminiRecruitmentsQuery(
       listGeminiRecruitmentsPage(
         {
           keyword: filters.title?.trim() || undefined,
-          periodStatus:
-            filters.status && filters.status !== 'ALL' ? filters.status : undefined,
+          periodStatus: mapGeminiRecruitmentUiStatusToPeriodStatusWire(filters.status),
         },
         pageParam as number
       ),
@@ -170,5 +176,105 @@ export function useGeminiApprovedTrainingsQuery(
     enabled,
     staleTime: remoteEnabled ? 30_000 : Number.POSITIVE_INFINITY,
     retry: false,
+  })
+}
+
+export function useGeminiApprovedTrainingDetailQuery(
+  approvedTrainingId: string | undefined,
+  enabled = true
+) {
+  return useQuery({
+    queryKey: geminiVisitingTrainingQueryKeys.approvedDetail(approvedTrainingId ?? ''),
+    queryFn: () => getGeminiApprovedTrainingDetail(approvedTrainingId!),
+    enabled: enabled && Boolean(approvedTrainingId),
+    staleTime: 30_000,
+    retry: false,
+  })
+}
+
+export type GeminiInstructorApplicationListFilters = {
+  instructorName?: string
+  homeSido?: string
+  homeSigungu?: string
+  experienceYears?: string
+  grade?: string
+  approvalStatus?: string
+}
+
+export function useGeminiApprovedInstructorApplicationsQuery(
+  approvedTrainingId: string | undefined,
+  filters: GeminiInstructorApplicationListFilters = {},
+  enabled = true
+) {
+  const filtersKey = JSON.stringify(filters)
+  const queryKey = useMemo(
+    () =>
+      geminiVisitingTrainingQueryKeys.approvedInstructorApplications(
+        approvedTrainingId ?? '',
+        filtersKey
+      ),
+    [approvedTrainingId, filtersKey]
+  )
+  useTrimInfiniteQueryPages<GeminiInstructorApplicationsPage>(
+    queryKey,
+    enabled && Boolean(approvedTrainingId)
+  )
+  return useInfiniteQuery({
+    queryKey,
+    queryFn: ({ pageParam }) =>
+      listGeminiApprovedInstructorApplicationsPage(
+        approvedTrainingId!,
+        {
+          status:
+            filters.approvalStatus && filters.approvalStatus !== 'ALL'
+              ? filters.approvalStatus
+              : undefined,
+          instructorName: filters.instructorName?.trim() || undefined,
+          homeSido: filters.homeSido?.trim() || undefined,
+          homeSigungu: filters.homeSigungu?.trim() || undefined,
+          experienceYears:
+            filters.experienceYears && filters.experienceYears !== 'ALL'
+              ? filters.experienceYears
+              : undefined,
+          grade: filters.grade && filters.grade !== 'ALL' ? filters.grade : undefined,
+        },
+        pageParam as number
+      ),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: enabled && Boolean(approvedTrainingId),
+    staleTime: 30_000,
+    retry: false,
+  })
+}
+
+export function useApproveGeminiInstructorApplicationMutation(approvedTrainingId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (applicationId: string) => approveGeminiInstructorApplication(applicationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.approvedInstructorApplications(approvedTrainingId),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.approvedDetail(approvedTrainingId),
+      })
+    },
+  })
+}
+
+export function useRejectGeminiInstructorApplicationMutation(approvedTrainingId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ applicationId, reason }: { applicationId: string; reason?: string }) =>
+      rejectGeminiInstructorApplication(applicationId, reason),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.approvedInstructorApplications(approvedTrainingId),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.approvedDetail(approvedTrainingId),
+      })
+    },
   })
 }

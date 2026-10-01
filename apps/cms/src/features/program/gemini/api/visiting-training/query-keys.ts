@@ -18,4 +18,13 @@ export const geminiVisitingTrainingQueryKeys = {
   approved: () => [...geminiVisitingTrainingQueryKeys.all, 'approved'] as const,
   approvedList: (filtersKey = '') =>
     [...geminiVisitingTrainingQueryKeys.approved(), 'list', 'remote', filtersKey] as const,
+  approvedDetail: (approvedTrainingId: string) =>
+    [...geminiVisitingTrainingQueryKeys.approved(), 'detail', approvedTrainingId] as const,
+  approvedInstructorApplications: (approvedTrainingId: string, filtersKey = '') =>
+    [
+      ...geminiVisitingTrainingQueryKeys.approved(),
+      'instructor-applications',
+      approvedTrainingId,
+      filtersKey,
+    ] as const,
 }

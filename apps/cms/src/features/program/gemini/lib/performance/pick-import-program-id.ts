@@ -7,8 +7,10 @@ export type GeminiImportProgramCandidate = {
 }
 
 const PERIOD_RANK: Record<string, number> = {
+  RECRUITING: 0,
   IN_PROGRESS: 0,
   SCHEDULED: 1,
+  COMPLETED: 2,
   ENDED: 2,
 }
 

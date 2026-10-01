@@ -11,4 +11,14 @@ describe('pickGeminiImportProgramId', () => {
       ])
     ).toBe(2)
   })
+
+  it('treats Primary RECRUITING like in-progress for import program pick', () => {
+    expect(
+      pickGeminiImportProgramId([
+        { programId: 185002, draftStatus: 'PUBLISHED', periodStatus: 'SCHEDULED', businessYear: 2026 },
+        { programId: 185003, draftStatus: 'PUBLISHED', periodStatus: 'RECRUITING', businessYear: 2026 },
+        { programId: 185004, draftStatus: 'PUBLISHED', periodStatus: 'COMPLETED', businessYear: 2026 },
+      ])
+    ).toBe(185003)
+  })
 })
