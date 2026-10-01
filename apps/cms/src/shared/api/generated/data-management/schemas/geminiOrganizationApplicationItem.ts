@@ -5,19 +5,52 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { PreferredScheduleBlock } from './preferredScheduleBlock';
 
+/**
+ * Gemini 찾아가는 연수 기관 신청 목록 행. CMS 「기관 신청 목록」 컬럼에 맞춘 투영.
+ */
 export interface GeminiOrganizationApplicationItem {
   applicationId?: number;
   programId?: number;
   recruitmentId?: number;
   organizationId?: number;
-  organizationName?: string;
+  /**
+     * 신청 기관명. CMS 컬럼 「신청 기관명」.
+     * @nullable
+     */
+  organizationName?: string | null;
   applicationStatus?: string;
   requestedStudentCount?: number;
   requestedClassCount?: number;
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;
+  /**
+     * 기관 소재지 시/도. organization.region_sido. CMS 「기관 소재지」 앞.
+     * @nullable
+     */
+  regionSido?: string | null;
+  /**
+     * 기관 소재지 시군구. organization.region_sigungu. CMS 「기관 소재지」 뒤.
+     * @nullable
+     */
+  regionSigungu?: string | null;
+  /**
+     * 담당 교사명. teacher_member 이름. CMS 「담당 교사명」.
+     * @nullable
+     */
+  teacherName?: string | null;
+  /**
+     * 희망 교육 일정 구조화 블록. preferred_schedule_blocks_jsonb SSOT. 없으면 null.
+     * @nullable
+     */
+  preferredScheduleBlocks?: PreferredScheduleBlock[] | null;
+  /**
+     * 희망 교육 일정 표시 문자열. blocks를 CMS 셀 포맷으로 투영. 줄바꿈·콜론·파이프 포함. 없으면 null.
+     * @nullable
+     */
+  preferredLectureScheduleText?: string | null;
   /**
      * 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다.
      * @nullable

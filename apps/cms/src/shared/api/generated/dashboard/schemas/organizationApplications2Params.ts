@@ -12,6 +12,26 @@ export type OrganizationApplications2Params = {
  */
 status?: string;
 /**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+organizationName?: string;
+/**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+keyword?: string;
+/**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+regionSido?: string;
+/**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+regionSigungu?: string;
+/**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+teacherName?: string;
+/**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */
 page?: number;

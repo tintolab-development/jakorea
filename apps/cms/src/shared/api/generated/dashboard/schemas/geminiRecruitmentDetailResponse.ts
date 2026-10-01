@@ -42,12 +42,12 @@ export interface GeminiRecruitmentDetailResponse {
      */
   recruitmentTargetDetail?: string | null;
   /**
-     * 교육 형태. online|offline|hybrid
+     * 교육 형태. Gemini 모집은 online|offline 권장. hybrid는 계약 확정 전 값으로 내려갈 수 있다.
      * @nullable
      */
   educationForm?: GeminiRecruitmentDetailResponseEducationForm;
   /**
-     * 교육 진행 구조. SCHEDULE | CURRICULUM. null이면 FE가 SCHEDULE로 하드코딩해 PATCH 하지 말 것.
+     * 교육 진행 구조. program.education_structure. 예: SCHEDULE. 없으면 null — FE가 SCHEDULE로 추정하지 않도록 GET SSOT.
      * @nullable
      */
   educationStructure?: string | null;
