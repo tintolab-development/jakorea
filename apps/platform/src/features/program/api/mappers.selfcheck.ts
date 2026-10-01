@@ -900,8 +900,8 @@ const nullGuide = mapPortalProgramDetail(
     title: '프로그램 제목',
     summary: '프로그램 요약',
     description: '프로그램 공통 설명',
-    recruitmentGuide: null,
-    additionalContentHtml: null,
+    recruitmentGuide: undefined,
+    additionalContentHtml: undefined,
     recruitmentStatus: 'CLOSED',
     recruitments: [
       {
