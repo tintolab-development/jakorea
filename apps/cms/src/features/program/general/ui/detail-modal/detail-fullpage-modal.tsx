@@ -67,6 +67,7 @@ import {
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
 import {
+  GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -351,7 +352,7 @@ function normalizeGeneralDetailParams(
     }
   } else if (lnb === 'survey') {
     if (surveyKeys.length === 0) {
-      if (tab !== 'main') setInvalid('survey', 'main')
+      setInvalid('info', 'info')
     } else if (!(surveyKeys as readonly string[]).includes(tab)) {
       setInvalid('survey', surveyKeys[0] ?? 'main')
     }
@@ -1467,6 +1468,13 @@ export function GeneralProgramDetailFullPageModal({
   const setLnbTab = useCallback(
     (lnb: GeneralDetailLnbKey, tab: string) => {
       if (!programId || isClosingRef.current) return
+      if (lnb === 'survey' && surveyItems.length === 0) {
+        void showAlert({
+          title: '안내',
+          content: GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
+        })
+        return
+      }
       setOptimisticDetailRoute({ lnb, tab })
       setSearchParams(
         prev => {
@@ -1526,7 +1534,7 @@ export function GeneralProgramDetailFullPageModal({
         { replace: true }
       )
     },
-    [programId, setSearchParams]
+    [programId, setSearchParams, showAlert, surveyItems.length]
   )
 
   const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)

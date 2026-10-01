@@ -97,6 +97,7 @@ import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/li
 import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
 import {
   FEATURE_COMING_SOON_ALERT_MESSAGE,
+  GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -483,6 +484,14 @@ export function ProgramDetailFullPageModal({
         }
 
         if (currentLnb === 'survey') {
+          if (surveyMenuItems.length === 0) {
+            const next = new URLSearchParams(prev)
+            next.set(LNB_PARAM, 'info')
+            next.set(TAB_PARAM, 'info')
+            next.delete(EDIT_PARAM)
+            preserveGeneralProgramDetailProgramId(prev, next)
+            return next
+          }
           const nextSurveyKey = surveyMenuItems.some(item => item.key === prev.get(TAB_PARAM))
             ? prev.get(TAB_PARAM)
             : (surveyMenuItems[0]?.key ?? 'main')
@@ -961,6 +970,13 @@ export function ProgramDetailFullPageModal({
             : 'institutions'
       )
     } else if (k === 'survey') {
+      if (surveyMenuItems.length === 0) {
+        void showAlert({
+          title: '안내',
+          content: GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
+        })
+        return
+      }
       setSurveyChild(activeSurveyChild || 'main')
     } else {
       setLnb(k)
@@ -978,7 +994,16 @@ export function ProgramDetailFullPageModal({
     }
     if (groupKey === 'applicants') setApplicantsChild(childKey as TabKey)
     else if (groupKey === 'progress') setProgressChild(childKey as TabKey)
-    else if (groupKey === 'survey') setSurveyChild(childKey as GeneralSurveyNavKey)
+    else if (groupKey === 'survey') {
+      if (surveyMenuItems.length === 0) {
+        void showAlert({
+          title: '안내',
+          content: GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
+        })
+        return
+      }
+      setSurveyChild(childKey as GeneralSurveyNavKey)
+    }
   }
 
   const setSchoolId = (id: string | null) => {
