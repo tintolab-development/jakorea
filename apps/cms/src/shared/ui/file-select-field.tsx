@@ -7,6 +7,7 @@
  */
 
 import { useRef, type ChangeEvent } from 'react'
+import { Spin } from 'antd'
 import './file-select-field.css'
 import { CmsButton } from '@/shared/ui/cms-button'
 import {
@@ -118,7 +119,8 @@ export function FileSelectField({
     e.target.value = ''
   }
 
-  const canRemove = !disabled && typeof onRemoveFile === 'function'
+  const fieldDisabled = disabled || uploading
+  const canRemove = !fieldDisabled && typeof onRemoveFile === 'function'
   const hasFiles = Boolean(fileNames && fileNames.length > 0)
   const showNames = hasFiles || uploading
 
@@ -131,8 +133,9 @@ export function FileSelectField({
       ]
         .filter(Boolean)
         .join(' ')}
+      aria-busy={uploading || undefined}
     >
-      {!disabled && (
+      {!fieldDisabled && (
         <input
           ref={inputRef}
           type="file"
@@ -148,6 +151,7 @@ export function FileSelectField({
         <div className="file-select-field__names">
           {uploading ? (
             <span className="file-select-field__name-row">
+              <Spin size="small" />
               <span className="file-select-field__name file-select-field__name--uploading">
                 파일을 업로드중입니다
               </span>
@@ -177,7 +181,8 @@ export function FileSelectField({
           type="button"
           variant="secondary"
           size="large"
-          disabled={disabled}
+          disabled={fieldDisabled}
+          loading={uploading}
           onClick={() => inputRef.current?.click()}
         >
           {buttonLabel}
