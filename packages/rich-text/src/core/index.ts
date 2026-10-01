@@ -2,6 +2,7 @@ export { Editor, Node, mergeAttributes } from '@tiptap/core'
 export { Plugin, TextSelection, NodeSelection } from '@tiptap/pm/state'
 export type { EditorState, Transaction } from '@tiptap/pm/state'
 export { createRichTextExtensions } from './extensions'
+export { stripPastedDataUriImages } from './strip-pasted-data-uri-images'
 export { createRichTextEditorApi } from './editor-api'
 export { isRichTextEditorReady } from './editor-ready'
 export {
@@ -27,6 +28,7 @@ export {
   setLinkFromUrl,
   RICH_TEXT_IMAGE_ACCEPT,
 } from './insert-actions'
+export type { ResolvedRichTextImageSrc } from './insert-actions'
 export {
   emojis,
   filterEmojis,
