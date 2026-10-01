@@ -71,6 +71,7 @@ function mapNoticeAttachmentResponse(row: NoticeAttachmentResponse): NoticeAttac
   return toNoticeAttachment(fileObjectId, name, {
     attachmentId: row.attachmentId,
     fileUrl: row.downloadPath,
+    fileSize: typeof row.fileSize === 'number' ? row.fileSize : undefined,
   })
 }
 
@@ -134,8 +135,8 @@ export async function hydrateNoticeAttachments(notice: Notice): Promise<Notice> 
   }
 }
 
-/** 서버 allow-list. 파일당 20MiB. */
-export const NOTICE_ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024
+/** 서버 allow-list. 파일당 15MiB, 요청 전체 합계도 15MiB. */
+export const NOTICE_ATTACHMENT_MAX_BYTES = 15 * 1024 * 1024
 export const NOTICE_ATTACHMENT_ACCEPT = '.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx'
 
 const NOTICE_ATTACHMENT_EXTENSIONS = new Set([

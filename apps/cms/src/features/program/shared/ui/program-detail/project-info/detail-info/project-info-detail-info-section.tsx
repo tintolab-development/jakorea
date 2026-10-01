@@ -8,9 +8,11 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Image } from 'antd'
 import type { Program } from '@/types/domain'
-import type { UseFormReturn } from 'react-hook-form'
+import { useFormState, type UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import { THUMBNAIL_SIZE_EXCEEDED_MESSAGE } from '@/shared/ui/file-select-field-limits'
+import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
 import {
@@ -54,6 +56,11 @@ const ATTACHMENT_GUIDE_LINES = [
 ]
 
 export type DetailInfoEmptyReadDisplay = 'mock-default' | 'dash'
+
+function axiosErrorData(error: unknown): unknown {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined
+  return (error as { response?: { data?: unknown } }).response?.data
+}
 
 function revokeBlobUrl(url: string | null | undefined) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
@@ -191,6 +198,7 @@ function useDetailInfoEditorBlock(
   const isFormEdit = Boolean(isEditMode && form)
   const rowMedia = usesRecruitmentRowMedia(program)
   const [linkedAttachmentNames, setLinkedAttachmentNames] = useState<string[] | null>(null)
+  const [linkedAttachmentTotalBytes, setLinkedAttachmentTotalBytes] = useState(0)
   const displayFileNames = resolveAttachmentFileNamesForDisplay({
     rowScoped: rowMedia,
     isFormEdit,
@@ -202,6 +210,7 @@ function useDetailInfoEditorBlock(
   useEffect(() => {
     if (!hasProgramMediaTarget(program)) {
       setLinkedAttachmentNames(null)
+      setLinkedAttachmentTotalBytes(0)
       return
     }
     let cancelled = false
@@ -212,12 +221,18 @@ function useDetailInfoEditorBlock(
           .map(item => item.originalFileName?.trim() || '')
           .filter(Boolean)
         setLinkedAttachmentNames(names)
+        setLinkedAttachmentTotalBytes(
+          items.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
+        )
         if (form && (usesRecruitmentRowMedia(program) || names.length > 0)) {
           form.setValue('attachmentFileNames', names, { shouldDirty: false })
         }
       })
       .catch(() => {
-        if (!cancelled) setLinkedAttachmentNames(null)
+        if (!cancelled) {
+          setLinkedAttachmentNames(null)
+          setLinkedAttachmentTotalBytes(0)
+        }
       })
     return () => {
       cancelled = true
@@ -302,6 +317,8 @@ function useDetailInfoEditorBlock(
     setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
+    linkedAttachmentTotalBytes,
+    setLinkedAttachmentTotalBytes,
     displayThumbnailUrl,
     thumbnailFilename,
     form,
@@ -386,6 +403,7 @@ function ThumbnailImageRow({
                 }
                 fileNames={thumbnailFilename ? [thumbnailFilename] : []}
                 guideLines={guideLines}
+                sizeExceededMessage={THUMBNAIL_SIZE_EXCEEDED_MESSAGE}
                 onFilesChange={
                   isFormEdit
                     ? async files => {
@@ -417,12 +435,14 @@ function ThumbnailImageRow({
                             return { url: previewUrl, fileName: file.name }
                           })
                           setThumbnailPreviewBlobUrl(null)
-                        } catch {
+                        } catch (error) {
                           URL.revokeObjectURL(blobUrl)
                           setThumbnailPreviewBlobUrl(null)
                           showAlert({
                             title: '안내',
-                            content: '대표 이미지를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                            content: extractApiErrorMessage(axiosErrorData(error), {
+                              fallback: '대표 이미지를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                            }),
                           })
                         } finally {
                           setUploadingThumbnail(false)
@@ -465,6 +485,22 @@ function ThumbnailImageRow({
   )
 }
 
+function AdditionalContentFieldError({
+  control,
+}: {
+  control: UseFormReturn<ProgramDetailEditFormValues>['control']
+}) {
+  const { errors } = useFormState({ control })
+  const message = (errors as { additionalContentHtml?: { message?: string } }).additionalContentHtml
+    ?.message
+  if (!message) return null
+  return (
+    <p className="text-area-field-row__field-error" role="alert">
+      {message}
+    </p>
+  )
+}
+
 function AdditionalContentRow({
   program,
   isEditMode,
@@ -474,6 +510,7 @@ function AdditionalContentRow({
   editorMinHeight,
   showRequiredOnTh,
   emptyReadDisplay = 'mock-default',
+  form,
 }: {
   program: Program
   isEditMode: boolean
@@ -483,6 +520,7 @@ function AdditionalContentRow({
   editorMinHeight: string
   showRequiredOnTh: boolean
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
+  form?: UseFormReturn<ProgramDetailEditFormValues>
 }) {
   const additionalEmpty =
     emptyReadDisplay === 'dash' ? isAdditionalContentEmpty(program) : false
@@ -505,6 +543,7 @@ function AdditionalContentRow({
                   minHeight={editorMinHeight}
                   fileUploadOwner={programInlineImageOwner(parseFileObjectId(program.id))}
                 />
+                {form ? <AdditionalContentFieldError control={form.control} /> : null}
               </div>
             ) : (
               <div className="program-detail-info-tab__editor-placeholder">로딩 중…</div>
@@ -536,6 +575,8 @@ function AttachmentRowStandard({
   guideLines,
   emptyReadDisplay = 'mock-default',
   onNamesChange,
+  currentTotalBytes = 0,
+  onTotalBytesChange,
 }: {
   program: Program
   isEditMode: boolean
@@ -545,7 +586,10 @@ function AttachmentRowStandard({
   guideLines: string[]
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
   onNamesChange?: (names: string[]) => void
+  currentTotalBytes?: number
+  onTotalBytesChange?: (bytes: number) => void
 }) {
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const showEmptyDash =
     !isEditMode && emptyReadDisplay === 'dash' && displayFileNames.length === 0
@@ -557,6 +601,7 @@ function AttachmentRowStandard({
         {showEmptyDash ? (
           '-'
         ) : (
+          <>
           <FileSelectField
             accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
             multiple
@@ -566,6 +611,7 @@ function AttachmentRowStandard({
             className={isEditMode ? 'file-select-field--edit' : ''}
             fileNames={displayFileNames}
             guideLines={guideLines}
+            currentTotalBytes={currentTotalBytes}
             onFilesChange={
               isFormEdit
                 ? async files => {
@@ -592,6 +638,16 @@ function AttachmentRowStandard({
                         .filter(Boolean)
                       form!.setValue('attachmentFileNames', names)
                       onNamesChange?.(names)
+                      onTotalBytesChange?.(
+                        linked.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
+                      )
+                      setAttachmentError(null)
+                    } catch (error) {
+                      setAttachmentError(
+                        extractApiErrorMessage(axiosErrorData(error), {
+                          fallback: '첨부파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                        })
+                      )
                     } finally {
                       setUploading(false)
                     }
@@ -614,19 +670,35 @@ function AttachmentRowStandard({
                         .map(item => item.fileObjectId)
                         .filter((id): id is number => typeof id === 'number' && id > 0)
                         .filter((_, i) => i !== index)
-                      const linked = await putProgramMediaAttachments(program, remainingIds).catch(
-                        () => [] as Awaited<ReturnType<typeof putProgramMediaAttachments>>
-                      )
-                      const names = linked
-                        .map(item => item.originalFileName?.trim() || '')
-                        .filter(Boolean)
-                      form!.setValue('attachmentFileNames', names)
-                      onNamesChange?.(names)
+                      try {
+                        const linked = await putProgramMediaAttachments(program, remainingIds)
+                        const names = linked
+                          .map(item => item.originalFileName?.trim() || '')
+                          .filter(Boolean)
+                        form!.setValue('attachmentFileNames', names)
+                        onNamesChange?.(names)
+                        onTotalBytesChange?.(
+                          linked.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
+                        )
+                        setAttachmentError(null)
+                      } catch (error) {
+                        setAttachmentError(
+                          extractApiErrorMessage(axiosErrorData(error), {
+                            fallback: '첨부파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                          })
+                        )
+                      }
                     })()
                   }
                 : undefined
             }
           />
+          {attachmentError != null ? (
+            <p className="text-area-field-row__field-error" role="alert">
+              {attachmentError}
+            </p>
+          ) : null}
+          </>
         )}
       </td>
     </tr>
@@ -683,6 +755,8 @@ export function DetailInfoSection({
     setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
+    linkedAttachmentTotalBytes,
+    setLinkedAttachmentTotalBytes,
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
@@ -791,6 +865,7 @@ export function DetailInfoSection({
             editorMinHeight={editorMinHeight}
             showRequiredOnTh={false}
             emptyReadDisplay={emptyReadDisplay}
+            form={f}
           />
           <AttachmentRowStandard
             program={program}
@@ -801,6 +876,8 @@ export function DetailInfoSection({
             guideLines={ATTACHMENT_GUIDE_LINES}
             emptyReadDisplay={emptyReadDisplay}
             onNamesChange={setLinkedAttachmentNames}
+            currentTotalBytes={linkedAttachmentTotalBytes}
+            onTotalBytesChange={setLinkedAttachmentTotalBytes}
           />
         </DetailInfoTableFrame>
       </DetailInfoForm>
@@ -833,6 +910,8 @@ export function InstructorDetailInfoSection({
     setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
+    linkedAttachmentTotalBytes,
+    setLinkedAttachmentTotalBytes,
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
@@ -927,6 +1006,7 @@ export function InstructorDetailInfoSection({
             editorMinHeight={editorMinHeight}
             showRequiredOnTh={false}
             emptyReadDisplay={emptyReadDisplay}
+            form={f}
           />
           <TextAreaFieldRow
             label="기타사항"
@@ -949,6 +1029,8 @@ export function InstructorDetailInfoSection({
             ]}
             emptyReadDisplay={emptyReadDisplay}
             onNamesChange={setLinkedAttachmentNames}
+            currentTotalBytes={linkedAttachmentTotalBytes}
+            onTotalBytesChange={setLinkedAttachmentTotalBytes}
           />
         </DetailInfoTableFrame>
       </DetailInfoForm>
@@ -978,6 +1060,7 @@ export function VolunteerDetailInfoSection({
   emptyReadDisplay = 'mock-default',
 }: VolunteerDetailInfoSectionProps) {
   const [uploadingAttachments, setUploadingAttachments] = useState(false)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
   const {
     editorOpen,
     editor,
@@ -988,6 +1071,8 @@ export function VolunteerDetailInfoSection({
     setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
+    linkedAttachmentTotalBytes,
+    setLinkedAttachmentTotalBytes,
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
@@ -1084,6 +1169,7 @@ export function VolunteerDetailInfoSection({
             editorMinHeight={editorMinHeight}
             showRequiredOnTh={false}
             emptyReadDisplay={emptyReadDisplay}
+            form={f}
           />
           <TextAreaFieldRow
             label="기타사항"
@@ -1098,6 +1184,7 @@ export function VolunteerDetailInfoSection({
             <th>첨부 파일</th>
             <td>
               {isEditMode ? (
+                <>
                 <FileSelectField
                   accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                   multiple
@@ -1107,6 +1194,7 @@ export function VolunteerDetailInfoSection({
                   className="file-select-field--edit"
                   fileNames={displayFileNames}
                   guideLines={ATTACHMENT_GUIDE_LINES}
+                  currentTotalBytes={linkedAttachmentTotalBytes}
                   onFilesChange={
                     isFormEdit
                       ? async files => {
@@ -1135,6 +1223,16 @@ export function VolunteerDetailInfoSection({
                               .filter(Boolean)
                             f!.setValue('attachmentFileNames', names)
                             setLinkedAttachmentNames(names)
+                            setLinkedAttachmentTotalBytes(
+                              linked.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
+                            )
+                            setAttachmentError(null)
+                          } catch (error) {
+                            setAttachmentError(
+                              extractApiErrorMessage(axiosErrorData(error), {
+                                fallback: '첨부파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                              })
+                            )
                           } finally {
                             setUploadingAttachments(false)
                           }
@@ -1159,19 +1257,36 @@ export function VolunteerDetailInfoSection({
                               .map(item => item.fileObjectId)
                               .filter((id): id is number => typeof id === 'number' && id > 0)
                               .filter((_, i) => i !== index)
-                            const linked = await putProgramMediaAttachments(program, remainingIds).catch(
-                              () => [] as Awaited<ReturnType<typeof putProgramMediaAttachments>>
-                            )
+                            try {
+                            const linked = await putProgramMediaAttachments(program, remainingIds)
                             const names = linked
                               .map(item => item.originalFileName?.trim() || '')
                               .filter(Boolean)
                             f!.setValue('attachmentFileNames', names)
                             setLinkedAttachmentNames(names)
+                            setLinkedAttachmentTotalBytes(
+                              linked.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
+                            )
+                            setAttachmentError(null)
+                            } catch (error) {
+                              setAttachmentError(
+                                extractApiErrorMessage(axiosErrorData(error), {
+                                  fallback: '첨부파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                                })
+                              )
+                              return
+                            }
                           })()
                         }
                       : undefined
                   }
                 />
+                {attachmentError != null ? (
+                  <p className="text-area-field-row__field-error" role="alert">
+                    {attachmentError}
+                  </p>
+                ) : null}
+                </>
               ) : (
                 <div className="program-detail-info-tab__content-block">
                   {displayFileNames.length > 0 ? displayFileNames.join(', ') : '-'}

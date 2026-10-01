@@ -7,9 +7,9 @@
  * - 개인 → STUDENT (학생·개인 참여자)
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Checkbox } from 'antd'
-import { CmsButton, ContentModal } from '@/shared/ui'
+import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import {
   FILE_SELECT_MAX_TOTAL_BYTES,
@@ -19,6 +19,7 @@ import type { Program, ProgramPost } from '@/types/domain'
 import { createProgramPost, addProgramFiles } from '@/data/mock'
 import {
   createGeneralProgramPost,
+  fetchGeneralProgramPostAttachments,
   putGeneralProgramPostAttachments,
   updateGeneralProgramPost,
 } from '@/features/program/general/api/admin-general-programs-service'
@@ -34,6 +35,7 @@ import {
 } from '@/shared/lib/admin-file-upload'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor } from '@/shared/rich-text'
+import { extractApiErrorMessage, getApiErrorField } from '@/shared/lib/extract-api-error-message'
 import {
   buildPostWriteAudienceOptions,
   buildPostWriteVisibilityType,
@@ -105,9 +107,16 @@ export function PostWriteModal({
     defaultPostWriteAudience(program)
   )
   const [files, setFiles] = useState<File[]>([])
+  const [existingAttachments, setExistingAttachments] = useState<
+    { fileObjectId: number; name: string; fileSize: number }[]
+  >([])
+  const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null)
   const [loading, setLoading] = useState(false)
+  const { showAlert } = useCmsAlert()
+  const loadedAttachmentIdsRef = useRef<number[] | null>(null)
 
-  const fileNames = files.map(f => f.name)
+  const fileNames = [...existingAttachments.map(item => item.name), ...files.map(f => f.name)]
+  const existingAttachmentBytes = existingAttachments.reduce((sum, item) => sum + item.fileSize, 0)
   const audienceOptions = useMemo(() => buildPostWriteAudienceOptions(program), [program])
 
   const editorResetKey = useMemo(
@@ -136,11 +145,54 @@ export function PostWriteModal({
     if (!open) {
       setAudience(defaultPostWriteAudience(program))
       setFiles([])
+      setExistingAttachments([])
+      loadedAttachmentIdsRef.current = null
+      setFieldError(null)
       return
     }
     setAudience(audienceFromPost(editingPost, program))
     setFiles([])
-  }, [open, program, editingPost])
+    if (!editingPost || editingPost.id.startsWith('temp-')) {
+      setExistingAttachments([])
+      loadedAttachmentIdsRef.current = null
+      return
+    }
+    let cancelled = false
+    void fetchGeneralProgramPostAttachments(programId, editingPost.id)
+      .then(items => {
+        if (cancelled) return
+        const loaded = items.flatMap(item =>
+          typeof item.fileObjectId === 'number'
+            ? [
+                {
+                  fileObjectId: item.fileObjectId,
+                  name: item.originalFileName?.trim() || `file-${item.fileObjectId}`,
+                  fileSize: item.fileSize ?? 0,
+                },
+              ]
+            : []
+        )
+        loadedAttachmentIdsRef.current = loaded.map(item => item.fileObjectId)
+        setExistingAttachments(loaded)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          loadedAttachmentIdsRef.current = null
+          setExistingAttachments([])
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, program, programId, editingPost])
+
+  const handleRemoveFile = (index: number) => {
+    if (index < existingAttachments.length) {
+      setExistingAttachments(prev => prev.filter((_, i) => i !== index))
+      return
+    }
+    setFiles(prev => prev.filter((_, i) => i !== index - existingAttachments.length))
+  }
 
   const handleFilesChange = (newFiles: File[]) => {
     const valid: File[] = []
@@ -152,10 +204,6 @@ export function PostWriteModal({
       valid.push(file)
     }
     setFiles(prev => [...prev, ...valid])
-  }
-
-  const handleRemoveFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleRegister = async () => {
@@ -203,12 +251,18 @@ export function PostWriteModal({
             content: trimmed,
             visibilityType,
           })
-          if (uploadResults.length > 0) {
-            await putGeneralProgramPostAttachments(
-              programId,
-              editingPost.id,
-              uploadResults.map(r => r.fileObjectId)
-            )
+          const nextAttachmentIds = [
+            ...existingAttachments.map(item => item.fileObjectId),
+            ...uploadResults.map(r => r.fileObjectId),
+          ]
+          const loadedIds = loadedAttachmentIdsRef.current
+          const attachmentsChanged =
+            uploadResults.length > 0 ||
+            (loadedIds != null &&
+              (loadedIds.length !== existingAttachments.length ||
+                loadedIds.some((id, index) => existingAttachments[index]?.fileObjectId !== id)))
+          if (attachmentsChanged) {
+            await putGeneralProgramPostAttachments(programId, editingPost.id, nextAttachmentIds)
           }
         }
         setAudience(defaultPostWriteAudience(program))
@@ -257,8 +311,21 @@ export function PostWriteModal({
       setFiles([])
       onSuccess?.()
       onCancel()
-    } catch (e) {
-      console.error(isEditMode ? '게시글 수정 실패:' : '게시글 등록 실패:', e)
+    } catch (error) {
+      const data =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: unknown } }).response?.data
+          : undefined
+      const message = extractApiErrorMessage(data, {
+        fallback: isEditMode ? '게시글 수정에 실패했습니다.' : '게시글 등록에 실패했습니다.',
+      })
+      const field = getApiErrorField(error) ?? ''
+      if (field === 'content' || field === 'inlineImages' || field === 'attachments') {
+        setFieldError({ field, message })
+      } else {
+        setFieldError(null)
+        showAlert({ title: '안내', content: message })
+      }
     } finally {
       setLoading(false)
     }
@@ -302,6 +369,11 @@ export function PostWriteModal({
               minHeight={editorMinHeight}
               fileUploadOwner={inlineImageOwner}
             />
+            {fieldError && (fieldError.field === 'content' || fieldError.field === 'inlineImages') ? (
+              <p className="text-area-field-row__field-error" role="alert">
+                {fieldError.message}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -313,7 +385,7 @@ export function PostWriteModal({
                 <FileSelectField
                   accept=".jpg,.jpeg,.png"
                   fileNames={fileNames}
-                  currentTotalBytes={sumFileBytes(files)}
+                  currentTotalBytes={existingAttachmentBytes + sumFileBytes(files)}
                   maxTotalBytes={FILE_SELECT_MAX_TOTAL_BYTES}
                   onFilesChange={handleFilesChange}
                   onRemoveFile={handleRemoveFile}
@@ -325,6 +397,11 @@ export function PostWriteModal({
                   ]}
                   className="post-write-modal__file-select file-select-field--edit"
                 />
+                {fieldError?.field === 'attachments' ? (
+                  <p className="text-area-field-row__field-error" role="alert">
+                    {fieldError.message}
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>
