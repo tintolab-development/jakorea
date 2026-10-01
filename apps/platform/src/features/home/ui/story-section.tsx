@@ -10,7 +10,10 @@ import cardMinjaeUrl from '@/features/impact-story/image/illustration/card-minja
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import { useHomeMain } from '../api/use-home-main'
 import { FALLBACK_IMPACT_TITLE } from '../lib/view'
+import { SkeletonBlock } from './skeleton-block'
 import styles from './story-section.module.css'
+
+const SUB_STORY_SKELETON_KEYS = [0, 1, 2] as const
 
 function TitleLines({ title }: { title: string }) {
   const lines = title.split(/\r?\n/).filter(Boolean)
@@ -65,6 +68,17 @@ function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
   )
 }
 
+function SubStoryCardSkeleton() {
+  return (
+    <div className={styles.subCard} aria-hidden="true">
+      <div className={styles.subCardMedia}>
+        <SkeletonBlock className={styles.skeletonMedia} />
+      </div>
+      <SkeletonBlock className={styles.skeletonTitle} />
+    </div>
+  )
+}
+
 function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
   return (
     <Link
@@ -93,7 +107,9 @@ function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
 export function StorySection() {
   const { featuredStory, impactTitle } = useHomeMain()
   const featured = featuredStory
-  const subStories = useHomeImpactSubStories(featured?.id ?? null)
+  const { items: subStories, isPending: subStoriesPending } = useHomeImpactSubStories(
+    featured?.id ?? null,
+  )
   const mobileTitle = impactTitle.trim() || FALLBACK_IMPACT_TITLE
 
   if (!featured) {
@@ -101,7 +117,7 @@ export function StorySection() {
   }
 
   return (
-    <section className={styles.section}>
+    <section className={styles.section} aria-busy={subStoriesPending || undefined}>
       <div className={styles.inner}>
         <h2 className={styles.mobileTitle}>
           <TitleLines title={mobileTitle} />
@@ -110,9 +126,9 @@ export function StorySection() {
         <FeaturedStory story={featured} />
 
         <div className={styles.subGrid}>
-          {subStories.map(story => (
-            <SubStoryCard story={story} key={story.id} />
-          ))}
+          {subStoriesPending
+            ? SUB_STORY_SKELETON_KEYS.map(key => <SubStoryCardSkeleton key={key} />)
+            : subStories.map(story => <SubStoryCard story={story} key={story.id} />)}
         </div>
 
         <div className={styles.viewAllRow}>

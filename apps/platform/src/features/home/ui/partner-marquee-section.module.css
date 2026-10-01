@@ -185,6 +185,18 @@
   }
 }
 
+.logoSkeletonRow {
+  display: flex;
+  width: max-content;
+  gap: var(--spacing-20);
+}
+
+.logoSkeleton {
+  width: 70%;
+  height: 28px;
+  border-radius: var(--radius-8);
+}
+
 .logoImage {
   display: block;
   width: 100%;

@@ -53,6 +53,7 @@ export {
   useImpactStoryDetail,
 } from './api/hooks'
 export type {
+  HomeImpactSubStoriesQuery,
   ImpactStoriesListQuery,
   ImpactStoriesPreviewQuery,
   ImpactStoryDetailQuery,
