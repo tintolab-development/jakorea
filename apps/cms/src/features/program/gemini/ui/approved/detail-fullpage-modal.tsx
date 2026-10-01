@@ -45,9 +45,10 @@ export function GeminiApprovedTrainingDetailFullPageModal({
   const todayKey = useToday()
   const { detail, isLoading } = useGeminiApprovedTrainingDetail(approvedTrainingId)
 
+  const trainingDatetimeLabel = detail ? formatTrainingDatetimeDisplay(detail) : '-'
   const detailTitle = detail
-    ? detail.instructorAssigned
-      ? `${detail.institutionName} (${formatTrainingDatetimeDisplay(detail)})`
+    ? detail.instructorAssigned && trainingDatetimeLabel !== '-'
+      ? `${detail.institutionName} (${trainingDatetimeLabel})`
       : detail.institutionName
     : '승인 연수 상세'
 

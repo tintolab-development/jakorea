@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { GeminiApprovedTrainingDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingDetailResponse'
 import {
   mapGeminiApprovedTrainingDetailResponseToDetail,
   mapGeminiInstructorApplicationItemToRow,
@@ -74,6 +75,54 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
       email: 'lee***@example.com',
     })
     expect(detail.officialDocumentType).toBe('필요')
+  })
+
+  it('일정 없이도 assignedInstructor만으로 담당 강사를 두고 희망일을 확정일로 쓰지 않는다', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 185334,
+      programId: 185003,
+      instructorMemberId: 190006,
+      instructorName: '최지원',
+      trainingDate: null,
+      trainingTimeText: null,
+      lastPreferredDate: '2026-05-01',
+      assignedInstructor: {
+        memberId: 190006,
+        name: '최지원',
+        homeAddress: '부산광역시 해운대구 센텀중앙로 79',
+        experienceYears: null,
+        grade: null,
+        phone: '010-3327-5124',
+        email: 'jiwon94k@tinto.co.kr',
+      },
+    })
+
+    expect(detail.instructorAssigned).toBe(true)
+    expect(detail.trainingDate).toBe('')
+    expect(detail.trainingDate).not.toBe(detail.lastPreferredDate)
+    expect(detail.instructor).toEqual({
+      name: '최지원',
+      region: '부산광역시 해운대구 센텀중앙로 79',
+      experienceYears: null,
+      grade: '-',
+      contact: '010-3327-5124',
+      email: 'jiwon94k@tinto.co.kr',
+    })
+  })
+
+  it('assignedInstructor가 null이면 instructorName이 있어도 섹션을 열지 않는다', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 185334,
+      instructorName: '최지원',
+      trainingDate: null,
+      lastPreferredDate: '2026-05-01',
+      // OpenAPI는 optional만 적지만 응답은 null로 온다.
+      assignedInstructor: null,
+    } as unknown as GeminiApprovedTrainingDetailResponse)
+
+    expect(detail.instructorAssigned).toBe(false)
+    expect(detail.trainingDate).toBe('')
+    expect(detail.instructor.name).toBe('-')
   })
 })
 

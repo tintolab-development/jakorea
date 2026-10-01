@@ -24,35 +24,28 @@ function trimmed(value: string | null | undefined): string {
 
 function emptyInstructor(): GeminiApprovedTrainingInstructorInfo {
   return {
-    name: '미지정',
+    name: '-',
     region: '-',
-    experienceYears: 0,
+    experienceYears: null,
     grade: '-',
     contact: '-',
     email: '-',
   }
 }
 
+/** 섹션 노출은 assignedInstructor 객체만. instructorName·일정 매칭으로 대체하지 않는다. */
 function mapAssignedInstructor(
-  assigned: GeminiAssignedInstructor | null | undefined,
-  fallbackName: string | null | undefined
+  assigned: GeminiAssignedInstructor | null | undefined
 ): { instructor: GeminiApprovedTrainingInstructorInfo; instructorAssigned: boolean } {
   if (assigned == null) {
-    const name = trimmed(fallbackName)
-    if (!name || name === '미지정') {
-      return { instructor: emptyInstructor(), instructorAssigned: false }
-    }
-    return {
-      instructor: { ...emptyInstructor(), name },
-      instructorAssigned: true,
-    }
+    return { instructor: emptyInstructor(), instructorAssigned: false }
   }
   return {
     instructorAssigned: true,
     instructor: {
-      name: trimmed(assigned.name) || '미지정',
+      name: trimmed(assigned.name) || '-',
       region: trimmed(assigned.homeAddress) || '-',
-      experienceYears: assigned.experienceYears ?? 0,
+      experienceYears: assigned.experienceYears ?? null,
       grade: trimmed(assigned.grade) || '-',
       contact: trimmed(assigned.phone) || '-',
       email: trimmed(assigned.email) || '-',
@@ -96,10 +89,7 @@ function buildInstitutionAddress(dto: GeminiApprovedTrainingDetailResponse): str
 export function mapGeminiApprovedTrainingDetailResponseToDetail(
   dto: GeminiApprovedTrainingDetailResponse
 ): GeminiApprovedTrainingDetail {
-  const { instructor, instructorAssigned } = mapAssignedInstructor(
-    dto.assignedInstructor,
-    dto.instructorName
-  )
+  const { instructor, instructorAssigned } = mapAssignedInstructor(dto.assignedInstructor)
   const officialRequired = dto.officialDocumentRequired === true
   const teacherName = trimmed(dto.teacherName) || trimmed(dto.managerName)
 
@@ -211,19 +201,10 @@ export function mapGeminiApprovedTrainingRowToDetail(
     managerSubject: '',
     trainingContent: '',
     institutionName: row.institutionName,
-    trainingDate: instructorAssigned ? row.trainingDate : row.lastPreferredDate,
-    trainingTimeText: instructorAssigned ? row.trainingTimeText : '-',
+    trainingDate: row.trainingDate,
+    trainingTimeText: row.trainingTimeText,
     studentCount: row.studentCount,
-    instructor: instructorAssigned
-      ? {
-          name: row.instructorName,
-          region: '-',
-          experienceYears: 0,
-          grade: '-',
-          contact: '-',
-          email: '-',
-        }
-      : emptyInstructor(),
+    instructor: emptyInstructor(),
     officialDocumentType: row.officialDocumentRequired ? '필요' : '필요 없음',
     officialDocumentRequiredInfo: row.officialDocumentRequired
       ? '이름, 소속(학교), 연수예정일시, 연수인원'

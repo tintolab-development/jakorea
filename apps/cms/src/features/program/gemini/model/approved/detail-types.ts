@@ -5,7 +5,8 @@ export type GeminiApprovedTrainingEmploymentStatus = 'ACTIVE' | 'LEAVE' | 'TRANS
 export type GeminiApprovedTrainingInstructorInfo = {
   name: string
   region: string
-  experienceYears: number
+  /** null이면 0으로 바꾸지 않는다 */
+  experienceYears: number | null
   grade: string
   contact: string
   email: string
