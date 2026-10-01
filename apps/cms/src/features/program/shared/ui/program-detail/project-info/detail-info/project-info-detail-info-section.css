@@ -25,57 +25,45 @@
   row-gap: 2px;
 }
 
-.program-detail-info-tab__editor-host--field {
+/*
+ * 상세 정보 리치텍스트(모집 안내·지원 방법·학습 지원·기타사항·추가 내용)
+ * - 초기 총 높이 ≈ 100px (툴바+본문)
+ * - 내용이 늘면 height:auto 로 자연 증가
+ * - shared 320px / cms --rt-body-min-height:200px / template 420px 를 이 스코프에서만 덮음
+ */
+.project-info-detail-info-section__frame .program-detail-info-tab__editor-host--field,
+.project-info-detail-info-section__frame
+  .program-detail-info-tab__additional-content--edit
+  .program-detail-info-tab__editor-host--field {
   width: 100%;
-  height: auto !important;
   min-height: 100px !important;
 }
 
-.program-detail-info-tab__editor-host--field .rich-text-editor {
+.project-info-detail-info-section__frame
+  .program-detail-info-tab__editor-host--field
+  .rich-text-editor,
+.project-info-detail-info-section__frame
+  .program-detail-info-tab__editor-host--field
+  .cms-rich-text-editor {
   width: 100%;
-  height: auto !important;
   min-height: 100px !important;
-}
-
-.program-detail-info-tab__rich-text-editor {
-  --rt-body-min-height: 100px !important;
+  --rt-body-min-height: 56px !important;
   --rt-body-padding: 8px 16px;
 }
 
-.program-detail-info-tab__rich-text-editor .rich-text-editor__body {
-  flex: 1 1 auto !important;
-  min-height: 100px !important;
-  height: auto !important;
-}
-
-.program-detail-info-tab__editor-host--field
-  .program-detail-info-tab__rich-text-editor
+.project-info-detail-info-section__frame
+  .program-detail-info-tab__editor-host--field
+  .cms-rich-text-editor
+  .rich-text-editor__body,
+.project-info-detail-info-section__frame
+  .program-detail-info-tab__editor-host--field
   .rich-text-editor__body {
-  min-height: 100px !important;
+  flex: 1 1 auto !important;
+  min-height: 56px !important;
+  height: auto !important;
+  max-height: none !important;
 }
 
 .project-info-detail-info-section__frame .program-detail-info-tab__additional-content--edit {
-  min-height: 100px !important;
-}
-
-.project-info-detail-info-section__frame
-  .program-detail-info-tab__additional-content--edit
-  .program-detail-info-tab__editor-host {
-  height: auto !important;
-  min-height: 100px !important;
-}
-
-.project-info-detail-info-section__frame
-  .program-detail-info-tab__additional-content--edit
-  .program-detail-info-tab__editor-host
-  .rich-text-editor {
-  height: auto !important;
-  min-height: 100px !important;
-}
-
-.project-info-detail-info-section__frame
-  .program-detail-info-tab__additional-content--edit
-  .program-detail-info-tab__editor-host
-  .rich-text-editor__body {
   min-height: 100px !important;
 }

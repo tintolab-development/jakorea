@@ -587,7 +587,6 @@ function AdditionalContentRow({
   isFormEdit,
   editorOpen,
   editor,
-  editorMinHeight,
   showRequiredOnTh,
   emptyReadDisplay = 'mock-default',
 }: {
@@ -596,7 +595,7 @@ function AdditionalContentRow({
   isFormEdit: boolean
   editorOpen: boolean
   editor: ReturnType<typeof useTemplateEditor>['editor']
-  editorMinHeight: string
+  editorMinHeight?: string
   showRequiredOnTh: boolean
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
 }) {
@@ -615,10 +614,11 @@ function AdditionalContentRow({
         {isEditMode ? (
           <div className="program-detail-info-tab__additional-content program-detail-info-tab__additional-content--edit">
             {editorOpen && editor ? (
-              <div className="program-detail-info-tab__editor-host">
+              <div className="program-detail-info-tab__editor-host program-detail-info-tab__editor-host--field">
                 <RichTextEditor
                   editor={editor}
-                  minHeight={editorMinHeight}
+                  className="program-detail-info-tab__rich-text-editor"
+                  minHeight="100px"
                   fileUploadOwner={programInlineImageOwner(parseFileObjectId(program.id))}
                 />
               </div>
