@@ -165,14 +165,20 @@ export const RichTextImageResize = ImageResize.configure({
       fileSize: {
         default: null,
         parseHTML: (element: HTMLElement) => {
-          const raw = element.getAttribute('data-file-size')
-          const size = raw == null ? Number.NaN : Number(raw)
-          return Number.isFinite(size) && size > 0 ? size : null
+          const value = element.getAttribute('data-file-size')
+          if (!value || !/^\d+$/.test(value)) return null
+          return Number(value)
         },
-        renderHTML: (attributes: { fileSize?: number | null }) =>
-          typeof attributes.fileSize === 'number' && attributes.fileSize > 0
-            ? { 'data-file-size': String(attributes.fileSize) }
-            : {},
+        renderHTML: (attributes: { fileSize?: number | string | null }) => {
+          const value = attributes.fileSize
+          if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+            return { 'data-file-size': String(value) }
+          }
+          if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+            return { 'data-file-size': value.trim() }
+          }
+          return {}
+        },
       },
     }
   },
@@ -194,13 +200,18 @@ export const RichTextImageResize = ImageResize.configure({
     })
   },
   renderMarkdown: (node: JSONContent) => {
-    const attrs = node.attrs as Record<string, string | undefined> | undefined
-    const src = attrs?.persistSrc || attrs?.src || ''
-    const alt = attrs?.alt ?? ''
-    const containerStyle = attrs?.containerStyle
-    if (containerStyle?.includes('width')) {
-      const style = escapeHtml(containerStyle)
-      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="rich-text-content__image" style="${style}" />`
+    const attrs = node.attrs as Record<string, string | number | undefined> | undefined
+    const rawSrc = attrs?.persistSrc || attrs?.src || ''
+    const src = typeof rawSrc === 'string' ? rawSrc : String(rawSrc)
+    const rawAlt = attrs?.alt ?? ''
+    const alt = typeof rawAlt === 'string' ? rawAlt : String(rawAlt)
+    const containerStyle = typeof attrs?.containerStyle === 'string' ? attrs.containerStyle : undefined
+    const fileSize = attrs?.fileSize
+    if (containerStyle?.includes('width') || fileSize) {
+      const style = escapeHtml(containerStyle ?? '')
+      const styleAttr = style ? ` style="${style}"` : ''
+      const fileSizeAttr = fileSize ? ` data-file-size="${escapeHtml(String(fileSize))}"` : ''
+      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="rich-text-content__image"${styleAttr}${fileSizeAttr} />`
     }
     const safeAlt = alt.replace(/]/g, '\\]')
     return `![${safeAlt}](${src})`

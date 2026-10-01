@@ -4907,6 +4907,86 @@
           }
         }
       },
+      "ProgramAttachmentUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        },
+        "required": [
+          "fileObjectIds"
+        ]
+      },
+      "ApiResponseListProgramRecruitmentAttachmentResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "items": {
+              "$ref": "#/components/schemas/ProgramRecruitmentAttachmentResponse"
+            }
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "ProgramRecruitmentAttachmentResponse": {
+        "type": "object",
+        "description": "모집 행 하나에 붙은 첨부파일",
+        "properties": {
+          "attachmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "downloadPath": {
+            "type": "string"
+          }
+        }
+      },
       "PostReactionUpsertRequest": {
         "type": "object",
         "properties": {
@@ -5751,21 +5831,6 @@
             }
           }
         }
-      },
-      "ProgramAttachmentUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "fileObjectIds": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        },
-        "required": [
-          "fileObjectIds"
-        ]
       },
       "ApiResponseListProgramAttachmentResponse": {
         "type": "object",
@@ -14034,10 +14099,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -14577,6 +14642,114 @@
           "selectionMethod": {
             "type": "string",
             "description": "선발 방식 코드. 예: ADMIN_REVIEW"
+          },
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "수정할 모집 행 id. 보내면 그 행만 수정하고, 요청에 없는 행은 그대로 둔다. id 또는 applicationType 이 하나라도 있으면 행 단위 저장으로 처리한다."
+          },
+          "applicationType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 신청 유형. recruitmentType/targetType 은 이 값에서 정한다.",
+            "enum": [
+              "INDIVIDUAL",
+              "ORGANIZATION",
+              "INSTRUCTOR",
+              "VOLUNTEER"
+            ]
+          },
+          "announcementTitle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, \"\" 이면 비움"
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "한 줄 소개. null 유지, \"\" 비움"
+          },
+          "programDescription": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "프로그램 설명. null 유지, \"\" 비움"
+          },
+          "recruitmentGuide": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "모집 안내. null 유지, \"\" 비움"
+          },
+          "applicationMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신청 방법. null 유지, \"\" 비움"
+          },
+          "learningSupportContent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "학습 지원. null 유지, \"\" 비움"
+          },
+          "additionalContentHtml": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "추가 내용 HTML. null 유지, \"\" 비움"
+          },
+          "remarks": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "비고. null 유지, \"\" 비움"
+          },
+          "contactName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "담당자 이름. null 유지, \"\" 비움"
+          },
+          "contactPhone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "담당자 연락처. null 유지, \"\" 비움"
+          },
+          "contactEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "담당자 이메일. null 유지, \"\" 비움"
+          },
+          "clearFields": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "null 로 비울 필드 이름. 예: [\"maxCount\",\"remarks\"]",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21410,7 +21583,7 @@
       },
       "ProgramRecruitmentResponse": {
         "type": "object",
-        "description": "프로그램 모집 유형별 canonical 설정 응답",
+        "description": "프로그램 모집 행 응답. 모집 행마다 공고 문구·담당자·대표 이미지·첨부·신청 양식을 따로 가진다.",
         "properties": {
           "id": {
             "type": "integer",
@@ -21451,6 +21624,116 @@
           },
           "selectionMethod": {
             "type": "string"
+          },
+          "programDescription": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 프로그램 설명. 비어 있으면 null. 프로그램 description으로 채우지 않는다."
+          },
+          "recruitmentGuide": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 모집 안내. 비어 있으면 null. 다른 모집이나 프로그램 recruitmentGuide로 채우지 않는다."
+          },
+          "applicationMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 신청 방법. 비어 있으면 null."
+          },
+          "learningSupportContent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 학습 지원. 비어 있으면 null."
+          },
+          "additionalContentHtml": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 추가 내용 HTML. 비어 있으면 null."
+          },
+          "remarks": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 비고. 비어 있으면 null."
+          },
+          "applicationType": {
+            "type": "string",
+            "description": "이 모집 행의 신청 유형",
+            "enum": [
+              "INDIVIDUAL",
+              "ORGANIZATION",
+              "INSTRUCTOR",
+              "VOLUNTEER"
+            ]
+          },
+          "announcementTitle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 공고 제목. 비어 있으면 null."
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 한 줄 소개. 비어 있으면 null."
+          },
+          "contactName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 담당자 이름. GENERAL_*/UJAT 외 유형은 null(프로그램 contactName 사용)."
+          },
+          "contactPhone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 담당자 연락처. 비어 있으면 null."
+          },
+          "contactEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 담당자 이메일. 비어 있으면 null."
+          },
+          "thumbnailFileObjectId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "이 모집 행의 대표 이미지 file_object id. 없으면 null. GENERAL_*/UJAT 외 유형은 프로그램 대표 이미지."
+          },
+          "attachments": {
+            "type": "array",
+            "description": "이 모집 행의 첨부파일. 없으면 []. GENERAL_*/UJAT 외 유형은 프로그램 첨부파일.",
+            "items": {
+              "$ref": "#/components/schemas/ProgramRecruitmentAttachmentResponse"
+            }
+          },
+          "applicationFormBindingId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "이 모집 행의 신청 양식 바인딩 id. 행 전용(RECRUITMENT) 바인딩이 없으면 같은 신청 유형의 프로그램 바인딩, 그것도 없으면 null."
           }
         }
       },
@@ -26199,6 +26482,35 @@
           }
         }
       },
+      "ApiResponseProgramRecruitmentResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/ProgramRecruitmentResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
       "ChangeItem": {
         "type": "object",
         "properties": {
@@ -28190,6 +28502,46 @@
             ],
             "format": "int32",
             "description": "홈 캐러셀 정렬 순서(오름차순). 미노출이면 null."
+          },
+          "recruitmentId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "이 목록 행의 모집 id. 모집 없는 NONE 행이면 null."
+          },
+          "recruitmentType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 행의 모집 유형.",
+            "enum": [
+              "PARTICIPANT",
+              "VOLUNTEER",
+              "INSTRUCTOR"
+            ]
+          },
+          "targetType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 행의 모집 대상. 저장된 target_type."
+          },
+          "applicationType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 행의 신청 양식 하나.",
+            "enum": [
+              "INDIVIDUAL",
+              "ORGANIZATION",
+              "INSTRUCTOR",
+              "VOLUNTEER"
+            ]
           }
         }
       },
@@ -28634,6 +28986,22 @@
             "type": "null",
             "$ref": "#/components/schemas/ScheduleRange",
             "description": "기간 지정(period)일 때 {start,end}. date 모드이거나 값이 없으면 null."
+          },
+          "recruitmentStartAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "recruitmentId 조회일 때 그 모집의 시작. 쿼리가 없으면 null."
+          },
+          "recruitmentEndAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "recruitmentId 조회일 때 그 모집의 종료. 쿼리가 없으면 null."
           }
         }
       },
@@ -28727,6 +29095,62 @@
             ],
             "format": "date-time",
             "description": "최종 합격자 발표 시각. 면접이 없어도 값이 있으면 내려줍니다. 없으면 null입니다."
+          },
+          "programDescription": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 프로그램 설명. 비어 있으면 null."
+          },
+          "recruitmentGuide": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 모집 안내. 비어 있으면 null. 다른 모집 문구로 채우지 않는다."
+          },
+          "applicationMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 신청 방법. 비어 있으면 null."
+          },
+          "learningSupportContent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 학습 지원. 비어 있으면 null."
+          },
+          "additionalContentHtml": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 추가 내용 HTML. 비어 있으면 null."
+          },
+          "remarks": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 비고. 비어 있으면 null."
+          },
+          "announcementTitle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 제목. 없으면 null."
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이 모집 행의 요약. 없으면 null."
           }
         }
       },

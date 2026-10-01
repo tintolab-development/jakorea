@@ -16,6 +16,8 @@ export type UjatRecruitParagraphProps = {
   exceptionScheduleCount?: number
   /** draft `paragraphTitle` — 프로그램 상세에서만 노출 (`paragraphDescription`은 미노출) */
   sectionTitle?: string
+  /** 등록 시드 단락 id — 상세 수정 필수 누락 제목 강조 */
+  highlightParagraphId?: string
 }
 
 export function resolveUjatRecruitParagraphMode(props: UjatRecruitParagraphProps): UjatRecruitParagraphMode {

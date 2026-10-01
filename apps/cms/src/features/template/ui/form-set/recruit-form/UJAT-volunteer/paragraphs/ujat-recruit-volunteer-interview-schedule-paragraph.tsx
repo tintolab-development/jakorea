@@ -34,6 +34,7 @@ export function UjatRecruitVolunteerInterviewScheduleParagraph({
         isEdit={mode === 'edit'}
         volunteerHalf={props.volunteerHalf}
         sectionTitle={props.sectionTitle}
+        highlightParagraphId={props.highlightParagraphId}
       />
     )
   }

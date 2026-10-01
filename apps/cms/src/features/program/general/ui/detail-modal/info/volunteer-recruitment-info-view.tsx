@@ -12,6 +12,7 @@ import {
   parseVolunteerTargetsSelectValue,
   VOLUNTEER_TARGET_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import { RECRUIT_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/recruit-form-volunteer-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -78,6 +79,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
   const recruitmentPeriodField = (
     <DetailInfoForm.Field
       label="봉사자 모집 기간"
+      validationKey="recruit.volunteer.recruitRangeSeal"
       fullRow={!interviewEnabled}
       view={display.recruitmentPeriodLabel}
       edit={
@@ -113,6 +115,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
   const documentPassField = (
     <DetailInfoForm.Field
       label="1차 서류 합격자 발표"
+      validationKey={['recruit.volunteer.docDeadlineIso', 'recruit.volunteer.docAnnounceMethod']}
       view={
         <ProgramDetailDateMethodReadRow
           dateIso={display.documentPassAnnouncementDate}
@@ -161,6 +164,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
   const interviewPeriodField = (
     <DetailInfoForm.Field
       label="2차 면접 기간"
+      validationKey={['recruit.volunteer.interviewRangeSeal', 'recruit.volunteer.interviewMethod']}
       view={
         <ProgramDetailInterviewReadRow
           start={display.interviewStartDate}
@@ -215,6 +219,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
   const finalPassField = (
     <DetailInfoForm.Field
       label="최종 합격자 발표"
+      validationKey={['recruit.volunteer.finalAnnounceIso', 'recruit.volunteer.finalAnnounceMethod']}
       fullRow={!interviewEnabled}
       view={
         <ProgramDetailDateMethodReadRow
@@ -268,6 +273,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
         surface="responseEntry"
         titleAligned
         required={isEdit}
+        highlightParagraphId={RECRUIT_FORM_VOLUNTEER_IDS.recruitInfo}
       />
       <div className="volunteer-recruitment-info-view__forms">
         <DetailInfoForm
@@ -279,6 +285,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="공고 게시 여부"
+              validationKey="recruit.volunteer.announcementPublished"
               view={display.announcementPublishedLabel}
               edit={
                 isEdit && form ? (
@@ -297,6 +304,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
             />
             <DetailInfoForm.Field
               label="봉사자 면접 유무"
+              validationKey="recruit.volunteer.interviewRequired"
               view={display.interviewEnabledLabel}
               edit={
                 isEdit && form ? (
@@ -328,6 +336,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="프로그램 운영 기간"
+              validationKey="recruit.volunteer.programRangeSeal"
               view={display.operationPeriodLabel}
               edit={
                 isEdit && form ? (
@@ -369,6 +378,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="모집 대상"
+              validationKey="recruit.volunteer.volunteerTargets"
               view={display.volunteerTargetLabel}
               edit={
                 isEdit && form ? (
@@ -394,6 +404,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
             />
             <DetailInfoForm.Field
               label="모집 대상 상세"
+              validationKey="recruit.volunteer.volunteerTargetDetail"
               view={display.volunteerTargetDetailLabel}
               edit={
                 isEdit && form ? (
@@ -437,6 +448,11 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="문의처"
+              validationKey={[
+                'recruit.volunteer.inquiryContact',
+                'recruit.volunteer.inquiryTel',
+                'recruit.volunteer.inquiryEmail',
+              ]}
               fullRow
               view={
                 <ProgramDetailContactReadRow
@@ -514,6 +530,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="비고"
+              validationKey="recruit.volunteer.notes"
               fullRow
               view={display.notes}
               edit={

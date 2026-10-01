@@ -1,4 +1,15 @@
 import { useCallback, useEffect, useMemo } from 'react'
+import { listIncompleteApplicationFormThirdPartyRecipientKeys } from '@/features/template/model/application-form-third-party-recipient'
+import {
+  RegistrationWizardValidationHighlightProvider,
+  RegistrationWizardValidationHighlightSync,
+  useDetailEditRequiredHighlightRequest,
+} from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
+import { showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import type { Program } from '@/types/domain'
 import {
   patchInstitutionApplicationProgramBridge,
@@ -25,7 +36,6 @@ import type { TemplateEditorVm } from '@/features/template/ui/template-renderers
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
-import { showUpdateCompletedAlert } from '@/shared/ui'
 
 export function GeneralProgramApplicationTemplateEditModal({
   open,
@@ -133,19 +143,42 @@ export function GeneralProgramApplicationTemplateEditModal({
     [registryEntry, editorVm]
   )
 
+  const { showAlert } = useCmsAlert()
+  const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
+
+  useEffect(() => {
+    if (!open) detailRequiredHighlight.clear()
+  }, [detailRequiredHighlight.clear, open])
+
   const handleSave = useCallback(async () => {
+    const incompleteKeys = listIncompleteApplicationFormThirdPartyRecipientKeys(vm.draft)
+    if (incompleteKeys.length > 0) {
+      detailRequiredHighlight.report(incompleteKeys)
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
     try {
       await vm.handleSave()
+      detailRequiredHighlight.clear()
       onSaved?.()
       showUpdateCompletedAlert()
     } catch {
       // useProgramParticipantApplicationEditor / form-template-save-feedback에서 안내
     }
-  }, [onSaved, vm])
+  }, [detailRequiredHighlight, onSaved, showAlert, vm])
 
   if (registryEntry == null) return null
 
   return (
+    <RegistrationWizardValidationHighlightProvider variant="general">
+    <RegistrationWizardValidationHighlightSync
+      nonce={detailRequiredHighlight.request.nonce}
+      keys={detailRequiredHighlight.request.keys}
+      variant="general"
+    />
     <TemplateFullpageModal
       open={open}
       onClose={onClose}
@@ -159,5 +192,6 @@ export function GeneralProgramApplicationTemplateEditModal({
       leftContent={vm.isDraftLoading ? <FormDraftLoading /> : panels.leftContent}
       rightNavigation={vm.isDraftLoading ? null : panels.rightNavigation}
     />
+    </RegistrationWizardValidationHighlightProvider>
   )
 }

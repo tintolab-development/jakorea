@@ -83,7 +83,17 @@ import {
   seedEconomyRegistrationOverlayFromProgram,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
-import { hasIncompleteEconomyProgramRegistrationRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { listIncompleteDetailRecruitmentHighlightKeys } from '@/features/program/general/lib/detail-recruitment-required-highlight'
+import {
+  hasIncompleteEconomyProgramRegistrationRequiredFields,
+  listIncompleteEconomyProgramRegistrationRequiredFields,
+} from '@/features/program/general/lib/economy-program-registration-required-fields'
+import type { RegistrationWizardIncompleteMapVariant } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
+import {
+  RegistrationWizardValidationHighlightProvider,
+  RegistrationWizardValidationHighlightSync,
+  useDetailEditRequiredHighlightRequest,
+} from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   programToRecruitmentTabEditValues,
@@ -199,6 +209,25 @@ const LNB_KEYS_READONLY: readonly LnbKey[] = [
   'managers',
 ]
 
+function trainedTeachersDetailHighlightKey(path: readonly PropertyKey[]): string {
+  const head = String(path[0] ?? '')
+  if (head === 'curriculumSessions') return 'curriculum.title'
+  if (head === 'scheduleDetails' || head === 'progressGroupsByDetail') return 'scheduleCurriculum.name'
+  if (head === 'educationScheduleLines') return 'educationScheduleSettings.periodDateIso'
+  if (
+    head === 'educationStructure' ||
+    head === 'sessionRound' ||
+    head === 'sessionRoundType' ||
+    head === 'ipsCategory' ||
+    head === 'ipsDetail' ||
+    head === 'educationFormScheduleDetail' ||
+    head === 'ipsScheduleDetail'
+  ) {
+    return 'typeSettings.programType'
+  }
+  return `basicInfo.${head || 'programTitleKo'}`
+}
+
 function isCompanySchoolDetailProgram(program: Program | null): boolean {
   return isCompanySchoolProgram(program)
 }
@@ -270,6 +299,7 @@ export function ProgramDetailFullPageModal({
     rawSetSearchParams(nextInit, navigateOpts)
   }, [rawSetSearchParams])
   const { showAlert } = useCmsAlert()
+  const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
   const programId = program?.id
   const {
     program: detailProgram,
@@ -1390,14 +1420,16 @@ export function ProgramDetailFullPageModal({
   const handleInfoSave = useCallback(async () => {
     if (isCompanySchoolDetail && !isTrainedTeachersDetail && displayProgram) {
       const overlay = readEconomyRegistrationOverlayForSave()
-      if (
-        hasIncompleteEconomyProgramRegistrationRequiredFields(overlay, {
-          individual: false,
-          organization: true,
-          teacherInstructor: true,
-          volunteer: false,
-        })
-      ) {
+      const economyParticipant = {
+        individual: false,
+        organization: true,
+        teacherInstructor: true,
+        volunteer: false,
+      }
+      if (hasIncompleteEconomyProgramRegistrationRequiredFields(overlay, economyParticipant)) {
+        detailRequiredHighlight.report(
+          listIncompleteEconomyProgramRegistrationRequiredFields(overlay, economyParticipant)
+        )
         void showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -1426,8 +1458,10 @@ export function ProgramDetailFullPageModal({
       })
       return
     }
+    detailRequiredHighlight.clear()
     setEditMode(null)
   }, [
+    detailRequiredHighlight,
     commonInfoEditSchema,
     displayProgram,
     infoForm,
@@ -1645,6 +1679,25 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
   const handleCompanySchoolRecruitSave = async () => {
+    if (displayProgram) {
+      const audience =
+        activeCompanySchoolRecruitTab === 'instructors' ? 'instructor' : 'participant'
+      const form =
+        audience === 'instructor' ? instructorsForm : institutionsForm
+      const incompleteKeys = listIncompleteDetailRecruitmentHighlightKeys({
+        program: displayProgram,
+        audience,
+        values: form.getValues(),
+      })
+      if (incompleteKeys.length > 0) {
+        detailRequiredHighlight.report(incompleteKeys)
+        void showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
+    }
     if (activeCompanySchoolRecruitTab === 'instructors') {
       const validation = programInstructorRecruitmentSaveSchema.safeParse(
         instructorsForm.getValues()
@@ -1658,6 +1711,7 @@ export function ProgramDetailFullPageModal({
       }
       const ok = await instructorsTriggerSave()
       if (!ok) return
+      detailRequiredHighlight.clear()
       setEditMode(null)
       return
     }
@@ -1678,6 +1732,7 @@ export function ProgramDetailFullPageModal({
     }
     const ok = await institutionsTriggerSave()
     if (!ok) return
+    detailRequiredHighlight.clear()
     setEditMode(null)
   }
   const isCompanySchoolApplicationInfoTab =
@@ -1714,7 +1769,19 @@ export function ProgramDetailFullPageModal({
         isCompanySchoolProgram(displayProgram) ||
         isTrainedTeachersDetailProgram(displayProgram)))
 
+  const detailHighlightVariant: RegistrationWizardIncompleteMapVariant = isTrainedTeachersDetail
+    ? 'trainedTeachers'
+    : isCompanySchoolDetail
+      ? 'economy'
+      : 'general'
+
   return (
+    <RegistrationWizardValidationHighlightProvider variant={detailHighlightVariant}>
+    <RegistrationWizardValidationHighlightSync
+      nonce={detailRequiredHighlight.request.nonce}
+      keys={detailRequiredHighlight.request.keys}
+      variant={detailHighlightVariant}
+    />
     <>
       <DetailFullPageModal
       open={open}
@@ -1826,6 +1893,11 @@ export function ProgramDetailFullPageModal({
                   infoForm.getValues()
                 )
                 if (!validation.success) {
+                  detailRequiredHighlight.report(
+                    validation.error.issues.map(issue =>
+                      trainedTeachersDetailHighlightKey(issue.path)
+                    )
+                  )
                   const message = formatZodIssuesForUser(validation.error.issues)
                   if (message === PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE) {
                     void showAlert({
@@ -2041,5 +2113,6 @@ export function ProgramDetailFullPageModal({
         />
       ) : null}
     </>
+    </RegistrationWizardValidationHighlightProvider>
   )
 }

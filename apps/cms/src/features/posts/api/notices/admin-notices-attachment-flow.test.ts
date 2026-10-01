@@ -21,6 +21,7 @@ vi.mock('@/features/posts/api/notices/notices-api-client', () => ({
   createNoticeRemote: mocks.createNoticeRemote,
   updateNoticeRemote: mocks.updateNoticeRemote,
   deleteNoticeRemote: vi.fn(),
+  replaceNoticeInlineImagesRemote: vi.fn(),
 }))
 
 vi.mock('@/features/posts/api/notices/notice-attachments', () => ({

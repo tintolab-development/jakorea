@@ -126,7 +126,7 @@
   padding-right: 0;
   --rt-content-color: var(--main-BK, #3d3d3d);
   --rt-content-font-family: Pretendard, var(--font-family-primary), sans-serif;
-  --rt-content-font-size: 15px;
+  --rt-content-font-size: 16px;
   --rt-content-line-height: 160%;
   --rt-link-color: #0070e7;
 }

@@ -45,4 +45,44 @@ export interface RecruitmentResponse {
      * @nullable
      */
   finalPassAnnouncementAt?: string | null;
+  /**
+     * 이 모집 행의 프로그램 설명. 비어 있으면 null.
+     * @nullable
+     */
+  programDescription?: string | null;
+  /**
+     * 이 모집 행의 모집 안내. 비어 있으면 null. 다른 모집 문구로 채우지 않는다.
+     * @nullable
+     */
+  recruitmentGuide?: string | null;
+  /**
+     * 이 모집 행의 신청 방법. 비어 있으면 null.
+     * @nullable
+     */
+  applicationMethod?: string | null;
+  /**
+     * 이 모집 행의 학습 지원. 비어 있으면 null.
+     * @nullable
+     */
+  learningSupportContent?: string | null;
+  /**
+     * 이 모집 행의 추가 내용 HTML. 비어 있으면 null.
+     * @nullable
+     */
+  additionalContentHtml?: string | null;
+  /**
+     * 이 모집 행의 비고. 비어 있으면 null.
+     * @nullable
+     */
+  remarks?: string | null;
+  /**
+     * 이 모집 행의 제목. 없으면 null.
+     * @nullable
+     */
+  announcementTitle?: string | null;
+  /**
+     * 이 모집 행의 요약. 없으면 null.
+     * @nullable
+     */
+  summary?: string | null;
 }

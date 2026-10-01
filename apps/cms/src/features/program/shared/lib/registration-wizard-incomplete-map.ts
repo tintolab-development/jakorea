@@ -111,7 +111,7 @@ export function resolveRegistrationWizardIncompleteParagraphIds(
         if (UJAT_EVENT_RANGE_KEYS.has(key)) {
           ids.add(UJAT_PROGRAM_REGISTRATION_IDS[5])
         }
-        continue
+        if (ujatId || UJAT_EVENT_RANGE_KEYS.has(key)) continue
       }
       if (section === 'schedule') {
         ids.add(PROGRAM_REGISTRATION_IDS.educationScheduleSettings)

@@ -6,6 +6,14 @@ export { stripPastedDataUriImages } from './strip-pasted-data-uri-images'
 export { createRichTextEditorApi } from './editor-api'
 export { isRichTextEditorReady } from './editor-ready'
 export {
+  countRichTextCharacters,
+  countRichTextDocumentCharacters,
+  formatRichTextBytes,
+  getRichTextImageTotalBytes,
+  RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
+  RICH_TEXT_MAX_TEXT_CHARACTERS,
+} from './limits'
+export {
   getInitialEditorContent,
   markdownToHtml,
   serializeEditorContent,

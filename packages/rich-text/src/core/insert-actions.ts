@@ -4,7 +4,13 @@ import {
   getEmbedUrlFromYoutubeUrl,
   isValidYoutubeUrl,
 } from '@tiptap/extension-youtube'
+import { NodeSelection } from '@tiptap/pm/state'
 import { findEmojiByName } from './emoji-extension'
+import {
+  getRichTextImageFileSize,
+  getRichTextImageTotalBytes,
+  RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
+} from './limits'
 import {
   RICH_TEXT_INLINE_IMAGE_MAX_BYTES,
   RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE,
@@ -116,7 +122,12 @@ export function insertImageFromFile(
     window.alert('이미지는 20MB 이하만 삽입할 수 있습니다.')
     return
   }
-  if (sumKnownInlineImageBytes(editor) + file.size > IMAGE_MAX_BYTES) {
+  const selectedImageSize =
+    editor.state.selection instanceof NodeSelection
+      ? getRichTextImageFileSize(editor.state.selection.node)
+      : 0
+  const nextTotalBytes = getRichTextImageTotalBytes(editor) - selectedImageSize + file.size
+  if (nextTotalBytes > RICH_TEXT_IMAGE_MAX_TOTAL_BYTES) {
     window.alert(RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE)
     return
   }

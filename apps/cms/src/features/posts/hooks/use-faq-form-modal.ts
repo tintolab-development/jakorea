@@ -13,8 +13,13 @@ import type {
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   faqInlineImageOwner,
+  stripBlobImageSources,
   type AdminFileUploadOwner,
 } from '@/shared/lib/admin-file-upload'
+import {
+  editorHasPendingInlineImages,
+  flushPendingRichTextInlineImages,
+} from '@/shared/rich-text/use-rich-text-inline-image'
 import { parseOwnerResourceId } from '@/shared/lib/admin-file-upload/attachments'
 import type { Editor } from '@/shared/rich-text'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -112,6 +117,7 @@ export function useFaqFormModal({
       const category = v.category.trim()
       const author = user?.name?.trim() || '관리자'
       const status = v.visibility === 'public' ? 'published' : 'draft'
+      const pendingInlineImages = editorHasPendingInlineImages(editor)
 
       if (isEdit && faq) {
         const updated = await updateMutation.mutateAsync({
@@ -129,12 +135,30 @@ export function useFaqFormModal({
         const created = await createMutation.mutateAsync({
           category,
           question: v.question.trim(),
-          answer,
+          answer: pendingInlineImages ? stripBlobImageSources(answer).trim() || ' ' : answer,
           author,
           status,
           createdAt: new Date().toISOString(),
         })
-        onSuccess?.(created)
+        let saved = created
+        const ownerId = created.resourceId ?? parseOwnerResourceId(created.id)
+        if (pendingInlineImages && editor) {
+          if (ownerId == null) {
+            throw new Error('FAQ ID를 확인하지 못해 이미지를 업로드할 수 없습니다.')
+          }
+          await flushPendingRichTextInlineImages(editor, faqInlineImageOwner(ownerId))
+          saved = await updateMutation.mutateAsync({
+            id: created.id,
+            patch: {
+              category,
+              question: v.question.trim(),
+              answer: getMarkdown().trim(),
+              author,
+              status,
+            },
+          })
+        }
+        onSuccess?.(saved)
       }
       onCancel()
     } catch (err) {
@@ -160,6 +184,7 @@ export function useFaqFormModal({
     faq,
     onCancel,
     onSuccess,
+    editor,
     getMarkdown,
     updateMutation,
     user?.name,

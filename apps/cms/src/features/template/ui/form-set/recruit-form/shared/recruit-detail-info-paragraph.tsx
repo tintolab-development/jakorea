@@ -19,7 +19,7 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import {
   recruitDetailAdditionalContentOverlayKey,
-  registerRecruitDetailAdditionalContentHtml,
+  registerRecruitDetailRichTextHtml,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID,
@@ -41,7 +41,6 @@ import {
   programDetailAttachmentOwner,
   programThumbnailOwner,
 } from '@/features/program/shared/api/program-attachments'
-import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './recruit-detail-info-paragraph.css'
 
@@ -50,7 +49,9 @@ const DEFAULT_OVERLAY_KEY_PREFIX = 'recruit.detailInfo'
 const DETAIL_INFO_WYSIWYG_OPTIONS = {
   placeholder: '내용을 작성하세요',
   contentFormat: 'html' as const,
+  height: '100px',
 }
+const RICH_TEXT_FIELD_LABELS = new Set(['모집 안내', '지원 방법', '학습 지원 내용', '기타사항'])
 
 type RecruitDetailInfoTextField = {
   label: string
@@ -73,14 +74,39 @@ export type RecruitDetailInfoParagraphProps = {
 function RecruitDetailInfoTextFieldRow({
   field,
   overlayKeyPrefix,
+  wysiwygResetKey,
   textFieldControl = 'textarea',
 }: {
   field: RecruitDetailInfoTextField
   overlayKeyPrefix: string
+  wysiwygResetKey: string
   textFieldControl?: 'textarea' | 'input'
 }) {
   const overlayKey = resolveRecruitDetailTextFieldOverlayKey(overlayKeyPrefix, field.label)
   const [value, setValue] = useGeneralRecruitOverlayKv<string>(overlayKey, '')
+
+  if (RICH_TEXT_FIELD_LABELS.has(field.label)) {
+    return (
+      <DetailInfoForm.Row
+        type="single"
+        className="recruit-detail-info-paragraph__rich-text-row"
+      >
+        <DetailInfoForm.Field
+          label={field.label}
+          fullRow
+          edit={
+            <RecruitDetailRichTextEditor
+              key={overlayKey}
+              overlayKey={overlayKey}
+              placeholder={field.placeholder}
+              wysiwygResetKey={`${wysiwygResetKey}-${overlayKey}`}
+            />
+          }
+          view="-"
+        />
+      </DetailInfoForm.Row>
+    )
+  }
 
   const control =
     textFieldControl === 'input' ? (
@@ -112,10 +138,12 @@ function RecruitDetailInfoTextFieldRow({
 function RecruitDetailInfoTextFieldRows({
   fields,
   overlayKeyPrefix,
+  wysiwygResetKey,
   textFieldControl = 'textarea',
 }: {
   fields: RecruitDetailInfoTextField[]
   overlayKeyPrefix: string
+  wysiwygResetKey: string
   textFieldControl?: 'textarea' | 'input'
 }) {
   return (
@@ -125,6 +153,7 @@ function RecruitDetailInfoTextFieldRows({
           key={field.label}
           field={field}
           overlayKeyPrefix={overlayKeyPrefix}
+          wysiwygResetKey={wysiwygResetKey}
           textFieldControl={textFieldControl}
         />
       ))}
@@ -132,30 +161,32 @@ function RecruitDetailInfoTextFieldRows({
   )
 }
 
-function readOverlayAdditionalContentHtml(overlayKey: string): string {
+function readOverlayHtml(overlayKey: string): string {
   const raw = getGeneralRecruitOverlayRecord()[overlayKey]
   return typeof raw === 'string' ? raw : ''
 }
 
-const RecruitDetailAdditionalContentEditor = memo(function RecruitDetailAdditionalContentEditor({
+const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
   wysiwygResetKey,
-  additionalContentKey,
+  overlayKey,
+  placeholder = DETAIL_INFO_WYSIWYG_OPTIONS.placeholder,
 }: {
   wysiwygResetKey: string
-  additionalContentKey: string
+  overlayKey: string
+  placeholder?: string
 }) {
-  const initialAdditionalHtmlRef = useRef(readOverlayAdditionalContentHtml(additionalContentKey))
+  const initialHtmlRef = useRef(readOverlayHtml(overlayKey))
   const fileUploadOwner = programInlineImageOwner(null)
   const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(
     true,
-    initialAdditionalHtmlRef.current,
+    initialHtmlRef.current,
     wysiwygResetKey,
-    { ...DETAIL_INFO_WYSIWYG_OPTIONS, fileUploadOwner }
+    { ...DETAIL_INFO_WYSIWYG_OPTIONS, placeholder, fileUploadOwner }
   )
 
   const getHtmlRef = useRef(getHTML)
   getHtmlRef.current = getHTML
-  const latestHtmlRef = useRef(initialAdditionalHtmlRef.current)
+  const latestHtmlRef = useRef(initialHtmlRef.current)
 
   useEffect(() => {
     if (editor == null) return
@@ -179,36 +210,55 @@ const RecruitDetailAdditionalContentEditor = memo(function RecruitDetailAddition
 
   useEffect(() => {
     const readHtml = () => latestHtmlRef.current || getHtmlRef.current()
-    registerRecruitDetailAdditionalContentHtml(additionalContentKey, readHtml)
+    registerRecruitDetailRichTextHtml(overlayKey, readHtml)
     return () => {
       const html = readHtml()
       if (typeof html === 'string') {
-        patchGeneralRecruitOverlay({ [additionalContentKey]: html })
+        patchGeneralRecruitOverlay({ [overlayKey]: html })
       }
-      registerRecruitDetailAdditionalContentHtml(additionalContentKey, null)
+      registerRecruitDetailRichTextHtml(overlayKey, null)
     }
-  }, [additionalContentKey])
+  }, [overlayKey])
 
-  const [overlayAdditionalHtml] = useGeneralRecruitOverlayKv<string>(additionalContentKey, '')
+  const [overlayHtml] = useGeneralRecruitOverlayKv<string>(overlayKey, '')
   useEffect(() => {
     if (editor == null) return
-    const incoming = overlayAdditionalHtml.trim()
+    const incoming = overlayHtml.trim()
     if (incoming === '') return
-    const current = getHtmlRef.current().replace(/<p><\/p>/gi, '').trim()
+    const current = getHtmlRef
+      .current()
+      .replace(/<p><\/p>/gi, '')
+      .trim()
     if (current !== '') return
     editor.commands.setContent(incoming, { emitUpdate: false, contentType: 'html' })
-  }, [editor, overlayAdditionalHtml])
+  }, [editor, overlayHtml])
 
   return (
-    <div className="notice-register-modal__section notice-register-modal__section--editor">
-      <div className="notice-register-modal__editor-host">
+    <div className="recruit-detail-info-paragraph__editor-section">
+      <div className="recruit-detail-info-paragraph__editor-host">
         <RichTextEditor
           editor={editor}
+          className="recruit-detail-info-paragraph__rich-text-editor"
           minHeight={editorMinHeight}
           fileUploadOwner={fileUploadOwner}
         />
       </div>
     </div>
+  )
+})
+
+const RecruitDetailAdditionalContentEditor = memo(function RecruitDetailAdditionalContentEditor({
+  wysiwygResetKey,
+  additionalContentKey,
+}: {
+  wysiwygResetKey: string
+  additionalContentKey: string
+}) {
+  return (
+    <RecruitDetailRichTextEditor
+      wysiwygResetKey={wysiwygResetKey}
+      overlayKey={additionalContentKey}
+    />
   )
 })
 
@@ -404,6 +454,7 @@ export function RecruitDetailInfoParagraph({
         <RecruitDetailInfoTextFieldRows
           fields={textFields}
           overlayKeyPrefix={overlayKeyPrefix}
+          wysiwygResetKey={wysiwygResetKey}
           textFieldControl={textFieldControl}
         />
 
@@ -426,6 +477,7 @@ export function RecruitDetailInfoParagraph({
           <RecruitDetailInfoTextFieldRows
             fields={afterEditorFields}
             overlayKeyPrefix={overlayKeyPrefix}
+            wysiwygResetKey={wysiwygResetKey}
             textFieldControl={textFieldControl}
           />
         ) : null}

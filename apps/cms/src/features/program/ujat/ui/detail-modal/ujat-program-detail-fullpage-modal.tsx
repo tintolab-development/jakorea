@@ -114,7 +114,16 @@ import {
   UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL,
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
-import { hasIncompleteUjatProgramRegistrationRequiredFields } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
+import {
+  hasIncompleteUjatProgramRegistrationRequiredFields,
+  listIncompleteUjatProgramRecruitmentRequiredFields,
+  listIncompleteUjatProgramRegistrationRequiredFields,
+} from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
+import {
+  RegistrationWizardValidationHighlightProvider,
+  RegistrationWizardValidationHighlightSync,
+  useDetailEditRequiredHighlightRequest,
+} from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -721,6 +730,7 @@ export function UjatProgramDetailFullPageModal({
   const requestPreviewHistoryPush = usePushUserPreviewHistoryWhenOpen(isWritingUserPreviewOpen)
   const { copyText } = useClipboard()
   const { showAlert } = useCmsAlert()
+  const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
 
   const openUjatSurveyTemplatePreview = useCallback(
     (
@@ -1238,6 +1248,7 @@ export function UjatProgramDetailFullPageModal({
       ujatRegistrationOverlay: overlay,
     }
     if (hasIncompleteUjatProgramRegistrationRequiredFields(overlay)) {
+      detailRequiredHighlight.report(listIncompleteUjatProgramRegistrationRequiredFields(overlay))
       void showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -1246,14 +1257,18 @@ export function UjatProgramDetailFullPageModal({
     }
     infoForm.reset(programToDetailEditValues(mergedProgram))
     const ok = await infoTriggerSave()
-    if (ok) setEditMode(null)
-  }, [displayProgram, infoForm, infoTriggerSave, setEditMode, showAlert])
+    if (ok) {
+      detailRequiredHighlight.clear()
+      setEditMode(null)
+    }
+  }, [detailRequiredHighlight, displayProgram, infoForm, infoTriggerSave, setEditMode, showAlert])
 
   const handleInfoCancel = useCallback(() => {
     if (displayProgram) seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
     infoResetToProgram()
+    detailRequiredHighlight.clear()
     setEditMode(null)
-  }, [displayProgram, infoResetToProgram, setEditMode])
+  }, [detailRequiredHighlight, displayProgram, infoResetToProgram, setEditMode])
 
   const isEditModeRecruitParticipant =
     open &&
@@ -1499,18 +1514,54 @@ export function UjatProgramDetailFullPageModal({
 
   const handleRecruitmentSave = useCallback(async () => {
     if (!activeRecruitTab) return
+    const recruitHalf =
+      activeRecruitTab === 'recruit_volunteer_h1'
+        ? 'h1'
+        : activeRecruitTab === 'recruit_volunteer_h2'
+          ? 'h2'
+          : null
+    const incompleteKeys = listIncompleteUjatProgramRecruitmentRequiredFields().filter(key => {
+      if (activeRecruitTab === 'recruit_participant') return key.startsWith('recruit.institution')
+      if (recruitHalf == null) return false
+      return key.startsWith(`recruit.volunteer.${recruitHalf}`)
+    })
+    if (incompleteKeys.length > 0) {
+      detailRequiredHighlight.report(incompleteKeys)
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
     const ok =
       activeRecruitTab === 'recruit_participant'
         ? await institutionsTriggerSave()
         : await volunteersTriggerSave()
-    if (ok) setEditMode(null)
-  }, [activeRecruitTab, institutionsTriggerSave, volunteersTriggerSave, setEditMode])
+    if (ok) {
+      detailRequiredHighlight.clear()
+      setEditMode(null)
+    }
+  }, [
+    activeRecruitTab,
+    detailRequiredHighlight,
+    institutionsTriggerSave,
+    setEditMode,
+    showAlert,
+    volunteersTriggerSave,
+  ])
 
   const handleRecruitmentCancel = useCallback(() => {
     if (activeRecruitTab === 'recruit_participant') institutionsResetToProgram()
     else volunteersResetToProgram()
+    detailRequiredHighlight.clear()
     setEditMode(null)
-  }, [activeRecruitTab, institutionsResetToProgram, setEditMode, volunteersResetToProgram])
+  }, [
+    activeRecruitTab,
+    detailRequiredHighlight,
+    institutionsResetToProgram,
+    setEditMode,
+    volunteersResetToProgram,
+  ])
 
   // TODO: X는 바깥 모달 닫기로 통일됨. breadcrumb/목록 복귀 외 용도가 없으면 등록부 제거 검토.
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
@@ -2471,6 +2522,12 @@ export function UjatProgramDetailFullPageModal({
   })()
 
   return (
+    <RegistrationWizardValidationHighlightProvider variant="ujat">
+    <RegistrationWizardValidationHighlightSync
+      nonce={detailRequiredHighlight.request.nonce}
+      keys={detailRequiredHighlight.request.keys}
+      variant="ujat"
+    />
     <>
     <DetailFullPageModal
       open={open}
@@ -3113,5 +3170,6 @@ export function UjatProgramDetailFullPageModal({
       />
     ) : null}
     </>
+    </RegistrationWizardValidationHighlightProvider>
   )
 }

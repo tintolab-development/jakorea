@@ -39,11 +39,14 @@ export function resolveRecruitmentApplicationType(
   return undefined
 }
 
-function rowApplicationType(row: ProgramRecruitmentWindow): string | undefined {
-  return (
-    row.applicationType?.toUpperCase() ??
-    resolveRecruitmentApplicationType(row.recruitmentType, row.targetType)
-  )
+function rowApplicationType(
+  row: ProgramRecruitmentWindow
+): RecruitmentApplicationType | undefined {
+  const raw = row.applicationType?.toUpperCase()
+  if (raw === 'INDIVIDUAL' || raw === 'ORGANIZATION' || raw === 'INSTRUCTOR' || raw === 'VOLUNTEER') {
+    return raw
+  }
+  return resolveRecruitmentApplicationType(row.recruitmentType, row.targetType)
 }
 
 function byStartAt(a: ProgramRecruitmentWindow, b: ProgramRecruitmentWindow): number {

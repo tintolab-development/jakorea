@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramRecruitmentRequestApplicationType } from './programRecruitmentRequestApplicationType';
 import type { ProgramRecruitmentRequestRecruitmentType } from './programRecruitmentRequestRecruitmentType';
 import type { ProgramRecruitmentRequestStatus } from './programRecruitmentRequestStatus';
 
@@ -31,73 +32,73 @@ export interface ProgramRecruitmentRequest {
   /** 선발 방식 코드. 예: ADMIN_REVIEW */
   selectionMethod?: string;
   /**
-   * 수정할 모집 행 id. 없으면 새 행
-   * @nullable
-   */
+     * 수정할 모집 행 id. 보내면 그 행만 수정하고, 요청에 없는 행은 그대로 둔다. id 또는 applicationType 이 하나라도 있으면 행 단위 저장으로 처리한다.
+     * @nullable
+     */
   id?: number | null;
   /**
-   * 이 행의 신청 유형. INDIVIDUAL | ORGANIZATION | INSTRUCTOR | VOLUNTEER
-   * @nullable
-   */
-  applicationType?: string | null;
+     * 이 모집 행의 신청 유형. recruitmentType/targetType 은 이 값에서 정한다.
+     * @nullable
+     */
+  applicationType?: ProgramRecruitmentRequestApplicationType;
   /**
-   * 행 공고용 프로그램명. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, "" 이면 비움
+     * @nullable
+     */
   announcementTitle?: string | null;
   /**
-   * 행 요약. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 한 줄 소개. null 유지, "" 비움
+     * @nullable
+     */
   summary?: string | null;
   /**
-   * 행 설명. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 프로그램 설명. null 유지, "" 비움
+     * @nullable
+     */
   programDescription?: string | null;
   /**
-   * 행 모집 안내. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 모집 안내. null 유지, "" 비움
+     * @nullable
+     */
   recruitmentGuide?: string | null;
   /**
-   * 행 신청 방법. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 신청 방법. null 유지, "" 비움
+     * @nullable
+     */
   applicationMethod?: string | null;
   /**
-   * 행 학습 지원. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 학습 지원. null 유지, "" 비움
+     * @nullable
+     */
   learningSupportContent?: string | null;
   /**
-   * 행 추가 내용 HTML. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 추가 내용 HTML. null 유지, "" 비움
+     * @nullable
+     */
   additionalContentHtml?: string | null;
   /**
-   * 행 비고. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 비고. null 유지, "" 비움
+     * @nullable
+     */
   remarks?: string | null;
   /**
-   * 행 담당자 이름. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 담당자 이름. null 유지, "" 비움
+     * @nullable
+     */
   contactName?: string | null;
   /**
-   * 행 담당자 전화. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 담당자 연락처. null 유지, "" 비움
+     * @nullable
+     */
   contactPhone?: string | null;
   /**
-   * 행 담당자 이메일. null·생략은 유지, ""는 비움
-   * @nullable
-   */
+     * 담당자 이메일. null 유지, "" 비움
+     * @nullable
+     */
   contactEmail?: string | null;
   /**
-   * null로 비울 필드 이름
-   * @nullable
-   */
+     * null 로 비울 필드 이름. 예: ["maxCount","remarks"]
+     * @nullable
+     */
   clearFields?: string[] | null;
 }

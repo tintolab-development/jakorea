@@ -70,6 +70,7 @@ export function UjatRecruitParticipantInfoProgramView({
   form,
   isEdit,
   sectionTitle = '참여 기관 모집 정보',
+  highlightParagraphId,
   hideSectionHeader = false,
   isTemplateAuthoring = false,
 }: {
@@ -78,6 +79,7 @@ export function UjatRecruitParticipantInfoProgramView({
   form?: UseFormReturn<ProgramDetailEditFormValues>
   isEdit: boolean
   sectionTitle?: string
+  highlightParagraphId?: string
   /** 폼 양식 편집기 — 바깥 단락 헤더가 있을 때 중복 제거 */
   hideSectionHeader?: boolean
   /** 양식 작성 화면 — 프로그램 연동 값 대신 placeholder·힌트 */
@@ -116,7 +118,12 @@ export function UjatRecruitParticipantInfoProgramView({
 
   return (
     <div className="ujat-recruit-participant-info-program">
-      {!hideSectionHeader ? <UjatRecruitSectionDescriptionHeader title={sectionTitle} /> : null}
+      {!hideSectionHeader ? (
+        <UjatRecruitSectionDescriptionHeader
+          title={sectionTitle}
+          highlightParagraphId={highlightParagraphId}
+        />
+      ) : null}
       <div className="ujat-recruit-participant-info-program__forms">
       <DetailInfoForm title="참여 기관 모집 정보(설정)" hideHeader mode={formMode}>
         <DetailInfoForm.Row type="single">

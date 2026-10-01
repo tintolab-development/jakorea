@@ -21,7 +21,12 @@ import {
   uploadUnboundNoticeAttachment,
 } from '@/features/posts/api/notices/notice-attachments'
 import { dedupeFileObjectIds } from '@/features/posts/api/notices/notice-file-ids'
+import { stripBlobImageSources } from '@/shared/lib/admin-file-upload'
 import { RichTextEditor } from '@/shared/rich-text'
+import {
+  editorHasPendingInlineImages,
+  flushPendingRichTextInlineImages,
+} from '@/shared/rich-text/use-rich-text-inline-image'
 import { sumFileBytes } from '@/shared/ui/file-select-field-limits'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -317,16 +322,20 @@ export function NoticeFormModal({
 
     const attachmentNames = attachmentDisplayNames
     const pinToTop = values.pinTop === 'on'
-    const uploadsOnSave = newFiles.length > 0
+    const pendingInlineImages = editorHasPendingInlineImages(editor)
+    const uploadsOnSave = newFiles.length > 0 || pendingInlineImages
     if (uploadsOnSave) setUploadingAttachments(true)
     try {
       let createFileObjectIds: number[] | undefined
       if (mode === 'create' && newFiles.length > 0) {
         createFileObjectIds = await fileObjectIdsForCreate(newFiles)
       }
+      const contentForCreate = pendingInlineImages
+        ? stripBlobImageSources(md).trim() || ' '
+        : md
       const base = {
         title: values.title,
-        contentMarkdown: md,
+        contentMarkdown: contentForCreate,
         categoryId,
         category: categoryName,
         visibility: values.visibility,
@@ -343,7 +352,25 @@ export function NoticeFormModal({
       if (mode === 'create') {
         const created = await createMutation.mutateAsync(base)
         markUploadsClaimed()
-        onSuccess?.(created)
+        let saved = created
+        const ownerId = parseNoticeOwnerId(created.id) ?? created.resourceId ?? null
+        if (pendingInlineImages && editor) {
+          if (ownerId == null) {
+            throw new Error('공지 ID를 확인하지 못해 이미지를 업로드할 수 없습니다.')
+          }
+          await flushPendingRichTextInlineImages(editor, noticeInlineImageOwner(ownerId))
+          saved = await updateMutation.mutateAsync({
+            id: created.id,
+            existing: created,
+            params: {
+              ...base,
+              contentMarkdown: getMarkdown().trim(),
+              newFiles: [],
+              fileObjectIds: undefined,
+            },
+          })
+        }
+        onSuccess?.(saved)
       } else {
         const updated = await updateMutation.mutateAsync({
           id: notice!.id,

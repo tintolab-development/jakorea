@@ -30,11 +30,13 @@ export function UjatRecruitInterviewScheduleProgramView({
   isEdit,
   volunteerHalf,
   sectionTitle = '면접 진행 가능 일정',
+  highlightParagraphId,
   isTemplateAuthoring = false,
 }: {
   program: Program
   volunteerHalf?: UjatVolunteerRecruitHalf
   sectionTitle?: string
+  highlightParagraphId?: string
   form?: UseFormReturn<ProgramDetailEditFormValues>
   isEdit: boolean
   /** 양식 작성 화면 — mock·미리보기 선택값을 넣지 않음 */
@@ -64,6 +66,7 @@ export function UjatRecruitInterviewScheduleProgramView({
         surface="responseEntry"
         titleAligned
         required
+        highlightParagraphId={highlightParagraphId}
         description={isFormEdit ? INTERVIEW_SCHEDULE_EDIT_DESCRIPTION : undefined}
         titleTrailing={
           isFormEdit ? (

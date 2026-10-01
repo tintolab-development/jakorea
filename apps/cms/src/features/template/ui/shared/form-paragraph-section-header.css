@@ -41,3 +41,10 @@
 .form-paragraph-section-header__required {
   margin-left: 2px;
 }
+
+/* 필수 누락 — 제목은 섹션이 선택된 상태에서도 빨간색을 유지 */
+.form-paragraph-section-header--required-incomplete .detail-info-form__title,
+.form-paragraph-section-header--required-incomplete .detail-info-form__title * {
+  color: var(--color-red, #c32f4a) !important;
+  -webkit-text-fill-color: var(--color-red, #c32f4a);
+}

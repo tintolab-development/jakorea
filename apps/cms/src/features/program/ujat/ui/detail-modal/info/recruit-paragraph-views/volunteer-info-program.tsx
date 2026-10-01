@@ -97,6 +97,7 @@ export function UjatRecruitVolunteerInfoProgramView({
   volunteerHalf,
   showNoticeExposure,
   sectionTitle = '봉사자 모집 정보',
+  highlightParagraphId,
   hideSectionHeader = false,
   isTemplateAuthoring = false,
 }: {
@@ -107,6 +108,7 @@ export function UjatRecruitVolunteerInfoProgramView({
   volunteerHalf: UjatVolunteerRecruitHalf
   showNoticeExposure: boolean
   sectionTitle?: string
+  highlightParagraphId?: string
   /** 폼 양식 편집기 — 바깥 단락 헤더(title·description)가 있을 때 중복 제거 */
   hideSectionHeader?: boolean
   /** 양식 작성 화면 — 프로그램 연동 값 대신 placeholder·힌트 */
@@ -221,7 +223,12 @@ export function UjatRecruitVolunteerInfoProgramView({
 
   return (
     <div className="ujat-recruit-volunteer-info-program">
-      {!hideSectionHeader ? <UjatRecruitSectionDescriptionHeader title={sectionTitle} /> : null}
+      {!hideSectionHeader ? (
+        <UjatRecruitSectionDescriptionHeader
+          title={sectionTitle}
+          highlightParagraphId={highlightParagraphId}
+        />
+      ) : null}
       <div className="ujat-recruit-volunteer-info-program__forms">
       <DetailInfoForm title="봉사자 모집 정보(설정)" hideHeader mode={formMode}>
         {showNoticeExposure ? (
