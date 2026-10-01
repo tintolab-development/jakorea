@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { uploadAdminFileMaybeMock } from '@/shared/lib/admin-file-upload/upload-maybe-mock'
 import {
   faqInlineImageOwner,
   mailTemplateInlineImageOwner,
@@ -6,6 +7,7 @@ import {
   programInlineImageOwner,
   programPostInlineImageOwner,
   resolveRichTextInlineImageSrc,
+  stripBlobImageSources,
 } from '@/shared/lib/admin-file-upload/inline-image'
 
 vi.mock('@/shared/lib/admin-file-upload/upload-maybe-mock', () => ({
@@ -36,5 +38,23 @@ describe('rich-text inline image owners', () => {
     expect(resolved.src.startsWith('blob:')).toBe(true)
     expect(resolved.persistSrc).toBe('/api/admin/files/42/content')
     URL.revokeObjectURL(resolved.src)
+  })
+
+  it('공지 신규는 ownerId 없이 업로드하지 않고 blob만 둔다', async () => {
+    vi.mocked(uploadAdminFileMaybeMock).mockClear()
+    const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
+    const resolved = await resolveRichTextInlineImageSrc(file, noticeInlineImageOwner(null))
+    expect(resolved.src.startsWith('blob:')).toBe(true)
+    expect(resolved.persistSrc).toBeUndefined()
+    expect(uploadAdminFileMaybeMock).not.toHaveBeenCalled()
+    URL.revokeObjectURL(resolved.src)
+  })
+
+  it('blob 이미지 마크업만 제거한다', () => {
+    expect(
+      stripBlobImageSources('안녕 ![a](blob:http://localhost/1) 하세요 <img src="blob:http://localhost/2" />')
+        .replace(/\s+/g, ' ')
+        .trim()
+    ).toBe('안녕 하세요')
   })
 })

@@ -66,6 +66,15 @@ export async function fetchNoticeAttachmentsRemote(
   )
 }
 
+export async function replaceNoticeInlineImagesRemote(
+  noticeId: string,
+  fileObjectIds: number[]
+): Promise<void> {
+  await unwrapApiBody(
+    await postsApi.replaceNoticeInlineImages(pathId(noticeId), { fileObjectIds })
+  )
+}
+
 export async function replaceNoticeAttachmentsRemote(
   noticeId: string,
   fileObjectIds: number[]
