@@ -13,21 +13,17 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
+import { uploadAdminFileMaybeMock } from '@/shared/lib/admin-file-upload'
+import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
 import {
-  parseFileObjectId,
-  uploadAdminFileMaybeMock,
-} from '@/shared/lib/admin-file-upload'
-import {
-  fetchProgramAttachments,
-  programDetailAttachmentOwner,
-  programThumbnailOwner,
-  putProgramAttachments,
-} from '@/features/program/shared/api/program-attachments'
-import {
-  fetchProgramThumbnail,
-  loadProgramThumbnailPreviewUrl,
-  putProgramThumbnail,
-} from '@/features/program/shared/api/program-thumbnail'
+  fetchProgramMediaAttachments,
+  fetchProgramMediaThumbnail,
+  hasProgramMediaTarget,
+  programMediaAttachmentOwner,
+  programMediaThumbnailOwner,
+  putProgramMediaAttachments,
+  putProgramMediaThumbnail,
+} from '@/features/program/shared/api/program-media-target'
 import { useCmsAlert } from '@/shared/ui'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
@@ -189,13 +185,12 @@ function useDetailInfoEditorBlock(
   })
 
   useEffect(() => {
-    const programId = parseFileObjectId(program.id)
-    if (programId == null) {
+    if (!hasProgramMediaTarget(program)) {
       setLinkedAttachmentNames(null)
       return
     }
     let cancelled = false
-    void fetchProgramAttachments(programId)
+    void fetchProgramMediaAttachments(program)
       .then(items => {
         if (cancelled) return
         const names = items
@@ -212,20 +207,23 @@ function useDetailInfoEditorBlock(
     return () => {
       cancelled = true
     }
-    // form identity는 렌더마다 바뀔 수 있어 program.id 기준으로만 동기화
+    // form identity는 렌더마다 바뀔 수 있어 program.id·모집 행 기준으로만 동기화
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync from attachments API SSOT
-  }, [program.id])
+  }, [program.id, program.activeRecruitmentId])
+
+  const activeRowThumbnailId = program.programRecruitments?.find(
+    row => row.id != null && row.id === program.activeRecruitmentId
+  )?.thumbnailFileObjectId
 
   useEffect(() => {
-    const programId = parseFileObjectId(program.id)
-    if (programId == null) {
+    if (!hasProgramMediaTarget(program)) {
       setLinkedThumbnail(null)
       return
     }
     let cancelled = false
     let createdUrl: string | null = null
     void (async () => {
-      const thumbnail = await fetchProgramThumbnail(programId)
+      const thumbnail = await fetchProgramMediaThumbnail(program)
       if (cancelled || thumbnail.fileObjectId == null) {
         if (!cancelled) {
           setLinkedThumbnail(prev => {
@@ -260,7 +258,8 @@ function useDetailInfoEditorBlock(
       cancelled = true
       revokeBlobUrl(createdUrl)
     }
-  }, [program.id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- program 객체는 렌더마다 바뀐다
+  }, [program.id, program.activeRecruitmentId, activeRowThumbnailId])
 
   const legacyThumbnailUrl = readableThumbnailUrl(
     (isFormEdit && form
@@ -381,15 +380,12 @@ function ThumbnailImageRow({
                         setThumbnailPreviewBlobUrl(blobUrl)
                         setUploadingThumbnail(true)
                         try {
-                          const programId = parseFileObjectId(program.id)
-                          if (programId == null) {
+                          const owner = programMediaThumbnailOwner(program)
+                          if (owner == null) {
                             throw new Error('프로그램 번호가 없어 대표 이미지를 저장할 수 없습니다.')
                           }
-                          const uploaded = await uploadAdminFileMaybeMock({
-                            file,
-                            owner: programThumbnailOwner(programId),
-                          })
-                          await putProgramThumbnail(programId, uploaded.fileObjectId)
+                          const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                          await putProgramMediaThumbnail(program, uploaded.fileObjectId)
                           let previewUrl = blobUrl
                           try {
                             previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
@@ -426,13 +422,12 @@ function ThumbnailImageRow({
                           form.setValue('keyVisualImage', undefined)
                           form.setValue('posterImage', undefined)
                         }
-                        const programId = parseFileObjectId(program.id)
                         setLinkedThumbnail(prev => {
                           revokeBlobUrl(prev?.url)
                           return null
                         })
-                        if (programId != null) {
-                          void putProgramThumbnail(programId, null).catch(() => {
+                        if (hasProgramMediaTarget(program)) {
+                          void putProgramMediaThumbnail(program, null).catch(() => {
                             showAlert({
                               title: '안내',
                               content: '대표 이미지를 지우지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -547,20 +542,19 @@ function AttachmentRowStandard({
             onFilesChange={
               isFormEdit
                 ? async files => {
-                    const programId = parseFileObjectId(program.id)
-                    if (programId == null) return
-                    const owner = programDetailAttachmentOwner(programId)
+                    const owner = programMediaAttachmentOwner(program)
+                    if (owner == null) return
                     const uploadedIds: number[] = []
                     for (const file of files) {
                       const uploaded = await uploadAdminFileMaybeMock({ file, owner })
                       uploadedIds.push(uploaded.fileObjectId)
                     }
                     if (uploadedIds.length === 0) return
-                    const existing = await fetchProgramAttachments(programId).catch(() => [])
+                    const existing = await fetchProgramMediaAttachments(program).catch(() => [])
                     const existingIds = existing
                       .map(item => item.fileObjectId)
                       .filter((id): id is number => typeof id === 'number' && id > 0)
-                    const linked = await putProgramAttachments(programId, [
+                    const linked = await putProgramMediaAttachments(program, [
                       ...existingIds,
                       ...uploadedIds,
                     ])
@@ -574,8 +568,7 @@ function AttachmentRowStandard({
             onRemoveFile={
               isFormEdit
                 ? index => {
-                    const programId = parseFileObjectId(program.id)
-                    if (programId == null) {
+                    if (!hasProgramMediaTarget(program)) {
                       const list = form!.getValues('attachmentFileNames') ?? []
                       form!.setValue(
                         'attachmentFileNames',
@@ -584,13 +577,13 @@ function AttachmentRowStandard({
                       return
                     }
                     void (async () => {
-                      const existing = await fetchProgramAttachments(programId).catch(() => [])
+                      const existing = await fetchProgramMediaAttachments(program).catch(() => [])
                       const remainingIds = existing
                         .map(item => item.fileObjectId)
                         .filter((id): id is number => typeof id === 'number' && id > 0)
                         .filter((_, i) => i !== index)
-                      const linked = await putProgramAttachments(programId, remainingIds).catch(
-                        () => [] as Awaited<ReturnType<typeof putProgramAttachments>>
+                      const linked = await putProgramMediaAttachments(program, remainingIds).catch(
+                        () => [] as Awaited<ReturnType<typeof putProgramMediaAttachments>>
                       )
                       const names = linked
                         .map(item => item.originalFileName?.trim() || '')
@@ -1077,20 +1070,19 @@ export function VolunteerDetailInfoSection({
                   onFilesChange={
                     isFormEdit
                       ? async files => {
-                          const programId = parseFileObjectId(program.id)
-                          if (programId == null) return
-                          const owner = programDetailAttachmentOwner(programId)
+                          const owner = programMediaAttachmentOwner(program)
+                          if (owner == null) return
                           const uploadedIds: number[] = []
                           for (const file of files) {
                             const uploaded = await uploadAdminFileMaybeMock({ file, owner })
                             uploadedIds.push(uploaded.fileObjectId)
                           }
                           if (uploadedIds.length === 0) return
-                          const existing = await fetchProgramAttachments(programId).catch(() => [])
+                          const existing = await fetchProgramMediaAttachments(program).catch(() => [])
                           const existingIds = existing
                             .map(item => item.fileObjectId)
                             .filter((id): id is number => typeof id === 'number' && id > 0)
-                          const linked = await putProgramAttachments(programId, [
+                          const linked = await putProgramMediaAttachments(program, [
                             ...existingIds,
                             ...uploadedIds,
                           ])
@@ -1104,8 +1096,7 @@ export function VolunteerDetailInfoSection({
                   onRemoveFile={
                     isFormEdit
                       ? index => {
-                          const programId = parseFileObjectId(program.id)
-                          if (programId == null) {
+                          if (!hasProgramMediaTarget(program)) {
                             const list = f!.getValues('attachmentFileNames') ?? []
                             f!.setValue(
                               'attachmentFileNames',
@@ -1114,15 +1105,15 @@ export function VolunteerDetailInfoSection({
                             return
                           }
                           void (async () => {
-                            const existing = await fetchProgramAttachments(programId).catch(
+                            const existing = await fetchProgramMediaAttachments(program).catch(
                               () => []
                             )
                             const remainingIds = existing
                               .map(item => item.fileObjectId)
                               .filter((id): id is number => typeof id === 'number' && id > 0)
                               .filter((_, i) => i !== index)
-                            const linked = await putProgramAttachments(programId, remainingIds).catch(
-                              () => [] as Awaited<ReturnType<typeof putProgramAttachments>>
+                            const linked = await putProgramMediaAttachments(program, remainingIds).catch(
+                              () => [] as Awaited<ReturnType<typeof putProgramMediaAttachments>>
                             )
                             const names = linked
                               .map(item => item.originalFileName?.trim() || '')

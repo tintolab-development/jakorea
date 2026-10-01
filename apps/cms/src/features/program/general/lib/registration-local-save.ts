@@ -41,6 +41,7 @@ import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   awaitRecruitDetailMediaUploads,
+  bindGeneralRecruitDetailMediaToRows,
   bindRecruitDetailMediaAfterProgramCreate,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
@@ -694,7 +695,7 @@ export async function persistGeneralProgramRegistration(args: {
     shouldUseGeneralProgramsRemoteApi()
   ) {
     const created = await createGeneralProgram(program, args.preparedFormBindings)
-    await bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay).catch(error => {
+    await bindGeneralRecruitDetailMediaToRows(created, recruitMediaOverlay).catch(error => {
       console.error('[registration] bind recruit detail media failed', created.id, error)
     })
     return created
