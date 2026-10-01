@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { deleteGeneralPrograms } from '@/features/program/general/api/admin-general-programs-service'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { isProgramHardDeleteBlockedError } from '@/features/program/shared/lib/program-delete-guide'
 
 export function useDeleteGeneralPrograms() {
   const queryClient = useQueryClient()
@@ -15,6 +16,11 @@ export function useDeleteGeneralPrograms() {
         await queryClient.cancelQueries({ queryKey: detailKey })
         queryClient.removeQueries({ queryKey: detailKey })
       }
+      void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.lists() })
+      void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.overviewStages() })
+    },
+    onError: error => {
+      if (!isProgramHardDeleteBlockedError(error) || error.successCount < 1) return
       void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.lists() })
       void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.overviewStages() })
     },
