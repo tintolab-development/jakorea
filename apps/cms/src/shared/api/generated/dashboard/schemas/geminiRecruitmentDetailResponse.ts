@@ -47,6 +47,11 @@ export interface GeminiRecruitmentDetailResponse {
      */
   educationForm?: GeminiRecruitmentDetailResponseEducationForm;
   /**
+     * 교육 진행 구조. SCHEDULE | CURRICULUM. null이면 FE가 SCHEDULE로 하드코딩해 PATCH 하지 말 것.
+     * @nullable
+     */
+  educationStructure?: string | null;
+  /**
      * 문의처 이름
      * @nullable
      */

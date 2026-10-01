@@ -14,9 +14,19 @@ export interface GeminiApprovedTrainingItem {
   institutionName?: string;
   institutionSido?: string;
   institutionSigungu?: string;
+  /**
+   * 목록은 program.period_status일 수 있음 — 행 배지에 쓰지 말고 FE가 날짜로 파생.
+   * @nullable
+   */
   progressStatus?: string;
+  /** 강사 매칭 확정일. 미매칭이면 null 이어야 함 */
   trainingDate?: string;
   trainingTimeText?: string;
+  /**
+   * 희망 일정 3지망 마지막일. 목록 OpenAPI에 아직 없을 수 있음 — 있으면 사용.
+   * @nullable
+   */
+  lastPreferredDate?: string | null;
   studentCount?: number;
   instructorName?: string;
   managerName?: string;
