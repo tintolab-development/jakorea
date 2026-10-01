@@ -27,6 +27,7 @@ import {
   programMediaThumbnailOwner,
   putProgramMediaAttachments,
   putProgramMediaThumbnail,
+  usesRecruitmentRowMedia,
 } from '@/features/program/shared/api/program-media-target'
 import { useCmsAlert } from '@/shared/ui'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
@@ -76,22 +77,28 @@ function normalizeAttachmentFileNames(names: string[] | undefined | null): strin
   return (names ?? []).map(name => name.trim()).filter(Boolean)
 }
 
-/** GET attachments API 결과 + program/상세 JSON fallback (빈 API 응답이 이름을 덮어쓰지 않게) */
-function resolveAttachmentFileNamesForDisplay({
+/**
+ * 모집 행 화면은 그 행 첨부만 보여 준다. `[]`이면 프로그램 첨부로 채우지 않는다.
+ * 프로그램 화면은 행 API가 비어 있을 때만 프로그램 첨부 이름을 유지한다.
+ */
+export function resolveAttachmentFileNamesForDisplay({
+  rowScoped,
   isFormEdit,
   formFileNames,
   linkedAttachmentNames,
   programFallback,
 }: {
+  rowScoped: boolean
   isFormEdit: boolean
   formFileNames: string[] | undefined
   linkedAttachmentNames: string[] | null
   programFallback: string[] | undefined
 }): string[] {
-  const fallback = normalizeAttachmentFileNames(programFallback)
-  if (isFormEdit) {
-    return normalizeAttachmentFileNames(formFileNames)
+  if (rowScoped) {
+    return normalizeAttachmentFileNames(linkedAttachmentNames ?? [])
   }
+  const fallback = normalizeAttachmentFileNames(programFallback)
+  if (isFormEdit) return normalizeAttachmentFileNames(formFileNames)
   if (linkedAttachmentNames != null && linkedAttachmentNames.length > 0) {
     return normalizeAttachmentFileNames(linkedAttachmentNames)
   }
@@ -182,12 +189,14 @@ function useDetailInfoEditorBlock(
   }, [isEditMode, onRegisterGetAdditionalContentHtml])
 
   const isFormEdit = Boolean(isEditMode && form)
+  const rowMedia = usesRecruitmentRowMedia(program)
   const [linkedAttachmentNames, setLinkedAttachmentNames] = useState<string[] | null>(null)
   const displayFileNames = resolveAttachmentFileNamesForDisplay({
+    rowScoped: rowMedia,
     isFormEdit,
     formFileNames: isFormEdit ? form!.watch('attachmentFileNames') : undefined,
     linkedAttachmentNames,
-    programFallback: program.attachmentFileNames,
+    programFallback: rowMedia ? undefined : program.attachmentFileNames,
   })
 
   useEffect(() => {
@@ -203,7 +212,7 @@ function useDetailInfoEditorBlock(
           .map(item => item.originalFileName?.trim() || '')
           .filter(Boolean)
         setLinkedAttachmentNames(names)
-        if (form && names.length > 0) {
+        if (form && (usesRecruitmentRowMedia(program) || names.length > 0)) {
           form.setValue('attachmentFileNames', names, { shouldDirty: false })
         }
       })
@@ -274,11 +283,14 @@ function useDetailInfoEditorBlock(
       program.keyVisualImage ||
       program.posterImage
   )
-  const displayThumbnailUrl =
-    thumbnailPreviewBlobUrl || linkedThumbnail?.url || legacyThumbnailUrl
-  const thumbnailFilename =
-    linkedThumbnail?.fileName ||
-    (legacyThumbnailUrl ? getThumbnailFilename(legacyThumbnailUrl) : '')
+  const displayThumbnailUrl = rowMedia
+    ? thumbnailPreviewBlobUrl || linkedThumbnail?.url
+    : thumbnailPreviewBlobUrl || linkedThumbnail?.url || legacyThumbnailUrl
+  const thumbnailFilename = rowMedia
+    ? linkedThumbnail?.fileName ||
+      (thumbnailPreviewBlobUrl ? getThumbnailFilename(thumbnailPreviewBlobUrl) : '')
+    : linkedThumbnail?.fileName ||
+      (legacyThumbnailUrl ? getThumbnailFilename(legacyThumbnailUrl) : '')
 
   return {
     editorOpen,
@@ -293,6 +305,7 @@ function useDetailInfoEditorBlock(
     displayThumbnailUrl,
     thumbnailFilename,
     form,
+    setLinkedAttachmentNames,
   }
 }
 
@@ -522,6 +535,7 @@ function AttachmentRowStandard({
   displayFileNames,
   guideLines,
   emptyReadDisplay = 'mock-default',
+  onNamesChange,
 }: {
   program: Program
   isEditMode: boolean
@@ -530,6 +544,7 @@ function AttachmentRowStandard({
   displayFileNames: string[]
   guideLines: string[]
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
+  onNamesChange?: (names: string[]) => void
 }) {
   const [uploading, setUploading] = useState(false)
   const showEmptyDash =
@@ -576,6 +591,7 @@ function AttachmentRowStandard({
                         .map(item => item.originalFileName?.trim() || '')
                         .filter(Boolean)
                       form!.setValue('attachmentFileNames', names)
+                      onNamesChange?.(names)
                     } finally {
                       setUploading(false)
                     }
@@ -587,10 +603,9 @@ function AttachmentRowStandard({
                 ? index => {
                     if (!hasProgramMediaTarget(program)) {
                       const list = form!.getValues('attachmentFileNames') ?? []
-                      form!.setValue(
-                        'attachmentFileNames',
-                        list.filter((_, i) => i !== index)
-                      )
+                      const next = list.filter((_, i) => i !== index)
+                      form!.setValue('attachmentFileNames', next)
+                      onNamesChange?.(next)
                       return
                     }
                     void (async () => {
@@ -606,6 +621,7 @@ function AttachmentRowStandard({
                         .map(item => item.originalFileName?.trim() || '')
                         .filter(Boolean)
                       form!.setValue('attachmentFileNames', names)
+                      onNamesChange?.(names)
                     })()
                   }
                 : undefined
@@ -670,6 +686,7 @@ export function DetailInfoSection({
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
+    setLinkedAttachmentNames,
   } = useDetailInfoEditorBlock(
     program,
     isEditMode,
@@ -783,6 +800,7 @@ export function DetailInfoSection({
             displayFileNames={displayFileNames}
             guideLines={ATTACHMENT_GUIDE_LINES}
             emptyReadDisplay={emptyReadDisplay}
+            onNamesChange={setLinkedAttachmentNames}
           />
         </DetailInfoTableFrame>
       </DetailInfoForm>
@@ -818,6 +836,7 @@ export function InstructorDetailInfoSection({
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
+    setLinkedAttachmentNames,
   } = useDetailInfoEditorBlock(
     program,
     isEditMode,
@@ -929,6 +948,7 @@ export function InstructorDetailInfoSection({
               '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
             ]}
             emptyReadDisplay={emptyReadDisplay}
+            onNamesChange={setLinkedAttachmentNames}
           />
         </DetailInfoTableFrame>
       </DetailInfoForm>
@@ -971,6 +991,7 @@ export function VolunteerDetailInfoSection({
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
+    setLinkedAttachmentNames,
   } = useDetailInfoEditorBlock(
     program,
     isEditMode,
@@ -1113,6 +1134,7 @@ export function VolunteerDetailInfoSection({
                               .map(item => item.originalFileName?.trim() || '')
                               .filter(Boolean)
                             f!.setValue('attachmentFileNames', names)
+                            setLinkedAttachmentNames(names)
                           } finally {
                             setUploadingAttachments(false)
                           }
@@ -1124,10 +1146,9 @@ export function VolunteerDetailInfoSection({
                       ? index => {
                           if (!hasProgramMediaTarget(program)) {
                             const list = f!.getValues('attachmentFileNames') ?? []
-                            f!.setValue(
-                              'attachmentFileNames',
-                              list.filter((_, i) => i !== index)
-                            )
+                            const next = list.filter((_, i) => i !== index)
+                            f!.setValue('attachmentFileNames', next)
+                            setLinkedAttachmentNames(next)
                             return
                           }
                           void (async () => {
@@ -1145,6 +1166,7 @@ export function VolunteerDetailInfoSection({
                               .map(item => item.originalFileName?.trim() || '')
                               .filter(Boolean)
                             f!.setValue('attachmentFileNames', names)
+                            setLinkedAttachmentNames(names)
                           })()
                         }
                       : undefined

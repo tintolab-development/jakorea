@@ -45,6 +45,11 @@ export function hasProgramMediaTarget(program: Program): boolean {
   return resolveTarget(program) != null
 }
 
+/** GENERAL_*·UJAT 모집 탭. 첨부와 대표 이미지는 그 행만 쓴다. */
+export function usesRecruitmentRowMedia(program: Program): boolean {
+  return resolveTarget(program)?.recruitmentId != null
+}
+
 export function programMediaAttachmentOwner(program: Program): AdminFileUploadOwner | null {
   const target = resolveTarget(program)
   if (!target) return null
