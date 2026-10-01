@@ -148,7 +148,7 @@ export async function uploadToS3(
 export async function createUploadRequest(
   input: CreateUploadRequestInput
 ): Promise<PreparedUpload> {
-  const body: FileUploadPrepareRequest = {
+  const body: Omit<FileUploadPrepareRequest, 'ownerId'> & { ownerId: number | null } = {
     ownerDomain: input.owner.ownerDomain,
     ownerType: input.owner.ownerType,
     ownerId: input.owner.ownerId,

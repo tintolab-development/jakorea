@@ -39,13 +39,7 @@ export function noticeFileOwner(noticeId: number): AdminFileUploadOwner {
   return buildAdminFileOwner(ADMIN_FILE_OWNER.NOTICE, noticeId, NOTICE_FILE_PURPOSE)
 }
 
-export function noticeInlineImageOwner(noticeId: number): AdminFileUploadOwner {
-  return buildAdminFileOwner(
-    ADMIN_FILE_OWNER.NOTICE_INLINE,
-    noticeId,
-    ADMIN_FILE_PURPOSE.NOTICE_INLINE_IMAGE
-  )
-}
+export { noticeInlineImageOwner } from '@/shared/lib/admin-file-upload/inline-image'
 
 export function parseNoticeOwnerId(noticeId: string | undefined): number | null {
   return parseOwnerResourceId(noticeId)

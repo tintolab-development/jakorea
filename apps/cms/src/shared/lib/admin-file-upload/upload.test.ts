@@ -145,6 +145,39 @@ describe('admin file upload', () => {
     expect(config?.headers).toMatchObject({ 'Idempotency-Key': 'idem-1' })
   })
 
+  it('createUploadRequest는 신규 본문 이미지의 ownerId null을 그대로 보낸다', async () => {
+    vi.mocked(customInstance).mockResolvedValue(
+      wrapData({
+        fileObjectId: '202',
+        uploadUrl: 'https://s3.example/upload',
+        method: 'PUT',
+        requiredHeaders: { 'Content-Type': 'image/jpeg' },
+        confirmPath: '/api/admin/files/202/confirm',
+      })
+    )
+
+    await createUploadRequest({
+      owner: {
+        ownerDomain: 'PROGRAM_CONTENT',
+        ownerType: 'PROGRAM',
+        ownerId: null,
+        filePurpose: 'PROGRAM_INLINE_IMAGE',
+      },
+      originalFileName: 'inline.jpg',
+      contentType: 'image/jpeg',
+      fileSize: 2048,
+      checksumSha256: 'SHA256_VALUE',
+    })
+
+    const config = vi.mocked(customInstance).mock.calls[0]?.[0]
+    expect(config?.data).toMatchObject({
+      ownerDomain: 'PROGRAM_CONTENT',
+      ownerType: 'PROGRAM',
+      ownerId: null,
+      filePurpose: 'PROGRAM_INLINE_IMAGE',
+    })
+  })
+
   it('confirmUpload는 최초 요청과 같은 fileSize·checksum·contentType을 보낸다', async () => {
     vi.mocked(customInstance).mockResolvedValue(
       wrapData({
