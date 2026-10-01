@@ -51,12 +51,19 @@ export function writeRecruitmentRowCopy(
   copy: Partial<
     Pick<
       ProgramRecruitmentWindow,
+      | 'announcementTitle'
+      | 'summary'
+      | 'contactName'
+      | 'contactPhone'
+      | 'contactEmail'
       | 'programDescription'
       | 'recruitmentGuide'
       | 'applicationMethod'
       | 'learningSupportContent'
       | 'additionalContentHtml'
       | 'remarks'
+      | 'startAt'
+      | 'endAt'
     >
   >,
   volunteerHalf?: 'h1' | 'h2'
@@ -75,9 +82,11 @@ export function applyRecruitmentRowCopy(
   volunteerHalf?: 'h1' | 'h2'
 ): Program {
   const row = pickRecruitmentCopyRow(program, audience, volunteerHalf)
-  if (!row || !hasRecruitmentCopy(row)) return program
+  if (!row) return program
+  const withRow: Program = row.id != null ? { ...program, activeRecruitmentId: row.id } : program
+  if (!hasRecruitmentCopy(row)) return withRow
   return {
-    ...program,
+    ...withRow,
     description: emptyToUndefined(row.programDescription),
     recruitmentGuide: emptyToUndefined(row.recruitmentGuide),
     applicationMethod: emptyToUndefined(row.applicationMethod),

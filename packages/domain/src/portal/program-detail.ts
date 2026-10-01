@@ -22,6 +22,16 @@ export type PortalRecruitment = {
   interviewStartAt?: string | null
   interviewEndAt?: string | null
   finalPassAnnouncementAt?: string | null
+  /** GENERAL_*·UJAT 모집 행 값. 비어 있으면 null이며 프로그램 값으로 채우지 않는다. */
+  applicationType?: string | null
+  announcementTitle?: string | null
+  summary?: string | null
+  programDescription?: string | null
+  recruitmentGuide?: string | null
+  applicationMethod?: string | null
+  learningSupportContent?: string | null
+  additionalContentHtml?: string | null
+  remarks?: string | null
 }
 
 export type PortalSchedule = {
@@ -105,8 +115,9 @@ export type PortalProgramDetail = {
   portalCategories?: string[]
   title?: string
   titleEn?: string
-  summary?: string
-  description?: string
+  /** `recruitmentId` 상세(GENERAL_*·UJAT)는 행 값만. 없으면 null */
+  summary?: string | null
+  description?: string | null
   operationMethod?: string
   businessYear?: number
   businessStartDate?: string
@@ -122,9 +133,9 @@ export type PortalProgramDetail = {
   venue?: string
   /** inside=기관 안, outside=기관 밖, other=기타. 없으면 상세만 표시 */
   venueKind?: 'inside' | 'outside' | 'other' | null
-  contactName?: string
-  contactEmail?: string
-  contactPhone?: string
+  contactName?: string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
   additionalContentHtml?: string | null
   recruitmentGuide?: string | null
   learningSupportContent?: string | null
@@ -163,7 +174,8 @@ export type PortalProgramDetail = {
   educationTargets?: string[]
   educationTargetDetail?: string
   recruitmentTargetDetail?: string
-  thumbnailFileObjectId?: number
+  /** GENERAL_*·UJAT 행 대표 이미지. 없으면 null이며 프로그램 썸네일로 채우지 않는다. */
+  thumbnailFileObjectId?: number | null
   sponsorNames?: string[]
   recruitments?: PortalRecruitment[]
   schedules?: PortalSchedule[]

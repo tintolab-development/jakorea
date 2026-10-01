@@ -16,9 +16,12 @@ const SEOUL_TIME_ZONE = 'Asia/Seoul'
 export function toProgramRecruitmentWindows(
   recruitments:
     | Array<{
+        id?: number | null
         recruitmentType?: string
         targetType?: string
+        applicationType?: string | null
         startAt?: string | null
+        endAt?: string | null
         operationStartDate?: string | null
         programDescription?: string | null
         recruitmentGuide?: string | null
@@ -26,16 +29,45 @@ export function toProgramRecruitmentWindows(
         learningSupportContent?: string | null
         additionalContentHtml?: string | null
         remarks?: string | null
+        announcementTitle?: string | null
+        summary?: string | null
+        contactName?: string | null
+        contactPhone?: string | null
+        contactEmail?: string | null
+        thumbnailFileObjectId?: number | null
+        attachments?: Array<{
+          attachmentId?: number
+          fileObjectId?: number
+          originalFileName?: string | null
+          displayOrder?: number
+        }> | null
+        applicationFormBindingId?: number | null
       }>
     | null
     | undefined
 ): ProgramRecruitmentWindow[] | undefined {
   if (!recruitments?.length) return undefined
   return recruitments.map(row => ({
+    ...(row.id != null ? { id: row.id } : {}),
     recruitmentType: row.recruitmentType,
     targetType: row.targetType,
+    ...(row.applicationType ? { applicationType: row.applicationType } : {}),
     startAt: row.startAt ?? null,
+    endAt: row.endAt ?? null,
     operationStartDate: row.operationStartDate ?? null,
+    announcementTitle: row.announcementTitle ?? null,
+    summary: row.summary ?? null,
+    contactName: row.contactName ?? null,
+    contactPhone: row.contactPhone ?? null,
+    contactEmail: row.contactEmail ?? null,
+    thumbnailFileObjectId: row.thumbnailFileObjectId ?? null,
+    attachments: (row.attachments ?? []).map(item => ({
+      attachmentId: item.attachmentId,
+      fileObjectId: item.fileObjectId,
+      originalFileName: item.originalFileName ?? null,
+      displayOrder: item.displayOrder,
+    })),
+    applicationFormBindingId: row.applicationFormBindingId ?? null,
     programDescription: row.programDescription ?? null,
     recruitmentGuide: row.recruitmentGuide ?? null,
     applicationMethod: row.applicationMethod ?? null,

@@ -402,10 +402,22 @@ export type UjatProgramProgressStatus =
  * 프로그램 모집 행.
  * 신청양식 잠금은 `startAt`, 모집정보 잠금은 `operationStartDate`.
  */
+export interface ProgramRecruitmentAttachment {
+  attachmentId?: number
+  fileObjectId?: number
+  originalFileName?: string | null
+  displayOrder?: number
+}
+
 export interface ProgramRecruitmentWindow {
+  /** 모집 행 id. 저장 시 기존 행은 이 id로 고친다. */
+  id?: number
   recruitmentType?: string
   targetType?: string
+  /** INDIVIDUAL | ORGANIZATION | INSTRUCTOR | VOLUNTEER */
+  applicationType?: string
   startAt?: string | null
+  endAt?: string | null
   /** 해당 모집 유형의 프로그램 운영 시작일. 없으면 모집정보를 잠그지 않는다. */
   operationStartDate?: string | null
   /** 모집 행 문구. null이면 프로그램 공통 문장으로 채우지 않는다. */
@@ -415,6 +427,15 @@ export interface ProgramRecruitmentWindow {
   learningSupportContent?: string | null
   additionalContentHtml?: string | null
   remarks?: string | null
+  announcementTitle?: string | null
+  summary?: string | null
+  contactName?: string | null
+  contactPhone?: string | null
+  contactEmail?: string | null
+  /** 이 모집 대표 이미지. 프로그램 대표 이미지로 대체하지 않는다. */
+  thumbnailFileObjectId?: number | null
+  attachments?: ProgramRecruitmentAttachment[]
+  applicationFormBindingId?: number | null
 }
 
 export interface Program {
@@ -563,6 +584,8 @@ export interface Program {
    * 신청양식 잠금은 유형별 `startAt`, 모집정보 잠금은 유형별 `operationStartDate`.
    */
   programRecruitments?: ProgramRecruitmentWindow[]
+  /** 모집 탭 표시용 program에만 설정. 첨부·대표 이미지를 이 모집 행에 저장한다. */
+  activeRecruitmentId?: number
   /** 일반 프로그램 — 봉사자 선발 시 면접 단계 LNB 노출 여부 */
   generalVolunteerInterviewEnabled?: boolean
   /** 일반 프로그램 — 개인 참여자 선발 시 면접 단계 LNB 노출 여부 */
