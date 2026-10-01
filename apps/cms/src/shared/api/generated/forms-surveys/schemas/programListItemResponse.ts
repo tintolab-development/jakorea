@@ -5,9 +5,11 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramListItemResponseApplicationType } from './programListItemResponseApplicationType';
 import type { ProgramListItemResponseEducationForm } from './programListItemResponseEducationForm';
 import type { ProgramListItemResponseEducationTarget } from './programListItemResponseEducationTarget';
 import type { ProgramListItemResponseRecruitmentStatus } from './programListItemResponseRecruitmentStatus';
+import type { ProgramListItemResponseRecruitmentType } from './programListItemResponseRecruitmentType';
 
 export interface ProgramListItemResponse {
   programId?: number;
@@ -60,4 +62,24 @@ export interface ProgramListItemResponse {
      * @nullable
      */
   homeDisplayOrder?: number | null;
+  /**
+     * 이 목록 행의 모집 id. 모집 없는 NONE 행이면 null.
+     * @nullable
+     */
+  recruitmentId?: number | null;
+  /**
+     * 이 행의 모집 유형.
+     * @nullable
+     */
+  recruitmentType?: ProgramListItemResponseRecruitmentType;
+  /**
+     * 이 행의 모집 대상. 저장된 target_type.
+     * @nullable
+     */
+  targetType?: string | null;
+  /**
+     * 이 행의 신청 양식 하나.
+     * @nullable
+     */
+  applicationType?: ProgramListItemResponseApplicationType;
 }

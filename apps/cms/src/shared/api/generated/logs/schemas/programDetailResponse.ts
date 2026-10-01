@@ -149,4 +149,14 @@ export interface ProgramDetailResponse {
      * @nullable
      */
   educationScheduleRange?: ScheduleRange;
+  /**
+     * recruitmentId 조회일 때 그 모집의 시작. 쿼리가 없으면 null.
+     * @nullable
+     */
+  recruitmentStartAt?: string | null;
+  /**
+     * recruitmentId 조회일 때 그 모집의 종료. 쿼리가 없으면 null.
+     * @nullable
+     */
+  recruitmentEndAt?: string | null;
 }

@@ -6,16 +6,15 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 모집 행 하나에 붙은 첨부파일
+ */
 export interface ProgramRecruitmentAttachmentResponse {
   attachmentId?: number;
   fileObjectId?: number;
-  /** @nullable */
-  originalFileName?: string | null;
-  /** @nullable */
-  contentType?: string | null;
-  /** @nullable */
-  fileSize?: number | null;
+  originalFileName?: string;
+  contentType?: string;
+  fileSize?: number;
   displayOrder?: number;
-  /** @nullable */
-  downloadPath?: string | null;
+  downloadPath?: string;
 }
