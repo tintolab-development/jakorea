@@ -66,13 +66,13 @@ export function TemplateCreateModal({
   const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
   const { sections } = useWritingFormSections()
-  const [kind, setKind] = useState<TemplateCreateKind>('application')
+  const [kind, setKind] = useState<TemplateCreateKind>('survey')
   const [selectValue, setSelectValue] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!open) return
-    setKind('application')
+    setKind('survey')
     setSelectValue(null)
     setSubmitting(false)
   }, [open])
@@ -213,8 +213,10 @@ export function TemplateCreateModal({
           value={kind}
           onChange={e => handleKindChange(e.target.value as TemplateCreateKind)}
         >
+          {/* TODO: 모집·신청 양식 신규 등록 임시 비노출
           <CmsRadio value="application">모집 양식</CmsRadio>
           <CmsRadio value="application_form">신청 양식</CmsRadio>
+          */}
           <CmsRadio value="survey">설문 양식</CmsRadio>
           <CmsRadio value="agreement">동의 양식</CmsRadio>
         </CmsRadioGroup>
