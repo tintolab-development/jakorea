@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { PlusOutlined } from '@ant-design/icons'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
@@ -11,6 +11,11 @@ import {
 } from '@/features/program/general/lib/volunteer-interview-schedule-display'
 import { resolveGeneralProgramVolunteerRecruitmentDisplay } from '@/features/program/general/lib/volunteer-recruitment-display'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  hydrateMissingVolunteerInterviewOverlay,
+  listVolunteerInterviewExceptionBlockIds,
+} from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/recruit-form-volunteer-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
@@ -70,6 +75,7 @@ function GeneralProgramVolunteerInterviewScheduleView({
   }
 
   return (
+    <>
     <DetailInfoForm title="면접 진행 가능 일정" hideHeader mode="view" className={FORM_CLASS}>
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
@@ -91,6 +97,30 @@ function GeneralProgramVolunteerInterviewScheduleView({
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>
+    {display.exceptions.map((exception, index) => (
+      <div key={exception.blockId}>
+        <div className="detail-info-form--text-bold volunteer-interview-available-schedule__block-title">
+          {`■ 예외 일정 ${String(index + 1).padStart(2, '0')}`}
+        </div>
+        <DetailInfoForm title="예외 일정" hideHeader mode="view" className={FORM_CLASS}>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="예외 진행 일정"
+              fullRow
+              view={exception.exceptionDate?.trim() || '-'}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="면접 진행 가능 시간"
+              fullRow
+              view={exception.availableTimeSlots?.trim() || '-'}
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+      </div>
+    ))}
+    </>
   )
 }
 
@@ -114,6 +144,23 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
   const [exceptionScheduleAddDisabled, setExceptionScheduleAddDisabled] = useState(
     () => editSeed?.excludeNone ?? false
   )
+  useLayoutEffect(() => {
+    const source =
+      program.registrationOverlay != null &&
+      typeof program.registrationOverlay === 'object' &&
+      !Array.isArray(program.registrationOverlay)
+        ? program.registrationOverlay
+        : undefined
+    hydrateMissingVolunteerInterviewOverlay({ source, store: 'recruit' })
+    setExceptionBlockKeys(prev => {
+      if (prev.length > 0) return prev
+      const ids = listVolunteerInterviewExceptionBlockIds(
+        { ...(source ?? {}), ...getGeneralRecruitOverlayRecord() },
+        'recruit'
+      )
+      return ids.length > 0 ? ids : prev
+    })
+  }, [program.id, program.registrationOverlay])
   const showInterviewSchedule =
     isEdit && form
       ? interviewEnabledField === 'yes'

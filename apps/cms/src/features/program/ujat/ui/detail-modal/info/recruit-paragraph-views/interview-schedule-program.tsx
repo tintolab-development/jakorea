@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { PlusOutlined } from '@ant-design/icons'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
@@ -14,6 +14,11 @@ import {
   ujatVolunteerRecruitInterviewNamespace,
   ujatVolunteerRecruitInterviewRangeSealKey,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  hydrateMissingVolunteerInterviewOverlay,
+  listVolunteerInterviewExceptionBlockIds,
+} from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { CmsButton } from '@/shared/ui'
@@ -48,14 +53,42 @@ export function UjatRecruitInterviewScheduleProgramView({
   const editSeed = resolveUjatVolunteerInterviewScheduleEditSeed(program, volunteerHalf, {
     allowMockFallback: !isTemplateAuthoring,
   })
-  const [exceptionBlockKeys, setExceptionBlockKeys] = useState<number[]>(() =>
-    display.exceptions.length > 0
-      ? display.exceptions.map((_, index) => Date.now() + index)
-      : []
-  )
+  const interviewNamespace = volunteerHalf
+    ? ujatVolunteerRecruitInterviewNamespace(volunteerHalf)
+    : undefined
+  const [exceptionBlockKeys, setExceptionBlockKeys] = useState<number[]>([])
   const [exceptionScheduleAddDisabled, setExceptionScheduleAddDisabled] = useState(
     () => editSeed?.excludeNone ?? false
   )
+  useLayoutEffect(() => {
+    const registrationOverlay =
+      program.ujatRegistrationOverlay != null &&
+      typeof program.ujatRegistrationOverlay === 'object' &&
+      !Array.isArray(program.ujatRegistrationOverlay)
+        ? program.ujatRegistrationOverlay
+        : {}
+    const savedOverlay =
+      program.registrationOverlay != null &&
+      typeof program.registrationOverlay === 'object' &&
+      !Array.isArray(program.registrationOverlay)
+        ? program.registrationOverlay
+        : {}
+    const source = { ...savedOverlay, ...registrationOverlay }
+    hydrateMissingVolunteerInterviewOverlay({
+      source,
+      store: 'recruit',
+      namespace: interviewNamespace,
+    })
+    setExceptionBlockKeys(prev => {
+      if (prev.length > 0) return prev
+      const ids = listVolunteerInterviewExceptionBlockIds(
+        { ...source, ...getGeneralRecruitOverlayRecord() },
+        'recruit',
+        interviewNamespace
+      )
+      return ids.length > 0 ? ids : prev
+    })
+  }, [interviewNamespace, program.id, program.registrationOverlay, program.ujatRegistrationOverlay])
 
   const isFormEdit = Boolean(isEdit && form)
 

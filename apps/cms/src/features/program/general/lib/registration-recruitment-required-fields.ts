@@ -14,7 +14,10 @@ import {
   getApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
-import { buildVolunteerInterviewOverlayKey } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import {
+  buildVolunteerInterviewOverlayKey,
+  listVolunteerInterviewExceptionBlockIds,
+} from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import {
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
@@ -239,9 +242,25 @@ function listIncompleteVolunteerInterviewSchedule(
     !Array.isArray(slots) || slots.length === 0 || slots.every(s => isEmptyText(s)),
     `${p}.selectedSlotKeys`
   )
-  if (exceptionCount > 0) {
-    pushReason(reasons, read(overlay, key('exceptionDate')) == null, `${p}.exceptionDate`)
-    pushReason(reasons, read(overlay, key('interviewTime')) == null, `${p}.interviewTime`)
+  const exceptionIds = listVolunteerInterviewExceptionBlockIds(overlay, 'recruit')
+  if (exceptionCount > exceptionIds.length) {
+    pushReason(reasons, true, `${p}.exceptionDate`)
+  }
+  for (const id of exceptionIds) {
+    const exceptionPrefix = `${p}.exception.${id}`
+    pushReason(
+      reasons,
+      read(overlay, `${exceptionPrefix}.exceptionDate`) == null,
+      `${exceptionPrefix}.exceptionDate`
+    )
+    const exceptionSlots = read(overlay, `${exceptionPrefix}.selectedSlotKeys`)
+    const hasExceptionSlots =
+      Array.isArray(exceptionSlots) && exceptionSlots.some(slot => !isEmptyText(slot))
+    pushReason(
+      reasons,
+      !hasExceptionSlots && read(overlay, `${exceptionPrefix}.interviewTime`) == null,
+      `${exceptionPrefix}.interviewTime`
+    )
   }
   return reasons
 }

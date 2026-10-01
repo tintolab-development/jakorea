@@ -13,7 +13,14 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import {
+  getGeneralApplicationOverlayRecord,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  listVolunteerInterviewExceptionBlockIds,
   persistMissingVolunteerInterviewOverlayDefaults,
+  reconcileVolunteerInterviewExceptionBlockKeys,
+  removeVolunteerInterviewExceptionBlock,
   updateVolunteerInterviewOverlayKey,
   useVolunteerInterviewOverlayKv,
   type VolunteerInterviewOverlayStore,
@@ -484,29 +491,42 @@ function VolunteerInterviewScheduleTemplateUi({
   interviewRangeSealKey?: string
   freezeUnavailableCalendar?: boolean
 }) {
-  const [internalBlockKeys, setInternalBlockKeys] = useState<number[]>([])
+  const [internalBlockKeys, setInternalBlockKeys] = useState<number[]>(() => {
+    if (exceptionBlockKeys != null) return []
+    const record =
+      overlayStore === 'recruit'
+        ? getGeneralRecruitOverlayRecord()
+        : getGeneralApplicationOverlayRecord()
+    return listVolunteerInterviewExceptionBlockIds(record, overlayStore, overlayNamespace)
+  })
 
   useEffect(() => {
     if (exceptionBlockKeys != null) return
+    const record =
+      overlayStore === 'recruit'
+        ? getGeneralRecruitOverlayRecord()
+        : getGeneralApplicationOverlayRecord()
+    const saved = listVolunteerInterviewExceptionBlockIds(record, overlayStore, overlayNamespace)
     setInternalBlockKeys(prev => {
-      if (exceptionScheduleCount > prev.length) {
-        const next = [...prev]
-        for (let i = prev.length; i < exceptionScheduleCount; i += 1) {
-          next.push(Date.now() + i)
-        }
-        return next
-      }
-      if (exceptionScheduleCount < prev.length) {
-        return prev.slice(0, exceptionScheduleCount)
-      }
-      return prev
+      const next = reconcileVolunteerInterviewExceptionBlockKeys({
+        previous: prev,
+        saved,
+        count: exceptionScheduleCount,
+      })
+      if (next.length === prev.length && next.every((id, index) => id === prev[index])) return prev
+      return next
     })
-  }, [exceptionScheduleCount, exceptionBlockKeys])
+  }, [exceptionScheduleCount, exceptionBlockKeys, overlayNamespace, overlayStore])
 
   const blockKeys = exceptionBlockKeys ?? internalBlockKeys
   const hasExceptionSchedules = blockKeys.length > 0
 
   const handleRemoveException = (key: number) => {
+    removeVolunteerInterviewExceptionBlock({
+      store: overlayStore,
+      namespace: overlayNamespace,
+      blockKey: key,
+    })
     if (onRemoveExceptionBlock) {
       onRemoveExceptionBlock(key)
       return
