@@ -1,4 +1,5 @@
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { isParticipantSelectionEducationFormInOverlay } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import type { InstitutionApplicationDetailEditFields } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import type { Program } from '@/types/domain'
 
@@ -37,6 +38,11 @@ export function shouldShowInstitutionApplicationEducationFormatField(
   program?: Program | null
 ): boolean {
   if (!program) return false
+  const overlay =
+    program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
+      ? (program.registrationOverlay as Record<string, unknown>)
+      : undefined
+  if (isParticipantSelectionEducationFormInOverlay(overlay)) return true
   const label = resolveGeneralProgramCommonInfo(program).educationFormLabel?.trim() ?? ''
   return label.includes('참여자')
 }

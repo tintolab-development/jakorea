@@ -13,7 +13,7 @@ type CmsRichTextEditorProps = Omit<RichTextEditorProps, 'toolbar'> & {
    */
   showToolbar?: boolean
   toolbar?: RichTextEditorProps['toolbar']
-  /** 인라인 이미지 prepare owner. 없으면 로컬 blob */
+  /** 본문 이미지 업로드 owner. 신규는 ownerId null */
   fileUploadOwner?: AdminFileUploadOwner | null
 }
 

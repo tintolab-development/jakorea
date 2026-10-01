@@ -32,6 +32,7 @@ import {
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
+import { resolveRecruitmentOtherMatters } from '@/features/program/shared/lib/recruitment-row-copy'
 
 export type ProgramPreviewAudience = GeneralRecruitTabKey
 
@@ -214,7 +215,13 @@ export function buildProgramPortalPreviewDetail(
     additionalContentHtml: firstTrimmed(info.additionalContentHtml, program.additionalContentHtml),
     recruitmentGuide: firstTrimmed(info.recruitmentGuide, program.recruitmentGuide),
     learningSupportContent: firstTrimmed(info.learningSupportContent, program.learningSupportContent),
-    otherMatters: trimmedOrUndefined(program.otherNotes),
+    otherMatters:
+      audience === 'institutions'
+        ? undefined
+        : resolveRecruitmentOtherMatters(
+            program,
+            audience === 'instructors' ? 'instructor' : 'volunteer'
+          ),
     remarks: info.notesNotApplicable ? undefined : firstTrimmed(info.remarks, program.remarks),
     applicationMethod: firstTrimmed(info.applicationMethod, program.applicationMethod) ?? null,
     educationTargets: targetLevels.length > 0 ? targetLevels : undefined,

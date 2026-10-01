@@ -16,7 +16,11 @@ export function buildParticipantApplicationEditorState(args: {
 }): Record<string, unknown> | undefined {
   const editorState: Record<string, unknown> = {}
 
-  if (args.variant === 'volunteer' || args.variant === 'recruit-volunteer') {
+  if (
+    args.variant === 'volunteer' ||
+    args.variant === 'recruit-volunteer' ||
+    args.variant === 'ujat-recruit-volunteer'
+  ) {
     editorState.volunteerExceptionScheduleCount = args.volunteerExceptionScheduleCount
   }
   if (args.variant === 'ujat-application-volunteer') {
@@ -60,7 +64,9 @@ export function applyParticipantApplicationEditorState(args: {
 
   const count = editorState.volunteerExceptionScheduleCount
   if (
-    (variant === 'volunteer' || variant === 'recruit-volunteer') &&
+    (variant === 'volunteer' ||
+      variant === 'recruit-volunteer' ||
+      variant === 'ujat-recruit-volunteer') &&
     typeof count === 'number' &&
     Number.isFinite(count)
   ) {

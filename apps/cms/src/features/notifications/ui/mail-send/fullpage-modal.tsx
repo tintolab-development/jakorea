@@ -545,6 +545,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                               form.setProgramId(program.id)
                               form.clearRecipients()
                               setSelectedRecipientIds([])
+                              setRecipientManualOpen(false)
                             }}
                             onClearProgram={() => {
                               form.setProgramId(MAIL_SEND_ALL_PROGRAM_ID)
@@ -655,14 +656,16 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       >
                         선택 삭제
                       </CmsButton>
-                      <CmsButton
-                        variant="secondary"
-                        size="large"
-                        type="button"
-                        onClick={handleOpenRecipientManual}
-                      >
-                        수신자 직접 입력
-                      </CmsButton>
+                      {isWithoutProgram ? (
+                        <CmsButton
+                          variant="secondary"
+                          size="large"
+                          type="button"
+                          onClick={handleOpenRecipientManual}
+                        >
+                          수신자 직접 입력
+                        </CmsButton>
+                      ) : null}
                       <CmsButton
                         variant="secondary"
                         size="large"
@@ -700,6 +703,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       onRememberSubjectRange={form.rememberSubjectRange}
                       onAttachmentAdd={handleAttachmentAdd}
                       onAttachmentRemove={form.handleAttachmentRemove}
+                      fileUploadOwner={form.fileUploadOwner}
                     />
                   </DetailInfoForm>
                   {contextKeysInCompose.length > 0 ? (

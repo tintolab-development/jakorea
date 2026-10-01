@@ -4,6 +4,7 @@ import {
   type UjatEducationScheduleSettingsSemesterDisplay,
 } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
 import { UjatEducationScheduleSettingsSection } from '@/features/program/ujat/ui/detail-modal/info/ujat-education-schedule-settings-section'
+import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
 import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
@@ -36,6 +37,7 @@ export function UjatEducationScheduleSettingsProgramView({
           surface="responseEntry"
           titleAligned
           required
+          highlightParagraphId={UJAT_PROGRAM_REGISTRATION_IDS[5]}
         />
       ) : (
         <div className="ujat-education-schedule-settings-program-view__header">

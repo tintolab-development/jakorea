@@ -9,6 +9,7 @@ import {
   ProgramBackButton,
   programApplyCompletePath,
   programDetailPath,
+  readPortalRecruitmentFocus,
   resolveProgramApplyFormCase,
   shouldShowIndividualTeamInfoParagraph,
   useProgramApplicationForm,
@@ -96,7 +97,7 @@ import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } f
 import { PFButton, PFCheckbox, PFText, PFTextarea, PFTextInput } from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 function createEmptyPreferredBlock(): ApplyPreferredScheduleBlock {
   return { date: '', classPeriod: '', startTime: '', endTime: '' }
@@ -122,14 +123,27 @@ function draftAnswerForParagraph(
 
 export function ProgramApplyPage() {
   const navigate = useNavigate()
+  const { search } = useLocation()
+  const focus = readPortalRecruitmentFocus(search)
+  const fromPath = new URLSearchParams(search).get('from') ?? undefined
   const [isReady, setIsReady] = useState(false)
   const programId = getProgramIdFromPath()
-  const { program, isLoading } = useProgramDetail(programId, { fresh: true })
+  const { program, isLoading, status } = useProgramDetail(programId, { fresh: true, focus })
   const numericProgramId = parsePortalProgramId(programId)
   const remoteApplyEnabled =
-    isRemoteApiConfigured() && numericProgramId != null && Boolean(getAccessToken())
+    isRemoteApiConfigured() &&
+    numericProgramId != null &&
+    Boolean(getAccessToken()) &&
+    status === 'ready'
   const applicationFormQuery = useProgramApplicationForm(
-    remoteApplyEnabled ? programId : null,
+    remoteApplyEnabled && !program?.recruitmentSelectionAmbiguous ? programId : null,
+    focus
+      ? {
+          recruitmentId: focus.recruitmentIds?.[0],
+          recruitmentIds: focus.recruitmentIds,
+          applicationTypes: focus.applicationTypes,
+        }
+      : null,
   )
   const submitMutation = useSubmitProgramApplication(numericProgramId)
   const profileQuery = usePortalProfileQuery({ enabled: remoteApplyEnabled })
@@ -140,12 +154,12 @@ export function ProgramApplyPage() {
     }
 
     if (!getDevAuthLoggedIn()) {
-      navigate(resolveLoginRequiredPath(`/programs/${programId}/apply`))
+      navigate(resolveLoginRequiredPath(`/programs/${programId}/apply${search}`))
       return
     }
 
     setIsReady(true)
-  }, [navigate, programId])
+  }, [navigate, programId, search])
 
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [preferredBlocks, setPreferredBlocks] = useState<ApplyPreferredScheduleBlock[]>([
@@ -165,7 +179,16 @@ export function ProgramApplyPage() {
   /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
   const hydratedFormKeyRef = useRef<string | null>(null)
 
-  const applyCase = program ? resolveProgramApplyFormCase(program) : null
+  const focusedApplicationType =
+    applicationFormQuery.bundle?.option.applicationType ??
+    (focus?.applicationTypes?.length === 1 ? focus.applicationTypes[0] : undefined) ??
+    program?.applicationType
+  const applyCase = program
+    ? resolveProgramApplyFormCase({
+        ...program,
+        applicationType: focusedApplicationType,
+      })
+    : null
   const showTrainedTeachersApply =
     applyCase === 'trained-teachers' ||
     program?.registrationKind === 'trainedTeachers' ||
@@ -220,7 +243,10 @@ export function ProgramApplyPage() {
         )
         if (remoteDraft) {
           hydratedFormKeyRef.current = remoteFormKey
-          const applyCaseForDraft = resolveProgramApplyFormCase(program)
+          const applyCaseForDraft = resolveProgramApplyFormCase({
+            ...program,
+            applicationType: focusedApplicationType,
+          })
           setDraft(
             applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
               ? prepareIndividualApplicationDraft(remoteDraft)
@@ -288,15 +314,53 @@ export function ProgramApplyPage() {
         setDraft(null)
         return
       }
-      hydratedFormKeyRef.current = null
-      setDraft(null)
+
+      // form-bindings 409(RECRUITMENT_NOT_STARTED 등) · options unavailable 이어도
+      // 빈 화면(return null) 대신 시드 draft로 골격 유지. 제출은 blockedMessage로 막는다.
+      const fallbackKey = [
+        'fallback',
+        program.id,
+        focusedApplicationType ?? '',
+        applicationFormQuery.status,
+        applicationFormQuery.blockedReason ?? '',
+      ].join(':')
+      if (hydratedFormKeyRef.current === fallbackKey) return
+      hydratedFormKeyRef.current = fallbackKey
+      const applyCaseForDraft = resolveProgramApplyFormCase({
+        ...program,
+        applicationType: focusedApplicationType,
+      })
+      const fallbackDraft = getMockApplyFormDraft({
+        ...program,
+        applicationType: focusedApplicationType,
+      })
+      setDraft(
+        applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
+          ? prepareIndividualApplicationDraft(fallbackDraft)
+          : fallbackDraft,
+      )
+      setPreferredBlocks([createEmptyPreferredBlock()])
+      setBasicInfo(
+        fillTrainedTeachersBasicInfoFromProfile(
+          emptyTrainedTeachersBasicInfo(),
+          profileDefaults,
+        ),
+      )
+      setTeamInfo(emptyIndividualTeamInfo())
+      setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
+      setSexOffense(emptyInstitutionSexOffense())
       return
     }
 
-    const mockKey = `mock:${program.id}`
+    const mockKey = `mock:${program.id}:${focusedApplicationType ?? ''}`
     if (hydratedFormKeyRef.current === mockKey) return
     hydratedFormKeyRef.current = mockKey
-    setDraft(getMockApplyFormDraft(program))
+    setDraft(
+      getMockApplyFormDraft({
+        ...program,
+        applicationType: focusedApplicationType,
+      }),
+    )
     setPreferredBlocks([createEmptyPreferredBlock()])
     setBasicInfo(emptyTrainedTeachersBasicInfo())
     setTeamInfo(emptyIndividualTeamInfo())
@@ -307,9 +371,11 @@ export function ProgramApplyPage() {
     programId,
     remoteApplyEnabled,
     applicationFormQuery.status,
+    applicationFormQuery.blockedReason,
     remoteForm,
     remoteFormKey,
     profileDefaults,
+    focusedApplicationType,
   ])
 
   useEffect(() => {
@@ -572,6 +638,39 @@ export function ProgramApplyPage() {
     ]
   )
 
+  const formLoading =
+    remoteApplyEnabled &&
+    (applicationFormQuery.status === 'loading' || applicationFormQuery.status === 'idle')
+
+  /** remote 양식 실패(모집 전 409 등) 시에도 시드 draft로 화면 골격 유지 */
+  const displayDraft = useMemo(() => {
+    if (draft != null) return draft
+    if (!program || !remoteApplyEnabled) return null
+    if (
+      applicationFormQuery.status !== 'unavailable' &&
+      applicationFormQuery.status !== 'error'
+    ) {
+      return null
+    }
+    const applyCaseForDraft = resolveProgramApplyFormCase({
+      ...program,
+      applicationType: focusedApplicationType,
+    })
+    const fallbackDraft = getMockApplyFormDraft({
+      ...program,
+      applicationType: focusedApplicationType,
+    })
+    return applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
+      ? prepareIndividualApplicationDraft(fallbackDraft)
+      : fallbackDraft
+  }, [
+    applicationFormQuery.status,
+    draft,
+    focusedApplicationType,
+    program,
+    remoteApplyEnabled,
+  ])
+
   const hiddenParagraphIds = useMemo(() => {
     const hidden = new Set<string>()
     const runtimeFields = applyScheduleVisibilityFieldsFromRuntimeContext(
@@ -583,36 +682,32 @@ export function ProgramApplyPage() {
       educationScheduleMode: runtimeFields?.educationScheduleMode ?? program?.educationScheduleMode,
       educationScheduleLines: program?.educationScheduleLines,
     }
-    if (draft && !shouldShowApplyScheduleParagraph(scheduleFields)) {
-      for (const paragraph of draft.paragraphs) {
+    if (displayDraft && !shouldShowApplyScheduleParagraph(scheduleFields)) {
+      for (const paragraph of displayDraft.paragraphs) {
         if (isApplyScheduleChoiceParagraphId(paragraph.id)) hidden.add(paragraph.id)
       }
     }
-    if (applyCase && !shouldShowIndividualTeamInfoParagraph(applyCase) && draft) {
-      for (const paragraph of draft.paragraphs) {
+    if (applyCase && !shouldShowIndividualTeamInfoParagraph(applyCase) && displayDraft) {
+      for (const paragraph of displayDraft.paragraphs) {
         if (isApplicationTeamInfoParagraphId(paragraph.id)) hidden.add(paragraph.id)
       }
     }
-    if (!shouldShowSexOffenseInquiry(sexOffense) && draft) {
-      for (const paragraph of draft.paragraphs) {
+    if (!shouldShowSexOffenseInquiry(sexOffense) && displayDraft) {
+      for (const paragraph of displayDraft.paragraphs) {
         if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
           hidden.add(paragraph.id)
         }
       }
     }
     return hidden
-  }, [applyCase, draft, program, remoteForm, sexOffense])
+  }, [applyCase, displayDraft, program, remoteForm, sexOffense])
 
-  const formLoading =
-    remoteApplyEnabled &&
-    (applicationFormQuery.status === 'loading' || applicationFormQuery.status === 'idle')
-
-  if (!isReady || isLoading || formLoading || !program || !draft) {
+  if (!isReady || isLoading || formLoading || !program || !displayDraft) {
     return null
   }
 
   const handleBack = () => {
-    navigate(programDetailPath(program.id))
+    navigate(programDetailPath(program.id, fromPath, focus))
   }
 
   const handleSubmit = async () => {
@@ -645,7 +740,7 @@ export function ProgramApplyPage() {
         setSubmitError('진행 희망 교육 일정을 한 개 이상 입력해 주세요.')
         return
       }
-      const basicParagraph = findDraftParagraph(draft, isApplicationBasicInfoParagraphId)
+      const basicParagraph = findDraftParagraph(displayDraft, isApplicationBasicInfoParagraphId)
       const basicAnswer = basicParagraph ? basicInfoAnswerFromValues(basicInfo) : null
       if (basicParagraph) {
         const basicError = findIncompleteTrainedTeachersBasicInfoMessage(basicInfo)
@@ -658,7 +753,7 @@ export function ProgramApplyPage() {
           return
         }
       }
-      const teamParagraph = findDraftParagraph(draft, isApplicationTeamInfoParagraphId)
+      const teamParagraph = findDraftParagraph(displayDraft, isApplicationTeamInfoParagraphId)
       const showTeamInfo =
         applyCase != null && shouldShowIndividualTeamInfoParagraph(applyCase)
       if (showTeamInfo && teamParagraph) {
@@ -669,7 +764,7 @@ export function ProgramApplyPage() {
         }
       }
       const sexOffenseParagraph = findDraftParagraph(
-        draft,
+        displayDraft,
         isApplicationSexOffenseSubmissionParagraphId,
       )
       if (sexOffenseParagraph) {
@@ -682,7 +777,7 @@ export function ProgramApplyPage() {
 
       const overrides: Record<string, unknown> = {}
       if (preferredAnswer != null) {
-        const scheduleParagraph = draft.paragraphs.find(
+        const scheduleParagraph = displayDraft.paragraphs.find(
           paragraph =>
             isApplicationPreferredScheduleParagraphId(paragraph.id) ||
             isApplyScheduleChoiceParagraphId(paragraph.id),
@@ -698,7 +793,7 @@ export function ProgramApplyPage() {
       if (showTeamInfo && teamParagraph) {
         overrides[resolveApplicationAnswerKey(teamParagraph)] = teamInfoAnswerFromValues(teamInfo)
       }
-      const guidanceParagraph = findDraftParagraph(draft, isApplicationGuidanceParagraphId)
+      const guidanceParagraph = findDraftParagraph(displayDraft, isApplicationGuidanceParagraphId)
       if (guidanceParagraph) {
         overrides[resolveApplicationAnswerKey(guidanceParagraph)] =
           guidanceAnswerFromValues(guidanceAnswers)
@@ -708,7 +803,7 @@ export function ProgramApplyPage() {
           sexOffenseSubmissionAnswerFromValues(sexOffense)
       }
       const inquiryParagraph = findDraftParagraph(
-        draft,
+        displayDraft,
         isApplicationSexOffenseInquiryParagraphId,
       )
       if (inquiryParagraph && shouldShowSexOffenseInquiry(sexOffense)) {
@@ -725,14 +820,14 @@ export function ProgramApplyPage() {
         omitParagraphIds.add(teamParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(teamParagraph))
       }
-      for (const paragraph of draft.paragraphs) {
+      for (const paragraph of displayDraft.paragraphs) {
         if (isApplyScheduleChoiceParagraphId(paragraph.id) && hiddenParagraphIds.has(paragraph.id)) {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
         }
       }
 
-      const answers = buildApplicationAnswersFromDraft(draft, {
+      const answers = buildApplicationAnswersFromDraft(displayDraft, {
         overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
         omitParagraphIds: omitParagraphIds.size > 0 ? omitParagraphIds : undefined,
       })
@@ -754,7 +849,7 @@ export function ProgramApplyPage() {
             ? { requestedStudentCount: studentCount }
             : {}),
         })
-        navigate(programApplyCompletePath(program.id))
+        navigate(programApplyCompletePath(program.id, focus, fromPath))
       } catch (error) {
         setSubmitError(getProgramApplicationApiErrorMessage(error))
       }
@@ -766,7 +861,7 @@ export function ProgramApplyPage() {
       )
       return
     }
-    navigate(programApplyCompletePath(program.id))
+    navigate(programApplyCompletePath(program.id, focus, fromPath))
   }
 
   return (
@@ -798,7 +893,7 @@ export function ProgramApplyPage() {
         <div className={styles.form}>
           <FormTemplateHost surface="platformUser">
             <FormTemplateRenderer
-              draft={draft}
+              draft={displayDraft}
               interactionMode="user"
               surface="platformUser"
               hiddenParagraphIds={hiddenParagraphIds}

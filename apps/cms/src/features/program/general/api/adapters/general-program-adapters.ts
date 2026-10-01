@@ -35,7 +35,9 @@ import {
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
 import {
+  applyParticipantRecruitmentColumnsFromResponse,
   applyProgramMissingCommonStringFieldsToUpdateRequest,
+  applyRecruitmentParticipantColumnFieldsToUpdateRequest,
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
@@ -45,6 +47,13 @@ import {
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
+import {
+  attachRecruitmentRowIdentity,
+  buildRecruitmentRowCopyRequests,
+  mergeRecruitmentRowRequests,
+} from '@/features/program/shared/lib/recruitment-row-request'
+import type { RecruitmentCopyAudience } from '@/features/program/shared/lib/recruitment-row-copy'
+import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
   normalizeProgramBusinessAreaValue,
@@ -368,16 +377,15 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     ? dto.targetLevels.map(v => String(v))
     : undefined
   const jsonTargetLevels = serviceDetail.targetLevels
-  const columnTargetLevels = resolveProgramTargetLevels({
-    targetLevels:
-      (dtoTargetLevels?.length ?? 0) >= (jsonTargetLevels?.length ?? 0)
-        ? (dtoTargetLevels ?? jsonTargetLevels)
-        : jsonTargetLevels,
-    targetLevel: dto.targetLevel ?? jsonTargetLevels?.[0],
-  })
+  // Admin 컬럼이 있으면(빈 배열 포함) SSOT. 키가 없을 때만 JSON·라벨 legacy hydrate.
+  const columnSource = Array.isArray(dtoTargetLevels)
+    ? dtoTargetLevels
+    : Array.isArray(jsonTargetLevels)
+      ? jsonTargetLevels
+      : undefined
   const detailTargetLevels = resolvePersistedProgramTargetLevels({
-    targetLevels: columnTargetLevels,
-    targetLevel: dto.targetLevel ?? jsonTargetLevels?.[0],
+    targetLevels: columnSource,
+    targetLevel: dto.targetLevel,
     registrationOverlay: serviceDetail.registrationOverlay,
     generalCommonInfo,
   })
@@ -458,7 +466,10 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     detailedProgramId:
       dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     targetLevel: detailTargetLevels[0],
-    targetLevels: detailTargetLevels.length > 0 ? detailTargetLevels : undefined,
+    targetLevels:
+      columnSource !== undefined || detailTargetLevels.length > 0
+        ? detailTargetLevels
+        : undefined,
     // typed lifecycleStatus SSOT — serviceDetailJson 값으로 덮지 않음
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: toTypedProgramLifecycleStatus(dto.lifecycleStatus) ?? undefined,
@@ -474,10 +485,13 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
 
-  return applyResolvedAnnouncementTitle(mapped, {
-    serviceDetailJson: dto.serviceDetailJson,
-    overlay: serviceDetail.registrationOverlay,
-  })
+  return applyResolvedAnnouncementTitle(
+    applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+    {
+      serviceDetailJson: dto.serviceDetailJson,
+      overlay: serviceDetail.registrationOverlay,
+    }
+  )
 }
 
 export function filterGeneralProgramsByOverviewStatus(
@@ -579,7 +593,65 @@ export function mapGeneralProgramRecruitmentsToRequest(
     })
   }
 
-  return out.length > 0 ? out : undefined
+  return out.length > 0 ? attachRecruitmentRowIdentity(out, program.programRecruitments) : undefined
+}
+
+function copyAudienceOf(row: ProgramRecruitmentRequest): RecruitmentCopyAudience {
+  if (row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.INSTRUCTOR) return 'instructor'
+  if (row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER) return 'volunteer'
+  return 'participant'
+}
+
+/** 생성 시 모집 탭별 문구·담당자를 각 행에 담는다. 이후 읽기는 행 값만 쓴다. */
+function withGeneralCreateRowCopy(
+  rows: ProgramRecruitmentRequest[] | undefined,
+  program: Program
+): ProgramRecruitmentRequest[] | undefined {
+  return rows?.map(row => {
+    const audience = copyAudienceOf(row)
+    const display = resolveGeneralRecruitDetailDisplayProgram(program, audience)
+    const contact = createRowContactOf(program, audience)
+    return {
+      ...row,
+      programDescription: display.description || undefined,
+      recruitmentGuide: display.recruitmentGuide || undefined,
+      applicationMethod: display.applicationMethod || undefined,
+      learningSupportContent: display.learningSupportContent || undefined,
+      additionalContentHtml: display.additionalContentHtml || undefined,
+      ...contact,
+    }
+  })
+}
+
+/** 담당자·비고는 각 모집 탭 `*RecruitmentInfo`에서만 읽는다. 프로그램 `managerName`·기타사항을 비고로 쓰지 않는다. */
+function createRowContactOf(
+  program: Program,
+  audience: RecruitmentCopyAudience
+): Pick<ProgramRecruitmentRequest, 'contactName' | 'contactPhone' | 'contactEmail' | 'remarks'> & {
+  otherMatters?: string
+} {
+  const common = program.generalCommonInfo
+  const info =
+    audience === 'instructor'
+      ? common?.instructorRecruitmentInfo
+      : audience === 'volunteer'
+        ? common?.volunteerRecruitmentInfo
+        : common?.participantRecruitmentInfo
+  const participantContactName =
+    audience === 'participant' ? common?.participantRecruitmentInfo?.contactName : undefined
+  const notesNotApplicable =
+    info != null && 'notesNotApplicable' in info && info.notesNotApplicable === true
+  const otherMatters =
+    audience !== 'participant' && info != null && 'otherMatters' in info
+      ? info.otherMatters?.trim() || undefined
+      : undefined
+  return {
+    contactName: info?.contactOrganizationName?.trim() || participantContactName?.trim() || undefined,
+    contactPhone: toRequestPhone(info?.contactPhone ?? info?.inquiryTel ?? info?.tel) || undefined,
+    contactEmail: (info?.contactEmail ?? info?.inquiryEmail ?? info?.email)?.trim() || undefined,
+    remarks: notesNotApplicable ? undefined : info?.remarks?.trim() || undefined,
+    ...(otherMatters ? { otherMatters } : {}),
+  }
 }
 
 function mapProgramSponsorAssignments(program: Program) {
@@ -609,16 +681,30 @@ function toRequestPhone(value: string | null | undefined): string | undefined {
   return formatKoreanPhoneNumber(trimmed)
 }
 
-/** Admin create/update SSOT — 모집 라벨·overlay가 더 길면 그 배열을 컬럼에 올린다. */
+/** Admin create/update — 컬럼 `targetLevels`가 있으면 그대로. 없을 때만 legacy hydrate. */
 function resolveRequestTargetLevels(
   program: Program,
   fallback?: Program
 ): ProgramUpdateRequestTargetLevelsItem[] | undefined {
+  if (Array.isArray(program.targetLevels)) {
+    return [
+      ...resolvePersistedProgramTargetLevels(program),
+    ] as ProgramUpdateRequestTargetLevelsItem[]
+  }
   const resolved = resolvePersistedProgramTargetLevels(program)
-  const fromFallback = fallback ? resolvePersistedProgramTargetLevels(fallback) : []
-  const richest = resolved.length >= fromFallback.length ? resolved : fromFallback
-  if (richest.length > 0) {
-    return [...richest] as ProgramUpdateRequestTargetLevelsItem[]
+  if (resolved.length > 0) {
+    return [...resolved] as ProgramUpdateRequestTargetLevelsItem[]
+  }
+  if (fallback) {
+    if (Array.isArray(fallback.targetLevels)) {
+      return [
+        ...resolvePersistedProgramTargetLevels(fallback),
+      ] as ProgramUpdateRequestTargetLevelsItem[]
+    }
+    const fromFallback = resolvePersistedProgramTargetLevels(fallback)
+    if (fromFallback.length > 0) {
+      return [...fromFallback] as ProgramUpdateRequestTargetLevelsItem[]
+    }
   }
   return undefined
 }
@@ -719,6 +805,7 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
   const core = mapProgramCoreFieldsToRequest(program)
   return {
     ...core,
+    recruitments: withGeneralCreateRowCopy(core.recruitments, program),
     // OpenAPI `sponsorId`는 string — 숫자 id가 number로 직렬화되면 BE 검증/DB 오류 유발 가능
     sponsorId: core.sponsorId != null ? String(core.sponsorId) : undefined,
     programType: resolveGeneralProgramCreateProgramType(
@@ -842,16 +929,31 @@ function mapProgramPatchFieldsToRequest(
   if (has('applicationEndDate') && !participantLocked) {
     body.applicationEndDate = toRequestDate(merged.applicationEndDate)
   }
-  if (includeParticipantRecruitment || includeInstructorRecruitment || includeVolunteerRecruitment) {
-    const rows = mapGeneralProgramRecruitmentsToRequest(merged)?.filter(row => {
-      const type = recruitmentTypeOf(row.recruitmentType)
-      if (type === 'PARTICIPANT') return includeParticipantRecruitment
-      if (type === 'INSTRUCTOR') return includeInstructorRecruitment
-      if (type === 'VOLUNTEER') return includeVolunteerRecruitment
-      return false
-    })
-    if (rows && rows.length > 0) body.recruitments = rows
-  }
+  const windowRows =
+    includeParticipantRecruitment || includeInstructorRecruitment || includeVolunteerRecruitment
+      ? (mapGeneralProgramRecruitmentsToRequest({
+          ...merged,
+          programRecruitments: existing.programRecruitments,
+        })?.filter(row => {
+          const type = recruitmentTypeOf(row.recruitmentType)
+          if (type === 'PARTICIPANT') return includeParticipantRecruitment
+          if (type === 'INSTRUCTOR') return includeInstructorRecruitment
+          if (type === 'VOLUNTEER') return includeVolunteerRecruitment
+          return false
+        }) ?? [])
+      : []
+  const copyRows = has('programRecruitments')
+    ? buildRecruitmentRowCopyRequests(
+        merged.programRecruitments,
+        existing.programRecruitments,
+        row => {
+          const type = recruitmentTypeOf(row.recruitmentType)
+          return type != null && isProgramOperationStartLocked(existing, type)
+        }
+      )
+    : []
+  const recruitmentRows = mergeRecruitmentRowRequests(windowRows, copyRows)
+  if (recruitmentRows.length > 0) body.recruitments = recruitmentRows
   if (has('businessArea')) {
     const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
     body.businessArea = businessArea
@@ -873,7 +975,12 @@ function mapProgramPatchFieldsToRequest(
   if (has('district')) body.district = merged.district
   if (has('ips')) body.ips = merged.ips
   if (has('targetLevel') || has('targetLevels')) {
-    const targetLevels = resolveRequestTargetLevels(merged) ?? []
+    const formTargetLevels = merged.targetLevels?.filter(Boolean) ?? []
+    const targetLevels = patchIncludesRecruitmentWindow(patch)
+      ? formTargetLevels.length > 0
+        ? [...formTargetLevels]
+        : (resolveRequestTargetLevels(merged) ?? [])
+      : (resolveRequestTargetLevels(merged) ?? [])
     body.targetLevels = targetLevels
     body.targetLevel = targetLevels[0]
   }
@@ -948,23 +1055,33 @@ function mapProgramPatchFieldsToRequest(
       has(key)
   )
   if (touchesServiceDetail) {
-    const persistedTargetLevels =
-      has('targetLevel') || has('targetLevels')
-        ? resolveRequestTargetLevels(merged)
-        : resolveRequestTargetLevels(detailSource, existing)
+    const touchesTargetLevels = has('targetLevel') || has('targetLevels')
+    const persistedTargetLevels = touchesTargetLevels
+      ? patchIncludesRecruitmentWindow(patch) && (merged.targetLevels?.length ?? 0) > 0
+        ? [...(merged.targetLevels ?? [])]
+        : resolveRequestTargetLevels(merged)
+      : resolveRequestTargetLevels(detailSource, existing)
     const serializeSource =
-      persistedTargetLevels?.length
+      persistedTargetLevels != null
         ? { ...detailSource, targetLevels: persistedTargetLevels }
         : detailSource
     body.serviceDetailJson = serializeGeneralProgramServiceDetailJson(serializeSource, {
       omitRecruitmentWindow: !patchIncludesRecruitmentWindow(patch),
     })
-    if (persistedTargetLevels?.length) {
+    if (touchesTargetLevels && persistedTargetLevels != null) {
+      body.targetLevels = persistedTargetLevels
+      body.targetLevel = persistedTargetLevels[0]
+    } else if (
+      !touchesTargetLevels &&
+      persistedTargetLevels != null &&
+      persistedTargetLevels.length > 0
+    ) {
       body.targetLevels = persistedTargetLevels
       body.targetLevel = persistedTargetLevels[0]
     }
   }
 
+  applyRecruitmentParticipantColumnFieldsToUpdateRequest(body, { merged, existing, patch })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'patch',
     merged,

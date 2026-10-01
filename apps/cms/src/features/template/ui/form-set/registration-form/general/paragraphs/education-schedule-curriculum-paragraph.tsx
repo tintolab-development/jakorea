@@ -528,6 +528,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     const assignmentField = (fullRow: boolean) => (
       <DetailInfoForm.Field
         label="과제 설정"
+        validationKey={`scheduleCurriculum.assignment[${detailIndex}]`}
         fullRow={fullRow}
         view={
           <CurriculumAssignmentSettingView
@@ -606,6 +607,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   ) => (
     <DetailInfoForm.Field
       label="IPS 유형"
+      validationKey={`scheduleCurriculum.ips[${detailIndex}]`}
       fullRow={options?.fullRow}
       edit={
         <ProgramRegistrationIpsTypeFields
@@ -657,6 +659,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="과제 설정"
+              validationKey={`scheduleCurriculum.assignment[${detailIndex}]`}
               edit={
                 <ScheduleDetailAssignmentInputs
                   value={assignment}
@@ -686,6 +689,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="과제 설정"
+            validationKey={`scheduleCurriculum.assignment[${detailIndex}]`}
             edit={
               <ScheduleDetailAssignmentInputs
                 value={assignment}
@@ -711,6 +715,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="과제 설정"
+            validationKey={`scheduleCurriculum.assignment[${detailIndex}]`}
             edit={
               <ScheduleDetailAssignmentInputs
                 value={assignment}
@@ -915,6 +920,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
               <DetailInfoForm.Row type="double">
                 <DetailInfoForm.Field
                   label="일정명"
+                  validationKey="scheduleCurriculum.preEducationName"
                   edit={
                     <CmsInput
                       inputSize="medium"
@@ -929,6 +935,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                 />
                 <DetailInfoForm.Field
                   label="진행 일정"
+                  validationKey="scheduleCurriculum.preEducationScheduleDate"
                   edit={renderEventProgressScheduleField(PRE_EDUCATION_DETAIL_INDEX)}
                   view="-"
                 />
@@ -972,6 +979,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                     <DetailInfoForm.Row type="double">
                       <DetailInfoForm.Field
                         label="일정명"
+                        validationKey={`scheduleCurriculum.eventName[${n}]`}
                         edit={
                           <CmsInput
                             inputSize="medium"
@@ -993,6 +1001,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                       />
                       <DetailInfoForm.Field
                         label="진행 일정"
+                        validationKey={`scheduleCurriculum.scheduleDate[${n}]`}
                         edit={renderEventProgressScheduleField(n)}
                         view="-"
                       />
@@ -1041,6 +1050,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                   <DetailInfoForm.Row type="single">
                     <DetailInfoForm.Field
                       label={groupCount > 1 ? '일정명' : '일정 상세'}
+                      validationKey={`scheduleCurriculum.eventName[${n}]`}
                       fullRow
                       edit={
                         <CmsInput
@@ -1068,6 +1078,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                   <DetailInfoForm.Row type="single">
                     <DetailInfoForm.Field
                       label="진행 시간"
+                      validationKey={`scheduleCurriculum.groupTimes[${n}]`}
                       fullRow
                       edit={renderGroupTimeField(n)}
                       view="-"

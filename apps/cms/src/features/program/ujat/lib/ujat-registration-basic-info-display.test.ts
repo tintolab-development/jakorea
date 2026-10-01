@@ -17,6 +17,7 @@ import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/
 import {
   buildUjatRegistrationBasicInfoOverlayFromProgram,
   reconcileUjatRegistrationOverlayFromApi,
+  resyncUjatPersistOverlayFromProgram,
   seedUjatRegistrationBasicInfoOverlayFromProgram,
 } from './ujat-registration-basic-info-overlay-sync'
 
@@ -61,6 +62,18 @@ describe('resolveUjatRegistrationBasicInfoDisplay — 상세 overlay (세션 기
     expect(display.programManagementName).toBe('기업가정신 스타트업 체험 운영')
     expect(display.publicProgramTitle).toBe('고등학생 기업가정신 캠프 참가자 모집')
     expect(display.businessField).toBe('경제금융')
+    expect(display.participantTypes).toBe('학교/기관, 봉사자')
+  })
+
+  it('overlay 참여자 플래그가 없어도 상세에 학교/기관, 봉사자가 보인다', () => {
+    const display = resolveUjatRegistrationBasicInfoDisplay({
+      ...baseProgram(),
+      programRecruitments: [
+        { recruitmentType: 'PARTICIPANT', targetType: 'ORGANIZATION' },
+        { recruitmentType: 'VOLUNTEER', targetType: 'COLLEGE_STUDENT' },
+      ],
+    })
+    expect(display.participantTypes).toBe('학교/기관, 봉사자')
   })
 
   it('announcementTitle이 대표명이면 공고용으로 쓰지 않는다', () => {
@@ -204,5 +217,57 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
       SPONSOR_CONTACT_UNSELECTED_VALUE,
     ])
     expect(overlay['ujat.basicInfo.sponsorContactId']).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
+  })
+
+  it('시드 leftover overlay가 참여자 유형·KPI 강사보다 이기지 않는다', () => {
+    resetUjatProgramRegistrationOverlay()
+    seedUjatRegistrationBasicInfoOverlayFromProgram({
+      ...baseProgram(),
+      generalParticipantTypes: ['school_institution', 'volunteer'],
+      generalCommonInfo: {
+        kpi: {
+          finalParticipants: 10,
+          instructorCount: 7,
+          volunteerCount: 3,
+          finalSchools: 2,
+          finalClasses: 4,
+        },
+      },
+      ujatRegistrationOverlay: {
+        'ujat.basicInfo.participant.individual': true,
+        'ujat.basicInfo.participant.organization': false,
+        'ujat.kpi.instructor': 99,
+      },
+    })
+    const overlay = getUjatProgramRegistrationOverlayRecord()
+    expect(overlay['ujat.basicInfo.participant.individual']).toBe(false)
+    expect(overlay['ujat.basicInfo.participant.organization']).toBe(true)
+    expect(overlay['ujat.basicInfo.participant.volunteer']).toBe(true)
+    expect(overlay['ujat.kpi.instructor']).toBe(7)
+  })
+
+  it('기관 모집 leftover 기간이 중첩 기간보다 이기지 않는다', () => {
+    const program: Program = {
+      ...baseProgram(),
+      applicationStartDate: '2026-03-01T00:00:00.000Z',
+      applicationEndDate: '2026-03-31T00:00:00.000Z',
+      targetLevels: ['elementary'],
+    }
+    const overlay = resyncUjatPersistOverlayFromProgram(
+      program,
+      {
+        'ujat.recruit.institution.recruitRange': {
+          start: '2025-01-01T00:00:00.000Z',
+          end: '2025-01-31T00:00:00.000Z',
+        },
+        'ujat.recruit.institution.targetLevels': ['high', 'university'],
+      },
+      { includeRecruit: true }
+    )
+    expect(overlay['ujat.recruit.institution.recruitRange']).toEqual({
+      start: '2026-03-01T00:00:00.000Z',
+      end: '2026-03-31T00:00:00.000Z',
+    })
+    expect(overlay['ujat.recruit.institution.targetLevels']).toEqual(['elementary'])
   })
 })

@@ -66,6 +66,19 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     expect(next.generalCommonInfo?.announcementTitle).toBe('공고용 청소년 경제')
   })
 
+  it('공통정보 공고명이 없으면 overlay에 있던 공고명을 비우지 않는다', () => {
+    const { announcementTitle: _omit, ...common } = baseProgram().generalCommonInfo ?? {}
+    void _omit
+    const overlay = buildGeneralRegistrationOverlayFromProgram({
+      ...baseProgram(),
+      generalCommonInfo: common,
+      registrationOverlay: {
+        'generalRegistration.basicInfo.publicProgramTitle': '남아 있는 공고명',
+      },
+    })
+    expect(overlay['generalRegistration.basicInfo.publicProgramTitle']).toBe('남아 있는 공고명')
+  })
+
   it('일정형은 세부 프로그램명을 해당없음으로 시드하고 apply extras가 구조를 유지한다', () => {
     const program = {
       ...baseProgram(),
@@ -138,7 +151,7 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     expect(saved['generalRegistration.wageInfo.paymentItemValues']).toEqual(['p-1', 'p-3'])
   })
 
-  it('sessionRound가 single이어도 overlay 회차 맵이면 extras는 복수 1회차다', () => {
+  it('sessionRound가 single이면 overlay 회차 맵이 있어도 extras는 단수다', () => {
     const extras = extrasFromGeneralProgram({
       ...baseProgram(),
       generalProgramSessionRound: 'single',
@@ -163,8 +176,8 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
         },
       },
     })
-    expect(extras.sessionRoundType).toBe('multi')
-    expect(extras.curriculumSessionCount).toBe(1)
+    expect(extras.sessionRoundType).toBe('single')
+    expect(extras.curriculumChartSessionCount).toBe(2)
   })
 
   it('sessionRound가 multi여도 차시 행이면 extras 회차 수는 overlay다', () => {
@@ -193,7 +206,7 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     expect(extras.curriculumSessionCount).toBe(1)
   })
 
-  it('sessionRound가 single이어도 seed는 overlay 회차 맵을 유지한다', () => {
+  it('sessionRound가 single이어도 seed는 중첩 차시 행으로 단원·회차 맵을 채운다', () => {
     const program = {
       ...baseProgram(),
       generalProgramSessionRound: 'single' as const,
@@ -214,15 +227,25 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     }
     seedGeneralRegistrationOverlayFromProgram(program)
     const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.unitNameBySession']).toEqual({
+      1: '필요와 욕구, 현명한 소비',
+      2: '',
+    })
+    expect(saved['generalRegistration.educationCurriculum.unitContentBySession']).toEqual({
+      1: '본문',
+      2: '',
+    })
     expect(saved['generalRegistration.educationCurriculum.progressSessionByRound']).toEqual({
-      1: '1',
+      1: '필요와 욕구, 현명한 소비',
+      2: '2',
     })
     expect(saved['generalRegistration.educationCurriculum.roundContentByRound']).toEqual({
       1: '본문',
+      2: '',
     })
   })
 
-  it('sessionRound가 multi여도 차시 행이면 seed는 overlay 1회차만 연다', () => {
+  it('sessionRound가 multi여도 차시 행이면 seed는 중첩 행으로 맵을 채운다', () => {
     const program = {
       ...baseProgram(),
       generalProgramSessionRound: 'multi' as const,
@@ -247,19 +270,52 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     }
     seedGeneralRegistrationOverlayFromProgram(program)
     const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.unitNameBySession']).toEqual({
+      1: '필요와 욕구, 현명한 소비',
+      2: '',
+    })
     expect(saved['generalRegistration.educationCurriculum.progressSessionByRound']).toEqual({
-      1: '1',
+      1: '필요와 욕구, 현명한 소비',
+      2: '2',
     })
     expect(saved['generalRegistration.educationCurriculum.roundContentByRound']).toEqual({
       1: '본문',
+      2: '',
     })
     expect(saved['generalRegistration.educationCurriculum.assignmentByRound']).toEqual({
-      1: { enabled: true, period: '26년 10월 13일(화) 10:00 ~ 12:00' },
+      1: { enabled: false, period: '' },
+      2: { enabled: false, period: '' },
     })
-    expect(saved['generalRegistration.educationCurriculum.ipsBySession']).toEqual({
-      1: { category: 'succeed', detail: 'conference' },
-    })
+    expect(saved['generalRegistration.educationCurriculum.ipsBySession']).toEqual({})
     expect(extrasFromGeneralProgram(program).curriculumSessionCount).toBe(1)
+  })
+
+  it('복수 회차여도 overlay 단원 맵이 더 많으면 extras 회차 수는 단원 맵이다', () => {
+    const extras = extrasFromGeneralProgram({
+      ...baseProgram(),
+      generalProgramSessionRound: 'multi',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: '1차시', description: '옛 본문' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.unitNameBySession': {
+          1: '개인 커리큘럼 단일1',
+          2: '개인 커리큘럼 단일2',
+        },
+        'generalRegistration.educationCurriculum.unitContentBySession': {
+          1: '개인 커리큘럼 단일11',
+          2: '개인 커리큘럼 단일22',
+        },
+        'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+        'generalRegistration.educationCurriculum.roundContentByRound': { 1: '옛 본문' },
+      },
+    })
+    expect(extras.sessionRoundType).toBe('multi')
+    expect(extras.curriculumSessionCount).toBe(2)
+    expect(extras.curriculumChartSessionCount).toBe(2)
   })
 
   it('교육 진행 extras 회차 수는 사전 교육을 제외한다', () => {
@@ -286,6 +342,33 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     expect(extras.curriculumChartSessionCount).toBe(2)
     expect(extras.scheduleCurriculumDetailCount).toBe(2)
     expect(extras.scheduleCurriculumPreEducation).toBe(true)
+  })
+
+  it('커리큘럼형 seed는 leftover 일정 overlay 맵을 비운다', () => {
+    const program = {
+      ...baseProgram(),
+      generalProgramEducationStructure: 'curriculum' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          { sessionLabel: '1차시', title: '단원', description: '본문' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '옛 일정',
+        },
+        'generalRegistration.educationScheduleCurriculum.educationFormByDetail': {
+          1: 'hybrid',
+        },
+      },
+    }
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationScheduleCurriculum.eventNameByDetail']).toEqual({})
+    expect(
+      saved['generalRegistration.educationScheduleCurriculum.educationFormByDetail']
+    ).toEqual({})
   })
 
   it('seed는 조회 커리큘럼·일정 줄을 우선하고 오래된 overlay 회차를 버린다', () => {

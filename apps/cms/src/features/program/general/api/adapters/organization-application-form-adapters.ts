@@ -6,6 +6,27 @@ import type {
 } from '@/features/program/shared/model/applicant-institution'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 
+const BASIC_INFO_PARAGRAPH_KEYS = [
+  'program-application-trained-teachers-seed-basic-info',
+  'program-application-institution-seed-basic-info',
+  'program-application-economy-seed-basic-info',
+] as const
+
+const GUIDANCE_PARAGRAPH_KEYS = [
+  'program-application-institution-seed-guidance',
+  'program-application-economy-seed-guidance',
+] as const
+
+const SEX_OFFENSE_SUBMISSION_KEYS = [
+  'program-application-institution-seed-sex-offense-consent-submission',
+  'program-application-economy-seed-sex-offense-consent-submission',
+] as const
+
+const SEX_OFFENSE_INQUIRY_KEYS = [
+  'program-application-institution-seed-sex-offense-consent-inquiry',
+  'program-application-economy-seed-sex-offense-consent-inquiry',
+] as const
+
 function isJsonContainer(raw: string): boolean {
   const trimmed = raw.trim()
   if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return false
@@ -84,35 +105,154 @@ function pickAnswerWithNested(
   return pickAnswer(map, ...keys) ?? pickAnswer(nested, ...keys)
 }
 
+function parseJsonObject(raw: string | undefined): Record<string, unknown> | null {
+  const text = raw?.trim()
+  if (!text || !isJsonContainer(text) || !text.startsWith('{')) return null
+  try {
+    const parsed: unknown = JSON.parse(text)
+    if (parsed != null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>
+    }
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+function stringFieldsFromObject(
+  object: Record<string, unknown> | null
+): Record<string, string> {
+  if (!object) return {}
+  const out: Record<string, string> = {}
+  for (const [key, value] of Object.entries(object)) {
+    if (typeof value === 'string' && value.trim()) {
+      out[key] = value.trim()
+    } else if (typeof value === 'number' && Number.isFinite(value)) {
+      out[key] = String(value)
+    }
+  }
+  return out
+}
+
+/** Platform/CMS 모집양식 nested basic-info 객체 (빈 detail만 채울 때 사용) */
+function parseNestedBasicInfo(map: Record<string, string>): Record<string, string> {
+  for (const key of BASIC_INFO_PARAGRAPH_KEYS) {
+    const nested = stringFieldsFromObject(parseJsonObject(map[key]))
+    if (Object.keys(nested).length > 0) return nested
+  }
+  for (const [key, raw] of Object.entries(map)) {
+    if (!key.includes('seed-basic-info')) continue
+    const nested = stringFieldsFromObject(parseJsonObject(raw))
+    if (nested.applicationReason || nested.applicationGrade || nested.educationGrade) {
+      return nested
+    }
+  }
+  return {}
+}
+
 function parseGuidanceRows(map: Record<string, string>): {
   computer?: string
   waiting?: string
   meal?: string
   notes?: string
 } {
-  const computer = pickAnswer(map, 'computerAvailability')
-  const waiting = pickAnswer(map, 'waitingAreaGuide')
-  const meal = pickAnswer(map, 'mealGuide')
-  const notes = pickAnswer(map, 'otherNotes')
+  const computer = pickAnswer(
+    map,
+    'computerAvailability',
+    'computer-in-room',
+    'computerInRoom'
+  )
+  const waiting = pickAnswer(map, 'waitingAreaGuide', 'waiting-place', 'waitingRoomLocation')
+  const meal = pickAnswer(map, 'mealGuide', 'meal', 'mealNotice')
+  const notes = pickAnswer(map, 'otherNotes', 'other-notes', 'parkingInfo')
   if (computer || waiting || meal || notes) {
     return { computer, waiting, meal, notes }
   }
-  const tableRaw = map['program-application-institution-seed-guidance']?.trim()
-  if (!tableRaw) return {}
-  try {
-    const parsed = JSON.parse(tableRaw) as unknown
-    if (Array.isArray(parsed)) {
-      return {
-        computer: typeof parsed[0] === 'string' ? parsed[0] : undefined,
-        waiting: typeof parsed[1] === 'string' ? parsed[1] : undefined,
-        meal: typeof parsed[2] === 'string' ? parsed[2] : undefined,
-        notes: typeof parsed[3] === 'string' ? parsed[3] : undefined,
+
+  for (const key of [...GUIDANCE_PARAGRAPH_KEYS, ...Object.keys(map).filter(k => k.includes('seed-guidance'))]) {
+    const raw = map[key]?.trim()
+    if (!raw) continue
+    const object = parseJsonObject(raw)
+    if (object) {
+      const nested = stringFieldsFromObject(object)
+      const fromObject = {
+        computer: nested['computer-in-room'] || nested.computerInRoom || nested.computerAvailability,
+        waiting: nested['waiting-place'] || nested.waitingRoomLocation || nested.waitingAreaGuide,
+        meal: nested.meal || nested.mealNotice || nested.mealGuide,
+        notes: nested['other-notes'] || nested.parkingInfo || nested.otherNotes,
+      }
+      if (fromObject.computer || fromObject.waiting || fromObject.meal || fromObject.notes) {
+        return fromObject
       }
     }
-  } catch {
-    /* ignore */
+    try {
+      const parsed = JSON.parse(raw) as unknown
+      if (Array.isArray(parsed)) {
+        return {
+          computer: typeof parsed[0] === 'string' ? parsed[0] : undefined,
+          waiting: typeof parsed[1] === 'string' ? parsed[1] : undefined,
+          meal: typeof parsed[2] === 'string' ? parsed[2] : undefined,
+          notes: typeof parsed[3] === 'string' ? parsed[3] : undefined,
+        }
+      }
+    } catch {
+      /* ignore */
+    }
   }
   return {}
+}
+
+function formatSexOffenseSubmissionLabel(raw: string | undefined): string | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  if (trimmed === 'request') return '동의서 제출 요청'
+  if (trimmed === 'no_submit') return '동의서 미제출'
+  return trimmed
+}
+
+function formatSexOffenseInquiryParts(object: Record<string, unknown> | null): string[] {
+  if (!object) return []
+  const parts: string[] = []
+  const method = typeof object.inquiryMethod === 'string' ? object.inquiryMethod : ''
+  if (method === 'ja_system') parts.push('JA 시스템 내에서 동의서 확인')
+  else if (method === 'criminal_record_site') parts.push('범죄경력회보서 사이트 이용')
+  else if (method.trim()) parts.push(method.trim())
+
+  const site = typeof object.siteSubmission === 'string' ? object.siteSubmission : ''
+  if (site === 'direct') parts.push('직접 제출')
+  else if (site === 'online') parts.push('온라인 제출')
+  else if (site.trim()) parts.push(site.trim())
+
+  const institutionId =
+    typeof object.institutionId === 'string' ? object.institutionId.trim() : ''
+  if (institutionId) parts.push(`기관 ID ${institutionId}`)
+  const verificationNumber =
+    typeof object.verificationNumber === 'string' ? object.verificationNumber.trim() : ''
+  if (verificationNumber) parts.push(`검증번호 ${verificationNumber}`)
+  return parts
+}
+
+function parseSexOffenseCheckRequest(map: Record<string, string>): string | undefined {
+  const flat = pickAnswer(map, ...SEX_OFFENSE_SUBMISSION_KEYS)
+  if (flat && !isJsonContainer(flat)) return flat
+
+  const submissionObject =
+    parseJsonObject(flat) ??
+    SEX_OFFENSE_SUBMISSION_KEYS.map(key => parseJsonObject(map[key])).find(Boolean) ??
+    null
+  const submissionLabel = formatSexOffenseSubmissionLabel(
+    typeof submissionObject?.submissionRequest === 'string'
+      ? submissionObject.submissionRequest
+      : flat
+  )
+
+  const inquiryObject =
+    SEX_OFFENSE_INQUIRY_KEYS.map(key => parseJsonObject(map[key])).find(Boolean) ?? null
+  const parts = [
+    ...(submissionLabel ? [submissionLabel] : []),
+    ...formatSexOffenseInquiryParts(inquiryObject),
+  ]
+  return parts.length > 0 ? parts.join(' | ') : undefined
 }
 
 function sessionsFromDesiredEducationDate(
@@ -135,7 +275,7 @@ function sessionsFromDesiredEducationDate(
 
 /**
  * ORGANIZATION_APPLICATION form_response → 기관 신청 상세 필드 hydrate.
- * 목록 DTO 필드는 유지하고 form/코멘트로 빈 칸을 채운다.
+ * 목록·상세 DTO 필드는 유지하고, 비어 있는 칸만 form/코멘트로 채운다.
  */
 export function hydrateOrganizationApplicationRowFromForm(input: {
   row: ApplicantSchoolRow
@@ -145,32 +285,43 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
   const { row, formResponse, adminComment } = input
   const map = buildFormAnswerMap(formResponse?.answers)
   /**
-   * basic-info 문단 객체는 열지 않는다. 학년·상세주소·사유·기타 요청·교육 형태·교사 연락처는
-   * 기관 신청 컬럼(`requestedGrade` 등)이 원본이다.
+   * 학년·주소·교사 연락처는 목록/상세 컬럼이 우선.
+   * 신청사유·기타요청·안내는 DTO가 비어 있으면 nested 모집양식 답을 fallback으로 쓴다.
    */
-  const ttBasic: Record<string, string> = {}
+  const nestedBasic = parseNestedBasicInfo(map)
   const guidance = parseGuidanceRows(map)
 
-  const textbookName = pickAnswerWithNested(map, ttBasic, 'textbookName')
-  const educationGrade = formatApplicantGradeLabel(
-    pickAnswerWithNested(map, ttBasic, 'applicationGrade', 'educationGrade', 'grade') ??
-      row.educationGrade
+  const textbookName = pickAnswerWithNested(map, nestedBasic, 'textbookName')
+  const educationGradeFromForm = formatApplicantGradeLabel(
+    pickAnswer(map, 'applicationGrade', 'educationGrade', 'grade')
   )
-  const region =
-    pickAnswerWithNested(map, ttBasic, 'organizationRegion', 'regionLabel') ?? row.region
-  const addressDetail =
-    pickAnswerWithNested(map, ttBasic, 'addressDetail', 'detailAddress', 'address', 'organizationAddress')
-  const applicationReason = pickAnswerWithNested(map, ttBasic, 'applicationReason')
-  const otherRequests = pickAnswerWithNested(map, ttBasic, 'otherRequests')
-  const educationType = pickAnswerWithNested(map, ttBasic, 'educationFormat', 'educationType')
-  const teacherName = pickAnswerWithNested(map, ttBasic, 'teacherName')
-  const teacherMobile = pickAnswerWithNested(map, ttBasic, 'teacherMobile', 'teacherPhone')
-  const teacherTel = pickAnswerWithNested(map, ttBasic, 'teacherTel')
-  const teacherEmail = pickAnswerWithNested(map, ttBasic, 'teacherEmail')
-  const sexOffenseCheckRequest = pickAnswer(
+  const regionFromForm = pickAnswer(map, 'organizationRegion', 'regionLabel')
+  const addressDetailFromForm = pickAnswer(
     map,
-    'program-application-institution-seed-sex-offense-consent-submission'
+    'addressDetail',
+    'detailAddress',
+    'address',
+    'organizationAddress'
   )
+  const applicationReason =
+    row.detail?.applicationReason?.trim() ||
+    pickAnswer(map, 'applicationReason') ||
+    nestedBasic.applicationReason
+  const otherRequests =
+    row.detail?.otherRequests?.trim() ||
+    pickAnswer(map, 'otherRequests') ||
+    nestedBasic.otherRequests
+  const educationType =
+    row.detail?.educationType?.trim() ||
+    pickAnswer(map, 'educationFormat', 'educationType') ||
+    nestedBasic.educationFormat ||
+    nestedBasic.educationType
+  const teacherNameFromForm = pickAnswer(map, 'teacherName')
+  const teacherMobileFromForm = pickAnswer(map, 'teacherMobile', 'teacherPhone')
+  const teacherTelFromForm = pickAnswer(map, 'teacherTel')
+  const teacherEmailFromForm = pickAnswer(map, 'teacherEmail')
+  const sexOffenseCheckRequest =
+    row.detail?.sexOffenseCheckRequest?.trim() || parseSexOffenseCheckRequest(map)
   const desiredEducationDate = pickAnswer(
     map,
     'desiredEducationDate',
@@ -179,22 +330,31 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
 
   const detail: ApplicantInstitutionDetailExtend = {
     ...row.detail,
-    ...(textbookName ? { textbookName } : {}),
-    ...(addressDetail ? { addressDetail } : {}),
+    ...(textbookName && !row.detail?.textbookName ? { textbookName } : {}),
+    ...(addressDetailFromForm && !row.detail?.addressDetail
+      ? { addressDetail: addressDetailFromForm }
+      : {}),
     ...(applicationReason ? { applicationReason } : {}),
     ...(otherRequests ? { otherRequests } : {}),
     ...(educationType ? { educationType } : {}),
-    /** 구조화 필드 우선 — `teacherInfo` 파이프 문자열에 의존하지 않음 */
-    ...(teacherTel ? { teacherPhone: teacherTel } : {}),
-    ...(teacherMobile ? { teacherMobile } : {}),
-    ...(teacherEmail ? { teacherEmail } : {}),
+    ...(teacherTelFromForm && !row.detail?.teacherPhone
+      ? { teacherPhone: teacherTelFromForm }
+      : {}),
+    ...(teacherMobileFromForm && !row.detail?.teacherMobile
+      ? { teacherMobile: teacherMobileFromForm }
+      : {}),
+    ...(teacherEmailFromForm && !row.detail?.teacherEmail
+      ? { teacherEmail: teacherEmailFromForm }
+      : {}),
     teacherInfo: undefined,
-    ...(guidance.computer ? { computerInSpace: guidance.computer } : {}),
-    ...(guidance.waiting
+    ...(guidance.computer && !row.detail?.computerInSpace
+      ? { computerInSpace: guidance.computer }
+      : {}),
+    ...(guidance.waiting && !row.detail?.waitingPlaceGuide && !row.detail?.waitingRoom
       ? { waitingPlaceGuide: guidance.waiting, waitingRoom: guidance.waiting }
       : {}),
-    ...(guidance.meal ? { mealInfo: guidance.meal } : {}),
-    ...(guidance.notes
+    ...(guidance.meal && !row.detail?.mealInfo ? { mealInfo: guidance.meal } : {}),
+    ...(guidance.notes && !row.detail?.otherSpecialNotes && !row.detail?.parkingInfo
       ? { otherSpecialNotes: guidance.notes, parkingInfo: guidance.notes }
       : {}),
     ...(sexOffenseCheckRequest ? { sexOffenseCheckRequest } : {}),
@@ -205,15 +365,15 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
       ? row.sessions
       : sessionsFromDesiredEducationDate(desiredEducationDate)
 
-  const classCountRaw = pickAnswerWithNested(map, ttBasic, 'classCount')
-  const studentCountRaw = pickAnswerWithNested(map, ttBasic, 'studentCount', 'totalStudents')
+  const classCountRaw = pickAnswerWithNested(map, nestedBasic, 'classCount')
+  const studentCountRaw = pickAnswerWithNested(map, nestedBasic, 'studentCount', 'totalStudents')
   const classCountParsed = classCountRaw ? Number.parseInt(classCountRaw, 10) : NaN
   const studentCountParsed = studentCountRaw ? Number.parseInt(studentCountRaw, 10) : NaN
 
   return {
     ...row,
-    educationGrade: educationGrade || row.educationGrade,
-    region: region || row.region,
+    educationGrade: row.educationGrade?.trim() || educationGradeFromForm || row.educationGrade,
+    region: row.region?.trim() || regionFromForm || row.region,
     classCount:
       Number.isFinite(classCountParsed) && classCountParsed > 0
         ? classCountParsed
@@ -222,8 +382,8 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
       Number.isFinite(studentCountParsed) && studentCountParsed > 0
         ? studentCountParsed
         : row.studentCount,
-    teacherName: teacherName || row.teacherName,
-    contact: teacherMobile || row.contact,
+    teacherName: row.teacherName?.trim() || teacherNameFromForm || row.teacherName,
+    contact: row.contact?.trim() || teacherMobileFromForm || row.contact,
     sessions,
     detail: Object.keys(detail).length > 0 ? detail : row.detail,
     adminComment: adminComment?.trim() || row.adminComment,

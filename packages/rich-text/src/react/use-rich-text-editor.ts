@@ -4,6 +4,7 @@ import { createRichTextExtensions } from '../core/extensions'
 import { createRichTextEditorApi } from '../core/editor-api'
 import { isRichTextEditorReady } from '../core/editor-ready'
 import { getInitialEditorContent } from '../core/content'
+import { stripPastedDataUriImages } from '../core/strip-pasted-data-uri-images'
 import type { RichTextEditorApi, UseRichTextEditorOptions } from './types'
 
 const EMPTY_CONTENT = ''
@@ -60,6 +61,7 @@ export function useRichTextEditor({
           class: 'rich-text-content',
           tabindex: '-1',
         },
+        transformPastedHTML: stripPastedDataUriImages,
       },
       onCreate: ({ editor: instance }) => {
         if (!isRichTextEditorReady(instance)) return

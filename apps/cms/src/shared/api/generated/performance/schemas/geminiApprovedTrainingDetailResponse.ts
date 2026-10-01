@@ -5,34 +5,132 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GeminiApprovedTrainingDetailResponseProgressStatus } from './geminiApprovedTrainingDetailResponseProgressStatus';
+import type { GeminiApprovedTrainingDetailResponseTeacherEmploymentStatus } from './geminiApprovedTrainingDetailResponseTeacherEmploymentStatus';
+import type { GeminiAssignedInstructor } from './geminiAssignedInstructor';
 
+/**
+ * Gemini 승인 연수 상세. id=organizationApplicationId. 전화·이메일·계좌·상세주소는 목록에 넣지 않는다. 없는 값은 null.
+ */
 export interface GeminiApprovedTrainingDetailResponse {
   id?: number;
+  /** 모집 공고 programId. 담당자 LNB managers API에 이 값을 쓴다. */
   programId?: number;
   organizationApplicationId?: number;
   recruitmentId?: number;
   recruitmentTitle?: string;
   recruitmentDescription?: string;
-  progressStatus?: string;
+  /** @nullable */
+  progressStatus?: GeminiApprovedTrainingDetailResponseProgressStatus;
   applicationStatus?: string;
   institutionName?: string;
   institutionSido?: string;
   institutionSigungu?: string;
-  institutionAddress?: string;
-  institutionAddressDetail?: string;
+  /**
+     * 도로명 등 본문 주소
+     * @nullable
+     */
+  institutionAddress?: string | null;
+  /** @nullable */
+  institutionAddressDetail?: string | null;
+  /**
+     * 이 기관의 Gemini 찾아가는 연수 신청 누적
+     * @nullable
+     */
+  institutionApplicationCount?: number | null;
+  /**
+     * 그 중 연수 완료(강사 매칭+연수일 경과) 건수
+     * @nullable
+     */
+  institutionCompletedTrainingCount?: number | null;
+  /**
+     * 기관(조직) 등록일. 신청 submittedAt과 다를 수 있다
+     * @nullable
+     */
+  institutionJoinedAt?: string | null;
   scheduleId?: number;
   scheduleName?: string;
-  trainingDate?: string;
+  /**
+     * 강사 매칭으로 확정된 날짜. 미매칭이면 null
+     * @nullable
+     */
+  trainingDate?: string | null;
   trainingStartTime?: string;
   trainingEndTime?: string;
-  trainingTimeText?: string;
+  /**
+     * 확정 시간 표시. 미매칭이면 null
+     * @nullable
+     */
+  trainingTimeText?: string | null;
+  /**
+     * 희망 일정 마지막 순위(3지망) 날짜. 확정 trainingDate와 분리
+     * @nullable
+     */
+  lastPreferredDate?: string | null;
   studentCount?: number;
   classCount?: number;
   requestedScheduleMemo?: string;
   instructorMemberId?: number;
   instructorName?: string;
+  /**
+     * 매칭된 연수 담당 강사 프로필. 미매칭이면 null
+     * @nullable
+     */
+  assignedInstructor?: GeminiAssignedInstructor;
+  /**
+     * 프로그램 PM admin id. 교사 회원 id가 아님
+     * @deprecated
+     */
   managerAdminId?: number;
+  /**
+     * teacherName 별칭. 한 릴리스 유지
+     * @deprecated
+     */
   managerName?: string;
+  /**
+     * 기관 신청 담당 교사 회원 id
+     * @nullable
+     */
+  teacherMemberId?: number | null;
+  /** @nullable */
+  teacherName?: string | null;
+  /**
+     * MALE|FEMALE|OTHER 또는 한글 표시 원문
+     * @nullable
+     */
+  teacherGender?: string | null;
+  /** @nullable */
+  teacherBirthDate?: string | null;
+  /** @nullable */
+  teacherPhone?: string | null;
+  /** @nullable */
+  teacherEmail?: string | null;
+  /** @nullable */
+  teacherSchoolName?: string | null;
+  /** @nullable */
+  teacherEmploymentStatus?: GeminiApprovedTrainingDetailResponseTeacherEmploymentStatus;
+  /** @nullable */
+  teacherPosition?: string | null;
+  /** @nullable */
+  teacherSubject?: string | null;
+  /** @nullable */
+  teacherHomeAddress?: string | null;
+  /** @nullable */
+  teacherScheduleChangeCount?: number | null;
+  /** @nullable */
+  teacherLectureExperience?: string | null;
+  /** @nullable */
+  teacherAccountBank?: string | null;
+  /** @nullable */
+  teacherAccountNumber?: string | null;
+  /** @nullable */
+  teacherAccountHolder?: string | null;
+  /** @nullable */
+  teacherInstructorFeeGrade?: string | null;
+  /** @nullable */
+  teacherBusinessIncomeLabel?: string | null;
+  /** @nullable */
+  teacherOneLineIntro?: string | null;
   officialDocumentRequired?: boolean;
   submittedAt?: string;
   approvedAt?: string;

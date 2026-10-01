@@ -14,7 +14,7 @@
  */
 
 import { useCallback, useRef } from 'react'
-import type { UseFormReturn } from 'react-hook-form'
+import type { FieldPath, UseFormReturn } from 'react-hook-form'
 import type { z } from 'zod'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -25,9 +25,18 @@ import {
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import { showUpdateCompletedAlert } from '@/shared/ui'
 import {
+  extractApiErrorField,
+  extractApiErrorMessage,
+} from '@/shared/lib/extract-api-error-message'
+import {
   applyRecruitmentDetailInfoFields,
   type ProgramDetailRecruitmentAudience,
+  type ProgramDetailRecruitmentNotesField,
 } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
+import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { looksLikeUjatProgramId } from '@/features/program/ujat/lib/is-ujat-primary-program'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 
 export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
@@ -42,6 +51,8 @@ export interface UseProgramDetailInfoSaveOptions {
   commonInfoPatchOnly?: boolean
   /** 모집 탭 저장 — 프로그램 설명·추가 내용 등을 해당 *RecruitmentInfo SSOT에도 넣는다 */
   recruitmentAudience?: ProgramDetailRecruitmentAudience
+  /** 모집 비고 폼 필드. 기본: 참여자 remarks · 강사 instructorRecruitmentRemarks(일반) / otherNotes · 봉사자 oneLineIntroduction */
+  recruitmentNotesField?: ProgramDetailRecruitmentNotesField
 }
 
 export type ProgramDetailInfoSaveExtraCommon = Partial<
@@ -56,6 +67,7 @@ export function useProgramDetailInfoSave({
   validateSchema,
   commonInfoPatchOnly = false,
   recruitmentAudience,
+  recruitmentNotesField,
 }: UseProgramDetailInfoSaveOptions) {
   const savingRef = useRef(false)
   const saveFailureRef = useRef<'validation' | 'api' | null>(null)
@@ -103,6 +115,44 @@ export function useProgramDetailInfoSave({
           ...(generalCommonInfo ? { generalCommonInfo } : {}),
         }
         if (recruitmentAudience) {
+          const writesRowFields =
+            !isCompanySchoolProgram(program) &&
+            !isTrainedTeachersDetailProgram(program) &&
+            program.backendProgramType !== 'UJAT' &&
+            !looksLikeUjatProgramId(program.id)
+          const notesField =
+            recruitmentNotesField ??
+            (recruitmentAudience === 'instructor'
+              ? writesRowFields
+                ? 'instructorRecruitmentRemarks'
+                : 'otherNotes'
+              : recruitmentAudience === 'volunteer'
+                ? 'oneLineIntroduction'
+                : 'remarks')
+          const notesNotApplicable =
+            recruitmentAudience === 'participant'
+              ? values.participantRecruitmentNotesNotApplicable === 'not_applicable'
+              : recruitmentAudience === 'volunteer'
+                ? values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
+                : false
+          const contact =
+            recruitmentAudience === 'instructor'
+              ? {
+                  contactName: values.instructorRecruitmentContactOrganizationName,
+                  contactPhone: values.instructorContactPhone,
+                  contactEmail: values.instructorContactEmail,
+                }
+              : recruitmentAudience === 'volunteer'
+                ? {
+                    contactName: values.volunteerRecruitmentContactOrganizationName,
+                    contactPhone: values.volunteerContactPhone,
+                    contactEmail: values.volunteerContactEmail,
+                  }
+                : {
+                    contactName: values.recruitmentContactOrganizationName,
+                    contactPhone: values.contactPhone,
+                    contactEmail: values.contactEmail,
+                  }
           remotePatch = applyRecruitmentDetailInfoFields(
             remotePatch,
             program,
@@ -113,9 +163,56 @@ export function useProgramDetailInfoSave({
               applicationMethod: values.applicationMethod,
               learningSupportContent: values.learningSupportContent,
               ...(typeof html === 'string' ? { additionalContentHtml: html } : {}),
-              otherNotes: values.otherNotes,
+              remarks: values[notesField],
+              notesNotApplicable,
+              ...(writesRowFields
+                ? {
+                    contactName: contact.contactName ?? '',
+                    contactPhone: contact.contactPhone ?? '',
+                    contactEmail: contact.contactEmail ?? '',
+                    ...(recruitmentAudience !== 'participant'
+                      ? { otherMatters: values.otherNotes ?? '' }
+                      : {}),
+                  }
+                : {}),
             }
           )
+          if (writesRowFields && notesField !== 'remarks') {
+            // 비고는 모집 행 remarks 전용 — 프로그램 oneLineIntroduction·otherMatters로 새지 않게 한다.
+            const { [notesField]: _rowNotes, ...withoutNotes } = remotePatch as Record<string, unknown>
+            remotePatch = withoutNotes as Partial<Program>
+          }
+          if (remotePatch.generalCommonInfo) {
+            // 모집 폼의 announcementTitle(행에 없으면 '')이 공통정보 공고명을 비우지 않게 한다.
+            remotePatch = {
+              ...remotePatch,
+              generalCommonInfo: {
+                ...remotePatch.generalCommonInfo,
+                announcementTitle: program.generalCommonInfo?.announcementTitle,
+              },
+            }
+          }
+          const isGeneralRecruitProgram =
+            !isCompanySchoolProgram(program) &&
+            program.backendProgramType !== 'UJAT' &&
+            !looksLikeUjatProgramId(program.id)
+          if (isGeneralRecruitProgram) {
+            const draftForResync: Program = {
+              ...program,
+              ...remotePatch,
+              generalCommonInfo: {
+                ...program.generalCommonInfo,
+                ...remotePatch.generalCommonInfo,
+              },
+            }
+            remotePatch = {
+              ...remotePatch,
+              registrationOverlay: resyncGeneralRecruitOverlayFromProgram(draftForResync, {
+                ...(program.registrationOverlay ?? {}),
+                ...(remotePatch.registrationOverlay ?? {}),
+              }),
+            }
+          }
         }
         if (commonInfoPatchOnly) {
           remotePatch = narrowProgramDetailPatchForCommonInfoSave(remotePatch)
@@ -131,14 +228,34 @@ export function useProgramDetailInfoSave({
         await onSaveEdit(draftToSave, remotePatch)
         showUpdateCompletedAlert()
         return true
-      } catch {
+      } catch (error) {
+        const data =
+          error && typeof error === 'object' && 'response' in error
+            ? (error as { response?: { data?: unknown } }).response?.data
+            : undefined
+        const field = extractApiErrorField(data)
+        const message = extractApiErrorMessage(data, { fallback: '' })
+        if (field && message) {
+          form.setError(field as FieldPath<ProgramDetailEditFormValues>, {
+            type: 'server',
+            message,
+          })
+        }
         saveFailureRef.current = 'api'
         return false
       } finally {
         savingRef.current = false
       }
     },
-    [commonInfoPatchOnly, form, program, onSaveEdit, recruitmentAudience, validateSchema]
+    [
+      commonInfoPatchOnly,
+      form,
+      program,
+      onSaveEdit,
+      recruitmentAudience,
+      recruitmentNotesField,
+      validateSchema,
+    ]
   )
 
   const resetToProgram = useCallback(() => {

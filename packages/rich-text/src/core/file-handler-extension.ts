@@ -1,13 +1,17 @@
 import type { Editor } from '@tiptap/react'
 import FileHandler from '@tiptap/extension-file-handler'
-import { insertImageFromFile, RICH_TEXT_IMAGE_ACCEPT } from './insert-actions'
+import {
+  insertImageFromFile,
+  RICH_TEXT_IMAGE_ACCEPT,
+  type ResolvedRichTextImageSrc,
+} from './insert-actions'
 
 const ALLOWED_MIME_TYPES = RICH_TEXT_IMAGE_ACCEPT.split(',').map(type => type.trim())
 
 function handleImageFiles(
   editor: Editor,
   files: File[],
-  resolveSrc?: (file: File) => Promise<string>,
+  resolveSrc?: (file: File) => Promise<ResolvedRichTextImageSrc>,
 ): void {
   const imageFile = files.find(file => ALLOWED_MIME_TYPES.includes(file.type))
   if (!imageFile) return
@@ -16,7 +20,7 @@ function handleImageFiles(
 
 /** 드래그·붙여넣기 이미지 — insertImageFromFile 재사용 */
 export function createRichTextFileHandler(
-  getResolveSrc?: () => ((file: File) => Promise<string>) | undefined,
+  getResolveSrc?: () => ((file: File) => Promise<ResolvedRichTextImageSrc>) | undefined,
 ) {
   return FileHandler.configure({
     allowedMimeTypes: ALLOWED_MIME_TYPES,

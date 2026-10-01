@@ -22,7 +22,9 @@
 import {
   formatDateOnly,
   formatDateRange,
+  formatInstructorTargetsLabel,
   formatTargetLevelsLabel,
+  formatVolunteerTargetsLabel,
   normalizeTargetLevelValue,
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
@@ -279,6 +281,8 @@ const programDetailEditSchemaBase = z.object({
   oneLineIntroduction: z.string().optional(),
   /** 모집 비고 (BE remarks) — oneLineIntroduction 과 분리 */
   remarks: z.string().optional(),
+  /** 강사 모집 비고 (강사 행 remarks) — 기타사항 otherNotes(otherMatters)와 분리 */
+  instructorRecruitmentRemarks: z.string().optional(),
   /** 교육 대상 상세 (BE educationTargetDetail) — district 와 분리 */
   educationTargetDetail: z.string().optional(),
   /** 참여자 모집 문의처 기관명 (nested contactOrganizationName) */
@@ -1397,6 +1401,29 @@ export function detailEditValuesToProgramPatch(
         inquiryEmail: instructorContactEmail?.trim() || undefined,
         contactPhone: instructorContactPhone?.trim() || undefined,
         contactEmail: instructorContactEmail?.trim() || undefined,
+        recruitmentTarget:
+          values.instructorTargets?.length
+            ? formatInstructorTargetsLabel(values.instructorTargets)
+            : existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTarget,
+        recruitmentTargetDetail:
+          values.instructorTargetDetail?.trim() ||
+          existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTargetDetail,
+        recruitmentPeriodLabel:
+          periodLabelFromRange(
+            values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
+            values.instructorApplicationEndDate ?? existing.instructorApplicationEndDate
+          ) ?? existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentPeriodLabel,
+        operationPeriodLabel:
+          periodLabelFromRange(startDate, endDate) ??
+          existing.generalCommonInfo?.instructorRecruitmentInfo?.operationPeriodLabel,
+        resultAnnouncementLabel: finalAnnouncementLabelFromParts(
+          values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
+          values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod
+        ),
+        finalAnnouncementLabel: finalAnnouncementLabelFromParts(
+          values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
+          values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod
+        ),
       },
       volunteerRecruitmentInfo: {
         ...existing.generalCommonInfo?.volunteerRecruitmentInfo,
@@ -1412,6 +1439,33 @@ export function detailEditValuesToProgramPatch(
         inquiryEmail: volunteerContactEmail?.trim() || undefined,
         contactPhone: volunteerContactPhone?.trim() || undefined,
         contactEmail: volunteerContactEmail?.trim() || undefined,
+        recruitmentTarget:
+          values.volunteerTargets?.length
+            ? formatVolunteerTargetsLabel(values.volunteerTargets)
+            : existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTarget,
+        recruitmentTargetDetail:
+          values.volunteerTargetDetail?.trim() ||
+          existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail,
+        recruitmentPeriodLabel:
+          periodLabelFromRange(
+            values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
+            values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate
+          ) ?? existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentPeriodLabel,
+        operationPeriodLabel:
+          periodLabelFromRange(startDate, endDate) ??
+          existing.generalCommonInfo?.volunteerRecruitmentInfo?.operationPeriodLabel,
+        volunteerInterviewEnabled:
+          values.volunteerRecruitmentInterviewEnabled === 'yes'
+            ? true
+            : values.volunteerRecruitmentInterviewEnabled === 'no'
+              ? false
+              : existing.generalCommonInfo?.volunteerRecruitmentInfo?.volunteerInterviewEnabled,
+        generalVolunteerInterviewEnabled:
+          values.volunteerRecruitmentInterviewEnabled === 'yes'
+            ? true
+            : values.volunteerRecruitmentInterviewEnabled === 'no'
+              ? false
+              : existing.generalCommonInfo?.volunteerRecruitmentInfo?.generalVolunteerInterviewEnabled,
       },
     },
     generalVolunteerInterviewEnabled:
@@ -1457,10 +1511,7 @@ export function detailEditValuesToProgramPatch(
       : undefined,
     volunteerTargetDetail: values.volunteerTargetDetail ?? existing.volunteerTargetDetail,
     applicationMethod: values.applicationMethod ?? existing.applicationMethod,
-    otherNotes:
-      values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
-        ? undefined
-        : (values.otherNotes ?? existing.otherNotes),
+    otherNotes: values.otherNotes ?? existing.otherNotes,
     additionalContentHtml: values.additionalContentHtml ?? existing.additionalContentHtml,
     mainTitle: values.mainTitle ?? existing.mainTitle,
     titleEn: values.titleEn ?? existing.titleEn,

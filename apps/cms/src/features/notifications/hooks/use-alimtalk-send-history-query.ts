@@ -3,32 +3,22 @@ import {
   getAlimtalkSendHistoryDetail,
   getAlimtalkSendHistoryList,
 } from '@/features/notifications/api/alimtalk-send-history-service'
-import {
-  DELIVERY_LIST_POST_SEND_POLL_INTERVAL_MS,
-  markNotificationDeliveryListAwaitingDispatch,
-} from '@/features/notifications/api/delivery-list-refresh'
+import { markNotificationDeliveryListAwaitingDispatch } from '@/features/notifications/api/delivery-list-refresh'
 import { notificationsQueryKeys } from '@/features/notifications/api/notifications-query-keys'
 import { alimtalkSendHistorySearchParamsKey } from '@/features/notifications/api/send-history-search-params-key'
 import { useDeliveryListShortPoll } from '@/features/notifications/hooks/use-delivery-list-short-poll'
-
-/** Class E — soft nav 캐시 hit 금지 · 발송 직후 dispatch 지연 흡수 */
-const LIST_QUERY_OPTIONS = {
-  staleTime: 0,
-  refetchOnMount: 'always' as const,
-  refetchOnWindowFocus: true,
-  retry: false as const,
-}
+import { useInfiniteSendHistoryQuery } from '@/features/notifications/hooks/use-infinite-send-history'
 
 export function useAlimtalkSendHistoryQuery(searchParams: URLSearchParams, enabled = true) {
   const searchParamsKey = alimtalkSendHistorySearchParamsKey(searchParams)
   const shortPoll = useDeliveryListShortPoll('alimtalk')
 
-  return useQuery({
+  return useInfiniteSendHistoryQuery({
     queryKey: notificationsQueryKeys.alimtalkSendHistory.list(searchParamsKey),
-    queryFn: () => getAlimtalkSendHistoryList(new URLSearchParams(searchParamsKey)),
+    queryKeyIdentity: searchParamsKey,
+    queryFn: page => getAlimtalkSendHistoryList(new URLSearchParams(searchParamsKey), page),
     enabled,
-    ...LIST_QUERY_OPTIONS,
-    refetchInterval: shortPoll ? DELIVERY_LIST_POST_SEND_POLL_INTERVAL_MS : false,
+    shortPoll,
   })
 }
 

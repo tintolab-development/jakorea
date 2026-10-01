@@ -94,7 +94,11 @@ export function getMockApplyFormDraft(
     Partial<
       Pick<
         ProgramDetail,
-        'detailCase' | 'participationMethod' | 'programType' | 'registrationKind'
+        | 'detailCase'
+        | 'participationMethod'
+        | 'programType'
+        | 'registrationKind'
+        | 'applicationType'
       > &
         ApplyScheduleProgramFields
     >

@@ -9,6 +9,8 @@ import {
   describeIncompleteUjatProgramRegistrationRequiredFields,
   describeIncompleteUjatProgramRegistrationWizardRequiredFields,
   hasIncompleteUjatProgramRegistrationRequiredFields,
+  listIncompleteUjatProgramRegistrationRequiredFields,
+  listIncompleteUjatProgramRegistrationWizardRequiredFields,
   UjatRegistrationRequiredFieldsIncompleteError,
 } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import type { Program } from '@/types/domain'
@@ -68,6 +70,8 @@ import {
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
 
 export type UseUjatProgramRegistrationFlowOptions = {
+  /** 필수 미입력 검증 실패 시 — 인라인 강조용 진단 키 */
+  reportValidationIncomplete?: (keys: readonly string[]) => void
   /** 1단계(프로그램 등록) 저장 성공 후 — 목록 갱신·모달 닫기 등 */
   onProgramRegistrationSaved?: (program: Program) => void
   /** URL `ujatStep` 초기값 */
@@ -284,6 +288,9 @@ export function useUjatProgramRegistrationFlow(
         phase === 'program' &&
         hasIncompleteUjatProgramRegistrationRequiredFields()
       ) {
+        options?.reportValidationIncomplete?.(
+          listIncompleteUjatProgramRegistrationRequiredFields()
+        )
         console.debug(
           '[registration] UJAT 공통정보 필수항목 미입력:',
           describeIncompleteUjatProgramRegistrationRequiredFields()
@@ -348,6 +355,9 @@ export function useUjatProgramRegistrationFlow(
     if (completionPromiseRef.current) return completionPromiseRef.current
 
     if (describeIncompleteUjatProgramRegistrationWizardRequiredFields() != null) {
+      options?.reportValidationIncomplete?.(
+        listIncompleteUjatProgramRegistrationWizardRequiredFields()
+      )
       console.debug(
         '[registration] UJAT 등록 완료 필수항목 미입력:',
         describeIncompleteUjatProgramRegistrationWizardRequiredFields()

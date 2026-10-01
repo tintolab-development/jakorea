@@ -116,6 +116,7 @@ function SemesterScheduleTableBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 진행 일정"
+            validationKey={`${half}.event.range`}
             view={formatUjatEventRangeLabel(eventSeal)}
             edit={
               mode === 'edit' ? (

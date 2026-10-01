@@ -9,6 +9,13 @@
   text-align: left;
 }
 
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
 .title {
   margin: 0;
   width: 100%;

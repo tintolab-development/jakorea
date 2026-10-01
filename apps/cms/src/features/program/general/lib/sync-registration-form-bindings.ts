@@ -12,6 +12,8 @@ import {
   getOperationalFormSpec,
   listVisibleOperationalFormSpecs,
   pickOperationalFormBinding,
+  recruitmentApplicationBindingScope,
+  resolveRowApplicationBinding,
   type OperationalFormSpec,
 } from '@/features/program/general/lib/operational-form-bindings'
 import {
@@ -65,20 +67,46 @@ export function rememberProgramOperationalFormBinding(
 function bindingToUpdatePayload(
   binding: ProgramFormBindingResponse,
   ids: RememberedBinding,
-  spec: OperationalFormSpec
+  spec: OperationalFormSpec,
+  program?: Program
 ): ProgramFormBindingRequest {
+  const scope = program
+    ? recruitmentApplicationBindingScope(program, spec.formType)
+    : undefined
   return {
     formType: binding.formType ?? spec.formType,
     templateId: ids.templateId,
     templateVersionId: ids.templateVersionId,
     targetType: binding.targetType,
     targetRole: binding.targetRole ?? spec.targetRole,
-    targetScope: binding.targetScope,
-    targetScopeId: binding.targetScopeId,
+    targetScope: scope?.targetScope ?? binding.targetScope,
+    targetScopeId: scope?.targetScopeId ?? binding.targetScopeId,
     required: binding.required,
     active: true,
     displayOrder: binding.displayOrder,
   }
+}
+
+function selectBindingForOperationalSpec(
+  program: Program,
+  bindings: readonly ProgramFormBindingResponse[],
+  spec: OperationalFormSpec,
+  catalogTemplateId?: number
+): ProgramFormBindingResponse | undefined {
+  const row = resolveRowApplicationBinding(program, bindings, spec)
+  if (row.kind === 'missing') return undefined
+  if (row.kind === 'binding') return row.binding
+  return pickOperationalFormBinding(bindings, { ...spec, catalogTemplateId })
+}
+
+function withRecruitmentApplicationScope(
+  program: Program,
+  spec: OperationalFormSpec,
+  payload: ProgramFormBindingRequest
+): ProgramFormBindingRequest {
+  const scope = recruitmentApplicationBindingScope(program, spec.formType)
+  if (scope == null) return payload
+  return { ...payload, ...scope }
 }
 
 async function attachLocalDraftToBinding(args: {
@@ -92,10 +120,12 @@ async function attachLocalDraftToBinding(args: {
   const local = await loadOperationalFormDraftForProgram(args.program, args.spec.templateCode)
   if (local?.draft == null) return
 
-  const existing = pickOperationalFormBinding(args.bindings, {
-    ...args.spec,
-    catalogTemplateId: args.catalogTemplateId,
-  })
+  const existing = selectBindingForOperationalSpec(
+    args.program,
+    args.bindings,
+    args.spec,
+    args.catalogTemplateId
+  )
   const alreadyScoped =
     existing?.templateId != null &&
     existing.templateVersionId != null &&
@@ -155,13 +185,13 @@ async function attachLocalDraftToBinding(args: {
   }
 
   const ids = { templateId, templateVersionId: publishedVersionId }
-  const createPayload: ProgramFormBindingRequest = {
+  const createPayload = withRecruitmentApplicationScope(args.program, args.spec, {
     formType: args.spec.formType,
     templateId,
     templateVersionId: publishedVersionId,
     active: true,
     required: false,
-  }
+  })
   if (args.spec.targetRole != null && args.spec.targetRole !== '') {
     createPayload.targetRole = args.spec.targetRole
     createPayload.targetType = resolveFormBindingTargetType(args.spec.targetRole)
@@ -175,7 +205,7 @@ async function attachLocalDraftToBinding(args: {
       await updateGeneralProgramFormBinding(
         programId,
         String(existing.bindingId),
-        bindingToUpdatePayload(existing, ids, args.spec)
+        bindingToUpdatePayload(existing, ids, args.spec, args.program)
       )
     } catch (error) {
       if (getApiErrorCode(error) === 'OPERATION_NOT_ALLOWED') {
@@ -195,10 +225,12 @@ async function promoteCatalogBindingToProgramScoped(args: {
   catalogVersionId: number
 }): Promise<RememberedBinding | undefined> {
   const programId = args.program.id
-  const existing = pickOperationalFormBinding(args.bindings, {
-    ...args.spec,
-    catalogTemplateId: args.catalogTemplateId,
-  })
+  const existing = selectBindingForOperationalSpec(
+    args.program,
+    args.bindings,
+    args.spec,
+    args.catalogTemplateId
+  )
   if (
     existing?.templateId != null &&
     existing.templateVersionId != null &&
@@ -235,13 +267,13 @@ async function promoteCatalogBindingToProgramScoped(args: {
   }
 
   const ids = { templateId, templateVersionId: publishedVersionId }
-  const createPayload: ProgramFormBindingRequest = {
+  const createPayload = withRecruitmentApplicationScope(args.program, args.spec, {
     formType: args.spec.formType,
     templateId,
     templateVersionId: publishedVersionId,
     active: true,
     required: false,
-  }
+  })
   if (args.spec.targetRole != null && args.spec.targetRole !== '') {
     createPayload.targetRole = args.spec.targetRole
     createPayload.targetType = resolveFormBindingTargetType(args.spec.targetRole)
@@ -255,7 +287,7 @@ async function promoteCatalogBindingToProgramScoped(args: {
       await updateGeneralProgramFormBinding(
         programId,
         String(existing.bindingId),
-        bindingToUpdatePayload(existing, ids, args.spec)
+        bindingToUpdatePayload(existing, ids, args.spec, args.program)
       )
     } catch (error) {
       if (getApiErrorCode(error) === 'OPERATION_NOT_ALLOWED') {
@@ -348,17 +380,19 @@ export async function saveProgramScopedOperationalFormVersion(args: {
 
   const ids = { templateId: draftTemplateId, templateVersionId: publishedVersionId }
   const bindings = await fetchGeneralProgramFormBindings(args.program.id)
-  const existing = pickOperationalFormBinding(bindings, {
-    ...spec,
-    catalogTemplateId: catalog?.templateId,
-  })
-  const createPayload: ProgramFormBindingRequest = {
+  const existing = selectBindingForOperationalSpec(
+    args.program,
+    bindings,
+    spec,
+    catalog?.templateId
+  )
+  const createPayload = withRecruitmentApplicationScope(args.program, spec, {
     formType: spec.formType,
     templateId: draftTemplateId,
     templateVersionId: publishedVersionId,
     active: true,
     required: false,
-  }
+  })
   if (spec.targetRole != null && spec.targetRole !== '') {
     createPayload.targetRole = spec.targetRole
     createPayload.targetType = resolveFormBindingTargetType(spec.targetRole)
@@ -371,7 +405,7 @@ export async function saveProgramScopedOperationalFormVersion(args: {
     await updateGeneralProgramFormBinding(
       args.program.id,
       String(existing.bindingId),
-      bindingToUpdatePayload(existing, ids, spec)
+      bindingToUpdatePayload(existing, ids, spec, args.program)
     )
   }
   rememberProgramOperationalFormBinding(args.program.id, args.templateCode, ids)
@@ -436,6 +470,7 @@ export async function resolveProgramOperationalFormLoadSource(
   const bindings = await fetchGeneralProgramFormBindings(program.id)
   return resolveApplicationFormLoadSource({
     programId: program.id,
+    program,
     templateCode,
     bindings,
     catalogTemplateId: catalog?.templateId,
@@ -561,6 +596,7 @@ export async function ensureProgramScopedOperationalBinding(
     const catalog = await resolveFormTemplateCatalogIds(templateCode).catch(() => null)
     return resolveApplicationFormLoadSource({
       programId: program.id,
+      program,
       templateCode,
       bindings,
       catalogTemplateId: catalog?.templateId,
@@ -571,6 +607,7 @@ export async function ensureProgramScopedOperationalBinding(
   const bindings = await fetchGeneralProgramFormBindings(program.id)
   const initial = resolveApplicationFormLoadSource({
     programId: program.id,
+    program,
     templateCode,
     bindings,
     catalogTemplateId: catalog?.templateId,
@@ -599,6 +636,7 @@ export async function ensureProgramScopedOperationalBinding(
   const nextBindings = await fetchGeneralProgramFormBindings(program.id)
   return resolveApplicationFormLoadSource({
     programId: program.id,
+    program,
     templateCode,
     bindings: nextBindings,
     catalogTemplateId: catalog?.templateId,
@@ -610,13 +648,27 @@ export function resolveApplicationFormLoadSource(args: {
   templateCode: string
   bindings: readonly ProgramFormBindingResponse[]
   catalogTemplateId?: number
+  program?: Program
 }): { templateVersionId?: number; preferLocalDraft: boolean } {
-  const remembered = getRememberedProgramOperationalFormBinding(args.programId, args.templateCode)
-  if (remembered?.templateVersionId != null) {
-    return { templateVersionId: remembered.templateVersionId, preferLocalDraft: false }
-  }
   const spec = getOperationalFormSpec(args.templateCode)
+  const rowScoped =
+    args.program != null &&
+    spec != null &&
+    recruitmentApplicationBindingScope(args.program, spec.formType) != null
+  if (!rowScoped) {
+    const remembered = getRememberedProgramOperationalFormBinding(args.programId, args.templateCode)
+    if (remembered?.templateVersionId != null) {
+      return { templateVersionId: remembered.templateVersionId, preferLocalDraft: false }
+    }
+  }
   if (spec == null) return { preferLocalDraft: true }
+  if (rowScoped && args.program != null) {
+    const row = resolveRowApplicationBinding(args.program, args.bindings, spec)
+    if (row.kind !== 'binding' || row.binding.templateVersionId == null) {
+      return { preferLocalDraft: true }
+    }
+    return { templateVersionId: row.binding.templateVersionId, preferLocalDraft: false }
+  }
   const binding = pickOperationalFormBinding(args.bindings, {
     ...spec,
     catalogTemplateId: args.catalogTemplateId,

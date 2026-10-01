@@ -1,5 +1,9 @@
 import dayjs, { type Dayjs } from 'dayjs'
+import { seedDevAutofillApplicationThirdPartyRecipients } from '@/features/program/general/lib/fill-application-form-third-party-recipient'
+import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import { shouldDisableEducationSchedulePeriodMode } from '@/features/program/general/lib/schedule-detail-form'
+import { completeTrainedTeachersDevAutofillOverlay } from '@/features/program/trained-teachers/lib/dev-autofill-required'
+import type { TrainedTeachersRegistrationRequiredFieldContext } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
 import {
   APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
   patchApplicantRecruitInstitutionOverlay,
@@ -792,7 +796,7 @@ async function resolveDetailedProgram(
   try {
     const rows = await getDetailedProgramOptionsList()
     for (const row of rows) {
-      if (row.id) pool.push({ value: row.id, label: row.name ?? '' })
+      if (isDetailedProgramMasterId(row.id)) pool.push({ value: String(row.id), label: row.name ?? '' })
     }
   } catch {
     /* remote 미연동·실패 시 빈 후보 */
@@ -869,6 +873,10 @@ export type ProgramRegistrationDevAutofillLayout = {
   participantOrganization: boolean
   programType: 'curriculum' | 'schedule'
   sessionRoundType: 'single' | 'multi'
+  /** 교육받은 교사 — 교육 연수 토글. 켜져 있으면 진행 일정이 필수다. */
+  teacherTrainingEnabled?: boolean
+  /** 교육받은 교사 필수 검사에 쓰는 참여자 선택. 없으면 학교/기관만 선택한 것으로 본다. */
+  participant?: TrainedTeachersRegistrationRequiredFieldContext['participant']
 }
 
 export type ProgramRegistrationDevAutofillTypeSettings = {
@@ -1383,6 +1391,124 @@ function buildUjatOverlay(
   }
 }
 
+const TRAINED_TEACHERS_AUTOFILL_PARTICIPANT = {
+  individual: false,
+  organization: true,
+  teacherInstructor: false,
+  volunteer: false,
+} as const
+
+function composeTrainedTeachersRegistrationDevAutofillOverlay(input: {
+  sample: DevAutofillSample
+  layout: ProgramRegistrationDevAutofillLayout
+  typeSettings: ProgramRegistrationDevAutofillTypeSettings
+  educationScheduleLines: readonly string[]
+  resolved: {
+    sponsorId: string
+    contactId: string
+    detailedProgramId: string
+    detailedProgramName: string
+    paymentItemValues: string[]
+    paymentItemLabels: string
+  }
+}): Record<string, unknown> {
+  const basicPrefix = 'trainedTeachersRegistration.basicInfo'
+  const scheduleLine =
+    input.educationScheduleLines.find(line => line.trim()) ?? scheduleLineAt(1)
+  const participant = input.layout.participant ?? {
+    ...TRAINED_TEACHERS_AUTOFILL_PARTICIPANT,
+    organization: input.layout.participantOrganization,
+    individual: !input.layout.participantOrganization,
+  }
+  const overlay = {
+    ...buildGeneralLikeOverlay(
+      input.sample,
+      basicPrefix,
+      'generalRegistration.kpi',
+      'trainedTeachersRegistration.educationCurriculum',
+      'trainedTeachersRegistration.educationScheduleSettings',
+      `${basicPrefix}.programTitleKo`,
+      'trainedTeachersRegistration.typeSettings',
+      input.layout,
+      input.typeSettings,
+      input.educationScheduleLines,
+      input.resolved
+    ),
+    [`${basicPrefix}.sponsorId`]: input.resolved.sponsorId,
+    [`${basicPrefix}.managerContactId`]: input.resolved.contactId,
+    [`${basicPrefix}.managerContactIds`]: input.resolved.contactId ? [input.resolved.contactId] : [],
+    'trainedTeachersRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
+    'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine': scheduleLine,
+    'trainedTeachersRegistration.educationCurriculum.teacherTrainingEducationForm':
+      input.typeSettings.educationForm,
+    'generalRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
+    'generalRegistration.educationCurriculum.preEducationScheduleLine': scheduleLine,
+  }
+  const requiredContext: TrainedTeachersRegistrationRequiredFieldContext = {
+    participant,
+    programType: input.typeSettings.programType,
+    sessionRoundType: input.typeSettings.sessionRoundType,
+    educationFormScheduleDetail: input.typeSettings.educationFormScheduleDetail,
+    participationScheduleDetail: input.typeSettings.participationScheduleDetail,
+    ipsScheduleDetail: input.typeSettings.ipsScheduleDetail,
+    curriculumSessionCount: input.layout.curriculumSessionCount,
+    curriculumChartSessionCount: input.layout.curriculumChartSessionCount,
+    scheduleCurriculumDetailCount: input.layout.scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount: input.layout.scheduleCurriculumGroupCount,
+    teacherTrainingEnabled: input.layout.teacherTrainingEnabled === true,
+    educationScheduleMode: input.typeSettings.educationScheduleMode,
+    sponsorId: input.resolved.sponsorId,
+    sponsorContactId: input.resolved.contactId,
+    programTitleKo: input.sample.titleKo,
+  }
+  return completeTrainedTeachersDevAutofillOverlay(overlay, requiredContext, {
+    scheduleLine,
+    titleEn: input.sample.titleEn,
+    publicTitle: input.sample.publicTitle,
+    operationRange: { ...input.sample.operationRange },
+    businessField: input.sample.businessField,
+    educationCourse: input.sample.educationCourse,
+    ipOwned: input.sample.ipOwned,
+    courseDeliveredBy: input.sample.courseDeliveredBy,
+    educationForm: input.typeSettings.educationForm || 'online',
+    ips: { category: input.sample.ipsCategory, detail: input.sample.ipsDetail },
+    unitName: input.sample.units[0]?.name || '단원',
+    unitContent: input.sample.units[0]?.content || '교육 내용',
+    detailedProgramId: input.resolved.detailedProgramId,
+    detailedProgramName: input.resolved.detailedProgramName,
+    venueDetail: input.sample.venueDetail,
+  })
+}
+
+/** 테스트·개발용 — 샘플을 만들어 교육받은 교사 자동입력 overlay를 돌려준다. */
+export function previewTrainedTeachersRegistrationDevAutofill(input: {
+  layout: ProgramRegistrationDevAutofillLayout
+  typeSettings: ProgramRegistrationDevAutofillTypeSettings
+  resolved: {
+    sponsorId: string
+    contactId: string
+    detailedProgramId: string
+    detailedProgramName: string
+    paymentItemValues: string[]
+    paymentItemLabels: string
+  }
+}): { overlay: Record<string, unknown>; programTitleKo: string } {
+  const sample = buildDevAutofillSample()
+  const educationScheduleLines = buildEducationSchedulePreviewLines(
+    input.typeSettings.educationScheduleMode
+  )
+  return {
+    programTitleKo: sample.titleKo,
+    overlay: composeTrainedTeachersRegistrationDevAutofillOverlay({
+      sample,
+      layout: input.layout,
+      typeSettings: input.typeSettings,
+      educationScheduleLines,
+      resolved: input.resolved,
+    }),
+  }
+}
+
 export type ProgramRegistrationDevAutofillEditorPatch = {
   programTitleKo: string
   sponsorId: string
@@ -1464,6 +1590,8 @@ export async function applyDevProgramRegistrationAutofill(
     }
   }
 
+  seedDevAutofillApplicationThirdPartyRecipients(variant, layout)
+
   if (variant === 'economy') {
     const [sponsorContact, detailedProgram, paymentItems] = await Promise.all([
       resolveSponsorAndContact(true),
@@ -1521,25 +1649,15 @@ export async function applyDevProgramRegistrationAutofill(
   }
 
   if (variant === 'trainedTeachers') {
-    const basicPrefix = 'trainedTeachersRegistration.basicInfo'
-    patchProgramRegistrationOverlay({
-      ...buildGeneralLikeOverlay(
+    patchProgramRegistrationOverlay(
+      composeTrainedTeachersRegistrationDevAutofillOverlay({
         sample,
-        basicPrefix,
-        'generalRegistration.kpi',
-        'trainedTeachersRegistration.educationCurriculum',
-        'trainedTeachersRegistration.educationScheduleSettings',
-        `${basicPrefix}.programTitleKo`,
-        'trainedTeachersRegistration.typeSettings',
         layout,
         typeSettings,
         educationScheduleLines,
-        resolved
-      ),
-      [`${basicPrefix}.sponsorId`]: resolved.sponsorId,
-      [`${basicPrefix}.managerContactId`]: resolved.contactId,
-      [`${basicPrefix}.managerContactIds`]: resolved.contactId ? [resolved.contactId] : [],
-    })
+        resolved,
+      })
+    )
     return {
       programTitleKo: sample.titleKo,
       sponsorId: resolved.sponsorId,

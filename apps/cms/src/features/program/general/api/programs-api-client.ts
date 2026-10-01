@@ -1,4 +1,9 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { syncProgramInlineImages } from '@/features/program/shared/api/program-inline-images'
+import {
+  PROGRAM_HARD_DELETE_BLOCKED_CODE,
+  ProgramHardDeleteBlockedError,
+} from '@/features/program/shared/lib/program-delete-guide'
 import customInstance from '@/shared/api/orval-mutator'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
@@ -138,26 +143,46 @@ export async function fetchAdminProgramSponsorsRemote(
 export async function createAdminProgramRemote(
   payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
 ): Promise<ProgramResponse> {
-  return unwrapApiBody<ProgramResponse>(
+  const created = unwrapApiBody<ProgramResponse>(
     await customInstance({
       url: '/api/admin/programs',
       method: 'POST',
       data: payload,
     })
   )
+  const createdId = created.id
+  if (createdId) {
+    try {
+      await syncProgramInlineImages(createdId, [payload, created])
+    } catch (error) {
+      await rollbackCreatedProgram(createdId)
+      throw error
+    }
+  }
+  return created
+}
+
+async function rollbackCreatedProgram(programId: string | number): Promise<void> {
+  try {
+    await deleteAdminProgramRemote(String(programId))
+  } catch (rollbackError) {
+    console.error('[program] rollback created program failed', programId, rollbackError)
+  }
 }
 
 export async function updateAdminProgramRemote(
   programId: string,
   payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest
 ): Promise<ProgramResponse> {
-  return unwrapApiBody<ProgramResponse>(
+  const updated = unwrapApiBody<ProgramResponse>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}`,
       method: 'PATCH',
       data: payload,
     })
   )
+  await syncProgramInlineImages(programId, [payload, updated])
+  return updated
 }
 
 export async function deleteAdminProgramRemote(programId: string): Promise<void> {
@@ -196,6 +221,16 @@ export async function bulkDeleteAdminProgramsRemote(programIds: string[]): Promi
       })
     )
     if ((result.failureCount ?? 0) > 0) {
+      const blocked = result.failures?.find(
+        failure => failure.code === PROGRAM_HARD_DELETE_BLOCKED_CODE
+      )
+      if (blocked) {
+        throw new ProgramHardDeleteBlockedError(
+          result.requestedCount ?? chunk.length,
+          blocked.message,
+          result.successCount ?? 0
+        )
+      }
       const firstFailure = result.failures?.[0]
       throw new Error(
         firstFailure?.message?.trim() ||

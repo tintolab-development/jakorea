@@ -53,7 +53,7 @@ export const ADMIN_FILE_OWNER = {
 
 export function buildAdminFileOwner(
   base: { ownerDomain: string; ownerType: string },
-  ownerId: number,
+  ownerId: number | null,
   filePurpose: AdminFilePurpose | string
 ): AdminFileUploadOwner {
   return {

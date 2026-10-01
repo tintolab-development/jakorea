@@ -13,7 +13,14 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import {
+  getGeneralApplicationOverlayRecord,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  listVolunteerInterviewExceptionBlockIds,
   persistMissingVolunteerInterviewOverlayDefaults,
+  reconcileVolunteerInterviewExceptionBlockKeys,
+  removeVolunteerInterviewExceptionBlock,
   updateVolunteerInterviewOverlayKey,
   useVolunteerInterviewOverlayKv,
   type VolunteerInterviewOverlayStore,
@@ -83,6 +90,17 @@ function coerceDayjsRange(value: unknown): [Dayjs, Dayjs] | null {
   return [start, end]
 }
 
+function exceptionInterviewOverlayNamespace(
+  overlayStore: VolunteerInterviewOverlayStore,
+  overlayNamespace: string | undefined,
+  blockKey: number
+): string {
+  const base =
+    overlayNamespace?.trim() ||
+    (overlayStore === 'recruit' ? 'recruit.volunteer.interview' : 'application.volunteer.interview')
+  return `${base}.exception.${blockKey}`
+}
+
 function VolunteerInterviewScheduleBlock({
   title,
   type,
@@ -142,6 +160,26 @@ function VolunteerInterviewScheduleBlock({
       content: '봉사자 모집 정보의 2차 면접 기간을 먼저 선택해 주세요.',
     })
   }, [showAlert])
+
+  const ujatInterviewHalf = overlayNamespace?.includes('.h1.')
+    ? 'h1'
+    : overlayNamespace?.includes('.h2.')
+      ? 'h2'
+      : null
+  const interviewTimeValidationKey = ujatInterviewHalf
+    ? `recruit.volunteer.${ujatInterviewHalf}.interviewSchedule`
+    : overlayStore === 'recruit'
+      ? [
+          'recruit.volunteer.interview.interviewTimeRange',
+          'recruit.volunteer.interview.timeUnit',
+          'recruit.volunteer.interview.selectedSlotKeys',
+        ]
+      : undefined
+  const exceptionDateValidationKey = ujatInterviewHalf
+    ? `recruit.volunteer.${ujatInterviewHalf}.interviewSchedule`
+    : overlayStore === 'recruit'
+      ? 'recruit.volunteer.interview.exceptionDate'
+      : undefined
 
   const [exceptionDate, setExceptionDate] = useVolunteerInterviewOverlayKv<Dayjs | null>(
     overlayStore,
@@ -344,6 +382,7 @@ function VolunteerInterviewScheduleBlock({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="예외 진행 일정"
+              validationKey={exceptionDateValidationKey}
               fullRow
               edit={
                 <ParagraphDatePicker
@@ -367,6 +406,15 @@ function VolunteerInterviewScheduleBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="면접 진행 가능 시간"
+            validationKey={
+              type === 'exception' && overlayStore === 'recruit' && ujatInterviewHalf == null
+                ? [
+                    'recruit.volunteer.interview.interviewTime',
+                    'recruit.volunteer.interview.interviewTimeRange',
+                    'recruit.volunteer.interview.selectedSlotKeys',
+                  ]
+                : interviewTimeValidationKey
+            }
             fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper">
@@ -443,29 +491,42 @@ function VolunteerInterviewScheduleTemplateUi({
   interviewRangeSealKey?: string
   freezeUnavailableCalendar?: boolean
 }) {
-  const [internalBlockKeys, setInternalBlockKeys] = useState<number[]>([])
+  const [internalBlockKeys, setInternalBlockKeys] = useState<number[]>(() => {
+    if (exceptionBlockKeys != null) return []
+    const record =
+      overlayStore === 'recruit'
+        ? getGeneralRecruitOverlayRecord()
+        : getGeneralApplicationOverlayRecord()
+    return listVolunteerInterviewExceptionBlockIds(record, overlayStore, overlayNamespace)
+  })
 
   useEffect(() => {
     if (exceptionBlockKeys != null) return
+    const record =
+      overlayStore === 'recruit'
+        ? getGeneralRecruitOverlayRecord()
+        : getGeneralApplicationOverlayRecord()
+    const saved = listVolunteerInterviewExceptionBlockIds(record, overlayStore, overlayNamespace)
     setInternalBlockKeys(prev => {
-      if (exceptionScheduleCount > prev.length) {
-        const next = [...prev]
-        for (let i = prev.length; i < exceptionScheduleCount; i += 1) {
-          next.push(Date.now() + i)
-        }
-        return next
-      }
-      if (exceptionScheduleCount < prev.length) {
-        return prev.slice(0, exceptionScheduleCount)
-      }
-      return prev
+      const next = reconcileVolunteerInterviewExceptionBlockKeys({
+        previous: prev,
+        saved,
+        count: exceptionScheduleCount,
+      })
+      if (next.length === prev.length && next.every((id, index) => id === prev[index])) return prev
+      return next
     })
-  }, [exceptionScheduleCount, exceptionBlockKeys])
+  }, [exceptionScheduleCount, exceptionBlockKeys, overlayNamespace, overlayStore])
 
   const blockKeys = exceptionBlockKeys ?? internalBlockKeys
   const hasExceptionSchedules = blockKeys.length > 0
 
   const handleRemoveException = (key: number) => {
+    removeVolunteerInterviewExceptionBlock({
+      store: overlayStore,
+      namespace: overlayNamespace,
+      blockKey: key,
+    })
     if (onRemoveExceptionBlock) {
       onRemoveExceptionBlock(key)
       return
@@ -491,7 +552,7 @@ function VolunteerInterviewScheduleTemplateUi({
             title={`■ 예외 일정 ${String(index + 1).padStart(2, '0')}`}
             type="exception"
             overlayStore={overlayStore}
-            overlayNamespace={overlayNamespace}
+            overlayNamespace={exceptionInterviewOverlayNamespace(overlayStore, overlayNamespace, key)}
             interviewRangeSealKey={interviewRangeSealKey}
           />
           <div className="volunteer-interview-available-schedule__exception-delete-cell">

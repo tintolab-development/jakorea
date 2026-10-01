@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { RichTextViewer } from '@/shared/rich-text'
 import { PFText } from '@/shared/ui'
 import type { ProgramDetail, ProgramEventSchedule, ProgramSession } from '../../model/types'
+import { isHtmlContent } from '../../lib/html-body'
 import { ProgramInfoPeriodSponsor } from './program-info-period-sponsor'
 import styles from './program-info-body.module.css'
 
@@ -155,9 +156,6 @@ export function ProgramInfoDetail({
 
           {program.eventSchedules.length > 0 ? (
             <div className={styles.curriculumBlock}>
-              <PFText as="h3" typo="bd-sm-rg" color="neutral-cool-600">
-                교육 커리큘럼
-              </PFText>
               <ul className={styles.sessions} aria-label="행사·세부 일정">
                 {program.eventSchedules.map(event => (
                   <li
@@ -272,9 +270,18 @@ export function ProgramInfoDetail({
           <PFText as="span" typo="bd-md-md" color="neutral-cool-600">
             {program.applicationMethodLabel}
           </PFText>
-          <PFText as="span" typo="bd-lg-sb" color="black">
-            {applicationMethodValue}
-          </PFText>
+          {isHtmlContent(applicationMethodValue) ? (
+            <RichTextViewer
+              content={applicationMethodValue}
+              contentFormat="html"
+              maxHeight="none"
+              className={styles.extraSectionRichText}
+            />
+          ) : (
+            <PFText as="span" typo="bd-lg-sb" color="black">
+              {applicationMethodValue}
+            </PFText>
+          )}
         </div>
       ) : null}
     </article>

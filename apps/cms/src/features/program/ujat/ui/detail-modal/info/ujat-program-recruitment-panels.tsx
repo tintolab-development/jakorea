@@ -30,6 +30,7 @@ function institutionParagraphRenderOptions(
   return {
     ...base,
     sectionTitle: paragraph.paragraphTitle,
+    highlightParagraphId: paragraph.id,
   }
 }
 
@@ -45,6 +46,7 @@ function volunteerParagraphRenderOptions(
       paragraph.id === UJAT_RECRUIT_FORM_VOLUNTEER_IDS.recruitInfo && recruitInfoTitle
         ? recruitInfoTitle
         : paragraph.paragraphTitle,
+    highlightParagraphId: paragraph.id,
   }
 }
 

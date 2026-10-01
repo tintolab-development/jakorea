@@ -56,8 +56,13 @@ export function filterAndSortPrograms(
 ): ProgramListItem[] {
   let items = [...programs]
 
-  if (params.category !== DEFAULT_PROGRAMS_LIST_PARAMS.category) {
-    items = items.filter(program => program.category === params.category)
+  const category = params.category
+  if (category !== DEFAULT_PROGRAMS_LIST_PARAMS.category) {
+    items = items.filter(program =>
+      program.categories.length > 0
+        ? program.categories.includes(category)
+        : program.category === category
+    )
   }
 
   if (params.q.trim()) {

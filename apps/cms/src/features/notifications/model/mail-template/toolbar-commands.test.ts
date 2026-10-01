@@ -18,6 +18,8 @@ import {
   insertYoutubeFromUrl,
   NodeSelection,
   promptLinkUrl,
+  RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
+  RICH_TEXT_MAX_TEXT_CHARACTERS,
   setLinkFromUrl,
   stripTrailingEmptyMarkdown,
   stripTrailingEmptyParagraphs,
@@ -211,6 +213,54 @@ describe('mail template editor toolbar commands', () => {
     await vi.waitFor(() => {
       expect(instance.getHTML()).toMatch(/<img\b[^>]*src="data:image\/png/i)
     })
+  })
+
+  it('blocks visible text above the common 50,000 character limit', () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    const instance = createEditor('')
+
+    expect(
+      instance.chain().focus().insertContent('가'.repeat(RICH_TEXT_MAX_TEXT_CHARACTERS)).run()
+    ).toBe(true)
+    expect(createRichTextEditorApi(instance).getCharacterCount()).toBe(RICH_TEXT_MAX_TEXT_CHARACTERS)
+
+    instance.chain().focus().insertContent('나').run()
+    expect(createRichTextEditorApi(instance).getCharacterCount()).toBe(RICH_TEXT_MAX_TEXT_CHARACTERS)
+    expect(alertSpy).toHaveBeenCalled()
+    alertSpy.mockRestore()
+  })
+
+  it('allows one editor image up to 20MB and blocks total image size above 20MB', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    const instance = createEditor('<p>본문</p>')
+    const firstFile = {
+      name: 'big.png',
+      type: 'image/png',
+      size: RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
+    } as File
+    const secondFile = {
+      name: 'too-much.png',
+      type: 'image/png',
+      size: 1,
+    } as File
+    const resolveSrc = vi.fn(async (file: File) => ({
+      src: `https://example.com/${file.name}`,
+      persistSrc: `/api/admin/files/${file.name === 'big.png' ? 1 : 2}/content`,
+    }))
+
+    insertImageFromFile(instance, firstFile, resolveSrc)
+    await vi.waitFor(() => {
+      expect(instance.getHTML()).toContain('data-file-size="20971520"')
+    })
+    expect(createRichTextEditorApi(instance).getImageTotalBytes()).toBe(RICH_TEXT_IMAGE_MAX_TOTAL_BYTES)
+
+    insertImageFromFile(instance, secondFile, resolveSrc)
+    await vi.waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('에디터 이미지는 총 20MB까지 업로드 가능합니다.')
+    })
+    expect(instance.getHTML()).not.toContain('too-much.png')
+    expect(resolveSrc).toHaveBeenCalledTimes(1)
+    alertSpy.mockRestore()
   })
 
   it('inserts a YouTube video from a watch URL', () => {

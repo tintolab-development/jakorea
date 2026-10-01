@@ -1,6 +1,7 @@
 /* 단락 카드 — FormEditor / 템플릿 미리보기 공통 */
 
 @import '../../shared/form-paragraph-section-description.css';
+@import '../../shared/form-required-incomplete.css';
 
 .paragraph-card {
   position: relative;

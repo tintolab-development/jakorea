@@ -9,6 +9,9 @@ import type {
   GeminiPerformanceUploadRow,
 } from '@/features/program/gemini/model/performance/types'
 import type { GeminiTrainingReportImportRow } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportRow'
+import { fetchGeminiRecruitmentsRemotePage } from '@/features/program/gemini/api/visiting-training/client'
+import { formatGeminiImportPreviewFailures } from '@/features/program/gemini/lib/performance/import-preview-failure'
+import { pickGeminiImportProgramId } from '@/features/program/gemini/lib/performance/pick-import-program-id'
 import {
   mapGeminiTrainingReportItemToRow,
   mapUploadAndDisplayToImportRow,
@@ -74,13 +77,20 @@ export async function prepareGeminiPerformanceImportRemote(
   assertRemoteReady()
   const uploadRows = await parseUploadExcel(file)
   const importedRows = await Promise.all(uploadRows.map(row => mapUploadToDisplayRow(row)))
-  const remoteImportRows = uploadRows.map((upload, index) =>
-    mapUploadAndDisplayToImportRow(upload, importedRows[index]!)
-  )
+  const recruitments = await fetchGeminiRecruitmentsRemotePage({}, 0, 100)
+  const programId = pickGeminiImportProgramId(recruitments.items)
+  const remoteImportRows = uploadRows.map((upload, index) => ({
+    ...mapUploadAndDisplayToImportRow(upload, importedRows[index]!),
+    ...(programId != null ? { programId } : {}),
+  }))
 
   const preview = await previewGeminiTrainingReportImportRemote({
     rows: remoteImportRows,
   })
+  const previewFailure = formatGeminiImportPreviewFailures(preview.results)
+  if (previewFailure) {
+    throw new Error(previewFailure)
+  }
   const remoteDuplicateIndexes = new Set(
     (preview.results ?? [])
       .filter(result => result.duplicate === true)

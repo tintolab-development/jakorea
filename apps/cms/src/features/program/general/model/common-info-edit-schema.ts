@@ -1832,7 +1832,10 @@ export function generalCommonInfoEditValuesToProgramPatch(
         ipsCategory,
         values.ipsDetail
       ),
-      curriculumSessions: values.curriculumSessions.map(s => {
+      curriculumSessions:
+        values.educationStructure === 'schedule'
+          ? []
+          : values.curriculumSessions.map(s => {
         const isPreEducation = isPreEducationCurriculumSession(s)
         if (isPreEducation) {
           return {
@@ -1965,7 +1968,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
                     : undefined,
               }
             })
-          : existingCommon.scheduleDetails,
+          : [],
       educationScheduleMode: shouldDisableEducationSchedulePeriodMode({
         participantOrganization: values.participantOrganization,
         sessionRound: values.sessionRound,

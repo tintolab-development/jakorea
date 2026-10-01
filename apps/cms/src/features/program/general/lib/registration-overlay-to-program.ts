@@ -130,6 +130,25 @@ function overlayRecord<T>(overlay: Record<string, unknown>, key: string): Record
   return out
 }
 
+function sessionOverlayValueFilled(value: unknown): boolean {
+  if (typeof value === 'string') return value.trim() !== ''
+  if (value == null || typeof value !== 'object' || Array.isArray(value)) return false
+  const row = value as { enabled?: boolean; period?: string; category?: string }
+  return row.enabled === true || Boolean(row.period?.trim()) || Boolean(row.category?.trim())
+}
+
+function maxFilledSessionIndex(records: Array<Record<number, unknown>>): number {
+  let max = 0
+  for (const record of records) {
+    for (const [key, value] of Object.entries(record)) {
+      const index = Number(key)
+      if (!Number.isFinite(index) || index <= 0 || !sessionOverlayValueFilled(value)) continue
+      if (index > max) max = index
+    }
+  }
+  return max
+}
+
 function readOperationRangeSeal(
   overlay: Record<string, unknown>
 ): { start: string; end: string } | null {
@@ -377,48 +396,47 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
     })
   }
 
-  if (isMulti) {
-    const count = Math.max(1, extras.curriculumSessionCount ?? 1)
-    for (let i = 1; i <= count; i += 1) {
-      const progress = progressSessionByRound[i]?.trim()
-      const assignment = assignmentByRound[i]
-      const ips = ipsBySession[i]
-      sessions.push({
-        sessionLabel: `${i}회차`,
-        title: progress ? `${progress}차시` : `${i}차시`,
-        description: roundContentByRound[i]?.trim() ?? '',
-        assignmentEnabled: hideAssignment ? false : Boolean(assignment?.enabled),
-        assignmentPeriod: hideAssignment ? undefined : assignment?.period?.trim() || undefined,
-        educationFormLabel:
-          eduDetail === 'perSchedule'
-            ? educationFormLabelFromValue(educationFormBySession[i] ?? 'online')
-            : undefined,
-        participationMethodLabel:
-          !hideParticipation && partDetail === 'perSchedule'
-            ? participationMethodLabelFromValue(
-                (participationBySession[i] as 'individual' | 'team' | undefined) ?? 'individual'
-              )
-            : undefined,
-        ipsTypeSummary:
-          ipsDetail === 'perSchedule'
-            ? buildSessionIpsTypeSummary(
-                (ips?.category as ProgramRegistrationIpsCategory | '') ?? 'prepare',
-                ips?.detail ?? 'none'
-              )
-            : undefined,
-      })
-    }
-    return sessions
-  }
+  const unitMax = maxFilledSessionIndex([unitNameBySession, unitContentBySession])
+  const roundMax = maxFilledSessionIndex([progressSessionByRound, roundContentByRound])
+  const overlayCount = maxFilledSessionIndex([
+    unitNameBySession,
+    unitContentBySession,
+    progressSessionByRound,
+    roundContentByRound,
+    ipsBySession,
+    assignmentByRound,
+  ])
+  const count = Math.max(
+    1,
+    isMulti ? (extras.curriculumSessionCount ?? 1) : (extras.curriculumChartSessionCount ?? 1),
+    overlayCount
+  )
+  /**
+   * 복수 회차 extras여도 수정 UI가 단원 맵(차트 차시)을 쓰면 unitMax > roundMax.
+   * 그때는 단원 맵을 교육 진행 본문으로 쓴다.
+   */
+  const preferUnitMaps = !isMulti || unitMax > roundMax
 
-  const chartCount = Math.max(1, extras.curriculumChartSessionCount ?? 1)
-  for (let i = 1; i <= chartCount; i += 1) {
+  for (let i = 1; i <= count; i += 1) {
+    const unitName = unitNameBySession[i]?.trim() ?? ''
+    const unitContent = unitContentBySession[i]?.trim() ?? ''
+    const progress = progressSessionByRound[i]?.trim() ?? ''
+    const roundContent = roundContentByRound[i]?.trim() ?? ''
+    const useUnit = preferUnitMaps && Boolean(unitName || unitContent)
+    const title = useUnit
+      ? unitName || (progress ? `${progress}차시` : `${i}차시`)
+      : progress
+        ? `${progress}차시`
+        : unitName || `${i}차시`
+    const description = useUnit ? unitContent || roundContent : roundContent || unitContent
+    const assignment = assignmentByRound[i]
     const ips = ipsBySession[i]
     sessions.push({
-      sessionLabel: `${i}차시`,
-      title: unitNameBySession[i]?.trim() ?? '',
-      description: unitContentBySession[i]?.trim() ?? '',
-      assignmentEnabled: false,
+      sessionLabel: isMulti ? `${i}회차` : `${i}차시`,
+      title,
+      description,
+      assignmentEnabled: hideAssignment ? false : Boolean(assignment?.enabled),
+      assignmentPeriod: hideAssignment ? undefined : assignment?.period?.trim() || undefined,
       educationFormLabel:
         eduDetail === 'perSchedule'
           ? educationFormLabelFromValue(educationFormBySession[i] ?? 'online')
@@ -764,12 +782,10 @@ export function applyGeneralRegistrationOverlayToProgram(
           : program.type
 
   const isSchedule = extras.programType === 'schedule'
-  const scheduleDetails = isSchedule
-    ? buildEnrichedScheduleDetails(overlay, extras)
-    : undefined
-  const curriculumSessions = !isSchedule
-    ? buildCurriculumSessionsFromRegistrationOverlay(overlay, extras)
-    : undefined
+  const scheduleDetails = isSchedule ? buildEnrichedScheduleDetails(overlay, extras) : []
+  const curriculumSessions = isSchedule
+    ? []
+    : buildCurriculumSessionsFromRegistrationOverlay(overlay, extras)
 
   // 버그 수정: 일반 일정형은 「세부 프로그램명」select가 잠겨 있어(해당없음) 일정 상세명으로
   // 대체해도 되지만, 교육받은 교사는 일정형이어도 select 잠금이 없어 사용자가 실제로

@@ -12,6 +12,7 @@ import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
 import type { ProgramSponsorAssignmentRequest } from './programSponsorAssignmentRequest';
+import type { ProgramUpdateRequestDraftStatus } from './programUpdateRequestDraftStatus';
 import type { ProgramUpdateRequestEducationForm } from './programUpdateRequestEducationForm';
 import type { ProgramUpdateRequestEducationStructure } from './programUpdateRequestEducationStructure';
 import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
@@ -123,4 +124,9 @@ export interface ProgramUpdateRequest {
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];
+  /**
+     * Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.
+     * @nullable
+     */
+  draftStatus?: ProgramUpdateRequestDraftStatus;
 }

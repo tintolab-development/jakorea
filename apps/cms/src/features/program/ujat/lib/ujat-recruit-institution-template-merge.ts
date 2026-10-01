@@ -57,10 +57,63 @@ function overlayStringList(overlay: Record<string, unknown>, key: string): strin
   return list.length > 0 ? list : undefined
 }
 
-function toRangeSeal(start?: string, end?: string): RangeSeal {
+function toRangeSeal(start?: string | Date, end?: string | Date): RangeSeal {
+  const startText = start == null ? '' : String(start).trim()
+  const endText = end == null ? '' : String(end).trim()
   return {
-    start: start?.trim() ? start : null,
-    end: end?.trim() ? end : null,
+    start: startText ? startText : null,
+    end: endText ? endText : null,
+  }
+}
+
+/** 중첩·컬럼 → 기관 모집 overlay. leftover 기간·대상·문의처를 덮는다. */
+export function buildUjatRecruitInstitutionOverlayFromProgram(
+  program: Program
+): Record<string, unknown> {
+  const participant = program.generalCommonInfo?.participantRecruitmentInfo
+  const contactName =
+    participant?.contactOrganizationName?.trim() ||
+    participant?.contactName?.trim() ||
+    program.contactName?.trim() ||
+    ''
+  return {
+    [OVERLAY_KEYS.publicTitle]:
+      program.generalCommonInfo?.announcementTitle?.trim() || '',
+    [OVERLAY_KEYS.programRange]: toRangeSeal(program.startDate, program.endDate),
+    [OVERLAY_KEYS.targetLevels]: program.targetLevels ?? [],
+    [OVERLAY_KEYS.district]:
+      program.district?.trim() ||
+      program.educationTargetDetail?.trim() ||
+      participant?.educationTargetDetail?.trim() ||
+      '',
+    [OVERLAY_KEYS.recruitRange]: toRangeSeal(
+      program.applicationStartDate,
+      program.applicationEndDate
+    ),
+    [OVERLAY_KEYS.resultAnnounce]: {
+      date: program.resultAnnouncementDate
+        ? String(program.resultAnnouncementDate)
+        : null,
+      method: program.resultAnnouncementMethod?.trim() ?? '',
+    },
+    [OVERLAY_KEYS.contact]: {
+      name: contactName,
+      phone: participant?.inquiryTel?.trim() || program.contactPhone?.trim() || '',
+      email: participant?.inquiryEmail?.trim() || program.contactEmail?.trim() || '',
+    },
+    [OVERLAY_KEYS.notes]: participant?.remarks?.trim() || '',
+    [OVERLAY_KEYS.description]:
+      participant?.programDescription?.trim() || program.description?.trim() || '',
+    [OVERLAY_KEYS.recruitmentGuide]:
+      participant?.recruitmentGuide?.trim() || program.recruitmentGuide?.trim() || '',
+    [OVERLAY_KEYS.learningSupportContent]:
+      participant?.learningSupportContent?.trim() ||
+      program.learningSupportContent?.trim() ||
+      '',
+    [OVERLAY_KEYS.additionalContentHtml]:
+      participant?.additionalContentHtml?.trim() ||
+      program.additionalContentHtml?.trim() ||
+      '',
   }
 }
 
@@ -93,6 +146,10 @@ export function buildUjatRecruitInstitutionOverlayFromDetailEditValues(
       values.participantRecruitmentNotesNotApplicable === 'not_applicable'
         ? ''
         : (values.oneLineIntroduction?.trim() ?? ''),
+    [OVERLAY_KEYS.description]: values.description?.trim() ?? '',
+    [OVERLAY_KEYS.recruitmentGuide]: values.recruitmentGuide?.trim() ?? '',
+    [OVERLAY_KEYS.learningSupportContent]: values.learningSupportContent?.trim() ?? '',
+    [OVERLAY_KEYS.additionalContentHtml]: values.additionalContentHtml?.trim() ?? '',
   }
 }
 

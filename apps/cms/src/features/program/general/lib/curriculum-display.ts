@@ -12,6 +12,12 @@ const CURRICULUM_OVERLAY_ROUND_CONTENT_BY_ROUND_KEY =
   'generalRegistration.educationCurriculum.roundContentByRound'
 const CURRICULUM_OVERLAY_ASSIGNMENT_BY_ROUND_KEY =
   'generalRegistration.educationCurriculum.assignmentByRound'
+const CURRICULUM_OVERLAY_UNIT_NAME_BY_SESSION_KEY =
+  'generalRegistration.educationCurriculum.unitNameBySession'
+const CURRICULUM_OVERLAY_UNIT_CONTENT_BY_SESSION_KEY =
+  'generalRegistration.educationCurriculum.unitContentBySession'
+const CURRICULUM_OVERLAY_IPS_BY_SESSION_KEY =
+  'generalRegistration.educationCurriculum.ipsBySession'
 
 function overlayRecordHasText(raw: unknown): boolean {
   if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return false
@@ -67,6 +73,50 @@ export function countGeneralCurriculumMultiRoundsFromOverlay(
   return keys.length > 0 ? Math.max(...keys) : 0
 }
 
+/** overlay 단원명·교육 내용(차트 차시) 개수 */
+export function countGeneralCurriculumUnitSessionsFromOverlay(
+  overlay?: Record<string, unknown> | null
+): number {
+  if (!overlay) return 0
+  const keys = [
+    ...overlayRoundKeys(overlay[CURRICULUM_OVERLAY_UNIT_NAME_BY_SESSION_KEY]),
+    ...overlayRoundKeys(overlay[CURRICULUM_OVERLAY_UNIT_CONTENT_BY_SESSION_KEY]),
+  ]
+  return keys.length > 0 ? Math.max(...keys) : 0
+}
+
+function overlayIpsSessionKeys(raw: unknown): number[] {
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return []
+  return Object.entries(raw)
+    .filter(([, value]) => {
+      if (value == null || typeof value !== 'object' || Array.isArray(value)) return false
+      const row = value as { category?: string }
+      return Boolean(row.category?.trim())
+    })
+    .map(([key]) => Number(key))
+    .filter(key => Number.isFinite(key) && key > 0)
+}
+
+/** overlay IPS 일정별 맵 개수 */
+export function countGeneralCurriculumIpsSessionsFromOverlay(
+  overlay?: Record<string, unknown> | null
+): number {
+  if (!overlay) return 0
+  const keys = overlayIpsSessionKeys(overlay[CURRICULUM_OVERLAY_IPS_BY_SESSION_KEY])
+  return keys.length > 0 ? Math.max(...keys) : 0
+}
+
+/** 수정 overlay에 남아 있는 교육 진행 슬롯 수 (회차·단원·IPS) */
+export function countGeneralCurriculumOverlaySessions(
+  overlay?: Record<string, unknown> | null
+): number {
+  return Math.max(
+    countGeneralCurriculumMultiRoundsFromOverlay(overlay),
+    countGeneralCurriculumUnitSessionsFromOverlay(overlay),
+    countGeneralCurriculumIpsSessionsFromOverlay(overlay)
+  )
+}
+
 export function curriculumSessionHasRoundLabel(
   session: Pick<GeneralProgramCurriculumSessionRow, 'sessionLabel'> | null | undefined
 ): boolean {
@@ -99,19 +149,23 @@ export function resolveEffectiveGeneralProgramTypeFields(input: {
 
   const fromOverlay = hasGeneralCurriculumMultiRoundOverlay(input.registrationOverlay)
   const fromSessionLabels = sessions.some(session => curriculumSessionHasRoundLabel(session))
+  const explicitRound =
+    input.generalProgramSessionRound === 'single' || input.generalProgramSessionRound === 'multi'
+      ? input.generalProgramSessionRound
+      : undefined
   const sessionRound: GeneralProgramSessionRoundKind =
     educationStructure === 'schedule'
-      ? (input.generalProgramSessionRound ?? variant?.sessionRound ?? 'single')
-      : input.generalProgramSessionRound === 'multi' || fromOverlay || fromSessionLabels
-        ? 'multi'
-        : (input.generalProgramSessionRound ??
-          variant?.sessionRound ??
-          (isGeneralProgramMultiRoundCurriculum({
-            educationStructure,
-            curriculumSessions: sessions,
-          })
-            ? 'multi'
-            : 'single'))
+      ? (explicitRound ?? variant?.sessionRound ?? 'single')
+      : (explicitRound ??
+        (fromOverlay || fromSessionLabels
+          ? 'multi'
+          : (variant?.sessionRound ??
+            (isGeneralProgramMultiRoundCurriculum({
+              educationStructure,
+              curriculumSessions: sessions,
+            })
+              ? 'multi'
+              : 'single'))))
 
   const audience =
     input.generalProgramAudience ??

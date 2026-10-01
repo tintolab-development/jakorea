@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -14,6 +14,7 @@ import { shouldUseGeminiVisitingTrainingRemoteApi } from '../api/visiting-traini
 import { useGeminiRecruitmentDetailQuery } from '../api/visiting-training/hooks'
 import { geminiVisitingTrainingQueryKeys } from '../api/visiting-training/query-keys'
 import { updateGeminiRecruitment } from '../api/visiting-training/service'
+import { useGeminiRecruitmentRichTextGetters } from './use-gemini-recruitment-rich-text-getters'
 import {
   GEMINI_RECRUITMENT_EDIT_INFO_VALUE,
   GEMINI_RECRUITMENT_EDIT_PARAM,
@@ -36,7 +37,7 @@ export function useGeminiRecruitmentInfoEdit(
     recruitmentId ?? undefined,
     remoteEnabled && Boolean(recruitmentId)
   )
-  const getAdditionalContentMarkdownRef = useRef<() => string>(() => '')
+  const { registerRichTextGetter, overlayRichText } = useGeminiRecruitmentRichTextGetters()
 
   const detail = useMemo(() => {
     if (!recruitmentId) return null
@@ -74,10 +75,6 @@ export function useGeminiRecruitmentInfoEdit(
     resetDraftFromDetail()
   }, [isEditMode, resetDraftFromDetail])
 
-  const registerGetAdditionalContentMarkdown = useCallback((getter: () => string) => {
-    getAdditionalContentMarkdownRef.current = getter
-  }, [])
-
   const setEditMode = useCallback(
     (enabled: boolean) => {
       setSearchParams(
@@ -112,11 +109,7 @@ export function useGeminiRecruitmentInfoEdit(
 
   const handleSave = useCallback(async () => {
     if (detail == null || draft == null || !recruitmentId) return
-    const nextDraft: GeminiRecruitmentInfoEditDraft = {
-      ...draft,
-      additionalContentMarkdown:
-        getAdditionalContentMarkdownRef.current() || draft.additionalContentMarkdown,
-    }
+    const nextDraft = overlayRichText(draft)
     if (remoteEnabled) {
       await updateGeminiRecruitment(recruitmentId, nextDraft)
       const detailKey = geminiVisitingTrainingQueryKeys.recruitmentDetail(recruitmentId)
@@ -136,7 +129,7 @@ export function useGeminiRecruitmentInfoEdit(
       setDetailVersion(v => v + 1)
     }
     setEditMode(false)
-  }, [detail, draft, queryClient, recruitmentId, remoteEnabled, setEditMode])
+  }, [detail, draft, overlayRichText, queryClient, recruitmentId, remoteEnabled, setEditMode])
 
   const patchDraft = useCallback((patch: Partial<GeminiRecruitmentInfoEditDraft>) => {
     setDraft(prev => (prev == null ? prev : { ...prev, ...patch }))
@@ -194,7 +187,8 @@ export function useGeminiRecruitmentInfoEdit(
     handleEdit,
     handleCancel,
     handleSave,
-    registerGetAdditionalContentMarkdown,
+    registerRichTextGetter,
+    overlayRichText,
     remoteEnabled,
     isDetailFetching: remoteEnabled ? remoteDetailQuery.isFetching : false,
     isDetailError: remoteEnabled ? remoteDetailQuery.isError : false,

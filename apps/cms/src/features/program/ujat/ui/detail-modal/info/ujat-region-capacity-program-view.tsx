@@ -4,6 +4,7 @@ import {
   resolveUjatRegionCapacitySemesterValues,
 } from '@/features/program/ujat/lib/ujat-region-capacity-display'
 import { UjatRegionCapacitySection } from '@/features/program/ujat/ui/detail-modal/info/ujat-region-capacity-section'
+import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
 import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-class-capacity-by-region-paragraph.css'
@@ -33,6 +34,7 @@ export function UjatRegionCapacityProgramView({
           surface="responseEntry"
           titleAligned
           required
+          highlightParagraphId={UJAT_PROGRAM_REGISTRATION_IDS[6]}
         />
       ) : (
         <div className="ujat-region-capacity-program-view__header">

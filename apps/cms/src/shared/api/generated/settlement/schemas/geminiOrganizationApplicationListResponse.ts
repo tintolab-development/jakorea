@@ -8,9 +8,8 @@
 import type { GeminiOrganizationApplicationItem } from './geminiOrganizationApplicationItem';
 
 export interface GeminiOrganizationApplicationListResponse {
-  /** 기관 신청이 없으면 []. */
-  content: GeminiOrganizationApplicationItem[];
-  page: number;
-  size: number;
-  totalElements: number;
+  content?: GeminiOrganizationApplicationItem[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
 }

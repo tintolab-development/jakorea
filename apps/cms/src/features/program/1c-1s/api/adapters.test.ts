@@ -67,7 +67,7 @@ describe('company-school adapters', () => {
     expect(request.autoApplyDefaultFormBindings).toBe(true)
   })
 
-  it('공통정보 패치가 모집 라벨을 빼도 existing 라벨의 복수 targetLevels를 컬럼에 올린다', () => {
+  it('공통정보 패치는 컬럼 targetLevels를 유지하고 모집 라벨로 키우지 않는다', () => {
     const existing: Program = {
       ...program,
       targetLevel: 'elementary',
@@ -84,7 +84,7 @@ describe('company-school adapters', () => {
       title: '수정된 1사1교',
       generalCommonInfo: { announcementTitle: '수정된 공고' },
     })
-    expect(request.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(request.targetLevels).toEqual(['elementary'])
     expect(request.targetLevel).toBe('elementary')
   })
 
@@ -730,5 +730,48 @@ describe('company-school adapters', () => {
     })
     expect(mapped.participantApprovedCount).toBe(3)
     expect(mapped.participantCapacity).toBeUndefined()
+  })
+
+  it('모집 패치의 applicationMethod·remarks만 컬럼으로 보내고 otherNotes와 섞지 않는다', () => {
+    const existing: Program = {
+      ...program,
+      applicationMethod: '방문 접수',
+      remarks: '기존 비고',
+      otherNotes: '기존 기타',
+    }
+    const sent = mapCompanySchoolToUpdateRequest(existing, {
+      applicationMethod: '온라인 신청',
+      remarks: '수정 비고',
+    })
+    expect(sent.applicationMethod).toBe('온라인 신청')
+    expect(sent.remarks).toBe('수정 비고')
+    expect(sent.otherMatters).toBeUndefined()
+
+    const untouched = mapCompanySchoolToUpdateRequest(existing, { title: '제목만' })
+    expect(untouched.applicationMethod).toBeUndefined()
+    expect(untouched.remarks).toBeUndefined()
+
+    const otherOnly = mapCompanySchoolToUpdateRequest(existing, { otherNotes: '기타만' })
+    expect(otherOnly.remarks).toBeUndefined()
+    expect(otherOnly.otherMatters).toBe('기타만')
+  })
+
+  it('지원 방법·비고를 비우면 clearFields에만 싣는다', () => {
+    const existing: Program = {
+      ...program,
+      applicationMethod: '방문 접수',
+      remarks: '기존 비고',
+    }
+    const request = mapCompanySchoolToUpdateRequest(existing, {
+      applicationMethod: '',
+      remarks: undefined,
+      generalCommonInfo: {
+        ...existing.generalCommonInfo,
+        participantRecruitmentInfo: { remarks: undefined },
+      },
+    })
+    expect(request.applicationMethod).toBeUndefined()
+    expect(request.remarks).toBeUndefined()
+    expect(request.clearFields).toEqual(expect.arrayContaining(['applicationMethod', 'remarks']))
   })
 })

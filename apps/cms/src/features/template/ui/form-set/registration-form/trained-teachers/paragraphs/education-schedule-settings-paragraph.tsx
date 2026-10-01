@@ -187,6 +187,10 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
         />
         <DetailInfoForm.Field
           label="교육 진행 일정 선택"
+          validationKey={[
+            'educationScheduleSettings.singleDateIso',
+            'educationScheduleSettings.periodDateIso',
+          ]}
           edit={
             educationScheduleMode === 'date' ? (
               <ParagraphDatePicker

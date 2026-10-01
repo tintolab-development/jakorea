@@ -14,7 +14,7 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import {
   EducationSchedulePreviewLines,
 } from '@/features/template/ui/shared/education-schedule-preview-lines'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsButton } from '@/shared/ui'
 import { EducationScheduleChangeModal } from './education-schedule-change-modal'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -213,6 +213,10 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
         />
         <DetailInfoForm.Field
           label="교육 진행 일정 선택"
+          validationKey={[
+            'educationScheduleSettings.singleDateIso',
+            'educationScheduleSettings.periodDateIso',
+          ]}
           edit={
             scheduleMode === 'date' ? (
               <ParagraphDatePicker

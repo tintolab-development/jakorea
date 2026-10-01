@@ -34,22 +34,21 @@ import {
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
-  TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
   TEMPLATE_FORM_PARTNER_INVOLVEMENT_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
+import {
+  generalParticipantTypesFromUjatFlags,
+  resolveUjatParticipantTypeFlags,
+  ujatParticipantTypeLabels,
+} from '@/features/program/ujat/lib/participant-type-flags'
 
 type OperationRangeSeal = { start?: string | null; end?: string | null } | null
 
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {
   const v = overlay[key]
   return typeof v === 'string' ? v : undefined
-}
-
-function overlayBoolean(overlay: Record<string, unknown>, key: string, fallback: boolean): boolean {
-  const v = overlay[key]
-  return typeof v === 'boolean' ? v : fallback
 }
 
 function overlayNullableNumber(overlay: Record<string, unknown>, key: string): number | undefined {
@@ -102,32 +101,8 @@ function resolveOperationRange(
   return range === '-' ? '-' : range
 }
 
-function resolveParticipantTypes(overlay: Record<string, unknown>, defaults: ReturnType<typeof createUjatRegistrationBasicInfoOverlayDefaults>): string {
-  const flags = {
-    individual: overlayBoolean(overlay, 'ujat.basicInfo.participant.individual', defaults.participantIndividual),
-    organization: overlayBoolean(
-      overlay,
-      'ujat.basicInfo.participant.organization',
-      defaults.participantOrganization
-    ),
-    teacher: overlayBoolean(overlay, 'ujat.basicInfo.participant.teacher', defaults.participantTeacher),
-    volunteer: overlayBoolean(overlay, 'ujat.basicInfo.participant.volunteer', defaults.participantVolunteer),
-  }
-  const labels = TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.filter(opt => {
-    switch (opt.value) {
-      case 'individual':
-        return flags.individual
-      case 'school_institution':
-        return flags.organization
-      case 'teacher_instructor':
-        return flags.teacher
-      case 'volunteer':
-        return flags.volunteer
-      default:
-        return false
-    }
-  }).map(opt => opt.label)
-  return labels.length > 0 ? labels.join(', ') : '-'
+function resolveParticipantTypes(program: Program, overlay: Record<string, unknown>): string {
+  return ujatParticipantTypeLabels(resolveUjatParticipantTypeFlags(program, overlay))
 }
 
 function resolveSurveyItemsText(surveyItems: Record<UjatSurveyRowId, boolean>): string {
@@ -276,7 +251,7 @@ export function resolveUjatRegistrationBasicInfoDisplay(
     publicProgramTitle,
     detailedProgramName,
     operationRange: resolveOperationRange(operationSeal, program),
-    participantTypes: resolveParticipantTypes(overlay, defaults),
+    participantTypes: resolveParticipantTypes(program, overlay),
     businessField: optionLabel(TEMPLATE_FORM_BUSINESS_AREA_OPTIONS, businessField),
     sponsorName: resolveSponsorName(sponsorId, sponsorName, sponsors),
     sponsorManager,
@@ -375,9 +350,11 @@ export function applyUjatRegistrationOverlayToProgram(
     finalClasses: overlayNullableNumber(overlayInput, 'ujat.kpi.dispatchedClass'),
   }
   const prevKpi = program.generalCommonInfo?.kpi
+  const participantFlags = resolveUjatParticipantTypeFlags(program, overlayInput)
 
   return {
     ...program,
+    generalParticipantTypes: generalParticipantTypesFromUjatFlags(participantFlags),
     mainTitle: repKo,
     titleEn: repEn,
     title,

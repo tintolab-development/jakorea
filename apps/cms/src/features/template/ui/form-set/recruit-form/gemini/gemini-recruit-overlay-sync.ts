@@ -73,6 +73,63 @@ export function replaceGeminiRecruitOverlay(next: Record<string, unknown>): void
   emitOverlay()
 }
 
+export function pickGeminiRecruitOverlay(record: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const key of Object.values(GEMINI_RECRUIT_OVERLAY_KEYS)) {
+    if (record[key] !== undefined) out[key] = record[key]
+  }
+  return out
+}
+
+/** 상세·스냅샷 → geminiRecruit.* 만. 일반 recruit.* 와 섞지 않는다. */
+export function seedGeminiRecruitOverlayFromDetail(detail: {
+  title?: string
+  announcementPublished?: string
+  educationTargetLevels?: string[]
+  educationTargetDetail?: string
+  applicationPeriodStart?: string | null
+  applicationPeriodEnd?: string | null
+  trainingRequestPeriodStart?: string | null
+  trainingRequestPeriodEnd?: string | null
+  minStudentCount?: number | null
+  educationForm?: string
+  inquiryContactName?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  notesNotApplicable?: boolean
+  notes?: string
+}): Record<string, unknown> {
+  return {
+    [GEMINI_RECRUIT_OVERLAY_KEYS.title]: detail.title ?? '',
+    [GEMINI_RECRUIT_OVERLAY_KEYS.announcementPublished]:
+      detail.announcementPublished ?? defaults.announcementPublished,
+    [GEMINI_RECRUIT_OVERLAY_KEYS.educationTargetLevels]: detail.educationTargetLevels ?? [],
+    [GEMINI_RECRUIT_OVERLAY_KEYS.educationTargetDetail]: detail.educationTargetDetail ?? '',
+    [GEMINI_RECRUIT_OVERLAY_KEYS.applicationPeriodStart]: detail.applicationPeriodStart ?? null,
+    [GEMINI_RECRUIT_OVERLAY_KEYS.applicationPeriodEnd]: detail.applicationPeriodEnd ?? null,
+    [GEMINI_RECRUIT_OVERLAY_KEYS.trainingRequestPeriodStart]:
+      detail.trainingRequestPeriodStart ?? null,
+    [GEMINI_RECRUIT_OVERLAY_KEYS.trainingRequestPeriodEnd]:
+      detail.trainingRequestPeriodEnd ?? null,
+    [GEMINI_RECRUIT_OVERLAY_KEYS.minStudentCount]: detail.minStudentCount ?? null,
+    [GEMINI_RECRUIT_OVERLAY_KEYS.educationForm]: detail.educationForm ?? defaults.educationForm,
+    [GEMINI_RECRUIT_OVERLAY_KEYS.inquiryContactName]: detail.inquiryContactName ?? '',
+    [GEMINI_RECRUIT_OVERLAY_KEYS.inquiryTel]: detail.inquiryTel ?? '',
+    [GEMINI_RECRUIT_OVERLAY_KEYS.inquiryEmail]: detail.inquiryEmail ?? '',
+    [GEMINI_RECRUIT_OVERLAY_KEYS.notesNotApplicable]: detail.notesNotApplicable === true,
+    [GEMINI_RECRUIT_OVERLAY_KEYS.notes]: detail.notes ?? '',
+  }
+}
+
+export function restoreGeminiRecruitOverlay(overlay: Record<string, unknown>): void {
+  const picked = pickGeminiRecruitOverlay(overlay)
+  if (Object.keys(picked).length > 0) {
+    replaceGeminiRecruitOverlay(picked)
+    return
+  }
+  replaceGeminiRecruitOverlay(seedGeminiRecruitOverlayFromDetail(overlay))
+}
+
 export function resetGeminiRecruitOverlay(): void {
   overlayState = createDefaultGeminiRecruitOverlay()
   emitOverlay()

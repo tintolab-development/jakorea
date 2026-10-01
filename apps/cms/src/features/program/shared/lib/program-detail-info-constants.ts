@@ -346,20 +346,30 @@ export function normalizeTargetLevelValue(raw: unknown): TargetLevel | undefined
   return TARGET_LEVEL_ALIASES[trimmed] ?? TARGET_LEVEL_ALIASES[key]
 }
 
-export function resolveProgramTargetLevels(program: {
-  targetLevels?: Array<TargetLevel | string | null | undefined> | null
-  targetLevel?: TargetLevel | string | null
-}): TargetLevel[] {
-  const raw =
-    program.targetLevels?.length
-      ? program.targetLevels
-      : program.targetLevel
-        ? [program.targetLevel]
-        : []
+function normalizeTargetLevelList(
+  raw: Array<TargetLevel | string | null | undefined>
+): TargetLevel[] {
   const levels = raw
     .map(normalizeTargetLevelValue)
     .filter((level): level is TargetLevel => level != null)
   return [...new Set(levels)]
+}
+
+/**
+ * 목록·상세 표시용 교육 대상.
+ * `targetLevels` 키가 배열이면(빈 배열 포함) 그 배열이 SSOT. 키가 없을 때만 `targetLevel`.
+ */
+export function resolveProgramTargetLevels(program: {
+  targetLevels?: Array<TargetLevel | string | null | undefined> | null
+  targetLevel?: TargetLevel | string | null
+}): TargetLevel[] {
+  if (Array.isArray(program.targetLevels)) {
+    return normalizeTargetLevelList(program.targetLevels)
+  }
+  if (program.targetLevel) {
+    return normalizeTargetLevelList([program.targetLevel])
+  }
+  return []
 }
 
 function parseTargetLevelFromDisplayPart(part: string): TargetLevel | undefined {
@@ -425,8 +435,9 @@ function pickRichestTargetLevels(...lists: TargetLevel[][]): TargetLevel[] {
 }
 
 /**
- * 컬럼·모집 overlay·조회 라벨 중 가장 긴 교육 대상.
- * 저장 시 `targetLevels[]` 컬럼에 올린다. 라벨만 JSON에 남기지 않는다.
+ * 저장·hydrate용 교육 대상.
+ * 컬럼 `targetLevels`가 배열이면(빈 배열 포함) 컬럼만 쓴다.
+ * 키가 없을 때만 overlay / 모집 라벨 / `targetLevel`로 legacy hydrate.
  */
 export function resolvePersistedProgramTargetLevels(program: {
   targetLevels?: Array<TargetLevel | string | null | undefined> | null
@@ -439,6 +450,9 @@ export function resolvePersistedProgramTargetLevels(program: {
     } | null
   } | null
 }): TargetLevel[] {
+  if (Array.isArray(program.targetLevels)) {
+    return normalizeTargetLevelList(program.targetLevels)
+  }
   const info = program.generalCommonInfo?.participantRecruitmentInfo
   return pickRichestTargetLevels(
     parseTargetLevelsFromRegistrationOverlay(program.registrationOverlay),

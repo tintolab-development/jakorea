@@ -97,6 +97,7 @@ export function UjatRecruitVolunteerInfoProgramView({
   volunteerHalf,
   showNoticeExposure,
   sectionTitle = '봉사자 모집 정보',
+  highlightParagraphId,
   hideSectionHeader = false,
   isTemplateAuthoring = false,
 }: {
@@ -107,11 +108,13 @@ export function UjatRecruitVolunteerInfoProgramView({
   volunteerHalf: UjatVolunteerRecruitHalf
   showNoticeExposure: boolean
   sectionTitle?: string
+  highlightParagraphId?: string
   /** 폼 양식 편집기 — 바깥 단락 헤더(title·description)가 있을 때 중복 제거 */
   hideSectionHeader?: boolean
   /** 양식 작성 화면 — 프로그램 연동 값 대신 placeholder·힌트 */
   isTemplateAuthoring?: boolean
 }) {
+  const recruitKey = (suffix: string) => `recruit.volunteer.${volunteerHalf}.${suffix}`
   const period = getUjatVolunteerRecruitPeriod(program, volunteerHalf)
   const roundIndex = volunteerHalf === 'h1' ? 0 : 1
   const hasRound = isEdit && form ? form.watch(`rounds.${roundIndex}`) != null : (program.rounds?.[roundIndex] != null)
@@ -220,18 +223,25 @@ export function UjatRecruitVolunteerInfoProgramView({
 
   return (
     <div className="ujat-recruit-volunteer-info-program">
-      {!hideSectionHeader ? <UjatRecruitSectionDescriptionHeader title={sectionTitle} /> : null}
+      {!hideSectionHeader ? (
+        <UjatRecruitSectionDescriptionHeader
+          title={sectionTitle}
+          highlightParagraphId={highlightParagraphId}
+        />
+      ) : null}
       <div className="ujat-recruit-volunteer-info-program__forms">
       <DetailInfoForm title="봉사자 모집 정보(설정)" hideHeader mode={formMode}>
         {showNoticeExposure ? (
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="공고 게시 여부"
+              validationKey={recruitKey('announcementPublished')}
               view={announcementPublishedLabel}
               edit={announcementPublishedEdit}
             />
             <DetailInfoForm.Field
               label="모집 공고 노출 시점"
+              validationKey={recruitKey('noticeExposure')}
               view={noticeExposureLabel}
               edit={noticeExposureEdit}
             />
@@ -240,6 +250,7 @@ export function UjatRecruitVolunteerInfoProgramView({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="공고 게시 여부"
+              validationKey={recruitKey('announcementPublished')}
               fullRow
               view={announcementPublishedLabel}
               edit={announcementPublishedEdit}
@@ -273,6 +284,7 @@ export function UjatRecruitVolunteerInfoProgramView({
           />
           <DetailInfoForm.Field
             label="활동 기수"
+            validationKey={recruitKey('activityTerm')}
             view={activityTerm}
             edit={
               isEdit && form ? (
@@ -302,6 +314,7 @@ export function UjatRecruitVolunteerInfoProgramView({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="프로그램 운영 기간"
+            validationKey={recruitKey('programRangeSeal')}
             view={formatDateRange(program.startDate, program.endDate)}
             edit={
               isEdit && form ? (
@@ -332,6 +345,7 @@ export function UjatRecruitVolunteerInfoProgramView({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="모집 대상"
+            validationKey={recruitKey('volunteerTargets')}
             view={volunteerTarget}
             edit={
               isEdit && form ? (
@@ -358,6 +372,7 @@ export function UjatRecruitVolunteerInfoProgramView({
           />
           <DetailInfoForm.Field
             label="모집 대상 상세"
+            validationKey={recruitKey('volunteerTargetDetail')}
             view={volunteerTargetDetail}
             edit={
               isEdit && form ? (
@@ -382,6 +397,7 @@ export function UjatRecruitVolunteerInfoProgramView({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="봉사자 모집 기간"
+            validationKey={recruitKey('recruitRangeSeal')}
             view={volunteerPeriodLabel}
             edit={
               isEdit && form ? (
@@ -399,6 +415,7 @@ export function UjatRecruitVolunteerInfoProgramView({
           />
           <DetailInfoForm.Field
             label="1차 서류 합격자 발표"
+            validationKey={recruitKey('docAnnounce')}
             view={dateMethodLine(
               program.documentPassAnnouncementDate,
               program.documentPassAnnouncementMethod,
@@ -421,6 +438,7 @@ export function UjatRecruitVolunteerInfoProgramView({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="2차 면접 기간"
+            validationKey={[recruitKey('interviewRangeSeal'), recruitKey('interviewMethod')]}
             view={interviewLine}
             edit={
               isEdit && form ? (
@@ -435,6 +453,7 @@ export function UjatRecruitVolunteerInfoProgramView({
           />
           <DetailInfoForm.Field
             label="최종 합격자 발표"
+            validationKey={[recruitKey('finalAnnounceIso'), recruitKey('finalAnnounceMethod')]}
             view={dateMethodLine(
               program.finalPassAnnouncementDate ?? program.resultAnnouncementDate,
               program.finalPassAnnouncementMethod ?? program.resultAnnouncementMethod,
@@ -457,6 +476,11 @@ export function UjatRecruitVolunteerInfoProgramView({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="문의처"
+            validationKey={[
+              recruitKey('inquiryContact'),
+              recruitKey('inquiryTel'),
+              recruitKey('inquiryEmail'),
+            ]}
             fullRow
             view={
               <ProgramDetailContactReadRow
@@ -534,6 +558,7 @@ export function UjatRecruitVolunteerInfoProgramView({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="비고"
+            validationKey={[recruitKey('notes'), recruitKey('otherNotes')]}
             fullRow
             view={notes}
             edit={isEdit && form ? <UjatRecruitVolunteerNotesField form={form} /> : undefined}

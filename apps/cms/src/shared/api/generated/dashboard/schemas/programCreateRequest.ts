@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
+import type { ProgramCreateRequestDraftStatus } from './programCreateRequestDraftStatus';
 import type { ProgramCreateRequestEducationForm } from './programCreateRequestEducationForm';
 import type { ProgramCreateRequestEducationStructure } from './programCreateRequestEducationStructure';
 import type { ProgramCreateRequestProgramType } from './programCreateRequestProgramType';
@@ -125,4 +126,9 @@ export interface ProgramCreateRequest {
   programDraftId?: number;
   /** 프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings. GENERAL / TRAINED_TEACHER / COMPANY_SCHOOL / UJAT에서 허용. 공용 카탈로그 version id는 거부하고 draft-owned COPY만 받는다. */
   formBindings?: ProgramFormBindingRequest[];
+  /**
+     * Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략 시 PUBLISHED. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.
+     * @nullable
+     */
+  draftStatus?: ProgramCreateRequestDraftStatus;
 }

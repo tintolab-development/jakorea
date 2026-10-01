@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState, forwardRef } from 'react'
+import { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
 import { Form, Select } from 'antd'
 import type { RefSelectProps } from 'antd/es/select'
 import type { Notice, NoticeAttachment } from '@/data/mock/notices'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
+import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
 import {
   noticeToFormValues,
   type NoticeFormFieldValues,
@@ -10,18 +11,49 @@ import {
 import { useNoticeCategoriesQuery } from '@/features/posts/hooks/use-notice-categories-query'
 import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
-import { noticeInlineImageOwner, parseNoticeOwnerId } from '@/features/posts/api/notices/notice-attachments'
+import {
+  isAllowedNoticeAttachment,
+  NOTICE_ATTACHMENT_ACCEPT,
+  NOTICE_ATTACHMENT_MAX_BYTES,
+  noticeInlineImageOwner,
+  parseNoticeOwnerId,
+  removeNoticeFileObjects,
+  uploadUnboundNoticeAttachment,
+} from '@/features/posts/api/notices/notice-attachments'
+import { dedupeFileObjectIds } from '@/features/posts/api/notices/notice-file-ids'
+import { stripBlobImageSources } from '@/shared/lib/admin-file-upload'
 import { RichTextEditor } from '@/shared/rich-text'
+import {
+  editorHasPendingInlineImages,
+  flushPendingRichTextInlineImages,
+} from '@/shared/rich-text/use-rich-text-inline-image'
+import { sumFileBytes } from '@/shared/ui/file-select-field-limits'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import {
   ContentModal,
   CmsButton,
   CmsInput,
   CmsRadioGroup,
   FileSelectField,
+  useCmsAlert,
 } from '@/shared/ui'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import './notice-register-modal.css'
+
+function requiredNoticeLabel(text: string) {
+  return (
+    <>
+      {text}
+      <span className="notice-register-modal__required" aria-hidden>
+        *
+      </span>
+    </>
+  )
+}
 
 function isRegisterableNoticeCategoryId(value: string): boolean {
   const v = value.trim()
@@ -87,8 +119,6 @@ type FormValues = NoticeFormFieldValues & {
   categoryId: string | undefined
 }
 
-const ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024
-
 export function NoticeFormModal({
   open,
   mode,
@@ -98,13 +128,19 @@ export function NoticeFormModal({
   onDeleted,
 }: NoticeFormModalProps) {
   const { user } = useAuthStore()
+  const { showAlert } = useCmsAlert()
   const { createMutation, updateMutation, deleteMutation } = useNoticeMutations()
   const categoriesQuery = useNoticeCategoriesQuery(open)
   const [form] = Form.useForm<FormValues>()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [contentError, setContentError] = useState<string | null>(null)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
   const [existingAttachments, setExistingAttachments] = useState<NoticeAttachment[]>([])
   const [newFiles, setNewFiles] = useState<File[]>([])
+  const [uploadingAttachments, setUploadingAttachments] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  /** 신규 등록에서 claim 전인 첨부. 성공 후에는 비워서 취소 cleanup이 지우지 않게 한다. */
+  const unboundUploadsRef = useRef(new Map<File, number>())
 
   const authorName = user?.name?.trim() || '관리자'
 
@@ -119,17 +155,17 @@ export function NoticeFormModal({
     [open, mode, notice?.id]
   )
 
+  const noticeInlineOwner = useMemo(() => {
+    const id = mode === 'edit' && notice ? parseNoticeOwnerId(notice.id) : null
+    return noticeInlineImageOwner(id)
+  }, [mode, notice])
+
   const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
     open,
     initialMarkdown,
-    editorResetKey
+    editorResetKey,
+    { fileUploadOwner: noticeInlineOwner }
   )
-
-  const noticeInlineOwner = useMemo(() => {
-    if (mode !== 'edit' || !notice) return null
-    const id = parseNoticeOwnerId(notice.id)
-    return id != null ? noticeInlineImageOwner(id) : null
-  }, [mode, notice])
 
   /* 모달이 열릴 때마다 폼·첨부 세션 초기화(등록↔수정·다른 공지 전환) */
   /* eslint-disable react-hooks/set-state-in-effect -- open/mode/notice 변경 시 의도적 초기화 */
@@ -149,6 +185,10 @@ export function NoticeFormModal({
       setExistingAttachments([])
       setNewFiles([])
     }
+    setUploadingAttachments(false)
+    setErrorMessage(null)
+    setContentError(null)
+    setAttachmentError(null)
   }, [open, mode, notice, form])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -170,6 +210,12 @@ export function NoticeFormModal({
     () => [...existingAttachments.map(item => item.name), ...newFiles.map(f => f.name)],
     [existingAttachments, newFiles]
   )
+  const attachmentTotalBytes = useMemo(
+    () =>
+      existingAttachments.reduce((sum, item) => sum + (item.fileSize ?? 0), 0) +
+      sumFileBytes(newFiles),
+    [existingAttachments, newFiles]
+  )
 
   /** API 카테고리만 — label=name, value=id. 하드코딩 폴백 없음 */
   const categorySelectOptions = useMemo(
@@ -180,7 +226,18 @@ export function NoticeFormModal({
     [categoriesQuery.data]
   )
 
+  const releaseUnclaimedUploads = () => {
+    const ids = dedupeFileObjectIds([...unboundUploadsRef.current.values()])
+    unboundUploadsRef.current.clear()
+    if (ids.length > 0) void removeNoticeFileObjects(ids)
+  }
+
+  const markUploadsClaimed = () => {
+    unboundUploadsRef.current.clear()
+  }
+
   const handleCancel = () => {
+    releaseUnclaimedUploads()
     form.resetFields()
     setExistingAttachments([])
     setNewFiles([])
@@ -205,12 +262,7 @@ export function NoticeFormModal({
   }
 
   const handleAttachmentAdd = (files: File[]) => {
-    const ok = files.filter(f => {
-      if (f.size > ATTACHMENT_MAX_BYTES) {
-        return false
-      }
-      return true
-    })
+    const ok = files.filter(isAllowedNoticeAttachment)
     setNewFiles(prev => [...prev, ...ok])
   }
 
@@ -218,10 +270,31 @@ export function NoticeFormModal({
     const nExisting = existingAttachments.length
     if (index < nExisting) {
       setExistingAttachments(prev => prev.filter((_, i) => i !== index))
-    } else {
-      const ni = index - nExisting
-      setNewFiles(prev => prev.filter((_, i) => i !== ni))
+      return
     }
+    const ni = index - nExisting
+    const removed = newFiles[ni]
+    if (removed) {
+      const uploadedId = unboundUploadsRef.current.get(removed)
+      unboundUploadsRef.current.delete(removed)
+      if (uploadedId != null) void removeNoticeFileObjects([uploadedId])
+    }
+    setNewFiles(prev => prev.filter((_, i) => i !== ni))
+  }
+
+  const fileObjectIdsForCreate = async (files: File[]): Promise<number[]> => {
+    const ids: number[] = []
+    for (const file of files) {
+      const known = unboundUploadsRef.current.get(file)
+      if (known != null) {
+        ids.push(known)
+        continue
+      }
+      const id = await uploadUnboundNoticeAttachment(file)
+      unboundUploadsRef.current.set(file, id)
+      ids.push(id)
+    }
+    return dedupeFileObjectIds(ids)
   }
 
   const handleFinish = async (values: FormValues) => {
@@ -230,15 +303,18 @@ export function NoticeFormModal({
     }
 
     const md = getMarkdown().trim()
-    if (!md) {
-      setErrorMessage('내용을 입력해 주세요.')
-      return
-    }
-
     const categoryIdRaw = values.categoryId?.trim() ?? ''
     const categoryId = Number(categoryIdRaw)
-    if (!isRegisterableNoticeCategoryId(categoryIdRaw) || !Number.isFinite(categoryId)) {
-      setErrorMessage('카테고리를 선택해 주세요.')
+    const categoryMissing =
+      !isRegisterableNoticeCategoryId(categoryIdRaw) || !Number.isFinite(categoryId)
+    const visibilityMissing = values.visibility !== 'public' && values.visibility !== 'private'
+    const pinMissing = values.pinTop !== 'on' && values.pinTop !== 'off'
+    const titleMissing = !values.title?.trim()
+    if (categoryMissing || visibilityMissing || pinMissing || titleMissing || !md) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return
     }
     const categoryName =
@@ -246,25 +322,55 @@ export function NoticeFormModal({
 
     const attachmentNames = attachmentDisplayNames
     const pinToTop = values.pinTop === 'on'
-    const base = {
-      title: values.title,
-      contentMarkdown: md,
-      categoryId,
-      category: categoryName,
-      visibility: values.visibility,
-      pinToTop,
-      attachmentNames,
-      newFiles,
-      retainedFileObjectIds: existingAttachments.flatMap(item =>
-        item.fileObjectId != null ? [item.fileObjectId] : []
-      ),
-      author: authorName,
-    }
-
+    const pendingInlineImages = editorHasPendingInlineImages(editor)
+    const uploadsOnSave = newFiles.length > 0 || pendingInlineImages
+    if (uploadsOnSave) setUploadingAttachments(true)
     try {
+      let createFileObjectIds: number[] | undefined
+      if (mode === 'create' && newFiles.length > 0) {
+        createFileObjectIds = await fileObjectIdsForCreate(newFiles)
+      }
+      const contentForCreate = pendingInlineImages
+        ? stripBlobImageSources(md).trim() || ' '
+        : md
+      const base = {
+        title: values.title,
+        contentMarkdown: contentForCreate,
+        categoryId,
+        category: categoryName,
+        visibility: values.visibility,
+        pinToTop,
+        attachmentNames,
+        newFiles: mode === 'create' ? [] : newFiles,
+        fileObjectIds: createFileObjectIds,
+        retainedFileObjectIds: existingAttachments.flatMap(item =>
+          item.fileObjectId != null ? [item.fileObjectId] : []
+        ),
+        author: authorName,
+      }
+
       if (mode === 'create') {
         const created = await createMutation.mutateAsync(base)
-        onSuccess?.(created)
+        markUploadsClaimed()
+        let saved = created
+        const ownerId = parseNoticeOwnerId(created.id) ?? created.resourceId ?? null
+        if (pendingInlineImages && editor) {
+          if (ownerId == null) {
+            throw new Error('공지 ID를 확인하지 못해 이미지를 업로드할 수 없습니다.')
+          }
+          await flushPendingRichTextInlineImages(editor, noticeInlineImageOwner(ownerId))
+          saved = await updateMutation.mutateAsync({
+            id: created.id,
+            existing: created,
+            params: {
+              ...base,
+              contentMarkdown: getMarkdown().trim(),
+              newFiles: [],
+              fileObjectIds: undefined,
+            },
+          })
+        }
+        onSuccess?.(saved)
       } else {
         const updated = await updateMutation.mutateAsync({
           id: notice!.id,
@@ -279,7 +385,16 @@ export function NoticeFormModal({
       setNewFiles([])
       onCancel()
     } catch (error) {
-      setErrorMessage(getPostsApiErrorMessage(error, '저장에 실패했습니다.'))
+      const message = getPostsApiErrorMessage(error, '저장에 실패했습니다.')
+      const field = getApiErrorField(error)
+      setErrorMessage(null)
+      setContentError(null)
+      setAttachmentError(null)
+      if (field === 'content' || field === 'inlineImages') setContentError(message)
+      else if (field === 'attachments') setAttachmentError(message)
+      else setErrorMessage(message)
+    } finally {
+      if (uploadsOnSave) setUploadingAttachments(false)
     }
   }
 
@@ -338,27 +453,20 @@ export function NoticeFormModal({
             <div className="notice-register-modal__filter-inner">
               <Form.Item
                 name="categoryId"
-                label="카테고리"
+                label={requiredNoticeLabel('카테고리')}
+                required
                 className="notice-register-modal__filter-field notice-register-modal__filter-field--category"
                 normalize={(value: unknown) => {
                   if (typeof value !== 'string') return undefined
                   return isRegisterableNoticeCategoryId(value) ? value.trim() : undefined
                 }}
-                rules={[
-                  {
-                    validator: async (_, value) => {
-                      if (typeof value !== 'string' || !isRegisterableNoticeCategoryId(value)) {
-                        throw new Error('카테고리를 선택해 주세요.')
-                      }
-                    },
-                  },
-                ]}
               >
                 <NoticeCategorySelect options={categorySelectOptions} />
               </Form.Item>
               <Form.Item
                 name="visibility"
-                label="공개 여부"
+                label={requiredNoticeLabel('공개 여부')}
+                required
                 className="notice-register-modal__filter-field"
               >
                 <CmsRadioGroup
@@ -371,7 +479,8 @@ export function NoticeFormModal({
               </Form.Item>
               <Form.Item
                 name="pinTop"
-                label="상단 고정"
+                label={requiredNoticeLabel('상단 고정')}
+                required
                 className="notice-register-modal__filter-field"
               >
                 <CmsRadioGroup
@@ -387,15 +496,20 @@ export function NoticeFormModal({
 
           <Form.Item
             name="title"
-            label="제목"
+            label={requiredNoticeLabel('제목')}
+            required
             className="notice-register-modal__section"
-            rules={[{ required: true, whitespace: true, message: '제목을 입력해 주세요.' }]}
           >
             <CmsInput placeholder="제목을 입력하세요" inputSize="large" width="100%" />
           </Form.Item>
 
           <div className="notice-register-modal__section notice-register-modal__section--editor">
-            <div className="notice-register-modal__editor-label">내용</div>
+            <div className="notice-register-modal__editor-label">
+              내용
+              <span className="notice-register-modal__required" aria-hidden>
+                *
+              </span>
+            </div>
             <div className="notice-register-modal__editor-host">
               <RichTextEditor
                 editor={editor}
@@ -403,6 +517,11 @@ export function NoticeFormModal({
                 fileUploadOwner={noticeInlineOwner}
               />
             </div>
+            {contentError ? (
+              <p className="notice-register-modal__error" role="alert">
+                {contentError}
+              </p>
+            ) : null}
           </div>
 
           {errorMessage ? (
@@ -418,17 +537,23 @@ export function NoticeFormModal({
                 className="notice-register-modal__file-field"
                 multiple
                 buttonLabel="파일 추가"
-                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.hwp,.hwpx,.ppt,.pptx"
+                accept={NOTICE_ATTACHMENT_ACCEPT}
                 fileNames={attachmentDisplayNames}
-                currentTotalBytes={newFiles.reduce((sum, file) => sum + file.size, 0)}
-                maxTotalBytes={ATTACHMENT_MAX_BYTES}
+                currentTotalBytes={attachmentTotalBytes}
+                maxTotalBytes={NOTICE_ATTACHMENT_MAX_BYTES}
+                uploading={uploadingAttachments}
                 onFilesChange={handleAttachmentAdd}
                 onRemoveFile={handleAttachmentRemove}
                 guideLines={[
-                  '파일은 최대 20MB까지 업로드 가능하며,',
-                  'PDF, 이미지, 문서 파일 형식만 지원됩니다.',
+                  '파일은 총 최대 15MB까지 업로드 가능하며,',
+                  'JPG, PNG, PDF, Word, Excel 파일 형식만 지원됩니다.',
                 ]}
               />
+              {attachmentError ? (
+                <p className="notice-register-modal__error" role="alert">
+                  {attachmentError}
+                </p>
+              ) : null}
             </div>
           </div>
         </Form>

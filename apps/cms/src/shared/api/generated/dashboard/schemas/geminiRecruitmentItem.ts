@@ -6,9 +6,6 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * Gemini 찾아가는 연수 모집 공고 목록 행. 기관 모집 기간과 연수 요청 기간을 분리한다.
- */
 export interface GeminiRecruitmentItem {
   programId: number;
   programCode?: string | null;
@@ -39,7 +36,7 @@ export interface GeminiRecruitmentItem {
      * @nullable
      */
   trainingRequestEndDate?: string | null;
-  organizationApplicationCount: number | null;
-  approvedOrganizationApplicationCount: number | null;
-  updatedAt?: string | null;
+  organizationApplicationCount?: number;
+  approvedOrganizationApplicationCount?: number;
+  updatedAt?: string;
 }

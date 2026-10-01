@@ -89,7 +89,7 @@ function saveBlob(fileName: string, blob: Blob) {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
 }
 
-function readDownloadUrlFromJsonBlob(blob: Blob): Promise<string | null> {
+export function readDownloadUrlFromJsonBlob(blob: Blob): Promise<string | null> {
   if (!/\bjson\b/i.test(blob.type) && blob.size > 8_192) return Promise.resolve(null)
   return blob.text().then(text => {
     const trimmed = text.trim()
@@ -108,7 +108,7 @@ function readDownloadUrlFromJsonBlob(blob: Blob): Promise<string | null> {
   })
 }
 
-async function fetchBlobOnce(url: string): Promise<Blob> {
+export async function fetchBlobOnce(url: string): Promise<Blob> {
   const proxied = toProxiedApiPath(url) ?? toSameOriginApiPath(url, getApiBaseUrl())
   if (proxied) {
     const { data } = await axiosClient.get<Blob>(proxied, {

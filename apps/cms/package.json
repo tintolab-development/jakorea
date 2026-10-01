@@ -144,6 +144,7 @@
     "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
+    "jszip": "3.10.1",
     "otplib": "^13.4.0",
     "pdfjs-dist": "^6.3.289",
     "qrcode": "^1.5.4",

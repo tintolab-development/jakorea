@@ -6,6 +6,7 @@
 import {
   isGeneralProgramTempMockEnabled,
   isGeneralProgramTempMockIndividualProgramId,
+  TEMP_MOCK_INDIVIDUAL_NO_INTERVIEW_PROGRAM_ID,
   TEMP_MOCK_INDIVIDUAL_PROGRAM_ID,
 } from '@/features/program/general/api/temp-mock-capabilities'
 import { GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_COMMON_INFO_MOCK } from '@/features/program/general/lib/detail-common-info-display'
@@ -46,6 +47,11 @@ import {
   TEMP_MOCK_ORG_PROGRESS_VOLUNTEER_PREFIX,
   TEMP_MOCK_ORG_VOLUNTEER_APP_PREFIX,
 } from '@/features/program/general/lib/temp-mock-org-program'
+import {
+  overlayIndividualNoInterviewProgram,
+  remapIndividualNoInterviewRows,
+  TEMP_MOCK_INDIVIDUAL_NOIV_PARTICIPANT_PREFIX,
+} from '@/features/program/general/lib/temp-mock-no-interview-variants'
 
 export { TEMP_MOCK_INDIVIDUAL_PROGRAM_ID }
 
@@ -58,7 +64,10 @@ export const TEMP_MOCK_INDIVIDUAL_PROGRESS_VOLUNTEER_PREFIX =
   'temp-mock-individual-progress-volunteer-'
 
 export function isTempMockIndividualParticipantRowId(id: string): boolean {
-  return id.startsWith(TEMP_MOCK_INDIVIDUAL_PARTICIPANT_PREFIX)
+  return (
+    id.startsWith(TEMP_MOCK_INDIVIDUAL_PARTICIPANT_PREFIX) ||
+    id.startsWith(TEMP_MOCK_INDIVIDUAL_NOIV_PARTICIPANT_PREFIX)
+  )
 }
 
 const TEMP_MOCK_TEXTBOOK_NAME = '[개인] 커리큘럼형 복수회차 테스트 프로그램 교재'
@@ -376,18 +385,50 @@ const PROGRESS_VOLUNTEERS = remapInstructorVolunteerSeeds(
   [[TEMP_MOCK_ORG_PROGRESS_VOLUNTEER_PREFIX, TEMP_MOCK_INDIVIDUAL_PROGRESS_VOLUNTEER_PREFIX]]
 )
 
+let cachedNoInterviewProgram: Program | null = null
+let cachedNoInterviewApplicants: GeneralIndividualApplicantRow[] | null = null
+let cachedNoInterviewProgressParticipants: ParticipatingIndividualParticipantRow[] | null = null
+let cachedNoInterviewApplicantInstructors: ApplicantInstructorRow[] | null = null
+let cachedNoInterviewProgressInstructors: ParticipatingInstructorRow[] | null = null
+let cachedNoInterviewVolunteerApplicants: GeneralVolunteerApplicantRow[] | null = null
+let cachedNoInterviewProgressVolunteers: ParticipatingVolunteerRow[] | null = null
+let cachedNoInterviewManagers: ProgramManagerRow[] | null = null
+
+function isIndividualNoInterviewId(programId?: string | null): boolean {
+  return programId === TEMP_MOCK_INDIVIDUAL_NO_INTERVIEW_PROGRAM_ID
+}
+
+function getCachedNoInterviewProgram(): Program {
+  if (cachedNoInterviewProgram == null) {
+    cachedNoInterviewProgram = overlayIndividualNoInterviewProgram(getCachedProgram())
+  }
+  return cachedNoInterviewProgram
+}
+
 export function getTempMockIndividualProgram(): Program | null {
   if (!isGeneralProgramTempMockEnabled()) return null
   return cloneJson(getCachedProgram())
 }
 
+export function getTempMockIndividualNoInterviewProgram(): Program | null {
+  if (!isGeneralProgramTempMockEnabled()) return null
+  return cloneJson(getCachedNoInterviewProgram())
+}
+
 export function getTempMockIndividualProgramIfId(programId?: string | null): Program | null {
   if (!isGeneralProgramTempMockIndividualProgramId(programId)) return null
+  if (isIndividualNoInterviewId(programId)) return cloneJson(getCachedNoInterviewProgram())
   return cloneJson(getCachedProgram())
 }
 
 export function getTempMockIndividualApplicants(programId?: string | null): GeneralIndividualApplicantRow[] {
   if (!isGeneralProgramTempMockIndividualProgramId(programId)) return []
+  if (isIndividualNoInterviewId(programId)) {
+    if (cachedNoInterviewApplicants == null) {
+      cachedNoInterviewApplicants = remapIndividualNoInterviewRows(APPLICANT_INDIVIDUALS)
+    }
+    return cloneJson(cachedNoInterviewApplicants)
+  }
   return cloneJson(APPLICANT_INDIVIDUALS)
 }
 
@@ -395,6 +436,12 @@ export function getTempMockIndividualProgressParticipants(
   programId?: string | null
 ): ParticipatingIndividualParticipantRow[] {
   if (!isGeneralProgramTempMockIndividualProgramId(programId)) return []
+  if (isIndividualNoInterviewId(programId)) {
+    if (cachedNoInterviewProgressParticipants == null) {
+      cachedNoInterviewProgressParticipants = remapIndividualNoInterviewRows(PROGRESS_PARTICIPANTS)
+    }
+    return cloneJson(cachedNoInterviewProgressParticipants)
+  }
   return cloneJson(PROGRESS_PARTICIPANTS)
 }
 
@@ -402,6 +449,12 @@ export function getTempMockIndividualApplicantInstructors(
   programId?: string | null
 ): ApplicantInstructorRow[] {
   if (!isGeneralProgramTempMockIndividualProgramId(programId)) return []
+  if (isIndividualNoInterviewId(programId)) {
+    if (cachedNoInterviewApplicantInstructors == null) {
+      cachedNoInterviewApplicantInstructors = remapIndividualNoInterviewRows(APPLICANT_INSTRUCTORS)
+    }
+    return cloneJson(cachedNoInterviewApplicantInstructors)
+  }
   return cloneJson(APPLICANT_INSTRUCTORS)
 }
 
@@ -409,6 +462,12 @@ export function getTempMockIndividualProgressInstructors(
   programId?: string | null
 ): ParticipatingInstructorRow[] {
   if (!isGeneralProgramTempMockIndividualProgramId(programId)) return []
+  if (isIndividualNoInterviewId(programId)) {
+    if (cachedNoInterviewProgressInstructors == null) {
+      cachedNoInterviewProgressInstructors = remapIndividualNoInterviewRows(PROGRESS_INSTRUCTORS)
+    }
+    return cloneJson(cachedNoInterviewProgressInstructors)
+  }
   return cloneJson(PROGRESS_INSTRUCTORS)
 }
 
@@ -417,7 +476,11 @@ export function getTempMockIndividualVolunteerApplicants(
   stage?: 'doc1' | 'docPassed' | 'interview2'
 ): GeneralVolunteerApplicantRow[] {
   if (!isGeneralProgramTempMockIndividualProgramId(programId)) return []
-  const rows = cloneJson(VOLUNTEER_APPLICANTS)
+  const rows = isIndividualNoInterviewId(programId)
+    ? cloneJson(
+        (cachedNoInterviewVolunteerApplicants ??= remapIndividualNoInterviewRows(VOLUNTEER_APPLICANTS))
+      )
+    : cloneJson(VOLUNTEER_APPLICANTS)
   if (stage === 'docPassed') {
     return rows.filter(row => row.documentScreeningStatus === 'pass')
   }
@@ -434,6 +497,12 @@ export function getTempMockIndividualProgressVolunteers(
   programId?: string | null
 ): ParticipatingVolunteerRow[] {
   if (!isGeneralProgramTempMockIndividualProgramId(programId)) return []
+  if (isIndividualNoInterviewId(programId)) {
+    if (cachedNoInterviewProgressVolunteers == null) {
+      cachedNoInterviewProgressVolunteers = remapIndividualNoInterviewRows(PROGRESS_VOLUNTEERS)
+    }
+    return cloneJson(cachedNoInterviewProgressVolunteers)
+  }
   return cloneJson(PROGRESS_VOLUNTEERS)
 }
 
@@ -441,5 +510,11 @@ export function getTempMockIndividualProgramManagers(
   programId?: string | null
 ): ProgramManagerRow[] {
   if (!isGeneralProgramTempMockIndividualProgramId(programId)) return []
+  if (isIndividualNoInterviewId(programId)) {
+    if (cachedNoInterviewManagers == null) {
+      cachedNoInterviewManagers = remapIndividualNoInterviewRows(PROGRAM_MANAGERS)
+    }
+    return cloneJson(cachedNoInterviewManagers)
+  }
   return cloneJson(PROGRAM_MANAGERS)
 }

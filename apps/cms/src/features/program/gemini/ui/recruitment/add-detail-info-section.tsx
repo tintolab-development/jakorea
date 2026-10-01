@@ -18,15 +18,13 @@ export function GeminiRecruitmentAddDetailInfoSection({
     programDescription,
     setProgramDescription,
     recruitmentGuide,
-    setRecruitmentGuide,
     applicationMethod,
-    setApplicationMethod,
     learningSupportContent,
-    setLearningSupportContent,
+    additionalContentMarkdown,
+    registerRichTextGetter,
+    markRichTextTouched,
     attachmentFileNames,
     setAttachmentFileNames,
-    editor,
-    editorMinHeight,
     title,
     announcementPublished,
     educationTargetLevels,
@@ -63,7 +61,7 @@ export function GeminiRecruitmentAddDetailInfoSection({
     recruitmentGuide,
     applicationMethod,
     learningSupportContent,
-    additionalContentMarkdown: '',
+    additionalContentMarkdown,
     attachmentFileNames,
   }
 
@@ -77,16 +75,12 @@ export function GeminiRecruitmentAddDetailInfoSection({
       <GeminiRecruitmentDetailFields
         mode="edit"
         values={values}
-        editor={editor}
-        editorMinHeight={editorMinHeight}
+        richTextResetKey="gemini-recruitment-add"
+        registerRichTextGetter={registerRichTextGetter}
+        onRichTextEdit={markRichTextTouched}
         onChange={patch => {
           if (patch.thumbnailFileName !== undefined) setThumbnailFileName(patch.thumbnailFileName)
           if (patch.programDescription != null) setProgramDescription(patch.programDescription)
-          if (patch.recruitmentGuide != null) setRecruitmentGuide(patch.recruitmentGuide)
-          if (patch.applicationMethod != null) setApplicationMethod(patch.applicationMethod)
-          if (patch.learningSupportContent != null) {
-            setLearningSupportContent(patch.learningSupportContent)
-          }
           if (patch.attachmentFileNames != null) setAttachmentFileNames(patch.attachmentFileNames)
         }}
       />

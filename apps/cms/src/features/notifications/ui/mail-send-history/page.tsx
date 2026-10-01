@@ -4,6 +4,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { MAIL_SEND_HISTORY_FILTER_FIELDS } from '@/features/notifications/model/mail-send-history/filter-fields'
 import {
   applyMailSendHistoryFiltersToSearchParams,
@@ -56,7 +57,22 @@ export function MailSendHistoryPage() {
     () => readMailSendHistoryFiltersFromParams(searchParams),
     [searchParams]
   )
-  const { data: rows = [], isLoading } = useMailSendHistoryQuery(searchParams)
+  const {
+    rows,
+    totalCount,
+    searchParamsKey,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useMailSendHistoryQuery(searchParams)
+  const displayTotal = totalCount ?? rows.length
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: searchParamsKey,
+  })
   const [pendingFilters, setPendingFilters] =
     useState<MailSendHistoryPendingFilters>(appliedFilters)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
@@ -92,7 +108,8 @@ export function MailSendHistoryPage() {
         key: 'no',
         width: COL_W.no,
         align: 'center',
-        render: (_: unknown, __: MailSendHistoryRow, index: number) => rows.length - index,
+        render: (_: unknown, __: MailSendHistoryRow, index: number) =>
+          displayTotal === 0 ? '-' : displayTotal - index,
       },
       {
         title: '요청일시',
@@ -173,7 +190,7 @@ export function MailSendHistoryPage() {
         render: (value: string, row) => formatReservedAt(value, row.broadcastTiming),
       },
     ],
-    [rows.length]
+    [displayTotal]
   )
 
   return (
@@ -189,7 +206,7 @@ export function MailSendHistoryPage() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="메일 발송 조회"
-        description={`총 ${rows.length.toLocaleString()}건`}
+        description={`총 ${displayTotal.toLocaleString()}건`}
         contentLoading={isLoading}
       >
         <Table<MailSendHistoryRow>
@@ -205,6 +222,7 @@ export function MailSendHistoryPage() {
             onClick: () => setSelectedRowId(record.id),
           })}
         />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
       <DetailModal
         open={selectedRowId != null}

@@ -142,6 +142,8 @@ import {
   persistUjatRecruitVolunteerTemplateSave,
 } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE } from '@/features/template/lib/program-registration-editor-state'
 import { coalesceUjatRecruitOverlay } from '@/features/program/ujat/lib/ujat-recruit-overlay-coalesce'
 import { pickUjatRecruitInstitutionOverlay } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import { pickUjatRecruitVolunteerOverlay } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
@@ -157,8 +159,8 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import {
   getGeminiRecruitOverlayRecord,
-  replaceGeminiRecruitOverlay,
   resetGeminiRecruitOverlay,
+  restoreGeminiRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
 import {
   getApplicantRecruitInstitutionOverlayRecord,
@@ -174,6 +176,7 @@ import {
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   mergeRecruitDetailInfoFromGeneralStore,
+  overlayEntriesAbsentFromLive,
   pickUjatVolunteerRecruitGeneralStoreSidecar,
   recruitDetailInfoOverlayPrefixForEditorVariant,
   restoreRecruitDetailInfoIntoGeneralStore,
@@ -202,6 +205,7 @@ import {
 import {
   getInstitutionApplicationFormHiddenParagraphIds,
   isInstitutionApplicationBridgeTemplateAuthoring,
+  syncInstitutionApplicationPreferredEducationFormFromOverlay,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveGeneralApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/application-form-preview-options'
@@ -211,7 +215,15 @@ import {
 } from '@/features/program/general/lib/instructor-application-available-schedule'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { resolveGeneralProgramVolunteerInterviewScheduleEditSeed } from '@/features/program/general/lib/volunteer-interview-schedule-display'
-import { rememberRegistrationWizardSessionDraft, clearRegistrationWizardSessionDrafts } from '@/features/program/general/lib/registration-wizard-session-drafts'
+import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
+import { applyDevAutofillThirdPartyRecipient } from '@/features/program/general/lib/fill-application-form-third-party-recipient'
+import { hasIncompleteApplicationFormThirdPartyRecipient } from '@/features/template/model/application-form-third-party-recipient'
+import {
+  rememberRegistrationWizardSessionDraft,
+  clearRegistrationWizardSessionDrafts,
+  peekRegistrationWizardSessionDrafts,
+  subscribeRegistrationWizardApplicationDraft,
+} from '@/features/program/general/lib/registration-wizard-session-drafts'
 import { getUjatVolunteerRound } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-program-round'
 import { resolveUjatVolunteerHiddenParagraphIds } from '@/features/template/lib/ujat-volunteer-application-form-visibility'
 import type { Program } from '@/types/domain'
@@ -434,12 +446,9 @@ function restoreParticipantOverlayForVariant(
   const resetIfMissing = options?.resetIfMissing === true
   if (variant === 'gemini-recruit') {
     if (overlay) {
-      replaceGeminiRecruitOverlay(overlay)
-      // 공유 general recruit 스토어는 탭 간 키를 유지하도록 merge
-      patchGeneralRecruitOverlay(overlay)
+      restoreGeminiRecruitOverlay(overlay)
     } else if (resetIfMissing) {
       resetGeminiRecruitOverlay()
-      resetGeneralRecruitOverlay()
     }
     return
   }
@@ -454,14 +463,19 @@ function restoreParticipantOverlayForVariant(
     return
   }
   if (isGeneralRecruitOverlayVariant(variant)) {
-    // 개인·강사·봉사자 모집이 한 스토어를 공유 — replace 하면 다른 탭 입력이 사라짐
-    if (overlay) patchGeneralRecruitOverlay(overlay)
-    else if (resetIfMissing) resetGeneralRecruitOverlay()
+    // 개인·강사·봉사자 모집이 한 스토어를 공유한다.
+    // 다른 단계 스냅샷에 들어 있는 첨부·썸네일 키로 방금 입력한 값을 덮지 않는다.
+    if (overlay) {
+      const patch = overlayEntriesAbsentFromLive(overlay, getGeneralRecruitOverlayRecord())
+      if (Object.keys(patch).length > 0) patchGeneralRecruitOverlay(patch)
+    } else if (resetIfMissing) resetGeneralRecruitOverlay()
     return
   }
   if (isGeneralApplicationOverlayVariant(variant)) {
-    if (overlay) patchGeneralApplicationOverlay(overlay)
-    else if (resetIfMissing) resetGeneralApplicationOverlay()
+    if (overlay) {
+      const patch = overlayEntriesAbsentFromLive(overlay, getGeneralApplicationOverlayRecord())
+      if (Object.keys(patch).length > 0) patchGeneralApplicationOverlay(patch)
+    } else if (resetIfMissing) resetGeneralApplicationOverlay()
     return
   }
   if (variant === 'ujat-application-institution') {
@@ -479,10 +493,7 @@ export function collectParticipantOverlayForVariant(
   variant: ProgramParticipantApplicationEditorVariant
 ): Record<string, unknown> | undefined {
   if (variant === 'gemini-recruit') {
-    return {
-      ...getGeneralRecruitOverlayRecord(),
-      ...getGeminiRecruitOverlayRecord(),
-    }
+    return { ...getGeminiRecruitOverlayRecord() }
   }
   if (isApplicantRecruitInstitutionVariant(variant)) {
     return mergeRecruitDetailInfoFromGeneralStore(
@@ -782,7 +793,13 @@ export function useProgramParticipantApplicationEditor(
     } else {
       // 탭 전환 시 EMPTY/스피너 대신 시드를 즉시 그려 깜빡임 제거.
       // overlay는 비우지 않음 — 공유 스토어·이어서작성 hydrate 값을 유지한 채 저장본 merge.
-      applyDraftNow(createSeedDraft())
+      // 개발용 자동입력이 넣어 둔 신청 draft가 있으면 빈 시드보다 그 값을 그린다.
+      const autofilled = peekRegistrationWizardSessionDrafts().find(
+        entry =>
+          entry.templateCode === templateId &&
+          !hasIncompleteApplicationFormThirdPartyRecipient(entry.draft)
+      )
+      applyDraftNow(autofilled?.draft ?? createSeedDraft())
       setIsDraftLoading(false)
     }
 
@@ -884,7 +901,14 @@ export function useProgramParticipantApplicationEditor(
         if (cancelled) return
         if (preferSessionCache) return
         if (saved?.draft) {
-          applyDraftNow(saved.draft)
+          const autofilled = peekRegistrationWizardSessionDrafts().find(
+            entry =>
+              entry.templateCode === templateId &&
+              !hasIncompleteApplicationFormThirdPartyRecipient(entry.draft)
+          )
+          const useAutofill =
+            autofilled != null && hasIncompleteApplicationFormThirdPartyRecipient(saved.draft)
+          applyDraftNow(useAutofill ? autofilled.draft : saved.draft)
           restoreParticipantOverlayForVariant(variant, saved.overlay)
           applyParticipantApplicationEditorState({
             variant,
@@ -966,6 +990,17 @@ export function useProgramParticipantApplicationEditor(
     variant,
   ])
 
+  useEffect(() => {
+    if (!active || !usesRegistrationWizardDraft) return
+    const templateId = resolvePersistTemplateId()
+    return subscribeRegistrationWizardApplicationDraft((code, next) => {
+      if (code !== templateId) return
+      setDraft(prev =>
+        prev.paragraphs.length === 0 ? next : applyDevAutofillThirdPartyRecipient(prev)
+      )
+    })
+  }, [active, resolvePersistTemplateId, usesRegistrationWizardDraft])
+
   /** 등록 위저드 닫힘 → 세션 캐시 정리 (다음 신규 등록과 섞이지 않게) */
   useEffect(() => {
     if (registrationWizardOpen !== false) return
@@ -973,6 +1008,28 @@ export function useProgramParticipantApplicationEditor(
     storageHydratedTemplateIdsRef.current.clear()
     clearRegistrationWizardSessionDrafts()
   }, [registrationWizardOpen])
+
+  /** 기관 신청 스텝 — overlay/위저드 draft에서 희망 교육 형태를 다시 켠다 */
+  useEffect(() => {
+    if (!active || variant !== 'institution') return
+    const live = getProgramRegistrationOverlayRecord()
+    if (Object.keys(live).length > 0) {
+      syncInstitutionApplicationPreferredEducationFormFromOverlay(live)
+      return
+    }
+    if (!usesRegistrationWizardDraft || registrationWizardProgramType == null) return
+    let cancelled = false
+    void loadRegistrationWizardFormDraft({
+      programType: registrationWizardProgramType,
+      templateCode: PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
+    }).then(saved => {
+      if (cancelled) return
+      syncInstitutionApplicationPreferredEducationFormFromOverlay(saved?.overlay)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [active, registrationWizardProgramType, usesRegistrationWizardDraft, variant])
 
   useEffect(() => {
     if (!active) {
@@ -982,7 +1039,6 @@ export function useProgramParticipantApplicationEditor(
         if (variant === 'ujat-recruit-volunteer') resetUjatRecruitVolunteerOverlay()
         if (variant === 'gemini-recruit') {
           resetGeminiRecruitOverlay()
-          resetGeneralRecruitOverlay()
         }
         if (variant === 'ujat-application-institution') resetUjatApplicationInstitutionOverlay()
         if (variant === 'ujat-application-volunteer') resetUjatApplicationVolunteerOverlay()

@@ -18,6 +18,7 @@ import {
   fetchNoticeCategoriesRemote,
   fetchNoticeRemote,
   fetchNoticesRemote,
+  replaceNoticeInlineImagesRemote,
   updateNoticeCategoryRemote,
   updateNoticeRemote,
 } from '@/features/posts/api/notices/notices-api-client'
@@ -25,12 +26,15 @@ import type { Notice } from '@/data/mock/notices'
 import type { BuildNoticeBodyParams } from '@/features/posts/model/notice-form-mapper'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { dedupeFileObjectIds } from '@/features/posts/api/notices/notice-file-ids'
 import {
   hydrateNoticeAttachments,
   linkNoticeAttachments,
   noticeUploadOwnerId,
   uploadAndAttachNoticeFiles,
+  uploadUnboundNoticeAttachments,
 } from '@/features/posts/api/notices/notice-attachments'
+import { collectAdminFileObjectIdsFromContent } from '@/shared/lib/admin-file-upload'
 
 function assertNoticesRemoteReady(): void {
   if (!isRealApiModuleEnabled('notices')) {
@@ -76,6 +80,14 @@ function sameFileObjectIds(left: number[], right: number[]): boolean {
   return left.length === right.length && left.every((id, index) => id === right[index])
 }
 
+async function syncNoticeInlineImages(noticeId: string, content: string | undefined): Promise<void> {
+  if (!noticeId) return
+  await replaceNoticeInlineImagesRemote(
+    noticeId,
+    collectAdminFileObjectIdsFromContent(content ?? '')
+  )
+}
+
 async function attachNewNoticeFiles(
   notice: Notice,
   files: File[] | undefined,
@@ -103,23 +115,21 @@ async function attachNewNoticeFiles(
 
 export async function createNotice(params: BuildNoticeBodyParams): Promise<Notice> {
   assertNoticesRemoteReady()
-  const dto = await createNoticeRemote(toNoticeRequestFromForm(params))
-  const created = mapNoticeResponse(dto)
-  try {
-    return await attachNewNoticeFiles(
-      {
-        ...created,
-        category: created.category || params.category,
-        categoryId: created.categoryId ?? params.categoryId,
-      },
-      params.newFiles,
-      params.retainedFileObjectIds
-    )
-  } catch (error) {
-    return rethrowAfterRollback(error, async () => {
-      if (created.id) await deleteNoticeRemote(created.id)
+  const prepared = dedupeFileObjectIds(params.fileObjectIds ?? [])
+  const pending = (params.newFiles ?? []).filter(file => file.size > 0)
+  const uploaded = pending.length > 0 ? await uploadUnboundNoticeAttachments(pending) : []
+  const fileObjectIds = dedupeFileObjectIds([...prepared, ...uploaded])
+  const dto = await createNoticeRemote(
+    toNoticeRequestFromForm({
+      ...params,
+      fileObjectIds,
     })
+  )
+  const created = mapNoticeResponse(dto)
+  if (created.id) {
+    await syncNoticeInlineImages(created.id, params.contentMarkdown)
   }
+  return created
 }
 
 export async function updateNotice(
@@ -130,6 +140,7 @@ export async function updateNotice(
   assertNoticesRemoteReady()
   const dto = await updateNoticeRemote(id, toNoticeRequestFromForm(params))
   const updated = mapNoticeResponse(dto)
+  await syncNoticeInlineImages(id, params.contentMarkdown)
   try {
     return await attachNewNoticeFiles(
       {

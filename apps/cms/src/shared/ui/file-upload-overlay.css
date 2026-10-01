@@ -1,0 +1,9 @@
+/* 모달(z-index 1000대)보다 위에서 뷰포트 전체를 덮는다.
+   fullscreen Spin은 점을 흰색으로 바꾸므로, 다른 화면과 같은 primary 색으로 되돌린다. */
+.file-upload-overlay.ant-spin-fullscreen {
+  z-index: 4000;
+}
+
+.file-upload-overlay.ant-spin-fullscreen .ant-spin .ant-spin-dot-holder {
+  color: var(--ant-color-primary, #01a1af);
+}

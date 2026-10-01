@@ -79,10 +79,21 @@ import {
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import {
   readEconomyRegistrationOverlayForSave,
+  resyncEconomyRegistrationOverlayFromProgram,
   seedEconomyRegistrationOverlayFromProgram,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
-import { hasIncompleteEconomyProgramRegistrationRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { listIncompleteDetailRecruitmentHighlightKeys } from '@/features/program/general/lib/detail-recruitment-required-highlight'
+import {
+  hasIncompleteEconomyProgramRegistrationRequiredFields,
+  listIncompleteEconomyProgramRegistrationRequiredFields,
+} from '@/features/program/general/lib/economy-program-registration-required-fields'
+import type { RegistrationWizardIncompleteMapVariant } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
+import {
+  RegistrationWizardValidationHighlightProvider,
+  RegistrationWizardValidationHighlightSync,
+  useDetailEditRequiredHighlightRequest,
+} from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   programToRecruitmentTabEditValues,
@@ -96,6 +107,7 @@ import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/li
 import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
 import {
   FEATURE_COMING_SOON_ALERT_MESSAGE,
+  GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -197,6 +209,25 @@ const LNB_KEYS_READONLY: readonly LnbKey[] = [
   'managers',
 ]
 
+function trainedTeachersDetailHighlightKey(path: readonly PropertyKey[]): string {
+  const head = String(path[0] ?? '')
+  if (head === 'curriculumSessions') return 'curriculum.title'
+  if (head === 'scheduleDetails' || head === 'progressGroupsByDetail') return 'scheduleCurriculum.name'
+  if (head === 'educationScheduleLines') return 'educationScheduleSettings.periodDateIso'
+  if (
+    head === 'educationStructure' ||
+    head === 'sessionRound' ||
+    head === 'sessionRoundType' ||
+    head === 'ipsCategory' ||
+    head === 'ipsDetail' ||
+    head === 'educationFormScheduleDetail' ||
+    head === 'ipsScheduleDetail'
+  ) {
+    return 'typeSettings.programType'
+  }
+  return `basicInfo.${head || 'programTitleKo'}`
+}
+
 function isCompanySchoolDetailProgram(program: Program | null): boolean {
   return isCompanySchoolProgram(program)
 }
@@ -268,6 +299,7 @@ export function ProgramDetailFullPageModal({
     rawSetSearchParams(nextInit, navigateOpts)
   }, [rawSetSearchParams])
   const { showAlert } = useCmsAlert()
+  const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
   const programId = program?.id
   const {
     program: detailProgram,
@@ -306,7 +338,13 @@ export function ProgramDetailFullPageModal({
   )
   const persistProgramPatch = async (draft: Program, patch: Partial<Program>) => {
     if (onUpdateProgram) {
-      await onUpdateProgram(draft.id, draft, patch)
+      // 행 문구 diff는 저장 전 행과 비교해야 한다. draft는 이미 새 행을 갖고 있어 차이가 없다.
+      const baseline = displayProgram ?? draft
+      await onUpdateProgram(
+        draft.id,
+        { ...draft, programRecruitments: baseline.programRecruitments },
+        patch
+      )
       return
     }
     await updateProgram(draft.id, patch)
@@ -482,6 +520,14 @@ export function ProgramDetailFullPageModal({
         }
 
         if (currentLnb === 'survey') {
+          if (surveyMenuItems.length === 0) {
+            const next = new URLSearchParams(prev)
+            next.set(LNB_PARAM, 'info')
+            next.set(TAB_PARAM, 'info')
+            next.delete(EDIT_PARAM)
+            preserveGeneralProgramDetailProgramId(prev, next)
+            return next
+          }
           const nextSurveyKey = surveyMenuItems.some(item => item.key === prev.get(TAB_PARAM))
             ? prev.get(TAB_PARAM)
             : (surveyMenuItems[0]?.key ?? 'main')
@@ -960,6 +1006,13 @@ export function ProgramDetailFullPageModal({
             : 'institutions'
       )
     } else if (k === 'survey') {
+      if (surveyMenuItems.length === 0) {
+        void showAlert({
+          title: '안내',
+          content: GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
+        })
+        return
+      }
       setSurveyChild(activeSurveyChild || 'main')
     } else {
       setLnb(k)
@@ -977,7 +1030,16 @@ export function ProgramDetailFullPageModal({
     }
     if (groupKey === 'applicants') setApplicantsChild(childKey as TabKey)
     else if (groupKey === 'progress') setProgressChild(childKey as TabKey)
-    else if (groupKey === 'survey') setSurveyChild(childKey as GeneralSurveyNavKey)
+    else if (groupKey === 'survey') {
+      if (surveyMenuItems.length === 0) {
+        void showAlert({
+          title: '안내',
+          content: GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
+        })
+        return
+      }
+      setSurveyChild(childKey as GeneralSurveyNavKey)
+    }
   }
 
   const setSchoolId = (id: string | null) => {
@@ -1320,10 +1382,10 @@ export function ProgramDetailFullPageModal({
                 if (isCompanySchoolDetail && !isTrainedTeachersDetail) {
                   const overlay = readEconomyRegistrationOverlayForSave()
                   const merged = applyEconomyRegistrationOverlayToProgram(draft, overlay)
-                  const registrationOverlay = {
+                  const registrationOverlay = resyncEconomyRegistrationOverlayFromProgram(merged, {
                     ...(draft.registrationOverlay ?? {}),
                     ...overlay,
-                  }
+                  })
                   const roundsChanged =
                     JSON.stringify(merged.rounds ?? []) !== JSON.stringify(draft.rounds ?? [])
                   const periodUnchanged =
@@ -1358,14 +1420,16 @@ export function ProgramDetailFullPageModal({
   const handleInfoSave = useCallback(async () => {
     if (isCompanySchoolDetail && !isTrainedTeachersDetail && displayProgram) {
       const overlay = readEconomyRegistrationOverlayForSave()
-      if (
-        hasIncompleteEconomyProgramRegistrationRequiredFields(overlay, {
-          individual: false,
-          organization: true,
-          teacherInstructor: true,
-          volunteer: false,
-        })
-      ) {
+      const economyParticipant = {
+        individual: false,
+        organization: true,
+        teacherInstructor: true,
+        volunteer: false,
+      }
+      if (hasIncompleteEconomyProgramRegistrationRequiredFields(overlay, economyParticipant)) {
+        detailRequiredHighlight.report(
+          listIncompleteEconomyProgramRegistrationRequiredFields(overlay, economyParticipant)
+        )
         void showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -1394,8 +1458,10 @@ export function ProgramDetailFullPageModal({
       })
       return
     }
+    detailRequiredHighlight.clear()
     setEditMode(null)
   }, [
+    detailRequiredHighlight,
     commonInfoEditSchema,
     displayProgram,
     infoForm,
@@ -1613,6 +1679,25 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
   const handleCompanySchoolRecruitSave = async () => {
+    if (displayProgram) {
+      const audience =
+        activeCompanySchoolRecruitTab === 'instructors' ? 'instructor' : 'participant'
+      const form =
+        audience === 'instructor' ? instructorsForm : institutionsForm
+      const incompleteKeys = listIncompleteDetailRecruitmentHighlightKeys({
+        program: displayProgram,
+        audience,
+        values: form.getValues(),
+      })
+      if (incompleteKeys.length > 0) {
+        detailRequiredHighlight.report(incompleteKeys)
+        void showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
+    }
     if (activeCompanySchoolRecruitTab === 'instructors') {
       const validation = programInstructorRecruitmentSaveSchema.safeParse(
         instructorsForm.getValues()
@@ -1626,6 +1711,7 @@ export function ProgramDetailFullPageModal({
       }
       const ok = await instructorsTriggerSave()
       if (!ok) return
+      detailRequiredHighlight.clear()
       setEditMode(null)
       return
     }
@@ -1646,6 +1732,7 @@ export function ProgramDetailFullPageModal({
     }
     const ok = await institutionsTriggerSave()
     if (!ok) return
+    detailRequiredHighlight.clear()
     setEditMode(null)
   }
   const isCompanySchoolApplicationInfoTab =
@@ -1682,7 +1769,19 @@ export function ProgramDetailFullPageModal({
         isCompanySchoolProgram(displayProgram) ||
         isTrainedTeachersDetailProgram(displayProgram)))
 
+  const detailHighlightVariant: RegistrationWizardIncompleteMapVariant = isTrainedTeachersDetail
+    ? 'trainedTeachers'
+    : isCompanySchoolDetail
+      ? 'economy'
+      : 'general'
+
   return (
+    <RegistrationWizardValidationHighlightProvider variant={detailHighlightVariant}>
+    <RegistrationWizardValidationHighlightSync
+      nonce={detailRequiredHighlight.request.nonce}
+      keys={detailRequiredHighlight.request.keys}
+      variant={detailHighlightVariant}
+    />
     <>
       <DetailFullPageModal
       open={open}
@@ -1794,6 +1893,11 @@ export function ProgramDetailFullPageModal({
                   infoForm.getValues()
                 )
                 if (!validation.success) {
+                  detailRequiredHighlight.report(
+                    validation.error.issues.map(issue =>
+                      trainedTeachersDetailHighlightKey(issue.path)
+                    )
+                  )
                   const message = formatZodIssuesForUser(validation.error.issues)
                   if (message === PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE) {
                     void showAlert({
@@ -2009,5 +2113,6 @@ export function ProgramDetailFullPageModal({
         />
       ) : null}
     </>
+    </RegistrationWizardValidationHighlightProvider>
   )
 }

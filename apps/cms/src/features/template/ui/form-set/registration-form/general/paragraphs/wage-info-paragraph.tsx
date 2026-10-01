@@ -4,7 +4,7 @@ import {
   resolveProgramWageDeductionLabel,
   useProgramWagePaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import {
@@ -47,10 +47,11 @@ export function ProgramRegistrationWageInfoParagraph() {
 
   return (
     <DetailInfoForm title="임금 정보" hideHeader mode="edit" className="program-registration-paragraph">
-      {gradeFees.map(({ row, value, setValue }) => (
+      {gradeFees.map(({ row, value, setValue }, index) => (
         <DetailInfoForm.Row key={row.label} type="single">
           <DetailInfoForm.Field
             label={row.label}
+            validationKey={`wage.grade${index + 1}Fee`}
             fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper">
@@ -84,6 +85,7 @@ export function ProgramRegistrationWageInfoParagraph() {
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="지급 항목"
+          validationKey="wage.paymentItemValues"
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect

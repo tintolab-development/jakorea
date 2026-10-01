@@ -88,6 +88,7 @@ function TrainedTeachersTeacherTrainingBlock() {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="진행 일정"
+              validationKey="curriculum.preEducationScheduleLine"
               fullRow
               edit={
                 <div className="detail-info-form-inputs-wrapper-no-gap">
@@ -180,6 +181,10 @@ function TrainedTeachersCurriculumSessionBlock({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="단원명 및 교육 내용"
+              validationKey={[
+                `curriculum.unitName[${sessionIndex}]`,
+                `curriculum.unitContent[${sessionIndex}]`,
+              ]}
               fullRow
               edit={
                 <div className="detail-info-form-inputs-wrapper">

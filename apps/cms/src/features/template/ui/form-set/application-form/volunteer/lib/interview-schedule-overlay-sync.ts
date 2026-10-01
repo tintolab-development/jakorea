@@ -4,6 +4,7 @@ import {
   getGeneralApplicationOverlayRecord,
   getGeneralApplicationOverlayVersion,
   patchGeneralApplicationOverlay,
+  replaceGeneralApplicationOverlay,
   subscribeGeneralApplicationOverlay,
   updateGeneralApplicationOverlayKey,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
@@ -11,6 +12,7 @@ import {
   getGeneralRecruitOverlayRecord,
   getGeneralRecruitOverlayVersion,
   patchGeneralRecruitOverlay,
+  replaceGeneralRecruitOverlay,
   subscribeGeneralRecruitOverlay,
   updateGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
@@ -120,4 +122,157 @@ export function updateVolunteerInterviewOverlayKey<T>(
     return
   }
   updateGeneralApplicationOverlayKey<T>(key, wrap)
+}
+
+export type VolunteerInterviewExceptionOverlayBlock = {
+  blockId: number
+  exceptionDate: unknown
+  selectedSlotKeys: unknown
+  interviewTime: unknown
+  interviewTimeRange: unknown
+  timeUnit: unknown
+  exclusionState: unknown
+  appliedUnavailableDates: unknown
+}
+
+function exceptionBlockKeyPrefix(
+  store: VolunteerInterviewOverlayStore,
+  namespace: string | undefined,
+  blockId: number
+): string {
+  return `${getInterviewOverlayKeyPrefix(store, namespace)}.exception.${blockId}.`
+}
+
+/** overlay에 남아 있는 예외 일정 블록 id. 추가 순서(키 삽입 순서)를 유지한다. */
+export function listVolunteerInterviewExceptionBlockIds(
+  record: Record<string, unknown>,
+  store: VolunteerInterviewOverlayStore,
+  namespace?: string
+): number[] {
+  const prefix = `${getInterviewOverlayKeyPrefix(store, namespace)}.exception.`
+  const ids: number[] = []
+  const seen = new Set<number>()
+  for (const key of Object.keys(record)) {
+    if (!key.startsWith(prefix)) continue
+    const idPart = key.slice(prefix.length).split('.')[0] ?? ''
+    if (!/^\d+$/.test(idPart)) continue
+    const id = Number(idPart)
+    if (seen.has(id)) continue
+    seen.add(id)
+    ids.push(id)
+  }
+  return ids
+}
+
+export function readVolunteerInterviewExceptionOverlayBlocks(
+  record: Record<string, unknown>,
+  store: VolunteerInterviewOverlayStore,
+  namespace?: string
+): VolunteerInterviewExceptionOverlayBlock[] {
+  return listVolunteerInterviewExceptionBlockIds(record, store, namespace).map(blockId => {
+    const prefix = exceptionBlockKeyPrefix(store, namespace, blockId)
+    return {
+      blockId,
+      exceptionDate: record[`${prefix}exceptionDate`],
+      selectedSlotKeys: record[`${prefix}selectedSlotKeys`],
+      interviewTime: record[`${prefix}interviewTime`],
+      interviewTimeRange: record[`${prefix}interviewTimeRange`],
+      timeUnit: record[`${prefix}timeUnit`],
+      exclusionState: record[`${prefix}exclusionState`],
+      appliedUnavailableDates: record[`${prefix}appliedUnavailableDates`],
+    }
+  })
+}
+
+function mintExceptionBlockIds(count: number, existing: number[]): number[] {
+  const next = [...existing]
+  let stamp = Date.now()
+  while (next.length < existing.length + count) {
+    while (next.includes(stamp)) stamp += 1
+    next.push(stamp)
+    stamp += 1
+  }
+  return next
+}
+
+/**
+ * 예외 일정 블록 id를 overlay에 이미 있는 id와 맞춘다.
+ * 다시 열 때 `Date.now()`로 새 id를 만들면 저장된 값이 빈 블록으로 보인다.
+ */
+export function reconcileVolunteerInterviewExceptionBlockKeys(args: {
+  previous: number[]
+  saved: number[]
+  count: number
+}): number[] {
+  const { previous, saved, count } = args
+  if (previous.length === 0) {
+    if (saved.length === 0) {
+      return count > 0 ? mintExceptionBlockIds(count, []) : []
+    }
+    if (count <= saved.length) return saved
+    return mintExceptionBlockIds(count - saved.length, saved)
+  }
+  if (count < previous.length) {
+    const previousMatchesSaved = previous.every(id => saved.includes(id))
+    if (previousMatchesSaved) return previous
+    return previous.slice(0, count)
+  }
+  if (count > previous.length) {
+    const base = [...previous]
+    for (const id of saved) {
+      if (!base.includes(id)) base.push(id)
+    }
+    if (base.length >= count) return base
+    return mintExceptionBlockIds(count - base.length, base)
+  }
+  return previous
+}
+
+export function removeVolunteerInterviewExceptionBlock(args: {
+  store: VolunteerInterviewOverlayStore
+  namespace?: string
+  blockKey: number
+}): void {
+  const prefix = exceptionBlockKeyPrefix(args.store, args.namespace, args.blockKey)
+  const record =
+    args.store === 'recruit' ? getGeneralRecruitOverlayRecord() : getGeneralApplicationOverlayRecord()
+  const next: Record<string, unknown> = {}
+  let changed = false
+  for (const [key, value] of Object.entries(record)) {
+    if (key.startsWith(prefix)) {
+      changed = true
+      continue
+    }
+    next[key] = value
+  }
+  if (!changed) return
+  if (args.store === 'recruit') {
+    replaceGeneralRecruitOverlay(next)
+    return
+  }
+  replaceGeneralApplicationOverlay(next)
+}
+
+/** 저장된 overlay 중 live에 없는 면접 일정 키만 채운다. 편집 중인 값은 덮지 않는다. */
+export function hydrateMissingVolunteerInterviewOverlay(args: {
+  source: Record<string, unknown> | undefined
+  store: VolunteerInterviewOverlayStore
+  namespace?: string
+}): void {
+  if (args.source == null) return
+  const prefix = `${getInterviewOverlayKeyPrefix(args.store, args.namespace)}.`
+  const live =
+    args.store === 'recruit' ? getGeneralRecruitOverlayRecord() : getGeneralApplicationOverlayRecord()
+  const patch: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(args.source)) {
+    if (!key.startsWith(prefix)) continue
+    if (live[key] !== undefined) continue
+    patch[key] = value
+  }
+  if (Object.keys(patch).length === 0) return
+  if (args.store === 'recruit') {
+    patchGeneralRecruitOverlay(patch)
+    return
+  }
+  patchGeneralApplicationOverlay(patch)
 }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   countGeneralCurriculumMultiRoundsFromOverlay,
+  countGeneralCurriculumOverlaySessions,
+  countGeneralCurriculumUnitSessionsFromOverlay,
   hasGeneralCurriculumMultiRoundOverlay,
   resolveEffectiveGeneralProgramTypeFields,
 } from './curriculum-display'
@@ -19,10 +21,38 @@ describe('curriculum multi-round overlay inference', () => {
       resolveEffectiveGeneralProgramTypeFields({
         generalProgramAudience: 'individual',
         generalProgramEducationStructure: 'curriculum',
-        generalProgramSessionRound: 'single',
         curriculumSessions: [
           { sessionLabel: '1차시', title: '필요와 욕구, 현명한 소비', description: '내용' },
           { sessionLabel: '2차시', title: '', description: '' },
+        ],
+        registrationOverlay: overlay,
+      }).sessionRound
+    ).toBe('multi')
+  })
+
+  it('저장된 수업 회차 유형이 있으면 overlay 회차 맵보다 우선한다', () => {
+    const overlay = {
+      'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+      'generalRegistration.educationCurriculum.roundContentByRound': { 1: '본문' },
+    }
+    expect(
+      resolveEffectiveGeneralProgramTypeFields({
+        generalProgramAudience: 'individual',
+        generalProgramEducationStructure: 'curriculum',
+        generalProgramSessionRound: 'single',
+        curriculumSessions: [
+          { sessionLabel: '1차시', title: '1차시', description: '본문' },
+        ],
+        registrationOverlay: overlay,
+      }).sessionRound
+    ).toBe('single')
+    expect(
+      resolveEffectiveGeneralProgramTypeFields({
+        generalProgramAudience: 'individual',
+        generalProgramEducationStructure: 'curriculum',
+        generalProgramSessionRound: 'multi',
+        curriculumSessions: [
+          { sessionLabel: '1차시', title: '1차시', description: '본문' },
         ],
         registrationOverlay: overlay,
       }).sessionRound
@@ -44,5 +74,21 @@ describe('curriculum multi-round overlay inference', () => {
         },
       })
     ).toBe(0)
+  })
+
+  it('단원 맵 개수를 교육 진행 overlay 슬롯으로 센다', () => {
+    const overlay = {
+      'generalRegistration.educationCurriculum.unitNameBySession': {
+        1: '개인 커리큘럼 단일1',
+        2: '개인 커리큘럼 단일2',
+      },
+      'generalRegistration.educationCurriculum.unitContentBySession': {
+        1: '개인 커리큘럼 단일11',
+        2: '개인 커리큘럼 단일22',
+      },
+      'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+    }
+    expect(countGeneralCurriculumUnitSessionsFromOverlay(overlay)).toBe(2)
+    expect(countGeneralCurriculumOverlaySessions(overlay)).toBe(2)
   })
 })

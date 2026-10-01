@@ -33,7 +33,11 @@ import {
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
 import { CmsButton, DeleteGuideModal } from '@/shared/ui'
-import { resolveProgramDeleteGuideModalCopy } from '@/features/program/shared/lib/program-delete-guide'
+import {
+  isProgramHardDeleteBlockedError,
+  PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+  resolveProgramDeleteGuideModalCopy,
+} from '@/features/program/shared/lib/program-delete-guide'
 import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
@@ -367,18 +371,27 @@ function TrainedTeachersProgramPageContent() {
   }, [filteredPrograms, selectedRowKeys, showAlert])
 
   const handleBulkDeleteConfirm = useCallback(async () => {
+    const idsToDelete = programsPendingBulkDelete.map(program => program.id)
+    if (programIdFromUrl && idsToDelete.includes(programIdFromUrl)) {
+      handleCloseFullPageModal()
+    }
     if (remoteEnabled) {
       try {
-        await deleteProgramsMutation.mutateAsync(
-          programsPendingBulkDelete.map(program => program.id)
-        )
+        await deleteProgramsMutation.mutateAsync(idsToDelete)
         setSelectedRowKeys([])
         refetchPrograms()
-      } catch {
-        showAlert({
-          title: '삭제 실패',
-          content: '선택한 프로그램 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-        })
+      } catch (error) {
+        showAlert(
+          isProgramHardDeleteBlockedError(error)
+            ? {
+                title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+                content: error.message,
+              }
+            : {
+                title: '삭제 실패',
+                content: '선택한 프로그램 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+              }
+        )
       }
       setBulkDeleteModalOpen(false)
       setProgramsPendingBulkDelete([])
@@ -393,6 +406,8 @@ function TrainedTeachersProgramPageContent() {
   }, [
     deleteProgramsMutation,
     handleBulkDelete,
+    handleCloseFullPageModal,
+    programIdFromUrl,
     programsPendingBulkDelete,
     refetchPrograms,
     remoteEnabled,

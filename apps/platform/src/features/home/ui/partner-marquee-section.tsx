@@ -6,7 +6,11 @@ import jaArrowCtaTealUrl from '../image/icon/ja-arrow-cta-teal.svg'
 import { useHomeMain } from '../api/use-home-main'
 import type { HomeDonationCta } from '../lib/view'
 import type { HomePartnerLogo } from '../lib/mock'
+import { SkeletonBlock } from './skeleton-block'
 import styles from './partner-marquee-section.module.css'
+
+const PARTNER_SKELETON_KEYS = [0, 1, 2, 3] as const
+const PARTNER_SKELETON_ROWS = [0, 1] as const
 
 function LogoChips({ logos, hidden }: { logos: readonly HomePartnerLogo[]; hidden?: boolean }) {
   return (
@@ -59,8 +63,44 @@ function DonationCtaLink({
   )
 }
 
+function PartnerHeader() {
+  return (
+    <div className={styles.header}>
+      <p className={styles.eyebrow}>Our Partners in Education</p>
+      <h2 className={styles.title}>배움에 함께하는 후원 기업들</h2>
+    </div>
+  )
+}
+
+function PartnerLogoSkeleton() {
+  return (
+    <>
+      <ul className={styles.logoGrid} aria-hidden="true">
+        {PARTNER_SKELETON_KEYS.map(key => (
+          <li className={styles.logoChip} key={key}>
+            <SkeletonBlock className={styles.logoSkeleton} />
+          </li>
+        ))}
+      </ul>
+      <div className={styles.marqueeArea} aria-hidden="true">
+        {PARTNER_SKELETON_ROWS.map(row => (
+          <div className={styles.marqueeRow} key={row}>
+            <div className={styles.logoSkeletonRow}>
+              {PARTNER_SKELETON_KEYS.map(key => (
+                <div className={styles.logoChip} key={key}>
+                  <SkeletonBlock className={styles.logoSkeleton} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
 export function PartnerMarqueeSection() {
-  const { partnerRows, donationTitle, donationCta1, donationCta2 } = useHomeMain()
+  const { partnerRows, donationTitle, donationCta1, donationCta2, isPending } = useHomeMain()
   const flatLogos = useMemo(
     () => partnerRows.flatMap(row => [...row]),
     [partnerRows],
@@ -83,13 +123,15 @@ export function PartnerMarqueeSection() {
   }, [marqueeNode])
 
   return (
-    <section className={styles.section}>
-      {hasLogos ? (
+    <section className={styles.section} aria-busy={isPending || undefined}>
+      {isPending ? (
         <>
-          <div className={styles.header}>
-            <p className={styles.eyebrow}>Our Partners in Education</p>
-            <h2 className={styles.title}>배움에 함께하는 후원 기업들</h2>
-          </div>
+          <PartnerHeader />
+          <PartnerLogoSkeleton />
+        </>
+      ) : hasLogos ? (
+        <>
+          <PartnerHeader />
 
           <ul className={styles.logoGrid} aria-label="후원 기업 로고">
             {flatLogos.map((logo, index) => (

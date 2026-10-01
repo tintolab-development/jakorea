@@ -4,6 +4,10 @@ import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
+  hasRecruitmentCopy,
+  pickRecruitmentCopyRow,
+} from '@/features/program/shared/lib/recruitment-row-copy'
+import {
   buildUjatRecruitInstitutionOverlayFromDetailEditValues,
   pickUjatRecruitInstitutionOverlay,
   UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
@@ -232,7 +236,7 @@ export function programToUjatRecruitTemplateFormValues(
     if (!next.applicationEndDate && recruitRange?.end?.trim()) {
       next.applicationEndDate = recruitRange.end
     }
-    return next
+    return applyUjatRecruitmentRowCopyToForm(next, program, 'institution')
   }
   const contact = readOverlayContact(overlay, VOLUNTEER_KEYS.contact)
   if (contact?.name?.trim()) next.volunteerRecruitmentContactOrganizationName = contact.name
@@ -259,7 +263,59 @@ export function programToUjatRecruitTemplateFormValues(
   if (!next.volunteerApplicationEndDate && recruitRange?.end?.trim()) {
     next.volunteerApplicationEndDate = recruitRange.end
   }
-  return next
+  return applyUjatRecruitmentRowCopyToForm(next, program, 'volunteer', volunteerHalf)
+}
+
+function applyUjatRecruitmentRowCopyToForm(
+  values: ProgramDetailEditFormValues,
+  program: Program,
+  kind: 'institution' | 'volunteer',
+  volunteerHalf?: UjatVolunteerRecruitHalf
+): ProgramDetailEditFormValues {
+  const row = pickRecruitmentCopyRow(
+    program,
+    kind === 'institution' ? 'participant' : 'volunteer',
+    kind === 'volunteer' ? (volunteerHalf ?? 'h1') : undefined
+  )
+  if (!row) return values
+  const contactName =
+    kind === 'institution'
+      ? { recruitmentContactOrganizationName: row.contactName?.trim() ?? '' }
+      : { volunteerRecruitmentContactOrganizationName: row.contactName?.trim() ?? '' }
+  const halfPeriod =
+    kind === 'volunteer'
+      ? {
+          ...(row.startAt ? { volunteerApplicationStartDate: row.startAt } : {}),
+          ...(row.endAt ? { volunteerApplicationEndDate: row.endAt } : {}),
+        }
+      : volunteerHalf !== 'h2' && row.startAt
+        ? {
+            applicationStartDate: row.startAt,
+            ...(row.endAt ? { applicationEndDate: row.endAt } : {}),
+          }
+        : {}
+  return {
+    ...values,
+    ...(row.announcementTitle != null
+      ? { announcementTitle: row.announcementTitle.trim() }
+      : {}),
+    ...(row.applicationMethod != null
+      ? { applicationMethod: row.applicationMethod.trim() }
+      : {}),
+    ...(row.contactName != null ? contactName : {}),
+    ...(row.contactPhone != null ? { contactPhone: row.contactPhone.trim() } : {}),
+    ...(row.contactEmail != null ? { contactEmail: row.contactEmail.trim() } : {}),
+    ...halfPeriod,
+    ...(hasRecruitmentCopy(row)
+      ? {
+          description: row.programDescription?.trim() ?? '',
+          recruitmentGuide: row.recruitmentGuide?.trim() ?? '',
+          learningSupportContent: row.learningSupportContent?.trim() ?? '',
+          additionalContentHtml: row.additionalContentHtml?.trim() ?? '',
+          oneLineIntroduction: row.remarks?.trim() ?? '',
+        }
+      : {}),
+  }
 }
 
 function patchRecruitOverlayFromForm(

@@ -370,4 +370,48 @@ describe('UJAT recruit form overlay', () => {
     expect(h2.volunteerTargetDetail ?? '').toBe('')
     expect(resolveUjatRecruitAnnouncementTitle(program, 'volunteer_h2')).toBe('-')
   })
+
+  it('참여 기관·봉사자 상하반기 안내는 recruitments[] 행을 쓰고 공통 문장으로 채우지 않는다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      description: '공통 설명',
+      recruitmentGuide: '공통 안내',
+      programRecruitments: [
+        {
+          recruitmentType: 'PARTICIPANT',
+          programDescription: '기관 설명',
+          recruitmentGuide: '기관 안내',
+          applicationMethod: null,
+          learningSupportContent: null,
+          additionalContentHtml: null,
+          remarks: null,
+        },
+        {
+          recruitmentType: 'VOLUNTEER',
+          startAt: '2026-09-01T00:00:00Z',
+          programDescription: '하반기 설명',
+          recruitmentGuide: '하반기 안내',
+          applicationMethod: null,
+          learningSupportContent: null,
+          additionalContentHtml: null,
+          remarks: null,
+        },
+        {
+          recruitmentType: 'VOLUNTEER',
+          startAt: '2026-03-01T00:00:00Z',
+          programDescription: '상반기 설명',
+          recruitmentGuide: '상반기 안내',
+          applicationMethod: null,
+          learningSupportContent: null,
+          additionalContentHtml: null,
+          remarks: null,
+        },
+      ],
+    }
+    expect(resolveUjatRecruitDisplayProgram(program, 'institution').recruitmentGuide).toBe('기관 안내')
+    expect(resolveUjatRecruitDisplayProgram(program, 'institution').description).toBe('기관 설명')
+    expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h1').recruitmentGuide).toBe('상반기 안내')
+    expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h2').recruitmentGuide).toBe('하반기 안내')
+    expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h1').description).toBe('상반기 설명')
+  })
 })

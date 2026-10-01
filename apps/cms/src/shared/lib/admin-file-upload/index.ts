@@ -23,6 +23,7 @@ export {
   createFileAttachment,
   deleteFileObject,
   downloadAdminFile,
+  fileObjectIdFromAdminFileUrl,
   loadAdminFileBlob,
   loadSensitiveAdminFileBlob,
   fetchFileContentBlob,
@@ -38,6 +39,22 @@ export {
   shouldMockAdminFileUpload,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload/upload-maybe-mock'
+export {
+  collectAdminFileObjectIdsFromContent,
+  faqInlineImageOwner,
+  inlineImageRequiresOwnerId,
+  mailTemplateInlineImageOwner,
+  noticeInlineImageOwner,
+  peekPendingInlineImage,
+  persistRichTextInlineImage,
+  programInlineImageOwner,
+  programPostInlineImageOwner,
+  rememberPendingInlineImage,
+  resolveRichTextInlineImageSrc,
+  shouldInsertRichTextImageLocally,
+  stripBlobImageSources,
+  takePendingInlineImage,
+} from '@/shared/lib/admin-file-upload/inline-image'
 export type {
   AdminFileUploadOwner,
   AdminFileUploadPhase,

@@ -14,7 +14,10 @@ import {
   ProgramRegistrationIpsTypeFields,
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
-import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  getProgramRegistrationOverlayRecord,
+  useProgramRegistrationOverlayKv,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { TYPE_SETTINGS_PER_SCHEDULE_HINT } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
@@ -39,11 +42,13 @@ function ScheduleDetailRadioRow({
   value,
   onChange,
   commonDetailEdit,
+  validationKey,
 }: {
   label: string
   value: ProgramRegistrationScheduleDetailKind
   onChange: (value: ProgramRegistrationScheduleDetailKind) => void
   commonDetailEdit?: ReactNode
+  validationKey?: string
 }) {
   const handleChange = (e: RadioChangeEvent) => {
     onChange(e.target.value as ProgramRegistrationScheduleDetailKind)
@@ -53,6 +58,7 @@ function ScheduleDetailRadioRow({
     <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
         label={label}
+        validationKey={validationKey}
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
@@ -125,6 +131,13 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
 
   useEffect(() => {
     if (sessionRoundType !== 'multi' || educationFormScheduleDetail !== 'common') return
+    if (
+      getProgramRegistrationOverlayRecord()[
+        'trainedTeachersRegistration.typeSettings.multiCommonEducationForm'
+      ] !== undefined
+    ) {
+      return
+    }
     if (multiCommonEducationForm.trim()) return
     setMultiCommonEducationForm(educationForm.trim() || 'online')
   }, [
@@ -182,6 +195,7 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
           <>
             <ScheduleDetailRadioRow
               label="교육 형태"
+              validationKey="typeSettings.multiCommonEducationForm"
               value={educationFormScheduleDetail}
               onChange={onEducationFormScheduleDetailChange}
               commonDetailEdit={
@@ -198,6 +212,7 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
             />
             <ScheduleDetailRadioRow
               label="IPS 유형"
+              validationKey="typeSettings.ipsType"
               value={ipsScheduleDetail}
               onChange={onIpsScheduleDetailChange}
               commonDetailEdit={
@@ -229,6 +244,7 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
             </DetailInfoForm.Row>
             <ScheduleDetailRadioRow
               label="IPS 유형"
+              validationKey="typeSettings.ipsType"
               value={ipsScheduleDetail}
               onChange={onIpsScheduleDetailChange}
               commonDetailEdit={

@@ -35,6 +35,8 @@ import {
   resolveProgramDetailCase,
   shouldIncludeInterviewStages,
 } from './detail-case.ts'
+import { PROGRAM_TAB_LABEL } from './constants.ts'
+import { extraSection, rewriteAdminFileContentSrcsForPortal } from './html-body.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {
@@ -62,11 +64,6 @@ const TARGET_LEVEL_LABELS: Record<
   adult: { educationTargetLabel: '성인', educationTargetGroupLabel: '성인' },
 }
 
-const CATEGORY_LABEL: Record<ProgramListItem['category'], string> = {
-  youth: '청소년 · 청년',
-  institution: '기관',
-  instructor: '강사',
-}
 
 const SCHEDULED_LIFECYCLES = new Set<CmsLifecycleStatus>([
   'planned',
@@ -481,7 +478,12 @@ function mapEventSchedules(program: CmsProgramLike): ProgramEventSchedule[] {
 
   return details.map((detail, index) => {
     const pad = String(index + 1).padStart(2, '0')
-    const scheduleLabel = detail.scheduleLabel?.trim() || `세부 일정 ${pad}`
+    const isMultiRound = program.generalProgramSessionRound === 'multi'
+    const rawScheduleLabel =
+      detail.scheduleLabel?.trim() || `${isMultiRound ? '행사 일정' : '세부 일정'} ${pad}`
+    const scheduleLabel = isMultiRound
+      ? rawScheduleLabel.replace(/^세부\s*일정/, '행사 일정')
+      : rawScheduleLabel
     const name = detail.name?.trim() || ''
     const dateParts = [detail.scheduleDateLabel?.trim(), detail.progressTimeSummary?.trim()].filter(
       Boolean
@@ -667,17 +669,21 @@ function mapExtraSections(
   const sections: ProgramExtraSection[] = []
   const guide = program.recruitmentGuide?.trim()
   if (guide) {
-    sections.push({ title: '모집안내', body: guide })
+    sections.push(extraSection('모집안내', guide))
   }
 
   const additional = program.additionalContent?.trim()
   if (additional) {
-    sections.push({ title: '추가 내용', body: additional, bodyFormat: 'html' })
+    sections.push({
+      title: '추가 내용',
+      body: rewriteAdminFileContentSrcsForPortal(additional),
+      bodyFormat: 'html',
+    })
   }
 
   const learning = program.learningSupportContent?.trim()
   if (learning && canShowLearningSupport(detailCase)) {
-    sections.push({ title: '학습 지원 내용', body: learning })
+    sections.push(extraSection('학습 지원 내용', learning))
   }
 
   const other = program.otherNotes?.trim()
@@ -761,7 +767,8 @@ export function mapCmsProgramToPlatformDetail(
   return {
     id: program.id,
     category,
-    categoryLabel: CATEGORY_LABEL[category],
+    categories: [category],
+    categoryLabel: PROGRAM_TAB_LABEL[category],
     title,
     operatingPeriodLabel: formatOperatingPeriodLabel(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
@@ -835,6 +842,7 @@ export function mapCmsProgramToPlatformListItem(
   return {
     id: detail.id,
     category: detail.category,
+    categories: detail.categories,
     categoryLabel: detail.categoryLabel,
     title: detail.title,
     operatingPeriodLabel: detail.operatingPeriodLabel,

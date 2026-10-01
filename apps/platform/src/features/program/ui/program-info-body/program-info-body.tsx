@@ -44,7 +44,9 @@ export function ProgramInfoBody({
         detailImageUrl={program.detailImageUrl}
         thumbnailUrl={program.thumbnailUrl}
         attachments={program.attachments}
-        canApply={canApplyToProgram(program.recruitmentStatus)}
+        canApply={
+          canApplyToProgram(program.recruitmentStatus) && !program.recruitmentSelectionAmbiguous
+        }
         applicationPeriodLabel={program.applicationPeriodLabel}
         showApplyCta={showApplyCta}
         showCancelCta={showCancelCta}

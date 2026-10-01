@@ -44,8 +44,11 @@ export const ujatPaymentItemLabelsFromIds = programPaymentItemLabelsFromIds
 export const normalizeUjatPaymentItemSelection = normalizeProgramPaymentItemSelection
 
 function readPaymentItemIdsFromOverlay(overlay: Record<string, unknown>): string[] | undefined {
+  if (!Object.prototype.hasOwnProperty.call(overlay, UJAT_WAGE_OVERLAY_PAYMENT_KEY)) {
+    return undefined
+  }
   const raw = overlay[UJAT_WAGE_OVERLAY_PAYMENT_KEY]
-  if (!Array.isArray(raw)) return undefined
+  if (!Array.isArray(raw)) return []
   return raw.filter((v): v is string => typeof v === 'string')
 }
 
@@ -55,7 +58,8 @@ export function resolveUjatPaymentItemIdsFromProgram(
 ): string[] {
   const overlay = overlayInput ?? program.ujatRegistrationOverlay
   const fromOverlay = overlay ? readPaymentItemIdsFromOverlay(overlay) : undefined
-  if (fromOverlay?.length) return fromOverlay
+  // 사용자가 []로 비운 값은 유지. 키 미기록(undefined)만 프로그램/기본값으로 채운다.
+  if (fromOverlay !== undefined) return fromOverlay
 
   const labels = coerceProgramPaymentItemsText(program.generalCommonInfo?.paymentItems).trim()
   if (!labels) return [...UJAT_DEFAULT_PAYMENT_ITEM_VALUES]

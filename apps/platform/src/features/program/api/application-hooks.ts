@@ -11,11 +11,17 @@ import {
 } from './application-client'
 import type {
   PortalApplicationFormBundle,
-  PortalApplicationOption,
   PortalSaveApplicationRequest,
 } from './application-types'
 import { getApplicationApiErrorCode } from '../lib/application-api-error'
 import { parsePortalProgramId } from './mappers'
+import {
+  pickApplicationOption,
+  type ProgramApplicationSelection,
+} from './pick-application-option'
+
+export type { ProgramApplicationSelection } from './pick-application-option'
+export { pickApplicationOption } from './pick-application-option'
 
 const FORM_STALE_MS = 0
 const FORM_GC_MS = 15 * 60_000
@@ -24,20 +30,6 @@ const FORM_GC_MS = 15 * 60_000
 function isRecruitmentWindowBlocked(reason: string | null | undefined): boolean {
   const code = (reason ?? '').trim().toUpperCase()
   return code === 'RECRUITMENT_NOT_STARTED' || code === 'RECRUITMENT_CLOSED'
-}
-
-function pickApplicationOption(
-  options: PortalApplicationOption[],
-): PortalApplicationOption | null {
-  const withBinding = options.filter(
-    row =>
-      row.formBindingId != null &&
-      row.recruitmentId != null &&
-      Boolean(row.applicationType?.trim()),
-  )
-  if (withBinding.length === 0) return null
-  const canApply = withBinding.find(row => row.canApply === true)
-  return canApply ?? withBinding[0] ?? null
 }
 
 export type ProgramApplicationFormStatus =
@@ -64,6 +56,7 @@ export type ProgramApplicationFormQuery = {
  */
 export function useProgramApplicationForm(
   programId: string | null | undefined,
+  selection?: ProgramApplicationSelection | null,
 ): ProgramApplicationFormQuery {
   const remote = isRemoteApiConfigured()
   const numericId = parsePortalProgramId(programId)
@@ -76,14 +69,15 @@ export function useProgramApplicationForm(
     enabled,
     staleTime: FORM_STALE_MS,
     gcTime: FORM_GC_MS,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    refetchOnMount: query =>
+      getQueryRetryHttpStatus(query.state.error) === 404 ? false : 'always',
+    refetchOnWindowFocus: query => getQueryRetryHttpStatus(query.state.error) !== 404,
+    refetchOnReconnect: query => getQueryRetryHttpStatus(query.state.error) !== 404,
     retry: shouldRetryQuery,
     retryDelay: queryRetryDelay,
   })
 
-  const option = optionsQuery.data ? pickApplicationOption(optionsQuery.data) : null
+  const option = optionsQuery.data ? pickApplicationOption(optionsQuery.data, selection) : null
   const bindingId = option?.formBindingId ?? null
   const recruitmentId = option?.recruitmentId ?? null
   const applicationType = option?.applicationType?.trim() || null
@@ -114,9 +108,19 @@ export function useProgramApplicationForm(
     enabled: formEnabled,
     staleTime: FORM_STALE_MS,
     gcTime: FORM_GC_MS,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    refetchOnMount: query => {
+      const status = getQueryRetryHttpStatus(query.state.error)
+      if (status === 404 || status === 409) return false
+      return 'always'
+    },
+    refetchOnWindowFocus: query => {
+      const status = getQueryRetryHttpStatus(query.state.error)
+      return status !== 404 && status !== 409
+    },
+    refetchOnReconnect: query => {
+      const status = getQueryRetryHttpStatus(query.state.error)
+      return status !== 404 && status !== 409
+    },
     retry: (failureCount, error) => {
       const status = getQueryRetryHttpStatus(error)
       if (status === 404 || status === 409) return false
@@ -216,6 +220,13 @@ export function useSubmitProgramApplication(programId: number | null) {
     },
     onSuccess: () => {
       if (programId == null) return
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.program.applicationOptions(String(programId)),
+      })
+    },
+    onError: error => {
+      if (programId == null) return
+      if (getApplicationApiErrorCode(error) !== 'RECRUITMENT_FORM_BINDING_MISMATCH') return
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.program.applicationOptions(String(programId)),
       })

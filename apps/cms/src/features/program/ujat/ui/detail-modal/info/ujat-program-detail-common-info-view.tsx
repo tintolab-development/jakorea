@@ -17,6 +17,7 @@ import { UjatEducationScheduleSettingsProgramView } from './ujat-education-sched
 import { UjatRegionCapacityProgramView } from './ujat-region-capacity-program-view'
 import { UjatBasicInfoReadonlyView } from './ujat-basic-info-readonly-view'
 import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
+import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
@@ -85,6 +86,7 @@ export function UjatProgramDetailCommonInfoView({
               surface="responseEntry"
               titleAligned
               required
+              highlightParagraphId={UJAT_PROGRAM_REGISTRATION_IDS[0]}
             />
             <UjatBasicInfoRegistrationAuditRow program={program} />
             <div className="ujat-program-detail-common-info-view__basic-info-edit-blocks">

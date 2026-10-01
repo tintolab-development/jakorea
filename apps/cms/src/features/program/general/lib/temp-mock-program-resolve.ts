@@ -9,6 +9,8 @@ import {
 import {
   getTempMockIndividualApplicants,
   getTempMockIndividualApplicantInstructors,
+  getTempMockIndividualNoInterviewProgram,
+  getTempMockIndividualProgram,
   getTempMockIndividualProgramIfId,
   getTempMockIndividualProgramManagers,
   getTempMockIndividualProgressInstructors,
@@ -18,6 +20,8 @@ import {
 } from '@/features/program/general/lib/temp-mock-individual-program'
 import {
   getTempMockOrgApplicantInstructors,
+  getTempMockOrgNoInterviewProgram,
+  getTempMockOrgProgram,
   getTempMockOrgProgramIfId,
   getTempMockOrgProgramManagers,
   getTempMockOrgProgressInstructors,
@@ -32,6 +36,15 @@ import type { ParticipatingInstructorRow } from '@/features/program/general/mode
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+
+export function getTempMockShowcasePrograms(): Program[] {
+  return [
+    getTempMockOrgProgram(),
+    getTempMockOrgNoInterviewProgram(),
+    getTempMockIndividualProgram(),
+    getTempMockIndividualNoInterviewProgram(),
+  ].filter((program): program is Program => program != null)
+}
 
 export function getTempMockShowcaseProgramIfId(programId?: string | null): Program | undefined {
   return (

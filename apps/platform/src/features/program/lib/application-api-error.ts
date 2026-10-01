@@ -38,6 +38,8 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
     '하루 최대 수업 시수를 초과했습니다.',
   VALIDATION_FAILED: '필수 항목을 모두 입력해 주세요.',
   OPERATION_NOT_ALLOWED: '제출할 수 없는 답변이 포함되어 있습니다.',
+  RECRUITMENT_FORM_BINDING_MISMATCH: '선택한 모집의 신청서가 아닙니다. 모집을 다시 선택해 주세요.',
+  RECRUITMENT_NOT_FOUND: '선택한 모집을 찾을 수 없습니다. 모집을 다시 선택해 주세요.',
 }
 
 export function messageForApplicationBlockedReason(

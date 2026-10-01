@@ -1,9 +1,15 @@
+import type { GeminiApprovedTrainingDetail } from '@/features/program/gemini/model/approved/detail-types'
+import type { GeminiInstructorApplicationRow } from '@/features/program/gemini/model/approved/instructor-application-types'
 import type { GeminiApprovedTrainingRow } from '@/features/program/gemini/model/approved/types'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
 import type { GeminiInstitutionApplicationRow } from '@/features/program/gemini/model/recruitment/institution-application-types'
 import type { GeminiRecruitmentAddFormSnapshot } from '@/features/program/gemini/lib/recruitment/add-local-save'
 import type { GeminiRecruitmentInfoEditDraft } from '@/features/program/gemini/model/recruitment/info-edit-draft'
 import type { GeminiRecruitmentRow } from '@/features/program/gemini/model/recruitment/types'
+import {
+  mapGeminiApprovedTrainingDetailResponseToDetail,
+  mapGeminiInstructorApplicationItemToRow,
+} from '@/features/program/gemini/model/approved/approved-detail-resolver'
 import {
   mapGeminiOrganizationApplicationToRow,
   mapGeminiRecruitmentDetailToDetail,
@@ -15,19 +21,24 @@ import {
 } from './adapters'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import {
+  approveGeminiInstructorApplicationRemote,
   approveGeminiOrganizationApplicationRemote,
   bulkApproveGeminiOrganizationApplicationsRemote,
   bulkDeleteGeminiRecruitmentsRemote,
   bulkRejectGeminiOrganizationApplicationsRemote,
   createGeminiRecruitmentRemote,
   deleteGeminiRecruitmentRemote,
+  fetchGeminiApprovedInstructorApplicationsRemote,
+  fetchGeminiApprovedTrainingDetailRemote,
   fetchGeminiApprovedTrainingsRemote,
   fetchGeminiOrganizationApplicationsRemote,
   fetchGeminiRecruitmentDetailRemote,
   fetchGeminiRecruitmentsRemotePage,
+  rejectGeminiInstructorApplicationRemote,
   rejectGeminiOrganizationApplicationRemote,
   resendGeminiOrganizationApplicationNotificationRemote,
   updateGeminiRecruitmentRemote,
+  type GeminiInstructorApplicationRemoteFilters,
   type GeminiOrganizationNotificationResendPayload,
   type GeminiRecruitmentRemoteFilters,
 } from './client'
@@ -57,6 +68,14 @@ export type GeminiOrganizationApplicationsPage = {
 
 export type GeminiApprovedTrainingsPage = {
   rows: GeminiApprovedTrainingRow[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+export type GeminiInstructorApplicationsPage = {
+  rows: GeminiInstructorApplicationRow[]
   page: number
   size: number
   totalElements: number
@@ -94,11 +113,17 @@ export async function getGeminiRecruitmentDetail(
 
 export async function listGeminiOrganizationApplicationsPage(
   programId: string,
-  status: string | undefined,
+  filters: {
+    status?: string
+    organizationName?: string
+    regionSido?: string
+    regionSigungu?: string
+    teacherName?: string
+  } = {},
   pageParam = 0
 ): Promise<GeminiOrganizationApplicationsPage> {
   assertRemoteReady()
-  const page = await fetchGeminiOrganizationApplicationsRemote(programId, status, pageParam)
+  const page = await fetchGeminiOrganizationApplicationsRemote(programId, filters, pageParam)
   const baseNo = page.page * page.size
   return {
     rows: page.items.map((item, index) =>
@@ -127,6 +152,50 @@ export async function listGeminiApprovedTrainingsPage(
     totalElements: page.totalElements,
     hasMore: page.hasMore,
   }
+}
+
+export async function getGeminiApprovedTrainingDetail(
+  approvedTrainingId: string
+): Promise<GeminiApprovedTrainingDetail> {
+  assertRemoteReady()
+  const dto = await fetchGeminiApprovedTrainingDetailRemote(approvedTrainingId)
+  return mapGeminiApprovedTrainingDetailResponseToDetail(dto)
+}
+
+export async function listGeminiApprovedInstructorApplicationsPage(
+  approvedTrainingId: string,
+  filters: GeminiInstructorApplicationRemoteFilters = {},
+  pageParam = 0
+): Promise<GeminiInstructorApplicationsPage> {
+  assertRemoteReady()
+  const page = await fetchGeminiApprovedInstructorApplicationsRemote(
+    approvedTrainingId,
+    filters,
+    pageParam
+  )
+  const baseNo = page.page * page.size
+  return {
+    rows: page.items.map((item, index) =>
+      mapGeminiInstructorApplicationItemToRow(item, approvedTrainingId, baseNo + index)
+    ),
+    page: page.page,
+    size: page.size,
+    totalElements: page.totalElements,
+    hasMore: page.hasMore,
+  }
+}
+
+export async function approveGeminiInstructorApplication(applicationId: string): Promise<void> {
+  assertRemoteReady()
+  await approveGeminiInstructorApplicationRemote(applicationId)
+}
+
+export async function rejectGeminiInstructorApplication(
+  applicationId: string,
+  reason?: string
+): Promise<void> {
+  assertRemoteReady()
+  await rejectGeminiInstructorApplicationRemote(applicationId, reason)
 }
 
 export async function createGeminiRecruitment(

@@ -14,6 +14,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import { Markdown } from '@tiptap/markdown'
 import StarterKit from '@tiptap/starter-kit'
+import { RichTextCharacterLimit } from './character-limit-extension'
 import { RichTextEmoji } from './emoji-extension'
 import { createRichTextFileHandler } from './file-handler-extension'
 import { FontSize } from './font-size-extension'
@@ -80,6 +81,7 @@ export function createRichTextExtensions(
     TableHeader,
     TableCell,
     Markdown,
+    RichTextCharacterLimit,
   ]
 
   if (isFull) {

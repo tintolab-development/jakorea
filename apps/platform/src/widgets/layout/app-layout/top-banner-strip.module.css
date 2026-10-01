@@ -44,6 +44,16 @@
   outline-offset: -2px;
 }
 
+.bannerPending {
+  background: var(--color-neutral-cool-200);
+}
+
+.bannerBone {
+  width: min(280px, 70%);
+  height: 14px;
+  border-radius: 999px;
+}
+
 .label {
   min-width: 0;
 }

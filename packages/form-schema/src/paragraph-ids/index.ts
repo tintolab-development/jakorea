@@ -1,3 +1,4 @@
+export * from './application-form-third-party-recipient.js'
 export * from './program-application-form-economy-draft.js'
 export * from './program-application-form-individual-draft.js'
 export * from './program-application-form-institution-draft.js'

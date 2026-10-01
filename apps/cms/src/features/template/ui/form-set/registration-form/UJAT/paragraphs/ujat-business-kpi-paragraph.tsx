@@ -18,6 +18,7 @@ export function UjatBusinessKpiParagraph() {
       instructorPlaceholder="해당 없음"
       volunteerDisabled={!volunteerChecked}
       volunteerPlaceholder={volunteerChecked ? '목표값 입력' : '해당 없음'}
+      educationProgressValidationKey={volunteerChecked ? 'kpi.volunteer' : undefined}
     />
   )
 }

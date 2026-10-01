@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { isProgramHardDeleteBlockedError } from '@/features/program/shared/lib/program-delete-guide'
 import {
   programDetailCacheFromSave,
   syncOpenProgramDetailCache,
@@ -150,8 +151,10 @@ export function useDeleteCompanySchoolProgram() {
     mutationKey: companySchoolQueryKeys.mutations.delete(''),
     mutationFn: deleteCompanySchoolProgram,
     retry: false,
-    onSuccess: (_data, programId) => {
-      queryClient.removeQueries({ queryKey: companySchoolQueryKeys.detail(programId) })
+    onSuccess: async (_data, programId) => {
+      const detailKey = companySchoolQueryKeys.detail(programId)
+      await queryClient.cancelQueries({ queryKey: detailKey })
+      queryClient.removeQueries({ queryKey: detailKey })
       invalidateCompanySchoolListCaches(queryClient)
     },
   })
@@ -163,10 +166,16 @@ export function useDeleteCompanySchoolPrograms() {
     mutationKey: [...companySchoolQueryKeys.all, 'mutation', 'bulk-delete'] as const,
     mutationFn: deleteCompanySchoolPrograms,
     retry: false,
-    onSuccess: (_data, programIds) => {
+    onSuccess: async (_data, programIds) => {
       for (const programId of programIds) {
-        queryClient.removeQueries({ queryKey: companySchoolQueryKeys.detail(programId) })
+        const detailKey = companySchoolQueryKeys.detail(programId)
+        await queryClient.cancelQueries({ queryKey: detailKey })
+        queryClient.removeQueries({ queryKey: detailKey })
       }
+      invalidateCompanySchoolListCaches(queryClient)
+    },
+    onError: error => {
+      if (!isProgramHardDeleteBlockedError(error) || error.successCount < 1) return
       invalidateCompanySchoolListCaches(queryClient)
     },
   })

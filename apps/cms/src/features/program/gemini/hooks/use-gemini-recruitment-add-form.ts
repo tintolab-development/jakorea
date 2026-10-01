@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import type { GeminiRecruitmentEducationForm } from '../lib/recruitment/add-form-options'
 import {
@@ -10,8 +9,7 @@ import {
   type GeminiRecruitmentAddFormSnapshot,
 } from '../lib/recruitment/add-local-save'
 import { buildGeminiRecruitmentDevAutofillSnapshot } from '../lib/recruitment/dev-autofill'
-
-const WYSIWYG_RESET_KEY = 'gemini-visiting-training-recruitment-add'
+import { useGeminiRecruitmentRichTextGetters } from './use-gemini-recruitment-rich-text-getters'
 
 function toPeriodTuple(
   start: string | null,
@@ -79,6 +77,44 @@ function isPeriodComplete(dates: [Dayjs | null, Dayjs | null] | null): boolean {
   return dates?.[0] != null && dates[1] != null
 }
 
+function hasFilledText(value: string): boolean {
+  return value.trim().length > 0
+}
+
+/**
+ * 「참여 기관 모집 정보」필수 항목.
+ * 상세 정보는 공란 허용(홈페이지에서 미노출).
+ */
+function isInstitutionRecruitmentComplete(input: {
+  title: string
+  educationTargetLevels: string[]
+  educationTargetDetail: string
+  applicationPeriod: [Dayjs | null, Dayjs | null] | null
+  trainingRequestPeriod: [Dayjs | null, Dayjs | null] | null
+  minStudentCount: number | undefined
+  educationForm: GeminiRecruitmentEducationForm
+  inquiryContactName: string
+  inquiryTel: string
+  inquiryEmail: string
+  notesNotApplicable: boolean
+  notes: string
+}): boolean {
+  const count = input.minStudentCount ?? 0
+  return (
+    hasFilledText(input.title) &&
+    input.educationTargetLevels.length > 0 &&
+    hasFilledText(input.educationTargetDetail) &&
+    isPeriodComplete(input.applicationPeriod) &&
+    isPeriodComplete(input.trainingRequestPeriod) &&
+    count >= 1 &&
+    (input.educationForm === 'online' || input.educationForm === 'offline') &&
+    hasFilledText(input.inquiryContactName) &&
+    hasFilledText(input.inquiryTel) &&
+    hasFilledText(input.inquiryEmail) &&
+    (input.notesNotApplicable || hasFilledText(input.notes))
+  )
+}
+
 export function useGeminiRecruitmentAddForm(
   open: boolean,
   options?: { skipDraftRestore?: boolean }
@@ -114,6 +150,11 @@ export function useGeminiRecruitmentAddForm(
   const [detailSectionDescription, setDetailSectionDescription] = useState('')
 
   const baselineRef = useRef<string>('')
+  const { registerRichTextGetter, overlayRichText } = useGeminiRecruitmentRichTextGetters()
+  const [richTextTouched, setRichTextTouched] = useState(false)
+  const markRichTextTouched = useCallback(() => {
+    setRichTextTouched(true)
+  }, [])
 
   const applyFormState = useCallback((snapshot: GeminiRecruitmentAddFormSnapshot) => {
     const next = snapshotToFormState(snapshot)
@@ -140,6 +181,7 @@ export function useGeminiRecruitmentAddForm(
     setInstitutionSectionDescription(next.institutionSectionDescription)
     setDetailSectionDescription(next.detailSectionDescription)
     baselineRef.current = JSON.stringify(normalizeGeminiRecruitmentAddFormSnapshot(snapshot))
+    setRichTextTouched(false)
   }, [])
 
   /** 개발용 — 텍스트·기간·케이스만 채운다. 이미 올린 썸네일·첨부는 유지한다. */
@@ -188,16 +230,6 @@ export function useGeminiRecruitmentAddForm(
     setHydrated(true)
   }, [applyFormState, open, skipDraftRestore])
 
-  const editorOpen = open && hydrated
-  const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
-    editorOpen,
-    additionalContentMarkdown,
-    `${WYSIWYG_RESET_KEY}-${hydrated ? 'ready' : 'pending'}`,
-    {
-      placeholder: '내용을 작성하세요',
-    }
-  )
-
   const handleMinStudentCountChange = useCallback((value: string) => {
     const digits = value.replace(/\D/g, '')
     setMinStudentCount(digits ? Number(digits) : undefined)
@@ -206,52 +238,55 @@ export function useGeminiRecruitmentAddForm(
   const buildSaveSnapshot = useCallback((): GeminiRecruitmentAddFormSnapshot => {
     const application = periodToIso(applicationPeriod)
     const trainingRequest = periodToIso(trainingRequestPeriod)
-    return normalizeGeminiRecruitmentAddFormSnapshot({
-      title,
-      announcementPublished,
-      educationTargetLevels,
-      educationTargetDetail,
-      applicationPeriodStart: application.start,
-      applicationPeriodEnd: application.end,
-      trainingRequestPeriodStart: trainingRequest.start,
-      trainingRequestPeriodEnd: trainingRequest.end,
-      minStudentCount: minStudentCount ?? null,
-      educationForm,
-      inquiryContactName,
-      inquiryTel,
-      inquiryEmail,
-      notesNotApplicable,
-      notes,
-      thumbnailFileName,
-      programDescription,
-      recruitmentGuide,
-      applicationMethod,
-      learningSupportContent,
-      additionalContentMarkdown: getMarkdown(),
-      attachmentFileNames,
-      institutionSectionDescription,
-      detailSectionDescription,
-    })
+    return normalizeGeminiRecruitmentAddFormSnapshot(
+      overlayRichText({
+        title,
+        announcementPublished,
+        educationTargetLevels,
+        educationTargetDetail,
+        applicationPeriodStart: application.start,
+        applicationPeriodEnd: application.end,
+        trainingRequestPeriodStart: trainingRequest.start,
+        trainingRequestPeriodEnd: trainingRequest.end,
+        minStudentCount: minStudentCount ?? null,
+        educationForm,
+        inquiryContactName,
+        inquiryTel,
+        inquiryEmail,
+        notesNotApplicable,
+        notes,
+        thumbnailFileName,
+        programDescription,
+        recruitmentGuide,
+        applicationMethod,
+        learningSupportContent,
+        additionalContentMarkdown,
+        attachmentFileNames,
+        institutionSectionDescription,
+        detailSectionDescription,
+      })
+    )
   }, [
+    additionalContentMarkdown,
     announcementPublished,
     applicationMethod,
     applicationPeriod,
     attachmentFileNames,
+    detailSectionDescription,
     educationForm,
     educationTargetDetail,
     educationTargetLevels,
-    getMarkdown,
     inquiryContactName,
     inquiryEmail,
     inquiryTel,
+    institutionSectionDescription,
     learningSupportContent,
     minStudentCount,
     notes,
     notesNotApplicable,
+    overlayRichText,
     programDescription,
     recruitmentGuide,
-    institutionSectionDescription,
-    detailSectionDescription,
     thumbnailFileName,
     title,
     trainingRequestPeriod,
@@ -260,29 +295,45 @@ export function useGeminiRecruitmentAddForm(
   const isDirty = useMemo(() => {
     if (!hydrated) return false
     return JSON.stringify(buildSaveSnapshot()) !== baselineRef.current
-  }, [buildSaveSnapshot, hydrated])
+  }, [buildSaveSnapshot, hydrated, richTextTouched])
 
-  const isRegisterReady = useMemo(() => {
-    if (!hydrated) return false
-    const count = minStudentCount ?? 0
-    return (
-      title.trim().length > 0 &&
-      isPeriodComplete(applicationPeriod) &&
-      isPeriodComplete(trainingRequestPeriod) &&
-      count >= 1 &&
-      (educationForm === 'online' || educationForm === 'offline')
-    )
-  }, [
-    applicationPeriod,
-    educationForm,
-    hydrated,
-    minStudentCount,
-    title,
-    trainingRequestPeriod,
-  ])
+  const isRegisterReady = useMemo(
+    () =>
+      hydrated &&
+      isInstitutionRecruitmentComplete({
+        title,
+        educationTargetLevels,
+        educationTargetDetail,
+        applicationPeriod,
+        trainingRequestPeriod,
+        minStudentCount,
+        educationForm,
+        inquiryContactName,
+        inquiryTel,
+        inquiryEmail,
+        notesNotApplicable,
+        notes,
+      }),
+    [
+      applicationPeriod,
+      educationForm,
+      educationTargetDetail,
+      educationTargetLevels,
+      hydrated,
+      inquiryContactName,
+      inquiryEmail,
+      inquiryTel,
+      minStudentCount,
+      notes,
+      notesNotApplicable,
+      title,
+      trainingRequestPeriod,
+    ]
+  )
 
   const markSavedBaseline = useCallback(() => {
     baselineRef.current = JSON.stringify(buildSaveSnapshot())
+    setRichTextTouched(false)
   }, [buildSaveSnapshot])
 
   return {
@@ -323,14 +374,15 @@ export function useGeminiRecruitmentAddForm(
     setApplicationMethod,
     learningSupportContent,
     setLearningSupportContent,
+    additionalContentMarkdown,
+    registerRichTextGetter,
+    markRichTextTouched,
     attachmentFileNames,
     setAttachmentFileNames,
     institutionSectionDescription,
     setInstitutionSectionDescription,
     detailSectionDescription,
     setDetailSectionDescription,
-    editor,
-    editorMinHeight,
     buildSaveSnapshot,
     isDirty,
     isRegisterReady,

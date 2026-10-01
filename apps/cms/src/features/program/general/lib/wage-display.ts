@@ -79,10 +79,9 @@ export function resolveWageGradeFee(
   rows: Array<{ grade: string; pricing: string }> | undefined,
   field: (typeof WAGE_GRADE_FIELDS)[number]
 ): number | null {
-  return (
-    overlayWageFee(overlay, `${WAGE_OVERLAY}.${field.overlayKey}`) ??
-    parseWageGradeAmount(pricingByWageGrade(rows)[field.label])
-  )
+  const fromRow = parseWageGradeAmount(pricingByWageGrade(rows)[field.label])
+  if (fromRow != null) return fromRow
+  return overlayWageFee(overlay, `${WAGE_OVERLAY}.${field.overlayKey}`)
 }
 
 export function resolveWagePaymentItemsFromOverlay(
@@ -97,7 +96,7 @@ export function resolveWagePaymentItemsFromOverlay(
   return ''
 }
 
-/** 조회·수정이 같은 overlay 금액을 쓰도록 commonInfo.wageGradeRows를 맞춘다. */
+/** 조회 — 중첩 wageGradeRows가 SSOT. overlay는 중첩 금액이 없을 때만. */
 export function applyRegistrationWageOverlayToCommonInfo<
   T extends { wageGradeRows?: Array<{ grade: string; pricing: string }>; paymentItems?: string },
 >(common: T, overlay: Record<string, unknown> | undefined): T {
@@ -109,9 +108,8 @@ export function applyRegistrationWageOverlayToCommonInfo<
       pricing: amount != null ? formatWageGradePricing(amount) : (byGrade[field.label] ?? ''),
     }
   })
-  const paymentItems =
-    resolveWagePaymentItemsFromOverlay(overlay) ||
-    coerceProgramPaymentItemsText(common.paymentItems).trim()
+  const fromNested = coerceProgramPaymentItemsText(common.paymentItems).trim()
+  const paymentItems = fromNested || resolveWagePaymentItemsFromOverlay(overlay)
   return {
     ...common,
     wageGradeRows,

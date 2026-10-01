@@ -64,6 +64,7 @@ import {
   formatEducationScheduleLineFromRange,
   parseEducationScheduleLineToRange,
 } from '@/features/template/lib/format-education-schedule-line'
+import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import { TYPE_SETTINGS_PER_SCHEDULE_HINT } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
@@ -253,6 +254,7 @@ function TrainedTeachersDetailSection({
   titleTrailing,
   isFormEdit = false,
   required = false,
+  highlightParagraphId,
 }: {
   title: string
   children: ReactNode
@@ -262,6 +264,7 @@ function TrainedTeachersDetailSection({
   isFormEdit?: boolean
   /** 수정 모드 + 등록 위저드에서 필수인 단락일 때 타이틀 `*` */
   required?: boolean
+  highlightParagraphId?: string
 }) {
   return (
     <section className="trained-teachers-common-info__section" aria-label={title}>
@@ -272,6 +275,7 @@ function TrainedTeachersDetailSection({
         surface="responseEntry"
         titleAligned
         required={isFormEdit && required}
+        highlightParagraphId={highlightParagraphId}
       />
       <div
         className={['trained-teachers-common-info__section-body', bodyClassName]
@@ -367,6 +371,7 @@ function TrainedTeachersTypeSettingsSection({
       bodyClassName="trained-teachers-common-info__section-body--type-settings"
       isFormEdit={isFormEdit}
       required
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.typeSettings}
     >
       <DetailInfoForm
         title="프로그램 유형 설정"
@@ -1044,6 +1049,7 @@ function TrainedTeachersCurriculumSection({
       bodyClassName="trained-teachers-common-info__section-body--curriculum"
       isFormEdit={isFormEdit}
       required
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationCurriculum}
       titleTrailing={
         isFormEdit ? (
           <div className="trained-teachers-common-info__section-title-actions">
@@ -1498,6 +1504,7 @@ function TrainedTeachersScheduleSection({
       bodyClassName="trained-teachers-common-info__section-body--schedule-curriculum"
       isFormEdit={isFormEdit}
       required
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationCurriculum}
       titleTrailing={
         isFormEdit ? (
           <div className="trained-teachers-common-info__section-title-actions">
@@ -1628,6 +1635,7 @@ function TrainedTeachersScheduleSettingsSection({
       description={isFormEdit ? scheduleMeta.editDescription : undefined}
       isFormEdit={isFormEdit}
       required
+      highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationScheduleSettings}
       titleTrailing={
         isFormEdit && form ? (
           <EducationScheduleChangeTitleAction
@@ -2102,7 +2110,12 @@ export function TrainedTeachersCommonInfoView({
       </div>
 
       {isEditMode ? (
-        <TrainedTeachersDetailSection title="기본 정보" isFormEdit required>
+        <TrainedTeachersDetailSection
+          title="기본 정보"
+          isFormEdit
+          required
+          highlightParagraphId={PROGRAM_REGISTRATION_IDS.basicInfo}
+        >
           <BasicInfoSection
             program={displayProgram}
             sponsorName={sponsorName}
