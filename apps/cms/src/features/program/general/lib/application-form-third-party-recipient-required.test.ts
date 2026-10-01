@@ -17,6 +17,7 @@ import {
   describeIncompleteApplicationFormThirdPartyRecipient,
   hasIncompleteApplicationFormThirdPartyRecipientForProgram,
 } from './application-form-third-party-recipient-required'
+import { seedDevAutofillApplicationThirdPartyRecipients } from './fill-application-form-third-party-recipient'
 
 function individualProgram(): Program {
   return {
@@ -83,6 +84,37 @@ describe('application form third-party recipient required', () => {
         current: { templateCode: 'application-participant-individual', draft: filled },
       })
     ).toBe(false)
+  })
+
+  it('교육받은 교사 pending id는 일반 기관 신청이 아니라 교육받은 교사 신청을 본다', () => {
+    const program = {
+      id: 'trained-teachers-local-pending',
+      generalParticipantTypes: ['school_institution'],
+    } as Program
+    expect(describeIncompleteApplicationFormThirdPartyRecipient({ program })).toBe(
+      'application.application-trained-teachers.thirdPartyRecipient'
+    )
+  })
+
+  it('미리보기용 id면 교육받은 교사도 일반 기관 신청으로 오인한다', () => {
+    const program = {
+      id: 'registration-preview',
+      generalParticipantTypes: ['school_institution'],
+    } as Program
+    expect(describeIncompleteApplicationFormThirdPartyRecipient({ program })).toBe(
+      'application.application-participant-school.thirdPartyRecipient'
+    )
+  })
+
+  it('개발용 자동입력은 교육받은 교사 신청의 제공받는 곳을 채운다', () => {
+    seedDevAutofillApplicationThirdPartyRecipients('trainedTeachers', {
+      participantOrganization: true,
+    })
+    const program = {
+      id: 'trained-teachers-local-pending',
+      generalParticipantTypes: ['school_institution'],
+    } as Program
+    expect(hasIncompleteApplicationFormThirdPartyRecipientForProgram({ program })).toBe(false)
   })
 
   it('기관·1사1교 신청 시드도 제공받는 곳이 비면 미입력이다', () => {

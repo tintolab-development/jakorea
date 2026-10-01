@@ -137,8 +137,10 @@ export function useDeleteProgram() {
   return useMutation({
     mutationFn: remove,
     retry: false,
-    onSuccess: (_data, programId) => {
-      queryClient.removeQueries({ queryKey: queryKeys.detail(dataScope, programId) })
+    onSuccess: async (_data, programId) => {
+      const detailKey = queryKeys.detail(dataScope, programId)
+      await queryClient.cancelQueries({ queryKey: detailKey })
+      queryClient.removeQueries({ queryKey: detailKey })
       void queryClient.invalidateQueries({ queryKey: queryKeys.lists() })
     },
   })

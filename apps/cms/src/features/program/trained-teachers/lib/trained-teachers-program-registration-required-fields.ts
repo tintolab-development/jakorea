@@ -3,7 +3,11 @@
  * 일반 검사와 동일 규칙이되 KPI·임금은 없고, 일정형 교육 연수는 첫 세부 일정(replaceFirst).
  */
 import { normalizeRegistrationOverlayForApply } from '@/features/program/general/lib/registration-overlay-to-program'
-import { describeIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
+import {
+  describeIncompleteGeneralProgramRegistrationRequiredFields,
+  formatGeneralProgramRegistrationRequiredFieldReason,
+  listIncompleteGeneralProgramRegistrationRequiredFields,
+} from '@/features/program/general/lib/registration-required-fields'
 import type { ProgramRegistrationParticipantSelection } from '@/features/template/lib/program-registration-editor-state'
 import type {
   ProgramRegistrationEducationScheduleMode,
@@ -30,12 +34,8 @@ export type TrainedTeachersRegistrationRequiredFieldContext = {
   programTitleKo: string
 }
 
-export function describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(
-  overlay: Record<string, unknown>,
-  ctx: TrainedTeachersRegistrationRequiredFieldContext
-): string | null {
-  const normalized = normalizeRegistrationOverlayForApply(overlay, 'trainedTeachers')
-  return describeIncompleteGeneralProgramRegistrationRequiredFields(normalized, {
+function toGeneralRequiredFieldContext(ctx: TrainedTeachersRegistrationRequiredFieldContext) {
+  return {
     participant: ctx.participant,
     programType: ctx.programType,
     sessionRoundType: ctx.sessionRoundType,
@@ -53,8 +53,42 @@ export function describeIncompleteTrainedTeachersProgramRegistrationRequiredFiel
     programTitleKo: ctx.programTitleKo,
     omitKpiAndWage: true,
     allowEmptySponsor: true,
-    preEducationDisplayMode: ctx.programType === 'schedule' ? 'replaceFirst' : 'prepend',
-  })
+    preEducationDisplayMode:
+      ctx.programType === 'schedule' ? ('replaceFirst' as const) : ('prepend' as const),
+  }
+}
+
+/** 교육받은 교사 등록 — 비어 있는 필수 항목 진단 키 */
+export function listIncompleteTrainedTeachersProgramRegistrationRequiredFieldReasons(
+  overlay: Record<string, unknown>,
+  ctx: TrainedTeachersRegistrationRequiredFieldContext
+): string[] {
+  const normalized = normalizeRegistrationOverlayForApply(overlay, 'trainedTeachers')
+  return listIncompleteGeneralProgramRegistrationRequiredFields(
+    normalized,
+    toGeneralRequiredFieldContext(ctx)
+  )
+}
+
+/** 교육받은 교사 등록 — 비어 있는 필수 항목의 화면 라벨 */
+export function listIncompleteTrainedTeachersProgramRegistrationRequiredFieldLabels(
+  overlay: Record<string, unknown>,
+  ctx: TrainedTeachersRegistrationRequiredFieldContext
+): string[] {
+  return listIncompleteTrainedTeachersProgramRegistrationRequiredFieldReasons(overlay, ctx).map(
+    formatGeneralProgramRegistrationRequiredFieldReason
+  )
+}
+
+export function describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(
+  overlay: Record<string, unknown>,
+  ctx: TrainedTeachersRegistrationRequiredFieldContext
+): string | null {
+  const normalized = normalizeRegistrationOverlayForApply(overlay, 'trainedTeachers')
+  return describeIncompleteGeneralProgramRegistrationRequiredFields(
+    normalized,
+    toGeneralRequiredFieldContext(ctx)
+  )
 }
 
 export function hasIncompleteTrainedTeachersProgramRegistrationRequiredFields(

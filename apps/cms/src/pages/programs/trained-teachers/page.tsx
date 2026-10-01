@@ -367,11 +367,13 @@ function TrainedTeachersProgramPageContent() {
   }, [filteredPrograms, selectedRowKeys, showAlert])
 
   const handleBulkDeleteConfirm = useCallback(async () => {
+    const idsToDelete = programsPendingBulkDelete.map(program => program.id)
+    if (programIdFromUrl && idsToDelete.includes(programIdFromUrl)) {
+      handleCloseFullPageModal()
+    }
     if (remoteEnabled) {
       try {
-        await deleteProgramsMutation.mutateAsync(
-          programsPendingBulkDelete.map(program => program.id)
-        )
+        await deleteProgramsMutation.mutateAsync(idsToDelete)
         setSelectedRowKeys([])
         refetchPrograms()
       } catch {
@@ -393,6 +395,8 @@ function TrainedTeachersProgramPageContent() {
   }, [
     deleteProgramsMutation,
     handleBulkDelete,
+    handleCloseFullPageModal,
+    programIdFromUrl,
     programsPendingBulkDelete,
     refetchPrograms,
     remoteEnabled,

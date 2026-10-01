@@ -779,10 +779,15 @@ function ProgramListPageContent() {
         onConfirm={() => {
           void (async () => {
             try {
+              const idsToDelete = programsPendingBulkDelete.map(program => program.id)
+              if (
+                companySchoolProgramIdFromUrl &&
+                idsToDelete.includes(companySchoolProgramIdFromUrl)
+              ) {
+                handleCloseFullPageModal()
+              }
               if (isCompanySchoolPath) {
-                await deleteCompanySchoolProgramsMutation.mutateAsync(
-                  programsPendingBulkDelete.map(program => program.id)
-                )
+                await deleteCompanySchoolProgramsMutation.mutateAsync(idsToDelete)
                 await companySchoolListQuery.refetch()
                 setSelectedRowKeys([])
               } else {

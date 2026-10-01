@@ -90,7 +90,10 @@ import {
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { useCmsAlert } from '@/shared/ui'
 import { describeIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
-import { describeIncompleteTrainedTeachersProgramRegistrationRequiredFields } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
+import {
+  describeIncompleteTrainedTeachersProgramRegistrationRequiredFields,
+  listIncompleteTrainedTeachersProgramRegistrationRequiredFieldLabels,
+} from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
 import {
   describeIncompleteEconomyProgramRegistrationRequiredFields,
   hasIncompleteEconomyRegistrationFromStore,
@@ -1324,6 +1327,8 @@ export function useProgramRegistrationEditor(
       participantOrganization: participant.organization,
       programType,
       sessionRoundType,
+      teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+      participant,
     })
     setProgramTitleKo(patch.programTitleKo)
     if (patch.sponsorId) setSponsorId(patch.sponsorId)
@@ -1366,12 +1371,13 @@ export function useProgramRegistrationEditor(
   }, [
     curriculumChartSessionCount,
     curriculumSessionCount,
-    participant.organization,
+    participant,
     programRegistrationFormVariant,
     programType,
     scheduleCurriculumDetailCount,
     scheduleCurriculumGroupCount,
     sessionRoundType,
+    trainedTeachersTeacherTrainingEnabled,
   ])
 
   /** 등록 완료 — 프로그램 생성 POST 1회 */
@@ -1640,6 +1646,50 @@ export function useProgramRegistrationEditor(
     trainedTeachersTeacherTrainingEnabled,
   ])
 
+  const getIncompleteRequiredFieldLabels = useCallback((): string[] => {
+    if (programRegistrationFormVariant !== 'trainedTeachers') return []
+    const overlay = getProgramRegistrationOverlayRecord()
+    const resolvedSponsorId =
+      sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
+    const resolvedContactId =
+      sponsorContactId.trim() ||
+      readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
+    return listIncompleteTrainedTeachersProgramRegistrationRequiredFieldLabels(overlay, {
+      participant,
+      programType,
+      sessionRoundType,
+      educationFormScheduleDetail,
+      participationScheduleDetail,
+      ipsScheduleDetail,
+      curriculumSessionCount,
+      curriculumChartSessionCount,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+      educationScheduleMode,
+      sponsorId: resolvedSponsorId,
+      sponsorContactId: resolvedContactId,
+      programTitleKo: resolveProgramTitleKo(),
+    })
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    educationFormScheduleDetail,
+    educationScheduleMode,
+    ipsScheduleDetail,
+    participant,
+    participationScheduleDetail,
+    programRegistrationFormVariant,
+    programType,
+    resolveProgramTitleKo,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount,
+    sessionRoundType,
+    sponsorContactId,
+    sponsorId,
+    trainedTeachersTeacherTrainingEnabled,
+  ])
+
   const hasIncompleteRequiredFields = useCallback(() => {
     if (programRegistrationFormVariant === 'economy') {
       return hasIncompleteEconomyRegistrationFromStore(participant)
@@ -1689,6 +1739,7 @@ export function useProgramRegistrationEditor(
     educationScheduleMode,
     hasIncompleteRequiredFields,
     getIncompleteRequiredFieldsReason,
+    getIncompleteRequiredFieldLabels,
     resolveProgramTitleKo,
   }
 }

@@ -124,10 +124,13 @@ export function ProgramApplyPage() {
   const navigate = useNavigate()
   const [isReady, setIsReady] = useState(false)
   const programId = getProgramIdFromPath()
-  const { program, isLoading } = useProgramDetail(programId, { fresh: true })
+  const { program, isLoading, status } = useProgramDetail(programId, { fresh: true })
   const numericProgramId = parsePortalProgramId(programId)
   const remoteApplyEnabled =
-    isRemoteApiConfigured() && numericProgramId != null && Boolean(getAccessToken())
+    isRemoteApiConfigured() &&
+    numericProgramId != null &&
+    Boolean(getAccessToken()) &&
+    status === 'ready'
   const applicationFormQuery = useProgramApplicationForm(
     remoteApplyEnabled ? programId : null,
   )

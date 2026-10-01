@@ -4,6 +4,12 @@ import {
 } from '@/features/notifications/api/adapters/mail-delivery-adapters'
 import { mailSendHistoryParamsFromSearchParams } from '@/features/notifications/api/mail-send-history-filter-params'
 import {
+  emptySendHistoryListPage,
+  toSendHistoryListPage,
+  withSendHistoryPaging,
+  type SendHistoryListPage,
+} from '@/features/notifications/api/delivery-list-page'
+import {
   fetchNotificationDeliveriesRemote,
   fetchNotificationDeliveryRemote,
 } from '@/features/notifications/api/notifications-api-client'
@@ -17,14 +23,15 @@ export function shouldUseMailSendHistoryRemoteApi(): boolean {
 
 /** 메일 발송 조회 — EMAIL channel */
 export async function getMailSendHistoryList(
-  searchParams: URLSearchParams
-): Promise<MailSendHistoryRow[]> {
-  if (!shouldUseMailSendHistoryRemoteApi()) return []
+  searchParams: URLSearchParams,
+  page = 0
+): Promise<SendHistoryListPage<MailSendHistoryRow>> {
+  if (!shouldUseMailSendHistoryRemoteApi()) return emptySendHistoryListPage(page)
 
   const dto = await fetchNotificationDeliveriesRemote(
-    mailSendHistoryParamsFromSearchParams(searchParams)
+    withSendHistoryPaging(mailSendHistoryParamsFromSearchParams(searchParams), page)
   )
-  return mapMailDeliveryListResponse(dto.items)
+  return toSendHistoryListPage(dto, page, mapMailDeliveryListResponse)
 }
 
 export async function getMailSendHistoryDetail(

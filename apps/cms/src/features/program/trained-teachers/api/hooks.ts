@@ -162,8 +162,10 @@ export function useDeleteTrainedTeacherProgram() {
     mutationKey: trainedTeacherQueryKeys.mutations.delete(''),
     mutationFn: deleteTrainedTeacherProgram,
     retry: false,
-    onSuccess: (_data, programId) => {
-      queryClient.removeQueries({ queryKey: trainedTeacherQueryKeys.detail(programId) })
+    onSuccess: async (_data, programId) => {
+      const detailKey = trainedTeacherQueryKeys.detail(programId)
+      await queryClient.cancelQueries({ queryKey: detailKey })
+      queryClient.removeQueries({ queryKey: detailKey })
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
       invalidateTrainedTeacherOverviewStages(queryClient)
     },
@@ -176,9 +178,11 @@ export function useDeleteTrainedTeacherPrograms() {
     mutationKey: [...trainedTeacherQueryKeys.all, 'mutation', 'bulk-delete'] as const,
     mutationFn: deleteTrainedTeacherPrograms,
     retry: false,
-    onSuccess: (_data, programIds) => {
+    onSuccess: async (_data, programIds) => {
       for (const programId of programIds) {
-        queryClient.removeQueries({ queryKey: trainedTeacherQueryKeys.detail(programId) })
+        const detailKey = trainedTeacherQueryKeys.detail(programId)
+        await queryClient.cancelQueries({ queryKey: detailKey })
+        queryClient.removeQueries({ queryKey: detailKey })
       }
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
       invalidateTrainedTeacherOverviewStages(queryClient)
