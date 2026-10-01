@@ -4,10 +4,16 @@ import {
   getEmbedUrlFromYoutubeUrl,
   isValidYoutubeUrl,
 } from '@tiptap/extension-youtube'
+import { NodeSelection } from '@tiptap/pm/state'
 import { findEmojiByName } from './emoji-extension'
+import {
+  formatRichTextBytes,
+  getRichTextImageFileSize,
+  getRichTextImageTotalBytes,
+  RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
+} from './limits'
 
 const IMAGE_ACCEPT = 'image/jpeg,image/jpg,image/png,image/gif,image/webp'
-const IMAGE_MAX_BYTES = 10 * 1024 * 1024
 
 export function promptImageUrl(): string | null {
   const url = window.prompt('이미지 URL', 'https://')
@@ -64,13 +70,15 @@ function applyImageSrc(
   editor: Editor,
   src: string,
   alt?: string,
-  persistSrc?: string
+  persistSrc?: string,
+  fileSize?: number
 ): boolean {
   if (editor.isDestroyed) return false
   const attrs = {
     src,
     alt: alt ?? '',
     ...(persistSrc?.trim() ? { persistSrc: persistSrc.trim() } : {}),
+    ...(fileSize != null && fileSize > 0 ? { fileSize } : {}),
   }
   const ok =
     editor.chain().focus().setImage(attrs).run() ||
@@ -94,13 +102,20 @@ export function insertImageFromFile(
     window.alert('JPG, PNG, GIF, WebP 이미지만 삽입할 수 있습니다.')
     return
   }
-  if (file.size > IMAGE_MAX_BYTES) {
-    window.alert('이미지는 10MB 이하만 삽입할 수 있습니다.')
+  const selectedImageSize =
+    editor.state.selection instanceof NodeSelection
+      ? getRichTextImageFileSize(editor.state.selection.node)
+      : 0
+  const nextTotalBytes = getRichTextImageTotalBytes(editor) - selectedImageSize + file.size
+  if (nextTotalBytes > RICH_TEXT_IMAGE_MAX_TOTAL_BYTES) {
+    window.alert(
+      `에디터 이미지는 총 ${formatRichTextBytes(RICH_TEXT_IMAGE_MAX_TOTAL_BYTES)}까지 업로드 가능합니다.`
+    )
     return
   }
 
   const insertResolved = (src: string, persistSrc?: string) => {
-    applyImageSrc(editor, src, file.name, persistSrc)
+    applyImageSrc(editor, src, file.name, persistSrc, file.size)
   }
 
   if (resolveSrc) {
