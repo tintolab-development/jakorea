@@ -19,10 +19,6 @@
   overflow-y: auto;
 }
 
-.auth-card.auth-card--register {
-  min-height: 709px;
-}
-
 .auth-card.auth-card--register-step-2 {
   min-height: 600px;
 }
@@ -158,19 +154,6 @@
 
 .admin-register-step__form .ant-form-item .ant-form-item-label > label {
   height: auto;
-}
-
-.admin-register-step__form .admin-register-step__actions,
-.admin-register-step--placeholder .admin-register-step__actions,
-.admin-register-step--identity .admin-register-step__actions,
-.admin-register-step--terms .admin-register-step__actions,
-.admin-register-step--review .admin-register-step__actions,
-.admin-register-step--email .admin-register-step__actions,
-.admin-register-step--password .admin-register-step__actions {
-  gap: 16px;
-  margin-top: auto;
-  padding-top: 40px;
-  flex-shrink: 0;
 }
 
 .admin-register-step__trailing {
