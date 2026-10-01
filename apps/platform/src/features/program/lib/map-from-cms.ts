@@ -36,7 +36,7 @@ import {
   shouldIncludeInterviewStages,
 } from './detail-case.ts'
 import { PROGRAM_TAB_LABEL } from './constants.ts'
-import { extraSection } from './html-body.ts'
+import { extraSection, rewriteAdminFileContentSrcsForPortal } from './html-body.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {
@@ -674,7 +674,11 @@ function mapExtraSections(
 
   const additional = program.additionalContent?.trim()
   if (additional) {
-    sections.push({ title: '추가 내용', body: additional, bodyFormat: 'html' })
+    sections.push({
+      title: '추가 내용',
+      body: rewriteAdminFileContentSrcsForPortal(additional),
+      bodyFormat: 'html',
+    })
   }
 
   const learning = program.learningSupportContent?.trim()

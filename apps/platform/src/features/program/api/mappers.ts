@@ -23,7 +23,7 @@ import type {
   PortalRecruitment,
   PortalSchedule,
 } from './types'
-import { extraSection } from '../lib/html-body.ts'
+import { extraSection, rewriteAdminFileContentSrcsForPortal } from '../lib/html-body.ts'
 
 const RECRUITMENT_STATUS = {
   scheduled: 'scheduled',
@@ -683,7 +683,9 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 
   const recruitmentGuide = readString(remote.recruitmentGuide) ?? ''
-  const additionalContent = readString(remote.additionalContentHtml) ?? ''
+  const additionalContent = rewriteAdminFileContentSrcsForPortal(
+    readString(remote.additionalContentHtml) ?? ''
+  )
   const learningSupportContent = readString(remote.learningSupportContent) ?? ''
   const extraSections: ProgramExtraSection[] = [
     extraSection('모집 안내', recruitmentGuide),
@@ -775,7 +777,9 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     extraSections,
     contactValue: contactValue(remote.contactName, remote.contactPhone, remote.contactEmail),
     applicationMethodLabel: '지원방법',
-    applicationMethodValue: readString(remote.applicationMethod ?? undefined) ?? '',
+    applicationMethodValue: rewriteAdminFileContentSrcsForPortal(
+      readString(remote.applicationMethod ?? undefined) ?? ''
+    ),
     attachments: (remote.attachments ?? []).flatMap(file => {
       const fileObjectId = Number(file.fileObjectId)
       if (!Number.isFinite(fileObjectId) || fileObjectId <= 0) return []

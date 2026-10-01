@@ -37,7 +37,7 @@ const mapped = mapPortalProgramDetail({
   contactPhone: '02-6085-6028',
   recruitmentGuide: '모집 안내 본문',
   additionalContentHtml:
-    '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p>',
+    '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p><img src="/api/admin/files/42/content" alt="사진" />',
   educationTarget: 'university',
   thumbnailFileObjectId: 77,
   sponsorNames: ['현대 자동차'],
@@ -109,7 +109,7 @@ assert.deepEqual(
   mapped.extraSections.find(section => section.title === '추가 내용'),
   {
     title: '추가 내용',
-    body: '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p>',
+    body: '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p><img src="/api/portal/public/files/42/content?inline=1" alt="사진" />',
     bodyFormat: 'html',
   }
 )
