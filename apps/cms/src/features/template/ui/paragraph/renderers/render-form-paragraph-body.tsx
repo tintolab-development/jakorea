@@ -110,7 +110,15 @@ export type FormUpdateParagraph = (
 
 export type { ParagraphBodyInteractionMode }
 
+export type RegistrationWizardValidationHighlightOptions = {
+  isFieldIncomplete: (validationKey: string) => boolean
+  isParagraphIncomplete: (paragraphId: string) => boolean
+  isHorizontalTableCellIncomplete: (cellKey: string) => boolean
+}
+
 export type RenderFormParagraphBodyOptions = {
+  /** 프로그램 등록 위저드 — 필수 미입력 강조 */
+  registrationWizardValidation?: RegistrationWizardValidationHighlightOptions
   horizontalTableRowSelection?: HorizontalTableRowSelection | null
   onHorizontalTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
   /** 세로형 테이블 본문 행 선택(캔버스) — 폼 에디터에서 단일 전역 */
@@ -560,6 +568,7 @@ export function renderFormParagraphBody(
                 }
           }
           programApplicationFormIndividual={options?.programApplicationFormIndividual}
+          registrationWizardValidation={options?.registrationWizardValidation}
           paragraphInteractionMode={paragraphInteractionMode}
         />
       )

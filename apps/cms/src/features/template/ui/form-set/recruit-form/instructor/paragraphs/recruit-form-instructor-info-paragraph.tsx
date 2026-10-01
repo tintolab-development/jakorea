@@ -7,7 +7,7 @@ import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/pr
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
@@ -165,6 +165,7 @@ export function RecruitFormInstructorInfoParagraph() {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="공고 게시 여부"
+            validationKey="recruit.instructor.announcementPublished"
             fullRow
             edit={
               <ParticipantRecruitmentAnnouncementPublishedRadios
@@ -181,6 +182,7 @@ export function RecruitFormInstructorInfoParagraph() {
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="프로그램 운영 기간"
+          validationKey="recruit.instructor.programRangeSeal"
           edit={
             <div className={MAX_SUFFIX_CLASS}>
               <ParagraphDatePicker
@@ -214,6 +216,7 @@ export function RecruitFormInstructorInfoParagraph() {
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="모집 대상"
+          validationKey="recruit.instructor.recruitTargets"
           edit={
             <CmsSelect
               mode="multiple"
@@ -230,6 +233,7 @@ export function RecruitFormInstructorInfoParagraph() {
         />
         <DetailInfoForm.Field
           label="모집 대상 상세"
+          validationKey="recruit.instructor.recruitTargetDetail"
           edit={
             <CmsInput
               inputSize="medium"
@@ -246,6 +250,7 @@ export function RecruitFormInstructorInfoParagraph() {
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="강사 모집 기간"
+          validationKey="recruit.instructor.recruitRangeSeal"
           edit={
             <div className={MAX_SUFFIX_CLASS}>
               <ParagraphDatePicker
@@ -269,6 +274,10 @@ export function RecruitFormInstructorInfoParagraph() {
         />
         <DetailInfoForm.Field
           label="최종 합격자 발표"
+          validationKey={[
+            'recruit.instructor.finalAnnounceIso',
+            'recruit.instructor.finalAnnounceMethod',
+          ]}
           edit={
             <div className={MAX_SUFFIX_CLASS}>
               <ParagraphDatePicker
@@ -297,6 +306,11 @@ export function RecruitFormInstructorInfoParagraph() {
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="문의처"
+          validationKey={[
+            'recruit.instructor.inquiryContact',
+            'recruit.instructor.inquiryTel',
+            'recruit.instructor.inquiryEmail',
+          ]}
           fullRow
           edit={
             <div className={MAX_SUFFIX_CLASS}>
@@ -330,6 +344,7 @@ export function RecruitFormInstructorInfoParagraph() {
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="비고"
+          validationKey="recruit.instructor.notes"
           fullRow
           edit={
             <div className={MAX_SUFFIX_CLASS}>

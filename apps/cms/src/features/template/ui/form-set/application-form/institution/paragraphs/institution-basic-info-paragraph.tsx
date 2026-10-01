@@ -1,8 +1,14 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import {
   shouldShowInstitutionApplicationPreferredEducationForm,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { isParticipantSelectionEducationFormInOverlay } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
+import {
+  getProgramRegistrationOverlayRecord,
+  getProgramRegistrationOverlayVersion,
+  subscribeProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
   DEFAULT_INSTITUTION_APPLICATION_MAX_CLASS_COUNT,
   buildInstitutionClassCountOptions,
@@ -54,7 +60,15 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
       ),
     [bridge.maxClassCount]
   )
-  const showPreferredEducationForm = shouldShowInstitutionApplicationPreferredEducationForm(bridge)
+  const overlayVersion = useSyncExternalStore(
+    subscribeProgramRegistrationOverlay,
+    getProgramRegistrationOverlayVersion,
+    getProgramRegistrationOverlayVersion
+  )
+  void overlayVersion
+  const showPreferredEducationForm =
+    shouldShowInstitutionApplicationPreferredEducationForm(bridge) ||
+    isParticipantSelectionEducationFormInOverlay(getProgramRegistrationOverlayRecord())
 
   const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
     'application.institution.applicationGrade',

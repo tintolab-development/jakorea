@@ -5,6 +5,7 @@ import {
   describeIncompleteUjatProgramRegistrationRequiredFields,
   hasIncompleteUjatProgramRecruitmentRequiredFields,
   hasIncompleteUjatProgramRegistrationRequiredFields,
+  listIncompleteUjatProgramRegistrationRequiredFields,
 } from './ujat-program-registration-required-fields'
 import {
   replaceUjatRecruitInstitutionOverlay,
@@ -132,6 +133,20 @@ describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
 
   it('필수 채우면 완료', () => {
     expect(hasIncompleteUjatProgramRegistrationRequiredFields(filledRegistration())).toBe(false)
+  })
+
+  it('설문 진행 항목을 하나도 고르지 않아도 완료이다', () => {
+    const overlay = filledRegistration()
+    overlay['ujat.basicInfo.surveyItems'] = {
+      survey: false,
+      satisfaction: false,
+      school_satisfaction: false,
+      lecture_evaluation: false,
+    }
+    expect(hasIncompleteUjatProgramRegistrationRequiredFields(overlay)).toBe(false)
+    expect(listIncompleteUjatProgramRegistrationRequiredFields(overlay)).not.toContain(
+      'basicInfo.surveyItems'
+    )
   })
 
   it('사전 교육 진행 일정이 없으면 미완료', () => {

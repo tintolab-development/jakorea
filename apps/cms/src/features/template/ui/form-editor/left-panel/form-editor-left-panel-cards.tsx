@@ -36,6 +36,7 @@ import {
   modalCardFooterActions,
   modalCardFooterToggles,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-card-footer'
+import { useRegistrationWizardValidationHighlight } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 
 function isAgreementAdminProxyConfirmCard(
   paragraph: WritingFormParagraph,
@@ -192,12 +193,17 @@ function PinnedFormCardInner({
   const seedFillLocked =
     paragraphBodyOptions?.seedApplicantFillLocked === true &&
     (structureLockedParagraphIds?.has(paragraph.id) ?? false)
+  const registrationWizardHighlight = useRegistrationWizardValidationHighlight()
+  const paragraphRequiredIncomplete =
+    registrationWizardHighlight.attemptId > 0 &&
+    registrationWizardHighlight.isParagraphIncomplete(paragraph.id)
 
   return (
     <ParagraphCard
       dataParagraphId={paragraph.id}
       className={[
         'form-editor-card',
+        paragraphRequiredIncomplete ? 'paragraph-card--required-incomplete' : '',
         showEditorChrome ? 'paragraph-card--selectable' : '',
         showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
         isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
@@ -390,6 +396,10 @@ function SortableMiddleFormCardInner({
   const seedFillLocked =
     paragraphBodyOptions?.seedApplicantFillLocked === true &&
     (structureLockedParagraphIds?.has(paragraph.id) ?? false)
+  const registrationWizardHighlight = useRegistrationWizardValidationHighlight()
+  const paragraphRequiredIncomplete =
+    registrationWizardHighlight.attemptId > 0 &&
+    registrationWizardHighlight.isParagraphIncomplete(paragraph.id)
 
   return (
     <div
@@ -413,6 +423,7 @@ function SortableMiddleFormCardInner({
         dataParagraphId={paragraph.id}
         className={[
           'form-editor-card',
+          paragraphRequiredIncomplete ? 'paragraph-card--required-incomplete' : '',
           showEditorChrome ? 'paragraph-card--selectable' : '',
           showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
           isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',

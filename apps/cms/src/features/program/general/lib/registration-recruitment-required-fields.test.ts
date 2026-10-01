@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   hasIncompleteGeneralProgramRecruitmentRequiredFields,
+  listIncompleteGeneralProgramRecruitmentRequiredFields,
   type GeneralProgramRecruitmentRequiredFieldContext,
 } from './registration-recruitment-required-fields'
 import {
@@ -75,6 +76,15 @@ describe('hasIncompleteGeneralProgramRecruitmentRequiredFields', () => {
     delete row[K.maxAssignableInstructors]
     replaceApplicantRecruitInstitutionOverlay(row)
     expect(hasIncompleteGeneralProgramRecruitmentRequiredFields(ctx())).toBe(true)
+  })
+
+  it('listIncomplete — 기관 최대 강사 수 키를 반환한다', () => {
+    const row = filledInstitution()
+    delete row[K.maxAssignableInstructors]
+    replaceApplicantRecruitInstitutionOverlay(row)
+    expect(listIncompleteGeneralProgramRecruitmentRequiredFields(ctx())).toContain(
+      'recruit.institution.maxAssignableInstructors'
+    )
   })
 
   it('비고 해당없음이면 비고 본문 없이도 완료이다', () => {

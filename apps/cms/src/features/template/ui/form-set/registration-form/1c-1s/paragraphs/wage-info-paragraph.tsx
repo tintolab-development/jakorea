@@ -4,11 +4,14 @@
  */
 import { useEffect, useMemo } from 'react'
 import { useTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  getProgramRegistrationOverlayRecord,
+  useProgramRegistrationOverlayKv,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const DEDUCTION_VIEW = '일용근로자 원천징수세액'
@@ -28,6 +31,8 @@ const WAGE_FEE_ROWS = [
     distanceKey: 'economyRegistration.wageInfo.grade1DistanceFee',
     maxText: '최대 500,000원',
     max: 500_000,
+    validationFeeKey: 'wage.grade1Fee',
+    validationDistanceKey: 'wage.grade1DistanceFee',
   },
   {
     feeLabel: '2급 강사비',
@@ -36,6 +41,8 @@ const WAGE_FEE_ROWS = [
     distanceKey: 'economyRegistration.wageInfo.grade2DistanceFee',
     maxText: '최대 400,000원',
     max: 400_000,
+    validationFeeKey: 'wage.grade2Fee',
+    validationDistanceKey: 'wage.grade2DistanceFee',
   },
   {
     feeLabel: '3급 강사비',
@@ -44,6 +51,8 @@ const WAGE_FEE_ROWS = [
     distanceKey: 'economyRegistration.wageInfo.grade3DistanceFee',
     maxText: '최대 300,000원',
     max: 300_000,
+    validationFeeKey: 'wage.grade3Fee',
+    validationDistanceKey: 'wage.grade3DistanceFee',
   },
 ] as const
 
@@ -106,13 +115,19 @@ export function OneCOneSRegistrationWageInfoParagraph() {
 
   useEffect(() => {
     if (remotePaymentOptions.length === 0) return
-    const current = paymentItemValues.map(id => id.trim()).filter(Boolean)
+    const raw = getProgramRegistrationOverlayRecord()['economyRegistration.wageInfo.paymentItemValues']
+    // 사용자가 []로 비운 값은 유지. 미기록(undefined)만 초기 시드.
+    if (Array.isArray(raw) && raw.every(id => String(id ?? '').trim() === '')) return
+    const current = (Array.isArray(raw) ? raw : paymentItemValues)
+      .map(id => String(id ?? '').trim())
+      .filter(Boolean)
     const known = new Set(remotePaymentOptions.map(opt => opt.value))
     const allKnown = current.length > 0 && current.every(id => known.has(id))
     if (allKnown) return
-    const shouldReplace =
-      current.length === 0 || current.every(id => LEGACY_PAYMENT_IDS.has(id) || !known.has(id))
-    if (!shouldReplace) return
+    const shouldSeed = raw === undefined
+    const shouldMigrate =
+      current.length > 0 && current.every(id => LEGACY_PAYMENT_IDS.has(id) || !known.has(id))
+    if (!shouldSeed && !shouldMigrate) return
     const transport = remotePaymentOptions.find(
       opt => opt.label.trim() === PAYMENT_LABEL_TRANSPORT_CATALOG
     )
@@ -129,11 +144,13 @@ export function OneCOneSRegistrationWageInfoParagraph() {
         <DetailInfoForm.Row key={row.feeLabel} type="double">
           <DetailInfoForm.Field
             label={row.feeLabel}
+            validationKey={row.validationFeeKey}
             edit={<HourlyFeeInput overlayKey={row.feeKey} max={row.max} maxText={row.maxText} />}
             view="-"
           />
           <DetailInfoForm.Field
             label={row.distanceLabel}
+            validationKey={row.validationDistanceKey}
             edit={
               <HourlyFeeInput overlayKey={row.distanceKey} max={row.max} maxText={row.maxText} />
             }
@@ -144,6 +161,7 @@ export function OneCOneSRegistrationWageInfoParagraph() {
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="지급 항목"
+          validationKey="wage.paymentItemValues"
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect

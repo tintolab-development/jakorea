@@ -143,6 +143,26 @@ function VolunteerInterviewScheduleBlock({
     })
   }, [showAlert])
 
+  const ujatInterviewHalf = overlayNamespace?.includes('.h1.')
+    ? 'h1'
+    : overlayNamespace?.includes('.h2.')
+      ? 'h2'
+      : null
+  const interviewTimeValidationKey = ujatInterviewHalf
+    ? `recruit.volunteer.${ujatInterviewHalf}.interviewSchedule`
+    : overlayStore === 'recruit'
+      ? [
+          'recruit.volunteer.interview.interviewTimeRange',
+          'recruit.volunteer.interview.timeUnit',
+          'recruit.volunteer.interview.selectedSlotKeys',
+        ]
+      : undefined
+  const exceptionDateValidationKey = ujatInterviewHalf
+    ? `recruit.volunteer.${ujatInterviewHalf}.interviewSchedule`
+    : overlayStore === 'recruit'
+      ? 'recruit.volunteer.interview.exceptionDate'
+      : undefined
+
   const [exceptionDate, setExceptionDate] = useVolunteerInterviewOverlayKv<Dayjs | null>(
     overlayStore,
     'exceptionDate',
@@ -344,6 +364,7 @@ function VolunteerInterviewScheduleBlock({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="예외 진행 일정"
+              validationKey={exceptionDateValidationKey}
               fullRow
               edit={
                 <ParagraphDatePicker
@@ -367,6 +388,15 @@ function VolunteerInterviewScheduleBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="면접 진행 가능 시간"
+            validationKey={
+              type === 'exception' && overlayStore === 'recruit' && ujatInterviewHalf == null
+                ? [
+                    'recruit.volunteer.interview.interviewTime',
+                    'recruit.volunteer.interview.interviewTimeRange',
+                    'recruit.volunteer.interview.selectedSlotKeys',
+                  ]
+                : interviewTimeValidationKey
+            }
             fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper">

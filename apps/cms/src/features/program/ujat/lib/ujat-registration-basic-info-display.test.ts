@@ -62,6 +62,18 @@ describe('resolveUjatRegistrationBasicInfoDisplay — 상세 overlay (세션 기
     expect(display.programManagementName).toBe('기업가정신 스타트업 체험 운영')
     expect(display.publicProgramTitle).toBe('고등학생 기업가정신 캠프 참가자 모집')
     expect(display.businessField).toBe('경제금융')
+    expect(display.participantTypes).toBe('학교/기관, 봉사자')
+  })
+
+  it('overlay 참여자 플래그가 없어도 상세에 학교/기관, 봉사자가 보인다', () => {
+    const display = resolveUjatRegistrationBasicInfoDisplay({
+      ...baseProgram(),
+      programRecruitments: [
+        { recruitmentType: 'PARTICIPANT', targetType: 'ORGANIZATION' },
+        { recruitmentType: 'VOLUNTEER', targetType: 'COLLEGE_STUDENT' },
+      ],
+    })
+    expect(display.participantTypes).toBe('학교/기관, 봉사자')
   })
 
   it('announcementTitle이 대표명이면 공고용으로 쓰지 않는다', () => {

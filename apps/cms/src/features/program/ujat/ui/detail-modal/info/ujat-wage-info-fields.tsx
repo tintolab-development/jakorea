@@ -34,6 +34,7 @@ export function UjatWageInfoFields({
     <DetailInfoForm.Row type="double">
       <DetailInfoForm.Field
         label="지급 항목"
+        validationKey="wage.paymentItemValues"
         view={viewPaymentText}
         edit={
           mode === 'edit' ? (

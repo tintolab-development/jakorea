@@ -1,3 +1,5 @@
+@import '../../../../shared/form-required-incomplete.css';
+
 .applicant-recruit-individual-participant-info-paragraph__forms {
   display: flex;
   flex-direction: column;

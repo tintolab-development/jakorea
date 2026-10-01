@@ -8,7 +8,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
@@ -66,6 +66,7 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="교육 진행 일정 선택"
+          validationKey="schedule.dateRangeSeal"
           fullRow
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">

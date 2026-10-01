@@ -4,6 +4,7 @@ import {
   hasIncompleteEconomyProgramApplicationRequiredFields,
   hasIncompleteEconomyProgramRegistrationRequiredFields,
   hasIncompleteEconomyProgramRecruitmentRequiredFields,
+  listIncompleteEconomyProgramRegistrationRequiredFields,
 } from './economy-program-registration-required-fields'
 import {
   replaceApplicantRecruitInstitutionOverlay,
@@ -78,6 +79,19 @@ describe('economy registration required fields', () => {
     )
   })
 
+  it('설문 진행 항목을 하나도 고르지 않아도 완료이다', () => {
+    const row = filledRegistration()
+    row['economyRegistration.basicInfo.surveyItems'] = {
+      survey: false,
+      satisfaction: false,
+      lecture_evaluation: false,
+    }
+    expect(hasIncompleteEconomyProgramRegistrationRequiredFields(row, ORG)).toBe(false)
+    expect(listIncompleteEconomyProgramRegistrationRequiredFields(row, ORG)).not.toContain(
+      'basicInfo.surveyItems'
+    )
+  })
+
   it('참여자 유형이 없으면 미완료', () => {
     expect(
       hasIncompleteEconomyProgramRegistrationRequiredFields(filledRegistration(), {
@@ -111,6 +125,14 @@ describe('economy registration required fields', () => {
     const row = filledRegistration()
     row['economyRegistration.educationCurriculum.session1.title'] = ''
     expect(hasIncompleteEconomyProgramRegistrationRequiredFields(row, ORG)).toBe(true)
+  })
+
+  it('listIncomplete — KPI 강사 키를 반환한다', () => {
+    const row = filledRegistration()
+    row['economyRegistration.kpi.instructor'] = null
+    expect(listIncompleteEconomyProgramRegistrationRequiredFields(row, ORG)).toContain(
+      'kpi.instructor'
+    )
   })
 })
 

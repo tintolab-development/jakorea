@@ -141,6 +141,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="대표 프로그램명 (국문)"
+          validationKey="basicInfo.programTitleKo"
           edit={
             <CmsInput
               inputSize="medium"
@@ -154,6 +155,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
         />
         <DetailInfoForm.Field
           label="대표 프로그램명 (영문)"
+          validationKey="basicInfo.programTitleEn"
           edit={
             <CmsInput
               inputSize="medium"
@@ -169,6 +171,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="공고용 프로그램명"
+          validationKey="basicInfo.publicProgramTitle"
           edit={
             <CmsInput
               inputSize="medium"
@@ -182,6 +185,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
         />
         <DetailInfoForm.Field
           label="세부 프로그램명"
+          validationKey="basicInfo.detailedProgram"
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect

@@ -21,6 +21,7 @@ export function RecruitInquiryContactRow({
   inquiryEmail,
   onInquiryEmailChange,
   required = false,
+  validationKeyPrefix = 'recruit.institution',
 }: {
   inquiryContact: string
   onInquiryContactChange: (next: string) => void
@@ -29,12 +30,19 @@ export function RecruitInquiryContactRow({
   inquiryEmail: string
   onInquiryEmailChange: (next: string) => void
   required?: boolean
+  /** 등록 위저드 미입력 강조 — `recruit.{scope}` 접두 */
+  validationKeyPrefix?: string
 }) {
   return (
     <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
         label="문의처"
         required={required}
+        validationKey={[
+          `${validationKeyPrefix}.inquiryContact`,
+          `${validationKeyPrefix}.inquiryTel`,
+          `${validationKeyPrefix}.inquiryEmail`,
+        ]}
         fullRow
         edit={
           <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
@@ -73,17 +81,20 @@ export function RecruitNotesRow({
   notes,
   onNotesChange,
   fullRow = false,
+  validationKey = 'recruit.institution.notes',
 }: {
   notesNotApplicable: boolean
   onNotesNotApplicableChange: (next: boolean) => void
   notes: string
   onNotesChange: (next: string) => void
   fullRow?: boolean
+  validationKey?: string
 }) {
   return (
     <DetailInfoForm.Row type={fullRow ? 'single' : 'single'}>
       <DetailInfoForm.Field
         label="비고"
+        validationKey={validationKey}
         fullRow={fullRow}
         edit={
           <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>

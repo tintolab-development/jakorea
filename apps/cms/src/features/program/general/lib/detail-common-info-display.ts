@@ -36,7 +36,11 @@ import {
   buildEnrichedScheduleDetails,
 } from '@/features/program/general/lib/registration-overlay-to-program'
 import { resolveStoredEducationFormLabel } from '@/features/program/shared/model/program-detail-edit-schema'
-import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
+import {
+  EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
+  getProgramRegistrationEducationFormOptions,
+  isParticipantSelectionEducationFormInOverlay,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
   overlayIpsIndexForScheduleDetail,
   resolveScheduleDetailProgressTimeSummaryForView,
@@ -736,6 +740,14 @@ function applyCurriculumSessionsFromRegistrationOverlay<
 function applyRegistrationEducationFormLabelToCommonInfo<
   T extends NonNullable<Program['generalCommonInfo']>,
 >(common: T, overlay: Record<string, unknown> | undefined): T {
+  if (isParticipantSelectionEducationFormInOverlay(overlay)) {
+    const label = educationFormLabelFromRegistrationValue(
+      EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE
+    ).trim()
+    if (common.educationFormLabel?.trim() === label) return common
+    return { ...common, educationFormLabel: label }
+  }
+
   const fromStored = resolveStoredEducationFormLabel({
     educationFormLabel: common.educationFormLabel,
     scheduleDetails: common.scheduleDetails,

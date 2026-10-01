@@ -2,7 +2,7 @@
  * 1사 1교 프로그램 등록 폼 — 교육 진행 (커리큘럼)
  * 과제 설정 없음 · 2차시 고정 · 단원명 | 교육 내용 표 (차시 헤딩 없음)
  */
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
@@ -23,6 +23,7 @@ function CurriculumSessionRow({ sessionIndex }: { sessionIndex: number }) {
     <DetailInfoForm.Row type="double">
       <DetailInfoForm.Field
         label={`${sessionIndex}차시 단원명`}
+        validationKey={`curriculum.session${sessionIndex}.title`}
         edit={
           <CmsInput
             inputSize="medium"
@@ -36,6 +37,7 @@ function CurriculumSessionRow({ sessionIndex }: { sessionIndex: number }) {
       />
       <DetailInfoForm.Field
         label={`${sessionIndex}차시 교육 내용`}
+        validationKey={`curriculum.session${sessionIndex}.description`}
         edit={
           <CmsInput
             inputSize="medium"

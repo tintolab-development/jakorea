@@ -23,6 +23,7 @@ import {
 } from '@/features/template/lib/template-form-select-options'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { collectUjatRegistrationCreateOverlay } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { resolveUjatParticipantTypeFlags } from '@/features/program/ujat/lib/participant-type-flags'
 import { buildUjatRecruitInstitutionOverlayFromProgram } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import {
   isSponsorContactUnselected,
@@ -70,14 +71,7 @@ function participantFlagsFromUjatProgram(program: Program): {
   teacher: boolean
   volunteer: boolean
 } {
-  const types = new Set(program.generalParticipantTypes ?? [])
-  const audience = program.generalProgramAudience
-  return {
-    individual: types.has('individual') || audience === 'individual',
-    organization: types.has('school_institution') || audience === 'organization',
-    teacher: types.has('teacher_instructor'),
-    volunteer: types.has('volunteer'),
-  }
+  return resolveUjatParticipantTypeFlags(program)
 }
 
 /** 프로그램 mock → 등록 양식 overlay 키 (수정 모드 진입 시 시드) */

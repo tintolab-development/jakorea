@@ -1,6 +1,9 @@
 import type { Program } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
-import { hasIncompleteApplicationFormThirdPartyRecipient } from '@/features/template/model/application-form-third-party-recipient'
+import {
+  hasIncompleteApplicationFormThirdPartyRecipient,
+  listIncompleteApplicationFormThirdPartyRecipientKeys,
+} from '@/features/template/model/application-form-third-party-recipient'
 import { listVisibleOperationalFormSpecs } from '@/features/program/general/lib/operational-form-bindings'
 import { createSeedDraftForOperationalCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { peekRegistrationWizardSessionDrafts } from '@/features/program/general/lib/registration-wizard-session-drafts'
@@ -63,4 +66,16 @@ export function hasIncompleteApplicationFormThirdPartyRecipientForProgram(args: 
   current?: ApplicationFormDraftSnapshot
 }): boolean {
   return describeIncompleteApplicationFormThirdPartyRecipient(args) != null
+}
+
+/** 등록 위저드 — 신청 양식 제3자 제공받는 곳 미입력 셀 키 */
+export function listIncompleteApplicationFormThirdPartyRecipientFieldKeys(args: {
+  program: Program
+  current?: ApplicationFormDraftSnapshot
+}): string[] {
+  const keys: string[] = []
+  for (const entry of collectVisibleApplicationFormDrafts(args)) {
+    keys.push(...listIncompleteApplicationFormThirdPartyRecipientKeys(entry.draft))
+  }
+  return keys
 }

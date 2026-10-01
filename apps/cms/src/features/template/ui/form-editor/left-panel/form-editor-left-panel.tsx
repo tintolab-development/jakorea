@@ -28,6 +28,7 @@ import {
   shouldFlattenSurveyUserInfoWrite,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-survey-write'
 import { AgreementSheetClosingFooter } from '@/features/template/ui/paragraph/explanation/agreement-sheet-closing-footer'
+import { useRegistrationWizardParagraphBodyOptions } from '@/features/program/shared/ui/registration/use-registration-wizard-paragraph-body-options'
 import '../form-editor.css'
 
 export type { FormEditorLeftPanelLayout, FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
@@ -67,7 +68,7 @@ export function FormEditorLeftPanel({
         showRecipient={agreementClosingFooter?.showRecipient ?? false}
       />
     ) : null
-  const mergedParagraphBodyOptions: RenderFormParagraphBodyOptions = useMemo(
+  const mergedParagraphBodyOptionsBase: RenderFormParagraphBodyOptions = useMemo(
     () => ({
       ...paragraphBodyOptions,
       paragraphInteractionMode,
@@ -75,6 +76,9 @@ export function FormEditorLeftPanel({
         paragraphBodyOptions?.structureLockedParagraphIds ?? structureLockedParagraphIds,
     }),
     [paragraphBodyOptions, paragraphInteractionMode, structureLockedParagraphIds]
+  )
+  const mergedParagraphBodyOptions = useRegistrationWizardParagraphBodyOptions(
+    mergedParagraphBodyOptionsBase
   )
 
   const hiddenParagraphIds = mergedParagraphBodyOptions.hiddenParagraphIds

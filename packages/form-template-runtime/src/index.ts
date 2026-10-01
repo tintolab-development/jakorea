@@ -1,4 +1,10 @@
-export { DetailInfoForm, DetailInfoFormTdDivider } from './detail-info-form/index.js'
+export {
+  DetailInfoForm,
+  DetailInfoFormTdDivider,
+  FieldValidationHighlightContext,
+  useOptionalFieldValidationHighlight,
+} from './detail-info-form/index.js'
+export type { FieldValidationHighlightContextValue } from './detail-info-form/index.js'
 export type {
   DetailInfoFormFieldProps,
   DetailInfoFormMode,

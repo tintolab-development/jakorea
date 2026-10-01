@@ -30,6 +30,10 @@ export type GeneralProgramRecruitmentRequiredFieldContext = {
   volunteerExceptionScheduleCount: number
 }
 
+function pushReason(reasons: string[], condition: boolean, key: string): void {
+  if (condition) reasons.push(key)
+}
+
 function isEmptyText(value: unknown): boolean {
   return typeof value !== 'string' || value.trim() === ''
 }
@@ -66,28 +70,55 @@ function isNotesIncomplete(overlay: Record<string, unknown>, prefix: string): bo
   return isEmptyText(read(overlay, `${prefix}.notes`))
 }
 
-function isInquiryIncomplete(overlay: Record<string, unknown>, prefix: string): boolean {
-  return (
-    isEmptyText(read(overlay, `${prefix}.inquiryContact`)) ||
-    isEmptyText(read(overlay, `${prefix}.inquiryTel`)) ||
-    isEmptyText(read(overlay, `${prefix}.inquiryEmail`))
-  )
-}
-
-function isFinalAnnounceIncomplete(overlay: Record<string, unknown>, prefix: string): boolean {
-  return (
-    isEmptyText(read(overlay, `${prefix}.finalAnnounceIso`)) ||
-    isEmptyText(read(overlay, `${prefix}.finalAnnounceMethod`))
-  )
-}
-
-function isProgramAndRecruitPeriodIncomplete(
+function pushInquiryIncomplete(
+  reasons: string[],
   overlay: Record<string, unknown>,
   prefix: string
-): boolean {
-  return (
-    isRangeSealIncomplete(read(overlay, `${prefix}.programRangeSeal`)) ||
-    isRangeSealIncomplete(read(overlay, `${prefix}.recruitRangeSeal`))
+): void {
+  pushReason(
+    reasons,
+    isEmptyText(read(overlay, `${prefix}.inquiryContact`)),
+    `${prefix}.inquiryContact`
+  )
+  pushReason(reasons, isEmptyText(read(overlay, `${prefix}.inquiryTel`)), `${prefix}.inquiryTel`)
+  pushReason(
+    reasons,
+    isEmptyText(read(overlay, `${prefix}.inquiryEmail`)),
+    `${prefix}.inquiryEmail`
+  )
+}
+
+function pushFinalAnnounceIncomplete(
+  reasons: string[],
+  overlay: Record<string, unknown>,
+  prefix: string
+): void {
+  pushReason(
+    reasons,
+    isEmptyText(read(overlay, `${prefix}.finalAnnounceIso`)),
+    `${prefix}.finalAnnounceIso`
+  )
+  pushReason(
+    reasons,
+    isEmptyText(read(overlay, `${prefix}.finalAnnounceMethod`)),
+    `${prefix}.finalAnnounceMethod`
+  )
+}
+
+function pushProgramAndRecruitPeriodIncomplete(
+  reasons: string[],
+  overlay: Record<string, unknown>,
+  prefix: string
+): void {
+  pushReason(
+    reasons,
+    isRangeSealIncomplete(read(overlay, `${prefix}.programRangeSeal`)),
+    `${prefix}.programRangeSeal`
+  )
+  pushReason(
+    reasons,
+    isRangeSealIncomplete(read(overlay, `${prefix}.recruitRangeSeal`)),
+    `${prefix}.recruitRangeSeal`
   )
 }
 
@@ -95,7 +126,6 @@ function buildInstitutionLimitsBridge(
   ctx: GeneralProgramRecruitmentRequiredFieldContext
 ): InstitutionApplicationProgramBridge {
   return {
-    // 최대 일정·회차 필드 노출 판정에만 쓰는 합성 브리지 — 사전 안내 여부는 기본값을 따른다
     preEducationNoticeRequired: true,
     educationStructure: ctx.programType,
     sessionRound: ctx.sessionRoundType,
@@ -103,65 +133,85 @@ function buildInstitutionLimitsBridge(
   }
 }
 
-function hasIncompleteInstitutionRecruitInfo(
+function listIncompleteInstitutionRecruitInfo(
   overlay: Record<string, unknown>,
   ctx: GeneralProgramRecruitmentRequiredFieldContext
-): boolean {
+): string[] {
+  const reasons: string[] = []
   const K = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
-  // 라디오 기본값 — 미기록이면 기본으로 간주
-  if (isEmptyText(readText(overlay, K.announcementPublished, 'published'))) return true
-  if (isEmptyText(readText(overlay, K.studentListRequired, 'need'))) return true
-  if (isEmptyText(readText(overlay, K.preguidanceRequired, 'need'))) return true
-
-  if (isEmptyNumber(read(overlay, K.maxAssignableInstructors))) return true
-  if (isEmptyNumber(read(overlay, K.maxClassCount))) return true
+  const p = 'recruit.institution'
+  pushReason(
+    reasons,
+    isEmptyText(readText(overlay, K.announcementPublished, 'published')),
+    `${p}.announcementPublished`
+  )
+  pushReason(
+    reasons,
+    isEmptyText(readText(overlay, K.studentListRequired, 'need')),
+    `${p}.studentListRequired`
+  )
+  pushReason(
+    reasons,
+    isEmptyText(readText(overlay, K.preguidanceRequired, 'need')),
+    `${p}.preguidanceRequired`
+  )
+  pushReason(reasons, isEmptyNumber(read(overlay, K.maxAssignableInstructors)), `${p}.maxAssignableInstructors`)
+  pushReason(reasons, isEmptyNumber(read(overlay, K.maxClassCount)), `${p}.maxClassCount`)
 
   const bridge = buildInstitutionLimitsBridge(ctx)
   if (shouldShowInstitutionApplicationMaxScheduleFields(bridge)) {
-    if (isEmptyNumber(read(overlay, K.maxScheduleCount))) return true
+    pushReason(reasons, isEmptyNumber(read(overlay, K.maxScheduleCount)), `${p}.maxScheduleCount`)
   }
   if (shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)) {
-    if (isEmptyNumber(read(overlay, K.maxSessionsPerDay))) return true
+    pushReason(reasons, isEmptyNumber(read(overlay, K.maxSessionsPerDay)), `${p}.maxSessionsPerDay`)
   }
 
-  if (isRangeSealIncomplete(read(overlay, K.programRangeSeal))) return true
-  if (isEmptyStringList(read(overlay, K.targetLevels))) return true
-  if (isEmptyText(read(overlay, K.targetLevelDetail))) return true
-  if (isRangeSealIncomplete(read(overlay, K.recruitRangeSeal))) return true
-  if (isEmptyText(read(overlay, K.finalAnnounceIso))) return true
-  if (isEmptyText(read(overlay, K.finalAnnounceMethod))) return true
-  if (isEmptyText(read(overlay, K.inquiryContact))) return true
-  if (isEmptyText(read(overlay, K.inquiryTel))) return true
-  if (isEmptyText(read(overlay, K.inquiryEmail))) return true
-  if (isNotesIncomplete(overlay, 'recruit')) return true
-  return false
+  pushReason(reasons, isRangeSealIncomplete(read(overlay, K.programRangeSeal)), `${p}.programRangeSeal`)
+  pushReason(reasons, isEmptyStringList(read(overlay, K.targetLevels)), `${p}.targetLevels`)
+  pushReason(reasons, isEmptyText(read(overlay, K.targetLevelDetail)), `${p}.targetLevelDetail`)
+  pushReason(reasons, isRangeSealIncomplete(read(overlay, K.recruitRangeSeal)), `${p}.recruitRangeSeal`)
+  pushReason(reasons, isEmptyText(read(overlay, K.finalAnnounceIso)), `${p}.finalAnnounceIso`)
+  pushReason(reasons, isEmptyText(read(overlay, K.finalAnnounceMethod)), `${p}.finalAnnounceMethod`)
+  pushReason(reasons, isEmptyText(read(overlay, K.inquiryContact)), `${p}.inquiryContact`)
+  pushReason(reasons, isEmptyText(read(overlay, K.inquiryTel)), `${p}.inquiryTel`)
+  pushReason(reasons, isEmptyText(read(overlay, K.inquiryEmail)), `${p}.inquiryEmail`)
+  pushReason(reasons, isNotesIncomplete(overlay, 'recruit'), `${p}.notes`)
+  return reasons
 }
 
-function hasIncompleteIndividualRecruitInfo(overlay: Record<string, unknown>): boolean {
+function listIncompleteIndividualRecruitInfo(overlay: Record<string, unknown>): string[] {
+  const reasons: string[] = []
   const p = 'recruit.individual'
-  if (isEmptyText(readText(overlay, `${p}.announcementPublished`, 'published'))) return true
-  if (isProgramAndRecruitPeriodIncomplete(overlay, p)) return true
-  if (isEmptyStringList(read(overlay, `${p}.targetLevels`))) return true
-  if (isEmptyText(read(overlay, `${p}.targetLevelDetail`))) return true
-  // 면접 UI 비노출(interviewEnabled=false) — 서류/면접 필드 미검사
-  if (isFinalAnnounceIncomplete(overlay, p)) return true
-  if (isInquiryIncomplete(overlay, p)) return true
-  if (isNotesIncomplete(overlay, p)) return true
-  return false
+  pushReason(
+    reasons,
+    isEmptyText(readText(overlay, `${p}.announcementPublished`, 'published')),
+    `${p}.announcementPublished`
+  )
+  pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
+  pushReason(reasons, isEmptyStringList(read(overlay, `${p}.targetLevels`)), `${p}.targetLevels`)
+  pushReason(reasons, isEmptyText(read(overlay, `${p}.targetLevelDetail`)), `${p}.targetLevelDetail`)
+  pushFinalAnnounceIncomplete(reasons, overlay, p)
+  pushInquiryIncomplete(reasons, overlay, p)
+  pushReason(reasons, isNotesIncomplete(overlay, p), `${p}.notes`)
+  return reasons
 }
 
-function hasIncompleteInstructorRecruitInfo(overlay: Record<string, unknown>): boolean {
+function listIncompleteInstructorRecruitInfo(overlay: Record<string, unknown>): string[] {
+  const reasons: string[] = []
   const p = 'recruit.instructor'
-  if (isEmptyText(readText(overlay, `${p}.announcementPublished`, 'published'))) return true
-  if (isProgramAndRecruitPeriodIncomplete(overlay, p)) return true
-  // 기본 ['성인'] — 미기록이면 통과, 명시적 빈 배열만 실패
+  pushReason(
+    reasons,
+    isEmptyText(readText(overlay, `${p}.announcementPublished`, 'published')),
+    `${p}.announcementPublished`
+  )
+  pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
   const targets = read(overlay, `${p}.recruitTargets`)
-  if (targets !== undefined && isEmptyStringList(targets)) return true
-  if (isEmptyText(read(overlay, `${p}.recruitTargetDetail`))) return true
-  if (isFinalAnnounceIncomplete(overlay, p)) return true
-  if (isInquiryIncomplete(overlay, p)) return true
-  if (isNotesIncomplete(overlay, p)) return true
-  return false
+  pushReason(reasons, targets !== undefined && isEmptyStringList(targets), `${p}.recruitTargets`)
+  pushReason(reasons, isEmptyText(read(overlay, `${p}.recruitTargetDetail`)), `${p}.recruitTargetDetail`)
+  pushFinalAnnounceIncomplete(reasons, overlay, p)
+  pushInquiryIncomplete(reasons, overlay, p)
+  pushReason(reasons, isNotesIncomplete(overlay, p), `${p}.notes`)
+  return reasons
 }
 
 function isInterviewTimeRangeIncomplete(value: unknown): boolean {
@@ -170,80 +220,97 @@ function isInterviewTimeRangeIncomplete(value: unknown): boolean {
   return value[0] == null || value[1] == null
 }
 
-function hasIncompleteVolunteerInterviewSchedule(
+function listIncompleteVolunteerInterviewSchedule(
   overlay: Record<string, unknown>,
   exceptionCount: number
-): boolean {
+): string[] {
+  const reasons: string[] = []
+  const p = 'recruit.volunteer.interview'
   const key = (suffix: string) => buildVolunteerInterviewOverlayKey('recruit', suffix)
-  // 면접 진행 불가일 — 빈 목록(불가일 없음) 허용. exclusion 기본값 있음.
-  if (isInterviewTimeRangeIncomplete(read(overlay, key('interviewTimeRange')))) return true
-  if (isEmptyText(readText(overlay, key('timeUnit'), '30'))) return true
+  pushReason(
+    reasons,
+    isInterviewTimeRangeIncomplete(read(overlay, key('interviewTimeRange'))),
+    `${p}.interviewTimeRange`
+  )
+  pushReason(reasons, isEmptyText(readText(overlay, key('timeUnit'), '30')), `${p}.timeUnit`)
   const slots = read(overlay, key('selectedSlotKeys'))
-  if (!Array.isArray(slots) || slots.length === 0) return true
-  if (slots.every(s => isEmptyText(s))) return true
-
+  pushReason(
+    reasons,
+    !Array.isArray(slots) || slots.length === 0 || slots.every(s => isEmptyText(s)),
+    `${p}.selectedSlotKeys`
+  )
   if (exceptionCount > 0) {
-    if (read(overlay, key('exceptionDate')) == null) return true
-    if (read(overlay, key('interviewTime')) == null) return true
+    pushReason(reasons, read(overlay, key('exceptionDate')) == null, `${p}.exceptionDate`)
+    pushReason(reasons, read(overlay, key('interviewTime')) == null, `${p}.interviewTime`)
   }
-  return false
+  return reasons
 }
 
-function hasIncompleteVolunteerRecruitInfo(
+function listIncompleteVolunteerRecruitInfo(
   overlay: Record<string, unknown>,
   ctx: GeneralProgramRecruitmentRequiredFieldContext
-): boolean {
+): string[] {
+  const reasons: string[] = []
   const p = 'recruit.volunteer'
-  if (isEmptyText(readText(overlay, `${p}.announcementPublished`, 'published'))) return true
+  pushReason(
+    reasons,
+    isEmptyText(readText(overlay, `${p}.announcementPublished`, 'published')),
+    `${p}.announcementPublished`
+  )
   const interviewRequired = readText(overlay, `${p}.interviewRequired`, 'yes')
-  if (isEmptyText(interviewRequired)) return true
-
-  if (isProgramAndRecruitPeriodIncomplete(overlay, p)) return true
-  if (isEmptyStringList(read(overlay, `${p}.volunteerTargets`))) return true
-  if (isEmptyText(read(overlay, `${p}.volunteerTargetDetail`))) return true
-
-  if (interviewRequired === 'yes') {
-    if (isEmptyText(read(overlay, `${p}.docDeadlineIso`))) return true
-    if (isEmptyText(read(overlay, `${p}.docAnnounceMethod`))) return true
-    if (isRangeSealIncomplete(read(overlay, `${p}.interviewRangeSeal`))) return true
-    if (isEmptyText(read(overlay, `${p}.interviewMethod`))) return true
-  }
-
-  if (isFinalAnnounceIncomplete(overlay, p)) return true
-  if (isInquiryIncomplete(overlay, p)) return true
-  if (isNotesIncomplete(overlay, p)) return true
+  pushReason(reasons, isEmptyText(interviewRequired), `${p}.interviewRequired`)
+  pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
+  pushReason(reasons, isEmptyStringList(read(overlay, `${p}.volunteerTargets`)), `${p}.volunteerTargets`)
+  pushReason(reasons, isEmptyText(read(overlay, `${p}.volunteerTargetDetail`)), `${p}.volunteerTargetDetail`)
 
   if (interviewRequired === 'yes') {
-    if (
-      hasIncompleteVolunteerInterviewSchedule(overlay, ctx.volunteerExceptionScheduleCount)
-    ) {
-      return true
-    }
+    pushReason(reasons, isEmptyText(read(overlay, `${p}.docDeadlineIso`)), `${p}.docDeadlineIso`)
+    pushReason(reasons, isEmptyText(read(overlay, `${p}.docAnnounceMethod`)), `${p}.docAnnounceMethod`)
+    pushReason(
+      reasons,
+      isRangeSealIncomplete(read(overlay, `${p}.interviewRangeSeal`)),
+      `${p}.interviewRangeSeal`
+    )
+    pushReason(reasons, isEmptyText(read(overlay, `${p}.interviewMethod`)), `${p}.interviewMethod`)
   }
-  return false
+
+  pushFinalAnnounceIncomplete(reasons, overlay, p)
+  pushInquiryIncomplete(reasons, overlay, p)
+  pushReason(reasons, isNotesIncomplete(overlay, p), `${p}.notes`)
+
+  if (interviewRequired === 'yes') {
+    reasons.push(...listIncompleteVolunteerInterviewSchedule(overlay, ctx.volunteerExceptionScheduleCount))
+  }
+  return reasons
+}
+
+/** 노출된 모집 탭 전부 — 미입력 필수 필드 진단 키 */
+export function listIncompleteGeneralProgramRecruitmentRequiredFields(
+  ctx: GeneralProgramRecruitmentRequiredFieldContext
+): string[] {
+  const reasons: string[] = []
+  const { participant } = ctx
+  if (participant.organization) {
+    reasons.push(
+      ...listIncompleteInstitutionRecruitInfo(getApplicantRecruitInstitutionOverlayRecord(), ctx)
+    )
+  }
+  const general = getGeneralRecruitOverlayRecord()
+  if (participant.individual) {
+    reasons.push(...listIncompleteIndividualRecruitInfo(general))
+  }
+  if (participant.teacherInstructor) {
+    reasons.push(...listIncompleteInstructorRecruitInfo(general))
+  }
+  if (participant.volunteer) {
+    reasons.push(...listIncompleteVolunteerRecruitInfo(general, ctx))
+  }
+  return reasons
 }
 
 /** 노출된 모집 탭 전부에 대해 필수 미입력 여부 */
 export function hasIncompleteGeneralProgramRecruitmentRequiredFields(
   ctx: GeneralProgramRecruitmentRequiredFieldContext
 ): boolean {
-  const { participant } = ctx
-  if (participant.organization) {
-    if (
-      hasIncompleteInstitutionRecruitInfo(getApplicantRecruitInstitutionOverlayRecord(), ctx)
-    ) {
-      return true
-    }
-  }
-  const general = getGeneralRecruitOverlayRecord()
-  if (participant.individual) {
-    if (hasIncompleteIndividualRecruitInfo(general)) return true
-  }
-  if (participant.teacherInstructor) {
-    if (hasIncompleteInstructorRecruitInfo(general)) return true
-  }
-  if (participant.volunteer) {
-    if (hasIncompleteVolunteerRecruitInfo(general, ctx)) return true
-  }
-  return false
+  return listIncompleteGeneralProgramRecruitmentRequiredFields(ctx).length > 0
 }

@@ -8,11 +8,15 @@ import {
 import {
   patchInstitutionApplicationProgramBridge,
   resetInstitutionApplicationProgramBridge,
+  syncInstitutionApplicationPreferredEducationFormFromOverlay,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resetApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { resetGeneralApplicationOverlay } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
-import { resetProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  getProgramRegistrationOverlayRecord,
+  resetProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   lookupTemplateRegistry,
@@ -51,8 +55,9 @@ import {
   registrationProgramTypeForTemplateCode,
   type ProgramRegistrationDraftTemplateCode,
 } from '@/features/program/shared/lib/registration-draft-notice'
-import { hasIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
-import { hasIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { listIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
+import { listIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { listIncompleteApplicationFormThirdPartyRecipientFieldKeys } from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { formatRegistrationStepTransitionLabel } from '@/features/program/shared/lib/log-program-registration-create-payload'
 
 /** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
@@ -80,6 +85,8 @@ export type UseGeneralProgramRegistrationFlowOptions = {
   registrationFormVariant?: ProgramRegistrationFormVariant
   /** true면 임시저장 복원 없이 시드로 시작 */
   skipDraftRestore?: boolean
+  /** 필수 미입력 검증 실패 시 — 인라인 강조용 진단 키 */
+  reportValidationIncomplete?: (keys: readonly string[]) => void
 }
 
 function resolveStepTemplateName(templateId: string): string {
@@ -377,8 +384,12 @@ export function useGeneralProgramRegistrationFlow(
       sessionRound: registrationVm.sessionRoundType,
       educationScheduleMode: registrationVm.educationScheduleMode,
     })
+    syncInstitutionApplicationPreferredEducationFormFromOverlay(
+      getProgramRegistrationOverlayRecord()
+    )
   }, [
     open,
+    isParticipantStep,
     registrationVm.programType,
     registrationVm.sessionRoundType,
     registrationVm.educationScheduleMode,
@@ -490,6 +501,8 @@ export function useGeneralProgramRegistrationFlow(
         isProgramStep &&
         registrationVm.hasIncompleteRequiredFields()
       ) {
+        const incompleteKeys = registrationVm.listIncompleteRequiredFieldKeys()
+        options?.reportValidationIncomplete?.(incompleteKeys)
         const missingLabels =
           registrationFormVariant === 'trainedTeachers'
             ? registrationVm.getIncompleteRequiredFieldLabels()
@@ -514,17 +527,20 @@ export function useGeneralProgramRegistrationFlow(
         phase === 'recruitment' &&
         nextPhase === 'application'
       ) {
-        const recruitIncomplete =
+        const recruitCtx = {
+          participant: participantFlags,
+          programType: registrationVm.programType,
+          sessionRoundType: registrationVm.sessionRoundType,
+          educationScheduleMode: registrationVm.educationScheduleMode,
+          volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+        }
+        const recruitIncompleteKeys =
           registrationFormVariant === 'economy'
-            ? hasIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
-            : hasIncompleteGeneralProgramRecruitmentRequiredFields({
-                participant: participantFlags,
-                programType: registrationVm.programType,
-                sessionRoundType: registrationVm.sessionRoundType,
-                educationScheduleMode: registrationVm.educationScheduleMode,
-                volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
-              })
+            ? listIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
+            : listIncompleteGeneralProgramRecruitmentRequiredFields(recruitCtx)
+        const recruitIncomplete = recruitIncompleteKeys.length > 0
         if (recruitIncomplete) {
+          options?.reportValidationIncomplete?.(recruitIncompleteKeys)
           showAlert({
             title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
             content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -548,6 +564,7 @@ export function useGeneralProgramRegistrationFlow(
       participantVm.volunteerExceptionScheduleCount,
       phase,
       registrationFormVariant,
+      options,
       registrationVm,
       selectStep,
       showAlert,
@@ -580,13 +597,22 @@ export function useGeneralProgramRegistrationFlow(
               draft: participantVm.draft,
             }
           : undefined
-      const recipientReason = describeIncompleteApplicationFormThirdPartyRecipient({
-        program: registrationVm.buildCurrentProgramSnapshot(
-          registrationPendingSnapshotId(registrationFormVariant)
-        ),
+      const programSnapshot = registrationVm.buildCurrentProgramSnapshot(
+        registrationPendingSnapshotId(registrationFormVariant)
+      )
+      const applicationIncompleteKeys = listIncompleteApplicationFormThirdPartyRecipientFieldKeys({
+        program: programSnapshot,
         current,
       })
+      const recipientReason =
+        applicationIncompleteKeys.length > 0
+          ? applicationIncompleteKeys[0]
+          : describeIncompleteApplicationFormThirdPartyRecipient({
+              program: programSnapshot,
+              current,
+            })
       if (recipientReason != null) {
+        options?.reportValidationIncomplete?.(applicationIncompleteKeys)
         console.debug('[registration] 신청 양식 제공받는 곳 미입력:', recipientReason)
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,

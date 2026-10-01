@@ -2,7 +2,7 @@ import { useEffect, useMemo, type ReactNode } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -199,7 +199,6 @@ export function ProgramRegistrationBasicInfoParagraph({
   }
 
   const educationCourseOptions = [...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]
-
   return (
     <>
       <DetailInfoForm
@@ -217,6 +216,7 @@ export function ProgramRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="사업 운영 기간"
+            validationKey="basicInfo.operationRangeSeal"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <ParagraphDatePicker
@@ -252,6 +252,7 @@ export function ProgramRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="참여자 유형"
+            validationKey="basicInfo.audience"
             edit={
               participantTypesEdit ?? (
                 <div className="detail-info-form-inputs-wrapper">
@@ -285,6 +286,7 @@ export function ProgramRegistrationBasicInfoParagraph({
           />
           <DetailInfoForm.Field
             label="사업 분야"
+            validationKey="basicInfo.businessField"
             edit={
               <div className="detail-info-form-inputs-wrapper">
                 <CmsSelect
@@ -311,6 +313,7 @@ export function ProgramRegistrationBasicInfoParagraph({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="교육 장소"
+              validationKey="basicInfo.educationVenueDetail"
               fullRow
               edit={
                 <div className="detail-info-form-inputs-wrapper">
@@ -363,10 +366,16 @@ export function ProgramRegistrationBasicInfoParagraph({
         </DetailInfoForm.Row>
       </DetailInfoForm>
 
-      <DetailInfoForm title="" hideHeader mode="edit" className="program-registration-paragraph">
+      <DetailInfoForm
+        title=""
+        hideHeader
+        mode="edit"
+        className="program-registration-paragraph"
+      >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="교육 과정"
+            validationKey="basicInfo.educationCourse"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
@@ -386,6 +395,7 @@ export function ProgramRegistrationBasicInfoParagraph({
           />
           <DetailInfoForm.Field
             label="IP Owned"
+            validationKey="basicInfo.ipOwned"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
@@ -405,6 +415,7 @@ export function ProgramRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="Course Delivered By"
+            validationKey="basicInfo.courseDeliveredBy"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect

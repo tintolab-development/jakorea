@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import type {
   ProgramRegistrationScheduleDetailKind,
   ProgramRegistrationSessionRoundType,
@@ -20,7 +20,10 @@ import {
   shouldShowEducationFormParticipantSelectionRadio,
   type EducationFormTypeSettingsMode,
 } from './program-registration-education-form-options'
-import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  getProgramRegistrationOverlayRecord,
+  useProgramRegistrationOverlayKv,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { typeSettingsPerScheduleHint } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import './program-registration-paragraph.css'
 
@@ -50,6 +53,7 @@ function ScheduleDetailRadioRow({
   onChange,
   commonDetailEdit,
   perScheduleHint,
+  validationKey,
 }: {
   label: string
   value: ProgramRegistrationScheduleDetailKind
@@ -57,6 +61,7 @@ function ScheduleDetailRadioRow({
   /** `일정 공통`일 때 라디오 오른쪽에 노출 (스크린샷: 구분선 + CmsSelect 등) */
   commonDetailEdit?: ReactNode
   perScheduleHint: string
+  validationKey?: string
 }) {
   const handleChange = (e: RadioChangeEvent) => {
     onChange(e.target.value as ProgramRegistrationScheduleDetailKind)
@@ -66,6 +71,7 @@ function ScheduleDetailRadioRow({
     <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
         label={label}
+        validationKey={validationKey}
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
@@ -111,6 +117,7 @@ export function EducationFormTypeSettingsRadioRow({
     <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
         label="교육 형태"
+        validationKey="typeSettings.multiCommonEducationForm"
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
@@ -207,14 +214,29 @@ export function ProgramRegistrationTypeSettingsParagraph({
       return
     }
     const form = sessionRoundType === 'multi' ? multiCommonEducationForm : singleEducationForm
+    if (form === 'participant_selection') {
+      patchInstitutionApplicationProgramBridge({
+        showPreferredEducationForm: true,
+      })
+      return
+    }
+    // overlay reset 직후 기본값 online으로 false를 덮어쓰지 않는다
+    if (Object.keys(getProgramRegistrationOverlayRecord()).length === 0) return
     patchInstitutionApplicationProgramBridge({
-      showPreferredEducationForm: form === 'participant_selection',
+      showPreferredEducationForm: false,
     })
   }, [sessionRoundType, educationFormScheduleDetail, singleEducationForm, multiCommonEducationForm])
 
-  /** 복수회차·일정 공통 — 빈 값은 단일 회차와 같은 기본값으로 채운다 */
+  /** 복수회차·일정 공통 — overlay 미기록만 단일 회차 값으로 시드. 사용자가 비운 값은 유지. */
   useEffect(() => {
     if (sessionRoundType !== 'multi' || educationFormScheduleDetail !== 'common') return
+    if (
+      getProgramRegistrationOverlayRecord()[
+        'generalRegistration.typeSettings.multiCommonEducationForm'
+      ] !== undefined
+    ) {
+      return
+    }
     if (multiCommonEducationForm.trim()) return
     setMultiCommonEducationForm(singleEducationForm.trim() || 'online')
   }, [
@@ -228,6 +250,13 @@ export function ProgramRegistrationTypeSettingsParagraph({
   useEffect(() => {
     if (participantOrganization) return
     if (sessionRoundType !== 'multi' || participationScheduleDetail !== 'common') return
+    if (
+      getProgramRegistrationOverlayRecord()[
+        'generalRegistration.typeSettings.multiCommonParticipation'
+      ] !== undefined
+    ) {
+      return
+    }
     if (multiCommonParticipation.trim()) return
     setMultiCommonParticipation(singleParticipation.trim() || 'individual')
   }, [
@@ -320,6 +349,7 @@ export function ProgramRegistrationTypeSettingsParagraph({
             ) : (
               <ScheduleDetailRadioRow
                 label="교육 형태"
+                validationKey="typeSettings.multiCommonEducationForm"
                 value={educationFormScheduleDetail}
                 onChange={onEducationFormScheduleDetailChange}
                 perScheduleHint={perScheduleHint}
@@ -339,6 +369,7 @@ export function ProgramRegistrationTypeSettingsParagraph({
             {showParticipationMethod ? (
               <ScheduleDetailRadioRow
                 label="참여 방식"
+                validationKey="typeSettings.multiCommonParticipation"
                 value={participationScheduleDetail}
                 onChange={onParticipationScheduleDetailChange}
                 perScheduleHint={perScheduleHint}
@@ -357,6 +388,7 @@ export function ProgramRegistrationTypeSettingsParagraph({
             ) : null}
             <ScheduleDetailRadioRow
               label="IPS 유형"
+              validationKey="typeSettings.ipsType"
               value={ipsScheduleDetail}
               onChange={onIpsScheduleDetailChange}
               perScheduleHint={perScheduleHint}
@@ -407,6 +439,7 @@ export function ProgramRegistrationTypeSettingsParagraph({
             </DetailInfoForm.Row>
             <ScheduleDetailRadioRow
               label="IPS 유형"
+              validationKey="typeSettings.ipsType"
               value={ipsScheduleDetail}
               onChange={onIpsScheduleDetailChange}
               perScheduleHint={perScheduleHint}

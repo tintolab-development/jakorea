@@ -64,8 +64,11 @@ export function isBlankApplicationFormThirdPartyRecipientValue(raw: string): boo
   return false
 }
 
-/** 신청 양식 draft에 제3자 「제공받는 곳」이 비어 있으면 true */
-export function hasIncompleteApplicationFormThirdPartyRecipient(draft: WritingFormDraft): boolean {
+/** 미입력 「제공받는 곳」 셀 — `application.thirdParty.{paragraphId}.{rowIndex}.{columnIndex}` */
+export function listIncompleteApplicationFormThirdPartyRecipientKeys(
+  draft: WritingFormDraft
+): string[] {
+  const keys: string[] = []
   for (const paragraph of draft.paragraphs) {
     if (paragraph.variant !== 'horizontal_table') continue
     if (!isApplicationFormThirdPartyConsentParagraph(paragraph.id)) continue
@@ -77,8 +80,15 @@ export function hasIncompleteApplicationFormThirdPartyRecipient(draft: WritingFo
         fieldCell != null
           ? fieldCellValueToPlainText(fieldCell)
           : (paragraph.dataRows[rowIndex]?.[col] ?? '')
-      if (isBlankApplicationFormThirdPartyRecipientValue(text)) return true
+      if (isBlankApplicationFormThirdPartyRecipientValue(text)) {
+        keys.push(`application.thirdParty.${paragraph.id}.${rowIndex}.${col}`)
+      }
     }
   }
-  return false
+  return keys
+}
+
+/** 신청 양식 draft에 제3자 「제공받는 곳」이 비어 있으면 true */
+export function hasIncompleteApplicationFormThirdPartyRecipient(draft: WritingFormDraft): boolean {
+  return listIncompleteApplicationFormThirdPartyRecipientKeys(draft).length > 0
 }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resolveKpiFieldValueForParticipantAvailability } from '@/features/template/ui/form-set/registration-form/shared/program-registration-kpi-participant-sync'
@@ -192,6 +192,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="참여자 최종 인원"
+          validationKey="kpi.participantCount"
           edit={
             <KpiCountInput
               placeholder="목표값 입력"
@@ -203,6 +204,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
         />
         <DetailInfoForm.Field
           label="교육진행자 최종 인원"
+          validationKey="kpi.instructor"
           edit={
             <div className="detail-info-form-inputs-wrapper program-registration-paragraph__instructor-kpi-row">
               {progressItems.map((item, index) => {
@@ -262,6 +264,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최종 파견 학교 수"
+          validationKey="kpi.dispatchedSchool"
           edit={
             <KpiCountInput
               disabled={dispatchedSchoolDisabled}
@@ -274,6 +277,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
         />
         <DetailInfoForm.Field
           label="최종 파견 학급 수"
+          validationKey="kpi.dispatchedClass"
           edit={
             <KpiCountInput
               disabled={dispatchedClassDisabled}

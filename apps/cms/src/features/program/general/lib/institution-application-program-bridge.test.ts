@@ -1,14 +1,41 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import type { Program } from '@/types/domain'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
+import { EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
+import {
+  resetProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
   getInstitutionApplicationFormHiddenParagraphIds,
+  getInstitutionApplicationProgramBridge,
+  patchInstitutionApplicationProgramBridge,
+  resetInstitutionApplicationProgramBridge,
   resolveInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationPreferredScheduleParagraph,
   shouldShowInstitutionApplicationScheduleParagraph,
+  syncInstitutionApplicationPreferredEducationFormFromOverlay,
 } from './institution-application-program-bridge'
 
+afterEach(() => {
+  resetInstitutionApplicationProgramBridge()
+  resetProgramRegistrationOverlay()
+})
+
 describe('resolveInstitutionApplicationProgramBridge', () => {
+  it('GET 온라인 라벨 + overlay 참여자 선택이면 희망 교육 형태를 켠다', () => {
+    const bridge = resolveInstitutionApplicationProgramBridge({
+      id: 'prog-preferred',
+      generalCommonInfo: { educationFormLabel: '온라인' },
+      registrationOverlay: {
+        'generalRegistration.typeSettings.multiCommonEducationForm':
+          EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
+      },
+    } as unknown as Program)
+
+    expect(bridge.showPreferredEducationForm).toBe(true)
+  })
+
   it('프로그램 공통 정보의 교육 진행 예정일을 브리지에 포함한다', () => {
     const bridge = resolveInstitutionApplicationProgramBridge({
       id: GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
@@ -137,6 +164,43 @@ describe('getInstitutionApplicationFormHiddenParagraphIds', () => {
       preEducationNoticeRequired: true,
     })
     expect(hidden?.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)).toBe(true)
+  })
+})
+
+describe('syncInstitutionApplicationPreferredEducationFormFromOverlay', () => {
+  it('overlay reset 후에도 브리지 플래그를 유지한다', () => {
+    patchInstitutionApplicationProgramBridge({ showPreferredEducationForm: true })
+    expect(getInstitutionApplicationProgramBridge().showPreferredEducationForm).toBe(true)
+
+    resetProgramRegistrationOverlay()
+    syncInstitutionApplicationPreferredEducationFormFromOverlay({})
+
+    expect(getInstitutionApplicationProgramBridge().showPreferredEducationForm).toBe(true)
+  })
+
+  it('overlay 참여자 선택이면 플래그를 켠다', () => {
+    syncInstitutionApplicationPreferredEducationFormFromOverlay({
+      'generalRegistration.typeSettings.singleEducationForm':
+        EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
+    })
+    expect(getInstitutionApplicationProgramBridge().showPreferredEducationForm).toBe(true)
+  })
+
+  it('복수회차 online이 남아 있어도 단일 회차 참여자 선택이면 켠다', () => {
+    syncInstitutionApplicationPreferredEducationFormFromOverlay({
+      'generalRegistration.typeSettings.multiCommonEducationForm': 'online',
+      'generalRegistration.typeSettings.singleEducationForm':
+        EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
+    })
+    expect(getInstitutionApplicationProgramBridge().showPreferredEducationForm).toBe(true)
+  })
+
+  it('overlay에 참여자 선택이 없으면 기존 true를 끄지 않는다', () => {
+    patchInstitutionApplicationProgramBridge({ showPreferredEducationForm: true })
+    syncInstitutionApplicationPreferredEducationFormFromOverlay({
+      'generalRegistration.typeSettings.multiCommonEducationForm': 'online',
+    })
+    expect(getInstitutionApplicationProgramBridge().showPreferredEducationForm).toBe(true)
   })
 })
 
