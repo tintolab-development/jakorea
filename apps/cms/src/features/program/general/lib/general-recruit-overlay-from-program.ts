@@ -224,7 +224,7 @@ export function buildGeneralRecruitOverlayFromProgram(
     [keys.detailInfo.instructorMethod]: instructor?.applicationMethod?.trim() || '',
     [keys.detailInfo.instructorLearningSupport]: instructor?.learningSupportContent?.trim() || '',
     [keys.detailInfo.instructorAdditionalHtml]: instructor?.additionalContentHtml?.trim() || '',
-    [keys.detailInfo.instructorOtherNotes]: instructor?.remarks?.trim() || '',
+    [keys.detailInfo.instructorOtherNotes]: instructor?.otherMatters?.trim() || '',
     [keys.volunteer.volunteerTargets]: volunteerTargets,
     [keys.volunteer.volunteerTargetDetail]:
       program.volunteerTargetDetail?.trim() || volunteer?.recruitmentTargetDetail?.trim() || '',
@@ -239,7 +239,7 @@ export function buildGeneralRecruitOverlayFromProgram(
     [keys.detailInfo.volunteerMethod]: volunteer?.applicationMethod?.trim() || '',
     [keys.detailInfo.volunteerLearningSupport]: volunteer?.learningSupportContent?.trim() || '',
     [keys.detailInfo.volunteerAdditionalHtml]: volunteer?.additionalContentHtml?.trim() || '',
-    [keys.detailInfo.volunteerOtherNotes]: volunteer?.remarks?.trim() || '',
+    [keys.detailInfo.volunteerOtherNotes]: volunteer?.otherMatters?.trim() || '',
   }
 
   const published = publishedOverlay(participant?.announcementPublished)

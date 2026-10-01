@@ -122,6 +122,22 @@ describe('buildGeneralProgramPortalPreview', () => {
     })
   })
 
+  it('maps volunteer otherMatters from the volunteer row, not program otherNotes', () => {
+    const detail = buildGeneralProgramPortalPreview({
+      audience: 'volunteers',
+      program: makeProgram({
+        otherNotes: '프로그램 공통 기타',
+        generalCommonInfo: {
+          volunteerRecruitmentInfo: { otherMatters: 'nested 기타' },
+        },
+        programRecruitments: [
+          { id: 186070, recruitmentType: 'VOLUNTEER', otherMatters: '행 기타사항' },
+        ],
+      }),
+    })
+    expect(detail.otherMatters).toBe('행 기타사항')
+  })
+
   it('maps the volunteer tab with interview dates and hides notes marked not applicable', () => {
     const detail = buildGeneralProgramPortalPreview({
       audience: 'volunteers',

@@ -245,6 +245,17 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
     })
   })
 
+  it('강사 모집 비고 — instructorRecruitmentInfo.remarks만 갱신한다', () => {
+    const patch = applyRecruitmentDetailInfoFields({}, existing, 'instructor', {
+      remarks: '강사 비고 신값',
+    })
+
+    expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.remarks).toBe('강사 비고 신값')
+    expect(patch.registrationOverlay?.['recruit.instructor.notes']).toBe('강사 비고 신값')
+    expect(patch.registrationOverlay?.['recruitInstructor.detailInfo.otherNotes']).toBeUndefined()
+    expect(patch.otherNotes).toBeUndefined()
+  })
+
   it('봉사자 모집 비고 — volunteerRecruitmentInfo.remarks만 갱신한다', () => {
     const patch = applyRecruitmentDetailInfoFields({}, existing, 'volunteer', {
       remarks: '봉사자 비고 신값',
@@ -252,9 +263,39 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
 
     expect(patch.generalCommonInfo?.volunteerRecruitmentInfo?.remarks).toBe('봉사자 비고 신값')
     expect(patch.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBeUndefined()
-    expect(patch.registrationOverlay?.['recruitVolunteer.detailInfo.otherNotes']).toBe(
-      '봉사자 비고 신값'
-    )
+    expect(patch.registrationOverlay?.['recruit.volunteer.notes']).toBe('봉사자 비고 신값')
+    expect(patch.registrationOverlay?.['recruitVolunteer.detailInfo.otherNotes']).toBeUndefined()
     expect(patch.otherNotes).toBeUndefined()
+  })
+
+  it('봉사자 기타사항은 행·nested otherMatters에만 쓰고 프로그램 otherNotes로 새지 않는다', () => {
+    const withVolunteerRow = {
+      ...existing,
+      otherNotes: '프로그램 공통 기타',
+      programRecruitments: [
+        { id: 186070, recruitmentType: 'VOLUNTEER', otherMatters: '옛 행 기타' },
+      ],
+    } as Program
+    const patch = applyRecruitmentDetailInfoFields(
+      { otherNotes: '폼 기타사항' },
+      withVolunteerRow,
+      'volunteer',
+      { otherMatters: '봉사자 기타 신값' }
+    )
+
+    expect(patch.otherNotes).toBeUndefined()
+    expect(patch.generalCommonInfo?.volunteerRecruitmentInfo?.otherMatters).toBe('봉사자 기타 신값')
+    expect(patch.registrationOverlay?.['recruitVolunteer.detailInfo.otherNotes']).toBe(
+      '봉사자 기타 신값'
+    )
+    expect(patch.programRecruitments?.find(row => row.id === 186070)?.otherMatters).toBe(
+      '봉사자 기타 신값'
+    )
+
+    const display = resolveGeneralRecruitDetailDisplayProgram(
+      { ...withVolunteerRow, ...patch } as Program,
+      'volunteer'
+    )
+    expect(display.otherNotes).toBe('봉사자 기타 신값')
   })
 })
