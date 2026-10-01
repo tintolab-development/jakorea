@@ -95,6 +95,16 @@ export function resolveUjatRecruitDisplayProgram(
   )
 }
 
+function volunteerHalfPeriod(
+  values: ProgramDetailEditFormValues,
+  _half: UjatVolunteerRecruitHalf
+): { startAt?: string | null; endAt?: string | null } {
+  const startAt = values.volunteerApplicationStartDate?.trim() || null
+  const endAt = values.volunteerApplicationEndDate?.trim() || null
+  if (!startAt && !endAt) return {}
+  return { startAt, endAt }
+}
+
 /** 공고용 프로그램명 — 모집 유형 overlay만. 공통정보·다른 탭과 공유하지 않는다. */
 export function resolveUjatRecruitAnnouncementTitle(
   program: Program,
@@ -150,8 +160,10 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
         args.existing,
         args.kind === 'institution' ? 'participant' : 'volunteer',
         {
+          ...(args.title !== undefined ? { announcementTitle: args.title.trim() || null } : {}),
           programDescription: args.values.description?.trim() || null,
           recruitmentGuide: args.values.recruitmentGuide?.trim() || null,
+          applicationMethod: args.values.applicationMethod?.trim() || null,
           learningSupportContent: args.values.learningSupportContent?.trim() || null,
           additionalContentHtml:
             (typeof institutionHtml === 'string'
@@ -159,6 +171,14 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
               : args.values.additionalContentHtml
             )?.trim() || null,
           remarks: args.values.oneLineIntroduction?.trim() || null,
+          contactName:
+            (args.kind === 'institution'
+              ? args.values.recruitmentContactOrganizationName
+              : args.values.volunteerRecruitmentContactOrganizationName
+            )?.trim() || null,
+          contactPhone: args.values.contactPhone?.trim() || null,
+          contactEmail: args.values.contactEmail?.trim() || null,
+          ...(half ? volunteerHalfPeriod(args.values, half) : {}),
         },
         half ?? undefined
       )

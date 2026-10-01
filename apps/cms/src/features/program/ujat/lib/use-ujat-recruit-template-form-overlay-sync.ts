@@ -277,14 +277,44 @@ function applyUjatRecruitmentRowCopyToForm(
     kind === 'institution' ? 'participant' : 'volunteer',
     kind === 'volunteer' ? (volunteerHalf ?? 'h1') : undefined
   )
-  if (!row || !hasRecruitmentCopy(row)) return values
+  if (!row) return values
+  const contactName =
+    kind === 'institution'
+      ? { recruitmentContactOrganizationName: row.contactName?.trim() ?? '' }
+      : { volunteerRecruitmentContactOrganizationName: row.contactName?.trim() ?? '' }
+  const halfPeriod =
+    kind === 'volunteer'
+      ? {
+          ...(row.startAt ? { volunteerApplicationStartDate: row.startAt } : {}),
+          ...(row.endAt ? { volunteerApplicationEndDate: row.endAt } : {}),
+        }
+      : volunteerHalf !== 'h2' && row.startAt
+        ? {
+            applicationStartDate: row.startAt,
+            ...(row.endAt ? { applicationEndDate: row.endAt } : {}),
+          }
+        : {}
   return {
     ...values,
-    description: row.programDescription?.trim() ?? '',
-    recruitmentGuide: row.recruitmentGuide?.trim() ?? '',
-    learningSupportContent: row.learningSupportContent?.trim() ?? '',
-    additionalContentHtml: row.additionalContentHtml?.trim() ?? '',
-    oneLineIntroduction: row.remarks?.trim() ?? '',
+    ...(row.announcementTitle != null
+      ? { announcementTitle: row.announcementTitle.trim() }
+      : {}),
+    ...(row.applicationMethod != null
+      ? { applicationMethod: row.applicationMethod.trim() }
+      : {}),
+    ...(row.contactName != null ? contactName : {}),
+    ...(row.contactPhone != null ? { contactPhone: row.contactPhone.trim() } : {}),
+    ...(row.contactEmail != null ? { contactEmail: row.contactEmail.trim() } : {}),
+    ...halfPeriod,
+    ...(hasRecruitmentCopy(row)
+      ? {
+          description: row.programDescription?.trim() ?? '',
+          recruitmentGuide: row.recruitmentGuide?.trim() ?? '',
+          learningSupportContent: row.learningSupportContent?.trim() ?? '',
+          additionalContentHtml: row.additionalContentHtml?.trim() ?? '',
+          oneLineIntroduction: row.remarks?.trim() ?? '',
+        }
+      : {}),
   }
 }
 

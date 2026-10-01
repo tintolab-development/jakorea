@@ -1303,9 +1303,17 @@ export function UjatProgramDetailFullPageModal({
                 ...patch,
                 ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
                 generalCommonInfo: draftWithOverlay.generalCommonInfo,
+                programRecruitments: draftWithOverlay.programRecruitments,
               }
               if (onUpdateProgram) {
-                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, remotePatch)
+                await onUpdateProgram(
+                  draftWithOverlay.id,
+                  {
+                    ...draftWithOverlay,
+                    programRecruitments: displayProgram.programRecruitments,
+                  },
+                  remotePatch
+                )
               } else {
                 await updateProgram(draftWithOverlay.id, draftWithOverlay)
               }
@@ -1389,9 +1397,17 @@ export function UjatProgramDetailFullPageModal({
                 applicationMethod: draftWithOverlay.applicationMethod,
                 additionalContentHtml: draftWithOverlay.additionalContentHtml,
                 rounds: draftWithOverlay.rounds,
+                programRecruitments: draftWithOverlay.programRecruitments,
               }
               if (onUpdateProgram) {
-                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, remotePatch)
+                await onUpdateProgram(
+                  draftWithOverlay.id,
+                  {
+                    ...draftWithOverlay,
+                    programRecruitments: displayProgram.programRecruitments,
+                  },
+                  remotePatch
+                )
               } else {
                 await updateProgram(draftWithOverlay.id, draftWithOverlay)
               }

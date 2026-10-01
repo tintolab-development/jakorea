@@ -94,14 +94,17 @@ export function buildUjatRecruitVolunteerOverlayFromDetailEditValues(
     [KEYS.volunteerTargets]: values.volunteerTargets ?? [],
     [KEYS.targetDetail]: values.volunteerTargetDetail?.trim() ?? '',
     [KEYS.recruitRange]: toRangeSeal(
-      h1?.startDate ?? values.volunteerApplicationStartDate,
-      h1?.endDate ?? values.volunteerApplicationEndDate
+      values.volunteerApplicationStartDate,
+      values.volunteerApplicationEndDate
     ),
     [KEYS.recruitRangeH1]: toRangeSeal(
-      h1?.startDate ?? values.volunteerApplicationStartDate,
-      h1?.endDate ?? values.volunteerApplicationEndDate
+      values.volunteerApplicationStartDate,
+      values.volunteerApplicationEndDate
     ),
-    [KEYS.recruitRangeH2]: toRangeSeal(h2?.startDate, h2?.endDate),
+    [KEYS.recruitRangeH2]: toRangeSeal(
+      values.volunteerApplicationStartDate,
+      values.volunteerApplicationEndDate
+    ),
     [KEYS.activityTermH1]: h1?.curriculum?.trim() ?? '',
     [KEYS.activityTermH2]: h2?.curriculum?.trim() ?? '',
     [KEYS.docAnnounce]: {
