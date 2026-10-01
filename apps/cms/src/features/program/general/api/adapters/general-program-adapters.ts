@@ -623,11 +623,13 @@ function withGeneralCreateRowCopy(
   })
 }
 
-/** 담당자·비고는 각 모집 탭 `*RecruitmentInfo`에서만 읽는다. 프로그램 `managerName`·기타사항을 쓰지 않는다. */
+/** 담당자·비고는 각 모집 탭 `*RecruitmentInfo`에서만 읽는다. 프로그램 `managerName`·기타사항을 비고로 쓰지 않는다. */
 function createRowContactOf(
   program: Program,
   audience: RecruitmentCopyAudience
-): Pick<ProgramRecruitmentRequest, 'contactName' | 'contactPhone' | 'contactEmail' | 'remarks'> {
+): Pick<ProgramRecruitmentRequest, 'contactName' | 'contactPhone' | 'contactEmail' | 'remarks'> & {
+  otherMatters?: string
+} {
   const common = program.generalCommonInfo
   const info =
     audience === 'instructor'
@@ -639,11 +641,16 @@ function createRowContactOf(
     audience === 'participant' ? common?.participantRecruitmentInfo?.contactName : undefined
   const notesNotApplicable =
     info != null && 'notesNotApplicable' in info && info.notesNotApplicable === true
+  const otherMatters =
+    audience !== 'participant' && info != null && 'otherMatters' in info
+      ? info.otherMatters?.trim() || undefined
+      : undefined
   return {
     contactName: info?.contactOrganizationName?.trim() || participantContactName?.trim() || undefined,
     contactPhone: toRequestPhone(info?.contactPhone ?? info?.inquiryTel ?? info?.tel) || undefined,
     contactEmail: (info?.contactEmail ?? info?.inquiryEmail ?? info?.email)?.trim() || undefined,
     remarks: notesNotApplicable ? undefined : info?.remarks?.trim() || undefined,
+    ...(otherMatters ? { otherMatters } : {}),
   }
 }
 

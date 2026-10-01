@@ -96,6 +96,35 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
     expect(programToRecruitmentTabEditValues(program, 'volunteer').otherNotes).toBe('기타 안내')
   })
 
+  it('봉사자 기타사항은 행 otherMatters를 쓰고 비고·프로그램 공통을 섞지 않는다', () => {
+    const program = {
+      id: 'general-prog-volunteer-other-matters',
+      title: '기타사항',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      otherNotes: '프로그램 공통 기타',
+      oneLineIntroduction: '한줄 소개',
+      generalCommonInfo: {
+        volunteerRecruitmentInfo: { remarks: '봉사자 비고', otherMatters: 'nested 기타' },
+      },
+      programRecruitments: [
+        {
+          id: 186070,
+          recruitmentType: 'VOLUNTEER',
+          remarks: '행 비고',
+          otherMatters: '행 기타사항',
+        },
+      ],
+    } as Program
+
+    const values = programToRecruitmentTabEditValues(program, 'volunteer')
+    expect(values.otherNotes).toBe('행 기타사항')
+    expect(values.oneLineIntroduction).toBe('봉사자 비고')
+  })
+
+
   it('강사 모집 대상 라벨을 instructorTargets로 복원한다', () => {
     const program = {
       id: 'general-prog-2',

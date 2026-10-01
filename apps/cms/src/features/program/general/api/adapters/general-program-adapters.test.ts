@@ -442,7 +442,7 @@ describe('general-program-adapters', () => {
       contactEmail: 'program@jakorea.org',
       otherNotes: '우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.',
       generalProgramAudience: 'organization',
-      generalParticipantTypes: ['school_institution', 'volunteer'],
+      generalParticipantTypes: ['school_institution', 'teacher_instructor', 'volunteer'],
       volunteerApplicationStartDate: '2026-09-18T15:00:00.000Z',
       volunteerApplicationEndDate: '2026-09-21T15:00:00.000Z',
       generalCommonInfo: {
@@ -452,15 +452,22 @@ describe('general-program-adapters', () => {
           contactEmail: 'edu.team@jakorea.org',
           remarks: '참여기관 비고',
         },
+        instructorRecruitmentInfo: {
+          contactOrganizationName: '강사 담당',
+          remarks: '신청 전 학교 담당 교사 확인이 필요합니다.',
+          otherMatters: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+        },
         volunteerRecruitmentInfo: {
           contactOrganizationName: '정민재',
           contactPhone: '010-6234-7890',
           remarks: '봉사자 비고',
+          otherMatters: '봉사자 기타사항',
         },
       },
     })
 
     const org = request.recruitments?.find(row => row.targetType === 'ORGANIZATION')
+    const instructor = request.recruitments?.find(row => row.recruitmentType === 'INSTRUCTOR')
     const volunteer = request.recruitments?.find(row => row.recruitmentType === 'VOLUNTEER')
     expect(org).toMatchObject({
       contactName: '최수아',
@@ -468,10 +475,15 @@ describe('general-program-adapters', () => {
       contactEmail: 'edu.team@jakorea.org',
       remarks: '참여기관 비고',
     })
+    expect(instructor).toMatchObject({
+      remarks: '신청 전 학교 담당 교사 확인이 필요합니다.',
+      otherMatters: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+    })
     expect(volunteer).toMatchObject({
       contactName: '정민재',
       contactPhone: '010-6234-7890',
       remarks: '봉사자 비고',
+      otherMatters: '봉사자 기타사항',
     })
     expect(volunteer?.contactEmail).toBeUndefined()
   })

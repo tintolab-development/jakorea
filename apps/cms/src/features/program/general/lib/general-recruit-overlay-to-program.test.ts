@@ -4,6 +4,7 @@ import type { Program } from '@/types/domain'
 import {
   applyGeneralRecruitOverlayToProgram,
   GENERAL_RECRUIT_OVERLAY_KEYS,
+  resolveGeneralRecruitDetailDisplayProgram,
 } from './general-recruit-overlay-to-program'
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 
@@ -199,6 +200,35 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(schedule?.availableTimeSlots).toBe('09:00 ~ 09:30')
   })
 
+  it('maps volunteer interview exception blocks into the saved schedule', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const exceptionStart = dayjs('2026-03-26T14:00:00')
+    const exceptionEnd = exceptionStart.add(30, 'minute')
+    const overlay: Record<string, unknown> = {
+      [keys.volunteer.interviewRequired]: 'yes',
+      'recruit.volunteer.interview.selectedSlotKeys': [
+        `${dayjs('2026-03-26T09:00:00').valueOf()}-${dayjs('2026-03-26T09:30:00').valueOf()}`,
+      ],
+      'recruit.volunteer.interview.exception.1710000000000.exceptionDate':
+        '2026-03-26T00:00:00.000Z',
+      'recruit.volunteer.interview.exception.1710000000000.selectedSlotKeys': [
+        `${exceptionStart.valueOf()}-${exceptionEnd.valueOf()}`,
+      ],
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(baseProgram(), overlay, {
+      preferOverlay: true,
+    })
+
+    expect(next.generalCommonInfo?.volunteerInterviewScheduleInfo?.exceptions).toEqual([
+      expect.objectContaining({
+        blockId: 1710000000000,
+        exceptionDateIso: '2026-03-26T00:00:00.000Z',
+        availableTimeSlots: '14:00 ~ 14:30',
+      }),
+    ])
+  })
+
   it('skips volunteer interview schedule when interview is disabled', () => {
     const keys = GENERAL_RECRUIT_OVERLAY_KEYS
     const overlay: Record<string, unknown> = {
@@ -382,4 +412,60 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.generalCommonInfo?.participantRecruitmentInfo?.notesNotApplicable).toBe(false)
     expect(next.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('수정된 비고')
   })
+
+  it('강사·봉사자 overlay notes는 비고, detailInfo.otherNotes는 기타사항으로 넣는다', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const next = applyGeneralRecruitOverlayToProgram(
+      baseProgram(),
+      {
+        [keys.instructor.notes]: '신청 전 학교 담당 교사 확인이 필요합니다.',
+        [keys.detailInfo.instructorOtherNotes]:
+          '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+        [keys.volunteer.notes]: '모집 인원 초과 시 선착순으로 마감합니다.',
+        [keys.detailInfo.volunteerOtherNotes]:
+          '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+      },
+      { preferOverlay: true }
+    )
+
+    const instructorInfo = next.generalCommonInfo?.instructorRecruitmentInfo
+    const volunteerInfo = next.generalCommonInfo?.volunteerRecruitmentInfo
+    expect(instructorInfo?.remarks).toBe('신청 전 학교 담당 교사 확인이 필요합니다.')
+    expect(instructorInfo?.otherMatters).toBe(
+      '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
+    )
+    expect(volunteerInfo?.remarks).toBe('모집 인원 초과 시 선착순으로 마감합니다.')
+    expect(volunteerInfo?.otherMatters).toBe(
+      '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
+    )
+    expect(next.otherNotes).toBeUndefined()
+  })
 })
+
+describe('resolveGeneralRecruitDetailDisplayProgram', () => {
+  it('봉사자 상세 기타사항은 행 otherMatters를 쓰고 비고 overlay를 쓰지 않는다', () => {
+    const program = {
+      ...baseProgram(),
+      otherNotes: '프로그램 공통 기타',
+      registrationOverlay: {
+        [GENERAL_RECRUIT_OVERLAY_KEYS.detailInfo.volunteerOtherNotes]: 'overlay 비고',
+      },
+      generalCommonInfo: {
+        volunteerRecruitmentInfo: { remarks: '봉사자 비고', otherMatters: 'nested 기타' },
+      },
+      programRecruitments: [
+        {
+          id: 186070,
+          recruitmentType: 'VOLUNTEER',
+          remarks: '행 비고',
+          otherMatters: '행 기타사항',
+        },
+      ],
+    } as Program
+
+    const display = resolveGeneralRecruitDetailDisplayProgram(program, 'volunteer')
+    expect(display.otherNotes).toBe('행 기타사항')
+    expect(display.oneLineIntroduction).toBeUndefined()
+  })
+})
+

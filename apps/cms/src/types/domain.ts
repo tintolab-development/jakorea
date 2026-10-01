@@ -335,6 +335,17 @@ export interface GeneralProgramVolunteerRecruitmentInfo {
   otherMatters?: string
 }
 
+/** 봉사자 면접 — 예외 일정 1건 */
+export interface GeneralProgramVolunteerInterviewScheduleException {
+  /** overlay 블록 id. 재편집 시 같은 키로 복원한다. */
+  blockId: number
+  /** 표시용 `YYYY. MM. DD (요일)` */
+  exceptionDate?: string
+  /** ISO */
+  exceptionDateIso?: string
+  availableTimeSlots?: string
+}
+
 /** 일반 프로그램 — 봉사자 면접 진행 가능 일정 */
 export interface GeneralProgramVolunteerInterviewScheduleInfo {
   recurringUnavailable?: string
@@ -342,6 +353,7 @@ export interface GeneralProgramVolunteerInterviewScheduleInfo {
   /** 직접 추가 불가일 — ISO `YYYY-MM-DD` */
   specificUnavailableDateIsos?: string[]
   availableTimeSlots?: string
+  exceptions?: GeneralProgramVolunteerInterviewScheduleException[]
 }
 
 // IPS 분류

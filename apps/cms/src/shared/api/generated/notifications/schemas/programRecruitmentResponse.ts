@@ -53,6 +53,11 @@ export interface ProgramRecruitmentResponse {
      * @nullable
      */
   remarks?: string | null;
+  /**
+     * 강사·봉사자 행 기타사항. 참여자·기관 행과 빈 값은 null. 프로그램 공통 기타사항으로 채우지 않는다.
+     * @nullable
+     */
+  otherMatters?: string | null;
   /** 이 모집 행의 신청 유형 */
   applicationType?: ProgramRecruitmentResponseApplicationType;
   /**

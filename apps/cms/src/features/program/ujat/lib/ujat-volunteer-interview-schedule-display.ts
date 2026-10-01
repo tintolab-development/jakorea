@@ -15,6 +15,7 @@ import {
   buildRecurringUnavailableLabel,
   type UnavailableDatesExclusionState,
 } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+import { mapVolunteerInterviewExceptionsFromOverlay } from '@/features/program/shared/lib/volunteer-interview-exception-overlay'
 
 const EMPTY_UJAT_VOLUNTEER_INTERVIEW_SCHEDULE: UjatVolunteerInterviewScheduleData = {
   common: {
@@ -109,11 +110,18 @@ function interviewScheduleFromOverlay(
   const availableTimeSlots = formatAvailableTimeSlotsFromSelectedKeys(
     overlay[`${ns}.selectedSlotKeys`]
   )
+  const exceptions = mapVolunteerInterviewExceptionsFromOverlay(overlay, 'recruit', ns).map(
+    exception => ({
+      exceptionDate: exception.exceptionDate?.trim() || '-',
+      availableTimeSlots: exception.availableTimeSlots?.trim() || '-',
+    })
+  )
   const hasSchedule =
     availableTimeSlots != null ||
     exclusion != null ||
     dates.isos.length > 0 ||
-    overlay[`${ns}.interviewTimeRange`] != null
+    overlay[`${ns}.interviewTimeRange`] != null ||
+    exceptions.length > 0
   if (!hasSchedule) return null
 
   const display: UjatVolunteerInterviewScheduleData = {
@@ -122,18 +130,7 @@ function interviewScheduleFromOverlay(
       specificUnavailableDates: dates.label ?? '',
       availableTimeSlots: availableTimeSlots ?? '-',
     },
-    exceptions: [],
-  }
-
-  const exceptionDate = overlay[`${ns}.exceptionDate`]
-  if (exceptionDate != null && String(exceptionDate).trim() !== '') {
-    const parsed = dayjs(exceptionDate as string | number | Date)
-    display.exceptions = [
-      {
-        exceptionDate: parsed.isValid() ? parsed.format('YYYY. MM. DD (ddd)') : String(exceptionDate),
-        availableTimeSlots: availableTimeSlots ?? '-',
-      },
-    ]
+    exceptions,
   }
 
   if (availableTimeSlots == null) return { display }
@@ -185,7 +182,10 @@ export function resolveUjatVolunteerInterviewScheduleDisplay(
         specificUnavailableDates: info?.specificUnavailableDates?.trim() || '-',
         availableTimeSlots,
       },
-      exceptions: [],
+      exceptions: (info?.exceptions ?? []).map(exception => ({
+        exceptionDate: exception.exceptionDate?.trim() || '-',
+        availableTimeSlots: exception.availableTimeSlots?.trim() || '-',
+      })),
     }
   }
 

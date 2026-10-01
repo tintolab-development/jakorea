@@ -15,7 +15,30 @@ export function hasRecruitmentCopy(row: ProgramRecruitmentWindow): boolean {
     row.applicationMethod !== undefined ||
     row.learningSupportContent !== undefined ||
     row.additionalContentHtml !== undefined ||
-    row.remarks !== undefined
+    row.remarks !== undefined ||
+    row.otherMatters !== undefined
+  )
+}
+
+/**
+ * 강사·봉사자 상세 「기타사항」.
+ * 행 `otherMatters` → nested `*RecruitmentInfo.otherMatters` → (레거시) 프로그램 `otherNotes`.
+ * 비고(`remarks`)와 섞지 않는다. 참여자는 프로그램 기타 안내만.
+ */
+export function resolveRecruitmentOtherMatters(
+  program: Program,
+  audience: RecruitmentCopyAudience
+): string | undefined {
+  if (audience === 'participant') return emptyToUndefined(program.otherNotes)
+  const row = pickRecruitmentCopyRow(program, audience)
+  const nested =
+    audience === 'instructor'
+      ? program.generalCommonInfo?.instructorRecruitmentInfo?.otherMatters
+      : program.generalCommonInfo?.volunteerRecruitmentInfo?.otherMatters
+  return (
+    emptyToUndefined(row?.otherMatters) ||
+    emptyToUndefined(nested) ||
+    emptyToUndefined(program.otherNotes)
   )
 }
 
@@ -86,6 +109,7 @@ export function applyRecruitmentRowCopy(
   if (!row) return program
   const withRow: Program = row.id != null ? { ...program, activeRecruitmentId: row.id } : program
   if (!hasRecruitmentCopy(row)) return withRow
+  const otherMatters = emptyToUndefined(row.otherMatters)
   return {
     ...withRow,
     description: emptyToUndefined(row.programDescription),
@@ -93,7 +117,7 @@ export function applyRecruitmentRowCopy(
     applicationMethod: emptyToUndefined(row.applicationMethod),
     learningSupportContent: emptyToUndefined(row.learningSupportContent),
     additionalContentHtml: emptyToUndefined(row.additionalContentHtml),
-    otherNotes: emptyToUndefined(row.remarks),
+    ...(otherMatters ? { otherNotes: otherMatters } : {}),
     oneLineIntroduction: emptyToUndefined(row.remarks),
   }
 }

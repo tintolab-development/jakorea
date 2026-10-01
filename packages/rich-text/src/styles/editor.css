@@ -113,8 +113,8 @@
   cursor: text;
 }
 
-.rich-text-editor__body .tiptap p.is-empty::before,
-.rich-text-editor__body .ProseMirror p.is-empty::before {
+.rich-text-editor__body .tiptap.rich-text-editor--is-empty p.is-empty::before,
+.rich-text-editor__body .ProseMirror.rich-text-editor--is-empty p.is-empty::before {
   color: var(--rt-placeholder-color, var(--text-placeholder, #999));
   content: attr(data-placeholder);
   float: left;

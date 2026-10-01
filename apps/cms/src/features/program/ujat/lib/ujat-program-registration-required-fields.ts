@@ -13,6 +13,7 @@ export class UjatRegistrationRequiredFieldsIncompleteError extends Error {
   }
 }
 
+import { listVolunteerInterviewExceptionBlockIds } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import {
   UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
   UJAT_BASIC_INFO_REP_EN_DEFAULT,
@@ -378,6 +379,15 @@ function hasIncompleteUjatVolunteerInterviewSchedule(
   const slots = read(overlay, `${ns}.selectedSlotKeys`)
   if (!Array.isArray(slots) || slots.length === 0) return true
   if (slots.every(slot => isEmptyText(slot))) return true
+  const exceptionIds = listVolunteerInterviewExceptionBlockIds(overlay, 'recruit', ns)
+  for (const id of exceptionIds) {
+    const prefix = `${ns}.exception.${id}`
+    const exceptionDate = read(overlay, `${prefix}.exceptionDate`)
+    if (exceptionDate == null || isEmptyText(String(exceptionDate))) return true
+    const exceptionSlots = read(overlay, `${prefix}.selectedSlotKeys`)
+    if (!Array.isArray(exceptionSlots) || exceptionSlots.length === 0) return true
+    if (exceptionSlots.every(slot => isEmptyText(slot))) return true
+  }
   return false
 }
 

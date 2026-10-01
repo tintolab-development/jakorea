@@ -49,8 +49,8 @@ const RECRUIT_NOTES_OVERLAY_KEYS = {
     'recruit.individual.notes',
     'recruit.notes',
   ],
-  instructor: ['recruitInstructor.detailInfo.otherNotes', 'recruit.instructor.notes'],
-  volunteer: ['recruitVolunteer.detailInfo.otherNotes', 'recruit.volunteer.notes'],
+  instructor: ['recruit.instructor.notes'],
+  volunteer: ['recruit.volunteer.notes'],
 } as const
 
 const RECRUIT_NOTES_NOT_APPLICABLE_OVERLAY_KEYS = {
@@ -143,6 +143,7 @@ export function applyRecruitmentDetailInfoFields(
   }
   if (fields.otherMatters !== undefined && audience !== 'participant') {
     nestedPatch.otherMatters = fields.otherMatters.trim() || undefined
+    overlayPatch[overlayKeys.otherNotes] = fields.otherMatters.trim() || ''
   }
 
   const {
@@ -151,6 +152,7 @@ export function applyRecruitmentDetailInfoFields(
     applicationMethod: _sharedMethod,
     learningSupportContent: _sharedLearning,
     additionalContentHtml: _sharedAdditional,
+    otherNotes: patchOtherNotes,
     ...audiencePatch
   } = patch
 
@@ -202,6 +204,11 @@ export function applyRecruitmentDetailInfoFields(
 
   return {
     ...audiencePatch,
+    ...(fields.otherMatters !== undefined && audience !== 'participant'
+      ? {}
+      : patchOtherNotes !== undefined
+        ? { otherNotes: patchOtherNotes }
+        : {}),
     generalCommonInfo,
     registrationOverlay: overlayPatch,
     ...(programRecruitments ? { programRecruitments } : {}),

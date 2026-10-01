@@ -76,6 +76,11 @@ export interface RecruitmentResponse {
      */
   remarks?: string | null;
   /**
+     * 강사·봉사자 행 기타사항. 참여자·기관 행과 빈 값은 null.
+     * @nullable
+     */
+  otherMatters?: string | null;
+  /**
      * 이 모집 행의 제목. 없으면 null.
      * @nullable
      */

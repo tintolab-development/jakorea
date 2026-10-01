@@ -17,6 +17,7 @@ import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { buildVolunteerInterviewOverlayKey } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import { mapVolunteerInterviewExceptionsFromOverlay } from '@/features/program/shared/lib/volunteer-interview-exception-overlay'
 import {
   buildRecurringUnavailableLabel,
   type UnavailableDatesExclusionState,
@@ -35,7 +36,10 @@ import {
   resolvePersistedProgramTargetLevels,
   resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
-import { applyRecruitmentRowCopy } from '@/features/program/shared/lib/recruitment-row-copy'
+import {
+  applyRecruitmentRowCopy,
+  resolveRecruitmentOtherMatters,
+} from '@/features/program/shared/lib/recruitment-row-copy'
 
 type RangeSeal = { start?: string | null; end?: string | null }
 
@@ -350,12 +354,14 @@ function buildVolunteerInterviewScheduleFromOverlay(
   const specificUnavailableDates = formatSpecificUnavailableDateLabel(
     specificUnavailableDateIsos
   )
+  const exceptions = mapVolunteerInterviewExceptionsFromOverlay(overlay, 'recruit')
 
   if (
     !recurringUnavailable &&
     !specificUnavailableDates &&
     !specificUnavailableDateIsos.length &&
-    !availableTimeSlots
+    !availableTimeSlots &&
+    exceptions.length === 0
   ) {
     return undefined
   }
@@ -365,6 +371,7 @@ function buildVolunteerInterviewScheduleFromOverlay(
     ...(specificUnavailableDates ? { specificUnavailableDates } : {}),
     ...(specificUnavailableDateIsos.length > 0 ? { specificUnavailableDateIsos } : {}),
     ...(availableTimeSlots ? { availableTimeSlots } : {}),
+    ...(exceptions.length > 0 ? { exceptions } : {}),
   }
 }
 
@@ -485,17 +492,6 @@ export function applyGeneralRecruitOverlayToProgram(
     ) ??
       overlayString(overlay, keys.detailInfo.instructorAdditionalHtml) ??
       overlayString(overlay, keys.detailInfo.volunteerAdditionalHtml),
-    preferOverlay
-  )
-  const otherNotes = coalesceString(
-    program.otherNotes,
-    overlayParticipantDetailString(overlay, 'otherNotes', keys.detailInfo.participantOtherNotes) ??
-      overlayString(overlay, keys.detailInfo.instructorOtherNotes) ??
-      overlayString(overlay, keys.detailInfo.volunteerOtherNotes) ??
-      overlayString(overlay, keys.instructor.notes) ??
-      overlayString(overlay, keys.volunteer.notes) ??
-      overlayString(overlay, keys.individual.notes) ??
-      overlayString(overlay, inst.notes),
     preferOverlay
   )
 
@@ -829,9 +825,8 @@ export function applyGeneralRecruitOverlayToProgram(
   const instructorDescription = overlayString(overlay, keys.detailInfo.instructorDescription)
   const instructorGuide = overlayString(overlay, keys.detailInfo.instructorGuide)
   const instructorMethod = overlayString(overlay, keys.detailInfo.instructorMethod)
-  const instructorRemarks =
-    overlayString(overlay, keys.detailInfo.instructorOtherNotes) ??
-    overlayString(overlay, keys.instructor.notes)
+  const instructorRemarks = overlayString(overlay, keys.instructor.notes)
+  const instructorOtherMatters = overlayString(overlay, keys.detailInfo.instructorOtherNotes)
   if (instructorDescription) {
     instructorInfo.programDescription = coalesceString(
       instructorInfo.programDescription,
@@ -871,6 +866,13 @@ export function applyGeneralRecruitOverlayToProgram(
   }
   if (instructorRemarks) {
     instructorInfo.remarks = coalesceString(instructorInfo.remarks, instructorRemarks, preferOverlay)
+  }
+  if (instructorOtherMatters) {
+    instructorInfo.otherMatters = coalesceString(
+      instructorInfo.otherMatters,
+      instructorOtherMatters,
+      preferOverlay
+    )
   }
 
   const volunteerTargetLabel =
@@ -927,9 +929,8 @@ export function applyGeneralRecruitOverlayToProgram(
   const volunteerDescription = overlayString(overlay, keys.detailInfo.volunteerDescription)
   const volunteerGuide = overlayString(overlay, keys.detailInfo.volunteerGuide)
   const volunteerMethod = overlayString(overlay, keys.detailInfo.volunteerMethod)
-  const volunteerRemarks =
-    overlayString(overlay, keys.detailInfo.volunteerOtherNotes) ??
-    overlayString(overlay, keys.volunteer.notes)
+  const volunteerRemarks = overlayString(overlay, keys.volunteer.notes)
+  const volunteerOtherMatters = overlayString(overlay, keys.detailInfo.volunteerOtherNotes)
   if (volunteerDescription) {
     volunteerInfo.programDescription = coalesceString(
       volunteerInfo.programDescription,
@@ -969,6 +970,13 @@ export function applyGeneralRecruitOverlayToProgram(
   }
   if (volunteerRemarks) {
     volunteerInfo.remarks = coalesceString(volunteerInfo.remarks, volunteerRemarks, preferOverlay)
+  }
+  if (volunteerOtherMatters) {
+    volunteerInfo.otherMatters = coalesceString(
+      volunteerInfo.otherMatters,
+      volunteerOtherMatters,
+      preferOverlay
+    )
   }
   const overlayVolunteerNotesNA =
     overlay[keys.volunteer.notesNotApplicable] === true
@@ -1184,7 +1192,7 @@ export function applyGeneralRecruitOverlayToProgram(
     keyVisualImage: keyVisualImage ?? program.keyVisualImage,
     posterImage: keyVisualImage ?? program.posterImage,
     attachmentFileNames: attachmentFileNames ?? program.attachmentFileNames,
-    otherNotes: otherNotes ?? program.otherNotes,
+    otherNotes: program.otherNotes,
     oneLineIntroduction: coalesceString(
       program.oneLineIntroduction,
       overlayString(overlay, keys.individual.notes) ?? overlayString(overlay, inst.notes),
@@ -1439,7 +1447,7 @@ export function resolveGeneralRecruitDetailDisplayProgram(
             program.otherNotes
           )
         : firstRecruitDetailText(
-            info?.remarks,
+            info != null && 'otherMatters' in info ? info.otherMatters : undefined,
             overlayString(
               overlay,
               audience === 'instructor' ? keys.instructorOtherNotes : keys.volunteerOtherNotes
@@ -1468,10 +1476,13 @@ export function resolveGeneralRecruitDetailDisplayProgram(
 
   return {
     ...withAudienceCopy,
-    // 강사·봉사자 상세 「기타사항」은 프로그램 기타사항(otherMatters) — 비고(행 remarks)와 섞지 않는다.
+    // 강사·봉사자 상세 「기타사항」은 해당 행 otherMatters. 비고(행 remarks)와 섞지 않는다.
     ...(audience === 'participant'
       ? {}
-      : { otherNotes: program.otherNotes?.trim() || undefined, oneLineIntroduction: undefined }),
+      : {
+          otherNotes: resolveRecruitmentOtherMatters(program, audience),
+          oneLineIntroduction: undefined,
+        }),
     attachmentFileNames:
       withPersistedRecruitMedia.attachmentFileNames ?? program.attachmentFileNames,
     keyVisualImage: withPersistedRecruitMedia.keyVisualImage ?? program.keyVisualImage,

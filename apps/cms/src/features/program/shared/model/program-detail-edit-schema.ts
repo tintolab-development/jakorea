@@ -1511,10 +1511,7 @@ export function detailEditValuesToProgramPatch(
       : undefined,
     volunteerTargetDetail: values.volunteerTargetDetail ?? existing.volunteerTargetDetail,
     applicationMethod: values.applicationMethod ?? existing.applicationMethod,
-    otherNotes:
-      values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
-        ? undefined
-        : (values.otherNotes ?? existing.otherNotes),
+    otherNotes: values.otherNotes ?? existing.otherNotes,
     additionalContentHtml: values.additionalContentHtml ?? existing.additionalContentHtml,
     mainTitle: values.mainTitle ?? existing.mainTitle,
     titleEn: values.titleEn ?? existing.titleEn,

@@ -175,25 +175,36 @@ function DetailInfoRichTextFieldEditor({
   const value = typeof field.value === 'string' ? field.value : String(field.value ?? '')
   const owner = programInlineImageOwner(parseFileObjectId(program.id))
   const resetKey = `${program.id}-${field.name}`
-  const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(true, value, resetKey, {
-    placeholder,
-    contentFormat: 'html',
-    height: '100px',
-    fileUploadOwner: owner,
-  })
+  const initialContentRef = useRef({ resetKey, value })
+  if (initialContentRef.current.resetKey !== resetKey) {
+    initialContentRef.current = { resetKey, value }
+  }
+  const onChangeRef = useRef(field.onChange)
+  onChangeRef.current = field.onChange
+  const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(
+    true,
+    initialContentRef.current.value,
+    resetKey,
+    {
+      placeholder,
+      contentFormat: 'html',
+      height: '100px',
+      fileUploadOwner: owner,
+    }
+  )
 
   useEffect(() => {
     if (editor == null) return
     const sync = () => {
       if (editor.isDestroyed) return
-      field.onChange(getHTML())
+      onChangeRef.current(getHTML())
     }
     editor.on('update', sync)
     return () => {
       sync()
       if (!editor.isDestroyed) editor.off('update', sync)
     }
-  }, [editor, field, getHTML])
+  }, [editor, getHTML])
 
   return (
     <>
@@ -1058,11 +1069,7 @@ export function InstructorDetailInfoSection({
     emptyReadDisplay,
     '-'
   )
-  const otherNotes = resolveTextReadContent(
-    program.otherNotes ?? program.oneLineIntroduction,
-    emptyReadDisplay,
-    '-'
-  )
+  const otherNotes = resolveTextReadContent(program.otherNotes, emptyReadDisplay, '-')
   const headerDescription = isFormEdit
     ? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.'
     : undefined
@@ -1222,11 +1229,7 @@ export function VolunteerDetailInfoSection({
     emptyReadDisplay,
     '-'
   )
-  const otherNotes = resolveTextReadContent(
-    program.otherNotes ?? program.oneLineIntroduction,
-    emptyReadDisplay,
-    '-'
-  )
+  const otherNotes = resolveTextReadContent(program.otherNotes, emptyReadDisplay, '-')
   const headerDescription = !isFormEdit
     ? undefined
     : sectionTitleOnly
