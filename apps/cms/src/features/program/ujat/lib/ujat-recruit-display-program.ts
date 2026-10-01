@@ -23,6 +23,10 @@ import {
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  applyRecruitmentRowCopy,
+  writeRecruitmentRowCopy,
+} from '@/features/program/shared/lib/recruitment-row-copy'
 
 export type UjatRecruitDisplayKind = 'institution' | 'volunteer' | 'volunteer_h1' | 'volunteer_h2'
 
@@ -62,17 +66,27 @@ export function resolveUjatRecruitDisplayProgram(
   kind?: UjatRecruitDisplayKind
 ): Program {
   if (kind === 'institution') {
-    return applyUjatRecruitInstitutionOverlayOntoProgram(program, mergedInstitutionOverlay(program))
+    return applyRecruitmentRowCopy(
+      applyUjatRecruitInstitutionOverlayOntoProgram(program, mergedInstitutionOverlay(program)),
+      'participant'
+    )
   }
   if (kind === 'volunteer' || kind === 'volunteer_h1' || kind === 'volunteer_h2') {
     const half = volunteerHalfFromRecruitDisplayKind(kind)
     const overlay = mergedVolunteerOverlay(program)
     if (half == null) {
-      return applyUjatRecruitVolunteerOverlayOntoProgram(program, overlay)
+      return applyRecruitmentRowCopy(
+        applyUjatRecruitVolunteerOverlayOntoProgram(program, overlay),
+        'volunteer'
+      )
     }
-    return applyUjatRecruitVolunteerOverlayOntoProgram(
-      blankUjatVolunteerRecruitProgramFields(program),
-      resolveVolunteerOverlayForHalf(overlay, half)
+    return applyRecruitmentRowCopy(
+      applyUjatRecruitVolunteerOverlayOntoProgram(
+        blankUjatVolunteerRecruitProgramFields(program),
+        resolveVolunteerOverlayForHalf(overlay, half)
+      ),
+      'volunteer',
+      half
     )
   }
   return applyUjatRecruitVolunteerTemplateDefaults(
@@ -131,6 +145,24 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
     half === 'h1' ? 'h2' : half === 'h2' ? 'h1' : null
   const otherSnapshot =
     otherHalf != null ? snapshotVolunteerHalfFromLegacy(existingOverlay, otherHalf) : {}
+  const programRecruitments = args.values
+    ? writeRecruitmentRowCopy(
+        args.existing,
+        args.kind === 'institution' ? 'participant' : 'volunteer',
+        {
+          programDescription: args.values.description?.trim() || null,
+          recruitmentGuide: args.values.recruitmentGuide?.trim() || null,
+          learningSupportContent: args.values.learningSupportContent?.trim() || null,
+          additionalContentHtml:
+            (typeof institutionHtml === 'string'
+              ? institutionHtml
+              : args.values.additionalContentHtml
+            )?.trim() || null,
+          remarks: args.values.oneLineIntroduction?.trim() || null,
+        },
+        half ?? undefined
+      )
+    : undefined
   const next: Program = {
     ...args.draft,
     ujatRegistrationOverlay: {
@@ -143,6 +175,7 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
       ...args.draft.generalCommonInfo,
       announcementTitle: args.existing.generalCommonInfo?.announcementTitle,
     },
+    ...(programRecruitments ? { programRecruitments } : {}),
   }
   return half ? restoreUjatVolunteerRecruitProgramColumns(next, args.existing, half) : next
 }

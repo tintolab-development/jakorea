@@ -199,6 +199,41 @@ describe('모집 정보 display — 공통정보 폴백 금지', () => {
     expect(display.contactEmail).toBe('common@jakorea.org')
   })
 
+  it('모집 행 문구는 recruitments[]만 쓰고 공통 문장으로 채우지 않는다', () => {
+    const program = {
+      ...commonOnlyProgram(),
+      programRecruitments: [
+        {
+          recruitmentType: 'PARTICIPANT',
+          programDescription: '참여자 설명',
+          recruitmentGuide: '참여자 안내',
+          applicationMethod: null,
+          learningSupportContent: null,
+          additionalContentHtml: null,
+          remarks: null,
+        },
+        {
+          recruitmentType: 'INSTRUCTOR',
+          programDescription: null,
+          recruitmentGuide: '강사 안내',
+          applicationMethod: '강사 신청 방법',
+          learningSupportContent: '강사 학습',
+          additionalContentHtml: null,
+          remarks: null,
+        },
+      ],
+    } as Program
+    const participant = resolveGeneralRecruitDetailDisplayProgram(program, 'participant')
+    const instructor = resolveGeneralRecruitDetailDisplayProgram(program, 'instructor')
+    expect(participant.recruitmentGuide).toBe('참여자 안내')
+    expect(participant.description).toBe('참여자 설명')
+    expect(participant.learningSupportContent).toBeUndefined()
+    expect(instructor.recruitmentGuide).toBe('강사 안내')
+    expect(instructor.description).toBeUndefined()
+    expect(instructor.applicationMethod).toBe('강사 신청 방법')
+    expect(instructor.learningSupportContent).toBe('강사 학습')
+  })
+
   it('강사·봉사자도 공통 폴백 없이 -', () => {
     const program = commonOnlyProgram()
     expect(resolveGeneralProgramInstructorRecruitmentDisplay(program).instructorTargetLabel).toBe(

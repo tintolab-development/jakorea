@@ -150,6 +150,54 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
     expect(remapped.otherNotes).toBe('기타 안내(otherMatters)')
   })
 
+  it('참여자 안내 저장은 그 모집 행만 바꾸고 강사 행은 그대로다', () => {
+    const withRows = {
+      ...existing,
+      description: '공통 설명',
+      recruitmentGuide: '공통 안내',
+      programRecruitments: [
+        {
+          recruitmentType: 'PARTICIPANT',
+          programDescription: '참여자 옛 설명',
+          recruitmentGuide: '참여자 옛 안내',
+          applicationMethod: null,
+          learningSupportContent: null,
+          additionalContentHtml: null,
+          remarks: null,
+        },
+        {
+          recruitmentType: 'INSTRUCTOR',
+          programDescription: '강사 설명',
+          recruitmentGuide: '강사 안내',
+          applicationMethod: null,
+          learningSupportContent: null,
+          additionalContentHtml: null,
+          remarks: null,
+        },
+      ],
+    } as Program
+    const patch = applyRecruitmentDetailInfoFields({}, withRows, 'participant', {
+      description: '참여자 새 설명',
+      recruitmentGuide: '참여자 새 안내',
+    })
+    expect(patch.description).toBeUndefined()
+    expect(patch.recruitmentGuide).toBeUndefined()
+    expect(patch.programRecruitments?.[0]?.recruitmentGuide).toBe('참여자 새 안내')
+    expect(patch.programRecruitments?.[1]?.recruitmentGuide).toBe('강사 안내')
+    const participant = resolveGeneralRecruitDetailDisplayProgram(
+      { ...withRows, ...patch, programRecruitments: patch.programRecruitments },
+      'participant'
+    )
+    const instructor = resolveGeneralRecruitDetailDisplayProgram(
+      { ...withRows, ...patch, programRecruitments: patch.programRecruitments },
+      'instructor'
+    )
+    expect(participant.recruitmentGuide).toBe('참여자 새 안내')
+    expect(participant.description).toBe('참여자 새 설명')
+    expect(instructor.recruitmentGuide).toBe('강사 안내')
+    expect(instructor.description).toBe('강사 설명')
+  })
+
   it('봉사자 모집 비고 — volunteerRecruitmentInfo.remarks만 갱신한다', () => {
     const patch = applyRecruitmentDetailInfoFields({}, existing, 'volunteer', {
       remarks: '봉사자 비고 신값',

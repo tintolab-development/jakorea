@@ -20,6 +20,12 @@ export function toProgramRecruitmentWindows(
         targetType?: string
         startAt?: string | null
         operationStartDate?: string | null
+        programDescription?: string | null
+        recruitmentGuide?: string | null
+        applicationMethod?: string | null
+        learningSupportContent?: string | null
+        additionalContentHtml?: string | null
+        remarks?: string | null
       }>
     | null
     | undefined
@@ -30,6 +36,12 @@ export function toProgramRecruitmentWindows(
     targetType: row.targetType,
     startAt: row.startAt ?? null,
     operationStartDate: row.operationStartDate ?? null,
+    programDescription: row.programDescription ?? null,
+    recruitmentGuide: row.recruitmentGuide ?? null,
+    applicationMethod: row.applicationMethod ?? null,
+    learningSupportContent: row.learningSupportContent ?? null,
+    additionalContentHtml: row.additionalContentHtml ?? null,
+    remarks: row.remarks ?? null,
   }))
 }
 

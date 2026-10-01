@@ -1,4 +1,5 @@
 import type { Program } from '@/types/domain'
+import { writeRecruitmentRowCopy } from '@/features/program/shared/lib/recruitment-row-copy'
 
 export type ProgramDetailRecruitmentAudience = 'participant' | 'instructor' | 'volunteer'
 
@@ -137,6 +138,27 @@ export function applyRecruitmentDetailInfoFields(
     ...audiencePatch
   } = patch
 
+  const programRecruitments = writeRecruitmentRowCopy(existing, audience, {
+    ...(fields.description !== undefined
+      ? { programDescription: fields.description.trim() || null }
+      : {}),
+    ...(fields.recruitmentGuide !== undefined
+      ? { recruitmentGuide: fields.recruitmentGuide.trim() || null }
+      : {}),
+    ...(fields.applicationMethod !== undefined
+      ? { applicationMethod: fields.applicationMethod.trim() || null }
+      : {}),
+    ...(fields.learningSupportContent !== undefined
+      ? { learningSupportContent: fields.learningSupportContent.trim() || null }
+      : {}),
+    ...(fields.additionalContentHtml !== undefined
+      ? { additionalContentHtml: fields.additionalContentHtml.trim() || null }
+      : {}),
+    ...(remarks !== undefined || fields.notesNotApplicable !== undefined
+      ? { remarks: notesNotApplicable ? null : remarks?.trim() || null }
+      : {}),
+  })
+
   return {
     ...audiencePatch,
     generalCommonInfo: {
@@ -145,6 +167,7 @@ export function applyRecruitmentDetailInfoFields(
       [nestedKey]: nestedPatch as NonNullable<Program['generalCommonInfo']>[typeof nestedKey],
     },
     registrationOverlay: overlayPatch,
+    ...(programRecruitments ? { programRecruitments } : {}),
   }
 }
 
