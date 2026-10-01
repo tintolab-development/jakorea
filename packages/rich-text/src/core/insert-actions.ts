@@ -5,9 +5,13 @@ import {
   isValidYoutubeUrl,
 } from '@tiptap/extension-youtube'
 import { findEmojiByName } from './emoji-extension'
+import {
+  RICH_TEXT_INLINE_IMAGE_MAX_BYTES,
+  RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE,
+} from './visible-length'
 
 const IMAGE_ACCEPT = 'image/jpeg,image/jpg,image/png,image/gif,image/webp'
-const IMAGE_MAX_BYTES = 10 * 1024 * 1024
+const IMAGE_MAX_BYTES = RICH_TEXT_INLINE_IMAGE_MAX_BYTES
 
 export function promptImageUrl(): string | null {
   const url = window.prompt('이미지 URL', 'https://')
@@ -60,17 +64,31 @@ export function promptYoutubeUrl(): string | null {
 
 export type ResolvedRichTextImageSrc = string | { src: string; persistSrc?: string }
 
+/** 이 에디터에 크기를 아는 저장 이미지만 합친다. 외부 URL은 크기가 없어 빠진다. */
+export function sumKnownInlineImageBytes(editor: Editor): number {
+  if (editor.isDestroyed) return 0
+  let total = 0
+  editor.state.doc.descendants(node => {
+    if (node.type.name !== 'image') return
+    const size = node.attrs.fileSize
+    if (typeof size === 'number' && Number.isFinite(size) && size > 0) total += size
+  })
+  return total
+}
+
 function applyImageSrc(
   editor: Editor,
   src: string,
   alt?: string,
-  persistSrc?: string
+  persistSrc?: string,
+  fileSize?: number
 ): boolean {
   if (editor.isDestroyed) return false
   const attrs = {
     src,
     alt: alt ?? '',
     ...(persistSrc?.trim() ? { persistSrc: persistSrc.trim() } : {}),
+    ...(typeof fileSize === 'number' && fileSize > 0 ? { fileSize } : {}),
   }
   const ok =
     editor.chain().focus().setImage(attrs).run() ||
@@ -95,12 +113,16 @@ export function insertImageFromFile(
     return
   }
   if (file.size > IMAGE_MAX_BYTES) {
-    window.alert('이미지는 10MB 이하만 삽입할 수 있습니다.')
+    window.alert('이미지는 20MB 이하만 삽입할 수 있습니다.')
+    return
+  }
+  if (sumKnownInlineImageBytes(editor) + file.size > IMAGE_MAX_BYTES) {
+    window.alert(RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE)
     return
   }
 
   const insertResolved = (src: string, persistSrc?: string) => {
-    applyImageSrc(editor, src, file.name, persistSrc)
+    applyImageSrc(editor, src, file.name, persistSrc, file.size)
   }
 
   if (resolveSrc) {

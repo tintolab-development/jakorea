@@ -162,6 +162,18 @@ export const RichTextImageResize = ImageResize.configure({
         renderHTML: (attributes: { persistSrc?: string | null }) =>
           attributes.persistSrc ? { 'data-persist-src': attributes.persistSrc } : {},
       },
+      fileSize: {
+        default: null,
+        parseHTML: (element: HTMLElement) => {
+          const raw = element.getAttribute('data-file-size')
+          const size = raw == null ? Number.NaN : Number(raw)
+          return Number.isFinite(size) && size > 0 ? size : null
+        },
+        renderHTML: (attributes: { fileSize?: number | null }) =>
+          typeof attributes.fileSize === 'number' && attributes.fileSize > 0
+            ? { 'data-file-size': String(attributes.fileSize) }
+            : {},
+      },
     }
   },
   renderHTML({ HTMLAttributes }) {
@@ -170,6 +182,7 @@ export const RichTextImageResize = ImageResize.configure({
     if (persistSrc) attrs.src = persistSrc
     delete attrs.persistSrc
     delete attrs['data-persist-src']
+    delete attrs.fileSize
     return ['img', mergeAttributes(this.options.HTMLAttributes, attrs)]
   },
   parseMarkdown: (token, helpers) => {
