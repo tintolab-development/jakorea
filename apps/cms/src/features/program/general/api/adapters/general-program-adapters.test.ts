@@ -980,7 +980,11 @@ describe('general-program-adapters', () => {
     )
     const request = mapGeneralProgramToUpdateRequest({ ...existing, ...patch }, patch)
 
-    expect(request.additionalContentHtml).toBe(html)
+    expect(request.additionalContentHtml).toBeUndefined()
+    const participantRow = request.recruitments?.find(row => row.recruitmentType === 'PARTICIPANT')
+    if (existing.programRecruitments?.some(row => row.recruitmentType === 'PARTICIPANT')) {
+      expect(participantRow?.additionalContentHtml).toBe(html)
+    }
     expect(request.serviceDetailJson).toBeTruthy()
     const parsed = JSON.parse(request.serviceDetailJson!) as {
       generalCommonInfo?: {

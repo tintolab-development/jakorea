@@ -38,7 +38,16 @@ import { stripRegistrationOverlayDebugKeys } from '@/features/program/shared/lib
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
-import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
+import {
+  isProgramOperationStartLocked,
+  toProgramRecruitmentWindows,
+} from '@/features/program/shared/lib/program-edit-window'
+import {
+  attachRecruitmentRowIdentity,
+  buildRecruitmentRowCopyRequests,
+  mergeRecruitmentRowRequests,
+} from '@/features/program/shared/lib/recruitment-row-request'
+import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import {
   normalizeProgramBusinessAreaValue,
   resolvePersistedProgramTargetLevels,
@@ -122,8 +131,10 @@ function recruitmentRow(input: {
   operationStartDate?: string
   operationEndDate?: string
   maxCount?: number
+  id?: number
 }): ProgramRecruitmentRequest {
   return {
+    ...(input.id != null ? { id: input.id } : {}),
     recruitmentType: input.recruitmentType,
     targetType: input.targetType,
     status: ProgramRecruitmentRequestStatus.ACTIVE,
@@ -145,13 +156,20 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
   const operationEndDate = dateValue(program.endDate)
   const institutionStart = dateValue(program.applicationStartDate)
   const institutionEnd = dateValue(program.applicationEndDate)
+  const volunteers = (program.programRecruitments ?? [])
+    .filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' && row.id != null)
+    .slice()
+    .sort((a, b) => {
+      const aTime = Date.parse(a.startAt ?? '')
+      const bTime = Date.parse(b.startAt ?? '')
+      return (Number.isNaN(aTime) ? Infinity : aTime) - (Number.isNaN(bTime) ? Infinity : bTime)
+    })
+  const h1 = volunteers[0]
   const volunteerStart = dateValue(
     program.volunteerApplicationStartDate ?? program.applicationStartDate
   )
-  const volunteerEnd = dateValue(
-    program.volunteerApplicationEndDate ?? program.applicationEndDate
-  )
-  return [
+  const volunteerEnd = dateValue(program.volunteerApplicationEndDate ?? program.applicationEndDate)
+  const rows = [
     recruitmentRow({
       recruitmentType: ProgramRecruitmentRequestRecruitmentType.PARTICIPANT,
       targetType: 'ORGANIZATION',
@@ -169,8 +187,38 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
       operationStartDate,
       operationEndDate,
       maxCount: program.generalVolunteers ?? program.ujatFirstHalfVolunteerCount,
+      ...(h1?.id != null ? { id: h1.id } : {}),
     }),
   ]
+  // 프로그램 봉사자 기간은 상반기 행에만 맞춘다. 하반기 기간은 그 행의 startAt/endAt 변경분으로만 보낸다.
+  return attachRecruitmentRowIdentity(rows, program.programRecruitments)
+}
+
+/** 생성 시 기관·봉사자(상반기) 탭 문구와 담당자를 각 행에 담는다. */
+function withUjatCreateRowCopy(
+  rows: ProgramRecruitmentRequest[] | undefined,
+  program: Program
+): ProgramRecruitmentRequest[] | undefined {
+  return rows?.map(row => {
+    const display = resolveUjatRecruitDisplayProgram(
+      program,
+      row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER
+        ? 'volunteer_h1'
+        : 'institution'
+    )
+    return {
+      ...row,
+      programDescription: display.description || undefined,
+      recruitmentGuide: display.recruitmentGuide || undefined,
+      applicationMethod: display.applicationMethod || undefined,
+      learningSupportContent: display.learningSupportContent || undefined,
+      additionalContentHtml: display.additionalContentHtml || undefined,
+      remarks: display.otherNotes || undefined,
+      contactName: program.managerName || undefined,
+      contactPhone: program.contactPhone || undefined,
+      contactEmail: program.contactEmail || undefined,
+    }
+  })
 }
 
 function programIps(value: string | null | undefined): Program['ips'] | undefined {
@@ -691,7 +739,23 @@ function patchRequest(
     const applicationDates = applicationDatesInsideBusiness(merged)
     body.applicationStartDate = applicationDates.applicationStartDate
     body.applicationEndDate = applicationDates.applicationEndDate
-    body.recruitments = mapUjatProgramRecruitmentsToRequest(merged)
+    body.recruitments = mapUjatProgramRecruitmentsToRequest({
+      ...merged,
+      programRecruitments: existing.programRecruitments,
+    })
+  }
+  if (has('programRecruitments')) {
+    const copyRows = buildRecruitmentRowCopyRequests(
+      merged.programRecruitments,
+      existing.programRecruitments,
+      row =>
+        row.recruitmentType === 'PARTICIPANT' || row.recruitmentType === 'VOLUNTEER'
+          ? isProgramOperationStartLocked(existing, row.recruitmentType)
+          : false
+    )
+    if (copyRows.length > 0) {
+      body.recruitments = mergeRecruitmentRowRequests(body.recruitments ?? [], copyRows)
+    }
   }
   if (has('businessArea')) {
     const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
@@ -806,11 +870,21 @@ export function toCreateRequest(
   const core = coreRequest(program, apiRegistration)
   const serviceDetailJson = core.serviceDetailJson
   const { serviceDetailJson: _serviceDetailOmit, ...coreWithoutDetail } = core
+  const copySource: Program = apiRegistration?.overlay
+    ? {
+        ...program,
+        ujatRegistrationOverlay: {
+          ...(program.ujatRegistrationOverlay ?? {}),
+          ...(apiRegistration.overlay as Record<string, unknown>),
+        },
+      }
+    : program
   // programType·serviceDetailJson을 앞에 — DevTools/문서 복사 시 detail 잘림·BE INVALID_VALUE 방지
   return {
     programType: 'UJAT',
     serviceDetailJson,
     ...coreWithoutDetail,
+    recruitments: withUjatCreateRowCopy(coreWithoutDetail.recruitments, copySource),
     businessStartDate: dateValue(program.startDate),
     businessEndDate: dateValue(program.endDate),
     autoApplyDefaultFormBindings: true,

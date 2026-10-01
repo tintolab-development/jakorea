@@ -47,6 +47,13 @@ import {
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
+import {
+  attachRecruitmentRowIdentity,
+  buildRecruitmentRowCopyRequests,
+  mergeRecruitmentRowRequests,
+} from '@/features/program/shared/lib/recruitment-row-request'
+import type { RecruitmentCopyAudience } from '@/features/program/shared/lib/recruitment-row-copy'
+import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
   normalizeProgramBusinessAreaValue,
@@ -586,7 +593,35 @@ export function mapGeneralProgramRecruitmentsToRequest(
     })
   }
 
-  return out.length > 0 ? out : undefined
+  return out.length > 0 ? attachRecruitmentRowIdentity(out, program.programRecruitments) : undefined
+}
+
+function copyAudienceOf(row: ProgramRecruitmentRequest): RecruitmentCopyAudience {
+  if (row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.INSTRUCTOR) return 'instructor'
+  if (row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER) return 'volunteer'
+  return 'participant'
+}
+
+/** 생성 시 모집 탭별 문구·담당자를 각 행에 담는다. 이후 읽기는 행 값만 쓴다. */
+function withGeneralCreateRowCopy(
+  rows: ProgramRecruitmentRequest[] | undefined,
+  program: Program
+): ProgramRecruitmentRequest[] | undefined {
+  return rows?.map(row => {
+    const display = resolveGeneralRecruitDetailDisplayProgram(program, copyAudienceOf(row))
+    return {
+      ...row,
+      programDescription: display.description || undefined,
+      recruitmentGuide: display.recruitmentGuide || undefined,
+      applicationMethod: display.applicationMethod || undefined,
+      learningSupportContent: display.learningSupportContent || undefined,
+      additionalContentHtml: display.additionalContentHtml || undefined,
+      remarks: display.otherNotes || undefined,
+      contactName: program.managerName || undefined,
+      contactPhone: toRequestPhone(program.contactPhone) || undefined,
+      contactEmail: program.contactEmail || undefined,
+    }
+  })
 }
 
 function mapProgramSponsorAssignments(program: Program) {
@@ -740,6 +775,7 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
   const core = mapProgramCoreFieldsToRequest(program)
   return {
     ...core,
+    recruitments: withGeneralCreateRowCopy(core.recruitments, program),
     // OpenAPI `sponsorId`는 string — 숫자 id가 number로 직렬화되면 BE 검증/DB 오류 유발 가능
     sponsorId: core.sponsorId != null ? String(core.sponsorId) : undefined,
     programType: resolveGeneralProgramCreateProgramType(
@@ -863,16 +899,31 @@ function mapProgramPatchFieldsToRequest(
   if (has('applicationEndDate') && !participantLocked) {
     body.applicationEndDate = toRequestDate(merged.applicationEndDate)
   }
-  if (includeParticipantRecruitment || includeInstructorRecruitment || includeVolunteerRecruitment) {
-    const rows = mapGeneralProgramRecruitmentsToRequest(merged)?.filter(row => {
-      const type = recruitmentTypeOf(row.recruitmentType)
-      if (type === 'PARTICIPANT') return includeParticipantRecruitment
-      if (type === 'INSTRUCTOR') return includeInstructorRecruitment
-      if (type === 'VOLUNTEER') return includeVolunteerRecruitment
-      return false
-    })
-    if (rows && rows.length > 0) body.recruitments = rows
-  }
+  const windowRows =
+    includeParticipantRecruitment || includeInstructorRecruitment || includeVolunteerRecruitment
+      ? (mapGeneralProgramRecruitmentsToRequest({
+          ...merged,
+          programRecruitments: existing.programRecruitments,
+        })?.filter(row => {
+          const type = recruitmentTypeOf(row.recruitmentType)
+          if (type === 'PARTICIPANT') return includeParticipantRecruitment
+          if (type === 'INSTRUCTOR') return includeInstructorRecruitment
+          if (type === 'VOLUNTEER') return includeVolunteerRecruitment
+          return false
+        }) ?? [])
+      : []
+  const copyRows = has('programRecruitments')
+    ? buildRecruitmentRowCopyRequests(
+        merged.programRecruitments,
+        existing.programRecruitments,
+        row => {
+          const type = recruitmentTypeOf(row.recruitmentType)
+          return type != null && isProgramOperationStartLocked(existing, type)
+        }
+      )
+    : []
+  const recruitmentRows = mergeRecruitmentRowRequests(windowRows, copyRows)
+  if (recruitmentRows.length > 0) body.recruitments = recruitmentRows
   if (has('businessArea')) {
     const businessArea = normalizeProgramBusinessAreaValue(merged.businessArea) || undefined
     body.businessArea = businessArea
