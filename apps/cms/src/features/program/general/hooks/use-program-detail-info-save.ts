@@ -167,7 +167,6 @@ export function useProgramDetailInfoSave({
               notesNotApplicable,
               ...(writesRowFields
                 ? {
-                    announcementTitle: values.announcementTitle ?? '',
                     contactName: contact.contactName ?? '',
                     contactPhone: contact.contactPhone ?? '',
                     contactEmail: contact.contactEmail ?? '',
@@ -186,6 +185,16 @@ export function useProgramDetailInfoSave({
           if (writesRowFields && recruitmentAudience !== 'participant') {
             // 기타사항(otherMatters)은 비고 「해당 없음」과 무관하다.
             remotePatch = { ...remotePatch, otherNotes: values.otherNotes ?? program.otherNotes }
+          }
+          if (remotePatch.generalCommonInfo) {
+            // 모집 폼의 announcementTitle(행에 없으면 '')이 공통정보 공고명을 비우지 않게 한다.
+            remotePatch = {
+              ...remotePatch,
+              generalCommonInfo: {
+                ...remotePatch.generalCommonInfo,
+                announcementTitle: program.generalCommonInfo?.announcementTitle,
+              },
+            }
           }
           const isGeneralRecruitProgram =
             !isCompanySchoolProgram(program) &&

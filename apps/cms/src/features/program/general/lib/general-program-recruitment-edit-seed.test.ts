@@ -189,6 +189,27 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
     expect(values.targetLevels).toEqual(['middle', 'university'])
   })
 
+  it('모집 탭 시드는 공통정보 공고명을 행 공고명으로 바꾸지 않는다', () => {
+    const program = {
+      id: 'general-prog-public-title',
+      title: '대표 프로그램명',
+      mainTitle: '대표 프로그램명',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      backendProgramType: 'GENERAL',
+      generalCommonInfo: { announcementTitle: '공통 공고명' },
+      programRecruitments: [
+        { id: 1, recruitmentType: 'PARTICIPANT', announcementTitle: null },
+      ],
+    } as Program
+
+    expect(programToRecruitmentTabEditValues(program, 'participant').announcementTitle).toBe(
+      '공통 공고명'
+    )
+  })
+
   it('기존 program 컬럼이 있으면 nested 라벨로 덮어쓰지 않는다', () => {
     const program = {
       id: 'general-prog-3',

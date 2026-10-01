@@ -66,6 +66,19 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     expect(next.generalCommonInfo?.announcementTitle).toBe('공고용 청소년 경제')
   })
 
+  it('공통정보 공고명이 없으면 overlay에 있던 공고명을 비우지 않는다', () => {
+    const { announcementTitle: _omit, ...common } = baseProgram().generalCommonInfo ?? {}
+    void _omit
+    const overlay = buildGeneralRegistrationOverlayFromProgram({
+      ...baseProgram(),
+      generalCommonInfo: common,
+      registrationOverlay: {
+        'generalRegistration.basicInfo.publicProgramTitle': '남아 있는 공고명',
+      },
+    })
+    expect(overlay['generalRegistration.basicInfo.publicProgramTitle']).toBe('남아 있는 공고명')
+  })
+
   it('일정형은 세부 프로그램명을 해당없음으로 시드하고 apply extras가 구조를 유지한다', () => {
     const program = {
       ...baseProgram(),
