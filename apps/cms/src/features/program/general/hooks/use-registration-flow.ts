@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui'
+import { formatIncompleteRegistrationRequiredFieldsAlert } from '@/features/program/general/lib/registration-required-fields'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -40,6 +41,7 @@ import {
   flushApplicationOperationalOverrides,
 } from '@/features/program/general/lib/registration-wizard-session-drafts'
 import { describeIncompleteApplicationFormThirdPartyRecipient } from '@/features/program/general/lib/application-form-third-party-recipient-required'
+import { registrationPendingSnapshotId } from '@/features/program/general/lib/registration-local-save'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
   hydrateRegistrationProgramDraft,
@@ -488,14 +490,20 @@ export function useGeneralProgramRegistrationFlow(
         isProgramStep &&
         registrationVm.hasIncompleteRequiredFields()
       ) {
-        // 진단용 — 어떤 항목이 비어 있다고 판정됐는지 콘솔에서 즉시 확인 가능 (UI 문구에는 노출 안 함)
+        const missingLabels =
+          registrationFormVariant === 'trainedTeachers'
+            ? registrationVm.getIncompleteRequiredFieldLabels()
+            : []
         console.debug(
           '[registration] 공통정보 필수항목 미입력:',
           registrationVm.getIncompleteRequiredFieldsReason?.()
         )
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          content:
+            missingLabels.length > 0
+              ? formatIncompleteRegistrationRequiredFieldsAlert(missingLabels)
+              : REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
         })
         return
       }
@@ -573,7 +581,9 @@ export function useGeneralProgramRegistrationFlow(
             }
           : undefined
       const recipientReason = describeIncompleteApplicationFormThirdPartyRecipient({
-        program: registrationVm.buildCurrentProgramSnapshot(),
+        program: registrationVm.buildCurrentProgramSnapshot(
+          registrationPendingSnapshotId(registrationFormVariant)
+        ),
         current,
       })
       if (recipientReason != null) {
@@ -648,6 +658,7 @@ export function useGeneralProgramRegistrationFlow(
     isProgramStep,
     participantVariant,
     participantVm,
+    registrationFormVariant,
     registrationVm,
     showAlert,
   ])
