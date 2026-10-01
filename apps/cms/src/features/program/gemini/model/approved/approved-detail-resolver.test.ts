@@ -15,7 +15,7 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
       trainingDate: null,
       trainingTimeText: null,
       lastPreferredDate: '2026-03-15',
-      studentCount: null,
+      studentCount: undefined,
       institutionApplicationCount: null,
       institutionCompletedTrainingCount: null,
       institutionJoinedAt: '2025-11-01',
@@ -29,7 +29,7 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
       teacherEmail: 'kim@example.com',
       teacherEmploymentStatus: null,
       teacherScheduleChangeCount: null,
-      assignedInstructor: null,
+      assignedInstructor: undefined,
       officialDocumentRequired: false,
     })
 

@@ -36,8 +36,6 @@ describe('gemini visiting-training adapters', () => {
         trainingRequestStartDate: '2026-04-01',
         trainingRequestEndDate: '2026-04-30',
         draftStatus: 'DRAFT',
-        organizationApplicationCount: null,
-        approvedOrganizationApplicationCount: null,
       },
       0
     )
