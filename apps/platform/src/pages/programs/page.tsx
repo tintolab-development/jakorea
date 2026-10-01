@@ -6,7 +6,9 @@ import {
   getProgramsListReturnPath,
   PROGRAM_CATEGORY_ITEMS,
   PROGRAM_FILTER_KEYS,
+  focusFromListItem,
   programDetailPath,
+  programListEntryKey,
   ProgramListItemRow,
   ProgramSort,
   readProgramsListParams,
@@ -193,10 +195,17 @@ export function ProgramsPage() {
           ) : (
             pageItems.map(program => (
               <ProgramListItemRow
-                key={program.id}
+                key={programListEntryKey(program)}
                 program={program}
+                activeTab={params.category}
                 onClick={() =>
-                  navigate(programDetailPath(program.id, getProgramsListReturnPath()))
+                  navigate(
+                    programDetailPath(
+                      program.id,
+                      getProgramsListReturnPath(),
+                      focusFromListItem(program, params.category),
+                    ),
+                  )
                 }
               />
             ))

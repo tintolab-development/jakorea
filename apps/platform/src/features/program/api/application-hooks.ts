@@ -11,11 +11,17 @@ import {
 } from './application-client'
 import type {
   PortalApplicationFormBundle,
-  PortalApplicationOption,
   PortalSaveApplicationRequest,
 } from './application-types'
 import { getApplicationApiErrorCode } from '../lib/application-api-error'
 import { parsePortalProgramId } from './mappers'
+import {
+  pickApplicationOption,
+  type ProgramApplicationSelection,
+} from './pick-application-option'
+
+export type { ProgramApplicationSelection } from './pick-application-option'
+export { pickApplicationOption } from './pick-application-option'
 
 const FORM_STALE_MS = 0
 const FORM_GC_MS = 15 * 60_000
@@ -24,20 +30,6 @@ const FORM_GC_MS = 15 * 60_000
 function isRecruitmentWindowBlocked(reason: string | null | undefined): boolean {
   const code = (reason ?? '').trim().toUpperCase()
   return code === 'RECRUITMENT_NOT_STARTED' || code === 'RECRUITMENT_CLOSED'
-}
-
-function pickApplicationOption(
-  options: PortalApplicationOption[],
-): PortalApplicationOption | null {
-  const withBinding = options.filter(
-    row =>
-      row.formBindingId != null &&
-      row.recruitmentId != null &&
-      Boolean(row.applicationType?.trim()),
-  )
-  if (withBinding.length === 0) return null
-  const canApply = withBinding.find(row => row.canApply === true)
-  return canApply ?? withBinding[0] ?? null
 }
 
 export type ProgramApplicationFormStatus =
@@ -64,6 +56,7 @@ export type ProgramApplicationFormQuery = {
  */
 export function useProgramApplicationForm(
   programId: string | null | undefined,
+  selection?: ProgramApplicationSelection | null,
 ): ProgramApplicationFormQuery {
   const remote = isRemoteApiConfigured()
   const numericId = parsePortalProgramId(programId)
@@ -84,7 +77,7 @@ export function useProgramApplicationForm(
     retryDelay: queryRetryDelay,
   })
 
-  const option = optionsQuery.data ? pickApplicationOption(optionsQuery.data) : null
+  const option = optionsQuery.data ? pickApplicationOption(optionsQuery.data, selection) : null
   const bindingId = option?.formBindingId ?? null
   const recruitmentId = option?.recruitmentId ?? null
   const applicationType = option?.applicationType?.trim() || null

@@ -2,17 +2,21 @@ import {
   getProgramIdFromPath,
   programDetailPath,
   PROGRAMS_PATH,
+  readPortalRecruitmentFocus,
   useProgramDetail,
 } from '@/features/program'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 export function ProgramApplyCompletePage() {
   const navigate = useNavigate()
+  const { search } = useLocation()
+  const focus = readPortalRecruitmentFocus(search)
+  const fromPath = new URLSearchParams(search).get('from') ?? undefined
   const programId = getProgramIdFromPath()
-  const { program, isLoading } = useProgramDetail(programId)
+  const { program, isLoading } = useProgramDetail(programId, { focus })
 
   if (isLoading && !program) {
     return null
@@ -52,7 +56,7 @@ export function ProgramApplyCompletePage() {
             size="xlarge"
             variant="tertiary"
             width="100%"
-            onClick={() => navigate(programDetailPath(program.id))}
+            onClick={() => navigate(programDetailPath(program.id, fromPath, focus))}
           >
             프로그램 상세로 이동
           </PFButton>

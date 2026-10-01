@@ -745,4 +745,181 @@ const volunteerSchool = mapPortalProgramListItem({
 assert.ok(volunteerSchool)
 assert.deepEqual(volunteerSchool.categories, ['institution'])
 
+const youthClosed = mapPortalProgramDetail(
+  {
+    programId: 182102,
+    title: 'UJAT 기관·봉사',
+    programType: 'UJAT',
+    portalCategories: ['ORGANIZATION', 'YOUTH_YOUNG'],
+    recruitmentStatus: 'OPEN',
+    recruitments: [
+      {
+        recruitmentId: 182221,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'SCHOOL',
+        status: 'OPEN',
+        applicationTypes: ['ORGANIZATION'],
+        startAt: '2026-09-20T15:00:00Z',
+        endAt: '2026-10-22T14:59:00Z',
+      },
+      {
+        recruitmentId: 182222,
+        recruitmentType: 'VOLUNTEER',
+        targetType: 'COLLEGE_STUDENT',
+        status: 'CLOSED',
+        applicationTypes: ['VOLUNTEER'],
+        startAt: '2026-11-19T15:00:00Z',
+        endAt: '2026-12-15T14:59:00Z',
+      },
+    ],
+  },
+  { portalTab: 'YOUTH_YOUNG', recruitmentIds: [182222], applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(youthClosed)
+assert.deepEqual(youthClosed.categories, ['youth'])
+assert.equal(youthClosed.recruitmentStatus, 'closed')
+assert.equal(youthClosed.detailCase, 'ujat-volunteer')
+assert.equal(youthClosed.applicationType, 'VOLUNTEER')
+assert.deepEqual(youthClosed.focusedRecruitmentIds, [182222])
+assert.equal(youthClosed.recruitmentSelectionAmbiguous, undefined)
+assert.equal(youthClosed.recruitmentPhases.length, 1)
+assert.equal(youthClosed.recruitmentPhases[0]?.label, '봉사자 모집 기간')
+
+const bothIndividual = mapPortalProgramDetail(
+  {
+    programId: 186010,
+    title: '개인·기관',
+    programType: 'GENERAL_INDIVIDUAL',
+    portalCategories: ['YOUTH_YOUNG', 'ORGANIZATION'],
+    recruitments: [
+      {
+        recruitmentId: 186050,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'BOTH',
+        status: 'OPEN',
+        applicationTypes: ['INDIVIDUAL', 'ORGANIZATION'],
+        startAt: '2026-09-01T00:00:00Z',
+        endAt: '2026-10-01T00:00:00Z',
+      },
+    ],
+  },
+  { portalTab: 'YOUTH_YOUNG', recruitmentIds: [186050], applicationTypes: ['INDIVIDUAL'] },
+)
+assert.ok(bothIndividual)
+assert.equal(bothIndividual.recruitmentSelectionAmbiguous, undefined)
+assert.equal(bothIndividual.applicationType, 'INDIVIDUAL')
+assert.equal(bothIndividual.detailCase, 'general')
+assert.equal(bothIndividual.recruitmentPhases.length, 1)
+
+const volunteerAmbiguous = mapPortalProgramDetail(
+  {
+    programId: 182102,
+    title: 'UJAT 상·하반기 봉사',
+    programType: 'UJAT',
+    portalCategories: ['ORGANIZATION', 'YOUTH_YOUNG'],
+    recruitmentStatus: 'OPEN',
+    recruitments: [
+      {
+        recruitmentId: 182221,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'SCHOOL',
+        status: 'OPEN',
+        applicationTypes: ['ORGANIZATION'],
+      },
+      {
+        recruitmentId: 182222,
+        recruitmentType: 'VOLUNTEER',
+        targetType: 'COLLEGE_STUDENT',
+        status: 'CLOSED',
+        applicationTypes: ['VOLUNTEER'],
+      },
+      {
+        recruitmentId: 182223,
+        recruitmentType: 'VOLUNTEER',
+        targetType: 'COLLEGE_STUDENT',
+        status: 'CLOSED',
+        applicationTypes: ['VOLUNTEER'],
+      },
+    ],
+  },
+  { portalTab: 'YOUTH_YOUNG', applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(volunteerAmbiguous)
+assert.equal(volunteerAmbiguous.recruitmentSelectionAmbiguous, true)
+assert.equal(volunteerAmbiguous.focusedRecruitmentIds, undefined)
+assert.equal(volunteerAmbiguous.applicationType, undefined)
+assert.equal(volunteerAmbiguous.recruitmentStatus, 'closed')
+assert.equal(volunteerAmbiguous.recruitmentPhases.length, 0)
+
+const listOneToN = [
+  mapPortalProgramListItem({
+    programId: 100,
+    title: 'Program A',
+    recruitmentId: 1001,
+    applicationType: 'INDIVIDUAL',
+    recruitmentType: 'PARTICIPANT',
+    targetType: 'INDIVIDUAL',
+    recruitmentStatus: 'OPEN',
+    portalCategories: ['YOUTH_YOUNG'],
+  }),
+  mapPortalProgramListItem({
+    programId: 100,
+    title: 'Program A',
+    recruitmentId: 1002,
+    applicationType: 'ORGANIZATION',
+    recruitmentType: 'PARTICIPANT',
+    targetType: 'SCHOOL',
+    recruitmentStatus: 'OPEN',
+    portalCategories: ['ORGANIZATION'],
+  }),
+  mapPortalProgramListItem({
+    programId: 100,
+    title: 'Program A',
+    recruitmentId: 1003,
+    applicationType: 'VOLUNTEER',
+    recruitmentType: 'VOLUNTEER',
+    targetType: 'COLLEGE_STUDENT',
+    recruitmentStatus: 'CLOSED',
+    portalCategories: ['YOUTH_YOUNG'],
+  }),
+]
+assert.equal(listOneToN.length, 3)
+assert.ok(listOneToN.every(Boolean))
+assert.equal(listOneToN[0]!.id, '100')
+assert.equal(listOneToN[1]!.id, '100')
+assert.equal(listOneToN[2]!.id, '100')
+assert.equal(listOneToN[0]!.recruitmentId, 1001)
+assert.equal(listOneToN[1]!.recruitmentId, 1002)
+assert.equal(listOneToN[2]!.recruitmentId, 1003)
+assert.equal(listOneToN[0]!.applicationType, 'INDIVIDUAL')
+assert.equal(listOneToN[1]!.applicationType, 'ORGANIZATION')
+
+const orgTabTwoEntries = listOneToN.filter(row => row!.recruitmentId === 1002 || row!.applicationType === 'ORGANIZATION')
+assert.equal(orgTabTwoEntries.length, 1)
+
+const trainedTeacherOrg = mapPortalProgramDetail(
+  {
+    programId: 186016,
+    title: '교육받은 교사',
+    programType: 'TRAINED_TEACHER',
+    portalCategories: ['ORGANIZATION'],
+    recruitmentStatus: 'OPEN',
+    recruitments: [
+      {
+        recruitmentId: 186059,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'ORGANIZATION',
+        status: 'OPEN',
+        applicationTypes: ['ORGANIZATION'],
+      },
+    ],
+  },
+  { portalTab: 'ORGANIZATION', applicationTypes: ['ORGANIZATION'] },
+)
+assert.ok(trainedTeacherOrg)
+assert.equal(trainedTeacherOrg.category, 'institution')
+assert.equal(trainedTeacherOrg.detailCase, 'general')
+assert.equal(trainedTeacherOrg.recruitmentRoleLabel, '참여자')
+assert.equal(trainedTeacherOrg.applicationType, 'ORGANIZATION')
+
 console.log('program portal mappers.selfcheck: ok')

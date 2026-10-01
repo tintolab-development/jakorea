@@ -23,6 +23,14 @@ export {
   programDetailPath,
 } from './lib/constants'
 export {
+  applicationTypesForPortalTab,
+  focusFromListItem,
+  portalTabFromCategory,
+  programListEntryKey,
+  readPortalRecruitmentFocus,
+} from './lib/portal-recruitment'
+export type { PortalRecruitmentFocus, PortalTabCode } from './lib/portal-recruitment'
+export {
   getApplicationTemplateCodeForApplyCase,
   getMockApplyFormCase,
   getMockApplyFormDraft,

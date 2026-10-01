@@ -1,4 +1,4 @@
-import type { ProgramListItem } from '../model/types'
+import type { ProgramCategory, ProgramListItem } from '../model/types'
 import { PROGRAM_TAB_LABEL } from '../lib/constants'
 import { MediaListRow } from '@/shared/ui/media-list-row'
 import { PFArrowButton, PFText } from '@/shared/ui'
@@ -7,10 +7,14 @@ import styles from './list-item.module.css'
 
 type ProgramListItemRowProps = {
   program: ProgramListItem
+  /** 목록 탭. 전체가 아니면 그 탭 문구만 보여 준다. */
+  activeTab?: ProgramCategory
   onClick: () => void
 }
 
-export function ProgramListItemRow({ program, onClick }: ProgramListItemRowProps) {
+export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListItemRowProps) {
+  const tabs =
+    activeTab && activeTab !== 'all' ? [activeTab] : program.categories
   const isClosed = program.recruitmentStatus === 'closed'
 
   return (
@@ -23,9 +27,9 @@ export function ProgramListItemRow({ program, onClick }: ProgramListItemRowProps
       content={
         <>
           <div className={styles.info}>
-            {program.categories.length > 0 ? (
+            {tabs.length > 0 ? (
               <div className={styles.categories}>
-                {program.categories.map(tab => (
+                {tabs.map(tab => (
                   <PFText
                     key={tab}
                     as="span"

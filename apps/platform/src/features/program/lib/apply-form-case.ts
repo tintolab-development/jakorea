@@ -43,6 +43,7 @@ export type ProgramApplyFormCaseInput = Pick<ProgramListItem | ProgramDetail, 'c
       | 'programType'
       | 'registrationKind'
       | 'programAudience'
+      | 'applicationType'
     >
   >
 
@@ -97,6 +98,16 @@ function isGeminiProgramId(id: string): boolean {
   return id.startsWith('gemini-prog-')
 }
 
+function isGeminiProgram(program: ProgramApplyFormCaseInput): boolean {
+  const type = (program.programType ?? '').trim().toUpperCase()
+  return (
+    type === 'GEMINI_TRAINING' ||
+    type === 'GEMINI' ||
+    type === 'VISITING_TRAINING' ||
+    isGeminiProgramId(program.id)
+  )
+}
+
 function isTrainedTeachersProgram(program: ProgramApplyFormCaseInput): boolean {
   if (program.registrationKind === 'trainedTeachers') return true
   if ((program.programType ?? '').trim().toUpperCase() === 'TRAINED_TEACHER') return true
@@ -115,6 +126,21 @@ export function resolveProgramApplyFormCase(
 ): ProgramApplyFormCase {
   const byId = SSOT_ID_TO_APPLY_CASE[program.id]
   if (byId) return byId
+
+  const applicationType = program.applicationType?.trim().toUpperCase()
+  if (applicationType === 'VOLUNTEER') return 'individual-volunteer'
+  if (applicationType === 'INSTRUCTOR') {
+    return isGeminiProgram(program) ? 'instructor-gemini' : 'instructor'
+  }
+  if (applicationType === 'INDIVIDUAL') {
+    return program.participationMethod === 'team' ? 'individual-team' : 'individual-general'
+  }
+  if (applicationType === 'ORGANIZATION') {
+    if (isTrainedTeachersProgram(program)) return 'trained-teachers'
+    if (isGeminiProgram(program)) return 'institution-gemini'
+    if (isEconomyProgramId(program.id)) return 'institution-economy'
+    return 'institution-general'
+  }
 
   if (isTrainedTeachersProgram(program)) {
     return 'trained-teachers'
