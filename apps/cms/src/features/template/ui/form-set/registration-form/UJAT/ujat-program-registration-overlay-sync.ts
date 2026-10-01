@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useRef, useSyncExternalStore } from 'react'
 
 /**
  * UJAT 프로그램 등록 폼 단락 본문이 `WritingFormDraft`가 아닌 로컬 state로만 관리될 때,
@@ -48,6 +48,7 @@ export function resetUjatProgramRegistrationOverlay(): void {
 
 /** `useSyncExternalStore`용 — 버전만 구독하고 렌더 시 `getUjatProgramRegistrationOverlayRecord()`로 값을 읽는다. */
 export function useUjatProgramRegistrationOverlayKv<T>(key: string, defaultValue: T): [T, (next: T) => void] {
+  const defaultRef = useRef(defaultValue)
   const version = useSyncExternalStore(
     subscribeUjatProgramRegistrationOverlay,
     getUjatProgramRegistrationOverlayVersion,
@@ -55,7 +56,8 @@ export function useUjatProgramRegistrationOverlayKv<T>(key: string, defaultValue
   )
   void version
   const record = getUjatProgramRegistrationOverlayRecord()
-  const value = (record[key] as T | undefined) ?? defaultValue
+  const raw = record[key] as T | undefined
+  const value = raw === undefined ? defaultRef.current : raw
   const setValue = useCallback(
     (next: T) => {
       patchUjatProgramRegistrationOverlay({ [key]: next })

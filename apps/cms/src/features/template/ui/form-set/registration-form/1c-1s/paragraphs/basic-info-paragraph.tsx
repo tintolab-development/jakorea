@@ -9,7 +9,7 @@ import type { Dayjs } from 'dayjs'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -40,6 +40,7 @@ import {
   type ProgramRegistrationSurveyItemId,
 } from '@/features/template/lib/program-registration-survey-items'
 import {
+  getProgramRegistrationOverlayRecord,
   patchProgramRegistrationOverlay,
   useProgramRegistrationOverlayKv,
   updateProgramRegistrationOverlayKey,
@@ -259,11 +260,12 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     setDetailedProgramName(label)
   }
 
-  // 기본 선택: 미선택 또는 과거 sentinel 잔존이면 카탈로그에서 「1사1교 경제금융교육」을 찾아 실제 id 로 채운다.
-  // 카탈로그에 없으면 비워 둔다 → 필수 검증에서 미완료.
+  // 기본 선택: overlay 미기록 또는 과거 sentinel 만 시드. 사용자가 ''로 비운 값은 유지.
   useEffect(() => {
     if (!detailedProgramOptionsLoaded) return
-    const current = detailedProgramId.trim()
+    const raw = getProgramRegistrationOverlayRecord()['economyRegistration.basicInfo.detailedProgramId']
+    if (raw === '') return
+    const current = typeof raw === 'string' ? raw.trim() : detailedProgramId.trim()
     if (current && !isLegacyDetailedProgramValue(current)) return
     const main = remoteDetailedProgramOptions.find(
       o => o.label.trim() === DETAILED_PROGRAM_MAIN_LABEL
@@ -295,6 +297,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="대표 프로그램명 (국문)"
+            validationKey="basicInfo.repKo"
             edit={
               <CmsInput
                 inputSize="medium"
@@ -308,6 +311,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
           />
           <DetailInfoForm.Field
             label="대표 프로그램명 (영문)"
+            validationKey="basicInfo.repEn"
             edit={
               <CmsInput
                 inputSize="medium"
@@ -323,6 +327,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="공고용 프로그램명"
+            validationKey="basicInfo.publicProgramTitle"
             edit={
               <CmsInput
                 inputSize="medium"
@@ -336,6 +341,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
           />
           <DetailInfoForm.Field
             label="세부 프로그램명"
+            validationKey="basicInfo.detailedProgramId"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
@@ -355,6 +361,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="사업 운영 기간"
+            validationKey="basicInfo.operationRangeSeal"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <ParagraphDatePicker
@@ -389,6 +396,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="참여자 유형"
+            validationKey="basicInfo.audience"
             edit={
               <div className="detail-info-form-inputs-wrapper">
                 <CmsCheckbox checkboxSize="large" checked={false} disabled>
@@ -410,6 +418,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
           />
           <DetailInfoForm.Field
             label="사업 분야"
+            validationKey="basicInfo.businessField"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
@@ -429,6 +438,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="후원사"
+            validationKey="basicInfo.sponsorId"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
@@ -450,6 +460,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
           />
           <DetailInfoForm.Field
             label="후원사 담당자"
+            validationKey="basicInfo.managerContact"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
@@ -500,6 +511,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="교육 과정"
+            validationKey="basicInfo.educationCourse"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
@@ -517,6 +529,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
           />
           <DetailInfoForm.Field
             label="IP Owned"
+            validationKey="basicInfo.ipOwned"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
@@ -536,6 +549,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="Course Delivered By"
+            validationKey="basicInfo.courseDeliveredBy"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
@@ -553,6 +567,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
           />
           <DetailInfoForm.Field
             label="Partner Involvement"
+            validationKey="basicInfo.partnerInvolvement"
             edit={
               <CmsRadioGroup
                 size="large"
@@ -569,6 +584,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="IPS 유형"
+            validationKey="basicInfo.ipsCategory"
             fullRow
             edit={
               <CmsSelect

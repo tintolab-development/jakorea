@@ -401,9 +401,8 @@ export function mapGeminiRecruitmentDetailToDetail(
         trainingRequestStartDate: dto.trainingRequestStartDate ?? undefined,
         trainingRequestEndDate: dto.trainingRequestEndDate ?? undefined,
         draftStatus: dto.draftStatus,
-        organizationApplicationCount: dto.organizationApplicationCount ?? null,
-        approvedOrganizationApplicationCount:
-          dto.approvedOrganizationApplicationCount ?? null,
+        organizationApplicationCount: dto.organizationApplicationCount,
+        approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount,
       },
       0
     )
@@ -492,9 +491,14 @@ export function mapGeminiOrganizationApplicationToRow(
  * Primary Case: 행별 예정/중/완료/미진행은 trainingDate+강사로 FE 파생.
  * 목록 progressStatus는 program.period_status일 수 있어 배지에 쓰지 않는다.
  * 확정일(trainingDate)과 3지망 마지막일(lastPreferredDate)을 섞지 않는다.
+ * 목록 OpenAPI에 lastPreferredDate가 없어도 BE가 주면 사용한다.
  */
+type GeminiApprovedTrainingListItem = GeminiApprovedTrainingItem & {
+  lastPreferredDate?: string | null
+}
+
 export function mapGeminiRecruitmentItemToApprovedRow(
-  dto: GeminiApprovedTrainingItem,
+  dto: GeminiApprovedTrainingListItem,
   index: number
 ): GeminiApprovedTrainingRow {
   const rawName = dto.instructorName?.trim()

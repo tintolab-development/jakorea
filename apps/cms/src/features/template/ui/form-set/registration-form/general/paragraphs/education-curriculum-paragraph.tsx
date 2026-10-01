@@ -164,6 +164,10 @@ function ProgramRegistrationMultiRoundClassRow({
     <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
         label={fieldLabel ?? `${roundIndex}회차 수업`}
+        validationKey={[
+          `curriculum.progressSession[${roundIndex}]`,
+          `curriculum.roundContent[${roundIndex}]`,
+        ]}
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper">
@@ -232,6 +236,10 @@ function ProgramRegistrationCurriculumChartSessionBlock({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="단원명 및 교육 내용"
+              validationKey={[
+                `curriculum.unitName[${chartIndex}]`,
+                `curriculum.unitContent[${chartIndex}]`,
+              ]}
               fullRow
               edit={
                 <ProgramRegistrationCurriculumUnitContentInputs
@@ -497,6 +505,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
               <DetailInfoForm.Row type="double">
                 <DetailInfoForm.Field
                   label="일정명"
+                  validationKey="curriculum.preEducationScheduleName"
                   edit={
                     <CmsInput
                       inputSize="medium"
@@ -511,6 +520,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                 />
                 <DetailInfoForm.Field
                   label="진행 일정"
+                  validationKey="curriculum.preEducationScheduleLine"
                   edit={
                     <div className="detail-info-form-inputs-wrapper-no-gap">
                       <ParagraphDatePicker
@@ -588,6 +598,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                   <DetailInfoForm.Row type="single">
                     <DetailInfoForm.Field
                       label="IPS 유형"
+                      validationKey={`curriculum.ips[${chartIndex}]`}
                       fullRow
                       edit={
                         <ProgramRegistrationIpsTypeFields
@@ -685,6 +696,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
           {educationField}
           <DetailInfoForm.Field
             label="IPS 유형"
+            validationKey={`curriculum.ips[${roundIndex}]`}
             edit={
               <ProgramRegistrationIpsTypeFields
                 layout="inline"
@@ -738,6 +750,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="IPS 유형"
+              validationKey={`curriculum.ips[${roundIndex}]`}
               fullRow
               edit={
                 <ProgramRegistrationIpsTypeFields
@@ -848,6 +861,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                           <ProgramRegistrationMultiRoundAssignmentFields
                             embedded
                             fullRow={options.fullRow}
+                            validationKey={`curriculum.assignment[${roundIndex}]`}
                             value={assignmentForRound(roundIndex)}
                             onChange={next => setAssignmentForRound(roundIndex, next)}
                           />
@@ -879,6 +893,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                         return (
                           <DetailInfoForm.Field
                             label="IPS 유형"
+                            validationKey={`curriculum.ips[${roundIndex}]`}
                             fullRow={options.fullRow}
                             edit={
                               <ProgramRegistrationIpsTypeFields

@@ -14,7 +14,7 @@ import type { ProgramRecruitmentRequestStatus } from './programRecruitmentReques
 export interface ProgramRecruitmentRequest {
   /** 모집 유형 */
   recruitmentType: ProgramRecruitmentRequestRecruitmentType;
-  /** 모집 대상. 일반 프로그램에서 PARTICIPANT=ORGANIZATION|INDIVIDUAL, INSTRUCTOR=TEACHER, VOLUNTEER=COLLEGE_STUDENT */
+  /** 모집 대상. 일반 프로그램에서 PARTICIPANT=ORGANIZATION|INDIVIDUAL, INSTRUCTOR=TEACHER, VOLUNTEER=ORGANIZATION|SCHOOL|INDIVIDUAL|STUDENT|COLLEGE_STUDENT(비어 있으면 COLLEGE_STUDENT) */
   targetType?: string;
   /** 모집 상태 */
   status?: ProgramRecruitmentRequestStatus;

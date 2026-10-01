@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import {
@@ -13,10 +13,13 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import {
   ADMIN_FILE_PURPOSE,
+  parseFileObjectId,
   programFileOwner,
+  programInlineImageOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
 import { GeminiDeferredCmsInput } from './gemini-recruitment-deferred-text-input'
+import { RichTextViewer } from '@/shared/rich-text'
 import { GeminiRecruitmentRichTextEditor } from './gemini-recruitment-rich-text-editor'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -42,10 +45,14 @@ function GeminiRecruitmentRichTextView({ content }: { content: string }) {
     return <div className="gemini-recruitment-info-tab__multiline-text">{content}</div>
   }
   return (
-    <div
-      className="gemini-recruitment-info-tab__additional-content gemini-recruitment-detail-fields__rich-text-view rich-text-content"
-      dangerouslySetInnerHTML={{ __html: content }}
-    />
+    <div className="gemini-recruitment-info-tab__additional-content gemini-recruitment-detail-fields__rich-text-view">
+      <RichTextViewer
+        content={content}
+        contentFormat="html"
+        maxHeight="none"
+        className="gemini-recruitment-detail-fields__rich-text-view"
+      />
+    </div>
   )
 }
 
@@ -64,6 +71,8 @@ export type GeminiRecruitmentDetailFieldsProps = {
   readOnlyUpload?: boolean
   /** true면 한 줄 입력 타이핑은 blur 때 draft commit */
   deferTextCommit?: boolean
+  /** 수정 화면의 프로그램 id. 등록은 생략하고 ownerId null */
+  programId?: string | number | null
 }
 
 export function GeminiRecruitmentDetailFields({
@@ -75,8 +84,13 @@ export function GeminiRecruitmentDetailFields({
   onRichTextEdit,
   readOnlyUpload = false,
   deferTextCommit = false,
+  programId,
 }: GeminiRecruitmentDetailFieldsProps) {
   const isEdit = mode === 'edit' && onChange != null
+  const inlineImageOwner = useMemo(
+    () => programInlineImageOwner(parseFileObjectId(programId)),
+    [programId]
+  )
   const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null)
 
   const revokeThumb = useCallback((url: string | null) => {
@@ -199,6 +213,7 @@ export function GeminiRecruitmentDetailFields({
                   placeholder={field.placeholder}
                   registerGetHtml={registerRichTextGetter}
                   onEdit={onRichTextEdit}
+                  fileUploadOwner={inlineImageOwner}
                 />
               ) : undefined
             }

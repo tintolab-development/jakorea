@@ -474,6 +474,7 @@ export function HorizontalTableParagraphBody({
   programApplicationFormVolunteer,
   programApplicationFormIndividual,
   programLinkedInstitutionApplicationForm,
+  registrationWizardValidation,
   paragraphInteractionMode = 'authoring',
 }: {
   paragraph: HorizontalTableParagraph
@@ -545,6 +546,7 @@ export function HorizontalTableParagraphBody({
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
   /** 프로그램 참여자 신청 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormIndividual?: boolean
+  registrationWizardValidation?: import('@/features/template/ui/paragraph/renderers/render-form-paragraph-body').RegistrationWizardValidationHighlightOptions
   paragraphInteractionMode?: ParagraphBodyInteractionMode
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
@@ -1138,12 +1140,19 @@ export function HorizontalTableParagraphBody({
               const systemSettingsTextEditing =
                 usePartialLockTextCellInput &&
                 isTextCellEditing({ area: 'body', row: rowIdx, col: colIdx })
+              const wizardCellKey = `application.thirdParty.${p.id}.${rowIdx}.${colIdx}`
+              const wizardCellIncomplete =
+                registrationWizardValidation?.isHorizontalTableCellIncomplete(wizardCellKey) ===
+                true
               return (
                 <div
                   key={`cf-${rowIdx}-${colIdx}`}
                   className={[
                     'form-editor-horizontal-table__td',
                     'form-editor-horizontal-table__td--field',
+                    wizardCellIncomplete
+                      ? 'form-editor-horizontal-table__td--label-required-incomplete'
+                      : '',
                     bodyColumnEditable &&
                       isChoiceField &&
                       'form-editor-horizontal-table__td--field-choices',

@@ -13,7 +13,7 @@ import {
   RECRUIT_FORM_MAX_SUFFIX_CLASS,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { RecruitInterviewConditionalRows } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-conditional-rows'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -193,6 +193,7 @@ export function RecruitFormVolunteerInfoParagraph() {
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="공고 게시 여부"
+            validationKey="recruit.volunteer.announcementPublished"
             edit={
               <ParticipantRecruitmentAnnouncementPublishedRadios
                 value={announcementPublished}
@@ -203,6 +204,7 @@ export function RecruitFormVolunteerInfoParagraph() {
           />
           <DetailInfoForm.Field
             label="봉사자 면접 유무"
+            validationKey="recruit.volunteer.interviewRequired"
             edit={
               <CmsRadioGroup
                 size="large"
@@ -226,6 +228,7 @@ export function RecruitFormVolunteerInfoParagraph() {
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="프로그램 운영 기간"
+            validationKey="recruit.volunteer.programRangeSeal"
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker
@@ -259,6 +262,7 @@ export function RecruitFormVolunteerInfoParagraph() {
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="모집 대상"
+            validationKey="recruit.volunteer.volunteerTargets"
             edit={
               <CmsSelect
                 mode="multiple"
@@ -275,6 +279,7 @@ export function RecruitFormVolunteerInfoParagraph() {
           />
           <DetailInfoForm.Field
             label="모집 대상 상세"
+            validationKey="recruit.volunteer.volunteerTargetDetail"
             edit={
               <CmsInput
                 inputSize="medium"
@@ -291,6 +296,7 @@ export function RecruitFormVolunteerInfoParagraph() {
         <RecruitInterviewConditionalRows
           recruitPeriodLabel="봉사자 모집 기간"
           interviewEnabled={interviewEnabled}
+          validationKeyPrefix="recruit.volunteer"
           state={{
             recruitAnchor,
             setRecruitAnchor,
@@ -322,6 +328,7 @@ export function RecruitFormVolunteerInfoParagraph() {
           onInquiryTelChange={setInquiryTel}
           inquiryEmail={inquiryEmail}
           onInquiryEmailChange={setInquiryEmail}
+          validationKeyPrefix="recruit.volunteer"
         />
 
         <RecruitNotesRow
@@ -329,6 +336,7 @@ export function RecruitFormVolunteerInfoParagraph() {
           onNotesNotApplicableChange={setNotesNotApplicable}
           notes={notes}
           onNotesChange={setNotes}
+          validationKey="recruit.volunteer.notes"
         />
       </DetailInfoForm>
     </div>

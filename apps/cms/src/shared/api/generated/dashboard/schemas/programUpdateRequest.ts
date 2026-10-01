@@ -4,9 +4,6 @@
  * JA Korea CMS Backend API — Dashboard subset
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
- *
- * Note: nested recruitments/rounds/… items are kept as typed DTOs (not additionalProperties
- * object) so CMS adapters stay assignable after OpenAPI sync.
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
 import type { ProgramPeriodRequest } from './programPeriodRequest';
@@ -53,7 +50,7 @@ export interface ProgramUpdateRequest {
   district?: string;
   ips?: string;
   targetLevel?: string;
-  /** 교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. */
+  /** 교육 대상 복수. elementary|middle|high|university|adult. 있으면 targetLevel은 첫 값과 같고, serviceDetailJson.program.targetLevels와 동기화된다. 빈 배열은 교육 대상을 지운다. */
   targetLevels?: string[];
   institutionType?: string;
   ipOwned?: string;
@@ -97,12 +94,6 @@ export interface ProgramUpdateRequest {
      */
   applicationMethod?: string | null;
   /**
-   * Gemini 모집 공고 게시 상태. 생략하면 기존 값을 유지한다.
-   * GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시된다.
-   * @nullable
-   */
-  draftStatus?: ProgramUpdateRequestDraftStatus | null;
-  /**
      * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.
      * @nullable
      */
@@ -133,4 +124,9 @@ export interface ProgramUpdateRequest {
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];
+  /**
+     * Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.
+     * @nullable
+     */
+  draftStatus?: ProgramUpdateRequestDraftStatus;
 }

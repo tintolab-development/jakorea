@@ -361,6 +361,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     <DetailInfoForm.Row type="double">
       <DetailInfoForm.Field
         label="후원사"
+        validationKey="basicInfo.sponsorId"
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
             {allowMultipleSponsors ? (
@@ -404,6 +405,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
       />
       <DetailInfoForm.Field
         label="후원사 담당자"
+        validationKey="basicInfo.sponsorContactId"
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect

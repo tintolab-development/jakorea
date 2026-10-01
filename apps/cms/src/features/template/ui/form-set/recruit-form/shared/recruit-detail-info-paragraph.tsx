@@ -34,6 +34,7 @@ import {
 import { resolveRecruitDetailTextFieldOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-text-field-keys'
 import {
   contentUrlForFileObjectId,
+  programInlineImageOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
 import {
@@ -144,11 +145,12 @@ const RecruitDetailAdditionalContentEditor = memo(function RecruitDetailAddition
   additionalContentKey: string
 }) {
   const initialAdditionalHtmlRef = useRef(readOverlayAdditionalContentHtml(additionalContentKey))
+  const fileUploadOwner = programInlineImageOwner(null)
   const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(
     true,
     initialAdditionalHtmlRef.current,
     wysiwygResetKey,
-    DETAIL_INFO_WYSIWYG_OPTIONS
+    { ...DETAIL_INFO_WYSIWYG_OPTIONS, fileUploadOwner }
   )
 
   const getHtmlRef = useRef(getHTML)
@@ -200,7 +202,11 @@ const RecruitDetailAdditionalContentEditor = memo(function RecruitDetailAddition
   return (
     <div className="notice-register-modal__section notice-register-modal__section--editor">
       <div className="notice-register-modal__editor-host">
-        <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+        <RichTextEditor
+          editor={editor}
+          minHeight={editorMinHeight}
+          fileUploadOwner={fileUploadOwner}
+        />
       </div>
     </div>
   )

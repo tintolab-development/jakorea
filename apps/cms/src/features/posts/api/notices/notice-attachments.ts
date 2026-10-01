@@ -1,4 +1,5 @@
 import type { Notice, NoticeAttachment } from '@/data/mock/notices'
+import { dedupeFileObjectIds } from '@/features/posts/api/notices/notice-file-ids'
 import {
   fetchNoticeAttachmentsRemote,
   replaceNoticeAttachmentsRemote,
@@ -10,13 +11,23 @@ import {
   listFileAttachments,
   parseOwnerResourceId,
 } from '@/shared/lib/admin-file-upload/attachments'
+import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { beginFileUploadOverlay } from '@/shared/ui/file-upload-overlay-store'
+import { customInstance } from '@/shared/api/orval-mutator'
 import {
   ADMIN_FILE_OWNER,
   ADMIN_FILE_PURPOSE,
   buildAdminFileOwner,
+  confirmUpload,
+  createSha256,
+  isFileAvailable,
+  parseFileObjectId,
+  resolveUploadContentType,
   uploadAdminFile,
+  uploadToS3,
+  waitUntilFileAvailable,
 } from '@/shared/lib/admin-file-upload'
-import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
+import type { AdminFileUploadOwner, PreparedUpload } from '@/shared/lib/admin-file-upload/types'
 
 /** CMS 공지 첨부의 files-domain owner. OpenAPI example은 PROGRAM/APPLICATION이라 공지 전용 값을 둔다. */
 export const NOTICE_FILE_OWNER_DOMAIN = 'CONTENT'
@@ -28,13 +39,7 @@ export function noticeFileOwner(noticeId: number): AdminFileUploadOwner {
   return buildAdminFileOwner(ADMIN_FILE_OWNER.NOTICE, noticeId, NOTICE_FILE_PURPOSE)
 }
 
-export function noticeInlineImageOwner(noticeId: number): AdminFileUploadOwner {
-  return buildAdminFileOwner(
-    ADMIN_FILE_OWNER.NOTICE_INLINE,
-    noticeId,
-    ADMIN_FILE_PURPOSE.NOTICE_INLINE_IMAGE
-  )
-}
+export { noticeInlineImageOwner } from '@/shared/lib/admin-file-upload/inline-image'
 
 export function parseNoticeOwnerId(noticeId: string | undefined): number | null {
   return parseOwnerResourceId(noticeId)
@@ -127,6 +132,108 @@ export async function hydrateNoticeAttachments(notice: Notice): Promise<Notice> 
   } catch {
     return { ...notice, attachments: notice.attachments ?? [], hasAttachment: false }
   }
+}
+
+/** 서버 allow-list. 파일당 20MiB. */
+export const NOTICE_ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024
+export const NOTICE_ATTACHMENT_ACCEPT = '.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx'
+
+const NOTICE_ATTACHMENT_EXTENSIONS = new Set([
+  'jpg',
+  'jpeg',
+  'png',
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+])
+
+export function isAllowedNoticeAttachment(file: File): boolean {
+  if (file.size < 1 || file.size > NOTICE_ATTACHMENT_MAX_BYTES) return false
+  const ext = file.name.trim().toLowerCase().split('.').pop() ?? ''
+  return NOTICE_ATTACHMENT_EXTENSIONS.has(ext)
+}
+
+/**
+ * 신규 공지 첨부 prepare. 공지 ID가 없으므로 ownerId는 null이다.
+ * 0이나 임시 notice id를 넣지 않는다.
+ */
+async function prepareUnboundNoticeAttachment(input: {
+  originalFileName: string
+  contentType: string
+  fileSize: number
+  checksumSha256: string
+}): Promise<PreparedUpload> {
+  return unwrapApiBody<PreparedUpload>(
+    await customInstance<PreparedUpload>({
+      url: '/api/admin/files/upload-requests',
+      method: 'POST',
+      data: {
+        ownerDomain: NOTICE_FILE_OWNER_DOMAIN,
+        ownerType: NOTICE_FILE_OWNER_TYPE,
+        ownerId: null,
+        filePurpose: NOTICE_FILE_PURPOSE,
+        originalFileName: input.originalFileName,
+        contentType: input.contentType,
+        fileSize: input.fileSize,
+        checksumSha256: input.checksumSha256,
+      },
+      headers: {
+        'Idempotency-Key': crypto.randomUUID(),
+      },
+    })
+  )
+}
+
+/** 신규 공지 첨부 1건. AVAILABLE + CLEAN 이후에만 fileObjectId를 반환한다. */
+export async function uploadUnboundNoticeAttachment(file: File): Promise<number> {
+  if (file.size < 1) {
+    throw new Error('업로드할 파일이 비어 있습니다.')
+  }
+  const endOverlay = beginFileUploadOverlay()
+  try {
+  const originalFileName = file.name.trim() || 'upload.bin'
+  const contentType = resolveUploadContentType(file)
+  const checksumSha256 = await createSha256(file)
+  const prepared = await prepareUnboundNoticeAttachment({
+    originalFileName,
+    contentType,
+    fileSize: file.size,
+    checksumSha256,
+  })
+  const fileObjectId = parseFileObjectId(prepared.fileObjectId)
+  if (fileObjectId == null) {
+    throw new Error('파일 객체 ID를 받지 못했습니다.')
+  }
+  const uploadUrl = prepared.uploadUrl?.trim()
+  if (!uploadUrl) {
+    throw new Error('파일 업로드 URL을 받지 못했습니다.')
+  }
+  await uploadToS3(uploadUrl, file, prepared.requiredHeaders, prepared.method)
+  const confirmed = await confirmUpload({
+    fileObjectId,
+    confirmPath: prepared.confirmPath,
+    fileSize: file.size,
+    checksumSha256,
+    contentType,
+  })
+  const confirmedId = parseFileObjectId(confirmed.fileObjectId) ?? fileObjectId
+  if (isFileAvailable(confirmed)) return confirmedId
+  const available = await waitUntilFileAvailable(confirmedId)
+  return parseFileObjectId(available.fileObjectId) ?? confirmedId
+  } finally {
+    endOverlay()
+  }
+}
+
+export async function uploadUnboundNoticeAttachments(files: File[]): Promise<number[]> {
+  const ids: number[] = []
+  for (const file of files) {
+    if (!file || file.size < 1) continue
+    ids.push(await uploadUnboundNoticeAttachment(file))
+  }
+  return dedupeFileObjectIds(ids)
 }
 
 export async function uploadAndAttachNoticeFiles(

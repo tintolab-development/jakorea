@@ -25,12 +25,14 @@ export function ProgramRegistrationMultiRoundAssignmentFields({
   onChange,
   embedded = false,
   fullRow,
+  validationKey,
 }: {
   value: ProgramRegistrationMultiRoundAssignmentValue
   onChange: (next: ProgramRegistrationMultiRoundAssignmentValue) => void
   /** true면 Row 없이 Field만 반환 (과제|참여 double 행용) */
   embedded?: boolean
   fullRow?: boolean
+  validationKey?: string
 }) {
   const appliedSurfaceRange = useMemo(
     () => parseEducationScheduleLineToRange(value.period),
@@ -40,6 +42,7 @@ export function ProgramRegistrationMultiRoundAssignmentFields({
   const field = (
     <DetailInfoForm.Field
       label="과제 설정"
+      validationKey={validationKey}
       fullRow={fullRow ?? !embedded}
       view={
         <CurriculumAssignmentSettingView

@@ -142,6 +142,8 @@ import {
   persistUjatRecruitVolunteerTemplateSave,
 } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE } from '@/features/template/lib/program-registration-editor-state'
 import { coalesceUjatRecruitOverlay } from '@/features/program/ujat/lib/ujat-recruit-overlay-coalesce'
 import { pickUjatRecruitInstitutionOverlay } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import { pickUjatRecruitVolunteerOverlay } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
@@ -203,6 +205,7 @@ import {
 import {
   getInstitutionApplicationFormHiddenParagraphIds,
   isInstitutionApplicationBridgeTemplateAuthoring,
+  syncInstitutionApplicationPreferredEducationFormFromOverlay,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveGeneralApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/application-form-preview-options'
@@ -212,6 +215,7 @@ import {
 } from '@/features/program/general/lib/instructor-application-available-schedule'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { resolveGeneralProgramVolunteerInterviewScheduleEditSeed } from '@/features/program/general/lib/volunteer-interview-schedule-display'
+import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
 import { applyDevAutofillThirdPartyRecipient } from '@/features/program/general/lib/fill-application-form-third-party-recipient'
 import { hasIncompleteApplicationFormThirdPartyRecipient } from '@/features/template/model/application-form-third-party-recipient'
 import {
@@ -1004,6 +1008,28 @@ export function useProgramParticipantApplicationEditor(
     storageHydratedTemplateIdsRef.current.clear()
     clearRegistrationWizardSessionDrafts()
   }, [registrationWizardOpen])
+
+  /** 기관 신청 스텝 — overlay/위저드 draft에서 희망 교육 형태를 다시 켠다 */
+  useEffect(() => {
+    if (!active || variant !== 'institution') return
+    const live = getProgramRegistrationOverlayRecord()
+    if (Object.keys(live).length > 0) {
+      syncInstitutionApplicationPreferredEducationFormFromOverlay(live)
+      return
+    }
+    if (!usesRegistrationWizardDraft || registrationWizardProgramType == null) return
+    let cancelled = false
+    void loadRegistrationWizardFormDraft({
+      programType: registrationWizardProgramType,
+      templateCode: PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
+    }).then(saved => {
+      if (cancelled) return
+      syncInstitutionApplicationPreferredEducationFormFromOverlay(saved?.overlay)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [active, registrationWizardProgramType, usesRegistrationWizardDraft, variant])
 
   useEffect(() => {
     if (!active) {

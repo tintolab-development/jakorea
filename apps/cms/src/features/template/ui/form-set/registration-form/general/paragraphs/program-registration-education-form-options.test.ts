@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyEducationFormTypeSettingsModeChange,
   EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
+  isParticipantSelectionEducationFormInOverlay,
   resolveEducationFormTypeSettingsMode,
   resolveGeneralRegistrationCommonEducationForm,
   resolveGeneralRegistrationCommonParticipation,
@@ -161,6 +162,67 @@ describe('resolveGeneralRegistrationCommonParticipation', () => {
 
   it('둘 다 없으면 단일 회차 기본값 individual', () => {
     expect(resolveGeneralRegistrationCommonParticipation({})).toBe('individual')
+  })
+})
+
+describe('isParticipantSelectionEducationFormInOverlay', () => {
+  it('복수회차 공통 키가 participant_selection이면 true', () => {
+    expect(
+      isParticipantSelectionEducationFormInOverlay({
+        'generalRegistration.typeSettings.multiCommonEducationForm':
+          EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
+      })
+    ).toBe(true)
+  })
+
+  it('단일 회차 키가 participant_selection이면 true', () => {
+    expect(
+      isParticipantSelectionEducationFormInOverlay({
+        'generalRegistration.typeSettings.singleEducationForm':
+          EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
+      })
+    ).toBe(true)
+  })
+
+  it('일정별 회차 맵에 participant_selection이 있으면 true', () => {
+    expect(
+      isParticipantSelectionEducationFormInOverlay({
+        'generalRegistration.educationCurriculum.educationFormBySession': {
+          0: 'online',
+          1: EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
+        },
+      })
+    ).toBe(true)
+  })
+
+  it('일정별 세부 맵에 participant_selection이 있으면 true', () => {
+    expect(
+      isParticipantSelectionEducationFormInOverlay({
+        'generalRegistration.educationScheduleCurriculum.educationFormByDetail': {
+          0: EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
+        },
+      })
+    ).toBe(true)
+  })
+
+  it('복수회차에 남은 online이 있어도 단일 회차 참여자 선택이면 true', () => {
+    expect(
+      isParticipantSelectionEducationFormInOverlay({
+        'generalRegistration.typeSettings.multiCommonEducationForm': 'online',
+        'generalRegistration.typeSettings.singleEducationForm':
+          EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
+      })
+    ).toBe(true)
+  })
+
+  it('온라인이거나 빈 overlay면 false', () => {
+    expect(isParticipantSelectionEducationFormInOverlay({})).toBe(false)
+    expect(isParticipantSelectionEducationFormInOverlay(undefined)).toBe(false)
+    expect(
+      isParticipantSelectionEducationFormInOverlay({
+        'generalRegistration.typeSettings.singleEducationForm': 'online',
+      })
+    ).toBe(false)
   })
 })
 

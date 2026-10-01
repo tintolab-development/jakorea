@@ -59,6 +59,10 @@ import {
 } from '@/features/program/shared/lib/program-update-common-string-fields'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
+  generalParticipantTypesFromUjatFlags,
+  resolveUjatParticipantTypeFlags,
+} from '@/features/program/ujat/lib/participant-type-flags'
+import {
   parseRegistrationOverlay,
   parseServiceDetail,
   parseUjatServiceDetailExtras,
@@ -323,6 +327,12 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     ...(Object.keys(registrationOverlay).length > 0
       ? { ujatRegistrationOverlay: registrationOverlay }
       : {}),
+    generalParticipantTypes: generalParticipantTypesFromUjatFlags(
+      resolveUjatParticipantTypeFlags({
+        ...baseProgram({ id, title }),
+        ujatRegistrationOverlay: registrationOverlay,
+      })
+    ),
   })
 }
 
@@ -507,6 +517,9 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
   )
   return {
     ...mapped,
+    generalParticipantTypes: generalParticipantTypesFromUjatFlags(
+      resolveUjatParticipantTypeFlags({ ...mapped, ujatRegistrationOverlay: overlay }, overlay)
+    ),
     ujatServiceDetailExtras: {
       ...extras,
       semesterType: extras.semesterType ?? 'FULL_YEAR',

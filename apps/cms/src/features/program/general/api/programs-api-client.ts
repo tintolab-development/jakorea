@@ -1,4 +1,5 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { syncProgramInlineImages } from '@/features/program/shared/api/program-inline-images'
 import customInstance from '@/shared/api/orval-mutator'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
@@ -138,26 +139,33 @@ export async function fetchAdminProgramSponsorsRemote(
 export async function createAdminProgramRemote(
   payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
 ): Promise<ProgramResponse> {
-  return unwrapApiBody<ProgramResponse>(
+  const created = unwrapApiBody<ProgramResponse>(
     await customInstance({
       url: '/api/admin/programs',
       method: 'POST',
       data: payload,
     })
   )
+  const createdId = created.id
+  if (createdId) {
+    await syncProgramInlineImages(createdId, [payload, created])
+  }
+  return created
 }
 
 export async function updateAdminProgramRemote(
   programId: string,
   payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest
 ): Promise<ProgramResponse> {
-  return unwrapApiBody<ProgramResponse>(
+  const updated = unwrapApiBody<ProgramResponse>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}`,
       method: 'PATCH',
       data: payload,
     })
   )
+  await syncProgramInlineImages(programId, [payload, updated])
+  return updated
 }
 
 export async function deleteAdminProgramRemote(programId: string): Promise<void> {

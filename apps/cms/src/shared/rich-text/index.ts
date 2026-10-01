@@ -24,7 +24,8 @@ export {
   toEditorContentType,
 } from '@jakorea/rich-text'
 export type { EditorState, Transaction } from '@jakorea/rich-text'
-export { RichTextViewer, useRichTextEditor } from '@jakorea/rich-text/react'
+export { useRichTextEditor } from '@jakorea/rich-text/react'
+export { CmsRichTextViewer as RichTextViewer } from './cms-rich-text-viewer'
 export { CmsRichTextEditor as RichTextEditor } from './cms-rich-text-editor'
 export { RichTextToolbar } from './toolbar/rich-text-toolbar'
 export type { RichTextToolbarProps } from './toolbar/rich-text-toolbar'

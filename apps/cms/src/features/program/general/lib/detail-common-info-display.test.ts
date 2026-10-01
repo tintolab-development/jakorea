@@ -255,6 +255,21 @@ describe('resolveGeneralProgramCommonInfo 커리큘럼 복수', () => {
 })
 
 describe('resolveGeneralProgramCommonInfo 교육 형태', () => {
+  it('overlay 참여자 선택은 GET 온라인 라벨을 덮는다', () => {
+    const common = resolveGeneralProgramCommonInfo(
+      baseProgram({
+        generalCommonInfo: {
+          educationFormScheduleDetail: 'common',
+          educationFormLabel: '온라인',
+        },
+        registrationOverlay: {
+          'generalRegistration.typeSettings.singleEducationForm': 'participant_selection',
+        },
+      })
+    )
+    expect(common.educationFormLabel).toBe('참여자 선택')
+  })
+
   it('generalCommonInfo 라벨이 없으면 registration overlay 일정 공통 값을 조회 라벨로 쓴다', () => {
     const common = resolveGeneralProgramCommonInfo(
       baseProgram({

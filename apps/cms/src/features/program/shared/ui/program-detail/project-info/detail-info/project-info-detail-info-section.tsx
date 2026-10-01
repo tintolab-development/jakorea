@@ -13,7 +13,11 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
-import { uploadAdminFileMaybeMock } from '@/shared/lib/admin-file-upload'
+import {
+  parseFileObjectId,
+  programInlineImageOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
 import {
   fetchProgramMediaAttachments,
@@ -155,11 +159,13 @@ function useDetailInfoEditorBlock(
   }, [isEditMode])
 
   const additionalContentHtml = resolveAdditionalContentHtml(program, emptyReadDisplay)
+  const inlineImageOwner = programInlineImageOwner(parseFileObjectId(program.id))
 
   const { editor, editorMinHeight, getHTML } = useTemplateEditor(
     editorOpen,
     '',
-    additionalContentHtml
+    additionalContentHtml,
+    inlineImageOwner
   )
   const getterRef = useRef<() => string>(() => '')
 
@@ -481,7 +487,11 @@ function AdditionalContentRow({
           <div className="program-detail-info-tab__additional-content program-detail-info-tab__additional-content--edit">
             {editorOpen && editor ? (
               <div className="program-detail-info-tab__editor-host">
-                <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+                <RichTextEditor
+                  editor={editor}
+                  minHeight={editorMinHeight}
+                  fileUploadOwner={programInlineImageOwner(parseFileObjectId(program.id))}
+                />
               </div>
             ) : (
               <div className="program-detail-info-tab__editor-placeholder">로딩 중…</div>
@@ -521,6 +531,7 @@ function AttachmentRowStandard({
   guideLines: string[]
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
 }) {
+  const [uploading, setUploading] = useState(false)
   const showEmptyDash =
     !isEditMode && emptyReadDisplay === 'dash' && displayFileNames.length === 0
 
@@ -534,7 +545,8 @@ function AttachmentRowStandard({
           <FileSelectField
             accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
             multiple
-            disabled={!isEditMode}
+            disabled={!isEditMode || uploading}
+            uploading={uploading}
             buttonLabel="파일 선택"
             className={isEditMode ? 'file-select-field--edit' : ''}
             fileNames={displayFileNames}
@@ -544,24 +556,29 @@ function AttachmentRowStandard({
                 ? async files => {
                     const owner = programMediaAttachmentOwner(program)
                     if (owner == null) return
-                    const uploadedIds: number[] = []
-                    for (const file of files) {
-                      const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                      uploadedIds.push(uploaded.fileObjectId)
+                    setUploading(true)
+                    try {
+                      const uploadedIds: number[] = []
+                      for (const file of files) {
+                        const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                        uploadedIds.push(uploaded.fileObjectId)
+                      }
+                      if (uploadedIds.length === 0) return
+                      const existing = await fetchProgramMediaAttachments(program).catch(() => [])
+                      const existingIds = existing
+                        .map(item => item.fileObjectId)
+                        .filter((id): id is number => typeof id === 'number' && id > 0)
+                      const linked = await putProgramMediaAttachments(program, [
+                        ...existingIds,
+                        ...uploadedIds,
+                      ])
+                      const names = linked
+                        .map(item => item.originalFileName?.trim() || '')
+                        .filter(Boolean)
+                      form!.setValue('attachmentFileNames', names)
+                    } finally {
+                      setUploading(false)
                     }
-                    if (uploadedIds.length === 0) return
-                    const existing = await fetchProgramMediaAttachments(program).catch(() => [])
-                    const existingIds = existing
-                      .map(item => item.fileObjectId)
-                      .filter((id): id is number => typeof id === 'number' && id > 0)
-                    const linked = await putProgramMediaAttachments(program, [
-                      ...existingIds,
-                      ...uploadedIds,
-                    ])
-                    const names = linked
-                      .map(item => item.originalFileName?.trim() || '')
-                      .filter(Boolean)
-                    form!.setValue('attachmentFileNames', names)
                   }
                 : undefined
             }
@@ -940,6 +957,7 @@ export function VolunteerDetailInfoSection({
   sectionTitleOnly = false,
   emptyReadDisplay = 'mock-default',
 }: VolunteerDetailInfoSectionProps) {
+  const [uploadingAttachments, setUploadingAttachments] = useState(false)
   const {
     editorOpen,
     editor,
@@ -1062,7 +1080,8 @@ export function VolunteerDetailInfoSection({
                 <FileSelectField
                   accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                   multiple
-                  disabled={false}
+                  disabled={uploadingAttachments}
+                  uploading={uploadingAttachments}
                   buttonLabel="파일 선택"
                   className="file-select-field--edit"
                   fileNames={displayFileNames}
@@ -1072,24 +1091,31 @@ export function VolunteerDetailInfoSection({
                       ? async files => {
                           const owner = programMediaAttachmentOwner(program)
                           if (owner == null) return
-                          const uploadedIds: number[] = []
-                          for (const file of files) {
-                            const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                            uploadedIds.push(uploaded.fileObjectId)
+                          setUploadingAttachments(true)
+                          try {
+                            const uploadedIds: number[] = []
+                            for (const file of files) {
+                              const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                              uploadedIds.push(uploaded.fileObjectId)
+                            }
+                            if (uploadedIds.length === 0) return
+                            const existing = await fetchProgramMediaAttachments(program).catch(
+                              () => []
+                            )
+                            const existingIds = existing
+                              .map(item => item.fileObjectId)
+                              .filter((id): id is number => typeof id === 'number' && id > 0)
+                            const linked = await putProgramMediaAttachments(program, [
+                              ...existingIds,
+                              ...uploadedIds,
+                            ])
+                            const names = linked
+                              .map(item => item.originalFileName?.trim() || '')
+                              .filter(Boolean)
+                            f!.setValue('attachmentFileNames', names)
+                          } finally {
+                            setUploadingAttachments(false)
                           }
-                          if (uploadedIds.length === 0) return
-                          const existing = await fetchProgramMediaAttachments(program).catch(() => [])
-                          const existingIds = existing
-                            .map(item => item.fileObjectId)
-                            .filter((id): id is number => typeof id === 'number' && id > 0)
-                          const linked = await putProgramMediaAttachments(program, [
-                            ...existingIds,
-                            ...uploadedIds,
-                          ])
-                          const names = linked
-                            .map(item => item.originalFileName?.trim() || '')
-                            .filter(Boolean)
-                          f!.setValue('attachmentFileNames', names)
                         }
                       : undefined
                   }

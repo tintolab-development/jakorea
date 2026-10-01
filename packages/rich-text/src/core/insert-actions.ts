@@ -58,9 +58,20 @@ export function promptYoutubeUrl(): string | null {
   return trimmed
 }
 
-function applyImageSrc(editor: Editor, src: string, alt?: string): boolean {
+export type ResolvedRichTextImageSrc = string | { src: string; persistSrc?: string }
+
+function applyImageSrc(
+  editor: Editor,
+  src: string,
+  alt?: string,
+  persistSrc?: string
+): boolean {
   if (editor.isDestroyed) return false
-  const attrs = { src, alt: alt ?? '' }
+  const attrs = {
+    src,
+    alt: alt ?? '',
+    ...(persistSrc?.trim() ? { persistSrc: persistSrc.trim() } : {}),
+  }
   const ok =
     editor.chain().focus().setImage(attrs).run() ||
     editor.chain().focus().insertContent({ type: 'image', attrs }).run()
@@ -77,7 +88,7 @@ export function insertImageFromUrl(editor: Editor, src: string): void {
 export function insertImageFromFile(
   editor: Editor,
   file: File,
-  resolveSrc?: (file: File) => Promise<string>,
+  resolveSrc?: (file: File) => Promise<ResolvedRichTextImageSrc>,
 ): void {
   if (!IMAGE_ACCEPT.split(',').some(type => file.type === type.trim())) {
     window.alert('JPG, PNG, GIF, WebP 이미지만 삽입할 수 있습니다.')
@@ -88,19 +99,21 @@ export function insertImageFromFile(
     return
   }
 
-  const insertResolved = (src: string) => {
-    applyImageSrc(editor, src, file.name)
+  const insertResolved = (src: string, persistSrc?: string) => {
+    applyImageSrc(editor, src, file.name, persistSrc)
   }
 
   if (resolveSrc) {
     void resolveSrc(file)
-      .then(src => {
+      .then(resolved => {
+        const src = typeof resolved === 'string' ? resolved : resolved.src
+        const persistSrc = typeof resolved === 'string' ? undefined : resolved.persistSrc
         const trimmed = src.trim()
         if (!trimmed || trimmed.startsWith('data:')) {
           window.alert('이미지 주소를 받지 못했습니다. 다시 시도해 주세요.')
           return
         }
-        insertResolved(trimmed)
+        insertResolved(trimmed, persistSrc)
       })
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message.trim() : ''

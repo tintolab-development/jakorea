@@ -6,8 +6,9 @@
  * - disabled 시 버튼 비활성화, input 미렌더, 삭제 버튼 미표시
  */
 
-import { useRef, type ChangeEvent } from 'react'
+import { useEffect, useRef, type ChangeEvent } from 'react'
 import './file-select-field.css'
+import { beginFileUploadOverlay } from '@/shared/ui/file-upload-overlay-store'
 import { CmsButton } from '@/shared/ui/cms-button'
 import {
   FILE_SELECT_MAX_TOTAL_BYTES,
@@ -69,7 +70,7 @@ export interface FileSelectFieldProps {
   onRemoveFile?: (index: number) => void
   /** 버튼에 표시할 텍스트 (기본: "파일 선택") */
   buttonLabel?: string
-  /** 업로드 중일 때 true — 파일명 영역에 "파일을 업로드중입니다" 표시하여 UI shifting 방지 */
+  /** 업로드 중이면 화면 전체 스피너를 띄우고 필드를 막는다 */
   uploading?: boolean
   /** 추가 클래스명 */
   className?: string
@@ -98,6 +99,11 @@ export function FileSelectField({
 }: FileSelectFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
+  useEffect(() => {
+    if (!uploading) return
+    return beginFileUploadOverlay()
+  }, [uploading])
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files?.length) {
@@ -118,9 +124,10 @@ export function FileSelectField({
     e.target.value = ''
   }
 
-  const canRemove = !disabled && typeof onRemoveFile === 'function'
+  const fieldDisabled = disabled || uploading
+  const canRemove = !fieldDisabled && typeof onRemoveFile === 'function'
   const hasFiles = Boolean(fileNames && fileNames.length > 0)
-  const showNames = hasFiles || uploading
+  const showNames = hasFiles
 
   return (
     <div
@@ -131,8 +138,9 @@ export function FileSelectField({
       ]
         .filter(Boolean)
         .join(' ')}
+      aria-busy={uploading || undefined}
     >
-      {!disabled && (
+      {!fieldDisabled && (
         <input
           ref={inputRef}
           type="file"
@@ -146,29 +154,21 @@ export function FileSelectField({
 
       {showNames ? (
         <div className="file-select-field__names">
-          {uploading ? (
-            <span className="file-select-field__name-row">
-              <span className="file-select-field__name file-select-field__name--uploading">
-                파일을 업로드중입니다
-              </span>
+          {fileNames!.map((name, i) => (
+            <span key={`${i}-${name}`} className="file-select-field__name-row">
+              <span className="file-select-field__name">{name}</span>
+              {canRemove && (
+                <button
+                  type="button"
+                  className="file-select-field__remove"
+                  onClick={() => onRemoveFile?.(i)}
+                  aria-label={`${name} 업로드 취소`}
+                >
+                  <RemoveIcon />
+                </button>
+              )}
             </span>
-          ) : (
-            fileNames!.map((name, i) => (
-              <span key={`${i}-${name}`} className="file-select-field__name-row">
-                <span className="file-select-field__name">{name}</span>
-                {canRemove && (
-                  <button
-                    type="button"
-                    className="file-select-field__remove"
-                    onClick={() => onRemoveFile?.(i)}
-                    aria-label={`${name} 업로드 취소`}
-                  >
-                    <RemoveIcon />
-                  </button>
-                )}
-              </span>
-            ))
-          )}
+          ))}
         </div>
       ) : null}
 
@@ -177,7 +177,7 @@ export function FileSelectField({
           type="button"
           variant="secondary"
           size="large"
-          disabled={disabled}
+          disabled={fieldDisabled}
           onClick={() => inputRef.current?.click()}
         >
           {buttonLabel}

@@ -2,7 +2,7 @@
  * CMS 전용 셀렉트 (span 래퍼 + borderless Select)
  * - inputSize: large | medium | small (CmsInput 치수 정렬)
  * - `placeholder`: Ant `Select`와 동일. options에 `value: ''`가 없을 때 폼 값이 `''`여도 placeholder가 보이도록 표시용 value만 `undefined`로 맞춤 (`cms-input`과 동일한 empty UX).
- * - 단일 선택: `allowClear`(×) 없음. 첫 옵션에 `전체`(value `''`)를 넣어 초기화(필터 등)는 해당 옵션 선택으로 처리.
+ * - 단일 선택: `allowClear`(기본 true)면 ×로 빈 값 가능. `withAllOption`은 「전체」 옵션만 제어하고 ×를 막지 않는다.
  * - `mode="multiple"`: AppMultiSelect와 동일 UX(검색·체크·pill, 닫힘 시 쉼표 구분) — Ant Select 미사용.
  * - 열린 드롭다운: `.ant-select`가 테두리 박스를 채우므로 Ant 기본 `popupMatchSelectWidth`로 폭·좌측 정렬이 트리거와 일치.
  */
@@ -202,6 +202,7 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
       `cms-select--${inputSize}`,
       hasExplicitWidth && 'cms-select--explicit-width',
       disabled && 'cms-select--disabled',
+      allowClear && 'cms-select--allow-clear',
       className,
     ]
       .filter(Boolean)
@@ -237,7 +238,7 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
           options={mergedOptions}
           value={resolvedValue as SelectProps['value']}
           onChange={handleChange}
-          allowClear={false}
+          allowClear={allowClear}
         />
       </span>
     )

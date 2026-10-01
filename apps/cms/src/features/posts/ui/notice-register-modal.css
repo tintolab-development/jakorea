@@ -164,6 +164,27 @@
   line-height: 1.5;
 }
 
+.notice-register-modal__required {
+  margin-left: var(--spacing-4);
+  color: var(--color-required-mark, #ff4d4f);
+  font-size: var(--font-size-14);
+}
+
+.notice-register-modal__form .ant-form-item-label {
+  overflow: visible;
+}
+
+.notice-register-modal__form .ant-form-item-label > label::before,
+.notice-register-modal__form .ant-form-item-label > label::after {
+  content: none !important;
+  display: none !important;
+}
+
+.notice-register-modal__form .ant-form-item-explain,
+.notice-register-modal__form .ant-form-item-extra {
+  display: none;
+}
+
 .notice-register-modal__editor-host {
   width: 100%;
   height: 369px;

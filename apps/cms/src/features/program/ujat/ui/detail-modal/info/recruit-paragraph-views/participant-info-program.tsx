@@ -122,6 +122,7 @@ export function UjatRecruitParticipantInfoProgramView({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="공고 게시 여부"
+            validationKey="recruit.institution.announcementPublished"
             fullRow
             view={announcementPublishedLabel}
             edit={
@@ -171,6 +172,7 @@ export function UjatRecruitParticipantInfoProgramView({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="프로그램 운영 기간"
+          validationKey="recruit.institution.programRangeSeal"
           view={formatDateRange(program.startDate, program.endDate)}
           edit={
             isEdit && form ? (
@@ -201,6 +203,7 @@ export function UjatRecruitParticipantInfoProgramView({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="교육 대상"
+          validationKey="recruit.institution.targetLevels"
           view={resolveEducationTargetLabel(program, isTemplateAuthoring)}
           edit={
             isEdit && form ? (
@@ -225,6 +228,7 @@ export function UjatRecruitParticipantInfoProgramView({
         />
         <DetailInfoForm.Field
           label="교육 대상 상세"
+          validationKey="recruit.institution.targetLevelDetail"
           view={program.district ?? '-'}
           edit={
             isEdit && form ? (
@@ -249,6 +253,7 @@ export function UjatRecruitParticipantInfoProgramView({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="참여자 모집 기간"
+          validationKey="recruit.institution.recruitRangeSeal"
           view={formatDateRange(program.applicationStartDate, program.applicationEndDate)}
           edit={
             isEdit && form ? (
@@ -265,6 +270,10 @@ export function UjatRecruitParticipantInfoProgramView({
         />
         <DetailInfoForm.Field
           label="최종 합격자 발표"
+          validationKey={[
+            'recruit.institution.finalAnnounceIso',
+            'recruit.institution.finalAnnounceMethod',
+          ]}
           view={resultLine}
           edit={
             isEdit && form ? (
@@ -283,6 +292,11 @@ export function UjatRecruitParticipantInfoProgramView({
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="문의처"
+          validationKey={[
+            'recruit.institution.inquiryContact',
+            'recruit.institution.inquiryTel',
+            'recruit.institution.inquiryEmail',
+          ]}
           fullRow
           view={
             <ProgramDetailContactReadRow
@@ -360,6 +374,7 @@ export function UjatRecruitParticipantInfoProgramView({
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="비고"
+          validationKey="recruit.institution.notes"
           fullRow
           view={notes}
           edit={isEdit && form ? <UjatRecruitParticipantNotesField form={form} /> : undefined}

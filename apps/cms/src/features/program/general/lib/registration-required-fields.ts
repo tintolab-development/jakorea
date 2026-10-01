@@ -518,12 +518,6 @@ export function formatGeneralProgramRegistrationRequiredFieldReason(reason: stri
   return `${label} (${index})`
 }
 
-export function formatIncompleteRegistrationRequiredFieldsAlert(labels: string[]): string {
-  return ['입력되지 않은 필수 항목이 있습니다.', '', ...labels.map(label => `- ${label}`)].join(
-    '\n'
-  )
-}
-
 /** 비어 있는 필수 항목 진단 키. 비어 있으면 완료. */
 export function listIncompleteGeneralProgramRegistrationRequiredFields(
   overlay: Record<string, unknown>,

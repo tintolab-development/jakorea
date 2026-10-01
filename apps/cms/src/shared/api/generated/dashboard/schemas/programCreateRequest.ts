@@ -79,8 +79,7 @@ export interface ProgramCreateRequest {
   curriculum?: string;
   contactEmail?: string;
   contactPhone?: string;
-  /** 문의처 이름 */
-  contactName?: string | null;
+  contactName?: string;
   oneLineIntroduction?: string;
   keyVisualImage?: string;
   settlementRuleId?: string;
@@ -92,13 +91,7 @@ export interface ProgramCreateRequest {
      */
   applicationMethod?: string | null;
   /**
-   * Gemini 모집 공고 게시 상태. 생략 시 PUBLISHED.
-   * GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시된다.
-   * @nullable
-   */
-  draftStatus?: ProgramCreateRequestDraftStatus | null;
-  /**
-     * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용. Gemini create/PATCH top-level.
+     * 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.
      * @nullable
      */
   educationForm?: ProgramCreateRequestEducationForm;
@@ -116,10 +109,8 @@ export interface ProgramCreateRequest {
   additionalContentHtml?: string;
   recruitmentGuide?: string;
   learningSupportContent?: string;
-  /** 비고. 해당없음이면 null */
-  otherMatters?: string | null;
-  /** 교육 대상 상세 */
-  recruitmentTargetDetail?: string | null;
+  otherMatters?: string;
+  recruitmentTargetDetail?: string;
   attachmentFileNames?: string[];
   rounds?: ProgramRoundRequest[];
   adminAssignments?: ProgramAdminAssignmentRequest[];
@@ -132,4 +123,9 @@ export interface ProgramCreateRequest {
   programDraftId?: number;
   /** 프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings. GENERAL / TRAINED_TEACHER / COMPANY_SCHOOL / UJAT에서 허용. 공용 카탈로그 version id는 거부하고 draft-owned COPY만 받는다. */
   formBindings?: ProgramFormBindingRequest[];
+  /**
+     * Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략 시 PUBLISHED. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.
+     * @nullable
+     */
+  draftStatus?: ProgramCreateRequestDraftStatus;
 }

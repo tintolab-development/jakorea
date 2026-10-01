@@ -29,6 +29,7 @@ import {
   createFileAttachment,
   parseFileObjectId,
   programPostFileOwner,
+  programPostInlineImageOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
@@ -116,6 +117,10 @@ export function PostWriteModal({
         : 'closed',
     [open, programId, editingPost?.id, editingPost?.updatedAt]
   )
+  const inlineImageOwner = useMemo(
+    () => programPostInlineImageOwner(parseFileObjectId(programId)),
+    [programId]
+  )
   const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
     open,
     editingPost?.content ?? '',
@@ -123,6 +128,7 @@ export function PostWriteModal({
     {
       height: '280px',
       placeholder: '게시글 내용을 작성하세요',
+      fileUploadOwner: inlineImageOwner,
     }
   )
 
@@ -291,7 +297,11 @@ export function PostWriteModal({
 
         <div className="post-write-modal__field post-write-modal__field--editor">
           <div className="post-write-modal__editor-host">
-            <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+            <RichTextEditor
+              editor={editor}
+              minHeight={editorMinHeight}
+              fileUploadOwner={inlineImageOwner}
+            />
           </div>
         </div>
 

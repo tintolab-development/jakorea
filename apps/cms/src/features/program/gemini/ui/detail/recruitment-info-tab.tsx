@@ -223,6 +223,7 @@ export function GeminiRecruitmentInfoTab({
         <GeminiRecruitmentDetailFields
           mode={contentMode}
           values={fieldValues}
+          programId={detail.id}
           deferTextCommit={contentMode === 'edit'}
           richTextResetKey={detail.id}
           registerRichTextGetter={

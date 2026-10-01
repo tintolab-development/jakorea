@@ -7,6 +7,7 @@ import { ErrorBoundary } from './app/providers/error-boundary'
 import { AuthProvider } from './app/providers/auth-provider'
 import { QueryProvider } from './app/providers/query-provider'
 import { CmsAlertModalProvider } from '@/shared/ui/cms-alert-modal-provider'
+import { FileUploadOverlay } from '@/shared/ui/file-upload-overlay'
 import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { router } from './app/router'
 import './index.css'
@@ -18,6 +19,7 @@ createRoot(document.getElementById('root')!).render(
         <QueryProvider>
           <App>
             <CmsAlertModalProvider>
+              <FileUploadOverlay />
               <AuthProvider>
                 <TemplateWritingPreviewProvider>
                   <RouterProvider router={router} />

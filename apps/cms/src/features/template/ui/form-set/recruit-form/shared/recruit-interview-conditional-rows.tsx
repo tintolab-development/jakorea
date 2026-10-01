@@ -33,10 +33,12 @@ export function RecruitInterviewConditionalRows({
   recruitPeriodLabel,
   interviewEnabled,
   state,
+  validationKeyPrefix,
 }: {
   recruitPeriodLabel: string
   interviewEnabled: boolean
   state: RecruitInterviewPeriodState
+  validationKeyPrefix: string
 }) {
   if (interviewEnabled) {
     return (
@@ -44,6 +46,7 @@ export function RecruitInterviewConditionalRows({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label={recruitPeriodLabel}
+            validationKey={`${validationKeyPrefix}.recruitRangeSeal`}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker
@@ -67,6 +70,10 @@ export function RecruitInterviewConditionalRows({
           />
           <DetailInfoForm.Field
             label="1차 서류 합격자 발표"
+            validationKey={[
+              `${validationKeyPrefix}.docDeadlineIso`,
+              `${validationKeyPrefix}.docAnnounceMethod`,
+            ]}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker
@@ -95,6 +102,10 @@ export function RecruitInterviewConditionalRows({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="2차 면접 기간"
+            validationKey={[
+              `${validationKeyPrefix}.interviewRangeSeal`,
+              `${validationKeyPrefix}.interviewMethod`,
+            ]}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker
@@ -128,6 +139,10 @@ export function RecruitInterviewConditionalRows({
           />
           <DetailInfoForm.Field
             label="최종 합격자 발표"
+            validationKey={[
+              `${validationKeyPrefix}.finalAnnounceIso`,
+              `${validationKeyPrefix}.finalAnnounceMethod`,
+            ]}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker
@@ -160,6 +175,7 @@ export function RecruitInterviewConditionalRows({
     <DetailInfoForm.Row type="double">
       <DetailInfoForm.Field
         label={recruitPeriodLabel}
+        validationKey={`${validationKeyPrefix}.recruitRangeSeal`}
         edit={
           <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
             <ParagraphDatePicker
@@ -183,6 +199,10 @@ export function RecruitInterviewConditionalRows({
       />
       <DetailInfoForm.Field
         label="최종 합격자 발표"
+        validationKey={[
+          `${validationKeyPrefix}.finalAnnounceIso`,
+          `${validationKeyPrefix}.finalAnnounceMethod`,
+        ]}
         edit={
           <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
             <ParagraphDatePicker

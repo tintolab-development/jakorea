@@ -368,3 +368,15 @@
   color: transparent;
   user-select: none;
 }
+
+/* 등록 위저드 필수 미입력 — base 라벨 BG-header보다 뒤에 선언 + !important */
+.detail-info-form__field-label.detail-info-form__field-label--required-incomplete,
+.detail-info-form__field--required-incomplete .detail-info-form__field-label {
+  background: #c32f4a1a !important;
+  color: var(--color-red, #c32f4a) !important;
+}
+
+.detail-info-form__field-label.detail-info-form__field-label--required-incomplete
+  .detail-info-form__field-label-text {
+  color: var(--color-red, #c32f4a) !important;
+}

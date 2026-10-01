@@ -14034,10 +14034,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -14428,6 +14428,17 @@
             "items": {
               "$ref": "#/components/schemas/ProgramFormBindingRequest"
             }
+          },
+          "draftStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략 시 PUBLISHED. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
           }
         }
       },
@@ -14526,7 +14537,7 @@
           },
           "targetType": {
             "type": "string",
-            "description": "모집 대상. 일반 프로그램에서 PARTICIPANT=ORGANIZATION|INDIVIDUAL, INSTRUCTOR=TEACHER, VOLUNTEER=COLLEGE_STUDENT"
+            "description": "모집 대상. 일반 프로그램에서 PARTICIPANT=ORGANIZATION|INDIVIDUAL, INSTRUCTOR=TEACHER, VOLUNTEER=ORGANIZATION|SCHOOL|INDIVIDUAL|STUDENT|COLLEGE_STUDENT(비어 있으면 COLLEGE_STUDENT)"
           },
           "status": {
             "type": "string",
@@ -21704,7 +21715,18 @@
             "type": "string"
           },
           "remarks": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "참여자 모집 비고. 강사·봉사자 nested remarks와 별개. otherMatters(기타사항)와 별개. 없으면 null."
+          },
+          "applicationMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "참여자 지원 방법 자유 텍스트. 강사·봉사자 nested applicationMethod와 별개. applicationPathId가 아님. 없으면 null."
           },
           "recruitmentTargetDetail": {
             "type": "string"
@@ -26036,6 +26058,17 @@
             "items": {
               "type": "string"
             }
+          },
+          "draftStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
           }
         }
       },
@@ -40094,12 +40127,19 @@
               "string",
               "null"
             ],
-            "description": "교육 형태. online|offline|hybrid",
+            "description": "교육 형태. Gemini 모집은 online|offline 권장. hybrid는 계약 확정 전 값으로 내려갈 수 있다.",
             "enum": [
               "online",
               "offline",
               "hybrid"
             ]
+          },
+          "educationStructure": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교육 진행 구조. program.education_structure. 예: SCHEDULE. 없으면 null — FE가 SCHEDULE로 추정하지 않도록 GET SSOT."
           },
           "contactName": {
             "type": [
@@ -40196,6 +40236,7 @@
       },
       "GeminiOrganizationApplicationItem": {
         "type": "object",
+        "description": "Gemini 찾아가는 연수 기관 신청 목록 행. CMS 「기관 신청 목록」 컬럼에 맞춘 투영.",
         "properties": {
           "applicationId": {
             "type": "integer",
@@ -40214,7 +40255,11 @@
             "format": "int64"
           },
           "organizationName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신청 기관명. CMS 컬럼 「신청 기관명」."
           },
           "applicationStatus": {
             "type": "string"
@@ -40238,6 +40283,45 @@
           "rejectedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "regionSido": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관 소재지 시/도. organization.region_sido. CMS 「기관 소재지」 앞."
+          },
+          "regionSigungu": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관 소재지 시군구. organization.region_sigungu. CMS 「기관 소재지」 뒤."
+          },
+          "teacherName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "담당 교사명. teacher_member 이름. CMS 「담당 교사명」."
+          },
+          "preferredScheduleBlocks": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "희망 교육 일정 구조화 블록. preferred_schedule_blocks_jsonb SSOT. 없으면 null.",
+            "items": {
+              "$ref": "#/components/schemas/PreferredScheduleBlock"
+            }
+          },
+          "preferredLectureScheduleText": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "희망 교육 일정 표시 문자열. blocks를 CMS 셀 포맷으로 투영. 줄바꿈·콜론·파이프 포함. 없으면 null.",
+            "example": "1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)"
           },
           "resultNotificationSentAt": {
             "type": [
@@ -40281,6 +40365,7 @@
       },
       "GeminiInstructorApplicationItem": {
         "type": "object",
+        "description": "Gemini 강사 신청 목록 행. 승인 연수 상세 LNB와 모집 단위 목록이 공유한다.",
         "properties": {
           "applicationId": {
             "type": "integer",
@@ -40302,13 +40387,63 @@
             "type": "string"
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "PENDING|APPROVED|REJECTED canonical"
           },
           "instructorTypeSnapshot": {
             "type": "string"
           },
           "instructorFeeGradeSnapshot": {
             "type": "string"
+          },
+          "grade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "JA 평가 등급 표시. 예: A등급"
+          },
+          "homeSido": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "homeSigungu": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "experienceYears": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "JA 강의 경력(년)"
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "목록 마스킹 전화. 예: 010-****-0000"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "목록 마스킹 이메일"
+          },
+          "monthlyAssignmentCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "해당 월 확정 배정 수"
           },
           "distanceKm": {
             "type": "number"
@@ -40437,6 +40572,7 @@
       },
       "GeminiApprovedTrainingDetailResponse": {
         "type": "object",
+        "description": "Gemini 승인 연수 상세. id=organizationApplicationId. 전화·이메일·계좌·상세주소는 목록에 넣지 않는다. 없는 값은 null.",
         "properties": {
           "id": {
             "type": "integer",
@@ -40444,7 +40580,8 @@
           },
           "programId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "모집 공고 programId. 담당자 LNB managers API에 이 값을 쓴다."
           },
           "organizationApplicationId": {
             "type": "integer",
@@ -40461,7 +40598,16 @@
             "type": "string"
           },
           "progressStatus": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "NOT_CONDUCTED"
+            ]
           },
           "applicationStatus": {
             "type": "string"
@@ -40476,10 +40622,41 @@
             "type": "string"
           },
           "institutionAddress": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "도로명 등 본문 주소"
           },
           "institutionAddressDetail": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "institutionApplicationCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "이 기관의 Gemini 찾아가는 연수 신청 누적"
+          },
+          "institutionCompletedTrainingCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "그 중 연수 완료(강사 매칭+연수일 경과) 건수"
+          },
+          "institutionJoinedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "기관(조직) 등록일. 신청 submittedAt과 다를 수 있다"
           },
           "scheduleId": {
             "type": "integer",
@@ -40489,8 +40666,12 @@
             "type": "string"
           },
           "trainingDate": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "강사 매칭으로 확정된 날짜. 미매칭이면 null"
           },
           "trainingStartTime": {
             "type": "string"
@@ -40499,7 +40680,19 @@
             "type": "string"
           },
           "trainingTimeText": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "확정 시간 표시. 미매칭이면 null"
+          },
+          "lastPreferredDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "희망 일정 마지막 순위(3지망) 날짜. 확정 trainingDate와 분리"
           },
           "studentCount": {
             "type": "integer",
@@ -40519,12 +40712,148 @@
           "instructorName": {
             "type": "string"
           },
+          "assignedInstructor": {
+            "type": "null",
+            "$ref": "#/components/schemas/GeminiAssignedInstructor",
+            "description": "매칭된 연수 담당 강사 프로필. 미매칭이면 null"
+          },
           "managerAdminId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "deprecated": true,
+            "description": "프로그램 PM admin id. 교사 회원 id가 아님"
           },
           "managerName": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "teacherName 별칭. 한 릴리스 유지"
+          },
+          "teacherMemberId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "기관 신청 담당 교사 회원 id"
+          },
+          "teacherName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherGender": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "MALE|FEMALE|OTHER 또는 한글 표시 원문"
+          },
+          "teacherBirthDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "teacherPhone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherEmail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherSchoolName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherEmploymentStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "ACTIVE",
+              "ON_LEAVE",
+              "TRANSFERRED",
+              "INACTIVE",
+              "RESIGNED",
+              "WITHDRAWN"
+            ]
+          },
+          "teacherPosition": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherSubject": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherHomeAddress": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherScheduleChangeCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "teacherLectureExperience": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherAccountBank": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherAccountNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherAccountHolder": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherInstructorFeeGrade": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherBusinessIncomeLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teacherOneLineIntro": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "officialDocumentRequired": {
             "type": "boolean"
@@ -40540,6 +40869,51 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "GeminiAssignedInstructor": {
+        "type": "object",
+        "description": "승인 연수에 매칭된 강사 프로필",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "homeAddress": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "experienceYears": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "grade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "JA 평가 등급. 예: A등급"
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
