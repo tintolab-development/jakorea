@@ -6,15 +6,48 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * Gemini 강사 신청 목록 행. 승인 연수 상세 LNB와 모집 단위 목록이 공유한다.
+ */
 export interface GeminiInstructorApplicationItem {
   applicationId?: number;
   programId?: number;
   recruitmentId?: number;
   instructorMemberId?: number;
   instructorName?: string;
+  /** PENDING|APPROVED|REJECTED canonical */
   applicationStatus?: string;
   instructorTypeSnapshot?: string;
   instructorFeeGradeSnapshot?: string;
+  /**
+     * JA 평가 등급 표시. 예: A등급
+     * @nullable
+     */
+  grade?: string | null;
+  /** @nullable */
+  homeSido?: string | null;
+  /** @nullable */
+  homeSigungu?: string | null;
+  /**
+     * JA 강의 경력(년)
+     * @nullable
+     */
+  experienceYears?: number | null;
+  /**
+     * 목록 마스킹 전화. 예: 010-****-0000
+     * @nullable
+     */
+  phone?: string | null;
+  /**
+     * 목록 마스킹 이메일
+     * @nullable
+     */
+  email?: string | null;
+  /**
+     * 해당 월 확정 배정 수
+     * @nullable
+     */
+  monthlyAssignmentCount?: number | null;
   distanceKm?: number;
   longDistance?: boolean;
   availableScheduleMemo?: string;

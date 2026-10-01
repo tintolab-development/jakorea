@@ -1,4 +1,4 @@
-import type { JSONContent, MarkdownRendererHelpers, MarkdownToken } from '@tiptap/core'
+import { mergeAttributes, type JSONContent, type MarkdownRendererHelpers, type MarkdownToken } from '@tiptap/core'
 import Heading from '@tiptap/extension-heading'
 import Highlight from '@tiptap/extension-highlight'
 import Paragraph from '@tiptap/extension-paragraph'
@@ -153,6 +153,44 @@ export const RichTextImageResize = ImageResize.configure({
   },
 }).extend({
   name: 'image',
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      persistSrc: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-persist-src'),
+        renderHTML: (attributes: { persistSrc?: string | null }) =>
+          attributes.persistSrc ? { 'data-persist-src': attributes.persistSrc } : {},
+      },
+      fileSize: {
+        default: null,
+        parseHTML: (element: HTMLElement) => {
+          const value = element.getAttribute('data-file-size')
+          if (!value || !/^\d+$/.test(value)) return null
+          return Number(value)
+        },
+        renderHTML: (attributes: { fileSize?: number | string | null }) => {
+          const value = attributes.fileSize
+          if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+            return { 'data-file-size': String(value) }
+          }
+          if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+            return { 'data-file-size': value.trim() }
+          }
+          return {}
+        },
+      },
+    }
+  },
+  renderHTML({ HTMLAttributes }) {
+    const attrs: Record<string, unknown> = { ...(HTMLAttributes as Record<string, unknown>) }
+    const persistSrc = typeof attrs['data-persist-src'] === 'string' ? attrs['data-persist-src'] : ''
+    if (persistSrc) attrs.src = persistSrc
+    delete attrs.persistSrc
+    delete attrs['data-persist-src']
+    delete attrs.fileSize
+    return ['img', mergeAttributes(this.options.HTMLAttributes, attrs)]
+  },
   parseMarkdown: (token, helpers) => {
     const t = token as { href?: string; title?: string; text?: string }
     return helpers.createNode('image', {
@@ -162,13 +200,18 @@ export const RichTextImageResize = ImageResize.configure({
     })
   },
   renderMarkdown: (node: JSONContent) => {
-    const attrs = node.attrs as Record<string, string | undefined> | undefined
-    const src = attrs?.src ?? ''
-    const alt = attrs?.alt ?? ''
-    const containerStyle = attrs?.containerStyle
-    if (containerStyle?.includes('width')) {
-      const style = escapeHtml(containerStyle)
-      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="rich-text-content__image" style="${style}" />`
+    const attrs = node.attrs as Record<string, string | number | undefined> | undefined
+    const rawSrc = attrs?.persistSrc || attrs?.src || ''
+    const src = typeof rawSrc === 'string' ? rawSrc : String(rawSrc)
+    const rawAlt = attrs?.alt ?? ''
+    const alt = typeof rawAlt === 'string' ? rawAlt : String(rawAlt)
+    const containerStyle = typeof attrs?.containerStyle === 'string' ? attrs.containerStyle : undefined
+    const fileSize = attrs?.fileSize
+    if (containerStyle?.includes('width') || fileSize) {
+      const style = escapeHtml(containerStyle ?? '')
+      const styleAttr = style ? ` style="${style}"` : ''
+      const fileSizeAttr = fileSize ? ` data-file-size="${escapeHtml(String(fileSize))}"` : ''
+      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="rich-text-content__image"${styleAttr}${fileSizeAttr} />`
     }
     const safeAlt = alt.replace(/]/g, '\\]')
     return `![${safeAlt}](${src})`

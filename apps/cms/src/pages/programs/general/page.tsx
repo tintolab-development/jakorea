@@ -23,7 +23,11 @@ import {
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import type { Program } from '@/types/domain'
 import { CmsButton, DeleteGuideModal } from '@/shared/ui'
-import { resolveProgramDeleteGuideModalCopy } from '@/features/program/shared/lib/program-delete-guide'
+import {
+  isProgramHardDeleteBlockedError,
+  PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+  resolveProgramDeleteGuideModalCopy,
+} from '@/features/program/shared/lib/program-delete-guide'
 import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
 import {
@@ -466,18 +470,38 @@ export function GeneralProgramListPageContent() {
         title={programBulkDeleteGuide.title}
         lines={programBulkDeleteGuide.lines}
         confirmText="삭제"
-        onConfirm={async () => {
-          if (isRemoteDataSource) {
-            await deleteGeneralProgramsMutation.mutateAsync(
-              programsPendingBulkDelete.map(program => program.id)
-            )
-            refetchPrograms()
-          } else {
-            await handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
-          }
-          setSelectedRowKeys([])
-          setBulkDeleteModalOpen(false)
-          setProgramsPendingBulkDelete([])
+        onConfirm={() => {
+          void (async () => {
+            try {
+              const idsToDelete = programsPendingBulkDelete.map(program => program.id)
+              // 상세가 열려 있으면 먼저 닫아 detail observer를 끈 뒤 삭제한다.
+              if (programIdFromUrl && idsToDelete.includes(programIdFromUrl)) {
+                handleCloseFullPageModal()
+              }
+              if (isRemoteDataSource) {
+                await deleteGeneralProgramsMutation.mutateAsync(idsToDelete)
+                refetchPrograms()
+              } else {
+                await handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
+              }
+              setSelectedRowKeys([])
+              setBulkDeleteModalOpen(false)
+              setProgramsPendingBulkDelete([])
+            } catch (error) {
+              showAlert(
+                isProgramHardDeleteBlockedError(error)
+                  ? {
+                      title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+                      content: error.message,
+                    }
+                  : {
+                      title: '삭제 실패',
+                      content:
+                        '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                    }
+              )
+            }
+          })()
         }}
         onCancel={() => {
           setBulkDeleteModalOpen(false)

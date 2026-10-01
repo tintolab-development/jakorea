@@ -3,6 +3,9 @@ import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-
 
 export type ProgramCategory = 'all' | 'youth' | 'institution' | 'instructor'
 
+/** 목록·상세에 그리는 탭. `all`은 필터 값이라 카드 배지에 쓰지 않는다. */
+export type ProgramTab = Exclude<ProgramCategory, 'all'>
+
 export type ProgramSort = 'latest' | 'name' | 'closing-soon'
 
 export type EducationForm = 'online' | 'offline' | 'hybrid' | 'participant_choice'
@@ -11,7 +14,17 @@ export type EducationTargetKey = EducationTarget
 
 export type ProgramListItem = {
   id: string
-  category: Exclude<ProgramCategory, 'all'>
+  /**
+   * 신청 양식 등 단일 분기에 쓰는 대표 탭.
+   * 배지는 `categories` 전체를 그린다.
+   */
+  category: ProgramTab
+  /**
+   * `portalCategories`에 해당하는 탭 전부.
+   * 공개 모집이 없으면 빈 배열이다. 진행 중 행만 남기지 않는다.
+   */
+  categories: ProgramTab[]
+  /** `categories` 라벨을 ` · `로 이은 문자열. 배지가 없으면 빈 문자열. */
   categoryLabel: string
   title: string
   /** 운영 기간 표시용 라벨 */
@@ -31,6 +44,20 @@ export type ProgramListItem = {
   educationTargetLabel: string
   educationForm: EducationForm
   educationFormLabel: string
+  /**
+   * 목록 행의 `availableApplicationTypes`.
+   * 탭 호출이면 그 탭 모집의 신청 유형만 온다.
+   */
+  applicationTypes?: string[]
+  /**
+   * 모집 공고 행 identity. API가 줄 때만 채운다.
+   * 같은 `id`(programId)가 여러 행이어도 `recruitmentId`로 구분한다.
+   */
+  recruitmentId?: number
+  recruitmentType?: string
+  targetType?: string
+  /** 행 단위 단일 신청 유형. 있으면 상세·신청 focus의 기준. */
+  applicationType?: string
   /** 목록 썸네일 이미지 URL(저해상) — 없으면 썸네일 영역 배경색만 표시 */
   thumbnailUrl?: string
 }
@@ -142,6 +169,19 @@ export type ProgramDetail = ProgramListItem & {
   participationMethod: ProgramParticipationMethod
   /** 배지·요약용 모집 역할 (강사·봉사자·기관·교육생 등) */
   recruitmentRoleLabel: string
+  /**
+   * 목록에서 고른 모집. exact match로 1건만 확정됐을 때 채운다.
+   * 후보가 여러 건이면 비우고 `recruitmentSelectionAmbiguous`를 켠다.
+   */
+  focusedRecruitmentIds?: number[]
+  focusedApplicationTypes?: string[]
+  /**
+   * focus로 모집을 좁혔지만 후보가 2건 이상.
+   * 대표 상태·기간·신청 option을 임의로 고르지 않는다.
+   */
+  recruitmentSelectionAmbiguous?: boolean
+  /** 확정된 모집의 신청 유형. 신청 양식 케이스의 기준. */
+  applicationType?: string
   /**
    * 기본정보 그리드 — 케이스별 라벨/값 세트.
    * 비어 있으면 레거시 5칸(사업 분야~교육 장소) 폴백 렌더.

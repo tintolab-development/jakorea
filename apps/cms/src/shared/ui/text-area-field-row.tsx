@@ -77,11 +77,11 @@ export function TextAreaFieldRow<TFieldValues extends FieldValues>({
                       status={fieldState.error ? 'error' : undefined}
                     />
                   )}
-                  {fieldState.error && (
-                    <span className="text-area-field-row__field-error">
-                      {fieldState.error ? '입력값을 확인해주세요.' : null}
+                  {fieldState.error?.message ? (
+                    <span className="text-area-field-row__field-error" role="alert">
+                      {fieldState.error.message}
                     </span>
-                  )}
+                  ) : null}
                 </>
               )
             }}

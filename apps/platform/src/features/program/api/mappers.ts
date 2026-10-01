@@ -11,7 +11,14 @@ import type {
   ProgramListItem,
   ProgramParticipationMethod,
   ProgramSession,
+  ProgramTab,
 } from '../model/types'
+import { PROGRAM_TAB_LABEL, programTabLabels } from '../lib/constants.ts'
+import {
+  programTabFromPortalTab,
+  selectRecruitmentsForFocus,
+  type PortalRecruitmentFocus,
+} from '../lib/portal-recruitment.ts'
 import type {
   PortalCurriculum,
   PortalEducationCurriculumSession,
@@ -21,6 +28,7 @@ import type {
   PortalRecruitment,
   PortalSchedule,
 } from './types'
+import { extraSection, rewriteAdminFileContentSrcsForPortal } from '../lib/html-body.ts'
 
 const RECRUITMENT_STATUS = {
   scheduled: 'scheduled',
@@ -30,11 +38,14 @@ const RECRUITMENT_STATUS = {
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
-const CATEGORY_LABEL = {
-  youth: '청소년 · 청년',
-  institution: '기관',
-  instructor: '강사',
-} as const
+const PORTAL_CATEGORY_CODE: Record<string, ProgramTab> = {
+  INSTRUCTOR: 'instructor',
+  ORGANIZATION: 'institution',
+  YOUTH_YOUNG: 'youth',
+}
+
+/** 코드 오름차순: INSTRUCTOR, ORGANIZATION, YOUTH_YOUNG */
+const PORTAL_CATEGORY_ORDER = ['INSTRUCTOR', 'ORGANIZATION', 'YOUTH_YOUNG'] as const
 
 const EDUCATION_FORM_LABEL: Record<EducationForm, string> = {
   online: '온라인',
@@ -194,23 +205,100 @@ function mapEducationTargets(remote: { educationTarget?: string; educationTarget
   }
 }
 
-function mapCategory(categories: string[] | undefined, programType: string | undefined) {
-  const codes = (categories ?? []).map(item => item.trim().toUpperCase())
-  if (codes.includes('INSTRUCTOR')) return 'instructor' as const
-  if (codes.includes('ORGANIZATION')) return 'institution' as const
-  if (codes.includes('YOUTH_YOUNG')) return 'youth' as const
+function fallbackTab(programType: string | undefined): ProgramTab {
   switch ((programType ?? '').trim().toUpperCase()) {
     case 'TRAINED_TEACHER':
-      return 'instructor' as const
+      return 'instructor'
     case 'GENERAL_ORGANIZATION':
     case 'GEMINI':
     case 'GEMINI_TRAINING':
     case 'COMPANY_SCHOOL':
     case 'ECONOMY':
-      return 'institution' as const
+      return 'institution'
     default:
-      return 'youth' as const
+      return 'youth'
   }
+}
+
+/**
+ * 공개 모집 탭 배지.
+ * `portalCategories`가 오면 그 배열 전체를 쓴다. 진행 중 행 하나만 남기지 않는다.
+ * 필드가 없는 구 응답만 programType으로 탭 하나를 만든다.
+ */
+function mapPortalTabs(
+  categories: string[] | undefined,
+  programType: string | undefined
+): ProgramTab[] {
+  if (categories == null) return [fallbackTab(programType)]
+  const codes = new Set(categories.map(item => item.trim().toUpperCase()))
+  return PORTAL_CATEGORY_ORDER.flatMap(code => {
+    const tab = PORTAL_CATEGORY_CODE[code]
+    return codes.has(code) && tab ? [tab] : []
+  })
+}
+
+function mapCategory(categories: string[] | undefined, programType: string | undefined): ProgramTab {
+  return mapPortalTabs(categories, programType)[0] ?? fallbackTab(programType)
+}
+
+const KNOWN_RECRUITMENT_STATUS = new Set([
+  'OPEN',
+  'RECRUITING',
+  'SCHEDULED',
+  'PLANNED',
+  'UPCOMING',
+  'CLOSED',
+  'COMPLETED',
+  'NONE',
+])
+
+/** 탭에서 고른 모집 행만. OPEN이 하나라도 있으면 모집 중. */
+function aggregateRecruitmentStatus(rows: readonly PortalRecruitment[]): RecruitmentStatus {
+  if (rows.length === 0) return RECRUITMENT_STATUS.closed
+  const mapped = rows.map(row => {
+    const status = (row.status ?? '').trim().toUpperCase()
+    if (KNOWN_RECRUITMENT_STATUS.has(status)) return mapRecruitmentStatus(row.status, undefined)
+    return mapRecruitmentStatus(undefined, [row])
+  })
+  if (mapped.some(status => status === RECRUITMENT_STATUS.recruiting)) {
+    return RECRUITMENT_STATUS.recruiting
+  }
+  if (mapped.some(status => status === RECRUITMENT_STATUS.scheduled)) {
+    return RECRUITMENT_STATUS.scheduled
+  }
+  return RECRUITMENT_STATUS.closed
+}
+
+function recruitmentWindow(rows: readonly PortalRecruitment[]): { start: Date | null; end: Date | null } {
+  let start: Date | null = null
+  let end: Date | null = null
+  for (const row of rows) {
+    const rowStart = toDate(row.startAt)
+    const rowEnd = toDate(row.endAt)
+    if (rowStart && (!start || rowStart < start)) start = rowStart
+    if (rowEnd && (!end || rowEnd > end)) end = rowEnd
+  }
+  return { start, end }
+}
+
+/**
+ * 진입 탭의 신청 유형으로 상세 케이스를 고른다.
+ * TRAINED_TEACHER는 기관 참가이지 강사 모집이 아니다.
+ */
+function detailCaseForFocus(
+  programType: string | undefined,
+  applicationTypes: readonly string[],
+): ProgramDetailCase {
+  const type = (programType ?? '').trim().toUpperCase()
+  if (type === 'GEMINI_TRAINING' || type === 'GEMINI' || type === 'VISITING_TRAINING') {
+    return 'gemini'
+  }
+  const types = new Set(applicationTypes.map(item => item.trim().toUpperCase()))
+  const only = types.size === 1 ? [...types][0] : undefined
+  if (only === 'VOLUNTEER') return type === 'UJAT' ? 'ujat-volunteer' : 'volunteer'
+  if (only === 'INSTRUCTOR') return 'instructor'
+  if (only === 'ORGANIZATION' && type === 'UJAT') return 'ujat-participant'
+  return 'general'
 }
 
 function mapDetailCase(
@@ -419,7 +507,32 @@ export function formatPortalEducationVenue(
   return detailWithoutKind ? `${kindLabel} | ${detailWithoutKind}` : kindLabel
 }
 
-function contactValue(name?: string, phone?: string, email?: string): string {
+/** 참여자·기관·Gemini만 학습 지원. 강사·봉사자는 기타사항. */
+function showsLearningSupport(detailCase: ProgramDetailCase): boolean {
+  return detailCase === 'general' || detailCase === 'ujat-participant' || detailCase === 'gemini'
+}
+
+function showsOtherMatters(detailCase: ProgramDetailCase): boolean {
+  return detailCase === 'instructor' || detailCase === 'volunteer' || detailCase === 'ujat-volunteer'
+}
+
+/** 빈 에디터(`<p></p>`, `<p><br></p>`)와 CMS 공란 표식은 섹션을 만들지 않는다. */
+function visibleCopy(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed || trimmed === '-' || trimmed === '해당 없음' || trimmed === '해당없음') return ''
+  const plain = trimmed
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/\u200b/g, '')
+    .trim()
+  return plain.length === 0 ? '' : trimmed
+}
+
+function contactValue(
+  name?: string | null,
+  phone?: string | null,
+  email?: string | null,
+): string {
   const n = readString(name)
   const p = readString(phone)
   const e = readString(email)
@@ -524,6 +637,11 @@ function mapPortalScheduleDetails(
 ): ProgramEventSchedule[] {
   if (structure !== 'schedule') return []
   return (details ?? []).map(detail => {
+    const rawScheduleLabel = detail.scheduleLabel?.trim() ?? ''
+    const scheduleLabel =
+      sessionRound === 'multi'
+        ? rawScheduleLabel.replace(/^세부\s*일정/, '행사 일정')
+        : rawScheduleLabel
     const timeSummary =
       optionalText(detail.progressTimeSummary) ?? formatGroupTimes(detail.groupTimes)
     const scheduleDateLabel = optionalText(detail.scheduleDateLabel)
@@ -532,7 +650,7 @@ function mapPortalScheduleDetails(
         ? [scheduleDateLabel, timeSummary].filter((part): part is string => Boolean(part)).join(' ')
         : (timeSummary ?? scheduleDateLabel ?? '')
     return {
-      scheduleLabel: detail.scheduleLabel ?? '',
+      scheduleLabel,
       name: detail.name ?? '',
       dateLabel,
       ...(detail.blockKind ? { blockKind: detail.blockKind } : {}),
@@ -585,20 +703,62 @@ function buildPortalBasicInfoFields(args: {
   return fields.filter(field => field.value.trim().length > 0 && field.value !== '-')
 }
 
-export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDetail | null {
+/**
+ * 포털 상세는 `recruitmentId`가 있으면 행 썸네일을 응답 최상위에 둔다.
+ * 행 객체에 id가 없고 키만 빠졌으면 그 최상위 값을 쓴다. 행이 null이면 비운다.
+ */
+function resolveFocusedThumbnailFileObjectId(
+  row: PortalRecruitment | undefined,
+  remoteThumbnailFileObjectId: number | null | undefined
+): number | null | undefined {
+  if (row == null) return remoteThumbnailFileObjectId
+  if (row.thumbnailFileObjectId != null) return row.thumbnailFileObjectId
+  if (row.thumbnailFileObjectId === null) return undefined
+  return remoteThumbnailFileObjectId
+}
+
+function isIndependentRecruitmentProgram(programType: string | undefined): boolean {
+  const type = programType?.trim().toUpperCase()
+  return type === 'UJAT' || type === 'GENERAL' || (type?.startsWith('GENERAL_') ?? false)
+}
+
+export function mapPortalProgramDetail(
+  remote: PortalProgramDetail,
+  focus?: PortalRecruitmentFocus | null,
+): ProgramDetail | null {
   const programId = remote.programId
   const title = readString(remote.title)
   if (programId == null || !title) return null
 
-  const category = mapCategory(remote.portalCategories, remote.programType)
-  const detailCase = mapDetailCase(remote.programType, remote.portalCategories, remote.recruitments)
+  const selected = focus ? selectRecruitmentsForFocus(remote.recruitments, focus) : null
+  const recruitmentResolved = selected != null && !selected.ambiguous && selected.rows.length === 1
+  const recruitmentRows = recruitmentResolved
+    ? selected.rows
+    : selected?.ambiguous
+      ? []
+      : remote.recruitments
+  const focusedTab = focus?.portalTab
+  const categories = focusedTab
+    ? [programTabFromPortalTab(focusedTab)]
+    : mapPortalTabs(remote.portalCategories, remote.programType)
+  const category = focusedTab
+    ? programTabFromPortalTab(focusedTab)
+    : mapCategory(remote.portalCategories, remote.programType)
+  const detailCase =
+    recruitmentResolved && selected
+      ? detailCaseForFocus(remote.programType, selected.applicationTypes)
+      : selected?.ambiguous && selected.applicationTypes.length === 1
+        ? detailCaseForFocus(remote.programType, selected.applicationTypes)
+        : mapDetailCase(remote.programType, remote.portalCategories, remote.recruitments)
   const perScheduleEducationForm = remote.educationFormScheduleDetail === 'perSchedule'
   const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const targets = mapEducationTargets(remote)
   const roleLabel = ROLE_LABEL[detailCase]
   const programType = readString(remote.programType)?.toUpperCase()
   const isTrainedTeacher = programType === 'TRAINED_TEACHER'
-  const recruitmentOperation = recruitmentOperatingDates(remote.recruitments)
+  const recruitmentOperation = recruitmentOperatingDates(
+    recruitmentResolved ? recruitmentRows : remote.recruitments,
+  )
   const operating = resolveOperatingRange({
     operationStart: recruitmentOperation.start,
     operationEnd: recruitmentOperation.end,
@@ -607,10 +767,23 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
   })
   const opStart = operating.start
   const opEnd = operating.end
-  const primaryRecruitment = remote.recruitments?.[0]
-  const appStart = toDate(primaryRecruitment?.startAt)
-  const appEnd = toDate(primaryRecruitment?.endAt)
-  const recruitmentStatus = mapRecruitmentStatus(remote.recruitmentStatus, remote.recruitments)
+  const primaryRecruitment = recruitmentResolved
+    ? recruitmentRows?.[0]
+    : selected?.ambiguous
+      ? undefined
+      : remote.recruitments?.[0]
+  const focusedWindow = recruitmentResolved ? recruitmentWindow(selected!.rows) : null
+  const appStart = focusedWindow
+    ? focusedWindow.start
+    : toDate(primaryRecruitment?.startAt)
+  const appEnd = focusedWindow
+    ? focusedWindow.end
+    : toDate(primaryRecruitment?.endAt)
+  const recruitmentStatus = recruitmentResolved
+    ? aggregateRecruitmentStatus(selected!.rows)
+    : selected?.ambiguous
+      ? RECRUITMENT_STATUS.closed
+      : mapRecruitmentStatus(remote.recruitmentStatus, remote.recruitments)
   const apiEducationFormLabel = perScheduleEducationForm
     ? undefined
     : optionalText(remote.educationFormLabel)
@@ -624,10 +797,16 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     remote,
     targets.educationTargetLabel
   )
-  const thumbnailUrl =
-    remote.thumbnailFileObjectId != null
-      ? portalPublicFileContentUrl(remote.thumbnailFileObjectId)
+  const independentRow =
+    recruitmentResolved && selected?.rows.length === 1 && isIndependentRecruitmentProgram(programType)
+      ? selected.rows[0]
       : undefined
+  const thumbnailFileObjectId = resolveFocusedThumbnailFileObjectId(
+    independentRow,
+    remote.thumbnailFileObjectId
+  )
+  const thumbnailUrl =
+    thumbnailFileObjectId != null ? portalPublicFileContentUrl(thumbnailFileObjectId) : undefined
   const usesEducationProgressFields =
     hasProjectedEducationProgress(remote) || isGeneralEducationProgressProgram(programType)
   const legacySessions = mapSessions(remote.curricula)
@@ -653,23 +832,40 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
   const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 
+  const programDescription = visibleCopy(
+    readString(independentRow ? independentRow.programDescription : remote.description) ?? ''
+  )
+  const recruitmentGuide = visibleCopy(
+    readString(independentRow ? independentRow.recruitmentGuide : remote.recruitmentGuide) ?? ''
+  )
+  const additionalContent = visibleCopy(
+    rewriteAdminFileContentSrcsForPortal(
+      readString(independentRow ? independentRow.additionalContentHtml : remote.additionalContentHtml) ??
+        ''
+    )
+  )
+  const learningSupportContent = visibleCopy(
+    readString(independentRow ? independentRow.learningSupportContent : remote.learningSupportContent) ??
+      ''
+  )
+  const otherMatters = visibleCopy(readString(remote.otherMatters) ?? '')
+  const remarks = visibleCopy(readString(independentRow ? independentRow.remarks : remote.remarks) ?? '')
   const extraSections: ProgramExtraSection[] = [
-    { title: '모집 안내', body: readString(remote.recruitmentGuide) ?? '' },
-    {
-      title: '추가 내용',
-      body: readString(remote.additionalContentHtml) ?? '',
-      bodyFormat: 'html' as const,
-    },
-    { title: '학습 지원 내용', body: readString(remote.learningSupportContent) ?? '' },
-    { title: '기타사항', body: readString(remote.otherMatters) ?? '' },
-    { title: '비고', body: readString(remote.remarks) ?? '' },
-  ].filter(section => section.body.length > 0)
+    extraSection('모집 안내', recruitmentGuide),
+    { title: '추가 내용', body: additionalContent, bodyFormat: 'html' as const },
+    ...(showsLearningSupport(detailCase)
+      ? [extraSection('학습 지원 내용', learningSupportContent)]
+      : []),
+    ...(showsOtherMatters(detailCase) ? [extraSection('기타사항', otherMatters)] : []),
+    extraSection('비고', remarks),
+  ].filter(section => visibleCopy(section.body).length > 0)
 
   return {
     id: String(programId),
     category,
-    categoryLabel: CATEGORY_LABEL[category],
-    title,
+    categories,
+    categoryLabel: programTabLabels(categories),
+    title: readString(independentRow?.announcementTitle) ?? title,
     operatingPeriodLabel: formatRange(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
     operatingPeriodEnd: opEnd ? formatYmd(opEnd) : '1970-01-01',
@@ -685,7 +881,9 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     thumbnailUrl,
     detailImageUrl: thumbnailUrl,
     sponsor: (remote.sponsorNames ?? []).map(readString).filter(Boolean).join(', ') || '-',
-    summary: readString(remote.description) ?? readString(remote.summary) ?? '',
+    summary: independentRow
+      ? programDescription
+      : visibleCopy(readString(remote.description) ?? readString(remote.summary) ?? ''),
     isRecruiting: recruitmentStatus === RECRUITMENT_STATUS.recruiting,
     businessFieldLabel,
     educationTargetGroupLabel: targets.educationTargetGroupLabel,
@@ -698,6 +896,17 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
       remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL' ? 'individual' : 'organization',
     participationMethod: mapParticipationMethod(remote),
     recruitmentRoleLabel: roleLabel,
+    ...(selected?.ambiguous
+      ? { recruitmentSelectionAmbiguous: true }
+      : recruitmentResolved && selected
+        ? {
+            focusedRecruitmentIds: selected.recruitmentIds,
+            focusedApplicationTypes: selected.applicationTypes,
+            ...(selected.applicationTypes.length === 1
+              ? { applicationType: selected.applicationTypes[0] }
+              : {}),
+          }
+        : {}),
     basicInfoFields: buildPortalBasicInfoFields({
       usesEducationProgressFields,
       businessFieldLabel,
@@ -736,7 +945,13 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     sessions,
     eventSchedules,
     recruitmentPhaseGroupLabel: '모집 및 선별 기간',
-    recruitmentPhases: mapRecruitmentPhases(remote.recruitments),
+    recruitmentPhases: mapRecruitmentPhases(
+      selected?.ambiguous
+        ? undefined
+        : recruitmentResolved
+          ? recruitmentRows
+          : remote.recruitments,
+    ),
     educationSchedules: usesEducationProgressFields
       ? mapPortalEducationScheduleCards(remote)
       : eventSchedules.map((item, index) => ({
@@ -744,10 +959,24 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
           value: `${item.name} · ${item.dateLabel}`,
         })),
     extraSections,
-    contactValue: contactValue(remote.contactName, remote.contactPhone, remote.contactEmail),
-    applicationMethodLabel: '지원방법',
-    applicationMethodValue: readString(remote.applicationMethod ?? undefined) ?? '',
-    attachments: (remote.attachments ?? []).flatMap(file => {
+    contactValue: contactValue(
+      independentRow?.contactName !== undefined ? independentRow.contactName : remote.contactName,
+      independentRow?.contactPhone !== undefined ? independentRow.contactPhone : remote.contactPhone,
+      independentRow?.contactEmail !== undefined ? independentRow.contactEmail : remote.contactEmail
+    ),
+    applicationMethodLabel: independentRow ? '지원 방법' : '지원방법',
+    applicationMethodValue: visibleCopy(
+      rewriteAdminFileContentSrcsForPortal(
+        readString(
+          independentRow
+            ? (independentRow.applicationMethod ?? undefined)
+            : (remote.applicationMethod ?? undefined)
+        ) ?? ''
+      )
+    ),
+    attachments: (
+      (independentRow?.attachments !== undefined ? independentRow.attachments : remote.attachments) ?? []
+    ).flatMap(file => {
       const fileObjectId = Number(file.fileObjectId)
       if (!Number.isFinite(fileObjectId) || fileObjectId <= 0) return []
       return [
@@ -765,6 +994,7 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
   const title = readString(remote.title)
   if (programId == null || !title) return null
 
+  const categories = mapPortalTabs(remote.portalCategories, remote.programType)
   const category = mapCategory(remote.portalCategories, remote.programType)
   const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const targets = mapEducationTargets(remote)
@@ -783,7 +1013,8 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
   return {
     id: String(programId),
     category,
-    categoryLabel: CATEGORY_LABEL[category],
+    categories,
+    categoryLabel: programTabLabels(categories),
     title,
     operatingPeriodLabel: formatRange(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
@@ -794,9 +1025,26 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetLabel:
-      targets.key != null ? targets.educationTargetLabel : CATEGORY_LABEL[category],
+      targets.key != null ? targets.educationTargetLabel : PROGRAM_TAB_LABEL[category],
     educationForm,
     educationFormLabel: EDUCATION_FORM_LABEL[educationForm],
+    applicationTypes: (remote.availableApplicationTypes ?? [])
+      .map(item => item.trim().toUpperCase())
+      .filter(Boolean),
+    ...(remote.recruitmentId != null &&
+    Number.isSafeInteger(remote.recruitmentId) &&
+    remote.recruitmentId > 0
+      ? { recruitmentId: remote.recruitmentId }
+      : {}),
+    ...(readString(remote.recruitmentType)
+      ? { recruitmentType: readString(remote.recruitmentType)!.toUpperCase() }
+      : {}),
+    ...(readString(remote.targetType)
+      ? { targetType: readString(remote.targetType)!.toUpperCase() }
+      : {}),
+    ...(readString(remote.applicationType)
+      ? { applicationType: readString(remote.applicationType)!.toUpperCase() }
+      : {}),
     thumbnailUrl:
       remote.thumbnailFileObjectId != null
         ? portalPublicFileContentUrl(remote.thumbnailFileObjectId)

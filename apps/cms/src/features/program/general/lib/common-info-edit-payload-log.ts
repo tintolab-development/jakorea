@@ -9,6 +9,7 @@ import {
   extrasFromGeneralProgram,
   getGeneralRegistrationDetailEditExtras,
   readGeneralRegistrationOverlayForSave,
+  resyncGeneralRegistrationOverlayFromProgram,
 } from '@/features/program/general/lib/registration-overlay-sync'
 
 function parseServiceDetailJson(raw: string | undefined): unknown {
@@ -30,14 +31,16 @@ export function logGeneralProgramCommonInfoEditCurrentPayload(
       : extrasFromGeneralProgram(program)
   const overlay = readGeneralRegistrationOverlayForSave()
   const applied = applyGeneralRegistrationOverlayToProgram(program, overlay, extras)
-  const withOverlay: Program = {
+  const withType: Program = {
     ...applied,
     generalProgramEducationStructure: extras.programType,
     generalProgramSessionRound: extras.sessionRoundType,
-    registrationOverlay: {
-      ...(program.registrationOverlay ?? {}),
-      ...overlay,
-    },
+    registrationOverlay: overlay,
+  }
+  const syncedOverlay = resyncGeneralRegistrationOverlayFromProgram(withType, overlay)
+  const withOverlay: Program = {
+    ...withType,
+    registrationOverlay: syncedOverlay,
   }
   const request = mapGeneralProgramToUpdateRequest(withOverlay, {
     registrationOverlay: withOverlay.registrationOverlay,

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Form } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
+import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
 import { useFaqCategoriesQuery } from '@/features/posts/hooks/use-faq-categories-query'
 import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
@@ -11,22 +12,18 @@ import type {
 } from '@/features/posts/model/faq-form-types'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
-  ADMIN_FILE_PURPOSE,
-  buildAdminFileOwner,
+  faqInlineImageOwner,
+  stripBlobImageSources,
   type AdminFileUploadOwner,
 } from '@/shared/lib/admin-file-upload'
+import {
+  editorHasPendingInlineImages,
+  flushPendingRichTextInlineImages,
+} from '@/shared/rich-text/use-rich-text-inline-image'
 import { parseOwnerResourceId } from '@/shared/lib/admin-file-upload/attachments'
 import type { Editor } from '@/shared/rich-text'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError } from '@/shared/utils/error-handler'
-
-function faqInlineImageOwner(faqId: number): AdminFileUploadOwner {
-  return buildAdminFileOwner(
-    { ownerDomain: 'CONTENT', ownerType: 'FAQ' },
-    faqId,
-    ADMIN_FILE_PURPOSE.FAQ_INLINE_IMAGE
-  )
-}
 
 export type UseFaqFormModalResult = {
   form: FormInstance<FaqFormFieldValues>
@@ -64,17 +61,20 @@ export function useFaqFormModal({
   const isEdit = mode === 'edit' && faq != null
   const isBroken = mode === 'edit' && open && !faq
   const editorResetKey = open ? `${mode}-${faq?.id ?? 'new'}` : 'closed'
+  const fileUploadOwner = useMemo(() => {
+    const ownerId = isEdit && faq ? (faq.resourceId ?? parseOwnerResourceId(faq.id)) : null
+    return faqInlineImageOwner(ownerId)
+  }, [faq, isEdit])
   const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
     open,
     open && isEdit && faq ? (faq.answer ?? '') : '',
     editorResetKey,
-    { height: '260px', placeholder: 'FAQ 내용을 입력하세요' }
+    {
+      height: '260px',
+      placeholder: 'FAQ 내용을 입력하세요',
+      fileUploadOwner,
+    }
   )
-  const fileUploadOwner = useMemo(() => {
-    if (!isEdit || !faq) return null
-    const ownerId = faq.resourceId ?? parseOwnerResourceId(faq.id)
-    return ownerId != null ? faqInlineImageOwner(ownerId) : null
-  }, [faq, isEdit])
 
   useEffect(() => {
     if (!open) return
@@ -117,6 +117,7 @@ export function useFaqFormModal({
       const category = v.category.trim()
       const author = user?.name?.trim() || '관리자'
       const status = v.visibility === 'public' ? 'published' : 'draft'
+      const pendingInlineImages = editorHasPendingInlineImages(editor)
 
       if (isEdit && faq) {
         const updated = await updateMutation.mutateAsync({
@@ -134,21 +135,45 @@ export function useFaqFormModal({
         const created = await createMutation.mutateAsync({
           category,
           question: v.question.trim(),
-          answer,
+          answer: pendingInlineImages ? stripBlobImageSources(answer).trim() || ' ' : answer,
           author,
           status,
           createdAt: new Date().toISOString(),
         })
-        onSuccess?.(created)
+        let saved = created
+        const ownerId = created.resourceId ?? parseOwnerResourceId(created.id)
+        if (pendingInlineImages && editor) {
+          if (ownerId == null) {
+            throw new Error('FAQ ID를 확인하지 못해 이미지를 업로드할 수 없습니다.')
+          }
+          await flushPendingRichTextInlineImages(editor, faqInlineImageOwner(ownerId))
+          saved = await updateMutation.mutateAsync({
+            id: created.id,
+            patch: {
+              category,
+              question: v.question.trim(),
+              answer: getMarkdown().trim(),
+              author,
+              status,
+            },
+          })
+        }
+        onSuccess?.(saved)
       }
       onCancel()
     } catch (err) {
       if (err && typeof err === 'object' && 'errorFields' in err) {
         return
       }
+      const message = getPostsApiErrorMessage(err, '저장에 실패했습니다.')
+      const field = getApiErrorField(err)
+      if (field === 'answer' || field === 'inlineImages') {
+        form.setFields([{ name: 'answer', errors: [message] }])
+        return
+      }
       handleError(err, {
         context: 'useFaqFormModal.handleSubmit',
-        defaultMessage: getPostsApiErrorMessage(err, '저장에 실패했습니다.'),
+        defaultMessage: message,
       })
     }
   }, [
@@ -159,6 +184,7 @@ export function useFaqFormModal({
     faq,
     onCancel,
     onSuccess,
+    editor,
     getMarkdown,
     updateMutation,
     user?.name,

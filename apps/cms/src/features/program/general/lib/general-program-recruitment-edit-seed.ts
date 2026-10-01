@@ -21,6 +21,11 @@ import {
   resolveGeneralRecruitDisplayProgram,
   type GeneralRecruitDetailAudience,
 } from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import {
+  hasRecruitmentCopy,
+  pickRecruitmentCopyRow,
+  resolveRecruitmentOtherMatters,
+} from '@/features/program/shared/lib/recruitment-row-copy'
 
 function hasIsoDate(value: string | Date | undefined): boolean {
   if (value == null || value === '') return false
@@ -221,7 +226,9 @@ export function resolveGeneralProgramForRecruitmentEdit(program: Program): Progr
     program.registrationOverlay ?? {},
     { preferOverlay: false }
   )
-  const withOverlay = resolveGeneralRecruitDisplayProgram(withPersistedOverlay)
+  const withOverlay = resolveGeneralRecruitDisplayProgram(withPersistedOverlay, {
+    preferOverlay: false,
+  })
   return enrichVolunteerRecruitmentScalars(
     enrichInstructorRecruitmentScalars(enrichParticipantRecruitmentScalars(withOverlay))
   )
@@ -234,13 +241,81 @@ export function programToRecruitmentTabEditValues(
   const merged = resolveGeneralProgramForRecruitmentEdit(program)
   const base = programToDetailEditValues(merged)
   const detail = resolveGeneralRecruitDetailDisplayProgram(merged, audience)
+  const recruitmentRow = pickRecruitmentCopyRow(merged, audience)
+  const recruitmentCopy = recruitmentRow != null && hasRecruitmentCopy(recruitmentRow)
+  const participantInfo = merged.generalCommonInfo?.participantRecruitmentInfo
+  const instructorInfo = merged.generalCommonInfo?.instructorRecruitmentInfo
+  const volunteerInfo = merged.generalCommonInfo?.volunteerRecruitmentInfo
   return {
     ...base,
-    description: detail.description ?? base.description,
-    recruitmentGuide: detail.recruitmentGuide ?? base.recruitmentGuide,
-    applicationMethod: detail.applicationMethod ?? base.applicationMethod,
-    learningSupportContent: detail.learningSupportContent ?? base.learningSupportContent,
-    additionalContentHtml: detail.additionalContentHtml ?? base.additionalContentHtml,
-    otherNotes: detail.otherNotes ?? base.otherNotes,
+    description: recruitmentCopy ? (detail.description ?? '') : (detail.description ?? base.description),
+    recruitmentGuide: recruitmentCopy
+      ? (detail.recruitmentGuide ?? '')
+      : (detail.recruitmentGuide ?? base.recruitmentGuide),
+    applicationMethod: recruitmentCopy
+      ? (detail.applicationMethod ?? '')
+      : (detail.applicationMethod ?? base.applicationMethod),
+    learningSupportContent: recruitmentCopy
+      ? (detail.learningSupportContent ?? '')
+      : (detail.learningSupportContent ?? base.learningSupportContent),
+    additionalContentHtml: recruitmentCopy
+      ? (detail.additionalContentHtml ?? '')
+      : (detail.additionalContentHtml ?? base.additionalContentHtml),
+    otherNotes: resolveRecruitmentOtherMatters(merged, audience) ?? base.otherNotes,
+    instructorRecruitmentRemarks:
+      audience === 'instructor' ? (instructorInfo?.remarks?.trim() || undefined) : undefined,
+    remarks:
+      audience === 'participant'
+        ? participantInfo?.notesNotApplicable
+          ? ''
+          : (participantInfo?.remarks?.trim() || base.remarks)
+        : base.remarks,
+    oneLineIntroduction:
+      audience === 'volunteer'
+        ? volunteerInfo?.notesNotApplicable
+          ? ''
+          : (volunteerInfo?.remarks?.trim() || base.oneLineIntroduction)
+        : base.oneLineIntroduction,
+    ...(isGeneralRowCopyProgram(merged)
+      ? generalRecruitmentRowFormSeed(recruitmentRow, audience)
+      : {}),
   }
+}
+
+function isGeneralRowCopyProgram(program: Program): boolean {
+  const type = program.backendProgramType?.toUpperCase() ?? ''
+  return type === 'GENERAL' || type.startsWith('GENERAL_')
+}
+
+/** 일반 프로그램 모집 탭은 그 행의 문의처만 보여 준다. 공고명은 공통정보를 본다. */
+function generalRecruitmentRowFormSeed(
+  row: ReturnType<typeof pickRecruitmentCopyRow>,
+  audience: GeneralRecruitDetailAudience
+): Partial<ProgramDetailEditFormValues> {
+  if (!row) return {}
+  const contact =
+    audience === 'instructor'
+      ? {
+          ...(row.contactName != null
+            ? { instructorRecruitmentContactOrganizationName: row.contactName }
+            : {}),
+          ...(row.contactPhone != null ? { instructorContactPhone: row.contactPhone } : {}),
+          ...(row.contactEmail != null ? { instructorContactEmail: row.contactEmail } : {}),
+        }
+      : audience === 'volunteer'
+        ? {
+            ...(row.contactName != null
+              ? { volunteerRecruitmentContactOrganizationName: row.contactName }
+              : {}),
+            ...(row.contactPhone != null ? { volunteerContactPhone: row.contactPhone } : {}),
+            ...(row.contactEmail != null ? { volunteerContactEmail: row.contactEmail } : {}),
+          }
+        : {
+            ...(row.contactName != null
+              ? { recruitmentContactOrganizationName: row.contactName }
+              : {}),
+            ...(row.contactPhone != null ? { contactPhone: row.contactPhone } : {}),
+            ...(row.contactEmail != null ? { contactEmail: row.contactEmail } : {}),
+          }
+  return contact
 }

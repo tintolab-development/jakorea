@@ -5,9 +5,11 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { ProgramRecruitmentAttachmentResponse } from './programRecruitmentAttachmentResponse';
+import type { ProgramRecruitmentResponseApplicationType } from './programRecruitmentResponseApplicationType';
 
 /**
- * 프로그램 모집 유형별 canonical 설정 응답
+ * 프로그램 모집 행 응답. 모집 행마다 공고 문구·담당자·대표 이미지·첨부·신청 양식을 따로 가진다.
  */
 export interface ProgramRecruitmentResponse {
   id?: number;
@@ -21,4 +23,78 @@ export interface ProgramRecruitmentResponse {
   maxCount?: number;
   minCount?: number;
   selectionMethod?: string;
+  /**
+     * 이 모집 행의 프로그램 설명. 비어 있으면 null. 프로그램 description으로 채우지 않는다.
+     * @nullable
+     */
+  programDescription?: string | null;
+  /**
+     * 이 모집 행의 모집 안내. 비어 있으면 null. 다른 모집이나 프로그램 recruitmentGuide로 채우지 않는다.
+     * @nullable
+     */
+  recruitmentGuide?: string | null;
+  /**
+     * 이 모집 행의 신청 방법. 비어 있으면 null.
+     * @nullable
+     */
+  applicationMethod?: string | null;
+  /**
+     * 이 모집 행의 학습 지원. 비어 있으면 null.
+     * @nullable
+     */
+  learningSupportContent?: string | null;
+  /**
+     * 이 모집 행의 추가 내용 HTML. 비어 있으면 null.
+     * @nullable
+     */
+  additionalContentHtml?: string | null;
+  /**
+     * 이 모집 행의 비고. 비어 있으면 null.
+     * @nullable
+     */
+  remarks?: string | null;
+  /**
+     * 강사·봉사자 행 기타사항. 참여자·기관 행과 빈 값은 null. 프로그램 공통 기타사항으로 채우지 않는다.
+     * @nullable
+     */
+  otherMatters?: string | null;
+  /** 이 모집 행의 신청 유형 */
+  applicationType?: ProgramRecruitmentResponseApplicationType;
+  /**
+     * 이 모집 행의 공고 제목. 비어 있으면 null.
+     * @nullable
+     */
+  announcementTitle?: string | null;
+  /**
+     * 이 모집 행의 한 줄 소개. 비어 있으면 null.
+     * @nullable
+     */
+  summary?: string | null;
+  /**
+     * 이 모집 행의 담당자 이름. GENERAL_*\/UJAT 외 유형은 null(프로그램 contactName 사용).
+     * @nullable
+     */
+  contactName?: string | null;
+  /**
+     * 이 모집 행의 담당자 연락처. 비어 있으면 null.
+     * @nullable
+     */
+  contactPhone?: string | null;
+  /**
+     * 이 모집 행의 담당자 이메일. 비어 있으면 null.
+     * @nullable
+     */
+  contactEmail?: string | null;
+  /**
+     * 이 모집 행의 대표 이미지 file_object id. 없으면 null. GENERAL_*\/UJAT 외 유형은 프로그램 대표 이미지.
+     * @nullable
+     */
+  thumbnailFileObjectId?: number | null;
+  /** 이 모집 행의 첨부파일. 없으면 []. GENERAL_*\/UJAT 외 유형은 프로그램 첨부파일. */
+  attachments?: ProgramRecruitmentAttachmentResponse[];
+  /**
+     * 이 모집 행의 신청 양식 바인딩 id. 행 전용(RECRUITMENT) 바인딩이 없으면 같은 신청 유형의 프로그램 바인딩, 그것도 없으면 null.
+     * @nullable
+     */
+  applicationFormBindingId?: number | null;
 }

@@ -307,6 +307,7 @@ function UjatPreEducationBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="일정명"
+            validationKey={`${half}.pre.name`}
             view={viewRow.scheduleName}
             edit={
               mode === 'edit' ? (
@@ -323,6 +324,7 @@ function UjatPreEducationBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="진행 일정"
+            validationKey={`${half}.pre.schedule`}
             fullRow
             view={<ScheduleTextView text={viewRow.scheduleText} />}
             edit={
@@ -390,6 +392,7 @@ function UjatEventScheduleBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="일정명"
+            validationKey={`${half}.event.name`}
             view={viewRow.scheduleName}
             edit={
               mode === 'edit' ? (
@@ -406,6 +409,7 @@ function UjatEventScheduleBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="진행 일정"
+            validationKey={`${half}.event.range`}
             view={<ScheduleTextView text={viewRow.scheduleText} />}
             edit={
               mode === 'edit' ? (
@@ -484,6 +488,7 @@ function UjatClosingCeremonyBlock({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="진행 일정"
+            validationKey={`${half}.closing.multi`}
             fullRow
             view={<ScheduleTextView text={viewRow.scheduleText} />}
             edit={

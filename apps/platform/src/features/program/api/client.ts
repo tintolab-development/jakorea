@@ -84,14 +84,28 @@ export async function fetchPortalPrograms(
   return normalizeListPage(data, query.size)
 }
 
+export type PortalProgramDetailQuery = {
+  recruitmentId?: number
+  applicationType?: string
+}
+
 /** GET /api/portal/programs/{programId} — CMS 8080, 로그인 전 호출 가능 */
 export async function fetchPortalProgramDetail(
   programId: number,
   signal?: AbortSignal,
+  query?: PortalProgramDetailQuery,
 ): Promise<PortalProgramDetail> {
+  const params: Record<string, string | number> = {}
+  if (query?.recruitmentId != null && query.recruitmentId > 0) {
+    params.recruitmentId = query.recruitmentId
+  }
+  if (query?.applicationType?.trim()) {
+    params.applicationType = query.applicationType.trim()
+  }
   const { data } = await axiosClient.get<unknown>(`${PORTAL_PROGRAMS_PATH}/${programId}`, {
     ...SKIP_AUTH,
     signal,
+    params,
   })
   return unwrapEnvelope<PortalProgramDetail>(data)
 }

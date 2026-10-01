@@ -180,6 +180,7 @@ type FormModalProps = {
   onClose: () => void
   onSubmit: (draft: MailTemplateFormDraft) => void
   onDelete?: () => void
+  bodyError?: string | null
 }
 
 export function FormModal({
@@ -190,6 +191,7 @@ export function FormModal({
   onClose,
   onSubmit,
   onDelete,
+  bodyError = null,
 }: FormModalProps) {
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
@@ -578,6 +580,8 @@ export function FormModal({
                       onRememberSubjectRange={form.rememberSubjectRange}
                       onAttachmentAdd={handleAttachmentAdd}
                       onAttachmentRemove={form.handleAttachmentRemove}
+                      fileUploadOwner={form.fileUploadOwner}
+                      bodyError={bodyError}
                     />
                   </DetailInfoForm>
                 </section>

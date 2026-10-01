@@ -15,8 +15,7 @@ import {
   clientFilterGeneralPrograms,
   type GeneralProgramListTableFilters,
 } from '@/features/program/general/api/general-program-list-filter-params'
-import { getTempMockIndividualProgram } from '@/features/program/general/lib/temp-mock-individual-program'
-import { getTempMockOrgProgram } from '@/features/program/general/lib/temp-mock-org-program'
+import { getTempMockShowcasePrograms } from '@/features/program/general/lib/temp-mock-program-resolve'
 import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
 import { programMatchesProgressPhase } from '@/features/program/general/ui/constants/program-list-constants'
 import {
@@ -121,9 +120,7 @@ export function useGeneralProgramListFilters() {
   // TODO(temp-mock): 열여라 참깨 — FE 전용 기관·개인 쇼케이스 목록 주입. 원격 행과 섞지 않음.
   const mockPrograms = useMemo(() => {
     if (!isGeneralProgramTempMockEnabled()) return []
-    const seeds = [getTempMockOrgProgram(), getTempMockIndividualProgram()].filter(
-      (program): program is NonNullable<typeof program> => program != null
-    )
+    const seeds = getTempMockShowcasePrograms()
     const titleKeyword = tableFilters.title?.trim()
     return seeds.filter(program => {
       if (statusFilter && !programMatchesProgressPhase(program, statusFilter)) return false

@@ -11,7 +11,7 @@ export const UJAT_RECRUIT_TAB_KEYS = [
 export type UjatRecruitTabKey = (typeof UJAT_RECRUIT_TAB_KEYS)[number]
 
 export const UJAT_RECRUIT_TAB_LABELS: Record<UjatRecruitTabKey, string> = {
-  recruit_participant: '참여자 모집 정보',
+  recruit_participant: '참여 기관 모집 정보',
   recruit_volunteer_h1: '상반기 봉사자 모집 정보',
   recruit_volunteer_h2: '하반기 봉사자 모집 정보',
 }

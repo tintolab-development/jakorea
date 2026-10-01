@@ -26,7 +26,9 @@ export type UseRichTextEditorOptions = {
    * 드롭·붙여넣기 이미지 src. 없으면 data URL.
    * 콜백 참조가 바뀌어도 에디터는 리마운트하지 않는다.
    */
-  resolveImageSrc?: (file: File) => Promise<string>
+  resolveImageSrc?: (
+    file: File
+  ) => Promise<import('../core/insert-actions').ResolvedRichTextImageSrc>
   /**
    * TipTap `useEditor` 트랜잭션마다 React 리렌더 여부.
    * 기본 `false` — 툴바는 `useEditorState`로 구독하고, 부모 폼 전체 리렌더를 막는다.
@@ -58,4 +60,6 @@ export type RichTextViewerProps = {
   extraExtensions?: Extensions
   /** 기본 `403px` — 구 공지 상세 뷰어 */
   maxHeight?: string | number
+  /** 뷰어 에디터 인스턴스. CMS 인라인 이미지 미리보기 등에 사용 */
+  onEditor?: (editor: Editor | null) => void
 }

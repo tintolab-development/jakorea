@@ -31,6 +31,14 @@ export type TempMockOrgSurveyState = {
 export const TEMP_MOCK_ORG_SURVEY_POLL_ID = 'temp-mock-org-survey-poll-1'
 export const TEMP_MOCK_ORG_SURVEY_LECTURE_ID = 'temp-mock-org-survey-lecture-eval'
 
+function surveyPollId(programId: string): string {
+  return `${programId}-survey-poll-1`
+}
+
+function surveyLectureId(programId: string): string {
+  return `${programId}-survey-lecture-eval`
+}
+
 const TEMP_MOCK_SURVEY_POLL_TEMPLATE_ID = 'survey-default'
 
 const SATISFACTION_TEMPLATE_BY_AUDIENCE: Record<GeneralSatisfactionAudienceKey, string> = {
@@ -49,8 +57,11 @@ const SATISFACTION_TITLE_BY_AUDIENCE: Record<GeneralSatisfactionAudienceKey, str
   volunteer_h2: '하반기 봉사자 만족도조사',
 }
 
-function satisfactionSurveyId(audience: GeneralSatisfactionAudienceKey): string {
-  return `temp-mock-org-survey-satisfaction-${audience}`
+function satisfactionSurveyId(
+  programId: string,
+  audience: GeneralSatisfactionAudienceKey
+): string {
+  return `${programId}-survey-satisfaction-${audience}`
 }
 
 function buildRegisteredSurvey(input: {
@@ -138,7 +149,7 @@ export function buildTempMockOrgSurveyState(program: Program): TempMockOrgSurvey
   if (!isGeneralProgramTempMockProgramId(program.id)) return null
 
   const pollSurvey = buildRegisteredSurvey({
-    id: TEMP_MOCK_ORG_SURVEY_POLL_ID,
+    id: surveyPollId(program.id),
     title: '열여라 참깨 프로그램 설문조사',
     templateId: TEMP_MOCK_SURVEY_POLL_TEMPLATE_ID,
     status: 'in_progress',
@@ -153,7 +164,7 @@ export function buildTempMockOrgSurveyState(program: Program): TempMockOrgSurvey
     const audience = tab.key
     const counts = satisfactionCounts(audience)
     satisfactionSurveysByAudience[audience] = buildRegisteredSurvey({
-      id: satisfactionSurveyId(audience),
+      id: satisfactionSurveyId(program.id, audience),
       title: SATISFACTION_TITLE_BY_AUDIENCE[audience],
       templateId: SATISFACTION_TEMPLATE_BY_AUDIENCE[audience],
       status: 'in_progress',
@@ -164,7 +175,7 @@ export function buildTempMockOrgSurveyState(program: Program): TempMockOrgSurvey
 
   const lectureEvalResponses = [buildLectureEvalSubmittedPollResponse()]
   const lectureEvalSurvey = buildRegisteredSurvey({
-    id: TEMP_MOCK_ORG_SURVEY_LECTURE_ID,
+    id: surveyLectureId(program.id),
     title: '강의평가 (관리자용)',
     templateId: LECTURE_EVAL_TEMPLATE_ID,
     status: 'finished',

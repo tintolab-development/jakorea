@@ -1,14 +1,26 @@
-import { createContext, useContext, useId, type CSSProperties, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useId,
+  useMemo,
+  type CSSProperties,
+  type ReactNode,
+} from 'react'
+import { useOptionalFieldValidationHighlight } from './field-validation-highlight-context.js'
 import './detail-info-form.css'
 
 export type DetailInfoFormMode = 'view' | 'edit'
 
 type DetailInfoFormContextValue = {
   mode: DetailInfoFormMode
+  fieldIncompleteHighlight?: (validationKey: string | readonly string[]) => boolean
+  /** 미입력 강조 attempt — Field가 context 변경 시 재계산하도록 */
+  fieldHighlightEpoch?: number
 }
 
 const DetailInfoFormContext = createContext<DetailInfoFormContextValue>({
-  mode: 'view' })
+  mode: 'view',
+})
 
 export type DetailInfoFormProps = {
   title: string
@@ -27,6 +39,10 @@ export type DetailInfoFormProps = {
   children: ReactNode
   className?: string
   style?: CSSProperties
+  /** 등록 위저드 등 — `DetailInfoForm.Field`의 `validationKey` 미입력 강조 */
+  fieldIncompleteHighlight?: (validationKey: string | readonly string[]) => boolean
+  /** `fieldIncompleteHighlight`와 함께 — 검증 실패 attempt(0이면 강조 비활성) */
+  fieldHighlightEpoch?: number
 }
 
 function DetailInfoFormRoot({
@@ -39,14 +55,21 @@ function DetailInfoFormRoot({
   mode = 'view',
   children,
   className,
-  style }: DetailInfoFormProps) {
+  style,
+  fieldIncompleteHighlight,
+  fieldHighlightEpoch,
+}: DetailInfoFormProps) {
   const titleId = useId()
   const rootClass = ['detail-info-form', className].filter(Boolean).join(' ')
   const body = <div className="detail-info-form__body">{children}</div>
+  const contextValue = useMemo(
+    (): DetailInfoFormContextValue => ({ mode, fieldIncompleteHighlight, fieldHighlightEpoch }),
+    [fieldHighlightEpoch, fieldIncompleteHighlight, mode]
+  )
 
   if (hideHeader) {
     return (
-      <DetailInfoFormContext.Provider value={{ mode }}>
+      <DetailInfoFormContext.Provider value={contextValue}>
         <div className={rootClass} role="group" aria-label={title} style={style}>
           {body}
         </div>
@@ -55,7 +78,7 @@ function DetailInfoFormRoot({
   }
 
   return (
-    <DetailInfoFormContext.Provider value={{ mode }}>
+    <DetailInfoFormContext.Provider value={contextValue}>
       <section className={rootClass} aria-labelledby={titleId} style={style}>
         <header className="detail-info-form__header">
           <div className="detail-info-form__header-lead">
@@ -124,6 +147,8 @@ export type DetailInfoFormFieldProps = {
    * `mode="view"`만으로 컨텍스트가 이기는 경우를 막기 위해 사용한다.
    */
   readOnlyDisplay?: boolean
+  /** `fieldIncompleteHighlight`와 함께 — 미입력 강조 대상 키(복수 시 하나라도 미입력이면 라벨 강조) */
+  validationKey?: string | readonly string[]
 }
 
 function DetailInfoFormField({
@@ -135,8 +160,12 @@ function DetailInfoFormField({
   view,
   edit,
   mode: modeProp,
-  readOnlyDisplay = false }: DetailInfoFormFieldProps) {
-  const { mode: contextMode } = useContext(DetailInfoFormContext)
+  readOnlyDisplay = false,
+  validationKey,
+}: DetailInfoFormFieldProps) {
+  const { mode: contextMode, fieldIncompleteHighlight, fieldHighlightEpoch } =
+    useContext(DetailInfoFormContext)
+  const wizardFieldHighlight = useOptionalFieldValidationHighlight()
   const effectiveMode: DetailInfoFormMode = readOnlyDisplay
     ? 'view'
     : (modeProp ?? contextMode ?? 'view')
@@ -149,10 +178,26 @@ function DetailInfoFormField({
 
   const isFull = Boolean(fullRow || colSpan === 2)
   const isEditSlot = useEditSlot
+
+  const highlightEpoch = Math.max(fieldHighlightEpoch ?? 0, wizardFieldHighlight?.epoch ?? 0)
+  const isValidationKeyIncomplete = (key: string | readonly string[]): boolean => {
+    if (fieldIncompleteHighlight?.(key) === true) return true
+    if (wizardFieldHighlight?.isFieldIncomplete(key) === true) return true
+    return false
+  }
+  const highlightActive = highlightEpoch > 0
+  const labelIncomplete =
+    highlightActive &&
+    validationKey != null &&
+    (Array.isArray(validationKey)
+      ? validationKey.some(key => isValidationKeyIncomplete(key))
+      : isValidationKeyIncomplete(validationKey))
+
   const fieldClass = [
     'detail-info-form__field',
     isFull ? 'detail-info-form__field--full-row' : '',
     isEditSlot ? 'detail-info-form__field--edit' : '',
+    labelIncomplete ? 'detail-info-form__field--required-incomplete' : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -161,10 +206,23 @@ function DetailInfoFormField({
     'detail-info-form__field-content',
     isEditSlot ? 'detail-info-form__field-content--edit' : 'detail-info-form__field-content--view',
   ].join(' ')
+  const labelClass = [
+    'detail-info-form__field-label',
+    labelIncomplete ? 'detail-info-form__field-label--required-incomplete' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const wizardFieldKeyAttr =
+    validationKey == null
+      ? undefined
+      : Array.isArray(validationKey)
+        ? validationKey.join('|')
+        : validationKey
 
   return (
-    <div className={fieldClass} style={style}>
-      <div className="detail-info-form__field-label">
+    <div className={fieldClass} style={style} data-wizard-field-key={wizardFieldKeyAttr}>
+      <div className={labelClass}>
         <span className="detail-info-form__field-label-text">{label}</span>
         {showRequired ? (
           <span className="detail-info-form__field-required" aria-hidden>

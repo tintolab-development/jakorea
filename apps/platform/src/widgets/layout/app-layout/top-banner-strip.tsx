@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import arrowRightWhite16Url from '@/shared/assets/icons/arrow-right-white-16.svg'
 import { useHomeMain } from '@/features/home/api/use-home-main'
 import type { HomeStripBanner } from '@/features/home/lib/view'
+import { SkeletonBlock } from '@/features/home/ui/skeleton-block'
 import styles from './top-banner-strip.module.css'
 
 function StripBannerLink({ banner }: { banner: HomeStripBanner }) {
@@ -42,15 +43,25 @@ function StripBannerLink({ banner }: { banner: HomeStripBanner }) {
 }
 
 /** 홈 전용 상단 띠배너 — Admin `/main/strip-banners`. 원격 빈 배열이면 숨김 */
+const STRIP_SKELETON_KEYS = [0, 1] as const
+
 export function TopBannerStrip() {
-  const { strips } = useHomeMain()
-  if (strips.length === 0) return null
+  const { strips, isPending } = useHomeMain()
+  if (!isPending && strips.length === 0) return null
 
   return (
-    <div className={styles.strip}>
-      {strips.map(banner => (
-        <StripBannerLink banner={banner} key={banner.id} />
-      ))}
+    <div className={styles.strip} aria-busy={isPending || undefined}>
+      {isPending
+        ? STRIP_SKELETON_KEYS.map(key => (
+            <div
+              className={[styles.banner, styles.bannerPending].join(' ')}
+              key={key}
+              aria-hidden="true"
+            >
+              <SkeletonBlock className={styles.bannerBone} />
+            </div>
+          ))
+        : strips.map(banner => <StripBannerLink banner={banner} key={banner.id} />)}
     </div>
   )
 }

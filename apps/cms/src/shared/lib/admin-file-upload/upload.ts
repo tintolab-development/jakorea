@@ -5,6 +5,7 @@ import { customInstance } from '@/shared/api/orval-mutator'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { createSha256 } from '@/shared/lib/admin-file-upload/create-sha256'
 import { resolveUploadContentType } from '@/shared/lib/admin-file-upload/purposes'
+import { beginFileUploadOverlay } from '@/shared/ui/file-upload-overlay-store'
 import type {
   ConfirmUploadInput,
   CreateUploadRequestInput,
@@ -147,7 +148,7 @@ export async function uploadToS3(
 export async function createUploadRequest(
   input: CreateUploadRequestInput
 ): Promise<PreparedUpload> {
-  const body: FileUploadPrepareRequest = {
+  const body: Omit<FileUploadPrepareRequest, 'ownerId'> & { ownerId: number | null } = {
     ownerDomain: input.owner.ownerDomain,
     ownerType: input.owner.ownerType,
     ownerId: input.owner.ownerId,
@@ -261,6 +262,7 @@ export async function uploadAdminFile(input: UploadAdminFileInput): Promise<Uplo
     throw new Error('업로드할 파일이 비어 있습니다.')
   }
 
+  const endOverlay = beginFileUploadOverlay()
   try {
     notify?.('HASHING')
     const checksumSha256 = await createSha256(input.file)
@@ -328,6 +330,8 @@ export async function uploadAdminFile(input: UploadAdminFileInput): Promise<Uplo
   } catch (error) {
     notify?.('ERROR')
     throw error
+  } finally {
+    endOverlay()
   }
 }
 

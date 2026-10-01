@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { isProgramHardDeleteBlockedError } from '@/features/program/shared/lib/program-delete-guide'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { shouldRetryTrainedTeacherQuery } from './errors'
 import type { TrainedTeacherListFilters } from './list-params'
@@ -162,8 +163,10 @@ export function useDeleteTrainedTeacherProgram() {
     mutationKey: trainedTeacherQueryKeys.mutations.delete(''),
     mutationFn: deleteTrainedTeacherProgram,
     retry: false,
-    onSuccess: (_data, programId) => {
-      queryClient.removeQueries({ queryKey: trainedTeacherQueryKeys.detail(programId) })
+    onSuccess: async (_data, programId) => {
+      const detailKey = trainedTeacherQueryKeys.detail(programId)
+      await queryClient.cancelQueries({ queryKey: detailKey })
+      queryClient.removeQueries({ queryKey: detailKey })
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
       invalidateTrainedTeacherOverviewStages(queryClient)
     },
@@ -176,10 +179,17 @@ export function useDeleteTrainedTeacherPrograms() {
     mutationKey: [...trainedTeacherQueryKeys.all, 'mutation', 'bulk-delete'] as const,
     mutationFn: deleteTrainedTeacherPrograms,
     retry: false,
-    onSuccess: (_data, programIds) => {
+    onSuccess: async (_data, programIds) => {
       for (const programId of programIds) {
-        queryClient.removeQueries({ queryKey: trainedTeacherQueryKeys.detail(programId) })
+        const detailKey = trainedTeacherQueryKeys.detail(programId)
+        await queryClient.cancelQueries({ queryKey: detailKey })
+        queryClient.removeQueries({ queryKey: detailKey })
       }
+      void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
+      invalidateTrainedTeacherOverviewStages(queryClient)
+    },
+    onError: error => {
+      if (!isProgramHardDeleteBlockedError(error) || error.successCount < 1) return
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
       invalidateTrainedTeacherOverviewStages(queryClient)
     },

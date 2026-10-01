@@ -1,3 +1,23 @@
+.emptyPage {
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100dvh - var(--app-header-height));
+  padding-block: 0;
+}
+
+.emptyInner {
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-24);
+  padding: 0;
+  text-align: center;
+}
+
+.emptyTitle {
+  margin: 0;
+  text-align: center;
+}
+
 .back {
   width: 100%;
   margin-bottom: var(--spacing-40);
@@ -11,6 +31,13 @@
 .headerMain {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--spacing-8);
 }
 

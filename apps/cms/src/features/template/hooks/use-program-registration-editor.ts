@@ -34,7 +34,10 @@ import type {
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
-import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  patchInstitutionApplicationProgramBridge,
+  syncInstitutionApplicationPreferredEducationFormFromOverlay,
+} from '@/features/program/general/lib/institution-application-program-bridge'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import {
   resolveProgramRegistrationCurriculumEditDescription,
@@ -89,10 +92,17 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { useCmsAlert } from '@/shared/ui'
-import { describeIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
-import { describeIncompleteTrainedTeachersProgramRegistrationRequiredFields } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
+import {
+  describeIncompleteGeneralProgramRegistrationRequiredFields,
+  listIncompleteGeneralProgramRegistrationRequiredFields,
+} from '@/features/program/general/lib/registration-required-fields'
+import {
+  describeIncompleteTrainedTeachersProgramRegistrationRequiredFields,
+  listIncompleteTrainedTeachersProgramRegistrationRequiredFieldReasons,
+} from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
 import {
   describeIncompleteEconomyProgramRegistrationRequiredFields,
+  listIncompleteEconomyProgramRegistrationRequiredFields,
   hasIncompleteEconomyRegistrationFromStore,
 } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
@@ -550,6 +560,9 @@ export function useProgramRegistrationEditor(
 
   useEffect(() => {
     if (!active) {
+      syncInstitutionApplicationPreferredEducationFormFromOverlay(
+        getProgramRegistrationOverlayRecord()
+      )
       resetProgramRegistrationOverlay()
       closeWritingUserPreview()
     }
@@ -1324,6 +1337,8 @@ export function useProgramRegistrationEditor(
       participantOrganization: participant.organization,
       programType,
       sessionRoundType,
+      teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+      participant,
     })
     setProgramTitleKo(patch.programTitleKo)
     if (patch.sponsorId) setSponsorId(patch.sponsorId)
@@ -1366,12 +1381,13 @@ export function useProgramRegistrationEditor(
   }, [
     curriculumChartSessionCount,
     curriculumSessionCount,
-    participant.organization,
+    participant,
     programRegistrationFormVariant,
     programType,
     scheduleCurriculumDetailCount,
     scheduleCurriculumGroupCount,
     sessionRoundType,
+    trainedTeachersTeacherTrainingEnabled,
   ])
 
   /** 등록 완료 — 프로그램 생성 POST 1회 */
@@ -1653,6 +1669,76 @@ export function useProgramRegistrationEditor(
     return getIncompleteRequiredFieldsReason() != null
   }, [getIncompleteRequiredFieldsReason, participant, programRegistrationFormVariant])
 
+  const listIncompleteRequiredFieldKeys = useCallback((): string[] => {
+    if (programRegistrationFormVariant === 'economy') {
+      return listIncompleteEconomyProgramRegistrationRequiredFields(
+        getProgramRegistrationOverlayRecord(),
+        participant
+      )
+    }
+    const overlay = getProgramRegistrationOverlayRecord()
+    const resolvedSponsorId =
+      sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
+    const resolvedContactId =
+      sponsorContactId.trim() ||
+      readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
+    if (programRegistrationFormVariant === 'trainedTeachers') {
+      return listIncompleteTrainedTeachersProgramRegistrationRequiredFieldReasons(overlay, {
+        participant,
+        programType,
+        sessionRoundType,
+        educationFormScheduleDetail,
+        participationScheduleDetail,
+        ipsScheduleDetail,
+        curriculumSessionCount,
+        curriculumChartSessionCount,
+        scheduleCurriculumDetailCount,
+        scheduleCurriculumGroupCount,
+        teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
+        educationScheduleMode,
+        sponsorId: resolvedSponsorId,
+        sponsorContactId: resolvedContactId,
+        programTitleKo: resolveProgramTitleKo(),
+      })
+    }
+    if (programRegistrationFormVariant !== 'general') return []
+    return listIncompleteGeneralProgramRegistrationRequiredFields(overlay, {
+      participant,
+      programType,
+      sessionRoundType,
+      educationFormScheduleDetail,
+      participationScheduleDetail,
+      ipsScheduleDetail,
+      curriculumSessionCount,
+      curriculumChartSessionCount,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      scheduleCurriculumPreEducation,
+      educationScheduleMode,
+      sponsorId: resolvedSponsorId,
+      sponsorContactId: resolvedContactId,
+      programTitleKo: resolveProgramTitleKo(),
+    })
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    educationFormScheduleDetail,
+    educationScheduleMode,
+    ipsScheduleDetail,
+    participant,
+    participationScheduleDetail,
+    programRegistrationFormVariant,
+    programType,
+    resolveProgramTitleKo,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount,
+    scheduleCurriculumPreEducation,
+    sessionRoundType,
+    sponsorContactId,
+    sponsorId,
+    trainedTeachersTeacherTrainingEnabled,
+  ])
+
   return {
     draft,
     programRegistrationFormVariant,
@@ -1688,6 +1774,7 @@ export function useProgramRegistrationEditor(
     sessionRoundType,
     educationScheduleMode,
     hasIncompleteRequiredFields,
+    listIncompleteRequiredFieldKeys,
     getIncompleteRequiredFieldsReason,
     resolveProgramTitleKo,
   }

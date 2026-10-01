@@ -52,6 +52,31 @@ describe('resolveUjatVolunteerInterviewScheduleDisplay', () => {
     )
   })
 
+  it('예외 일정 블록을 상세에 표시한다', () => {
+    const display = resolveUjatVolunteerInterviewScheduleDisplay(
+      programWithOverlay({
+        'recruit.volunteer.h1.interview.selectedSlotKeys': ['1790743800000-1790744700000'],
+        'recruit.volunteer.h1.interview.interviewTimeRange': [
+          '2026-09-30T04:50:00.000Z',
+          '2026-09-30T05:50:00.000Z',
+        ],
+        'recruit.volunteer.h1.interview.exception.1710000000001.exceptionDate':
+          '2026-10-02T00:00:00.000Z',
+        'recruit.volunteer.h1.interview.exception.1710000000001.selectedSlotKeys': [
+          '1790743800000-1790744700000',
+        ],
+      }),
+      'h1'
+    )
+
+    expect(display.exceptions).toEqual([
+      {
+        exceptionDate: '2026. 10. 02 (금)',
+        availableTimeSlots: slotLabel(1790743800000, 1790744700000),
+      },
+    ])
+  })
+
   it('원격 프로그램은 overlay가 없으면 mock 대신 빈 표시를 쓴다', () => {
     const display = resolveUjatVolunteerInterviewScheduleDisplay(programWithOverlay({}), 'h1')
     expect(display.common.availableTimeSlots).toBe('-')

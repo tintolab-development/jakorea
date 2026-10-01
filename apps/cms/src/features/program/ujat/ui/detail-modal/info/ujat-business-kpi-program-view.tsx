@@ -8,6 +8,7 @@ import {
 import { createUjatRegistrationBasicInfoOverlayDefaults } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 import { useUjatProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
@@ -54,6 +55,7 @@ export function UjatBusinessKpiProgramView({
           surface="responseEntry"
           titleAligned
           required
+          highlightParagraphId={UJAT_PROGRAM_REGISTRATION_IDS[1]}
         />
       ) : null}
       <DetailInfoForm

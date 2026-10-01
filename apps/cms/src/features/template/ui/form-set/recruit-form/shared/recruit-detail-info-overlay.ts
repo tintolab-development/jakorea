@@ -38,8 +38,9 @@ export function restoreUjatVolunteerRecruitGeneralStoreSidecar(
 ): void {
   if (overlay == null) return
   const sidecar = pickUjatVolunteerRecruitGeneralStoreSidecar(overlay)
-  if (Object.keys(sidecar).length === 0) return
-  patchGeneralRecruitOverlay(sidecar)
+  const patch = overlayEntriesAbsentFromLive(sidecar, getGeneralRecruitOverlayRecord())
+  if (Object.keys(patch).length === 0) return
+  patchGeneralRecruitOverlay(patch)
 }
 
 export function recruitDetailInfoOverlayPrefixForCatalogId(
@@ -96,14 +97,35 @@ export function pickRecruitDetailInfoFromGeneralStore(prefix: string): Record<st
   return pickOverlayKeysByPrefix(getGeneralRecruitOverlayRecord(), prefix)
 }
 
+/**
+ * 단계 복원용. live에 이미 있는 키(첨부 파일명·썸네일 포함)는 이전 스냅샷으로 덮지 않는다.
+ * live에 없는 키만 스냅샷에서 채운다.
+ */
+export function overlayEntriesAbsentFromLive(
+  incoming: Record<string, unknown>,
+  live: Record<string, unknown>
+): Record<string, unknown> {
+  const patch: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(incoming)) {
+    if (Object.prototype.hasOwnProperty.call(live, key)) continue
+    patch[key] = value
+  }
+  return patch
+}
+
+/**
+ * 상세 정보 편집값은 general-recruit 스토어가 최신이다.
+ * 기관 overlay에 남아 있는 이전 스냅샷(첨부 파일명 등)이 방금 입력한 값을 덮지 않게 live 키를 우선한다.
+ * live에 없는 키만 전용 overlay 값을 유지한다.
+ */
 export function mergeRecruitDetailInfoFromGeneralStore(
   overlay: Record<string, unknown>,
   prefix: string | null
 ): Record<string, unknown> {
   if (prefix == null) return overlay
   return {
-    ...pickRecruitDetailInfoFromGeneralStore(prefix),
     ...overlay,
+    ...pickRecruitDetailInfoFromGeneralStore(prefix),
   }
 }
 
@@ -114,5 +136,7 @@ export function restoreRecruitDetailInfoIntoGeneralStore(
   if (overlay == null || prefix == null) return
   const detail = pickOverlayKeysByPrefix(overlay, prefix)
   if (Object.keys(detail).length === 0) return
-  patchGeneralRecruitOverlay(detail)
+  const patch = overlayEntriesAbsentFromLive(detail, pickRecruitDetailInfoFromGeneralStore(prefix))
+  if (Object.keys(patch).length === 0) return
+  patchGeneralRecruitOverlay(patch)
 }

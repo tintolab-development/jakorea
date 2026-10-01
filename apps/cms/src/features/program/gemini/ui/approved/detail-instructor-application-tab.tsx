@@ -9,14 +9,15 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import {
+  useApproveGeminiInstructorApplicationMutation,
+  useGeminiApprovedInstructorApplicationsQuery,
+  useRejectGeminiInstructorApplicationMutation,
+} from '../../api/visiting-training/hooks'
+import {
   buildGeminiInstructorApproveMessageLines,
   buildGeminiInstructorChangeMessageLines,
 } from '../../lib/approved/instructor-approve-messages'
 import { GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS } from '../../model/approved/instructor-application-filter-fields'
-import {
-  applyGeminiInstructorAssignment,
-  resetGeminiInstructorAssignmentToPending,
-} from '../../model/approved/instructor-application-assignment'
 import type {
   GeminiInstructorApplicationApprovalStatus,
   GeminiInstructorApplicationRow,
@@ -87,39 +88,6 @@ function toHomeRegionText(row: GeminiInstructorApplicationRow): string {
   return `${row.homeSido} ${row.homeSigungu}`.trim()
 }
 
-function matchesExperienceYears(rowYears: number, filter: string): boolean {
-  if (filter === 'ALL') return true
-  if (filter === '6+') return rowYears >= 6
-  const parsed = Number(filter)
-  return !Number.isNaN(parsed) && rowYears === parsed
-}
-
-function filterRows(rows: GeminiInstructorApplicationRow[], filters: PendingFilters) {
-  const nameQ = filters.instructorName.trim().toLowerCase()
-
-  return rows.filter(row => {
-    if (nameQ && !row.instructorName.toLowerCase().includes(nameQ)) {
-      return false
-    }
-    if (filters.homeSido && row.homeSido !== filters.homeSido) {
-      return false
-    }
-    if (filters.homeSigungu && row.homeSigungu !== filters.homeSigungu) {
-      return false
-    }
-    if (!matchesExperienceYears(row.experienceYears, filters.experienceYears)) {
-      return false
-    }
-    if (filters.grade !== 'ALL' && row.grade !== filters.grade) {
-      return false
-    }
-    if (filters.approvalStatus !== 'ALL' && row.approvalStatus !== filters.approvalStatus) {
-      return false
-    }
-    return true
-  })
-}
-
 export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   approvedTrainingId,
 }: {
@@ -131,19 +99,32 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
-  const [rows, setRows] = useState<GeminiInstructorApplicationRow[]>(() => [])
   const [confirmModal, setConfirmModal] = useState<
     { mode: 'approve'; target: GeminiInstructorApplicationRow } | { mode: 'change' } | null
   >(null)
 
+  const listQuery = useGeminiApprovedInstructorApplicationsQuery(approvedTrainingId, {
+    instructorName: appliedFilters.instructorName,
+    homeSido: appliedFilters.homeSido,
+    homeSigungu: appliedFilters.homeSigungu,
+    experienceYears: appliedFilters.experienceYears,
+    grade: appliedFilters.grade,
+    approvalStatus: appliedFilters.approvalStatus,
+  })
+  const approveMutation = useApproveGeminiInstructorApplicationMutation(approvedTrainingId)
+  const rejectMutation = useRejectGeminiInstructorApplicationMutation(approvedTrainingId)
+
+  const rows = useMemo(
+    () => listQuery.data?.pages.flatMap(page => page.rows) ?? [],
+    [listQuery.data]
+  )
+  const totalElements = listQuery.data?.pages[0]?.totalElements ?? rows.length
+
   useEffect(() => {
-    setRows([])
     setSelectedRowKeys([])
     setPendingFilters(INITIAL_PENDING_FILTERS)
     setAppliedFilters(INITIAL_PENDING_FILTERS)
   }, [approvedTrainingId])
-
-  const filteredRows = useMemo(() => filterRows(rows, appliedFilters), [rows, appliedFilters])
 
   const approveButtonLabel = useMemo(() => {
     if (selectedRowKeys.length !== 1) return '선택 승인'
@@ -182,22 +163,37 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     setConfirmModal({ mode: 'approve', target })
   }, [canWrite, rows, selectedRowKeys, showAlert, showNoSelectionAlert])
 
-  const handleConfirmModalOk = useCallback(() => {
+  const handleConfirmModalOk = useCallback(async () => {
     if (!confirmModal) return
-    if (confirmModal.mode === 'approve') {
-      setRows(prev => applyGeminiInstructorAssignment(prev, confirmModal.target.id))
+    try {
+      if (confirmModal.mode === 'approve') {
+        await approveMutation.mutateAsync(confirmModal.target.id)
+        showAlert({
+          title: '승인 완료',
+          content: '승인되었습니다.',
+        })
+      } else {
+        const approved = rows.filter(row => row.approvalStatus === 'APPROVED')
+        for (const row of approved) {
+          await rejectMutation.mutateAsync({
+            applicationId: row.id,
+            reason: '강사 변경',
+          })
+        }
+        showAlert({
+          title: '강사 변경',
+          content: '기존 승인 강사를 대기 상태로 되돌렸습니다. 새 강사를 선택해 승인해 주세요.',
+        })
+      }
+      setSelectedRowKeys([])
+      setConfirmModal(null)
+    } catch {
       showAlert({
-        title: '승인 완료',
-        content: '승인되었습니다.',
+        title: '처리 실패',
+        content: '강사 승인·변경에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       })
-      // TODO: 강사 배정 승인 API 연동
-    } else {
-      setRows(prev => resetGeminiInstructorAssignmentToPending(prev))
-      // TODO: 강사 변경(전원 승인 대기) API 연동
     }
-    setSelectedRowKeys([])
-    setConfirmModal(null)
-  }, [confirmModal, showAlert])
+  }, [approveMutation, confirmModal, rejectMutation, rows, showAlert])
 
   const columns = useMemo<ColumnsType<GeminiInstructorApplicationRow>>(
     () => [
@@ -272,113 +268,116 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
 
   return (
     <>
-    <FilterTableLayout
-      bordered={false}
-      fields={GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS}
-      filters={pendingFilters}
-      onFilterChange={(key, value) => {
-        if (key === 'homeSido') {
+      <FilterTableLayout
+        bordered={false}
+        fields={GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          if (key === 'homeSido') {
+            setPendingFilters(prev => ({
+              ...prev,
+              homeSido: value == null ? '' : String(value),
+              homeSigungu: '',
+            }))
+            return
+          }
+          if (key === 'homeSigungu') {
+            setPendingFilters(prev => ({
+              ...prev,
+              homeSigungu: value == null ? '' : String(value),
+            }))
+            return
+          }
+          if (key === 'experienceYears') {
+            setPendingFilters(prev => ({
+              ...prev,
+              experienceYears: value == null ? 'ALL' : String(value),
+            }))
+            return
+          }
+          if (key === 'grade') {
+            setPendingFilters(prev => ({
+              ...prev,
+              grade: value == null ? 'ALL' : String(value),
+            }))
+            return
+          }
+          if (key === 'approvalStatus') {
+            setPendingFilters(prev => ({
+              ...prev,
+              approvalStatus: (value == null
+                ? 'ALL'
+                : String(value)) as PendingFilters['approvalStatus'],
+            }))
+            return
+          }
           setPendingFilters(prev => ({
             ...prev,
-            homeSido: value == null ? '' : String(value),
-            homeSigungu: '',
+            [key]: value == null ? '' : String(value),
           }))
-          return
+        }}
+        onSearch={() => setAppliedFilters(pendingFilters)}
+        title="교육 신청 강사 목록"
+        description={`총 ${totalElements.toLocaleString()}건`}
+        actions={
+          canWrite ? (
+            <CmsButton
+              variant="secondary"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={handleBulkApprove}
+            >
+              {approveButtonLabel}
+            </CmsButton>
+          ) : null
         }
-        if (key === 'homeSigungu') {
-          setPendingFilters(prev => ({
-            ...prev,
-            homeSigungu: value == null ? '' : String(value),
-          }))
-          return
-        }
-        if (key === 'experienceYears') {
-          setPendingFilters(prev => ({
-            ...prev,
-            experienceYears: value == null ? 'ALL' : String(value),
-          }))
-          return
-        }
-        if (key === 'grade') {
-          setPendingFilters(prev => ({
-            ...prev,
-            grade: value == null ? 'ALL' : String(value),
-          }))
-          return
-        }
-        if (key === 'approvalStatus') {
-          setPendingFilters(prev => ({
-            ...prev,
-            approvalStatus: (value == null
-              ? 'ALL'
-              : String(value)) as PendingFilters['approvalStatus'],
-          }))
-          return
-        }
-        setPendingFilters(prev => ({
-          ...prev,
-          [key]: value == null ? '' : String(value),
-        }))
-      }}
-      onSearch={() => setAppliedFilters(pendingFilters)}
-      title="교육 신청 강사 목록"
-      description={`총 ${filteredRows.length.toLocaleString()}건`}
-      actions={
-        canWrite ? (
-          <CmsButton
-            variant="secondary"
-            size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
-            onClick={handleBulkApprove}
-          >
-            {approveButtonLabel}
-          </CmsButton>
-        ) : null
-      }
-      excelExport={{
-        columns,
-        data: filteredRows,
-      }}
-    >
-      <Table<GeminiInstructorApplicationRow>
-        rowKey="id"
-        className="cms-data-table"
-        tableLayout="fixed"
-        scroll={{ x: TABLE_SCROLL_X }}
-        columns={columns}
-        dataSource={filteredRows}
-        pagination={false}
-        rowSelection={
-          canWrite
-            ? {
-                type: 'radio',
-                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                selectedRowKeys,
-                onChange: keys => setSelectedRowKeys(keys.slice(0, 1).map(k => String(k))),
-                preserveSelectedRowKeys: false,
-              }
-            : undefined
-        }
-      />
-    </FilterTableLayout>
+        excelExport={{
+          columns,
+          data: rows,
+        }}
+      >
+        <Table<GeminiInstructorApplicationRow>
+          rowKey="id"
+          className="cms-data-table"
+          tableLayout="fixed"
+          scroll={{ x: TABLE_SCROLL_X }}
+          columns={columns}
+          dataSource={rows}
+          loading={listQuery.isPending}
+          pagination={false}
+          rowSelection={
+            canWrite
+              ? {
+                  type: 'radio',
+                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                  selectedRowKeys,
+                  onChange: keys => setSelectedRowKeys(keys.slice(0, 1).map(k => String(k))),
+                  preserveSelectedRowKeys: false,
+                }
+              : undefined
+          }
+        />
+      </FilterTableLayout>
 
-    <DeleteGuideModal
-      open={confirmModal != null}
-      onCancel={() => setConfirmModal(null)}
-      onConfirm={handleConfirmModalOk}
-      title={confirmModal?.mode === 'change' ? '강사 변경' : '강사 승인 안내'}
-      lines={
-        confirmModal?.mode === 'change'
-          ? buildGeminiInstructorChangeMessageLines()
-          : confirmModal?.mode === 'approve'
-            ? buildGeminiInstructorApproveMessageLines(confirmModal.target.instructorName)
-            : []
-      }
-      confirmText={confirmModal?.mode === 'change' ? '변경' : '승인'}
-      confirmVariant="primary"
-      zIndex={2600}
-    />
+      <DeleteGuideModal
+        open={confirmModal != null}
+        onCancel={() => setConfirmModal(null)}
+        onConfirm={() => {
+          void handleConfirmModalOk()
+        }}
+        title={confirmModal?.mode === 'change' ? '강사 변경' : '강사 승인 안내'}
+        lines={
+          confirmModal?.mode === 'change'
+            ? buildGeminiInstructorChangeMessageLines()
+            : confirmModal?.mode === 'approve'
+              ? buildGeminiInstructorApproveMessageLines(confirmModal.target.instructorName)
+              : []
+        }
+        confirmText={confirmModal?.mode === 'change' ? '변경' : '승인'}
+        confirmVariant="primary"
+        zIndex={2600}
+      />
     </>
   )
 }

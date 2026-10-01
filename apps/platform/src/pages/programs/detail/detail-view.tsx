@@ -1,4 +1,5 @@
 import {
+  PROGRAM_TAB_LABEL,
   ProgramBackButton,
   ProgramInfoBody,
   ProgramStatusBadges,
@@ -30,9 +31,15 @@ export function ProgramDetailView({ program, onBackToList, onApply }: ProgramDet
           header={
             <header className={styles.header}>
               <div className={styles.headerMain}>
-                <PFText as="span" typo="hl-sm" color="black">
-                  {program.categoryLabel}
-                </PFText>
+                {program.categories.length > 0 ? (
+                  <div className={styles.categories}>
+                    {program.categories.map(tab => (
+                      <PFText key={tab} as="span" typo="hl-sm" color="black">
+                        {PROGRAM_TAB_LABEL[tab]}
+                      </PFText>
+                    ))}
+                  </div>
+                ) : null}
                 <PFText as="h1" typo="page-title" color="black" className={styles.title}>
                   {program.title}
                 </PFText>

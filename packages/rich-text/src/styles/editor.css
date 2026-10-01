@@ -3,6 +3,7 @@
  */
 
 .rich-text-editor {
+  position: relative;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -59,6 +60,31 @@
   border-bottom-right-radius: var(--rt-radius, 8px);
 }
 
+.rich-text-editor[data-resized='true'] {
+  height: var(--rt-user-height) !important;
+}
+
+.rich-text-editor__resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  width: 18px;
+  height: 18px;
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+  background:
+    linear-gradient(135deg, transparent 0 45%, var(--rt-resize-handle, #8c8c8c) 45% 52%, transparent 52%),
+    linear-gradient(135deg, transparent 0 62%, var(--rt-resize-handle, #8c8c8c) 62% 69%, transparent 69%),
+    linear-gradient(135deg, transparent 0 78%, var(--rt-resize-handle, #8c8c8c) 78% 85%, transparent 85%);
+  opacity: 0.75;
+}
+
+.rich-text-editor__resize-handle:hover {
+  opacity: 1;
+}
+
 .rich-text-editor__content {
   flex: 1 1 auto;
   align-self: stretch;
@@ -87,8 +113,8 @@
   cursor: text;
 }
 
-.rich-text-editor__body .tiptap p.is-empty::before,
-.rich-text-editor__body .ProseMirror p.is-empty::before {
+.rich-text-editor__body .tiptap.rich-text-editor--is-empty p.is-empty::before,
+.rich-text-editor__body .ProseMirror.rich-text-editor--is-empty p.is-empty::before {
   color: var(--rt-placeholder-color, var(--text-placeholder, #999));
   content: attr(data-placeholder);
   float: left;

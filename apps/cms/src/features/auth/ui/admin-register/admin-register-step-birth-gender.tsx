@@ -45,16 +45,7 @@ export function AdminRegisterStepBirthGender({
 
   return (
     <div className="admin-register-step">
-      <RegisterStepHeader
-        title="생년월일과 성별을 알려주세요"
-        description={
-          <>
-            나이에 맞는 가입 절차를 안내하기 위해 필요해요.
-            <br />
-            다음 단계에서 본인인증 정보와 함께 확인할 수 있어요.
-          </>
-        }
-      />
+      <RegisterStepHeader title="생년월일과 성별을 알려주세요" description="" />
 
       <Form
         form={form}
@@ -81,6 +72,7 @@ export function AdminRegisterStepBirthGender({
           ]}
         >
           <CmsDateTextInput
+            width={'100%'}
             className="admin-register-birth-input"
             placeholder="YYYY.MM.DD"
             maxLength={10}
@@ -95,7 +87,7 @@ export function AdminRegisterStepBirthGender({
           <RegisterGenderToggleField />
         </Form.Item>
 
-        <div className="auth-actions admin-register-step__actions">
+        <div className="auth-actions admin-register-step__actions" style={{ marginTop: '20px' }}>
           <LoadingButton type="primary" htmlType="submit" block className="auth-submit-btn">
             다음
           </LoadingButton>

@@ -1,4 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { RegistrationWizardIncompleteMapVariant } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
+import { resolveRegistrationWizardIncompleteParagraphIds } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
+import {
+  RegistrationWizardValidationHighlightProvider,
+  scrollToFirstRegistrationWizardIncompleteParagraph,
+  useRegistrationWizardValidationHighlight,
+} from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import { useSearchParams } from 'react-router-dom'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
@@ -43,6 +50,14 @@ const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
 const TRAINED_TEACHERS_REGISTRATION_MODAL_TITLE = '교육받은 교사 프로그램 등록'
 
+function registrationWizardHighlightVariant(
+  variant: ProgramRegistrationFormVariant
+): RegistrationWizardIncompleteMapVariant {
+  if (variant === 'economy') return 'economy'
+  if (variant === 'trainedTeachers') return 'trainedTeachers'
+  return 'general'
+}
+
 const DRAFT_SAVE_FAILURE_QUOTA_MESSAGE =
   '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
 const DRAFT_SAVE_FAILURE_GENERIC_MESSAGE =
@@ -61,7 +76,17 @@ export type GeneralProgramRegistrationFullpageModalProps = {
   registrationFormVariant?: ProgramRegistrationFormVariant
 }
 
-export function GeneralProgramRegistrationFullpageModal({
+export function GeneralProgramRegistrationFullpageModal(props: GeneralProgramRegistrationFullpageModalProps) {
+  return (
+    <RegistrationWizardValidationHighlightProvider
+      variant={registrationWizardHighlightVariant(props.registrationFormVariant ?? 'general')}
+    >
+      <GeneralProgramRegistrationFullpageModalInner {...props} />
+    </RegistrationWizardValidationHighlightProvider>
+  )
+}
+
+function GeneralProgramRegistrationFullpageModalInner({
   open,
   onClose,
   onProgramRegistrationSaved,
@@ -69,6 +94,19 @@ export function GeneralProgramRegistrationFullpageModal({
 }: GeneralProgramRegistrationFullpageModalProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const { showAlert } = useCmsAlert()
+  const { reportIncomplete } = useRegistrationWizardValidationHighlight()
+  const reportValidationIncomplete = useCallback(
+    (keys: readonly string[]) => {
+      reportIncomplete(keys)
+      scrollToFirstRegistrationWizardIncompleteParagraph(
+        resolveRegistrationWizardIncompleteParagraphIds(
+          keys,
+          registrationWizardHighlightVariant(registrationFormVariant)
+        )
+      )
+    },
+    [reportIncomplete, registrationFormVariant]
+  )
 
   const [overwriteOpen, setOverwriteOpen] = useState(false)
   const [overwriteTitle, setOverwriteTitle] = useState('')
@@ -151,6 +189,7 @@ export function GeneralProgramRegistrationFullpageModal({
     onStepChange: syncStepToUrl,
     registrationFormVariant,
     skipDraftRestore,
+    reportValidationIncomplete,
   })
 
   const handleClose = useCallback(() => {

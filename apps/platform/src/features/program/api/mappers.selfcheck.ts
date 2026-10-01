@@ -37,7 +37,7 @@ const mapped = mapPortalProgramDetail({
   contactPhone: '02-6085-6028',
   recruitmentGuide: '모집 안내 본문',
   additionalContentHtml:
-    '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p>',
+    '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p><img src="/api/admin/files/42/content" alt="사진" />',
   educationTarget: 'university',
   thumbnailFileObjectId: 77,
   sponsorNames: ['현대 자동차'],
@@ -109,7 +109,7 @@ assert.deepEqual(
   mapped.extraSections.find(section => section.title === '추가 내용'),
   {
     title: '추가 내용',
-    body: '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p>',
+    body: '<p>추가 안내</p><p><span style="color: rgb(229, 57, 53);">red</span><br><span data-name="grinning" data-type="emoji">😀</span></p><img src="/api/portal/public/files/42/content?inline=1" alt="사진" />',
     bodyFormat: 'html',
   }
 )
@@ -297,8 +297,8 @@ assert.equal(
   '일정은 학교 사정에 따라 조율할 수 있습니다.'
 )
 assert.equal(
-  generalCurriculum.extraSections.find(section => section.title === '기타사항')?.body,
-  '기타 안내'
+  generalCurriculum.extraSections.some(section => section.title === '기타사항'),
+  false
 )
 
 const scheduleMulti = mapPortalProgramDetail({
@@ -339,6 +339,7 @@ assert.equal(
   false
 )
 assert.equal(scheduleMulti.eventSchedules[0]?.blockKind, 'preEducation')
+assert.equal(scheduleMulti.eventSchedules[0]?.scheduleLabel, '행사 일정 01')
 assert.equal(scheduleMulti.eventSchedules[0]?.educationFormLabel, '온라인')
 assert.equal(scheduleMulti.eventSchedules[0]?.dateLabel, '26년 9월 29일(화)')
 assert.equal(scheduleMulti.eventSchedules[1]?.educationFormLabel, '오프라인')
@@ -365,6 +366,7 @@ const scheduleSingleWithGroups = mapPortalProgramDetail({
   ],
 })
 assert.ok(scheduleSingleWithGroups)
+assert.equal(scheduleSingleWithGroups.eventSchedules[0]?.scheduleLabel, '세부 일정 01')
 assert.equal(
   scheduleSingleWithGroups.eventSchedules[0]?.dateLabel,
   '그룹 A : 09:30 ~ 09:40 | 그룹 B : 13:00 ~ 13:10'
@@ -691,5 +693,399 @@ const geminiTrainingListed = mapPortalProgramListItem({
 assert.ok(geminiTrainingListed)
 assert.equal(geminiTrainingListed.category, 'institution')
 assert.equal(geminiTrainingListed.recruitmentStatus, 'scheduled')
+
+const mixedTabs = mapPortalProgramListItem({
+  programId: 186040,
+  title: '기관 진행 · 강사 마감',
+  portalCategories: ['ORGANIZATION', 'INSTRUCTOR'],
+  recruitmentStatus: 'OPEN',
+})
+assert.ok(mixedTabs)
+assert.deepEqual(mixedTabs.categories, ['instructor', 'institution'])
+assert.equal(mixedTabs.categoryLabel, '강사 · 기관')
+assert.equal(mixedTabs.category, 'instructor')
+
+const closedInstructorStillListed = mapPortalProgramListItem({
+  programId: 186041,
+  title: '강사 마감 카드',
+  portalCategories: ['INSTRUCTOR', 'ORGANIZATION'],
+  recruitmentStatus: 'CLOSED',
+})
+assert.ok(closedInstructorStillListed)
+assert.deepEqual(closedInstructorStillListed.categories, ['instructor', 'institution'])
+assert.equal(closedInstructorStillListed.recruitmentStatus, 'closed')
+
+const noPublicRecruitment = mapPortalProgramListItem({
+  programId: 186042,
+  title: '공개 모집 없음',
+  programType: 'GENERAL_INDIVIDUAL',
+  portalCategories: [],
+  recruitmentStatus: 'CLOSED',
+})
+assert.ok(noPublicRecruitment)
+assert.deepEqual(noPublicRecruitment.categories, [])
+assert.equal(noPublicRecruitment.categoryLabel, '')
+
+const volunteerYouth = mapPortalProgramDetail({
+  programId: 186043,
+  title: '대학생 봉사',
+  programType: 'GENERAL_INDIVIDUAL',
+  portalCategories: ['YOUTH_YOUNG'],
+  recruitments: [{ recruitmentType: 'VOLUNTEER', targetType: 'COLLEGE_STUDENT' }],
+})
+assert.ok(volunteerYouth)
+assert.deepEqual(volunteerYouth.categories, ['youth'])
+assert.equal(volunteerYouth.detailCase, 'volunteer')
+
+const volunteerSchool = mapPortalProgramListItem({
+  programId: 186044,
+  title: '학교 봉사',
+  portalCategories: ['ORGANIZATION'],
+})
+assert.ok(volunteerSchool)
+assert.deepEqual(volunteerSchool.categories, ['institution'])
+
+const youthClosed = mapPortalProgramDetail(
+  {
+    programId: 182102,
+    title: 'UJAT 기관·봉사',
+    programType: 'UJAT',
+    portalCategories: ['ORGANIZATION', 'YOUTH_YOUNG'],
+    recruitmentStatus: 'OPEN',
+    recruitments: [
+      {
+        recruitmentId: 182221,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'SCHOOL',
+        status: 'OPEN',
+        applicationTypes: ['ORGANIZATION'],
+        startAt: '2026-09-20T15:00:00Z',
+        endAt: '2026-10-22T14:59:00Z',
+      },
+      {
+        recruitmentId: 182222,
+        recruitmentType: 'VOLUNTEER',
+        targetType: 'COLLEGE_STUDENT',
+        status: 'CLOSED',
+        applicationTypes: ['VOLUNTEER'],
+        startAt: '2026-11-19T15:00:00Z',
+        endAt: '2026-12-15T14:59:00Z',
+      },
+    ],
+  },
+  { portalTab: 'YOUTH_YOUNG', recruitmentIds: [182222], applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(youthClosed)
+assert.deepEqual(youthClosed.categories, ['youth'])
+assert.equal(youthClosed.recruitmentStatus, 'closed')
+assert.equal(youthClosed.detailCase, 'ujat-volunteer')
+assert.equal(youthClosed.applicationType, 'VOLUNTEER')
+assert.deepEqual(youthClosed.focusedRecruitmentIds, [182222])
+assert.equal(youthClosed.recruitmentSelectionAmbiguous, undefined)
+assert.equal(youthClosed.recruitmentPhases.length, 1)
+assert.equal(youthClosed.recruitmentPhases[0]?.label, '봉사자 모집 기간')
+
+const bothIndividual = mapPortalProgramDetail(
+  {
+    programId: 186010,
+    title: '개인·기관',
+    programType: 'GENERAL_INDIVIDUAL',
+    portalCategories: ['YOUTH_YOUNG', 'ORGANIZATION'],
+    recruitments: [
+      {
+        recruitmentId: 186050,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'BOTH',
+        status: 'OPEN',
+        applicationTypes: ['INDIVIDUAL', 'ORGANIZATION'],
+        startAt: '2026-09-01T00:00:00Z',
+        endAt: '2026-10-01T00:00:00Z',
+      },
+    ],
+  },
+  { portalTab: 'YOUTH_YOUNG', recruitmentIds: [186050], applicationTypes: ['INDIVIDUAL'] },
+)
+assert.ok(bothIndividual)
+assert.equal(bothIndividual.recruitmentSelectionAmbiguous, undefined)
+assert.equal(bothIndividual.applicationType, 'INDIVIDUAL')
+assert.equal(bothIndividual.detailCase, 'general')
+assert.equal(bothIndividual.recruitmentPhases.length, 1)
+
+const volunteerAmbiguous = mapPortalProgramDetail(
+  {
+    programId: 182102,
+    title: 'UJAT 상·하반기 봉사',
+    programType: 'UJAT',
+    portalCategories: ['ORGANIZATION', 'YOUTH_YOUNG'],
+    recruitmentStatus: 'OPEN',
+    recruitments: [
+      {
+        recruitmentId: 182221,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'SCHOOL',
+        status: 'OPEN',
+        applicationTypes: ['ORGANIZATION'],
+      },
+      {
+        recruitmentId: 182222,
+        recruitmentType: 'VOLUNTEER',
+        targetType: 'COLLEGE_STUDENT',
+        status: 'CLOSED',
+        applicationTypes: ['VOLUNTEER'],
+      },
+      {
+        recruitmentId: 182223,
+        recruitmentType: 'VOLUNTEER',
+        targetType: 'COLLEGE_STUDENT',
+        status: 'CLOSED',
+        applicationTypes: ['VOLUNTEER'],
+      },
+    ],
+  },
+  { portalTab: 'YOUTH_YOUNG', applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(volunteerAmbiguous)
+assert.equal(volunteerAmbiguous.recruitmentSelectionAmbiguous, true)
+assert.equal(volunteerAmbiguous.focusedRecruitmentIds, undefined)
+assert.equal(volunteerAmbiguous.applicationType, undefined)
+assert.equal(volunteerAmbiguous.recruitmentStatus, 'closed')
+assert.equal(volunteerAmbiguous.recruitmentPhases.length, 0)
+
+const listOneToN = [
+  mapPortalProgramListItem({
+    programId: 100,
+    title: 'Program A',
+    recruitmentId: 1001,
+    applicationType: 'INDIVIDUAL',
+    recruitmentType: 'PARTICIPANT',
+    targetType: 'INDIVIDUAL',
+    recruitmentStatus: 'OPEN',
+    portalCategories: ['YOUTH_YOUNG'],
+  }),
+  mapPortalProgramListItem({
+    programId: 100,
+    title: 'Program A',
+    recruitmentId: 1002,
+    applicationType: 'ORGANIZATION',
+    recruitmentType: 'PARTICIPANT',
+    targetType: 'SCHOOL',
+    recruitmentStatus: 'OPEN',
+    portalCategories: ['ORGANIZATION'],
+  }),
+  mapPortalProgramListItem({
+    programId: 100,
+    title: 'Program A',
+    recruitmentId: 1003,
+    applicationType: 'VOLUNTEER',
+    recruitmentType: 'VOLUNTEER',
+    targetType: 'COLLEGE_STUDENT',
+    recruitmentStatus: 'CLOSED',
+    portalCategories: ['YOUTH_YOUNG'],
+  }),
+]
+assert.equal(listOneToN.length, 3)
+assert.ok(listOneToN.every(Boolean))
+assert.equal(listOneToN[0]!.id, '100')
+assert.equal(listOneToN[1]!.id, '100')
+assert.equal(listOneToN[2]!.id, '100')
+assert.equal(listOneToN[0]!.recruitmentId, 1001)
+assert.equal(listOneToN[1]!.recruitmentId, 1002)
+assert.equal(listOneToN[2]!.recruitmentId, 1003)
+assert.equal(listOneToN[0]!.applicationType, 'INDIVIDUAL')
+assert.equal(listOneToN[1]!.applicationType, 'ORGANIZATION')
+
+const nullGuide = mapPortalProgramDetail(
+  {
+    programId: 182102,
+    title: '프로그램 제목',
+    summary: '프로그램 요약',
+    description: '프로그램 공통 설명',
+    recruitmentGuide: undefined,
+    additionalContentHtml: undefined,
+    recruitmentStatus: 'CLOSED',
+    recruitments: [
+      {
+        recruitmentId: 182222,
+        recruitmentType: 'VOLUNTEER',
+        status: 'CLOSED',
+        applicationTypes: ['VOLUNTEER'],
+      },
+    ],
+  },
+  { recruitmentIds: [182222], applicationTypes: ['VOLUNTEER'], portalTab: 'YOUTH_YOUNG' },
+)
+assert.ok(nullGuide)
+assert.equal(nullGuide.recruitmentStatus, 'closed')
+assert.equal(nullGuide.summary, '프로그램 공통 설명')
+assert.equal(
+  nullGuide.extraSections.some(section => section.title === '모집 안내' || section.title === '추가 내용'),
+  false,
+)
+
+const orgTabTwoEntries = listOneToN.filter(row => row!.recruitmentId === 1002 || row!.applicationType === 'ORGANIZATION')
+assert.equal(orgTabTwoEntries.length, 1)
+
+const trainedTeacherOrg = mapPortalProgramDetail(
+  {
+    programId: 186016,
+    title: '교육받은 교사',
+    programType: 'TRAINED_TEACHER',
+    portalCategories: ['ORGANIZATION'],
+    recruitmentStatus: 'OPEN',
+    recruitments: [
+      {
+        recruitmentId: 186059,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'ORGANIZATION',
+        status: 'OPEN',
+        applicationTypes: ['ORGANIZATION'],
+      },
+    ],
+  },
+  { portalTab: 'ORGANIZATION', applicationTypes: ['ORGANIZATION'] },
+)
+assert.ok(trainedTeacherOrg)
+assert.equal(trainedTeacherOrg.category, 'institution')
+assert.equal(trainedTeacherOrg.detailCase, 'general')
+assert.equal(trainedTeacherOrg.recruitmentRoleLabel, '참여자')
+assert.equal(trainedTeacherOrg.applicationType, 'ORGANIZATION')
+
+const rowScopedEmpty = mapPortalProgramDetail(
+  {
+    programId: 168004,
+    title: '프로그램 제목',
+    programType: 'GENERAL_ORGANIZATION',
+    description: '프로그램 설명',
+    summary: '프로그램 요약',
+    thumbnailFileObjectId: 999,
+    otherMatters: '프로그램 기타사항',
+    attachments: [
+      { fileObjectId: 168101, originalFileName: 'Primary_Case_04_운영안내.pdf' },
+      { fileObjectId: 168102, originalFileName: 'Primary_Case_04_교육자료.pdf' },
+    ],
+    recruitments: [
+      {
+        recruitmentId: 168241,
+        recruitmentType: 'PARTICIPANT',
+        applicationTypes: ['ORGANIZATION'],
+        announcementTitle: '참여자 공고',
+        programDescription: '참여자 프로그램 설명',
+        recruitmentGuide: '참여자 모집 안내',
+        remarks: '참여자 비고',
+        attachments: [],
+      },
+    ],
+  },
+  { recruitmentIds: [168241], applicationTypes: ['ORGANIZATION'] },
+)
+assert.ok(rowScopedEmpty)
+assert.equal(rowScopedEmpty.title, '참여자 공고')
+assert.equal(rowScopedEmpty.summary, '참여자 프로그램 설명')
+assert.equal(
+  rowScopedEmpty.extraSections.some(section => section.title === '프로그램 설명'),
+  false
+)
+assert.equal(
+  rowScopedEmpty.extraSections.find(section => section.title === '모집 안내')?.body,
+  '참여자 모집 안내'
+)
+assert.equal(
+  rowScopedEmpty.extraSections.find(section => section.title === '비고')?.body,
+  '참여자 비고'
+)
+assert.equal(
+  rowScopedEmpty.extraSections.some(section => section.title === '기타사항'),
+  false
+)
+assert.equal(
+  rowScopedEmpty.extraSections.some(section => section.title === '학습 지원 내용'),
+  false
+)
+assert.equal(rowScopedEmpty.attachments.length, 0)
+assert.equal(rowScopedEmpty.thumbnailUrl, portalPublicFileContentUrl(999))
+
+const rowClearsThumbnail = mapPortalProgramDetail(
+  {
+    programId: 168004,
+    title: '프로그램 제목',
+    programType: 'GENERAL_ORGANIZATION',
+    thumbnailFileObjectId: 999,
+    recruitments: [
+      {
+        recruitmentId: 168242,
+        recruitmentType: 'INSTRUCTOR',
+        applicationTypes: ['INSTRUCTOR'],
+        thumbnailFileObjectId: null,
+      },
+    ],
+  },
+  { recruitmentIds: [168242], applicationTypes: ['INSTRUCTOR'] },
+)
+assert.ok(rowClearsThumbnail)
+assert.equal(rowClearsThumbnail.thumbnailUrl, undefined)
+
+const volunteerInterviewOff = mapPortalProgramDetail(
+  {
+    programId: 186021,
+    programType: 'GENERAL_ORGANIZATION',
+    title: '봉사자 공고',
+    description: '프로그램 공통 설명',
+    learningSupportContent: '참여자 학습 지원',
+    otherMatters: '봉사자 기타사항',
+    applicationMethod: '<p><br></p>',
+    recruitments: [
+      {
+        recruitmentId: 186070,
+        recruitmentType: 'VOLUNTEER',
+        applicationTypes: ['VOLUNTEER'],
+        programDescription: '<p></p>',
+        recruitmentGuide: '봉사자 모집 안내',
+        learningSupportContent: '행에 남은 학습 지원',
+        additionalContentHtml: '<p><br></p>',
+        remarks: '해당 없음',
+        interviewEnabled: false,
+        documentPassAnnouncementAt: '2026-10-07T00:00:00Z',
+        interviewStartAt: '2026-10-07T00:00:00Z',
+        interviewEndAt: '2026-10-07T00:00:00Z',
+        finalPassAnnouncementAt: '2026-10-11T00:00:00Z',
+      },
+    ],
+  },
+  { recruitmentIds: [186070], applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(volunteerInterviewOff)
+assert.equal(volunteerInterviewOff.detailCase, 'volunteer')
+assert.equal(volunteerInterviewOff.summary, '')
+assert.equal(volunteerInterviewOff.applicationMethodValue, '')
+assert.equal(
+  volunteerInterviewOff.extraSections.some(section => section.title === '학습 지원 내용'),
+  false
+)
+assert.equal(
+  volunteerInterviewOff.extraSections.find(section => section.title === '기타사항')?.body,
+  '봉사자 기타사항'
+)
+assert.equal(
+  volunteerInterviewOff.extraSections.find(section => section.title === '모집 안내')?.body,
+  '봉사자 모집 안내'
+)
+assert.equal(
+  volunteerInterviewOff.extraSections.some(
+    section => section.title === '추가 내용' || section.title === '비고'
+  ),
+  false
+)
+assert.equal(
+  volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '1차 합격자 발표일'),
+  false
+)
+assert.equal(
+  volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '면접 기간'),
+  false
+)
+assert.equal(
+  volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '최종 합격자 발표'),
+  true
+)
 
 console.log('program portal mappers.selfcheck: ok')

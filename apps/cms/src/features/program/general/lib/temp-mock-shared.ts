@@ -91,3 +91,21 @@ export function remapTempMockRowsProgramId<T extends { programId?: string; id: s
     return { ...row, programId, id: nextId }
   })
 }
+
+/** JSON 문자열 값 전체 치환 — prefix가 겹쳐도 안전 (`"old"`만 교체) */
+export function replaceTempMockJsonStringValues<T>(value: T, replacements: Array<[string, string]>): T {
+  let json = JSON.stringify(value)
+  for (const [from, to] of replacements) {
+    json = json.split(JSON.stringify(from)).join(JSON.stringify(to))
+  }
+  return JSON.parse(json) as T
+}
+
+/** id prefix 치환 — `from`이 `to`의 부분 문자열이 아니어야 함 */
+export function replaceTempMockIdPrefixes<T>(value: T, replacements: Array<[string, string]>): T {
+  let json = JSON.stringify(value)
+  for (const [from, to] of replacements) {
+    json = json.split(from).join(to)
+  }
+  return JSON.parse(json) as T
+}

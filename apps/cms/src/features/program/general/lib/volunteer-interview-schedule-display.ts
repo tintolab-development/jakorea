@@ -3,11 +3,12 @@
  * 값 없으면 '-' (mock/하드코드 기본값 없음)
  */
 
-import type { Program } from '@/types/domain'
+import type { GeneralProgramVolunteerInterviewScheduleException, Program } from '@/types/domain'
 import {
   buildVolunteerInterviewScheduleEditSeed,
   type VolunteerInterviewScheduleEditSeed,
 } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
+import { mapVolunteerInterviewExceptionsFromOverlay } from '@/features/program/shared/lib/volunteer-interview-exception-overlay'
 
 export type { VolunteerInterviewScheduleEditSeed }
 
@@ -15,6 +16,21 @@ export type GeneralProgramVolunteerInterviewScheduleDisplay = {
   recurringUnavailable: string
   specificUnavailableDates: string
   availableTimeSlots: string
+  exceptions: GeneralProgramVolunteerInterviewScheduleException[]
+}
+
+function readRegistrationOverlay(program: Program): Record<string, unknown> {
+  const overlay = program.registrationOverlay
+  if (overlay == null || typeof overlay !== 'object' || Array.isArray(overlay)) return {}
+  return overlay as Record<string, unknown>
+}
+
+function resolveVolunteerInterviewExceptions(
+  program: Program
+): GeneralProgramVolunteerInterviewScheduleException[] {
+  const fromOverlay = mapVolunteerInterviewExceptionsFromOverlay(readRegistrationOverlay(program))
+  if (fromOverlay.length > 0) return fromOverlay
+  return program.generalCommonInfo?.volunteerInterviewScheduleInfo?.exceptions ?? []
 }
 
 function dashOr(value: string | undefined | null): string {
@@ -31,6 +47,7 @@ export function resolveGeneralProgramVolunteerInterviewScheduleDisplay(
     recurringUnavailable: dashOr(info?.recurringUnavailable),
     specificUnavailableDates: dashOr(info?.specificUnavailableDates),
     availableTimeSlots: dashOr(info?.availableTimeSlots),
+    exceptions: resolveVolunteerInterviewExceptions(program),
   }
 }
 

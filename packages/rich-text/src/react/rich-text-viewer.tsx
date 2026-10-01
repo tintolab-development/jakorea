@@ -1,5 +1,5 @@
 import { EditorContent, useEditor } from '@tiptap/react'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { createRichTextExtensions } from '../core/extensions'
 import { getInitialEditorContent } from '../core/content'
 import type { RichTextViewerProps } from './types'
@@ -14,6 +14,7 @@ export function RichTextViewer({
   className,
   extraExtensions,
   maxHeight = '403px',
+  onEditor,
 }: RichTextViewerProps) {
   const content = markdown ?? contentProp ?? ''
 
@@ -43,6 +44,11 @@ export function RichTextViewer({
     },
     [editorContent, contentType, extraExtensions]
   )
+
+  useEffect(() => {
+    onEditor?.(editor)
+    return () => onEditor?.(null)
+  }, [editor, onEditor])
 
   const rootClass = ['rich-text-viewer', className].filter(Boolean).join(' ')
 

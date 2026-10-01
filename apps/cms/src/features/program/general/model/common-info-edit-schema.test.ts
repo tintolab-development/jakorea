@@ -212,6 +212,7 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     expect(patch.generalProgramEducationStructure).toBe('curriculum')
     expect(patch.generalProgramSessionRound).toBe('multi')
     expect(patch.generalProgramAudience).toBe('organization')
+    expect(patch.generalCommonInfo?.scheduleDetails).toEqual([])
   })
 
   it('일정형 단일 회차도 사전 교육을 저장한다', () => {

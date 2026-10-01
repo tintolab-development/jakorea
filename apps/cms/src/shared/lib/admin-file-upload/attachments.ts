@@ -42,6 +42,9 @@ function attachmentItems(
 export async function createFileAttachment(
   input: CreateFileAttachmentInput
 ): Promise<FileAttachmentResponse> {
+  if (input.owner.ownerId == null) {
+    throw new Error('파일 연결에 필요한 소유 대상이 없습니다.')
+  }
   const body: FileAttachmentCreateRequest = {
     fileObjectId: input.fileObjectId,
     ownerDomain: input.owner.ownerDomain,
@@ -62,6 +65,9 @@ export async function createFileAttachment(
 export async function listFileAttachments(
   owner: Pick<AdminFileUploadOwner, 'ownerDomain' | 'ownerType' | 'ownerId'>
 ): Promise<FileAttachmentResponse[]> {
+  if (owner.ownerId == null) {
+    throw new Error('파일 목록 조회에 필요한 소유 대상이 없습니다.')
+  }
   const dto = unwrapApiBody<FilePageResponseFileAttachmentResponse>(
     await customInstance<FilePageResponseFileAttachmentResponse>({
       url: '/api/admin/files/attachments',

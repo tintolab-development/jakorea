@@ -1,0 +1,50 @@
+/* 프로그램 등록 위저드 — 필수 미입력 인라인 강조 */
+
+.paragraph-card--required-incomplete {
+  border-color: var(--color-red, #c32f4a) !important;
+  box-shadow: 0 0 16px 0 rgba(195, 47, 74, 0.12);
+}
+
+.paragraph-card--required-incomplete.paragraph-card--active {
+  border-color: var(--color-red, #c32f4a) !important;
+  box-shadow: 0 4px 24px 0 rgba(195, 47, 74, 0.18);
+}
+
+.paragraph-card--required-incomplete .paragraph-card__title,
+.paragraph-card--required-incomplete
+  :is(.paragraph-card__title-block, .paragraph-card__title-main)
+  .paragraph-input--title
+  :is(.paragraph-input__view-text, .paragraph-input__leading, .paragraph-input__placeholder),
+.paragraph-card--required-incomplete
+  :is(.paragraph-card__title-block, .paragraph-card__title-main)
+  .paragraph-input--title.paragraph-input--edit
+  :is(.paragraph-input__shell, .paragraph-input__shell--focused)
+  :is(.ant-input, textarea.ant-input),
+.paragraph-card--required-incomplete
+  :is(.paragraph-card__title-block, .paragraph-card__title-main)
+  .paragraph-input--title.paragraph-input--edit
+  .paragraph-input__row:has(.paragraph-input__shell--focused)
+  .paragraph-input__leading {
+  color: var(--color-red, #c32f4a) !important;
+  -webkit-text-fill-color: var(--color-red, #c32f4a);
+}
+
+.detail-info-form__field-label.detail-info-form__field-label--required-incomplete {
+  background: #c32f4a1a !important;
+  color: var(--color-red, #c32f4a) !important;
+}
+
+.detail-info-form__field-label.detail-info-form__field-label--required-incomplete
+  .detail-info-form__field-label-text {
+  color: var(--color-red, #c32f4a) !important;
+}
+
+.form-editor-horizontal-table__td--label-required-incomplete {
+  background: #c32f4a1a !important;
+  color: var(--color-red, #c32f4a) !important;
+}
+
+.form-editor-horizontal-table__td--label-required-incomplete
+  .form-editor-horizontal-table__cell-text {
+  color: var(--color-red, #c32f4a);
+}

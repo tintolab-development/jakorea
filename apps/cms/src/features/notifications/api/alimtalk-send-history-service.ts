@@ -1,6 +1,12 @@
 import { mapDeliveryDetailResponse, mapDeliveryListResponse } from '@/features/notifications/api/adapters/alimtalk-delivery-adapters'
 import { alimtalkSendHistoryParamsFromSearchParams } from '@/features/notifications/api/alimtalk-send-history-filter-params'
 import {
+  emptySendHistoryListPage,
+  toSendHistoryListPage,
+  withSendHistoryPaging,
+  type SendHistoryListPage,
+} from '@/features/notifications/api/delivery-list-page'
+import {
   fetchNotificationDeliveriesRemote,
   fetchNotificationDeliveryRemote,
 } from '@/features/notifications/api/notifications-api-client'
@@ -14,14 +20,15 @@ export function shouldUseAlimtalkSendHistoryRemoteApi(): boolean {
 
 /** 알림톡 발송 조회 */
 export async function getAlimtalkSendHistoryList(
-  searchParams: URLSearchParams
-): Promise<AlimtalkSendHistoryRow[]> {
-  if (!shouldUseAlimtalkSendHistoryRemoteApi()) return []
+  searchParams: URLSearchParams,
+  page = 0
+): Promise<SendHistoryListPage<AlimtalkSendHistoryRow>> {
+  if (!shouldUseAlimtalkSendHistoryRemoteApi()) return emptySendHistoryListPage(page)
 
   const dto = await fetchNotificationDeliveriesRemote(
-    alimtalkSendHistoryParamsFromSearchParams(searchParams)
+    withSendHistoryPaging(alimtalkSendHistoryParamsFromSearchParams(searchParams), page)
   )
-  return mapDeliveryListResponse(dto.items)
+  return toSendHistoryListPage(dto, page, mapDeliveryListResponse)
 }
 
 export async function getAlimtalkSendHistoryDetail(

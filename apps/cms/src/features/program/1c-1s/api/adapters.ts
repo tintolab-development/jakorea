@@ -42,7 +42,9 @@ import {
 import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
+  applyParticipantRecruitmentColumnsFromResponse,
   applyProgramMissingCommonStringFieldsToUpdateRequest,
+  applyRecruitmentParticipantColumnFieldsToUpdateRequest,
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
@@ -212,9 +214,14 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   )
     ? (dto as ProgramResponse & { targetLevels?: string[] }).targetLevels
     : undefined
+  const columnSource = Array.isArray(dtoTargetLevels)
+    ? dtoTargetLevels
+    : Array.isArray(details.targetLevels)
+      ? details.targetLevels
+      : undefined
   const persistedTargetLevels = resolvePersistedProgramTargetLevels({
-    targetLevels: dtoTargetLevels ?? details.targetLevels,
-    targetLevel: dto.targetLevel ?? details.targetLevels?.[0],
+    targetLevels: columnSource,
+    targetLevel: dto.targetLevel,
     registrationOverlay: details.registrationOverlay,
     generalCommonInfo,
   })
@@ -257,8 +264,11 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     schoolId: dto.schoolId,
     district: dto.district,
     ips: dto.ips as Program['ips'],
-    targetLevel: persistedTargetLevels[0] ?? (dto.targetLevel as Program['targetLevel']),
-    targetLevels: persistedTargetLevels.length > 0 ? persistedTargetLevels : undefined,
+    targetLevel: persistedTargetLevels[0],
+    targetLevels:
+      columnSource !== undefined || persistedTargetLevels.length > 0
+        ? persistedTargetLevels
+        : undefined,
     institutionType: dto.institutionType as Program['institutionType'],
     ipOwned: dto.ipOwned,
     courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
@@ -305,10 +315,13 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     backendProgramType: dto.programType ?? COMPANY_SCHOOL_PROGRAM_API_TYPE,
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
-  return applyResolvedAnnouncementTitle(mapped, {
-    serviceDetailJson: dto.serviceDetailJson,
-    overlay: details.registrationOverlay,
-  })
+  return applyResolvedAnnouncementTitle(
+    applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+    {
+      serviceDetailJson: dto.serviceDetailJson,
+      overlay: details.registrationOverlay,
+    }
+  )
 }
 
 /** GET round id만 다시 보낸다. `186016-round-1` 같은 화면용 id를 넣으면 서버가 기존 일정을 삭제 후 재생성한다. */
@@ -383,11 +396,25 @@ function resolveRequestTargetLevels(
   program: Program,
   fallback?: Program
 ): ProgramUpdateRequestTargetLevelsItem[] | undefined {
+  if (Array.isArray(program.targetLevels)) {
+    return [
+      ...resolvePersistedProgramTargetLevels(program),
+    ] as ProgramUpdateRequestTargetLevelsItem[]
+  }
   const resolved = resolvePersistedProgramTargetLevels(program)
-  const fromFallback = fallback ? resolvePersistedProgramTargetLevels(fallback) : []
-  const richest = resolved.length >= fromFallback.length ? resolved : fromFallback
-  if (richest.length > 0) {
-    return [...richest] as ProgramUpdateRequestTargetLevelsItem[]
+  if (resolved.length > 0) {
+    return [...resolved] as ProgramUpdateRequestTargetLevelsItem[]
+  }
+  if (fallback) {
+    if (Array.isArray(fallback.targetLevels)) {
+      return [
+        ...resolvePersistedProgramTargetLevels(fallback),
+      ] as ProgramUpdateRequestTargetLevelsItem[]
+    }
+    const fromFallback = resolvePersistedProgramTargetLevels(fallback)
+    if (fromFallback.length > 0) {
+      return [...fromFallback] as ProgramUpdateRequestTargetLevelsItem[]
+    }
   }
   return undefined
 }
@@ -461,7 +488,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     district: program.district,
     ips: program.ips,
     targetLevels,
-    targetLevel: targetLevels?.[0] ?? program.targetLevel,
+    targetLevel: targetLevels?.[0],
     institutionType: program.institutionType,
     ipOwned: program.ipOwned,
     courseDeliveredBy: program.courseDeliveredBy,
@@ -628,24 +655,32 @@ function mapCompanySchoolPatchFieldsToRequest(
 
   const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
   if (touchesServiceDetail) {
-    const persistedTargetLevels =
-      has('targetLevel') || has('targetLevels')
-        ? resolveRequestTargetLevels(merged)
-        : resolveRequestTargetLevels(merged, existing)
+    const touchesTargetLevels = has('targetLevel') || has('targetLevels')
+    const persistedTargetLevels = touchesTargetLevels
+      ? resolveRequestTargetLevels(merged)
+      : resolveRequestTargetLevels(merged, existing)
     const serializeSource =
-      persistedTargetLevels?.length
+      persistedTargetLevels != null
         ? { ...merged, targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
         : merged
     body.serviceDetailJson = serializeCompanySchoolServiceDetailJsonForUpdatePatch(
       serializeSource,
-      persistedTargetLevels?.length ? { ...patch, targetLevels: persistedTargetLevels } : patch
+      persistedTargetLevels != null ? { ...patch, targetLevels: persistedTargetLevels } : patch
     )
-    if (persistedTargetLevels?.length) {
+    if (touchesTargetLevels && persistedTargetLevels != null) {
+      body.targetLevels = persistedTargetLevels
+      body.targetLevel = persistedTargetLevels[0]
+    } else if (
+      !touchesTargetLevels &&
+      persistedTargetLevels != null &&
+      persistedTargetLevels.length > 0
+    ) {
       body.targetLevels = persistedTargetLevels
       body.targetLevel = persistedTargetLevels[0]
     }
   }
 
+  applyRecruitmentParticipantColumnFieldsToUpdateRequest(body, { merged, existing, patch })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'patch',
     merged,

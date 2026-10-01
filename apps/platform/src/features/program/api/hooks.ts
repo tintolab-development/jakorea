@@ -5,6 +5,7 @@ import { getQueryRetryHttpStatus, queryRetryDelay, shouldRetryQuery } from '@/sh
 import type { ProgramDetail, ProgramListItem, ProgramsListParams } from '../model/types'
 import { fetchPortalProgramDetail, fetchPortalPrograms } from './client'
 import { HOME_PORTAL_PROGRAMS_QUERY, toPortalProgramListQuery } from './list-query'
+import type { PortalRecruitmentFocus } from '../lib/portal-recruitment'
 import { mapPortalProgramDetail, mapPortalProgramListItem, parsePortalProgramId } from './mappers'
 import type { PortalProgramListQuery } from './types'
 
@@ -18,6 +19,11 @@ const PROGRAMS_PAGE_SIZE = 10
 function shouldRetryDetail(failureCount: number, error: unknown): boolean {
   if (getQueryRetryHttpStatus(error) === 404) return false
   return shouldRetryQuery(failureCount, error)
+}
+
+/** 삭제·미존재(404)면 focus/reconnect 재요청을 막아 Network 노이즈를 줄인다. */
+function shouldRefetchProgramDetail(query: { state: { error: unknown } }): boolean {
+  return getQueryRetryHttpStatus(query.state.error) !== 404
 }
 
 function listKeyParams(query: PortalProgramListQuery) {
@@ -189,22 +195,33 @@ export function usePortalProgramsList(params: ProgramsListParams): PortalProgram
  */
 export function useProgramDetail(
   programId: string | null | undefined,
-  options?: { fresh?: boolean },
+  options?: { fresh?: boolean; focus?: PortalRecruitmentFocus | null },
 ): ProgramDetailQuery {
   const remote = isRemoteApiConfigured()
   const numericId = parsePortalProgramId(programId)
   const enabled = remote && numericId != null
   const fresh = options?.fresh === true
 
+  const recruitmentId =
+    options?.focus?.recruitmentIds?.length === 1 ? options.focus.recruitmentIds[0] : undefined
+  const applicationType =
+    options?.focus?.applicationTypes?.length === 1
+      ? options.focus.applicationTypes[0]
+      : undefined
+  const detailScope = { recruitmentId, applicationType }
+
   const detailQuery = useQuery({
-    queryKey: platformQueryKeys.program.detail(String(numericId ?? '')),
-    queryFn: ({ signal }) => fetchPortalProgramDetail(numericId!, signal),
+    queryKey: platformQueryKeys.program.detail(String(numericId ?? ''), detailScope),
+    queryFn: ({ signal }) => fetchPortalProgramDetail(numericId!, signal, detailScope),
     enabled,
     staleTime: fresh ? DETAIL_FRESH_STALE_MS : DETAIL_STALE_MS,
     gcTime: DETAIL_GC_MS,
-    refetchOnMount: fresh ? 'always' : true,
-    refetchOnWindowFocus: fresh,
-    refetchOnReconnect: true,
+    refetchOnMount: query => {
+      if (!shouldRefetchProgramDetail(query)) return false
+      return fresh ? 'always' : true
+    },
+    refetchOnWindowFocus: query => (shouldRefetchProgramDetail(query) ? fresh : false),
+    refetchOnReconnect: shouldRefetchProgramDetail,
     retry: shouldRetryDetail,
     retryDelay: queryRetryDelay,
   })
@@ -254,7 +271,9 @@ export function useProgramDetail(
     }
   }
 
-  const program = detailQuery.data ? mapPortalProgramDetail(detailQuery.data) : null
+  const program = detailQuery.data
+    ? mapPortalProgramDetail(detailQuery.data, options?.focus)
+    : null
   if (!program) {
     return {
       program: undefined,

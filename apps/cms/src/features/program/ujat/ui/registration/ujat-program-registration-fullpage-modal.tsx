@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { resolveRegistrationWizardIncompleteParagraphIds } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
+import {
+  RegistrationWizardValidationHighlightProvider,
+  scrollToFirstRegistrationWizardIncompleteParagraph,
+  useRegistrationWizardValidationHighlight,
+} from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import { useSearchParams } from 'react-router-dom'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
@@ -59,13 +65,28 @@ export type UjatProgramRegistrationFullpageModalProps = {
   onProgramRegistrationSaved?: (program: Program) => void
 }
 
-export function UjatProgramRegistrationFullpageModal({
+export function UjatProgramRegistrationFullpageModal(props: UjatProgramRegistrationFullpageModalProps) {
+  return (
+    <RegistrationWizardValidationHighlightProvider variant="ujat">
+      <UjatProgramRegistrationFullpageModalInner {...props} />
+    </RegistrationWizardValidationHighlightProvider>
+  )
+}
+
+function UjatProgramRegistrationFullpageModalInner({
   open,
   onClose,
   onProgramRegistrationSaved,
 }: UjatProgramRegistrationFullpageModalProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const { showAlert } = useCmsAlert()
+  const { reportIncomplete } = useRegistrationWizardValidationHighlight()
+  const reportValidationIncomplete = useCallback((keys: readonly string[]) => {
+    reportIncomplete(keys)
+    scrollToFirstRegistrationWizardIncompleteParagraph(
+      resolveRegistrationWizardIncompleteParagraphIds(keys, 'ujat')
+    )
+  }, [reportIncomplete])
 
   const [overwriteOpen, setOverwriteOpen] = useState(false)
   const [overwriteTitle, setOverwriteTitle] = useState('')
@@ -133,6 +154,7 @@ export function UjatProgramRegistrationFullpageModal({
     onProgramRegistrationSaved: handleRegistrationCreated,
     onStepChange: syncStepToUrl,
     skipDraftRestore,
+    reportValidationIncomplete,
   })
 
   const handleCompleteSuccessConfirm = useCallback(() => {

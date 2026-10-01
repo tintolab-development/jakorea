@@ -26,6 +26,7 @@ import {
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
 } from '@/features/program/general/lib/schedule-detail-form'
+import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import {
   resolveProgramRegistrationCurriculumEditDescription,
@@ -132,6 +133,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
       <ProgramCommonInfoEditSection
         title="기본 정보"
         required
+        highlightParagraphId={PROGRAM_REGISTRATION_IDS.basicInfo}
         bodyClassName="program-common-info-edit__section-body--stacked"
       >
         <ProgramCommonInfoEditRegistrationAuditForm program={program} />
@@ -161,7 +163,11 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           programType={extras.programType}
         />
       </ProgramCommonInfoEditSection>
-      <ProgramCommonInfoEditSection title="사업 KPI 목표" required>
+      <ProgramCommonInfoEditSection
+        title="사업 KPI 목표"
+        required
+        highlightParagraphId={PROGRAM_REGISTRATION_IDS.businessKpi}
+      >
         <ProgramRegistrationBusinessKpiParagraph
           instructorDisabled={kpiAvailability.instructorDisabled}
           instructorPlaceholder={
@@ -183,6 +189,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
         title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.title}
         description={PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.editDescription}
         required
+        highlightParagraphId={PROGRAM_REGISTRATION_IDS.wageInfo}
       >
         <ProgramRegistrationWageInfoParagraph />
       </ProgramCommonInfoEditSection>
@@ -190,6 +197,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
         title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.title}
         description={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription}
         required
+        highlightParagraphId={PROGRAM_REGISTRATION_IDS.typeSettings}
         bodyClassName="program-common-info-edit__section-body--stacked"
       >
         <ProgramRegistrationTypeSettingsParagraph
@@ -197,9 +205,18 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           onProgramTypeChange={value => commitExtras({ ...extras, programType: value })}
           participantOrganization={participant.organization}
           sessionRoundType={extras.sessionRoundType}
-          onSessionRoundTypeChange={value =>
-            commitExtras({ ...extras, sessionRoundType: value })
-          }
+          onSessionRoundTypeChange={value => {
+            const nextCount = Math.max(
+              extras.curriculumSessionCount ?? 1,
+              extras.curriculumChartSessionCount ?? 1
+            )
+            commitExtras({
+              ...extras,
+              sessionRoundType: value,
+              curriculumSessionCount: nextCount,
+              curriculumChartSessionCount: nextCount,
+            })
+          }}
           educationFormScheduleDetail={extras.educationFormScheduleDetail ?? 'common'}
           onEducationFormScheduleDetailChange={value =>
             commitExtras({ ...extras, educationFormScheduleDetail: value })
@@ -218,6 +235,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
         title={curriculumTitle}
         description={curriculumDescription}
         required
+        highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationCurriculum}
         bodyClassName={
           isScheduleStructure ? 'program-common-info-edit__section-body--stacked' : undefined
         }
@@ -336,6 +354,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
             PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription
           }
           required
+          highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationScheduleSettings}
           titleTrailing={
             <EducationScheduleChangeTitleAction
               overlayKeyPrefix="generalRegistration.educationScheduleSettings"

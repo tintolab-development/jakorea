@@ -13,7 +13,7 @@ import {
   RECRUIT_FORM_MAX_SUFFIX_CLASS,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { RecruitInterviewConditionalRows } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-conditional-rows'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -181,6 +181,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="공고 게시 여부"
+            validationKey="recruit.individual.announcementPublished"
             fullRow
             edit={
               <ParticipantRecruitmentAnnouncementPublishedRadios
@@ -197,6 +198,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="프로그램 운영 기간"
+            validationKey="recruit.individual.programRangeSeal"
             edit={
               <div className={MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker
@@ -230,6 +232,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="교육 대상"
+            validationKey="recruit.individual.targetLevels"
             edit={
               <CmsSelect
                 mode="multiple"
@@ -246,6 +249,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
           />
           <DetailInfoForm.Field
             label="교육 대상 상세"
+            validationKey="recruit.individual.targetLevelDetail"
             edit={
               <CmsInput
                 inputSize="medium"
@@ -262,6 +266,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
         <RecruitInterviewConditionalRows
           recruitPeriodLabel="참여자 모집 기간"
           interviewEnabled={false}
+          validationKeyPrefix="recruit.individual"
           state={{
             recruitAnchor,
             setRecruitAnchor,
@@ -293,6 +298,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
           onInquiryTelChange={setInquiryTel}
           inquiryEmail={inquiryEmail}
           onInquiryEmailChange={setInquiryEmail}
+          validationKeyPrefix="recruit.individual"
         />
 
         <RecruitNotesRow
@@ -301,6 +307,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
           onNotesNotApplicableChange={setNotesNotApplicable}
           notes={notes}
           onNotesChange={setNotes}
+          validationKey="recruit.individual.notes"
         />
       </DetailInfoForm>
     </div>

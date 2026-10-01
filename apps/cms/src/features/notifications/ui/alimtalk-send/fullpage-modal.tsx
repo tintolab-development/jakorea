@@ -580,6 +580,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                           setProgramId(program.id)
                           setRecipients([])
                           setSelectedRecipientIds([])
+                          setRecipientManualOpen(false)
                         }}
                         onClearProgram={() => {
                           setProgramId(ALIMTALK_SEND_ALL_PROGRAM_ID)
@@ -655,14 +656,16 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                   >
                     선택 삭제
                   </CmsButton>
-                  <CmsButton
-                    variant="secondary"
-                    size="large"
-                    type="button"
-                    onClick={handleManualRecipients}
-                  >
-                    수신자 직접 입력
-                  </CmsButton>
+                  {isWithoutProgram ? (
+                    <CmsButton
+                      variant="secondary"
+                      size="large"
+                      type="button"
+                      onClick={handleManualRecipients}
+                    >
+                      수신자 직접 입력
+                    </CmsButton>
+                  ) : null}
                   <CmsButton
                     variant="secondary"
                     size="large"

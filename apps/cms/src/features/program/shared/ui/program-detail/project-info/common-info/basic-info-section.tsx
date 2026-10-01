@@ -173,11 +173,6 @@ const GENERAL_PARTICIPANT_TYPE_LABELS: Record<string, string> = {
   volunteer: '봉사자',
 }
 
-const PARTNER_INVOLVEMENT_SELECT_OPTIONS = [
-  { value: 'yes', label: 'Yes' },
-  { value: 'no', label: 'No' },
-]
-
 function formatCompanySchoolParticipantTypes(program: Program): string {
   const labels = (program.generalParticipantTypes ?? [])
     .map(type => GENERAL_PARTICIPANT_TYPE_LABELS[type] ?? type)
@@ -1123,27 +1118,16 @@ export function BasicInfoSection({
                 <Controller
                   name="partnerInvolvement"
                   control={commonInfoForm.control}
-                  render={({ field }) =>
-                    isEconomyCommonInfo ? (
-                      <CmsRadio.Group
-                        size="large"
-                        value={field.value ? 'yes' : 'no'}
-                        onChange={event => field.onChange(event.target.value === 'yes')}
-                      >
-                        <CmsRadio value="yes">Yes</CmsRadio>
-                        <CmsRadio value="no">No</CmsRadio>
-                      </CmsRadio.Group>
-                    ) : (
-                      <CmsSelect
-                        withAllOption={false}
-                        placeholder="Partner Involvement를 선택하세요"
-                        width="100%"
-                        options={PARTNER_INVOLVEMENT_SELECT_OPTIONS}
-                        value={field.value ? 'yes' : 'no'}
-                        onChange={next => field.onChange(next === 'yes')}
-                      />
-                    )
-                  }
+                  render={({ field }) => (
+                    <CmsRadio.Group
+                      size="large"
+                      value={field.value ? 'yes' : 'no'}
+                      onChange={event => field.onChange(event.target.value === 'yes')}
+                    >
+                      <CmsRadio value="yes">Yes</CmsRadio>
+                      <CmsRadio value="no">No</CmsRadio>
+                    </CmsRadio.Group>
+                  )}
                 />
               }
             />

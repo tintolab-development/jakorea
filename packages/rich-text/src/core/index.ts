@@ -2,8 +2,17 @@ export { Editor, Node, mergeAttributes } from '@tiptap/core'
 export { Plugin, TextSelection, NodeSelection } from '@tiptap/pm/state'
 export type { EditorState, Transaction } from '@tiptap/pm/state'
 export { createRichTextExtensions } from './extensions'
+export { stripPastedDataUriImages } from './strip-pasted-data-uri-images'
 export { createRichTextEditorApi } from './editor-api'
 export { isRichTextEditorReady } from './editor-ready'
+export {
+  countRichTextCharacters,
+  countRichTextDocumentCharacters,
+  formatRichTextBytes,
+  getRichTextImageTotalBytes,
+  RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
+  RICH_TEXT_MAX_TEXT_CHARACTERS,
+} from './limits'
 export {
   getInitialEditorContent,
   markdownToHtml,
@@ -27,6 +36,7 @@ export {
   setLinkFromUrl,
   RICH_TEXT_IMAGE_ACCEPT,
 } from './insert-actions'
+export type { ResolvedRichTextImageSrc } from './insert-actions'
 export {
   emojis,
   filterEmojis,
@@ -47,3 +57,11 @@ export type {
   RichTextEditorApi,
   RichTextEditorContentType,
 } from './types'
+export {
+  countVisibleRichTextCharacters,
+  referencedInlineFileIds,
+  RICH_TEXT_INLINE_IMAGE_MAX_BYTES,
+  RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE,
+  RICH_TEXT_MAX_VISIBLE_CHARACTERS,
+  RICH_TEXT_VISIBLE_LENGTH_MESSAGE,
+} from './visible-length'

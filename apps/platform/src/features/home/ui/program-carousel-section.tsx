@@ -3,14 +3,24 @@ import { FALLBACK_EDUCATION_TITLE, HOME_PROGRAM_CARD_LIMIT, type HomeProgramCard
 import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
-import { PROGRAMS_PATH, programDetailPath, useHomePortalPrograms } from '@/features/program'
+import {
+  focusFromListItem,
+  PROGRAMS_PATH,
+  programDetailPath,
+  programListEntryKey,
+  useHomePortalPrograms,
+} from '@/features/program'
 import { RECRUITMENT_STATUS_TONE_MAP } from '@/features/program/lib/badge-config'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { useMediaQuery } from '@/shared/hooks'
 import { PFArrowButton, PFStateBadge, PFText } from '@/shared/ui'
 import chevronRightUrl from '../image/icon/chevron-right-black-12.svg'
 import viewAllChevronUrl from '../image/icon/chevron-right-black-18.svg'
+import { SkeletonBlock } from './skeleton-block'
 import styles from './program-carousel-section.module.css'
+
+/** 트랙은 가로라 장 수가 섹션 높이를 바꾸지 않는다. PC는 3장, 모바일은 1장이 보인다. */
+const PROGRAM_SKELETON_KEYS = [0, 1, 2] as const
 
 /** 홈 카드 상태배지 — 시안 compact 라벨 */
 function homeRecruitmentStatusLabel(status: RecruitmentStatus) {
@@ -28,11 +38,26 @@ function formatClassificationLabel(label: string) {
     .join(' · ')
 }
 
+function ProgramCardSkeleton() {
+  return (
+    <div className={styles.card} aria-hidden="true">
+      <div className={styles.cardMedia}>
+        <SkeletonBlock className={styles.skeletonMedia} />
+      </div>
+      <div className={styles.cardBody}>
+        <SkeletonBlock className={styles.skeletonBadge} />
+        <SkeletonBlock className={styles.skeletonTitle} />
+        <SkeletonBlock className={styles.skeletonTarget} />
+      </div>
+    </div>
+  )
+}
+
 function ProgramCard({ program }: { program: HomeProgramCard }) {
   return (
     <Link
       className={styles.card}
-      to={programDetailPath(program.id)}
+      to={program.detailPath}
       aria-label={`${program.title} 상세 보기`}
     >
       <div className={styles.cardMedia}>
@@ -107,6 +132,8 @@ export function ProgramCarouselSection() {
 
   const cards: HomeProgramCard[] = items.slice(0, HOME_PROGRAM_CARD_LIMIT).map(program => ({
     id: program.id,
+    entryKey: programListEntryKey(program),
+    detailPath: programDetailPath(program.id, undefined, focusFromListItem(program, 'all')),
     title: program.title,
     recruitmentStatus: program.recruitmentStatus,
     educationTargetLabel: program.educationTargetLabel,
@@ -125,7 +152,7 @@ export function ProgramCarouselSection() {
     : undefined
 
   return (
-    <section className={styles.section}>
+    <section className={styles.section} aria-busy={isPending || undefined}>
       <div className={styles.inner}>
         <div className={styles.content}>
           <div className={styles.header}>
@@ -143,11 +170,21 @@ export function ProgramCarouselSection() {
             </Link>
           </div>
 
-          {cards.length > 0 ? (
+          {isPending ? (
+            <div className={styles.viewport}>
+              <ul className={styles.track}>
+                {PROGRAM_SKELETON_KEYS.map(key => (
+                  <li className={styles.slide} key={key}>
+                    <ProgramCardSkeleton />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : cards.length > 0 ? (
             <div className={styles.viewport}>
               <ul className={styles.track} style={trackStyle}>
                 {cards.map(program => (
-                  <li className={styles.slide} key={program.id}>
+                  <li className={styles.slide} key={program.entryKey}>
                     <ProgramCard program={program} />
                   </li>
                 ))}

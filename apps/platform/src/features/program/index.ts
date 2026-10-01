@@ -13,6 +13,7 @@ export {
   DEFAULT_PROGRAMS_LIST_PARAMS,
   OPERATING_PERIOD_FILTER_OPTIONS,
   PROGRAM_CATEGORY_ITEMS,
+  PROGRAM_TAB_LABEL,
   PROGRAM_FILTER_KEYS,
   PROGRAM_SORT_OPTIONS,
   PROGRAMS_PATH,
@@ -21,6 +22,14 @@ export {
   programApplyRequiredPath,
   programDetailPath,
 } from './lib/constants'
+export {
+  applicationTypesForPortalTab,
+  focusFromListItem,
+  portalTabFromCategory,
+  programListEntryKey,
+  readPortalRecruitmentFocus,
+} from './lib/portal-recruitment'
+export type { PortalRecruitmentFocus, PortalTabCode } from './lib/portal-recruitment'
 export {
   getApplicationTemplateCodeForApplyCase,
   getMockApplyFormCase,

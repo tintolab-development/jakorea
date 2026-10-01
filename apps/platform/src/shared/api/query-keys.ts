@@ -116,8 +116,18 @@ export const platformQueryKeys = {
       ] as const,
     /** 홈 캐러셀 — GET /api/portal/programs?featuredOnHome=true&size=8 (Class C) */
     homePreview: () => [...platformQueryKeys.program.all(), 'home-preview'] as const,
-    /** 공개 상세 — GET /api/portal/programs/{programId} (Class D, CMS 8080) */
-    detail: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,
+    /**
+     * 공개 상세 — GET /api/portal/programs/{programId}
+     * recruitmentId·applicationType 이 있으면 그 모집 케이스 캐시.
+     */
+    detail: (id: string, scope?: { recruitmentId?: number; applicationType?: string }) =>
+      [
+        ...platformQueryKeys.program.all(),
+        'detail',
+        id,
+        scope?.recruitmentId ?? '',
+        scope?.applicationType ?? '',
+      ] as const,
     /** 신청 옵션 — GET /api/portal/programs/{programId}/application-options (Class D, 회원) */
     applicationOptions: (programId: string) =>
       [...platformQueryKeys.program.all(), 'application-options', programId] as const,

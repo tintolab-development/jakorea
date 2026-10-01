@@ -18,7 +18,7 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -287,11 +287,18 @@ export function ApplicantRecruitParticipantInfoParagraph({
 
   if (layoutVariant === 'economy') {
     return (
-      <div className="applicant-recruit-participant-info-paragraph__forms">
-        <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
+      <div
+      className="applicant-recruit-participant-info-paragraph__forms program-registration-paragraph"
+    >
+        <DetailInfoForm
+          title="참여 기관 모집 정보"
+          hideHeader
+          mode="edit"
+        >
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="공고 게시 여부"
+              validationKey="recruit.institution.announcementPublished"
               fullRow
               edit={
                 <ParticipantRecruitmentAnnouncementPublishedRadios
@@ -306,6 +313,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="배정 가능 최대 강사 수"
+              validationKey="recruit.institution.maxAssignableInstructors"
               edit={
                 <NumberWithSuffixRow
                   placeholder="최대값 입력"
@@ -318,6 +326,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
             />
             <DetailInfoForm.Field
               label="신청 가능 최대 학급 수"
+              validationKey="recruit.institution.maxClassCount"
               edit={
                 <NumberWithSuffixRow
                   placeholder="최대값 입력"
@@ -331,10 +340,15 @@ export function ApplicantRecruitParticipantInfoParagraph({
           </DetailInfoForm.Row>
         </DetailInfoForm>
 
-        <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
+        <DetailInfoForm
+          title="참여 기관 모집 정보"
+          hideHeader
+          mode="edit"
+        >
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="프로그램 운영 기간"
+              validationKey="recruit.institution.programRangeSeal"
               edit={
                 <div className={MAX_SUFFIX_CLASS}>
                   <ParagraphDatePicker
@@ -370,6 +384,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="교육 대상"
+              validationKey="recruit.institution.targetLevels"
               edit={
                 <CmsSelect
                   mode="multiple"
@@ -386,6 +401,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
             />
             <DetailInfoForm.Field
               label="교육 대상 상세"
+              validationKey="recruit.institution.targetLevelDetail"
               edit={
                 <CmsInput
                   inputSize="medium"
@@ -402,6 +418,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="참여자 모집 기간"
+              validationKey="recruit.institution.recruitRangeSeal"
               edit={
                 <div className={MAX_SUFFIX_CLASS}>
                   <ParagraphDatePicker
@@ -425,6 +442,10 @@ export function ApplicantRecruitParticipantInfoParagraph({
             />
             <DetailInfoForm.Field
               label="최종 합격자 발표"
+              validationKey={[
+                'recruit.institution.finalAnnounceIso',
+                'recruit.institution.finalAnnounceMethod',
+              ]}
               edit={
                 <div className={MAX_SUFFIX_CLASS}>
                   <ParagraphDatePicker
@@ -472,12 +493,19 @@ export function ApplicantRecruitParticipantInfoParagraph({
   }
 
   return (
-    <div className="applicant-recruit-participant-info-paragraph__forms">
-      <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
+    <div
+      className="applicant-recruit-participant-info-paragraph__forms program-registration-paragraph"
+    >
+      <DetailInfoForm
+        title="참여 기관 모집 정보"
+        hideHeader
+        mode="edit"
+      >
         {isTrainedTeachers ? (
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="공고 게시 여부"
+              validationKey="recruit.institution.announcementPublished"
               edit={
                 <ParticipantRecruitmentAnnouncementPublishedRadios
                   value={announcementPublished}
@@ -488,6 +516,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
             />
             <DetailInfoForm.Field
               label="학생 명단 제출 여부"
+              validationKey="recruit.institution.studentListRequired"
               edit={
                 <NeedOrNotRadioGroup
                   value={studentListRequired}
@@ -502,6 +531,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="공고 게시 여부"
+                validationKey="recruit.institution.announcementPublished"
                 fullRow
                 edit={
                   <ParticipantRecruitmentAnnouncementPublishedRadios
@@ -516,6 +546,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="학생 명단 제출 여부"
+                validationKey="recruit.institution.studentListRequired"
                 edit={
                   <NeedOrNotRadioGroup
                     value={studentListRequired}
@@ -526,6 +557,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
               />
               <DetailInfoForm.Field
                 label="사전 안내 사항 작성 여부"
+                validationKey="recruit.institution.preguidanceRequired"
                 edit={
                   <NeedOrNotRadioGroup
                     value={preguidanceRequired}
@@ -544,6 +576,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
               {isTrainedTeachers ? null : (
                 <DetailInfoForm.Field
                   label="배정 가능 최대 강사 수"
+                  validationKey="recruit.institution.maxAssignableInstructors"
                   edit={
                     <NumberWithSuffixRow
                       placeholder="최대값 입력"
@@ -557,6 +590,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
               )}
               <DetailInfoForm.Field
                 label="신청 가능 최대 학급 수"
+                validationKey="recruit.institution.maxClassCount"
                 fullRow={isTrainedTeachers}
                 edit={
                   <NumberWithSuffixRow
@@ -577,6 +611,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
                 {showMaxScheduleCountField ? (
                   <DetailInfoForm.Field
                     label="신청 가능 최대 일정 수"
+                    validationKey="recruit.institution.maxScheduleCount"
                     fullRow={!showMaxSessionsPerDayField}
                     edit={
                       <NumberWithSuffixRow
@@ -592,6 +627,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
                 {showMaxSessionsPerDayField ? (
                   <DetailInfoForm.Field
                     label="신청 가능 1일 최대 차시"
+                    validationKey="recruit.institution.maxSessionsPerDay"
                     fullRow={!showMaxScheduleCountField}
                     edit={
                       <NumberWithSuffixRow
@@ -610,10 +646,15 @@ export function ApplicantRecruitParticipantInfoParagraph({
         ) : null}
       </DetailInfoForm>
 
-      <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
+      <DetailInfoForm
+        title="참여 기관 모집 정보"
+        hideHeader
+        mode="edit"
+      >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="프로그램 운영 기간"
+            validationKey="recruit.institution.programRangeSeal"
             edit={
               <div className={MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker
@@ -647,6 +688,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="교육 대상"
+            validationKey="recruit.institution.targetLevels"
             edit={
               <CmsSelect
                 mode="multiple"
@@ -663,6 +705,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
           />
           <DetailInfoForm.Field
             label="교육 대상 상세"
+            validationKey="recruit.institution.targetLevelDetail"
             edit={
               <CmsInput
                 inputSize="medium"
@@ -679,6 +722,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="참여자 모집 기간"
+            validationKey="recruit.institution.recruitRangeSeal"
             edit={
               <div className={MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker
@@ -702,6 +746,10 @@ export function ApplicantRecruitParticipantInfoParagraph({
           />
           <DetailInfoForm.Field
             label="최종 합격자 발표"
+            validationKey={[
+              'recruit.institution.finalAnnounceIso',
+              'recruit.institution.finalAnnounceMethod',
+            ]}
             edit={
               <div className={MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker

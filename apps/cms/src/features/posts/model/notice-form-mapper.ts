@@ -41,6 +41,11 @@ export type BuildNoticeBodyParams = {
   newFiles?: File[]
   /** 수정 시 화면에 남겨 둔 기존 첨부. 없으면 기존 첨부를 유지한다. */
   retainedFileObjectIds?: number[]
+  /**
+   * 신규 등록에서 이미 AVAILABLE/CLEAN 까지 올린 미귀속 첨부.
+   * 있으면 같은 파일을 다시 올리지 않고 이 ID로 공지를 만든다.
+   */
+  fileObjectIds?: number[]
   author: string
 }
 

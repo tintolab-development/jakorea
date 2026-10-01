@@ -18,7 +18,7 @@ import '@/features/template/ui/form-editor/form-editor.css'
 export function UjatRecruitParticipantInfoProgramEdit({
   program: _program,
   form,
-  sectionTitle = '참여자 모집 정보' }: {
+  sectionTitle = '참여 기관 모집 정보' }: {
   program: Program
   form: UseFormReturn<ProgramDetailEditFormValues>
   sectionTitle?: string

@@ -8,27 +8,32 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Image } from 'antd'
 import type { Program } from '@/types/domain'
-import type { UseFormReturn } from 'react-hook-form'
+import { Controller, useFormState } from 'react-hook-form'
+import type { ControllerRenderProps, FieldPath, UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import { THUMBNAIL_SIZE_EXCEEDED_MESSAGE } from '@/shared/ui/file-select-field-limits'
+import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
 import {
   parseFileObjectId,
+  programInlineImageOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
 import {
-  fetchProgramAttachments,
-  programDetailAttachmentOwner,
-  programThumbnailOwner,
-  putProgramAttachments,
-} from '@/features/program/shared/api/program-attachments'
-import {
-  fetchProgramThumbnail,
-  loadProgramThumbnailPreviewUrl,
-  putProgramThumbnail,
-} from '@/features/program/shared/api/program-thumbnail'
+  fetchProgramMediaAttachments,
+  fetchProgramMediaThumbnail,
+  hasProgramMediaTarget,
+  programMediaAttachmentOwner,
+  programMediaThumbnailOwner,
+  putProgramMediaAttachments,
+  putProgramMediaThumbnail,
+  usesRecruitmentRowMedia,
+} from '@/features/program/shared/api/program-media-target'
 import { useCmsAlert } from '@/shared/ui'
+import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
@@ -54,6 +59,11 @@ const ATTACHMENT_GUIDE_LINES = [
 
 export type DetailInfoEmptyReadDisplay = 'mock-default' | 'dash'
 
+function axiosErrorData(error: unknown): unknown {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined
+  return (error as { response?: { data?: unknown } }).response?.data
+}
+
 function revokeBlobUrl(url: string | null | undefined) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
 }
@@ -76,22 +86,28 @@ function normalizeAttachmentFileNames(names: string[] | undefined | null): strin
   return (names ?? []).map(name => name.trim()).filter(Boolean)
 }
 
-/** GET attachments API 결과 + program/상세 JSON fallback (빈 API 응답이 이름을 덮어쓰지 않게) */
-function resolveAttachmentFileNamesForDisplay({
+/**
+ * 모집 행 화면은 그 행 첨부만 보여 준다. `[]`이면 프로그램 첨부로 채우지 않는다.
+ * 프로그램 화면은 행 API가 비어 있을 때만 프로그램 첨부 이름을 유지한다.
+ */
+export function resolveAttachmentFileNamesForDisplay({
+  rowScoped,
   isFormEdit,
   formFileNames,
   linkedAttachmentNames,
   programFallback,
 }: {
+  rowScoped: boolean
   isFormEdit: boolean
   formFileNames: string[] | undefined
   linkedAttachmentNames: string[] | null
   programFallback: string[] | undefined
 }): string[] {
-  const fallback = normalizeAttachmentFileNames(programFallback)
-  if (isFormEdit) {
-    return normalizeAttachmentFileNames(formFileNames)
+  if (rowScoped) {
+    return normalizeAttachmentFileNames(linkedAttachmentNames ?? [])
   }
+  const fallback = normalizeAttachmentFileNames(programFallback)
+  if (isFormEdit) return normalizeAttachmentFileNames(formFileNames)
   if (linkedAttachmentNames != null && linkedAttachmentNames.length > 0) {
     return normalizeAttachmentFileNames(linkedAttachmentNames)
   }
@@ -117,6 +133,144 @@ function isAdditionalContentEmpty(program: Program): boolean {
     .replace(/\s+/g, ' ')
     .trim()
   return !text
+}
+
+function isHtmlContent(value: string): boolean {
+  return /<\/?[a-z][^>]*>/i.test(value)
+}
+
+function RichTextReadContent({
+  content,
+  className,
+}: {
+  content: ReactNode
+  className?: string
+}) {
+  if (typeof content !== 'string' || !isHtmlContent(content)) {
+    return <div className={className}>{content}</div>
+  }
+  return (
+    <div className={className}>
+      <RichTextViewer
+        content={content}
+        contentFormat="html"
+        maxHeight="none"
+        className="program-detail-info-tab__editor-content"
+      />
+    </div>
+  )
+}
+
+function DetailInfoRichTextFieldEditor({
+  field,
+  program,
+  placeholder,
+  error,
+}: {
+  field: ControllerRenderProps<ProgramDetailEditFormValues, FieldPath<ProgramDetailEditFormValues>>
+  program: Program
+  placeholder: string
+  error?: unknown
+}) {
+  const value = typeof field.value === 'string' ? field.value : String(field.value ?? '')
+  const owner = programInlineImageOwner(parseFileObjectId(program.id))
+  const resetKey = `${program.id}-${field.name}`
+  const initialContentRef = useRef({ resetKey, value })
+  if (initialContentRef.current.resetKey !== resetKey) {
+    initialContentRef.current = { resetKey, value }
+  }
+  const onChangeRef = useRef(field.onChange)
+  onChangeRef.current = field.onChange
+  const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(
+    true,
+    initialContentRef.current.value,
+    resetKey,
+    {
+      placeholder,
+      contentFormat: 'html',
+      height: '100px',
+      fileUploadOwner: owner,
+    }
+  )
+
+  useEffect(() => {
+    if (editor == null) return
+    const sync = () => {
+      if (editor.isDestroyed) return
+      onChangeRef.current(getHTML())
+    }
+    editor.on('update', sync)
+    return () => {
+      sync()
+      if (!editor.isDestroyed) editor.off('update', sync)
+    }
+  }, [editor, getHTML])
+
+  return (
+    <>
+      <div className="program-detail-info-tab__editor-host program-detail-info-tab__editor-host--field">
+        <RichTextEditor
+          editor={editor}
+          className="program-detail-info-tab__rich-text-editor"
+          minHeight={editorMinHeight}
+          fileUploadOwner={owner}
+        />
+      </div>
+      {error ? (
+        <span className="text-area-field-row__field-error">입력값을 확인해주세요.</span>
+      ) : null}
+    </>
+  )
+}
+
+function RichTextFieldRow({
+  label,
+  showRequiredStar,
+  isFormEdit,
+  form,
+  program,
+  name,
+  placeholder,
+  readContent,
+}: {
+  label: string
+  showRequiredStar: boolean
+  isFormEdit: boolean
+  form: UseFormReturn<ProgramDetailEditFormValues> | undefined
+  program: Program
+  name: FieldPath<ProgramDetailEditFormValues>
+  placeholder: string
+  readContent: ReactNode
+}) {
+  return (
+    <tr>
+      <th>
+        {label}
+        {showRequiredStar ? <span className="text-area-field-row__required">*</span> : null}
+      </th>
+      <td>
+        {isFormEdit && form ? (
+          <Controller
+            name={name}
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <DetailInfoRichTextFieldEditor
+                field={field}
+                program={program}
+                placeholder={placeholder}
+                error={fieldState.error}
+              />
+            )}
+          />
+        ) : (
+          <RichTextReadContent
+            content={readContent}
+            className="text-area-field-row__content-block"
+          />
+        )}
+      </td>
+    </tr>
+  )
 }
 
 /** 조회·수정 모드 동일 — mock 기본 HTML 포함 (UJAT dash 모드는 공란 유지) */
@@ -159,11 +313,13 @@ function useDetailInfoEditorBlock(
   }, [isEditMode])
 
   const additionalContentHtml = resolveAdditionalContentHtml(program, emptyReadDisplay)
+  const inlineImageOwner = programInlineImageOwner(parseFileObjectId(program.id))
 
   const { editor, editorMinHeight, getHTML } = useTemplateEditor(
     editorOpen,
     '',
-    additionalContentHtml
+    additionalContentHtml,
+    inlineImageOwner
   )
   const getterRef = useRef<() => string>(() => '')
 
@@ -180,52 +336,64 @@ function useDetailInfoEditorBlock(
   }, [isEditMode, onRegisterGetAdditionalContentHtml])
 
   const isFormEdit = Boolean(isEditMode && form)
+  const rowMedia = usesRecruitmentRowMedia(program)
   const [linkedAttachmentNames, setLinkedAttachmentNames] = useState<string[] | null>(null)
+  const [linkedAttachmentTotalBytes, setLinkedAttachmentTotalBytes] = useState(0)
   const displayFileNames = resolveAttachmentFileNamesForDisplay({
+    rowScoped: rowMedia,
     isFormEdit,
     formFileNames: isFormEdit ? form!.watch('attachmentFileNames') : undefined,
     linkedAttachmentNames,
-    programFallback: program.attachmentFileNames,
+    programFallback: rowMedia ? undefined : program.attachmentFileNames,
   })
 
   useEffect(() => {
-    const programId = parseFileObjectId(program.id)
-    if (programId == null) {
+    if (!hasProgramMediaTarget(program)) {
       setLinkedAttachmentNames(null)
+      setLinkedAttachmentTotalBytes(0)
       return
     }
     let cancelled = false
-    void fetchProgramAttachments(programId)
+    void fetchProgramMediaAttachments(program)
       .then(items => {
         if (cancelled) return
         const names = items
           .map(item => item.originalFileName?.trim() || '')
           .filter(Boolean)
         setLinkedAttachmentNames(names)
-        if (form && names.length > 0) {
+        setLinkedAttachmentTotalBytes(
+          items.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
+        )
+        if (form && (usesRecruitmentRowMedia(program) || names.length > 0)) {
           form.setValue('attachmentFileNames', names, { shouldDirty: false })
         }
       })
       .catch(() => {
-        if (!cancelled) setLinkedAttachmentNames(null)
+        if (!cancelled) {
+          setLinkedAttachmentNames(null)
+          setLinkedAttachmentTotalBytes(0)
+        }
       })
     return () => {
       cancelled = true
     }
-    // form identity는 렌더마다 바뀔 수 있어 program.id 기준으로만 동기화
+    // form identity는 렌더마다 바뀔 수 있어 program.id·모집 행 기준으로만 동기화
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync from attachments API SSOT
-  }, [program.id])
+  }, [program.id, program.activeRecruitmentId])
+
+  const activeRowThumbnailId = program.programRecruitments?.find(
+    row => row.id != null && row.id === program.activeRecruitmentId
+  )?.thumbnailFileObjectId
 
   useEffect(() => {
-    const programId = parseFileObjectId(program.id)
-    if (programId == null) {
+    if (!hasProgramMediaTarget(program)) {
       setLinkedThumbnail(null)
       return
     }
     let cancelled = false
     let createdUrl: string | null = null
     void (async () => {
-      const thumbnail = await fetchProgramThumbnail(programId)
+      const thumbnail = await fetchProgramMediaThumbnail(program)
       if (cancelled || thumbnail.fileObjectId == null) {
         if (!cancelled) {
           setLinkedThumbnail(prev => {
@@ -260,7 +428,8 @@ function useDetailInfoEditorBlock(
       cancelled = true
       revokeBlobUrl(createdUrl)
     }
-  }, [program.id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- program 객체는 렌더마다 바뀐다
+  }, [program.id, program.activeRecruitmentId, activeRowThumbnailId])
 
   const legacyThumbnailUrl = readableThumbnailUrl(
     (isFormEdit && form
@@ -269,11 +438,14 @@ function useDetailInfoEditorBlock(
       program.keyVisualImage ||
       program.posterImage
   )
-  const displayThumbnailUrl =
-    thumbnailPreviewBlobUrl || linkedThumbnail?.url || legacyThumbnailUrl
-  const thumbnailFilename =
-    linkedThumbnail?.fileName ||
-    (legacyThumbnailUrl ? getThumbnailFilename(legacyThumbnailUrl) : '')
+  const displayThumbnailUrl = rowMedia
+    ? thumbnailPreviewBlobUrl || linkedThumbnail?.url
+    : thumbnailPreviewBlobUrl || linkedThumbnail?.url || legacyThumbnailUrl
+  const thumbnailFilename = rowMedia
+    ? linkedThumbnail?.fileName ||
+      (thumbnailPreviewBlobUrl ? getThumbnailFilename(thumbnailPreviewBlobUrl) : '')
+    : linkedThumbnail?.fileName ||
+      (legacyThumbnailUrl ? getThumbnailFilename(legacyThumbnailUrl) : '')
 
   return {
     editorOpen,
@@ -285,9 +457,12 @@ function useDetailInfoEditorBlock(
     setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
+    linkedAttachmentTotalBytes,
+    setLinkedAttachmentTotalBytes,
     displayThumbnailUrl,
     thumbnailFilename,
     form,
+    setLinkedAttachmentNames,
   }
 }
 
@@ -368,6 +543,7 @@ function ThumbnailImageRow({
                 }
                 fileNames={thumbnailFilename ? [thumbnailFilename] : []}
                 guideLines={guideLines}
+                sizeExceededMessage={THUMBNAIL_SIZE_EXCEEDED_MESSAGE}
                 onFilesChange={
                   isFormEdit
                     ? async files => {
@@ -381,15 +557,12 @@ function ThumbnailImageRow({
                         setThumbnailPreviewBlobUrl(blobUrl)
                         setUploadingThumbnail(true)
                         try {
-                          const programId = parseFileObjectId(program.id)
-                          if (programId == null) {
+                          const owner = programMediaThumbnailOwner(program)
+                          if (owner == null) {
                             throw new Error('프로그램 번호가 없어 대표 이미지를 저장할 수 없습니다.')
                           }
-                          const uploaded = await uploadAdminFileMaybeMock({
-                            file,
-                            owner: programThumbnailOwner(programId),
-                          })
-                          await putProgramThumbnail(programId, uploaded.fileObjectId)
+                          const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                          await putProgramMediaThumbnail(program, uploaded.fileObjectId)
                           let previewUrl = blobUrl
                           try {
                             previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
@@ -402,12 +575,14 @@ function ThumbnailImageRow({
                             return { url: previewUrl, fileName: file.name }
                           })
                           setThumbnailPreviewBlobUrl(null)
-                        } catch {
+                        } catch (error) {
                           URL.revokeObjectURL(blobUrl)
                           setThumbnailPreviewBlobUrl(null)
                           showAlert({
                             title: '안내',
-                            content: '대표 이미지를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                            content: extractApiErrorMessage(axiosErrorData(error), {
+                              fallback: '대표 이미지를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                            }),
                           })
                         } finally {
                           setUploadingThumbnail(false)
@@ -426,13 +601,12 @@ function ThumbnailImageRow({
                           form.setValue('keyVisualImage', undefined)
                           form.setValue('posterImage', undefined)
                         }
-                        const programId = parseFileObjectId(program.id)
                         setLinkedThumbnail(prev => {
                           revokeBlobUrl(prev?.url)
                           return null
                         })
-                        if (programId != null) {
-                          void putProgramThumbnail(programId, null).catch(() => {
+                        if (hasProgramMediaTarget(program)) {
+                          void putProgramMediaThumbnail(program, null).catch(() => {
                             showAlert({
                               title: '안내',
                               content: '대표 이미지를 지우지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -451,24 +625,41 @@ function ThumbnailImageRow({
   )
 }
 
+function AdditionalContentFieldError({
+  control,
+}: {
+  control: UseFormReturn<ProgramDetailEditFormValues>['control']
+}) {
+  const { errors } = useFormState({ control })
+  const message = (errors as { additionalContentHtml?: { message?: string } }).additionalContentHtml
+    ?.message
+  if (!message) return null
+  return (
+    <p className="text-area-field-row__field-error" role="alert">
+      {message}
+    </p>
+  )
+}
+
 function AdditionalContentRow({
   program,
   isEditMode,
   isFormEdit,
   editorOpen,
   editor,
-  editorMinHeight,
   showRequiredOnTh,
   emptyReadDisplay = 'mock-default',
+  form,
 }: {
   program: Program
   isEditMode: boolean
   isFormEdit: boolean
   editorOpen: boolean
   editor: ReturnType<typeof useTemplateEditor>['editor']
-  editorMinHeight: string
+  editorMinHeight?: string
   showRequiredOnTh: boolean
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
+  form?: UseFormReturn<ProgramDetailEditFormValues>
 }) {
   const additionalEmpty =
     emptyReadDisplay === 'dash' ? isAdditionalContentEmpty(program) : false
@@ -485,8 +676,14 @@ function AdditionalContentRow({
         {isEditMode ? (
           <div className="program-detail-info-tab__additional-content program-detail-info-tab__additional-content--edit">
             {editorOpen && editor ? (
-              <div className="program-detail-info-tab__editor-host">
-                <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+              <div className="program-detail-info-tab__editor-host program-detail-info-tab__editor-host--field">
+                <RichTextEditor
+                  editor={editor}
+                  className="program-detail-info-tab__rich-text-editor"
+                  minHeight="100px"
+                  fileUploadOwner={programInlineImageOwner(parseFileObjectId(program.id))}
+                />
+                {form ? <AdditionalContentFieldError control={form.control} /> : null}
               </div>
             ) : (
               <div className="program-detail-info-tab__editor-placeholder">로딩 중…</div>
@@ -517,6 +714,9 @@ function AttachmentRowStandard({
   displayFileNames,
   guideLines,
   emptyReadDisplay = 'mock-default',
+  onNamesChange,
+  currentTotalBytes = 0,
+  onTotalBytesChange,
 }: {
   program: Program
   isEditMode: boolean
@@ -525,7 +725,12 @@ function AttachmentRowStandard({
   displayFileNames: string[]
   guideLines: string[]
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
+  onNamesChange?: (names: string[]) => void
+  currentTotalBytes?: number
+  onTotalBytesChange?: (bytes: number) => void
 }) {
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
   const showEmptyDash =
     !isEditMode && emptyReadDisplay === 'dash' && displayFileNames.length === 0
 
@@ -536,71 +741,104 @@ function AttachmentRowStandard({
         {showEmptyDash ? (
           '-'
         ) : (
+          <>
           <FileSelectField
             accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
             multiple
-            disabled={!isEditMode}
+            disabled={!isEditMode || uploading}
+            uploading={uploading}
             buttonLabel="파일 선택"
             className={isEditMode ? 'file-select-field--edit' : ''}
             fileNames={displayFileNames}
             guideLines={guideLines}
+            currentTotalBytes={currentTotalBytes}
             onFilesChange={
               isFormEdit
                 ? async files => {
-                    const programId = parseFileObjectId(program.id)
-                    if (programId == null) return
-                    const owner = programDetailAttachmentOwner(programId)
-                    const uploadedIds: number[] = []
-                    for (const file of files) {
-                      const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                      uploadedIds.push(uploaded.fileObjectId)
+                    const owner = programMediaAttachmentOwner(program)
+                    if (owner == null) return
+                    setUploading(true)
+                    try {
+                      const uploadedIds: number[] = []
+                      for (const file of files) {
+                        const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                        uploadedIds.push(uploaded.fileObjectId)
+                      }
+                      if (uploadedIds.length === 0) return
+                      const existing = await fetchProgramMediaAttachments(program).catch(() => [])
+                      const existingIds = existing
+                        .map(item => item.fileObjectId)
+                        .filter((id): id is number => typeof id === 'number' && id > 0)
+                      const linked = await putProgramMediaAttachments(program, [
+                        ...existingIds,
+                        ...uploadedIds,
+                      ])
+                      const names = linked
+                        .map(item => item.originalFileName?.trim() || '')
+                        .filter(Boolean)
+                      form!.setValue('attachmentFileNames', names)
+                      onNamesChange?.(names)
+                      onTotalBytesChange?.(
+                        linked.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
+                      )
+                      setAttachmentError(null)
+                    } catch (error) {
+                      setAttachmentError(
+                        extractApiErrorMessage(axiosErrorData(error), {
+                          fallback: '첨부파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                        })
+                      )
+                    } finally {
+                      setUploading(false)
                     }
-                    if (uploadedIds.length === 0) return
-                    const existing = await fetchProgramAttachments(programId).catch(() => [])
-                    const existingIds = existing
-                      .map(item => item.fileObjectId)
-                      .filter((id): id is number => typeof id === 'number' && id > 0)
-                    const linked = await putProgramAttachments(programId, [
-                      ...existingIds,
-                      ...uploadedIds,
-                    ])
-                    const names = linked
-                      .map(item => item.originalFileName?.trim() || '')
-                      .filter(Boolean)
-                    form!.setValue('attachmentFileNames', names)
                   }
                 : undefined
             }
             onRemoveFile={
               isFormEdit
                 ? index => {
-                    const programId = parseFileObjectId(program.id)
-                    if (programId == null) {
+                    if (!hasProgramMediaTarget(program)) {
                       const list = form!.getValues('attachmentFileNames') ?? []
-                      form!.setValue(
-                        'attachmentFileNames',
-                        list.filter((_, i) => i !== index)
-                      )
+                      const next = list.filter((_, i) => i !== index)
+                      form!.setValue('attachmentFileNames', next)
+                      onNamesChange?.(next)
                       return
                     }
                     void (async () => {
-                      const existing = await fetchProgramAttachments(programId).catch(() => [])
+                      const existing = await fetchProgramMediaAttachments(program).catch(() => [])
                       const remainingIds = existing
                         .map(item => item.fileObjectId)
                         .filter((id): id is number => typeof id === 'number' && id > 0)
                         .filter((_, i) => i !== index)
-                      const linked = await putProgramAttachments(programId, remainingIds).catch(
-                        () => [] as Awaited<ReturnType<typeof putProgramAttachments>>
-                      )
-                      const names = linked
-                        .map(item => item.originalFileName?.trim() || '')
-                        .filter(Boolean)
-                      form!.setValue('attachmentFileNames', names)
+                      try {
+                        const linked = await putProgramMediaAttachments(program, remainingIds)
+                        const names = linked
+                          .map(item => item.originalFileName?.trim() || '')
+                          .filter(Boolean)
+                        form!.setValue('attachmentFileNames', names)
+                        onNamesChange?.(names)
+                        onTotalBytesChange?.(
+                          linked.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
+                        )
+                        setAttachmentError(null)
+                      } catch (error) {
+                        setAttachmentError(
+                          extractApiErrorMessage(axiosErrorData(error), {
+                            fallback: '첨부파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                          })
+                        )
+                      }
                     })()
                   }
                 : undefined
             }
           />
+          {attachmentError != null ? (
+            <p className="text-area-field-row__field-error" role="alert">
+              {attachmentError}
+            </p>
+          ) : null}
+          </>
         )}
       </td>
     </tr>
@@ -657,9 +895,12 @@ export function DetailInfoSection({
     setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
+    linkedAttachmentTotalBytes,
+    setLinkedAttachmentTotalBytes,
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
+    setLinkedAttachmentNames,
   } = useDetailInfoEditorBlock(
     program,
     isEditMode,
@@ -715,14 +956,14 @@ export function DetailInfoSection({
               DEFAULT_PROGRAM_DESCRIPTION
             )}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="모집 안내"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="recruitmentGuide"
             placeholder="모집 안내"
-            control={textFieldControl}
             readContent={resolveTextReadContent(
               program.recruitmentGuide,
               emptyReadDisplay,
@@ -730,25 +971,25 @@ export function DetailInfoSection({
             )}
           />
           {showRecruitmentMethod ? (
-            <TextAreaFieldRow
+            <RichTextFieldRow
               label={recruitmentMethodLabel}
               showRequiredStar={false}
               isFormEdit={isFormEdit}
               form={f}
+              program={program}
               name="applicationMethod"
               placeholder={recruitmentMethodLabel}
-              control={textFieldControl}
               readContent={program.applicationMethod ?? '-'}
             />
           ) : null}
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="학습 지원 내용"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="learningSupportContent"
             placeholder="학습 지원 내용"
-            control={textFieldControl}
             readContent={resolveTextReadContent(
               program.learningSupportContent,
               emptyReadDisplay,
@@ -764,6 +1005,7 @@ export function DetailInfoSection({
             editorMinHeight={editorMinHeight}
             showRequiredOnTh={false}
             emptyReadDisplay={emptyReadDisplay}
+            form={f}
           />
           <AttachmentRowStandard
             program={program}
@@ -773,6 +1015,9 @@ export function DetailInfoSection({
             displayFileNames={displayFileNames}
             guideLines={ATTACHMENT_GUIDE_LINES}
             emptyReadDisplay={emptyReadDisplay}
+            onNamesChange={setLinkedAttachmentNames}
+            currentTotalBytes={linkedAttachmentTotalBytes}
+            onTotalBytesChange={setLinkedAttachmentTotalBytes}
           />
         </DetailInfoTableFrame>
       </DetailInfoForm>
@@ -805,9 +1050,12 @@ export function InstructorDetailInfoSection({
     setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
+    linkedAttachmentTotalBytes,
+    setLinkedAttachmentTotalBytes,
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
+    setLinkedAttachmentNames,
   } = useDetailInfoEditorBlock(
     program,
     isEditMode,
@@ -821,11 +1069,7 @@ export function InstructorDetailInfoSection({
     emptyReadDisplay,
     '-'
   )
-  const otherNotes = resolveTextReadContent(
-    program.otherNotes ?? program.oneLineIntroduction,
-    emptyReadDisplay,
-    '-'
-  )
+  const otherNotes = resolveTextReadContent(program.otherNotes, emptyReadDisplay, '-')
   const headerDescription = isFormEdit
     ? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.'
     : undefined
@@ -867,11 +1111,12 @@ export function InstructorDetailInfoSection({
               DEFAULT_PROGRAM_DESCRIPTION
             )}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="모집 안내"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="recruitmentGuide"
             placeholder="모집 안내"
             readContent={resolveTextReadContent(
@@ -880,11 +1125,12 @@ export function InstructorDetailInfoSection({
               DEFAULT_RECRUITMENT_GUIDE
             )}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="지원 방법"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="applicationMethod"
             placeholder="지원 방법"
             readContent={applicationMethod}
@@ -898,12 +1144,14 @@ export function InstructorDetailInfoSection({
             editorMinHeight={editorMinHeight}
             showRequiredOnTh={false}
             emptyReadDisplay={emptyReadDisplay}
+            form={f}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="기타사항"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="otherNotes"
             placeholder="기타사항"
             readContent={otherNotes}
@@ -919,6 +1167,9 @@ export function InstructorDetailInfoSection({
               '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
             ]}
             emptyReadDisplay={emptyReadDisplay}
+            onNamesChange={setLinkedAttachmentNames}
+            currentTotalBytes={linkedAttachmentTotalBytes}
+            onTotalBytesChange={setLinkedAttachmentTotalBytes}
           />
         </DetailInfoTableFrame>
       </DetailInfoForm>
@@ -947,6 +1198,8 @@ export function VolunteerDetailInfoSection({
   sectionTitleOnly = false,
   emptyReadDisplay = 'mock-default',
 }: VolunteerDetailInfoSectionProps) {
+  const [uploadingAttachments, setUploadingAttachments] = useState(false)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
   const {
     editorOpen,
     editor,
@@ -957,9 +1210,12 @@ export function VolunteerDetailInfoSection({
     setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
+    linkedAttachmentTotalBytes,
+    setLinkedAttachmentTotalBytes,
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
+    setLinkedAttachmentNames,
   } = useDetailInfoEditorBlock(
     program,
     isEditMode,
@@ -973,11 +1229,7 @@ export function VolunteerDetailInfoSection({
     emptyReadDisplay,
     '-'
   )
-  const otherNotes = resolveTextReadContent(
-    program.otherNotes ?? program.oneLineIntroduction,
-    emptyReadDisplay,
-    '-'
-  )
+  const otherNotes = resolveTextReadContent(program.otherNotes, emptyReadDisplay, '-')
   const headerDescription = !isFormEdit
     ? undefined
     : sectionTitleOnly
@@ -1021,11 +1273,12 @@ export function VolunteerDetailInfoSection({
               DEFAULT_PROGRAM_DESCRIPTION
             )}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="모집 안내"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="recruitmentGuide"
             placeholder="모집 안내"
             readContent={resolveTextReadContent(
@@ -1034,11 +1287,12 @@ export function VolunteerDetailInfoSection({
               DEFAULT_RECRUITMENT_GUIDE
             )}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="지원 방법"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="applicationMethod"
             placeholder="지원 방법"
             readContent={applicationMethod}
@@ -1052,12 +1306,14 @@ export function VolunteerDetailInfoSection({
             editorMinHeight={editorMinHeight}
             showRequiredOnTh={false}
             emptyReadDisplay={emptyReadDisplay}
+            form={f}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="기타사항"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="otherNotes"
             placeholder="기타사항"
             readContent={otherNotes}
@@ -1066,73 +1322,109 @@ export function VolunteerDetailInfoSection({
             <th>첨부 파일</th>
             <td>
               {isEditMode ? (
+                <>
                 <FileSelectField
                   accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                   multiple
-                  disabled={false}
+                  disabled={uploadingAttachments}
+                  uploading={uploadingAttachments}
                   buttonLabel="파일 선택"
                   className="file-select-field--edit"
                   fileNames={displayFileNames}
                   guideLines={ATTACHMENT_GUIDE_LINES}
+                  currentTotalBytes={linkedAttachmentTotalBytes}
                   onFilesChange={
                     isFormEdit
                       ? async files => {
-                          const programId = parseFileObjectId(program.id)
-                          if (programId == null) return
-                          const owner = programDetailAttachmentOwner(programId)
-                          const uploadedIds: number[] = []
-                          for (const file of files) {
-                            const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                            uploadedIds.push(uploaded.fileObjectId)
+                          const owner = programMediaAttachmentOwner(program)
+                          if (owner == null) return
+                          setUploadingAttachments(true)
+                          try {
+                            const uploadedIds: number[] = []
+                            for (const file of files) {
+                              const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                              uploadedIds.push(uploaded.fileObjectId)
+                            }
+                            if (uploadedIds.length === 0) return
+                            const existing = await fetchProgramMediaAttachments(program).catch(
+                              () => []
+                            )
+                            const existingIds = existing
+                              .map(item => item.fileObjectId)
+                              .filter((id): id is number => typeof id === 'number' && id > 0)
+                            const linked = await putProgramMediaAttachments(program, [
+                              ...existingIds,
+                              ...uploadedIds,
+                            ])
+                            const names = linked
+                              .map(item => item.originalFileName?.trim() || '')
+                              .filter(Boolean)
+                            f!.setValue('attachmentFileNames', names)
+                            setLinkedAttachmentNames(names)
+                            setLinkedAttachmentTotalBytes(
+                              linked.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
+                            )
+                            setAttachmentError(null)
+                          } catch (error) {
+                            setAttachmentError(
+                              extractApiErrorMessage(axiosErrorData(error), {
+                                fallback: '첨부파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                              })
+                            )
+                          } finally {
+                            setUploadingAttachments(false)
                           }
-                          if (uploadedIds.length === 0) return
-                          const existing = await fetchProgramAttachments(programId).catch(() => [])
-                          const existingIds = existing
-                            .map(item => item.fileObjectId)
-                            .filter((id): id is number => typeof id === 'number' && id > 0)
-                          const linked = await putProgramAttachments(programId, [
-                            ...existingIds,
-                            ...uploadedIds,
-                          ])
-                          const names = linked
-                            .map(item => item.originalFileName?.trim() || '')
-                            .filter(Boolean)
-                          f!.setValue('attachmentFileNames', names)
                         }
                       : undefined
                   }
                   onRemoveFile={
                     isFormEdit
                       ? index => {
-                          const programId = parseFileObjectId(program.id)
-                          if (programId == null) {
+                          if (!hasProgramMediaTarget(program)) {
                             const list = f!.getValues('attachmentFileNames') ?? []
-                            f!.setValue(
-                              'attachmentFileNames',
-                              list.filter((_, i) => i !== index)
-                            )
+                            const next = list.filter((_, i) => i !== index)
+                            f!.setValue('attachmentFileNames', next)
+                            setLinkedAttachmentNames(next)
                             return
                           }
                           void (async () => {
-                            const existing = await fetchProgramAttachments(programId).catch(
+                            const existing = await fetchProgramMediaAttachments(program).catch(
                               () => []
                             )
                             const remainingIds = existing
                               .map(item => item.fileObjectId)
                               .filter((id): id is number => typeof id === 'number' && id > 0)
                               .filter((_, i) => i !== index)
-                            const linked = await putProgramAttachments(programId, remainingIds).catch(
-                              () => [] as Awaited<ReturnType<typeof putProgramAttachments>>
-                            )
+                            try {
+                            const linked = await putProgramMediaAttachments(program, remainingIds)
                             const names = linked
                               .map(item => item.originalFileName?.trim() || '')
                               .filter(Boolean)
                             f!.setValue('attachmentFileNames', names)
+                            setLinkedAttachmentNames(names)
+                            setLinkedAttachmentTotalBytes(
+                              linked.reduce((sum, item) => sum + (item.fileSize ?? 0), 0)
+                            )
+                            setAttachmentError(null)
+                            } catch (error) {
+                              setAttachmentError(
+                                extractApiErrorMessage(axiosErrorData(error), {
+                                  fallback: '첨부파일을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                                })
+                              )
+                              return
+                            }
                           })()
                         }
                       : undefined
                   }
                 />
+                {attachmentError != null ? (
+                  <p className="text-area-field-row__field-error" role="alert">
+                    {attachmentError}
+                  </p>
+                ) : null}
+                </>
               ) : (
                 <div className="program-detail-info-tab__content-block">
                   {displayFileNames.length > 0 ? displayFileNames.join(', ') : '-'}

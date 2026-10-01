@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from 'react'
 import dayjs from 'dayjs'
 import { shouldShowInstitutionApplicationEducationFormatField } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import { isParticipantSelectionEducationFormInOverlay } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import { shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph } from '@/features/program/general/lib/institution-application-form-visibility'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
@@ -127,6 +128,21 @@ function bridgePartialEqualsCurrent(
     if (!Object.is(prev, next)) return false
   }
   return true
+}
+
+/**
+ * 등록 overlay에서 「희망 교육 형태」 플래그를 다시 계산한다.
+ * overlay가 비면 기존 브리지 값을 유지한다 (프로그램 스텝 overlay reset 대비).
+ */
+export function syncInstitutionApplicationPreferredEducationFormFromOverlay(
+  overlay: Record<string, unknown> | null | undefined
+): void {
+  if (overlay == null || Object.keys(overlay).length === 0) return
+  // 남은 복수회차 online 키 때문에 false로 덮지 않는다. 참여자 선택일 때만 켠다.
+  if (!isParticipantSelectionEducationFormInOverlay(overlay)) return
+  patchInstitutionApplicationProgramBridge({
+    showPreferredEducationForm: true,
+  })
 }
 
 export function patchInstitutionApplicationProgramBridge(

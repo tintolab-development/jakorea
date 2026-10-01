@@ -288,6 +288,42 @@
   opacity: 0.25;
 }
 
+.skeletonMedia {
+  width: 100%;
+  height: 100%;
+  align-self: stretch;
+  flex: 1 1 auto;
+  border-radius: inherit;
+}
+
+.skeletonBadge {
+  width: 72px;
+  height: 26px;
+  border-radius: 999px;
+}
+
+.skeletonTitle {
+  width: 100%;
+  height: 46px;
+  border-radius: var(--radius-8);
+}
+
+.skeletonTarget {
+  width: 60%;
+  height: 20px;
+  border-radius: var(--radius-8);
+}
+
+@media (--bp-pc-up) {
+  .skeletonBadge {
+    height: 32px;
+  }
+
+  .skeletonTitle {
+    height: 86px;
+  }
+}
+
 .cardBody {
   display: flex;
   box-sizing: border-box;

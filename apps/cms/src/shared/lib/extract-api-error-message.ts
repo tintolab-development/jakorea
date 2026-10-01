@@ -73,6 +73,19 @@ export function formatApiErrorAlertContent(data: unknown, options?: { httpStatus
 }
 
 /** 구조화 오류 코드 (`error.code` 또는 top-level `code`) */
+/** `error.field`. 없으면 undefined. */
+export function extractApiErrorField(data: unknown): string | undefined {
+  const envelope = asEnvelope(data)
+  const field = envelope?.error?.field
+  return typeof field === 'string' && field.trim() ? field.trim() : undefined
+}
+
+export function getApiErrorField(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined
+  const data = (error as { response?: { data?: unknown } }).response?.data
+  return extractApiErrorField(data)
+}
+
 export function extractApiErrorCode(data: unknown): string | undefined {
   const envelope = asEnvelope(data)
   const nested = envelope?.error?.code?.trim()

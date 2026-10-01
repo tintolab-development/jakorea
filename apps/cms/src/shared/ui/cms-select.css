@@ -56,8 +56,7 @@
   box-shadow: none !important;
 }
 
-/* CmsSelect는 `allowClear` 비활성 — 혹시 전달되어도 × 숨김 */
-.cms-select .ant-select-clear {
+.cms-select:not(.cms-select--allow-clear) .ant-select-clear {
   display: none !important;
 }
 

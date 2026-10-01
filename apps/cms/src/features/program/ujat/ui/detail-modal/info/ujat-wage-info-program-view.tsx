@@ -2,6 +2,7 @@ import type { Program } from '@/types/domain'
 import { resolveUjatWageInfoDisplay } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { UjatWageInfoFields } from '@/features/program/ujat/ui/detail-modal/info/ujat-wage-info-fields'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
@@ -24,6 +25,7 @@ export function UjatWageInfoProgramView({
           surface="responseEntry"
           titleAligned
           required
+          highlightParagraphId={UJAT_PROGRAM_REGISTRATION_IDS[2]}
         />
       ) : null}
       <DetailInfoForm

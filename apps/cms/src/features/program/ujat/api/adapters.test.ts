@@ -3,7 +3,13 @@ import type { WritingFormDraft } from '@/features/template/model/writing-form-dr
 import type { Program } from '@/types/domain'
 import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
-import { fromDetail, fromListItem, toCreateRequest, toUpdateRequest } from './adapters'
+import {
+  fromDetail,
+  fromListItem,
+  mapUjatProgramRecruitmentsToRequest,
+  toCreateRequest,
+  toUpdateRequest,
+} from './adapters'
 import { shouldRetryQuery } from './errors'
 import { toRemoteListParams } from './list-params'
 import { parseRegistrationSnapshot } from './service-detail'
@@ -158,7 +164,7 @@ describe('UJAT program adapters', () => {
     expect(updated.managerName).toBeUndefined()
   })
 
-  it('공통정보 패치가 모집 라벨을 빼도 existing 라벨의 복수 targetLevels를 컬럼에 올린다', () => {
+  it('공통정보 패치는 컬럼 targetLevels를 유지하고 모집 라벨로 키우지 않는다', () => {
     const existing: Program = {
       ...program,
       targetLevel: 'elementary',
@@ -174,7 +180,7 @@ describe('UJAT program adapters', () => {
       title: '수정된 UJAT',
       generalCommonInfo: { announcementTitle: '수정된 공고' },
     })
-    expect(request.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(request.targetLevels).toEqual(['elementary'])
     expect(request.targetLevel).toBe('elementary')
   })
 
@@ -558,5 +564,61 @@ describe('UJAT API policy', () => {
     expect(shouldRetryQuery(0, { response: { status: 503 } })).toBe(true)
     expect(shouldRetryQuery(1, { response: { status: 503 } })).toBe(true)
     expect(shouldRetryQuery(2, { response: { status: 503 } })).toBe(false)
+  })
+})
+
+describe('mapUjatProgramRecruitmentsToRequest', () => {
+  it('프로그램 봉사자 기간은 상반기 행에만 넣고 하반기 행은 보내지 않는다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      applicationStartDate: '2026-02-01T00:00:00+09:00',
+      applicationEndDate: '2026-02-28T00:00:00+09:00',
+      volunteerApplicationStartDate: '2026-03-01T00:00:00+09:00',
+      volunteerApplicationEndDate: '2026-03-31T00:00:00+09:00',
+      rounds: [
+        {
+          id: 'r1',
+          programId: program.id,
+          roundNumber: 1,
+          startDate: '2026-09-01T00:00:00+09:00',
+          endDate: '2026-09-30T00:00:00+09:00',
+          status: 'active',
+        },
+        {
+          id: 'r2',
+          programId: program.id,
+          roundNumber: 2,
+          startDate: '2026-10-01T00:00:00+09:00',
+          endDate: '2026-10-31T00:00:00+09:00',
+          status: 'active',
+        },
+      ],
+      programRecruitments: [
+        {
+          id: 182211,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          startAt: '2026-02-01T00:00:00+09:00',
+        },
+        {
+          id: 182212,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          startAt: '2026-03-01T00:00:00+09:00',
+          endAt: '2026-03-31T00:00:00+09:00',
+        },
+        {
+          id: 182213,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          startAt: '2026-08-01T00:00:00+09:00',
+          endAt: '2026-08-31T00:00:00+09:00',
+        },
+      ],
+    })
+    const h1 = rows.find(row => row.id === 182212)
+    expect(h1?.startAt).toBe('2026-03-01T00:00:00+09:00')
+    expect(h1?.endAt).toBe('2026-03-31T00:00:00+09:00')
+    expect(rows.some(row => row.id === 182213)).toBe(false)
   })
 })

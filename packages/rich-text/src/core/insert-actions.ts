@@ -4,10 +4,20 @@ import {
   getEmbedUrlFromYoutubeUrl,
   isValidYoutubeUrl,
 } from '@tiptap/extension-youtube'
+import { NodeSelection } from '@tiptap/pm/state'
 import { findEmojiByName } from './emoji-extension'
+import {
+  getRichTextImageFileSize,
+  getRichTextImageTotalBytes,
+  RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
+} from './limits'
+import {
+  RICH_TEXT_INLINE_IMAGE_MAX_BYTES,
+  RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE,
+} from './visible-length'
 
 const IMAGE_ACCEPT = 'image/jpeg,image/jpg,image/png,image/gif,image/webp'
-const IMAGE_MAX_BYTES = 10 * 1024 * 1024
+const IMAGE_MAX_BYTES = RICH_TEXT_INLINE_IMAGE_MAX_BYTES
 
 export function promptImageUrl(): string | null {
   const url = window.prompt('이미지 URL', 'https://')
@@ -58,9 +68,34 @@ export function promptYoutubeUrl(): string | null {
   return trimmed
 }
 
-function applyImageSrc(editor: Editor, src: string, alt?: string): boolean {
+export type ResolvedRichTextImageSrc = string | { src: string; persistSrc?: string }
+
+/** 이 에디터에 크기를 아는 저장 이미지만 합친다. 외부 URL은 크기가 없어 빠진다. */
+export function sumKnownInlineImageBytes(editor: Editor): number {
+  if (editor.isDestroyed) return 0
+  let total = 0
+  editor.state.doc.descendants(node => {
+    if (node.type.name !== 'image') return
+    const size = node.attrs.fileSize
+    if (typeof size === 'number' && Number.isFinite(size) && size > 0) total += size
+  })
+  return total
+}
+
+function applyImageSrc(
+  editor: Editor,
+  src: string,
+  alt?: string,
+  persistSrc?: string,
+  fileSize?: number
+): boolean {
   if (editor.isDestroyed) return false
-  const attrs = { src, alt: alt ?? '' }
+  const attrs = {
+    src,
+    alt: alt ?? '',
+    ...(persistSrc?.trim() ? { persistSrc: persistSrc.trim() } : {}),
+    ...(typeof fileSize === 'number' && fileSize > 0 ? { fileSize } : {}),
+  }
   const ok =
     editor.chain().focus().setImage(attrs).run() ||
     editor.chain().focus().insertContent({ type: 'image', attrs }).run()
@@ -77,30 +112,41 @@ export function insertImageFromUrl(editor: Editor, src: string): void {
 export function insertImageFromFile(
   editor: Editor,
   file: File,
-  resolveSrc?: (file: File) => Promise<string>,
+  resolveSrc?: (file: File) => Promise<ResolvedRichTextImageSrc>,
 ): void {
   if (!IMAGE_ACCEPT.split(',').some(type => file.type === type.trim())) {
     window.alert('JPG, PNG, GIF, WebP 이미지만 삽입할 수 있습니다.')
     return
   }
   if (file.size > IMAGE_MAX_BYTES) {
-    window.alert('이미지는 10MB 이하만 삽입할 수 있습니다.')
+    window.alert('이미지는 20MB 이하만 삽입할 수 있습니다.')
+    return
+  }
+  const selectedImageSize =
+    editor.state.selection instanceof NodeSelection
+      ? getRichTextImageFileSize(editor.state.selection.node)
+      : 0
+  const nextTotalBytes = getRichTextImageTotalBytes(editor) - selectedImageSize + file.size
+  if (nextTotalBytes > RICH_TEXT_IMAGE_MAX_TOTAL_BYTES) {
+    window.alert(RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE)
     return
   }
 
-  const insertResolved = (src: string) => {
-    applyImageSrc(editor, src, file.name)
+  const insertResolved = (src: string, persistSrc?: string) => {
+    applyImageSrc(editor, src, file.name, persistSrc, file.size)
   }
 
   if (resolveSrc) {
     void resolveSrc(file)
-      .then(src => {
+      .then(resolved => {
+        const src = typeof resolved === 'string' ? resolved : resolved.src
+        const persistSrc = typeof resolved === 'string' ? undefined : resolved.persistSrc
         const trimmed = src.trim()
         if (!trimmed || trimmed.startsWith('data:')) {
           window.alert('이미지 주소를 받지 못했습니다. 다시 시도해 주세요.')
           return
         }
-        insertResolved(trimmed)
+        insertResolved(trimmed, persistSrc)
       })
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message.trim() : ''

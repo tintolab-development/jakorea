@@ -7,6 +7,7 @@ import {
   mapGeneralProgramToCreateRequest,
   mapGeneralProgramToUpdateRequest,
 } from '@/features/program/general/api/adapters/general-program-adapters'
+import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { applyRecruitmentAdditionalContentHtml } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import type { Program } from '@/types/domain'
@@ -209,6 +210,51 @@ describe('general-program-adapters', () => {
     expect(program.generalCommonInfo?.announcementTitle).toBe('실제 공고용 프로그램명')
   })
 
+  it('참여자 지원 방법·비고 컬럼이 nested보다 우선하고 null이면 참여자 nested만 비운다', () => {
+    const kept = mapAdminProgramDetailToProgram({
+      id: '1',
+      title: 't',
+      applicationMethod: '온라인 신청',
+      remarks: '참여자 비고',
+      serviceDetailJson: JSON.stringify({
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            applicationMethod: '옛 지원',
+            remarks: '옛 비고',
+          },
+          instructorRecruitmentInfo: {
+            applicationMethod: '강사 지원',
+            remarks: '강사 비고',
+          },
+        },
+      }),
+    } as unknown as ProgramResponse)
+    expect(kept.applicationMethod).toBe('온라인 신청')
+    expect(kept.remarks).toBe('참여자 비고')
+    expect(kept.generalCommonInfo?.instructorRecruitmentInfo?.applicationMethod).toBe('강사 지원')
+
+    const cleared = mapAdminProgramDetailToProgram({
+      id: '1',
+      title: 't',
+      applicationMethod: null,
+      remarks: null,
+      serviceDetailJson: JSON.stringify({
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            applicationMethod: '옛 지원',
+            remarks: '옛 비고',
+          },
+          instructorRecruitmentInfo: { applicationMethod: '강사 지원' },
+        },
+      }),
+    } as unknown as ProgramResponse)
+    expect(cleared.applicationMethod).toBeUndefined()
+    expect(cleared.remarks).toBeUndefined()
+    expect(cleared.generalCommonInfo?.participantRecruitmentInfo?.applicationMethod).toBeUndefined()
+    expect(cleared.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBeUndefined()
+    expect(cleared.generalCommonInfo?.instructorRecruitmentInfo?.applicationMethod).toBe('강사 지원')
+  })
+
   it('mapGeneralApiProgramTypeToAudience covers GENERAL_* values', () => {
     expect(mapGeneralApiProgramTypeToAudience('GENERAL_INDIVIDUAL')).toEqual({
       audience: 'individual',
@@ -388,6 +434,60 @@ describe('general-program-adapters', () => {
     )
   })
 
+  it('create 행 담당자·비고는 각 모집 탭 정보에서 가져오고 managerName·기타사항을 쓰지 않는다', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      managerName: '프로그램 담당자',
+      contactPhone: '010-0000-0000',
+      contactEmail: 'program@jakorea.org',
+      otherNotes: '우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor', 'volunteer'],
+      volunteerApplicationStartDate: '2026-09-18T15:00:00.000Z',
+      volunteerApplicationEndDate: '2026-09-21T15:00:00.000Z',
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactOrganizationName: '최수아',
+          contactPhone: '02-512-3456',
+          contactEmail: 'edu.team@jakorea.org',
+          remarks: '참여기관 비고',
+        },
+        instructorRecruitmentInfo: {
+          contactOrganizationName: '강사 담당',
+          remarks: '신청 전 학교 담당 교사 확인이 필요합니다.',
+          otherMatters: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+        },
+        volunteerRecruitmentInfo: {
+          contactOrganizationName: '정민재',
+          contactPhone: '010-6234-7890',
+          remarks: '봉사자 비고',
+          otherMatters: '봉사자 기타사항',
+        },
+      },
+    })
+
+    const org = request.recruitments?.find(row => row.targetType === 'ORGANIZATION')
+    const instructor = request.recruitments?.find(row => row.recruitmentType === 'INSTRUCTOR')
+    const volunteer = request.recruitments?.find(row => row.recruitmentType === 'VOLUNTEER')
+    expect(org).toMatchObject({
+      contactName: '최수아',
+      contactPhone: '02-512-3456',
+      contactEmail: 'edu.team@jakorea.org',
+      remarks: '참여기관 비고',
+    })
+    expect(instructor).toMatchObject({
+      remarks: '신청 전 학교 담당 교사 확인이 필요합니다.',
+      otherMatters: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+    })
+    expect(volunteer).toMatchObject({
+      contactName: '정민재',
+      contactPhone: '010-6234-7890',
+      remarks: '봉사자 비고',
+      otherMatters: '봉사자 기타사항',
+    })
+    expect(volunteer?.contactEmail).toBeUndefined()
+  })
+
   it('sends targetLevels array on create and update (not only targetLevel[0])', () => {
     const multi: Program = {
       ...sampleProgram,
@@ -405,7 +505,7 @@ describe('general-program-adapters', () => {
     expect(update.targetLevel).toBe('university')
   })
 
-  it('create/update는 모집 라벨의 복수 교육 대상을 targetLevels 컬럼에 올린다', () => {
+  it('create/update는 컬럼 targetLevels를 모집 라벨로 확대하지 않는다', () => {
     const program: Program = {
       ...sampleProgram,
       targetLevel: 'elementary',
@@ -417,17 +517,31 @@ describe('general-program-adapters', () => {
       },
     }
     const create = mapGeneralProgramToCreateRequest(program)
-    expect(create.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(create.targetLevels).toEqual(['elementary'])
     expect(create.targetLevel).toBe('elementary')
 
     const update = mapGeneralProgramToUpdateRequest(program, {
       generalCommonInfo: program.generalCommonInfo,
     })
-    expect(update.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(update.targetLevels).toEqual(['elementary'])
     expect(update.targetLevel).toBe('elementary')
   })
 
-  it('공통정보 패치가 모집 라벨을 빼도 existing 라벨의 복수 targetLevels를 컬럼·JSON에 올린다', () => {
+  it('축소 선택은 기존 복수 배열을 요청 배열로 교체한다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      targetLevel: 'university',
+      targetLevels: ['university', 'elementary'],
+    }
+    const request = mapGeneralProgramToUpdateRequest(existing, {
+      targetLevels: ['elementary'],
+      targetLevel: 'elementary',
+    })
+    expect(request.targetLevels).toEqual(['elementary'])
+    expect(request.targetLevel).toBe('elementary')
+  })
+
+  it('공통정보 패치는 컬럼 targetLevels를 유지하고 모집 라벨로 키우지 않는다', () => {
     const existing: Program = {
       ...sampleProgram,
       targetLevel: 'elementary',
@@ -445,7 +559,7 @@ describe('general-program-adapters', () => {
       title: '수정된 대표명',
       generalCommonInfo: { announcementTitle: '수정된 공고' },
     })
-    expect(request.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(request.targetLevels).toEqual(['elementary'])
     expect(request.targetLevel).toBe('elementary')
     const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
       targetLevels?: string[]
@@ -456,14 +570,14 @@ describe('general-program-adapters', () => {
         targetLevel?: string
       }
     }
-    expect(detail.targetLevels).toEqual(['elementary', 'middle', 'university'])
-    expect(detail.program?.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(detail.targetLevels).toEqual(['elementary'])
+    expect(detail.program?.targetLevels).toEqual(['elementary'])
     expect(detail.generalCommonInfo?.targetLevels).toBeUndefined()
     expect(detail.generalCommonInfo?.targetLevel).toBeUndefined()
     expect(detail.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
   })
 
-  it('상세 hydrate는 컬럼 1개여도 모집 라벨 복수를 targetLevels에 올린다', () => {
+  it('상세 hydrate는 컬럼 배열을 모집 라벨로 확대하지 않는다', () => {
     const program = mapAdminProgramDetailToProgram({
       id: '186023',
       title: '개인 커리큘럼 복수 2회차',
@@ -479,7 +593,28 @@ describe('general-program-adapters', () => {
         },
       }),
     } as unknown as ProgramResponse)
-    expect(program.targetLevels).toEqual(['elementary', 'middle', 'university'])
+    expect(program.targetLevels).toEqual(['elementary'])
+    expect(program.targetLevel).toBe('elementary')
+  })
+
+  it('빈 targetLevels는 stale targetLevel로 되살리지 않는다', () => {
+    const listed = mapAdminProgramListItemToProgram({
+      id: 186037,
+      title: '축소',
+      targetLevels: [],
+      targetLevel: 'university',
+    } as AdminProgramListItemDto)
+    expect(listed.targetLevels ?? []).toEqual([])
+    expect(listed.targetLevel).toBeUndefined()
+
+    const detail = mapAdminProgramDetailToProgram({
+      id: '186037',
+      title: '축소',
+      targetLevels: [],
+      targetLevel: 'university',
+    } as unknown as ProgramResponse)
+    expect(detail.targetLevels).toEqual([])
+    expect(detail.targetLevel).toBeUndefined()
   })
 
   it('hydrates detail targetLevels from ProgramResponse top-level array', () => {
@@ -899,7 +1034,11 @@ describe('general-program-adapters', () => {
     )
     const request = mapGeneralProgramToUpdateRequest({ ...existing, ...patch }, patch)
 
-    expect(request.additionalContentHtml).toBe(html)
+    expect(request.additionalContentHtml).toBeUndefined()
+    const participantRow = request.recruitments?.find(row => row.recruitmentType === 'PARTICIPANT')
+    if (existing.programRecruitments?.some(row => row.recruitmentType === 'PARTICIPANT')) {
+      expect(participantRow?.additionalContentHtml).toBe(html)
+    }
     expect(request.serviceDetailJson).toBeTruthy()
     const parsed = JSON.parse(request.serviceDetailJson!) as {
       generalCommonInfo?: {
@@ -909,5 +1048,46 @@ describe('general-program-adapters', () => {
     }
     expect(parsed.generalCommonInfo?.participantRecruitmentInfo?.additionalContentHtml).toBe(html)
     expect(parsed.registration?.overlay?.['recruit.detailInfo.additionalContentHtml']).toBe(html)
+  })
+
+  it('모집 패치의 applicationMethod·remarks만 컬럼으로 보내고 otherNotes와 섞지 않는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      applicationMethod: '방문 접수',
+      remarks: '기존 비고',
+      otherNotes: '기존 기타',
+    }
+    const sent = mapGeneralProgramToUpdateRequest(existing, {
+      applicationMethod: '온라인 신청',
+      remarks: '수정 비고',
+    })
+    expect(sent.applicationMethod).toBe('온라인 신청')
+    expect(sent.remarks).toBe('수정 비고')
+    expect(sent.otherMatters).toBeUndefined()
+
+    const untouched = mapGeneralProgramToUpdateRequest(existing, { title: '제목만' })
+    expect(untouched.applicationMethod).toBeUndefined()
+    expect(untouched.remarks).toBeUndefined()
+
+    const otherOnly = mapGeneralProgramToUpdateRequest(existing, { otherNotes: '기타만' })
+    expect(otherOnly.remarks).toBeUndefined()
+    expect(otherOnly.otherMatters).toBe('기타만')
+    expect(otherOnly.applicationMethod).toBeUndefined()
+  })
+
+  it('지원 방법·비고를 비우면 clearFields에만 싣는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      applicationMethod: '방문 접수',
+      remarks: '기존 비고',
+    }
+    const request = mapGeneralProgramToUpdateRequest(existing, {
+      applicationMethod: '  ',
+      remarks: undefined,
+      generalCommonInfo: { participantRecruitmentInfo: { remarks: undefined } },
+    })
+    expect(request.applicationMethod).toBeUndefined()
+    expect(request.remarks).toBeUndefined()
+    expect(request.clearFields).toEqual(expect.arrayContaining(['applicationMethod', 'remarks']))
   })
 })

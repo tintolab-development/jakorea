@@ -4,6 +4,12 @@ import {
 } from '@/features/notifications/api/adapters/sms-delivery-adapters'
 import { smsSendHistoryParamsFromSearchParams } from '@/features/notifications/api/sms-send-history-filter-params'
 import {
+  emptySendHistoryListPage,
+  toSendHistoryListPage,
+  withSendHistoryPaging,
+  type SendHistoryListPage,
+} from '@/features/notifications/api/delivery-list-page'
+import {
   fetchNotificationDeliveriesRemote,
   fetchNotificationDeliveryRemote,
 } from '@/features/notifications/api/notifications-api-client'
@@ -17,14 +23,15 @@ export function shouldUseSmsSendHistoryRemoteApi(): boolean {
 
 /** 문자 발송 조회 — SMS channel */
 export async function getSmsSendHistoryList(
-  searchParams: URLSearchParams
-): Promise<SmsSendHistoryRow[]> {
-  if (!shouldUseSmsSendHistoryRemoteApi()) return []
+  searchParams: URLSearchParams,
+  page = 0
+): Promise<SendHistoryListPage<SmsSendHistoryRow>> {
+  if (!shouldUseSmsSendHistoryRemoteApi()) return emptySendHistoryListPage(page)
 
   const dto = await fetchNotificationDeliveriesRemote(
-    smsSendHistoryParamsFromSearchParams(searchParams)
+    withSendHistoryPaging(smsSendHistoryParamsFromSearchParams(searchParams), page)
   )
-  return mapSmsDeliveryListResponse(dto.items)
+  return toSendHistoryListPage(dto, page, mapSmsDeliveryListResponse)
 }
 
 export async function getSmsSendHistoryDetail(

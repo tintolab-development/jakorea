@@ -137,6 +137,7 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
       title: '단원1',
       description: '내용1',
     })
+    expect(next.generalCommonInfo?.scheduleDetails).toEqual([])
     expect(next.generalCommonInfo?.educationFormLabel).toBeTruthy()
     expect(next.generalCommonInfo?.participationMethod).toBeUndefined()
     expect(next.type).toBe('offline')
@@ -168,6 +169,76 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
       }
     )
     expect(next.generalCommonInfo?.participationMethod).toBe('team')
+  })
+
+  it('복수 회차 extras여도 단원 맵이 더 많으면 교육 진행을 단원 맵으로 저장한다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+        generalProgramSessionRound: 'multi',
+        generalCommonInfo: {
+          ...baseProgram().generalCommonInfo,
+          curriculumSessions: [
+            {
+              sessionLabel: '1회차',
+              title: '1차시',
+              description: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+              assignmentEnabled: true,
+              assignmentPeriod: '26년 10월 13일(화) 10:00 ~ 12:00',
+              ipsTypeSummary: 'Succeed | Competition (대회+시상)',
+            },
+          ],
+        },
+      },
+      {
+        'generalRegistration.educationCurriculum.unitNameBySession': {
+          1: '개인 커리큘럼 단일1',
+          2: '개인 커리큘럼 단일2',
+        },
+        'generalRegistration.educationCurriculum.unitContentBySession': {
+          1: '개인 커리큘럼 단일11',
+          2: '개인 커리큘럼 단일22',
+        },
+        'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+        'generalRegistration.educationCurriculum.roundContentByRound': {
+          1: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',
+        },
+        'generalRegistration.educationCurriculum.ipsBySession': {
+          1: { category: 'succeed', detail: 'competition' },
+          2: { category: 'prepare', detail: 'none' },
+        },
+        'generalRegistration.educationCurriculum.assignmentByRound': {
+          1: { enabled: true, period: '26년 10월 13일(화) 10:00 ~ 12:00' },
+        },
+      },
+      {
+        programType: 'curriculum',
+        sessionRoundType: 'multi',
+        educationFormScheduleDetail: 'common',
+        participationScheduleDetail: 'common',
+        ipsScheduleDetail: 'perSchedule',
+        curriculumSessionCount: 1,
+        curriculumChartSessionCount: 1,
+        participantOrganization: false,
+      }
+    )
+
+    expect(next.generalCommonInfo?.curriculumSessions).toEqual([
+      expect.objectContaining({
+        sessionLabel: '1회차',
+        title: '개인 커리큘럼 단일1',
+        description: '개인 커리큘럼 단일11',
+        ipsTypeSummary: expect.stringMatching(/Succeed/),
+      }),
+      expect.objectContaining({
+        sessionLabel: '2회차',
+        title: '개인 커리큘럼 단일2',
+        description: '개인 커리큘럼 단일22',
+        ipsTypeSummary: expect.stringMatching(/Prepare/),
+      }),
+    ])
   })
 
   it('defaults partner yes and payment 해당없음 when overlay keys are missing', () => {
@@ -456,6 +527,7 @@ describe('일정형 사전 교육 overlay 교육 형태', () => {
       }
     )
 
+    expect(next.generalCommonInfo?.curriculumSessions).toEqual([])
     expect(next.generalCommonInfo?.scheduleDetails?.[0]).toEqual(
       expect.objectContaining({
         scheduleLabel: '사전 교육',

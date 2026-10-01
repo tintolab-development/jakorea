@@ -13,6 +13,8 @@ export type RichTextEditorContentType = RichTextContentFormat
 export type RichTextEditorApi = {
   getMarkdown: () => string
   getHTML: () => string
+  getCharacterCount: () => number
+  getImageTotalBytes: () => number
   insertText: (text: string) => void
   focus: () => void
   blur: () => void
@@ -27,5 +29,7 @@ export type CreateRichTextExtensionsOptions = {
   /** 앱별 추가 확장 (메일 변수 atom 등) */
   extraExtensions?: Extensions
   /** 드롭·붙여넣기 시점에 업로드 함수를 읽는다. 없으면 data URL */
-  getResolveImageSrc?: () => ((file: File) => Promise<string>) | undefined
+  getResolveImageSrc?: () =>
+    | ((file: File) => Promise<import('./insert-actions').ResolvedRichTextImageSrc>)
+    | undefined
 }

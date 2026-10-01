@@ -14,6 +14,10 @@ type RegistrationWizardSessionDraft = {
 
 const sessionDrafts = new Map<string, RegistrationWizardSessionDraft>()
 
+const applicationDraftListeners = new Set<
+  (templateCode: string, draft: WritingFormDraft) => void
+>()
+
 export function rememberRegistrationWizardSessionDraft(
   entry: RegistrationWizardSessionDraft
 ): void {
@@ -26,8 +30,39 @@ export function rememberRegistrationWizardSessionDraft(
   })
 }
 
+/** 개발용 자동입력이 신청 draft를 넣었을 때, 열려 있는 신청 편집기에 알린다. */
+export function publishRegistrationWizardApplicationDraft(
+  entry: RegistrationWizardSessionDraft
+): void {
+  rememberRegistrationWizardSessionDraft(entry)
+  const stored = sessionDrafts.get(entry.templateCode)
+  if (stored == null) return
+  for (const listener of applicationDraftListeners) {
+    listener(stored.templateCode, stored.draft)
+  }
+}
+
+export function subscribeRegistrationWizardApplicationDraft(
+  listener: (templateCode: string, draft: WritingFormDraft) => void
+): () => void {
+  applicationDraftListeners.add(listener)
+  return () => {
+    applicationDraftListeners.delete(listener)
+  }
+}
+
 export function clearRegistrationWizardSessionDrafts(): void {
   sessionDrafts.clear()
+}
+
+export function peekRegistrationWizardSessionDrafts(): ReadonlyArray<{
+  templateCode: string
+  draft: WritingFormDraft
+}> {
+  return [...sessionDrafts.values()].map(entry => ({
+    templateCode: entry.templateCode,
+    draft: entry.draft,
+  }))
 }
 
 export function flushApplicationOperationalOverrides(args: {

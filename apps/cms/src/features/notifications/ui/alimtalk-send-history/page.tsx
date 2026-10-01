@@ -3,6 +3,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { SEND_HISTORY_FILTER_FIELDS } from '@/features/notifications/model/alimtalk-send-history/filter-fields'
 import { formatDeliveryDateTimeSeoul } from '@/features/notifications/model/alimtalk-send-history/format-datetime'
 import {
@@ -43,7 +44,22 @@ function formatReservedAt(value: string | null | undefined, timing: string): str
 export function Page() {
   const [searchParams, setSearchParams] = useSearchParams()
   const appliedFilters = useMemo(() => readSendHistoryFiltersFromParams(searchParams), [searchParams])
-  const { data: rows = [], isLoading } = useAlimtalkSendHistoryQuery(searchParams)
+  const {
+    rows,
+    totalCount,
+    searchParamsKey,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useAlimtalkSendHistoryQuery(searchParams)
+  const displayTotal = totalCount ?? rows.length
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: searchParamsKey,
+  })
   const [pendingFilters, setPendingFilters] = useState<AlimtalkSendHistoryPendingFilters>(appliedFilters)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
 
@@ -75,7 +91,8 @@ export function Page() {
         align: 'center',
         className: 'alimtalk-send-history-page__col-no',
         onHeaderCell: () => ({ className: 'alimtalk-send-history-page__col-no' }),
-        render: (_: unknown, __: AlimtalkSendHistoryRow, index: number) => rows.length - index,
+        render: (_: unknown, __: AlimtalkSendHistoryRow, index: number) =>
+          displayTotal === 0 ? '-' : displayTotal - index,
       },
       {
         title: '요청일시',
@@ -165,7 +182,7 @@ export function Page() {
         render: (value: string, row) => formatReservedAt(value, row.broadcastTiming),
       },
     ],
-    [rows.length]
+    [displayTotal]
   )
 
   return (
@@ -181,7 +198,7 @@ export function Page() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="알림톡 발송 조회"
-        description={`총 ${rows.length.toLocaleString()}건`}
+        description={`총 ${displayTotal.toLocaleString()}건`}
         contentLoading={isLoading}
       >
         <Table<AlimtalkSendHistoryRow>
@@ -197,6 +214,7 @@ export function Page() {
             onClick: () => setSelectedRowId(record.id),
           })}
         />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
       <DetailModal
         open={selectedRowId != null}

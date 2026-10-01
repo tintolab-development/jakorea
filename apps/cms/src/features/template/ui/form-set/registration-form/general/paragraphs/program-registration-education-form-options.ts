@@ -95,15 +95,68 @@ const MULTI_COMMON_EDUCATION_FORM_KEY =
   'generalRegistration.typeSettings.multiCommonEducationForm' as const
 const SINGLE_EDUCATION_FORM_KEY =
   'generalRegistration.typeSettings.singleEducationForm' as const
+const LEGACY_EDUCATION_FORM_KEY =
+  'generalRegistration.typeSettings.educationForm' as const
 const MULTI_COMMON_PARTICIPATION_KEY =
   'generalRegistration.typeSettings.multiCommonParticipation' as const
 const SINGLE_PARTICIPATION_KEY =
   'generalRegistration.typeSettings.singleParticipation' as const
 
+const PER_SCHEDULE_EDUCATION_FORM_OVERLAY_KEYS = [
+  'generalRegistration.educationCurriculum.educationFormBySession',
+  'generalRegistration.educationScheduleCurriculum.educationFormByDetail',
+] as const
+
 function overlayNonEmptyText(overlay: Record<string, unknown>, key: string): string {
   const raw = overlay[key]
   if (typeof raw === 'string' && raw.trim()) return raw.trim()
   return ''
+}
+
+function overlayValueHasParticipantSelection(value: unknown): boolean {
+  if (typeof value === 'string') {
+    return isParticipantSelectionEducationFormValue(value)
+  }
+  if (value == null || typeof value !== 'object') return false
+  return Object.values(value).some(
+    entry => typeof entry === 'string' && isParticipantSelectionEducationFormValue(entry)
+  )
+}
+
+function isParticipantSelectionEducationFormValue(value: string): boolean {
+  const trimmed = value.trim()
+  return (
+    trimmed === EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE ||
+    trimmed === 'participant_choice' ||
+    trimmed.includes('참여자')
+  )
+}
+
+/**
+ * 등록 overlay가 「참여자 선택」인지.
+ * 단일/복수/레거시 키를 OR로 본다. 복수회차에 남은 `online`이
+ * 단일 회차 `participant_selection`을 가리면 안 된다.
+ * 일정별 회차/세부 맵 중 하나라도 해당하면 true.
+ */
+export function isParticipantSelectionEducationFormInOverlay(
+  overlay: Record<string, unknown> | null | undefined
+): boolean {
+  if (overlay == null) return false
+  const commonKeys = [
+    MULTI_COMMON_EDUCATION_FORM_KEY,
+    SINGLE_EDUCATION_FORM_KEY,
+    LEGACY_EDUCATION_FORM_KEY,
+  ] as const
+  if (
+    commonKeys.some(key =>
+      isParticipantSelectionEducationFormValue(overlayNonEmptyText(overlay, key))
+    )
+  ) {
+    return true
+  }
+  return PER_SCHEDULE_EDUCATION_FORM_OVERLAY_KEYS.some(key =>
+    overlayValueHasParticipantSelection(overlay[key])
+  )
 }
 
 /**

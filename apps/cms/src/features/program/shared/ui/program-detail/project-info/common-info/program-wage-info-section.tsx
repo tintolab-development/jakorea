@@ -330,22 +330,21 @@ export function ProgramWageInfoSection({
         form.setValue(row.longDistanceField, apiRow.longDistanceValue)
       }
     }
-    if (!current.wagePaymentItemIds?.length) {
-      const savedTokens = program?.generalCommonInfo?.paymentItems
-        ?.split(',')
-        .map(part => part.trim())
-        .filter(Boolean)
-      const matchedIds = (savedTokens ?? [])
-        .map(
-          token =>
-            companySchoolPaymentItemOptions.find(
-              opt => opt.value === token || opt.label === token
-            )?.value
-        )
-        .filter((id): id is string => Boolean(id))
-      if (matchedIds.length > 0) {
-        form.setValue('wagePaymentItemIds', matchedIds)
-      }
+    if (current.wagePaymentItemIds !== undefined) return
+    const savedTokens = program?.generalCommonInfo?.paymentItems
+      ?.split(',')
+      .map(part => part.trim())
+      .filter(Boolean)
+    const matchedIds = (savedTokens ?? [])
+      .map(
+        token =>
+          companySchoolPaymentItemOptions.find(
+            opt => opt.value === token || opt.label === token
+          )?.value
+      )
+      .filter((id): id is string => Boolean(id))
+    if (matchedIds.length > 0) {
+      form.setValue('wagePaymentItemIds', matchedIds)
     }
   }, [isCompanySchool, isFormEdit, form, program, companySchoolPaymentItemOptions])
 
@@ -465,12 +464,12 @@ export function ProgramWageInfoSection({
                       <CmsSelect
                         width={96}
                         style={{ flexShrink: 0 }}
-                        value={field.value || '시간'}
+                        withAllOption={false}
+                        placeholder="단위"
+                        value={field.value || undefined}
                         options={PROGRAM_WAGE_PRICING_MEASURE_OPTIONS}
                         onChange={v => {
-                          field.onChange(
-                            v === '' || v == null ? '시간' : (v as string)
-                          )
+                          field.onChange(v === '' || v == null ? '' : (v as string))
                           syncWagePricingTimeUnit(form)
                         }}
                       />

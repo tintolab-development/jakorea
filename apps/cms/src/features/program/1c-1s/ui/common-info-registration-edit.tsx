@@ -21,6 +21,7 @@ import {
   ProgramCommonInfoEditSection,
   ProgramCommonInfoEditSections,
 } from '@/features/program/shared/ui/program-detail/common-info-edit-section'
+import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
@@ -75,6 +76,7 @@ export function CompanySchoolCommonInfoRegistrationEdit({ program }: { program: 
       <ProgramCommonInfoEditSection
         title="기본 정보"
         required
+        highlightParagraphId={PROGRAM_REGISTRATION_IDS.basicInfo}
         bodyClassName="program-common-info-edit__section-body--stacked"
       >
         <ProgramCommonInfoEditRegistrationAuditForm program={program} />
@@ -85,19 +87,32 @@ export function CompanySchoolCommonInfoRegistrationEdit({ program }: { program: 
           onTeacherInstructorChange={noop}
         />
       </ProgramCommonInfoEditSection>
-      <ProgramCommonInfoEditSection title="사업 KPI 목표" required>
+      <ProgramCommonInfoEditSection
+        title="사업 KPI 목표"
+        required
+        highlightParagraphId={PROGRAM_REGISTRATION_IDS.businessKpi}
+      >
         <OneCOneSRegistrationBusinessKpiParagraph />
       </ProgramCommonInfoEditSection>
-      <ProgramCommonInfoEditSection title="임금 정보" required>
+      <ProgramCommonInfoEditSection
+        title="임금 정보"
+        required
+        highlightParagraphId={PROGRAM_REGISTRATION_IDS.wageInfo}
+      >
         <OneCOneSRegistrationWageInfoParagraph />
       </ProgramCommonInfoEditSection>
-      <ProgramCommonInfoEditSection title="교육 진행 (커리큘럼)" required>
+      <ProgramCommonInfoEditSection
+        title="교육 진행 (커리큘럼)"
+        required
+        highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationCurriculum}
+      >
         <OneCOneSRegistrationEducationCurriculumParagraph />
       </ProgramCommonInfoEditSection>
       <ProgramCommonInfoEditSection
         title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.title}
         description={PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription}
         required
+        highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationScheduleSettings}
         titleTrailing={<CompanySchoolEducationScheduleChangeAction program={program} />}
       >
         <OneCOneSRegistrationEducationScheduleSettingsParagraph

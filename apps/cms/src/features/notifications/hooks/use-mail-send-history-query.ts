@@ -1,8 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  DELIVERY_LIST_POST_SEND_POLL_INTERVAL_MS,
-  markNotificationDeliveryListAwaitingDispatch,
-} from '@/features/notifications/api/delivery-list-refresh'
+import { markNotificationDeliveryListAwaitingDispatch } from '@/features/notifications/api/delivery-list-refresh'
 import {
   getMailSendHistoryDetail,
   getMailSendHistoryList,
@@ -10,25 +7,18 @@ import {
 import { notificationsQueryKeys } from '@/features/notifications/api/notifications-query-keys'
 import { mailSendHistorySearchParamsKey } from '@/features/notifications/api/send-history-search-params-key'
 import { useDeliveryListShortPoll } from '@/features/notifications/hooks/use-delivery-list-short-poll'
-
-/** Class E — soft nav 캐시 hit 금지 · 발송 직후 dispatch 지연 흡수 */
-const LIST_QUERY_OPTIONS = {
-  staleTime: 0,
-  refetchOnMount: 'always' as const,
-  refetchOnWindowFocus: true,
-  retry: false as const,
-}
+import { useInfiniteSendHistoryQuery } from '@/features/notifications/hooks/use-infinite-send-history'
 
 export function useMailSendHistoryQuery(searchParams: URLSearchParams, enabled = true) {
   const searchParamsKey = mailSendHistorySearchParamsKey(searchParams)
   const shortPoll = useDeliveryListShortPoll('mail')
 
-  return useQuery({
+  return useInfiniteSendHistoryQuery({
     queryKey: notificationsQueryKeys.mailSendHistory.list(searchParamsKey),
-    queryFn: () => getMailSendHistoryList(new URLSearchParams(searchParamsKey)),
+    queryKeyIdentity: searchParamsKey,
+    queryFn: page => getMailSendHistoryList(new URLSearchParams(searchParamsKey), page),
     enabled,
-    ...LIST_QUERY_OPTIONS,
-    refetchInterval: shortPoll ? DELIVERY_LIST_POST_SEND_POLL_INTERVAL_MS : false,
+    shortPoll,
   })
 }
 

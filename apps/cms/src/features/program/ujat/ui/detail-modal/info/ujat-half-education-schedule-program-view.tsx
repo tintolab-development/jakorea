@@ -8,6 +8,7 @@ import {
   type UjatHalfSemesterKey,
 } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
 import { HalfEducationScheduleSection } from '@/features/program/shared/ui/half-education-schedule-section'
+import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
 import './ujat-half-education-schedule.css'
@@ -42,6 +43,9 @@ export function UjatHalfEducationScheduleProgramView({
           surface="responseEntry"
           titleAligned
           required
+          highlightParagraphId={
+            half === 'h1' ? UJAT_PROGRAM_REGISTRATION_IDS[3] : UJAT_PROGRAM_REGISTRATION_IDS[4]
+          }
         />
       ) : (
         <div className="ujat-half-education-schedule-program-view__header">

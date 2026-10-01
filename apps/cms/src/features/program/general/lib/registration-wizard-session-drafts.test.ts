@@ -5,7 +5,8 @@ import { createRecruitFormInstructorDraft } from '@/features/template/model/recr
 import {
   clearRegistrationWizardSessionDrafts,
   flushApplicationOperationalOverrides,
-  rememberRegistrationWizardSessionDraft,
+    rememberRegistrationWizardSessionDraft,
+    peekRegistrationWizardSessionDrafts,
 } from './registration-wizard-session-drafts'
 
 describe('registration wizard session drafts', () => {
@@ -53,6 +54,17 @@ describe('registration wizard session drafts', () => {
     expect(overrides[1]?.draft.paragraphs[0]?.paragraphTitle).toBe('봉사자 신청 수정')
     expect(overrides[1]?.overlay).toEqual({ 'application.volunteer.interview': [] })
     expect(overrides[1]?.editorState).toEqual({ volunteerExceptionScheduleCount: 2 })
+  })
+
+  it('peeks remembered application drafts without flushing', () => {
+    const institution = createProgramApplicationFormInstitutionDraft()
+    rememberRegistrationWizardSessionDraft({
+      templateCode: 'application-participant-school',
+      draft: institution,
+    })
+    expect(peekRegistrationWizardSessionDrafts()).toEqual([
+      { templateCode: 'application-participant-school', draft: institution },
+    ])
   })
 
   it('replaces the active application tab with the draft passed at complete time', () => {

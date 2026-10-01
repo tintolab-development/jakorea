@@ -6,6 +6,11 @@
 import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
 import { putProgramAttachments } from '@/features/program/shared/api/program-attachments'
 import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
+import {
+  putProgramRecruitmentAttachments,
+  putProgramRecruitmentThumbnail,
+} from '@/features/program/shared/api/program-recruitment-rows'
+import type { Program } from '@/types/domain'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { RECRUIT_DETAIL_INFO_OVERLAY_PREFIX } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 
@@ -94,7 +99,8 @@ export type RecruitDetailMediaFromOverlay = {
 
 /** canonical `recruit.detailInfo.*` + 유형별 prefix 별칭에서 미디어 필드 수집 */
 export function readRecruitDetailMediaFromOverlay(
-  overlay: Record<string, unknown>
+  overlay: Record<string, unknown>,
+  prefixes: readonly string[] = PARTICIPANT_DETAIL_INFO_PREFIXES
 ): RecruitDetailMediaFromOverlay {
   let keyVisualImage: string | undefined
   let thumbFileObjectId: number | undefined
@@ -102,7 +108,7 @@ export function readRecruitDetailMediaFromOverlay(
   let attachmentFileNames: string[] | undefined
   let attachmentFileObjectIds: number[] | undefined
 
-  for (const prefix of PARTICIPANT_DETAIL_INFO_PREFIXES) {
+  for (const prefix of prefixes) {
     if (!keyVisualImage) {
       const url = overlay[recruitDetailThumbContentUrlKey(prefix)]
       if (typeof url === 'string' && url.trim() && !url.startsWith('blob:')) {
@@ -140,7 +146,7 @@ export function readRecruitDetailMediaFromOverlay(
 /**
  * 프로그램 생성 직후 — staging 업로드 파일을 실제 programId 에 연결.
  * 첨부는 PUT /programs/{id}/attachments (포털 GENERAL 첨부 SSOT).
- * 실패해도 생성 자체는 유지 (호출부에서 catch).
+ * 실패하면 호출부가 방금 만든 프로그램을 삭제하고 등록을 완료하지 않는다.
  */
 export async function bindRecruitDetailMediaAfterProgramCreate(
   programId: string,
@@ -157,4 +163,40 @@ export async function bindRecruitDetailMediaAfterProgramCreate(
   const attachmentIds = media.attachmentFileObjectIds ?? []
   if (attachmentIds.length === 0) return
   await putProgramAttachments(numericId, attachmentIds)
+}
+
+const GENERAL_ROW_DETAIL_INFO_PREFIX: Record<string, string> = {
+  PARTICIPANT: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution,
+  INSTRUCTOR: 'recruitInstructor.detailInfo',
+  VOLUNTEER: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer,
+}
+
+/**
+ * 일반 프로그램 생성 직후 — 모집 양식별 썸네일·첨부를 해당 모집 행에 연결한다.
+ * 같은 유형 행이 여럿이면(기관·개인 참여자) 같은 양식 파일을 각 행에 넣는다.
+ * 행 id가 없으면 프로그램 단위로 연결한다.
+ */
+export async function bindGeneralRecruitDetailMediaToRows(
+  created: Pick<Program, 'id' | 'programRecruitments'>,
+  overlay: Record<string, unknown>
+): Promise<void> {
+  const numericId = parseFileObjectId(created.id)
+  if (numericId == null) return
+  const rows = (created.programRecruitments ?? []).filter(row => row.id != null)
+  if (rows.length === 0) {
+    await bindRecruitDetailMediaAfterProgramCreate(created.id, overlay)
+    return
+  }
+  for (const row of rows) {
+    const prefix = GENERAL_ROW_DETAIL_INFO_PREFIX[(row.recruitmentType ?? '').toUpperCase()]
+    if (!prefix) continue
+    const media = readRecruitDetailMediaFromOverlay(overlay, [prefix])
+    if (media.thumbFileObjectId != null) {
+      await putProgramRecruitmentThumbnail(numericId, row.id!, media.thumbFileObjectId)
+    }
+    const attachmentIds = media.attachmentFileObjectIds ?? []
+    if (attachmentIds.length > 0) {
+      await putProgramRecruitmentAttachments(numericId, row.id!, attachmentIds)
+    }
+  }
 }

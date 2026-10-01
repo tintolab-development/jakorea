@@ -49,22 +49,8 @@ export function UjatRecruitVolunteerInfoProgramEdit({
     () => recruitmentTargetLabelsToOptionValues(program.volunteerTarget),
     [program.volunteerTarget]
   )
-  const roundIndex = volunteerHalf === 'h1' ? 0 : 1
-  const hasRound = form.watch(`rounds.${roundIndex}`) != null
-  const recruitStartName = (
-    hasRound
-      ? volunteerHalf === 'h1'
-        ? 'rounds.0.startDate'
-        : 'rounds.1.startDate'
-      : 'volunteerApplicationStartDate'
-  ) as 'rounds.0.startDate' | 'volunteerApplicationStartDate'
-  const recruitEndName = (
-    hasRound
-      ? volunteerHalf === 'h1'
-        ? 'rounds.0.endDate'
-        : 'rounds.1.endDate'
-      : 'volunteerApplicationEndDate'
-  ) as 'rounds.0.endDate' | 'volunteerApplicationEndDate'
+  const recruitStartName = 'volunteerApplicationStartDate' as const
+  const recruitEndName = 'volunteerApplicationEndDate' as const
   const noticeExposureSetting: string | undefined = undefined /* TODO(api) */
   const noticeExposureValue = isUjatVolunteerNoticeExposureValue(noticeExposureSetting)
     ? noticeExposureSetting
@@ -266,7 +252,18 @@ export function UjatRecruitVolunteerInfoProgramEdit({
             fullRow
             edit={
               <div className={UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <UjatRecruitInquiryContactField label="문의처" placeholder="담당 문의처" />
+                <Controller
+                  name="volunteerRecruitmentContactOrganizationName"
+                  control={form.control}
+                  render={({ field }) => (
+                    <UjatRecruitInquiryContactField
+                      label="문의처"
+                      placeholder="담당 문의처"
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
                 <DetailInfoForm.InputsSeparator />
                 <Controller
                   name="contactPhone"

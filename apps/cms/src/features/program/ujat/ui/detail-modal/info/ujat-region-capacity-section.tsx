@@ -108,6 +108,7 @@ function SemesterRegionCapacityTable({
           <DetailInfoForm.Row key={`${half}-${row.left}-${row.right}`} type="double">
             <DetailInfoForm.Field
               label={row.left}
+              validationKey={`capacity.${half}.${row.left}`}
               view={<RegionCapacityView values={values[row.left]} />}
               edit={
                 mode === 'edit' && onChange ? (
@@ -121,6 +122,7 @@ function SemesterRegionCapacityTable({
             />
             <DetailInfoForm.Field
               label={row.right}
+              validationKey={`capacity.${half}.${row.right}`}
               view={<RegionCapacityView values={values[row.right]} />}
               edit={
                 mode === 'edit' && onChange ? (

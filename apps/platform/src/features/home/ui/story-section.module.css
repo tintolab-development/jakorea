@@ -176,6 +176,19 @@
   border-radius: var(--radius-12);
 }
 
+.skeletonMedia {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.skeletonTitle {
+  width: 100%;
+  height: 46px;
+  border-radius: var(--radius-8);
+}
+
 .subCardMedia {
   position: relative;
   width: 100%;
@@ -186,6 +199,10 @@
 }
 
 @media (--bp-pc-up) {
+  .skeletonTitle {
+    height: 52px;
+  }
+
   .subCardMedia {
     width: 100%;
     height: 255px;

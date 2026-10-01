@@ -4,6 +4,12 @@ import type {
 } from '@/features/program/gemini/model/performance/types'
 import type { GeminiTrainingReportImportRow } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportRow'
 import type { GeminiTrainingReportItem } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportItem'
+import {
+  toJavaInt,
+  toJavaLocalDate,
+  toJavaLocalTime,
+  toKoreanPhone,
+} from '@/features/program/gemini/lib/performance/import-wire-values'
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
@@ -53,15 +59,15 @@ export function mapUploadAndDisplayToImportRow(
     instructorMemberId:
       memberId != null && Number.isFinite(memberId) ? memberId : undefined,
     instructorEmail: upload.email.trim() || undefined,
-    instructorPhone: upload.contact.trim() || undefined,
+    instructorPhone: toKoreanPhone(upload.contact),
     instructorName: upload.instructorName.trim() || undefined,
     assistantInstructorNames: upload.assistantInstructorNames.trim() || undefined,
     trainingLocation: upload.trainingLocation.trim() || undefined,
     schoolOrOrganizationName: upload.school.trim() || undefined,
-    trainingDate: display.trainingDate || undefined,
-    trainingStartTime: upload.trainingStartTime.trim() || undefined,
-    trainingEndTime: upload.trainingEndTime.trim() || undefined,
-    trainingMinutes:
-      display.trainingHours > 0 ? Math.round(display.trainingHours * 60) : undefined,
+    trainingDate: toJavaLocalDate(display.trainingDate),
+    trainingStartTime: toJavaLocalTime(upload.trainingStartTime),
+    trainingEndTime: toJavaLocalTime(upload.trainingEndTime),
+    trainingSessionCount: toJavaInt(upload.classCount),
+    participantCount: toJavaInt(upload.participantCount),
   }
 }

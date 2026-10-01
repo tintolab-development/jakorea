@@ -150,12 +150,66 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
   }
 }
 
+/** 상세 DTO → 신청 기관 detail(사유·안내). 빈 값은 기존 row를 지우지 않는다. */
+export function readOrganizationApplicationDetailExtendFields(
+  dto: Pick<
+    OrganizationApplicationDetailResponse,
+    | 'organizationAddressDetail'
+    | 'requestedEducationFormat'
+    | 'applicationReason'
+    | 'otherRequests'
+    | 'computerInRoom'
+    | 'waitingRoomLocation'
+    | 'mealProvided'
+    | 'mealNotice'
+    | 'parkingInfo'
+    | 'textbookId'
+    | 'textbookName'
+    | 'teacherPhone'
+    | 'teacherEmail'
+  >
+): NonNullable<ApplicantSchoolRow['detail']> {
+  const addressDetail = dto.organizationAddressDetail?.trim() || undefined
+  const educationType = formatRequestedEducationFormat(dto.requestedEducationFormat) || undefined
+  const applicationReason = dto.applicationReason?.trim() || undefined
+  const otherRequests = dto.otherRequests?.trim() || undefined
+  const computerInSpace = dto.computerInRoom?.trim() || undefined
+  const waitingPlaceGuide = dto.waitingRoomLocation?.trim() || undefined
+  const mealNotice = dto.mealNotice?.trim() || undefined
+  const mealInfo =
+    mealNotice ||
+    (typeof dto.mealProvided === 'boolean' ? (dto.mealProvided ? '가능' : '불가') : undefined)
+  const parkingInfo = dto.parkingInfo?.trim() || undefined
+  const textbookId = toId(dto.textbookId) || undefined
+  const textbookName = dto.textbookName?.trim() || undefined
+  const teacherPhone = dto.teacherPhone?.trim() || undefined
+  const teacherEmail = dto.teacherEmail?.trim() || undefined
+
+  return {
+    ...(addressDetail ? { addressDetail } : {}),
+    ...(educationType ? { educationType } : {}),
+    ...(applicationReason ? { applicationReason } : {}),
+    ...(otherRequests ? { otherRequests } : {}),
+    ...(computerInSpace ? { computerInSpace } : {}),
+    ...(waitingPlaceGuide
+      ? { waitingPlaceGuide, waitingRoom: waitingPlaceGuide }
+      : {}),
+    ...(mealInfo ? { mealInfo } : {}),
+    ...(parkingInfo ? { parkingInfo, otherSpecialNotes: parkingInfo } : {}),
+    ...(textbookId ? { textbookId } : {}),
+    ...(textbookName ? { textbookName } : {}),
+    ...(teacherPhone ? { teacherPhone } : {}),
+    ...(teacherEmail ? { teacherEmail } : {}),
+  }
+}
+
 export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   dto: OrganizationApplicationDetailResponse,
   base: ApplicantSchoolRow
 ): ApplicantSchoolRow {
   const teacherPhone = dto.teacherPhone?.trim()
   const teacherEmail = dto.teacherEmail?.trim()
+  const detailFields = readOrganizationApplicationDetailExtendFields(dto)
   return {
     ...base,
     id: toId(dto.id) || base.id,
@@ -177,11 +231,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     availableActions: dto.availableActions ?? base.availableActions,
     detail: {
       ...base.detail,
-      addressDetail: dto.organizationAddressDetail?.trim() || base.detail?.addressDetail,
-      educationType:
-        formatRequestedEducationFormat(dto.requestedEducationFormat) || base.detail?.educationType,
-      textbookId: toId(dto.textbookId) || base.detail?.textbookId,
-      textbookName: dto.textbookName?.trim() || base.detail?.textbookName,
+      ...detailFields,
       ...(teacherPhone ? { teacherPhone } : {}),
       ...(teacherEmail ? { teacherEmail } : {}),
       teacherInfo: undefined,
@@ -268,15 +318,10 @@ export function softMergeOrganizationApplicationDetailOntoRow(
   const teacherPhone = dto.teacherPhone?.trim()
   const teacherEmail = dto.teacherEmail?.trim()
   const teacherName = dto.teacherName?.trim()
-  const addressDetail = dto.organizationAddressDetail?.trim()
   /** 상세 학년은 requestedGrade만. 목록 educationGrade(프로그램 대상 학년)를 다시 넣지 않는다. */
   const requestedGrade = formatApplicantGradeLabel(dto.requestedGrade)
-  const applicationReason = dto.applicationReason?.trim()
-  const otherRequests = dto.otherRequests?.trim()
-  const educationType = formatRequestedEducationFormat(dto.requestedEducationFormat)
-  const textbookName = dto.textbookName?.trim()
-  const textbookId = toId(dto.textbookId)
   const rejectReason = dto.rejectReason?.trim()
+  const detailFields = readOrganizationApplicationDetailExtendFields(dto)
 
   return {
     ...base,
@@ -291,14 +336,9 @@ export function softMergeOrganizationApplicationDetailOntoRow(
     availableActions: dto.availableActions ?? base.availableActions,
     detail: {
       ...base.detail,
-      ...(addressDetail ? { addressDetail } : {}),
-      ...(educationType ? { educationType } : {}),
-      ...(textbookId ? { textbookId } : {}),
-      ...(textbookName ? { textbookName } : {}),
+      ...detailFields,
       ...(teacherPhone ? { teacherPhone } : {}),
       ...(teacherEmail ? { teacherEmail } : {}),
-      ...(applicationReason ? { applicationReason } : {}),
-      ...(otherRequests ? { otherRequests } : {}),
       teacherInfo: undefined,
     },
   }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   describeIncompleteTrainedTeachersProgramRegistrationRequiredFields,
   hasIncompleteTrainedTeachersProgramRegistrationRequiredFields,
+  listIncompleteTrainedTeachersProgramRegistrationRequiredFieldLabels,
   type TrainedTeachersRegistrationRequiredFieldContext,
 } from './trained-teachers-program-registration-required-fields'
 
@@ -67,6 +68,34 @@ function filledOverlay(patch?: Record<string, unknown>): Record<string, unknown>
 describe('hasIncompleteTrainedTeachersProgramRegistrationRequiredFields', () => {
   it('빈 overlay면 미완료이다', () => {
     expect(hasIncompleteTrainedTeachersProgramRegistrationRequiredFields({}, ctx())).toBe(true)
+  })
+
+  it('빈 overlay면 누락된 화면 라벨을 모두 돌려준다', () => {
+    const labels = listIncompleteTrainedTeachersProgramRegistrationRequiredFieldLabels({}, ctx())
+    expect(labels).toEqual(
+      expect.arrayContaining([
+        '대표 프로그램명 (영문)',
+        '공고용 프로그램명',
+        '세부 프로그램명',
+        '사업 운영 기간',
+        '사업 분야',
+        '교육 과정',
+        'IP Owned',
+        'Course Delivered By',
+        'IPS 유형',
+        '1차시 단원명',
+        '1차시 교육 내용',
+        '교육 진행 예정일',
+      ])
+    )
+    expect(labels).not.toContain('후원사')
+    expect(labels).not.toContain('후원사 담당자')
+  })
+
+  it('필수값을 채우면 누락 라벨이 없다', () => {
+    expect(
+      listIncompleteTrainedTeachersProgramRegistrationRequiredFieldLabels(filledOverlay(), ctx())
+    ).toEqual([])
   })
 
   it('KPI·임금 없이도 필수값을 채우면 완료이다', () => {

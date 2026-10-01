@@ -5,6 +5,7 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramRecruitmentRequestApplicationType } from './programRecruitmentRequestApplicationType';
 import type { ProgramRecruitmentRequestRecruitmentType } from './programRecruitmentRequestRecruitmentType';
 import type { ProgramRecruitmentRequestStatus } from './programRecruitmentRequestStatus';
 
@@ -14,7 +15,7 @@ import type { ProgramRecruitmentRequestStatus } from './programRecruitmentReques
 export interface ProgramRecruitmentRequest {
   /** 모집 유형 */
   recruitmentType: ProgramRecruitmentRequestRecruitmentType;
-  /** 모집 대상. 일반 프로그램에서 PARTICIPANT=ORGANIZATION|INDIVIDUAL, INSTRUCTOR=TEACHER, VOLUNTEER=COLLEGE_STUDENT */
+  /** 모집 대상. 일반 프로그램에서 PARTICIPANT=ORGANIZATION|INDIVIDUAL, INSTRUCTOR=TEACHER, VOLUNTEER=ORGANIZATION|SCHOOL|INDIVIDUAL|STUDENT|COLLEGE_STUDENT(비어 있으면 COLLEGE_STUDENT) */
   targetType?: string;
   /** 모집 상태 */
   status?: ProgramRecruitmentRequestStatus;
@@ -30,4 +31,84 @@ export interface ProgramRecruitmentRequest {
   minCount?: number;
   /** 선발 방식 코드. 예: ADMIN_REVIEW */
   selectionMethod?: string;
+  /**
+     * 수정할 모집 행 id. 보내면 그 행만 수정하고, 요청에 없는 행은 그대로 둔다. id 또는 applicationType 이 하나라도 있으면 행 단위 저장으로 처리한다.
+     * @nullable
+     */
+  id?: number | null;
+  /**
+     * 이 모집 행의 신청 유형. recruitmentType/targetType 은 이 값에서 정한다.
+     * @nullable
+     */
+  applicationType?: ProgramRecruitmentRequestApplicationType;
+  /**
+     * 공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, "" 이면 비움
+     * @nullable
+     */
+  announcementTitle?: string | null;
+  /**
+     * 한 줄 소개. null 유지, "" 비움
+     * @nullable
+     */
+  summary?: string | null;
+  /**
+     * 프로그램 설명. null 유지, "" 비움
+     * @nullable
+     */
+  programDescription?: string | null;
+  /**
+     * 모집 안내. null 유지, "" 비움
+     * @nullable
+     */
+  recruitmentGuide?: string | null;
+  /**
+     * 신청 방법. null 유지, "" 비움
+     * @nullable
+     */
+  applicationMethod?: string | null;
+  /**
+     * 학습 지원. null 유지, "" 비움
+     * @nullable
+     */
+  learningSupportContent?: string | null;
+  /**
+     * 추가 내용 HTML. null 유지, "" 비움
+     * @nullable
+     */
+  additionalContentHtml?: string | null;
+  /**
+     * 비고. null 유지, "" 비움
+     * @nullable
+     */
+  remarks?: string | null;
+  /**
+     * 담당자 이름. null 유지, "" 비움
+     * @nullable
+     */
+  contactName?: string | null;
+  /**
+     * 담당자 연락처. null 유지, "" 비움
+     * @nullable
+     */
+  contactPhone?: string | null;
+  /**
+     * 담당자 이메일. null 유지, "" 비움
+     * @nullable
+     */
+  contactEmail?: string | null;
+  /**
+     * 강사·봉사자 기타사항. null 유지, "" 비움. 참여자 행에는 저장해도 포털 참여자 상세에는 내려가지 않는다.
+     * @nullable
+     */
+  otherMatters?: string | null;
+  /**
+     * 면접 여부. null 이면 기존 값 유지. false 여도 발표·면접 시각은 지우지 않는다.
+     * @nullable
+     */
+  interviewEnabled?: boolean | null;
+  /**
+     * null 로 비울 필드 이름. 예: ["maxCount","remarks"]
+     * @nullable
+     */
+  clearFields?: string[] | null;
 }

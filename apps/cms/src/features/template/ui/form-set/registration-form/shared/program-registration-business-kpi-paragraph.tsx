@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resolveKpiFieldValueForParticipantAvailability } from '@/features/template/ui/form-set/registration-form/shared/program-registration-kpi-participant-sync'
@@ -36,6 +36,11 @@ export type ProgramRegistrationBusinessKpiParagraphProps = {
   dispatchedClassPlaceholder?: string
   /** 교육진행자 최종 인원 항목 오버라이드 — 미지정 시 강사/봉사자 */
   educationProgressItems?: readonly ProgramRegistrationBusinessKpiProgressItem[]
+  /**
+   * 교육진행자 최종 인원 라벨 강조 키.
+   * 미지정 시 `kpi.instructor`. UJAT는 봉사자만 필수라 `kpi.volunteer`를 넘긴다.
+   */
+  educationProgressValidationKey?: string | readonly string[]
 }
 
 function KpiCountInput({
@@ -114,6 +119,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
   dispatchedClassDisabled = false,
   dispatchedClassPlaceholder = '목표값 입력',
   educationProgressItems,
+  educationProgressValidationKey = 'kpi.instructor',
 }: ProgramRegistrationBusinessKpiParagraphProps = {}) {
   const [participantCount, setParticipantCount] = useOverlayKv<number | null>(
     `${overlayKeyPrefix}.participantCount`,
@@ -192,6 +198,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="참여자 최종 인원"
+          validationKey="kpi.participantCount"
           edit={
             <KpiCountInput
               placeholder="목표값 입력"
@@ -203,6 +210,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
         />
         <DetailInfoForm.Field
           label="교육진행자 최종 인원"
+          validationKey={educationProgressValidationKey}
           edit={
             <div className="detail-info-form-inputs-wrapper program-registration-paragraph__instructor-kpi-row">
               {progressItems.map((item, index) => {
@@ -262,6 +270,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최종 파견 학교 수"
+          validationKey="kpi.dispatchedSchool"
           edit={
             <KpiCountInput
               disabled={dispatchedSchoolDisabled}
@@ -274,6 +283,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
         />
         <DetailInfoForm.Field
           label="최종 파견 학급 수"
+          validationKey="kpi.dispatchedClass"
           edit={
             <KpiCountInput
               disabled={dispatchedClassDisabled}

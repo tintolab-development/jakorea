@@ -270,15 +270,28 @@ export function useFeaturedImpactStories(): ImpactStoryListItem[] {
   }, [preview.isError, preview.isPending, preview.isRemoteEnabled, preview.items])
 }
 
-export function useHomeImpactSubStories(excludeId: string | null): ImpactStoryListItem[] {
+export type HomeImpactSubStoriesQuery = {
+  items: ImpactStoryListItem[]
+  isPending: boolean
+}
+
+export function useHomeImpactSubStories(excludeId: string | null): HomeImpactSubStoriesQuery {
   const preview = useImpactStoriesPreview()
   return useMemo(() => {
     if (!preview.isRemoteEnabled || preview.isError) {
-      return latestExcluding(getImpactStoryListFallback(), excludeId, 3)
+      return {
+        items: latestExcluding(getImpactStoryListFallback(), excludeId, 3),
+        isPending: false,
+      }
     }
-    if (preview.isPending) return []
+    if (preview.isPending) {
+      return { items: [], isPending: true }
+    }
     const next = latestExcluding(preview.items, excludeId, 3)
-    return next.length > 0 ? next : latestExcluding(getImpactStoryListFallback(), excludeId, 3)
+    return {
+      items: next.length > 0 ? next : latestExcluding(getImpactStoryListFallback(), excludeId, 3),
+      isPending: false,
+    }
   }, [excludeId, preview.isError, preview.isPending, preview.isRemoteEnabled, preview.items])
 }
 

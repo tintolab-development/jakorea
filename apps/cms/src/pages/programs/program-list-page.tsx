@@ -58,7 +58,11 @@ import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 
 import './program-list-page.css'
 import { CmsButton, DeleteGuideModal } from '@/shared/ui'
-import { resolveProgramDeleteGuideModalCopy } from '@/features/program/shared/lib/program-delete-guide'
+import {
+  isProgramHardDeleteBlockedError,
+  PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+  resolveProgramDeleteGuideModalCopy,
+} from '@/features/program/shared/lib/program-delete-guide'
 import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
@@ -779,10 +783,15 @@ function ProgramListPageContent() {
         onConfirm={() => {
           void (async () => {
             try {
+              const idsToDelete = programsPendingBulkDelete.map(program => program.id)
+              if (
+                companySchoolProgramIdFromUrl &&
+                idsToDelete.includes(companySchoolProgramIdFromUrl)
+              ) {
+                handleCloseFullPageModal()
+              }
               if (isCompanySchoolPath) {
-                await deleteCompanySchoolProgramsMutation.mutateAsync(
-                  programsPendingBulkDelete.map(program => program.id)
-                )
+                await deleteCompanySchoolProgramsMutation.mutateAsync(idsToDelete)
                 await companySchoolListQuery.refetch()
                 setSelectedRowKeys([])
               } else {
@@ -794,10 +803,18 @@ function ProgramListPageContent() {
               setProgramsPendingBulkDelete([])
             } catch (error) {
               console.debug('program bulk delete failed', error)
-              showAlert({
-                title: '삭제 실패',
-                content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-              })
+              showAlert(
+                isProgramHardDeleteBlockedError(error)
+                  ? {
+                      title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+                      content: error.message,
+                    }
+                  : {
+                      title: '삭제 실패',
+                      content:
+                        '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                    }
+              )
             }
           })()
         }}

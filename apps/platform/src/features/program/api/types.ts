@@ -42,6 +42,15 @@ export type PortalProgramListItem = {
   recruitmentEndAt?: string
   applicationTargetMode?: string
   availableApplicationTypes?: string[]
+  /**
+   * 모집 공고 행 단위로 내려올 때만 존재한다.
+   * program당 1행인 현행 응답에는 없다. 프론트에서 생성하지 않는다.
+   */
+  recruitmentId?: number
+  recruitmentType?: string
+  targetType?: string
+  /** 행 단위 단일 신청 유형. 있으면 `availableApplicationTypes`보다 우선한다. */
+  applicationType?: string
   canApply?: boolean
   thumbnailFileObjectId?: number
   educationTarget?: string
