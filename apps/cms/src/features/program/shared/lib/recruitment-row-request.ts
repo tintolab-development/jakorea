@@ -12,12 +12,18 @@ const ROW_COPY_KEYS = [
   'learningSupportContent',
   'additionalContentHtml',
   'remarks',
+  'otherMatters',
   'contactName',
   'contactPhone',
   'contactEmail',
   'startAt',
   'endAt',
-] as const satisfies ReadonlyArray<keyof ProgramRecruitmentWindow & keyof ProgramRecruitmentRequest>
+] as const satisfies ReadonlyArray<keyof ProgramRecruitmentWindow>
+
+/** 생성된 요청 타입에 아직 없는 행 필드. 면접 여부는 넣지 않는다. */
+type RecruitmentRowRequest = ProgramRecruitmentRequest & {
+  otherMatters?: string | null
+}
 
 export function resolveRecruitmentApplicationType(
   recruitmentType: string | null | undefined,
@@ -84,14 +90,14 @@ export function buildRecruitmentRowCopyRequests(
   next: ProgramRecruitmentWindow[] | undefined,
   existing: ProgramRecruitmentWindow[] | undefined,
   isLocked: (row: ProgramRecruitmentWindow) => boolean = () => false
-): ProgramRecruitmentRequest[] {
+): RecruitmentRowRequest[] {
   if (!next?.length) return []
   const before = new Map((existing ?? []).filter(row => row.id != null).map(row => [row.id!, row]))
-  const out: ProgramRecruitmentRequest[] = []
+  const out: RecruitmentRowRequest[] = []
   for (const row of next) {
     if (row.id == null || isLocked(row)) continue
     const prev = before.get(row.id)
-    const changed: Partial<ProgramRecruitmentRequest> = {}
+    const changed: Partial<RecruitmentRowRequest> = {}
     for (const key of ROW_COPY_KEYS) {
       if (!(key in row)) continue
       const value = row[key] ?? ''

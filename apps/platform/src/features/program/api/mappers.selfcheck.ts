@@ -297,8 +297,8 @@ assert.equal(
   '일정은 학교 사정에 따라 조율할 수 있습니다.'
 )
 assert.equal(
-  generalCurriculum.extraSections.find(section => section.title === '기타사항')?.body,
-  '기타 안내'
+  generalCurriculum.extraSections.some(section => section.title === '기타사항'),
+  false
 )
 
 const scheduleMulti = mapPortalProgramDetail({
@@ -980,10 +980,10 @@ const rowScopedEmpty = mapPortalProgramDetail(
 )
 assert.ok(rowScopedEmpty)
 assert.equal(rowScopedEmpty.title, '참여자 공고')
-assert.equal(rowScopedEmpty.summary, '')
+assert.equal(rowScopedEmpty.summary, '참여자 프로그램 설명')
 assert.equal(
-  rowScopedEmpty.extraSections.find(section => section.title === '프로그램 설명')?.body,
-  '참여자 프로그램 설명'
+  rowScopedEmpty.extraSections.some(section => section.title === '프로그램 설명'),
+  false
 )
 assert.equal(
   rowScopedEmpty.extraSections.find(section => section.title === '모집 안내')?.body,
@@ -994,8 +994,12 @@ assert.equal(
   '참여자 비고'
 )
 assert.equal(
-  rowScopedEmpty.extraSections.find(section => section.title === '기타사항')?.body,
-  '프로그램 기타사항'
+  rowScopedEmpty.extraSections.some(section => section.title === '기타사항'),
+  false
+)
+assert.equal(
+  rowScopedEmpty.extraSections.some(section => section.title === '학습 지원 내용'),
+  false
 )
 assert.equal(rowScopedEmpty.attachments.length, 0)
 assert.equal(rowScopedEmpty.thumbnailUrl, portalPublicFileContentUrl(999))
@@ -1019,5 +1023,69 @@ const rowClearsThumbnail = mapPortalProgramDetail(
 )
 assert.ok(rowClearsThumbnail)
 assert.equal(rowClearsThumbnail.thumbnailUrl, undefined)
+
+const volunteerInterviewOff = mapPortalProgramDetail(
+  {
+    programId: 186021,
+    programType: 'GENERAL_ORGANIZATION',
+    title: '봉사자 공고',
+    description: '프로그램 공통 설명',
+    learningSupportContent: '참여자 학습 지원',
+    otherMatters: '봉사자 기타사항',
+    applicationMethod: '<p><br></p>',
+    recruitments: [
+      {
+        recruitmentId: 186070,
+        recruitmentType: 'VOLUNTEER',
+        applicationTypes: ['VOLUNTEER'],
+        programDescription: '<p></p>',
+        recruitmentGuide: '봉사자 모집 안내',
+        learningSupportContent: '행에 남은 학습 지원',
+        additionalContentHtml: '<p><br></p>',
+        remarks: '해당 없음',
+        interviewEnabled: false,
+        documentPassAnnouncementAt: '2026-10-07T00:00:00Z',
+        interviewStartAt: '2026-10-07T00:00:00Z',
+        interviewEndAt: '2026-10-07T00:00:00Z',
+        finalPassAnnouncementAt: '2026-10-11T00:00:00Z',
+      },
+    ],
+  },
+  { recruitmentIds: [186070], applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(volunteerInterviewOff)
+assert.equal(volunteerInterviewOff.detailCase, 'volunteer')
+assert.equal(volunteerInterviewOff.summary, '')
+assert.equal(volunteerInterviewOff.applicationMethodValue, '')
+assert.equal(
+  volunteerInterviewOff.extraSections.some(section => section.title === '학습 지원 내용'),
+  false
+)
+assert.equal(
+  volunteerInterviewOff.extraSections.find(section => section.title === '기타사항')?.body,
+  '봉사자 기타사항'
+)
+assert.equal(
+  volunteerInterviewOff.extraSections.find(section => section.title === '모집 안내')?.body,
+  '봉사자 모집 안내'
+)
+assert.equal(
+  volunteerInterviewOff.extraSections.some(
+    section => section.title === '추가 내용' || section.title === '비고'
+  ),
+  false
+)
+assert.equal(
+  volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '1차 합격자 발표일'),
+  false
+)
+assert.equal(
+  volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '면접 기간'),
+  false
+)
+assert.equal(
+  volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '최종 합격자 발표'),
+  true
+)
 
 console.log('program portal mappers.selfcheck: ok')

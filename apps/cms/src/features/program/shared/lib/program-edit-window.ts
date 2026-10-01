@@ -29,6 +29,7 @@ export function toProgramRecruitmentWindows(
         learningSupportContent?: string | null
         additionalContentHtml?: string | null
         remarks?: string | null
+        otherMatters?: string | null
         announcementTitle?: string | null
         summary?: string | null
         contactName?: string | null
@@ -74,6 +75,7 @@ export function toProgramRecruitmentWindows(
     learningSupportContent: row.learningSupportContent ?? null,
     additionalContentHtml: row.additionalContentHtml ?? null,
     remarks: row.remarks ?? null,
+    otherMatters: row.otherMatters ?? null,
   }))
 }
 
