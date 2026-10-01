@@ -43,15 +43,6 @@
   color: var(--color-text-primary);
 }
 
-/* 업로드 중 문구 — 파일명과 동일한 스타일로 UI shifting 방지 */
-.file-select-field__name--uploading {
-  color: var(--color-text-primary);
-}
-
-.file-select-field__name-row .ant-spin {
-  line-height: 0;
-}
-
 /* 업로드 취소(X) 버튼 — 배경 없음, SVG 아이콘 그대로 */
 .file-select-field__remove {
   display: inline-flex;

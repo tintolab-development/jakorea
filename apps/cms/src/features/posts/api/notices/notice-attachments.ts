@@ -12,6 +12,7 @@ import {
   parseOwnerResourceId,
 } from '@/shared/lib/admin-file-upload/attachments'
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { beginFileUploadOverlay } from '@/shared/ui/file-upload-overlay-store'
 import { customInstance } from '@/shared/api/orval-mutator'
 import {
   ADMIN_FILE_OWNER,
@@ -196,6 +197,8 @@ export async function uploadUnboundNoticeAttachment(file: File): Promise<number>
   if (file.size < 1) {
     throw new Error('업로드할 파일이 비어 있습니다.')
   }
+  const endOverlay = beginFileUploadOverlay()
+  try {
   const originalFileName = file.name.trim() || 'upload.bin'
   const contentType = resolveUploadContentType(file)
   const checksumSha256 = await createSha256(file)
@@ -225,6 +228,9 @@ export async function uploadUnboundNoticeAttachment(file: File): Promise<number>
   if (isFileAvailable(confirmed)) return confirmedId
   const available = await waitUntilFileAvailable(confirmedId)
   return parseFileObjectId(available.fileObjectId) ?? confirmedId
+  } finally {
+    endOverlay()
+  }
 }
 
 export async function uploadUnboundNoticeAttachments(files: File[]): Promise<number[]> {
