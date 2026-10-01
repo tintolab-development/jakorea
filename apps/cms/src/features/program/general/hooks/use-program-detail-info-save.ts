@@ -47,7 +47,7 @@ export interface UseProgramDetailInfoSaveOptions {
   commonInfoPatchOnly?: boolean
   /** 모집 탭 저장 — 프로그램 설명·추가 내용 등을 해당 *RecruitmentInfo SSOT에도 넣는다 */
   recruitmentAudience?: ProgramDetailRecruitmentAudience
-  /** 모집 비고 폼 필드. 기본: 참여자 remarks · 강사 otherNotes · 봉사자 oneLineIntroduction */
+  /** 모집 비고 폼 필드. 기본: 참여자 remarks · 강사 instructorRecruitmentRemarks(일반) / otherNotes · 봉사자 oneLineIntroduction */
   recruitmentNotesField?: ProgramDetailRecruitmentNotesField
 }
 
@@ -111,10 +111,17 @@ export function useProgramDetailInfoSave({
           ...(generalCommonInfo ? { generalCommonInfo } : {}),
         }
         if (recruitmentAudience) {
+          const writesRowFields =
+            !isCompanySchoolProgram(program) &&
+            !isTrainedTeachersDetailProgram(program) &&
+            program.backendProgramType !== 'UJAT' &&
+            !looksLikeUjatProgramId(program.id)
           const notesField =
             recruitmentNotesField ??
             (recruitmentAudience === 'instructor'
-              ? 'otherNotes'
+              ? writesRowFields
+                ? 'instructorRecruitmentRemarks'
+                : 'otherNotes'
               : recruitmentAudience === 'volunteer'
                 ? 'oneLineIntroduction'
                 : 'remarks')
@@ -142,11 +149,6 @@ export function useProgramDetailInfoSave({
                     contactPhone: values.contactPhone,
                     contactEmail: values.contactEmail,
                   }
-          const writesRowFields =
-            !isCompanySchoolProgram(program) &&
-            !isTrainedTeachersDetailProgram(program) &&
-            program.backendProgramType !== 'UJAT' &&
-            !looksLikeUjatProgramId(program.id)
           remotePatch = applyRecruitmentDetailInfoFields(
             remotePatch,
             program,
@@ -169,6 +171,15 @@ export function useProgramDetailInfoSave({
                 : {}),
             }
           )
+          if (writesRowFields && notesField !== 'remarks') {
+            // 비고는 모집 행 remarks 전용 — 프로그램 oneLineIntroduction·otherMatters로 새지 않게 한다.
+            const { [notesField]: _rowNotes, ...withoutNotes } = remotePatch as Record<string, unknown>
+            remotePatch = withoutNotes as Partial<Program>
+          }
+          if (writesRowFields && recruitmentAudience !== 'participant') {
+            // 기타사항(otherMatters)은 비고 「해당 없음」과 무관하다.
+            remotePatch = { ...remotePatch, otherNotes: values.otherNotes ?? program.otherNotes }
+          }
           const isGeneralRecruitProgram =
             !isCompanySchoolProgram(program) &&
             program.backendProgramType !== 'UJAT' &&

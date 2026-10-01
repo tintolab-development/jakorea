@@ -281,6 +281,8 @@ const programDetailEditSchemaBase = z.object({
   oneLineIntroduction: z.string().optional(),
   /** 모집 비고 (BE remarks) — oneLineIntroduction 과 분리 */
   remarks: z.string().optional(),
+  /** 강사 모집 비고 (강사 행 remarks) — 기타사항 otherNotes(otherMatters)와 분리 */
+  instructorRecruitmentRemarks: z.string().optional(),
   /** 교육 대상 상세 (BE educationTargetDetail) — district 와 분리 */
   educationTargetDetail: z.string().optional(),
   /** 참여자 모집 문의처 기관명 (nested contactOrganizationName) */

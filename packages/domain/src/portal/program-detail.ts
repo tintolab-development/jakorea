@@ -32,6 +32,11 @@ export type PortalRecruitment = {
   learningSupportContent?: string | null
   additionalContentHtml?: string | null
   remarks?: string | null
+  contactName?: string | null
+  contactPhone?: string | null
+  contactEmail?: string | null
+  thumbnailFileObjectId?: number | null
+  attachments?: PortalAttachment[] | null
 }
 
 export type PortalSchedule = {

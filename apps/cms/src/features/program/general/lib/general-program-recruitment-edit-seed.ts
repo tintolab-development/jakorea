@@ -260,10 +260,9 @@ export function programToRecruitmentTabEditValues(
     additionalContentHtml: recruitmentCopy
       ? (detail.additionalContentHtml ?? '')
       : (detail.additionalContentHtml ?? base.additionalContentHtml),
-    otherNotes:
-      audience === 'instructor'
-        ? (instructorInfo?.remarks?.trim() || undefined)
-        : base.otherNotes,
+    otherNotes: base.otherNotes,
+    instructorRecruitmentRemarks:
+      audience === 'instructor' ? (instructorInfo?.remarks?.trim() || undefined) : undefined,
     remarks:
       audience === 'participant'
         ? participantInfo?.notesNotApplicable

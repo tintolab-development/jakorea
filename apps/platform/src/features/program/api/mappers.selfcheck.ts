@@ -950,4 +950,74 @@ assert.equal(trainedTeacherOrg.detailCase, 'general')
 assert.equal(trainedTeacherOrg.recruitmentRoleLabel, '참여자')
 assert.equal(trainedTeacherOrg.applicationType, 'ORGANIZATION')
 
+const rowScopedEmpty = mapPortalProgramDetail(
+  {
+    programId: 168004,
+    title: '프로그램 제목',
+    programType: 'GENERAL_ORGANIZATION',
+    description: '프로그램 설명',
+    summary: '프로그램 요약',
+    thumbnailFileObjectId: 999,
+    otherMatters: '프로그램 기타사항',
+    attachments: [
+      { fileObjectId: 168101, originalFileName: 'Primary_Case_04_운영안내.pdf' },
+      { fileObjectId: 168102, originalFileName: 'Primary_Case_04_교육자료.pdf' },
+    ],
+    recruitments: [
+      {
+        recruitmentId: 168241,
+        recruitmentType: 'PARTICIPANT',
+        applicationTypes: ['ORGANIZATION'],
+        announcementTitle: '참여자 공고',
+        programDescription: '참여자 프로그램 설명',
+        recruitmentGuide: '참여자 모집 안내',
+        remarks: '참여자 비고',
+        attachments: [],
+      },
+    ],
+  },
+  { recruitmentIds: [168241], applicationTypes: ['ORGANIZATION'] },
+)
+assert.ok(rowScopedEmpty)
+assert.equal(rowScopedEmpty.title, '참여자 공고')
+assert.equal(rowScopedEmpty.summary, '')
+assert.equal(
+  rowScopedEmpty.extraSections.find(section => section.title === '프로그램 설명')?.body,
+  '참여자 프로그램 설명'
+)
+assert.equal(
+  rowScopedEmpty.extraSections.find(section => section.title === '모집 안내')?.body,
+  '참여자 모집 안내'
+)
+assert.equal(
+  rowScopedEmpty.extraSections.find(section => section.title === '비고')?.body,
+  '참여자 비고'
+)
+assert.equal(
+  rowScopedEmpty.extraSections.find(section => section.title === '기타사항')?.body,
+  '프로그램 기타사항'
+)
+assert.equal(rowScopedEmpty.attachments.length, 0)
+assert.equal(rowScopedEmpty.thumbnailUrl, portalPublicFileContentUrl(999))
+
+const rowClearsThumbnail = mapPortalProgramDetail(
+  {
+    programId: 168004,
+    title: '프로그램 제목',
+    programType: 'GENERAL_ORGANIZATION',
+    thumbnailFileObjectId: 999,
+    recruitments: [
+      {
+        recruitmentId: 168242,
+        recruitmentType: 'INSTRUCTOR',
+        applicationTypes: ['INSTRUCTOR'],
+        thumbnailFileObjectId: null,
+      },
+    ],
+  },
+  { recruitmentIds: [168242], applicationTypes: ['INSTRUCTOR'] },
+)
+assert.ok(rowClearsThumbnail)
+assert.equal(rowClearsThumbnail.thumbnailUrl, undefined)
+
 console.log('program portal mappers.selfcheck: ok')

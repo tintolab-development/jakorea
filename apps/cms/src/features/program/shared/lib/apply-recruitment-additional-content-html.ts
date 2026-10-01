@@ -3,8 +3,12 @@ import { writeRecruitmentRowCopy } from '@/features/program/shared/lib/recruitme
 
 export type ProgramDetailRecruitmentAudience = 'participant' | 'instructor' | 'volunteer'
 
-/** 모집 탭 비고 폼 필드 — 일반 remarks / 강사 otherNotes / 봉사자·UJAT 참여자 oneLineIntroduction */
-export type ProgramDetailRecruitmentNotesField = 'remarks' | 'otherNotes' | 'oneLineIntroduction'
+/** 모집 탭 비고 폼 필드 — 일반 참여자 remarks / 일반 강사 instructorRecruitmentRemarks / UJAT 강사 otherNotes / 봉사자·UJAT 참여자 oneLineIntroduction */
+export type ProgramDetailRecruitmentNotesField =
+  | 'remarks'
+  | 'otherNotes'
+  | 'oneLineIntroduction'
+  | 'instructorRecruitmentRemarks'
 
 const NESTED_RECRUITMENT_INFO_KEY = {
   participant: 'participantRecruitmentInfo',

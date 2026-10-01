@@ -1468,6 +1468,10 @@ export function resolveGeneralRecruitDetailDisplayProgram(
 
   return {
     ...withAudienceCopy,
+    // 강사·봉사자 상세 「기타사항」은 프로그램 기타사항(otherMatters) — 비고(행 remarks)와 섞지 않는다.
+    ...(audience === 'participant'
+      ? {}
+      : { otherNotes: program.otherNotes?.trim() || undefined, oneLineIntroduction: undefined }),
     attachmentFileNames:
       withPersistedRecruitMedia.attachmentFileNames ?? program.attachmentFileNames,
     keyVisualImage: withPersistedRecruitMedia.keyVisualImage ?? program.keyVisualImage,

@@ -372,7 +372,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
               edit={
                 isEdit && form ? (
                   <Controller
-                    name="otherNotes"
+                    name="instructorRecruitmentRemarks"
                     control={form.control}
                     render={({ field }) => (
                       <CmsInput

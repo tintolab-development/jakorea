@@ -52,6 +52,7 @@ export function useProgramApplicationFormLoadSource(
 
   const fallbackSource = resolveApplicationFormLoadSource({
     programId: program.id,
+    program,
     templateCode,
     bindings: bindingsQuery.bindings,
     catalogTemplateId,

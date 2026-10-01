@@ -608,7 +608,9 @@ function withGeneralCreateRowCopy(
   program: Program
 ): ProgramRecruitmentRequest[] | undefined {
   return rows?.map(row => {
-    const display = resolveGeneralRecruitDetailDisplayProgram(program, copyAudienceOf(row))
+    const audience = copyAudienceOf(row)
+    const display = resolveGeneralRecruitDetailDisplayProgram(program, audience)
+    const contact = createRowContactOf(program, audience)
     return {
       ...row,
       programDescription: display.description || undefined,
@@ -616,12 +618,33 @@ function withGeneralCreateRowCopy(
       applicationMethod: display.applicationMethod || undefined,
       learningSupportContent: display.learningSupportContent || undefined,
       additionalContentHtml: display.additionalContentHtml || undefined,
-      remarks: display.otherNotes || undefined,
-      contactName: program.managerName || undefined,
-      contactPhone: toRequestPhone(program.contactPhone) || undefined,
-      contactEmail: program.contactEmail || undefined,
+      ...contact,
     }
   })
+}
+
+/** 담당자·비고는 각 모집 탭 `*RecruitmentInfo`에서만 읽는다. 프로그램 `managerName`·기타사항을 쓰지 않는다. */
+function createRowContactOf(
+  program: Program,
+  audience: RecruitmentCopyAudience
+): Pick<ProgramRecruitmentRequest, 'contactName' | 'contactPhone' | 'contactEmail' | 'remarks'> {
+  const common = program.generalCommonInfo
+  const info =
+    audience === 'instructor'
+      ? common?.instructorRecruitmentInfo
+      : audience === 'volunteer'
+        ? common?.volunteerRecruitmentInfo
+        : common?.participantRecruitmentInfo
+  const participantContactName =
+    audience === 'participant' ? common?.participantRecruitmentInfo?.contactName : undefined
+  const notesNotApplicable =
+    info != null && 'notesNotApplicable' in info && info.notesNotApplicable === true
+  return {
+    contactName: info?.contactOrganizationName?.trim() || participantContactName?.trim() || undefined,
+    contactPhone: toRequestPhone(info?.contactPhone ?? info?.inquiryTel ?? info?.tel) || undefined,
+    contactEmail: (info?.contactEmail ?? info?.inquiryEmail ?? info?.email)?.trim() || undefined,
+    remarks: notesNotApplicable ? undefined : info?.remarks?.trim() || undefined,
+  }
 }
 
 function mapProgramSponsorAssignments(program: Program) {

@@ -259,8 +259,58 @@ export function listAllRegistrationCreateFormSpecs(program: Program): Operationa
   return registrationSpec != null ? [registrationSpec, ...operational] : operational
 }
 
+const RECRUITMENT_ROW_PROGRAM_TYPES = new Set([
+  'GENERAL',
+  'GENERAL_INDIVIDUAL',
+  'GENERAL_ORGANIZATION',
+  'UJAT',
+])
+
 function normalizeBindingType(value: string | undefined): string {
   return value?.trim().toUpperCase() ?? ''
+}
+
+/** APPLICATION만 모집 행에 묶는다. RECRUITMENT 양식은 프로그램 단위다. */
+export function recruitmentApplicationBindingScope(
+  program: Program,
+  formType: string | undefined
+): { targetScope: 'RECRUITMENT'; targetScopeId: number } | undefined {
+  if (normalizeBindingType(formType) !== 'APPLICATION') return undefined
+  const programType = program.backendProgramType?.trim().toUpperCase()
+  if (programType == null || !RECRUITMENT_ROW_PROGRAM_TYPES.has(programType)) return undefined
+  const recruitmentId = program.activeRecruitmentId
+  if (recruitmentId == null || !Number.isSafeInteger(recruitmentId) || recruitmentId <= 0) {
+    return undefined
+  }
+  return { targetScope: 'RECRUITMENT', targetScopeId: recruitmentId }
+}
+
+export type RowApplicationBindingResolution =
+  | { kind: 'unscoped' }
+  | { kind: 'missing' }
+  | { kind: 'binding'; binding: ProgramFormBindingResponse }
+
+/**
+ * 행 `applicationFormBindingId`만 고른다. null이면 프로그램 바인딩으로 바꾸지 않는다.
+ */
+export function resolveRowApplicationBinding(
+  program: Program,
+  bindings: readonly ProgramFormBindingResponse[],
+  spec: Pick<OperationalFormSpec, 'formType'>
+): RowApplicationBindingResolution {
+  if (recruitmentApplicationBindingScope(program, spec.formType) == null) {
+    return { kind: 'unscoped' }
+  }
+  const row = program.programRecruitments?.find(
+    item => item.id === program.activeRecruitmentId
+  )
+  const bindingId = row?.applicationFormBindingId
+  if (bindingId == null) return { kind: 'missing' }
+  const binding = bindings.find(
+    item => item.bindingId === bindingId && item.active !== false
+  )
+  if (binding == null) return { kind: 'missing' }
+  return { kind: 'binding', binding }
 }
 
 function roleMatches(binding: ProgramFormBindingResponse, targetRole: string | undefined): boolean {
