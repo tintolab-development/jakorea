@@ -146,6 +146,10 @@ export function buildUjatRecruitInstitutionOverlayFromDetailEditValues(
       values.participantRecruitmentNotesNotApplicable === 'not_applicable'
         ? ''
         : (values.oneLineIntroduction?.trim() ?? ''),
+    [OVERLAY_KEYS.description]: values.description?.trim() ?? '',
+    [OVERLAY_KEYS.recruitmentGuide]: values.recruitmentGuide?.trim() ?? '',
+    [OVERLAY_KEYS.learningSupportContent]: values.learningSupportContent?.trim() ?? '',
+    [OVERLAY_KEYS.additionalContentHtml]: values.additionalContentHtml?.trim() ?? '',
   }
 }
 

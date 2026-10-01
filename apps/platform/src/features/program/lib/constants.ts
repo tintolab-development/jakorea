@@ -1,4 +1,8 @@
 import type { ProgramCategory, ProgramSort, ProgramTab, ProgramsListParams } from '../model/types'
+import {
+  writePortalRecruitmentFocus,
+  type PortalRecruitmentFocus,
+} from './portal-recruitment.ts'
 
 export const PROGRAMS_PATH = '/programs'
 
@@ -59,14 +63,34 @@ export const PROGRAM_FILTER_KEYS = [
   'educationForm',
 ] as const satisfies readonly (keyof ProgramsListParams)[]
 
-export const programDetailPath = (id: string, from?: string) => {
-  const base = `/programs/${id}`
-  return from ? `${base}?from=${encodeURIComponent(from)}` : base
+function withRecruitmentFocus(path: string, focus?: PortalRecruitmentFocus | null, from?: string) {
+  const params = new URLSearchParams()
+  if (from) params.set('from', from)
+  writePortalRecruitmentFocus(params, focus)
+  const query = params.toString()
+  return query ? `${path}?${query}` : path
 }
 
-export const programApplyPath = (id: string) => `/programs/${id}/apply`
+export const programDetailPath = (
+  id: string,
+  from?: string,
+  focus?: PortalRecruitmentFocus | null,
+) => withRecruitmentFocus(`/programs/${id}`, focus, from)
 
-export const programApplyCompletePath = (id: string) => `/programs/${id}/apply/complete`
+export const programApplyPath = (
+  id: string,
+  focus?: PortalRecruitmentFocus | null,
+  from?: string,
+) => withRecruitmentFocus(`/programs/${id}/apply`, focus, from)
 
-export const programApplyRequiredPath = (id: string) =>
-  `/auth/required?redirect=${encodeURIComponent(programApplyPath(id))}`
+export const programApplyCompletePath = (
+  id: string,
+  focus?: PortalRecruitmentFocus | null,
+  from?: string,
+) => withRecruitmentFocus(`/programs/${id}/apply/complete`, focus, from)
+
+export const programApplyRequiredPath = (
+  id: string,
+  focus?: PortalRecruitmentFocus | null,
+  from?: string,
+) => `/auth/required?redirect=${encodeURIComponent(programApplyPath(id, focus, from))}`

@@ -408,6 +408,13 @@ export interface ProgramRecruitmentWindow {
   startAt?: string | null
   /** 해당 모집 유형의 프로그램 운영 시작일. 없으면 모집정보를 잠그지 않는다. */
   operationStartDate?: string | null
+  /** 모집 행 문구. null이면 프로그램 공통 문장으로 채우지 않는다. */
+  programDescription?: string | null
+  recruitmentGuide?: string | null
+  applicationMethod?: string | null
+  learningSupportContent?: string | null
+  additionalContentHtml?: string | null
+  remarks?: string | null
 }
 
 export interface Program {

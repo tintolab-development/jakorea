@@ -125,11 +125,11 @@ export type PortalProgramDetail = {
   contactName?: string
   contactEmail?: string
   contactPhone?: string
-  additionalContentHtml?: string
-  recruitmentGuide?: string
+  additionalContentHtml?: string | null
+  recruitmentGuide?: string | null
   learningSupportContent?: string | null
   otherMatters?: string | null
-  remarks?: string
+  remarks?: string | null
   /**
    * 교육 진행 정보. 모든 유형에 키가 온다.
    * 일반 개인/기관이 아니면 스칼라는 null, 배열은 [].

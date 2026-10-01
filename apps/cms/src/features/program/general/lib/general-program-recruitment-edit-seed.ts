@@ -21,6 +21,10 @@ import {
   resolveGeneralRecruitDisplayProgram,
   type GeneralRecruitDetailAudience,
 } from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import {
+  hasRecruitmentCopy,
+  pickRecruitmentCopyRow,
+} from '@/features/program/shared/lib/recruitment-row-copy'
 
 function hasIsoDate(value: string | Date | undefined): boolean {
   if (value == null || value === '') return false
@@ -236,16 +240,26 @@ export function programToRecruitmentTabEditValues(
   const merged = resolveGeneralProgramForRecruitmentEdit(program)
   const base = programToDetailEditValues(merged)
   const detail = resolveGeneralRecruitDetailDisplayProgram(merged, audience)
+  const recruitmentRow = pickRecruitmentCopyRow(merged, audience)
+  const recruitmentCopy = recruitmentRow != null && hasRecruitmentCopy(recruitmentRow)
   const participantInfo = merged.generalCommonInfo?.participantRecruitmentInfo
   const instructorInfo = merged.generalCommonInfo?.instructorRecruitmentInfo
   const volunteerInfo = merged.generalCommonInfo?.volunteerRecruitmentInfo
   return {
     ...base,
-    description: detail.description ?? base.description,
-    recruitmentGuide: detail.recruitmentGuide ?? base.recruitmentGuide,
-    applicationMethod: detail.applicationMethod ?? base.applicationMethod,
-    learningSupportContent: detail.learningSupportContent ?? base.learningSupportContent,
-    additionalContentHtml: detail.additionalContentHtml ?? base.additionalContentHtml,
+    description: recruitmentCopy ? (detail.description ?? '') : (detail.description ?? base.description),
+    recruitmentGuide: recruitmentCopy
+      ? (detail.recruitmentGuide ?? '')
+      : (detail.recruitmentGuide ?? base.recruitmentGuide),
+    applicationMethod: recruitmentCopy
+      ? (detail.applicationMethod ?? '')
+      : (detail.applicationMethod ?? base.applicationMethod),
+    learningSupportContent: recruitmentCopy
+      ? (detail.learningSupportContent ?? '')
+      : (detail.learningSupportContent ?? base.learningSupportContent),
+    additionalContentHtml: recruitmentCopy
+      ? (detail.additionalContentHtml ?? '')
+      : (detail.additionalContentHtml ?? base.additionalContentHtml),
     otherNotes:
       audience === 'instructor'
         ? (instructorInfo?.remarks?.trim() || undefined)

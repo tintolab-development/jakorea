@@ -3,21 +3,23 @@ import {
   programApplyPath,
   programApplyRequiredPath,
   PROGRAMS_PATH,
+  readPortalRecruitmentFocus,
   useProgramDetail,
 } from '@/features/program'
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import { PFButton, PFText } from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ProgramDetailView } from './detail-view'
 
 export function ProgramDetailPage() {
   const navigate = useNavigate()
+  const { search } = useLocation()
   const programId = getProgramIdFromPath()
-  const { program, isLoading } = useProgramDetail(programId)
-  const searchParams = new URLSearchParams(window.location.search)
-  const fromPath = searchParams.get('from')
+  const focus = readPortalRecruitmentFocus(search)
+  const { program, isLoading } = useProgramDetail(programId, { focus })
+  const fromPath = new URLSearchParams(search).get('from')
 
   if (isLoading && !program) {
     return null
@@ -43,9 +45,20 @@ export function ProgramDetailPage() {
   }
 
   const handleApply = () => {
-    const applyPath = programApplyPath(program.id)
+    if (program.recruitmentSelectionAmbiguous) {
+      return
+    }
+    const nextFocus =
+      program.focusedRecruitmentIds?.length === 1
+        ? {
+            portalTab: focus?.portalTab,
+            applicationTypes: program.focusedApplicationTypes,
+            recruitmentIds: program.focusedRecruitmentIds,
+          }
+        : focus
+    const applyPath = programApplyPath(program.id, nextFocus, fromPath ?? undefined)
     if (!getDevAuthLoggedIn()) {
-      navigate(programApplyRequiredPath(program.id))
+      navigate(programApplyRequiredPath(program.id, nextFocus, fromPath ?? undefined))
       return
     }
 

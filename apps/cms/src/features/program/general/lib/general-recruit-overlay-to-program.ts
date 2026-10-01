@@ -35,6 +35,7 @@ import {
   resolvePersistedProgramTargetLevels,
   resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import { applyRecruitmentRowCopy } from '@/features/program/shared/lib/recruitment-row-copy'
 
 type RangeSeal = { start?: string | null; end?: string | null }
 
@@ -1451,15 +1452,22 @@ export function resolveGeneralRecruitDetailDisplayProgram(
     { preferOverlay: false }
   )
 
+  const withAudienceCopy = applyRecruitmentRowCopy(
+    {
+      ...program,
+      description,
+      recruitmentGuide,
+      applicationMethod,
+      learningSupportContent,
+      additionalContentHtml,
+      otherNotes,
+      oneLineIntroduction: otherNotes,
+    },
+    audience
+  )
+
   return {
-    ...program,
-    description,
-    recruitmentGuide,
-    applicationMethod,
-    learningSupportContent,
-    additionalContentHtml,
-    otherNotes,
-    oneLineIntroduction: otherNotes,
+    ...withAudienceCopy,
     attachmentFileNames:
       withPersistedRecruitMedia.attachmentFileNames ?? program.attachmentFileNames,
     keyVisualImage: withPersistedRecruitMedia.keyVisualImage ?? program.keyVisualImage,

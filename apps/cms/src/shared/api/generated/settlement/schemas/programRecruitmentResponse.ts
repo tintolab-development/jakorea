@@ -21,4 +21,34 @@ export interface ProgramRecruitmentResponse {
   maxCount?: number;
   minCount?: number;
   selectionMethod?: string;
+  /**
+   * 이 모집 행의 설명. 없으면 null.
+   * @nullable
+   */
+  programDescription?: string | null;
+  /**
+   * 이 모집 행의 모집 안내. 없으면 null.
+   * @nullable
+   */
+  recruitmentGuide?: string | null;
+  /**
+   * 이 모집 행의 신청 방법. 없으면 null.
+   * @nullable
+   */
+  applicationMethod?: string | null;
+  /**
+   * 이 모집 행의 학습 지원. 없으면 null.
+   * @nullable
+   */
+  learningSupportContent?: string | null;
+  /**
+   * 이 모집 행의 추가 내용 HTML. 없으면 null.
+   * @nullable
+   */
+  additionalContentHtml?: string | null;
+  /**
+   * 이 모집 행의 비고. 없으면 null.
+   * @nullable
+   */
+  remarks?: string | null;
 }

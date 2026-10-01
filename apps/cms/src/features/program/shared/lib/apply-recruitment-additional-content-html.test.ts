@@ -42,7 +42,7 @@ const existing = {
 } as Program
 
 describe('applyRecruitmentAdditionalContentHtml', () => {
-  it('참여자 모집 저장 — 중첩 SSOT·컬럼·overlay를 같은 HTML로 맞춘다', () => {
+  it('참여자 모집 저장 — 중첩 SSOT·overlay만 갱신하고 공통 컬럼은 건드리지 않는다', () => {
     const html = '<p style="color: red;">신규 추가 내용 😀</p>'
     const patch = applyRecruitmentAdditionalContentHtml(
       { additionalContentHtml: html },
@@ -51,7 +51,7 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
       'participant'
     )
 
-    expect(patch.additionalContentHtml).toBe(html)
+    expect(patch.additionalContentHtml).toBeUndefined()
     expect(patch.generalCommonInfo?.participantRecruitmentInfo?.additionalContentHtml).toBe(html)
     expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.additionalContentHtml).toBe(
       '<p>강사 옛본문</p>'
@@ -88,11 +88,12 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
     const description = '수정된 프로그램 설명'
     const patch = applyRecruitmentDetailInfoFields({}, existing, 'participant', { description })
 
-    expect(patch.description).toBe(description)
+    expect(patch.description).toBeUndefined()
     expect(patch.generalCommonInfo?.participantRecruitmentInfo?.programDescription).toBe(
       description
     )
     expect(patch.registrationOverlay?.['recruit.detailInfo.programDescription']).toBe(description)
+    expect(patch.recruitmentGuide).toBeUndefined()
 
     const display = resolveGeneralRecruitDetailDisplayProgram({ ...existing, ...patch }, 'participant')
     expect(display.description).toBe(description)
@@ -147,6 +148,54 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
     )
     expect(remapped.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('수정된 비고')
     expect(remapped.otherNotes).toBe('기타 안내(otherMatters)')
+  })
+
+  it('참여자 안내 저장은 그 모집 행만 바꾸고 강사 행은 그대로다', () => {
+    const withRows = {
+      ...existing,
+      description: '공통 설명',
+      recruitmentGuide: '공통 안내',
+      programRecruitments: [
+        {
+          recruitmentType: 'PARTICIPANT',
+          programDescription: '참여자 옛 설명',
+          recruitmentGuide: '참여자 옛 안내',
+          applicationMethod: null,
+          learningSupportContent: null,
+          additionalContentHtml: null,
+          remarks: null,
+        },
+        {
+          recruitmentType: 'INSTRUCTOR',
+          programDescription: '강사 설명',
+          recruitmentGuide: '강사 안내',
+          applicationMethod: null,
+          learningSupportContent: null,
+          additionalContentHtml: null,
+          remarks: null,
+        },
+      ],
+    } as Program
+    const patch = applyRecruitmentDetailInfoFields({}, withRows, 'participant', {
+      description: '참여자 새 설명',
+      recruitmentGuide: '참여자 새 안내',
+    })
+    expect(patch.description).toBeUndefined()
+    expect(patch.recruitmentGuide).toBeUndefined()
+    expect(patch.programRecruitments?.[0]?.recruitmentGuide).toBe('참여자 새 안내')
+    expect(patch.programRecruitments?.[1]?.recruitmentGuide).toBe('강사 안내')
+    const participant = resolveGeneralRecruitDetailDisplayProgram(
+      { ...withRows, ...patch, programRecruitments: patch.programRecruitments },
+      'participant'
+    )
+    const instructor = resolveGeneralRecruitDetailDisplayProgram(
+      { ...withRows, ...patch, programRecruitments: patch.programRecruitments },
+      'instructor'
+    )
+    expect(participant.recruitmentGuide).toBe('참여자 새 안내')
+    expect(participant.description).toBe('참여자 새 설명')
+    expect(instructor.recruitmentGuide).toBe('강사 안내')
+    expect(instructor.description).toBe('강사 설명')
   })
 
   it('봉사자 모집 비고 — volunteerRecruitmentInfo.remarks만 갱신한다', () => {
