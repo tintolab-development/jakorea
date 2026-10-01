@@ -8,7 +8,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Image } from 'antd'
 import type { Program } from '@/types/domain'
-import type { UseFormReturn } from 'react-hook-form'
+import { Controller } from 'react-hook-form'
+import type { ControllerRenderProps, FieldPath, UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -29,6 +30,7 @@ import {
   putProgramMediaThumbnail,
 } from '@/features/program/shared/api/program-media-target'
 import { useCmsAlert } from '@/shared/ui'
+import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
@@ -117,6 +119,133 @@ function isAdditionalContentEmpty(program: Program): boolean {
     .replace(/\s+/g, ' ')
     .trim()
   return !text
+}
+
+function isHtmlContent(value: string): boolean {
+  return /<\/?[a-z][^>]*>/i.test(value)
+}
+
+function RichTextReadContent({
+  content,
+  className,
+}: {
+  content: ReactNode
+  className?: string
+}) {
+  if (typeof content !== 'string' || !isHtmlContent(content)) {
+    return <div className={className}>{content}</div>
+  }
+  return (
+    <div className={className}>
+      <RichTextViewer
+        content={content}
+        contentFormat="html"
+        maxHeight="none"
+        className="program-detail-info-tab__editor-content"
+      />
+    </div>
+  )
+}
+
+function DetailInfoRichTextFieldEditor({
+  field,
+  program,
+  placeholder,
+  error,
+}: {
+  field: ControllerRenderProps<ProgramDetailEditFormValues, FieldPath<ProgramDetailEditFormValues>>
+  program: Program
+  placeholder: string
+  error?: unknown
+}) {
+  const value = typeof field.value === 'string' ? field.value : String(field.value ?? '')
+  const owner = programInlineImageOwner(parseFileObjectId(program.id))
+  const resetKey = `${program.id}-${field.name}`
+  const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(true, value, resetKey, {
+    placeholder,
+    contentFormat: 'html',
+    height: '100px',
+    fileUploadOwner: owner,
+  })
+
+  useEffect(() => {
+    if (editor == null) return
+    const sync = () => {
+      if (editor.isDestroyed) return
+      field.onChange(getHTML())
+    }
+    editor.on('update', sync)
+    return () => {
+      sync()
+      if (!editor.isDestroyed) editor.off('update', sync)
+    }
+  }, [editor, field, getHTML])
+
+  return (
+    <>
+      <div className="program-detail-info-tab__editor-host program-detail-info-tab__editor-host--field">
+        <RichTextEditor
+          editor={editor}
+          className="program-detail-info-tab__rich-text-editor"
+          minHeight={editorMinHeight}
+          fileUploadOwner={owner}
+        />
+      </div>
+      {error ? (
+        <span className="text-area-field-row__field-error">입력값을 확인해주세요.</span>
+      ) : null}
+    </>
+  )
+}
+
+function RichTextFieldRow({
+  label,
+  showRequiredStar,
+  isFormEdit,
+  form,
+  program,
+  name,
+  placeholder,
+  readContent,
+}: {
+  label: string
+  showRequiredStar: boolean
+  isFormEdit: boolean
+  form: UseFormReturn<ProgramDetailEditFormValues> | undefined
+  program: Program
+  name: FieldPath<ProgramDetailEditFormValues>
+  placeholder: string
+  readContent: ReactNode
+}) {
+  return (
+    <tr>
+      <th>
+        {label}
+        {showRequiredStar ? <span className="text-area-field-row__required">*</span> : null}
+      </th>
+      <td>
+        {isFormEdit && form ? (
+          <Controller
+            name={name}
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <DetailInfoRichTextFieldEditor
+                field={field}
+                program={program}
+                placeholder={placeholder}
+                error={fieldState.error}
+              />
+            )}
+          />
+        ) : (
+          <RichTextReadContent
+            content={readContent}
+            className="text-area-field-row__content-block"
+          />
+        )}
+      </td>
+    </tr>
+  )
 }
 
 /** 조회·수정 모드 동일 — mock 기본 HTML 포함 (UJAT dash 모드는 공란 유지) */
@@ -725,14 +854,14 @@ export function DetailInfoSection({
               DEFAULT_PROGRAM_DESCRIPTION
             )}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="모집 안내"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="recruitmentGuide"
             placeholder="모집 안내"
-            control={textFieldControl}
             readContent={resolveTextReadContent(
               program.recruitmentGuide,
               emptyReadDisplay,
@@ -740,25 +869,25 @@ export function DetailInfoSection({
             )}
           />
           {showRecruitmentMethod ? (
-            <TextAreaFieldRow
+            <RichTextFieldRow
               label={recruitmentMethodLabel}
               showRequiredStar={false}
               isFormEdit={isFormEdit}
               form={f}
+              program={program}
               name="applicationMethod"
               placeholder={recruitmentMethodLabel}
-              control={textFieldControl}
               readContent={program.applicationMethod ?? '-'}
             />
           ) : null}
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="학습 지원 내용"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="learningSupportContent"
             placeholder="학습 지원 내용"
-            control={textFieldControl}
             readContent={resolveTextReadContent(
               program.learningSupportContent,
               emptyReadDisplay,
@@ -877,11 +1006,12 @@ export function InstructorDetailInfoSection({
               DEFAULT_PROGRAM_DESCRIPTION
             )}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="모집 안내"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="recruitmentGuide"
             placeholder="모집 안내"
             readContent={resolveTextReadContent(
@@ -890,11 +1020,12 @@ export function InstructorDetailInfoSection({
               DEFAULT_RECRUITMENT_GUIDE
             )}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="지원 방법"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="applicationMethod"
             placeholder="지원 방법"
             readContent={applicationMethod}
@@ -909,11 +1040,12 @@ export function InstructorDetailInfoSection({
             showRequiredOnTh={false}
             emptyReadDisplay={emptyReadDisplay}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="기타사항"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="otherNotes"
             placeholder="기타사항"
             readContent={otherNotes}
@@ -1032,11 +1164,12 @@ export function VolunteerDetailInfoSection({
               DEFAULT_PROGRAM_DESCRIPTION
             )}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="모집 안내"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="recruitmentGuide"
             placeholder="모집 안내"
             readContent={resolveTextReadContent(
@@ -1045,11 +1178,12 @@ export function VolunteerDetailInfoSection({
               DEFAULT_RECRUITMENT_GUIDE
             )}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="지원 방법"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="applicationMethod"
             placeholder="지원 방법"
             readContent={applicationMethod}
@@ -1064,11 +1198,12 @@ export function VolunteerDetailInfoSection({
             showRequiredOnTh={false}
             emptyReadDisplay={emptyReadDisplay}
           />
-          <TextAreaFieldRow
+          <RichTextFieldRow
             label="기타사항"
             showRequiredStar={false}
             isFormEdit={isFormEdit}
             form={f}
+            program={program}
             name="otherNotes"
             placeholder="기타사항"
             readContent={otherNotes}
