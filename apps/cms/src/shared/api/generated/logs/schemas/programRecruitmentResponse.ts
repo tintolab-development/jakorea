@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramRecruitmentAttachmentResponse } from './programRecruitmentAttachmentResponse';
 
 /**
  * 프로그램 모집 유형별 canonical 설정 응답
@@ -51,4 +52,43 @@ export interface ProgramRecruitmentResponse {
    * @nullable
    */
   remarks?: string | null;
+  /** 이 행의 신청 유형 */
+  applicationType?: string;
+  /**
+   * 이 모집 행의 공고용 프로그램명. 없으면 null.
+   * @nullable
+   */
+  announcementTitle?: string | null;
+  /**
+   * 이 모집 행의 요약. 없으면 null.
+   * @nullable
+   */
+  summary?: string | null;
+  /**
+   * 이 모집 행의 담당자 이름. 없으면 null.
+   * @nullable
+   */
+  contactName?: string | null;
+  /**
+   * 이 모집 행의 담당자 전화. 없으면 null.
+   * @nullable
+   */
+  contactPhone?: string | null;
+  /**
+   * 이 모집 행의 담당자 이메일. 없으면 null.
+   * @nullable
+   */
+  contactEmail?: string | null;
+  /**
+   * 이 모집 행의 대표 이미지 fileObjectId. 없으면 null.
+   * @nullable
+   */
+  thumbnailFileObjectId?: number | null;
+  /**
+   * 이 모집 행의 신청서 바인딩 id. 없으면 null.
+   * @nullable
+   */
+  applicationFormBindingId?: number | null;
+  /** 이 모집 행 첨부. 없으면 [] */
+  attachments?: ProgramRecruitmentAttachmentResponse[];
 }

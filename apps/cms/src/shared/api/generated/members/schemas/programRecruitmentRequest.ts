@@ -30,4 +30,74 @@ export interface ProgramRecruitmentRequest {
   minCount?: number;
   /** 선발 방식 코드. 예: ADMIN_REVIEW */
   selectionMethod?: string;
+  /**
+   * 수정할 모집 행 id. 없으면 새 행
+   * @nullable
+   */
+  id?: number | null;
+  /**
+   * 이 행의 신청 유형. INDIVIDUAL | ORGANIZATION | INSTRUCTOR | VOLUNTEER
+   * @nullable
+   */
+  applicationType?: string | null;
+  /**
+   * 행 공고용 프로그램명. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  announcementTitle?: string | null;
+  /**
+   * 행 요약. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  summary?: string | null;
+  /**
+   * 행 설명. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  programDescription?: string | null;
+  /**
+   * 행 모집 안내. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  recruitmentGuide?: string | null;
+  /**
+   * 행 신청 방법. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  applicationMethod?: string | null;
+  /**
+   * 행 학습 지원. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  learningSupportContent?: string | null;
+  /**
+   * 행 추가 내용 HTML. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  additionalContentHtml?: string | null;
+  /**
+   * 행 비고. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  remarks?: string | null;
+  /**
+   * 행 담당자 이름. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  contactName?: string | null;
+  /**
+   * 행 담당자 전화. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  contactPhone?: string | null;
+  /**
+   * 행 담당자 이메일. null·생략은 유지, ""는 비움
+   * @nullable
+   */
+  contactEmail?: string | null;
+  /**
+   * null로 비울 필드 이름
+   * @nullable
+   */
+  clearFields?: string[] | null;
 }

@@ -950,6 +950,7 @@ export * from './programPostResponse';
 export * from './programPostUnreadReminderResponse';
 export * from './programPostUnreadTargetResponse';
 export * from './programPostUpsertRequest';
+export * from './programRecruitmentAttachmentResponse';
 export * from './programRecruitmentRequest';
 export * from './programRecruitmentRequestRecruitmentType';
 export * from './programRecruitmentRequestStatus';
