@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Form } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
+import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
 import { useFaqCategoriesQuery } from '@/features/posts/hooks/use-faq-categories-query'
 import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
@@ -164,9 +165,15 @@ export function useFaqFormModal({
       if (err && typeof err === 'object' && 'errorFields' in err) {
         return
       }
+      const message = getPostsApiErrorMessage(err, '저장에 실패했습니다.')
+      const field = getApiErrorField(err)
+      if (field === 'answer' || field === 'inlineImages') {
+        form.setFields([{ name: 'answer', errors: [message] }])
+        return
+      }
       handleError(err, {
         context: 'useFaqFormModal.handleSubmit',
-        defaultMessage: getPostsApiErrorMessage(err, '저장에 실패했습니다.'),
+        defaultMessage: message,
       })
     }
   }, [

@@ -106,6 +106,23 @@ describe('buildRecruitmentRowCopyRequests', () => {
     ])
   })
 
+  it('강사·봉사자 기타사항만 행에 보내고 면접 여부는 넣지 않는다', () => {
+    const before: ProgramRecruitmentWindow[] = [
+      { id: 186070, recruitmentType: 'VOLUNTEER', applicationType: 'VOLUNTEER', otherMatters: null },
+    ]
+    const next: ProgramRecruitmentWindow[] = [{ ...before[0], otherMatters: '봉사자 기타' }]
+    const sent = buildRecruitmentRowCopyRequests(next, before)
+    expect(sent).toEqual([
+      {
+        id: 186070,
+        recruitmentType: 'VOLUNTEER',
+        applicationType: 'VOLUNTEER',
+        otherMatters: '봉사자 기타',
+      },
+    ])
+    expect(sent[0]).not.toHaveProperty('interviewEnabled')
+  })
+
   it('잠긴 행은 보내지 않는다', () => {
     const before: ProgramRecruitmentWindow[] = [
       { id: 1, recruitmentType: 'PARTICIPANT', applicationType: 'ORGANIZATION', summary: 'a' },

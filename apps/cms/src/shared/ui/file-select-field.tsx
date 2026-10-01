@@ -81,6 +81,8 @@ export interface FileSelectFieldProps {
   currentTotalBytes?: number
   /** 첨부 합계 상한(byte). 기본 15MB. `0`이면 용량 검사 생략 */
   maxTotalBytes?: number
+  /** 합계 초과 안내. 썸네일은 썸네일 문구를 넘긴다. */
+  sizeExceededMessage?: string
 }
 
 export function FileSelectField({
@@ -96,6 +98,7 @@ export function FileSelectField({
   className = '',
   currentTotalBytes = 0,
   maxTotalBytes = FILE_SELECT_MAX_TOTAL_BYTES,
+  sizeExceededMessage,
 }: FileSelectFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -116,7 +119,7 @@ export function FileSelectField({
           maxTotalBytes,
         })
       ) {
-        notifyFileSelectTotalSizeExceeded()
+        notifyFileSelectTotalSizeExceeded(sizeExceededMessage)
       } else {
         onFilesChange?.(incoming)
       }

@@ -41,6 +41,7 @@ import {
   isCategoryHasChildrenError,
   isCategoryNeedsSyncError,
 } from '@/features/notifications/api/get-notifications-api-error'
+import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
 import {
   mailSyncSuccessMessage,
   shouldUseMailTemplatesRemoteApi,
@@ -137,6 +138,7 @@ export function MailTemplateList() {
     categoryId: string | null
   } | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [formBodyError, setFormBodyError] = useState<string | null>(null)
   const didInitExpandRef = useRef(!remote)
   const syncInFlightRef = useRef(false)
   const syncCatalogMutateAsync = mutations.syncCatalog.mutateAsync
@@ -537,6 +539,7 @@ export function MailTemplateList() {
   )
 
   const handleCloseForm = useCallback(() => {
+    setFormBodyError(null)
     setSearchParams(prev => closeMailFormSearchParams(prev), { replace: true })
   }, [setSearchParams])
 
@@ -567,6 +570,7 @@ export function MailTemplateList() {
 
   const handleSubmitForm = useCallback(
     async (draft: MailTemplateFormDraft) => {
+      setFormBodyError(null)
       try {
         if (remote) {
           if (formMode === 'create') {
@@ -643,6 +647,16 @@ export function MailTemplateList() {
         }
         handleCloseForm()
       } catch (error) {
+        const field = getApiErrorField(error)
+        const message = getNotificationsApiErrorMessage(
+          error,
+          '템플릿 저장에 실패했습니다. 다시 시도해 주세요.'
+        )
+        if (field === 'contentTemplate' || field === 'inlineImages') {
+          setFormBodyError(message)
+          return
+        }
+        setFormBodyError(null)
         offerSyncOnError(
           '저장 실패',
           error,
@@ -906,6 +920,7 @@ export function MailTemplateList() {
         onClose={handleCloseForm}
         onSubmit={draft => void handleSubmitForm(draft)}
         onDelete={() => void handleDeleteFromForm()}
+        bodyError={formBodyError}
       />
       <PreviewModal
         open={previewOpen && previewTemplate != null}

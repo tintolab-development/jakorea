@@ -1454,6 +1454,18 @@ export function detailEditValuesToProgramPatch(
         operationPeriodLabel:
           periodLabelFromRange(startDate, endDate) ??
           existing.generalCommonInfo?.volunteerRecruitmentInfo?.operationPeriodLabel,
+        volunteerInterviewEnabled:
+          values.volunteerRecruitmentInterviewEnabled === 'yes'
+            ? true
+            : values.volunteerRecruitmentInterviewEnabled === 'no'
+              ? false
+              : existing.generalCommonInfo?.volunteerRecruitmentInfo?.volunteerInterviewEnabled,
+        generalVolunteerInterviewEnabled:
+          values.volunteerRecruitmentInterviewEnabled === 'yes'
+            ? true
+            : values.volunteerRecruitmentInterviewEnabled === 'no'
+              ? false
+              : existing.generalCommonInfo?.volunteerRecruitmentInfo?.generalVolunteerInterviewEnabled,
       },
     },
     generalVolunteerInterviewEnabled:

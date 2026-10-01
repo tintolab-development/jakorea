@@ -77,6 +77,8 @@ export type RecruitmentDetailInfoFields = {
   contactName?: string
   contactPhone?: string
   contactEmail?: string
+  /** 강사·봉사자 행 기타사항. 참여자 행에는 쓰지 않는다. */
+  otherMatters?: string
 }
 
 /**
@@ -139,6 +141,9 @@ export function applyRecruitmentDetailInfoFields(
       overlayPatch[key] = notesNotApplicable
     }
   }
+  if (fields.otherMatters !== undefined && audience !== 'participant') {
+    nestedPatch.otherMatters = fields.otherMatters.trim() || undefined
+  }
 
   const {
     description: _sharedDescription,
@@ -180,6 +185,9 @@ export function applyRecruitmentDetailInfoFields(
       : {}),
     ...(remarks !== undefined || fields.notesNotApplicable !== undefined
       ? { remarks: notesNotApplicable ? null : remarks?.trim() || null }
+      : {}),
+    ...(fields.otherMatters !== undefined && audience !== 'participant'
+      ? { otherMatters: fields.otherMatters.trim() || null }
       : {}),
   })
 

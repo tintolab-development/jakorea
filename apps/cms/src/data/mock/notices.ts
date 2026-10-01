@@ -10,6 +10,8 @@ export interface NoticeAttachment {
   fileUrl?: string
   fileObjectId?: number
   attachmentId?: number
+  /** 서버 `fileSize`. 수정 화면 합계에 기존 첨부를 포함한다. */
+  fileSize?: number
 }
 
 export interface Notice {

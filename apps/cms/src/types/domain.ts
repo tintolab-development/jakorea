@@ -285,6 +285,8 @@ export interface GeneralProgramInstructorRecruitmentInfo {
   applicationMethod?: string
   learningSupportContent?: string
   additionalContentHtml?: string
+  /** 강사 행 기타사항. 포털 `otherMatters` */
+  otherMatters?: string
 }
 
 /** 일반 프로그램 — 봉사자 모집 정보 (프로그램 등록 봉사자 모집 양식 필드) */
@@ -329,6 +331,8 @@ export interface GeneralProgramVolunteerRecruitmentInfo {
   applicationMethod?: string
   learningSupportContent?: string
   additionalContentHtml?: string
+  /** 봉사자 행 기타사항. 포털 `otherMatters` */
+  otherMatters?: string
 }
 
 /** 일반 프로그램 — 봉사자 면접 진행 가능 일정 */
@@ -427,6 +431,8 @@ export interface ProgramRecruitmentWindow {
   learningSupportContent?: string | null
   additionalContentHtml?: string | null
   remarks?: string | null
+  /** 강사·봉사자 행 기타사항. 빈 문자열은 그 행만 비운다. */
+  otherMatters?: string | null
   announcementTitle?: string | null
   summary?: string | null
   contactName?: string | null

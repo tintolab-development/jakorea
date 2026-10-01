@@ -24,6 +24,16 @@ describe('collectFileObjectIdsFromHtml', () => {
 })
 
 describe('collectFileObjectIdsFromUnknown', () => {
+  it('썸네일·첨부 URL은 인라인 이미지로 모으지 않는다', () => {
+    expect(
+      collectFileObjectIdsFromUnknown({
+        additionalContentHtml: '<p><img src="/api/admin/files/7/content" /></p>',
+        thumbContentUrl: '/api/admin/files/2055808/content',
+        attachmentUrl: '/api/admin/files/2055810/download',
+      })
+    ).toEqual([7])
+  })
+
   it('중첩 HTML 필드에서 id를 모은다', () => {
     expect(
       collectFileObjectIdsFromUnknown({

@@ -3,6 +3,7 @@ import { Form, Select } from 'antd'
 import type { RefSelectProps } from 'antd/es/select'
 import type { Notice, NoticeAttachment } from '@/data/mock/notices'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
+import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
 import {
   noticeToFormValues,
   type NoticeFormFieldValues,
@@ -13,6 +14,7 @@ import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwy
 import {
   isAllowedNoticeAttachment,
   NOTICE_ATTACHMENT_ACCEPT,
+  NOTICE_ATTACHMENT_MAX_BYTES,
   noticeInlineImageOwner,
   parseNoticeOwnerId,
   removeNoticeFileObjects,
@@ -25,6 +27,7 @@ import {
   editorHasPendingInlineImages,
   flushPendingRichTextInlineImages,
 } from '@/shared/rich-text/use-rich-text-inline-image'
+import { sumFileBytes } from '@/shared/ui/file-select-field-limits'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -130,6 +133,8 @@ export function NoticeFormModal({
   const categoriesQuery = useNoticeCategoriesQuery(open)
   const [form] = Form.useForm<FormValues>()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [contentError, setContentError] = useState<string | null>(null)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
   const [existingAttachments, setExistingAttachments] = useState<NoticeAttachment[]>([])
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [uploadingAttachments, setUploadingAttachments] = useState(false)
@@ -181,6 +186,9 @@ export function NoticeFormModal({
       setNewFiles([])
     }
     setUploadingAttachments(false)
+    setErrorMessage(null)
+    setContentError(null)
+    setAttachmentError(null)
   }, [open, mode, notice, form])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -200,6 +208,12 @@ export function NoticeFormModal({
 
   const attachmentDisplayNames = useMemo(
     () => [...existingAttachments.map(item => item.name), ...newFiles.map(f => f.name)],
+    [existingAttachments, newFiles]
+  )
+  const attachmentTotalBytes = useMemo(
+    () =>
+      existingAttachments.reduce((sum, item) => sum + (item.fileSize ?? 0), 0) +
+      sumFileBytes(newFiles),
     [existingAttachments, newFiles]
   )
 
@@ -371,7 +385,14 @@ export function NoticeFormModal({
       setNewFiles([])
       onCancel()
     } catch (error) {
-      setErrorMessage(getPostsApiErrorMessage(error, '저장에 실패했습니다.'))
+      const message = getPostsApiErrorMessage(error, '저장에 실패했습니다.')
+      const field = getApiErrorField(error)
+      setErrorMessage(null)
+      setContentError(null)
+      setAttachmentError(null)
+      if (field === 'content' || field === 'inlineImages') setContentError(message)
+      else if (field === 'attachments') setAttachmentError(message)
+      else setErrorMessage(message)
     } finally {
       if (uploadsOnSave) setUploadingAttachments(false)
     }
@@ -496,6 +517,11 @@ export function NoticeFormModal({
                 fileUploadOwner={noticeInlineOwner}
               />
             </div>
+            {contentError ? (
+              <p className="notice-register-modal__error" role="alert">
+                {contentError}
+              </p>
+            ) : null}
           </div>
 
           {errorMessage ? (
@@ -513,15 +539,21 @@ export function NoticeFormModal({
                 buttonLabel="파일 추가"
                 accept={NOTICE_ATTACHMENT_ACCEPT}
                 fileNames={attachmentDisplayNames}
-                maxTotalBytes={0}
+                currentTotalBytes={attachmentTotalBytes}
+                maxTotalBytes={NOTICE_ATTACHMENT_MAX_BYTES}
                 uploading={uploadingAttachments}
                 onFilesChange={handleAttachmentAdd}
                 onRemoveFile={handleAttachmentRemove}
                 guideLines={[
-                  '파일은 개당 최대 20MB까지 업로드 가능하며,',
+                  '파일은 총 최대 15MB까지 업로드 가능하며,',
                   'JPG, PNG, PDF, Word, Excel 파일 형식만 지원됩니다.',
                 ]}
               />
+              {attachmentError ? (
+                <p className="notice-register-modal__error" role="alert">
+                  {attachmentError}
+                </p>
+              ) : null}
             </div>
           </div>
         </Form>

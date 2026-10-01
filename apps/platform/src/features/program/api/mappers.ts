@@ -507,6 +507,27 @@ export function formatPortalEducationVenue(
   return detailWithoutKind ? `${kindLabel} | ${detailWithoutKind}` : kindLabel
 }
 
+/** 참여자·기관·Gemini만 학습 지원. 강사·봉사자는 기타사항. */
+function showsLearningSupport(detailCase: ProgramDetailCase): boolean {
+  return detailCase === 'general' || detailCase === 'ujat-participant' || detailCase === 'gemini'
+}
+
+function showsOtherMatters(detailCase: ProgramDetailCase): boolean {
+  return detailCase === 'instructor' || detailCase === 'volunteer' || detailCase === 'ujat-volunteer'
+}
+
+/** 빈 에디터(`<p></p>`, `<p><br></p>`)와 CMS 공란 표식은 섹션을 만들지 않는다. */
+function visibleCopy(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed || trimmed === '-' || trimmed === '해당 없음' || trimmed === '해당없음') return ''
+  const plain = trimmed
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/\u200b/g, '')
+    .trim()
+  return plain.length === 0 ? '' : trimmed
+}
+
 function contactValue(
   name?: string | null,
   phone?: string | null,
@@ -811,28 +832,33 @@ export function mapPortalProgramDetail(
   const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 
-  const programDescription = readString(
-    independentRow ? independentRow.programDescription : remote.description
-  ) ?? ''
-  const recruitmentGuide = readString(
-    independentRow ? independentRow.recruitmentGuide : remote.recruitmentGuide
-  ) ?? ''
-  const additionalContent = rewriteAdminFileContentSrcsForPortal(
-    readString(independentRow ? independentRow.additionalContentHtml : remote.additionalContentHtml) ??
+  const programDescription = visibleCopy(
+    readString(independentRow ? independentRow.programDescription : remote.description) ?? ''
+  )
+  const recruitmentGuide = visibleCopy(
+    readString(independentRow ? independentRow.recruitmentGuide : remote.recruitmentGuide) ?? ''
+  )
+  const additionalContent = visibleCopy(
+    rewriteAdminFileContentSrcsForPortal(
+      readString(independentRow ? independentRow.additionalContentHtml : remote.additionalContentHtml) ??
+        ''
+    )
+  )
+  const learningSupportContent = visibleCopy(
+    readString(independentRow ? independentRow.learningSupportContent : remote.learningSupportContent) ??
       ''
   )
-  const learningSupportContent = readString(
-    independentRow ? independentRow.learningSupportContent : remote.learningSupportContent
-  ) ?? ''
-  const remarks = readString(independentRow ? independentRow.remarks : remote.remarks) ?? ''
+  const otherMatters = visibleCopy(readString(remote.otherMatters) ?? '')
+  const remarks = visibleCopy(readString(independentRow ? independentRow.remarks : remote.remarks) ?? '')
   const extraSections: ProgramExtraSection[] = [
-    ...(independentRow ? [extraSection('프로그램 설명', programDescription)] : []),
     extraSection('모집 안내', recruitmentGuide),
     { title: '추가 내용', body: additionalContent, bodyFormat: 'html' as const },
-    extraSection('학습 지원 내용', learningSupportContent),
-    extraSection('기타사항', readString(remote.otherMatters) ?? ''),
+    ...(showsLearningSupport(detailCase)
+      ? [extraSection('학습 지원 내용', learningSupportContent)]
+      : []),
+    ...(showsOtherMatters(detailCase) ? [extraSection('기타사항', otherMatters)] : []),
     extraSection('비고', remarks),
-  ].filter(section => section.body.length > 0)
+  ].filter(section => visibleCopy(section.body).length > 0)
 
   return {
     id: String(programId),
@@ -856,8 +882,8 @@ export function mapPortalProgramDetail(
     detailImageUrl: thumbnailUrl,
     sponsor: (remote.sponsorNames ?? []).map(readString).filter(Boolean).join(', ') || '-',
     summary: independentRow
-      ? (readString(independentRow.summary) ?? '')
-      : (readString(remote.description) ?? readString(remote.summary) ?? ''),
+      ? programDescription
+      : visibleCopy(readString(remote.description) ?? readString(remote.summary) ?? ''),
     isRecruiting: recruitmentStatus === RECRUITMENT_STATUS.recruiting,
     businessFieldLabel,
     educationTargetGroupLabel: targets.educationTargetGroupLabel,
@@ -939,10 +965,14 @@ export function mapPortalProgramDetail(
       independentRow?.contactEmail !== undefined ? independentRow.contactEmail : remote.contactEmail
     ),
     applicationMethodLabel: independentRow ? '지원 방법' : '지원방법',
-    applicationMethodValue: rewriteAdminFileContentSrcsForPortal(
-      readString(
-        independentRow ? (independentRow.applicationMethod ?? undefined) : (remote.applicationMethod ?? undefined)
-      ) ?? ''
+    applicationMethodValue: visibleCopy(
+      rewriteAdminFileContentSrcsForPortal(
+        readString(
+          independentRow
+            ? (independentRow.applicationMethod ?? undefined)
+            : (remote.applicationMethod ?? undefined)
+        ) ?? ''
+      )
     ),
     attachments: (
       (independentRow?.attachments !== undefined ? independentRow.attachments : remote.attachments) ?? []

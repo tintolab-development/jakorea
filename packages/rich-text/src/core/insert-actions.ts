@@ -7,13 +7,17 @@ import {
 import { NodeSelection } from '@tiptap/pm/state'
 import { findEmojiByName } from './emoji-extension'
 import {
-  formatRichTextBytes,
   getRichTextImageFileSize,
   getRichTextImageTotalBytes,
   RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
 } from './limits'
+import {
+  RICH_TEXT_INLINE_IMAGE_MAX_BYTES,
+  RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE,
+} from './visible-length'
 
 const IMAGE_ACCEPT = 'image/jpeg,image/jpg,image/png,image/gif,image/webp'
+const IMAGE_MAX_BYTES = RICH_TEXT_INLINE_IMAGE_MAX_BYTES
 
 export function promptImageUrl(): string | null {
   const url = window.prompt('이미지 URL', 'https://')
@@ -66,6 +70,18 @@ export function promptYoutubeUrl(): string | null {
 
 export type ResolvedRichTextImageSrc = string | { src: string; persistSrc?: string }
 
+/** 이 에디터에 크기를 아는 저장 이미지만 합친다. 외부 URL은 크기가 없어 빠진다. */
+export function sumKnownInlineImageBytes(editor: Editor): number {
+  if (editor.isDestroyed) return 0
+  let total = 0
+  editor.state.doc.descendants(node => {
+    if (node.type.name !== 'image') return
+    const size = node.attrs.fileSize
+    if (typeof size === 'number' && Number.isFinite(size) && size > 0) total += size
+  })
+  return total
+}
+
 function applyImageSrc(
   editor: Editor,
   src: string,
@@ -78,7 +94,7 @@ function applyImageSrc(
     src,
     alt: alt ?? '',
     ...(persistSrc?.trim() ? { persistSrc: persistSrc.trim() } : {}),
-    ...(fileSize != null && fileSize > 0 ? { fileSize } : {}),
+    ...(typeof fileSize === 'number' && fileSize > 0 ? { fileSize } : {}),
   }
   const ok =
     editor.chain().focus().setImage(attrs).run() ||
@@ -102,15 +118,17 @@ export function insertImageFromFile(
     window.alert('JPG, PNG, GIF, WebP 이미지만 삽입할 수 있습니다.')
     return
   }
+  if (file.size > IMAGE_MAX_BYTES) {
+    window.alert('이미지는 20MB 이하만 삽입할 수 있습니다.')
+    return
+  }
   const selectedImageSize =
     editor.state.selection instanceof NodeSelection
       ? getRichTextImageFileSize(editor.state.selection.node)
       : 0
   const nextTotalBytes = getRichTextImageTotalBytes(editor) - selectedImageSize + file.size
   if (nextTotalBytes > RICH_TEXT_IMAGE_MAX_TOTAL_BYTES) {
-    window.alert(
-      `에디터 이미지는 총 ${formatRichTextBytes(RICH_TEXT_IMAGE_MAX_TOTAL_BYTES)}까지 업로드 가능합니다.`
-    )
+    window.alert(RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE)
     return
   }
 

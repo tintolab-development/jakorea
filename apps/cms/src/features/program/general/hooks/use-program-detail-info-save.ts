@@ -14,7 +14,7 @@
  */
 
 import { useCallback, useRef } from 'react'
-import type { UseFormReturn } from 'react-hook-form'
+import type { FieldPath, UseFormReturn } from 'react-hook-form'
 import type { z } from 'zod'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -24,6 +24,10 @@ import {
   programToDetailEditValues,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import { showUpdateCompletedAlert } from '@/shared/ui'
+import {
+  extractApiErrorField,
+  extractApiErrorMessage,
+} from '@/shared/lib/extract-api-error-message'
 import {
   applyRecruitmentDetailInfoFields,
   type ProgramDetailRecruitmentAudience,
@@ -167,6 +171,9 @@ export function useProgramDetailInfoSave({
                     contactName: contact.contactName ?? '',
                     contactPhone: contact.contactPhone ?? '',
                     contactEmail: contact.contactEmail ?? '',
+                    ...(recruitmentAudience !== 'participant'
+                      ? { otherMatters: values.otherNotes ?? '' }
+                      : {}),
                   }
                 : {}),
             }
@@ -216,7 +223,19 @@ export function useProgramDetailInfoSave({
         await onSaveEdit(draftToSave, remotePatch)
         showUpdateCompletedAlert()
         return true
-      } catch {
+      } catch (error) {
+        const data =
+          error && typeof error === 'object' && 'response' in error
+            ? (error as { response?: { data?: unknown } }).response?.data
+            : undefined
+        const field = extractApiErrorField(data)
+        const message = extractApiErrorMessage(data, { fallback: '' })
+        if (field && message) {
+          form.setError(field as FieldPath<ProgramDetailEditFormValues>, {
+            type: 'server',
+            message,
+          })
+        }
         saveFailureRef.current = 'api'
         return false
       } finally {

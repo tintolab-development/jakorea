@@ -57,3 +57,11 @@ export type {
   RichTextEditorApi,
   RichTextEditorContentType,
 } from './types'
+export {
+  countVisibleRichTextCharacters,
+  referencedInlineFileIds,
+  RICH_TEXT_INLINE_IMAGE_MAX_BYTES,
+  RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE,
+  RICH_TEXT_MAX_VISIBLE_CHARACTERS,
+  RICH_TEXT_VISIBLE_LENGTH_MESSAGE,
+} from './visible-length'

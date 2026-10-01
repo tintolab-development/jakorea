@@ -23,9 +23,14 @@ export function isFileSelectTotalSizeExceeded(params: {
   return current + sumFileBytes(params.incoming) > max
 }
 
-export function notifyFileSelectTotalSizeExceeded(): void {
+export const FILE_SELECT_TOTAL_SIZE_EXCEEDED_MESSAGE =
+  '파일은 총 최대 15MB까지 업로드 가능합니다.'
+
+export const THUMBNAIL_SIZE_EXCEEDED_MESSAGE = '썸네일은 15MB까지 업로드 가능합니다.'
+
+export function notifyFileSelectTotalSizeExceeded(message = FILE_SELECT_TOTAL_SIZE_EXCEEDED_MESSAGE): void {
   cmsAlertModal.show({
     title: '안내',
-    content: '파일은 총 최대 15MB까지 업로드 가능합니다.',
+    content: message,
   })
 }
