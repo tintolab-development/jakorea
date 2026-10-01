@@ -682,6 +682,25 @@ function buildPortalBasicInfoFields(args: {
   return fields.filter(field => field.value.trim().length > 0 && field.value !== '-')
 }
 
+/**
+ * 포털 상세는 `recruitmentId`가 있으면 행 썸네일을 응답 최상위에 둔다.
+ * 행 객체에 id가 없고 키만 빠졌으면 그 최상위 값을 쓴다. 행이 null이면 비운다.
+ */
+function resolveFocusedThumbnailFileObjectId(
+  row: PortalRecruitment | undefined,
+  remoteThumbnailFileObjectId: number | null | undefined
+): number | null | undefined {
+  if (row == null) return remoteThumbnailFileObjectId
+  if (row.thumbnailFileObjectId != null) return row.thumbnailFileObjectId
+  if (row.thumbnailFileObjectId === null) return undefined
+  return remoteThumbnailFileObjectId
+}
+
+function isIndependentRecruitmentProgram(programType: string | undefined): boolean {
+  const type = programType?.trim().toUpperCase()
+  return type === 'UJAT' || type === 'GENERAL' || (type?.startsWith('GENERAL_') ?? false)
+}
+
 export function mapPortalProgramDetail(
   remote: PortalProgramDetail,
   focus?: PortalRecruitmentFocus | null,
@@ -757,10 +776,16 @@ export function mapPortalProgramDetail(
     remote,
     targets.educationTargetLabel
   )
-  const thumbnailUrl =
-    remote.thumbnailFileObjectId != null
-      ? portalPublicFileContentUrl(remote.thumbnailFileObjectId)
+  const independentRow =
+    recruitmentResolved && selected?.rows.length === 1 && isIndependentRecruitmentProgram(programType)
+      ? selected.rows[0]
       : undefined
+  const thumbnailFileObjectId = resolveFocusedThumbnailFileObjectId(
+    independentRow,
+    remote.thumbnailFileObjectId
+  )
+  const thumbnailUrl =
+    thumbnailFileObjectId != null ? portalPublicFileContentUrl(thumbnailFileObjectId) : undefined
   const usesEducationProgressFields =
     hasProjectedEducationProgress(remote) || isGeneralEducationProgressProgram(programType)
   const legacySessions = mapSessions(remote.curricula)
@@ -786,17 +811,27 @@ export function mapPortalProgramDetail(
   const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 
-  const recruitmentGuide = readString(remote.recruitmentGuide) ?? ''
+  const programDescription = readString(
+    independentRow ? independentRow.programDescription : remote.description
+  ) ?? ''
+  const recruitmentGuide = readString(
+    independentRow ? independentRow.recruitmentGuide : remote.recruitmentGuide
+  ) ?? ''
   const additionalContent = rewriteAdminFileContentSrcsForPortal(
-    readString(remote.additionalContentHtml) ?? ''
+    readString(independentRow ? independentRow.additionalContentHtml : remote.additionalContentHtml) ??
+      ''
   )
-  const learningSupportContent = readString(remote.learningSupportContent) ?? ''
+  const learningSupportContent = readString(
+    independentRow ? independentRow.learningSupportContent : remote.learningSupportContent
+  ) ?? ''
+  const remarks = readString(independentRow ? independentRow.remarks : remote.remarks) ?? ''
   const extraSections: ProgramExtraSection[] = [
+    ...(independentRow ? [extraSection('프로그램 설명', programDescription)] : []),
     extraSection('모집 안내', recruitmentGuide),
     { title: '추가 내용', body: additionalContent, bodyFormat: 'html' as const },
     extraSection('학습 지원 내용', learningSupportContent),
     extraSection('기타사항', readString(remote.otherMatters) ?? ''),
-    extraSection('비고', readString(remote.remarks) ?? ''),
+    extraSection('비고', remarks),
   ].filter(section => section.body.length > 0)
 
   return {
@@ -804,7 +839,7 @@ export function mapPortalProgramDetail(
     category,
     categories,
     categoryLabel: programTabLabels(categories),
-    title,
+    title: readString(independentRow?.announcementTitle) ?? title,
     operatingPeriodLabel: formatRange(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
     operatingPeriodEnd: opEnd ? formatYmd(opEnd) : '1970-01-01',
@@ -820,7 +855,9 @@ export function mapPortalProgramDetail(
     thumbnailUrl,
     detailImageUrl: thumbnailUrl,
     sponsor: (remote.sponsorNames ?? []).map(readString).filter(Boolean).join(', ') || '-',
-    summary: readString(remote.description) ?? readString(remote.summary) ?? '',
+    summary: independentRow
+      ? (readString(independentRow.summary) ?? '')
+      : (readString(remote.description) ?? readString(remote.summary) ?? ''),
     isRecruiting: recruitmentStatus === RECRUITMENT_STATUS.recruiting,
     businessFieldLabel,
     educationTargetGroupLabel: targets.educationTargetGroupLabel,
@@ -896,12 +933,20 @@ export function mapPortalProgramDetail(
           value: `${item.name} · ${item.dateLabel}`,
         })),
     extraSections,
-    contactValue: contactValue(remote.contactName, remote.contactPhone, remote.contactEmail),
-    applicationMethodLabel: '지원방법',
-    applicationMethodValue: rewriteAdminFileContentSrcsForPortal(
-      readString(remote.applicationMethod ?? undefined) ?? ''
+    contactValue: contactValue(
+      independentRow?.contactName !== undefined ? independentRow.contactName : remote.contactName,
+      independentRow?.contactPhone !== undefined ? independentRow.contactPhone : remote.contactPhone,
+      independentRow?.contactEmail !== undefined ? independentRow.contactEmail : remote.contactEmail
     ),
-    attachments: (remote.attachments ?? []).flatMap(file => {
+    applicationMethodLabel: independentRow ? '지원 방법' : '지원방법',
+    applicationMethodValue: rewriteAdminFileContentSrcsForPortal(
+      readString(
+        independentRow ? (independentRow.applicationMethod ?? undefined) : (remote.applicationMethod ?? undefined)
+      ) ?? ''
+    ),
+    attachments: (
+      (independentRow?.attachments !== undefined ? independentRow.attachments : remote.attachments) ?? []
+    ).flatMap(file => {
       const fileObjectId = Number(file.fileObjectId)
       if (!Number.isFinite(fileObjectId) || fileObjectId <= 0) return []
       return [
