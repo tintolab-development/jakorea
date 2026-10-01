@@ -148,9 +148,22 @@ export async function createAdminProgramRemote(
   )
   const createdId = created.id
   if (createdId) {
-    await syncProgramInlineImages(createdId, [payload, created])
+    try {
+      await syncProgramInlineImages(createdId, [payload, created])
+    } catch (error) {
+      await rollbackCreatedProgram(createdId)
+      throw error
+    }
   }
   return created
+}
+
+async function rollbackCreatedProgram(programId: string | number): Promise<void> {
+  try {
+    await deleteAdminProgramRemote(String(programId))
+  } catch (rollbackError) {
+    console.error('[program] rollback created program failed', programId, rollbackError)
+  }
 }
 
 export async function updateAdminProgramRemote(

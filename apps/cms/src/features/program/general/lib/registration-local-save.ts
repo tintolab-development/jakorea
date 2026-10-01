@@ -618,6 +618,24 @@ export function persistGeneralRegistrationFormLocal(args: {
   return program
 }
 
+async function bindCreatedProgramMediaOrRollback(
+  created: Program,
+  bind: () => Promise<void>
+): Promise<Program> {
+  try {
+    await bind()
+    return created
+  } catch (error) {
+    const { deleteAdminProgramRemote } = await import(
+      '@/features/program/general/api/programs-api-client'
+    )
+    await deleteAdminProgramRemote(created.id).catch(rollbackError => {
+      console.error('[registration] rollback created program failed', created.id, rollbackError)
+    })
+    throw error
+  }
+}
+
 export async function persistGeneralProgramRegistration(args: {
   draft: WritingFormDraft
   participant: ProgramRegistrationParticipantState
@@ -672,10 +690,9 @@ export async function persistGeneralProgramRegistration(args: {
       '@/features/program/1c-1s/api/service'
     )
     const created = await createCompanySchoolProgram(program, args.preparedFormBindings)
-    await bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay).catch(error => {
-      console.error('[registration] bind recruit detail media failed', created.id, error)
-    })
-    return created
+    return bindCreatedProgramMediaOrRollback(created, () =>
+      bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay)
+    )
   }
 
   if (variant === 'trainedTeachers' && shouldUseTrainedTeacherProgramsRemoteApi()) {
@@ -683,10 +700,9 @@ export async function persistGeneralProgramRegistration(args: {
       '@/features/program/trained-teachers/api/service'
     )
     const created = await createTrainedTeacherProgram(program, args.preparedFormBindings)
-    await bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay).catch(error => {
-      console.error('[registration] bind recruit detail media failed', created.id, error)
-    })
-    return created
+    return bindCreatedProgramMediaOrRollback(created, () =>
+      bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay)
+    )
   }
 
   if (
@@ -695,10 +711,9 @@ export async function persistGeneralProgramRegistration(args: {
     shouldUseGeneralProgramsRemoteApi()
   ) {
     const created = await createGeneralProgram(program, args.preparedFormBindings)
-    await bindGeneralRecruitDetailMediaToRows(created, recruitMediaOverlay).catch(error => {
-      console.error('[registration] bind recruit detail media failed', created.id, error)
-    })
-    return created
+    return bindCreatedProgramMediaOrRollback(created, () =>
+      bindGeneralRecruitDetailMediaToRows(created, recruitMediaOverlay)
+    )
   }
 
   return persistGeneralRegistrationFormLocal(args)

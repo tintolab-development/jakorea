@@ -3,7 +3,11 @@ import customInstance from '@/shared/api/orval-mutator'
 const FILE_ID_RE =
   /\/api\/(?:admin|portal\/public)\/files\/(\d+)\/(?:content|download)/g
 
+const IMAGE_MARKUP_RE = /<img\b|!\[[^\]]*\]\(/i
+
 export function collectFileObjectIdsFromHtml(value: string): number[] {
+  // 썸네일·첨부 content URL은 본문 이미지가 아니다. 그대로 바인딩하면 PURPOSE_MISMATCH.
+  if (!IMAGE_MARKUP_RE.test(value)) return []
   const ids: number[] = []
   const seen = new Set<number>()
   FILE_ID_RE.lastIndex = 0
