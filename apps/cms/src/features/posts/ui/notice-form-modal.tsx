@@ -22,14 +22,30 @@ import { dedupeFileObjectIds } from '@/features/posts/api/notices/notice-file-id
 import { RichTextEditor } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
+import {
   ContentModal,
   CmsButton,
   CmsInput,
   CmsRadioGroup,
   FileSelectField,
+  useCmsAlert,
 } from '@/shared/ui'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import './notice-register-modal.css'
+
+function requiredNoticeLabel(text: string) {
+  return (
+    <>
+      {text}
+      <span className="notice-register-modal__required" aria-hidden>
+        *
+      </span>
+    </>
+  )
+}
 
 function isRegisterableNoticeCategoryId(value: string): boolean {
   const v = value.trim()
@@ -104,6 +120,7 @@ export function NoticeFormModal({
   onDeleted,
 }: NoticeFormModalProps) {
   const { user } = useAuthStore()
+  const { showAlert } = useCmsAlert()
   const { createMutation, updateMutation, deleteMutation } = useNoticeMutations()
   const categoriesQuery = useNoticeCategoriesQuery(open)
   const [form] = Form.useForm<FormValues>()
@@ -267,15 +284,18 @@ export function NoticeFormModal({
     }
 
     const md = getMarkdown().trim()
-    if (!md) {
-      setErrorMessage('내용을 입력해 주세요.')
-      return
-    }
-
     const categoryIdRaw = values.categoryId?.trim() ?? ''
     const categoryId = Number(categoryIdRaw)
-    if (!isRegisterableNoticeCategoryId(categoryIdRaw) || !Number.isFinite(categoryId)) {
-      setErrorMessage('카테고리를 선택해 주세요.')
+    const categoryMissing =
+      !isRegisterableNoticeCategoryId(categoryIdRaw) || !Number.isFinite(categoryId)
+    const visibilityMissing = values.visibility !== 'public' && values.visibility !== 'private'
+    const pinMissing = values.pinTop !== 'on' && values.pinTop !== 'off'
+    const titleMissing = !values.title?.trim()
+    if (categoryMissing || visibilityMissing || pinMissing || titleMissing || !md) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return
     }
     const categoryName =
@@ -385,27 +405,20 @@ export function NoticeFormModal({
             <div className="notice-register-modal__filter-inner">
               <Form.Item
                 name="categoryId"
-                label="카테고리"
+                label={requiredNoticeLabel('카테고리')}
+                required
                 className="notice-register-modal__filter-field notice-register-modal__filter-field--category"
                 normalize={(value: unknown) => {
                   if (typeof value !== 'string') return undefined
                   return isRegisterableNoticeCategoryId(value) ? value.trim() : undefined
                 }}
-                rules={[
-                  {
-                    validator: async (_, value) => {
-                      if (typeof value !== 'string' || !isRegisterableNoticeCategoryId(value)) {
-                        throw new Error('카테고리를 선택해 주세요.')
-                      }
-                    },
-                  },
-                ]}
               >
                 <NoticeCategorySelect options={categorySelectOptions} />
               </Form.Item>
               <Form.Item
                 name="visibility"
-                label="공개 여부"
+                label={requiredNoticeLabel('공개 여부')}
+                required
                 className="notice-register-modal__filter-field"
               >
                 <CmsRadioGroup
@@ -418,7 +431,8 @@ export function NoticeFormModal({
               </Form.Item>
               <Form.Item
                 name="pinTop"
-                label="상단 고정"
+                label={requiredNoticeLabel('상단 고정')}
+                required
                 className="notice-register-modal__filter-field"
               >
                 <CmsRadioGroup
@@ -434,15 +448,20 @@ export function NoticeFormModal({
 
           <Form.Item
             name="title"
-            label="제목"
+            label={requiredNoticeLabel('제목')}
+            required
             className="notice-register-modal__section"
-            rules={[{ required: true, whitespace: true, message: '제목을 입력해 주세요.' }]}
           >
             <CmsInput placeholder="제목을 입력하세요" inputSize="large" width="100%" />
           </Form.Item>
 
           <div className="notice-register-modal__section notice-register-modal__section--editor">
-            <div className="notice-register-modal__editor-label">내용</div>
+            <div className="notice-register-modal__editor-label">
+              내용
+              <span className="notice-register-modal__required" aria-hidden>
+                *
+              </span>
+            </div>
             <div className="notice-register-modal__editor-host">
               <RichTextEditor
                 editor={editor}
