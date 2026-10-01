@@ -7,6 +7,10 @@
 import { memo, useEffect } from 'react'
 import { RichTextEditor } from '@/shared/rich-text'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
+import {
+  programInlineImageOwner,
+  type AdminFileUploadOwner,
+} from '@/shared/lib/admin-file-upload'
 import type {
   GeminiRecruitmentRichTextGetter,
   GeminiRecruitmentRichTextKey,
@@ -21,6 +25,7 @@ export const GeminiRecruitmentRichTextEditor = memo(function GeminiRecruitmentRi
   placeholder,
   registerGetHtml,
   onEdit,
+  fileUploadOwner,
 }: {
   fieldKey: GeminiRecruitmentRichTextKey
   resetKey: string
@@ -31,11 +36,14 @@ export const GeminiRecruitmentRichTextEditor = memo(function GeminiRecruitmentRi
     getter: GeminiRecruitmentRichTextGetter | null
   ) => void
   onEdit?: () => void
+  fileUploadOwner?: AdminFileUploadOwner | null
 }) {
+  const inlineImageOwner = fileUploadOwner ?? programInlineImageOwner(null)
   const { editor, getHTML } = useNoticeWysiwygEditor(true, initialContent, resetKey, {
     placeholder,
     contentFormat: 'html',
     height: EDITOR_HEIGHT,
+    fileUploadOwner: inlineImageOwner,
   })
 
   useEffect(() => {
@@ -55,7 +63,11 @@ export const GeminiRecruitmentRichTextEditor = memo(function GeminiRecruitmentRi
   return (
     <div className="gemini-recruitment-detail-editor">
       <div className="notice-register-modal__editor-host">
-        <RichTextEditor editor={editor} minHeight={EDITOR_HEIGHT} />
+        <RichTextEditor
+          editor={editor}
+          minHeight={EDITOR_HEIGHT}
+          fileUploadOwner={inlineImageOwner}
+        />
       </div>
     </div>
   )

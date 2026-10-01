@@ -15,6 +15,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
 import {
   parseFileObjectId,
+  programInlineImageOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
 import {
@@ -159,11 +160,13 @@ function useDetailInfoEditorBlock(
   }, [isEditMode])
 
   const additionalContentHtml = resolveAdditionalContentHtml(program, emptyReadDisplay)
+  const inlineImageOwner = programInlineImageOwner(parseFileObjectId(program.id))
 
   const { editor, editorMinHeight, getHTML } = useTemplateEditor(
     editorOpen,
     '',
-    additionalContentHtml
+    additionalContentHtml,
+    inlineImageOwner
   )
   const getterRef = useRef<() => string>(() => '')
 
@@ -486,7 +489,11 @@ function AdditionalContentRow({
           <div className="program-detail-info-tab__additional-content program-detail-info-tab__additional-content--edit">
             {editorOpen && editor ? (
               <div className="program-detail-info-tab__editor-host">
-                <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+                <RichTextEditor
+                  editor={editor}
+                  minHeight={editorMinHeight}
+                  fileUploadOwner={programInlineImageOwner(parseFileObjectId(program.id))}
+                />
               </div>
             ) : (
               <div className="program-detail-info-tab__editor-placeholder">로딩 중…</div>
