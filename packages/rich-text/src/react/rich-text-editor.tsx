@@ -4,6 +4,15 @@ import { isRichTextEditorReady } from '../core/editor-ready'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import type { RichTextEditorProps } from './types'
 
+function resolveMinResizeHeight(minHeight: string | number | undefined): number {
+  if (typeof minHeight === 'number' && Number.isFinite(minHeight)) return minHeight
+  if (typeof minHeight === 'string' && minHeight.endsWith('px')) {
+    const parsed = Number.parseFloat(minHeight)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return 80
+}
+
 /**
  * Headless 에디터 셸 — Pro Simple Editor / UI Components 미사용.
  * 툴바는 `toolbar` 슬롯으로 앱별 주입 (Ant Design, PF 등).
@@ -18,19 +27,20 @@ export function RichTextEditor({
   const rootRef = useRef<HTMLDivElement>(null)
   const [userHeight, setUserHeight] = useState<number | null>(null)
   const rootClass = ['rich-text-editor', className].filter(Boolean).join(' ')
+  const minResizeHeight = resolveMinResizeHeight(minHeight)
   const rootStyle: CSSProperties | undefined =
     minHeight != null || userHeight != null
       ? {
           ...(minHeight != null ? { minHeight } : null),
-          ...(userHeight != null ? { height: userHeight } : null),
+          ...(userHeight != null
+            ? ({
+                height: userHeight,
+                // CMS 쪽 height:auto !important 를 이기기 위한 변수
+                ['--rt-user-height' as string]: `${userHeight}px`,
+              } as CSSProperties)
+            : null),
         }
       : undefined
-  const minResizeHeight =
-    typeof minHeight === 'number'
-      ? minHeight
-      : typeof minHeight === 'string' && minHeight.endsWith('px')
-        ? Number.parseFloat(minHeight)
-        : 80
 
   const handleResizePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -42,19 +52,30 @@ export function RichTextEditor({
 
       const startY = event.clientY
       const startHeight = root.getBoundingClientRect().height
+      const pointerId = event.pointerId
+      event.currentTarget.setPointerCapture(pointerId)
+
+      const applyHeight = (nextHeight: number) => {
+        setUserHeight(nextHeight)
+        root.style.setProperty('height', `${nextHeight}px`, 'important')
+        root.style.setProperty('--rt-user-height', `${nextHeight}px`)
+        root.dataset.resized = 'true'
+      }
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
         const nextHeight = Math.max(minResizeHeight, startHeight + moveEvent.clientY - startY)
-        setUserHeight(nextHeight)
+        applyHeight(nextHeight)
       }
 
       const handlePointerUp = () => {
         document.removeEventListener('pointermove', handlePointerMove)
         document.removeEventListener('pointerup', handlePointerUp)
+        document.removeEventListener('pointercancel', handlePointerUp)
       }
 
       document.addEventListener('pointermove', handlePointerMove)
-      document.addEventListener('pointerup', handlePointerUp, { once: true })
+      document.addEventListener('pointerup', handlePointerUp)
+      document.addEventListener('pointercancel', handlePointerUp)
     },
     [minResizeHeight]
   )
@@ -66,6 +87,7 @@ export function RichTextEditor({
         className={rootClass}
         style={rootStyle}
         data-rich-text-editor=""
+        data-resized={userHeight != null ? 'true' : undefined}
         aria-busy="true"
       >
         <div className="rich-text-editor__body rich-text-editor__body--loading">로딩 중…</div>
@@ -79,6 +101,7 @@ export function RichTextEditor({
       className={rootClass}
       style={rootStyle}
       data-rich-text-editor=""
+      data-resized={userHeight != null ? 'true' : undefined}
     >
       {toolbar ? (
         <div className="rich-text-editor__toolbar">{toolbar}</div>
@@ -104,7 +127,9 @@ export function RichTextEditor({
       </div>
       <div
         className="rich-text-editor__resize-handle"
-        aria-hidden="true"
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="에디터 높이 조절"
         onPointerDown={handleResizePointerDown}
       />
     </div>
