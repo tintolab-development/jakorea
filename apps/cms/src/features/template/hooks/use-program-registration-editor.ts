@@ -98,7 +98,6 @@ import {
 } from '@/features/program/general/lib/registration-required-fields'
 import {
   describeIncompleteTrainedTeachersProgramRegistrationRequiredFields,
-  listIncompleteTrainedTeachersProgramRegistrationRequiredFieldLabels,
   listIncompleteTrainedTeachersProgramRegistrationRequiredFieldReasons,
 } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
 import {
@@ -1657,50 +1656,6 @@ export function useProgramRegistrationEditor(
     trainedTeachersTeacherTrainingEnabled,
   ])
 
-  const getIncompleteRequiredFieldLabels = useCallback((): string[] => {
-    if (programRegistrationFormVariant !== 'trainedTeachers') return []
-    const overlay = getProgramRegistrationOverlayRecord()
-    const resolvedSponsorId =
-      sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
-    const resolvedContactId =
-      sponsorContactId.trim() ||
-      readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
-    return listIncompleteTrainedTeachersProgramRegistrationRequiredFieldLabels(overlay, {
-      participant,
-      programType,
-      sessionRoundType,
-      educationFormScheduleDetail,
-      participationScheduleDetail,
-      ipsScheduleDetail,
-      curriculumSessionCount,
-      curriculumChartSessionCount,
-      scheduleCurriculumDetailCount,
-      scheduleCurriculumGroupCount,
-      teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
-      educationScheduleMode,
-      sponsorId: resolvedSponsorId,
-      sponsorContactId: resolvedContactId,
-      programTitleKo: resolveProgramTitleKo(),
-    })
-  }, [
-    curriculumChartSessionCount,
-    curriculumSessionCount,
-    educationFormScheduleDetail,
-    educationScheduleMode,
-    ipsScheduleDetail,
-    participant,
-    participationScheduleDetail,
-    programRegistrationFormVariant,
-    programType,
-    resolveProgramTitleKo,
-    scheduleCurriculumDetailCount,
-    scheduleCurriculumGroupCount,
-    sessionRoundType,
-    sponsorContactId,
-    sponsorId,
-    trainedTeachersTeacherTrainingEnabled,
-  ])
-
   const hasIncompleteRequiredFields = useCallback(() => {
     if (programRegistrationFormVariant === 'economy') {
       return hasIncompleteEconomyRegistrationFromStore(participant)
@@ -1821,7 +1776,6 @@ export function useProgramRegistrationEditor(
     hasIncompleteRequiredFields,
     listIncompleteRequiredFieldKeys,
     getIncompleteRequiredFieldsReason,
-    getIncompleteRequiredFieldLabels,
     resolveProgramTitleKo,
   }
 }

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui'
-import { formatIncompleteRegistrationRequiredFieldsAlert } from '@/features/program/general/lib/registration-required-fields'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -503,20 +502,13 @@ export function useGeneralProgramRegistrationFlow(
       ) {
         const incompleteKeys = registrationVm.listIncompleteRequiredFieldKeys()
         options?.reportValidationIncomplete?.(incompleteKeys)
-        const missingLabels =
-          registrationFormVariant === 'trainedTeachers'
-            ? registrationVm.getIncompleteRequiredFieldLabels()
-            : []
         console.debug(
           '[registration] 공통정보 필수항목 미입력:',
           registrationVm.getIncompleteRequiredFieldsReason?.()
         )
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content:
-            missingLabels.length > 0
-              ? formatIncompleteRegistrationRequiredFieldsAlert(missingLabels)
-              : REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
         })
         return
       }

@@ -36,6 +36,11 @@ export type ProgramRegistrationBusinessKpiParagraphProps = {
   dispatchedClassPlaceholder?: string
   /** 교육진행자 최종 인원 항목 오버라이드 — 미지정 시 강사/봉사자 */
   educationProgressItems?: readonly ProgramRegistrationBusinessKpiProgressItem[]
+  /**
+   * 교육진행자 최종 인원 라벨 강조 키.
+   * 미지정 시 `kpi.instructor`. UJAT는 봉사자만 필수라 `kpi.volunteer`를 넘긴다.
+   */
+  educationProgressValidationKey?: string | readonly string[]
 }
 
 function KpiCountInput({
@@ -114,6 +119,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
   dispatchedClassDisabled = false,
   dispatchedClassPlaceholder = '목표값 입력',
   educationProgressItems,
+  educationProgressValidationKey = 'kpi.instructor',
 }: ProgramRegistrationBusinessKpiParagraphProps = {}) {
   const [participantCount, setParticipantCount] = useOverlayKv<number | null>(
     `${overlayKeyPrefix}.participantCount`,
@@ -204,7 +210,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
         />
         <DetailInfoForm.Field
           label="교육진행자 최종 인원"
-          validationKey="kpi.instructor"
+          validationKey={educationProgressValidationKey}
           edit={
             <div className="detail-info-form-inputs-wrapper program-registration-paragraph__instructor-kpi-row">
               {progressItems.map((item, index) => {

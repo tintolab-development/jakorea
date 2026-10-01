@@ -25,8 +25,11 @@ const UJAT_PROGRAM_SECTION_PARAGRAPH: Record<string, string> = {
   wage: UJAT_PROGRAM_REGISTRATION_IDS[2],
   h1: UJAT_PROGRAM_REGISTRATION_IDS[3],
   h2: UJAT_PROGRAM_REGISTRATION_IDS[4],
-  capacity: UJAT_PROGRAM_REGISTRATION_IDS[5],
+  capacity: UJAT_PROGRAM_REGISTRATION_IDS[6],
 }
+
+/** 상·하반기 행사 진행 일정이 교육 진행 일정 설정 단락에도 표시된다. */
+const UJAT_EVENT_RANGE_KEYS = new Set(['h1.event.range', 'h2.event.range'])
 
 function programSectionFromKey(key: string): string | null {
   const indexed = /^(.+)\[\d+\]/.exec(key)
@@ -105,6 +108,9 @@ export function resolveRegistrationWizardIncompleteParagraphIds(
       if (variant === 'ujat') {
         const ujatId = UJAT_PROGRAM_SECTION_PARAGRAPH[section]
         if (ujatId) ids.add(ujatId)
+        if (UJAT_EVENT_RANGE_KEYS.has(key)) {
+          ids.add(UJAT_PROGRAM_REGISTRATION_IDS[5])
+        }
         continue
       }
       if (section === 'schedule') {
