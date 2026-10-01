@@ -1,4 +1,5 @@
 import type { ProgramListItem } from '../model/types'
+import { PROGRAM_TAB_LABEL } from '../lib/constants'
 import { MediaListRow } from '@/shared/ui/media-list-row'
 import { PFArrowButton, PFText } from '@/shared/ui'
 import { ProgramStatusBadges } from './program-status-badges'
@@ -22,9 +23,20 @@ export function ProgramListItemRow({ program, onClick }: ProgramListItemRowProps
       content={
         <>
           <div className={styles.info}>
-            <PFText as="span" typo="bd-lg-sb" color={isClosed ? 'neutral-cool-500' : 'black'}>
-              {program.categoryLabel}
-            </PFText>
+            {program.categories.length > 0 ? (
+              <div className={styles.categories}>
+                {program.categories.map(tab => (
+                  <PFText
+                    key={tab}
+                    as="span"
+                    typo="bd-lg-sb"
+                    color={isClosed ? 'neutral-cool-500' : 'black'}
+                  >
+                    {PROGRAM_TAB_LABEL[tab]}
+                  </PFText>
+                ))}
+              </div>
+            ) : null}
             <PFText
               as="h2"
               typo="hl-lg"
