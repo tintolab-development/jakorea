@@ -83,6 +83,17 @@ function coerceDayjsRange(value: unknown): [Dayjs, Dayjs] | null {
   return [start, end]
 }
 
+function exceptionInterviewOverlayNamespace(
+  overlayStore: VolunteerInterviewOverlayStore,
+  overlayNamespace: string | undefined,
+  blockKey: number
+): string {
+  const base =
+    overlayNamespace?.trim() ||
+    (overlayStore === 'recruit' ? 'recruit.volunteer.interview' : 'application.volunteer.interview')
+  return `${base}.exception.${blockKey}`
+}
+
 function VolunteerInterviewScheduleBlock({
   title,
   type,
@@ -521,7 +532,7 @@ function VolunteerInterviewScheduleTemplateUi({
             title={`■ 예외 일정 ${String(index + 1).padStart(2, '0')}`}
             type="exception"
             overlayStore={overlayStore}
-            overlayNamespace={overlayNamespace}
+            overlayNamespace={exceptionInterviewOverlayNamespace(overlayStore, overlayNamespace, key)}
             interviewRangeSealKey={interviewRangeSealKey}
           />
           <div className="volunteer-interview-available-schedule__exception-delete-cell">
