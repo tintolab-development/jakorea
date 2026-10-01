@@ -4,6 +4,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { SMS_SEND_HISTORY_FILTER_FIELDS } from '@/features/notifications/model/sms-send-history/filter-fields'
 import {
   applySmsSendHistoryFiltersToSearchParams,
@@ -56,7 +57,22 @@ export function SmsSendHistoryPage() {
     () => readSmsSendHistoryFiltersFromParams(searchParams),
     [searchParams]
   )
-  const { data: rows = [], isLoading } = useSmsSendHistoryQuery(searchParams)
+  const {
+    rows,
+    totalCount,
+    searchParamsKey,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useSmsSendHistoryQuery(searchParams)
+  const displayTotal = totalCount ?? rows.length
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: searchParamsKey,
+  })
   const [pendingFilters, setPendingFilters] =
     useState<SmsSendHistoryPendingFilters>(appliedFilters)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
@@ -91,7 +107,8 @@ export function SmsSendHistoryPage() {
         key: 'no',
         width: COL_W.no,
         align: 'center',
-        render: (_: unknown, __: SmsSendHistoryRow, index: number) => rows.length - index,
+        render: (_: unknown, __: SmsSendHistoryRow, index: number) =>
+          displayTotal === 0 ? '-' : displayTotal - index,
       },
       {
         title: '요청일시',
@@ -174,7 +191,7 @@ export function SmsSendHistoryPage() {
         render: (value: string, row) => formatReservedAt(value, row.broadcastTiming),
       },
     ],
-    [rows.length]
+    [displayTotal]
   )
 
   return (
@@ -190,7 +207,7 @@ export function SmsSendHistoryPage() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="문자 발송 조회"
-        description={`총 ${rows.length.toLocaleString()}건`}
+        description={`총 ${displayTotal.toLocaleString()}건`}
         contentLoading={isLoading}
       >
         <Table<SmsSendHistoryRow>
@@ -206,6 +223,7 @@ export function SmsSendHistoryPage() {
             onClick: () => setSelectedRowId(record.id),
           })}
         />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
       <DetailModal
         open={selectedRowId != null}
