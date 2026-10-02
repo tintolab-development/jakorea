@@ -7,8 +7,7 @@
  */
 
 /**
- * 상·하반기. 학교 모집은 연 1회라 null. 봉사 모집과 동일 규칙이 적용되는 경우만 FIRST_HALF|SECOND_HALF
- * @nullable
+ * 학교 모집은 연 1회라 보통 null
  */
 export type OrganizationApplicationListItemResponseRecruitHalf = typeof OrganizationApplicationListItemResponseRecruitHalf[keyof typeof OrganizationApplicationListItemResponseRecruitHalf] | null;
 

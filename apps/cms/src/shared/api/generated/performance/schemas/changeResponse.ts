@@ -5,11 +5,10 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { ChangeResult } from './changeResult';
 
 export interface ChangeResponse {
   programId?: number;
-  participantId?: number;
-  organizationApplicationId?: number;
-  changes?: ChangeResult[];
+  fromDate?: string;
+  toDate?: string;
+  changedScheduleIds?: number[];
 }

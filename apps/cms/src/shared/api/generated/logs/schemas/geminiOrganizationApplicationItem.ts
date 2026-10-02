@@ -8,54 +8,33 @@
 import type { PreferredScheduleBlock } from './preferredScheduleBlock';
 
 /**
- * Gemini 찾아가는 연수 기관 신청 목록 행. CMS 「기관 신청 목록」 컬럼에 맞춘 투영.
+ * Gemini 찾아가는 연수 기관 신청 목록 행. CMS 「기관 신청 목록」 컬럼 투영.
  */
 export interface GeminiOrganizationApplicationItem {
   applicationId?: number;
   programId?: number;
-  recruitmentId?: number;
-  organizationId?: number;
-  /**
-     * 신청 기관명. CMS 컬럼 「신청 기관명」.
-     * @nullable
-     */
+  recruitmentId?: number | null;
+  organizationId?: number | null;
+  /** 신청 기관명. CMS 「신청 기관명」. */
   organizationName?: string | null;
   applicationStatus?: string;
-  requestedStudentCount?: number;
-  requestedClassCount?: number;
-  submittedAt?: string;
-  approvedAt?: string;
-  rejectedAt?: string;
-  /**
-     * 기관 소재지 시/도. organization.region_sido. CMS 「기관 소재지」 앞.
-     * @nullable
-     */
+  requestedStudentCount?: number | null;
+  requestedClassCount?: number | null;
+  submittedAt?: string | null;
+  approvedAt?: string | null;
+  rejectedAt?: string | null;
+  /** 기관 소재지 시/도. organization.region_sido. CMS 「기관 소재지」 앞. 없으면 null. */
   regionSido?: string | null;
-  /**
-     * 기관 소재지 시군구. organization.region_sigungu. CMS 「기관 소재지」 뒤.
-     * @nullable
-     */
+  /** 기관 소재지 시군구. organization.region_sigungu. CMS 「기관 소재지」 뒤. 없으면 null. */
   regionSigungu?: string | null;
-  /**
-     * 담당 교사명. teacher_member 이름. CMS 「담당 교사명」.
-     * @nullable
-     */
+  /** 담당 교사명. teacher_member 이름. CMS 「담당 교사명」. 없으면 null. */
   teacherName?: string | null;
-  /**
-     * 희망 교육 일정 구조화 블록. preferred_schedule_blocks_jsonb SSOT. 없으면 null.
-     * @nullable
-     */
+  /** 희망 교육 일정 구조화 블록(SSOT). preferred_schedule_blocks_jsonb. 목록 행에 값이 있으면 non-null·length≥1이며 preferenceRank·date·sessionTimes(startTime/endTime)를 포함한다. sessionCount=N에 sessionTimes 1건(커버 구간)도 허용. 없으면 null(빈 배열 아님). */
   preferredScheduleBlocks?: PreferredScheduleBlock[] | null;
-  /**
-     * 희망 교육 일정 표시 문자열. blocks를 CMS 셀 포맷으로 투영. 줄바꿈·콜론·파이프 포함. 없으면 null.
-     * @nullable
-     */
+  /** 희망 교육 일정 표시 문자열. blocks를 `N지망 : yyyy. MM. dd(요일) | HH:mm~HH:mm(N차시)` 멀티라인으로 투영. CMS 「강의 진행 희망 교육 날짜 및 시간」. 목록 행에 값이 있으면 non-null·non-blank. 없으면 null. */
   preferredLectureScheduleText?: string | null;
-  /**
-     * 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다.
-     * @nullable
-     */
+  /** 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. */
   resultNotificationSentAt?: string | null;
-  /** APPROVED 또는 REJECTED이면 RESEND_NOTIFICATION을 포함한다. */
+  /** APPROVED 또는 REJECTED이면 RESEND_NOTIFICATION을 포함한다. 없거나 빈 배열은 []입니다. */
   availableActions?: string[];
 }
