@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
 import { postPortalLogout } from '@/features/auth/sign-in'
 import { ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
+import { parseProgramRoute } from '@/features/program/lib/routes'
 import { isTalentDonationApplyPath } from '@/features/talent-donation'
 import {
   DEV_AUTH_CHANGE_EVENT,
@@ -43,7 +44,9 @@ export function AppLayout({
   const isIntroduction = layout === 'introduction'
   /** 재능기부 신청 폼 — 히어로 오버레이(음수 margin·투명 헤더) 제외 */
   const isSupportHero = isSupport && !isTalentDonationApplyPath(pathname)
-  const useContentShell = layout === 'default' || isHero
+  /** 상세는 자체 셸을 쓰므로 ContentShell을 한 번 더 씌우지 않는다. 목록과 같은 레이아웃에 두어 헤더가 다시 마운트되지 않게 한다. */
+  const skipContentShell = parseProgramRoute(pathname)?.name === 'detail'
+  const useContentShell = (layout === 'default' || isHero) && !skipContentShell
   const transparentHeader =
     isMypageHome || isHero || isHome || isSupportHero || isIntroduction
   /* 홈은 기존처럼 PC inverse. 그 외는 route의 headerTheme만 사용. 모바일 바는 theme 무관 */

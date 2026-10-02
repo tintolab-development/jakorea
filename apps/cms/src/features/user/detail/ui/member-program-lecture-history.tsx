@@ -116,6 +116,9 @@ export interface MemberProgramLectureHistoryProps {
   memberId?: number
 }
 
+/** 임시: 이력 삭제 UI 비노출. true로 되돌리면 버튼·삭제용 선택이 다시 보인다. */
+const SHOW_PROGRAM_HISTORY_DELETE = false
+
 const DEFAULT_FOOTNOTE =
   '* 활동보고서는 개인정보 보관 만료 전(회원가입일로부터 5년)까지 자유롭게 발급이 가능합니다.'
 
@@ -620,13 +623,15 @@ export function MemberProgramLectureHistory({
         actions={
           <div className="member-program-lecture-history__toolbar-actions-inner">
             <div className="member-program-lecture-history__toolbar-actions-buttons">
-              <CmsButton
-                variant="delete"
-                disabled={selectedRowKeys.length === 0}
-                onClick={handleOpenHistoryDeleteModal}
-              >
-                이력 삭제
-              </CmsButton>
+              {SHOW_PROGRAM_HISTORY_DELETE ? (
+                <CmsButton
+                  variant="delete"
+                  disabled={selectedRowKeys.length === 0}
+                  onClick={handleOpenHistoryDeleteModal}
+                >
+                  이력 삭제
+                </CmsButton>
+              ) : null}
               {(mode === 'studentEnrollment' || mode === 'schoolProgramParticipation') &&
                 showCertificateBulkIssue && (
                   <CmsButton
@@ -709,11 +714,15 @@ export function MemberProgramLectureHistory({
           className="cms-data-table"
           scroll={{ x: 'max-content' }}
           loading={loading}
-          rowSelection={{
-            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-            selectedRowKeys,
-            onChange: keys => setSelectedRowKeys(keys),
-          }}
+          rowSelection={
+            SHOW_PROGRAM_HISTORY_DELETE || showCertificateBulkIssue
+              ? {
+                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                  selectedRowKeys,
+                  onChange: keys => setSelectedRowKeys(keys),
+                }
+              : undefined
+          }
           dataSource={tableDataSource}
           columns={columns as ColumnsType<Application | UserHistory>}
           rowKey="id"

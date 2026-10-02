@@ -86,6 +86,7 @@ function isUjatProgramListPath(pathnameNormalized: string): boolean {
 /** 진행년도 필터 — 전체 */
 const UJAT_PROGRESS_YEAR_ALL = '__all__' as const
 type UjatProgressYearFilter = typeof UJAT_PROGRESS_YEAR_ALL | number
+const ALL_YEARS_LIST_PARAMS = { businessYear: undefined }
 
 function UjatProgramListPageContent() {
   const navigate = useNavigate()
@@ -110,6 +111,8 @@ function UjatProgramListPageContent() {
     [appliedYear]
   )
   const programsQuery = usePrograms(listParams)
+  /** 진행년도 옵션 — 연도 필터 적용 결과가 아닌 전체 목록 기준 (초기 「전체」 조회와 같은 캐시) */
+  const allYearsQuery = usePrograms(ALL_YEARS_LIST_PARAMS)
   const updateProgramMutation = useUpdateProgram()
   const programs = useMemo(
     () => programsQuery.data?.pages.flatMap(page => page.programs) ?? [],
@@ -229,15 +232,17 @@ function UjatProgramListPageContent() {
 
   const progressYearFieldOptions = useMemo(() => {
     const years = new Set<number>()
-    ujatPrograms.forEach(p => {
+    const allYearPrograms = allYearsQuery.data?.pages.flatMap(page => page.programs) ?? []
+    ;[...allYearPrograms, ...ujatPrograms].forEach(p => {
       const y = dayjs(p.startDate).year()
       if (Number.isFinite(y)) years.add(y)
     })
+    if (appliedYear !== UJAT_PROGRESS_YEAR_ALL) years.add(appliedYear)
     const yearOptions = Array.from(years)
       .sort((a, b) => b - a)
       .map(y => ({ label: `${y}년`, value: y as number }))
     return [{ label: '전체', value: UJAT_PROGRESS_YEAR_ALL }, ...yearOptions]
-  }, [ujatPrograms])
+  }, [allYearsQuery.data, appliedYear, ujatPrograms])
 
   const filterFields = useMemo<FilterFieldConfig[]>(
     () => [

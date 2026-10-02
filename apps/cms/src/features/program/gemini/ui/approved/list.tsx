@@ -25,10 +25,7 @@ import {
   formatStatusLabel,
   formatTrainingDatetimeDisplay,
 } from '../../lib/approved/format-display'
-import {
-  resolveApprovedTrainingFilterDate,
-  resolveApprovedTrainingStatus,
-} from '../../lib/approved/resolve-status'
+import { resolveApprovedTrainingStatus } from '../../lib/approved/resolve-status'
 import {
   useGeminiApprovedTrainingRows,
 } from '../../hooks/use-gemini-approved-training-rows'
@@ -104,44 +101,6 @@ function instructorNameText(name: string) {
   return name
 }
 
-function filterRows(
-  rows: GeminiApprovedTrainingRow[],
-  filters: PendingFilters,
-  todayKey: string
-) {
-  const institutionNameQ = filters.institutionName.trim().toLowerCase()
-  const referenceDate = dayjs(todayKey)
-
-  return rows.filter(row => {
-    if (institutionNameQ && !row.institutionName.toLowerCase().includes(institutionNameQ)) {
-      return false
-    }
-    if (filters.institutionSido && row.institutionSido !== filters.institutionSido) {
-      return false
-    }
-    if (filters.institutionSigungu && row.institutionSigungu !== filters.institutionSigungu) {
-      return false
-    }
-    const derivedStatus = resolveApprovedTrainingStatus(row, referenceDate)
-    if (filters.status !== 'ALL' && derivedStatus !== filters.status) {
-      return false
-    }
-    if (filters.officialDocumentRequired !== 'ALL') {
-      const required = filters.officialDocumentRequired === 'Y'
-      if (row.officialDocumentRequired !== required) return false
-    }
-    if (filters.trainingDateRange?.[0] && filters.trainingDateRange[1]) {
-      const rowDate = dayjs(resolveApprovedTrainingFilterDate(row))
-      const from = filters.trainingDateRange[0].startOf('day')
-      const to = filters.trainingDateRange[1].endOf('day')
-      if (!rowDate.isValid() || rowDate.isBefore(from) || rowDate.isAfter(to)) {
-        return false
-      }
-    }
-    return true
-  })
-}
-
 export function GeminiApprovedTrainingList() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
@@ -171,7 +130,7 @@ export function GeminiApprovedTrainingList() {
     [appliedFilters]
   )
   const {
-    rows: allRows,
+    rows: filteredRows,
     remoteEnabled,
     isFetching,
     isFetchingNextPage,
@@ -187,11 +146,6 @@ export function GeminiApprovedTrainingList() {
     fetchNextPage,
     resetKey: JSON.stringify(queryFilters),
   })
-
-  const filteredRows = useMemo(
-    () => filterRows(allRows, appliedFilters, todayKey),
-    [allRows, appliedFilters, todayKey]
-  )
 
   const excelRows = useMemo(
     () => buildApprovedTrainingExcelRows(filteredRows, todayKey),

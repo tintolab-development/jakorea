@@ -159,11 +159,13 @@ export function GeminiApprovedTrainingDetailFullPageModal({
                     onClick={openPersonalInfoRevealConfirm}
                   />
                 </div>
-                <GeminiApprovedTrainingDetailProgramInfoTab
-                  detail={displayedDetail}
-                  todayKey={todayKey}
-                  personalInfoRevealed={personalInfoRevealed}
-                />
+                <div className="program-detail-fullpage-modal__info-tab">
+                  <GeminiApprovedTrainingDetailProgramInfoTab
+                    detail={displayedDetail}
+                    todayKey={todayKey}
+                    personalInfoRevealed={personalInfoRevealed}
+                  />
+                </div>
               </>
             ) : activeLnb === 'instructors' ? (
               <GeminiApprovedTrainingDetailInstructorApplicationTab
