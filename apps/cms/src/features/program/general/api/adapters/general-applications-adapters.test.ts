@@ -6,6 +6,8 @@ import {
   mapIndividualApplicationToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
   mapMaterialAssignmentStatusToTextbookStatus,
+  mapTextbookDeliveryStatusToBadge,
+  mapTextbookStatusKeyToDeliveryStatus,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
   mapOrganizationApplicationToApplicantSchoolRow,
   softMergeOrganizationApplicationDetailOntoRow,
@@ -84,6 +86,44 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.mealInfo).toBe('급식 가능')
     expect(row.detail?.otherSpecialNotes).toBe('정문 주차')
     expect(row.detail?.educationType).toBe('오프라인')
+  })
+
+  it('maps company-school economy fields from organization list and detail GET', () => {
+    const listRow = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 202,
+        organizationName: 'JA서울미래초등학교',
+        previousYearParticipation: 'yes',
+        affiliatedFinancialCompany: 'KB국민은행',
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '170001'
+    )
+    expect(listRow.detail?.previousYearParticipation).toBe('참여')
+    expect(listRow.detail?.affiliatedFinancialCompany).toBe('KB국민은행')
+
+    const detailRow = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 202,
+        previousYearParticipation: '미참여',
+        affiliatedFinancialCompany: '신한은행',
+      } as Parameters<typeof mapOrganizationApplicationDetailToApplicantSchoolRow>[0],
+      {
+        id: '202',
+        no: 1,
+        schoolName: 'JA서울미래초등학교',
+        region: '서울',
+        educationGrade: '2학년',
+        classCount: 1,
+        studentCount: 20,
+        teacherName: '김교사',
+        approvalStatus: 'pending',
+        programId: '170001',
+        detail: { previousYearParticipation: '참여' },
+      }
+    )
+    expect(detailRow.detail?.previousYearParticipation).toBe('미참여')
+    expect(detailRow.detail?.affiliatedFinancialCompany).toBe('신한은행')
   })
 
   it('does not show the program grade range when the application has no requested grade', () => {
@@ -209,7 +249,8 @@ describe('general-applications-adapters', () => {
         email: 'teacher@school.kr',
         textbookId: 12,
         textbookName: '금융교육 5학년',
-        materialAssignmentStatus: 'SHIPPING',
+        materialAssignmentStatus: 'ASSIGNED',
+        textbookDeliveryStatus: 'SHIPPING',
         sessions: [
           {
             scheduleId: 801,
@@ -248,6 +289,29 @@ describe('general-applications-adapters', () => {
     [undefined, 'not_applicable'],
   ] as const)('maps material assignment status %s to %s', (status, expected) => {
     expect(mapMaterialAssignmentStatusToTextbookStatus(status)).toBe(expected)
+  })
+
+  it.each([
+    ['PREPARING', 'preparing'],
+    ['SHIPPING', 'shipping'],
+    ['DELIVERED', 'delivered'],
+    ['NOT_APPLICABLE', 'not_applicable'],
+  ] as const)('maps textbook delivery status %s to badge %s', (status, expected) => {
+    expect(mapTextbookDeliveryStatusToBadge(status)).toBe(expected)
+  })
+
+  it('prefers textbookDeliveryStatus over materialAssignmentStatus for the badge', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 31001,
+        materialAssignmentStatus: 'ASSIGNED',
+        textbookDeliveryStatus: 'PREPARING',
+      } as never,
+      0,
+      '168001'
+    )
+    expect(row.textbookStatus).toBe('preparing')
+    expect(mapTextbookStatusKeyToDeliveryStatus('delivered')).toBe('DELIVERED')
   })
 
   it('maps saved affiliation fallback for individual, instructor, and volunteer participants', () => {
@@ -386,6 +450,7 @@ describe('general-applications-adapters', () => {
         id1365: '1365-10001',
         contact: '010-****-9999',
         email: 'vol***@example.com',
+        volunteerKind: 'GENERAL',
         assignedOrganizationNames: ['해봄초등학교', '푸른초등학교'],
         sessions: [
           {
@@ -404,6 +469,7 @@ describe('general-applications-adapters', () => {
 
     expect(volunteer.id).toBe('1691601')
     expect(volunteer.volunteerApplicationId).toBe('77002')
+    expect(volunteer.volunteerKind).toBe('GENERAL')
     expect(volunteer.memberId).toBe(9101)
     expect(volunteer.id1365).toBe('1365-10001')
     expect(volunteer.assignedInstitutionNames).toEqual(['해봄초등학교', '푸른초등학교'])
@@ -445,6 +511,26 @@ describe('general-applications-adapters', () => {
     expect(instructor.schoolName).toBe('해봄초등학교')
     expect(instructor.lectureReportSubmitted).toBe(true)
     expect(instructor.instructorApplicationId).toBeUndefined()
+    expect(instructor.memberId).toBe('9001')
+  })
+
+  it('maps admin-registered instructor row with null sourceApplicationId and none settlement', () => {
+    const instructor = mapParticipantToParticipatingInstructorRow(
+      {
+        participantId: 1,
+        memberId: 190010,
+        memberName: '등록강사',
+        sourceApplicationId: null,
+        settlementStatus: 'none',
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '170002'
+    )
+
+    expect(instructor.id).toBe('1')
+    expect(instructor.memberId).toBe('190010')
+    expect(instructor.instructorApplicationId).toBeUndefined()
+    expect(instructor.settlementStatus).toBe('none')
   })
 
   it('maps instructor sourceApplicationId to instructorApplicationId', () => {

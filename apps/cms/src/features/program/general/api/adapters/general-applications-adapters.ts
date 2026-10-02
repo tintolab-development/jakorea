@@ -113,6 +113,35 @@ function readResultNotificationSentAt(dto: object): string | null | undefined {
   return typeof value === 'string' ? value : undefined
 }
 
+/** codegen 미반영. 1사1교 기관 목록·상세 GET `참여`|`미참여`|결연사명. */
+export function readOrganizationApplicationEconomyDisplayFields(dto: object): {
+  previousYearParticipation?: string
+  affiliatedFinancialCompany?: string
+} {
+  const raw = dto as {
+    previousYearParticipation?: string | null
+    affiliatedFinancialCompany?: string | null
+  }
+  const previousYearParticipation = formatPreviousYearParticipationLabel(
+    raw.previousYearParticipation
+  )
+  const affiliatedFinancialCompany = raw.affiliatedFinancialCompany?.trim() || undefined
+  return {
+    ...(previousYearParticipation ? { previousYearParticipation } : {}),
+    ...(affiliatedFinancialCompany ? { affiliatedFinancialCompany } : {}),
+  }
+}
+
+export function formatPreviousYearParticipationLabel(
+  raw?: string | null
+): string | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  if (trimmed === 'yes' || trimmed === 'Y' || trimmed === '참여') return '참여'
+  if (trimmed === 'no' || trimmed === 'N' || trimmed === '미참여') return '미참여'
+  return trimmed
+}
+
 function formatOrganizationResultNotificationSentAt(
   iso?: string | null
 ): string | undefined {
@@ -156,6 +185,9 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     programId,
     sessions,
     desiredEducationPeriod,
+    detail: {
+      ...readOrganizationApplicationEconomyDisplayFields(dto),
+    },
   }
 }
 
@@ -241,6 +273,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     detail: {
       ...base.detail,
       ...detailFields,
+      ...readOrganizationApplicationEconomyDisplayFields(dto),
       ...(teacherPhone ? { teacherPhone } : {}),
       ...(teacherEmail ? { teacherEmail } : {}),
       teacherInfo: undefined,
@@ -346,6 +379,7 @@ export function softMergeOrganizationApplicationDetailOntoRow(
     detail: {
       ...base.detail,
       ...detailFields,
+      ...readOrganizationApplicationEconomyDisplayFields(dto),
       ...(teacherPhone ? { teacherPhone } : {}),
       ...(teacherEmail ? { teacherEmail } : {}),
       teacherInfo: undefined,
@@ -1146,6 +1180,35 @@ export function mapMaterialAssignmentStatusToTextbookStatus(
   return 'not_applicable'
 }
 
+/** 교재 배송 배지. `materialAssignmentStatus`(UNDECIDED/NONE/ASSIGNED)와 다르다. */
+export function mapTextbookDeliveryStatusToBadge(
+  status?: string | null
+): ParticipatingSchoolRow['textbookStatus'] {
+  const normalized = status?.trim().toUpperCase() ?? ''
+  if (normalized === 'PREPARING' || normalized === 'PREPARE') return 'preparing'
+  if (normalized === 'SHIPPING' || normalized === 'SHIP') return 'shipping'
+  if (normalized === 'DELIVERED' || normalized === 'DELIVER') return 'delivered'
+  return 'not_applicable'
+}
+
+export function mapTextbookStatusKeyToDeliveryStatus(
+  status: ParticipatingSchoolRow['textbookStatus']
+): 'PREPARING' | 'SHIPPING' | 'DELIVERED' | 'NOT_APPLICABLE' {
+  if (status === 'preparing') return 'PREPARING'
+  if (status === 'shipping') return 'SHIPPING'
+  if (status === 'delivered') return 'DELIVERED'
+  return 'NOT_APPLICABLE'
+}
+
+function readOrganizationTextbookStatus(
+  dto: ParticipantListItemResponse
+): ParticipatingSchoolRow['textbookStatus'] {
+  const extra = dto as ParticipantListItemResponse & { textbookDeliveryStatus?: string | null }
+  const delivery = extra.textbookDeliveryStatus?.trim()
+  if (delivery) return mapTextbookDeliveryStatusToBadge(delivery)
+  return mapMaterialAssignmentStatusToTextbookStatus(dto.materialAssignmentStatus)
+}
+
 export function mapParticipantToParticipatingSchoolRow(
   dto: ParticipantListItemResponse,
   index: number,
@@ -1173,7 +1236,7 @@ export function mapParticipantToParticipatingSchoolRow(
     classCount: dto.classCount ?? 0,
     studentCount: dto.studentCount ?? 0,
     lectureRound: sessions.length > 0 ? String(sessions.length) : '',
-    textbookStatus: mapMaterialAssignmentStatusToTextbookStatus(dto.materialAssignmentStatus),
+    textbookStatus: readOrganizationTextbookStatus(dto),
     textbookId: dto.textbookId != null ? String(dto.textbookId) : undefined,
     textbookName: dto.textbookName?.trim() || undefined,
     approvalStatus: 'approved',
@@ -1313,6 +1376,7 @@ type ParticipantVolunteerListEnriched = ParticipantListItemResponse & {
   external1365Id?: string | null
   assignedOrganizationNames?: string[] | null
   assignedInstitutionNames?: string[] | null
+  volunteerKind?: 'GENERAL' | 'EMPLOYEE' | null
 }
 
 function readParticipantVolunteerEnriched(
@@ -1344,6 +1408,10 @@ export function mapParticipantToParticipatingVolunteerRow(
     id: toId(dto.participantId),
     volunteerApplicationId:
       dto.sourceApplicationId != null ? String(dto.sourceApplicationId) : undefined,
+    volunteerKind:
+      enriched.volunteerKind === 'GENERAL' || enriched.volunteerKind === 'EMPLOYEE'
+        ? enriched.volunteerKind
+        : undefined,
     memberId: dto.memberId,
     programId,
     no: index + 1,
