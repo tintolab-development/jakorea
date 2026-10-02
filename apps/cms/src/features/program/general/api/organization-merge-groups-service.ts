@@ -2,6 +2,7 @@ import {
   cancelOrganizationMergeGroupRemote,
   createOrganizationMergeGroupRemote,
   fetchOrganizationMergeGroupsRemote,
+  patchOrganizationMergeGroupRemote,
 } from '@/features/program/general/api/organization-merge-groups-api-client'
 import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
 import {
@@ -94,6 +95,18 @@ export async function saveOrganizationCombinedClassRemote(
 
   if (existingLeadGroup && partnersUnchanged && !leadTeacherChanged) {
     return existingLeadGroup
+  }
+
+  if (
+    existingLeadGroup?.id != null &&
+    existingLeadGroup.status?.trim().toUpperCase() === 'EFFECTIVE' &&
+    partnersUnchanged &&
+    leadTeacherChanged &&
+    params.leadTeacherMemberId != null
+  ) {
+    return patchOrganizationMergeGroupRemote(params.programId, existingLeadGroup.id, {
+      leadTeacherMemberId: params.leadTeacherMemberId,
+    })
   }
 
   if (existingLeadGroup?.id != null) {
