@@ -32,14 +32,23 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { updateInstructorApplicationManagerCommentRemote } from '@/features/program/general/api/applications-api-client'
+import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import {
+  unmaskInstructorApplicationPrivacyRemote,
+  updateInstructorApplicationManagerCommentRemote,
+} from '@/features/program/general/api/applications-api-client'
+import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import { mapInstructorApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-instructor-application-detail'
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
 import {
   generalApplicationsQueryKeys,
   generalProgramProgressQueryKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
-import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import {
+  useIsCompanySchoolProgramsSurface,
+  useProgramProgressRemoteEnabledForSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { useParticipatingInstructorApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
 import {
@@ -78,6 +87,7 @@ import {
   fetchGeneralInstructorAssignmentBoard,
   findScheduleIdForLectureDate,
 } from '@/features/program/general/api/instructor-assignment-board-service'
+import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
 import {
   mapParticipatingSessionsToInstructorAssignOptions,
 } from '@/features/program/general/lib/instructor-assign-session-options'
@@ -141,10 +151,10 @@ function renderWaitingTableEmpty() {
   )
 }
 
-/** TODO(api): 강사 중첩 탭 mutation 잔여 — settlement.
- * institutionAssignment: instructor-assignments list/create/cancel/representative 연동.
- * lectureReports: GET list hybrid (`useProgramLectureReports`).
- * 1사1교 정산은 100km·교통·숙박·wagePolicies/paymentItems 구조화 계약 후. */
+/** 진행 현황 잔여 mutation — `docs/api/general-program-progress-remaining-backend-request-2026-10-02.md`
+ * institutionAssignment: list/create/cancel/representative 연동. 대표→일반은 BE H.
+ * lectureReports: GET + file download.
+ * 신청 정보 저장·강사 등록은 BE F·G. */
 export const INSTRUCTOR_DETAIL_TAB_KEYS = [
   'application',
   'institutionAssignment',
@@ -172,16 +182,6 @@ const TAB_LABELS: Record<InstructorDetailTabKey, string> = {
 }
 
 const NO_DATA = '데이터 없음'
-
-function isCompanySchoolProgram(program: Program): boolean {
-  return (
-    program.id.startsWith('economy-prog-') ||
-    program.id.startsWith('company-school-prog-') ||
-    program.id.startsWith('company-school-local-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title?.includes('1사1교') === true
-  )
-}
 
 function getEducationLevelBadge(educationLevel?: string, schoolType?: string): string {
   const raw = schoolType ?? educationLevel ?? ''
@@ -294,7 +294,8 @@ export function ParticipatingInstructorFullpageView({
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
-  const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
+  const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
+  const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
   const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
 
   const enrichedInstructor = useParticipatingInstructorApplicationDetailEnrichment(d, program.id)
@@ -309,7 +310,7 @@ export function ParticipatingInstructorFullpageView({
   )
 
   const isIndividualProgram = isGeneralIndividualProgram(program)
-  const isCompanySchool = isCompanySchoolProgram(program)
+  const isCompanySchool = isCompanySchoolSurface || isCompanySchoolProgram(program)
 
   const isActivityWithdrawn = mergedInstructor.activityWithdrawn === true
 
@@ -342,15 +343,83 @@ export function ParticipatingInstructorFullpageView({
     [d.instructorName]
   )
 
+  const revealParticipatingInstructorPersonalInfo = useCallback(
+    async (reason: string) => {
+      const applicationId = instructorApplicationId?.trim()
+      if (applicationId) {
+        const programIdNumber = Number(program.id)
+        const dto = await unmaskInstructorApplicationPrivacyRemote(
+          applicationId,
+          reason,
+          Number.isFinite(programIdNumber) ? programIdNumber : undefined
+        )
+        queryClient.setQueryData(
+          generalApplicationsQueryKeys.instructorDetail(applicationId),
+          dto
+        )
+        const mapped = mapInstructorApplicationDetailToParticipatingRow(
+          dto,
+          mergedInstructor,
+          program.id
+        )
+        setInstructorPatches(prev => ({
+          ...prev,
+          instructorName: mapped.instructorName,
+          contact: mapped.contact,
+          email: mapped.email,
+          address: mapped.address,
+          nameHanja: mapped.nameHanja,
+          nameEnglish: mapped.nameEnglish,
+          birthDate: mapped.birthDate,
+          gender: mapped.gender,
+        }))
+        return {
+          name: dto.instructorName?.trim() || undefined,
+          phone: dto.contact?.trim() || undefined,
+          email: dto.email?.trim() || undefined,
+          address:
+            [dto.homeAddress, dto.homeAddressDetail]
+              .map(part => part?.trim())
+              .filter(Boolean)
+              .join(' ') || undefined,
+        }
+      }
+
+      const memberId = Number(mergedInstructor.memberId)
+      if (!Number.isFinite(memberId) || memberId <= 0) {
+        throw new Error('강사 신청 ID 또는 회원 ID가 없습니다.')
+      }
+      return fetchMemberRolePrivacyUnmask(memberId, reason, 'INSTRUCTOR')
+    },
+    [instructorApplicationId, mergedInstructor, program.id, queryClient]
+  )
+
+  const applyParticipatingInstructorPersonalInfo = useCallback((payload: unknown) => {
+    if (payload == null || typeof payload !== 'object') return
+    const privacy = payload as {
+      name?: unknown
+      phone?: unknown
+      email?: unknown
+      address?: unknown
+    }
+    setInstructorPatches(prev => ({
+      ...prev,
+      ...(typeof privacy.name === 'string' ? { instructorName: privacy.name } : {}),
+      ...(typeof privacy.phone === 'string' ? { contact: privacy.phone } : {}),
+      ...(typeof privacy.email === 'string' ? { email: privacy.email } : {}),
+      ...(typeof privacy.address === 'string' ? { address: privacy.address } : {}),
+    }))
+  }, [])
+
   const {
     personalInfoRevealed,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolveParticipatingInstructorFullpageAccessItem,
-    resolveMemberId: () => mergedInstructor.memberId,
-    resolveMemberRole: () => 'INSTRUCTOR',
-    resetDeps: [d.id, mergedInstructor.memberId, schoolRows, instructorList],
+    revealPersonalInfo: revealParticipatingInstructorPersonalInfo,
+    onPrivacyUnmasked: applyParticipatingInstructorPersonalInfo,
+    resetDeps: [d.id, instructorApplicationId, mergedInstructor.memberId],
     controlMode: 'toggleRemask',
   })
 
@@ -847,7 +916,9 @@ export function ParticipatingInstructorFullpageView({
     }
 
     try {
-      const board = await fetchGeneralInstructorAssignmentBoard(program.id)
+      const board = isCompanySchool
+        ? await fetchCompanySchoolAssignmentBoard(program.id)
+        : await fetchGeneralInstructorAssignmentBoard(program.id)
       let leadAssigned = assignedSchools.some(row => row.role === 'lead')
       const selectedSessionKeys = new Set(assignGuideSessionIds)
 
@@ -952,6 +1023,7 @@ export function ParticipatingInstructorFullpageView({
     assignedSchools,
     closeAssignGuideModal,
     institutionAssignment,
+    isCompanySchool,
     instructorList,
     mergedInstructor,
     mergedInstructor.instructorApplicationId,
@@ -1126,7 +1198,7 @@ export function ParticipatingInstructorFullpageView({
 
   const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
-    if (shouldUseGeneralApplicationsRemoteApi()) {
+    if (shouldUseOrganizationApplicationRemoteApi()) {
       if (!hasInstructorApplicationId) {
         void showAlert({
           title: '안내',

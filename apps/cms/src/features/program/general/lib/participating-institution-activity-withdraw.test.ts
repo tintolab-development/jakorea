@@ -5,6 +5,7 @@ import {
   formatParticipatingInstitutionActivityWithdrawScheduleOptionLabel,
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
   resolveParticipatingInstitutionActivityWithdrawPatch,
+  resolveParticipatingInstitutionActivityWithdrawStopScheduleId,
 } from './participating-institution-activity-withdraw'
 import type { Program } from '@/types/domain'
 
@@ -89,5 +90,21 @@ describe('participating-institution-activity-withdraw', () => {
       activityWithdrawStopSessionKey: key,
       activityWithdrawStopScheduleLabel: '2026. 01. 09(금) 09:20 ~ 11:20 | 1차시',
     })
+  })
+
+  it('선택된 회차 resolvedScheduleId를 활동 포기 stopScheduleId로 반환한다', () => {
+    const sessions = [baseSession({ resolvedScheduleId: 801 }), baseSession({ resolvedScheduleId: 802 })]
+    expect(
+      resolveParticipatingInstitutionActivityWithdrawStopScheduleId(
+        sessions,
+        buildParticipatingSchoolSessionKey(sessions[1]!, 1)
+      )
+    ).toBe(802)
+    expect(
+      resolveParticipatingInstitutionActivityWithdrawStopScheduleId(
+        [baseSession()],
+        buildParticipatingSchoolSessionKey(baseSession(), 0)
+      )
+    ).toBeUndefined()
   })
 })

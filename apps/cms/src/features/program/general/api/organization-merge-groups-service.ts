@@ -41,6 +41,7 @@ export interface SaveOrganizationCombinedClassParams {
   partnerRowIds: string[]
   existingMergeGroups?: MergeGroupResponse[]
   changeReason?: string
+  leadTeacherMemberId?: number
 }
 
 export async function saveOrganizationCombinedClassRemote(
@@ -75,8 +76,8 @@ export async function saveOrganizationCombinedClassRemote(
     throw new Error('합반 대상 학년의 기관 신청 ID 또는 학년 정보가 없습니다.')
   }
 
-  if (
-    existingLeadGroup &&
+  const partnersUnchanged =
+    existingLeadGroup != null &&
     areMergeMemberRequestsEqual(
       partnerMembers,
       (existingLeadGroup.members ?? [])
@@ -87,7 +88,11 @@ export async function saveOrganizationCombinedClassRemote(
         }))
         .filter(member => member.grade)
     )
-  ) {
+  const leadTeacherChanged =
+    params.leadTeacherMemberId != null &&
+    params.leadTeacherMemberId !== existingLeadGroup?.leadTeacherMemberId
+
+  if (existingLeadGroup && partnersUnchanged && !leadTeacherChanged) {
     return existingLeadGroup
   }
 
@@ -101,6 +106,7 @@ export async function saveOrganizationCombinedClassRemote(
       leadOrganizationApplicationId: leadOrgAppId,
       partnerMembers,
       changeReason: params.changeReason,
+      leadTeacherMemberId: params.leadTeacherMemberId,
     })
   )
 }

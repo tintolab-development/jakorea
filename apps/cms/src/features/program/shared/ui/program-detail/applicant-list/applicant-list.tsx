@@ -69,6 +69,12 @@ import {
 } from '@/features/program/general/lib/applicant-notification-resend'
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
+import {
+  toFlatDecisionNotifyTiming,
+  toNestedDecisionNotification,
+  toScreeningNotifyFields,
+} from '@/features/program/general/lib/application-decision-notify-timing'
 import { patchInstructorForCancelApproval } from '@/features/program/general/lib/instructor-cancel-approval'
 import {
   patchInstructorForCancelRejection,
@@ -170,6 +176,8 @@ export function ApplicantList({
     confirmBulkParticipantReject,
     confirmBulkParticipantApprove,
     applyRemoteIndividualDecision,
+    applyRemoteIndividualCancelApproval,
+    applyRemoteIndividualCancelRejection,
     applyRemoteInstructorDecision,
     applyRemoteInstitutionDecision,
     applyRemoteInstitutionCancelApproval,
@@ -780,12 +788,12 @@ export function ApplicantList({
             canResendInstitutionNotification ? handleOpenNotificationResend : undefined
           }
         />
-      ) : showIndividualDetail && individualScreeningStage === 'doc1' && program ? (
+      ) : showIndividualDetail && program ? (
         <GeneralParticipantApplicantDetailView
           program={program}
           applicantId={(selectedItem as GeneralIndividualApplicantRow).id}
           applicant={selectedItem as GeneralIndividualApplicantRow}
-          screeningStage="doc1"
+          screeningStage={individualScreeningStage === 'doc1' ? 'doc1' : 'main'}
           onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
           onApplicantDetailMetaChange={onApplicantDetailMetaChange}
           onApplicantUpdated={row => {
@@ -962,9 +970,12 @@ export function ApplicantList({
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstructorBulkRejectOpen(false)}
         onConfirm={payload => {
-          confirmBulkInstructorReject(payload)
-          setInstructorBulkRejectOpen(false)
-          showApplicationRejectionCompletedAlert()
+          void (async () => {
+            const result = await confirmBulkInstructorReject(payload)
+            if (result !== 'ok') return
+            setInstructorBulkRejectOpen(false)
+            showApplicationRejectionCompletedAlert()
+          })()
         }}
       />
       <ProgramApplicationRejectModal
@@ -975,9 +986,12 @@ export function ApplicantList({
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstitutionBulkRejectOpen(false)}
         onConfirm={payload => {
-          confirmBulkInstitutionReject(payload)
-          setInstitutionBulkRejectOpen(false)
-          showApplicationRejectionCompletedAlert()
+          void (async () => {
+            const result = await confirmBulkInstitutionReject(payload)
+            if (result !== 'ok') return
+            setInstitutionBulkRejectOpen(false)
+            showApplicationRejectionCompletedAlert()
+          })()
         }}
       />
       <InstitutionBulkApproveModal
@@ -985,9 +999,12 @@ export function ApplicantList({
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstitutionBulkApproveOpen(false)}
         onConfirm={payload => {
-          confirmBulkInstitutionApprove(payload)
-          setInstitutionBulkApproveOpen(false)
-          showApplicationApprovalCompletedAlert()
+          void (async () => {
+            const result = await confirmBulkInstitutionApprove(payload)
+            if (result !== 'ok') return
+            setInstitutionBulkApproveOpen(false)
+            showApplicationApprovalCompletedAlert()
+          })()
         }}
       />
       <InstitutionApproveModal
@@ -1002,7 +1019,12 @@ export function ApplicantList({
             manualNotifyAt: payload.manualNotifyAt,
           }
           const run = async () => {
-            const remote = await applyRemoteInstitutionDecision([id], 'approve')
+            const remote = await applyRemoteInstitutionDecision(
+              [id],
+              'approve',
+              undefined,
+              toFlatDecisionNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
+            )
             if (remote === 'error') return
             if (remote === 'skipped') {
               notifyProgramApiUnavailable(
@@ -1046,7 +1068,12 @@ export function ApplicantList({
             rejectionReason: payload.reason,
           }
           const run = async () => {
-            const remote = await applyRemoteInstitutionDecision([id], 'reject', payload.reason)
+            const remote = await applyRemoteInstitutionDecision(
+              [id],
+              'reject',
+              payload.reason,
+              toFlatDecisionNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
+            )
             if (remote === 'error') return
             if (remote === 'skipped') {
               notifyProgramApiUnavailable(
@@ -1082,9 +1109,13 @@ export function ApplicantList({
           if (!institutionCancelApprovalTarget) return
           const { id, name } = institutionCancelApprovalTarget
           const reason = payload.reason?.trim() || '승인 취소'
+          const notification = toNestedDecisionNotification(
+            payload.notifyTiming,
+            payload.manualNotifyAt
+          )?.notification
           setInstitutionCancelApprovalTarget(null)
           void (async () => {
-            const remote = await applyRemoteInstitutionCancelApproval(id, reason)
+            const remote = await applyRemoteInstitutionCancelApproval(id, reason, notification)
             if (remote === 'error' || remote === 'unavailable') return
             setInstitutionCancelApprovalComplete({
               schoolName: name,
@@ -1108,9 +1139,14 @@ export function ApplicantList({
           const { id, name } = institutionCancelRejectTarget
           const reason =
             payload.variant === 'alreadySent' ? payload.reason?.trim() || '반려 취소' : '반려 취소'
+          const notification =
+            payload.variant === 'alreadySent'
+              ? toNestedDecisionNotification(payload.notifyTiming, payload.manualNotifyAt)
+                  ?.notification
+              : undefined
           setInstitutionCancelRejectTarget(null)
           void (async () => {
-            const remote = await applyRemoteInstitutionCancelRejection(id, reason)
+            const remote = await applyRemoteInstitutionCancelRejection(id, reason, notification)
             if (remote === 'error' || remote === 'unavailable') return
             setInstitutionCancelRejectComplete({ schoolName: name })
           })()
@@ -1157,7 +1193,12 @@ export function ApplicantList({
           }
           const run = async () => {
             if (individualRemoteEnabled) {
-              const remote = await applyRemoteIndividualDecision([id], 'approve')
+              const remote = await applyRemoteIndividualDecision(
+                [id],
+                'approve',
+                undefined,
+                toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
+              )
               if (remote === 'error') return
               if (remote === 'ok') {
                 setParticipantApproveTarget(null)
@@ -1227,7 +1268,12 @@ export function ApplicantList({
           }
           const run = async () => {
             if (individualRemoteEnabled) {
-              const remote = await applyRemoteIndividualDecision([id], 'reject', payload.reason)
+              const remote = await applyRemoteIndividualDecision(
+                [id],
+                'reject',
+                payload.reason,
+                toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
+              )
               if (remote === 'error') return
               if (remote === 'ok') {
                 setParticipantRejectTarget(null)
@@ -1285,23 +1331,28 @@ export function ApplicantList({
             manualNotifyAt: payload.manualNotifyAt,
             rejectionReason: payload.reason,
           }
-          setParticipantCancelApprovalTarget(null)
-          setIndividualList(prev => {
-            const next = prev.map(row =>
-              row.id === id ? patchParticipantForCancelApproval(row, notifyOptions) : row
-            )
-            const updated = next.find(row => row.id === id)
-            const current = selectedItem
-            if (updated && current && 'applicantName' in current && current.id === id) {
-              setSelectedItem(updated)
-            }
-            return next
-          })
-          updateGeneralIndividualApplicantCancelApproval(id, notifyOptions)
-          setParticipantCancelApprovalComplete({
-            participantName: name,
-            cancellationReason: payload.reason,
-          })
+          const run = async () => {
+            const remote = await applyRemoteIndividualCancelApproval(id, payload.reason)
+            if (remote !== 'ok') return
+            setParticipantCancelApprovalTarget(null)
+            setIndividualList(prev => {
+              const next = prev.map(row =>
+                row.id === id ? patchParticipantForCancelApproval(row, notifyOptions) : row
+              )
+              const updated = next.find(row => row.id === id)
+              const current = selectedItem
+              if (updated && current && 'applicantName' in current && current.id === id) {
+                setSelectedItem(updated)
+              }
+              return next
+            })
+            updateGeneralIndividualApplicantCancelApproval(id, notifyOptions)
+            setParticipantCancelApprovalComplete({
+              participantName: name,
+              cancellationReason: payload.reason,
+            })
+          }
+          void run()
         }}
       />
       <ParticipantCancelApprovalCompleteModal
@@ -1321,20 +1372,28 @@ export function ApplicantList({
             payload.variant === 'alreadySent'
               ? toParticipantCancelRejectionNotifyOptions(payload)
               : undefined
-          setParticipantCancelRejectTarget(null)
-          setIndividualList(prev => {
-            const next = prev.map(row =>
-              row.id === id ? patchParticipantForCancelRejection(row, notifyOptions) : row
+          const run = async () => {
+            const remote = await applyRemoteIndividualCancelRejection(
+              id,
+              payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
             )
-            const updated = next.find(row => row.id === id)
-            const current = selectedItem
-            if (updated && current && 'applicantName' in current && current.id === id) {
-              setSelectedItem(updated)
-            }
-            return next
-          })
-          updateGeneralIndividualApplicantCancelRejection(id, notifyOptions)
-          setParticipantCancelRejectComplete({ participantName: name })
+            if (remote !== 'ok') return
+            setParticipantCancelRejectTarget(null)
+            setIndividualList(prev => {
+              const next = prev.map(row =>
+                row.id === id ? patchParticipantForCancelRejection(row, notifyOptions) : row
+              )
+              const updated = next.find(row => row.id === id)
+              const current = selectedItem
+              if (updated && current && 'applicantName' in current && current.id === id) {
+                setSelectedItem(updated)
+              }
+              return next
+            })
+            updateGeneralIndividualApplicantCancelRejection(id, notifyOptions)
+            setParticipantCancelRejectComplete({ participantName: name })
+          }
+          void run()
         }}
       />
       <ParticipantCancelRejectCompleteModal
@@ -1358,7 +1417,16 @@ export function ApplicantList({
           }
           const run = async () => {
             if (instructorRemoteEnabled) {
-              const remote = await applyRemoteInstructorDecision([id], 'reject', payload.reason)
+              const remote = await applyRemoteInstructorDecision(
+                [id],
+                'reject',
+                payload.reason,
+                undefined,
+                toInstructorApplicationNotificationRequest(
+                  payload.notifyTiming,
+                  payload.manualNotifyAt
+                )
+              )
               if (remote === 'error') return
               if (remote === 'ok') {
                 setInstructorRejectTarget(null)
@@ -1413,7 +1481,14 @@ export function ApplicantList({
           }
           if (detailVariant === 'general') {
             void (async () => {
-              const success = await handleCancelApprovalInstructor(id, payload.reason)
+              const success = await handleCancelApprovalInstructor(
+                id,
+                payload.reason,
+                toInstructorApplicationNotificationRequest(
+                  payload.notifyTiming,
+                  payload.manualNotifyAt
+                )
+              )
               if (!success) return
               setInstructorCancelApprovalTarget(null)
               setInstructorCancelApprovalComplete({
@@ -1463,7 +1538,16 @@ export function ApplicantList({
             void (async () => {
               const reason =
                 payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
-              const success = await handleCancelRejectInstructor(id, reason)
+              const success = await handleCancelRejectInstructor(
+                id,
+                reason,
+                payload.variant === 'alreadySent'
+                  ? toInstructorApplicationNotificationRequest(
+                      payload.notifyTiming,
+                      payload.manualNotifyAt
+                    )
+                  : undefined
+              )
               if (!success) return
               setInstructorCancelRejectTarget(null)
               setInstructorCancelRejectComplete({ instructorName: name })
@@ -1602,9 +1686,12 @@ export function ApplicantList({
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstructorBulkApproveOpen(false)}
         onConfirm={payload => {
-          confirmBulkInstructorApprove(payload)
-          setInstructorBulkApproveOpen(false)
-          showApplicationApprovalCompletedAlert()
+          void (async () => {
+            const result = await confirmBulkInstructorApprove(payload)
+            if (result !== 'ok') return
+            setInstructorBulkApproveOpen(false)
+            showApplicationApprovalCompletedAlert()
+          })()
         }}
       />
       {instructorApprovalTarget?.step === 'assign' &&

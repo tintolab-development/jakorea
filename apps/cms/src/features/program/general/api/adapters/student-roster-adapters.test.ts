@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import { PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID } from '@/features/program/general/lib/student-portrait-consent'
 import {
   formatStudentGradeClass,
   mapApiBirthDateToDisplay,
   mapApiGenderToStudentGenderKey,
   mapDisplayBirthDateToApi,
+  mapRosterPortraitConsentSubmission,
   mapStudentRosterItemToRow,
   mapStudentRowToRosterRequest,
   mapStudentRowsToRosterCommitRequest,
@@ -35,11 +37,15 @@ describe('student-roster-adapters', () => {
         maskedPhone: '010-****-1234',
         maskedEmail: 'k***@example.com',
         participantId: 99,
+        memberId: 4401,
+        portraitConsentStatus: 'CONSENTED',
+        portraitConsentUpdatedAt: '2026-09-01T00:00:00Z',
       },
       0
     )
     expect(row).toMatchObject({
       id: '12',
+      memberId: 4401,
       no: 3,
       name: '김학생',
       gender: 'male',
@@ -48,7 +54,25 @@ describe('student-roster-adapters', () => {
       contact: '010-****-1234',
       email: 'k***@example.com',
       participantId: 99,
+      portraitConsentSubmission: {
+        templateId: PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID,
+        submittedAt: '2026-09-01T00:00:00Z',
+      },
     })
+  })
+
+  it('maps roster portrait consent only when CONSENTED with timestamp', () => {
+    expect(
+      mapRosterPortraitConsentSubmission({
+        portraitConsentStatus: 'REFUSED',
+        portraitConsentUpdatedAt: '2026-09-01T00:00:00Z',
+      })
+    ).toBeNull()
+    expect(
+      mapRosterPortraitConsentSubmission({
+        portraitConsentStatus: 'CONSENTED',
+      })
+    ).toBeNull()
   })
 
   it('omits masked phone/email on commit payload', () => {

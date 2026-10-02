@@ -14,9 +14,11 @@ import {
   approveGeneralIndividualApplication,
   rejectGeneralIndividualApplication,
   submitGeneralIndividualDocumentResult,
+  cancelGeneralIndividualApplicationApproval,
   cancelGeneralIndividualApplicationRejection,
 } from '@/features/program/general/api/admin-applications-service'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { patchParticipantForCancelApproval } from '@/features/program/general/lib/participant-cancel-approval'
 import {
   patchParticipantForCancelRejection,
   toParticipantCancelRejectionNotifyOptions,
@@ -34,6 +36,8 @@ import {
 } from '@/features/program/general/lib/screening-subject-kind'
 import {
   ParticipantApproveModal,
+  ParticipantCancelApprovalModal,
+  ParticipantCancelApprovalCompleteModal,
   ParticipantCancelRejectModal,
   ParticipantCancelRejectCompleteModal,
 } from '@/features/program/shared/ui/detail-modal/components/participant-application-flow-modals'
@@ -283,6 +287,14 @@ export function GeneralParticipantApplicantDetailView({
   const [cancelRejectComplete, setCancelRejectComplete] = useState<{
     participantName: string
   } | null>(null)
+  const [cancelApprovalTarget, setCancelApprovalTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const [cancelApprovalComplete, setCancelApprovalComplete] = useState<{
+    participantName: string
+    cancellationReason: string
+  } | null>(null)
   const [notificationResendOpen, setNotificationResendOpen] = useState(false)
   const notificationIdempotencyKeyRef = useRef<string | null>(null)
   const resendNotificationMutation = useMutation({
@@ -489,6 +501,11 @@ export function GeneralParticipantApplicantDetailView({
     return applicant
   }, [applicant, cancelRejectTarget])
 
+  const cancelApprovalParticipant = useMemo(() => {
+    if (!cancelApprovalTarget || !applicant) return null
+    return applicant
+  }, [applicant, cancelApprovalTarget])
+
   const handleOpenNotificationResend = useCallback(() => {
     if (!applicant) return
     if (applicant.approvalStatus !== 'approved' && applicant.approvalStatus !== 'rejected') return
@@ -519,6 +536,9 @@ export function GeneralParticipantApplicantDetailView({
         }}
         onReject={id => {
           setRejectTarget({ id, name: applicant.applicantName })
+        }}
+        onCancelApproval={id => {
+          setCancelApprovalTarget({ id, name: applicant.applicantName })
         }}
         onCancelReject={id => {
           setCancelRejectTarget({ id, name: applicant.applicantName })
@@ -733,6 +753,72 @@ export function GeneralParticipantApplicantDetailView({
           }
           void run()
         }}
+      />
+      <ParticipantCancelApprovalModal
+        open={cancelApprovalTarget != null}
+        participant={cancelApprovalParticipant}
+        onCancel={() => {
+          if (decisionBusy) return
+          setCancelApprovalTarget(null)
+        }}
+        onConfirm={payload => {
+          if (!cancelApprovalTarget || !applicant || decisionBusy) return
+          const notifyOptions = {
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
+            rejectionReason: payload.reason,
+          }
+          const run = async () => {
+            if (useRemote) {
+              setDecisionBusy(true)
+              try {
+                const response = await cancelGeneralIndividualApplicationApproval(
+                  applicant.id,
+                  payload.reason
+                )
+                await invalidateIndividualApplications()
+                const patched = patchParticipantForCancelApproval(applicant, notifyOptions)
+                syncApplicant({
+                  ...patched,
+                  availableActions: response.availableActions ?? patched.availableActions,
+                })
+              } catch (error) {
+                const responseData =
+                  error && typeof error === 'object' && 'response' in error
+                    ? (error as { response?: { data?: unknown } }).response?.data
+                    : undefined
+                void showAlert({
+                  title: '처리 실패',
+                  content: extractApiErrorMessage(responseData, {
+                    httpStatus: getApiErrorHttpStatus(error),
+                    fallback: '참여자 신청 승인 취소를 처리하지 못했습니다. 다시 시도해 주세요.',
+                  }),
+                })
+                return
+              } finally {
+                setDecisionBusy(false)
+              }
+            } else {
+              notifyProgramApiUnavailable(
+                'general-individual-application-cancel-approval',
+                '참여자 신청 · 승인 취소'
+              )
+              return
+            }
+            setCancelApprovalTarget(null)
+            setCancelApprovalComplete({
+              participantName: cancelApprovalTarget.name,
+              cancellationReason: payload.reason,
+            })
+          }
+          void run()
+        }}
+      />
+      <ParticipantCancelApprovalCompleteModal
+        open={cancelApprovalComplete != null}
+        participantName={cancelApprovalComplete?.participantName ?? ''}
+        cancellationReason={cancelApprovalComplete?.cancellationReason ?? ''}
+        onClose={() => setCancelApprovalComplete(null)}
       />
       <ParticipantCancelRejectModal
         open={cancelRejectTarget != null}

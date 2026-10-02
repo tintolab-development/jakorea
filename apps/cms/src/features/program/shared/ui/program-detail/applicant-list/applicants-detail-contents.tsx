@@ -18,15 +18,17 @@ import {
 import { applyCombinedClassMergeToApplicantDetail } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
-import { type CombinedClassLeadTeacherCandidate } from '@/features/program/general/lib/combined-class-lead-teacher'
+import {
+  applyCombinedClassLeadTeacherToApplicantRows,
+  type CombinedClassLeadTeacherCandidate,
+} from '@/features/program/general/lib/combined-class-lead-teacher'
 import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
 import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
 import {
   buildProgramApiUnavailableSaveContent,
-  notifyProgramApiUnavailable,
   PROGRAM_API_UNAVAILABLE_TITLE,
 } from '@/features/program/shared/lib/program-api-unavailable'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
@@ -34,7 +36,12 @@ import {
   useInstructorApplicationDetailEnrichment,
   useOrganizationApplicationDetailEnrichment,
 } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
-import { updateInstructorApplicationManagerCommentRemote } from '@/features/program/general/api/applications-api-client'
+import {
+  unmaskInstructorApplicationPrivacyRemote,
+  unmaskOrganizationApplicationPrivacyRemote,
+  updateInstructorApplicationManagerCommentRemote,
+} from '@/features/program/general/api/applications-api-client'
+import { mapInstructorApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
 import {
   type ApplicantInstructorRow,
@@ -58,7 +65,6 @@ import {
   PersonalInfoRevealButton,
   PERSONAL_INFO_REVEAL_BUTTON_LABEL,
 } from '@/features/user/detail/ui/personal-info-reveal-button'
-import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import './applicants-detail-contents.css'
 import {
@@ -314,6 +320,7 @@ function resolveApplicantHeaderItems(params: {
   onSaveInstructorEdit?: () => void
   isAdminCommentWriteEnabled?: boolean
   onEnterAdminCommentEdit?: () => void
+  individualAvailableActions?: string[]
 }): ApplicantHeaderActionItem[] | null {
   const {
     applicantId,
@@ -346,6 +353,7 @@ function resolveApplicantHeaderItems(params: {
     onSaveInstructorEdit,
     isAdminCommentWriteEnabled = false,
     onEnterAdminCommentEdit,
+    individualAvailableActions,
   } = params
 
   if (isApprovedInstitution) {
@@ -373,6 +381,10 @@ function resolveApplicantHeaderItems(params: {
 
   if (isApprovedIndividual) {
     const items: ApplicantHeaderActionItem[] = []
+
+    if (onCancelApproval && individualAvailableActions?.includes('CANCEL_APPROVAL')) {
+      items.push(headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState))
+    }
 
     if (isGeneralIndividualEditEnabled && onEnterIndividualEdit && onSaveIndividualEdit) {
       items.push(
@@ -409,11 +421,23 @@ function resolveApplicantHeaderItems(params: {
     items.push(headerBtnPrivacy(onRevealPersonalInfo))
     return items
   }
-  if (isRejectedInstructor || isRejectedInstitution || isRejectedIndividual) {
+  if (isRejectedInstructor || isRejectedInstitution) {
     return [
       headerBtnCancelReject(applicantId, onCancelReject),
       headerBtnPrivacy(onRevealPersonalInfo),
     ]
+  }
+  if (isRejectedIndividual) {
+    const items: ApplicantHeaderActionItem[] = []
+    if (
+      onCancelReject &&
+      (individualAvailableActions == null ||
+        individualAvailableActions.includes('CANCEL_REJECTION'))
+    ) {
+      items.push(headerBtnCancelReject(applicantId, onCancelReject))
+    }
+    items.push(headerBtnPrivacy(onRevealPersonalInfo))
+    return items
   }
   if (isInstitution || isInstructor || isIndividual) {
     return headerBtnsPendingParticipation(applicantId, onApprove, onReject, onRevealPersonalInfo)
@@ -655,13 +679,49 @@ export function ApplicantsDetailContents({
         open={combinedClassLeadTeacherModal != null}
         candidates={combinedClassLeadTeacherModal?.candidates ?? []}
         onCancel={() => setCombinedClassLeadTeacherModal(null)}
-        onConfirm={_candidate => {
-          if (!combinedClassLeadTeacherModal) return
-          notifyProgramApiUnavailable(
-            'general-org-merge-lead-teacher',
-            '일반 프로그램 · 합반 담당 교사 지정'
-          )
-          setCombinedClassLeadTeacherModal(null)
+        onConfirm={candidate => {
+          if (!combinedClassLeadTeacherModal || !programId || !institutionData) return
+          const leadTeacherMemberId = candidate.teacherMemberId
+          if (leadTeacherMemberId == null || !Number.isFinite(leadTeacherMemberId)) {
+            void showAlert({
+              title: '처리 실패',
+              content: '담당 교사 회원 ID가 없어 지정할 수 없습니다.',
+            })
+            return
+          }
+          void (async () => {
+            try {
+              await saveOrganizationCombinedClassRemote({
+                programId,
+                programType: program?.backendProgramType,
+                leadRow: institutionData,
+                allRows: institutionList,
+                combinedClassApplication: '신청',
+                partnerRowIds: combinedClassLeadTeacherModal.memberRowIds.filter(
+                  id => id !== institutionData.id
+                ),
+                existingMergeGroups: mergeGroupsQuery.data,
+                leadTeacherMemberId,
+              })
+              await queryClient.invalidateQueries({
+                queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+              })
+              onInstitutionDetailSaved?.(
+                applyCombinedClassLeadTeacherToApplicantRows(
+                  institutionList,
+                  combinedClassLeadTeacherModal.memberRowIds,
+                  candidate
+                )
+              )
+              setCombinedClassLeadTeacherModal(null)
+              setCombinedClassCompleteLabel(candidate.label)
+            } catch {
+              void showAlert({
+                title: '처리 실패',
+                content: '합반 담당 교사를 지정하지 못했습니다. 다시 시도해 주세요.',
+              })
+            }
+          })()
         }}
       />
       <InstitutionCombinedClassCompleteModal
@@ -691,7 +751,7 @@ export function ApplicantsDetailContents({
   const handleAdminCommentSave = useCallback(async () => {
     if (!institutionData) return
     const comment = adminCommentDraft.trim()
-    if (shouldUseGeneralApplicationsRemoteApi()) {
+    if (shouldUseOrganizationApplicationRemoteApi()) {
       const targetId = Number(institutionData.id)
       if (!Number.isFinite(targetId)) {
         void showAlert({
@@ -920,6 +980,16 @@ export function ApplicantsDetailContents({
       return { disabled: false, reason: null }
     }
 
+    // 일반 프로그램 — 개인 참여자: CANCEL_APPROVAL 노출. 교육 진행 이력은 BE 409.
+    if (
+      isGeneralDetail &&
+      isIndividual &&
+      individualData?.approvalStatus === 'approved' &&
+      onCancelApproval
+    ) {
+      return { disabled: false, reason: null }
+    }
+
     return resolved
   }, [
     program,
@@ -931,6 +1001,7 @@ export function ApplicantsDetailContents({
     isGeneralDetail,
     isInstitution,
     isInstructor,
+    isIndividual,
   ])
 
   const resolveApplicantPersonalInfoAccessItem = useCallback(() => {
@@ -951,19 +1022,41 @@ export function ApplicantsDetailContents({
     teacherEmail?: string
   } | null>(null)
 
+  const [instructorPrivacy, setInstructorPrivacy] = useState<{
+    instructorName?: string
+    contact?: string
+    email?: string
+    address?: string
+  } | null>(null)
+
   useEffect(() => {
     setInstitutionTeacherPrivacy(null)
+    setInstructorPrivacy(null)
   }, [applicantId])
 
   const revealInstitutionTeacherPersonalInfo = useCallback(
     async (reason: string) => {
-      const memberId = institutionData?.teacherMemberId
-      if (memberId == null) {
-        throw new Error('담당 교사 회원 ID가 없습니다.')
+      const applicationId = institutionData?.id
+      if (!applicationId?.trim()) {
+        throw new Error('기관 신청 ID가 없습니다.')
       }
-      return fetchMemberRolePrivacyUnmask(memberId, reason, 'SCHOOL')
+      const programIdNumber = program?.id != null ? Number(program.id) : NaN
+      const detail = await unmaskOrganizationApplicationPrivacyRemote(
+        applicationId,
+        reason,
+        Number.isFinite(programIdNumber) ? programIdNumber : undefined
+      )
+      queryClient.setQueryData(
+        generalApplicationsQueryKeys.organizationDetail(applicationId),
+        detail
+      )
+      return {
+        name: detail.teacherName?.trim() || undefined,
+        phone: detail.teacherPhone?.trim() || undefined,
+        email: detail.teacherEmail?.trim() || undefined,
+      }
     },
-    [institutionData?.teacherMemberId]
+    [institutionData?.id, program?.id, queryClient]
   )
 
   const applyInstitutionTeacherPersonalInfo = useCallback((payload: unknown) => {
@@ -973,6 +1066,56 @@ export function ApplicantsDetailContents({
       ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
       ...(typeof privacy.phone === 'string' ? { contact: privacy.phone } : {}),
       ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
+    })
+  }, [])
+
+  const revealInstructorPersonalInfo = useCallback(
+    async (reason: string) => {
+      const applicationId = instructorData?.id
+      if (!applicationId?.trim()) {
+        throw new Error('강사 신청 ID가 없습니다.')
+      }
+      const programIdNumber = program?.id != null ? Number(program.id) : NaN
+      const detail = await unmaskInstructorApplicationPrivacyRemote(
+        applicationId,
+        reason,
+        Number.isFinite(programIdNumber) ? programIdNumber : undefined
+      )
+      queryClient.setQueryData(
+        generalApplicationsQueryKeys.instructorDetail(applicationId),
+        detail
+      )
+      if (instructorData) {
+        const mapped = mapInstructorApplicationDetailToApplicantRow(detail, instructorData)
+        onInstructorDetailSaved?.(mapped)
+      }
+      return {
+        name: detail.instructorName?.trim() || undefined,
+        phone: detail.contact?.trim() || undefined,
+        email: detail.email?.trim() || undefined,
+        address:
+          [detail.homeAddress, detail.homeAddressDetail]
+            .map(part => part?.trim())
+            .filter(Boolean)
+            .join(' ') || undefined,
+      }
+    },
+    [instructorData, onInstructorDetailSaved, program?.id, queryClient]
+  )
+
+  const applyInstructorPersonalInfo = useCallback((payload: unknown) => {
+    if (payload == null || typeof payload !== 'object') return
+    const privacy = payload as {
+      name?: unknown
+      phone?: unknown
+      email?: unknown
+      address?: unknown
+    }
+    setInstructorPrivacy({
+      ...(typeof privacy.name === 'string' ? { instructorName: privacy.name } : {}),
+      ...(typeof privacy.phone === 'string' ? { contact: privacy.phone } : {}),
+      ...(typeof privacy.email === 'string' ? { email: privacy.email } : {}),
+      ...(typeof privacy.address === 'string' ? { address: privacy.address } : {}),
     })
   }, [])
 
@@ -997,6 +1140,18 @@ export function ApplicantsDetailContents({
       },
     }
   }, [institutionData, institutionTeacherPrivacy])
+
+  const displayedInstructorData = useMemo(() => {
+    if (!instructorData) return null
+    if (!instructorPrivacy) return instructorData
+    return {
+      ...instructorData,
+      instructorName: instructorPrivacy.instructorName ?? instructorData.instructorName,
+      contact: instructorPrivacy.contact ?? instructorData.contact,
+      email: instructorPrivacy.email ?? instructorData.email,
+      address: instructorPrivacy.address ?? instructorData.address,
+    }
+  }, [instructorData, instructorPrivacy])
 
   const {
     personalInfoRevealed,
@@ -1024,7 +1179,9 @@ export function ApplicantsDetailContents({
       ? onRevealIndividualPersonalInfo
       : isInstitution
         ? revealInstitutionTeacherPersonalInfo
-        : undefined,
+        : isInstructor
+          ? revealInstructorPersonalInfo
+          : undefined,
     onPrivacyUnmasked: payload => {
       if (isIndividual && onRevealIndividualPersonalInfo) {
         onIndividualPrivacyUnmasked?.(payload as GeneralIndividualApplicantRow)
@@ -1032,6 +1189,10 @@ export function ApplicantsDetailContents({
       }
       if (isInstitution) {
         applyInstitutionTeacherPersonalInfo(payload)
+        return
+      }
+      if (isInstructor) {
+        applyInstructorPersonalInfo(payload)
       }
     },
     resetDeps: [applicantId],
@@ -1083,6 +1244,7 @@ export function ApplicantsDetailContents({
         : isApprovedInstructor
           ? handleInstructorAdminCommentEditEnter
           : handleAdminCommentEditEnter,
+      individualAvailableActions: individualData?.availableActions,
     })
     if (!items) return null
     const visibleItems =
@@ -1202,8 +1364,8 @@ export function ApplicantsDetailContents({
   ])
 
   const instructorInfoPanel = useMemo(() => {
-    if (!isInstructor || !instructorData) return null
-    const d = instructorData
+    if (!isInstructor || !displayedInstructorData) return null
+    const d = displayedInstructorData
     if (isGeneralDetail) {
       return (
         <div className="applicant-info-section applicant-info-section--instructor">
@@ -1215,6 +1377,13 @@ export function ApplicantsDetailContents({
             onDraftChange={instructorDetailEdit.updateDraft}
             validationErrors={instructorDetailEdit.validationErrors}
             onResendNotificationClick={onResendNotification}
+            persistAffiliationEmploymentRemote
+            onAffiliationEmploymentStatusSaved={status => {
+              onInstructorDetailSaved?.({
+                ...d,
+                affiliationEmploymentStatus: status,
+              })
+            }}
           />
           <ApplicantInstructorResume instructor={d} />
         </div>
@@ -1232,7 +1401,7 @@ export function ApplicantsDetailContents({
     )
   }, [
     isInstructor,
-    instructorData,
+    displayedInstructorData,
     isGeneralDetail,
     personalInfoRevealed,
     instructorDetailEdit.isEditing,
@@ -1240,6 +1409,7 @@ export function ApplicantsDetailContents({
     instructorDetailEdit.updateDraft,
     instructorDetailEdit.validationErrors,
     onResendNotification,
+    onInstructorDetailSaved,
   ])
 
   const tabPanel = useMemo(() => {

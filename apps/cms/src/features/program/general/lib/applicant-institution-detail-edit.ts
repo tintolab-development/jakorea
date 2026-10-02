@@ -138,12 +138,16 @@ export function draftToSavePayload(
     educationType: options.showEducationFormatField
       ? parsed.data.educationFormat.trim() || undefined
       : row.detail?.educationType,
-    applicationReason: row.detail?.applicationReason,
-    otherRequests: row.detail?.otherRequests,
-    computerInSpace: row.detail?.computerInSpace,
-    waitingPlaceGuide: row.detail?.waitingPlaceGuide ?? row.detail?.waitingRoom,
-    mealInfo: row.detail?.mealInfo,
-    otherSpecialNotes: row.detail?.otherSpecialNotes ?? row.detail?.parkingInfo,
+    applicationReason: parsed.data.applicationReason.trim() || undefined,
+    otherRequests: parsed.data.otherRequests.trim() || undefined,
+    computerInSpace: parsed.data.computerInRoom.trim() || undefined,
+    waitingPlaceGuide: parsed.data.waitingRoomAvailable
+      ? parsed.data.waitingRoomLocation.trim() || undefined
+      : undefined,
+    mealInfo: parsed.data.mealProvided
+      ? parsed.data.mealNotice.trim() || '가능'
+      : '불가',
+    otherSpecialNotes: parsed.data.parkingInfo.trim() || undefined,
     textbookId: parsed.data.textbookId,
     textbookName: parsed.data.textbookName,
     combinedClassApplication: parsed.data.combinedClassApplication,
@@ -197,7 +201,11 @@ export function hasApplicantInstitutionNonCombinedClassDraftChanges(
   const baseline = rowToEditDraft(institution)
   const keys = Object.keys(draft) as Array<keyof ApplicantInstitutionEditDraft>
   for (const key of keys) {
-    if (key === 'combinedClassApplication' || key === 'combinedClassPartnerApplicantIds') {
+    if (
+      key === 'combinedClassApplication' ||
+      key === 'combinedClassPartnerApplicantIds' ||
+      key === 'adminComment'
+    ) {
       continue
     }
     const next = draft[key]

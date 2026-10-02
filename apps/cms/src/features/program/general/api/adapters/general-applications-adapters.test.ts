@@ -193,6 +193,53 @@ describe('general-applications-adapters', () => {
     expect(withdrawn.availableActions).toEqual(['VIEW'])
   })
 
+  it('maps ORGANIZATION participant list fields used by 참여 기관 정보 조회', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1691425,
+        organizationApplicationId: 77001,
+        organizationName: '진월초',
+        grade: '5',
+        regionSido: '광주광역시',
+        regionSigungu: '남구',
+        classCount: 2,
+        studentCount: 48,
+        teacherName: '김담당',
+        phone: '010-1111-2222',
+        email: 'teacher@school.kr',
+        textbookId: 12,
+        textbookName: '금융교육 5학년',
+        materialAssignmentStatus: 'SHIPPING',
+        sessions: [
+          {
+            scheduleId: 801,
+            sessionNo: 1,
+            scheduleName: '1회차',
+            startAt: '2026-10-12T09:00:00+09:00',
+            endAt: '2026-10-12T11:00:00+09:00',
+          },
+        ],
+        availableActions: ['VIEW', 'GIVE_UP'],
+      } as never,
+      0,
+      '168001'
+    )
+
+    expect(row.organizationApplicationId).toBe('77001')
+    expect(row.educationGrade).toBe('5학년')
+    expect(row.region).toBe('광주광역시 남구')
+    expect(row.classCount).toBe(2)
+    expect(row.studentCount).toBe(48)
+    expect(row.teacherName).toBe('김담당')
+    expect(row.teacherPhone).toBe('010-1111-2222')
+    expect(row.teacherEmail).toBe('teacher@school.kr')
+    expect(row.textbookId).toBe('12')
+    expect(row.textbookName).toBe('금융교육 5학년')
+    expect(row.textbookStatus).toBe('shipping')
+    expect(row.sessions).toHaveLength(1)
+    expect(row.sessions?.[0]?.resolvedScheduleId).toBe(801)
+  })
+
   it.each([
     ['BEFORE_SHIPPING', 'preparing'],
     ['SHIPPING', 'shipping'],
@@ -256,6 +303,76 @@ describe('general-applications-adapters', () => {
     expect(individual.homeAddress).toBe('서울특별시 강서구')
     expect(individual.sessions).toHaveLength(1)
     expect(individual.sessions?.[0]?.resolvedScheduleId).toBe(601)
+    expect(individual.lectureAttendanceSessions).toEqual([])
+    expect(individual.satisfactionSurveyCompleted).toBe(false)
+  })
+
+  it('maps individual person attendance onto lectureAttendanceSessions', () => {
+    const individual = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 1691703,
+        memberName: '이참여자',
+        sessions: [
+          { scheduleId: 701, sessionNo: 1, attendanceStatus: 'PRESENT' },
+          { scheduleId: 702, sessionNo: 2, attendanceStatus: 'LATE' },
+          { scheduleId: 703, sessionNo: 3, attendanceStatus: 'EXCUSED' },
+        ],
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '168001'
+    )
+
+    expect(individual.lectureAttendanceSessions).toEqual([
+      { roundNumber: 1, scheduleId: 701, status: 'attended' },
+      { roundNumber: 2, scheduleId: 702, status: 'late' },
+      { roundNumber: 3, scheduleId: 703, status: 'attended' },
+    ])
+  })
+
+  it('prefers homeAddressSummary and maps satisfactionSurveyCompleted when present', () => {
+    const individual = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 1691702,
+        memberName: '박참여자',
+        homeAddressSummary: '경기도 성남시 분당구',
+        regionSido: '서울특별시',
+        regionSigungu: '강서구',
+        contact: '010-****-1111',
+        email: 'p***@example.com',
+        satisfactionSurveyCompleted: true,
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse & {
+        satisfactionSurveyCompleted?: boolean
+      },
+      0,
+      '168001'
+    )
+
+    expect(individual.homeAddress).toBe('경기도 성남시 분당구')
+    expect(individual.satisfactionSurveyCompleted).toBe(true)
+    expect(individual.detail?.contact).toBe('010-****-1111')
+    expect(individual.detail?.email).toBe('p***@example.com')
+  })
+
+  it('maps additive survey view keys when present', () => {
+    const individual = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 1691704,
+        memberName: '최참여자',
+        surveyResponse: { templateVersionId: 12, formResponseId: 3401 },
+        satisfactionResponse: { templateVersionId: 15, formResponseId: 3402 },
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse & {
+        surveyResponse?: { templateVersionId: number; formResponseId: number }
+        satisfactionResponse?: { templateVersionId: number; formResponseId: number }
+      },
+      0,
+      '168001'
+    )
+
+    expect(individual.surveyResponse).toEqual({ templateVersionId: 12, formResponseId: 3401 })
+    expect(individual.satisfactionResponse).toEqual({
+      templateVersionId: 15,
+      formResponseId: 3402,
+    })
   })
 
   it('maps volunteer participant sessions and additive enrich fields', () => {
@@ -263,6 +380,7 @@ describe('general-applications-adapters', () => {
       {
         participantId: 1691601,
         memberId: 9101,
+        sourceApplicationId: 77002,
         memberName: '이봉사자',
         organizationName: '해봄초등학교',
         id1365: '1365-10001',
@@ -284,6 +402,8 @@ describe('general-applications-adapters', () => {
       '168001'
     )
 
+    expect(volunteer.id).toBe('1691601')
+    expect(volunteer.volunteerApplicationId).toBe('77002')
     expect(volunteer.memberId).toBe(9101)
     expect(volunteer.id1365).toBe('1365-10001')
     expect(volunteer.assignedInstitutionNames).toEqual(['해봄초등학교', '푸른초등학교'])

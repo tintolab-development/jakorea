@@ -14,6 +14,8 @@ import {
   giveUpGeneralVolunteerApplication,
   submitGeneralInterviewAssignmentEvaluation,
   updateGeneralVolunteerDocumentEvaluation,
+  cancelGeneralVolunteerApplicationApproval,
+  cancelGeneralVolunteerApplicationRejection,
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
@@ -25,7 +27,10 @@ import type {
   GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { giveUpIndividualApplicationRemote } from '@/features/program/general/api/applications-api-client'
+import {
+  giveUpIndividualApplicationRemote,
+  type InstructorApplicationNotificationRequest,
+} from '@/features/program/general/api/applications-api-client'
 
 export type GeneralVolunteerApplicationsStage = 'doc1' | 'docPassed' | 'interview2'
 
@@ -142,7 +147,8 @@ export function useGeneralVolunteerApplicationsRemote({
       ids: string[],
       result: 'PASS' | 'FAIL',
       reason?: string,
-      notifyTiming?: string
+      notifyTiming?: string,
+      scheduledAt?: string
     ) => {
       if (!remoteEnabled) return false
       try {
@@ -150,6 +156,7 @@ export function useGeneralVolunteerApplicationsRemote({
           result,
           reason: result === 'FAIL' ? reason?.trim() || '반려' : reason,
           notifyTiming: notifyTiming?.trim().toUpperCase() || undefined,
+          ...(scheduledAt ? { scheduledAt } : {}),
         } as const
         if (subjectKind === 'participant') {
           if (ids.length > 1) {
@@ -212,11 +219,12 @@ export function useGeneralVolunteerApplicationsRemote({
         GeneralSecondInterviewScreeningStatus,
         'pass' | 'fail' | 'reserve1' | 'reserve2' | 'reserve3' | 'reserve4'
       >,
-      reason?: string
+      reason?: string,
+      notify?: { notifyTiming?: string; scheduledAt?: string }
     ) => {
       if (!remoteEnabled) return false
       try {
-        const payload = mapSecondInterviewStatusToFinalResultPayload(status, reason)
+        const payload = mapSecondInterviewStatusToFinalResultPayload(status, reason, notify)
         if (subjectKind === 'participant') {
           for (const id of ids) {
             await submitGeneralIndividualFinalResult(id, payload)
@@ -270,6 +278,50 @@ export function useGeneralVolunteerApplicationsRemote({
     [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert]
   )
 
+  const applyRemoteDocumentCancelApproval = useCallback(
+    async (
+      applicationId: string,
+      reason: string,
+      notification?: InstructorApplicationNotificationRequest
+    ) => {
+      if (!remoteEnabled || subjectKind !== 'volunteer') return false
+      try {
+        await cancelGeneralVolunteerApplicationApproval(applicationId, reason, notification)
+        await queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.volunteerDetail(applicationId),
+        })
+        await invalidateApplications()
+        return true
+      } catch (error) {
+        notifyRemoteFailure(error)
+        return false
+      }
+    },
+    [invalidateApplications, notifyRemoteFailure, queryClient, remoteEnabled, subjectKind]
+  )
+
+  const applyRemoteDocumentCancelRejection = useCallback(
+    async (
+      applicationId: string,
+      reason: string,
+      notification?: InstructorApplicationNotificationRequest
+    ) => {
+      if (!remoteEnabled || subjectKind !== 'volunteer') return false
+      try {
+        await cancelGeneralVolunteerApplicationRejection(applicationId, reason, notification)
+        await queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.volunteerDetail(applicationId),
+        })
+        await invalidateApplications()
+        return true
+      } catch (error) {
+        notifyRemoteFailure(error)
+        return false
+      }
+    },
+    [invalidateApplications, notifyRemoteFailure, queryClient, remoteEnabled, subjectKind]
+  )
+
   const applyRemoteGiveUp = useCallback(
     async (applicationId: string, reason: string) => {
       if (!remoteEnabled) return false
@@ -303,6 +355,8 @@ export function useGeneralVolunteerApplicationsRemote({
     applyRemoteFinalResult,
     applyRemoteInterviewEvaluation,
     applyRemoteGiveUp,
+    applyRemoteDocumentCancelApproval,
+    applyRemoteDocumentCancelRejection,
     invalidateVolunteerApplications: invalidateApplications,
     invalidateApplications,
   }
