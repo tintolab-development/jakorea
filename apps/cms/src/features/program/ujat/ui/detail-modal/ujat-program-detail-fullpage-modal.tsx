@@ -130,6 +130,7 @@ import {
 } from '@/shared/constants/messages'
 import { PROGRAM_RECRUITMENT_INFO_OPERATION_STARTED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
@@ -1256,10 +1257,15 @@ export function UjatProgramDetailFullPageModal({
       return
     }
     infoForm.reset(programToDetailEditValues(mergedProgram))
-    const ok = await infoTriggerSave()
-    if (ok) {
-      detailRequiredHighlight.clear()
-      setEditMode(null)
+    const endOverlay = beginBlockingOverlay()
+    try {
+      const ok = await infoTriggerSave()
+      if (ok) {
+        detailRequiredHighlight.clear()
+        setEditMode(null)
+      }
+    } finally {
+      endOverlay()
     }
   }, [detailRequiredHighlight, displayProgram, infoForm, infoTriggerSave, setEditMode, showAlert])
 
@@ -1533,13 +1539,18 @@ export function UjatProgramDetailFullPageModal({
       })
       return
     }
-    const ok =
-      activeRecruitTab === 'recruit_participant'
-        ? await institutionsTriggerSave()
-        : await volunteersTriggerSave()
-    if (ok) {
-      detailRequiredHighlight.clear()
-      setEditMode(null)
+    const endOverlay = beginBlockingOverlay()
+    try {
+      const ok =
+        activeRecruitTab === 'recruit_participant'
+          ? await institutionsTriggerSave()
+          : await volunteersTriggerSave()
+      if (ok) {
+        detailRequiredHighlight.clear()
+        setEditMode(null)
+      }
+    } finally {
+      endOverlay()
     }
   }, [
     activeRecruitTab,

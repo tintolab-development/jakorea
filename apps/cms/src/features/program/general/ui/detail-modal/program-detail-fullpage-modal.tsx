@@ -114,6 +114,7 @@ import {
 import { PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE } from '@/features/program/general/model/common-info-edit-schema'
 import { handleError } from '@/shared/utils/error-handler'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
   canGeneralProgramCommonInfoEdit,
   getGeneralProgramCommonInfoEditBlockedAlertMessage,
@@ -1447,19 +1448,24 @@ export function ProgramDetailFullPageModal({
         })
       )
     }
-    const ok = await infoTriggerSave()
-    if (!ok) {
-      void showAlert({
-        title: '입력 확인',
-        content: getProgramDetailEditValidationMessage(
-          infoForm.getValues(),
-          commonInfoEditSchema ?? programDetailEditSchema
-        ),
-      })
-      return
+    const endOverlay = beginBlockingOverlay()
+    try {
+      const ok = await infoTriggerSave()
+      if (!ok) {
+        void showAlert({
+          title: '입력 확인',
+          content: getProgramDetailEditValidationMessage(
+            infoForm.getValues(),
+            commonInfoEditSchema ?? programDetailEditSchema
+          ),
+        })
+        return
+      }
+      detailRequiredHighlight.clear()
+      setEditMode(null)
+    } finally {
+      endOverlay()
     }
-    detailRequiredHighlight.clear()
-    setEditMode(null)
   }, [
     detailRequiredHighlight,
     commonInfoEditSchema,
@@ -1656,9 +1662,14 @@ export function ProgramDetailFullPageModal({
   })
 
   const handleVolunteersSave = async () => {
-    const ok = await volunteersTriggerSave()
-    if (!ok) return
-    setEditMode(null)
+    const endOverlay = beginBlockingOverlay()
+    try {
+      const ok = await volunteersTriggerSave()
+      if (!ok) return
+      setEditMode(null)
+    } finally {
+      endOverlay()
+    }
   }
 
   const handlePreview = () => {
@@ -1710,10 +1721,15 @@ export function ProgramDetailFullPageModal({
         })
         return
       }
-      const ok = await instructorsTriggerSave()
-      if (!ok) return
-      detailRequiredHighlight.clear()
-      setEditMode(null)
+      const endOverlay = beginBlockingOverlay()
+      try {
+        const ok = await instructorsTriggerSave()
+        if (!ok) return
+        detailRequiredHighlight.clear()
+        setEditMode(null)
+      } finally {
+        endOverlay()
+      }
       return
     }
     const recruitSaveSchema = isTrainedTeachersDetail
@@ -1731,10 +1747,15 @@ export function ProgramDetailFullPageModal({
     if (validation.data.targetLevels) {
       institutionsForm.setValue('targetLevels', [...validation.data.targetLevels])
     }
-    const ok = await institutionsTriggerSave()
-    if (!ok) return
-    detailRequiredHighlight.clear()
-    setEditMode(null)
+    const endOverlay = beginBlockingOverlay()
+    try {
+      const ok = await institutionsTriggerSave()
+      if (!ok) return
+      detailRequiredHighlight.clear()
+      setEditMode(null)
+    } finally {
+      endOverlay()
+    }
   }
   const isCompanySchoolApplicationInfoTab =
     isOverviewProgramDetail && activeLnb === 'info' && activeTab === 'instructors'
@@ -1974,9 +1995,14 @@ export function ProgramDetailFullPageModal({
                 void handleCompanySchoolRecruitSave()
               }}
               onInstructorsSave={() => {
-                void instructorsTriggerSave().then(ok => {
-                  if (ok) setEditMode(null)
-                })
+                const endOverlay = beginBlockingOverlay()
+                void instructorsTriggerSave()
+                  .then(ok => {
+                    if (ok) setEditMode(null)
+                  })
+                  .finally(() => {
+                    endOverlay()
+                  })
               }}
               onVolunteersSave={() => {
                 void handleVolunteersSave()

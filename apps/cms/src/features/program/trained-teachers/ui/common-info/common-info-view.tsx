@@ -30,6 +30,7 @@ import type {
 } from '@/types/domain'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, CmsToggle, useCmsAlert } from '@/shared/ui'
+import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -1924,6 +1925,7 @@ export function TrainedTeachersCommonInfoView({
   const handleSave = () => {
     const run = async () => {
       setSaving(true)
+      const endOverlay = beginBlockingOverlay()
       try {
         // KPI SSOT = programs PATCH — draft → RHF 동기화 후 onBeforePersist(infoTriggerSave)
         // int32 초과 시드는 이미 clamp — 저장 직전 한 번 더 방어
@@ -2089,6 +2091,7 @@ export function TrainedTeachersCommonInfoView({
       } catch {
         return
       } finally {
+        endOverlay()
         setSaving(false)
       }
     }

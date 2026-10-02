@@ -9,6 +9,7 @@ import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { useCmsAlert } from '@/shared/ui'
+import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import type { DetailFullpageBreadcrumbItem } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { buildSearchParams } from '@/shared/lib/detail-fullpage-query-stack'
@@ -785,27 +786,32 @@ export function GeneralProgramDetailFullPageModal({
 
   const handleInfoSave = useCallback(async () => {
     if (displayProgram) logGeneralProgramCommonInfoEditCurrentPayload(displayProgram, 'save')
-    const result = await infoTriggerSave()
-    if (!result.ok) {
-      if (result.kind === 'validation') {
-        if (result.keys.length > 0) detailRequiredHighlight.report(result.keys)
-        void showAlert({
-          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-        })
-      } else if (!isGlobalApiErrorAlertShown(result.error)) {
-        void showAlert({
-          title: '저장 실패',
-          content: getGeneralProgramApiErrorMessage(
-            result.error,
-            '저장 중 오류가 발생했습니다. 다시 시도해 주세요.'
-          ),
-        })
+    const endOverlay = beginBlockingOverlay()
+    try {
+      const result = await infoTriggerSave()
+      if (!result.ok) {
+        if (result.kind === 'validation') {
+          if (result.keys.length > 0) detailRequiredHighlight.report(result.keys)
+          void showAlert({
+            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          })
+        } else if (!isGlobalApiErrorAlertShown(result.error)) {
+          void showAlert({
+            title: '저장 실패',
+            content: getGeneralProgramApiErrorMessage(
+              result.error,
+              '저장 중 오류가 발생했습니다. 다시 시도해 주세요.'
+            ),
+          })
+        }
+        return
       }
-      return
+      detailRequiredHighlight.clear()
+      setEditMode(null)
+    } finally {
+      endOverlay()
     }
-    detailRequiredHighlight.clear()
-    setEditMode(null)
   }, [detailRequiredHighlight, displayProgram, infoTriggerSave, setEditMode, showAlert])
 
   const handleInfoCancel = useCallback(() => {
@@ -1074,26 +1080,31 @@ export function GeneralProgramDetailFullPageModal({
         return
       }
     }
-    let saved = false
-    let failure: 'validation' | 'api' | null = null
-    if (recruitSubTab === 'institutions') {
-      saved = await institutionsTriggerSave()
-      failure = takeInstitutionsSaveFailure()
-    } else if (recruitSubTab === 'instructors') {
-      saved = await instructorsTriggerSave()
-      failure = takeInstructorsSaveFailure()
-    } else if (recruitSubTab === 'volunteers') {
-      saved = await volunteersTriggerSave()
-      failure = takeVolunteersSaveFailure()
-    }
-    if (!saved) {
-      if (failure !== 'api') {
-        void showAlert({ title: '입력 확인', content: '입력값을 확인해 주세요.' })
+    const endOverlay = beginBlockingOverlay()
+    try {
+      let saved = false
+      let failure: 'validation' | 'api' | null = null
+      if (recruitSubTab === 'institutions') {
+        saved = await institutionsTriggerSave()
+        failure = takeInstitutionsSaveFailure()
+      } else if (recruitSubTab === 'instructors') {
+        saved = await instructorsTriggerSave()
+        failure = takeInstructorsSaveFailure()
+      } else if (recruitSubTab === 'volunteers') {
+        saved = await volunteersTriggerSave()
+        failure = takeVolunteersSaveFailure()
       }
-      return
+      if (!saved) {
+        if (failure !== 'api') {
+          void showAlert({ title: '입력 확인', content: '입력값을 확인해 주세요.' })
+        }
+        return
+      }
+      detailRequiredHighlight.clear()
+      setEditMode(null)
+    } finally {
+      endOverlay()
     }
-    detailRequiredHighlight.clear()
-    setEditMode(null)
   }, [
     detailRequiredHighlight,
     displayProgram,
