@@ -40,6 +40,7 @@ import {
   rejectGeminiOrganizationApplicationRemote,
   resendGeminiOrganizationApplicationNotificationRemote,
   updateGeminiRecruitmentRemote,
+  type GeminiApprovedTrainingRemoteFilters,
   type GeminiInstructorApplicationRemoteFilters,
   type GeminiOrganizationNotificationResendPayload,
   type GeminiRecruitmentRemoteFilters,
@@ -139,11 +140,11 @@ export async function listGeminiOrganizationApplicationsPage(
 }
 
 export async function listGeminiApprovedTrainingsPage(
-  keyword: string | undefined,
+  filters: GeminiApprovedTrainingRemoteFilters,
   pageParam = 0
 ): Promise<GeminiApprovedTrainingsPage> {
   assertRemoteReady()
-  const page = await fetchGeminiApprovedTrainingsRemote(keyword, pageParam)
+  const page = await fetchGeminiApprovedTrainingsRemote(filters, pageParam)
   const baseNo = page.page * page.size
   return {
     rows: page.items.map((item, index) =>

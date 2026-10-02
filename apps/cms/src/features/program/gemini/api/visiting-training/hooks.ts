@@ -170,7 +170,20 @@ export function useGeminiApprovedTrainingsQuery(
     queryKey,
     queryFn: ({ pageParam }) =>
       listGeminiApprovedTrainingsPage(
-        filters.institutionName?.trim() || undefined,
+        {
+          keyword: filters.institutionName?.trim() || undefined,
+          institutionSido: filters.institutionSido || undefined,
+          institutionSigungu: filters.institutionSigungu || undefined,
+          status: filters.status || undefined,
+          officialDocumentRequired:
+            filters.officialDocumentRequired === 'Y'
+              ? true
+              : filters.officialDocumentRequired === 'N'
+                ? false
+                : undefined,
+          trainingDateFrom: filters.trainingDateFrom || undefined,
+          trainingDateTo: filters.trainingDateTo || undefined,
+        },
         pageParam as number
       ),
     initialPageParam: 0,

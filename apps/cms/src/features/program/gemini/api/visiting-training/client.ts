@@ -132,13 +132,32 @@ export async function fetchGeminiOrganizationApplicationsRemote(
   return toPageEnvelope(body, page, size)
 }
 
+/** OpenAPI는 현재 keyword만 정의. 나머지는 BE 반영 전까지 서버에서 무시됨 */
+export type GeminiApprovedTrainingRemoteFilters = {
+  keyword?: string
+  institutionSido?: string
+  institutionSigungu?: string
+  status?: string
+  officialDocumentRequired?: boolean
+  trainingDateFrom?: string
+  trainingDateTo?: string
+}
+
 export async function fetchGeminiApprovedTrainingsRemote(
-  keyword: string | undefined,
+  filters: GeminiApprovedTrainingRemoteFilters = {},
   page = 0,
   size = GEMINI_VISITING_TRAINING_LIST_PAGE_SIZE
 ): Promise<PageEnvelope<GeminiApprovedTrainingItem>> {
   const query = new URLSearchParams()
-  if (keyword) query.set('keyword', keyword)
+  if (filters.keyword) query.set('keyword', filters.keyword)
+  if (filters.institutionSido) query.set('institutionSido', filters.institutionSido)
+  if (filters.institutionSigungu) query.set('institutionSigungu', filters.institutionSigungu)
+  if (filters.status) query.set('status', filters.status)
+  if (filters.officialDocumentRequired !== undefined) {
+    query.set('officialDocumentRequired', String(filters.officialDocumentRequired))
+  }
+  if (filters.trainingDateFrom) query.set('trainingDateFrom', filters.trainingDateFrom)
+  if (filters.trainingDateTo) query.set('trainingDateTo', filters.trainingDateTo)
   appendPageParams(query, page, size)
   const body = await unwrapApiBody<
     GeminiApprovedTrainingListResponse | GeminiApprovedTrainingItem[]
