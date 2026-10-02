@@ -1,5 +1,7 @@
 # Cursor prompt — 같은 날짜 기관 교육 일정 일괄 변경 (JABACK)
 
+범위는 `program-same-date-institution-schedule-change-all-types-backend-request-2026-10-02.md` 로 넓어졌다. 일반만 구현하지 말고 그 문서를 따른다.
+
 아래 지시를 **백엔드 레포(`JABACK`, 로컬 `localhost:8080`)에서 실행**하라.
 프론트 레포를 탐색하지 말고, **이 문서의 계약만** 사용하라.
 
