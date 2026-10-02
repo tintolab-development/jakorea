@@ -101,6 +101,7 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
     expect(detail.trainingDate).toBe('')
     expect(detail.trainingDate).not.toBe(detail.lastPreferredDate)
     expect(detail.instructor).toEqual({
+      memberId: '190006',
       name: '최지원',
       region: '부산광역시 해운대구 센텀중앙로 79',
       experienceYears: null,

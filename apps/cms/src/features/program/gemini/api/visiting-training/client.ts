@@ -181,6 +181,28 @@ export async function fetchGeminiApprovedTrainingDetailRemote(
   )
 }
 
+/** 승인 연수 id = 기관 신청 id. 담당 교사 원문만 반환 (OrganizationApplicationDetailResponse) */
+export type GeminiOrganizationApplicationPrivacyUnmasked = {
+  teacherName?: string | null
+  teacherPhone?: string | null
+  teacherEmail?: string | null
+}
+
+export async function unmaskGeminiOrganizationApplicationPrivacyRemote(
+  applicationId: string,
+  reason: string,
+  programId?: number
+): Promise<GeminiOrganizationApplicationPrivacyUnmasked> {
+  return unwrapApiBody<GeminiOrganizationApplicationPrivacyUnmasked>(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      data: { reason, ...(programId != null ? { programId } : {}) },
+    })
+  )
+}
+
 export type GeminiInstructorApplicationRemoteFilters = {
   status?: string
   instructorName?: string
