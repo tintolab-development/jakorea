@@ -13,6 +13,10 @@ import { buildGeneralApplicationFormPreviewParagraphBodyOptions } from '@/featur
 import { buildInstructorAvailableScheduleSlotsFromProgram } from '@/features/program/general/lib/instructor-application-available-schedule'
 import { resolveGeneralApplicationEditorVariant } from '@/features/program/general/lib/application-tabs'
 import type { GeneralApplicationTabKey } from '@/features/program/general/lib/application-tabs'
+import {
+  applicationAudienceForEditorVariant,
+  programWithApplicationFormRecruitmentScope,
+} from '@/features/program/general/lib/operational-form-bindings'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
 import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
@@ -40,12 +44,18 @@ export function ApplicationFormPreviewPanel({
     () => resolveGeneralApplicationEditorVariant(program, applicationTab),
     [program, applicationTab]
   )
+  const scopedProgram = useMemo(() => {
+    const audience = applicationAudienceForEditorVariant(variant)
+    return audience != null
+      ? programWithApplicationFormRecruitmentScope(program, audience)
+      : program
+  }, [program, variant])
   const templateName = useMemo(() => resolveGeneralApplicationTemplateName(variant), [variant])
   const templateId = useMemo(
     () => getTemplateIdForParticipantApplicationVariant(variant),
     [variant]
   )
-  const formSource = useProgramApplicationFormLoadSource(program, variant)
+  const formSource = useProgramApplicationFormLoadSource(scopedProgram, variant)
   const [editorActive, setEditorActive] = useState(false)
 
   useEffect(() => {
@@ -67,17 +77,19 @@ export function ApplicationFormPreviewPanel({
       variant === 'individual' ||
       variant === 'economy-application-institution'
     ) {
-      patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
+      patchInstitutionApplicationProgramBridge(
+        resolveInstitutionApplicationProgramBridge(scopedProgram)
+      )
     }
     return () => {
       resetInstitutionApplicationProgramBridge()
       resetInstitutionApplicationFormVisibility()
     }
-  }, [active, program, variant])
+  }, [active, scopedProgram, variant])
 
   const vm = useProgramParticipantApplicationEditor(editorActive, templateName, variant, {
     participantOrganization: variant === 'institution',
-    program,
+    program: scopedProgram,
     programLinkedApplicationFormPreview:
       variant === 'institution' ||
       variant === 'individual' ||
@@ -102,22 +114,22 @@ export function ApplicationFormPreviewPanel({
   }, [active, templateId])
 
   const institutionBridge = useMemo(
-    () => resolveInstitutionApplicationProgramBridge(program),
-    [program]
+    () => resolveInstitutionApplicationProgramBridge(scopedProgram),
+    [scopedProgram]
   )
   useInstitutionApplicationFormVisibilityVersion()
   const instructorScheduleSlots = useMemo(
     () =>
       variant === 'instructor'
-        ? buildInstructorAvailableScheduleSlotsFromProgram(program)
+        ? buildInstructorAvailableScheduleSlotsFromProgram(scopedProgram)
         : undefined,
-    [variant, program]
+    [variant, scopedProgram]
   )
 
   const paragraphBodyOptions = useMemo(
     () =>
       buildGeneralApplicationFormPreviewParagraphBodyOptions(variant, vm, {
-        program,
+        program: scopedProgram,
         paragraphs: vm.draft.paragraphs,
         institutionBridge,
         instructorScheduleSlots,
@@ -132,7 +144,7 @@ export function ApplicationFormPreviewPanel({
       vm.programApplicationFormInstructorOptions,
       vm.programApplicationFormVolunteerOptions,
       vm.draft.paragraphs,
-      program,
+      scopedProgram,
       institutionBridge,
       instructorScheduleSlots,
     ]
