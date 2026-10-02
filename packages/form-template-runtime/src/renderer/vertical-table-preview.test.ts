@@ -134,6 +134,26 @@ assertNormalizedPreserved(patchedChoice)
 assert.deepEqual(patchedChoice.rows[0]?.choiceMultipleSelections?.[0], ['A', 'C'])
 assert.deepEqual(patchedChoice.verticalChoiceOptions, ['A', 'B', 'C'])
 
+const textFlavorMultiple: VerticalTableParagraph = normalizeVerticalTableParagraph({
+  ...createVerticalTableParagraph('vt-text-multi', 'text'),
+  rows: [
+    {
+      stageCount: 1,
+      headers: ['다중'],
+      cells: [''],
+      stageKinds: ['multiple_choice'],
+      choiceMultipleSelections: [['A']],
+    },
+  ],
+  verticalChoiceOptions: ['A', 'B', 'C'],
+})
+assert.equal(textFlavorMultiple.verticalTableFlavor, 'text')
+assert.deepEqual(textFlavorMultiple.rows[0]?.stageKinds, ['multiple_choice'])
+assert.deepEqual(textFlavorMultiple.rows[0]?.choiceMultipleSelections?.[0], ['A'])
+const textFlavorMultipleLayout = resolveVerticalTablePreviewLayout(textFlavorMultiple)
+assert.equal(textFlavorMultipleLayout.rows[0]?.stages[0]?.kind, 'multiple_choice')
+assert.deepEqual(textFlavorMultipleLayout.rows[0]?.stages[0]?.multipleSelected, ['A'])
+
 const patchedFiles = patchVerticalTableFileNames(fileStage, 0, 0, ['a.png', 'b.jpg'])
 assertNormalizedPreserved(patchedFiles)
 assert.equal(patchedFiles.rows[0]?.cells[0], 'a.png | b.jpg')

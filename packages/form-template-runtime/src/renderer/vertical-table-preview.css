@@ -161,12 +161,68 @@
   background: var(--table-line, #e0e0e0);
 }
 
-.form-template-vertical-table__choice {
+.form-template-vertical-table__choice,
+.form-template-vertical-table__choice.ant-radio-group,
+.form-template-vertical-table__choice.app-radio-group {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 16px;
+  gap: 16px !important;
   width: 100%;
+}
+
+/* 단일·다중 — 라벨 16px, 아이콘–텍스트 8px (라디오 large와 동일) */
+.form-template-vertical-table__choice .ant-radio-wrapper,
+.form-template-vertical-table__choice .ant-checkbox-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px !important;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.form-template-vertical-table__choice .ant-radio-wrapper::after,
+.form-template-vertical-table__choice .ant-checkbox-wrapper::after {
+  display: none !important;
+}
+
+.form-template-vertical-table__choice .ant-radio,
+.form-template-vertical-table__choice .ant-checkbox {
+  margin: 0 !important;
+  margin-inline-end: 0 !important;
+  padding: 0 !important;
+  top: 0 !important;
+  align-self: center;
+}
+
+.form-template-vertical-table__choice .ant-checkbox + span,
+.form-template-vertical-table__choice .ant-checkbox-label,
+.form-template-vertical-table__choice .ant-checkbox-wrapper > span:not(.ant-checkbox),
+.form-template-vertical-table__choice .ant-radio + span,
+.form-template-vertical-table__choice .ant-radio-wrapper > span:not(.ant-radio) {
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+  margin-inline-start: 0 !important;
+  font-size: 16px !important;
+  line-height: 150%;
+}
+
+.form-template-vertical-table__choice .ant-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.form-template-vertical-table__choice .ant-checkbox-checked .ant-checkbox-inner {
+  border-color: var(--color-mint-01, #01a1af);
+  background-color: var(--color-mint-01, #01a1af);
 }
 
 .form-template-vertical-table__file {
@@ -175,6 +231,31 @@
   align-items: flex-start;
   gap: 8px;
   width: 100%;
+}
+
+.form-template-vertical-table__file-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.form-template-vertical-table__file-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.form-template-vertical-table__file-guide-line {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+  white-space: nowrap;
 }
 
 .form-template-vertical-table__file-input {

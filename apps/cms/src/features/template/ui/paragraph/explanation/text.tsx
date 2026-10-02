@@ -57,7 +57,7 @@ export function ExplanationText({
           bottomConsent: e.target.value as TableBottomConsent,
         })
       }}
-      disabled={bottomConsentDisplayOnly ? false : !consentInteractive}
+      disabled={false}
       style={
         bottomConsentDisplayOnly || !consentInteractive ? { pointerEvents: 'none' } : undefined
       }

@@ -128,6 +128,11 @@ function VerticalTableCellText({
   )
 }
 
+const VERTICAL_TABLE_FILE_GUIDE_LINES = [
+  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
+
 /** 세로형 행 스테이지 — 파일첨부형 셀 (작성·미리보기) */
 function VerticalTableFileAttachmentCell({
   disabled,
@@ -144,6 +149,7 @@ function VerticalTableFileAttachmentCell({
     >
       <ParagraphFileUpload
         accept=".jpg,.jpeg,.png"
+        guideLines={VERTICAL_TABLE_FILE_GUIDE_LINES}
         multiple
         disabled={disabled}
         fileNames={fileNames}
@@ -842,7 +848,7 @@ export function VerticalTableParagraphBody({
               if (bottomConsentDisplayOnly || !bottomConsentInteractive) return
               onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
             }}
-            disabled={bottomConsentDisplayOnly ? false : !bottomConsentInteractive}
+            disabled={false}
             style={
               bottomConsentDisplayOnly || !bottomConsentInteractive
                 ? { pointerEvents: 'none' }

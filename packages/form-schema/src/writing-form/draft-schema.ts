@@ -1429,6 +1429,13 @@ function normalizeRowsForVerticalFlavor(
   return rows.map(r => normalizeVerticalTableRowChoices(r, flavor, options))
 }
 
+function stageKindsInclude(
+  kinds: [VerticalTableStageKind] | [VerticalTableStageKind, VerticalTableStageKind],
+  kind: VerticalTableStageKind
+): boolean {
+  return kinds[0] === kind || (kinds.length > 1 && kinds[1] === kind)
+}
+
 function normalizeVerticalTableRowChoices(
   row: VerticalTableRow,
   flavor: VerticalTableFlavor,
@@ -1436,23 +1443,25 @@ function normalizeVerticalTableRowChoices(
 ): VerticalTableRow {
   const base = normalizeVerticalTableRow(row)
   const stageKinds = effectiveVerticalStageKinds(base, flavor)
-  const r = { ...base, stageKinds } as VerticalTableRow
-  if (flavor === 'single_choice') {
-    if (r.stageCount === 1) {
-      return {
-        ...r,
-        cells: [rehomeVerticalSingleCell(r.cells[0] ?? '', options)],
-      }
+  let r = { ...base, stageKinds } as VerticalTableRow
+  if (r.stageCount === 1) {
+    if (stageKinds[0] === 'single_choice') {
+      r = { ...r, cells: [rehomeVerticalSingleCell(r.cells[0] ?? '', options)] }
     }
-    return {
+  } else {
+    r = {
       ...r,
       cells: [
-        rehomeVerticalSingleCell(r.cells[0] ?? '', options),
-        rehomeVerticalSingleCell(r.cells[1] ?? '', options),
+        stageKinds[0] === 'single_choice'
+          ? rehomeVerticalSingleCell(r.cells[0] ?? '', options)
+          : (r.cells[0] ?? ''),
+        stageKinds[1] === 'single_choice'
+          ? rehomeVerticalSingleCell(r.cells[1] ?? '', options)
+          : (r.cells[1] ?? ''),
       ],
     }
   }
-  if (flavor === 'multiple_choice') {
+  if (stageKindsInclude(stageKinds, 'multiple_choice')) {
     if (r.stageCount === 1) {
       const prev = parseStringArrayUnknown(r.choiceMultipleSelections?.[0])
       return {
@@ -1465,8 +1474,8 @@ function normalizeVerticalTableRowChoices(
     return {
       ...r,
       choiceMultipleSelections: [
-        filterSelectionsByOptions(p0, options),
-        filterSelectionsByOptions(p1, options),
+        stageKinds[0] === 'multiple_choice' ? filterSelectionsByOptions(p0, options) : [],
+        stageKinds[1] === 'multiple_choice' ? filterSelectionsByOptions(p1, options) : [],
       ],
     }
   }
@@ -1880,7 +1889,7 @@ export function verticalTableRowWithStageCount(
     const stageKinds = effectiveVerticalStageKinds(b, flavor)
 
     if (stageCount === 1) {
-      if (flavor === 'multiple_choice') {
+      if (flavor === 'multiple_choice' || stageKinds[0] === 'multiple_choice') {
         const kept = parseStringArrayUnknown(b.choiceMultipleSelections?.[0])
         const out: VerticalTableRow = {
           stageCount: 1,
@@ -1906,7 +1915,11 @@ export function verticalTableRowWithStageCount(
       return normalizeVerticalTableRow(out)
     }
 
-    if (flavor === 'multiple_choice') {
+    if (
+      flavor === 'multiple_choice' ||
+      stageKinds[0] === 'multiple_choice' ||
+      stageKinds[1] === 'multiple_choice'
+    ) {
       const first = parseStringArrayUnknown(b.choiceMultipleSelections?.[0])
       const second =
         b.stageCount === 2 ? parseStringArrayUnknown(b.choiceMultipleSelections?.[1]) : []

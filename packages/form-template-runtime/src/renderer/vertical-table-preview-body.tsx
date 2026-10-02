@@ -35,6 +35,11 @@ function VerticalTableCellText({
   )
 }
 
+const VERTICAL_TABLE_FILE_GUIDE_LINES = [
+  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
+
 function VerticalTableFileCell({
   fileNames,
   disabled,
@@ -51,21 +56,31 @@ function VerticalTableFileCell({
   return (
     <div className="form-template-vertical-table__file">
       {disabled ? null : (
-        <label className="form-template-vertical-table__file-trigger">
-          파일 선택
-          <input
-            className="form-template-vertical-table__file-input"
-            type="file"
-            multiple
-            disabled={disabled}
-            onChange={event => {
-              const selected = Array.from(event.target.files ?? []).map(file => file.name)
-              if (selected.length === 0) return
-              onFileNamesChange?.([...fileNames, ...selected])
-              event.target.value = ''
-            }}
-          />
-        </label>
+        <div className="form-template-vertical-table__file-content">
+          <label className="form-template-vertical-table__file-trigger">
+            파일 선택
+            <input
+              className="form-template-vertical-table__file-input"
+              type="file"
+              accept=".jpg,.jpeg,.png"
+              multiple
+              disabled={disabled}
+              onChange={event => {
+                const selected = Array.from(event.target.files ?? []).map(file => file.name)
+                if (selected.length === 0) return
+                onFileNamesChange?.([...fileNames, ...selected])
+                event.target.value = ''
+              }}
+            />
+          </label>
+          <div className="form-template-vertical-table__file-guide">
+            {VERTICAL_TABLE_FILE_GUIDE_LINES.map(line => (
+              <span key={line} className="form-template-vertical-table__file-guide-line">
+                {line}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
       {fileNames.length > 0 ? (
         <ul className="form-template-vertical-table__file-list">

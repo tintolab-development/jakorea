@@ -427,21 +427,18 @@
   min-height: 0;
   margin: 0 !important;
   padding: 0 !important;
-  display: flex !important;
+  display: inline-flex !important;
   align-items: center;
   justify-content: flex-start;
   align-self: center;
+  gap: 8px !important;
   box-sizing: border-box;
   font-family: var(--ht-font);
-  font-size: var(--ht-font-size);
+  font-size: 16px !important;
   font-style: normal;
   font-weight: 500;
   line-height: 1.5;
   color: var(--ht-color-text);
-}
-
-.form-editor-horizontal-table__field-check-label {
-  gap: 8px;
 }
 
 .form-editor-horizontal-table__field-radios .ant-radio-wrapper-checked {
@@ -451,6 +448,14 @@
 .form-editor-horizontal-table__field-radios .ant-radio,
 .form-editor-horizontal-table__field-checks .ant-checkbox {
   align-self: center;
+  margin-inline-end: 0 !important;
+}
+
+.form-editor-horizontal-table__field-check-label.ant-checkbox-wrapper > span:not(.ant-checkbox),
+.form-editor-horizontal-table__field-check-label .ant-checkbox-label,
+.form-editor-horizontal-table__field-check-label .ant-checkbox + span {
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
 }
 
 .form-editor-horizontal-table__field-radios .ant-radio {
@@ -472,8 +477,8 @@
 .form-editor-horizontal-table__field-checks .ant-checkbox .ant-checkbox-inner {
   width: 20px;
   height: 20px;
-  border: 1px solid var(--ht-color-line);
-  background: var(--ht-color-surface);
+  border: 1px solid var(--ht-color-line, var(--table-line, #e0e0e0));
+  background: var(--ht-color-surface, var(--main-WT, #fff));
   box-sizing: border-box;
 }
 
@@ -503,6 +508,10 @@
 
 .form-editor-horizontal-table__field-check-label.ant-checkbox-wrapper {
   margin: 0;
+}
+
+.form-editor-horizontal-table__field-check-label.ant-checkbox-wrapper::after {
+  display: none !important;
 }
 
 .form-editor-horizontal-table__field-checks .ant-checkbox-checked .ant-checkbox-inner {

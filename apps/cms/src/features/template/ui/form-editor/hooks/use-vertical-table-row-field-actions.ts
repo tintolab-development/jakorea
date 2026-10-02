@@ -283,6 +283,9 @@ export function useVerticalTableRowFieldActions({
               cells: base.cells,
               placeholderHints: base.placeholderHints,
               stageKinds: [nextKind],
+              ...(nextKind === 'multiple_choice'
+                ? { choiceMultipleSelections: [base.choiceMultipleSelections?.[0] ?? []] }
+                : {}),
             })
             return nextRow
           }
@@ -290,12 +293,22 @@ export function useVerticalTableRowFieldActions({
             stageIdx === 0 ? nextKind : currentKinds[0]!,
             stageIdx === 1 ? nextKind : currentKinds[1]!,
           ]
+          const cur0 = base.choiceMultipleSelections?.[0] ?? []
+          const cur1 = base.choiceMultipleSelections?.[1] ?? []
           return mergeVerticalRow(base, {
             stageCount: 2,
             headers: base.headers,
             cells: base.cells,
             placeholderHints: base.placeholderHints,
             stageKinds: nextKinds,
+            ...(nextKinds[0] === 'multiple_choice' || nextKinds[1] === 'multiple_choice'
+              ? {
+                  choiceMultipleSelections: [
+                    nextKinds[0] === 'multiple_choice' ? cur0 : [],
+                    nextKinds[1] === 'multiple_choice' ? cur1 : [],
+                  ] as [string[], string[]],
+                }
+              : {}),
           })
         })
       })
