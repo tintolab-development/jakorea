@@ -39,6 +39,8 @@ export function ParagraphMetaSection({
               options={PARAGRAPH_KIND_OPTIONS}
               onChange={v => onKindChange(v as ParagraphKindSelectValue)}
               disabled={activeKindLocked}
+              withAllOption={false}
+              allowClear={false}
             />
             <CmsSelect
               width="100%"
@@ -49,6 +51,8 @@ export function ParagraphMetaSection({
               )}
               onChange={v => onDetailChange(v as DetailSelectValue)}
               disabled={activeKindLocked}
+              withAllOption={false}
+              allowClear={false}
             />
           </>
         </div>

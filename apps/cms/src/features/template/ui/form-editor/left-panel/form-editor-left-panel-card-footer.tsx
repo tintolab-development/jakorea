@@ -318,20 +318,6 @@ export function modalCardFooterActions(
   if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
     if (!isSelected) return undefined
     const vt = paragraph as VerticalTableParagraph
-    if (vt.verticalTableFlavor === 'file_attachment') {
-      return middleParagraphActions ? (
-        <FormParagraphCardActions
-          addDisabled={addDisabled}
-          duplicateDisabled={lockDupDel}
-          deleteDisabled={lockDupDel}
-          onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
-          onDuplicate={() => middleParagraphActions.onDuplicate(vt.id)}
-          onDelete={() => middleParagraphActions.onDelete(vt.id)}
-        />
-      ) : (
-        disabledParagraphCardActions(false)
-      )
-    }
     const dimensionActions = (
       <VerticalTableDimensionActions
         paragraph={vt}

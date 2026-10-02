@@ -5,9 +5,12 @@
 
 import {
   fieldCellValueToPlainText,
+  normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
   resolveHorizontalTableCellPlainText,
   type HorizontalTableParagraph,
+  type VerticalTableParagraph,
+  type VerticalTableRow,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
@@ -101,6 +104,19 @@ function filledParagraphContentScore(document: Record<string, unknown>): number 
     if (typeof paragraph.paragraphDescription === 'string') {
       score += paragraph.paragraphDescription.trim().length
     }
+    if (paragraph.variant === 'vertical_table') {
+      const table = paragraph as unknown as VerticalTableParagraph
+      for (const row of table.rows ?? []) {
+        for (const cell of row.cells ?? []) score += String(cell ?? '').trim().length
+        if (typeof row.dateTimeStage0AuxTime === 'string') {
+          score += row.dateTimeStage0AuxTime.trim().length
+        }
+        if (typeof row.dateTimeStage1Time === 'string') {
+          score += row.dateTimeStage1Time.trim().length
+        }
+      }
+      continue
+    }
     if (paragraph.variant !== 'horizontal_table') continue
     const table = paragraph as unknown as HorizontalTableParagraph
     const rowCount = Math.max(1, table.dataRows?.length ?? 0, table.fieldDataRows?.length ?? 0)
@@ -173,6 +189,97 @@ function mergeFilledHorizontalTable(
   return { ...current, fieldDataRows, dataRows }
 }
 
+function mergeFilledVerticalTable(
+  current: VerticalTableParagraph,
+  extra: VerticalTableParagraph,
+): VerticalTableParagraph {
+  const currentTable = normalizeVerticalTableParagraph(current)
+  const extraTable = normalizeVerticalTableParagraph(extra)
+  const rowCount = Math.max(currentTable.rows.length, extraTable.rows.length, 1)
+  const rows = Array.from({ length: rowCount }, (_, rowIndex) => {
+    const currentRow = currentTable.rows[rowIndex]
+    const extraRow = extraTable.rows[rowIndex]
+    if (!extraRow) return currentRow ?? extraRow
+    if (!currentRow) return extraRow
+    const stageCount: 1 | 2 = currentRow.stageCount === 2 || extraRow.stageCount === 2 ? 2 : 1
+    const mergedCells = Array.from({ length: stageCount }, (_, stageIdx) => {
+      const currentText = currentRow.cells[stageIdx] ?? ''
+      const extraText = extraRow.cells[stageIdx] ?? ''
+      return extraText.trim().length > currentText.trim().length ? extraText : currentText
+    })
+    const mergedHeaders = Array.from({ length: stageCount }, (_, stageIdx) => {
+      const currentHeader = currentRow.headers[stageIdx] ?? ''
+      const extraHeader = extraRow.headers[stageIdx] ?? ''
+      return extraHeader.trim().length > currentHeader.trim().length ? extraHeader : currentHeader
+    })
+    const mergedMultiple = Array.from({ length: stageCount }, (_, stageIdx) => {
+      const currentSelected = currentRow.choiceMultipleSelections?.[stageIdx] ?? []
+      const extraSelected = extraRow.choiceMultipleSelections?.[stageIdx] ?? []
+      return extraSelected.length > currentSelected.length ? extraSelected : currentSelected
+    })
+    const currentTime0 = currentRow.dateTimeStage0AuxTime ?? ''
+    const extraTime0 = extraRow.dateTimeStage0AuxTime ?? ''
+    const currentTime1 = currentRow.dateTimeStage1Time ?? ''
+    const extraTime1 = extraRow.dateTimeStage1Time ?? ''
+    const kinds = extraRow.stageKinds ?? currentRow.stageKinds
+    const dateTimeStage0AuxTime =
+      extraTime0.trim().length > currentTime0.trim().length ? extraTime0 : currentTime0
+    const dateTimeStage1Time =
+      extraTime1.trim().length > currentTime1.trim().length ? extraTime1 : currentTime1
+    if (stageCount === 2) {
+      const row: VerticalTableRow = {
+        stageCount: 2,
+        headers: [mergedHeaders[0] ?? '', mergedHeaders[1] ?? ''],
+        cells: [mergedCells[0] ?? '', mergedCells[1] ?? ''],
+        choiceMultipleSelections: [mergedMultiple[0] ?? [], mergedMultiple[1] ?? []],
+        dateTimeStage0AuxTime,
+        dateTimeStage1Time,
+      }
+      if (kinds && kinds.length >= 2 && kinds[0] != null && kinds[1] != null) {
+        row.stageKinds = [kinds[0], kinds[1]]
+      }
+      return row
+    }
+    const row: VerticalTableRow = {
+      stageCount: 1,
+      headers: [mergedHeaders[0] ?? ''],
+      cells: [mergedCells[0] ?? ''],
+      choiceMultipleSelections: [mergedMultiple[0] ?? []],
+      dateTimeStage0AuxTime,
+      dateTimeStage1Time,
+    }
+    if (kinds && kinds.length >= 1 && kinds[0] != null) {
+      row.stageKinds = [kinds[0]]
+    }
+    return row
+  })
+  return normalizeVerticalTableParagraph({
+    ...currentTable,
+    rows,
+    bottomConsent: extraTable.bottomConsent ?? currentTable.bottomConsent,
+    bottomText:
+      extraTable.bottomText.trim().length > currentTable.bottomText.trim().length
+        ? extraTable.bottomText
+        : currentTable.bottomText,
+  })
+}
+
+function mergeFilledParagraph(
+  current: Record<string, unknown>,
+  extra: Record<string, unknown>,
+): Record<string, unknown> {
+  if (current.variant === 'horizontal_table' && extra.variant === 'horizontal_table') {
+    return mergeFilledHorizontalTable(current, extra)
+  }
+  if (current.variant === 'vertical_table' && extra.variant === 'vertical_table') {
+    return mergeFilledVerticalTable(
+      current as unknown as VerticalTableParagraph,
+      extra as unknown as VerticalTableParagraph,
+    ) as unknown as Record<string, unknown>
+  }
+  return current
+}
+
 function mergeFilledParagraphContent(
   primary: Record<string, unknown>,
   extras: readonly Record<string, unknown>[],
@@ -183,7 +290,7 @@ function mergeFilledParagraphContent(
     for (const paragraph of extra.paragraphs) {
       if (!isRecord(paragraph) || typeof paragraph.id !== 'string' || !paragraph.id.trim()) continue
       const existing = extraById.get(paragraph.id)
-      extraById.set(paragraph.id, existing ? mergeFilledHorizontalTable(existing, paragraph) : paragraph)
+      extraById.set(paragraph.id, existing ? mergeFilledParagraph(existing, paragraph) : paragraph)
     }
   }
   if (!Array.isArray(primary.paragraphs) || extraById.size === 0) return primary
@@ -192,7 +299,7 @@ function mergeFilledParagraphContent(
     paragraphs: primary.paragraphs.map(paragraph => {
       if (!isRecord(paragraph) || typeof paragraph.id !== 'string') return paragraph
       const extra = extraById.get(paragraph.id)
-      return extra ? mergeFilledHorizontalTable(paragraph, extra) : paragraph
+      return extra ? mergeFilledParagraph(paragraph, extra) : paragraph
     }),
   }
 }
@@ -290,6 +397,18 @@ function mergeAnswerIntoParagraph(
       selectedPreviewMultipleIds: answer.selectedPreviewMultipleIds as string[],
     }
   }
+  if (next.kind === 'single_item' && next.variant === 'vertical_table') {
+    const extraRows = Array.isArray(answer.rows) ? answer.rows : undefined
+    if (extraRows != null || 'bottomConsent' in answer) {
+      next = mergeFilledVerticalTable(next, {
+        ...next,
+        ...(extraRows != null ? { rows: extraRows } : {}),
+        ...('bottomConsent' in answer
+          ? { bottomConsent: answer.bottomConsent as VerticalTableParagraph['bottomConsent'] }
+          : {}),
+      } as VerticalTableParagraph)
+    }
+  }
   return next
 }
 
@@ -378,6 +497,12 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
     return {
       fieldDataRows: 'fieldDataRows' in paragraph ? paragraph.fieldDataRows : [],
       dataRows: 'dataRows' in paragraph ? paragraph.dataRows : [],
+    }
+  }
+  if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
+    return {
+      rows: paragraph.rows,
+      bottomConsent: paragraph.showBottomConsent ? (paragraph.bottomConsent ?? null) : undefined,
     }
   }
   return undefined

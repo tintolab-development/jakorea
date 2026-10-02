@@ -94,7 +94,8 @@ export function FormEditorCustomFieldPanel({
   hint,
   children,
 }: {
-  title: string
+  /** 상단 종류 셀렉트와 중복되면 생략 */
+  title?: string
   subtitle?: string
   titleClassName?: string
   className?: string
@@ -105,7 +106,7 @@ export function FormEditorCustomFieldPanel({
 }) {
   return (
     <div className={className}>
-      <h3 className={titleClassName}>{title}</h3>
+      {title ? <h3 className={titleClassName}>{title}</h3> : null}
       {subtitle ? (
         <p className="form-editor-custom-field-panel__subtitle">{subtitle}</p>
       ) : null}

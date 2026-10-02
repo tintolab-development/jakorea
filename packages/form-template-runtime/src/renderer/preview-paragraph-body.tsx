@@ -3,6 +3,7 @@ import type {
 } from '@jakorea/form-schema/writing-form'
 import type { FormTemplateSurface, ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
 import { HorizontalTablePreviewBody } from './horizontal-table-preview-body.js'
+import { VerticalTablePreviewBody } from './vertical-table-preview-body.js'
 import { FillParagraphBody } from './fill-paragraph-body.js'
 
 export type PreviewParagraphBodyProps = {
@@ -42,6 +43,10 @@ export function PreviewParagraphBody({
     return (
       <HorizontalTablePreviewBody paragraph={paragraph} interactionMode={interactionMode} />
     )
+  }
+
+  if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
+    return <VerticalTablePreviewBody paragraph={paragraph} interactionMode={interactionMode} />
   }
 
   if (paragraph.kind === 'description') {

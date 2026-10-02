@@ -314,4 +314,99 @@ assert.equal(
   '배정된 교육 대상 학교'
 )
 
+const verticalForm = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [
+    {
+      id: 'program-application-custom-vertical',
+      kind: 'single_item',
+      variant: 'vertical_table',
+      requiredMark: true,
+      paragraphTitle: '커스텀 세로표',
+      verticalTableFlavor: 'text',
+      rows: [
+        {
+          stageCount: 1,
+          headers: ['항목'],
+          cells: [''],
+          stageKinds: ['subjective'],
+        },
+      ],
+      bottomText: '',
+      showBottomText: false,
+      showBottomConsent: false,
+      answerRequired: true,
+    },
+  ],
+}
+const verticalDraft = writingFormDraftFromApplicationForm(verticalForm, {
+  'program-application-custom-vertical': {
+    rows: [
+      {
+        stageCount: 1,
+        headers: ['항목'],
+        cells: ['작성한 답'],
+        stageKinds: ['subjective'],
+      },
+    ],
+  },
+})
+assert.ok(verticalDraft)
+const verticalParagraph = verticalDraft!.paragraphs[0]
+assert.ok(verticalParagraph && verticalParagraph.variant === 'vertical_table')
+assert.equal(
+  verticalParagraph.variant === 'vertical_table' ? verticalParagraph.rows[0]?.cells[0] : '',
+  '작성한 답',
+)
+const verticalAnswers = buildApplicationAnswersFromDraft(verticalDraft!)
+assert.ok(verticalAnswers['program-application-custom-vertical'])
+assert.equal(
+  (verticalAnswers['program-application-custom-vertical'] as { rows?: { cells?: string[] }[] })
+    .rows?.[0]?.cells?.[0],
+  '작성한 답',
+)
+
+const richerVertical = coerceApplicationFormDocument({
+  paragraphs: [
+    {
+      id: 'program-application-custom-vertical',
+      kind: 'single_item',
+      variant: 'vertical_table',
+      verticalTableFlavor: 'text',
+      rows: [
+        {
+          stageCount: 1,
+          headers: ['항목'],
+          cells: [''],
+          stageKinds: ['subjective'],
+        },
+      ],
+    },
+  ],
+  schemaJson: {
+    paragraphs: [
+      {
+        id: 'program-application-custom-vertical',
+        kind: 'single_item',
+        variant: 'vertical_table',
+        verticalTableFlavor: 'text',
+        rows: [
+          {
+            stageCount: 1,
+            headers: ['항목'],
+            cells: ['중첩 문서 답'],
+            stageKinds: ['subjective'],
+          },
+        ],
+      },
+    ],
+  },
+})
+assert.ok(richerVertical)
+const richerParagraphs = richerVertical.paragraphs
+assert.ok(Array.isArray(richerParagraphs))
+const richerParagraph = richerParagraphs[0] as { rows?: { cells?: string[] }[] }
+assert.equal(richerParagraph.rows?.[0]?.cells?.[0], '중첩 문서 답')
+
 console.log('application-form-draft.selfcheck: ok')

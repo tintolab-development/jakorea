@@ -543,6 +543,7 @@ export type VerticalTableStageKind =
   | 'date_time'
   | 'single_choice'
   | 'multiple_choice'
+  | 'file_attachment'
 
 /** 세로형 테이블 한 행: 1단(항목·입력 1쌍) 또는 2단(같은 행에 두 쌍, 폭 분배).
  * `stageKinds`: 단락 전체 flavor와 다르게 특정 스테이지(항목)만 다른 유형일 때 사용.
@@ -591,15 +592,16 @@ export const DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER = '내용을 입력해
 
 /**
  * 세로형 단락 종류.
- * - `text`: 테이블_세로형(텍스트형)
+ * - `text`: 테이블_세로형(텍스트형) — 행별 `stageKinds`로 세부 유형(파일첨부 포함)
  * - `subjective`: 테이블_세로형(주관식형) — 행별 주관식(자유 서술) 입력
  * - `date_time`: 테이블_세로형(날짜/시간형)
  * - `single_choice` / `multiple_choice`: 테이블_세로형(단일·다중 선택형) — `verticalChoiceOptions` 공통 선택지
- * - `file_attachment`: 테이블_세로형(파일첨부형) — 고정 1행, 행·열 추가 없음
+ * - `file_attachment`: **레거시** 단락 단위 파일첨부 — `normalizeVerticalTableParagraph`가
+ *   `text` + 행 `stageKinds: file_attachment`로 승격(고정 1행 제약 해제)
  */
-export type VerticalTableFlavor = VerticalTableStageKind | 'file_attachment'
+export type VerticalTableFlavor = VerticalTableStageKind
 
-/** 파일첨부형 세로 테이블 좌측 th 기본 라벨 */
+/** 파일첨부형 세로 테이블 좌측 th 기본 라벨 (레거시 단락 flavor·스테이지 플레이스홀더) */
 export const DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL = '파일첨부형'
 
 /** 작성 양식 — 테이블 세로형 (`verticalTableFlavor`로 세부 유형 구분) */
@@ -609,8 +611,7 @@ export interface VerticalTableParagraph extends WritingFormParagraphBase {
   /** 생략·불명시는 `text`(기존 JSON 호환) */
   verticalTableFlavor: VerticalTableFlavor
   /**
-   * `verticalTableFlavor === 'file_attachment'`일 때만 사용 — 좌측 th 표시 문구.
-   * 생략·빈 문자열이면 `DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL`.
+   * 레거시 `verticalTableFlavor === 'file_attachment'` 전용 — normalize 시 행 header로 흡수 후 제거.
    */
   verticalFileAttachmentHeaderLabel?: string
   /** 단일·다중 선택형 공통 선택지(생략 시 `['A','B','C']`) */
@@ -1375,11 +1376,12 @@ export function coerceVerticalTableStageKind(raw: unknown): VerticalTableStageKi
   if (raw === 'date_time') return 'date_time'
   if (raw === 'single_choice') return 'single_choice'
   if (raw === 'multiple_choice') return 'multiple_choice'
+  if (raw === 'file_attachment') return 'file_attachment'
   return 'text'
 }
 
 function defaultVerticalStageKindForFlavor(flavor: VerticalTableFlavor): VerticalTableStageKind {
-  return flavor === 'file_attachment' ? 'text' : flavor
+  return flavor
 }
 
 /** 새 행·빈 단락 초기화용 — 단락 flavor에 맞는 기본 행 */
@@ -1657,7 +1659,7 @@ export function effectiveVerticalCompositeTimeHint(row: VerticalTableRow, stageI
 }
 
 export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): VerticalTableParagraph {
-  const verticalTableFlavor = coerceVerticalTableFlavor(p.verticalTableFlavor)
+  let verticalTableFlavor = coerceVerticalTableFlavor(p.verticalTableFlavor)
   const verticalChoiceOptions = normalizeVerticalChoiceOptions(p.verticalChoiceOptions)
   const rowsIn = p.rows ?? []
   let rows = rowsIn.map(normalizeVerticalTableRow)
@@ -1667,29 +1669,40 @@ export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): Vert
         ? defaultVerticalTextTableInitialRows().map(normalizeVerticalTableRow)
         : [normalizeVerticalTableRow(defaultVerticalTableRowForFlavor(verticalTableFlavor))]
   }
+  /** 레거시 단락 단위 파일첨부 → 행 stageKinds + 일반 세로형(행 추가 가능) */
   if (verticalTableFlavor === 'file_attachment') {
-    rows = rows.slice(0, 1)
-    const r0 = rows[0] ?? defaultVerticalTableRowForFlavor('file_attachment')
-    if (r0.stageCount === 2) {
-      rows = [verticalTableRowWithStageCount(r0, 1, 'file_attachment')]
-    } else {
-      rows = [r0]
-    }
-  }
-  rows = normalizeRowsForVerticalFlavor(rows, verticalTableFlavor, verticalChoiceOptions)
-  const verticalFileAttachmentHeaderLabel =
-    verticalTableFlavor === 'file_attachment'
-      ? (p.verticalFileAttachmentHeaderLabel ?? '').trim() !== ''
+    const legacyHeader =
+      (p.verticalFileAttachmentHeaderLabel ?? '').trim() !== ''
         ? (p.verticalFileAttachmentHeaderLabel ?? '').trim()
         : DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL
-      : undefined
+    verticalTableFlavor = 'text'
+    rows = rows.map(r => {
+      const base = normalizeVerticalTableRow(r)
+      if (base.stageCount === 1) {
+        const h0 = (base.headers[0] ?? '').trim()
+        return {
+          ...base,
+          headers: [h0 !== '' ? h0 : legacyHeader] as [string],
+          stageKinds: ['file_attachment'] as [VerticalTableStageKind],
+        }
+      }
+      return {
+        ...base,
+        stageKinds: ['file_attachment', 'file_attachment'] as [
+          VerticalTableStageKind,
+          VerticalTableStageKind,
+        ],
+      }
+    })
+  }
+  rows = normalizeRowsForVerticalFlavor(rows, verticalTableFlavor, verticalChoiceOptions)
   return {
     ...p,
     variant: 'vertical_table',
     verticalTableFlavor,
     verticalChoiceOptions,
     rows,
-    verticalFileAttachmentHeaderLabel,
+    verticalFileAttachmentHeaderLabel: undefined,
     bottomText: p.bottomText ?? '',
     showBottomText: Boolean(p.showBottomText),
     showBottomConsent: Boolean(p.showBottomConsent),
@@ -1716,7 +1729,7 @@ export function createVerticalTableParagraph(
     id,
     kind: 'single_item',
     variant: 'vertical_table',
-    verticalTableFlavor: flavor,
+    verticalTableFlavor: flavor === 'file_attachment' ? 'text' : flavor,
     requiredMark: true,
     /** 비우면 카드·네비는 `타이틀을 입력해 주세요` 플레이스홀더 톤(유형명 자동 노출 없음) */
     paragraphTitle: '',
@@ -1725,14 +1738,20 @@ export function createVerticalTableParagraph(
     rows:
       flavor === 'text'
         ? defaultVerticalTextTableInitialRows()
-        : [defaultVerticalTableRowForFlavor(flavor)],
+        : flavor === 'file_attachment'
+          ? [
+              {
+                stageCount: 1,
+                headers: [DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL],
+                cells: [''],
+                stageKinds: ['file_attachment'],
+              },
+            ]
+          : [defaultVerticalTableRowForFlavor(flavor)],
     verticalChoiceOptions:
       flavor === 'single_choice' || flavor === 'multiple_choice'
         ? [...DEFAULT_CHOICE_OPTIONS]
         : undefined,
-    ...(flavor === 'file_attachment'
-      ? { verticalFileAttachmentHeaderLabel: DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL }
-      : {}),
     bottomText: '',
     showBottomText: false,
     showBottomConsent: true,
@@ -1823,9 +1842,6 @@ export function cloneVerticalTableParagraph(
 
 export function verticalTableAddRow(p: VerticalTableParagraph): VerticalTableParagraph {
   const n = normalizeVerticalTableParagraph(p)
-  if (n.verticalTableFlavor === 'file_attachment') {
-    return n
-  }
   return {
     ...n,
     rows: [...n.rows, defaultVerticalTableRowForFlavor(n.verticalTableFlavor)],
