@@ -10,6 +10,7 @@
 | 항목 | 값 |
 |------|-----|
 | 작성일 | 2026-10-02 |
+| 갱신 | 2026-10-02 — FE는 `company-school-progress-instructor-frontend-handoff-2026-10-02.md` 를 반영했다. A 등록 · B PATCH · C 강등 호출은 CMS에 붙어 있다. |
 | 대상 | CMS 백엔드 `JABACK` (`localhost:8080`) |
 | 우선순위 | **P1** (A 강사 등록 · B 강사 신청 운영정보 PATCH · C 대표→일반 · D INSTRUCTOR 목록 채움 · E COMPANY_SCHOOL 허용) |
 | 화면 | CMS **1사1교** 프로그램 상세 → LNB **프로그램 진행 현황** → **참여 강사** 목록·상세 (신청 정보 / 교육 배정 현황 / 강의보고서 관리 / 정산 현황) |
