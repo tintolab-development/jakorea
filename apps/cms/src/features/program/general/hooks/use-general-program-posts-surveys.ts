@@ -29,6 +29,7 @@ import {
 } from '@/features/program/general/api/admin-general-programs-service'
 import {
   classifyProgramFormBindings,
+  isDedicatedSurveyManagementTabTitle,
   mapSurveyResponseListItemToPollResponse,
   mergeSurveysWithBindings,
   surveyResponseNeedsDetail,
@@ -436,7 +437,7 @@ export function useGeneralProgramSurveys(programId: string | undefined) {
             String(c.binding.templateVersionId ?? '') === survey.id ||
             String(c.binding.templateId ?? '') === survey.templateId
         )
-        if (!hit) return true
+        if (!hit) return !isDedicatedSurveyManagementTabTitle(survey.title)
         return hit.kind === 'poll'
       }
     )

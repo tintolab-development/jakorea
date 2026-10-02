@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest'
 import {
   classifyFormBindingByTemplateId,
   classifyProgramFormBindings,
+  isDedicatedSurveyManagementTabTitle,
   isProgramSurveyManagementFormBinding,
   mapSurveyAnswersToRecord,
   mapSurveyResponseListItemToPollResponse,
+  mapProgramSurveyToRegisteredSurvey,
   mergeSurveysWithBindings,
   parseAnswerPreviewJson,
+  pickLectureEvalSurveyFromRemote,
+  resolveLectureEvalSubmitContext,
   resolveSatisfactionAudienceFromBinding,
   resolveSurveyCreateBindingTemplateCode,
   resolveSurveyShareClipboardUrl,
@@ -65,6 +69,87 @@ describe('mapSurveyResponseListItemToPollResponse', () => {
     expect(surveyResponseNeedsDetail({ formResponseId: 11, answerPreviewJson: '{"a":"1"}' })).toBe(
       false
     )
+  })
+})
+
+describe('mapProgramSurveyToRegisteredSurvey', () => {
+  it('uses surveys GET bindingId when merge binding is missing', () => {
+    const row = mapProgramSurveyToRegisteredSurvey(
+      {
+        bindingId: 77,
+        templateId: 200,
+        templateVersionId: 2000,
+        templateName: '설문',
+        responseCount: 2,
+      },
+      0
+    )
+    expect(row.bindingId).toBe('77')
+  })
+})
+
+describe('resolveLectureEvalSubmitContext', () => {
+  it('prefers binding SCHEDULE over surveys GET', () => {
+    expect(
+      resolveLectureEvalSubmitContext({
+        binding: { targetScope: 'SCHEDULE', targetScopeId: 11 },
+        surveyDto: { targetScope: 'PROGRAM', targetScopeId: 99 },
+      })
+    ).toEqual({ contextType: 'SCHEDULE', contextId: 11 })
+  })
+
+  it('falls back to surveys GET targetScope when binding is empty', () => {
+    expect(
+      resolveLectureEvalSubmitContext({
+        surveyDto: { targetScope: 'SCHEDULE', targetScopeId: 22 },
+      })
+    ).toEqual({ contextType: 'SCHEDULE', contextId: 22 })
+  })
+})
+
+describe('pickLectureEvalSurveyFromRemote', () => {
+  it('uses classified lecture binding first', () => {
+    const row = pickLectureEvalSurveyFromRemote({
+      classified: [
+        {
+          kind: 'lecture_evaluation',
+          binding: { bindingId: 5, templateName: '강의평가' },
+          survey: {
+            id: '5',
+            title: '강의평가',
+            templateId: '9',
+            status: 'in_progress',
+            responseCount: 0,
+            participantTotal: 1,
+            bindingId: '5',
+          },
+        },
+      ],
+      surveys: [{ templateName: '다른 강의평가', templateVersionId: 88 }],
+    })
+    expect(row?.bindingId).toBe('5')
+  })
+
+  it('falls back to surveys GET title when binding is missing', () => {
+    const row = pickLectureEvalSurveyFromRemote({
+      classified: [],
+      surveys: [
+        { bindingId: 77, templateName: '1회차 강의평가', templateVersionId: 300, templateId: 30 },
+      ],
+    })
+    expect(row).toMatchObject({
+      id: '300',
+      title: '1회차 강의평가',
+      bindingId: '77',
+    })
+  })
+})
+
+describe('isDedicatedSurveyManagementTabTitle', () => {
+  it('keeps generic poll titles on the poll tab', () => {
+    expect(isDedicatedSurveyManagementTabTitle('신규 설문조사 1')).toBe(false)
+    expect(isDedicatedSurveyManagementTabTitle('강의평가')).toBe(true)
+    expect(isDedicatedSurveyManagementTabTitle('만족도조사 (학생용)')).toBe(true)
   })
 })
 

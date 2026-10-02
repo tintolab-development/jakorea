@@ -54,6 +54,7 @@ import {
   updateAdminProgramRemote,
   updateAdminProgramPostRemote,
 } from '@/features/program/general/api/programs-api-client'
+import { updateFormResponseRemote } from '@/features/program/general/api/form-responses-api-client'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import type { ProgramRole } from '@/types/user'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
@@ -422,6 +423,16 @@ export async function submitGeneralProgramFormResponse(
   if (!shouldUseProgramsHttpRemoteApi()) return null
   assertProgramsHttpRemoteReady()
   return submitAdminFormResponseRemote(payload)
+}
+
+/** 강의평가 응답 수정. OpenAPI: PATCH /api/admin/form-responses/{responseId} */
+export async function updateGeneralProgramFormResponse(
+  responseId: number,
+  payload: import('@/shared/api/generated/forms-surveys/schemas/formResponseUpdateRequest').FormResponseUpdateRequest
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return updateFormResponseRemote(responseId, payload)
 }
 
 export async function fetchGeneralProgramManagers(
