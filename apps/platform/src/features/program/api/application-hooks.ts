@@ -52,7 +52,9 @@ export type ProgramApplicationFormQuery = {
  * Class D. remote + 숫자 programId + access token 일 때만 호출.
  *
  * BE: 모집 전이면 options 에 formBindingId 는 있고 canApply=false + RECRUITMENT_NOT_STARTED.
- * 양식 GET 은 그대로 시도한다. 409 면 unavailable, 200 이면 CMS 등록본을 미리보기한다.
+ * 양식 GET 은 그대로 시도한다. 200 이면 CMS 프로그램 전용 발행본(강사·기관 포함)을 그린다.
+ * GET 이 모집 window 로 409 를 내면 unavailable — 카탈로그 시드로 대체하지 않는다.
+ * (BE 계약: portal-apply-form-bindings-before-recruitment-backend-request-2026-10-02.md)
  */
 export function useProgramApplicationForm(
   programId: string | null | undefined,

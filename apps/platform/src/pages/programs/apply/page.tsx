@@ -238,7 +238,7 @@ export function ProgramApplyPage() {
       if (applicationFormQuery.status === 'ready' && remoteForm && remoteFormKey) {
         if (hydratedFormKeyRef.current === remoteFormKey) return
         const remoteDraft = writingFormDraftFromApplicationForm(
-          remoteForm.form ?? remoteForm,
+          remoteForm,
           remoteForm.draftAnswers,
         )
         if (remoteDraft) {
@@ -305,6 +305,12 @@ export function ProgramApplyPage() {
           )
           return
         }
+        /** 원격 양식은 왔는데 문서를 못 읽으면 카탈로그 시드로 바꾸지 않는다. */
+        if (hydratedFormKeyRef.current !== remoteFormKey) {
+          hydratedFormKeyRef.current = remoteFormKey
+          setDraft(null)
+        }
+        return
       }
       if (
         applicationFormQuery.status === 'loading' ||
@@ -315,30 +321,21 @@ export function ProgramApplyPage() {
         return
       }
 
-      // form-bindings 409(RECRUITMENT_NOT_STARTED 등) · options unavailable 이어도
-      // 빈 화면(return null) 대신 시드 draft로 골격 유지. 제출은 blockedMessage로 막는다.
-      const fallbackKey = [
-        'fallback',
+      /**
+       * form-bindings 409(RECRUITMENT_NOT_STARTED 등) · error 시 카탈로그 시드로 바꾸지 않는다.
+       * 시드는 CMS 프로그램 전용 수정본이 아니라서 강사·기관 신청 양식 「연동 안 됨」처럼 보인다.
+       * 제출 차단 안내는 blockedMessage 로 표시한다.
+       */
+      const remoteMissKey = [
+        'remote-miss',
         program.id,
         focusedApplicationType ?? '',
         applicationFormQuery.status,
         applicationFormQuery.blockedReason ?? '',
       ].join(':')
-      if (hydratedFormKeyRef.current === fallbackKey) return
-      hydratedFormKeyRef.current = fallbackKey
-      const applyCaseForDraft = resolveProgramApplyFormCase({
-        ...program,
-        applicationType: focusedApplicationType,
-      })
-      const fallbackDraft = getMockApplyFormDraft({
-        ...program,
-        applicationType: focusedApplicationType,
-      })
-      setDraft(
-        applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
-          ? prepareIndividualApplicationDraft(fallbackDraft)
-          : fallbackDraft,
-      )
+      if (hydratedFormKeyRef.current === remoteMissKey) return
+      hydratedFormKeyRef.current = remoteMissKey
+      setDraft(null)
       setPreferredBlocks([createEmptyPreferredBlock()])
       setBasicInfo(
         fillTrainedTeachersBasicInfoFromProfile(
@@ -642,34 +639,8 @@ export function ProgramApplyPage() {
     remoteApplyEnabled &&
     (applicationFormQuery.status === 'loading' || applicationFormQuery.status === 'idle')
 
-  /** remote 양식 실패(모집 전 409 등) 시에도 시드 draft로 화면 골격 유지 */
-  const displayDraft = useMemo(() => {
-    if (draft != null) return draft
-    if (!program || !remoteApplyEnabled) return null
-    if (
-      applicationFormQuery.status !== 'unavailable' &&
-      applicationFormQuery.status !== 'error'
-    ) {
-      return null
-    }
-    const applyCaseForDraft = resolveProgramApplyFormCase({
-      ...program,
-      applicationType: focusedApplicationType,
-    })
-    const fallbackDraft = getMockApplyFormDraft({
-      ...program,
-      applicationType: focusedApplicationType,
-    })
-    return applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
-      ? prepareIndividualApplicationDraft(fallbackDraft)
-      : fallbackDraft
-  }, [
-    applicationFormQuery.status,
-    draft,
-    focusedApplicationType,
-    program,
-    remoteApplyEnabled,
-  ])
+  /** remote 모드에서는 CMS form-bindings 응답만 쓴다. 시드 폴백 금지. */
+  const displayDraft = draft
 
   const hiddenParagraphIds = useMemo(() => {
     const hidden = new Set<string>()
@@ -702,7 +673,19 @@ export function ProgramApplyPage() {
     return hidden
   }, [applyCase, displayDraft, program, remoteForm, sexOffense])
 
-  if (!isReady || isLoading || formLoading || !program || !displayDraft) {
+  const remoteFormUnavailable =
+    remoteApplyEnabled &&
+    !formLoading &&
+    displayDraft == null &&
+    (applicationFormQuery.status === 'unavailable' ||
+      applicationFormQuery.status === 'error' ||
+      applicationFormQuery.status === 'ready')
+
+  if (!isReady || isLoading || formLoading || !program) {
+    return null
+  }
+
+  if (!displayDraft && !remoteFormUnavailable) {
     return null
   }
 
@@ -712,6 +695,12 @@ export function ProgramApplyPage() {
 
   const handleSubmit = async () => {
     setSubmitError(null)
+    if (displayDraft == null) {
+      setSubmitError(
+        blockedMessage ?? '신청 양식을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      )
+      return
+    }
     if (blockedMessage && !canSubmitRemote) {
       setSubmitError(blockedMessage)
       return
@@ -890,18 +879,26 @@ export function ProgramApplyPage() {
           </PFText>
         ) : null}
 
+        {remoteFormUnavailable && !blockedMessage ? (
+          <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.blockedNotice}>
+            신청 양식을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </PFText>
+        ) : null}
+
         <div className={styles.form}>
-          <FormTemplateHost surface="platformUser">
-            <FormTemplateRenderer
-              draft={displayDraft}
-              interactionMode="user"
-              surface="platformUser"
-              hiddenParagraphIds={hiddenParagraphIds}
-              onUpdateParagraph={updateParagraph}
-              fillOptions={{ consentFillReadOnlyBody: true }}
-              renderParagraphSlot={renderParagraphSlot}
-            />
-          </FormTemplateHost>
+          {displayDraft ? (
+            <FormTemplateHost surface="platformUser">
+              <FormTemplateRenderer
+                draft={displayDraft}
+                interactionMode="user"
+                surface="platformUser"
+                hiddenParagraphIds={hiddenParagraphIds}
+                onUpdateParagraph={updateParagraph}
+                fillOptions={{ consentFillReadOnlyBody: true }}
+                renderParagraphSlot={renderParagraphSlot}
+              />
+            </FormTemplateHost>
+          ) : null}
 
           {submitError ? (
             <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
@@ -914,7 +911,11 @@ export function ProgramApplyPage() {
               size="xlarge"
               width={240}
               type="button"
-              disabled={submitMutation.isPending || Boolean(blockedMessage && remoteApplyEnabled)}
+              disabled={
+                submitMutation.isPending ||
+                !displayDraft ||
+                Boolean(blockedMessage && remoteApplyEnabled)
+              }
               onClick={() => {
                 void handleSubmit()
               }}

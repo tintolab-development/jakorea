@@ -4,7 +4,10 @@
  */
 
 import {
+  fieldCellValueToPlainText,
   normalizeWritingFormDraft,
+  resolveHorizontalTableCellPlainText,
+  type HorizontalTableParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
@@ -65,11 +68,17 @@ function isDisplayOnlyApplicationParagraph(paragraph: Record<string, unknown>): 
   )
 }
 
-function hasParagraphs(value: unknown): value is { paragraphs: unknown[] } {
-  return isRecord(value) && Array.isArray(value.paragraphs)
-}
-
-const NESTED_FORM_KEYS = ['schemaJson', 'schema', 'document', 'form', 'data'] as const
+const NESTED_FORM_KEYS = [
+  'schemaJson',
+  'schema',
+  'schema_json',
+  'publishedForm',
+  'publishedSchema',
+  'writingForm',
+  'document',
+  'form',
+  'data',
+] as const
 
 function paragraphCount(document: Record<string, unknown>): number {
   return Array.isArray(document.paragraphs) ? document.paragraphs.length : -1
@@ -82,7 +91,30 @@ function displayOnlyParagraphCount(document: Record<string, unknown>): number {
   ).length
 }
 
-/** CMS 등록본이 중첩 schemaJson 에만 있을 때 — 문단이 더 많은 쪽을 고른다. */
+function filledParagraphContentScore(document: Record<string, unknown>): number {
+  if (!Array.isArray(document.paragraphs)) return 0
+  let score = 0
+  for (const paragraph of document.paragraphs) {
+    if (!isRecord(paragraph)) continue
+    if (typeof paragraph.paragraphTitle === 'string') score += paragraph.paragraphTitle.trim().length
+    if (typeof paragraph.bodyText === 'string') score += paragraph.bodyText.trim().length
+    if (typeof paragraph.paragraphDescription === 'string') {
+      score += paragraph.paragraphDescription.trim().length
+    }
+    if (paragraph.variant !== 'horizontal_table') continue
+    const table = paragraph as unknown as HorizontalTableParagraph
+    const rowCount = Math.max(1, table.dataRows?.length ?? 0, table.fieldDataRows?.length ?? 0)
+    const colCount = Math.max(1, table.columnHeaders?.length ?? 0)
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+      for (let colIndex = 0; colIndex < colCount; colIndex += 1) {
+        score += resolveHorizontalTableCellPlainText(table, rowIndex, colIndex).trim().length
+      }
+    }
+  }
+  return score
+}
+
+/** CMS 등록본이 중첩 schemaJson 에만 있을 때 — 문단 수, 그다음 채워진 셀을 고른다. */
 function pickRicherFormDocument(
   current: Record<string, unknown> | null,
   next: Record<string, unknown> | null,
@@ -92,35 +124,118 @@ function pickRicherFormDocument(
   const currentCount = paragraphCount(current)
   const nextCount = paragraphCount(next)
   if (nextCount > currentCount) return next
-  if (nextCount === currentCount && displayOnlyParagraphCount(next) > displayOnlyParagraphCount(current)) {
-    return next
-  }
+  if (nextCount < currentCount) return current
+  if (displayOnlyParagraphCount(next) > displayOnlyParagraphCount(current)) return next
+  if (filledParagraphContentScore(next) > filledParagraphContentScore(current)) return next
   return current
 }
 
-/** form 이 schemaJson 래퍼·중첩 객체여도 paragraphs 문서로 정규화. */
-export function coerceApplicationFormDocument(
-  form: unknown,
-  depth = 0,
-): Record<string, unknown> | null {
-  if (!form || depth > 4) return null
-  if (typeof form === 'string' && form.trim()) {
-    try {
-      return coerceApplicationFormDocument(JSON.parse(form), depth + 1)
-    } catch {
-      return null
+function mergeFilledHorizontalTable(
+  current: Record<string, unknown>,
+  extra: Record<string, unknown>,
+): Record<string, unknown> {
+  if (current.variant !== 'horizontal_table' || extra.variant !== 'horizontal_table') {
+    return current
+  }
+  const currentTable = current as unknown as HorizontalTableParagraph
+  const extraTable = extra as unknown as HorizontalTableParagraph
+  const rowCount = Math.max(
+    currentTable.dataRows?.length ?? 0,
+    currentTable.fieldDataRows?.length ?? 0,
+    extraTable.dataRows?.length ?? 0,
+    extraTable.fieldDataRows?.length ?? 0,
+    1,
+  )
+  const colCount = Math.max(
+    currentTable.columnHeaders?.length ?? 0,
+    extraTable.columnHeaders?.length ?? 0,
+    1,
+  )
+  const fieldDataRows = Array.from({ length: rowCount }, (_, rowIndex) =>
+    Array.from({ length: colCount }, (_, colIndex) => {
+      const currentCell = currentTable.fieldDataRows?.[rowIndex]?.[colIndex]
+      const extraCell = extraTable.fieldDataRows?.[rowIndex]?.[colIndex]
+      const currentText = fieldCellValueToPlainText(currentCell)
+      const extraText = fieldCellValueToPlainText(extraCell)
+      if (extraText.trim().length > currentText.trim().length) {
+        return extraCell ?? currentCell ?? { kind: 'text' as const, value: extraText }
+      }
+      return currentCell ?? extraCell ?? { kind: 'text' as const, value: currentText }
+    }),
+  )
+  const dataRows = Array.from({ length: rowCount }, (_, rowIndex) =>
+    Array.from({ length: colCount }, (_, colIndex) => {
+      const currentText = currentTable.dataRows?.[rowIndex]?.[colIndex] ?? ''
+      const extraText = extraTable.dataRows?.[rowIndex]?.[colIndex] ?? ''
+      return extraText.trim().length > currentText.trim().length ? extraText : currentText
+    }),
+  )
+  return { ...current, fieldDataRows, dataRows }
+}
+
+function mergeFilledParagraphContent(
+  primary: Record<string, unknown>,
+  extras: readonly Record<string, unknown>[],
+): Record<string, unknown> {
+  const extraById = new Map<string, Record<string, unknown>>()
+  for (const extra of extras) {
+    if (extra === primary || !Array.isArray(extra.paragraphs)) continue
+    for (const paragraph of extra.paragraphs) {
+      if (!isRecord(paragraph) || typeof paragraph.id !== 'string' || !paragraph.id.trim()) continue
+      const existing = extraById.get(paragraph.id)
+      extraById.set(paragraph.id, existing ? mergeFilledHorizontalTable(existing, paragraph) : paragraph)
     }
   }
-  if (!isRecord(form)) return null
+  if (!Array.isArray(primary.paragraphs) || extraById.size === 0) return primary
+  return {
+    ...primary,
+    paragraphs: primary.paragraphs.map(paragraph => {
+      if (!isRecord(paragraph) || typeof paragraph.id !== 'string') return paragraph
+      const extra = extraById.get(paragraph.id)
+      return extra ? mergeFilledHorizontalTable(paragraph, extra) : paragraph
+    }),
+  }
+}
 
-  let best: Record<string, unknown> | null = hasParagraphs(form) ? form : null
+function collectApplicationFormDocuments(
+  form: unknown,
+  depth: number,
+  collected: Record<string, unknown>[],
+): void {
+  if (!form || depth > 4) return
+  if (typeof form === 'string' && form.trim()) {
+    try {
+      collectApplicationFormDocuments(JSON.parse(form), depth + 1, collected)
+    } catch {
+      return
+    }
+    return
+  }
+  if (Array.isArray(form) && form.length > 0 && isRecord(form[0]) && 'kind' in form[0]) {
+    collectApplicationFormDocuments({ paragraphs: form }, depth + 1, collected)
+    return
+  }
+  if (!isRecord(form)) return
+  if (Array.isArray(form.paragraphs) && form.paragraphs.length > 0) {
+    collected.push(form)
+  }
   for (const key of NESTED_FORM_KEYS) {
     const nested = form[key]
     if (nested == null) continue
-    best = pickRicherFormDocument(best, coerceApplicationFormDocument(nested, depth + 1))
+    collectApplicationFormDocuments(nested, depth + 1, collected)
   }
-  if (best && paragraphCount(best) <= 0) return null
-  return best
+}
+
+/** form 이 schemaJson 래퍼·중첩 객체여도 paragraphs 문서로 정규화. */
+export function coerceApplicationFormDocument(form: unknown): Record<string, unknown> | null {
+  const documents: Record<string, unknown>[] = []
+  collectApplicationFormDocuments(form, 0, documents)
+  if (documents.length === 0) return null
+  let best: Record<string, unknown> | null = documents[0] ?? null
+  for (const document of documents.slice(1)) {
+    best = pickRicherFormDocument(best, document)
+  }
+  return best && paragraphCount(best) > 0 ? mergeFilledParagraphContent(best, documents) : null
 }
 
 function mergeAnswerIntoParagraph(

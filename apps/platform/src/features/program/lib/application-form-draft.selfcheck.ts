@@ -2,6 +2,7 @@
  * application-form-draft — Portal form → WritingFormDraft / answers
  */
 import assert from 'node:assert/strict'
+import { resolveHorizontalTableCellPlainText } from '@jakorea/form-schema/writing-form'
 import {
   buildApplicationAnswersFromDraft,
   coerceApplicationFormDocument,
@@ -73,6 +74,70 @@ const wrappedExplanation = {
 const fromWrapped = coerceApplicationFormDocument(wrappedExplanation)
 assert.ok(fromWrapped && Array.isArray(fromWrapped.paragraphs))
 assert.equal(fromWrapped.paragraphs.length, 2)
+
+const seedThirdParty = {
+  id: 'program-instructor-application-seed-third-party',
+  kind: 'single_item',
+  variant: 'horizontal_table',
+  tableFlavor: 'field',
+  columnHeaders: ['제공받는 곳', '수집 항목'],
+  dataRows: [['', '']],
+  fieldDataRows: [
+    [
+      { kind: 'text', value: '' },
+      { kind: 'text', value: '이름' },
+    ],
+  ],
+}
+const customThirdParty = {
+  ...seedThirdParty,
+  fieldDataRows: [
+    [
+      { kind: 'text', value: '배정된 교육 대상 학교' },
+      { kind: 'text', value: '이름' },
+    ],
+  ],
+}
+const catalogSeedDoc = {
+  schemaVersion: 1,
+  paragraphs: [seedThirdParty],
+}
+const publishedCustomDoc = {
+  schemaVersion: 1,
+  paragraphs: [customThirdParty],
+}
+const sameCountPrefersPublishedCells = coerceApplicationFormDocument({
+  paragraphs: catalogSeedDoc.paragraphs,
+  schemaJson: JSON.stringify(publishedCustomDoc),
+})
+assert.ok(sameCountPrefersPublishedCells)
+const publishedParagraphs = sameCountPrefersPublishedCells!.paragraphs
+assert.ok(Array.isArray(publishedParagraphs))
+const publishedRecipient = publishedParagraphs[0] as {
+  fieldDataRows?: { kind: string; value?: string }[][]
+}
+assert.equal(publishedRecipient.fieldDataRows?.[0]?.[0]?.value, '배정된 교육 대상 학교')
+
+const portalEnvelope = coerceApplicationFormDocument({
+  programId: 186025,
+  formBindingId: 11,
+  templateVersionId: 88,
+  form: {
+    templateCode: 'application-instructor',
+    questions: [],
+    sections: [],
+    paragraphs: catalogSeedDoc.paragraphs,
+    schemaJson: publishedCustomDoc,
+  },
+  draftAnswers: {},
+})
+assert.ok(portalEnvelope)
+const envelopeParagraphs = portalEnvelope!.paragraphs
+assert.ok(Array.isArray(envelopeParagraphs))
+const envelopeRecipient = envelopeParagraphs[0] as {
+  fieldDataRows?: { kind: string; value?: string }[][]
+}
+assert.equal(envelopeRecipient.fieldDataRows?.[0]?.[0]?.value, '배정된 교육 대상 학교')
 
 const draft = writingFormDraftFromApplicationForm(formDoc, {
   'program-application-trained-teachers-seed-personal-info': { bottomConsent: 'agree' },
@@ -211,6 +276,42 @@ assert.equal(preparedTeam.requiredMark, true)
 assert.equal(
   'runtimeHidden' in preparedTeam ? (preparedTeam as { runtimeHidden?: boolean }).runtimeHidden : false,
   false
+)
+
+const lostFlavorForm = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [
+    {
+      id: 'program-instructor-application-seed-third-party',
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      requiredMark: true,
+      paragraphTitle: '개인정보 제3자 정보 제공·이용 동의',
+      tableFlavor: 'text',
+      columnHeaders: ['제공받는 곳', '수집 항목', '수집·이용 목적', '제공받는 자의 보유기간'],
+      dataRows: [['', '', '', '']],
+      columnFields: [{ kind: 'text' }, { kind: 'text' }, { kind: 'text' }, { kind: 'text' }],
+      fieldDataRows: [
+        [
+          { kind: 'text', value: '배정된 교육 대상 학교' },
+          { kind: 'text', value: '이름' },
+          { kind: 'text', value: '안내' },
+          { kind: 'text', value: '3년' },
+        ],
+      ],
+      showBottomConsent: true,
+      bottomConsent: 'agree',
+    },
+  ],
+}
+const lostFlavorDraft = writingFormDraftFromApplicationForm(lostFlavorForm)
+assert.ok(lostFlavorDraft)
+const lostFlavorTable = lostFlavorDraft!.paragraphs[0]
+assert.ok(lostFlavorTable && lostFlavorTable.variant === 'horizontal_table')
+assert.equal(
+  resolveHorizontalTableCellPlainText(lostFlavorTable, 0, 0),
+  '배정된 교육 대상 학교'
 )
 
 console.log('application-form-draft.selfcheck: ok')
