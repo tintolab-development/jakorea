@@ -35,6 +35,11 @@ import { resolveOneSchoolPerDayAssignmentStatus } from '@/features/program/1c-1s
 import type { Application } from '@/types/domain'
 import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
 import { isTempMockOrgProgressInstructorId, isTempMockOrgSchoolRowId } from '@/features/program/general/lib/temp-mock-org-program'
+import {
+  formatApplicantGradeLabel,
+  formatRequestedEducationFormat,
+} from '@/features/program/general/api/adapters/general-applications-adapters'
+import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
 
 /**
  * 참여 강사 행 → 학교 상세 모달용 강사 행 (모달·테이블 연동 시 재사용)
@@ -343,6 +348,44 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
     activityWithdrawn: row.activityWithdrawn === true,
     availableActions: row.availableActions,
     instructors: [],
+  }
+}
+
+export function mergeOrganizationApplicationDetailOntoSchoolDetail(
+  detail: SchoolDetailForModal,
+  dto: OrganizationApplicationDetailResponse
+): SchoolDetailForModal {
+  const teacherPhone = dto.teacherPhone?.trim()
+  const teacherEmail = dto.teacherEmail?.trim()
+  const addressDetail = dto.organizationAddressDetail?.trim()
+  const educationFormat = formatRequestedEducationFormat(dto.requestedEducationFormat)
+  return {
+    ...detail,
+    schoolName: dto.organizationName?.trim() || detail.schoolName,
+    region: dto.organizationAddress?.trim() || detail.region,
+    addressDetail: addressDetail || detail.addressDetail,
+    educationGrade: formatApplicantGradeLabel(dto.requestedGrade) || detail.educationGrade,
+    educationFormat: educationFormat || detail.educationFormat,
+    classCount: dto.requestedClassCount ?? detail.classCount,
+    studentCount: dto.requestedStudentCount ?? detail.studentCount,
+    teacherName: dto.teacherName?.trim() || detail.teacherName,
+    teacherPhone: teacherPhone || detail.teacherPhone,
+    teacherMobile: teacherPhone || detail.teacherMobile,
+    teacherEmail: teacherEmail || detail.teacherEmail,
+    applicationReason: dto.applicationReason?.trim() || detail.applicationReason,
+    otherRequests: dto.otherRequests?.trim() || detail.otherRequests,
+    computerInRoom: dto.computerInRoom?.trim() || detail.computerInRoom,
+    waitingRoomLocation: dto.waitingRoomLocation?.trim() || detail.waitingRoomLocation,
+    mealProvided: dto.mealProvided ?? detail.mealProvided,
+    mealNotice: dto.mealNotice?.trim() || detail.mealNotice,
+    parkingInfo: dto.parkingInfo?.trim() || detail.parkingInfo,
+    textbookId: dto.textbookId != null ? String(dto.textbookId) : detail.textbookId,
+    textbookName: dto.textbookName?.trim() || detail.textbookName,
+    textbookGrade: dto.textbookGrade?.trim() || detail.textbookGrade,
+    textbookKits: dto.textbookKits ?? detail.textbookKits,
+    textbookQuantity: dto.textbookQuantity ?? detail.textbookQuantity,
+    waitingRoomAvailable: dto.waitingRoomAvailable ?? detail.waitingRoomAvailable,
+    participationAppliedAt: dto.submittedAt ?? detail.participationAppliedAt,
   }
 }
 

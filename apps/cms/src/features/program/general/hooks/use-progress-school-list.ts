@@ -331,16 +331,26 @@ export function useProgressSchoolList({
     setSelectedSchoolRowKeys([])
   }, [selectedSchoolRowKeys])
 
-  /** 학교 상세에서 승인 취소 확인 시: 해당 기관 approvalStatus → cancelled */
-  const handleSchoolApprovalCancel = useCallback((schoolId: string) => {
-    setSchoolList(prev =>
-      prev.map(row =>
-        row.id === schoolId
-          ? { ...row, approvalStatus: 'cancelled' as ParticipatingSchoolApprovalStatusKey }
-          : row
+  /** 잔여 모달 승인 취소. 진행 현황 SSOT는 활동 포기. 로컬 성공 위장 금지. */
+  const handleSchoolApprovalCancel = useCallback(
+    (schoolId: string) => {
+      if (isTempMockProgram) {
+        setSchoolList(prev =>
+          prev.map(row =>
+            row.id === schoolId
+              ? { ...row, approvalStatus: 'cancelled' as ParticipatingSchoolApprovalStatusKey }
+              : row
+          )
+        )
+        return
+      }
+      notifyProgramApiUnavailable(
+        'general-participating-institution-cancel-approval',
+        '일반 프로그램 · 참여 기관 진행 현황 승인 취소'
       )
-    )
-  }, [])
+    },
+    [isTempMockProgram]
+  )
 
   /** 학교별 배정 강사 요약 (대표강사명 외 N명, 저장 패치 우선) */
   const getInstructorDisplayForSchool = useCallback(

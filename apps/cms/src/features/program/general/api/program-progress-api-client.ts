@@ -2,6 +2,8 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { PageResponseParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseParticipantListItemResponse'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
+import type { ChangeRequest } from '@/shared/api/generated/dashboard/schemas/changeRequest'
+import type { ChangeResponse } from '@/shared/api/generated/dashboard/schemas/changeResponse'
 
 export type ProgramParticipantsListQuery = {
   participantType?: string
@@ -171,6 +173,24 @@ export async function giveUpProgramParticipantRemote(
   })
 }
 
+/**
+ * PATCH /api/admin/programs/{programId}/participants/{participantId}/schedules
+ * 참여 기관 실제 교육 일정 변경.
+ */
+export async function changeParticipantSchedulesRemote(
+  programId: string,
+  participantId: string,
+  payload: ChangeRequest
+): Promise<ChangeResponse> {
+  return unwrapApiBody<ChangeResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/schedules`,
+      method: 'PATCH',
+      data: payload,
+    })
+  )
+}
+
 export type ParticipantEducationScopeResponse = {
   programId?: number
   participantId?: number
@@ -281,6 +301,71 @@ export async function fetchProgramSubmissionTeamsRemote(
   )
   if (Array.isArray(body)) return body
   return body.items ?? []
+}
+
+export type GeneralAssignmentSubmissionFileDto = {
+  fileObjectId?: number
+  originalFileName?: string
+  downloadable?: boolean
+}
+
+export type GeneralAssignmentSubmissionParticipantDto = {
+  participantId?: number
+  memberId?: number
+  memberName?: string | null
+  gender?: string | null
+  birthDate?: string | null
+  affiliation?: string | null
+  organizationName?: string | null
+  grade?: string | null
+  submissionStatus?: string | null
+  remarkKind?: string | null
+  remarkAt?: string | null
+  files?: GeneralAssignmentSubmissionFileDto[] | null
+  surveyResponse?: { templateVersionId?: number; formResponseId?: number } | null
+  satisfactionResponse?: { templateVersionId?: number; formResponseId?: number } | null
+}
+
+export type GeneralAssignmentSubmissionScheduleDto = {
+  scheduleId?: number
+  sessionNo?: number | null
+  scheduleName?: string | null
+  startAt?: string | null
+  endAt?: string | null
+  assignmentEnabled?: boolean
+  assignmentPeriodStart?: string | null
+  assignmentPeriodEnd?: string | null
+  participants?: GeneralAssignmentSubmissionParticipantDto[] | null
+}
+
+export type GeneralAssignmentSubmissionListResponse = {
+  items?: GeneralAssignmentSubmissionScheduleDto[] | null
+}
+
+/** GET /api/admin/programs/{programId}/assignment-submissions — 일반 개인 LNB 과제 관리 */
+export async function fetchProgramAssignmentSubmissionsRemote(
+  programId: string,
+  params?: {
+    scheduleId?: string
+    memberName?: string
+    affiliation?: string
+    grade?: string
+    submissionStatus?: 'NOT_SUBMITTED' | 'SUBMITTED'
+    page?: number
+    size?: number
+  }
+): Promise<GeneralAssignmentSubmissionListResponse> {
+  const body = await unwrapApiBody<
+    GeneralAssignmentSubmissionListResponse | GeneralAssignmentSubmissionScheduleDto[]
+  >(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/assignment-submissions`,
+      method: 'GET',
+      params,
+    })
+  )
+  if (Array.isArray(body)) return { items: body }
+  return { items: body.items ?? [] }
 }
 
 /** POST /api/admin/programs/{programId}/submission-teams */

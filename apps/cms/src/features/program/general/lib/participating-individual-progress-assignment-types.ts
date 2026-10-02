@@ -4,7 +4,17 @@ export type ParticipatingIndividualProgressAssignmentSubmissionFilter = 'not_sub
 
 export type ParticipatingIndividualProgressAssignmentSubmission =
   | { kind: 'not_submitted' }
-  | { kind: 'submitted'; fileName: string; href: string; secondaryFileName?: string; secondaryHref?: string }
+  | {
+      kind: 'submitted'
+      fileName: string
+      href: string
+      fileObjectId?: number
+      downloadable?: boolean
+      secondaryFileName?: string
+      secondaryHref?: string
+      secondaryFileObjectId?: number
+      secondaryDownloadable?: boolean
+    }
   | { kind: 'scheduled' }
 
 export type ParticipatingIndividualProgressAssignmentRemarkKind =
@@ -32,6 +42,8 @@ export type ParticipatingIndividualProgressAssignmentParticipantRow = {
   submission: ParticipatingIndividualProgressAssignmentSubmission
   remarkKind: ParticipatingIndividualProgressAssignmentRemarkKind
   remarkDateLabel?: string
+  surveyResponse?: { templateVersionId: number; formResponseId: number }
+  satisfactionResponse?: { templateVersionId: number; formResponseId: number }
 }
 
 export type ParticipatingIndividualProgressAssignmentSessionGroup = {

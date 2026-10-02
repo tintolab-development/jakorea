@@ -6,10 +6,12 @@ import {
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
+  fetchProgramAssignmentSubmissionsRemote,
   fetchProgramParticipantsRemote,
   fetchProgramSchedulesViaDashboardRemote,
   fetchScheduleAttendancesRemote,
   giveUpProgramParticipantRemote,
+  changeParticipantSchedulesRemote,
   putScheduleAttendancesRemote,
   fetchParticipantEducationScopeRemote,
   putParticipantEducationScopeRemote,
@@ -245,6 +247,12 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
   }
 }
 
+/** 일반 개인 진행 현황 · 과제 관리. mock/null 폴백 없음. */
+export async function fetchGeneralProgressAssignmentBundle(programId: string) {
+  assertProgramProgressRemoteReady()
+  return fetchProgramAssignmentSubmissionsRemote(programId)
+}
+
 export async function fetchGeneralProgramLectureReports(
   programId: string
 ): Promise<unknown[]> {
@@ -321,6 +329,22 @@ export async function downloadGeneralProgramLectureReportFiles(
       fileName: generateFilename(prefix, 'pdf'),
     })
   }
+}
+
+/** 참여 기관 실제 교육 일정 변경. `PATCH …/participants/{id}/schedules`. */
+export async function changeGeneralParticipatingInstitutionSchedules(
+  programId: string,
+  participantId: string,
+  payload: {
+    changes: Array<{ scheduleId: number; educationDate: string }>
+    reason: string
+  }
+): Promise<void> {
+  assertProgramProgressRemoteReady()
+  await changeParticipantSchedulesRemote(programId, participantId, {
+    changes: payload.changes,
+    reason: payload.reason.trim() || '교육 진행 일정 변경',
+  })
 }
 
 /**
