@@ -97,6 +97,7 @@ export const router = createBrowserRouter([
     element: <AppLayoutRoute layout="default" />,
     children: [
       { path: '/programs', element: <ProgramsPage /> },
+      { path: '/programs/:programId', element: <ProgramDetailPage /> },
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
       { path: '/notices/:noticeId', element: <NoticeDetailPage /> },
       { path: '/about/careers/:postingId', element: <CareerPostingDetailPage /> },
@@ -234,7 +235,6 @@ export const router = createBrowserRouter([
         path: '/auth/find-email/identity/mock',
         element: <FindEmailIdentityMockNicePage />,
       },
-      { path: '/programs/:programId', element: <ProgramDetailPage /> },
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
       { path: '/mypage/education/:applicationType/:applicationId', element: <MypageEducationDetailPage /> },
       { path: '/mypage/education/:applicationId', element: <MypageEducationDetailPage /> },
