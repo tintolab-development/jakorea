@@ -1,6 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
+import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
 import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
 import type { GeminiApprovedTrainingDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingDetailResponse'
@@ -131,13 +132,32 @@ export async function fetchGeminiOrganizationApplicationsRemote(
   return toPageEnvelope(body, page, size)
 }
 
+/** OpenAPI는 현재 keyword만 정의. 나머지는 BE 반영 전까지 서버에서 무시됨 */
+export type GeminiApprovedTrainingRemoteFilters = {
+  keyword?: string
+  institutionSido?: string
+  institutionSigungu?: string
+  status?: string
+  officialDocumentRequired?: boolean
+  trainingDateFrom?: string
+  trainingDateTo?: string
+}
+
 export async function fetchGeminiApprovedTrainingsRemote(
-  keyword: string | undefined,
+  filters: GeminiApprovedTrainingRemoteFilters = {},
   page = 0,
   size = GEMINI_VISITING_TRAINING_LIST_PAGE_SIZE
 ): Promise<PageEnvelope<GeminiApprovedTrainingItem>> {
   const query = new URLSearchParams()
-  if (keyword) query.set('keyword', keyword)
+  if (filters.keyword) query.set('keyword', filters.keyword)
+  if (filters.institutionSido) query.set('institutionSido', filters.institutionSido)
+  if (filters.institutionSigungu) query.set('institutionSigungu', filters.institutionSigungu)
+  if (filters.status) query.set('status', filters.status)
+  if (filters.officialDocumentRequired !== undefined) {
+    query.set('officialDocumentRequired', String(filters.officialDocumentRequired))
+  }
+  if (filters.trainingDateFrom) query.set('trainingDateFrom', filters.trainingDateFrom)
+  if (filters.trainingDateTo) query.set('trainingDateTo', filters.trainingDateTo)
   appendPageParams(query, page, size)
   const body = await unwrapApiBody<
     GeminiApprovedTrainingListResponse | GeminiApprovedTrainingItem[]
@@ -157,6 +177,28 @@ export async function fetchGeminiApprovedTrainingDetailRemote(
     await customInstance({
       url: `${BASE}/approved/${encodeURIComponent(approvedTrainingId)}`,
       method: 'GET',
+    })
+  )
+}
+
+/** 승인 연수 id = 기관 신청 id. 담당 교사 원문만 반환 (OrganizationApplicationDetailResponse) */
+export type GeminiOrganizationApplicationPrivacyUnmasked = {
+  teacherName?: string | null
+  teacherPhone?: string | null
+  teacherEmail?: string | null
+}
+
+export async function unmaskGeminiOrganizationApplicationPrivacyRemote(
+  applicationId: string,
+  reason: string,
+  programId?: number
+): Promise<GeminiOrganizationApplicationPrivacyUnmasked> {
+  return unwrapApiBody<GeminiOrganizationApplicationPrivacyUnmasked>(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      data: { reason, ...(programId != null ? { programId } : {}) },
     })
   )
 }
@@ -237,6 +279,28 @@ export async function bulkDeleteGeminiRecruitmentsRemote(ids: number[]): Promise
     headers: { 'Content-Type': 'application/json' },
     data: body,
   })
+}
+
+export async function deleteGeminiApprovedTrainingRemote(approvedTrainingId: string): Promise<void> {
+  await customInstance({
+    url: `${BASE}/approved/${encodeURIComponent(approvedTrainingId)}`,
+    method: 'DELETE',
+  })
+}
+
+/** OpenAPI operationId: bulkDeleteApprovedTrainings — 부분 성공 가능 */
+export async function bulkDeleteGeminiApprovedTrainingsRemote(
+  ids: number[]
+): Promise<BulkActionResponse> {
+  const body: BulkDecisionRequest = { ids }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `${BASE}/approved/bulk-delete`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
 }
 
 export async function approveGeminiOrganizationApplicationRemote(

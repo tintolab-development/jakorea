@@ -31,13 +31,6 @@
   gap: 8px;
 }
 
-.gemini-approved-training-detail-info__affiliation-with-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .gemini-approved-training-detail-info__instructor-table {
   width: 100%;
 }

@@ -1,4 +1,6 @@
 import type { GeminiApprovedTrainingDetail } from '@/features/program/gemini/model/approved/detail-types'
+import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas/instructorMemberDetailResponse'
 import type { GeminiInstructorApplicationRow } from '@/features/program/gemini/model/approved/instructor-application-types'
 import type { GeminiApprovedTrainingRow } from '@/features/program/gemini/model/approved/types'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
@@ -24,9 +26,11 @@ import {
   approveGeminiInstructorApplicationRemote,
   approveGeminiOrganizationApplicationRemote,
   bulkApproveGeminiOrganizationApplicationsRemote,
+  bulkDeleteGeminiApprovedTrainingsRemote,
   bulkDeleteGeminiRecruitmentsRemote,
   bulkRejectGeminiOrganizationApplicationsRemote,
   createGeminiRecruitmentRemote,
+  deleteGeminiApprovedTrainingRemote,
   deleteGeminiRecruitmentRemote,
   fetchGeminiApprovedInstructorApplicationsRemote,
   fetchGeminiApprovedTrainingDetailRemote,
@@ -37,7 +41,9 @@ import {
   rejectGeminiInstructorApplicationRemote,
   rejectGeminiOrganizationApplicationRemote,
   resendGeminiOrganizationApplicationNotificationRemote,
+  unmaskGeminiOrganizationApplicationPrivacyRemote,
   updateGeminiRecruitmentRemote,
+  type GeminiApprovedTrainingRemoteFilters,
   type GeminiInstructorApplicationRemoteFilters,
   type GeminiOrganizationNotificationResendPayload,
   type GeminiRecruitmentRemoteFilters,
@@ -137,11 +143,11 @@ export async function listGeminiOrganizationApplicationsPage(
 }
 
 export async function listGeminiApprovedTrainingsPage(
-  keyword: string | undefined,
+  filters: GeminiApprovedTrainingRemoteFilters,
   pageParam = 0
 ): Promise<GeminiApprovedTrainingsPage> {
   assertRemoteReady()
-  const page = await fetchGeminiApprovedTrainingsRemote(keyword, pageParam)
+  const page = await fetchGeminiApprovedTrainingsRemote(filters, pageParam)
   const baseNo = page.page * page.size
   return {
     rows: page.items.map((item, index) =>
@@ -160,6 +166,46 @@ export async function getGeminiApprovedTrainingDetail(
   assertRemoteReady()
   const dto = await fetchGeminiApprovedTrainingDetailRemote(approvedTrainingId)
   return mapGeminiApprovedTrainingDetailResponseToDetail(dto)
+}
+
+export type GeminiApprovedTrainingPrivacyUnmasked = {
+  teacherName?: string
+  teacherPhone?: string
+  teacherEmail?: string
+  instructorPhone?: string
+  instructorEmail?: string
+}
+
+function nonEmpty(value: string | null | undefined): string | undefined {
+  const v = value?.trim()
+  return v ? v : undefined
+}
+
+/** 담당 교사(기관 신청 unmask) 실패 시 전체 실패. 연수 담당 강사 unmask 실패는 강사만 마스킹 유지 */
+export async function revealGeminiApprovedTrainingPersonalInfo(
+  detail: Pick<GeminiApprovedTrainingDetail, 'id' | 'programId' | 'instructor'>,
+  reason: string
+): Promise<GeminiApprovedTrainingPrivacyUnmasked> {
+  assertRemoteReady()
+  const programId = Number(detail.programId)
+  const teacher = await unmaskGeminiOrganizationApplicationPrivacyRemote(
+    detail.id,
+    reason,
+    Number.isFinite(programId) && programId > 0 ? programId : undefined
+  )
+  const instructorMemberId = Number(detail.instructor.memberId)
+  const instructor = Number.isFinite(instructorMemberId)
+    ? ((await fetchMemberRolePrivacyUnmask(instructorMemberId, reason, 'INSTRUCTOR').catch(
+        () => null
+      )) as InstructorMemberDetailResponse | null)
+    : null
+  return {
+    teacherName: nonEmpty(teacher.teacherName),
+    teacherPhone: nonEmpty(teacher.teacherPhone),
+    teacherEmail: nonEmpty(teacher.teacherEmail),
+    instructorPhone: nonEmpty(instructor?.member?.phone),
+    instructorEmail: nonEmpty(instructor?.member?.email),
+  }
 }
 
 export async function listGeminiApprovedInstructorApplicationsPage(
@@ -227,6 +273,31 @@ export async function deleteGeminiRecruitments(ids: string[]): Promise<void> {
     return
   }
   await bulkDeleteGeminiRecruitmentsRemote(numericIds)
+}
+
+export type GeminiApprovedTrainingsDeleteResult = {
+  successIds: string[]
+  failureCount: number
+}
+
+export async function deleteGeminiApprovedTrainings(
+  ids: string[]
+): Promise<GeminiApprovedTrainingsDeleteResult> {
+  assertRemoteReady()
+  const numericIds = toGeminiNumericIds(ids)
+  if (numericIds.length === 0) {
+    throw new Error('삭제할 승인 연수 ID가 올바르지 않습니다.')
+  }
+  if (numericIds.length === 1) {
+    await deleteGeminiApprovedTrainingRemote(String(numericIds[0]))
+    return { successIds: [String(numericIds[0])], failureCount: 0 }
+  }
+  const result = await bulkDeleteGeminiApprovedTrainingsRemote(numericIds)
+  const successIds = (result?.successIds ?? []).map(String)
+  return {
+    successIds,
+    failureCount: result?.failureCount ?? numericIds.length - successIds.length,
+  }
 }
 
 export async function approveGeminiOrganizationApplications(ids: string[]): Promise<void> {
