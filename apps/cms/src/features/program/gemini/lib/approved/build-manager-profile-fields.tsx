@@ -75,12 +75,14 @@ export function buildGeminiApprovedManagerTableItems(
       key: 'affiliation',
       label: '소속',
       children: (
-        <span className="gemini-approved-training-detail-info__affiliation-with-badge">
-          {detail.managerSchool}
-          {employmentStatus != null ? (
-            <SchoolTeacherEmploymentStatusBadge status={employmentStatus} />
-          ) : null}
-        </span>
+        <ProgramDetailTdSegmentWrap>
+          {withProgramDetailTdDivider([
+            detail.managerSchool,
+            employmentStatus != null ? (
+              <SchoolTeacherEmploymentStatusBadge status={employmentStatus} />
+            ) : null,
+          ])}
+        </ProgramDetailTdSegmentWrap>
       ),
     },
     {
