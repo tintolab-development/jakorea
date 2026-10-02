@@ -281,7 +281,7 @@ export async function giveUpProgramParticipantRemote(
 
 /**
  * PATCH /api/admin/programs/{programId}/participants/{participantId}/schedules
- * 참여 기관 실제 교육 일정 변경.
+ * 이 참여 기관에서 fromDate에 시작하는 교육 일정을 toDate로 옮긴다.
  */
 export async function changeParticipantSchedulesRemote(
   programId: string,

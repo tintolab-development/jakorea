@@ -7,15 +7,15 @@
  */
 
 export interface GeminiRecruitmentItem {
-  programId: number;
-  programCode?: string | null;
-  programType: string;
-  draftStatus?: string | null;
-  periodStatus?: string | null;
-  nameKo: string;
-  businessYear?: number | null;
-  businessStartDate?: string | null;
-  businessEndDate?: string | null;
+  programId?: number;
+  programCode?: string;
+  programType?: string;
+  draftStatus?: string;
+  periodStatus?: string;
+  nameKo?: string;
+  businessYear?: number;
+  businessStartDate?: string;
+  businessEndDate?: string;
   /**
      * 기관 모집 기간 시작. 연수 요청 가능기간(trainingRequest*)과 별개.
      * @nullable
