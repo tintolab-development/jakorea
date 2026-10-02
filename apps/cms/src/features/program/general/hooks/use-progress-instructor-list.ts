@@ -13,8 +13,11 @@ import type {
 import type { ProgressFilters } from './use-program-progress-params'
 import { fetchGeneralParticipatingInstructorsPage } from '@/features/program/general/api/admin-program-progress-service'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
+import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
+import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
+  useIsCompanySchoolProgramsSurface,
   useIsTrainedTeachersProgramsSurface,
   useProgramProgressRemoteEnabledForSurface,
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -55,6 +58,7 @@ export function useProgressInstructorList({
   programId,
 }: UseProgressInstructorListOptions) {
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+  const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
   const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
   const remoteEnabled =
     useProgramProgressRemoteEnabledForSurface(programId) && !isTempMockProgram
@@ -77,8 +81,13 @@ export function useProgressInstructorList({
   })
 
   const assignmentsQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.instructorAssignments(programId ?? ''),
-    queryFn: () => fetchGeneralInstructorAssignmentBoard(programId!),
+    queryKey: isCompanySchoolSurface
+      ? companySchoolQueryKeys.instructorAssignmentConflicts(programId ?? '')
+      : generalProgramProgressQueryKeys.instructorAssignments(programId ?? ''),
+    queryFn: () =>
+      isCompanySchoolSurface
+        ? fetchCompanySchoolAssignmentBoard(programId!)
+        : fetchGeneralInstructorAssignmentBoard(programId!),
     enabled: remoteEnabled && Boolean(programId),
     staleTime: 30_000,
     retry: false,
