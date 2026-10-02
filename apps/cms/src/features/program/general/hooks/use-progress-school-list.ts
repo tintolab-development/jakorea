@@ -18,7 +18,12 @@ import type {
   InstructorListFormInstructor,
 } from '../model/school-detail-types'
 import type { ProgressFilters } from './use-program-progress-params'
-import { fetchGeneralParticipatingInstitutionsPage } from '@/features/program/general/api/admin-program-progress-service'
+import {
+  fetchGeneralParticipatingInstitutionsPage,
+  updateGeneralParticipatingInstitutionTextbookDelivery,
+} from '@/features/program/general/api/admin-program-progress-service'
+import { mapTextbookStatusKeyToDeliveryStatus } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
   useIsCompanySchoolProgramsSurface,
@@ -208,12 +213,46 @@ export function useProgressSchoolList({
         )
         return
       }
-      notifyProgramApiUnavailable(
-        'general-participating-institution-textbook-delivery-status',
-        '참여 기관 · 교재 배송 현황 변경'
+      if (!remoteEnabled || !programId) {
+        notifyProgramApiUnavailable(
+          'general-participating-institution-textbook-delivery-status',
+          '참여 기관 · 교재 배송 현황 변경'
+        )
+        return
+      }
+      const previous = schoolList.find(row => row.id === recordId)?.textbookStatus
+      setSchoolList(prev =>
+        prev.map(row => (row.id === recordId ? { ...row, textbookStatus: status } : row))
       )
+      void (async () => {
+        try {
+          await updateGeneralParticipatingInstitutionTextbookDelivery(
+            programId,
+            recordId,
+            mapTextbookStatusKeyToDeliveryStatus(status)
+          )
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.institutions(programId),
+          })
+        } catch (error) {
+          if (previous) {
+            setSchoolList(prev =>
+              prev.map(row =>
+                row.id === recordId ? { ...row, textbookStatus: previous } : row
+              )
+            )
+          }
+          showAlert({
+            title: '교재 배송 변경 실패',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              '교재 배송 현황을 변경하지 못했습니다. 다시 시도해 주세요.'
+            ),
+          })
+        }
+      })()
     },
-    [isTempMockProgram]
+    [isTempMockProgram, programId, queryClient, remoteEnabled, schoolList, showAlert]
   )
 
   const handleSchoolDeleteClick = useCallback(() => {
