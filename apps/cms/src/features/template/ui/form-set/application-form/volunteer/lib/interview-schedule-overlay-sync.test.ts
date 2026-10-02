@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  listFilledVolunteerInterviewExceptionBlockIds,
   listVolunteerInterviewExceptionBlockIds,
   reconcileVolunteerInterviewExceptionBlockKeys,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
@@ -17,6 +18,22 @@ describe('listVolunteerInterviewExceptionBlockIds', () => {
     )
 
     expect(ids).toEqual([20, 10])
+  })
+})
+
+describe('listFilledVolunteerInterviewExceptionBlockIds', () => {
+  it('persistMissing 기본값만 있는 빈 예외 블록은 뺀다', () => {
+    const ids = listFilledVolunteerInterviewExceptionBlockIds(
+      {
+        'recruit.volunteer.interview.exception.10.exceptionDate': '2026-11-13',
+        'recruit.volunteer.interview.exception.10.selectedSlotKeys': ['1-2'],
+        'recruit.volunteer.interview.exception.20.timeUnit': '30',
+        'recruit.volunteer.interview.exception.20.exclusionState': { excludeNone: false },
+      },
+      'recruit'
+    )
+
+    expect(ids).toEqual([10])
   })
 })
 

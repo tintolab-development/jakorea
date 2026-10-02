@@ -62,6 +62,7 @@ const keys = {
     notes: 'recruit.volunteer.notes',
     notesNotApplicable: 'recruit.volunteer.notesNotApplicable',
     interviewRequired: 'recruit.volunteer.interviewRequired',
+    interviewRangeSeal: 'recruit.volunteer.interviewRangeSeal',
   },
   detailInfo: {
     participantDescription: 'recruit.detailInfo.programDescription',
@@ -180,6 +181,10 @@ export function buildGeneralRecruitOverlayFromProgram(
     program.volunteerApplicationEndDate,
     volunteer?.recruitmentPeriodLabel
   )
+  const volunteerInterviewRange = rangeSeal(
+    program.interviewStartDate ?? volunteer?.interviewStartDate,
+    program.interviewEndDate ?? volunteer?.interviewEndDate
+  )
   const inquiryContact =
     participant?.contactOrganizationName?.trim() ||
     participant?.contactName?.trim() ||
@@ -279,6 +284,7 @@ export function buildGeneralRecruitOverlayFromProgram(
   if (participantProgram) overlay[keys.instructor.programRangeSeal] = participantProgram
   if (volunteerRecruit) overlay[keys.volunteer.recruitRangeSeal] = volunteerRecruit
   if (participantProgram) overlay[keys.volunteer.programRangeSeal] = participantProgram
+  if (volunteerInterviewRange) overlay[keys.volunteer.interviewRangeSeal] = volunteerInterviewRange
 
   if (program.resultAnnouncementDate) {
     overlay[inst.finalAnnounceIso] = isoOrUndefined(program.resultAnnouncementDate)

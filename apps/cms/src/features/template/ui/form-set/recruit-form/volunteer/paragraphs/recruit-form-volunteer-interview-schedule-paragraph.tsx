@@ -1,3 +1,4 @@
+import type { Dayjs } from 'dayjs'
 import { VolunteerInterviewAvailableScheduleParagraph } from '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-interview-available-schedule-paragraph'
 import type { VolunteerInterviewScheduleEditSeed } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
@@ -13,6 +14,7 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   freezeUnavailableCalendar = false,
   overlayNamespace,
   interviewRangeSealKey,
+  interviewPeriodRange,
 }: {
   exceptionScheduleCount?: number
   exceptionBlockKeys?: number[]
@@ -23,6 +25,7 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   freezeUnavailableCalendar?: boolean
   overlayNamespace?: string
   interviewRangeSealKey?: string
+  interviewPeriodRange?: [Dayjs, Dayjs] | null
 }) {
   return (
     <VolunteerInterviewAvailableScheduleParagraph
@@ -36,6 +39,7 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
       commonScheduleSeed={commonScheduleSeed}
       onCommonExclusionChange={onCommonExclusionChange}
       freezeUnavailableCalendar={freezeUnavailableCalendar}
+      interviewPeriodRange={interviewPeriodRange}
     />
   )
 }
