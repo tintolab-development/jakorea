@@ -1,23 +1,35 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
+  draftToParticipatingInstructorSavePayload,
   parseParticipatingInstructorEditDraft,
   rowToParticipatingInstructorEditDraft,
   type ParticipatingInstructorEditDraft,
 } from '@/features/program/general/lib/participating-instructor-detail-edit'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import { LECTURE_FEE_MEASURE_NOT_APPLICABLE } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  fetchInstructorApplicationDetailRemote,
+  updateInstructorApplication,
+} from '@/features/program/general/api/applications-api-client'
+import { mapInstructorApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-instructor-application-detail'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
 
 /**
  * 참여 강사 신청 정보 편집.
- * OpenAPI에 강사 신청 body PATCH 없음 (코멘트만 PATCH) — P2-6. 저장은 미연동 안내.
+ * PATCH feePolicy + businessIncomeEarnerStatus 후 GET 상세로 폼 복원.
  */
 export interface UseParticipatingInstructorDetailEditParams {
   instructor: ParticipatingInstructorRow
+  programId: string
   onSaved: (updatedRow: ParticipatingInstructorRow) => void
 }
 
 export function useParticipatingInstructorDetailEdit({
   instructor,
+  programId,
+  onSaved,
 }: UseParticipatingInstructorDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<ParticipatingInstructorEditDraft | null>(null)
@@ -50,7 +62,7 @@ export function useParticipatingInstructorDetailEdit({
     setValidationErrors({})
   }, [])
 
-  const saveEdit = useCallback((): boolean => {
+  const saveEdit = useCallback(async (): Promise<boolean> => {
     if (!draft) return false
 
     const parsed = parseParticipatingInstructorEditDraft(draft)
@@ -59,9 +71,48 @@ export function useParticipatingInstructorDetailEdit({
       return false
     }
 
-    setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
-    return false
-  }, [draft])
+    const applicationId = instructor.instructorApplicationId?.trim()
+    if (!applicationId) {
+      setValidationErrors({
+        form: '강사 신청 ID가 없어 신청 정보를 저장할 수 없습니다. 관리자 등록 강사는 신청 정보 수정 대상이 아닙니다.',
+      })
+      return false
+    }
+
+    if (!shouldUseOrganizationApplicationRemoteApi()) {
+      setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
+      return false
+    }
+
+    const payload = draftToParticipatingInstructorSavePayload(draft)
+    const amount = Number(payload.lectureFeeAmount ?? 0)
+    try {
+      await updateInstructorApplication(applicationId, {
+        feePolicy: {
+          basisType: payload.lectureFeeBasisType ?? 'special_lecture',
+          measure:
+            payload.lectureFeeBasisType === 'program'
+              ? LECTURE_FEE_MEASURE_NOT_APPLICABLE
+              : (payload.lectureFeeMeasure ?? '출강 1회당'),
+          amount: Number.isFinite(amount) ? amount : 0,
+          instructorFeeGrade: payload.instructorFeeGradeLabel ?? '',
+        },
+        businessIncomeEarnerStatus: payload.businessIncomeEarnerStatus,
+      })
+      const refreshed = await fetchInstructorApplicationDetailRemote(applicationId)
+      onSaved(mapInstructorApplicationDetailToParticipatingRow(refreshed, instructor, programId))
+      resetEditState()
+      return true
+    } catch (error) {
+      setValidationErrors({
+        form: getGeneralProgramApiErrorMessage(
+          error,
+          '강사 정보를 저장하지 못했습니다. 다시 시도해 주세요.'
+        ),
+      })
+      return false
+    }
+  }, [draft, instructor, onSaved, programId, resetEditState])
 
   return {
     isEditing,

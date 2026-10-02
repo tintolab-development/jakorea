@@ -40,6 +40,7 @@ import {
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { mapInstructorApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-instructor-application-detail'
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
   generalApplicationsQueryKeys,
   generalProgramProgressQueryKeys,
@@ -324,6 +325,7 @@ export function ParticipatingInstructorFullpageView({
 
   const applicationInfoEdit = useParticipatingInstructorDetailEdit({
     instructor: mergedInstructor,
+    programId: program.id,
     onSaved: updatedRow => {
       setInstructorPatches(prev => ({
         ...prev,
@@ -484,19 +486,19 @@ export function ParticipatingInstructorFullpageView({
           )
           return
         }
-        notifyProgramApiUnavailable(
-          'general-participating-instructor-role-demote',
-          '참여 강사 · 일반 강사 변경'
-        )
-        return
-      }
-      if (institutionAssignment.isTempMockDataSource) {
+        if (!institutionAssignment.remoteEnabled) {
+          notifyProgramApiUnavailable(
+            'general-participating-instructor-role-demote',
+            '참여 강사 · 일반 강사 변경'
+          )
+          return
+        }
+      } else if (institutionAssignment.isTempMockDataSource) {
         setAssignedSchools(prev =>
           renumberAssignedRows(applyLocalInstructorLeadRoleChange(prev, schoolId, newRole))
         )
         return
-      }
-      if (!institutionAssignment.remoteEnabled) {
+      } else if (!institutionAssignment.remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-participating-instructor-role-change',
           '참여 강사 · 대표 강사 변경'
@@ -520,17 +522,24 @@ export function ParticipatingInstructorFullpageView({
         })
         return
       }
+      const isDemote = newRole !== 'lead'
       try {
         await putRepresentativeInstructorRemote(program.id, {
           instructorMemberId: memberId,
           organizationApplicationId: orgAppId,
           ...(Number.isFinite(scheduleId) && scheduleId > 0 ? { scheduleId } : {}),
+          ...(isDemote ? { scheduleLead: false } : {}),
         })
         await institutionAssignment.invalidate()
-      } catch {
+      } catch (error) {
         showAlert({
-          title: '대표 강사 변경 실패',
-          content: '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          title: isDemote ? '일반 강사 변경 실패' : '대표 강사 변경 실패',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            isDemote
+              ? '일반 강사 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+              : '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          ),
         })
       }
     },
@@ -1158,13 +1167,12 @@ export function ParticipatingInstructorFullpageView({
             content: `${mergedInstructor.instructorName} 강사가 활동 포기 처리되었습니다.`,
           })
         } catch (error) {
-          const message =
-            error instanceof Error && error.message.trim()
-              ? error.message
-              : '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
           showAlert({
             title: '활동 포기 실패',
-            content: message,
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+            ),
           })
         } finally {
           setActivityWithdrawSubmitting(false)

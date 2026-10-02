@@ -39,6 +39,7 @@ import {
   PrivacyHomeAddressDisplay,
 } from '@/features/program/shared/lib/program-pii-display'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import {
   useParticipatingInstructorsParams,
@@ -274,9 +275,19 @@ export function ParticipatingInstructorsSection({
     setPendingInstructorMemberId(null)
     if (!memberId) return
 
-    const success = await handleAddInstructorByMemberId(memberId)
-    if (success) {
-      showAlert({ title: '안내', content: PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE })
+    try {
+      const success = await handleAddInstructorByMemberId(memberId)
+      if (success) {
+        showAlert({ title: '안내', content: PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE })
+      }
+    } catch (error) {
+      showAlert({
+        title: '강사 등록 실패',
+        content: getGeneralProgramApiErrorMessage(
+          error,
+          '강사 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+        ),
+      })
     }
   }, [handleAddInstructorByMemberId, pendingInstructorMemberId, showAlert])
 
