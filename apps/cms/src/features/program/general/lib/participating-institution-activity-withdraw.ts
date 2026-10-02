@@ -62,6 +62,22 @@ export function getParticipatingInstitutionActivityWithdrawScheduleOptions(
     }))
 }
 
+export function resolveParticipatingInstitutionActivityWithdrawStopScheduleId(
+  sessions: ReadonlyArray<ParticipatingSchoolSession>,
+  stopSessionKey: string
+): number | undefined {
+  const matched = sessions
+    .map((session, index) => ({
+      session,
+      key: buildParticipatingSchoolSessionKey(session, index),
+    }))
+    .find(({ key }) => key === stopSessionKey)
+  const scheduleId = matched?.session.resolvedScheduleId
+  return typeof scheduleId === 'number' && Number.isFinite(scheduleId) && scheduleId > 0
+    ? scheduleId
+    : undefined
+}
+
 export function resolveParticipatingInstitutionActivityWithdrawPatch(
   program: Program,
   sessions: ReadonlyArray<ParticipatingSchoolSession>,

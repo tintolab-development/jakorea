@@ -5,6 +5,7 @@ import type {
   ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import { formatPreviousYearParticipationLabel } from '@/features/program/general/api/adapters/general-applications-adapters'
 
 const BASIC_INFO_PARAGRAPH_KEYS = [
   'program-application-trained-teachers-seed-basic-info',
@@ -255,6 +256,37 @@ function parseSexOffenseCheckRequest(map: Record<string, string>): string | unde
   return parts.length > 0 ? parts.join(' | ') : undefined
 }
 
+function parseEconomyDisplayFieldsFromForm(map: Record<string, string>): {
+  previousYearParticipation?: string
+  affiliatedFinancialCompany?: string
+} {
+  const previousYearParticipation = formatPreviousYearParticipationLabel(
+    pickAnswer(
+      map,
+      'previousYearParticipation',
+      'application.economy.previousYearParticipation'
+    )
+  )
+  const companyFlat = pickAnswer(
+    map,
+    'affiliatedFinancialCompany',
+    'application.economy.affiliatedFinancialCompany',
+    'application.economy.lessonReply.customCompanyName'
+  )
+  const lessonReply =
+    parseJsonObject(map['program-application-economy-seed-lesson-reply']) ??
+    parseJsonObject(map['application.economy.lessonReply'])
+  const customCompanyName =
+    typeof lessonReply?.customCompanyName === 'string'
+      ? lessonReply.customCompanyName.trim()
+      : ''
+  const affiliatedFinancialCompany = companyFlat || customCompanyName || undefined
+  return {
+    ...(previousYearParticipation ? { previousYearParticipation } : {}),
+    ...(affiliatedFinancialCompany ? { affiliatedFinancialCompany } : {}),
+  }
+}
+
 function sessionsFromDesiredEducationDate(
   label: string | undefined
 ): ParticipatingSchoolSession[] | undefined {
@@ -327,6 +359,7 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
     'desiredEducationDate',
     'requestedScheduleMemo'
   )
+  const economyFromForm = parseEconomyDisplayFieldsFromForm(map)
 
   const detail: ApplicantInstitutionDetailExtend = {
     ...row.detail,
@@ -358,6 +391,12 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
       ? { otherSpecialNotes: guidance.notes, parkingInfo: guidance.notes }
       : {}),
     ...(sexOffenseCheckRequest ? { sexOffenseCheckRequest } : {}),
+    ...(!row.detail?.previousYearParticipation && economyFromForm.previousYearParticipation
+      ? { previousYearParticipation: economyFromForm.previousYearParticipation }
+      : {}),
+    ...(!row.detail?.affiliatedFinancialCompany && economyFromForm.affiliatedFinancialCompany
+      ? { affiliatedFinancialCompany: economyFromForm.affiliatedFinancialCompany }
+      : {}),
   }
 
   const sessions =

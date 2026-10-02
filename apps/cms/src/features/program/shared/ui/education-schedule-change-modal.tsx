@@ -21,27 +21,37 @@ import './education-schedule-change-modal.css'
 export function EducationScheduleChangeModal({
   open,
   scheduleLines,
+  scheduleRowLabels,
   educationScheduleMode = 'date',
   operationStart,
   operationEnd,
+  submitting = false,
   onCancel,
   onConfirm,
 }: {
   open: boolean
   scheduleLines: readonly string[]
+  /** 있으면 `기존 일정 01` 대신 `{라벨} 기존 일정`으로 표시한다. */
+  scheduleRowLabels?: readonly string[]
   educationScheduleMode?: ProgramRegistrationEducationScheduleMode
   operationStart?: DateValue | null
   operationEnd?: DateValue | null
+  submitting?: boolean
   onCancel: () => void
-  onConfirm: (nextLines: string[]) => void
+  onConfirm: (nextLines: string[]) => void | Promise<void>
 }) {
   const [changedRanges, setChangedRanges] = useState<Record<number, [Dayjs, Dayjs] | null>>({})
+  const [confirming, setConfirming] = useState(false)
   const rangeStart = useMemo(() => toEducationOperationDayjs(operationStart), [operationStart])
   const rangeEnd = useMemo(() => toEducationOperationDayjs(operationEnd), [operationEnd])
   const isPeriodMode = educationScheduleMode === 'period'
+  const busy = submitting || confirming
 
   useEffect(() => {
-    if (open) setChangedRanges({})
+    if (open) {
+      setChangedRanges({})
+      setConfirming(false)
+    }
   }, [open])
 
   const selectedCount = Object.values(changedRanges).filter(Boolean).length
@@ -49,24 +59,37 @@ export function EducationScheduleChangeModal({
   return (
     <ContentModal
       open={open}
-      onCancel={onCancel}
+      onCancel={busy ? () => undefined : onCancel}
       title={EDUCATION_SCHEDULE_CHANGE_MODAL_TITLE}
       description={EDUCATION_SCHEDULE_CHANGE_MODAL_DESCRIPTION}
       size="medium"
       className="education-schedule-change-modal"
       footer={
         <div className="education-schedule-change-modal__footer">
-          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
+          <CmsButton
+            variant="secondary"
+            size="large"
+            type="button"
+            disabled={busy}
+            onClick={onCancel}
+          >
             닫기
           </CmsButton>
           <CmsButton
             variant="primary"
             size="large"
             type="button"
-            disabled={selectedCount === 0}
-            onClick={() =>
-              onConfirm(applyChangedRangesToEducationScheduleLines(scheduleLines, changedRanges))
-            }
+            disabled={selectedCount === 0 || busy}
+            onClick={() => {
+              const nextLines = applyChangedRangesToEducationScheduleLines(
+                scheduleLines,
+                changedRanges
+              )
+              setConfirming(true)
+              void Promise.resolve(onConfirm(nextLines)).finally(() => {
+                setConfirming(false)
+              })
+            }}
           >
             일정 변경
           </CmsButton>
@@ -76,17 +99,18 @@ export function EducationScheduleChangeModal({
       <DetailInfoForm title={EDUCATION_SCHEDULE_CHANGE_MODAL_TITLE} hideHeader mode="edit">
         {scheduleLines.map((line, index) => {
           const order = padEducationScheduleChangeLabel(index)
+          const rowLabel = scheduleRowLabels?.[index]
           const originalRange = parseEducationScheduleLineToChangeRange(line)
           const selectedRange = changedRanges[index] ?? null
           return (
             <DetailInfoForm.Row key={`${line}-${index}`} type="double">
               <DetailInfoForm.Field
-                label={`기존 일정 ${order}`}
+                label={rowLabel ? `${rowLabel} 기존 일정` : `기존 일정 ${order}`}
                 readOnlyDisplay
                 view={formatEducationScheduleLineForChangeModal(line)}
               />
               <DetailInfoForm.Field
-                label={`변경 일정 ${order}`}
+                label={rowLabel ? `${rowLabel} 변경 일정` : `변경 일정 ${order}`}
                 view="-"
                 edit={
                   <ParagraphDatePicker
@@ -107,6 +131,7 @@ export function EducationScheduleChangeModal({
                     initialPopoverRange={originalRange}
                     placeholder="변경 일정을 선택해 주세요"
                     width={isPeriodMode ? 360 : 240}
+                    disabled={busy}
                     disabledDate={date => {
                       if (
                         originalRange != null &&

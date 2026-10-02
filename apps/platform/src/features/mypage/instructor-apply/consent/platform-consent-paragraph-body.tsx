@@ -20,7 +20,16 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
-import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
+import {
+  FormTemplateHost,
+  type FormUpdateParagraph,
+  VerticalTablePreviewBody,
+  patchVerticalTableBottomConsent,
+  patchVerticalTableCell,
+  patchVerticalTableCompositeTime,
+  patchVerticalTableFileNames,
+  patchVerticalTableMultipleChoice,
+} from '@jakorea/form-template-runtime'
 import { ConsentWriteRadioGroup } from './consent-radio'
 import { ConsentInfoTable } from './info-table'
 import { PlatformIdTypeWithInputFields } from './id-type-with-input-fields'
@@ -119,6 +128,52 @@ export function PlatformConsentParagraphBody({
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     return (
       <PlatformHorizontalTableBody paragraph={paragraph} onUpdateParagraph={onUpdateParagraph} />
+    )
+  }
+
+  if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
+    return (
+      <FormTemplateHost surface="platformUser">
+        <VerticalTablePreviewBody
+          paragraph={paragraph}
+          interactionMode="user"
+          onBottomConsentChange={value =>
+            onUpdateParagraph(paragraph.id, current =>
+              current.kind === 'single_item' && current.variant === 'vertical_table'
+                ? patchVerticalTableBottomConsent(current, value)
+                : current
+            )
+          }
+          onCellChange={(rowIndex, stageIndex, value) =>
+            onUpdateParagraph(paragraph.id, current =>
+              current.kind === 'single_item' && current.variant === 'vertical_table'
+                ? patchVerticalTableCell(current, rowIndex, stageIndex, value)
+                : current
+            )
+          }
+          onCompositeTimeChange={(rowIndex, stageIndex, value) =>
+            onUpdateParagraph(paragraph.id, current =>
+              current.kind === 'single_item' && current.variant === 'vertical_table'
+                ? patchVerticalTableCompositeTime(current, rowIndex, stageIndex, value)
+                : current
+            )
+          }
+          onMultipleChoiceChange={(rowIndex, stageIndex, values) =>
+            onUpdateParagraph(paragraph.id, current =>
+              current.kind === 'single_item' && current.variant === 'vertical_table'
+                ? patchVerticalTableMultipleChoice(current, rowIndex, stageIndex, values)
+                : current
+            )
+          }
+          onFileNamesChange={(rowIndex, stageIndex, fileNames) =>
+            onUpdateParagraph(paragraph.id, current =>
+              current.kind === 'single_item' && current.variant === 'vertical_table'
+                ? patchVerticalTableFileNames(current, rowIndex, stageIndex, fileNames)
+                : current
+            )
+          }
+        />
+      </FormTemplateHost>
     )
   }
 

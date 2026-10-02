@@ -213,10 +213,19 @@ export function usePersonalInfoReveal({
           setPersonalInfoRevealed(true)
           setConfirmOpen(false)
           return { ok: true, payload }
-        } catch {
+        } catch (error) {
+          const hasHttpResponse =
+            error != null &&
+            typeof error === 'object' &&
+            'response' in error &&
+            (error as { response?: unknown }).response != null
+          const message =
+            !hasHttpResponse && error instanceof Error && error.message.trim()
+              ? error.message
+              : '개인정보 원문 조회에 실패했습니다.'
           cmsAlertModal.show({
             title: '열람 실패',
-            content: '개인정보 원문 조회에 실패했습니다.',
+            content: message,
           })
           return { ok: false }
         }

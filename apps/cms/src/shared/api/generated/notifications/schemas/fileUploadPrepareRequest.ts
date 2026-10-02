@@ -23,10 +23,10 @@ export interface FileUploadPrepareRequest {
      */
   ownerType: string;
   /**
-     * 파일 소유 리소스 ID
+     * 파일 소유 리소스 ID. NOTICE_ATTACHMENT upload-first draft는 CONTENT/NOTICE일 때만 null 허용
      * @minimum 1
      */
-  ownerId: number;
+  ownerId?: number;
   /**
      * 파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다.
      * @minLength 0

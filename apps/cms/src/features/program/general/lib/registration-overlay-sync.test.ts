@@ -318,6 +318,49 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     expect(extras.curriculumChartSessionCount).toBe(2)
   })
 
+  it('사전 교육이 단원 맵 1번이면 회차 수를 키 최댓값으로 늘리지 않는다', () => {
+    const extras = extrasFromGeneralProgram({
+      ...baseProgram(),
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'multi',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        scheduleCurriculumPreEducation: true,
+        curriculumSessions: [
+          { sessionLabel: '사전 교육', title: '사전 교육', description: '' },
+          { sessionLabel: '1회차', title: '1차시', description: '첫 회차' },
+          { sessionLabel: '2회차', title: '2차시', description: '둘째 회차' },
+          { sessionLabel: '3회차', title: '3차시', description: '셋째 회차' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.unitNameBySession': {
+          1: '사전 교육',
+          2: '1차시',
+          3: '2차시',
+          4: '3차시',
+        },
+        'generalRegistration.educationCurriculum.unitContentBySession': {
+          2: '첫 회차',
+          3: '둘째 회차',
+          4: '셋째 회차',
+        },
+        'generalRegistration.educationCurriculum.progressSessionByRound': {
+          1: '1',
+          2: '2',
+          3: '3',
+        },
+        'generalRegistration.educationCurriculum.roundContentByRound': {
+          1: '첫 회차',
+          2: '둘째 회차',
+          3: '셋째 회차',
+        },
+      },
+    })
+    expect(extras.curriculumSessionCount).toBe(3)
+    expect(extras.curriculumChartSessionCount).toBe(3)
+  })
+
   it('교육 진행 extras 회차 수는 사전 교육을 제외한다', () => {
     const program = {
       ...baseProgram(),

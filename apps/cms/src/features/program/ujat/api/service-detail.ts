@@ -1,6 +1,6 @@
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { Program } from '@/types/domain'
-import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import { normalizeUjatSurveyMenuKeys } from '@/features/program/ujat/lib/registration-survey-items'
 import { normalizeUjatProgressStatus } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
 
 const VERSION = 1 as const
@@ -113,9 +113,9 @@ function hydrateFromRecord(source: Record<string, unknown>): Partial<ServiceDeta
   if (!result.generalSurveyMenuKeys) {
     const keys = source.surveyMenuKeys ?? source.generalSurveyMenuKeys
     if (Array.isArray(keys)) {
-      result.generalSurveyMenuKeys = normalizeGeneralSurveyMenuKeys(
+      result.generalSurveyMenuKeys = normalizeUjatSurveyMenuKeys(
         keys.filter((item): item is string => typeof item === 'string')
-      )
+      ) as Program['generalSurveyMenuKeys']
     }
   }
 

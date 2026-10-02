@@ -5,11 +5,10 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FeePolicy } from './feePolicy';
 
 export interface Update {
-  /**
-     * @minLength 0
-     * @maxLength 2000
-     */
   managerComment?: string;
+  feePolicy?: FeePolicy;
+  businessIncomeEarnerStatus?: string;
 }

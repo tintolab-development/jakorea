@@ -1,5 +1,15 @@
 /* 테이블 세로형(텍스트형·주관식형 공통) — 작성 양식 직접 등록 */
 .form-editor-vertical-table-wrap {
+  /* 가로형 choice CSS(`form-editor-horizontal-table__field-checks`)가 참조하는 토큰 */
+  --ht-color-text: var(--main-BK, #3d3d3d);
+  --ht-color-text-muted: var(--gray-85969-d, #85969d);
+  --ht-color-line: var(--table-line, #e0e0e0);
+  --ht-color-mint: var(--color-mint-01, #01a1af);
+  --ht-color-surface: var(--main-WT, #fff);
+  --ht-font: Pretendard, sans-serif;
+  --ht-font-size: 16px;
+  --ht-line-height: 150%;
+
   width: 100%;
   max-width: 1404px;
   align-self: flex-start;
@@ -138,13 +148,17 @@
   text-align: left;
 }
 
-/* 파일첨부형 — 가이드 문구 여러 줄 대비 */
+/* 파일첨부형 — 안내 2줄(용량·형식 / 특수문자) */
 .form-editor-vertical-table__td--file-upload {
   align-items: flex-start;
 }
 
 .form-editor-vertical-table__td--file-upload .paragraph-file-upload {
   width: 100%;
+}
+
+.form-editor-vertical-table__td--file-upload .paragraph-file-upload__guide-line {
+  white-space: nowrap;
 }
 
 /* 테이블 외곽선과 겹쳐 이중으로 보이지 않게 */
@@ -182,6 +196,47 @@
   width: 100%;
   min-height: 100%;
   box-sizing: border-box;
+}
+
+.form-editor-vertical-table .form-editor-horizontal-table__field-radios,
+.form-editor-vertical-table .form-editor-horizontal-table__field-checks {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px !important;
+}
+
+.form-editor-vertical-table .form-editor-horizontal-table__field-radios .ant-radio-wrapper,
+.form-editor-vertical-table .form-editor-horizontal-table__field-checks .ant-checkbox-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  font-size: 16px !important;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-editor-vertical-table .form-editor-horizontal-table__field-checks .ant-checkbox-wrapper::after {
+  display: none !important;
+}
+
+.form-editor-vertical-table .form-editor-horizontal-table__field-checks .ant-checkbox {
+  margin: 0 !important;
+  margin-inline-end: 0 !important;
+  padding: 0 !important;
+}
+
+.form-editor-vertical-table .form-editor-horizontal-table__field-checks .ant-checkbox + span,
+.form-editor-vertical-table .form-editor-horizontal-table__field-checks .ant-checkbox-label,
+.form-editor-vertical-table
+  .form-editor-horizontal-table__field-checks
+  .ant-checkbox-wrapper
+  > span:not(.ant-checkbox) {
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+  margin-inline-start: 0 !important;
+  font-size: 16px !important;
 }
 
 .form-editor-vertical-table__cell-input-shell--header .ant-input {

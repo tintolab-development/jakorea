@@ -1,5 +1,7 @@
-import { useLayoutEffect, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { PlusOutlined } from '@ant-design/icons'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -14,7 +16,8 @@ import type { UnavailableDatesExclusionState } from '@/features/template/ui/form
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import {
   hydrateMissingVolunteerInterviewOverlay,
-  listVolunteerInterviewExceptionBlockIds,
+  listFilledVolunteerInterviewExceptionBlockIds,
+  syncVolunteerInterviewRangeSealOverlay,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/recruit-form-volunteer-draft'
@@ -54,6 +57,7 @@ function GeneralProgramVolunteerInterviewScheduleView({
   onRemoveExceptionBlock,
   commonScheduleSeed,
   onCommonExclusionChange,
+  interviewPeriodRange,
 }: {
   display: GeneralProgramVolunteerInterviewScheduleDisplay
   isEdit: boolean
@@ -61,6 +65,7 @@ function GeneralProgramVolunteerInterviewScheduleView({
   onRemoveExceptionBlock: (key: number) => void
   commonScheduleSeed?: ReturnType<typeof resolveGeneralProgramVolunteerInterviewScheduleEditSeed>
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
+  interviewPeriodRange?: [Dayjs, Dayjs] | null
 }) {
   if (isEdit) {
     return (
@@ -70,57 +75,67 @@ function GeneralProgramVolunteerInterviewScheduleView({
         commonScheduleSeed={commonScheduleSeed}
         onCommonExclusionChange={onCommonExclusionChange}
         freezeUnavailableCalendar={false}
+        interviewPeriodRange={interviewPeriodRange}
       />
     )
   }
 
   return (
-    <>
-    <DetailInfoForm title="면접 진행 가능 일정" hideHeader mode="view" className={FORM_CLASS}>
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="면접 진행 불가일"
-          fullRow
-          view={
-            <UnavailableDatesReadRow
-              recurring={display.recurringUnavailable}
-              specific={display.specificUnavailableDates}
-            />
-          }
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="면접 진행 가능 시간"
-          fullRow
-          view={display.availableTimeSlots}
-        />
-      </DetailInfoForm.Row>
-    </DetailInfoForm>
-    {display.exceptions.map((exception, index) => (
-      <div key={exception.blockId}>
-        <div className="detail-info-form--text-bold volunteer-interview-available-schedule__block-title">
-          {`■ 예외 일정 ${String(index + 1).padStart(2, '0')}`}
-        </div>
-        <DetailInfoForm title="예외 일정" hideHeader mode="view" className={FORM_CLASS}>
+    <div className="volunteer-interview-available-schedule volunteer-interview-available-schedule--readonly">
+      <div className="volunteer-interview-available-schedule__schedule-block">
+        <DetailInfoForm title="면접 진행 가능 일정" hideHeader mode="view" className={FORM_CLASS}>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
-              label="예외 진행 일정"
+              label="면접 진행 불가일"
               fullRow
-              view={exception.exceptionDate?.trim() || '-'}
+              view={
+                <UnavailableDatesReadRow
+                  recurring={display.recurringUnavailable}
+                  specific={display.specificUnavailableDates}
+                />
+              }
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="면접 진행 가능 시간"
               fullRow
-              view={exception.availableTimeSlots?.trim() || '-'}
+              view={display.availableTimeSlots}
             />
           </DetailInfoForm.Row>
         </DetailInfoForm>
       </div>
-    ))}
-    </>
+      {display.exceptions.map((exception, index) => (
+        <div
+          key={exception.blockId}
+          className="volunteer-interview-available-schedule__schedule-block"
+        >
+          <div className="detail-info-form--text-bold volunteer-interview-available-schedule__block-title">
+            {`■ 예외 일정 ${String(index + 1).padStart(2, '0')}`}
+          </div>
+          <DetailInfoForm title="예외 일정" hideHeader mode="view" className={FORM_CLASS}>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="예외 진행 일정"
+                fullRow
+                view={exception.exceptionDate?.trim() || '-'}
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="면접 진행 가능 시간"
+                fullRow
+                view={
+                  <span className="volunteer-interview-available-schedule__readonly-slots">
+                    {exception.availableTimeSlots?.trim() || '-'}
+                  </span>
+                }
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -140,10 +155,13 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
   const editSeed = resolveGeneralProgramVolunteerInterviewScheduleEditSeed(program)
   const recruitmentDisplay = resolveGeneralProgramVolunteerRecruitmentDisplay(program)
   const interviewEnabledField = form?.watch('volunteerRecruitmentInterviewEnabled')
+  const interviewStart = form?.watch('interviewStartDate') ?? program.interviewStartDate
+  const interviewEnd = form?.watch('interviewEndDate') ?? program.interviewEndDate
   const [exceptionBlockKeys, setExceptionBlockKeys] = useState<number[]>([])
   const [exceptionScheduleAddDisabled, setExceptionScheduleAddDisabled] = useState(
     () => editSeed?.excludeNone ?? false
   )
+  const programIdRef = useRef(program.id)
   useLayoutEffect(() => {
     const source =
       program.registrationOverlay != null &&
@@ -152,15 +170,20 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
         ? program.registrationOverlay
         : undefined
     hydrateMissingVolunteerInterviewOverlay({ source, store: 'recruit' })
+    syncVolunteerInterviewRangeSealOverlay(interviewStart, interviewEnd)
+    const filled = listFilledVolunteerInterviewExceptionBlockIds(
+      { ...(source ?? {}), ...getGeneralRecruitOverlayRecord() },
+      'recruit'
+    )
     setExceptionBlockKeys(prev => {
-      if (prev.length > 0) return prev
-      const ids = listVolunteerInterviewExceptionBlockIds(
-        { ...(source ?? {}), ...getGeneralRecruitOverlayRecord() },
-        'recruit'
-      )
-      return ids.length > 0 ? ids : prev
+      if (programIdRef.current !== program.id) {
+        programIdRef.current = program.id
+        return filled
+      }
+      if (prev.length === 0) return filled
+      return [...filled, ...prev.filter(id => !filled.includes(id))]
     })
-  }, [program.id, program.registrationOverlay])
+  }, [interviewEnd, interviewStart, program.id, program.registrationOverlay])
   const showInterviewSchedule =
     isEdit && form
       ? interviewEnabledField === 'yes'
@@ -170,6 +193,13 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
   if (!showInterviewSchedule) return null
 
   const isFormEdit = Boolean(isEdit && form)
+  const interviewPeriodRange = useMemo((): [Dayjs, Dayjs] | null => {
+    if (interviewStart == null || interviewEnd == null) return null
+    const start = dayjs(interviewStart)
+    const end = dayjs(interviewEnd)
+    if (!start.isValid() || !end.isValid()) return null
+    return start.isBefore(end, 'day') ? [start, end] : [end, start]
+  }, [interviewEnd, interviewStart])
 
   return (
     <section aria-label="면접 진행 가능 일정">
@@ -207,6 +237,7 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
         }
         commonScheduleSeed={editSeed}
         onCommonExclusionChange={state => setExceptionScheduleAddDisabled(state.excludeNone)}
+        interviewPeriodRange={interviewPeriodRange}
       />
     </section>
   )

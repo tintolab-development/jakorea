@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
   fetchSchoolDetailAttendanceBundle,
@@ -80,7 +80,7 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       ? String(row.organizationApplicationId)
       : ''
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId || undefined)
-  const applicationsRemoteEnabled = shouldUseGeneralApplicationsRemoteApi()
+  const applicationsRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
   const isTempMockSchool = isTempMockOrgSchoolRowId(row.id)
   const remoteEnabled = Boolean(
     progressRemoteEnabled &&

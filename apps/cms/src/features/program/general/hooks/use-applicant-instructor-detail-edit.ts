@@ -1,16 +1,23 @@
 /**
  * 강사 신청자 상세 편집.
- * OpenAPI에 강사 신청 body PATCH 없음 (코멘트만 PATCH) — P2-6. 저장은 미연동 안내.
+ * PATCH feePolicy + businessIncomeEarnerStatus + managerComment 후 GET 상세로 폼 복원.
  */
 
 import { useCallback, useEffect, useState } from 'react'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
+  draftToInstructorSavePayload,
   parseApplicantInstructorEditDraft,
   rowToInstructorEditDraft,
   type ApplicantInstructorEditDraft,
 } from '@/features/program/general/lib/applicant-instructor-detail-edit'
-import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
+import { LECTURE_FEE_MEASURE_NOT_APPLICABLE } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  fetchInstructorApplicationDetailRemote,
+  updateInstructorApplication,
+} from '@/features/program/general/api/applications-api-client'
+import { mapInstructorApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 
 export interface UseApplicantInstructorDetailEditParams {
   instructor: ApplicantInstructorRow | null
@@ -19,6 +26,7 @@ export interface UseApplicantInstructorDetailEditParams {
 
 export function useApplicantInstructorDetailEdit({
   instructor,
+  onSaved,
 }: UseApplicantInstructorDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<ApplicantInstructorEditDraft | null>(null)
@@ -52,7 +60,7 @@ export function useApplicantInstructorDetailEdit({
     setValidationErrors({})
   }, [])
 
-  const saveEdit = useCallback((): boolean => {
+  const saveEdit = useCallback(async (): Promise<boolean> => {
     if (!instructor || !draft) return false
 
     const parsed = parseApplicantInstructorEditDraft(draft)
@@ -61,9 +69,36 @@ export function useApplicantInstructorDetailEdit({
       return false
     }
 
-    setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
-    return false
-  }, [instructor, draft])
+    const payload = draftToInstructorSavePayload(draft)
+    const amount = Number(payload.lectureFeeAmount ?? 0)
+    try {
+      await updateInstructorApplication(instructor.id, {
+        managerComment: payload.managerComment ?? null,
+        feePolicy: {
+          basisType: payload.lectureFeeBasisType ?? 'special_lecture',
+          measure:
+            payload.lectureFeeBasisType === 'program'
+              ? LECTURE_FEE_MEASURE_NOT_APPLICABLE
+              : (payload.lectureFeeMeasure ?? '출강 1회당'),
+          amount: Number.isFinite(amount) ? amount : 0,
+          instructorFeeGrade: payload.instructorFeeGradeLabel ?? '',
+        },
+        businessIncomeEarnerStatus: payload.businessIncomeEarnerStatus,
+      })
+      const refreshed = await fetchInstructorApplicationDetailRemote(instructor.id)
+      onSaved(mapInstructorApplicationDetailToApplicantRow(refreshed, instructor))
+      resetEditState()
+      return true
+    } catch (error) {
+      setValidationErrors({
+        form: getGeneralProgramApiErrorMessage(
+          error,
+          '강사 정보를 저장하지 못했습니다. 다시 시도해 주세요.'
+        ),
+      })
+      return false
+    }
+  }, [draft, instructor, onSaved, resetEditState])
 
   return {
     isEditing,

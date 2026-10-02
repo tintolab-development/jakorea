@@ -50,4 +50,8 @@ export type InstructorAssignmentCalendarResponse = {
   items?: InstructorAssignmentCalendarItem[]
 }
 
-export type RepresentativeInstructorBody = RepresentativeInstructorRequest
+/** 지정은 scheduleLead 생략. 강등은 `scheduleLead: false` 또는 `role: 'ASSISTANT'` */
+export type RepresentativeInstructorBody = RepresentativeInstructorRequest & {
+  scheduleLead?: boolean
+  role?: 'ASSISTANT' | 'REPRESENTATIVE'
+}

@@ -104,3 +104,37 @@ export function applyChangedRangesToEducationScheduleLines(
     return formatEducationScheduleLineFromRange(range)
   })
 }
+
+export type SameDateScheduleChangePair = {
+  fromDate: string
+  toDate: string
+}
+
+/**
+ * 팝업에서 바뀐 일정 줄마다 시작 달력일을 fromDate→toDate로 만든다.
+ * 같은 쌍은 한 번만. `same-date` API 본문에 쓴다.
+ */
+export function buildSameDateScheduleChangePairs(
+  previousLines: readonly string[],
+  nextLines: readonly string[]
+): SameDateScheduleChangePair[] {
+  const seen = new Set<string>()
+  const pairs: SameDateScheduleChangePair[] = []
+  const length = Math.max(previousLines.length, nextLines.length)
+  for (let index = 0; index < length; index += 1) {
+    const prev = previousLines[index] ?? ''
+    const next = nextLines[index] ?? ''
+    if (prev === next) continue
+    const prevRange = parseEducationScheduleLineToChangeRange(prev)
+    const nextRange = parseEducationScheduleLineToChangeRange(next)
+    if (!prevRange || !nextRange) continue
+    const fromDate = prevRange[0].format('YYYY-MM-DD')
+    const toDate = nextRange[0].format('YYYY-MM-DD')
+    if (fromDate === toDate) continue
+    const key = `${fromDate}->${toDate}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    pairs.push({ fromDate, toDate })
+  }
+  return pairs
+}

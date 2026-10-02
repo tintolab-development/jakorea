@@ -7,6 +7,11 @@ export type RegisteredSurvey = {
   status: SurveyProgressStatus
   responseCount: number
   participantTotal: number
+  /**
+   * surveys / form-bindings GET `expectedRespondentCount`.
+   * `null`이면 서버가 대상 분모를 안 준 것. `0`은 실제 0명.
+   */
+  expectedRespondentCount?: number | null
   /** remote form-binding id — 삭제 시 사용 */
   bindingId?: string
 }

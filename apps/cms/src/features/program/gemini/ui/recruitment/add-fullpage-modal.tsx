@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { useCmsAlert } from '@/shared/ui'
+import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   shouldSkipRegistrationDraftRestore,
@@ -105,6 +106,7 @@ export function GeminiRecruitmentAddFullpageModal({
   const handleRegister = useCallback(async () => {
     if (!form.hydrated || !form.isRegisterReady) return
     const snapshot = form.buildSaveSnapshot()
+    const endOverlay = beginBlockingOverlay()
     try {
       await geminiRecruitmentService.register(snapshot)
       removeGeminiRecruitmentAddDraft()
@@ -121,6 +123,8 @@ export function GeminiRecruitmentAddFullpageModal({
         title: '안내',
         content: '모집 공고 등록에 실패했습니다.\n입력값과 서버 상태를 확인한 뒤 다시 시도해 주세요.',
       })
+    } finally {
+      endOverlay()
     }
   }, [form, onClose, queryClient, showAlert])
 

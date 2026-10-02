@@ -6,7 +6,12 @@ import {
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
   UJAT_SPONSOR_ALL_VALUE,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
-import { ujatSurveyItemsFromProgramKeys } from '@/features/program/ujat/lib/registration-survey-items'
+import {
+  createUjatSurveyItemsDefault,
+  hasExplicitUjatSurveySplit,
+  readUjatSurveyItems,
+  ujatSurveyItemsFromProgramKeys,
+} from '@/features/program/ujat/lib/registration-survey-items'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import {
@@ -172,6 +177,13 @@ export function seedUjatRegistrationBasicInfoOverlayFromProgram(program: Program
     merged['ujat.basicInfo.sponsorContactId'] = SPONSOR_CONTACT_UNSELECTED_VALUE
     merged['ujat.basicInfo.sponsorManagerName'] = SPONSOR_CONTACT_UNSELECTED_LABEL
   }
+  const explicitSurveyItems = program.ujatRegistrationOverlay?.['ujat.basicInfo.surveyItems']
+  if (hasExplicitUjatSurveySplit(explicitSurveyItems)) {
+    merged['ujat.basicInfo.surveyItems'] = readUjatSurveyItems(
+      explicitSurveyItems,
+      createUjatSurveyItemsDefault(false)
+    )
+  }
   patchUjatProgramRegistrationOverlay(merged)
 }
 
@@ -180,14 +192,36 @@ export function readUjatRegistrationBasicInfoOverlayForSave(): Record<string, un
 }
 
 /** apply 후 canonical에서 basicInfo / kpi / wage overlay를 재생성 */
+function preferExplicitUjatSurveyItems(
+  merged: Record<string, unknown>,
+  ...candidates: unknown[]
+): Record<string, unknown> {
+  for (const candidate of candidates) {
+    if (!hasExplicitUjatSurveySplit(candidate)) continue
+    return {
+      ...merged,
+      'ujat.basicInfo.surveyItems': readUjatSurveyItems(
+        candidate,
+        createUjatSurveyItemsDefault(false)
+      ),
+    }
+  }
+  return merged
+}
+
 export function resyncUjatRegistrationOverlayFromProgram(
   program: Program,
   extra?: Record<string, unknown>
 ): Record<string, unknown> {
-  return {
+  const merged = {
     ...(extra ?? {}),
     ...buildUjatRegistrationBasicInfoOverlayFromProgram(program),
   }
+  return preferExplicitUjatSurveyItems(
+    merged,
+    extra?.['ujat.basicInfo.surveyItems'],
+    program.ujatRegistrationOverlay?.['ujat.basicInfo.surveyItems']
+  )
 }
 
 /** 모집 저장 — 세션 모집 키를 합친 뒤 기관 모집은 중첩에서 다시 그린다 */
@@ -293,7 +327,7 @@ export function reconcileUjatRegistrationOverlayFromApi(
       end: String(dto.endDate),
     }
   }
-  if (dto.generalSurveyMenuKeys?.length) {
+  if (dto.generalSurveyMenuKeys && !hasExplicitUjatSurveySplit(next['ujat.basicInfo.surveyItems'])) {
     next['ujat.basicInfo.surveyItems'] = ujatSurveyItemsFromProgramKeys(dto.generalSurveyMenuKeys)
   }
   const managerLine = dto.sponsorManagerLine?.trim()

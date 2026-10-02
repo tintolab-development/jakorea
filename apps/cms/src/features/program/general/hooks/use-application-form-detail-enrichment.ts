@@ -1,6 +1,9 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import {
+  shouldUseGeneralApplicationsRemoteApi,
+  shouldUseOrganizationApplicationRemoteApi,
+} from '@/features/program/general/api/applications-remote-capabilities'
 import {
   mapInstructorApplicationDetailToApplicantRow,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
@@ -40,6 +43,12 @@ import {
 } from '@/features/program/general/lib/participating-instructor-application-detail'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import { mapIndividualApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-individual-application-detail'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
+import {
+  mapVolunteerApplicationDetailToParticipatingRow,
+  mergeVolunteerApplicationIntoParticipatingRow,
+  participatingRowToVolunteerApplicationSeed,
+} from '@/features/program/general/lib/participating-volunteer-application-detail'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 
 function parseNumericId(id: string | undefined): number | null {
@@ -61,7 +70,11 @@ function useApplicationFormAndComments(input: {
   contextId: number | null
   targetType: AdminCommentTargetType
 }) {
-  const remote = shouldUseGeneralApplicationsRemoteApi()
+  const remote =
+    input.contextType === 'ORGANIZATION_APPLICATION' ||
+    input.contextType === 'INSTRUCTOR_APPLICATION'
+      ? shouldUseOrganizationApplicationRemoteApi()
+      : shouldUseGeneralApplicationsRemoteApi()
   const enabled =
     input.enabled &&
     remote &&
@@ -132,7 +145,7 @@ export function useOrganizationApplicationDetailEnrichment(
       options?.enabled !== false &&
         !skipDetail &&
         row &&
-        shouldUseGeneralApplicationsRemoteApi() &&
+        shouldUseOrganizationApplicationRemoteApi() &&
         contextId != null
     ),
     staleTime: 30_000,
@@ -213,7 +226,7 @@ export function useInstructorApplicationDetailEnrichment(
     enabled: Boolean(
       options?.enabled !== false &&
         row &&
-        shouldUseGeneralApplicationsRemoteApi() &&
+        shouldUseOrganizationApplicationRemoteApi() &&
         contextId != null
     ),
     staleTime: 30_000,
@@ -254,7 +267,7 @@ export function useParticipatingInstructorApplicationDetailEnrichment(
     enabled: Boolean(
       options?.enabled !== false &&
         row &&
-        shouldUseGeneralApplicationsRemoteApi() &&
+        shouldUseOrganizationApplicationRemoteApi() &&
         applicationId != null
     ),
     staleTime: 30_000,
@@ -321,6 +334,60 @@ export function useParticipatingIndividualApplicationDetailEnrichment(
     if (!detailQuery.data) return row
     return mapIndividualApplicationDetailToParticipatingRow(detailQuery.data, row)
   }, [row, detailQuery.data])
+}
+
+/** 참여 봉사자 상세 — 신청 정보 탭 (volunteer-applications GET + form hydrate) */
+export function useParticipatingVolunteerApplicationDetailEnrichment(
+  row: ParticipatingVolunteerRow | null | undefined,
+  options?: { enabled?: boolean }
+): ParticipatingVolunteerRow | null {
+  const applicationId = parseNumericId(row?.volunteerApplicationId)
+  const programId = parseProgramId(row?.programId)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.volunteerDetail(String(applicationId ?? '')),
+    queryFn: () => fetchVolunteerApplicationDetailRemote(String(applicationId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        applicationId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
+  const { formResponse, adminComment } = useApplicationFormAndComments({
+    enabled: Boolean(options?.enabled !== false && row && applicationId != null),
+    programId,
+    contextType: 'VOLUNTEER_APPLICATION',
+    contextId: applicationId,
+    targetType: 'VOLUNTEER_APPLICATION',
+  })
+
+  return useMemo(() => {
+    if (!row) return null
+    if (!detailQuery.data) {
+      if (!formResponse && !adminComment) return row
+      const seed = participatingRowToVolunteerApplicationSeed(row)
+      const hydrated = hydrateVolunteerApplicationRowFromForm({
+        row: { ...seed, id: row.volunteerApplicationId ?? seed.id },
+        formResponse,
+        adminComment,
+      })
+      return mergeVolunteerApplicationIntoParticipatingRow(row, hydrated)
+    }
+    const canonical = mapVolunteerApplicationDetailToParticipatingRow(detailQuery.data, row)
+    if (!formResponse && !adminComment) return canonical
+    const seed = participatingRowToVolunteerApplicationSeed(canonical)
+    const hydrated = hydrateVolunteerApplicationRowFromForm({
+      row: {
+        ...seed,
+        id: canonical.volunteerApplicationId ?? seed.id,
+      },
+      formResponse,
+      adminComment,
+    })
+    return mergeVolunteerApplicationIntoParticipatingRow(canonical, hydrated)
+  }, [row, detailQuery.data, formResponse, adminComment])
 }
 
 /** 일반 봉사 신청 상세 — form_response hydrate (essay 등) */

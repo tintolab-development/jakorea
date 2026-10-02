@@ -44,6 +44,7 @@ import {
 } from '@/features/program/general/lib/institution-application-session-display'
 import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import {
   INSTITUTION_APPLICATION_INFO_COLGROUP,
@@ -55,6 +56,18 @@ import {
   INSTITUTION_OTHER_NOTES_TABLE_LABEL,
 } from './institution-application-info-table'
 import './institution-basic-info.css'
+
+function shouldShowCompanySchoolEconomyFields(
+  program: Program | null | undefined,
+  detail: ApplicantInstitutionDetailExtend | undefined
+): boolean {
+  const type = program?.backendProgramType?.trim().toUpperCase()
+  if (type === 'COMPANY_SCHOOL' || type === 'ONE_COMPANY_ONE_SCHOOL') return true
+  if (isCompanySchoolProgram(program)) return true
+  return Boolean(
+    detail?.previousYearParticipation?.trim() || detail?.affiliatedFinancialCompany?.trim()
+  )
+}
 
 function maskSexOffenseCheckRequestLine(text: string): string {
   return text
@@ -363,6 +376,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const waitingPlaceValue = detail?.waitingPlaceGuide ?? detail?.waitingRoom ?? '-'
   const mealValue = detail?.mealInfo ?? '-'
   const otherNotesValue = detail?.otherSpecialNotes ?? detail?.parkingInfo ?? '-'
+  const showCompanySchoolEconomyFields = shouldShowCompanySchoolEconomyFields(program, detail)
 
   const combinedClassEditValue =
     isEditMode && draft && onDraftChange ? (
@@ -465,6 +479,14 @@ export function ApplicantGeneralInstitutionBasicInfo({
                   value={otherRequestsValue}
                   multiline
                 />
+                {showCompanySchoolEconomyFields ? (
+                  <InstitutionApplicationTableRowTwoCols
+                    label1="전년도 참여 여부"
+                    value1={detail?.previousYearParticipation ?? '-'}
+                    label2="결연 금융회사명"
+                    value2={detail?.affiliatedFinancialCompany ?? '-'}
+                  />
+                ) : null}
               </tbody>
             </table>
           </div>

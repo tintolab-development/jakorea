@@ -65,6 +65,7 @@ import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certific
 import { handleError } from '@/shared/utils/error-handler'
 import {
   buildPortraitConsentDownloadContext,
+  buildPortraitConsentDownloadFileName,
   type PortraitConsentDownloadContext,
 } from '../../../lib/build-portrait-consent-download'
 import { buildStudentCertificateDownloadContext } from '../../../lib/build-student-certificate-issuance'
@@ -75,6 +76,7 @@ import {
 } from '../../../lib/resolve-student-certificate-kind'
 import { downloadLectureReportPdfFiles } from '../../../lib/download-lecture-reports-bulk-pdf'
 import { hasStudentPortraitConsentSubmission } from '../../../lib/student-portrait-consent'
+import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { PortraitConsentBulkPdfExportHost } from './portrait-consent-bulk-pdf-export-host'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import './school-detail-modal.css'
@@ -379,14 +381,42 @@ export function SchoolDetailStudentListSection({
 
     if (portraitConsentExportActive) return
 
-    portraitConsentExportResultsRef.current = []
-    portraitConsentExportStartedRef.current = true
-    setPortraitConsentExportQueue(
-      downloadableRows.map(row =>
-        buildPortraitConsentDownloadContext(row, schoolName, educationGrade)
-      )
+    const fileRows = downloadableRows.filter(
+      row => row.portraitConsentFileObjectId != null && row.portraitConsentFileObjectId > 0
     )
-    setPortraitConsentExportActive(true)
+    const fallbackRows = downloadableRows.filter(
+      row => row.portraitConsentFileObjectId == null || row.portraitConsentFileObjectId <= 0
+    )
+
+    void (async () => {
+      try {
+        await Promise.all(
+          fileRows.map(row =>
+            downloadAdminFile({
+              fileObjectId: row.portraitConsentFileObjectId!,
+              fileName: `${buildPortraitConsentDownloadFileName(
+                buildPortraitConsentDownloadContext(row, schoolName, educationGrade)
+              )}.pdf`,
+            })
+          )
+        )
+      } catch (error) {
+        handleError(error, { context: 'schoolDetailStudentListSection.portraitConsentFileDownload' })
+        showAlert({ title: '안내', content: STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE })
+        return
+      }
+
+      if (fallbackRows.length === 0) return
+
+      portraitConsentExportResultsRef.current = []
+      portraitConsentExportStartedRef.current = true
+      setPortraitConsentExportQueue(
+        fallbackRows.map(row =>
+          buildPortraitConsentDownloadContext(row, schoolName, educationGrade)
+        )
+      )
+      setPortraitConsentExportActive(true)
+    })()
   }, [
     educationGrade,
     isStudentListEditMode,

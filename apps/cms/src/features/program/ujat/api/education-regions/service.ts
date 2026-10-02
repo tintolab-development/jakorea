@@ -1,8 +1,10 @@
 import type {
   UjatEducationRegion,
   UjatEducationRegionCreateInput,
+  UjatEducationRegionFilters,
   UjatEducationRegionUpdateInput,
 } from '@/features/program/ujat/model/education-region.types'
+import { filterUjatEducationRegions } from '@/features/program/ujat/lib/education-region-filter'
 import {
   createUjatEducationRegion as createLocal,
   clearUjatEducationRegionsLocalStorage,
@@ -57,6 +59,30 @@ export async function listUjatEducationRegionsService(): Promise<UjatEducationRe
   )
   setUjatEducationRegionsRemoteSnapshot(items)
   return items
+}
+
+/**
+ * 교육 지역 관리 테이블 조회 — 필터를 GET 쿼리로 전달.
+ * 백엔드는 현재 `includeInactive`만 지원하므로 응답에 동일 필터를 한 번 더 적용한다.
+ * 전역 스냅샷(전체 목록)은 갱신하지 않는다.
+ */
+export async function listUjatEducationRegionsFilteredService(
+  filters: UjatEducationRegionFilters
+): Promise<UjatEducationRegion[]> {
+  if (!shouldUseUjatEducationRegionsRemoteApi()) {
+    return filterUjatEducationRegions(readUjatEducationRegions(), filters)
+  }
+  const keyword = filters.name.trim()
+  const items = normalizeEducationRegionSort(
+    (
+      await fetchAdminUjatEducationRegionsRemote({
+        includeInactive: filters.usageStatus !== 'active',
+        activeYn: filters.usageStatus === 'active',
+        keyword: keyword || undefined,
+      })
+    ).map(mapEducationRegionResponse)
+  )
+  return filterUjatEducationRegions(items, filters)
 }
 
 async function resolveRegionsForNameCheck(): Promise<UjatEducationRegion[]> {

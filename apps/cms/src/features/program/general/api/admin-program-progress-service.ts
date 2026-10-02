@@ -6,10 +6,16 @@ import {
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
+  fetchProgramAssignmentSubmissionsRemote,
   fetchProgramParticipantsRemote,
   fetchProgramSchedulesViaDashboardRemote,
   fetchScheduleAttendancesRemote,
   giveUpProgramParticipantRemote,
+  createProgramInstructorParticipantRemote,
+  createProgramParticipantRemote,
+  patchParticipantTextbookDeliveryRemote,
+  putParticipantAssignedOrganizationsRemote,
+  changeParticipantSchedulesRemote,
   putScheduleAttendancesRemote,
   fetchParticipantEducationScopeRemote,
   putParticipantEducationScopeRemote,
@@ -245,6 +251,12 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
   }
 }
 
+/** 일반 개인 진행 현황 · 과제 관리. mock/null 폴백 없음. */
+export async function fetchGeneralProgressAssignmentBundle(programId: string) {
+  assertProgramProgressRemoteReady()
+  return fetchProgramAssignmentSubmissionsRemote(programId)
+}
+
 export async function fetchGeneralProgramLectureReports(
   programId: string
 ): Promise<unknown[]> {
@@ -323,10 +335,74 @@ export async function downloadGeneralProgramLectureReportFiles(
   }
 }
 
+/** 참여 기관 실제 교육 일정 변경. `PATCH …/participants/{id}/schedules`. */
+export async function changeGeneralParticipatingInstitutionSchedules(
+  programId: string,
+  participantId: string,
+  payload: {
+    changes: Array<{ scheduleId: number; educationDate: string }>
+    reason: string
+  }
+): Promise<void> {
+  assertProgramProgressRemoteReady()
+  await changeParticipantSchedulesRemote(programId, participantId, {
+    changes: payload.changes,
+    reason: payload.reason.trim() || '교육 진행 일정 변경',
+  })
+}
+
 /**
  * 참여 기관(ORGANIZATION participant) 활동 포기.
  * `organization-applications/{id}/give-up` 가 아님 — participantId 필수.
  */
+export async function createGeneralProgramInstructorParticipant(
+  programId: string,
+  memberId: number
+) {
+  assertProgramProgressRemoteReady()
+  return createProgramInstructorParticipantRemote(programId, {
+    participantType: 'INSTRUCTOR',
+    memberId,
+  })
+}
+
+export async function createGeneralProgramVolunteerParticipant(
+  programId: string,
+  memberId: number,
+  volunteerKind: 'GENERAL' | 'EMPLOYEE' = 'GENERAL'
+) {
+  assertProgramProgressRemoteReady()
+  return createProgramParticipantRemote(programId, {
+    participantType: 'VOLUNTEER',
+    memberId,
+    volunteerKind,
+  })
+}
+
+export async function updateGeneralParticipatingInstitutionTextbookDelivery(
+  programId: string,
+  participantId: string,
+  textbookDeliveryStatus: import('@/features/program/general/api/program-progress-api-client').TextbookDeliveryStatus
+) {
+  assertProgramProgressRemoteReady()
+  return patchParticipantTextbookDeliveryRemote(programId, participantId, {
+    textbookDeliveryStatus,
+  })
+}
+
+export async function saveGeneralVolunteerAssignedOrganizations(
+  programId: string,
+  participantId: string,
+  payload: {
+    organizationApplicationIds: number[]
+    expectedRevision?: number
+    reason?: string
+  }
+) {
+  assertProgramProgressRemoteReady()
+  return putParticipantAssignedOrganizationsRemote(programId, participantId, payload)
+}
+
 export async function giveUpGeneralParticipatingInstitution(
   programId: string,
   participantId: string,

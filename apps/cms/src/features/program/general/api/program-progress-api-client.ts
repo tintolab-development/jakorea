@@ -2,6 +2,8 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { PageResponseParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseParticipantListItemResponse'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
+import type { ChangeRequest } from '@/shared/api/generated/dashboard/schemas/changeRequest'
+import type { ChangeResponse } from '@/shared/api/generated/dashboard/schemas/changeResponse'
 
 export type ProgramParticipantsListQuery = {
   participantType?: string
@@ -148,6 +150,112 @@ export async function downloadProgramLectureReportsRemote(
   )
 }
 
+export type TextbookDeliveryStatus = 'PREPARING' | 'SHIPPING' | 'DELIVERED' | 'NOT_APPLICABLE'
+
+export type TextbookDeliveryPatchRequest = {
+  textbookDeliveryStatus: TextbookDeliveryStatus
+}
+
+export type TextbookDeliveryPatchResponse = {
+  participantId?: number
+  programId?: number
+  organizationApplicationId?: number
+  textbookDeliveryStatus?: TextbookDeliveryStatus
+}
+
+/**
+ * PATCH /api/admin/programs/{programId}/participants/{participantId}/textbook-delivery
+ * 참여 기관 교재 배송 배지. materialAssignmentStatus(교재 배정)와 다르다.
+ */
+export async function patchParticipantTextbookDeliveryRemote(
+  programId: string,
+  participantId: string,
+  payload: TextbookDeliveryPatchRequest
+): Promise<TextbookDeliveryPatchResponse> {
+  return unwrapApiBody<TextbookDeliveryPatchResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/textbook-delivery`,
+      method: 'PATCH',
+      data: payload,
+    })
+  )
+}
+
+export type VolunteerKind = 'GENERAL' | 'EMPLOYEE'
+
+export type ProgramParticipantCreateRequest =
+  | { participantType: 'INSTRUCTOR'; memberId: number }
+  | { participantType: 'VOLUNTEER'; memberId: number; volunteerKind?: VolunteerKind }
+
+export type ProgramInstructorParticipantCreateRequest = Extract<
+  ProgramParticipantCreateRequest,
+  { participantType: 'INSTRUCTOR' }
+>
+
+export type ProgramInstructorParticipantCreateResponse = {
+  participantId?: number
+  programId?: number
+  memberId?: number
+  participantType?: string
+  participantStatus?: string
+  sourceApplicationId?: number | null
+  volunteerKind?: VolunteerKind | null
+}
+
+/**
+ * POST /api/admin/programs/{programId}/participants
+ * 강사·봉사자 회원을 participant 로 등록. 신청 승인 API가 아니다.
+ */
+export async function createProgramParticipantRemote(
+  programId: string,
+  payload: ProgramParticipantCreateRequest
+): Promise<ProgramInstructorParticipantCreateResponse> {
+  return unwrapApiBody<ProgramInstructorParticipantCreateResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function createProgramInstructorParticipantRemote(
+  programId: string,
+  payload: ProgramInstructorParticipantCreateRequest
+): Promise<ProgramInstructorParticipantCreateResponse> {
+  return createProgramParticipantRemote(programId, payload)
+}
+
+export type VolunteerAssignedOrganizationsRequest = {
+  organizationApplicationIds: number[]
+  expectedRevision?: number
+  reason?: string
+}
+
+export type VolunteerAssignedOrganizationsResponse = {
+  participantId?: number
+  revision?: number
+  assignedOrganizationNames?: string[]
+}
+
+/**
+ * PUT /api/admin/programs/{programId}/participants/{participantId}/assigned-organizations
+ * 기관형 봉사 배정. 개인형 education-scope 와 다르다.
+ */
+export async function putParticipantAssignedOrganizationsRemote(
+  programId: string,
+  participantId: string,
+  payload: VolunteerAssignedOrganizationsRequest
+): Promise<VolunteerAssignedOrganizationsResponse> {
+  return unwrapApiBody<VolunteerAssignedOrganizationsResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/assigned-organizations`,
+      method: 'PUT',
+      data: payload,
+    })
+  )
+}
+
 export type ProgramParticipantGiveUpRequest = {
   reason: string
   /** BE 보완 — §G-8 활동 포기 중단일 (resolvedScheduleId) */
@@ -169,6 +277,24 @@ export async function giveUpProgramParticipantRemote(
     method: 'POST',
     data: payload,
   })
+}
+
+/**
+ * PATCH /api/admin/programs/{programId}/participants/{participantId}/schedules
+ * 참여 기관 실제 교육 일정 변경.
+ */
+export async function changeParticipantSchedulesRemote(
+  programId: string,
+  participantId: string,
+  payload: ChangeRequest
+): Promise<ChangeResponse> {
+  return unwrapApiBody<ChangeResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/schedules`,
+      method: 'PATCH',
+      data: payload,
+    })
+  )
 }
 
 export type ParticipantEducationScopeResponse = {
@@ -281,6 +407,71 @@ export async function fetchProgramSubmissionTeamsRemote(
   )
   if (Array.isArray(body)) return body
   return body.items ?? []
+}
+
+export type GeneralAssignmentSubmissionFileDto = {
+  fileObjectId?: number
+  originalFileName?: string
+  downloadable?: boolean
+}
+
+export type GeneralAssignmentSubmissionParticipantDto = {
+  participantId?: number
+  memberId?: number
+  memberName?: string | null
+  gender?: string | null
+  birthDate?: string | null
+  affiliation?: string | null
+  organizationName?: string | null
+  grade?: string | null
+  submissionStatus?: string | null
+  remarkKind?: string | null
+  remarkAt?: string | null
+  files?: GeneralAssignmentSubmissionFileDto[] | null
+  surveyResponse?: { templateVersionId?: number; formResponseId?: number } | null
+  satisfactionResponse?: { templateVersionId?: number; formResponseId?: number } | null
+}
+
+export type GeneralAssignmentSubmissionScheduleDto = {
+  scheduleId?: number
+  sessionNo?: number | null
+  scheduleName?: string | null
+  startAt?: string | null
+  endAt?: string | null
+  assignmentEnabled?: boolean
+  assignmentPeriodStart?: string | null
+  assignmentPeriodEnd?: string | null
+  participants?: GeneralAssignmentSubmissionParticipantDto[] | null
+}
+
+export type GeneralAssignmentSubmissionListResponse = {
+  items?: GeneralAssignmentSubmissionScheduleDto[] | null
+}
+
+/** GET /api/admin/programs/{programId}/assignment-submissions — 일반 개인 LNB 과제 관리 */
+export async function fetchProgramAssignmentSubmissionsRemote(
+  programId: string,
+  params?: {
+    scheduleId?: string
+    memberName?: string
+    affiliation?: string
+    grade?: string
+    submissionStatus?: 'NOT_SUBMITTED' | 'SUBMITTED'
+    page?: number
+    size?: number
+  }
+): Promise<GeneralAssignmentSubmissionListResponse> {
+  const body = await unwrapApiBody<
+    GeneralAssignmentSubmissionListResponse | GeneralAssignmentSubmissionScheduleDto[]
+  >(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/assignment-submissions`,
+      method: 'GET',
+      params,
+    })
+  )
+  if (Array.isArray(body)) return { items: body }
+  return { items: body.items ?? [] }
 }
 
 /** POST /api/admin/programs/{programId}/submission-teams */

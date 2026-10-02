@@ -7,6 +7,10 @@ import type { GeneralVolunteerApplicationType } from '@/features/program/general
 
 export interface ParticipatingVolunteerRow {
   id: string
+  /** 봉사자 신청 PK — participants `sourceApplicationId` */
+  volunteerApplicationId?: string
+  /** 관리자 등록 봉사자만 GENERAL | EMPLOYEE */
+  volunteerKind?: 'GENERAL' | 'EMPLOYEE'
   /** BE 회원 ID — 참여 PK와 구분 */
   memberId?: number
   /** 저장된 기존 소속 학교/기관 ID */

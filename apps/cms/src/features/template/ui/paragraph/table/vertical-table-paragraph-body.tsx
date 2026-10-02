@@ -12,7 +12,6 @@ import type {
 import { resolveTableBottomConsentRadioValue } from '@/features/template/lib/resolve-table-bottom-consent-radio-value'
 import {
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
-  DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL,
   DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
   effectiveVerticalCompositeTimeHint,
   effectiveVerticalRowDateTimeModes,
@@ -129,6 +128,53 @@ function VerticalTableCellText({
   )
 }
 
+const VERTICAL_TABLE_FILE_GUIDE_LINES = [
+  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
+
+/** 세로형 행 스테이지 — 파일첨부형 셀 (작성·미리보기) */
+function VerticalTableFileAttachmentCell({
+  disabled,
+  onFocusRow,
+}: {
+  disabled: boolean
+  onFocusRow?: () => void
+}) {
+  const [fileNames, setFileNames] = useState<string[]>([])
+  return (
+    <div
+      className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body"
+      onClick={e => e.stopPropagation()}
+    >
+      <ParagraphFileUpload
+        accept=".jpg,.jpeg,.png"
+        guideLines={VERTICAL_TABLE_FILE_GUIDE_LINES}
+        multiple
+        disabled={disabled}
+        fileNames={fileNames}
+        onFilesChange={files => {
+          onFocusRow?.()
+          setFileNames(prev => [...prev, ...files.map(file => file.name)])
+          const owner = buildAdminFileOwner(
+            ADMIN_FILE_OWNER.EDUCATION_JOURNAL,
+            1,
+            ADMIN_FILE_PURPOSE.EDUCATION_JOURNAL
+          )
+          void (async () => {
+            for (const file of files) {
+              await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+            }
+          })()
+        }}
+        onRemoveFile={index =>
+          setFileNames(prev => prev.filter((_, currentIndex) => currentIndex !== index))
+        }
+      />
+    </div>
+  )
+}
+
 function replaceRowStage(
   rows: VerticalTableRow[],
   rowIdx: number,
@@ -188,7 +234,6 @@ export function VerticalTableParagraphBody({
   const dtCellsInteractive = dateTimeCellsInteractiveProp ?? isEditMode
   const canvasInteractive = tableCanvasInteractive
   const p = useMemo(() => normalizeVerticalTableParagraph(paragraph), [paragraph])
-  const [fileAttachmentNames, setFileAttachmentNames] = useState<string[]>([])
   const choiceOpts = useMemo(
     () => normalizeVerticalChoiceOptions(p.verticalChoiceOptions),
     [p.verticalChoiceOptions]
@@ -355,6 +400,7 @@ export function VerticalTableParagraphBody({
     const isDateTime = stageKind === 'date_time'
     const isSingleChoice = stageKind === 'single_choice'
     const isMultipleChoice = stageKind === 'multiple_choice'
+    const isFileAttachment = stageKind === 'file_attachment'
     const dtModes = isDateTime ? effectiveVerticalRowDateTimeModes(row) : null
     const dtModeAtStage = dtModes ? (dtModes[stageIdx as 0 | 1] ?? 'date') : 'date'
     const defaultDatePlaceholder =
@@ -560,6 +606,7 @@ export function VerticalTableParagraphBody({
             isPortraitRetentionPeriodCell
               ? 'form-editor-vertical-table__td--portrait-retention'
               : '',
+            isFileAttachment ? 'form-editor-vertical-table__td--file-upload' : '',
           ]
             .filter(Boolean)
             .join(' ')}
@@ -577,7 +624,19 @@ export function VerticalTableParagraphBody({
               : undefined
           }
         >
-          {isDateTime ? (
+          {isFileAttachment ? (
+            <div
+              className="form-editor-vertical-table__td-file-upload-wrap"
+              onClick={e => e.stopPropagation()}
+            >
+              <VerticalTableFileAttachmentCell
+                disabled={!rowBodyEditMode}
+                onFocusRow={() => {
+                  if (canvasInteractive) setSelectedRow(rowIdx)
+                }}
+              />
+            </div>
+          ) : isDateTime ? (
             <div
               className={[
                 'form-editor-vertical-table__cell-input-shell',
@@ -754,9 +813,6 @@ export function VerticalTableParagraphBody({
     )
   }
 
-  const fileAttachmentHeaderLabel =
-    (p.verticalFileAttachmentHeaderLabel ?? '').trim() || DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL
-
   const bottomSection =
     p.showBottomText || p.showBottomConsent ? (
       <div className="form-editor-vertical-table__bottom">
@@ -792,7 +848,7 @@ export function VerticalTableParagraphBody({
               if (bottomConsentDisplayOnly || !bottomConsentInteractive) return
               onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
             }}
-            disabled={bottomConsentDisplayOnly ? false : !bottomConsentInteractive}
+            disabled={false}
             style={
               bottomConsentDisplayOnly || !bottomConsentInteractive
                 ? { pointerEvents: 'none' }
@@ -805,100 +861,6 @@ export function VerticalTableParagraphBody({
         ) : null}
       </div>
     ) : null
-
-  if (p.verticalTableFlavor === 'file_attachment') {
-    return (
-      <div
-        className={[
-          'form-editor-body',
-          'form-editor-vertical-table-wrap',
-          canvasInteractive ? 'form-editor-vertical-table-wrap--canvas-interactive' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <div className="form-editor-vertical-table" role="grid" aria-readonly={!isEditMode}>
-          <div
-            className={[
-              'form-editor-vertical-table__row',
-              'form-editor-vertical-table__row--file-attachment',
-              canvasInteractive && selectedRow === 0
-                ? 'form-editor-vertical-table__row--selected'
-                : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            role="row"
-            aria-selected={canvasInteractive && selectedRow === 0}
-          >
-            <div className="form-editor-vertical-table__stage">
-              <div
-                className="form-editor-vertical-table__th"
-                role="columnheader"
-                onClick={
-                  canvasInteractive
-                    ? e => {
-                        if (isEventFromTableInteractive(e.target)) return
-                        toggleRow(0)
-                      }
-                    : undefined
-                }
-              >
-                <VerticalTableCellText
-                  value={fileAttachmentHeaderLabel}
-                  placeholder={DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL}
-                  variant="header"
-                />
-              </div>
-              <div
-                className="form-editor-vertical-table__td form-editor-vertical-table__td--file-upload"
-                role="gridcell"
-                onClick={
-                  canvasInteractive
-                    ? e => {
-                        if (isEventFromTableInteractive(e.target)) return
-                        toggleRow(0)
-                      }
-                    : undefined
-                }
-              >
-                <div
-                  className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <ParagraphFileUpload
-                    accept=".jpg,.jpeg,.png"
-                    multiple
-                    disabled={!isEditMode}
-                    fileNames={fileAttachmentNames}
-                    onFilesChange={files => {
-                      setFileAttachmentNames(prev => [...prev, ...files.map(file => file.name)])
-                      const owner = buildAdminFileOwner(
-                        ADMIN_FILE_OWNER.EDUCATION_JOURNAL,
-                        1,
-                        ADMIN_FILE_PURPOSE.EDUCATION_JOURNAL
-                      )
-                      void (async () => {
-                        for (const file of files) {
-                          await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
-                        }
-                      })()
-                    }}
-                    onRemoveFile={index =>
-                      setFileAttachmentNames(prev =>
-                        prev.filter((_, currentIndex) => currentIndex !== index)
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {bottomSection}
-      </div>
-    )
-  }
 
   return (
     <div

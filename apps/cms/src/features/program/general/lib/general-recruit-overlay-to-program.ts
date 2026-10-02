@@ -69,6 +69,7 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
     programRangeSeal: 'recruit.instructor.programRangeSeal',
     recruitTargets: 'recruit.instructor.recruitTargets',
     recruitTargetDetail: 'recruit.instructor.recruitTargetDetail',
+    announcementPublished: 'recruit.instructor.announcementPublished',
     inquiryContact: 'recruit.instructor.inquiryContact',
     inquiryTel: 'recruit.instructor.inquiryTel',
     inquiryEmail: 'recruit.instructor.inquiryEmail',
@@ -864,8 +865,10 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
-  if (instructorRemarks) {
-    instructorInfo.remarks = coalesceString(instructorInfo.remarks, instructorRemarks, preferOverlay)
+  // 등록(preferOverlay)만 overlay notes → 비고. 조회는 nested remarks가 비고 SSOT.
+  // leftover overlay notes에 옛 기타사항이 남아 있어도 비고를 채우지 않는다. 값 비교로 건너뛰지 않는다.
+  if (preferOverlay && instructorRemarks) {
+    instructorInfo.remarks = coalesceString(instructorInfo.remarks, instructorRemarks, true)
   }
   if (instructorOtherMatters) {
     instructorInfo.otherMatters = coalesceString(
@@ -873,6 +876,21 @@ export function applyGeneralRecruitOverlayToProgram(
       instructorOtherMatters,
       preferOverlay
     )
+  }
+  const instructorAnnouncementPublished =
+    overlayAnnouncementPublished(overlay, keys.instructor.announcementPublished) ??
+    // 라디오 기본값 `published` — 값을 안 바꿔도 강사 모집 정보가 있으면 게시로 본다.
+    (instructorPeriodLabel || instructorContact || instructorTargets?.length ? true : undefined)
+  if (instructorAnnouncementPublished !== undefined) {
+    const nextPublished = coalesceBool(
+      instructorInfo.announcementPublished,
+      instructorAnnouncementPublished,
+      preferOverlay
+    )
+    if (nextPublished !== undefined) {
+      instructorInfo.announcementPublished = nextPublished
+      instructorInfo.announcementPublishedLabel = nextPublished ? '게시' : '미게시'
+    }
   }
 
   const volunteerTargetLabel =
@@ -968,8 +986,8 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
-  if (volunteerRemarks) {
-    volunteerInfo.remarks = coalesceString(volunteerInfo.remarks, volunteerRemarks, preferOverlay)
+  if (preferOverlay && volunteerRemarks) {
+    volunteerInfo.remarks = coalesceString(volunteerInfo.remarks, volunteerRemarks, true)
   }
   if (volunteerOtherMatters) {
     volunteerInfo.otherMatters = coalesceString(
@@ -1474,8 +1492,21 @@ export function resolveGeneralRecruitDetailDisplayProgram(
     audience
   )
 
+  const instructorAnnouncement =
+    audience === 'instructor'
+      ? withPersistedRecruitMedia.generalCommonInfo?.instructorRecruitmentInfo
+      : undefined
+
   return {
     ...withAudienceCopy,
+    ...(instructorAnnouncement
+      ? {
+          generalCommonInfo: {
+            ...withAudienceCopy.generalCommonInfo,
+            instructorRecruitmentInfo: instructorAnnouncement,
+          },
+        }
+      : {}),
     // 강사·봉사자 상세 「기타사항」은 해당 행 otherMatters. 비고(행 remarks)와 섞지 않는다.
     ...(audience === 'participant'
       ? {}

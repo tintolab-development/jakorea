@@ -17,9 +17,16 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
-import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import {
+  generalApplicationsQueryKeys,
+  generalProgramProgressQueryKeys,
+} from '@/features/program/general/api/general-applications-query-keys'
+import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import { useParticipatingVolunteerApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
+import { mapVolunteerApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-volunteer-application-detail'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
   buildProgramApiUnavailableSaveContent,
@@ -96,10 +103,16 @@ export function ParticipatingVolunteerFullpageView({
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
 
+  const enrichedVolunteer = useParticipatingVolunteerApplicationDetailEnrichment(initialVolunteer)
+  const baseVolunteer = enrichedVolunteer ?? initialVolunteer
+
   const mergedVolunteer = useMemo(
-    () => mergeParticipatingVolunteerDetailRow({ ...initialVolunteer, ...volunteerPatches }),
-    [initialVolunteer, volunteerPatches]
+    () => mergeParticipatingVolunteerDetailRow({ ...baseVolunteer, ...volunteerPatches }),
+    [baseVolunteer, volunteerPatches]
   )
+
+  const volunteerApplicationId = mergedVolunteer.volunteerApplicationId?.trim() || ''
+  const hasVolunteerApplicationId = volunteerApplicationId !== ''
 
   const activityWithdrawScheduleOptions = useMemo(
     () => getParticipatingVolunteerActivityWithdrawScheduleOptions(mergedVolunteer),
@@ -111,13 +124,83 @@ export function ParticipatingVolunteerFullpageView({
     [mergedVolunteer.volunteerName]
   )
 
+  const revealParticipatingVolunteerPersonalInfo = useCallback(
+    async (reason: string) => {
+      if (hasVolunteerApplicationId) {
+        const programIdNumber = Number(program.id)
+        const dto = await unmaskVolunteerApplicationPrivacyRemote(
+          volunteerApplicationId,
+          reason,
+          Number.isFinite(programIdNumber) ? programIdNumber : undefined
+        )
+        queryClient.setQueryData(
+          generalApplicationsQueryKeys.volunteerDetail(volunteerApplicationId),
+          dto
+        )
+        const mapped = mapVolunteerApplicationDetailToParticipatingRow(dto, mergedVolunteer)
+        setVolunteerPatches(prev => ({
+          ...prev,
+          volunteerName: mapped.volunteerName,
+          contact: mapped.contact,
+          email: mapped.email,
+          contactRaw: mapped.contactRaw,
+          emailRaw: mapped.emailRaw,
+          id1365: mapped.id1365,
+          gender: mapped.gender,
+          birthDate: mapped.birthDate,
+          age: mapped.age,
+          memberId: mapped.memberId,
+        }))
+        return {
+          name: dto.profile?.name?.trim() || undefined,
+          phone: dto.profile?.contact?.trim() || undefined,
+          email: dto.profile?.email?.trim() || undefined,
+        }
+      }
+
+      const memberId = Number(mergedVolunteer.memberId)
+      if (!Number.isFinite(memberId) || memberId <= 0) {
+        throw new Error('봉사자 신청 ID 또는 회원 ID가 없습니다.')
+      }
+      return fetchMemberRolePrivacyUnmask(memberId, reason)
+    },
+    [
+      hasVolunteerApplicationId,
+      mergedVolunteer,
+      program.id,
+      queryClient,
+      volunteerApplicationId,
+    ]
+  )
+
+  const applyParticipatingVolunteerPersonalInfo = useCallback((payload: unknown) => {
+    if (payload == null || typeof payload !== 'object') return
+    const privacy = payload as {
+      name?: unknown
+      phone?: unknown
+      email?: unknown
+    }
+    setVolunteerPatches(prev => ({
+      ...prev,
+      ...(typeof privacy.name === 'string' ? { volunteerName: privacy.name } : {}),
+      ...(typeof privacy.phone === 'string'
+        ? { contact: privacy.phone, contactRaw: privacy.phone }
+        : {}),
+      ...(typeof privacy.email === 'string'
+        ? { email: privacy.email, emailRaw: privacy.email }
+        : {}),
+    }))
+  }, [])
+
   const {
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolveParticipatingVolunteerFullpageAccessItem,
-    resetDeps: [mergedVolunteer.id],
+    revealPersonalInfo: revealParticipatingVolunteerPersonalInfo,
+    onPrivacyUnmasked: applyParticipatingVolunteerPersonalInfo,
+    resetDeps: [mergedVolunteer.id, volunteerApplicationId, mergedVolunteer.memberId],
     controlMode: 'headerStickyNoop',
   })
 
@@ -135,7 +218,7 @@ export function ParticipatingVolunteerFullpageView({
   )
 
   useEffect(() => {
-    setSavedAdminComment(initialVolunteer.adminComment ?? '')
+    setSavedAdminComment(baseVolunteer.adminComment ?? '')
     setAdminCommentModalOpen(false)
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
@@ -143,7 +226,7 @@ export function ParticipatingVolunteerFullpageView({
     setActivityWithdrawModalOpen(false)
     setActivityWithdrawSubmitting(false)
     setActivityCertPreviewOpen(false)
-  }, [initialVolunteer.id, initialVolunteer.adminComment])
+  }, [initialVolunteer.id, baseVolunteer.adminComment])
 
   const privacyMasked = !personalInfoRevealed
 
@@ -244,23 +327,17 @@ export function ParticipatingVolunteerFullpageView({
 
   const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
-    if (shouldUseGeneralApplicationsRemoteApi()) {
-      const targetId = Number(mergedVolunteer.id)
-      if (!Number.isFinite(targetId)) {
-        void showAlert({
-          title: '안내',
-          content: MESSAGES.error.save,
-        })
-        return
-      }
+    const applicationTargetId = Number(volunteerApplicationId)
+    if (shouldUseGeneralApplicationsRemoteApi() && Number.isFinite(applicationTargetId)) {
       try {
         const result = await upsertAdminCommentByTargetRemote({
           targetType: 'VOLUNTEER_APPLICATION',
-          targetId,
+          targetId: applicationTargetId,
           screenCode: 'VOLUNTEER_APPLICATION',
           comment: trimmed,
         })
         setSavedAdminComment(result.commentText ?? '')
+        setVolunteerPatches(prev => ({ ...prev, adminComment: result.commentText ?? trimmed }))
         setAdminCommentModalOpen(false)
         setAdminCommentError(undefined)
         return
@@ -281,9 +358,17 @@ export function ParticipatingVolunteerFullpageView({
     }
     void showAlert({
       title: PROGRAM_API_UNAVAILABLE_TITLE,
-      content: buildProgramApiUnavailableSaveContent('참여 봉사자 관리자 코멘트'),
+      content: hasVolunteerApplicationId
+        ? buildProgramApiUnavailableSaveContent('참여 봉사자 관리자 코멘트')
+        : '봉사자 신청 ID가 없어 코멘트를 저장할 수 없습니다. participants API에 sourceApplicationId 매핑이 필요합니다.',
     })
-  }, [adminCommentDraft, isTempMockProgram, mergedVolunteer.id, showAlert])
+  }, [
+    adminCommentDraft,
+    hasVolunteerApplicationId,
+    isTempMockProgram,
+    showAlert,
+    volunteerApplicationId,
+  ])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)

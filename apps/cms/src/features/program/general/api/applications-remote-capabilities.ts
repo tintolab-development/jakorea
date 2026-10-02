@@ -23,3 +23,13 @@ export function shouldUseApplicationsHttpRemoteApi(): boolean {
       hasRemoteAdminJwt())
   )
 }
+
+/**
+ * 기관·강사 신청 상세 GET · form/코멘트 hydrate.
+ * 1사1교는 일반 programs remote가 꺼져 있어도 company-school opt-in이면 같은 path를 쓴다.
+ */
+export function shouldUseOrganizationApplicationRemoteApi(): boolean {
+  return (
+    shouldUseGeneralApplicationsRemoteApi() || shouldUseCompanySchoolApplicationsRemoteApi()
+  )
+}

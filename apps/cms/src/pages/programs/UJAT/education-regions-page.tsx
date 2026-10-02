@@ -17,6 +17,7 @@ import {
   useDeleteUjatEducationRegion,
   useReorderUjatEducationRegions,
   useUpdateUjatEducationRegion,
+  useUjatEducationRegionsFilteredList,
   useUjatEducationRegionsList,
 } from '@/features/program/ujat/api/education-regions/hooks'
 import { UJAT_EDUCATION_REGIONS_CHANGED_EVENT } from '@/features/program/ujat/lib/education-region-store'
@@ -24,10 +25,7 @@ import {
   isUjatEducationRegionDuplicateNameError,
   UJAT_EDUCATION_REGION_DUPLICATE_NAME_MESSAGE,
 } from '@/features/program/ujat/lib/education-region-name'
-import {
-  filterUjatEducationRegions,
-  formatUjatEducationRegionDateTime,
-} from '@/features/program/ujat/lib/education-region-filter'
+import { formatUjatEducationRegionDateTime } from '@/features/program/ujat/lib/education-region-filter'
 import type {
   UjatEducationRegion,
   UjatEducationRegionDraft,
@@ -73,8 +71,10 @@ export default function UjatEducationRegionsPage() {
   const reorderMutation = useReorderUjatEducationRegions()
 
   const [rows, setRows] = useState<UjatEducationRegion[]>([])
+  const [filteredRows, setFilteredRows] = useState<UjatEducationRegion[]>([])
   const [pendingFilters, setPendingFilters] = useState<UjatEducationRegionFilters>(INITIAL_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<UjatEducationRegionFilters>(INITIAL_FILTERS)
+  const filteredQuery = useUjatEducationRegionsFilteredList(appliedFilters)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState<UjatEducationRegionDraft | null>(null)
   const [registerOpen, setRegisterOpen] = useState(false)
@@ -86,26 +86,30 @@ export default function UjatEducationRegionsPage() {
   }, [listQuery.data])
 
   useEffect(() => {
-    if (!listQuery.isError || listQuery.isFetching) return
+    if (filteredQuery.data) setFilteredRows(filteredQuery.data)
+  }, [filteredQuery.data])
+
+  const listFailed =
+    (listQuery.isError && !listQuery.isFetching) ||
+    (filteredQuery.isError && !filteredQuery.isFetching)
+
+  useEffect(() => {
+    if (!listFailed) return
     showAlert({
       title: '목록 조회 실패',
       content: '교육 지역 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
     })
-  }, [listQuery.isError, listQuery.isFetching, showAlert])
+  }, [listFailed, showAlert])
 
   useEffect(() => {
     if (remoteEnabled) return
     const handler = () => {
       void listQuery.refetch()
+      void filteredQuery.refetch()
     }
     window.addEventListener(UJAT_EDUCATION_REGIONS_CHANGED_EVENT, handler)
     return () => window.removeEventListener(UJAT_EDUCATION_REGIONS_CHANGED_EVENT, handler)
-  }, [listQuery, remoteEnabled])
-
-  const filteredRows = useMemo(
-    () => filterUjatEducationRegions(rows, appliedFilters),
-    [appliedFilters, rows]
-  )
+  }, [filteredQuery, listQuery, remoteEnabled])
 
   const filterFields = useMemo<FilterFieldConfig[]>(
     () => [
@@ -142,10 +146,17 @@ export default function UjatEducationRegionsPage() {
   }, [])
 
   const handleSearch = useCallback(() => {
-    setAppliedFilters({ ...pendingFilters })
+    const unchanged =
+      pendingFilters.usageStatus === appliedFilters.usageStatus &&
+      pendingFilters.name.trim() === appliedFilters.name.trim()
+    if (unchanged) {
+      void filteredQuery.refetch()
+    } else {
+      setAppliedFilters({ ...pendingFilters })
+    }
     setEditingId(null)
     setEditDraft(null)
-  }, [pendingFilters])
+  }, [appliedFilters, filteredQuery, pendingFilters])
 
   const startEdit = useCallback((row: UjatEducationRegion) => {
     setEditingId(row.id)
@@ -193,6 +204,7 @@ export default function UjatEducationRegionsPage() {
       const visibleIds = reorderedVisible.map(row => row.id)
       const hiddenIds = rows.filter(row => !visibleIds.includes(row.id)).map(row => row.id)
       const orderedIds = [...visibleIds, ...hiddenIds]
+      setFilteredRows(reorderedVisible)
       setRows(prev => {
         const byId = new Map(prev.map(row => [row.id, row]))
         return orderedIds
@@ -434,7 +446,7 @@ export default function UjatEducationRegionsPage() {
         <UjatEducationRegionsSortableTable
           rows={filteredRows}
           columns={columns}
-          loading={listQuery.isFetching && filteredRows.length === 0}
+          loading={filteredQuery.isFetching && filteredRows.length === 0}
           onRowsReorder={handleReorder}
         />
       </FilterTableLayout>

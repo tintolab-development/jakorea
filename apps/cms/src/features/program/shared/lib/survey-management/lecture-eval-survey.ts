@@ -234,6 +234,43 @@ export function draftToLectureEvalPollResponse(draft: WritingFormDraft): SurveyP
   }
 }
 
+export function parseLectureEvalFormResponseId(
+  responses: SurveyPollRawResponse[]
+): number | null {
+  for (const row of responses) {
+    const n = Number(row.respondentId)
+    if (Number.isSafeInteger(n) && n > 0) return n
+  }
+  return null
+}
+
+export function applyLectureEvalAnswersToDraft(
+  draft: WritingFormDraft,
+  answers: Record<string, string>
+): WritingFormDraft {
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.map(paragraph => {
+      if (paragraph.kind !== 'single_item') return paragraph
+      const value = answers[paragraph.id]
+      if (value == null || value === '') return paragraph
+      if (paragraph.variant === 'scale_type') {
+        return { ...paragraph, selectedPreviewItemId: value }
+      }
+      if (paragraph.variant === 'short_essay') {
+        const items =
+          paragraph.items != null && paragraph.items.length > 0
+            ? paragraph.items.map((item, index) =>
+                index === 0 ? { ...item, bodyText: value } : item
+              )
+            : paragraph.items
+        return { ...paragraph, bodyText: value, items }
+      }
+      return paragraph
+    }),
+  }
+}
+
 export function validateLectureEvalFormDraft(draft: WritingFormDraft): LectureEvalValidationResult {
   for (const paragraph of draft.paragraphs) {
     if (paragraph.kind !== 'single_item') continue

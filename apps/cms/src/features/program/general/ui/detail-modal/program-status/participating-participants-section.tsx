@@ -26,7 +26,9 @@ import { useParticipatingIndividualParticipantColumns } from '@/features/program
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
+import { hydrateParticipatingIndividualLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
 import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
+import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
@@ -214,22 +216,36 @@ export function ParticipatingParticipantsSection({
   }, [])
 
   const handleCertificateIssueConfirm = useCallback(
-    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+    async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
       if (program == null) return
 
       const selectedId = String(selectedRowKeys[0])
       const participant = filteredParticipants.find(row => row.id === selectedId)
       if (participant == null) return
 
-      setCertificateExportContext(
-        buildParticipatingParticipantCertificateContext({
-          participant,
-          program,
-          hasStudentSatisfactionSurvey,
-          issuanceReasonLabel: reasonLabel,
+      try {
+        const lectureAttendanceSessions = shouldUseGeneralProgramProgressRemoteApi()
+          ? await hydrateParticipatingIndividualLectureAttendanceSessions({
+              programId: String(program.id),
+              participantId: participant.id,
+              existing: participant.lectureAttendanceSessions,
+            })
+          : participant.lectureAttendanceSessions
+
+        setCertificateExportContext(
+          buildParticipatingParticipantCertificateContext({
+            participant: { ...participant, lectureAttendanceSessions },
+            program,
+            hasStudentSatisfactionSurvey,
+            issuanceReasonLabel: reasonLabel,
+          })
+        )
+        setCertificateExportActive(true)
+      } catch (error) {
+        handleError(error, {
+          context: 'participatingParticipantsSection.certificateAttendanceHydrate',
         })
-      )
-      setCertificateExportActive(true)
+      }
     },
     [filteredParticipants, hasStudentSatisfactionSurvey, program, selectedRowKeys]
   )

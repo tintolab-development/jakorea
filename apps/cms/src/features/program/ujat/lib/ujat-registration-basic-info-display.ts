@@ -13,6 +13,7 @@ import {
   readUjatSurveyItems,
   resolveUjatSurveyItemsText,
   ujatGeneralSurveyMenuKeysFromOverlay,
+  ujatSurveyItemsFromProgramKeys,
   UJAT_REGISTRATION_SURVEY_ITEM_LABELS,
   UJAT_SURVEY_MENU_KEY_BY_ITEM,
 } from '@/features/program/ujat/lib/registration-survey-items'
@@ -62,8 +63,21 @@ function readOperationRangeSeal(overlay: Record<string, unknown>): OperationRang
   return v as OperationRangeSeal
 }
 
-function readSurveyItems(overlay: Record<string, unknown>): Record<UjatSurveyRowId, boolean> {
-  return readUjatSurveyItems(overlay['ujat.basicInfo.surveyItems'], createUjatSurveyItemsDefault())
+/** 상세 SSOT — 프로그램 overlay 4종, 없으면 저장된 키. 세션 overlay는 둘 다 없을 때만. */
+export function resolveUjatSurveyItemFlags(program?: Program): Record<UjatSurveyRowId, boolean> {
+  const programOverlay = program ? readUjatRegistrationOverlayFromProgram(program) : {}
+  const fromProgram = programOverlay['ujat.basicInfo.surveyItems']
+  if (fromProgram != null && typeof fromProgram === 'object') {
+    return readUjatSurveyItems(fromProgram, createUjatSurveyItemsDefault(false))
+  }
+  if (program?.generalSurveyMenuKeys) {
+    return ujatSurveyItemsFromProgramKeys(program.generalSurveyMenuKeys)
+  }
+  const sessionItems = getUjatProgramRegistrationOverlayRecord()['ujat.basicInfo.surveyItems']
+  if (sessionItems != null && typeof sessionItems === 'object') {
+    return readUjatSurveyItems(sessionItems, createUjatSurveyItemsDefault(false))
+  }
+  return createUjatSurveyItemsDefault(false)
 }
 
 function optionLabel(
@@ -113,9 +127,7 @@ export type UjatSurveyMenuItem = { key: string; label: string }
 
 /** 공통 정보 > 설문 진행 항목 — 설문 관리 LNB 2depth */
 export function resolveUjatSurveyMenuItems(program?: Program): UjatSurveyMenuItem[] {
-  const overlay = resolveUjatRegistrationBasicInfoOverlay()
-  void program
-  const surveyItems = readSurveyItems(overlay)
+  const surveyItems = resolveUjatSurveyItemFlags(program)
   const items: UjatSurveyMenuItem[] = []
 
   if (surveyItems.survey) {
@@ -223,7 +235,7 @@ export function resolveUjatRegistrationBasicInfoDisplay(
       : defaults.partnerInvolvement
 
   const operationSeal = readOperationRangeSeal(overlay)
-  const surveyItems = readSurveyItems(overlay)
+  const surveyItems = resolveUjatSurveyItemFlags(program)
   const sponsorManager =
     overlayString(overlay, 'ujat.basicInfo.sponsorManagerName')?.trim() ||
     program.generalCommonInfo?.sponsorManagerLine?.trim() ||
@@ -340,8 +352,10 @@ export function applyUjatRegistrationOverlayToProgram(
     id: overlayString(overlayInput, 'ujat.basicInfo.sponsorContactId') ?? undefined,
     managerLine: sponsorManagerLine ?? '',
   })
+  const persistedSurveyMenuKeys = ujatGeneralSurveyMenuKeysFromOverlay(overlayInput)
   const generalSurveyMenuKeys =
-    ujatGeneralSurveyMenuKeysFromOverlay(overlayInput) ?? program.generalSurveyMenuKeys
+    (persistedSurveyMenuKeys as Program['generalSurveyMenuKeys'] | undefined) ??
+    program.generalSurveyMenuKeys
   const overlayKpi = {
     finalParticipants: overlayNullableNumber(overlayInput, 'ujat.kpi.participantCount'),
     instructorCount: overlayNullableNumber(overlayInput, 'ujat.kpi.instructor'),

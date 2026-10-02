@@ -357,6 +357,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationScheduleSettings}
           titleTrailing={
             <EducationScheduleChangeTitleAction
+              programId={program.id}
               overlayKeyPrefix="generalRegistration.educationScheduleSettings"
               educationScheduleMode={extras.educationScheduleMode ?? 'date'}
               autoFillFromScheduleGroupTimes={
@@ -391,7 +392,6 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
               participantOrganization: participant.organization,
               educationStructure: extras.programType,
             })}
-            showScheduleChangeAction
           />
         </ProgramCommonInfoEditSection>
       )}

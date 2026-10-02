@@ -16,10 +16,17 @@
   line-height: 150%;
 }
 
+/* Ant baseline spacer — flex에서 우측 빈칸으로 잡혀 항목 간격이 커 보임 */
+.cms-checkbox.ant-checkbox-wrapper::after,
+.cms-checkbox-group .ant-checkbox-wrapper::after {
+  display: none !important;
+}
+
 .cms-checkbox .ant-checkbox,
 .cms-checkbox-group .ant-checkbox-wrapper .ant-checkbox {
   align-self: center;
   top: 0;
+  margin-inline-end: 0 !important;
 }
 
 /* 체크 박스·라벨 간격 (antd 기본 padding 제거 → gap만 사용) */
@@ -32,6 +39,7 @@
 .cms-checkbox-group .ant-checkbox-wrapper span.ant-checkbox + * {
   padding-inline-start: 0 !important;
   padding-inline-end: 0 !important;
+  margin-inline-start: 0 !important;
 }
 
 .cms-checkbox .ant-checkbox-label,

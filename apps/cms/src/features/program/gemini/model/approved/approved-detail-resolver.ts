@@ -43,6 +43,7 @@ function mapAssignedInstructor(
   return {
     instructorAssigned: true,
     instructor: {
+      memberId: assigned.memberId != null ? String(assigned.memberId) : undefined,
       name: trimmed(assigned.name) || '-',
       region: trimmed(assigned.homeAddress) || '-',
       experienceYears: assigned.experienceYears ?? null,

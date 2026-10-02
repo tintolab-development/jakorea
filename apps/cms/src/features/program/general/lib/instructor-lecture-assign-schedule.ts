@@ -135,7 +135,15 @@ function slotFromInstitutionSession(
   const dateKey = parseSessionDateKey(session.date)
   if (!dateKey) return null
   const sessionRound = session.round
-  const key = buildSlotKey(dateKey, institution.id, sessionRound)
+  const resolvedScheduleId = session.resolvedScheduleId
+  const hasResolvedSchedule =
+    resolvedScheduleId != null && Number.isFinite(resolvedScheduleId) && resolvedScheduleId > 0
+  const key = hasResolvedSchedule
+    ? String(resolvedScheduleId)
+    : buildSlotKey(dateKey, institution.id, sessionRound)
+  const remoteScheduleUnresolved =
+    session.scheduleUnresolved === true ||
+    (resolvedScheduleId !== undefined && !hasResolvedSchedule)
   return {
     key,
     dateKey,
@@ -146,7 +154,7 @@ function slotFromInstitutionSession(
     sessionLabel: sessionLabelFromSession(session),
     timeRange: normalizeTimeRange(session.timeRange),
     assignedCount: 0,
-    disabled: session.status === 'completed',
+    disabled: session.status === 'completed' || remoteScheduleUnresolved,
   }
 }
 
@@ -197,13 +205,16 @@ export function getApprovedInstitutionLectureScheduleSlots(
   })
 }
 
-export function parseInstructorLectureAssignSchedule(
-  programId: string
+/** 기관 신청 행 → 강의 배정 캘린더. remote 목록을 넘기면 mock 캐시를 쓰지 않는다. */
+export function parseInstructorLectureAssignScheduleFromInstitutions(
+  institutions: ApplicantSchoolRow[],
+  options?: { approvedOnly?: boolean }
 ): ParsedInstructorLectureAssignSchedule {
-  const institutions = getGeneralInstitutionApplicationsForProgram(programId)
+  const approvedOnly = options?.approvedOnly !== false
   const slotMap = new Map<string, InstructorLectureAssignSlot>()
 
   for (const institution of institutions) {
+    if (approvedOnly && institution.approvalStatus !== 'approved') continue
     for (const session of institution.sessions ?? []) {
       const slot = slotFromInstitutionSession(institution, session)
       if (slot) mergeSlot(slotMap, slot)
@@ -224,8 +235,13 @@ export function parseInstructorLectureAssignSchedule(
     slots.sort((a, b) => a.schoolName.localeCompare(b.schoolName, 'ko'))
   }
 
-  const rangeStart = dayjs('2026-03-01')
-  const rangeEnd = dayjs('2026-03-31')
+  const sortedDateKeys = [...clickableDateKeys].sort()
+  const rangeStart = sortedDateKeys[0]
+    ? dayjs(sortedDateKeys[0]).startOf('month')
+    : dayjs('2026-03-01')
+  const rangeEnd = sortedDateKeys.length
+    ? dayjs(sortedDateKeys[sortedDateKeys.length - 1]).endOf('month')
+    : dayjs('2026-03-31')
 
   const disabledDate = (date: Dayjs) => {
     if (date.isBefore(rangeStart, 'month') || date.isAfter(rangeEnd, 'month')) {
@@ -244,6 +260,15 @@ export function parseInstructorLectureAssignSchedule(
     rangeEnd,
     scheduleMonth: rangeStart.startOf('month'),
   }
+}
+
+export function parseInstructorLectureAssignSchedule(
+  programId: string
+): ParsedInstructorLectureAssignSchedule {
+  return parseInstructorLectureAssignScheduleFromInstitutions(
+    getGeneralInstitutionApplicationsForProgram(programId),
+    { approvedOnly: false }
+  )
 }
 
 export function getApplicantPreferredDateKeys(instructor: ApplicantInstructorRow): Set<string> {

@@ -8,6 +8,8 @@ export const generalApplicationsQueryKeys = {
     [...generalApplicationsQueryKeys.all, 'instructor', programId, status ?? 'all'] as const,
   instructorDetail: (applicationId: string) =>
     [...generalApplicationsQueryKeys.all, 'instructor-detail', applicationId] as const,
+  instructorLectureAssignInstitutions: (programId: string) =>
+    [...generalApplicationsQueryKeys.all, 'instructor-lecture-assign-institutions', programId] as const,
   individualLists: (programId: string) =>
     [...generalApplicationsQueryKeys.all, 'individual', programId] as const,
   individualList: (programId: string, status?: string | null) =>
@@ -53,6 +55,8 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'volunteers', programId] as const,
   attendances: (programId: string, scheduleId: string) =>
     [...generalProgramProgressQueryKeys.all, 'attendances', programId, scheduleId] as const,
+  assignmentSubmissions: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'assignment-submissions', programId] as const,
   schedules: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'schedules', programId] as const,
   absenceReasons: (programId: string) =>

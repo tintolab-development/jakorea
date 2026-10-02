@@ -36,6 +36,7 @@ import {
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useGeneralVolunteerInterview2Columns } from './interview2-columns'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { toScreeningNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
 import {
   requestGeneralVolunteerInterview2BulkFail,
   requestGeneralVolunteerInterview2BulkPass,
@@ -169,7 +170,12 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const applySecondInterviewStatus = useCallback(
-    async (ids: string[], status: GeneralSecondInterviewScreeningStatus, reason?: string) => {
+    async (
+      ids: string[],
+      status: GeneralSecondInterviewScreeningStatus,
+      reason?: string,
+      notify?: { notifyTiming?: string; scheduledAt?: string }
+    ) => {
       if (
         status === 'pass' ||
         status === 'fail' ||
@@ -178,7 +184,7 @@ export function useGeneralVolunteerInterview2({
         status === 'reserve3' ||
         status === 'reserve4'
       ) {
-        const remoteOk = await volunteerRemote.applyRemoteFinalResult(ids, status, reason)
+        const remoteOk = await volunteerRemote.applyRemoteFinalResult(ids, status, reason, notify)
         if (remoteOk) return
         if (isGeneralProgramTempMockProgramId(programId)) {
           setList(prev =>
@@ -219,10 +225,15 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const handlePassModalConfirm = useCallback(
-    async (_payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (!passModalVolunteer) return
       const volunteerName = passModalVolunteer.name
-      await applySecondInterviewStatus([passModalVolunteer.id], 'pass')
+      await applySecondInterviewStatus(
+        [passModalVolunteer.id],
+        'pass',
+        undefined,
+        toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
+      )
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== passModalVolunteer.id))
       setPassModalVolunteer(null)
       setPassCompleteVolunteerName(volunteerName)
@@ -234,7 +245,12 @@ export function useGeneralVolunteerInterview2({
     async (payload: PermissionModalPayload) => {
       if (!failModalVolunteer) return
       const { name, id } = failModalVolunteer
-      await applySecondInterviewStatus([id], 'fail', payload.reason)
+      await applySecondInterviewStatus(
+        [id],
+        'fail',
+        payload.reason,
+        toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
+      )
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       setFailModalVolunteer(null)
       setFailCompleteVolunteer({ name, reason: payload.reason })
@@ -266,10 +282,15 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const confirmBulkFail = useCallback(
-    async (_payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       const ids = selectedRowKeys.map(String)
       if (ids.length === 0) return
-      await applySecondInterviewStatus(ids, 'fail')
+      await applySecondInterviewStatus(
+        ids,
+        'fail',
+        payload.reason,
+        toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
+      )
       setSelectedRowKeys([])
       setBulkFailModalOpen(false)
       setBulkFailCompleteCount(ids.length)
@@ -299,7 +320,12 @@ export function useGeneralVolunteerInterview2({
   const confirmBulkPass = useCallback(
     async (payload: GeneralInterview2BulkPassConfirmPayload) => {
       const ids = selectedRowKeys.map(String)
-      await applySecondInterviewStatus(ids, payload.passType)
+      await applySecondInterviewStatus(
+        ids,
+        payload.passType,
+        undefined,
+        toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
+      )
       const passTypeLabel =
         GENERAL_INTERVIEW2_BULK_PASS_TYPE_OPTIONS.find(option => option.value === payload.passType)
           ?.label ?? payload.passType

@@ -11,7 +11,9 @@ import {
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
+import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { useCmsAlert } from '@/shared/ui'
+import { handleError } from '@/shared/utils/error-handler'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
@@ -19,9 +21,16 @@ import { assignmentTeamRoleTagClassName, ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE
 import {
   applyTeamNameFromSessionOrder,
   buildParticipatingIndividualParticipantAssignmentSummary,
+  collectParticipantAssignmentDownloadableFiles,
   getParticipatingIndividualParticipantAssignmentBundle,
+  mergeParticipantDetailAssignmentRowsWithRemote,
   sortParticipatingIndividualParticipantAssignmentRows,
 } from '@/features/program/general/lib/participating-individual-participant-assignment'
+import { fetchGeneralProgressAssignmentBundle } from '@/features/program/general/api/admin-program-progress-service'
+import { fetchGeneralProgramSurveyResponseDetail } from '@/features/program/general/api/admin-general-programs-service'
+import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import type { SurveyAnswerResponse } from '@/shared/api/generated/dashboard/schemas/surveyAnswerResponse'
+import { buildProgressAssignmentSessionsFromRemote } from '@/features/program/general/api/adapters/progress-assignment-adapters'
 import { PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-participant-assignment-export'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
@@ -119,22 +128,49 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     retry: false,
   })
 
+  const assignmentSubmissionsQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.assignmentSubmissions(program.id),
+    queryFn: () => fetchGeneralProgressAssignmentBundle(program.id),
+    enabled: remoteEnabled,
+    staleTime: 15_000,
+    retry: false,
+  })
+
   const overlayRows = useMemo(() => {
-    const base = sortParticipatingIndividualParticipantAssignmentRows(bundle.rows)
+    const remoteSessions = assignmentSubmissionsQuery.data
+      ? buildProgressAssignmentSessionsFromRemote(assignmentSubmissionsQuery.data)
+      : []
+    const withSubmissions = mergeParticipantDetailAssignmentRowsWithRemote({
+      participantId: participant.id,
+      localRows: sortParticipatingIndividualParticipantAssignmentRows(bundle.rows),
+      remoteSessions,
+      surveyResponse: participant.surveyResponse,
+      satisfactionResponse: participant.satisfactionResponse,
+    })
     const team = submissionTeamQuery.data
-    if (!team) return base
+    if (!team) return withSubmissions
     const teamName = team.teamName?.trim() || team.name?.trim()
     const teamRole = mapApiSubmissionTeamRole(team.role)
-    return base.map(row => ({
+    return withSubmissions.map(row => ({
       ...row,
       teamName: teamName || row.teamName,
       teamRole: row.isTeamSchedule ? teamRole : row.teamRole,
     }))
-  }, [bundle.rows, submissionTeamQuery.data])
+  }, [
+    assignmentSubmissionsQuery.data,
+    bundle.rows,
+    participant.id,
+    participant.satisfactionResponse,
+    participant.surveyResponse,
+    submissionTeamQuery.data,
+  ])
 
   const [rows, setRows] = useState(() => overlayRows)
   const [teamChangeModalOpen, setTeamChangeModalOpen] = useState(false)
   const [openTeamRoleDropdownRowId, setOpenTeamRoleDropdownRowId] = useState<string | null>(null)
+  const [surveyViewTitle, setSurveyViewTitle] = useState('설문조사 보기')
+  const [surveyViewAnswers, setSurveyViewAnswers] = useState<SurveyAnswerResponse[] | null>(null)
+  const [surveyViewLoading, setSurveyViewLoading] = useState(false)
 
   useEffect(() => {
     setRows(overlayRows)
@@ -190,17 +226,39 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     setTeamChangeModalOpen(true)
   }, [showAlert, teamChangeScheduleOptions.length])
 
+  const downloadAssignmentFile = useCallback(
+    async (fileObjectId?: number, fileName?: string, downloadable?: boolean) => {
+      if (fileObjectId == null || downloadable !== true) {
+        showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
+        return
+      }
+      try {
+        await downloadAdminFile({
+          fileObjectId,
+          fileName: fileName?.trim() || `과제_${fileObjectId}`,
+        })
+      } catch (error) {
+        handleError(error, { context: 'downloadParticipantDetailAssignmentFile' })
+      }
+    },
+    [showAlert]
+  )
+
   const handleBulkDownloadAssignments = useCallback(() => {
-    const fileRows = rows.filter(row => row.submission.kind === 'file')
-    if (fileRows.length === 0) {
+    const files = collectParticipantAssignmentDownloadableFiles(rows)
+    if (files.length === 0) {
       showAlert({
         title: '안내',
         content: '다운로드할 제출 파일이 없습니다.',
       })
       return
     }
-    showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
-  }, [rows, showAlert])
+    void (async () => {
+      for (const file of files) {
+        await downloadAssignmentFile(file.fileObjectId, file.fileName, true)
+      }
+    })()
+  }, [downloadAssignmentFile, rows, showAlert])
 
   useImperativeHandle(
     ref,
@@ -301,6 +359,44 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
   }, [showAlert])
 
+  const openSurveyResponseView = useCallback(
+    async (
+      title: string,
+      keys: { templateVersionId?: number; formResponseId?: number }
+    ) => {
+      const templateVersionId = keys.templateVersionId
+      const formResponseId = keys.formResponseId
+      if (
+        templateVersionId == null ||
+        formResponseId == null ||
+        !Number.isFinite(templateVersionId) ||
+        !Number.isFinite(formResponseId)
+      ) {
+        showComingSoon()
+        return
+      }
+      setSurveyViewLoading(true)
+      setSurveyViewTitle(title)
+      try {
+        const detail = await fetchGeneralProgramSurveyResponseDetail(
+          program.id,
+          String(templateVersionId),
+          String(formResponseId)
+        )
+        if (detail == null) {
+          showComingSoon()
+          return
+        }
+        setSurveyViewAnswers(detail.answers ?? [])
+      } catch (error) {
+        handleError(error, { context: 'openParticipantDetailSurveyResponse' })
+      } finally {
+        setSurveyViewLoading(false)
+      }
+    },
+    [program.id, showComingSoon]
+  )
+
   const renderSubmissionCell = useCallback(
     (record: ParticipatingIndividualParticipantAssignmentRow) => {
       const { submission, educationProgress } = record
@@ -319,13 +415,36 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
       if (submission.kind === 'file') {
         return (
-          <button
-            type="button"
-            className="participating-individual-participant-assignment-section__submission-link"
-            onClick={showComingSoon}
-          >
-            {submission.fileName}
-          </button>
+          <div className="assignment-submission-modal__status-text">
+            <button
+              type="button"
+              className="participating-individual-participant-assignment-section__submission-link"
+              onClick={() =>
+                void downloadAssignmentFile(
+                  submission.fileObjectId,
+                  submission.fileName,
+                  submission.downloadable
+                )
+              }
+            >
+              {submission.fileName}
+            </button>
+            {submission.secondaryFileName ? (
+              <button
+                type="button"
+                className="participating-individual-participant-assignment-section__submission-link"
+                onClick={() =>
+                  void downloadAssignmentFile(
+                    submission.secondaryFileObjectId,
+                    submission.secondaryFileName,
+                    submission.secondaryDownloadable
+                  )
+                }
+              >
+                {submission.secondaryFileName}
+              </button>
+            ) : null}
+          </div>
         )
       }
 
@@ -344,7 +463,15 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
       if (submission.kind === 'survey_view') {
         return (
-          <AssignmentSubmissionCellActionButton onClick={showComingSoon}>
+          <AssignmentSubmissionCellActionButton
+            loading={surveyViewLoading}
+            onClick={() =>
+              void openSurveyResponseView('설문조사 보기', {
+                templateVersionId: submission.templateVersionId,
+                formResponseId: submission.formResponseId,
+              })
+            }
+          >
             설문조사 보기
           </AssignmentSubmissionCellActionButton>
         )
@@ -352,7 +479,15 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
       if (submission.kind === 'satisfaction_survey_view') {
         return (
-          <AssignmentSubmissionCellActionButton onClick={showComingSoon}>
+          <AssignmentSubmissionCellActionButton
+            loading={surveyViewLoading}
+            onClick={() =>
+              void openSurveyResponseView('만족도조사 보기', {
+                templateVersionId: submission.templateVersionId,
+                formResponseId: submission.formResponseId,
+              })
+            }
+          >
             만족도조사 보기
           </AssignmentSubmissionCellActionButton>
         )
@@ -360,7 +495,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
       return '-'
     },
-    [showComingSoon]
+    [downloadAssignmentFile, openSurveyResponseView, surveyViewLoading]
   )
 
   const columns: ColumnsType<ParticipatingIndividualParticipantAssignmentRow & { no: number }> =
@@ -517,6 +652,32 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         onCancel={() => setTeamChangeModalOpen(false)}
         onConfirm={handleTeamChangeConfirm}
       />
+      <TealHeaderModal
+        open={surveyViewAnswers != null}
+        onCancel={() => setSurveyViewAnswers(null)}
+        title={surveyViewTitle}
+        size="compact"
+      >
+        {surveyViewAnswers != null && surveyViewAnswers.length === 0 ? (
+          <p className="participating-individual-participant-assignment-section__survey-empty">
+            제출된 답변이 없습니다.
+          </p>
+        ) : (
+          <dl className="participating-individual-participant-assignment-section__survey-answers">
+            {(surveyViewAnswers ?? []).map((answer, index) => (
+              <div
+                key={answer.answerId ?? `${answer.questionId ?? index}-${index}`}
+                className="participating-individual-participant-assignment-section__survey-row"
+              >
+                <dt>
+                  {answer.questionLabel?.trim() || answer.questionKey?.trim() || `문항 ${index + 1}`}
+                </dt>
+                <dd>{answer.answerDisplayText?.trim() || answer.answerValueJson?.trim() || '-'}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </TealHeaderModal>
     </div>
   )
 })

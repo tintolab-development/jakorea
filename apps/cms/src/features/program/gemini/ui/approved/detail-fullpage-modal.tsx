@@ -1,5 +1,11 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import {
+  revealGeminiApprovedTrainingPersonalInfo,
+  type GeminiApprovedTrainingPrivacyUnmasked,
+} from '../../api/visiting-training/service'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
@@ -44,6 +50,45 @@ export function GeminiApprovedTrainingDetailFullPageModal({
   )
   const todayKey = useToday()
   const { detail, isLoading } = useGeminiApprovedTrainingDetail(approvedTrainingId)
+  const [unmasked, setUnmasked] = useState<GeminiApprovedTrainingPrivacyUnmasked | null>(null)
+
+  const {
+    personalInfoRevealed,
+    openPersonalInfoRevealConfirm,
+    confirmModal: personalInfoRevealModal,
+  } = usePersonalInfoReveal({
+    resolveAccessItem: () => detail?.managerNameKo || detail?.institutionName || '승인 연수 정보',
+    revealPersonalInfo: reason => {
+      if (!detail) return Promise.reject(new Error('승인 연수 상세가 없습니다.'))
+      return revealGeminiApprovedTrainingPersonalInfo(detail, reason)
+    },
+    onPrivacyUnmasked: payload => setUnmasked(payload as GeminiApprovedTrainingPrivacyUnmasked),
+    resetDeps: [approvedTrainingId],
+    controlMode: 'headerStickyNoop',
+  })
+
+  const displayedDetail = useMemo(() => {
+    if (!detail || !unmasked || !personalInfoRevealed) return detail
+    return {
+      ...detail,
+      managerNameKo: unmasked.teacherName ?? detail.managerNameKo,
+      managerContact: unmasked.teacherPhone ?? detail.managerContact,
+      managerEmail: unmasked.teacherEmail ?? detail.managerEmail,
+      managerHomeAddress: unmasked.teacherHomeAddress ?? detail.managerHomeAddress,
+      managerAccountNumber: unmasked.teacherAccountNumber ?? '',
+      managerPosition: '',
+      managerSubject: '',
+      instructor:
+        unmasked.instructor == null
+          ? detail.instructor
+          : {
+              ...detail.instructor,
+              contact: unmasked.instructor.phone ?? detail.instructor.contact,
+              email: unmasked.instructor.email ?? detail.instructor.email,
+              region: unmasked.instructor.homeAddress ?? detail.instructor.region,
+            },
+    }
+  }, [detail, personalInfoRevealed, unmasked])
 
   const trainingDatetimeLabel = detail ? formatTrainingDatetimeDisplay(detail) : '-'
   const detailTitle = detail
@@ -109,10 +154,27 @@ export function GeminiApprovedTrainingDetailFullPageModal({
           />
         }
       >
-        {detail ? (
+        {detail && displayedDetail ? (
           <>
             {activeLnb === 'info' ? (
-              <GeminiApprovedTrainingDetailProgramInfoTab detail={detail} todayKey={todayKey} />
+              <>
+                <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
+                  <PersonalInfoRevealButton
+                    labelMode="stickyReveal"
+                    revealed={personalInfoRevealed}
+                    cmsSize="large"
+                    width={180}
+                    onClick={openPersonalInfoRevealConfirm}
+                  />
+                </div>
+                <div className="program-detail-fullpage-modal__info-tab">
+                  <GeminiApprovedTrainingDetailProgramInfoTab
+                    detail={displayedDetail}
+                    todayKey={todayKey}
+                    personalInfoRevealed={personalInfoRevealed}
+                  />
+                </div>
+              </>
             ) : activeLnb === 'instructors' ? (
               <GeminiApprovedTrainingDetailInstructorApplicationTab
                 approvedTrainingId={approvedTrainingId}
@@ -128,6 +190,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
             )}
           </>
         ) : null}
+        {personalInfoRevealModal}
     </DetailFullPageModal>
   )
 }

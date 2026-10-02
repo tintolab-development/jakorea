@@ -30,6 +30,7 @@ import type {
 } from '@/types/domain'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, CmsToggle, useCmsAlert } from '@/shared/ui'
+import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -1576,12 +1577,18 @@ function TrainedTeachersScheduleSection({
 
 /** 교육 진행 일정 설정 섹션 — 일정형 복수는 비노출. 수정 모드: date/period + 예정일 목록 */
 function TrainedTeachersScheduleSettingsSection({
+  programId,
+  operationStart,
+  operationEnd,
   educationStructure,
   sessionRound,
   commonInfo,
   isEditMode = false,
   form,
 }: {
+  programId: string
+  operationStart?: Program['startDate']
+  operationEnd?: Program['endDate']
   educationStructure: 'curriculum' | 'schedule'
   sessionRound: 'single' | 'multi'
   commonInfo: TrainedTeachersCommonInfo
@@ -1639,8 +1646,11 @@ function TrainedTeachersScheduleSettingsSection({
       titleTrailing={
         isFormEdit && form ? (
           <EducationScheduleChangeTitleAction
+            programId={programId}
             scheduleLines={lines}
             educationScheduleMode={scheduleMode}
+            operationStart={operationStart}
+            operationEnd={operationEnd}
             onApply={nextLines => {
               form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
             }}
@@ -1924,6 +1934,7 @@ export function TrainedTeachersCommonInfoView({
   const handleSave = () => {
     const run = async () => {
       setSaving(true)
+      const endOverlay = beginBlockingOverlay()
       try {
         // KPI SSOT = programs PATCH — draft → RHF 동기화 후 onBeforePersist(infoTriggerSave)
         // int32 초과 시드는 이미 clamp — 저장 직전 한 번 더 방어
@@ -2089,6 +2100,7 @@ export function TrainedTeachersCommonInfoView({
       } catch {
         return
       } finally {
+        endOverlay()
         setSaving(false)
       }
     }
@@ -2208,6 +2220,9 @@ export function TrainedTeachersCommonInfoView({
       )}
 
       <TrainedTeachersScheduleSettingsSection
+        programId={program.id}
+        operationStart={program.startDate}
+        operationEnd={program.endDate}
         educationStructure={educationStructure}
         sessionRound={sessionRound}
         commonInfo={commonInfo}

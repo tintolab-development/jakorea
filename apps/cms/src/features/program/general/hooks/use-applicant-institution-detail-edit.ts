@@ -44,8 +44,7 @@ import { mapOrganizationApplicationDetailToApplicantSchoolRow, toRequestedEducat
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 
 /**
- * 기관 신청자 상세 편집 — 합반은 organization-merge-groups remote만 저장.
- * 그 외 필드(주소·교재·교사 등)는 상세 PATCH API 부재 → mock 금지, API 연동 안내.
+ * 기관 신청자 상세 편집 — 합반은 organization-merge-groups, 그 외는 PATCH organization-applications.
  */
 
 export interface TextbookSelectOption {
@@ -265,28 +264,6 @@ export function useApplicantInstitutionDetailEdit({
       return false
     }
     const baselineDraft = rowToEditDraft(institution)
-    const unsupportedKeys = [
-      'adminComment',
-      'applicationReason',
-      'otherRequests',
-      'computerInRoom',
-      'waitingRoomAvailable',
-      'waitingRoomLocation',
-      'mealProvided',
-      'mealNotice',
-      'parkingInfo',
-    ] as const
-    if (
-      unsupportedKeys.some(
-        key => String(normalizedDraft[key] ?? '') !== String(baselineDraft[key] ?? '')
-      )
-    ) {
-      notifyProgramApiUnavailable(
-        'general-org-application-detail-unsupported-patch',
-        '일반 프로그램 · 기관 신청 안내 정보 수정'
-      )
-      return false
-    }
 
     setIsSaving(true)
     try {
@@ -348,6 +325,18 @@ export function useApplicantInstitutionDetailEdit({
             undefined,
           teacherEmail: normalizedDraft.teacherEmail.trim() || undefined,
           textbookId: Number.isFinite(textbookId) ? textbookId : undefined,
+          applicationReason: normalizedDraft.applicationReason.trim() || undefined,
+          otherRequests: normalizedDraft.otherRequests.trim() || undefined,
+          computerInRoom: normalizedDraft.computerInRoom.trim() || undefined,
+          waitingRoomAvailable: normalizedDraft.waitingRoomAvailable,
+          waitingRoomLocation: normalizedDraft.waitingRoomAvailable
+            ? normalizedDraft.waitingRoomLocation.trim() || undefined
+            : undefined,
+          mealProvided: normalizedDraft.mealProvided,
+          mealNotice: normalizedDraft.mealProvided
+            ? normalizedDraft.mealNotice.trim() || undefined
+            : undefined,
+          parkingInfo: normalizedDraft.parkingInfo.trim() || undefined,
         })
         remotelyUpdatedInstitution = mapOrganizationApplicationDetailToApplicantSchoolRow(
           response,

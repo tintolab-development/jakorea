@@ -12,6 +12,11 @@ import {
   type GeneralProgramRegistrationTabVisibilityOptions,
 } from '@/features/program/general/model/registration-flow'
 import {
+  pickRecruitmentCopyRow,
+  type RecruitmentCopyAudience,
+} from '@/features/program/shared/lib/recruitment-row-copy'
+import type { ProgramParticipantApplicationEditorVariant } from '@/features/template/hooks/use-program-participant-application-editor'
+import {
   UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS,
   UJAT_PROGRAM_REGISTRATION_STEPS,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
@@ -285,32 +290,95 @@ export function recruitmentApplicationBindingScope(
   return { targetScope: 'RECRUITMENT', targetScopeId: recruitmentId }
 }
 
+/**
+ * 신청 양식 미리보기·수정이 Portal `application-options.formBindingId`(모집 행 scope)와
+ * 같은 바인딩을 쓰도록 `activeRecruitmentId` 를 맞춘다.
+ */
+export function applicationAudienceForEditorVariant(
+  variant: ProgramParticipantApplicationEditorVariant
+): RecruitmentCopyAudience | null {
+  if (variant === 'instructor') return 'instructor'
+  if (variant === 'volunteer') return 'volunteer'
+  if (
+    variant === 'institution' ||
+    variant === 'individual' ||
+    variant === 'economy-application-institution' ||
+    variant === 'trained-teachers-application-institution'
+  ) {
+    return 'participant'
+  }
+  return null
+}
+
+export function programWithApplicationFormRecruitmentScope(
+  program: Program,
+  audience: RecruitmentCopyAudience
+): Program {
+  const rows = program.programRecruitments ?? []
+  let row = pickRecruitmentCopyRow(program, audience)
+  if (audience === 'participant' && rows.length > 0) {
+    const participants = rows.filter(
+      item => (item.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
+    )
+    if (participants.length > 1) {
+      const types = getGeneralParticipantTypes(program)
+      const want =
+        types.includes('individual') && !types.includes('school_institution')
+          ? 'INDIVIDUAL'
+          : types.includes('school_institution')
+            ? 'ORGANIZATION'
+            : null
+      if (want != null) {
+        const byType = participants.find(
+          item => (item.applicationType ?? '').toUpperCase() === want
+        )
+        if (byType != null) row = byType
+      }
+    }
+  }
+  if (row?.id == null) return program
+  if (program.activeRecruitmentId === row.id) return program
+  return { ...program, activeRecruitmentId: row.id }
+}
+
 export type RowApplicationBindingResolution =
   | { kind: 'unscoped' }
   | { kind: 'missing' }
   | { kind: 'binding'; binding: ProgramFormBindingResponse }
 
 /**
- * 행 `applicationFormBindingId`만 고른다. null이면 프로그램 바인딩으로 바꾸지 않는다.
+ * 행 `applicationFormBindingId`를 우선한다.
+ * 비어 있거나 깨져 있으면 같은 모집 `targetScope=RECRUITMENT` 바인딩을 고른다.
+ * 프로그램 단위 바인딩으로 바꾸지 않는다.
  */
 export function resolveRowApplicationBinding(
   program: Program,
   bindings: readonly ProgramFormBindingResponse[],
-  spec: Pick<OperationalFormSpec, 'formType'>
+  spec: Pick<OperationalFormSpec, 'formType' | 'targetRole'>
 ): RowApplicationBindingResolution {
-  if (recruitmentApplicationBindingScope(program, spec.formType) == null) {
+  const scope = recruitmentApplicationBindingScope(program, spec.formType)
+  if (scope == null) {
     return { kind: 'unscoped' }
   }
   const row = program.programRecruitments?.find(
     item => item.id === program.activeRecruitmentId
   )
   const bindingId = row?.applicationFormBindingId
-  if (bindingId == null) return { kind: 'missing' }
-  const binding = bindings.find(
-    item => item.bindingId === bindingId && item.active !== false
-  )
-  if (binding == null) return { kind: 'missing' }
-  return { kind: 'binding', binding }
+  if (bindingId != null) {
+    const binding = bindings.find(
+      item => item.bindingId === bindingId && item.active !== false
+    )
+    if (binding != null) return { kind: 'binding', binding }
+  }
+  const byScope = bindings.find(item => {
+    if (item.active === false) return false
+    if (normalizeBindingType(item.formType) !== 'APPLICATION') return false
+    if ((item.targetScope ?? '').toUpperCase() !== 'RECRUITMENT') return false
+    if (item.targetScopeId !== scope.targetScopeId) return false
+    return roleMatches(item, spec.targetRole)
+  })
+  if (byScope != null) return { kind: 'binding', binding: byScope }
+  return { kind: 'missing' }
 }
 
 function roleMatches(binding: ProgramFormBindingResponse, targetRole: string | undefined): boolean {

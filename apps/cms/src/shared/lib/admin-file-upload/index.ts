@@ -42,18 +42,12 @@ export {
 export {
   collectAdminFileObjectIdsFromContent,
   faqInlineImageOwner,
-  inlineImageRequiresOwnerId,
   mailTemplateInlineImageOwner,
   noticeInlineImageOwner,
-  peekPendingInlineImage,
-  persistRichTextInlineImage,
   programInlineImageOwner,
   programPostInlineImageOwner,
-  rememberPendingInlineImage,
   resolveRichTextInlineImageSrc,
   shouldInsertRichTextImageLocally,
-  stripBlobImageSources,
-  takePendingInlineImage,
 } from '@/shared/lib/admin-file-upload/inline-image'
 export type {
   AdminFileUploadOwner,

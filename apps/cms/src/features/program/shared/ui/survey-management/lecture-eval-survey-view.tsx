@@ -46,6 +46,8 @@ export type LectureEvalSurveyViewProps = {
   onSubmitClick: () => void
   onEditResponseClick: () => void
   onDownloadResultsClick: () => void
+  /** 기본: 설문 상태가 finished. 일반은 제출 후에도 결과 탭을 연다. */
+  resultsAccessible?: boolean
 }
 
 export function LectureEvalSurveyView({
@@ -67,12 +69,14 @@ export function LectureEvalSurveyView({
   onSubmitClick,
   onEditResponseClick,
   onDownloadResultsClick,
+  resultsAccessible: resultsAccessibleProp,
 }: LectureEvalSurveyViewProps) {
   const showForm =
     survey != null && isLectureEvalFormPhase(survey, submitted) && formDraft != null
   const showSubmitted = survey != null && submitted
   const showPreStart = survey != null && survey.status === 'before_start'
-  const resultsAccessible = survey != null && isLectureEvalResultsTabAccessible(survey)
+  const resultsAccessible =
+    resultsAccessibleProp ?? (survey != null && isLectureEvalResultsTabAccessible(survey))
   const downloadEnabled = survey != null && canDownloadSurveyResults(survey)
 
   const trailingActions =

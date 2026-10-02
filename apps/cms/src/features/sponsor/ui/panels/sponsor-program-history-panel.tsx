@@ -27,6 +27,9 @@ import {
   isProgramHistoryDeleteBlockedByDisplayStatus,
 } from '@/shared/constants/status'
 
+/** 임시: 이력 삭제 UI 비노출. true로 되돌리면 버튼·삭제용 선택이 다시 보인다. */
+const SHOW_PROGRAM_HISTORY_DELETE = false
+
 const LIFECYCLE_OPTIONS = [
   { label: '전체', value: SPONSOR_PROGRAM_HISTORY_FILTER_ALL },
   { label: '프로그램 진행 예정', value: 'planned' },
@@ -142,7 +145,7 @@ export function SponsorProgramHistoryPanel({
   }, [selectedRows])
 
   const rowSelection = useMemo((): TableRowSelection<SponsorProgramHistoryRow> | undefined => {
-    if (!canWrite) return undefined
+    if (!SHOW_PROGRAM_HISTORY_DELETE || !canWrite) return undefined
     return {
       columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
       selectedRowKeys: selectedKeys,
@@ -247,14 +250,16 @@ export function SponsorProgramHistoryPanel({
         title="프로그램 진행 이력"
         description={`총 ${(totalCount ?? filteredRows.length).toLocaleString()}건`}
         actions={
-          <CmsButton
-            variant="delete"
-            onClick={handleDeleteProgramHistory}
-            disabled={!canWrite || deleteDisabled}
-            loading={deleteDisabled}
-          >
-            이력 삭제
-          </CmsButton>
+          SHOW_PROGRAM_HISTORY_DELETE ? (
+            <CmsButton
+              variant="delete"
+              onClick={handleDeleteProgramHistory}
+              disabled={!canWrite || deleteDisabled}
+              loading={deleteDisabled}
+            >
+              이력 삭제
+            </CmsButton>
+          ) : null
         }
         excelExport={{
           columns,

@@ -20,6 +20,10 @@ import {
   resolveGeneralApplicationEditorVariant,
   type GeneralApplicationTabKey,
 } from '@/features/program/general/lib/application-tabs'
+import {
+  applicationAudienceForEditorVariant,
+  programWithApplicationFormRecruitmentScope,
+} from '@/features/program/general/lib/operational-form-bindings'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
 import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import {
@@ -57,6 +61,12 @@ export function GeneralProgramApplicationTemplateEditModal({
     () => variantOverride ?? resolveGeneralApplicationEditorVariant(program, applicationTab),
     [variantOverride, program, applicationTab]
   )
+  const scopedProgram = useMemo(() => {
+    const audience = applicationAudienceForEditorVariant(variant)
+    return audience != null
+      ? programWithApplicationFormRecruitmentScope(program, audience)
+      : program
+  }, [program, variant])
   const templateName = useMemo(() => resolveGeneralApplicationTemplateName(variant), [variant])
   const definitionId = useMemo(
     () => getTemplateIdForParticipantApplicationVariant(variant),
@@ -84,13 +94,15 @@ export function GeneralProgramApplicationTemplateEditModal({
     ) {
       return
     }
-    patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
+    patchInstitutionApplicationProgramBridge(
+      resolveInstitutionApplicationProgramBridge(scopedProgram)
+    )
     return () => {
       resetInstitutionApplicationProgramBridge()
     }
-  }, [open, program, variant])
+  }, [open, scopedProgram, variant])
 
-  const formSource = useProgramApplicationFormLoadSource(program, variant, {
+  const formSource = useProgramApplicationFormLoadSource(scopedProgram, variant, {
     ensureScopedBinding: open,
   })
 
@@ -102,7 +114,7 @@ export function GeneralProgramApplicationTemplateEditModal({
     participantOrganization: variant === 'institution',
     programLinkedInstitutionApplicationForm:
       variant === 'institution' || variant === 'economy-application-institution',
-    program,
+    program: scopedProgram,
     programLinkedApplicationFormPreview:
       variant === 'institution' ||
       variant === 'individual' ||

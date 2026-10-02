@@ -6,6 +6,8 @@
  * OpenAPI spec version: v9
  */
 import type { AvailableScheduleSlot } from './availableScheduleSlot';
+import type { FeePolicy } from './feePolicy';
+import type { InstructorMemberProfile } from './instructorMemberProfile';
 
 export interface InstructorApplicationDetailResponse {
   id?: number;
@@ -44,4 +46,34 @@ export interface InstructorApplicationDetailResponse {
   availableActions?: string[];
   privacyMaskingLevel?: string;
   canRevealPersonalInfo?: boolean;
+  /**
+     * 강사 회원에 DB로 연결된 기존 소속 학교/기관 ID. 목록과 같은 값. 없으면 null
+     * @nullable
+     */
+  affiliationOrganizationId?: number | null;
+  /**
+     * 교사 프로필 재직 상태. ACTIVE | ON_LEAVE | TRANSFERRED | INACTIVE | RESIGNED | WITHDRAWN. 교사 프로필이 없으면 null
+     * @nullable
+     */
+  employmentStatus?: string | null;
+  /**
+     * 재직(ACTIVE)이면 true. 교사 프로필이 없으면 null
+     * @nullable
+     */
+  affiliationIsCurrentlyEmployed?: boolean | null;
+  /**
+     * 저장된 강사비. basis/measure/amount가 모두 없으면 null
+     * @nullable
+     */
+  feePolicy?: FeePolicy;
+  /**
+     * 사업소득자 해당 여부. 해당 | 해당 없음. 없으면 null
+     * @nullable
+     */
+  businessIncomeEarnerStatus?: string | null;
+  /**
+     * 교사 겸직 스냅샷. 교사 프로필이 없으면 null
+     * @nullable
+     */
+  instructorMemberProfile?: InstructorMemberProfile;
 }

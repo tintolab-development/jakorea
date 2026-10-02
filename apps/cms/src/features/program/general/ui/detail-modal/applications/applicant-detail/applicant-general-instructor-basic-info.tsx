@@ -4,6 +4,7 @@
  */
 
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { SchoolTeacherEmploymentStatus } from '@/types/user'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
@@ -41,6 +42,8 @@ export interface ApplicantGeneralInstructorBasicInfoProps {
   onDraftChange?: (partial: Partial<ApplicantInstructorEditDraft>) => void
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
+  persistAffiliationEmploymentRemote?: boolean
+  onAffiliationEmploymentStatusSaved?: (status: SchoolTeacherEmploymentStatus) => void
 }
 
 function ProgramApprovalStatusValue({
@@ -68,6 +71,8 @@ export function ApplicantGeneralInstructorBasicInfo({
   onDraftChange,
   validationErrors,
   onResendNotificationClick,
+  persistAffiliationEmploymentRemote = false,
+  onAffiliationEmploymentStatusSaved,
 }: ApplicantGeneralInstructorBasicInfoProps) {
   const shouldMask = maskSensitive && instructor.approvalStatus !== 'approved'
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
@@ -100,6 +105,10 @@ export function ApplicantGeneralInstructorBasicInfo({
         instructorId={instructor.id}
         affiliation={instructor.affiliation}
         employmentStatus={affiliationEmploymentStatus}
+        affiliationOrganizationId={instructor.affiliationOrganizationId}
+        instructorMemberId={instructor.instructorMemberId}
+        persistRemote={persistAffiliationEmploymentRemote}
+        onEmploymentStatusSaved={onAffiliationEmploymentStatusSaved}
       />
     ) : null
 

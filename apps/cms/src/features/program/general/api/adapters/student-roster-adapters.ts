@@ -10,6 +10,10 @@ import type {
   StudentGenderKey,
 } from '@/features/program/general/model/school-detail-types'
 import { formatStudentBirthDateFromDigits } from '@/features/program/general/model/school-detail-add-student-schema'
+import {
+  PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID,
+  type StudentPortraitConsentSubmission,
+} from '@/features/program/general/lib/student-portrait-consent'
 
 function isLikelyMaskedPii(value?: string | null): boolean {
   if (!value) return false
@@ -76,13 +80,34 @@ export function formatStudentGradeClass(grade?: string | null, className?: strin
   return c || g
 }
 
+type StudentRosterItemEnriched = StudentRosterItemResponse & {
+  portraitConsentFileObjectId?: number | null
+  satisfactionSurveyCompleted?: boolean | null
+}
+
+export function mapRosterPortraitConsentSubmission(
+  item: Pick<StudentRosterItemResponse, 'portraitConsentStatus' | 'portraitConsentUpdatedAt'>
+): StudentPortraitConsentSubmission | null {
+  const status = item.portraitConsentStatus?.trim().toUpperCase()
+  if (status !== 'CONSENTED') return null
+  const submittedAt = item.portraitConsentUpdatedAt?.trim()
+  if (!submittedAt) return null
+  return {
+    templateId: PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID,
+    submittedAt,
+  }
+}
+
 export function mapStudentRosterItemToRow(
   item: StudentRosterItemResponse,
   index: number
 ): SchoolDetailStudentRow {
   const rosterId = item.rosterId
+  const extra = item as StudentRosterItemEnriched
+  const fileObjectId = extra.portraitConsentFileObjectId
   return {
     id: rosterId != null ? String(rosterId) : `roster-row-${index + 1}`,
+    memberId: item.memberId,
     no: item.studentNo ?? index + 1,
     name: item.studentName?.trim() || '-',
     gender: mapApiGenderToStudentGenderKey(item.gender),
@@ -91,6 +116,12 @@ export function mapStudentRosterItemToRow(
     contact: item.maskedPhone?.trim() || undefined,
     email: item.maskedEmail?.trim() || undefined,
     participantId: item.participantId,
+    portraitConsentSubmission: mapRosterPortraitConsentSubmission(item),
+    portraitConsentFileObjectId:
+      typeof fileObjectId === 'number' && Number.isFinite(fileObjectId) && fileObjectId > 0
+        ? fileObjectId
+        : undefined,
+    satisfactionSurveyCompleted: extra.satisfactionSurveyCompleted === true,
   }
 }
 

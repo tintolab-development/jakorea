@@ -1,0 +1,87 @@
+name: Deploy CMS QA
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: cms-qa-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ROLE_ARN: arn:aws:iam::264015108093:role/ja-prod-github-cms-deploy-role
+  CMS_BUCKET: ja-prod-frontend-cms-264015108093
+  CMS_DISTRIBUTION_ID: E1H6YN0NW3269W
+  NODE_OPTIONS: --max-old-space-size=5120
+
+jobs:
+  deploy:
+    name: Build and deploy CMS
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.20.2
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build CMS
+        run: pnpm --filter cms build
+
+      - name: Verify build output
+        run: test -f apps/cms/dist/index.html
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-cms-qa-deploy
+
+      - name: Verify AWS identity
+        run: |
+          aws sts get-caller-identity \
+            --query '{Account:Account,Arn:Arn}' \
+            --output json
+
+      - name: Deploy CMS to S3
+        run: |
+          aws s3 sync apps/cms/dist/ "s3://${CMS_BUCKET}/" \
+            --delete \
+            --no-progress \
+            --cache-control "public,max-age=0,must-revalidate"
+
+      - name: Invalidate CloudFront
+        shell: bash
+        run: |
+          INVALIDATION_ID="$(
+            aws cloudfront create-invalidation \
+              --distribution-id "${CMS_DISTRIBUTION_ID}" \
+              --paths '/*' \
+              --query 'Invalidation.Id' \
+              --output text
+          )"
+
+          test -n "${INVALIDATION_ID}"
+
+          aws cloudfront wait invalidation-completed \
+            --distribution-id "${CMS_DISTRIBUTION_ID}" \
+            --id "${INVALIDATION_ID}"

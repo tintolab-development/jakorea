@@ -5,6 +5,11 @@
 
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
+import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import { useCmsAlert } from '@/shared/ui'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { updateTeacherEmploymentStatusRemote } from '@/features/user/api/members-api-client'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { StatusDropdownCell } from '@/shared/components'
@@ -67,24 +72,79 @@ export function AffiliationEmploymentStatusField({
   instructorId,
   affiliation,
   employmentStatus: initialEmploymentStatus,
+  affiliationOrganizationId,
+  instructorMemberId,
+  persistRemote = false,
+  onEmploymentStatusSaved,
 }: {
   instructorId: string
   affiliation?: string
   employmentStatus: SchoolTeacherEmploymentStatus | null
+  affiliationOrganizationId?: number | null
+  instructorMemberId?: number
+  persistRemote?: boolean
+  onEmploymentStatusSaved?: (status: SchoolTeacherEmploymentStatus) => void
 }) {
+  const { showAlert } = useCmsAlert()
   const [employmentStatus, setEmploymentStatus] = useState<SchoolTeacherEmploymentStatus | null>(
     () => initialEmploymentStatus
   )
   const [employmentDropdownOpen, setEmploymentDropdownOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setEmploymentStatus(initialEmploymentStatus)
   }, [instructorId, affiliation, initialEmploymentStatus])
 
-  const handleEmploymentStatusChange = useCallback((next: SchoolTeacherEmploymentStatus) => {
-    setEmploymentStatus(next)
-    setEmploymentDropdownOpen(false)
-  }, [])
+  const handleEmploymentStatusChange = useCallback(
+    async (next: SchoolTeacherEmploymentStatus) => {
+      if (!persistRemote) {
+        setEmploymentStatus(next)
+        setEmploymentDropdownOpen(false)
+        return
+      }
+
+      const organizationId =
+        affiliationOrganizationId != null && Number.isFinite(affiliationOrganizationId)
+          ? affiliationOrganizationId
+          : null
+      const teacherMemberId =
+        instructorMemberId != null && Number.isFinite(instructorMemberId)
+          ? instructorMemberId
+          : null
+
+      if (!isMembersRemoteEnabled() || organizationId == null || teacherMemberId == null) {
+        notifyProgramApiUnavailable(
+          'general-instructor-affiliation-employment',
+          '일반 프로그램 · 강사 소속 재직 현황'
+        )
+        setEmploymentDropdownOpen(false)
+        return
+      }
+
+      setSaving(true)
+      try {
+        await updateTeacherEmploymentStatusRemote(organizationId, teacherMemberId, next)
+        setEmploymentStatus(next)
+        onEmploymentStatusSaved?.(next)
+      } catch (error) {
+        void showAlert({
+          title: '재직 현황 저장 실패',
+          content: extractApiErrorMessage(error) || '재직 현황을 저장하지 못했습니다.',
+        })
+      } finally {
+        setSaving(false)
+        setEmploymentDropdownOpen(false)
+      }
+    },
+    [
+      affiliationOrganizationId,
+      instructorMemberId,
+      onEmploymentStatusSaved,
+      persistRemote,
+      showAlert,
+    ]
+  )
 
   if (employmentStatus == null) {
     return null
@@ -100,6 +160,7 @@ export function AffiliationEmploymentStatusField({
         renderBadge={status => <SchoolTeacherEmploymentStatusBadge status={status} />}
         isItemDisabled={(cur, opt) => cur === opt}
         onChange={handleEmploymentStatusChange}
+        isUpdating={saving}
         isOpen={employmentDropdownOpen}
         onOpenChange={setEmploymentDropdownOpen}
         tagLayout="tag100"

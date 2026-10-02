@@ -31,6 +31,7 @@ import {
   resolveGeneralProgramVolunteerRecruitmentDisplay,
   resolveVolunteerRecruitmentInterviewEnabled,
 } from '@/features/program/general/lib/volunteer-recruitment-display'
+import { syncVolunteerInterviewRangeSealOverlay } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './volunteer-recruitment-info-view.css'
@@ -188,6 +189,9 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                   onChange={([start, end]) => {
                     field.onChange(start ? start.toISOString() : undefined)
                     form.setValue('interviewEndDate', end ? end.toISOString() : undefined)
+                    if (start && end) {
+                      syncVolunteerInterviewRangeSealOverlay(start.toISOString(), end.toISOString())
+                    }
                   }}
                   placeholder={['면접 시작일', '면접 종료일']}
                   width="100%"

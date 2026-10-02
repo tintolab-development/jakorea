@@ -14,7 +14,7 @@ import {
   mapStudentRowsToRosterCommitRequest,
 } from '@/features/program/general/api/adapters/student-roster-adapters'
 import type { SchoolDetailStudentRow } from '@/features/program/general/model/school-detail-types'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { isTempMockOrgSchoolRowId } from '@/features/program/general/lib/temp-mock-org-program'
 import {
   notifyProgramApiUnavailable,
@@ -32,7 +32,7 @@ export function useOrganizationStudentRosterRemote(input: {
     input.organizationApplicationId != null && String(input.organizationApplicationId).trim() !== ''
       ? String(input.organizationApplicationId)
       : ''
-  const remoteCapability = shouldUseGeneralApplicationsRemoteApi()
+  const remoteCapability = shouldUseOrganizationApplicationRemoteApi()
   const isTempMockOrgApplication = isTempMockOrgSchoolRowId(applicationId)
   const enabled = Boolean(
     input.enabled !== false && remoteCapability && applicationId && !isTempMockOrgApplication

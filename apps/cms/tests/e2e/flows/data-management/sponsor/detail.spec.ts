@@ -65,8 +65,8 @@ test.describe('후원사 상세 LNB', () => {
       })
     }
 
-    await test.step('이력 삭제는 remote에서 비활성 (gap P0)', async () => {
-      await expect(page.getByRole('button', { name: '이력 삭제' })).toBeDisabled()
+    await test.step('이력 삭제는 임시 비노출', async () => {
+      await expect(page.getByRole('button', { name: '이력 삭제' })).toHaveCount(0)
     })
 
     const historyNav = await sponsors.tryOpenHistoryProgramDetail()

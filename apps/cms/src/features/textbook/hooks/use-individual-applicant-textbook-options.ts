@@ -9,6 +9,7 @@ import {
   serializeIndividualTextbookCatalogKey,
 } from '@/features/textbook/api/textbook-program-catalog'
 import { fetchProgramMaterialTextbookIds } from '@/features/program/general/api/program-materials-api-client'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { buildIndividualApplicantTextbookOptions } from '@/features/program/general/lib/individual-applicant-textbook'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -28,6 +29,9 @@ export function useIndividualApplicantTextbookOptions(
   const canFetchMatches = Boolean(program && businessArea && grade)
   const catalogKey = program ? serializeIndividualTextbookCatalogKey(program, grade) : ''
   const remoteEnabled = shouldUseTextbooksRemoteApi() && canFetchMatches
+  /** FE 전용 임시 mock 프로그램 id는 원격 programs API에 없음 → materials 교집합 생략 */
+  const materialsEnabled =
+    remoteEnabled && Boolean(program?.id) && !isGeneralProgramTempMockProgramId(program?.id)
 
   const mockCatalog = useMemo(
     () =>
@@ -48,7 +52,7 @@ export function useIndividualApplicantTextbookOptions(
   const materialsQuery = useQuery({
     queryKey: [...dataManagementQueryKeys.textbooks.all(), 'program-materials', program?.id ?? ''],
     queryFn: () => fetchProgramMaterialTextbookIds(String(program!.id)),
-    enabled: remoteEnabled && Boolean(program?.id),
+    enabled: materialsEnabled,
     staleTime: 60_000,
     retry: false,
   })
@@ -62,7 +66,7 @@ export function useIndividualApplicantTextbookOptions(
         : []
 
   const materialIds =
-    !remoteEnabled
+    !materialsEnabled
       ? null
       : materialsQuery.data !== undefined
         ? materialsQuery.data
@@ -88,6 +92,6 @@ export function useIndividualApplicantTextbookOptions(
     isLoading:
       remoteEnabled &&
       ((matchesQuery.isPending || matchesQuery.isLoading) ||
-        (materialsQuery.isPending || materialsQuery.isLoading)),
+        (materialsEnabled && (materialsQuery.isPending || materialsQuery.isLoading))),
   }
 }

@@ -48,6 +48,9 @@ import '@/features/program/general/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 
+/** 임시: 이력 삭제 UI 비노출. true로 되돌리면 버튼·삭제용 선택이 다시 보인다. */
+const SHOW_PROGRAM_HISTORY_DELETE = false
+
 type AdminUser = Omit<User, 'password'>
 
 const ALL = ''
@@ -441,13 +444,15 @@ export function AdminManagedProgramHistory({
         title="프로그램 담당 이력"
         description={`총 ${displayedCount}건`}
         actions={
-          <CmsButton
-            variant="delete"
-            disabled={selectedRowKeys.length === 0}
-            onClick={handleOpenDeleteModal}
-          >
-            이력 삭제
-          </CmsButton>
+          SHOW_PROGRAM_HISTORY_DELETE ? (
+            <CmsButton
+              variant="delete"
+              disabled={selectedRowKeys.length === 0}
+              onClick={handleOpenDeleteModal}
+            >
+              이력 삭제
+            </CmsButton>
+          ) : null
         }
         excelExport={{
           columns,
@@ -456,11 +461,15 @@ export function AdminManagedProgramHistory({
       >
         <Spin spinning={membersRemote && remoteProgramsLoading}>
           <Table<Program>
-            rowSelection={{
-              columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-              selectedRowKeys,
-              onChange: keys => setSelectedRowKeys(keys),
-            }}
+            rowSelection={
+              SHOW_PROGRAM_HISTORY_DELETE
+                ? {
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys,
+                    onChange: keys => setSelectedRowKeys(keys),
+                  }
+                : undefined
+            }
             dataSource={tableData}
             columns={columns}
             rowKey="id"

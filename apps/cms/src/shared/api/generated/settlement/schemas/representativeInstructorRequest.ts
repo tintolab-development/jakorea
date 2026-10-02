@@ -13,4 +13,6 @@ export interface RepresentativeInstructorRequest {
   scheduleId?: number;
   /** @minimum 1 */
   organizationApplicationId?: number;
+  scheduleLead?: boolean;
+  role?: string;
 }
