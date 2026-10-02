@@ -36,15 +36,12 @@ export function buildGeminiApprovedManagerTableItems(
       ? mapEmploymentStatus(detail.managerEmploymentStatus)
       : null
 
-  const nameCell =
-    detail.managerScheduleChangeCount > 0 ? (
-      <span className="gemini-approved-training-detail-info__manager-name-with-badge">
-        {detail.managerNameKo}
-        <ScheduleChangeHistoryBadge count={detail.managerScheduleChangeCount} />
-      </span>
-    ) : (
-      detail.managerNameKo
-    )
+  const nameCell = (
+    <span className="gemini-approved-training-detail-info__manager-name-with-badge">
+      {detail.managerNameKo}
+      <ScheduleChangeHistoryBadge count={detail.managerScheduleChangeCount} />
+    </span>
+  )
 
   return [
     {
@@ -106,7 +103,7 @@ export function buildGeminiApprovedManagerTableItems(
               accountNumber: detail.managerAccountNumber,
               accountHolder: detail.managerAccountHolder,
             },
-            mask
+            false
           )}
         </ProgramDetailTdSegmentWrap>
       ),
