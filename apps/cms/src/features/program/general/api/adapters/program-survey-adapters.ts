@@ -116,6 +116,28 @@ export function resolveSurveyShareClipboardUrl(
   return null
 }
 
+type SurveyExpectedRespondentSource = {
+  expectedRespondentCount?: number | null
+}
+
+export function readExpectedRespondentCount(source: unknown): number | null {
+  if (source == null || typeof source !== 'object') return null
+  const value = (source as SurveyExpectedRespondentSource).expectedRespondentCount
+  if (value == null) return null
+  const n = Number(value)
+  if (!Number.isFinite(n) || n < 0) return null
+  return Math.trunc(n)
+}
+
+export function resolveSurveyResultsParticipantTotal(
+  survey: Pick<RegisteredSurvey, 'participantTotal' | 'expectedRespondentCount'>,
+  programTotal: number | undefined
+): number {
+  if (survey.expectedRespondentCount != null) return survey.expectedRespondentCount
+  if (programTotal != null && programTotal > 0) return programTotal
+  return survey.participantTotal
+}
+
 function resolveSurveyStatusFromBinding(
   binding: ProgramFormBindingResponse | undefined
 ): SurveyProgressStatus {
@@ -128,18 +150,27 @@ function resolveSurveyStatusFromBinding(
   return 'in_progress'
 }
 
+function resolveMappedExpectedRespondentCount(
+  binding?: ProgramFormBindingResponse,
+  dto?: ProgramSurveyResponse
+): number | null {
+  return readExpectedRespondentCount(binding) ?? readExpectedRespondentCount(dto)
+}
+
 export function mapProgramSurveyToRegisteredSurvey(
   dto: ProgramSurveyResponse,
   index: number,
   binding?: ProgramFormBindingResponse
 ): RegisteredSurvey {
+  const expectedRespondentCount = resolveMappedExpectedRespondentCount(binding, dto)
   return {
     id: String(dto.templateVersionId ?? dto.templateId ?? index),
     title: dto.templateName?.trim() || dto.versionLabel?.trim() || binding?.templateName?.trim() || '설문',
     templateId: String(dto.templateId ?? binding?.templateId ?? ''),
     status: resolveSurveyStatusFromBinding(binding),
     responseCount: dto.responseCount ?? dto.submittedCount ?? binding?.submittedCount ?? 0,
-    participantTotal: binding?.submittedCount ?? dto.submittedCount ?? 0,
+    participantTotal: expectedRespondentCount ?? 0,
+    expectedRespondentCount,
     bindingId:
       binding?.bindingId != null
         ? String(binding.bindingId)
@@ -153,13 +184,15 @@ export function mapFormBindingToRegisteredSurvey(
   binding: ProgramFormBindingResponse,
   index: number
 ): RegisteredSurvey {
+  const expectedRespondentCount = readExpectedRespondentCount(binding)
   return {
     id: String(binding.templateVersionId ?? binding.templateId ?? binding.bindingId ?? index),
     title: binding.templateName?.trim() || binding.versionLabel?.trim() || '설문',
     templateId: String(binding.templateId ?? ''),
     status: resolveSurveyStatusFromBinding(binding),
     responseCount: binding.submittedCount ?? 0,
-    participantTotal: binding.submittedCount ?? 0,
+    participantTotal: expectedRespondentCount ?? 0,
+    expectedRespondentCount,
     bindingId: binding.bindingId != null ? String(binding.bindingId) : undefined,
   }
 }
@@ -203,9 +236,16 @@ export function resolveSatisfactionAudienceFromBinding(
   const role = (binding.targetRole ?? binding.targetType ?? '').toUpperCase()
   if (role.includes('TEACHER') || role.includes('INSTRUCTOR')) return 'teacher'
   if (role.includes('STUDENT')) return 'student'
-  if (role.includes('VOLUNTEER') && role.includes('H2')) return 'volunteer_h2'
-  if (role.includes('VOLUNTEER')) return 'volunteer_h1'
+  if (role.includes('VOLUNTEER')) {
+    const termId = Number(binding.targetScopeId)
+    if (binding.targetScope === 'TERM' && termId === 2) return 'volunteer_h2'
+    if (binding.targetScope === 'TERM' && termId === 1) return 'volunteer_h1'
+    if (role.includes('H2')) return 'volunteer_h2'
+    if (role.includes('H1')) return 'volunteer_h1'
+    return 'volunteer_h1'
+  }
   if (role.includes('INDIVIDUAL') || role.includes('MEMBER')) return 'individual'
+  if (role.includes('ORGANIZATION') || role.includes('SCHOOL')) return 'teacher'
   return undefined
 }
 

@@ -8,7 +8,5 @@
 import type { EducationDayGroup } from './educationDayGroup';
 
 export interface AssignmentSubmissionListResponse {
-  semesterType?: string;
-  educationRegionCode?: string;
-  items?: EducationDayGroup[];
+  sessions?: EducationDayGroup[];
 }

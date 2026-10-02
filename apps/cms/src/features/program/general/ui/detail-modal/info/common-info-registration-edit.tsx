@@ -357,6 +357,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationScheduleSettings}
           titleTrailing={
             <EducationScheduleChangeTitleAction
+              programId={program.id}
               overlayKeyPrefix="generalRegistration.educationScheduleSettings"
               educationScheduleMode={extras.educationScheduleMode ?? 'date'}
               autoFillFromScheduleGroupTimes={

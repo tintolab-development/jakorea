@@ -27,7 +27,9 @@ export interface ProgramFormBindingResponse {
   settlementRequired?: boolean;
   performanceRequired?: boolean;
   reviewRequired?: boolean;
+  /** 없으면 null. 시작·종료가 모두 null이면 기간 없음이며 화면 상태는 진행 중(in_progress)이다. 서버가 종료 시각을 만들어 finished로 두지 않는다. */
   submissionStartAt?: string;
+  /** 없으면 null. 시작·종료가 모두 null이면 기간 없음이며 화면 상태는 진행 중(in_progress)이다. */
   submissionEndAt?: string;
   duplicatePolicy?: string;
   displayOrder?: number;
@@ -35,4 +37,9 @@ export interface ProgramFormBindingResponse {
   createdAt?: string;
   updatedAt?: string;
   availableActions?: string[];
+  /**
+     * 대상별 예상 응답 인원. submittedCount(실제 제출 수)와 별개다. 대상을 확정할 수 없으면 null. 0은 그 대상 참여 인원이 0명일 때만.
+     * @nullable
+     */
+  expectedRespondentCount?: number | null;
 }

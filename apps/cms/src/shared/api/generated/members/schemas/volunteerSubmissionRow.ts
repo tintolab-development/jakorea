@@ -10,13 +10,11 @@ import type { SubmissionDocument } from './submissionDocument';
 export interface VolunteerSubmissionRow {
   participantId?: number;
   memberId?: number;
-  memberName?: string;
-  organizationApplicationId?: number;
+  volunteerName?: string;
   institutionName?: string;
   assignedClass?: string;
-  educationSlotId?: number;
-  isDropout?: boolean;
-  hasProgressHistory?: boolean;
+  activityAbandoned?: boolean;
+  hasProgressOnDate?: boolean;
   plan?: SubmissionDocument;
   log?: SubmissionDocument;
 }

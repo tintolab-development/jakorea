@@ -5,14 +5,13 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SubmissionPeriod } from './submissionPeriod';
 import type { VolunteerSubmissionRow } from './volunteerSubmissionRow';
 
 export interface EducationDayGroup {
   scheduleId?: number;
-  isoDate?: string;
-  planSubmissionPeriodStart?: string;
-  planSubmissionPeriodEnd?: string;
-  logSubmissionPeriodStart?: string;
-  logSubmissionPeriodEnd?: string;
+  educationDate?: string;
+  planSubmissionPeriod?: SubmissionPeriod;
+  logSubmissionPeriod?: SubmissionPeriod;
   volunteers?: VolunteerSubmissionRow[];
 }

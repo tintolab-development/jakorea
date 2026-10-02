@@ -51,14 +51,22 @@ export interface GeminiApprovedTrainingDetailResponse {
   scheduleId?: number;
   scheduleName?: string;
   /**
-     * 강사 매칭으로 확정된 날짜. 미매칭이면 null
+     * 강사 식별자가 있고 취소되지 않은 기관 일정 배정이 있을 때만 채운다. 희망일 1지망으로 대체하지 않는다. 그 외에는 null
      * @nullable
      */
   trainingDate?: string | null;
-  trainingStartTime?: string;
-  trainingEndTime?: string;
   /**
-     * 확정 시간 표시. 미매칭이면 null
+     * trainingDate와 같은 조건. 강사 미식별이거나 취소되지 않은 일정 배정이 없으면 null
+     * @nullable
+     */
+  trainingStartTime?: string | null;
+  /**
+     * trainingDate와 같은 조건. 강사 미식별이거나 취소되지 않은 일정 배정이 없으면 null
+     * @nullable
+     */
+  trainingEndTime?: string | null;
+  /**
+     * 확정 시간 표시. trainingDate와 같은 조건일 때만 채운다. 그 외에는 null
      * @nullable
      */
   trainingTimeText?: string | null;
@@ -109,19 +117,31 @@ export interface GeminiApprovedTrainingDetailResponse {
   teacherSchoolName?: string | null;
   /** @nullable */
   teacherEmploymentStatus?: GeminiApprovedTrainingDetailResponseTeacherEmploymentStatus;
-  /** @nullable */
+  /**
+     * 저장 원천이 없다. teacher_profile과 Gemini 기관 신청 폼에 직급 키가 없어 항상 null
+     * @nullable
+     */
   teacherPosition?: string | null;
-  /** @nullable */
+  /**
+     * 저장 원천이 없다. teacher_profile과 Gemini 기관 신청 폼에 과목 키가 없어 항상 null
+     * @nullable
+     */
   teacherSubject?: string | null;
   /** @nullable */
   teacherHomeAddress?: string | null;
-  /** @nullable */
+  /**
+     * 이 기관 신청의 program_organization_schedule_assignment_revision 행 수. 일정 교체 이력이 없으면 0. null이 아니다
+     * @nullable
+     */
   teacherScheduleChangeCount?: number | null;
   /** @nullable */
   teacherLectureExperience?: string | null;
   /** @nullable */
   teacherAccountBank?: string | null;
-  /** @nullable */
+  /**
+     * 상세 GET은 앞 3자리·뒤 4자리만 남긴 마스킹(123-****-7890). 계좌가 없거나 복호화에 실패하면 null. 원문은 POST .../privacy/unmask 응답에만 있다
+     * @nullable
+     */
   teacherAccountNumber?: string | null;
   /** @nullable */
   teacherAccountHolder?: string | null;

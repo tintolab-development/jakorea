@@ -202,6 +202,7 @@ export function UnavailableDatesBulkExclusionsRow({
         onDirectUnavailableModalBlocked={onDirectUnavailableModalBlocked}
       />
       <DetailInfoForm.InputsSeparator />
+      <div className="unavailable-dates-bulk-exclusions-row__checks">
       <CmsCheckbox
         checkboxSize="medium"
         checked={exclusionState.excludeNone}
@@ -236,6 +237,7 @@ export function UnavailableDatesBulkExclusionsRow({
       >
         공휴일 제외
       </CmsCheckbox>
+      </div>
     </div>
   )
 }

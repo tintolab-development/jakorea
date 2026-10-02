@@ -8,6 +8,8 @@ import {
   mapSurveyResponseListItemToPollResponse,
   mapProgramSurveyToRegisteredSurvey,
   mergeSurveysWithBindings,
+  readExpectedRespondentCount,
+  resolveSurveyResultsParticipantTotal,
   parseAnswerPreviewJson,
   pickLectureEvalSurveyFromRemote,
   resolveLectureEvalSubmitContext,
@@ -85,6 +87,51 @@ describe('mapProgramSurveyToRegisteredSurvey', () => {
       0
     )
     expect(row.bindingId).toBe('77')
+  })
+
+  it('maps expectedRespondentCount and does not use submittedCount as the denominator', () => {
+    const withExpected = mapProgramSurveyToRegisteredSurvey(
+      {
+        submittedCount: 4,
+        expectedRespondentCount: 0,
+      } as Parameters<typeof mapProgramSurveyToRegisteredSurvey>[0],
+      0
+    )
+    expect(withExpected.expectedRespondentCount).toBe(0)
+    expect(withExpected.participantTotal).toBe(0)
+    expect(withExpected.responseCount).toBe(4)
+
+    const withoutExpected = mapProgramSurveyToRegisteredSurvey(
+      { submittedCount: 4, responseCount: 4 },
+      0
+    )
+    expect(withoutExpected.expectedRespondentCount).toBeNull()
+    expect(withoutExpected.participantTotal).toBe(0)
+  })
+})
+
+describe('resolveSurveyResultsParticipantTotal', () => {
+  it('prefers expected 0 over program total', () => {
+    expect(
+      resolveSurveyResultsParticipantTotal(
+        { participantTotal: 0, expectedRespondentCount: 0 },
+        216
+      )
+    ).toBe(0)
+  })
+
+  it('falls back to program total when expected is null', () => {
+    expect(
+      resolveSurveyResultsParticipantTotal({ participantTotal: 0, expectedRespondentCount: null }, 12)
+    ).toBe(12)
+  })
+})
+
+describe('readExpectedRespondentCount', () => {
+  it('reads a non-negative integer and ignores missing values', () => {
+    expect(readExpectedRespondentCount({ expectedRespondentCount: 8 })).toBe(8)
+    expect(readExpectedRespondentCount({ expectedRespondentCount: null })).toBeNull()
+    expect(readExpectedRespondentCount({})).toBeNull()
   })
 })
 
@@ -185,6 +232,25 @@ describe('classifyFormBindingByTemplateId', () => {
     expect(
       resolveSatisfactionAudienceFromBinding({ templateId: 1, targetRole: 'TEACHER' })
     ).toBe('teacher')
+  })
+
+  it('resolves volunteer term from targetScopeId', () => {
+    expect(
+      resolveSatisfactionAudienceFromBinding({
+        templateId: 1,
+        targetRole: 'VOLUNTEER',
+        targetScope: 'TERM',
+        targetScopeId: 2,
+      })
+    ).toBe('volunteer_h2')
+    expect(
+      resolveSatisfactionAudienceFromBinding({
+        templateId: 1,
+        targetRole: 'VOLUNTEER',
+        targetScope: 'TERM',
+        targetScopeId: 1,
+      })
+    ).toBe('volunteer_h1')
   })
 })
 

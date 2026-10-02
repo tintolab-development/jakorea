@@ -95,7 +95,7 @@ describe('general-applications-adapters', () => {
         organizationName: 'JA서울미래초등학교',
         previousYearParticipation: 'yes',
         affiliatedFinancialCompany: 'KB국민은행',
-      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      } as unknown as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
       0,
       '170001'
     )

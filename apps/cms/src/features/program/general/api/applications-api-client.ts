@@ -120,7 +120,10 @@ export type OrganizationDecisionNotifyRequest = {
 }
 
 /** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */
-export type ApplicationDecisionCancelRequestWithNotification = ApplicationDecisionCancelRequest & {
+export type ApplicationDecisionCancelRequestWithNotification = Omit<
+  ApplicationDecisionCancelRequest,
+  'notification'
+> & {
   notification?: InstructorApplicationNotificationRequest
 }
 
@@ -135,8 +138,8 @@ export type InstructorApplicationDetailResponseEnriched = InstructorApplicationD
   affiliationIsCurrentlyEmployed?: boolean | null
   instructorMemberProfile?: {
     teacherAffiliated?: boolean
-    employmentStatus?: string
-    currentlyEmployed?: boolean
+    employmentStatus?: string | null
+    currentlyEmployed?: boolean | null
   } | null
   feePolicy?: InstructorApplicationFeePolicyRequest | null
   businessIncomeEarnerStatus?: string | null

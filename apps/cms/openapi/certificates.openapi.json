@@ -309,6 +309,10 @@
       "description": "Forms 관련 관리자 API"
     },
     {
+      "name": "기타 API",
+      "description": "일반 프로그램 진행현황 참여 기관/강사/봉사자 잔여 mutation"
+    },
+    {
       "name": "공개 콘텐츠",
       "description": "로그인 전 공개 화면에서 조회하는 콘텐츠 API입니다."
     },

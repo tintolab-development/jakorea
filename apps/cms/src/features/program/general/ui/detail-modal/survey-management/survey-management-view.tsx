@@ -112,6 +112,7 @@ import {
   pickLectureEvalSurveyFromRemote,
   resolveLectureEvalSubmitContext,
   resolveSurveyCreateBindingTemplateCode,
+  resolveSurveyResultsParticipantTotal,
   resolveSurveyShareClipboardUrl,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
@@ -389,6 +390,29 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const showSatisfactionAudienceTabs =
     !isInstitutionTeacherOnlySatisfaction && satisfactionAudienceTabs.length > 0
   const activeSatisfactionSurvey = satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null
+  const satisfactionSurveysForView = useMemo(() => {
+    const next: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> = {}
+    for (const [key, survey] of Object.entries(satisfactionSurveysByAudience) as Array<
+      [GeneralSatisfactionAudienceKey, RegisteredSurvey | undefined]
+    >) {
+      if (survey == null) continue
+      next[key] = {
+        ...survey,
+        participantTotal: resolveSurveyResultsParticipantTotal(survey, program.totalParticipants),
+      }
+    }
+    return next
+  }, [program.totalParticipants, satisfactionSurveysByAudience])
+  const lectureEvalSurveyForView =
+    lectureEvalSurvey == null
+      ? null
+      : {
+          ...lectureEvalSurvey,
+          participantTotal: resolveSurveyResultsParticipantTotal(
+            lectureEvalSurvey,
+            program.totalParticipants
+          ),
+        }
 
   const pollResponses = useMemo((): SurveyPollRawResponse[] => {
     if (pollResponsesRemote) return remotePollResponses ?? []
@@ -507,11 +531,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           ? 'TEACHER'
           : audience === 'student'
             ? 'STUDENT'
-            : audience === 'volunteer_h1'
-              ? 'VOLUNTEER_H1'
-              : audience === 'volunteer_h2'
-                ? 'VOLUNTEER_H2'
-                : 'INDIVIDUAL'
+            : audience === 'volunteer_h1' || audience === 'volunteer_h2'
+              ? 'VOLUNTEER'
+              : 'INDIVIDUAL'
         : kind === 'lecture'
           ? 'ADMIN'
           : undefined
@@ -520,6 +542,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       templateId: ids.templateId,
       templateVersionId: ids.templateVersionId,
       targetRole,
+      ...(audience === 'volunteer_h1'
+        ? { targetScope: 'TERM', targetScopeId: 1 }
+        : audience === 'volunteer_h2'
+          ? { targetScope: 'TERM', targetScopeId: 2 }
+          : {}),
       active: true,
       required: false,
     }
@@ -941,7 +968,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             surveyTitle: activeSatisfactionSurvey.title,
             templateId: activeSatisfactionSurvey.templateId,
             responseCount: activeSatisfactionSurvey.responseCount,
-            participantTotal: activeSatisfactionSurvey.participantTotal,
+            participantTotal: resolveSurveyResultsParticipantTotal(
+              activeSatisfactionSurvey,
+              program.totalParticipants
+            ),
             responses: satisfactionResponses,
           })
         }
@@ -956,7 +986,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         setDownloadingSatisfactionResults(false)
       }
     },
-    [activeSatisfactionSurvey, program.title, satisfactionResponses, showAlert]
+    [activeSatisfactionSurvey, program.title, program.totalParticipants, satisfactionResponses, showAlert]
   )
 
   const handleDownloadPollResults = useCallback(
@@ -978,7 +1008,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             surveyTitle: activeRegisteredSurvey.title,
             templateId: activeRegisteredSurvey.templateId,
             responseCount: activeRegisteredSurvey.responseCount,
-            participantTotal: activeRegisteredSurvey.participantTotal,
+            participantTotal: resolveSurveyResultsParticipantTotal(
+              activeRegisteredSurvey,
+              program.totalParticipants
+            ),
             responses: pollResponses,
           })
         }
@@ -993,7 +1026,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         setDownloadingPollResults(false)
       }
     },
-    [activeRegisteredSurvey, pollResponses, program.title, showAlert]
+    [activeRegisteredSurvey, pollResponses, program.title, program.totalParticipants, showAlert]
   )
 
   const handleLectureEvalDraftChange = useCallback((draft: WritingFormDraft) => {
@@ -1067,10 +1100,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         handleError(error, { context: 'generalLectureEvalSubmit' })
         void showAlert({
           title: existingResponseId != null ? '수정 실패' : '제출 실패',
-          content:
+          content: getGeneralProgramApiErrorMessage(
+            error,
             existingResponseId != null
               ? '강의평가 수정 중 오류가 발생했습니다. 다시 시도해 주세요.'
-              : '강의평가 제출 중 오류가 발생했습니다. 다시 시도해 주세요.',
+              : '강의평가 제출 중 오류가 발생했습니다. 다시 시도해 주세요.'
+          ),
         })
         return
       }
@@ -1101,7 +1136,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         ...prev,
         status: nextStatus,
         responseCount: Math.max(prev.responseCount, 1),
-        participantTotal: Math.max(prev.participantTotal, 1),
+        participantTotal: resolveSurveyResultsParticipantTotal(prev, program.totalParticipants),
       }
     })
   }, [
@@ -1109,6 +1144,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     lectureEvalResponses,
     lectureEvalSurvey,
     program.id,
+    program.totalParticipants,
     queryClient,
     rawSurveys,
     showAlert,
@@ -1159,7 +1195,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             surveyTitle: lectureEvalSurvey.title,
             templateId: lectureEvalSurvey.templateId,
             responseCount: lectureEvalSurvey.responseCount,
-            participantTotal: lectureEvalSurvey.participantTotal,
+            participantTotal: resolveSurveyResultsParticipantTotal(
+              lectureEvalSurvey,
+              program.totalParticipants
+            ),
             responses: lectureEvalResponses,
           })
         }
@@ -1174,7 +1213,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         setDownloadingLectureEvalResults(false)
       }
     },
-    [lectureEvalResponses, lectureEvalSurvey, program.title, showAlert]
+    [lectureEvalResponses, lectureEvalSurvey, program.title, program.totalParticipants, showAlert]
   )
 
   const renderPoll = () => {
@@ -1206,7 +1245,13 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           trailing={
             activeRegisteredSurvey != null ? (
               <SurveyRegisteredActions
-                survey={activeRegisteredSurvey}
+                survey={{
+                  ...activeRegisteredSurvey,
+                  participantTotal: resolveSurveyResultsParticipantTotal(
+                    activeRegisteredSurvey,
+                    program.totalParticipants
+                  ),
+                }}
                 labels={GENERAL_SURVEY_POLL_ACTION_LABELS}
                 onShareClick={() => shareRegisteredSurveyUrl(activeRegisteredSurvey)}
                 onAddClick={() => openCreateModal('survey')}
@@ -1246,11 +1291,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             <SurveyPollResultsView
               templateId={activeRegisteredSurvey.templateId}
               responseCount={activeRegisteredSurvey.responseCount}
-              participantTotal={
-                program.totalParticipants && program.totalParticipants > 0
-                  ? program.totalParticipants
-                  : activeRegisteredSurvey.participantTotal
-              }
+              participantTotal={resolveSurveyResultsParticipantTotal(
+                activeRegisteredSurvey,
+                program.totalParticipants
+              )}
               responses={pollResponses}
               pdfTitle="설문조사 결과"
             />
@@ -1296,7 +1340,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     }
     return (
     <SatisfactionSurveyView
-      surveysByAudience={satisfactionSurveysByAudience}
+      surveysByAudience={satisfactionSurveysForView}
       activeAudience={activeSatisfactionAudience}
       audienceTabs={satisfactionAudienceTabs}
       className={
@@ -1347,7 +1391,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           </div>
         ) : (
         <LectureEvalSurveyView
-          survey={lectureEvalSurvey}
+          survey={lectureEvalSurveyForView}
           submitted={lectureEvalSubmitted}
           formDraft={lectureEvalFormDraft}
           pollResponses={lectureEvalResponses}
