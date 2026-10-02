@@ -322,9 +322,8 @@ export function ProgramApplyPage() {
       }
 
       /**
-       * form-bindings 409(RECRUITMENT_NOT_STARTED 등) · error 시 카탈로그 시드로 바꾸지 않는다.
-       * 시드는 CMS 프로그램 전용 수정본이 아니라서 강사·기관 신청 양식 「연동 안 됨」처럼 보인다.
-       * 제출 차단 안내는 blockedMessage 로 표시한다.
+       * form-bindings GET 실패·unavailable 시 카탈로그 시드로 바꾸지 않는다.
+       * 모집 전에도 GET 은 200 이어야 하고, 제출 불가만 options.`canApply` / blockedMessage 로 막는다.
        */
       const remoteMissKey = [
         'remote-miss',

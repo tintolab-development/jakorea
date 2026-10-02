@@ -1,5 +1,9 @@
 # Cursor prompt — Portal 신청 양식 GET은 모집 시작 전에도 200 (JABACK)
 
+> **상태 (2026-10-02):** BE 반영됨. FE handoff →  
+> [portal-apply-form-before-recruitment-frontend-handoff-2026-10-02.md](./portal-apply-form-before-recruitment-frontend-handoff-2026-10-02.md)  
+> 제출 종료 코드는 요청안 `RECRUITMENT_CLOSED` 가 아니라 기존 **`RECRUITMENT_ENDED`**. options `blockedReason` 만 `RECRUITMENT_CLOSED`.
+
 아래 지시를 **CMS 백엔드 레포(`JABACK`, 로컬 `localhost:8080`)에서 실행**하라.  
 프론트 레포를 고치지 마라. Homepage Admin(`JAHOMEADMINBACK`)도 고치지 마라.  
 질문이 필요하면 스키마가 값을 거부할 때(enum·NOT NULL·권한)만 하라.
