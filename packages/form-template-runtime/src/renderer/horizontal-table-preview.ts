@@ -1,5 +1,5 @@
 import {
-  fieldCellValueToPlainText,
+  resolveHorizontalTableCellPlainText,
   type HorizontalTableParagraph,
 } from '@jakorea/form-schema/writing-form'
 
@@ -16,31 +16,12 @@ export function resolveHorizontalTablePreviewLayout(
   const headers = paragraph.columnHeaders.slice(0, colCount)
   while (headers.length < colCount) headers.push('')
 
-  if (paragraph.tableFlavor === 'field') {
-    const fieldRows = paragraph.fieldDataRows ?? []
-    const bodyRows =
-      fieldRows.length > 0
-        ? fieldRows.map(row => {
-            const cells = row.slice(0, colCount)
-            while (cells.length < colCount) {
-              cells.push({ kind: 'text', value: '' })
-            }
-            return cells.map(cell => fieldCellValueToPlainText(cell))
-          })
-        : [Array.from({ length: colCount }, () => '')]
-
-    return { colCount, headers, bodyRows }
-  }
-
-  const bodyRows = paragraph.dataRows.map(row => {
-    const cells = [...row]
-    while (cells.length < colCount) cells.push('')
-    return cells.slice(0, colCount)
-  })
-
-  if (bodyRows.length === 0) {
-    bodyRows.push(Array.from({ length: colCount }, () => ''))
-  }
+  const rowCount = Math.max(1, paragraph.dataRows.length, paragraph.fieldDataRows?.length ?? 0)
+  const bodyRows = Array.from({ length: rowCount }, (_, rowIndex) =>
+    Array.from({ length: colCount }, (_, colIndex) =>
+      resolveHorizontalTableCellPlainText(paragraph, rowIndex, colIndex)
+    )
+  )
 
   return { colCount, headers, bodyRows }
 }

@@ -1,15 +1,50 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
-import { createProgramParticipantApplicationDraft } from '@/features/template/model/program-application-form-individual-draft'
-import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
-import { createProgramApplicationFormInstitutionDraft } from '@/features/template/model/program-application-form-institution-draft'
-import { createProgramApplicationFormEconomyDraft } from '@/features/template/model/program-application-form-economy-draft'
 import {
+  createProgramParticipantApplicationDraft,
+  PROGRAM_PARTICIPANT_APPLICATION_IDS,
+} from '@/features/template/model/program-application-form-individual-draft'
+import {
+  createProgramApplicationFormInstitutionDraft,
+  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
+} from '@/features/template/model/program-application-form-institution-draft'
+import {
+  createProgramApplicationFormEconomyDraft,
+  PROGRAM_APPLICATION_FORM_ECONOMY_IDS,
+} from '@/features/template/model/program-application-form-economy-draft'
+import {
+  APPLICATION_FORM_THIRD_PARTY_RECIPIENT_SEED_BY_PARAGRAPH_ID,
   hasIncompleteApplicationFormThirdPartyRecipient,
   isApplicationFormThirdPartyRecipientColumn,
+  readApplicationFormThirdPartyRecipientValue,
 } from '@/features/template/model/application-form-third-party-recipient'
 import {
+  createProgramApplicationFormInstructorDraft,
+  PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS,
+} from '@/features/template/model/program-application-form-instructor-draft'
+import {
+  createProgramApplicationFormVolunteerDraft,
+  PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
+} from '@/features/template/model/program-application-form-volunteer-draft'
+import {
+  createProgramApplicationFormTrainedTeachersDraft,
+  PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS,
+} from '@/features/template/model/program-application-form-trained-teachers-draft'
+import {
+  createGeminiVisitingTrainingApplicationFormInstitutionDraft,
+  GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS,
+} from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
+import {
+  createUjatProgramApplicationFormInstitutionDraft,
+  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
+} from '@/features/template/model/ujat-program-application-form-institution-draft'
+import {
+  createUjatProgramApplicationFormVolunteerDraft,
+  UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
+} from '@/features/template/model/ujat-program-application-form-volunteer-draft'
+import {
   horizontalTableSetFieldCellValue,
+  resolveHorizontalTableCellPlainText,
   type HorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { clearRegistrationWizardSessionDrafts } from './registration-wizard-session-drafts'
@@ -124,5 +159,50 @@ describe('application form third-party recipient required', () => {
     expect(
       hasIncompleteApplicationFormThirdPartyRecipient(createProgramApplicationFormEconomyDraft())
     ).toBe(true)
+  })
+
+  it('모든 신청 폼 시드의 「제공받는 곳」 기본값이 정책 표와 같다', () => {
+    const seeds: Array<[string, ReturnType<typeof createProgramParticipantApplicationDraft>]> = [
+      [PROGRAM_PARTICIPANT_APPLICATION_IDS.thirdPartyConsent, createProgramParticipantApplicationDraft()],
+      [PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent, createProgramApplicationFormInstitutionDraft()],
+      [PROGRAM_APPLICATION_FORM_ECONOMY_IDS.thirdPartyConsent, createProgramApplicationFormEconomyDraft()],
+      [
+        PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.thirdPartyConsent,
+        createProgramApplicationFormTrainedTeachersDraft(),
+      ],
+      [
+        UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent,
+        createUjatProgramApplicationFormInstitutionDraft(),
+      ],
+      [
+        GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent,
+        createGeminiVisitingTrainingApplicationFormInstitutionDraft(),
+      ],
+      [PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent, createProgramApplicationFormInstructorDraft()],
+      [PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent, createProgramApplicationFormVolunteerDraft()],
+      [
+        UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent,
+        createUjatProgramApplicationFormVolunteerDraft(),
+      ],
+    ]
+    for (const [paragraphId, draft] of seeds) {
+      expect(readApplicationFormThirdPartyRecipientValue(draft)).toBe(
+        APPLICATION_FORM_THIRD_PARTY_RECIPIENT_SEED_BY_PARAGRAPH_ID[paragraphId]
+      )
+    }
+  })
+
+  it('tableFlavor가 text이고 dataRows가 비어도 fieldDataRows의 제공받는 곳을 읽는다', () => {
+    const draft = createProgramApplicationFormInstructorDraft()
+    const paragraph = draft.paragraphs.find(
+      item => item.id === PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent
+    ) as HorizontalTableParagraph | undefined
+    expect(paragraph).toBeDefined()
+    const lostFlavor = {
+      ...paragraph!,
+      tableFlavor: 'text' as const,
+      dataRows: [['', '', '', '']],
+    }
+    expect(resolveHorizontalTableCellPlainText(lostFlavor, 0, 0)).toBe('배정된 교육 대상 학교')
   })
 })

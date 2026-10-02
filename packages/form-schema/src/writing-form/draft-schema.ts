@@ -849,11 +849,29 @@ function cloneFieldCellValue(v: HorizontalTableFieldCellValue): HorizontalTableF
 }
 
 /** 필드 셀 값을 텍스트형 `dataRows`에 옮길 때(모드 전환) */
-export function fieldCellValueToPlainText(v: HorizontalTableFieldCellValue): string {
+export function fieldCellValueToPlainText(
+  v: HorizontalTableFieldCellValue | string | null | undefined
+): string {
+  if (v == null) return ''
+  if (typeof v === 'string') return v
   if (v.kind === 'multiple') {
-    return v.values.join(', ')
+    return Array.isArray(v.values) ? v.values.join(', ') : ''
   }
-  return v.value
+  return typeof v.value === 'string' ? v.value : ''
+}
+
+/**
+ * CMS 상세는 `fieldDataRows`, Platform fill은 `tableFlavor`에 따라 `dataRows`만 보던
+ * 경로가 어긋나면 「제공받는 곳」이 한쪽에서만 보인다. 비어 있지 않은 쪽을 쓴다.
+ */
+export function resolveHorizontalTableCellPlainText(
+  paragraph: Pick<HorizontalTableParagraph, 'dataRows' | 'fieldDataRows'>,
+  rowIndex: number,
+  colIndex: number
+): string {
+  const fieldText = fieldCellValueToPlainText(paragraph.fieldDataRows?.[rowIndex]?.[colIndex])
+  const dataText = paragraph.dataRows?.[rowIndex]?.[colIndex] ?? ''
+  return fieldText.trim() ? fieldText : dataText
 }
 
 export function createHorizontalTableParagraph(id: string): HorizontalTableParagraph {
@@ -992,14 +1010,21 @@ export function normalizeHorizontalTableParagraph(
     }
   }
   if (tableFlavor === 'text') {
-    /* 텍스트형 셀 값은 dataRows — placeholder로 옮기며 비우지 않음(입력 유지) */
+    /* 텍스트형 셀 값은 dataRows. fieldDataRows에만 값이 있으면 비운 dataRows를 채운다. */
+    const fieldDataRows = p.fieldDataRows ?? []
+    const dataRowsSynced = dataRows.map((row, ri) =>
+      row.map((cell, ci) => {
+        if (cell.trim()) return cell
+        return fieldCellValueToPlainText(fieldDataRows[ri]?.[ci])
+      })
+    )
     return {
       ...p,
       tableFlavor: 'text',
       columnHeaders: headers,
-      dataRows,
+      dataRows: dataRowsSynced,
       columnFields: p.columnFields ?? [],
-      fieldDataRows: p.fieldDataRows ?? [],
+      fieldDataRows,
       cellColumnFields: p.cellColumnFields,
       bottomText: p.bottomText ?? '',
       showBottomText: Boolean(p.showBottomText),
@@ -1302,7 +1327,16 @@ export function horizontalTableSetFieldCellValue(
   const row = [...base[rowIdx]!]
   row[colIdx] = rehomeFieldCellValue(value, f)
   base[rowIdx] = row
-  return { ...n, columnFields: fieldCols, fieldDataRows: base }
+  const dataRows = Array.from({ length: rowCount }, (_, ri) => {
+    const existing = n.dataRows[ri] ?? Array.from({ length: colCount }, () => '')
+    const nextRow = [...existing]
+    while (nextRow.length < colCount) nextRow.push('')
+    return nextRow.slice(0, colCount).map((cell, ci) => {
+      const field = base[ri]?.[ci]
+      return field != null ? fieldCellValueToPlainText(field) : cell
+    })
+  })
+  return { ...n, columnFields: fieldCols, fieldDataRows: base, dataRows }
 }
 
 /** 세로형 단일·다중 선택 공통 선택지 (비어 있으면 정규화 시 기본값) */
