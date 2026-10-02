@@ -10,8 +10,9 @@
 | 항목 | 값 |
 |------|-----|
 | 작성일 | 2026-10-02 |
+| 갱신 | 2026-10-02 — BE 핸드오프 반영. FE는 `expectedRespondentCount` · 409 `FORM_RESPONSE_ALREADY_SUBMITTED` · 봉사자 `TERM` 을 붙였다 |
 | 대상 | CMS 백엔드 `JABACK` (`localhost:8080`) |
-| 우선순위 | **P1** (A·B) / **P2** (C) |
+| 우선순위 | **P1** (A·B) / **P2** (C) — **FE 반영 완료. 이 티켓을 다시 열지 마라** |
 | 화면 | CMS 일반 프로그램 상세 → LNB **설문 관리** (설문조사 / 만족도조사 / 강의평가) |
 | 대상 path | `programs/{id}/surveys`, `programs/{id}/form-bindings`, `form-responses`. UJAT·1사1교·Gemini 전용 path 아님 |
 
