@@ -150,6 +150,112 @@ export async function downloadProgramLectureReportsRemote(
   )
 }
 
+export type TextbookDeliveryStatus = 'PREPARING' | 'SHIPPING' | 'DELIVERED' | 'NOT_APPLICABLE'
+
+export type TextbookDeliveryPatchRequest = {
+  textbookDeliveryStatus: TextbookDeliveryStatus
+}
+
+export type TextbookDeliveryPatchResponse = {
+  participantId?: number
+  programId?: number
+  organizationApplicationId?: number
+  textbookDeliveryStatus?: TextbookDeliveryStatus
+}
+
+/**
+ * PATCH /api/admin/programs/{programId}/participants/{participantId}/textbook-delivery
+ * 참여 기관 교재 배송 배지. materialAssignmentStatus(교재 배정)와 다르다.
+ */
+export async function patchParticipantTextbookDeliveryRemote(
+  programId: string,
+  participantId: string,
+  payload: TextbookDeliveryPatchRequest
+): Promise<TextbookDeliveryPatchResponse> {
+  return unwrapApiBody<TextbookDeliveryPatchResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/textbook-delivery`,
+      method: 'PATCH',
+      data: payload,
+    })
+  )
+}
+
+export type VolunteerKind = 'GENERAL' | 'EMPLOYEE'
+
+export type ProgramParticipantCreateRequest =
+  | { participantType: 'INSTRUCTOR'; memberId: number }
+  | { participantType: 'VOLUNTEER'; memberId: number; volunteerKind?: VolunteerKind }
+
+export type ProgramInstructorParticipantCreateRequest = Extract<
+  ProgramParticipantCreateRequest,
+  { participantType: 'INSTRUCTOR' }
+>
+
+export type ProgramInstructorParticipantCreateResponse = {
+  participantId?: number
+  programId?: number
+  memberId?: number
+  participantType?: string
+  participantStatus?: string
+  sourceApplicationId?: number | null
+  volunteerKind?: VolunteerKind | null
+}
+
+/**
+ * POST /api/admin/programs/{programId}/participants
+ * 강사·봉사자 회원을 participant 로 등록. 신청 승인 API가 아니다.
+ */
+export async function createProgramParticipantRemote(
+  programId: string,
+  payload: ProgramParticipantCreateRequest
+): Promise<ProgramInstructorParticipantCreateResponse> {
+  return unwrapApiBody<ProgramInstructorParticipantCreateResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function createProgramInstructorParticipantRemote(
+  programId: string,
+  payload: ProgramInstructorParticipantCreateRequest
+): Promise<ProgramInstructorParticipantCreateResponse> {
+  return createProgramParticipantRemote(programId, payload)
+}
+
+export type VolunteerAssignedOrganizationsRequest = {
+  organizationApplicationIds: number[]
+  expectedRevision?: number
+  reason?: string
+}
+
+export type VolunteerAssignedOrganizationsResponse = {
+  participantId?: number
+  revision?: number
+  assignedOrganizationNames?: string[]
+}
+
+/**
+ * PUT /api/admin/programs/{programId}/participants/{participantId}/assigned-organizations
+ * 기관형 봉사 배정. 개인형 education-scope 와 다르다.
+ */
+export async function putParticipantAssignedOrganizationsRemote(
+  programId: string,
+  participantId: string,
+  payload: VolunteerAssignedOrganizationsRequest
+): Promise<VolunteerAssignedOrganizationsResponse> {
+  return unwrapApiBody<VolunteerAssignedOrganizationsResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/assigned-organizations`,
+      method: 'PUT',
+      data: payload,
+    })
+  )
+}
+
 export type ProgramParticipantGiveUpRequest = {
   reason: string
   /** BE 보완 — §G-8 활동 포기 중단일 (resolvedScheduleId) */

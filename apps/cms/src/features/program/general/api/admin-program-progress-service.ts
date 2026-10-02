@@ -11,6 +11,10 @@ import {
   fetchProgramSchedulesViaDashboardRemote,
   fetchScheduleAttendancesRemote,
   giveUpProgramParticipantRemote,
+  createProgramInstructorParticipantRemote,
+  createProgramParticipantRemote,
+  patchParticipantTextbookDeliveryRemote,
+  putParticipantAssignedOrganizationsRemote,
   changeParticipantSchedulesRemote,
   putScheduleAttendancesRemote,
   fetchParticipantEducationScopeRemote,
@@ -351,6 +355,54 @@ export async function changeGeneralParticipatingInstitutionSchedules(
  * 참여 기관(ORGANIZATION participant) 활동 포기.
  * `organization-applications/{id}/give-up` 가 아님 — participantId 필수.
  */
+export async function createGeneralProgramInstructorParticipant(
+  programId: string,
+  memberId: number
+) {
+  assertProgramProgressRemoteReady()
+  return createProgramInstructorParticipantRemote(programId, {
+    participantType: 'INSTRUCTOR',
+    memberId,
+  })
+}
+
+export async function createGeneralProgramVolunteerParticipant(
+  programId: string,
+  memberId: number,
+  volunteerKind: 'GENERAL' | 'EMPLOYEE' = 'GENERAL'
+) {
+  assertProgramProgressRemoteReady()
+  return createProgramParticipantRemote(programId, {
+    participantType: 'VOLUNTEER',
+    memberId,
+    volunteerKind,
+  })
+}
+
+export async function updateGeneralParticipatingInstitutionTextbookDelivery(
+  programId: string,
+  participantId: string,
+  textbookDeliveryStatus: import('@/features/program/general/api/program-progress-api-client').TextbookDeliveryStatus
+) {
+  assertProgramProgressRemoteReady()
+  return patchParticipantTextbookDeliveryRemote(programId, participantId, {
+    textbookDeliveryStatus,
+  })
+}
+
+export async function saveGeneralVolunteerAssignedOrganizations(
+  programId: string,
+  participantId: string,
+  payload: {
+    organizationApplicationIds: number[]
+    expectedRevision?: number
+    reason?: string
+  }
+) {
+  assertProgramProgressRemoteReady()
+  return putParticipantAssignedOrganizationsRemote(programId, participantId, payload)
+}
+
 export async function giveUpGeneralParticipatingInstitution(
   programId: string,
   participantId: string,
