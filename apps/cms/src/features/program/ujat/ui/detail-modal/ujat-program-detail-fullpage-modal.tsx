@@ -2769,6 +2769,7 @@ export function UjatProgramDetailFullPageModal({
           {activeLnb === 'education_progress' && /^edu_h[12]_assignments$/.test(activeTab) && (
             <div className="program-detail-fullpage-modal__info-tab">
               <UjatEducationProgressAssignmentsSection
+                programId={displayProgram.id}
                 half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
               />
             </div>

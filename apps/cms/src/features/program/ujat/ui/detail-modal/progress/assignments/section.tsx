@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
@@ -39,8 +40,10 @@ const UJAT_ASSIGNMENT_EXCEL_COLUMNS: ColumnsType<UjatAssignmentExcelRow> = [
 ]
 
 export function UjatEducationProgressAssignmentsSection({
+  programId,
   half,
 }: {
+  programId: string
   half: EducationProgressHalfKey
 }) {
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
@@ -55,7 +58,8 @@ export function UjatEducationProgressAssignmentsSection({
     filterFields,
     sessionGroups,
     resetRegionState,
-  } = useUjatEducationProgressAssignments(half, activeRegion)
+    loading,
+  } = useUjatEducationProgressAssignments(programId, half, activeRegion)
 
   const assignmentExcelRows = useMemo(() => {
     const rows: UjatAssignmentExcelRow[] = []
@@ -111,6 +115,11 @@ export function UjatEducationProgressAssignmentsSection({
         onChange={setActiveRegion}
       />
 
+      {loading ? (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <Spin size="large" />
+        </div>
+      ) : (
       <FilterTableLayout
         className="ujat-education-progress-assignments__filter-layout"
         bordered={false}
@@ -142,6 +151,7 @@ export function UjatEducationProgressAssignmentsSection({
           </div>
         )}
       </FilterTableLayout>
+      )}
     </div>
   )
 }

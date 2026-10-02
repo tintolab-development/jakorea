@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
-import {
-  getUjatEducationProgressAssignmentDateOptions,
-  getUjatEducationProgressAssignmentInstitutionOptions,
-  getUjatEducationProgressAssignmentSessions,
-} from '@/features/program/ujat/model/ujat-education-progress'
+import { useQuery } from '@tanstack/react-query'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { buildUjatAssignmentSessionsFromRemote } from '@/features/program/ujat/api/assignment-submissions-adapters'
+import { fetchUjatAssignmentSubmissions } from '@/features/program/ujat/api/education-execution-api'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
+import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
+import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import type { EducationProgressHalfKey } from '../tabs'
@@ -77,11 +79,16 @@ function filterSessionGroups(
 }
 
 export function useUjatEducationProgressAssignments(
+  programId: string,
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ) {
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
+  const educationRegionCode = toUjatEducationRegionCode(regionKey)
+  const semesterType = toUjatRecruitHalfApi(half)
+
   useNotifyProgramApiUnavailableOnce(
-    true,
+    !remoteEnabled,
     'ujat-progress-assignments',
     'UJAT 진행 현황 · 과제'
   )
@@ -93,25 +100,60 @@ export function useUjatEducationProgressAssignments(
     () => ({ ...EMPTY_UJAT_ASSIGNMENT_FILTERS })
   )
 
-  const educationDateOptions = useMemo(
-    () => getUjatEducationProgressAssignmentDateOptions(half),
-    [half]
-  )
+  const remoteQuery = useQuery({
+    queryKey: ujatQueryKeys.assignmentSubmissions(programId, educationRegionCode, semesterType),
+    enabled: remoteEnabled,
+    staleTime: 15_000,
+    retry: false,
+    queryFn: () =>
+      fetchUjatAssignmentSubmissions(programId, {
+        semesterType,
+        educationRegionCode,
+      }),
+  })
 
-  const institutionOptions = useMemo(
-    () => getUjatEducationProgressAssignmentInstitutionOptions(half, regionKey),
-    [half, regionKey]
-  )
+  const remoteSessions = useMemo(() => {
+    if (!remoteEnabled || remoteQuery.data == null || remoteQuery.isError) return []
+    return buildUjatAssignmentSessionsFromRemote({
+      data: remoteQuery.data,
+      half,
+      regionKey,
+    })
+  }, [half, regionKey, remoteEnabled, remoteQuery.data, remoteQuery.isError])
+
+  const educationDateOptions = useMemo(() => {
+    const seen = new Set<string>()
+    return remoteSessions.reduce<{ value: string; label: string }[]>((acc, session) => {
+      if (!session.isoDate || seen.has(session.isoDate)) return acc
+      seen.add(session.isoDate)
+      acc.push({ value: session.isoDate, label: session.dateLabel })
+      return acc
+    }, [])
+  }, [remoteSessions])
+
+  const institutionOptions = useMemo(() => {
+    const seen = new Set<string>()
+    return remoteSessions.flatMap(session => session.volunteers).reduce<{ value: string; label: string }[]>(
+      (acc, volunteer) => {
+        const name = volunteer.institutionName.trim()
+        if (!name || name === '-' || seen.has(name)) return acc
+        seen.add(name)
+        acc.push({ value: name, label: name })
+        return acc
+      },
+      []
+    )
+  }, [remoteSessions])
 
   const filterFields = useMemo(
     () => buildUjatAssignmentFilterFields(educationDateOptions, institutionOptions),
     [educationDateOptions, institutionOptions]
   )
 
-  const sessionGroups = useMemo(() => {
-    const sessions = getUjatEducationProgressAssignmentSessions(half, regionKey)
-    return filterSessionGroups(sessions, appliedFilters)
-  }, [appliedFilters, half, regionKey])
+  const sessionGroups = useMemo(
+    () => filterSessionGroups(remoteSessions, appliedFilters),
+    [appliedFilters, remoteSessions]
+  )
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -134,5 +176,6 @@ export function useUjatEducationProgressAssignments(
     filterFields,
     sessionGroups,
     resetRegionState,
+    loading: remoteEnabled && remoteQuery.isFetching && remoteQuery.data == null,
   }
 }
