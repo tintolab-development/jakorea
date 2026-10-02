@@ -14099,10 +14099,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -23036,7 +23036,7 @@
           "ownerId": {
             "type": "integer",
             "format": "int64",
-            "description": "파일 소유 리소스 ID",
+            "description": "파일 소유 리소스 ID. upload-first draft 처리 중에는 null일 수 있음",
             "example": 10001,
             "minimum": 1
           },
@@ -23127,7 +23127,6 @@
         },
         "required": [
           "fileObjectId",
-          "ownerId",
           "ownerType"
         ]
       },
@@ -23177,7 +23176,7 @@
           "ownerId": {
             "type": "integer",
             "format": "int64",
-            "description": "파일 소유 리소스 ID",
+            "description": "파일 소유 리소스 ID. NOTICE_ATTACHMENT upload-first draft는 CONTENT/NOTICE일 때만 null 허용",
             "example": 10001,
             "minimum": 1
           },
@@ -23222,7 +23221,6 @@
           "fileSize",
           "originalFileName",
           "ownerDomain",
-          "ownerId",
           "ownerType"
         ]
       },
@@ -23562,6 +23560,14 @@
             "type": "boolean",
             "description": "첨부파일 존재 여부",
             "example": false
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "description": "업로드 완료 후 공지 생성 시 함께 귀속할 NOTICE_ATTACHMENT fileObject ID 목록",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           },
           "status": {
             "type": "string",
@@ -41167,7 +41173,7 @@
           "assignedInstructor": {
             "type": "null",
             "$ref": "#/components/schemas/GeminiAssignedInstructor",
-            "description": "매칭된 연수 담당 강사 프로필. 미매칭이면 null"
+            "description": "연수 담당 강사. 일정 배정 또는 같은 모집의 승인 강사가 있으면 채운다. 둘 다 없으면 null"
           },
           "managerAdminId": {
             "type": "integer",

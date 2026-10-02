@@ -25,6 +25,8 @@ export interface NoticeRequest {
   author?: string;
   /** 첨부파일 존재 여부 */
   hasAttachment?: boolean;
+  /** 업로드 완료 후 공지 생성 시 함께 귀속할 NOTICE_ATTACHMENT fileObject ID 목록 */
+  fileObjectIds?: number[];
   /** 상태 */
   status?: NoticeRequestStatus;
 }
