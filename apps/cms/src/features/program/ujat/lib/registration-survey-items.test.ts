@@ -26,17 +26,20 @@ describe('readUjatSurveyItems', () => {
     })
   })
 
-  it('레거시 satisfaction 단일 키를 봉사단·학교 만족도로 펼친다', () => {
+  it('satisfaction 한 키만으로는 봉사단·학교 만족도를 켜지 않는다', () => {
     expect(
-      readUjatSurveyItems({
-        survey: true,
-        satisfaction: true,
-        lecture_evaluation: true,
-      })
+      readUjatSurveyItems(
+        {
+          survey: true,
+          satisfaction: true,
+          lecture_evaluation: true,
+        },
+        createUjatSurveyItemsDefault(false)
+      )
     ).toEqual({
       survey: true,
-      volunteer_satisfaction: true,
-      school_satisfaction: true,
+      volunteer_satisfaction: false,
+      school_satisfaction: false,
       lecture_evaluation: true,
     })
   })
@@ -58,13 +61,53 @@ describe('readUjatSurveyItems', () => {
 })
 
 describe('ujatSurveyItemsFromProgramKeys / ujatGeneralSurveyMenuKeysFromOverlay', () => {
-  it('program keys → overlay items → envelope keys', () => {
+  it('satisfaction 한 키는 봉사단·학교 메뉴를 만들지 않는다', () => {
     const items = ujatSurveyItemsFromProgramKeys(['survey', 'satisfaction', 'lecture_evaluation'])
-    expect(items.volunteer_satisfaction).toBe(true)
-    expect(items.school_satisfaction).toBe(true)
+    expect(items).toEqual({
+      survey: true,
+      volunteer_satisfaction: false,
+      school_satisfaction: false,
+      lecture_evaluation: true,
+    })
     expect(
       ujatGeneralSurveyMenuKeysFromOverlay({ 'ujat.basicInfo.surveyItems': items })
-    ).toEqual(['survey', 'satisfaction', 'lecture_evaluation'])
+    ).toEqual(['survey', 'lecture_evaluation'])
+  })
+
+  it('봉사단만 켠 키는 학교 만족도를 켜지 않는다', () => {
+    expect(ujatSurveyItemsFromProgramKeys(['volunteer_satisfaction'])).toEqual({
+      survey: false,
+      volunteer_satisfaction: true,
+      school_satisfaction: false,
+      lecture_evaluation: false,
+    })
+  })
+
+  it('LNB id도 4종으로 나눈다', () => {
+    expect(
+      ujatSurveyItemsFromProgramKeys([
+        'survey-volunteer-satisfaction',
+        'survey-school-satisfaction',
+      ])
+    ).toMatchObject({
+      volunteer_satisfaction: true,
+      school_satisfaction: true,
+      survey: false,
+      lecture_evaluation: false,
+    })
+  })
+
+  it('학교만 체크한 overlay는 school_satisfaction 키만 남긴다', () => {
+    expect(
+      ujatGeneralSurveyMenuKeysFromOverlay({
+        'ujat.basicInfo.surveyItems': {
+          survey: true,
+          volunteer_satisfaction: false,
+          school_satisfaction: true,
+          lecture_evaluation: true,
+        },
+      })
+    ).toEqual(['survey', 'school_satisfaction', 'lecture_evaluation'])
   })
 
   it('overlay에 surveyItems 키가 없으면 envelope 변환을 하지 않는다', () => {

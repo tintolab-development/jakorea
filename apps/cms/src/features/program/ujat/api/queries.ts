@@ -11,6 +11,7 @@ import {
   programDetailCacheFromSave,
   syncOpenProgramDetailCache,
 } from '@/features/program/shared/lib/program-detail-cache-after-save'
+import { fetchUjatProgramBusinessYears } from './business-years'
 import { shouldUseRemoteApi } from './capabilities'
 import { shouldRetryQuery } from './errors'
 import type { ListParams } from './list-params'
@@ -24,6 +25,9 @@ import {
   type CreateInput,
   type UjatProgramsRemoteListPage,
 } from './service'
+
+/** 진행년도는 프로그램 등록·삭제 때만 바뀐다. */
+const UJAT_BUSINESS_YEARS_STALE_MS = 5 * 60 * 1000
 
 function scope(): 'remote' | 'local' {
   return shouldUseRemoteApi() ? 'remote' : 'local'
@@ -70,6 +74,17 @@ export function usePrograms(params: ListParams = {}) {
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     staleTime: dataScope === 'remote' ? 30_000 : Infinity,
+    retry: shouldRetryQuery,
+  })
+}
+
+export function useUjatBusinessYears() {
+  const remote = shouldUseRemoteApi()
+  return useQuery({
+    queryKey: queryKeys.businessYears('UJAT'),
+    queryFn: fetchUjatProgramBusinessYears,
+    enabled: remote,
+    staleTime: UJAT_BUSINESS_YEARS_STALE_MS,
     retry: shouldRetryQuery,
   })
 }

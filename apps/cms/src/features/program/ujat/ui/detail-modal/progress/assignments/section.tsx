@@ -136,7 +136,7 @@ export function UjatEducationProgressAssignmentsSection({
       >
         {sessionGroups.length === 0 ? (
           <div className="ujat-education-progress-assignments__empty">
-            조회 결과가 없습니다.
+            {loading ? '불러오는 중입니다.' : '조회 결과가 없습니다.'}
           </div>
         ) : (
           <div className="ujat-education-progress-assignments__groups">

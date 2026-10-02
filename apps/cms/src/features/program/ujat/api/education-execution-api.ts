@@ -224,6 +224,48 @@ export async function fetchUjatAllocationMatrix(
   )
 }
 
+export type UjatAssignmentDocumentStatus =
+  | 'NOT_SUBMITTED'
+  | 'SUBMITTED'
+  | 'REVISED'
+  | 'DEADLINE_MISSED'
+
+export type UjatAssignmentDocumentDto = {
+  status?: UjatAssignmentDocumentStatus | string | null
+  submittedAt?: string | null
+  feedbackDeliveredAt?: string | null
+  formResponseId?: number | null
+}
+
+export type UjatAssignmentVolunteerDto = {
+  participantId?: number | null
+  memberId?: number | null
+  volunteerName?: string | null
+  institutionName?: string | null
+  assignedClass?: string | null
+  activityAbandoned?: boolean | null
+  hasProgressOnDate?: boolean | null
+  plan?: UjatAssignmentDocumentDto | null
+  log?: UjatAssignmentDocumentDto | null
+}
+
+export type UjatAssignmentDatePeriodDto = {
+  from?: string | null
+  to?: string | null
+}
+
+export type UjatAssignmentSessionDto = {
+  scheduleId?: number | null
+  educationDate?: string | null
+  planSubmissionPeriod?: UjatAssignmentDatePeriodDto | null
+  logSubmissionPeriod?: UjatAssignmentDatePeriodDto | null
+  volunteers?: UjatAssignmentVolunteerDto[] | null
+}
+
+export type UjatAssignmentSubmissionsResponse = {
+  sessions?: UjatAssignmentSessionDto[] | null
+}
+
 export async function postUjatPartnerAssignmentsAuto(
   programId: string,
   body: UjatAutoAssignmentRequest

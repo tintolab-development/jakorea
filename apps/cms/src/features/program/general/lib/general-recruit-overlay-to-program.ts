@@ -69,6 +69,7 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
     programRangeSeal: 'recruit.instructor.programRangeSeal',
     recruitTargets: 'recruit.instructor.recruitTargets',
     recruitTargetDetail: 'recruit.instructor.recruitTargetDetail',
+    announcementPublished: 'recruit.instructor.announcementPublished',
     inquiryContact: 'recruit.instructor.inquiryContact',
     inquiryTel: 'recruit.instructor.inquiryTel',
     inquiryEmail: 'recruit.instructor.inquiryEmail',
@@ -876,6 +877,21 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
+  const instructorAnnouncementPublished =
+    overlayAnnouncementPublished(overlay, keys.instructor.announcementPublished) ??
+    // 라디오 기본값 `published` — 값을 안 바꿔도 강사 모집 정보가 있으면 게시로 본다.
+    (instructorPeriodLabel || instructorContact || instructorTargets?.length ? true : undefined)
+  if (instructorAnnouncementPublished !== undefined) {
+    const nextPublished = coalesceBool(
+      instructorInfo.announcementPublished,
+      instructorAnnouncementPublished,
+      preferOverlay
+    )
+    if (nextPublished !== undefined) {
+      instructorInfo.announcementPublished = nextPublished
+      instructorInfo.announcementPublishedLabel = nextPublished ? '게시' : '미게시'
+    }
+  }
 
   const volunteerTargetLabel =
     volunteerTargets?.length ? formatVolunteerTargetsLabel(volunteerTargets) : undefined
@@ -1476,8 +1492,21 @@ export function resolveGeneralRecruitDetailDisplayProgram(
     audience
   )
 
+  const instructorAnnouncement =
+    audience === 'instructor'
+      ? withPersistedRecruitMedia.generalCommonInfo?.instructorRecruitmentInfo
+      : undefined
+
   return {
     ...withAudienceCopy,
+    ...(instructorAnnouncement
+      ? {
+          generalCommonInfo: {
+            ...withAudienceCopy.generalCommonInfo,
+            instructorRecruitmentInfo: instructorAnnouncement,
+          },
+        }
+      : {}),
     // 강사·봉사자 상세 「기타사항」은 해당 행 otherMatters. 비고(행 remarks)와 섞지 않는다.
     ...(audience === 'participant'
       ? {}

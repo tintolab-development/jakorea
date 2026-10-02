@@ -1,6 +1,9 @@
 import type { GeminiApprovedTrainingDetail } from '@/features/program/gemini/model/approved/detail-types'
-import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
-import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas/instructorMemberDetailResponse'
+import {
+  mapGeminiApprovedTrainingPrivacyUnmask,
+  toGeminiApprovedTrainingUnmaskError,
+  type GeminiApprovedTrainingPrivacyUnmasked,
+} from '@/features/program/gemini/lib/approved/privacy-unmask'
 import type { GeminiInstructorApplicationRow } from '@/features/program/gemini/model/approved/instructor-application-types'
 import type { GeminiApprovedTrainingRow } from '@/features/program/gemini/model/approved/types'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
@@ -41,7 +44,7 @@ import {
   rejectGeminiInstructorApplicationRemote,
   rejectGeminiOrganizationApplicationRemote,
   resendGeminiOrganizationApplicationNotificationRemote,
-  unmaskGeminiOrganizationApplicationPrivacyRemote,
+  unmaskGeminiApprovedTrainingPrivacyRemote,
   updateGeminiRecruitmentRemote,
   type GeminiApprovedTrainingRemoteFilters,
   type GeminiInstructorApplicationRemoteFilters,
@@ -168,43 +171,19 @@ export async function getGeminiApprovedTrainingDetail(
   return mapGeminiApprovedTrainingDetailResponseToDetail(dto)
 }
 
-export type GeminiApprovedTrainingPrivacyUnmasked = {
-  teacherName?: string
-  teacherPhone?: string
-  teacherEmail?: string
-  instructorPhone?: string
-  instructorEmail?: string
-}
+export type { GeminiApprovedTrainingPrivacyUnmasked }
 
-function nonEmpty(value: string | null | undefined): string | undefined {
-  const v = value?.trim()
-  return v ? v : undefined
-}
-
-/** 담당 교사(기관 신청 unmask) 실패 시 전체 실패. 연수 담당 강사 unmask 실패는 강사만 마스킹 유지 */
+/** 승인 연수 id 하나로 교사·배정 강사 원문을 조회한다. 응답은 쿼리 캐시에 넣지 않는다. */
 export async function revealGeminiApprovedTrainingPersonalInfo(
-  detail: Pick<GeminiApprovedTrainingDetail, 'id' | 'programId' | 'instructor'>,
+  detail: Pick<GeminiApprovedTrainingDetail, 'id'>,
   reason: string
 ): Promise<GeminiApprovedTrainingPrivacyUnmasked> {
   assertRemoteReady()
-  const programId = Number(detail.programId)
-  const teacher = await unmaskGeminiOrganizationApplicationPrivacyRemote(
-    detail.id,
-    reason,
-    Number.isFinite(programId) && programId > 0 ? programId : undefined
-  )
-  const instructorMemberId = Number(detail.instructor.memberId)
-  const instructor = Number.isFinite(instructorMemberId)
-    ? ((await fetchMemberRolePrivacyUnmask(instructorMemberId, reason, 'INSTRUCTOR').catch(
-        () => null
-      )) as InstructorMemberDetailResponse | null)
-    : null
-  return {
-    teacherName: nonEmpty(teacher.teacherName),
-    teacherPhone: nonEmpty(teacher.teacherPhone),
-    teacherEmail: nonEmpty(teacher.teacherEmail),
-    instructorPhone: nonEmpty(instructor?.member?.phone),
-    instructorEmail: nonEmpty(instructor?.member?.email),
+  try {
+    const dto = await unmaskGeminiApprovedTrainingPrivacyRemote(detail.id, reason)
+    return mapGeminiApprovedTrainingPrivacyUnmask(dto)
+  } catch (error) {
+    throw toGeminiApprovedTrainingUnmaskError(error)
   }
 }
 

@@ -142,6 +142,47 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.description).toBe('강사 모집 설명')
   })
 
+  it('강사 공고 게시 여부를 overlay에서 강사 모집 정보로 옮긴다', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const unpublished = applyGeneralRecruitOverlayToProgram(
+      baseProgram(),
+      {
+        [keys.instructor.announcementPublished]: 'unpublished',
+        [keys.instructor.inquiryContact]: '강사 문의처',
+      },
+      { preferOverlay: true }
+    )
+    expect(unpublished.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished).toBe(
+      false
+    )
+    expect(
+      unpublished.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublishedLabel
+    ).toBe('미게시')
+
+    const display = resolveGeneralRecruitDetailDisplayProgram(
+      {
+        ...baseProgram(),
+        registrationOverlay: {
+          [keys.instructor.announcementPublished]: 'published',
+        },
+        generalCommonInfo: {
+          instructorRecruitmentInfo: {
+            contactOrganizationName: '강사 문의처',
+            recruitmentPeriodLabel: '2026.10.16 (금) ~ 2027.09.15 (수)',
+          },
+        },
+      } as Program,
+      'instructor'
+    )
+    expect(display.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished).toBe(true)
+    expect(display.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublishedLabel).toBe(
+      '게시'
+    )
+    expect(display.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName).toBe(
+      '강사 문의처'
+    )
+  })
+
   it('maps volunteer announcement, interview flags, final announce, and interview schedule', () => {
     const keys = GENERAL_RECRUIT_OVERLAY_KEYS
     const slotStart = dayjs().startOf('day').hour(9).minute(0).second(0).millisecond(0)

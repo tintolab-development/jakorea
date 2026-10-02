@@ -6,6 +6,8 @@ import type { UjatVolunteerApplicationsStage } from './applications-list-query'
 export const queryKeys = {
   all: ['cms', 'programs', 'ujat'] as const,
   lists: () => [...queryKeys.all, 'list'] as const,
+  businessYears: (programType: 'UJAT') =>
+    [...queryKeys.all, 'business-years', programType] as const,
   list: (scope: 'remote' | 'local', params: ListParams) =>
     [...queryKeys.lists(), scope, params] as const,
   details: () => [...queryKeys.all, 'detail'] as const,
@@ -33,8 +35,6 @@ export const queryKeys = {
       educationRegionCode,
       semesterType,
     ] as const,
-  scheduleAttendances: (programId: string, scheduleId: string) =>
-    [...queryKeys.execution(), 'attendances', programId, scheduleId] as const,
   assignmentSubmissions: (
     programId: string,
     educationRegionCode: string,
@@ -47,4 +47,6 @@ export const queryKeys = {
       educationRegionCode,
       semesterType,
     ] as const,
+  scheduleAttendances: (programId: string, scheduleId: string) =>
+    [...queryKeys.execution(), 'attendances', programId, scheduleId] as const,
 }

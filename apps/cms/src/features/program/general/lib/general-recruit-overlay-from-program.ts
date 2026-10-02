@@ -45,6 +45,7 @@ const keys = {
     programRangeSeal: 'recruit.instructor.programRangeSeal',
     recruitTargets: 'recruit.instructor.recruitTargets',
     recruitTargetDetail: 'recruit.instructor.recruitTargetDetail',
+    announcementPublished: 'recruit.instructor.announcementPublished',
     inquiryContact: 'recruit.instructor.inquiryContact',
     inquiryTel: 'recruit.instructor.inquiryTel',
     inquiryEmail: 'recruit.instructor.inquiryEmail',
@@ -256,6 +257,8 @@ export function buildGeneralRecruitOverlayFromProgram(
 
   const published = publishedOverlay(participant?.announcementPublished)
   if (published) overlay[inst.announcementPublished] = published
+  const instructorPublished = publishedOverlay(instructor?.announcementPublished)
+  if (instructorPublished) overlay[keys.instructor.announcementPublished] = instructorPublished
   const volunteerPublished = publishedOverlay(volunteer?.announcementPublished)
   if (volunteerPublished) overlay[keys.volunteer.announcementPublished] = volunteerPublished
 

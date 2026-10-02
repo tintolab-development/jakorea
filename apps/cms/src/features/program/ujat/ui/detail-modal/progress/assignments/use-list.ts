@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useCmsAlert } from '@/shared/ui'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { buildUjatAssignmentSessionsFromRemote } from '@/features/program/ujat/api/assignment-submissions-adapters'
 import { fetchUjatAssignmentSubmissions } from '@/features/program/ujat/api/education-execution-api'
@@ -83,6 +84,7 @@ export function useUjatEducationProgressAssignments(
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ) {
+  const { showAlert } = useCmsAlert()
   const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const educationRegionCode = toUjatEducationRegionCode(regionKey)
   const semesterType = toUjatRecruitHalfApi(half)
@@ -111,6 +113,14 @@ export function useUjatEducationProgressAssignments(
         educationRegionCode,
       }),
   })
+
+  useEffect(() => {
+    if (!remoteQuery.isError || remoteQuery.isFetching) return
+    showAlert({
+      title: '목록 조회 실패',
+      content: '과제 제출 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    })
+  }, [remoteQuery.isError, remoteQuery.isFetching, showAlert])
 
   const remoteSessions = useMemo(() => {
     if (!remoteEnabled || remoteQuery.data == null || remoteQuery.isError) return []

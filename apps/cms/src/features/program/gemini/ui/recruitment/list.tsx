@@ -313,10 +313,7 @@ export function GeminiRecruitmentList() {
           onRow={record => ({
             onClick: (e: MouseEvent<HTMLElement>) => {
               if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-              if (record.isDraft) {
-                openAdd('continue')
-                return
-              }
+              // 임시저장도 서버 공고다. 추가 폼은 브라우저 초안만 복원해서 등록값이 비어 보인다.
               openDetail(record.id)
             },
             style: { cursor: 'pointer' },

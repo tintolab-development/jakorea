@@ -74,11 +74,19 @@ export function GeminiApprovedTrainingDetailFullPageModal({
       managerNameKo: unmasked.teacherName ?? detail.managerNameKo,
       managerContact: unmasked.teacherPhone ?? detail.managerContact,
       managerEmail: unmasked.teacherEmail ?? detail.managerEmail,
-      instructor: {
-        ...detail.instructor,
-        contact: unmasked.instructorPhone ?? detail.instructor.contact,
-        email: unmasked.instructorEmail ?? detail.instructor.email,
-      },
+      managerHomeAddress: unmasked.teacherHomeAddress ?? detail.managerHomeAddress,
+      managerAccountNumber: unmasked.teacherAccountNumber ?? '',
+      managerPosition: '',
+      managerSubject: '',
+      instructor:
+        unmasked.instructor == null
+          ? detail.instructor
+          : {
+              ...detail.instructor,
+              contact: unmasked.instructor.phone ?? detail.instructor.contact,
+              email: unmasked.instructor.email ?? detail.instructor.email,
+              region: unmasked.instructor.homeAddress ?? detail.instructor.region,
+            },
     }
   }, [detail, personalInfoRevealed, unmasked])
 
