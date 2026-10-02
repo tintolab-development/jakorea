@@ -50,6 +50,7 @@ function CompanySchoolEducationScheduleChangeAction({ program }: { program: Prog
 
   return (
     <EducationScheduleChangeTitleAction
+      programId={program.id}
       scheduleLines={scheduleLines}
       educationScheduleMode="period"
       operationStart={program.startDate}

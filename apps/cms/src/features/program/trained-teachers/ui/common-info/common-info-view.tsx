@@ -1577,12 +1577,18 @@ function TrainedTeachersScheduleSection({
 
 /** 교육 진행 일정 설정 섹션 — 일정형 복수는 비노출. 수정 모드: date/period + 예정일 목록 */
 function TrainedTeachersScheduleSettingsSection({
+  programId,
+  operationStart,
+  operationEnd,
   educationStructure,
   sessionRound,
   commonInfo,
   isEditMode = false,
   form,
 }: {
+  programId: string
+  operationStart?: Program['startDate']
+  operationEnd?: Program['endDate']
   educationStructure: 'curriculum' | 'schedule'
   sessionRound: 'single' | 'multi'
   commonInfo: TrainedTeachersCommonInfo
@@ -1640,8 +1646,11 @@ function TrainedTeachersScheduleSettingsSection({
       titleTrailing={
         isFormEdit && form ? (
           <EducationScheduleChangeTitleAction
+            programId={programId}
             scheduleLines={lines}
             educationScheduleMode={scheduleMode}
+            operationStart={operationStart}
+            operationEnd={operationEnd}
             onApply={nextLines => {
               form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
             }}
@@ -2211,6 +2220,9 @@ export function TrainedTeachersCommonInfoView({
       )}
 
       <TrainedTeachersScheduleSettingsSection
+        programId={program.id}
+        operationStart={program.startDate}
+        operationEnd={program.endDate}
         educationStructure={educationStructure}
         sessionRound={sessionRound}
         commonInfo={commonInfo}

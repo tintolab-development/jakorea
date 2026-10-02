@@ -408,6 +408,7 @@ export function EducationScheduleSettingsSection({
         description={scheduleMeta.editDescription}
         titleTrailing={
           <EducationScheduleChangeTitleAction
+            programId={program.id}
             scheduleLines={lines}
             educationScheduleMode="period"
             operationStart={program.startDate}

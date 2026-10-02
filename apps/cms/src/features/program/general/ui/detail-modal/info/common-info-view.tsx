@@ -4692,6 +4692,7 @@ function ScheduleSettingsSection({
       titleTrailing={
         isFormEdit ? (
           <EducationScheduleChangeTitleAction
+            programId={program.id}
             scheduleLines={lines}
             educationScheduleMode={
               isFormEdit
