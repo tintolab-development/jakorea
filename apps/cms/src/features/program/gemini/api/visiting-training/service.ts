@@ -24,9 +24,11 @@ import {
   approveGeminiInstructorApplicationRemote,
   approveGeminiOrganizationApplicationRemote,
   bulkApproveGeminiOrganizationApplicationsRemote,
+  bulkDeleteGeminiApprovedTrainingsRemote,
   bulkDeleteGeminiRecruitmentsRemote,
   bulkRejectGeminiOrganizationApplicationsRemote,
   createGeminiRecruitmentRemote,
+  deleteGeminiApprovedTrainingRemote,
   deleteGeminiRecruitmentRemote,
   fetchGeminiApprovedInstructorApplicationsRemote,
   fetchGeminiApprovedTrainingDetailRemote,
@@ -227,6 +229,31 @@ export async function deleteGeminiRecruitments(ids: string[]): Promise<void> {
     return
   }
   await bulkDeleteGeminiRecruitmentsRemote(numericIds)
+}
+
+export type GeminiApprovedTrainingsDeleteResult = {
+  successIds: string[]
+  failureCount: number
+}
+
+export async function deleteGeminiApprovedTrainings(
+  ids: string[]
+): Promise<GeminiApprovedTrainingsDeleteResult> {
+  assertRemoteReady()
+  const numericIds = toGeminiNumericIds(ids)
+  if (numericIds.length === 0) {
+    throw new Error('삭제할 승인 연수 ID가 올바르지 않습니다.')
+  }
+  if (numericIds.length === 1) {
+    await deleteGeminiApprovedTrainingRemote(String(numericIds[0]))
+    return { successIds: [String(numericIds[0])], failureCount: 0 }
+  }
+  const result = await bulkDeleteGeminiApprovedTrainingsRemote(numericIds)
+  const successIds = (result?.successIds ?? []).map(String)
+  return {
+    successIds,
+    failureCount: result?.failureCount ?? numericIds.length - successIds.length,
+  }
 }
 
 export async function approveGeminiOrganizationApplications(ids: string[]): Promise<void> {

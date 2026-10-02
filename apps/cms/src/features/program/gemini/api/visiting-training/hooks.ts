@@ -7,6 +7,7 @@ import {
   type InfiniteData,
   type QueryClient,
 } from '@tanstack/react-query'
+import { geminiApprovedTrainingService } from '../approved-training-service'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import { geminiVisitingTrainingQueryKeys } from './query-keys'
 import { mapGeminiRecruitmentUiStatusToPeriodStatusWire } from '../../lib/recruitment/map-period-status-wire'
@@ -270,6 +271,27 @@ export function useApproveGeminiInstructorApplicationMutation(approvedTrainingId
     mutationFn: (applicationId: string) => approveGeminiInstructorApplication(applicationId),
     onSuccess: async () => {
       await invalidateGeminiInstructorApprovalQueries(queryClient, approvedTrainingId)
+    },
+  })
+}
+
+export function useDeleteGeminiApprovedTrainingsMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) => geminiApprovedTrainingService.delete(ids),
+    retry: false,
+    onSuccess: result => {
+      for (const id of result.successIds) {
+        queryClient.removeQueries({ queryKey: geminiVisitingTrainingQueryKeys.approvedDetail(id) })
+        queryClient.removeQueries({
+          queryKey: geminiVisitingTrainingQueryKeys.approvedInstructorApplications(id),
+        })
+      }
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.approvedList(),
+      })
     },
   })
 }

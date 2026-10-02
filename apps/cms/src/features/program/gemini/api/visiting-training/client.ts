@@ -1,6 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
+import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
 import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
 import type { GeminiApprovedTrainingDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingDetailResponse'
@@ -237,6 +238,28 @@ export async function bulkDeleteGeminiRecruitmentsRemote(ids: number[]): Promise
     headers: { 'Content-Type': 'application/json' },
     data: body,
   })
+}
+
+export async function deleteGeminiApprovedTrainingRemote(approvedTrainingId: string): Promise<void> {
+  await customInstance({
+    url: `${BASE}/approved/${encodeURIComponent(approvedTrainingId)}`,
+    method: 'DELETE',
+  })
+}
+
+/** OpenAPI operationId: bulkDeleteApprovedTrainings — 부분 성공 가능 */
+export async function bulkDeleteGeminiApprovedTrainingsRemote(
+  ids: number[]
+): Promise<BulkActionResponse> {
+  const body: BulkDecisionRequest = { ids }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `${BASE}/approved/bulk-delete`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
 }
 
 export async function approveGeminiOrganizationApplicationRemote(

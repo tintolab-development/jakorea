@@ -8,7 +8,7 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { CmsButton, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
-import { geminiApprovedTrainingService } from '../../api/approved-training-service'
+import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
 import {
   geminiApprovedTrainingDeleteBlocked,
   resolveGeminiDeleteBlockedAlert,
@@ -150,6 +150,7 @@ export function GeminiApprovedTrainingList() {
   const todayKey = useToday()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const { mutateAsync: deleteApprovedTrainings } = useDeleteGeminiApprovedTrainingsMutation()
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const queryFilters = useMemo(
@@ -204,39 +205,34 @@ export function GeminiApprovedTrainingList() {
     })
   }, [showAlert])
 
-  const showRemoteMutationUnavailable = useCallback(() => {
-    showAlert({
-      title: '안내',
-      content:
-        '승인 연수 삭제 API가 아직 연동되지 않았습니다.\nOpenAPI mutation 추가 후 사용할 수 있습니다.',
-    })
-  }, [showAlert])
-
   const handleBulkDeleteClick = useCallback(() => {
     if (!canWrite) return
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
-    const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
-    const selectedRows = filteredRows.filter(row => selectedIds.has(row.id))
-    if (selectedRows.some(geminiApprovedTrainingDeleteBlocked)) {
-      showAlert(resolveGeminiDeleteBlockedAlert('연수', selectedRows.length))
-      return
-    }
     setDeleteModalOpen(true)
-  }, [canWrite, filteredRows, selectedRowKeys, showAlert, showNoSelectionAlert])
+  }, [canWrite, selectedRowKeys, showNoSelectionAlert])
 
-  const handleConfirmDelete = useCallback(() => {
-    if (remoteEnabled) {
-      setDeleteModalOpen(false)
-      showRemoteMutationUnavailable()
+  const handleConfirmDelete = useCallback(async () => {
+    setDeleteModalOpen(false)
+    const selectedIds = selectedRowKeys.map(key => String(key))
+    const selectedIdSet = new Set(selectedIds)
+    const selectedRows = filteredRows.filter(row => selectedIdSet.has(row.id))
+    const blockedAlert = resolveGeminiDeleteBlockedAlert('연수', selectedIds.length)
+    if (selectedRows.some(geminiApprovedTrainingDeleteBlocked)) {
+      showAlert(blockedAlert)
       return
     }
-    geminiApprovedTrainingService.delete(selectedRowKeys.map(key => String(key)))
-    setSelectedRowKeys([])
-    setDeleteModalOpen(false)
-  }, [remoteEnabled, selectedRowKeys, showRemoteMutationUnavailable])
+    try {
+      const result = await deleteApprovedTrainings(selectedIds)
+      const deletedIds = new Set(result.successIds)
+      setSelectedRowKeys(selectedIds.filter(id => !deletedIds.has(id)))
+      if (result.failureCount > 0) showAlert(blockedAlert)
+    } catch {
+      showAlert(blockedAlert)
+    }
+  }, [deleteApprovedTrainings, filteredRows, selectedRowKeys, showAlert])
 
   const columns: ColumnsType<GeminiApprovedTrainingRow> = useMemo(
     () => [
