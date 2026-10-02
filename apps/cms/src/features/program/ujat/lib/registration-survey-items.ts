@@ -3,9 +3,6 @@
  * (일반·1사1교 공통 3종과 분리. 만족도는 봉사단/학교로 나뉨)
  */
 
-import type { GeneralProgramSurveyMenuKey } from '@/types/domain'
-import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
-
 export const UJAT_REGISTRATION_SURVEY_ITEM_IDS = [
   'survey',
   'volunteer_satisfaction',
@@ -46,25 +43,17 @@ export function readUjatSurveyItems(
 ): Record<UjatSurveyRowId, boolean> {
   if (!raw || typeof raw !== 'object') return { ...defaults }
   const o = raw as Record<string, unknown>
-  const legacyCombined =
-    o.satisfaction === true ||
-    o.student_satisfaction === true ||
-    o.teacher_satisfaction === true
 
   return {
     survey: typeof o.survey === 'boolean' ? o.survey : defaults.survey,
     volunteer_satisfaction:
       typeof o.volunteer_satisfaction === 'boolean'
         ? o.volunteer_satisfaction
-        : legacyCombined
-          ? true
-          : defaults.volunteer_satisfaction,
+        : defaults.volunteer_satisfaction,
     school_satisfaction:
       typeof o.school_satisfaction === 'boolean'
         ? o.school_satisfaction
-        : legacyCombined
-          ? true
-          : defaults.school_satisfaction,
+        : defaults.school_satisfaction,
     lecture_evaluation:
       typeof o.lecture_evaluation === 'boolean' ? o.lecture_evaluation : defaults.lecture_evaluation,
   }
@@ -79,40 +68,78 @@ export function resolveUjatSurveyItemsText(
   return labels.length > 0 ? labels.join(', ') : '-'
 }
 
-const SATISFACTION_ALIASES = new Set([
-  'satisfaction',
-  'student_satisfaction',
-  'teacher_satisfaction',
-  'volunteer_satisfaction',
-  'school_satisfaction',
-])
+/** UJAT 저장 키. 일반 프로그램 3종(`satisfaction` 단일)과 달리 봉사단/학교를 유지한다. */
+export type UjatPersistedSurveyMenuKey =
+  | 'survey'
+  | 'volunteer_satisfaction'
+  | 'school_satisfaction'
+  | 'lecture_evaluation'
 
-/** BE `generalSurveyMenuKeys` → UJAT overlay `ujat.basicInfo.surveyItems` */
+function hasKey(set: Set<string>, keys: readonly string[]): boolean {
+  return keys.some(key => set.has(key))
+}
+
+/**
+ * `generalSurveyMenuKeys` · Primary `surveyMenuKeys`(LNB id) → overlay 4종.
+ * `satisfaction` 한 키는 봉사단·학교로 펼치지 않는다.
+ */
 export function ujatSurveyItemsFromProgramKeys(
   keys: readonly string[] | undefined
 ): Record<UjatSurveyRowId, boolean> {
   const set = new Set(keys ?? [])
-  const combinedSatisfaction = [...set].some(key => SATISFACTION_ALIASES.has(key))
   return {
-    survey: set.has('survey'),
-    volunteer_satisfaction: set.has('volunteer_satisfaction') || combinedSatisfaction,
-    school_satisfaction: set.has('school_satisfaction') || combinedSatisfaction,
-    lecture_evaluation: set.has('lecture_evaluation'),
+    survey: hasKey(set, ['survey', 'survey-poll']),
+    volunteer_satisfaction: hasKey(set, [
+      'volunteer_satisfaction',
+      'survey-volunteer-satisfaction',
+      'survey-satisfaction',
+      'survey-student-satisfaction',
+    ]),
+    school_satisfaction: hasKey(set, [
+      'school_satisfaction',
+      'survey-school-satisfaction',
+      'survey-teacher-satisfaction',
+    ]),
+    lecture_evaluation: hasKey(set, ['lecture_evaluation', 'survey-lecture-eval']),
   }
 }
 
-/** UJAT overlay 설문 체크 → PATCH `generalSurveyMenuKeys` (공통 3종 envelope) */
+export function normalizeUjatSurveyMenuKeys(
+  keys: readonly string[]
+): UjatPersistedSurveyMenuKey[] {
+  return ujatPersistedSurveyMenuKeysFromItems(ujatSurveyItemsFromProgramKeys(keys))
+}
+
+export function ujatPersistedSurveyMenuKeysFromItems(
+  items: Record<UjatSurveyRowId, boolean>
+): UjatPersistedSurveyMenuKey[] {
+  const result: UjatPersistedSurveyMenuKey[] = []
+  if (items.survey) result.push('survey')
+  if (items.volunteer_satisfaction) result.push('volunteer_satisfaction')
+  if (items.school_satisfaction) result.push('school_satisfaction')
+  if (items.lecture_evaluation) result.push('lecture_evaluation')
+  return result
+}
+
+/** 봉사단/학교 체크가 boolean으로 있으면 4종 SSOT. 3종 `satisfaction`만 있는 객체는 제외. */
+export function hasExplicitUjatSurveySplit(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false
+  const o = raw as Record<string, unknown>
+  return (
+    typeof o.volunteer_satisfaction === 'boolean' || typeof o.school_satisfaction === 'boolean'
+  )
+}
+
+/** UJAT overlay 설문 체크 → `generalSurveyMenuKeys` (4종, 만족도 합치지 않음) */
 export function ujatGeneralSurveyMenuKeysFromOverlay(
   overlay: Record<string, unknown>
-): GeneralProgramSurveyMenuKey[] | undefined {
+): UjatPersistedSurveyMenuKey[] | undefined {
   if (!Object.prototype.hasOwnProperty.call(overlay, 'ujat.basicInfo.surveyItems')) {
     return undefined
   }
-  const items = readUjatSurveyItems(overlay['ujat.basicInfo.surveyItems'], createUjatSurveyItemsDefault(false))
-  const rawKeys: string[] = []
-  if (items.survey) rawKeys.push('survey')
-  if (items.volunteer_satisfaction) rawKeys.push('volunteer_satisfaction')
-  if (items.school_satisfaction) rawKeys.push('school_satisfaction')
-  if (items.lecture_evaluation) rawKeys.push('lecture_evaluation')
-  return normalizeGeneralSurveyMenuKeys(rawKeys)
+  const items = readUjatSurveyItems(
+    overlay['ujat.basicInfo.surveyItems'],
+    createUjatSurveyItemsDefault(false)
+  )
+  return ujatPersistedSurveyMenuKeysFromItems(items)
 }

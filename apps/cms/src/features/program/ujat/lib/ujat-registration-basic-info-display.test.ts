@@ -7,6 +7,7 @@ import {
 import {
   applyUjatRegistrationOverlayToProgram,
   resolveUjatRegistrationBasicInfoDisplay,
+  resolveUjatSurveyMenuItems,
 } from './ujat-registration-basic-info-display'
 import {
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
@@ -192,7 +193,11 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
     })
     expect(next.generalCommonInfo?.sponsorManagerContactIds).toEqual(['contact-9'])
     expect(next.generalCommonInfo?.sponsorManagerLine).toBe('담당자A')
-    expect(next.generalSurveyMenuKeys).toEqual(['survey', 'satisfaction', 'lecture_evaluation'])
+    expect(next.generalSurveyMenuKeys).toEqual([
+      'survey',
+      'school_satisfaction',
+      'lecture_evaluation',
+    ])
   })
 
   it('저장된 overlay가 담당자 전체 기본값이어도 수정 시드에 미선택을 넣는다', () => {
@@ -269,5 +274,69 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
       end: '2026-03-31T00:00:00.000Z',
     })
     expect(overlay['ujat.recruit.institution.targetLevels']).toEqual(['elementary'])
+  })
+})
+
+describe('UJAT 설문 4종 — 등록 체크와 상세', () => {
+  beforeEach(() => {
+    resetUjatProgramRegistrationOverlay()
+  })
+
+  it('합쳐진 satisfaction 키가 와도 overlay의 학교만 체크를 유지한다', () => {
+    const overlay = {
+      'ujat.basicInfo.surveyItems': {
+        survey: true,
+        volunteer_satisfaction: false,
+        school_satisfaction: true,
+        lecture_evaluation: false,
+      },
+    }
+    const next = reconcileUjatRegistrationOverlayFromApi(
+      { generalSurveyMenuKeys: ['survey', 'satisfaction'] },
+      overlay
+    )
+    expect(next['ujat.basicInfo.surveyItems']).toEqual(overlay['ujat.basicInfo.surveyItems'])
+  })
+
+  it('상세 LNB는 세션이 아니라 프로그램 overlay 4종을 따른다', () => {
+    resetUjatProgramRegistrationOverlay()
+    const program: Program = {
+      ...baseProgram(),
+      generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
+      ujatRegistrationOverlay: {
+        'ujat.basicInfo.surveyItems': {
+          survey: false,
+          volunteer_satisfaction: true,
+          school_satisfaction: false,
+          lecture_evaluation: false,
+        },
+      },
+    }
+    expect(resolveUjatSurveyMenuItems(program).map(item => item.label)).toEqual([
+      '봉사단 만족도조사',
+    ])
+    expect(resolveUjatRegistrationBasicInfoDisplay(program).surveyItems).toBe('봉사단 만족도조사')
+  })
+
+  it('수정 시드는 합쳐진 키로 봉사단·학교를 둘 다 켜지 않는다', () => {
+    const program: Program = {
+      ...baseProgram(),
+      generalSurveyMenuKeys: ['satisfaction'],
+      ujatRegistrationOverlay: {
+        'ujat.basicInfo.surveyItems': {
+          survey: false,
+          volunteer_satisfaction: false,
+          school_satisfaction: true,
+          lecture_evaluation: false,
+        },
+      },
+    }
+    seedUjatRegistrationBasicInfoOverlayFromProgram(program)
+    expect(getUjatProgramRegistrationOverlayRecord()['ujat.basicInfo.surveyItems']).toEqual({
+      survey: false,
+      volunteer_satisfaction: false,
+      school_satisfaction: true,
+      lecture_evaluation: false,
+    })
   })
 })
