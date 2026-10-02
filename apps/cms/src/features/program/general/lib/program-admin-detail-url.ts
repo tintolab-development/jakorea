@@ -13,6 +13,7 @@ import {
   COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
   TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/general/lib/registration-local-save'
+import { isUjatPrimaryProgramId } from '@/features/program/ujat/lib/is-ujat-primary-program'
 import { isUjatProgramId } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import { buildUjatProgramDetailUrl } from '@/features/program/ujat/lib/ujat-program-detail-url'
 
@@ -74,13 +75,23 @@ export function getProgramAdminDetailInfoTabUrlForProgramType(
 }
 
 /**
+ * `looksLikeUjatProgramId`의 `/^18xxxx$/`는 교육받은 교사 등 다른 유형 id(186020)까지 UJAT로 본다.
+ * 그 숫자 대역은 navigation으로 유형을 확인하고, Primary 시드와 mock prefix만 여기서 UJAT로 연다.
+ */
+function isPrefixConfirmedUjatProgramId(id: string): boolean {
+  if (isUjatPrimaryProgramId(id)) return true
+  if (/^18\d{4}$/.test(id)) return false
+  return isUjatProgramId(id)
+}
+
+/**
  * mock·로컬 등록 prefix로 유형이 확정될 때만 URL 반환.
  * 숫자 BE id 등은 null → remote resolve 필요.
  */
 export function tryGetProgramAdminDetailInfoTabUrlByIdPrefix(programId: string): string | null {
   const id = programId.trim()
   if (!id) return null
-  if (isUjatProgramId(id)) {
+  if (isPrefixConfirmedUjatProgramId(id)) {
     return buildUjatProgramDetailUrl(id, 'info', 'info')
   }
   if (isGeneralProgramId(id)) {

@@ -6,6 +6,9 @@ const resolveMock = vi.fn(async (id: string) => {
   if (id === '167001') {
     return '/programs/company-school?programId=167001&lnb=info&tab=info'
   }
+  if (id === '186020') {
+    return '/programs/trained-teachers?programId=186020&lnb=info&tab=info'
+  }
   return `/programs/general?programId=${id}&lnb=info&tab=info`
 })
 
@@ -48,6 +51,21 @@ describe('navigateToProgramAdminDetail', () => {
       '/programs/company-school?programId=167001&lnb=info&tab=info'
     )
     expect(resolveMock).not.toHaveBeenCalled()
+  })
+
+  it('resolves 18xxxx ids through navigation instead of the UJAT list', async () => {
+    const navigate = vi.fn()
+    const queryClient = { getQueryData: vi.fn(() => undefined) } as never
+
+    navigateToProgramAdminDetail(navigate, '186020', { queryClient })
+
+    expect(navigate).not.toHaveBeenCalled()
+    await vi.waitFor(() => {
+      expect(navigate).toHaveBeenCalledTimes(1)
+    })
+    expect(navigate).toHaveBeenCalledWith(
+      '/programs/trained-teachers?programId=186020&lnb=info&tab=info'
+    )
   })
 
   it('falls back to async resolve once when cache misses', async () => {
