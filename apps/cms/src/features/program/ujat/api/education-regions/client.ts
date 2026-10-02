@@ -7,13 +7,24 @@ import type { UjatEducationRegionUpdateRequest } from '@/shared/api/generated/fo
 
 const BASE = '/api/admin/ujat/education-regions'
 
-export async function fetchAdminUjatEducationRegionsRemote(): Promise<
-  UjatEducationRegionResponse[]
-> {
+export type UjatEducationRegionRemoteListParams = {
+  includeInactive?: boolean
+  activeYn?: boolean
+  keyword?: string
+}
+
+export async function fetchAdminUjatEducationRegionsRemote(
+  params: UjatEducationRegionRemoteListParams = {}
+): Promise<UjatEducationRegionResponse[]> {
+  const query: Record<string, string | boolean> = {}
+  if (params.includeInactive !== undefined) query.includeInactive = params.includeInactive
+  if (params.activeYn !== undefined) query.activeYn = params.activeYn
+  if (params.keyword) query.keyword = params.keyword
   const body = await unwrapApiBody<UjatEducationRegionListResponse | UjatEducationRegionResponse[]>(
     await customInstance({
       url: BASE,
       method: 'GET',
+      params: query,
     })
   )
   if (Array.isArray(body)) return body
