@@ -80,6 +80,11 @@ export function formatStudentGradeClass(grade?: string | null, className?: strin
   return c || g
 }
 
+type StudentRosterItemEnriched = StudentRosterItemResponse & {
+  portraitConsentFileObjectId?: number | null
+  satisfactionSurveyCompleted?: boolean | null
+}
+
 export function mapRosterPortraitConsentSubmission(
   item: Pick<StudentRosterItemResponse, 'portraitConsentStatus' | 'portraitConsentUpdatedAt'>
 ): StudentPortraitConsentSubmission | null {
@@ -98,6 +103,8 @@ export function mapStudentRosterItemToRow(
   index: number
 ): SchoolDetailStudentRow {
   const rosterId = item.rosterId
+  const extra = item as StudentRosterItemEnriched
+  const fileObjectId = extra.portraitConsentFileObjectId
   return {
     id: rosterId != null ? String(rosterId) : `roster-row-${index + 1}`,
     memberId: item.memberId,
@@ -110,6 +117,11 @@ export function mapStudentRosterItemToRow(
     email: item.maskedEmail?.trim() || undefined,
     participantId: item.participantId,
     portraitConsentSubmission: mapRosterPortraitConsentSubmission(item),
+    portraitConsentFileObjectId:
+      typeof fileObjectId === 'number' && Number.isFinite(fileObjectId) && fileObjectId > 0
+        ? fileObjectId
+        : undefined,
+    satisfactionSurveyCompleted: extra.satisfactionSurveyCompleted === true,
   }
 }
 

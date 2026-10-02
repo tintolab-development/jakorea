@@ -61,6 +61,22 @@ describe('student-roster-adapters', () => {
     })
   })
 
+  it('maps portraitConsentFileObjectId and satisfactionSurveyCompleted additively', () => {
+    const row = mapStudentRosterItemToRow(
+      {
+        rosterId: 13,
+        studentName: '이학생',
+        portraitConsentStatus: 'CONSENTED',
+        portraitConsentUpdatedAt: '2026-09-01T00:00:00Z',
+        portraitConsentFileObjectId: 88001,
+        satisfactionSurveyCompleted: true,
+      } as never,
+      0
+    )
+    expect(row.portraitConsentFileObjectId).toBe(88001)
+    expect(row.satisfactionSurveyCompleted).toBe(true)
+  })
+
   it('maps roster portrait consent only when CONSENTED with timestamp', () => {
     expect(
       mapRosterPortraitConsentSubmission({

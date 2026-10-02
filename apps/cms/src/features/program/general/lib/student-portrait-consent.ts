@@ -12,8 +12,11 @@ export interface StudentPortraitConsentSubmission {
 }
 
 export function hasStudentPortraitConsentSubmission(
-  row: Pick<SchoolDetailStudentRow, 'portraitConsentSubmission'>
+  row: Pick<SchoolDetailStudentRow, 'portraitConsentSubmission' | 'portraitConsentFileObjectId'>
 ): boolean {
+  if (row.portraitConsentFileObjectId != null && row.portraitConsentFileObjectId > 0) {
+    return true
+  }
   return (
     row.portraitConsentSubmission?.templateId === PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID &&
     Boolean(row.portraitConsentSubmission.submittedAt?.trim())

@@ -122,6 +122,8 @@ export interface SchoolDetailStudentRow {
   lectureAttendance?: string
   /** 교사 제출 초상권 동의서 (`agreement-portrait` 연동) */
   portraitConsentSubmission?: StudentPortraitConsentSubmission | null
+  /** 관리자 파일 fileObjectId — 있으면 downloadAdminFile. artifact id가 아니다. */
+  portraitConsentFileObjectId?: number
   /** 학생 만족도조사 제출 완료 여부 (프로그램에 만족도 조사가 있을 때 수료 판별에 사용) */
   satisfactionSurveyCompleted?: boolean
   /** 과제 제출 내역 있음 여부 */
