@@ -91,4 +91,17 @@ describe('curriculum multi-round overlay inference', () => {
     expect(countGeneralCurriculumUnitSessionsFromOverlay(overlay)).toBe(2)
     expect(countGeneralCurriculumOverlaySessions(overlay)).toBe(2)
   })
+
+  it('사전 교육이 단원 1번이면 차시 수는 그 칸을 빼서 센다', () => {
+    expect(
+      countGeneralCurriculumUnitSessionsFromOverlay({
+        'generalRegistration.educationCurriculum.unitNameBySession': {
+          1: '사전 교육',
+          2: '1차시',
+          3: '2차시',
+          4: '3차시',
+        },
+      })
+    ).toBe(3)
+  })
 })
