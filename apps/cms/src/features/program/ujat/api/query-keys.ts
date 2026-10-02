@@ -35,6 +35,18 @@ export const queryKeys = {
       educationRegionCode,
       semesterType,
     ] as const,
+  assignmentSubmissions: (
+    programId: string,
+    educationRegionCode: string,
+    semesterType: 'FIRST_HALF' | 'SECOND_HALF'
+  ) =>
+    [
+      ...queryKeys.execution(),
+      'assignment-submissions',
+      programId,
+      educationRegionCode,
+      semesterType,
+    ] as const,
   scheduleAttendances: (programId: string, scheduleId: string) =>
     [...queryKeys.execution(), 'attendances', programId, scheduleId] as const,
 }

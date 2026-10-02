@@ -39,8 +39,10 @@ const UJAT_ASSIGNMENT_EXCEL_COLUMNS: ColumnsType<UjatAssignmentExcelRow> = [
 ]
 
 export function UjatEducationProgressAssignmentsSection({
+  programId,
   half,
 }: {
+  programId: string
   half: EducationProgressHalfKey
 }) {
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
@@ -55,7 +57,8 @@ export function UjatEducationProgressAssignmentsSection({
     filterFields,
     sessionGroups,
     resetRegionState,
-  } = useUjatEducationProgressAssignments(half, activeRegion)
+    loading,
+  } = useUjatEducationProgressAssignments(programId, half, activeRegion)
 
   const assignmentExcelRows = useMemo(() => {
     const rows: UjatAssignmentExcelRow[] = []
@@ -127,7 +130,7 @@ export function UjatEducationProgressAssignmentsSection({
       >
         {sessionGroups.length === 0 ? (
           <div className="ujat-education-progress-assignments__empty">
-            조회 결과가 없습니다.
+            {loading ? '불러오는 중입니다.' : '조회 결과가 없습니다.'}
           </div>
         ) : (
           <div className="ujat-education-progress-assignments__groups">

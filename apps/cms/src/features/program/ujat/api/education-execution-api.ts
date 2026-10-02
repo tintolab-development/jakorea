@@ -224,6 +224,70 @@ export async function fetchUjatAllocationMatrix(
   )
 }
 
+export type UjatAssignmentDocumentStatus =
+  | 'NOT_SUBMITTED'
+  | 'SUBMITTED'
+  | 'REVISED'
+  | 'DEADLINE_MISSED'
+
+export type UjatAssignmentDocumentDto = {
+  status?: UjatAssignmentDocumentStatus | string | null
+  submittedAt?: string | null
+  feedbackDeliveredAt?: string | null
+  formResponseId?: number | null
+}
+
+export type UjatAssignmentVolunteerDto = {
+  participantId?: number | null
+  memberId?: number | null
+  volunteerName?: string | null
+  institutionName?: string | null
+  assignedClass?: string | null
+  activityAbandoned?: boolean | null
+  hasProgressOnDate?: boolean | null
+  plan?: UjatAssignmentDocumentDto | null
+  log?: UjatAssignmentDocumentDto | null
+}
+
+export type UjatAssignmentDatePeriodDto = {
+  from?: string | null
+  to?: string | null
+}
+
+export type UjatAssignmentSessionDto = {
+  scheduleId?: number | null
+  educationDate?: string | null
+  planSubmissionPeriod?: UjatAssignmentDatePeriodDto | null
+  logSubmissionPeriod?: UjatAssignmentDatePeriodDto | null
+  volunteers?: UjatAssignmentVolunteerDto[] | null
+}
+
+export type UjatAssignmentSubmissionsResponse = {
+  sessions?: UjatAssignmentSessionDto[] | null
+}
+
+/** 교육 진행 · 과제 — 반기·교육지역 단위 교육계획서/교육일지 제출 목록 */
+export async function fetchUjatAssignmentSubmissions(
+  programId: string,
+  params: {
+    semesterType: UjatSemesterType
+    educationRegionCode: string
+    isoDate?: string
+  }
+): Promise<UjatAssignmentSubmissionsResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: executionUjatPath(programId, '/assignment-submissions'),
+      method: 'GET',
+      params: {
+        semesterType: params.semesterType,
+        educationRegionCode: params.educationRegionCode,
+        isoDate: params.isoDate || undefined,
+      },
+    })
+  )
+}
+
 export async function postUjatPartnerAssignmentsAuto(
   programId: string,
   body: UjatAutoAssignmentRequest
