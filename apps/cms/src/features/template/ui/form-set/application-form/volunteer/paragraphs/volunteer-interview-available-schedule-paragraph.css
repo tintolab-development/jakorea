@@ -13,6 +13,15 @@
   width: 100%;
 }
 
+.volunteer-interview-available-schedule .unavailable-dates-bulk-exclusions-row__checks {
+  gap: 16px;
+}
+
+.volunteer-interview-available-schedule .unavailable-dates-bulk-exclusions-row__checks > .cms-checkbox {
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+}
+
 .volunteer-interview-available-schedule__block-title.detail-info-form--text-bold {
   margin-bottom: -8px;
 }
