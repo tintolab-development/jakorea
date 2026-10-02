@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { OrganizationApplicationListItemResponsePreviousYearParticipation } from './organizationApplicationListItemResponsePreviousYearParticipation';
 import type { OrganizationApplicationListItemResponseRecruitHalf } from './organizationApplicationListItemResponseRecruitHalf';
 import type { Session } from './session';
 
@@ -52,4 +53,14 @@ export interface OrganizationApplicationListItemResponse {
   mergeGroupId?: number;
   mergeStatus?: string;
   mergeLead?: boolean;
+  /**
+     * 1사1교 전년도 참여 여부. 참여|미참여. 다른 프로그램이거나 답이 없으면 null.
+     * @nullable
+     */
+  previousYearParticipation?: OrganizationApplicationListItemResponsePreviousYearParticipation;
+  /**
+     * 1사1교 결연 금융회사명. 없거나 다른 프로그램이면 null.
+     * @nullable
+     */
+  affiliatedFinancialCompany?: string | null;
 }

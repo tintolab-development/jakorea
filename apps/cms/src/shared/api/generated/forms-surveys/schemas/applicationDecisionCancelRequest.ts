@@ -5,9 +5,10 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { Notification } from './notification';
 
 /**
- * 신청 결정 취소 요청
+ * 신청 결정 취소 요청. notification을 생략하면 즉시 발송합니다.
  */
 export interface ApplicationDecisionCancelRequest {
   /**
@@ -16,4 +17,6 @@ export interface ApplicationDecisionCancelRequest {
      * @maxLength 500
      */
   reason: string;
+  /** 취소 결과 알림 시점. 강사 Cancellation.notification과 같은 필드. 생략하면 즉시 발송 */
+  notification?: Notification;
 }

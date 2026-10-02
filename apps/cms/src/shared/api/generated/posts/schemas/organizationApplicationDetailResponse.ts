@@ -5,6 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { OrganizationApplicationDetailResponsePreviousYearParticipation } from './organizationApplicationDetailResponsePreviousYearParticipation';
 import type { SessionResponse } from './sessionResponse';
 
 export interface OrganizationApplicationDetailResponse {
@@ -72,4 +73,14 @@ export interface OrganizationApplicationDetailResponse {
   mergeGroupId?: number;
   combinedClassYn?: boolean;
   sessions?: SessionResponse[];
+  /**
+     * 1사1교 전년도 참여 여부. 참여|미참여. 다른 프로그램이거나 답이 없으면 null.
+     * @nullable
+     */
+  previousYearParticipation?: OrganizationApplicationDetailResponsePreviousYearParticipation;
+  /**
+     * 1사1교 결연 금융회사명. 없거나 다른 프로그램이면 null.
+     * @nullable
+     */
+  affiliatedFinancialCompany?: string | null;
 }

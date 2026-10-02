@@ -20,4 +20,9 @@ export interface InterviewAssignmentResponse {
   interviewSlotId?: number;
   /** 배정 상태 */
   assignmentStatus?: string;
+  /**
+     * 배정 알림 이벤트 ID. 같은 슬롯 재요청처럼 알림을 만들지 않으면 null
+     * @nullable
+     */
+  notificationEventId?: number | null;
 }
