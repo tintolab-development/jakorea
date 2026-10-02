@@ -391,7 +391,6 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
               participantOrganization: participant.organization,
               educationStructure: extras.programType,
             })}
-            showScheduleChangeAction
           />
         </ProgramCommonInfoEditSection>
       )}

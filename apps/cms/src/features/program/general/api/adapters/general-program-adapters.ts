@@ -52,7 +52,10 @@ import {
   buildRecruitmentRowCopyRequests,
   mergeRecruitmentRowRequests,
 } from '@/features/program/shared/lib/recruitment-row-request'
-import type { RecruitmentCopyAudience } from '@/features/program/shared/lib/recruitment-row-copy'
+import {
+  hydrateGeneralRecruitmentInfoFromRows,
+  type RecruitmentCopyAudience,
+} from '@/features/program/shared/lib/recruitment-row-copy'
 import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
@@ -485,12 +488,14 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
 
-  return applyResolvedAnnouncementTitle(
-    applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
-    {
-      serviceDetailJson: dto.serviceDetailJson,
-      overlay: serviceDetail.registrationOverlay,
-    }
+  return hydrateGeneralRecruitmentInfoFromRows(
+    applyResolvedAnnouncementTitle(
+      applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+      {
+        serviceDetailJson: dto.serviceDetailJson,
+        overlay: serviceDetail.registrationOverlay,
+      }
+    )
   )
 }
 

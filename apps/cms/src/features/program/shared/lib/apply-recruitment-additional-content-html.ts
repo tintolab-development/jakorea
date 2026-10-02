@@ -127,9 +127,10 @@ export function applyRecruitmentDetailInfoFields(
     overlayPatch[overlayKeys.additionalContentHtml] = fields.additionalContentHtml
   }
 
-  const remarks = fields.remarks !== undefined ? fields.remarks : fields.otherNotes
+  const remarks = fields.remarks
   const notesNotApplicable = fields.notesNotApplicable === true
-  if (remarks !== undefined || fields.notesNotApplicable !== undefined) {
+  // 비고 overlay는 remarks를 넘긴 저장만 갱신한다. 기타사항(otherMatters) 저장이 비고 overlay를 덮지 않는다.
+  if (remarks !== undefined || notesNotApplicable) {
     const nextRemarks = notesNotApplicable ? undefined : remarks?.trim() || undefined
     nestedPatch.remarks = nextRemarks
     nestedPatch.notesNotApplicable = notesNotApplicable
@@ -185,7 +186,7 @@ export function applyRecruitmentDetailInfoFields(
     ...(fields.additionalContentHtml !== undefined
       ? { additionalContentHtml: fields.additionalContentHtml.trim() || null }
       : {}),
-    ...(remarks !== undefined || fields.notesNotApplicable !== undefined
+    ...(remarks !== undefined || notesNotApplicable
       ? { remarks: notesNotApplicable ? null : remarks?.trim() || null }
       : {}),
     ...(fields.otherMatters !== undefined && audience !== 'participant'

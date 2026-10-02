@@ -11,6 +11,7 @@ import {
   labelBool,
   pickDisplayString,
 } from '@/features/program/general/lib/detail-value-helpers'
+import { resolveRecruitmentRemarks } from '@/features/program/shared/lib/recruitment-row-copy'
 
 type InstructorRecruitmentInfoLoose = NonNullable<
   NonNullable<Program['generalCommonInfo']>['instructorRecruitmentInfo']
@@ -91,6 +92,6 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
     contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
     contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
     contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),
-    notes: pickDisplayString(info?.remarks),
+    notes: pickDisplayString(resolveRecruitmentRemarks(program, 'instructor')),
   }
 }

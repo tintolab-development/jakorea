@@ -26,12 +26,6 @@ export { pickApplicationOption } from './pick-application-option'
 const FORM_STALE_MS = 0
 const FORM_GC_MS = 15 * 60_000
 
-/** 모집 기간 밖 form-bindings 409 — retry 하지 않고 unavailable 로 본다. */
-function isRecruitmentWindowBlocked(reason: string | null | undefined): boolean {
-  const code = (reason ?? '').trim().toUpperCase()
-  return code === 'RECRUITMENT_NOT_STARTED' || code === 'RECRUITMENT_CLOSED'
-}
-
 export type ProgramApplicationFormStatus =
   | 'idle'
   | 'loading'
@@ -43,6 +37,7 @@ export type ProgramApplicationFormQuery = {
   status: ProgramApplicationFormStatus
   isRemoteEnabled: boolean
   bundle: PortalApplicationFormBundle | null
+  /** 제출 불가 사유 — options.`canApply=false` 의 blockedReason. GET 양식 성공과 무관. */
   blockedReason: string | null
   refetch: () => void
 }
@@ -51,8 +46,11 @@ export type ProgramApplicationFormQuery = {
  * 회원 신청 옵션 + 바인딩 양식.
  * Class D. remote + 숫자 programId + access token 일 때만 호출.
  *
- * BE: 모집 전이면 options 에 formBindingId 는 있고 canApply=false + RECRUITMENT_NOT_STARTED.
- * 양식 GET 은 그대로 시도한다. 409 면 unavailable, 200 이면 CMS 등록본을 미리보기한다.
+ * BE (portal-apply-form-before-recruitment-frontend-handoff-2026-10-02):
+ * - form-bindings GET 은 모집 시작 전·종료 후에도 200 + 발행 양식.
+ * - options 는 모집 전 `canApply=false` + `RECRUITMENT_NOT_STARTED`,
+ *   종료 후 `RECRUITMENT_CLOSED`. formBindingId 는 유지.
+ * - 제출/임시저장만 모집 window 로 409 (`RECRUITMENT_NOT_STARTED` / `RECRUITMENT_ENDED`).
  */
 export function useProgramApplicationForm(
   programId: string | null | undefined,
@@ -81,10 +79,7 @@ export function useProgramApplicationForm(
   const bindingId = option?.formBindingId ?? null
   const recruitmentId = option?.recruitmentId ?? null
   const applicationType = option?.applicationType?.trim() || null
-  /**
-   * 모집 창 밖이어도 바인딩이 있으면 양식 GET 을 시도한다.
-   * 미리보기(CMS 등록본)가 시드 폴백으로 바뀌지 않게 한다. 409 는 retry 하지 않는다.
-   */
+  /** 모집 창과 무관 — formBindingId 가 있으면 발행 양식 GET. */
   const formEnabled =
     enabled &&
     bindingId != null &&
@@ -110,20 +105,13 @@ export function useProgramApplicationForm(
     gcTime: FORM_GC_MS,
     refetchOnMount: query => {
       const status = getQueryRetryHttpStatus(query.state.error)
-      if (status === 404 || status === 409) return false
+      if (status === 404) return false
       return 'always'
     },
-    refetchOnWindowFocus: query => {
-      const status = getQueryRetryHttpStatus(query.state.error)
-      return status !== 404 && status !== 409
-    },
-    refetchOnReconnect: query => {
-      const status = getQueryRetryHttpStatus(query.state.error)
-      return status !== 404 && status !== 409
-    },
+    refetchOnWindowFocus: query => getQueryRetryHttpStatus(query.state.error) !== 404,
+    refetchOnReconnect: query => getQueryRetryHttpStatus(query.state.error) !== 404,
     retry: (failureCount, error) => {
-      const status = getQueryRetryHttpStatus(error)
-      if (status === 404 || status === 409) return false
+      if (getQueryRetryHttpStatus(error) === 404) return false
       return shouldRetryQuery(failureCount, error)
     },
     retryDelay: queryRetryDelay,
@@ -190,12 +178,13 @@ export function useProgramApplicationForm(
   }
 
   if (formQuery.isError || !formQuery.data || !readyBundle) {
-    const code = getApplicationApiErrorCode(formQuery.error)
     return {
-      status: code && isRecruitmentWindowBlocked(code) ? 'unavailable' : 'error',
+      status: 'error',
       isRemoteEnabled: true,
       bundle: null,
-      blockedReason: code ?? option.blockedReason ?? null,
+      blockedReason:
+        getApplicationApiErrorCode(formQuery.error) ??
+        (option.canApply === false ? (option.blockedReason ?? null) : null),
       refetch,
     }
   }

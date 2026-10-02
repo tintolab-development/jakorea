@@ -13,7 +13,6 @@ import {
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   HORIZONTAL_TABLE_MIN_COLUMN_COUNT,
   normalizeHorizontalTableParagraph,
-  writingOutlineLabel,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   FormEditorCustomFieldPanel,
@@ -194,7 +193,7 @@ export function FormEditorHorizontalTableBodyFields({
   paragraph,
   paragraphId,
   rowIndex,
-  focusedCol,
+  focusedCol: _focusedCol,
   updateParagraph,
   onBodyRowDeleted,
 }: {
@@ -223,17 +222,8 @@ export function FormEditorHorizontalTableBodyFields({
     onBodyRowDeleted,
   })
 
-  const panelTitle = writingOutlineLabel(paragraph)
-  const focusedColumnIndex = focusedCol ?? 0
-  const panelSubtitle =
-    typeof focusedCol === 'number'
-      ? `${focusedColumnIndex + 1}-${rowIndex + 1}. 항목`
-      : `${rowIndex + 1}행 항목`
-
   return (
     <FormEditorCustomFieldPanel
-      title={panelTitle}
-      subtitle={panelSubtitle}
       onDeleteRow={deleteRow}
       hint={
         <FormEditorFieldHint>

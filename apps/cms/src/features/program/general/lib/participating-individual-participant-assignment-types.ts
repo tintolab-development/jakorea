@@ -3,13 +3,33 @@ export type ParticipatingIndividualParticipantAssignmentTeamRole = 'leader' | 'm
 export type ParticipatingIndividualParticipantAssignmentSubmission =
   | { kind: 'none' }
   | { kind: 'not_submitted' }
-  | { kind: 'file'; fileName: string }
+  | {
+      kind: 'file'
+      fileName: string
+      fileObjectId?: number
+      downloadable?: boolean
+      secondaryFileName?: string
+      secondaryFileObjectId?: number
+      secondaryDownloadable?: boolean
+    }
   | { kind: 'link'; label: string; href: string }
-  | { kind: 'survey_view'; submitted: boolean }
-  | { kind: 'satisfaction_survey_view'; submitted: boolean }
+  | {
+      kind: 'survey_view'
+      submitted: boolean
+      templateVersionId?: number
+      formResponseId?: number
+    }
+  | {
+      kind: 'satisfaction_survey_view'
+      submitted: boolean
+      templateVersionId?: number
+      formResponseId?: number
+    }
 
 export type ParticipatingIndividualParticipantAssignmentRow = {
   id: string
+  /** assignment-submissions `scheduleId` — 제출 파일 조인 */
+  scheduleId?: string
   /** 교육 일정 순서(1=가장 이른 일정) */
   sessionOrder: number
   teamRole: ParticipatingIndividualParticipantAssignmentTeamRole

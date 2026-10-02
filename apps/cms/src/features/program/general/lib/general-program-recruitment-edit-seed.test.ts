@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import { GENERAL_RECRUIT_OVERLAY_KEYS } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import {
   parseDisplayPeriodLabelToIsoRange,
   parseTargetLevelsFromDisplayLabel,
@@ -124,6 +125,72 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
     expect(values.oneLineIntroduction).toBe('봉사자 비고')
   })
 
+  it('강사 비고는 nested remarks, 기타사항은 행 otherMatters다', () => {
+    const program = {
+      id: 'general-prog-instructor-remarks-row',
+      title: '비고',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      otherNotes: '프로그램 공통 기타',
+      generalCommonInfo: {
+        instructorRecruitmentInfo: {
+          remarks: '신청 전 학교 담당 교사 확인이 필요합니다.',
+          otherMatters: '옛 nested 기타',
+        },
+      },
+      programRecruitments: [
+        {
+          id: 186069,
+          recruitmentType: 'INSTRUCTOR',
+          remarks: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+          otherMatters: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+        },
+      ],
+    } as Program
+
+    const values = programToRecruitmentTabEditValues(program, 'instructor')
+    expect(values.instructorRecruitmentRemarks).toBe(
+      '신청 전 학교 담당 교사 확인이 필요합니다.'
+    )
+    expect(values.otherNotes).toBe(
+      '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
+    )
+  })
+
+  it('조회 leftover overlay notes가 기타사항과 같아도 비고 시드에 넣지 않는다', () => {
+    const html = '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const program = {
+      id: 'general-prog-instructor-leftover-notes',
+      title: '비고',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      otherNotes: '프로그램 공통 기타',
+      registrationOverlay: {
+        [keys.instructor.notes]: html,
+        [keys.detailInfo.instructorOtherNotes]: html,
+      },
+      generalCommonInfo: {
+        instructorRecruitmentInfo: { otherMatters: '옛 nested 기타' },
+      },
+      programRecruitments: [
+        {
+          id: 186069,
+          recruitmentType: 'INSTRUCTOR',
+          remarks: html,
+          otherMatters: html,
+        },
+      ],
+    } as unknown as Program
+
+    const values = programToRecruitmentTabEditValues(program, 'instructor')
+    expect(values.instructorRecruitmentRemarks).toBeUndefined()
+    expect(values.otherNotes).toBe(html)
+  })
 
   it('강사 모집 대상 라벨을 instructorTargets로 복원한다', () => {
     const program = {

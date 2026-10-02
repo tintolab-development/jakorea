@@ -14,6 +14,23 @@ const BUSINESS_START_LOCK_PATTERN =
 const SPONSOR_INVALID_PATTERN = /sponsor|후원사|program_sponsor|sponsorId/i
 
 /** Portal 희망 교육 일정 서버 검증 — BE 회신 2026-09-18 */
+const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
+  PARTICIPANT_TYPE_UNSUPPORTED: '이 경로로는 강사 참여자만 등록할 수 있습니다.',
+  INSTRUCTOR_MEMBER_REQUIRED: '강사 역할이 있는 회원만 등록할 수 있습니다.',
+  PROGRAM_PARTICIPANT_ALREADY_EXISTS: '이미 이 프로그램에 참여 중입니다.',
+  PARTICIPANT_MEMBER_TYPE_INVALID: '이 회원은 해당 유형으로 등록할 수 없습니다.',
+  TEXTBOOK_DELIVERY_NOT_APPLICABLE: '이 기관에는 교재가 없어 배송 상태를 변경할 수 없습니다.',
+  VOLUNTEER_ASSIGNMENT_REVISION_CONFLICT: '봉사 배정이 변경되어 다시 시도해 주세요.',
+  VOLUNTEER_ASSIGNMENT_STARTED_USE_GIVE_UP:
+    '이미 시작된 봉사 일정은 배정 해제가 아니라 활동 포기로 처리해야 합니다.',
+  VOLUNTEER_ASSIGNMENT_SCHEDULE_REQUIRED: '활성 교육 일정이 있는 기관만 배정할 수 있습니다.',
+  INSTRUCTOR_REPRESENTATIVE_NOT_CURRENT: '현재 대표 강사가 아니면 일반 강사로 변경할 수 없습니다.',
+  PROGRAM_PARTICIPANT_GIVE_UP_BEFORE_FIRST_ACTIVITY:
+    '첫 교육이 시작되기 전에는 활동 포기할 수 없습니다.',
+  INVALID_BUSINESS_INCOME_EARNER_STATUS: '사업소득자 여부는 해당 또는 해당 없음만 저장할 수 있습니다.',
+  FORBIDDEN_APPLICATION_ACTION: '이 프로그램 유형에서는 해당 작업을 할 수 없습니다.',
+}
+
 const PREFERRED_SCHEDULE_ERROR_MESSAGES: Record<string, string> = {
   PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE:
     '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
@@ -33,6 +50,11 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (editWindowMessage) return editWindowMessage
   if (code === 'INVALID_PROGRAM_ASSIGNMENT_ROLE') {
     return CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE
+  }
+  if (code && PROGRESS_INSTRUCTOR_ERROR_MESSAGES[code]) {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return PROGRESS_INSTRUCTOR_ERROR_MESSAGES[code]
   }
   if (code && PREFERRED_SCHEDULE_ERROR_MESSAGES[code]) {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()

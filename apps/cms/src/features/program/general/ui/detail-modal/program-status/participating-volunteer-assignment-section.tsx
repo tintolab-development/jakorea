@@ -3,11 +3,18 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Table, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import { saveGeneralVolunteerAssignedOrganizations } from '@/features/program/general/api/admin-program-progress-service'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import {
   VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
@@ -24,6 +31,7 @@ import {
   buildVolunteerWaitingInstitutionRows,
   renumberVolunteerAssignedRows,
   renumberVolunteerWaitingRows,
+  resolveVolunteerAssignedOrganizationApplicationIds,
   schoolRowToVolunteerAssignedRow,
   type VolunteerAssignedInstitutionRow,
   type VolunteerWaitingInstitutionRow,
@@ -81,6 +89,9 @@ export function ParticipatingVolunteerAssignmentSection({
   volunteerList = [],
 }: ParticipatingVolunteerAssignmentSectionProps) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const [assignedInstitutions, setAssignedInstitutions] = useState<VolunteerAssignedInstitutionRow[]>(
     []
   )
@@ -315,6 +326,66 @@ export function ParticipatingVolunteerAssignmentSection({
     setSelectAssignConfirmOpen(true)
   }, [selectedWaitingKeys, waitingInstitutions, showAlert])
 
+  const persistAssignedOrganizations = useCallback(
+    async (
+      nextAssigned: VolunteerAssignedInstitutionRow[],
+      reason: string
+    ): Promise<boolean> => {
+      if (isTempMockProgram) return true
+      if (!remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-progress-volunteer-assigned-organizations',
+          '참여 봉사자 · 기관 배정'
+        )
+        return false
+      }
+      const organizationApplicationIds = resolveVolunteerAssignedOrganizationApplicationIds(
+        nextAssigned,
+        schoolRows
+      )
+      if (organizationApplicationIds.length !== nextAssigned.length) {
+        showAlert({
+          title: '배정 실패',
+          content: '기관 신청 ID가 없어 봉사 배정을 저장할 수 없습니다.',
+        })
+        return false
+      }
+      try {
+        await saveGeneralVolunteerAssignedOrganizations(program.id, volunteer.id, {
+          organizationApplicationIds,
+          expectedRevision: assignedInstitutions.length,
+          reason: reason.trim() || '봉사 배정',
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.volunteers(program.id),
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.institutions(program.id),
+        })
+        return true
+      } catch (error) {
+        showAlert({
+          title: '배정 실패',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '봉사 배정을 저장하지 못했습니다. 다시 시도해 주세요.'
+          ),
+        })
+        return false
+      }
+    },
+    [
+      assignedInstitutions.length,
+      isTempMockProgram,
+      program.id,
+      queryClient,
+      remoteEnabled,
+      schoolRows,
+      showAlert,
+      volunteer.id,
+    ]
+  )
+
   const handleUnassignConfirm = useCallback(
     (payload: PermissionModalPayload) => {
       if (selectedAssignedKeys.length === 0) return
@@ -324,21 +395,31 @@ export function ParticipatingVolunteerAssignmentSection({
         removedRows.map(r => r.id.split('__assigned')[0] ?? r.id)
       )
       const toRemove = new Set(selectedAssignedKeys.map(String))
-      setAssignedInstitutions(prev =>
-        renumberVolunteerAssignedRows(prev.filter(r => !toRemove.has(r.id)))
+      const nextAssigned = renumberVolunteerAssignedRows(
+        assignedInstitutions.filter(r => !toRemove.has(r.id))
       )
-      setWaitingInstitutions(prev =>
-        renumberVolunteerWaitingRows(prev.filter(w => !removedSchoolIds.has(w.schoolId)))
-      )
-      setUnassignConfirmOpen(false)
-      setSelectedAssignedKeys([])
-      setUnassignCompleteModal({
-        volunteerNames: [volunteer.volunteerName],
-        targetNames: removedSchoolNames,
-        reason: payload.reason,
-      })
+      void (async () => {
+        const saved = await persistAssignedOrganizations(nextAssigned, payload.reason)
+        if (!saved) return
+        setAssignedInstitutions(nextAssigned)
+        setWaitingInstitutions(prev =>
+          renumberVolunteerWaitingRows(prev.filter(w => !removedSchoolIds.has(w.schoolId)))
+        )
+        setUnassignConfirmOpen(false)
+        setSelectedAssignedKeys([])
+        setUnassignCompleteModal({
+          volunteerNames: [volunteer.volunteerName],
+          targetNames: removedSchoolNames,
+          reason: payload.reason,
+        })
+      })()
     },
-    [selectedAssignedKeys, assignedInstitutions, volunteer.volunteerName]
+    [
+      assignedInstitutions,
+      persistAssignedOrganizations,
+      selectedAssignedKeys,
+      volunteer.volunteerName,
+    ]
   )
 
   const handleSelectAssignConfirm = useCallback(() => {
@@ -348,10 +429,8 @@ export function ParticipatingVolunteerAssignmentSection({
     if (selectedRows.length === 0) return
 
     const ids = new Set(selectedRows.map(r => r.id))
-    setWaitingInstitutions(prev => renumberVolunteerWaitingRows(prev.filter(w => !ids.has(w.id))))
-
-    setAssignedInstitutions(prev => {
-      const next = [...prev]
+    const nextAssigned = (() => {
+      const next = [...assignedInstitutions]
       let idx = next.length
       const addedSchoolIds = new Set(next.map(r => r.id.split('__assigned')[0]))
 
@@ -364,11 +443,25 @@ export function ParticipatingVolunteerAssignmentSection({
         idx += 1
       }
       return renumberVolunteerAssignedRows(next)
-    })
+    })()
 
-    setSelectAssignConfirmOpen(false)
-    setSelectedWaitingKeys([])
-  }, [selectedWaitingKeys, waitingInstitutions, schoolRows, volunteer, program])
+    void (async () => {
+      const saved = await persistAssignedOrganizations(nextAssigned, '봉사 배정')
+      if (!saved) return
+      setWaitingInstitutions(prev => renumberVolunteerWaitingRows(prev.filter(w => !ids.has(w.id))))
+      setAssignedInstitutions(nextAssigned)
+      setSelectAssignConfirmOpen(false)
+      setSelectedWaitingKeys([])
+    })()
+  }, [
+    assignedInstitutions,
+    persistAssignedOrganizations,
+    program,
+    schoolRows,
+    selectedWaitingKeys,
+    volunteer,
+    waitingInstitutions,
+  ])
 
   const handleAddAssignConfirm = useCallback(() => {
     if (!addAssignWaitingRowId) return
@@ -378,21 +471,33 @@ export function ParticipatingVolunteerAssignmentSection({
     const school = schoolRows.find(s => s.id === waitingRow.schoolId)
     if (!school) return
 
-    setWaitingInstitutions(prev =>
-      renumberVolunteerWaitingRows(prev.filter(w => w.id !== addAssignWaitingRowId))
-    )
-    setAssignedInstitutions(prev => {
-      const alreadyAssigned = prev.some(r => r.id.startsWith(`${school.id}__assigned`))
-      if (alreadyAssigned) return prev
-      const next = [
-        ...prev,
-        schoolRowToVolunteerAssignedRow(school, volunteer, 0, prev.length, program),
-      ]
-      return renumberVolunteerAssignedRows(next)
-    })
-    setAddAssignModalOpen(false)
-    setAddAssignWaitingRowId(null)
-  }, [addAssignWaitingRowId, waitingInstitutions, schoolRows, volunteer, program])
+    const alreadyAssigned = assignedInstitutions.some(r => r.id.startsWith(`${school.id}__assigned`))
+    const nextAssigned = alreadyAssigned
+      ? assignedInstitutions
+      : renumberVolunteerAssignedRows([
+          ...assignedInstitutions,
+          schoolRowToVolunteerAssignedRow(school, volunteer, 0, assignedInstitutions.length, program),
+        ])
+
+    void (async () => {
+      const saved = await persistAssignedOrganizations(nextAssigned, '봉사 배정')
+      if (!saved) return
+      setWaitingInstitutions(prev =>
+        renumberVolunteerWaitingRows(prev.filter(w => w.id !== addAssignWaitingRowId))
+      )
+      setAssignedInstitutions(nextAssigned)
+      setAddAssignModalOpen(false)
+      setAddAssignWaitingRowId(null)
+    })()
+  }, [
+    addAssignWaitingRowId,
+    assignedInstitutions,
+    persistAssignedOrganizations,
+    program,
+    schoolRows,
+    volunteer,
+    waitingInstitutions,
+  ])
 
   const addAssignOptions = useMemo(
     () =>

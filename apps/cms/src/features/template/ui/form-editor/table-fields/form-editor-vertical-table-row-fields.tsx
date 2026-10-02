@@ -12,9 +12,10 @@ import {
   DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
   effectiveVerticalRowDateTimeModes,
   effectiveVerticalStageKinds,
+  normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
   verticalTablePanelStageTitle,
-  writingOutlineLabel,
+  verticalTableParagraphWithChoiceOptions,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   FormEditorCustomFieldPanel,
@@ -24,6 +25,7 @@ import {
   FormEditorFieldListItem,
   FormEditorFieldTypeRow,
 } from '@/features/template/ui/form-editor/table-fields/form-editor-custom-field-panel'
+import { FormEditorOptionListEditor } from '@/features/template/ui/form-editor/table-fields/form-editor-option-list-editor'
 import { useVerticalTableRowFieldActions } from '@/features/template/ui/form-editor/hooks/use-vertical-table-row-field-actions'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
@@ -33,6 +35,7 @@ const VERTICAL_TABLE_CELL_KIND_OPTIONS: { value: VerticalTableStageKind; label: 
   { value: 'date_time', label: '날짜/시간형' },
   { value: 'single_choice', label: '단일선택형' },
   { value: 'multiple_choice', label: '다중선택형' },
+  { value: 'file_attachment', label: '파일첨부형' },
 ]
 
 type FormEditorVerticalTableRowFieldsProps = {
@@ -96,8 +99,6 @@ function FormEditorVerticalTableRowFieldsBody({
   return (
     <FormEditorCustomFieldPanel
       className="form-editor-horizontal-table-body-fields form-editor-vertical-table-row-fields"
-      title={writingOutlineLabel(paragraph)}
-      subtitle={`${rowIndex + 1}. 항목`}
       beforeDelete={
         <div className="form-editor-vertical-table-row-fields__structure">
           <span className="form-editor-vertical-table-row-fields__structure-label">
@@ -156,6 +157,7 @@ function FormEditorVerticalTableRowFieldsBody({
                     width="100%"
                     value={stageKind}
                     options={VERTICAL_TABLE_CELL_KIND_OPTIONS}
+                    allowClear={false}
                     onChange={v => setStageKind(si, v as VerticalTableStageKind)}
                     withAllOption={false}
                   />
@@ -253,8 +255,25 @@ function FormEditorVerticalTableRowFieldsBody({
                       placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
                     />
                   </Form.Item>
-                ) : stageKind === 'single_choice' ||
-                  stageKind === 'multiple_choice' ? null : (
+                ) : stageKind === 'single_choice' || stageKind === 'multiple_choice' ? (
+                  <div className="form-editor-vertical-table-row-fields__choice-options">
+                    <FormEditorOptionListEditor
+                      values={normalizeVerticalChoiceOptions(p.verticalChoiceOptions)}
+                      onChange={options =>
+                        updateParagraph(paragraphId, cur => {
+                          if (cur.kind !== 'single_item' || cur.variant !== 'vertical_table')
+                            return cur
+                          return verticalTableParagraphWithChoiceOptions(
+                            cur as VerticalTableParagraph,
+                            options
+                          )
+                        })
+                      }
+                      addLabel="+ 항목 추가"
+                      addButtonIcon={false}
+                    />
+                  </div>
+                ) : stageKind === 'file_attachment' ? null : (
                   <Form.Item
                     className="form-editor-horizontal-table-body-fields__content-form-item"
                     label="내용"

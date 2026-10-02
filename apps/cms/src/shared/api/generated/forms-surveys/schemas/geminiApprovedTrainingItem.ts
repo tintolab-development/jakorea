@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GeminiApprovedTrainingItemProgressStatus } from './geminiApprovedTrainingItemProgressStatus';
 
 export interface GeminiApprovedTrainingItem {
   id?: number;
@@ -14,8 +15,18 @@ export interface GeminiApprovedTrainingItem {
   institutionName?: string;
   institutionSido?: string;
   institutionSigungu?: string;
-  progressStatus?: string;
-  trainingDate?: string;
+  /** Asia/Seoul 기준 파생 진행 현황. program.period_status가 아니다. */
+  progressStatus?: GeminiApprovedTrainingItemProgressStatus;
+  /**
+     * 강사 매칭으로 확정된 날짜. 미매칭이면 null.
+     * @nullable
+     */
+  trainingDate?: string | null;
+  /**
+     * 희망 일정 중 preferenceRank가 가장 높은 날짜. 없으면 null. 확정 trainingDate와 분리.
+     * @nullable
+     */
+  lastPreferredDate?: string | null;
   trainingTimeText?: string;
   studentCount?: number;
   instructorName?: string;

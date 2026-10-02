@@ -93,7 +93,7 @@
         "columnFields": [
           {
             "kind": "text",
-            "placeholder": "텍스트를 입력해 주세요"
+            "placeholder": "제공받는 곳을 입력해 주세요"
           },
           {
             "kind": "text",
@@ -112,7 +112,7 @@
           [
             {
               "kind": "text",
-              "value": "제공받는 곳을 입력해 주세요"
+              "value": ""
             },
             {
               "kind": "text",

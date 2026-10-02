@@ -445,6 +445,10 @@
       "description": "본인인증 요청, 콜백 검증, 재사용 방지, 인증 결과 조회 API입니다."
     },
     {
+      "name": "신청/프로그램 워크플로우",
+      "description": "일반 개인 프로그램 진행 현황 과제 관리"
+    },
+    {
       "name": "본인인증",
       "description": "회원가입 본인인증/보호자 인증 세션 API"
     },
@@ -23036,7 +23040,7 @@
           "ownerId": {
             "type": "integer",
             "format": "int64",
-            "description": "파일 소유 리소스 ID",
+            "description": "파일 소유 리소스 ID. upload-first draft 처리 중에는 null일 수 있음",
             "example": 10001,
             "minimum": 1
           },
@@ -23127,7 +23131,6 @@
         },
         "required": [
           "fileObjectId",
-          "ownerId",
           "ownerType"
         ]
       },
@@ -23177,7 +23180,7 @@
           "ownerId": {
             "type": "integer",
             "format": "int64",
-            "description": "파일 소유 리소스 ID",
+            "description": "파일 소유 리소스 ID. NOTICE_ATTACHMENT upload-first draft는 CONTENT/NOTICE일 때만 null 허용",
             "example": 10001,
             "minimum": 1
           },
@@ -23222,7 +23225,6 @@
           "fileSize",
           "originalFileName",
           "ownerDomain",
-          "ownerId",
           "ownerType"
         ]
       },
@@ -23562,6 +23564,14 @@
             "type": "boolean",
             "description": "첨부파일 존재 여부",
             "example": false
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "description": "업로드 완료 후 공지 생성 시 함께 귀속할 NOTICE_ATTACHMENT fileObject ID 목록",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           },
           "status": {
             "type": "string",
@@ -36701,6 +36711,106 @@
           }
         }
       },
+      "ListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleGroup"
+            }
+          }
+        }
+      },
+      "ParticipantRow": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberName": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "affiliation": {
+            "type": "string"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "submissionStatus": {
+            "type": "string"
+          },
+          "remarkKind": {
+            "type": "string"
+          },
+          "remarkAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionFile"
+            }
+          }
+        }
+      },
+      "ScheduleGroup": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scheduleName": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assignmentEnabled": {
+            "type": "boolean"
+          },
+          "assignmentPeriodStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assignmentPeriodEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParticipantRow"
+            }
+          }
+        }
+      },
       "ApiResponseProgramOverviewStagesResponse": {
         "type": "object",
         "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
@@ -36888,6 +36998,119 @@
             "items": {
               "$ref": "#/components/schemas/DirectAssignmentCandidate"
             }
+          }
+        }
+      },
+      "AssignmentSubmissionListResponse": {
+        "type": "object",
+        "properties": {
+          "semesterType": {
+            "type": "string"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EducationDayGroup"
+            }
+          }
+        }
+      },
+      "EducationDayGroup": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "isoDate": {
+            "type": "string"
+          },
+          "planSubmissionPeriodStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "planSubmissionPeriodEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "logSubmissionPeriodStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "logSubmissionPeriodEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "volunteers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VolunteerSubmissionRow"
+            }
+          }
+        }
+      },
+      "SubmissionDocument": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "feedbackDeliveredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "VolunteerSubmissionRow": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberName": {
+            "type": "string"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "assignedClass": {
+            "type": "string"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "isDropout": {
+            "type": "boolean"
+          },
+          "hasProgressHistory": {
+            "type": "boolean"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/SubmissionDocument"
+          },
+          "log": {
+            "$ref": "#/components/schemas/SubmissionDocument"
           }
         }
       },
@@ -40972,11 +41195,30 @@
             "type": "string"
           },
           "progressStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "Asia/Seoul 기준 파생 진행 현황. program.period_status가 아니다.",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "NOT_CONDUCTED"
+            ]
           },
           "trainingDate": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "강사 매칭으로 확정된 날짜. 미매칭이면 null."
+          },
+          "lastPreferredDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "희망 일정 중 preferenceRank가 가장 높은 날짜. 없으면 null. 확정 trainingDate와 분리."
           },
           "trainingTimeText": {
             "type": "string"
@@ -41167,7 +41409,7 @@
           "assignedInstructor": {
             "type": "null",
             "$ref": "#/components/schemas/GeminiAssignedInstructor",
-            "description": "매칭된 연수 담당 강사 프로필. 미매칭이면 null"
+            "description": "연수 담당 강사. 일정 배정 또는 같은 모집의 승인 강사가 있으면 채운다. 둘 다 없으면 null"
           },
           "managerAdminId": {
             "type": "integer",

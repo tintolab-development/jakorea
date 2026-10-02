@@ -80,9 +80,20 @@
   padding: 0 12px;
 }
 
+.volunteer-interview-available-schedule--readonly {
+  gap: 12px;
+}
+
+.volunteer-interview-available-schedule__readonly-slots {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
 .volunteer-interview-available-schedule__exception-row {
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   column-gap: 8px;
   width: 100%;
 }
@@ -95,8 +106,7 @@
 
 .volunteer-interview-available-schedule__exception-delete-cell {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex-shrink: 0;
-  align-self: stretch;
-  margin-top: 20px;
+  padding-top: 2px;
 }

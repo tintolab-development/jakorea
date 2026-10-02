@@ -22,7 +22,7 @@ function tempMockAssignmentSessionsForProgram(
   return tempMockAssignmentSeedCache[program.id]!
 }
 
-/** 개인 프로그램 진행 — 과제 제출 (remote API 연동 전 빈 목록) */
+/** 개인 프로그램 진행 — 과제 제출 (temp-mock 전용. 실프로그램은 remote) */
 export function getParticipatingIndividualProgressAssignmentSessions(
   program: Program
 ): ParticipatingIndividualProgressAssignmentSessionGroup[] {

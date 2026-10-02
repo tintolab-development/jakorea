@@ -28,10 +28,13 @@ import {
   getWritingTemplateRowsByCategory,
 } from '@/features/template/lib/writing-template-create-helpers'
 import {
+  applyLectureEvalAnswersToDraft,
   buildLectureEvalFormDraft,
   canEditLectureEvalResponse,
   draftToLectureEvalPollResponse,
+  isLectureEvalResultsTabAccessible,
   LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT,
+  parseLectureEvalFormResponseId,
   LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
   LECTURE_EVAL_TEMPLATE_ID,
   validateLectureEvalFormDraft,
@@ -103,8 +106,11 @@ import {
 import {
   createGeneralProgramSurveyShareLink,
   submitGeneralProgramFormResponse,
+  updateGeneralProgramFormResponse,
 } from '@/features/program/general/api/admin-general-programs-service'
 import {
+  pickLectureEvalSurveyFromRemote,
+  resolveLectureEvalSubmitContext,
   resolveSurveyCreateBindingTemplateCode,
   resolveSurveyShareClipboardUrl,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
@@ -200,6 +206,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const {
     registeredSurveys: remoteRegisteredSurveys,
     classifiedBindings,
+    rawSurveys,
     loading: surveysLoading,
     isRemoteDataSource: surveysRemote,
   } = useGeneralProgramSurveys(program.id)
@@ -329,20 +336,21 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   useEffect(() => {
     if (!surveysRemote || !classifiedBindings) return
     const nextSatisfaction: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> = {}
-    let nextLecture: RegisteredSurvey | null = null
     const fallbackSatisfactionAudience = getDefaultGeneralSatisfactionAudience(program)
     for (const item of classifiedBindings) {
       if (item.kind === 'satisfaction') {
         const audience = item.satisfactionAudience ?? fallbackSatisfactionAudience
         nextSatisfaction[audience] = item.survey
       }
-      if (item.kind === 'lecture_evaluation') {
-        nextLecture = item.survey
-      }
     }
     setSatisfactionSurveysByAudience(nextSatisfaction)
-    setLectureEvalSurvey(nextLecture)
-  }, [classifiedBindings, program, surveysRemote])
+    setLectureEvalSurvey(
+      pickLectureEvalSurveyFromRemote({
+        classified: classifiedBindings,
+        surveys: rawSurveys ?? [],
+      })
+    )
+  }, [classifiedBindings, program, rawSurveys, surveysRemote])
 
   useEffect(() => {
     if (!isGeneralSatisfactionSurveyNavTab(activeTab)) return
@@ -414,6 +422,17 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       setLectureEvalSubmitted(true)
     }
   }, [lectureResponsesRemote, remoteLectureResponses])
+
+  useEffect(() => {
+    if (!lectureEvalSubmitted) return
+    const answers = lectureEvalResponses[0]?.answers
+    if (answers == null || Object.keys(answers).length === 0) return
+    const current = lectureEvalDraftRef.current
+    if (current == null) return
+    const next = applyLectureEvalAnswersToDraft(current, answers)
+    lectureEvalDraftRef.current = next
+    setLectureEvalFormDraft(next)
+  }, [lectureEvalResponses, lectureEvalSubmitted])
 
   useEffect(() => {
     if (lectureEvalSurvey == null) {
@@ -1007,13 +1026,37 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         })
         return
       }
+      const existingResponseId = parseLectureEvalFormResponseId(lectureEvalResponses)
+      const lectureBinding = classifiedBindings?.find(
+        item => item.kind === 'lecture_evaluation'
+      )?.binding
+      const lectureSurveyDto =
+        rawSurveys?.find(
+          row =>
+            String(row.templateVersionId ?? '') === lectureEvalSurvey.id ||
+            String(row.templateId ?? '') === lectureEvalSurvey.templateId
+        ) ?? rawSurveys?.find(row => row.bindingId != null && String(row.bindingId) === lectureEvalSurvey.bindingId)
+      const submitContext = resolveLectureEvalSubmitContext({
+        binding: lectureBinding,
+        surveyDto: lectureSurveyDto,
+      })
       try {
-        await submitGeneralProgramFormResponse({
-          templateVersionId,
-          programId: programIdNum,
-          contextType: 'PROGRAM',
-          answers: pollResponse.answers,
-        })
+        if (existingResponseId != null) {
+          await updateGeneralProgramFormResponse(existingResponseId, {
+            answers: pollResponse.answers,
+          })
+        } else {
+          const created = await submitGeneralProgramFormResponse({
+            templateVersionId,
+            programId: programIdNum,
+            contextType: submitContext.contextType,
+            contextId: submitContext.contextId,
+            answers: pollResponse.answers,
+          })
+          if (created?.formResponseId != null) {
+            pollResponse.respondentId = String(created.formResponseId)
+          }
+        }
         await queryClient.invalidateQueries({
           queryKey: generalProgramQueryKeys.surveyResponses(
             String(program.id),
@@ -1023,39 +1066,69 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       } catch (error) {
         handleError(error, { context: 'generalLectureEvalSubmit' })
         void showAlert({
-          title: '제출 실패',
-          content: '강의평가 제출 중 오류가 발생했습니다. 다시 시도해 주세요.',
+          title: existingResponseId != null ? '수정 실패' : '제출 실패',
+          content:
+            existingResponseId != null
+              ? '강의평가 수정 중 오류가 발생했습니다. 다시 시도해 주세요.'
+              : '강의평가 제출 중 오류가 발생했습니다. 다시 시도해 주세요.',
         })
         return
       }
     }
 
     setLectureEvalSubmitted(true)
-    setLectureEvalResponses([pollResponse])
+    setLectureEvalResponses(prev => {
+      const existingId = parseLectureEvalFormResponseId(prev)
+      return [
+        {
+          ...pollResponse,
+          respondentId:
+            existingId != null
+              ? String(existingId)
+              : pollResponse.respondentId,
+        },
+      ]
+    })
     setLectureEvalSurvey(prev => {
       if (prev == null) return prev
       const nextStatus =
-        LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT && prev.status === 'in_progress'
+        !surveysRemote &&
+        LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT &&
+        prev.status === 'in_progress'
           ? 'finished'
           : prev.status
       return {
         ...prev,
         status: nextStatus,
-        responseCount: 1,
+        responseCount: Math.max(prev.responseCount, 1),
         participantTotal: Math.max(prev.participantTotal, 1),
       }
     })
-  }, [lectureEvalSurvey, program.id, queryClient, showAlert, surveysRemote])
+  }, [
+    classifiedBindings,
+    lectureEvalResponses,
+    lectureEvalSurvey,
+    program.id,
+    queryClient,
+    rawSurveys,
+    showAlert,
+    surveysRemote,
+  ])
 
   const handleLectureEvalTabChange = useCallback(
     (tab: LectureEvalTabKey) => {
-      if (tab === 'results' && lectureEvalSurvey?.status !== 'finished') {
+      const resultsReady =
+        lectureEvalSurvey != null &&
+        (isLectureEvalResultsTabAccessible(lectureEvalSurvey) ||
+          lectureEvalSubmitted ||
+          lectureEvalResponses.length > 0)
+      if (tab === 'results' && !resultsReady) {
         setLectureEvalIncompleteModalOpen(true)
         return
       }
       setActiveLectureEvalTab(tab)
     },
-    [lectureEvalSurvey?.status]
+    [lectureEvalResponses.length, lectureEvalSubmitted, lectureEvalSurvey]
   )
 
   const handleLectureEvalPreview = useCallback(() => {
@@ -1173,7 +1246,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             <SurveyPollResultsView
               templateId={activeRegisteredSurvey.templateId}
               responseCount={activeRegisteredSurvey.responseCount}
-              participantTotal={activeRegisteredSurvey.participantTotal}
+              participantTotal={
+                program.totalParticipants && program.totalParticipants > 0
+                  ? program.totalParticipants
+                  : activeRegisteredSurvey.participantTotal
+              }
               responses={pollResponses}
               pdfTitle="설문조사 결과"
             />
@@ -1295,6 +1372,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             }
           }}
           onDownloadResultsClick={() => setLectureEvalDownloadModalOpen(true)}
+          resultsAccessible={
+            lectureEvalSurvey != null &&
+            (isLectureEvalResultsTabAccessible(lectureEvalSurvey) ||
+              lectureEvalSubmitted ||
+              lectureEvalResponses.length > 0)
+          }
         />
         )
       ) : null}

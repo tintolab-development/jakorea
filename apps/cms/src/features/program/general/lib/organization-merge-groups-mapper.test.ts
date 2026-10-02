@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildCreateMergeRequest,
   buildMergeMemberRequestsFromPartnerRows,
   findActiveMergeGroupForOrganizationApplication,
   isActiveMergeGroup,
@@ -49,6 +50,20 @@ describe('organization-merge-groups-mapper', () => {
 
   it('findActiveMergeGroupForOrganizationApplication finds member group', () => {
     expect(findActiveMergeGroupForOrganizationApplication([activeGroup], 101)?.id).toBe(10)
+  })
+
+  it('buildCreateMergeRequest includes leadTeacherMemberId when given', () => {
+    expect(
+      buildCreateMergeRequest({
+        leadOrganizationApplicationId: 100,
+        partnerMembers: [{ organizationApplicationId: 101, grade: '6학년' }],
+        leadTeacherMemberId: 2001,
+      })
+    ).toEqual({
+      leadApplicationId: 100,
+      members: [{ organizationApplicationId: 101, grade: '6학년' }],
+      leadTeacherMemberId: 2001,
+    })
   })
 
   it('buildMergeMemberRequestsFromPartnerRows maps grade and org app id', () => {

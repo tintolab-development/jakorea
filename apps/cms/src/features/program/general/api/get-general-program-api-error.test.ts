@@ -133,6 +133,33 @@ describe('getGeneralProgramApiErrorMessage', () => {
     ).toBe('모집 시작 이후에는 신청 양식을 수정할 수 없습니다.')
   })
 
+  it('참여 강사 등록·강등·포기 코드를 FE 메시지로 매핑한다', () => {
+    const errorFor = (code: string) => ({
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          error: { code },
+        },
+      },
+    })
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('PROGRAM_PARTICIPANT_ALREADY_EXISTS'), 'fallback')
+    ).toBe('이미 이 프로그램에 참여 중입니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('INSTRUCTOR_REPRESENTATIVE_NOT_CURRENT'),
+        'fallback'
+      )
+    ).toBe('현재 대표 강사가 아니면 일반 강사로 변경할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_PARTICIPANT_GIVE_UP_BEFORE_FIRST_ACTIVITY'),
+        'fallback'
+      )
+    ).toBe('첫 교육이 시작되기 전에는 활동 포기할 수 없습니다.')
+  })
+
   it('PREFERRED_SCHEDULE_* 서버 메시지가 있으면 그대로 쓴다', () => {
     const error = {
       response: {

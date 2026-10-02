@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui'
+import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -387,77 +388,82 @@ export function useUjatProgramRegistrationFlow(
     })
 
     const completion = (async () => {
-      const registrationOverlay = collectUjatRegistrationCreateOverlay(
-        getUjatProgramRegistrationOverlayRecord()
-      )
-      const registrationSnapshot = {
-        draft: registrationVm.draft,
-        overlay: registrationOverlay,
-      }
+      const endOverlay = beginBlockingOverlay()
+      try {
+        const registrationOverlay = collectUjatRegistrationCreateOverlay(
+          getUjatProgramRegistrationOverlayRecord()
+        )
+        const registrationSnapshot = {
+          draft: registrationVm.draft,
+          overlay: registrationOverlay,
+        }
 
-      if (shouldUseRegistrationCreateFormBindings()) {
-        const program = buildUjatProgramListRowFromRegistrationSnapshot({
+        if (shouldUseRegistrationCreateFormBindings()) {
+          const program = buildUjatProgramListRowFromRegistrationSnapshot({
+            id: `ujat-pending-${idempotencyKeyRef.current}`,
+            overlay: registrationOverlay,
+          })
+
+          const operationalOverrides = flushApplicationOperationalOverrides({
+            overlayForTemplateCode: collectOperationalOverlayForCatalogId,
+          })
+
+          const { prepareRegistrationCreateFormBindings } = await import(
+            '@/features/program/general/lib/prepare-registration-create-form-bindings'
+          )
+          const preparedFormBindings = await prepareRegistrationCreateFormBindings({
+            program,
+            registration: {
+              templateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
+              draft: registrationVm.draft,
+              overlay: registrationOverlay,
+            },
+            operationalOverrides,
+          })
+
+          await logProgramRegistrationCreatePayload({
+            program,
+            variant: 'ujat',
+            ujatBaseRequest: toCreateRequest(program, registrationSnapshot),
+            preparedFormBindings,
+            stepLabel: '등록 완료',
+          })
+
+          const createdProgram = await createProgramMutation.mutateAsync({
+            ...registrationSnapshot,
+            idempotencyKey: idempotencyKeyRef.current,
+            preparedFormBindings,
+          })
+          options?.onProgramRegistrationSaved?.(createdProgram)
+          return createdProgram
+        }
+
+        if (isParticipantStep) {
+          await participantVm.handleSave()
+        }
+        const snapshot = await registrationVm.persistDraft()
+        const programForLog = buildUjatProgramListRowFromRegistrationSnapshot({
           id: `ujat-pending-${idempotencyKeyRef.current}`,
           overlay: registrationOverlay,
         })
-
-        const operationalOverrides = flushApplicationOperationalOverrides({
-          overlayForTemplateCode: collectOperationalOverlayForCatalogId,
-        })
-
-        const { prepareRegistrationCreateFormBindings } = await import(
-          '@/features/program/general/lib/prepare-registration-create-form-bindings'
-        )
-        const preparedFormBindings = await prepareRegistrationCreateFormBindings({
-          program,
-          registration: {
-            templateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
-            draft: registrationVm.draft,
-            overlay: registrationOverlay,
-          },
-          operationalOverrides,
-        })
-
         await logProgramRegistrationCreatePayload({
-          program,
+          program: programForLog,
           variant: 'ujat',
-          ujatBaseRequest: toCreateRequest(program, registrationSnapshot),
-          preparedFormBindings,
+          ujatBaseRequest: toCreateRequest(programForLog, snapshot),
+          preparedFormBindings: null,
           stepLabel: '등록 완료',
         })
-
-        const createdProgram = await createProgramMutation.mutateAsync({
-          ...registrationSnapshot,
+        const program = await createProgramMutation.mutateAsync({
+          ...snapshot,
           idempotencyKey: idempotencyKeyRef.current,
-          preparedFormBindings,
         })
-        options?.onProgramRegistrationSaved?.(createdProgram)
-        return createdProgram
+        options?.onProgramRegistrationSaved?.(program)
+        return program
+      } finally {
+        endOverlay()
+        completionPromiseRef.current = null
       }
-
-      if (isParticipantStep) {
-        await participantVm.handleSave()
-      }
-      const snapshot = await registrationVm.persistDraft()
-      const programForLog = buildUjatProgramListRowFromRegistrationSnapshot({
-        id: `ujat-pending-${idempotencyKeyRef.current}`,
-        overlay: registrationOverlay,
-      })
-      await logProgramRegistrationCreatePayload({
-        program: programForLog,
-        variant: 'ujat',
-        ujatBaseRequest: toCreateRequest(programForLog, snapshot),
-        preparedFormBindings: null,
-        stepLabel: '등록 완료',
-      })
-      const program = await createProgramMutation.mutateAsync({
-        ...snapshot,
-        idempotencyKey: idempotencyKeyRef.current,
-      })
-      options?.onProgramRegistrationSaved?.(program)
-      return program
     })().catch(error => {
-      completionPromiseRef.current = null
       throw error
     })
 

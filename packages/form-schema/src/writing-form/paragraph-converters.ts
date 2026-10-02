@@ -1,5 +1,9 @@
-import type { WritingFormParagraph } from './draft-schema.js'
-import { createHorizontalTableParagraph } from './draft-schema.js'
+import type { VerticalTableFlavor, WritingFormParagraph } from './draft-schema.js'
+import {
+  createHorizontalTableParagraph,
+  createVerticalTableParagraph,
+  normalizeVerticalTableParagraph,
+} from './draft-schema.js'
 import { createParagraphByDetail } from './paragraph-factories.js'
 import type { DetailSelectValue } from './paragraph-selectors.js'
 
@@ -20,6 +24,19 @@ export function preserveParagraphCommonFields<T extends WritingFormParagraph>(
   }
 }
 
+/** 세로형 단락 flavor 전환 — 구조가 flavor마다 달라 기본 단락으로 재생성 후 공통 필드만 유지 */
+export function convertVerticalTableFlavor(
+  prev: WritingFormParagraph,
+  flavor: VerticalTableFlavor
+): WritingFormParagraph {
+  if (prev.kind !== 'single_item' || prev.variant !== 'vertical_table') {
+    return preserveParagraphCommonFields(createVerticalTableParagraph(prev.id, flavor), prev)
+  }
+  const current = normalizeVerticalTableParagraph(prev)
+  if (current.verticalTableFlavor === flavor) return current
+  return preserveParagraphCommonFields(createVerticalTableParagraph(prev.id, flavor), prev)
+}
+
 export function convertParagraphByDetail(
   prev: WritingFormParagraph,
   detail: DetailSelectValue
@@ -36,6 +53,7 @@ export function convertParagraphByDetail(
     case 'horizontal_table':
       return preserveParagraphCommonFields(createHorizontalTableParagraph(id), prev)
     case 'vertical_table':
+      if (prev.kind === 'single_item' && prev.variant === 'vertical_table') return prev
       return preserveParagraphCommonFields(createParagraphByDetail('vertical_table', id), prev)
     case 'subjective':
       return preserveParagraphCommonFields(createParagraphByDetail('subjective', id), prev)

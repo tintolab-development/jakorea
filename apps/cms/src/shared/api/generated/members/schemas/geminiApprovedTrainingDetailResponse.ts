@@ -73,7 +73,7 @@ export interface GeminiApprovedTrainingDetailResponse {
   instructorMemberId?: number;
   instructorName?: string;
   /**
-     * 매칭된 연수 담당 강사 프로필. 미매칭이면 null
+     * 연수 담당 강사. 일정 배정 또는 같은 모집의 승인 강사가 있으면 채운다. 둘 다 없으면 null
      * @nullable
      */
   assignedInstructor?: GeminiAssignedInstructor;

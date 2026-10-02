@@ -6,6 +6,8 @@ import {
   mapIndividualApplicationToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
   mapMaterialAssignmentStatusToTextbookStatus,
+  mapTextbookDeliveryStatusToBadge,
+  mapTextbookStatusKeyToDeliveryStatus,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
   mapOrganizationApplicationToApplicantSchoolRow,
   softMergeOrganizationApplicationDetailOntoRow,
@@ -84,6 +86,44 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.mealInfo).toBe('급식 가능')
     expect(row.detail?.otherSpecialNotes).toBe('정문 주차')
     expect(row.detail?.educationType).toBe('오프라인')
+  })
+
+  it('maps company-school economy fields from organization list and detail GET', () => {
+    const listRow = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 202,
+        organizationName: 'JA서울미래초등학교',
+        previousYearParticipation: 'yes',
+        affiliatedFinancialCompany: 'KB국민은행',
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '170001'
+    )
+    expect(listRow.detail?.previousYearParticipation).toBe('참여')
+    expect(listRow.detail?.affiliatedFinancialCompany).toBe('KB국민은행')
+
+    const detailRow = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 202,
+        previousYearParticipation: '미참여',
+        affiliatedFinancialCompany: '신한은행',
+      } as Parameters<typeof mapOrganizationApplicationDetailToApplicantSchoolRow>[0],
+      {
+        id: '202',
+        no: 1,
+        schoolName: 'JA서울미래초등학교',
+        region: '서울',
+        educationGrade: '2학년',
+        classCount: 1,
+        studentCount: 20,
+        teacherName: '김교사',
+        approvalStatus: 'pending',
+        programId: '170001',
+        detail: { previousYearParticipation: '참여' },
+      }
+    )
+    expect(detailRow.detail?.previousYearParticipation).toBe('미참여')
+    expect(detailRow.detail?.affiliatedFinancialCompany).toBe('신한은행')
   })
 
   it('does not show the program grade range when the application has no requested grade', () => {
@@ -193,6 +233,54 @@ describe('general-applications-adapters', () => {
     expect(withdrawn.availableActions).toEqual(['VIEW'])
   })
 
+  it('maps ORGANIZATION participant list fields used by 참여 기관 정보 조회', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1691425,
+        organizationApplicationId: 77001,
+        organizationName: '진월초',
+        grade: '5',
+        regionSido: '광주광역시',
+        regionSigungu: '남구',
+        classCount: 2,
+        studentCount: 48,
+        teacherName: '김담당',
+        phone: '010-1111-2222',
+        email: 'teacher@school.kr',
+        textbookId: 12,
+        textbookName: '금융교육 5학년',
+        materialAssignmentStatus: 'ASSIGNED',
+        textbookDeliveryStatus: 'SHIPPING',
+        sessions: [
+          {
+            scheduleId: 801,
+            sessionNo: 1,
+            scheduleName: '1회차',
+            startAt: '2026-10-12T09:00:00+09:00',
+            endAt: '2026-10-12T11:00:00+09:00',
+          },
+        ],
+        availableActions: ['VIEW', 'GIVE_UP'],
+      } as never,
+      0,
+      '168001'
+    )
+
+    expect(row.organizationApplicationId).toBe('77001')
+    expect(row.educationGrade).toBe('5학년')
+    expect(row.region).toBe('광주광역시 남구')
+    expect(row.classCount).toBe(2)
+    expect(row.studentCount).toBe(48)
+    expect(row.teacherName).toBe('김담당')
+    expect(row.teacherPhone).toBe('010-1111-2222')
+    expect(row.teacherEmail).toBe('teacher@school.kr')
+    expect(row.textbookId).toBe('12')
+    expect(row.textbookName).toBe('금융교육 5학년')
+    expect(row.textbookStatus).toBe('shipping')
+    expect(row.sessions).toHaveLength(1)
+    expect(row.sessions?.[0]?.resolvedScheduleId).toBe(801)
+  })
+
   it.each([
     ['BEFORE_SHIPPING', 'preparing'],
     ['SHIPPING', 'shipping'],
@@ -201,6 +289,29 @@ describe('general-applications-adapters', () => {
     [undefined, 'not_applicable'],
   ] as const)('maps material assignment status %s to %s', (status, expected) => {
     expect(mapMaterialAssignmentStatusToTextbookStatus(status)).toBe(expected)
+  })
+
+  it.each([
+    ['PREPARING', 'preparing'],
+    ['SHIPPING', 'shipping'],
+    ['DELIVERED', 'delivered'],
+    ['NOT_APPLICABLE', 'not_applicable'],
+  ] as const)('maps textbook delivery status %s to badge %s', (status, expected) => {
+    expect(mapTextbookDeliveryStatusToBadge(status)).toBe(expected)
+  })
+
+  it('prefers textbookDeliveryStatus over materialAssignmentStatus for the badge', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 31001,
+        materialAssignmentStatus: 'ASSIGNED',
+        textbookDeliveryStatus: 'PREPARING',
+      } as never,
+      0,
+      '168001'
+    )
+    expect(row.textbookStatus).toBe('preparing')
+    expect(mapTextbookStatusKeyToDeliveryStatus('delivered')).toBe('DELIVERED')
   })
 
   it('maps saved affiliation fallback for individual, instructor, and volunteer participants', () => {
@@ -256,6 +367,76 @@ describe('general-applications-adapters', () => {
     expect(individual.homeAddress).toBe('서울특별시 강서구')
     expect(individual.sessions).toHaveLength(1)
     expect(individual.sessions?.[0]?.resolvedScheduleId).toBe(601)
+    expect(individual.lectureAttendanceSessions).toEqual([])
+    expect(individual.satisfactionSurveyCompleted).toBe(false)
+  })
+
+  it('maps individual person attendance onto lectureAttendanceSessions', () => {
+    const individual = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 1691703,
+        memberName: '이참여자',
+        sessions: [
+          { scheduleId: 701, sessionNo: 1, attendanceStatus: 'PRESENT' },
+          { scheduleId: 702, sessionNo: 2, attendanceStatus: 'LATE' },
+          { scheduleId: 703, sessionNo: 3, attendanceStatus: 'EXCUSED' },
+        ],
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '168001'
+    )
+
+    expect(individual.lectureAttendanceSessions).toEqual([
+      { roundNumber: 1, scheduleId: 701, status: 'attended' },
+      { roundNumber: 2, scheduleId: 702, status: 'late' },
+      { roundNumber: 3, scheduleId: 703, status: 'attended' },
+    ])
+  })
+
+  it('prefers homeAddressSummary and maps satisfactionSurveyCompleted when present', () => {
+    const individual = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 1691702,
+        memberName: '박참여자',
+        homeAddressSummary: '경기도 성남시 분당구',
+        regionSido: '서울특별시',
+        regionSigungu: '강서구',
+        contact: '010-****-1111',
+        email: 'p***@example.com',
+        satisfactionSurveyCompleted: true,
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse & {
+        satisfactionSurveyCompleted?: boolean
+      },
+      0,
+      '168001'
+    )
+
+    expect(individual.homeAddress).toBe('경기도 성남시 분당구')
+    expect(individual.satisfactionSurveyCompleted).toBe(true)
+    expect(individual.detail?.contact).toBe('010-****-1111')
+    expect(individual.detail?.email).toBe('p***@example.com')
+  })
+
+  it('maps additive survey view keys when present', () => {
+    const individual = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 1691704,
+        memberName: '최참여자',
+        surveyResponse: { templateVersionId: 12, formResponseId: 3401 },
+        satisfactionResponse: { templateVersionId: 15, formResponseId: 3402 },
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse & {
+        surveyResponse?: { templateVersionId: number; formResponseId: number }
+        satisfactionResponse?: { templateVersionId: number; formResponseId: number }
+      },
+      0,
+      '168001'
+    )
+
+    expect(individual.surveyResponse).toEqual({ templateVersionId: 12, formResponseId: 3401 })
+    expect(individual.satisfactionResponse).toEqual({
+      templateVersionId: 15,
+      formResponseId: 3402,
+    })
   })
 
   it('maps volunteer participant sessions and additive enrich fields', () => {
@@ -263,11 +444,13 @@ describe('general-applications-adapters', () => {
       {
         participantId: 1691601,
         memberId: 9101,
+        sourceApplicationId: 77002,
         memberName: '이봉사자',
         organizationName: '해봄초등학교',
         id1365: '1365-10001',
         contact: '010-****-9999',
         email: 'vol***@example.com',
+        volunteerKind: 'GENERAL',
         assignedOrganizationNames: ['해봄초등학교', '푸른초등학교'],
         sessions: [
           {
@@ -284,6 +467,9 @@ describe('general-applications-adapters', () => {
       '168001'
     )
 
+    expect(volunteer.id).toBe('1691601')
+    expect(volunteer.volunteerApplicationId).toBe('77002')
+    expect(volunteer.volunteerKind).toBe('GENERAL')
     expect(volunteer.memberId).toBe(9101)
     expect(volunteer.id1365).toBe('1365-10001')
     expect(volunteer.assignedInstitutionNames).toEqual(['해봄초등학교', '푸른초등학교'])
@@ -325,6 +511,26 @@ describe('general-applications-adapters', () => {
     expect(instructor.schoolName).toBe('해봄초등학교')
     expect(instructor.lectureReportSubmitted).toBe(true)
     expect(instructor.instructorApplicationId).toBeUndefined()
+    expect(instructor.memberId).toBe('9001')
+  })
+
+  it('maps admin-registered instructor row with null sourceApplicationId and none settlement', () => {
+    const instructor = mapParticipantToParticipatingInstructorRow(
+      {
+        participantId: 1,
+        memberId: 190010,
+        memberName: '등록강사',
+        sourceApplicationId: null,
+        settlementStatus: 'none',
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '170002'
+    )
+
+    expect(instructor.id).toBe('1')
+    expect(instructor.memberId).toBe('190010')
+    expect(instructor.instructorApplicationId).toBeUndefined()
+    expect(instructor.settlementStatus).toBe('none')
   })
 
   it('maps instructor sourceApplicationId to instructorApplicationId', () => {

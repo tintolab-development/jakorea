@@ -31,6 +31,7 @@ export interface VolunteerAssignedInstitutionRow {
   region: string
   distanceFromHome: string
   volunteerScheduleLines: string[]
+  organizationApplicationId?: string
 }
 
 export interface VolunteerWaitingInstitutionRow {
@@ -150,6 +151,7 @@ export function buildInitialVolunteerAssignedRows(
       region: school.region,
       distanceFromHome: '-',
       volunteerScheduleLines: scheduleLinesForSchool(school, volunteer, program),
+      organizationApplicationId: school.organizationApplicationId,
     }
   })
 }
@@ -235,6 +237,7 @@ export function schoolRowToVolunteerAssignedRow(
     region: school.region,
     distanceFromHome: '-',
     volunteerScheduleLines: scheduleLinesForSchool(school, volunteer, program),
+    organizationApplicationId: school.organizationApplicationId,
   }
 }
 
@@ -251,4 +254,23 @@ export function renumberVolunteerWaitingRows(
   const sorted = sortWaitingInstructorRowsUnavailableToBottom(rows)
   const n = sorted.length
   return sorted.map((r, i) => ({ ...r, no: n - i }))
+}
+
+export function resolveVolunteerAssignedOrganizationApplicationIds(
+  assigned: VolunteerAssignedInstitutionRow[],
+  schoolRows: ParticipatingSchoolRow[]
+): number[] {
+  const ids = new Set<number>()
+  for (const row of assigned) {
+    const fromRow = Number(row.organizationApplicationId)
+    if (Number.isFinite(fromRow) && fromRow > 0) {
+      ids.add(fromRow)
+      continue
+    }
+    const schoolId = row.id.split('__assigned')[0] ?? ''
+    const school = schoolRows.find(item => item.id === schoolId)
+    const fromSchool = Number(school?.organizationApplicationId)
+    if (Number.isFinite(fromSchool) && fromSchool > 0) ids.add(fromSchool)
+  }
+  return [...ids]
 }

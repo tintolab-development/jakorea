@@ -26,10 +26,10 @@ export interface FileObjectResponse {
      */
   ownerType: string;
   /**
-     * 파일 소유 리소스 ID
+     * 파일 소유 리소스 ID. upload-first draft 처리 중에는 null일 수 있음
      * @minimum 1
      */
-  ownerId: number;
+  ownerId?: number;
   /** 개인정보/민감도 등급 */
   privacyLevel?: string;
   /** 원본 파일명 */

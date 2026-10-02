@@ -17,6 +17,17 @@ export { FormTemplateHost } from './host/form-template-host.js'
 export type { FormTemplateHostProps } from './host/form-template-host.js'
 export { FormTemplateRenderer } from './renderer/form-template-renderer.js'
 export type { FormTemplateRendererProps } from './renderer/form-template-renderer.js'
+export { VerticalTablePreviewBody } from './renderer/vertical-table-preview-body.js'
+export type { VerticalTablePreviewBodyProps } from './renderer/vertical-table-preview-body.js'
+export {
+  mergeFilledVerticalTable,
+  patchVerticalTableBottomConsent,
+  patchVerticalTableCell,
+  patchVerticalTableCompositeTime,
+  patchVerticalTableFileNames,
+  patchVerticalTableMultipleChoice,
+  resolveVerticalTablePreviewLayout,
+} from './renderer/vertical-table-preview.js'
 export type {
   FillParagraphBodyOptions,
   FormUpdateParagraph,

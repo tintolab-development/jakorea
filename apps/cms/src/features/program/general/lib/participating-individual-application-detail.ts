@@ -28,6 +28,8 @@ export function mergeIndividualApplicationIntoParticipatingRow(
     individualApplicationId: mappedApplicationId,
     lectureAttendanceSessions: base.lectureAttendanceSessions,
     satisfactionSurveyCompleted: base.satisfactionSurveyCompleted,
+    surveyResponse: base.surveyResponse,
+    satisfactionResponse: base.satisfactionResponse,
     participationAppliedAt: base.participationAppliedAt,
     activityWithdrawn: base.activityWithdrawn,
     activityWithdrawStopSessionKey: base.activityWithdrawStopSessionKey,

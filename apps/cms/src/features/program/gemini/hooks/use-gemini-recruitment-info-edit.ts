@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
+import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { buildGeminiRecruitmentDevAutofillSnapshot } from '../lib/recruitment/dev-autofill'
 import {
   applyInfoEditDraft,
@@ -110,25 +111,30 @@ export function useGeminiRecruitmentInfoEdit(
   const handleSave = useCallback(async () => {
     if (detail == null || draft == null || !recruitmentId) return
     const nextDraft = overlayRichText(draft)
-    if (remoteEnabled) {
-      await updateGeminiRecruitment(recruitmentId, nextDraft)
-      const detailKey = geminiVisitingTrainingQueryKeys.recruitmentDetail(recruitmentId)
-      await queryClient.cancelQueries({ queryKey: detailKey })
-      queryClient.setQueryData(detailKey, applyInfoEditDraft(detail, nextDraft))
-      await queryClient.invalidateQueries({ queryKey: detailKey })
-      await queryClient.invalidateQueries({
-        queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
-      })
-    } else {
-      const nextDetail = applyInfoEditDraft(detail, nextDraft)
-      patchRecruitmentDetail(detail.id, {
-        ...nextDraft,
-        title: nextDetail.title,
-        updatedAt: nextDetail.updatedAt,
-      })
-      setDetailVersion(v => v + 1)
+    const endOverlay = beginBlockingOverlay()
+    try {
+      if (remoteEnabled) {
+        await updateGeminiRecruitment(recruitmentId, nextDraft)
+        const detailKey = geminiVisitingTrainingQueryKeys.recruitmentDetail(recruitmentId)
+        await queryClient.cancelQueries({ queryKey: detailKey })
+        queryClient.setQueryData(detailKey, applyInfoEditDraft(detail, nextDraft))
+        await queryClient.invalidateQueries({ queryKey: detailKey })
+        await queryClient.invalidateQueries({
+          queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
+        })
+      } else {
+        const nextDetail = applyInfoEditDraft(detail, nextDraft)
+        patchRecruitmentDetail(detail.id, {
+          ...nextDraft,
+          title: nextDetail.title,
+          updatedAt: nextDetail.updatedAt,
+        })
+        setDetailVersion(v => v + 1)
+      }
+      setEditMode(false)
+    } finally {
+      endOverlay()
     }
-    setEditMode(false)
   }, [detail, draft, overlayRichText, queryClient, recruitmentId, remoteEnabled, setEditMode])
 
   const patchDraft = useCallback((patch: Partial<GeminiRecruitmentInfoEditDraft>) => {

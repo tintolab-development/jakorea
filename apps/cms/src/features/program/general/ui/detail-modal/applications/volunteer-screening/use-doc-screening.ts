@@ -5,6 +5,10 @@ import {
 } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import {
+  toNestedDecisionNotification,
+  toScreeningNotifyFields,
+} from '@/features/program/general/lib/application-decision-notify-timing'
 import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { VolunteerDocumentCancelRejectionConfirmPayload } from '@/features/program/general/lib/volunteer-document-cancel-rejection'
@@ -195,13 +199,16 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
       ids: string[],
       status: 'pass' | 'fail',
       _notifyTiming?: PermissionModalPayload['notifyTiming'],
-      reason?: string
+      reason?: string,
+      scheduledAt?: string
     ) => {
+      const notify = toScreeningNotifyFields(_notifyTiming)
       const remoteOk = await volunteerRemote.applyRemoteDocumentResult(
         ids,
         status === 'pass' ? 'PASS' : 'FAIL',
         reason,
-        _notifyTiming
+        notify.notifyTiming ?? _notifyTiming,
+        scheduledAt ?? notify.scheduledAt
       )
       if (remoteOk) return
       if (isGeneralProgramTempMockProgramId(programId)) {
@@ -215,9 +222,41 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     [programId, volunteerRemote]
   )
 
-  const applyDocumentScreeningCancel = useCallback((_id: string) => {
-    notifyProgramApiUnavailable('general-volunteer-document-cancel', '봉사자 서류 승인·반려 취소')
-  }, [])
+  const applyDocumentScreeningCancelApproval = useCallback(
+    async (
+      id: string,
+      reason: string,
+      notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest
+    ) => {
+      if (volunteerRemote.remoteEnabled) {
+        return volunteerRemote.applyRemoteDocumentCancelApproval(id, reason, notification)
+      }
+      notifyProgramApiUnavailable(
+        'general-volunteer-document-cancel-approval',
+        '봉사자 서류 승인 취소'
+      )
+      return false
+    },
+    [volunteerRemote]
+  )
+
+  const applyDocumentScreeningCancelRejection = useCallback(
+    async (
+      id: string,
+      reason: string,
+      notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest
+    ) => {
+      if (volunteerRemote.remoteEnabled) {
+        return volunteerRemote.applyRemoteDocumentCancelRejection(id, reason, notification)
+      }
+      notifyProgramApiUnavailable(
+        'general-volunteer-document-cancel-rejection',
+        '봉사자 서류 반려 취소'
+      )
+      return false
+    },
+    [volunteerRemote]
+  )
 
   const closeBulkApproveModal = useCallback(() => {
     setBulkApproveOpen(false)
@@ -263,7 +302,13 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     async (payload: PermissionModalPayload) => {
       const ids = selectedRowKeys.map(String)
       if (ids.length === 0) return
-      await applyDocumentScreeningStatus(ids, 'pass', payload.notifyTiming)
+      await applyDocumentScreeningStatus(
+        ids,
+        'pass',
+        payload.notifyTiming,
+        undefined,
+        toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt).scheduledAt
+      )
       setSelectedRowKeys([])
       setBulkApproveOpen(false)
       showApplicationApprovalCompletedAlert()
@@ -275,7 +320,13 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     async (payload: PermissionModalPayload) => {
       const ids = selectedRowKeys.map(String)
       if (ids.length === 0) return
-      await applyDocumentScreeningStatus(ids, 'fail', payload.notifyTiming, payload.reason)
+      await applyDocumentScreeningStatus(
+        ids,
+        'fail',
+        payload.notifyTiming,
+        payload.reason,
+        toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt).scheduledAt
+      )
       setSelectedRowKeys([])
       setBulkRejectOpen(false)
       showApplicationRejectionCompletedAlert()
@@ -286,7 +337,13 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   const handleApproveModalConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (!approveModalVolunteer) return
-      await applyDocumentScreeningStatus([approveModalVolunteer.id], 'pass', payload.notifyTiming)
+      await applyDocumentScreeningStatus(
+        [approveModalVolunteer.id],
+        'pass',
+        payload.notifyTiming,
+        undefined,
+        toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt).scheduledAt
+      )
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== approveModalVolunteer.id))
       setApproveModalVolunteer(null)
       showApplicationApprovalCompletedAlert()
@@ -298,7 +355,13 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     async (payload: PermissionModalPayload) => {
       if (!rejectModalVolunteer) return
       const { id } = rejectModalVolunteer
-      await applyDocumentScreeningStatus([id], 'fail', payload.notifyTiming, payload.reason)
+      await applyDocumentScreeningStatus(
+        [id],
+        'fail',
+        payload.notifyTiming,
+        payload.reason,
+        toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt).scheduledAt
+      )
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       setRejectModalVolunteer(null)
       showApplicationRejectionCompletedAlert()
@@ -307,21 +370,36 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   )
 
   const handleCancelApprovalConfirm = useCallback(
-    (_payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (!cancelApprovalVolunteer) return
-      applyDocumentScreeningCancel(cancelApprovalVolunteer.id)
+      const ok = await applyDocumentScreeningCancelApproval(
+        cancelApprovalVolunteer.id,
+        payload.reason,
+        toNestedDecisionNotification(payload.notifyTiming, payload.manualNotifyAt)?.notification
+      )
+      if (!ok) return
       setCancelApprovalTargetId(null)
     },
-    [applyDocumentScreeningCancel, cancelApprovalVolunteer]
+    [applyDocumentScreeningCancelApproval, cancelApprovalVolunteer]
   )
 
   const handleCancelRejectConfirm = useCallback(
-    (_payload: VolunteerDocumentCancelRejectionConfirmPayload) => {
+    async (payload: VolunteerDocumentCancelRejectionConfirmPayload) => {
       if (!cancelRejectVolunteer) return
-      applyDocumentScreeningCancel(cancelRejectVolunteer.id)
+      const reason = payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
+      const notification =
+        payload.variant === 'alreadySent'
+          ? toNestedDecisionNotification(payload.notifyTiming, payload.manualNotifyAt)?.notification
+          : undefined
+      const ok = await applyDocumentScreeningCancelRejection(
+        cancelRejectVolunteer.id,
+        reason,
+        notification
+      )
+      if (!ok) return
       setCancelRejectTargetId(null)
     },
-    [applyDocumentScreeningCancel, cancelRejectVolunteer]
+    [applyDocumentScreeningCancelRejection, cancelRejectVolunteer]
   )
 
   const handleBulkReject = useCallback(() => {

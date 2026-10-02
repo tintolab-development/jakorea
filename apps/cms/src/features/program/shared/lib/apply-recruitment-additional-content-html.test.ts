@@ -298,4 +298,59 @@ describe('applyRecruitmentAdditionalContentHtml', () => {
     )
     expect(display.otherNotes).toBe('봉사자 기타 신값')
   })
+
+  it('강사 기타사항은 remarks(비고)를 덮지 않는다', () => {
+    const withInstructorRow = {
+      ...existing,
+      generalCommonInfo: {
+        ...existing.generalCommonInfo,
+        instructorRecruitmentInfo: { remarks: '강사 비고' },
+      },
+      programRecruitments: [
+        { id: 186069, recruitmentType: 'INSTRUCTOR', remarks: '강사 비고', otherMatters: '옛 기타' },
+      ],
+    } as Program
+    const patch = applyRecruitmentDetailInfoFields(
+      { otherNotes: '<p>우천 시 일정 조정</p>' },
+      withInstructorRow,
+      'instructor',
+      { otherMatters: '<p>우천 시 일정 조정</p>' }
+    )
+
+    expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.remarks).toBe('강사 비고')
+    expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.otherMatters).toBe(
+      '<p>우천 시 일정 조정</p>'
+    )
+    expect(patch.registrationOverlay?.['recruit.instructor.notes']).toBeUndefined()
+    expect(patch.programRecruitments?.find(row => row.id === 186069)?.remarks).toBe('강사 비고')
+    expect(patch.programRecruitments?.find(row => row.id === 186069)?.otherMatters).toBe(
+      '<p>우천 시 일정 조정</p>'
+    )
+  })
+
+  it('강사 기타사항 저장은 leftover 비고 overlay를 덮지 않는다', () => {
+    const html = '<p>우천 시 일정 조정</p>'
+    const withLeftoverNotes = {
+      ...existing,
+      generalCommonInfo: {
+        ...existing.generalCommonInfo,
+        instructorRecruitmentInfo: { remarks: '강사 비고', otherMatters: '옛 기타' },
+      },
+      registrationOverlay: {
+        'recruit.instructor.notes': html,
+        'recruitInstructor.detailInfo.otherNotes': '옛 기타',
+      },
+      programRecruitments: [
+        { id: 186069, recruitmentType: 'INSTRUCTOR', remarks: '강사 비고', otherMatters: '옛 기타' },
+      ],
+    } as Program
+    const patch = applyRecruitmentDetailInfoFields({}, withLeftoverNotes, 'instructor', {
+      otherMatters: html,
+    })
+
+    expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.remarks).toBe('강사 비고')
+    expect(patch.registrationOverlay?.['recruit.instructor.notes']).toBe(html)
+    expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.otherMatters).toBe(html)
+    expect(patch.registrationOverlay?.['recruitInstructor.detailInfo.otherNotes']).toBe(html)
+  })
 })

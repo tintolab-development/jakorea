@@ -140,7 +140,12 @@ export function mapProgramSurveyToRegisteredSurvey(
     status: resolveSurveyStatusFromBinding(binding),
     responseCount: dto.responseCount ?? dto.submittedCount ?? binding?.submittedCount ?? 0,
     participantTotal: binding?.submittedCount ?? dto.submittedCount ?? 0,
-    bindingId: binding?.bindingId != null ? String(binding.bindingId) : undefined,
+    bindingId:
+      binding?.bindingId != null
+        ? String(binding.bindingId)
+        : dto.bindingId != null
+          ? String(dto.bindingId)
+          : undefined,
   }
 }
 
@@ -297,6 +302,44 @@ export function mapSurveyResponseListItemToPollResponse(
 export function surveyResponseNeedsDetail(item: SurveyResponseListItemResponse): boolean {
   const preview = parseAnswerPreviewJson(item.answerPreviewJson)
   return Object.keys(preview).length === 0 && item.formResponseId != null
+}
+
+export function isLectureEvalSurveyListRow(dto: ProgramSurveyResponse): boolean {
+  const name = `${dto.templateName ?? ''} ${dto.versionLabel ?? ''}`.toLowerCase()
+  return name.includes('강의평가') || name.includes('lecture eval')
+}
+
+export function isDedicatedSurveyManagementTabTitle(title: string): boolean {
+  const name = title.toLowerCase()
+  return (
+    name.includes('강의평가') ||
+    name.includes('lecture eval') ||
+    name.includes('만족도') ||
+    name.includes('satisfaction')
+  )
+}
+
+export function resolveLectureEvalSubmitContext(input: {
+  binding?: ProgramFormBindingResponse | null
+  surveyDto?: ProgramSurveyResponse | null
+}): { contextType: 'SCHEDULE' | 'PROGRAM'; contextId?: number } {
+  const scope = input.binding?.targetScope ?? input.surveyDto?.targetScope
+  const id = input.binding?.targetScopeId ?? input.surveyDto?.targetScopeId
+  if (scope === 'SCHEDULE' && id != null && Number.isFinite(id) && id > 0) {
+    return { contextType: 'SCHEDULE', contextId: Math.trunc(id) }
+  }
+  return { contextType: 'PROGRAM', contextId: id != null && Number.isFinite(id) && id > 0 ? Math.trunc(id) : undefined }
+}
+
+export function pickLectureEvalSurveyFromRemote(input: {
+  classified: ClassifiedFormBinding[]
+  surveys: ProgramSurveyResponse[]
+}): RegisteredSurvey | null {
+  const fromBinding = input.classified.find(item => item.kind === 'lecture_evaluation')
+  if (fromBinding) return fromBinding.survey
+  const dto = input.surveys.find(isLectureEvalSurveyListRow)
+  if (dto == null) return null
+  return mapProgramSurveyToRegisteredSurvey(dto, 0)
 }
 
 export function mergeSurveysWithBindings(

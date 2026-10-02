@@ -315,6 +315,11 @@
   box-sizing: border-box;
 }
 
+/* 단일·다중선택형 — 항목 옵션 목록은 해당 항목 블록 안에 */
+.form-editor-vertical-table-row-fields__choice-options {
+  width: 100%;
+}
+
 .form-editor-vertical-table-row-fields__list-wrap {
   margin: 0;
   padding-top: 24px;

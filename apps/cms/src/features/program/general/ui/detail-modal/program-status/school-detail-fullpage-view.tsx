@@ -12,7 +12,10 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
-import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import {
+  changeGeneralParticipatingInstitutionSchedules,
+  giveUpGeneralParticipatingInstitution,
+} from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -41,6 +44,7 @@ import {
   getInstructorRowsForSchool,
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
+  mergeOrganizationApplicationDetailOntoSchoolDetail,
   type WaitingInstructorRowMock,
 } from '../../../lib/school-detail'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '../../../lib/waiting-instructor-assignment'
@@ -158,14 +162,21 @@ import {
   notifyProgramApiUnavailable,
   PROGRAM_API_UNAVAILABLE_TITLE,
 } from '@/features/program/shared/lib/program-api-unavailable'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
   listAdminCommentsByTargetRemote,
   resolveLatestAdminCommentText,
   upsertAdminCommentByTargetRemote,
 } from '@/features/program/general/api/admin-comments-api-client'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import {
+  fetchOrganizationApplicationDetailRemote,
+  unmaskOrganizationApplicationPrivacyRemote,
+} from '@/features/program/general/api/applications-api-client'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
+import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use-organization-merge-groups'
+import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
 import { MESSAGES } from '@/shared/constants/messages'
 import { formatParticipatingCombinedClassDisplay } from '@/features/program/general/lib/participating-institution-detail-edit'
 import { InstitutionCombinedClassEditCell } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-combined-class-edit-cell'
@@ -185,6 +196,7 @@ import { ParticipatingInstitutionScheduleChangeModal } from './participating-ins
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
   resolveParticipatingInstitutionActivityWithdrawPatch,
+  resolveParticipatingInstitutionActivityWithdrawStopScheduleId,
 } from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import { buildParticipatingSchoolPreferredScheduleLines } from '@/features/program/general/lib/participating-school-session-display'
 import {
@@ -512,6 +524,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [scheduleChangeModalOpen, setScheduleChangeModalOpen] = useState(false)
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
+  const [scheduleChangeSubmitting, setScheduleChangeSubmitting] = useState(false)
+  const [leadTeacherSubmitting, setLeadTeacherSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
@@ -548,13 +562,23 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       }),
     enabled:
       showAdminCommentSection &&
-      shouldUseGeneralApplicationsRemoteApi() &&
+      shouldUseOrganizationApplicationRemoteApi() &&
       hasOrganizationApplicationId,
     staleTime: 30_000,
   })
   const remoteAdminComment = resolveLatestAdminCommentText(adminCommentQuery.data)
+  const organizationApplicationIdForDetail = row.organizationApplicationId?.trim() ?? ''
+  const organizationDetailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.organizationDetail(organizationApplicationIdForDetail),
+    queryFn: () => fetchOrganizationApplicationDetailRemote(organizationApplicationIdForDetail),
+    enabled:
+      shouldUseOrganizationApplicationRemoteApi() && organizationApplicationIdForDetail.length > 0,
+    staleTime: 30_000,
+  })
   const mergedDetail = {
-    ...detail,
+    ...(organizationDetailQuery.data
+      ? mergeOrganizationApplicationDetailOntoSchoolDetail(detail, organizationDetailQuery.data)
+      : detail),
     ...(adminCommentQuery.data ? { adminComment: remoteAdminComment } : {}),
     ...savedBasicPatches[detail.id],
   }
@@ -642,6 +666,12 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     candidates: CombinedClassLeadTeacherCandidate[]
   } | null>(null)
   const [combinedClassCompleteLabel, setCombinedClassCompleteLabel] = useState<string | null>(null)
+  const mergeGroupsAllowed = isGeneralOrganizationProgram(program)
+  const mergeGroupsQuery = useOrganizationMergeGroups(
+    programId,
+    program.backendProgramType,
+    mergeGroupsAllowed && shouldUseOrganizationMergeGroupsRemoteApi()
+  )
 
   const applicationInfoEdit = useParticipatingInstitutionDetailEdit({
     detail: mergedDetail,
@@ -717,12 +747,27 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   )
   const revealInstitutionTeacherPersonalInfo = useCallback(
     async (reason: string) => {
+      const orgAppId = row.organizationApplicationId?.trim()
+      if (orgAppId) {
+        const programIdNumber = Number(program.id)
+        const dto = await unmaskOrganizationApplicationPrivacyRemote(
+          orgAppId,
+          reason,
+          Number.isFinite(programIdNumber) ? programIdNumber : undefined
+        )
+        queryClient.setQueryData(generalApplicationsQueryKeys.organizationDetail(orgAppId), dto)
+        return {
+          name: dto.teacherName?.trim() || undefined,
+          phone: dto.teacherPhone?.trim() || undefined,
+          email: dto.teacherEmail?.trim() || undefined,
+        }
+      }
       if (row.teacherMemberId == null) {
-        throw new Error('담당 교사 회원 ID가 없습니다.')
+        throw new Error('기관 신청 ID 또는 담당 교사 회원 ID가 없습니다.')
       }
       return fetchMemberRolePrivacyUnmask(row.teacherMemberId, reason, 'SCHOOL')
     },
-    [row.teacherMemberId]
+    [program.id, queryClient, row.organizationApplicationId, row.teacherMemberId]
   )
   const applyInstitutionTeacherPersonalInfo = useCallback(
     (payload: unknown) => {
@@ -731,7 +776,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       onSaveBasicInfo?.({
         id: detail.id,
         ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
-        ...(typeof privacy.phone === 'string' ? { teacherMobile: privacy.phone } : {}),
+        ...(typeof privacy.phone === 'string'
+          ? { teacherPhone: privacy.phone, teacherMobile: privacy.phone }
+          : {}),
         ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
       })
     },
@@ -761,7 +808,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
   const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
-    if (shouldUseGeneralApplicationsRemoteApi()) {
+    if (shouldUseOrganizationApplicationRemoteApi()) {
       if (!hasOrganizationApplicationId) {
         void showAlert({
           title: '안내',
@@ -863,7 +910,13 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         setActivityWithdrawSubmitting(true)
         try {
           if (progressRemoteEnabled) {
-            await giveUpGeneralParticipatingInstitution(programId, detail.id, reason)
+            const stopScheduleId = resolveParticipatingInstitutionActivityWithdrawStopScheduleId(
+              sessions,
+              payload.stopSessionKey
+            )
+            await giveUpGeneralParticipatingInstitution(programId, detail.id, reason, {
+              stopScheduleId,
+            })
             await queryClient.invalidateQueries({
               queryKey: generalProgramProgressQueryKeys.institutions(programId),
             })
@@ -2603,20 +2656,69 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         open={scheduleChangeModalOpen}
         program={program}
         sessions={sessions}
-        onCancel={() => setScheduleChangeModalOpen(false)}
-        onConfirm={() => {
+        onCancel={() => {
+          if (scheduleChangeSubmitting) return
           setScheduleChangeModalOpen(false)
+        }}
+        onConfirm={payload => {
           if (isTempMockProgram) {
+            setScheduleChangeModalOpen(false)
             showAlert({
               title: '일정 변경',
               content: '교육 진행 일정 변경이 저장되었습니다. (temp mock)',
             })
             return
           }
-          notifyProgramApiUnavailable(
-            'general-participating-institution-schedule-change',
-            '일반 프로그램 · 참여 기관 교육 진행 일정 변경'
-          )
+          if (!progressRemoteEnabled) {
+            notifyProgramApiUnavailable(
+              'general-participating-institution-schedule-change',
+              '일반 프로그램 · 참여 기관 교육 진행 일정 변경'
+            )
+            return
+          }
+          const changes = payload.changes.flatMap(change => {
+            const scheduleId = change.session.resolvedScheduleId
+            if (typeof scheduleId !== 'number' || !Number.isFinite(scheduleId) || scheduleId <= 0) {
+              return []
+            }
+            return [{ scheduleId, educationDate: change.changedDate }]
+          })
+          if (changes.length === 0) {
+            void showAlert({
+              title: '일정 변경 실패',
+              content:
+                '교육 일정 ID가 없어 변경할 수 없습니다. 참여 기관 sessions.scheduleId가 필요합니다.',
+            })
+            return
+          }
+          void (async () => {
+            setScheduleChangeSubmitting(true)
+            try {
+              await changeGeneralParticipatingInstitutionSchedules(programId, detail.id, {
+                changes,
+                reason: '교육 진행 일정 변경',
+              })
+              await queryClient.invalidateQueries({
+                queryKey: generalProgramProgressQueryKeys.institutions(programId),
+              })
+              setScheduleChangeModalOpen(false)
+              showAlert({
+                title: '일정 변경',
+                content: '교육 진행 일정 변경이 저장되었습니다.',
+              })
+            } catch (error) {
+              const message =
+                error instanceof Error && error.message.trim()
+                  ? error.message
+                  : '교육 진행 일정을 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+              showAlert({
+                title: '일정 변경 실패',
+                content: message,
+              })
+            } finally {
+              setScheduleChangeSubmitting(false)
+            }
+          })()
         }}
       />
       <MemberAdminCommentModal
@@ -2629,13 +2731,60 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       <InstitutionCombinedClassLeadTeacherModal
         open={combinedClassLeadTeacherModal != null}
         candidates={combinedClassLeadTeacherModal?.candidates ?? []}
-        onCancel={() => setCombinedClassLeadTeacherModal(null)}
-        onConfirm={() => {
-          notifyProgramApiUnavailable(
-            'general-org-merge-lead-teacher-progress',
-            '일반 프로그램 · 합반 담당 교사 지정'
-          )
+        onCancel={() => {
+          if (leadTeacherSubmitting) return
           setCombinedClassLeadTeacherModal(null)
+        }}
+        onConfirm={candidate => {
+          if (!combinedClassLeadTeacherModal) return
+          const leadTeacherMemberId = candidate.teacherMemberId
+          if (leadTeacherMemberId == null || !Number.isFinite(leadTeacherMemberId)) {
+            void showAlert({
+              title: '처리 실패',
+              content: '담당 교사 회원 ID가 없어 지정할 수 없습니다.',
+            })
+            return
+          }
+          if (
+            !mergeGroupsAllowed ||
+            !shouldUseOrganizationMergeGroupsRemoteApi() ||
+            !progressRemoteEnabled
+          ) {
+            notifyProgramApiUnavailable(
+              'general-org-merge-lead-teacher-progress',
+              '일반 프로그램 · 합반 담당 교사 지정'
+            )
+            return
+          }
+          void (async () => {
+            setLeadTeacherSubmitting(true)
+            try {
+              await saveOrganizationCombinedClassRemote({
+                programId,
+                programType: program.backendProgramType,
+                leadRow: row,
+                allRows: participatingSchoolList,
+                combinedClassApplication: '신청',
+                partnerRowIds: combinedClassLeadTeacherModal.memberRowIds.filter(
+                  id => id !== row.id
+                ),
+                existingMergeGroups: mergeGroupsQuery.data,
+                leadTeacherMemberId,
+              })
+              await queryClient.invalidateQueries({
+                queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+              })
+              setCombinedClassLeadTeacherModal(null)
+              setCombinedClassCompleteLabel(candidate.label)
+            } catch {
+              void showAlert({
+                title: '처리 실패',
+                content: '합반 담당 교사를 지정하지 못했습니다. 다시 시도해 주세요.',
+              })
+            } finally {
+              setLeadTeacherSubmitting(false)
+            }
+          })()
         }}
       />
       <InstitutionCombinedClassCompleteModal
