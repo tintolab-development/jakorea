@@ -220,7 +220,7 @@ export class SponsorManagementPage {
     const dialog = this.detailDialog()
     await expect(dialog.getByText('프로그램 진행 이력').first()).toBeVisible({ timeout: 15_000 })
     await expect(dialog.getByPlaceholder('프로그램명을 입력하세요')).toBeVisible()
-    await expect(dialog.getByRole('button', { name: '이력 삭제' })).toBeDisabled()
+    await expect(dialog.getByRole('button', { name: '이력 삭제' })).toHaveCount(0)
     await expectColumnTitles(this.page, HISTORY_COLUMNS, dialog)
     await expectNoColumnTitle(this.page, '참여자 모집 인원', dialog)
   }
