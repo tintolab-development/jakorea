@@ -29,6 +29,8 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
     '첫 교육이 시작되기 전에는 활동 포기할 수 없습니다.',
   INVALID_BUSINESS_INCOME_EARNER_STATUS: '사업소득자 여부는 해당 또는 해당 없음만 저장할 수 있습니다.',
   FORBIDDEN_APPLICATION_ACTION: '이 프로그램 유형에서는 해당 작업을 할 수 없습니다.',
+  FORM_RESPONSE_ALREADY_SUBMITTED:
+    '이미 제출된 응답입니다. 수정은 응답 수정으로 해 주세요.',
 }
 
 const PREFERRED_SCHEDULE_ERROR_MESSAGES: Record<string, string> = {

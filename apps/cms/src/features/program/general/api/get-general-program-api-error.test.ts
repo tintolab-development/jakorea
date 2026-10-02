@@ -158,6 +158,9 @@ describe('getGeneralProgramApiErrorMessage', () => {
         'fallback'
       )
     ).toBe('첫 교육이 시작되기 전에는 활동 포기할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('FORM_RESPONSE_ALREADY_SUBMITTED'), 'fallback')
+    ).toBe('이미 제출된 응답입니다. 수정은 응답 수정으로 해 주세요.')
   })
 
   it('PREFERRED_SCHEDULE_* 서버 메시지가 있으면 그대로 쓴다', () => {
