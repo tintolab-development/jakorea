@@ -1,5 +1,8 @@
 # Cursor prompt — 같은 날짜 기관 교육 일정 일괄 변경, 전 유형 (JABACK)
 
+**BE 반영됨 (2026-10-02).** FE 계약은 `program-same-date-institution-schedule-frontend-handoff-2026-10-02.md`.
+path: `PATCH /api/admin/programs/{programId}/schedules/same-date`.
+
 아래 지시를 **백엔드 레포(`JABACK`, 로컬 `localhost:8080`)에서 실행**하라.
 프론트 레포를 탐색하지 말고, **이 문서의 계약만** 사용하라.
 
