@@ -1,7 +1,11 @@
 import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
+import { getDefaultTrainingRequestPeriodRange } from '../../model/recruitment/table.config'
 import { buildGeminiRecruitmentDevAutofillSnapshot } from './dev-autofill'
 import type { GeminiRecruitmentDevAutofillCase } from './dev-autofill'
+
+/** 목록 기본 필터 끝이 10월 안인 날. 연수 요청 시작일이 이 날 이후면 목록에서 빠진다. */
+const OCTOBER_REFERENCE = dayjs('2026-10-02')
 
 const BASE_CASE: GeminiRecruitmentDevAutofillCase = {
   notes: 'filled',
@@ -51,24 +55,57 @@ describe('buildGeminiRecruitmentDevAutofillSnapshot', () => {
   })
 
   it('연수 요청은 모집 종료 다음 날이거나 모집 기간과 겹친다', () => {
-    const after = buildGeminiRecruitmentDevAutofillSnapshot({
-      ...BASE_CASE,
-      period: 'request-after-recruitment',
-    })
+    const after = buildGeminiRecruitmentDevAutofillSnapshot(
+      {
+        ...BASE_CASE,
+        period: 'request-after-recruitment',
+      },
+      OCTOBER_REFERENCE
+    )
     expect(
       dayjs(after.trainingRequestPeriodStart).isAfter(dayjs(after.applicationPeriodEnd), 'day')
     ).toBe(true)
 
-    const overlap = buildGeminiRecruitmentDevAutofillSnapshot({
-      ...BASE_CASE,
-      period: 'request-overlaps-recruitment',
-    })
+    const overlap = buildGeminiRecruitmentDevAutofillSnapshot(
+      {
+        ...BASE_CASE,
+        period: 'request-overlaps-recruitment',
+      },
+      OCTOBER_REFERENCE
+    )
     const trainingStart = dayjs(overlap.trainingRequestPeriodStart)
     const applicationStart = dayjs(overlap.applicationPeriodStart)
     const applicationEnd = dayjs(overlap.applicationPeriodEnd)
     expect(trainingStart.isAfter(applicationStart, 'day')).toBe(true)
     expect(trainingStart.isBefore(applicationEnd, 'day')).toBe(true)
     expect(dayjs(overlap.trainingRequestPeriodEnd).isAfter(applicationEnd, 'day')).toBe(true)
+  })
+
+  it('기관 모집·연수 요청 기간은 10월이고 목록 기본 필터와 겹친다', () => {
+    const [filterFrom, filterTo] = getDefaultTrainingRequestPeriodRange(OCTOBER_REFERENCE)
+
+    for (const period of ['request-after-recruitment', 'request-overlaps-recruitment'] as const) {
+      const snapshot = buildGeminiRecruitmentDevAutofillSnapshot(
+        { ...BASE_CASE, period },
+        OCTOBER_REFERENCE
+      )
+      const dates = [
+        snapshot.applicationPeriodStart,
+        snapshot.applicationPeriodEnd,
+        snapshot.trainingRequestPeriodStart,
+        snapshot.trainingRequestPeriodEnd,
+      ].map(value => dayjs(value))
+
+      for (const date of dates) {
+        expect(date.year()).toBe(2026)
+        expect(date.month()).toBe(9)
+      }
+
+      const trainingStart = dayjs(snapshot.trainingRequestPeriodStart)
+      const trainingEnd = dayjs(snapshot.trainingRequestPeriodEnd)
+      expect(trainingEnd.isBefore(filterFrom, 'day')).toBe(false)
+      expect(trainingStart.isAfter(filterTo, 'day')).toBe(false)
+    }
   })
 
   it('섹션 설명이 공란이면 홈페이지 미노출 케이스다', () => {
@@ -97,7 +134,9 @@ describe('buildGeminiRecruitmentDevAutofillSnapshot', () => {
     expect(snapshot.announcementPublished).toBe('unpublished')
     expect(snapshot.educationForm).toBe('online')
     expect(snapshot.educationStructure).toBe('SCHEDULE')
-    expect(snapshot.minStudentCount).toBeGreaterThanOrEqual(1)
+    expect(snapshot.minStudentCount).toBe(15)
+    expect(snapshot.programDescription).toContain('기관')
+    expect(snapshot.inquiryContactName).toContain('찾아가는 연수')
     expect(snapshot.applicationPeriodStart).toBeTruthy()
     expect(snapshot.applicationPeriodEnd).toBeTruthy()
     expect(snapshot.thumbnailFileName).toBeNull()
