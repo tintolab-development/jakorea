@@ -66,7 +66,7 @@ function SemesterScheduleTableBlock({
   const eventRangeKey = ujatHalfScheduleOverlayKeys(half).eventRange
   const settingsKeys = ujatEducationScheduleSettingsOverlayKeys(half)
 
-  const [eventSeal] = useUjatProgramRegistrationOverlayKv<UjatHalfEventRangeSeal>(
+  const [eventSeal, setEventSeal] = useUjatProgramRegistrationOverlayKv<UjatHalfEventRangeSeal>(
     eventRangeKey,
     display.eventRange ?? EMPTY_UJAT_HALF_EVENT_RANGE_SEAL
   )
@@ -123,10 +123,13 @@ function SemesterScheduleTableBlock({
                 <ParagraphDatePicker
                   mode="range"
                   value={range}
-                  onChange={() => undefined}
+                  onChange={next =>
+                    setEventSeal({
+                      start: next[0]?.toISOString() ?? null,
+                      end: next[1]?.toISOString() ?? null,
+                    })
+                  }
                   placeholder={['시작일', '종료일']}
-                  disabled
-                  disabledDate={disableNonFriday}
                   className="ujat-education-schedule-settings__range-picker"
                 />
               ) : undefined
