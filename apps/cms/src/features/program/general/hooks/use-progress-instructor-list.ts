@@ -5,16 +5,22 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey,
 } from '@/features/program/general/model/participating-instructors'
 import type { ProgressFilters } from './use-program-progress-params'
-import { fetchGeneralParticipatingInstructorsPage } from '@/features/program/general/api/admin-program-progress-service'
+import {
+  createGeneralProgramInstructorParticipant,
+  fetchGeneralParticipatingInstructorsPage,
+} from '@/features/program/general/api/admin-program-progress-service'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
+import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
+import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
+  useIsCompanySchoolProgramsSurface,
   useIsTrainedTeachersProgramsSurface,
   useProgramProgressRemoteEnabledForSurface,
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -55,7 +61,9 @@ export function useProgressInstructorList({
   programId,
 }: UseProgressInstructorListOptions) {
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+  const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
   const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
+  const queryClient = useQueryClient()
   const remoteEnabled =
     useProgramProgressRemoteEnabledForSurface(programId) && !isTempMockProgram
 
@@ -77,8 +85,13 @@ export function useProgressInstructorList({
   })
 
   const assignmentsQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.instructorAssignments(programId ?? ''),
-    queryFn: () => fetchGeneralInstructorAssignmentBoard(programId!),
+    queryKey: isCompanySchoolSurface
+      ? companySchoolQueryKeys.instructorAssignmentConflicts(programId ?? '')
+      : generalProgramProgressQueryKeys.instructorAssignments(programId ?? ''),
+    queryFn: () =>
+      isCompanySchoolSurface
+        ? fetchCompanySchoolAssignmentBoard(programId!)
+        : fetchGeneralInstructorAssignmentBoard(programId!),
     enabled: remoteEnabled && Boolean(programId),
     staleTime: 30_000,
     retry: false,
@@ -172,11 +185,28 @@ export function useProgressInstructorList({
     )
   }, [])
 
-  const handleAddInstructorByMemberId = useCallback(async (_memberId: string): Promise<boolean> => {
+  const handleAddInstructorByMemberId = useCallback(async (memberId: string): Promise<boolean> => {
     if (isTempMockProgram) return true
-    notifyInstructorRegisterUnavailable()
-    return false
-  }, [isTempMockProgram, notifyInstructorRegisterUnavailable])
+    if (!remoteEnabled || !programId) {
+      notifyInstructorRegisterUnavailable()
+      return false
+    }
+    const numericMemberId = Number(memberId)
+    if (!Number.isFinite(numericMemberId) || numericMemberId <= 0) {
+      throw new Error('강사 회원 ID가 올바르지 않습니다.')
+    }
+    await createGeneralProgramInstructorParticipant(programId, numericMemberId)
+    await queryClient.invalidateQueries({
+      queryKey: generalProgramProgressQueryKeys.instructors(programId),
+    })
+    return true
+  }, [
+    isTempMockProgram,
+    notifyInstructorRegisterUnavailable,
+    programId,
+    queryClient,
+    remoteEnabled,
+  ])
 
   const handleAddInstructor = useCallback((_values: unknown) => {
     void _values

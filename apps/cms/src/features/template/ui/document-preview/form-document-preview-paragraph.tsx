@@ -466,7 +466,7 @@ function renderBody(
               className="form-editor-table-bottom-consent"
               size="large"
               value={p.bottomConsent ?? 'agree'}
-              disabled
+              disabled={false}
               style={{ pointerEvents: 'none' }}
             >
               <CmsRadio value="agree">동의</CmsRadio>

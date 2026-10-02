@@ -1,0 +1,69 @@
+import dayjs from 'dayjs'
+import { describe, expect, it } from 'vitest'
+import {
+  toFlatDecisionNotifyTiming,
+  toInterviewAssignNotifyFields,
+  toNestedDecisionNotification,
+  toScreeningNotifyFields,
+} from './application-decision-notify-timing'
+
+const scheduled = dayjs('2026-10-20T09:00:00+09:00')
+
+describe('toFlatDecisionNotifyTiming', () => {
+  it('직접설정만 SCHEDULED + scheduledAt을 반환한다', () => {
+    expect(toFlatDecisionNotifyTiming('manual', scheduled)).toEqual({
+      timing: 'SCHEDULED',
+      scheduledAt: scheduled.toISOString(),
+    })
+  })
+
+  it('즉시·발표일은 생략한다', () => {
+    expect(toFlatDecisionNotifyTiming('immediate')).toBeUndefined()
+    expect(toFlatDecisionNotifyTiming('on_announcement')).toBeUndefined()
+  })
+
+  it('시각이 없으면 생략한다', () => {
+    expect(toFlatDecisionNotifyTiming('manual')).toBeUndefined()
+  })
+})
+
+describe('toNestedDecisionNotification', () => {
+  it('직접설정을 notification 객체로 감싼다', () => {
+    expect(toNestedDecisionNotification('manual', scheduled)).toEqual({
+      notification: {
+        timing: 'SCHEDULED',
+        scheduledAt: scheduled.toISOString(),
+      },
+    })
+  })
+
+  it('즉시 발송은 생략한다', () => {
+    expect(toNestedDecisionNotification('immediate')).toBeUndefined()
+  })
+})
+
+describe('toScreeningNotifyFields', () => {
+  it('즉시·발표일에는 scheduledAt을 붙이지 않는다', () => {
+    expect(toScreeningNotifyFields('immediate')).toEqual({ notifyTiming: 'IMMEDIATE' })
+    expect(toScreeningNotifyFields('on_announcement', scheduled)).toEqual({
+      notifyTiming: 'ON_ANNOUNCEMENT',
+    })
+  })
+
+  it('직접설정은 MANUAL + scheduledAt이다', () => {
+    expect(toScreeningNotifyFields('manual', scheduled)).toEqual({
+      notifyTiming: 'MANUAL',
+      scheduledAt: scheduled.toISOString(),
+    })
+  })
+})
+
+describe('toInterviewAssignNotifyFields', () => {
+  it('면접 배정 직접설정만 scheduledAt을 붙인다', () => {
+    expect(toInterviewAssignNotifyFields('manual', scheduled)).toEqual({
+      notifyTiming: 'MANUAL',
+      scheduledAt: scheduled.toISOString(),
+    })
+    expect(toInterviewAssignNotifyFields('immediate')).toEqual({ notifyTiming: 'IMMEDIATE' })
+  })
+})

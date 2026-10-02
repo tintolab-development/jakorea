@@ -1,4 +1,9 @@
 import dayjs, { type Dayjs } from 'dayjs'
+import {
+  buildEconomyAutofillDatePlan,
+  selectEconomyRegistrationAutofillPhrases,
+  type EconomyAutofillPhraseSelection,
+} from '@/features/program/1c-1s/lib/dev-autofill-phrases'
 import { seedDevAutofillApplicationThirdPartyRecipients } from '@/features/program/general/lib/fill-application-form-third-party-recipient'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import { shouldDisableEducationSchedulePeriodMode } from '@/features/program/general/lib/schedule-detail-form'
@@ -51,6 +56,7 @@ import {
   PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS,
   PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
+import { EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import {
   getUjatProgramRegistrationOverlayRecord,
@@ -388,7 +394,8 @@ function recruitInquiryPatch(prefix: string): Record<string, unknown> {
 function recruitDetailPatch(
   prefix: string,
   fields: readonly string[],
-  titleKo: string
+  titleKo: string,
+  copyOverride?: EconomyAutofillPhraseSelection['recruit']
 ): Record<string, unknown> {
   const copy: Record<string, string> = {
     programDescription: `${titleKo}는 학교 현장에서 경제·금융 기초를 익히는 참여형 교육입니다.`,
@@ -396,11 +403,22 @@ function recruitDetailPatch(
     applicationMethod: '온라인 신청서 작성 후 제출해 주세요. 추가 서류는 담당자가 안내합니다.',
     learningSupportContent: '교재와 활동지를 제공하고, 수업 전 강사 사전 연수를 진행합니다.',
     otherNotes: '우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.',
+    ...(copyOverride
+      ? {
+          programDescription: copyOverride.programDescription,
+          recruitmentGuide: copyOverride.recruitmentGuide,
+          applicationMethod: copyOverride.applicationMethod,
+          learningSupportContent: copyOverride.learningSupportContent,
+          otherNotes: copyOverride.otherNotes,
+        }
+      : {}),
   }
   const patch: Record<string, unknown> = {
     [`${prefix}.thumbFileName`]: null,
     [`${prefix}.attachmentFileNames`]: ['모집안내.pdf'],
-    [`${prefix}.additionalContentHtml`]: `<p>${titleKo} 참여를 희망하는 학교와 강사는 모집 기간 안에 신청해 주세요.</p>`,
+    [`${prefix}.additionalContentHtml`]:
+      copyOverride?.additionalContentHtml ??
+      `<p>${titleKo} 참여를 희망하는 학교와 강사는 모집 기간 안에 신청해 주세요.</p>`,
   }
   for (const field of fields) {
     patch[`${prefix}.${field}`] = copy[field] ?? ''
@@ -410,15 +428,27 @@ function recruitDetailPatch(
 
 function patchRecruitDatePlan(
   plan: ReturnType<typeof buildRegistrationDatePlan>,
-  titleKo: string
+  titleKo: string,
+  economy?: EconomyAutofillPhraseSelection
 ): void {
   const programSeal = { ...plan.program }
   const recruitSeal = { ...plan.recruit }
   const interviewSeal = { ...plan.interview }
   const institutionKeys = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
-  const educationTargets = pickSome(EDUCATION_TARGET_OPTIONS, pickInt(1, 2))
+  const educationTargets = economy
+    ? economy.targetLevels.map(value => ({
+        value,
+        label: value,
+      }))
+    : pickSome(EDUCATION_TARGET_OPTIONS, pickInt(1, 2))
   const instructorTargets = pickSome(INSTRUCTOR_TARGET_OPTIONS, pickInt(1, 2))
   const volunteerTargets = pickSome(VOLUNTEER_TARGET_OPTIONS, pickInt(1, 2))
+  const educationTargetDetail =
+    economy?.targetLevelDetail ??
+    educationTargets
+      .map(option => EDUCATION_TARGET_DETAIL[option.value] ?? option.label)
+      .join(', ')
+  const economyRecruit = economy?.recruit
   const interviewClockStart = dayjs().startOf('day').hour(10).minute(0).second(0).millisecond(0)
   const interviewClockEnd = interviewClockStart.hour(12)
   const firstSlotEnd = interviewClockStart.add(30, 'minute')
@@ -426,27 +456,25 @@ function patchRecruitDatePlan(
 
   patchApplicantRecruitInstitutionOverlay({
     [institutionKeys.announcementPublished]: 'published',
-    [institutionKeys.studentListRequired]: pick(['need', 'none']),
-    [institutionKeys.preguidanceRequired]: pick(['need', 'none']),
+    [institutionKeys.studentListRequired]: economy ? 'none' : pick(['need', 'none']),
+    [institutionKeys.preguidanceRequired]: economy ? 'need' : pick(['need', 'none']),
     [institutionKeys.maxAssignableInstructors]: pickInt(1, 4),
     [institutionKeys.maxClassCount]: pickInt(2, 6),
-    [institutionKeys.maxScheduleCount]: pickInt(1, 4),
-    [institutionKeys.maxSessionsPerDay]: pickInt(2, 6),
+    [institutionKeys.maxScheduleCount]: economy ? 2 : pickInt(1, 4),
+    [institutionKeys.maxSessionsPerDay]: economy ? 2 : pickInt(2, 6),
     [institutionKeys.programRangeSeal]: programSeal,
     [institutionKeys.programAnchorIso]: programSeal.start,
     [institutionKeys.recruitRangeSeal]: recruitSeal,
     [institutionKeys.recruitAnchorIso]: recruitSeal.start,
     [institutionKeys.targetLevels]: educationTargets.map(option => option.value),
-    [institutionKeys.targetLevelDetail]: educationTargets
-      .map(option => EDUCATION_TARGET_DETAIL[option.value] ?? option.label)
-      .join(', '),
+    [institutionKeys.targetLevelDetail]: educationTargetDetail,
     [institutionKeys.finalAnnounceIso]: recruitSeal.end,
     [institutionKeys.finalAnnounceMethod]: institutionInquiry['recruit.finalAnnounceMethod'],
     [institutionKeys.inquiryContact]: institutionInquiry['recruit.inquiryContact'],
     [institutionKeys.inquiryTel]: institutionInquiry['recruit.inquiryTel'],
     [institutionKeys.inquiryEmail]: institutionInquiry['recruit.inquiryEmail'],
     [institutionKeys.notesNotApplicable]: false,
-    [institutionKeys.notes]: institutionInquiry['recruit.notes'],
+    [institutionKeys.notes]: economyRecruit?.notes ?? institutionInquiry['recruit.notes'],
   })
 
   const individualInquiry = recruitInquiryPatch('recruit.individual')
@@ -463,9 +491,7 @@ function patchRecruitDatePlan(
     'recruit.individual.recruitAnchorIso': recruitSeal.start,
     'recruit.individual.finalAnnounceIso': recruitSeal.end,
     'recruit.individual.targetLevels': educationTargets.map(option => option.value),
-    'recruit.individual.targetLevelDetail': educationTargets
-      .map(option => EDUCATION_TARGET_DETAIL[option.value] ?? option.label)
-      .join(', '),
+    'recruit.individual.targetLevelDetail': educationTargetDetail,
     'recruit.individual.docDeadlineIso': recruitSeal.start,
     'recruit.individual.docAnnounceMethod': pick(RECRUIT_ANNOUNCE_METHODS),
     'recruit.individual.interviewRangeSeal': interviewSeal,
@@ -513,13 +539,13 @@ function patchRecruitDatePlan(
       'recruitmentGuide',
       'applicationMethod',
       'learningSupportContent',
-    ], titleKo),
+    ], titleKo, economyRecruit),
     ...recruitDetailPatch('economyRecruit.detailInfo', [
       'programDescription',
       'recruitmentGuide',
       'applicationMethod',
       'learningSupportContent',
-    ], titleKo),
+    ], titleKo, economyRecruit),
     ...recruitDetailPatch('trainedTeachersRecruit.detailInfo', [
       'programDescription',
       'recruitmentGuide',
@@ -537,13 +563,19 @@ function patchRecruitDatePlan(
       'recruitmentGuide',
       'applicationMethod',
       'otherNotes',
-    ], titleKo),
+    ], titleKo, economyRecruit),
     ...recruitDetailPatch('recruitVolunteer.detailInfo', [
       'programDescription',
       'recruitmentGuide',
       'applicationMethod',
       'otherNotes',
     ], titleKo),
+    ...(economyRecruit
+      ? {
+          'recruit.notes': economyRecruit.notes,
+          'recruit.instructor.notes': economyRecruit.notes,
+        }
+      : {}),
   })
 }
 
@@ -939,12 +971,15 @@ function buildTypeSettings(
 ): Omit<ProgramRegistrationDevAutofillTypeSettings, 'educationScheduleMode'> {
   return {
     programType: variant === 'economy' ? 'curriculum' : pick(['curriculum', 'schedule']),
-    sessionRoundType: pick(['single', 'multi']),
+    sessionRoundType: variant === 'economy' ? 'single' : pick(['single', 'multi']),
     educationFormScheduleDetail: pick(SCHEDULE_DETAIL_KINDS),
     participationScheduleDetail: pick(SCHEDULE_DETAIL_KINDS),
     ipsScheduleDetail: pick(SCHEDULE_DETAIL_KINDS),
-    educationForm: pick(EDUCATION_FORM_VALUES),
-    participation: pick(PARTICIPATION_VALUES),
+    educationForm:
+      variant === 'economy'
+        ? pick([...EDUCATION_FORM_VALUES, EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE])
+        : pick(EDUCATION_FORM_VALUES),
+    participation: variant === 'economy' ? 'individual' : pick(PARTICIPATION_VALUES),
   }
 }
 
@@ -993,7 +1028,12 @@ function finalizeTypeSettings(
         ? 'curriculum'
         : layout.programType
       : drafted.programType
-  const sessionRoundType = keepVisibleRows ? layout.sessionRoundType : drafted.sessionRoundType
+  const sessionRoundType =
+    variant === 'economy'
+      ? 'single'
+      : keepVisibleRows
+        ? layout.sessionRoundType
+        : drafted.sessionRoundType
   const educationScheduleMode =
     variant === 'economy'
       ? 'period'
@@ -1527,12 +1567,24 @@ export async function applyDevProgramRegistrationAutofill(
   layout: ProgramRegistrationDevAutofillLayout = DEFAULT_AUTOFILL_LAYOUT
 ): Promise<ProgramRegistrationDevAutofillEditorPatch> {
   const sample = buildDevAutofillSample()
+  const economyPhrases = variant === 'economy' ? selectEconomyRegistrationAutofillPhrases() : undefined
+  if (economyPhrases) {
+    const dates = buildEconomyAutofillDatePlan()
+    sample.titleKo = economyPhrases.program.titleKo
+    sample.titleEn = economyPhrases.program.titleEn
+    sample.publicTitle = economyPhrases.program.publicTitle
+    sample.units = [...economyPhrases.units]
+    sample.businessField = 'economy_finance'
+    sample.recruitDates = dates
+    sample.operationRange = { ...dates.business }
+    sample.periodRange = { ...dates.educationPeriod }
+  }
   if (variant === 'ujat') {
     sample.recruitDates = alignUjatAutofillDatePlan(sample.recruitDates)
     sample.operationRange = { ...sample.recruitDates.business }
     sample.periodRange = { ...sample.recruitDates.business }
   }
-  patchRecruitDatePlan(sample.recruitDates, sample.titleKo)
+  patchRecruitDatePlan(sample.recruitDates, sample.titleKo, economyPhrases)
   const typeSettings = finalizeTypeSettings(variant, layout)
   const educationScheduleLines = buildEducationSchedulePreviewLines(
     typeSettings.educationScheduleMode

@@ -13,6 +13,35 @@ import styles from './page.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ProgramDetailView } from './detail-view'
 
+function ProgramDetailLoading() {
+  return (
+    <section className={[shell.page, styles.page].join(' ')} aria-busy="true">
+      <div className={shell.inner}>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.loadingStatus}>
+          프로그램을 불러오는 중입니다.
+        </PFText>
+        <div className={styles.back}>
+          <span className={[styles.skeleton, styles.skeletonBack].join(' ')} />
+        </div>
+        <div className={styles.loadingBody}>
+          <div className={styles.loadingMain}>
+            <span className={[styles.skeleton, styles.skeletonCategory].join(' ')} />
+            <span className={[styles.skeleton, styles.skeletonTitle].join(' ')} />
+            <span className={[styles.skeleton, styles.skeletonTitleShort].join(' ')} />
+            <span className={[styles.skeleton, styles.skeletonMeta].join(' ')} />
+            <span className={[styles.skeleton, styles.skeletonBadges].join(' ')} />
+            <span className={[styles.skeleton, styles.skeletonSummary].join(' ')} />
+          </div>
+          <div className={styles.loadingAside}>
+            <span className={[styles.skeleton, styles.skeletonBanner].join(' ')} />
+            <span className={[styles.skeleton, styles.skeletonApply].join(' ')} />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function ProgramDetailPage() {
   const navigate = useNavigate()
   const { search } = useLocation()
@@ -22,7 +51,7 @@ export function ProgramDetailPage() {
   const fromPath = new URLSearchParams(search).get('from')
 
   if (isLoading && !program) {
-    return null
+    return <ProgramDetailLoading />
   }
 
   if (!program) {

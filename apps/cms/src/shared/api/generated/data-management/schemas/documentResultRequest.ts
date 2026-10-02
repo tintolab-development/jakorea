@@ -21,4 +21,6 @@ export interface DocumentResultRequest {
   reason?: string;
   /** 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL */
   notifyTiming?: string;
+  /** notifyTiming=MANUAL일 때 필수. 현재 시각 이후 ISO-8601 */
+  scheduledAt?: string;
 }

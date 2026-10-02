@@ -1,10 +1,14 @@
 export {
   APPLICATION_FORM_THIRD_PARTY_CONSENT_PARAGRAPH_IDS,
+  APPLICATION_FORM_THIRD_PARTY_RECIPIENT_ASSIGNED_SCHOOL,
+  APPLICATION_FORM_THIRD_PARTY_RECIPIENT_GEMINI,
   APPLICATION_FORM_THIRD_PARTY_RECIPIENT_HEADER,
   APPLICATION_FORM_THIRD_PARTY_RECIPIENT_PLACEHOLDER,
+  APPLICATION_FORM_THIRD_PARTY_RECIPIENT_SEED_BY_PARAGRAPH_ID,
   hasIncompleteApplicationFormThirdPartyRecipient,
   isApplicationFormThirdPartyConsentParagraph,
   isApplicationFormThirdPartyRecipientColumn,
   isBlankApplicationFormThirdPartyRecipientValue,
   listIncompleteApplicationFormThirdPartyRecipientKeys,
+  readApplicationFormThirdPartyRecipientValue,
 } from '@jakorea/form-schema/paragraph-ids/application-form-third-party-recipient'

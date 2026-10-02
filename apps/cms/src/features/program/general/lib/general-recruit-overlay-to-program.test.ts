@@ -142,6 +142,47 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.description).toBe('강사 모집 설명')
   })
 
+  it('강사 공고 게시 여부를 overlay에서 강사 모집 정보로 옮긴다', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const unpublished = applyGeneralRecruitOverlayToProgram(
+      baseProgram(),
+      {
+        [keys.instructor.announcementPublished]: 'unpublished',
+        [keys.instructor.inquiryContact]: '강사 문의처',
+      },
+      { preferOverlay: true }
+    )
+    expect(unpublished.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished).toBe(
+      false
+    )
+    expect(
+      unpublished.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublishedLabel
+    ).toBe('미게시')
+
+    const display = resolveGeneralRecruitDetailDisplayProgram(
+      {
+        ...baseProgram(),
+        registrationOverlay: {
+          [keys.instructor.announcementPublished]: 'published',
+        },
+        generalCommonInfo: {
+          instructorRecruitmentInfo: {
+            contactOrganizationName: '강사 문의처',
+            recruitmentPeriodLabel: '2026.10.16 (금) ~ 2027.09.15 (수)',
+          },
+        },
+      } as Program,
+      'instructor'
+    )
+    expect(display.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished).toBe(true)
+    expect(display.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublishedLabel).toBe(
+      '게시'
+    )
+    expect(display.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName).toBe(
+      '강사 문의처'
+    )
+  })
+
   it('maps volunteer announcement, interview flags, final announce, and interview schedule', () => {
     const keys = GENERAL_RECRUIT_OVERLAY_KEYS
     const slotStart = dayjs().startOf('day').hour(9).minute(0).second(0).millisecond(0)
@@ -439,6 +480,49 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
       '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
     )
     expect(next.otherNotes).toBeUndefined()
+  })
+
+  it('강사 overlay notes는 비고, detailInfo.otherNotes는 기타사항이다', () => {
+    const html = '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const next = applyGeneralRecruitOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalCommonInfo: {
+          instructorRecruitmentInfo: { remarks: '신청 전 학교 담당 교사 확인이 필요합니다.' },
+        },
+      } as Program,
+      {
+        [keys.instructor.notes]: '신청 전 학교 담당 교사 확인이 필요합니다.',
+        [keys.detailInfo.instructorOtherNotes]: html,
+      },
+      { preferOverlay: false }
+    )
+
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.remarks).toBe(
+      '신청 전 학교 담당 교사 확인이 필요합니다.'
+    )
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.otherMatters).toBe(html)
+  })
+
+  it('조회 시 leftover overlay notes가 비어도 강사 비고를 기타사항으로 채우지 않는다', () => {
+    const html = '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const next = applyGeneralRecruitOverlayToProgram(
+      baseProgram(),
+      {
+        [keys.instructor.notes]: html,
+        [keys.detailInfo.instructorOtherNotes]: html,
+        [keys.volunteer.notes]: html,
+        [keys.detailInfo.volunteerOtherNotes]: '봉사자 기타',
+      },
+      { preferOverlay: false }
+    )
+
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.remarks).toBeUndefined()
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.otherMatters).toBe(html)
+    expect(next.generalCommonInfo?.volunteerRecruitmentInfo?.remarks).toBeUndefined()
+    expect(next.generalCommonInfo?.volunteerRecruitmentInfo?.otherMatters).toBe('봉사자 기타')
   })
 })
 

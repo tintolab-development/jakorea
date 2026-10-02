@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
 import {
+  programWithApplicationFormRecruitmentScope,
   recruitmentApplicationBindingScope,
   resolveRowApplicationBinding,
 } from './operational-form-bindings'
@@ -85,5 +86,44 @@ describe('recruitment application binding scope', () => {
       catalogTemplateId: 10,
     })
     expect(source).toEqual({ templateVersionId: 880, preferLocalDraft: false })
+  })
+
+  it('activeRecruitmentId 없으면 모집 scope로 묶지 않는다', () => {
+    expect(
+      recruitmentApplicationBindingScope(
+        program({ activeRecruitmentId: undefined }),
+        'APPLICATION'
+      )
+    ).toBeUndefined()
+  })
+
+  it('applicationFormBindingId가 없어도 같은 모집 RECRUITMENT 바인딩을 고른다', () => {
+    const row = resolveRowApplicationBinding(
+      program({
+        activeRecruitmentId: 168241,
+        programRecruitments: [{ id: 168241, applicationFormBindingId: null }],
+      }),
+      bindings,
+      { formType: 'APPLICATION', targetRole: 'ORGANIZATION' }
+    )
+    expect(row).toEqual({ kind: 'binding', binding: bindings[1] })
+  })
+
+  it('강사 탭은 INSTRUCTOR 모집 행 id를 activeRecruitmentId로 둔다', () => {
+    const scoped = programWithApplicationFormRecruitmentScope(
+      program({
+        activeRecruitmentId: undefined,
+        programRecruitments: [
+          { id: 168241, recruitmentType: 'PARTICIPANT', applicationFormBindingId: 1682410 },
+          { id: 186080, recruitmentType: 'INSTRUCTOR', applicationFormBindingId: 1860800 },
+        ],
+      }),
+      'instructor'
+    )
+    expect(scoped.activeRecruitmentId).toBe(186080)
+    expect(recruitmentApplicationBindingScope(scoped, 'APPLICATION')).toEqual({
+      targetScope: 'RECRUITMENT',
+      targetScopeId: 186080,
+    })
   })
 })

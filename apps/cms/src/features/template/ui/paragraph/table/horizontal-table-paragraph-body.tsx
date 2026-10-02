@@ -1294,7 +1294,7 @@ export function HorizontalTableParagraphBody({
                 if (bottomConsentDisplayOnly || !bottomConsentInteractive) return
                 onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
               }}
-              disabled={bottomConsentDisplayOnly ? false : !bottomConsentInteractive}
+              disabled={false}
               style={
                 bottomConsentDisplayOnly || !bottomConsentInteractive
                   ? { pointerEvents: 'none' }

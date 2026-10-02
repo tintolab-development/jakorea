@@ -224,6 +224,48 @@ export async function fetchUjatAllocationMatrix(
   )
 }
 
+export type UjatAssignmentDocumentStatus =
+  | 'NOT_SUBMITTED'
+  | 'SUBMITTED'
+  | 'REVISED'
+  | 'DEADLINE_MISSED'
+
+export type UjatAssignmentDocumentDto = {
+  status?: UjatAssignmentDocumentStatus | string | null
+  submittedAt?: string | null
+  feedbackDeliveredAt?: string | null
+  formResponseId?: number | null
+}
+
+export type UjatAssignmentVolunteerDto = {
+  participantId?: number | null
+  memberId?: number | null
+  volunteerName?: string | null
+  institutionName?: string | null
+  assignedClass?: string | null
+  activityAbandoned?: boolean | null
+  hasProgressOnDate?: boolean | null
+  plan?: UjatAssignmentDocumentDto | null
+  log?: UjatAssignmentDocumentDto | null
+}
+
+export type UjatAssignmentDatePeriodDto = {
+  from?: string | null
+  to?: string | null
+}
+
+export type UjatAssignmentSessionDto = {
+  scheduleId?: number | null
+  educationDate?: string | null
+  planSubmissionPeriod?: UjatAssignmentDatePeriodDto | null
+  logSubmissionPeriod?: UjatAssignmentDatePeriodDto | null
+  volunteers?: UjatAssignmentVolunteerDto[] | null
+}
+
+export type UjatAssignmentSubmissionsResponse = {
+  sessions?: UjatAssignmentSessionDto[] | null
+}
+
 export async function postUjatPartnerAssignmentsAuto(
   programId: string,
   body: UjatAutoAssignmentRequest
@@ -421,6 +463,65 @@ export async function bulkUpsertUjatAttendances(
       url: executionProgramPath(programId, '/attendances:bulk-upsert'),
       method: 'POST',
       data: body,
+    })
+  )
+}
+
+export type UjatAssignmentSubmissionDocumentDto = {
+  status?: string | null
+  submittedAt?: string | null
+  feedbackDeliveredAt?: string | null
+  formResponseId?: number | null
+}
+
+export type UjatAssignmentSubmissionVolunteerDto = {
+  participantId?: number | null
+  memberId?: number | null
+  memberName?: string | null
+  organizationApplicationId?: number | null
+  institutionName?: string | null
+  assignedClass?: string | null
+  educationSlotId?: number | null
+  isDropout?: boolean | null
+  hasProgressHistory?: boolean | null
+  plan?: UjatAssignmentSubmissionDocumentDto | null
+  log?: UjatAssignmentSubmissionDocumentDto | null
+}
+
+export type UjatAssignmentSubmissionDayDto = {
+  scheduleId?: number | null
+  isoDate?: string | null
+  planSubmissionPeriodStart?: string | null
+  planSubmissionPeriodEnd?: string | null
+  logSubmissionPeriodStart?: string | null
+  logSubmissionPeriodEnd?: string | null
+  volunteers?: UjatAssignmentSubmissionVolunteerDto[] | null
+}
+
+export type UjatAssignmentSubmissionListResponse = {
+  semesterType?: string | null
+  educationRegionCode?: string | null
+  items?: UjatAssignmentSubmissionDayDto[] | null
+}
+
+/** GET /api/admin/program-execution/programs/{programId}/ujat/assignment-submissions */
+export async function fetchUjatAssignmentSubmissions(
+  programId: string,
+  params: {
+    semesterType: UjatSemesterType
+    educationRegionCode: string
+    isoDate?: string
+  }
+): Promise<UjatAssignmentSubmissionListResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: executionUjatPath(programId, '/assignment-submissions'),
+      method: 'GET',
+      params: {
+        semesterType: params.semesterType,
+        educationRegionCode: params.educationRegionCode,
+        isoDate: params.isoDate,
+      },
     })
   )
 }

@@ -1,4 +1,5 @@
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { Spin } from 'antd'
 import type { Program } from '@/types/domain'
 import { useParticipatingIndividualProgressAssignment } from '@/features/program/general/hooks/use-participating-individual-progress-assignment'
 import { ParticipatingIndividualProgressAssignmentSessionPanel } from './participating-individual-progress-assignment-session-panel'
@@ -7,7 +8,6 @@ import './school-detail-attendance-section.css'
 import './participating-individual-progress-assignment-section.css'
 
 export function ParticipatingIndividualProgressAssignmentSection({ program }: { program: Program }) {
-  // P2-5: 프로그램 단위 과제 admin API 없음 — mock 유지 (원격 전환 제외).
   const {
     pendingFilters,
     appliedFilters,
@@ -16,7 +16,16 @@ export function ParticipatingIndividualProgressAssignmentSection({ program }: { 
     filterFields,
     sessionGroups,
     getSessionParticipants,
+    loading,
   } = useParticipatingIndividualProgressAssignment(program)
+
+  if (loading) {
+    return (
+      <div className="participating-individual-progress-assignment-section school-detail-attendance-section flex min-h-[200px] items-center justify-center">
+        <Spin size="large" />
+      </div>
+    )
+  }
 
   return (
     <div className="participating-individual-progress-assignment-section school-detail-attendance-section">

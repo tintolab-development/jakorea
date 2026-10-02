@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import {
   getSchoolIdForDateFromAssignments,
   isLectureAssignSlotDisabled,
+  parseInstructorLectureAssignScheduleFromInstitutions,
   toLectureAssignItem,
   type InstructorLectureAssignItem,
   type InstructorLectureAssignSlot,
@@ -49,6 +51,38 @@ describe('instructor-lecture-assign-schedule', () => {
   it('같은 날 동일 기관의 다른 차시는 활성 상태를 유지한다', () => {
     const assigned: InstructorLectureAssignItem[] = [toLectureAssignItem(gangseoSlot)]
     expect(isLectureAssignSlotDisabled(gangseoSecondSession, assigned)).toBe(false)
+  })
+
+  it('remote 승인 기관 슬롯은 resolvedScheduleId를 approve scheduleId로 쓴다', () => {
+    const institution: ApplicantSchoolRow = {
+      id: '1691183',
+      no: 1,
+      schoolName: '부산 미래고',
+      region: '부산',
+      educationGrade: '고2',
+      classCount: 2,
+      studentCount: 40,
+      teacherName: '김교사',
+      approvalStatus: 'approved',
+      programId: '168004',
+      sessions: [
+        {
+          round: 1,
+          date: '2026. 10. 20',
+          dayOfWeek: '화',
+          duration: '1차시',
+          format: '단독',
+          classNum: '1교시',
+          timeRange: '1교시',
+          resolvedScheduleId: 8801,
+        },
+      ],
+    }
+    const parsed = parseInstructorLectureAssignScheduleFromInstitutions([institution])
+    const slots = parsed.slotsByDateKey.get('2026-10-20') ?? []
+    expect(slots).toHaveLength(1)
+    expect(slots[0]?.key).toBe('8801')
+    expect(slots[0]?.disabled).toBe(false)
   })
 
   it('배정 항목 삭제 시 해당 날짜 기관 잠금이 해제된다', () => {

@@ -17,7 +17,7 @@ import {
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import {
   hydrateMissingVolunteerInterviewOverlay,
-  listVolunteerInterviewExceptionBlockIds,
+  listFilledVolunteerInterviewExceptionBlockIds,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
@@ -81,7 +81,7 @@ export function UjatRecruitInterviewScheduleProgramView({
     })
     setExceptionBlockKeys(prev => {
       if (prev.length > 0) return prev
-      const ids = listVolunteerInterviewExceptionBlockIds(
+      const ids = listFilledVolunteerInterviewExceptionBlockIds(
         { ...source, ...getGeneralRecruitOverlayRecord() },
         'recruit',
         interviewNamespace

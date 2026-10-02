@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { AssignmentInstructor } from './assignmentInstructor';
+import type { FormResponseRef } from './formResponseRef';
 import type { SessionProgress } from './sessionProgress';
 
 export interface ParticipantListItemResponse {
@@ -54,4 +55,9 @@ export interface ParticipantListItemResponse {
   mergeGroupId?: number;
   mergeStatus?: string;
   mergeLead?: boolean;
+  textbookDeliveryStatus?: string;
+  volunteerKind?: string;
+  satisfactionSurveyCompleted?: boolean;
+  surveyResponse?: FormResponseRef;
+  satisfactionResponse?: FormResponseRef;
 }

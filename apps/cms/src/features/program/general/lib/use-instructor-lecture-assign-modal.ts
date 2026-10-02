@@ -1,13 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { Dayjs } from 'dayjs'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
+import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { fetchGeneralOrganizationApplicationsPage } from '@/features/program/general/api/admin-applications-service'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
   getApplicantPreferredDateKeys,
   getAssignedLectureDateKeys,
   getIndividualLectureAssignSlots,
   getSlotsForLectureAssignDate,
   parseInstructorLectureAssignSchedule,
+  parseInstructorLectureAssignScheduleFromInstitutions,
   resolveProgramForIndividualLectureAssign,
   resolveLectureAssignModalCalendarState,
   toIndividualLectureAssignItem,
@@ -15,6 +21,23 @@ import {
   type InstructorLectureAssignItem,
   type InstructorLectureAssignSlot,
 } from './instructor-lecture-assign-schedule'
+
+const ASSIGN_ORG_PAGE_LIMIT = 40
+
+async function fetchApprovedOrganizationApplicationsForLectureAssign(
+  programId: string
+): Promise<ApplicantSchoolRow[]> {
+  const rows: ApplicantSchoolRow[] = []
+  let page = 0
+  for (;;) {
+    const result = await fetchGeneralOrganizationApplicationsPage(programId, { page })
+    rows.push(...result.rows)
+    if (!result.hasMore) break
+    page += 1
+    if (page > ASSIGN_ORG_PAGE_LIMIT) break
+  }
+  return rows.filter(row => row.approvalStatus === 'approved')
+}
 
 export type InstructorLectureAssignModalVariant = 'organization' | 'individual'
 
@@ -40,10 +63,27 @@ export function useInstructorLectureAssignModal(params: {
   } = params
 
   const isIndividual = variant === 'individual'
+  const organizationRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
+
+  const organizationApplicationsQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.instructorLectureAssignInstitutions(programId),
+    queryFn: () => fetchApprovedOrganizationApplicationsForLectureAssign(programId),
+    enabled: open && !isIndividual && organizationRemoteEnabled && Boolean(programId.trim()),
+    staleTime: 30_000,
+    retry: false,
+  })
 
   const schedule = useMemo(
-    () => parseInstructorLectureAssignSchedule(programId),
-    [programId]
+    () =>
+      !isIndividual && organizationRemoteEnabled && organizationApplicationsQuery.data
+        ? parseInstructorLectureAssignScheduleFromInstitutions(organizationApplicationsQuery.data)
+        : parseInstructorLectureAssignSchedule(programId),
+    [
+      isIndividual,
+      organizationApplicationsQuery.data,
+      organizationRemoteEnabled,
+      programId,
+    ]
   )
 
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => schedule.scheduleMonth)

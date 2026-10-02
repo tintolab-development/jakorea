@@ -1,12 +1,17 @@
 import { useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
+import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
+import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
   isGeneralProgramTempMockIndividualProgramId,
   isGeneralProgramTempMockOrgProgramId,
 } from '@/features/program/general/api/temp-mock-capabilities'
-import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import {
+  useIsCompanySchoolProgramsSurface,
+  useProgramProgressRemoteEnabledForSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import {
   buildInitialAssignedSchoolRows,
   buildWaitingSchoolRows,
@@ -47,13 +52,18 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   isTempMockDataSource: boolean
   invalidate: () => Promise<void>
 } {
-  const remoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
+  const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
+  const useCompanySchoolBoard = isCompanySchoolSurface || input.isCompanySchool
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(input.programId)
   const isOrgTempMockProgram = isGeneralProgramTempMockOrgProgramId(input.programId)
   const isIndividualTempMockProgram = isGeneralProgramTempMockIndividualProgramId(input.programId)
   const instructorMemberId = input.instructor.memberId?.trim() ?? ''
   const queryEnabled = Boolean(
     input.enabled !== false && remoteEnabled && input.programId && instructorMemberId
   )
+  const assignmentQueryKey = useCompanySchoolBoard
+    ? companySchoolQueryKeys.instructorAssignmentConflicts(input.programId)
+    : generalProgramProgressQueryKeys.instructorAssignments(input.programId)
 
   useNotifyProgramApiUnavailableOnce(
     Boolean(
@@ -67,8 +77,11 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   )
 
   const boardQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.instructorAssignments(input.programId),
-    queryFn: () => fetchGeneralInstructorAssignmentBoard(input.programId),
+    queryKey: assignmentQueryKey,
+    queryFn: () =>
+      useCompanySchoolBoard
+        ? fetchCompanySchoolAssignmentBoard(input.programId)
+        : fetchGeneralInstructorAssignmentBoard(input.programId),
     enabled: queryEnabled,
     staleTime: 30_000,
     retry: false,
@@ -174,7 +187,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({
-      queryKey: generalProgramProgressQueryKeys.instructorAssignments(input.programId),
+      queryKey: assignmentQueryKey,
     })
   }
 

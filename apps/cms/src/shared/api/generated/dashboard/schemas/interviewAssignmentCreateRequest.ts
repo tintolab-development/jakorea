@@ -16,5 +16,9 @@ export interface InterviewAssignmentCreateRequest {
   individualApplicationId?: number;
   /** 면접 슬롯 ID */
   interviewSlotId: number;
+  /** 배정 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL. 생략하면 즉시 발송 */
+  notifyTiming?: string;
+  /** notifyTiming=MANUAL일 때 필수. 현재 시각 이후 ISO-8601 */
+  scheduledAt?: string;
   individual?: boolean;
 }

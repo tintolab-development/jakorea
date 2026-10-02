@@ -12,6 +12,7 @@ import {
   labelBool,
   pickDisplayString,
 } from '@/features/program/general/lib/detail-value-helpers'
+import { resolveRecruitmentRemarks } from '@/features/program/shared/lib/recruitment-row-copy'
 
 type VolunteerRecruitmentInfoLoose = NonNullable<
   NonNullable<Program['generalCommonInfo']>['volunteerRecruitmentInfo']
@@ -140,6 +141,8 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
     contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
     contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
     contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),
-    notes: info?.notesNotApplicable ? '-' : pickDisplayString(info?.remarks),
+    notes: info?.notesNotApplicable
+      ? '-'
+      : pickDisplayString(resolveRecruitmentRemarks(program, 'volunteer')),
   }
 }

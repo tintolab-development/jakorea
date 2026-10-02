@@ -9,6 +9,14 @@ import { resolveMultipleChoiceBodyDescriptionText } from '@jakorea/form-schema/w
 import type { ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
 import { isFormPreviewReadonlyMode } from '@jakorea/form-schema/surface'
 import { HorizontalTablePreviewBody } from './horizontal-table-preview-body.js'
+import { VerticalTablePreviewBody } from './vertical-table-preview-body.js'
+import {
+  patchVerticalTableBottomConsent,
+  patchVerticalTableCell,
+  patchVerticalTableCompositeTime,
+  patchVerticalTableFileNames,
+  patchVerticalTableMultipleChoice,
+} from './vertical-table-preview.js'
 import { PreviewParagraphBody } from './preview-paragraph-body.js'
 
 export type FormUpdateParagraph = (
@@ -318,6 +326,70 @@ export function FillParagraphBody({
                   )
                   return { ...current, fieldDataRows }
                 })
+              }
+        }
+      />
+    )
+  }
+
+  if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
+    return (
+      <VerticalTablePreviewBody
+        paragraph={paragraph}
+        interactionMode={interactionMode}
+        onBottomConsentChange={
+          readonly
+            ? undefined
+            : value => {
+                onUpdateParagraph?.(paragraph.id, current =>
+                  current.kind === 'single_item' && current.variant === 'vertical_table'
+                    ? patchVerticalTableBottomConsent(current, value)
+                    : current
+                )
+              }
+        }
+        onCellChange={
+          readonly
+            ? undefined
+            : (rowIndex, stageIndex, value) => {
+                onUpdateParagraph?.(paragraph.id, current =>
+                  current.kind === 'single_item' && current.variant === 'vertical_table'
+                    ? patchVerticalTableCell(current, rowIndex, stageIndex, value)
+                    : current
+                )
+              }
+        }
+        onCompositeTimeChange={
+          readonly
+            ? undefined
+            : (rowIndex, stageIndex, value) => {
+                onUpdateParagraph?.(paragraph.id, current =>
+                  current.kind === 'single_item' && current.variant === 'vertical_table'
+                    ? patchVerticalTableCompositeTime(current, rowIndex, stageIndex, value)
+                    : current
+                )
+              }
+        }
+        onMultipleChoiceChange={
+          readonly
+            ? undefined
+            : (rowIndex, stageIndex, values) => {
+                onUpdateParagraph?.(paragraph.id, current =>
+                  current.kind === 'single_item' && current.variant === 'vertical_table'
+                    ? patchVerticalTableMultipleChoice(current, rowIndex, stageIndex, values)
+                    : current
+                )
+              }
+        }
+        onFileNamesChange={
+          readonly
+            ? undefined
+            : (rowIndex, stageIndex, fileNames) => {
+                onUpdateParagraph?.(paragraph.id, current =>
+                  current.kind === 'single_item' && current.variant === 'vertical_table'
+                    ? patchVerticalTableFileNames(current, rowIndex, stageIndex, fileNames)
+                    : current
+                )
               }
         }
       />

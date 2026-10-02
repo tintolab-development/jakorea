@@ -3,60 +3,9 @@ import type { Editor } from '@tiptap/react'
 import {
   fileObjectIdFromAdminFileUrl,
   loadAdminFileBlob,
-  persistRichTextInlineImage,
-  peekPendingInlineImage,
-  takePendingInlineImage,
   resolveRichTextInlineImageSrc,
   type AdminFileUploadOwner,
 } from '@/shared/lib/admin-file-upload'
-
-export function editorHasPendingInlineImages(editor: Editor | null): boolean {
-  if (editor == null || editor.isDestroyed) return false
-  let found = false
-  editor.state.doc.descendants(node => {
-    if (found || node.type.name !== 'image') return
-    const src = typeof node.attrs.src === 'string' ? node.attrs.src : ''
-    if (node.attrs.persistSrc || !src.startsWith('blob:')) return
-    if (peekPendingInlineImage(src)) found = true
-  })
-  return found
-}
-
-export async function flushPendingRichTextInlineImages(
-  editor: Editor,
-  owner: AdminFileUploadOwner
-): Promise<number[]> {
-  if (editor.isDestroyed) return []
-  if (owner.ownerId == null) {
-    throw new Error('이미지를 업로드할 수 없습니다. 다시 시도해 주세요.')
-  }
-  const targets: Array<{ pos: number; src: string; file: File }> = []
-  editor.state.doc.descendants((node, pos) => {
-    if (node.type.name !== 'image') return
-    const src = typeof node.attrs.src === 'string' ? node.attrs.src : ''
-    if (node.attrs.persistSrc || !src.startsWith('blob:')) return
-    const file = peekPendingInlineImage(src)
-    if (file) targets.push({ pos, src, file })
-  })
-
-  const uploadedIds: number[] = []
-  for (const target of targets) {
-    const persistSrc = await persistRichTextInlineImage(target.file, owner)
-    takePendingInlineImage(target.src)
-    if (editor.isDestroyed) return uploadedIds
-    const current = editor.state.doc.nodeAt(target.pos)
-    if (current?.type.name !== 'image') continue
-    const fileObjectId = fileObjectIdFromAdminFileUrl(persistSrc)
-    if (fileObjectId != null) uploadedIds.push(fileObjectId)
-    editor.view.dispatch(
-      editor.state.tr.setNodeMarkup(target.pos, undefined, {
-        ...current.attrs,
-        persistSrc,
-      })
-    )
-  }
-  return uploadedIds
-}
 
 /** 에디터 리마운트 없이 최신 owner로 본문 이미지를 올린다. */
 export function useRichTextInlineImageSrc(owner: AdminFileUploadOwner | null | undefined) {

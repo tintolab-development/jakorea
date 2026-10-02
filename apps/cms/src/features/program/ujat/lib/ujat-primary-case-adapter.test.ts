@@ -47,8 +47,8 @@ describe('UJAT Primary Case adapter', () => {
 
     expect(partial.ujatProgressStatus).toBe('VOLUNTEER_RECRUITING')
     expect(partial.generalSurveyMenuKeys).toEqual([
-      'survey-volunteer-satisfaction',
-      'survey-school-satisfaction',
+      'volunteer_satisfaction',
+      'school_satisfaction',
     ])
     expect(extras.semesterType).toBe('FULL_YEAR')
     expect(extras.preTrainingDeliveredBy).toBe('JA')

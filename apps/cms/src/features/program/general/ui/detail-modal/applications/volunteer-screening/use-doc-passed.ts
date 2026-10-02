@@ -16,6 +16,7 @@ import {
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import { assignGeneralIndividualInterview, assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
+import { toInterviewAssignNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { getTempMockShowcaseVolunteerApplicants } from '@/features/program/general/lib/temp-mock-program-resolve'
@@ -201,17 +202,23 @@ export function useGeneralVolunteerDocPassed({
         return
       }
       try {
+        const assignNotify = toInterviewAssignNotifyFields(
+          payload.notifyTiming,
+          payload.manualNotifyAt
+        )
         if (subjectKind === 'participant') {
           await assignGeneralIndividualInterview({
             programId,
             applicationId: target.id,
             ...slotTimes,
+            ...assignNotify,
           })
         } else {
           await assignGeneralVolunteerInterview({
             programId,
             applicationId: target.id,
             ...slotTimes,
+            ...assignNotify,
           })
         }
         await volunteerRemote.invalidateVolunteerApplications?.()

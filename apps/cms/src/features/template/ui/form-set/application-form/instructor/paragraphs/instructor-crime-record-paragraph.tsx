@@ -11,11 +11,10 @@ import {
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
 
-const MOCK_AGENCY_LINE = 'ID : tinto  |  검증번호 : 940412'
-/** 템플릿 작성 화면 — 기관 조회 방식(온라인 제출) 연동 값 안내 */
-const TEMPLATE_AGENCY_ID_HINT = '기관이 작성한 ID와 검증번호가 노출됩니다.'
+/** 등록 위저드 · 템플릿 관리 · 프로그램 상세 미리보기/수정 — 동일 안내 */
+const AGENCY_ID_HINT = '기관이 작성한 ID와 검증번호가 노출됩니다.'
 
-/** 성범죄 경력 조회서 제출 — 가로 테이블 레이아웃(데모 고정값) */
+/** 성범죄 경력 조회서 제출 — 가로 테이블 레이아웃 */
 export function InstructorCrimeRecordParagraph({
   isTemplateAuthoringMode = false,
   readOnlyPreview = false,
@@ -28,6 +27,10 @@ export function InstructorCrimeRecordParagraph({
     null
   )
   const readOnly = isTemplateAuthoringMode || readOnlyPreview
+
+  const agencyIdCell = (
+    <span className="form-editor-template-field-hint-text">{AGENCY_ID_HINT}</span>
+  )
 
   const fileUploadCell = (
     <div
@@ -76,17 +79,11 @@ export function InstructorCrimeRecordParagraph({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="기관 ID 및 검증번호"
-          readOnlyDisplay={readOnly}
-          edit={MOCK_AGENCY_LINE}
-          view={
-            readOnly ? (
-              <span className="form-editor-template-field-hint-text">{TEMPLATE_AGENCY_ID_HINT}</span>
-            ) : (
-              MOCK_AGENCY_LINE
-            )
-          }
+          readOnlyDisplay
+          edit={agencyIdCell}
+          view={agencyIdCell}
         />
-        {/* readOnlyDisplay=true면 edit 슬롯이 무시되고 view(—)만 노출됨 */}
+        {/* 파일 첨부만 작성 가능(미리보기·템플릿은 readOnly로 클릭 차단) */}
         <DetailInfoForm.Field
           label="파일 첨부"
           mode="edit"

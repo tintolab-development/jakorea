@@ -10,6 +10,7 @@ import {
   resolveProgramTargetLevels,
   resolveProgramVolunteerTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import { pickRecruitmentCopyRow } from '@/features/program/shared/lib/recruitment-row-copy'
 
 const inst = {
   targetLevels: 'recruit.targetLevels',
@@ -44,6 +45,7 @@ const keys = {
     programRangeSeal: 'recruit.instructor.programRangeSeal',
     recruitTargets: 'recruit.instructor.recruitTargets',
     recruitTargetDetail: 'recruit.instructor.recruitTargetDetail',
+    announcementPublished: 'recruit.instructor.announcementPublished',
     inquiryContact: 'recruit.instructor.inquiryContact',
     inquiryTel: 'recruit.instructor.inquiryTel',
     inquiryEmail: 'recruit.instructor.inquiryEmail',
@@ -61,6 +63,7 @@ const keys = {
     notes: 'recruit.volunteer.notes',
     notesNotApplicable: 'recruit.volunteer.notesNotApplicable',
     interviewRequired: 'recruit.volunteer.interviewRequired',
+    interviewRangeSeal: 'recruit.volunteer.interviewRangeSeal',
   },
   detailInfo: {
     participantDescription: 'recruit.detailInfo.programDescription',
@@ -179,6 +182,10 @@ export function buildGeneralRecruitOverlayFromProgram(
     program.volunteerApplicationEndDate,
     volunteer?.recruitmentPeriodLabel
   )
+  const volunteerInterviewRange = rangeSeal(
+    program.interviewStartDate ?? volunteer?.interviewStartDate,
+    program.interviewEndDate ?? volunteer?.interviewEndDate
+  )
   const inquiryContact =
     participant?.contactOrganizationName?.trim() ||
     participant?.contactName?.trim() ||
@@ -224,7 +231,10 @@ export function buildGeneralRecruitOverlayFromProgram(
     [keys.detailInfo.instructorMethod]: instructor?.applicationMethod?.trim() || '',
     [keys.detailInfo.instructorLearningSupport]: instructor?.learningSupportContent?.trim() || '',
     [keys.detailInfo.instructorAdditionalHtml]: instructor?.additionalContentHtml?.trim() || '',
-    [keys.detailInfo.instructorOtherNotes]: instructor?.otherMatters?.trim() || '',
+    [keys.detailInfo.instructorOtherNotes]:
+      pickRecruitmentCopyRow(program, 'instructor')?.otherMatters?.trim() ||
+      instructor?.otherMatters?.trim() ||
+      '',
     [keys.volunteer.volunteerTargets]: volunteerTargets,
     [keys.volunteer.volunteerTargetDetail]:
       program.volunteerTargetDetail?.trim() || volunteer?.recruitmentTargetDetail?.trim() || '',
@@ -239,11 +249,16 @@ export function buildGeneralRecruitOverlayFromProgram(
     [keys.detailInfo.volunteerMethod]: volunteer?.applicationMethod?.trim() || '',
     [keys.detailInfo.volunteerLearningSupport]: volunteer?.learningSupportContent?.trim() || '',
     [keys.detailInfo.volunteerAdditionalHtml]: volunteer?.additionalContentHtml?.trim() || '',
-    [keys.detailInfo.volunteerOtherNotes]: volunteer?.otherMatters?.trim() || '',
+    [keys.detailInfo.volunteerOtherNotes]:
+      pickRecruitmentCopyRow(program, 'volunteer')?.otherMatters?.trim() ||
+      volunteer?.otherMatters?.trim() ||
+      '',
   }
 
   const published = publishedOverlay(participant?.announcementPublished)
   if (published) overlay[inst.announcementPublished] = published
+  const instructorPublished = publishedOverlay(instructor?.announcementPublished)
+  if (instructorPublished) overlay[keys.instructor.announcementPublished] = instructorPublished
   const volunteerPublished = publishedOverlay(volunteer?.announcementPublished)
   if (volunteerPublished) overlay[keys.volunteer.announcementPublished] = volunteerPublished
 
@@ -272,6 +287,7 @@ export function buildGeneralRecruitOverlayFromProgram(
   if (participantProgram) overlay[keys.instructor.programRangeSeal] = participantProgram
   if (volunteerRecruit) overlay[keys.volunteer.recruitRangeSeal] = volunteerRecruit
   if (participantProgram) overlay[keys.volunteer.programRangeSeal] = participantProgram
+  if (volunteerInterviewRange) overlay[keys.volunteer.interviewRangeSeal] = volunteerInterviewRange
 
   if (program.resultAnnouncementDate) {
     overlay[inst.finalAnnounceIso] = isoOrUndefined(program.resultAnnouncementDate)

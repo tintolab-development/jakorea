@@ -135,11 +135,15 @@ export function buildCreateMergeRequest(params: {
   leadOrganizationApplicationId: number
   partnerMembers: MergeMemberRequest[]
   changeReason?: string
+  leadTeacherMemberId?: number
 }): CreateMergeRequest {
   return {
     leadApplicationId: params.leadOrganizationApplicationId,
     members: params.partnerMembers,
     changeReason: params.changeReason,
+    ...(params.leadTeacherMemberId != null
+      ? { leadTeacherMemberId: params.leadTeacherMemberId }
+      : {}),
   }
 }
 

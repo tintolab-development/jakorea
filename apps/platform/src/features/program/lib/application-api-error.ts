@@ -25,7 +25,10 @@ function extractErrorMessage(data: unknown): string | undefined {
 
 const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   RECRUITMENT_NOT_STARTED: '모집 기간이 아직 시작되지 않았습니다.',
+  /** application-options.blockedReason — 모집 종료 */
   RECRUITMENT_CLOSED: '모집이 마감되었습니다.',
+  /** PUT draft / POST applications — 모집 종료 (options 코드와 다름) */
+  RECRUITMENT_ENDED: '모집이 마감되었습니다.',
   APPLICATION_FORM_NOT_CONFIGURED: '신청 양식이 아직 준비되지 않았습니다.',
   PROGRAM_NOT_APPLICABLE: '현재 신청할 수 없는 프로그램입니다.',
   ORGANIZATION_MEMBERSHIP_REQUIRED: '학교·기관 회원만 신청할 수 있습니다.',

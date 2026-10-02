@@ -1,9 +1,11 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
 import { useVolunteerApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
+import { mapVolunteerApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -71,7 +73,13 @@ export function GeneralVolunteerApplicantDetailView(
   const applicantEnriched = useVolunteerApplicationDetailEnrichment(applicantBase, {
     enabled: shouldUseGeneralApplicationsRemoteApi(),
   })
-  const applicant = applicantEnriched ?? applicantBase
+  const [unmaskedOverlay, setUnmaskedOverlay] = useState<GeneralVolunteerApplicantRow | null>(null)
+
+  useEffect(() => {
+    setUnmaskedOverlay(null)
+  }, [applicantBase.id])
+
+  const applicant = unmaskedOverlay ?? applicantEnriched ?? applicantBase
 
   const interview2StatusTickRows = useMemo(
     () => (props.variant === 'interview2' ? [applicant] : []),
@@ -84,14 +92,29 @@ export function GeneralVolunteerApplicantDetailView(
     [applicant.name]
   )
 
+  const revealVolunteerPersonalInfo = useCallback(
+    async (reason: string) => {
+      const programId = Number(applicant.programId)
+      const response = await unmaskVolunteerApplicationPrivacyRemote(
+        applicant.id,
+        reason,
+        Number.isSafeInteger(programId) ? programId : undefined
+      )
+      return mapVolunteerApplicationDetailToApplicantRow(response, applicant)
+    },
+    [applicant]
+  )
+
   const {
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem,
-    resolveMemberId: () => (applicant.memberId != null ? String(applicant.memberId) : undefined),
-    resolveMemberRole: () => 'INDIVIDUAL',
+    revealPersonalInfo: revealVolunteerPersonalInfo,
+    onPrivacyUnmasked: payload => {
+      setUnmaskedOverlay(payload as GeneralVolunteerApplicantRow)
+    },
     resetDeps: [applicant.id],
     controlMode: 'headerStickyNoop',
   })

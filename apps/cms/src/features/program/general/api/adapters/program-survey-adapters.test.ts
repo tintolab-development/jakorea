@@ -2,11 +2,17 @@ import { describe, expect, it } from 'vitest'
 import {
   classifyFormBindingByTemplateId,
   classifyProgramFormBindings,
+  isDedicatedSurveyManagementTabTitle,
   isProgramSurveyManagementFormBinding,
   mapSurveyAnswersToRecord,
   mapSurveyResponseListItemToPollResponse,
+  mapProgramSurveyToRegisteredSurvey,
   mergeSurveysWithBindings,
+  readExpectedRespondentCount,
+  resolveSurveyResultsParticipantTotal,
   parseAnswerPreviewJson,
+  pickLectureEvalSurveyFromRemote,
+  resolveLectureEvalSubmitContext,
   resolveSatisfactionAudienceFromBinding,
   resolveSurveyCreateBindingTemplateCode,
   resolveSurveyShareClipboardUrl,
@@ -68,6 +74,132 @@ describe('mapSurveyResponseListItemToPollResponse', () => {
   })
 })
 
+describe('mapProgramSurveyToRegisteredSurvey', () => {
+  it('uses surveys GET bindingId when merge binding is missing', () => {
+    const row = mapProgramSurveyToRegisteredSurvey(
+      {
+        bindingId: 77,
+        templateId: 200,
+        templateVersionId: 2000,
+        templateName: '설문',
+        responseCount: 2,
+      },
+      0
+    )
+    expect(row.bindingId).toBe('77')
+  })
+
+  it('maps expectedRespondentCount and does not use submittedCount as the denominator', () => {
+    const withExpected = mapProgramSurveyToRegisteredSurvey(
+      {
+        submittedCount: 4,
+        expectedRespondentCount: 0,
+      } as Parameters<typeof mapProgramSurveyToRegisteredSurvey>[0],
+      0
+    )
+    expect(withExpected.expectedRespondentCount).toBe(0)
+    expect(withExpected.participantTotal).toBe(0)
+    expect(withExpected.responseCount).toBe(4)
+
+    const withoutExpected = mapProgramSurveyToRegisteredSurvey(
+      { submittedCount: 4, responseCount: 4 },
+      0
+    )
+    expect(withoutExpected.expectedRespondentCount).toBeNull()
+    expect(withoutExpected.participantTotal).toBe(0)
+  })
+})
+
+describe('resolveSurveyResultsParticipantTotal', () => {
+  it('prefers expected 0 over program total', () => {
+    expect(
+      resolveSurveyResultsParticipantTotal(
+        { participantTotal: 0, expectedRespondentCount: 0 },
+        216
+      )
+    ).toBe(0)
+  })
+
+  it('falls back to program total when expected is null', () => {
+    expect(
+      resolveSurveyResultsParticipantTotal({ participantTotal: 0, expectedRespondentCount: null }, 12)
+    ).toBe(12)
+  })
+})
+
+describe('readExpectedRespondentCount', () => {
+  it('reads a non-negative integer and ignores missing values', () => {
+    expect(readExpectedRespondentCount({ expectedRespondentCount: 8 })).toBe(8)
+    expect(readExpectedRespondentCount({ expectedRespondentCount: null })).toBeNull()
+    expect(readExpectedRespondentCount({})).toBeNull()
+  })
+})
+
+describe('resolveLectureEvalSubmitContext', () => {
+  it('prefers binding SCHEDULE over surveys GET', () => {
+    expect(
+      resolveLectureEvalSubmitContext({
+        binding: { targetScope: 'SCHEDULE', targetScopeId: 11 },
+        surveyDto: { targetScope: 'PROGRAM', targetScopeId: 99 },
+      })
+    ).toEqual({ contextType: 'SCHEDULE', contextId: 11 })
+  })
+
+  it('falls back to surveys GET targetScope when binding is empty', () => {
+    expect(
+      resolveLectureEvalSubmitContext({
+        surveyDto: { targetScope: 'SCHEDULE', targetScopeId: 22 },
+      })
+    ).toEqual({ contextType: 'SCHEDULE', contextId: 22 })
+  })
+})
+
+describe('pickLectureEvalSurveyFromRemote', () => {
+  it('uses classified lecture binding first', () => {
+    const row = pickLectureEvalSurveyFromRemote({
+      classified: [
+        {
+          kind: 'lecture_evaluation',
+          binding: { bindingId: 5, templateName: '강의평가' },
+          survey: {
+            id: '5',
+            title: '강의평가',
+            templateId: '9',
+            status: 'in_progress',
+            responseCount: 0,
+            participantTotal: 1,
+            bindingId: '5',
+          },
+        },
+      ],
+      surveys: [{ templateName: '다른 강의평가', templateVersionId: 88 }],
+    })
+    expect(row?.bindingId).toBe('5')
+  })
+
+  it('falls back to surveys GET title when binding is missing', () => {
+    const row = pickLectureEvalSurveyFromRemote({
+      classified: [],
+      surveys: [
+        { bindingId: 77, templateName: '1회차 강의평가', templateVersionId: 300, templateId: 30 },
+      ],
+    })
+    expect(row).toMatchObject({
+      id: '300',
+      title: '1회차 강의평가',
+      bindingId: '77',
+    })
+  })
+})
+
+describe('isDedicatedSurveyManagementTabTitle', () => {
+  it('keeps generic poll titles on the poll tab', () => {
+    expect(isDedicatedSurveyManagementTabTitle('신규 설문조사 1')).toBe(false)
+    expect(isDedicatedSurveyManagementTabTitle('강의평가')).toBe(true)
+    expect(isDedicatedSurveyManagementTabTitle('만족도조사 (학생용)')).toBe(true)
+  })
+})
+
 describe('classifyFormBindingByTemplateId', () => {
   it('classifies known satisfaction and lecture templates', () => {
     expect(classifyFormBindingByTemplateId({ templateId: 'survey-teacher' as unknown as number })).toBe(
@@ -100,6 +232,25 @@ describe('classifyFormBindingByTemplateId', () => {
     expect(
       resolveSatisfactionAudienceFromBinding({ templateId: 1, targetRole: 'TEACHER' })
     ).toBe('teacher')
+  })
+
+  it('resolves volunteer term from targetScopeId', () => {
+    expect(
+      resolveSatisfactionAudienceFromBinding({
+        templateId: 1,
+        targetRole: 'VOLUNTEER',
+        targetScope: 'TERM',
+        targetScopeId: 2,
+      })
+    ).toBe('volunteer_h2')
+    expect(
+      resolveSatisfactionAudienceFromBinding({
+        templateId: 1,
+        targetRole: 'VOLUNTEER',
+        targetScope: 'TERM',
+        targetScopeId: 1,
+      })
+    ).toBe('volunteer_h1')
   })
 })
 

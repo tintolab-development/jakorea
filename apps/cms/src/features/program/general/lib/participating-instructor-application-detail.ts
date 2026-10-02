@@ -51,6 +51,12 @@ export function mergeInstructorApplicationIntoParticipatingRow(
     educationSchoolName: applicant.educationSchoolName || base.educationSchoolName,
     jaEvaluationGrade: applicant.evaluationGrade ?? base.jaEvaluationGrade,
     instructorFeeGradeLabel: applicant.instructorFeeGradeLabel ?? base.instructorFeeGradeLabel,
+    lectureFeeBasisType: applicant.lectureFeeBasisType ?? base.lectureFeeBasisType,
+    lectureFeeMeasure: applicant.lectureFeeMeasure ?? base.lectureFeeMeasure,
+    lectureFeeAmount: applicant.lectureFeeAmount ?? base.lectureFeeAmount,
+    lectureFeeBasisDisplay: applicant.lectureFeeBasisDisplay ?? base.lectureFeeBasisDisplay,
+    businessIncomeEarnerStatus:
+      applicant.businessIncomeEarnerStatus ?? base.businessIncomeEarnerStatus,
     adminComment: applicant.managerComment ?? base.adminComment,
     educations: applicant.educations ?? base.educations,
     careerDetails: applicant.careerDetails ?? base.careerDetails,

@@ -73,16 +73,32 @@ export function countGeneralCurriculumMultiRoundsFromOverlay(
   return keys.length > 0 ? Math.max(...keys) : 0
 }
 
-/** overlay 단원명·교육 내용(차트 차시) 개수 */
+function isLegacyPreEducationUnitText(value: unknown): boolean {
+  return typeof value === 'string' && /사전|연수/.test(value.trim())
+}
+
+/**
+ * 구 데이터는 사전 교육을 `unitNameBySession["1"]`에 넣고 1·2·3차시를 2·3·4번에 둔다.
+ * 키 최댓값을 그대로 쓰면 수정 화면에 빈 회차가 하나 더 생긴다.
+ */
+function legacyPreEducationUnitShift(overlay: Record<string, unknown>): number {
+  const raw = overlay[CURRICULUM_OVERLAY_UNIT_NAME_BY_SESSION_KEY]
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return 0
+  return isLegacyPreEducationUnitText((raw as Record<string, unknown>)['1']) ? 1 : 0
+}
+
+/** overlay 단원명·교육 내용(차트 차시) 개수. 사전 교육이 1번 칸이면 그 칸은 차시·회차가 아니다. */
 export function countGeneralCurriculumUnitSessionsFromOverlay(
   overlay?: Record<string, unknown> | null
 ): number {
   if (!overlay) return 0
+  const shift = legacyPreEducationUnitShift(overlay)
   const keys = [
     ...overlayRoundKeys(overlay[CURRICULUM_OVERLAY_UNIT_NAME_BY_SESSION_KEY]),
     ...overlayRoundKeys(overlay[CURRICULUM_OVERLAY_UNIT_CONTENT_BY_SESSION_KEY]),
-  ]
-  return keys.length > 0 ? Math.max(...keys) : 0
+  ].filter(key => shift === 0 || key !== 1)
+  if (keys.length === 0) return 0
+  return Math.max(...keys) - shift
 }
 
 function overlayIpsSessionKeys(raw: unknown): number[] {

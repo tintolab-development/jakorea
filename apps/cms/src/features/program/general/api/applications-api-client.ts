@@ -109,6 +109,40 @@ export type InstructorApplicationDecisionWithReasonRequest = {
 
 export type InstructorApplicationUpdatePayload = {
   managerComment?: string | null
+  feePolicy?: InstructorApplicationFeePolicyRequest | null
+  businessIncomeEarnerStatus?: '해당' | '해당 없음' | string
+}
+
+/** 기관 승인·반려 / 강사 일괄 — 평탄 timing. 생략 시 즉시 발송. IMMEDIATE에 scheduledAt 금지. */
+export type OrganizationDecisionNotifyRequest = {
+  timing?: 'IMMEDIATE' | 'SCHEDULED'
+  scheduledAt?: string
+}
+
+/** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */
+export type ApplicationDecisionCancelRequestWithNotification = Omit<
+  ApplicationDecisionCancelRequest,
+  'notification'
+> & {
+  notification?: InstructorApplicationNotificationRequest
+}
+
+export type ScreeningResultNotifyFields = {
+  notifyTiming?: string
+  scheduledAt?: string
+}
+
+export type InstructorApplicationDetailResponseEnriched = InstructorApplicationDetailResponse & {
+  affiliationOrganizationId?: number | null
+  employmentStatus?: string | null
+  affiliationIsCurrentlyEmployed?: boolean | null
+  instructorMemberProfile?: {
+    teacherAffiliated?: boolean
+    employmentStatus?: string | null
+    currentlyEmployed?: boolean | null
+  } | null
+  feePolicy?: InstructorApplicationFeePolicyRequest | null
+  businessIncomeEarnerStatus?: string | null
 }
 
 export type IndividualApplicationUpdatePayload = Omit<
@@ -179,6 +213,44 @@ export async function updateOrganizationApplicationRemote(
   )
 }
 
+/** OpenAPI operationId: unmaskOrganizationApplicationDetail */
+export async function unmaskOrganizationApplicationPrivacyRemote(
+  applicationId: string,
+  reason: string,
+  programId?: number
+): Promise<OrganizationApplicationDetailResponse> {
+  return unwrapApiBody<OrganizationApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
+      method: 'POST',
+      data: {
+        reason,
+        ...(programId != null ? { programId } : {}),
+      },
+      headers: { 'Cache-Control': 'no-store' },
+    })
+  )
+}
+
+/** OpenAPI operationId: unmaskInstructorApplicationDetail */
+export async function unmaskInstructorApplicationPrivacyRemote(
+  applicationId: string,
+  reason: string,
+  programId?: number
+): Promise<InstructorApplicationDetailResponse> {
+  return unwrapApiBody<InstructorApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
+      method: 'POST',
+      data: {
+        reason,
+        ...(programId != null ? { programId } : {}),
+      },
+      headers: { 'Cache-Control': 'no-store' },
+    })
+  )
+}
+
 export async function fetchInstructorApplicationsRemote(
   programId: string,
   params?: ApplicationsListQuery
@@ -191,8 +263,8 @@ export async function fetchInstructorApplicationsRemote(
 
 export async function fetchInstructorApplicationDetailRemote(
   applicationId: string
-): Promise<InstructorApplicationDetailResponse> {
-  return unwrapApiBody<InstructorApplicationDetailResponse>(
+): Promise<InstructorApplicationDetailResponseEnriched> {
+  return unwrapApiBody<InstructorApplicationDetailResponseEnriched>(
     await customInstance({
       url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}`,
       method: 'GET',
@@ -299,20 +371,69 @@ export async function fetchVolunteerApplicationDetailRemote(
   )
 }
 
+/** OpenAPI operationId: unmaskVolunteerApplicationDetail */
+export async function unmaskVolunteerApplicationPrivacyRemote(
+  applicationId: string,
+  reason: string,
+  programId?: number
+): Promise<VolunteerApplicationDetailResponse> {
+  return unwrapApiBody<VolunteerApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
+      method: 'POST',
+      data: {
+        reason,
+        ...(programId != null ? { programId } : {}),
+      },
+      headers: { 'Cache-Control': 'no-store' },
+    })
+  )
+}
+
+/** OpenAPI operationId: cancelVolunteerDocumentApproval */
+export async function cancelVolunteerApplicationApprovalRemote(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequestWithNotification
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/cancel-approval`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** OpenAPI operationId: cancelVolunteerDocumentRejection */
+export async function cancelVolunteerApplicationRejectionRemote(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequestWithNotification
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/cancel-rejection`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 export async function approveOrganizationApplicationRemote(
-  applicationId: string
+  applicationId: string,
+  payload?: OrganizationDecisionNotifyRequest
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/approve`,
       method: 'POST',
+      ...(payload ? { data: payload } : {}),
     })
   )
 }
 
 export async function rejectOrganizationApplicationRemote(
   applicationId: string,
-  payload: ApplicationRejectRequest
+  payload: ApplicationRejectRequest & OrganizationDecisionNotifyRequest
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
@@ -325,7 +446,7 @@ export async function rejectOrganizationApplicationRemote(
 
 export async function cancelOrganizationApplicationApprovalRemote(
   applicationId: string,
-  payload: ApplicationDecisionCancelRequest
+  payload: ApplicationDecisionCancelRequestWithNotification
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
@@ -338,7 +459,7 @@ export async function cancelOrganizationApplicationApprovalRemote(
 
 export async function cancelOrganizationApplicationRejectionRemote(
   applicationId: string,
-  payload: ApplicationDecisionCancelRequest
+  payload: ApplicationDecisionCancelRequestWithNotification
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
@@ -445,9 +566,14 @@ export async function updateInstructorApplicationManagerCommentRemote(
 
 /** POST /api/admin/organization-applications/bulk-approve */
 export async function bulkApproveOrganizationApplicationsRemote(
-  ids: number[]
+  ids: number[],
+  notify?: OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
-  const body: BulkIdsRequest = { ids }
+  const body: BulkIdsRequest & OrganizationDecisionNotifyRequest = {
+    ids,
+    ...(notify?.timing ? { timing: notify.timing } : {}),
+    ...(notify?.scheduledAt ? { scheduledAt: notify.scheduledAt } : {}),
+  }
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
       url: `/api/admin/organization-applications/bulk-approve`,
@@ -460,9 +586,15 @@ export async function bulkApproveOrganizationApplicationsRemote(
 /** POST /api/admin/organization-applications/bulk-reject */
 export async function bulkRejectOrganizationApplicationsRemote(
   ids: number[],
-  reason: string
+  reason: string,
+  notify?: OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
-  const body: BulkDecisionRequest = { ids, reason }
+  const body: BulkDecisionRequest & OrganizationDecisionNotifyRequest = {
+    ids,
+    reason,
+    ...(notify?.timing ? { timing: notify.timing } : {}),
+    ...(notify?.scheduledAt ? { scheduledAt: notify.scheduledAt } : {}),
+  }
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
       url: `/api/admin/organization-applications/bulk-reject`,
@@ -474,9 +606,14 @@ export async function bulkRejectOrganizationApplicationsRemote(
 
 /** POST /api/admin/instructor-applications/bulk-approve */
 export async function bulkApproveInstructorApplicationsRemote(
-  ids: number[]
+  ids: number[],
+  notify?: OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
-  const body: BulkIdsRequest = { ids }
+  const body: BulkIdsRequest & OrganizationDecisionNotifyRequest = {
+    ids,
+    ...(notify?.timing ? { timing: notify.timing } : {}),
+    ...(notify?.scheduledAt ? { scheduledAt: notify.scheduledAt } : {}),
+  }
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
       url: `/api/admin/instructor-applications/bulk-approve`,
@@ -489,9 +626,15 @@ export async function bulkApproveInstructorApplicationsRemote(
 /** POST /api/admin/instructor-applications/bulk-reject */
 export async function bulkRejectInstructorApplicationsRemote(
   ids: number[],
-  reason: string
+  reason: string,
+  notify?: OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
-  const body: BulkDecisionRequest = { ids, reason }
+  const body: BulkDecisionRequest & OrganizationDecisionNotifyRequest = {
+    ids,
+    reason,
+    ...(notify?.timing ? { timing: notify.timing } : {}),
+    ...(notify?.scheduledAt ? { scheduledAt: notify.scheduledAt } : {}),
+  }
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
       url: `/api/admin/instructor-applications/bulk-reject`,
@@ -532,6 +675,19 @@ export async function cancelIndividualApplicationRejectionRemote(
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/cancel-rejection`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function cancelIndividualApplicationApprovalRemote(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/cancel-approval`,
       method: 'POST',
       data: payload,
     })
@@ -644,7 +800,7 @@ export async function giveUpVolunteerApplicationRemote(
 
 export async function submitIndividualDocumentResultRemote(
   applicationId: string,
-  payload: DocumentResultRequest
+  payload: DocumentResultRequest & ScreeningResultNotifyFields
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
@@ -657,7 +813,7 @@ export async function submitIndividualDocumentResultRemote(
 
 export async function submitIndividualFinalResultRemote(
   applicationId: string,
-  payload: VolunteerFinalResultRequest
+  payload: VolunteerFinalResultRequest & ScreeningResultNotifyFields
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
@@ -670,7 +826,7 @@ export async function submitIndividualFinalResultRemote(
 
 export async function submitVolunteerDocumentResultRemote(
   applicationId: string,
-  payload: DocumentResultRequest
+  payload: DocumentResultRequest & ScreeningResultNotifyFields
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
@@ -683,7 +839,7 @@ export async function submitVolunteerDocumentResultRemote(
 
 /** POST /api/admin/volunteer-applications/document-results/bulk */
 export async function bulkVolunteerDocumentResultsRemote(
-  payload: BulkResultRequest
+  payload: BulkResultRequest & ScreeningResultNotifyFields
 ): Promise<BulkActionResponse> {
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
@@ -695,7 +851,7 @@ export async function bulkVolunteerDocumentResultsRemote(
 }
 
 export async function bulkIndividualDocumentResultsRemote(
-  payload: BulkResultRequest
+  payload: BulkResultRequest & ScreeningResultNotifyFields
 ): Promise<BulkActionResponse> {
   return unwrapApiBody(
     await customInstance({
@@ -708,7 +864,7 @@ export async function bulkIndividualDocumentResultsRemote(
 
 export async function submitVolunteerFinalResultRemote(
   applicationId: string,
-  payload: VolunteerFinalResultRequest
+  payload: VolunteerFinalResultRequest & ScreeningResultNotifyFields
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
@@ -721,7 +877,7 @@ export async function submitVolunteerFinalResultRemote(
 
 /** POST /api/admin/volunteer-applications/final-results/bulk */
 export async function bulkVolunteerFinalResultsRemote(
-  payload: BulkResultRequest
+  payload: BulkResultRequest & ScreeningResultNotifyFields
 ): Promise<BulkActionResponse> {
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({

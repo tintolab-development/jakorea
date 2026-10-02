@@ -14,6 +14,9 @@ import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-
 import {
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE,
+  PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE,
+  PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE,
+  PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
@@ -25,6 +28,13 @@ import {
 import { mergeParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { AddParticipatingInstructorModal } from '@/features/program/general/ui/add-participating-instructor-modal'
+import { ParticipatingVolunteerAddRegistrationModal } from '@/features/program/general/ui/participating-volunteer-add-registration-modal'
+import {
+  fetchParticipatingVolunteerMemberCandidates,
+  type ParticipatingVolunteerMemberCandidate,
+} from '@/features/program/general/lib/participating-volunteer-member-candidates'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
@@ -93,6 +103,7 @@ export function ParticipatingVolunteersSection({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
+    handleAddVolunteerByMemberId,
   } = useProgressVolunteerList(programId, program)
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
@@ -208,34 +219,109 @@ export function ParticipatingVolunteersSection({
   )
 
   const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
+  const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
+  const [volunteerConsentOpen, setVolunteerConsentOpen] = useState(false)
+  const [pendingVolunteerMemberId, setPendingVolunteerMemberId] = useState<string | null>(null)
+  const [pendingVolunteerKind, setPendingVolunteerKind] = useState<'GENERAL' | 'EMPLOYEE'>(
+    'GENERAL'
+  )
+  const [volunteerMemberOptions, setVolunteerMemberOptions] = useState<
+    ParticipatingVolunteerMemberCandidate[]
+  >([])
+
+  const openVolunteerRegister = useCallback(
+    (kind: 'GENERAL' | 'EMPLOYEE') => {
+      if (isTempMockProgram) {
+        showAlert({
+          title: '등록 완료',
+          content:
+            kind === 'EMPLOYEE'
+              ? '임직원 자원봉사자 등록이 완료되었습니다. (temp mock)'
+              : '봉사자 등록이 완료되었습니다. (temp mock)',
+        })
+        return
+      }
+      if (!programId) {
+        notifyProgramApiUnavailable(
+          kind === 'EMPLOYEE'
+            ? 'general-progress-volunteer-employee-register'
+            : 'general-progress-volunteer-register',
+          kind === 'EMPLOYEE'
+            ? '참여 봉사자 · 임직원 자원봉사자 등록'
+            : '참여 봉사자 · 봉사자 등록'
+        )
+        return
+      }
+      setPendingVolunteerKind(kind)
+      void fetchParticipatingVolunteerMemberCandidates(
+        volunteerList.map(row => row.volunteerName)
+      )
+        .then(options => {
+          setVolunteerMemberOptions(options)
+          setAddVolunteerModalOpen(true)
+        })
+        .catch(error => {
+          showAlert({
+            title: '봉사자 등록 실패',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              '등록 가능한 회원 목록을 불러오지 못했습니다. 다시 시도해 주세요.'
+            ),
+          })
+        })
+    },
+    [isTempMockProgram, programId, showAlert, volunteerList]
+  )
 
   const handleRegisterEmployeeVolunteerClick = useCallback(() => {
-    if (isTempMockProgram) {
-      showAlert({
-        title: '등록 완료',
-        content: '임직원 자원봉사자 등록이 완료되었습니다. (temp mock)',
-      })
-      return
-    }
-    notifyProgramApiUnavailable(
-      'general-progress-volunteer-employee-register',
-      '참여 봉사자 · 임직원 자원봉사자 등록'
-    )
-  }, [isTempMockProgram, showAlert])
+    openVolunteerRegister('EMPLOYEE')
+  }, [openVolunteerRegister])
 
   const handleRegisterVolunteerClick = useCallback(() => {
-    if (isTempMockProgram) {
+    openVolunteerRegister('GENERAL')
+  }, [openVolunteerRegister])
+
+  const handleProceedToVolunteerConsent = useCallback((memberId: string) => {
+    setPendingVolunteerMemberId(memberId)
+    setVolunteerConsentOpen(true)
+  }, [])
+
+  const handleVolunteerConsentClose = useCallback(() => {
+    setVolunteerConsentOpen(false)
+    setPendingVolunteerMemberId(null)
+  }, [])
+
+  const handleVolunteerConsentConfirm = useCallback(async () => {
+    const memberId = pendingVolunteerMemberId
+    const kind = pendingVolunteerKind
+    setVolunteerConsentOpen(false)
+    setPendingVolunteerMemberId(null)
+    if (!memberId) return
+    try {
+      const success = await handleAddVolunteerByMemberId(memberId, kind)
+      if (success) {
+        showAlert({
+          title: '안내',
+          content:
+            kind === 'EMPLOYEE'
+              ? PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE
+              : PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE,
+        })
+      }
+    } catch (error) {
       showAlert({
-        title: '등록 완료',
-        content: '봉사자 등록이 완료되었습니다. (temp mock)',
+        title: '봉사자 등록 실패',
+        content: getGeneralProgramApiErrorMessage(
+          error,
+          '봉사자 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+        ),
       })
-      return
     }
-    notifyProgramApiUnavailable(
-      'general-progress-volunteer-register',
-      '참여 봉사자 · 봉사자 등록'
-    )
-  }, [isTempMockProgram, showAlert])
+  }, [handleAddVolunteerByMemberId, pendingVolunteerKind, pendingVolunteerMemberId, showAlert])
+
+  const pendingVolunteerHasId1365 =
+    volunteerMemberOptions.find(option => option.memberId === pendingVolunteerMemberId)
+      ?.hasRegisteredId1365 === true
 
   const handleActivityCertificateIssueClick = useCallback(() => {
     const selectedCount = selectedRowKeys.length
@@ -580,6 +666,34 @@ export function ParticipatingVolunteersSection({
       </FilterTableLayout>
 
       <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />
+
+      <AddParticipatingInstructorModal
+        open={addVolunteerModalOpen}
+        onCancel={() => setAddVolunteerModalOpen(false)}
+        memberOptions={volunteerMemberOptions.map(option => ({
+          memberId: option.memberId,
+          instructorName: option.volunteerName,
+        }))}
+        onNoMemberSelected={() =>
+          showAlert({ title: '안내', content: PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE })
+        }
+        onProceedToConsent={handleProceedToVolunteerConsent}
+        title={pendingVolunteerKind === 'EMPLOYEE' ? '임직원 자원봉사자 등록' : '봉사자 추가 등록'}
+        description={
+          pendingVolunteerKind === 'EMPLOYEE'
+            ? '추가할 임직원 자원봉사자를 선택해 주세요.\n같은 이메일의 활성 관리자 계정이 있는 회원만 등록할 수 있습니다.'
+            : '추가할 봉사자를 선택해 주세요.\n1365 식별자 또는 기존 봉사자 신청이 있는 회원만 등록할 수 있습니다.'
+        }
+        fieldLabel={pendingVolunteerKind === 'EMPLOYEE' ? '임직원 자원봉사자 추가' : '봉사자 추가'}
+        placeholder="추가 등록할 회원을 선택해 주세요"
+        emptyContent="추가 등록 가능한 회원이 없습니다"
+      />
+      <ParticipatingVolunteerAddRegistrationModal
+        open={volunteerConsentOpen}
+        hideBasicInfoSection={pendingVolunteerHasId1365}
+        onClose={handleVolunteerConsentClose}
+        onConfirm={handleVolunteerConsentConfirm}
+      />
 
       {activityCertPreviewVolunteer ? (
         <ParticipatingVolunteerActivityCertificatePreviewModal

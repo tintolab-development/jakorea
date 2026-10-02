@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
   applyRecruitmentRowCopy,
+  hydrateGeneralRecruitmentInfoFromRows,
   resolveRecruitmentOtherMatters,
+  resolveRecruitmentRemarks,
 } from './recruitment-row-copy'
 
 function baseProgram(overrides: Partial<Program> = {}): Program {
@@ -53,6 +55,63 @@ describe('resolveRecruitmentOtherMatters', () => {
     })
 
     expect(resolveRecruitmentOtherMatters(program, 'volunteer')).toBe('nested 기타')
+  })
+})
+
+describe('resolveRecruitmentRemarks', () => {
+  it('강사 비고는 nested remarks만 쓰고 행 remarks를 쓰지 않는다', () => {
+    const program = baseProgram({
+      generalCommonInfo: {
+        instructorRecruitmentInfo: {
+          remarks: '신청 전 학교 담당 교사 확인이 필요합니다.',
+          otherMatters: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+        },
+      },
+      programRecruitments: [
+        {
+          id: 186069,
+          recruitmentType: 'INSTRUCTOR',
+          remarks: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+          otherMatters: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+        },
+      ],
+    })
+
+    expect(resolveRecruitmentRemarks(program, 'instructor')).toBe(
+      '신청 전 학교 담당 교사 확인이 필요합니다.'
+    )
+    expect(resolveRecruitmentOtherMatters(program, 'instructor')).toBe(
+      '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
+    )
+  })
+})
+
+describe('hydrateGeneralRecruitmentInfoFromRows', () => {
+  it('강사 행 otherMatters만 nested에 넣고 remarks는 그대로 둔다', () => {
+    const program = baseProgram({
+      generalCommonInfo: {
+        instructorRecruitmentInfo: {
+          remarks: '신청 전 학교 담당 교사 확인이 필요합니다.',
+          otherMatters: '옛 기타',
+        },
+      },
+      programRecruitments: [
+        {
+          id: 186069,
+          recruitmentType: 'INSTRUCTOR',
+          remarks: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+          otherMatters: '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>',
+        },
+      ],
+    })
+
+    const next = hydrateGeneralRecruitmentInfoFromRows(program)
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.remarks).toBe(
+      '신청 전 학교 담당 교사 확인이 필요합니다.'
+    )
+    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.otherMatters).toBe(
+      '<p>우천·학교 행사와 겹치면 일정을 조정할 수 있습니다.</p>'
+    )
   })
 })
 

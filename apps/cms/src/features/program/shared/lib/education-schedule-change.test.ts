@@ -4,6 +4,7 @@ import {
   applyChangedDatesToEducationScheduleLines,
   applyChangedRangesToEducationScheduleLines,
   applyDateToEducationScheduleLine,
+  buildSameDateScheduleChangePairs,
   educationOperationRangeSealKeyFromSchedulePrefix,
   formatEducationScheduleLineForChangeModal,
   isOutsideEducationOperationRange,
@@ -67,5 +68,23 @@ describe('education-schedule-change', () => {
     expect(isOutsideEducationOperationRange(dayjs('2026-09-30'), start, end)).toBe(true)
     expect(isOutsideEducationOperationRange(dayjs('2026-10-12'), start, end)).toBe(false)
     expect(isOutsideEducationOperationRange(dayjs('2027-01-01'), start, end)).toBe(true)
+  })
+
+  it('바뀐 일정 줄의 시작 달력일을 same-date 요청 쌍으로 만든다', () => {
+    expect(
+      buildSameDateScheduleChangePairs(
+        ['26년 4월 20일(월) 9:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50'],
+        ['26년 5월 1일(금) 9:30 ~ 12:20', '26년 4월 27일(월) 13:00 ~ 15:50']
+      )
+    ).toEqual([{ fromDate: '2026-04-20', toDate: '2026-05-01' }])
+  })
+
+  it('같은 fromDate→toDate는 한 번만 넣는다', () => {
+    expect(
+      buildSameDateScheduleChangePairs(
+        ['26년 4월 20일(월) 9:30 ~ 12:20', '26년 4월 20일(월) 14:00 ~ 16:00'],
+        ['26년 5월 1일(금) 9:30 ~ 12:20', '26년 5월 1일(금) 14:00 ~ 16:00']
+      )
+    ).toEqual([{ fromDate: '2026-04-20', toDate: '2026-05-01' }])
   })
 })

@@ -18,12 +18,18 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { unmaskIndividualApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
+import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
 import {
   saveIndividualApplicationAdminCommentRemote,
   saveIndividualApplicationDetailRemote,
 } from '@/features/program/general/api/individual-application-update-helpers'
-import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import {
+  generalApplicationsQueryKeys,
+  generalProgramProgressQueryKeys,
+} from '@/features/program/general/api/general-applications-query-keys'
+import { mapIndividualApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-individual-application-detail'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { patchGeneralIndividualApplicantDetail } from '@/features/program/general/model/individual-applicant'
@@ -35,6 +41,7 @@ import {
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
+import { hydrateParticipatingIndividualLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
@@ -146,13 +153,81 @@ export function ParticipatingParticipantFullpageView({
     [mergedParticipant.applicantName]
   )
 
+  const revealParticipatingParticipantPersonalInfo = useCallback(
+    async (reason: string) => {
+      if (hasIndividualApplicationId) {
+        const dto = await unmaskIndividualApplicationPrivacyRemote(
+          individualApplicationId,
+          reason
+        )
+        queryClient.setQueryData(
+          generalApplicationsQueryKeys.individualDetail(individualApplicationId),
+          dto
+        )
+        const mapped = mapIndividualApplicationDetailToParticipatingRow(dto, mergedParticipant)
+        setParticipantPatches(prev => ({
+          ...prev,
+          applicantName: mapped.applicantName,
+          homeAddress: mapped.homeAddress,
+          memberId: mapped.memberId,
+          detail: {
+            ...mergedParticipant.detail,
+            ...mapped.detail,
+          },
+        }))
+        return {
+          name: dto.profile?.name?.trim() || undefined,
+          phone: dto.profile?.contact?.trim() || undefined,
+          email: dto.profile?.email?.trim() || undefined,
+          address: mapped.homeAddress?.trim() || undefined,
+        }
+      }
+
+      const memberId = Number(mergedParticipant.memberId)
+      if (!Number.isFinite(memberId) || memberId <= 0) {
+        throw new Error('개인 신청 ID 또는 회원 ID가 없습니다.')
+      }
+      return fetchMemberRolePrivacyUnmask(memberId, reason, 'INDIVIDUAL')
+    },
+    [
+      hasIndividualApplicationId,
+      individualApplicationId,
+      mergedParticipant,
+      queryClient,
+    ]
+  )
+
+  const applyParticipatingParticipantPersonalInfo = useCallback((payload: unknown) => {
+    if (payload == null || typeof payload !== 'object') return
+    const privacy = payload as {
+      name?: unknown
+      phone?: unknown
+      email?: unknown
+      address?: unknown
+    }
+    setParticipantPatches(prev => ({
+      ...prev,
+      ...(typeof privacy.name === 'string' ? { applicantName: privacy.name } : {}),
+      ...(typeof privacy.address === 'string' ? { homeAddress: privacy.address } : {}),
+      detail: {
+        ...mergedParticipant.detail,
+        ...prev.detail,
+        ...(typeof privacy.phone === 'string' ? { contact: privacy.phone } : {}),
+        ...(typeof privacy.email === 'string' ? { email: privacy.email } : {}),
+        ...(typeof privacy.address === 'string' ? { homeAddressFull: privacy.address } : {}),
+      },
+    }))
+  }, [mergedParticipant.detail])
+
   const {
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
-    resetDeps: [mergedParticipant.id],
+    revealPersonalInfo: revealParticipatingParticipantPersonalInfo,
+    onPrivacyUnmasked: applyParticipatingParticipantPersonalInfo,
+    resetDeps: [mergedParticipant.id, individualApplicationId, mergedParticipant.memberId],
     controlMode: 'headerStickyNoop',
   })
 
@@ -326,18 +401,39 @@ export function ParticipatingParticipantFullpageView({
   }, [])
 
   const handleCertificateIssueConfirm = useCallback(
-    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
-      setCertificateExportContext(
-        buildParticipatingParticipantCertificateContext({
-          participant: mergedParticipant,
-          program,
-          hasStudentSatisfactionSurvey,
-          issuanceReasonLabel: reasonLabel,
+    async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      try {
+        const lectureAttendanceSessions =
+          progressRemoteEnabled && !isTempMockProgram
+            ? await hydrateParticipatingIndividualLectureAttendanceSessions({
+                programId: String(program.id),
+                participantId: mergedParticipant.id,
+                existing: mergedParticipant.lectureAttendanceSessions,
+              })
+            : mergedParticipant.lectureAttendanceSessions
+
+        setCertificateExportContext(
+          buildParticipatingParticipantCertificateContext({
+            participant: { ...mergedParticipant, lectureAttendanceSessions },
+            program,
+            hasStudentSatisfactionSurvey,
+            issuanceReasonLabel: reasonLabel,
+          })
+        )
+        setCertificateExportActive(true)
+      } catch (error) {
+        handleError(error, {
+          context: 'participatingParticipantFullpageView.certificateAttendanceHydrate',
         })
-      )
-      setCertificateExportActive(true)
+      }
     },
-    [hasStudentSatisfactionSurvey, mergedParticipant, program]
+    [
+      hasStudentSatisfactionSurvey,
+      isTempMockProgram,
+      mergedParticipant,
+      program,
+      progressRemoteEnabled,
+    ]
   )
 
   const handleCertificateExportComplete = useCallback((success: boolean) => {

@@ -2,7 +2,9 @@ import { useMemo } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
+import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { useCmsAlert } from '@/shared/ui'
+import { handleError } from '@/shared/utils/error-handler'
 import { resolveProgressAssignmentRemark } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
 import type { ParticipatingIndividualProgressAssignmentParticipantRow } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -29,12 +31,29 @@ function SubmissionCell({
     )
   }
 
+  const downloadFile = async (fileObjectId?: number, fileName?: string, downloadable?: boolean) => {
+    if (fileObjectId == null || downloadable !== true) {
+      showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
+      return
+    }
+    try {
+      await downloadAdminFile({
+        fileObjectId,
+        fileName: fileName?.trim() || `과제_${fileObjectId}`,
+      })
+    } catch (error) {
+      handleError(error, { context: 'downloadProgressAssignmentFile' })
+    }
+  }
+
   return (
     <div className="participating-individual-progress-assignment-table__submission-links">
       <button
         type="button"
         className="participating-individual-progress-assignment-table__submission-link"
-        onClick={() => showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })}
+        onClick={() =>
+          void downloadFile(submission.fileObjectId, submission.fileName, submission.downloadable)
+        }
       >
         {submission.fileName}
       </button>
@@ -42,7 +61,13 @@ function SubmissionCell({
         <button
           type="button"
           className="participating-individual-progress-assignment-table__submission-link"
-          onClick={() => showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })}
+          onClick={() =>
+            void downloadFile(
+              submission.secondaryFileObjectId,
+              submission.secondaryFileName,
+              submission.secondaryDownloadable
+            )
+          }
         >
           {submission.secondaryFileName}
         </button>

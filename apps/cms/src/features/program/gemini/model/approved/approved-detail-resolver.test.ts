@@ -49,6 +49,44 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
     expect(detail.officialDocumentType).toBe('필요 없음')
     expect(detail.progressStatus).toBe('SCHEDULED')
     expect(detail.lastPreferredDate).toBe('2026-03-15')
+    expect(detail.managerPosition).toBe('')
+    expect(detail.managerSubject).toBe('')
+  })
+
+  it('계좌번호 마스킹 문자열을 유지하고 직급·과목은 비운다', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 186100,
+      teacherPosition: null,
+      teacherSubject: null,
+      teacherScheduleChangeCount: 0,
+      teacherAccountBank: '국민',
+      teacherAccountNumber: '123-****-7890',
+      teacherAccountHolder: '김교사',
+      trainingDate: null,
+      lastPreferredDate: '2026-03-15',
+    })
+
+    expect(detail.managerScheduleChangeCount).toBe(0)
+    expect(detail.managerPosition).toBe('')
+    expect(detail.managerSubject).toBe('')
+    expect(detail.managerAccountBank).toBe('국민')
+    expect(detail.managerAccountNumber).toBe('123-****-7890')
+    expect(detail.managerAccountHolder).toBe('김교사')
+    expect(detail.trainingDate).toBe('')
+    expect(detail.trainingDate).not.toBe(detail.lastPreferredDate)
+  })
+
+  it('계좌가 없으면 계좌번호만 빈 문자열로 둔다', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 186101,
+      teacherAccountBank: '국민',
+      teacherAccountNumber: null,
+      teacherAccountHolder: '김교사',
+    })
+
+    expect(detail.managerAccountBank).toBe('국민')
+    expect(detail.managerAccountNumber).toBe('')
+    expect(detail.managerAccountHolder).toBe('김교사')
   })
 
   it('maps assignedInstructor when present', () => {
@@ -101,6 +139,7 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
     expect(detail.trainingDate).toBe('')
     expect(detail.trainingDate).not.toBe(detail.lastPreferredDate)
     expect(detail.instructor).toEqual({
+      memberId: '190006',
       name: '최지원',
       region: '부산광역시 해운대구 센텀중앙로 79',
       experienceYears: null,

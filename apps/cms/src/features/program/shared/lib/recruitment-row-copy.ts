@@ -42,6 +42,50 @@ export function resolveRecruitmentOtherMatters(
   )
 }
 
+/** 모집 비고. 강사·봉사자는 nested remarks만. 행 remarks·otherMatters와 섞지 않는다. */
+export function resolveRecruitmentRemarks(
+  program: Program,
+  audience: RecruitmentCopyAudience
+): string | undefined {
+  if (audience === 'instructor') {
+    return emptyToUndefined(program.generalCommonInfo?.instructorRecruitmentInfo?.remarks)
+  }
+  if (audience === 'volunteer') {
+    return emptyToUndefined(program.generalCommonInfo?.volunteerRecruitmentInfo?.remarks)
+  }
+  const row = pickRecruitmentCopyRow(program, audience)
+  return (
+    emptyToUndefined(row?.remarks) ||
+    emptyToUndefined(program.generalCommonInfo?.participantRecruitmentInfo?.remarks)
+  )
+}
+
+/**
+ * GET 행 기타사항만 nested에 맞춘다. 비고(remarks)는 행에서 복사하지 않는다.
+ */
+export function hydrateGeneralRecruitmentInfoFromRows(program: Program): Program {
+  const patches: Array<{
+    audience: Exclude<RecruitmentCopyAudience, 'participant'>
+    key: 'instructorRecruitmentInfo' | 'volunteerRecruitmentInfo'
+  }> = [
+    { audience: 'instructor', key: 'instructorRecruitmentInfo' },
+    { audience: 'volunteer', key: 'volunteerRecruitmentInfo' },
+  ]
+  let common = program.generalCommonInfo
+  let changed = false
+  for (const { audience, key } of patches) {
+    const row = pickRecruitmentCopyRow(program, audience)
+    if (!row || row.otherMatters == null) continue
+    const info = { ...(common?.[key] ?? {}) }
+    const next = emptyToUndefined(row.otherMatters)
+    if (info.otherMatters === next) continue
+    info.otherMatters = next
+    common = { ...common, [key]: info }
+    changed = true
+  }
+  return changed ? { ...program, generalCommonInfo: common } : program
+}
+
 function byStartAt(a: ProgramRecruitmentWindow, b: ProgramRecruitmentWindow): number {
   const aTime = Date.parse(a.startAt ?? '')
   const bTime = Date.parse(b.startAt ?? '')

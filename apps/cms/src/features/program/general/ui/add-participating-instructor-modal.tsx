@@ -21,6 +21,11 @@ export interface AddParticipatingInstructorModalProps {
   onNoMemberSelected: () => void
   /** 강사 선택 후 추가 등록 클릭 시 — 개인정보 동의 모달로 진행 */
   onProceedToConsent: (memberId: string) => void
+  title?: string
+  description?: string
+  fieldLabel?: string
+  placeholder?: string
+  emptyContent?: string
 }
 
 export function AddParticipatingInstructorModal({
@@ -29,6 +34,11 @@ export function AddParticipatingInstructorModal({
   memberOptions,
   onNoMemberSelected,
   onProceedToConsent,
+  title = '강사 추가 등록',
+  description = '추가할 강사를 선택해 주세요.\n등록된 강사 정보가 없는 경우, **[강사 회원]**에서 강사 정보를 먼저 등록해 주세요.',
+  fieldLabel = '강사 추가',
+  placeholder = '추가 등록할 강사를 선택해 주세요',
+  emptyContent = '추가 등록 가능한 강사가 없습니다',
 }: AddParticipatingInstructorModalProps) {
   const [form] = Form.useForm<AddParticipatingInstructorModalFormValues>()
 
@@ -68,13 +78,11 @@ export function AddParticipatingInstructorModal({
     <ContentModal
       open={open}
       onCancel={handleCancel}
-      title="강사 추가 등록"
+      title={title}
       width={600}
       footer={footer}
       className="add-participating-instructor-modal"
-      description={
-        '추가할 강사를 선택해 주세요.\n등록된 강사 정보가 없는 경우, **[강사 회원]**에서 강사 정보를 먼저 등록해 주세요.'
-      }
+      description={description}
     >
       <div className="add-participating-instructor-modal__body">
         <Form<AddParticipatingInstructorModalFormValues>
@@ -85,21 +93,19 @@ export function AddParticipatingInstructorModal({
         >
           <Form.Item
             name="memberId"
-            label="강사 추가"
+            label={fieldLabel}
             className="add-participating-instructor-modal__field"
           >
             <CmsSelect
               inputSize="large"
               width="100%"
               withAllOption={false}
-              placeholder="추가 등록할 강사를 선택해 주세요"
+              placeholder={placeholder}
               options={memberOptions.map(member => ({
                 value: member.memberId,
                 label: member.instructorName,
               }))}
-              notFoundContent={
-                memberOptions.length === 0 ? '추가 등록 가능한 강사가 없습니다' : undefined
-              }
+              notFoundContent={memberOptions.length === 0 ? emptyContent : undefined}
               getPopupContainer={() => document.body}
             />
           </Form.Item>

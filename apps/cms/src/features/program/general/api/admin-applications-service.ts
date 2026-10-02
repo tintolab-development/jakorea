@@ -34,7 +34,10 @@ import {
   giveUpVolunteerApplicationRemote,
   listInterviewSlotsRemote,
   rejectIndividualApplicationRemote,
+  cancelIndividualApplicationApprovalRemote,
   cancelIndividualApplicationRejectionRemote,
+  cancelVolunteerApplicationApprovalRemote,
+  cancelVolunteerApplicationRejectionRemote,
   rejectInstructorApplicationRemote,
   rejectOrganizationApplicationRemote,
   resendInstructorApplicationNotification,
@@ -48,9 +51,13 @@ import {
   submitVolunteerDocumentResultRemote,
   submitVolunteerFinalResultRemote,
   updateVolunteerDocumentEvaluationRemote,
+  type ApplicationDecisionCancelRequestWithNotification,
   type ApplicationsListQuery,
   type InstructorApplicationApprovalRequest,
+  type InstructorApplicationDecisionWithReasonRequest,
   type InstructorApplicationNotificationRequest,
+  type OrganizationDecisionNotifyRequest,
+  type ScreeningResultNotifyFields,
 } from '@/features/program/general/api/applications-api-client'
 import {
   sortGeneralParticipantDocPassedVolunteerRows,
@@ -63,7 +70,7 @@ import type { ApplicantSchoolRow } from '@/features/program/shared/model/applica
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
-import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/dashboard/schemas/applicationDecisionCancelRequest'
+import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
@@ -328,14 +335,17 @@ export async function fetchGeneralVolunteerScreeningApplicationsPage(
   return { ...page, rows }
 }
 
-export async function approveGeneralOrganizationApplication(applicationId: string): Promise<void> {
+export async function approveGeneralOrganizationApplication(
+  applicationId: string,
+  payload?: OrganizationDecisionNotifyRequest
+): Promise<void> {
   assertApplicationsRemoteReady()
-  await approveOrganizationApplicationRemote(applicationId)
+  await approveOrganizationApplicationRemote(applicationId, payload)
 }
 
 export async function rejectGeneralOrganizationApplication(
   applicationId: string,
-  payload: ApplicationRejectRequest
+  payload: ApplicationRejectRequest & OrganizationDecisionNotifyRequest
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await rejectOrganizationApplicationRemote(applicationId, payload)
@@ -343,7 +353,7 @@ export async function rejectGeneralOrganizationApplication(
 
 export async function cancelGeneralOrganizationApplicationApproval(
   applicationId: string,
-  payload: ApplicationDecisionCancelRequest
+  payload: ApplicationDecisionCancelRequestWithNotification
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await cancelOrganizationApplicationApprovalRemote(applicationId, payload)
@@ -351,33 +361,37 @@ export async function cancelGeneralOrganizationApplicationApproval(
 
 export async function cancelGeneralOrganizationApplicationRejection(
   applicationId: string,
-  payload: ApplicationDecisionCancelRequest
+  payload: ApplicationDecisionCancelRequestWithNotification
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await cancelOrganizationApplicationRejectionRemote(applicationId, payload)
 }
 
 export async function bulkApproveGeneralOrganizationApplications(
-  applicationIds: string[]
+  applicationIds: string[],
+  notify?: OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
   assertApplicationsRemoteReady()
   const ids = toBulkNumericApplicationIds(applicationIds)
   if (!ids?.length) {
     throw new Error('기관 신청 ID를 확인할 수 없습니다.')
   }
-  return bulkApproveOrganizationApplicationsRemote(ids)
+  return bulkApproveOrganizationApplicationsRemote(ids, notify)
 }
 
 export async function bulkRejectGeneralOrganizationApplications(
   applicationIds: string[],
-  payload: ApplicationRejectRequest
+  payload: ApplicationRejectRequest & OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
   assertApplicationsRemoteReady()
   const ids = toBulkNumericApplicationIds(applicationIds)
   if (!ids?.length) {
     throw new Error('기관 신청 ID를 확인할 수 없습니다.')
   }
-  return bulkRejectOrganizationApplicationsRemote(ids, payload.reason)
+  return bulkRejectOrganizationApplicationsRemote(ids, payload.reason, {
+    ...(payload.timing ? { timing: payload.timing } : {}),
+    ...(payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : {}),
+  })
 }
 
 export async function approveGeneralInstructorApplication(
@@ -390,7 +404,7 @@ export async function approveGeneralInstructorApplication(
 
 export async function rejectGeneralInstructorApplication(
   applicationId: string,
-  payload: ApplicationRejectRequest
+  payload: ApplicationRejectRequest | InstructorApplicationDecisionWithReasonRequest
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await rejectInstructorApplicationRemote(applicationId, payload)
@@ -398,21 +412,25 @@ export async function rejectGeneralInstructorApplication(
 
 export async function cancelGeneralInstructorApplicationApproval(
   applicationId: string,
-  reason: string
+  reason: string,
+  notification?: InstructorApplicationNotificationRequest
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await cancelInstructorApplicationApprovalRemote(applicationId, {
     reason: reason.trim() || '승인 취소',
+    ...(notification ? { notification } : {}),
   })
 }
 
 export async function cancelGeneralInstructorApplicationRejection(
   applicationId: string,
-  reason: string
+  reason: string,
+  notification?: InstructorApplicationNotificationRequest
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await cancelInstructorApplicationRejectionRemote(applicationId, {
     reason: reason.trim() || '반려 취소',
+    ...(notification ? { notification } : {}),
   })
 }
 
@@ -438,26 +456,30 @@ export async function resendGeneralOrganizationApplicationNotification(
 }
 
 export async function bulkApproveGeneralInstructorApplications(
-  applicationIds: string[]
+  applicationIds: string[],
+  notify?: OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
   assertApplicationsRemoteReady()
   const ids = toBulkNumericApplicationIds(applicationIds)
   if (!ids?.length) {
     throw new Error('강사 신청 ID를 확인할 수 없습니다.')
   }
-  return bulkApproveInstructorApplicationsRemote(ids)
+  return bulkApproveInstructorApplicationsRemote(ids, notify)
 }
 
 export async function bulkRejectGeneralInstructorApplications(
   applicationIds: string[],
-  payload: ApplicationRejectRequest
+  payload: ApplicationRejectRequest & OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
   assertApplicationsRemoteReady()
   const ids = toBulkNumericApplicationIds(applicationIds)
   if (!ids?.length) {
     throw new Error('강사 신청 ID를 확인할 수 없습니다.')
   }
-  return bulkRejectInstructorApplicationsRemote(ids, payload.reason)
+  return bulkRejectInstructorApplicationsRemote(ids, payload.reason, {
+    ...(payload.timing ? { timing: payload.timing } : {}),
+    ...(payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : {}),
+  })
 }
 
 export async function approveGeneralIndividualApplication(applicationId: string): Promise<void> {
@@ -483,9 +505,43 @@ export async function cancelGeneralIndividualApplicationRejection(
   })
 }
 
+export async function cancelGeneralIndividualApplicationApproval(
+  applicationId: string,
+  reason: string
+): Promise<ApplicationDecisionResponse> {
+  assertApplicationsRemoteReady()
+  return cancelIndividualApplicationApprovalRemote(applicationId, {
+    reason: reason.trim() || '승인 취소',
+  })
+}
+
+export async function cancelGeneralVolunteerApplicationRejection(
+  applicationId: string,
+  reason: string,
+  notification?: InstructorApplicationNotificationRequest
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await cancelVolunteerApplicationRejectionRemote(applicationId, {
+    reason: reason.trim() || '반려 취소',
+    ...(notification ? { notification } : {}),
+  })
+}
+
+export async function cancelGeneralVolunteerApplicationApproval(
+  applicationId: string,
+  reason: string,
+  notification?: InstructorApplicationNotificationRequest
+): Promise<ApplicationDecisionResponse> {
+  assertApplicationsRemoteReady()
+  return cancelVolunteerApplicationApprovalRemote(applicationId, {
+    reason: reason.trim() || '승인 취소',
+    ...(notification ? { notification } : {}),
+  })
+}
+
 export async function submitGeneralVolunteerDocumentResult(
   applicationId: string,
-  payload: DocumentResultRequest
+  payload: DocumentResultRequest & ScreeningResultNotifyFields
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await submitVolunteerDocumentResultRemote(applicationId, payload)
@@ -509,7 +565,7 @@ export async function updateGeneralVolunteerDocumentEvaluation(
  */
 export async function submitGeneralVolunteerDocumentResultBulk(
   applicationIds: string[],
-  payload: Pick<DocumentResultRequest, 'result' | 'reason'>
+  payload: Pick<DocumentResultRequest, 'result' | 'reason'> & ScreeningResultNotifyFields
 ): Promise<BulkActionResponse> {
   assertApplicationsRemoteReady()
   const ids = toBulkNumericApplicationIds(applicationIds)
@@ -520,12 +576,14 @@ export async function submitGeneralVolunteerDocumentResultBulk(
     ids,
     result: payload.result,
     reason: payload.reason,
+    ...(payload.notifyTiming ? { notifyTiming: payload.notifyTiming } : {}),
+    ...(payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : {}),
   })
 }
 
 export async function submitGeneralIndividualDocumentResult(
   applicationId: string,
-  payload: DocumentResultRequest
+  payload: DocumentResultRequest & ScreeningResultNotifyFields
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await submitIndividualDocumentResultRemote(applicationId, payload)
@@ -533,7 +591,7 @@ export async function submitGeneralIndividualDocumentResult(
 
 export async function submitGeneralIndividualDocumentResultBulk(
   applicationIds: string[],
-  payload: Pick<DocumentResultRequest, 'result' | 'reason'>
+  payload: Pick<DocumentResultRequest, 'result' | 'reason'> & ScreeningResultNotifyFields
 ): Promise<BulkActionResponse> {
   assertApplicationsRemoteReady()
   const ids = toBulkNumericApplicationIds(applicationIds)
@@ -542,12 +600,14 @@ export async function submitGeneralIndividualDocumentResultBulk(
     ids,
     result: payload.result,
     reason: payload.reason,
+    ...(payload.notifyTiming ? { notifyTiming: payload.notifyTiming } : {}),
+    ...(payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : {}),
   })
 }
 
 export async function submitGeneralVolunteerFinalResult(
   applicationId: string,
-  payload: VolunteerFinalResultRequest
+  payload: VolunteerFinalResultRequest & ScreeningResultNotifyFields
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await submitVolunteerFinalResultRemote(applicationId, payload)
@@ -559,7 +619,7 @@ export async function submitGeneralVolunteerFinalResult(
  */
 export async function submitGeneralVolunteerFinalResultBulk(
   applicationIds: string[],
-  payload: VolunteerFinalResultRequest
+  payload: VolunteerFinalResultRequest & ScreeningResultNotifyFields
 ): Promise<BulkActionResponse> {
   assertApplicationsRemoteReady()
   const ids = toBulkNumericApplicationIds(applicationIds)
@@ -571,6 +631,8 @@ export async function submitGeneralVolunteerFinalResultBulk(
     result: payload.result,
     reason: payload.reason,
     reserveRank: payload.reserveRank,
+    ...(payload.notifyTiming ? { notifyTiming: payload.notifyTiming } : {}),
+    ...(payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : {}),
   })
 }
 
@@ -587,7 +649,7 @@ export async function submitGeneralInterviewAssignmentEvaluation(
 
 export async function submitGeneralIndividualFinalResult(
   applicationId: string,
-  payload: VolunteerFinalResultRequest
+  payload: VolunteerFinalResultRequest & ScreeningResultNotifyFields
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await submitIndividualFinalResultRemote(applicationId, payload)
@@ -653,6 +715,8 @@ export async function assignGeneralVolunteerInterview(params: {
   startAt: string
   endAt: string
   maxAssignCount?: number
+  notifyTiming?: string
+  scheduledAt?: string
 }): Promise<{ interviewSlotId?: number; interviewAssignmentId?: number }> {
   assertApplicationsRemoteReady()
 
@@ -666,6 +730,8 @@ export async function assignGeneralVolunteerInterview(params: {
   const assignment = await createInterviewAssignmentRemote({
     volunteerApplicationId,
     interviewSlotId,
+    ...(params.notifyTiming ? { notifyTiming: params.notifyTiming } : {}),
+    ...(params.scheduledAt ? { scheduledAt: params.scheduledAt } : {}),
   })
 
   return {
@@ -685,6 +751,8 @@ export async function assignGeneralIndividualInterview(params: {
   startAt: string
   endAt: string
   maxAssignCount?: number
+  notifyTiming?: string
+  scheduledAt?: string
 }): Promise<{ interviewSlotId?: number; interviewAssignmentId?: number }> {
   assertApplicationsRemoteReady()
 
@@ -698,6 +766,8 @@ export async function assignGeneralIndividualInterview(params: {
   const assignment = await createInterviewAssignmentRemote({
     individualApplicationId,
     interviewSlotId,
+    ...(params.notifyTiming ? { notifyTiming: params.notifyTiming } : {}),
+    ...(params.scheduledAt ? { scheduledAt: params.scheduledAt } : {}),
   })
 
   return {
@@ -711,12 +781,17 @@ export function mapSecondInterviewStatusToFinalResultPayload(
     GeneralSecondInterviewScreeningStatus,
     'pass' | 'fail' | 'reserve1' | 'reserve2' | 'reserve3' | 'reserve4'
   >,
-  reason?: string
-): VolunteerFinalResultRequest {
-  if (status === 'pass') return { result: 'PASS', reason }
-  if (status === 'fail') return { result: 'FAIL', reason }
+  reason?: string,
+  notify?: ScreeningResultNotifyFields
+): VolunteerFinalResultRequest & ScreeningResultNotifyFields {
+  const notifyFields: ScreeningResultNotifyFields = {
+    ...(notify?.notifyTiming ? { notifyTiming: notify.notifyTiming } : {}),
+    ...(notify?.scheduledAt ? { scheduledAt: notify.scheduledAt } : {}),
+  }
+  if (status === 'pass') return { result: 'PASS', reason, ...notifyFields }
+  if (status === 'fail') return { result: 'FAIL', reason, ...notifyFields }
   const rank = Number(status.replace('reserve', '')) as 1 | 2 | 3 | 4
-  return { result: 'RESERVE', reserveRank: rank, reason }
+  return { result: 'RESERVE', reserveRank: rank, reason, ...notifyFields }
 }
 
 export type GeneralInterviewSlotListItem = {

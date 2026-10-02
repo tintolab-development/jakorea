@@ -3,6 +3,7 @@ import type { GeminiApprovedTrainingStatus } from './types'
 export type GeminiApprovedTrainingEmploymentStatus = 'ACTIVE' | 'LEAVE' | 'TRANSFER'
 
 export type GeminiApprovedTrainingInstructorInfo = {
+  memberId?: string
   name: string
   region: string
   /** null이면 0으로 바꾸지 않는다 */

@@ -92,6 +92,7 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { useCmsAlert } from '@/shared/ui'
+import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
   describeIncompleteGeneralProgramRegistrationRequiredFields,
   listIncompleteGeneralProgramRegistrationRequiredFields,
@@ -1417,6 +1418,7 @@ export function useProgramRegistrationEditor(
       setSponsorId(resolvedSponsorId)
     }
     const completion = (async () => {
+      const endOverlay = beginBlockingOverlay()
       try {
         const registrationSnapshotArgs = {
           id: registrationPendingSnapshotId(programRegistrationFormVariant),
@@ -1546,6 +1548,7 @@ export function useProgramRegistrationEditor(
           ),
         })
       } finally {
+        endOverlay()
         completionPromiseRef.current = null
       }
     })()

@@ -23,8 +23,10 @@ import {
 } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import {
   hasRecruitmentCopy,
+  hydrateGeneralRecruitmentInfoFromRows,
   pickRecruitmentCopyRow,
   resolveRecruitmentOtherMatters,
+  resolveRecruitmentRemarks,
 } from '@/features/program/shared/lib/recruitment-row-copy'
 
 function hasIsoDate(value: string | Date | undefined): boolean {
@@ -229,8 +231,10 @@ export function resolveGeneralProgramForRecruitmentEdit(program: Program): Progr
   const withOverlay = resolveGeneralRecruitDisplayProgram(withPersistedOverlay, {
     preferOverlay: false,
   })
-  return enrichVolunteerRecruitmentScalars(
-    enrichInstructorRecruitmentScalars(enrichParticipantRecruitmentScalars(withOverlay))
+  return hydrateGeneralRecruitmentInfoFromRows(
+    enrichVolunteerRecruitmentScalars(
+      enrichInstructorRecruitmentScalars(enrichParticipantRecruitmentScalars(withOverlay))
+    )
   )
 }
 
@@ -244,7 +248,6 @@ export function programToRecruitmentTabEditValues(
   const recruitmentRow = pickRecruitmentCopyRow(merged, audience)
   const recruitmentCopy = recruitmentRow != null && hasRecruitmentCopy(recruitmentRow)
   const participantInfo = merged.generalCommonInfo?.participantRecruitmentInfo
-  const instructorInfo = merged.generalCommonInfo?.instructorRecruitmentInfo
   const volunteerInfo = merged.generalCommonInfo?.volunteerRecruitmentInfo
   return {
     ...base,
@@ -263,18 +266,20 @@ export function programToRecruitmentTabEditValues(
       : (detail.additionalContentHtml ?? base.additionalContentHtml),
     otherNotes: resolveRecruitmentOtherMatters(merged, audience) ?? base.otherNotes,
     instructorRecruitmentRemarks:
-      audience === 'instructor' ? (instructorInfo?.remarks?.trim() || undefined) : undefined,
+      audience === 'instructor'
+        ? resolveRecruitmentRemarks(merged, 'instructor')
+        : undefined,
     remarks:
       audience === 'participant'
         ? participantInfo?.notesNotApplicable
           ? ''
-          : (participantInfo?.remarks?.trim() || base.remarks)
+          : (resolveRecruitmentRemarks(merged, 'participant') || base.remarks)
         : base.remarks,
     oneLineIntroduction:
       audience === 'volunteer'
         ? volunteerInfo?.notesNotApplicable
           ? ''
-          : (volunteerInfo?.remarks?.trim() || base.oneLineIntroduction)
+          : (resolveRecruitmentRemarks(merged, 'volunteer') || base.oneLineIntroduction)
         : base.oneLineIntroduction,
     ...(isGeneralRowCopyProgram(merged)
       ? generalRecruitmentRowFormSeed(recruitmentRow, audience)

@@ -1,6 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { FormResponseResponse } from '@/shared/api/generated/forms-surveys/schemas/formResponseResponse'
+import type { FormResponseUpdateRequest } from '@/shared/api/generated/forms-surveys/schemas/formResponseUpdateRequest'
 import type { PageResponseFormResponseResponse } from '@/shared/api/generated/forms-surveys/schemas/pageResponseFormResponseResponse'
 
 export type FormResponseContextType =
@@ -38,6 +39,21 @@ export async function getFormResponseRemote(
     await customInstance({
       url: `/api/admin/form-responses/${encodeURIComponent(String(responseId))}`,
       method: 'GET',
+    })
+  )
+}
+
+/** OpenAPI operationId: updateResponse — 강의평가 응답 관리자 수정 */
+export async function updateFormResponseRemote(
+  responseId: number,
+  payload: FormResponseUpdateRequest
+): Promise<FormResponseResponse> {
+  return unwrapApiBody<FormResponseResponse>(
+    await customInstance({
+      url: `/api/admin/form-responses/${encodeURIComponent(String(responseId))}`,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      data: payload,
     })
   )
 }

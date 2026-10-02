@@ -129,7 +129,7 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
     columnHeaders: ['제공받는 곳', '수집 항목', '수집·이용 목적', '제공받는 자의 보유기간'],
     dataRows: [Array.from({ length: colCount }, () => '')],
     columnFields: [
-      { kind: 'text', placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
+      { kind: 'text', placeholder: '제공받는 곳을 입력해 주세요' },
       { kind: 'text', placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
       { kind: 'text', placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
       { kind: 'text', placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },

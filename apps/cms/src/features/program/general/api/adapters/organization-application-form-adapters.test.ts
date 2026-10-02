@@ -166,6 +166,28 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     )
   })
 
+  it('fills empty previous-year and affiliated company from economy form answers', () => {
+    const form = formWithAnswers([
+      {
+        questionKeySnapshot: 'previousYearParticipation',
+        answerDisplayText: 'yes',
+      },
+      {
+        questionKeySnapshot: 'program-application-economy-seed-lesson-reply',
+        answerValueJson: JSON.stringify({
+          companyType: 'partner',
+          customCompanyName: '우리은행',
+        }),
+      },
+    ])
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: baseRow,
+      formResponse: form,
+    })
+    expect(hydrated.detail?.previousYearParticipation).toBe('참여')
+    expect(hydrated.detail?.affiliatedFinancialCompany).toBe('우리은행')
+  })
+
   it('keeps list DTO fields when form answers are empty', () => {
     const hydrated = hydrateOrganizationApplicationRowFromForm({
       row: { ...baseRow, region: '서울', educationGrade: '중1' },

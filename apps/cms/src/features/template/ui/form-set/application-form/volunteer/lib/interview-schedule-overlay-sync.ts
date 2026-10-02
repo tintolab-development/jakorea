@@ -164,6 +164,42 @@ export function listVolunteerInterviewExceptionBlockIds(
   return ids
 }
 
+function exceptionOverlayBlockIsFilled(block: VolunteerInterviewExceptionOverlayBlock): boolean {
+  if (block.exceptionDate != null && String(block.exceptionDate).trim() !== '') return true
+  if (block.interviewTime != null && String(block.interviewTime).trim() !== '') return true
+  return Array.isArray(block.selectedSlotKeys) && block.selectedSlotKeys.length > 0
+}
+
+/** 저장된 예외 일정만. persistMissing 기본값만 있는 빈 블록은 뺀다. */
+export function listFilledVolunteerInterviewExceptionBlockIds(
+  record: Record<string, unknown>,
+  store: VolunteerInterviewOverlayStore,
+  namespace?: string
+): number[] {
+  return readVolunteerInterviewExceptionOverlayBlocks(record, store, namespace)
+    .filter(exceptionOverlayBlockIsFilled)
+    .map(block => block.blockId)
+}
+
+const VOLUNTEER_INTERVIEW_RANGE_SEAL_KEY = 'recruit.volunteer.interviewRangeSeal'
+
+/** 봉사자 모집 「2차 면접 기간」→ 진행 불가일 달력 범위 overlay */
+export function syncVolunteerInterviewRangeSealOverlay(
+  start: string | Date | undefined,
+  end: string | Date | undefined
+): void {
+  const startDay = start == null ? null : dayjs(start)
+  const endDay = end == null ? null : dayjs(end)
+  if (startDay == null || endDay == null || !startDay.isValid() || !endDay.isValid()) return
+  const [from, to] = startDay.isBefore(endDay, 'day') ? [startDay, endDay] : [endDay, startDay]
+  patchGeneralRecruitOverlay({
+    [VOLUNTEER_INTERVIEW_RANGE_SEAL_KEY]: {
+      start: from.startOf('day').toISOString(),
+      end: to.startOf('day').toISOString(),
+    },
+  })
+}
+
 export function readVolunteerInterviewExceptionOverlayBlocks(
   record: Record<string, unknown>,
   store: VolunteerInterviewOverlayStore,

@@ -1,6 +1,6 @@
 import {
-  fieldCellValueToPlainText,
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
+  resolveHorizontalTableCellPlainText,
   type WritingFormDraft,
 } from '../writing-form/draft-schema.js'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from './program-application-form-economy-draft.js'
@@ -18,6 +18,32 @@ export const APPLICATION_FORM_THIRD_PARTY_RECIPIENT_HEADER = '제공받는 곳'
 
 /** 시드 placeholder. 셀 값으로 남아 있으면 미입력으로 본다. */
 export const APPLICATION_FORM_THIRD_PARTY_RECIPIENT_PLACEHOLDER = '제공받는 곳을 입력해 주세요'
+
+/** 공통 강사·봉사자·UJAT 봉사자 신청 폼 시드 기본값 */
+export const APPLICATION_FORM_THIRD_PARTY_RECIPIENT_ASSIGNED_SCHOOL = '배정된 교육 대상 학교'
+
+/** Gemini 찾아가는 연수 신청 폼 시드 기본값 */
+export const APPLICATION_FORM_THIRD_PARTY_RECIPIENT_GEMINI = 'Google'
+
+/**
+ * 등록 위저드·템플릿 관리 시드 「제공받는 곳」 기본값.
+ * 공백은 `''`. placeholder 문구를 값으로 넣지 않는다.
+ */
+export const APPLICATION_FORM_THIRD_PARTY_RECIPIENT_SEED_BY_PARAGRAPH_ID: Record<string, string> = {
+  [PROGRAM_PARTICIPANT_APPLICATION_IDS.thirdPartyConsent]: '',
+  [PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent]: '',
+  [PROGRAM_APPLICATION_FORM_ECONOMY_IDS.thirdPartyConsent]: '',
+  [PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.thirdPartyConsent]: '',
+  [UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent]: '',
+  [GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent]:
+    APPLICATION_FORM_THIRD_PARTY_RECIPIENT_GEMINI,
+  [PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent]:
+    APPLICATION_FORM_THIRD_PARTY_RECIPIENT_ASSIGNED_SCHOOL,
+  [PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent]:
+    APPLICATION_FORM_THIRD_PARTY_RECIPIENT_ASSIGNED_SCHOOL,
+  [UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent]:
+    APPLICATION_FORM_THIRD_PARTY_RECIPIENT_ASSIGNED_SCHOOL,
+}
 
 /**
  * 프로그램 신청 양식 「개인정보 제3자 정보 제공·이용 동의」 단락.
@@ -75,11 +101,7 @@ export function listIncompleteApplicationFormThirdPartyRecipientKeys(
     const col = recipientColumnIndex(paragraph.columnHeaders)
     const rowCount = Math.max(paragraph.dataRows.length, paragraph.fieldDataRows?.length ?? 0, 1)
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
-      const fieldCell = paragraph.fieldDataRows?.[rowIndex]?.[col]
-      const text =
-        fieldCell != null
-          ? fieldCellValueToPlainText(fieldCell)
-          : (paragraph.dataRows[rowIndex]?.[col] ?? '')
+      const text = resolveHorizontalTableCellPlainText(paragraph, rowIndex, col)
       if (isBlankApplicationFormThirdPartyRecipientValue(text)) {
         keys.push(`application.thirdParty.${paragraph.id}.${rowIndex}.${col}`)
       }
@@ -91,4 +113,18 @@ export function listIncompleteApplicationFormThirdPartyRecipientKeys(
 /** 신청 양식 draft에 제3자 「제공받는 곳」이 비어 있으면 true */
 export function hasIncompleteApplicationFormThirdPartyRecipient(draft: WritingFormDraft): boolean {
   return listIncompleteApplicationFormThirdPartyRecipientKeys(draft).length > 0
+}
+
+/** 첫 제3자 동의 표의 「제공받는 곳」 현재 값. 단락이 없으면 null */
+export function readApplicationFormThirdPartyRecipientValue(draft: WritingFormDraft): string | null {
+  for (const paragraph of draft.paragraphs) {
+    if (paragraph.variant !== 'horizontal_table') continue
+    if (!isApplicationFormThirdPartyConsentParagraph(paragraph.id)) continue
+    return resolveHorizontalTableCellPlainText(
+      paragraph,
+      0,
+      recipientColumnIndex(paragraph.columnHeaders)
+    )
+  }
+  return null
 }
