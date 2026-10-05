@@ -43,7 +43,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify CMS address env
+        shell: bash
+        env:
+          VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
+        run: |
+          if [ -z "${VITE_ADDRESS_API_KEY:-}" ]; then
+            echo "VITE_ADDRESS_API_KEY=MISSING"
+            exit 1
+          fi
+
+          echo "VITE_ADDRESS_API_KEY=SET"
+
       - name: Build CMS
+        env:
+          VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
         run: pnpm --filter cms build
 
       - name: Verify build output

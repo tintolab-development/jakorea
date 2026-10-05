@@ -89,7 +89,8 @@ export function ParticipatingInstitutionScheduleChangeModal({
     >
       <div className="participating-institution-schedule-change-modal__content">
         <p className="participating-institution-schedule-change-modal__description">
-          일정은 아래의 교육 진행 기간 내에서만 변경 가능합니다.
+          일정은 아래의 교육 진행 기간 내에서만 변경 가능합니다. 같은 날짜에 시작하는 이
+          기관의 교육 일정은 함께 옮겨집니다.
         </p>
 
         <DetailInfoForm title="교육 진행 기간" hideHeader mode="edit">

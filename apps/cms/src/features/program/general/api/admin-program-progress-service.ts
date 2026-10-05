@@ -335,19 +335,19 @@ export async function downloadGeneralProgramLectureReportFiles(
   }
 }
 
-/** 참여 기관 실제 교육 일정 변경. `PATCH …/participants/{id}/schedules`. */
+/** 참여 기관 실제 교육 일정 변경. `PATCH …/participants/{id}/schedules` — `{ fromDate, toDate }`. */
 export async function changeGeneralParticipatingInstitutionSchedules(
   programId: string,
   participantId: string,
   payload: {
-    changes: Array<{ scheduleId: number; educationDate: string }>
-    reason: string
+    fromDate: string
+    toDate: string
   }
 ): Promise<void> {
   assertProgramProgressRemoteReady()
   await changeParticipantSchedulesRemote(programId, participantId, {
-    changes: payload.changes,
-    reason: payload.reason.trim() || '교육 진행 일정 변경',
+    fromDate: payload.fromDate,
+    toDate: payload.toDate,
   })
 }
 

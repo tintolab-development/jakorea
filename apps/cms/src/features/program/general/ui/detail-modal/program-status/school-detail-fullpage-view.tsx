@@ -17,6 +17,7 @@ import {
   giveUpGeneralParticipatingInstitution,
 } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { buildParticipantScheduleDateMoves } from '@/features/program/general/lib/participating-institution-schedule-date-moves'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -2676,28 +2677,20 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             )
             return
           }
-          const changes = payload.changes.flatMap(change => {
-            const scheduleId = change.session.resolvedScheduleId
-            if (typeof scheduleId !== 'number' || !Number.isFinite(scheduleId) || scheduleId <= 0) {
-              return []
-            }
-            return [{ scheduleId, educationDate: change.changedDate }]
-          })
-          if (changes.length === 0) {
+          const moves = buildParticipantScheduleDateMoves(payload.changes)
+          if (!moves.ok) {
             void showAlert({
               title: '일정 변경 실패',
-              content:
-                '교육 일정 ID가 없어 변경할 수 없습니다. 참여 기관 sessions.scheduleId가 필요합니다.',
+              content: moves.message,
             })
             return
           }
           void (async () => {
             setScheduleChangeSubmitting(true)
             try {
-              await changeGeneralParticipatingInstitutionSchedules(programId, detail.id, {
-                changes,
-                reason: '교육 진행 일정 변경',
-              })
+              for (const move of moves.moves) {
+                await changeGeneralParticipatingInstitutionSchedules(programId, detail.id, move)
+              }
               await queryClient.invalidateQueries({
                 queryKey: generalProgramProgressQueryKeys.institutions(programId),
               })

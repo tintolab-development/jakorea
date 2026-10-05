@@ -43,6 +43,16 @@ describe('tryGetProgramAdminDetailInfoTabUrlByIdPrefix', () => {
     expect(tryGetProgramAdminDetailInfoTabUrlByIdPrefix('167001')).toBeNull()
   })
 
+  it('does not treat 18xxxx trained-teacher ids as UJAT', () => {
+    expect(tryGetProgramAdminDetailInfoTabUrlByIdPrefix('186020')).toBeNull()
+  })
+
+  it('still opens known UJAT primary ids on the UJAT list', () => {
+    expect(tryGetProgramAdminDetailInfoTabUrlByIdPrefix('182101')).toBe(
+      '/programs/ujat?programId=182101&lnb=info&tab=info'
+    )
+  })
+
   it('returns company-school for economy-prog prefix', () => {
     expect(tryGetProgramAdminDetailInfoTabUrlByIdPrefix('economy-prog-001')).toBe(
       '/programs/company-school?programId=economy-prog-001&lnb=info&tab=info'

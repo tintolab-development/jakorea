@@ -5,17 +5,8 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
-import type { ChangeItem } from './changeItem';
 
 export interface ChangeRequest {
-  /**
-     * @minItems 0
-     * @maxItems 50
-     */
-  changes: ChangeItem[];
-  /**
-     * @minLength 0
-     * @maxLength 500
-     */
-  reason: string;
+  fromDate: string;
+  toDate: string;
 }
