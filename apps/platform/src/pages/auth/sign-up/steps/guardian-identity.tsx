@@ -1,4 +1,8 @@
 import { useCallback, useRef } from 'react'
+import {
+  IDENTITY_MODULE_IDLE_DESCRIPTION,
+  IDENTITY_MODULE_IDLE_TITLE,
+} from '@jakorea/domain/shared/identity-module-copy'
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
 import {
   useGuardianIdentityVerification,
@@ -51,9 +55,9 @@ export function GuardianIdentityStep({ signUp }: GuardianIdentityStepProps) {
         <div className={styles.stepContent}>
           <div className={styles.identityModule}>
             <PFText as="p" typo="bd-sm-rg" color="neutral-warm-500">
-              보호자 명의 휴대폰으로 본인인증을 진행해 주세요.
+              {IDENTITY_MODULE_IDLE_TITLE}
               <br />
-              인증이 끝나면 이 화면으로 돌아와 다음 단계로 진행돼요.
+              {IDENTITY_MODULE_IDLE_DESCRIPTION}
             </PFText>
             {errorMessage ? (
               <PFText as="p" typo="bd-sm-md" color="error" className={styles.stepMessage}>

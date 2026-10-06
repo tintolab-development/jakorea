@@ -135,6 +135,7 @@ export function useSignUp() {
   const [schoolSource, setSchoolSource] = useState<'neis' | 'careerNet' | null>(null)
   const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(null)
   const [grade, setGrade] = useState('')
+  const [affiliationName, setAffiliationName] = useState('')
   const [employmentStatus, setEmploymentStatus] = useState<EmploymentStatus | null>('employed')
   const [address, setAddress] = useState('')
   const [addressDetail, setAddressDetail] = useState('')
@@ -502,6 +503,8 @@ export function useSignUp() {
       setSchoolNeisCode(null)
       setSchoolOrganizationId(null)
       setGrade('')
+    } else {
+      setAffiliationName('')
     }
   }
 
@@ -616,6 +619,7 @@ export function useSignUp() {
       schoolAddress,
       schoolSource: schoolSource ?? undefined,
       grade,
+      affiliationName,
       employmentStatus,
       address,
       addressDetail,
@@ -667,6 +671,7 @@ export function useSignUp() {
     phone: verifiedPhone,
     schoolName,
     schoolAddress,
+    affiliationName,
     employmentStatus,
   })
 
@@ -791,6 +796,8 @@ export function useSignUp() {
       selectSchool: handleSchoolSelect,
       grade,
       setGrade,
+      affiliationName,
+      setAffiliationName,
       employmentStatus,
       setEmploymentStatus,
       address,

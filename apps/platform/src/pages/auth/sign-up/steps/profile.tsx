@@ -126,7 +126,16 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
               }))}
             />
           </>
-        ) : null}
+        ) : (
+          <PFTextInput
+            size="xlarge"
+            label="소속 기관명"
+            placeholder="소속 기관명을 입력해 주세요"
+            value={profile.affiliationName}
+            onValueChange={profile.setAffiliationName}
+            message="소속된 기관이 없으신 경우 비워두셔도 괜찮아요"
+          />
+        )}
 
         <div className={styles.addressField}>
           <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>

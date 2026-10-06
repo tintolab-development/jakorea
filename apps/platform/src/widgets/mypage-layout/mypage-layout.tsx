@@ -53,7 +53,11 @@ export function MypageLayout({
     <div className={shellClassName}>
       {variant === 'home' ? <div className={styles.pageBackground} aria-hidden="true" /> : null}
       <div className={layoutClassName}>
-        <aside className={styles.sidebar}>
+        <aside
+          className={[styles.sidebar, sidebarLeading ? styles.sidebarWithLeading : undefined]
+            .filter(Boolean)
+            .join(' ')}
+        >
           {sidebarLeading ? <div className={styles.sidebarLeading}>{sidebarLeading}</div> : null}
           <Lnb
             items={lnbItems}
