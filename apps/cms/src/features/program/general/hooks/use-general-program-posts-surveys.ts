@@ -170,10 +170,37 @@ export function useGeneralProgramPosts(programId: string | undefined) {
   const invalidatePosts = useCallback(async () => {
     if (!programId) return
     await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) })
-    await queryClient.invalidateQueries({
-      queryKey: [...generalProgramQueryKeys.posts(programId)],
-    })
   }, [programId, queryClient])
+
+  /**
+   * 삭제된 글의 상세·댓글·반응·첨부·읽음 쿼리가 다시 나가 404/400 을 내지 않도록 캐시에서 먼저 뺀다.
+   * 목록 무효화는 exact — posts 키 prefix 가 글 단위 키를 포함해 열린 상세 모달 쿼리까지 refetch 시킨다.
+   */
+  const removeDeletedPost = useCallback(
+    async (postId: string) => {
+      if (!programId) return
+      const scopedKeys = [
+        generalProgramQueryKeys.postAttachments(programId, postId),
+        generalProgramQueryKeys.postDetail(programId, postId),
+        generalProgramQueryKeys.postComments(programId, postId),
+        generalProgramQueryKeys.postReactions(programId, postId),
+        generalProgramQueryKeys.postReads(programId, postId),
+      ]
+      for (const queryKey of scopedKeys) {
+        await queryClient.cancelQueries({ queryKey })
+        queryClient.removeQueries({ queryKey })
+      }
+      queryClient.setQueryData<Awaited<ReturnType<typeof fetchGeneralProgramPosts>>>(
+        generalProgramQueryKeys.posts(programId),
+        prev => prev?.filter(item => String(item.postId) !== postId)
+      )
+      await queryClient.invalidateQueries({
+        queryKey: generalProgramQueryKeys.posts(programId),
+        exact: true,
+      })
+    },
+    [programId, queryClient]
+  )
 
   return {
     posts,
@@ -181,6 +208,7 @@ export function useGeneralProgramPosts(programId: string | undefined) {
     loading: remoteEnabled ? query.isFetching && query.data === undefined : false,
     isRemoteDataSource: remoteEnabled && !query.isError,
     invalidatePosts,
+    removeDeletedPost,
     createPost: async (payload: { title?: string; content: string; visibilityType?: string }) => {
       if (!programId || !remoteEnabled) return null
       const result = await createGeneralProgramPost(programId, payload)
@@ -199,7 +227,7 @@ export function useGeneralProgramPosts(programId: string | undefined) {
     deletePost: async (postId: string) => {
       if (!programId || !remoteEnabled) return
       await deleteGeneralProgramPost(programId, postId)
-      await invalidatePosts()
+      await removeDeletedPost(postId)
     },
   }
 }

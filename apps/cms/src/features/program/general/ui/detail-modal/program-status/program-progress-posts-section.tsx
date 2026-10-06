@@ -6,7 +6,7 @@ import './program-progress-posts-section.css'
 
 /** 일반 프로그램 진행 현황 — 게시글 (개인·기관 동일 UI, 프로그램 전체 범위) */
 export function ProgramProgressPostsSection({ program }: { program: Program }) {
-  const { posts, files, loading, isRemoteDataSource, invalidatePosts } =
+  const { posts, files, loading, isRemoteDataSource, invalidatePosts, removeDeletedPost } =
     useGeneralProgramPosts(program.id)
 
   if (loading && isRemoteDataSource && posts == null) {
@@ -25,6 +25,9 @@ export function ProgramProgressPostsSection({ program }: { program: Program }) {
         filesOverride={isRemoteDataSource ? files : null}
         onPostWriteSuccess={() => {
           void invalidatePosts()
+        }}
+        onPostDeleted={postId => {
+          void removeDeletedPost(postId)
         }}
       />
     </div>

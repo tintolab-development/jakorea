@@ -103,14 +103,15 @@ export function mapProgramPostListItemToDomain(
   }
 }
 
+/** 관리자 게시글 상세 런타임은 `postId`, 생성 스키마는 `id` — 백엔드 스키마명 충돌 해소 전까지 둘 다 수용 */
 export function mapProgramPostResponseToDomain(
-  dto: ProgramPostResponse,
+  dto: ProgramPostResponse & { postId?: number },
   programId: string
 ): ProgramPost {
   const createdAt = dto.createdAt ?? new Date().toISOString()
   const content = dto.content?.trim() ?? ''
   return {
-    id: String(dto.id ?? ''),
+    id: String(dto.postId ?? dto.id ?? ''),
     programId: dto.programId != null ? String(dto.programId) : programId,
     authorName: resolvePostAuthorName(dto.createdByActorType, dto.createdByActorId),
     createdByActorType: dto.createdByActorType,

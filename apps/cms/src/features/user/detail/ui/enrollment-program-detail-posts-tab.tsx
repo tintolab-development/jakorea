@@ -5,7 +5,8 @@
  */
 
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { CmsButton, AttachmentClipIcon, ConfirmModal } from '@/shared/ui'
+import { CmsButton, AttachmentClipIcon, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
+import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import { Input, Dropdown, Popover, type MenuProps } from 'antd'
 import type { Program, ProgramPost, ProgramFile } from '@/types/domain'
@@ -39,6 +40,8 @@ export interface EnrollmentProgramDetailPostsTabProps {
   writeAuthorName?: string
   /** 게시글 등록 성공 시 추가 콜백 (목록 갱신 후 호출) */
   onPostWriteSuccess?: () => void
+  /** 게시글 삭제 성공 시 콜백. 없으면 onPostWriteSuccess 를 호출한다 */
+  onPostDeleted?: (postId: string) => void
   /** remote API 등으로 주입한 게시글 목록 — 있으면 mock 대신 사용 */
   postsOverride?: ProgramPost[] | null
   /** remote API 첨부 파일 목록 — 있으면 우측 파일 패널에 사용 */
@@ -183,6 +186,11 @@ function PostAttachmentIcon() {
 
 const DEFAULT_WRITE_AUTHOR_NAME = 'JA KOREA 알림'
 
+const POST_DELETE_GUIDE_LINES = [
+  '해당 게시글을 삭제하시겠습니까?',
+  '삭제된 정보는 되돌릴 수 없습니다.',
+]
+
 export function EnrollmentProgramDetailPostsTab({
   program,
   schoolId,
@@ -191,6 +199,7 @@ export function EnrollmentProgramDetailPostsTab({
   onWriteModalOpenChange,
   writeAuthorName = DEFAULT_WRITE_AUTHOR_NAME,
   onPostWriteSuccess,
+  onPostDeleted,
   postsOverride = null,
   filesOverride = null,
 }: EnrollmentProgramDetailPostsTabProps) {
@@ -203,6 +212,7 @@ export function EnrollmentProgramDetailPostsTab({
     : setInternalWriteModalOpen
 
   const currentUser = useAuthStore(state => state.user)
+  const { showAlert } = useCmsAlert()
   const membersRemote = isMembersRemoteEnabled()
   const [detailPost, setDetailPost] = useState<ProgramPost | null>(null)
   const [editingPost, setEditingPost] = useState<ProgramPost | null>(null)
@@ -329,10 +339,18 @@ export function EnrollmentProgramDetailPostsTab({
       }
       setRemovedPostIds(prev => new Set(prev).add(deleteTargetPost.id))
       if (detailPost?.id === deleteTargetPost.id) setDetailPost(null)
-      onPostWriteSuccess?.()
+      if (onPostDeleted) onPostDeleted(deleteTargetPost.id)
+      else onPostWriteSuccess?.()
       setDeleteTargetPost(null)
     } catch (e) {
-      console.error('게시글 삭제 실패:', e)
+      const data =
+        e && typeof e === 'object' && 'response' in e
+          ? (e as { response?: { data?: unknown } }).response?.data
+          : undefined
+      showAlert({
+        title: '안내',
+        content: extractApiErrorMessage(data, { fallback: '게시글 삭제에 실패했습니다.' }),
+      })
     } finally {
       setDeleteSubmitting(false)
     }
@@ -632,13 +650,10 @@ export function EnrollmentProgramDetailPostsTab({
         }}
         onPostStatsChanged={() => setPostsVersion(v => v + 1)}
       />
-      <ConfirmModal
+      <DeleteGuideModal
         open={deleteTargetPost != null}
-        title="게시글 삭제"
-        content="선택한 게시글을 삭제하시겠습니까?"
-        warningMessage="삭제된 게시글은 복구할 수 없습니다."
-        confirmText="삭제"
-        danger
+        title="게시글 삭제 안내"
+        lines={POST_DELETE_GUIDE_LINES}
         confirmLoading={deleteSubmitting}
         onConfirm={() => void handleConfirmDeletePost()}
         onCancel={() => {

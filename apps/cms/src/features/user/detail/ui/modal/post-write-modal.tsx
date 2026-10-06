@@ -25,9 +25,7 @@ import {
 } from '@/features/program/general/api/admin-general-programs-service'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import {
-  ADMIN_FILE_PURPOSE,
   contentUrlForFileObjectId,
-  createFileAttachment,
   parseFileObjectId,
   programPostFileOwner,
   programPostInlineImageOwner,
@@ -214,8 +212,27 @@ export function PostWriteModal({
 
     setLoading(true)
     try {
-      const ownerId = parseFileObjectId(programId) ?? 1
-      const owner = programPostFileOwner(ownerId, ADMIN_FILE_PURPOSE.PROGRAM_POST_ATTACHMENT)
+      const editingPostId =
+        isEditMode && editingPost && !editingPost.id.startsWith('temp-')
+          ? parseFileObjectId(editingPost.id)
+          : null
+      if (
+        editingPostId != null &&
+        files.length > 0 &&
+        shouldUseGeneralProgramsRemoteApi() &&
+        loadedAttachmentIdsRef.current == null
+      ) {
+        // PUT attachments 는 전체 교체라 기존 목록 없이 보내면 기존 첨부가 해제된다.
+        showAlert({
+          title: '안내',
+          content: '기존 첨부파일을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+        return
+      }
+      const owner = programPostFileOwner({
+        programId: parseFileObjectId(programId) ?? 1,
+        postId: editingPostId,
+      })
       const uploadResults: Array<{
         fileName: string
         fileUrl: string
@@ -224,12 +241,6 @@ export function PostWriteModal({
       }> = []
       for (const file of files) {
         const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-        await createFileAttachment({
-          fileObjectId: uploaded.fileObjectId,
-          owner,
-          attachmentType: ADMIN_FILE_PURPOSE.PROGRAM_POST_ATTACHMENT,
-          displayOrder: uploadResults.length + 1,
-        })
         uploadResults.push({
           fileName: file.name,
           fileUrl: contentUrlForFileObjectId(uploaded.fileObjectId),
@@ -336,7 +347,7 @@ export function PostWriteModal({
       open={open}
       onCancel={onCancel}
       title={isEditMode ? '게시글 수정' : '게시글 등록'}
-      width={800}
+      width={1000}
       className="post-write-modal"
       footer={
         <div className="post-write-modal__footer-actions">
