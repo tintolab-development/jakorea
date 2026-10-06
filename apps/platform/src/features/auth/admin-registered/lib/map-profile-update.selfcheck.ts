@@ -77,6 +77,20 @@ const with1365 = mapAdminRegisteredEditToPortalProfileUpdate({
 assert.equal(with1365.external1365Id, 'vol-1')
 assert.equal(with1365.schoolEnrollmentStatus, 'NOT_ENROLLED')
 assert.equal(with1365.schoolName, '')
+assert.equal(with1365.affiliationName, '')
 assert.equal(with1365.schoolOrganizationId, null)
+
+const withAffiliation = mapAdminRegisteredEditToPortalProfileUpdate({
+  schoolStatus: 'none',
+  schoolName: '',
+  affiliationName: '지역아동센터',
+  grade: '',
+  address: '서울',
+  addressDetail: '1',
+  volunteerId: '',
+})
+assert.equal(withAffiliation.affiliationName, '지역아동센터')
+assert.equal(withAffiliation.schoolName, '')
+assert.equal(withAffiliation.grade, '')
 
 console.log('map-profile-update.selfcheck: ok')
