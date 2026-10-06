@@ -76,7 +76,11 @@ export default defineConfig(({ mode }) => {
     if (!cmsTarget && !homepageTarget) return undefined
     const entries: Record<string, ProxyOptions> = {}
     if (cmsTarget) {
-      entries['/api/portal'] = withNgrokSkip(cmsTarget, ngrokSkip)
+      entries['/api/portal'] = {
+        ...withNgrokSkip(cmsTarget, ngrokSkip),
+        // 안내사항 본문 이미지 302 Location(백엔드 절대 주소)을 dev origin 으로 — XHR 이 교차 출처로 넘어가지 않게
+        autoRewrite: true,
+      }
       // CMS shared auth (NICE start is public). Must beat the catch-all `/api` → 8081.
       entries['/api/auth'] = withNgrokSkip(cmsTarget, ngrokSkip)
     }
