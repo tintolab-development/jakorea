@@ -251,6 +251,25 @@ export function useApplicantsDetail({
     [showAlert]
   )
 
+  /** 강사 승인·반려 — 동의 부족(409 INSTRUCTOR_PARTICIPATION_CONSENT_REQUIRED) 등 서버 문구를 그대로 노출 */
+  const notifyRemoteInstructorDecisionFailure = useCallback(
+    (error: unknown) => {
+      console.debug('instructor applications remote decision failed', error)
+      const responseData =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: unknown } }).response?.data
+          : undefined
+      showAlert({
+        title: '처리 실패',
+        content: extractApiErrorMessage(responseData, {
+          httpStatus: getApiErrorHttpStatus(error),
+          fallback: '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        }),
+      })
+    },
+    [showAlert]
+  )
+
   const notifyNotificationResendFailure = useCallback(
     (error: unknown) => {
       const responseData =
@@ -395,11 +414,11 @@ export function useApplicantsDetail({
         await applicationsRemote.invalidateApplications()
         return 'ok'
       } catch (error) {
-        notifyRemoteDecisionFailure(error)
+        notifyRemoteInstructorDecisionFailure(error)
         return 'error'
       }
     },
-    [applicationsRemote, notifyRemoteDecisionFailure, showAlert]
+    [applicationsRemote, notifyRemoteInstructorDecisionFailure, showAlert]
   )
 
   const applyRemoteIndividualDecision = useCallback(
