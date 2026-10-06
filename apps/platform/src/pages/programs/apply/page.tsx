@@ -35,6 +35,8 @@ import {
   isApplicationSexOffenseInquiryParagraphId,
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
+  isInstructorAvailableScheduleParagraphId,
+  isInstructorCrimeRecordParagraphId,
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
 import {
@@ -91,6 +93,23 @@ import {
   shouldShowSexOffenseInquiry,
   type ApplyInstitutionSexOffenseValues,
 } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense'
+import {
+  ApplyInstructorCrimeRecord,
+  emptyInstructorCrimeRecord,
+  findIncompleteInstructorCrimeRecordMessage,
+  instructorCrimeRecordAnswerFromValues,
+  instructorCrimeRecordValuesFromDraftAnswer,
+  type ApplyInstructorCrimeRecordValues,
+} from '@/features/program/ui/apply-instructor-crime-record/apply-instructor-crime-record'
+import {
+  ApplyInstructorAvailableSchedule,
+  buildInstructorApplyScheduleSlots,
+  emptyInstructorAvailableSchedule,
+  findIncompleteInstructorAvailableScheduleMessage,
+  instructorAvailableScheduleAnswerFromValues,
+  instructorAvailableScheduleValuesFromDraftAnswer,
+  type ApplyInstructorAvailableScheduleValues,
+} from '@/features/program/ui/apply-instructor-available-schedule/apply-instructor-available-schedule'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
@@ -175,6 +194,10 @@ export function ProgramApplyPage() {
   const [sexOffense, setSexOffense] = useState<ApplyInstitutionSexOffenseValues>(
     emptyInstitutionSexOffense,
   )
+  const [instructorCrimeRecord, setInstructorCrimeRecord] =
+    useState<ApplyInstructorCrimeRecordValues>(emptyInstructorCrimeRecord)
+  const [instructorSchedule, setInstructorSchedule] =
+    useState<ApplyInstructorAvailableScheduleValues>(emptyInstructorAvailableSchedule)
   const [submitError, setSubmitError] = useState<string | null>(null)
   /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
   const hydratedFormKeyRef = useRef<string | null>(null)
@@ -215,6 +238,16 @@ export function ProgramApplyPage() {
   const profileTeacherMobile = profileDefaults.teacherMobile
   const profileTeacherEmail = profileDefaults.teacherEmail
   const showPreferredEducationForm = program?.educationForm === 'participant_choice'
+  const instructorScheduleSlots = useMemo(
+    () =>
+      program
+        ? buildInstructorApplyScheduleSlots({
+            educationScheduleLines: program.educationScheduleLines,
+            educationSchedules: program.educationSchedules,
+          })
+        : [],
+    [program],
+  )
   const remoteForm = applicationFormQuery.bundle?.form
   const remoteFormKey =
     remoteApplyEnabled && applicationFormQuery.status === 'ready' && remoteForm
@@ -303,6 +336,21 @@ export function ProgramApplyPage() {
               draftAnswerForParagraph(draftAnswers, inquiryParagraph),
             ) ?? emptyInstitutionSexOffense(),
           )
+          const crimeParagraph = findDraftParagraph(remoteDraft, isInstructorCrimeRecordParagraphId)
+          setInstructorCrimeRecord(
+            instructorCrimeRecordValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, crimeParagraph),
+            ) ?? emptyInstructorCrimeRecord(),
+          )
+          const instructorScheduleParagraph = findDraftParagraph(
+            remoteDraft,
+            isInstructorAvailableScheduleParagraphId,
+          )
+          setInstructorSchedule(
+            instructorAvailableScheduleValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, instructorScheduleParagraph),
+            ) ?? emptyInstructorAvailableSchedule(),
+          )
           return
         }
         /** 원격 양식은 왔는데 문서를 못 읽으면 카탈로그 시드로 바꾸지 않는다. */
@@ -345,6 +393,8 @@ export function ProgramApplyPage() {
       setTeamInfo(emptyIndividualTeamInfo())
       setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
       setSexOffense(emptyInstitutionSexOffense())
+      setInstructorCrimeRecord(emptyInstructorCrimeRecord())
+      setInstructorSchedule(emptyInstructorAvailableSchedule())
       return
     }
 
@@ -362,6 +412,8 @@ export function ProgramApplyPage() {
     setTeamInfo(emptyIndividualTeamInfo())
     setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
     setSexOffense(emptyInstitutionSexOffense())
+    setInstructorCrimeRecord(emptyInstructorCrimeRecord())
+    setInstructorSchedule(emptyInstructorAvailableSchedule())
   }, [
     program,
     programId,
@@ -444,6 +496,25 @@ export function ProgramApplyPage() {
       if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
         return (
           <ApplyInstitutionSexOffenseInquiry value={sexOffense} onChange={setSexOffense} />
+        )
+      }
+
+      if (isInstructorCrimeRecordParagraphId(paragraph.id)) {
+        return (
+          <ApplyInstructorCrimeRecord
+            value={instructorCrimeRecord}
+            onChange={setInstructorCrimeRecord}
+          />
+        )
+      }
+
+      if (isInstructorAvailableScheduleParagraphId(paragraph.id)) {
+        return (
+          <ApplyInstructorAvailableSchedule
+            slots={instructorScheduleSlots}
+            value={instructorSchedule}
+            onChange={setInstructorSchedule}
+          />
         )
       }
 
@@ -619,6 +690,9 @@ export function ProgramApplyPage() {
       teamInfo,
       guidanceAnswers,
       sexOffense,
+      instructorCrimeRecord,
+      instructorSchedule,
+      instructorScheduleSlots,
       applyCase,
       showTrainedTeachersApply,
       showGeneralPreferredSchedule,
@@ -762,6 +836,31 @@ export function ProgramApplyPage() {
           return
         }
       }
+      const instructorCrimeParagraph = findDraftParagraph(
+        displayDraft,
+        isInstructorCrimeRecordParagraphId,
+      )
+      if (instructorCrimeParagraph) {
+        const crimeError = findIncompleteInstructorCrimeRecordMessage(instructorCrimeRecord)
+        if (crimeError) {
+          setSubmitError(crimeError)
+          return
+        }
+      }
+      const instructorScheduleParagraph = findDraftParagraph(
+        displayDraft,
+        isInstructorAvailableScheduleParagraphId,
+      )
+      if (instructorScheduleParagraph) {
+        const scheduleError = findIncompleteInstructorAvailableScheduleMessage(
+          instructorSchedule,
+          instructorScheduleSlots,
+        )
+        if (scheduleError) {
+          setSubmitError(scheduleError)
+          return
+        }
+      }
 
       const overrides: Record<string, unknown> = {}
       if (preferredAnswer != null) {
@@ -789,6 +888,17 @@ export function ProgramApplyPage() {
       if (sexOffenseParagraph) {
         overrides[resolveApplicationAnswerKey(sexOffenseParagraph)] =
           sexOffenseSubmissionAnswerFromValues(sexOffense)
+      }
+      if (instructorCrimeParagraph) {
+        overrides[resolveApplicationAnswerKey(instructorCrimeParagraph)] =
+          instructorCrimeRecordAnswerFromValues(instructorCrimeRecord)
+      }
+      if (instructorScheduleParagraph) {
+        overrides[resolveApplicationAnswerKey(instructorScheduleParagraph)] =
+          instructorAvailableScheduleAnswerFromValues(
+            instructorSchedule,
+            instructorScheduleSlots,
+          )
       }
       const inquiryParagraph = findDraftParagraph(
         displayDraft,

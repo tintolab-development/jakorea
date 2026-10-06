@@ -158,3 +158,20 @@ export function PFFormFieldValueText({
     <Tag className={[styles.fieldValueText, className].filter(Boolean).join(' ')}>{children}</Tag>
   )
 }
+
+export type PFFormFieldHintTextProps = {
+  children: ReactNode
+  className?: string
+  as?: 'span' | 'p'
+}
+
+/** 읽기 전용 안내 — CMS `form-editor-template-field-hint-text` */
+export function PFFormFieldHintText({
+  children,
+  className,
+  as: Tag = 'span',
+}: PFFormFieldHintTextProps) {
+  return (
+    <Tag className={[styles.fieldHintText, className].filter(Boolean).join(' ')}>{children}</Tag>
+  )
+}

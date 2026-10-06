@@ -1,0 +1,25 @@
+.root {
+  width: 100%;
+}
+
+/*
+ * 신청 양식 FormTemplateHost 안에서 typo-* 가 unset 된다.
+ * PFFormFieldTable 라벨을 신청 표와 동일하게 복구한다.
+ */
+:global(.form-template-host) .root :global(.typo-form-field-label) {
+  font-family: var(--font-family-base);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+:global(.form-template-host) .root :global(.typo-bd-sm-rg) {
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.14px;
+}
