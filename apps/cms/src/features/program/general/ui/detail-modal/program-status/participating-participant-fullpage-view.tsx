@@ -69,6 +69,7 @@ import {
   type ParticipatingIndividualParticipantAssignmentSectionHandle,
 } from './participating-individual-participant-assignment-section'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
+import { isSubmissionTeamApplicable } from '@/features/program/general/lib/submission-team-applicable'
 import './school-detail-fullpage-view.css'
 import './participating-participant-fullpage-view.css'
 
@@ -111,6 +112,10 @@ export function ParticipatingParticipantFullpageView({
   const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const attendanceSectionRef = useRef<ParticipatingIndividualParticipantAttendanceSectionHandle>(null)
   const assignmentSectionRef = useRef<ParticipatingIndividualParticipantAssignmentSectionHandle>(null)
+  const [submissionTeamRejected, setSubmissionTeamRejected] = useState(false)
+  const submissionTeamApplicable =
+    isSubmissionTeamApplicable(program.businessArea) && !submissionTeamRejected
+  const handleSubmissionTeamNotApplicable = useCallback(() => setSubmissionTeamRejected(true), [])
   const [participantPatches, setParticipantPatches] = useState<
     Partial<ParticipatingIndividualParticipantRow>
   >({})
@@ -590,14 +595,16 @@ export function ParticipatingParticipantFullpageView({
             </>
           ) : activeTab === 'assignments' ? (
             <>
-              <CmsButton
-                variant="secondary"
-                size="large"
-                width={140}
-                onClick={() => assignmentSectionRef.current?.openTeamChangeModal()}
-              >
-                팀 변경
-              </CmsButton>
+              {submissionTeamApplicable ? (
+                <CmsButton
+                  variant="secondary"
+                  size="large"
+                  width={140}
+                  onClick={() => assignmentSectionRef.current?.openTeamChangeModal()}
+                >
+                  팀 변경
+                </CmsButton>
+              ) : null}
               <CmsButton
                 variant="secondary"
                 size="large"
@@ -654,6 +661,7 @@ export function ParticipatingParticipantFullpageView({
               ref={assignmentSectionRef}
               program={program}
               participant={mergedParticipant}
+              onTeamFeatureNotApplicable={handleSubmissionTeamNotApplicable}
             />
           </div>
         )}
