@@ -273,6 +273,41 @@ assert.equal(
   prepared.paragraphs.some(paragraph => paragraph.paragraphTitle === '면접 진행 가능 일정'),
   false
 )
+const dynamicInterviewId = 'program-participant-application-seed-interview-schedule'
+const preparedWithInterview = prepareIndividualApplicationDraft(
+  {
+    ...visibleDraft!,
+    paragraphs: [
+      visibleDraft!.paragraphs[0]!,
+      {
+        id: dynamicInterviewId,
+        kind: 'single_item',
+        variant: 'horizontal_table',
+        paragraphTitle: '면접 진행 가능 일정',
+        paragraphDescription: '',
+        requiredMark: true,
+        participatesInTitleNumbering: true,
+        tableFlavor: 'text',
+        columnHeaders: ['면접 진행 가능일', ''],
+        dataRows: [['', '']],
+        columnFields: [],
+        fieldDataRows: [],
+        bottomText: '',
+        showBottomText: false,
+        showBottomConsent: false,
+        bottomConsent: 'agree',
+        answerRequired: true,
+      },
+      ...visibleDraft!.paragraphs.slice(1),
+    ],
+  },
+  { keepParagraphIds: new Set([dynamicInterviewId]) },
+)
+assert.deepEqual(
+  preparedWithInterview.paragraphs.map(paragraph => paragraph.id),
+  [visibleId, dynamicInterviewId, hiddenScheduleId, explanationId, hiddenTeamId],
+)
+
 const preparedTeam = prepared.paragraphs.find(paragraph => paragraph.id === hiddenTeamId)
 assert.ok(preparedTeam)
 assert.equal(preparedTeam.requiredMark, true)

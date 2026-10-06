@@ -40,6 +40,8 @@ import {
   isApplicationSexOffenseInquiryParagraphId,
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
+  isDynamicIndividualInterviewParagraph,
+  isIndividualInterviewScheduleParagraphId,
   isInstructorAvailableScheduleParagraphId,
   isInstructorCrimeRecordParagraphId,
   shouldShowEducationPlaceOnBasicInfo,
@@ -111,6 +113,8 @@ import {
   buildInstructorApplyScheduleSlots,
   emptyInstructorAvailableSchedule,
   findIncompleteInstructorAvailableScheduleMessage,
+  findIncompleteInterviewScheduleMessage,
+  INDIVIDUAL_INTERVIEW_SCHEDULE_COPY,
   instructorAvailableScheduleAnswerFromValues,
   instructorAvailableScheduleOptionValues,
   instructorAvailableScheduleValuesFromDraftAnswer,
@@ -205,6 +209,8 @@ export function ProgramApplyPage() {
     useState<ApplyInstructorCrimeRecordValues>(emptyInstructorCrimeRecord)
   const [instructorSchedule, setInstructorSchedule] =
     useState<ApplyInstructorAvailableScheduleValues>(emptyInstructorAvailableSchedule)
+  const [interviewSchedule, setInterviewSchedule] =
+    useState<ApplyInstructorAvailableScheduleValues>(emptyInstructorAvailableSchedule)
   const [submitError, setSubmitError] = useState<string | null>(null)
   /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
   const hydratedFormKeyRef = useRef<string | null>(null)
@@ -268,6 +274,16 @@ export function ProgramApplyPage() {
         : []),
     [program, runtimeInstructorScheduleSlots],
   )
+  const runtimeInterviewParagraph = useMemo(() => {
+    const paragraphs = coerceApplicationFormDocument(remoteForm)?.paragraphs
+    if (!Array.isArray(paragraphs)) return null
+    const found = paragraphs.find(isDynamicIndividualInterviewParagraph)
+    return found ? (found as { id: string }) : null
+  }, [remoteForm])
+  const interviewSlots = useMemo(
+    () => readRuntimeInstructorScheduleSlots(runtimeInterviewParagraph) ?? [],
+    [runtimeInterviewParagraph],
+  )
   const runtimeHiddenAnswerKeys = useMemo(
     () => collectRuntimeHiddenAnswerKeys(remoteForm),
     [remoteForm],
@@ -309,10 +325,23 @@ export function ProgramApplyPage() {
           })
           setDraft(
             applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
-              ? prepareIndividualApplicationDraft(remoteDraft)
+              ? prepareIndividualApplicationDraft(remoteDraft, {
+                  keepParagraphIds: runtimeInterviewParagraph
+                    ? new Set([runtimeInterviewParagraph.id])
+                    : undefined,
+                })
               : remoteDraft,
           )
           const draftAnswers = remoteForm.draftAnswers
+          const interviewParagraph = findDraftParagraph(
+            remoteDraft,
+            isIndividualInterviewScheduleParagraphId,
+          )
+          setInterviewSchedule(
+            instructorAvailableScheduleValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, interviewParagraph),
+            ) ?? emptyInstructorAvailableSchedule(),
+          )
           const preferredParagraph = findDraftParagraph(
             remoteDraft,
             id =>
@@ -422,6 +451,7 @@ export function ProgramApplyPage() {
       setSexOffense(emptyInstitutionSexOffense())
       setInstructorCrimeRecord(emptyInstructorCrimeRecord())
       setInstructorSchedule(emptyInstructorAvailableSchedule())
+      setInterviewSchedule(emptyInstructorAvailableSchedule())
       return
     }
 
@@ -441,6 +471,7 @@ export function ProgramApplyPage() {
     setSexOffense(emptyInstitutionSexOffense())
     setInstructorCrimeRecord(emptyInstructorCrimeRecord())
     setInstructorSchedule(emptyInstructorAvailableSchedule())
+    setInterviewSchedule(emptyInstructorAvailableSchedule())
   }, [
     program,
     programId,
@@ -449,6 +480,7 @@ export function ProgramApplyPage() {
     applicationFormQuery.blockedReason,
     remoteForm,
     remoteFormKey,
+    runtimeInterviewParagraph,
     profileDefaults,
     focusedApplicationType,
   ])
@@ -541,6 +573,17 @@ export function ProgramApplyPage() {
             slots={instructorScheduleSlots}
             value={instructorSchedule}
             onChange={setInstructorSchedule}
+          />
+        )
+      }
+
+      if (runtimeInterviewParagraph && paragraph.id === runtimeInterviewParagraph.id) {
+        return (
+          <ApplyInstructorAvailableSchedule
+            slots={interviewSlots}
+            value={interviewSchedule}
+            onChange={setInterviewSchedule}
+            copy={INDIVIDUAL_INTERVIEW_SCHEDULE_COPY}
           />
         )
       }
@@ -720,6 +763,9 @@ export function ProgramApplyPage() {
       instructorCrimeRecord,
       instructorSchedule,
       instructorScheduleSlots,
+      runtimeInterviewParagraph,
+      interviewSlots,
+      interviewSchedule,
       applyCase,
       showTrainedTeachersApply,
       showGeneralPreferredSchedule,
@@ -921,6 +967,23 @@ export function ProgramApplyPage() {
           return
         }
       }
+      const interviewParagraphCandidate = runtimeInterviewParagraph
+        ? findDraftParagraph(displayDraft, id => id === runtimeInterviewParagraph.id)
+        : undefined
+      const interviewParagraph =
+        interviewParagraphCandidate && !hiddenParagraphIds.has(interviewParagraphCandidate.id)
+          ? interviewParagraphCandidate
+          : null
+      if (interviewParagraph && isRequiredParagraph(interviewParagraph)) {
+        const interviewError = findIncompleteInterviewScheduleMessage(
+          interviewSchedule,
+          interviewSlots,
+        )
+        if (interviewError) {
+          setSubmitError(interviewError)
+          return
+        }
+      }
 
       const overrides: Record<string, unknown> = {}
       if (preferredAnswer != null) {
@@ -961,6 +1024,10 @@ export function ProgramApplyPage() {
                 instructorSchedule,
                 instructorScheduleSlots,
               )
+      }
+      if (interviewParagraph) {
+        overrides[resolveApplicationAnswerKey(interviewParagraph)] =
+          instructorAvailableScheduleOptionValues(interviewSchedule, interviewSlots)
       }
       const inquiryParagraph = findDraftParagraph(
         displayDraft,

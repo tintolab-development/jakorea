@@ -1,5 +1,9 @@
 # Cursor prompt — 개인 신청 「면접 진행 가능 일정」 필수 검증으로 제출 실패 (JABACK)
 
+> **Status (2026-10-06):** BE 수정 완료. 면접 없는 프로그램(PARTICIPANT 모집 `interview_enabled` true + 유효 슬롯 1건 이상이 아니면)은 개인 면접 키 4종을 `hiddenQuestionKeys` + `runtimeHidden: true`로 내리고 제출 필수에서 제외. 186046 동일 payload 제출 200 확인.  
+> FE handoff: `JABACK/docs/frontend/individual-application-interview-schedule-runtime-hidden-frontend-handoff-2026-10-06.md`  
+> 면접 있는 프로그램: BE가 `runtimeInputMode: "dynamic_interview_slots"` + `items[].id = "interview-slot:{id}"`로 구현. FE 반영 — `isDynamicIndividualInterviewParagraph`인 단락만 `prepareIndividualApplicationDraft({ keepParagraphIds })`로 유지, `ApplyInstructorAvailableSchedule`(면접 copy)로 다중 선택, 필수면 1개 이상 검증, 선택 id 배열 제출. 아래는 이력용.
+
 아래 지시를 **백엔드 레포(`JABACK`, 로컬 `localhost:8080`)에서 실행**하라.  
 프론트 레포를 탐색하지 말고, **이 문서의 재현·요청에만** 답하라.
 

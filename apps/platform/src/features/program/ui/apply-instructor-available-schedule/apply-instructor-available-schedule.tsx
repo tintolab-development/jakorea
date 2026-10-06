@@ -171,10 +171,43 @@ export function instructorAvailableScheduleValuesFromDraftAnswer(
   return { selectedSlotIds: ids }
 }
 
+export type ApplyScheduleSlotPickerCopy = {
+  calendarAriaLabel: string
+  summaryLabel: string
+  emptyMessage: string
+}
+
+const INSTRUCTOR_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
+  calendarAriaLabel: '강의 진행 가능 일정 날짜',
+  summaryLabel: '강의 진행 가능일',
+  emptyMessage: '선택 가능한 강의 일정이 없습니다.',
+}
+
+export const INDIVIDUAL_INTERVIEW_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
+  calendarAriaLabel: '면접 진행 가능 일정 날짜',
+  summaryLabel: '면접 진행 가능일',
+  emptyMessage: '선택 가능한 면접 일정이 없습니다.',
+}
+
+/** 개인 신청 면접 — 선택지는 `interview-slot:{id}` 문자열 그대로 제출 */
+export function findIncompleteInterviewScheduleMessage(
+  values: ApplyInstructorAvailableScheduleValues,
+  slots: readonly ApplyInstructorScheduleSlot[],
+): string | null {
+  if (slots.length === 0) {
+    return '선택 가능한 면접 일정이 없습니다. 관리자에게 문의해 주세요.'
+  }
+  if (!slots.some(slot => values.selectedSlotIds.includes(slot.id))) {
+    return '면접 진행이 가능한 일정을 하나 이상 선택해 주세요.'
+  }
+  return null
+}
+
 type ApplyInstructorAvailableScheduleProps = {
   slots: readonly ApplyInstructorScheduleSlot[]
   value: ApplyInstructorAvailableScheduleValues
   onChange: (next: ApplyInstructorAvailableScheduleValues) => void
+  copy?: ApplyScheduleSlotPickerCopy
 }
 
 function firstSlotDateKey(slots: readonly ApplyInstructorScheduleSlot[]): string | null {
@@ -193,6 +226,7 @@ export function ApplyInstructorAvailableSchedule({
   slots,
   value,
   onChange,
+  copy = INSTRUCTOR_SCHEDULE_COPY,
 }: ApplyInstructorAvailableScheduleProps) {
   const selected = slots.filter(slot => value.selectedSlotIds.includes(slot.id))
   const showCalendar = slots.every(slot => slot.dateKey != null)
@@ -219,7 +253,7 @@ export function ApplyInstructorAvailableSchedule({
   }
 
   const emptyMessage =
-    slots.length === 0 ? '선택 가능한 강의 일정이 없습니다.' : '이 날짜에 선택할 수 있는 일정이 없습니다.'
+    slots.length === 0 ? copy.emptyMessage : '이 날짜에 선택할 수 있는 일정이 없습니다.'
 
   return (
     <div className={styles.root}>
@@ -229,7 +263,7 @@ export function ApplyInstructorAvailableSchedule({
             key={anchorDateKey ?? 'empty'}
             inline
             className={styles.calendar}
-            aria-label="강의 진행 가능 일정 날짜"
+            aria-label={copy.calendarAriaLabel}
             selectedDate={selectedDateKey}
             initialViewMonth={monthStartOf(anchorDateKey)}
             markedDates={markedDates}
@@ -270,7 +304,7 @@ export function ApplyInstructorAvailableSchedule({
       {/* CMS DetailInfoForm.Row type="single" + TdDivider 요약 */}
       <PFFormFieldTable className={styles.summary}>
         <PFFormFieldRow type="single">
-          <PFFormField label="강의 진행 가능일">
+          <PFFormField label={copy.summaryLabel}>
             {selected.length === 0 ? (
               <PFFormFieldHintText as="p">선택한 일정이 여기에 표시됩니다.</PFFormFieldHintText>
             ) : (

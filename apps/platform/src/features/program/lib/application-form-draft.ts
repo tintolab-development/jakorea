@@ -514,15 +514,29 @@ function revealIndividualTeamInfoParagraph(paragraph: WritingFormParagraph): Wri
 
 /**
  * CMS 개인 신청 미리보기와 맞춤: 동일 id 중복 제거, 봉사자 면접 단락 제거, 팀 정보 숨김 플래그 해제.
+ * `keepParagraphIds` — 면접 있는 프로그램에서 BE가 슬롯 선택지를 붙인 개인 면접 단락은 제거하지 않는다.
  */
-export function prepareIndividualApplicationDraft(draft: WritingFormDraft): WritingFormDraft {
-  const migrated = migrateProgramParticipantApplicationParagraphs({
-    ...draft,
-    paragraphs: uniqueWritingFormParagraphsById(draft.paragraphs),
-  })
+export function prepareIndividualApplicationDraft(
+  draft: WritingFormDraft,
+  options?: { keepParagraphIds?: ReadonlySet<string> },
+): WritingFormDraft {
+  const unique = uniqueWritingFormParagraphsById(draft.paragraphs)
+  const migrated = migrateProgramParticipantApplicationParagraphs({ ...draft, paragraphs: unique })
+  const keep = options?.keepParagraphIds
+  const migratedIds = new Set(migrated.paragraphs.map(paragraph => paragraph.id))
+  const paragraphs =
+    keep && keep.size > 0
+      ? unique.flatMap(paragraph => {
+          if (migratedIds.has(paragraph.id)) {
+            const next = migrated.paragraphs.find(row => row.id === paragraph.id)
+            return next ? [next] : []
+          }
+          return keep.has(paragraph.id) ? [paragraph] : []
+        })
+      : migrated.paragraphs
   return {
     ...migrated,
-    paragraphs: migrated.paragraphs.map(revealIndividualTeamInfoParagraph),
+    paragraphs: paragraphs.map(revealIndividualTeamInfoParagraph),
   }
 }
 
