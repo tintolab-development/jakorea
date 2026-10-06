@@ -65,6 +65,8 @@ export type SignUpMapInput = {
   schoolAddress?: string
   schoolSource?: 'neis' | 'careerNet'
   grade: string
+  /** 미재학(해당 없음) 선택 시 선택 입력 */
+  affiliationName?: string
   employmentStatus: EmploymentStatus | null
   address: string
   addressDetail: string
@@ -134,6 +136,10 @@ function buildMember(input: SignUpMapInput): MemberSignupRequest {
         source: input.schoolSource,
       })
     }
+  }
+
+  if (input.selectedType === 'general' && input.schoolStatus === 'none') {
+    member.affiliationName = input.affiliationName?.trim() || undefined
   }
 
   return member

@@ -132,6 +132,7 @@ export function buildConfirmationRows(input: {
   phone?: string
   schoolName?: string
   schoolAddress?: string
+  affiliationName?: string
   employmentStatus?: EmploymentStatus | null
 }): ConfirmationRow[] {
   const shared: ConfirmationRow[] = [
@@ -154,9 +155,14 @@ export function buildConfirmationRows(input: {
     ]
   }
 
+  const affiliationName = input.affiliationName?.trim() ?? ''
+
   return [
     ...shared,
     { label: '재학유무', value: getSchoolStatusLabel(input.schoolStatus) },
+    ...(input.schoolStatus === 'none'
+      ? [{ label: '소속 기관명', value: affiliationName || '소속 없음' }]
+      : []),
     { label: '자택 주소', value: formatHomeAddress(input.address, input.addressDetail) },
     { label: '이메일 ID', value: input.email },
     { label: '1365 ID', value: input.volunteerId.trim() || '-' },

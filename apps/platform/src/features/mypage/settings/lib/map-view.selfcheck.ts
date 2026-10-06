@@ -38,6 +38,16 @@ const remoteWithoutGuardian = mapPortalProfileToSettingsView({
 assert.equal(remoteWithoutGuardian.guardian, null)
 assert.equal(remoteWithoutGuardian.basicRows[1]?.value, '김회원')
 
+const notEnrolledView = mapPortalProfileToSettingsView({
+  schoolEnrollmentStatus: 'NOT_ENROLLED',
+  affiliationName: '지역아동센터',
+  grade: '2',
+})
+assert.equal(notEnrolledView.basicRows[6]?.label, '소속 기관명')
+assert.equal(notEnrolledView.basicRows[6]?.value, '지역아동센터')
+assert.equal(notEnrolledView.basicRows.some(row => row.label === '학년'), false)
+assert.equal(notEnrolledView.basicRows.some(row => row.label === '소속/학교명'), false)
+
 assert.equal(formatSettingsEmployment('ACTIVE'), '재직 중')
 assert.equal(formatSettingsEmployment('ON_LEAVE'), '휴직 중')
 assert.equal(formatSettingsEmployment('TRANSFERRED'), '-')
