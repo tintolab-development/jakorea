@@ -19,19 +19,14 @@ export function GuardianConfirmStep({ signUp }: GuardianConfirmStepProps) {
         description="입력한 정보는 보호자 본인인증과 동의 확인에만 사용돼요."
         actionsVariant="terms"
         actions={
-          <>
-            <PFButton
-              size="xlarge"
-              width="100%"
-              disabled={!profile.isValid}
-              onClick={profile.continue}
-            >
-              보호자 정보 확인
-            </PFButton>
-            <PFButton size="xlarge" variant="tertiary" width="100%" onClick={step.goPrevious}>
-              이전
-            </PFButton>
-          </>
+          <PFButton
+            size="xlarge"
+            width="100%"
+            disabled={!profile.isValid}
+            onClick={profile.continue}
+          >
+            보호자 정보 확인
+          </PFButton>
         }
       >
         <div className={styles.guardianConfirmContent}>

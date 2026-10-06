@@ -32,9 +32,7 @@ export function SignUpCompletePage() {
           color="neutral-cool-500"
           className={authPageCopyClass('description')}
         >
-          이제 JA Korea의 다양한 프로그램과 소식을
-          <br />
-          확인할 수 있어요.
+          이제 JA Korea의 다양한 프로그램과 소식을 확인할 수 있어요.
         </PFText>
       </div>
 
