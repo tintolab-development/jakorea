@@ -1014,6 +1014,8 @@ export function mapParticipantToParticipatingIndividualRow(
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
     detail: {
+      gender: toGenderLabelOrRaw(dto.gender),
+      birthDate: dto.birthDate?.trim() || undefined,
       contact: contact || undefined,
       email: email || undefined,
       homeAddressFull: homeAddress || undefined,

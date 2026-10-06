@@ -60,4 +60,14 @@ export interface ParticipantListItemResponse {
   satisfactionSurveyCompleted?: boolean;
   surveyResponse?: FormResponseRef;
   satisfactionResponse?: FormResponseRef;
+  /**
+     * 참여자 생년월일 (개인 신청 스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null
+     * @nullable
+     */
+  birthDate?: string | null;
+  /**
+     * 참여자 성별 원시 코드 (스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null
+     * @nullable
+     */
+  gender?: string | null;
 }

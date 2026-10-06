@@ -40,7 +40,10 @@ import {
   PROGRAM_API_UNAVAILABLE_TITLE,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
-import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
+import {
+  buildParticipatingParticipantCertificateContext,
+  hydrateParticipatingParticipantCertificateProfile,
+} from '@/features/program/general/lib/participating-individual-participant-certificate'
 import { hydrateParticipatingIndividualLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
@@ -403,18 +406,22 @@ export function ParticipatingParticipantFullpageView({
   const handleCertificateIssueConfirm = useCallback(
     async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
       try {
-        const lectureAttendanceSessions =
+        const [lectureAttendanceSessions, profileHydrated] = await Promise.all([
           progressRemoteEnabled && !isTempMockProgram
-            ? await hydrateParticipatingIndividualLectureAttendanceSessions({
+            ? hydrateParticipatingIndividualLectureAttendanceSessions({
                 programId: String(program.id),
                 participantId: mergedParticipant.id,
                 existing: mergedParticipant.lectureAttendanceSessions,
               })
-            : mergedParticipant.lectureAttendanceSessions
+            : mergedParticipant.lectureAttendanceSessions,
+          shouldUseGeneralApplicationsRemoteApi() && !isTempMockProgram
+            ? hydrateParticipatingParticipantCertificateProfile(mergedParticipant)
+            : mergedParticipant,
+        ])
 
         setCertificateExportContext(
           buildParticipatingParticipantCertificateContext({
-            participant: { ...mergedParticipant, lectureAttendanceSessions },
+            participant: { ...profileHydrated, lectureAttendanceSessions },
             program,
             hasStudentSatisfactionSurvey,
             issuanceReasonLabel: reasonLabel,

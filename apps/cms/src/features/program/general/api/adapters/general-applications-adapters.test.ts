@@ -418,6 +418,24 @@ describe('general-applications-adapters', () => {
     expect(individual.detail?.email).toBe('p***@example.com')
   })
 
+  it('maps list birthDate and gender into detail for certificate issuance', () => {
+    const withProfile = mapParticipantToParticipatingIndividualRow(
+      { participantId: 1694731, memberName: '이건희일반', birthDate: '1994-07-29', gender: 'MALE' },
+      0,
+      '186046'
+    )
+    const legacyGender = mapParticipantToParticipatingIndividualRow(
+      { participantId: 1694732, memberName: '레거시', birthDate: null, gender: 'X' },
+      1,
+      '186046'
+    )
+
+    expect(withProfile.detail?.birthDate).toBe('1994-07-29')
+    expect(withProfile.detail?.gender).toBe('남성')
+    expect(legacyGender.detail?.birthDate).toBeUndefined()
+    expect(legacyGender.detail?.gender).toBe('X')
+  })
+
   it('maps additive survey view keys when present', () => {
     const individual = mapParticipantToParticipatingIndividualRow(
       {

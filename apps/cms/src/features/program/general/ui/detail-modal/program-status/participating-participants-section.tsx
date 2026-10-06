@@ -25,10 +25,14 @@ import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/g
 import { useParticipatingIndividualParticipantColumns } from '@/features/program/general/lib/participating-individual-participant-columns'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
+import {
+  buildParticipatingParticipantCertificateContext,
+  hydrateParticipatingParticipantCertificateProfile,
+} from '@/features/program/general/lib/participating-individual-participant-certificate'
 import { hydrateParticipatingIndividualLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
 import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
@@ -224,17 +228,22 @@ export function ParticipatingParticipantsSection({
       if (participant == null) return
 
       try {
-        const lectureAttendanceSessions = shouldUseGeneralProgramProgressRemoteApi()
-          ? await hydrateParticipatingIndividualLectureAttendanceSessions({
-              programId: String(program.id),
-              participantId: participant.id,
-              existing: participant.lectureAttendanceSessions,
-            })
-          : participant.lectureAttendanceSessions
+        const [lectureAttendanceSessions, profileHydrated] = await Promise.all([
+          shouldUseGeneralProgramProgressRemoteApi()
+            ? hydrateParticipatingIndividualLectureAttendanceSessions({
+                programId: String(program.id),
+                participantId: participant.id,
+                existing: participant.lectureAttendanceSessions,
+              })
+            : participant.lectureAttendanceSessions,
+          shouldUseGeneralApplicationsRemoteApi()
+            ? hydrateParticipatingParticipantCertificateProfile(participant)
+            : participant,
+        ])
 
         setCertificateExportContext(
           buildParticipatingParticipantCertificateContext({
-            participant: { ...participant, lectureAttendanceSessions },
+            participant: { ...profileHydrated, lectureAttendanceSessions },
             program,
             hasStudentSatisfactionSurvey,
             issuanceReasonLabel: reasonLabel,
