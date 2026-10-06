@@ -285,7 +285,7 @@ export function ParticipatingParticipantsSection({
 
   if (participantsLoading && participantList.length === 0) {
     return (
-      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+      <div className="detail-fullpage-modal__loading" role="status">
         <Spin size="large" />
       </div>
     )

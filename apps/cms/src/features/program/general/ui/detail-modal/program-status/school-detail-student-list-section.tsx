@@ -1096,7 +1096,7 @@ export function SchoolDetailStudentListSection({
       >
         <div className="school-detail-student-list-section__table-wrap">
           {rosterRemote.isLoading && filteredStudentList.length === 0 ? (
-            <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+            <div className="detail-fullpage-modal__loading" role="status">
               <Spin size="large" />
             </div>
           ) : isStudentListEditMode ? (

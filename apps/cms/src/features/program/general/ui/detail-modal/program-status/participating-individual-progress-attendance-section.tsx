@@ -22,7 +22,7 @@ export function ParticipatingIndividualProgressAttendanceSection({ program }: { 
 
   if (loading) {
     return (
-      <div className="participating-individual-progress-attendance-section school-detail-attendance-section flex min-h-[200px] items-center justify-center">
+      <div className="detail-fullpage-modal__loading" role="status">
         <Spin size="large" />
       </div>
     )
