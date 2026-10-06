@@ -50,12 +50,26 @@ function collectClearText(node: unknown): string {
 }
 
 describe('detailAddressView', () => {
-  it('시·군·구만 있고 상세가 없으면 블러 없이 그대로 노출한다', () => {
+  it('BE 마스킹으로 시·군·구만 오면 더미 블러 꼬리를 붙인다', () => {
     const view = detailAddressView(
       baseUser({ detailAddress: '서울특별시 금천구', detailAddressDetail: undefined }),
       false
     )
-    expect(view).toBe('서울특별시 금천구')
+    expect(collectClearText(view).trim()).toBe('서울특별시 금천구')
+    expect(collectBlurText(view).trim()).not.toBe('')
+  })
+
+  it('상세가 마스킹 플레이스홀더면 더미 블러 꼬리를 붙인다', () => {
+    const view = detailAddressView(
+      baseUser({ detailAddress: '서울특별시 광진구', detailAddressDetail: '마스킹' }),
+      false
+    )
+    expect(collectClearText(view).trim()).toBe('서울특별시 광진구')
+    expect(collectBlurText(view).trim()).not.toBe('')
+  })
+
+  it('주소가 없으면 블러 없이 - 를 노출한다', () => {
+    expect(detailAddressView(baseUser(), false)).toBe('-')
   })
 
   it('시·군·구 + 상세가 있으면 상세는 항상 블러 꼬리로 노출한다', () => {
