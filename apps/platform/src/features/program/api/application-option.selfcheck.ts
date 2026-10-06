@@ -61,6 +61,31 @@ assert.equal(
 )
 assert.equal(pickApplicationOption(sharedRecruitment, { recruitmentId: 186050 }), null)
 
+/** formBindingId=null 이어도 진입 모집+유형 행을 고른다 (blockedReason 전달). INSTRUCTOR≠ORGANIZATION 재사용 금지. */
+const instructorWithoutBinding = [
+  {
+    recruitmentId: 186096,
+    applicationType: 'ORGANIZATION',
+    formBindingId: 99,
+    canApply: true,
+  },
+  {
+    recruitmentId: 186097,
+    applicationType: 'INSTRUCTOR',
+    formBindingId: null,
+    canApply: false,
+    blockedReason: 'APPLICATION_FORM_NOT_CONFIGURED',
+  },
+]
+const instructorPick = pickApplicationOption(instructorWithoutBinding, {
+  recruitmentId: 186097,
+  applicationTypes: ['INSTRUCTOR'],
+})
+assert.equal(instructorPick?.recruitmentId, 186097)
+assert.equal(instructorPick?.formBindingId ?? null, null)
+assert.equal(instructorPick?.blockedReason, 'APPLICATION_FORM_NOT_CONFIGURED')
+assert.notEqual(instructorPick?.formBindingId, 99)
+
 const keys = [
   programListEntryKey({ id: '100', recruitmentId: 1001 }),
   programListEntryKey({ id: '100', recruitmentId: 1002 }),

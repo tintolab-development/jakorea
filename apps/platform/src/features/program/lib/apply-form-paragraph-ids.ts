@@ -3,8 +3,10 @@
  * schema 자리 표시 표는 CMS DetailInfoForm 본문으로 대체되므로 동일 ID를 slot으로 렌더한다.
  */
 
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 
@@ -34,6 +36,15 @@ const PREFERRED_SCHEDULE_IDS = new Set<string>([
   PROGRAM_APPLICATION_FORM_ECONOMY_IDS.preferredSchedule,
 ])
 
+const INSTRUCTOR_CRIME_RECORD_IDS = new Set<string>([
+  PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord,
+])
+
+const INSTRUCTOR_AVAILABLE_SCHEDULE_IDS = new Set<string>([
+  PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+  GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+])
+
 export function isApplicationBasicInfoParagraphId(id: string): boolean {
   return INSTITUTION_LIKE_BASIC_INFO_IDS.has(id)
 }
@@ -56,6 +67,16 @@ export function isApplicationGuidanceParagraphId(id: string): boolean {
 
 export function isApplicationPreferredScheduleParagraphId(id: string): boolean {
   return PREFERRED_SCHEDULE_IDS.has(id)
+}
+
+/** 강사 신청 — 성범죄 경력 조회서 제출 (CMS InstructorCrimeRecordParagraph) */
+export function isInstructorCrimeRecordParagraphId(id: string): boolean {
+  return INSTRUCTOR_CRIME_RECORD_IDS.has(id)
+}
+
+/** 강사 신청 — 강의 진행 가능 일정 (CMS InstructorAvailableScheduleParagraph) */
+export function isInstructorAvailableScheduleParagraphId(id: string): boolean {
+  return INSTRUCTOR_AVAILABLE_SCHEDULE_IDS.has(id)
 }
 
 export function shouldShowEducationPlaceOnBasicInfo(paragraphId: string): boolean {

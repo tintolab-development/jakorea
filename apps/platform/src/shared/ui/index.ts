@@ -53,9 +53,11 @@ export { PFDataTable } from './pf-data-table'
 export type { PFDataTableColumn, PFDataTableProps } from './pf-data-table'
 export {
   PFFormField,
+  PFFormFieldHintText,
   PFFormFieldRow,
   PFFormFieldTable,
   PFFormFieldValueText,
+  PFFormFileAttach,
   PFFormControlCluster,
   PFFormInlineRow,
   PFFormInlineSegment,
@@ -70,6 +72,7 @@ export {
 } from './pf-form'
 export type {
   PFFormControlClusterProps,
+  PFFormFieldHintTextProps,
   PFFormFieldLabelWidth,
   PFFormFieldLayout,
   PFFormFieldProps,
@@ -77,6 +80,7 @@ export type {
   PFFormFieldTableProps,
   PFFormFieldTableRadius,
   PFFormFieldValueTextProps,
+  PFFormFileAttachProps,
   PFFormHomeAddressFieldsProps,
   PFFormInlineRowProps,
   PFFormInlineSegmentProps,

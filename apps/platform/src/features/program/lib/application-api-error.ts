@@ -29,12 +29,16 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   RECRUITMENT_CLOSED: '모집이 마감되었습니다.',
   /** PUT draft / POST applications — 모집 종료 (options 코드와 다름) */
   RECRUITMENT_ENDED: '모집이 마감되었습니다.',
-  APPLICATION_FORM_NOT_CONFIGURED: '신청 양식이 아직 준비되지 않았습니다.',
+  /** CMS 신청 양식 미설정 — URL/파싱 오류가 아님 */
+  APPLICATION_FORM_NOT_CONFIGURED:
+    '신청 양식이 아직 준비되지 않았습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
   PROGRAM_NOT_APPLICABLE: '현재 신청할 수 없는 프로그램입니다.',
   ORGANIZATION_MEMBERSHIP_REQUIRED: '학교·기관 회원만 신청할 수 있습니다.',
   APPROVED_INSTRUCTOR_REQUIRED: '승인된 강사만 신청할 수 있습니다.',
   MEMBER_NOT_ACTIVE: '활성 회원만 신청할 수 있습니다.',
   APPLICATION_ALREADY_SUBMITTED: '이미 제출한 신청이 있습니다.',
+  /** application-options.blockedReason — APPLICATION_ALREADY_SUBMITTED와 동일 안내 */
+  ALREADY_APPLIED: '이미 제출한 신청이 있습니다.',
   PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE:
     '희망 교육일이 프로그램 교육 가능 기간을 벗어났습니다.',
   PREFERRED_SCHEDULE_EXCEEDS_MAX_SESSIONS_PER_DAY:

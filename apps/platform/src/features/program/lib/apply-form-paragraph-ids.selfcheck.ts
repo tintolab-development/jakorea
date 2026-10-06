@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import {
@@ -10,6 +11,8 @@ import {
   isApplicationSexOffenseInquiryParagraphId,
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
+  isInstructorAvailableScheduleParagraphId,
+  isInstructorCrimeRecordParagraphId,
   shouldShowEducationPlaceOnBasicInfo,
 } from './apply-form-paragraph-ids.ts'
 
@@ -55,6 +58,16 @@ assert.equal(
 )
 assert.equal(
   shouldShowEducationPlaceOnBasicInfo(PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo),
+  true,
+)
+assert.equal(
+  isInstructorCrimeRecordParagraphId(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord),
+  true,
+)
+assert.equal(
+  isInstructorAvailableScheduleParagraphId(
+    PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+  ),
   true,
 )
 

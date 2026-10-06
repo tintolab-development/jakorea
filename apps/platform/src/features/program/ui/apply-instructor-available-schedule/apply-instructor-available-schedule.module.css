@@ -1,0 +1,45 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.slotList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.slotItem {
+  width: 100%;
+}
+
+.empty {
+  margin: 0;
+}
+
+.summary {
+  width: 100%;
+}
+
+:global(.form-template-host) .summary :global(.typo-form-field-label) {
+  font-family: var(--font-family-base);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+:global(.form-template-host) .root :global(.typo-bd-md-md) {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
