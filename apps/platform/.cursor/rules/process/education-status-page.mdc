@@ -36,12 +36,12 @@ alwaysApply: false
 
 ### 목록 탭
 
-| 탭 | key | 포함 상태 |
-|----|-----|-----------|
-| 전체 | `all` | 전체 |
-| 신청한 프로그램 | `applied` | 승인/반려 처리 **전** — `waiting_result`, `document_passed` |
-| 진행중인 프로그램 | `in_progress` | 승인 이후 종료 **전** — `in_progress` |
-| 종료된 프로그램 | `completed` | `completed`, `withdrawn`, `rejected` |
+| 탭                | key           | 포함 상태                                                   |
+| ----------------- | ------------- | ----------------------------------------------------------- |
+| 전체              | `all`         | 전체                                                        |
+| 신청한 프로그램   | `applied`     | 승인/반려 처리 **전** — `waiting_result`, `document_passed` |
+| 진행중인 프로그램 | `in_progress` | 승인 이후 종료 **전** — `in_progress`                       |
+| 종료된 프로그램   | `completed`   | `completed`, `withdrawn`, `rejected`                        |
 
 종료 판정 (API 연동 시 백엔드 canonical):
 
@@ -57,23 +57,23 @@ alwaysApply: false
 - 태그: `ProgramStatusBadges` — 모집 완료(`closed`) → 회색(`disabled`)
 - 진행 상태 색: [`education-display-status.ts`](apps/platform/src/features/mypage/education/applications/lib/display-status.ts)
 
-| 상태 | 색 |
-|------|-----|
-| 결과 대기, 서류 합격 | 주황 `--color-element-orange` |
-| 진행중 | 파랑 `--color-element-blue` |
-| 진행 완료, 활동 포기 | 회색 `--color-neutral-cool-500` |
-| 신청 반려 | 빨강 `--color-status-error-default` |
+| 상태                 | 색                                  |
+| -------------------- | ----------------------------------- |
+| 결과 대기, 서류 합격 | 주황 `--color-element-orange`       |
+| 진행중               | 파랑 `--color-element-blue`         |
+| 진행 완료, 활동 포기 | 회색 `--color-neutral-cool-500`     |
+| 신청 반려            | 빨강 `--color-status-error-default` |
 
-### 교사회원 (`school_teacher`) 진행 상태 라벨
+### 교사 회원 (`school_teacher`) 진행 상태 라벨
 
 내부 enum·탭·정렬은 일반과 동일. **표시 문구만** [`display-status.ts`](apps/platform/src/features/mypage/education/applications/lib/display-status.ts) `audience: 'teacher'`.
 
-| 라벨 | 색 (톤) |
-|------|---------|
-| 승인대기 (`waiting_result` · `document_passed`) | 주황 `pending` |
-| 진행중 | 파랑 `progress` |
-| 진행 완료, 활동 포기 | 회색 `completed` |
-| 신청 반려 | 빨강 `rejected` |
+| 라벨                                            | 색 (톤)          |
+| ----------------------------------------------- | ---------------- |
+| 승인대기 (`waiting_result` · `document_passed`) | 주황 `pending`   |
+| 진행중                                          | 파랑 `progress`  |
+| 진행 완료, 활동 포기                            | 회색 `completed` |
+| 신청 반려                                       | 빨강 `rejected`  |
 
 목록·상세: `isSchoolTeacherMypageProfile` 일 때 `statusAudience="teacher"`. 봉사·강의현황은 `general` 유지.
 
@@ -107,11 +107,11 @@ alwaysApply: false
 
 ### 상세 탭 분기 (기획 · SSOT)
 
-| 진행 상태 | 탭 |
-|-----------|-----|
-| 결과 대기 / 서류 합격 / 신청 반려 | 프로그램 정보 / 신청 내용 |
-| **진행 중 / 진행 완료** | 안내사항 / 교육 일정 / 설문조사 / 만족도조사 / **정산 현황** |
-| **활동 포기 (교육 전)** `before_education` | 프로그램 정보 / 신청 내용. 상태만 `활동 포기`, 합격 배너·신청 취소 비노출 |
+| 진행 상태                                  | 탭                                                                                                             |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| 결과 대기 / 서류 합격 / 신청 반려          | 프로그램 정보 / 신청 내용                                                                                      |
+| **진행 중 / 진행 완료**                    | 안내사항 / 교육 일정 / 설문조사 / 만족도조사 / **정산 현황**                                                   |
+| **활동 포기 (교육 전)** `before_education` | 프로그램 정보 / 신청 내용. 상태만 `활동 포기`, 합격 배너·신청 취소 비노출                                      |
 | **활동 포기 (교육 중)** `during_education` | 교육 일정 / 설문조사 / 만족도조사 / **정산 현황** (**안내사항 비노출**). `lastParticipatedSession` 이하만 노출 |
 
 #### 진행·완료 탭 세부
@@ -139,47 +139,47 @@ alwaysApply: false
 
 ### Aside (우측 · 모바일 상단)
 
-| 요소 | 규칙 |
-|------|------|
-| **썸네일** | `detailImageUrl` → 없으면 `thumbnailUrl`. 없으면 플레이스홀더 |
+| 요소              | 규칙                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **썸네일**        | `detailImageUrl` → 없으면 `thumbnailUrl`. 없으면 플레이스홀더                                                             |
 | **신청 취소하기** | `canCancelEducationApplication` — **결과 대기·서류 합격만** 노출. 승인/반려 **이후**(반려·진행중·완료·포기 등) **비노출** |
-| 취소 동작 | 확인 모달 → 확정 시 신청 **삭제(이력 미잔존)** → 교육현황 목록으로. Mock: `cancelMockEducationApplication`. API 연동 후속 |
-| **첨부파일** | 파일명 클릭 시 다운로드 (`PFFileDownload`). **첨부 없으면 비노출** |
+| 취소 동작         | 확인 모달 → 확정 시 신청 **삭제(이력 미잔존)** → 교육현황 목록으로. Mock: `cancelMockEducationApplication`. API 연동 후속 |
+| **첨부파일**      | 파일명 클릭 시 다운로드 (`PFFileDownload`). **첨부 없으면 비노출**                                                        |
 
 ### 상단 정보 (본문)
 
 참여하기 상세는 운영 기간·후원사를 **페이지 header**에 둔다. 교육·봉사현황 상세는 `EducationDetailHeader`로 header를 대체하므로 `ProgramInfoBody showPeriodSponsor`로 본문 상단에 동일 메타를 둔다. 안내사항 「프로그램 정보」 모달도 동일.
 
-| 블록 | 규칙 | 어드민 출처 |
-|------|------|-------------|
-| **프로그램 운영 기간** | `operatingPeriodLabel`. `-`·빈 값이면 **비노출** | 공통 정보 > 프로그램 운영 기간 (`startDate`–`endDate`) |
-| **후원사** | `sponsor`. `-`·빈 값이면 **비노출** | 공통 정보 > 후원사 (`sponsorDisplayName`) |
-| **프로그램 설명** | 미기재 시 **비노출** (`summary`) | 모집 정보 > 유형별 상세 정보 > 프로그램 설명 |
-| **기본 정보** | 항목 값이 길거나 너비가 줄면 **아래 줄로 wrap** (`infoFields` flex-wrap). 빈 값 항목 **비노출** | 아래 표 |
-| └ 사업 분야 | | 공통 정보 > 기본 정보 > 사업 분야 |
-| └ 교육 형태 | | 공통 정보 > 프로그램 유형 설정 > 교육 형태 |
-| └ 교육 대상 | | 모집 정보 > 참여자 모집 정보 > 교육 대상 |
-| └ 교육 대상 상세 | | 모집 정보 > 참여자 모집 정보 > 교육 대상(상세) |
-| └ 교육 장소 | | 공통 정보 > 기본 정보 > 교육 장소 |
-| └ 교육 커리큘럼 | `sessions` / `eventSchedules` 블록. 없으면 비노출 | 공통 정보 > 교육 진행(커리큘럼/일정) |
+| 블록                   | 규칙                                                                                            | 어드민 출처                                            |
+| ---------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **프로그램 운영 기간** | `operatingPeriodLabel`. `-`·빈 값이면 **비노출**                                                | 공통 정보 > 프로그램 운영 기간 (`startDate`–`endDate`) |
+| **후원사**             | `sponsor`. `-`·빈 값이면 **비노출**                                                             | 공통 정보 > 후원사 (`sponsorDisplayName`)              |
+| **프로그램 설명**      | 미기재 시 **비노출** (`summary`)                                                                | 모집 정보 > 유형별 상세 정보 > 프로그램 설명           |
+| **기본 정보**          | 항목 값이 길거나 너비가 줄면 **아래 줄로 wrap** (`infoFields` flex-wrap). 빈 값 항목 **비노출** | 아래 표                                                |
+| └ 사업 분야            |                                                                                                 | 공통 정보 > 기본 정보 > 사업 분야                      |
+| └ 교육 형태            |                                                                                                 | 공통 정보 > 프로그램 유형 설정 > 교육 형태             |
+| └ 교육 대상            |                                                                                                 | 모집 정보 > 참여자 모집 정보 > 교육 대상               |
+| └ 교육 대상 상세       |                                                                                                 | 모집 정보 > 참여자 모집 정보 > 교육 대상(상세)         |
+| └ 교육 장소            |                                                                                                 | 공통 정보 > 기본 정보 > 교육 장소                      |
+| └ 교육 커리큘럼        | `sessions` / `eventSchedules` 블록. 없으면 비노출                                               | 공통 정보 > 교육 진행(커리큘럼/일정)                   |
 
 > 강사·봉사·UJAT·Gemini 등 케이스별 `basicInfoFields` 라벨 세트는 `mapBasicInfoFields` SSOT. **일반(참여자)** 기본은 위 6항목.
 
 ### 세부 내용
 
-| 블록 | 규칙 | 어드민 출처 |
-|------|------|-------------|
-| **모집 및 선별 기간** | 그룹 라벨은 프로그램 유형별 (`recruitmentPhaseGroupLabel` / 기간 명칭 상이) | |
-| └ 참여자 모집 기간 등 | 유형별 명칭 (참여자/강사/봉사자/기관/연수 신청 기간 등) | 참여자 모집 정보 > 모집 기간 |
-| └ 1차 서류 합격자 발표 | **면접 있는 경우만** | 참여자 모집 정보 > 1차 서류 합격자 발표 |
-| └ 2차 면접 기간 | **면접 있는 경우만** | 참여자 모집 정보 > 2차 면접 기간 |
-| └ 최종 합격자 발표 | | 참여자 모집 정보 > 최종 합격자 발표 |
-| **교육 일정** | `educationSchedules` 카드. 없으면 비노출 | 공통 정보 > 교육 진행 일정 설정 |
-| **모집안내** | 미기재 시 비노출 | 참여자 모집 정보 > 상세 정보 > 모집 안내 |
-| **추가 내용** | 미기재 시 비노출 | 참여자 모집 정보 > 상세 정보 > 추가 내용 |
-| **학습 지원 내용** | 미기재 시 비노출 (일반·UJAT 기관·Gemini 등 케이스) | 참여자 모집 정보 > 상세 정보 > 학습 지원 내용 |
-| **비고** | 미기재 시 비노출 | 참여자 모집 정보 > 비고 |
-| **문의처** | 미기재 시 비노출 | 참여자 모집 정보 > 문의처 |
+| 블록                   | 규칙                                                                        | 어드민 출처                                   |
+| ---------------------- | --------------------------------------------------------------------------- | --------------------------------------------- |
+| **모집 및 선별 기간**  | 그룹 라벨은 프로그램 유형별 (`recruitmentPhaseGroupLabel` / 기간 명칭 상이) |                                               |
+| └ 참여자 모집 기간 등  | 유형별 명칭 (참여자/강사/봉사자/기관/연수 신청 기간 등)                     | 참여자 모집 정보 > 모집 기간                  |
+| └ 1차 서류 합격자 발표 | **면접 있는 경우만**                                                        | 참여자 모집 정보 > 1차 서류 합격자 발표       |
+| └ 2차 면접 기간        | **면접 있는 경우만**                                                        | 참여자 모집 정보 > 2차 면접 기간              |
+| └ 최종 합격자 발표     |                                                                             | 참여자 모집 정보 > 최종 합격자 발표           |
+| **교육 일정**          | `educationSchedules` 카드. 없으면 비노출                                    | 공통 정보 > 교육 진행 일정 설정               |
+| **모집안내**           | 미기재 시 비노출                                                            | 참여자 모집 정보 > 상세 정보 > 모집 안내      |
+| **추가 내용**          | 미기재 시 비노출                                                            | 참여자 모집 정보 > 상세 정보 > 추가 내용      |
+| **학습 지원 내용**     | 미기재 시 비노출 (일반·UJAT 기관·Gemini 등 케이스)                          | 참여자 모집 정보 > 상세 정보 > 학습 지원 내용 |
+| **비고**               | 미기재 시 비노출                                                            | 참여자 모집 정보 > 비고                       |
+| **문의처**             | 미기재 시 비노출                                                            | 참여자 모집 정보 > 문의처                     |
 
 ### 지원 방법
 
@@ -199,13 +199,13 @@ alwaysApply: false
 
 ### 일정 행
 
-| 요소 | 규칙 |
-|------|------|
-| 진행 태그 | `진행 완료` / `진행 예정` — 교육일(로컬 일) 지나면 예정→완료 |
-| 교육 진행일 | `YYYY년 MM월 DD일(요일)` |
-| 회차/일정명 | 커리큘럼형 회차명 · 일정형 일정명 (`title`) |
-| 출석 | 출석 / 지각 / 결석 / 사유 불참(+사유). **미진행(예정)은 비노출** |
-| 결석 사유 제출하기 | **진행 예정** 또는 **결석**만. 클릭 → 팝업(현재 준비 중) |
+| 요소               | 규칙                                                             |
+| ------------------ | ---------------------------------------------------------------- |
+| 진행 태그          | `진행 완료` / `진행 예정` — 교육일(로컬 일) 지나면 예정→완료     |
+| 교육 진행일        | `YYYY년 MM월 DD일(요일)`                                         |
+| 회차/일정명        | 커리큘럼형 회차명 · 일정형 일정명 (`title`)                      |
+| 출석               | 출석 / 지각 / 결석 / 사유 불참(+사유). **미진행(예정)은 비노출** |
+| 결석 사유 제출하기 | **진행 예정** 또는 **결석**만. 클릭 → 팝업(현재 준비 중)         |
 
 ### 과제 안내
 
@@ -228,9 +228,9 @@ alwaysApply: false
 컴포넌트: [`EducationSurveyEmptyPanel`](apps/platform/src/features/mypage/education/surveys/ui/empty-panel.tsx)  
 `kind: 'survey' | 'satisfaction'` — 동일 레이아웃(`illust-cross` · 600px · center · `background: cool-50` · **100vw full-bleed** · 푸터까지), 카피만 분기.
 
-| kind | 타이틀 | 설명 |
-|------|--------|------|
-| survey | 진행 중인 설문조사가 없어요 | 참여할 프로그램의 설문조사가 생기면 이곳에서 확인할 수 있어요 |
+| kind         | 타이틀                        | 설명                                                            |
+| ------------ | ----------------------------- | --------------------------------------------------------------- |
+| survey       | 진행 중인 설문조사가 없어요   | 참여할 프로그램의 설문조사가 생기면 이곳에서 확인할 수 있어요   |
 | satisfaction | 진행 중인 만족도조사가 없어요 | 참여할 프로그램의 만족도조사가 생기면 이곳에서 확인할 수 있어요 |
 
 ### 설문·만족도 fill (active)
@@ -240,11 +240,11 @@ alwaysApply: false
 
 시드: [`createEducationSurveySeedDraft`](apps/platform/src/features/mypage/education/surveys/lib/seed-survey-draft.ts) — CMS `createDefaultSurveyDraft()`(14단락) + catalog `templateName` 주입.
 
-| kind / audience | surveyTitle |
-|-----------------|-------------|
-| survey | 설문조사 |
+| kind / audience                    | surveyTitle         |
+| ---------------------------------- | ------------------- |
+| survey                             | 설문조사            |
 | satisfaction + student (교육/봉사) | 만족도조사 (학생용) |
-| satisfaction + teacher (강의) | 만족도조사 (교사용) |
+| satisfaction + teacher (강의)      | 만족도조사 (교사용) |
 
 단락: 제목·설문자정보(name·addressRegion 등 CMS 선택 키) · 객관식 1 · 척도 6 · 주관식 3 · 별점 · closing. date/time/file은 시드에 없음(커스텀 양식용 field UI만 유지).
 
@@ -254,10 +254,10 @@ alwaysApply: false
 
 **노출 분기** [`getEducationSurveyMockAvailability`](apps/platform/src/features/mypage/education/surveys/lib/mock-survey-availability.ts) — `configured`에 `surveyConfigured` / `satisfactionConfigured` 전달:
 
-| 조건 | UI |
-|------|-----|
-| `in_progress` / `completed` / 교육 중 포기 | fill |
-| `configured === false` 또는 그 외 | empty |
+| 조건                                       | UI    |
+| ------------------------------------------ | ----- |
+| `in_progress` / `completed` / 교육 중 포기 | fill  |
+| `configured === false` 또는 그 외          | empty |
 
 목록·응답 API 후속.
 
@@ -268,10 +268,10 @@ alwaysApply: false
 컴포넌트: [`EducationApplicationContent`](apps/platform/src/features/mypage/education/applications/ui/content.tsx)  
 분기: `canShowEducationApplicationContent`
 
-| 블록 | 규칙 | 스타일 |
-|------|------|--------|
-| **자기소개 및 지원동기** | 미기재 시 비노출 (`selfIntroMotivation`) | 타이틀 `bd-sm-rg` cool-600 · mb 8 / 본문 `bd-md-md` black · **line-height 170%** |
-| **진행 희망 교육 일정** | 미기재 시 비노출 (`preferredEducationScheduleLabel`) | 카드 cool-50 · padding 20 · radius 16 · gap 8 / 타이틀 `bd-md-sb` / 일정 `bd-md-md` |
+| 블록                     | 규칙                                                 | 스타일                                                                              |
+| ------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **자기소개 및 지원동기** | 미기재 시 비노출 (`selfIntroMotivation`)             | 타이틀 `bd-sm-rg` cool-600 · mb 8 / 본문 `bd-md-md` black · **line-height 170%**    |
+| **진행 희망 교육 일정**  | 미기재 시 비노출 (`preferredEducationScheduleLabel`) | 카드 cool-50 · padding 20 · radius 16 · gap 8 / 타이틀 `bd-md-sb` / 일정 `bd-md-md` |
 
 섹션 간 gap: 32. Mock: [`mock-education-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts). API 연동 후속.
 
@@ -296,15 +296,15 @@ alwaysApply: false
 
 ### 구현 범위 vs 후속
 
-| 구현됨 | 후속 |
-|--------|------|
-| 공통 헤더·배너·프로그램 신청 상태 2탭 | 신청 반려용 신청 내용 UI |
-| ProgramInfoBody 재사용 + 취소 확인·이력 제거(mock) | 취소 API 연동 |
-| 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨 | 교육 일정·설문·만족도 탭 |
-| 신청 내용 (결과 대기·서류 합격) mock UI | 신청 내용 API 연동 |
+| 구현됨                                                                                       | 후속                                              |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| 공통 헤더·배너·프로그램 신청 상태 2탭                                                        | 신청 반려용 신청 내용 UI                          |
+| ProgramInfoBody 재사용 + 취소 확인·이력 제거(mock)                                           | 취소 API 연동                                     |
+| 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨                                            | 교육 일정·설문·만족도 탭                          |
+| 신청 내용 (결과 대기·서류 합격) mock UI                                                      | 신청 내용 API 연동                                |
 | 안내사항 · 프로그램/신청 정보 팝업 · 교육일정 목록 · **설문·만족도 CMS 시드 fill / 빈 상태** | 결석/과제/피드백 팝업 · 설문 목록 UI · 정산 · API |
-| **활동 포기** 상세 분기(교육 전/중) · 탭 SSOT | 교육일정·설문 UI + 회차 필터 연동 |
-| 비-applied 상태 placeholder | 진행 완료 안내사항 탭 |
+| **활동 포기** 상세 분기(교육 전/중) · 탭 SSOT                                                | 교육일정·설문 UI + 회차 필터 연동                 |
+| 비-applied 상태 placeholder                                                                  | 진행 완료 안내사항 탭                             |
 
 ## 금지
 

@@ -91,32 +91,32 @@ export function useSignUp() {
   const wizardPathname = location.pathname
 
   const [currentStep, setCurrentStep] = useState(() =>
-    parseSignUpStep(searchParams, SIGN_UP_UNDER_AGE_TOTAL_STEPS),
+    parseSignUpStep(searchParams, SIGN_UP_UNDER_AGE_TOTAL_STEPS)
   )
   const [selectedType, setSelectedType] = useState<MemberType | null>(null)
   const [birthDate, setBirthDate] = useState('')
   const [gender, setGender] = useState<GenderType | null>(null)
   const [stepTwoMessage, setStepTwoMessage] = useState('')
   const [requiresGuardianConsent, setRequiresGuardianConsent] = useState(
-    () => parseSignUpPhase(searchParams) === 'guardian-consent',
+    () => parseSignUpPhase(searchParams) === 'guardian-consent'
   )
   const [isUnderAgeSignup, setIsUnderAgeSignup] = useState(false)
   const [isGuardianAgreementCompleted, setIsGuardianAgreementCompleted] = useState(
-    () => parseSignUpPhase(searchParams) === 'guardian-identity',
+    () => parseSignUpPhase(searchParams) === 'guardian-identity'
   )
   const [isGuardianIdentityVerified, setIsGuardianIdentityVerified] = useState(false)
   const [guardianAgreements, setGuardianAgreements] = useState<GuardianAgreementState>(
-    createInitialGuardianAgreementState,
+    createInitialGuardianAgreementState
   )
   const [guardianRelationship, setGuardianRelationship] = useState('')
   const [isIdentityVerified, setIsIdentityVerified] = useState(
-    () => parseSignUpPhase(searchParams) === 'agreement',
+    () => parseSignUpPhase(searchParams) === 'agreement'
   )
   const [identityVerificationSessionId, setIdentityVerificationSessionId] = useState<number | null>(
-    null,
+    null
   )
   const [guardianVerificationSessionId, setGuardianVerificationSessionId] = useState<number | null>(
-    null,
+    null
   )
   const [verifiedName, setVerifiedName] = useState(MOCK_VERIFIED_NAME)
   const [verifiedPhone, setVerifiedPhone] = useState(MOCK_VERIFIED_PHONE)
@@ -157,7 +157,7 @@ export function useSignUp() {
     setCurrentStep(step)
     navigate(
       { pathname: wizardPathname, search: `?${buildSignUpSearch(step, phase)}` },
-      { replace: false, state: { signupWizard: true } },
+      { replace: false, state: { signupWizard: true } }
     )
   }
 
@@ -166,7 +166,7 @@ export function useSignUp() {
     setCurrentStep(step)
     navigate(
       { pathname: wizardPathname, search: `?${buildSignUpSearch(step, phase)}` },
-      { replace: true, state: { signupWizard: true } },
+      { replace: true, state: { signupWizard: true } }
     )
   }
 
@@ -264,7 +264,7 @@ export function useSignUp() {
 
     if (result.status === 'under-age') {
       if (selectedType === 'teacher') {
-        setStepTwoMessage('교사회원은 만 14세 이상만 가입할 수 있어요.')
+        setStepTwoMessage('교사 회원은 만 14세 이상만 가입할 수 있어요.')
         return
       }
 
@@ -467,7 +467,7 @@ export function useSignUp() {
       setEmailCheckStatus(available ? 'success' : 'error')
       setEmailMessage(
         response.message?.trim() ||
-          (available ? '사용할 수 있는 이메일이에요.' : EMAIL_ID_MESSAGES.duplicate),
+          (available ? '사용할 수 있는 이메일이에요.' : EMAIL_ID_MESSAGES.duplicate)
       )
       if (available) {
         setEmail(normalizeEmailId(normalizedEmail))
@@ -475,7 +475,7 @@ export function useSignUp() {
     } catch (error) {
       setEmailCheckStatus('error')
       setEmailMessage(
-        getSignupApiErrorMessage(error, '이메일 확인에 실패했어요. 잠시 후 다시 시도해 주세요.'),
+        getSignupApiErrorMessage(error, '이메일 확인에 실패했어요. 잠시 후 다시 시도해 주세요.')
       )
     } finally {
       setIsEmailChecking(false)
@@ -651,7 +651,10 @@ export function useSignUp() {
       navigate(SIGN_UP_COMPLETE_PATH, { replace: true })
     } catch (error) {
       setSubmitMessage(
-        getSignupApiErrorMessage(error, '가입에 실패했어요. 입력 정보를 확인한 뒤 다시 시도해 주세요.'),
+        getSignupApiErrorMessage(
+          error,
+          '가입에 실패했어요. 입력 정보를 확인한 뒤 다시 시도해 주세요.'
+        )
       )
     } finally {
       setIsSubmitting(false)

@@ -6,10 +6,7 @@ import type {
   SchoolStatus,
 } from '../model/sign-up.types'
 import { isDateWithinInputBounds } from '@/shared/ui/pf-date-input/date-utils'
-import {
-  MOCK_VERIFIED_NAME,
-  MOCK_VERIFIED_PHONE,
-} from './constants'
+import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from './constants'
 
 /** 숫자만 입력해도 YYYY.MM.DD 형식으로 `.`을 자동 삽입한다. */
 export function formatBirthDateInput(value: string) {
@@ -76,7 +73,7 @@ export function isValidPassword(value: string) {
 }
 
 export function getMemberTypeLabel(type: MemberType | null) {
-  if (type === 'teacher') return '교사회원'
+  if (type === 'teacher') return '교사 회원'
   return '일반회원'
 }
 
@@ -100,21 +97,18 @@ export function formatHomeAddress(address: string, addressDetail: string) {
   return [address.trim(), addressDetail.trim()].filter(Boolean).join(' ')
 }
 
-/** 교사회원 확인 화면 — 학교명, 소재지 */
+/** 교사 회원 확인 화면 — 학교명, 소재지 */
 export function formatTeacherAffiliation(schoolName: string, schoolAddress: string) {
   return [schoolName.trim(), schoolAddress.trim()].filter(Boolean).join(', ') || '-'
 }
 
-export function isAllAgreed<T extends string>(
-  agreements: Record<T, boolean>,
-  items: { key: T }[],
-) {
+export function isAllAgreed<T extends string>(agreements: Record<T, boolean>, items: { key: T }[]) {
   return items.every(item => agreements[item.key])
 }
 
 export function isRequiredAgreed<T extends string>(
   agreements: Record<T, boolean>,
-  items: { key: T; required: boolean }[],
+  items: { key: T; required: boolean }[]
 ) {
   return items.filter(item => item.required).every(item => agreements[item.key])
 }

@@ -22,7 +22,7 @@ export type EducationDisplayStatusTone = 'pending' | 'progress' | 'completed' | 
  */
 export type EducationWithdrawalPhase = 'before_education' | 'during_education'
 
-/** 교사회원 교육현황 상세 — 교재 배송 현황 */
+/** 교사 회원 교육현황 상세 — 교재 배송 현황 */
 export type EducationTeacherDeliveryStatus = 'before' | 'shipping' | 'completed'
 
 export const EDUCATION_TEACHER_DELIVERY_STATUS_LABEL: Record<
@@ -34,7 +34,7 @@ export const EDUCATION_TEACHER_DELIVERY_STATUS_LABEL: Record<
   completed: '배송 완료',
 }
 
-/** 교사회원 교육현황 상세 — 교재·배정강사(동의서) */
+/** 교사 회원 교육현황 상세 — 교재·배정강사(동의서) */
 export type EducationTeacherAssignmentTextbook = {
   title: string
   kitCountLabel: string
@@ -71,7 +71,7 @@ export type EducationTeacherAssignment = {
 }
 
 export function hasTeacherAssignmentAsideContent(
-  assignment: EducationTeacherAssignment | undefined,
+  assignment: EducationTeacherAssignment | undefined
 ): boolean {
   if (!assignment) return false
   return Boolean(assignment.textbook) || assignment.instructors.length > 0
@@ -111,13 +111,13 @@ export type EducationApplicationListItem = {
    * 예: 10회차 중 3회차까지 진행 후 포기 → `3` — 이후 회차 일정·과제·자료 비노출
    */
   lastParticipatedSession?: number
-  /** 교사회원 상세 헤더 우측 — 교재·배정강사 (일반/강사 비노출) */
+  /** 교사 회원 상세 헤더 우측 — 교재·배정강사 (일반/강사 비노출) */
   teacherAssignment?: EducationTeacherAssignment
-  /** 교사회원 신청 내용 탭 — 기관 신청·안내사항·희망 일정 */
+  /** 교사 회원 신청 내용 탭 — 기관 신청·안내사항·희망 일정 */
   teacherApplicationContent?: EducationTeacherApplicationContent
 }
 
-/** 교사회원 신청 내용 — 신청 기관 정보 */
+/** 교사 회원 신청 내용 — 신청 기관 정보 */
 export type EducationTeacherApplicationInstitution = {
   name: string
   grade: string
@@ -132,7 +132,7 @@ export type EducationTeacherApplicationInstitution = {
   otherRequests: string
 }
 
-/** 교사회원 신청 내용 — 안내사항 */
+/** 교사 회원 신청 내용 — 안내사항 */
 export type EducationTeacherApplicationGuidance = {
   computerInRoom: string
   waitingPlace: string
