@@ -19,6 +19,21 @@ const DISPLAY_STATUS_FROM_API: Record<string, EducationDisplayStatus> = {
   '신청 반려': 'rejected',
   '작성 중': 'waiting_result',
   '신청 취소': 'withdrawn',
+  // 영문/코드형 displayStatus (일부 환경·상세 폴백)
+  WAITING_RESULT: 'waiting_result',
+  WAITING: 'waiting_result',
+  DOCUMENT_PASSED: 'document_passed',
+  DOC_PASSED: 'document_passed',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  FINISHED: 'completed',
+  WITHDRAWN: 'withdrawn',
+  GIVE_UP: 'withdrawn',
+  GIVEN_UP: 'withdrawn',
+  REJECTED: 'rejected',
+  AUTO_REJECTED: 'rejected',
+  CANCELLED: 'withdrawn',
+  CANCELED: 'withdrawn',
 }
 
 const APPLICATION_TYPE_SET = new Set<ProgramApplicationType>([
@@ -40,27 +55,31 @@ function readApplicationType(value: string | undefined): ProgramApplicationType 
   return null
 }
 
-function mapDisplayStatus(value: string | undefined): EducationDisplayStatus {
+function mapDisplayStatus(value: string | undefined): EducationDisplayStatus | null {
   const normalized = value?.trim()
-  if (normalized && normalized in DISPLAY_STATUS_FROM_API) {
+  if (!normalized) return null
+  if (normalized in DISPLAY_STATUS_FROM_API) {
     return DISPLAY_STATUS_FROM_API[normalized]!
   }
-  return 'waiting_result'
+  const upper = normalized.toUpperCase()
+  if (upper in DISPLAY_STATUS_FROM_API) {
+    return DISPLAY_STATUS_FROM_API[upper]!
+  }
+  return null
 }
 
 function hasStatus(value: string, tokens: readonly string[]): boolean {
   return tokens.includes(value)
 }
 
-/** 상세 응답에 displayStatus가 없을 때 applicationStatus·참여 상태로 목록과 같은 탭을 고른다. */
-export function resolvePortalDisplayStatus(
-  detail: PortalProgramApplicationDetail,
-): EducationDisplayStatus {
-  if (detail.displayStatus?.trim()) return mapDisplayStatus(detail.displayStatus)
-
-  const applicationStatus = (detail.applicationStatus ?? '').trim().toUpperCase()
-  const participationStatus = (detail.participation?.status ?? '').trim().toUpperCase()
-  const completionStatus = (detail.participation?.completionStatus ?? '').trim().toUpperCase()
+function resolveDisplayStatusFromApplicationFields(input: {
+  applicationStatus?: string | null
+  participationStatus?: string | null
+  completionStatus?: string | null
+}): EducationDisplayStatus {
+  const applicationStatus = (input.applicationStatus ?? '').trim().toUpperCase()
+  const participationStatus = (input.participationStatus ?? '').trim().toUpperCase()
+  const completionStatus = (input.completionStatus ?? '').trim().toUpperCase()
 
   if (hasStatus(applicationStatus, ['REJECTED', 'AUTO_REJECTED', 'FINAL_REJECTED', 'FINAL_FAILED', 'FAILED'])) {
     return 'rejected'
@@ -100,6 +119,25 @@ export function resolvePortalDisplayStatus(
     return 'document_passed'
   }
   return 'waiting_result'
+}
+
+/** 상세·목록 공통: displayStatus 우선, 없으면 applicationStatus·참여 상태로 탭 분류. */
+export function resolvePortalDisplayStatus(
+  detail: PortalProgramApplicationDetail | PortalProgramApplicationListItem,
+): EducationDisplayStatus {
+  const fromLabel = mapDisplayStatus(detail.displayStatus)
+  if (fromLabel) return fromLabel
+
+  const participation =
+    'participation' in detail && detail.participation
+      ? detail.participation
+      : undefined
+
+  return resolveDisplayStatusFromApplicationFields({
+    applicationStatus: detail.applicationStatus,
+    participationStatus: detail.participationStatus ?? participation?.status,
+    completionStatus: participation?.completionStatus,
+  })
 }
 
 function mapDetailCase(
@@ -160,7 +198,7 @@ export function mapPortalProgramApplicationListItem(
   const applicationType = readApplicationType(row.applicationType)
   if (!applicationType || row.applicationId == null || row.programId == null) return null
 
-  const displayStatus = mapDisplayStatus(row.displayStatus)
+  const displayStatus = resolvePortalDisplayStatus(row)
   const detailCase = mapDetailCase(applicationType, row.programGroup)
   const thumbnailUrl =
     row.thumbnailFileObjectId == null ? undefined : portalPublicFileContentUrl(row.thumbnailFileObjectId)
@@ -171,7 +209,7 @@ export function mapPortalProgramApplicationListItem(
     programId: String(row.programId),
     categoryLabel: mapCategoryLabel(applicationType, row.programGroup),
     title: row.programTitle?.trim() || '프로그램',
-    recruitmentPeriodLabel: '-',
+    recruitmentPeriodLabel: formatDateRange(row.recruitmentStartAt, row.recruitmentEndAt),
     operatingPeriodLabel: formatDateRange(row.educationStartAt, row.educationEndAt),
     recruitmentStatus: mapRecruitmentStatus(displayStatus),
     educationTargetLabel: '전체',
