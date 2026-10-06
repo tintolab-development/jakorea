@@ -43,6 +43,17 @@ export function toDisplayGender(gender: string | undefined | null): string {
 }
 
 /**
+ * 어댑터용 성별 라벨 — `남성` | `여성`, 알 수 없는 값은 원문 유지, 빈 값은 `undefined`.
+ * 화면 모델에 `MALE`/`M` 같은 API 원시값이 남지 않게 한다.
+ */
+export function toGenderLabelOrRaw(gender: string | undefined | null): string | undefined {
+  const raw = gender?.trim()
+  if (!raw) return undefined
+  const label = toDisplayGender(raw)
+  return label === '-' ? raw : label
+}
+
+/**
  * API `format: date` 전송용 `YYYY-MM-DD`.
  * `YYYY.MM.DD` / `YYYY-MM-DD` / `YYYYMMDD` 입력을 허용한다.
  */

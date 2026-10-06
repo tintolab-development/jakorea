@@ -13,6 +13,7 @@ import {
 } from '@/features/user/api/map-instructor-activity-display'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { SCHOOL_ENROLLMENT_STATUS_LABELS } from '@/features/user/api/map-school-enrollment-status'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
   parseAffiliationOrgSegments,
@@ -72,9 +73,8 @@ export function affiliationLine(user: Omit<User, 'password'>): string {
 /** 소속 td — 문자 `|` 대신 TdDivider, gap 12px */
 /** 개인 회원 — 현재 학교 재학 여부 */
 export function individualSchoolEnrollmentStatusView(user: Omit<User, 'password'>): string {
-  if (user.schoolEnrollmentStatus === 'NOT_ENROLLED') return '해당 없음'
-  if (user.schoolEnrollmentStatus === 'ENROLLED') return '재학 중'
-  return '재학 중'
+  if (user.schoolEnrollmentStatus === 'NOT_ENROLLED') return SCHOOL_ENROLLMENT_STATUS_LABELS.NOT_ENROLLED
+  return SCHOOL_ENROLLMENT_STATUS_LABELS.ENROLLED
 }
 
 export function affiliationView(user: Omit<User, 'password'>): ReactNode {

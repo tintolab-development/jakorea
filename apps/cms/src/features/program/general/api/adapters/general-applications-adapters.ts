@@ -9,6 +9,8 @@ import type {
 } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { buildLectureFeeBasisDisplay } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
+import { toSchoolEnrollmentStatusLabelOrRaw } from '@/features/user/api/map-school-enrollment-status'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
@@ -550,7 +552,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
     nameHanja: dto.nameHanja?.trim() || base.nameHanja,
     nameEnglish: dto.nameEnglish?.trim() || base.nameEnglish,
     birthDate: dto.birthDate?.trim() || base.birthDate,
-    gender: dto.gender?.trim() || base.gender,
+    gender: toGenderLabelOrRaw(dto.gender) || base.gender,
     rejectionReason: dto.rejectReason?.trim() || base.rejectionReason,
     distanceKm: dto.distanceKm ?? base.distanceKm,
     longDistanceYn: dto.longDistance ?? base.longDistanceYn,
@@ -898,10 +900,10 @@ export function mapIndividualApplicationDetailToApplicantRow(
       dto.application?.preferredEducationSchedules
     ),
     detail: {
-      gender: profile?.gender ?? undefined,
+      gender: toGenderLabelOrRaw(profile?.gender),
       birthDate: profile?.birthDate ?? undefined,
       age: profile?.age,
-      schoolEnrollmentStatus: profile?.schoolEnrollmentStatus ?? undefined,
+      schoolEnrollmentStatus: toSchoolEnrollmentStatusLabelOrRaw(profile?.schoolEnrollmentStatus),
       affiliationSchool: profile?.affiliationSchool ?? undefined,
       affiliationGrade: profile?.affiliationGrade ?? undefined,
       contact: profile?.contact ?? undefined,
@@ -1159,7 +1161,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
       screening?.giveUpYn
     ),
     programId: toId(dto.programId) || base.programId,
-    gender: profile?.gender?.trim() || base.gender,
+    gender: toGenderLabelOrRaw(profile?.gender) || base.gender,
     birthDate: profile?.birthDate?.trim() || base.birthDate,
     age: profile?.age ?? base.age,
     interviewAvailability: mapInterviewAvailabilitySlots(dto.interviewAvailability),

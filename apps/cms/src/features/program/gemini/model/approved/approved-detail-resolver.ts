@@ -13,6 +13,7 @@ import type {
 import type { GeminiApprovedTrainingRow, GeminiApprovedTrainingStatus } from './types'
 import { getGeminiApprovedTrainingRowsSnapshot } from './approved-training-store'
 import { formatInstructorFeeGradeLabel } from '@/shared/constants/instructor-fee-grade'
+import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 
 function toId(value: number | string | null | undefined): string {
   if (value == null) return ''
@@ -110,7 +111,7 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
     managerMemberId: dto.teacherMemberId != null ? String(dto.teacherMemberId) : undefined,
     managerNameKo: teacherName,
     managerScheduleChangeCount: dto.teacherScheduleChangeCount ?? 0,
-    managerGender: trimmed(dto.teacherGender),
+    managerGender: toGenderLabelOrRaw(dto.teacherGender) ?? '',
     managerBirthDate: trimmed(dto.teacherBirthDate),
     managerEmploymentStatus: mapEmploymentStatus(dto.teacherEmploymentStatus),
     managerContact: trimmed(dto.teacherPhone),
