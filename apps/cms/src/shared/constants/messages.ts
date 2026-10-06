@@ -27,6 +27,9 @@ export const CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE =
 export const INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE =
   '재학 중인 회원은 학교를 검색해 선택해 주세요.'
 
+/** 계좌 지급 상세 — 민감정보 권한 없음(403) AlertModal 본문 */
+export const ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE = '계좌 원문 조회 권한이 없습니다.'
+
 /** 미구현 기능 `window.alert` 공통 안내 (프로그램 상세 미리보기, 대시보드 위젯 더보기 등) */
 export const FEATURE_COMING_SOON_ALERT_MESSAGE = '준비 중입니다.'
 

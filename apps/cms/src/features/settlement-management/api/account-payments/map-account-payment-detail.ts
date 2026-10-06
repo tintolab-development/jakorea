@@ -222,6 +222,7 @@ export function mapAccountPaymentDetailFromGetApi(
 ): AccountPaymentStatusDetail {
   const payment = detail.payment
   const settlement = detail.settlement ?? undefined
+  const sensitiveAccount = detail.sensitiveAccount
 
   const mergedRow: AccountPaymentRow = {
     ...row,
@@ -245,9 +246,11 @@ export function mapAccountPaymentDetailFromGetApi(
     amount: payment?.netPaymentAmount ?? row.amount,
     transferScheduledDate:
       payment?.scheduledPaymentDate ?? settlement?.expectedTransferDate ?? row.transferScheduledDate,
-    bankName: payment?.bankName ?? row.bankName,
-    maskedAccountNo: payment?.maskedAccountNo ?? row.maskedAccountNo,
-    accountHolder: payment?.accountHolder ?? row.accountHolder,
+    bankName: sensitiveAccount?.bankName?.trim() || payment?.bankName || row.bankName,
+    maskedAccountNo:
+      sensitiveAccount?.accountNo?.trim() || payment?.maskedAccountNo || row.maskedAccountNo,
+    accountHolder:
+      sensitiveAccount?.accountHolder?.trim() || payment?.accountHolder || row.accountHolder,
     accountPaymentStatus: mapPaymentStatusToAccountPaymentStatus(payment?.paymentStatus),
   }
 
