@@ -9,7 +9,7 @@ import type {
 } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { buildLectureFeeBasisDisplay } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
-import type { InstructorApplicationDetailResponseEnriched } from '@/features/program/general/api/applications-api-client'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -38,6 +38,7 @@ import {
   type ParticipatingIndividualParticipantRow,
 } from '@/features/program/general/model/participating-individual-participants'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
+import { formatInstructorFeeGradeLabel } from '@/shared/constants/instructor-fee-grade'
 import { INSTRUCTOR_SETTLEMENT_STATUS_ORDER } from '@/shared/constants/instructor-settlement-status'
 import type {
   GeneralDocumentScreeningStatus,
@@ -53,6 +54,10 @@ import {
   resolveStoredAffiliation,
 } from '@/features/program/general/lib/affiliation-organization'
 import { mapSessionProgressToLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
+import {
+  instructorCmsProfileToApplicantInstructorRowPartial,
+  normalizeInstructorCmsProfileFromApi,
+} from '@/features/user/api/map-instructor-cms-profile'
 
 function toId(value: number | string | null | undefined): string {
   if (value == null || value === '') return ''
@@ -425,7 +430,7 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     schoolName: '',
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
-    instructorFeeGradeLabel: dto.instructorFeeGradeSnapshot?.trim() || undefined,
+    instructorFeeGradeLabel: formatInstructorFeeGradeLabel(dto.instructorFeeGradeSnapshot) || undefined,
     rejectionReason: dto.rejectReason?.trim() || undefined,
     distanceKm: dto.distanceKm,
     longDistanceYn: dto.longDistance,
@@ -441,7 +446,7 @@ function mapInstructorFeeBasisType(
 }
 
 function mapInstructorMemberProfileFromDetail(
-  dto: InstructorApplicationDetailResponseEnriched
+  dto: InstructorApplicationDetailResponse
 ): InstructorMemberProfile | undefined {
   const profile = dto.instructorMemberProfile
   if (!profile) return undefined
@@ -460,7 +465,7 @@ function mapAffiliationEmploymentStatus(
 }
 
 export function mapInstructorApplicationDetailToApplicantRow(
-  dto: InstructorApplicationDetailResponseEnriched,
+  dto: InstructorApplicationDetailResponse,
   base: ApplicantInstructorRow
 ): ApplicantInstructorRow {
   const preferredScheduleSlots =
@@ -504,8 +509,8 @@ export function mapInstructorApplicationDetailToApplicantRow(
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade) ?? base.evaluationGrade,
     instructorFeeGradeLabel:
-      dto.feePolicy?.instructorFeeGrade?.trim() ||
-      dto.instructorFeeGradeSnapshot?.trim() ||
+      formatInstructorFeeGradeLabel(dto.feePolicy?.instructorFeeGrade) ||
+      formatInstructorFeeGradeLabel(dto.instructorFeeGradeSnapshot) ||
       base.instructorFeeGradeLabel,
     lectureFeeBasisType:
       mapInstructorFeeBasisType(dto.feePolicy?.basisType) ?? base.lectureFeeBasisType,
@@ -552,6 +557,31 @@ export function mapInstructorApplicationDetailToApplicantRow(
     managerComment: dto.managerComment ?? base.managerComment,
     availableActions: dto.availableActions ?? base.availableActions,
     preferredScheduleSlots,
+    ...mapInstructorResumeFromDetail(dto, base),
+  }
+}
+
+/** `instructorCmsProfile` 이력서 섹션 — 기본 정보 필드는 신청 DTO 우선이라 여기서 덮지 않는다. */
+function mapInstructorResumeFromDetail(
+  dto: InstructorApplicationDetailResponse,
+  base: ApplicantInstructorRow
+): Partial<ApplicantInstructorRow> {
+  const profile = normalizeInstructorCmsProfileFromApi(dto.instructorCmsProfile ?? undefined)
+  if (!profile) return {}
+  const resume = instructorCmsProfileToApplicantInstructorRowPartial(profile)
+  const pickList = <T>(next: T[] | undefined, prev: T[] | undefined) =>
+    (next?.length ?? 0) > 0 ? next : prev
+  return {
+    careerDetails: pickList(resume.careerDetails, base.careerDetails),
+    jaKoreaActivities: pickList(resume.jaKoreaActivities, base.jaKoreaActivities),
+    educations: pickList(resume.educations, base.educations),
+    qualifications: pickList(resume.qualifications, base.qualifications),
+    awards: pickList(resume.awards, base.awards),
+    freeWriting1: resume.freeWriting1 || base.freeWriting1,
+    freeWriting2: resume.freeWriting2 || base.freeWriting2,
+    freeWriting3: resume.freeWriting3 || base.freeWriting3,
+    freeWriting4: resume.freeWriting4 || base.freeWriting4,
+    instructorCareerLevel: resume.instructorCareerLevel ?? base.instructorCareerLevel,
   }
 }
 

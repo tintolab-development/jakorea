@@ -12,6 +12,7 @@ import type {
 } from './instructor-application-types'
 import type { GeminiApprovedTrainingRow, GeminiApprovedTrainingStatus } from './types'
 import { getGeminiApprovedTrainingRowsSnapshot } from './approved-training-store'
+import { formatInstructorFeeGradeLabel } from '@/shared/constants/instructor-fee-grade'
 
 function toId(value: number | string | null | undefined): string {
   if (value == null) return ''
@@ -120,7 +121,7 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
     managerAccountBank: trimmed(dto.teacherAccountBank),
     managerAccountNumber: trimmed(dto.teacherAccountNumber),
     managerAccountHolder: trimmed(dto.teacherAccountHolder),
-    managerInstructorFeeGrade: trimmed(dto.teacherInstructorFeeGrade),
+    managerInstructorFeeGrade: formatInstructorFeeGradeLabel(dto.teacherInstructorFeeGrade),
     managerBusinessIncomeLabel: trimmed(dto.teacherBusinessIncomeLabel),
     managerOneLineIntro: trimmed(dto.teacherOneLineIntro),
     managerPosition: trimmed(dto.teacherPosition),

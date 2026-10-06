@@ -4,6 +4,7 @@ import {
   mapApiApplicationStatusToApprovalStatus,
   mapIndividualApplicationDetailToApplicantRow,
   mapIndividualApplicationToApplicantRow,
+  mapInstructorApplicationDetailToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
   mapMaterialAssignmentStatusToTextbookStatus,
   mapTextbookDeliveryStatusToBadge,
@@ -608,6 +609,61 @@ describe('general-applications-adapters', () => {
     expect(row.approvalStatus).toBe('approved')
     expect(row.instructorFeeGradeLabel).toBe('3급 강사비')
     expect(row.rejectionReason).toBe('서류 미비')
+  })
+
+  it('merges instructorCmsProfile resume onto instructor application detail', () => {
+    const base = mapInstructorApplicationToApplicantInstructorRow(
+      {
+        id: 1694639,
+        instructorMemberId: 190001,
+        programId: 186048,
+        instructorName: '이건희',
+        applicationStatus: 'SUBMITTED',
+      },
+      0,
+      '186048'
+    )
+    const instructorCmsProfile = {
+      memberType: 'GENERAL',
+      career: {
+        level: 'experienced',
+        rows: [
+          {
+            companyName: 'JA Korea',
+            roleName: '강사',
+            periodStart: '2020-01',
+            currentlyEmployed: true,
+          },
+        ],
+      },
+      awards: [{ title: '우수강사상', acquiredYear: '2024' }],
+      essays: { freeWrite1: '자기소개', freeWrite4: '대처사례' },
+    }
+
+    const row = mapInstructorApplicationDetailToApplicantRow(
+      { id: 1694639, instructorCmsProfile },
+      { ...base, freeWriting2: '기존 작성' }
+    )
+
+    expect(row.careerDetails).toHaveLength(1)
+    expect(row.awards).toHaveLength(1)
+    expect(row.freeWriting1).toBe('자기소개')
+    expect(row.freeWriting2).toBe('기존 작성')
+    expect(row.freeWriting4).toBe('대처사례')
+    expect(row.instructorCareerLevel).toBe('experienced')
+  })
+
+  it('keeps base resume when instructorCmsProfile is absent', () => {
+    const base = mapInstructorApplicationToApplicantInstructorRow(
+      { id: 1, programId: 1, instructorName: '강사', applicationStatus: 'SUBMITTED' },
+      0,
+      '1'
+    )
+    const row = mapInstructorApplicationDetailToApplicantRow(
+      { id: 1 },
+      { ...base, freeWriting1: '기존' }
+    )
+    expect(row.freeWriting1).toBe('기존')
   })
 
   it('maps volunteer application list item to screening row', () => {

@@ -132,19 +132,6 @@ export type ScreeningResultNotifyFields = {
   scheduledAt?: string
 }
 
-export type InstructorApplicationDetailResponseEnriched = InstructorApplicationDetailResponse & {
-  affiliationOrganizationId?: number | null
-  employmentStatus?: string | null
-  affiliationIsCurrentlyEmployed?: boolean | null
-  instructorMemberProfile?: {
-    teacherAffiliated?: boolean
-    employmentStatus?: string | null
-    currentlyEmployed?: boolean | null
-  } | null
-  feePolicy?: InstructorApplicationFeePolicyRequest | null
-  businessIncomeEarnerStatus?: string | null
-}
-
 export type IndividualApplicationUpdatePayload = Omit<
   IndividualApplicationUpdateRequest,
   'textbookId' | 'teamName' | 'teamRole' | 'managerComment'
@@ -263,8 +250,8 @@ export async function fetchInstructorApplicationsRemote(
 
 export async function fetchInstructorApplicationDetailRemote(
   applicationId: string
-): Promise<InstructorApplicationDetailResponseEnriched> {
-  return unwrapApiBody<InstructorApplicationDetailResponseEnriched>(
+): Promise<InstructorApplicationDetailResponse> {
+  return unwrapApiBody<InstructorApplicationDetailResponse>(
     await customInstance({
       url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}`,
       method: 'GET',

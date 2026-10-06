@@ -40,7 +40,9 @@ export function hydrateInstructorApplicationRowFromForm(input: {
   return {
     ...input.row,
     oneLineIntro: oneLineIntro || input.row.oneLineIntro,
-    freeWriting1: scheduleMemo || input.row.freeWriting1,
+    freeWriting1: input.row.freeWriting1?.trim()
+      ? input.row.freeWriting1
+      : scheduleMemo || input.row.freeWriting1,
     preferredScheduleSlots,
     managerComment:
       input.adminComment?.trim() || input.row.managerComment,
