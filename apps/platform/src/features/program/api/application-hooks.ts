@@ -79,7 +79,10 @@ export function useProgramApplicationForm(
   const bindingId = option?.formBindingId ?? null
   const recruitmentId = option?.recruitmentId ?? null
   const applicationType = option?.applicationType?.trim() || null
-  /** 모집 창과 무관 — formBindingId 가 있으면 발행 양식 GET. */
+  /**
+   * formBindingId 가 있을 때만 발행 양식 GET.
+   * null이면 BE blockedReason(APPLICATION_FORM_NOT_CONFIGURED 등)만 전달하고 GET/POST 하지 않는다.
+   */
   const formEnabled =
     enabled &&
     bindingId != null &&
@@ -157,12 +160,25 @@ export function useProgramApplicationForm(
     }
   }
 
-  if (!option || bindingId == null || recruitmentId == null || !applicationType) {
+  if (!option) {
     return {
       status: 'unavailable',
       isRemoteEnabled: true,
       bundle: null,
-      blockedReason: option?.blockedReason ?? 'APPLICATION_FORM_NOT_CONFIGURED',
+      blockedReason:
+        selection?.recruitmentId != null || (selection?.recruitmentIds?.length ?? 0) > 0
+          ? 'RECRUITMENT_NOT_FOUND'
+          : 'APPLICATION_FORM_NOT_CONFIGURED',
+      refetch,
+    }
+  }
+
+  if (bindingId == null || recruitmentId == null || !applicationType) {
+    return {
+      status: 'unavailable',
+      isRemoteEnabled: true,
+      bundle: null,
+      blockedReason: option.blockedReason ?? 'APPLICATION_FORM_NOT_CONFIGURED',
       refetch,
     }
   }
