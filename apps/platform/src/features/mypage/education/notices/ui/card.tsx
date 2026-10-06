@@ -2,6 +2,7 @@ import type { EducationInProgressNotice } from '../model/types'
 import {
   formatEducationNoticePublishedAt,
   resolveEducationNoticeTitle,
+  toEducationNoticePlainText,
 } from '../lib/format'
 import { PFText } from '@/shared/ui'
 import { EducationNoticeStats } from './stats'
@@ -26,7 +27,7 @@ export function EducationInProgressNoticeCard({
           {title}
         </PFText>
         <PFText as="p" typo="bd-md-md" color="black" className={styles.preview}>
-          {notice.content}
+          {toEducationNoticePlainText(notice.content)}
         </PFText>
       </div>
 

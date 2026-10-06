@@ -348,6 +348,24 @@ export const platformQueryKeys = {
           applicationId,
           postId,
         ] as const,
+      /** 안내 첨부 전체 — GET .../notices/attachments (Class C). keyword 가 응답을 바꾼다 */
+      noticeAttachments: (applicationType: string, applicationId: string, keyword = '') =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notice-attachments',
+          applicationType,
+          applicationId,
+          keyword,
+        ] as const,
+      /** 안내 반응 — GET .../notices/{postId}/reactions (Class E) */
+      noticeReactions: (applicationType: string, applicationId: string, postId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notice-reactions',
+          applicationType,
+          applicationId,
+          postId,
+        ] as const,
       /** 교육·봉사 일정 — GET .../schedules (Class C) */
       schedules: (applicationType: string, applicationId: string) =>
         [

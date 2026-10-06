@@ -1,7 +1,8 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { ProgramDetail } from '@/features/program'
 import {
   useApplicationNoticeDetailQuery,
+  useApplicationNoticeFiles,
   useApplicationNoticesQuery,
 } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
@@ -9,7 +10,12 @@ import { EducationApplicationInfoModal } from '../../applications/ui/application
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
 import { useDebouncedValue } from '@/shared/hooks'
 import type { EducationInProgressFile, EducationInProgressNotice } from '../model/types'
-import { downloadEducationNoticeFile } from '../lib/download-file'
+import {
+  downloadEducationNoticeFile,
+  downloadRemoteEducationNoticeFile,
+  hasRemoteDownloadPath,
+} from '../lib/download-file'
+import { readNoticeIdFromLocation, writeNoticeIdToLocation } from '../lib/notice-url'
 import {
   getMockEducationInProgressFiles,
   getMockEducationInProgressNotices,
@@ -51,7 +57,10 @@ export function EducationInProgressNoticePanel({
   const [localNotices, setLocalNotices] = useState<EducationInProgressNotice[]>(() =>
     getMockEducationInProgressNotices(programId),
   )
-  const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(null)
+  const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(readNoticeIdFromLocation)
+  const [downloadErrorOpen, setDownloadErrorOpen] = useState(false)
+  /** 이 패널이 push 한 history 엔트리 위에 있으면 닫을 때 back 으로 되돌린다. */
+  const pushedNoticeEntryRef = useRef(false)
   const remoteDetail = useApplicationNoticeDetailQuery(
     applicationType,
     applicationId,
@@ -60,22 +69,65 @@ export function EducationInProgressNoticePanel({
 
   const notices = useMemo(() => {
     const source = remoteNotices.enabled ? remoteNotices.items : localNotices
-    if (!remoteDetail.detail || !selectedNoticeId) return source
-    return source.map(notice =>
-      notice.id === selectedNoticeId ? { ...notice, ...remoteDetail.detail?.notice } : notice,
-    )
+    const detailNotice = remoteDetail.detail?.notice
+    if (!detailNotice || !selectedNoticeId) return source
+    return source.map(notice => {
+      if (notice.id !== selectedNoticeId) return notice
+      // 반응 수는 목록 invalidate·반응 쿼리가 최신이다. 상세 스냅샷으로 덮지 않는다.
+      return { ...notice, ...detailNotice, reactionCount: notice.reactionCount }
+    })
   }, [localNotices, remoteDetail.detail, remoteNotices.enabled, remoteNotices.items, selectedNoticeId])
 
+  const remoteFiles = useApplicationNoticeFiles(
+    applicationType,
+    applicationId,
+    remoteNotices.items,
+    debouncedFileQuery,
+  )
   const files = useMemo(() => {
-    if (remoteNotices.enabled) return remoteDetail.detail?.files ?? []
+    if (remoteNotices.enabled) return remoteFiles.files
     return getMockEducationInProgressFiles(programId)
-  }, [programId, remoteDetail.detail?.files, remoteNotices.enabled])
+  }, [programId, remoteFiles.files, remoteNotices.enabled])
 
   const filteredFiles = useMemo(() => {
+    if (remoteNotices.enabled && remoteFiles.isFullList) return files
     const query = debouncedFileQuery.trim().toLowerCase()
     if (!query) return files
     return files.filter(file => file.fileName.toLowerCase().includes(query))
-  }, [files, debouncedFileQuery])
+  }, [debouncedFileQuery, files, remoteFiles.isFullList, remoteNotices.enabled])
+
+  useEffect(() => {
+    const handlePopState = () => {
+      pushedNoticeEntryRef.current = false
+      setSelectedNoticeId(readNoticeIdFromLocation())
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  const closeNoticeDetail = () => {
+    setSelectedNoticeId(null)
+    if (pushedNoticeEntryRef.current && readNoticeIdFromLocation()) {
+      pushedNoticeEntryRef.current = false
+      window.history.back()
+      return
+    }
+    pushedNoticeEntryRef.current = false
+    writeNoticeIdToLocation(null, 'replace')
+  }
+
+  const isNoticeListReady = !remoteNotices.isLoading && !remoteNotices.isError
+  const isSelectedNoticeMissing =
+    selectedNoticeId !== null && !notices.some(notice => notice.id === selectedNoticeId)
+  const shouldDropSelectedNotice =
+    isNoticeListReady && (isSelectedNoticeMissing || remoteDetail.isError)
+
+  useEffect(() => {
+    if (!shouldDropSelectedNotice) return
+    pushedNoticeEntryRef.current = false
+    setSelectedNoticeId(null)
+    writeNoticeIdToLocation(null, 'replace')
+  }, [shouldDropSelectedNotice])
 
   const openComingSoon = () => {
     setIsComingSoonOpen(true)
@@ -87,11 +139,21 @@ export function EducationInProgressNoticePanel({
         prev.map(notice => (notice.id === noticeId ? { ...notice, read: true } : notice)),
       )
     }
+    if (selectedNoticeId === null) {
+      writeNoticeIdToLocation(noticeId, 'push')
+      pushedNoticeEntryRef.current = true
+    } else {
+      writeNoticeIdToLocation(noticeId, 'replace')
+    }
     setSelectedNoticeId(noticeId)
   }
 
   const handleDownloadFile = (file: EducationInProgressFile) => {
-    downloadEducationNoticeFile(file)
+    if (!hasRemoteDownloadPath(file)) {
+      downloadEducationNoticeFile(file)
+      return
+    }
+    downloadRemoteEducationNoticeFile(file).catch(() => setDownloadErrorOpen(true))
   }
 
   const handleViewOriginal = (file: EducationInProgressFile) => {
@@ -106,7 +168,7 @@ export function EducationInProgressNoticePanel({
     if (!remoteNotices.enabled) {
       setLocalNotices(prev => prev.filter(notice => notice.id !== noticeId))
     }
-    setSelectedNoticeId(null)
+    closeNoticeDetail()
   }
 
   if (remoteNotices.isLoading) return null
@@ -166,7 +228,11 @@ export function EducationInProgressNoticePanel({
           onValueChange={setDraftFileQuery}
         />
 
-        {!hasFiles ? (
+        {hasFileQuery && filteredFiles.length === 0 ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.searchEmpty}>
+            검색 결과가 없습니다.
+          </PFText>
+        ) : !hasFiles ? (
           <div className={styles.filesEmpty}>
             <PFText as="p" typo="bd-md-bd" color="black" className={styles.filesEmptyTitle}>
               첨부된 파일이 없어요
@@ -175,10 +241,6 @@ export function EducationInProgressNoticePanel({
               첨부파일이 등록되면 이곳에서 확인할 수 있어요.
             </PFText>
           </div>
-        ) : filteredFiles.length === 0 && hasFileQuery ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.searchEmpty}>
-            검색 결과가 없습니다.
-          </PFText>
         ) : (
           <div className={styles.filesList}>
             {filteredFiles.map(file => (
@@ -208,9 +270,11 @@ export function EducationInProgressNoticePanel({
         notices={notices}
         files={files}
         noticeId={selectedNoticeId}
-        onClose={() => setSelectedNoticeId(null)}
+        onClose={closeNoticeDetail}
         onNoticeChange={openNoticeDetail}
         onDelete={deleteNotice}
+        applicationType={applicationType}
+        applicationId={applicationId}
         onReactionCountChange={(noticeId, reactionCount) => {
           if (!remoteNotices.enabled) {
             setLocalNotices(prev =>
@@ -248,6 +312,12 @@ export function EducationInProgressNoticePanel({
         open={isComingSoonOpen}
         title="준비 중"
         onConfirm={() => setIsComingSoonOpen(false)}
+      />
+
+      <PFAlertModal
+        open={downloadErrorOpen}
+        title="첨부파일을 내려받지 못했습니다."
+        onConfirm={() => setDownloadErrorOpen(false)}
       />
     </div>
   )

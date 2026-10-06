@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useId,
   useLayoutEffect,
@@ -11,6 +12,7 @@ import { createPortal } from 'react-dom'
 import {
   getPlatformReactionEmojiIndex,
   getPlatformReactionEmojiTypeForIndex,
+  PLATFORM_REACTION_EMOJI_ITEMS,
 } from '../lib/reaction-emojis'
 import type {
   EducationInProgressFile,
@@ -30,6 +32,17 @@ import {
   toggleNoticeReaction,
 } from '../lib/mock-reactions'
 import { MOCK_MYPAGE_USER_NAME } from '../../../lib/constants'
+import { useMypageMember } from '../../../hooks/use-mypage-member'
+import {
+  useApplicationNoticeCommentMutations,
+  useApplicationNoticeDetailQuery,
+  useApplicationNoticeReactionsQuery,
+  useToggleApplicationNoticeReactionMutation,
+} from '../../applications/api/activity-hooks'
+import { fetchApplicationNoticeInlineImageSrc } from '../../applications/api/activity-client'
+import type { ProgramApplicationType } from '../../applications/api/types'
+import { RichTextViewer } from '@/shared/rich-text'
+import { downloadRemoteEducationNoticeFile, hasRemoteDownloadPath } from '../lib/download-file'
 import moreVerticalUrl from '../assets/icon/more-vertical.svg'
 import noticeIconEmojiUrl from '../assets/icon/notice-icon-emoji.svg'
 import rChevronDownGray22Url from '@/shared/assets/icons/r-chevron-down-gray-22.svg'
@@ -59,6 +72,9 @@ type EducationInProgressNoticeDetailModalProps = {
   onDelete: (noticeId: string) => void
   onReactionCountChange?: (noticeId: string, reactionCount: number) => void
   onCommentCountChange?: (noticeId: string, commentCount: number) => void
+  /** 원격 세션이면 댓글·반응을 회원 포탈 API로 처리 */
+  applicationType?: ProgramApplicationType | null
+  applicationId?: string | null
 }
 
 const AUTHOR_MENU_OPTIONS = [
@@ -109,6 +125,8 @@ export function EducationInProgressNoticeDetailModal({
   onDelete,
   onReactionCountChange,
   onCommentCountChange,
+  applicationType,
+  applicationId,
 }: EducationInProgressNoticeDetailModalProps) {
   const [comment, setComment] = useState('')
   const [isAuthorMenuOpen, setIsAuthorMenuOpen] = useState(false)
@@ -128,6 +146,7 @@ export function EducationInProgressNoticeDetailModal({
   const reactionPickerPopoverRef = useRef<HTMLDivElement>(null)
   const authorMenuRef = useRef<HTMLDivElement>(null)
   const authorMenuId = useId()
+  const emojiPreviewClipId = useId().replace(/:/g, '')
 
   const currentIndex = noticeId ? notices.findIndex(notice => notice.id === noticeId) : -1
   const notice = currentIndex >= 0 ? notices[currentIndex] : undefined
@@ -136,21 +155,69 @@ export function EducationInProgressNoticeDetailModal({
   const canGoPrev = currentIndex > 0
   const canGoNext = currentIndex >= 0 && currentIndex < notices.length - 1
 
-  const reactions = useMemo(
-    () => (notice ? getNoticeReactions(notice.id) : []),
-    [notice, reactionTick]
+  const remoteNoticeId = open ? noticeId : null
+  const remoteDetail = useApplicationNoticeDetailQuery(applicationType, applicationId, remoteNoticeId)
+  const remoteReactions = useApplicationNoticeReactionsQuery(
+    applicationType,
+    applicationId,
+    remoteNoticeId
   )
-  const reactionUsers = useMemo(
-    () => (notice ? getNoticeReactionUsers(notice.id) : []),
-    [notice, reactionTick]
+  const commentMutations = useApplicationNoticeCommentMutations(applicationType, applicationId)
+  const toggleReactionMutation = useToggleApplicationNoticeReactionMutation(
+    applicationType,
+    applicationId
   )
-  const comments = useMemo(
-    () => (notice ? getNoticeComments(notice.id) : []),
-    [notice, commentTick]
+  const isRemote = remoteDetail.enabled
+  const resolveInlineImage = useCallback(
+    (fileObjectId: number) => {
+      if (!applicationType || !applicationId || !noticeId) {
+        return Promise.reject(new Error('application scope is required'))
+      }
+      return fetchApplicationNoticeInlineImageSrc(
+        applicationType,
+        applicationId,
+        noticeId,
+        fileObjectId
+      )
+    },
+    [applicationId, applicationType, noticeId]
   )
-  const myReactionType = reactionUsers.find(
-    row => row.authorName === MOCK_MYPAGE_USER_NAME
-  )?.emojiType
+  const { displayName: memberDisplayName } = useMypageMember()
+  const currentUserName = isRemote ? memberDisplayName : MOCK_MYPAGE_USER_NAME
+  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null)
+  /** 댓글 입력창에서 고른 반응 — 전송 시 반영 (CMS comment-composer 와 동일) */
+  const [draftEmojiIndex, setDraftEmojiIndex] = useState<number | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const mockReactions = useMemo(
+    () => (notice && !isRemote ? getNoticeReactions(notice.id) : []),
+    [isRemote, notice, reactionTick]
+  )
+  const mockReactionUsers = useMemo(
+    () => (notice && !isRemote ? getNoticeReactionUsers(notice.id) : []),
+    [isRemote, notice, reactionTick]
+  )
+  const mockComments = useMemo(
+    () => (notice && !isRemote ? getNoticeComments(notice.id) : []),
+    [isRemote, notice, commentTick]
+  )
+  const remoteComments = useMemo(
+    () =>
+      (remoteDetail.detail?.comments ?? []).map(row =>
+        row.mine && memberDisplayName ? { ...row, authorName: memberDisplayName } : row
+      ),
+    [memberDisplayName, remoteDetail.detail?.comments]
+  )
+
+  const reactions = isRemote ? remoteReactions.summary : mockReactions
+  const reactionUsers = isRemote ? [] : mockReactionUsers
+  const comments = isRemote ? remoteComments : mockComments
+  const reactionCount = isRemote ? remoteReactions.total : (notice?.reactionCount ?? 0)
+  const commentCount =
+    isRemote && remoteDetail.detail ? remoteComments.length : (notice?.commentCount ?? 0)
+  const myReactionType = isRemote
+    ? remoteReactions.myReactionTypes[0]
+    : mockReactionUsers.find(row => row.authorName === MOCK_MYPAGE_USER_NAME)?.emojiType
   const selectedEmojiIndex =
     myReactionType != null ? getPlatformReactionEmojiIndex(myReactionType) : null
 
@@ -159,6 +226,7 @@ export function EducationInProgressNoticeDetailModal({
     setReactionPanel(null)
     setIsCommentListOpen(false)
     setCommentToDeleteId(null)
+    setDraftEmojiIndex(null)
     if (!open) {
       setComment('')
       setIsAuthorMenuOpen(false)
@@ -308,21 +376,24 @@ export function EducationInProgressNoticeDetailModal({
     onDelete(notice.id)
   }
 
-  const handleDownload = (fileName: string) => {
-    downloadAttachment(fileName)
+  const handleDownload = (file: EducationInProgressFile) => {
+    if (!hasRemoteDownloadPath(file)) {
+      void downloadAttachment(file.fileName)
+      return
+    }
+    downloadRemoteEducationNoticeFile(file).catch(() => {
+      setActionErrorMessage('첨부파일을 내려받지 못했습니다.')
+    })
   }
 
   const handleReactionEmojiSelect = (index: number) => {
-    const emojiType = getPlatformReactionEmojiTypeForIndex(index)
-    if (!emojiType) return
-    const { reactionCount } = toggleNoticeReaction(notice.id, emojiType, MOCK_MYPAGE_USER_NAME)
-    setReactionTick(tick => tick + 1)
-    onReactionCountChange?.(notice.id, reactionCount)
-    if (reactionCount === 0 && reactionPanel === 'list') setReactionPanel(null)
+    if (!getPlatformReactionEmojiTypeForIndex(index)) return
+    setDraftEmojiIndex(prev => (prev === index ? null : index))
+    setReactionPanel(null)
   }
 
   const handleReactionListToggle = () => {
-    if (notice.reactionCount <= 0) return
+    if (reactionCount <= 0) return
     setReactionPanel(panel => (panel === 'list' ? null : 'list'))
   }
 
@@ -330,23 +401,96 @@ export function EducationInProgressNoticeDetailModal({
     setIsCommentListOpen(open => !open)
   }
 
+  /** 같은 반응을 다시 보내면 취소, 다른 반응이면 교체 (1인 1반응) */
   const handleCommentSubmit = () => {
     const content = comment.trim()
-    if (!content) return
-    const { commentCount } = addNoticeComment(notice.id, MOCK_MYPAGE_USER_NAME, content)
-    setComment('')
-    setCommentTick(tick => tick + 1)
-    setIsCommentListOpen(true)
-    onCommentCountChange?.(notice.id, commentCount)
+    const emojiType =
+      draftEmojiIndex != null ? getPlatformReactionEmojiTypeForIndex(draftEmojiIndex) : undefined
+    if (!content && !emojiType) return
+    if (isSubmitting) return
+
+    const finish = () => {
+      setComment('')
+      setDraftEmojiIndex(null)
+      if (content) setIsCommentListOpen(true)
+    }
+
+    if (isRemote) {
+      setIsSubmitting(true)
+      void (async () => {
+        try {
+          if (emojiType) {
+            try {
+              await toggleReactionMutation.mutateAsync({
+                postId: notice.id,
+                reactionType: emojiType,
+                myReactionTypes: remoteReactions.myReactionTypes,
+              })
+            } catch {
+              setActionErrorMessage('반응을 저장하지 못했습니다.')
+              return
+            }
+          }
+          if (content) {
+            try {
+              await commentMutations.create.mutateAsync({ postId: notice.id, content })
+            } catch {
+              setDraftEmojiIndex(null)
+              setActionErrorMessage('댓글을 등록하지 못했습니다.')
+              return
+            }
+          }
+          finish()
+        } finally {
+          setIsSubmitting(false)
+        }
+      })()
+      return
+    }
+
+    if (emojiType) {
+      const { reactionCount: nextReactionCount } = toggleNoticeReaction(
+        notice.id,
+        emojiType,
+        MOCK_MYPAGE_USER_NAME
+      )
+      setReactionTick(tick => tick + 1)
+      onReactionCountChange?.(notice.id, nextReactionCount)
+    }
+    if (content) {
+      const { commentCount: nextCommentCount } = addNoticeComment(
+        notice.id,
+        MOCK_MYPAGE_USER_NAME,
+        content
+      )
+      setCommentTick(tick => tick + 1)
+      onCommentCountChange?.(notice.id, nextCommentCount)
+    }
+    finish()
   }
 
   const handleCommentUpdate = (commentId: string, content: string) => {
+    if (isRemote) {
+      commentMutations.update.mutate(
+        { postId: notice.id, commentId, content },
+        { onError: () => setActionErrorMessage('댓글을 수정하지 못했습니다.') }
+      )
+      return
+    }
     updateNoticeComment(commentId, content)
     setCommentTick(tick => tick + 1)
   }
 
   const handleCommentDeleteConfirm = () => {
     if (!commentToDeleteId) return
+    if (isRemote) {
+      commentMutations.remove.mutate(
+        { postId: notice.id, commentId: commentToDeleteId },
+        { onError: () => setActionErrorMessage('댓글을 삭제하지 못했습니다.') }
+      )
+      setCommentToDeleteId(null)
+      return
+    }
     const result = deleteNoticeComment(commentToDeleteId)
     setCommentToDeleteId(null)
     if (!result) return
@@ -354,7 +498,10 @@ export function EducationInProgressNoticeDetailModal({
     onCommentCountChange?.(result.noticeId, result.commentCount)
   }
 
-  const canSubmitComment = comment.trim().length > 0
+  const canSubmitComment =
+    (comment.trim().length > 0 || draftEmojiIndex != null) && !isSubmitting
+  const draftEmojiItem =
+    draftEmojiIndex != null ? PLATFORM_REACTION_EMOJI_ITEMS[draftEmojiIndex] : undefined
 
   return (
     <>
@@ -468,7 +615,7 @@ export function EducationInProgressNoticeDetailModal({
                 <button
                   type="button"
                   className={styles.attachment}
-                  onClick={() => handleDownload(singleAttachment.fileName)}
+                  onClick={() => handleDownload(singleAttachment)}
                   aria-label={`${singleAttachment.fileName} 다운로드`}
                 >
                   <span className={styles.attachmentMain}>
@@ -540,7 +687,7 @@ export function EducationInProgressNoticeDetailModal({
                           <button
                             type="button"
                             className={styles.attachmentRow}
-                            onClick={() => handleDownload(file.fileName)}
+                            onClick={() => handleDownload(file)}
                             aria-label={`${file.fileName} 다운로드`}
                           >
                             <PFText
@@ -569,9 +716,20 @@ export function EducationInProgressNoticeDetailModal({
             </div>
 
             <div className={styles.scroll}>
-              <PFText as="div" typo="bd-md-md" color="black" className={styles.content}>
-                {notice.content}
-              </PFText>
+              {isRemote ? (
+                <RichTextViewer
+                  key={notice.id}
+                  content={notice.content}
+                  contentFormat="markdown"
+                  maxHeight="none"
+                  className={styles.richContent}
+                  resolveInlineImage={resolveInlineImage}
+                />
+              ) : (
+                <PFText as="div" typo="bd-md-md" color="black" className={styles.content}>
+                  {notice.content}
+                </PFText>
+              )}
             </div>
           </div>
 
@@ -579,16 +737,14 @@ export function EducationInProgressNoticeDetailModal({
             <div className={styles.reactionAnchor} ref={reactionListRef}>
               <EducationNoticeStats
                 viewCount={notice.viewCount}
-                commentCount={notice.commentCount}
-                reactionCount={notice.reactionCount}
+                commentCount={commentCount}
+                reactionCount={reactionCount}
                 reactionExpanded={reactionPanel === 'list'}
                 commentExpanded={isCommentListOpen}
                 onCommentClick={handleCommentListToggle}
-                onReactionClick={
-                  notice.reactionCount > 0 ? handleReactionListToggle : undefined
-                }
+                onReactionClick={reactionCount > 0 ? handleReactionListToggle : undefined}
               />
-              {reactionPanel === 'list' && listPopoverStyle
+              {reactionPanel === 'list' && reactionCount > 0 && listPopoverStyle
                 ? createPortal(
                     <div
                       ref={reactionListPopoverRef}
@@ -608,7 +764,7 @@ export function EducationInProgressNoticeDetailModal({
               <EducationNoticeCommentList
                 className={styles.footerComments}
                 comments={comments}
-                currentUserName={MOCK_MYPAGE_USER_NAME}
+                currentUserName={currentUserName}
                 onUpdate={handleCommentUpdate}
                 onDeleteRequest={setCommentToDeleteId}
               />
@@ -651,14 +807,20 @@ export function EducationInProgressNoticeDetailModal({
                   aria-expanded={reactionPanel === 'picker'}
                   onClick={() => setReactionPanel(panel => (panel === 'picker' ? null : 'picker'))}
                 >
-                  <img
-                    className={styles.emojiIcon}
-                    src={noticeIconEmojiUrl}
-                    alt=""
-                    width={40}
-                    height={40}
-                    aria-hidden="true"
-                  />
+                  {draftEmojiItem ? (
+                    <span className={styles.emojiPreview} aria-hidden="true">
+                      {draftEmojiItem.renderIcon(`${emojiPreviewClipId}-draft`)}
+                    </span>
+                  ) : (
+                    <img
+                      className={styles.emojiIcon}
+                      src={noticeIconEmojiUrl}
+                      alt=""
+                      width={40}
+                      height={40}
+                      aria-hidden="true"
+                    />
+                  )}
                 </button>
                 {reactionPanel === 'picker' && pickerPopoverStyle
                   ? createPortal(
@@ -668,7 +830,7 @@ export function EducationInProgressNoticeDetailModal({
                         style={pickerPopoverStyle}
                       >
                         <EducationNoticeReactionEmojiPicker
-                          selectedIndex={selectedEmojiIndex}
+                          selectedIndex={draftEmojiIndex ?? selectedEmojiIndex}
                           onSelect={handleReactionEmojiSelect}
                         />
                       </div>,
@@ -697,6 +859,12 @@ export function EducationInProgressNoticeDetailModal({
         open={isComingSoonOpen}
         title="준비 중"
         onConfirm={() => setIsComingSoonOpen(false)}
+      />
+
+      <PFAlertModal
+        open={actionErrorMessage !== null}
+        title={actionErrorMessage ?? ''}
+        onConfirm={() => setActionErrorMessage(null)}
       />
     </>
   )

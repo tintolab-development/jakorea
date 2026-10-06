@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import type { EducationNoticeComment } from '../model/types'
 import { formatEducationNoticePublishedAt } from '../lib/format'
 import moreVerticalUrl from '../assets/icon/more-vertical.svg'
@@ -9,6 +10,28 @@ const COMMENT_MENU_OPTIONS = [
   { value: 'edit', label: '수정하기' },
   { value: 'delete', label: '삭제하기' },
 ]
+
+const COMMENT_MENU_GAP_PX = 4
+const COMMENT_MENU_Z_INDEX = 1100
+
+function computeCommentMenuStyle(anchor: HTMLElement, menu: HTMLElement | null): CSSProperties {
+  const rect = anchor.getBoundingClientRect()
+  const menuHeight = menu?.offsetHeight ?? 96
+  const menuWidth = menu?.offsetWidth ?? 140
+  const spaceBelow = window.innerHeight - rect.bottom - COMMENT_MENU_GAP_PX
+  const openUpward = spaceBelow < menuHeight && rect.top > spaceBelow
+  const top = openUpward
+    ? Math.max(8, rect.top - COMMENT_MENU_GAP_PX - menuHeight)
+    : rect.bottom + COMMENT_MENU_GAP_PX
+
+  return {
+    position: 'fixed',
+    top,
+    left: Math.max(8, rect.right - menuWidth),
+    zIndex: COMMENT_MENU_Z_INDEX,
+    minWidth: 140,
+  }
+}
 
 type EducationNoticeCommentListProps = {
   comments: EducationNoticeComment[]
@@ -26,10 +49,44 @@ export function EducationNoticeCommentList({
   className,
 }: EducationNoticeCommentListProps) {
   const menuId = useId()
-  const menuRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLUListElement>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [menuStyle, setMenuStyle] = useState<CSSProperties | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+
+  useLayoutEffect(() => {
+    if (!openMenuId) {
+      setMenuStyle(null)
+      return
+    }
+
+    const place = () => {
+      const anchor = buttonRef.current
+      const list = listRef.current
+      if (!anchor) return
+      const rect = anchor.getBoundingClientRect()
+      const listRect = list?.getBoundingClientRect()
+      const outsideList =
+        listRect != null && (rect.bottom <= listRect.top || rect.top >= listRect.bottom)
+      if (outsideList) {
+        setOpenMenuId(null)
+        return
+      }
+      setMenuStyle(computeCommentMenuStyle(anchor, menuRef.current))
+    }
+
+    place()
+    const list = listRef.current
+    list?.addEventListener('scroll', place, { passive: true })
+    window.addEventListener('resize', place)
+    return () => {
+      list?.removeEventListener('scroll', place)
+      window.removeEventListener('resize', place)
+    }
+  }, [openMenuId])
 
   useEffect(() => {
     if (!openMenuId) return
@@ -38,6 +95,7 @@ export function EducationNoticeCommentList({
       const target = event.target
       if (!(target instanceof Node)) return
       if (menuRef.current?.contains(target)) return
+      if (buttonRef.current?.contains(target)) return
       setOpenMenuId(null)
     }
 
@@ -75,9 +133,9 @@ export function EducationNoticeCommentList({
   if (comments.length === 0) return null
 
   return (
-    <div className={[styles.list, className].filter(Boolean).join(' ')}>
+    <div ref={listRef} className={[styles.list, className].filter(Boolean).join(' ')}>
       {comments.map(comment => {
-        const isMine = comment.authorName === currentUserName
+        const isMine = comment.mine ?? comment.authorName === currentUserName
         const isEditing = editingId === comment.id
         const isMenuOpen = openMenuId === comment.id
 
@@ -93,8 +151,9 @@ export function EducationNoticeCommentList({
                 </PFText>
               </div>
               {isMine && !isEditing ? (
-                <div className={styles.moreWrap} ref={isMenuOpen ? menuRef : undefined}>
+                <div className={styles.moreWrap}>
                   <button
+                    ref={isMenuOpen ? buttonRef : undefined}
                     type="button"
                     className={styles.moreButton}
                     aria-label="댓글 더보기"
@@ -105,22 +164,34 @@ export function EducationNoticeCommentList({
                   >
                     <img src={moreVerticalUrl} alt="" width={24} height={24} aria-hidden="true" />
                   </button>
-                  {isMenuOpen ? (
-                    <PFOptionList
-                      id={menuId}
-                      className={styles.moreMenu}
-                      role="menu"
-                      options={COMMENT_MENU_OPTIONS}
-                      onSelect={value => {
-                        if (value === 'edit') {
-                          startEdit(comment)
-                          return
-                        }
-                        setOpenMenuId(null)
-                        onDeleteRequest(comment.id)
-                      }}
-                    />
-                  ) : null}
+                  {isMenuOpen
+                    ? createPortal(
+                        <PFOptionList
+                          ref={menuRef}
+                          id={menuId}
+                          className={styles.moreMenu}
+                          role="menu"
+                          style={
+                            menuStyle ?? {
+                              position: 'fixed',
+                              top: -9999,
+                              left: 0,
+                              minWidth: 140,
+                            }
+                          }
+                          options={COMMENT_MENU_OPTIONS}
+                          onSelect={value => {
+                            if (value === 'edit') {
+                              startEdit(comment)
+                              return
+                            }
+                            setOpenMenuId(null)
+                            onDeleteRequest(comment.id)
+                          }}
+                        />,
+                        document.body,
+                      )
+                    : null}
                 </div>
               ) : null}
             </div>
