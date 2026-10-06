@@ -39,6 +39,7 @@ export type PlatformSurveyParagraphBodyProps = {
   userInfoWriteField?: { key: string; label: string }
   /** 설문자 정보 필드 표시값 (로그인·프로그램 컨텍스트) */
   userInfoDisplayValue?: string
+  readOnly?: boolean
 }
 
 export function PlatformSurveyParagraphBody({
@@ -48,6 +49,7 @@ export function PlatformSurveyParagraphBody({
   onSidecarChange,
   userInfoWriteField,
   userInfoDisplayValue,
+  readOnly = false,
 }: PlatformSurveyParagraphBodyProps) {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'user_info') {
     if (userInfoWriteField == null) return null
@@ -64,6 +66,7 @@ export function PlatformSurveyParagraphBody({
       <SurveyMultipleChoiceField
         paragraph={paragraph as MultipleChoiceParagraph}
         onUpdateParagraph={onUpdateParagraph}
+        disabled={readOnly}
       />
     )
   }
@@ -73,6 +76,7 @@ export function PlatformSurveyParagraphBody({
       <SurveyScaleTypeField
         paragraph={paragraph as ScaleTypeParagraph}
         onUpdateParagraph={onUpdateParagraph}
+        disabled={readOnly}
       />
     )
   }
@@ -82,6 +86,7 @@ export function PlatformSurveyParagraphBody({
       <SurveyShortEssayField
         paragraph={paragraph as ShortEssayParagraph}
         onUpdateParagraph={onUpdateParagraph}
+        disabled={readOnly}
       />
     )
   }
@@ -91,6 +96,7 @@ export function PlatformSurveyParagraphBody({
       <SurveyStarRateField
         paragraph={paragraph as StarRateParagraph}
         onUpdateParagraph={onUpdateParagraph}
+        disabled={readOnly}
       />
     )
   }
@@ -101,11 +107,13 @@ export function PlatformSurveyParagraphBody({
         paragraph={paragraph as DateParagraph}
         value={sidecar.dateValues[paragraph.id] ?? ''}
         onValueChange={next => {
+          if (readOnly) return
           onSidecarChange({
             ...sidecar,
             dateValues: { ...sidecar.dateValues, [paragraph.id]: next },
           })
         }}
+        disabled={readOnly}
       />
     )
   }
@@ -116,11 +124,13 @@ export function PlatformSurveyParagraphBody({
         paragraph={paragraph as TimeParagraph}
         value={sidecar.timeValues[paragraph.id] ?? ''}
         onValueChange={next => {
+          if (readOnly) return
           onSidecarChange({
             ...sidecar,
             timeValues: { ...sidecar.timeValues, [paragraph.id]: next },
           })
         }}
+        disabled={readOnly}
       />
     )
   }
@@ -131,11 +141,13 @@ export function PlatformSurveyParagraphBody({
         paragraph={paragraph as FileAttachmentParagraph}
         fileName={sidecar.fileNames[paragraph.id] ?? null}
         onFileNameChange={next => {
+          if (readOnly) return
           onSidecarChange({
             ...sidecar,
             fileNames: { ...sidecar.fileNames, [paragraph.id]: next },
           })
         }}
+        disabled={readOnly}
       />
     )
   }
@@ -145,7 +157,7 @@ export function PlatformSurveyParagraphBody({
       <FormTemplateHost surface="platformUser">
         <VerticalTablePreviewBody
           paragraph={paragraph}
-          interactionMode="user"
+          interactionMode={readOnly ? 'preview' : 'user'}
           onBottomConsentChange={value =>
             onUpdateParagraph(paragraph.id, current =>
               current.kind === 'single_item' && current.variant === 'vertical_table'

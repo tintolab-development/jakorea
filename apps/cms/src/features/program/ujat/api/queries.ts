@@ -11,6 +11,7 @@ import {
   programDetailCacheFromSave,
   syncOpenProgramDetailCache,
 } from '@/features/program/shared/lib/program-detail-cache-after-save'
+import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { fetchUjatProgramBusinessYears } from './business-years'
 import { shouldUseRemoteApi } from './capabilities'
 import { shouldRetryQuery } from './errors'
@@ -114,7 +115,7 @@ export function useCreateProgram() {
     retry: false,
     onSuccess: program => {
       queryClient.setQueryData(queryKeys.detail(dataScope, program.id), program)
-      void queryClient.invalidateQueries({ queryKey: queryKeys.lists() })
+      invalidateUjatProgramListCaches(queryClient)
     },
   })
 }
@@ -141,7 +142,7 @@ export function useUpdateProgram() {
           variables.patch
         )
       )
-      void queryClient.invalidateQueries({ queryKey: queryKeys.lists() })
+      invalidateUjatProgramListCaches(queryClient)
     },
   })
 }
@@ -156,7 +157,7 @@ export function useDeleteProgram() {
       const detailKey = queryKeys.detail(dataScope, programId)
       await queryClient.cancelQueries({ queryKey: detailKey })
       queryClient.removeQueries({ queryKey: detailKey })
-      void queryClient.invalidateQueries({ queryKey: queryKeys.lists() })
+      invalidateUjatProgramListCaches(queryClient)
     },
   })
 }

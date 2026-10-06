@@ -22,6 +22,7 @@ export type EducationSurveyFormBodyProps = {
   onSidecarChange: (next: SurveySidecarState) => void
   /** 설문자 정보 fieldKey → 표시값 */
   userInfoValues?: Record<string, string>
+  readOnly?: boolean
 }
 
 function isBodyOnlyParagraph(paragraph: WritingFormParagraph): boolean {
@@ -42,6 +43,7 @@ export function EducationSurveyFormBody({
   sidecar,
   onSidecarChange,
   userInfoValues,
+  readOnly = false,
 }: EducationSurveyFormBodyProps) {
   return (
     <div className={styles.form}>
@@ -69,6 +71,7 @@ export function EducationSurveyFormBody({
                   onSidecarChange={onSidecarChange}
                   userInfoWriteField={entry}
                   userInfoDisplayValue={userInfoValues?.[entry.key]}
+                  readOnly={readOnly}
                 />
               </PFFormSection>
             )
@@ -92,13 +95,13 @@ export function EducationSurveyFormBody({
         }
 
         const title = resolveEducationSurveySectionTitle(draft, paragraph)
-        if (!title) return []
+        if (!title && paragraph.kind === 'description') return []
 
         return [
           <PFFormSection
             key={paragraph.id}
             id={paragraph.id}
-            title={title}
+            title={title || '문항'}
             description={paragraph.paragraphDescription?.trim() || undefined}
             required={resolveEducationSurveySectionRequired(paragraph)}
           >
@@ -108,6 +111,7 @@ export function EducationSurveyFormBody({
               onUpdateParagraph={onUpdateParagraph}
               sidecar={sidecar}
               onSidecarChange={onSidecarChange}
+              readOnly={readOnly}
             />
           </PFFormSection>,
         ]

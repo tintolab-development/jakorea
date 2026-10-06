@@ -5,6 +5,7 @@ import {
   programDetailCacheFromSave,
   syncOpenProgramDetailCache,
 } from '@/features/program/shared/lib/program-detail-cache-after-save'
+import { invalidateGeneralProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import type { Program } from '@/types/domain'
 
 export function useUpdateGeneralProgram() {
@@ -32,8 +33,7 @@ export function useUpdateGeneralProgram() {
           variables.patch
         )
       )
-      void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.lists() })
-      void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.overviewStages() })
+      invalidateGeneralProgramListCaches(queryClient)
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.navigation(variables.programId),
       })

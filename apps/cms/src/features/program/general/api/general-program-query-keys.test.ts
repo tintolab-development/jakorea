@@ -25,4 +25,12 @@ describe('program mutation invalidate prefixes', () => {
     expect(isPrefixedBy(companySchoolQueryKeys.detail('p1'), lists)).toBe(false)
     expect(isPrefixedBy(companySchoolQueryKeys.overviewStages(), lists)).toBe(false)
   })
+
+  it('general overviewStages is a sibling of lists (must invalidate both after create)', () => {
+    const lists = generalProgramQueryKeys.lists()
+    const overview = generalProgramQueryKeys.overviewStages()
+
+    expect(isPrefixedBy(overview, lists)).toBe(false)
+    expect(isPrefixedBy(lists, overview)).toBe(false)
+  })
 })

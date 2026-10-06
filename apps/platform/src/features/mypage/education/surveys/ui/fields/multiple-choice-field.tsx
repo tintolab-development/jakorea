@@ -6,11 +6,13 @@ import styles from '../survey-fields.module.css'
 type SurveyMultipleChoiceFieldProps = {
   paragraph: MultipleChoiceParagraph
   onUpdateParagraph: FormUpdateParagraph
+  disabled?: boolean
 }
 
 export function SurveyMultipleChoiceField({
   paragraph,
   onUpdateParagraph,
+  disabled = false,
 }: SurveyMultipleChoiceFieldProps) {
   const allowMultiple = paragraph.allowMultiple === true
   const selectedIds = paragraph.selectedPreviewMultipleIds ?? []
@@ -22,7 +24,9 @@ export function SurveyMultipleChoiceField({
           <PFCheckbox
             key={item.id}
             checked={selectedIds.includes(item.id)}
+            disabled={disabled}
             onCheckedChange={checked => {
+              if (disabled) return
               onUpdateParagraph(paragraph.id, current => {
                 if (current.kind !== 'single_item' || current.variant !== 'multiple_choice') {
                   return current
@@ -48,8 +52,9 @@ export function SurveyMultipleChoiceField({
         <PFCheckbox
           key={item.id}
           checked={paragraph.selectedPreviewSingleId === item.id}
+          disabled={disabled}
           onCheckedChange={checked => {
-            if (!checked) return
+            if (disabled || !checked) return
             onUpdateParagraph(paragraph.id, current =>
               current.kind === 'single_item' && current.variant === 'multiple_choice'
                 ? { ...current, selectedPreviewSingleId: item.id }

@@ -63,12 +63,19 @@ export type PortalEducationScheduleList = {
 
 export type PortalFormListItem = {
   bindingId?: number
+  id?: number
+  formBindingId?: number
   title?: string
   formType?: string
   status?: string
   submissionStartAt?: string
   submissionEndAt?: string
   required?: boolean
+  templateVersionId?: number
+  form?: Record<string, unknown> | null
+  formResponseId?: number
+  answers?: Record<string, unknown> | null
+  draftAnswers?: Record<string, unknown> | null
 }
 
 export type PortalFormListResponse = {
@@ -158,6 +165,70 @@ export async function fetchApplicationForms(
   const unwrapped = unwrapEnvelope<PortalFormListResponse | PortalFormListItem[]>(data)
   if (Array.isArray(unwrapped)) return unwrapped
   return unwrapped.items ?? []
+}
+
+export type PortalSurveyFormDocument = {
+  programId?: number
+  formBindingId?: number
+  templateVersionId?: number
+  form?: Record<string, unknown> | null
+  draftAnswers?: Record<string, unknown> | null
+  answers?: Record<string, unknown> | null
+  formResponseId?: number
+}
+
+/** GET /api/portal/programs/{programId}/form-bindings/{bindingId} — 설문·만족도 본문 */
+export async function fetchPortalSurveyFormBinding(
+  programId: number,
+  bindingId: number,
+  query: { applicationType?: string; recruitmentId?: number },
+  signal?: AbortSignal,
+): Promise<PortalSurveyFormDocument> {
+  const { data } = await axiosClient.get<unknown>(
+    `/api/portal/programs/${programId}/form-bindings/${bindingId}`,
+    {
+      signal,
+      params: {
+        ...(query.recruitmentId != null ? { recruitmentId: query.recruitmentId } : {}),
+        ...(query.applicationType ? { applicationType: query.applicationType } : {}),
+      },
+    },
+  )
+  return unwrapEnvelope<PortalSurveyFormDocument>(data)
+}
+
+export type PortalSurveySubmitBody = {
+  answers: Record<string, unknown>
+  templateVersionId?: number
+}
+
+/** POST 설문·만족도 제출 */
+export async function submitPortalSurveyResponse(
+  programId: number,
+  bindingId: number,
+  body: PortalSurveySubmitBody,
+): Promise<unknown> {
+  try {
+    const { data } = await axiosClient.post<unknown>(
+      `/api/portal/me/programs/${programId}/form-bindings/${bindingId}/responses`,
+      { answers: body.answers },
+    )
+    return unwrapEnvelope(data)
+  } catch (error) {
+    const status =
+      typeof error === 'object' && error != null && 'response' in error
+        ? (error as { response?: { status?: unknown } }).response?.status
+        : undefined
+    if (status !== 404 && status !== 405) throw error
+    const { data } = await axiosClient.post<unknown>('/api/portal/me/form-responses/submit', {
+      programId,
+      templateVersionId: body.templateVersionId,
+      contextType: 'PROGRAM',
+      contextId: programId,
+      answers: body.answers,
+    })
+    return unwrapEnvelope(data)
+  }
 }
 
 export async function fetchExpenseReceipts(

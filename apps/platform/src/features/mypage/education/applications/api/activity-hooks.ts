@@ -1,8 +1,10 @@
-import { useQuery } from '@tanstack/react-query'
-import { platformQueryKeys } from '@/shared/api/query-keys'
+import { useMemo } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { parsePortalProgramId } from '@/features/program/api/mappers'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import type { EducationInProgressFile, EducationInProgressNotice } from '../../notices/model/types'
 import type { EducationScheduleItem } from '../../schedules/model/types'
 import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
@@ -13,13 +15,16 @@ import {
   fetchApplicationNotices,
   fetchApplicationSchedules,
   fetchExpenseReceipts,
+  fetchPortalSurveyFormBinding,
   fetchSettlementApplications,
+  submitPortalSurveyResponse,
   type PortalEducationSchedule,
   type PortalExpenseReceipt,
   type PortalFormListItem,
   type PortalNoticeDetail,
   type PortalNoticeListItem,
   type PortalSettlementApplication,
+  type PortalSurveySubmitBody,
 } from './activity-client'
 import type { ProgramApplicationType } from './types'
 
@@ -120,16 +125,22 @@ function mapSchedule(item: PortalEducationSchedule, index: number): EducationSch
 }
 
 function mapForm(item: PortalFormListItem): EducationSurveyListEntry | null {
-  if (item.bindingId == null) return null
+  const bindingId = item.bindingId ?? item.formBindingId ?? item.id
+  if (bindingId == null) return null
   const status = (item.status ?? '').toUpperCase()
   const submitted = ['SUBMITTED', 'COMPLETED', 'DONE'].includes(status)
   return {
-    id: String(item.bindingId),
+    id: String(bindingId),
     title: item.title?.trim() || '설문',
     status: submitted ? 'submitted' : 'in_progress',
     startAt: item.submissionStartAt?.slice(0, 10),
     endAt: item.submissionEndAt?.slice(0, 10),
     createdAt: item.submissionStartAt,
+    templateVersionId: item.templateVersionId,
+    form: item.form,
+    formResponseId: item.formResponseId,
+    answers: item.answers,
+    draftAnswers: item.draftAnswers,
   }
 }
 
@@ -269,14 +280,19 @@ export function useApplicationFormsQuery(
     enabled,
     ...queryOptions(),
   })
+  const items = useMemo(
+    () =>
+      (query.data ?? []).flatMap(item => {
+        const mapped = mapForm(item)
+        return mapped ? [mapped] : []
+      }),
+    [query.data],
+  )
   return {
     enabled,
     isLoading: enabled && query.isPending,
     isError: enabled && query.isError,
-    items: (query.data ?? []).flatMap(item => {
-      const mapped = mapForm(item)
-      return mapped ? [mapped] : []
-    }),
+    items,
   }
 }
 
@@ -317,4 +333,90 @@ export function useApplicationSettlementsQuery(
     isError: enabled && (receipts.isError || settlements.isError),
     items: [...receiptItems, ...settlementItems],
   }
+}
+
+export function useApplicationSurveyFormQuery(
+  programId: string | null | undefined,
+  bindingId: string | null | undefined,
+  applicationType: ProgramApplicationType | null | undefined,
+  recruitmentId?: number | null,
+) {
+  const numericProgramId = parsePortalProgramId(programId)
+  const numericBindingId = parsePortalProgramId(bindingId)
+  const enabled =
+    isRemoteApiConfigured() &&
+    Boolean(getAccessToken()) &&
+    numericProgramId != null &&
+    numericBindingId != null
+  const query = useQuery({
+    queryKey: platformQueryKeys.mypage.programApplications.formBinding({
+      programId: String(numericProgramId ?? ''),
+      bindingId: numericBindingId ?? 0,
+      recruitmentId: recruitmentId ?? null,
+      applicationType: applicationType ?? '',
+    }),
+    queryFn: ({ signal }) =>
+      fetchPortalSurveyFormBinding(
+        numericProgramId!,
+        numericBindingId!,
+        {
+          applicationType: applicationType ?? undefined,
+          recruitmentId: recruitmentId ?? undefined,
+        },
+        signal,
+      ),
+    enabled,
+    staleTime: 60_000,
+    gcTime: GC_MS,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
+  return {
+    enabled,
+    isLoading: enabled && query.isPending,
+    isError: enabled && query.isError,
+    document: query.data ?? null,
+  }
+}
+
+export function useSubmitEducationSurveyMutation(
+  programId: string | null | undefined,
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+) {
+  const queryClient = useQueryClient()
+  const numericProgramId = parsePortalProgramId(programId)
+  return useMutation({
+    mutationFn: (input: { bindingId: number } & PortalSurveySubmitBody) => {
+      if (numericProgramId == null) {
+        throw new Error('programId is required')
+      }
+      return submitPortalSurveyResponse(numericProgramId, input.bindingId, {
+        answers: input.answers,
+        templateVersionId: input.templateVersionId,
+      })
+    },
+    onSuccess: () => {
+      if (!applicationType || !applicationId) return
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.forms(
+          applicationType,
+          applicationId,
+          'SURVEY',
+        ),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.forms(
+          applicationType,
+          applicationId,
+          'SATISFACTION',
+        ),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.all(),
+      })
+    },
+  })
 }

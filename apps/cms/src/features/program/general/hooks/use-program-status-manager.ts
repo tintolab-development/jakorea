@@ -20,6 +20,10 @@ import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import {
   useIsCompanySchoolProgramsSurface,
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  invalidateCompanySchoolListCaches,
+  invalidateGeneralProgramListCaches,
+} from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { getPreviousProgramLifecycleStatus } from '@/shared/lib/status-transition'
 import { handleError } from '@/shared/utils/error-handler'
 import type { ProgramLifecycleStatus } from '@/types/domain'
@@ -44,7 +48,7 @@ export function useProgramStatusManager(): UseProgramStatusManagerResult {
         await queryClient.invalidateQueries({
           queryKey: companySchoolQueryKeys.detail(programId),
         })
-        await queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.lists() })
+        invalidateCompanySchoolListCaches(queryClient)
         return
       }
       if (shouldUseGeneralProgramsRemoteApi()) {
@@ -55,10 +59,7 @@ export function useProgramStatusManager(): UseProgramStatusManagerResult {
         await queryClient.invalidateQueries({
           queryKey: generalProgramQueryKeys.detail(programId),
         })
-        await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.lists() })
-        await queryClient.invalidateQueries({
-          queryKey: generalProgramQueryKeys.overviewStages(),
-        })
+        invalidateGeneralProgramListCaches(queryClient)
         return
       }
       await updateProgram(programId, { lifecycleStatus: status })

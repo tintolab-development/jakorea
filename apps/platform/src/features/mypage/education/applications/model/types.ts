@@ -82,6 +82,8 @@ export type EducationApplicationListItem = {
   /** 포털 신청 건 역할 SoT. Mock/레거시 항목은 없을 수 있음. */
   applicationType?: ProgramApplicationType
   programId: string
+  /** 포털 신청 건 모집 id — 설문 form-bindings GET 쿼리 */
+  recruitmentId?: number
   categoryLabel: string
   title: string
   recruitmentPeriodLabel: string

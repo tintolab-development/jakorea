@@ -389,6 +389,8 @@ export function MypageLectureDetailPage() {
             educationTargetLabel={program.educationTargetDetailLabel}
             applicationType={routeApplicationType}
             applicationId={application.id}
+            programId={program.id}
+            recruitmentId={application.recruitmentId}
           />
         )
       }
@@ -410,6 +412,8 @@ export function MypageLectureDetailPage() {
             educationTargetLabel={program.educationTargetDetailLabel}
             applicationType={routeApplicationType}
             applicationId={application.id}
+            programId={program.id}
+            recruitmentId={application.recruitmentId}
           />
         )
       }

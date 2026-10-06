@@ -207,6 +207,7 @@ export function mapPortalProgramApplicationListItem(
     id: String(row.applicationId),
     applicationType,
     programId: String(row.programId),
+    recruitmentId: row.recruitmentId,
     categoryLabel: mapCategoryLabel(applicationType, row.programGroup),
     title: row.programTitle?.trim() || '프로그램',
     recruitmentPeriodLabel: formatDateRange(row.recruitmentStartAt, row.recruitmentEndAt),

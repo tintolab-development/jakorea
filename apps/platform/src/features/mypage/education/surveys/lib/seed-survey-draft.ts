@@ -68,6 +68,30 @@ function applySurveyHeader(
   })
 }
 
+/** CMS 미리보기 선택값(척도 5점 등)을 작성 화면 초기값에서 제거한다. */
+export function clearEducationSurveyPreviewAnswers(draft: WritingFormDraft): WritingFormDraft {
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.map(paragraph => {
+      if (paragraph.kind !== 'single_item') return paragraph
+      if (paragraph.variant === 'scale_type') {
+        return { ...paragraph, selectedPreviewItemId: null }
+      }
+      if (paragraph.variant === 'star_rate') {
+        return { ...paragraph, selectedPreviewStars: null }
+      }
+      if (paragraph.variant === 'multiple_choice') {
+        return {
+          ...paragraph,
+          selectedPreviewSingleId: null,
+          selectedPreviewMultipleIds: [],
+        }
+      }
+      return paragraph
+    }),
+  }
+}
+
 /**
  * CMS 기본 설문/만족도 시드 — `createDefaultSurveyDraft()` + catalog templateName.
  * schema 본문은 survey-default / survey-student / survey-teacher와 동일.

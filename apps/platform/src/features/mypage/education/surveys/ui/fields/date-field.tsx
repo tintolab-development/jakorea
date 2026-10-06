@@ -6,9 +6,15 @@ type SurveyDateFieldProps = {
   paragraph: DateParagraph
   value: string
   onValueChange: (next: string) => void
+  disabled?: boolean
 }
 
-export function SurveyDateField({ paragraph: _paragraph, value, onValueChange }: SurveyDateFieldProps) {
+export function SurveyDateField({
+  paragraph: _paragraph,
+  value,
+  onValueChange,
+  disabled = false,
+}: SurveyDateFieldProps) {
   return (
     <div className={styles.surveyFields}>
       <PFDateInput
@@ -17,6 +23,7 @@ export function SurveyDateField({ paragraph: _paragraph, value, onValueChange }:
         placeholder="YYYY-MM-DD"
         value={value}
         onValueChange={onValueChange}
+        disabled={disabled}
       />
     </div>
   )

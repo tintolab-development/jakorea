@@ -5,7 +5,6 @@ import {
   useQuery,
   useQueryClient,
   type InfiniteData,
-  type QueryClient,
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
@@ -18,6 +17,7 @@ import { shouldUseCompanySchoolRemoteApi } from './capabilities'
 import { shouldRetryCompanySchoolQuery } from './errors'
 import type { CompanySchoolListFilters } from './list-params'
 import { companySchoolQueryKeys } from './query-keys'
+import { invalidateCompanySchoolListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import {
   createCompanySchoolProgram,
   deleteCompanySchoolProgram,
@@ -181,7 +181,3 @@ export function useDeleteCompanySchoolPrograms() {
   })
 }
 
-function invalidateCompanySchoolListCaches(queryClient: QueryClient) {
-  void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.lists() })
-  void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.overviewStages() })
-}
