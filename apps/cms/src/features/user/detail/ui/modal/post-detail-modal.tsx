@@ -437,7 +437,11 @@ export function PostDetailModal({
                 {postTypeLabel && (
                   <span className="post-detail-modal__type-tag">{postTypeLabel}</span>
                 )}
-                <RichTextViewer content={displayPost.content} contentFormat="markdown" />
+                <RichTextViewer
+                  content={displayPost.content}
+                  contentFormat="markdown"
+                  className="post-detail-modal__viewer"
+                />
               </div>
 
               <AttachmentDownloadList
@@ -455,6 +459,7 @@ export function PostDetailModal({
         {/* ── 댓글 카드 (전체 너비) ── */}
         <div className="post-detail-modal__comments-card">
           <CommentList
+            className="post-detail-modal__comment-list"
             items={comments.map(comment => ({
               id: comment.id,
               authorName: comment.authorName,
