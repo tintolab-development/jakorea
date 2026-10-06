@@ -6,7 +6,10 @@ import type { ProgramListView } from '@/features/program/general/ui/table/progra
 import type { ProgramListConfig } from '@/features/program/general/ui/program-list'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { useTrainedTeacherPrograms } from '@/features/program/trained-teachers/api/hooks'
-import { trainedTeacherListParamsFromOverviewStatus } from '@/features/program/trained-teachers/api/list-params'
+import {
+  readTrainedTeacherTableFilters,
+  trainedTeacherListParamsFromOverviewStatus,
+} from '@/features/program/trained-teachers/api/list-params'
 import { resolveTrainedTeachersListFilterFields } from '@/features/program/trained-teachers/lib/list-filter-fields'
 
 export type TrainedTeachersOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
@@ -71,31 +74,18 @@ export function useTrainedTeachersProgramListFilters() {
     return null
   }, [params.status])
 
-  const tableFilters = useMemo(() => {
-    const title = params.title?.trim() || undefined
-    const targetLevel = params.targetLevel?.trim() || undefined
-    const lifecycleStatus = params.lifecycleStatus?.trim() || undefined
-    const operationStartDate = params.operationStartDate?.trim() || undefined
-    const operationEndDate = params.operationEndDate?.trim() || undefined
-    const yearRaw = params.businessYear
-    const businessYear =
-      yearRaw && /^\d{4}$/.test(yearRaw) ? Number.parseInt(yearRaw, 10) : undefined
-    return {
-      title,
-      businessYear,
-      targetLevel,
-      lifecycleStatus,
-      operationStartDate,
-      operationEndDate,
-    }
-  }, [
-    params.businessYear,
-    params.lifecycleStatus,
-    params.operationEndDate,
-    params.operationStartDate,
-    params.targetLevel,
-    params.title,
-  ])
+  const tableFilters = useMemo(
+    () => readTrainedTeacherTableFilters(key => params[key]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 목록 필터 키만 의존 (programId 등 상세 파라미터 변경 시 재생성 방지)
+    [
+      params.businessYear,
+      params.lifecycleStatus,
+      params.operationEndDate,
+      params.operationStartDate,
+      params.targetLevel,
+      params.title,
+    ]
+  )
 
   const listFilters = useMemo(
     () => trainedTeacherListParamsFromOverviewStatus(statusFilter, tableFilters),
@@ -168,6 +158,6 @@ export function useTrainedTeachersProgramListFilters() {
     listQueryFiltersKey,
     isFetchingNextPage: listQuery.isFetchingNextPage,
     fetchNextPage: listQuery.fetchNextPage,
-    hasNextPage: listQuery.hasNextPage ?? false,
+    hasNextPage: !listQuery.isPlaceholderData && (listQuery.hasNextPage ?? false),
   }
 }

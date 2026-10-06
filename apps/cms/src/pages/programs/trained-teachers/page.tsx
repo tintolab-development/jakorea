@@ -468,7 +468,7 @@ function TrainedTeachersProgramPageContent() {
         loading={
           listQuery.isFetching &&
           !listQuery.isFetchingNextPage &&
-          filteredPrograms.length === 0
+          (filteredPrograms.length === 0 || listQuery.isPlaceholderData)
         }
         headerTitle={headerTitle}
         headerCount={remoteEnabled ? totalElements : undefined}

@@ -28,6 +28,8 @@ export interface ProgressStagesWidgetProps {
   showBottomDivider?: boolean
   /** 카드 클릭 (없으면 비활성) */
   onStageClick?: (key: string) => void
+  /** 카드 hover·focus — 클릭 전 이동할 단계 데이터 프리페치용 */
+  onStageIntent?: (key: string) => void
   /** 로딩 시 스켈레톤 카드 개수 */
   loading?: boolean
   /** 로딩 시 표시할 카드 수 (기본: stages.length 또는 6) */
@@ -42,6 +44,7 @@ export function ProgressStagesWidget({
   showDividerAfterFirstCard = false,
   showBottomDivider = true,
   onStageClick,
+  onStageIntent,
   loading = false,
   loadingCardCount,
   className,
@@ -102,7 +105,21 @@ export function ProgressStagesWidget({
       <div
         key={item.key}
         className={`${cardClass} ${onStageClick ? 'program-progress-widget__stage--clickable' : ''}`.trim()}
+        role={onStageClick ? 'button' : undefined}
+        tabIndex={onStageClick ? 0 : undefined}
+        aria-pressed={onStageClick ? Boolean(item.isSelected) : undefined}
         onClick={onStageClick ? () => onStageClick(item.key) : undefined}
+        onKeyDown={
+          onStageClick
+            ? event => {
+                if (event.key !== 'Enter' && event.key !== ' ') return
+                event.preventDefault()
+                onStageClick(item.key)
+              }
+            : undefined
+        }
+        onMouseEnter={onStageIntent ? () => onStageIntent(item.key) : undefined}
+        onFocus={onStageIntent ? () => onStageIntent(item.key) : undefined}
       >
         <span className="program-progress-widget__stage-label">{item.label}</span>
         <div className="program-progress-widget__stage-count-wrapper">
