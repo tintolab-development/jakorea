@@ -67,16 +67,17 @@ export function EducationInProgressNoticePanel({
     remoteNotices.enabled ? selectedNoticeId : null,
   )
 
-  const notices = useMemo(() => {
-    const source = remoteNotices.enabled ? remoteNotices.items : localNotices
+  const notices = remoteNotices.enabled ? remoteNotices.items : localNotices
+  /** 상세 본문은 팝업에만 합친다 — 목록 카드에 넣으면 열린 카드만 높이가 바뀌어 순서가 바뀐 듯 보인다 */
+  const modalNotices = useMemo(() => {
     const detailNotice = remoteDetail.detail?.notice
-    if (!detailNotice || !selectedNoticeId) return source
-    return source.map(notice => {
+    if (!detailNotice || !selectedNoticeId) return notices
+    return notices.map(notice => {
       if (notice.id !== selectedNoticeId) return notice
       // 반응 수는 목록 invalidate·반응 쿼리가 최신이다. 상세 스냅샷으로 덮지 않는다.
       return { ...notice, ...detailNotice, reactionCount: notice.reactionCount }
     })
-  }, [localNotices, remoteDetail.detail, remoteNotices.enabled, remoteNotices.items, selectedNoticeId])
+  }, [notices, remoteDetail.detail, selectedNoticeId])
 
   const remoteFiles = useApplicationNoticeFiles(
     applicationType,
@@ -267,7 +268,7 @@ export function EducationInProgressNoticePanel({
 
       <EducationInProgressNoticeDetailModal
         open={selectedNoticeId !== null}
-        notices={notices}
+        notices={modalNotices}
         files={files}
         noticeId={selectedNoticeId}
         onClose={closeNoticeDetail}

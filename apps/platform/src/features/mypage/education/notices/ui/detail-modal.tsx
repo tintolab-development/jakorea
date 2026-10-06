@@ -209,8 +209,20 @@ export function EducationInProgressNoticeDetailModal({
     [memberDisplayName, remoteDetail.detail?.comments]
   )
 
+  const remoteReactionUsers = useMemo(() => {
+    if (remoteReactions.users) return remoteReactions.users
+    if (!noticeId) return []
+    return remoteReactions.myReactionTypes.map(emojiType => ({
+      id: `${noticeId}-mine-${emojiType}`,
+      noticeId,
+      authorName: memberDisplayName || '나',
+      emojiType,
+      reactedAt: '',
+    }))
+  }, [memberDisplayName, noticeId, remoteReactions.myReactionTypes, remoteReactions.users])
+
   const reactions = isRemote ? remoteReactions.summary : mockReactions
-  const reactionUsers = isRemote ? [] : mockReactionUsers
+  const reactionUsers = isRemote ? remoteReactionUsers : mockReactionUsers
   const comments = isRemote ? remoteComments : mockComments
   const reactionCount = isRemote ? remoteReactions.total : (notice?.reactionCount ?? 0)
   const commentCount =

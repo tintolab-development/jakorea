@@ -10,6 +10,7 @@ import type {
   EducationInProgressNotice,
   EducationNoticeComment,
   EducationNoticeReactionSummary,
+  EducationNoticeReactionUser,
 } from '../../notices/model/types'
 import type { EducationScheduleItem } from '../../schedules/model/types'
 import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
@@ -97,15 +98,23 @@ function mapNoticeAttachmentListItem(
   }
 }
 
-function noticeCommentAuthorLabel(comment: PortalNoticeComment): string {
-  const named = comment.authorDisplayName?.trim()
+function portalActorLabel(
+  displayName: string | null | undefined,
+  actorType: string | undefined,
+  mine: boolean | undefined,
+): string {
+  const named = displayName?.trim()
   if (named) return named
-  const authorType = (comment.authorType ?? '').toUpperCase()
-  if (authorType === 'ADMIN' || authorType === 'CMS' || authorType === 'SYSTEM') {
+  const normalized = (actorType ?? '').toUpperCase()
+  if (normalized === 'ADMIN' || normalized === 'CMS' || normalized === 'SYSTEM') {
     return 'JA KOREA 알림'
   }
-  if (comment.mine) return '나'
+  if (mine) return '나'
   return '회원'
+}
+
+function noticeCommentAuthorLabel(comment: PortalNoticeComment): string {
+  return portalActorLabel(comment.authorDisplayName, comment.authorType, comment.mine)
 }
 
 function mapNoticeDetail(detail: PortalNoticeDetail): {
@@ -153,20 +162,41 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
   }
 }
 
-function mapNoticeReactions(state: PortalNoticeReactionState | undefined): {
+function mapNoticeReactions(
+  state: PortalNoticeReactionState | undefined,
+  postId: string,
+): {
   summary: EducationNoticeReactionSummary[]
   myReactionTypes: string[]
   total: number
+  /** BE `reactors` 를 줄 때만 채운다 — 없으면 null (화면이 내 반응만 대신 보여 준다) */
+  users: EducationNoticeReactionUser[] | null
 } {
   const summary = (state?.summary ?? []).flatMap(row => {
     const emojiType = row.reactionType?.trim()
     const count = row.count ?? 0
     return emojiType && count > 0 ? [{ emojiType, count }] : []
   })
+  const users = state?.reactors
+    ? state.reactors.flatMap((row, index) => {
+        const emojiType = row.reactionType?.trim()
+        if (!emojiType) return []
+        return [
+          {
+            id: `${postId}-${row.actorType ?? 'actor'}-${row.actorId ?? index}-${emojiType}`,
+            noticeId: postId,
+            authorName: portalActorLabel(row.actorDisplayName, row.actorType, row.mine),
+            emojiType,
+            reactedAt: row.reactedAt ?? '',
+          },
+        ]
+      })
+    : null
   return {
     summary,
     myReactionTypes: (state?.myReactions ?? []).filter(Boolean),
     total: summary.reduce((sum, row) => sum + row.count, 0),
+    users,
   }
 }
 
@@ -423,7 +453,10 @@ export function useApplicationNoticeReactionsQuery(
     ...queryOptions(),
     staleTime: 0,
   })
-  const reactions = useMemo(() => mapNoticeReactions(query.data), [query.data])
+  const reactions = useMemo(
+    () => mapNoticeReactions(query.data, postId ?? ''),
+    [postId, query.data],
+  )
   return { enabled, ...reactions }
 }
 

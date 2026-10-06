@@ -70,10 +70,21 @@ export type PortalNoticeReactionSummary = {
   count?: number
 }
 
+/** 반응한 사람 1행 — BE `reactors[]` (이름 규칙은 댓글 `authorDisplayName` 과 같다) */
+export type PortalNoticeReactor = {
+  reactionType?: string
+  actorType?: string
+  actorId?: number
+  actorDisplayName?: string | null
+  mine?: boolean
+  reactedAt?: string
+}
+
 export type PortalNoticeReactionState = {
   postId?: number
   summary?: PortalNoticeReactionSummary[]
   myReactions?: string[]
+  reactors?: PortalNoticeReactor[]
 }
 
 type PortalFileDownloadResolve = {
