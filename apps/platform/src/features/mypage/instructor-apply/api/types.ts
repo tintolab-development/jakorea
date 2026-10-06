@@ -89,8 +89,6 @@ export type InstructorRoleRequestTermsAgreement = {
   version: string
   required: boolean
   agreed: boolean
-  /** CRIMINAL_HISTORY_CHECK_CONSENT 이고 agreed=true 일 때만 */
-  evidenceFileObjectId?: number
 }
 
 /** POST /api/portal/me/instructor-role-requests — InstructorRoleRequestCreateRequest */

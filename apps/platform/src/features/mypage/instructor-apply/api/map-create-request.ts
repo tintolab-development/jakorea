@@ -8,8 +8,6 @@ import type {
   InstructorRoleRequestSettlement,
   InstructorRoleRequestTermsAgreement,
 } from './types'
-import { loadCrimeEvidenceFileObjectId } from '../consent/crime-evidence-file'
-
 /** CMS 권한 목록·승인 카피와 맞춘 기본 신청 유형 */
 export const DEFAULT_INSTRUCTOR_REQUESTED_ACTIVITY_TYPE = 'JA 강사단'
 
@@ -292,21 +290,13 @@ function mapSettlement(values: InstructorSharedProfileFormValues): InstructorRol
 function mapTermsAgreements(
   values: InstructorSharedProfileFormValues,
 ): InstructorRoleRequestTermsAgreement[] {
-  return AGREEMENT_TERMS.map(item => {
-    const agreed = values[item.formKey] === 'agree'
-    const evidenceFileObjectId =
-      item.termsType === 'CRIMINAL_HISTORY_CHECK_CONSENT' && agreed
-        ? loadCrimeEvidenceFileObjectId()
-        : null
-    return {
-      termsType: item.termsType,
-      version: TERMS_VERSION,
-      /** CMS 동의서 작성형과 동일 — 가입·등록 필수는 SERVICE/PRIVACY만 */
-      required: false,
-      agreed,
-      ...(evidenceFileObjectId != null ? { evidenceFileObjectId } : {}),
-    }
-  })
+  return AGREEMENT_TERMS.map(item => ({
+    termsType: item.termsType,
+    version: TERMS_VERSION,
+    /** CMS 동의서 작성형과 동일 — 가입·등록 필수는 SERVICE/PRIVACY만 */
+    required: false,
+    agreed: values[item.formKey] === 'agree',
+  }))
 }
 
 /**

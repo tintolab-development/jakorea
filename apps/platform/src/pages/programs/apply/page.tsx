@@ -24,6 +24,11 @@ import {
 import {
   buildApplicationAnswersFromDraft,
   coerceApplicationFormDocument,
+  collectConditionallyHiddenAnswerKeys,
+  collectRuntimeConditionalQuestions,
+  collectRuntimeHiddenAnswerKeys,
+  isRequiredParagraph,
+  omitRuntimeHiddenAnswers,
   prepareIndividualApplicationDraft,
   writingFormDraftFromApplicationForm,
 } from '@/features/program/lib/application-form-draft'
@@ -107,7 +112,9 @@ import {
   emptyInstructorAvailableSchedule,
   findIncompleteInstructorAvailableScheduleMessage,
   instructorAvailableScheduleAnswerFromValues,
+  instructorAvailableScheduleOptionValues,
   instructorAvailableScheduleValuesFromDraftAnswer,
+  readRuntimeInstructorScheduleSlots,
   type ApplyInstructorAvailableScheduleValues,
 } from '@/features/program/ui/apply-instructor-available-schedule/apply-instructor-available-schedule'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
@@ -238,17 +245,37 @@ export function ProgramApplyPage() {
   const profileTeacherMobile = profileDefaults.teacherMobile
   const profileTeacherEmail = profileDefaults.teacherEmail
   const showPreferredEducationForm = program?.educationForm === 'participant_choice'
+  const remoteForm = applicationFormQuery.bundle?.form
+  const runtimeInstructorScheduleSlots = useMemo(() => {
+    const paragraphs = coerceApplicationFormDocument(remoteForm)?.paragraphs
+    if (!Array.isArray(paragraphs)) return null
+    const scheduleParagraph = paragraphs.find(
+      paragraph =>
+        paragraph != null &&
+        typeof paragraph === 'object' &&
+        isInstructorAvailableScheduleParagraphId(String((paragraph as { id?: unknown }).id ?? '')),
+    )
+    return readRuntimeInstructorScheduleSlots(scheduleParagraph)
+  }, [remoteForm])
   const instructorScheduleSlots = useMemo(
     () =>
-      program
+      runtimeInstructorScheduleSlots ??
+      (program
         ? buildInstructorApplyScheduleSlots({
             educationScheduleLines: program.educationScheduleLines,
             educationSchedules: program.educationSchedules,
           })
-        : [],
-    [program],
+        : []),
+    [program, runtimeInstructorScheduleSlots],
   )
-  const remoteForm = applicationFormQuery.bundle?.form
+  const runtimeHiddenAnswerKeys = useMemo(
+    () => collectRuntimeHiddenAnswerKeys(remoteForm),
+    [remoteForm],
+  )
+  const runtimeConditionalQuestions = useMemo(
+    () => collectRuntimeConditionalQuestions(remoteForm),
+    [remoteForm],
+  )
   const remoteFormKey =
     remoteApplyEnabled && applicationFormQuery.status === 'ready' && remoteForm
       ? [
@@ -743,8 +770,33 @@ export function ProgramApplyPage() {
         }
       }
     }
+    if (displayDraft && (runtimeHiddenAnswerKeys.size > 0 || runtimeConditionalQuestions.length > 0)) {
+      const conditionallyHidden = collectConditionallyHiddenAnswerKeys(
+        runtimeConditionalQuestions,
+        buildApplicationAnswersFromDraft(displayDraft),
+      )
+      for (const paragraph of displayDraft.paragraphs) {
+        const key = resolveApplicationAnswerKey(paragraph)
+        if (
+          runtimeHiddenAnswerKeys.has(paragraph.id) ||
+          runtimeHiddenAnswerKeys.has(key) ||
+          conditionallyHidden.has(paragraph.id) ||
+          conditionallyHidden.has(key)
+        ) {
+          hidden.add(paragraph.id)
+        }
+      }
+    }
     return hidden
-  }, [applyCase, displayDraft, program, remoteForm, sexOffense])
+  }, [
+    applyCase,
+    displayDraft,
+    program,
+    remoteForm,
+    runtimeConditionalQuestions,
+    runtimeHiddenAnswerKeys,
+    sexOffense,
+  ])
 
   const remoteFormUnavailable =
     remoteApplyEnabled &&
@@ -836,21 +888,29 @@ export function ProgramApplyPage() {
           return
         }
       }
-      const instructorCrimeParagraph = findDraftParagraph(
+      const crimeParagraphCandidate = findDraftParagraph(
         displayDraft,
         isInstructorCrimeRecordParagraphId,
       )
-      if (instructorCrimeParagraph) {
+      const instructorCrimeParagraph =
+        crimeParagraphCandidate && !hiddenParagraphIds.has(crimeParagraphCandidate.id)
+          ? crimeParagraphCandidate
+          : null
+      if (instructorCrimeParagraph && isRequiredParagraph(instructorCrimeParagraph)) {
         const crimeError = findIncompleteInstructorCrimeRecordMessage(instructorCrimeRecord)
         if (crimeError) {
           setSubmitError(crimeError)
           return
         }
       }
-      const instructorScheduleParagraph = findDraftParagraph(
+      const scheduleParagraphCandidate = findDraftParagraph(
         displayDraft,
         isInstructorAvailableScheduleParagraphId,
       )
+      const instructorScheduleParagraph =
+        scheduleParagraphCandidate && !hiddenParagraphIds.has(scheduleParagraphCandidate.id)
+          ? scheduleParagraphCandidate
+          : null
       if (instructorScheduleParagraph) {
         const scheduleError = findIncompleteInstructorAvailableScheduleMessage(
           instructorSchedule,
@@ -889,16 +949,18 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(sexOffenseParagraph)] =
           sexOffenseSubmissionAnswerFromValues(sexOffense)
       }
-      if (instructorCrimeParagraph) {
+      if (instructorCrimeParagraph && instructorCrimeRecord.fileObjectId != null) {
         overrides[resolveApplicationAnswerKey(instructorCrimeParagraph)] =
           instructorCrimeRecordAnswerFromValues(instructorCrimeRecord)
       }
       if (instructorScheduleParagraph) {
         overrides[resolveApplicationAnswerKey(instructorScheduleParagraph)] =
-          instructorAvailableScheduleAnswerFromValues(
-            instructorSchedule,
-            instructorScheduleSlots,
-          )
+          runtimeInstructorScheduleSlots != null
+            ? instructorAvailableScheduleOptionValues(instructorSchedule, instructorScheduleSlots)
+            : instructorAvailableScheduleAnswerFromValues(
+                instructorSchedule,
+                instructorScheduleSlots,
+              )
       }
       const inquiryParagraph = findDraftParagraph(
         displayDraft,
@@ -918,6 +980,17 @@ export function ProgramApplyPage() {
         omitParagraphIds.add(teamParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(teamParagraph))
       }
+      if (instructorCrimeParagraph && instructorCrimeRecord.fileObjectId == null) {
+        omitParagraphIds.add(instructorCrimeParagraph.id)
+        omitParagraphIds.add(resolveApplicationAnswerKey(instructorCrimeParagraph))
+      }
+      for (const paragraph of displayDraft.paragraphs) {
+        const key = resolveApplicationAnswerKey(paragraph)
+        if (runtimeHiddenAnswerKeys.has(paragraph.id) || (key && runtimeHiddenAnswerKeys.has(key))) {
+          omitParagraphIds.add(paragraph.id)
+          if (key) omitParagraphIds.add(key)
+        }
+      }
       for (const paragraph of displayDraft.paragraphs) {
         if (isApplyScheduleChoiceParagraphId(paragraph.id) && hiddenParagraphIds.has(paragraph.id)) {
           omitParagraphIds.add(paragraph.id)
@@ -925,10 +998,14 @@ export function ProgramApplyPage() {
         }
       }
 
-      const answers = buildApplicationAnswersFromDraft(displayDraft, {
-        overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
-        omitParagraphIds: omitParagraphIds.size > 0 ? omitParagraphIds : undefined,
-      })
+      const answers = omitRuntimeHiddenAnswers(
+        buildApplicationAnswersFromDraft(displayDraft, {
+          overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+          omitParagraphIds: omitParagraphIds.size > 0 ? omitParagraphIds : undefined,
+        }),
+        runtimeHiddenAnswerKeys,
+        runtimeConditionalQuestions,
+      )
 
       const classCount = Number.parseInt(basicInfo.classCount, 10)
       const studentCount = Number.parseInt(basicInfo.studentCount, 10)
@@ -961,6 +1038,17 @@ export function ProgramApplyPage() {
     }
     navigate(programApplyCompletePath(program.id, focus, fromPath))
   }
+
+  const visibleInstructorScheduleParagraph = displayDraft
+    ? findDraftParagraph(
+        displayDraft,
+        id => isInstructorAvailableScheduleParagraphId(id) && !hiddenParagraphIds.has(id),
+      )
+    : null
+  const instructorScheduleUnavailable =
+    visibleInstructorScheduleParagraph != null &&
+    runtimeInstructorScheduleSlots != null &&
+    runtimeInstructorScheduleSlots.length === 0
 
   return (
     <section className={[shell.page, styles.page].join(' ')}>
@@ -1013,6 +1101,10 @@ export function ProgramApplyPage() {
             <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
               {submitError}
             </PFText>
+          ) : instructorScheduleUnavailable ? (
+            <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
+              선택 가능한 강의 일정이 없어 신청할 수 없습니다. 관리자에게 문의해 주세요.
+            </PFText>
           ) : null}
 
           <div className={styles.actions}>
@@ -1023,6 +1115,7 @@ export function ProgramApplyPage() {
               disabled={
                 submitMutation.isPending ||
                 !displayDraft ||
+                instructorScheduleUnavailable ||
                 Boolean(blockedMessage && remoteApplyEnabled)
               }
               onClick={() => {

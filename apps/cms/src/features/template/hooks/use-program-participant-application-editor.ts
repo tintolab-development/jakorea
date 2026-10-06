@@ -359,6 +359,11 @@ export type UseProgramParticipantApplicationEditorOptions = {
   programLinkedInstitutionApplicationForm?: boolean
   /** 프로그램 상세 — 공통·모집 정보 연동 미리보기/양식 수정 */
   program?: Program | null
+  /**
+   * 등록 위저드 — 강사 일정 슬롯 계산에만 쓰는 공통 정보 스냅샷.
+   * `program`과 달리 기관 신청 연동·숨김 단락·저장 경로에는 쓰지 않는다.
+   */
+  instructorScheduleSourceProgram?: Program | null
   programLinkedApplicationFormPreview?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
@@ -1263,18 +1268,21 @@ export function useProgramParticipantApplicationEditor(
     !isRegistrationApplicationStructureEdit &&
     editorOptions?.programLinkedInstitutionApplicationForm === true
 
+  const instructorScheduleProgram =
+    linkedProgram ?? editorOptions?.instructorScheduleSourceProgram ?? null
+
   const instructorScheduleSlots = useMemo(
     () =>
-      linkedProgram && variant === 'instructor'
-        ? buildInstructorAvailableScheduleSlotsFromProgram(linkedProgram)
+      instructorScheduleProgram && variant === 'instructor'
+        ? buildInstructorAvailableScheduleSlotsFromProgram(instructorScheduleProgram)
         : undefined,
-    [linkedProgram, variant]
+    [instructorScheduleProgram, variant]
   )
 
   const instructorHideScheduleCalendar =
-    linkedProgram != null &&
+    instructorScheduleProgram != null &&
     variant === 'instructor' &&
-    isGeneralIndividualProgram(linkedProgram)
+    isGeneralIndividualProgram(instructorScheduleProgram)
 
   const volunteerScheduleSeed = useMemo(
     () =>

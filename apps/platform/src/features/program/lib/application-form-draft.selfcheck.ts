@@ -6,6 +6,9 @@ import { resolveHorizontalTableCellPlainText } from '@jakorea/form-schema/writin
 import {
   buildApplicationAnswersFromDraft,
   coerceApplicationFormDocument,
+  collectRuntimeConditionalQuestions,
+  collectRuntimeHiddenAnswerKeys,
+  omitRuntimeHiddenAnswers,
   prepareIndividualApplicationDraft,
   writingFormDraftFromApplicationForm,
 } from './application-form-draft.ts'
@@ -408,5 +411,60 @@ const richerParagraphs = richerVertical.paragraphs
 assert.ok(Array.isArray(richerParagraphs))
 const richerParagraph = richerParagraphs[0] as { rows?: { cells?: string[] }[] }
 assert.equal(richerParagraph.rows?.[0]?.cells?.[0], '중첩 문서 답')
+
+const crimeKey = 'program-instructor-application-seed-crime-record'
+const experienceKey = 'program-volunteer-application-seed-ja-experience'
+const previousJaKey = 'program-volunteer-application-seed-previous-ja-program'
+const audienceForm = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  runtimeContext: {
+    audienceApplication: {
+      version: 1,
+      flavor: 'instructor',
+      hiddenQuestionKeys: [crimeKey],
+      dynamicQuestions: {},
+      conditionalQuestions: {
+        [previousJaKey]: {
+          dependsOnQuestionKey: experienceKey,
+          visibleValues: ['PROGRAM-VOLUNTEER-APPLICATION-JA-EXPERIENCE-YES', 'YES'],
+          hiddenValues: ['PROGRAM-VOLUNTEER-APPLICATION-JA-EXPERIENCE-NO', 'NO'],
+        },
+      },
+    },
+  },
+  paragraphs: runtimeForm.paragraphs.slice(0, 1),
+}
+const audienceHidden = collectRuntimeHiddenAnswerKeys(audienceForm)
+const audienceConditionals = collectRuntimeConditionalQuestions(audienceForm)
+assert.equal(audienceHidden.has(crimeKey), true)
+assert.deepEqual(
+  Object.keys(
+    omitRuntimeHiddenAnswers(
+      {
+        [crimeKey]: '',
+        [experienceKey]: ['program-volunteer-application-ja-experience-no'],
+        [previousJaKey]: [],
+        other: 'x',
+      },
+      audienceHidden,
+      audienceConditionals,
+    ),
+  ),
+  [experienceKey, 'other'],
+)
+assert.deepEqual(
+  Object.keys(
+    omitRuntimeHiddenAnswers(
+      {
+        [experienceKey]: ['program-volunteer-application-ja-experience-yes'],
+        [previousJaKey]: 'answer',
+      },
+      audienceHidden,
+      audienceConditionals,
+    ),
+  ),
+  [experienceKey, previousJaKey],
+)
 
 console.log('application-form-draft.selfcheck: ok')

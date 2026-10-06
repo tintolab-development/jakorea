@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { uploadMemberPortalFile } from '@/features/mypage/instructor-apply/api/member-file-upload'
+import { getApplicationApiErrorCode } from '@/features/program/lib/application-api-error'
 import {
   PFFormField,
   PFFormFieldHintText,
@@ -9,15 +10,33 @@ import {
 } from '@/shared/ui'
 import styles from './apply-instructor-crime-record.module.css'
 
-/** CMS `InstructorCrimeRecordParagraph` — 기관 ID 힌트 + PDF 첨부 */
+/** CMS `InstructorCrimeRecordParagraph` — 기관 ID 힌트 + PDF·이미지 첨부 */
 export type ApplyInstructorCrimeRecordValues = {
   fileObjectId: number | null
   fileName: string
 }
 
 const AGENCY_ID_HINT = '기관이 작성한 ID와 검증번호가 노출됩니다.'
-const ACCEPT = 'application/pdf,.pdf'
+/** BE `CRIMINAL_HISTORY_EVIDENCE` 정책 — pdf·jpg·jpeg·png·webp, 20MB */
+const ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp'
+const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
+const ALLOWED_FILE_NAME_PATTERN = /\.(pdf|jpe?g|png|webp)$/i
 const MAX_BYTES = 20 * 1024 * 1024
+const FILE_TYPE_ERROR = 'PDF 또는 이미지(JPG, PNG, WEBP) 파일만 업로드할 수 있습니다.'
+const FILE_SIZE_ERROR = '파일은 20MB 이하만 업로드할 수 있습니다.'
+
+function isAllowedCrimeRecordFile(file: File): boolean {
+  const mime = file.type.trim().toLowerCase()
+  if (mime) return ALLOWED_MIME_TYPES.has(mime)
+  return ALLOWED_FILE_NAME_PATTERN.test(file.name)
+}
+
+function uploadErrorMessage(error: unknown): string {
+  const code = getApplicationApiErrorCode(error)
+  if (code === 'MEMBER_FILE_TYPE_NOT_ALLOWED') return FILE_TYPE_ERROR
+  if (code === 'MEMBER_FILE_SIZE_EXCEEDED') return FILE_SIZE_ERROR
+  return '파일 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+}
 
 export function emptyInstructorCrimeRecord(): ApplyInstructorCrimeRecordValues {
   return { fileObjectId: null, fileName: '' }
@@ -65,13 +84,12 @@ export function ApplyInstructorCrimeRecord({ value, onChange }: ApplyInstructorC
   const [error, setError] = useState<string | null>(null)
 
   const handleFileSelect = (file: File) => {
-    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
-    if (!isPdf) {
-      setError('PDF 파일만 업로드할 수 있습니다.')
+    if (!isAllowedCrimeRecordFile(file)) {
+      setError(FILE_TYPE_ERROR)
       return
     }
     if (file.size > MAX_BYTES) {
-      setError('파일은 20MB 이하만 업로드할 수 있습니다.')
+      setError(FILE_SIZE_ERROR)
       return
     }
     setError(null)
@@ -80,9 +98,9 @@ export function ApplyInstructorCrimeRecord({ value, onChange }: ApplyInstructorC
       .then(fileObjectId => {
         onChange({ fileObjectId, fileName: file.name })
       })
-      .catch(() => {
+      .catch(uploadError => {
         onChange(emptyInstructorCrimeRecord())
-        setError('파일 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+        setError(uploadErrorMessage(uploadError))
       })
       .finally(() => {
         setUploading(false)
