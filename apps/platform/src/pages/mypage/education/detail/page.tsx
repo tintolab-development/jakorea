@@ -129,6 +129,37 @@ function buildDetailPath(
   return `${base}?section=${section}`
 }
 
+function EducationDetailLoading({ onBack }: { onBack: () => void }) {
+  return (
+    <section className={styles.page} aria-busy="true">
+      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.loadingStatus}>
+        신청 정보를 불러오는 중입니다.
+      </PFText>
+      <EducationDetailBack onClick={onBack} />
+      <div className={styles.loadingHeader}>
+        <span className={[styles.skeleton, styles.skeletonTitle].join(' ')} />
+        <span className={[styles.skeleton, styles.skeletonTitleShort].join(' ')} />
+        <span className={[styles.skeleton, styles.skeletonStatus].join(' ')} />
+        <span className={[styles.skeleton, styles.skeletonMeta].join(' ')} />
+      </div>
+      <div className={styles.loadingTabs} aria-hidden="true">
+        <span className={[styles.skeleton, styles.skeletonTab].join(' ')} />
+        <span className={[styles.skeleton, styles.skeletonTab].join(' ')} />
+      </div>
+      <div className={styles.loadingBody}>
+        <div className={styles.loadingMain}>
+          <span className={[styles.skeleton, styles.skeletonSummary].join(' ')} />
+          <span className={[styles.skeleton, styles.skeletonBlock].join(' ')} />
+        </div>
+        <div className={styles.loadingAside}>
+          <span className={[styles.skeleton, styles.skeletonBanner].join(' ')} />
+          <span className={[styles.skeleton, styles.skeletonApply].join(' ')} />
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function MypageEducationDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -159,9 +190,16 @@ export function MypageEducationDetailPage() {
     { fresh: true },
   )
   const program = remoteDetailEnabled ? remoteProgramQuery.program : mockProgramQuery.program
+  const isApplicationLoading = remoteDetailEnabled && remoteApplicationQuery.isLoading
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
     : mockProgramQuery.isLoading
+  const isDetailLoading =
+    !isAuthReady ||
+    isChecking ||
+    isRedirecting ||
+    isApplicationLoading ||
+    (Boolean(application) && isProgramLoading && !program)
 
   const isWithdrawnBefore = application ? isWithdrawnBeforeEducation(application) : false
   const isWithdrawnDuring = application ? isWithdrawnDuringEducation(application) : false
@@ -328,8 +366,8 @@ export function MypageEducationDetailPage() {
     navigate(MYPAGE_EDUCATION_PATH, { replace: true })
   }
 
-  if (!isAuthReady || isChecking || isRedirecting) {
-    return null
+  if (isDetailLoading) {
+    return <EducationDetailLoading onBack={handleBack} />
   }
 
   if (!application) {
@@ -344,10 +382,6 @@ export function MypageEducationDetailPage() {
         </PFButton>
       </section>
     )
-  }
-
-  if (isProgramLoading && !program) {
-    return null
   }
 
   if (!program) {
