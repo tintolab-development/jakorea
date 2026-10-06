@@ -22,6 +22,8 @@ export type SettingsConsentItem = {
   validityLabel?: string
   hint?: string
   termsViewType?: TermsViewType
+  /** 전자서명 동의서 ID — 철회·확인 API 대상 */
+  documentId?: number
 }
 
 const MOCK_AGREED_AT = '2026.07.03 09:23'

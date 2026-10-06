@@ -275,6 +275,8 @@ export const platformQueryKeys = {
       [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current'] as const,
     /** 마이페이지 홈 요약 — GET /api/portal/me/dashboard (Class E, member scoped) */
     dashboard: () => [...platformQueryKeys.mypage.all(), 'dashboard'] as const,
+    /** 내 통합 동의 현황 — GET /api/portal/me/consents (member scoped) */
+    consents: () => [...platformQueryKeys.mypage.all(), 'consents'] as const,
     /** 마이페이지 일정 — GET /api/portal/me/calendar (Class C, member scoped) */
     calendar: (from: string, to: string) =>
       [...platformQueryKeys.mypage.all(), 'calendar', from, to] as const,
