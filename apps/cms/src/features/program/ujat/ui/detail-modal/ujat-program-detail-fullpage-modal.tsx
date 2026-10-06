@@ -130,6 +130,7 @@ import {
 } from '@/shared/constants/messages'
 import { PROGRAM_RECRUITMENT_INFO_OPERATION_STARTED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { extractApiErrorMessage, getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -1438,6 +1439,15 @@ export function UjatProgramDetailFullPageModal({
               setSearchParams(next, { replace: true })
             } catch (error) {
               handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
+              if (getApiErrorCode(error)?.startsWith('UJAT_RECRUIT_TERM_')) {
+                void showAlert({
+                  title: '저장 실패',
+                  content: extractApiErrorMessage(
+                    (error as { response?: { data?: unknown } }).response?.data,
+                    { fallback: '봉사자 모집 상·하반기 구분을 확인해 주세요.' }
+                  ),
+                })
+              }
               throw error
             }
           }

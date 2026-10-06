@@ -432,6 +432,8 @@ export interface ProgramRecruitmentWindow {
   targetType?: string
   /** INDIVIDUAL | ORGANIZATION | INSTRUCTOR | VOLUNTEER */
   applicationType?: string
+  /** UJAT 봉사자 모집 상·하반기. 그 외 행은 null. */
+  recruitTerm?: 'FIRST_HALF' | 'SECOND_HALF' | null
   startAt?: string | null
   endAt?: string | null
   /** 해당 모집 유형의 프로그램 운영 시작일. 없으면 모집정보를 잠그지 않는다. */

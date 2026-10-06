@@ -6,6 +6,7 @@ import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/
 import {
   fromDetail,
   fromListItem,
+  buildUjatNewVolunteerHalfRowRequests,
   mapUjatProgramRecruitmentsToRequest,
   toCreateRequest,
   toUpdateRequest,
@@ -619,6 +620,83 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
     const h1 = rows.find(row => row.id === 182212)
     expect(h1?.startAt).toBe('2026-03-01T00:00:00+09:00')
     expect(h1?.endAt).toBe('2026-03-31T00:00:00+09:00')
+    expect(h1?.recruitTerm).toBe('FIRST_HALF')
     expect(rows.some(row => row.id === 182213)).toBe(false)
+  })
+
+  it('봉사자 행은 recruitTerm FIRST_HALF 행을 상반기로 쓰고 기관 행에는 recruitTerm을 보내지 않는다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      programRecruitments: [
+        { id: 1, recruitmentType: 'PARTICIPANT', applicationType: 'ORGANIZATION' },
+        {
+          id: 2,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          startAt: '2026-01-01T00:00:00+09:00',
+        },
+        {
+          id: 3,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          startAt: '2026-03-01T00:00:00+09:00',
+        },
+      ],
+    })
+    const volunteer = rows.find(row => row.recruitmentType === 'VOLUNTEER')
+    expect(volunteer).toMatchObject({ id: 3, recruitTerm: 'FIRST_HALF' })
+    expect(rows.find(row => row.recruitmentType === 'PARTICIPANT')?.recruitTerm).toBeUndefined()
+  })
+
+  it('신규 생성 시에도 봉사자 행에 recruitTerm FIRST_HALF를 보낸다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({ ...program, programRecruitments: undefined })
+    const volunteer = rows.find(row => row.recruitmentType === 'VOLUNTEER')
+    expect(volunteer?.id).toBeUndefined()
+    expect(volunteer?.recruitTerm).toBe('FIRST_HALF')
+  })
+})
+
+describe('buildUjatNewVolunteerHalfRowRequests', () => {
+  const existing: Program = {
+    ...program,
+    programRecruitments: [
+      { id: 10, recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' },
+    ],
+  }
+
+  it('저장되지 않은 하반기 행을 id 없이 SECOND_HALF로 보낸다', () => {
+    const rows = buildUjatNewVolunteerHalfRowRequests(
+      [
+        ...(existing.programRecruitments ?? []),
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          startAt: '2026-08-01T00:00:00',
+          endAt: '2026-08-31T23:59:59',
+          announcementTitle: '하반기 모집',
+        },
+      ],
+      existing
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      recruitmentType: 'VOLUNTEER',
+      targetType: 'COLLEGE_STUDENT',
+      applicationType: 'VOLUNTEER',
+      recruitTerm: 'SECOND_HALF',
+      startAt: '2026-08-01T00:00:00',
+      announcementTitle: '하반기 모집',
+    })
+    expect(rows[0]).not.toHaveProperty('id')
+  })
+
+  it('이미 저장된 반기는 새 행으로 보내지 않는다', () => {
+    const rows = buildUjatNewVolunteerHalfRowRequests(
+      [{ recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' }],
+      existing
+    )
+    expect(rows).toHaveLength(0)
   })
 })

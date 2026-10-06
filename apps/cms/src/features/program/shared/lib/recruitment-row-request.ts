@@ -78,7 +78,10 @@ export function attachRecruitmentRowIdentity(
         !claimed.has(candidate.id!) &&
         (candidate.recruitmentType ?? '').toUpperCase() ===
           (row.recruitmentType ?? '').toUpperCase() &&
-        rowApplicationType(candidate) === applicationType
+        rowApplicationType(candidate) === applicationType &&
+        (row.recruitTerm == null ||
+          candidate.recruitTerm == null ||
+          candidate.recruitTerm === row.recruitTerm)
     )
     if (match) {
       claimed.add(match.id!)
