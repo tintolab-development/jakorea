@@ -5,7 +5,6 @@ import {
   useQuery,
   useQueryClient,
   type InfiniteData,
-  type QueryClient,
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
@@ -13,6 +12,7 @@ import { isProgramHardDeleteBlockedError } from '@/features/program/shared/lib/p
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { shouldRetryTrainedTeacherQuery } from './errors'
 import type { TrainedTeacherListFilters } from './list-params'
+import { invalidateTrainedTeacherListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { trainedTeacherQueryKeys } from './query-keys'
 import {
   createTrainedTeacherProgram,
@@ -48,10 +48,6 @@ function keepFirstInfiniteQueryPage<T>(
     pages: data.pages.slice(0, 1),
     pageParams: data.pageParams.slice(0, 1),
   }
-}
-
-function invalidateTrainedTeacherOverviewStages(queryClient: QueryClient): void {
-  void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.overviewStages() })
 }
 
 /** 교육받은 교사 목록 상단 4카드 건수 (목록과 동일 데이터 소스) */
@@ -116,8 +112,7 @@ export function useCreateTrainedTeacherProgram() {
     retry: false,
     onSuccess: program => {
       queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)
-      void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
-      invalidateTrainedTeacherOverviewStages(queryClient)
+      invalidateTrainedTeacherListCaches(queryClient)
     },
   })
 }
@@ -148,8 +143,7 @@ export function useUpdateTrainedTeacherProgram() {
           variables.patch
         )
       )
-      void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
-      invalidateTrainedTeacherOverviewStages(queryClient)
+      invalidateTrainedTeacherListCaches(queryClient)
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.navigation(variables.programId),
       })
@@ -167,8 +161,7 @@ export function useDeleteTrainedTeacherProgram() {
       const detailKey = trainedTeacherQueryKeys.detail(programId)
       await queryClient.cancelQueries({ queryKey: detailKey })
       queryClient.removeQueries({ queryKey: detailKey })
-      void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
-      invalidateTrainedTeacherOverviewStages(queryClient)
+      invalidateTrainedTeacherListCaches(queryClient)
     },
   })
 }
@@ -185,13 +178,11 @@ export function useDeleteTrainedTeacherPrograms() {
         await queryClient.cancelQueries({ queryKey: detailKey })
         queryClient.removeQueries({ queryKey: detailKey })
       }
-      void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
-      invalidateTrainedTeacherOverviewStages(queryClient)
+      invalidateTrainedTeacherListCaches(queryClient)
     },
     onError: error => {
       if (!isProgramHardDeleteBlockedError(error) || error.successCount < 1) return
-      void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
-      invalidateTrainedTeacherOverviewStages(queryClient)
+      invalidateTrainedTeacherListCaches(queryClient)
     },
   })
 }
@@ -226,7 +217,7 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
           ? { ...merged, businessArea: previousBusinessArea }
           : merged
       )
-      void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
+      invalidateTrainedTeacherListCaches(queryClient)
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.navigation(variables.programId),
       })

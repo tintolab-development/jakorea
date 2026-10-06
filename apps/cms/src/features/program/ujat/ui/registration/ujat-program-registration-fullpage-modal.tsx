@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { resolveRegistrationWizardIncompleteParagraphIds } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
 import {
   RegistrationWizardValidationHighlightProvider,
@@ -39,6 +40,7 @@ import {
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
+import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
@@ -78,6 +80,7 @@ function UjatProgramRegistrationFullpageModalInner({
   onClose,
   onProgramRegistrationSaved,
 }: UjatProgramRegistrationFullpageModalProps) {
+  const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const { showAlert } = useCmsAlert()
   const { reportIncomplete } = useRegistrationWizardValidationHighlight()
@@ -142,10 +145,14 @@ function UjatProgramRegistrationFullpageModalInner({
     pendingCreatedProgramRef.current = undefined
   }, [open])
 
-  const handleRegistrationCreated = useCallback((program: Program) => {
-    pendingCreatedProgramRef.current = program
-    setCompleteSuccessOpen(true)
-  }, [])
+  const handleRegistrationCreated = useCallback(
+    (program: Program) => {
+      invalidateUjatProgramListCaches(queryClient)
+      pendingCreatedProgramRef.current = program
+      setCompleteSuccessOpen(true)
+    },
+    [queryClient]
+  )
 
   const recruitmentPreviewSponsorName = useSponsorNameById(recruitmentPreviewProgram?.sponsorId)
 

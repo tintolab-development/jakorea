@@ -11,7 +11,7 @@ import {
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
-import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
+import { invalidateGeminiRecruitmentListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
 import { useGeminiRecruitmentAddForm } from '../../hooks/use-gemini-recruitment-add-form'
 import {
@@ -110,9 +110,7 @@ export function GeminiRecruitmentAddFullpageModal({
     try {
       await geminiRecruitmentService.register(snapshot)
       removeGeminiRecruitmentAddDraft()
-      await queryClient.invalidateQueries({
-        queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
-      })
+      invalidateGeminiRecruitmentListCaches(queryClient)
       showAlert({
         title: '등록 완료',
         content: REGISTER_SUCCESS_MESSAGE,
