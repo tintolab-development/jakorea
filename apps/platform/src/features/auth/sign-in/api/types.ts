@@ -35,6 +35,7 @@ export type HomepageMeResponse = {
   name?: string
   status?: string
   memberType?: string
+  /** `UNDER_14` | `OVER_14` */
   ageGroup?: string
   teacher?: boolean
   identityVerified?: boolean
@@ -112,6 +113,9 @@ export type PortalProfileResponse = {
   memberType?: string
   teacher?: boolean
   instructor?: boolean
+  under14?: boolean
+  /** `UNDER_14` | `OVER_14` */
+  ageGroup?: string
   postalCode?: string
   address?: string
   addressDetail?: string
@@ -125,7 +129,7 @@ export type PortalProfileResponse = {
   schoolEnrollmentStatus?: string
   /** API `ACTIVE` | `ON_LEAVE` | `EMPLOYED` 등 */
   teacherEmploymentStatus?: string
-  /** 교사회원 현재 학교. 기관 주소의 SSOT */
+  /** 교사 회원 현재 학교. 기관 주소의 SSOT */
   teacherOrganization?: PortalTeacherOrganizationResponse
   external1365Id?: string
   accountStatus?: string
