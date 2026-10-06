@@ -145,11 +145,13 @@ export type PhoneIdentityChangeResponse = {
   changedAt?: string
 }
 
-/** POST /api/portal/me/withdrawals — OpenAPI `PortalWithdrawalRequest` */
+/**
+ * POST /api/portal/me/withdrawals — OpenAPI `PortalWithdrawalRequest`
+ * 본인 확인 SoT는 `currentPassword`만. `confirmationText`는 optional·서버 무시(보내지 않음).
+ */
 export type PortalWithdrawalRequest = {
   currentPassword: string
   reason: string
-  confirmationText: string
 }
 
 /** POST /api/portal/me/withdrawals — OpenAPI `PortalWithdrawalResponse` */
