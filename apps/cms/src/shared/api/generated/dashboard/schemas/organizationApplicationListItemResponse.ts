@@ -25,13 +25,12 @@ export interface OrganizationApplicationListItemResponse {
   applicationStatus?: string;
   requestedStudentCount?: number | null;
   requestedClassCount?: number | null;
-  educationGrade?: string | null;
-  region?: string | null;
   mergeGroupId?: number | null;
-  combinedClassPartnerGrades?: string[];
   submittedAt?: string | null;
   approvedAt?: string | null;
   rejectedAt?: string | null;
+  /** 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt은 바뀌지 않습니다. */
+  resultNotificationSentAt?: string | null;
   rejectReason?: string | null;
   availableActions: string[];
   defaultScheduleId?: number | null;
@@ -45,7 +44,7 @@ export interface OrganizationApplicationListItemResponse {
   sessions: OrganizationApplicationSession[];
   mergeStatus?: string | null;
   mergeLead?: boolean | null;
-  /** 학교 모집은 연 1회라 보통 null */
+  /** 학교 모집은 연 1회라 보통 null. 명시적 recruit_term이 있는 경우 FIRST_HALF|SECOND_HALF. */
   recruitHalf?: OrganizationApplicationListItemResponseRecruitHalf;
   /** UJAT 임시배정 워크플로. TEMP_ASSIGNED|TEMP_REJECTED 등 */
   temporaryAssignmentStatus?: string | null;

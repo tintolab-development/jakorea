@@ -13,7 +13,7 @@ export interface TermsAgreementRow {
   required?: boolean;
   agreed?: boolean;
   agreedAt?: string;
-  /** PORTRAIT_RIGHTS 전용 상태 */
+  /** PORTRAIT_RIGHTS 전용 상태. FULL은 deprecated이며 조회 시 PARTIAL로 정규화됩니다. */
   consentStatus?: TermsAgreementRowConsentStatus;
   /** PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 */
   programEligible?: boolean;

@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { HomepageMeResponseAgeGroup } from './homepageMeResponseAgeGroup';
 
 /**
  * 회원 포탈 현재 로그인 회원 응답
@@ -22,10 +23,12 @@ export interface HomepageMeResponse {
   status?: string;
   /** 회원가입 유형 */
   memberType?: string;
-  /** 나이 그룹 */
-  ageGroup?: string;
+  /** 나이 그룹. 항상 UNDER_14 또는 OVER_14. */
+  ageGroup?: HomepageMeResponseAgeGroup;
   /** 교사회원 여부 */
   teacher?: boolean;
+  /** 강사회원 여부. 승인된 강사 권한이 있을 때만 true. 강사 권한 신청 중(미승인)·반려·철회·권한 없음은 false. GET /api/portal/me/profile 의 instructor와 항상 동일. */
+  instructor?: boolean;
   /** 본인인증 완료 여부 */
   identityVerified?: boolean;
   /** 마지막 로그인 시각 */

@@ -7,7 +7,7 @@
  */
 
 /**
- * 학교 모집은 연 1회라 보통 null
+ * 학교 모집은 연 1회라 보통 null. 명시적 recruit_term이 있는 경우 FIRST_HALF|SECOND_HALF.
  */
 export type OrganizationApplicationListItemResponseRecruitHalf = typeof OrganizationApplicationListItemResponseRecruitHalf[keyof typeof OrganizationApplicationListItemResponseRecruitHalf] | null;
 

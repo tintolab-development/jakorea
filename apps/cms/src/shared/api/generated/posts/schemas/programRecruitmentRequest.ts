@@ -7,6 +7,7 @@
  */
 import type { ProgramRecruitmentRequestApplicationType } from './programRecruitmentRequestApplicationType';
 import type { ProgramRecruitmentRequestRecruitmentType } from './programRecruitmentRequestRecruitmentType';
+import type { ProgramRecruitmentRequestRecruitTerm } from './programRecruitmentRequestRecruitTerm';
 import type { ProgramRecruitmentRequestStatus } from './programRecruitmentRequestStatus';
 
 /**
@@ -41,6 +42,11 @@ export interface ProgramRecruitmentRequest {
      * @nullable
      */
   applicationType?: ProgramRecruitmentRequestApplicationType;
+  /**
+     * UJAT 봉사자 모집 상·하반기 SSOT. UJAT VOLUNTEER에서만 FIRST_HALF|SECOND_HALF, 그 외에는 null.
+     * @nullable
+     */
+  recruitTerm?: ProgramRecruitmentRequestRecruitTerm;
   /**
      * 공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, "" 이면 비움
      * @nullable

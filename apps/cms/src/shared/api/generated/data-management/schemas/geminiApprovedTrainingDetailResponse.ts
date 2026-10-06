@@ -80,11 +80,8 @@ export interface GeminiApprovedTrainingDetailResponse {
   requestedScheduleMemo?: string;
   instructorMemberId?: number;
   instructorName?: string;
-  /**
-     * 연수 담당 강사. 일정 배정 또는 같은 모집의 승인 강사가 있으면 채운다. 둘 다 없으면 null
-     * @nullable
-     */
-  assignedInstructor?: GeminiAssignedInstructor;
+  /** 연수 담당 강사. 일정 배정 또는 같은 모집의 승인 강사가 있으면 채운다. 둘 다 없으면 null */
+  assignedInstructor?: GeminiAssignedInstructor | null;
   /**
      * 프로그램 PM admin id. 교사 회원 id가 아님
      * @deprecated

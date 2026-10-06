@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { AccountPaymentListItemResponse } from './accountPaymentListItemResponse';
+import type { AccountPaymentSensitiveDetailResponse } from './accountPaymentSensitiveDetailResponse';
 import type { SettlementFrontendResponse } from './settlementFrontendResponse';
 
 /**
@@ -13,9 +14,8 @@ import type { SettlementFrontendResponse } from './settlementFrontendResponse';
  */
 export interface AccountPaymentDetailResponse {
   payment?: AccountPaymentListItemResponse;
-  /**
-     * GET /settlements/{id} 와 동일 계약(SettlementFrontendResponse). Gemini 등 정산 없음이면 null.
-     * @nullable
-     */
+  /** 정산 상세와 동일 계약(SettlementFrontendResponse). Gemini 등 정산 없는 건은 null. */
   settlement?: SettlementFrontendResponse;
+  /** 계좌 지급 상세 팝업 전용 원문 계좌정보. 권한 확인 및 개인정보 감사로그 기록 후 제공됩니다. */
+  sensitiveAccount?: AccountPaymentSensitiveDetailResponse;
 }

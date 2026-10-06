@@ -7,6 +7,7 @@
  */
 import type { ProgramRecruitmentAttachmentResponse } from './programRecruitmentAttachmentResponse';
 import type { ProgramRecruitmentResponseApplicationType } from './programRecruitmentResponseApplicationType';
+import type { ProgramRecruitmentResponseRecruitTerm } from './programRecruitmentResponseRecruitTerm';
 
 /**
  * 프로그램 모집 행 응답. 모집 행마다 공고 문구·담당자·대표 이미지·첨부·신청 양식을 따로 가진다.
@@ -60,6 +61,11 @@ export interface ProgramRecruitmentResponse {
   otherMatters?: string | null;
   /** 이 모집 행의 신청 유형 */
   applicationType?: ProgramRecruitmentResponseApplicationType;
+  /**
+     * UJAT 봉사자 모집 상·하반기. UJAT VOLUNTEER 외에는 null.
+     * @nullable
+     */
+  recruitTerm?: ProgramRecruitmentResponseRecruitTerm;
   /**
      * 이 모집 행의 공고 제목. 비어 있으면 null.
      * @nullable

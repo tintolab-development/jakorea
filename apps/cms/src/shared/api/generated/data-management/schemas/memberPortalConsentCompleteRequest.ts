@@ -10,12 +10,12 @@ import type { MemberPortalConsentCompleteRequestConsentStatus } from './memberPo
 
 export interface MemberPortalConsentCompleteRequest {
   identityVerificationSessionId?: number;
-  /** PORTRAIT_RIGHTS 전용 부분동의 상태 힌트 */
+  /** PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. FULL은 deprecated이며 서버가 PARTIAL로 정규화합니다. */
   consentStatus?: MemberPortalConsentCompleteRequestConsentStatus;
   /** PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 힌트. 서버가 filledDocument의 1·2번 항목으로 재계산합니다. */
   programEligible?: boolean;
-  /** PORTRAIT_RIGHTS 작성 완료 WritingFormDraft 전체 객체. FULL/PARTIAL 완료 시 필수입니다. */
+  /** PORTRAIT_RIGHTS 작성 완료 WritingFormDraft 전체 객체. PARTIAL 완료 시 필수입니다. */
   filledDocument?: FilledDocumentRequest;
-  /** CRIMINAL_HISTORY_CHECK_CONSENT 완료 시에만 필수인 회원 본인 CRIMINAL_HISTORY_EVIDENCE fileObjectId. 다른 consentType 에 있으면 400. */
+  /** 호환 입력 필드입니다. 최신 법적 운영정책에 따라 성범죄 경력 조회 결과/증빙 파일은 저장하지 않으므로 값이 있으면 400입니다. */
   evidenceFileObjectId?: number;
 }

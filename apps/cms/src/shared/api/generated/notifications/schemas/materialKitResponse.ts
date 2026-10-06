@@ -9,6 +9,7 @@
 export interface MaterialKitResponse {
   id?: number;
   kitName?: string;
+  nameKo?: string;
   businessArea?: string;
   useYn?: boolean;
   textbookId?: number;

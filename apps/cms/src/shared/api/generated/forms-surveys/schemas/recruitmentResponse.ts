@@ -5,11 +5,17 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { RecruitmentResponseRecruitTerm } from './recruitmentResponseRecruitTerm';
 
 export interface RecruitmentResponse {
   recruitmentId?: number;
   recruitmentType?: string;
   targetType?: string;
+  /**
+     * UJAT 봉사자 모집 상·하반기. UJAT VOLUNTEER 외에는 null.
+     * @nullable
+     */
+  recruitTerm?: RecruitmentResponseRecruitTerm;
   status?: string;
   startAt?: string;
   endAt?: string;
