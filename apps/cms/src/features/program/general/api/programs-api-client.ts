@@ -417,6 +417,19 @@ export async function putAdminProgramPostAttachmentsRemote(
   )
 }
 
+/** PUT /api/admin/programs/{programId}/posts/{postId}/inline-images — 본문 이미지 전체 교체 */
+export async function putAdminProgramPostInlineImagesRemote(
+  programId: string,
+  postId: string,
+  fileObjectIds: number[]
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/inline-images`,
+    method: 'PUT',
+    data: { fileObjectIds },
+  })
+}
+
 export async function fetchAdminProgramPostReactionsRemote(
   programId: string,
   postId: string

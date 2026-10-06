@@ -21,8 +21,10 @@ import {
   createGeneralProgramPost,
   fetchGeneralProgramPostAttachments,
   putGeneralProgramPostAttachments,
+  putGeneralProgramPostInlineImages,
   updateGeneralProgramPost,
 } from '@/features/program/general/api/admin-general-programs-service'
+import { collectFileObjectIdsFromHtml } from '@/features/program/shared/api/program-inline-images'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import {
   contentUrlForFileObjectId,
@@ -254,6 +256,7 @@ export function PostWriteModal({
         : audience.filter(key => key !== 'all')
       const title =
         trimmed.replace(/[#*_`>\-[\]()]/g, '').slice(0, 40) || '게시글'
+      const inlineImageIds = collectFileObjectIdsFromHtml(trimmed)
 
       if (isEditMode && editingPost) {
         if (shouldUseGeneralProgramsRemoteApi() && !editingPost.id.startsWith('temp-')) {
@@ -275,6 +278,7 @@ export function PostWriteModal({
           if (attachmentsChanged) {
             await putGeneralProgramPostAttachments(programId, editingPost.id, nextAttachmentIds)
           }
+          await putGeneralProgramPostInlineImages(programId, editingPost.id, inlineImageIds)
         }
         setAudience(defaultPostWriteAudience(program))
         setFiles([])
@@ -296,6 +300,9 @@ export function PostWriteModal({
             String(createdPostId),
             uploadResults.map(r => r.fileObjectId)
           )
+        }
+        if (createdPostId != null && inlineImageIds.length > 0) {
+          await putGeneralProgramPostInlineImages(programId, String(createdPostId), inlineImageIds)
         }
       } else {
         const newPost = createProgramPost({

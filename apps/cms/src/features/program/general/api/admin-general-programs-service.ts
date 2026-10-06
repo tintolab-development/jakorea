@@ -45,6 +45,7 @@ import {
   fetchAdminProgramSurveySummaryRemote,
   fetchAdminProgramSurveysRemote,
   putAdminProgramPostAttachmentsRemote,
+  putAdminProgramPostInlineImagesRemote,
   putAdminProgramPostReactionRemote,
   createAdminProgramPostCommentRemote,
   submitAdminFormResponseRemote,
@@ -329,6 +330,17 @@ export async function putGeneralProgramPostAttachments(
   if (!shouldUseProgramsHttpRemoteApi()) return null
   assertProgramsHttpRemoteReady()
   return putAdminProgramPostAttachmentsRemote(programId, postId, { fileObjectIds })
+}
+
+/** 회원 포탈은 바인딩된 본문 이미지만 내려준다 — 저장 후 본문의 파일 ID로 전체 교체 */
+export async function putGeneralProgramPostInlineImages(
+  programId: string,
+  postId: string,
+  fileObjectIds: number[]
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return
+  assertProgramsHttpRemoteReady()
+  await putAdminProgramPostInlineImagesRemote(programId, postId, fileObjectIds)
 }
 
 export async function fetchGeneralProgramPostReads(programId: string, postId: string) {
