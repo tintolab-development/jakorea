@@ -304,7 +304,6 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
         requiredConsentAgreeKeys: [...REQUIRED_CONSENT_AGREE_KEYS],
         requireEducation: true,
         requireCareer: true,
-        requireFreeWrite: true,
       }
     )
 
@@ -1376,7 +1375,6 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
           id="instructor-apply-free-write"
           title={SECTION_TITLE.freeWrite}
           description={INSTRUCTOR_FORM_SECTION_DESCRIPTIONS.freeWrite}
-          required
         >
           {INSTRUCTOR_FREE_WRITE_ITEMS.map(item => (
             <PFFormFieldTable key={item.name}>

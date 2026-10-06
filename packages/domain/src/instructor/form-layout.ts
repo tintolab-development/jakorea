@@ -87,7 +87,7 @@ const CMS_CONSENT_LAYOUT: InstructorFormConsentLayout = {
 /**
  * Platform 강사 신청 — 동의 상단·제목 별도.
  * 동의서 4건만 2열 노출 (지급조서|교육진행자 / 행정정보|성범죄). CMS 8건과 별개.
- * 필수 동의는 강사 신규 등록과 동일(이용약관·개인정보). 위 4건은 선택(미작성=미동의).
+ * 강사 신청은 위 4건 모두 작성·동의해야 제출 가능(섹션 `*`). CMS 등록·상세는 선택 유지.
  */
 const PLATFORM_APPLY_CONSENT_LAYOUT: InstructorFormConsentLayout = {
   title: '필수 작성 동의서',
@@ -102,7 +102,7 @@ const PLATFORM_APPLY_CONSENT_LAYOUT: InstructorFormConsentLayout = {
     'consentAdministrativeJoint',
     'consentSexOffenseCheck',
   ],
-  allItemsRequired: false,
+  allItemsRequired: true,
 }
 
 export const INSTRUCTOR_FORM_LAYOUT: Record<InstructorFormSurface, InstructorFormLayout> = {
@@ -195,11 +195,19 @@ export function getInstructorConsentDocumentItems(surface: InstructorFormSurface
   }))
 }
 
-/** 제출 시 동의(agree)가 필요한 키 — 강사 신규 등록과 동일(이용약관·개인정보). `allItemsRequired`만 예외 */
-export function getInstructorRequiredConsentAgreeKeys(surface: InstructorFormSurface) {
+const BASE_REQUIRED_CONSENT_AGREE_KEYS = ['consentTermsOfService', 'consentPersonal'] as const
+
+/** 제출 시 동의(agree)가 필요한 키 — 이용약관·개인정보 + `allItemsRequired`면 해당 surface 동의 단락 전체 */
+export function getInstructorRequiredConsentAgreeKeys(
+  surface: InstructorFormSurface,
+): readonly (InstructorConsentRadioKey | InstructorConsentDocumentKey)[] {
   const layout = INSTRUCTOR_FORM_LAYOUT[surface]
-  if (layout.consent.allItemsRequired) {
-    return [...layout.consent.radioKeys, ...layout.consent.documentKeys] as const
-  }
-  return ['consentTermsOfService', 'consentPersonal'] as const
+  if (!layout.consent.allItemsRequired) return BASE_REQUIRED_CONSENT_AGREE_KEYS
+  return [
+    ...new Set([
+      ...BASE_REQUIRED_CONSENT_AGREE_KEYS,
+      ...layout.consent.radioKeys,
+      ...layout.consent.documentKeys,
+    ]),
+  ]
 }
