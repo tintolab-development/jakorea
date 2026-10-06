@@ -48,6 +48,10 @@
       "types": "./dist/shared/korean-business-number.d.ts",
       "import": "./dist/shared/korean-business-number.js"
     },
+    "./shared/identity-module-copy": {
+      "types": "./dist/shared/identity-module-copy.d.ts",
+      "import": "./dist/shared/identity-module-copy.js"
+    },
     "./instructor/gender": {
       "types": "./dist/instructor/gender.d.ts",
       "import": "./dist/instructor/gender.js"
