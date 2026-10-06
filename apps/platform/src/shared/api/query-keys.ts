@@ -365,6 +365,21 @@ export const platformQueryKeys = {
           applicationId,
           formType,
         ] as const,
+      /** 설문 본문 — GET /api/portal/programs/{programId}/form-bindings/{bindingId} (Class D) */
+      formBinding: (params: {
+        programId: string
+        bindingId: number
+        recruitmentId: number | null
+        applicationType: string
+      }) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'form-binding',
+          params.programId,
+          params.bindingId,
+          params.recruitmentId ?? '',
+          params.applicationType,
+        ] as const,
       /** 영수증 — GET .../expense-receipts (Class C) */
       expenseReceipts: (applicationType: string, applicationId: string) =>
         [
