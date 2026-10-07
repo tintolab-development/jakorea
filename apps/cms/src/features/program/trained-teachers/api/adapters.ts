@@ -42,6 +42,7 @@ import {
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
+import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
 
 /** 목록 GET echo (상세와 동일 컬럼). 일반 프로그램 DTO에는 없을 수 있음. */
 type TrainedTeacherListItemDto = AdminProgramListItemDto & {
@@ -167,6 +168,15 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
     titleEn: item.titleEn?.trim() || undefined,
     ...resolveBusinessPeriodDates(item),
     lifecycleStatus: resolveListLifecycleStatus(item),
+    listDeleteBlocked: resolveProgramListDeleteBlocked({
+      lifecycleStatus: resolveListLifecycleStatus(item),
+      participantApprovedCount: toOptionalNumber(item.participantApprovedCount),
+      approvedOrganizationApplicationCount: toOptionalNumber(item.approvedOrganizationApplicationCount),
+      participatingSchoolCount:
+        toOptionalNumber(item.participatingSchoolCount) ??
+        toOptionalNumber(item.participatingOrganizationCount),
+      participatingStudentCount: toOptionalNumber(item.participatingStudentCount),
+    }),
     targetLevel: targetLevels[0],
     targetLevels: targetLevels.length > 0 ? targetLevels : undefined,
     approvedStudentCount:

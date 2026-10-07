@@ -2,7 +2,7 @@
  * UJAT 프로그램 상세 전용 LNB (다단 메뉴 — 기존 DetailModalSidebar는 2뎁스만 지원)
  */
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, type ReactNode } from 'react'
 import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
 import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
 import type { UjatSurveyMenuItem } from '@/features/program/ujat/lib/ujat-program-detail-meta'
@@ -87,6 +87,7 @@ export interface UjatProgramDetailSidebarProps {
   interviewEnabled: boolean
   surveyItems: UjatSurveyMenuItem[]
   onSelectChildTab: (lnb: UjatDetailLnbKey, tab: string) => void
+  footer?: ReactNode
 }
 
 function volunteerTabPrefix(half: VolunteerHalfKey): string {
@@ -99,6 +100,7 @@ export function UjatProgramDetailSidebar({
   interviewEnabled,
   surveyItems,
   onSelectChildTab,
+  footer,
 }: UjatProgramDetailSidebarProps) {
   const [topBodyStick, setTopBodyStick] = useState<Partial<Record<TopAccordionKey, boolean>>>({})
 
@@ -442,6 +444,7 @@ export function UjatProgramDetailSidebar({
         </li>
         </ul>
       </div>
+      {footer}
     </nav>
   )
 }

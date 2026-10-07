@@ -48,6 +48,7 @@ import {
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
+import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
 
@@ -116,6 +117,13 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
     ...resolveCompanySchoolOperationDates(dto),
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: resolveCompanySchoolListLifecycle(dto),
+    listDeleteBlocked: resolveProgramListDeleteBlocked({
+      lifecycleStatus: resolveCompanySchoolListLifecycle(dto),
+      participantApprovedCount: dto.participantApprovedCount,
+      approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount,
+      participatingSchoolCount: dto.participatingSchoolCount ?? dto.participatingOrganizationCount,
+      participatingStudentCount: dto.participatingStudentCount,
+    }),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     ...mapListParticipantRecruitment(dto),
     instructors: dto.instructorApplicantCount,

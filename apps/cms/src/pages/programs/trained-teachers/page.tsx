@@ -122,6 +122,7 @@ function TrainedTeachersProgramPageContent() {
     isTrainedTeachersProgramListPath(normalizedPath) &&
     searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)
   const isScheduledFilter = statusFilter === 'scheduled'
+  const showBulkSelection = statusFilter == null || isScheduledFilter
   const isAdmin = user?.role === 'ADMIN'
   const showCalendarView = isAdmin
 
@@ -147,8 +148,8 @@ function TrainedTeachersProgramPageContent() {
       : selectedProgramForFullPageModal)
 
   useEffect(() => {
-    if (!isScheduledFilter) setSelectedRowKeys([])
-  }, [isScheduledFilter])
+    setSelectedRowKeys([])
+  }, [statusFilter])
 
   useEffect(() => {
     const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -416,7 +417,7 @@ function TrainedTeachersProgramPageContent() {
 
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
-      {isScheduledFilter && (
+      {showBulkSelection && (
         <CmsButton
           variant="delete"
           width={140}
@@ -476,9 +477,9 @@ function TrainedTeachersProgramPageContent() {
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         disableUrlSync={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}
-        onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
-        selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
-        showRowSelection={isScheduledFilter}
+        onSelectionChange={showBulkSelection ? setSelectedRowKeys : undefined}
+        selectedRowKeys={showBulkSelection ? selectedRowKeys : undefined}
+        showRowSelection={showBulkSelection}
         showCalendarView={showCalendarView}
         viewMode={viewMode}
         tableVariant="overview"
@@ -517,6 +518,10 @@ function TrainedTeachersProgramPageContent() {
               }
             : undefined
         }
+        onRequestDelete={program => {
+          setProgramsPendingBulkDelete([program])
+          setBulkDeleteModalOpen(true)
+        }}
       />
       </ProgramModalWhenOpen>
 

@@ -193,6 +193,7 @@ export function GeneralProgramListPageContent() {
   )
 
   const isScheduledFilter = statusFilter === 'scheduled'
+  const showBulkSelection = statusFilter == null || isScheduledFilter
   const [, setHasListFilters] = useState(false)
   const handleDisplayCountChange = useCallback((_count: number, hasActiveFilters: boolean) => {
     setHasListFilters(hasActiveFilters)
@@ -204,8 +205,8 @@ export function GeneralProgramListPageContent() {
   )
 
   useEffect(() => {
-    if (!isScheduledFilter) setSelectedRowKeys([])
-  }, [isScheduledFilter])
+    setSelectedRowKeys([])
+  }, [statusFilter])
 
   useEffect(() => {
     const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -369,7 +370,7 @@ export function GeneralProgramListPageContent() {
 
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
-      {isScheduledFilter && (
+      {showBulkSelection && (
         <CmsButton
           variant="delete"
           width={140}
@@ -423,9 +424,9 @@ export function GeneralProgramListPageContent() {
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         disableUrlSync={generalDetailModalOpen}
-        onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
-        selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
-        showRowSelection={isScheduledFilter}
+        onSelectionChange={showBulkSelection ? setSelectedRowKeys : undefined}
+        selectedRowKeys={showBulkSelection ? selectedRowKeys : undefined}
+        showRowSelection={showBulkSelection}
         showCalendarView={showCalendarView}
         viewMode={viewMode}
         tableVariant="overview"
@@ -447,6 +448,10 @@ export function GeneralProgramListPageContent() {
           searchParams={searchParams}
           setSearchParams={setSearchParams}
           onClose={handleCloseFullPageModal}
+          onRequestDelete={program => {
+            setProgramsPendingBulkDelete([program])
+            setBulkDeleteModalOpen(true)
+          }}
         />
       </ProgramModalWhenOpen>
 

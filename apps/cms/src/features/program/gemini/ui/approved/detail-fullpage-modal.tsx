@@ -7,6 +7,16 @@ import {
   type GeminiApprovedTrainingPrivacyUnmasked,
 } from '../../api/visiting-training/service'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DeleteGuideModal, useCmsAlert } from '@/shared/ui'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
+import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
+import {
+  geminiApprovedTrainingDeleteBlocked,
+  resolveGeminiDeleteBlockedAlert,
+  resolveGeminiDeleteGuideModalCopy,
+} from '../../lib/delete-guide'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
@@ -51,6 +61,11 @@ export function GeminiApprovedTrainingDetailFullPageModal({
   const todayKey = useToday()
   const { detail, isLoading } = useGeminiApprovedTrainingDetail(approvedTrainingId)
   const [unmasked, setUnmasked] = useState<GeminiApprovedTrainingPrivacyUnmasked | null>(null)
+  const { user } = useAuthStore()
+  const canWrite = canPerformWriteAction(user)
+  const { showAlert } = useCmsAlert()
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const { mutateAsync: deleteApprovedTrainings } = useDeleteGeminiApprovedTrainingsMutation()
 
   const {
     personalInfoRevealed,
@@ -134,6 +149,27 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     [setActiveLnb]
   )
 
+  const handleConfirmDelete = useCallback(async () => {
+    setDeleteModalOpen(false)
+    const blockedAlert = resolveGeminiDeleteBlockedAlert('연수', 1)
+    if (detail && geminiApprovedTrainingDeleteBlocked(detail)) {
+      showAlert(blockedAlert)
+      return
+    }
+    try {
+      const result = await deleteApprovedTrainings([approvedTrainingId])
+      if (result.failureCount > 0) {
+        showAlert(blockedAlert)
+        return
+      }
+      onClose()
+    } catch {
+      showAlert(blockedAlert)
+    }
+  }, [approvedTrainingId, deleteApprovedTrainings, detail, onClose, showAlert])
+
+  const deleteGuide = resolveGeminiDeleteGuideModalCopy('연수', 1)
+
   return (
     <DetailFullPageModal
       open={Boolean(approvedTrainingId)}
@@ -151,6 +187,11 @@ export function GeminiApprovedTrainingDetailFullPageModal({
             expandedGroupKeys={[]}
             onSelectTop={handleSidebarSelectTop}
             onSelectChild={() => undefined}
+            footer={
+              canWrite && detail ? (
+                <ProgramDetailLnbDeleteButton onClick={() => setDeleteModalOpen(true)} />
+              ) : null
+            }
           />
         }
       >
@@ -191,6 +232,16 @@ export function GeminiApprovedTrainingDetailFullPageModal({
           </>
         ) : null}
         {personalInfoRevealModal}
+        <DeleteGuideModal
+          open={deleteModalOpen}
+          title={deleteGuide.title}
+          lines={deleteGuide.lines}
+          confirmText="삭제"
+          onConfirm={() => {
+            void handleConfirmDelete()
+          }}
+          onCancel={() => setDeleteModalOpen(false)}
+        />
     </DetailFullPageModal>
   )
 }

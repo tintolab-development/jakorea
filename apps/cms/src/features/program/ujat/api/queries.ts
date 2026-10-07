@@ -12,6 +12,7 @@ import {
   syncOpenProgramDetailCache,
 } from '@/features/program/shared/lib/program-detail-cache-after-save'
 import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
+import { isProgramHardDeleteBlockedError } from '@/features/program/shared/lib/program-delete-guide'
 import { fetchUjatProgramBusinessYears } from './business-years'
 import { shouldUseRemoteApi } from './capabilities'
 import { shouldRetryQuery } from './errors'
@@ -22,6 +23,7 @@ import {
   detail,
   listPage,
   remove,
+  removeMany,
   update,
   type CreateInput,
   type UjatProgramsRemoteListPage,
@@ -143,6 +145,27 @@ export function useUpdateProgram() {
         )
       )
       invalidateUjatProgramListCaches(queryClient)
+    },
+  })
+}
+
+export function useBulkDeleteUjatPrograms() {
+  const queryClient = useQueryClient()
+  const dataScope = scope()
+  return useMutation({
+    mutationFn: removeMany,
+    retry: false,
+    onSuccess: async (_data, programIds) => {
+      for (const programId of programIds) {
+        const detailKey = queryKeys.detail(dataScope, programId)
+        await queryClient.cancelQueries({ queryKey: detailKey })
+        queryClient.removeQueries({ queryKey: detailKey })
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.lists() })
+    },
+    onError: error => {
+      if (!isProgramHardDeleteBlockedError(error) || error.successCount < 1) return
+      void queryClient.invalidateQueries({ queryKey: queryKeys.lists() })
     },
   })
 }

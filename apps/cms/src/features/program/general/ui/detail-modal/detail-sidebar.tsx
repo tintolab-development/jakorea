@@ -2,7 +2,7 @@
  * 일반 프로그램 상세 LNB (최대 2depth, UJAT 상세 패턴)
  */
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, type ReactNode } from 'react'
 import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
 import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
 import type {
@@ -92,6 +92,7 @@ export interface GeneralProgramDetailSidebarProps {
   progressMenuItems: GeneralProgressMenuItem[]
   surveyItems: GeneralSurveyMenuItem[]
   onSelectChildTab: (lnb: GeneralDetailLnbKey, tab: string) => void
+  footer?: ReactNode
 }
 
 export function GeneralProgramDetailSidebar({
@@ -107,6 +108,7 @@ export function GeneralProgramDetailSidebar({
   progressMenuItems,
   surveyItems,
   onSelectChildTab,
+  footer,
 }: GeneralProgramDetailSidebarProps) {
   const [topBodyStick, setTopBodyStick] = useState<Partial<Record<TopAccordionKey, boolean>>>({})
 
@@ -463,6 +465,7 @@ export function GeneralProgramDetailSidebar({
           ) : null}
         </ul>
       </div>
+      {footer}
     </nav>
   )
 }

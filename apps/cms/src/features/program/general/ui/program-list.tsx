@@ -258,6 +258,9 @@ export function ProgramList({
                     columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                     selectedRowKeys: effectiveSelectedRowKeys,
                     onChange: handleSelectionChange,
+                    getCheckboxProps: (record: Program) => ({
+                      disabled: record.listDeleteBlocked === true,
+                    }),
                   }
                 : undefined
             }

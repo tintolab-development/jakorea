@@ -473,6 +473,8 @@ export interface Program {
   lifecycleStatus?: ProgramLifecycleStatus // 모집 신청 현황(참여자·강사·봉사자 모집 등)
   /** UJAT 전용 프로그램 진행 현황(목록 5종) */
   ujatProgressStatus?: UjatProgramProgressStatus
+  /** 목록 DTO 기준 삭제 불가(교육 예정 참여자·교육 진행 이력) — 목록 체크박스 비활성 */
+  listDeleteBlocked?: boolean
   /** UJAT 목록 — 상반기 봉사자 모집 인원(현재) */
   ujatFirstHalfVolunteerCount?: number
   /** UJAT 목록 — 하반기 봉사자 모집 인원(현재) */
