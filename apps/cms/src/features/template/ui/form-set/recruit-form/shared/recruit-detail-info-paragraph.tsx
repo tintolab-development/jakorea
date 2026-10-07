@@ -18,8 +18,10 @@ import {
   RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import {
+  isRecruitDetailContentPersistSuppressed,
   recruitDetailAdditionalContentOverlayKey,
   registerRecruitDetailRichTextHtml,
+  useRecruitDetailContentResetGeneration,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID,
@@ -212,9 +214,11 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
     const readHtml = () => latestHtmlRef.current || getHtmlRef.current()
     registerRecruitDetailRichTextHtml(overlayKey, readHtml)
     return () => {
-      const html = readHtml()
-      if (typeof html === 'string') {
-        patchGeneralRecruitOverlay({ [overlayKey]: html })
+      if (!isRecruitDetailContentPersistSuppressed()) {
+        const html = readHtml()
+        if (typeof html === 'string') {
+          patchGeneralRecruitOverlay({ [overlayKey]: html })
+        }
       }
       registerRecruitDetailRichTextHtml(overlayKey, null)
     }
@@ -222,15 +226,24 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
 
   const [overlayHtml] = useGeneralRecruitOverlayKv<string>(overlayKey, '')
   useEffect(() => {
-    if (editor == null) return
+    if (editor == null || editor.isDestroyed || editor.view == null) return
     const incoming = overlayHtml.trim()
     if (incoming === '') return
-    const current = getHtmlRef
-      .current()
-      .replace(/<p><\/p>/gi, '')
-      .trim()
+    let current = ''
+    try {
+      current = getHtmlRef
+        .current()
+        .replace(/<p><\/p>/gi, '')
+        .trim()
+    } catch {
+      return
+    }
     if (current !== '') return
-    editor.commands.setContent(incoming, { emitUpdate: false, contentType: 'html' })
+    try {
+      editor.commands.setContent(incoming, { emitUpdate: false, contentType: 'html' })
+    } catch {
+      // 템플릿 변경으로 에디터가 destroy된 뒤 overlay hydrate가 늦게 오면 무시
+    }
   }, [editor, overlayHtml])
 
   return (
@@ -271,6 +284,8 @@ export function RecruitDetailInfoParagraph({
   attachmentGuideLines = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
   textFieldControl = 'textarea',
 }: RecruitDetailInfoParagraphProps) {
+  const contentResetGeneration = useRecruitDetailContentResetGeneration()
+  const editorResetKey = `${wysiwygResetKey}::reset-${contentResetGeneration}`
   const thumbObjectUrlKey = recruitDetailThumbObjectUrlKey(overlayKeyPrefix)
   const thumbFileNameKey = recruitDetailThumbFileNameKey(overlayKeyPrefix)
   const thumbFileObjectIdKey = recruitDetailThumbFileObjectIdKey(overlayKeyPrefix)
@@ -454,7 +469,7 @@ export function RecruitDetailInfoParagraph({
         <RecruitDetailInfoTextFieldRows
           fields={textFields}
           overlayKeyPrefix={overlayKeyPrefix}
-          wysiwygResetKey={wysiwygResetKey}
+          wysiwygResetKey={editorResetKey}
           textFieldControl={textFieldControl}
         />
 
@@ -464,8 +479,8 @@ export function RecruitDetailInfoParagraph({
             fullRow
             edit={
               <RecruitDetailAdditionalContentEditor
-                key={additionalContentKey}
-                wysiwygResetKey={wysiwygResetKey}
+                key={`${additionalContentKey}-${contentResetGeneration}`}
+                wysiwygResetKey={editorResetKey}
                 additionalContentKey={additionalContentKey}
               />
             }
@@ -477,7 +492,7 @@ export function RecruitDetailInfoParagraph({
           <RecruitDetailInfoTextFieldRows
             fields={afterEditorFields}
             overlayKeyPrefix={overlayKeyPrefix}
-            wysiwygResetKey={wysiwygResetKey}
+            wysiwygResetKey={editorResetKey}
             textFieldControl={textFieldControl}
           />
         ) : null}

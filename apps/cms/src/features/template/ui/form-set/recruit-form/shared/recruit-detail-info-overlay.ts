@@ -1,3 +1,5 @@
+import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
+import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
@@ -46,7 +48,11 @@ export function restoreUjatVolunteerRecruitGeneralStoreSidecar(
 export function recruitDetailInfoOverlayPrefixForCatalogId(
   catalogTemplateId: string
 ): string | null {
-  switch (catalogTemplateId) {
+  const code = resolveWritingFormBaseTemplateCode(
+    catalogTemplateId,
+    getFormTemplateVersionCacheEntry(catalogTemplateId)?.baseTemplateCode
+  )
+  switch (code) {
     case 'recruitment-participant-school':
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution
     case 'recruitment-economy':
@@ -139,4 +145,15 @@ export function restoreRecruitDetailInfoIntoGeneralStore(
   const patch = overlayEntriesAbsentFromLive(detail, pickRecruitDetailInfoFromGeneralStore(prefix))
   if (Object.keys(patch).length === 0) return
   patchGeneralRecruitOverlay(patch)
+}
+
+/** 템플릿 변경 — 불러온 양식의 상세 정보로 덮어쓴다. */
+export function replaceRecruitDetailInfoIntoGeneralStore(
+  overlay: Record<string, unknown> | undefined,
+  prefix: string | null
+): void {
+  if (overlay == null || prefix == null) return
+  const detail = pickOverlayKeysByPrefix(overlay, prefix)
+  if (Object.keys(detail).length === 0) return
+  patchGeneralRecruitOverlay(detail)
 }

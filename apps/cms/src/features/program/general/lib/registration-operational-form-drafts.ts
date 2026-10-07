@@ -11,18 +11,18 @@ import {
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getApplicantRecruitInstitutionOverlayRecord,
-  patchApplicantRecruitInstitutionOverlay,
+  replaceApplicantRecruitInstitutionOverlay,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
   getGeneralRecruitOverlayRecord,
-  patchGeneralRecruitOverlay,
+  replaceGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   mergeRecruitDetailInfoFromGeneralStore,
   pickUjatVolunteerRecruitGeneralStoreSidecar,
   recruitDetailInfoOverlayPrefixForCatalogId,
-  restoreRecruitDetailInfoIntoGeneralStore,
+  replaceRecruitDetailInfoIntoGeneralStore,
   restoreUjatVolunteerRecruitGeneralStoreSidecar,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 import { createApplicantRecruitFormIndividualDraft } from '@/features/template/model/applicant-recruit-form-individual-draft'
@@ -58,7 +58,8 @@ import {
   persistDraftOwnedFormVersion,
 } from '@/features/program/general/lib/registration-draft-form-versions'
 import { listVisibleOperationalFormSpecs } from '@/features/program/general/lib/operational-form-bindings'
-import { stripWritingTemplateCopySuffix } from '@/features/template/lib/form-template-delete-policy'
+import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form-template-delete-policy'
+import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import { getRegistrationStepTemplateSelections } from '@/features/program/shared/lib/step-template-selection'
 import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
 import {
@@ -185,8 +186,15 @@ type OperationalOverlayKind =
   | 'ujat-application-institution'
   | 'ujat-application-volunteer'
 
+function resolveOperationalCatalogId(templateCode: string): string {
+  return resolveWritingFormBaseTemplateCode(
+    templateCode,
+    getFormTemplateVersionCacheEntry(templateCode)?.baseTemplateCode
+  )
+}
+
 function resolveOperationalOverlayKind(catalogTemplateId: string): OperationalOverlayKind | null {
-  const code = stripWritingTemplateCopySuffix(catalogTemplateId)
+  const code = resolveOperationalCatalogId(catalogTemplateId)
   if (code === 'recruitment-ujat-school') return 'ujat-recruit-institution'
   if (code === 'recruitment-ujat-volunteer') return 'ujat-recruit-volunteer'
   if (code === 'application-ujat-school') return 'ujat-application-institution'
@@ -210,7 +218,7 @@ function resolveOperationalOverlayKind(catalogTemplateId: string): OperationalOv
 export function createSeedDraftForOperationalCatalogId(
   catalogTemplateId: string
 ): WritingFormDraft | null {
-  switch (stripWritingTemplateCopySuffix(catalogTemplateId)) {
+  switch (resolveOperationalCatalogId(catalogTemplateId)) {
     case 'recruitment-participant-school':
       return createApplicantRecruitFormInstitutionDraft()
     case 'recruitment-economy':
@@ -288,6 +296,16 @@ export function collectOperationalOverlayForCatalogId(
   return overlayRecordForKind(kind, catalogTemplateId)
 }
 
+export function applyOperationalOverlayForCatalogId(
+  catalogTemplateId: string,
+  overlay: Record<string, unknown> | undefined
+): void {
+  if (overlay == null || Object.keys(overlay).length === 0) return
+  const kind = resolveOperationalOverlayKind(catalogTemplateId)
+  if (kind == null) return
+  applyOverlayRecord(kind, overlay, catalogTemplateId)
+}
+
 function applyOverlayRecord(
   kind: OperationalOverlayKind,
   overlay: Record<string, unknown>,
@@ -296,12 +314,12 @@ function applyOverlayRecord(
   if (Object.keys(overlay).length === 0) return
   const detailPrefix = recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId)
   if (kind === 'institution-recruit') {
-    patchApplicantRecruitInstitutionOverlay(overlay)
-    restoreRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
+    replaceApplicantRecruitInstitutionOverlay(overlay)
+    replaceRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
     return
   }
   if (kind === 'general-recruit') {
-    patchGeneralRecruitOverlay(overlay)
+    replaceGeneralRecruitOverlay(overlay)
     return
   }
   if (kind === 'general-application') {
@@ -310,12 +328,12 @@ function applyOverlayRecord(
   }
   if (kind === 'ujat-recruit-institution') {
     patchUjatRecruitInstitutionOverlay(overlay)
-    restoreRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
+    replaceRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
     return
   }
   if (kind === 'ujat-recruit-volunteer') {
     patchUjatRecruitVolunteerOverlay(overlay)
-    restoreRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
+    replaceRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
     restoreUjatVolunteerRecruitGeneralStoreSidecar(overlay)
     return
   }

@@ -404,8 +404,8 @@ function GeneralProgramRegistrationFullpageModalInner({
               pickerOpen={templatePickerOpen}
               onOpenPicker={() => setTemplatePickerOpen(true)}
               onClosePicker={() => setTemplatePickerOpen(false)}
-              onUseTemplate={code => {
-                void flow.selectStepTemplate(code).then(() => setTemplatePickerOpen(false))
+              onUseTemplate={row => {
+                void flow.selectStepTemplate(row).then(() => setTemplatePickerOpen(false))
               }}
             />
           )

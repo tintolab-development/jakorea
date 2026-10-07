@@ -16,12 +16,13 @@ import {
   getProgramRegistrationOverlayRecord,
   resetProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
-import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
+import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
+import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { getParticipantApplicationEditorVariantForTemplateCode } from '@/features/template/lib/participant-application-template-id'
 import {
-  lookupTemplateRegistry,
-  resolvePreviewHeaderTitle,
-} from '@/features/template/model/template-registry/template-registry'
+  lookupWritingTemplateRegistry,
+  resolveWritingTemplateDisplayName,
+} from '@/features/template/lib/lookup-writing-template-registry'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
@@ -98,10 +99,7 @@ export type UseGeneralProgramRegistrationFlowOptions = {
 }
 
 function resolveStepTemplateName(templateId: string): string {
-  return (
-    findWritingTemplateRowByDefinitionId(templateId)?.templateName ??
-    resolvePreviewHeaderTitle(lookupTemplateRegistry(templateId), undefined)
-  )
+  return resolveWritingTemplateDisplayName(templateId)
 }
 
 /** 1사1교·교육받은 교사 — 봉사자 탭 미노출 */
@@ -128,6 +126,7 @@ export function useGeneralProgramRegistrationFlow(
   options?: UseGeneralProgramRegistrationFlowOptions
 ) {
   const { showAlert } = useCmsAlert()
+  const { sections: writingFormSections } = useWritingFormSections()
   const registrationFormVariant = options?.registrationFormVariant ?? 'general'
   const isCompanySchoolRegistration = registrationFormVariant === 'economy'
   const isTrainedTeachersRegistration = registrationFormVariant === 'trainedTeachers'
@@ -341,11 +340,14 @@ export function useGeneralProgramRegistrationFlow(
 
   const participantTemplateName = useMemo(
     () => resolveStepTemplateName(selectedTemplateCode),
-    [selectedTemplateCode]
+    [selectedTemplateCode, writingFormSections]
   )
 
   const participantVariant =
-    getParticipantApplicationEditorVariantForTemplateCode(selectedTemplateCode) ??
+    getParticipantApplicationEditorVariantForTemplateCode(
+      selectedTemplateCode,
+      getFormTemplateVersionCacheEntry(selectedTemplateCode)?.baseTemplateCode
+    ) ??
     currentStepDef.editorVariant ??
     'applicant-recruit-institution'
 
@@ -438,8 +440,8 @@ export function useGeneralProgramRegistrationFlow(
   ])
 
   const registryEntry = useMemo(
-    () => lookupTemplateRegistry(selectedTemplateCode),
-    [selectedTemplateCode]
+    () => lookupWritingTemplateRegistry(selectedTemplateCode),
+    [selectedTemplateCode, writingFormSections]
   )
 
   const editorVm = useMemo((): TemplateEditorVm => {
@@ -725,13 +727,16 @@ export function useGeneralProgramRegistrationFlow(
   ])
 
   const selectStepTemplate = useCallback(
-    async (nextCode: string) => {
+    async (next: { id: string; latestVersionId?: number; baseTemplateCode?: string; apiTemplateId?: number }) => {
       const result = await applyRegistrationStepTemplateChange({
         programType,
         stepKey: coercedActiveStep,
         previousCode: selectedTemplateCode,
-        nextCode,
+        nextCode: next.id,
         defaultCode: currentStepDef.templateId,
+        latestVersionId: next.latestVersionId,
+        baseTemplateCode: next.baseTemplateCode,
+        apiTemplateId: next.apiTemplateId,
       })
       if (result === 'unchanged') return
       setStepTemplateByKey(getRegistrationStepTemplateSelections(programType))

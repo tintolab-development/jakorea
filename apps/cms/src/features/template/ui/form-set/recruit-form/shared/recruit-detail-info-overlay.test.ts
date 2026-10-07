@@ -14,6 +14,7 @@ import {
   mergeRecruitDetailInfoFromGeneralStore,
   overlayEntriesAbsentFromLive,
   pickOverlayKeysByPrefix,
+  recruitDetailInfoOverlayPrefixForCatalogId,
   restoreRecruitDetailInfoIntoGeneralStore,
   restoreUjatVolunteerRecruitGeneralStoreSidecar,
 } from './recruit-detail-info-overlay'
@@ -22,6 +23,15 @@ describe('recruit detail info overlay persist', () => {
   beforeEach(() => {
     resetApplicantRecruitInstitutionOverlay()
     resetGeneralRecruitOverlay()
+  })
+
+  it('resolves detail prefix for copied catalog codes', () => {
+    expect(recruitDetailInfoOverlayPrefixForCatalogId('recruitment-participant-school-custom-2')).toBe(
+      'recruit.detailInfo'
+    )
+    expect(recruitDetailInfoOverlayPrefixForCatalogId('recruitment-economy-copy-1')).toBe(
+      'economyRecruit.detailInfo'
+    )
   })
 
   it('picks only the detailInfo prefix', () => {

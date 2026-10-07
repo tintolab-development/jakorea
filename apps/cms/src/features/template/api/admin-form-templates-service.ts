@@ -242,7 +242,8 @@ export function buildSaveRecordFromVersionResponse(args: {
 
   let draft = schemaJsonToWritingFormDraft(args.schemaJson)
   if (draft == null) {
-    if (settings == null) return null
+    // 모집 양식은 schemaJson을 생략하고 extensionJson(overlay)만 둔다.
+    if (settings == null && extension == null) return null
     draft = EMPTY_SCHEMA_DRAFT
   } else if (args.skipSeedMigration) {
     draft = normalizeWritingFormDraft(draft)

@@ -15,12 +15,13 @@ import {
   UjatRegistrationRequiredFieldsIncompleteError,
 } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import type { Program } from '@/types/domain'
-import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
+import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
+import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { getParticipantApplicationEditorVariantForTemplateCode } from '@/features/template/lib/participant-application-template-id'
 import {
-  lookupTemplateRegistry,
-  resolvePreviewHeaderTitle,
-} from '@/features/template/model/template-registry/template-registry'
+  lookupWritingTemplateRegistry,
+  resolveWritingTemplateDisplayName,
+} from '@/features/template/lib/lookup-writing-template-registry'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import {
   getUjatProgramRegistrationOverlayRecord,
@@ -96,10 +97,7 @@ function createRegistrationIdempotencyKey(): string {
 }
 
 function resolveStepTemplateName(templateId: string): string {
-  return (
-    findWritingTemplateRowByDefinitionId(templateId)?.templateName ??
-    resolvePreviewHeaderTitle(lookupTemplateRegistry(templateId), undefined)
-  )
+  return resolveWritingTemplateDisplayName(templateId)
 }
 
 export function useUjatProgramRegistrationFlow(
@@ -111,6 +109,7 @@ export function useUjatProgramRegistrationFlow(
     return initial != null ? normalizeUjatProgramRegistrationStepKey(initial) : 'program'
   })
   const { showAlert } = useCmsAlert()
+  const { sections: writingFormSections } = useWritingFormSections()
   const createProgramMutation = useCreateProgram()
   const completionPromiseRef = useRef<Promise<Program> | null>(null)
   const idempotencyKeyRef = useRef(createRegistrationIdempotencyKey())
@@ -197,11 +196,14 @@ export function useUjatProgramRegistrationFlow(
 
   const participantTemplateName = useMemo(
     () => resolveStepTemplateName(selectedTemplateCode),
-    [selectedTemplateCode]
+    [selectedTemplateCode, writingFormSections]
   )
 
   const participantVariant =
-    getParticipantApplicationEditorVariantForTemplateCode(selectedTemplateCode) ??
+    getParticipantApplicationEditorVariantForTemplateCode(
+      selectedTemplateCode,
+      getFormTemplateVersionCacheEntry(selectedTemplateCode)?.baseTemplateCode
+    ) ??
     currentStepDef.editorVariant ??
     ('ujat-recruit-institution' as const)
 
@@ -240,8 +242,8 @@ export function useUjatProgramRegistrationFlow(
   )
 
   const registryEntry = useMemo(
-    () => lookupTemplateRegistry(selectedTemplateCode),
-    [selectedTemplateCode]
+    () => lookupWritingTemplateRegistry(selectedTemplateCode),
+    [selectedTemplateCode, writingFormSections]
   )
 
   const editorVm = useMemo((): TemplateEditorVm => {
@@ -511,13 +513,16 @@ export function useUjatProgramRegistrationFlow(
   ])
 
   const selectStepTemplate = useCallback(
-    async (nextCode: string) => {
+    async (next: { id: string; latestVersionId?: number; baseTemplateCode?: string; apiTemplateId?: number }) => {
       const result = await applyRegistrationStepTemplateChange({
         programType,
         stepKey: activeStep,
         previousCode: selectedTemplateCode,
-        nextCode,
+        nextCode: next.id,
         defaultCode: currentStepDef.templateId,
+        latestVersionId: next.latestVersionId,
+        baseTemplateCode: next.baseTemplateCode,
+        apiTemplateId: next.apiTemplateId,
       })
       if (result === 'unchanged') return
       setStepTemplateByKey(getRegistrationStepTemplateSelections(programType))

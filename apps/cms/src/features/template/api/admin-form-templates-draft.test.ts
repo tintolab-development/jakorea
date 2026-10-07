@@ -194,4 +194,30 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     const loaded = await loadFormTemplateVersionDraft(TEMPLATE_CODE)
     expect(loaded?.editorState).toEqual({ marker: 'remote' })
   })
+
+  it('keeps recruitment overlay when schemaJson is omitted', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'recruitment-participant-school-custom-2',
+      templateId: 9,
+      templateVersionId: 22,
+      latestVersionId: 22,
+    })
+    fetchRemoteMock.mockResolvedValue({
+      templateVersionId: 22,
+      versionNo: 1,
+      extensionJson: JSON.stringify({
+        overlay: {
+          'recruit.notes': '양식 안내',
+          'recruit.detailInfo.programDescription': '양식 설명',
+        },
+      }),
+      updatedAt: new Date().toISOString(),
+    })
+
+    const loaded = await loadFormTemplateVersionDraft('recruitment-participant-school-custom-2')
+    expect(loaded?.overlay).toEqual({
+      'recruit.notes': '양식 안내',
+      'recruit.detailInfo.programDescription': '양식 설명',
+    })
+  })
 })

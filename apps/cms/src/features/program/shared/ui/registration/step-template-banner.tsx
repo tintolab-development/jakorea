@@ -1,6 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
+import type { TemplateRow } from '@/features/template/model/template.schema'
 import {
   WritingTemplateSelectModal,
   type WritingTemplateSelectCategory,
@@ -14,7 +15,7 @@ export type RegistrationStepTemplateChromeProps = {
   pickerOpen: boolean
   onOpenPicker: () => void
   onClosePicker: () => void
-  onUseTemplate: (templateCode: string) => void
+  onUseTemplate: (row: TemplateRow) => void
 }
 
 export function RegistrationStepTemplateBanner({
@@ -94,7 +95,7 @@ export function RegistrationStepTemplateChrome({
         category={category}
         currentTemplateName={templateName}
         onClose={onClosePicker}
-        onUse={row => onUseTemplate(row.id)}
+        onUse={onUseTemplate}
       />
     </>
   )
