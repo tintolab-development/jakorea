@@ -86,16 +86,6 @@ export function isProgramSurveyManagementFormBinding(binding: ProgramFormBinding
   return true
 }
 
-/** 설문 등록 form-binding은 복제된 템플릿 ID를 쓴다. 원본 selectedTemplateId 사용 금지. */
-export function resolveSurveyCreateBindingTemplateCode(params: {
-  duplicatedTemplateId: string
-  catalogTemplateCode?: string | null
-}): string {
-  const duplicated = params.duplicatedTemplateId.trim()
-  if (duplicated) return duplicated
-  return params.catalogTemplateCode?.trim() || ''
-}
-
 export function resolveSurveyShareClipboardUrl(
   response: {
     formPath?: string | null

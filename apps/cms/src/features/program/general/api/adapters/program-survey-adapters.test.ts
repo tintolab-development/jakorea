@@ -15,7 +15,6 @@ import {
   pickLectureEvalSurveyFromRemote,
   resolveLectureEvalSubmitContext,
   resolveSatisfactionAudienceFromBinding,
-  resolveSurveyCreateBindingTemplateCode,
   resolveSurveyShareClipboardUrl,
   mapSurveySummaryToQuestionSummaries,
   surveyResponseNeedsDetail,
@@ -478,29 +477,6 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
     )
     expect(rows).toHaveLength(1)
     expect(rows[0]?.title).toBe('만족도조사 (학생용)')
-  })
-})
-
-describe('resolveSurveyCreateBindingTemplateCode', () => {
-  it('uses the duplicated template id, not the original selected template', () => {
-    expect(
-      resolveSurveyCreateBindingTemplateCode({
-        duplicatedTemplateId: 'tmpl-copied-9',
-        catalogTemplateCode: null,
-      })
-    ).toBe('tmpl-copied-9')
-    expect(
-      resolveSurveyCreateBindingTemplateCode({
-        duplicatedTemplateId: 'tmpl-copied-9',
-        catalogTemplateCode: 'tmpl-copied-9',
-      })
-    ).toBe('tmpl-copied-9')
-    expect(
-      resolveSurveyCreateBindingTemplateCode({
-        duplicatedTemplateId: 'tmpl-copied-9',
-        catalogTemplateCode: 'original-survey-template',
-      })
-    ).not.toBe('original-survey-template')
   })
 })
 

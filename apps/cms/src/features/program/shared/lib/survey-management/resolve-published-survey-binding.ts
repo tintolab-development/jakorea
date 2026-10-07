@@ -1,36 +1,46 @@
-import {
-  publishFormTemplateVersionById,
-  resolveFormTemplateCatalogIds,
-} from '@/features/template/api/admin-form-templates-service'
-import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { resolveFormTemplateCatalogIds } from '@/features/template/api/admin-form-templates-service'
+import { fetchFormTemplateVersionsRemote } from '@/features/template/api/form-templates-api-client'
 
-async function publishCopiedSurveyVersion(versionId: number): Promise<number> {
-  try {
-    return await publishFormTemplateVersionById(versionId)
-  } catch (error) {
-    const message = getGeneralProgramApiErrorMessage(error, '')
-    const status =
-      error != null && typeof error === 'object' && 'response' in error
-        ? (error as { response?: { status?: number } }).response?.status
-        : undefined
-    if (status === 409 || /already published|이미 게시|PUBLISHED/i.test(message)) {
-      return versionId
-    }
-    throw error
+export type PublishedSurveyBindingResolution =
+  | { ok: true; templateId: number; templateVersionId: number }
+  | { ok: false; reason: 'not_found' | 'not_published' }
+
+/**
+ * 설문·만족도·강의평가 등록은 양식 관리에서 고른 템플릿의 게시 version에 바인딩한다.
+ * 카탈로그 템플릿을 복제하거나 원본을 게시하지 않는다.
+ */
+export async function resolvePublishedSurveyBinding(
+  templateCode: string
+): Promise<PublishedSurveyBindingResolution> {
+  const code = templateCode.trim()
+  if (code === '') return { ok: false, reason: 'not_found' }
+
+  const resolved = await resolveFormTemplateCatalogIds(code)
+  if (resolved == null) return { ok: false, reason: 'not_found' }
+
+  const versions = await fetchFormTemplateVersionsRemote(resolved.templateId)
+  const published = versions
+    .filter(
+      version => version.versionStatus === 'PUBLISHED' && version.templateVersionId != null
+    )
+    .sort((left, right) => (right.versionNo ?? 0) - (left.versionNo ?? 0))
+  const latestPublished = published[0]
+  if (latestPublished?.templateVersionId == null) {
+    return { ok: false, reason: 'not_published' }
+  }
+
+  return {
+    ok: true,
+    templateId: resolved.templateId,
+    templateVersionId: latestPublished.templateVersionId,
   }
 }
 
-/**
- * 설문·만족도·강의평가 등록은 복제된 템플릿을 게시한 뒤 그 version에 바인딩한다.
- * 양식 관리 원본 templateCode는 쓰지 않는다.
- */
-export async function resolvePublishedDuplicatedSurveyBinding(
-  duplicatedTemplateCode: string
-): Promise<{ templateId: number; templateVersionId: number } | null> {
-  const code = duplicatedTemplateCode.trim()
-  if (code === '') return null
-  const resolved = await resolveFormTemplateCatalogIds(code)
-  if (resolved == null) return null
-  const templateVersionId = await publishCopiedSurveyVersion(resolved.templateVersionId)
-  return { templateId: resolved.templateId, templateVersionId }
+export function surveyBindingResolutionAlert(
+  reason: Exclude<PublishedSurveyBindingResolution, { ok: true }>['reason']
+): string {
+  if (reason === 'not_published') {
+    return '선택한 양식에 게시된 버전이 없습니다. 양식 관리에서 게시한 뒤 다시 등록해 주세요.'
+  }
+  return '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.'
 }

@@ -1,49 +1,69 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const resolveFormTemplateCatalogIds = vi.fn()
-const publishFormTemplateVersionById = vi.fn()
+const fetchFormTemplateVersionsRemote = vi.fn()
 
 vi.mock('@/features/template/api/admin-form-templates-service', () => ({
   resolveFormTemplateCatalogIds: (...args: unknown[]) => resolveFormTemplateCatalogIds(...args),
-  publishFormTemplateVersionById: (...args: unknown[]) => publishFormTemplateVersionById(...args),
 }))
 
-import { resolvePublishedDuplicatedSurveyBinding } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
+vi.mock('@/features/template/api/form-templates-api-client', () => ({
+  fetchFormTemplateVersionsRemote: (...args: unknown[]) => fetchFormTemplateVersionsRemote(...args),
+}))
 
-describe('resolvePublishedDuplicatedSurveyBinding', () => {
+import {
+  resolvePublishedSurveyBinding,
+  surveyBindingResolutionAlert,
+} from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
+
+describe('resolvePublishedSurveyBinding', () => {
   beforeEach(() => {
     resolveFormTemplateCatalogIds.mockReset()
-    publishFormTemplateVersionById.mockReset()
+    fetchFormTemplateVersionsRemote.mockReset()
   })
 
-  it('publishes the duplicated version before binding', async () => {
-    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 99, templateVersionId: 100 })
-    publishFormTemplateVersionById.mockResolvedValue(100)
+  it('binds the latest published version of the selected template', async () => {
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 99, templateVersionId: 101 })
+    fetchFormTemplateVersionsRemote.mockResolvedValue([
+      { templateVersionId: 100, versionNo: 1, versionStatus: 'PUBLISHED' },
+      { templateVersionId: 101, versionNo: 2, versionStatus: 'DRAFT' },
+      { templateVersionId: 102, versionNo: 3, versionStatus: 'PUBLISHED' },
+    ])
 
-    await expect(resolvePublishedDuplicatedSurveyBinding('survey-admin-copy')).resolves.toEqual({
+    await expect(resolvePublishedSurveyBinding('survey-student')).resolves.toEqual({
+      ok: true,
       templateId: 99,
-      templateVersionId: 100,
+      templateVersionId: 102,
     })
-    expect(publishFormTemplateVersionById).toHaveBeenCalledWith(100)
+    expect(fetchFormTemplateVersionsRemote).toHaveBeenCalledWith(99)
   })
 
-  it('keeps the copied version when it is already published', async () => {
+  it('returns not_published when the catalog template has no published version', async () => {
     resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 99, templateVersionId: 100 })
-    publishFormTemplateVersionById.mockRejectedValue({
-      response: { status: 409 },
-      message: 'already published',
-    })
+    fetchFormTemplateVersionsRemote.mockResolvedValue([
+      { templateVersionId: 100, versionNo: 1, versionStatus: 'DRAFT' },
+    ])
 
-    await expect(resolvePublishedDuplicatedSurveyBinding('survey-admin-copy')).resolves.toEqual({
-      templateId: 99,
-      templateVersionId: 100,
+    await expect(resolvePublishedSurveyBinding('survey-student')).resolves.toEqual({
+      ok: false,
+      reason: 'not_published',
     })
   })
 
-  it('returns null when the duplicated template has no server id', async () => {
+  it('returns not_found when the selected template has no server id', async () => {
     resolveFormTemplateCatalogIds.mockResolvedValue(null)
 
-    await expect(resolvePublishedDuplicatedSurveyBinding('missing')).resolves.toBeNull()
-    expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
+    await expect(resolvePublishedSurveyBinding('missing')).resolves.toEqual({
+      ok: false,
+      reason: 'not_found',
+    })
+    expect(fetchFormTemplateVersionsRemote).not.toHaveBeenCalled()
+  })
+})
+
+describe('surveyBindingResolutionAlert', () => {
+  it('asks to publish when the selected form has no published version', () => {
+    expect(surveyBindingResolutionAlert('not_published')).toContain('게시')
+    expect(surveyBindingResolutionAlert('not_found')).toContain('서버 ID')
   })
 })
