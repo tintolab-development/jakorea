@@ -12,6 +12,8 @@ export type ApiErrorEnvelope = {
     message?: string
     field?: string | null
     traceId?: string
+    /** 키가 없을 수 있음 — 서버는 빈 값을 null 대신 생략한다. */
+    details?: Record<string, string | undefined> | null
   }
   traceId?: string
 }
@@ -92,6 +94,17 @@ export function extractApiErrorCode(data: unknown): string | undefined {
   if (nested) return nested
   const top = (envelope as { code?: unknown } | null)?.code
   return typeof top === 'string' && top.trim() ? top.trim() : undefined
+}
+
+/** `error.details` 중 문자열 값만. 없으면 빈 객체. */
+export function extractApiErrorDetails(data: unknown): Record<string, string | undefined> {
+  const details = asEnvelope(data)?.error?.details
+  if (!details || typeof details !== 'object') return {}
+  const out: Record<string, string | undefined> = {}
+  for (const [key, value] of Object.entries(details)) {
+    if (typeof value === 'string') out[key] = value
+  }
+  return out
 }
 
 export function getApiErrorHttpStatus(error: unknown): number | undefined {

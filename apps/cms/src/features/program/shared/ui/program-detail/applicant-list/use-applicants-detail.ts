@@ -16,6 +16,7 @@ import {
   extractApiErrorMessage,
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
+import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import {
   institutionFilterFields,
   instructorFilterFields,
@@ -245,7 +246,9 @@ export function useApplicantsDetail({
       console.debug('applications remote decision failed', error)
       showAlert({
         title: '처리 실패',
-        content: '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        content:
+          formatApplicationEligibilityConflictMessage(error) ??
+          '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
       })
     },
     [showAlert]
@@ -261,10 +264,12 @@ export function useApplicantsDetail({
           : undefined
       showAlert({
         title: '처리 실패',
-        content: extractApiErrorMessage(responseData, {
-          httpStatus: getApiErrorHttpStatus(error),
-          fallback: '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
-        }),
+        content:
+          formatApplicationEligibilityConflictMessage(error) ??
+          extractApiErrorMessage(responseData, {
+            httpStatus: getApiErrorHttpStatus(error),
+            fallback: '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+          }),
       })
     },
     [showAlert]

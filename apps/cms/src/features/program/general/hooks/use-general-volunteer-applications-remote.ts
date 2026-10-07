@@ -27,6 +27,7 @@ import type {
   GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import {
   giveUpIndividualApplicationRemote,
   type ApplicationsListQuery,
@@ -155,9 +156,10 @@ export function useGeneralVolunteerApplicationsRemote({
       showAlert({
         title: '처리 실패',
         content:
-          subjectKind === 'participant'
+          formatApplicationEligibilityConflictMessage(error) ??
+          (subjectKind === 'participant'
             ? '참여자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.'
-            : '봉사자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+            : '봉사자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.'),
       })
     },
     [showAlert, subjectKind]
