@@ -1,0 +1,77 @@
+name: Validate Frontend DEV PR
+
+on:
+  pull_request:
+    branches:
+      - development
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'tools/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/deploy-frontend-dev.yml'
+      - '.github/workflows/validate-frontend-dev-pr.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-dev-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  NODE_OPTIONS: --max-old-space-size=5120
+  VITE_API_BASE_URL: https://example.invalid
+  VITE_HOMEPAGE_API_BASE_URL: https://example.invalid
+  VITE_OAUTH_BACKEND_ORIGIN: https://example.invalid
+  VITE_ADDRESS_API_KEY: ci-placeholder
+  VITE_NEIS_API_KEY: ci-placeholder
+  VITE_CAREER_NET_API_KEY: ci-placeholder
+
+jobs:
+  build:
+    name: Build admin, cms, platform
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.20.2
+          cache: pnpm
+
+      - name: Install dependencies
+        env:
+          HUSKY: '0'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Admin
+        run: pnpm --filter admin build
+
+      - name: Verify Admin output
+        run: test -f apps/admin/dist/index.html
+
+      - name: Build CMS
+        run: pnpm --filter cms build
+
+      - name: Verify CMS output
+        run: test -f apps/cms/dist/index.html
+
+      - name: Build Platform
+        run: pnpm --filter platform build
+
+      - name: Verify Platform output
+        run: test -f apps/platform/dist/index.html
