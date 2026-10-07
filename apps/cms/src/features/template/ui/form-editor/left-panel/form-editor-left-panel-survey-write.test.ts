@@ -42,20 +42,19 @@ function scoreParagraph(): WritingFormParagraph {
   }
 }
 
-describe('survey user_info write flatten', () => {
-  it('keeps a single card in edit and expands selected fields in write', () => {
+describe('survey user_info write', () => {
+  it('keeps user_info as a single auto-filled table card in edit and write', () => {
     const paragraphs = [userInfo(['name', 'birthDate']), scoreParagraph()]
     expect(shouldFlattenSurveyUserInfoWrite('survey', 'authoring')).toBe(false)
     expect(shouldFlattenSurveyUserInfoWrite('survey', 'preview')).toBe(true)
     expect(shouldFlattenSurveyUserInfoWrite('agreement', 'preview')).toBe(false)
 
-    const editCards = buildSurveyDisplayCards(paragraphs, false)
-    expect(editCards.map(card => card.displayKey)).toEqual(['user', 'score'])
-
-    const writeCards = buildSurveyDisplayCards(paragraphs, true)
-    expect(writeCards.map(card => card.displayKey)).toEqual([
-      'user::name',
-      'user::birthDate',
+    expect(buildSurveyDisplayCards(paragraphs, false).map(card => card.displayKey)).toEqual([
+      'user',
+      'score',
+    ])
+    expect(buildSurveyDisplayCards(paragraphs, true).map(card => card.displayKey)).toEqual([
+      'user',
       'score',
     ])
   })
@@ -65,23 +64,23 @@ describe('survey user_info write flatten', () => {
     expect(cards.map(card => card.displayKey)).toEqual(['score'])
   })
 
-  it('consumes one Q per selected field in write, but one Q in edit', () => {
+  it('consumes one Q for user_info in both edit and write', () => {
     const paragraphs = [userInfo(['name', 'birthDate']), scoreParagraph()]
     expect(getTitleNumberSequenceIndex(paragraphs, 'user')).toBe(1)
     expect(getTitleNumberSequenceIndex(paragraphs, 'score')).toBe(2)
 
-    expect(
-      getSurveyWriteFormTitleNumberPrefix(paragraphs, { paragraphId: 'user', fieldKey: 'name' }, 'q123')
-    ).toBe('Q1. ')
-    expect(
-      getSurveyWriteFormTitleNumberPrefix(
-        paragraphs,
-        { paragraphId: 'user', fieldKey: 'birthDate' },
-        'q123'
-      )
-    ).toBe('Q2. ')
+    expect(getSurveyWriteFormTitleNumberPrefix(paragraphs, { paragraphId: 'user' }, 'q123')).toBe(
+      'Q1. '
+    )
     expect(getSurveyWriteFormTitleNumberPrefix(paragraphs, { paragraphId: 'score' }, 'q123')).toBe(
-      'Q3. '
+      'Q2. '
+    )
+  })
+
+  it('skips the Q number of user_info without selected fields', () => {
+    const paragraphs = [userInfo([]), scoreParagraph()]
+    expect(getSurveyWriteFormTitleNumberPrefix(paragraphs, { paragraphId: 'score' }, 'q123')).toBe(
+      'Q1. '
     )
   })
 })

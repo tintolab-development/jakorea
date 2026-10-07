@@ -74,8 +74,6 @@ export function areFormEditorCardPropsEqual(
   if (prev.hideDragHandleForParagraphIds !== next.hideDragHandleForParagraphIds) return false
   if (prev.paragraphBodyOptions !== next.paragraphBodyOptions) return false
   if (prev.surveyWriteNumbering !== next.surveyWriteNumbering) return false
-  if (prev.userInfoWriteField?.key !== next.userInfoWriteField?.key) return false
-  if (prev.userInfoWriteField?.label !== next.userInfoWriteField?.label) return false
   if (prev.middleParagraphActions !== next.middleParagraphActions) return false
   if (prev.updateParagraph !== next.updateParagraph) return false
   if (prev.onSelectCard !== next.onSelectCard) return false

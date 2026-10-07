@@ -8,6 +8,7 @@ import type {
   TimeParagraph,
   WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
+import { getUserInfoSelectedEntries, isUserInfoParagraph } from '@jakorea/form-schema/writing-form'
 import {
   FormTemplateHost,
   type FormUpdateParagraph,
@@ -36,9 +37,8 @@ export type PlatformSurveyParagraphBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   sidecar: SurveySidecarState
   onSidecarChange: (next: SurveySidecarState) => void
-  userInfoWriteField?: { key: string; label: string }
-  /** 설문자 정보 필드 표시값 (로그인·프로그램 컨텍스트) */
-  userInfoDisplayValue?: string
+  /** 설문자 정보 fieldKey → 표시값 (로그인·프로그램 컨텍스트) */
+  userInfoValues?: Record<string, string>
   readOnly?: boolean
 }
 
@@ -47,18 +47,13 @@ export function PlatformSurveyParagraphBody({
   onUpdateParagraph,
   sidecar,
   onSidecarChange,
-  userInfoWriteField,
-  userInfoDisplayValue,
+  userInfoValues,
   readOnly = false,
 }: PlatformSurveyParagraphBodyProps) {
-  if (paragraph.kind === 'single_item' && paragraph.variant === 'user_info') {
-    if (userInfoWriteField == null) return null
-    return (
-      <SurveyUserInfoField
-        label={userInfoWriteField.label}
-        value={userInfoDisplayValue ?? ''}
-      />
-    )
+  if (isUserInfoParagraph(paragraph)) {
+    const entries = getUserInfoSelectedEntries(paragraph)
+    if (entries.length === 0) return null
+    return <SurveyUserInfoField entries={entries} values={userInfoValues} />
   }
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'multiple_choice') {
