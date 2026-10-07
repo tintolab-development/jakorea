@@ -473,6 +473,7 @@ describe('general-applications-adapters', () => {
         contact: '010-****-9999',
         email: 'vol***@example.com',
         volunteerKind: 'GENERAL',
+        birthDate: '1999-03-04',
         assignedOrganizationNames: ['해봄초등학교', '푸른초등학교'],
         sessions: [
           {
@@ -492,6 +493,7 @@ describe('general-applications-adapters', () => {
     expect(volunteer.id).toBe('1691601')
     expect(volunteer.volunteerApplicationId).toBe('77002')
     expect(volunteer.volunteerKind).toBe('GENERAL')
+    expect(volunteer.birthDate).toBe('1999-03-04')
     expect(volunteer.memberId).toBe(9101)
     expect(volunteer.id1365).toBe('1365-10001')
     expect(volunteer.assignedInstitutionNames).toEqual(['해봄초등학교', '푸른초등학교'])

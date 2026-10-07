@@ -1510,6 +1510,7 @@ export function mapParticipantToParticipatingVolunteerRow(
     email: email || '-',
     contactRaw: contact || undefined,
     emailRaw: email || undefined,
+    birthDate: dto.birthDate?.trim() || undefined,
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
   }
