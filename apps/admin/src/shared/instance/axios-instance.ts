@@ -11,7 +11,7 @@ import {
   AUTH_TOKEN_KEY,
 } from '@/features/auth/model/auth-storage'
 import { adminAuthPaths } from '@/shared/config/api-paths'
-import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
+import { getApiBaseUrl, getApiBaseUrlForPath } from '@/shared/lib/api-remote-env'
 import axios, {
   type AxiosError,
   type AxiosRequestHeaders,
@@ -276,6 +276,7 @@ export async function refreshAccessTokenSession(): Promise<boolean> {
 axiosInstance.interceptors.request.use(
   config => {
     const retryable = config as RetryableRequest
+    config.baseURL = getApiBaseUrlForPath(config.url ?? '')
     const url = resolveRequestUrl(config)
 
     if (retryable.skipAuth || isExcludedFromAutoRefresh(url)) {

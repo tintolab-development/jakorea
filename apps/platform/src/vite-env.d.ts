@@ -11,8 +11,10 @@ interface ImportMetaEnv {
   readonly VITE_CAREER_NET_API_KEY?: string
   /** @deprecated 오타 호환 — `VITE_CAREER_NET_API_KEY` 사용 권장 */
   readonly VITE_CAREEAR_NET_API_KEY?: string
-  /** 브라우저에서 직접 호출할 백엔드 오리진 (크로스 오리진). 로컬 프록시 쓸 때는 비움. */
+  /** 정적 배포에서 JABACK을 직접 호출할 오리진. 로컬 프록시 쓸 때는 비움. */
   readonly VITE_API_BASE_URL?: string
+  /** 정적 배포에서 JAHOME을 직접 호출할 오리진. */
+  readonly VITE_HOMEPAGE_API_BASE_URL?: string
   /** 로컬 Vite `/api/portal`, `/api/auth` → CMS(8080) 로그인·회원·NICE */
   readonly VITE_API_SERVER?: string
   /** 로컬 Vite `/api` → JAHOMEADMINBACK(8081). 미설정 시 http://localhost:8081 */

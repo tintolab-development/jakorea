@@ -12,7 +12,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios'
 import { portalAuthPaths } from '@/features/auth/sign-in/api/endpoints'
-import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
+import { getApiBaseUrl, getApiBaseUrlForPath } from '@/shared/lib/api-remote-env'
 import { isAdminOnboardingRequired } from '@/shared/lib/admin-onboarding-session'
 import {
   clearAuthTokens,
@@ -326,6 +326,7 @@ async function runSingleFlightRefresh(refreshToken: string): Promise<string> {
 axiosClient.interceptors.request.use(
   config => {
     const retryable = config as RetryableRequest
+    config.baseURL = getApiBaseUrlForPath(config.url ?? '')
     const url = resolveRequestUrl(config)
 
     if (retryable.skipAuth || isExcludedFromAutoRefresh(url)) {
