@@ -19,13 +19,11 @@ import {
   VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
-import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
 import {
   buildInitialVolunteerAssignedRows,
   buildVolunteerWaitingInstitutionRows,
@@ -50,14 +48,17 @@ function renderVolunteerScheduleLines(lines: string[]) {
   const displayLines = lines.slice(0, showCount)
   const restCount = total - showCount
   return (
-    <div className="participating-institutions-section__sessions-cell">
+    <div className="participating-volunteer-assignment-section__schedule-cell">
       {displayLines.map((line, index) => (
-        <div key={`${line}-${index}`} className="participating-institutions-section__session-line">
-          {line}
+        <div
+          key={`${line}-${index}`}
+          className="participating-volunteer-assignment-section__schedule-line"
+        >
+          {renderProgramDetailPipeSeparated(line)}
         </div>
       ))}
       {restCount > 0 ? (
-        <div className="participating-institutions-section__session-more">
+        <div className="participating-volunteer-assignment-section__schedule-more">
           외 {restCount}개의 봉사 일정
         </div>
       ) : null}
@@ -67,13 +68,17 @@ function renderVolunteerScheduleLines(lines: string[]) {
 
 function renderHopeScheduleLine(line: string) {
   return (
-    <div className="participating-institutions-section__sessions-cell">
-      <div className="participating-institutions-section__session-line">
+    <div className="participating-volunteer-assignment-section__schedule-cell">
+      <div className="participating-volunteer-assignment-section__schedule-line">
         {renderProgramDetailPipeSeparated(line)}
       </div>
     </div>
   )
 }
+
+/** 시안 기준 체크박스 열 60px — 두 테이블 합계 1546px */
+const ASSIGNMENT_CHECKBOX_COLUMN_WIDTH = 60
+const ASSIGNMENT_TABLE_SCROLL_X = 1546
 
 export interface ParticipatingVolunteerAssignmentSectionProps {
   program: Program
@@ -129,32 +134,41 @@ export function ParticipatingVolunteerAssignmentSection({
   const assignedColumns: ColumnsType<VolunteerAssignedInstitutionRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
-      { title: '기관명', dataIndex: 'schoolName', key: 'schoolName', width: 140 },
+      {
+        title: '기관명',
+        dataIndex: 'schoolName',
+        key: 'schoolName',
+        width: 277,
+        align: 'center',
+        ellipsis: true,
+      },
       {
         title: '담당 학년',
         dataIndex: 'educationGrade',
         key: 'educationGrade',
-        width: 96,
+        width: 160,
         align: 'center',
       },
-      { title: '기관 소재지', dataIndex: 'region', key: 'region', width: 200 },
+      {
+        title: '기관 소재지',
+        dataIndex: 'region',
+        key: 'region',
+        width: 277,
+        align: 'center',
+        ellipsis: true,
+      },
       {
         title: '자택과의 거리',
         dataIndex: 'distanceFromHome',
         key: 'distanceFromHome',
-        width: 110,
+        width: 277,
         align: 'center',
       },
       {
         title: '담당 봉사 진행 일정',
         key: 'volunteerScheduleLines',
-        width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        width: 415,
+        align: 'center',
         render: (_: unknown, record) => renderVolunteerScheduleLines(record.volunteerScheduleLines),
       },
     ],
@@ -164,43 +178,52 @@ export function ParticipatingVolunteerAssignmentSection({
   const waitingColumns: ColumnsType<VolunteerWaitingInstitutionRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
-      { title: '기관명', dataIndex: 'schoolName', key: 'schoolName', width: 140 },
+      {
+        title: '기관명',
+        dataIndex: 'schoolName',
+        key: 'schoolName',
+        width: 200,
+        align: 'center',
+        ellipsis: true,
+      },
       {
         title: '희망 학년',
         dataIndex: 'desiredGrade',
         key: 'desiredGrade',
-        width: 96,
+        width: 140,
         align: 'center',
       },
-      { title: '기관 소재지', dataIndex: 'region', key: 'region', width: 200 },
+      {
+        title: '기관 소재지',
+        dataIndex: 'region',
+        key: 'region',
+        width: 250,
+        align: 'center',
+        ellipsis: true,
+      },
       {
         title: '자택과의 거리',
         dataIndex: 'distanceFromHome',
         key: 'distanceFromHome',
-        width: 110,
+        width: 140,
         align: 'center',
       },
       {
         title: '봉사 진행 희망 일정',
         key: 'hopeScheduleLine',
-        width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        width: 356,
+        align: 'center',
         render: (_: unknown, record) => renderHopeScheduleLine(record.hopeScheduleLine),
       },
       {
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 100,
+        width: 160,
         align: 'center',
         render: (status: VolunteerWaitingAssignmentStatus) => (
           <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status === 'unavailable' ? 'cancelled' : status}`}
+            className={`participating-volunteer-assignment-section__status participating-volunteer-assignment-section__status--${status}`}
           >
             {WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[status]}
           </span>
@@ -210,7 +233,7 @@ export function ParticipatingVolunteerAssignmentSection({
         title: '배정 봉사자 수',
         dataIndex: 'assignedVolunteerCountLabel',
         key: 'assignedVolunteerCountLabel',
-        width: 110,
+        width: 160,
         align: 'center',
       },
     ],
@@ -573,9 +596,10 @@ export function ParticipatingVolunteerAssignmentSection({
               rowKey="id"
               size="middle"
               pagination={false}
-              scroll={{ x: 1100 }}
+              tableLayout="fixed"
+              scroll={{ x: ASSIGNMENT_TABLE_SCROLL_X }}
               rowSelection={{
-                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                columnWidth: ASSIGNMENT_CHECKBOX_COLUMN_WIDTH,
                 selectedRowKeys: selectedAssignedKeys,
                 onChange: keys => setSelectedAssignedKeys(keys),
               }}
@@ -614,9 +638,10 @@ export function ParticipatingVolunteerAssignmentSection({
               rowKey="id"
               size="middle"
               pagination={false}
-              scroll={{ x: 1300 }}
+              tableLayout="fixed"
+              scroll={{ x: ASSIGNMENT_TABLE_SCROLL_X }}
               rowSelection={{
-                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                columnWidth: ASSIGNMENT_CHECKBOX_COLUMN_WIDTH,
                 selectedRowKeys: selectedWaitingKeys,
                 onChange: keys => setSelectedWaitingKeys(keys),
                 getCheckboxProps: record => ({
@@ -627,7 +652,7 @@ export function ParticipatingVolunteerAssignmentSection({
               dataSource={waitingInstitutions}
               rowClassName={record =>
                 record.assignmentStatus === 'unavailable'
-                  ? 'school-detail-fullpage-view__waiting-row--unavailable'
+                  ? 'participating-volunteer-assignment-section__row--unavailable'
                   : ''
               }
             />
