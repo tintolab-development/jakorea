@@ -149,6 +149,28 @@ describe('applyRecruitmentRowCopy', () => {
     expect(next.otherNotes).toBe('overlay 비고')
     expect(next.oneLineIntroduction).toBe('행 비고')
   })
+
+  it('빈 모집 행은 overlay로 채운 설명·안내를 지우지 않는다', () => {
+    const program = baseProgram({
+      description: '등록한 프로그램 설명',
+      recruitmentGuide: '등록한 모집 안내',
+      applicationMethod: '등록한 신청 방법',
+      programRecruitments: [
+        {
+          id: 11,
+          recruitmentType: 'PARTICIPANT',
+          programDescription: '',
+          recruitmentGuide: null,
+          applicationMethod: undefined,
+        },
+      ],
+    })
+
+    const next = applyRecruitmentRowCopy(program, 'participant')
+    expect(next.description).toBe('등록한 프로그램 설명')
+    expect(next.recruitmentGuide).toBe('등록한 모집 안내')
+    expect(next.applicationMethod).toBe('등록한 신청 방법')
+  })
 })
 
 describe('pickRecruitmentCopyRow 봉사자 반기', () => {

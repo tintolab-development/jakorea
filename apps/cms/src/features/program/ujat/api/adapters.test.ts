@@ -14,6 +14,7 @@ import {
 import { shouldRetryQuery } from './errors'
 import { toRemoteListParams } from './list-params'
 import { parseRegistrationSnapshot } from './service-detail'
+import { resolveUjatRecruitAnnouncementTitle } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 
 const program: Program = {
   id: 'ujat-1',
@@ -359,6 +360,53 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
       'Local Spending and Saving'
     )
     expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBe(61)
+  })
+
+  it('등록 overlay 모집 공고명·설명을 create body와 상세 매핑에 남긴다', () => {
+    const pending = buildUjatProgramListRowFromRegistrationSnapshot({
+      id: 'ujat-pending-recruit',
+      overlay: {
+        'ujat.basicInfo.repKo': '대학생경제교육봉사단',
+        'ujat.recruit.institution.publicTitle': '등록한 기관 공고',
+        'ujat.recruit.institution.description': '등록한 프로그램 설명',
+        'ujat.recruit.volunteer.h1.publicTitle': '등록한 상반기 공고',
+      },
+    })
+    const request = toCreateRequest(pending, {
+      draft,
+      overlay: pending.ujatRegistrationOverlay ?? {},
+    })
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(detail.registration?.overlay?.['ujat.recruit.institution.publicTitle']).toBe(
+      '등록한 기관 공고'
+    )
+    expect(request.recruitments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          recruitmentType: 'PARTICIPANT',
+          announcementTitle: '등록한 기관 공고',
+          programDescription: '등록한 프로그램 설명',
+        }),
+        expect.objectContaining({
+          recruitmentType: 'VOLUNTEER',
+          announcementTitle: '등록한 상반기 공고',
+        }),
+      ])
+    )
+
+    const mapped = fromDetail({
+      id: '186200',
+      sponsorId: pending.sponsorId,
+      title: pending.title,
+      startDate: String(pending.startDate),
+      endDate: String(pending.endDate),
+      serviceDetailJson: request.serviceDetailJson,
+      recruitments: request.recruitments as Parameters<typeof fromDetail>[0]['recruitments'],
+    })
+    expect(resolveUjatRecruitAnnouncementTitle(mapped, 'institution')).toBe('등록한 기관 공고')
+    expect(resolveUjatRecruitAnnouncementTitle(mapped, 'volunteer_h1')).toBe('등록한 상반기 공고')
   })
 
   it('BE top-level 대표·관리명·해당없음이 stale overlay보다 우선한다', () => {

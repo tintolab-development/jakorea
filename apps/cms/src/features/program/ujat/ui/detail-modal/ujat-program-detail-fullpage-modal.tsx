@@ -663,11 +663,13 @@ export function UjatProgramDetailFullPageModal({
     if (!displayProgram) return
     const overlay = readUjatRegistrationOverlayFromProgram(displayProgram)
     const stamp = `${displayProgram.id}:${Object.keys(overlay).length}`
-    if (overlayHydrateStampRef.current === stamp) return
-    overlayHydrateStampRef.current = stamp
-    if (Object.keys(overlay).length === 0) return
-    resetUjatProgramRegistrationOverlay()
-    patchUjatProgramRegistrationOverlay(overlay)
+    if (overlayHydrateStampRef.current !== stamp) {
+      overlayHydrateStampRef.current = stamp
+      if (Object.keys(overlay).length > 0) {
+        resetUjatProgramRegistrationOverlay()
+        patchUjatProgramRegistrationOverlay(overlay)
+      }
+    }
     void hydrateUjatRecruitTemplatesForProgram(displayProgram)
   }, [displayProgram])
 
@@ -2603,7 +2605,6 @@ export function UjatProgramDetailFullPageModal({
                 onOpenPreview={setRecruitmentPreviewTab}
               />
               <UjatProgramRecruitmentPanels
-                key={activeRecruitTab}
                 program={displayProgram}
                 sponsorName={sponsorName}
                 activeRecruitTab={activeRecruitTab}

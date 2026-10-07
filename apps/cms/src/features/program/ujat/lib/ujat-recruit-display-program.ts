@@ -12,7 +12,10 @@ import {
   pickUjatRecruitVolunteerOverlay,
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
-import { loadUjatRecruitInstitutionTemplateSave } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
+import {
+  loadUjatRecruitInstitutionTemplateSave,
+  loadUjatRecruitVolunteerTemplateSave,
+} from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import {
   blankUjatVolunteerRecruitProgramFields,
   buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues,
@@ -50,15 +53,36 @@ function overlayString(overlay: Record<string, unknown>, key: string): string | 
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
+/** 카탈로그 시드·빈 행 값이 등록 overlay를 덮지 않게 빈 값은 버린다. */
+function compactOverlay(record: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(record)) {
+    if (value == null) continue
+    if (typeof value === 'string' && !value.trim()) continue
+    if (Array.isArray(value) && value.length === 0) continue
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      const nested = compactOverlay(value as Record<string, unknown>)
+      if (Object.keys(nested).length === 0) continue
+      out[key] = nested
+      continue
+    }
+    out[key] = value
+  }
+  return out
+}
+
 function mergedInstitutionOverlay(program: Program): Record<string, unknown> {
-  return {
+  return compactOverlay({
     ...(loadUjatRecruitInstitutionTemplateSave()?.overlay ?? {}),
     ...pickUjatRecruitInstitutionOverlay(program.ujatRegistrationOverlay ?? {}),
-  }
+  })
 }
 
 function mergedVolunteerOverlay(program: Program): Record<string, unknown> {
-  return pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {})
+  return compactOverlay({
+    ...(loadUjatRecruitVolunteerTemplateSave()?.overlay ?? {}),
+    ...pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {}),
+  })
 }
 
 /** 모집 탭 전용 — kind가 있으면 해당 overlay만 적용. 공통정보 displayProgram에는 쓰지 않는다. */
@@ -106,20 +130,42 @@ function volunteerHalfPeriod(
   return { startAt, endAt }
 }
 
-/** 공고용 프로그램명 — 모집 유형 overlay만. 공통정보·다른 탭과 공유하지 않는다. */
+function rowAnnouncementTitle(
+  program: Program,
+  kind: UjatRecruitDisplayKind
+): string | undefined {
+  const audience = kind === 'institution' ? 'participant' : 'volunteer'
+  const half = volunteerHalfFromRecruitDisplayKind(kind) ?? undefined
+  const title = pickRecruitmentCopyRow(program, audience, half)?.announcementTitle
+  return typeof title === 'string' && title.trim() ? title.trim() : undefined
+}
+
+/** 공고용 프로그램명 — 모집 overlay, 없으면 해당 모집 행. 공통정보와 공유하지 않는다. */
 export function resolveUjatRecruitAnnouncementTitle(
   program: Program,
   kind: UjatRecruitDisplayKind
 ): string {
   if (kind === 'institution') {
-    return overlayString(mergedInstitutionOverlay(program), UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.publicTitle) || '-'
+    return (
+      overlayString(mergedInstitutionOverlay(program), UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.publicTitle) ||
+      rowAnnouncementTitle(program, kind) ||
+      '-'
+    )
   }
   const overlay = mergedVolunteerOverlay(program)
   const half = volunteerHalfFromRecruitDisplayKind(kind)
   if (half) {
-    return overlayString(overlay, ujatVolunteerHalfOverlayKey(half, 'publicTitle')) || '-'
+    return (
+      overlayString(overlay, ujatVolunteerHalfOverlayKey(half, 'publicTitle')) ||
+      rowAnnouncementTitle(program, kind) ||
+      '-'
+    )
   }
-  return overlayString(overlay, UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.publicTitle) || '-'
+  return (
+    overlayString(overlay, UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.publicTitle) ||
+    rowAnnouncementTitle(program, kind) ||
+    '-'
+  )
 }
 
 export function ujatRecruitPublicTitleOverlayKey(kind: UjatRecruitDisplayKind): string {
