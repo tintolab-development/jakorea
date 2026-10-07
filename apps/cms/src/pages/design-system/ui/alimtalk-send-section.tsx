@@ -66,7 +66,7 @@ export function AlimtalkSendSection() {
         ). 본문 블록 gap 16 — 검색 ↔ (총 건수+테이블) ↔ 페이지네이션.{' '}
         <strong>총 N건 ↔ 테이블 gap 8</strong>. 총 건수 16/500/150% main-BK opacity 0.6 (
         <code>총 {ALIMTALK_SEND_TEMPLATE_PICKER_MOCK.length}건</code> 형식). 검색은 CmsInput large + 검색 버튼(Enter·클릭 적용). 테이블{' '}
-        <code>cms-data-table</code> · 행 54px · 셀 padding 12×20 · 템플릿명·관리 열{' '}
+        <code>cms-data-table</code> · 행 52px · 셀 padding 8×12 · 템플릿명·관리 열{' '}
         <strong>가운데 정렬</strong>. 템플릿명 16/500 <code>#3D3D3D</code>. 관리 열 220px · 행
         버튼 80×32 gap 8(미리보기 default / 사용하기 mint). mock은 템플릿 목록(
         {ALIMTALK_SEND_TEMPLATE_PICKER_MOCK.length}건)과 동일 · 페이지당 {TEMPLATE_SELECT_MODAL_PAGE_SIZE}건.

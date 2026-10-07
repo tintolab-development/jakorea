@@ -53,12 +53,12 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  height: 54px !important;
+  height: 52px !important;
   background: #f5f6f7;
   color: var(--default-BK, #3d3d3d);
   text-align: center !important;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
@@ -79,14 +79,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
   padding: var(--spacing-10) var(--spacing-12);
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   vertical-align: middle;
   background: #fff;
   box-sizing: border-box;
@@ -104,9 +104,9 @@
 
 .dashboard-widget-table .ant-table-wrapper .ant-table-tbody > tr,
 .dashboard-widget-table__data .ant-table-tbody > tr {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
 }
 
 .dashboard-widget-table__data .ant-table-tbody > tr:hover:not(.ant-table-row-selected) > td {
