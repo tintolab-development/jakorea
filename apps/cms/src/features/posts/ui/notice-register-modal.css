@@ -249,30 +249,10 @@
   box-sizing: border-box;
 }
 
-/* FileSelectField: 버튼 옆 안내 문구 스펙 */
-.notice-register-modal__file-field.file-select-field {
-  gap: 8px;
-}
-
-.notice-register-modal__file-field .file-select-field__actions {
-  align-items: center;
-  gap: 12px;
-}
-
+/* FileSelectField: 버튼 옆 안내 문구 폭 */
 .notice-register-modal__file-field .file-select-field__guide {
   flex: 1 1 200px;
   min-width: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
-}
-
-.notice-register-modal__file-field .file-select-field__guide-line {
-  display: block;
 }
 
 /* 푸터: ContentModal 기본 우측 정렬 래퍼 안에서 전폭 행 — 좌 삭제(edit) + 우 취소·저장 */

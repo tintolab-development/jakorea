@@ -1,6 +1,6 @@
 /**
  * 파일 선택 필드 공통 컴포넌트 (디자인 시스템)
- * - hidden input + 파일명 목록(삭제 X 버튼) + "파일 선택" 버튼 + 가이드 텍스트
+ * - hidden input + 파일 행(유형 아이콘·파일명·X) / 「첨부된 파일이 없습니다.」 + 「파일 추가」(h32) + 가이드
  * - 기본 다중 선택(`multiple=true`). accept·가이드 문구는 케이스별 props
  * - 첨부 합계 기본 최대 15MB (`maxTotalBytes` / `currentTotalBytes`)
  * - disabled 시 버튼 비활성화, input 미렌더, 삭제 버튼 미표시
@@ -10,7 +10,11 @@ import { useEffect, useRef, type ChangeEvent } from 'react'
 import './file-select-field.css'
 import { beginFileUploadOverlay } from '@/shared/ui/file-upload-overlay-store'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { FileRemoveIcon } from '@/shared/ui/icons/FileRemoveIcon'
+import {
+  FileAttachmentEmpty,
+  FileAttachmentRow,
+  FileUploadGuide,
+} from '@/shared/ui/file-attachment-row'
 import {
   FILE_SELECT_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
@@ -36,7 +40,7 @@ export interface FileSelectFieldProps {
   onFilesChange?: (files: File[]) => void
   /** 특정 인덱스 파일 업로드 취소(삭제) 시 콜백 — 전달 시 해당 파일 옆에 X 버튼 표시 */
   onRemoveFile?: (index: number) => void
-  /** 버튼에 표시할 텍스트 (기본: "파일 선택") */
+  /** 버튼에 표시할 텍스트 (기본: "파일 추가") */
   buttonLabel?: string
   /** 업로드 중이면 화면 전체 스피너를 띄우고 필드를 막는다 */
   uploading?: boolean
@@ -61,7 +65,7 @@ export function FileSelectField({
   guideLines,
   onFilesChange,
   onRemoveFile,
-  buttonLabel = '파일 선택',
+  buttonLabel = '파일 추가',
   uploading = false,
   className = '',
   currentTotalBytes = 0,
@@ -98,15 +102,10 @@ export function FileSelectField({
   const fieldDisabled = disabled || uploading
   const canRemove = !fieldDisabled && typeof onRemoveFile === 'function'
   const hasFiles = Boolean(fileNames && fileNames.length > 0)
-  const showNames = hasFiles
 
   return (
     <div
-      className={[
-        'file-select-field',
-        !showNames ? 'file-select-field--empty' : '',
-        className,
-      ]
+      className={['file-select-field', !hasFiles ? 'file-select-field--empty' : '', className]
         .filter(Boolean)
         .join(' ')}
       aria-busy={uploading || undefined}
@@ -123,45 +122,32 @@ export function FileSelectField({
         />
       )}
 
-      {showNames ? (
-        <div className="file-select-field__names">
+      {hasFiles ? (
+        <div className="file-attachment-list file-select-field__names">
           {fileNames!.map((name, i) => (
-            <span key={`${i}-${name}`} className="file-select-field__name-row">
-              <span className="file-select-field__name">{name}</span>
-              {canRemove && (
-                <button
-                  type="button"
-                  className="file-select-field__remove"
-                  onClick={() => onRemoveFile?.(i)}
-                  aria-label={`${name} 업로드 취소`}
-                >
-                  <FileRemoveIcon />
-                </button>
-              )}
-            </span>
+            <FileAttachmentRow
+              key={`${i}-${name}`}
+              fileName={name}
+              removeLabel={`${name} 업로드 취소`}
+              onRemove={canRemove ? () => onRemoveFile?.(i) : undefined}
+            />
           ))}
         </div>
-      ) : null}
+      ) : (
+        <FileAttachmentEmpty />
+      )}
 
-      <div className="file-select-field__actions">
+      <div className="file-upload-actions file-select-field__actions">
         <CmsButton
           type="button"
           variant="secondary"
-          size="large"
+          size="h32"
           disabled={fieldDisabled}
           onClick={() => inputRef.current?.click()}
         >
           {buttonLabel}
         </CmsButton>
-        {guideLines && guideLines.length > 0 ? (
-          <div className="file-select-field__guide">
-            {guideLines.map((line, i) => (
-              <span key={i} className="file-select-field__guide-line">
-                {line}
-              </span>
-            ))}
-          </div>
-        ) : null}
+        <FileUploadGuide lines={guideLines} className="file-select-field__guide" />
       </div>
     </div>
   )

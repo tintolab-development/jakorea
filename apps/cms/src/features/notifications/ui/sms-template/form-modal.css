@@ -515,9 +515,5 @@
 }
 
 .sms-template-form-modal .file-select-field__actions {
-  display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
 }

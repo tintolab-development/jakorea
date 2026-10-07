@@ -236,7 +236,6 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
                           prev.filter((_, currentIndex) => currentIndex !== index)
                         )
                       }
-                      buttonLabel="파일 추가"
                     />
                   </td>
                 </tr>

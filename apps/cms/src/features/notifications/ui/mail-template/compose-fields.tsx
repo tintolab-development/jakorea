@@ -138,7 +138,6 @@ export const ComposeFields = memo(function ComposeFields({
               className="mail-template-compose__file-field"
               multiple
               maxTotalBytes={0}
-              buttonLabel="파일 추가"
               fileNames={attachmentFileNames}
               guideLines={
                 readOnly
