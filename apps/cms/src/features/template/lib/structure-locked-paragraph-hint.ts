@@ -47,6 +47,7 @@ export const PARTIAL_EDIT_STRUCTURE_LOCKED_SHORT_ESSAY_PARAGRAPH_IDS = new Set<s
 
 /** 구조 잠금이지만 카드 제목·설명글은 수정 가능 (본문 일정 구조는 프로그램 등록값) */
 export const PARTIAL_EDIT_STRUCTURE_LOCKED_HEADING_PARAGRAPH_IDS = new Set<string>([
+  PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.jaVolunteerExperience,
   PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice,
   PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
   PROGRAM_APPLICATION_FORM_ECONOMY_IDS.preferredSchedule,

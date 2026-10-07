@@ -31,6 +31,8 @@ export function resolveGeneralApplicationFormHiddenParagraphIds(
     program?: Program | null
     paragraphs: readonly WritingFormParagraph[]
     institutionBridge?: InstitutionApplicationProgramBridge
+    /** 템플릿 작성 — 봉사자 이전 참여 단락 등 응답 조건부 단락 기본 노출 */
+    isTemplateAuthoringMode?: boolean
   }
 ): ReadonlySet<string> | undefined {
   if (variant === 'institution' && params.institutionBridge) {
@@ -42,6 +44,7 @@ export function resolveGeneralApplicationFormHiddenParagraphIds(
         params.program == null
           ? undefined
           : isGeneralProgramVolunteerInterviewScheduleVisible(params.program),
+      isTemplateAuthoringMode: params.isTemplateAuthoringMode === true,
     })
   }
   if (variant === 'individual' && params.program) {
@@ -132,6 +135,7 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
         program,
         paragraphs,
         institutionBridge,
+        isTemplateAuthoringMode: !programLinkedPreview,
       })
 
   const programApplicationFormEconomyInstitution =

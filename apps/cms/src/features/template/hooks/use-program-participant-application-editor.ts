@@ -1401,8 +1401,9 @@ export function useProgramParticipantApplicationEditor(
     return resolveGeneralApplicationFormHiddenParagraphIds('volunteer', {
       program: linkedProgram,
       paragraphs: draft.paragraphs,
+      isTemplateAuthoringMode: !programLinkedPreview,
     })
-  }, [variant, draft.paragraphs, linkedProgram])
+  }, [variant, draft.paragraphs, linkedProgram, programLinkedPreview])
 
   const volunteerInterviewRequired = useSyncExternalStore(
     variant === 'recruit-volunteer' ? subscribeVolunteerInterviewRequiredOverlay : subscribeNoop,
@@ -1500,6 +1501,7 @@ export function useProgramParticipantApplicationEditor(
             program: linkedProgram,
             paragraphs: draft.paragraphs,
             institutionBridge: institutionApplicationBridge,
+            isTemplateAuthoringMode: !programLinkedPreview,
           })
         }
         if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds
