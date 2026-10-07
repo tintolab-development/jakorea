@@ -1329,7 +1329,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           <div className="survey-management-loading" role="status">
             <Spin size="large" />
           </div>
-        ) : activeRegisteredSurvey != null && activeRegisteredSurvey.responseCount === 0 ? (
+        ) : activeRegisteredSurvey != null && activeRegisteredSurvey.status === 'before_start' ? (
           <SurveyNoResponseState
             title={GENERAL_SURVEY_POLL_NO_RESPONSE_COPY.title}
             description={GENERAL_SURVEY_POLL_NO_RESPONSE_COPY.description}
@@ -1343,7 +1343,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               setDeleteModalKind('survey')
             }}
             onOpenTemplatePreview={() =>
-              openTemplatePreview(activeRegisteredSurvey, { allowEdit: true })
+              openTemplatePreview(activeRegisteredSurvey, {
+                allowEdit: activeRegisteredSurvey.status === 'before_start',
+              })
             }
           />
         ) : activeRegisteredSurvey != null ? (
