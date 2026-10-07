@@ -10,6 +10,7 @@ import type {
 } from '@jakorea/form-schema/writing-form'
 import { getUserInfoSelectedEntries, isUserInfoParagraph } from '@jakorea/form-schema/writing-form'
 import {
+  FillParagraphBody,
   FormTemplateHost,
   type FormUpdateParagraph,
   VerticalTablePreviewBody,
@@ -188,6 +189,21 @@ export function PlatformSurveyParagraphBody({
                 : current
             )
           }
+        />
+      </FormTemplateHost>
+    )
+  }
+
+  if (
+    paragraph.kind === 'single_item' &&
+    (paragraph.variant === 'horizontal_table' || paragraph.variant === 'agreement_explanation_text')
+  ) {
+    return (
+      <FormTemplateHost surface="platformUser">
+        <FillParagraphBody
+          paragraph={paragraph}
+          interactionMode={readOnly ? 'preview' : 'user'}
+          onUpdateParagraph={readOnly ? undefined : onUpdateParagraph}
         />
       </FormTemplateHost>
     )

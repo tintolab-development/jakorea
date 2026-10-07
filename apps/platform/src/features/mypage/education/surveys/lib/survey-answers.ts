@@ -70,6 +70,18 @@ function extractSurveyParagraphAnswer(
     }
   }
 
+  if (paragraph.variant === 'horizontal_table') {
+    if (paragraph.showBottomConsent && paragraph.bottomConsent == null) return null
+    return {
+      fieldDataRows: paragraph.fieldDataRows ?? [],
+      bottomConsent: paragraph.showBottomConsent ? paragraph.bottomConsent : undefined,
+    }
+  }
+
+  if (paragraph.variant === 'agreement_explanation_text') {
+    return paragraph.bodyText ?? ''
+  }
+
   return undefined
 }
 
@@ -164,6 +176,21 @@ export function applyEducationSurveyAnswersToDraft(
               )
             : paragraph.items
         return { ...paragraph, bodyText: value, items }
+      }
+      if (paragraph.variant === 'agreement_explanation_text' && typeof value === 'string') {
+        return { ...paragraph, bodyText: value }
+      }
+      if (paragraph.variant === 'horizontal_table' && value && typeof value === 'object') {
+        const record = value as { fieldDataRows?: unknown; bottomConsent?: unknown }
+        return {
+          ...paragraph,
+          ...(Array.isArray(record.fieldDataRows)
+            ? { fieldDataRows: record.fieldDataRows as typeof paragraph.fieldDataRows }
+            : {}),
+          ...(record.bottomConsent === 'agree' || record.bottomConsent === 'disagree'
+            ? { bottomConsent: record.bottomConsent }
+            : {}),
+        }
       }
       if (isUserInfoParagraph(paragraph) && value && typeof value === 'object' && !Array.isArray(value)) {
         return { ...paragraph, fieldAnswers: value as Record<string, string> }
