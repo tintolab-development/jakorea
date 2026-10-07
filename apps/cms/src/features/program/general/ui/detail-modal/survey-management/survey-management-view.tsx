@@ -7,7 +7,6 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { handleError } from '@/shared/utils/error-handler'
 import { loadFormTemplateVersionDraftByVersionId } from '@/features/template/api/admin-form-templates-service'
-import { duplicateWritingTemplate } from '@/features/template/api/duplicate-writing-template'
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
@@ -66,7 +65,11 @@ import type {
   SurveyPollRawResponse,
 } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import { resolveSurveyWritingDraft } from '@/features/program/shared/lib/survey-management/survey-writing-draft'
-import { resolvePublishedDuplicatedSurveyBinding } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
+import {
+  resolvePublishedSurveyBinding,
+  surveyBindingResolutionAlert,
+  type SurveySubmissionPeriod,
+} from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
 import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { SurveyEmptyState } from '@/features/program/shared/ui/survey-management/survey-empty-state'
 import { SurveyNoResponseState } from '@/features/program/shared/ui/survey-management/survey-no-response-state'
@@ -112,7 +115,6 @@ import {
   isSurveyTemplateOptionForKind,
   pickLectureEvalSurveyFromRemote,
   resolveLectureEvalSubmitContext,
-  resolveSurveyCreateBindingTemplateCode,
   resolveSurveyResultsParticipantTotal,
   resolveSurveyShareClipboardUrl,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
@@ -388,13 +390,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   }, [])
 
   const surveyTemplateOptions = useMemo(() => {
-    const options =
-      remoteSurveyRows.length > 0
-        ? remoteSurveyRows.map(row => ({
-            label: row.templateName,
-            value: row.id,
-          }))
-        : getSurveyWritingTemplateSelectOptions()
+    if (remoteSurveyRows.length > 0) {
+      return remoteSurveyRows
+        .filter(row => createModalKind == null || isSurveyTemplateOptionForKind(row, createModalKind))
+        .map(row => ({
+          label: row.templateName,
+          value: row.id,
+        }))
+    }
+    const options = getSurveyWritingTemplateSelectOptions()
     if (createModalKind == null) return options
     return options.filter(option =>
       isSurveyTemplateOptionForKind(
@@ -547,7 +551,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   function buildFormBindingPayload(
     kind: CreateModalKind,
-    ids: { templateId: number; templateVersionId?: number },
+    ids: { templateId: number; templateVersionId?: number } & SurveySubmissionPeriod,
     audience?: GeneralSatisfactionAudienceKey | null
   ): ProgramFormBindingRequest {
     const formType =
@@ -568,6 +572,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       formType,
       templateId: ids.templateId,
       templateVersionId: ids.templateVersionId,
+      submissionStartAt: ids.submissionStartAt,
+      submissionEndAt: ids.submissionEndAt,
       targetRole,
       ...(audience === 'volunteer_h1'
         ? { targetScope: 'TERM', targetScopeId: 1 }
@@ -710,23 +716,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     }
     setSubmitting(true)
     try {
-      const { newTemplateId } = await duplicateWritingTemplate({
-        sourceTemplateId: selectedTemplateId,
-        category: 'survey',
-      })
-      const row = findWritingTemplateRowByDefinitionId(newTemplateId)
-      const templateCode = resolveSurveyCreateBindingTemplateCode({
-        duplicatedTemplateId: newTemplateId,
-        catalogTemplateCode: row?.id,
-      })
+      const selectedRow = findWritingTemplateRowByDefinitionId(selectedTemplateId)
 
       if (surveysRemote) {
-        const resolved = await resolvePublishedDuplicatedSurveyBinding(templateCode)
-        if (resolved == null) {
+        const resolved = await resolvePublishedSurveyBinding(selectedTemplateId)
+        if (!resolved.ok) {
           void showAlert({
             title: '등록 실패',
-            content:
-              '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.',
+            content: surveyBindingResolutionAlert(resolved.reason),
           })
           return
         }
@@ -759,14 +756,13 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       }
 
       if (isTempMockProgram) {
-        const row = findWritingTemplateRowByDefinitionId(newTemplateId)
-        const titleBase = row?.templateName ?? '설문조사'
+        const titleBase = selectedRow?.templateName ?? '설문조사'
         if (createModalKind === 'survey') {
           const surveyIndex = registeredSurveys.length + 1
           const newSurvey: RegisteredSurvey = {
             id: `temp-mock-org-survey-poll-${Date.now()}`,
             title: `${titleBase} ${String(surveyIndex).padStart(2, '0')}`,
-            templateId: newTemplateId,
+            templateId: selectedTemplateId,
             status: 'before_start',
             responseCount: 0,
             participantTotal: program.totalParticipants ?? 0,
@@ -778,7 +774,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             id: `temp-mock-org-survey-satisfaction-${pendingSatisfactionAudience}-${Date.now()}`,
             title: `${titleBase} (${getGeneralSatisfactionAudienceLabel(pendingSatisfactionAudience)})`,
             templateId:
-              newTemplateId ||
+              selectedTemplateId ||
               GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[pendingSatisfactionAudience],
             status: 'before_start',
             responseCount: 0,
@@ -792,7 +788,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           setLectureEvalSurvey({
             id: `temp-mock-org-survey-lecture-${Date.now()}`,
             title: titleBase,
-            templateId: newTemplateId,
+            templateId: selectedTemplateId,
             status: 'before_start',
             responseCount: 0,
             participantTotal: 1,

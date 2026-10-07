@@ -9,6 +9,7 @@ import {
   GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
+import { SURVEY_ESSAY_QUESTION_TYPES } from '@/features/program/shared/lib/survey-management/aggregate-survey-poll-results'
 import { LECTURE_EVAL_TEMPLATE_ID } from '@/features/program/shared/lib/survey-management/lecture-eval-survey'
 import type {
   RegisteredSurvey,
@@ -83,16 +84,6 @@ export function isProgramSurveyManagementFormBinding(binding: ProgramFormBinding
     return false
   }
   return true
-}
-
-/** 설문 등록 form-binding은 복제된 템플릿 ID를 쓴다. 원본 selectedTemplateId 사용 금지. */
-export function resolveSurveyCreateBindingTemplateCode(params: {
-  duplicatedTemplateId: string
-  catalogTemplateCode?: string | null
-}): string {
-  const duplicated = params.duplicatedTemplateId.trim()
-  if (duplicated) return duplicated
-  return params.catalogTemplateCode?.trim() || ''
 }
 
 export function resolveSurveyShareClipboardUrl(
@@ -439,12 +430,12 @@ export function mapSurveySummaryToQuestionSummaries(
   return questions
 }
 
-/** 주관식 답이 공개(summary `topAnswers` 존재)일 때만 응답 상세로 주관식 표를 채울 의미가 있다 */
+/** 주관식 답이 1건이라도 있을 때만(summary `topAnswers` 비어 있지 않음) 응답 상세로 주관식 표를 채운다 */
 export function surveySummaryHasPublicTextAnswers(
   rows: SurveySummaryResponse[] | null | undefined
 ): boolean {
   return (rows ?? []).some(row => {
-    if (row.questionType !== 'SHORT_ESSAY') return false
+    if (!SURVEY_ESSAY_QUESTION_TYPES.has(row.questionType?.trim().toUpperCase() ?? '')) return false
     const parsed = parseSurveySummaryJson(row.summaryJson)
     return Array.isArray(parsed?.topAnswers) && parsed.topAnswers.length > 0
   })
@@ -461,14 +452,30 @@ const SATISFACTION_TEMPLATE_CODES = new Set<string>(
   Object.values(GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE)
 )
 
-/** 양식 관리 「설문」 카테고리 행의 용도 — 원본 코드 우선, 복사본은 이름으로 판별 */
-export function resolveSurveyTemplateOptionKind(row: {
+type SurveyTemplateOptionRow = {
   id: string
   templateName: string
-}): SurveyTemplateOptionKind {
-  const code = row.id.trim()
+  /** 복제본의 최초 카탈로그 원본 code (양식 목록 API) */
+  baseTemplateCode?: string
+}
+
+function resolveSurveyTemplateKindByCode(code: string): SurveyTemplateOptionKind | null {
   if (code === LECTURE_EVAL_TEMPLATE_ID) return 'lecture'
   if (SATISFACTION_TEMPLATE_CODES.has(code)) return 'satisfaction'
+  return null
+}
+
+/** 양식 관리 「설문」 카테고리 행의 용도 — 원본 코드(`baseTemplateCode` 포함) 우선, 없으면 이름으로 판별 */
+export function resolveSurveyTemplateOptionKind(
+  row: SurveyTemplateOptionRow
+): SurveyTemplateOptionKind {
+  const byCode =
+    resolveSurveyTemplateKindByCode(row.id.trim()) ??
+    resolveSurveyTemplateKindByCode(row.baseTemplateCode?.trim() ?? '')
+  if (byCode != null) return byCode
+  if (row.baseTemplateCode?.trim() && row.baseTemplateCode.trim() !== row.id.trim()) {
+    return 'survey'
+  }
   const name = row.templateName.toLowerCase()
   if (name.includes('강의평가') || name.includes('lecture eval')) return 'lecture'
   if (name.includes('만족도') || name.includes('satisfaction')) return 'satisfaction'
@@ -477,7 +484,7 @@ export function resolveSurveyTemplateOptionKind(row: {
 
 /** 등록 모달 종류(설문조사·만족도조사·강의평가)에 맞는 템플릿만 후보로 둔다 */
 export function isSurveyTemplateOptionForKind(
-  row: { id: string; templateName: string },
+  row: SurveyTemplateOptionRow,
   kind: SurveyTemplateOptionKind
 ): boolean {
   return resolveSurveyTemplateOptionKind(row) === kind

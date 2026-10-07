@@ -20,6 +20,7 @@ import {
 } from '@/features/template/api/form-template-version-cache'
 import {
   createFormTemplateRemote,
+  createFormTemplateVersionRemote,
   deleteFormTemplateRemote,
   duplicateFormTemplateRemote,
   fetchFormTemplatePayloadByCodeRemote,
@@ -50,6 +51,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import type {
   FormTemplateListItemResponse,
   ListTemplatesParams,
@@ -416,13 +418,58 @@ export async function saveFormTemplateVersionDraft(args: {
     throw new Error('저장할 템플릿 버전 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
   }
 
-  await updateFormTemplateVersionRemote(
-    versionId,
-    buildVersionUpdateBody({
-      ...args,
-      omitSchemaJson: shouldOmitImmutableFormSchemaJson(args.templateCode),
-    })
-  )
+  const body = buildVersionUpdateBody({
+    ...args,
+    omitSchemaJson: shouldOmitImmutableFormSchemaJson(args.templateCode),
+  })
+
+  try {
+    await updateFormTemplateVersionRemote(versionId, body)
+  } catch (error) {
+    if (getApiErrorCode(error) !== 'FORM_VERSION_IMMUTABLE') throw error
+    await createDraftVersionFromImmutable(args.templateCode, versionId, body)
+  }
+}
+
+/**
+ * 게시·보관 version은 수정 불가 — 같은 템플릿에 저장 내용으로 새 DRAFT version을 추가한다.
+ * `versions/copy`는 새 COPY 템플릿(「복사본」)을 만들므로 쓰지 않는다.
+ */
+async function createDraftVersionFromImmutable(
+  templateCode: string,
+  sourceVersionId: number,
+  body: ReturnType<typeof buildVersionUpdateBody>
+): Promise<void> {
+  const cached = getFormTemplateVersionCacheEntry(templateCode)
+  if (cached?.templateId == null) {
+    throw new Error('템플릿 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
+  }
+
+  const source =
+    body.schemaJson != null && body.extensionJson != null && body.settingsJson != null
+      ? null
+      : await fetchFormTemplateVersionRemote(sourceVersionId)
+  const created = await createFormTemplateVersionRemote(cached.templateId, {
+    schemaJson: body.schemaJson ?? toJsonText(source?.schemaJson),
+    extensionJson: body.extensionJson ?? toJsonText(source?.extensionJson),
+    settingsJson: body.settingsJson ?? toJsonText(source?.settingsJson),
+  })
+  if (created.templateVersionId == null) {
+    throw new Error('새 초안 버전 ID를 응답에서 찾을 수 없습니다.')
+  }
+
+  upsertFormTemplateVersionCacheEntry({
+    templateCode,
+    templateId: cached.templateId,
+    templateVersionId: created.templateVersionId,
+    latestVersionId: created.templateVersionId,
+    latestVersionNo: created.versionNo,
+  })
+}
+
+function toJsonText(value: unknown): string | undefined {
+  if (value == null) return undefined
+  return typeof value === 'string' ? value : JSON.stringify(value)
 }
 
 export async function publishFormTemplateVersion(templateCode: string): Promise<void> {

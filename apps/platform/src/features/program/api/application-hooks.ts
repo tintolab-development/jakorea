@@ -155,7 +155,7 @@ export function useProgramApplicationForm(
       status: 'error',
       isRemoteEnabled: true,
       bundle: null,
-      blockedReason: null,
+      blockedReason: getApplicationApiErrorCode(optionsQuery.error),
       refetch,
     }
   }

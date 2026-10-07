@@ -11,6 +11,7 @@ import {
   parseTargetLevelsFromDisplayLabel,
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
+  normalizeVolunteerTargetList,
   resolveProgramVolunteerTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 
@@ -193,9 +194,8 @@ function enrichVolunteerRecruitmentScalars(program: Program): Program {
   if (resolveProgramVolunteerTargets(next).length === 0 && info.recruitmentTarget?.trim()) {
     next = {
       ...next,
-      volunteerTargets: parseMultiSelectFromDisplayLabel(
-        info.recruitmentTarget,
-        new Set(['대학(원)생', '일반인', '기타'])
+      volunteerTargets: normalizeVolunteerTargetList(
+        info.recruitmentTarget.split(/[,，·]/)
       ),
       volunteerTarget: info.recruitmentTarget.trim(),
     }

@@ -47,6 +47,12 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   OPERATION_NOT_ALLOWED: '제출할 수 없는 답변이 포함되어 있습니다.',
   RECRUITMENT_FORM_BINDING_MISMATCH: '선택한 모집의 신청서가 아닙니다. 모집을 다시 선택해 주세요.',
   RECRUITMENT_NOT_FOUND: '선택한 모집을 찾을 수 없습니다. 모집을 다시 선택해 주세요.',
+  /**
+   * 봉사자 신청 — volunteerTargets 코드와 회원 구분(재학·학교급)이 겹치지 않음.
+   * application-options · 폼 조회 · 임시저장 · 제출 모두 HTTP 403.
+   */
+  VOLUNTEER_RECRUITMENT_TARGET_MISMATCH:
+    '모집 대상과 회원 구분이 일치하지 않아 신청할 수 없습니다.',
 }
 
 export function messageForApplicationBlockedReason(

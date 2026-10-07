@@ -150,7 +150,6 @@ import type { ApplicantDetailMeta } from './application-volunteer/screening/appl
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { duplicateWritingTemplate } from '@/features/template/api/duplicate-writing-template'
 import {
   findWritingTemplateRowByDefinitionId,
 } from '@/features/template/lib/writing-template-create-helpers'
@@ -228,12 +227,12 @@ import {
   useGeneralProgramSurveys,
   useGeneralProgramSurveySummary,
 } from '@/features/program/general/hooks/use-general-program-posts-surveys'
-import { resolvePublishedDuplicatedSurveyBinding } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
-import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import {
-  resolveSurveyCreateBindingTemplateCode,
-  resolveSurveyShareClipboardUrl,
-} from '@/features/program/general/api/adapters/program-survey-adapters'
+  resolvePublishedSurveyBinding,
+  surveyBindingResolutionAlert,
+} from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
+import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
+import { resolveSurveyShareClipboardUrl } from '@/features/program/general/api/adapters/program-survey-adapters'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
   createGeneralProgramSurveyShareLink,
@@ -1640,31 +1639,23 @@ export function UjatProgramDetailFullPageModal({
     if (selectedSurveyTemplateId == null || selectedSurveyTemplateId === '') return
     setSubmittingSurveyTemplate(true)
     try {
-      const { newTemplateId } = await duplicateWritingTemplate({
-        sourceTemplateId: selectedSurveyTemplateId,
-        category: 'survey',
-      })
-      const next = findWritingTemplateRowByDefinitionId(newTemplateId)
+      const next = findWritingTemplateRowByDefinitionId(selectedSurveyTemplateId)
 
       if (surveysRemote) {
-        const ids = await resolvePublishedDuplicatedSurveyBinding(
-          resolveSurveyCreateBindingTemplateCode({
-            duplicatedTemplateId: newTemplateId,
-            catalogTemplateCode: next?.id,
-          })
-        )
-        if (ids == null) {
+        const resolved = await resolvePublishedSurveyBinding(selectedSurveyTemplateId)
+        if (!resolved.ok) {
           void showAlert({
             title: '등록 실패',
-            content:
-              '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.',
+            content: surveyBindingResolutionAlert(resolved.reason),
           })
           return
         }
         const payload: ProgramFormBindingRequest = {
           formType: 'SURVEY',
-          templateId: ids.templateId,
-          templateVersionId: ids.templateVersionId,
+          templateId: resolved.templateId,
+          templateVersionId: resolved.templateVersionId,
+          submissionStartAt: resolved.submissionStartAt,
+          submissionEndAt: resolved.submissionEndAt,
           active: true,
           required: false,
         }
@@ -1856,24 +1847,14 @@ export function UjatProgramDetailFullPageModal({
     if (selectedSatisfactionTemplateId == null || selectedSatisfactionTemplateId === '') return
     setSubmittingSatisfactionSurvey(true)
     try {
-      const { newTemplateId } = await duplicateWritingTemplate({
-        sourceTemplateId: selectedSatisfactionTemplateId,
-        category: 'survey',
-      })
-      const next = findWritingTemplateRowByDefinitionId(newTemplateId)
+      const next = findWritingTemplateRowByDefinitionId(selectedSatisfactionTemplateId)
 
       if (surveysRemote) {
-        const ids = await resolvePublishedDuplicatedSurveyBinding(
-          resolveSurveyCreateBindingTemplateCode({
-            duplicatedTemplateId: newTemplateId,
-            catalogTemplateCode: next?.id,
-          })
-        )
-        if (ids == null) {
+        const resolved = await resolvePublishedSurveyBinding(selectedSatisfactionTemplateId)
+        if (!resolved.ok) {
           void showAlert({
             title: '등록 실패',
-            content:
-              '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.',
+            content: surveyBindingResolutionAlert(resolved.reason),
           })
           return
         }
@@ -1885,8 +1866,10 @@ export function UjatProgramDetailFullPageModal({
               : 'VOLUNTEER_H1'
         const payload: ProgramFormBindingRequest = {
           formType: 'SATISFACTION',
-          templateId: ids.templateId,
-          templateVersionId: ids.templateVersionId,
+          templateId: resolved.templateId,
+          templateVersionId: resolved.templateVersionId,
+          submissionStartAt: resolved.submissionStartAt,
+          submissionEndAt: resolved.submissionEndAt,
           targetRole,
           active: true,
           required: false,
@@ -2134,24 +2117,14 @@ export function UjatProgramDetailFullPageModal({
     if (selectedLectureEvalTemplateId == null || selectedLectureEvalTemplateId === '') return
     setSubmittingLectureEvalSurvey(true)
     try {
-      const { newTemplateId } = await duplicateWritingTemplate({
-        sourceTemplateId: selectedLectureEvalTemplateId,
-        category: 'survey',
-      })
-      const next = findWritingTemplateRowByDefinitionId(newTemplateId)
+      const next = findWritingTemplateRowByDefinitionId(selectedLectureEvalTemplateId)
 
       if (surveysRemote) {
-        const ids = await resolvePublishedDuplicatedSurveyBinding(
-          resolveSurveyCreateBindingTemplateCode({
-            duplicatedTemplateId: newTemplateId,
-            catalogTemplateCode: next?.id,
-          })
-        )
-        if (ids == null) {
+        const resolved = await resolvePublishedSurveyBinding(selectedLectureEvalTemplateId)
+        if (!resolved.ok) {
           void showAlert({
             title: '등록 실패',
-            content:
-              '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.',
+            content: surveyBindingResolutionAlert(resolved.reason),
           })
           return
         }
@@ -2167,8 +2140,10 @@ export function UjatProgramDetailFullPageModal({
         }
         const payload: ProgramFormBindingRequest = {
           formType: 'LECTURE_EVALUATION',
-          templateId: ids.templateId,
-          templateVersionId: ids.templateVersionId,
+          templateId: resolved.templateId,
+          templateVersionId: resolved.templateVersionId,
+          submissionStartAt: resolved.submissionStartAt,
+          submissionEndAt: resolved.submissionEndAt,
           targetRole: 'ADMIN',
           targetScope: lectureTarget.targetScope,
           targetScopeId: lectureTarget.targetScopeId,

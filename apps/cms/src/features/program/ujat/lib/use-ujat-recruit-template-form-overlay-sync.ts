@@ -3,6 +3,7 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { normalizeVolunteerTargetList } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   hasRecruitmentCopy,
   pickRecruitmentCopyRow,
@@ -247,8 +248,13 @@ export function programToUjatRecruitTemplateFormValues(
     next.volunteerTargetDetail = targetDetail
   }
   const volunteerTargets = readOverlayStringList(overlay, VOLUNTEER_KEYS.volunteerTargets)
-  if ((!next.volunteerTargets || next.volunteerTargets.length === 0) && volunteerTargets) {
-    next.volunteerTargets = volunteerTargets
+  if (Array.isArray(overlay[VOLUNTEER_KEYS.volunteerTargets])) {
+    next.volunteerTargets = normalizeVolunteerTargetList(volunteerTargets ?? [])
+  } else if (!next.volunteerTargets?.length) {
+    // 반기 overlay에 모집 대상 키가 없을 때만. 저장된 배열(빈 배열 포함)은 덮지 않는다.
+    next.volunteerTargets = ['university', 'adult']
+  } else {
+    next.volunteerTargets = normalizeVolunteerTargetList(next.volunteerTargets)
   }
   const programRange = readOverlayRange(overlay, VOLUNTEER_KEYS.programRange)
   if (!next.startDate && programRange?.start?.trim()) next.startDate = programRange.start
