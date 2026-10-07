@@ -149,7 +149,7 @@
 | [logs-api-backend-gaps.md](api/logs-api-backend-gaps.md) | 보안 설정(로그 관리) 백엔드 갭 요약 (상세는 위 SSOT) |
 | [data-management-api-integration.md](api/data-management-api-integration.md) | 데이터 관리(후원사·교재·세부 프로그램) API 연동 명세 |
 | [data-management-api-backend-gaps.md](api/data-management-api-backend-gaps.md) | 데이터 관리 **백엔드 갭 요청** |
-| [template-create-api-backend-handoff.md](api/template-create-api-backend-handoff.md) | 템플릿 관리 **신규 템플릿 생성** API·로직 갭 (BE 전달용) |
+| [template-create-api-backend-handoff-2026-10-07.md](api/template-create-api-backend-handoff-2026-10-07.md) | 템플릿 관리 **신규 템플릿 생성** API·로직 갭 (BE 전달용) |
 | [programs-detail-api-conversion-status.md](api/programs-detail-api-conversion-status.md) | 일반 프로그램 상세 LNB Phase·완료율 SSOT |
 | [general-org-application-vs-participant-give-up-fe-acceptance-2026-09-16.md](api/general-org-application-vs-participant-give-up-fe-acceptance-2026-09-16.md) | 일반 기관 신청 vs 참여 · 활동 포기 FE 수용 |
 | [general-org-application-detail-form-seed-fe-acceptance-2026-09-16.md](api/general-org-application-detail-form-seed-fe-acceptance-2026-09-16.md) | 일반 기관·강사·봉사 신청 상세 form/코멘트 seed FE 수용 |

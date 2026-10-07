@@ -10,7 +10,7 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9) · subset `openapi/forms-sur
 JSON 계약 SSOT: [form-template-json-contract.md](./form-template-json-contract.md)  
 연동 명세: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md)  
 마이그레이션 PHASE: [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md)  
-**신규 템플릿 생성 전용**: [template-create-api-backend-handoff.md](./template-create-api-backend-handoff.md)
+**신규 템플릿 생성 전용**: [template-create-api-backend-handoff-2026-10-07.md](./template-create-api-backend-handoff-2026-10-07.md)
 
 **작성일**: 2026-07-01  
 **Swagger 서버 스냅샷**: `https://6920-221-146-247-18.ngrok-free.app//`
