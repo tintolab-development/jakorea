@@ -25,6 +25,17 @@ function unwrap<T>(payload: unknown): T {
   return payload as T
 }
 
+const REJECTED_UPLOAD_STATUSES = new Set(['QUARANTINED', 'DELETED', 'DESTROYED', 'EXPIRED'])
+const REJECTED_SCAN_STATUSES = new Set(['INFECTED', 'FAILED', 'DESTROYED'])
+
+/** 보안 검사·내용 정책에서 최종 거부된 파일. 다시 기다려도 사용할 수 없다. */
+export class MemberFileRejectedError extends Error {
+  constructor() {
+    super('파일 보안 검사에 실패했습니다.')
+    this.name = 'MemberFileRejectedError'
+  }
+}
+
 function isAvailable(file: MemberFileResponse): boolean {
   return (
     file.scanStatus?.trim().toUpperCase() === 'CLEAN' &&
@@ -84,8 +95,9 @@ export async function uploadMemberPortalFile(input: {
     )
     if (isAvailable(status)) return prepared.fileObjectId
     const scan = status.scanStatus?.trim().toUpperCase() ?? ''
-    if (scan === 'INFECTED' || scan === 'FAILED') {
-      throw new Error('파일 보안 검사에 실패했습니다.')
+    const upload = status.uploadStatus?.trim().toUpperCase() ?? ''
+    if (REJECTED_SCAN_STATUSES.has(scan) || REJECTED_UPLOAD_STATUSES.has(upload)) {
+      throw new MemberFileRejectedError()
     }
     await sleep(POLL_INTERVAL_MS)
   }
