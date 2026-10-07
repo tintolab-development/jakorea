@@ -462,14 +462,30 @@ const SATISFACTION_TEMPLATE_CODES = new Set<string>(
   Object.values(GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE)
 )
 
-/** 양식 관리 「설문」 카테고리 행의 용도 — 원본 코드 우선, 복사본은 이름으로 판별 */
-export function resolveSurveyTemplateOptionKind(row: {
+type SurveyTemplateOptionRow = {
   id: string
   templateName: string
-}): SurveyTemplateOptionKind {
-  const code = row.id.trim()
+  /** 복제본의 최초 카탈로그 원본 code (양식 목록 API) */
+  baseTemplateCode?: string
+}
+
+function resolveSurveyTemplateKindByCode(code: string): SurveyTemplateOptionKind | null {
   if (code === LECTURE_EVAL_TEMPLATE_ID) return 'lecture'
   if (SATISFACTION_TEMPLATE_CODES.has(code)) return 'satisfaction'
+  return null
+}
+
+/** 양식 관리 「설문」 카테고리 행의 용도 — 원본 코드(`baseTemplateCode` 포함) 우선, 없으면 이름으로 판별 */
+export function resolveSurveyTemplateOptionKind(
+  row: SurveyTemplateOptionRow
+): SurveyTemplateOptionKind {
+  const byCode =
+    resolveSurveyTemplateKindByCode(row.id.trim()) ??
+    resolveSurveyTemplateKindByCode(row.baseTemplateCode?.trim() ?? '')
+  if (byCode != null) return byCode
+  if (row.baseTemplateCode?.trim() && row.baseTemplateCode.trim() !== row.id.trim()) {
+    return 'survey'
+  }
   const name = row.templateName.toLowerCase()
   if (name.includes('강의평가') || name.includes('lecture eval')) return 'lecture'
   if (name.includes('만족도') || name.includes('satisfaction')) return 'satisfaction'
@@ -478,7 +494,7 @@ export function resolveSurveyTemplateOptionKind(row: {
 
 /** 등록 모달 종류(설문조사·만족도조사·강의평가)에 맞는 템플릿만 후보로 둔다 */
 export function isSurveyTemplateOptionForKind(
-  row: { id: string; templateName: string },
+  row: SurveyTemplateOptionRow,
   kind: SurveyTemplateOptionKind
 ): boolean {
   return resolveSurveyTemplateOptionKind(row) === kind

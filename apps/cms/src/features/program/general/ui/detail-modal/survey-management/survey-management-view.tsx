@@ -388,13 +388,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   }, [])
 
   const surveyTemplateOptions = useMemo(() => {
-    const options =
-      remoteSurveyRows.length > 0
-        ? remoteSurveyRows.map(row => ({
-            label: row.templateName,
-            value: row.id,
-          }))
-        : getSurveyWritingTemplateSelectOptions()
+    if (remoteSurveyRows.length > 0) {
+      return remoteSurveyRows
+        .filter(row => createModalKind == null || isSurveyTemplateOptionForKind(row, createModalKind))
+        .map(row => ({
+          label: row.templateName,
+          value: row.id,
+        }))
+    }
+    const options = getSurveyWritingTemplateSelectOptions()
     if (createModalKind == null) return options
     return options.filter(option =>
       isSurveyTemplateOptionForKind(
