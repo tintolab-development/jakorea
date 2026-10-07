@@ -494,18 +494,19 @@ export function GeneralProgramListPageContent() {
               setBulkDeleteModalOpen(false)
               setProgramsPendingBulkDelete([])
             } catch (error) {
-              showAlert(
-                isProgramHardDeleteBlockedError(error)
-                  ? {
-                      title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
-                      content: error.message,
-                    }
-                  : {
-                      title: '삭제 실패',
-                      content:
-                        '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-                    }
-              )
+              if (isProgramHardDeleteBlockedError(error)) {
+                setBulkDeleteModalOpen(false)
+                setProgramsPendingBulkDelete([])
+                showAlert({
+                  title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+                  content: error.message,
+                })
+                return
+              }
+              showAlert({
+                title: '삭제 실패',
+                content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+              })
             }
           })()
         }}
