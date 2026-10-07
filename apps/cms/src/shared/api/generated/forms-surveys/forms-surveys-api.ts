@@ -96,8 +96,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  */
 const getVersion = (
     versionId: number,
- options?: SecondParameter<typeof customInstance<FormTemplateVersionResponse>>,) => {
-      return customInstance<FormTemplateVersionResponse>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/form-template-versions/${versionId}`, method: 'GET'
     },
       options);

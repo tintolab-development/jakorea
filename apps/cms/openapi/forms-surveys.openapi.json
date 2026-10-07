@@ -492,7 +492,10 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다."
+          },
+          "304": {
+            "description": "PUBLISHED version이 If-None-Match ETag와 같음",
             "content": {
               "*/*": {
                 "schema": {
@@ -727,6 +730,16 @@
             "required": false,
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "includeProgramScoped",
+            "in": "query",
+            "description": "true면 template_scope=PROGRAM 템플릿도 포함. REGISTRATION/RECRUITMENT/APPLICATION 프로그램 copy 제외 규칙은 그대로다.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -15682,7 +15695,19 @@
           "submissionEndAt": {
             "type": "string",
             "format": "date-time",
-            "description": "없으면 null. 시작·종료가 모두 null이면 기간 없음이며 화면 상태는 진행 중(in_progress)이다."
+            "description": "없으면 null. 시작·종료가 모두 null이면 기간 없음이며 progressStatus는 IN_PROGRESS다."
+          },
+          "progressStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)만. BEFORE_START | IN_PROGRESS | FINISHED. 그 외 formType은 null. now < submissionStartAt 이면 BEFORE_START, submissionEndAt이 있고 now > submissionEndAt 이면 FINISHED, 그 외(시작 시각 null 포함)는 IN_PROGRESS. 응답 수로 바꾸지 않는다.",
+            "enum": [
+              "BEFORE_START",
+              "IN_PROGRESS",
+              "FINISHED"
+            ]
           },
           "duplicatePolicy": {
             "type": "string"
@@ -15705,6 +15730,7 @@
           },
           "availableActions": {
             "type": "array",
+            "description": "기존 연결 동작(VIEW, EDIT, DEACTIVATE, CHANGE_TEMPLATE_VERSION, REACTIVATE_WITH_UPDATE)을 유지한다. 설문류이고 progressStatus가 BEFORE_START일 때만 DELETE, UPDATE_TEMPLATE을 추가한다. submittedCount로 이 두 값을 빼지 않는다.",
             "items": {
               "type": "string"
             }
@@ -22625,6 +22651,14 @@
             "type": "integer",
             "format": "int64",
             "description": "프로그램 등록 중 copy 소유 draft. 지정 시 해당 관리자 draft에 귀속"
+          },
+          "ownerProgramId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "이미 생성된 프로그램 전용 copy. 지정 시 새 템플릿을 template_scope=PROGRAM, owner_program_id=이 값으로 저장하고 양식 관리 목록에서 제외한다. 해당 프로그램 수정 권한이 없으면 403. ownerProgramDraftId와 함께 보내면 400 FORM_TEMPLATE_COPY_OWNER_CONFLICT."
           }
         }
       },
@@ -35305,7 +35339,8 @@
             "format": "int64"
           },
           "summaryJson": {
-            "type": "string"
+            "type": "string",
+            "description": "JSON 객체 문자열 {totalResponses, answeredCount, blankCount, distinctAnswerCount, topAnswers[{answer,count}]}. 공개(NON_PII/PUBLIC/NONE) SCALE_TYPE·MULTIPLE_CHOICE·STAR_RATE 문항에만 options[{value,label,displayOrder,count}](0건 옵션 포함, displayOrder 순)와 unmatchedCount(옵션에 없는 value 수)가 추가된다. STAR_RATE에 옵션이 없으면 value \"1\"~\"5\", label \"{n}점\". 그 외 문항에는 두 필드가 없다."
           },
           "summarySource": {
             "type": "string"
@@ -35313,6 +35348,15 @@
           "calculatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "questionDisplayOrder": {
+            "type": "integer",
+            "format": "int32",
+            "description": "게시 version 문항 순서(단락 순서 기준 0부터). 배열은 이 값 오름차순. 현재 version에 없는 문항의 답만 있는 행은 null이며 맨 뒤"
+          },
+          "requiredYn": {
+            "type": "boolean",
+            "description": "필수 문항 여부. 현재 version에 없는 문항의 답만 있는 행은 null"
           }
         }
       },
@@ -35350,14 +35394,22 @@
             "format": "int64"
           },
           "submittedByMemberName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "제출 회원 실명(마스킹 없음). 회원 제출이 아니거나 탈퇴 회원이면 null"
           },
           "submittedByAdminId": {
             "type": "integer",
             "format": "int64"
           },
           "submittedByAdminName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "대리 제출 관리자 실명(마스킹 없음). 관리자 제출이 아니면 null"
           },
           "answerCount": {
             "type": "integer",
@@ -35365,7 +35417,7 @@
           },
           "answerPreviewJson": {
             "type": "string",
-            "description": "최대 5개 답변 preview JSON 문자열. NON_PII/PUBLIC/NONE의 answerDisplayText만 표시하고 민감·미분류 답변은 null"
+            "description": "JSON 배열 문자열 [{\"questionKey\": string, \"questionLabel\": string, \"answerDisplayText\": string | null}], 최대 5개. NON_PII/PUBLIC/NONE의 answerDisplayText만 표시하고 민감·미분류 답변은 null. 주관식 answerDisplayText는 bodyText 원문. 답이 없으면 \"[]\""
           },
           "submittedAt": {
             "type": "string",
@@ -35442,14 +35494,22 @@
             "format": "int64"
           },
           "submittedByMemberName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "제출 회원 실명(마스킹 없음). 회원 제출이 아니거나 탈퇴 회원이면 null"
           },
           "submittedByAdminId": {
             "type": "integer",
             "format": "int64"
           },
           "submittedByAdminName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "대리 제출 관리자 실명(마스킹 없음). 관리자 제출이 아니면 null"
           },
           "submittedAt": {
             "type": "string",
@@ -39836,12 +39896,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
+            "description": "카탈로그 key = #{…} 안쪽 라벨",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
+            "description": "본문 삽입용 토큰",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -39853,11 +39913,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true이면 programId 없이 enabled=false."
+            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
+            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
           },
           "programGroups": {
             "type": "array",
@@ -39875,14 +39935,14 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "description": "허용 참여 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
+            "description": "허용 회원 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
@@ -40381,15 +40441,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
