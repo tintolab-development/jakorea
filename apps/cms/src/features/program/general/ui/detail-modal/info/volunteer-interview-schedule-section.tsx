@@ -140,7 +140,7 @@ function GeneralProgramVolunteerInterviewScheduleView({
 }
 
 const INTERVIEW_SCHEDULE_EDIT_DESCRIPTION =
-  '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요'
+  '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요. 신청자 면접 선택지는 2차 면접 심사 기간 안에서 열리며, 기간을 비우면 봉사자 모집 기간이 쓰입니다.'
 
 export function GeneralProgramVolunteerInterviewScheduleSection({
   program,
