@@ -1,20 +1,20 @@
 import { useCallback, useLayoutEffect, useMemo } from 'react'
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useQueryClient,
   type InfiniteData,
 } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
-import {
-  fetchGeneralProgramsRemoteListPage,
-  type GeneralProgramsRemoteListPage,
-} from '@/features/program/general/api/admin-general-programs-service'
+import type { GeneralProgramsRemoteListPage } from '@/features/program/general/api/admin-general-programs-service'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
-import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import {
-  clientFilterGeneralPrograms,
-  type GeneralProgramListTableFilters,
-} from '@/features/program/general/api/general-program-list-filter-params'
+  generalProgramListInfiniteQueryOptions,
+  readGeneralProgramTableFilters,
+  serializeGeneralProgramTableFilters,
+} from '@/features/program/general/api/general-program-list-query'
+import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
+import { clientFilterGeneralPrograms } from '@/features/program/general/api/general-program-list-filter-params'
 import { getTempMockShowcasePrograms } from '@/features/program/general/lib/temp-mock-program-resolve'
 import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
 import { programMatchesProgressPhase } from '@/features/program/general/ui/constants/program-list-constants'
@@ -31,25 +31,6 @@ export type { GeneralProgramOverviewStatusFilter } from '@/features/program/gene
 export interface GeneralProgramListQueryParams extends Record<string, string | undefined> {
   programId?: string
   status?: GeneralProgramOverviewStatusFilter | 'economy_scheduled' | 'economy_in_progress' | 'economy_completed'
-}
-
-const LIST_STALE_TIME_MS = 30_000
-
-function readTableFiltersFromSearchParams(
-  searchParams: URLSearchParams
-): GeneralProgramListTableFilters {
-  return {
-    title: searchParams.get('title') ?? undefined,
-    lifecycleStatus: searchParams.get('lifecycleStatus') ?? undefined,
-    targetLevel: searchParams.get('targetLevel') ?? undefined,
-    participantRecruitment: searchParams.get('participantRecruitment') ?? undefined,
-    operationStartDate: searchParams.get('operationStartDate') ?? undefined,
-    operationEndDate: searchParams.get('operationEndDate') ?? undefined,
-  }
-}
-
-function serializeTableFilters(filters: GeneralProgramListTableFilters): string {
-  return JSON.stringify(filters)
 }
 
 /** 목록 재진입 시 캐시된 2페이지 이상을 refetch하지 않도록 첫 페이지만 남긴다. */
@@ -82,10 +63,13 @@ export function useGeneralProgramListFilters() {
   }, [params.status])
 
   const tableFilters = useMemo(
-    () => readTableFiltersFromSearchParams(searchParams),
+    () => readGeneralProgramTableFilters(searchParams),
     [searchParams]
   )
-  const tableFiltersKey = useMemo(() => serializeTableFilters(tableFilters), [tableFilters])
+  const tableFiltersKey = useMemo(
+    () => serializeGeneralProgramTableFilters(tableFilters),
+    [tableFilters]
+  )
   const listQueryKey = useMemo(
     () => generalProgramQueryKeys.list(statusFilter, tableFiltersKey),
     [statusFilter, tableFiltersKey]
@@ -102,15 +86,12 @@ export function useGeneralProgramListFilters() {
   }, [queryClient, statusFilter, tableFiltersKey, remoteEnabled])
 
   const remoteListQuery = useInfiniteQuery({
-    queryKey: listQueryKey,
-    queryFn: ({ pageParam }) =>
-      fetchGeneralProgramsRemoteListPage(statusFilter, tableFilters, pageParam as number),
-    initialPageParam: 0,
-    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    ...generalProgramListInfiniteQueryOptions(statusFilter, tableFilters),
     enabled: remoteEnabled,
-    staleTime: LIST_STALE_TIME_MS,
-    retry: false,
+    // 상단 위젯 단계 이동 시 새 키 응답 전까지 이전 목록을 유지 (빈 표 → 스피너 → 표 깜빡임 방지)
+    placeholderData: keepPreviousData,
   })
+  const isPlaceholderData = remoteEnabled && remoteListQuery.isPlaceholderData
 
   const remotePrograms = useMemo(() => {
     if (!remoteEnabled) return []
@@ -184,9 +165,11 @@ export function useGeneralProgramListFilters() {
     loading: remoteEnabled
       ? remoteListQuery.isFetching && !remoteListQuery.isFetchingNextPage
       : false,
+    isPlaceholderData,
     isFetchingNextPage: remoteEnabled ? remoteListQuery.isFetchingNextPage : false,
     fetchNextPage: remoteListQuery.fetchNextPage,
-    hasNextPage: remoteEnabled ? (remoteListQuery.hasNextPage ?? false) : false,
+    hasNextPage:
+      remoteEnabled && !isPlaceholderData ? (remoteListQuery.hasNextPage ?? false) : false,
     listQueryFiltersKey: tableFiltersKey,
     isRemoteDataSource: remoteEnabled,
   }

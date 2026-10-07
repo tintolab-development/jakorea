@@ -249,7 +249,7 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
   if (lectureReports.loading) {
     return (
       <div className="school-detail-fullpage-view__instructor-section">
-        <div className="flex min-h-[160px] items-center justify-center py-8" role="status">
+        <div className="detail-fullpage-modal__loading" role="status">
           <Spin size="large" />
         </div>
       </div>

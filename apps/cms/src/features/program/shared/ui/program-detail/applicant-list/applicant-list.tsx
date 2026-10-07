@@ -70,6 +70,7 @@ import {
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
+import { toInstructorApplicationFeePolicy } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
   toFlatDecisionNotifyTiming,
   toNestedDecisionNotification,
@@ -1795,15 +1796,15 @@ export function ApplicantList({
                 undefined,
                 {
                   assignments: remoteAssignments,
-                  feePolicy: {
+                  feePolicy: toInstructorApplicationFeePolicy({
                     basisType: detail.lectureFeeBasisType,
-                    measure: detail.lectureFeeMeasure?.trim() || 'SESSION',
-                    amount: Number(detail.lectureFeeAmount?.replaceAll(',', '') ?? 0),
+                    measure: detail.lectureFeeMeasure,
+                    amount: detail.lectureFeeAmount,
                     instructorFeeGrade:
                       detail.instructorFeeGradeLabel?.trim() ||
                       instructorApprovalInstructor?.instructorFeeGradeLabel?.trim() ||
                       '미지정',
-                  },
+                  }),
                   notification: {
                     timing: detail.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
                     scheduledAt:

@@ -49,7 +49,7 @@ import type {
   DeleteAdminParams,
   DeleteApplicationHistoryParams,
   DeleteSchoolParams,
-  DownloadParams,
+  Download1Params,
   ExternalIdentifierResponse,
   ExternalIdentifierUpsertRequest,
   FileDownloadJobResponse,
@@ -869,10 +869,10 @@ const createMemberComment = (
  * - 검토 메모: Route documented from Round5-8 controllers; whole-application runtime OpenAPI export not executed.
  * @summary POST /api/admin/users/{memberId}/applications/{applicationId}/assignment-files/download
  */
-const download = (
+const download1 = (
     memberId: number,
     applicationId: number,
-    params: DownloadParams,
+    params: Download1Params,
  options?: SecondParameter<typeof customInstance<unknown>>,) => {
       return customInstance<unknown>(
       {url: `/api/admin/users/${memberId}/applications/${applicationId}/assignment-files/download`, method: 'POST',
@@ -4199,7 +4199,7 @@ const getMemberPrivacyAvailableActions = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: LECTURE_REPORT_READ 권한 필요
+ * - 필요 권한: FILE_DOWNLOAD 권한 필요
  * - 접근 범위: MEMBER_SCOPE 범위 정책
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -5444,7 +5444,7 @@ const listPermissions = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
+ * - 필요 권한: LOG_READ 권한 필요
  * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -5951,7 +5951,7 @@ const deleteProgramRole = (
       options);
     }
 
-return {getRolePermissions,updateRolePermissions,listProgramRoles,saveProgramRoles,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,consentFilledDocument,listMemberComments,createMemberComment,download,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,listSchools,createSchool,bulkDeleteSchools,bulkDelete1,withdrawMe,listVerificationRequests,createVerificationRequest,revoke,activityTypes,addActivityType,currentJaEvaluation,submitJaEvaluation,resetPending,resendNotification,reject2,unmask,cancelApproval,approve1,bulkReject,bulkApprove,allocateCertificateSerial,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,cancelAdminApproval,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,bulkDeleteProgramRoles,unmask1,resetAdminPassword,listComments,createComment,bulkDeleteAdmins,updateMemberBasicInfo,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,getSchool,deleteSchool,updateSchool,updateTeacherEmploymentStatus,updateActivityType,changeAdminStatus,changeAdminRole,deleteComment,updateComment,updateAdminBasicInfo,listMembers,getTeacherMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,downloadAllLectureReports,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,consentRecords,listMemberApplications,listLectureReports,getLectureAttendance,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listPreRegisterConflicts,listTeachers,listProgramEnrollmentHistory,listAllCmsMembersAndAdmins,listInstructors,listConsents,listInstructorRoleRequests,getDetail,listRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,availableActions1,consentRecords1,listProgramRoleOptions,deleteApplicationHistory,deleteProgramRole}};
+return {getRolePermissions,updateRolePermissions,listProgramRoles,saveProgramRoles,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,consentFilledDocument,listMemberComments,createMemberComment,download1,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,listSchools,createSchool,bulkDeleteSchools,bulkDelete1,withdrawMe,listVerificationRequests,createVerificationRequest,revoke,activityTypes,addActivityType,currentJaEvaluation,submitJaEvaluation,resetPending,resendNotification,reject2,unmask,cancelApproval,approve1,bulkReject,bulkApprove,allocateCertificateSerial,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,cancelAdminApproval,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,bulkDeleteProgramRoles,unmask1,resetAdminPassword,listComments,createComment,bulkDeleteAdmins,updateMemberBasicInfo,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,getSchool,deleteSchool,updateSchool,updateTeacherEmploymentStatus,updateActivityType,changeAdminStatus,changeAdminRole,deleteComment,updateComment,updateAdminBasicInfo,listMembers,getTeacherMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,downloadAllLectureReports,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,consentRecords,listMemberApplications,listLectureReports,getLectureAttendance,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listPreRegisterConflicts,listTeachers,listProgramEnrollmentHistory,listAllCmsMembersAndAdmins,listInstructors,listConsents,listInstructorRoleRequests,getDetail,listRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,availableActions1,consentRecords1,listProgramRoleOptions,deleteApplicationHistory,deleteProgramRole}};
 export type GetRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['getRolePermissions']>>>
 export type UpdateRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['updateRolePermissions']>>>
 export type ListProgramRolesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listProgramRoles']>>>
@@ -5964,7 +5964,7 @@ export type DeleteAndAnonymizeResult = NonNullable<Awaited<ReturnType<ReturnType
 export type ConsentFilledDocumentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['consentFilledDocument']>>>
 export type ListMemberCommentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listMemberComments']>>>
 export type CreateMemberCommentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['createMemberComment']>>>
-export type DownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['download']>>>
+export type Download1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['download1']>>>
 export type PreRegisterInstructorResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['preRegisterInstructor']>>>
 export type PreRegisterIndividualResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['preRegisterIndividual']>>>
 export type ResolvePreRegisterConflictResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['resolvePreRegisterConflict']>>>

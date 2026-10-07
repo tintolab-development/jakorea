@@ -11,5 +11,5 @@ export interface MemberPortalConsentWithdrawRequest {
      * @minLength 0
      * @maxLength 500
      */
-  reason: string;
+  reason?: string;
 }

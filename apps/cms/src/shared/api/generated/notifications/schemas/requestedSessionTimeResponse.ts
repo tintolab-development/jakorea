@@ -8,7 +8,11 @@
 
 export interface RequestedSessionTimeResponse {
   sessionOrder?: number;
-  period?: number;
+  /**
+     * 교시. 일반 기관 날짜 지정형은 null.
+     * @nullable
+     */
+  period?: number | null;
   startTime?: string;
   endTime?: string;
 }

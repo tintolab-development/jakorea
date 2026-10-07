@@ -351,6 +351,14 @@ export function useGeneralProgramRegistrationFlow(
 
   const isProgramStep = coercedActiveStep === 'program'
   const isParticipantStep = isParticipantRegistrationStep(coercedActiveStep)
+  const { buildCurrentProgramSnapshot } = registrationVm
+  const instructorScheduleSourceProgram = useMemo(
+    () =>
+      open && coercedActiveStep === 'application-instructor'
+        ? buildCurrentProgramSnapshot()
+        : null,
+    [open, coercedActiveStep, buildCurrentProgramSnapshot]
+  )
 
   const participantVm = useProgramParticipantApplicationEditor(
     open && isParticipantStep,
@@ -375,6 +383,7 @@ export function useGeneralProgramRegistrationFlow(
         participantVariant === 'volunteer' ||
         participantVariant === 'economy-application-institution' ||
         participantVariant === 'trained-teachers-application-institution',
+      instructorScheduleSourceProgram,
       applicantRecruitInstitutionLayoutVariant: isCompanySchoolRegistration
         ? 'economy'
         : isTrainedTeachersRegistration

@@ -7,6 +7,7 @@
  */
 import type { GuardianProfileResponse } from './guardianProfileResponse';
 import type { InstructorPortalProfileResponse } from './instructorPortalProfileResponse';
+import type { PortalProfileResponseAgeGroup } from './portalProfileResponseAgeGroup';
 import type { PortalTeacherOrganizationResponse } from './portalTeacherOrganizationResponse';
 
 export interface PortalProfileResponse {
@@ -18,6 +19,7 @@ export interface PortalProfileResponse {
   gender?: string;
   memberType?: string;
   teacher?: boolean;
+  /** 강사회원 여부. 승인된 강사 권한이 있을 때만 true. 강사 권한 신청 중(미승인)·반려·철회·권한 없음은 false. GET /api/portal/auth/me 의 instructor와 항상 동일. */
   instructor?: boolean;
   postalCode?: string;
   address?: string;
@@ -36,4 +38,8 @@ export interface PortalProfileResponse {
   joinedAt?: string;
   guardian?: GuardianProfileResponse;
   instructorProfile?: InstructorPortalProfileResponse;
+  /** 만 14세 미만 여부. ageGroup == UNDER_14 와 동일. */
+  under14?: boolean;
+  /** 나이 그룹 */
+  ageGroup?: PortalProfileResponseAgeGroup;
 }

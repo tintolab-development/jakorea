@@ -3,11 +3,17 @@ import type { Editor } from '@tiptap/react'
 import { fileObjectIdFromStoredFileUrl } from '@/shared/lib/portal-public-file-url'
 import { resolvePortalPublicImageSrc } from '@/shared/lib/resolve-portal-public-image-src'
 
+export type PortalInlineImageResolver = (fileObjectId: number) => Promise<string>
+
 /**
  * 저장된 `/api/admin|portal/public/files/{id}/content` 는 img src로 안 열리는 경우가 있다.
- * 공개 API에서 서명 URL/바이트를 받아 미리보기를 채운다.
+ * 공개 API(또는 주입한 resolver)에서 서명 URL/바이트를 받아 미리보기를 채운다.
  */
-export function useHydratePortalInlineImages(editor: Editor | null, resetKey?: string | number) {
+export function useHydratePortalInlineImages(
+  editor: Editor | null,
+  resetKey?: string | number,
+  resolveImage: PortalInlineImageResolver = resolvePortalPublicImageSrc,
+) {
   useEffect(() => {
     if (editor == null) return
     let cancelled = false
@@ -32,9 +38,9 @@ export function useHydratePortalInlineImages(editor: Editor | null, resetKey?: s
 
       for (const target of targets) {
         try {
-          const nextSrc = await resolvePortalPublicImageSrc(target.fileObjectId)
-          if (cancelled || editor.isDestroyed) return
+          const nextSrc = await resolveImage(target.fileObjectId)
           if (nextSrc.startsWith('blob:')) previewUrls.push(nextSrc)
+          if (cancelled || editor.isDestroyed) return
           const current = editor.state.doc.nodeAt(target.pos)
           if (current?.type.name !== 'image') continue
           const nodeDom = editor.view.nodeDOM(target.pos)
@@ -62,5 +68,5 @@ export function useHydratePortalInlineImages(editor: Editor | null, resetKey?: s
       cancelled = true
       for (const url of previewUrls) URL.revokeObjectURL(url)
     }
-  }, [editor, resetKey])
+  }, [editor, resetKey, resolveImage])
 }

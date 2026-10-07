@@ -8,6 +8,7 @@
 
 export interface MaterialKitRequest {
   kitName?: string;
+  nameKo?: string;
   businessArea?: string;
   useYn?: boolean;
   textbookId?: number;

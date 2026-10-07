@@ -1,4 +1,5 @@
 import { axiosClient } from '@/shared/api/axios-instance'
+import { fetchBlobOnce, readDownloadUrlFromJsonBlob } from '@/shared/lib/download-attachment'
 import type { ProgramApplicationType } from './types'
 
 const APPLICATIONS_PATH = '/api/portal/me/program-applications'
@@ -20,6 +21,8 @@ export type PortalNoticeListItem = {
   unread?: boolean
   commentCount?: number
   attachmentCount?: number
+  readCount?: number
+  reactionCount?: number
   createdAt?: string
 }
 
@@ -29,9 +32,24 @@ export type PortalNoticeListResponse = {
 
 export type PortalNoticeAttachment = {
   attachmentId?: number
+  fileObjectId?: number
   originalFileName?: string
   fileSize?: number
+  mimeType?: string
+  downloadPath?: string
   createdAt?: string
+}
+
+export type PortalNoticeComment = {
+  commentId?: number
+  content?: string
+  authorType?: string
+  authorId?: number
+  /** 회원 실명 또는 마스킹. 관리자·조회 불가는 null */
+  authorDisplayName?: string | null
+  mine?: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type PortalNoticeDetail = {
@@ -41,8 +59,36 @@ export type PortalNoticeDetail = {
   unread?: boolean
   createdAt?: string
   commentCount?: number
+  readCount?: number
+  reactionCount?: number
   attachments?: PortalNoticeAttachment[]
-  comments?: Array<{ commentId?: number }>
+  comments?: PortalNoticeComment[]
+}
+
+export type PortalNoticeReactionSummary = {
+  reactionType?: string
+  count?: number
+}
+
+/** 반응한 사람 1행 — BE `reactors[]` (이름 규칙은 댓글 `authorDisplayName` 과 같다) */
+export type PortalNoticeReactor = {
+  reactionType?: string
+  actorType?: string
+  actorId?: number
+  actorDisplayName?: string | null
+  mine?: boolean
+  reactedAt?: string
+}
+
+export type PortalNoticeReactionState = {
+  postId?: number
+  summary?: PortalNoticeReactionSummary[]
+  myReactions?: string[]
+  reactors?: PortalNoticeReactor[]
+}
+
+type PortalFileDownloadResolve = {
+  downloadUrl?: string
 }
 
 export type PortalEducationSchedule = {
@@ -136,6 +182,145 @@ export async function fetchApplicationNoticeDetail(
     { signal },
   )
   return unwrapEnvelope<PortalNoticeDetail>(data)
+}
+
+function noticePath(applicationType: ProgramApplicationType, applicationId: string, postId: string) {
+  return `${applicationPath(applicationType, applicationId)}/notices/${postId}`
+}
+
+export async function createApplicationNoticeComment(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  content: string,
+): Promise<void> {
+  await axiosClient.post(`${noticePath(applicationType, applicationId, postId)}/comments`, {
+    content,
+  })
+}
+
+export async function updateApplicationNoticeComment(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  commentId: string,
+  content: string,
+): Promise<void> {
+  await axiosClient.patch(
+    `${noticePath(applicationType, applicationId, postId)}/comments/${commentId}`,
+    { content },
+  )
+}
+
+export async function deleteApplicationNoticeComment(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  commentId: string,
+): Promise<void> {
+  await axiosClient.delete(
+    `${noticePath(applicationType, applicationId, postId)}/comments/${commentId}`,
+  )
+}
+
+export async function fetchApplicationNoticeReactions(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  signal?: AbortSignal,
+): Promise<PortalNoticeReactionState> {
+  const { data } = await axiosClient.get<unknown>(
+    `${noticePath(applicationType, applicationId, postId)}/reactions`,
+    { signal },
+  )
+  return unwrapEnvelope<PortalNoticeReactionState>(data)
+}
+
+export async function upsertApplicationNoticeReaction(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  reactionType: string,
+): Promise<PortalNoticeReactionState> {
+  const { data } = await axiosClient.put<unknown>(
+    `${noticePath(applicationType, applicationId, postId)}/reactions`,
+    { reactionType },
+  )
+  return unwrapEnvelope<PortalNoticeReactionState>(data)
+}
+
+export async function deleteApplicationNoticeReaction(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  reactionType: string,
+): Promise<PortalNoticeReactionState> {
+  const { data } = await axiosClient.delete<unknown>(
+    `${noticePath(applicationType, applicationId, postId)}/reactions/${encodeURIComponent(reactionType)}`,
+  )
+  return unwrapEnvelope<PortalNoticeReactionState>(data)
+}
+
+export type PortalNoticeAttachmentListItem = PortalNoticeAttachment & {
+  postId?: number
+  postTitle?: string
+}
+
+/** 신청 단위 첨부 전체 — 상세와 달리 읽음 처리하지 않는다. */
+export async function fetchApplicationNoticeAttachments(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  keyword?: string,
+  signal?: AbortSignal,
+): Promise<PortalNoticeAttachmentListItem[]> {
+  const trimmedKeyword = keyword?.trim()
+  const { data } = await axiosClient.get<unknown>(
+    `${applicationPath(applicationType, applicationId)}/notices/attachments`,
+    {
+      signal,
+      params: {
+        page: 0,
+        size: 100,
+        ...(trimmedKeyword ? { keyword: trimmedKeyword } : {}),
+      },
+    },
+  )
+  const unwrapped = unwrapEnvelope<
+    { items?: PortalNoticeAttachmentListItem[] } | PortalNoticeAttachmentListItem[]
+  >(data)
+  if (Array.isArray(unwrapped)) return unwrapped
+  return unwrapped?.items ?? []
+}
+
+/**
+ * 안내사항 본문 이미지 — 회원 Bearer 가 필요해 `<img src>` 로는 못 연다.
+ * 302 를 따라간 바이트(또는 JSON `downloadUrl`)를 blob URL 로 돌려준다.
+ */
+export async function fetchApplicationNoticeInlineImageSrc(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  fileObjectId: number,
+): Promise<string> {
+  const { data } = await axiosClient.get<Blob>(
+    `${noticePath(applicationType, applicationId, postId)}/inline-images/${fileObjectId}/content`,
+    { responseType: 'blob', headers: { Accept: 'image/*,*/*' } },
+  )
+  const signedUrl = await readDownloadUrlFromJsonBlob(data)
+  const blob = signedUrl ? await fetchBlobOnce(signedUrl) : data
+  if (blob.size === 0 || /\bjson\b/i.test(blob.type)) {
+    throw new Error('본문 이미지를 열 수 없습니다.')
+  }
+  return URL.createObjectURL(blob)
+}
+
+/** 회원 Bearer 로 서명 URL 을 받는다. 파일 바이트는 서명 URL 로 따로 받는다. */
+export async function resolveApplicationNoticeAttachmentUrl(downloadPath: string): Promise<string> {
+  const { data } = await axiosClient.get<unknown>(downloadPath)
+  const resolved = unwrapEnvelope<PortalFileDownloadResolve>(data)
+  const url = resolved?.downloadUrl?.trim()
+  if (!url) throw new Error('첨부파일 다운로드 주소를 받지 못했습니다.')
+  return url
 }
 
 export async function fetchApplicationSchedules(

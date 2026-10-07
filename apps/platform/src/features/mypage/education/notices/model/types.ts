@@ -10,6 +10,8 @@ export type EducationInProgressNotice = {
   reactionCount: number
   /** 현재 로그인 사용자가 작성자인지 — 더보기(수정/삭제) 노출 */
   isAuthor?: boolean
+  /** 원격 목록 `attachmentCount` */
+  attachmentCount?: number
 }
 
 export type EducationNoticeReactionSummary = {
@@ -31,6 +33,8 @@ export type EducationNoticeComment = {
   authorName: string
   content: string
   createdAt: string
+  /** 원격: 서버 `mine` — 있으면 작성자 이름 비교보다 우선 */
+  mine?: boolean
 }
 
 export type EducationInProgressFile = {
@@ -39,6 +43,8 @@ export type EducationInProgressFile = {
   uploadedAt: string
   fileSizeBytes: number
   postId?: string
+  /** 원격: 회원 Bearer 다운로드 resolve 경로 */
+  downloadPath?: string
 }
 
 export function getNoticeAttachments(

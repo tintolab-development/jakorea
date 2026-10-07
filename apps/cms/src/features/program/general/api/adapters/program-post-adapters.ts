@@ -19,6 +19,20 @@ import type { ProgramPostReactionResponse } from '@/shared/api/generated/dashboa
 import type { ProgramPostReadsResponse } from '@/shared/api/generated/dashboard/schemas/programPostReadsResponse'
 import { contentUrlForFileObjectId } from '@/shared/lib/admin-file-upload'
 
+/** BE 표시명 필드(2026-10-06 추가) — orval 재생성 전까지 로컬 확장 */
+type WithCreatedByDisplayName = { createdByDisplayName?: string | null }
+type ProgramPostCommentRuntime = ProgramPostCommentResponse &
+  WithCreatedByDisplayName & { commentId?: number }
+type ProgramPostReactionRuntime = ProgramPostReactionResponse & {
+  actorDisplayName?: string | null
+}
+type ProgramPostReaderRuntime = NonNullable<ProgramPostReadsResponse['readers']>[number] & {
+  readerDisplayName?: string | null
+}
+type ProgramPostUnreadRuntime = NonNullable<ProgramPostReadsResponse['unreadMembers']>[number] & {
+  displayName?: string | null
+}
+
 function mapActorRoleLabel(actorType: string | undefined): string {
   const normalized = (actorType ?? '').trim().toUpperCase()
   switch (normalized) {
@@ -78,7 +92,7 @@ function mapVisibilityToAudience(visibilityType: string | undefined): string[] |
 }
 
 export function mapProgramPostListItemToDomain(
-  dto: ProgramPostListItemResponse,
+  dto: ProgramPostListItemResponse & WithCreatedByDisplayName,
   programId: string
 ): ProgramPost {
   const createdAt = dto.createdAt ?? new Date().toISOString()
@@ -86,7 +100,11 @@ export function mapProgramPostListItemToDomain(
   return {
     id: String(dto.postId ?? ''),
     programId,
-    authorName: resolvePostAuthorName(dto.createdByActorType, dto.createdByActorId),
+    authorName: resolvePostAuthorName(
+      dto.createdByActorType,
+      dto.createdByActorId,
+      dto.createdByDisplayName
+    ),
     createdByActorType: dto.createdByActorType,
     createdByActorId: dto.createdByActorId,
     title: dto.title?.trim() || undefined,
@@ -103,16 +121,21 @@ export function mapProgramPostListItemToDomain(
   }
 }
 
+/** 관리자 게시글 상세 런타임은 `postId`, 생성 스키마는 `id` — 백엔드 스키마명 충돌 해소 전까지 둘 다 수용 */
 export function mapProgramPostResponseToDomain(
-  dto: ProgramPostResponse,
+  dto: ProgramPostResponse & WithCreatedByDisplayName & { postId?: number },
   programId: string
 ): ProgramPost {
   const createdAt = dto.createdAt ?? new Date().toISOString()
   const content = dto.content?.trim() ?? ''
   return {
-    id: String(dto.id ?? ''),
+    id: String(dto.postId ?? dto.id ?? ''),
     programId: dto.programId != null ? String(dto.programId) : programId,
-    authorName: resolvePostAuthorName(dto.createdByActorType, dto.createdByActorId),
+    authorName: resolvePostAuthorName(
+      dto.createdByActorType,
+      dto.createdByActorId,
+      dto.createdByDisplayName
+    ),
     createdByActorType: dto.createdByActorType,
     createdByActorId: dto.createdByActorId,
     title: dto.title?.trim() || undefined,
@@ -130,13 +153,17 @@ export function mapProgramPostResponseToDomain(
 }
 
 export function mapProgramPostCommentToDomain(
-  dto: ProgramPostCommentResponse,
+  dto: ProgramPostCommentRuntime,
   postId: string
 ): ProgramPostComment {
   return {
-    id: String(dto.id ?? ''),
+    id: String(dto.commentId ?? dto.id ?? ''),
     postId: dto.postId != null ? String(dto.postId) : postId,
-    authorName: resolvePostAuthorName(dto.createdByActorType, dto.createdByActorId),
+    authorName: resolvePostAuthorName(
+      dto.createdByActorType,
+      dto.createdByActorId,
+      dto.createdByDisplayName
+    ),
     content: dto.content?.trim() ?? '',
     createdAt: dto.createdAt ?? new Date().toISOString(),
   }
@@ -157,7 +184,7 @@ export function mapProgramPostReactionSummariesToDomain(
 }
 
 export function mapProgramPostReactionItemsToUsers(
-  items: ProgramPostReactionResponse[] | undefined,
+  items: ProgramPostReactionRuntime[] | undefined,
   postId: string
 ): ProgramPostReactionUser[] {
   return (items ?? [])
@@ -165,7 +192,7 @@ export function mapProgramPostReactionItemsToUsers(
     .map((row, index) => ({
       id: `${postId}-${row.actorType ?? 'actor'}-${row.actorId ?? index}-${row.reactionType}`,
       postId,
-      authorName: resolveActorDisplayName(row.actorType, row.actorId),
+      authorName: resolveActorDisplayName(row.actorType, row.actorId, row.actorDisplayName),
       roleLabel: mapActorRoleLabel(row.actorType),
       emojiType: row.reactionType!.trim(),
       createdAt: row.createdAt ?? new Date().toISOString(),
@@ -176,24 +203,26 @@ export function mapProgramPostReadsToDomainRows(
   dto: ProgramPostReadsResponse,
   postId: string
 ): ProgramPostReadRow[] {
-  const readers: ProgramPostReadRow[] = (dto.readers ?? []).map((row, index) => {
+  const readerRows: ProgramPostReaderRuntime[] = dto.readers ?? []
+  const readers: ProgramPostReadRow[] = readerRows.map((row, index) => {
     const actorId = row.readerActorId
     return {
       id: String(actorId ?? row.readId ?? `read-${index}`),
       postId,
-      displayName: resolveActorDisplayName(row.readerActorType, actorId),
+      displayName: resolveActorDisplayName(row.readerActorType, actorId, row.readerDisplayName),
       roleLabel: mapActorRoleLabel(row.readerActorType),
       hasRead: true,
       readAt: row.lastReadAt ?? row.firstReadAt ?? row.readAt,
     }
   })
 
-  const unread: ProgramPostReadRow[] = (dto.unreadMembers ?? []).map((row, index) => {
+  const unreadRows: ProgramPostUnreadRuntime[] = dto.unreadMembers ?? []
+  const unread: ProgramPostReadRow[] = unreadRows.map((row, index) => {
     const memberId = row.memberId
     return {
       id: String(memberId ?? `unread-${index}`),
       postId,
-      displayName: resolveActorDisplayName(row.targetRole, memberId),
+      displayName: resolveActorDisplayName(row.targetRole, memberId, row.displayName),
       roleLabel: mapActorRoleLabel(row.targetRole),
       hasRead: false,
     }

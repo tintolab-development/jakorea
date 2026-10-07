@@ -41,7 +41,6 @@ export const ADMIN_FILE_OWNER = {
   MEMBER_CONSENT: { ownerDomain: 'MEMBER', ownerType: 'CONSENT' },
   SPONSOR_LOGO: { ownerDomain: 'SPONSOR', ownerType: 'LOGO' },
   PROGRAM: { ownerDomain: 'PROGRAM', ownerType: 'PROGRAM' },
-  PROGRAM_POST: { ownerDomain: 'PROGRAM', ownerType: 'POST' },
   PROGRAM_APPLICATION: { ownerDomain: 'PROGRAM', ownerType: 'APPLICATION' },
   SMS_TEMPLATE: { ownerDomain: 'NOTIFICATION', ownerType: 'SMS_TEMPLATE' },
   SETTLEMENT: { ownerDomain: 'SETTLEMENT', ownerType: 'SUBMISSION' },

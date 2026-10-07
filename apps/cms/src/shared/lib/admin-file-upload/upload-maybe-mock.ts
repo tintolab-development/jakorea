@@ -63,11 +63,30 @@ export function programFileOwner(
   return buildAdminFileOwner(ADMIN_FILE_OWNER.PROGRAM, programId, filePurpose)
 }
 
-export function programPostFileOwner(
-  postOwnerId: number,
-  filePurpose: AdminFilePurpose = ADMIN_FILE_PURPOSE.PROGRAM_POST_ATTACHMENT
-): AdminFileUploadOwner {
-  return buildAdminFileOwner(ADMIN_FILE_OWNER.PROGRAM_POST, postOwnerId, filePurpose)
+/**
+ * 프로그램 게시글 첨부 업로드 owner. BE 는 아래 두 조합만 허용한다(그 외 400 PROGRAM_POST_ATTACHMENT_OWNER_INVALID).
+ * - 새 글 작성 중(postId 없음): PROGRAM_CONTENT / PROGRAM / {programId} — PUT attachments 시 서버가 게시글로 옮긴다.
+ * - 기존 글 수정: PROGRAM_CONTENT / PROGRAM_POST / {postId}
+ */
+export function programPostFileOwner(input: {
+  programId: number
+  postId?: number | null
+}): AdminFileUploadOwner {
+  const filePurpose = ADMIN_FILE_PURPOSE.PROGRAM_POST_ATTACHMENT
+  if (input.postId != null) {
+    return {
+      ownerDomain: 'PROGRAM_CONTENT',
+      ownerType: 'PROGRAM_POST',
+      ownerId: input.postId,
+      filePurpose,
+    }
+  }
+  return {
+    ownerDomain: 'PROGRAM_CONTENT',
+    ownerType: 'PROGRAM',
+    ownerId: input.programId,
+    filePurpose,
+  }
 }
 
 export function programApplicationFileOwner(

@@ -1,5 +1,7 @@
-import { useLayoutEffect, useMemo } from 'react'
+import { useLayoutEffect } from 'react'
 import {
+  infiniteQueryOptions,
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -63,6 +65,22 @@ export function useTrainedTeacherOverviewStages(enabled = true) {
   })
 }
 
+/** 목록 첫 페이지 쿼리 옵션 — 목록 훅과 상단 위젯 hover 프리페치가 같은 키·캐시 정책을 공유 */
+export function trainedTeacherProgramsInfiniteQueryOptions(
+  filters: TrainedTeacherListFilters,
+  remoteEnabled: boolean
+) {
+  return infiniteQueryOptions({
+    queryKey: trainedTeacherQueryKeys.list(filtersKey(filters, remoteEnabled)),
+    queryFn: ({ pageParam }) => listTrainedTeacherProgramsPage(filters, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: TrainedTeacherProgramsRemoteListPage) =>
+      lastPage.hasMore ? lastPage.page + 1 : undefined,
+    staleTime: remoteEnabled ? 30_000 : Number.POSITIVE_INFINITY,
+    retry: shouldRetryTrainedTeacherQuery,
+  })
+}
+
 export function useTrainedTeacherPrograms(
   filters: TrainedTeacherListFilters = {},
   enabled = true
@@ -70,24 +88,20 @@ export function useTrainedTeacherPrograms(
   const remoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
   const queryClient = useQueryClient()
   const key = filtersKey(filters, remoteEnabled)
-  const listQueryKey = useMemo(() => trainedTeacherQueryKeys.list(key), [key])
 
   useLayoutEffect(() => {
     if (!enabled || !remoteEnabled) return
     queryClient.setQueryData<InfiniteData<TrainedTeacherProgramsRemoteListPage>>(
-      listQueryKey,
+      trainedTeacherQueryKeys.list(key),
       keepFirstInfiniteQueryPage
     )
-  }, [queryClient, enabled, remoteEnabled, listQueryKey])
+  }, [queryClient, enabled, remoteEnabled, key])
 
   return useInfiniteQuery({
-    queryKey: listQueryKey,
-    queryFn: ({ pageParam }) => listTrainedTeacherProgramsPage(filters, pageParam as number),
-    initialPageParam: 0,
-    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    ...trainedTeacherProgramsInfiniteQueryOptions(filters, remoteEnabled),
     enabled,
-    staleTime: remoteEnabled ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: shouldRetryTrainedTeacherQuery,
+    // 상단 위젯 단계 이동 시 새 키 응답 전까지 이전 목록을 유지 (빈 표 → 스피너 → 표 깜빡임 방지)
+    placeholderData: keepPreviousData,
   })
 }
 

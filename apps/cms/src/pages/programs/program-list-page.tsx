@@ -72,7 +72,10 @@ import {
   useDeleteCompanySchoolPrograms,
   useUpdateCompanySchoolProgram,
 } from '@/features/program/1c-1s/api/hooks'
-import { companySchoolListParamsFromOverviewStatus } from '@/features/program/1c-1s/api/list-params'
+import {
+  companySchoolListParamsFromOverviewStatus,
+  readCompanySchoolTableFilters,
+} from '@/features/program/1c-1s/api/list-params'
 import type { OverviewStatusFilter } from './use-program-list-filters'
 
 const PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY = 'new'
@@ -98,14 +101,10 @@ function ProgramListPageContent() {
     if (value === 'economy_completed') return 'completed'
     return null
   }, [location.search])
-  const companySchoolTableFilters = useMemo(() => {
-    const sp = new URLSearchParams(location.search)
-    const title = sp.get('title') ?? undefined
-    const yearRaw = sp.get('businessYear')
-    const businessYear =
-      yearRaw && /^\d{4}$/.test(yearRaw) ? Number.parseInt(yearRaw, 10) : undefined
-    return { title, businessYear }
-  }, [location.search])
+  const companySchoolTableFilters = useMemo(
+    () => readCompanySchoolTableFilters(new URLSearchParams(location.search)),
+    [location.search]
+  )
   const companySchoolListFilters = useMemo(
     () =>
       companySchoolListParamsFromOverviewStatus(
@@ -127,7 +126,11 @@ function ProgramListPageContent() {
     [companySchoolListFilters]
   )
   const { sentinelRef: companySchoolLoadMoreRef } = useGatedInfiniteScroll({
-    hasNextPage: Boolean(isCompanySchoolPath && companySchoolListQuery.hasNextPage),
+    hasNextPage: Boolean(
+      isCompanySchoolPath &&
+        !companySchoolListQuery.isPlaceholderData &&
+        companySchoolListQuery.hasNextPage
+    ),
     isFetchingNextPage: Boolean(isCompanySchoolPath && companySchoolListQuery.isFetchingNextPage),
     fetchNextPage: companySchoolListQuery.fetchNextPage,
     resetKey: companySchoolInfiniteResetKey,
@@ -644,7 +647,7 @@ function ProgramListPageContent() {
           isCompanySchoolPath
             ? companySchoolListQuery.isFetching &&
               !companySchoolListQuery.isFetchingNextPage &&
-              filteredPrograms.length === 0
+              (filteredPrograms.length === 0 || companySchoolListQuery.isPlaceholderData)
             : loading
         }
         headerTitle={headerTitle}

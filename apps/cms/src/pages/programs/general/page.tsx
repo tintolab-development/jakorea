@@ -84,6 +84,7 @@ export function GeneralProgramListPageContent() {
     statusFilter,
     refetchPrograms,
     loading: listLoading,
+    isPlaceholderData: isListPlaceholderData,
     isRemoteDataSource,
     isFetchingNextPage,
     fetchNextPage,
@@ -418,7 +419,7 @@ export function GeneralProgramListPageContent() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={listLoading && filteredPrograms.length === 0}
+        loading={listLoading && (filteredPrograms.length === 0 || isListPlaceholderData)}
         headerTitle={headerTitle}
         onView={handleView}
         searchParams={searchParams}

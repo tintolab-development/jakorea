@@ -14,7 +14,19 @@ export interface RecipientCandidateResponse {
   participantStatus?: string;
   memberType?: string;
   typeLabel?: string;
-  recipientNameMasked?: string;
+  /** 수신자명 원문. 수신자 설정 팝업 조회 시 개인정보 감사로그가 자동 기록됩니다. */
+  recipientName?: string;
   channelType?: string;
+  /** 채널별 수신 연락처 원문(ALIMTALK/SMS=휴대폰, EMAIL=이메일). 개인정보 감사로그가 자동 기록됩니다. */
+  recipientContact?: string;
+  /**
+     * 하위호환 alias. 최신 계약에서는 recipientName을 사용합니다.
+     * @deprecated
+     */
+  recipientNameMasked?: string;
+  /**
+     * 하위호환 alias. 최신 계약에서는 recipientContact를 사용합니다.
+     * @deprecated
+     */
   recipientContactMasked?: string;
 }

@@ -1,18 +1,31 @@
 import { useMemo } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { parsePortalProgramId } from '@/features/program/api/mappers'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import { platformQueryKeys } from '@/shared/api/query-keys'
-import type { EducationInProgressFile, EducationInProgressNotice } from '../../notices/model/types'
+import type {
+  EducationInProgressFile,
+  EducationInProgressNotice,
+  EducationNoticeComment,
+  EducationNoticeReactionSummary,
+  EducationNoticeReactionUser,
+} from '../../notices/model/types'
 import type { EducationScheduleItem } from '../../schedules/model/types'
 import type { EducationSettlementItem, EducationSettlementStatus } from '../../settlements/model/types'
 import type { EducationSurveyListEntry } from '../../surveys/lib/mock-survey-list'
 import {
+  createApplicationNoticeComment,
+  deleteApplicationNoticeComment,
+  deleteApplicationNoticeReaction,
   fetchApplicationForms,
+  fetchApplicationNoticeAttachments,
   fetchApplicationNoticeDetail,
+  fetchApplicationNoticeReactions,
   fetchApplicationNotices,
+  updateApplicationNoticeComment,
+  upsertApplicationNoticeReaction,
   fetchApplicationSchedules,
   fetchExpenseReceipts,
   fetchPortalSurveyFormBinding,
@@ -21,8 +34,11 @@ import {
   type PortalEducationSchedule,
   type PortalExpenseReceipt,
   type PortalFormListItem,
+  type PortalNoticeAttachmentListItem,
+  type PortalNoticeComment,
   type PortalNoticeDetail,
   type PortalNoticeListItem,
+  type PortalNoticeReactionState,
   type PortalSettlementApplication,
   type PortalSurveySubmitBody,
 } from './activity-client'
@@ -60,16 +76,51 @@ function mapNotice(item: PortalNoticeListItem): EducationInProgressNotice | null
     authorName: '안내',
     publishedAt: item.createdAt ?? '',
     read: item.unread === false,
-    viewCount: 0,
+    viewCount: item.readCount ?? 0,
     commentCount: item.commentCount ?? 0,
-    reactionCount: 0,
+    reactionCount: item.reactionCount ?? 0,
     isAuthor: false,
+    attachmentCount: item.attachmentCount ?? 0,
   }
+}
+
+function mapNoticeAttachmentListItem(
+  item: PortalNoticeAttachmentListItem,
+): EducationInProgressFile | null {
+  if (item.attachmentId == null || item.postId == null) return null
+  return {
+    id: String(item.attachmentId),
+    fileName: item.originalFileName?.trim() || '첨부파일',
+    uploadedAt: item.createdAt ?? '',
+    fileSizeBytes: item.fileSize ?? 0,
+    postId: String(item.postId),
+    downloadPath: item.downloadPath?.trim() || undefined,
+  }
+}
+
+function portalActorLabel(
+  displayName: string | null | undefined,
+  actorType: string | undefined,
+  mine: boolean | undefined,
+): string {
+  const named = displayName?.trim()
+  if (named) return named
+  const normalized = (actorType ?? '').toUpperCase()
+  if (normalized === 'ADMIN' || normalized === 'CMS' || normalized === 'SYSTEM') {
+    return 'JA KOREA 알림'
+  }
+  if (mine) return '나'
+  return '회원'
+}
+
+function noticeCommentAuthorLabel(comment: PortalNoticeComment): string {
+  return portalActorLabel(comment.authorDisplayName, comment.authorType, comment.mine)
 }
 
 function mapNoticeDetail(detail: PortalNoticeDetail): {
   notice: Partial<EducationInProgressNotice>
   files: EducationInProgressFile[]
+  comments: EducationNoticeComment[]
 } {
   const id = detail.postId == null ? '' : String(detail.postId)
   return {
@@ -78,6 +129,8 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
       content: detail.content ?? '',
       publishedAt: detail.createdAt,
       read: detail.unread === false,
+      viewCount: detail.readCount ?? 0,
+      reactionCount: detail.reactionCount ?? 0,
       commentCount: detail.comments?.length ?? detail.commentCount,
     },
     files: (detail.attachments ?? []).flatMap(file => {
@@ -89,9 +142,61 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
           uploadedAt: file.createdAt ?? detail.createdAt ?? '',
           fileSizeBytes: file.fileSize ?? 0,
           postId: id,
+          downloadPath: file.downloadPath?.trim() || undefined,
         },
       ]
     }),
+    comments: (detail.comments ?? []).flatMap(comment => {
+      if (comment.commentId == null) return []
+      return [
+        {
+          id: String(comment.commentId),
+          noticeId: id,
+          authorName: noticeCommentAuthorLabel(comment),
+          content: comment.content ?? '',
+          createdAt: comment.createdAt ?? '',
+          mine: comment.mine === true,
+        },
+      ]
+    }),
+  }
+}
+
+function mapNoticeReactions(
+  state: PortalNoticeReactionState | undefined,
+  postId: string,
+): {
+  summary: EducationNoticeReactionSummary[]
+  myReactionTypes: string[]
+  total: number
+  /** BE `reactors` 를 줄 때만 채운다 — 없으면 null (화면이 내 반응만 대신 보여 준다) */
+  users: EducationNoticeReactionUser[] | null
+} {
+  const summary = (state?.summary ?? []).flatMap(row => {
+    const emojiType = row.reactionType?.trim()
+    const count = row.count ?? 0
+    return emojiType && count > 0 ? [{ emojiType, count }] : []
+  })
+  const users = state?.reactors
+    ? state.reactors.flatMap((row, index) => {
+        const emojiType = row.reactionType?.trim()
+        if (!emojiType) return []
+        return [
+          {
+            id: `${postId}-${row.actorType ?? 'actor'}-${row.actorId ?? index}-${emojiType}`,
+            noticeId: postId,
+            authorName: portalActorLabel(row.actorDisplayName, row.actorType, row.mine),
+            emojiType,
+            reactedAt: row.reactedAt ?? '',
+          },
+        ]
+      })
+    : null
+  return {
+    summary,
+    myReactionTypes: (state?.myReactions ?? []).filter(Boolean),
+    total: summary.reduce((sum, row) => sum + row.count, 0),
+    users,
   }
 }
 
@@ -205,14 +310,19 @@ export function useApplicationNoticesQuery(
     enabled,
     ...queryOptions(),
   })
+  const items = useMemo(
+    () =>
+      (query.data?.items ?? []).flatMap(item => {
+        const mapped = mapNotice(item)
+        return mapped ? [mapped] : []
+      }),
+    [query.data],
+  )
   return {
     enabled,
     isLoading: enabled && query.isPending,
     isError: enabled && query.isError,
-    items: (query.data?.items ?? []).flatMap(item => {
-      const mapped = mapNotice(item)
-      return mapped ? [mapped] : []
-    }),
+    items,
   }
 }
 
@@ -221,6 +331,7 @@ export function useApplicationNoticeDetailQuery(
   applicationId: string | null | undefined,
   postId: string | null,
 ) {
+  const queryClient = useQueryClient()
   const enabled = isActivityQueryEnabled(applicationType, applicationId) && Boolean(postId)
   const query = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.noticeDetail(
@@ -228,15 +339,249 @@ export function useApplicationNoticeDetailQuery(
       applicationId ?? '',
       postId ?? '',
     ),
-    queryFn: ({ signal }) =>
-      fetchApplicationNoticeDetail(applicationType!, applicationId!, postId!, signal),
+    queryFn: async ({ signal }) => {
+      const detail = await fetchApplicationNoticeDetail(
+        applicationType!,
+        applicationId!,
+        postId!,
+        signal,
+      )
+      // 상세 GET 이 읽음·조회수를 반영하므로 목록을 다시 받는다. 첨부 목록은 읽음과 무관하다.
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.notices(
+          applicationType!,
+          applicationId!,
+        ),
+        exact: true,
+      })
+      return detail
+    },
     enabled,
     ...queryOptions(),
   })
+  const detail = useMemo(() => (query.data ? mapNoticeDetail(query.data) : undefined), [query.data])
   return {
     enabled,
-    detail: query.data ? mapNoticeDetail(query.data) : undefined,
+    isError: enabled && query.isError,
+    detail,
   }
+}
+
+/**
+ * 우측 첨부 목록. `GET .../notices/attachments` 에 파일명 keyword 를 넘긴다.
+ * 그 API 가 없거나 실패하면 이미 열어 본(캐시된) 상세들의 첨부를 모은다.
+ * 상세 GET 은 읽음 처리라 첨부를 얻으려고 미리 호출하지 않는다.
+ */
+export function useApplicationNoticeFiles(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+  notices: readonly EducationInProgressNotice[],
+  keyword = '',
+) {
+  const enabled = isActivityQueryEnabled(applicationType, applicationId)
+  const trimmedKeyword = keyword.trim()
+  const listQuery = useQuery({
+    queryKey: platformQueryKeys.mypage.programApplications.noticeAttachments(
+      applicationType ?? '',
+      applicationId ?? '',
+      trimmedKeyword,
+    ),
+    queryFn: ({ signal }) =>
+      fetchApplicationNoticeAttachments(
+        applicationType!,
+        applicationId!,
+        trimmedKeyword,
+        signal,
+      ),
+    enabled,
+    ...queryOptions(),
+    placeholderData: keepPreviousData,
+    retry: false,
+  })
+
+  const fallbackPostIds = useMemo(
+    () => notices.filter(notice => (notice.attachmentCount ?? 0) > 0).map(notice => notice.id),
+    [notices],
+  )
+  const cachedDetails = useQueries({
+    queries: fallbackPostIds.map(postId => ({
+      queryKey: platformQueryKeys.mypage.programApplications.noticeDetail(
+        applicationType ?? '',
+        applicationId ?? '',
+        postId,
+      ),
+      queryFn: ({ signal }: { signal: AbortSignal }) =>
+        fetchApplicationNoticeDetail(applicationType!, applicationId!, postId, signal),
+      enabled: false,
+      ...queryOptions(),
+    })),
+  })
+  const cachedDetailData = cachedDetails.map(query => query.data)
+  const cachedDetailKey = cachedDetails.map(query => query.dataUpdatedAt).join(',')
+
+  const listData = listQuery.data
+  const files = useMemo(() => {
+    if (listData) {
+      return listData.flatMap(item => {
+        const mapped = mapNoticeAttachmentListItem(item)
+        return mapped ? [mapped] : []
+      })
+    }
+    return cachedDetailData.flatMap(data => (data ? mapNoticeDetail(data).files : []))
+    // cachedDetailData 는 렌더마다 새 배열 — 내용 변화는 cachedDetailKey 로 감지
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listData, cachedDetailKey])
+
+  return { enabled, isFullList: Boolean(listData), files }
+}
+
+export function useApplicationNoticeReactionsQuery(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+  postId: string | null,
+) {
+  const enabled = isActivityQueryEnabled(applicationType, applicationId) && Boolean(postId)
+  const query = useQuery({
+    queryKey: platformQueryKeys.mypage.programApplications.noticeReactions(
+      applicationType ?? '',
+      applicationId ?? '',
+      postId ?? '',
+    ),
+    queryFn: ({ signal }) =>
+      fetchApplicationNoticeReactions(applicationType!, applicationId!, postId!, signal),
+    enabled,
+    ...queryOptions(),
+    staleTime: 0,
+  })
+  const reactions = useMemo(
+    () => mapNoticeReactions(query.data, postId ?? ''),
+    [postId, query.data],
+  )
+  return { enabled, ...reactions }
+}
+
+/** 댓글 등록·수정·삭제 후 상세(댓글)와 목록(댓글 수)을 다시 받는다. */
+export function useApplicationNoticeCommentMutations(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+) {
+  const queryClient = useQueryClient()
+  const invalidate = (postId: string) => {
+    if (!applicationType || !applicationId) return
+    void queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.programApplications.noticeDetail(
+        applicationType,
+        applicationId,
+        postId,
+      ),
+    })
+    void queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.programApplications.notices(applicationType, applicationId),
+      exact: true,
+    })
+  }
+  const requireScope = () => {
+    if (!applicationType || !applicationId) throw new Error('application scope is required')
+    return { applicationType, applicationId }
+  }
+
+  const create = useMutation({
+    mutationFn: (input: { postId: string; content: string }) => {
+      const scope = requireScope()
+      return createApplicationNoticeComment(
+        scope.applicationType,
+        scope.applicationId,
+        input.postId,
+        input.content,
+      )
+    },
+    onSuccess: (_data, input) => invalidate(input.postId),
+  })
+  const update = useMutation({
+    mutationFn: (input: { postId: string; commentId: string; content: string }) => {
+      const scope = requireScope()
+      return updateApplicationNoticeComment(
+        scope.applicationType,
+        scope.applicationId,
+        input.postId,
+        input.commentId,
+        input.content,
+      )
+    },
+    onSuccess: (_data, input) => invalidate(input.postId),
+  })
+  const remove = useMutation({
+    mutationFn: (input: { postId: string; commentId: string }) => {
+      const scope = requireScope()
+      return deleteApplicationNoticeComment(
+        scope.applicationType,
+        scope.applicationId,
+        input.postId,
+        input.commentId,
+      )
+    },
+    onSuccess: (_data, input) => invalidate(input.postId),
+  })
+  return { create, update, remove }
+}
+
+/**
+ * 반응은 1인 1개 — 같은 반응을 다시 누르면 취소, 다른 반응이면 새로 등록하고 이전 반응을 지운다.
+ * 응답의 summary/myReactions 가 최신 상태라 캐시에 바로 쓴다.
+ */
+export function useToggleApplicationNoticeReactionMutation(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      postId: string
+      reactionType: string
+      myReactionTypes: readonly string[]
+    }): Promise<PortalNoticeReactionState> => {
+      if (!applicationType || !applicationId) throw new Error('application scope is required')
+      const target = input.reactionType.toUpperCase()
+      const mine = input.myReactionTypes.map(type => type.toUpperCase())
+      if (mine.includes(target)) {
+        return deleteApplicationNoticeReaction(applicationType, applicationId, input.postId, target)
+      }
+      let state = await upsertApplicationNoticeReaction(
+        applicationType,
+        applicationId,
+        input.postId,
+        target,
+      )
+      for (const previous of (state.myReactions ?? []).filter(type => type.toUpperCase() !== target)) {
+        state = await deleteApplicationNoticeReaction(
+          applicationType,
+          applicationId,
+          input.postId,
+          previous,
+        )
+      }
+      return state
+    },
+    onSuccess: (state, input) => {
+      if (!applicationType || !applicationId) return
+      queryClient.setQueryData(
+        platformQueryKeys.mypage.programApplications.noticeReactions(
+          applicationType,
+          applicationId,
+          input.postId,
+        ),
+        state,
+      )
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.notices(
+          applicationType,
+          applicationId,
+        ),
+        exact: true,
+      })
+    },
+    retry: false,
+  })
 }
 
 export function useApplicationSchedulesQuery(

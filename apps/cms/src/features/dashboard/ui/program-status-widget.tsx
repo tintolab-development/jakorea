@@ -6,7 +6,14 @@
  */
 
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import {
+  OVERVIEW_STAGE_REFRESH_MIN_AGE_MS,
+  refreshOverviewCachesOnStageChange,
+  type OverviewStageProgramType,
+} from '@/features/program/shared/lib/refresh-overview-on-stage-change'
+import { prefetchOverviewStageList } from '@/features/program/shared/lib/prefetch-overview-stage-list'
 import {
   getProgramProgressStages,
   type ProgramProgressStagesResult,
@@ -78,8 +85,19 @@ export function ProgramStatusWidget({
   const location = useLocation()
   const navigate = useNavigate()
   const [, setSearchParams] = useSearchParams()
-  const [progress, setProgress] = useState<ProgramProgressStagesResult | null>(null)
+  const queryClient = useQueryClient()
+  const [legacyProgress, setLegacyProgress] = useState<ProgramProgressStagesResult | null>(null)
   const [loading, setLoading] = useState(false)
+  /**
+   * 클릭한 카드를 URL 반영 전에 먼저 선택 표시한다.
+   * react-router v7은 searchParams 갱신을 transition으로 커밋하므로, 목록 렌더가 끝날 때까지 선택 표시가 늦어진다.
+   * 클릭 시점의 search와 현재 search가 같을 때만 유효 — URL이 바뀌면 자동으로 URL 값을 따른다.
+   */
+  const [pendingStage, setPendingStage] = useState<{ key: string; search: string } | null>(null)
+  /** 7단계(비 React Query) 건수 재조회 트리거 */
+  const [legacyReloadToken, setLegacyReloadToken] = useState(0)
+  const legacyLoadedAtRef = useRef(0)
+  const legacyLoadedTypeRef = useRef<string | null>(null)
 
   const programType = useMemo<
     'education' | 'company_school' | 'general' | 'trained_teachers' | 'volunteer' | 'all'
@@ -108,9 +126,12 @@ export function ProgramStatusWidget({
 
   const selectedStatus = useMemo<string | null>(() => {
     if (selectedFromPath !== null) return null
+    if (pendingStage && pendingStage.search === location.search) {
+      return pendingStage.key === 'total' ? null : pendingStage.key
+    }
     const sp = new URLSearchParams(location.search)
     return sp.get('status') || null
-  }, [location.search, selectedFromPath])
+  }, [location.search, selectedFromPath, pendingStage])
 
   const generalOverviewQuery = useGeneralProgramOverviewStages(programType === 'general')
   const companySchoolOverviewQuery = useCompanySchoolOverviewStages(
@@ -129,8 +150,9 @@ export function ProgramStatusWidget({
       return
     }
 
+    const isBackgroundReload = legacyLoadedTypeRef.current === programType
     const loadData = async () => {
-      setLoading(true)
+      if (!isBackgroundReload) setLoading(true)
       try {
         const data = await getProgramProgressStages({
           programType:
@@ -138,96 +160,50 @@ export function ProgramStatusWidget({
               ? undefined
               : programType,
         })
-        setProgress(data)
+        setLegacyProgress(data)
+        legacyLoadedAtRef.current = Date.now()
+        legacyLoadedTypeRef.current = programType
       } catch (error) {
         handleError(error, { defaultMessage: MESSAGES.error.programProgressLoadFailed })
       } finally {
-        setLoading(false)
+        if (!isBackgroundReload) setLoading(false)
       }
     }
     loadData()
-  }, [programType])
+  }, [programType, legacyReloadToken])
 
-  useEffect(() => {
-    if (programType !== 'general') return
-    if (generalOverviewQuery.isError) {
-      handleError(generalOverviewQuery.error, {
-        defaultMessage: MESSAGES.error.programProgressLoadFailed,
-      })
-      setProgress(null)
-      return
-    }
-    if (!generalOverviewQuery.data) {
-      setProgress(null)
-      return
-    }
-    const d = generalOverviewQuery.data
-    setProgress({
-      total: d.total,
-      scheduled: d.scheduled,
-      inProgress: d.inProgress,
-      completed: d.completed,
-    } satisfies ProgramOverviewStages)
-  }, [
-    programType,
-    generalOverviewQuery.data,
-    generalOverviewQuery.isError,
-    generalOverviewQuery.error,
-  ])
+  /** 4카드(일반·1사1교·교육받은 교사) 건수 쿼리 — 7단계 레거시 경로면 null */
+  const overviewQuery =
+    programType === 'general'
+      ? generalOverviewQuery
+      : programType === 'company_school'
+        ? companySchoolOverviewQuery
+        : programType === 'trained_teachers'
+          ? trainedTeacherOverviewQuery
+          : null
+  const overviewStageProgramType: OverviewStageProgramType | null =
+    overviewQuery != null ? (programType as OverviewStageProgramType) : null
 
+  const overviewError = overviewQuery?.isError ? overviewQuery.error : null
   useEffect(() => {
-    if (programType !== 'company_school') return
-    if (companySchoolOverviewQuery.isError) {
-      handleError(companySchoolOverviewQuery.error, {
-        defaultMessage: MESSAGES.error.programProgressLoadFailed,
-      })
-      setProgress(null)
-      return
-    }
-    if (!companySchoolOverviewQuery.data) {
-      setProgress(null)
-      return
-    }
-    const d = companySchoolOverviewQuery.data
-    setProgress({
-      total: d.total,
-      scheduled: d.scheduled,
-      inProgress: d.inProgress,
-      completed: d.completed,
-    } satisfies ProgramOverviewStages)
-  }, [
-    programType,
-    companySchoolOverviewQuery.data,
-    companySchoolOverviewQuery.isError,
-    companySchoolOverviewQuery.error,
-  ])
+    if (overviewError == null) return
+    handleError(overviewError, { defaultMessage: MESSAGES.error.programProgressLoadFailed })
+  }, [overviewError])
 
-  useEffect(() => {
-    if (programType !== 'trained_teachers') return
-    if (trainedTeacherOverviewQuery.isError) {
-      handleError(trainedTeacherOverviewQuery.error, {
-        defaultMessage: MESSAGES.error.programProgressLoadFailed,
-      })
-      setProgress(null)
-      return
+  // 단계 이동마다 건수를 재조회하므로, 재조회 실패 시에도 직전 건수를 유지한다 (위젯이 사라졌다 나타나는 점프 방지)
+  const overviewData = overviewQuery?.data
+  const overviewProgress = useMemo<ProgramOverviewStages | null>(() => {
+    if (!overviewData) return null
+    return {
+      total: overviewData.total,
+      scheduled: overviewData.scheduled,
+      inProgress: overviewData.inProgress,
+      completed: overviewData.completed,
     }
-    if (!trainedTeacherOverviewQuery.data) {
-      setProgress(null)
-      return
-    }
-    const d = trainedTeacherOverviewQuery.data
-    setProgress({
-      total: d.total,
-      scheduled: d.scheduled,
-      inProgress: d.inProgress,
-      completed: d.completed,
-    } satisfies ProgramOverviewStages)
-  }, [
-    programType,
-    trainedTeacherOverviewQuery.data,
-    trainedTeacherOverviewQuery.isError,
-    trainedTeacherOverviewQuery.error,
-  ])
+  }, [overviewData])
+
+  const progress: ProgramProgressStagesResult | null =
+    overviewQuery != null ? overviewProgress : legacyProgress
 
   const stages = useMemo((): ProgressStageItem[] => {
     if (!progress) return []
@@ -319,14 +295,23 @@ export function ProgramStatusWidget({
     return [totalItem, ...stageItems]
   }, [progress, selectedStatus, selectedFromPath, programType])
 
+  const handleStageIntent = useCallback(
+    (key: string) => {
+      if (overviewStageProgramType == null) return
+      if (stages.some(stage => stage.key === key && stage.isSelected)) return
+      prefetchOverviewStageList(queryClient, overviewStageProgramType, key, location.search)
+    },
+    [location.search, overviewStageProgramType, queryClient, stages]
+  )
+
   const handleStageClick = (key: string) => {
     onBeforeStageChange?.()
 
-    if (
-      programType === 'company_school' ||
-      programType === 'general' ||
-      programType === 'trained_teachers'
-    ) {
+    if (overviewStageProgramType != null) {
+      refreshOverviewCachesOnStageChange(queryClient, overviewStageProgramType, {
+        sameStage: stages.some(stage => stage.key === key && stage.isSelected),
+      })
+      setPendingStage({ key, search: location.search })
       setSearchParams(
         prev => {
           const nextParams = new URLSearchParams(prev)
@@ -340,6 +325,10 @@ export function ProgramStatusWidget({
         { replace: true }
       )
       return
+    }
+
+    if (Date.now() - legacyLoadedAtRef.current >= OVERVIEW_STAGE_REFRESH_MIN_AGE_MS) {
+      setLegacyReloadToken(token => token + 1)
     }
 
     if (isEducationLayoutPath(location.pathname)) {
@@ -397,22 +386,9 @@ export function ProgramStatusWidget({
       showDividerAfterFirstCard={false}
       showBottomDivider
       onStageClick={handleStageClick}
-      loading={
-        programType === 'general'
-          ? generalOverviewQuery.isFetching
-          : programType === 'company_school'
-            ? companySchoolOverviewQuery.isFetching
-            : programType === 'trained_teachers'
-              ? trainedTeacherOverviewQuery.isFetching
-              : loading
-      }
-      loadingCardCount={
-        programType === 'company_school' ||
-        programType === 'general' ||
-        programType === 'trained_teachers'
-          ? 4
-          : 8
-      }
+      onStageIntent={overviewStageProgramType != null ? handleStageIntent : undefined}
+      loading={overviewQuery != null ? overviewQuery.isLoading : loading}
+      loadingCardCount={overviewQuery != null ? 4 : 8}
     />
   )
 }

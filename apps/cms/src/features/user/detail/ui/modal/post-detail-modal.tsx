@@ -35,6 +35,8 @@ import { PostReadStatusPopoverContent } from '../post-read-status-popover'
 import { formatProgramPostAudienceBadgeLabel } from '../../lib/post-audience-display'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { useGeneralProgramPostDetail } from '@/features/program/general/hooks/use-general-program-posts-surveys'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import './post-detail-modal.css'
 
 function formatKoDate(date: string | Date): string {
@@ -229,7 +231,15 @@ export function PostDetailModal({
   const handleRemoveOwnReaction = (reactionUserId: string) => {
     if (!post) return
     if (useRemote) {
-      void remoteDetail.removeReaction().then(() => onPostStatsChanged?.())
+      void remoteDetail
+        .removeReaction()
+        .then(() => onPostStatsChanged?.())
+        .catch(error => {
+          cmsAlertModal.show({
+            title: '반응 취소 실패',
+            content: getGeneralProgramApiErrorMessage(error, '반응을 취소하지 못했습니다.'),
+          })
+        })
       return
     }
     const ok = removeProgramPostReactionUser(post.id, reactionUserId)
@@ -251,7 +261,16 @@ export function PostDetailModal({
     if (useRemote) {
       void (async () => {
         if (emojiType) {
-          await remoteDetail.putReaction(emojiType)
+          try {
+            await remoteDetail.putReaction(emojiType)
+          } catch (error) {
+            setSelectedEmojiIndex(null)
+            cmsAlertModal.show({
+              title: '반응 등록 실패',
+              content: getGeneralProgramApiErrorMessage(error, '반응을 등록하지 못했습니다.'),
+            })
+            return
+          }
         }
         if (trimmed) {
           await remoteDetail.createComment(trimmed)
@@ -418,7 +437,11 @@ export function PostDetailModal({
                 {postTypeLabel && (
                   <span className="post-detail-modal__type-tag">{postTypeLabel}</span>
                 )}
-                <RichTextViewer content={displayPost.content} contentFormat="markdown" />
+                <RichTextViewer
+                  content={displayPost.content}
+                  contentFormat="markdown"
+                  className="post-detail-modal__viewer"
+                />
               </div>
 
               <AttachmentDownloadList
@@ -436,6 +459,7 @@ export function PostDetailModal({
         {/* ── 댓글 카드 (전체 너비) ── */}
         <div className="post-detail-modal__comments-card">
           <CommentList
+            className="post-detail-modal__comment-list"
             items={comments.map(comment => ({
               id: comment.id,
               authorName: comment.authorName,

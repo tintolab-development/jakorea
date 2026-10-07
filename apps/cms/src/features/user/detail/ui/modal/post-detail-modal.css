@@ -33,30 +33,50 @@
 
 /* ── body ──────────────────────────────────────── */
 
+/*
+ * 셸은 피커 노출 때문에 overflow: visible — 높이가 넘치면 푸터(닫기)를 덮으므로
+ * 게시글 본문 뷰어가 남은 높이만큼 줄어들며 스크롤한다.
+ */
 .post-detail-modal__body {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 16px;
 }
 
 /* 본문 행: 게시글 카드 단일 컬럼 (첨부파일은 카드 내부 하단) */
 .post-detail-modal__main-row {
   display: flex;
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
 }
 
 .post-detail-modal__main-left {
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
 }
 
 /* ── 게시글 카드 ─────────────────────────────────── */
 
 .post-detail-modal__card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   border: 1px solid #d4d4d4;
   border-radius: 10px;
   padding: var(--spacing-20);
   background: #fff;
+}
+
+.post-detail-modal__card-header,
+.post-detail-modal__card > .attachment-download-list {
+  flex-shrink: 0;
 }
 
 .post-detail-modal__card-header {
@@ -204,6 +224,19 @@
   white-space: pre-wrap;
   word-break: break-word;
   margin-bottom: var(--spacing-16);
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
+.post-detail-modal__type-tag {
+  flex-shrink: 0;
+}
+
+.post-detail-modal__viewer {
+  flex: 0 1 auto;
+  min-height: 0;
 }
 
 .post-detail-modal__content:has(+ .attachment-download-list) {
@@ -219,9 +252,31 @@
 /* ── 댓글 카드 ──────────────────────────────────── */
 
 .post-detail-modal__comments-card {
+  flex-shrink: 0;
   position: relative;
   border: 1px solid #d4d4d4;
   border-radius: 10px;
   background: #fff;
   overflow: visible;
+}
+
+/* Figma: 작성기 상하좌우 20 · 구분선 좌우 20 인셋 (공통 작성기 기본값은 12/95%) */
+.post-detail-modal__comments-card .comment-composer {
+  padding: var(--spacing-20, 20px);
+}
+
+.post-detail-modal__comments-card .comment-list + .comment-composer::before {
+  left: var(--spacing-20, 20px);
+  right: var(--spacing-20, 20px);
+  width: auto;
+  transform: none;
+}
+
+/* 모달 셸이 이모지 피커 노출 때문에 overflow: visible — 목록 자체에서 스크롤 */
+.post-detail-modal__comment-list {
+  max-height: min(320px, 40vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }

@@ -25,6 +25,7 @@ import {
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   applyRecruitmentRowCopy,
+  pickRecruitmentCopyRow,
   writeRecruitmentRowCopy,
 } from '@/features/program/shared/lib/recruitment-row-copy'
 
@@ -155,11 +156,8 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
     half === 'h1' ? 'h2' : half === 'h2' ? 'h1' : null
   const otherSnapshot =
     otherHalf != null ? snapshotVolunteerHalfFromLegacy(existingOverlay, otherHalf) : {}
-  const programRecruitments = args.values
-    ? writeRecruitmentRowCopy(
-        args.existing,
-        args.kind === 'institution' ? 'participant' : 'volunteer',
-        {
+  const rowCopy = args.values
+    ? {
           ...(args.title !== undefined ? { announcementTitle: args.title.trim() || null } : {}),
           programDescription: args.values.description?.trim() || null,
           recruitmentGuide: args.values.recruitmentGuide?.trim() || null,
@@ -179,10 +177,25 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
           contactPhone: args.values.contactPhone?.trim() || null,
           contactEmail: args.values.contactEmail?.trim() || null,
           ...(half ? volunteerHalfPeriod(args.values, half) : {}),
-        },
-        half ?? undefined
-      )
+        }
     : undefined
+  const audience = args.kind === 'institution' ? 'participant' : 'volunteer'
+  const writtenRows = rowCopy
+    ? writeRecruitmentRowCopy(args.existing, audience, rowCopy, half ?? undefined)
+    : undefined
+  const programRecruitments =
+    rowCopy && half === 'h2' && !pickRecruitmentCopyRow(args.existing, 'volunteer', 'h2')
+      ? [
+          ...(writtenRows ?? args.existing.programRecruitments ?? []),
+          {
+            recruitmentType: 'VOLUNTEER',
+            targetType: 'COLLEGE_STUDENT',
+            applicationType: 'VOLUNTEER',
+            recruitTerm: 'SECOND_HALF' as const,
+            ...rowCopy,
+          },
+        ]
+      : writtenRows
   const next: Program = {
     ...args.draft,
     ujatRegistrationOverlay: {

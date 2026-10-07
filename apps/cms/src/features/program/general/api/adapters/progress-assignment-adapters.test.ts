@@ -80,6 +80,30 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
     expect(sessions[0]?.participants[2]?.submission).toEqual({ kind: 'scheduled' })
   })
 
+  it('omits the time range for all-day schedules (midnight to midnight)', () => {
+    const [allDay, timed] = buildProgressAssignmentSessionsFromRemote({
+      items: [
+        {
+          scheduleId: 701,
+          sessionNo: 1,
+          startAt: '2026-10-13T00:00:00',
+          endAt: '2026-11-08T00:00:00',
+          participants: [],
+        },
+        {
+          scheduleId: 702,
+          sessionNo: 2,
+          startAt: '2026-10-20T10:00:00',
+          endAt: '2026-10-20T12:00:00',
+          participants: [],
+        },
+      ],
+    })
+
+    expect(allDay?.headerScheduleSummary).toBe('1회차 · 2026.10.13')
+    expect(timed?.headerScheduleSummary).toBe('2회차 · 2026.10.20 10:00~12:00')
+  })
+
   it('drops schedules without scheduleId and empty items', () => {
     expect(buildProgressAssignmentSessionsFromRemote({ items: [] })).toEqual([])
     expect(

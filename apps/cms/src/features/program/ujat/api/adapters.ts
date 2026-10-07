@@ -5,6 +5,7 @@ import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/sche
 import { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
 import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
+import { ProgramRecruitmentRequestRecruitTerm } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitTerm'
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
@@ -137,11 +138,13 @@ function recruitmentRow(input: {
   operationEndDate?: string
   maxCount?: number
   id?: number
+  recruitTerm?: ProgramRecruitmentRequest['recruitTerm']
 }): ProgramRecruitmentRequest {
   return {
     ...(input.id != null ? { id: input.id } : {}),
     recruitmentType: input.recruitmentType,
     targetType: input.targetType,
+    ...(input.recruitTerm ? { recruitTerm: input.recruitTerm } : {}),
     status: ProgramRecruitmentRequestStatus.ACTIVE,
     ...(input.startAt ? { startAt: input.startAt } : {}),
     ...(input.endAt ? { endAt: input.endAt } : {}),
@@ -169,7 +172,9 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
       const bTime = Date.parse(b.startAt ?? '')
       return (Number.isNaN(aTime) ? Infinity : aTime) - (Number.isNaN(bTime) ? Infinity : bTime)
     })
-  const h1 = volunteers[0]
+  const h1 =
+    volunteers.find(row => row.recruitTerm === 'FIRST_HALF') ??
+    volunteers.find(row => row.recruitTerm == null)
   const volunteerStart = dateValue(
     program.volunteerApplicationStartDate ?? program.applicationStartDate
   )
@@ -192,11 +197,58 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
       operationStartDate,
       operationEndDate,
       maxCount: program.generalVolunteers ?? program.ujatFirstHalfVolunteerCount,
+      recruitTerm: ProgramRecruitmentRequestRecruitTerm.FIRST_HALF,
       ...(h1?.id != null ? { id: h1.id } : {}),
     }),
   ]
   // 프로그램 봉사자 기간은 상반기 행에만 맞춘다. 하반기 기간은 그 행의 startAt/endAt 변경분으로만 보낸다.
   return attachRecruitmentRowIdentity(rows, program.programRecruitments)
+}
+
+/**
+ * 저장된 행이 없는 반기(보통 하반기) 봉사자 모집 행 생성 요청.
+ * BE는 하반기 행을 자동 생성하지 않으므로 `id` 없이 `recruitTerm`을 붙여 보낸다.
+ */
+export function buildUjatNewVolunteerHalfRowRequests(
+  rows: Program['programRecruitments'],
+  existing: Program
+): ProgramRecruitmentRequest[] {
+  if (isProgramOperationStartLocked(existing, 'VOLUNTEER')) return []
+  const savedTerms = new Set(
+    (existing.programRecruitments ?? []).map(row => row.recruitTerm).filter(Boolean)
+  )
+  return (rows ?? [])
+    .filter(
+      row =>
+        row.id == null &&
+        (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' &&
+        row.recruitTerm != null &&
+        !savedTerms.has(row.recruitTerm)
+    )
+    .map(row => ({
+      recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
+      targetType: 'COLLEGE_STUDENT',
+      applicationType: 'VOLUNTEER',
+      recruitTerm: row.recruitTerm,
+      status: ProgramRecruitmentRequestStatus.ACTIVE,
+      selectionMethod: 'ADMIN_REVIEW',
+      ...(row.startAt ? { startAt: row.startAt } : {}),
+      ...(row.endAt ? { endAt: row.endAt } : {}),
+      ...(row.announcementTitle != null ? { announcementTitle: row.announcementTitle } : {}),
+      ...(row.programDescription != null ? { programDescription: row.programDescription } : {}),
+      ...(row.recruitmentGuide != null ? { recruitmentGuide: row.recruitmentGuide } : {}),
+      ...(row.applicationMethod != null ? { applicationMethod: row.applicationMethod } : {}),
+      ...(row.learningSupportContent != null
+        ? { learningSupportContent: row.learningSupportContent }
+        : {}),
+      ...(row.additionalContentHtml != null
+        ? { additionalContentHtml: row.additionalContentHtml }
+        : {}),
+      ...(row.remarks != null ? { remarks: row.remarks } : {}),
+      ...(row.contactName != null ? { contactName: row.contactName } : {}),
+      ...(row.contactPhone != null ? { contactPhone: row.contactPhone } : {}),
+      ...(row.contactEmail != null ? { contactEmail: row.contactEmail } : {}),
+    }))
 }
 
 /** 생성 시 기관·봉사자(상반기) 탭 문구와 담당자를 각 행에 담는다. */
@@ -777,6 +829,10 @@ function patchRequest(
     )
     if (copyRows.length > 0) {
       body.recruitments = mergeRecruitmentRowRequests(body.recruitments ?? [], copyRows)
+    }
+    const newHalfRows = buildUjatNewVolunteerHalfRowRequests(merged.programRecruitments, existing)
+    if (newHalfRows.length > 0) {
+      body.recruitments = [...(body.recruitments ?? []), ...newHalfRows]
     }
   }
   if (has('businessArea')) {

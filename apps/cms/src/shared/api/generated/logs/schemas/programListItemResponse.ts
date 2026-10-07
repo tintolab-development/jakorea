@@ -10,6 +10,7 @@ import type { ProgramListItemResponseEducationForm } from './programListItemResp
 import type { ProgramListItemResponseEducationTarget } from './programListItemResponseEducationTarget';
 import type { ProgramListItemResponseRecruitmentStatus } from './programListItemResponseRecruitmentStatus';
 import type { ProgramListItemResponseRecruitmentType } from './programListItemResponseRecruitmentType';
+import type { ProgramListItemResponseRecruitTerm } from './programListItemResponseRecruitTerm';
 
 export interface ProgramListItemResponse {
   programId?: number;
@@ -82,4 +83,9 @@ export interface ProgramListItemResponse {
      * @nullable
      */
   applicationType?: ProgramListItemResponseApplicationType;
+  /**
+     * UJAT 봉사자 모집 상·하반기. 그 외 목록 행은 null.
+     * @nullable
+     */
+  recruitTerm?: ProgramListItemResponseRecruitTerm;
 }

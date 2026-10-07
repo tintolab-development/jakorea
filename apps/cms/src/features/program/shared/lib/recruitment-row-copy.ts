@@ -101,11 +101,15 @@ export function pickRecruitmentCopyRow(
 ): ProgramRecruitmentWindow | undefined {
   const rows = program.programRecruitments ?? []
   if (audience === 'volunteer' && volunteerHalf) {
-    const volunteers = rows
-      .filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER')
-      .slice()
-      .sort(byStartAt)
-    return volunteerHalf === 'h1' ? volunteers[0] : volunteers[1]
+    const volunteers = rows.filter(
+      row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER'
+    )
+    if (volunteers.some(row => row.recruitTerm != null)) {
+      const term = volunteerHalf === 'h1' ? 'FIRST_HALF' : 'SECOND_HALF'
+      return volunteers.find(row => row.recruitTerm === term)
+    }
+    const ordered = volunteers.slice().sort(byStartAt)
+    return volunteerHalf === 'h1' ? ordered[0] : ordered[1]
   }
   const type =
     audience === 'participant' ? 'PARTICIPANT' : audience === 'instructor' ? 'INSTRUCTOR' : 'VOLUNTEER'

@@ -11,6 +11,7 @@ import {
   isApplicationSexOffenseInquiryParagraphId,
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
+  isDynamicIndividualInterviewParagraph,
   isInstructorAvailableScheduleParagraphId,
   isInstructorCrimeRecordParagraphId,
   shouldShowEducationPlaceOnBasicInfo,
@@ -69,6 +70,33 @@ assert.equal(
     PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
   ),
   true,
+)
+
+const interviewId = 'program-participant-application-seed-interview-schedule'
+assert.equal(
+  isDynamicIndividualInterviewParagraph({
+    id: interviewId,
+    runtimeInputMode: 'dynamic_interview_slots',
+    runtimeResolved: true,
+    runtimeHidden: null,
+  }),
+  true,
+)
+assert.equal(isDynamicIndividualInterviewParagraph({ id: interviewId }), false)
+assert.equal(
+  isDynamicIndividualInterviewParagraph({
+    id: interviewId,
+    runtimeInputMode: 'dynamic_interview_slots',
+    runtimeHidden: true,
+  }),
+  false,
+)
+assert.equal(
+  isDynamicIndividualInterviewParagraph({
+    id: 'program-volunteer-application-seed-interview-schedule',
+    runtimeInputMode: 'dynamic_interview_slots',
+  }),
+  false,
 )
 
 console.log('apply-form-paragraph-ids.selfcheck: ok')

@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ApplicationListItemResponseDisplayStatus } from './applicationListItemResponseDisplayStatus';
+import type { ApplicationListItemResponseRecruitTerm } from './applicationListItemResponseRecruitTerm';
 import type { ProgramApplicationSupplement } from './programApplicationSupplement';
 
 export interface ApplicationListItemResponse {
@@ -17,6 +18,11 @@ export interface ApplicationListItemResponse {
   programGroup?: string;
   recruitmentId?: number;
   recruitmentType?: string;
+  /**
+     * UJAT 봉사자 신청의 상·하반기 모집 식별자. 그 외에는 null.
+     * @nullable
+     */
+  recruitTerm?: ApplicationListItemResponseRecruitTerm;
   applicationStatus?: string;
   submittedAt?: string;
   updatedAt?: string;

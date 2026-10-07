@@ -27,6 +27,14 @@ export function participatingRowToInstructorApplicationSeed(
     affiliation: row.affiliation,
     oneLineIntro: row.oneLineIntro,
     managerComment: row.adminComment,
+    educations: row.educations,
+    careerDetails: row.careerDetails,
+    qualifications: row.qualifications,
+    awards: row.awards,
+    freeWriting1: row.freeWriting1,
+    freeWriting2: row.freeWriting2,
+    freeWriting3: row.freeWriting3,
+    freeWriting4: row.freeWriting4,
   }
 }
 

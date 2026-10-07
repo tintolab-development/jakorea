@@ -45,6 +45,16 @@ const INSTRUCTOR_AVAILABLE_SCHEDULE_IDS = new Set<string>([
   GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
 ])
 
+/** BE `IndividualApplicationInterviewAvailabilityService.INTERVIEW_KEYS` 와 동일 */
+const INDIVIDUAL_INTERVIEW_SCHEDULE_IDS = new Set<string>([
+  'program-participant-application-seed-interview-schedule',
+  'program-individual-application-seed-interview-schedule',
+  'program-participant-individual-application-seed-interview-schedule',
+  'individual-interview-schedule',
+])
+
+export const DYNAMIC_INTERVIEW_SLOTS_INPUT_MODE = 'dynamic_interview_slots'
+
 export function isApplicationBasicInfoParagraphId(id: string): boolean {
   return INSTITUTION_LIKE_BASIC_INFO_IDS.has(id)
 }
@@ -77,6 +87,24 @@ export function isInstructorCrimeRecordParagraphId(id: string): boolean {
 /** 강사 신청 — 강의 진행 가능 일정 (CMS InstructorAvailableScheduleParagraph) */
 export function isInstructorAvailableScheduleParagraphId(id: string): boolean {
   return INSTRUCTOR_AVAILABLE_SCHEDULE_IDS.has(id)
+}
+
+/** 개인 신청 — 면접 진행 가능 일정 */
+export function isIndividualInterviewScheduleParagraphId(id: string): boolean {
+  return INDIVIDUAL_INTERVIEW_SCHEDULE_IDS.has(id)
+}
+
+/** 면접 있는 프로그램에서 BE가 슬롯 선택지(`items`)를 붙여 내려준 개인 면접 단락 */
+export function isDynamicIndividualInterviewParagraph(paragraph: unknown): boolean {
+  if (!paragraph || typeof paragraph !== 'object') return false
+  const row = paragraph as Record<string, unknown>
+  return (
+    typeof row.id === 'string' &&
+    isIndividualInterviewScheduleParagraphId(row.id) &&
+    row.runtimeInputMode === DYNAMIC_INTERVIEW_SLOTS_INPUT_MODE &&
+    row.runtimeHidden !== true &&
+    row.hidden !== true
+  )
 }
 
 export function shouldShowEducationPlaceOnBasicInfo(paragraphId: string): boolean {
