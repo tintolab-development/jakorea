@@ -9,6 +9,7 @@ import type {
   FormTemplateResponse,
   FormTemplateUpdateRequest,
   FormTemplateVersionCopyRequest,
+  FormTemplateVersionCreateRequest,
   FormTemplateVersionPublishRequest,
   FormTemplateVersionResponse,
   FormTemplateVersionSummaryResponse,
@@ -57,6 +58,14 @@ export async function copyFormTemplateVersionRemote(
   body?: FormTemplateVersionCopyRequest
 ): Promise<FormVersionAdminResponse> {
   return unwrapApiBody(await formsSurveysApi.copyVersion(templateId, body ?? {}))
+}
+
+/** 같은 템플릿에 DRAFT version 추가 (`versionNo = max + 1`). `versions/copy`는 새 COPY 템플릿을 만든다. */
+export async function createFormTemplateVersionRemote(
+  templateId: number,
+  body: FormTemplateVersionCreateRequest
+): Promise<FormTemplateVersionResponse> {
+  return unwrapApiBody(await formsSurveysApi.createVersion1(templateId, body))
 }
 
 export async function createFormTemplateRemote(
