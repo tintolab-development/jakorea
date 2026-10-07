@@ -275,6 +275,7 @@ export function MypageLectureDetailPage() {
 
   const handleConfirmCancel = () => {
     if (remoteDetailEnabled && application?.applicationType) {
+      if (cancelMutation.isPending) return
       cancelMutation.mutate(
         { applicationType: application.applicationType, applicationId: application.id },
         {
@@ -510,8 +511,14 @@ export function MypageLectureDetailPage() {
 
       <EducationCancelConfirm
         open={isCancelConfirmOpen}
-        onCancel={() => setIsCancelConfirmOpen(false)}
+        onCancel={() => {
+          if (cancelMutation.isPending) return
+          cancelMutation.reset()
+          setIsCancelConfirmOpen(false)
+        }}
         onConfirm={handleConfirmCancel}
+        pending={cancelMutation.isPending}
+        error={cancelMutation.error}
       />
     </section>
   )
