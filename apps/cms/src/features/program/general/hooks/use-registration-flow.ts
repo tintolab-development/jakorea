@@ -10,7 +10,9 @@ import {
   syncInstitutionApplicationPreferredEducationFormFromOverlay,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resetApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { resetGeminiRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
 import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { clearOperationalSeedDefaultSuppression } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { resetGeneralApplicationOverlay } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getProgramRegistrationOverlayRecord,
@@ -45,6 +47,11 @@ import {
   clearRegistrationWizardSessionDrafts,
   flushApplicationOperationalOverrides,
 } from '@/features/program/general/lib/registration-wizard-session-drafts'
+import {
+  beginRegistrationWizardVisit,
+  endRegistrationWizardVisit,
+  trackRegistrationWizardVisitSave,
+} from '@/features/program/general/lib/registration-wizard-visit'
 import { describeIncompleteApplicationFormThirdPartyRecipient } from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { registrationPendingSnapshotId } from '@/features/program/general/lib/registration-local-save'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
@@ -68,9 +75,6 @@ import {
   isDefaultOperationalTemplateSelection,
 } from '@/features/program/shared/lib/step-template-selection'
 import { applyRegistrationStepTemplateChange } from '@/features/program/shared/lib/step-template-apply'
-
-/** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
-const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
 import {
   coerceGeneralProgramRegistrationStep,
   getDefaultGeneralProgramApplicationStep,
@@ -86,6 +90,19 @@ import {
   type GeneralProgramRegistrationPhaseKey,
   type GeneralProgramRegistrationStepKey,
 } from '@/features/program/general/model/registration-flow'
+
+/** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
+const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
+
+function resetGeneralRegistrationWizardMemory(): void {
+  clearOperationalSeedDefaultSuppression()
+  resetGeminiRecruitOverlay()
+  resetInstitutionApplicationProgramBridge()
+  resetApplicantRecruitInstitutionOverlay()
+  resetGeneralRecruitOverlay()
+  resetGeneralApplicationOverlay()
+  resetProgramRegistrationOverlay()
+}
 
 export type UseGeneralProgramRegistrationFlowOptions = {
   onProgramRegistrationSaved?: (program?: Program) => void
@@ -415,6 +432,8 @@ export function useGeneralProgramRegistrationFlow(
 
   useEffect(() => {
     if (!open) {
+      clearOperationalSeedDefaultSuppression()
+      resetGeminiRecruitOverlay()
       resetInstitutionApplicationProgramBridge()
       resetApplicantRecruitInstitutionOverlay()
       resetGeneralRecruitOverlay()
@@ -486,17 +505,19 @@ export function useGeneralProgramRegistrationFlow(
 
   /** 「임시 저장」— 현재 양식과 메타를 localStorage에만 저장한다. */
   const persistDraftSilent = useCallback(async () => {
-    // 공통정보는 다른 단계에서도 React state에 유지되므로 항상 함께 저장한다.
-    await registrationVm.handleSave({ silent: true })
-    if (!isProgramStep && isParticipantStep) {
-      await participantVm.handleSave({ silent: true })
-    }
-    await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
-    syncRegistrationProgramDraftSession({
-      programType,
-      registrationTemplateCode: registrationTemplateId,
-      activeStep: coercedActiveStep,
-      programTitleKo: registrationVm.resolveProgramTitleKo(),
+    await trackRegistrationWizardVisitSave(programType, async () => {
+      // 공통정보는 다른 단계에서도 React state에 유지되므로 항상 함께 저장한다.
+      await registrationVm.handleSave({ silent: true })
+      if (!isProgramStep && isParticipantStep) {
+        await participantVm.handleSave({ silent: true })
+      }
+      await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
+      syncRegistrationProgramDraftSession({
+        programType,
+        registrationTemplateCode: registrationTemplateId,
+        activeStep: coercedActiveStep,
+        programTitleKo: registrationVm.resolveProgramTitleKo(),
+      })
     })
   }, [
     coercedActiveStep,
@@ -749,6 +770,16 @@ export function useGeneralProgramRegistrationFlow(
     selectedTemplateCode,
     currentStepDef.templateId
   )
+
+  // 목록은 모달을 언마운트해서 닫는다. open=false 효과는 그때 실행되지 않으므로
+  // 방문 종료는 이 효과의 cleanup에서 한다. 임시저장하지 않은 양식 변경은 버린다.
+  useEffect(() => {
+    if (!open) return
+    beginRegistrationWizardVisit(programType)
+    return () => {
+      endRegistrationWizardVisit(programType, resetGeneralRegistrationWizardMemory)
+    }
+  }, [open, programType])
 
   const hasRecruitmentPhase = visibleRecruitTabKeys.length > 0
   const hasApplicationPhase = visibleApplicationTabKeys.length > 0

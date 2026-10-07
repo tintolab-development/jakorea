@@ -50,7 +50,13 @@ import {
   clearRegistrationWizardSessionDrafts,
   flushApplicationOperationalOverrides,
 } from '@/features/program/general/lib/registration-wizard-session-drafts'
+import {
+  beginRegistrationWizardVisit,
+  endRegistrationWizardVisit,
+  trackRegistrationWizardVisitSave,
+} from '@/features/program/general/lib/registration-wizard-visit'
 import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { clearOperationalSeedDefaultSuppression } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { resetUjatRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
 import { resetUjatRecruitVolunteerOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import { resetUjatApplicationInstitutionOverlay } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
@@ -98,6 +104,16 @@ function createRegistrationIdempotencyKey(): string {
 
 function resolveStepTemplateName(templateId: string): string {
   return resolveWritingTemplateDisplayName(templateId)
+}
+
+function resetUjatRegistrationWizardMemory(): void {
+  clearOperationalSeedDefaultSuppression()
+  resetUjatProgramRegistrationOverlay()
+  resetUjatRecruitInstitutionOverlay()
+  resetUjatRecruitVolunteerOverlay()
+  resetUjatApplicationInstitutionOverlay()
+  resetUjatApplicationVolunteerOverlay()
+  resetGeneralRecruitOverlay()
 }
 
 export function useUjatProgramRegistrationFlow(
@@ -157,6 +173,7 @@ export function useUjatProgramRegistrationFlow(
     if (open) return
     completionPromiseRef.current = null
     idempotencyKeyRef.current = createRegistrationIdempotencyKey()
+    clearOperationalSeedDefaultSuppression()
     resetUjatProgramRegistrationOverlay()
     resetUjatRecruitInstitutionOverlay()
     resetUjatRecruitVolunteerOverlay()
@@ -363,19 +380,21 @@ export function useUjatProgramRegistrationFlow(
 
   /** 「임시 저장」— 현재 양식과 메타를 localStorage에만 저장한다. */
   const persistDraftSilent = useCallback(async () => {
-    await registrationVm.handleSave({ silent: true })
-    if (!isProgramStep && isParticipantStep) {
-      await participantVm.handleSave({ silent: true })
-    }
-    await persistRegistrationOperationalOverlaysToLocal(programType, 'ujat')
-    syncRegistrationProgramDraftSession({
-      programType,
-      registrationTemplateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
-      activeStep,
-      programTitleKo: buildUjatProgramListRowFromRegistrationSnapshot({
-        id: 'ujat-local-draft',
-        overlay: { ...getUjatProgramRegistrationOverlayRecord() },
-      }).title,
+    await trackRegistrationWizardVisitSave(programType, async () => {
+      await registrationVm.handleSave({ silent: true })
+      if (!isProgramStep && isParticipantStep) {
+        await participantVm.handleSave({ silent: true })
+      }
+      await persistRegistrationOperationalOverlaysToLocal(programType, 'ujat')
+      syncRegistrationProgramDraftSession({
+        programType,
+        registrationTemplateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
+        activeStep,
+        programTitleKo: buildUjatProgramListRowFromRegistrationSnapshot({
+          id: 'ujat-local-draft',
+          overlay: { ...getUjatProgramRegistrationOverlayRecord() },
+        }).title,
+      })
     })
   }, [
     activeStep,
@@ -535,6 +554,15 @@ export function useUjatProgramRegistrationFlow(
     selectedTemplateCode,
     currentStepDef.templateId
   )
+
+  // 목록은 모달을 언마운트해서 닫는다. 임시저장하지 않은 양식 변경은 방문 종료 때 버린다.
+  useEffect(() => {
+    if (!open) return
+    beginRegistrationWizardVisit(programType)
+    return () => {
+      endRegistrationWizardVisit(programType, resetUjatRegistrationWizardMemory)
+    }
+  }, [open, programType])
 
   return {
     activeStep,

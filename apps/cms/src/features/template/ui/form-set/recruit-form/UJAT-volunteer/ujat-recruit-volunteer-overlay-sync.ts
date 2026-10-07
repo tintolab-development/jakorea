@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react'
+import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 let overlayState: Record<string, unknown> = {}
 let overlayVersion = 0
 const overlayListeners = new Set<() => void>()
@@ -44,7 +45,7 @@ export function useUjatRecruitVolunteerOverlayKv<T>(key: string, defaultValue: T
   )
   void version
   const record = getUjatRecruitVolunteerOverlayRecord()
-  const value = (record[key] as T | undefined) ?? defaultValue
+  const value = readOperationalOverlayKvValue('ujat-recruit-volunteer', record, key, defaultValue)
   const setValue = useCallback(
     (next: T) => {
       patchUjatRecruitVolunteerOverlay({ [key]: next })

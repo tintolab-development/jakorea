@@ -51,10 +51,11 @@ function ProgramApplicationFormInstitutionGuidanceParagraphBody({
   paragraph?: HorizontalTableParagraph
   onParagraphChange?: (next: HorizontalTableParagraph) => void
 }) {
-  const [localAnswers] = useGeneralApplicationOverlayKv<Record<string, string>>(
+  const [storedAnswers] = useGeneralApplicationOverlayKv<Record<string, string>>(
     'application.institution.guidanceAnswers',
     {}
   )
+  const localAnswers = storedAnswers ?? {}
   const usesParagraphState = paragraph != null && onParagraphChange != null
 
   // Initialize with empty answers on first render

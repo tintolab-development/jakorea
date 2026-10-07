@@ -17,15 +17,16 @@ export function EconomyProgramApplicationGuidanceParagraph() {
     'application.economy.guidanceAnswers',
     {}
   )
+  const guidanceAnswers = answers ?? {}
 
   useEffect(() => {
-    if (Object.keys(answers).length === 0) {
+    if (Object.keys(guidanceAnswers).length === 0) {
       updateGeneralApplicationOverlayKey<Record<string, string>>(
         'application.economy.guidanceAnswers',
         () => createInitialGuidanceAnswers()
       )
     }
-  }, [answers])
+  }, [guidanceAnswers])
 
   return (
     <div className="program-application-form-institution__paragraph program-application-form-institution__guidance">
@@ -34,7 +35,7 @@ export function EconomyProgramApplicationGuidanceParagraph() {
           <InstitutionGuidanceFieldCard
             key={field.id}
             field={field}
-            value={answers[field.id] ?? ''}
+            value={guidanceAnswers[field.id] ?? ''}
             onChange={value =>
               updateGeneralApplicationOverlayKey<Record<string, string>>(
                 'application.economy.guidanceAnswers',

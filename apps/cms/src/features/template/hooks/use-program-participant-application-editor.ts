@@ -120,6 +120,11 @@ import {
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import {
+  applyOperationalOverlayForCatalogId,
+  collectOperationalOverlayForCatalogId,
+  resetOperationalOverlayForCatalogId,
+} from '@/features/program/general/lib/registration-operational-form-drafts'
+import {
   applyParticipantApplicationEditorState,
   buildParticipantApplicationEditorState,
 } from '@/features/template/lib/participant-application-editor-state'
@@ -165,14 +170,13 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
 import {
   getApplicantRecruitInstitutionOverlayRecord,
+  patchApplicantRecruitInstitutionOverlay,
   replaceApplicantRecruitInstitutionOverlay,
   resetApplicantRecruitInstitutionOverlay,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
-  replaceGeneralRecruitOverlay,
-  resetGeneralRecruitOverlay,
   subscribeGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import {
@@ -194,8 +198,6 @@ import { getRecruitVolunteerHiddenParagraphIds } from '@/features/template/ui/fo
 import {
   getGeneralApplicationOverlayRecord,
   patchGeneralApplicationOverlay,
-  replaceGeneralApplicationOverlay,
-  resetGeneralApplicationOverlay,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getUjatApplicationInstitutionOverlayRecord,
@@ -233,6 +235,7 @@ import {
   peekRegistrationWizardSessionDrafts,
   subscribeRegistrationWizardApplicationDraft,
 } from '@/features/program/general/lib/registration-wizard-session-drafts'
+import { isRegistrationWizardVisitEnding } from '@/features/program/general/lib/registration-wizard-visit'
 import { getUjatVolunteerRound } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-program-round'
 import { resolveUjatVolunteerHiddenParagraphIds } from '@/features/template/lib/ujat-volunteer-application-form-visibility'
 import type { Program } from '@/types/domain'
@@ -439,6 +442,19 @@ function isGeneralApplicationOverlayVariant(
   )
 }
 
+function participantEditorHydrateKey(args: {
+  templateId: string
+  persistTemplateVersionId?: number
+  usesRegistrationWizardDraft: boolean
+  localOnlyDraftPersistence: boolean
+  preferLocalDraft: boolean
+  wizardDraftRevision: number
+}): string {
+  return `${args.templateId}::${args.persistTemplateVersionId ?? 'none'}::${
+    args.usesRegistrationWizardDraft ? 'wizard' : args.localOnlyDraftPersistence ? 'local' : 'remote'
+  }::${args.preferLocalDraft ? 'prefer-local' : 'bound'}::rev-${args.wizardDraftRevision}`
+}
+
 /** Notion 모집 양식 — 시드 단락에서 단락 추가·복제·삭제 전부 disabled 노출 */
 function isRecruitmentEditorVariant(variant: ProgramParticipantApplicationEditorVariant): boolean {
   return (
@@ -472,10 +488,22 @@ function restoreParticipantOverlayForVariant(
   if (isApplicantRecruitInstitutionVariant(variant)) {
     const detailPrefix = recruitDetailInfoOverlayPrefixForEditorVariant(variant)
     if (overlay) {
-      replaceApplicantRecruitInstitutionOverlay(overlay)
       if (replace) {
+        replaceApplicantRecruitInstitutionOverlay(overlay)
         replaceRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
       } else {
+        const applicantIncoming: Record<string, unknown> = {}
+        const needle =
+          detailPrefix == null ? null : detailPrefix.endsWith('.') ? detailPrefix : `${detailPrefix}.`
+        for (const [key, value] of Object.entries(overlay)) {
+          if (needle != null && (key === detailPrefix || key.startsWith(needle))) continue
+          applicantIncoming[key] = value
+        }
+        const patch = overlayEntriesAbsentFromLive(
+          applicantIncoming,
+          getApplicantRecruitInstitutionOverlayRecord()
+        )
+        if (Object.keys(patch).length > 0) patchApplicantRecruitInstitutionOverlay(patch)
         restoreRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
       }
     } else if (resetIfMissing) {
@@ -484,28 +512,23 @@ function restoreParticipantOverlayForVariant(
     }
     return
   }
-  if (isGeneralRecruitOverlayVariant(variant)) {
-    // 개인·강사·봉사자 모집이 한 스토어를 공유한다.
-    // 다른 단계 스냅샷에 들어 있는 첨부·썸네일 키로 방금 입력한 값을 덮지 않는다.
+  if (isGeneralRecruitOverlayVariant(variant) || isGeneralApplicationOverlayVariant(variant)) {
+    const catalogId = getTemplateIdForParticipantApplicationVariant(variant)
     if (overlay) {
       if (replace) {
-        replaceGeneralRecruitOverlay(overlay)
+        applyOperationalOverlayForCatalogId(catalogId, overlay)
       } else {
-        const patch = overlayEntriesAbsentFromLive(overlay, getGeneralRecruitOverlayRecord())
-        if (Object.keys(patch).length > 0) patchGeneralRecruitOverlay(patch)
+        const live = isGeneralRecruitOverlayVariant(variant)
+          ? getGeneralRecruitOverlayRecord()
+          : getGeneralApplicationOverlayRecord()
+        const patch = overlayEntriesAbsentFromLive(overlay, live)
+        if (Object.keys(patch).length === 0) return
+        if (isGeneralRecruitOverlayVariant(variant)) patchGeneralRecruitOverlay(patch)
+        else patchGeneralApplicationOverlay(patch)
       }
-    } else if (resetIfMissing) resetGeneralRecruitOverlay()
-    return
-  }
-  if (isGeneralApplicationOverlayVariant(variant)) {
-    if (overlay) {
-      if (replace) {
-        replaceGeneralApplicationOverlay(overlay)
-      } else {
-        const patch = overlayEntriesAbsentFromLive(overlay, getGeneralApplicationOverlayRecord())
-        if (Object.keys(patch).length > 0) patchGeneralApplicationOverlay(patch)
-      }
-    } else if (resetIfMissing) resetGeneralApplicationOverlay()
+    } else if (resetIfMissing) {
+      resetOperationalOverlayForCatalogId(catalogId)
+    }
     return
   }
   if (variant === 'ujat-application-institution') {
@@ -525,17 +548,16 @@ export function collectParticipantOverlayForVariant(
   if (variant === 'gemini-recruit') {
     return { ...getGeminiRecruitOverlayRecord() }
   }
-  if (isApplicantRecruitInstitutionVariant(variant)) {
-    return mergeRecruitDetailInfoFromGeneralStore(
-      { ...getApplicantRecruitInstitutionOverlayRecord() },
-      recruitDetailInfoOverlayPrefixForEditorVariant(variant)
+  if (
+    isApplicantRecruitInstitutionVariant(variant) ||
+    isGeneralRecruitOverlayVariant(variant) ||
+    isGeneralApplicationOverlayVariant(variant)
+  ) {
+    return (
+      collectOperationalOverlayForCatalogId(
+        getTemplateIdForParticipantApplicationVariant(variant)
+      ) ?? undefined
     )
-  }
-  if (isGeneralRecruitOverlayVariant(variant)) {
-    return { ...getGeneralRecruitOverlayRecord() }
-  }
-  if (isGeneralApplicationOverlayVariant(variant)) {
-    return { ...getGeneralApplicationOverlayRecord() }
   }
   if (variant === 'ujat-recruit-institution') {
     return mergeRecruitDetailInfoFromGeneralStore(
@@ -655,6 +677,7 @@ export function useProgramParticipantApplicationEditor(
 
   /** API/시드 로드 전 — 개인 신청 mock 등 잘못된 variant가 노출되지 않도록 빈 draft 유지 */
   const [draft, setDraft] = useState<WritingFormDraft>(() => EMPTY_WRITING_FORM_DRAFT)
+  const [draftHydrateKey, setDraftHydrateKey] = useState<string | null>(null)
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null)
   const [isDraftLoading, setIsDraftLoading] = useState(() => active)
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
@@ -711,6 +734,36 @@ export function useProgramParticipantApplicationEditor(
     return createProgramParticipantApplicationDraft()
   }, [variant])
 
+  const normalizeEditorDraft = useCallback(
+    (next: WritingFormDraft): WritingFormDraft => {
+      const migrated =
+        variant === 'ujat-application-volunteer'
+          ? migrateUjatProgramApplicationVolunteerChoiceParagraphs(next)
+          : variant === 'ujat-application-institution'
+            ? migrateUjatProgramApplicationInstitutionParagraphs(next)
+            : variant === 'gemini-application-institution'
+              ? migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(next)
+              : variant === 'economy-application-institution'
+                ? migrateProgramApplicationFormEconomyParagraphs(next)
+                : variant === 'trained-teachers-application-institution'
+                  ? migrateProgramApplicationFormTrainedTeachersParagraphs(next)
+                : variant === 'institution'
+                  ? migrateProgramApplicationFormInstitutionParagraphs(next)
+                  : variant === 'individual'
+                    ? migrateProgramParticipantApplicationParagraphs(next)
+                  : variant === 'instructor'
+                    ? migrateProgramApplicationFormInstructorParagraphs(next)
+                    : variant === 'volunteer'
+                      ? migrateProgramApplicationFormVolunteerParagraphs(next)
+                      : next
+      const withTitleRequired = forceSeedParagraphsRequired
+        ? withForcedSeedParagraphTitleRequired(migrated, seedParagraphIds)
+        : migrated
+      return normalizeWritingFormDraft(withTitleRequired)
+    },
+    [forceSeedParagraphsRequired, seedParagraphIds, variant]
+  )
+
   /** 모집/신청 탭 전환 시 EMPTY→스피너 깜빡임 방지 — 세션 내 templateId별 마지막 draft */
   const sessionDraftCacheRef = useRef(
     new Map<
@@ -736,6 +789,66 @@ export function useProgramParticipantApplicationEditor(
   ujatApplicationGradeByBlockIdRef.current = ujatApplicationGradeByBlockId
   const ujatGradeClassTimeBlockIdsRef = useRef(ujatGradeClassTimeBlockIds)
   ujatGradeClassTimeBlockIdsRef.current = ujatGradeClassTimeBlockIds
+  const overlayVariantRef = useRef(variant)
+  const snapshottedOnSwitchRef = useRef<string | null>(null)
+
+  const editorHydrateTemplateId = usesRegistrationWizardDraft
+    ? resolvePersistTemplateId()
+    : localOnlyDraftPersistence
+      ? resolveLocalDraftStorageKey()
+      : resolvePersistTemplateId()
+  const editorHydrateKey = participantEditorHydrateKey({
+    templateId: editorHydrateTemplateId,
+    persistTemplateVersionId,
+    usesRegistrationWizardDraft,
+    localOnlyDraftPersistence,
+    preferLocalDraft,
+    wizardDraftRevision: editorOptions?.wizardDraftRevision ?? 0,
+  })
+
+  if (active && draftHydrateKey !== editorHydrateKey) {
+    if (draftHydrateKey != null && draft.paragraphs.length > 0) {
+      const previousVariant = overlayVariantRef.current
+      const overlay = collectParticipantOverlayForVariant(previousVariant)
+      sessionDraftCacheRef.current.set(draftHydrateKey, {
+        draft,
+        overlay,
+        editorState: buildParticipantApplicationEditorState({
+          variant: previousVariant,
+          volunteerExceptionScheduleCount: volunteerExceptionScheduleCountRef.current,
+          ujatVolunteerApplicationType: ujatVolunteerApplicationTypeRef.current,
+          ujatGradeApplicationBlockIds: ujatGradeApplicationBlockIdsRef.current,
+          ujatApplicationGradeByBlockId: ujatApplicationGradeByBlockIdRef.current,
+          ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
+        }),
+      })
+      if (overlay != null && Object.keys(overlay).length > 0) {
+        storageHydratedTemplateIdsRef.current.add(draftHydrateKey)
+      }
+      snapshottedOnSwitchRef.current = draftHydrateKey
+    }
+    setDraftHydrateKey(editorHydrateKey)
+    const cached = sessionDraftCacheRef.current.get(editorHydrateKey)
+    const cacheIsHydrated = storageHydratedTemplateIdsRef.current.has(editorHydrateKey)
+    const autofilled =
+      usesRegistrationWizardDraft
+        ? peekRegistrationWizardSessionDrafts().find(
+            entry =>
+              entry.templateCode === editorHydrateTemplateId &&
+              !hasIncompleteApplicationFormThirdPartyRecipient(entry.draft)
+          )
+        : undefined
+    const nextDraft =
+      cached != null && cacheIsHydrated
+        ? cached.draft
+        : (autofilled?.draft ?? createSeedDraft())
+    const normalized = normalizeEditorDraft(nextDraft)
+    setDraft(normalized)
+    setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
+    setSingleItemListActiveItemId(null)
+    setIsDraftLoading(false)
+  }
+  overlayVariantRef.current = variant
 
   useEffect(() => {
     if (!active) {
@@ -749,40 +862,13 @@ export function useProgramParticipantApplicationEditor(
     }
     /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
     let cancelled = false
-    const templateId = usesRegistrationWizardDraft
-      ? resolvePersistTemplateId()
-      : localOnlyDraftPersistence
-        ? resolveLocalDraftStorageKey()
-        : resolvePersistTemplateId()
-    const hydrateKey = `${templateId}::${persistTemplateVersionId ?? 'none'}::${usesRegistrationWizardDraft ? 'wizard' : localOnlyDraftPersistence ? 'local' : 'remote'}::${preferLocalDraft ? 'prefer-local' : 'bound'}::rev-${editorOptions?.wizardDraftRevision ?? 0}`
+    const templateId = editorHydrateTemplateId
+    const hydrateKey = editorHydrateKey
     const clearOverlaysOnHydrate = consumeWizardContentResetPending()
     const replaceHydratedOverlay = clearOverlaysOnHydrate || !usesRegistrationWizardDraft
 
     const applyDraftNow = (next: WritingFormDraft) => {
-      const migrated =
-        variant === 'ujat-application-volunteer'
-          ? migrateUjatProgramApplicationVolunteerChoiceParagraphs(next)
-          : variant === 'ujat-application-institution'
-            ? migrateUjatProgramApplicationInstitutionParagraphs(next)
-            : variant === 'gemini-application-institution'
-              ? migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(next)
-              : variant === 'economy-application-institution'
-                ? migrateProgramApplicationFormEconomyParagraphs(next)
-                : variant === 'trained-teachers-application-institution'
-                  ? migrateProgramApplicationFormTrainedTeachersParagraphs(next)
-                : variant === 'institution'
-                  ? migrateProgramApplicationFormInstitutionParagraphs(next)
-                  : variant === 'individual'
-                    ? migrateProgramParticipantApplicationParagraphs(next)
-                  : variant === 'instructor'
-                    ? migrateProgramApplicationFormInstructorParagraphs(next)
-                    : variant === 'volunteer'
-                      ? migrateProgramApplicationFormVolunteerParagraphs(next)
-                      : next
-      const withTitleRequired = forceSeedParagraphsRequired
-        ? withForcedSeedParagraphTitleRequired(migrated, seedParagraphIds)
-        : migrated
-      const normalized = normalizeWritingFormDraft(withTitleRequired)
+      const normalized = normalizeEditorDraft(next)
       setDraft(normalized)
       setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
       setSingleItemListActiveItemId(null)
@@ -790,9 +876,8 @@ export function useProgramParticipantApplicationEditor(
 
     const cached = sessionDraftCacheRef.current.get(hydrateKey)
     const cacheIsHydrated = storageHydratedTemplateIdsRef.current.has(hydrateKey)
-    // 템플릿 변경으로 비운 입력은 이전 세션 캐시로 되돌리지 않는다.
+    // draft는 render에서 맞춤. 여기선 overlay만 보강해 탭 전환 재페인트가 나지 않게 한다.
     if (cached && cacheIsHydrated && !clearOverlaysOnHydrate) {
-      applyDraftNow(cached.draft)
       if (variant === 'ujat-recruit-institution') {
         replaceUjatRecruitInstitutionOverlay(
           coalesceUjatRecruitOverlay(cached.overlay ?? {}, getUjatRecruitInstitutionOverlayRecord())
@@ -828,18 +913,6 @@ export function useProgramParticipantApplicationEditor(
       }
       setIsDraftLoading(false)
     } else {
-      // 탭 전환 시 EMPTY/스피너 대신 시드를 즉시 그려 깜빡임 제거.
-      // overlay는 비우지 않음 — 공유 스토어·이어서작성 hydrate 값을 유지한 채 저장본 merge.
-      // 개발용 자동입력이 넣어 둔 신청 draft가 있으면 빈 시드보다 그 값을 그린다.
-      const autofilled =
-        clearOverlaysOnHydrate
-          ? undefined
-          : peekRegistrationWizardSessionDrafts().find(
-              entry =>
-                entry.templateCode === templateId &&
-                !hasIncompleteApplicationFormThirdPartyRecipient(entry.draft)
-            )
-      applyDraftNow(autofilled?.draft ?? createSeedDraft())
       setIsDraftLoading(false)
     }
 
@@ -1014,6 +1087,8 @@ export function useProgramParticipantApplicationEditor(
 
     return () => {
       cancelled = true
+      // 위저드를 닫는 중이면 세션 초안을 다시 심지 않는다. 닫기 cleanup이 먼저 초기화한다.
+      if (usesRegistrationWizardDraft && isRegistrationWizardVisitEnding()) return
       // 추가 내용 에디터는 키 입력마다 overlay에 안 쓴다. 단계 캐시보다 먼저 넣는다.
       flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
       const overlay =
@@ -1025,7 +1100,14 @@ export function useProgramParticipantApplicationEditor(
       const hasOverlayValues = overlay != null && Object.keys(overlay).length > 0
       // hydrate 완료 전 cleanup(Strict Mode 등)은 시드+빈 overlay로 캐시를 오염시키지 않음
       if (!storageHydratedTemplateIdsRef.current.has(hydrateKey) && !hasOverlayValues) return
-      if (draftRef.current.paragraphs.length === 0) return
+      const existing = sessionDraftCacheRef.current.get(hydrateKey)
+      const draftToSave =
+        snapshottedOnSwitchRef.current === hydrateKey &&
+        existing?.draft != null &&
+        existing.draft.paragraphs.length > 0
+          ? existing.draft
+          : draftRef.current
+      if (draftToSave.paragraphs.length === 0) return
       const editorState = buildParticipantApplicationEditorState({
         variant,
         volunteerExceptionScheduleCount: volunteerExceptionScheduleCountRef.current,
@@ -1035,7 +1117,7 @@ export function useProgramParticipantApplicationEditor(
         ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
       })
       sessionDraftCacheRef.current.set(hydrateKey, {
-        draft: draftRef.current,
+        draft: draftToSave,
         overlay,
         editorState,
       })
@@ -1045,26 +1127,23 @@ export function useProgramParticipantApplicationEditor(
       if (usesRegistrationWizardDraft) {
         rememberRegistrationWizardSessionDraft({
           templateCode: templateId,
-          draft: draftRef.current,
+          draft: draftToSave,
           editorState,
         })
       }
     }
   }, [
     active,
-    createSeedDraft,
-    forceSeedParagraphsRequired,
+    editorHydrateKey,
+    editorHydrateTemplateId,
     localOnlyDraftPersistence,
+    normalizeEditorDraft,
     persistTemplateVersionId,
     preferLocalDraft,
     registrationWizardProgramType,
-    resolveLocalDraftStorageKey,
-    resolvePersistTemplateId,
-    seedParagraphIds,
     skipDraftRestore,
     usesRegistrationWizardDraft,
     variant,
-    editorOptions?.wizardDraftRevision,
   ])
 
   useEffect(() => {

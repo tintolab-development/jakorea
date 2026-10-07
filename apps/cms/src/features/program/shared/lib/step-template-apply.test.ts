@@ -27,6 +27,14 @@ import {
   resetGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { consumeWizardContentResetPending } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import {
+  getGeminiRecruitOverlayRecord,
+  resetGeminiRecruitOverlay,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+import {
+  clearOperationalSeedDefaultSuppression,
+  readOperationalOverlayKvValue,
+} from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createEconomyRecruitFormInstitutionDraft } from '@/features/template/model/economy-recruit-form-institution-draft'
 import { createProgramApplicationFormInstitutionDraft } from '@/features/template/model/program-application-form-institution-draft'
 import { createProgramApplicationFormTrainedTeachersDraft } from '@/features/template/model/program-application-form-trained-teachers-draft'
@@ -66,6 +74,8 @@ describe('applyRegistrationStepTemplateChange', () => {
     resetInstitutionApplicationProgramBridge()
     resetUjatRecruitInstitutionOverlay()
     resetUjatRecruitVolunteerOverlay()
+    clearOperationalSeedDefaultSuppression()
+    resetGeminiRecruitOverlay()
     for (const templateCode of [
       'application-participant-school-custom-2',
       'recruitment-instructor-custom-2',
@@ -385,6 +395,165 @@ describe('applyRegistrationStepTemplateChange', () => {
     expect(getGeneralRecruitOverlayRecord()['ujatRecruit.detailInfo.programDescription']).toBe(
       '새 기관 상세'
     )
+  })
+
+  it('clears seeded recruit defaults after a template change and leaves other forms alone', async () => {
+    expect(
+      readOperationalOverlayKvValue(
+        'institution-recruit',
+        getApplicantRecruitInstitutionOverlayRecord(),
+        'recruit.maxAssignableInstructors',
+        2
+      )
+    ).toBe(2)
+    expect(
+      readOperationalOverlayKvValue(
+        'general-recruit',
+        getGeneralRecruitOverlayRecord(),
+        'recruit.volunteer.interviewRequired',
+        'yes'
+      )
+    ).toBe('yes')
+    expect(
+      readOperationalOverlayKvValue(
+        'gemini-recruit',
+        getGeminiRecruitOverlayRecord(),
+        'geminiRecruit.minStudentCount',
+        15
+      )
+    ).toBe(15)
+
+    loadFormTemplateVersionDraft.mockResolvedValue({
+      version: 1,
+      templateId: 'recruitment-economy-custom-2',
+      savedAt: '2026-10-07T00:00:00.000Z',
+      draft: createEconomyRecruitFormInstitutionDraft(),
+    })
+
+    await applyRegistrationStepTemplateChange({
+      programType: 'ECONOMY',
+      stepKey: 'recruit-economy',
+      previousCode: 'recruitment-economy',
+      nextCode: 'recruitment-economy-custom-2',
+      defaultCode: 'recruitment-economy',
+      baseTemplateCode: 'recruitment-economy',
+    })
+
+    expect(
+      readOperationalOverlayKvValue(
+        'institution-recruit',
+        getApplicantRecruitInstitutionOverlayRecord(),
+        'recruit.maxAssignableInstructors',
+        2
+      )
+    ).toBeUndefined()
+    expect(
+      readOperationalOverlayKvValue(
+        'institution-recruit',
+        getApplicantRecruitInstitutionOverlayRecord(),
+        'recruit.maxClassCount',
+        4
+      )
+    ).toBeUndefined()
+    expect(
+      readOperationalOverlayKvValue(
+        'institution-recruit',
+        getApplicantRecruitInstitutionOverlayRecord(),
+        'recruit.preguidanceRequired',
+        'need'
+      )
+    ).toBe('')
+    expect(
+      readOperationalOverlayKvValue(
+        'general-recruit',
+        getGeneralRecruitOverlayRecord(),
+        'recruit.volunteer.interviewRequired',
+        'yes'
+      )
+    ).toBe('yes')
+    expect(
+      readOperationalOverlayKvValue(
+        'general-recruit',
+        getGeneralRecruitOverlayRecord(),
+        'recruit.instructor.recruitTargets',
+        ['성인']
+      )
+    ).toEqual(['성인'])
+  })
+
+  it('clears volunteer, instructor, and gemini seed defaults on their own template change', async () => {
+    loadFormTemplateVersionDraft.mockResolvedValue(null)
+
+    await applyRegistrationStepTemplateChange({
+      programType: 'GENERAL',
+      stepKey: 'recruit-volunteer',
+      previousCode: 'recruitment-volunteer',
+      nextCode: 'recruitment-volunteer-custom-2',
+      defaultCode: 'recruitment-volunteer',
+      baseTemplateCode: 'recruitment-volunteer',
+    })
+    expect(
+      readOperationalOverlayKvValue(
+        'general-recruit',
+        getGeneralRecruitOverlayRecord(),
+        'recruit.volunteer.interviewRequired',
+        'yes'
+      )
+    ).toBe('')
+    expect(
+      readOperationalOverlayKvValue(
+        'general-recruit',
+        getGeneralRecruitOverlayRecord(),
+        'recruit.instructor.recruitTargets',
+        ['성인']
+      )
+    ).toEqual(['성인'])
+
+    clearOperationalSeedDefaultSuppression()
+    await applyRegistrationStepTemplateChange({
+      programType: 'GENERAL',
+      stepKey: 'recruit-instructor',
+      previousCode: 'recruitment-instructor',
+      nextCode: 'recruitment-instructor-custom-2',
+      defaultCode: 'recruitment-instructor',
+      baseTemplateCode: 'recruitment-instructor',
+    })
+    expect(
+      readOperationalOverlayKvValue(
+        'general-recruit',
+        getGeneralRecruitOverlayRecord(),
+        'recruit.instructor.recruitTargets',
+        ['성인']
+      )
+    ).toEqual([])
+
+    clearOperationalSeedDefaultSuppression()
+    resetGeminiRecruitOverlay()
+    await applyRegistrationStepTemplateChange({
+      programType: 'GEMINI',
+      stepKey: 'recruit-gemini',
+      previousCode: 'recruitment-gemini-visiting-training',
+      nextCode: 'recruitment-gemini-visiting-training-custom-2',
+      defaultCode: 'recruitment-gemini-visiting-training',
+      baseTemplateCode: 'recruitment-gemini-visiting-training',
+    })
+    expect(getGeminiRecruitOverlayRecord()['geminiRecruit.minStudentCount']).toBeUndefined()
+    expect(
+      readOperationalOverlayKvValue(
+        'gemini-recruit',
+        getGeminiRecruitOverlayRecord(),
+        'geminiRecruit.minStudentCount',
+        15
+      )
+    ).toBeUndefined()
+    expect(
+      readOperationalOverlayKvValue(
+        'gemini-recruit',
+        getGeminiRecruitOverlayRecord(),
+        'geminiRecruit.educationForm',
+        'online'
+      )
+    ).toBe('')
   })
 
   it('is a no-op when the same template is selected again', async () => {

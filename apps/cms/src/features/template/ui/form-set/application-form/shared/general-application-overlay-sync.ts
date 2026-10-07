@@ -1,4 +1,5 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 
 /**
  * 지원 폼(기관 지원, 개인 지원 등)의 공유 오버레이 스토어
@@ -77,7 +78,12 @@ export function useGeneralApplicationOverlayKv<T>(
   )
   void version
   const record = getGeneralApplicationOverlayRecord()
-  const value = (record[key] as T | undefined) ?? defaultRef.current
+  const value = readOperationalOverlayKvValue(
+    'general-application',
+    record,
+    key,
+    defaultRef.current
+  )
   const setValue = useCallback(
     (next: T) => {
       patchGeneralApplicationOverlay({ [key]: next })
