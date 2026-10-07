@@ -362,24 +362,34 @@ export type PortalSurveyFormDocument = {
   formResponseId?: number
 }
 
-/** GET /api/portal/programs/{programId}/form-bindings/{bindingId} — 설문·만족도 본문 */
+type PortalFormBindingRender = Record<string, unknown> & {
+  programId?: number
+  programFormBindingId?: number
+  templateVersionId?: number
+}
+
+/**
+ * GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render — 설문·만족도 본문
+ *
+ * `/api/portal/programs/{programId}/form-bindings/{bindingId}` 는 APPLICATION 바인딩 전용이라
+ * 설문 바인딩에 recruitmentId 를 붙이면 RECRUITMENT_FORM_BINDING_MISMATCH 가 난다.
+ */
 export async function fetchPortalSurveyFormBinding(
   programId: number,
   bindingId: number,
-  query: { applicationType?: string; recruitmentId?: number },
   signal?: AbortSignal,
 ): Promise<PortalSurveyFormDocument> {
   const { data } = await axiosClient.get<unknown>(
-    `/api/portal/programs/${programId}/form-bindings/${bindingId}`,
-    {
-      signal,
-      params: {
-        ...(query.recruitmentId != null ? { recruitmentId: query.recruitmentId } : {}),
-        ...(query.applicationType ? { applicationType: query.applicationType } : {}),
-      },
-    },
+    `/api/portal/me/programs/${programId}/form-bindings/${bindingId}/render`,
+    { signal },
   )
-  return unwrapEnvelope<PortalSurveyFormDocument>(data)
+  const rendered = unwrapEnvelope<PortalFormBindingRender>(data)
+  return {
+    programId: rendered.programId,
+    formBindingId: rendered.programFormBindingId,
+    templateVersionId: rendered.templateVersionId,
+    form: rendered,
+  }
 }
 
 export type PortalSurveySubmitBody = {

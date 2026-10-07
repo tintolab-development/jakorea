@@ -479,7 +479,6 @@ export function MypageEducationDetailPage() {
             applicationType={routeApplicationType}
             applicationId={application.id}
             programId={program.id}
-            recruitmentId={application.recruitmentId}
           />
         )
       }
@@ -502,7 +501,6 @@ export function MypageEducationDetailPage() {
             applicationType={routeApplicationType}
             applicationId={application.id}
             programId={program.id}
-            recruitmentId={application.recruitmentId}
           />
         )
       }

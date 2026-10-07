@@ -390,7 +390,6 @@ export function MypageLectureDetailPage() {
             applicationType={routeApplicationType}
             applicationId={application.id}
             programId={program.id}
-            recruitmentId={application.recruitmentId}
           />
         )
       }
@@ -413,7 +412,6 @@ export function MypageLectureDetailPage() {
             applicationType={routeApplicationType}
             applicationId={application.id}
             programId={program.id}
-            recruitmentId={application.recruitmentId}
           />
         )
       }
