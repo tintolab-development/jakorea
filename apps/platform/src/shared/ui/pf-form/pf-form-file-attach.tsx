@@ -13,6 +13,8 @@ export type PFFormFileAttachProps = {
   disabled?: boolean
   /** 첨부된 파일명 — 있으면 버튼 옆 칩 노출 */
   fileName?: string | null
+  /** 이미 올린 파일 목록용. 추가 버튼 없이 칩만 보여 준다 */
+  hideTrigger?: boolean
   onFileSelect: (file: File) => void
   onRemove?: () => void
   error?: string | null
@@ -52,6 +54,7 @@ export function PFFormFileAttach({
   uploading = false,
   disabled = false,
   fileName,
+  hideTrigger = false,
   onFileSelect,
   onRemove,
   error,
@@ -71,26 +74,30 @@ export function PFFormFileAttach({
 
   return (
     <div className={[styles.fileAttach, className].filter(Boolean).join(' ')}>
-      <input
-        ref={inputRef}
-        id={inputId}
-        type="file"
-        accept={accept}
-        className={styles.fileAttachInput}
-        aria-label={ariaLabel ?? buttonLabel}
-        disabled={busy}
-        onChange={handleChange}
-      />
-      <PFButton
-        type="button"
-        variant="secondary"
-        size="medium"
-        className={styles.fileAttachTrigger}
-        disabled={busy}
-        onClick={() => inputRef.current?.click()}
-      >
-        {uploading ? uploadingLabel : buttonLabel}
-      </PFButton>
+      {hideTrigger ? null : (
+        <input
+          ref={inputRef}
+          id={inputId}
+          type="file"
+          accept={accept}
+          className={styles.fileAttachInput}
+          aria-label={ariaLabel ?? buttonLabel}
+          disabled={busy}
+          onChange={handleChange}
+        />
+      )}
+      {hideTrigger ? null : (
+        <PFButton
+          type="button"
+          variant="secondary"
+          size="medium"
+          className={styles.fileAttachTrigger}
+          disabled={busy}
+          onClick={() => inputRef.current?.click()}
+        >
+          {uploading ? uploadingLabel : buttonLabel}
+        </PFButton>
+      )}
       {name ? (
         <span className={styles.fileAttachChip}>
           <PdfFileIcon />

@@ -66,6 +66,8 @@ export function collectRuntimeHiddenAnswerKeys(form: unknown): Set<string> {
 export type RuntimeConditionalQuestion = {
   questionKey: string
   dependsOnQuestionKey: string
+  /** 있으면 의존 답 객체의 이 필드 값으로 판정한다. 값은 대문자로 비교한다. */
+  dependsOnField?: string
   visibleValues: ReadonlySet<string>
   hiddenValues: ReadonlySet<string>
 }
@@ -97,6 +99,7 @@ export function collectRuntimeConditionalQuestions(form: unknown): RuntimeCondit
     out.push({
       questionKey,
       dependsOnQuestionKey: raw.dependsOnQuestionKey,
+      dependsOnField: typeof raw.dependsOnField === 'string' ? raw.dependsOnField : undefined,
       visibleValues: conditionValueSet(raw.visibleValues),
       hiddenValues: conditionValueSet(raw.hiddenValues),
     })
@@ -116,7 +119,13 @@ export function collectConditionallyHiddenAnswerKeys(
   for (const conditional of conditionals) {
     const raw = answers[conditional.dependsOnQuestionKey]
     if (raw == null) continue
-    const values = (Array.isArray(raw) ? raw : [raw]).map(normalizeConditionValue)
+    const field = conditional.dependsOnField
+    const compared =
+      field && raw && typeof raw === 'object' && !Array.isArray(raw)
+        ? (raw as Record<string, unknown>)[field]
+        : raw
+    if (field && (compared == null || compared === '')) continue
+    const values = (Array.isArray(compared) ? compared : [compared]).map(normalizeConditionValue)
     if (values.some(value => conditional.visibleValues.has(value))) continue
     if (values.some(value => conditional.hiddenValues.has(value))) {
       hidden.add(conditional.questionKey)
@@ -431,6 +440,14 @@ function mergeAnswerIntoParagraph(
     if (paragraph.kind === 'single_item' && paragraph.variant === 'short_essay') {
       return { ...paragraph, bodyText: answer }
     }
+    if (
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'multiple_choice' &&
+      !paragraph.allowMultiple &&
+      paragraph.items.some(item => item.id === answer)
+    ) {
+      return { ...paragraph, selectedPreviewSingleId: answer }
+    }
     return paragraph
   }
 
@@ -440,6 +457,10 @@ function mergeAnswerIntoParagraph(
       paragraph.variant === 'multiple_choice' &&
       answer.every(item => typeof item === 'string')
     ) {
+      if (!paragraph.allowMultiple) {
+        const selected = (answer as string[]).find(id => paragraph.items.some(item => item.id === id))
+        return selected ? { ...paragraph, selectedPreviewSingleId: selected } : paragraph
+      }
       return { ...paragraph, selectedPreviewMultipleIds: answer as string[] }
     }
     return paragraph
@@ -580,6 +601,8 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
     }
   }
   if (paragraph.kind === 'single_item' && paragraph.variant === 'multiple_choice') {
+    /** 단일 선택은 라디오가 `selectedPreviewSingleId`에 쓴다. 서버는 선택지 값 하나를 받는다. */
+    if (!paragraph.allowMultiple) return paragraph.selectedPreviewSingleId ?? null
     return paragraph.selectedPreviewMultipleIds ?? []
   }
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {

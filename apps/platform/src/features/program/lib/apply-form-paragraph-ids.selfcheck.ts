@@ -12,6 +12,7 @@ import {
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
   isDynamicIndividualInterviewParagraph,
+  isDynamicVolunteerInterviewParagraph,
   isInstructorAvailableScheduleParagraphId,
   isInstructorCrimeRecordParagraphId,
   shouldShowEducationPlaceOnBasicInfo,
@@ -95,6 +96,36 @@ assert.equal(
   isDynamicIndividualInterviewParagraph({
     id: 'program-volunteer-application-seed-interview-schedule',
     runtimeInputMode: 'dynamic_interview_slots',
+  }),
+  false,
+)
+
+assert.equal(
+  isDynamicVolunteerInterviewParagraph({
+    id: 'program-volunteer-application-seed-interview-schedule',
+    runtimeInputMode: 'dynamic_interview_slots',
+  }),
+  true,
+)
+assert.equal(
+  isDynamicVolunteerInterviewParagraph({
+    id: interviewId,
+    runtimeInputMode: 'dynamic_interview_slots',
+  }),
+  false,
+)
+assert.equal(
+  isDynamicVolunteerInterviewParagraph({
+    id: 'ujat-program-application-volunteer-seed-interview-schedule',
+    runtimeInputMode: 'dynamic_interview_slots',
+  }),
+  true,
+)
+assert.equal(
+  isDynamicVolunteerInterviewParagraph({
+    id: 'ujat-program-application-volunteer-seed-interview-schedule',
+    runtimeInputMode: 'dynamic_interview_slots',
+    runtimeHidden: true,
   }),
   false,
 )

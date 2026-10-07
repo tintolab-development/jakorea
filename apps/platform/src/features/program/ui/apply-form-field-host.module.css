@@ -1,0 +1,44 @@
+/*
+ * 신청 양식은 FormTemplateHost 안에서 typo-*가 unset 된다.
+ * 강사 신청·교육받은 교사 표(PFFormFieldTable)와 같은 라벨 글자로 되돌린다.
+ */
+.root :global(.typo-form-field-label) {
+  font-family: var(--font-family-base);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+:global(.form-template-host) .root :global(.typo-form-field-label) {
+  font-family: var(--font-family-base);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+/* 자유 작성 — 세로형 라벨은 왼쪽 정렬 */
+.vertical :global(.typo-form-field-label),
+:global(.form-template-host) .vertical :global(.typo-form-field-label) {
+  text-align: left;
+}
+
+/* PF 표 모바일(≤1079): 라벨 13px · 왼쪽 · cool-600. host unset 보다 세야 한다 */
+@media (--bp-below-pc) {
+  .root :global(.typo-form-field-label),
+  :global(.form-template-host) .root :global(.typo-form-field-label),
+  .vertical :global(.typo-form-field-label),
+  :global(.form-template-host) .vertical :global(.typo-form-field-label) {
+    color: var(--color-neutral-cool-600, #667278);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 140%;
+    letter-spacing: 0;
+    text-align: left;
+  }
+}
