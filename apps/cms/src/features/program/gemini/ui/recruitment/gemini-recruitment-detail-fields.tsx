@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import {
   GEMINI_RECRUITMENT_DETAIL_RICH_TEXT_FIELDS,
@@ -18,6 +17,15 @@ import {
   programInlineImageOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import { programThumbnailOwner } from '@/features/program/shared/api/program-attachments'
+import {
+  fetchProgramThumbnail,
+  loadProgramThumbnailPreviewUrl,
+} from '@/features/program/shared/api/program-thumbnail'
+import { FILE_SELECT_TOTAL_SIZE_GUIDE_LINE } from '@/shared/ui/file-select-field-limits'
+import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
+import { useCmsAlert } from '@/shared/ui'
+import { shouldUseGeminiVisitingTrainingRemoteApi } from '../../api/visiting-training/capabilities'
 import { GeminiDeferredCmsInput } from './gemini-recruitment-deferred-text-input'
 import { RichTextViewer } from '@/shared/rich-text'
 import { GeminiRecruitmentRichTextEditor } from './gemini-recruitment-rich-text-editor'
@@ -25,7 +33,18 @@ import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './gemini-recruitment-detail-fields.css'
 
-const THUMB_UPLOAD_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
+/** 등록 중(programId 없음) 썸네일 임시 업로드 owner — 등록 직후 PUT /programs/{id}/thumbnail 로 연결 */
+const GEMINI_THUMBNAIL_STAGING_PROGRAM_OWNER_ID = 1
+
+const THUMBNAIL_GUIDE_LINES = [
+  FILE_SELECT_TOTAL_SIZE_GUIDE_LINE,
+  '- JPG, PNG 형식만 등록 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
+
+function revokeBlobUrl(url: string | null) {
+  if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+}
 
 const ATTACHMENT_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG, PDF, HWP 형식만 등록 가능합니다.',
@@ -91,40 +110,91 @@ export function GeminiRecruitmentDetailFields({
     () => programInlineImageOwner(parseFileObjectId(programId)),
     [programId]
   )
+  const { showAlert } = useCmsAlert()
+  const programNumericId = useMemo(() => parseFileObjectId(programId), [programId])
   const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null)
+  const [storedThumbUrl, setStoredThumbUrl] = useState<string | null>(null)
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
 
-  const revokeThumb = useCallback((url: string | null) => {
-    if (url) URL.revokeObjectURL(url)
-  }, [])
+  // 저장된 썸네일 — 저장 후 파일명이 바뀌면 다시 불러온다.
+  const savedThumbnailName = values.thumbnailFileName
+  useEffect(() => {
+    if (programNumericId == null || !shouldUseGeminiVisitingTrainingRemoteApi()) return
+    let cancelled = false
+    let loadedUrl: string | null = null
+    void (async () => {
+      try {
+        const thumb = await fetchProgramThumbnail(programNumericId)
+        if (cancelled || thumb.fileObjectId == null) return
+        loadedUrl = await loadProgramThumbnailPreviewUrl(thumb.fileObjectId)
+        if (cancelled) {
+          revokeBlobUrl(loadedUrl)
+          return
+        }
+        setStoredThumbUrl(loadedUrl)
+      } catch {
+        /* placeholder 유지 */
+      }
+    })()
+    return () => {
+      cancelled = true
+      revokeBlobUrl(loadedUrl)
+      setStoredThumbUrl(null)
+    }
+  }, [programNumericId, savedThumbnailName])
 
-  const handleThumbnailFiles = useCallback(
-    (files: File[]) => {
+  const handleThumbnailFile = useCallback(
+    async (file: File) => {
       if (!onChange) return
-      const image = files.find(f => /^image\//u.test(f.type)) ?? files[0]
-      if (!image) return
-      onChange({ thumbnailFileName: image.name })
+      const previousName = values.thumbnailFileName
+      const previousFileObjectId = values.thumbnailFileObjectId
       setThumbObjectUrl(prev => {
-        revokeThumb(prev)
-        return URL.createObjectURL(image)
+        revokeBlobUrl(prev)
+        return URL.createObjectURL(file)
       })
+      onChange({ thumbnailFileName: file.name })
+      setUploadingThumbnail(true)
+      try {
+        const uploaded = await uploadAdminFileMaybeMock({
+          file,
+          owner: programThumbnailOwner(programNumericId ?? GEMINI_THUMBNAIL_STAGING_PROGRAM_OWNER_ID),
+        })
+        onChange({ thumbnailFileName: file.name, thumbnailFileObjectId: uploaded.fileObjectId })
+      } catch {
+        setThumbObjectUrl(prev => {
+          revokeBlobUrl(prev)
+          return null
+        })
+        onChange({ thumbnailFileName: previousName, thumbnailFileObjectId: previousFileObjectId })
+        showAlert({
+          title: '안내',
+          content: '썸네일을 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        setUploadingThumbnail(false)
+      }
     },
-    [onChange, revokeThumb]
+    [onChange, programNumericId, showAlert, values.thumbnailFileName, values.thumbnailFileObjectId]
   )
 
   const handleRemoveThumbnail = useCallback(() => {
-    onChange?.({ thumbnailFileName: null })
+    onChange?.({ thumbnailFileName: null, thumbnailFileObjectId: null })
     setThumbObjectUrl(prev => {
-      revokeThumb(prev)
+      revokeBlobUrl(prev)
       return null
     })
-  }, [onChange, revokeThumb])
+  }, [onChange])
 
   useEffect(
     () => () => {
-      revokeThumb(thumbObjectUrl)
+      revokeBlobUrl(thumbObjectUrl)
     },
-    [revokeThumb, thumbObjectUrl]
+    [thumbObjectUrl]
   )
+
+  const thumbnailPreviewUrl =
+    thumbObjectUrl ??
+    (values.thumbnailFileName && values.thumbnailFileObjectId !== null ? storedThumbUrl : null)
 
   const programDescription = GEMINI_RECRUITMENT_PROGRAM_DESCRIPTION_FIELD
 
@@ -135,35 +205,24 @@ export function GeminiRecruitmentDetailFields({
           label="썸네일 이미지"
           fullRow
           view={
-            <div className={THUMB_UPLOAD_CLASS}>
-              <ProgramThumbnailPlaceholder />
-              <ParagraphFileUpload
-                accept=".jpg,.jpeg,.png"
-                multiple={false}
-                disabled
-                style={{ marginLeft: 16 }}
-                fileNames={values.thumbnailFileName ? [values.thumbnailFileName] : []}
-              />
-            </div>
+            <ThumbnailUploadField
+              previewUrl={thumbnailPreviewUrl}
+              fileName={values.thumbnailFileName}
+              guideLines={THUMBNAIL_GUIDE_LINES}
+              disabled
+            />
           }
           edit={
             isEdit ? (
-              <div className={THUMB_UPLOAD_CLASS}>
-                {thumbObjectUrl ? (
-                  <img src={thumbObjectUrl} alt="" width={86} height={86} />
-                ) : (
-                  <ProgramThumbnailPlaceholder />
-                )}
-                <ParagraphFileUpload
-                  accept=".jpg,.jpeg,.png"
-                  multiple={false}
-                  style={{ marginLeft: 16 }}
-                  disabled={readOnlyUpload}
-                  fileNames={values.thumbnailFileName ? [values.thumbnailFileName] : []}
-                  onFilesChange={handleThumbnailFiles}
-                  onRemoveFile={handleRemoveThumbnail}
-                />
-              </div>
+              <ThumbnailUploadField
+                previewUrl={thumbnailPreviewUrl}
+                fileName={values.thumbnailFileName}
+                guideLines={THUMBNAIL_GUIDE_LINES}
+                disabled={readOnlyUpload}
+                uploading={uploadingThumbnail}
+                onSelectFile={file => void handleThumbnailFile(file)}
+                onRemove={handleRemoveThumbnail}
+              />
             ) : undefined
           }
         />

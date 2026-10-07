@@ -73,6 +73,7 @@ export function GeminiRecruitmentInfoTab({
       notesNotApplicable: resolvedDetail.notesNotApplicable,
       notes: resolvedDetail.notes,
       thumbnailFileName: resolvedDetail.thumbnailFileName,
+      thumbnailFileObjectId: resolvedDetail.thumbnailFileObjectId,
       programDescription: resolvedDetail.programDescription,
       recruitmentGuide: resolvedDetail.recruitmentGuide,
       applicationMethod: resolvedDetail.applicationMethod,

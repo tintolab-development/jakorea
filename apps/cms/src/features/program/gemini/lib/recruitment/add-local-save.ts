@@ -47,6 +47,11 @@ export type GeminiRecruitmentAddFormSnapshot = {
   notesNotApplicable: boolean
   notes: string
   thumbnailFileName: string | null
+  /**
+   * 업로드한 썸네일 fileObjectId — 저장 시 PUT /programs/{id}/thumbnail.
+   * undefined: 변경 없음 / null: 삭제 / number: 새 이미지
+   */
+  thumbnailFileObjectId?: number | null
   programDescription: string
   recruitmentGuide: string
   applicationMethod: string
@@ -144,6 +149,9 @@ export function normalizeGeminiRecruitmentAddFormSnapshot(
     notesNotApplicable: legacy.notesNotApplicable ?? defaults.notesNotApplicable,
     notes: legacy.notes ?? defaults.notes,
     thumbnailFileName: legacy.thumbnailFileName ?? defaults.thumbnailFileName,
+    ...(typeof legacy.thumbnailFileObjectId === 'number'
+      ? { thumbnailFileObjectId: legacy.thumbnailFileObjectId }
+      : {}),
     programDescription: legacy.programDescription ?? defaults.programDescription,
     recruitmentGuide: legacy.recruitmentGuide ?? defaults.recruitmentGuide,
     applicationMethod: legacy.applicationMethod ?? defaults.applicationMethod,
