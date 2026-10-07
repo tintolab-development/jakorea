@@ -15,7 +15,12 @@ export interface SurveySummaryResponse {
   targetType?: string;
   responseCount?: number;
   totalResponseCount?: number;
+  /** JSON 객체 문자열 {totalResponses, answeredCount, blankCount, distinctAnswerCount, topAnswers[{answer,count}]}. 공개(NON_PII/PUBLIC/NONE) SCALE_TYPE·MULTIPLE_CHOICE·STAR_RATE 문항에만 options[{value,label,displayOrder,count}](0건 옵션 포함, displayOrder 순)와 unmatchedCount(옵션에 없는 value 수)가 추가된다. STAR_RATE에 옵션이 없으면 value "1"~"5", label "{n}점". 그 외 문항에는 두 필드가 없다. */
   summaryJson?: string;
   summarySource?: string;
   calculatedAt?: string;
+  /** 게시 version 문항 순서(단락 순서 기준 0부터). 배열은 이 값 오름차순. 현재 version에 없는 문항의 답만 있는 행은 null이며 맨 뒤 */
+  questionDisplayOrder?: number;
+  /** 필수 문항 여부. 현재 version에 없는 문항의 답만 있는 행은 null */
+  requiredYn?: boolean;
 }

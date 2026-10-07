@@ -949,6 +949,7 @@ export * from './programDraftUpsertRequest';
 export * from './programDraftUpsertRequestDraftPayload';
 export * from './programFormBindingRequest';
 export * from './programFormBindingResponse';
+export * from './programFormBindingResponseProgressStatus';
 export * from './programListItemResponse';
 export * from './programListItemResponseApplicationType';
 export * from './programListItemResponseEducationForm';

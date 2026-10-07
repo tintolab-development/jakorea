@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramFormBindingResponseProgressStatus } from './programFormBindingResponseProgressStatus';
 
 export interface ProgramFormBindingResponse {
   bindingId?: number;
@@ -29,13 +30,19 @@ export interface ProgramFormBindingResponse {
   reviewRequired?: boolean;
   /** 없으면 null. 시작·종료가 모두 null이면 기간 없음이며 화면 상태는 진행 중(in_progress)이다. 서버가 종료 시각을 만들어 finished로 두지 않는다. */
   submissionStartAt?: string;
-  /** 없으면 null. 시작·종료가 모두 null이면 기간 없음이며 화면 상태는 진행 중(in_progress)이다. */
+  /** 없으면 null. 시작·종료가 모두 null이면 기간 없음이며 progressStatus는 IN_PROGRESS다. */
   submissionEndAt?: string;
+  /**
+     * 설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)만. BEFORE_START | IN_PROGRESS | FINISHED. 그 외 formType은 null. now < submissionStartAt 이면 BEFORE_START, submissionEndAt이 있고 now > submissionEndAt 이면 FINISHED, 그 외(시작 시각 null 포함)는 IN_PROGRESS. 응답 수로 바꾸지 않는다.
+     * @nullable
+     */
+  progressStatus?: ProgramFormBindingResponseProgressStatus;
   duplicatePolicy?: string;
   displayOrder?: number;
   submittedCount?: number;
   createdAt?: string;
   updatedAt?: string;
+  /** 기존 연결 동작(VIEW, EDIT, DEACTIVATE, CHANGE_TEMPLATE_VERSION, REACTIVATE_WITH_UPDATE)을 유지한다. 설문류이고 progressStatus가 BEFORE_START일 때만 DELETE, UPDATE_TEMPLATE을 추가한다. submittedCount로 이 두 값을 빼지 않는다. */
   availableActions?: string[];
   /**
      * 대상별 예상 응답 인원. submittedCount(실제 제출 수)와 별개다. 대상을 확정할 수 없으면 null. 0은 그 대상 참여 인원이 0명일 때만.
