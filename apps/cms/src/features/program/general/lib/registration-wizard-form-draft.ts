@@ -3,6 +3,7 @@ import type { WritingFormDraft } from '@/features/template/model/writing-form-dr
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
+  removeWritingFormTemplateSave,
   removeWritingFormTemplateSavesByPrefix,
 } from '@/features/template/lib/writing-form-template-local-save'
 
@@ -37,6 +38,13 @@ export async function persistRegistrationWizardFormDraft(args: {
     settingsJson: args.settingsJson,
     localOnly: true,
   })
+}
+
+export function clearRegistrationWizardFormDraft(args: {
+  programType: string
+  templateCode: string
+}): void {
+  removeWritingFormTemplateSave(localStorageKey(args.programType, args.templateCode))
 }
 
 export function clearRegistrationWizardFormDrafts(programType: string): void {

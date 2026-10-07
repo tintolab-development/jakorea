@@ -1,8 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
-import { listAllRegistrationCreateFormSpecs } from './operational-form-bindings'
+import { getOperationalFormSpec, listAllRegistrationCreateFormSpecs, listVisibleOperationalFormSpecs } from './operational-form-bindings'
+import {
+  clearRegistrationStepTemplateSelections,
+  setRegistrationStepTemplateSelection,
+} from '@/features/program/shared/lib/step-template-selection'
 
 describe('listAllRegistrationCreateFormSpecs', () => {
+  afterEach(() => {
+    clearRegistrationStepTemplateSelections()
+  })
   it('includes REGISTRATION + operational specs for GENERAL', () => {
     const program = { id: '100001' } as Program
     const specs = listAllRegistrationCreateFormSpecs(program)
@@ -52,5 +59,27 @@ describe('listAllRegistrationCreateFormSpecs', () => {
         'application-ujat-volunteer',
       ])
     )
+  })
+
+  it('keeps step targetRole when a different 모집 양식을 선택한다', () => {
+    setRegistrationStepTemplateSelection(
+      'GENERAL',
+      'recruit-participant-school',
+      'recruitment-instructor'
+    )
+    const program = {
+      id: '100001',
+      generalParticipantTypes: ['school_institution'],
+    } as Program
+    const specs = listVisibleOperationalFormSpecs(program)
+    const schoolRecruit = specs.find(spec => spec.targetRole === 'ORGANIZATION' && spec.formType === 'RECRUITMENT')
+    expect(schoolRecruit?.templateCode).toBe('recruitment-instructor')
+  })
+
+  it('resolves copy suffix specs without changing formType', () => {
+    const spec = getOperationalFormSpec('recruitment-participant-school-copy-12')
+    expect(spec?.formType).toBe('RECRUITMENT')
+    expect(spec?.targetRole).toBe('ORGANIZATION')
+    expect(spec?.templateCode).toBe('recruitment-participant-school-copy-12')
   })
 })

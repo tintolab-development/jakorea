@@ -10,8 +10,8 @@ describe('registration-program-draft-payload', () => {
       registrationTemplateCode: 'registration-general',
       activeStep: 'recruit-participant-individual',
       programTitleKo: '테스트 프로그램',
-      formVersions: {
-        'registration-general': { templateId: 1, draftVersionId: 10 },
+      selectedOperationalTemplates: {
+        'recruit-participant-school': 'recruitment-instructor',
       },
     })
 

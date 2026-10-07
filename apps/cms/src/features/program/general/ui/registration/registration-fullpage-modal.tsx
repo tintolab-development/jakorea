@@ -24,6 +24,8 @@ import {
 } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
 import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-registration-flow'
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
+import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/registration/step-template-banner'
+import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
 import {
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   clearRegistrationDraftForFreshStart,
@@ -118,6 +120,7 @@ function GeneralProgramRegistrationFullpageModalInner({
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
   const [recruitmentPreviewOpen, setRecruitmentPreviewOpen] = useState(false)
   const [recruitmentPreviewProgram, setRecruitmentPreviewProgram] = useState<Program | null>(null)
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
     useState<RecruitmentUserPreviewAudience>('institutions')
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
@@ -176,6 +179,7 @@ function GeneralProgramRegistrationFullpageModalInner({
     setCompleteSuccessOpen(false)
     setRecruitmentPreviewOpen(false)
     setRecruitmentPreviewProgram(null)
+    setTemplatePickerOpen(false)
     pendingCreatedProgramRef.current = undefined
   }, [open])
 
@@ -384,8 +388,26 @@ function GeneralProgramRegistrationFullpageModalInner({
             activeStep={flow.activeStep}
             visibleRecruitTabKeys={flow.visibleRecruitTabKeys}
             visibleApplicationTabKeys={flow.visibleApplicationTabKeys}
-            onSelectStep={flow.selectStep}
+            onSelectStep={key => {
+              setTemplatePickerOpen(false)
+              flow.selectStep(key)
+            }}
           />
+        }
+        bodyHeaderBelow={
+          flow.phase === 'program' ? undefined : (
+            <RegistrationStepTemplateChrome
+              templateName={flow.stepTemplateName}
+              isDefault={flow.isDefaultStepTemplate}
+              category={flow.phase === 'application' ? 'application_form' : 'application'}
+              pickerOpen={templatePickerOpen}
+              onOpenPicker={() => setTemplatePickerOpen(true)}
+              onClosePicker={() => setTemplatePickerOpen(false)}
+              onUseTemplate={code => {
+                void flow.selectStepTemplate(code).then(() => setTemplatePickerOpen(false))
+              }}
+            />
+          )
         }
         headerActionsLeading={
           <RegistrationDevAutofillButton
@@ -393,7 +415,15 @@ function GeneralProgramRegistrationFullpageModalInner({
           />
         }
         footerActions={footerActions}
-        leftContent={flow.isDraftLoading ? <FormDraftLoading /> : flow.panels.leftContent}
+        leftContent={
+          flow.isDraftLoading ? (
+            <FormDraftLoading />
+          ) : (
+            <HideParagraphSelectionChromeContext.Provider value={flow.phase !== 'application'}>
+              {flow.panels.leftContent}
+            </HideParagraphSelectionChromeContext.Provider>
+          )
+        }
         rightNavigation={
           flow.isDraftLoading || hideCustomFieldNav ? null : flow.panels.rightNavigation
         }

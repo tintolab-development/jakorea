@@ -20,6 +20,11 @@ import {
   UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS,
   UJAT_PROGRAM_REGISTRATION_STEPS,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
+import { stripWritingTemplateCopySuffix } from '@/features/template/lib/form-template-delete-policy'
+import {
+  draftProgramTypeForOperationalBindingKind,
+  getSelectedOperationalTemplateCode,
+} from '@/features/program/shared/lib/step-template-selection'
 
 export type OperationalFormType = 'APPLICATION' | 'RECRUITMENT' | 'REGISTRATION'
 
@@ -161,7 +166,13 @@ const OPERATIONAL_FORM_SPECS: readonly OperationalFormSpec[] = [
 const SPEC_BY_CODE = new Map(OPERATIONAL_FORM_SPECS.map(spec => [spec.templateCode, spec]))
 
 export function getOperationalFormSpec(templateCode: string): OperationalFormSpec | undefined {
-  return SPEC_BY_CODE.get(templateCode)
+  const exact = SPEC_BY_CODE.get(templateCode)
+  if (exact) return exact
+  const base = stripWritingTemplateCopySuffix(templateCode)
+  if (base === templateCode) return undefined
+  const baseSpec = SPEC_BY_CODE.get(base)
+  if (baseSpec == null) return undefined
+  return { ...baseSpec, templateCode }
 }
 
 export function generalProgramRegistrationFlagsFromProgram(
@@ -201,46 +212,75 @@ function resolveOperationalTemplateCodeForStep(
   return stepTemplateId
 }
 
-function listGeneralLikeOperationalTemplateCodes(
-  program: Program,
-  kind: ProgramOperationalBindingKind
-): string[] {
-  const flags = generalProgramRegistrationFlagsFromProgram(program)
-  const tabVisibility = tabVisibilityForBindingKind(kind)
-  const codes = GENERAL_PROGRAM_REGISTRATION_STEPS.flatMap(step => {
-    if (step.phase !== 'application' && step.phase !== 'recruitment') return []
-    if (!isGeneralProgramRegistrationStepVisible(step.key, flags, tabVisibility)) return []
-    return [resolveOperationalTemplateCodeForStep(kind, step.templateId, step.key)]
-  })
-  return [...new Set(codes)]
+function operationalSpecBindingKey(spec: OperationalFormSpec): string {
+  return `${spec.formType}:${spec.targetRole ?? ''}`
 }
 
-function listUjatOperationalTemplateCodes(): string[] {
-  const codes = UJAT_PROGRAM_REGISTRATION_STEPS.flatMap(step => {
-    if (step.phase === 'program') return []
-    return [step.templateId]
-  })
-  return [...new Set([...codes, ...UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS])]
+function listGeneralLikeOperationalFormSpecs(
+  program: Program,
+  kind: ProgramOperationalBindingKind
+): OperationalFormSpec[] {
+  const flags = generalProgramRegistrationFlagsFromProgram(program)
+  const tabVisibility = tabVisibilityForBindingKind(kind)
+  const programType = draftProgramTypeForOperationalBindingKind(kind)
+  const specs: OperationalFormSpec[] = []
+  const seen = new Set<string>()
+  for (const step of GENERAL_PROGRAM_REGISTRATION_STEPS) {
+    if (step.phase !== 'application' && step.phase !== 'recruitment') continue
+    if (!isGeneralProgramRegistrationStepVisible(step.key, flags, tabVisibility)) continue
+    const defaultCode = resolveOperationalTemplateCodeForStep(kind, step.templateId, step.key)
+    const defaultSpec = getOperationalFormSpec(defaultCode)
+    if (defaultSpec == null) continue
+    const selected = getSelectedOperationalTemplateCode(programType, step.key, defaultCode)
+    const spec: OperationalFormSpec = { ...defaultSpec, templateCode: selected }
+    const bindingKey = operationalSpecBindingKey(spec)
+    if (seen.has(bindingKey)) continue
+    seen.add(bindingKey)
+    specs.push(spec)
+  }
+  return specs
+}
+
+function listUjatOperationalFormSpecs(): OperationalFormSpec[] {
+  const programType = 'UJAT'
+  const specs: OperationalFormSpec[] = []
+  const seen = new Set<string>()
+  for (const step of UJAT_PROGRAM_REGISTRATION_STEPS) {
+    if (step.phase === 'program') continue
+    const defaultSpec = getOperationalFormSpec(step.templateId)
+    if (defaultSpec == null) continue
+    const selected = getSelectedOperationalTemplateCode(programType, step.key, step.templateId)
+    const spec: OperationalFormSpec = { ...defaultSpec, templateCode: selected }
+    const bindingKey = operationalSpecBindingKey(spec)
+    if (seen.has(bindingKey)) continue
+    seen.add(bindingKey)
+    specs.push(spec)
+  }
+  for (const code of UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS) {
+    const spec = getOperationalFormSpec(code)
+    if (spec == null) continue
+    const bindingKey = operationalSpecBindingKey(spec)
+    if (seen.has(bindingKey)) continue
+    seen.add(bindingKey)
+    specs.push(spec)
+  }
+  return specs
+}
+
+function listOperationalFormSpecsForProgram(program: Program): OperationalFormSpec[] {
+  const kind = resolveProgramOperationalBindingKind(program)
+  if (kind === 'UJAT') return listUjatOperationalFormSpecs()
+  if (kind === 'TRAINED_TEACHER') return listGeneralLikeOperationalFormSpecs(program, kind)
+  if (kind === 'COMPANY_SCHOOL') return listGeneralLikeOperationalFormSpecs(program, kind)
+  return listGeneralLikeOperationalFormSpecs(program, 'GENERAL')
 }
 
 export function listOperationalTemplateCodesForProgram(program: Program): string[] {
-  const kind = resolveProgramOperationalBindingKind(program)
-  if (kind === 'UJAT') {
-    return listUjatOperationalTemplateCodes()
-  }
-  if (kind === 'TRAINED_TEACHER') {
-    return listGeneralLikeOperationalTemplateCodes(program, kind)
-  }
-  if (kind === 'COMPANY_SCHOOL') {
-    return listGeneralLikeOperationalTemplateCodes(program, kind)
-  }
-  return listGeneralLikeOperationalTemplateCodes(program, 'GENERAL')
+  return [...new Set(listOperationalFormSpecsForProgram(program).map(spec => spec.templateCode))]
 }
 
 export function listVisibleOperationalFormSpecs(program: Program): OperationalFormSpec[] {
-  return listOperationalTemplateCodesForProgram(program)
-    .map(code => getOperationalFormSpec(code))
-    .filter((spec): spec is OperationalFormSpec => spec != null)
+  return listOperationalFormSpecsForProgram(program)
 }
 
 export function listRegistrationFormTemplateCodeForProgram(program: Program): string | null {

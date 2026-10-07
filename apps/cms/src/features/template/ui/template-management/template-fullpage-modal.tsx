@@ -47,6 +47,8 @@ interface TemplateFullpageModalProps {
   subHeader?: ReactNode
   /** `full-page-modal__body-header` 좌측(닫기·미리보기·임시저장과 동일 행) */
   bodyHeaderLeading?: ReactNode
+  /** `full-page-modal__body-header` 아래 행(탭·액션 행과 분리) — 등록 단계 템플릿 배너 등 */
+  bodyHeaderBelow?: ReactNode
   /**
    * writing 헤더 액션(닫기/미리보기/임시저장) **앞**에 붙는 슬롯.
    * 프로그램 등록 개발용 자동입력 등.
@@ -104,6 +106,7 @@ export function TemplateFullpageModal({
   footerActions,
   subHeader,
   bodyHeaderLeading,
+  bodyHeaderBelow,
   headerActionsLeading,
   zIndex,
 }: TemplateFullpageModalProps) {
@@ -267,6 +270,9 @@ export function TemplateFullpageModal({
             )}
             <div className="full-page-modal__actions">{headerActions}</div>
           </div>
+          {bodyHeaderBelow != null ? (
+            <div className="full-page-modal__body-header-below">{bodyHeaderBelow}</div>
+          ) : null}
 
           <div className="full-page-modal__contents">
             <div className="full-page-modal__left">{leftContent}</div>

@@ -194,6 +194,16 @@
   min-width: 0;
 }
 
+.full-page-modal__body-header-below {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  width: 100%;
+  max-width: var(--full-page-modal-contents-max-width);
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
 .full-page-modal__description {
   margin: 0;
   color: var(--main-BK, #3d3d3d);
