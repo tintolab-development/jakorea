@@ -199,7 +199,7 @@
   flex-direction: column;
   align-self: center;
   width: 100%;
-  max-width: 1404px;
+  max-width: var(--full-page-modal-contents-max-width);
   margin-inline: auto;
   box-sizing: border-box;
 }
@@ -280,6 +280,7 @@
 }
 
 .full-page-modal--no-right-nav .full-page-modal__body-header,
+.full-page-modal--no-right-nav .full-page-modal__body-header-below,
 .full-page-modal--no-right-nav .full-page-modal__footer-cta {
   max-width: var(--full-page-modal-left-column-width);
 }
