@@ -4,6 +4,7 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { resolveProgramVolunteerTargets } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   isUjatVolunteerNoticeExposureValue,
+  NOTICE_EXPOSURE_ERROR_STYLE,
   UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS,
 } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { UjatRecruitSectionDescriptionHeader } from '../ujat-recruit-section-description-header'
@@ -50,10 +51,6 @@ export function UjatRecruitVolunteerInfoProgramEdit({
   const activityTermLabel = volunteerHalf === 'h1' ? '상반기 (1학기)' : '하반기 (2학기)'
   const recruitStartName = 'volunteerApplicationStartDate' as const
   const recruitEndName = 'volunteerApplicationEndDate' as const
-  const noticeExposureSetting: string | undefined = undefined /* TODO(api) */
-  const noticeExposureValue = isUjatVolunteerNoticeExposureValue(noticeExposureSetting)
-    ? noticeExposureSetting
-    : 'start-day'
   return (
     <>
       <UjatRecruitSectionDescriptionHeader title={resolvedSectionTitle} />
@@ -64,13 +61,31 @@ export function UjatRecruitVolunteerInfoProgramEdit({
               label="모집 공고 노출 시점"
               fullRow
               edit={
-                <CmsRadioGroup value={noticeExposureValue} disabled>
-                  {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
-                    <CmsRadio key={o.value} value={o.value}>
-                      {o.label}
-                    </CmsRadio>
-                  ))}
-                </CmsRadioGroup>
+                <Controller
+                  name="volunteerRecruitmentNoticeExposure"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <>
+                      <CmsRadioGroup
+                        value={
+                          isUjatVolunteerNoticeExposureValue(field.value) ? field.value : undefined
+                        }
+                        onChange={e => field.onChange(String(e.target.value))}
+                      >
+                        {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
+                          <CmsRadio key={o.value} value={o.value}>
+                            {o.label}
+                          </CmsRadio>
+                        ))}
+                      </CmsRadioGroup>
+                      {fieldState.error?.message ? (
+                        <span role="alert" style={NOTICE_EXPOSURE_ERROR_STYLE}>
+                          {fieldState.error.message}
+                        </span>
+                      ) : null}
+                    </>
+                  )}
+                />
               }
               view="-"
             />

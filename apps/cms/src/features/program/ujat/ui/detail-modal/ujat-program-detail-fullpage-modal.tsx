@@ -132,6 +132,7 @@ import {
 import { PROGRAM_RECRUITMENT_INFO_OPERATION_STARTED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { extractApiErrorMessage, getApiErrorCode } from '@/shared/lib/extract-api-error-message'
+import { UJAT_NOTICE_EXPOSURE_TIMING_INVALID_CODE } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -1473,6 +1474,12 @@ export function UjatProgramDetailFullPageModal({
               setSearchParams(next, { replace: true })
             } catch (error) {
               handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
+              if (getApiErrorCode(error) === UJAT_NOTICE_EXPOSURE_TIMING_INVALID_CODE) {
+                volunteersForm.setError('volunteerRecruitmentNoticeExposure', {
+                  type: 'server',
+                  message: '모집 공고 노출 시점을 다시 선택해 주세요.',
+                })
+              }
               if (getApiErrorCode(error)?.startsWith('UJAT_RECRUIT_TERM_')) {
                 void showAlert({
                   title: '저장 실패',
