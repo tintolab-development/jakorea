@@ -1790,6 +1790,13 @@ export function ApplicantList({
                   },
                 ]
               })
+              if (useInstructorAssignFlow && remoteAssignments.length === 0) {
+                showAlert({
+                  title: '강사 배정 필요',
+                  content: '배정할 일정을 1개 이상 선택하세요.',
+                })
+                return
+              }
               const remote = await applyRemoteInstructorDecision(
                 [id],
                 'approve',

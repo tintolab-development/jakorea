@@ -470,10 +470,16 @@ export function mapInstructorApplicationDetailToApplicantRow(
         return {
           slotKey: String(scheduleId),
           assignable: slot.assignable !== false,
+          ...(slot.startAt ? { startAt: slot.startAt } : {}),
+          ...(slot.endAt ? { endAt: slot.endAt } : {}),
         }
       })
-      .filter((slot): slot is { slotKey: string; assignable: boolean } => slot != null) ??
-    base.preferredScheduleSlots
+      .filter(
+        (
+          slot
+        ): slot is { slotKey: string; assignable: boolean; startAt?: string; endAt?: string } =>
+          slot != null
+      ) ?? base.preferredScheduleSlots
 
   return {
     ...base,

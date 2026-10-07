@@ -19,6 +19,8 @@ export type InstructorLectureAssignSlot = {
   timeRange: string
   assignedCount: number
   disabled?: boolean
+  /** 지정 시 개인 프로그램 칩·태그 라벨로 그대로 사용 */
+  label?: string
 }
 
 export type InstructorLectureAssignItem = {
@@ -280,9 +282,7 @@ export function getApplicantPreferredDateKeys(instructor: ApplicantInstructorRow
     if (!match) continue
     const start = dayjs(`${match[1]}-${match[2]}-${match[3]}`)
     const endMatch = range.match(/~\s*(\d{4})\.(\d{2})\.(\d{2})/)
-    const end = endMatch
-      ? dayjs(`${endMatch[1]}-${endMatch[2]}-${endMatch[3]}`)
-      : start
+    const end = endMatch ? dayjs(`${endMatch[1]}-${endMatch[2]}-${endMatch[3]}`) : start
     let cursor = start.startOf('day')
     while (!cursor.isAfter(end, 'day')) {
       keys.add(cursor.format('YYYY-MM-DD'))
@@ -339,7 +339,9 @@ export function getSlotsForLectureAssignDate(
   }))
 }
 
-export function toLectureAssignItem(slot: InstructorLectureAssignSlot): InstructorLectureAssignItem {
+export function toLectureAssignItem(
+  slot: InstructorLectureAssignSlot
+): InstructorLectureAssignItem {
   const date = dayjs(slot.dateKey)
   const dateLabel = formatLectureAssignDateLabel(date)
   return {
@@ -511,7 +513,71 @@ export function toIndividualLectureAssignItem(
     schoolName: slot.schoolName,
     sessionLabel: slot.sessionLabel,
     timeRange: slot.timeRange,
-    dateLabel: formatLectureAssignDateLabel(date),
-    tagLabel: formatIndividualLectureAssignTagLabel(date, slot.timeRange),
+    dateLabel: date.isValid() ? formatLectureAssignDateLabel(date) : '',
+    tagLabel: slot.label ?? formatIndividualLectureAssignTagLabel(date, slot.timeRange),
   }
+}
+
+export type InstructorApplicationScheduleSlotInput = {
+  scheduleId?: number | null
+  startAt?: string | null
+  endAt?: string | null
+  assignable?: boolean | null
+}
+
+function formatScheduleSlotRangeLabel(
+  scheduleId: number,
+  startAt?: string | null,
+  endAt?: string | null
+) {
+  const start = startAt ? dayjs(startAt) : null
+  const end = endAt ? dayjs(endAt) : null
+  if (!start?.isValid()) return `일정 ${scheduleId}`
+  const startLabel = `${formatLectureAssignDateLabel(start)} ${start.format('HH:mm')}`
+  if (!end?.isValid()) return startLabel
+  if (end.isSame(start, 'day')) return `${startLabel} ~ ${end.format('HH:mm')}`
+  return `${startLabel} ~ ${formatLectureAssignDateLabel(end)} ${end.format('HH:mm')}`
+}
+
+/** 강사 신청 상세 `availableScheduleSlots` → 개인 프로그램 강의 배정 슬롯 (key = scheduleId) */
+export function buildIndividualLectureAssignSlotsFromScheduleSlots(
+  scheduleSlots: InstructorApplicationScheduleSlotInput[],
+  options: {
+    schoolName: string
+    allInstructors: ApplicantInstructorRow[]
+    excludeInstructorId?: string
+  }
+): InstructorLectureAssignSlot[] {
+  const slots: InstructorLectureAssignSlot[] = []
+  const seen = new Set<number>()
+  for (const item of scheduleSlots) {
+    const scheduleId = item.scheduleId
+    if (item.assignable !== true) continue
+    if (scheduleId == null || !Number.isFinite(scheduleId) || scheduleId < 1) continue
+    if (seen.has(scheduleId)) continue
+    seen.add(scheduleId)
+    const start = item.startAt ? dayjs(item.startAt) : null
+    const end = item.endAt ? dayjs(item.endAt) : null
+    const key = String(scheduleId)
+    slots.push({
+      key,
+      dateKey: start?.isValid() ? start.format('YYYY-MM-DD') : '',
+      schoolId: INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID,
+      schoolName: options.schoolName,
+      region: '',
+      sessionRound: 0,
+      sessionLabel: '',
+      timeRange:
+        start?.isValid() && end?.isValid()
+          ? `${start.format('HH:mm')} ~ ${end.format('HH:mm')}`
+          : '',
+      assignedCount: countLectureSlotAssignments(
+        key,
+        options.allInstructors,
+        options.excludeInstructorId
+      ),
+      label: formatScheduleSlotRangeLabel(scheduleId, item.startAt, item.endAt),
+    })
+  }
+  return slots.sort((a, b) => a.dateKey.localeCompare(b.dateKey))
 }
