@@ -3,7 +3,8 @@
  */
 
 import { useState, useMemo, useCallback } from 'react'
-import { Table, Input, Checkbox, Calendar } from 'antd'
+import { Table, Input, Calendar } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import {
   LeftOutlined,
   RightOutlined,
@@ -430,7 +431,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
                       className="settlement-cal__detail-item"
                       style={{ backgroundColor: tagStyle.bg }}
                     >
-                      <Checkbox
+                      <CmsCheckbox
                         checked={calendarSelectedKeys.includes(row.id)}
                         onChange={e => {
                           setCalendarSelectedKeys(prev =>

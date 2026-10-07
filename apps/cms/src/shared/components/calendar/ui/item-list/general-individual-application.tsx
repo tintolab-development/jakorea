@@ -1,4 +1,4 @@
-import { Checkbox } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import { CalendarApprovalStatusBadge } from './calendar-approval-status-badge'
 import './general-individual-application-list-item.css'
@@ -56,7 +56,7 @@ export function CalendarListItemContentGeneralIndividualApplication({
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
-        <Checkbox
+        <CmsCheckbox
           checked={checked}
           disabled={row.approvalStatus !== 'pending'}
           onChange={e => onToggle(row.id, e.target.checked)}

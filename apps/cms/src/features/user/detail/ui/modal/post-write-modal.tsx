@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Checkbox } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import {
@@ -368,15 +368,14 @@ export function PostWriteModal({
       }
     >
       <div className="post-write-modal__body">
-        <div className="post-write-modal__field post-write-modal__field--audience">
-          <label className="post-write-modal__label">
-            게시글 공개 범위 <span className="post-write-modal__required" aria-hidden>*</span>
-          </label>
-          <Checkbox.Group
+        <div className="post-write-modal__field">
+          <CmsCheckbox.Group
+            label="게시글 공개 범위"
+            required
+            checkboxSize="medium"
             options={audienceOptions}
             value={audience}
             onChange={vals => setAudience(vals as PostWriteAudienceApiKey[])}
-            className="post-write-modal__checkbox-group"
           />
         </div>
 

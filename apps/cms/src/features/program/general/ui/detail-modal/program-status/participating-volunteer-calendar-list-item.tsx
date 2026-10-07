@@ -1,4 +1,4 @@
-import { Checkbox } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/shared/components/calendar/ui/item-list/general-institution-application-list-item.css'
 
 export type ParticipatingVolunteerCalendarListRow = {
@@ -50,7 +50,7 @@ export function ParticipatingVolunteerCalendarListItem({
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
-        <Checkbox
+        <CmsCheckbox
           checked={checked}
           onChange={e => onToggle(row.volunteerId, e.target.checked)}
         />

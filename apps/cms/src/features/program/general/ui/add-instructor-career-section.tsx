@@ -6,7 +6,8 @@
  */
 
 import { useRef } from 'react'
-import { Checkbox, DatePicker, Form } from 'antd'
+import { DatePicker, Form } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsButton, CmsInput } from '@/shared/ui'
 import { NativeSelect } from './add-instructor-native-select'
 
@@ -197,7 +198,7 @@ export function CareerDetailSection() {
                                 valuePropName="checked"
                                 className="add-instructor-modal__career-check-wrap"
                               >
-                                <Checkbox>재직중</Checkbox>
+                                <CmsCheckbox checkboxSize="medium">재직중</CmsCheckbox>
                               </Form.Item>
                               {showDelete && (
                                 <button

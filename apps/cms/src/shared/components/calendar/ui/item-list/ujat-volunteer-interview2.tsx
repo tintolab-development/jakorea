@@ -1,4 +1,4 @@
-import { Checkbox } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import type { SecondInterviewScreeningEffectiveStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
 import {
   formatSecondInterviewListScoreLabel,
@@ -63,7 +63,7 @@ export function CalendarListItemContentVolunteerInterview2({
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
-        <Checkbox checked={checked} onChange={e => onToggle(row.id, e.target.checked)} />
+        <CmsCheckbox checked={checked} onChange={e => onToggle(row.id, e.target.checked)} />
       </div>
     </div>
   )

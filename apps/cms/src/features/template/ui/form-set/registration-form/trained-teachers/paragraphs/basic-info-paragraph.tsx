@@ -50,7 +50,7 @@ export function TrainedTeachersRegistrationBasicInfoParagraph({
       includeFooterIpsType
       trainedTeachersDefaults
       participantTypesEdit={
-        <div className="detail-info-form-inputs-wrapper">
+        <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--large">
           <CmsCheckbox checkboxSize="large" checked={false} disabled>
             {participantTypeLabel('individual')}
           </CmsCheckbox>

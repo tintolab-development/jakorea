@@ -168,7 +168,7 @@ export function LectureFeeCalculationDetailForm({
             label="지급 항목 여부"
             view={joinText(['교통비', '숙박비'])}
             edit={
-              <div className="detail-info-form-inputs-wrapper lecture-fee-calculation-detail-form__payment-items">
+              <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--large lecture-fee-calculation-detail-form__payment-items">
                 <CmsCheckbox checkboxSize="large" checked disabled>
                   교통비
                 </CmsCheckbox>

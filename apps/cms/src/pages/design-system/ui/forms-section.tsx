@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import type { Dayjs } from 'dayjs'
-import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { CmsCheckbox, type CmsCheckboxSize } from '@/shared/ui/cms-checkbox'
 import { CmsDatePicker, CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsInputSearch } from '@/shared/ui/cms-input-search'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { CmsRadio } from '@/shared/ui/cms-radio'
+import { CmsRadio, type CmsRadioSize } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsSelectMultiple } from '@/shared/ui/cms-select-multiple'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
@@ -26,6 +26,10 @@ const MULTI_OPTIONS = [
   { value: 'gemini', label: 'Gemini' },
 ]
 
+const CHECKBOX_SIZES: CmsCheckboxSize[] = ['large', 'medium']
+
+const RADIO_SIZES: CmsRadioSize[] = ['large', 'medium']
+
 export function FormsSection() {
   const [text, setText] = useState('')
   const [search, setSearch] = useState('')
@@ -33,7 +37,9 @@ export function FormsSection() {
   const [select, setSelect] = useState<string | undefined>()
   const [multi, setMulti] = useState<string[]>([])
   const [radio, setRadio] = useState('a')
+  const [radioGroup, setRadioGroup] = useState('general')
   const [checked, setChecked] = useState(true)
+  const [checkboxGroup, setCheckboxGroup] = useState<string[]>(['general'])
   const [toggle, setToggle] = useState(false)
   const [date, setDate] = useState<Dayjs | null>(null)
   const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
@@ -175,6 +181,130 @@ export function FormsSection() {
           </CmsCheckbox>
           <CmsToggle checked={toggle} onChange={setToggle} label="알림 수신" />
         </div>
+      </DsDemo>
+
+      <DsDemo label="CmsCheckbox sizes · states">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          large(기본) 박스 20×20 · 라벨 16px/500/130% · 간격 8 / medium 박스 18×18 · 라벨
+          14px/500/125% · 간격 6 · 그룹 항목 간격 16px(가로, large·medium 동일)
+        </p>
+        {CHECKBOX_SIZES.map(size => (
+          <div key={size} className="ds-demo__stack">
+            <span className="ds-demo__label">{size}</span>
+            <div className="ds-demo__row">
+              <CmsCheckbox checkboxSize={size} checked={false}>
+                미선택
+              </CmsCheckbox>
+              <CmsCheckbox checkboxSize={size} checked>
+                선택
+              </CmsCheckbox>
+              <CmsCheckbox checkboxSize={size} indeterminate>
+                일부 선택
+              </CmsCheckbox>
+              <CmsCheckbox checkboxSize={size} checked={false} disabled>
+                비활성 미선택
+              </CmsCheckbox>
+              <CmsCheckbox checkboxSize={size} checked disabled>
+                비활성 선택
+              </CmsCheckbox>
+            </div>
+          </div>
+        ))}
+        <div className="ds-demo__stack">
+          <span className="ds-demo__label">CmsCheckbox.Group (medium)</span>
+          <CmsCheckbox.Group
+            checkboxSize="medium"
+            options={MULTI_OPTIONS}
+            value={checkboxGroup}
+            onChange={values => setCheckboxGroup(values as string[])}
+          />
+        </div>
+      </DsDemo>
+
+      <DsDemo label="CmsRadio sizes · states">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          CmsCheckbox와 동일 규격 — large(기본) 원 20×20 · 라벨 16px/500/130% · 간격 8 / medium 원
+          18×18 · 라벨 14px/500/125% · 간격 6 · 그룹 항목 간격 16px(가로)
+        </p>
+        {RADIO_SIZES.map(size => (
+          <div key={size} className="ds-demo__stack">
+            <span className="ds-demo__label">{size}</span>
+            <div className="ds-demo__row">
+              <CmsRadio size={size} checked={false}>
+                미선택
+              </CmsRadio>
+              <CmsRadio size={size} checked>
+                선택
+              </CmsRadio>
+              <CmsRadio size={size} checked={false} disabled>
+                비활성 미선택
+              </CmsRadio>
+              <CmsRadio size={size} checked disabled>
+                비활성 선택
+              </CmsRadio>
+            </div>
+          </div>
+        ))}
+        <div className="ds-demo__stack">
+          <span className="ds-demo__label">CmsRadio.Group (medium)</span>
+          <CmsRadio.Group
+            size="medium"
+            options={MULTI_OPTIONS}
+            value={radioGroup}
+            onChange={e => setRadioGroup(e.target.value)}
+          />
+        </div>
+      </DsDemo>
+
+      <DsDemo label="CmsCheckbox.Group / CmsRadio.Group label">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          label · required prop — 라벨 14px(large 15px)/500/140% · #525252 · 라벨과 그룹 사이 4px ·
+          그룹 높이 40px · 항목 간격 16px
+        </p>
+        {CHECKBOX_SIZES.map(size => (
+          <div key={`checkbox-${size}`} className="ds-demo__stack">
+            <span className="ds-demo__label">CmsCheckbox.Group ({size})</span>
+            <div className="ds-demo__row">
+              <CmsCheckbox.Group
+                label="필수 라벨"
+                required
+                checkboxSize={size}
+                options={MULTI_OPTIONS}
+                value={checkboxGroup}
+                onChange={values => setCheckboxGroup(values as string[])}
+              />
+              <CmsCheckbox.Group
+                label="선택 라벨"
+                checkboxSize={size}
+                options={MULTI_OPTIONS}
+                value={checkboxGroup}
+                onChange={values => setCheckboxGroup(values as string[])}
+              />
+            </div>
+          </div>
+        ))}
+        {RADIO_SIZES.map(size => (
+          <div key={`radio-${size}`} className="ds-demo__stack">
+            <span className="ds-demo__label">CmsRadio.Group ({size})</span>
+            <div className="ds-demo__row">
+              <CmsRadio.Group
+                label="필수 라벨"
+                required
+                size={size}
+                options={MULTI_OPTIONS}
+                value={radioGroup}
+                onChange={e => setRadioGroup(e.target.value)}
+              />
+              <CmsRadio.Group
+                label="선택 라벨"
+                size={size}
+                options={MULTI_OPTIONS}
+                value={radioGroup}
+                onChange={e => setRadioGroup(e.target.value)}
+              />
+            </div>
+          </div>
+        ))}
       </DsDemo>
 
       <DsDemo label="CmsDatePicker / CmsDateRangePicker">

@@ -1,4 +1,5 @@
-import { Empty, Checkbox } from 'antd'
+import { Empty } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import type { Dayjs } from 'dayjs'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
@@ -216,7 +217,7 @@ export function ApplicantScheduleList({
                             handleToggleSelection(inst.id, inst)
                           }}
                         >
-                          <Checkbox checked={isInstSelected} disabled={instCheckboxDisabled} />
+                          <CmsCheckbox checked={isInstSelected} disabled={instCheckboxDisabled} />
                         </div>
                       </div>
                     )
@@ -344,7 +345,7 @@ export function ApplicantScheduleList({
                     handleToggleSelection(selectionKey, originalItem)
                   }}
                 >
-                  <Checkbox checked={isSelected} disabled={checkboxDisabled} />
+                  <CmsCheckbox checked={isSelected} disabled={checkboxDisabled} />
                 </div>
               </div>
             )

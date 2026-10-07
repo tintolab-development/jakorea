@@ -91,53 +91,16 @@
   gap: 6px;
   min-width: 0;
   margin-inline-start: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 150%;
 }
 
+/* 긴 바로가기명은 줄바꿈 (CmsCheckbox 기본 1줄 말줄임 해제) */
 .dashboard-settings-modal__shortcuts .ant-checkbox-wrapper > span:last-child {
+  display: block;
+  -webkit-line-clamp: unset;
   min-width: 0;
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: keep-all;
-}
-
-.dashboard-settings-modal__content .ant-checkbox-inner {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-}
-
-.dashboard-settings-modal__content .ant-checkbox + span {
-  padding-inline-start: 0;
-  padding-inline-end: 0;
-}
-
-.dashboard-settings-modal__content .ant-checkbox .ant-checkbox-inner::after {
-  inset-inline-start: 6px;
-}
-
-.dashboard-settings-modal__content .ant-checkbox-checked .ant-checkbox-inner::after {
-  inset-inline-start: 50%;
-  inset-block-start: 50%;
-  width: 5px;
-  height: 9px;
-  margin: 0;
-  transform: translate(-50%, -58%) rotate(45deg) scale(1);
-  transform-origin: center;
-}
-
-.dashboard-settings-modal__content .ant-checkbox-indeterminate .ant-checkbox-inner::after {
-  inset-inline-start: 50%;
-  inset-block-start: 50%;
-  width: 9px;
-  height: 2px;
-  border-radius: 2px;
-  margin: 0;
-  transform: translate(-50%, -50%) scale(1);
-  transform-origin: center;
 }
 
 .dashboard-settings-modal__program-empty {
@@ -276,23 +239,15 @@
   gap: 6px;
   min-width: 0;
   margin-inline-start: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 .dashboard-settings-modal__accordion-body .ant-checkbox-wrapper > span:last-child {
+  display: block;
+  -webkit-line-clamp: unset;
   min-width: 0;
-  color: var(--main-BK, #3d3d3d);
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: keep-all;
-  font-family: Pretendard, sans-serif;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 /* 펼침 애니메이션 제거 — smooth scroll + motion 중첩이 버벅임 원인 */
