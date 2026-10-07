@@ -1494,19 +1494,12 @@ export function useProgramParticipantApplicationEditor(
             isTemplateAuthoringMode: !programLinkedPreview,
           })
         }
-        if (variant === 'instructor') {
-          return resolveGeneralApplicationFormHiddenParagraphIds('instructor', {
-            program: linkedProgram,
-            paragraphs: draft.paragraphs,
-            isTemplateAuthoringMode: !programLinkedPreview,
-          })
-        }
+        if (variant === 'instructor') return undefined
         if (linkedProgram != null) {
           return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
             program: linkedProgram,
             paragraphs: draft.paragraphs,
             institutionBridge: institutionApplicationBridge,
-            isTemplateAuthoringMode: !programLinkedPreview,
           })
         }
         if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds

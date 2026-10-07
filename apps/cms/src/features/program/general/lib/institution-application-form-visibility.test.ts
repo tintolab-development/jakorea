@@ -1,15 +1,13 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
-import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
+import { resolveGeneralApplicationFormHiddenParagraphIds } from './application-form-preview-options'
 import { getInstitutionApplicationFormHiddenParagraphIds } from './institution-application-program-bridge'
 import {
-  getInstructorApplicationFormHiddenParagraphIds,
   patchInstitutionSexOffenseConsentInquiryMethod,
   patchInstitutionSexOffenseConsentSiteSubmission,
   patchInstitutionSexOffenseConsentSubmissionRequest,
   resetInstitutionApplicationFormVisibility,
   shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
-  shouldShowInstructorApplicationCrimeRecordParagraph,
 } from './institution-application-form-visibility'
 
 describe('institution-application-form-visibility', () => {
@@ -24,7 +22,6 @@ describe('institution-application-form-visibility', () => {
   it('동의서 미제출 선택 시 조회 방식 단락을 숨긴다', () => {
     patchInstitutionSexOffenseConsentSubmissionRequest('no_submit')
     expect(shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph()).toBe(false)
-    expect(shouldShowInstructorApplicationCrimeRecordParagraph()).toBe(false)
 
     const hidden = getInstitutionApplicationFormHiddenParagraphIds({
       preEducationNoticeRequired: true,
@@ -33,33 +30,14 @@ describe('institution-application-form-visibility', () => {
     expect(hidden?.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod)).toBe(
       true
     )
-
-    const instructorHidden = getInstructorApplicationFormHiddenParagraphIds()
-    expect(instructorHidden?.has(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord)).toBe(true)
   })
 
-  it('동의서 제출 요청 + 사이트 온라인 제출 선택 시 강사 성범죄 경력 조회서 단락을 노출한다', () => {
-    expect(getInstructorApplicationFormHiddenParagraphIds()).toBeUndefined()
-  })
-
-  it('템플릿 작성 모드에서는 기관 선택과 무관하게 강사 성범죄 단락을 노출한다', () => {
+  it('강사 신청 성범죄경력 조회 동의서 제출 방법 안내 단락은 기관 선택과 무관하게 항상 노출한다', () => {
+    patchInstitutionSexOffenseConsentSubmissionRequest('no_submit')
+    patchInstitutionSexOffenseConsentInquiryMethod('ja_system')
     patchInstitutionSexOffenseConsentSiteSubmission('direct')
     expect(
-      getInstructorApplicationFormHiddenParagraphIds({ isTemplateAuthoringMode: true })
+      resolveGeneralApplicationFormHiddenParagraphIds('instructor', { paragraphs: [] })
     ).toBeUndefined()
-  })
-
-  it('JA 시스템 내 확인 선택 시 강사 성범죄 경력 조회서 단락을 숨긴다', () => {
-    patchInstitutionSexOffenseConsentInquiryMethod('ja_system')
-    expect(shouldShowInstructorApplicationCrimeRecordParagraph()).toBe(false)
-    const instructorHidden = getInstructorApplicationFormHiddenParagraphIds()
-    expect(instructorHidden?.has(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord)).toBe(true)
-  })
-
-  it('직접 제출 선택 시 강사 성범죄 경력 조회서 단락을 숨긴다', () => {
-    patchInstitutionSexOffenseConsentSiteSubmission('direct')
-    expect(shouldShowInstructorApplicationCrimeRecordParagraph()).toBe(false)
-    const instructorHidden = getInstructorApplicationFormHiddenParagraphIds()
-    expect(instructorHidden?.has(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord)).toBe(true)
   })
 })
