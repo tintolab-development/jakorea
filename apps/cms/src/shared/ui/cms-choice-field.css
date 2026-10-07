@@ -1,0 +1,52 @@
+/**
+ * 체크박스·라디오 그룹 제목 라벨 (CmsCheckbox.Group / CmsRadio.Group label)
+ * - 라벨 14px(large 15px)/500/140%, 라벨–그룹 4px, 그룹 높이 40px·간격 16px
+ */
+
+.cms-choice-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cms-choice-field__label {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--Content-secondary, #525252);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+.cms-choice-field--large .cms-choice-field__label {
+  font-size: 15px;
+}
+
+.cms-choice-field__label-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cms-choice-field__required {
+  flex-shrink: 0;
+  color: var(--color-required-mark, var(--color-red, #ff4d4f));
+}
+
+/* .cms-checkbox-group / .app-radio-group 의 flex-wrap 보다 우선 */
+.cms-choice-field > .cms-choice-field__group.cms-choice-field__group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: 40px;
+  align-items: center;
+  gap: 16px;
+}

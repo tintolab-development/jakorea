@@ -1,4 +1,5 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
@@ -251,8 +252,7 @@ export function replaceProgramRegistrationOverlayPrefix(
 }
 
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
-  const raw = overlayState[key] as T | undefined
-  return raw === undefined ? defaultValue : raw
+  return readOperationalOverlayKvValue('program-registration', overlayState, key, defaultValue)
 }
 
 export function patchProgramRegistrationOverlay(partial: Record<string, unknown>): void {

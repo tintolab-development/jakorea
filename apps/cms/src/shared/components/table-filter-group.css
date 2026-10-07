@@ -151,7 +151,7 @@
 }
 
 /* 필터 영역 조회 — 시안 160×44 (CmsButton large 기본 140px 덮어씀) */
-.table-filter-group__fields-shell .table-filter-group__search-button.cms-button.cms-button--large {
+.table-filter-group__fields-shell .table-filter-group__search-button.cms-button.cms-button--h44 {
   width: 160px !important;
   min-width: 160px !important;
   max-width: 160px !important;

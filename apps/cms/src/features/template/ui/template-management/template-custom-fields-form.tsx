@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { Checkbox, Input } from 'antd'
+import { Input } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import type { FileUploadResult } from '@/entities/application/api/file-upload-service'
 import templateCertificateBg from '@/assets/images/template/certificate-background.png'
 import templateEducation from '@/assets/images/template/template-education.png'
@@ -343,7 +344,7 @@ export function TemplateCustomFieldsForm({
                     key={rowLabel}
                     className="template-custom-fields-form__participant-check-row"
                   >
-                    <Checkbox
+                    <CmsCheckbox
                       className="template-custom-fields-form__participant-checkbox"
                       checked={participantVisibilityResolved[index]}
                       onChange={e => {

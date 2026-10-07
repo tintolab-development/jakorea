@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { Checkbox } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { SearchOutlined } from '@ant-design/icons'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import { getScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
@@ -50,13 +50,13 @@ export function CalendarSearch({
 
           return (
             <div key={opt.id} className="calendar-search__filters-wrapper" style={rowStyle}>
-              <Checkbox
+              <CmsCheckbox
                 className="calendar-search__filter-item"
                 checked={selectedIds.includes(opt.id)}
                 onChange={e => onOptionToggle(opt.id, e.target.checked)}
               >
                 {opt.title}
-              </Checkbox>
+              </CmsCheckbox>
             </div>
           )
         })}

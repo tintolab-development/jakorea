@@ -63,7 +63,7 @@ describe('form-template-delete-policy', () => {
     ).toBe(false)
   })
 
-  it('locks recruitment copies like the registration wizard; application copies stay editable', () => {
+  it('locks recruitment and application copies like the registration wizard', () => {
     expect(isRecruitmentOrApplicationWritingTemplateCode('application-instructor')).toBe(true)
     expect(
       isRecruitmentOrApplicationWritingTemplateCode('recruitment-participant-school-custom-01')
@@ -87,7 +87,13 @@ describe('form-template-delete-policy', () => {
         systemTemplate: false,
         forceUserEditable: true,
       })
-    ).toBe(false)
+    ).toBe(true)
+    expect(
+      isWritingFormTemplateStructureLocked({
+        templateCode: 'application-volunteer-custom-01',
+        systemTemplate: false,
+      })
+    ).toBe(true)
   })
 
   it('allows application reorder while locking recruitment reorder', () => {

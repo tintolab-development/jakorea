@@ -859,6 +859,14 @@ export function HorizontalTableParagraphBody({
     setTextEditCell(target)
   }
 
+  const activateFieldTableHeaderCell = (colIdx: number) => {
+    if (!canvasInteractive) return
+    const target = { area: 'header' as const, col: colIdx }
+    if (isTextCellEditing(target)) return
+    if (!isHeaderRowSelected()) setSelection({ area: 'header' })
+    setTextEditCell(target)
+  }
+
   const activateTextTableBodyCell = (rowIdx: number, colIdx: number) => {
     if (!canvasInteractive) return
     const target = { area: 'body' as const, row: rowIdx, col: colIdx }
@@ -994,6 +1002,8 @@ export function HorizontalTableParagraphBody({
                         if (isEventFromTableInteractive(e.target)) return
                         if (isTextTable) {
                           activateTextTableHeaderCell(i)
+                        } else if (headerEditMode && !headerFieldLocked) {
+                          activateFieldTableHeaderCell(i)
                         } else {
                           toggleHeaderRow()
                         }
@@ -1002,7 +1012,7 @@ export function HorizontalTableParagraphBody({
                 }
               >
                 {headerEditMode && !headerFieldLocked ? (
-                  isTextTable ? (
+                  isTextTable || canvasInteractive ? (
                     isTextCellEditing({ area: 'header', col: i }) ? (
                       <TextCellInput
                         variant="header"

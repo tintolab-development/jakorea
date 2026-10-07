@@ -48,7 +48,10 @@ import {
   buildRecruitmentRowCopyRequests,
   mergeRecruitmentRowRequests,
 } from '@/features/program/shared/lib/recruitment-row-request'
-import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import {
+  resolveUjatRecruitAnnouncementTitle,
+  resolveUjatRecruitDisplayProgram,
+} from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import {
   normalizeProgramBusinessAreaValue,
   resolvePersistedProgramTargetLevels,
@@ -257,23 +260,24 @@ function withUjatCreateRowCopy(
   program: Program
 ): ProgramRecruitmentRequest[] | undefined {
   return rows?.map(row => {
-    const display = resolveUjatRecruitDisplayProgram(
-      program,
+    const kind =
       row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER
         ? 'volunteer_h1'
         : 'institution'
-    )
+    const display = resolveUjatRecruitDisplayProgram(program, kind)
+    const publicTitle = resolveUjatRecruitAnnouncementTitle(display, kind)
     return {
       ...row,
+      announcementTitle: publicTitle !== '-' ? publicTitle : undefined,
       programDescription: display.description || undefined,
       recruitmentGuide: display.recruitmentGuide || undefined,
       applicationMethod: display.applicationMethod || undefined,
       learningSupportContent: display.learningSupportContent || undefined,
       additionalContentHtml: display.additionalContentHtml || undefined,
       remarks: display.otherNotes || undefined,
-      contactName: program.managerName || undefined,
-      contactPhone: program.contactPhone || undefined,
-      contactEmail: program.contactEmail || undefined,
+      contactName: display.managerName || program.managerName || undefined,
+      contactPhone: display.contactPhone || program.contactPhone || undefined,
+      contactEmail: display.contactEmail || program.contactEmail || undefined,
     }
   })
 }

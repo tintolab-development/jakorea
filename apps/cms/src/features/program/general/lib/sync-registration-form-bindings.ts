@@ -6,7 +6,9 @@ import {
   fetchGeneralProgramFormBindings,
   updateGeneralProgramFormBinding,
 } from '@/features/program/general/api/admin-general-programs-service'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { shouldUseProgramsHttpRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { queryClient } from '@/shared/lib/query-client'
 import { shouldUseRemoteApi as shouldUseUjatProgramsRemoteApi } from '@/features/program/ujat/api/capabilities'
 import {
   getOperationalFormSpec,
@@ -42,6 +44,26 @@ type RememberedBinding = { templateId: number; templateVersionId: number }
 
 const rememberedByProgram = new Map<string, Map<string, RememberedBinding>>()
 const inflightByProgram = new Map<string, Promise<void>>()
+const FORM_BINDINGS_STALE_MS = 30_000
+
+async function fetchProgramFormBindingsCached(
+  programId: string,
+  options?: { fresh?: boolean }
+) {
+  const queryKey = generalProgramQueryKeys.formBindings(programId)
+  if (options?.fresh) {
+    await queryClient.invalidateQueries({ queryKey })
+  }
+  return queryClient.fetchQuery({
+    queryKey,
+    queryFn: () => fetchGeneralProgramFormBindings(programId),
+    staleTime: FORM_BINDINGS_STALE_MS,
+  })
+}
+
+function invalidateProgramFormBindingsCache(programId: string): void {
+  void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.formBindings(programId) })
+}
 
 function shouldUseProgramFormBindingsRemoteApi(): boolean {
   return shouldUseProgramsHttpRemoteApi() || shouldUseUjatProgramsRemoteApi()
@@ -215,6 +237,7 @@ async function attachLocalDraftToBinding(args: {
     }
   }
   rememberProgramOperationalFormBinding(programId, args.spec.templateCode, ids)
+  invalidateProgramFormBindingsCache(programId)
 }
 
 async function promoteCatalogBindingToProgramScoped(args: {
@@ -297,6 +320,7 @@ async function promoteCatalogBindingToProgramScoped(args: {
     }
   }
   rememberProgramOperationalFormBinding(programId, args.spec.templateCode, ids)
+  invalidateProgramFormBindingsCache(programId)
   return ids
 }
 
@@ -409,6 +433,7 @@ export async function saveProgramScopedOperationalFormVersion(args: {
     )
   }
   rememberProgramOperationalFormBinding(args.program.id, args.templateCode, ids)
+  invalidateProgramFormBindingsCache(args.program.id)
   return ids
 }
 
@@ -467,14 +492,26 @@ export async function resolveProgramOperationalFormLoadSource(
     return { preferLocalDraft: true }
   }
   const catalog = await resolveFormTemplateCatalogIds(templateCode)
-  const bindings = await fetchGeneralProgramFormBindings(program.id)
-  return resolveApplicationFormLoadSource({
+  const bindings = await fetchProgramFormBindingsCached(program.id)
+  const source = resolveApplicationFormLoadSource({
     programId: program.id,
     program,
     templateCode,
     bindings,
     catalogTemplateId: catalog?.templateId,
   })
+  if (source.templateVersionId != null) return source
+
+  // 위저드는 카탈로그 공유 바인딩을 local draft로 두지만, 이미 등록된 프로그램 상세는
+  // 같은 templateId여도 binding version(등록 시 작성본)을 읽어야 한다.
+  const spec = getOperationalFormSpec(templateCode)
+  if (spec == null) return source
+  const binding = pickOperationalFormBinding(bindings, {
+    ...spec,
+    catalogTemplateId: catalog?.templateId,
+  })
+  if (binding?.templateVersionId == null) return source
+  return { templateVersionId: binding.templateVersionId, preferLocalDraft: false }
 }
 
 /** 발행·보관 버전은 PUT 불가. DRAFT만 수정한다. */
@@ -516,9 +553,11 @@ async function rebindProgramOperationalFormVersion(args: {
 
   if (existing?.bindingId == null) {
     await createGeneralProgramFormBinding(args.programId, payload)
+    invalidateProgramFormBindingsCache(args.programId)
     return
   }
   await updateGeneralProgramFormBinding(args.programId, String(existing.bindingId), payload)
+  invalidateProgramFormBindingsCache(args.programId)
 }
 
 /**
@@ -592,7 +631,7 @@ export async function ensureProgramScopedOperationalBinding(
       spec.targetRole
     )
   ) {
-    const bindings = await fetchGeneralProgramFormBindings(program.id)
+    const bindings = await fetchProgramFormBindingsCached(program.id)
     const catalog = await resolveFormTemplateCatalogIds(templateCode).catch(() => null)
     return resolveApplicationFormLoadSource({
       programId: program.id,
@@ -604,7 +643,7 @@ export async function ensureProgramScopedOperationalBinding(
   }
 
   const catalog = await resolveFormTemplateCatalogIds(templateCode)
-  const bindings = await fetchGeneralProgramFormBindings(program.id)
+  const bindings = await fetchProgramFormBindingsCached(program.id)
   const initial = resolveApplicationFormLoadSource({
     programId: program.id,
     program,
@@ -633,7 +672,7 @@ export async function ensureProgramScopedOperationalBinding(
     })
   }
 
-  const nextBindings = await fetchGeneralProgramFormBindings(program.id)
+  const nextBindings = await fetchProgramFormBindingsCached(program.id, { fresh: true })
   return resolveApplicationFormLoadSource({
     programId: program.id,
     program,

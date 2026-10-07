@@ -1,8 +1,28 @@
 import { useState } from 'react'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
-import { CmsButton } from '@/shared/ui/cms-button'
+import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import {
+  CmsButton,
+  type CmsButtonResolvedSize,
+  type CmsButtonResolvedVariant,
+} from '@/shared/ui/cms-button'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import { DsDemo, DsSection } from './section'
+
+const BUTTON_SIZES: CmsButtonResolvedSize[] = ['h52', 'h44', 'h40', 'h36', 'h32']
+
+const BUTTON_STATES: { key: string; variant: CmsButtonResolvedVariant; disabled?: boolean }[] = [
+  { key: 'primary', variant: 'primary' },
+  { key: 'secondary', variant: 'secondary' },
+  { key: 'default', variant: 'default' },
+  { key: 'error', variant: 'error' },
+  { key: 'disabled', variant: 'primary', disabled: true },
+]
+
+const ICON_ROWS: { key: string; label: string; icon: boolean; iconPosition?: 'start' | 'end' }[] = [
+  { key: 'none', label: '아이콘 없음', icon: false },
+  { key: 'start', label: '왼쪽 아이콘', icon: true, iconPosition: 'start' },
+  { key: 'end', label: '오른쪽 아이콘', icon: true, iconPosition: 'end' },
+]
 
 export function ButtonsSection() {
   const [loading, setLoading] = useState(false)
@@ -12,76 +32,56 @@ export function ButtonsSection() {
     <DsSection
       id="buttons"
       title="Buttons"
-      description="표준 버튼은 CmsButton입니다. loading 중에는 라벨을 숨기고 스피너만 표시합니다."
+      description="표준 버튼은 CmsButton입니다. hover·focus 효과와 로딩 스피너는 없습니다."
     >
       <p className="ds-note">
-        <strong>Size</strong> — large 140×44 · medium 120×40 · small 100×32.
+        <strong>Size</strong> — h52 · h44(기본) · h40 · h36 · h32. 모두 radius 10 · font-weight 600.
+        폭은 사이즈별 min-width(h44 140 · h40 120 · h36 100 · h32 80, h52 없음)부터 라벨 길이만큼
+        늘어나며, <code>width</code> prop으로 고정할 수 있습니다.
         <br />
-        <strong>Large + icon</strong> — 180×44 · padding <code>6px 16px 6px 10px</code> (캘린더·엑셀
-        등).
+        <strong>별칭</strong> — <code>large</code>=h44 · <code>medium</code>=h40 ·{' '}
+        <code>small</code>=h32 · <code>delete</code>=error · <code>cancel</code>=default. 새 코드는
+        h·error 이름을 사용합니다.
         <br />
-        <strong>Variant</strong> — primary(솔리드) · secondary(민트 아웃라인) · default(회색 0.1) ·
-        cancel(흰 배경 · 테두리 rgba(61,61,61,0.16) · 텍스트 #3D3D3D) · delete(레드 아웃라인). 「정보
-        수정」은 <code>secondary</code> + <code>large</code>(140). 풀페이지 모달 「취소」는{' '}
-        <code>cancel</code> + <code>large</code>(140×44).
+        <strong>Variant</strong> — primary · secondary · default · error. disabled는{' '}
+        <code>disabled</code> prop(모든 variant 공통 회색).
         <br />
-        <strong>용도</strong> — 테이블 상단 액션=<strong>large</strong> · 모달 푸터=
-        <strong>large</strong> (140×44) · FileSelectField 내 버튼=medium ·{' '}
-        <code>cms-button--action</code>은 텍스트 액션 폭 140 고정.
+        <strong>아이콘</strong> — <code>icon</code> + <code>iconPosition</code>(start | end). 크기
+        h52·h44 24 · h40·h36 20 · h32 16. <code>cms-button--action</code>은 폭 140 고정.
         <br />
         SSOT: <code>.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc</code>
       </p>
 
-      <DsDemo label="CmsButton variants (large)">
-        <div className="ds-demo__row">
-          <CmsButton variant="primary" size="large">
-            Primary
-          </CmsButton>
-          <CmsButton variant="secondary" size="large">
-            Secondary
-          </CmsButton>
-          <CmsButton variant="default" size="large">
-            Default
-          </CmsButton>
-          <CmsButton variant="cancel" size="large">
-            취소
-          </CmsButton>
-          <CmsButton variant="delete" size="large">
-            Delete
-          </CmsButton>
-          <CmsButton variant="primary" size="large" disabled>
-            Disabled
-          </CmsButton>
-        </div>
-      </DsDemo>
+      {BUTTON_SIZES.map(size => (
+        <DsDemo key={size} label={`CmsButton ${size}`}>
+          <div className="ds-demo__stack">
+            {ICON_ROWS.map(row => (
+              <div key={row.key} className="ds-demo__row">
+                {BUTTON_STATES.map(state => (
+                  <CmsButton
+                    key={state.key}
+                    size={size}
+                    variant={state.variant}
+                    disabled={state.disabled}
+                    icon={row.icon ? <DownloadOutlined /> : undefined}
+                    iconPosition={row.iconPosition}
+                    aria-label={`${size} ${state.key} ${row.label}`}
+                  >
+                    text
+                  </CmsButton>
+                ))}
+              </div>
+            ))}
+          </div>
+        </DsDemo>
+      ))}
 
-      <DsDemo label="CmsButton sizes">
-        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-          large 140×44 (툴바·모달 푸터) · medium 120×40 (FileSelect·행 액션) · small 100×32
-        </p>
+      <DsDemo label="아이콘 + 긴 라벨">
         <div className="ds-demo__row">
-          <CmsButton variant="primary" size="large">
-            Large
-          </CmsButton>
-          <CmsButton variant="primary" size="medium">
-            Medium
-          </CmsButton>
-          <CmsButton variant="primary" size="small">
-            Small
-          </CmsButton>
-        </div>
-      </DsDemo>
-
-      <DsDemo label="Large + icon (180×44)">
-        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-          <code>size=&quot;large&quot;</code> + <code>icon</code> → 자동 180폭 · padding 6 / 16 / 6 /
-          10
-        </p>
-        <div className="ds-demo__row">
-          <CmsButton variant="secondary" size="large" icon={<CalendarOutlined />}>
+          <CmsButton variant="secondary" icon={<CalendarOutlined />}>
             캘린더 뷰로 보기
           </CmsButton>
-          <CmsButton variant="secondary" size="large" icon={<UnorderedListOutlined />}>
+          <CmsButton variant="secondary" icon={<UnorderedListOutlined />}>
             리스트 뷰로 보기
           </CmsButton>
           <ExcelButton onClick={() => undefined} />
@@ -90,19 +90,19 @@ export function ButtonsSection() {
 
       <DsDemo label="테이블 상단 툴바 (시안)">
         <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-          선택 반려 <code>delete</code> 140 · 선택 승인 <code>secondary</code> 140 · 뷰 토글{' '}
-          <code>secondary</code>+icon 180 · 엑셀 <code>ExcelButton</code> primary 180
+          선택 반려 <code>error</code> 140 · 선택 승인 <code>secondary</code> 140 · 뷰 토글{' '}
+          <code>secondary</code>+icon · 엑셀 <code>ExcelButton</code>
         </p>
         <div className="ds-demo__row">
-          <CmsButton variant="delete" size="large" className="cms-button--action">
+          <CmsButton variant="error" size="h44" className="cms-button--action">
             선택 반려
           </CmsButton>
-          <CmsButton variant="secondary" size="large" className="cms-button--action">
+          <CmsButton variant="secondary" size="h44" className="cms-button--action">
             선택 승인
           </CmsButton>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="h44"
             icon={listView ? <CalendarOutlined /> : <UnorderedListOutlined />}
             onClick={() => setListView(v => !v)}
           >
@@ -112,59 +112,44 @@ export function ButtonsSection() {
         </div>
       </DsDemo>
 
-      <DsDemo label="모달 푸터 (large 140×44)">
+      <DsDemo label="모달 푸터 (h44)">
         <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-          Confirm / DeleteGuide / Alert / 등록 모달 푸터 — 취소는 컨텍스트에 따라{' '}
-          <code>secondary</code>(민트) 또는 <code>cancel</code>(흰 아웃라인) · 확인{' '}
-          <code>primary</code> 또는 <code>delete</code> · 모두 <code>size=&quot;large&quot;</code>.
-          CSS: <code>.content-modal__footer-actions</code> 강제.
+          취소는 <code>default</code> 또는 <code>secondary</code> · 확인 <code>primary</code> 또는{' '}
+          <code>error</code>. CSS: <code>.content-modal__footer-actions</code> 강제.
         </p>
         <div className="ds-demo__row">
-          <CmsButton variant="cancel" size="large">
+          <CmsButton variant="default" size="h44">
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large">
-            알림톡 발송
-          </CmsButton>
-          <CmsButton variant="secondary" size="large">
-            취소
-          </CmsButton>
-          <CmsButton variant="primary" size="large">
+          <CmsButton variant="primary" size="h44">
             확인
           </CmsButton>
-          <CmsButton variant="cancel" size="large">
+          <CmsButton variant="secondary" size="h44">
             취소
           </CmsButton>
-          <CmsButton variant="delete" size="large">
+          <CmsButton variant="error" size="h44">
             삭제
           </CmsButton>
         </div>
       </DsDemo>
 
-      <DsDemo label="Loading (spinner only)">
+      <DsDemo label="Loading (스피너 없음, 클릭만 차단)">
         <div className="ds-demo__row">
           <CmsButton
             variant="primary"
-            size="large"
+            size="h44"
             loading={loading}
             onClick={() => {
               setLoading(true)
               window.setTimeout(() => setLoading(false), 1500)
             }}
           >
-            저장
-          </CmsButton>
-          <CmsButton variant="secondary" size="large" loading>
-            조회 중
+            {loading ? '저장 중' : '저장'}
           </CmsButton>
         </div>
       </DsDemo>
 
       <DsDemo label="ExcelButton">
-        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-          <code>ExcelButton</code> = primary · large · Download 아이콘 · 180×44 (직접 width 지정
-          불필요)
-        </p>
         <div className="ds-demo__row">
           <ExcelButton onClick={() => undefined} />
           <ExcelButton disabled />

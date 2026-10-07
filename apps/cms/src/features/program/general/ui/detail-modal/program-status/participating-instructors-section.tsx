@@ -6,7 +6,8 @@
 import { useCallback, useMemo, useState, useEffect, useRef, type CSSProperties } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { Table, Checkbox, Spin } from 'antd'
+import { Table, Spin } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CalendarOutlined, UnorderedListOutlined, DownloadOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
@@ -872,7 +873,7 @@ export function ParticipatingInstructorsSection({
                               </div>
                             </div>
                             <div className="participating-instructors-section__calendar-card-checkbox-wrap">
-                              <Checkbox
+                              <CmsCheckbox
                                 checked={selectedInstructorRowKeys.includes(row.id)}
                                 onChange={e => {
                                   e.stopPropagation()

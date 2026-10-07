@@ -77,7 +77,7 @@
 }
 
 /* 스크린샷: 삭제 — 연한 핑크 배경 + 진한 레드 테두리/글자 */
-.notice-delete-confirm-modal .notice-delete-confirm-modal__delete-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled) {
+.notice-delete-confirm-modal .notice-delete-confirm-modal__delete-btn.cms-button--error:not(:disabled):not(.ant-btn-disabled) {
   color: #c64e62 !important;
   border-color: #c64e62 !important;
   background-color: #fff0f2 !important;

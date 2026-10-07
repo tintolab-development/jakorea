@@ -5,8 +5,12 @@
 import { forwardRef, useId, type ReactNode } from 'react'
 import './cms-toggle.css'
 
+export type CmsToggleSize = 'large' | 'medium'
+
 export interface CmsToggleProps {
   checked: boolean
+  /** large(기본): 트랙 50px·썸 20px·라벨 16px/130% / medium: 42px·16px·14px/125% */
+  size?: CmsToggleSize
   onChange?: (checked: boolean) => void
   /** 스위치 왼쪽 라벨 */
   label?: ReactNode
@@ -22,6 +26,7 @@ export const CmsToggle = forwardRef<HTMLButtonElement, CmsToggleProps>(
   (
     {
       checked,
+      size = 'large',
       onChange,
       label,
       disabled,
@@ -36,7 +41,9 @@ export const CmsToggle = forwardRef<HTMLButtonElement, CmsToggleProps>(
     const labelId = `${uid}-cms-toggle-label`
     const buttonId = idProp ?? `${uid}-cms-toggle`
 
-    const rootCn = ['cms-toggle__root', rootClassName].filter(Boolean).join(' ')
+    const rootCn = ['cms-toggle__root', `cms-toggle__root--${size}`, rootClassName]
+      .filter(Boolean)
+      .join(' ')
     const btnCn = ['cms-toggle', checked ? 'cms-toggle--checked' : '', className]
       .filter(Boolean)
       .join(' ')

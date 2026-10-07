@@ -26,7 +26,7 @@
   animation: none !important;
 }
 
-/* ----- large (기본): 원 20px, 본문 16px, 원–텍스트 8px, 옵션 간격 16px ----- */
+/* ----- large (기본): 원 20px, 본문 16px/130%, 원–텍스트 8px, 옵션 간격 16px ----- */
 .app-radio-group--large.ant-radio-group {
   font-size: 16px;
 }
@@ -39,18 +39,20 @@
   margin-inline-end: 0;
   font-size: 16px;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 130%;
   color: var(--default-BK, #3d3d3d);
+}
+
+.app-radio-group--large .ant-radio-wrapper .ant-radio,
+.app-radio--large.ant-radio-wrapper .ant-radio {
+  width: 20px;
+  height: 20px;
 }
 
 .app-radio-group--large .ant-radio-wrapper .ant-radio .ant-radio-inner,
 .app-radio--large.ant-radio-wrapper .ant-radio .ant-radio-inner {
   width: 20px;
   height: 20px;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #c4cdd1;
-  background-color: #fff;
   box-sizing: border-box;
 }
 
@@ -65,9 +67,9 @@
   transform: translate(-50%, -50%) scale(1) !important;
 }
 
-/* ----- medium: 원 18px, 본문 15px, 원–텍스트 6px ----- */
+/* ----- medium: 원 18px, 본문 14px/125%, 원–텍스트 6px ----- */
 .app-radio-group--medium.ant-radio-group {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .app-radio-group--medium .ant-radio-wrapper,
@@ -76,9 +78,9 @@
   align-items: center !important;
   gap: 6px !important;
   margin-inline-end: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 125%;
   color: var(--default-BK, #3d3d3d);
 }
 
@@ -92,10 +94,6 @@
 .app-radio--medium.ant-radio-wrapper .ant-radio .ant-radio-inner {
   width: 18px;
   height: 18px;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #c4cdd1;
-  background-color: #fff;
   box-sizing: border-box;
 }
 
@@ -115,39 +113,61 @@
   display: none !important;
 }
 
-/* ----- 공통: 선택·호버 ----- */
+/* ----- 공통: 원 레이아웃·선택 (호버 효과 없음) ----- */
 .app-radio-group--large .ant-radio-wrapper .ant-radio,
 .app-radio-group--medium .ant-radio-wrapper .ant-radio,
 .app-radio--large.ant-radio-wrapper .ant-radio,
 .app-radio--medium.ant-radio-wrapper .ant-radio {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
   align-self: center;
+  aspect-ratio: 1 / 1;
   top: 0 !important;
 }
 
-.app-radio-group--large .ant-radio-checked .ant-radio-inner,
-.app-radio-group--medium .ant-radio-checked .ant-radio-inner,
-.app-radio--large .ant-radio-checked .ant-radio-inner,
-.app-radio--medium .ant-radio-checked .ant-radio-inner {
-  border-color: #4da1af;
-  background-color: #fff;
+/* 미선택 원 — hover 시에도 동일 (호버 효과 없음) */
+.app-radio-group--large .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-inner,
+.app-radio-group--medium .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-inner,
+.app-radio--large.ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-inner,
+.app-radio--medium.ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-inner,
+.app-radio-group--large .ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-inner,
+.app-radio-group--medium .ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-inner,
+.app-radio--large.ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-inner,
+.app-radio--medium.ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-inner {
+  border-radius: var(--Radius-100, 100px);
+  border: 1px solid var(--Border-default, #e0e0e0);
+  background: var(--White, #fff);
 }
 
-.app-radio-group--large .ant-radio-checked .ant-radio-inner::after,
-.app-radio-group--medium .ant-radio-checked .ant-radio-inner::after,
-.app-radio--large .ant-radio-checked .ant-radio-inner::after,
-.app-radio--medium .ant-radio-checked .ant-radio-inner::after {
-  background-color: #4da1af;
+/* 선택 원 — hover 시에도 동일 */
+.app-radio-group--large .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner,
+.app-radio-group--medium .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner,
+.app-radio--large.ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner,
+.app-radio--medium.ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner,
+.app-radio-group--large .ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-checked .ant-radio-inner,
+.app-radio-group--medium .ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-checked .ant-radio-inner,
+.app-radio--large.ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-checked .ant-radio-inner,
+.app-radio--medium.ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-checked .ant-radio-inner {
+  border-radius: var(--Radius-50, 50px);
+  border: 1px solid var(--Brand-500, #00a0af);
+  background: var(--White, #fff);
 }
 
-.app-radio-group--large
-  .ant-radio-wrapper:not(.ant-radio-wrapper-checked):hover
-  .ant-radio-inner,
-.app-radio-group--medium
-  .ant-radio-wrapper:not(.ant-radio-wrapper-checked):hover
-  .ant-radio-inner,
-.app-radio--large.ant-radio-wrapper:not(.ant-radio-wrapper-checked):hover .ant-radio-inner,
-.app-radio--medium.ant-radio-wrapper:not(.ant-radio-wrapper-checked):hover .ant-radio-inner {
-  border-color: #a8b4b9;
+.app-radio-group--large .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner::after,
+.app-radio-group--medium .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner::after,
+.app-radio--large.ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner::after,
+.app-radio--medium.ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner::after {
+  background-color: var(--Brand-500, #00a0af);
+}
+
+/* antd hover·focus 링 제거 */
+.app-radio-group--large .ant-radio-wrapper .ant-radio::after,
+.app-radio-group--medium .ant-radio-wrapper .ant-radio::after,
+.app-radio--large.ant-radio-wrapper .ant-radio::after,
+.app-radio--medium.ant-radio-wrapper .ant-radio::after {
+  display: none !important;
 }
 
 .app-radio-group--large .ant-radio-wrapper-checked,
@@ -163,14 +183,6 @@
 .app-radio--medium.ant-radio-wrapper-checked:hover {
   color: var(--JA-mint-01, #01a1af) !important;
 }
-
-.app-radio-group--large .ant-radio-wrapper-checked:hover .ant-radio-checked .ant-radio-inner,
-.app-radio-group--medium .ant-radio-wrapper-checked:hover .ant-radio-checked .ant-radio-inner,
-.app-radio--large.ant-radio-wrapper-checked:hover .ant-radio-checked .ant-radio-inner,
-.app-radio--medium.ant-radio-wrapper-checked:hover .ant-radio-checked .ant-radio-inner {
-  border-color: #4da1af;
-}
-
 /* ----- disabled ----- */
 .app-radio-group--large .ant-radio-wrapper-disabled,
 .app-radio-group--medium .ant-radio-wrapper-disabled,

@@ -19,6 +19,7 @@ import {
   pickUjatRecruitVolunteerOverlay,
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import { isOperationalSeedDefaultSuppressed } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import {
   blankUjatVolunteerRecruitProgramFields,
   buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues,
@@ -252,7 +253,10 @@ export function programToUjatRecruitTemplateFormValues(
     next.volunteerTargets = normalizeVolunteerTargetList(volunteerTargets ?? [])
   } else if (!next.volunteerTargets?.length) {
     // 반기 overlay에 모집 대상 키가 없을 때만. 저장된 배열(빈 배열 포함)은 덮지 않는다.
-    next.volunteerTargets = ['university', 'adult']
+    // 템플릿 변경으로 스토어를 비운 뒤에는 대학생·성인 시드를 다시 넣지 않는다.
+    if (!isOperationalSeedDefaultSuppressed('ujat-recruit-volunteer', VOLUNTEER_KEYS.volunteerTargets)) {
+      next.volunteerTargets = ['university', 'adult']
+    }
   } else {
     next.volunteerTargets = normalizeVolunteerTargetList(next.volunteerTargets)
   }

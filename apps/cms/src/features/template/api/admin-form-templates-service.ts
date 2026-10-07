@@ -49,9 +49,11 @@ import {
   normalizeWritingFormDraft,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
+import { queryClient } from '@/shared/lib/query-client'
 import type {
   FormTemplateListItemResponse,
   ListTemplatesParams,
@@ -244,7 +246,8 @@ export function buildSaveRecordFromVersionResponse(args: {
 
   let draft = schemaJsonToWritingFormDraft(args.schemaJson)
   if (draft == null) {
-    if (settings == null) return null
+    // 모집 양식은 schemaJson을 생략하고 extensionJson(overlay)만 둔다.
+    if (settings == null && extension == null) return null
     draft = EMPTY_SCHEMA_DRAFT
   } else if (args.skipSeedMigration) {
     draft = normalizeWritingFormDraft(draft)
@@ -320,7 +323,11 @@ export async function loadFormTemplateVersionDraftByVersionId(
   versionId: number
 ): Promise<WritingFormTemplateSaveRecord | null> {
   assertFormsSurveysRemoteReady()
-  const version = await fetchFormTemplateVersionRemote(versionId)
+  const version = await queryClient.fetchQuery({
+    queryKey: formTemplateQueryKeys.versionById(versionId),
+    queryFn: () => fetchFormTemplateVersionRemote(versionId),
+    staleTime: 30_000,
+  })
   return buildSaveRecordFromVersionResponse({
     templateCode,
     schemaJson: version.schemaJson,
@@ -392,6 +399,9 @@ export async function saveFormTemplateVersionDraftByVersionId(args: {
         args.omitSchemaJson === true || shouldOmitImmutableFormSchemaJson(args.templateCode),
     })
   )
+  await queryClient.invalidateQueries({
+    queryKey: formTemplateQueryKeys.versionById(args.versionId),
+  })
 }
 
 /**

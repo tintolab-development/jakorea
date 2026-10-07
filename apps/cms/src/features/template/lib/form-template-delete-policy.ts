@@ -60,6 +60,15 @@ export function isDuplicateWritingTemplateCode(
 
 const PROGRAM_SCOPED_OPERATIONAL_CATEGORIES = new Set(['REGISTRATION'])
 
+/** 신청 카탈로그 및 복제본 — 기존 단락은 등록 화면과 같은 잠금 */
+export function isApplicationWritingTemplateCode(
+  templateCode: string | undefined | null
+): boolean {
+  const raw = templateCode?.trim() ?? ''
+  if (raw === '') return false
+  return resolveWritingFormBaseTemplateCode(raw).startsWith('application-')
+}
+
 /** 모집 카탈로그 및 복제본 — 구조 고정, 내용 입력만 */
 export function isRecruitmentWritingTemplateCode(
   templateCode: string | undefined | null
@@ -118,11 +127,12 @@ export function isProgramScopedOperationalWritingTemplate(item: {
   return PROGRAM_SCOPED_OPERATIONAL_CATEGORIES.has(resolved)
 }
 
-/** 단락 구조 잠금 — 모집(복제본 포함)은 항상 잠금. 신청 카탈로그 원본도 잠금. */
+/** 단락 구조 잠금 — 모집·신청(복제본 포함)은 항상 잠금. 신청은 등록 화면과 같은 부분 편집. */
 export function isWritingFormTemplateStructureLocked(
   target: WritingFormTemplateStructureLockTarget
 ): boolean {
   if (isRecruitmentWritingTemplateCode(target.templateCode)) return true
+  if (isApplicationWritingTemplateCode(target.templateCode)) return true
   if (target.forceUserEditable === true) return false
   const templateCode = target.templateCode?.trim() ?? ''
   const catalogOriginal = isCatalogFixedWritingFormTemplateCode(templateCode)

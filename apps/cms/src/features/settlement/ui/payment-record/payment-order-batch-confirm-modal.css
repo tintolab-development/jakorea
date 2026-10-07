@@ -40,7 +40,7 @@
   box-sizing: border-box;
 }
 
-.payment-order-batch-confirm-modal .content-modal__footer-actions .cms-button--primary.cms-button--large {
+.payment-order-batch-confirm-modal .content-modal__footer-actions .cms-button--primary.cms-button--h44 {
   width: 160px !important;
   min-width: 160px !important;
   height: 40px !important;

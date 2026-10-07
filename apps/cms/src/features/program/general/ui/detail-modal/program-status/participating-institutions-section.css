@@ -480,37 +480,6 @@
   line-height: 1;
 }
 
-.participating-instructors-section__calendar-card-checkbox .ant-checkbox {
-  width: 22px;
-  height: 22px;
-  top: 0;
-}
-
-.participating-instructors-section__calendar-card-checkbox .ant-checkbox-inner {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-}
-
-.participating-instructors-section__calendar-card-checkbox
-  .ant-checkbox-checked
-  .ant-checkbox-inner {
-  background-color: #0097a7;
-  border-color: #0097a7;
-}
-
-.participating-instructors-section__calendar-card-checkbox
-  .ant-checkbox-checked:not(.ant-checkbox-disabled):hover
-  .ant-checkbox-inner {
-  background-color: #00838f;
-  border-color: #00838f;
-}
-
-.participating-instructors-section__calendar-card-checkbox .ant-checkbox-inner::after {
-  width: 6px;
-  height: 10px;
-}
-
 .participating-instructors-section__calendar-card-body {
   flex: 1;
   min-width: 0;

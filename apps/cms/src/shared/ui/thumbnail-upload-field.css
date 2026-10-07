@@ -1,0 +1,119 @@
+/**
+ * 썸네일 업로드 공통 필드 — thumbnail-upload-field.tsx
+ */
+
+.thumbnail-upload-field {
+  display: inline-flex;
+  min-height: 54px;
+  padding: var(--Spacing-12, 12px) var(--Spacing-16, 16px);
+  align-items: center;
+  gap: var(--Spacing-12, 12px);
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.thumbnail-upload-field__thumb {
+  display: flex;
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+}
+
+.thumbnail-upload-field__thumb .ant-image,
+.thumbnail-upload-field__image {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.thumbnail-upload-field__thumb .ant-image-img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border: 1px solid var(--Border-default, #e0e0e0);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.thumbnail-upload-field__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--Spacing-8, 8px);
+  min-width: 0;
+}
+
+.thumbnail-upload-field__empty,
+.thumbnail-upload-field__file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+.thumbnail-upload-field__empty {
+  max-width: 100%;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+}
+
+.thumbnail-upload-field__file {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.thumbnail-upload-field__file-icon {
+  flex-shrink: 0;
+  color: var(--Netural-black, #3d3d3d);
+}
+
+.thumbnail-upload-field__file-name {
+  min-width: 0;
+  color: var(--Netural-black, #3d3d3d);
+}
+
+.thumbnail-upload-field__remove {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.thumbnail-upload-field__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.thumbnail-upload-field__actions .cms-button {
+  flex-shrink: 0;
+}
+
+.thumbnail-upload-field__input {
+  display: none;
+}
+
+.thumbnail-upload-field__guide {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}

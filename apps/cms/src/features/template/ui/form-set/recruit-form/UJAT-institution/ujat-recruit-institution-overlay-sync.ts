@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react'
+import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 /**
  * UJAT 학교 모집 폼 템플릿 편집기·미리보기가 각각 마운트될 때 로컬 state가 갈라지지 않도록 공유한다.
  */
@@ -50,7 +51,7 @@ export function useUjatRecruitInstitutionOverlayKv<T>(
   )
   void version
   const record = getUjatRecruitInstitutionOverlayRecord()
-  const value = (record[key] as T | undefined) ?? defaultValue
+  const value = readOperationalOverlayKvValue('ujat-recruit-institution', record, key, defaultValue)
   const setValue = useCallback(
     (next: T) => {
       patchUjatRecruitInstitutionOverlay({ [key]: next })

@@ -1,5 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 
 export const APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
   maxAssignableInstructors: 'recruit.maxAssignableInstructors',
@@ -135,7 +136,7 @@ export function useApplicantRecruitInstitutionOverlayKv<T>(
   )
   void version
   const record = getApplicantRecruitInstitutionOverlayRecord()
-  const value = (record[key] as T | undefined) ?? defaultValue
+  const value = readOperationalOverlayKvValue('institution-recruit', record, key, defaultValue)
   const setValue = useCallback(
     (next: T) => {
       patchApplicantRecruitInstitutionOverlay({ [key]: next })

@@ -1,4 +1,5 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 
 /**
  * 모집 폼(개인 모집, 강사 모집, 봉사자 모집)의 공유 오버레이 스토어
@@ -53,8 +54,7 @@ export function getGeneralRecruitOverlayRecord(): Record<string, unknown> {
 }
 
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
-  const raw = overlayState[key] as T | undefined
-  return raw === undefined ? defaultValue : raw
+  return readOperationalOverlayKvValue('general-recruit', overlayState, key, defaultValue)
 }
 
 export function patchGeneralRecruitOverlay(partial: Record<string, unknown>): void {

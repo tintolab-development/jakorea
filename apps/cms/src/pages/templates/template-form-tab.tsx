@@ -360,6 +360,7 @@ export default function TemplateFormTab() {
         deleteLoading={deleteLoading}
         registryEntry={registryEntry}
         templateId={templateId}
+        templateVersionId={selectedTemplate?.latestVersionId}
         templateName={selectedTemplate?.templateName}
         systemTemplate={selectedTemplate?.systemTemplate}
         forceUserEditable={forceUserEditable}
