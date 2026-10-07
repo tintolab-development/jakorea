@@ -47,7 +47,8 @@ export const GENERAL_MANAGER_EVALUATION_LABELS: Record<GeneralManagerEvaluation,
   unreviewed: '미검토',
 }
 
-export type GeneralInterviewAssignmentStatus = 'waiting' | 'assigned' | 'withdrawn'
+/** `not_required` — API `interviewStatus=NOT_REQUIRED`(면접 미운영 신청). 배정 불가 */
+export type GeneralInterviewAssignmentStatus = 'waiting' | 'assigned' | 'withdrawn' | 'not_required'
 
 export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS: Record<
   GeneralInterviewAssignmentStatus,
@@ -56,6 +57,7 @@ export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS: Record<
   waiting: '배정 대기',
   assigned: '배정 완료',
   withdrawn: '활동 포기',
+  not_required: '면접 불필요',
 }
 
 /** 1차 서류 합격자 캘린더 우측 목록 — 면접일 배정 현황 태그 (짧은 문구) */
@@ -66,6 +68,7 @@ export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_CALENDAR_LIST_TAG_LABELS: Recor
   waiting: '배정 대기',
   assigned: '배정 완료',
   withdrawn: '활동 포기',
+  not_required: '면접 불필요',
 }
 
 export type { SecondInterviewScreeningStatus }

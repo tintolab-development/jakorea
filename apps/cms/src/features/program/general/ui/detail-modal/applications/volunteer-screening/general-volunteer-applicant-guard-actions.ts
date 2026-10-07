@@ -11,6 +11,13 @@ export function guardGeneralVolunteerWithdrawActivity(row: GeneralVolunteerAppli
 }
 
 export function guardGeneralVolunteerAssignInterview(row: GeneralVolunteerApplicantRow): boolean {
+  if (row.interviewAssignmentStatus === 'not_required') {
+    cmsAlertModal.show({
+      title: '면접일 배정 안내',
+      content: '면접이 필요하지 않은 신청입니다. 면접일을 배정할 수 없습니다.',
+    })
+    return false
+  }
   if (row.interviewAssignmentStatus !== 'withdrawn') return true
   cmsAlertModal.show({
     title: '면접일 배정 안내',

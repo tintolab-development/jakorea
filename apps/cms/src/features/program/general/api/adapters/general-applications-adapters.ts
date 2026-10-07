@@ -1045,6 +1045,16 @@ export function mapApiInterviewStatusToAssignmentStatus(
   return 'waiting'
 }
 
+/** 봉사자 신청 — BE가 면접 운영 시 `WAITING`, 미운영 시 `NOT_REQUIRED`로 내려준다 */
+export function mapApiVolunteerInterviewStatusToAssignmentStatus(
+  status?: string | null,
+  giveUpYn?: boolean
+): GeneralInterviewAssignmentStatus {
+  const mapped = mapApiInterviewStatusToAssignmentStatus(status, giveUpYn)
+  if (mapped !== 'waiting') return mapped
+  return status?.trim().toUpperCase() === 'NOT_REQUIRED' ? 'not_required' : 'waiting'
+}
+
 export function mapApiFinalResultToSecondInterviewStatus(
   status?: string | null,
   reserveRank?: number
@@ -1110,7 +1120,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     availableActions: dto.availableActions ?? [],
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
-    interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
+    interviewAssignmentStatus: mapApiVolunteerInterviewStatusToAssignmentStatus(
       dto.interviewStatus,
       dto.giveUpYn
     ),
@@ -1166,8 +1176,12 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     availableActions: dto.availableActions ?? base.availableActions,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
-    interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
-      dto.assignedInterviewSlotId != null ? 'ASSIGNED' : 'WAITING_ASSIGNMENT',
+    interviewAssignmentStatus: mapApiVolunteerInterviewStatusToAssignmentStatus(
+      dto.assignedInterviewSlotId != null
+        ? 'ASSIGNED'
+        : base.interviewAssignmentStatus === 'not_required'
+          ? 'NOT_REQUIRED'
+          : 'WAITING_ASSIGNMENT',
       screening?.giveUpYn
     ),
     programId: toId(dto.programId) || base.programId,
