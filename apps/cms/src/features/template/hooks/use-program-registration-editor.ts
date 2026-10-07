@@ -317,9 +317,15 @@ export function useProgramRegistrationEditor(
     programRegistrationFormVariant === 'general' && !restrictCurriculumSessionStructure
 
   const resolveProgramTitleKo = useCallback(
-    () =>
-      programTitleKo.trim() ||
-      readRegistrationOverlayProgramTitleKo(programRegistrationFormVariant),
+    () => {
+      if (programRegistrationFormVariant === 'economy') {
+        return readRegistrationOverlayProgramTitleKo('economy')
+      }
+      return (
+        programTitleKo.trim() ||
+        readRegistrationOverlayProgramTitleKo(programRegistrationFormVariant)
+      )
+    },
     [programTitleKo, programRegistrationFormVariant]
   )
 
