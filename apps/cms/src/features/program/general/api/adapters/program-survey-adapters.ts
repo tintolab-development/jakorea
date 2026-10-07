@@ -4,6 +4,7 @@ import type { ProgramSurveyResponse } from '@/shared/api/generated/dashboard/sch
 import type { SurveyAnswerResponse } from '@/shared/api/generated/dashboard/schemas/surveyAnswerResponse'
 import type { SurveyResponseDetailResponse } from '@/shared/api/generated/dashboard/schemas/surveyResponseDetailResponse'
 import type { SurveyResponseListItemResponse } from '@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse'
+import type { SurveySummaryResponse } from '@/shared/api/generated/dashboard/schemas/surveySummaryResponse'
 import {
   GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE,
   type GeneralSatisfactionAudienceKey,
@@ -13,6 +14,8 @@ import type {
   RegisteredSurvey,
   SurveyPollRawResponse,
   SurveyProgressStatus,
+  SurveyQuestionOptionCount,
+  SurveyResultQuestionSummary,
 } from '@/features/program/shared/lib/survey-management/survey-management-types'
 
 export type ClassifiedFormBindingKind = 'poll' | 'satisfaction' | 'lecture_evaluation'
@@ -68,9 +71,7 @@ function isOperationalFormBindingByTemplateName(templateName: string | undefined
 }
 
 /** 설문 관리(설문조사·만족도·강의평가) 대상 binding인지 */
-export function isProgramSurveyManagementFormBinding(
-  binding: ProgramFormBindingResponse
-): boolean {
+export function isProgramSurveyManagementFormBinding(binding: ProgramFormBindingResponse): boolean {
   const formType = normalizeProgramFormBindingType(binding.formType)
   if (formType && PROGRAM_SURVEY_MANAGEMENT_FORM_TYPES.has(formType)) {
     return true
@@ -165,7 +166,11 @@ export function mapProgramSurveyToRegisteredSurvey(
   const expectedRespondentCount = resolveMappedExpectedRespondentCount(binding, dto)
   return {
     id: String(dto.templateVersionId ?? dto.templateId ?? index),
-    title: dto.templateName?.trim() || dto.versionLabel?.trim() || binding?.templateName?.trim() || '설문',
+    title:
+      dto.templateName?.trim() ||
+      dto.versionLabel?.trim() ||
+      binding?.templateName?.trim() ||
+      '설문',
     templateId: String(dto.templateId ?? binding?.templateId ?? ''),
     status: resolveSurveyStatusFromBinding(binding),
     responseCount: dto.responseCount ?? dto.submittedCount ?? binding?.submittedCount ?? 0,
@@ -270,7 +275,23 @@ export function parseAnswerPreviewJson(raw: string | undefined | null): Record<s
   if (!raw?.trim()) return {}
   try {
     const parsed = JSON.parse(raw) as unknown
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    if (Array.isArray(parsed)) {
+      // 서버 형식: [{ questionKey, questionLabel, answerDisplayText }] — 최대 5문항, PII 문항은 null
+      const out: Record<string, string> = {}
+      for (const row of parsed) {
+        if (!row || typeof row !== 'object') continue
+        const { questionKey, answerDisplayText } = row as {
+          questionKey?: unknown
+          answerDisplayText?: unknown
+        }
+        if (typeof questionKey !== 'string' || !questionKey.trim()) continue
+        if (answerDisplayText == null) continue
+        const text = String(answerDisplayText).trim()
+        if (text) out[questionKey.trim()] = text
+      }
+      return out
+    }
+    if (!parsed || typeof parsed !== 'object') return {}
     const out: Record<string, string> = {}
     for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
       if (value == null) continue
@@ -280,8 +301,7 @@ export function parseAnswerPreviewJson(raw: string | undefined | null): Record<s
       }
       if (typeof value === 'object' && value !== null) {
         const obj = value as { displayText?: unknown; value?: unknown; answer?: unknown }
-        const display =
-          obj.displayText ?? obj.value ?? obj.answer ?? JSON.stringify(value)
+        const display = obj.displayText ?? obj.value ?? obj.answer ?? JSON.stringify(value)
         out[key] = String(display)
       }
     }
@@ -303,7 +323,11 @@ export function mapSurveyAnswersToRecord(
     if (!text && answer.answerValueJson?.trim()) {
       try {
         const parsed = JSON.parse(answer.answerValueJson) as unknown
-        if (typeof parsed === 'string' || typeof parsed === 'number' || typeof parsed === 'boolean') {
+        if (
+          typeof parsed === 'string' ||
+          typeof parsed === 'number' ||
+          typeof parsed === 'boolean'
+        ) {
           text = String(parsed)
         } else {
           text = answer.answerValueJson.trim()
@@ -338,10 +362,92 @@ export function mapSurveyResponseListItemToPollResponse(
   }
 }
 
-/** preview answers가 비어 있으면 detail fetch가 필요 */
+/** preview가 전체 답(answerCount)을 담지 못하면 detail fetch가 필요 */
 export function surveyResponseNeedsDetail(item: SurveyResponseListItemResponse): boolean {
-  const preview = parseAnswerPreviewJson(item.answerPreviewJson)
-  return Object.keys(preview).length === 0 && item.formResponseId != null
+  if (item.formResponseId == null) return false
+  const previewCount = Object.keys(parseAnswerPreviewJson(item.answerPreviewJson)).length
+  if (previewCount === 0) return true
+  return item.answerCount != null && previewCount < item.answerCount
+}
+
+type ParsedSurveySummaryJson = {
+  topAnswers?: unknown
+  options?: unknown
+}
+
+function parseSurveySummaryJson(raw: string | undefined): ParsedSurveySummaryJson | null {
+  if (raw == null || raw.trim() === '') return null
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return parsed != null && typeof parsed === 'object' ? (parsed as ParsedSurveySummaryJson) : null
+  } catch {
+    return null
+  }
+}
+
+function toSurveyQuestionOptionCount(raw: unknown): SurveyQuestionOptionCount | null {
+  if (raw == null || typeof raw !== 'object') return null
+  const row = raw as Record<string, unknown>
+  if (row.value == null) return null
+  const value = String(row.value)
+  const label = typeof row.label === 'string' && row.label.trim() ? row.label : value
+  const displayOrder = Number(row.displayOrder)
+  const count = Number(row.count)
+  return {
+    value,
+    label,
+    displayOrder: Number.isFinite(displayOrder) ? displayOrder : 0,
+    count: Number.isFinite(count) ? count : 0,
+  }
+}
+
+/** OpenAPI 재생성 전 — 백엔드 2026-10-07 추가 필드 */
+type SurveySummaryRow = SurveySummaryResponse & {
+  questionDisplayOrder?: number | null
+  requiredYn?: boolean | null
+}
+
+/**
+ * summary 행 → 결과 화면 문항 목록 (서버 정렬 = 게시 version 단락 순서, 그대로 유지).
+ * `options`는 `summaryJson.options` 키가 있는 문항(공개 선택형)에만 채운다.
+ */
+export function mapSurveySummaryToQuestionSummaries(
+  rows: SurveySummaryRow[] | null | undefined
+): SurveyResultQuestionSummary[] {
+  const questions: SurveyResultQuestionSummary[] = []
+  for (const row of rows ?? []) {
+    const questionKey = row.questionKey?.trim()
+    if (!questionKey) continue
+    const parsed = parseSurveySummaryJson(row.summaryJson)
+    const displayOrder = row.questionDisplayOrder
+    questions.push({
+      questionKey,
+      questionLabel: row.questionLabel?.trim() ?? '',
+      questionType: row.questionType?.trim().toUpperCase() ?? '',
+      displayOrder:
+        typeof displayOrder === 'number' && Number.isFinite(displayOrder) ? displayOrder : null,
+      required: row.requiredYn === true,
+      ...(parsed != null && Array.isArray(parsed.options)
+        ? {
+            options: parsed.options
+              .map(toSurveyQuestionOptionCount)
+              .filter((option): option is SurveyQuestionOptionCount => option != null),
+          }
+        : {}),
+    })
+  }
+  return questions
+}
+
+/** 주관식 답이 공개(summary `topAnswers` 존재)일 때만 응답 상세로 주관식 표를 채울 의미가 있다 */
+export function surveySummaryHasPublicTextAnswers(
+  rows: SurveySummaryResponse[] | null | undefined
+): boolean {
+  return (rows ?? []).some(row => {
+    if (row.questionType !== 'SHORT_ESSAY') return false
+    const parsed = parseSurveySummaryJson(row.summaryJson)
+    return Array.isArray(parsed?.topAnswers) && parsed.topAnswers.length > 0
+  })
 }
 
 export function isLectureEvalSurveyListRow(dto: ProgramSurveyResponse): boolean {
@@ -368,7 +474,10 @@ export function resolveLectureEvalSubmitContext(input: {
   if (scope === 'SCHEDULE' && id != null && Number.isFinite(id) && id > 0) {
     return { contextType: 'SCHEDULE', contextId: Math.trunc(id) }
   }
-  return { contextType: 'PROGRAM', contextId: id != null && Number.isFinite(id) && id > 0 ? Math.trunc(id) : undefined }
+  return {
+    contextType: 'PROGRAM',
+    contextId: id != null && Number.isFinite(id) && id > 0 ? Math.trunc(id) : undefined,
+  }
 }
 
 export function pickLectureEvalSurveyFromRemote(input: {

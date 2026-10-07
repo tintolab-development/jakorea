@@ -1,7 +1,15 @@
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
-import type { ScaleTypeItem, WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
+import type {
+  ScaleTypeItem,
+  WritingFormDraft,
+  WritingFormParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
 import { resolveSurveyWritingDraft } from './survey-writing-draft'
-import type { SurveyPollRawResponse } from './survey-management-types'
+import type {
+  SurveyPollRawResponse,
+  SurveyQuestionOptionCount,
+  SurveyResultQuestionSummary,
+} from './survey-management-types'
 
 export type SurveyScaleChartDatum = {
   itemId: string
@@ -20,13 +28,14 @@ export type SurveyPollResultSection =
       kind: 'scale'
       paragraphId: string
       title: string
-      scaleItems: ScaleTypeItem[]
+      required?: boolean
       data: SurveyScaleChartDatum[]
     }
   | {
       kind: 'text'
       paragraphId: string
       title: string
+      required?: boolean
       rows: SurveyTextResponseRow[]
     }
 
@@ -39,26 +48,47 @@ export const SURVEY_SCALE_BAR_COLORS = [
   '#7B6FD4',
 ] as const
 
+function barColorAt(index: number): string {
+  return SURVEY_SCALE_BAR_COLORS[index % SURVEY_SCALE_BAR_COLORS.length]!
+}
+
 export function aggregateScaleResults(
   responses: SurveyPollRawResponse[],
   paragraphId: string,
   scaleItems: ScaleTypeItem[]
 ): SurveyScaleChartDatum[] {
   const counts = new Map<string, number>()
+  const idByLabel = new Map<string, string>()
   for (const item of scaleItems) {
     counts.set(item.id, 0)
+    if (item.label.trim()) idByLabel.set(item.label.trim(), item.id)
   }
   for (const response of responses) {
-    const answer = response.answers[paragraphId]
+    const answer = response.answers[paragraphId]?.trim()
     if (answer == null || answer === '') continue
-    counts.set(answer, (counts.get(answer) ?? 0) + 1)
+    const itemId = counts.has(answer) ? answer : (idByLabel.get(answer) ?? answer)
+    counts.set(itemId, (counts.get(itemId) ?? 0) + 1)
   }
   return scaleItems.map((item, index) => ({
     itemId: item.id,
     label: item.label,
     count: counts.get(item.id) ?? 0,
-    color: SURVEY_SCALE_BAR_COLORS[index] ?? SURVEY_SCALE_BAR_COLORS[0],
+    color: barColorAt(index),
   }))
+}
+
+/** summary `options`는 서버가 템플릿 옵션 전체(0건 포함)를 준다 — displayOrder 순으로 그대로 사용 */
+export function toOptionSummaryChartData(
+  options: SurveyQuestionOptionCount[]
+): SurveyScaleChartDatum[] {
+  return [...options]
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+    .map((option, index) => ({
+      itemId: option.value,
+      label: option.label,
+      count: option.count,
+      color: barColorAt(index),
+    }))
 }
 
 export function aggregateTextResults(
@@ -77,11 +107,73 @@ function getParagraphTitle(paragraphs: WritingFormParagraph[], paragraph: Writin
   return getFormNavDisplayLine(paragraphs, paragraph, 'q123')
 }
 
+/**
+ * summary 행이 있으면 version schema 없이 결과를 구성하고, 없으면 version/템플릿 draft로 집계한다.
+ */
 export async function buildSurveyPollResultSections(
   templateId: string,
-  responses: SurveyPollRawResponse[]
+  responses: SurveyPollRawResponse[],
+  options?: { templateVersionId?: number; questionSummaries?: SurveyResultQuestionSummary[] }
 ): Promise<SurveyPollResultSection[]> {
-  const draft = await resolveSurveyWritingDraft(templateId)
+  if (options?.questionSummaries != null && options.questionSummaries.length > 0) {
+    return buildSurveyPollResultSectionsFromSummary(options.questionSummaries, responses)
+  }
+  const draft = await resolveSurveyWritingDraft(templateId, options)
+  return buildSurveyPollResultSectionsFromDraft(draft, responses)
+}
+
+/** 편집기 번호 규칙과 동일 — 제목·마무리 단락만 번호에서 제외 */
+const SUMMARY_UNNUMBERED_QUESTION_TYPES = new Set(['SURVEY_TITLE_WITH_PERIOD', 'CLOSING'])
+const SUMMARY_CHART_QUESTION_TYPES = new Set(['SCALE_TYPE', 'MULTIPLE_CHOICE', 'STAR_RATE'])
+
+/**
+ * summary API 행(서버가 단락 순서로 정렬)만으로 결과 섹션 구성.
+ * 그래프는 공개 선택형의 `options`, 주관식 표는 응답 답(`answers[questionKey]`).
+ */
+export function buildSurveyPollResultSectionsFromSummary(
+  questions: SurveyResultQuestionSummary[],
+  responses: SurveyPollRawResponse[]
+): SurveyPollResultSection[] {
+  const sections: SurveyPollResultSection[] = []
+  let sequence = 0
+
+  for (const question of questions) {
+    if (question.displayOrder == null) continue
+    if (!SUMMARY_UNNUMBERED_QUESTION_TYPES.has(question.questionType)) sequence += 1
+    const label = question.questionLabel.trim() || '제목 없음'
+    const title = SUMMARY_UNNUMBERED_QUESTION_TYPES.has(question.questionType)
+      ? label
+      : `Q${sequence}. ${label}`
+
+    if (SUMMARY_CHART_QUESTION_TYPES.has(question.questionType) && question.options != null) {
+      sections.push({
+        kind: 'scale',
+        paragraphId: question.questionKey,
+        title,
+        required: question.required,
+        data: toOptionSummaryChartData(question.options),
+      })
+      continue
+    }
+
+    if (question.questionType === 'SHORT_ESSAY') {
+      sections.push({
+        kind: 'text',
+        paragraphId: question.questionKey,
+        title,
+        required: question.required,
+        rows: aggregateTextResults(responses, question.questionKey),
+      })
+    }
+  }
+
+  return sections
+}
+
+export function buildSurveyPollResultSectionsFromDraft(
+  draft: WritingFormDraft,
+  responses: SurveyPollRawResponse[]
+): SurveyPollResultSection[] {
   const sections: SurveyPollResultSection[] = []
 
   for (const paragraph of draft.paragraphs) {
@@ -92,7 +184,6 @@ export async function buildSurveyPollResultSections(
         kind: 'scale',
         paragraphId: paragraph.id,
         title: getParagraphTitle(draft.paragraphs, paragraph),
-        scaleItems: paragraph.items,
         data: aggregateScaleResults(responses, paragraph.id, paragraph.items),
       })
       continue

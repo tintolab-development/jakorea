@@ -1,6 +1,11 @@
 import type { RefObject } from 'react'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import type { RegisteredSurvey, SurveyAudienceTab, SurveyPollRawResponse } from '../../lib/survey-management/survey-management-types'
+import type {
+  RegisteredSurvey,
+  SurveyAudienceTab,
+  SurveyPollRawResponse,
+  SurveyResultQuestionSummary,
+} from '../../lib/survey-management/survey-management-types'
 import type { SurveyActionLabels, SurveyEmptyCopy, SurveyNoResponseCopy } from '../../lib/survey-management/survey-copy'
 import { SurveyEmptyState } from './survey-empty-state'
 import { SurveyNoResponseState } from './survey-no-response-state'
@@ -25,6 +30,10 @@ export type SatisfactionSurveyViewProps<TKey extends string> = {
   onDownloadClick: () => void
   resultsExportRef?: RefObject<HTMLDivElement | null>
   resultsResponses?: SurveyPollRawResponse[]
+  /** 결과 집계 기준 게시 version (remote 바인딩) */
+  resultsTemplateVersionId?: number
+  /** summary API 행 (remote) — `null`이면 로딩 중 */
+  resultsQuestionSummaries?: SurveyResultQuestionSummary[] | null
 }
 
 export function SatisfactionSurveyView<TKey extends string>({
@@ -45,6 +54,8 @@ export function SatisfactionSurveyView<TKey extends string>({
   onDownloadClick,
   resultsExportRef,
   resultsResponses,
+  resultsTemplateVersionId,
+  resultsQuestionSummaries,
 }: SatisfactionSurveyViewProps<TKey>) {
   const activeSurvey = surveysByAudience[activeAudience]
   const rootClassName = [
@@ -121,9 +132,11 @@ export function SatisfactionSurveyView<TKey extends string>({
         <div ref={resultsExportRef}>
           <SurveyPollResultsView
             templateId={activeSurvey.templateId}
+            templateVersionId={resultsTemplateVersionId}
             responseCount={activeSurvey.responseCount}
             participantTotal={activeSurvey.participantTotal}
             responses={resultsResponses}
+            questionSummaries={resultsQuestionSummaries}
             pdfTitle="만족도조사 결과"
           />
         </div>

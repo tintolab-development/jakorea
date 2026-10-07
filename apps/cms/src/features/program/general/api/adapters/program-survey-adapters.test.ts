@@ -16,7 +16,9 @@ import {
   resolveSatisfactionAudienceFromBinding,
   resolveSurveyCreateBindingTemplateCode,
   resolveSurveyShareClipboardUrl,
+  mapSurveySummaryToQuestionSummaries,
   surveyResponseNeedsDetail,
+  surveySummaryHasPublicTextAnswers,
 } from './program-survey-adapters'
 
 describe('parseAnswerPreviewJson', () => {
@@ -27,6 +29,29 @@ describe('parseAnswerPreviewJson', () => {
   it('returns empty on invalid json', () => {
     expect(parseAnswerPreviewJson('not-json')).toEqual({})
     expect(parseAnswerPreviewJson('')).toEqual({})
+  })
+
+  it('parses server preview array and skips masked answers', () => {
+    expect(
+      parseAnswerPreviewJson(
+        JSON.stringify([
+          { questionKey: 'q1', questionLabel: '만족도', answerDisplayText: 'scale-5' },
+          { questionKey: 'q2', questionLabel: '이름', answerDisplayText: null },
+        ])
+      )
+    ).toEqual({ q1: 'scale-5' })
+  })
+})
+
+describe('surveyResponseNeedsDetail', () => {
+  it('skips detail when preview covers every answer', () => {
+    const preview = JSON.stringify([{ questionKey: 'q1', answerDisplayText: 'a' }])
+    expect(
+      surveyResponseNeedsDetail({ formResponseId: 1, answerCount: 1, answerPreviewJson: preview })
+    ).toBe(false)
+    expect(
+      surveyResponseNeedsDetail({ formResponseId: 1, answerCount: 6, answerPreviewJson: preview })
+    ).toBe(true)
   })
 })
 
@@ -448,5 +473,76 @@ describe('resolveSurveyShareClipboardUrl', () => {
         'https://cms.example.com'
       )
     ).toBe('https://platform.example.com/s/abc')
+  })
+})
+
+describe('mapSurveySummaryToQuestionSummaries', () => {
+  it('keeps server order and maps options, order and required flags', () => {
+    const rows = [
+      {
+        questionKey: 'survey-paragraph-title',
+        questionLabel: '설문 제목',
+        questionType: 'SURVEY_TITLE_WITH_PERIOD',
+        summaryJson: '{"totalResponses":1,"topAnswers":[]}',
+        questionDisplayOrder: 0,
+        requiredYn: true,
+      },
+      {
+        questionKey: 'survey-paragraph-star',
+        questionLabel: '별점',
+        questionType: 'STAR_RATE',
+        summaryJson: JSON.stringify({
+          totalResponses: 1,
+          topAnswers: [{ answer: '1', count: 1 }],
+          options: [{ value: '1', label: '1점', displayOrder: 0, count: 1 }],
+          unmatchedCount: 0,
+        }),
+        questionDisplayOrder: 1,
+        requiredYn: false,
+      },
+      { questionKey: 'orphan', questionType: 'SHORT_ESSAY', summaryJson: 'not-json' },
+    ]
+    expect(mapSurveySummaryToQuestionSummaries(rows)).toEqual([
+      {
+        questionKey: 'survey-paragraph-title',
+        questionLabel: '설문 제목',
+        questionType: 'SURVEY_TITLE_WITH_PERIOD',
+        displayOrder: 0,
+        required: true,
+      },
+      {
+        questionKey: 'survey-paragraph-star',
+        questionLabel: '별점',
+        questionType: 'STAR_RATE',
+        displayOrder: 1,
+        required: false,
+        options: [{ value: '1', label: '1점', displayOrder: 0, count: 1 }],
+      },
+      {
+        questionKey: 'orphan',
+        questionLabel: '',
+        questionType: 'SHORT_ESSAY',
+        displayOrder: null,
+        required: false,
+      },
+    ])
+  })
+})
+
+describe('surveySummaryHasPublicTextAnswers', () => {
+  it('is false when short essay answers are masked', () => {
+    expect(
+      surveySummaryHasPublicTextAnswers([
+        { questionType: 'SHORT_ESSAY', summaryJson: '{"topAnswers":[]}' },
+      ])
+    ).toBe(false)
+  })
+
+  it('is true when a short essay has public answers', () => {
+    expect(
+      surveySummaryHasPublicTextAnswers([
+        { questionType: 'SHORT_ESSAY', summaryJson: '{"topAnswers":[{"answer":"좋아요","count":1}]}' },
+      ])
+    ).toBe(true)
   })
 })

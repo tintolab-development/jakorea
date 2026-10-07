@@ -230,3 +230,7 @@
   max-width: none;
 }
 
+.ujat-survey-poll-results__required {
+  margin-left: 2px;
+  color: var(--color-red, #c32f4a);
+}
