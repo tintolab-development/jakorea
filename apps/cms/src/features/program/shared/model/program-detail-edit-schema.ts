@@ -1507,7 +1507,7 @@ export function detailEditValuesToProgramPatch(
       values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate,
     volunteerTargets: values.volunteerTargets?.length ? values.volunteerTargets : undefined,
     volunteerTarget: values.volunteerTargets?.length
-      ? values.volunteerTargets.join(', ')
+      ? formatVolunteerTargetsLabel(values.volunteerTargets)
       : undefined,
     volunteerTargetDetail: values.volunteerTargetDetail ?? existing.volunteerTargetDetail,
     applicationMethod: values.applicationMethod ?? existing.applicationMethod,

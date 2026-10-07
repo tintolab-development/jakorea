@@ -371,9 +371,11 @@ const INSTRUCTOR_TARGET_DETAIL: Record<string, string> = {
   기타: '지역 봉사 강사',
 }
 const VOLUNTEER_TARGET_DETAIL: Record<string, string> = {
-  '대학(원)생': '경제·교육 관련 학과 재학생',
-  일반인: '평일 오후 참여 가능한 성인',
-  기타: '지역 봉사 경험자',
+  elementary: '초등학교 4~6학년',
+  middle: '중학교 1~3학년',
+  high: '고등학교 1~2학년',
+  university: '경제·교육 관련 학과 재학생',
+  adult: '평일 오후 참여 가능한 성인',
 }
 
 function pickSome<T>(items: readonly T[], count: number): T[] {
@@ -651,10 +653,10 @@ function buildUjatVolunteerHalfRecruitOverlay(
     [ujatVolunteerHalfOverlayKey(half, 'publicTitle')]: `${titleKo} ${halfLabel} 봉사자 모집`,
     [ujatVolunteerHalfOverlayKey(half, 'programRange')]: args.programSeal,
     [ujatVolunteerHalfOverlayKey(half, 'volunteerTargets')]: args.volunteerTargets.map(
-      option => option.label
+      option => option.value
     ),
     [ujatVolunteerHalfOverlayKey(half, 'targetDetail')]: args.volunteerTargets
-      .map(option => VOLUNTEER_TARGET_DETAIL[option.label] ?? `${option.label} 대상`)
+      .map(option => VOLUNTEER_TARGET_DETAIL[option.value] ?? `${option.label} 대상`)
       .join(', '),
     [ujatVolunteerHalfOverlayKey(half, 'docAnnounce')]: {
       date: args.recruitSeal.start,

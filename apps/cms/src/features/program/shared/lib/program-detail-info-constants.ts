@@ -250,41 +250,89 @@ export const TYPE_LABEL: Record<string, string> = {
   hybrid: '온/오프라인',
 }
 
-/** 봉사자 모집 대상 옵션 */
+/** 봉사자 모집 대상. 저장 값은 교육 대상 코드와 같다. */
 export const VOLUNTEER_TARGET_OPTIONS = [
-  { value: '대학(원)생', label: '대학(원)생' },
-  { value: '일반인', label: '일반인' },
-  { value: '기타', label: '기타' },
+  { value: 'elementary', label: '초등학생' },
+  { value: 'middle', label: '중학생' },
+  { value: 'high', label: '고등학생' },
+  { value: 'university', label: '대학(원)생' },
+  { value: 'adult', label: '성인' },
 ] as const
+
+export type VolunteerTargetCode = (typeof VOLUNTEER_TARGET_OPTIONS)[number]['value']
 
 const VOLUNTEER_TARGET_VALUES = new Set<string>(
   VOLUNTEER_TARGET_OPTIONS.map(option => option.value)
 )
 
+const VOLUNTEER_TARGET_LABEL_BY_CODE = new Map<string, string>(
+  VOLUNTEER_TARGET_OPTIONS.map(option => [option.value, option.label])
+)
+
+/** 조회·구 저장값 → 코드. `기타`는 선택지에서 빠졌으므로 원문을 유지한다. */
+const VOLUNTEER_TARGET_CODE_BY_TOKEN: Record<string, VolunteerTargetCode> = {
+  elementary: 'elementary',
+  초등학생: 'elementary',
+  middle: 'middle',
+  중학생: 'middle',
+  high: 'high',
+  고등학생: 'high',
+  university: 'university',
+  '대학(원)생': 'university',
+  대학생: 'university',
+  adult: 'adult',
+  성인: 'adult',
+  일반인: 'adult',
+}
+
+export function normalizeVolunteerTargetToken(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed) return ''
+  return VOLUNTEER_TARGET_CODE_BY_TOKEN[trimmed] ?? trimmed
+}
+
+export function normalizeVolunteerTargetList(raw: readonly string[]): string[] {
+  const targets: string[] = []
+  for (const item of raw) {
+    const token = normalizeVolunteerTargetToken(item)
+    if (!token || targets.includes(token)) continue
+    targets.push(token)
+  }
+  return targets
+}
+
+function splitVolunteerTargetText(raw: string): string[] {
+  return raw
+    .split(/[,，·]/)
+    .map(part => part.trim())
+    .filter(Boolean)
+}
+
 export function resolveProgramVolunteerTargets(program: {
   volunteerTargets?: string[]
   volunteerTarget?: string
 }): string[] {
-  if (program.volunteerTargets?.length) return program.volunteerTargets
+  if (program.volunteerTargets?.length) return normalizeVolunteerTargetList(program.volunteerTargets)
   const raw = program.volunteerTarget?.trim()
-  if (!raw) return []
-  const parts = raw
-    .split(/[,，·]/)
-    .map(part => part.trim())
-    .filter(Boolean)
-  const valid = parts.filter(part => VOLUNTEER_TARGET_VALUES.has(part))
-  if (valid.length > 0) return valid
-  return [raw]
+  if (!raw || raw === '-') return []
+  return normalizeVolunteerTargetList(splitVolunteerTargetText(raw))
+}
+
+export function formatVolunteerTargetLabel(target: string): string {
+  const token = normalizeVolunteerTargetToken(target)
+  return VOLUNTEER_TARGET_LABEL_BY_CODE.get(token) ?? target.trim()
 }
 
 export function formatVolunteerTargetsLabel(targets: string[]): string {
   if (targets.length === 0) return '-'
-  return targets.join(', ')
+  return targets.map(formatVolunteerTargetLabel).join(', ')
 }
 
 export function parseVolunteerTargetsSelectValue(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined
-  const targets = value.map(String).filter(item => VOLUNTEER_TARGET_VALUES.has(item))
+  const targets = normalizeVolunteerTargetList(value.map(String)).filter(
+    item => VOLUNTEER_TARGET_VALUES.has(item) || item === '기타'
+  )
   return targets.length > 0 ? targets : undefined
 }
 
