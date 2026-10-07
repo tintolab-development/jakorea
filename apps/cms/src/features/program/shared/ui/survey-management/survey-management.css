@@ -206,7 +206,7 @@
 }
 
 /* 결과 다운로드 — large+icon · 긴 라벨(max-content) · DS 패딩 6 16 6 10 */
-.survey-management-registered-actions__download-button.cms-button.ant-btn.cms-button--large {
+.survey-management-registered-actions__download-button.cms-button.ant-btn.cms-button--h44 {
   width: max-content !important;
   min-width: fit-content;
   max-width: none;

@@ -7,7 +7,6 @@ import { Button } from 'antd'
 import type { ButtonProps } from 'antd'
 import type { CSSProperties, ReactNode, MouseEvent } from 'react'
 import './cms-button.css'
-import './button-loading-only.css'
 import { guardAdminAction, type AdminActionKind } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 
@@ -22,9 +21,35 @@ type CmsButtonPropsOmit =
   | 'className'
   | 'style'
 
-export type CmsButtonVariant = 'primary' | 'secondary' | 'default' | 'cancel' | 'delete'
+/** `cancel`=default, `delete`=error 별칭 */
+export type CmsButtonVariant = 'primary' | 'secondary' | 'default' | 'error' | 'cancel' | 'delete'
 
-export type CmsButtonSize = 'large' | 'medium' | 'small'
+/** `large`=h44, `medium`=h40, `small`=h32 별칭 */
+export type CmsButtonSize = 'h52' | 'h44' | 'h40' | 'h36' | 'h32' | 'large' | 'medium' | 'small'
+
+export type CmsButtonResolvedSize = 'h52' | 'h44' | 'h40' | 'h36' | 'h32'
+export type CmsButtonResolvedVariant = 'primary' | 'secondary' | 'default' | 'error'
+
+export function resolveCmsButtonSize(size: CmsButtonSize): CmsButtonResolvedSize {
+  if (size === 'large') return 'h44'
+  if (size === 'medium') return 'h40'
+  if (size === 'small') return 'h32'
+  return size
+}
+
+export function resolveCmsButtonVariant(variant: CmsButtonVariant): CmsButtonResolvedVariant {
+  if (variant === 'cancel') return 'default'
+  if (variant === 'delete') return 'error'
+  return variant
+}
+
+const ANTD_SIZE: Record<CmsButtonResolvedSize, ButtonProps['size']> = {
+  h52: 'large',
+  h44: 'large',
+  h40: 'middle',
+  h36: 'small',
+  h32: 'small',
+}
 
 /** 승인·반려·취소 등 CMS 관리 액션 버튼 공통 폭(px) */
 export const CMS_ACTION_BUTTON_WIDTH = 140
@@ -38,12 +63,14 @@ export interface CmsButtonProps extends Omit<ButtonProps, CmsButtonPropsOmit> {
   /** 지정 시 사이즈별 기본 width 대신 적용 (숫자는 px) */
   width?: number | string
   icon?: ReactNode
+  /** 아이콘 위치 — 라벨 앞(start) / 뒤(end) */
+  iconPosition?: 'start' | 'end'
   children?: ReactNode
   className?: string
   style?: CSSProperties
   /** 네이티브 `<button type>` → antd `htmlType` */
   type?: 'button' | 'submit' | 'reset'
-  /** 지정 시 클릭을 해당 조작으로 가드. `variant="delete"` 는 미지정 시 delete */
+  /** 지정 시 클릭을 해당 조작으로 가드. `variant="error"`(`delete`)는 미지정 시 delete */
   adminAction?: AdminActionKind
 }
 
@@ -54,6 +81,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       size = 'large',
       width,
       icon,
+      iconPosition = 'start',
       children,
       className,
       style,
@@ -90,32 +118,30 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
             }
           : { width: resolvedWidth, minWidth: resolvedWidth, maxWidth: resolvedWidth }
 
-    const antdSize = size === 'large' ? 'large' : size === 'small' ? 'small' : 'middle'
-    const isLoading = Boolean(loading)
+    const resolvedSize = resolveCmsButtonSize(size)
+    const resolvedVariant = resolveCmsButtonVariant(variant)
+    const isLoading = typeof loading === 'object' ? true : Boolean(loading)
 
     const cn = [
       'cms-button',
-      'btn-loading-only',
-      `cms-button--${variant}`,
-      `cms-button--${size}`,
+      `cms-button--${resolvedVariant}`,
+      `cms-button--${resolvedSize}`,
       hasIcon && 'cms-button--has-icon',
-      isLoading && 'cms-button--loading-only',
+      hasIcon && iconPosition === 'end' && 'cms-button--icon-end',
       className,
     ]
       .filter(Boolean)
       .join(' ')
 
-    const antType: ButtonProps['type'] =
-      variant === 'primary' ? 'primary' : variant === 'delete' ? 'default' : 'default'
-
-    /**
-     * Ant DefaultLoadingIcon: `icon` 없으면 CSSMotion(width 애니메이션) →
-     * 스피너 absolute 중앙 정렬이 깨짐. 로딩 중 더미 icon으로 existIcon 경로 사용.
-     */
-    const antdIcon = isLoading ? <span className="cms-button__loading-slot" aria-hidden /> : undefined
-    const resolvedAdminAction = adminAction ?? (variant === 'delete' ? 'delete' : undefined)
+    const antType: ButtonProps['type'] = resolvedVariant === 'primary' ? 'primary' : 'default'
+    const resolvedAdminAction = adminAction ?? (resolvedVariant === 'error' ? 'delete' : undefined)
 
     const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+      if (isLoading) {
+        event.preventDefault()
+        event.stopPropagation()
+        return
+      }
       if (
         resolvedAdminAction &&
         !guardAdminAction({ roleCode, action: resolvedAdminAction })
@@ -132,20 +158,24 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
         ref={ref}
         type={antType}
         htmlType={type}
-        danger={variant === 'delete'}
-        size={antdSize}
+        danger={resolvedVariant === 'error'}
+        size={ANTD_SIZE[resolvedSize]}
         className={cn}
         disabled={disabled}
-        loading={loading}
-        icon={antdIcon}
+        aria-busy={isLoading || undefined}
         style={{ outline: 'none', ...widthStyle, ...style }}
         {...rest}
         onClick={handleClick}
       >
         {children != null || hasIcon ? (
           <span className="btn-loading-only__content">
-            {hasIcon ? <span className="cms-button__icon">{icon}</span> : null}
+            {hasIcon && iconPosition === 'start' ? (
+              <span className="cms-button__icon">{icon}</span>
+            ) : null}
             {children != null ? <span className="cms-button__label">{children}</span> : null}
+            {hasIcon && iconPosition === 'end' ? (
+              <span className="cms-button__icon">{icon}</span>
+            ) : null}
           </span>
         ) : null}
       </Button>

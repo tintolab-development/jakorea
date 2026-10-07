@@ -51,7 +51,7 @@
 }
 
 /* 시안: 240×52 · padding 6×16 · radius 8 · font 18/600/150% · mint primary */
-.agreement-sheet-closing-footer__submit.cms-button.ant-btn.cms-button--large {
+.agreement-sheet-closing-footer__submit.cms-button.ant-btn.cms-button--h44 {
   display: flex !important;
   flex-direction: column;
   justify-content: center;
