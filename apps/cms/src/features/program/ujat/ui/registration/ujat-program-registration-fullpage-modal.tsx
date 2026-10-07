@@ -343,7 +343,10 @@ function UjatProgramRegistrationFullpageModalInner({
           flow.isDraftLoading ? (
             <FormDraftLoading />
           ) : (
-            <HideParagraphSelectionChromeContext.Provider value>
+            <HideParagraphSelectionChromeContext.Provider
+              key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
+              value
+            >
               {flow.panels.leftContent}
             </HideParagraphSelectionChromeContext.Provider>
           )

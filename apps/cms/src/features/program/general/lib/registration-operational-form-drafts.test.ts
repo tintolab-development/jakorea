@@ -103,7 +103,10 @@ describe('registration operational draft-owned helpers', () => {
   })
 
   it('persists only visible operational overlays for individual general program', async () => {
-    patchGeneralRecruitOverlay({ 'recruit.instructor.inquiryContact': '강사문의' })
+    patchGeneralRecruitOverlay({
+      'recruit.individual.inquiryContact': '개인문의',
+      'recruit.instructor.inquiryContact': '강사문의',
+    })
     patchGeneralApplicationOverlay({ 'application.volunteer.essay': '에세이' })
     ensureDraftOwnedFormVersionWithBaseline.mockResolvedValue({
       owned: { templateCode: 'recruitment-participant-individual', templateId: 1, draftVersionId: 10 },

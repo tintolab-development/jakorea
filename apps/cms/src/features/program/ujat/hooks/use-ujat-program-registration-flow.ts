@@ -544,6 +544,8 @@ export function useUjatProgramRegistrationFlow(
     selectStepTemplate,
     stepTemplateName: participantTemplateName,
     isDefaultStepTemplate,
+    selectedTemplateCode,
+    wizardDraftRevision,
     goToPhase,
     panels,
     isDraftLoading,

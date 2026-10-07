@@ -762,6 +762,8 @@ export function useGeneralProgramRegistrationFlow(
     selectStepTemplate,
     stepTemplateName: participantTemplateName,
     isDefaultStepTemplate,
+    selectedTemplateCode,
+    wizardDraftRevision,
     goToPhase,
     panels,
     isDraftLoading,

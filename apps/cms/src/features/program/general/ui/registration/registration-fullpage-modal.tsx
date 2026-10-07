@@ -420,7 +420,10 @@ function GeneralProgramRegistrationFullpageModalInner({
           flow.isDraftLoading ? (
             <FormDraftLoading />
           ) : (
-            <HideParagraphSelectionChromeContext.Provider value={flow.phase !== 'application'}>
+            <HideParagraphSelectionChromeContext.Provider
+              key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
+              value={flow.phase !== 'application'}
+            >
               {flow.panels.leftContent}
             </HideParagraphSelectionChromeContext.Provider>
           )

@@ -8,10 +8,12 @@ import type { WritingFormTemplateSaveRecord } from '@/features/template/lib/writ
 import {
   getGeneralApplicationOverlayRecord,
   patchGeneralApplicationOverlay,
+  replaceGeneralApplicationOverlay,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getApplicantRecruitInstitutionOverlayRecord,
   replaceApplicantRecruitInstitutionOverlay,
+  resetApplicantRecruitInstitutionOverlay,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
   getGeneralRecruitOverlayRecord,
@@ -23,6 +25,7 @@ import {
   pickUjatVolunteerRecruitGeneralStoreSidecar,
   recruitDetailInfoOverlayPrefixForCatalogId,
   replaceRecruitDetailInfoIntoGeneralStore,
+  replaceUjatVolunteerRecruitGeneralStoreSidecar,
   restoreUjatVolunteerRecruitGeneralStoreSidecar,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 import { createApplicantRecruitFormIndividualDraft } from '@/features/template/model/applicant-recruit-form-individual-draft'
@@ -65,18 +68,26 @@ import { resolveRegistrationProgramDraftProgramType } from '@/features/program/g
 import {
   getUjatApplicationInstitutionOverlayRecord,
   patchUjatApplicationInstitutionOverlay,
+  replaceUjatApplicationInstitutionOverlay,
+  resetUjatApplicationInstitutionOverlay,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 import {
   getUjatApplicationVolunteerOverlayRecord,
   patchUjatApplicationVolunteerOverlay,
+  replaceUjatApplicationVolunteerOverlay,
+  resetUjatApplicationVolunteerOverlay,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
   getUjatRecruitInstitutionOverlayRecord,
   patchUjatRecruitInstitutionOverlay,
+  replaceUjatRecruitInstitutionOverlay,
+  resetUjatRecruitInstitutionOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
 import {
   getUjatRecruitVolunteerOverlayRecord,
   patchUjatRecruitVolunteerOverlay,
+  replaceUjatRecruitVolunteerOverlay,
+  resetUjatRecruitVolunteerOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 
 /** 등록 위저드 모집/신청 임시저장 목록 — UJAT는 일반과 동일하게 전 탭 overlay를 남긴다. */
@@ -215,6 +226,133 @@ function resolveOperationalOverlayKind(catalogTemplateId: string): OperationalOv
   return null
 }
 
+/** 공유 스토어에서 이 카탈로그 탭만 지울 때 쓰는 키 prefix */
+export function operationalOverlayKeyPrefixesForCatalogId(
+  catalogTemplateId: string
+): readonly string[] {
+  const code = resolveOperationalCatalogId(catalogTemplateId)
+  switch (code) {
+    case 'recruitment-participant-school':
+      return ['recruit.detailInfo']
+    case 'recruitment-economy':
+      return ['economyRecruit.detailInfo']
+    case 'recruitment-trained-teachers':
+      return ['trainedTeachersRecruit.detailInfo']
+    case 'recruitment-participant-individual':
+      return ['recruit.individual']
+    case 'recruitment-instructor':
+      return ['recruit.instructor', 'recruitInstructor.detailInfo']
+    case 'recruitment-volunteer':
+      return ['recruit.volunteer', 'recruitVolunteer']
+    case 'recruitment-ujat-school':
+      return ['ujatRecruit.detailInfo']
+    case 'recruitment-ujat-volunteer':
+      return [
+        'recruitVolunteer.detailInfo',
+        'recruitVolunteer.h1.detailInfo',
+        'recruitVolunteer.h2.detailInfo',
+        'recruit.volunteer.h1',
+        'recruit.volunteer.h2',
+      ]
+    case 'application-participant-school':
+      return ['application.institution']
+    case 'application-economy':
+      return ['application.economy']
+    case 'application-trained-teachers':
+      return ['application.trainedTeachers']
+    case 'application-participant-individual':
+      return ['application.individual']
+    case 'application-instructor':
+      return ['application.instructor']
+    case 'application-volunteer':
+      return ['application.volunteer']
+    default:
+      return []
+  }
+}
+
+export function keyMatchesOperationalOverlayPrefixes(
+  key: string,
+  prefixes: readonly string[]
+): boolean {
+  return prefixes.some(prefix => {
+    if (key === prefix) return true
+    const needle = prefix.endsWith('.') ? prefix : `${prefix}.`
+    return key.startsWith(needle)
+  })
+}
+
+function pickOverlayKeysByPrefixes(
+  record: Record<string, unknown>,
+  prefixes: readonly string[]
+): Record<string, unknown> {
+  if (prefixes.length === 0) return {}
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(record)) {
+    if (keyMatchesOperationalOverlayPrefixes(key, prefixes)) out[key] = value
+  }
+  return out
+}
+
+function replaceSharedOverlayKeysByPrefixes(
+  store: 'recruit' | 'application',
+  prefixes: readonly string[],
+  incoming: Record<string, unknown>
+): void {
+  const live =
+    store === 'recruit' ? getGeneralRecruitOverlayRecord() : getGeneralApplicationOverlayRecord()
+  const next: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(live)) {
+    if (!keyMatchesOperationalOverlayPrefixes(key, prefixes)) next[key] = value
+  }
+  for (const [key, value] of Object.entries(incoming)) {
+    if (keyMatchesOperationalOverlayPrefixes(key, prefixes)) next[key] = value
+  }
+  if (store === 'recruit') replaceGeneralRecruitOverlay(next)
+  else replaceGeneralApplicationOverlay(next)
+}
+
+/** 템플릿 변경 — 해당 카탈로그 탭 overlay만 비운다. 다른 탭·공통정보 브리지는 유지. */
+export function resetOperationalOverlayForCatalogId(catalogTemplateId: string): void {
+  const kind = resolveOperationalOverlayKind(catalogTemplateId)
+  if (kind == null) return
+  const prefixes = operationalOverlayKeyPrefixesForCatalogId(catalogTemplateId)
+  if (kind === 'institution-recruit') {
+    resetApplicantRecruitInstitutionOverlay()
+    replaceRecruitDetailInfoIntoGeneralStore(
+      undefined,
+      recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId)
+    )
+    return
+  }
+  if (kind === 'ujat-recruit-institution') {
+    resetUjatRecruitInstitutionOverlay()
+    replaceRecruitDetailInfoIntoGeneralStore(
+      undefined,
+      recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId)
+    )
+    return
+  }
+  if (kind === 'ujat-recruit-volunteer') {
+    resetUjatRecruitVolunteerOverlay()
+    replaceUjatVolunteerRecruitGeneralStoreSidecar(undefined)
+    return
+  }
+  if (kind === 'ujat-application-institution') {
+    resetUjatApplicationInstitutionOverlay()
+    return
+  }
+  if (kind === 'ujat-application-volunteer') {
+    resetUjatApplicationVolunteerOverlay()
+    return
+  }
+  if (kind === 'general-recruit') {
+    replaceSharedOverlayKeysByPrefixes('recruit', prefixes, {})
+    return
+  }
+  replaceSharedOverlayKeysByPrefixes('application', prefixes, {})
+}
+
 export function createSeedDraftForOperationalCatalogId(
   catalogTemplateId: string
 ): WritingFormDraft | null {
@@ -267,8 +405,18 @@ function overlayRecordForKind(
       detailPrefix
     )
   }
-  if (kind === 'general-recruit') return { ...getGeneralRecruitOverlayRecord() }
-  if (kind === 'general-application') return { ...getGeneralApplicationOverlayRecord() }
+  if (kind === 'general-recruit') {
+    return pickOverlayKeysByPrefixes(
+      getGeneralRecruitOverlayRecord(),
+      operationalOverlayKeyPrefixesForCatalogId(catalogTemplateId)
+    )
+  }
+  if (kind === 'general-application') {
+    return pickOverlayKeysByPrefixes(
+      getGeneralApplicationOverlayRecord(),
+      operationalOverlayKeyPrefixesForCatalogId(catalogTemplateId)
+    )
+  }
   if (kind === 'ujat-recruit-institution') {
     return mergeRecruitDetailInfoFromGeneralStore(
       { ...getUjatRecruitInstitutionOverlayRecord() },
@@ -284,7 +432,9 @@ function overlayRecordForKind(
       detailPrefix
     )
   }
-  if (kind === 'ujat-application-institution') return { ...getUjatApplicationInstitutionOverlayRecord() }
+  if (kind === 'ujat-application-institution') {
+    return { ...getUjatApplicationInstitutionOverlayRecord() }
+  }
   return { ...getUjatApplicationVolunteerOverlayRecord() }
 }
 
@@ -300,10 +450,47 @@ export function applyOperationalOverlayForCatalogId(
   catalogTemplateId: string,
   overlay: Record<string, unknown> | undefined
 ): void {
-  if (overlay == null || Object.keys(overlay).length === 0) return
   const kind = resolveOperationalOverlayKind(catalogTemplateId)
   if (kind == null) return
-  applyOverlayRecord(kind, overlay, catalogTemplateId)
+  if (overlay == null || Object.keys(overlay).length === 0) {
+    resetOperationalOverlayForCatalogId(catalogTemplateId)
+    return
+  }
+  const prefixes = operationalOverlayKeyPrefixesForCatalogId(catalogTemplateId)
+  if (kind === 'institution-recruit') {
+    replaceApplicantRecruitInstitutionOverlay(overlay)
+    replaceRecruitDetailInfoIntoGeneralStore(
+      overlay,
+      recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId)
+    )
+    return
+  }
+  if (kind === 'general-recruit') {
+    replaceSharedOverlayKeysByPrefixes('recruit', prefixes, overlay)
+    return
+  }
+  if (kind === 'general-application') {
+    replaceSharedOverlayKeysByPrefixes('application', prefixes, overlay)
+    return
+  }
+  if (kind === 'ujat-recruit-institution') {
+    replaceUjatRecruitInstitutionOverlay(overlay)
+    replaceRecruitDetailInfoIntoGeneralStore(
+      overlay,
+      recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId)
+    )
+    return
+  }
+  if (kind === 'ujat-recruit-volunteer') {
+    replaceUjatRecruitVolunteerOverlay(overlay)
+    replaceUjatVolunteerRecruitGeneralStoreSidecar(overlay)
+    return
+  }
+  if (kind === 'ujat-application-institution') {
+    replaceUjatApplicationInstitutionOverlay(overlay)
+    return
+  }
+  replaceUjatApplicationVolunteerOverlay(overlay)
 }
 
 function applyOverlayRecord(

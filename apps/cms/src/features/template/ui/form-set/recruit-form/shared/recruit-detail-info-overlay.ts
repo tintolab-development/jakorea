@@ -3,6 +3,7 @@ import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
+  replaceGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 
 /**
@@ -43,6 +44,25 @@ export function restoreUjatVolunteerRecruitGeneralStoreSidecar(
   const patch = overlayEntriesAbsentFromLive(sidecar, getGeneralRecruitOverlayRecord())
   if (Object.keys(patch).length === 0) return
   patchGeneralRecruitOverlay(patch)
+}
+
+/** 템플릿 조회 — 반기 sidecar 잔여 키를 지운 뒤 저장본으로 덮어쓴다. */
+export function replaceUjatVolunteerRecruitGeneralStoreSidecar(
+  overlay: Record<string, unknown> | undefined
+): void {
+  const live = getGeneralRecruitOverlayRecord()
+  const next: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(live)) {
+    const keep = UJAT_VOLUNTEER_RECRUIT_GENERAL_STORE_PREFIXES.every(prefix => {
+      const needle = prefix.endsWith('.') ? prefix : `${prefix}.`
+      return key !== prefix && !key.startsWith(needle)
+    })
+    if (keep) next[key] = value
+  }
+  if (overlay != null) {
+    Object.assign(next, pickUjatVolunteerRecruitGeneralStoreSidecar(overlay))
+  }
+  replaceGeneralRecruitOverlay(next)
 }
 
 export function recruitDetailInfoOverlayPrefixForCatalogId(
@@ -147,13 +167,21 @@ export function restoreRecruitDetailInfoIntoGeneralStore(
   patchGeneralRecruitOverlay(patch)
 }
 
-/** 템플릿 변경 — 불러온 양식의 상세 정보로 덮어쓴다. */
+/** 템플릿 조회·변경 — prefix 잔여 키를 지운 뒤 불러온 상세 정보로 덮어쓴다. */
 export function replaceRecruitDetailInfoIntoGeneralStore(
   overlay: Record<string, unknown> | undefined,
   prefix: string | null
 ): void {
-  if (overlay == null || prefix == null) return
-  const detail = pickOverlayKeysByPrefix(overlay, prefix)
-  if (Object.keys(detail).length === 0) return
-  patchGeneralRecruitOverlay(detail)
+  if (prefix == null) return
+  const live = getGeneralRecruitOverlayRecord()
+  const needle = prefix.endsWith('.') ? prefix : `${prefix}.`
+  const next: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(live)) {
+    if (key === prefix || key.startsWith(needle)) continue
+    next[key] = value
+  }
+  if (overlay != null) {
+    Object.assign(next, pickOverlayKeysByPrefix(overlay, prefix))
+  }
+  replaceGeneralRecruitOverlay(next)
 }
