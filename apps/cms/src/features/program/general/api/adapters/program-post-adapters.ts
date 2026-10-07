@@ -22,7 +22,7 @@ import { contentUrlForFileObjectId } from '@/shared/lib/admin-file-upload'
 /** BE 표시명 필드(2026-10-06 추가) — orval 재생성 전까지 로컬 확장 */
 type WithCreatedByDisplayName = { createdByDisplayName?: string | null }
 type ProgramPostCommentRuntime = ProgramPostCommentResponse &
-  WithCreatedByDisplayName & { commentId?: number }
+  WithCreatedByDisplayName & { id?: number }
 type ProgramPostReactionRuntime = ProgramPostReactionResponse & {
   actorDisplayName?: string | null
 }
@@ -121,9 +121,9 @@ export function mapProgramPostListItemToDomain(
   }
 }
 
-/** 관리자 게시글 상세 런타임은 `postId`, 생성 스키마는 `id` — 백엔드 스키마명 충돌 해소 전까지 둘 다 수용 */
+/** 식별자는 `postId` — 스키마 충돌 해소 이전 응답의 `id`도 수용 */
 export function mapProgramPostResponseToDomain(
-  dto: ProgramPostResponse & WithCreatedByDisplayName & { postId?: number },
+  dto: ProgramPostResponse & WithCreatedByDisplayName & { id?: number },
   programId: string
 ): ProgramPost {
   const createdAt = dto.createdAt ?? new Date().toISOString()

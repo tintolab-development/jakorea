@@ -5,11 +5,11 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { TeacherSignupRequest } from './teacherSignupRequest'
+import type { TeacherSignupRequest } from './teacherSignupRequest';
 
 /**
- * 회원 포탈 교사 회원 가입 요청
+ * 회원 포탈 교사회원 가입 요청
  */
 export interface HomepageTeacherSignupRequest {
-  teacher: TeacherSignupRequest
+  teacher: TeacherSignupRequest;
 }

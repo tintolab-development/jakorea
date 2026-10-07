@@ -7,19 +7,19 @@
  */
 
 /**
- * 교사 회원의 현재 학교/재직 정보. teacher_profile.current_organization_id -> organization을 CMS와 Portal이 공통 SSOT로 사용합니다.
+ * 교사회원의 현재 학교/재직 정보. teacher_profile.current_organization_id -> organization을 CMS와 Portal이 공통 SSOT로 사용합니다.
  */
 export interface PortalTeacherOrganizationResponse {
-  organizationId?: number
-  organizationName?: string
-  neisCode?: string
-  organizationCategory?: string
-  address?: string
-  addressDetail?: string
-  zipCode?: string
-  regionSido?: string
-  regionSigungu?: string
-  employmentStatus?: string
-  affiliationStatus?: string
-  affiliationStartedAt?: string
+  organizationId?: number;
+  organizationName?: string;
+  neisCode?: string;
+  organizationCategory?: string;
+  address?: string;
+  addressDetail?: string;
+  zipCode?: string;
+  regionSido?: string;
+  regionSigungu?: string;
+  employmentStatus?: string;
+  affiliationStatus?: string;
+  affiliationStartedAt?: string;
 }
