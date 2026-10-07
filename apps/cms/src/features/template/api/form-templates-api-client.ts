@@ -4,6 +4,7 @@ import type {
   FormResponseFeedbackCreateRequest,
   FormResponseFeedbackResponse,
   FormTemplateCreateRequest,
+  FormTemplateDuplicateRequest,
   FormTemplateLatestPayloadResponse,
   FormTemplateResponse,
   FormTemplateUpdateRequest,
@@ -62,6 +63,13 @@ export async function createFormTemplateRemote(
   body: FormTemplateCreateRequest
 ): Promise<FormTemplateResponse> {
   return unwrapApiBody(await formsSurveysApi.createTemplate2(body))
+}
+
+export async function duplicateFormTemplateRemote(
+  templateId: number,
+  body: FormTemplateDuplicateRequest
+): Promise<FormTemplateResponse> {
+  return unwrapApiBody(await formsSurveysApi.duplicateTemplate(templateId, body))
 }
 
 export async function updateFormTemplateRemote(

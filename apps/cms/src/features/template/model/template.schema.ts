@@ -18,6 +18,9 @@ export interface TemplateRow extends TemplateDefinition {
   availableActions?: string[]
   /** 목록 행 기준 삭제 버튼 노출 (미지정 시 policy helper가 계산) */
   deletable?: boolean
+  /** 최초 카탈로그 원본 code — 에디터·시드 판단 */
+  baseTemplateCode?: string
+  latestVersionId?: number
 }
 
 export interface TemplateSection {

@@ -5,11 +5,6 @@ import {
   shouldUseFormsSurveysRemoteApi,
 } from '@/features/template/api/admin-form-templates-service'
 import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
-import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
-import {
-  getUserCreatedWritingTemplateName,
-  renameUserCreatedWritingTemplate,
-} from '@/features/template/lib/user-created-writing-template-catalog'
 
 type UseFormTemplateModalTitleArgs = {
   /** forms-surveys templateCode — 없으면 UI만 갱신 */
@@ -39,11 +34,7 @@ export function useFormTemplateModalTitle({
       setDisplayName(next)
 
       const code = templateCode?.trim()
-      if (code == null || code === '') return
-
-      const prevLocalName = getUserCreatedWritingTemplateName(code)
-      const localRenamed = renameUserCreatedWritingTemplate(code, next)
-      if (!shouldUseFormsSurveysRemoteApi()) return
+      if (code == null || code === '' || !shouldUseFormsSurveysRemoteApi()) return
 
       void (async () => {
         try {
@@ -58,11 +49,6 @@ export function useFormTemplateModalTitle({
           ])
         } catch (error) {
           console.warn('[form-templates] rename failed', error)
-          // 서버 ID가 없는 로컬 복제본은 세션 카탈로그 이름을 유지한다
-          if (localRenamed && getFormTemplateVersionCacheEntry(code)?.templateId == null) return
-          if (localRenamed && prevLocalName != null) {
-            renameUserCreatedWritingTemplate(code, prevLocalName)
-          }
           setDisplayName(prev)
         }
       })()

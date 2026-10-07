@@ -35,10 +35,21 @@ describe('participant-application-template-id', () => {
     }
   })
 
-  it('maps copy suffix codes to the catalog variant', () => {
+  it('maps derived codes to the catalog variant', () => {
     expect(
       getParticipantApplicationEditorVariantForTemplateCode(
         'recruitment-participant-school-copy-99'
+      )
+    ).toBe('applicant-recruit-institution')
+    expect(
+      getParticipantApplicationEditorVariantForTemplateCode(
+        'recruitment-participant-school-custom-01'
+      )
+    ).toBe('applicant-recruit-institution')
+    expect(
+      getParticipantApplicationEditorVariantForTemplateCode(
+        'recruitment-participant-school-custom-01',
+        'recruitment-participant-school'
       )
     ).toBe('applicant-recruit-institution')
   })

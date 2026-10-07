@@ -1,5 +1,5 @@
 import type { ProgramParticipantApplicationEditorVariant } from '@/features/template/hooks/use-program-participant-application-editor'
-import { stripWritingTemplateCopySuffix } from '@/features/template/lib/form-template-delete-policy'
+import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 
 const VARIANT_BY_TEMPLATE_ID = {
   'application-participant-school': 'institution',
@@ -24,10 +24,11 @@ const VARIANT_BY_TEMPLATE_ID = {
 } as const satisfies Record<string, ProgramParticipantApplicationEditorVariant>
 
 export function getParticipantApplicationEditorVariantForTemplateCode(
-  templateCode: string | undefined | null
+  templateCode: string | undefined | null,
+  baseTemplateCode?: string | null
 ): ProgramParticipantApplicationEditorVariant | undefined {
   if (templateCode == null) return undefined
-  const base = stripWritingTemplateCopySuffix(templateCode)
+  const base = resolveWritingFormBaseTemplateCode(templateCode, baseTemplateCode)
   return VARIANT_BY_TEMPLATE_ID[base as keyof typeof VARIANT_BY_TEMPLATE_ID]
 }
 

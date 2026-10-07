@@ -20,7 +20,7 @@ import {
   UJAT_PROGRAM_REGISTRATION_APPLICATION_TEMPLATE_IDS,
   UJAT_PROGRAM_REGISTRATION_STEPS,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
-import { stripWritingTemplateCopySuffix } from '@/features/template/lib/form-template-delete-policy'
+import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import {
   draftProgramTypeForOperationalBindingKind,
   getSelectedOperationalTemplateCode,
@@ -168,7 +168,7 @@ const SPEC_BY_CODE = new Map(OPERATIONAL_FORM_SPECS.map(spec => [spec.templateCo
 export function getOperationalFormSpec(templateCode: string): OperationalFormSpec | undefined {
   const exact = SPEC_BY_CODE.get(templateCode)
   if (exact) return exact
-  const base = stripWritingTemplateCopySuffix(templateCode)
+  const base = resolveWritingFormBaseTemplateCode(templateCode)
   if (base === templateCode) return undefined
   const baseSpec = SPEC_BY_CODE.get(base)
   if (baseSpec == null) return undefined

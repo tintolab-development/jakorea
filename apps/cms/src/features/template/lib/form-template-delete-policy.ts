@@ -1,5 +1,5 @@
 import { TEMPLATE_CODE_CATALOG } from '@/features/template/api/form-template-catalog'
-import { lookupTemplateRegistry } from '@/features/template/model/template-registry/template-registry'
+import { lookupWritingTemplateRegistry } from '@/features/template/lib/lookup-writing-template-registry'
 
 const DELETE_AVAILABLE_ACTIONS = new Set(['DELETE', 'delete', 'REMOVE', 'remove'])
 
@@ -28,32 +28,54 @@ export function isCatalogFixedWritingFormTemplateCode(
   return TEMPLATE_CODE_CATALOG[code] != null
 }
 
-const WRITING_TEMPLATE_COPY_SUFFIX = /-copy(?:-\d+)?$/i
+const WRITING_TEMPLATE_DERIVED_SUFFIX = /-(?:copy(?:-\d+)?|custom-\d+)$/i
 
-/** 복제 suffix(`-copy`, `-copy-123`)를 떼 카탈로그 base code를 얻는다. */
-export function stripWritingTemplateCopySuffix(templateCode: string): string {
-  return templateCode.trim().replace(WRITING_TEMPLATE_COPY_SUFFIX, '')
+/**
+ * 카탈로그 원본 code.
+ * `apiBaseTemplateCode`가 있으면 그걸 쓰고, 없으면 레거시 `-copy-` / `-custom-NN` 접미사만 뗀다.
+ */
+export function resolveWritingFormBaseTemplateCode(
+  templateCode: string,
+  apiBaseTemplateCode?: string | null
+): string {
+  const explicit = apiBaseTemplateCode?.trim()
+  if (explicit != null && explicit !== '') return explicit
+  return templateCode.trim().replace(WRITING_TEMPLATE_DERIVED_SUFFIX, '')
 }
 
-/** 신규 등록(복제)로 생성된 `-copy-{timestamp}` templateCode */
+/** @deprecated `resolveWritingFormBaseTemplateCode` 사용 */
+export function stripWritingTemplateCopySuffix(templateCode: string): string {
+  return resolveWritingFormBaseTemplateCode(templateCode)
+}
+
+/** 사용자 복제·직접 등록으로 보이는 derived templateCode */
 export function isDuplicateWritingTemplateCode(
   templateCode: string | undefined | null
 ): boolean {
   if (templateCode == null) return false
   const code = templateCode.trim()
   if (code === '') return false
-  return WRITING_TEMPLATE_COPY_SUFFIX.test(code)
+  return WRITING_TEMPLATE_DERIVED_SUFFIX.test(code)
 }
 
 const PROGRAM_SCOPED_OPERATIONAL_CATEGORIES = new Set(['REGISTRATION'])
 
-/** 모집·신청 카탈로그 및 그 복사본 (`-copy`, `-copy-123`) */
+/** 모집 카탈로그 및 복제본 — 구조 고정, 내용 입력만 */
+export function isRecruitmentWritingTemplateCode(
+  templateCode: string | undefined | null
+): boolean {
+  const raw = templateCode?.trim() ?? ''
+  if (raw === '') return false
+  return resolveWritingFormBaseTemplateCode(raw).startsWith('recruitment-')
+}
+
+/** 모집·신청 카탈로그 및 그 복사본 */
 export function isRecruitmentOrApplicationWritingTemplateCode(
   templateCode: string | undefined | null
 ): boolean {
   const raw = templateCode?.trim() ?? ''
   if (raw === '') return false
-  const base = stripWritingTemplateCopySuffix(raw)
+  const base = resolveWritingFormBaseTemplateCode(raw)
   return base.startsWith('recruitment-') || base.startsWith('application-')
 }
 
@@ -66,7 +88,8 @@ export function shouldOmitImmutableFormSchemaJson(
 ): boolean {
   const code = templateCode?.trim() ?? ''
   if (code === '') return false
-  return code.startsWith('registration-') || code.startsWith('recruitment-')
+  if (code.startsWith('registration-')) return true
+  return isRecruitmentWritingTemplateCode(code)
 }
 
 /**
@@ -95,21 +118,29 @@ export function isProgramScopedOperationalWritingTemplate(item: {
   return PROGRAM_SCOPED_OPERATIONAL_CATEGORIES.has(resolved)
 }
 
-/** 단락 구조 잠금 — 모집·신청(복사본 포함)은 항상 잠금. 설문은 제외. 동의 복사는 해제. */
+/** 단락 구조 잠금 — 모집(복제본 포함)은 항상 잠금. 신청 카탈로그 원본도 잠금. */
 export function isWritingFormTemplateStructureLocked(
   target: WritingFormTemplateStructureLockTarget
 ): boolean {
-  if (isRecruitmentOrApplicationWritingTemplateCode(target.templateCode)) return true
+  if (isRecruitmentWritingTemplateCode(target.templateCode)) return true
   if (target.forceUserEditable === true) return false
-  const templateCode = target.templateCode?.trim()
-  if (templateCode != null && templateCode !== '') {
-    const registryEntry = lookupTemplateRegistry(templateCode)
+  const templateCode = target.templateCode?.trim() ?? ''
+  const catalogOriginal = isCatalogFixedWritingFormTemplateCode(templateCode)
+  if (
+    catalogOriginal &&
+    isRecruitmentOrApplicationWritingTemplateCode(templateCode) &&
+    target.systemTemplate !== false
+  ) {
+    return true
+  }
+  if (templateCode !== '') {
+    const registryEntry = lookupWritingTemplateRegistry(templateCode)
     if (registryEntry?.category === 'survey') return false
   }
   if (target.systemTemplate === false) return false
   if (isDuplicateWritingTemplateCode(target.templateCode)) return false
   if (target.systemTemplate === true) return true
-  return isCatalogFixedWritingFormTemplateCode(target.templateCode)
+  return catalogOriginal
 }
 
 /** 신청은 lock이어도 순서 변경 가능. 모집은 lock이면 불가. */
@@ -131,7 +162,7 @@ export function isUserCreatedWritingFormTemplateRow(
 }
 
 export function buildLocalDuplicateWritingTemplateCode(sourceTemplateCode: string): string {
-  const base = stripWritingTemplateCopySuffix(sourceTemplateCode)
+  const base = resolveWritingFormBaseTemplateCode(sourceTemplateCode)
   return `${base}-copy-${Date.now()}`
 }
 

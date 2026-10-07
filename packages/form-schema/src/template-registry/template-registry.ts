@@ -302,13 +302,14 @@ export const TEMPLATE_FORM_MODAL_DESCRIPTION = REGISTRATION_MODAL_DESCRIPTION
  * - `agreement-custom-…` → 직접 등록 동의(셸 없음) — undefined 유지 후 호출부 처리
  */
 export function resolveBaseTemplateCodeForRegistry(
-  templateCode: string
+  templateCode: string,
+  apiBaseTemplateCode?: string | null
 ): string | undefined {
+  const explicit = apiBaseTemplateCode?.trim()
+  if (explicit != null && explicit !== '') return explicit
+
   const code = templateCode.trim()
   if (code === '') return undefined
-
-  const copyMatch = code.match(/^(.*)-copy(?:-\d+)?$/i)
-  if (copyMatch?.[1]) return copyMatch[1]
 
   if (/^survey-custom-/i.test(code)) return 'survey-default'
 
@@ -316,19 +317,19 @@ export function resolveBaseTemplateCodeForRegistry(
 }
 
 export function lookupTemplateRegistry(
-  templateId: string | undefined | null
+  templateId: string | undefined | null,
+  options?: { baseTemplateCode?: string | null }
 ): TemplateRegistryDefinition | undefined {
   if (templateId == null || templateId.trim() === '') return undefined
   const code = templateId.trim()
   const exact = TEMPLATE_REGISTRY[code]
-  if (exact != null) return exact
+  if (exact != null) return { ...exact, id: code }
 
-  const baseCode = resolveBaseTemplateCodeForRegistry(code)
+  const baseCode = resolveBaseTemplateCodeForRegistry(code, options?.baseTemplateCode)
   if (baseCode == null) return undefined
   const base = TEMPLATE_REGISTRY[baseCode]
   if (base == null) return undefined
 
-  // 에디터 종류는 베이스를 따르고, draft 로드/저장 id는 실제 templateCode 유지
   return { ...base, id: code }
 }
 

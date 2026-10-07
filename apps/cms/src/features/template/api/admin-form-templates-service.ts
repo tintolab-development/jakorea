@@ -11,10 +11,7 @@ import {
   writingFormDraftToSchemaJson,
 } from '@/features/template/api/adapters/form-template-draft-adapters'
 import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/form-template-catalog'
-import {
-  buildLocalDuplicateWritingTemplateCode,
-  shouldOmitImmutableFormSchemaJson,
-} from '@/features/template/lib/form-template-delete-policy'
+import { shouldOmitImmutableFormSchemaJson } from '@/features/template/lib/form-template-delete-policy'
 import {
   getFormTemplateVersionCacheEntry,
   removeFormTemplateVersionCacheEntry,
@@ -24,6 +21,7 @@ import {
 import {
   createFormTemplateRemote,
   deleteFormTemplateRemote,
+  duplicateFormTemplateRemote,
   fetchFormTemplatePayloadByCodeRemote,
   fetchFormTemplateVersionRemote,
   fetchFormTemplateVersionsRemote,
@@ -33,10 +31,6 @@ import {
   updateFormTemplateVersionRemote,
 } from '@/features/template/api/form-templates-api-client'
 import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-template-seed-registry'
-import {
-  forgetUserCreatedWritingTemplate,
-  rememberUserCreatedWritingTemplate,
-} from '@/features/template/lib/user-created-writing-template-catalog'
 import {
   isFormTemplateLocalFallbackEnabled,
   shouldUseRemoteDraftApiForTemplateCode,
@@ -56,9 +50,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
-import type { WritingTemplateCategory } from '@/features/template/model/template-create.types'
 import type {
-  FormTemplateCreateRequestCategory,
   FormTemplateListItemResponse,
   ListTemplatesParams,
 } from '@/shared/api/generated/forms-surveys/schemas'
@@ -452,16 +444,6 @@ export async function publishFormTemplateVersionById(versionId: number): Promise
   return published.templateVersionId ?? versionId
 }
 
-const WRITING_TEMPLATE_API_CATEGORY: Record<
-  WritingTemplateCategory,
-  FormTemplateCreateRequestCategory
-> = {
-  application: 'RECRUITMENT',
-  application_form: 'APPLICATION',
-  survey: 'SURVEY',
-  agreement: 'AGREEMENT',
-}
-
 async function resolveDuplicateTemplateName(args: {
   sourceTemplateCode: string
   templateName?: string
@@ -479,39 +461,32 @@ async function resolveDuplicateTemplateName(args: {
 }
 
 /**
- * 신규 템플릿 등록(복제) — `POST /form-templates`로 새 template 행을 만든다.
- * `versions/copy`는 원본 template 안에 버전만 추가하므로 사용하지 않는다.
+ * 신규 템플릿 등록(복제) — `POST /form-templates/{templateId}/duplicate`.
+ * `versions/copy`는 프로그램 바인딩 전용으로 쓰지 않는다.
  */
 export async function duplicateFormTemplateVersionRemote(args: {
   sourceTemplateCode: string
-  category: WritingTemplateCategory
-  versionLabel?: string
-  /** 동명 회피용 표시명 — 없으면 원본 이름 */
+  sourceApiTemplateId?: number
+  sourceVersionId?: number
   templateName?: string
 }): Promise<string> {
   assertFormsSurveysRemoteReady()
-  const source = await resolveFormTemplateCatalogIds(args.sourceTemplateCode)
-  if (source == null) {
-    throw new Error('복제할 템플릿 ID를 찾을 수 없습니다. 양식 관리에서 템플릿을 확인해 주세요.')
+
+  let sourceTemplateId = args.sourceApiTemplateId
+  let sourceVersionId = args.sourceVersionId
+  if (sourceTemplateId == null) {
+    const source = await resolveFormTemplateCatalogIds(args.sourceTemplateCode)
+    if (source == null) {
+      throw new Error('복제할 템플릿 ID를 찾을 수 없습니다. 양식 관리에서 템플릿을 확인해 주세요.')
+    }
+    sourceTemplateId = source.templateId
+    sourceVersionId = sourceVersionId ?? source.templateVersionId
   }
 
-  const sourceVersion = await fetchFormTemplateVersionRemote(source.templateVersionId)
   const templateName = await resolveDuplicateTemplateName(args)
-
-  // 에디터·위저드는 `-copy-{ts}` 접미사로 베이스 양식(registry)을 찾는다
-  const created = await createFormTemplateRemote({
-    templateCode: buildLocalDuplicateWritingTemplateCode(args.sourceTemplateCode),
+  const created = await duplicateFormTemplateRemote(sourceTemplateId, {
     templateName,
-    formType: WRITING_FORM_TYPE,
-    category: WRITING_TEMPLATE_API_CATEGORY[args.category],
-    useYn: true,
-    versionLabel: args.versionLabel ?? 'v1',
-    schemaJson: sourceVersion.schemaJson,
-    extensionJson: sourceVersion.extensionJson,
-    settingsJson: sourceVersion.settingsJson,
-    sourceTemplateId: source.templateId,
-    sourceVersionId: source.templateVersionId,
-    sourceTemplateCode: args.sourceTemplateCode,
+    sourceVersionId,
   })
 
   const newCode = created.templateCode?.trim()
@@ -522,7 +497,7 @@ export async function duplicateFormTemplateVersionRemote(args: {
     throw new Error('신규 템플릿 ID를 응답에서 찾을 수 없습니다.')
   }
 
-  let createdVersionId = created.versions?.[0]?.templateVersionId
+  let createdVersionId = created.latestVersionId ?? created.versions?.[0]?.templateVersionId
   let createdVersionNo = created.versions?.[0]?.versionNo
   if (createdVersionId == null) {
     const versions = await fetchFormTemplateVersionsRemote(created.templateId)
@@ -589,13 +564,6 @@ export async function createWritingFormTemplateRemote(args: {
     })
   }
 
-  rememberUserCreatedWritingTemplate({
-    templateCode: newCode,
-    templateName,
-    sectionKey: args.target,
-    createdAt: new Date().toISOString(),
-  })
-
   return newCode
 }
 
@@ -646,14 +614,12 @@ export async function deleteFormTemplate(templateCode: string): Promise<void> {
   const cached = getFormTemplateVersionCacheEntry(templateCode)
   const templateId = cached?.templateId
   if (templateId == null) {
-    forgetUserCreatedWritingTemplate(templateCode)
     removeWritingFormTemplateSave(templateCode)
     return
   }
 
   assertFormsSurveysRemoteReady()
   await deleteFormTemplateRemote(templateId)
-  forgetUserCreatedWritingTemplate(templateCode)
   removeFormTemplateVersionCacheEntry(templateCode)
   removeWritingFormTemplateSave(templateCode)
 }

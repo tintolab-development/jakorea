@@ -8,7 +8,7 @@ import type { TemplateRow } from '@/features/template/model/template.schema'
 import { TemplatePreviewModal } from '@/features/template/ui/modal/template-preview-modal'
 import { loadFormTemplateVersionDraft } from '@/features/template/api/admin-form-templates-service'
 import { createSeedDraftForOperationalCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
-import { stripWritingTemplateCopySuffix } from '@/features/template/lib/form-template-delete-policy'
+import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import './writing-template-select-modal.css'
@@ -79,7 +79,9 @@ export function WritingTemplateSelectModal({
 
   const handlePreview = async (row: TemplateRow) => {
     const saved = await loadFormTemplateVersionDraft(row.id)
-    const seed = createSeedDraftForOperationalCatalogId(stripWritingTemplateCopySuffix(row.id))
+    const seed = createSeedDraftForOperationalCatalogId(
+      resolveWritingFormBaseTemplateCode(row.id, row.baseTemplateCode)
+    )
     setPreviewDraft(saved?.draft ?? seed ?? EMPTY_WRITING_FORM_DRAFT)
     setPreviewRow(row)
   }

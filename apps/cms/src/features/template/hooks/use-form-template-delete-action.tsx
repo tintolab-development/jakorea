@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { deleteFormTemplate } from '@/features/template/api/admin-form-templates-service'
-import { forgetUserCreatedWritingTemplate } from '@/features/template/lib/user-created-writing-template-catalog'
 import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
 import { shouldShowWritingFormTemplateDeleteButton } from '@/features/template/lib/form-template-delete-policy'
 import { useFormsSurveysRemoteEnabled } from '@/features/template/hooks/use-forms-surveys-remote-enabled'
@@ -32,7 +31,6 @@ export function useFormTemplateDeleteAction(args: {
     setDeleting(true)
     try {
       await deleteFormTemplate(templateRow.id)
-      forgetUserCreatedWritingTemplate(templateRow.id)
       await queryClient.invalidateQueries({ queryKey: formTemplateQueryKeys.writingSections() })
       setConfirmOpen(false)
       showAlert({

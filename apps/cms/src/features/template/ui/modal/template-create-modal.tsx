@@ -13,6 +13,7 @@ import type {
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import './template-create-modal.css'
@@ -51,6 +52,10 @@ function resolveSelection(
 }
 
 function resolveErrorMessage(error: unknown, fallback: string): string {
+  if (error != null && typeof error === 'object' && 'response' in error) {
+    const data = (error as { response?: { data?: unknown } }).response?.data
+    return extractApiErrorMessage(data, { fallback })
+  }
   if (error instanceof Error && error.message.trim() !== '') {
     return error.message
   }
@@ -138,6 +143,8 @@ export function TemplateCreateModal({
       const { newTemplateId } = await duplicateWritingTemplate({
         sourceTemplateId: resolved.templateId,
         category: resolved.category,
+        sourceApiTemplateId: sourceRow?.apiTemplateId,
+        sourceVersionId: sourceRow?.latestVersionId,
         templateName,
       })
       await invalidateWritingSections()

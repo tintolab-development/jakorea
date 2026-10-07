@@ -82,4 +82,10 @@ describe('listAllRegistrationCreateFormSpecs', () => {
     expect(spec?.targetRole).toBe('ORGANIZATION')
     expect(spec?.templateCode).toBe('recruitment-participant-school-copy-12')
   })
+
+  it('resolves custom suffix specs without changing formType', () => {
+    const spec = getOperationalFormSpec('recruitment-participant-school-custom-01')
+    expect(spec?.formType).toBe('RECRUITMENT')
+    expect(spec?.templateCode).toBe('recruitment-participant-school-custom-01')
+  })
 })
