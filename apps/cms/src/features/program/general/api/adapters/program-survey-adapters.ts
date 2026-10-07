@@ -455,6 +455,34 @@ export function isLectureEvalSurveyListRow(dto: ProgramSurveyResponse): boolean 
   return name.includes('강의평가') || name.includes('lecture eval')
 }
 
+export type SurveyTemplateOptionKind = 'survey' | 'satisfaction' | 'lecture'
+
+const SATISFACTION_TEMPLATE_CODES = new Set<string>(
+  Object.values(GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE)
+)
+
+/** 양식 관리 「설문」 카테고리 행의 용도 — 원본 코드 우선, 복사본은 이름으로 판별 */
+export function resolveSurveyTemplateOptionKind(row: {
+  id: string
+  templateName: string
+}): SurveyTemplateOptionKind {
+  const code = row.id.trim()
+  if (code === LECTURE_EVAL_TEMPLATE_ID) return 'lecture'
+  if (SATISFACTION_TEMPLATE_CODES.has(code)) return 'satisfaction'
+  const name = row.templateName.toLowerCase()
+  if (name.includes('강의평가') || name.includes('lecture eval')) return 'lecture'
+  if (name.includes('만족도') || name.includes('satisfaction')) return 'satisfaction'
+  return 'survey'
+}
+
+/** 등록 모달 종류(설문조사·만족도조사·강의평가)에 맞는 템플릿만 후보로 둔다 */
+export function isSurveyTemplateOptionForKind(
+  row: { id: string; templateName: string },
+  kind: SurveyTemplateOptionKind
+): boolean {
+  return resolveSurveyTemplateOptionKind(row) === kind
+}
+
 export function isDedicatedSurveyManagementTabTitle(title: string): boolean {
   const name = title.toLowerCase()
   return (

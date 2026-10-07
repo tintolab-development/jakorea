@@ -10,6 +10,7 @@ import {
   mergeSurveysWithBindings,
   readExpectedRespondentCount,
   resolveSurveyResultsParticipantTotal,
+  isSurveyTemplateOptionForKind,
   parseAnswerPreviewJson,
   pickLectureEvalSurveyFromRemote,
   resolveLectureEvalSubmitContext,
@@ -40,6 +41,32 @@ describe('parseAnswerPreviewJson', () => {
         ])
       )
     ).toEqual({ q1: 'scale-5' })
+  })
+})
+
+describe('isSurveyTemplateOptionForKind', () => {
+  const rows = [
+    { id: 'survey', templateName: '설문조사' },
+    { id: 'survey-student', templateName: '만족도조사 (학생용)' },
+    { id: 'survey-teacher', templateName: '만족도조사 (교사용)' },
+    { id: 'survey-admin', templateName: '강의평가 (관리자용)' },
+    { id: 'copy-1', templateName: '만족도조사 (학생용) 복사본' },
+    { id: 'copy-2', templateName: '강의평가 (관리자용) 복사본' },
+    { id: 'copy-3', templateName: '설문조사 복사본' },
+  ]
+  const idsFor = (kind: 'survey' | 'satisfaction' | 'lecture') =>
+    rows.filter(row => isSurveyTemplateOptionForKind(row, kind)).map(row => row.id)
+
+  it('설문조사 모달은 만족도·강의평가 템플릿을 제외한다', () => {
+    expect(idsFor('survey')).toEqual(['survey', 'copy-3'])
+  })
+
+  it('만족도조사 모달은 만족도 템플릿과 복사본만 노출한다', () => {
+    expect(idsFor('satisfaction')).toEqual(['survey-student', 'survey-teacher', 'copy-1'])
+  })
+
+  it('강의평가 모달은 강의평가 템플릿과 복사본만 노출한다', () => {
+    expect(idsFor('lecture')).toEqual(['survey-admin', 'copy-2'])
   })
 })
 

@@ -109,6 +109,7 @@ import {
   updateGeneralProgramFormResponse,
 } from '@/features/program/general/api/admin-general-programs-service'
 import {
+  isSurveyTemplateOptionForKind,
   pickLectureEvalSurveyFromRemote,
   resolveLectureEvalSubmitContext,
   resolveSurveyCreateBindingTemplateCode,
@@ -387,14 +388,21 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   }, [])
 
   const surveyTemplateOptions = useMemo(() => {
-    if (remoteSurveyRows.length > 0) {
-      return remoteSurveyRows.map(row => ({
-        label: row.templateName,
-        value: row.id,
-      }))
-    }
-    return getSurveyWritingTemplateSelectOptions()
-  }, [remoteSurveyRows])
+    const options =
+      remoteSurveyRows.length > 0
+        ? remoteSurveyRows.map(row => ({
+            label: row.templateName,
+            value: row.id,
+          }))
+        : getSurveyWritingTemplateSelectOptions()
+    if (createModalKind == null) return options
+    return options.filter(option =>
+      isSurveyTemplateOptionForKind(
+        { id: option.value, templateName: option.label },
+        createModalKind
+      )
+    )
+  }, [createModalKind, remoteSurveyRows])
   const activeRegisteredSurvey = useMemo(
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
@@ -688,6 +696,18 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const submitCreateModal = useCallback(async () => {
     if (createModalKind == null || selectedTemplateId == null || selectedTemplateId === '') return
+    if (!surveyTemplateOptions.some(option => option.value === selectedTemplateId)) {
+      void showAlert({
+        title: '등록 불가',
+        content:
+          createModalKind === 'satisfaction'
+            ? '만족도조사 양식만 선택할 수 있습니다. 템플릿을 다시 선택해 주세요.'
+            : createModalKind === 'lecture'
+              ? '강의평가 양식만 선택할 수 있습니다. 템플릿을 다시 선택해 주세요.'
+              : '설문조사 양식만 선택할 수 있습니다. 템플릿을 다시 선택해 주세요.',
+      })
+      return
+    }
     setSubmitting(true)
     try {
       const { newTemplateId } = await duplicateWritingTemplate({
@@ -812,6 +832,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     selectedTemplateId,
     showAlert,
     surveysRemote,
+    surveyTemplateOptions,
   ])
 
   const confirmDelete = useCallback(async () => {
