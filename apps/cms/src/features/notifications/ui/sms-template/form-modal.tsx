@@ -1,4 +1,4 @@
-import { CloseOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -277,7 +277,7 @@ export function FormModal({
                 onClick={onClose}
                 aria-label="닫기"
               >
-                <CloseOutlined />
+                <ModalCloseIcon />
               </button>
             </div>
           </header>

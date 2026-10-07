@@ -1,4 +1,5 @@
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
@@ -185,7 +186,7 @@ function MemberConsentCrimeDocumentView({
             onClick={onClose}
             aria-label="닫기"
           >
-            <CloseOutlined />
+            <ModalCloseIcon />
           </button>
         </header>
 
@@ -349,7 +350,7 @@ function MemberConsentAgreementDocumentView({
               onClick={onClose}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
           <div className="full-page-modal__body">

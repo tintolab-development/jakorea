@@ -2,7 +2,7 @@
  * 풀페이지 상세 모달 공통 셸 — LNB + 메인(타이틀·옵션 액션·닫기·스크롤 영역)
  */
 
-import { CloseOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { Spin } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
@@ -123,7 +123,7 @@ export function DetailFullPageModal({
                 onClick={handleClose}
                 aria-label={closeAriaLabel}
               >
-                <CloseOutlined />
+                <ModalCloseIcon />
               </button>
             </div>
             {headerExtra ? (

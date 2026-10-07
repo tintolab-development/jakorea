@@ -3,7 +3,8 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import {
   ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
   buildActivityCertificateFileName,
@@ -154,7 +155,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
               onClick={handleClose}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
 

@@ -1,4 +1,5 @@
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type {
@@ -299,7 +300,7 @@ export function TemplatePreviewModal({
             onClick={handleClose}
             aria-label="닫기"
           >
-            <CloseOutlined />
+            <ModalCloseIcon tone="white" />
           </button>
         </header>
 

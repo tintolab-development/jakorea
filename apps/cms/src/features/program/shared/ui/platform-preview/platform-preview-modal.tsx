@@ -2,7 +2,7 @@
  * Platform 실제 화면 미리보기 — CMS 빌드에 포함된 `/platform-preview/` 번들을 iframe으로 띄운다.
  */
 
-import { CloseOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   PLATFORM_PROGRAM_PREVIEW_PATH,
@@ -119,7 +119,7 @@ export function PlatformPreviewModal({
             onClick={onClose}
             aria-label="닫기"
           >
-            <CloseOutlined />
+            <ModalCloseIcon tone="white" />
           </button>
         </header>
 

@@ -1,4 +1,5 @@
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { Spin } from 'antd'
 import { type ChangeEvent, useCallback, useEffect, useId, useRef, useState } from 'react'
 import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
@@ -250,7 +251,7 @@ export function MemberConsentCrimeModal({
             aria-label="닫기"
             disabled={isSubmitting}
           >
-            <CloseOutlined />
+            <ModalCloseIcon />
           </button>
         </header>
 

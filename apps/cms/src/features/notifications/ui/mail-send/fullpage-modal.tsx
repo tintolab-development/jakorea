@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CloseOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
@@ -492,7 +492,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
               onClick={handleClose}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
 
