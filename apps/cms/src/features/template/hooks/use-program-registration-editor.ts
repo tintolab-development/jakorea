@@ -107,6 +107,10 @@ import {
   hasIncompleteEconomyRegistrationFromStore,
 } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
+import {
+  normalizeOverlayPaymentItemsBeforeSubmit,
+  PAYMENT_ITEM_RESELECT_ALERT,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 
 export type ProgramRegistrationParticipantSelection = {
   individual: boolean
@@ -1426,6 +1430,23 @@ export function useProgramRegistrationEditor(
     const completion = (async () => {
       const endOverlay = beginBlockingOverlay()
       try {
+        const paymentItems = await normalizeOverlayPaymentItemsBeforeSubmit(
+          getProgramRegistrationOverlayRecord(),
+          [
+            {
+              valuesKey: 'generalRegistration.wageInfo.paymentItemValues',
+              labelsKey: 'generalRegistration.wageInfo.paymentItemLabels',
+            },
+            { valuesKey: 'economyRegistration.wageInfo.paymentItemValues' },
+          ]
+        )
+        if (Object.keys(paymentItems.patch).length > 0) {
+          patchProgramRegistrationOverlay(paymentItems.patch)
+        }
+        if (paymentItems.clearedKeys.length > 0) {
+          showAlert(PAYMENT_ITEM_RESELECT_ALERT)
+          return
+        }
         const registrationSnapshotArgs = {
           id: registrationPendingSnapshotId(programRegistrationFormVariant),
           participant,

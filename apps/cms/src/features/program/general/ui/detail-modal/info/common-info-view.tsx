@@ -81,8 +81,10 @@ import { isGeneralIndividualParticipantTarget } from '@/features/program/general
 import {
   normalizeProgramPaymentItemSelection,
   resolveProgramWageDeductionLabel,
-  useProgramWagePaymentItemOptions,
+  useNormalizeProgramPaymentItemValues,
+  useProgramWagePaymentItemOptionsState,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { paymentItemSelectPlaceholder } from '@/features/template/lib/template-registration-payment-item-options'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
   parseWageGradeAmount,
@@ -1293,7 +1295,8 @@ function WageSection({
   const paymentItemIds = resolveWagePaymentItemIds(commonInfo.paymentItems)
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
-  const paymentItemOptions = useProgramWagePaymentItemOptions()
+  const paymentCatalog = useProgramWagePaymentItemOptionsState()
+  const paymentItemOptions = paymentCatalog.options
 
   const editForm =
     form ??
@@ -1306,6 +1309,15 @@ function WageSection({
   const watchedPaymentItemIds = isFormEdit
     ? (editForm.watch('wagePaymentItemIds') ?? [])
     : []
+  const setWagePaymentItemIds = useCallback(
+    (ids: string[]) => form?.setValue('wagePaymentItemIds', ids, { shouldDirty: true }),
+    [form]
+  )
+  useNormalizeProgramPaymentItemValues(
+    isFormEdit ? watchedPaymentItemIds : undefined,
+    setWagePaymentItemIds,
+    paymentCatalog.ready
+  )
   const deductionLabel = isFormEdit
     ? resolveProgramWageDeductionLabel(watchedPaymentItemIds)
     : (mapSettlementDeductionTypeToLabel(commonInfo.deductionItems) ??
@@ -1382,7 +1394,8 @@ function WageSection({
                       )
                     }
                     options={paymentItemOptions}
-                    placeholder="지급 항목을 선택하세요"
+                    disabled={!paymentCatalog.ready}
+                    placeholder={paymentItemSelectPlaceholder(paymentCatalog)}
                     style={{ width: '100%', minWidth: 0 }}
                   />
                 )}

@@ -1,5 +1,7 @@
 import type { Program } from '@/types/domain'
+import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import {
+  findProgramPaymentItemIdByLabel,
   getProgramWagePaymentItemOptions,
   isProgramPaymentNoneOnly,
   normalizeProgramPaymentItemSelection,
@@ -18,12 +20,21 @@ export const UJAT_WAGE_PAYMENT_ITEM_NONE_LABEL = PROGRAM_WAGE_PAYMENT_ITEM_NONE_
 export const UJAT_WAGE_DEDUCTION_LABEL = PROGRAM_WAGE_DEDUCTION_LABEL
 export const UJAT_WAGE_OVERLAY_PAYMENT_KEY = 'ujat.wage.paymentItemValues' as const
 
-/** 카탈로그 `강사 교통비`(p-1) — UJAT 화면 표기 `교통비(일반)` */
-const UJAT_PAYMENT_ID_TRANSPORT_GENERAL = 'p-1'
+/** 카탈로그 `강사 교통비` — UJAT 화면 표기 `교통비(일반)` */
+const UJAT_PAYMENT_CATALOG_LABEL_TRANSPORT_GENERAL = '강사 교통비'
 const UJAT_PAYMENT_LABEL_TRANSPORT_GENERAL = '교통비(일반)'
 
-/** UJAT 등록 양식 기본 지급 항목 — `교통비(일반)` */
-export const UJAT_DEFAULT_PAYMENT_ITEM_VALUES: string[] = [UJAT_PAYMENT_ID_TRANSPORT_GENERAL]
+/** 로컬 mock 카탈로그의 `강사 교통비` id */
+export const UJAT_DEFAULT_PAYMENT_ITEM_VALUES: string[] = ['p-1']
+
+/**
+ * UJAT 등록 양식 기본 지급 항목 — `교통비(일반)`.
+ * 실제 목록이 있으면 항목명으로 실제 id를 고르고, 응답 전이면 mock id(화면 진입·제출 시 교정).
+ */
+export function resolveUjatDefaultPaymentItemValues(): string[] {
+  const id = findProgramPaymentItemIdByLabel(UJAT_PAYMENT_CATALOG_LABEL_TRANSPORT_GENERAL)
+  return id ? [id] : [...UJAT_DEFAULT_PAYMENT_ITEM_VALUES]
+}
 
 export type UjatWageInfoDisplay = {
   paymentItemsText: string
@@ -31,12 +42,18 @@ export type UjatWageInfoDisplay = {
   paymentItemIds: string[]
 }
 
-export function getUjatWagePaymentItemOptions() {
-  return getProgramWagePaymentItemOptions().map(opt =>
-    opt.value === UJAT_PAYMENT_ID_TRANSPORT_GENERAL
+export function remapUjatWagePaymentItemOptions(
+  options: readonly CmsSelectMultipleOption[]
+): CmsSelectMultipleOption[] {
+  return options.map(opt =>
+    String(opt.label).trim() === UJAT_PAYMENT_CATALOG_LABEL_TRANSPORT_GENERAL
       ? { ...opt, label: UJAT_PAYMENT_LABEL_TRANSPORT_GENERAL }
       : opt
   )
+}
+
+export function getUjatWagePaymentItemOptions() {
+  return remapUjatWagePaymentItemOptions(getProgramWagePaymentItemOptions())
 }
 export const isUjatPaymentNoneOnly = isProgramPaymentNoneOnly
 export const resolveUjatWageDeductionLabel = resolveProgramWageDeductionLabel
@@ -62,7 +79,7 @@ export function resolveUjatPaymentItemIdsFromProgram(
   if (fromOverlay !== undefined) return fromOverlay
 
   const labels = coerceProgramPaymentItemsText(program.generalCommonInfo?.paymentItems).trim()
-  if (!labels) return [...UJAT_DEFAULT_PAYMENT_ITEM_VALUES]
+  if (!labels) return resolveUjatDefaultPaymentItemValues()
 
   const fromLabels = resolveProgramPaymentItemIdsFromLabels(labels)
   if (fromLabels.length > 0) return fromLabels
@@ -75,7 +92,7 @@ export function resolveUjatPaymentItemIdsFromProgram(
     .map((label: string) => options.find(o => o.label === label)?.value)
     .filter((v: string | undefined): v is string => Boolean(v))
 
-  return resolved.length > 0 ? resolved : [...UJAT_DEFAULT_PAYMENT_ITEM_VALUES]
+  return resolved.length > 0 ? resolved : resolveUjatDefaultPaymentItemValues()
 }
 
 export function resolveUjatWageInfoDisplay(
@@ -93,7 +110,7 @@ export function resolveUjatWageInfoDisplay(
 export function readUjatWagePaymentItemValuesFromOverlay(
   overlay: Record<string, unknown>
 ): string[] {
-  return readPaymentItemIdsFromOverlay(overlay) ?? [...UJAT_DEFAULT_PAYMENT_ITEM_VALUES]
+  return readPaymentItemIdsFromOverlay(overlay) ?? resolveUjatDefaultPaymentItemValues()
 }
 
 export function buildUjatWageOverlayPatchFromPaymentItemIds(
