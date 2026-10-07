@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { BUSINESS_INCOME_OPTIONS } from '@jakorea/domain/instructor/business-income'
 import { CAREER_LEVEL_OPTIONS } from '@jakorea/domain/instructor/career-level'
@@ -22,7 +23,6 @@ import {
   resolveAvailableEducationDetailKeys,
   type EducationDetailKey,
 } from '@jakorea/domain/instructor/education-options'
-import { SCHOOL_TEACHER_EMPLOYMENT_STATUS_FORM_OPTIONS } from '@jakorea/domain/instructor/employment-status'
 import {
   INSTRUCTOR_FORM_PLACEHOLDERS as PH,
   INSTRUCTOR_FORM_SECTION_DESCRIPTIONS,
@@ -41,6 +41,7 @@ import {
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { isValidEmail, parseBirthDate } from '@/features/auth/sign-up'
+import { SETTINGS_TEACHER_EMPLOYMENT_OPTIONS } from '@/features/mypage/settings/lib/map-edit'
 import {
   PFAlertModal,
   PFButton,
@@ -60,7 +61,9 @@ import {
   PFFormPeriodTilde,
   PFFormSection,
   PFItemDeleteButton,
+  PFOptionList,
   PFSelect,
+  PFStateBadge,
   PFText,
   PFTextInput,
 } from '@/shared/ui'
@@ -111,16 +114,28 @@ const LOCKED_BASIC_KEYS = [
   'email',
   'memberType',
   'schoolName',
-  'employmentStatus',
   'affiliationName',
   'affiliationNone',
 ] as const satisfies ReadonlyArray<keyof InstructorApplyLockedBasicInfo>
 
+function shouldPreserveEmploymentStatus(
+  draft: InstructorSharedProfileFormValues | null,
+): boolean {
+  return draft?.memberType === 'school_teacher' && Boolean(draft.employmentStatus)
+}
+
 function applyLockedBasic(
   base: InstructorSharedProfileFormValues,
-  locked: InstructorApplyLockedBasicInfo
+  locked: InstructorApplyLockedBasicInfo,
+  preserveEmploymentStatus: boolean,
 ): InstructorSharedProfileFormValues {
   const homeAddressLocked = isInstructorApplyHomeAddressLocked(locked)
+  const employmentStatus =
+    locked.memberType === 'school_teacher'
+      ? preserveEmploymentStatus
+        ? base.employmentStatus
+        : locked.employmentStatus
+      : ''
   return {
     ...base,
     name: locked.name,
@@ -132,7 +147,7 @@ function applyLockedBasic(
     homeAddressDetail: homeAddressLocked ? locked.homeAddressDetail : base.homeAddressDetail,
     memberType: locked.memberType,
     schoolName: locked.memberType === 'school_teacher' ? locked.schoolName : '',
-    employmentStatus: locked.memberType === 'school_teacher' ? locked.employmentStatus : '',
+    employmentStatus,
     affiliationName: locked.memberType === 'general' ? locked.affiliationName : '',
     affiliationNone: locked.memberType === 'general' ? locked.affiliationNone : false,
   }
@@ -187,6 +202,131 @@ function RadioGroup<T extends string>({
   )
 }
 
+function HomeAddressFieldRow({
+  roadValue,
+  detailValue,
+  disabled,
+  onRoadChange,
+  onDetailChange,
+}: {
+  roadValue: string
+  detailValue: string
+  disabled: boolean
+  onRoadChange: (value: string) => void
+  onDetailChange: (value: string) => void
+}) {
+  return (
+    <PFFormFieldRow type="single">
+      <PFFormField label="자택 주소지">
+        <PFFormHomeAddressFields
+          roadValue={roadValue}
+          detailValue={detailValue}
+          onRoadChange={onRoadChange}
+          onDetailChange={onDetailChange}
+          roadPlaceholder={PH.homeAddress}
+          detailPlaceholder={PH.homeAddressDetail}
+          disabled={disabled}
+        />
+      </PFFormField>
+    </PFFormFieldRow>
+  )
+}
+
+function TeacherEmploymentStatusMenu({
+  value,
+  onChange,
+}: {
+  value: InstructorSharedProfileFormValues['employmentStatus']
+  onChange: (next: InstructorSharedProfileFormValues['employmentStatus']) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [listStyle, setListStyle] = useState<CSSProperties | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+  const matched = SETTINGS_TEACHER_EMPLOYMENT_OPTIONS.find(option => option.value === value)
+  const tone = value === 'ON_LEAVE' ? 'success' : 'progress'
+
+  useLayoutEffect(() => {
+    if (!open) return
+
+    const updatePosition = () => {
+      const trigger = rootRef.current
+      if (!trigger) return
+      const rect = trigger.getBoundingClientRect()
+      setListStyle({
+        position: 'fixed',
+        top: rect.bottom + 4,
+        left: rect.left,
+        minWidth: Math.max(120, rect.width),
+        zIndex: 20,
+      })
+    }
+
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null
+      if (!target) return
+      if (rootRef.current?.contains(target) || listRef.current?.contains(target)) return
+      setOpen(false)
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open])
+
+  return (
+    <div className={styles.employmentMenu} ref={rootRef}>
+      <button
+        type="button"
+        className={styles.employmentTrigger}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="재직 현황"
+        onClick={() => setOpen(current => !current)}
+      >
+        <PFStateBadge size="small" tone={matched ? tone : 'disabled'}>
+          {matched?.label ?? '재직 현황'}
+        </PFStateBadge>
+      </button>
+      {open
+        ? createPortal(
+            <PFOptionList
+              ref={listRef}
+              className={styles.employmentList}
+              style={listStyle ?? undefined}
+              aria-label="재직 현황"
+              options={SETTINGS_TEACHER_EMPLOYMENT_OPTIONS}
+              selectedValue={value}
+              onSelect={next => {
+                onChange(next as InstructorSharedProfileFormValues['employmentStatus'])
+                setOpen(false)
+              }}
+            />,
+            document.body,
+          )
+        : null}
+    </div>
+  )
+}
+
 function ListRowActions({
   isFirst,
   onAdd,
@@ -211,12 +351,17 @@ export type InstructorApplyFormProps = {
 
 export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: InstructorApplyFormProps) {
   const navigate = useNavigate()
-  const [values, setValues] = useState<InstructorSharedProfileFormValues>(() =>
-    applyLockedBasic(
-      loadInstructorApplyFormDraft() ?? INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
-      lockedBasic
+  const employmentTouchedRef = useRef(false)
+  const [values, setValues] = useState<InstructorSharedProfileFormValues>(() => {
+    const draft = loadInstructorApplyFormDraft()
+    const preserveEmploymentStatus = shouldPreserveEmploymentStatus(draft)
+    employmentTouchedRef.current = preserveEmploymentStatus
+    return applyLockedBasic(
+      draft ?? INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
+      lockedBasic,
+      preserveEmploymentStatus,
     )
-  )
+  })
   const [alert, setAlert] = useState<AlertState>(null)
   const [submitting, setSubmitting] = useState(false)
   const createMutation = useCreateInstructorRoleRequestMutation()
@@ -225,7 +370,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
   const isHomeAddressLocked = isInstructorApplyHomeAddressLocked(lockedBasic)
 
   useEffect(() => {
-    setValues(prev => applyLockedBasic(prev, lockedBasic))
+    setValues(prev => applyLockedBasic(prev, lockedBasic, employmentTouchedRef.current))
   }, [lockedBasic])
 
   useEffect(() => {
@@ -253,6 +398,13 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
       return
     }
     setValues(prev => ({ ...prev, [key]: next }))
+  }
+
+  const handleEmploymentStatusChange = (
+    next: InstructorSharedProfileFormValues['employmentStatus'],
+  ) => {
+    employmentTouchedRef.current = true
+    setValues(prev => ({ ...prev, employmentStatus: next }))
   }
 
   const handleEduSchoolTypeChange = (eduSchoolType: string) => {
@@ -461,6 +613,15 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                 />
               </PFFormField>
             </PFFormFieldRow>
+            {values.memberType === 'school_teacher' ? (
+              <HomeAddressFieldRow
+                roadValue={values.homeAddress}
+                detailValue={values.homeAddressDetail}
+                disabled={isHomeAddressLocked}
+                onRoadChange={value => patch('homeAddress', value)}
+                onDetailChange={value => patch('homeAddressDetail', value)}
+              />
+            ) : null}
             <PFFormFieldRow type="single">
               <PFFormField label="소속">
                 {values.memberType === 'school_teacher' ? (
@@ -476,22 +637,10 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                         onValueChange={value => patch('schoolName', value)}
                       />
                     </PFFormInlineSegment>
-                    <PFFormInlineSeparator />
                     <PFFormInlineSegment>
-                      <PFSelect
-                        variant="formPage"
-                        size="large"
-                        width={200}
-                        placeholder={PH.employmentStatus}
-                        options={toSelectOptions(SCHOOL_TEACHER_EMPLOYMENT_STATUS_FORM_OPTIONS)}
-                        disabled
+                      <TeacherEmploymentStatusMenu
                         value={values.employmentStatus}
-                        onValueChange={value =>
-                          patch(
-                            'employmentStatus',
-                            value as InstructorSharedProfileFormValues['employmentStatus']
-                          )
-                        }
+                        onChange={handleEmploymentStatusChange}
                       />
                     </PFFormInlineSegment>
                   </PFFormInlineRow>
@@ -529,20 +678,15 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                 )}
               </PFFormField>
             </PFFormFieldRow>
-
-            <PFFormFieldRow type="single">
-              <PFFormField label="자택 주소지">
-                <PFFormHomeAddressFields
-                  roadValue={values.homeAddress}
-                  detailValue={values.homeAddressDetail}
-                  onRoadChange={value => patch('homeAddress', value)}
-                  onDetailChange={value => patch('homeAddressDetail', value)}
-                  roadPlaceholder={PH.homeAddress}
-                  detailPlaceholder={PH.homeAddressDetail}
-                  disabled={isHomeAddressLocked}
-                />
-              </PFFormField>
-            </PFFormFieldRow>
+            {values.memberType === 'school_teacher' ? null : (
+              <HomeAddressFieldRow
+                roadValue={values.homeAddress}
+                detailValue={values.homeAddressDetail}
+                disabled={isHomeAddressLocked}
+                onRoadChange={value => patch('homeAddress', value)}
+                onDetailChange={value => patch('homeAddressDetail', value)}
+              />
+            )}
             <PFFormFieldRow type="single">
               <PFFormField label="강사 경력">
                 <PFTextInput
