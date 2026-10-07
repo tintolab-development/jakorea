@@ -73,6 +73,7 @@ import type {
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-program-application-institution-body-options'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { isFormPreviewReadonlyMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import { useHideParagraphSelectionChrome } from '@/features/template/context/paragraph-selection-chrome-context'
 import { IdTypeWithInputBody } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -550,6 +551,7 @@ export function HorizontalTableParagraphBody({
   paragraphInteractionMode?: ParagraphBodyInteractionMode
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
+  const hideSelectionChrome = useHideParagraphSelectionChrome()
 
   const [internalSelection, setInternalSelection] = useState<HorizontalTableRowSelection | null>(
     null
@@ -968,7 +970,7 @@ export function HorizontalTableParagraphBody({
           className={[
             'form-editor-horizontal-table__row',
             'form-editor-horizontal-table__row--header',
-            canvasInteractive && isHeaderRowSelected()
+            canvasInteractive && !hideSelectionChrome && isHeaderRowSelected()
               ? 'form-editor-horizontal-table__row--selected'
               : '',
           ]
@@ -1047,7 +1049,7 @@ export function HorizontalTableParagraphBody({
             key={`r-${rowIdx}`}
             className={[
               'form-editor-horizontal-table__row',
-              canvasInteractive && isBodyRowSelected(rowIdx)
+              canvasInteractive && !hideSelectionChrome && isBodyRowSelected(rowIdx)
                 ? 'form-editor-horizontal-table__row--selected'
                 : '',
             ]
