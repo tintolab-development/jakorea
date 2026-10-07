@@ -234,3 +234,9 @@
   margin-left: 2px;
   color: var(--color-red, #c32f4a);
 }
+
+/* 주관식 여러 칸 답은 서버가 줄바꿈(\n)으로 이어 준다 */
+.ujat-survey-text-responses-table__table td.ujat-survey-text-responses-table__cell--content {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

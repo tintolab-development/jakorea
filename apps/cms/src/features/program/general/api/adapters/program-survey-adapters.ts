@@ -9,6 +9,7 @@ import {
   GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
+import { SURVEY_ESSAY_QUESTION_TYPES } from '@/features/program/shared/lib/survey-management/aggregate-survey-poll-results'
 import { LECTURE_EVAL_TEMPLATE_ID } from '@/features/program/shared/lib/survey-management/lecture-eval-survey'
 import type {
   RegisteredSurvey,
@@ -439,12 +440,12 @@ export function mapSurveySummaryToQuestionSummaries(
   return questions
 }
 
-/** 주관식 답이 공개(summary `topAnswers` 존재)일 때만 응답 상세로 주관식 표를 채울 의미가 있다 */
+/** 주관식 답이 1건이라도 있을 때만(summary `topAnswers` 비어 있지 않음) 응답 상세로 주관식 표를 채운다 */
 export function surveySummaryHasPublicTextAnswers(
   rows: SurveySummaryResponse[] | null | undefined
 ): boolean {
   return (rows ?? []).some(row => {
-    if (row.questionType !== 'SHORT_ESSAY') return false
+    if (!SURVEY_ESSAY_QUESTION_TYPES.has(row.questionType?.trim().toUpperCase() ?? '')) return false
     const parsed = parseSurveySummaryJson(row.summaryJson)
     return Array.isArray(parsed?.topAnswers) && parsed.topAnswers.length > 0
   })

@@ -125,6 +125,12 @@ export async function buildSurveyPollResultSections(
 /** 편집기 번호 규칙과 동일 — 제목·마무리 단락만 번호에서 제외 */
 const SUMMARY_UNNUMBERED_QUESTION_TYPES = new Set(['SURVEY_TITLE_WITH_PERIOD', 'CLOSING'])
 const SUMMARY_CHART_QUESTION_TYPES = new Set(['SCALE_TYPE', 'MULTIPLE_CHOICE', 'STAR_RATE'])
+/** 서버 주관식 문항 타입 — 설문은 `SHORT_ESSAY`, 그 외 템플릿 호환 */
+export const SURVEY_ESSAY_QUESTION_TYPES: ReadonlySet<string> = new Set([
+  'SHORT_ESSAY',
+  'LONG_TEXT',
+  'SUBJECTIVE',
+])
 
 /**
  * summary API 행(서버가 단락 순서로 정렬)만으로 결과 섹션 구성.
@@ -156,7 +162,7 @@ export function buildSurveyPollResultSectionsFromSummary(
       continue
     }
 
-    if (question.questionType === 'SHORT_ESSAY') {
+    if (SURVEY_ESSAY_QUESTION_TYPES.has(question.questionType)) {
       sections.push({
         kind: 'text',
         paragraphId: question.questionKey,

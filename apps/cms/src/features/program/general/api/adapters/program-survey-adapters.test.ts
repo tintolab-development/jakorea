@@ -573,3 +573,29 @@ describe('surveySummaryHasPublicTextAnswers', () => {
     ).toBe(true)
   })
 })
+
+describe('mapSurveyResponseListItemToPollResponse — 주관식 공개 응답', () => {
+  it('uses essay answerDisplayText and real respondent name from detail', () => {
+    expect(
+      mapSurveyResponseListItemToPollResponse(
+        { formResponseId: 1851453, submittedByMemberName: '이건희일반', answerPreviewJson: '[]' },
+        {
+          formResponseId: 1851453,
+          submittedByMemberName: '이건희일반',
+          answers: [
+            {
+              questionKey: 'survey-paragraph-subjective',
+              questionType: 'SHORT_ESSAY',
+              answerValueJson:
+                '{"bodyText":"123","items":[{"id":"survey-short-essay-item-1","bodyText":"123"}]}',
+              answerDisplayText: '123',
+            },
+          ],
+        }
+      )
+    ).toMatchObject({
+      respondentName: '이건희일반',
+      answers: { 'survey-paragraph-subjective': '123' },
+    })
+  })
+})
