@@ -28,6 +28,13 @@ export function isCatalogFixedWritingFormTemplateCode(
   return TEMPLATE_CODE_CATALOG[code] != null
 }
 
+const WRITING_TEMPLATE_COPY_SUFFIX = /-copy(?:-\d+)?$/i
+
+/** 복제 suffix(`-copy`, `-copy-123`)를 떼 카탈로그 base code를 얻는다. */
+export function stripWritingTemplateCopySuffix(templateCode: string): string {
+  return templateCode.trim().replace(WRITING_TEMPLATE_COPY_SUFFIX, '')
+}
+
 /** 신규 등록(복제)로 생성된 `-copy-{timestamp}` templateCode */
 export function isDuplicateWritingTemplateCode(
   templateCode: string | undefined | null
@@ -35,7 +42,7 @@ export function isDuplicateWritingTemplateCode(
   if (templateCode == null) return false
   const code = templateCode.trim()
   if (code === '') return false
-  return /-copy(?:-\d+)?$/i.test(code)
+  return WRITING_TEMPLATE_COPY_SUFFIX.test(code)
 }
 
 const PROGRAM_SCOPED_OPERATIONAL_CATEGORIES = new Set(['REGISTRATION'])
@@ -46,7 +53,7 @@ export function isRecruitmentOrApplicationWritingTemplateCode(
 ): boolean {
   const raw = templateCode?.trim() ?? ''
   if (raw === '') return false
-  const base = raw.replace(/-copy(?:-\d+)?$/i, '')
+  const base = stripWritingTemplateCopySuffix(raw)
   return base.startsWith('recruitment-') || base.startsWith('application-')
 }
 
@@ -124,7 +131,7 @@ export function isUserCreatedWritingFormTemplateRow(
 }
 
 export function buildLocalDuplicateWritingTemplateCode(sourceTemplateCode: string): string {
-  const base = sourceTemplateCode.trim().replace(/-copy(?:-\d+)?$/i, '')
+  const base = stripWritingTemplateCopySuffix(sourceTemplateCode)
   return `${base}-copy-${Date.now()}`
 }
 

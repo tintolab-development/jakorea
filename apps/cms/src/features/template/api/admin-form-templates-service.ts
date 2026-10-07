@@ -22,7 +22,6 @@ import {
   upsertFormTemplateVersionCacheFromListItems,
 } from '@/features/template/api/form-template-version-cache'
 import {
-  copyFormTemplateVersionRemote,
   createFormTemplateRemote,
   deleteFormTemplateRemote,
   fetchFormTemplatePayloadByCodeRemote,
@@ -57,7 +56,9 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import type { WritingTemplateCategory } from '@/features/template/model/template-create.types'
 import type {
+  FormTemplateCreateRequestCategory,
   FormTemplateListItemResponse,
   ListTemplatesParams,
 } from '@/shared/api/generated/forms-surveys/schemas'
@@ -451,59 +452,96 @@ export async function publishFormTemplateVersionById(versionId: number): Promise
   return published.templateVersionId ?? versionId
 }
 
+const WRITING_TEMPLATE_API_CATEGORY: Record<
+  WritingTemplateCategory,
+  FormTemplateCreateRequestCategory
+> = {
+  application: 'RECRUITMENT',
+  application_form: 'APPLICATION',
+  survey: 'SURVEY',
+  agreement: 'AGREEMENT',
+}
+
+async function resolveDuplicateTemplateName(args: {
+  sourceTemplateCode: string
+  templateName?: string
+}): Promise<string> {
+  const explicit = args.templateName?.trim()
+  if (explicit != null && explicit !== '') return explicit
+  try {
+    const payload = await fetchFormTemplatePayloadByCodeRemote(args.sourceTemplateCode)
+    const sourceName = payload?.templateName?.trim()
+    if (sourceName != null && sourceName !== '') return sourceName
+  } catch {
+    /* 원본 이름 조회 실패 — code로 대체 */
+  }
+  return args.sourceTemplateCode
+}
+
+/**
+ * 신규 템플릿 등록(복제) — `POST /form-templates`로 새 template 행을 만든다.
+ * `versions/copy`는 원본 template 안에 버전만 추가하므로 사용하지 않는다.
+ */
 export async function duplicateFormTemplateVersionRemote(args: {
   sourceTemplateCode: string
+  category: WritingTemplateCategory
   versionLabel?: string
-  /** 동명 회피용 — 복제 후 PATCH로 적용 */
+  /** 동명 회피용 표시명 — 없으면 원본 이름 */
   templateName?: string
 }): Promise<string> {
   assertFormsSurveysRemoteReady()
-  let cached = getFormTemplateVersionCacheEntry(args.sourceTemplateCode)
-  if (cached?.templateId == null) {
-    await resolveFormTemplateCatalogIds(args.sourceTemplateCode)
-    cached = getFormTemplateVersionCacheEntry(args.sourceTemplateCode)
-  }
-  if (cached?.templateId == null) {
+  const source = await resolveFormTemplateCatalogIds(args.sourceTemplateCode)
+  if (source == null) {
     throw new Error('복제할 템플릿 ID를 찾을 수 없습니다. 양식 관리에서 템플릿을 확인해 주세요.')
   }
 
-  const sourceVersionId = await resolveTemplateVersionId(args.sourceTemplateCode)
-  const copied = await copyFormTemplateVersionRemote(cached.templateId, {
-    sourceVersionId: sourceVersionId ?? undefined,
-    versionLabel: args.versionLabel,
+  const sourceVersion = await fetchFormTemplateVersionRemote(source.templateVersionId)
+  const templateName = await resolveDuplicateTemplateName(args)
+
+  // 에디터·위저드는 `-copy-{ts}` 접미사로 베이스 양식(registry)을 찾는다
+  const created = await createFormTemplateRemote({
+    templateCode: buildLocalDuplicateWritingTemplateCode(args.sourceTemplateCode),
+    templateName,
+    formType: WRITING_FORM_TYPE,
+    category: WRITING_TEMPLATE_API_CATEGORY[args.category],
+    useYn: true,
+    versionLabel: args.versionLabel ?? 'v1',
+    schemaJson: sourceVersion.schemaJson,
+    extensionJson: sourceVersion.extensionJson,
+    settingsJson: sourceVersion.settingsJson,
+    sourceTemplateId: source.templateId,
+    sourceVersionId: source.templateVersionId,
+    sourceTemplateCode: args.sourceTemplateCode,
   })
 
-  let newCode = copied.templateCode?.trim() || args.sourceTemplateCode
-  if (newCode === args.sourceTemplateCode) {
-    newCode = buildLocalDuplicateWritingTemplateCode(args.sourceTemplateCode)
+  const newCode = created.templateCode?.trim()
+  if (newCode == null || newCode === '' || newCode === args.sourceTemplateCode) {
+    throw new Error('신규 템플릿 코드를 응답에서 찾을 수 없습니다.')
   }
-  const copiedTemplateId = copied.templateId ?? cached.templateId
-  let copiedVersionId = copied.templateVersionId
-  if (copiedVersionId == null) {
-    const versions = await fetchFormTemplateVersionsRemote(copiedTemplateId)
+  if (created.templateId == null) {
+    throw new Error('신규 템플릿 ID를 응답에서 찾을 수 없습니다.')
+  }
+
+  let createdVersionId = created.versions?.[0]?.templateVersionId
+  let createdVersionNo = created.versions?.[0]?.versionNo
+  if (createdVersionId == null) {
+    const versions = await fetchFormTemplateVersionsRemote(created.templateId)
     const latest =
       versions.find(version => version.versionStatus === 'DRAFT') ?? versions.at(-1)
-    copiedVersionId = latest?.templateVersionId
+    createdVersionId = latest?.templateVersionId
+    createdVersionNo = latest?.versionNo
   }
-  if (copiedVersionId == null) {
-    throw new Error('복제된 템플릿 버전 ID를 찾지 못했습니다.')
+  if (createdVersionId == null) {
+    throw new Error('신규 템플릿 버전 ID를 찾지 못했습니다.')
   }
+
   upsertFormTemplateVersionCacheEntry({
     templateCode: newCode,
-    templateId: copiedTemplateId,
-    templateVersionId: copiedVersionId,
-    latestVersionId: copiedVersionId,
-    latestVersionNo: copied.versionNo,
+    templateId: created.templateId,
+    templateVersionId: createdVersionId,
+    latestVersionId: createdVersionId,
+    latestVersionNo: createdVersionNo,
   })
-
-  const nextName = args.templateName?.trim()
-  if (nextName != null && nextName !== '' && copied.templateId != null) {
-    try {
-      await updateFormTemplateRemote(copied.templateId, { templateName: nextName })
-    } catch (error) {
-      console.warn('[form-templates] rename after copy failed', error)
-    }
-  }
 
   return newCode
 }

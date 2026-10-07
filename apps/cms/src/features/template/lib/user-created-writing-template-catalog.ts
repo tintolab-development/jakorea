@@ -77,6 +77,24 @@ export function rememberUserCreatedWritingTemplate(entry: UserCreatedWritingTemp
   persistAndNotify()
 }
 
+export function getUserCreatedWritingTemplateName(templateCode: string): string | null {
+  const code = templateCode.trim()
+  return entries.find(item => item.templateCode === code)?.templateName ?? null
+}
+
+/** 신규 복제 양식 표시명 변경 — 카탈로그에 있을 때만 갱신하고 true 반환 */
+export function renameUserCreatedWritingTemplate(templateCode: string, templateName: string): boolean {
+  const code = templateCode.trim()
+  const name = templateName.trim()
+  if (code === '' || name === '') return false
+  const index = entries.findIndex(item => item.templateCode === code)
+  if (index < 0) return false
+  if (entries[index].templateName === name) return true
+  entries = entries.map((item, i) => (i === index ? { ...item, templateName: name } : item))
+  persistAndNotify()
+  return true
+}
+
 export function forgetUserCreatedWritingTemplate(templateCode: string): void {
   const code = templateCode.trim()
   if (code === '') return
