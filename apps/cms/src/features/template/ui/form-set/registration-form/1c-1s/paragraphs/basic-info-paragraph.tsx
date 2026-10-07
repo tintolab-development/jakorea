@@ -40,13 +40,15 @@ import {
   type ProgramRegistrationSurveyItemId,
 } from '@/features/template/lib/program-registration-survey-items'
 import {
+  ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+  ECONOMY_REGISTRATION_PROGRAM_TITLE_KO_DEFAULT,
   getProgramRegistrationOverlayRecord,
   patchProgramRegistrationOverlay,
   useProgramRegistrationOverlayKv,
   updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
-const REP_KO = '1사1교 경제금융교육'
+const REP_KO = ECONOMY_REGISTRATION_PROGRAM_TITLE_KO_DEFAULT
 const REP_EN = '1 Company 1 School Economics and Finance Education'
 
 const PROGRAM_PROGRESS_STATIC_VIEW = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
@@ -93,7 +95,10 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   onOrganizationChange: _onOrganizationChange,
   onTeacherInstructorChange: _onTeacherInstructorChange,
 }: OneCOneSRegistrationBasicInfoParagraphProps) {
-  const [repKo, setRepKo] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.repKo', REP_KO)
+  const [repKo, setRepKo] = useProgramRegistrationOverlayKv(
+    ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+    REP_KO
+  )
   const [repEn, setRepEn] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.repEn', REP_EN)
   const [businessField, setBusinessField] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.businessField',

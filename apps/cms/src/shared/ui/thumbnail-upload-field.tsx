@@ -15,8 +15,11 @@ import {
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
 } from '@/shared/ui/file-select-field-limits'
-import { FileTypeIcon } from '@/shared/ui/icons/FileTypeIcon'
-import { FileRemoveIcon } from '@/shared/ui/icons/FileRemoveIcon'
+import {
+  FileAttachmentEmpty,
+  FileAttachmentRow,
+  FileUploadGuide,
+} from '@/shared/ui/file-attachment-row'
 import { ThumbnailPlaceholder } from '@/shared/ui/thumbnail-placeholder'
 import './thumbnail-upload-field.css'
 
@@ -99,27 +102,15 @@ export function ThumbnailUploadField({
 
       <div className="thumbnail-upload-field__body">
         {hasFile ? (
-          <span className="thumbnail-upload-field__file">
-            <FileTypeIcon fileName={name} className="thumbnail-upload-field__file-icon" />
-            <span className="thumbnail-upload-field__file-name" title={name}>
-              {name}
-            </span>
-            {canRemove ? (
-              <button
-                type="button"
-                className="thumbnail-upload-field__remove"
-                onClick={onRemove}
-                aria-label={`${name} 삭제`}
-              >
-                <FileRemoveIcon />
-              </button>
-            ) : null}
-          </span>
+          <FileAttachmentRow
+            fileName={name}
+            onRemove={canRemove ? () => onRemove?.() : undefined}
+          />
         ) : (
-          <span className="thumbnail-upload-field__empty">첨부된 파일이 없습니다.</span>
+          <FileAttachmentEmpty />
         )}
 
-        <div className="thumbnail-upload-field__actions">
+        <div className="file-upload-actions">
           {canSelect ? (
             <input
               ref={inputRef}
@@ -133,19 +124,13 @@ export function ThumbnailUploadField({
           <CmsButton
             type="button"
             variant="secondary"
-            size="small"
+            size="h32"
             disabled={!canSelect}
             onClick={() => inputRef.current?.click()}
           >
             {uploading ? '업로드 중…' : buttonLabel}
           </CmsButton>
-          {guideLines && guideLines.length > 0 ? (
-            <div className="thumbnail-upload-field__guide">
-              {guideLines.map((line, i) => (
-                <span key={i}>{line}</span>
-              ))}
-            </div>
-          ) : null}
+          <FileUploadGuide lines={guideLines} />
         </div>
       </div>
     </div>

@@ -13,7 +13,7 @@ import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   RegistrationDraftNoticeModal,
   type RegistrationDraftNoticeChoice,
@@ -181,6 +181,7 @@ export function GeminiRecruitmentList() {
       setSelectedRowKeys([])
       setDeleteModalOpen(false)
       if (remoteEnabled) void refetch()
+      showDeleteCompletedAlert()
     } catch {
       showRemoteMutationUnavailable()
     }

@@ -329,7 +329,7 @@
 }
 
 .payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-thead > tr > th {
-  height: 54px;
+  height: 52px;
   padding: 0 16px;
   box-sizing: border-box;
   vertical-align: middle;
@@ -337,7 +337,7 @@
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
@@ -371,12 +371,12 @@
   padding-inline: 16px !important;
 }
 
-/* 본문: 데이터 행만 54px (tbody 첫 줄 ant-table-measure-row 는 측정용 — 높이 주면 빈 한 줄로 보임) */
+/* 본문: 데이터 행만 52px (tbody 첫 줄 ant-table-measure-row 는 측정용 — 높이 주면 빈 한 줄로 보임) */
 .payment-order-calc-statement-modal__table.ant-table-wrapper
   .ant-table-tbody
   > tr:not(.ant-table-measure-row) {
-  height: 54px;
-  min-height: 54px;
+  height: 52px;
+  min-height: 52px;
 }
 
 .payment-order-calc-statement-modal__table.ant-table-wrapper
@@ -408,7 +408,7 @@
   text-align: center;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -428,7 +428,7 @@
 }
 
 .payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-summary > tr {
-  height: 54px;
+  height: 52px;
 }
 
 .payment-order-calc-statement-modal__table.ant-table-wrapper
@@ -438,8 +438,8 @@
 }
 
 .payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-summary .ant-table-cell {
-  height: 54px;
-  min-height: 54px;
+  height: 52px;
+  min-height: 52px;
   padding-block: 0 !important;
   padding-inline: 16px !important;
   box-sizing: border-box;
@@ -449,7 +449,7 @@
   vertical-align: middle;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -464,8 +464,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 54px;
-  height: 54px;
+  min-height: 52px;
+  height: 52px;
 }
 
 /* 정산 금액: 기존 색 유지, 타이포는 테이블과 동일 */

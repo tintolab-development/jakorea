@@ -157,7 +157,7 @@
   width: 100%;
 }
 
-.form-editor-vertical-table__td--file-upload .paragraph-file-upload__guide-line {
+.form-editor-vertical-table__td--file-upload .file-upload-guide__line {
   white-space: nowrap;
 }
 

@@ -57,7 +57,7 @@ import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 
 import './program-list-page.css'
-import { CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
   PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
@@ -802,13 +802,16 @@ function ProgramListPageContent() {
                 await deleteCompanySchoolProgramsMutation.mutateAsync(idsToDelete)
                 await companySchoolListQuery.refetch()
                 setSelectedRowKeys([])
+                setBulkDeleteModalOpen(false)
+                setProgramsPendingBulkDelete([])
+                showDeleteCompletedAlert()
               } else {
                 await handleBulkDelete(programsPendingBulkDelete, () =>
                   setSelectedRowKeys([])
                 )
+                setBulkDeleteModalOpen(false)
+                setProgramsPendingBulkDelete([])
               }
-              setBulkDeleteModalOpen(false)
-              setProgramsPendingBulkDelete([])
             } catch (error) {
               console.debug('program bulk delete failed', error)
               if (isProgramHardDeleteBlockedError(error)) {

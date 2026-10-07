@@ -12,7 +12,7 @@
   padding: 32px 0;
 }
 
-/* 후원사 목록 전용 강제 고정: 체크 68px(좌 8px 포함) / No. 80px / 행 높이 54px */
+/* 후원사 목록 전용 강제 고정: 체크 68px(좌 8px 포함) / No. 80px / 행 높이 52px */
 .filter-table-layout.sponsor-page .filter-table-layout__table .sponsor-page__table.cms-data-table col.ant-table-selection-col {
   width: var(--table-selection-column-width, 68px) !important;
   min-width: var(--table-selection-column-width, 68px) !important;
@@ -62,7 +62,7 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 54px !important;
+  height: 52px !important;
   flex-shrink: 0;
   align-self: stretch;
   vertical-align: middle !important;
@@ -80,9 +80,9 @@
   .ant-table-tbody
   > tr
   > td {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   box-sizing: border-box !important;
   vertical-align: middle !important;
   padding-top: 10px !important;
@@ -276,9 +276,9 @@
   .ant-table-tbody
   > tr:has(td .status-dropdown-cell__status-trigger--open)
   > td {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
 }
 
 /* 행 hover 시 열린 tag-100 트리거 민트 외곽·그림자 유지 (공통 규칙이 border 제거함) */

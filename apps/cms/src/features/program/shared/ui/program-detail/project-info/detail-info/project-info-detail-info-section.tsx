@@ -721,7 +721,6 @@ function AttachmentRowStandard({
             multiple
             disabled={!isEditMode || uploading}
             uploading={uploading}
-            buttonLabel="파일 선택"
             className={isEditMode ? 'file-select-field--edit' : ''}
             fileNames={displayFileNames}
             guideLines={guideLines}
@@ -1302,7 +1301,6 @@ export function VolunteerDetailInfoSection({
                   multiple
                   disabled={uploadingAttachments}
                   uploading={uploadingAttachments}
-                  buttonLabel="파일 선택"
                   className="file-select-field--edit"
                   fileNames={displayFileNames}
                   guideLines={ATTACHMENT_GUIDE_LINES}

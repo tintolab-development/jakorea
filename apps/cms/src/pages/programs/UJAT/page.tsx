@@ -63,7 +63,7 @@ import {
 import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
 import { getHttpStatus } from '@/features/program/ujat/api/errors'
 import type { Program } from '@/types/domain'
-import { FilterTableLayout, CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { FilterTableLayout, CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
@@ -267,6 +267,7 @@ function UjatProgramListPageContent() {
         replace: true,
       })
       void programsQuery.refetch()
+      showDeleteCompletedAlert()
     } catch (error) {
       setProgramPendingDelete(null)
       showAlert(
@@ -310,6 +311,7 @@ function UjatProgramListPageContent() {
       setSelectedRowKeys([])
       setBulkDeleteModalOpen(false)
       void programsQuery.refetch()
+      showDeleteCompletedAlert()
     } catch (error) {
       setBulkDeleteModalOpen(false)
       showAlert(

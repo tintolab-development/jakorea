@@ -162,7 +162,7 @@
   .ant-table-thead
   > tr
   > th.ant-table-cell:not(.ant-table-cell-scrollbar) {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* 테이블 가로 스크롤 — 열 합이 래퍼보다 클 때만 내부 스크롤 */

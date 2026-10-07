@@ -32,7 +32,7 @@ import {
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
-import { CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
   PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
@@ -381,6 +381,10 @@ function TrainedTeachersProgramPageContent() {
         await deleteProgramsMutation.mutateAsync(idsToDelete)
         setSelectedRowKeys([])
         refetchPrograms()
+        setBulkDeleteModalOpen(false)
+        setProgramsPendingBulkDelete([])
+        showDeleteCompletedAlert()
+        return
       } catch (error) {
         showAlert(
           isProgramHardDeleteBlockedError(error)

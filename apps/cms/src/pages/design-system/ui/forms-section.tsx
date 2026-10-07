@@ -47,6 +47,11 @@ const FILE_TYPE_ICON_DEMO: { type: FileTypeIconType; label: string }[] = [
   { type: 'clip', label: 'clip' },
 ]
 
+const FILE_SELECT_DEMO_GUIDE_LINES = [
+  '- 파일은 총 최대 15MB까지 업로드 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
+
 const THUMBNAIL_DEMO_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
@@ -361,6 +366,7 @@ export function FormsSection() {
 
       <DsDemo label="FileSelectField">
         <div className="ds-demo__stack">
+          <span className="ds-demo__label">선택 가능 (빈 상태에서 시작)</span>
           <FileSelectField
             accept=".pdf,.png,.jpg"
             fileNames={fileNames}
@@ -370,10 +376,25 @@ export function FormsSection() {
             }
             onRemoveFile={index => setFileNames(prev => prev.filter((_, i) => i !== index))}
           />
+          <span className="ds-demo__label">파일 여러 개</span>
+          <FileSelectField
+            fileNames={['사업계획서.pdf', '참가자명단.xlsx', '안내문.hwp', '현장사진.jpg']}
+            guideLines={FILE_SELECT_DEMO_GUIDE_LINES}
+            onFilesChange={() => undefined}
+            onRemoveFile={() => undefined}
+          />
+          <span className="ds-demo__label">disabled (보기 모드)</span>
+          <FileSelectField
+            fileNames={['사업계획서.pdf']}
+            guideLines={FILE_SELECT_DEMO_GUIDE_LINES}
+            disabled
+          />
         </div>
         <p className="ds-note">
           기본 <code>multiple</code>·합계 <code>15MB</code>. <code>accept</code>·가이드는 케이스별.
-          단건만 <code>multiple=&#123;false&#125;</code>. 버튼은 secondary medium(120×40).
+          단건만 <code>multiple=&#123;false&#125;</code>. 파일 행(유형 아이콘·파일명·X)과 빈 상태
+          「첨부된 파일이 없습니다.」는 <code>FileAttachmentRow</code> 공통(썸네일·ParagraphFileUpload
+          동일). 버튼은 「파일 추가」 secondary h32, 가이드 12px · 버튼과 16px.
           DetailInfoForm Field edit 사용 시 layout override —{' '}
           <code>cms-admin-ui/file-select-detail-form</code>. 주소·학교 검색은{' '}
           <a href="#search-modals">Search modals</a>.

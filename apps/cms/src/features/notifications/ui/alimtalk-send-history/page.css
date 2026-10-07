@@ -42,7 +42,7 @@
 .alimtalk-send-history-page__table.cms-data-table .ant-table-tbody > tr > td,
 .alimtalk-send-history-page__table.cms-data-table .ant-table-tbody > tr:hover > td {
   box-sizing: border-box !important;
-  padding: 10px 16px !important;
+  padding: 8px 12px !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

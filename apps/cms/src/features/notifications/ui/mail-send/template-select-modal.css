@@ -82,9 +82,9 @@
 .mail-send-template-select-modal__table.cms-data-table .ant-table-thead > tr > th,
 .mail-send-template-select-modal__table.cms-data-table .ant-table-tbody > tr > td {
   box-sizing: border-box;
-  min-height: 54px;
-  height: 54px;
-  padding: 12px 20px !important;
+  min-height: 52px;
+  height: 52px;
+  padding: 8px 12px !important;
   vertical-align: middle !important;
   text-align: center !important;
 }

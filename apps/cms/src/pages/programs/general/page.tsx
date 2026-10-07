@@ -22,7 +22,7 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import type { Program } from '@/types/domain'
-import { CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
   PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
@@ -487,12 +487,16 @@ export function GeneralProgramListPageContent() {
               if (isRemoteDataSource) {
                 await deleteGeneralProgramsMutation.mutateAsync(idsToDelete)
                 refetchPrograms()
+                setSelectedRowKeys([])
+                setBulkDeleteModalOpen(false)
+                setProgramsPendingBulkDelete([])
+                showDeleteCompletedAlert()
               } else {
                 await handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
+                setSelectedRowKeys([])
+                setBulkDeleteModalOpen(false)
+                setProgramsPendingBulkDelete([])
               }
-              setSelectedRowKeys([])
-              setBulkDeleteModalOpen(false)
-              setProgramsPendingBulkDelete([])
             } catch (error) {
               if (isProgramHardDeleteBlockedError(error)) {
                 setBulkDeleteModalOpen(false)

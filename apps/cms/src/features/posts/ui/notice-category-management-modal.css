@@ -150,7 +150,7 @@
   color: var(--default-BK, #3d3d3d);
 }
 
-/* cms-data-table 기본(54px)보다 구체적으로 덮어 시안 64px·버튼 행 가운데 정렬 · 행 좌우 8px */
+/* cms-data-table 기본(52px)보다 구체적으로 덮어 시안 64px·버튼 행 가운데 정렬 · 행 좌우 8px */
 .notice-category-management-modal__table.cms-data-table .ant-table-tbody > tr > td {
   box-sizing: border-box;
   height: 64px !important;

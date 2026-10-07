@@ -509,7 +509,6 @@ export function NoticeFormModal({
               <FileSelectField
                 className="notice-register-modal__file-field"
                 multiple
-                buttonLabel="파일 추가"
                 accept={NOTICE_ATTACHMENT_ACCEPT}
                 fileNames={attachmentDisplayNames}
                 currentTotalBytes={attachmentTotalBytes}

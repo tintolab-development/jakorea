@@ -212,7 +212,8 @@
   align-items: center;
 }
 
-.applicant-institution-basic-info__attachment-file-select .file-select-field__names {
+.applicant-institution-basic-info__attachment-file-select .file-select-field__names,
+.applicant-institution-basic-info__attachment-file-select .file-attachment-empty {
   order: 2;
   flex: 1;
   min-width: 0;

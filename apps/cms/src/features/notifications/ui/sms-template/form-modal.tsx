@@ -445,7 +445,6 @@ export function FormModal({
                                 className="sms-template-form-modal__file-field"
                                 multiple
                                 accept=".jpg,.jpeg"
-                                buttonLabel="파일 추가"
                                 fileNames={form.attachmentsEnabled ? form.attachmentFileNames : []}
                                 guideLines={[...SMS_MMS_ATTACHMENT_GUIDE_LINES]}
                                 onFilesChange={handleAttachmentAdd}

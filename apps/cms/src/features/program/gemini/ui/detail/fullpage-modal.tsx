@@ -10,7 +10,13 @@ import {
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
-import { CmsButton, DeleteGuideModal, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  DeleteGuideModal,
+  showDeleteCompletedAlert,
+  showUpdateCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
@@ -234,6 +240,7 @@ export function GeminiRecruitmentDetailFullPageModal({
       void queryClient.invalidateQueries({
         queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
       })
+      showDeleteCompletedAlert()
     } catch {
       setDeleteModalOpen(false)
       showAlert({

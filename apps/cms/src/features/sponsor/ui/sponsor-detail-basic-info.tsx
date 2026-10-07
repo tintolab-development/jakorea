@@ -320,7 +320,6 @@ export function SponsorBasicInfoSection({
               <FileSelectField
                 multiple
                 accept=".jpg,.jpeg,.png"
-                buttonLabel="파일 추가"
                 fileNames={[
                   ...value.logos.map(file => file.fileName),
                   ...value.pendingLogoFiles.map(file => file.name),
