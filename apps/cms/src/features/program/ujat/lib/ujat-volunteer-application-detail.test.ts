@@ -1,0 +1,86 @@
+import { describe, expect, it } from 'vitest'
+import { applyUjatVolunteerProjection } from './ujat-volunteer-application-detail'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import type { VolunteerApplicationEvidenceAttachment } from '@/features/program/general/model/volunteer-applicant'
+
+const row = {
+  id: '1',
+  no: 1,
+  name: '김봉사',
+  grade: '1학년',
+  preferredRegion: '',
+  contact: '',
+  email: '',
+  contactRaw: '',
+  emailRaw: '',
+  hasEducationExperience: false,
+  applicationType: 'new',
+  essayIntro: '목록 자기소개',
+  essayEducationExperience: '',
+  essayNecessity: '',
+  essayJaExperience: '',
+  managerAEvaluation: 'unreviewed',
+  managerBEvaluation: 'unreviewed',
+  documentScreeningStatus: 'pending',
+  interviewSlotCount: 0,
+  interviewAssignmentStatus: 'waiting',
+  programId: '186026',
+  half: 'h1',
+  englishName: '',
+  id1365: '',
+  gender: '',
+  birthDate: '',
+  age: 0,
+  universityName: '',
+  major: '',
+  applicationRoute: '',
+  scheduleChangeCancelCount: 0,
+  interviewAvailability: [],
+} satisfies UjatVolunteerApplicantRow
+
+const certificate: VolunteerApplicationEvidenceAttachment = {
+  submissionFileId: 9,
+  questionKey: 'ujat-program-application-volunteer-seed-previous-term',
+  fileObjectId: 88,
+  originalFileName: 'certificate.pdf',
+  contentType: 'application/pdf',
+  fileSize: 10,
+  downloadPolicyPath: '/api/admin/form-submission-files/9/download',
+}
+
+describe('applyUjatVolunteerProjection', () => {
+  it('maps graduate projection and certificate attachments', () => {
+    const next = applyUjatVolunteerProjection(
+      row,
+      {
+        universityName: '서울대학교',
+        grade: '3',
+        gradeLabel: '3학년',
+        major: '경영',
+        applicationRouteLabel: '인스타그램',
+        applicationType: 'ujat-graduate',
+        previousActivityTerm: '12',
+        previousActivityYear: '2024',
+        essayIntro: null,
+        educationExperienceYn: true,
+        preferredActivityRegion: '서울',
+      },
+      [certificate],
+    )
+
+    expect(next.applicationType).toBe('ujat-graduate')
+    expect(next.universityName).toBe('서울대학교')
+    expect(next.grade).toBe('3학년')
+    expect(next.major).toBe('경영')
+    expect(next.applicationRoute).toBe('인스타그램')
+    expect(next.hasEducationExperience).toBe(true)
+    expect(next.preferredRegion).toBe('서울')
+    expect(next.essayIntro).toBe('')
+    expect(next.previousUjatActivity).toEqual({
+      term: '12',
+      year: '2024',
+      certificateFileName: 'certificate.pdf',
+    })
+    expect(next.evidenceAttachments).toEqual([certificate])
+  })
+})

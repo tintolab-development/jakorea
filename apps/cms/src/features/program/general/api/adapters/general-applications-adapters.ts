@@ -30,6 +30,8 @@ import type {
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import { mapParticipantSessionsToEducationSchedules } from '@/features/program/general/lib/map-participant-sessions-to-education-schedules'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
+import { readVolunteerApplicationAttachments } from '@/features/program/general/lib/volunteer-application-evidence'
+import { readGeneralVolunteerProjection } from '@/features/program/general/lib/general-volunteer-application-projection'
 import type { VolunteerApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationDetailResponse'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard/schemas/interviewAvailabilitySlot'
@@ -1071,6 +1073,10 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     assignedInterviewSlotId?: number | null
     assignedInterviewStartAt?: string | null
     assignedInterviewEndAt?: string | null
+    essayIntro?: string | null
+    essayEducationExperience?: string | null
+    essayNecessity?: string | null
+    essayJaExperience?: string | null
   }
   const assigned = formatAssignedInterviewFromIso(
     enriched.assignedInterviewStartAt,
@@ -1093,10 +1099,10 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     scheduleChangeCancelCount: 0,
     applicationType: dto.isReparticipation ? 'ujat-graduate' : 'new',
     hasJaVolunteerExperience: Boolean(dto.isReparticipation),
-    essayIntro: '',
-    essayEducationExperience: '',
-    essayNecessity: '',
-    essayJaExperience: '',
+    essayIntro: enriched.essayIntro?.trim() ?? '',
+    essayEducationExperience: enriched.essayEducationExperience?.trim() ?? '',
+    essayNecessity: enriched.essayNecessity?.trim() ?? '',
+    essayJaExperience: enriched.essayJaExperience?.trim() ?? '',
     managerAEvaluation: mapManagerEvaluation(dto.managerAEvaluation),
     managerBEvaluation: mapManagerEvaluation(dto.managerBEvaluation),
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation === true,
@@ -1141,6 +1147,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
   return {
     ...base,
+    ...readGeneralVolunteerProjection(dto.application, base),
     id: toId(dto.id) || base.id,
     memberId: dto.memberId ?? base.memberId,
     name: profile?.name?.trim() || base.name,
@@ -1151,6 +1158,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     id1365: profile?.external1365Id?.trim() || base.id1365,
     scheduleChangeCancelCount:
       dto.application?.scheduleChangeCancelCount ?? base.scheduleChangeCancelCount,
+    evidenceAttachments: readVolunteerApplicationAttachments(dto.application),
     managerAEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerA),
     managerBEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerB),
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditEvaluation,

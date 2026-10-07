@@ -1,12 +1,13 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { VolunteerEvidenceFileList } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/evidence-files'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
-import { AttachmentDownloadIcon } from '@/shared/ui'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
-import { downloadFile } from '@/shared/lib/file-download'
 import './previous-term-section.css'
+
+const PREVIOUS_TERM_QUESTION_KEY = 'ujat-program-application-volunteer-seed-previous-term'
 
 export interface PreviousTermSectionProps {
   applicant: UjatVolunteerApplicantRow
@@ -16,7 +17,12 @@ export function PreviousTermSection({
   applicant,
 }: PreviousTermSectionProps) {
   const activity = applicant.previousUjatActivity
-  if (!applicant.hasEducationExperience) return null
+  const certificates = (applicant.evidenceAttachments ?? []).filter(
+    file => file.questionKey === PREVIOUS_TERM_QUESTION_KEY,
+  )
+  if (applicant.applicationType !== 'ujat-graduate' && !activity && certificates.length === 0) {
+    return null
+  }
 
   const termYearDisplay = activity
     ? withProgramDetailTdDivider([`${activity.term}기`, `${activity.year}년도`])
@@ -34,24 +40,7 @@ export function PreviousTermSection({
           <DetailInfoForm.Field
             label="수료증 첨부"
             readOnlyDisplay
-            view={
-              activity ? (
-                <button
-                  type="button"
-                  className="previous-term-section__file"
-                  onClick={() =>
-                    void downloadFile(activity.certificateFileName, activity.certificateFileUrl)
-                  }
-                >
-                  <AttachmentDownloadIcon className="previous-term-section__file-icon" />
-                  <span className="previous-term-section__file-name">
-                    {activity.certificateFileName}
-                  </span>
-                </button>
-              ) : (
-                '-'
-              )
-            }
+            view={certificates.length > 0 ? <VolunteerEvidenceFileList files={certificates} /> : '-'}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>

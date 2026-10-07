@@ -4,6 +4,7 @@
 
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { GeneralVolunteerApplicationType } from '@/features/program/general/lib/volunteer-screening-constants'
+import type { VolunteerApplicationEvidenceAttachment } from '@/features/program/general/model/volunteer-applicant'
 
 export interface ParticipatingVolunteerRow {
   id: string
@@ -36,6 +37,8 @@ export interface ParticipatingVolunteerRow {
   age?: number
   scheduleChangeCancelCount?: number
   hasJaVolunteerExperience?: boolean
+  previousJaProgram?: string
+  evidenceAttachments?: VolunteerApplicationEvidenceAttachment[]
   applicationType?: GeneralVolunteerApplicationType
   adminComment?: string
   activityWithdrawn?: boolean

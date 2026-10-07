@@ -719,6 +719,28 @@ describe('general-applications-adapters', () => {
     expect(row.canEditManagerAEvaluation).toBe(true)
     expect(row.canEditManagerBEvaluation).toBe(false)
     expect(row.availableActions).toEqual(['VIEW', 'UPDATE_DOCUMENT_EVALUATION'])
+    expect(row.essayIntro).toBe('')
+  })
+
+  it('maps volunteer list essay fields and keeps null as empty', () => {
+    const row = mapVolunteerApplicationToGeneralVolunteerApplicantRow(
+      {
+        id: 56,
+        programId: 5001,
+        memberName: '김봉사',
+        essayIntro: ' 자기소개 ',
+        essayEducationExperience: '****2312',
+        essayNecessity: null,
+        essayJaExperience: 'JA 경험',
+      } as Parameters<typeof mapVolunteerApplicationToGeneralVolunteerApplicantRow>[0],
+      0,
+      '5001'
+    )
+
+    expect(row.essayIntro).toBe('자기소개')
+    expect(row.essayEducationExperience).toBe('****2312')
+    expect(row.essayNecessity).toBe('')
+    expect(row.essayJaExperience).toBe('JA 경험')
   })
 
   it('maps individual application list item with screening fields', () => {

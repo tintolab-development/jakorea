@@ -21,7 +21,7 @@ export interface EssaySectionsProps {
 }
 
 export function EssaySections({ applicant }: EssaySectionsProps) {
-  if (applicant.hasEducationExperience) {
+  if (applicant.applicationType === 'ujat-graduate') {
     return null
   }
 

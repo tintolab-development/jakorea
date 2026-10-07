@@ -74,6 +74,19 @@
   gap: var(--spacing-8, 8px);
 }
 
+.general-volunteer-applicant-basic-info__previous-ja {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.general-volunteer-applicant-basic-info .detail-info-form__field-label {
+  word-break: keep-all;
+}
+
 .general-volunteer-applicant-basic-info .applicant-instructor-basic-info__name-badge {
   margin-left: 8px;
 }
@@ -87,6 +100,14 @@
 .general-volunteer-applicant-essay-sections__item {
   width: 100%;
   min-width: 0;
+}
+
+.general-volunteer-applicant-essay-sections__item .instructor-resume-free-writing-card {
+  padding: 20px 24px;
+}
+
+.general-volunteer-applicant-essay-sections__item .instructor-resume-free-writing-text {
+  color: #3d3d3d;
 }
 
 /* 담당자 서류 평가 — 행 높이 58px (패딩 포함, DetailInfoForm 기본 12px 상하 패딩 제거) */

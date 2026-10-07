@@ -3,6 +3,7 @@
  * @see apps/cms/.cursor/rules/process/program-no-fe-mock.mdc
  */
 
+import type { VolunteerApplicationEvidenceAttachment } from '@/features/program/general/model/volunteer-applicant'
 import {
   UJAT_VOLUNTEER_APPLICATION_TYPE_LABELS,
   type UjatDocumentScreeningStatus,
@@ -61,6 +62,8 @@ export interface UjatVolunteerApplicantRow {
   scheduleChangeCancelCount: number
   interviewAvailability: UjatVolunteerInterviewAvailabilityDay[]
   previousUjatActivity?: UjatVolunteerPreviousUjatActivity
+  /** 상세 API `application.attachments` */
+  evidenceAttachments?: VolunteerApplicationEvidenceAttachment[]
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
   secondInterviewScreeningStatus?: UjatSecondInterviewScreeningStatus

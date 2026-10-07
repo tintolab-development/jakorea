@@ -76,9 +76,7 @@ export function ApplicantBasicInfo({
   const contactDisplay = maskSensitive ? applicant.contact : applicant.contactRaw
   const emailDisplay = maskSensitive ? applicant.email : applicant.emailRaw
   const id1365Display = maskSensitive ? maskId1365(applicant.id1365) : applicant.id1365
-  const applicationTypeDisplay = formatUjatVolunteerApplicationType(
-    applicant.hasEducationExperience ? 'ujat-graduate' : 'new'
-  )
+  const applicationTypeDisplay = formatUjatVolunteerApplicationType(applicant.applicationType)
   const genderBirthDisplay = withProgramDetailTdDivider([
     applicant.gender,
     formatUjatVolunteerBirthDateAndAge(applicant.birthDate, applicant.age),
