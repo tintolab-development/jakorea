@@ -136,11 +136,12 @@
 }
 
 .filter-table-layout__description {
-  color: var(--default-BK, #3d3d3d);
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard;
   font-size: 16px;
+  font-style: normal;
   font-weight: 500;
   line-height: 150%; /* 24px */
-  opacity: 0.6;
   white-space: nowrap;
 }
 
@@ -166,7 +167,8 @@
   overflow: visible;
 }
 
-.filter-table-layout:has(.calendar-split-card-layout .calendar-week--time-grid) .filter-table-layout__table {
+.filter-table-layout:has(.calendar-split-card-layout .calendar-week--time-grid)
+  .filter-table-layout__table {
   overflow: visible;
   min-width: var(--calendar-split-card-min-width-week);
   flex-shrink: 0;
@@ -236,14 +238,12 @@
   box-sizing: border-box;
 }
 
-.filter-table-layout__calendar-body
-  .calendar-set-scroll-host:has(.calendar-week--time-grid) {
+.filter-table-layout__calendar-body .calendar-set-scroll-host:has(.calendar-week--time-grid) {
   min-width: var(--calendar-split-card-min-width-week);
   flex-shrink: 0;
 }
 
-.filter-table-layout__calendar-body
-  .calendar-split-card-layout:has(.calendar-week--time-grid) {
+.filter-table-layout__calendar-body .calendar-split-card-layout:has(.calendar-week--time-grid) {
   min-width: var(--calendar-split-card-min-width-week);
   flex-shrink: 0;
 }
