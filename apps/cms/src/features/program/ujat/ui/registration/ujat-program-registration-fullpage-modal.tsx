@@ -303,6 +303,7 @@ function UjatProgramRegistrationFullpageModalInner({
         titleReadOnly
         templateTabType="writing"
         registrationUserMode
+        showCloseButton
         onPreview={handlePreview}
         showPreview={flow.phase !== 'program'}
         onSave={handleSaveClick}

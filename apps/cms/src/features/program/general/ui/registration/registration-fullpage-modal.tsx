@@ -380,6 +380,7 @@ function GeneralProgramRegistrationFullpageModalInner({
         titleReadOnly
         templateTabType="writing"
         registrationUserMode
+        showCloseButton
         onPreview={handlePreview}
         showPreview={showPreview}
         onSave={handleSaveClick}

@@ -37,9 +37,9 @@
 
 .full-page-modal__topbar {
   display: flex;
-  height: 64px;
+  height: 84px;
   box-sizing: border-box;
-  padding: 16px 52px;
+  padding: 8px 52px;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
@@ -482,12 +482,16 @@
   );
 }
 
-.form-template-fullpage-modal .full-page-modal__contents:has(.form-draft-loading) .full-page-modal__left {
+.form-template-fullpage-modal
+  .full-page-modal__contents:has(.form-draft-loading)
+  .full-page-modal__left {
   max-width: none;
   width: 100%;
 }
 
-.form-template-fullpage-modal .full-page-modal__contents:has(.form-draft-loading) .full-page-modal__right-wrap {
+.form-template-fullpage-modal
+  .full-page-modal__contents:has(.form-draft-loading)
+  .full-page-modal__right-wrap {
   display: none;
 }
 
@@ -539,7 +543,9 @@
 }
 
 /* 본문 상단 액션 — 편집 모드와 동일 위치, 회색 배경 위 CmsButton 스펙 */
-.full-page-modal--registration-user-mode .full-page-modal__body-header .cms-button--secondary:not(:disabled):not(.ant-btn-disabled) {
+.full-page-modal--registration-user-mode
+  .full-page-modal__body-header
+  .cms-button--secondary:not(:disabled):not(.ant-btn-disabled) {
   background-image: none !important;
   background-color: var(--main-WT, #fff) !important;
 }

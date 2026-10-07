@@ -1,4 +1,5 @@
-import { CloseOutlined, DownloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { DownloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -37,6 +38,8 @@ interface TemplateFullpageModalProps {
    * 템플릿 등록 사용자 모드 — 미리보기와 동일 청록 헤더·회색 본문·상단 닫기/미리보기/임시저장.
    */
   registrationUserMode?: boolean
+  /** 상단바 X 닫기 버튼 노출 (기본: `registrationUserMode`가 아닐 때만) */
+  showCloseButton?: boolean
   /** 저장 버튼 라벨 (`registrationUserMode` 기본: 임시저장) */
   saveLabel?: string
   /** 우측 하단 CTA — 미전달 시 숨김 (단일, `footerActions`와 병용 시 배열 우선) */
@@ -101,6 +104,7 @@ export function TemplateFullpageModal({
   titleReadOnly = false,
   onTitleCommit,
   registrationUserMode = false,
+  showCloseButton = !registrationUserMode,
   saveLabel,
   footerAction,
   footerActions,
@@ -245,14 +249,14 @@ export function TemplateFullpageModal({
               </>
             )}
           </div>
-          {!registrationUserMode ? (
+          {showCloseButton ? (
             <button
               type="button"
               className="full-page-modal__close"
               onClick={onClose}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              <ModalCloseIcon tone={registrationUserMode ? 'white' : 'black'} />
             </button>
           ) : null}
         </header>
