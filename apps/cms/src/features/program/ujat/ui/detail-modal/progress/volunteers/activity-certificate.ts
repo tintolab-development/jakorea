@@ -43,7 +43,7 @@ export function buildActivityCertificateVolunteerFromUjatDetail(
     gender: applicant.gender,
     birthDate: applicant.birthDate,
     age: applicant.age,
-    hasJaVolunteerExperience: applicant.hasEducationExperience,
+    hasJaVolunteerExperience: applicant.hasEducationExperience === true,
     applicationType: applicant.applicationType === 'ujat-graduate' ? 'ujat-graduate' : 'new',
     adminComment: detail.adminComment,
     activityWithdrawn: row.assignmentStatus === 'activity_abandoned',

@@ -166,7 +166,6 @@ export function UjatEducationProgressRegionAssignmentSection({
             type="button"
             variant="secondary"
             size="large"
-            width={160}
             icon={<DownloadOutlined />}
             onClick={handleOpenDownloadModal}
           >
@@ -176,7 +175,6 @@ export function UjatEducationProgressRegionAssignmentSection({
             type="button"
             variant="delete"
             size="large"
-            width={140}
             disabled={isMutating}
             onClick={handleOpenBlockedDateModal}
           >
@@ -186,7 +184,6 @@ export function UjatEducationProgressRegionAssignmentSection({
             type="button"
             variant="secondary"
             size="large"
-            width={140}
             disabled={isMutating}
             onClick={handleOpenAttendanceManagerModal}
           >
@@ -196,7 +193,6 @@ export function UjatEducationProgressRegionAssignmentSection({
             type="button"
             variant="primary"
             size="large"
-            width={140}
             disabled={isMutating}
             onClick={handleOpenDirectAssignModal}
           >
@@ -206,7 +202,6 @@ export function UjatEducationProgressRegionAssignmentSection({
             type="button"
             variant="primary"
             size="large"
-            width={140}
             disabled={isMutating}
             onClick={handleAutoAssign}
           >

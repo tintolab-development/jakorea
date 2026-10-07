@@ -48,12 +48,11 @@ import { UjatEducationProgressVolunteerAddRegistrationView } from './progress/vo
 import { UjatEducationProgressVolunteerDetailPage } from './progress/volunteers/detail/detail-page'
 import {
   formatUjatEducationProgressVolunteerDetailTitle,
-  getUjatEducationProgressVolunteerDetail,
   isUjatEducationProgressVolunteerInList,
 } from './progress/volunteers/detail/volunteer-detail-data'
+import { useUjatEducationProgressVolunteerDetail } from './progress/volunteers/detail/use-detail'
 import { UjatInstitutionScheduleConfirmDetailPage } from './application-institution/schedule-confirm/detail-page'
 import type { Program } from '@/types/domain'
-import { getUjatInstitutionApplicationMockRows } from '@/features/program/ujat/model/ujat-institution-application'
 import {
   isUjatVolunteerApplicantDetailTab,
   parseUjatDetailLnb,
@@ -78,7 +77,6 @@ import {
   isEducationProgressInstitutionsTab,
   isUjatEducationProgressInstitutionInList,
 } from './progress/institutions/detail/detail-url'
-import { getUjatEducationProgressInstitutionName } from './progress/institutions/detail/institution-detail-data'
 import { UjatEducationProgressInstitutionDetailPage } from './progress/institutions/detail/detail-page'
 import {
   getUjatSurveyMenuItemsForProgram,
@@ -162,10 +160,6 @@ import {
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
-import {
-  UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT,
-  UJAT_SURVEY_POLL_RESPONSES_MOCK,
-} from '@/features/program/ujat/model/ujat-survey-poll'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
 import {
   defaultSatisfactionAudienceForSurveyTab,
@@ -897,18 +891,16 @@ export function UjatProgramDetailFullPageModal({
 
   const pollResponses = useMemo((): UjatSurveyPollRawResponse[] => {
     if (pollResponsesRemote) return remotePollResponses ?? []
-    if (activeRegisteredSurvey == null) return []
-    return UJAT_SURVEY_POLL_RESPONSES_MOCK.slice(0, activeRegisteredSurvey.responseCount)
-  }, [activeRegisteredSurvey, pollResponsesRemote, remotePollResponses])
+    return []
+  }, [pollResponsesRemote, remotePollResponses])
   const activeSatisfactionSurvey = useMemo(
     () => satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null,
     [satisfactionSurveysByAudience, activeSatisfactionAudience]
   )
   const satisfactionResponses = useMemo((): UjatSurveyPollRawResponse[] => {
     if (satisfactionResponsesRemote) return remoteSatisfactionResponses ?? []
-    if (activeSatisfactionSurvey == null) return []
-    return UJAT_SURVEY_POLL_RESPONSES_MOCK.slice(0, activeSatisfactionSurvey.responseCount)
-  }, [activeSatisfactionSurvey, remoteSatisfactionResponses, satisfactionResponsesRemote])
+    return []
+  }, [remoteSatisfactionResponses, satisfactionResponsesRemote])
 
   useEffect(() => {
     if (!pollResponsesRemote || !activeRegisteredSurveyId) return
@@ -937,17 +929,10 @@ export function UjatProgramDetailFullPageModal({
     ? (resolveUjatDetailLnbFromSearchParams(searchParams) ?? 'info')
     : 'info'
 
-  const validInstAppIds = useMemo(
-    () => new Set(getUjatInstitutionApplicationMockRows().map(row => row.id)),
-    [institutionListVersion]
-  )
+  const validInstAppIds = useMemo(() => new Set<string>(), [])
 
   const institutionApplicationId = open ? searchParams.get(UJAT_INST_APP_ID_PARAM) : null
-  const institutionDetailId =
-    institutionApplicationId &&
-    (validInstAppIds.size === 0 || validInstAppIds.has(institutionApplicationId))
-      ? institutionApplicationId
-      : null
+  const institutionDetailId = institutionApplicationId
 
   const activeTab = useMemo(() => {
     if (!open) return 'info'
@@ -990,18 +975,8 @@ export function UjatProgramDetailFullPageModal({
       ? eduInstitutionIdRaw
       : null
 
-  const institutionDetailName = useMemo(() => {
-    if (!institutionDetailId) return null
-    return (
-      getUjatInstitutionApplicationMockRows().find(row => row.id === institutionDetailId)
-        ?.institutionName ?? null
-    )
-  }, [institutionDetailId, institutionListVersion])
-
-  const eduInstitutionDetailName = useMemo(() => {
-    if (!eduInstitutionDetailId) return null
-    return getUjatEducationProgressInstitutionName(eduInstitutionDetailId)
-  }, [eduInstitutionDetailId])
+  const institutionDetailName: string | null = null
+  const eduInstitutionDetailName: string | null = null
 
   const eduInstitutionDetailTab = open
     ? parseUjatEduInstTab(searchParams)
@@ -1025,20 +1000,20 @@ export function UjatProgramDetailFullPageModal({
     ? parseUjatEduVolTab(searchParams)
     : ('application' as UjatEducationProgressVolunteerDetailTab)
 
-  const eduVolunteerDetailMeta = useMemo(() => {
-    if (!eduVolunteerDetailId || !eduVolunteerHalf) return null
-    const detail = getUjatEducationProgressVolunteerDetail(
-      displayProgram?.id ?? '',
-      eduVolunteerHalf,
-      eduVolunteerDetailId
-    )
-    if (!detail) return null
-    const volunteerName = detail.applicant.name
-    return {
-      title: formatUjatEducationProgressVolunteerDetailTitle(eduVolunteerHalf, volunteerName),
-      breadcrumbLabel: volunteerName,
-    }
-  }, [displayProgram?.id, eduVolunteerDetailId, eduVolunteerHalf])
+  const { detail: eduVolunteerRemoteDetail } = useUjatEducationProgressVolunteerDetail({
+    programId: displayProgram?.id ?? '',
+    half: eduVolunteerHalf ?? 'h1',
+    volunteerId: eduVolunteerDetailId ?? '',
+  })
+  const eduVolunteerDetailMeta = eduVolunteerRemoteDetail
+    ? {
+        title: formatUjatEducationProgressVolunteerDetailTitle(
+          eduVolunteerRemoteDetail.half,
+          eduVolunteerRemoteDetail.row.volunteerName
+        ),
+        breadcrumbLabel: eduVolunteerRemoteDetail.row.volunteerName,
+      }
+    : null
 
   const institutionDetailTitlePrefix = useMemo(() => {
     if (!institutionDetailId) return '신청 기관 상세'
@@ -1707,19 +1682,11 @@ export function UjatProgramDetailFullPageModal({
         return
       }
 
-      if (next != null) {
-        const surveyIndex = registeredSurveys.length + 1
-        const newSurvey: UjatRegisteredSurvey = {
-          id: `ujat-survey-${Date.now()}`,
-          title: `${next.templateName} ${surveyIndex < 10 ? `0${surveyIndex}` : surveyIndex}`,
-          templateId: next.id,
-          status: 'before_start',
-          responseCount: 0,
-          participantTotal: 16,
-        }
-        setRegisteredSurveys(prev => [...prev, newSurvey])
-        setActiveRegisteredSurveyId(newSurvey.id)
-      }
+      void next
+      void showAlert({
+        title: '등록 불가',
+        content: '설문 등록은 remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+      })
       setSurveyCreateModalOpen(false)
     } catch (error) {
       handleError(error, { context: 'ujatSurveyTemplate.create' })
@@ -1922,22 +1889,11 @@ export function UjatProgramDetailFullPageModal({
         return
       }
 
-      if (next != null) {
-        const isTeacherAudience = activeSatisfactionAudience === 'teacher'
-        const audienceLabel = getSatisfactionAudienceLabel(activeSatisfactionAudience)
-        const newSurvey: UjatRegisteredSurvey = {
-          id: `ujat-satisfaction-${activeSatisfactionAudience}-${Date.now()}`,
-          title: `${audienceLabel} 만족도조사`,
-          templateId: next.id,
-          status: isTeacherAudience ? 'in_progress' : 'before_start',
-          responseCount: isTeacherAudience ? UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT : 0,
-          participantTotal: isTeacherAudience ? 11 : 0,
-        }
-        setSatisfactionSurveysByAudience(prev => ({
-          ...prev,
-          [activeSatisfactionAudience]: newSurvey,
-        }))
-      }
+      void next
+      void showAlert({
+        title: '등록 불가',
+        content: '만족도조사 등록은 remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+      })
       setSatisfactionCreateModalOpen(false)
     } catch (error) {
       handleError(error, { context: 'ujatSatisfactionSurvey.create' })
@@ -2198,21 +2154,11 @@ export function UjatProgramDetailFullPageModal({
         return
       }
 
-      if (next != null) {
-        const newSurvey: UjatRegisteredSurvey = {
-          id: `ujat-lecture-eval-${Date.now()}`,
-          title: next.templateName,
-          templateId: next.id,
-          status: 'in_progress',
-          responseCount: 0,
-          participantTotal: 1,
-        }
-        setLectureEvalSurvey(newSurvey)
-        setLectureEvalSubmitted(false)
-        setLectureEvalResponses([])
-        setActiveLectureEvalTab('eval')
-        void buildLectureEvalFormDraft(next.id).then(setLectureEvalFormDraft)
-      }
+      void next
+      void showAlert({
+        title: '등록 불가',
+        content: '강의평가 등록은 remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+      })
       setLectureEvalCreateModalOpen(false)
     } catch (error) {
       handleError(error, { context: 'ujatLectureEval.register' })
@@ -2836,7 +2782,7 @@ export function UjatProgramDetailFullPageModal({
           )}
           {activeLnb === 'education_progress' && activeTab === 'edu_summary' && (
             <div className="program-detail-fullpage-modal__info-tab">
-              <UjatEducationProgressSummarySection />
+              <UjatEducationProgressSummarySection programId={displayProgram?.id ?? programId} />
             </div>
           )}
 

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
-import { ContentModal, CmsButton, useCmsAlert } from '@/shared/ui'
+import { ContentModal, CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { RegionAssignmentTableData } from './types'
 import './assignment-download-modal.css'
@@ -67,17 +66,10 @@ export function RegionAssignmentDownloadModal({
       <CmsButton variant="secondary" size="medium" width={120} onClick={handleCancel}>
         취소
       </CmsButton>
-      <CmsButton
-        variant="primary"
-        size="medium"
-        width={140}
-        icon={<DownloadOutlined />}
-        adminAction="download"
+      <ExcelButton
         disabled={selectedColumnIds.length === 0 || exporting}
         onClick={() => void handleDownload()}
-      >
-        엑셀 다운로드
-      </CmsButton>
+      />
     </div>
   )
 

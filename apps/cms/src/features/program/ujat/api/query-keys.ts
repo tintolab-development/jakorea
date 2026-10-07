@@ -1,4 +1,4 @@
-import type { ApplicationsListQuery } from '@/features/program/general/api/applications-api-client'
+import type { UjatApplicationsListQuery as ApplicationsListQuery } from './ujat-applications-contract'
 import type { ListParams } from './list-params'
 import type { UjatVolunteerRecruitHalf } from '../model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicationsStage } from './applications-list-query'

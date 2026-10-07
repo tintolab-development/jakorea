@@ -7,7 +7,8 @@ import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/uja
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { buildUjatVolunteerDocPassedFilterRows } from './filter-fields'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
-import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
+import { filterScheduleDatesByHalf } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
+import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-modal/application-institution/use-program-schedule-dates'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { useUjatVolunteerDocPassed } from './use-list'
 import { useApplicantDetail, type ApplicantDetailMetaChangeHandler } from '../applicant/use-detail'
@@ -88,15 +89,14 @@ export function DocPassedSection({
     showDocumentScreeningConfirm: noopShowDocumentScreeningConfirm,
   })
 
+  const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
   const activityWithdrawScheduleOptions = useMemo(
     () =>
-      UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(
-        entry => ({
-          value: entry.isoDate,
-          label: entry.title,
-        })
-      ),
-    [half]
+      filterScheduleDatesByHalf(scheduleDates, half).map(entry => ({
+        value: entry.isoDate,
+        label: entry.title,
+      })),
+    [half, scheduleDates]
   )
 
   const handleDetailAssignInterview = useCallback(() => {

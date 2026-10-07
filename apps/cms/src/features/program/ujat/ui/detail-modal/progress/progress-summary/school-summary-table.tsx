@@ -1,7 +1,5 @@
 import '@/shared/ui/cross-table.css'
-import {
-  getUjatEducationProgressSchoolSummary,
-} from '@/features/program/ujat/model/ujat-education-progress'
+import type { UjatEducationProgressSchoolSummary } from './types'
 import {
   UJAT_EDU_PROGRESS_SCHOOL_METRIC_ORDER,
   UJAT_EDU_PROGRESS_SCHOOL_METRIC_LABEL,
@@ -19,8 +17,11 @@ import {
   UjatEducationProgressSummaryRegionHeader,
 } from './region-matrix-table'
 
-export function UjatEducationProgressSchoolSummaryTable() {
-  const summary = getUjatEducationProgressSchoolSummary()
+export function UjatEducationProgressSchoolSummaryTable({
+  summary,
+}: {
+  summary: UjatEducationProgressSchoolSummary
+}) {
 
   return (
     <UjatEducationProgressSummaryMatrixShell

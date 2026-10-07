@@ -1,6 +1,6 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
-import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '../education-schedule'
+import { formatScheduleColumnTitle } from '../education-schedule'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { getUjatScheduleAssignRegionState } from '../schedule-assign/store'
 import {
@@ -24,14 +24,16 @@ export function listRegisteredConfirmScheduleFilterOptions(
 ): CmsSelectMultipleOption[] {
   const state = getUjatScheduleAssignRegionState(regionKey)
 
-  return UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.flatMap(({ isoDate, title }) => {
-    const day = state.days[isoDate]
-    const hasAssignment = day?.rows.some(
-      row => row.institutionRowId != null && row.gradeValues.length > 0
-    )
-    if (!hasAssignment) return []
-    return [{ label: title, value: isoDate }]
-  })
+  return Object.keys(state.days)
+    .sort()
+    .flatMap(isoDate => {
+      const day = state.days[isoDate]
+      const hasAssignment = day?.rows.some(
+        row => row.institutionRowId != null && row.gradeValues.length > 0
+      )
+      if (!hasAssignment) return []
+      return [{ label: formatScheduleColumnTitle(isoDate), value: isoDate }]
+    })
 }
 
 export function buildUjatScheduleConfirmFilterFields(

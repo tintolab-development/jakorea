@@ -9,10 +9,7 @@ import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
-import {
-  getUjatEducationProgressVolunteerDetail,
-  type UjatEducationProgressVolunteerDetail,
-} from '@/features/program/ujat/ui/detail-modal/progress/volunteers/detail/volunteer-detail-data'
+import type { UjatEducationProgressVolunteerDetail } from '@/features/program/ujat/ui/detail-modal/progress/volunteers/detail/volunteer-detail-data'
 import type { UjatEducationProgressVolunteerRow } from '@/features/program/ujat/ui/detail-modal/progress/volunteers/types'
 import { UJAT_EDU_PROGRESS_VOLUNTEER_GRADE_OPTIONS } from '@/features/program/ujat/ui/detail-modal/progress/volunteers/types'
 import { getUjatEducationRegionLabel, findUjatEducationRegionKeyByLabel } from '@/features/program/ujat/lib/ujat-education-regions'
@@ -33,7 +30,7 @@ function mapApplicantToProgressRow(
     UJAT_EDU_PROGRESS_VOLUNTEER_GRADE_OPTIONS as readonly string[]
   ).includes(applicant.grade)
     ? (applicant.grade as UjatEducationProgressVolunteerRow['grade'])
-    : '1학년'
+    : ''
   const withdrawn = applicant.interviewAssignmentStatus === 'withdrawn'
   const completed =
     applicant.secondInterviewScreeningStatus === 'pass' ||
@@ -98,7 +95,7 @@ export function useUjatEducationProgressVolunteerDetail(input: {
         adminComment: '',
       }
     }
-    return getUjatEducationProgressVolunteerDetail(programId, half, volunteerId)
+    return null
   }, [half, programId, remoteEnabled, remoteQuery.data, volunteerId])
 
   return {

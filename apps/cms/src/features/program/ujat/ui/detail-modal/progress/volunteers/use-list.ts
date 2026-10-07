@@ -55,16 +55,16 @@ function recruitHalfFromProgress(half: EducationProgressHalfKey): UjatVolunteerR
   return half === 'h2' ? 'h2' : 'h1'
 }
 
-function mapGrade(grade: string): UjatEducationProgressVolunteerGrade {
+function mapGrade(grade: string): UjatEducationProgressVolunteerGrade | '' {
   return (UJAT_EDU_PROGRESS_VOLUNTEER_GRADE_OPTIONS as readonly string[]).includes(grade)
     ? (grade as UjatEducationProgressVolunteerGrade)
-    : '1학년'
+    : ''
 }
 
 function mapRegionKey(preferredRegion: string): UjatInstitutionApplicationRegionKey {
   const trimmed = preferredRegion.trim()
   const byLabel = findUjatEducationRegionKeyByLabel(trimmed)
-  return (byLabel ?? (trimmed || '서울')) as UjatInstitutionApplicationRegionKey
+  return (byLabel ?? '') as UjatInstitutionApplicationRegionKey
 }
 
 function mapApplicantToProgressVolunteer(
@@ -83,9 +83,12 @@ function mapApplicantToProgressVolunteer(
     volunteerName: row.name,
     grade: mapGrade(row.grade),
     regionKey,
-    regionLabel: getUjatEducationRegionLabel(regionKey, regionKey),
+    regionLabel: regionKey ? getUjatEducationRegionLabel(regionKey, regionKey) : '-',
     mobile: row.contact,
     email: row.email,
+    memberId: row.memberId,
+    birthDate: row.birthDate,
+    id1365: row.id1365,
     totalAssignmentDays: null,
     assignmentStatus: withdrawn
       ? 'activity_abandoned'
@@ -120,17 +123,21 @@ export function useUjatEducationProgressVolunteers(
     []
   )
 
+  const listQuery = useMemo(() => {
+    const keyword = appliedFilters.volunteerName.trim() || undefined
+    return {
+      finalResultStatus: 'APPROVED' as const,
+      ...(keyword ? { keyword } : {}),
+    }
+  }, [appliedFilters.volunteerName])
+
   const remoteQuery = useInfiniteQuery({
     queryKey: [
-      ...ujatQueryKeys.volunteerApplications(programId, recruitHalf, 'interview2', {
-        finalResultStatus: 'APPROVED',
-      }),
+      ...ujatQueryKeys.volunteerApplications(programId, recruitHalf, 'interview2', listQuery),
       'edu-progress',
     ] as const,
     queryFn: ({ pageParam }) =>
-      listUjatVolunteerApplicationsPage(programId, recruitHalf, pageParam, {
-        finalResultStatus: 'APPROVED',
-      }),
+      listUjatVolunteerApplicationsPage(programId, recruitHalf, pageParam, listQuery),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,

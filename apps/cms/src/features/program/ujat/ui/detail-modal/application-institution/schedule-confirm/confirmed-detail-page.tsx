@@ -1,12 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Space } from 'antd'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import {
-  getUjatInstitutionApplicationRowById,
-  getUjatInstitutionScheduleConfirmStatus,
-  patchUjatInstitutionScheduleConfirmStatus,
-} from '@/features/program/ujat/model/ujat-institution-application'
+import { patchUjatInstitutionScheduleConfirmStatus } from '@/features/program/ujat/model/ujat-institution-application'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { postUjatScheduleChangeRequest } from '@/features/program/ujat/api/temporary-schedule-api'
 import { shouldShowScheduleConfirmGuidanceNotes } from './types'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -18,7 +15,6 @@ import { buildUjatScheduleConfirmConfirmedDetail } from './build-confirmed-detai
 import { UjatScheduleConfirmConfirmedDetailView } from './confirmed-detail-view'
 import {
   getUjatInstitutionScheduleConfirmApproveCompleteContent,
-  getUjatInstitutionScheduleConfirmAssignedInstructorCount,
   UJAT_INSTITUTION_SCHEDULE_CONFIRM_APPROVE_ALERT_TITLE,
 } from './institution-approve-complete'
 import {
@@ -46,24 +42,19 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   const [pendingReject, setPendingReject] = useState(false)
   const [pendingApprove, setPendingApprove] = useState(false)
   const [pendingRevisionRequest, setPendingRevisionRequest] = useState(false)
-  const [statusRefreshTick, setStatusRefreshTick] = useState(0)
-
-  const row = useMemo(
-    () => getUjatInstitutionApplicationRowById(institutionId),
-    [institutionId]
-  )
+  const { row, detail: baseDetail, invalidate } = useUjatInstitutionApplicationDetail({
+    institutionId,
+    programId,
+  })
 
   const detail = useMemo(
-    () => buildUjatScheduleConfirmConfirmedDetail(institutionId),
-    [institutionId, statusRefreshTick]
+    () => buildUjatScheduleConfirmConfirmedDetail(row, baseDetail),
+    [row, baseDetail]
   )
 
-  const scheduleConfirmStatus = useMemo(
-    () => getUjatInstitutionScheduleConfirmStatus(institutionId),
-    [institutionId, statusRefreshTick]
+  const showGuidanceNotes = shouldShowScheduleConfirmGuidanceNotes(
+    row?.scheduleConfirmStatus ?? null
   )
-
-  const showGuidanceNotes = shouldShowScheduleConfirmGuidanceNotes(scheduleConfirmStatus)
 
   const {
     personalInfoRevealed,
@@ -86,18 +77,17 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   const handleApproveConfirm = useCallback(() => {
     if (!row) return
     patchUjatInstitutionScheduleConfirmStatus([row.id], 'approval_completed')
-    setStatusRefreshTick(t => t + 1)
+    void invalidate()
     onStatusUpdated()
     setPendingApprove(false)
-    const assignedCount = getUjatInstitutionScheduleConfirmAssignedInstructorCount(row.id)
     showAlert({
       title: UJAT_INSTITUTION_SCHEDULE_CONFIRM_APPROVE_ALERT_TITLE,
       content: getUjatInstitutionScheduleConfirmApproveCompleteContent(
         row.institutionName,
-        assignedCount
+        row.assignedInstructorCount ?? null
       ),
     })
-  }, [row, onStatusUpdated, showAlert])
+  }, [row, invalidate, onStatusUpdated, showAlert])
 
   const handleRevisionRequestConfirm = useCallback(
     async (payload: UjatScheduleConfirmRevisionRequestModalPayload) => {
@@ -119,7 +109,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
         }
       }
       patchUjatInstitutionScheduleConfirmStatus([row.id], 'revision_requested')
-      setStatusRefreshTick(t => t + 1)
+      void invalidate()
       onStatusUpdated()
       setPendingRevisionRequest(false)
       showAlert({
@@ -127,7 +117,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
         content: `[${row.institutionName}] 담당교사님에게 수정 요청이 전달되었습니다.`,
       })
     },
-    [programId, row, onStatusUpdated, showAlert]
+    [programId, row, invalidate, onStatusUpdated, showAlert]
   )
 
   if (!row || !detail) {

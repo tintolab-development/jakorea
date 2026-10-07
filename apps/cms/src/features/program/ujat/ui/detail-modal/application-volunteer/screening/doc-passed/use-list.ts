@@ -59,8 +59,8 @@ function filterDocPassedApplicants(
     ) {
       return false
     }
-    if (filters.educationExperience === 'yes' && !row.hasEducationExperience) return false
-    if (filters.educationExperience === 'no' && row.hasEducationExperience) return false
+    if (filters.educationExperience === 'yes' && row.hasEducationExperience !== true) return false
+    if (filters.educationExperience === 'no' && row.hasEducationExperience !== false) return false
     if (
       filters.interviewAssignmentStatus !== UJAT_VOLUNTEER_DOC_PASSED_FILTER_ALL &&
       row.interviewAssignmentStatus !== filters.interviewAssignmentStatus
@@ -154,14 +154,9 @@ export function useUjatVolunteerDocPassed({
   }, [pendingFilters])
 
   const filteredSorted = useMemo(() => {
-    const clientOnly: UjatVolunteerDocPassedFilters = {
-      ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS,
-      preferredRegion: appliedFilters.preferredRegion,
-      educationExperience: appliedFilters.educationExperience,
-    }
-    const filtered = filterDocPassedApplicants(list, clientOnly)
+    const filtered = filterDocPassedApplicants(list, DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS)
     return sortUjatVolunteerDocPassedApplicants(filtered)
-  }, [appliedFilters, list])
+  }, [list])
   const infiniteScrollResetKey = useMemo(
     () => `${programId}:${half}:${JSON.stringify(appliedFilters)}`,
     [appliedFilters, half, programId]

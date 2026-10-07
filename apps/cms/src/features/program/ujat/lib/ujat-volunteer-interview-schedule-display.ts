@@ -7,7 +7,7 @@ import {
   type VolunteerInterviewScheduleEditSeed,
 } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
 import {
-  getUjatVolunteerInterviewScheduleMock,
+  EMPTY_UJAT_VOLUNTEER_INTERVIEW_SCHEDULE,
   type UjatVolunteerInterviewScheduleData,
 } from '@/features/program/ujat/model/ujat-volunteer-interview-schedule'
 import { formatDateOnly } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -16,15 +16,6 @@ import {
   type UnavailableDatesExclusionState,
 } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { mapVolunteerInterviewExceptionsFromOverlay } from '@/features/program/shared/lib/volunteer-interview-exception-overlay'
-
-const EMPTY_UJAT_VOLUNTEER_INTERVIEW_SCHEDULE: UjatVolunteerInterviewScheduleData = {
-  common: {
-    recurringUnavailable: '-',
-    specificUnavailableDates: '-',
-    availableTimeSlots: '-',
-  },
-  exceptions: [],
-}
 
 function readExclusionState(value: unknown): UnavailableDatesExclusionState | undefined {
   if (value == null || typeof value !== 'object' || Array.isArray(value)) return undefined
@@ -159,10 +150,6 @@ function interviewScheduleFromOverlay(
   }
 }
 
-function isRemoteProgramId(id: string): boolean {
-  return /^\d+$/.test(id)
-}
-
 export function resolveUjatVolunteerInterviewScheduleDisplay(
   program: Program,
   half?: UjatVolunteerRecruitHalf,
@@ -190,11 +177,9 @@ export function resolveUjatVolunteerInterviewScheduleDisplay(
   }
 
   if (fromOverlay) return fromOverlay.display
-  if (options?.allowMockFallback === false || isRemoteProgramId(program.id)) {
-    return EMPTY_UJAT_VOLUNTEER_INTERVIEW_SCHEDULE
-  }
-
-  return getUjatVolunteerInterviewScheduleMock(program.id, half)
+  void options
+  void half
+  return EMPTY_UJAT_VOLUNTEER_INTERVIEW_SCHEDULE
 }
 
 export function resolveUjatVolunteerInterviewScheduleEditSeed(
@@ -215,15 +200,9 @@ export function resolveUjatVolunteerInterviewScheduleEditSeed(
     })
   }
 
-  if (options?.allowMockFallback === false || isRemoteProgramId(program.id)) {
-    return undefined
-  }
-
-  const mock = getUjatVolunteerInterviewScheduleMock(program.id, half)
-  return buildVolunteerInterviewScheduleEditSeed({
-    recurringUnavailable: mock.common.recurringUnavailable,
-    availableTimeSlots: mock.common.availableTimeSlots,
-  })
+  void options
+  void half
+  return undefined
 }
 
 /** UJAT는 봉사자 면접이 항상 있으므로 면접 진행 가능 일정을 상시 노출 */

@@ -31,7 +31,7 @@ export type UjatScheduleConfirmGuidanceNotes = {
 }
 
 export type UjatScheduleConfirmConfirmedDetail = {
-  scheduleConfirmStatus: UjatInstitutionScheduleConfirmStatus
+  scheduleConfirmStatus: UjatInstitutionScheduleConfirmStatus | null
   institutionName: string
   regionLabel: string
   address: string

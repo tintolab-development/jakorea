@@ -1,12 +1,4 @@
-import { getUjatEducationProgressVolunteerMockRows } from '@/features/program/ujat/model/ujat-education-progress'
-import {
-  buildUjatVolunteerApplicantId,
-  getUjatVolunteerMockProfile,
-  parseEducationProgressVolunteerProfileId,
-} from '@/features/program/ujat/model/ujat-volunteer-profile'
-import { findUjatVolunteerApplicantById } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
-import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { EducationProgressHalfKey } from '../../tabs'
 import type { UjatEducationProgressVolunteerRow } from '../types'
 
@@ -18,10 +10,6 @@ export type UjatEducationProgressVolunteerDetail = {
   adminComment: string
 }
 
-function recruitHalfFromProgress(half: EducationProgressHalfKey): UjatVolunteerRecruitHalf {
-  return half === 'h2' ? 'h2' : 'h1'
-}
-
 export function isUjatEducationProgressVolunteerInList(
   _half: EducationProgressHalfKey,
   volunteerId: string
@@ -31,35 +19,11 @@ export function isUjatEducationProgressVolunteerInList(
 }
 
 export function getUjatEducationProgressVolunteerDetail(
-  programId: string,
-  half: EducationProgressHalfKey,
-  volunteerId: string
+  _programId: string,
+  _half: EducationProgressHalfKey,
+  _volunteerId: string
 ): UjatEducationProgressVolunteerDetail | null {
-  const row = getUjatEducationProgressVolunteerMockRows(half).find(r => r.id === volunteerId)
-  if (!row) return null
-
-  const recruitHalf = recruitHalfFromProgress(half)
-  const profileId = parseEducationProgressVolunteerProfileId(volunteerId)
-  const profile = profileId ? getUjatVolunteerMockProfile(profileId) : undefined
-
-  const applicant =
-    (profileId
-      ? findUjatVolunteerApplicantById(
-          programId,
-          recruitHalf,
-          buildUjatVolunteerApplicantId(programId, recruitHalf, profileId)
-        )
-      : undefined) ?? null
-
-  if (!applicant) return null
-
-  return {
-    volunteerId,
-    half,
-    row,
-    applicant,
-    adminComment: profile?.adminComment ?? '',
-  }
+  return null
 }
 
 export function formatUjatEducationProgressVolunteerDetailTitle(

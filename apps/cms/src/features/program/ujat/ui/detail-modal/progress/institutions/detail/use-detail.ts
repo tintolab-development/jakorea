@@ -11,18 +11,16 @@ import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-h
 import { getUjatInstitutionApplicationDetail } from '@/features/program/ujat/model/ujat-institution-application'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
-import {
-  getUjatEducationProgressInstitutionDetail,
-} from './institution-detail-data'
 import type {
   UjatEducationProgressInstitutionConfirmedScheduleRow,
   UjatEducationProgressInstitutionDetail,
 } from './types'
 import {
-  UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,
   formatUjatInstitutionFridayDisplay,
   resolveEducationSemesterForIsoDate,
+  type UjatInstitutionScheduleAssignDateEntry,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
+import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-modal/application-institution/use-program-schedule-dates'
 import { getUjatScheduleAssignRegionState } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-assign/store'
 import {
   formatGradeClassSectionLabel,
@@ -42,13 +40,16 @@ const DEFAULT_GUIDANCE = {
 function buildConfirmedEducationScheduleRows(
   institutionId: string,
   regionKey: UjatInstitutionApplicationRegionKey,
-  half: EducationProgressHalfKey
+  half: EducationProgressHalfKey,
+  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[]
 ): UjatEducationProgressInstitutionConfirmedScheduleRow[] {
   const state = getUjatScheduleAssignRegionState(regionKey)
   const rows: UjatEducationProgressInstitutionConfirmedScheduleRow[] = []
 
-  for (const { isoDate } of UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES) {
-    if (resolveEducationSemesterForIsoDate(isoDate) !== half) continue
+  for (const isoDate of Object.keys(state.days).sort()) {
+    const known = scheduleDates.find(entry => entry.isoDate === isoDate)
+    const semester = known?.semester ?? resolveEducationSemesterForIsoDate(isoDate)
+    if (semester !== half) continue
     const day = state.days[isoDate]
     if (!day) continue
 
@@ -81,6 +82,7 @@ export function useUjatEducationProgressInstitutionDetail(input: {
 }) {
   const { programId, half, institutionId } = input
   const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
+  const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
 
   const remoteQuery = useInfiniteQuery({
     queryKey: [
@@ -117,13 +119,14 @@ export function useUjatEducationProgressInstitutionDetail(input: {
         confirmedScheduleRows: buildConfirmedEducationScheduleRows(
           institutionId,
           row.regionKey,
-          half
+          half,
+          scheduleDates
         ),
         guidance: { ...DEFAULT_GUIDANCE },
       }
     }
-    return getUjatEducationProgressInstitutionDetail(programId, half, institutionId)
-  }, [half, institutionId, programId, remoteEnabled, remoteQuery.data])
+    return null
+  }, [half, institutionId, programId, remoteEnabled, remoteQuery.data, scheduleDates])
 
   return {
     detail,
