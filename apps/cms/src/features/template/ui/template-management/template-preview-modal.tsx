@@ -16,6 +16,7 @@ export type TemplatePreviewModalProps = {
   deleteLoading?: boolean
   registryEntry: TemplateRegistryDefinition | undefined
   templateId: string | undefined
+  templateVersionId?: number
   templateName: string | undefined
   systemTemplate?: boolean
   forceUserEditable?: boolean
@@ -39,6 +40,7 @@ export function TemplatePreviewModal({
   deleteLoading,
   registryEntry,
   templateId,
+  templateVersionId,
   templateName,
   systemTemplate,
   forceUserEditable = false,
@@ -70,6 +72,7 @@ export function TemplatePreviewModal({
       deleteLoading={deleteLoading}
       registryEntry={registryEntry}
       templateId={templateId}
+      templateVersionId={templateVersionId}
       templateName={templateName}
       systemTemplate={systemTemplate}
       forceUserEditable={forceUserEditable}

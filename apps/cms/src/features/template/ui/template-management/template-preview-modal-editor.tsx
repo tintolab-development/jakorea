@@ -39,6 +39,7 @@ type TemplatePreviewModalEditorProps = {
   deleteLoading?: boolean
   registryEntry: TemplateRegistryDefinition | undefined
   templateId: string | undefined
+  templateVersionId?: number
   templateName: string | undefined
   systemTemplate?: boolean
   forceUserEditable?: boolean
@@ -272,6 +273,7 @@ function ParticipantApplicationTemplatePreviewEditor({
   title,
   registryEntry,
   templateId,
+  templateVersionId,
   templateName,
   systemTemplate,
   forceUserEditable = false,
@@ -291,6 +293,7 @@ function ParticipantApplicationTemplatePreviewEditor({
     {
       onTemplateDraftSaveConfirmed,
       templateCode: registryEntry.id ?? templateId,
+      templateVersionId,
       systemTemplate,
       forceUserEditable,
     }
