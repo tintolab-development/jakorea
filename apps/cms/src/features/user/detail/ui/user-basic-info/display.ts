@@ -413,7 +413,8 @@ export function detailEmailDisplay(user: Omit<User, 'password'>, revealed: boole
  * - 개인정보 상세보기 전:
  *   - `detailAddress` + `detailAddressDetail`이 나뉘어 있으면 본문은 그대로(또는 본문 토큰 3+면 앞 2만),
  *     상세·나머지 토큰은 항상 CSS blur — 시·군·구(≤2토큰)만 있어도 상세가 있으면 블러 꼬리 유지.
- *   - 한 줄로만 오면 토큰 3+일 때 앞 2 / 이후 블러. 토큰 2개 이하는 BE 시·군·구 마스킹으로 보고 그대로.
+ *   - 한 줄로만 오면 토큰 3+일 때 앞 2 / 이후 블러. 토큰 2개 이하는 BE 시·군·구 마스킹으로 보고
+ *     원문 뒤에 고정 더미 블러 꼬리를 붙인다.
  * - 상세보기 후: 원문 전체.
  */
 export function detailAddressView(user: Omit<User, 'password'>, revealed: boolean): ReactNode {
@@ -445,13 +446,16 @@ export function detailAddressView(user: Omit<User, 'password'>, revealed: boolea
 
   const parts = raw.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '-'
-  // BE 마스킹 응답(시 / 시군구) — FE에서 재블러하지 않음
-  if (parts.length <= 2) return raw
+  // BE 마스킹 응답(시 / 시군구)은 상세가 잘려 오므로 고정 더미를 블러해 마스킹 상태임을 표시
+  if (parts.length <= 2) return createAddressPrivacyView(raw, MASKED_ADDRESS_DETAIL_PLACEHOLDER)
 
   const head = parts.slice(0, 2).join(' ')
   const tail = parts.slice(2).join(' ')
   return createAddressPrivacyView(head, tail)
 }
+
+/** 원문과 무관한 고정 문자열 — 마스킹 값에서 상세주소를 복원하지 않는다 */
+const MASKED_ADDRESS_DETAIL_PLACEHOLDER = '상세주소 ●●● ●●●호'
 
 function createAddressPrivacyView(head: string, tail: string): ReactNode {
   const clear = head.trim()

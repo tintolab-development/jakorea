@@ -8,7 +8,7 @@
 
 import { useId, type ReactNode } from 'react'
 import { Modal, type ModalProps } from 'antd'
-import { CloseOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import './teal-header-modal.css'
 
 export interface TealHeaderModalProps {
@@ -31,7 +31,7 @@ export interface TealHeaderModalProps {
   className?: string
   /** true 시 헤더(타이틀+닫기) 영역 미렌더 — 풀페이지 모달 등에서 자체 헤더/닫기 사용 시 */
   hideHeader?: boolean
-  /** 닫기 버튼 커스텀 아이콘 (미지정 시 CloseOutlined) */
+  /** 닫기 버튼 커스텀 아이콘 (미지정 시 ModalCloseIcon) */
   closeIcon?: React.ReactNode
   /** 다른 모달 위에 겹칠 때 스택 순서 (예: 산출 내역서 위 확인 모달) */
   zIndex?: number
@@ -123,7 +123,7 @@ export function TealHeaderModal({
               onClick={onCancel}
               aria-label="닫기"
             >
-              {closeIcon ?? <CloseOutlined />}
+              {closeIcon ?? <ModalCloseIcon tone="white" />}
             </button>
           </div>
         </div>

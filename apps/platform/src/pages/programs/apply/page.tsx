@@ -1012,7 +1012,7 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(sexOffenseParagraph)] =
           sexOffenseSubmissionAnswerFromValues(sexOffense)
       }
-      if (instructorCrimeParagraph && instructorCrimeRecord.fileObjectId != null) {
+      if (instructorCrimeParagraph && instructorCrimeRecord.confirmed) {
         overrides[resolveApplicationAnswerKey(instructorCrimeParagraph)] =
           instructorCrimeRecordAnswerFromValues(instructorCrimeRecord)
       }
@@ -1047,7 +1047,7 @@ export function ProgramApplyPage() {
         omitParagraphIds.add(teamParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(teamParagraph))
       }
-      if (instructorCrimeParagraph && instructorCrimeRecord.fileObjectId == null) {
+      if (instructorCrimeParagraph && !instructorCrimeRecord.confirmed) {
         omitParagraphIds.add(instructorCrimeParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(instructorCrimeParagraph))
       }
@@ -1116,6 +1116,16 @@ export function ProgramApplyPage() {
     visibleInstructorScheduleParagraph != null &&
     runtimeInstructorScheduleSlots != null &&
     runtimeInstructorScheduleSlots.length === 0
+  const visibleInstructorCrimeParagraph = displayDraft
+    ? findDraftParagraph(
+        displayDraft,
+        id => isInstructorCrimeRecordParagraphId(id) && !hiddenParagraphIds.has(id),
+      )
+    : null
+  const instructorCrimeRecordUnconfirmed =
+    visibleInstructorCrimeParagraph != null &&
+    isRequiredParagraph(visibleInstructorCrimeParagraph) &&
+    !instructorCrimeRecord.confirmed
 
   return (
     <section className={[shell.page, styles.page].join(' ')}>
@@ -1183,6 +1193,7 @@ export function ProgramApplyPage() {
                 submitMutation.isPending ||
                 !displayDraft ||
                 instructorScheduleUnavailable ||
+                instructorCrimeRecordUnconfirmed ||
                 Boolean(blockedMessage && remoteApplyEnabled)
               }
               onClick={() => {

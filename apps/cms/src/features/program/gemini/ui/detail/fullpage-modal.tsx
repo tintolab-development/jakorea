@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -9,7 +10,8 @@ import {
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
-import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -19,7 +21,14 @@ import {
 } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { LnbIconGeminiInstitutionApplications } from './gemini-recruitment-detail-lnb-icons'
+import { geminiRecruitmentService } from '../../api/recruitment-service'
+import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import { useGeminiRecruitmentInfoEdit } from '../../hooks/use-gemini-recruitment-info-edit'
+import {
+  geminiRecruitmentDeleteBlocked,
+  resolveGeminiDeleteBlockedAlert,
+  resolveGeminiDeleteGuideModalCopy,
+} from '../../lib/delete-guide'
 import { useToday } from '../../hooks/use-today'
 import { GEMINI_RECRUITMENT_ADD_PARAM } from '../../lib/recruitment/add-url'
 import {
@@ -80,6 +89,8 @@ export function GeminiRecruitmentDetailFullPageModal({
   const todayKey = useToday()
   const activeLnb = parseGeminiRecruitmentDetailLnb(searchParams.get(GEMINI_RECRUITMENT_LNB_PARAM))
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const queryClient = useQueryClient()
   const activeLnbItem =
     SIDEBAR_ITEMS.find(item => item.key === activeLnb) ?? SIDEBAR_ITEMS[0]
 
@@ -206,7 +217,34 @@ export function GeminiRecruitmentDetailFullPageModal({
     }
   }, [handleInfoSave, infoDraft, isEditModeInfo, showAlert])
 
+  const handleDeleteClick = useCallback(() => {
+    if (detail == null) return
+    if (geminiRecruitmentDeleteBlocked(detail)) {
+      showAlert(resolveGeminiDeleteBlockedAlert('공고', 1))
+      return
+    }
+    setDeleteModalOpen(true)
+  }, [detail, showAlert])
+
+  const handleConfirmDelete = useCallback(async () => {
+    try {
+      await geminiRecruitmentService.delete([recruitmentId])
+      setDeleteModalOpen(false)
+      onClose()
+      void queryClient.invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
+      })
+    } catch {
+      setDeleteModalOpen(false)
+      showAlert({
+        title: '안내',
+        content: '모집 공고 등록/삭제를 처리하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
+      })
+    }
+  }, [onClose, queryClient, recruitmentId, showAlert])
+
   const open = Boolean(recruitmentId)
+  const deleteGuide = resolveGeminiDeleteGuideModalCopy('공고', 1)
 
   return (
     <>
@@ -230,6 +268,11 @@ export function GeminiRecruitmentDetailFullPageModal({
             expandedGroupKeys={[]}
             onSelectTop={handleSidebarSelectTop}
             onSelectChild={() => undefined}
+            footer={
+              canWrite && detail ? (
+                <ProgramDetailLnbDeleteButton onClick={handleDeleteClick} />
+              ) : null
+            }
           />
         }
       >
@@ -283,6 +326,16 @@ export function GeminiRecruitmentDetailFullPageModal({
         open={previewOpen}
         snapshot={previewSnapshot}
         onClose={() => setPreviewOpen(false)}
+      />
+      <DeleteGuideModal
+        open={deleteModalOpen}
+        title={deleteGuide.title}
+        lines={deleteGuide.lines}
+        confirmText="삭제"
+        onConfirm={() => {
+          void handleConfirmDelete()
+        }}
+        onCancel={() => setDeleteModalOpen(false)}
       />
     </>
   )

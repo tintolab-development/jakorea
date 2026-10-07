@@ -7,6 +7,8 @@ type ConsentWithdrawConfirmProps = {
   title: ReactNode
   description: ReactNode
   confirmLoading?: boolean
+  /** `agree` — 동의 확인(확인 버튼 강조) */
+  mode?: 'withdraw' | 'agree'
   onCancel: () => void
   onConfirm: () => void
 }
@@ -16,9 +18,11 @@ export function ConsentWithdrawConfirm({
   title,
   description,
   confirmLoading = false,
+  mode = 'withdraw',
   onCancel,
   onConfirm,
 }: ConsentWithdrawConfirmProps) {
+  const isAgree = mode === 'agree'
   return (
     <PFModal open={open} size="md" onClose={onCancel} closeOnBackdropClick={!confirmLoading}>
       <div className={styles.content}>
@@ -33,7 +37,7 @@ export function ConsentWithdrawConfirm({
         <div className={styles.actions}>
           <PFButton
             type="button"
-            variant="primary"
+            variant={isAgree ? 'tertiary' : 'primary'}
             size="xlarge"
             disabled={confirmLoading}
             onClick={onCancel}
@@ -42,12 +46,12 @@ export function ConsentWithdrawConfirm({
           </PFButton>
           <PFButton
             type="button"
-            variant="tertiary"
+            variant={isAgree ? 'primary' : 'tertiary'}
             size="xlarge"
             disabled={confirmLoading}
             onClick={onConfirm}
           >
-            {confirmLoading ? '처리 중…' : '철회하기'}
+            {confirmLoading ? '처리 중…' : isAgree ? '동의하기' : '철회하기'}
           </PFButton>
         </div>
       </div>

@@ -12,7 +12,7 @@ export function isSchoolTeacherMypageProfile(profile: PlatformMemberProfile) {
   return profile === 'school_teacher'
 }
 
-/** 교사회원·교사 겸직 강사 — 소속·재직현황 노출 대상 */
+/** 교사 회원·교사 겸직 강사 — 소속·재직현황 노출 대상 */
 export function showMypageAffiliationEmployment(profile: PlatformMemberProfile) {
   return profile === 'school_teacher' || profile === 'instructor_dual'
 }
@@ -25,11 +25,11 @@ export function isInstructorDualMypageProfile(profile: PlatformMemberProfile) {
 export function getMypageProfileLabel(profile: PlatformMemberProfile) {
   switch (profile) {
     case 'individual':
-      return '일반회원'
+      return '일반 회원'
     case 'school_teacher':
-      return '교사회원'
+      return '교사 회원'
     case 'instructor_only':
-      return '강사회원'
+      return '강사 회원'
     case 'instructor_dual':
       return '교사+강사회원'
   }

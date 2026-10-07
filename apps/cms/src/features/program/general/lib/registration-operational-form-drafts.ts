@@ -58,6 +58,8 @@ import {
   persistDraftOwnedFormVersion,
 } from '@/features/program/general/lib/registration-draft-form-versions'
 import { listVisibleOperationalFormSpecs } from '@/features/program/general/lib/operational-form-bindings'
+import { stripWritingTemplateCopySuffix } from '@/features/template/lib/form-template-delete-policy'
+import { getRegistrationStepTemplateSelections } from '@/features/program/shared/lib/step-template-selection'
 import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
 import {
   getUjatApplicationInstitutionOverlayRecord,
@@ -110,29 +112,27 @@ export function resolveRegistrationOperationalDraftStorageKey(
 }
 
 export function listRegistrationOperationalFormDraftStorageKeys(
-  variant: RegistrationOperationalDraftVariant
+  variant: RegistrationOperationalDraftVariant,
+  programType?: string
 ): readonly string[] {
-  if (variant === 'general') {
-    return GENERAL_PROGRAM_REGISTRATION_STEPS.filter(s => s.phase !== 'program').map(
-      s => s.templateId
-    )
-  }
-  if (variant === 'economy') {
-    return [
-      ...ECONOMY_OWNED_OPERATIONAL_TEMPLATE_IDS,
-      'recruitment-participant-individual',
-      'recruitment-instructor',
-      'application-participant-individual',
-      'application-instructor',
-    ]
-  }
-  if (variant === 'trainedTeachers') {
-    return [...TRAINED_TEACHERS_OWNED_OPERATIONAL_TEMPLATE_IDS]
-  }
-  if (variant === 'ujat') {
-    return [...UJAT_OWNED_OPERATIONAL_TEMPLATE_IDS]
-  }
-  return []
+  const defaults =
+    variant === 'general'
+      ? GENERAL_PROGRAM_REGISTRATION_STEPS.filter(s => s.phase !== 'program').map(s => s.templateId)
+      : variant === 'economy'
+        ? [
+            ...ECONOMY_OWNED_OPERATIONAL_TEMPLATE_IDS,
+            'recruitment-participant-individual',
+            'recruitment-instructor',
+            'application-participant-individual',
+            'application-instructor',
+          ]
+        : variant === 'trainedTeachers'
+          ? [...TRAINED_TEACHERS_OWNED_OPERATIONAL_TEMPLATE_IDS]
+          : variant === 'ujat'
+            ? [...UJAT_OWNED_OPERATIONAL_TEMPLATE_IDS]
+            : []
+  if (programType == null) return defaults
+  return [...new Set([...defaults, ...Object.values(getRegistrationStepTemplateSelections(programType))])]
 }
 
 /** storage key → 카탈로그 templateId */
@@ -186,21 +186,22 @@ type OperationalOverlayKind =
   | 'ujat-application-volunteer'
 
 function resolveOperationalOverlayKind(catalogTemplateId: string): OperationalOverlayKind | null {
-  if (catalogTemplateId === 'recruitment-ujat-school') return 'ujat-recruit-institution'
-  if (catalogTemplateId === 'recruitment-ujat-volunteer') return 'ujat-recruit-volunteer'
-  if (catalogTemplateId === 'application-ujat-school') return 'ujat-application-institution'
-  if (catalogTemplateId === 'application-ujat-volunteer') return 'ujat-application-volunteer'
+  const code = stripWritingTemplateCopySuffix(catalogTemplateId)
+  if (code === 'recruitment-ujat-school') return 'ujat-recruit-institution'
+  if (code === 'recruitment-ujat-volunteer') return 'ujat-recruit-volunteer'
+  if (code === 'application-ujat-school') return 'ujat-application-institution'
+  if (code === 'application-ujat-volunteer') return 'ujat-application-volunteer'
   if (
-    catalogTemplateId === 'recruitment-participant-school' ||
-    catalogTemplateId === 'recruitment-economy' ||
-    catalogTemplateId === 'recruitment-trained-teachers'
+    code === 'recruitment-participant-school' ||
+    code === 'recruitment-economy' ||
+    code === 'recruitment-trained-teachers'
   ) {
     return 'institution-recruit'
   }
-  if (catalogTemplateId.startsWith('recruitment-')) {
+  if (code.startsWith('recruitment-')) {
     return 'general-recruit'
   }
-  if (catalogTemplateId.startsWith('application-')) {
+  if (code.startsWith('application-')) {
     return 'general-application'
   }
   return null
@@ -209,7 +210,7 @@ function resolveOperationalOverlayKind(catalogTemplateId: string): OperationalOv
 export function createSeedDraftForOperationalCatalogId(
   catalogTemplateId: string
 ): WritingFormDraft | null {
-  switch (catalogTemplateId) {
+  switch (stripWritingTemplateCopySuffix(catalogTemplateId)) {
     case 'recruitment-participant-school':
       return createApplicantRecruitFormInstitutionDraft()
     case 'recruitment-economy':
@@ -335,7 +336,7 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
   const { loadRegistrationWizardFormDraft } = await import(
     '@/features/program/general/lib/registration-wizard-form-draft'
   )
-  for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant)) {
+  for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant, programType)) {
     const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
     const saved = await loadRegistrationWizardFormDraft({
       programType,
@@ -395,7 +396,7 @@ export async function persistRegistrationOperationalOverlaysToLocal(
   const { loadRegistrationWizardFormDraft, persistRegistrationWizardFormDraft } = await import(
     '@/features/program/general/lib/registration-wizard-form-draft'
   )
-  for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant)) {
+  for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant, programType)) {
     const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
     const overlay = collectOperationalOverlayForCatalogId(catalogId)
     if (overlay == null || Object.keys(overlay).length === 0) continue

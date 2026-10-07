@@ -27,7 +27,7 @@ function normalizeTermsType(value: string) {
 
 function resolveUiKeyForTermsType(
   termsType: string,
-  label?: string,
+  label?: string
 ): AgreementKey | GuardianAgreementKey | null {
   const normalized = normalizeTermsType(termsType)
 
@@ -41,7 +41,7 @@ function resolveUiKeyForTermsType(
   }
 
   const labelText = (label ?? '').trim()
-  if (labelText.includes('교사회원') || labelText.includes('학교/기관')) return 'teacherInfo'
+  if (labelText.includes('교사 회원') || labelText.includes('학교/기관')) return 'teacherInfo'
   if (labelText.includes('초상권')) return 'portrait'
   if (labelText.includes('마케팅')) return 'marketing'
   if (labelText.includes('법정대리인') || labelText.includes('보호자')) return 'guardianLegal'
@@ -59,7 +59,7 @@ function isAgreedForUiKey(
   uiKey: AgreementKey | GuardianAgreementKey,
   agreements: AgreementState,
   guardianAgreements: GuardianAgreementState | null,
-  isUnderAge: boolean,
+  isUnderAge: boolean
 ): boolean {
   if (uiKey === 'guardianLegal') {
     return isChoiceAgreed(guardianAgreements?.guardianLegal)
@@ -78,7 +78,7 @@ function isAgreedForUiKey(
 
 function toTermsAgreementRequest(
   doc: SignupTermsDocument,
-  agreed: boolean,
+  agreed: boolean
 ): TermsAgreementRequest | null {
   const payload: SignupTermsAgreementPayload | undefined = doc.agreementPayload
   const termsType = payload?.termsType ?? doc.termsType
@@ -93,9 +93,7 @@ function toTermsAgreementRequest(
     version,
     required: payload?.required ?? doc.required,
     agreed,
-    ...(payload?.termsSnapshotJson
-      ? { termsSnapshotJson: payload.termsSnapshotJson }
-      : {}),
+    ...(payload?.termsSnapshotJson ? { termsSnapshotJson: payload.termsSnapshotJson } : {}),
   }
 }
 

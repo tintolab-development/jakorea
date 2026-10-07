@@ -378,6 +378,8 @@ export type UseProgramParticipantApplicationEditorOptions = {
    * (미전달 시 기존처럼 active=false에서 캐시 clear)
    */
   registrationWizardOpen?: boolean
+  /** 탭 템플릿 변경 시 세션 draft 캐시를 비우고 다시 hydrate */
+  wizardDraftRevision?: number
 }
 
 function isApplicantRecruitInstitutionVariant(
@@ -724,7 +726,7 @@ export function useProgramParticipantApplicationEditor(
       : localOnlyDraftPersistence
         ? resolveLocalDraftStorageKey()
         : resolvePersistTemplateId()
-    const hydrateKey = `${templateId}::${persistTemplateVersionId ?? 'none'}::${usesRegistrationWizardDraft ? 'wizard' : localOnlyDraftPersistence ? 'local' : 'remote'}::${preferLocalDraft ? 'prefer-local' : 'bound'}`
+    const hydrateKey = `${templateId}::${persistTemplateVersionId ?? 'none'}::${usesRegistrationWizardDraft ? 'wizard' : localOnlyDraftPersistence ? 'local' : 'remote'}::${preferLocalDraft ? 'prefer-local' : 'bound'}::rev-${editorOptions?.wizardDraftRevision ?? 0}`
 
     const applyDraftNow = (next: WritingFormDraft) => {
       const migrated =
@@ -993,6 +995,7 @@ export function useProgramParticipantApplicationEditor(
     skipDraftRestore,
     usesRegistrationWizardDraft,
     variant,
+    editorOptions?.wizardDraftRevision,
   ])
 
   useEffect(() => {
@@ -1491,19 +1494,12 @@ export function useProgramParticipantApplicationEditor(
             isTemplateAuthoringMode: !programLinkedPreview,
           })
         }
-        if (variant === 'instructor') {
-          return resolveGeneralApplicationFormHiddenParagraphIds('instructor', {
-            program: linkedProgram,
-            paragraphs: draft.paragraphs,
-            isTemplateAuthoringMode: !programLinkedPreview,
-          })
-        }
+        if (variant === 'instructor') return undefined
         if (linkedProgram != null) {
           return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
             program: linkedProgram,
             paragraphs: draft.paragraphs,
             institutionBridge: institutionApplicationBridge,
-            isTemplateAuthoringMode: !programLinkedPreview,
           })
         }
         if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds

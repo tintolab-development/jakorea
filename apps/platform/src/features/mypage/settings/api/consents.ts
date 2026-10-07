@@ -1,6 +1,7 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 
 const PORTAL_CONSENTS_PATH = '/api/portal/me/consents'
+const PORTAL_MARKETING_CONSENT_PATH = '/api/portal/me/marketing-consent'
 
 /** GET /api/portal/me/consents 항목 — MemberPortalConsentSummary */
 export type PortalConsentSummary = {
@@ -17,9 +18,39 @@ export type PortalConsentSummary = {
   withdrawable?: boolean
   reconsentRequired?: boolean
   documentId?: number
+  /** 초상권 — `PARTIAL` | `DISAGREED` (FULL 없음) */
   consentStatus?: string
+  /** 초상권 — 프로그램 참여 게이트는 이 값만 사용 */
   programEligible?: boolean
 }
+
+/** PUT /api/portal/me/marketing-consent — PortalMarketingConsentUpdateRequest */
+export type PortalMarketingConsentUpdateRequest = {
+  agreed: boolean
+  version?: string
+  reason?: string
+}
+
+/** PUT /api/portal/me/marketing-consent — PortalMarketingConsentResponse */
+export type PortalMarketingConsentResponse = {
+  consentType?: string
+  agreed?: boolean
+  agreedAt?: string | null
+  withdrawnAt?: string | null
+  updatedAt?: string
+  version?: string
+}
+
+/** 철회 응답 — MemberPortalConsentMutationResponse */
+export type PortalConsentMutationResponse = {
+  documentId?: number | null
+  consentType?: string
+  status?: string
+  changedAt?: string
+}
+
+/** documentId 없이 유형으로 철회 가능한 항목 */
+export const TYPE_WITHDRAWABLE_CONSENT_TYPES = ['PORTRAIT_RIGHTS', 'CHILD_PRIVACY_COLLECTION'] as const
 
 function unwrapEnvelope<T>(payload: unknown): T {
   if (payload && typeof payload === 'object') {
@@ -32,11 +63,35 @@ function unwrapEnvelope<T>(payload: unknown): T {
 }
 
 /** POST /api/portal/me/consents/documents/{documentId}/withdraw — 전자서명 동의 철회 */
-export async function withdrawPortalConsentDocument(documentId: number, reason: string) {
-  await axiosClient.post(
+export async function withdrawPortalConsentDocument(
+  documentId: number,
+  reason: string,
+): Promise<PortalConsentMutationResponse> {
+  const res = await axiosClient.post(
     `${PORTAL_CONSENTS_PATH}/documents/${encodeURIComponent(String(documentId))}/withdraw`,
     { reason },
   )
+  return unwrapEnvelope<PortalConsentMutationResponse>(res.data) ?? {}
+}
+
+/** POST /api/portal/me/consents/{consentType}/withdraw — 문서 없는 초상권·아동개인정보 철회 */
+export async function withdrawPortalConsentByType(
+  consentType: (typeof TYPE_WITHDRAWABLE_CONSENT_TYPES)[number],
+  reason: string,
+): Promise<PortalConsentMutationResponse> {
+  const res = await axiosClient.post(
+    `${PORTAL_CONSENTS_PATH}/${encodeURIComponent(consentType)}/withdraw`,
+    { reason },
+  )
+  return unwrapEnvelope<PortalConsentMutationResponse>(res.data) ?? {}
+}
+
+/** PUT /api/portal/me/marketing-consent — 마케팅 동의·철회 (profile PATCH 사용 금지) */
+export async function putPortalMarketingConsent(
+  body: PortalMarketingConsentUpdateRequest,
+): Promise<PortalMarketingConsentResponse> {
+  const res = await axiosClient.put(PORTAL_MARKETING_CONSENT_PATH, body)
+  return unwrapEnvelope<PortalMarketingConsentResponse>(res.data) ?? {}
 }
 
 export async function fetchPortalConsents(signal?: AbortSignal): Promise<PortalConsentSummary[]> {

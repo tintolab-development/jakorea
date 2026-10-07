@@ -1,4 +1,4 @@
-import { CloseOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useId, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -99,7 +99,7 @@ export function TemplateFullpageModal({
             onClick={onClose}
             aria-label="닫기"
           >
-            <CloseOutlined />
+            <ModalCloseIcon />
           </button>
         </header>
 

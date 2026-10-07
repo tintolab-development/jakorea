@@ -69,26 +69,44 @@ describe('instructor register consent validation', () => {
     expect(result.missingRequired).toBe(false)
   })
 
-  it('Platform 강사 신청 필수 동의 키는 강사 신규 등록과 동일하다', () => {
-    expect([...getInstructorRequiredConsentAgreeKeys('platformApply')]).toEqual([
-      ...getInstructorRequiredConsentAgreeKeys('cmsRegister'),
+  it('강사 신규 등록 필수 동의 키는 이용약관·개인정보뿐이다', () => {
+    expect([...getInstructorRequiredConsentAgreeKeys('cmsRegister')]).toEqual([
+      'consentTermsOfService',
+      'consentPersonal',
     ])
   })
 
-  it('동의서 미작성(미동의)만으로는 Platform 강사 신청 필수 누락이 되지 않는다', () => {
-    const result = collectInstructorRegisterValidation(
-      baseValues({
-        consentPaymentStatement: 'disagree',
-        consentEducatorPledge: 'disagree',
-        consentAdministrativeJoint: 'disagree',
-        consentSexOffenseCheck: 'disagree',
-      }),
-      {},
-      {
-        requiredConsentAgreeKeys: [...getInstructorRequiredConsentAgreeKeys('platformApply')],
-      }
+  it('Platform 강사 신청은 이용약관·개인정보 + 동의서 4종이 필수다', () => {
+    expect([...getInstructorRequiredConsentAgreeKeys('platformApply')]).toEqual([
+      'consentTermsOfService',
+      'consentPersonal',
+      'consentPaymentStatement',
+      'consentEducatorPledge',
+      'consentAdministrativeJoint',
+      'consentSexOffenseCheck',
+    ])
+  })
+
+  it('동의서 1건이라도 미작성(미동의)이면 Platform 강사 신청 필수 누락이다', () => {
+    const allAgreed = {
+      consentPaymentStatement: 'agree',
+      consentEducatorPledge: 'agree',
+      consentAdministrativeJoint: 'agree',
+      consentSexOffenseCheck: 'agree',
+    } as const
+    const options = {
+      requiredConsentAgreeKeys: [...getInstructorRequiredConsentAgreeKeys('platformApply')],
+    }
+    expect(collectInstructorRegisterValidation(baseValues(allAgreed), {}, options).missingRequired).toBe(
+      false
     )
-    expect(result.missingRequired).toBe(false)
+    expect(
+      collectInstructorRegisterValidation(
+        baseValues({ ...allAgreed, consentSexOffenseCheck: 'disagree' }),
+        {},
+        options
+      ).missingRequired
+    ).toBe(true)
   })
 
   it('필수 동의 미동의 시 팝업 문구에 항목명이 포함된다', () => {

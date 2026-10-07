@@ -13,6 +13,8 @@ export type RegistrationProgramDraftPayloadV1 = {
   savedAt: string
   /** peekRegistrationDraftNotice — 제목 표시용 */
   programTitleKo?: string
+  /** 모집/신청 탭별 선택 양식 code (기본이면 키 생략) */
+  selectedOperationalTemplates?: Record<string, string>
 }
 
 export function isRegistrationProgramDraftPayloadV1(
@@ -40,6 +42,7 @@ export function createRegistrationProgramDraftPayload(args: {
   activeStep?: string
   formVersions?: Record<string, RegistrationProgramDraftFormVersionRef>
   programTitleKo?: string
+  selectedOperationalTemplates?: Record<string, string>
 }): RegistrationProgramDraftPayloadV1 {
   return {
     version: REGISTRATION_PROGRAM_DRAFT_PAYLOAD_VERSION,
@@ -48,5 +51,6 @@ export function createRegistrationProgramDraftPayload(args: {
     formVersions: args.formVersions ?? {},
     savedAt: new Date().toISOString(),
     programTitleKo: args.programTitleKo,
+    selectedOperationalTemplates: args.selectedOperationalTemplates,
   }
 }

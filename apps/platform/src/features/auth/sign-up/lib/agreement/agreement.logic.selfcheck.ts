@@ -28,7 +28,7 @@ const teacherItems = [
 
 function isRequiredAgreed(
   agreements: AgreementState,
-  items: { key: keyof AgreementState; required: boolean }[],
+  items: { key: keyof AgreementState; required: boolean }[]
 ) {
   return items.filter(item => item.required).every(item => agreements[item.key])
 }
@@ -59,7 +59,7 @@ assert.equal(isAllAgreed(requiredOnlyGeneral, generalItems), false)
 assert.equal(
   isRequiredAgreed(requiredOnlyGeneral, teacherItems),
   false,
-  '교사회원은 학교/기관 정보 동의도 필수',
+  '교사 회원은 학교/기관 정보 동의도 필수'
 )
 
 const requiredOnlyTeacher: AgreementState = {

@@ -16,6 +16,7 @@ import {
 } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import type { Program } from '@/types/domain'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
+import { getParticipantApplicationEditorVariantForTemplateCode } from '@/features/template/lib/participant-application-template-id'
 import {
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
@@ -69,6 +70,14 @@ import {
   type UjatProgramRegistrationPhaseKey,
   type UjatProgramRegistrationStepKey,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
+import {
+  clearRegistrationStepTemplateSelections,
+  getRegistrationStepTemplateSelections,
+  getSelectedOperationalTemplateCode,
+  hydrateRegistrationStepTemplateSelections,
+  isDefaultOperationalTemplateSelection,
+} from '@/features/program/shared/lib/step-template-selection'
+import { applyRegistrationStepTemplateChange } from '@/features/program/shared/lib/step-template-apply'
 
 export type UseUjatProgramRegistrationFlowOptions = {
   /** 필수 미입력 검증 실패 시 — 인라인 강조용 진단 키 */
@@ -110,12 +119,17 @@ export function useUjatProgramRegistrationFlow(
   const continueHydratedRef = useRef(false)
   const skipDraftRestore = options?.skipDraftRestore === true
   const programType = 'UJAT' as const
+  const [stepTemplateByKey, setStepTemplateByKey] = useState<Record<string, string>>({})
+  const [wizardDraftRevision, setWizardDraftRevision] = useState(0)
 
   useEffect(() => {
     if (!open) {
       continueHydratedRef.current = false
+      clearRegistrationStepTemplateSelections(programType)
+      setStepTemplateByKey({})
+      setWizardDraftRevision(0)
     }
-  }, [open])
+  }, [open, programType])
 
   useEffect(() => {
     if (!open || skipDraftRestore) return
@@ -124,6 +138,13 @@ export function useUjatProgramRegistrationFlow(
     void (async () => {
       const payload = await hydrateRegistrationProgramDraft(programType)
       await hydrateRegistrationOperationalOverlaysFromLocalDrafts(programType, 'ujat')
+      if (payload?.selectedOperationalTemplates != null) {
+        hydrateRegistrationStepTemplateSelections(
+          programType,
+          payload.selectedOperationalTemplates
+        )
+        setStepTemplateByKey(payload.selectedOperationalTemplates)
+      }
       if (payload?.activeStep == null) return
       const restored = normalizeUjatProgramRegistrationStepKey(payload.activeStep)
       setActiveStep(restored)
@@ -162,18 +183,27 @@ export function useUjatProgramRegistrationFlow(
     [activeStep]
   )
 
+  const selectedTemplateCode =
+    stepTemplateByKey[
+      activeStep === 'recruit-volunteer-h1' || activeStep === 'recruit-volunteer-h2'
+        ? 'recruit-volunteer'
+        : activeStep
+    ] ?? getSelectedOperationalTemplateCode(programType, activeStep, currentStepDef.templateId)
+
   const programTemplateName = useMemo(
     () => resolveStepTemplateName('registration-ujat'),
     []
   )
 
   const participantTemplateName = useMemo(
-    () => resolveStepTemplateName(currentStepDef.templateId),
-    [currentStepDef.templateId]
+    () => resolveStepTemplateName(selectedTemplateCode),
+    [selectedTemplateCode]
   )
 
   const participantVariant =
-    currentStepDef.editorVariant ?? ('ujat-recruit-institution' as const)
+    getParticipantApplicationEditorVariantForTemplateCode(selectedTemplateCode) ??
+    currentStepDef.editorVariant ??
+    ('ujat-recruit-institution' as const)
 
   const isProgramStep = activeStep === 'program'
   const isParticipantStep = isParticipantRegistrationStep(activeStep)
@@ -202,14 +232,16 @@ export function useUjatProgramRegistrationFlow(
       registrationWizardProgramType: programType,
       registrationWizardOpen: open,
       skipDraftRestore,
+      templateCode: selectedTemplateCode,
+      wizardDraftRevision,
       /** UJAT 등록 위저드 — 단락 타이틀 옆 필수(*) */
       forceSeedParagraphsRequired: true,
     }
   )
 
   const registryEntry = useMemo(
-    () => lookupTemplateRegistry(currentStepDef.templateId),
-    [currentStepDef.templateId]
+    () => lookupTemplateRegistry(selectedTemplateCode),
+    [selectedTemplateCode]
   )
 
   const editorVm = useMemo((): TemplateEditorVm => {
@@ -478,11 +510,35 @@ export function useUjatProgramRegistrationFlow(
     showAlert,
   ])
 
+  const selectStepTemplate = useCallback(
+    async (nextCode: string) => {
+      const result = await applyRegistrationStepTemplateChange({
+        programType,
+        stepKey: activeStep,
+        previousCode: selectedTemplateCode,
+        nextCode,
+        defaultCode: currentStepDef.templateId,
+      })
+      if (result === 'unchanged') return
+      setStepTemplateByKey(getRegistrationStepTemplateSelections(programType))
+      setWizardDraftRevision(value => value + 1)
+    },
+    [activeStep, currentStepDef.templateId, programType, selectedTemplateCode]
+  )
+
+  const isDefaultStepTemplate = isDefaultOperationalTemplateSelection(
+    selectedTemplateCode,
+    currentStepDef.templateId
+  )
+
   return {
     activeStep,
     phase,
     currentStepDef,
     selectStep,
+    selectStepTemplate,
+    stepTemplateName: participantTemplateName,
+    isDefaultStepTemplate,
     goToPhase,
     panels,
     isDraftLoading,

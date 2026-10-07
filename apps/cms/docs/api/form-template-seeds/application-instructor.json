@@ -140,8 +140,8 @@
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "성범죄 경력 조회서 제출",
-        "paragraphDescription": "학교에 전달할 성범죄 경력 조회서 파일을 제출해 주세요.",
+        "paragraphTitle": "성범죄경력 조회 동의서 제출 방법 안내",
+        "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

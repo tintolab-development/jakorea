@@ -94,6 +94,7 @@ import {
   patchUjatProgramRegistrationOverlay,
   resetUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
@@ -303,6 +304,8 @@ export interface UjatProgramDetailFullPageModalProps {
     program: Program,
     patch: Partial<Program>
   ) => Promise<Program>
+  /** LNB 하단 「프로그램 삭제」 — 미지정 시 버튼 미노출 */
+  onRequestDelete?: (program: Program) => void
 }
 
 function defaultVolunteerTab(interview: boolean, half: 'h1' | 'h2'): string {
@@ -587,6 +590,7 @@ export function UjatProgramDetailFullPageModal({
   externalLoading = false,
   externalError = false,
   onUpdateProgram,
+  onRequestDelete,
 }: UjatProgramDetailFullPageModalProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -2565,6 +2569,11 @@ export function UjatProgramDetailFullPageModal({
             interviewEnabled={interviewEnabled}
             surveyItems={surveyItems}
             onSelectChildTab={setLnbTab}
+            footer={
+              onRequestDelete && displayProgram ? (
+                <ProgramDetailLnbDeleteButton onClick={() => onRequestDelete(displayProgram)} />
+              ) : null
+            }
           />
         ) : null
       }

@@ -22,4 +22,8 @@ export interface NoticeDetailResponse {
   attachments?: NoticeAttachment[];
   inlineImages?: NoticeInlineImage[];
   comments?: NoticeComment[];
+  /** 조회 수. 이번 상세 조회의 읽음 처리를 반영한 값입니다. */
+  readCount?: number;
+  /** 반응 총합(모든 reactionType 합계). 반응이 없으면 0입니다. */
+  reactionCount?: number;
 }

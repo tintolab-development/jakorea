@@ -3,18 +3,22 @@ import {
   patchInstitutionSexOffenseConsentInquiryMethod,
   patchInstitutionSexOffenseConsentSiteSubmission,
   shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
-  type InstitutionSexOffenseConsentInquiryMethod,
   type InstitutionSexOffenseConsentSiteSubmission,
 } from '@/features/program/general/lib/institution-application-form-visibility'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
-  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS,
+  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_CAUTION,
+  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_NOTES,
   INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS,
 } from '@/features/template/lib/institution-sex-offense-consent-field-definitions'
 import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
+import './institution-sex-offense-consent-inquiry-paragraph.css'
+
+/** 조회 방식 선택 항목 제거 — 저장 값은 범죄경력회보서 사이트 이용으로 고정 */
+const FIXED_INQUIRY_METHOD = 'criminal_record_site'
 
 const nowrapSpanStyle = { whiteSpace: 'nowrap' as const, flexShrink: 0 as const }
 
@@ -34,7 +38,7 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
 } = {}) {
   const [inquiryMethod, setInquiryMethod] = useGeneralApplicationOverlayKv<string>(
     'application.institution.sexOffense.inquiryMethod',
-    'criminal_record_site'
+    FIXED_INQUIRY_METHOD
   )
   const [siteSubmission, setSiteSubmission] = useGeneralApplicationOverlayKv<string>(
     'application.institution.sexOffense.siteSubmission',
@@ -50,10 +54,9 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
   )
 
   useEffect(() => {
-    patchInstitutionSexOffenseConsentInquiryMethod(
-      inquiryMethod as InstitutionSexOffenseConsentInquiryMethod
-    )
-  }, [inquiryMethod])
+    if (inquiryMethod !== FIXED_INQUIRY_METHOD) setInquiryMethod(FIXED_INQUIRY_METHOD)
+    patchInstitutionSexOffenseConsentInquiryMethod(FIXED_INQUIRY_METHOD)
+  }, [inquiryMethod, setInquiryMethod])
 
   useEffect(() => {
     patchInstitutionSexOffenseConsentSiteSubmission(
@@ -65,94 +68,45 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
     return null
   }
 
-  const showSiteSubmissionFields = inquiryMethod === 'criminal_record_site'
-  const showOnlineCredentials = showSiteSubmissionFields && siteSubmission === 'online'
-  const displayInquiryMethod = choiceDisplayOnly ? undefined : inquiryMethod
+  const showOnlineCredentials = siteSubmission === 'online'
   const displaySiteSubmission = choiceDisplayOnly ? undefined : siteSubmission
   const displayInstitutionId = choiceDisplayOnly ? '' : institutionId
   const displayVerificationNumber = choiceDisplayOnly ? '' : verificationNumber
   const lockStyle = choiceDisplayOnly ? { pointerEvents: 'none' as const } : undefined
 
+  const siteSubmissionField = (
+    <DetailInfoForm.Field
+      label="사이트 제출 방식"
+      fullRow={!showOnlineCredentials}
+      edit={
+        <CmsRadioGroup
+          size="large"
+          value={displaySiteSubmission}
+          onChange={event => {
+            if (choiceDisplayOnly) return
+            setSiteSubmission(event.target.value)
+          }}
+          style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+        >
+          {INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS.map(option => (
+            <CmsRadio key={option.value} value={option.value}>
+              {option.label}
+            </CmsRadio>
+          ))}
+        </CmsRadioGroup>
+      }
+      view="-"
+    />
+  )
+
   return (
     <div className="program-application-form-institution__paragraph" style={lockStyle}>
       <DetailInfoForm title="" hideHeader mode="edit" className="program-registration-paragraph">
-        {showSiteSubmissionFields ? (
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="조회 방식"
-              edit={
-                <CmsRadioGroup
-                  size="large"
-                  value={displayInquiryMethod}
-                  onChange={event => {
-                    if (choiceDisplayOnly) return
-                    setInquiryMethod(event.target.value)
-                  }}
-                  style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
-                >
-                  {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS.map(option => (
-                    <CmsRadio key={option.value} value={option.value}>
-                      {option.label}
-                    </CmsRadio>
-                  ))}
-                </CmsRadioGroup>
-              }
-              view="-"
-            />
-            <DetailInfoForm.Field
-              label="사이트 제출 방식"
-              edit={
-                <CmsRadioGroup
-                  size="large"
-                  value={displaySiteSubmission}
-                  onChange={event => {
-                    if (choiceDisplayOnly) return
-                    setSiteSubmission(event.target.value)
-                  }}
-                  style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
-                >
-                  {INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS.map(option => (
-                    <CmsRadio key={option.value} value={option.value}>
-                      {option.label}
-                    </CmsRadio>
-                  ))}
-                </CmsRadioGroup>
-              }
-              view="-"
-            />
-          </DetailInfoForm.Row>
-        ) : (
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="조회 방식"
-              fullRow
-              edit={
-                <CmsRadioGroup
-                  size="large"
-                  value={displayInquiryMethod}
-                  onChange={event => {
-                    if (choiceDisplayOnly) return
-                    setInquiryMethod(event.target.value)
-                  }}
-                  style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
-                >
-                  {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS.map(option => (
-                    <CmsRadio key={option.value} value={option.value}>
-                      {option.label}
-                    </CmsRadio>
-                  ))}
-                </CmsRadioGroup>
-              }
-              view="-"
-            />
-          </DetailInfoForm.Row>
-        )}
-
         {showOnlineCredentials ? (
-          <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Row type="double">
+            {siteSubmissionField}
             <DetailInfoForm.Field
               label="성범죄 경력조회용 정보"
-              fullRow
               edit={
                 <div
                   className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
@@ -188,8 +142,20 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
               view="-"
             />
           </DetailInfoForm.Row>
-        ) : null}
+        ) : (
+          <DetailInfoForm.Row type="single">{siteSubmissionField}</DetailInfoForm.Row>
+        )}
       </DetailInfoForm>
+      <div className="institution-sex-offense-inquiry__notes">
+        <ul className="institution-sex-offense-inquiry__note-list">
+          {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_NOTES.map(note => (
+            <li key={note}>{note}</li>
+          ))}
+        </ul>
+        <p className="institution-sex-offense-inquiry__caution">
+          {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_CAUTION}
+        </p>
+      </div>
     </div>
   )
 }

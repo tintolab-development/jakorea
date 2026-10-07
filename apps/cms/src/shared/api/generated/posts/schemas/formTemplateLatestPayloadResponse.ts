@@ -5,6 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FormTemplateLatestPayloadResponseLatestVersionStatus } from './formTemplateLatestPayloadResponseLatestVersionStatus';
 import type { FormTemplateLatestPayloadResponseVersionStatus } from './formTemplateLatestPayloadResponseVersionStatus';
 
 export interface FormTemplateLatestPayloadResponse {
@@ -27,4 +28,10 @@ export interface FormTemplateLatestPayloadResponse {
   publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  latestVersionId?: number;
+  latestVersionStatus?: FormTemplateLatestPayloadResponseLatestVersionStatus;
+  /** 최초 카탈로그 원본 templateCode. 원본은 자기 자신. null 아님. */
+  baseTemplateCode?: string;
+  systemTemplate?: boolean;
+  deletable?: boolean;
 }

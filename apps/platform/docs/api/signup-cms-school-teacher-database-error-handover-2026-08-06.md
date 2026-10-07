@@ -9,13 +9,13 @@
 
 ## 공통
 
-| 항목 | 값 |
-|------|-----|
-| FE | `apps/platform` 회원가입 (`/auth/sign-up`) |
-| 에러 envelope | `{ success, message, error: { code, message, field, traceId } }` |
-| 학교 검색 API (BE 캐시) | `GET /api/portal/organizations/schools` |
-| 교사 가입 API | `POST /api/portal/auth/signup/teacher` |
-| 일반 가입 API | `POST /api/portal/auth/signup/general` |
+| 항목                    | 값                                                               |
+| ----------------------- | ---------------------------------------------------------------- |
+| FE                      | `apps/platform` 회원가입 (`/auth/sign-up`)                       |
+| 에러 envelope           | `{ success, message, error: { code, message, field, traceId } }` |
+| 학교 검색 API (BE 캐시) | `GET /api/portal/organizations/schools`                          |
+| 교사 가입 API           | `POST /api/portal/auth/signup/teacher`                           |
+| 일반 가입 API           | `POST /api/portal/auth/signup/general`                           |
 
 ---
 
@@ -27,7 +27,7 @@ CMS **학교(기관) 사전등록**으로 올라간 학교(예: `강서초등학
 
 ### 재현 경로 (Platform)
 
-1. `/auth/sign-up` → **교사회원** 또는 **일반회원(재학 중)**
+1. `/auth/sign-up` → **교사 회원** 또는 **일반회원(재학 중)**
 2. 소속/학교 검색 → NEIS에서 CMS와 동일 학교명 선택
 3. 가입 완료 → API 실패
 
@@ -56,12 +56,14 @@ GET /api/portal/organizations/schools?keyword=고양고등학교&page=0&size=5
 
 ```json
 {
-  "content": [{
-    "organizationId": 6,
-    "name": "고양고등학교",
-    "organizationCategory": "SCHOOL",
-    "address": "경기도 고양시 덕양구 삼송로 171"
-  }],
+  "content": [
+    {
+      "organizationId": 6,
+      "name": "고양고등학교",
+      "organizationCategory": "SCHOOL",
+      "address": "경기도 고양시 덕양구 삼송로 171"
+    }
+  ],
   "totalElements": 1,
   "source": "LOCAL_ORGANIZATION_CACHE",
   "nextAction": "SELECT_CMS_ORGANIZATION"
@@ -69,9 +71,9 @@ GET /api/portal/organizations/schools?keyword=고양고등학교&page=0&size=5
 ```
 
 | 학교명 (관측) | CMS `organizationId` |
-|---------------|----------------------|
-| 강서초등학교 | **165101** |
-| 고양고등학교 | **6** |
+| ------------- | -------------------- |
+| 강서초등학교  | **165101**           |
+| 고양고등학교  | **6**                |
 
 ```http
 GET /api/portal/organizations/schools?keyword=강서초등학교&page=0&size=5
@@ -81,10 +83,10 @@ GET /api/portal/organizations/schools?keyword=강서초등학교&page=0&size=5
 
 ### 기대 vs 실제 요청
 
-| 케이스 | OpenAPI/BE 기대 | FE 실제 (2026-08-06) |
-|--------|-----------------|----------------------|
-| CMS 등록 학교 | `teacher.organizationId` 또는 `member.schoolOrganizationId` | **미전송** |
-| CMS 미등록 학교 | `member.schoolSelection` (NEIS resolve/create) | NEIS 코드·명·주소만 전송 |
+| 케이스          | OpenAPI/BE 기대                                             | FE 실제 (2026-08-06)     |
+| --------------- | ----------------------------------------------------------- | ------------------------ |
+| CMS 등록 학교   | `teacher.organizationId` 또는 `member.schoolOrganizationId` | **미전송**               |
+| CMS 미등록 학교 | `member.schoolSelection` (NEIS resolve/create)              | NEIS 코드·명·주소만 전송 |
 
 ### BE 확인 요청
 
@@ -106,7 +108,7 @@ GET /api/portal/organizations/schools?keyword=강서초등학교&page=0&size=5
 
 ### 증상
 
-교사회원 가입 완료 시 HTTP **500**, 응답 메시지: `DATABASE_ERROR: database operation failed`
+교사 회원 가입 완료 시 HTTP **500**, 응답 메시지: `DATABASE_ERROR: database operation failed`
 
 ### API
 
@@ -158,8 +160,18 @@ Content-Type: application/json
       },
       "termsAgreements": [
         { "termsType": "SERVICE_TERMS", "version": "2026-01", "required": true, "agreed": true },
-        { "termsType": "PRIVACY_COLLECTION", "version": "2026-01", "required": true, "agreed": true },
-        { "termsType": "TEACHER_INFO_COLLECTION", "version": "2026-01", "required": false, "agreed": false },
+        {
+          "termsType": "PRIVACY_COLLECTION",
+          "version": "2026-01",
+          "required": true,
+          "agreed": true
+        },
+        {
+          "termsType": "TEACHER_INFO_COLLECTION",
+          "version": "2026-01",
+          "required": false,
+          "agreed": false
+        },
         { "termsType": "MARKETING", "version": "2026-01", "required": false, "agreed": false },
         { "termsType": "PORTRAIT_RIGHTS", "version": "2026-01", "required": false, "agreed": false }
       ]
@@ -174,12 +186,12 @@ Content-Type: application/json
 
 ### OpenAPI 계약 vs payload
 
-| 스키마 | required | payload |
-|--------|----------|---------|
-| `HomepageTeacherSignupRequest` | `teacher` | ✅ |
-| `TeacherSignupRequest` | `member` | ✅ (`organizationId` optional) |
-| `MemberSignupRequest` | `email`, `password`, `name` | ✅ |
-| `PortalSchoolSelectionRequest` | **없음** (전부 optional) | provider, code, name, address |
+| 스키마                         | required                    | payload                        |
+| ------------------------------ | --------------------------- | ------------------------------ |
+| `HomepageTeacherSignupRequest` | `teacher`                   | ✅                             |
+| `TeacherSignupRequest`         | `member`                    | ✅ (`organizationId` optional) |
+| `MemberSignupRequest`          | `email`, `password`, `name` | ✅                             |
+| `PortalSchoolSelectionRequest` | **없음** (전부 optional)    | provider, code, name, address  |
 
 OpenAPI **required 기준으로는 필수 누락 필드 없음.**  
 `schoolSelection`에 없는 optional 필드: `schoolLevel`, `regionSido`, `regionSigungu`, `zipcode`.
@@ -211,12 +223,12 @@ CMS 등록 학교인데 `organizationId` 없이 `schoolSelection`만 보내면, 
 
 ## 관련 코드·문서
 
-| 구분 | 경로 |
-|------|------|
-| Platform 학교 검색 모달 | `apps/platform/src/features/auth/sign-up/ui/school-search-modal/` |
-| 가입 요청 매핑 | `apps/platform/src/features/auth/sign-up/model/mapper/map-signup-request.ts` |
-| BE 학교 검색 클라이언트 | `apps/platform/src/features/auth/sign-up/api/client.ts` → `searchHomepageSchools` |
-| OpenAPI 스키마 | `apps/cms/openapi/backend.openapi.json` — `PortalSchoolSelectionRequest`, `TeacherSignupRequest` |
-| 선행 handoff | [signup-school-organization-handover.md](./signup-school-organization-handover.md) |
+| 구분                    | 경로                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| Platform 학교 검색 모달 | `apps/platform/src/features/auth/sign-up/ui/school-search-modal/`                                |
+| 가입 요청 매핑          | `apps/platform/src/features/auth/sign-up/model/mapper/map-signup-request.ts`                     |
+| BE 학교 검색 클라이언트 | `apps/platform/src/features/auth/sign-up/api/client.ts` → `searchHomepageSchools`                |
+| OpenAPI 스키마          | `apps/cms/openapi/backend.openapi.json` — `PortalSchoolSelectionRequest`, `TeacherSignupRequest` |
+| 선행 handoff            | [signup-school-organization-handover.md](./signup-school-organization-handover.md)               |
 
 **Last updated:** 2026-08-06

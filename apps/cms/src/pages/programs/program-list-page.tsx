@@ -406,6 +406,8 @@ function ProgramListPageContent() {
 
   /** 예정 프로그램 필터 활성 시에만 행 선택·선택 삭제 표시 (1사1교 페이지) */
   const isScheduledFilter = programType === 'company_school' && statusFilter === 'scheduled'
+  const showBulkSelection =
+    programType === 'company_school' && (statusFilter == null || statusFilter === 'scheduled')
 
   const isAdmin = user?.role === 'ADMIN'
 
@@ -534,8 +536,8 @@ function ProgramListPageContent() {
 
   // 예정 프로그램 필터 해제 시 선택 초기화
   useEffect(() => {
-    if (!isScheduledFilter) setSelectedRowKeys([])
-  }, [isScheduledFilter])
+    setSelectedRowKeys([])
+  }, [statusFilter])
 
   const handleView = (program: Program) => {
     if (!user || !isAuthenticated) {
@@ -598,7 +600,7 @@ function ProgramListPageContent() {
   /** ProgramList `FilterTableLayout`의 `actions` 슬롯 — 제목·건수는 `headerTitle`·목록 내부 건수로 표시 */
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
-      {isScheduledFilter && (
+      {showBulkSelection && (
         <CmsButton
           variant="delete"
           width={140}
@@ -650,9 +652,9 @@ function ProgramListPageContent() {
         }
         headerTitle={headerTitle}
         onView={handleView}
-        onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
-        selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
-        showRowSelection={isScheduledFilter}
+        onSelectionChange={showBulkSelection ? setSelectedRowKeys : undefined}
+        selectedRowKeys={showBulkSelection ? selectedRowKeys : undefined}
+        showRowSelection={showBulkSelection}
         showCalendarView={showCalendarView}
         viewMode={viewMode}
         tableVariant={programType === 'company_school' ? 'overview' : 'general'}
@@ -711,6 +713,10 @@ function ProgramListPageContent() {
               }
             : undefined
         }
+        onRequestDelete={program => {
+          setProgramsPendingBulkDelete([program])
+          setBulkDeleteModalOpen(true)
+        }}
       />
       </ProgramModalWhenOpen>
 
@@ -787,10 +793,9 @@ function ProgramListPageContent() {
           void (async () => {
             try {
               const idsToDelete = programsPendingBulkDelete.map(program => program.id)
-              if (
-                companySchoolProgramIdFromUrl &&
-                idsToDelete.includes(companySchoolProgramIdFromUrl)
-              ) {
+              const openDetailProgramId =
+                companySchoolProgramIdFromUrl ?? selectedProgramForFullPageModal?.id
+              if (openDetailProgramId && idsToDelete.includes(openDetailProgramId)) {
                 handleCloseFullPageModal()
               }
               if (isCompanySchoolPath) {

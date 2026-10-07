@@ -1,4 +1,5 @@
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   buildCertificateFormSettings,
@@ -233,7 +234,7 @@ export function FormTemplateFullpageModal({
             onClick={handleClosePreview}
             aria-label="닫기"
           >
-            <CloseOutlined />
+            <ModalCloseIcon tone="white" />
           </button>
         </header>
 

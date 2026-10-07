@@ -19,10 +19,34 @@ export interface FormTemplateCreateRequest {
   schemaJson?: string;
   extensionJson?: string;
   settingsJson?: string;
+  /**
+     * 복제는 POST /{templateId}/duplicate 사용.
+     * @deprecated
+     */
   sourceTemplateId?: number;
+  /**
+     * 복제는 POST /{templateId}/duplicate 사용.
+     * @deprecated
+     */
   sourceVersionId?: number;
+  /**
+     * 복제는 POST /{templateId}/duplicate 사용.
+     * @deprecated
+     */
   sourceTemplateCode?: string;
+  /**
+     * 복제는 POST /{templateId}/duplicate 사용.
+     * @deprecated
+     */
   baseTemplateId?: number;
+  /**
+     * 복제는 POST /{templateId}/duplicate 사용.
+     * @deprecated
+     */
   baseVersionId?: number;
+  /**
+     * 복제는 POST /{templateId}/duplicate 사용.
+     * @deprecated
+     */
   baseTemplateCode?: string;
 }

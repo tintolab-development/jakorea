@@ -72,6 +72,7 @@ import {
   type RegistrationSnapshot,
   type UjatServiceDetailExtras,
 } from './service-detail'
+import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
 
 const DEFAULT_SPONSOR_ID = 'sponsor-default'
 
@@ -369,6 +370,14 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     ...resolveBusinessPeriodDates(dto),
     lifecycleStatus,
     ujatProgressStatus,
+    listDeleteBlocked: resolveProgramListDeleteBlocked({
+      lifecycleStatus,
+      ujatProgressStatus: ujatProgressStatus ?? undefined,
+      participantApprovedCount: dto.participantApprovedCount,
+      approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount,
+      participatingSchoolCount: dto.participatingSchoolCount ?? dto.participatingOrganizationCount,
+      participatingStudentCount: dto.participatingStudentCount,
+    }),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount ?? 0,
     ...mapListParticipantRecruitment(dto),
     participatingSchoolCount: dto.organizationApplicationCount ?? 0,

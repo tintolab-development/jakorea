@@ -2,7 +2,8 @@
  * 작성 양식 — 성범죄 경력조회 동의서 상세: 정적 A4 문서 미리보기 풀페이지 모달
  */
 
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { type ChangeEvent, useCallback, useId, useRef } from 'react'
 import { useAgreementCrimeConsentDocumentEditor } from '@/features/template/hooks/use-agreement-crime-consent-document-editor'
 import {
@@ -114,7 +115,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
             onClick={onClose}
             aria-label="닫기"
           >
-            <CloseOutlined />
+            <ModalCloseIcon />
           </button>
         </header>
 

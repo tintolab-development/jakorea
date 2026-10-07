@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import {
   ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
@@ -143,7 +144,7 @@ export function ActivityCertificateIssuancePreviewModal({
               onClick={handleClose}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
 

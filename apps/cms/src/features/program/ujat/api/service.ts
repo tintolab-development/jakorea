@@ -1,5 +1,6 @@
 import { createAdminProgramRemoteWithRegistrationForms } from '@/features/program/general/api/create-admin-program-remote-with-registration-forms'
 import {
+  bulkDeleteAdminProgramsRemote,
   deleteAdminProgramRemote,
   fetchAdminProgramByIdRemote,
   fetchAdminProgramsRemote,
@@ -143,4 +144,11 @@ export async function update(
 export async function remove(programId: string): Promise<void> {
   assertRemoteReady()
   await deleteAdminProgramRemote(programId)
+}
+
+/** 409 `PROGRAM_HARD_DELETE_BLOCKED` → `ProgramHardDeleteBlockedError` */
+export async function removeMany(programIds: string[]): Promise<void> {
+  if (programIds.length === 0) return
+  assertRemoteReady()
+  await bulkDeleteAdminProgramsRemote(programIds)
 }

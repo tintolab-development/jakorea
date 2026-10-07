@@ -31,6 +31,7 @@ import {
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { PortraitAffiliationBody } from '@/features/template/ui/paragraph/table/agreement-portrait-personal-consent-name-row'
 import { TextCellInput } from '@/features/template/ui/paragraph/table/text-cell-input'
+import { useHideParagraphSelectionChrome } from '@/features/template/context/paragraph-selection-chrome-context'
 import '@/features/template/ui/form-editor/form-editor.css'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -256,6 +257,7 @@ export function VerticalTableParagraphBody({
     }
     setTextEditCell(null)
   }
+  const hideSelectionChrome = useHideParagraphSelectionChrome()
   const isControlled = onTableRowSelectionChange != null
   const selectedRow = isControlled ? (controlledRow ?? null) : internalRow
   const setSelectedRow = (next: number | null) => {
@@ -883,7 +885,7 @@ export function VerticalTableParagraphBody({
               key={`vr-${rowIdx}-sc${row.stageCount}`}
               className={[
                 'form-editor-vertical-table__row',
-                canvasInteractive && selectedRow === rowIdx
+                canvasInteractive && !hideSelectionChrome && selectedRow === rowIdx
                   ? 'form-editor-vertical-table__row--selected'
                   : '',
               ]

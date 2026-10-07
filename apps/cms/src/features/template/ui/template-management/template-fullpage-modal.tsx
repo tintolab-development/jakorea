@@ -1,4 +1,5 @@
-import { CloseOutlined, DownloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { DownloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -37,6 +38,8 @@ interface TemplateFullpageModalProps {
    * 템플릿 등록 사용자 모드 — 미리보기와 동일 청록 헤더·회색 본문·상단 닫기/미리보기/임시저장.
    */
   registrationUserMode?: boolean
+  /** 상단바 X 닫기 버튼 노출 (기본: `registrationUserMode`가 아닐 때만) */
+  showCloseButton?: boolean
   /** 저장 버튼 라벨 (`registrationUserMode` 기본: 임시저장) */
   saveLabel?: string
   /** 우측 하단 CTA — 미전달 시 숨김 (단일, `footerActions`와 병용 시 배열 우선) */
@@ -47,6 +50,8 @@ interface TemplateFullpageModalProps {
   subHeader?: ReactNode
   /** `full-page-modal__body-header` 좌측(닫기·미리보기·임시저장과 동일 행) */
   bodyHeaderLeading?: ReactNode
+  /** `full-page-modal__body-header` 아래 행(탭·액션 행과 분리) — 등록 단계 템플릿 배너 등 */
+  bodyHeaderBelow?: ReactNode
   /**
    * writing 헤더 액션(닫기/미리보기/임시저장) **앞**에 붙는 슬롯.
    * 프로그램 등록 개발용 자동입력 등.
@@ -99,11 +104,13 @@ export function TemplateFullpageModal({
   titleReadOnly = false,
   onTitleCommit,
   registrationUserMode = false,
+  showCloseButton = !registrationUserMode,
   saveLabel,
   footerAction,
   footerActions,
   subHeader,
   bodyHeaderLeading,
+  bodyHeaderBelow,
   headerActionsLeading,
   zIndex,
 }: TemplateFullpageModalProps) {
@@ -242,14 +249,14 @@ export function TemplateFullpageModal({
               </>
             )}
           </div>
-          {!registrationUserMode ? (
+          {showCloseButton ? (
             <button
               type="button"
               className="full-page-modal__close"
               onClick={onClose}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              <ModalCloseIcon tone={registrationUserMode ? 'white' : 'black'} />
             </button>
           ) : null}
         </header>
@@ -267,6 +274,9 @@ export function TemplateFullpageModal({
             )}
             <div className="full-page-modal__actions">{headerActions}</div>
           </div>
+          {bodyHeaderBelow != null ? (
+            <div className="full-page-modal__body-header-below">{bodyHeaderBelow}</div>
+          ) : null}
 
           <div className="full-page-modal__contents">
             <div className="full-page-modal__left">{leftContent}</div>

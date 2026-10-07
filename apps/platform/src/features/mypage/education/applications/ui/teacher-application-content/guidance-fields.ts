@@ -1,3 +1,4 @@
+import { INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION } from '@jakorea/form-schema/program-application'
 import type { EducationTeacherApplicationGuidance } from '../../model/types'
 
 /**
@@ -14,7 +15,7 @@ export const TEACHER_GUIDANCE_FIELDS: readonly {
   { key: 'otherNotes', label: '기타 특이사항(주차, 전달사항 등)' },
 ]
 
-export const TEACHER_SEX_OFFENSE_CONSENT_METHOD_LABEL = '성범죄 경력 조회 동의서 조회 방식'
+export const TEACHER_SEX_OFFENSE_CONSENT_METHOD_LABEL = INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title
 
 export const TEACHER_GUIDANCE_ANSWER_PLACEHOLDER = '답변을 입력해 주세요'
 export const TEACHER_GUIDANCE_ANSWER_MAX_LENGTH = 1000

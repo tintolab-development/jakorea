@@ -12,10 +12,8 @@ import {
   isUserCreatedWritingFormTemplateRow,
   isWritingFormTemplateStructureLocked,
 } from '@/features/template/lib/form-template-delete-policy'
-import {
-  lookupTemplateRegistry,
-  resolvePreviewHeaderTitle,
-} from '@/features/template/model/template-registry/template-registry'
+import { resolvePreviewHeaderTitle } from '@/features/template/model/template-registry/template-registry'
+import { lookupWritingTemplateRegistry } from '@/features/template/lib/lookup-writing-template-registry'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   buildRightNavigationConfig,
@@ -79,7 +77,13 @@ export default function TemplateFormTab() {
   })
 
   const templateId = selectedTemplate?.id
-  const registryEntry = useMemo(() => lookupTemplateRegistry(templateId), [templateId])
+  const registryEntry = useMemo(
+    () =>
+      lookupWritingTemplateRegistry(templateId, {
+        baseTemplateCode: selectedTemplate?.baseTemplateCode,
+      }),
+    [templateId, selectedTemplate?.baseTemplateCode]
+  )
 
   const handleOpenTemplatePreview = useCallback(
     (row: TemplateRow) => {
@@ -194,7 +198,9 @@ export default function TemplateFormTab() {
 
   const isCrimeConsentDetail =
     isPreviewOpen &&
-    lookupTemplateRegistry(params.id?.trim() || templateId)?.usesCrimeConsentModal === true
+    lookupWritingTemplateRegistry(params.id?.trim() || templateId, {
+      baseTemplateCode: selectedTemplate?.baseTemplateCode,
+    })?.usesCrimeConsentModal === true
 
   const forceUserEditable = useMemo(() => {
     if (params.userTemplate === '1') return true
@@ -214,7 +220,12 @@ export default function TemplateFormTab() {
     if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return null
     const templateCode = params.id.trim()
     // 성범죄 동의서는 정적 문서 모달 전용 — 동의 셸/직접등록 fallback 금지
-    if (lookupTemplateRegistry(templateCode)?.usesCrimeConsentModal === true) return null
+    if (
+      lookupWritingTemplateRegistry(templateCode, {
+        baseTemplateCode: selectedTemplate?.baseTemplateCode,
+      })?.usesCrimeConsentModal === true
+    )
+      return null
 
     const row =
       selectedTemplate?.id === templateCode
@@ -252,7 +263,9 @@ export default function TemplateFormTab() {
 
   const suppressInactiveUserPreviewStrip = useMemo(() => {
     if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return false
-    const entry = lookupTemplateRegistry(params.id.trim())
+    const entry = lookupWritingTemplateRegistry(params.id.trim(), {
+      baseTemplateCode: selectedTemplate?.baseTemplateCode,
+    })
     return entry?.suppressUserPreviewStrip === true
   }, [params.mode, params.id])
 

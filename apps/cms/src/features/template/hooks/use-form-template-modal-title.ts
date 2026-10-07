@@ -34,9 +34,7 @@ export function useFormTemplateModalTitle({
       setDisplayName(next)
 
       const code = templateCode?.trim()
-      if (code == null || code === '' || !shouldUseFormsSurveysRemoteApi()) {
-        return
-      }
+      if (code == null || code === '' || !shouldUseFormsSurveysRemoteApi()) return
 
       void (async () => {
         try {

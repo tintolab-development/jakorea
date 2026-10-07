@@ -11,7 +11,7 @@ describe('mapProgramPostResponseToDomain', () => {
     expect(post.viewCount).toBe(1)
   })
 
-  it('생성 스키마의 id도 계속 받는다', () => {
+  it('이전 응답의 id도 계속 받는다', () => {
     const post = mapProgramPostResponseToDomain({ id: 30001, programId: 1201 }, '1201')
     expect(post.id).toBe('30001')
   })

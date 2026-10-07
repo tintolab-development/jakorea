@@ -138,6 +138,7 @@ import {
   LnbIconProjectInfo,
 } from './program-detail-lnb-icons'
 import { GeneralLnbSurveyManagementIcon } from './detail-lnb-icons'
+import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import './applications/participant-applications.css'
 import './program-detail-fullpage-modal.css'
 
@@ -157,6 +158,8 @@ export interface ProgramDetailFullPageModalProps {
     program: Program,
     patch: Partial<Program>
   ) => Promise<void>
+  /** LNB 하단 「프로그램 삭제」 — 미지정 시 버튼 미노출 */
+  onRequestDelete?: (program: Program) => void
 }
 
 const TAB_PARAM = 'tab'
@@ -281,6 +284,7 @@ export function ProgramDetailFullPageModal({
   searchParams: searchParamsProp,
   setSearchParams: setSearchParamsProp,
   onUpdateProgram,
+  onRequestDelete,
 }: ProgramDetailFullPageModalProps) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -1827,6 +1831,11 @@ export function ProgramDetailFullPageModal({
           expandedGroupKeys={sidebarExpandedGroups}
           onSelectTop={handleSidebarSelectTop}
           onSelectChild={handleSidebarSelectChild}
+          footer={
+            onRequestDelete && displayProgram ? (
+              <ProgramDetailLnbDeleteButton onClick={() => onRequestDelete(displayProgram)} />
+            ) : null
+          }
         />
       }
     >

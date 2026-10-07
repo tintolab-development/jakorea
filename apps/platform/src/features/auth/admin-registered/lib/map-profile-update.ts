@@ -9,6 +9,8 @@ import { buildSchoolSelection } from '@/features/auth/sign-up/lib/build-school-s
 type AdminRegisteredProfileUpdateInput = {
   schoolStatus: SchoolStatus
   schoolName: string
+  /** 미재학(해당 없음) 선택 시 선택 입력 */
+  affiliationName?: string
   grade: string
   address: string
   addressDetail: string
@@ -103,7 +105,7 @@ export function mapAdminRegisteredEditToPortalProfileUpdate(
     ...(schoolSelection ? { schoolSelection } : {}),
     schoolName,
     grade,
-    affiliationName: schoolName,
+    affiliationName: enrolled ? schoolName : text(input.affiliationName),
     schoolEnrollmentStatus: enrolled ? 'ENROLLED' : 'NOT_ENROLLED',
     teacherEmploymentStatus,
     external1365Id: text(input.volunteerId),

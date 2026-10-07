@@ -11,7 +11,6 @@ import {
   SettingsEditForm,
   SettingsSocialAccountsView,
   SettingsView,
-  showSettingsInstructorConsentDocuments,
   useMypageMember,
   useSettingsView,
   type MypageLnbItemKey,
@@ -191,11 +190,7 @@ export function MypageSettingsPage() {
   }
 
   if (tab === 'consents') {
-    return wrap(
-      <SettingsConsentsView
-        showInstructorDocuments={showSettingsInstructorConsentDocuments(member.profile)}
-      />
-    )
+    return wrap(<SettingsConsentsView />)
   }
 
   return wrap(

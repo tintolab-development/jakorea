@@ -24,6 +24,8 @@ export interface DetailModalSidebarProps {
   expandedGroupKeys: readonly string[]
   onSelectTop: (key: string) => void
   onSelectChild: (groupKey: string, childKey: string) => void
+  /** 메뉴 목록 아래 LNB 하단 고정 영역 */
+  footer?: React.ReactNode
 }
 
 export function DetailModalSidebar({
@@ -34,6 +36,7 @@ export function DetailModalSidebar({
   expandedGroupKeys,
   onSelectTop,
   onSelectChild,
+  footer,
 }: DetailModalSidebarProps) {
   return (
     <nav className="detail-fullpage-modal__lnb" aria-label={navAriaLabel}>
@@ -100,6 +103,7 @@ export function DetailModalSidebar({
         })}
         </ul>
       </div>
+      {footer}
     </nav>
   )
 }

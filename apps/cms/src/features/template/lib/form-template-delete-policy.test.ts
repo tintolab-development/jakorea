@@ -22,6 +22,9 @@ describe('form-template-delete-policy', () => {
     expect(shouldOmitImmutableFormSchemaJson('registration-trained-teachers')).toBe(true)
     expect(shouldOmitImmutableFormSchemaJson('registration-trained-teachers-copy-1')).toBe(true)
     expect(shouldOmitImmutableFormSchemaJson('recruitment-participant-school')).toBe(true)
+    expect(shouldOmitImmutableFormSchemaJson('recruitment-participant-school-custom-01')).toBe(
+      true
+    )
     expect(shouldOmitImmutableFormSchemaJson('application-participant-school')).toBe(false)
     expect(shouldOmitImmutableFormSchemaJson('agreement-portrait')).toBe(false)
   })
@@ -60,27 +63,31 @@ describe('form-template-delete-policy', () => {
     ).toBe(false)
   })
 
-  it('keeps recruitment and application copies structure-locked', () => {
+  it('locks recruitment copies like the registration wizard; application copies stay editable', () => {
     expect(isRecruitmentOrApplicationWritingTemplateCode('application-instructor')).toBe(true)
-    expect(isRecruitmentOrApplicationWritingTemplateCode('application-instructor-copy-99')).toBe(
-      true
-    )
-    expect(isRecruitmentOrApplicationWritingTemplateCode('recruitment-volunteer-copy')).toBe(true)
-    expect(isRecruitmentOrApplicationWritingTemplateCode('agreement-portrait-copy-1')).toBe(false)
+    expect(
+      isRecruitmentOrApplicationWritingTemplateCode('recruitment-participant-school-custom-01')
+    ).toBe(true)
+    expect(
+      isWritingFormTemplateStructureLocked({
+        templateCode: 'recruitment-instructor-custom-01',
+        systemTemplate: false,
+        forceUserEditable: true,
+      })
+    ).toBe(true)
+    expect(
+      isWritingFormTemplateStructureLocked({
+        templateCode: 'recruitment-participant-school-copy-99',
+        systemTemplate: false,
+      })
+    ).toBe(true)
     expect(
       isWritingFormTemplateStructureLocked({
         templateCode: 'application-participant-individual-copy-1735689600123',
         systemTemplate: false,
         forceUserEditable: true,
       })
-    ).toBe(true)
-    expect(
-      isWritingFormTemplateStructureLocked({
-        templateCode: 'recruitment-instructor-copy-1',
-        systemTemplate: false,
-        forceUserEditable: true,
-      })
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it('allows application reorder while locking recruitment reorder', () => {

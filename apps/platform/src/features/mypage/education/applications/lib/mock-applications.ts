@@ -39,7 +39,7 @@ const MOCK_SELF_INTRO_MOTIVATION =
 
 const MOCK_PREFERRED_EDUCATION_SCHEDULE = '2026년 04월 20일(월) 9:30 ~ 12:20'
 
-/** 교사회원 상세 UI 확인용 — 승인 대기 교육 신청 1건에 시드 */
+/** 교사 회원 상세 UI 확인용 — 승인 대기 교육 신청 1건에 시드 */
 const MOCK_TEACHER_CONSENTS = [
   {
     id: 'sex-offense',
@@ -53,7 +53,7 @@ const MOCK_TEACHER_CONSENTS = [
   },
 ] as const
 
-/** 교사회원 신청 내용 탭 — 스크린샷 문구 시드 */
+/** 교사 회원 신청 내용 탭 — 스크린샷 문구 시드 */
 function createMockTeacherApplicationContent(): EducationTeacherApplicationContent {
   return {
     institution: {
@@ -73,8 +73,7 @@ function createMockTeacherApplicationContent(): EducationTeacherApplicationConte
       waitingPlace:
         '후관 2층 1-4옆 강사대기실(늘봄교실1)에서 대기, 정수기는 후관 2층 2학년 연구실 이용하시면 됩니다.',
       meal: '가능',
-      otherNotes:
-        "본교 주차장이 협소한 관계로 학교 바로 옆 '운남동 공영주차장' 이용 부탁드립니다!",
+      otherNotes: "본교 주차장이 협소한 관계로 학교 바로 옆 '운남동 공영주차장' 이용 부탁드립니다!",
       sexOffenseConsentMethod: '온라인 제출 | ID: tinto | 검증번호: 940412',
     },
     preferredSchedules: [
@@ -97,7 +96,7 @@ const teacherGuidanceOverrides = new Map<string, EducationTeacherApplicationGuid
 
 export function updateMockTeacherApplicationGuidance(
   applicationId: string,
-  guidance: EducationTeacherApplicationGuidance,
+  guidance: EducationTeacherApplicationGuidance
 ): void {
   if (!shouldUsePlatformMockData()) return
   teacherGuidanceOverrides.set(applicationId, { ...guidance })
@@ -192,7 +191,7 @@ function educationApplicationId(programId: string) {
 
 function toEducationApplication(
   program: ProgramListItem,
-  index: number,
+  index: number
 ): EducationApplicationListItem {
   const detail = getMockProgramById(program.id)
   const displayStatus =
@@ -225,8 +224,7 @@ function toEducationApplication(
       item.lastParticipatedSession = 3
     } else {
       const withdrawnWave = Math.floor(index / DISPLAY_STATUS_CYCLE.length)
-      item.withdrawalPhase =
-        withdrawnWave % 2 === 0 ? 'before_education' : 'during_education'
+      item.withdrawalPhase = withdrawnWave % 2 === 0 ? 'before_education' : 'during_education'
       if (item.withdrawalPhase === 'during_education') {
         item.lastParticipatedSession = 3
       }
@@ -341,7 +339,7 @@ export function subscribeMockEducationApplications(onStoreChange: () => void): (
 }
 
 export function getMockEducationApplicationById(
-  applicationId: string,
+  applicationId: string
 ): EducationApplicationListItem | undefined {
   if (!shouldUsePlatformMockData()) return undefined
   return buildEducationApplications().find(item => item.id === applicationId)

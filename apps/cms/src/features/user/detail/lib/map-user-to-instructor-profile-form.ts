@@ -60,10 +60,7 @@ export function isInstructorConsentFormFieldKey(key: string): key is InstructorC
 
 /** 강사 수정 폼 동의값 → PATCH용 선택 termsAgreements (기존 version 유지) */
 export function mapInstructorFormConsentToEditableTermsAgreements(
-  values: Pick<
-    InstructorProfileFormValues,
-    InstructorConsentFormFieldKey
-  >,
+  values: Pick<InstructorProfileFormValues, InstructorConsentFormFieldKey>,
   existing?: TermsAgreementRequest[]
 ): TermsAgreementRequest[] | undefined {
   const built = filterEditableTermsAgreementsForBasicInfoPatch(
@@ -108,13 +105,17 @@ function mapGender(gender: string | undefined): 'male' | 'female' {
 
 function birthDateToFormValue(birthDate: User['birthDate']): string {
   if (!birthDate) return ''
-  const raw = typeof birthDate === 'string' ? birthDate : new Date(birthDate).toISOString().slice(0, 10)
+  const raw =
+    typeof birthDate === 'string' ? birthDate : new Date(birthDate).toISOString().slice(0, 10)
   const digits = raw.replace(/\D/g, '')
   if (digits.length !== 8) return raw.replace(/-/g, '.')
   return `${digits.slice(0, 4)}.${digits.slice(4, 6)}.${digits.slice(6, 8)}`
 }
 
-function splitEducationLevel(label: string | undefined): { eduSchoolType: string; eduStatus: string } {
+function splitEducationLevel(label: string | undefined): {
+  eduSchoolType: string
+  eduStatus: string
+} {
   const raw = label?.trim() ?? ''
   if (!raw || raw === '-') return { eduSchoolType: '', eduStatus: '' }
   const [schoolType, status] = raw.split(/\s*\/\s*/).map(part => part.trim())
@@ -126,7 +127,8 @@ function mapCertificationsToLicenseRows(user: Omit<User, 'password'>): LicenseOr
   const certs = user.instructorCertifications ?? []
   if (certs.length === 0) return [{ ...EMPTY_LICENSE_OR_AWARD_ROW }]
   return certs.map(cert => ({
-    acquiredYear: cert.issuedDate && dayjs(cert.issuedDate).isValid() ? dayjs(cert.issuedDate) : null,
+    acquiredYear:
+      cert.issuedDate && dayjs(cert.issuedDate).isValid() ? dayjs(cert.issuedDate) : null,
     title: cert.name,
     issuer: cert.issuer ?? '',
     ...(cert.id != null ? { certificationId: cert.id } : {}),
@@ -146,8 +148,9 @@ function mapAwardsToRows(instructor: ApplicantInstructorRow | null): LicenseOrAw
 
 function resolveMemberType(user: Omit<User, 'password'>): 'general' | 'school_teacher' {
   const profile = resolveInstructorMemberProfile(user)
-  // 순수 교사만 교사회원 폼(소속 학교·재직). 교사 겸 강사(instructor_dual)는 강사 상세 행 구성 유지.
-  if (profile === 'school_teacher' || isInstructorSchoolTeacherProfile(user)) return 'school_teacher'
+  // 순수 교사만 교사 회원 폼(소속 학교·재직). 교사 겸 강사(instructor_dual)는 강사 상세 행 구성 유지.
+  if (profile === 'school_teacher' || isInstructorSchoolTeacherProfile(user))
+    return 'school_teacher'
   return 'general'
 }
 
@@ -168,7 +171,9 @@ function normalizeSchoolTeacherEmploymentStatus(
   return ''
 }
 
-function resolveAffiliationFields(user: Omit<User, 'password'>): Pick<
+function resolveAffiliationFields(
+  user: Omit<User, 'password'>
+): Pick<
   InstructorProfileFormValues,
   'affiliationName' | 'affiliationNone' | 'schoolName' | 'employmentStatus'
 > {
@@ -179,8 +184,11 @@ function resolveAffiliationFields(user: Omit<User, 'password'>): Pick<
     user.affiliatedSchoolName?.trim() ||
     user.instructorCmsProfile?.affiliation?.schoolName?.trim() ||
     (memberType === 'school_teacher'
-      ? (user.affiliation?.split(/\s*,\s*/)[0]?.trim().split(USER_AFFILIATION_PIPE_SEP)[0]?.trim() ??
-        '')
+      ? (user.affiliation
+          ?.split(/\s*,\s*/)[0]
+          ?.trim()
+          .split(USER_AFFILIATION_PIPE_SEP)[0]
+          ?.trim() ?? '')
       : '')
   const employment =
     parseSchoolTeacherEmploymentStatus(user.listMetrics?.employmentStatusLabel) ??
@@ -254,11 +262,7 @@ function mapTermsAgreements(
     'PAYMENT_STATEMENT_PRE_CONSENT',
   ])
   const educator = find(['EDUCATOR_PLEDGE', 'EDUCATOR', 'FACILITATOR_PLEDGE'])
-  const sexOffense = find([
-    'SEX_OFFENSE_CHECK',
-    'CRIME_CHECK',
-    'CRIMINAL_HISTORY_CHECK_CONSENT',
-  ])
+  const sexOffense = find(['SEX_OFFENSE_CHECK', 'CRIME_CHECK', 'CRIMINAL_HISTORY_CHECK_CONSENT'])
   const adminJoint = find([
     'ADMINISTRATIVE_JOINT',
     'ADMIN_INFO_JOINT',
@@ -266,7 +270,9 @@ function mapTermsAgreements(
   ])
 
   return {
-    consentTermsOfService: service ? toConsentValue(service.agreed) : INITIAL_VALUES.consentTermsOfService,
+    consentTermsOfService: service
+      ? toConsentValue(service.agreed)
+      : INITIAL_VALUES.consentTermsOfService,
     consentPersonal: privacy ? toConsentValue(privacy.agreed) : INITIAL_VALUES.consentPersonal,
     consentMarketing: marketing ? toConsentValue(marketing.agreed) : 'disagree',
     consentPortrait: portrait ? toConsentValue(portrait.agreed) : INITIAL_VALUES.consentPortrait,
@@ -333,9 +339,7 @@ export function mapUserToInstructorProfileFormValues(
       : {
           ...resolveAffiliationFields(user),
         }),
-    instructorCareer:
-      fromCmsProfile?.instructorCareer ??
-      careerText,
+    instructorCareer: fromCmsProfile?.instructorCareer ?? careerText,
     instructorFeeGrade: normalizeInstructorFeeGradeSelectValue(
       fromCmsProfile?.instructorFeeGrade ??
         user.instructorCmsProfile?.defaultFeeGrade ??
@@ -442,10 +446,7 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
 
   const affiliationInstitution =
     values.memberType === 'school_teacher'
-      ? [
-          values.schoolName.trim(),
-          values.employmentStatus ? String(values.employmentStatus) : '',
-        ]
+      ? [values.schoolName.trim(), values.employmentStatus ? String(values.employmentStatus) : '']
           .filter(Boolean)
           .join(' | ')
       : values.affiliationNone

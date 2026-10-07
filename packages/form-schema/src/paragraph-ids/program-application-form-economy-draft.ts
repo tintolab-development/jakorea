@@ -283,6 +283,16 @@ export function migrateProgramApplicationFormEconomyParagraphs(
       if (next !== paragraph) changed = true
       return next
     }
+    if (
+      paragraph.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentInquiryMethod &&
+      paragraph.paragraphDescription !== INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description
+    ) {
+      changed = true
+      return {
+        ...paragraph,
+        paragraphDescription: INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description,
+      }
+    }
     return paragraph
   })
   return changed ? { ...draft, paragraphs } : draft

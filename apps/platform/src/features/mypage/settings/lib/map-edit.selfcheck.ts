@@ -33,12 +33,33 @@ const saved = applySettingsEditToSnapshot(MOCK_SETTINGS_PROFILE, {
   ...initial,
   schoolStatus: 'none',
   schoolName: '',
+  affiliationName: '',
   grade: '',
   volunteerId: 'vol-1',
 })
 assert.equal(saved.schoolEnrollmentStatus, 'NOT_ENROLLED')
 assert.equal(saved.schoolName, '')
+assert.equal(saved.affiliationName, '')
 assert.equal(saved.external1365Id, 'vol-1')
+
+const notEnrolledInitial = mapProfileToSettingsEditForm({
+  schoolEnrollmentStatus: 'NOT_ENROLLED',
+  affiliationName: '지역아동센터',
+  address: '서울특별시 마포구 독막로 95-27',
+  addressDetail: '9층 901호',
+})
+assert.equal(notEnrolledInitial.schoolStatus, 'none')
+assert.equal(notEnrolledInitial.affiliationName, '지역아동센터')
+assert.equal(notEnrolledInitial.schoolName, '')
+assert.equal(isSettingsEditValid(notEnrolledInitial), true)
+
+const savedAffiliation = applySettingsEditToSnapshot(MOCK_SETTINGS_PROFILE, {
+  ...notEnrolledInitial,
+  volunteerId: 'vol-1',
+})
+assert.equal(savedAffiliation.affiliationName, '지역아동센터')
+assert.equal(savedAffiliation.schoolName, '')
+assert.equal(savedAffiliation.grade, '')
 
 const nulled = nullifyEmptyProfileUpdateFields({
   external1365Id: '',

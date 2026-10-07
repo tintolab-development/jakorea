@@ -27,7 +27,7 @@ export const MOCK_SETTINGS_PROFILE = {
   external1365Id: '',
 } as const
 
-/** 로컬/dev 조회 mock — 교사회원 필드셋 */
+/** 로컬/dev 조회 mock — 교사 회원 필드셋 */
 export const MOCK_TEACHER_SETTINGS_PROFILE = {
   joinedAt: '2026-09-15',
   name: '김교사',

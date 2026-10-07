@@ -4,7 +4,6 @@
  */
 
 import { useSyncExternalStore } from 'react'
-import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 
 export type InstitutionSexOffenseConsentSubmissionRequest = 'request' | 'no_submit'
 export type InstitutionSexOffenseConsentInquiryMethod = 'ja_system' | 'criminal_record_site'
@@ -86,22 +85,6 @@ export function resetInstitutionApplicationFormVisibility(): void {
 /** 「동의서 제출 요청」 선택 시에만 조회 방식 단락 노출 */
 export function shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph(): boolean {
   return sexOffenseConsentSubmissionRequest === 'request'
-}
-
-/** 기관 온라인 제출 선택 시에만 강사 신청 — 성범죄 경력 조회서 제출 단락 노출 */
-export function shouldShowInstructorApplicationCrimeRecordParagraph(): boolean {
-  if (!shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph()) return false
-  if (sexOffenseConsentInquiryMethod !== 'criminal_record_site') return false
-  return sexOffenseConsentSiteSubmission === 'online'
-}
-
-export function getInstructorApplicationFormHiddenParagraphIds(options?: {
-  /** 템플릿 작성 화면 — 성범죄 단락 기본 노출(기관 선택과 무관) */
-  isTemplateAuthoringMode?: boolean
-}): ReadonlySet<string> | undefined {
-  if (options?.isTemplateAuthoringMode === true) return undefined
-  if (shouldShowInstructorApplicationCrimeRecordParagraph()) return undefined
-  return new Set([PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord])
 }
 
 export function useInstitutionApplicationFormVisibilityVersion(): number {
