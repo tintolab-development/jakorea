@@ -7,7 +7,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { CmsButton, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
 import {
   geminiApprovedTrainingDeleteBlocked,
@@ -182,7 +182,11 @@ export function GeminiApprovedTrainingList() {
       const result = await deleteApprovedTrainings(selectedIds)
       const deletedIds = new Set(result.successIds)
       setSelectedRowKeys(selectedIds.filter(id => !deletedIds.has(id)))
-      if (result.failureCount > 0) showAlert(blockedAlert)
+      if (result.failureCount > 0) {
+        showAlert(blockedAlert)
+        return
+      }
+      showDeleteCompletedAlert()
     } catch {
       showAlert(blockedAlert)
     }

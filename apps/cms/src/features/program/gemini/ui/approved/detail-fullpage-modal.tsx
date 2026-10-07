@@ -7,7 +7,7 @@ import {
   type GeminiApprovedTrainingPrivacyUnmasked,
 } from '../../api/visiting-training/service'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
-import { DeleteGuideModal, useCmsAlert } from '@/shared/ui'
+import { DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
@@ -163,6 +163,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
         return
       }
       onClose()
+      showDeleteCompletedAlert()
     } catch {
       showAlert(blockedAlert)
     }
