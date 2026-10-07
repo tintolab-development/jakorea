@@ -4,12 +4,12 @@
  * - size: h52 | h44 | h40 | h36 | h32  (large=h44, medium=h40, small=h32 별칭)
  * - hover·focus·active 시각 변화 없음, 로딩 스피너 없음
  *
- * Size (Figma) — radius 10 · font-weight 600 · 폭은 min-width + 라벨 길이
- *   h52  padding 10×24 · min-width 없음 · font 18/135% · icon 24 · gap 8
- *   h44  padding 8×20  · min-width 140  · font 16/125% · icon 24 · gap 6
- *   h40  padding 6×16  · min-width 120  · font 14/125% · icon 20 · gap 6
- *   h36  padding 6×12  · min-width 100  · font 14/125% · icon 20 · gap 4
- *   h32  padding 8×10  · min-width 80   · font 12/115% · icon 16 · gap 4
+ * Size (Figma) — font-weight 600 · 폭은 min-width + 라벨 길이
+ *   h52  radius 10 · padding 10×24 · min-width 없음 · font 18/135% · icon 24 · gap 8
+ *   h44  radius 8  · padding 8×20  · min-width 140  · font 16/125% · icon 24 · gap 6
+ *   h40  radius 8  · padding 6×16  · min-width 120  · font 14/125% · icon 20 · gap 6
+ *   h36  radius 6  · padding 6×12  · min-width 100  · font 14/125% · icon 20 · gap 4
+ *   h32  radius 6  · padding 8×10  · min-width 80   · font 12/115% · icon 16 · gap 4
  */
 
 .cms-button.ant-btn {
@@ -28,7 +28,6 @@
   cursor: pointer;
   border-style: solid;
   border-width: 1px;
-  border-radius: var(--Radius-10, 10px);
   transition: none !important;
   box-shadow: none !important;
 }
@@ -46,6 +45,7 @@
   min-height: 52px !important;
   padding: var(--Spacing-10, 10px) var(--Spacing-24, 24px) !important;
   gap: var(--Spacing-8, 8px);
+  border-radius: var(--Radius-10, 10px);
   font-size: 18px;
   line-height: 135%;
 }
@@ -57,6 +57,7 @@
   min-height: 44px !important;
   padding: var(--Spacing-8, 8px) var(--Spacing-20, 20px) !important;
   gap: 6px;
+  border-radius: var(--Radius-8, 8px);
   font-size: 16px;
   line-height: 125%;
 }
@@ -68,6 +69,7 @@
   min-height: 40px !important;
   padding: var(--Spacing-6, 6px) var(--Spacing-16, 16px) !important;
   gap: 6px;
+  border-radius: var(--Radius-8, 8px);
   font-size: 14px;
   line-height: 125%;
 }
@@ -79,6 +81,7 @@
   min-height: 36px !important;
   padding: var(--Spacing-6, 6px) var(--Spacing-12, 12px) !important;
   gap: var(--Spacing-4, 4px);
+  border-radius: var(--Radius-6, 6px);
   font-size: 14px;
   line-height: 125%;
 }
@@ -90,6 +93,7 @@
   min-height: 32px !important;
   padding: var(--Spacing-8, 8px) var(--Spacing-10, 10px) !important;
   gap: var(--Spacing-4, 4px);
+  border-radius: var(--Radius-6, 6px);
   font-size: 12px;
   line-height: 115%;
 }

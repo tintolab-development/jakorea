@@ -35,7 +35,8 @@ export function ButtonsSection() {
       description="표준 버튼은 CmsButton입니다. hover·focus 효과와 로딩 스피너는 없습니다."
     >
       <p className="ds-note">
-        <strong>Size</strong> — h52 · h44(기본) · h40 · h36 · h32. 모두 radius 10 · font-weight 600.
+        <strong>Size</strong> — h52 · h44(기본) · h40 · h36 · h32. radius h52 10 · h44·h40 8 ·
+        h36·h32 6 · font-weight 600.
         폭은 사이즈별 min-width(h44 140 · h40 120 · h36 100 · h32 80, h52 없음)부터 라벨 길이만큼
         늘어나며, <code>width</code> prop으로 고정할 수 있습니다.
         <br />
