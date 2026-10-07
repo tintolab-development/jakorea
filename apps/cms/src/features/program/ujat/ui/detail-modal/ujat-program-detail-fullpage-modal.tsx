@@ -214,6 +214,14 @@ import {
   buildUjatSurveyWritingPreviewSession,
 } from './survey-management/lib/open-ujat-survey-writing-preview'
 import { UjatSurveyTemplateEditModal } from './survey-management/ui/ujat-survey-template-edit-modal'
+import {
+  SurveyTemplateEditModal,
+  type ProgramSurveyFormEdit,
+} from '@/features/program/shared/ui/survey-management/survey-template-edit-modal'
+import {
+  buildProgramSurveyFormEditTarget,
+  canEditRegisteredSurveyForm,
+} from '@/features/program/shared/lib/survey-management/save-program-survey-form-edit'
 import { UjatSatisfactionSurveyView } from './survey-management/ui/ujat-satisfaction-survey-view'
 import { UjatLectureEvalSurveyView } from './survey-management/ui/ujat-lecture-eval-survey-view'
 import { UjatSurveyEmptyState } from './survey-management/ui/ujat-survey-empty-state'
@@ -710,6 +718,7 @@ export function UjatProgramDetailFullPageModal({
   const satisfactionResultsExportRef = useRef<HTMLDivElement>(null)
   const [surveyTemplateEditOpen, setSurveyTemplateEditOpen] = useState(false)
   const [surveyTemplateEditId, setSurveyTemplateEditId] = useState<string | null>(null)
+  const [programFormEdit, setProgramFormEdit] = useState<ProgramSurveyFormEdit | null>(null)
   const [selectedSatisfactionTemplateId, setSelectedSatisfactionTemplateId] = useState<string | null>(
     null
   )
@@ -739,13 +748,17 @@ export function UjatProgramDetailFullPageModal({
 
   const openUjatSurveyTemplatePreview = useCallback(
     (
-      survey: { id: string; templateId: string; title: string },
+      survey: { id: string; templateId: string; title: string; bindingId?: string },
       options?: { allowEdit?: boolean }
     ) => {
       const catalogRow = findWritingTemplateRowByDefinitionId(survey.templateId)
       const allowEdit = options?.allowEdit ?? true
+      const editTarget =
+        allowEdit && displayProgram != null
+          ? buildProgramSurveyFormEditTarget(String(displayProgram.id), survey)
+          : null
       const onEditForm =
-        allowEdit && catalogRow != null
+        allowEdit && editTarget == null && catalogRow != null
           ? () => {
               closeWritingUserPreview()
               setSurveyTemplateEditId(survey.templateId)
@@ -767,7 +780,17 @@ export function UjatProgramDetailFullPageModal({
             return
           }
           requestPreviewHistoryPush()
-          openWritingUserPreview(session)
+          openWritingUserPreview(
+            editTarget != null
+              ? {
+                  ...session,
+                  onEditForm: () => {
+                    closeWritingUserPreview()
+                    setProgramFormEdit({ target: editTarget, initialDraft: session.draft })
+                  },
+                }
+              : session
+          )
         })
         .catch(error => {
           handleError(error, { context: 'ujatSurveyPreview' })
@@ -780,7 +803,13 @@ export function UjatProgramDetailFullPageModal({
           })
         })
     },
-    [closeWritingUserPreview, openWritingUserPreview, requestPreviewHistoryPush, showAlert]
+    [
+      closeWritingUserPreview,
+      displayProgram,
+      openWritingUserPreview,
+      requestPreviewHistoryPush,
+      showAlert,
+    ]
   )
 
   const showShareCopyToast = useCallback(
@@ -1745,7 +1774,7 @@ export function UjatProgramDetailFullPageModal({
   const handleOpenRegisteredSurveyTemplatePreview = useCallback(() => {
     if (!activeRegisteredSurvey) return
     openUjatSurveyTemplatePreview(activeRegisteredSurvey, {
-      allowEdit: activeRegisteredSurvey.status === 'before_start',
+      allowEdit: canEditRegisteredSurveyForm(activeRegisteredSurvey),
     })
   }, [activeRegisteredSurvey, openUjatSurveyTemplatePreview])
 
@@ -1966,7 +1995,7 @@ export function UjatProgramDetailFullPageModal({
   const handleOpenSatisfactionTemplatePreview = useCallback(() => {
     if (!activeSatisfactionSurvey) return
     openUjatSurveyTemplatePreview(activeSatisfactionSurvey, {
-      allowEdit: activeSatisfactionSurvey.status === 'before_start',
+      allowEdit: canEditRegisteredSurveyForm(activeSatisfactionSurvey),
     })
   }, [activeSatisfactionSurvey, openUjatSurveyTemplatePreview])
 
@@ -2200,8 +2229,12 @@ export function UjatProgramDetailFullPageModal({
   const handleOpenLectureEvalPreview = useCallback(() => {
     if (!lectureEvalSurvey) return
     const row = findWritingTemplateRowByDefinitionId(lectureEvalSurvey.templateId)
+    const editTarget =
+      canEditRegisteredSurveyForm(lectureEvalSurvey) && displayProgram != null
+        ? buildProgramSurveyFormEditTarget(String(displayProgram.id), lectureEvalSurvey)
+        : null
     const onEditForm =
-      lectureEvalSurvey.status === 'before_start' && row != null
+      canEditRegisteredSurveyForm(lectureEvalSurvey) && editTarget == null && row != null
         ? () => {
             closeWritingUserPreview()
             setSurveyTemplateEditId(row.id)
@@ -2247,7 +2280,17 @@ export function UjatProgramDetailFullPageModal({
           return
         }
         requestPreviewHistoryPush()
-        openWritingUserPreview(session)
+        openWritingUserPreview(
+          editTarget != null
+            ? {
+                ...session,
+                onEditForm: () => {
+                  closeWritingUserPreview()
+                  setProgramFormEdit({ target: editTarget, initialDraft: session.draft })
+                },
+              }
+            : session
+        )
       })
       .catch(error => {
         handleError(error, { context: 'ujatLectureEvalPreview' })
@@ -2259,7 +2302,14 @@ export function UjatProgramDetailFullPageModal({
           ),
         })
       })
-  }, [lectureEvalSurvey, closeWritingUserPreview, openWritingUserPreview, requestPreviewHistoryPush, showAlert])
+  }, [
+    lectureEvalSurvey,
+    displayProgram,
+    closeWritingUserPreview,
+    openWritingUserPreview,
+    requestPreviewHistoryPush,
+    showAlert,
+  ])
 
   const handleLectureEvalTabChange = useCallback(
     (tab: UjatLectureEvalTabKey) => {
@@ -3162,6 +3212,21 @@ export function UjatProgramDetailFullPageModal({
         open={surveyTemplateEditOpen}
         templateId={surveyTemplateEditId}
         onClose={handleCloseSurveyTemplateEdit}
+      />
+    ) : null}
+    {programFormEdit != null ? (
+      <SurveyTemplateEditModal
+        open
+        templateId={String(programFormEdit.target.sourceVersionId)}
+        programEdit={programFormEdit}
+        onBindingsStale={() => void invalidateSurveyCaches()}
+        onClose={() => setProgramFormEdit(null)}
+        onSaved={newVersionId => {
+          const sourceId = String(programFormEdit.target.sourceVersionId)
+          setActiveRegisteredSurveyId(prev => (prev === sourceId ? newVersionId : prev))
+          setProgramFormEdit(null)
+          void invalidateSurveyCaches()
+        }}
       />
     ) : null}
     <ProgramDetailSponsorDetailOverlay />
