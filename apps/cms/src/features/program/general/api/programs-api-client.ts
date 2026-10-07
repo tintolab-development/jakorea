@@ -5,6 +5,7 @@ import {
   ProgramHardDeleteBlockedError,
 } from '@/features/program/shared/lib/program-delete-guide'
 import customInstance from '@/shared/api/orval-mutator'
+import { axiosClient } from '@/shared/instance/axios-instance'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 
@@ -492,25 +493,43 @@ export async function createAdminProgramPostUnreadReminderRemote(
   )
 }
 
+type SurveyResponseListItem =
+  import('@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse').SurveyResponseListItemResponse
+
+/** 서버 `size` 최대값 */
+const SURVEY_RESPONSES_PAGE_SIZE = 100
+/** 비정상 헤더·무한 페이지 방지 */
+const SURVEY_RESPONSES_MAX_PAGES = 50
+
+function parseTotalCountHeader(value: unknown): number | null {
+  if (value == null) return null
+  const total = Number(String(value))
+  return Number.isFinite(total) && total >= 0 ? total : null
+}
+
+/** 응답 목록 전체 — `X-Total-Count`(없으면 마지막 페이지가 size 미만)까지 페이지 수집 */
 export async function fetchAdminProgramSurveyResponsesRemote(
   programId: string,
   templateVersionId: string
-): Promise<
-  import('@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse').SurveyResponseListItemResponse[]
-> {
-  const body = await unwrapApiBody<
-    | import('@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse').SurveyResponseListItemResponse[]
-    | {
-        items?: import('@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse').SurveyResponseListItemResponse[]
-      }
-  >(
-    await customInstance({
-      url: `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/responses`,
+): Promise<SurveyResponseListItem[]> {
+  const url = `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/responses`
+  const items: SurveyResponseListItem[] = []
+  for (let page = 0; page < SURVEY_RESPONSES_MAX_PAGES; page += 1) {
+    const response = await axiosClient.request<unknown>({
+      url,
       method: 'GET',
+      params: { page, size: SURVEY_RESPONSES_PAGE_SIZE },
     })
-  )
-  if (Array.isArray(body)) return body
-  return body.items ?? []
+    const body = unwrapApiBody<SurveyResponseListItem[] | { items?: SurveyResponseListItem[] }>(
+      response.data
+    )
+    const pageItems = Array.isArray(body) ? body : (body.items ?? [])
+    items.push(...pageItems)
+    const total = parseTotalCountHeader(response.headers['x-total-count'])
+    if (total != null ? items.length >= total : pageItems.length < SURVEY_RESPONSES_PAGE_SIZE) break
+    if (pageItems.length === 0) break
+  }
+  return items
 }
 
 export async function fetchAdminProgramSurveySummaryRemote(

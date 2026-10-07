@@ -109,6 +109,7 @@ import {
   updateGeneralProgramFormResponse,
 } from '@/features/program/general/api/admin-general-programs-service'
 import {
+  isSurveyTemplateOptionForKind,
   pickLectureEvalSurveyFromRemote,
   resolveLectureEvalSubmitContext,
   resolveSurveyCreateBindingTemplateCode,
@@ -195,6 +196,16 @@ function pickRegisteredSurveyTemplateId(
   return preferredId
 }
 
+/** remote 설문 id = 바인딩 templateVersionId */
+function toRemoteSurveyVersionId(
+  survey: Pick<RegisteredSurvey, 'id'> | null | undefined,
+  remote: boolean
+): number | undefined {
+  if (!remote || survey == null) return undefined
+  const value = Number(survey.id)
+  return Number.isFinite(value) && value > 0 ? Math.trunc(value) : undefined
+}
+
 function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: string): string {
   const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
   const safeSurvey = surveyTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '만족도조사'
@@ -208,7 +219,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     registeredSurveys: remoteRegisteredSurveys,
     classifiedBindings,
     rawSurveys,
-    loading: surveysLoading,
+    initialLoading: surveysLoading,
     isRemoteDataSource: surveysRemote,
   } = useGeneralProgramSurveys(program.id)
   const {
@@ -291,20 +302,28 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const {
     pollResponses: remotePollResponses,
-    loading: pollResponsesLoading,
+    initialLoading: pollResponsesLoading,
     isRemoteDataSource: pollResponsesRemote,
-  } = useGeneralProgramSurveyResponses(program.id, pollResponseVersionId)
+  } = useGeneralProgramSurveyResponses(program.id, pollResponseVersionId, {
+    detailPolicy: 'public-text-only',
+  })
   const {
     pollResponses: remoteSatisfactionResponses,
     isRemoteDataSource: satisfactionResponsesRemote,
-  } = useGeneralProgramSurveyResponses(program.id, satisfactionResponseVersionId)
+  } = useGeneralProgramSurveyResponses(program.id, satisfactionResponseVersionId, {
+    detailPolicy: 'public-text-only',
+  })
   const {
     pollResponses: remoteLectureResponses,
     isRemoteDataSource: lectureResponsesRemote,
   } = useGeneralProgramSurveyResponses(program.id, lectureResponseVersionId)
-  const { totalResponseCount: remotePollSummaryCount } = useGeneralProgramSurveySummary(
+  const {
+    totalResponseCount: remotePollSummaryCount,
+    questionSummaries: pollQuestionSummaries,
+  } = useGeneralProgramSurveySummary(program.id, pollResponseVersionId)
+  const { questionSummaries: satisfactionQuestionSummaries } = useGeneralProgramSurveySummary(
     program.id,
-    pollResponseVersionId
+    satisfactionResponseVersionId
   )
 
   useEffect(() => {
@@ -369,14 +388,21 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   }, [])
 
   const surveyTemplateOptions = useMemo(() => {
-    if (remoteSurveyRows.length > 0) {
-      return remoteSurveyRows.map(row => ({
-        label: row.templateName,
-        value: row.id,
-      }))
-    }
-    return getSurveyWritingTemplateSelectOptions()
-  }, [remoteSurveyRows])
+    const options =
+      remoteSurveyRows.length > 0
+        ? remoteSurveyRows.map(row => ({
+            label: row.templateName,
+            value: row.id,
+          }))
+        : getSurveyWritingTemplateSelectOptions()
+    if (createModalKind == null) return options
+    return options.filter(option =>
+      isSurveyTemplateOptionForKind(
+        { id: option.value, templateName: option.label },
+        createModalKind
+      )
+    )
+  }, [createModalKind, remoteSurveyRows])
   const activeRegisteredSurvey = useMemo(
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
@@ -470,6 +496,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       return
     }
     if (lectureEvalSurvey.status === 'in_progress' || lectureEvalSurvey.status === 'finished') {
+      if (lectureEvalDraftRef.current != null) return
       let cancelled = false
       const versionId = Number(lectureEvalSurvey.id)
       const loadDraft = async () => {
@@ -669,6 +696,18 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const submitCreateModal = useCallback(async () => {
     if (createModalKind == null || selectedTemplateId == null || selectedTemplateId === '') return
+    if (!surveyTemplateOptions.some(option => option.value === selectedTemplateId)) {
+      void showAlert({
+        title: '등록 불가',
+        content:
+          createModalKind === 'satisfaction'
+            ? '만족도조사 양식만 선택할 수 있습니다. 템플릿을 다시 선택해 주세요.'
+            : createModalKind === 'lecture'
+              ? '강의평가 양식만 선택할 수 있습니다. 템플릿을 다시 선택해 주세요.'
+              : '설문조사 양식만 선택할 수 있습니다. 템플릿을 다시 선택해 주세요.',
+      })
+      return
+    }
     setSubmitting(true)
     try {
       const { newTemplateId } = await duplicateWritingTemplate({
@@ -793,6 +832,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     selectedTemplateId,
     showAlert,
     surveysRemote,
+    surveyTemplateOptions,
   ])
 
   const confirmDelete = useCallback(async () => {
@@ -967,12 +1007,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           await exportSurveyResultsExcel({
             surveyTitle: activeSatisfactionSurvey.title,
             templateId: activeSatisfactionSurvey.templateId,
+            templateVersionId: toRemoteSurveyVersionId(activeSatisfactionSurvey, surveysRemote),
             responseCount: activeSatisfactionSurvey.responseCount,
             participantTotal: resolveSurveyResultsParticipantTotal(
               activeSatisfactionSurvey,
               program.totalParticipants
             ),
             responses: satisfactionResponses,
+            questionSummaries: satisfactionQuestionSummaries,
           })
         }
         setSatisfactionDownloadModalOpen(false)
@@ -986,7 +1028,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         setDownloadingSatisfactionResults(false)
       }
     },
-    [activeSatisfactionSurvey, program.title, program.totalParticipants, satisfactionResponses, showAlert]
+    [
+      activeSatisfactionSurvey,
+      program.title,
+      program.totalParticipants,
+      satisfactionQuestionSummaries,
+      satisfactionResponses,
+      showAlert,
+      surveysRemote,
+    ]
   )
 
   const handleDownloadPollResults = useCallback(
@@ -1007,12 +1057,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           await exportSurveyResultsExcel({
             surveyTitle: activeRegisteredSurvey.title,
             templateId: activeRegisteredSurvey.templateId,
+            templateVersionId: toRemoteSurveyVersionId(activeRegisteredSurvey, surveysRemote),
             responseCount: activeRegisteredSurvey.responseCount,
             participantTotal: resolveSurveyResultsParticipantTotal(
               activeRegisteredSurvey,
               program.totalParticipants
             ),
             responses: pollResponses,
+            questionSummaries: pollQuestionSummaries,
           })
         }
         setPollDownloadModalOpen(false)
@@ -1026,7 +1078,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         setDownloadingPollResults(false)
       }
     },
-    [activeRegisteredSurvey, pollResponses, program.title, program.totalParticipants, showAlert]
+    [
+      activeRegisteredSurvey,
+      pollQuestionSummaries,
+      pollResponses,
+      program.title,
+      program.totalParticipants,
+      showAlert,
+      surveysRemote,
+    ]
   )
 
   const handleLectureEvalDraftChange = useCallback((draft: WritingFormDraft) => {
@@ -1269,7 +1329,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           <div className="survey-management-loading" role="status">
             <Spin size="large" />
           </div>
-        ) : activeRegisteredSurvey != null && activeRegisteredSurvey.responseCount === 0 ? (
+        ) : activeRegisteredSurvey != null && activeRegisteredSurvey.status === 'before_start' ? (
           <SurveyNoResponseState
             title={GENERAL_SURVEY_POLL_NO_RESPONSE_COPY.title}
             description={GENERAL_SURVEY_POLL_NO_RESPONSE_COPY.description}
@@ -1283,19 +1343,23 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               setDeleteModalKind('survey')
             }}
             onOpenTemplatePreview={() =>
-              openTemplatePreview(activeRegisteredSurvey, { allowEdit: true })
+              openTemplatePreview(activeRegisteredSurvey, {
+                allowEdit: activeRegisteredSurvey.status === 'before_start',
+              })
             }
           />
         ) : activeRegisteredSurvey != null ? (
           <div ref={pollResultsExportRef}>
             <SurveyPollResultsView
               templateId={activeRegisteredSurvey.templateId}
+              templateVersionId={toRemoteSurveyVersionId(activeRegisteredSurvey, surveysRemote)}
               responseCount={activeRegisteredSurvey.responseCount}
               participantTotal={resolveSurveyResultsParticipantTotal(
                 activeRegisteredSurvey,
                 program.totalParticipants
               )}
               responses={pollResponses}
+              questionSummaries={pollQuestionSummaries}
               pdfTitle="설문조사 결과"
             />
           </div>
@@ -1371,6 +1435,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       onDownloadClick={() => setSatisfactionDownloadModalOpen(true)}
       resultsExportRef={satisfactionResultsExportRef}
       resultsResponses={satisfactionResponses}
+      resultsTemplateVersionId={toRemoteSurveyVersionId(activeSatisfactionSurvey, surveysRemote)}
+      resultsQuestionSummaries={satisfactionQuestionSummaries}
     />
     )
   }

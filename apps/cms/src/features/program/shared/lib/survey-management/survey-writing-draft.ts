@@ -2,7 +2,9 @@
  * 프로그램 설문 관리 draft — form-template version API SSOT (양식 관리와 동일).
  * localStorage에 쓰지 않는다. remote 실패 시 seed만 사용.
  */
+import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
+import { queryClient } from '@/shared/lib/query-client'
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
@@ -22,7 +24,14 @@ export type SurveyWritingDraftValidationResult =
 
 export type ResolveSurveyWritingDraftOptions = {
   templateName?: string
+  /** 바인딩된 게시 version — 있으면 그 version 본문을 단건 조회 (템플릿 목록 warm 없음) */
+  templateVersionId?: number
+  /** true면 version 캐시를 무시하고 다시 조회 (양식 저장 직후) */
+  fresh?: boolean
 }
+
+/** 게시 version은 결과 화면에서 바뀌지 않는다 — 탭 전환·재마운트마다 재조회하지 않도록 캐시 */
+const SURVEY_VERSION_DRAFT_STALE_MS = 5 * 60_000
 
 /** remote load/save 후 동기 peek용 (poll/preview hydrate) */
 const draftCache = new Map<string, WritingFormDraft>()
@@ -69,6 +78,22 @@ export async function resolveSurveyWritingDraft(
   templateId: string,
   options?: ResolveSurveyWritingDraftOptions
 ): Promise<WritingFormDraft> {
+  const versionId = options?.templateVersionId
+  if (versionId != null && Number.isFinite(versionId) && versionId > 0) {
+    try {
+      const normalizedVersionId = Math.trunc(versionId)
+      const saved = await queryClient.fetchQuery({
+        queryKey: formTemplateQueryKeys.surveyVersionDraft(normalizedVersionId),
+        queryFn: () =>
+          loadWritingFormTemplateDraft(templateId, { templateVersionId: normalizedVersionId }),
+        staleTime: options?.fresh ? 0 : SURVEY_VERSION_DRAFT_STALE_MS,
+        retry: false,
+      })
+      if (saved?.draft != null) return normalizeWritingFormDraft(saved.draft)
+    } catch (error) {
+      console.warn('[survey-writing-draft] version load failed; using template draft', error)
+    }
+  }
   try {
     const saved = await loadWritingFormTemplateDraft(templateId)
     if (saved?.draft != null) {

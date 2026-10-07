@@ -58,7 +58,6 @@ export type EducationSurveyFillPanelProps = {
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
   programId?: string | null
-  recruitmentId?: number | null
 }
 
 function resolveFillDraft(options: {
@@ -95,7 +94,6 @@ export function EducationSurveyFillPanel({
   applicationType,
   applicationId,
   programId,
-  recruitmentId,
 }: EducationSurveyFillPanelProps) {
   const remoteForms = useApplicationFormsQuery(
     applicationType,
@@ -119,8 +117,6 @@ export function EducationSurveyFillPanel({
   const remoteFormQuery = useApplicationSurveyFormQuery(
     listHasForm ? null : programId,
     listHasForm ? null : selectedEntryId,
-    applicationType,
-    recruitmentId,
   )
   const submitMutation = useSubmitEducationSurveyMutation(programId, applicationType, applicationId)
   const readOnly = selectedEntry?.status === 'submitted'

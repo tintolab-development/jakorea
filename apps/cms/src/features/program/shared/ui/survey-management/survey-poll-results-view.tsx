@@ -1,34 +1,47 @@
-import { useEffect, useState } from 'react'
-import {
-  UJAT_SURVEY_POLL_RESPONSES_MOCK,
-} from '@/features/program/ujat/model/ujat-survey-poll'
+import { useEffect, useMemo, useState } from 'react'
+import { UJAT_SURVEY_POLL_RESPONSES_MOCK } from '@/features/program/ujat/model/ujat-survey-poll'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
+import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import {
-  buildSurveyPollResultSections,
+  buildSurveyPollResultSectionsFromDraft,
+  buildSurveyPollResultSectionsFromSummary,
   type SurveyPollResultSection,
 } from '../../lib/survey-management/aggregate-survey-poll-results'
-import type { SurveyPollRawResponse } from '../../lib/survey-management/survey-management-types'
+import { resolveSurveyWritingDraft } from '../../lib/survey-management/survey-writing-draft'
+import type {
+  SurveyPollRawResponse,
+  SurveyResultQuestionSummary,
+} from '../../lib/survey-management/survey-management-types'
 import { SurveyScaleResultChart } from './survey-scale-result-chart'
 import { SurveyTextResponsesTable } from './survey-text-responses-table'
 import './survey-management.css'
 
 export type SurveyPollResultsViewProps = {
   templateId: string
+  /** 응답이 묶인 게시 version — 지정 시 문항 구성을 그 version 기준으로 집계 */
+  templateVersionId?: number
   responseCount: number
   participantTotal: number
   responses?: SurveyPollRawResponse[]
+  /**
+   * summary API 행. 비어 있지 않으면 version schema 조회 없이 이 값으로 결과를 구성한다.
+   * `null` = summary 로딩 중(대기), `undefined`·빈 배열 = version/템플릿 draft로 집계
+   */
+  questionSummaries?: SurveyResultQuestionSummary[] | null
   pdfTitle?: string
 }
 
 export function SurveyPollResultsView({
   templateId,
+  templateVersionId,
   responseCount,
   participantTotal,
   responses,
+  questionSummaries,
   pdfTitle = '강의 평가 결과',
 }: SurveyPollResultsViewProps) {
   const [templateSaveRevision, setTemplateSaveRevision] = useState(0)
-  const [sections, setSections] = useState<SurveyPollResultSection[]>([])
+  const [draft, setDraft] = useState<WritingFormDraft | null>(null)
 
   useEffect(() => {
     const handleTemplateSaved = (event: Event) => {
@@ -41,18 +54,43 @@ export function SurveyPollResultsView({
     return () => window.removeEventListener(WRITING_FORM_TEMPLATE_SAVE_EVENT, handleTemplateSaved)
   }, [templateId])
 
+  const useSummary = questionSummaries != null && questionSummaries.length > 0
+  const needsDraft = questionSummaries !== null && !useSummary
+
   useEffect(() => {
+    if (!needsDraft) return
     let cancelled = false
-    void buildSurveyPollResultSections(
-      templateId,
-      responses ?? UJAT_SURVEY_POLL_RESPONSES_MOCK
-    ).then(next => {
-      if (!cancelled) setSections(next)
+    void resolveSurveyWritingDraft(templateId, {
+      templateVersionId,
+      fresh: templateSaveRevision > 0,
+    }).then(next => {
+      if (!cancelled) setDraft(next)
     })
     return () => {
       cancelled = true
     }
-  }, [templateId, responses, templateSaveRevision])
+  }, [needsDraft, templateId, templateVersionId, templateSaveRevision])
+
+  const sections = useMemo((): SurveyPollResultSection[] => {
+    if (useSummary)
+      return buildSurveyPollResultSectionsFromSummary(questionSummaries, responses ?? [])
+    if (!needsDraft || draft == null) return []
+    return buildSurveyPollResultSectionsFromDraft(
+      draft,
+      responses ?? UJAT_SURVEY_POLL_RESPONSES_MOCK
+    )
+  }, [draft, needsDraft, questionSummaries, responses, useSummary])
+
+  const renderSectionTitle = (section: SurveyPollResultSection) => (
+    <>
+      {section.title}
+      {section.required ? (
+        <span className="ujat-survey-poll-results__required" aria-label="필수">
+          *
+        </span>
+      ) : null}
+    </>
+  )
 
   const summary = (
     <>
@@ -87,7 +125,7 @@ export function SurveyPollResultsView({
               className="ujat-survey-poll-results__section-title"
               id={`survey-result-${section.paragraphId}`}
             >
-              {section.title}
+              {renderSectionTitle(section)}
             </h3>
             <div className="ujat-survey-poll-results__section-divider" aria-hidden />
             <div className="ujat-survey-poll-results__section-body">
@@ -113,8 +151,13 @@ export function SurveyPollResultsView({
 
           <div className="ujat-survey-poll-results__pdf-sections">
             {sections.map(section => (
-              <div key={`pdf-${section.paragraphId}`} className="ujat-survey-poll-results__pdf-section">
-                <h3 className="ujat-survey-poll-results__pdf-section-title">{section.title}</h3>
+              <div
+                key={`pdf-${section.paragraphId}`}
+                className="ujat-survey-poll-results__pdf-section"
+              >
+                <h3 className="ujat-survey-poll-results__pdf-section-title">
+                  {renderSectionTitle(section)}
+                </h3>
                 <div className="ujat-survey-poll-results__section-divider" aria-hidden />
                 <div className="ujat-survey-poll-results__section-body">
                   {section.kind === 'scale' ? (

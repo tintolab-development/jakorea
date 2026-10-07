@@ -405,7 +405,6 @@ export function MypageVolunteerDetailPage() {
             applicationType={routeApplicationType}
             applicationId={application.id}
             programId={program.id}
-            recruitmentId={application.recruitmentId}
           />
         )
       }
@@ -428,7 +427,6 @@ export function MypageVolunteerDetailPage() {
             applicationType={routeApplicationType}
             applicationId={application.id}
             programId={program.id}
-            recruitmentId={application.recruitmentId}
           />
         )
       }

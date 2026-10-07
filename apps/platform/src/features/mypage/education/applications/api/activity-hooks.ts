@@ -683,8 +683,6 @@ export function useApplicationSettlementsQuery(
 export function useApplicationSurveyFormQuery(
   programId: string | null | undefined,
   bindingId: string | null | undefined,
-  applicationType: ProgramApplicationType | null | undefined,
-  recruitmentId?: number | null,
 ) {
   const numericProgramId = parsePortalProgramId(programId)
   const numericBindingId = parsePortalProgramId(bindingId)
@@ -697,19 +695,9 @@ export function useApplicationSurveyFormQuery(
     queryKey: platformQueryKeys.mypage.programApplications.formBinding({
       programId: String(numericProgramId ?? ''),
       bindingId: numericBindingId ?? 0,
-      recruitmentId: recruitmentId ?? null,
-      applicationType: applicationType ?? '',
     }),
     queryFn: ({ signal }) =>
-      fetchPortalSurveyFormBinding(
-        numericProgramId!,
-        numericBindingId!,
-        {
-          applicationType: applicationType ?? undefined,
-          recruitmentId: recruitmentId ?? undefined,
-        },
-        signal,
-      ),
+      fetchPortalSurveyFormBinding(numericProgramId!, numericBindingId!, signal),
     enabled,
     staleTime: 60_000,
     gcTime: GC_MS,

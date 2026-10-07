@@ -31,8 +31,10 @@ import {
   classifyProgramFormBindings,
   isDedicatedSurveyManagementTabTitle,
   mapSurveyResponseListItemToPollResponse,
+  mapSurveySummaryToQuestionSummaries,
   mergeSurveysWithBindings,
   surveyResponseNeedsDetail,
+  surveySummaryHasPublicTextAnswers,
   type ClassifiedFormBinding,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
 import {
@@ -57,7 +59,10 @@ import type {
 } from '@/types/domain'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import type { RegisteredSurvey } from '@/features/program/shared/lib/survey-management/survey-management-types'
-import type { SurveyPollRawResponse } from '@/features/program/shared/lib/survey-management/survey-management-types'
+import type {
+  SurveyPollRawResponse,
+  SurveyResultQuestionSummary,
+} from '@/features/program/shared/lib/survey-management/survey-management-types'
 import type { SurveySummaryResponse } from '@/shared/api/generated/dashboard/schemas/surveySummaryResponse'
 import type { SurveyResponseListItemResponse } from '@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse'
 
@@ -486,20 +491,50 @@ export function useGeneralProgramSurveys(programId: string | undefined) {
         bindingsQuery.isFetching ||
         bindingsQuery.isLoading
       : false,
+    /** 최초 로드만 — 백그라운드 재조회 중에는 false (결과 뷰 언마운트 방지) */
+    initialLoading: remoteEnabled
+      ? (surveysQuery.isFetching && surveysQuery.data === undefined) ||
+        (bindingsQuery.isFetching && bindingsQuery.data === undefined)
+      : false,
     isRemoteDataSource: remoteEnabled && !surveysQuery.isError,
   }
 }
 
+const SURVEY_SUMMARY_STALE_MS = 30_000
+
+export type SurveyResponsesDetailPolicy =
+  /** preview로 답이 부족하면 응답별 상세 조회 (강의평가 draft 채우기 등) */
+  | 'when-preview-short'
+  /** 그래프는 summary `options`로 그리므로 주관식 답이 공개일 때만 상세 조회 */
+  | 'public-text-only'
+
 export function useGeneralProgramSurveyResponses(
   programId: string | undefined,
-  templateVersionId: string | undefined
+  templateVersionId: string | undefined,
+  options?: { detailPolicy?: SurveyResponsesDetailPolicy }
 ) {
   const surfaceRemote = useProgramsReadsRemoteEnabledForSurface(programId)
   const remoteEnabled = surfaceRemote && Boolean(templateVersionId)
+  const queryClient = useQueryClient()
+  const detailPolicy = options?.detailPolicy ?? 'when-preview-short'
   const query = useQuery({
-    queryKey: generalProgramQueryKeys.surveyResponses(programId ?? '', templateVersionId ?? ''),
+    queryKey: [
+      ...generalProgramQueryKeys.surveyResponses(programId ?? '', templateVersionId ?? ''),
+      detailPolicy,
+    ],
     queryFn: async () => {
       const items = await fetchGeneralProgramSurveyResponses(programId!, templateVersionId!)
+      if (detailPolicy === 'public-text-only') {
+        const summary = await queryClient.fetchQuery({
+          queryKey: generalProgramQueryKeys.surveySummary(programId!, templateVersionId!),
+          queryFn: () => fetchGeneralProgramSurveySummary(programId!, templateVersionId!),
+          staleTime: SURVEY_SUMMARY_STALE_MS,
+          retry: false,
+        })
+        if (!surveySummaryHasPublicTextAnswers(summary)) {
+          return items.map(item => mapSurveyResponseListItemToPollResponse(item))
+        }
+      }
       return mapResponsesWithDetails(programId!, templateVersionId!, items)
     },
     enabled: remoteEnabled,
@@ -512,6 +547,8 @@ export function useGeneralProgramSurveyResponses(
     /** @deprecated use pollResponses — raw list no longer exposed after adapter */
     responses: (query.data ?? null) as SurveyPollRawResponse[] | null,
     loading: remoteEnabled ? query.isFetching || query.isLoading : false,
+    /** 최초 로드만 — 백그라운드 재조회 중에는 false (결과 뷰 언마운트 방지) */
+    initialLoading: remoteEnabled && query.isFetching && query.data === undefined,
     isRemoteDataSource: remoteEnabled && !query.isError,
   }
 }
@@ -526,7 +563,7 @@ export function useGeneralProgramSurveySummary(
     queryKey: generalProgramQueryKeys.surveySummary(programId ?? '', templateVersionId ?? ''),
     queryFn: () => fetchGeneralProgramSurveySummary(programId!, templateVersionId!),
     enabled: remoteEnabled,
-    staleTime: 30_000,
+    staleTime: SURVEY_SUMMARY_STALE_MS,
     retry: false,
   })
 
@@ -536,9 +573,18 @@ export function useGeneralProgramSurveySummary(
     return Math.max(...rows.map(r => r.totalResponseCount ?? r.responseCount ?? 0), 0)
   }, [query.data])
 
+  const questionSummaries = useMemo<SurveyResultQuestionSummary[] | null | undefined>(() => {
+    if (!remoteEnabled || query.isError) return undefined
+    return query.data == null ? null : mapSurveySummaryToQuestionSummaries(query.data)
+  }, [query.data, query.isError, remoteEnabled])
+
   return {
     summary: (query.data ?? null) as SurveySummaryResponse[] | null,
     totalResponseCount,
+    /**
+     * 결과 화면 문항 목록. `null` = 로딩 중, `undefined` = remote OFF·오류(→ version draft로 집계)
+     */
+    questionSummaries,
     loading: remoteEnabled ? query.isFetching || query.isLoading : false,
     isRemoteDataSource: remoteEnabled && !query.isError,
   }
