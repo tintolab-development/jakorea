@@ -316,6 +316,17 @@ export function EducationSurveyFillPanel({
   if (remoteForms.enabled && surveyList.length === 0) {
     return <EducationSurveyEmptyPanel kind={kind} />
   }
+  // 실패 시 seed 양식이 대신 보이면 CMS 양식과 다른 설문을 제출하게 된다.
+  if (remoteFormQuery.isError) {
+    return (
+      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+        {getProgramApplicationApiErrorMessage(
+          remoteFormQuery.error,
+          kind === 'satisfaction' ? '만족도조사를 불러오지 못했습니다.' : '설문조사를 불러오지 못했습니다.',
+        )}
+      </PFText>
+    )
+  }
 
   const surveyCreatedAt =
     selectedEntry?.createdAt ?? selectedEntry?.startAt ?? EDUCATION_SURVEY_SEED_CREATED_AT
