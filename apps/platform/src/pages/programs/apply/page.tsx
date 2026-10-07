@@ -1012,7 +1012,7 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(sexOffenseParagraph)] =
           sexOffenseSubmissionAnswerFromValues(sexOffense)
       }
-      if (instructorCrimeParagraph && instructorCrimeRecord.fileObjectId != null) {
+      if (instructorCrimeParagraph && instructorCrimeRecord.confirmed) {
         overrides[resolveApplicationAnswerKey(instructorCrimeParagraph)] =
           instructorCrimeRecordAnswerFromValues(instructorCrimeRecord)
       }
@@ -1047,7 +1047,7 @@ export function ProgramApplyPage() {
         omitParagraphIds.add(teamParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(teamParagraph))
       }
-      if (instructorCrimeParagraph && instructorCrimeRecord.fileObjectId == null) {
+      if (instructorCrimeParagraph && !instructorCrimeRecord.confirmed) {
         omitParagraphIds.add(instructorCrimeParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(instructorCrimeParagraph))
       }

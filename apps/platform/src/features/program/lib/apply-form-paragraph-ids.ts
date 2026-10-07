@@ -79,7 +79,7 @@ export function isApplicationPreferredScheduleParagraphId(id: string): boolean {
   return PREFERRED_SCHEDULE_IDS.has(id)
 }
 
-/** 강사 신청 — 성범죄 경력 조회서 제출 (CMS InstructorCrimeRecordParagraph) */
+/** 강사 신청 — 성범죄경력 조회 동의서 제출 방법 안내 (CMS InstructorCrimeRecordParagraph) */
 export function isInstructorCrimeRecordParagraphId(id: string): boolean {
   return INSTRUCTOR_CRIME_RECORD_IDS.has(id)
 }
