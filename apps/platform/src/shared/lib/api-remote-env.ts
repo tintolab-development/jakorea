@@ -1,11 +1,26 @@
 /**
  * 백엔드 URL·프록시 여부 — axios·auth 레이어에서 사용.
- * CMS `apps/cms/src/shared/lib/api-remote-env.ts`와 동일 규칙 + Homepage 이중 프록시.
+ * CMS `apps/cms/src/shared/lib/api-remote-env.ts`와 동일 규칙 + Homepage 이중 라우팅.
  *
- * - `VITE_API_BASE_URL`: 브라우저가 직접 호출할 오리진 (크로스 오리진 — 백엔드 CORS)
- * - `VITE_API_SERVER`: 로컬 Vite `/api/portal`, `/api/auth` → CMS(8080) 로그인·회원·NICE
- * - `VITE_HOMEPAGE_API_SERVER`: 로컬 Vite `/api` → JAHOMEADMINBACK(8081) 공개 홈
+ * - `VITE_API_BASE_URL`: JABACK 직접 호출 오리진 (배포·CORS)
+ * - `VITE_HOMEPAGE_API_BASE_URL`: JAHOME 직접 호출 오리진 (정적 배포)
+ * - `VITE_API_SERVER`: 로컬 Vite `/api/portal`, `/api/auth` → JABACK
+ * - `VITE_HOMEPAGE_API_SERVER`: 로컬 Vite 그 외 `/api` → JAHOMEADMINBACK
  */
+
+function normalizeOrigin(origin: string): string {
+  return origin.replace(/\/$/, '')
+}
+
+function normalizeRequestPath(raw: string): string {
+  const value = raw.trim()
+  if (!value) return ''
+  try {
+    return new URL(value, 'https://frontend.invalid').pathname
+  } catch {
+    return value.split('?')[0] ?? value
+  }
+}
 
 function backendOriginFromEnv(): string | undefined {
   const fromEnv =
@@ -22,13 +37,50 @@ function homepageOriginFromEnv(): string | undefined {
 
 export function getApiBaseUrl(): string {
   const raw = import.meta.env.VITE_API_BASE_URL?.trim()
-  if (raw) return raw.replace(/\/$/, '')
+  if (raw) return normalizeOrigin(raw)
   if (import.meta.env.DEV) {
     return ''
   }
   const productionOrigin = backendOriginFromEnv() || homepageOriginFromEnv()
-  if (productionOrigin) return productionOrigin.replace(/\/$/, '')
+  if (productionOrigin) return normalizeOrigin(productionOrigin)
   return ''
+}
+
+export function getHomepageApiBaseUrl(): string {
+  const raw = import.meta.env.VITE_HOMEPAGE_API_BASE_URL?.trim()
+  if (raw) return normalizeOrigin(raw)
+
+  if (import.meta.env.PROD) {
+    const fromServer = homepageOriginFromEnv()
+    if (fromServer) return normalizeOrigin(fromServer)
+  }
+
+  return ''
+}
+
+/**
+ * 정적 배포에서는 Vite proxy가 없으므로 로컬 proxy 계약을 브라우저 요청에도 동일하게 적용한다.
+ * - /api/portal, /api/auth → JABACK
+ * - 그 외 /api → JAHOME
+ */
+export function getApiBaseUrlForPath(requestUrl: string): string {
+  const jabackOrigin = getApiBaseUrl()
+  if (!import.meta.env.PROD) return jabackOrigin
+
+  const path = normalizeRequestPath(requestUrl)
+  const usesJaback =
+    path === '/api/portal' ||
+    path.startsWith('/api/portal/') ||
+    path === '/api/auth' ||
+    path.startsWith('/api/auth/')
+
+  if (usesJaback) return jabackOrigin
+
+  if (path === '/api' || path.startsWith('/api/')) {
+    return getHomepageApiBaseUrl() || jabackOrigin
+  }
+
+  return jabackOrigin
 }
 
 /** CMS/Portal(8080) — 로그인·회원가입·세션. */
@@ -37,8 +89,9 @@ export function isRemoteApiConfigured(): boolean {
   return !!backendOriginFromEnv()
 }
 
-/** Homepage Admin(8081) — `GET /api/public/main` 등. 로컬 Vite는 미설정 시 8081. */
+/** Homepage Admin(8081) — `GET /api/public/main` 등. */
 export function isHomepageApiConfigured(): boolean {
+  if (import.meta.env.VITE_HOMEPAGE_API_BASE_URL?.trim()) return true
   if (import.meta.env.VITE_API_BASE_URL?.trim()) return true
   if (homepageOriginFromEnv()) return true
   return import.meta.env.DEV

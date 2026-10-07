@@ -1,0 +1,201 @@
+name: Deploy Frontend DEV
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'tools/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/deploy-frontend-dev.yml'
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Frontend app to deploy
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - admin
+          - cms
+          - platform
+      ref:
+        description: Git ref to deploy
+        required: true
+        default: development
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: frontend-dev-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ROLE_ARN: ${{ vars.DEV_FRONTEND_AWS_ROLE_ARN }}
+  NODE_OPTIONS: --max-old-space-size=5120
+
+  JABACK_ORIGIN: https://d2z94oidjp1bmr.cloudfront.net
+  JAHOME_ORIGIN: https://d169xyrrpt335v.cloudfront.net
+
+  ADMIN_ORIGIN: https://dr4oy3qcacroy.cloudfront.net
+  CMS_ORIGIN: https://dcnk18mrzq68w.cloudfront.net
+  PLATFORM_ORIGIN: https://d1lmb5teh1vl41.cloudfront.net
+
+  ADMIN_BUCKET: ja-dev-frontend-admin-264015108093-ap-northeast-2
+  CMS_BUCKET: ja-dev-frontend-cms-264015108093-ap-northeast-2
+  PLATFORM_BUCKET: ja-dev-frontend-platform-264015108093-ap-northeast-2
+
+  ADMIN_DISTRIBUTION_ID: E2MYPYFI9RSY6H
+  CMS_DISTRIBUTION_ID: E2SPXN47SR3679
+  PLATFORM_DISTRIBUTION_ID: E3ASRIRXPD0KD5
+
+jobs:
+  deploy:
+    name: Build and deploy DEV frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DEPLOY_APP: ${{ github.event_name == 'workflow_dispatch' && inputs.app || 'all' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.20.2
+          cache: pnpm
+
+      - name: Install dependencies
+        env:
+          HUSKY: '0'
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify DEV deploy configuration
+        shell: bash
+        env:
+          VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
+        run: |
+          if [ -z "${AWS_ROLE_ARN:-}" ]; then
+            echo "DEV_FRONTEND_AWS_ROLE_ARN=MISSING"
+            exit 1
+          fi
+
+          case "${DEPLOY_APP}" in
+            all|cms|platform)
+              if [ -z "${VITE_ADDRESS_API_KEY:-}" ]; then
+                echo "VITE_ADDRESS_API_KEY=MISSING"
+                exit 1
+              fi
+              ;;
+          esac
+
+          echo "DEPLOY_APP=${DEPLOY_APP}"
+          echo "AWS_ROLE_ARN=SET"
+          echo "VITE_ADDRESS_API_KEY=SET_OR_NOT_REQUIRED"
+
+      - name: Build Admin
+        if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'admin' }}
+        env:
+          VITE_API_BASE_URL: ${{ env.JABACK_ORIGIN }}
+          VITE_HOMEPAGE_API_BASE_URL: ${{ env.JAHOME_ORIGIN }}
+        run: pnpm --filter admin build
+
+      - name: Verify Admin build output
+        if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'admin' }}
+        run: test -f apps/admin/dist/index.html
+
+      - name: Build CMS
+        if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'cms' }}
+        env:
+          VITE_API_BASE_URL: ${{ env.JABACK_ORIGIN }}
+          VITE_OAUTH_BACKEND_ORIGIN: ${{ env.JABACK_ORIGIN }}
+          VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
+          VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
+          VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
+        run: pnpm --filter cms build
+
+      - name: Verify CMS build output
+        if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'cms' }}
+        run: test -f apps/cms/dist/index.html
+
+      - name: Build Platform
+        if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'platform' }}
+        env:
+          VITE_API_BASE_URL: ${{ env.JABACK_ORIGIN }}
+          VITE_HOMEPAGE_API_BASE_URL: ${{ env.JAHOME_ORIGIN }}
+          VITE_OAUTH_BACKEND_ORIGIN: ${{ env.JABACK_ORIGIN }}
+          VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
+          VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
+          VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
+        run: pnpm --filter platform build
+
+      - name: Verify Platform build output
+        if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'platform' }}
+        run: test -f apps/platform/dist/index.html
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-frontend-dev-deploy
+
+      - name: Verify AWS identity
+        shell: bash
+        run: |
+          ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+          echo "AWS_ACCOUNT=${ACCOUNT}"
+          test "${ACCOUNT}" = "264015108093"
+
+      - name: Deploy Admin
+        if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'admin' }}
+        shell: bash
+        run: |
+          aws s3 sync apps/admin/dist/ "s3://${ADMIN_BUCKET}/"             --delete             --no-progress             --cache-control "public,max-age=0,must-revalidate"
+
+          ID="$(aws cloudfront create-invalidation             --distribution-id "${ADMIN_DISTRIBUTION_ID}"             --paths '/*'             --query 'Invalidation.Id'             --output text)"
+
+          test -n "${ID}"
+          aws cloudfront wait invalidation-completed             --distribution-id "${ADMIN_DISTRIBUTION_ID}"             --id "${ID}"
+
+      - name: Deploy CMS
+        if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'cms' }}
+        shell: bash
+        run: |
+          aws s3 sync apps/cms/dist/ "s3://${CMS_BUCKET}/"             --delete             --no-progress             --cache-control "public,max-age=0,must-revalidate"
+
+          ID="$(aws cloudfront create-invalidation             --distribution-id "${CMS_DISTRIBUTION_ID}"             --paths '/*'             --query 'Invalidation.Id'             --output text)"
+
+          test -n "${ID}"
+          aws cloudfront wait invalidation-completed             --distribution-id "${CMS_DISTRIBUTION_ID}"             --id "${ID}"
+
+      - name: Deploy Platform
+        if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'platform' }}
+        shell: bash
+        run: |
+          aws s3 sync apps/platform/dist/ "s3://${PLATFORM_BUCKET}/"             --delete             --no-progress             --cache-control "public,max-age=0,must-revalidate"
+
+          ID="$(aws cloudfront create-invalidation             --distribution-id "${PLATFORM_DISTRIBUTION_ID}"             --paths '/*'             --query 'Invalidation.Id'             --output text)"
+
+          test -n "${ID}"
+          aws cloudfront wait invalidation-completed             --distribution-id "${PLATFORM_DISTRIBUTION_ID}"             --id "${ID}"

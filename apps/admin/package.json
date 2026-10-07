@@ -6,7 +6,7 @@
   "scripts": {
     "predev": "pnpm run build:workspace-deps",
     "prebuild": "pnpm run build:workspace-deps",
-    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-template-runtime --filter @jakorea/rich-text --filter @jakorea/domain build",
+    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-schema --filter @jakorea/form-template-runtime --filter @jakorea/rich-text --filter @jakorea/domain build",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --max-warnings=-1",
