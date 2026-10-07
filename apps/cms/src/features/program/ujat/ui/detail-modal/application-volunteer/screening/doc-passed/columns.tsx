@@ -71,7 +71,8 @@ export function useUjatVolunteerDocPassedColumns({
         width: 140,
         align: 'center',
         className: CENTER_CELL_CLASS,
-        render: (_value, record) => (record.hasEducationExperience ? 'O' : 'X'),
+        render: (_value, record) =>
+          record.hasEducationExperience == null ? '-' : record.hasEducationExperience ? 'O' : 'X',
       },
       {
         title: '면접일 배정 현황',

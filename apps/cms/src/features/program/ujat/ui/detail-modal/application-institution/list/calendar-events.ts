@@ -1,5 +1,4 @@
 import type { UjatInstitutionApplicationRow } from './types'
-import { UJAT_INSTITUTION_SCHEDULE_COLUMNS } from './types'
 
 export type UjatInstitutionCalendarOriginalItem = UjatInstitutionApplicationRow & {
   schoolName: string
@@ -41,11 +40,10 @@ export function buildUjatInstitutionApplicationCalendarEvents(
   const events: UjatInstitutionCalendarEvent[] = []
 
   for (const row of rows) {
-    for (const col of UJAT_INSTITUTION_SCHEDULE_COLUMNS) {
-      if (row.scheduleSlots[col.key] !== 'O') continue
-      const dateIso = col.isoDate
+    for (const [dateIso, mark] of Object.entries(row.scheduleSlots)) {
+      if (mark !== 'O') continue
       events.push({
-        id: `${row.id}-${col.key}`,
+        id: `${row.id}-${dateIso}`,
         title: row.institutionName,
         startDate: `${dateIso}T00:00:00`,
         endDate: `${dateIso}T00:00:00`,

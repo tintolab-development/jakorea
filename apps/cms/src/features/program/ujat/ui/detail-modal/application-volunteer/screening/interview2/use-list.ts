@@ -201,12 +201,11 @@ export function useUjatVolunteerInterview2({
   }, [pendingFilters])
 
   const filteredSorted = useMemo(() => {
+    // 면접 시간·총점 「-」는 서버 query가 없어 클라이언트에서만 거른다.
     const clientOnly: UjatVolunteerInterview2Filters = {
       ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
-      preferredRegion: appliedFilters.preferredRegion,
-      interviewDate: appliedFilters.interviewDate,
       interviewTime: appliedFilters.interviewTime,
-      totalScore: appliedFilters.totalScore,
+      totalScore: appliedFilters.totalScore === 'empty' ? 'empty' : UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL,
     }
     const filtered = filterInterview2Applicants(list, clientOnly, now)
     return sortUjatVolunteerInterview2Rows(filtered)

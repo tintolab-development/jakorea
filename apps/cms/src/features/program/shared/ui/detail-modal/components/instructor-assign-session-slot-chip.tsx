@@ -11,6 +11,7 @@ export interface InstructorAssignSessionSlotChipProps {
   scheduleLabel: string
   /** 지정 시 scheduleLabel은 날짜만, timeLabel은 진행 시간으로 분리 표시 */
   timeLabel?: string
+  /** 빈 값이면 차시 구분선·라벨을 생략 */
   sessionRoundLabel: string
   capacityLabel: string
   selected?: boolean
@@ -34,6 +35,7 @@ export function InstructorAssignSessionSlotChip({
   disabled = false,
   onClick,
 }: InstructorAssignSessionSlotChipProps) {
+  const roundLabel = sessionRoundLabel.trim()
   return (
     <ParagraphChip
       aria-pressed={selected}
@@ -49,30 +51,25 @@ export function InstructorAssignSessionSlotChip({
     >
       <span className="instructor-assign-session-slot-chip__main">
         <span className="instructor-assign-session-slot-chip__content">
+          <span className="instructor-assign-session-slot-chip__schedule">{scheduleLabel}</span>
           {timeLabel ? (
             <>
-              <span className="instructor-assign-session-slot-chip__schedule">{scheduleLabel}</span>
               <DividerVertical
                 height={13}
                 className="instructor-assign-session-slot-chip__divider"
               />
               <span className="instructor-assign-session-slot-chip__time">{timeLabel}</span>
-              <DividerVertical
-                height={13}
-                className="instructor-assign-session-slot-chip__divider"
-              />
-              <span className="instructor-assign-session-slot-chip__round">{sessionRoundLabel}</span>
             </>
-          ) : (
+          ) : null}
+          {roundLabel ? (
             <>
-              <span className="instructor-assign-session-slot-chip__schedule">{scheduleLabel}</span>
               <DividerVertical
                 height={13}
                 className="instructor-assign-session-slot-chip__divider"
               />
-              <span className="instructor-assign-session-slot-chip__round">{sessionRoundLabel}</span>
+              <span className="instructor-assign-session-slot-chip__round">{roundLabel}</span>
             </>
-          )}
+          ) : null}
         </span>
       </span>
       <span className="instructor-assign-session-slot-chip__count">

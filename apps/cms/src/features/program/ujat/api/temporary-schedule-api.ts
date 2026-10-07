@@ -75,6 +75,9 @@ export type ProgramScheduleListItem = {
   scheduleStartAt?: string | null
   scheduleEndAt?: string | null
   name?: string | null
+  semesterType?: string | null
+  half?: string | null
+  semester?: string | null
 }
 
 function programPath(programId: string, suffix: string): string {

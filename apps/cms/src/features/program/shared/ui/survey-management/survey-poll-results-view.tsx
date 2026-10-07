@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { UJAT_SURVEY_POLL_RESPONSES_MOCK } from '@/features/program/ujat/model/ujat-survey-poll'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import {
@@ -77,7 +76,7 @@ export function SurveyPollResultsView({
     if (!needsDraft || draft == null) return []
     return buildSurveyPollResultSectionsFromDraft(
       draft,
-      responses ?? UJAT_SURVEY_POLL_RESPONSES_MOCK
+      responses ?? []
     )
   }, [draft, needsDraft, questionSummaries, responses, useSummary])
 

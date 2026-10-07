@@ -44,8 +44,8 @@ export type ChangeClassConfirmPayload = {
   mappings: ChangeClassMapping[]
 }
 
-export function getUjatEducationProgressMockToday(half: EducationProgressHalfKey): dayjs.Dayjs {
-  return half === 'h1' ? dayjs('2026-04-03') : dayjs('2026-09-11')
+export function getUjatEducationProgressToday(): dayjs.Dayjs {
+  return dayjs()
 }
 
 function parseIsoDateFromScheduleId(scheduleId: string, institutionId: string): string {
@@ -58,9 +58,10 @@ function parseIsoDateFromScheduleId(scheduleId: string, institutionId: string): 
 
 export function buildChangeClassScheduleOptions(
   detail: UjatEducationProgressInstitutionDetail,
-  half: EducationProgressHalfKey
+  _half: EducationProgressHalfKey
 ): ChangeClassScheduleOption[] {
-  const today = getUjatEducationProgressMockToday(half).startOf('day')
+  void _half
+  const today = getUjatEducationProgressToday().startOf('day')
 
   return detail.confirmedScheduleRows
     .map(row => ({

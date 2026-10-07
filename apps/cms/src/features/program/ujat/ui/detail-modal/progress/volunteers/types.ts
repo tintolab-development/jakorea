@@ -28,13 +28,19 @@ export type UjatEducationProgressVolunteerRow = {
   id: string
   no: number
   volunteerName: string
-  grade: UjatEducationProgressVolunteerGrade
+  grade: UjatEducationProgressVolunteerGrade | ''
   regionKey: UjatInstitutionApplicationRegionKey
   regionLabel: string
   mobile: string
   email: string
   totalAssignmentDays: number | null
   assignmentStatus: UjatEducationProgressVolunteerAssignmentStatus
+  /** 1365 출석 조인용 */
+  memberId?: string
+  /** 1365 양식용 — 서버 미제공 시 빈 문자열 */
+  birthDate?: string
+  /** 1365 양식용 — 서버가 마스킹한 값 그대로 */
+  id1365?: string
 }
 
 export type UjatEducationProgressVolunteerFilters = {

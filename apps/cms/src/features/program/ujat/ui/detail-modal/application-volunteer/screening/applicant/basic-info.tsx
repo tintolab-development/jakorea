@@ -154,7 +154,13 @@ export function ApplicantBasicInfo({
           <DetailInfoForm.Field
             label="교육 진행 경험 여부"
             readOnlyDisplay
-            view={applicant.hasEducationExperience ? '있음' : '없음'}
+            view={
+              applicant.hasEducationExperience == null
+                ? '-'
+                : applicant.hasEducationExperience
+                  ? '있음'
+                  : '없음'
+            }
           />
           <DetailInfoForm.Field
             label="희망 교육 활동 지역"

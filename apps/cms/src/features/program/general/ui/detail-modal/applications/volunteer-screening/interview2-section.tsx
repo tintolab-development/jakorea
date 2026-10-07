@@ -31,6 +31,7 @@ import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-inte
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
 import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { useGeneralVolunteerInterview2 } from './use-interview2'
+import { useGeneralInterviewEvaluationAccess } from '@/features/program/general/hooks/use-interview-evaluation-access'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
@@ -107,6 +108,7 @@ export function GeneralVolunteerInterview2Section({
     isFetchingNextPage,
     fetchNextPage,
   } = useGeneralVolunteerInterview2({ programId, subjectKind })
+  const evaluationAccess = useGeneralInterviewEvaluationAccess(programId)
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
@@ -188,6 +190,8 @@ export function GeneralVolunteerInterview2Section({
       <GeneralVolunteerInterviewEvaluationModal
         open
         applicant={evaluationTarget}
+        canFillBothSlots={evaluationAccess.canFillBothSlots}
+        currentAdminId={evaluationAccess.currentAdminId}
         onCancel={closeEvaluationModal}
         onConfirm={saveInterviewEvaluation}
       />

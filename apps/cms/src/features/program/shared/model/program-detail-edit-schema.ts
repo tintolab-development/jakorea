@@ -38,6 +38,7 @@ import {
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
 import { z } from 'zod'
+import { toUjatVolunteerNoticeExposurePayload } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { formatKoreanPhoneNumber, isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import {
   announcementPublishedFromFormValue,
@@ -836,7 +837,7 @@ export function programToDetailEditValues(
     volunteerRecruitmentNoticeExposure: (() => {
       const raw = program.generalCommonInfo?.volunteerRecruitmentInfo?.noticeExposureTiming
       if (raw === 'start-day' || raw === 'one-day-before' || raw === 'one-week-before') return raw
-      return 'start-day' as const
+      return undefined
     })(),
     volunteerRecruitmentNotesNotApplicable:
       program.generalCommonInfo?.volunteerRecruitmentInfo?.notesNotApplicable === true
@@ -1431,8 +1432,10 @@ export function detailEditValuesToProgramPatch(
           announcementPublishedFromFormValue(values.volunteerRecruitmentAnnouncementPublished) ??
           existing.generalCommonInfo?.volunteerRecruitmentInfo?.announcementPublished,
         noticeExposureTiming:
-          values.volunteerRecruitmentNoticeExposure ??
-          existing.generalCommonInfo?.volunteerRecruitmentInfo?.noticeExposureTiming,
+          toUjatVolunteerNoticeExposurePayload(values.volunteerRecruitmentNoticeExposure) ??
+          toUjatVolunteerNoticeExposurePayload(
+            existing.generalCommonInfo?.volunteerRecruitmentInfo?.noticeExposureTiming
+          ),
         notesNotApplicable: values.volunteerRecruitmentNotesNotApplicable === 'not_applicable',
         contactOrganizationName: volunteerContactOrganizationName,
         inquiryTel: volunteerContactPhone?.trim() || undefined,

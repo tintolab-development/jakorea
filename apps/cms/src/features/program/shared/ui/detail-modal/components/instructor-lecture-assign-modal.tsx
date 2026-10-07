@@ -89,6 +89,7 @@ function renderSlotChip(params: {
     timeRange: string
     dateKey: string
     assignedCount: number
+    label?: string
   }
   isSelected: boolean
   isIndividual: boolean
@@ -100,7 +101,9 @@ function renderSlotChip(params: {
     return (
       <InstructorAssignSessionSlotChip
         key={slot.key}
-        scheduleLabel={formatIndividualLectureAssignTagLabel(dayjs(slot.dateKey), slot.timeRange)}
+        scheduleLabel={
+          slot.label ?? formatIndividualLectureAssignTagLabel(dayjs(slot.dateKey), slot.timeRange)
+        }
         sessionRoundLabel={slot.sessionLabel}
         capacityLabel={`${slot.assignedCount}명`}
         selected={isSelected}
@@ -157,6 +160,9 @@ export function InstructorLectureAssignModal({
     selectedDate,
     slotsForDay,
     individualSlots,
+    individualRemote,
+    individualSlotsLoading,
+    individualSlotsError,
     preferredDateKeys,
     assignedDateKeys,
     assignedItems,
@@ -209,6 +215,14 @@ export function InstructorLectureAssignModal({
   const summaryLabel = isIndividual ? '배정된 일정' : '배정된 항목 수'
 
   const visibleSlots = isIndividual ? individualSlots : slotsForDay
+
+  const individualEmptyText = individualSlotsLoading
+    ? '배정 가능한 일정을 불러오는 중입니다.'
+    : individualSlotsError
+      ? '배정 가능한 일정을 불러오지 못했습니다.'
+      : individualRemote
+        ? '배정 가능한 일정이 없습니다.'
+        : '등록된 교육 일정이 없습니다.'
 
   return (
     <ContentModal
@@ -291,9 +305,7 @@ export function InstructorLectureAssignModal({
           <div className="instructor-lecture-assign-modal__slots-list">
             {visibleSlots.length === 0 ? (
               <div className="instructor-lecture-assign-modal__slots-empty" role="status">
-                {isIndividual
-                  ? '등록된 교육 일정이 없습니다.'
-                  : '이 날짜에 배정 가능한 기관이 없습니다.'}
+                {isIndividual ? individualEmptyText : '이 날짜에 배정 가능한 기관이 없습니다.'}
               </div>
             ) : (
               visibleSlots.map(slot => {

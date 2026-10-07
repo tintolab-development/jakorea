@@ -9,7 +9,8 @@ import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/uj
 import { buildUjatVolunteerInterview2FilterRows } from './filter-fields'
 import { useUjatVolunteerInterview2 } from './use-list'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
-import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
+import { filterScheduleDatesByHalf } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
+import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-modal/application-institution/use-program-schedule-dates'
 import { useApplicantDetail, type ApplicantDetailMetaChangeHandler } from '../applicant/use-detail'
 import { ApplicantDetailView } from '../applicant/detail-view'
 import { UjatVolunteerInterviewEvaluationModal } from '../interview-assign/evaluation-modal'
@@ -104,15 +105,14 @@ export function Interview2Section({
     [filterRowsSource, viewMode]
   )
 
+  const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
   const activityWithdrawScheduleOptions = useMemo(
     () =>
-      UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(
-        entry => ({
-          value: entry.isoDate,
-          label: entry.title,
-        })
-      ),
-    [half]
+      filterScheduleDatesByHalf(scheduleDates, half).map(entry => ({
+        value: entry.isoDate,
+        label: entry.title,
+      })),
+    [half, scheduleDates]
   )
 
   useLayoutEffect(() => {

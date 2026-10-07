@@ -58,6 +58,7 @@ import {
   type InstructorApplicationNotificationRequest,
   type OrganizationDecisionNotifyRequest,
   type ScreeningResultNotifyFields,
+  type InterviewAssignmentEvaluationPayload,
 } from '@/features/program/general/api/applications-api-client'
 import {
   sortGeneralParticipantDocPassedVolunteerRows,
@@ -640,10 +641,7 @@ export async function submitGeneralVolunteerFinalResultBulk(
 
 export async function submitGeneralInterviewAssignmentEvaluation(
   assignmentId: string | number,
-  payload: {
-    scoreTotal: number
-    comment?: string
-  }
+  payload: InterviewAssignmentEvaluationPayload
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await submitInterviewAssignmentEvaluationRemote(assignmentId, payload)

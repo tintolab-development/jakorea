@@ -11,7 +11,7 @@ import type { ParticipatingIndividualParticipantRow } from '@/features/program/g
 import type {
   GeneralIndividualApplicantRow,
 } from '@/features/program/general/model/individual-applicant'
-import { CmsButton, ExcelButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { MESSAGES } from '@/shared/constants/messages'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -542,7 +542,6 @@ export function ParticipatingParticipantFullpageView({
               <CmsButton
                 variant="secondary"
                 size="large"
-                width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
                 icon={<DownloadOutlined />}
                 disabled={
                   certificateExportActive ||

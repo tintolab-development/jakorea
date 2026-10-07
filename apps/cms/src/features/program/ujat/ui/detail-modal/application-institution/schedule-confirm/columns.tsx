@@ -55,9 +55,8 @@ export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirm
         key: 'scheduleConfirmStatus',
         width: COL.status,
         align: 'center',
-        render: (status: UjatScheduleConfirmRow['scheduleConfirmStatus']) => (
-          <UjatInstitutionScheduleConfirmStatusBadge status={status} />
-        ),
+        render: (status: UjatScheduleConfirmRow['scheduleConfirmStatus']) =>
+          status ? <UjatInstitutionScheduleConfirmStatusBadge status={status} /> : null,
       },
       {
         title: '교육 진행 일정',

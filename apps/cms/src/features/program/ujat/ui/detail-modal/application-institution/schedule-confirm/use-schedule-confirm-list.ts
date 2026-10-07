@@ -10,6 +10,7 @@ import {
   type UjatScheduleConfirmRow,
 } from './types'
 import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
+import type { UjatApplicationsListQuery } from '@/features/program/ujat/api/ujat-applications-contract'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 
@@ -17,11 +18,7 @@ function filterRows(
   rows: UjatScheduleConfirmRow[],
   filters: UjatScheduleConfirmFilters
 ): UjatScheduleConfirmRow[] {
-  const institutionQ = filters.institutionName.trim().toLowerCase()
-  const teacherQ = filters.teacherName.trim().toLowerCase()
-
   return rows.filter(row => {
-    if (institutionQ && !row.institutionName.toLowerCase().includes(institutionQ)) return false
     if (
       filters.scheduleConfirmStatus !== UJAT_SCHEDULE_CONFIRM_FILTER_ALL &&
       row.scheduleConfirmStatus !== filters.scheduleConfirmStatus
@@ -33,7 +30,6 @@ function filterRows(
       const matches = row.confirmedScheduleIsoDates.some(iso => selected.has(iso))
       if (!matches) return false
     }
-    if (teacherQ && !row.teacherName.toLowerCase().includes(teacherQ)) return false
     return true
   })
 }
@@ -51,14 +47,21 @@ export function useUjatScheduleConfirmList(
   )
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 
-  const remoteQuery = useInfiniteQuery({
-    queryKey: ujatQueryKeys.organizationApplications(programId ?? '', {
+  const listQuery = useMemo((): UjatApplicationsListQuery => {
+    const organizationName = appliedFilters.institutionName.trim()
+    const teacherName = appliedFilters.teacherName.trim()
+    return {
       status: 'TEMP_ASSIGNED',
-    }),
+      ...(regionKey ? { educationRegionCode: regionKey } : {}),
+      ...(organizationName ? { organizationName } : {}),
+      ...(teacherName ? { teacherName } : {}),
+    }
+  }, [appliedFilters.institutionName, appliedFilters.teacherName, regionKey])
+
+  const remoteQuery = useInfiniteQuery({
+    queryKey: ujatQueryKeys.organizationApplications(programId ?? '', listQuery),
     queryFn: ({ pageParam }) =>
-      listUjatInstitutionApplicationsPage(String(programId), pageParam, {
-        status: 'TEMP_ASSIGNED',
-      }),
+      listUjatInstitutionApplicationsPage(String(programId), pageParam, listQuery),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,

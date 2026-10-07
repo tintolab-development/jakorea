@@ -15,6 +15,7 @@ import { useCertificateTemplateModalState } from '@/features/template/hooks/use-
 import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
+import { mapApiBirthDateToDisplay } from '@/features/program/general/api/adapters/student-roster-adapters'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -51,7 +52,10 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
   const runtimeStringValues = useMemo(
     () =>
       buildActivityCertificateInitialStringValuesForVolunteer(volunteer.volunteerName, {
-        birthDate: volunteer.birthDate,
+        birthDate:
+          volunteer.birthDate && volunteer.birthDate !== '-'
+            ? mapApiBirthDateToDisplay(volunteer.birthDate)
+            : undefined,
         institutionName: volunteer.assignedInstitutionNames[0],
         program,
       }),

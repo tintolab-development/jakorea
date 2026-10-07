@@ -1,12 +1,14 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import { getUjatEducationProgressScheduleFilterOptions } from '@/features/program/ujat/model/ujat-education-progress'
+import type { UjatInstitutionScheduleAssignDateEntry } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import type { EducationProgressHalfKey } from '../tabs'
 
 export const UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL = ''
 
 export function buildUjatEducationProgressInstitutionFilterFields(
-  half: EducationProgressHalfKey
+  half: EducationProgressHalfKey,
+  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = []
 ): FilterFieldConfig[] {
   const regionOptions = [
     { label: '전체', value: UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL },
@@ -18,7 +20,7 @@ export function buildUjatEducationProgressInstitutionFilterFields(
 
   const scheduleOptions = [
     { label: '전체', value: UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL },
-    ...getUjatEducationProgressScheduleFilterOptions(half),
+    ...getUjatEducationProgressScheduleFilterOptions(half, scheduleDates),
   ]
 
   return [

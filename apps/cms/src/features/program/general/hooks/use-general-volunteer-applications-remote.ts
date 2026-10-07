@@ -29,8 +29,13 @@ import type {
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import {
+  extractApiErrorMessage,
+  getApiErrorHttpStatus,
+} from '@/shared/lib/extract-api-error-message'
+import {
   giveUpIndividualApplicationRemote,
   type ApplicationsListQuery,
+  type InterviewAssignmentEvaluationPayload,
   type InstructorApplicationNotificationRequest,
 } from '@/features/program/general/api/applications-api-client'
 
@@ -278,7 +283,7 @@ export function useGeneralVolunteerApplicationsRemote({
   const applyRemoteInterviewEvaluation = useCallback(
     async (
       assignmentId: number | string | undefined,
-      payload: { scoreTotal: number; comment?: string }
+      payload: InterviewAssignmentEvaluationPayload
     ): Promise<'ok' | 'missing_assignment' | 'error' | 'skipped'> => {
       if (!remoteEnabled) return 'skipped'
       if (assignmentId == null || assignmentId === '') {
@@ -294,11 +299,21 @@ export function useGeneralVolunteerApplicationsRemote({
         await invalidateApplications()
         return 'ok'
       } catch (error) {
-        notifyRemoteFailure(error)
+        console.debug('interview evaluation failed', error)
+        showAlert({
+          title: '면접 평가 실패',
+          content: extractApiErrorMessage(
+            (error as { response?: { data?: unknown } } | null)?.response?.data,
+            {
+              httpStatus: getApiErrorHttpStatus(error),
+              fallback: '면접 평가 저장 중 오류가 발생했습니다. 다시 시도해 주세요.',
+            }
+          ),
+        })
         return 'error'
       }
     },
-    [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert]
+    [invalidateApplications, remoteEnabled, showAlert]
   )
 
   const applyRemoteDocumentCancelApproval = useCallback(

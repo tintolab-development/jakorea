@@ -27,7 +27,6 @@ import {
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import {
   DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
-  UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL,
   type UjatVolunteerDocScreeningFilters,
 } from './filter-fields'
 import { useUjatVolunteerDocScreeningColumns } from './columns'
@@ -37,52 +36,6 @@ import {
   patchUjatVolunteerDocumentScreeningStatus,
 } from './document-actions'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-
-function filterApplicants(
-  rows: UjatVolunteerApplicantRow[],
-  filters: UjatVolunteerDocScreeningFilters
-): UjatVolunteerApplicantRow[] {
-  const nameQ = filters.volunteerName.trim().toLowerCase()
-  return rows.filter(row => {
-    if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
-    if (filters.grade !== UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL && row.grade !== filters.grade) {
-      return false
-    }
-    if (
-      filters.preferredRegion !== UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL &&
-      row.preferredRegion !== filters.preferredRegion
-    ) {
-      return false
-    }
-    if (filters.educationExperience === 'yes' && !row.hasEducationExperience) return false
-    if (filters.educationExperience === 'no' && row.hasEducationExperience) return false
-    if (
-      filters.applicationType !== UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL &&
-      row.applicationType !== filters.applicationType
-    ) {
-      return false
-    }
-    if (
-      filters.managerAEvaluation !== UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL &&
-      row.managerAEvaluation !== filters.managerAEvaluation
-    ) {
-      return false
-    }
-    if (
-      filters.managerBEvaluation !== UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL &&
-      row.managerBEvaluation !== filters.managerBEvaluation
-    ) {
-      return false
-    }
-    if (
-      filters.documentScreeningStatus !== UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL &&
-      row.documentScreeningStatus !== filters.documentScreeningStatus
-    ) {
-      return false
-    }
-    return true
-  })
-}
 
 const EXPORT_COLUMNS_UJAT: ColumnsType<Record<string, string | number>> = [
   { title: 'No.', dataIndex: 'no', key: 'no' },
@@ -130,7 +83,8 @@ function toExportRowUjat(row: UjatVolunteerApplicantRow): Record<string, string 
     preferredRegion: row.preferredRegion,
     contact: row.contact,
     email: row.email,
-    educationExperience: row.hasEducationExperience ? 'O' : 'X',
+    educationExperience:
+      row.hasEducationExperience == null ? '-' : row.hasEducationExperience ? 'O' : 'X',
     applicationTypeLabel: formatUjatVolunteerApplicationType(row.applicationType),
     essayIntro: formatUjatVolunteerEssayCellValue(row.applicationType, row.essayIntro),
     essayEducationExperience: formatUjatVolunteerEssayCellValue(
@@ -228,17 +182,10 @@ export function useUjatVolunteerDocScreening({
     setAppliedFilters({ ...pendingFilters })
   }, [pendingFilters])
 
-  const filteredSorted = useMemo(() => {
-    // API가 지원하지 않는 필드(학년·희망지역·교육경험)만 추가 클라이언트 필터
-    const clientOnly: UjatVolunteerDocScreeningFilters = {
-      ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
-      grade: appliedFilters.grade,
-      preferredRegion: appliedFilters.preferredRegion,
-      educationExperience: appliedFilters.educationExperience,
-    }
-    const filtered = filterApplicants(list, clientOnly)
-    return sortUjatVolunteerApplicants(filtered)
-  }, [appliedFilters, list])
+  const filteredSorted = useMemo(
+    () => sortUjatVolunteerApplicants(list),
+    [list]
+  )
   const infiniteScrollResetKey = useMemo(
     () => `${programId}:${half}:${JSON.stringify(appliedFilters)}`,
     [appliedFilters, half, programId]

@@ -6,8 +6,10 @@ import type { ApplicantSchoolRow } from '@/features/program/shared/model/applica
 import type { Program } from '@/types/domain'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { fetchGeneralOrganizationApplicationsPage } from '@/features/program/general/api/admin-applications-service'
+import { fetchInstructorApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
+  buildIndividualLectureAssignSlotsFromScheduleSlots,
   getApplicantPreferredDateKeys,
   getAssignedLectureDateKeys,
   getIndividualLectureAssignSlots,
@@ -78,12 +80,7 @@ export function useInstructorLectureAssignModal(params: {
       !isIndividual && organizationRemoteEnabled && organizationApplicationsQuery.data
         ? parseInstructorLectureAssignScheduleFromInstitutions(organizationApplicationsQuery.data)
         : parseInstructorLectureAssignSchedule(programId),
-    [
-      isIndividual,
-      organizationApplicationsQuery.data,
-      organizationRemoteEnabled,
-      programId,
-    ]
+    [isIndividual, organizationApplicationsQuery.data, organizationRemoteEnabled, programId]
   )
 
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => schedule.scheduleMonth)
@@ -124,7 +121,32 @@ export function useInstructorLectureAssignModal(params: {
     [isIndividual, program, programId]
   )
 
+  const instructorApplicationId = instructor.id.trim()
+  const individualRemote =
+    isIndividual && organizationRemoteEnabled && Number.isFinite(Number(instructorApplicationId))
+
+  const instructorDetailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.instructorDetail(instructorApplicationId),
+    queryFn: () => fetchInstructorApplicationDetailRemote(instructorApplicationId),
+    enabled: open && individualRemote && Boolean(instructorApplicationId),
+    staleTime: 30_000,
+    retry: false,
+  })
+
   const individualSlots = useMemo(() => {
+    if (individualRemote) {
+      return buildIndividualLectureAssignSlotsFromScheduleSlots(
+        instructorDetailQuery.data?.availableScheduleSlots ?? [],
+        {
+          schoolName:
+            individualProgram?.mainTitle?.trim() ||
+            individualProgram?.title?.trim() ||
+            '개인 프로그램',
+          allInstructors,
+          excludeInstructorId: instructor.id,
+        }
+      )
+    }
     if (!isIndividual || !individualProgram) return []
     return getIndividualLectureAssignSlots(
       individualProgram,
@@ -132,17 +154,30 @@ export function useInstructorLectureAssignModal(params: {
       allInstructors,
       instructor.id
     )
-  }, [isIndividual, individualProgram, instructor, allInstructors])
+  }, [
+    individualRemote,
+    instructorDetailQuery.data,
+    isIndividual,
+    individualProgram,
+    instructor,
+    allInstructors,
+  ])
 
-  const preferredDateKeys = useMemo(
-    () => getApplicantPreferredDateKeys(instructor),
-    [instructor]
-  )
+  const individualSlotsLoading = individualRemote && instructorDetailQuery.isPending
+  const individualSlotsError = individualRemote && instructorDetailQuery.isError
 
-  const assignedDateKeys = useMemo(
-    () => getAssignedLectureDateKeys(assignedItems),
-    [assignedItems]
-  )
+  const singleRemoteSlot =
+    individualRemote && individualSlots.length === 1 ? individualSlots[0] : undefined
+  useEffect(() => {
+    if (!open || !singleRemoteSlot) return
+    setAssignedItems(prev =>
+      prev.length > 0 ? prev : [toIndividualLectureAssignItem(singleRemoteSlot)]
+    )
+  }, [open, singleRemoteSlot])
+
+  const preferredDateKeys = useMemo(() => getApplicantPreferredDateKeys(instructor), [instructor])
+
+  const assignedDateKeys = useMemo(() => getAssignedLectureDateKeys(assignedItems), [assignedItems])
 
   const handleSelectDate = useCallback(
     (date: Dayjs) => {
@@ -157,7 +192,9 @@ export function useInstructorLectureAssignModal(params: {
       if (slot.disabled) return
       setAssignedItems(prev => {
         if (prev.some(item => item.slotKey === slot.key)) return prev
-        const nextItem = isIndividual ? toIndividualLectureAssignItem(slot) : toLectureAssignItem(slot)
+        const nextItem = isIndividual
+          ? toIndividualLectureAssignItem(slot)
+          : toLectureAssignItem(slot)
         return [...prev, nextItem]
       })
     },
@@ -180,6 +217,9 @@ export function useInstructorLectureAssignModal(params: {
     selectedDateKey,
     slotsForDay,
     individualSlots,
+    individualRemote,
+    individualSlotsLoading,
+    individualSlotsError,
     preferredDateKeys,
     assignedDateKeys,
     assignedItems,

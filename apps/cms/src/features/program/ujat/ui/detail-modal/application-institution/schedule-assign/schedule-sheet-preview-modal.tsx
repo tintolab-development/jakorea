@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState, type CSSProperties } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
-import { getUjatInstitutionApplicationMockRows } from '@/features/program/ujat/model/ujat-institution-application'
+import { useInfiniteQuery } from '@tanstack/react-query'
+import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { useCmsAlert } from '@/shared/ui'
+import { ExcelButton, useCmsAlert } from '@/shared/ui'
 import { CrossTable } from '@/shared/ui/cross-table'
 import type { CrossTableRow } from '@/shared/ui/cross-table'
 import {
@@ -71,17 +73,35 @@ export function UjatInstitutionScheduleSheetPreviewModal({
   open,
   onCancel,
   refreshKey,
+  programId,
 }: {
   open: boolean
   onCancel: () => void
   refreshKey: number
+  programId?: string | null
 }) {
   const { showAlert } = useCmsAlert()
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
+  const remoteQuery = useInfiniteQuery({
+    queryKey: ujatQueryKeys.organizationApplications(programId ?? '', {
+      status: 'TEMP_ASSIGNED',
+    }),
+    queryFn: ({ pageParam }) =>
+      listUjatInstitutionApplicationsPage(String(programId), pageParam, {
+        status: 'TEMP_ASSIGNED',
+      }),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: remoteEnabled && open,
+    staleTime: 30_000,
+    retry: false,
+  })
 
   const regions = useMemo(() => {
     void refreshKey
-    return buildScheduleSheetPreview(getUjatInstitutionApplicationMockRows())
-  }, [refreshKey])
+    const rows = remoteQuery.data?.pages.flatMap(page => page.rows) ?? []
+    return buildScheduleSheetPreview(rows)
+  }, [refreshKey, remoteQuery.data])
 
   const [exporting, setExporting] = useState(false)
 
@@ -114,17 +134,10 @@ export function UjatInstitutionScheduleSheetPreviewModal({
           <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             닫기
           </CmsButton>
-          <CmsButton
-            variant="primary"
-            size="medium"
-            width={140}
-            icon={<DownloadOutlined />}
-            adminAction="download"
+          <ExcelButton
             disabled={exporting}
             onClick={() => void handleExcelDownload()}
-          >
-            엑셀 다운로드
-          </CmsButton>
+          />
         </>
       }
     >

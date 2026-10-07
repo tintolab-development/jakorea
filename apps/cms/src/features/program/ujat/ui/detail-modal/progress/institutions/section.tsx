@@ -6,6 +6,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { EducationProgressHalfKey } from '../tabs'
+import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-modal/application-institution/use-program-schedule-dates'
 import { buildUjatEducationProgressInstitutionFilterFields } from './filter-fields'
 import { UjatEducationProgressInstitutionsCalendarView } from './calendar-view'
 import { useUjatEducationProgressInstitutions } from './use-list'
@@ -40,9 +41,10 @@ export function UjatEducationProgressInstitutionsSection({
     }
   )
 
+  const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
   const filterFields = useMemo(
-    () => buildUjatEducationProgressInstitutionFilterFields(half),
-    [half]
+    () => buildUjatEducationProgressInstitutionFilterFields(half, scheduleDates),
+    [half, scheduleDates]
   )
 
   useEffect(() => {

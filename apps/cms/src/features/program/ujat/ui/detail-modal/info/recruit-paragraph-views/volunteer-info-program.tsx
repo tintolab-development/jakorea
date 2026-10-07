@@ -21,6 +21,7 @@ import {
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import {
   getUjatVolunteerNoticeExposureReadLabel,
+  NOTICE_EXPOSURE_ERROR_STYLE,
   UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS,
 } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
@@ -214,17 +215,24 @@ export function UjatRecruitVolunteerInfoProgramView({
       <Controller
         name="volunteerRecruitmentNoticeExposure"
         control={form.control}
-        render={({ field }) => (
-          <CmsRadioGroup
-            value={field.value ?? 'start-day'}
-            onChange={e => field.onChange(String(e.target.value))}
-          >
-            {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
-              <CmsRadio key={o.value} value={o.value}>
-                {o.label}
-              </CmsRadio>
-            ))}
-          </CmsRadioGroup>
+        render={({ field, fieldState }) => (
+          <>
+            <CmsRadioGroup
+              value={field.value ?? undefined}
+              onChange={e => field.onChange(String(e.target.value))}
+            >
+              {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
+                <CmsRadio key={o.value} value={o.value}>
+                  {o.label}
+                </CmsRadio>
+              ))}
+            </CmsRadioGroup>
+            {fieldState.error?.message ? (
+              <span role="alert" style={NOTICE_EXPOSURE_ERROR_STYLE}>
+                {fieldState.error.message}
+              </span>
+            ) : null}
+          </>
         )}
       />
     ) : undefined

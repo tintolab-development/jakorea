@@ -55,7 +55,10 @@ export type UjatScheduleConfirmRow = {
   regionKey: UjatInstitutionApplicationRegionKey
   no: number
   institutionName: string
-  scheduleConfirmStatus: UjatInstitutionScheduleConfirmStatus
+  /** 서버 미제공 시 null — 셀은 비운다 */
+  scheduleConfirmStatus: UjatInstitutionScheduleConfirmStatus | null
+  /** 서버 미제공 시 null — 「현재 배정 강사 N명」 문구를 숨긴다 */
+  assignedInstructorCount: number | null
   /** 표시용 — `6월 10일, 9월 11일` */
   confirmedScheduleDisplay: string
   /** 필터용 ISO 날짜 */
@@ -75,7 +78,7 @@ export type UjatScheduleConfirmFilters = {
 
 /** 안내 사항 블록 — 기관 확인 완료·승인 완료에서 노출 */
 export function shouldShowScheduleConfirmGuidanceNotes(
-  status: UjatInstitutionScheduleConfirmStatus
+  status: UjatInstitutionScheduleConfirmStatus | null
 ): boolean {
   return status === 'institution_confirmed' || status === 'approval_completed'
 }

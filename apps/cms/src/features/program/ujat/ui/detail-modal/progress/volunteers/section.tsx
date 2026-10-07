@@ -10,7 +10,7 @@ import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
 } from '@/shared/constants'
-import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-activity-certificate-preview-modal'
@@ -27,7 +27,7 @@ import {
 } from './activity-certificate'
 import { buildUjatEducationProgressVolunteerFilterFields } from './filter-fields'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
-import { getUjatEducationProgressVolunteerDetail } from './detail/volunteer-detail-data'
+import { useUjatEducationProgressVolunteerDetail } from './detail/use-detail'
 import { useUjatEducationProgressVolunteers } from './use-list'
 import type { UjatEducationProgressVolunteerRow } from './types'
 import { Volunteer1365PreviewModal } from './volunteer-1365-preview-modal'
@@ -80,6 +80,13 @@ export function UjatEducationProgressVolunteersSection({
     syncRowsFromMock,
   } = useUjatEducationProgressVolunteers(program.id, half)
 
+  const selectedVolunteerId = selectedRowKeys.length === 1 ? String(selectedRowKeys[0]) : ''
+  const { detail: selectedVolunteerDetail } = useUjatEducationProgressVolunteerDetail({
+    programId: program.id,
+    half,
+    volunteerId: selectedVolunteerId,
+  })
+
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
     columns as ColumnsType<unknown>,
     { includeSelection: true }
@@ -127,8 +134,7 @@ export function UjatEducationProgressVolunteersSection({
       return
     }
 
-    const selectedVolunteerId = String(selectedRowKeys[0])
-    const detail = getUjatEducationProgressVolunteerDetail(program.id, half, selectedVolunteerId)
+    const detail = selectedVolunteerDetail
 
     if (!detail) {
       showAlert({
@@ -139,7 +145,7 @@ export function UjatEducationProgressVolunteersSection({
     }
 
     setActivityCertificateVolunteer(buildActivityCertificateVolunteerFromUjatDetail(detail))
-  }, [half, program.id, selectedRowKeys, showAlert])
+  }, [selectedRowKeys, selectedVolunteerDetail, showAlert])
 
   const handleStudentCertificateIssueClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
@@ -160,8 +166,7 @@ export function UjatEducationProgressVolunteersSection({
 
   const handleStudentCertificateIssueConfirm = useCallback(
     (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
-      const selectedVolunteerId = String(selectedRowKeys[0])
-      const detail = getUjatEducationProgressVolunteerDetail(program.id, half, selectedVolunteerId)
+      const detail = selectedVolunteerDetail
 
       if (!detail) {
         showAlert({
@@ -180,7 +185,7 @@ export function UjatEducationProgressVolunteersSection({
       )
       setStudentCertificateExportActive(true)
     },
-    [half, program, selectedRowKeys, showAlert]
+    [program, selectedVolunteerDetail, showAlert]
   )
 
   const handleStudentCertificateExportComplete = useCallback(
@@ -226,7 +231,6 @@ export function UjatEducationProgressVolunteersSection({
               type="button"
               variant="secondary"
               size="large"
-              width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
               icon={<DownloadOutlined />}
               disabled={studentCertificateExportActive}
               onClick={handleStudentCertificateIssueClick}
@@ -237,7 +241,6 @@ export function UjatEducationProgressVolunteersSection({
               type="button"
               variant="secondary"
               size="large"
-              width={220}
               icon={<DownloadOutlined />}
               onClick={() => setVolunteer1365PreviewOpen(true)}
             >
@@ -315,7 +318,15 @@ export function UjatEducationProgressVolunteersSection({
         open={volunteer1365PreviewOpen}
         onCancel={() => setVolunteer1365PreviewOpen(false)}
         half={half}
-        volunteerIds={tableData.map(row => row.id)}
+        programId={program.id}
+        volunteers={tableData.map(row => ({
+          id: row.id,
+          memberId: row.memberId,
+          name: row.volunteerName,
+          birthDate: row.birthDate,
+          id1365: row.id1365,
+          region: row.regionLabel,
+        }))}
       />
     </div>
   )

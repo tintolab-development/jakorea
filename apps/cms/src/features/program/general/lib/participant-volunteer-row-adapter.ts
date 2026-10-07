@@ -71,6 +71,8 @@ export function mapParticipantToVolunteerScreeningRow(
     totalScore: row.totalScore,
     managerAScore: row.managerAScore,
     managerBScore: row.managerBScore,
+    managerAEvaluatorAdminId: row.managerAEvaluatorAdminId,
+    managerBEvaluatorAdminId: row.managerBEvaluatorAdminId,
     interviewEvaluationRemark: row.interviewEvaluationRemark,
     participantApplicant: row,
   }
@@ -107,6 +109,8 @@ export function mapVolunteerScreeningRowToParticipant(
     totalScore: row.totalScore,
     managerAScore: row.managerAScore,
     managerBScore: row.managerBScore,
+    managerAEvaluatorAdminId: row.managerAEvaluatorAdminId,
+    managerBEvaluatorAdminId: row.managerBEvaluatorAdminId,
     interviewEvaluationRemark: row.interviewEvaluationRemark,
     detail: {
       contact: row.contactRaw,
