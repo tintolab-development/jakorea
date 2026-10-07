@@ -68,6 +68,7 @@ import { resolveSurveyWritingDraft } from '@/features/program/shared/lib/survey-
 import {
   resolvePublishedSurveyBinding,
   surveyBindingResolutionAlert,
+  type SurveySubmissionPeriod,
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
 import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { SurveyEmptyState } from '@/features/program/shared/ui/survey-management/survey-empty-state'
@@ -550,7 +551,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   function buildFormBindingPayload(
     kind: CreateModalKind,
-    ids: { templateId: number; templateVersionId?: number },
+    ids: { templateId: number; templateVersionId?: number } & SurveySubmissionPeriod,
     audience?: GeneralSatisfactionAudienceKey | null
   ): ProgramFormBindingRequest {
     const formType =
@@ -571,6 +572,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       formType,
       templateId: ids.templateId,
       templateVersionId: ids.templateVersionId,
+      submissionStartAt: ids.submissionStartAt,
+      submissionEndAt: ids.submissionEndAt,
       targetRole,
       ...(audience === 'volunteer_h1'
         ? { targetScope: 'TERM', targetScopeId: 1 }
