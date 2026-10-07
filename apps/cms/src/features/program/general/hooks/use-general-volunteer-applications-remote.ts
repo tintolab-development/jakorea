@@ -29,6 +29,7 @@ import type {
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   giveUpIndividualApplicationRemote,
+  type ApplicationsListQuery,
   type InstructorApplicationNotificationRequest,
 } from '@/features/program/general/api/applications-api-client'
 
@@ -41,6 +42,8 @@ type UseGeneralVolunteerApplicationsRemoteOptions = {
   subjectKind?: ScreeningSubjectKind
   /** false면 remote 비활성 — mock 로더는 호출부 유지 */
   enabled?: boolean
+  /** 서버 필터 (volunteer 전용). 지정 시 query key에 포함 */
+  listQuery?: ApplicationsListQuery
   setList: (rows: GeneralVolunteerApplicantRow[]) => void
 }
 
@@ -69,6 +72,7 @@ export function useGeneralVolunteerApplicationsRemote({
   stage,
   subjectKind = 'volunteer',
   enabled = true,
+  listQuery,
   setList,
 }: UseGeneralVolunteerApplicationsRemoteOptions) {
   const queryClient = useQueryClient()
@@ -93,20 +97,27 @@ export function useGeneralVolunteerApplicationsRemote({
     return fetchGeneralVolunteerScreeningApplicationsPage(
       programId,
       stage,
-      pageParam
+      pageParam,
+      listQuery
     )
-  }, [programId, stage, subjectKind])
+  }, [listQuery, programId, stage, subjectKind])
 
   const listQueryKey =
     subjectKind === 'participant'
       ? ([...generalApplicationsQueryKeys.individualList(programId), 'screening', stage] as const)
-      : ([...generalApplicationsQueryKeys.volunteerList(programId), stage] as const)
+      : listQuery
+        ? ([...generalApplicationsQueryKeys.volunteerList(programId), stage, listQuery] as const)
+        : ([...generalApplicationsQueryKeys.volunteerList(programId), stage] as const)
 
   const query = useInfiniteQuery({
     queryKey: listQueryKey,
     queryFn,
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    placeholderData: listQuery
+      ? (previousData, previousQuery) =>
+          previousQuery?.queryKey.includes(programId) ? previousData : undefined
+      : undefined,
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
@@ -118,14 +129,24 @@ export function useGeneralVolunteerApplicationsRemote({
 
   const invalidateApplications = useCallback(async () => {
     if (subjectKind === 'participant') {
-      await queryClient.invalidateQueries({
-        queryKey: generalApplicationsQueryKeys.individualLists(programId),
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.individualLists(programId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.individualDetails(),
+        }),
+      ])
       return
     }
-    await queryClient.invalidateQueries({
-      queryKey: generalApplicationsQueryKeys.volunteerList(programId),
-    })
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.volunteerList(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.volunteerDetails(),
+      }),
+    ])
   }, [programId, queryClient, subjectKind])
 
   const notifyRemoteFailure = useCallback(

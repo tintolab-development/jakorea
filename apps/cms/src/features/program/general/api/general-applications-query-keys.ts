@@ -14,12 +14,14 @@ export const generalApplicationsQueryKeys = {
     [...generalApplicationsQueryKeys.all, 'individual', programId] as const,
   individualList: (programId: string, status?: string | null) =>
     [...generalApplicationsQueryKeys.individualLists(programId), status ?? 'all'] as const,
+  individualDetails: () => [...generalApplicationsQueryKeys.all, 'individual-detail'] as const,
   individualDetail: (applicationId: string) =>
-    [...generalApplicationsQueryKeys.all, 'individual-detail', applicationId] as const,
+    [...generalApplicationsQueryKeys.individualDetails(), applicationId] as const,
   volunteerList: (programId: string, status?: string | null) =>
     [...generalApplicationsQueryKeys.all, 'volunteer', programId, status ?? 'all'] as const,
+  volunteerDetails: () => [...generalApplicationsQueryKeys.all, 'volunteer-detail'] as const,
   volunteerDetail: (applicationId: string) =>
-    [...generalApplicationsQueryKeys.all, 'volunteer-detail', applicationId] as const,
+    [...generalApplicationsQueryKeys.volunteerDetails(), applicationId] as const,
   /** form_response by application context (기관/강사/봉사 신청 상세 hydrate) */
   formByContext: (
     programId: string,
