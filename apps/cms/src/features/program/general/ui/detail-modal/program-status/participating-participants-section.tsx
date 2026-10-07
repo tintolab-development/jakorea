@@ -7,7 +7,7 @@ import { Table, Spin } from 'antd'
 import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
@@ -339,7 +339,6 @@ export function ParticipatingParticipantsSection({
             <CmsButton
               variant="secondary"
               size="large"
-              width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
               icon={<DownloadOutlined />}
               disabled={certificateExportActive}
               onClick={handleCertificateIssueClick}
