@@ -77,7 +77,14 @@ import { SurveyPollResultsView } from '@/features/program/shared/ui/survey-manag
 import { SurveyRegisteredActions } from '@/features/program/shared/ui/survey-management/survey-registered-actions'
 import { SatisfactionSurveyView } from '@/features/program/shared/ui/survey-management/satisfaction-survey-view'
 import { LectureEvalSurveyView } from '@/features/program/shared/ui/survey-management/lecture-eval-survey-view'
-import { SurveyTemplateEditModal } from '@/features/program/shared/ui/survey-management/survey-template-edit-modal'
+import {
+  SurveyTemplateEditModal,
+  type ProgramSurveyFormEdit,
+} from '@/features/program/shared/ui/survey-management/survey-template-edit-modal'
+import {
+  buildProgramSurveyFormEditTarget,
+  canEditRegisteredSurveyForm,
+} from '@/features/program/shared/lib/survey-management/save-program-survey-form-edit'
 import { SurveyShareCopyToast } from '@/features/program/shared/ui/survey-management/survey-share-copy-toast'
 import {
   SurveyResultsDownloadModal,
@@ -272,6 +279,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const [lectureEvalIncompleteModalOpen, setLectureEvalIncompleteModalOpen] = useState(false)
   const [downloadingLectureEvalResults, setDownloadingLectureEvalResults] = useState(false)
   const [templateEditId, setTemplateEditId] = useState<string | null>(null)
+  const [programFormEdit, setProgramFormEdit] = useState<ProgramSurveyFormEdit | null>(null)
   const [shareToastOpen, setShareToastOpen] = useState(false)
   const [shareToastLines, setShareToastLines] = useState<{ line1: string; line2: string }>({
     line1: GENERAL_SURVEY_POLL_SHARE_TOAST_COPY.line1,
@@ -286,7 +294,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const pollResultsExportRef = useRef<HTMLDivElement>(null)
   const satisfactionResultsExportRef = useRef<HTMLDivElement>(null)
   const shareToastTimerRef = useRef<number | null>(null)
-  const { openWritingUserPreview, isWritingUserPreviewOpen } = useTemplateWritingPreview()
+  const { openWritingUserPreview, closeWritingUserPreview, isWritingUserPreviewOpen } =
+    useTemplateWritingPreview()
   const requestPreviewHistoryPush = usePushUserPreviewHistoryWhenOpen(isWritingUserPreviewOpen)
   const { copyText } = useClipboard()
   const { showAlert } = useCmsAlert()
@@ -587,24 +596,31 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const openTemplatePreview = useCallback(
     (
-      survey: Pick<RegisteredSurvey, 'id' | 'templateId' | 'title'>,
+      survey: Pick<RegisteredSurvey, 'id' | 'templateId' | 'title' | 'bindingId'>,
       options?: {
         allowEdit?: boolean
         lecture?: boolean
         paragraphBodyOptions?: TemplateWritingUserPreviewSession['paragraphBodyOptions']
       }
     ) => {
+      const allowEdit = options?.allowEdit === true
+      const editTarget = allowEdit
+        ? buildProgramSurveyFormEditTarget(String(program.id), survey)
+        : null
       const catalogRow = findWritingTemplateRowByDefinitionId(survey.templateId)
-      const onEditForm =
-        options?.allowEdit === true && catalogRow != null
-          ? () => setTemplateEditId(survey.templateId)
+      const onCatalogEditForm =
+        allowEdit && editTarget == null && catalogRow != null
+          ? () => {
+              closeWritingUserPreview()
+              setTemplateEditId(survey.templateId)
+            }
           : undefined
       void buildPreviewSession({
         templateId: survey.templateId,
         title: survey.title,
         versionId: survey.id,
         lecture: options?.lecture,
-        onEditForm,
+        onEditForm: onCatalogEditForm,
         paragraphBodyOptions: options?.paragraphBodyOptions,
       })
         .then(session => {
@@ -616,7 +632,17 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             return
           }
           requestPreviewHistoryPush()
-          openWritingUserPreview(session)
+          openWritingUserPreview(
+            editTarget != null
+              ? {
+                  ...session,
+                  onEditForm: () => {
+                    closeWritingUserPreview()
+                    setProgramFormEdit({ target: editTarget, initialDraft: session.draft })
+                  },
+                }
+              : session
+          )
         })
         .catch(error => {
           handleError(error, { context: 'generalSurveyManagement.preview' })
@@ -629,7 +655,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           })
         })
     },
-    [openWritingUserPreview, requestPreviewHistoryPush, showAlert]
+    [closeWritingUserPreview, openWritingUserPreview, program.id, requestPreviewHistoryPush, showAlert]
   )
 
   const showShareCopyToast = useCallback(
@@ -1226,7 +1252,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const handleLectureEvalPreview = useCallback(() => {
     if (lectureEvalSurvey == null) return
     openTemplatePreview(lectureEvalSurvey, {
-      allowEdit: lectureEvalSurvey.status === 'before_start',
+      allowEdit: canEditRegisteredSurveyForm(lectureEvalSurvey),
       lecture: true,
       paragraphBodyOptions: LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
     })
@@ -1313,7 +1339,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
                 onAddClick={() => openCreateModal('survey')}
                 onOpenTemplatePreview={() =>
                   openTemplatePreview(activeRegisteredSurvey, {
-                    allowEdit: activeRegisteredSurvey.status === 'before_start',
+                    allowEdit: canEditRegisteredSurveyForm(activeRegisteredSurvey),
                   })
                 }
                 onDownloadClick={() => setPollDownloadModalOpen(true)}
@@ -1340,7 +1366,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             }}
             onOpenTemplatePreview={() =>
               openTemplatePreview(activeRegisteredSurvey, {
-                allowEdit: activeRegisteredSurvey.status === 'before_start',
+                allowEdit: canEditRegisteredSurveyForm(activeRegisteredSurvey),
               })
             }
           />
@@ -1424,7 +1450,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         const survey = satisfactionSurveysByAudience[activeSatisfactionAudience]
         if (survey != null) {
           openTemplatePreview(survey, {
-            allowEdit: survey.status === 'before_start',
+            allowEdit: canEditRegisteredSurveyForm(survey),
           })
         }
       }}
@@ -1626,6 +1652,22 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           open={templateEditId != null}
           templateId={templateEditId}
           onClose={() => setTemplateEditId(null)}
+        />
+      ) : null}
+
+      {programFormEdit != null ? (
+        <SurveyTemplateEditModal
+          open
+          templateId={String(programFormEdit.target.sourceVersionId)}
+          programEdit={programFormEdit}
+          onBindingsStale={() => void invalidateSurveyCaches()}
+          onClose={() => setProgramFormEdit(null)}
+          onSaved={newVersionId => {
+            const sourceId = String(programFormEdit.target.sourceVersionId)
+            setActiveRegisteredSurveyId(prev => (prev === sourceId ? newVersionId : prev))
+            setProgramFormEdit(null)
+            void invalidateSurveyCaches()
+          }}
         />
       ) : null}
 

@@ -354,6 +354,9 @@ export interface GeneralProgramVolunteerInterviewScheduleInfo {
   specificUnavailableDateIsos?: string[]
   availableTimeSlots?: string
   exceptions?: GeneralProgramVolunteerInterviewScheduleException[]
+  /** 면접 선택지 펼침 기간 — KST `YYYY-MM-DD`. 비면 BE가 봉사자 모집 기간을 쓴다. */
+  periodStartDate?: string
+  periodEndDate?: string
 }
 
 // IPS 분류

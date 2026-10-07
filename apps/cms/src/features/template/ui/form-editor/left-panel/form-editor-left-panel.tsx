@@ -348,7 +348,6 @@ export function FormEditorLeftPanel({
         headingDescriptionExtraClassName,
         showEditorChrome,
         surveyWriteNumbering: flattenUserInfoWrite,
-        userInfoWriteField: card.writeField,
       }
       return sortable ? (
         <SortableMiddleFormCard key={card.displayKey} {...commonProps} />

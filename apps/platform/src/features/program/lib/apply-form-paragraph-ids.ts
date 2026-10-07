@@ -9,6 +9,8 @@ import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragr
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
+import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
+import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 
 const INSTITUTION_LIKE_BASIC_INFO_IDS = new Set<string>([
   PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo,
@@ -92,6 +94,54 @@ export function isInstructorAvailableScheduleParagraphId(id: string): boolean {
 /** 개인 신청 — 면접 진행 가능 일정 */
 export function isIndividualInterviewScheduleParagraphId(id: string): boolean {
   return INDIVIDUAL_INTERVIEW_SCHEDULE_IDS.has(id)
+}
+
+/** 일반 봉사자 신청 — CMS `VolunteerPreviousJaProgramParagraph` */
+export function isVolunteerPreviousJaProgramParagraphId(id: string): boolean {
+  return id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousJaProgram
+}
+
+/** 일반 봉사자 신청 — CMS `VolunteerFreeTextItemsParagraph` */
+export function isVolunteerFreeTextItemsParagraphId(id: string): boolean {
+  return id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems
+}
+
+/** UJAT 봉사자 신청 — CMS `UjatProgramApplicationVolunteerBasicInfoParagraph` */
+export function isUjatVolunteerBasicInfoParagraphId(id: string): boolean {
+  return id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo
+}
+
+/** UJAT 봉사자 신청 — 이전 UJAT 활동 기수 (지원 형태 「UJAT 수료자 봉사자」일 때만) */
+export function isUjatVolunteerPreviousTermParagraphId(id: string): boolean {
+  return id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
+}
+
+/** UJAT 봉사자 신청 — 자유 작성 항목 (지원 형태 「신규 봉사자」일 때만) */
+export function isUjatVolunteerFreeTextItemsParagraphId(id: string): boolean {
+  return id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems
+}
+
+const VOLUNTEER_INTERVIEW_SCHEDULE_IDS = new Set<string>([
+  PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
+  UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
+])
+
+/** 일반 봉사자 신청 — 봉사 진행 가능 일정 (BE `dynamic_schedule_options`) */
+export function isVolunteerActivityScheduleParagraphId(id: string): boolean {
+  return id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule
+}
+
+/** 일반·UJAT 봉사자 신청 — BE가 면접 슬롯 선택지(`items`)를 붙여 내려준 면접 단락 */
+export function isDynamicVolunteerInterviewParagraph(paragraph: unknown): boolean {
+  if (!paragraph || typeof paragraph !== 'object') return false
+  const row = paragraph as Record<string, unknown>
+  return (
+    typeof row.id === 'string' &&
+    VOLUNTEER_INTERVIEW_SCHEDULE_IDS.has(row.id) &&
+    row.runtimeInputMode === DYNAMIC_INTERVIEW_SLOTS_INPUT_MODE &&
+    row.runtimeHidden !== true &&
+    row.hidden !== true
+  )
 }
 
 /** 면접 있는 프로그램에서 BE가 슬롯 선택지(`items`)를 붙여 내려준 개인 면접 단락 */

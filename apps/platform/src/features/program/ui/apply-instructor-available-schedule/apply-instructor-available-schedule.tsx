@@ -189,6 +189,26 @@ export const INDIVIDUAL_INTERVIEW_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   emptyMessage: '선택 가능한 면접 일정이 없습니다.',
 }
 
+/** 봉사자 신청 — CMS `VolunteerActivityAvailableScheduleParagraph` (강사 일정 UI 재사용) */
+export const VOLUNTEER_ACTIVITY_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
+  calendarAriaLabel: '봉사 진행 가능 일정 날짜',
+  summaryLabel: '봉사 진행 가능일',
+  emptyMessage: '선택 가능한 봉사 일정이 없습니다.',
+}
+
+export function findIncompleteVolunteerActivityScheduleMessage(
+  values: ApplyInstructorAvailableScheduleValues,
+  slots: readonly ApplyInstructorScheduleSlot[],
+): string | null {
+  if (slots.length === 0) {
+    return '선택 가능한 봉사 일정이 없습니다. 관리자에게 문의해 주세요.'
+  }
+  if (!slots.some(slot => values.selectedSlotIds.includes(slot.id))) {
+    return '봉사 진행이 가능한 일정을 하나 이상 선택해 주세요.'
+  }
+  return null
+}
+
 /** 개인 신청 면접 — 선택지는 `interview-slot:{id}` 문자열 그대로 제출 */
 export function findIncompleteInterviewScheduleMessage(
   values: ApplyInstructorAvailableScheduleValues,

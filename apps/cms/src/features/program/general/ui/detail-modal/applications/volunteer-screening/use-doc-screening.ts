@@ -30,6 +30,7 @@ import { isGeneralProgramTempMockProgramId } from '@/features/program/general/ap
 import { getTempMockShowcaseVolunteerApplicants } from '@/features/program/general/lib/temp-mock-program-resolve'
 import { patchGeneralVolunteerDocumentScreeningStatus } from '@/features/program/general/model/volunteer-applicant'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
+import { buildGeneralVolunteerDoc1ListQuery } from '@/features/program/general/api/volunteer-list-query'
 import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
@@ -128,18 +129,20 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     '프로그램 신청 · 봉사자 1차 서류 심사'
   )
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => [])
-  const volunteerRemote = useGeneralVolunteerApplicationsRemote({
-    programId,
-    stage: 'doc1',
-    enabled: true,
-    setList,
-  })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerDoc1Filters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS,
   }))
   const [appliedFilters, setAppliedFilters] = useState<GeneralVolunteerDoc1Filters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS,
   }))
+  const listQuery = useMemo(() => buildGeneralVolunteerDoc1ListQuery(appliedFilters), [appliedFilters])
+  const volunteerRemote = useGeneralVolunteerApplicationsRemote({
+    programId,
+    stage: 'doc1',
+    enabled: true,
+    listQuery,
+    setList,
+  })
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [openManagerDropdown, setOpenManagerDropdown] = useState<{
     rowId: string
@@ -165,11 +168,13 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
 
   const handleSearch = useCallback(() => {
     setAppliedFilters({ ...pendingFilters })
+    setSelectedRowKeys([])
   }, [pendingFilters])
 
   const tableData = useMemo(
-    () => filterGeneralDoc1Applicants(list, appliedFilters),
-    [appliedFilters, list]
+    () =>
+      volunteerRemote.remoteEnabled ? list : filterGeneralDoc1Applicants(list, appliedFilters),
+    [appliedFilters, list, volunteerRemote.remoteEnabled]
   )
 
   const exportRows = useMemo(() => tableData.map(toExportRow), [tableData])
@@ -506,6 +511,7 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     onManagerBEvaluationChange,
     applicationsLoading: volunteerRemote.applicationsLoading,
     isRemoteDataSource: volunteerRemote.remoteEnabled,
+    listQuery,
     hasNextPage: volunteerRemote.hasNextPage,
     isFetchingNextPage: volunteerRemote.isFetchingNextPage,
     fetchNextPage: volunteerRemote.fetchNextPage,

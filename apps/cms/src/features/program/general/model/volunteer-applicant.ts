@@ -19,6 +19,17 @@ export type GeneralVolunteerInterviewAvailabilityDay = {
   slots: string[]
 }
 
+/** GET 봉사자 신청 상세 `application.attachments` 한 건 */
+export type VolunteerApplicationEvidenceAttachment = {
+  submissionFileId: number
+  questionKey: string
+  fileObjectId: number
+  originalFileName: string
+  contentType?: string | null
+  fileSize?: number | null
+  downloadPolicyPath: string
+}
+
 export interface GeneralVolunteerApplicantRow {
   id: string
   /** BE 회원 ID — 봉사 신청 PK와 구분 */
@@ -35,6 +46,10 @@ export interface GeneralVolunteerApplicantRow {
   scheduleChangeCancelCount: number
   applicationType: GeneralVolunteerApplicationType
   hasJaVolunteerExperience: boolean
+  /** 신청서 「이전 참여 JA 봉사 프로그램」 — 진행년도 · 프로그램명 */
+  previousJaProgram?: string
+  /** 신청서 증빙 첨부. 상세 API `application.attachments` */
+  evidenceAttachments?: VolunteerApplicationEvidenceAttachment[]
   essayIntro: string
   essayEducationExperience: string
   essayNecessity: string

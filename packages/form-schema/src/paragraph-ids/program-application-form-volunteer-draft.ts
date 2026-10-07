@@ -28,6 +28,36 @@ export const PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS = new Set<str
   Object.values(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS)
 )
 
+export type ProgramVolunteerFreeTextQuestion = {
+  id: 'intro' | 'educationExperience' | 'necessity' | 'jaExperience'
+  label: string
+  hint?: string
+}
+
+/**
+ * 자유 작성 항목 문항 — CMS 미리보기·Platform 작성·CMS 신청정보 공통.
+ * 제출 답: `{ items: [{ id, label, bodyText }] }`
+ */
+export const PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS: readonly ProgramVolunteerFreeTextQuestion[] = [
+  { id: 'intro', label: '1. 자기소개 및 지원동기를 자유롭게 작성해 주세요.' },
+  {
+    id: 'educationExperience',
+    label: '2. 교육봉사, 강사 아르바이트 등 교육 진행 경험을 간략히 적어주세요.',
+  },
+  {
+    id: 'necessity',
+    label: '3. 초등학생 대상 경제 교육의 필요성에 대해 본인의 생각을 자유롭게 작성해 주세요.',
+  },
+  {
+    id: 'jaExperience',
+    label:
+      '4. 초·중·고 당시 학교에서 JA Korea 경제금융교육을 들은 경험 혹은 진행하는 프로그램에 지원하여 참여한 경험 등을 간략하게 적어 주세요.',
+    hint: "(경험이 없을 경우 '없음'으로 작성해 주세요.)",
+  },
+]
+
+export const PROGRAM_VOLUNTEER_FREE_TEXT_MAX_LENGTH = 1000
+
 const PERSONAL_INFO_COLLECTION_BOTTOM =
   '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
 

@@ -31,7 +31,6 @@ import {
   withoutPlaceholderDescriptionInPreview,
   withoutTitleRequired,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
-import type { SurveyUserInfoWriteField } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-survey-write'
 import {
   modalCardFooterActions,
   modalCardFooterToggles,
@@ -99,7 +98,6 @@ export interface PinnedCardProps {
   hideParagraphRequiredChrome?: boolean
   headingDescriptionExtraClassName?: string
   surveyWriteNumbering?: boolean
-  userInfoWriteField?: SurveyUserInfoWriteField
 }
 
 function PinnedFormCardInner({
@@ -125,7 +123,6 @@ function PinnedFormCardInner({
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
   surveyWriteNumbering = false,
-  userInfoWriteField,
 }: PinnedCardProps) {
   useInstitutionApplicationProgramBridge()
   const isSelected = selectedCardId === paragraph.id
@@ -154,8 +151,7 @@ function PinnedFormCardInner({
         paragraphs,
         paragraph,
         titleNumbering,
-        surveyWriteNumbering,
-        userInfoWriteField
+        surveyWriteNumbering
       ),
       hideParagraphRequiredChrome
     ),
@@ -260,11 +256,7 @@ function PinnedFormCardInner({
         onVerticalTableBodyRowSelectionChange,
         singleItemListActiveItemId,
         onSelectSingleItemListItem,
-        {
-          ...paragraphBodyOptions,
-          userInfoWriteField,
-          userInfoWritePersist: paragraphBodyOptions?.paragraphInteractionMode === 'user',
-        }
+        paragraphBodyOptions
       )}
     </ParagraphCard>
   )
@@ -294,7 +286,6 @@ export interface SortableMiddleCardProps {
   hideParagraphRequiredChrome?: boolean
   headingDescriptionExtraClassName?: string
   surveyWriteNumbering?: boolean
-  userInfoWriteField?: SurveyUserInfoWriteField
 }
 
 function SortableMiddleFormCardInner({
@@ -320,7 +311,6 @@ function SortableMiddleFormCardInner({
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
   surveyWriteNumbering = false,
-  userInfoWriteField,
 }: SortableMiddleCardProps) {
   useInstitutionApplicationProgramBridge()
   const hideDragHandle =
@@ -359,8 +349,7 @@ function SortableMiddleFormCardInner({
         paragraphs,
         paragraph,
         titleNumbering,
-        surveyWriteNumbering,
-        userInfoWriteField
+        surveyWriteNumbering
       ),
       hideParagraphRequiredChrome
     ),
@@ -496,11 +485,7 @@ function SortableMiddleFormCardInner({
           onVerticalTableBodyRowSelectionChange,
           singleItemListActiveItemId,
           onSelectSingleItemListItem,
-          {
-            ...paragraphBodyOptions,
-            userInfoWriteField,
-            userInfoWritePersist: paragraphBodyOptions?.paragraphInteractionMode === 'user',
-          }
+          paragraphBodyOptions
         )}
       </ParagraphCard>
     </div>

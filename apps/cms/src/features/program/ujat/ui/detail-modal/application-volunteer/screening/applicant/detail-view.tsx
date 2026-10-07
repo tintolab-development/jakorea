@@ -1,9 +1,14 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
+import {
+  applyUjatVolunteerApplicationDetail,
+  useUjatVolunteerApplicationDetailEnrichment,
+} from '@/features/program/ujat/lib/ujat-volunteer-application-detail'
 import { ApplicantBasicInfo } from './basic-info'
 import { ManagerEvaluationSection } from './manager-evaluation-section'
 import { InterviewAvailabilitySection } from './interview-availability'
@@ -60,11 +65,31 @@ function isInterview2Props(
 }
 
 export function ApplicantDetailView(props: ApplicantDetailViewProps) {
-  const { applicant } = props
+  const applicantEnriched = useUjatVolunteerApplicationDetailEnrichment(props.applicant)
+  const [unmaskedOverlay, setUnmaskedOverlay] = useState<UjatVolunteerApplicantRow | null>(null)
+
+  useEffect(() => {
+    setUnmaskedOverlay(null)
+  }, [props.applicant.id])
+
+  const applicant = unmaskedOverlay ?? applicantEnriched
 
   const resolveAccessItem = useCallback(
     () => `${applicant.name} 봉사자 신청 정보`,
     [applicant.name]
+  )
+
+  const revealVolunteerPersonalInfo = useCallback(
+    async (reason: string) => {
+      const programId = Number(applicant.programId)
+      const response = await unmaskVolunteerApplicationPrivacyRemote(
+        applicant.id,
+        reason,
+        Number.isSafeInteger(programId) ? programId : undefined,
+      )
+      return applyUjatVolunteerApplicationDetail(applicant, response.application)
+    },
+    [applicant],
   )
 
   const {
@@ -73,6 +98,10 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem,
+    revealPersonalInfo: revealVolunteerPersonalInfo,
+    onPrivacyUnmasked: payload => {
+      setUnmaskedOverlay(payload as UjatVolunteerApplicantRow)
+    },
     resetDeps: [applicant.id],
     controlMode: 'headerStickyNoop',
   })

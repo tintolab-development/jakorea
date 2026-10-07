@@ -1,0 +1,8 @@
+.root {
+  width: 100%;
+}
+
+.root .growSegment {
+  min-width: 0;
+  flex: 1 1 0;
+}

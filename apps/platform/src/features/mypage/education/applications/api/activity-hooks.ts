@@ -710,6 +710,7 @@ export function useApplicationSurveyFormQuery(
     enabled,
     isLoading: enabled && query.isPending,
     isError: enabled && query.isError,
+    error: enabled ? query.error : null,
     document: query.data ?? null,
   }
 }

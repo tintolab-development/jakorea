@@ -52,30 +52,8 @@ export function EducationSurveyFormBody({
           return []
         }
 
-        if (isUserInfoParagraph(paragraph)) {
-          const entries = getUserInfoSelectedEntries(paragraph)
-          return entries.map(entry => {
-            const title = resolveEducationSurveySectionTitle(draft, paragraph, entry)
-            return (
-              <PFFormSection
-                key={`${paragraph.id}::${entry.key}`}
-                id={`${paragraph.id}::${entry.key}`}
-                title={title}
-                required={resolveEducationSurveySectionRequired(paragraph)}
-              >
-                <PlatformSurveyParagraphBody
-                  paragraph={paragraph}
-                  programTitle={programTitle}
-                  onUpdateParagraph={onUpdateParagraph}
-                  sidecar={sidecar}
-                  onSidecarChange={onSidecarChange}
-                  userInfoWriteField={entry}
-                  userInfoDisplayValue={userInfoValues?.[entry.key]}
-                  readOnly={readOnly}
-                />
-              </PFFormSection>
-            )
-          })
+        if (isUserInfoParagraph(paragraph) && getUserInfoSelectedEntries(paragraph).length === 0) {
+          return []
         }
 
         if (isBodyOnlyParagraph(paragraph)) {
@@ -102,7 +80,11 @@ export function EducationSurveyFormBody({
             key={paragraph.id}
             id={paragraph.id}
             title={title || '문항'}
-            description={paragraph.paragraphDescription?.trim() || undefined}
+            description={
+              isUserInfoParagraph(paragraph)
+                ? undefined
+                : paragraph.paragraphDescription?.trim() || undefined
+            }
             required={resolveEducationSurveySectionRequired(paragraph)}
           >
             <PlatformSurveyParagraphBody
@@ -111,6 +93,7 @@ export function EducationSurveyFormBody({
               onUpdateParagraph={onUpdateParagraph}
               sidecar={sidecar}
               onSidecarChange={onSidecarChange}
+              userInfoValues={userInfoValues}
               readOnly={readOnly}
             />
           </PFFormSection>,

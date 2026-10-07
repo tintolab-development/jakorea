@@ -1,6 +1,10 @@
 import type { FormResponseResponse } from '@/shared/api/generated/forms-surveys/schemas/formResponseResponse'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import {
+  PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS,
+  type ProgramVolunteerFreeTextQuestion,
+} from '@/features/template/model/program-application-form-volunteer-draft'
 import { buildFormAnswerMap } from './organization-application-form-adapters'
 
 function pickAnswer(
@@ -49,6 +53,60 @@ export function hydrateInstructorApplicationRowFromForm(input: {
   }
 }
 
+function resolveHasJaVolunteerExperience(
+  map: Record<string, string>,
+  row: GeneralVolunteerApplicantRow
+): boolean {
+  const choice = pickAnswer(map, 'program-volunteer-application-seed-ja-experience')
+  if (choice == null) return row.hasJaVolunteerExperience
+  return (
+    /yes|있|경험/i.test(choice) ||
+    choice.includes('program-volunteer-application-ja-experience-yes')
+  )
+}
+
+function parseJsonRecord(raw: string | undefined): Record<string, unknown> | null {
+  if (!raw?.startsWith('{')) return null
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null
+  } catch {
+    return null
+  }
+}
+
+type VolunteerFreeTextAnswers = Partial<
+  Record<ProgramVolunteerFreeTextQuestion['id'], string>
+>
+
+/** Platform 제출 `{ items: [{ id, bodyText }] }` → 문항별 답. 구조가 아니면 null */
+function parseVolunteerFreeTextItems(raw: string | undefined): VolunteerFreeTextAnswers | null {
+  const items = parseJsonRecord(raw)?.items
+  if (!Array.isArray(items)) return null
+  const out: VolunteerFreeTextAnswers = {}
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as Record<string, unknown>
+    const question = PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS.find(q => q.id === row.id)
+    if (question && typeof row.bodyText === 'string' && row.bodyText.trim()) {
+      out[question.id] = row.bodyText.trim()
+    }
+  }
+  return out
+}
+
+/** Platform 제출 `{ applicationYear, programName }` → 「2024 · 프로그램명」 */
+function formatVolunteerPreviousJaProgram(raw: string | undefined): string | undefined {
+  const record = parseJsonRecord(raw)
+  if (!record) return raw
+  const parts = [record.applicationYear, record.programName]
+    .map(value => (typeof value === 'string' ? value.trim() : ''))
+    .filter(Boolean)
+  return parts.length > 0 ? parts.join(' · ') : undefined
+}
+
 /**
  * VOLUNTEER_APPLICATION form_response + admin comment → 봉사 신청 hydrate.
  */
@@ -58,27 +116,32 @@ export function hydrateVolunteerApplicationRowFromForm(input: {
   adminComment?: string | null
 }): GeneralVolunteerApplicantRow {
   const map = buildFormAnswerMap(input.formResponse?.answers)
-  const previousJa = pickAnswer(
-    map,
-    'program-volunteer-application-seed-previous-ja-program'
+  const previousJa = formatVolunteerPreviousJaProgram(
+    pickAnswer(map, 'program-volunteer-application-seed-previous-ja-program')
   )
-  const freeText = pickAnswer(
+  const freeTextRaw = pickAnswer(
     map,
     'program-volunteer-application-seed-free-text-items'
   )
-  const jaExpChoice = pickAnswer(
-    map,
-    'program-volunteer-application-seed-ja-experience'
-  )
-  const hasJa =
-    jaExpChoice != null
-      ? /yes|있|경험/i.test(jaExpChoice) ||
-        jaExpChoice.includes('program-volunteer-application-ja-experience-yes')
-      : input.row.hasJaVolunteerExperience
-
+  const freeTextItems = parseVolunteerFreeTextItems(freeTextRaw)
+  if (freeTextItems) {
+    return {
+      ...input.row,
+      hasJaVolunteerExperience: resolveHasJaVolunteerExperience(map, input.row),
+      previousJaProgram: previousJa ?? input.row.previousJaProgram,
+      essayIntro: freeTextItems.intro ?? input.row.essayIntro,
+      essayEducationExperience:
+        freeTextItems.educationExperience ?? input.row.essayEducationExperience,
+      essayNecessity: freeTextItems.necessity ?? input.row.essayNecessity,
+      essayJaExperience: freeTextItems.jaExperience ?? input.row.essayJaExperience,
+      adminComment: input.adminComment ?? input.row.adminComment,
+    }
+  }
+  const freeText = freeTextRaw
   return {
     ...input.row,
-    hasJaVolunteerExperience: hasJa,
+    hasJaVolunteerExperience: resolveHasJaVolunteerExperience(map, input.row),
+    previousJaProgram: previousJa ?? input.row.previousJaProgram,
     essayIntro: freeText || input.row.essayIntro,
     essayJaExperience: previousJa || input.row.essayJaExperience,
     essayEducationExperience:

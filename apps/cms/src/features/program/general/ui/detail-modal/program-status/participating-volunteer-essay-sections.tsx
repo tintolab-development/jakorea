@@ -14,7 +14,7 @@ const NO_DATA = '작성 내용이 없습니다.'
 
 function resolveEssayKeys(volunteer: ParticipatingVolunteerDetailRow): GeneralEssayColumnKey[] {
   const base: GeneralEssayColumnKey[] = ['essayIntro', 'essayEducationExperience', 'essayNecessity']
-  if (!volunteer.hasJaVolunteerExperience) {
+  if (!volunteer.hasJaVolunteerExperience || volunteer.essayJaExperience?.trim()) {
     return [...base, 'essayJaExperience']
   }
   return base

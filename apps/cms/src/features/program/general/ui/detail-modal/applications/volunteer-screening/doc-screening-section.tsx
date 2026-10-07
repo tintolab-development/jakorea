@@ -80,12 +80,13 @@ export function GeneralVolunteerDocScreeningSection({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
+    listQuery,
   } = useGeneralVolunteerDocScreening({ programId })
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-    resetKey: programId,
+    resetKey: `${programId}:${JSON.stringify(listQuery)}`,
   })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({

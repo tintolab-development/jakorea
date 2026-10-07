@@ -733,6 +733,16 @@
             }
           },
           {
+            "name": "includeProgramScoped",
+            "in": "query",
+            "description": "true면 template_scope=PROGRAM 템플릿도 포함. REGISTRATION/RECRUITMENT/APPLICATION 프로그램 copy 제외 규칙은 그대로다.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "description": "페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.",
@@ -22641,6 +22651,14 @@
             "type": "integer",
             "format": "int64",
             "description": "프로그램 등록 중 copy 소유 draft. 지정 시 해당 관리자 draft에 귀속"
+          },
+          "ownerProgramId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "이미 생성된 프로그램 전용 copy. 지정 시 새 템플릿을 template_scope=PROGRAM, owner_program_id=이 값으로 저장하고 양식 관리 목록에서 제외한다. 해당 프로그램 수정 권한이 없으면 403. ownerProgramDraftId와 함께 보내면 400 FORM_TEMPLATE_COPY_OWNER_CONFLICT."
           }
         }
       },
@@ -39878,12 +39896,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
+            "description": "카탈로그 key = #{…} 안쪽 라벨",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
+            "description": "본문 삽입용 토큰",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -39895,11 +39913,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true이면 programId 없이 enabled=false."
+            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
+            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
           },
           "programGroups": {
             "type": "array",
@@ -39917,14 +39935,14 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "description": "허용 참여 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
+            "description": "허용 회원 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
@@ -40423,15 +40441,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
