@@ -93,6 +93,8 @@ export interface GeneralIndividualApplicantRow {
   totalScore?: number | null
   managerAScore?: number | null
   managerBScore?: number | null
+  managerAEvaluatorAdminId?: number | null
+  managerBEvaluatorAdminId?: number | null
   interviewEvaluationRemark?: string
 }
 

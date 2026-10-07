@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   filterIndividualDoc1Rows,
   mapApiApplicationStatusToApprovalStatus,
+  mapApiInterviewStatusToAssignmentStatus,
+  mapApiVolunteerInterviewStatusToAssignmentStatus,
   mapIndividualApplicationDetailToApplicantRow,
   mapIndividualApplicationToApplicantRow,
+  mapInterviewEvaluationSlots,
   mapInstructorApplicationDetailToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
   mapMaterialAssignmentStatusToTextbookStatus,
@@ -964,6 +967,34 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.teamRole).toBe('leader')
     expect(row.interviewSlotCount).toBe(1)
     expect(row.assignedInterviewDateLabel).toBe('2026.09.18')
+  })
+
+  it('keeps evaluated interviews in the assigned state so they stay on the 2nd interview list', () => {
+    for (const status of ['PARTIALLY_EVALUATED', 'EVALUATED', 'INTERVIEW_ASSIGNED']) {
+      expect(mapApiVolunteerInterviewStatusToAssignmentStatus(status)).toBe('assigned')
+      expect(mapApiInterviewStatusToAssignmentStatus(status)).toBe('assigned')
+    }
+    expect(mapApiVolunteerInterviewStatusToAssignmentStatus('EVALUATED', true)).toBe('withdrawn')
+  })
+
+  it('maps interview evaluation slots by evaluatorOrder, not array position', () => {
+    expect(
+      mapInterviewEvaluationSlots([
+        { evaluatorOrder: 2, evaluatorAdminId: 20, scoreTotal: 4 },
+        { evaluatorOrder: 1, evaluatorAdminId: 10, scoreTotal: 5 },
+      ])
+    ).toEqual({
+      managerAScore: 5,
+      managerBScore: 4,
+      managerAEvaluatorAdminId: 10,
+      managerBEvaluatorAdminId: 20,
+    })
+    expect(mapInterviewEvaluationSlots([{ evaluatorOrder: null, scoreTotal: 3 }])).toEqual({
+      managerAScore: null,
+      managerBScore: null,
+      managerAEvaluatorAdminId: null,
+      managerBEvaluatorAdminId: null,
+    })
   })
 
   it('uses the document-evaluation action when slot edit flags are omitted', () => {

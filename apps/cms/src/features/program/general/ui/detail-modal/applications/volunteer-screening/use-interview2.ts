@@ -16,10 +16,7 @@ import {
   filterGeneralInterview2CalendarApplicants,
   type GeneralVolunteerInterview2Filters,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
-import {
-  computeGeneralInterviewTotalScore,
-  sortGeneralVolunteerInterview2Applicants,
-} from '@/features/program/general/lib/general-volunteer-interview2-display'
+import { sortGeneralVolunteerInterview2Applicants } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { mapGeneralVolunteerAssignedInterviewToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
@@ -429,11 +426,7 @@ export function useGeneralVolunteerInterview2({
     async (payload: GeneralVolunteerInterviewEvaluationPayload) => {
       if (!evaluationTargetId) return
       const target = list.find(row => row.id === evaluationTargetId)
-      const scoreTotal = computeGeneralInterviewTotalScore({
-        managerAScore: payload.managerAScore,
-        managerBScore: payload.managerBScore,
-      })
-      if (scoreTotal == null) return
+      if (payload.managerAScore == null && payload.managerBScore == null) return
 
       if (!volunteerRemote.remoteEnabled) {
         notifyProgramApiUnavailable('general-volunteer-interview-evaluation', '봉사자 면접 평가')
@@ -442,7 +435,8 @@ export function useGeneralVolunteerInterview2({
       const result = await volunteerRemote.applyRemoteInterviewEvaluation?.(
         target?.interviewAssignmentId,
         {
-          scoreTotal,
+          ...(payload.managerAScore != null ? { managerAScore: payload.managerAScore } : {}),
+          ...(payload.managerBScore != null ? { managerBScore: payload.managerBScore } : {}),
           comment: payload.interviewEvaluationRemark?.trim() || undefined,
         }
       )

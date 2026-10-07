@@ -54,9 +54,7 @@ import {
   formatRequestedSchedulesPeriodLabel,
   mapRequestedSchedulesToSessions,
 } from '@/features/program/1c-1s/lib/map-requested-schedules'
-import {
-  resolveStoredAffiliation,
-} from '@/features/program/general/lib/affiliation-organization'
+import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { mapSessionProgressToLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
 import {
   instructorCmsProfileToApplicantInstructorRowPartial,
@@ -141,9 +139,7 @@ export function readOrganizationApplicationEconomyDisplayFields(dto: object): {
   }
 }
 
-export function formatPreviousYearParticipationLabel(
-  raw?: string | null
-): string | undefined {
+export function formatPreviousYearParticipationLabel(raw?: string | null): string | undefined {
   const trimmed = raw?.trim()
   if (!trimmed) return undefined
   if (trimmed === 'yes' || trimmed === 'Y' || trimmed === '참여') return '참여'
@@ -151,9 +147,7 @@ export function formatPreviousYearParticipationLabel(
   return trimmed
 }
 
-function formatOrganizationResultNotificationSentAt(
-  iso?: string | null
-): string | undefined {
+function formatOrganizationResultNotificationSentAt(iso?: string | null): string | undefined {
   const trimmed = iso?.trim()
   if (!trimmed) return undefined
   const parsed = new Date(trimmed)
@@ -241,9 +235,7 @@ export function readOrganizationApplicationDetailExtendFields(
     ...(applicationReason ? { applicationReason } : {}),
     ...(otherRequests ? { otherRequests } : {}),
     ...(computerInSpace ? { computerInSpace } : {}),
-    ...(waitingPlaceGuide
-      ? { waitingPlaceGuide, waitingRoom: waitingPlaceGuide }
-      : {}),
+    ...(waitingPlaceGuide ? { waitingPlaceGuide, waitingRoom: waitingPlaceGuide } : {}),
     ...(mealInfo ? { mealInfo } : {}),
     ...(parkingInfo ? { parkingInfo, otherSpecialNotes: parkingInfo } : {}),
     ...(textbookId ? { textbookId } : {}),
@@ -340,10 +332,7 @@ export function toRequestedEducationFormatApiValue(
 export function readOrganizationApplicationBasicInfoFields(
   dto: Pick<
     OrganizationApplicationDetailResponse,
-    | 'organizationAddressDetail'
-    | 'requestedEducationFormat'
-    | 'applicationReason'
-    | 'otherRequests'
+    'organizationAddressDetail' | 'requestedEducationFormat' | 'applicationReason' | 'otherRequests'
   >
 ): {
   addressDetail?: string
@@ -434,7 +423,8 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     schoolName: '',
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
-    instructorFeeGradeLabel: formatInstructorFeeGradeLabel(dto.instructorFeeGradeSnapshot) || undefined,
+    instructorFeeGradeLabel:
+      formatInstructorFeeGradeLabel(dto.instructorFeeGradeSnapshot) || undefined,
     rejectionReason: dto.rejectReason?.trim() || undefined,
     distanceKm: dto.distanceKm,
     longDistanceYn: dto.longDistance,
@@ -523,7 +513,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
       dto.feePolicy?.amount != null ? String(dto.feePolicy.amount) : base.lectureFeeAmount,
     lectureFeeBasisDisplay:
       dto.feePolicy != null
-        ? buildLectureFeeBasisDisplay(
+        ? (buildLectureFeeBasisDisplay(
             mapInstructorFeeBasisType(dto.feePolicy.basisType) ??
               base.lectureFeeBasisType ??
               'special_lecture',
@@ -531,7 +521,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
             dto.feePolicy.amount != null
               ? String(dto.feePolicy.amount)
               : (base.lectureFeeAmount ?? '')
-          ) ?? base.lectureFeeBasisDisplay
+          ) ?? base.lectureFeeBasisDisplay)
         : base.lectureFeeBasisDisplay,
     businessIncomeEarnerStatus:
       dto.businessIncomeEarnerStatus?.trim() || base.businessIncomeEarnerStatus,
@@ -791,8 +781,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         ),
         resolvedScheduleId: session.scheduleId ?? session.resolvedScheduleId ?? null,
         requestedScheduleId: session.requestedScheduleId ?? undefined,
-        scheduleUnresolved:
-          session.scheduleId == null && session.resolvedScheduleId == null,
+        scheduleUnresolved: session.scheduleId == null && session.resolvedScheduleId == null,
       }
     })
 }
@@ -868,8 +857,6 @@ export function mapIndividualApplicationDetailToApplicantRow(
     dto.assignedInterviewEndAt
   )
   const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
-  const interviewA = screening?.interviewEvaluations?.find(item => item.evaluatorOrder === 1)
-  const interviewB = screening?.interviewEvaluations?.find(item => item.evaluatorOrder === 2)
   const team = dto.team as
     | {
         name?: string
@@ -943,8 +930,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
       screening?.reserveRank
     ),
     totalScore: screening?.interviewTotalScore ?? null,
-    managerAScore: interviewA?.score ?? null,
-    managerBScore: interviewB?.score ?? null,
+    ...mapInterviewEvaluationSlots(screening?.interviewEvaluations),
     interviewEvaluationRemark: screening?.interviewEvaluationRemark ?? undefined,
     assignedInterviewDateLabel: assigned.assignedInterviewDateLabel,
     assignedInterviewTime: assigned.assignedInterviewTime,
@@ -1034,13 +1020,23 @@ export function mapApiDocumentStatusToScreeningStatus(
   return 'pending'
 }
 
+/** 면접 평가 저장 후 서버는 배정 상태를 `PARTIALLY_EVALUATED`(한 슬롯)·`EVALUATED`(두 슬롯)로 바꾼다. */
+const INTERVIEW_ASSIGNED_API_STATUSES = new Set([
+  'ASSIGNED',
+  'INTERVIEW_ASSIGNED',
+  'PARTIALLY_EVALUATED',
+  'EVALUATED',
+  'INTERVIEW_EVALUATED',
+  'COMPLETED',
+])
+
 export function mapApiInterviewStatusToAssignmentStatus(
   status?: string | null,
   giveUpYn?: boolean
 ): GeneralInterviewAssignmentStatus {
   if (giveUpYn) return 'withdrawn'
   const normalized = status?.trim().toUpperCase() ?? ''
-  if (['ASSIGNED', 'COMPLETED'].includes(normalized)) return 'assigned'
+  if (INTERVIEW_ASSIGNED_API_STATUSES.has(normalized)) return 'assigned'
   if (['WITHDRAWN', 'GIVE_UP', 'CANCELLED'].includes(normalized)) return 'withdrawn'
   return 'waiting'
 }
@@ -1073,6 +1069,30 @@ export function mapApiFinalResultToSecondInterviewStatus(
   return 'waiting'
 }
 
+type InterviewEvaluationSlotSource = {
+  evaluatorOrder?: number | null
+  evaluatorAdminId?: number | null
+  score?: number | null
+  scoreTotal?: number | null
+}
+
+/** `evaluatorOrder` 1 = 담당자 A, 2 = 담당자 B. 배열 위치로 추정하지 않는다. */
+export function mapInterviewEvaluationSlots(
+  evaluations: readonly InterviewEvaluationSlotSource[] | null | undefined
+): Pick<
+  GeneralVolunteerApplicantRow,
+  'managerAScore' | 'managerBScore' | 'managerAEvaluatorAdminId' | 'managerBEvaluatorAdminId'
+> {
+  const a = evaluations?.find(item => item.evaluatorOrder === 1)
+  const b = evaluations?.find(item => item.evaluatorOrder === 2)
+  return {
+    managerAScore: a?.score ?? a?.scoreTotal ?? null,
+    managerBScore: b?.score ?? b?.scoreTotal ?? null,
+    managerAEvaluatorAdminId: a?.evaluatorAdminId ?? null,
+    managerBEvaluatorAdminId: b?.evaluatorAdminId ?? null,
+  }
+}
+
 export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
   dto: VolunteerApplicationListItemResponse,
   index: number,
@@ -1087,11 +1107,13 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     essayEducationExperience?: string | null
     essayNecessity?: string | null
     essayJaExperience?: string | null
+    interviewEvaluations?: InterviewEvaluationSlotSource[] | null
   }
   const assigned = formatAssignedInterviewFromIso(
     enriched.assignedInterviewStartAt,
     enriched.assignedInterviewEndAt
   )
+  const interviewSlots = mapInterviewEvaluationSlots(enriched.interviewEvaluations)
   const affiliation = resolveStoredAffiliation({
     affiliationOrganizationId: dto.affiliationOrganizationId,
   })
@@ -1135,6 +1157,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     interviewAvailability: mapInterviewAvailabilitySlots(dto.interviewAvailability),
     interviewAssignmentId:
       enriched.interviewAssignmentId != null ? Number(enriched.interviewAssignmentId) : undefined,
+    ...interviewSlots,
     ...assigned,
     secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
       dto.finalResultStatus,
@@ -1153,8 +1176,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     dto.assignedInterviewStartAt,
     dto.assignedInterviewEndAt
   )
-  const canEditEvaluation =
-    dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
+  const canEditEvaluation = dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
   return {
     ...base,
     ...readGeneralVolunteerProjection(dto.application, base),
@@ -1195,6 +1217,9 @@ export function mapVolunteerApplicationDetailToApplicantRow(
       screening?.reserveRank
     ),
     totalScore: screening?.interviewTotalScore ?? base.totalScore,
+    ...(screening?.interviewEvaluations
+      ? mapInterviewEvaluationSlots(screening.interviewEvaluations)
+      : {}),
     interviewEvaluationRemark:
       screening?.interviewEvaluationRemark ?? base.interviewEvaluationRemark,
     assignedInterviewDateLabel:
@@ -1410,8 +1435,7 @@ export function mapParticipantToParticipatingInstructorRow(
     address: homeAddress,
     region: homeAddress,
     assignedOrganizationNames,
-    jaEvaluationGrade:
-      enriched.jaEvaluationGrade?.trim() || enriched.jaGrade?.trim() || undefined,
+    jaEvaluationGrade: enriched.jaEvaluationGrade?.trim() || enriched.jaGrade?.trim() || undefined,
     lectureExperienceYears:
       typeof enriched.lectureExperienceYears === 'number'
         ? enriched.lectureExperienceYears
@@ -1457,8 +1481,7 @@ export function mapParticipantToParticipatingVolunteerRow(
     (dto.organizationName?.trim() ? [dto.organizationName.trim()] : [])
   const contact = enriched.contact?.trim() || enriched.phone?.trim() || ''
   const email = enriched.email?.trim() || ''
-  const id1365 =
-    enriched.id1365?.trim() || enriched.external1365Id?.trim() || ''
+  const id1365 = enriched.id1365?.trim() || enriched.external1365Id?.trim() || ''
 
   return {
     id: toId(dto.participantId),

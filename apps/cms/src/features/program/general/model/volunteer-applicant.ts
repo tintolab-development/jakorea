@@ -86,6 +86,10 @@ export interface GeneralVolunteerApplicantRow {
   totalScore?: number | null
   managerAScore?: number | null
   managerBScore?: number | null
+  /** 면접 평가 담당자 A(`evaluatorOrder` 1)를 입력한 관리자 ID */
+  managerAEvaluatorAdminId?: number | null
+  /** 면접 평가 담당자 B(`evaluatorOrder` 2)를 입력한 관리자 ID */
+  managerBEvaluatorAdminId?: number | null
   interviewEvaluationRemark?: string
   /** 참여자 심사 UI 재사용 시 상세에 전달할 원본 개인 신청 행 */
   participantApplicant?: GeneralIndividualApplicantRow
