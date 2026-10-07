@@ -10,8 +10,10 @@ import { CmsRadio, type CmsRadioSize } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsSelectMultiple } from '@/shared/ui/cms-select-multiple'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
-import { CmsToggle } from '@/shared/ui/cms-toggle'
+import { CmsToggle, type CmsToggleSize } from '@/shared/ui/cms-toggle'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
+import { FileTypeIcon, type FileTypeIconType } from '@/shared/ui/icons/FileTypeIcon'
 import { DsDemo, DsSection } from './section'
 
 const SELECT_OPTIONS = [
@@ -30,6 +32,26 @@ const CHECKBOX_SIZES: CmsCheckboxSize[] = ['large', 'medium']
 
 const RADIO_SIZES: CmsRadioSize[] = ['large', 'medium']
 
+const TOGGLE_SIZES: CmsToggleSize[] = ['large', 'medium']
+
+const FILE_TYPE_ICON_DEMO: { type: FileTypeIconType; label: string }[] = [
+  { type: 'jpg', label: 'jpg' },
+  { type: 'png', label: 'png' },
+  { type: 'ai', label: 'ai' },
+  { type: 'pdf', label: 'pdf' },
+  { type: 'word', label: 'word' },
+  { type: 'excel', label: 'excel' },
+  { type: 'ppt', label: 'ppt' },
+  { type: 'hwp', label: 'hwp' },
+  { type: 'net', label: 'net' },
+  { type: 'clip', label: 'clip' },
+]
+
+const THUMBNAIL_DEMO_GUIDE_LINES = [
+  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
+
 export function FormsSection() {
   const [text, setText] = useState('')
   const [search, setSearch] = useState('')
@@ -44,6 +66,7 @@ export function FormsSection() {
   const [date, setDate] = useState<Dayjs | null>(null)
   const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
   const [fileNames, setFileNames] = useState<string[]>([])
+  const [thumbDemo, setThumbDemo] = useState<{ url: string; name: string } | null>(null)
   const [integer, setInteger] = useState('')
   const [decimal, setDecimal] = useState('')
   const [currency, setCurrency] = useState('')
@@ -181,6 +204,24 @@ export function FormsSection() {
           </CmsCheckbox>
           <CmsToggle checked={toggle} onChange={setToggle} label="알림 수신" />
         </div>
+      </DsDemo>
+
+      <DsDemo label="CmsToggle sizes · states">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          large(기본) 트랙 50px · 썸 20×20 · 라벨 16px/500/130% / medium 트랙 42px · 썸 16×16 · 라벨
+          14px/500/125% · 라벨–토글 8px · 켜짐 #00A0AF · 꺼짐 #BDC6C9
+        </p>
+        {TOGGLE_SIZES.map(size => (
+          <div key={size} className="ds-demo__stack">
+            <span className="ds-demo__label">{size}</span>
+            <div className="ds-demo__row">
+              <CmsToggle size={size} checked label="켜짐" />
+              <CmsToggle size={size} checked={false} label="꺼짐" />
+              <CmsToggle size={size} checked disabled label="비활성 켜짐" />
+              <CmsToggle size={size} checked={false} disabled label="비활성 꺼짐" />
+            </div>
+          </div>
+        ))}
       </DsDemo>
 
       <DsDemo label="CmsCheckbox sizes · states">
@@ -337,6 +378,67 @@ export function FormsSection() {
           <code>cms-admin-ui/file-select-detail-form</code>. 주소·학교 검색은{' '}
           <a href="#search-modals">Search modals</a>.
         </p>
+      </DsDemo>
+
+      <DsDemo label="FileTypeIcon">
+        <div className="ds-demo__row" style={{ gap: 24 }}>
+          {FILE_TYPE_ICON_DEMO.map(({ type, label }) => (
+            <span
+              key={type}
+              style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+            >
+              <FileTypeIcon type={type} />
+              <span className="ds-demo__label">{label}</span>
+            </span>
+          ))}
+        </div>
+        <p className="ds-note">
+          <code>&lt;FileTypeIcon fileName=&quot;a.pdf&quot; /&gt;</code> — 확장자로 자동 선택(jpeg→jpg,
+          docx→word, xlsx·csv→excel, pptx→ppt, hwpx→hwp, http(s) URL→net). 매핑 없으면 clip. 원본{' '}
+          <code>shared/assets/icons/file-types/file-icon-*.svg</code>
+        </p>
+      </DsDemo>
+
+      <DsDemo label="ThumbnailUploadField">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          썸네일 72×72(클릭 시 확대 보기) · 파일명 14px/500/130% · 「파일 추가」 secondary small(h32) ·
+          가이드 12px/500/150% · 버튼–가이드 16px · 파일이 있으면 버튼 비활성, X로 삭제
+        </p>
+        <div className="ds-demo__stack">
+          <span className="ds-demo__label">빈 상태 · 파일 선택 가능</span>
+          <ThumbnailUploadField
+            previewUrl={thumbDemo?.url}
+            fileName={thumbDemo?.name}
+            guideLines={THUMBNAIL_DEMO_GUIDE_LINES}
+            onSelectFile={file =>
+              setThumbDemo(prev => {
+                if (prev) URL.revokeObjectURL(prev.url)
+                return { url: URL.createObjectURL(file), name: file.name }
+              })
+            }
+            onRemove={() =>
+              setThumbDemo(prev => {
+                if (prev) URL.revokeObjectURL(prev.url)
+                return null
+              })
+            }
+          />
+          <span className="ds-demo__label">파일 있음 (placeholder 이미지)</span>
+          <ThumbnailUploadField
+            fileName="thumbnail.png"
+            guideLines={THUMBNAIL_DEMO_GUIDE_LINES}
+            onSelectFile={() => undefined}
+            onRemove={() => undefined}
+          />
+          <span className="ds-demo__label">disabled (보기 모드)</span>
+          <ThumbnailUploadField
+            fileName="thumbnail.png"
+            guideLines={THUMBNAIL_DEMO_GUIDE_LINES}
+            disabled
+          />
+          <span className="ds-demo__label">disabled · 첨부 없음</span>
+          <ThumbnailUploadField guideLines={THUMBNAIL_DEMO_GUIDE_LINES} disabled />
+        </div>
       </DsDemo>
     </DsSection>
   )

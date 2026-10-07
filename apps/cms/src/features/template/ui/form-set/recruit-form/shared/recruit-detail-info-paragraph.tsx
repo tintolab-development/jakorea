@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor } from '@/shared/rich-text'
-import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
+import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -46,7 +46,6 @@ import {
 import '@/features/template/ui/form-editor/form-editor.css'
 import './recruit-detail-info-paragraph.css'
 
-const THUMB_UPLOAD_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 const DEFAULT_OVERLAY_KEY_PREFIX = 'recruit.detailInfo'
 const DETAIL_INFO_WYSIWYG_OPTIONS = {
   placeholder: '내용을 작성하세요',
@@ -445,22 +444,14 @@ export function RecruitDetailInfoParagraph({
             label="썸네일 이미지"
             fullRow
             edit={
-              <div className={THUMB_UPLOAD_CLASS}>
-                {thumbObjectUrl ? (
-                  <img src={thumbObjectUrl} alt="" width={86} height={86} />
-                ) : (
-                  <ProgramThumbnailPlaceholder />
-                )}
-                <ParagraphFileUpload
-                  accept=".jpg,.jpeg,.png"
-                  multiple={false}
-                  style={{ marginLeft: 16 }}
-                  guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
-                  fileNames={thumbFileName ? [thumbFileName] : []}
-                  onFilesChange={uploadingThumbnail ? undefined : handleThumbnailFiles}
-                  onRemoveFile={uploadingThumbnail ? undefined : handleRemoveThumbnail}
-                />
-              </div>
+              <ThumbnailUploadField
+                previewUrl={thumbObjectUrl}
+                fileName={thumbFileName}
+                guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
+                uploading={uploadingThumbnail}
+                onSelectFile={file => handleThumbnailFiles([file])}
+                onRemove={handleRemoveThumbnail}
+              />
             }
             view="-"
           />

@@ -1,18 +1,18 @@
 import { useId } from 'react'
 
 /**
- * 프로그램 썸네일 미업로드 시 기본 이미지 (등록·모집 상세 정보 공통)
+ * 썸네일 미업로드 시 기본 이미지 — ThumbnailUploadField 공통 (기본 72×72)
  */
-export function ProgramThumbnailPlaceholder({ className }: { className?: string }) {
+export function ThumbnailPlaceholder({ className, size = 72 }: { className?: string; size?: number }) {
   const id = useId().replace(/:/g, '')
-  const clipId = `program-thumb-clip-${id}`
-  const maskId = `program-thumb-mask-${id}`
+  const clipId = `thumb-placeholder-clip-${id}`
+  const maskId = `thumb-placeholder-mask-${id}`
 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="86"
-      height="86"
+      width={size}
+      height={size}
       viewBox="0 0 86 86"
       fill="none"
       className={className}

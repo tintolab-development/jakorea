@@ -211,11 +211,15 @@ export {
   FileDownloadRowIcon,
   CommentEmojiToggleIcon,
   CommentSendIcon,
+  FileTypeIcon,
+  resolveFileTypeIconType,
 } from './icons'
 export type {
   AttachmentDownloadIconProps,
   AttachmentClipIconProps,
   FileDownloadRowIconProps,
+  FileTypeIconProps,
+  FileTypeIconType,
 } from './icons'
 export {
   REACTION_EMOJI_ITEMS,
