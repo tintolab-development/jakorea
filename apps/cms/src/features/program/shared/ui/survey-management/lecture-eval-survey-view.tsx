@@ -1,4 +1,3 @@
-import { DownloadOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import type { RefObject } from 'react'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -25,6 +24,7 @@ import { LectureEvalSubmittedIcon } from './lecture-eval-submitted-icon'
 import { SurveySubmittedState } from './survey-submitted-state'
 import { LectureEvalFormView } from './lecture-eval-form-view'
 import { SurveyPollResultsView } from './survey-poll-results-view'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './survey-management.css'
 
 export type LectureEvalSurveyViewProps = {
@@ -94,7 +94,7 @@ export function LectureEvalSurveyView({
         variant="secondary"
         size="large"
         width="auto"
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         disabled={!downloadEnabled || downloadingResults}
         onClick={onDownloadResultsClick}
       >

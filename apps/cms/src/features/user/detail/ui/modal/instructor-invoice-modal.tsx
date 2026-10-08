@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { DownloadOutlined } from '@ant-design/icons'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -26,6 +25,7 @@ import {
   mapSettlementDetailToInstructorInvoice,
 } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './instructor-invoice-modal.css'
 
 export interface InstructorInvoiceModalProps {
@@ -358,7 +358,7 @@ export function InstructorInvoiceModal({
                               variant="primary"
                               size="large"
                               width={160}
-                              icon={<DownloadOutlined />}
+                              icon={<ButtonDownloadIcon />}
                               loading={downloadLoading}
                               onClick={() => void handleDownloadPaymentStatement()}
                             >

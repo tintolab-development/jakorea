@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useRegionAssignment } from './use-region-assignment'
-import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
@@ -22,6 +21,7 @@ import {
   getRegionDirectAssignVolunteerOptions,
   getRegionEducationDateOptions,
 } from './region-assignment-options'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
 
 export function UjatEducationProgressRegionAssignmentSection({
@@ -166,7 +166,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             type="button"
             variant="secondary"
             size="large"
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             onClick={handleOpenDownloadModal}
           >
             배정표 다운로드

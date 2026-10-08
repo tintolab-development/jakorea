@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom'
 import { UJAT_EDU_VOL_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
@@ -31,6 +30,7 @@ import { useUjatEducationProgressVolunteerDetail } from './detail/use-detail'
 import { useUjatEducationProgressVolunteers } from './use-list'
 import type { UjatEducationProgressVolunteerRow } from './types'
 import { Volunteer1365PreviewModal } from './volunteer-1365-preview-modal'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
 
 export function UjatEducationProgressVolunteersSection({
@@ -222,7 +222,7 @@ export function UjatEducationProgressVolunteersSection({
               variant="secondary"
               size="large"
               width={180}
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
               활동인증서 발급
@@ -231,7 +231,7 @@ export function UjatEducationProgressVolunteersSection({
               type="button"
               variant="secondary"
               size="large"
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               disabled={studentCertificateExportActive}
               onClick={handleStudentCertificateIssueClick}
             >
@@ -241,7 +241,7 @@ export function UjatEducationProgressVolunteersSection({
               type="button"
               variant="secondary"
               size="large"
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               onClick={() => setVolunteer1365PreviewOpen(true)}
             >
               1365 봉사시간 등록 양식

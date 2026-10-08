@@ -1,4 +1,4 @@
-import { DownloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -162,7 +162,7 @@ export function TemplateFullpageModal({
         {headerActionsLeading}
         <CmsButton
           variant="secondary"
-          icon={<DownloadOutlined />}
+          icon={<ButtonDownloadIcon />}
           onClick={onDownloadDocument}
           className="full-page-modal__download-btn"
           disabled={downloadDocumentLoading}
@@ -357,3 +357,5 @@ export {
   type ParagraphCardEditableHeading,
   type ParagraphCardProps,
 } from '@/features/template/ui/paragraph/shared/paragraph-card'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+

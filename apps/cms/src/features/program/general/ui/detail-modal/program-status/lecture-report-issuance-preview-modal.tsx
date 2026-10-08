@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -23,6 +22,7 @@ import {
   type LectureReportPreviewContext,
 } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
 import { handleError } from '@/shared/utils/error-handler'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import './lecture-report-issuance-preview-modal.css'
 
@@ -181,7 +181,7 @@ export function LectureReportIssuancePreviewModal({
         variant="primary"
         size="medium"
         width={140}
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         disabled={pdfLoading}
         onClick={() => void handleDownloadPdf()}
       >

@@ -8,12 +8,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Card, Tag, Space, Spin } from 'antd'
 import { CmsButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import {
-  ArrowLeftOutlined,
-  DownloadOutlined,
-  EyeOutlined,
-  CheckCircleOutlined,
-} from '@ant-design/icons'
+import { ArrowLeftOutlined, EyeOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlementDetail } from '@/entities/settlement/api/instructor-settlement-service'
 import { getStatusConfigAccentColor, settlementStatusStatusConfig } from '@/shared/constants/status'
@@ -24,6 +19,8 @@ import { paymentStatementService } from '@/entities/settlement/api/payment-state
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
+
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 export function MySettlementDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -349,7 +346,7 @@ export function MySettlementDetailPage() {
                       </CmsButton>
                       <CmsButton
                         variant="default"
-                        icon={<DownloadOutlined />}
+                        icon={<ButtonDownloadIcon />}
                         size="small"
                         onClick={() => {
                           // TODO: 파일 다운로드 API 연결

@@ -21,7 +21,6 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Controller } from 'react-hook-form'
-import { PlusOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
 import type {
   GeneralProgramCurriculumSessionRow,
@@ -80,6 +79,7 @@ import '@/features/template/ui/shared/paragraph-time-picker.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import { stampTrainedTeachersSessionFields } from '@/features/program/trained-teachers/lib/stamp-session-fields'
 import { validateTrainedTeachersCommonInfoDraft } from '@/features/program/trained-teachers/lib/validate-trained-teachers-common-info-draft'
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 import './common-info-view.css'
 
 /** 교육 연수 — IPS Prepare 고정 표기 */
@@ -1064,7 +1064,7 @@ function TrainedTeachersCurriculumSection({
               variant="secondary"
               size="medium"
               width={180}
-              icon={<PlusOutlined aria-hidden />}
+              icon={<ButtonAddIcon aria-hidden />}
               onClick={addSession}
             >
               {isMulti ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
@@ -1234,7 +1234,7 @@ function ScheduleDetailBlock({
                         variant="secondary"
                         size="medium"
                         width={180}
-                        icon={<PlusOutlined aria-hidden />}
+                        icon={<ButtonAddIcon aria-hidden />}
                         onClick={() => onAddGroup?.()}
                       >
                         진행 그룹 구분 추가
@@ -1519,7 +1519,7 @@ function TrainedTeachersScheduleSection({
               variant="secondary"
               size="medium"
               width={180}
-              icon={<PlusOutlined aria-hidden />}
+              icon={<ButtonAddIcon aria-hidden />}
               onClick={addDetail}
             >
               강의 진행 일정 추가

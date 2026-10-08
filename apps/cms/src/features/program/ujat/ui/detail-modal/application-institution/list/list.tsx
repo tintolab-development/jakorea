@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Spin, Table } from 'antd'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
@@ -13,6 +12,7 @@ import type { UjatInstitutionApplicationRow } from './types'
 import { useUjatInstitutionApplicationList } from './use-list'
 import { UjatInstitutionApplicationActionModal } from './action-modal'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './list.css'
 
 export function UjatInstitutionApplicationList({
@@ -123,7 +123,7 @@ export function UjatInstitutionApplicationList({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
@@ -134,7 +134,7 @@ export function UjatInstitutionApplicationList({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={() => setViewMode('table')}
               >
                 리스트 뷰로 보기

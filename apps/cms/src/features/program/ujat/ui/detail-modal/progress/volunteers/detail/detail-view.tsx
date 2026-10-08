@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
@@ -37,6 +36,7 @@ import { getVolunteerActivityWithdrawScheduleOptions } from './volunteer-assignm
 import {
   UjatEducationProgressVolunteerAssignmentProgressTab,
 } from './assignment-progress-tab'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './detail.css'
 
 const TAB_KEYS = Object.keys(
@@ -236,7 +236,7 @@ export function UjatEducationProgressVolunteerDetailView({
         variant="secondary"
         size="large"
         width={180}
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         onClick={() => setActivityCertPreviewOpen(true)}
       >
         활동인증서 발급
@@ -245,7 +245,7 @@ export function UjatEducationProgressVolunteerDetailView({
         type="button"
         variant="secondary"
         size="large"
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         disabled={studentCertificateExportActive}
         onClick={() => setStudentCertificateIssueModalOpen(true)}
       >

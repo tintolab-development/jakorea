@@ -1,6 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { Spin, Table } from 'antd'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
@@ -19,6 +18,7 @@ import { UjatVolunteerInterview2CalendarView } from './calendar-view'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { UJAT_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X } from './columns'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 
@@ -274,7 +274,7 @@ export function Interview2Section({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={handleViewCalendar}
               >
                 캘린더뷰 보기
@@ -285,7 +285,7 @@ export function Interview2Section({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={handleViewList}
               >
                 리스트로 보기

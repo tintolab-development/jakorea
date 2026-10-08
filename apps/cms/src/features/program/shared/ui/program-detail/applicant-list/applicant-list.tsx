@@ -108,10 +108,9 @@ import type {
   InstructorColumnPreset,
   SessionLinePreset,
 } from './applicant-list-menu'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './applicants-detail.css'
 import './applicant-list.css'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
-
 export interface ApplicantListProps {
   menu: ApplicantListMenu | ''
   /** 신청 강사 상세 게시글 탭 등에 사용 */
@@ -1882,7 +1881,7 @@ export function ApplicantList({
                 </CmsButton>
                 {showIndividualCalendarToggle && displayViewMode === 'table' && (
                   <CmsButton
-                    icon={<CalendarOutlined />}
+                    icon={<ButtonCalendarIcon />}
                     variant="secondary"
                     size="large"
                     onClick={handleViewCalendar}
@@ -1893,7 +1892,7 @@ export function ApplicantList({
                 {showIndividualCalendarToggle && displayViewMode === 'calendar' && (
                   <CmsButton
                     variant="secondary"
-                    icon={<UnorderedListOutlined />}
+                    icon={<ButtonListIcon />}
                     size="large"
                     onClick={() => setViewMode('table')}
                   >

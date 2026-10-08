@@ -21,6 +21,15 @@ export type { FileDownloadRowIconProps } from './FileDownloadRowIcon'
 export { CommentEmojiToggleIcon } from './CommentEmojiToggleIcon'
 export { CommentSendIcon } from './CommentSendIcon'
 export { FileRemoveIcon } from './FileRemoveIcon'
+export {
+  ButtonAddIcon,
+  ButtonCalendarIcon,
+  ButtonCopyIcon,
+  ButtonDeleteIcon,
+  ButtonDownloadIcon,
+  ButtonListIcon,
+} from './ButtonIcons'
+export type { ButtonIconProps } from './ButtonIcons'
 export { FileTypeIcon, resolveFileTypeIconType } from './FileTypeIcon'
 export type { FileTypeIconProps, FileTypeIconType } from './FileTypeIcon'
 export { ModalCloseIcon } from './ModalCloseIcon'

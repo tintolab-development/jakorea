@@ -4,7 +4,6 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramList } from '@/features/program/general/ui/program-list'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -54,6 +53,7 @@ import {
   type RegistrationDraftNoticeChoice,
 } from '@/features/program/shared/ui/registration/draft-notice-modal'
 
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './general-program-list-page.css'
 
 /** `/programs/general?new` — 일반 프로그램 등록 폼 풀페이지 */
@@ -384,7 +384,7 @@ export function GeneralProgramListPageContent() {
       <CmsButton
         variant="secondary"
         size="large"
-        icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
+        icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
         onClick={handleViewModeToggle}
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}

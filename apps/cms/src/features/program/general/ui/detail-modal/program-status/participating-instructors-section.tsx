@@ -8,7 +8,6 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { Table, Spin } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
-import { CalendarOutlined, UnorderedListOutlined, DownloadOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui'
@@ -72,6 +71,7 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
 } from '../../../../shared/ui/program-schedule-colors'
+import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
@@ -693,7 +693,7 @@ export function ParticipatingInstructorsSection({
               variant="secondary"
               size="large"
               style={{ minWidth: 180 }}
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
               활동인증서 발급
@@ -703,7 +703,7 @@ export function ParticipatingInstructorsSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={handleCalendarView}
               >
                 캘린더 뷰로 보기
@@ -713,7 +713,7 @@ export function ParticipatingInstructorsSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={handleListView}
               >
                 리스트 뷰로 보기

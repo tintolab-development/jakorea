@@ -3,9 +3,9 @@
  * 과제 제출 내역 모달 > "과제 보기" 클릭 시 노출. 1400×880, 미리보기 영역 임시 배경 #E3E3E3
  */
 
-import { DownloadOutlined } from '@ant-design/icons'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './assignment-preview-modal.css'
 
 export interface AssignmentPreviewModalProps {
@@ -42,7 +42,7 @@ export function AssignmentPreviewModal({
       <CmsButton
         variant="primary"
         size="medium"
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         loading={downloadLoading}
         disabled={onDownload == null}
         onClick={() => onDownload?.()}

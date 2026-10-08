@@ -3,8 +3,9 @@
  */
 
 import { forwardRef } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton, type CmsButtonProps } from './cms-button'
+
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 export type ExcelButtonProps = Omit<
   CmsButtonProps,
@@ -20,7 +21,7 @@ export const ExcelButton = forwardRef<HTMLButtonElement, ExcelButtonProps>(
         type={type}
         variant="primary"
         size="large"
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         className={['excel-button', className].filter(Boolean).join(' ')}
         {...rest}
         adminAction="download"

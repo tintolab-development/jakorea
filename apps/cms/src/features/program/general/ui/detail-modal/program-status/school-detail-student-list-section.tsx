@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { useStudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import type { StudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
-import { CheckOutlined, DownloadOutlined } from '@ant-design/icons'
+import { CheckOutlined } from '@ant-design/icons'
 import { Spin, Table } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert } from '@/shared/ui'
@@ -86,6 +86,8 @@ import {
   STUDENT_LIST_TABLE_SCROLL_X,
   studentListTableDataColumnSize,
 } from './school-detail-student-list-table'
+
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const STUDENT_GENDER_EDIT_OPTIONS = [
   { value: 'male', label: '남' },
@@ -737,7 +739,7 @@ export function SchoolDetailStudentListSection({
       <CmsButton
         variant="secondary"
         size="large"
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         className="school-detail-student-list-section__btn-outline"
         disabled={certificateExportActive}
         onClick={handleCertificateIssueClick}

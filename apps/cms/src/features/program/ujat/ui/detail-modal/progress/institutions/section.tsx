@@ -1,6 +1,5 @@
 import { useEffect, useMemo, type MouseEvent } from 'react'
 import { Table } from 'antd'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
@@ -11,6 +10,7 @@ import { buildUjatEducationProgressInstitutionFilterFields } from './filter-fiel
 import { UjatEducationProgressInstitutionsCalendarView } from './calendar-view'
 import { useUjatEducationProgressInstitutions } from './use-list'
 import type { UjatEducationProgressInstitutionRow } from './types'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
 
 export function UjatEducationProgressInstitutionsSection({
@@ -74,7 +74,7 @@ export function UjatEducationProgressInstitutionsSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
@@ -85,7 +85,7 @@ export function UjatEducationProgressInstitutionsSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={() => setViewMode('table')}
               >
                 리스트 뷰로 보기

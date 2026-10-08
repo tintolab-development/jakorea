@@ -1,4 +1,3 @@
-import { DownloadOutlined } from '@ant-design/icons'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { Spin } from 'antd'
 import { type ChangeEvent, useCallback, useEffect, useId, useRef, useState } from 'react'
@@ -27,6 +26,7 @@ import {
   CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE,
   CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal.css'
 import './member-consent-crime-modal.css'
 
@@ -274,7 +274,7 @@ export function MemberConsentCrimeModal({
               <CmsButton
                 variant="secondary"
                 size="medium"
-                icon={<DownloadOutlined />}
+                icon={<ButtonDownloadIcon />}
                 onClick={handleDownload}
                 className="crime-consent-doc-modal__download-btn"
                 disabled={isSubmitting}

@@ -1,4 +1,3 @@
-import { DownloadOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import type { RefObject } from 'react'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -26,6 +25,7 @@ import { UjatLectureEvalSubmittedIcon } from './ujat-lecture-eval-submitted-icon
 import { UjatSurveySubmittedState } from './ujat-survey-submitted-state'
 import { UjatLectureEvalFormView } from './ujat-lecture-eval-form-view'
 import { UjatSurveyPollResultsView } from './ujat-survey-poll-results-view'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './ujat-lecture-eval.css'
 
 export type UjatLectureEvalSurveyViewProps = {
@@ -83,7 +83,7 @@ export function UjatLectureEvalSurveyView({
         variant="secondary"
         size="large"
         width="auto"
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         disabled={!downloadEnabled || downloadingResults}
         onClick={onDownloadResultsClick}
       >
