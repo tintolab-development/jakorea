@@ -9,7 +9,6 @@
   max-width: 100%;
   height: auto;
   box-sizing: border-box;
-  padding: 60px 60px;
   align-items: stretch;
   justify-content: flex-start;
   overflow-x: hidden;
@@ -19,12 +18,6 @@
   height: 426px;
   min-height: 426px;
   overflow: hidden;
-}
-
-.auth-card.auth-card--find-email-result {
-  min-height: 580px;
-  padding: 60px 0;
-  overflow-y: auto;
 }
 
 .find-email-page-content {
@@ -66,6 +59,13 @@
   width: auto;
 }
 
+.find-email-result__illustration {
+  display: block;
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+}
+
 .find-email-result {
   display: flex;
   flex-direction: column;
@@ -78,7 +78,6 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: 0 72px;
   box-sizing: border-box;
 }
 
@@ -94,45 +93,43 @@
 }
 
 .find-email-result__description {
-  margin: 12px 0 0;
-  color: var(--Color-netural-cool-500, #85969d);
+  color: var(--Brand-700, #285f74);
   text-align: center;
-  font-family: Pretendard, system-ui, sans-serif;
+  font-family: Pretendard;
   font-size: 18px;
+  font-style: normal;
   font-weight: 400;
-  line-height: 150%;
+  line-height: 150%; /* 27px */
   letter-spacing: -0.18px;
 }
 
 .find-email-result__email-box {
   display: flex;
-  align-items: center;
+  padding: var(--Spacing-24, 24px);
+  flex-direction: column;
   justify-content: center;
-  width: 100%;
-  margin-top: 32px;
-  padding: 20px 24px;
-  border-radius: var(--radius-8, 8px);
-  background: var(--Color-netural-cool-50, #f5f7f7);
-  color: var(--Color-netural-black, #3d3d3d);
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 150%;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  border-radius: var(--Radius-8, 8px);
+  background: var(
+    --Background-page,
+    linear-gradient(0deg, rgba(34, 64, 75, 0.05) 0%, rgba(34, 64, 75, 0.05) 100%),
+    #fff
+  );
+  color: var(--Netural-black, #3d3d3d);
   text-align: center;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%; /* 27px */
+  letter-spacing: -0.18px;
 }
 
 .find-email-result__actions {
   margin-top: 32px;
   width: 100%;
-}
-
-.auth-card.auth-card--find-email-result:has(.find-email-not-found) {
-  min-height: 0;
-  padding: 60px;
-}
-
-.find-email-not-found .find-email-result__body {
-  padding: 0;
 }
 
 .find-email-not-found .find-email-result__title {
@@ -146,21 +143,4 @@
 .find-email-not-found .find-email-result__actions {
   margin-top: 40px;
   gap: 16px;
-}
-
-@media (max-width: 640px) {
-  .auth-card.auth-card--find-email {
-    height: auto;
-    min-height: 0;
-    overflow-y: auto;
-  }
-
-  .auth-card.auth-card--find-email,
-  .auth-card.auth-card--find-email-result {
-    padding: 40px 24px;
-  }
-
-  .find-email-result__body {
-    padding: 0 24px;
-  }
 }

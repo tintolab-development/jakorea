@@ -1,5 +1,4 @@
-
-import { FindEmailSearchIcon } from './find-email-search-icon'
+import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { CmsButton } from '@/shared/ui'
 
 interface FindEmailResultViewProps {
@@ -16,10 +15,15 @@ export function FindEmailResultView({
   return (
     <div className="find-email-result">
       <div className="find-email-result__body">
-        <FindEmailSearchIcon />
+        <img
+          className="find-email-result__illustration"
+          src={illustCheckUrl}
+          alt=""
+          aria-hidden="true"
+        />
 
-        <h1 className="find-email-result__title">가입한 이메일을 찾았어요</h1>
-        <p className="find-email-result__description">아래 이메일로 로그인할 수 있어요.</p>
+        <h1 className="find-email-result__title">가입한 이메일을 찾았습니다.</h1>
+        <p className="find-email-result__description">아래 이메일로 로그인할 수 있습니다.</p>
 
         <div className="find-email-result__email-box" aria-label="찾은 이메일">
           {maskedEmail}
