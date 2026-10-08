@@ -188,6 +188,7 @@ export function EducationInProgressNoticeDetailModal({
   /** 댓글 입력창에서 고른 반응 — 전송 시 반영 (CMS comment-composer 와 동일) */
   const [draftEmojiIndex, setDraftEmojiIndex] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isContentImagesLoading, setIsContentImagesLoading] = useState(false)
 
   const mockReactions = useMemo(
     () => (notice && !isRemote ? getNoticeReactions(notice.id) : []),
@@ -727,16 +728,33 @@ export function EducationInProgressNoticeDetailModal({
               ) : null}
             </div>
 
-            <div className={styles.scroll}>
+            <div className={styles.scroll} aria-busy={isRemote && isContentImagesLoading}>
               {isRemote ? (
-                <RichTextViewer
-                  key={notice.id}
-                  content={notice.content}
-                  contentFormat="markdown"
-                  maxHeight="none"
-                  className={styles.richContent}
-                  resolveInlineImage={resolveInlineImage}
-                />
+                <>
+                  {isContentImagesLoading ? (
+                    // TODO(ui): 임시 스피너 — 디자인 확정 시 공통 컴포넌트로 교체
+                    <div className={styles.contentLoading} role="status">
+                      <span className={styles.spinner} aria-hidden="true" />
+                      <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
+                        이미지를 불러오는 중입니다
+                      </PFText>
+                    </div>
+                  ) : null}
+                  <RichTextViewer
+                    key={notice.id}
+                    content={notice.content}
+                    contentFormat="markdown"
+                    maxHeight="none"
+                    className={[
+                      styles.richContent,
+                      isContentImagesLoading ? styles.richContentLoading : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    resolveInlineImage={resolveInlineImage}
+                    onInlineImagesLoadingChange={setIsContentImagesLoading}
+                  />
+                </>
               ) : (
                 <PFText as="div" typo="bd-md-md" color="black" className={styles.content}>
                   {notice.content}
