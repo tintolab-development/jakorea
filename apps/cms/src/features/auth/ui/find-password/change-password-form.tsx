@@ -1,4 +1,4 @@
-import { Form, Input } from 'antd'
+import { Form } from 'antd'
 
 import {
   isValidRegisterPassword,
@@ -6,20 +6,8 @@ import {
   REGISTER_PASSWORD_MIN_LENGTH,
   REGISTER_PASSWORD_MISMATCH_MESSAGE,
 } from '@/features/auth/lib/validate-register-password'
-import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
-import { authInputAllowClear } from '@/features/auth/ui/auth-input-clear-icon'
-import { LoadingButton } from '@/shared/ui/loading-button'
+import { CmsButton, CmsInput } from '@/shared/ui'
 import { RegisterStepHeader } from '@/features/auth/ui/admin-register/register-step-header'
-
-function getRegisterPasswordFieldClassName({ hasError = false }: { hasError?: boolean } = {}) {
-  return [
-    'register-password-field',
-    'register-password-field--clearable',
-    hasError ? 'register-password-field--error' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-}
 
 export interface FindPasswordChangeFormValues {
   newPassword: string
@@ -75,63 +63,51 @@ export function FindPasswordChangeForm({
       >
         <Form.Item
           name="newPassword"
-          label={<AuthFormLabel>새 비밀번호</AuthFormLabel>}
-          validateStatus={isNewPasswordConditionError || submitError ? 'error' : undefined}
           rules={[{ required: true, message: '새 비밀번호를 입력해 주세요.' }]}
-          extra={
-            submitError ? (
-              <p className="register-password-field__message register-password-field__message--error">
-                {submitError}
-              </p>
-            ) : isNewPasswordConditionError ? null : (
-              <p className="register-password-field__help">{REGISTER_PASSWORD_HELP_TEXT}</p>
-            )
-          }
         >
-          <Input.Password
-            className={getRegisterPasswordFieldClassName({
-              hasError: isNewPasswordConditionError || Boolean(submitError),
-            })}
+          <CmsInput
+            label="새 비밀번호"
+            required
+            type="password"
+            inputSize="xlarge"
+            width="100%"
             placeholder="새 비밀번호를 입력해 주세요"
             autoComplete="new-password"
-            visibilityToggle={false}
-            allowClear={authInputAllowClear}
+            error={isNewPasswordConditionError || Boolean(submitError)}
+            message={
+              submitError ?? (isNewPasswordConditionError ? undefined : REGISTER_PASSWORD_HELP_TEXT)
+            }
           />
         </Form.Item>
 
         <Form.Item
           name="newPasswordConfirm"
-          label={<AuthFormLabel>새 비밀번호 확인</AuthFormLabel>}
-          validateStatus={isConfirmMismatch ? 'error' : undefined}
           rules={[{ required: true, message: '비밀번호를 한 번 더 입력해 주세요.' }]}
-          extra={
-            isConfirmMismatch ? (
-              <p className="register-password-field__message register-password-field__message--error">
-                {REGISTER_PASSWORD_MISMATCH_MESSAGE}
-              </p>
-            ) : null
-          }
         >
-          <Input.Password
-            className={getRegisterPasswordFieldClassName({ hasError: isConfirmMismatch })}
+          <CmsInput
+            label="새 비밀번호 확인"
+            required
+            type="password"
+            inputSize="xlarge"
+            width="100%"
             placeholder="비밀번호를 한 번 더 입력해 주세요"
             autoComplete="new-password"
-            visibilityToggle={false}
-            allowClear={authInputAllowClear}
+            error={isConfirmMismatch}
+            message={isConfirmMismatch ? REGISTER_PASSWORD_MISMATCH_MESSAGE : undefined}
           />
         </Form.Item>
 
         <div className="auth-actions find-password-change-step__actions">
-          <LoadingButton
-            type="primary"
-            htmlType="submit"
-            block
-            className="auth-submit-btn"
+          <CmsButton
+            variant="primary"
+            size="h52"
+            type="submit"
+            width="100%"
             loading={isSubmitting}
             disabled={!canSubmit}
           >
             비밀번호 변경하기
-          </LoadingButton>
+          </CmsButton>
         </div>
       </Form>
     </div>

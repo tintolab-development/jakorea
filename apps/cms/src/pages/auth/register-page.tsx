@@ -3,11 +3,14 @@
  */
 
 import { useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 
-import { useIdentityVerification, clearPendingIdentityChallenge } from '@/features/auth/identity-verification'
+import {
+  cmsIdentityVerificationClient,
+  useIdentityVerification,
+  type IdentityChallengeCompleteResult,
+  type VerifiedIdentityProfileResponse,
+} from '@/features/auth/identity-verification'
 import { useAdminRegisterWizard } from '@/features/auth/hooks/use-admin-register-wizard'
-import { AdminRegisterStepBirthGender } from '@/features/auth/ui/admin-register/admin-register-step-birth-gender'
 import { AdminRegisterStepEmail } from '@/features/auth/ui/admin-register/admin-register-step-email'
 import { AdminRegisterStepIdentity } from '@/features/auth/ui/admin-register/admin-register-step-identity'
 import { AdminRegisterStepReview } from '@/features/auth/ui/admin-register/admin-register-step-review'
@@ -17,7 +20,6 @@ import { RegisterStepProgress } from '@/features/auth/ui/admin-register/register
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import type {
-  AdminRegisterStep1Data,
   AdminRegisterStep3Data,
   AdminRegisterStep4Data,
   AdminRegisterStep5Data,
@@ -26,35 +28,33 @@ import type {
 import './register-page.css'
 
 export function RegisterPage() {
-  const navigate = useNavigate()
   const { params } = useQueryParams<{ redirect?: string }>()
-  const {
-    currentStep,
-    formData,
-    updateStepData,
-    goNext,
-    goPrev,
-    buildLoginPath,
-    buildCompletePath,
-    totalSteps,
-  } = useAdminRegisterWizard({ redirectPath: params.redirect })
+  const { currentStep, formData, updateStepData, goNext, goPrev, buildCompletePath, totalSteps } =
+    useAdminRegisterWizard({ redirectPath: params.redirect })
 
   const handleIdentitySuccess = useCallback(
-    (result: {
-      sessionId: number
-      sessionUuid?: string
-      verifiedName?: string
-      verifiedPhone?: string
-      verifiedAt: string
-    }) => {
+    async (result: IdentityChallengeCompleteResult) => {
+      let profile: VerifiedIdentityProfileResponse | undefined
+      if (result.profileToken) {
+        try {
+          profile = await cmsIdentityVerificationClient.fetchVerifiedProfile(
+            result.sessionId,
+            result.profileToken
+          )
+        } catch {
+          profile = undefined
+        }
+      }
+
       updateStepData({
         identityVerificationSessionId: result.sessionId,
-        identityVerificationSessionUuid:
-          result.sessionUuid ?? String(result.sessionId),
+        identityVerificationSessionUuid: result.sessionUuid ?? String(result.sessionId),
         identityVerificationStatus: 'verified',
         identityVerifiedAt: result.verifiedAt,
         verifiedName: result.verifiedName,
         verifiedPhone: result.verifiedPhone,
+        verifiedBirthDate: result.verifiedBirthDate ?? profile?.birthDate,
+        verifiedGender: profile?.gender ?? profile?.genderLabel,
       })
       goNext()
     },
@@ -62,54 +62,30 @@ export function RegisterPage() {
   )
 
   const { verify, status, isVerifying, errorMessage } = useIdentityVerification({
-    birthDate: formData.birthDate,
-    gender: formData.gender,
     onSuccess: handleIdentitySuccess,
   })
 
-  const handleStep1Next = (values: AdminRegisterStep1Data) => {
+  const handleTermsNext = (values: AdminRegisterStep3Data) => {
     updateStepData(values)
     goNext()
   }
 
-  const handleStep3Next = (values: AdminRegisterStep3Data) => {
+  const handleEmailNext = (values: AdminRegisterStep4Data) => {
     updateStepData(values)
     goNext()
   }
 
-  const handleStep4Next = (values: AdminRegisterStep4Data) => {
-    updateStepData(values)
-    goNext()
-  }
-
-  const handleStep5Next = (values: AdminRegisterStep5Data) => {
+  const handlePasswordNext = (values: AdminRegisterStep5Data) => {
     updateStepData(values)
     goNext()
   }
 
   const handleBack = () => {
-    if (currentStep === 2) {
-      clearPendingIdentityChallenge()
-    }
-    if (currentStep === 1) {
-      navigate(buildLoginPath(), { replace: true })
-      return
-    }
     goPrev()
   }
 
   const renderStep = () => {
     if (currentStep === 1) {
-      return (
-        <AdminRegisterStepBirthGender
-          initialValues={formData}
-          onNext={handleStep1Next}
-          onBack={handleBack}
-        />
-      )
-    }
-
-    if (currentStep === 2) {
       return (
         <AdminRegisterStepIdentity
           onStartVerify={verify}
@@ -122,7 +98,7 @@ export function RegisterPage() {
       )
     }
 
-    if (currentStep === 3) {
+    if (currentStep === 2) {
       return (
         <AdminRegisterStepTerms
           initialValues={{
@@ -131,7 +107,20 @@ export function RegisterPage() {
             marketingConsent: formData.marketingConsent,
             mfaSetupAgreed: formData.mfaSetupAgreed,
           }}
-          onNext={handleStep3Next}
+          onNext={handleTermsNext}
+          onBack={handleBack}
+        />
+      )
+    }
+
+    if (currentStep === 3) {
+      return (
+        <AdminRegisterStepEmail
+          initialValues={{
+            emailLocalPart: formData.emailLocalPart,
+            email: formData.email,
+          }}
+          onNext={handleEmailNext}
           onBack={handleBack}
         />
       )
@@ -139,28 +128,15 @@ export function RegisterPage() {
 
     if (currentStep === 4) {
       return (
-        <AdminRegisterStepEmail
-          initialValues={{
-            emailLocalPart: formData.emailLocalPart,
-            email: formData.email,
-          }}
-          onNext={handleStep4Next}
+        <AdminRegisterStepPassword
+          initialValues={{ password: formData.password }}
+          onNext={handlePasswordNext}
           onBack={handleBack}
         />
       )
     }
 
     if (currentStep === 5) {
-      return (
-        <AdminRegisterStepPassword
-          initialValues={{ password: formData.password }}
-          onNext={handleStep5Next}
-          onBack={handleBack}
-        />
-      )
-    }
-
-    if (currentStep === 6) {
       return (
         <AdminRegisterStepReview
           formData={formData}
@@ -174,14 +150,14 @@ export function RegisterPage() {
   }
 
   const registerCardClassName =
-    currentStep === 2
-      ? 'auth-card--register auth-card--register-step-2'
-      : currentStep === 3
-        ? 'auth-card--register auth-card--register-step-3'
-        : currentStep === 5
-          ? 'auth-card--register auth-card--register-step-5'
-          : currentStep === 6
-            ? 'auth-card--register auth-card--register-step-6'
+    currentStep === 1
+      ? 'auth-card--register auth-card--register-step-1'
+      : currentStep === 2
+        ? 'auth-card--register auth-card--register-step-2'
+        : currentStep === 4
+          ? 'auth-card--register auth-card--register-step-4'
+          : currentStep === 5
+            ? 'auth-card--register auth-card--register-step-5'
             : 'auth-card--register'
 
   return (

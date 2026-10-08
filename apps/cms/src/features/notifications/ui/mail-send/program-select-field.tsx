@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { SearchOutlined } from '@ant-design/icons'
 import { CmsSelect } from '@/shared/ui'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import type { MailSendProgram } from '@/features/notifications/model/mail-send/types'
 import { MAIL_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/mail-send/types'
 import { findMailSendProgram } from '@/features/notifications/model/mail-send/programs'
@@ -79,8 +79,13 @@ export function ProgramSelectField({
           value={selectValue}
           options={selectOptions}
           open={false}
+          allowClear={false}
           showSearch={false}
-          suffixIcon={<SearchOutlined />}
+          suffixIcon={
+            <span className="cms-field__icon">
+              <FieldSearchIcon />
+            </span>
+          }
           tabIndex={-1}
           style={{ width: '100%' }}
         />

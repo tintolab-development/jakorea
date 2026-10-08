@@ -2,13 +2,12 @@
  * 로그인 페이지
  */
 
-import { Form, Button, Typography, Space, Alert } from 'antd'
+import { Form, Typography, Space, Alert } from 'antd'
 import type { FormInstance } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { LoadingButton } from '@/shared/ui/loading-button'
-import { CmsInput } from '@/shared/ui'
+import { CmsButton, CmsInput } from '@/shared/ui'
 import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/types/user'
 import type { LoginMode } from '@/entities/user/api/auth-service'
@@ -80,15 +79,8 @@ export function LoginPage() {
     socialAlreadyLinked?: string
   }>()
   const authStore = useAuthStore()
-  const {
-    login,
-    loading,
-    isAuthenticated,
-    requiresMfa,
-    passwordChangeRequired,
-    user,
-    clearError,
-  } = authStore
+  const { login, loading, isAuthenticated, requiresMfa, passwordChangeRequired, user, clearError } =
+    authStore
   const [form] = Form.useForm()
   const [mfaModalOpen, setMfaModalOpen] = useState(false)
   const [loginMode, setLoginMode] = useState<LoginMode | null>(null)
@@ -299,7 +291,9 @@ export function LoginPage() {
             ) : (
               <>
                 <p className="login-notice">
-                  인가된 관리자만 접속 가능하며, 중요 활동의 경우 로그로 기록됩니다.
+                  본 시스템은 승인된 관리자 전용입니다.
+                  <br />
+                  보안을 위해 접속 및 중요 작업의 이력이 저장됩니다.
                 </p>
 
                 <div className="login-form-wrapper">
@@ -384,16 +378,17 @@ export function LoginPage() {
                       )}
 
                     <Form.Item className="login-submit-actions">
-                      <LoadingButton
-                        type="primary"
-                        block
+                      <CmsButton
+                        variant="primary"
+                        size="h52"
+                        width="100%"
                         className="login-submit-btn"
                         loading={loading && loginMode === 'api'}
                         disabled={isLocked || !apiLoginAvailable}
                         onClick={() => handleLoginClick('api')}
                       >
                         로그인하기
-                      </LoadingButton>
+                      </CmsButton>
                     </Form.Item>
                   </Form>
 
@@ -406,9 +401,10 @@ export function LoginPage() {
                     </Text>
                     <Space size="small" wrap>
                       {DEV_LOGIN_QA_ACCOUNTS.map(account => (
-                        <Button
+                        <CmsButton
                           key={account.key}
-                          size="small"
+                          variant="default"
+                          size="h32"
                           onClick={() => {
                             form.setFieldsValue({
                               email: account.email,
@@ -417,7 +413,7 @@ export function LoginPage() {
                           }}
                         >
                           {account.label}
-                        </Button>
+                        </CmsButton>
                       ))}
                     </Space>
                     <Text type="secondary" className="login-dev-quick__hint">

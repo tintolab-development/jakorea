@@ -232,6 +232,19 @@
   /** 테이블·상세 폼 필드 라벨(th) 배경 */
   --BG-header: linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff;
 
+  /* 입력 컴포넌트 시안 토큰 (Figma Input / Select / Time / Search) */
+  --White: #fff;
+  --Netural-black: #3d3d3d;
+  --Content-secondary: #525252;
+  --Content-tertiary: #85969d;
+  --Content-disabled: rgba(61, 61, 61, 0.5);
+  --Border-default: #e0e0e0;
+  --Border-alpha-10: rgba(61, 61, 61, 0.1);
+  --Brand-500: #00a0af;
+  --Status-red-main: #c32f4a;
+  --Background-disabled: linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%), #fff;
+  --Radius-8: 8px;
+
   /* 폰트 패밀리 */
   --font-family-primary: 'Pretendard', sans-serif;
   --font-family-number: 'Outfit', sans-serif;

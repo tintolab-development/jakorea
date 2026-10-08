@@ -115,10 +115,8 @@ export function FindEmailPage() {
 
   const cardClassName =
     view === 'form' ? 'auth-card--find-email' : 'auth-card--find-email-result'
-  const showLogo = view === 'not_found'
-
   return (
-    <AuthPageShell showLogo={showLogo} cardClassName={cardClassName}>
+    <AuthPageShell showLogo={false} cardClassName={cardClassName}>
       <div className="find-email-page-content">
         {view === 'form' ? (
           <FindEmailForm
@@ -138,7 +136,10 @@ export function FindEmailPage() {
           />
         ) : (
           <FindEmailNotFoundView
-            onGoRegister={() => navigate('/register', { replace: true })}
+            onRetry={() => {
+              resetError()
+              setView('form')
+            }}
             onGoLogin={() => navigate('/login', { replace: true })}
           />
         )}

@@ -1,6 +1,7 @@
-import { Button, Input } from 'antd'
 import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+
+import { CmsButton, CmsInput } from '@/shared/ui'
 
 import './register-identity-mock-nice-page.css'
 
@@ -38,15 +39,14 @@ export function FindEmailIdentityMockNicePage() {
         </p>
         {prefilledName ? (
           <div className="register-identity-mock-nice__field">
-            <label className="register-identity-mock-nice__field-label" htmlFor="mock-nice-name">
-              이름
-            </label>
-            <Input
-              id="mock-nice-name"
+            <CmsInput
+              label="이름"
+              inputSize="large"
+              width="100%"
               value={prefilledName}
               readOnly
               aria-readonly
-              className="register-identity-mock-nice__field-input"
+              allowClear={false}
             />
           </div>
         ) : null}
@@ -54,12 +54,12 @@ export function FindEmailIdentityMockNicePage() {
           <p className="register-identity-mock-nice__meta">세션 ID: {sessionId}</p>
         ) : null}
         <div className="register-identity-mock-nice__actions">
-          <Button type="primary" block onClick={handleComplete}>
+          <CmsButton variant="primary" size="h44" width="100%" onClick={handleComplete}>
             인증 완료
-          </Button>
-          <Button block onClick={handleClose}>
+          </CmsButton>
+          <CmsButton variant="default" size="h44" width="100%" onClick={handleClose}>
             닫기
-          </Button>
+          </CmsButton>
         </div>
       </div>
     </div>

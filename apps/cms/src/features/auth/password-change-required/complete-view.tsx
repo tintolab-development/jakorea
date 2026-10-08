@@ -1,5 +1,5 @@
-import { LoadingButton } from '@/shared/ui'
 import { FindEmailSearchIcon } from '@/features/auth/ui/find-email/find-email-search-icon'
+import { CmsButton } from '@/shared/ui'
 
 interface PasswordChangeRequiredCompleteViewProps {
   onGoLogin: () => void
@@ -22,17 +22,12 @@ export function PasswordChangeRequiredCompleteView({
         변경된 비밀번호로 다시 로그인해 주세요.
       </p>
       <div className="auth-actions password-change-required-complete__actions">
-        <LoadingButton type="primary" block className="auth-submit-btn" onClick={onGoLogin}>
+        <CmsButton variant="primary" size="h52" width="100%" onClick={onGoLogin}>
           로그인 화면 이동하기
-        </LoadingButton>
-        <LoadingButton
-          type="default"
-          block
-          className="auth-secondary-btn"
-          onClick={onConnectSocial}
-        >
+        </CmsButton>
+        <CmsButton variant="default" size="h52" width="100%" onClick={onConnectSocial}>
           소셜 계정 연결하기
-        </LoadingButton>
+        </CmsButton>
       </div>
     </div>
   )

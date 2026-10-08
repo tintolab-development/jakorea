@@ -25,13 +25,10 @@
 
 .paragraph-time-picker__trigger-icon {
   margin-inline-end: 8px;
-  color: var(--gray-85969-d, #85969d);
-  font-size: 16px;
+  color: #9fafb5;
+  width: var(--cms-icon-size, 22px);
+  height: var(--cms-icon-size, 22px);
   flex-shrink: 0;
-}
-
-.cms-datepicker--small .paragraph-time-picker__trigger-icon {
-  font-size: 14px;
 }
 
 .paragraph-time-picker__trigger:disabled .paragraph-time-picker__trigger-icon {

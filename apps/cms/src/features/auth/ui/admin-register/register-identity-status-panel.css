@@ -1,7 +1,5 @@
 /**
  * RegisterIdentityStatusPanel — 본인인증 상태 패널 공통
- * 가입 step 레이아웃용 flex 확장은 register-page.css의
- * `.admin-register-step--identity .register-identity-module` 에서만 추가
  */
 
 .register-identity-module {
