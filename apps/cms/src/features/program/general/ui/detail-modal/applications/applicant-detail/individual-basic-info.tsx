@@ -808,9 +808,6 @@ export function ApplicantGeneralIndividualBasicInfo({
 
   return (
     <div className="general-volunteer-applicant-detail__body applicant-institution-basic-info">
-      {validationErrors?.form ? (
-        <div className="institution-basic-info__field-error">{validationErrors.form}</div>
-      ) : null}
       {showAdminComment ? (
         <ApplicantAdminCommentSection
           adminComment={applicant.adminComment}
