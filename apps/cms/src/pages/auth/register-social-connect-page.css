@@ -43,18 +43,6 @@
   padding-top: 52px;
 }
 
-.register-social-connect__actions .auth-submit-btn {
-  display: flex;
-  height: 52px;
-  padding: 6px 16px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  align-self: stretch;
-  width: 100%;
-}
-
 .register-social-connect__trailing {
   height: 60px;
   flex-shrink: 0;

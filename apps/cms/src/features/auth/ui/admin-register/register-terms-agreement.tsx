@@ -40,8 +40,7 @@ export function RegisterTermsAgreement({
 }: RegisterTermsAgreementProps) {
   const includesMfaConsent = onMfaSetupAgreedChange != null
   const allChecked =
-    TERMS_ITEMS.every(item => value[item.key]) &&
-    (!includesMfaConsent || mfaSetupAgreed)
+    TERMS_ITEMS.every(item => value[item.key]) && (!includesMfaConsent || mfaSetupAgreed)
 
   const handleAgreeAll = () => {
     const nextChecked = !allChecked
@@ -153,7 +152,7 @@ export function RegisterTermsAgreement({
 
       <div className="register-terms-agreement__footnote-wrapper">
         <p className="register-terms-agreement__footnote">
-          선택 항목에 동의하지 않아도 회원가입은 가능해요.
+          선택 항목에 동의하지 않아도 회원가입이 가능합니다.
         </p>
       </div>
     </div>

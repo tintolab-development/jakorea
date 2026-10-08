@@ -1,20 +1,20 @@
 import type { ConsentFormData } from './consent'
 
-export type AdminRegisterGender = 'male' | 'female'
-
-export const ADMIN_REGISTER_TOTAL_STEPS = 6
+/** 본인인증 → 약관 → 이메일 → 비밀번호 → 입력 정보 확인 */
+export const ADMIN_REGISTER_TOTAL_STEPS = 5
 
 export type IdentityVerificationStatus = 'idle' | 'pending' | 'verified' | 'failed'
 
 export interface AdminRegisterWizardData {
-  birthDate?: string
-  gender?: AdminRegisterGender
   identityVerificationSessionId?: number
   identityVerificationSessionUuid?: string
   identityVerificationStatus?: IdentityVerificationStatus
   identityVerifiedAt?: string
   verifiedName?: string
   verifiedPhone?: string
+  verifiedBirthDate?: string
+  /** 본인인증 프로필 성별 (`M`/`F` 또는 표시 라벨) */
+  verifiedGender?: string
   termsOfService?: boolean
   privacyPolicy?: boolean
   marketingConsent?: boolean
@@ -22,11 +22,6 @@ export interface AdminRegisterWizardData {
   emailLocalPart?: string
   email?: string
   password?: string
-}
-
-export interface AdminRegisterStep1Data {
-  birthDate: string
-  gender: AdminRegisterGender
 }
 
 export type AdminRegisterStep3Data = ConsentFormData & {

@@ -16,7 +16,7 @@ export function AdminRegisterStepPlaceholder({
   onBack,
 }: AdminRegisterStepPlaceholderProps) {
   return (
-    <div className="admin-register-step admin-register-step--placeholder">
+    <div>
       <header className="register-step-header">
         <h1 className="register-step-header__title">{step}단계 준비 중</h1>
         <p className="register-step-header__description">
@@ -30,7 +30,7 @@ export function AdminRegisterStepPlaceholder({
         </p>
       </header>
 
-      <div className="auth-actions admin-register-step__actions">
+      <div className="auth-actions">
         {step < 6 ? (
           <LoadingButton type="primary" block className="auth-submit-btn" onClick={onNext}>
             다음

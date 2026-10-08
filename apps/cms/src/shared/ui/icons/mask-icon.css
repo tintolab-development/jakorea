@@ -1,0 +1,9 @@
+.cms-mask-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  -webkit-mask: var(--cms-mask-icon-src) center / var(--cms-mask-icon-size, contain) no-repeat;
+  mask: var(--cms-mask-icon-src) center / var(--cms-mask-icon-size, contain) no-repeat;
+}

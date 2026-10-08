@@ -1,6 +1,5 @@
-import { LoadingButton } from '@/shared/ui'
-
 import { FindEmailSearchIcon } from '@/features/auth/ui/find-email/find-email-search-icon'
+import { CmsButton } from '@/shared/ui'
 
 interface FindPasswordCompleteViewProps {
   onGoLogin: () => void
@@ -18,9 +17,9 @@ export function FindPasswordCompleteView({ onGoLogin }: FindPasswordCompleteView
         </p>
 
         <div className="auth-actions find-password-complete__actions">
-          <LoadingButton type="primary" block className="auth-submit-btn" onClick={onGoLogin}>
+          <CmsButton variant="primary" size="h52" width="100%" onClick={onGoLogin}>
             로그인하기
-          </LoadingButton>
+          </CmsButton>
         </div>
       </div>
     </div>

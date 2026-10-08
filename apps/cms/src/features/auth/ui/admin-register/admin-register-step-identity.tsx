@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { LoadingButton } from '@/shared/ui/loading-button'
+import { CmsButton } from '@/shared/ui'
 
 import type { IdentityVerificationHookStatus } from '@/features/auth/identity-verification'
 
@@ -28,19 +28,19 @@ export function AdminRegisterStepIdentity({
   idleDescription,
 }: AdminRegisterStepIdentityProps) {
   return (
-    <div className="admin-register-step admin-register-step--identity">
+    <div>
       <RegisterStepHeader
         title="본인인증을 진행해 주세요"
         description={
           <>
-            안전하게 가입하기 위해 휴대폰 본인인증이 필요해요.
+            안전하게 가입하기 위해 휴대폰 본인인증이 필요합니다.
             <br />
-            인증 결과는 생년월일과 함께 확인하며, 회원가입 절차에만 사용돼요.
+            인증 결과는 회원가입 절차에만 사용됩니다.
           </>
         }
       />
 
-      <div className="admin-register-step__content">
+      <div style={{ marginTop: '30px' }}>
         <RegisterIdentityStatusPanel
           status={status}
           errorMessage={errorMessage}
@@ -49,18 +49,17 @@ export function AdminRegisterStepIdentity({
           idleTitle={idleTitle}
           idleDescription={idleDescription}
         />
-        <div className="admin-register-step__actions admin-register-step__actions--single">
-          <LoadingButton
-            type="primary"
-            block
-            className="auth-submit-btn"
+        <div style={{ marginTop: '40px' }}>
+          <CmsButton
+            variant="primary"
+            size="h52"
+            width="100%"
             loading={isVerifying}
             onClick={onStartVerify}
           >
             휴대폰 본인인증하기
-          </LoadingButton>
+          </CmsButton>
         </div>
-        <div className="admin-register-step__trailing" aria-hidden />
       </div>
     </div>
   )

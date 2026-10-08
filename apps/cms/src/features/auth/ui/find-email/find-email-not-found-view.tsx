@@ -1,24 +1,30 @@
-import { LoadingButton } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui/cms-button'
+
+import { FindEmailSearchIcon } from './find-email-search-icon'
 
 interface FindEmailNotFoundViewProps {
-  onGoRegister: () => void
+  onRetry: () => void
   onGoLogin: () => void
 }
 
-export function FindEmailNotFoundView({ onGoRegister, onGoLogin }: FindEmailNotFoundViewProps) {
+export function FindEmailNotFoundView({ onRetry, onGoLogin }: FindEmailNotFoundViewProps) {
   return (
     <div className="find-email-result find-email-not-found">
       <div className="find-email-result__body">
-        <h1 className="find-email-result__title">가입된 이메일 정보가 없어요</h1>
-        <p className="find-email-result__description">JA Korea 계정을 찾을 수 없어요.</p>
+        <FindEmailSearchIcon />
+
+        <h1 className="find-email-result__title">일치하는 가입 정보가 없습니다.</h1>
+        <p className="find-email-result__description">
+          입력 정보를 다시 확인하시거나, 관리자에게 문의해 주세요.
+        </p>
 
         <div className="auth-actions find-email-result__actions">
-          <LoadingButton type="primary" block className="auth-submit-btn" onClick={onGoRegister}>
-            회원가입 하기
-          </LoadingButton>
-          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onGoLogin}>
+          <CmsButton variant="primary" size="h52" width="100%" onClick={onRetry}>
+            이메일 다시 찾기
+          </CmsButton>
+          <CmsButton variant="default" size="h52" width="100%" onClick={onGoLogin}>
             로그인 화면 돌아가기
-          </LoadingButton>
+          </CmsButton>
         </div>
       </div>
     </div>

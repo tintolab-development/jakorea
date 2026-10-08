@@ -19,6 +19,7 @@ import {
 } from 'react'
 import type { InputRef } from 'antd'
 import { CmsInput, type CmsInputProps } from './cms-input'
+import { FieldSearchIcon } from './icons/FieldIcons'
 
 const HIGHLIGHT_STYLE: CSSProperties = { color: 'var(--JA-mint-01, #01a1af)' }
 
@@ -227,7 +228,7 @@ export const CmsInputSearch = forwardRef<InputRef, CmsInputSearchProps>(function
 
   const wrapStyle: CSSProperties = {
     position: 'relative',
-    width: width != null ? (typeof width === 'number' ? `${width}px` : width) : '100%',
+    width: width != null ? (typeof width === 'number' ? `${width}px` : width) : '240px',
     ...style,
   }
 
@@ -237,6 +238,7 @@ export const CmsInputSearch = forwardRef<InputRef, CmsInputSearchProps>(function
     <div style={wrapStyle} className={wrapClassName}>
       <CmsInput
         ref={ref}
+        icon={<FieldSearchIcon />}
         {...cmsInputProps}
         width="100%"
         disabled={disabled}

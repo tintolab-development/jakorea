@@ -1,6 +1,6 @@
-import { Button } from 'antd'
 import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { CmsButton } from '@/shared/ui'
 
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
@@ -41,12 +41,12 @@ export function PasswordChangeRequiredIdentityMockNicePage() {
           <p className="register-identity-mock-nice__meta">세션 ID: {sessionId}</p>
         ) : null}
         <div className="register-identity-mock-nice__actions">
-          <Button type="primary" block onClick={handleComplete}>
+          <CmsButton variant="primary" size="h44" width="100%" onClick={handleComplete}>
             인증 완료
-          </Button>
-          <Button block onClick={handleClose}>
+          </CmsButton>
+          <CmsButton variant="default" size="h44" width="100%" onClick={handleClose}>
             닫기
-          </Button>
+          </CmsButton>
         </div>
       </div>
     </div>

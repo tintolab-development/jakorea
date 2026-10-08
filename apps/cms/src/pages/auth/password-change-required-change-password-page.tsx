@@ -1,5 +1,5 @@
 /**
- * 최초 로그인 — 본인인증 후 비밀번호 변경 (step 3)
+ * 최초 로그인 — 본인인증 후 비밀번호 변경 (step 2)
  * 이메일(읽기전용) · 새 비밀번호 · 확인 — 인풋 그룹 간격 40px
  */
 
@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router-dom'
 import { fetchAdminPasswordChange } from '@/features/auth/api/admin-password-change-fetcher'
 import {
   getPasswordChangeRequiredWizardState,
-  hasBirthGender,
   hasIdentityVerified,
   hasPasswordChangeRequiredComplete,
   markPasswordChangeRequiredComplete,
@@ -21,8 +20,7 @@ import {
 import { RegisterStepHeader } from '@/features/auth/ui/admin-register/register-step-header'
 import { RegisterStepProgress } from '@/features/auth/ui/admin-register/register-step-progress'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
-import { LoadingButton } from '@/shared/ui/loading-button'
-import { CmsInput } from '@/shared/ui'
+import { CmsButton, CmsInput } from '@/shared/ui'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
 import './register-page.css'
@@ -39,7 +37,6 @@ export function PasswordChangeRequiredChangePasswordPage() {
   const [submitting, setSubmitting] = useState(false)
   const { isReady } = usePasswordChangeRequiredGuard()
   const wizardState = getPasswordChangeRequiredWizardState()
-  const birthReady = hasBirthGender(wizardState)
   const identityReady = hasIdentityVerified(wizardState)
   const email = wizardState?.email?.trim() ?? ''
 
@@ -49,14 +46,10 @@ export function PasswordChangeRequiredChangePasswordPage() {
       return
     }
     if (!isReady) return
-    if (!birthReady) {
-      navigate(passwordChangeRequiredPaths.birth, { replace: true })
-      return
-    }
     if (!identityReady) {
       navigate(passwordChangeRequiredPaths.identity, { replace: true })
     }
-  }, [isReady, birthReady, identityReady, navigate])
+  }, [isReady, identityReady, navigate])
 
   const handleSubmit = async (values: FormValues) => {
     if (!email) {
@@ -93,7 +86,7 @@ export function PasswordChangeRequiredChangePasswordPage() {
     }
   }
 
-  if (!isReady || !birthReady || !identityReady) {
+  if (!isReady || !identityReady) {
     return null
   }
 
@@ -103,11 +96,11 @@ export function PasswordChangeRequiredChangePasswordPage() {
       cardClassName="register-card auth-card--password-change-required-change"
     >
       <RegisterStepProgress
-        currentStep={3}
+        currentStep={2}
         totalSteps={PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS}
         className="register-step-progress--password-change-required"
       />
-      <div className="admin-register-step admin-register-step--password-change-required">
+      <div>
         <RegisterStepHeader
           title="비밀번호를 변경해 주세요."
           description="현재 비밀번호는 가입된 이메일 주소와 동일합니다."
@@ -117,7 +110,7 @@ export function PasswordChangeRequiredChangePasswordPage() {
           form={form}
           layout="vertical"
           requiredMark={false}
-          className="auth-form admin-register-step__form password-change-required-change-form"
+          className="auth-form password-change-required-change-form"
           onFinish={values => {
             void handleSubmit(values)
           }}
@@ -168,16 +161,10 @@ export function PasswordChangeRequiredChangePasswordPage() {
             />
           </Form.Item>
 
-          <div className="auth-actions admin-register-step__actions">
-            <LoadingButton
-              type="primary"
-              htmlType="submit"
-              block
-              className="auth-submit-btn"
-              loading={submitting}
-            >
+          <div className="auth-actions">
+            <CmsButton variant="primary" size="h52" type="submit" width="100%" loading={submitting}>
               비밀번호 변경하기
-            </LoadingButton>
+            </CmsButton>
           </div>
         </Form>
       </div>

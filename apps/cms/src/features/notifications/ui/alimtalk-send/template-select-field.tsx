@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { SearchOutlined } from '@ant-design/icons'
 import { CmsSelect } from '@/shared/ui'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import { PreviewModal } from '@/features/notifications/ui/alimtalk-template/preview-modal'
 import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
 import { TemplateSelectModal } from './template-select-modal'
@@ -73,9 +73,14 @@ export function TemplateSelectField({
           value={value}
           options={selectOptions}
           open={false}
+          allowClear={false}
           showSearch={false}
           disabled={disabled}
-          suffixIcon={<SearchOutlined />}
+          suffixIcon={
+            <span className="cms-field__icon">
+              <FieldSearchIcon />
+            </span>
+          }
           tabIndex={-1}
           style={{ width: '100%' }}
         />

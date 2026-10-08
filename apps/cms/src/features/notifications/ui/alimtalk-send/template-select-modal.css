@@ -33,13 +33,6 @@
   color: inherit;
 }
 
-.template-select-field__trigger .cms-select .ant-select-arrow .anticon,
-.template-select-field__trigger .cms-select .ant-select-arrow svg {
-  width: 16px;
-  height: 16px;
-  font-size: 16px;
-}
-
 .template-select-field__trigger .cms-select .ant-select.ant-select-open .ant-select-arrow {
   transform: translateY(-50%) !important;
 }

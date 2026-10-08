@@ -8,7 +8,6 @@ import { Form, Input, Card, Typography, Space, Alert, Spin } from 'antd'
 import { SafetyOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { LoadingButton } from '@/shared/ui/loading-button'
 import { useMfa } from '@/features/auth/hooks/use-mfa'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { getTotpProvisioning } from '@/entities/user/api/mfa-service'
@@ -24,6 +23,7 @@ import { unknownErrorText } from '@/shared/utils/error-handler'
 import { resolvePostAuthRedirectPath } from '@/shared/utils/post-auth-redirect'
 import type { TotpProvisioning } from '@/types/mfa'
 import './mfa-page.css'
+import { CmsButton } from '@/shared/ui'
 
 const { Text, Title } = Typography
 
@@ -258,29 +258,29 @@ export function MfaPage() {
           </div>
 
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
-            <LoadingButton
-              type="primary"
-              htmlType="submit"
-              block
-              size="large"
+            <CmsButton
+              variant="primary"
+              size="h52"
+              type="submit"
+              width="100%"
               loading={verifying}
               disabled={isLocked || otpCode.length !== OTP_LENGTH}
               icon={<SafetyOutlined />}
             >
               인증하기
-            </LoadingButton>
+            </CmsButton>
 
-            <LoadingButton
-              type="default"
+            <CmsButton
+              variant="default"
+              size="h52"
               onClick={() => void loadProvisioning()}
-              block
-              size="large"
+              width="100%"
               loading={provisioningLoading}
               disabled={isLocked || isLocalTestMfa}
               icon={<ReloadOutlined />}
             >
               QR 코드 다시 불러오기
-            </LoadingButton>
+            </CmsButton>
           </Space>
         </Form>
 

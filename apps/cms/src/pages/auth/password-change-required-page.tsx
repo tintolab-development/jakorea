@@ -44,7 +44,7 @@ export function PasswordChangeRequiredPage() {
       return
     }
     initPasswordChangeRequiredWizardState(user.email)
-    navigate(passwordChangeRequiredPaths.birth)
+    navigate(passwordChangeRequiredPaths.identity)
   }
 
   if (!isAuthenticated || !passwordChangeRequired) {

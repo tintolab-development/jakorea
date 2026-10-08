@@ -1,5 +1,5 @@
 /**
- * 최초 로그인 — 본인인증 (스크린샷2)
+ * 최초 로그인 — 본인인증 (step 1)
  */
 
 import { useCallback, useEffect } from 'react'
@@ -11,7 +11,6 @@ import {
 } from '@/features/auth/identity-verification'
 import {
   getPasswordChangeRequiredWizardState,
-  hasBirthGender,
   hasPasswordChangeRequiredComplete,
   updatePasswordChangeRequiredWizardState,
   usePasswordChangeRequiredGuard,
@@ -28,18 +27,12 @@ export function PasswordChangeRequiredIdentityPage() {
   const navigate = useNavigate()
   const { isReady } = usePasswordChangeRequiredGuard()
   const wizardState = getPasswordChangeRequiredWizardState()
-  const birthReady = hasBirthGender(wizardState)
 
   useEffect(() => {
     if (hasPasswordChangeRequiredComplete()) {
       navigate(passwordChangeRequiredPaths.complete, { replace: true })
-      return
     }
-    if (!isReady) return
-    if (!birthReady) {
-      navigate(passwordChangeRequiredPaths.birth, { replace: true })
-    }
-  }, [isReady, birthReady, navigate])
+  }, [navigate])
 
   const handleSuccess = useCallback(
     (result: IdentityChallengeCompleteResult) => {
@@ -55,19 +48,17 @@ export function PasswordChangeRequiredIdentityPage() {
 
   const { verify, status, isVerifying, errorMessage } =
     usePasswordChangeRequiredIdentityVerification({
-      birthDate: wizardState?.birthDate,
-      gender: wizardState?.gender,
       onSuccess: handleSuccess,
     })
 
-  if (!isReady || !birthReady || hasPasswordChangeRequiredComplete()) {
+  if (!isReady || hasPasswordChangeRequiredComplete()) {
     return null
   }
 
   return (
     <AuthPageShell showLogo={false} cardClassName="register-card">
       <RegisterStepProgress
-        currentStep={2}
+        currentStep={1}
         totalSteps={PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS}
         className="register-step-progress--password-change-required"
       />
