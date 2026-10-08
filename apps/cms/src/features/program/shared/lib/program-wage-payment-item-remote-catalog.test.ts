@@ -7,6 +7,7 @@ import {
   normalizeOverlayPaymentItemsBeforeSubmit,
   normalizeProgramPaymentItemIds,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE,
+  resolveProgramPaymentItemIdsFromLabels,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 
 vi.mock('@/features/settlement-management/hooks/use-settlement-remote-enabled', () => ({
@@ -60,6 +61,27 @@ describe('지급 항목 — 실 API 카탈로그 전용', () => {
       'p-166201',
       'p-166207',
     ])
+  })
+
+  it('임시저장 라벨 「숙박비 (1사1교)」를 「숙박비」가 아니라 1사1교 항목으로 되돌린다', () => {
+    seedRemoteCatalog([
+      { id: 'p-166201', title: '강사 교통비' },
+      { id: 'p-166203', title: '숙박비' },
+      { id: 'p-166207', title: '숙박비 (1사1교)' },
+    ])
+    expect(resolveProgramPaymentItemIdsFromLabels('강사 교통비, 숙박비 (1사1교)')).toEqual([
+      'p-166201',
+      'p-166207',
+    ])
+    expect(resolveProgramPaymentItemIdsFromLabels('교통비(일사일교), 숙박비(일사일교)')).toEqual([
+      'p-166201',
+      'p-166207',
+    ])
+    expect(resolveProgramPaymentItemIdsFromLabels('숙박비')).toEqual(['p-166203'])
+  })
+
+  it('응답 전 mock 매칭도 「숙박비 (1사1교)」를 1사1교 항목으로 고른다', () => {
+    expect(resolveProgramPaymentItemIdsFromLabels('숙박비 (1사1교)')).toEqual(['p-7'])
   })
 
   it('제출 직전 교정 — 하나도 못 찾으면 재선택 대상으로 알린다', async () => {

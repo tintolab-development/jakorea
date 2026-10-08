@@ -21,6 +21,8 @@ const PAYMENT_ITEM_CODE_RE = /^(p|w|d)-\d+$/i
 const PAYMENT_ITEM_LABEL_ALIASES: Record<string, string> = {
   교통비: '강사 교통비',
   식비: '식사비',
+  '교통비(일사일교)': '강사 교통비',
+  '숙박비(일사일교)': '숙박비 (1사1교)',
 }
 
 const SETTLEMENT_ITEM_TYPE_LABEL: Record<string, string> = {
@@ -292,13 +294,22 @@ export function resolveProgramPaymentItemIdsFromLabels(
     .split(',')
     .map(s => s.trim())
     .filter(Boolean)
-    .map(token => PAYMENT_ITEM_LABEL_ALIASES[token] ?? token)
+    .map(token => PAYMENT_ITEM_LABEL_ALIASES[compactPaymentLabel(token)] ?? token)
     .map(token => {
       const byValue = options.find(o => o.value === token)
       if (byValue) return byValue.value
-      return options.find(o => o.label === token || token.includes(String(o.label)))?.value
+      const target = compactPaymentLabel(token)
+      const exact = options.find(o => compactPaymentLabel(String(o.label)) === target)
+      if (exact) return exact.value
+      // 「숙박비 (1사1교)」가 「숙박비」에 먼저 걸리지 않도록 가장 긴 항목명을 고른다
+      return options
+        .filter(o => {
+          const label = compactPaymentLabel(String(o.label))
+          return label.length > 0 && target.includes(label)
+        })
+        .sort((a, b) => String(b.label).length - String(a.label).length)[0]?.value
     })
-    .filter((v): v is string => Boolean(v))
+    .filter((v, index, all): v is string => Boolean(v) && all.indexOf(v) === index)
 }
 
 export function normalizeProgramPaymentItemSelection(next: string[], prev: string[]): string[] {
