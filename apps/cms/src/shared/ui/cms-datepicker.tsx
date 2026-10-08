@@ -1,5 +1,7 @@
 /**
- * CMS 전용 날짜 선택 (AppDatePicker와 동일 동작 + CmsInput 치수)
+ * CMS 전용 날짜 선택 (AppDatePicker와 동일 동작 + `cms-field.css` 공통 스펙)
+ * - inputSize: xlarge | large | medium | small
+ * - 상단 라벨 / 하단 메세지(선택) · error · 값이 있으면 우측 X 노출
  */
 
 import {
@@ -11,14 +13,23 @@ import {
   type CSSProperties,
   type ForwardRefExoticComponent,
   type ForwardRefRenderFunction,
+  type ReactNode,
   type Ref,
   type RefAttributes,
 } from 'react'
-import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
 import type { DatePickerProps } from 'antd'
 import type { Dayjs } from 'dayjs'
 import type { CmsControlSize } from './cms-control-size'
+import {
+  CmsClearIconSvg,
+  CmsFieldFrame,
+  cmsControlSizeClass,
+  joinCmsClassNames,
+  shouldRenderCmsFieldFrame,
+  useCmsFieldStatus,
+} from './cms-field'
+import type { CmsFieldProps } from './cms-field'
 import {
   DEFAULT_APP_DATE_PLACEHOLDER,
   formatAppDatepickerDateTimeDisplay,
@@ -26,6 +37,7 @@ import {
   formatAppDatepickerRangePlain,
 } from './app-datepicker'
 import type { AppDatePickerRef } from './app-datepicker'
+import { FieldCalendarIcon } from './icons/FieldIcons'
 import './cms-datepicker.css'
 
 export type CmsDatePickerRef = AppDatePickerRef
@@ -39,18 +51,54 @@ export {
 
 type InternalDatePickerRef = ComponentRef<typeof DatePicker>
 type RangePickerProps = ComponentProps<typeof DatePicker.RangePicker>
+type PickerAllowClear = DatePickerProps['allowClear']
 
-export interface CmsDatePickerProps extends Omit<DatePickerProps, 'variant' | 'className' | 'size'> {
+export const cmsDatePickerPopupContainer = () => document.body
+
+/** 좌측 아이콘 — 사이즈별 크기·placeholder/filled 색은 `.cms-field__icon` */
+export function CmsPickerPrefixIcon({ children }: { children: ReactNode }) {
+  return (
+    <span className="cms-field__icon cms-datepicker__icon" aria-hidden>
+      {children}
+    </span>
+  )
+}
+
+/** antd 기본 clear 아이콘을 CMS 공통 X(사이즈별 크기)로 교체 */
+export function resolveCmsPickerAllowClear(allowClear: PickerAllowClear): PickerAllowClear {
+  if (allowClear === false) return false
+  const clearIcon = (
+    <span className="cms-field__clear cms-datepicker__clear-icon">
+      <CmsClearIconSvg />
+    </span>
+  )
+  if (allowClear != null && typeof allowClear === 'object') {
+    return { clearIcon, ...allowClear }
+  }
+  return { clearIcon }
+}
+
+function toWidthStyle(width: number | string | undefined): CSSProperties | undefined {
+  if (width == null) return undefined
+  return { width: typeof width === 'number' ? `${width}px` : width }
+}
+
+export interface CmsDatePickerProps
+  extends Omit<DatePickerProps, 'variant' | 'className' | 'size' | 'status'>,
+    CmsFieldProps {
   className?: string
   pickerClassName?: string
   inputSize?: CmsControlSize
+  /** 지정 시 기본 width(240px) 대신 적용 (숫자는 px) */
   width?: number | string
+  status?: DatePickerProps['status']
 }
 
-const cmsDatePickerPopupContainer = () => document.body
-
 const CmsDatePickerRender: ForwardRefRenderFunction<CmsDatePickerRef, CmsDatePickerProps> = (
-  {
+  props,
+  ref
+) => {
+  const {
     className,
     pickerClassName,
     format: formatProp,
@@ -63,34 +111,46 @@ const CmsDatePickerRender: ForwardRefRenderFunction<CmsDatePickerRef, CmsDatePic
     placeholder,
     disabled,
     style,
+    allowClear,
+    label,
+    required = false,
+    message,
+    error = false,
+    status,
+    value,
     ...rest
-  },
-  ref
-) => {
+  } = props
   const { getPopupContainer, ...pickerRest } = rest
+  const framed = shouldRenderCmsFieldFrame(props, label)
+  const { isError, message: resolvedMessage } = useCmsFieldStatus({
+    error,
+    status,
+    message,
+    disabled,
+  })
   const hasExplicitWidth = width != null
-  const widthStyle: CSSProperties | undefined =
-    width != null
-      ? { width: typeof width === 'number' ? `${width}px` : width }
-      : undefined
+  const widthStyle = toWidthStyle(width)
 
   const resolvedFormat =
     formatProp ??
     (showTime ? formatAppDatepickerDateTimeDisplay : formatAppDatepickerDisplay)
 
-  const wrapperCn = [
+  const boxCn = joinCmsClassNames(
     'cms-datepicker',
     `cms-datepicker--${inputSize}`,
+    cmsControlSizeClass(inputSize),
+    'cms-field__box',
     hasExplicitWidth && 'cms-datepicker--explicit-width',
     disabled && 'cms-datepicker--disabled',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ')
+    disabled && 'cms-field__box--disabled',
+    isError && 'cms-field__box--error',
+    value != null && 'cms-field__box--filled',
+    framed ? undefined : className
+  )
   const pickerCn = ['cms-datepicker__picker', pickerClassName].filter(Boolean).join(' ')
 
-  return (
-    <span className={wrapperCn} style={{ ...widthStyle, ...style }}>
+  const box = (
+    <span className={boxCn} style={framed ? undefined : { ...widthStyle, ...style }}>
       <DatePicker
         ref={ref as Ref<InternalDatePickerRef>}
         variant="borderless"
@@ -98,16 +158,42 @@ const CmsDatePickerRender: ForwardRefRenderFunction<CmsDatePickerRef, CmsDatePic
         format={resolvedFormat}
         showTime={showTime === true ? { format: 'HH:mm:ss' } : showTime}
         prefix={
-          prefix ?? <CalendarOutlined className="cms-datepicker__calendar-icon" aria-hidden />
+          prefix ?? (
+            <CmsPickerPrefixIcon>
+              <FieldCalendarIcon className="cms-datepicker__calendar-icon" />
+            </CmsPickerPrefixIcon>
+          )
         }
         suffixIcon={suffixIcon ?? null}
         inputReadOnly={inputReadOnly ?? true}
         placeholder={placeholder ?? DEFAULT_APP_DATE_PLACEHOLDER}
         disabled={disabled}
+        allowClear={resolveCmsPickerAllowClear(allowClear)}
+        value={value}
         {...pickerRest}
         getPopupContainer={getPopupContainer ?? cmsDatePickerPopupContainer}
       />
     </span>
+  )
+
+  if (!framed) return box
+
+  return (
+    <CmsFieldFrame
+      size={inputSize}
+      label={label}
+      required={required}
+      message={resolvedMessage}
+      isError={isError}
+      className={joinCmsClassNames(
+        'cms-datepicker-field',
+        hasExplicitWidth && 'cms-field--explicit-width',
+        className
+      )}
+      style={{ ...widthStyle, ...style }}
+    >
+      {box}
+    </CmsFieldFrame>
   )
 }
 
@@ -117,11 +203,14 @@ export const CmsDatePicker: ForwardRefExoticComponent<
 
 CmsDatePicker.displayName = 'CmsDatePicker'
 
-export interface CmsDateRangePickerProps extends Omit<RangePickerProps, 'variant' | 'className' | 'size'> {
+export interface CmsDateRangePickerProps
+  extends Omit<RangePickerProps, 'variant' | 'className' | 'size' | 'status'>,
+    CmsFieldProps {
   className?: string
   pickerClassName?: string
   inputSize?: CmsControlSize
   width?: number | string
+  status?: RangePickerProps['status']
   /** 시작일 선택 시 종료일을 `시작+1개월`(동일일)로 설정 (분할 Range UI) */
   oneMonthFromStart?: boolean
 }
@@ -129,8 +218,8 @@ export interface CmsDateRangePickerProps extends Omit<RangePickerProps, 'variant
 const CmsDateRangePickerRender: ForwardRefRenderFunction<
   CmsDatePickerRef,
   CmsDateRangePickerProps
-> = (
-  {
+> = (props, ref) => {
+  const {
     className,
     pickerClassName,
     format: formatProp,
@@ -152,18 +241,26 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
     order: _order,
     oneMonthFromStart = false,
     getPopupContainer,
+    label,
+    required = false,
+    message,
+    error = false,
+    status,
     ...rest
-  },
-  ref
-) => {
+  } = props
   const startPickerRef = useRef<InternalDatePickerRef>(null)
+  const framed = shouldRenderCmsFieldFrame(props, label)
+  const disabledAll = typeof disabled === 'boolean' ? disabled : Boolean(disabled?.[0] && disabled?.[1])
+  const { isError, message: resolvedMessage } = useCmsFieldStatus({
+    error,
+    status,
+    message,
+    disabled: disabledAll,
+  })
   const pickerCn = ['cms-datepicker__picker', pickerClassName].filter(Boolean).join(' ')
   const fmt = formatProp ?? formatAppDatepickerRangePlain
   const hasExplicitWidth = width != null
-  const widthStyle: CSSProperties | undefined =
-    width != null
-      ? { width: typeof width === 'number' ? `${width}px` : width }
-      : undefined
+  const widthStyle = toWidthStyle(width)
 
   const start = value?.[0] ?? null
   const end = value?.[1] ?? null
@@ -210,15 +307,14 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
     }
   }
 
-  const wrapperCn = [
+  const rootCn = joinCmsClassNames(
     'cms-datepicker',
     'cms-datepicker--range-split',
     `cms-datepicker--${inputSize}`,
+    cmsControlSizeClass(inputSize),
     hasExplicitWidth && 'cms-datepicker--explicit-width',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ')
+    framed ? undefined : className
+  )
 
   const startId = typeof rangeId === 'object' && rangeId != null ? rangeId.start : undefined
   const endId = typeof rangeId === 'object' && rangeId != null ? rangeId.end : undefined
@@ -240,36 +336,39 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
   >
 
   const resolvedPopupContainer = getPopupContainer ?? cmsDatePickerPopupContainer
+  const resolvedAllowClear = resolveCmsPickerAllowClear(allowClear)
 
-  const segmentStartCn = [
-    'cms-datepicker__segment',
-    disabledStart && 'cms-datepicker__segment--disabled',
-  ]
-    .filter(Boolean)
-    .join(' ')
-  const segmentEndCn = [
-    'cms-datepicker__segment',
-    disabledEnd && 'cms-datepicker__segment--disabled',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  const segmentCn = (segmentDisabled: boolean, filled: boolean) =>
+    joinCmsClassNames(
+      'cms-datepicker__segment',
+      'cms-field__box',
+      segmentDisabled && 'cms-datepicker__segment--disabled',
+      segmentDisabled && 'cms-field__box--disabled',
+      isError && 'cms-field__box--error',
+      filled && 'cms-field__box--filled'
+    )
 
-  return (
-    <span className={wrapperCn} style={{ ...widthStyle, ...style }}>
-      <span className={segmentStartCn}>
+  const renderPrefix = () =>
+    prefix ?? (
+      <CmsPickerPrefixIcon>
+        <FieldCalendarIcon className="cms-datepicker__calendar-icon" />
+      </CmsPickerPrefixIcon>
+    )
+
+  const range = (
+    <span className={rootCn} style={framed ? undefined : { ...widthStyle, ...style }}>
+      <span className={segmentCn(disabledStart, start != null)}>
         <DatePicker
           ref={startPickerRef}
           variant="borderless"
           className={pickerCn}
           format={fmt}
-          prefix={
-            prefix ?? <CalendarOutlined className="cms-datepicker__calendar-icon" aria-hidden />
-          }
+          prefix={renderPrefix()}
           suffixIcon={suffixIcon ?? null}
           inputReadOnly={inputReadOnly ?? true}
           value={start}
           onChange={handleStartChange}
-          allowClear={allowClear}
+          allowClear={resolvedAllowClear}
           disabled={disabledStart}
           placeholder={placeholderTuple[0]}
           id={startId}
@@ -281,19 +380,17 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
       <span className="cms-datepicker__range-separator" aria-hidden>
         ~
       </span>
-      <span className={segmentEndCn}>
+      <span className={segmentCn(disabledEnd, end != null)}>
         <DatePicker
           variant="borderless"
           className={pickerCn}
           format={fmt}
-          prefix={
-            prefix ?? <CalendarOutlined className="cms-datepicker__calendar-icon" aria-hidden />
-          }
+          prefix={renderPrefix()}
           suffixIcon={suffixIcon ?? null}
           inputReadOnly={inputReadOnly ?? true}
           value={end}
           onChange={handleEndChange}
-          allowClear={allowClear}
+          allowClear={resolvedAllowClear}
           disabled={disabledEnd}
           placeholder={placeholderTuple[1]}
           id={endId}
@@ -303,6 +400,27 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
         />
       </span>
     </span>
+  )
+
+  if (!framed) return range
+
+  return (
+    <CmsFieldFrame
+      size={inputSize}
+      label={label}
+      required={required}
+      message={resolvedMessage}
+      isError={isError}
+      className={joinCmsClassNames(
+        'cms-datepicker-field',
+        'cms-datepicker-field--range',
+        hasExplicitWidth && 'cms-field--explicit-width',
+        className
+      )}
+      style={{ ...widthStyle, ...style }}
+    >
+      {range}
+    </CmsFieldFrame>
   )
 }
 

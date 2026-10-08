@@ -1,22 +1,33 @@
 /**
- * CMS 전용 셀렉트 (span 래퍼 + borderless Select)
- * - inputSize: large | medium | small (CmsInput 치수 정렬)
+ * CMS 전용 셀렉트 (span 박스 + borderless Select, `cms-field.css` 공통 스펙)
+ * - inputSize: xlarge | large | medium | small (CmsInput 치수 정렬)
+ * - 상단 라벨 / 하단 메세지(선택) · error
  * - `placeholder`: Ant `Select`와 동일. options에 `value: ''`가 없을 때 폼 값이 `''`여도 placeholder가 보이도록 표시용 value만 `undefined`로 맞춤 (`cms-input`과 동일한 empty UX).
- * - 단일 선택: `allowClear`(기본 true)면 ×로 빈 값 가능. `withAllOption`은 「전체」 옵션만 제어하고 ×를 막지 않는다.
+ * - 단일 선택: `allowClear`(기본 true)면 값이 있을 때 X와 화살표를 함께 노출(Ant allowClear 대신 suffix 커스텀). `withAllOption`은 「전체」 옵션만 제어하고 ×를 막지 않는다.
  * - `mode="multiple"`: AppMultiSelect와 동일 UX(검색·체크·pill, 닫힘 시 쉼표 구분) — Ant Select 미사용.
  * - 열린 드롭다운: `.ant-select`가 테두리 박스를 채우므로 Ant 기본 `popupMatchSelectWidth`로 폭·좌측 정렬이 트리거와 일치.
  */
 
-import { forwardRef, useMemo } from 'react'
-import type { CSSProperties } from 'react'
+import { forwardRef, useMemo, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { Select } from 'antd'
 import type { SelectProps } from 'antd'
 import type { RefSelectProps } from 'antd/es/select'
 import type { CmsControlSize } from './cms-control-size'
 import {
+  CmsFieldClearButton,
+  CmsFieldFrame,
+  cmsControlSizeClass,
+  joinCmsClassNames,
+  shouldRenderCmsFieldFrame,
+  useCmsFieldStatus,
+} from './cms-field'
+import type { CmsFieldProps } from './cms-field'
+import {
   CmsSelectMultiple,
   type CmsSelectMultipleOption,
 } from './cms-select-multiple'
+import { FieldChevronDownIcon } from './icons/FieldIcons'
 import './cms-select.css'
 
 const CMS_SELECT_ALL_OPTION = { label: '전체', value: '' as const }
@@ -114,145 +125,225 @@ function normalizeMultipleOptions(options: SelectProps['options']): CmsSelectMul
   })
 }
 
+function hasSelectedValue(value: unknown): boolean {
+  if (value === undefined || value === null || value === '') return false
+  if (Array.isArray(value)) return value.length > 0
+  return true
+}
+
 export { CMS_MULTI_SELECT_TAG_COLORS } from './cms-select-multiple'
 
-export interface CmsSelectProps extends Omit<SelectProps, 'variant' | 'size' | 'allowClear'> {
+export interface CmsSelectProps
+  extends Omit<SelectProps, 'variant' | 'size' | 'allowClear'>,
+    CmsFieldProps {
   /** Ant Select 루트(.ant-select)에만 붙는 클래스 */
   selectClassName?: string
-  /** large 44px / medium 40px / small 32px */
+  /** xlarge 52px / large 44px / medium 40px / small 36px */
   inputSize?: CmsControlSize
-  /** 지정 시 사이즈별 기본 width 대신 적용 (숫자는 px) */
+  /** 지정 시 기본 width(240px) 대신 적용 (숫자는 px) */
   width?: number | string
   /** true면 비어있는 전체 옵션을 자동 삽입 (기본 true) */
   withAllOption?: boolean
-  /** `mode="multiple"`일 때 선택 초기화(×) 표시 (기본 true) */
+  /** 값이 있을 때 선택 초기화(×) 표시 (기본 true) */
   allowClear?: boolean
 }
 
-export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
-  (
-    {
-      className,
-      selectClassName,
-      inputSize = 'large',
-      width,
-      disabled,
-      style,
-      value,
-      onChange,
-      options,
-      mode,
-      withAllOption = true,
-      allowClear = true,
-      placeholder,
-      classNames,
-      popupClassName,
-      ...rest
-    },
-    ref
-  ) => {
-    const popupRootCn = [CMS_SELECT_DROPDOWN_CLASS, classNames?.popup?.root, popupClassName]
-      .filter(Boolean)
-      .join(' ')
+export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref) => {
+  const {
+    className,
+    selectClassName,
+    inputSize = 'large',
+    width,
+    disabled,
+    style,
+    value,
+    defaultValue,
+    onChange,
+    onClear,
+    options,
+    mode,
+    withAllOption = true,
+    allowClear = true,
+    placeholder,
+    classNames,
+    popupClassName,
+    suffixIcon,
+    label,
+    required = false,
+    message,
+    error = false,
+    status,
+    ...rest
+  } = props
 
-    const hasExplicitWidth = width != null
-    const widthStyle: CSSProperties | undefined =
-      width == null
-        ? undefined
-        : typeof width === 'number'
-          ? {
-              width: `${width}px`,
-              minWidth: `${width}px`,
-              maxWidth: `${width}px`,
-              flex: `0 0 ${width}px`,
-            }
-          : { width }
+  const framed = shouldRenderCmsFieldFrame(props, label)
+  const { isError, message: resolvedMessage } = useCmsFieldStatus({
+    error,
+    status,
+    message,
+    disabled,
+  })
 
-    const mergedOptions = useMemo(
-      () => mergeOptionsForCmsSelect(options, mode, withAllOption),
-      [options, mode, withAllOption]
-    )
+  const isControlled = Object.prototype.hasOwnProperty.call(props, 'value')
+  const [uncontrolledValue, setUncontrolledValue] = useState<unknown>(defaultValue)
+  const currentValue = isControlled ? value : uncontrolledValue
 
-    const multipleOptions = useMemo(
-      () => normalizeMultipleOptions(mergedOptions),
-      [mergedOptions]
-    )
+  const popupRootCn = [CMS_SELECT_DROPDOWN_CLASS, classNames?.popup?.root, popupClassName]
+    .filter(Boolean)
+    .join(' ')
 
-    const optionsHaveEmptyValue = useMemo(
-      () => optionsIncludeEmptyValueOption(mergedOptions),
-      [mergedOptions]
-    )
+  const hasExplicitWidth = width != null
+  const widthStyle: CSSProperties | undefined =
+    width == null
+      ? undefined
+      : typeof width === 'number'
+        ? {
+            width: `${width}px`,
+            minWidth: `${width}px`,
+            maxWidth: `${width}px`,
+            flex: `0 0 ${width}px`,
+          }
+        : { width }
 
-    const resolvedValue = useMemo(() => {
-      if (mode === 'multiple') {
-        return Array.isArray(value) ? value.map(String) : []
-      }
-      if (optionsHaveEmptyValue) return value
-      if (value === '' || value === null || value === undefined) return undefined
-      return value
-    }, [value, optionsHaveEmptyValue, mode])
+  const mergedOptions = useMemo(
+    () => mergeOptionsForCmsSelect(options, mode, withAllOption),
+    [options, mode, withAllOption]
+  )
 
-    const handleChange: SelectProps['onChange'] = (next, option) => {
-      if (!onChange) return
-      const isMulti = mode === 'multiple' || mode === 'tags'
-      if (
-        !optionsHaveEmptyValue &&
-        !isMulti &&
-        (next === undefined || next === null)
-      ) {
-        onChange('' as never, option)
-        return
-      }
-      onChange(next, option)
-    }
+  const multipleOptions = useMemo(() => normalizeMultipleOptions(mergedOptions), [mergedOptions])
 
-    const wrapperCn = [
-      'cms-select',
-      `cms-select--${inputSize}`,
-      hasExplicitWidth && 'cms-select--explicit-width',
-      disabled && 'cms-select--disabled',
-      allowClear && 'cms-select--allow-clear',
-      className,
-    ]
-      .filter(Boolean)
-      .join(' ')
+  const optionsHaveEmptyValue = useMemo(
+    () => optionsIncludeEmptyValueOption(mergedOptions),
+    [mergedOptions]
+  )
 
+  const resolvedValue = useMemo(() => {
     if (mode === 'multiple') {
-      return (
-        <CmsSelectMultiple
-          className={[wrapperCn, 'cms-select--multiple-ui'].filter(Boolean).join(' ')}
-          style={{ ...widthStyle, ...style }}
-          disabled={disabled}
-          placeholder={typeof placeholder === 'string' ? placeholder : undefined}
-          options={multipleOptions}
-          value={resolvedValue as string[]}
-          allowClear={allowClear}
-          onChange={next => {
-            onChange?.(next as never, [] as never)
-          }}
-        />
-      )
+      return Array.isArray(currentValue) ? currentValue.map(String) : []
     }
+    if (optionsHaveEmptyValue) return currentValue
+    if (currentValue === '' || currentValue === null || currentValue === undefined) return undefined
+    return currentValue
+  }, [currentValue, optionsHaveEmptyValue, mode])
 
-    return (
-      <span className={wrapperCn} style={{ ...widthStyle, ...style }}>
-        <Select
-          ref={ref}
-          variant="borderless"
-          className={selectClassName}
-          disabled={disabled}
-          placeholder={placeholder}
-          {...rest}
-          classNames={{ ...classNames, popup: { ...classNames?.popup, root: popupRootCn } }}
-          mode={mode}
-          options={mergedOptions}
-          value={resolvedValue as SelectProps['value']}
-          onChange={handleChange}
-          allowClear={allowClear}
-        />
-      </span>
+  const isFilled = resolvedValue !== undefined && resolvedValue !== null
+  const showClear = Boolean(allowClear && !disabled && hasSelectedValue(resolvedValue))
+
+  const handleChange: SelectProps['onChange'] = (next, option) => {
+    const isMulti = mode === 'multiple' || mode === 'tags'
+    const normalized =
+      !optionsHaveEmptyValue && !isMulti && (next === undefined || next === null) ? '' : next
+    if (!isControlled) setUncontrolledValue(normalized)
+    onChange?.(normalized as never, option as never)
+  }
+
+  const handleClear = () => {
+    const isMulti = mode === 'multiple' || mode === 'tags'
+    handleChange((isMulti ? [] : undefined) as never, (isMulti ? [] : undefined) as never)
+    onClear?.()
+  }
+
+  const boxCn = joinCmsClassNames(
+    'cms-select',
+    `cms-select--${inputSize}`,
+    cmsControlSizeClass(inputSize),
+    'cms-field__box',
+    hasExplicitWidth && 'cms-select--explicit-width',
+    disabled && 'cms-select--disabled',
+    disabled && 'cms-field__box--disabled',
+    isError && 'cms-field__box--error',
+    isFilled && 'cms-field__box--filled',
+    showClear && 'cms-select--clearable',
+    allowClear && 'cms-select--allow-clear',
+    framed ? undefined : className
+  )
+
+  const boxStyle = framed ? undefined : { ...widthStyle, ...style }
+
+  const renderFrame = (control: ReactNode) =>
+    framed ? (
+      <CmsFieldFrame
+        size={inputSize}
+        label={label}
+        required={required}
+        message={resolvedMessage}
+        isError={isError}
+        className={joinCmsClassNames(
+          'cms-select-field',
+          hasExplicitWidth && 'cms-field--explicit-width',
+          className
+        )}
+        style={{ ...widthStyle, ...style }}
+      >
+        {control}
+      </CmsFieldFrame>
+    ) : (
+      control
+    )
+
+  if (mode === 'multiple') {
+    return renderFrame(
+      <CmsSelectMultiple
+        className={joinCmsClassNames(
+          'cms-select',
+          `cms-select--${inputSize}`,
+          cmsControlSizeClass(inputSize),
+          'cms-select--multiple-ui',
+          hasExplicitWidth && 'cms-select--explicit-width',
+          disabled && 'cms-select--disabled',
+          framed ? undefined : className
+        )}
+        style={boxStyle}
+        disabled={disabled}
+        error={isError}
+        placeholder={typeof placeholder === 'string' ? placeholder : undefined}
+        options={multipleOptions}
+        value={resolvedValue as string[]}
+        allowClear={allowClear}
+        onChange={next => {
+          if (!isControlled) setUncontrolledValue(next)
+          onChange?.(next as never, [] as never)
+        }}
+      />
     )
   }
-)
+
+  const suffixNode = (
+    <span className="cms-select__suffix">
+      {showClear ? (
+        <CmsFieldClearButton
+          className="cms-select__clear"
+          label="선택 초기화"
+          onClear={handleClear}
+        />
+      ) : null}
+      {suffixIcon ?? (
+        <span className="cms-field__chevron cms-select__chevron" aria-hidden>
+          <FieldChevronDownIcon />
+        </span>
+      )}
+    </span>
+  )
+
+  return renderFrame(
+    <span className={boxCn} style={boxStyle}>
+      <Select
+        ref={ref}
+        variant="borderless"
+        className={selectClassName}
+        disabled={disabled}
+        placeholder={placeholder}
+        {...rest}
+        classNames={{ ...classNames, popup: { ...classNames?.popup, root: popupRootCn } }}
+        mode={mode}
+        options={mergedOptions}
+        value={resolvedValue as SelectProps['value']}
+        onChange={handleChange}
+        allowClear={false}
+        suffixIcon={suffixNode}
+      />
+    </span>
+  )
+})
 
 CmsSelect.displayName = 'CmsSelect'

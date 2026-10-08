@@ -1,7 +1,7 @@
 import type { CSSProperties, SVGProps } from 'react'
 
 /** 시안 LNB 드롭다운 쉐브론 스펙 */
-export const MENU_DROPDOWN_ICON_SIZE = 20
+const MENU_DROPDOWN_ICON_SIZE = 20
 
 const BASE_STYLE: CSSProperties = {
   width: MENU_DROPDOWN_ICON_SIZE,

@@ -129,7 +129,7 @@
   line-height: 0;
 }
 
-.cms-button.ant-btn .cms-button__icon :is(svg, img, .anticon) {
+.cms-button.ant-btn .cms-button__icon :is(svg, img, .anticon, .cms-mask-icon) {
   width: var(--cms-button-icon-size);
   height: var(--cms-button-icon-size);
   font-size: var(--cms-button-icon-size);
