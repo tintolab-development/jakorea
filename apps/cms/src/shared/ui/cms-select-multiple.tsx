@@ -6,8 +6,8 @@ import { useCallback, useId, useMemo, useState } from 'react'
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import { Input, Popover } from 'antd'
 import { CmsCheckbox } from './cms-checkbox'
-import { CloseCircleFilled } from '@ant-design/icons'
-import { FilterSelectChevronIcon } from './icons/FilterSelectChevronIcon'
+import { CmsClearIconSvg, joinCmsClassNames } from './cms-field'
+import { FieldChevronDownIcon } from './icons/FieldIcons'
 
 export type CmsSelectMultipleOption = {
   value: string
@@ -40,6 +40,8 @@ export type CmsSelectMultipleProps = {
   options: CmsSelectMultipleOption[]
   placeholder?: ReactNode
   disabled?: boolean
+  /** 에러 테두리 (disabled 이면 무시) */
+  error?: boolean
   allowClear?: boolean
   className?: string
   id?: string
@@ -52,6 +54,7 @@ export function CmsSelectMultiple({
   options,
   placeholder = '선택하세요',
   disabled = false,
+  error = false,
   allowClear = true,
   className,
   id: idProp,
@@ -167,10 +170,15 @@ export function CmsSelectMultiple({
       >
         <button
           type="button"
-          className={[
+          className={joinCmsClassNames(
             'cms-select-multi__trigger',
-            open ? 'cms-select-multi__trigger--open' : '',
-          ].join(' ')}
+            'cms-field__box',
+            open && 'cms-select-multi__trigger--open',
+            open && 'cms-field__box--active',
+            value.length > 0 && 'cms-field__box--filled',
+            disabled && 'cms-field__box--disabled',
+            error && !disabled && 'cms-field__box--error'
+          )}
           disabled={disabled}
           aria-expanded={open}
           aria-haspopup="listbox"
@@ -188,7 +196,7 @@ export function CmsSelectMultiple({
             <span
               role="button"
               tabIndex={0}
-              className="cms-select-multi__clear"
+              className="cms-select-multi__clear cms-field__clear"
               onClick={handleClear}
               onKeyDown={e => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -198,10 +206,12 @@ export function CmsSelectMultiple({
               }}
               aria-label="선택 초기화"
             >
-              <CloseCircleFilled />
+              <CmsClearIconSvg />
             </span>
           )}
-          <FilterSelectChevronIcon className="cms-select-multi__chevron" />
+          <span className="cms-select-multi__chevron cms-field__chevron" aria-hidden>
+            <FieldChevronDownIcon />
+          </span>
         </button>
       </Popover>
     </div>

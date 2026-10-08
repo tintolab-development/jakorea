@@ -57,16 +57,3 @@
   margin-top: 40px;
   width: 100%;
 }
-
-.register-social-connect-failed__actions .auth-submit-btn,
-.register-social-connect-failed__actions .auth-secondary-btn {
-  display: flex;
-  height: 52px;
-  padding: 6px 16px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  align-self: stretch;
-  width: 100%;
-}

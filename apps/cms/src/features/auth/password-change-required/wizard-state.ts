@@ -2,21 +2,18 @@
  * 최초 로그인 passwordChangeRequired 위저드 상태 (sessionStorage)
  */
 
-import type { AdminRegisterGender } from '@/types/admin-register'
 import {
   PASSWORD_CHANGE_REQUIRED_SOCIAL_ONBOARDING_STORAGE_KEY,
   passwordChangeRequiredPaths,
 } from '@/shared/utils/post-auth-redirect'
 
-/** 생년월일·성별 → 본인인증 → 비밀번호 변경 */
-export const PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS = 3 as const
+/** 본인인증 → 비밀번호 변경 */
+export const PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS = 2 as const
 
 const WIZARD_STORAGE_KEY = 'cms:password-change-required-wizard'
 
 export type PasswordChangeRequiredWizardState = {
   email: string
-  birthDate?: string
-  gender?: AdminRegisterGender
   identityVerificationSessionId?: number
   verifiedName?: string
   verifiedPhone?: string
@@ -132,10 +129,6 @@ export function requirePasswordChangeRequiredWizardState() {
     return null
   }
   return state
-}
-
-export function hasBirthGender(state: PasswordChangeRequiredWizardState | null): boolean {
-  return Boolean(state?.birthDate && state.gender)
 }
 
 export function hasIdentityVerified(state: PasswordChangeRequiredWizardState | null): boolean {

@@ -1,5 +1,5 @@
-import { LoadingButton } from '@/shared/ui'
 import { LoginUtilityLinks } from './login-utility-links'
+import { CmsButton } from '@/shared/ui'
 
 interface LoginSocialNotLinkedViewProps {
   registerPath: string
@@ -27,9 +27,15 @@ export function LoginSocialNotLinkedView({
         </p>
       </div>
 
-      <LoadingButton type="primary" block className="login-submit-btn" onClick={onEmailLogin}>
+      <CmsButton
+        variant="primary"
+        size="h52"
+        width="100%"
+        className="login-submit-btn"
+        onClick={onEmailLogin}
+      >
         이메일로 로그인하기
-      </LoadingButton>
+      </CmsButton>
 
       <LoginUtilityLinks registerPath={registerPath} />
     </div>

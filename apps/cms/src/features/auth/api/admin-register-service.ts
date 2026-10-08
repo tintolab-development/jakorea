@@ -90,8 +90,6 @@ async function completeAdminSignupMock(
     !formData.email ||
     !formData.password ||
     !identityOk ||
-    !formData.birthDate ||
-    !formData.gender ||
     !formData.termsOfService ||
     !formData.privacyPolicy ||
     formData.mfaSetupAgreed !== true

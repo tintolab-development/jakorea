@@ -1,6 +1,5 @@
-import { LoadingButton } from '@/shared/ui'
-
 import bubbleIconImage from '@/assets/images/logo/bubble.png'
+import { CmsButton } from '@/shared/ui'
 
 interface LoginSocialAlreadyLinkedViewProps {
   onConnectOtherSocial: () => void
@@ -32,17 +31,18 @@ export function LoginSocialAlreadyLinkedView({
       </p>
 
       <div className="login-social-already-linked__actions">
-        <LoadingButton
-          type="primary"
-          block
+        <CmsButton
+          variant="primary"
+          size="h52"
+          width="100%"
           className="login-submit-btn"
           onClick={onConnectOtherSocial}
         >
           다른 소셜 계정 연결하기
-        </LoadingButton>
-        <LoadingButton block className="login-secondary-btn" onClick={onEmailLogin}>
+        </CmsButton>
+        <CmsButton variant="default" size="h52" width="100%" onClick={onEmailLogin}>
           이메일로 로그인하기
-        </LoadingButton>
+        </CmsButton>
       </div>
     </div>
   )

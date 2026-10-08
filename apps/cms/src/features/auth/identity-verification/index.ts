@@ -1,8 +1,6 @@
 import { useIdentityVerification as useIdentityVerificationBase } from '@jakorea/identity-verification/react'
 import type { IdentityChallengeCompleteResult } from '@jakorea/identity-verification'
 
-import type { AdminRegisterGender } from '@/types/admin-register'
-
 import { cmsIdentityVerificationClient } from './cms-client'
 import { findEmailIdentityVerificationClient } from './find-email-client'
 import { findPasswordIdentityVerificationClient } from './find-password-client'
@@ -43,16 +41,14 @@ export {
 } from '@jakorea/identity-verification'
 
 interface UseIdentityVerificationOptions {
-  birthDate?: string
-  gender?: AdminRegisterGender
   onSuccess: (result: IdentityChallengeCompleteResult) => void
 }
 
 export function useIdentityVerification(options: UseIdentityVerificationOptions) {
   return useIdentityVerificationBase({
     client: cmsIdentityVerificationClient,
-    birthDate: options.birthDate,
-    gender: options.gender,
+    requireBirthGender: false,
+    requireName: false,
     onSuccess: options.onSuccess,
   })
 }
@@ -88,8 +84,6 @@ export function useFindPasswordIdentityVerification(
 }
 
 interface UsePasswordChangeRequiredIdentityVerificationOptions {
-  birthDate?: string
-  gender?: AdminRegisterGender
   onSuccess: (result: IdentityChallengeCompleteResult) => void
 }
 
@@ -98,8 +92,8 @@ export function usePasswordChangeRequiredIdentityVerification(
 ) {
   return useIdentityVerificationBase({
     client: passwordChangeRequiredIdentityClient,
-    birthDate: options.birthDate,
-    gender: options.gender,
+    requireBirthGender: false,
+    requireName: false,
     onSuccess: options.onSuccess,
   })
 }

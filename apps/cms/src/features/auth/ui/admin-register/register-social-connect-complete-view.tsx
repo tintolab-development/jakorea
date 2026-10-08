@@ -1,5 +1,5 @@
-import { LoadingButton } from '@/shared/ui'
 import { JaKoreaLogo } from '@/shared/ui/icons/JaKoreaLogo'
+import { CmsButton } from '@/shared/ui'
 
 interface RegisterSocialConnectCompleteViewProps {
   onGoLogin: () => void
@@ -20,17 +20,12 @@ export function RegisterSocialConnectCompleteView({
         </p>
 
         <div className="auth-actions register-complete__actions">
-          <LoadingButton type="primary" block className="auth-submit-btn" onClick={onGoLogin}>
+          <CmsButton variant="primary" size="h52" width="100%" onClick={onGoLogin}>
             로그인하러 가기
-          </LoadingButton>
-          <LoadingButton
-            type="default"
-            block
-            className="auth-secondary-btn"
-            onClick={onConnectMore}
-          >
+          </CmsButton>
+          <CmsButton variant="default" size="h52" width="100%" onClick={onConnectMore}>
             다른 소셜 계정도 연결하기
-          </LoadingButton>
+          </CmsButton>
         </div>
       </div>
     </div>

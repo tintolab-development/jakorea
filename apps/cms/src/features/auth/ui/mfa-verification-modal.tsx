@@ -9,7 +9,7 @@ import { ADMIN_MFA_LOCAL_TEST_CODE } from '@/shared/constants/mfa-policy'
 import { MfaModalHeader } from './mfa-modal-header'
 import { MfaOtpInput } from './mfa-otp-input'
 import { MfaOtpStatus } from './mfa-otp-status'
-import { MfaModalCloseIcon } from '@/shared/ui/icons/MfaModalCloseIcon'
+import { ModalCloseIcon } from '@/shared/ui/icons/ModalCloseIcon'
 import './mfa-verification-modal.css'
 
 interface MfaVerificationModalProps {
@@ -45,7 +45,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
       closable
       closeIcon={
         <span className="mfa-verification-modal__close-icon">
-          <MfaModalCloseIcon />
+          <ModalCloseIcon width={24} height={24} />
         </span>
       }
       onCancel={onClose}

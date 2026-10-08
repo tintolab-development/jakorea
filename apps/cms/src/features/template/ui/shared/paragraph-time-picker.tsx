@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { ClockCircleOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
@@ -10,6 +9,7 @@ import {
 } from '@/shared/components/date-time-picker-modal'
 import { toValidDayjsOrNull } from '@/shared/components/date-time-picker-shared'
 import type { CmsControlSize } from '@/shared/ui/cms-control-size'
+import { FieldClockIcon } from '@/shared/ui/icons'
 import '@/shared/ui/cms-datepicker.css'
 import './paragraph-time-picker.css'
 
@@ -198,8 +198,11 @@ export function ParagraphTimePicker({
         className={cn(
           'cms-datepicker',
           `cms-datepicker--${inputSize}`,
+          `cms-control--${inputSize}`,
+          'cms-field__box',
           hasExplicitWidth && 'cms-datepicker--explicit-width',
           disabled && 'cms-datepicker--disabled',
+          disabled && 'cms-field__box--disabled',
           className
         )}
         style={{ ...widthStyle, ...style }}
@@ -219,10 +222,7 @@ export function ParagraphTimePicker({
               : undefined
           }
         >
-          <ClockCircleOutlined
-            className="paragraph-time-picker__trigger-icon cms-datepicker__calendar-icon"
-            aria-hidden
-          />
+          <FieldClockIcon className="paragraph-time-picker__trigger-icon cms-datepicker__calendar-icon" />
           <span
             className={cn(
               'paragraph-time-picker__trigger-text',

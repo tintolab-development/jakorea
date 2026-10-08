@@ -1,6 +1,5 @@
-import { LoadingButton } from '@/shared/ui'
-
 import bubbleIconImage from '@/assets/images/logo/bubble.png'
+import { CmsButton } from '@/shared/ui'
 
 interface RegisterSocialConnectFailedViewProps {
   onRetry: () => void
@@ -26,12 +25,12 @@ export function RegisterSocialConnectFailedView({
       <p className="register-social-connect-failed__description">잠시후 다시 시도해 주세요.</p>
 
       <div className="auth-actions register-social-connect-failed__actions">
-        <LoadingButton type="primary" block className="auth-submit-btn" onClick={onRetry}>
+        <CmsButton variant="primary" size="h52" width="100%" onClick={onRetry}>
           다시 시도하기
-        </LoadingButton>
-        <LoadingButton type="default" block className="auth-secondary-btn" onClick={onSkipLogin}>
+        </CmsButton>
+        <CmsButton variant="default" size="h52" width="100%" onClick={onSkipLogin}>
           연결하지 않고 로그인하기
-        </LoadingButton>
+        </CmsButton>
       </div>
     </div>
   )

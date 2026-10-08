@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { LoadingButton } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 
 import { useTermsViewModal } from '@/features/auth/hooks/use-terms-view-modal'
 import type { TermsViewType } from '@/features/auth/lib/terms-view-config'
@@ -51,19 +51,16 @@ export function AdminRegisterStepTerms({
       }
       return consent[type]
     },
-    [consent, mfaSetupAgreed],
+    [consent, mfaSetupAgreed]
   )
 
-  const handleAgreedChange = useCallback(
-    (type: TermsViewType, agreed: boolean) => {
-      if (type === 'mfaSetup') {
-        setMfaSetupAgreed(agreed)
-        return
-      }
-      setConsent(previous => ({ ...previous, [type]: agreed }))
-    },
-    [],
-  )
+  const handleAgreedChange = useCallback((type: TermsViewType, agreed: boolean) => {
+    if (type === 'mfaSetup') {
+      setMfaSetupAgreed(agreed)
+      return
+    }
+    setConsent(previous => ({ ...previous, [type]: agreed }))
+  }, [])
 
   const handleContinue = () => {
     if (!isValid) {
@@ -76,7 +73,7 @@ export function AdminRegisterStepTerms({
   }
 
   return (
-    <div className="admin-register-step admin-register-step--terms">
+    <div>
       <RegisterStepHeader
         title={
           <>
@@ -85,10 +82,10 @@ export function AdminRegisterStepTerms({
             약관에 동의해 주세요
           </>
         }
-        description="필수 항목 동의는 가입을 위해 꼭 필요해요."
+        description="필수 항목 동의는 가입을 위해 꼭 필요합니다."
       />
 
-      <div className="admin-register-step__content">
+      <div style={{ marginTop: '40px' }}>
         <RegisterTermsAgreement
           value={consent}
           onChange={setConsent}
@@ -96,21 +93,20 @@ export function AdminRegisterStepTerms({
           onMfaSetupAgreedChange={setMfaSetupAgreed}
           onViewTerm={open}
         />
-        <div className="auth-actions admin-register-step__actions">
-          <LoadingButton
-            type="primary"
-            block
-            className="auth-submit-btn"
+        <div className="auth-actions">
+          <CmsButton
+            variant="primary"
+            size="h52"
+            width="100%"
             disabled={!isValid}
             onClick={handleContinue}
           >
             동의하고 계속하기
-          </LoadingButton>
-          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onBack}>
+          </CmsButton>
+          <CmsButton variant="default" size="h52" width="100%" onClick={onBack}>
             이전으로
-          </LoadingButton>
+          </CmsButton>
         </div>
-        <div className="admin-register-step__trailing" aria-hidden />
       </div>
 
       {openType ? (

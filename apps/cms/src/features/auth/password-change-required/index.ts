@@ -3,7 +3,6 @@ export {
   clearPasswordChangeRequiredSocialOnboarding,
   clearPasswordChangeRequiredWizardState,
   getPasswordChangeRequiredWizardState,
-  hasBirthGender,
   hasIdentityVerified,
   hasPasswordChangeRequiredComplete,
   hasPasswordChangeRequiredSocialOnboarding,

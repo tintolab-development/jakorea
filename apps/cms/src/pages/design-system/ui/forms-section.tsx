@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import type { Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import { CmsCheckbox, type CmsCheckboxSize } from '@/shared/ui/cms-checkbox'
+import type { CmsControlSize } from '@/shared/ui/cms-control-size'
+import { CmsTimePicker } from '@/shared/ui/cms-time-picker'
 import { CmsDatePicker, CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsInputSearch } from '@/shared/ui/cms-input-search'
@@ -27,6 +29,15 @@ const MULTI_OPTIONS = [
   { value: 'ujat', label: 'UJAT' },
   { value: 'gemini', label: 'Gemini' },
 ]
+
+const INPUT_FIELD_SIZES: { size: CmsControlSize; label: string }[] = [
+  { size: 'xlarge', label: 'xlarge (52px)' },
+  { size: 'large', label: 'large (44px, 기본)' },
+  { size: 'medium', label: 'medium (40px)' },
+  { size: 'small', label: 'small (36px)' },
+]
+
+const DEMO_TIME = dayjs('2026-01-01 09:30')
 
 const CHECKBOX_SIZES: CmsCheckboxSize[] = ['large', 'medium']
 
@@ -84,12 +95,42 @@ export function FormsSection() {
       title="Forms"
       description="입력 컨트롤은 Cms* 래퍼를 표준으로 사용합니다. Ant Design 원시 Input/Select는 동등 Cms*가 있을 때 피합니다."
     >
-      <DsDemo label="CmsInput sizes">
-        <div className="ds-demo__stack">
-          <CmsInput inputSize="large" placeholder="large (44px)" width="100%" />
-          <CmsInput inputSize="medium" placeholder="medium (40px)" width="100%" />
-          <CmsInput inputSize="small" placeholder="small (32px)" width="100%" />
-        </div>
+      <DsDemo label="입력 컴포넌트 sizes · states (Input / Select / Time / Search / Date)">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          XL 52 · L 44 · M 40 · S 36 / 기본 너비 240px / 라벨 – 6px – 박스 – 6px – 메세지(선택) ·
+          라벨 #525252 500/140% · 필수 * #C32F4A 700 · 메세지 12px 500/150% #85969D(에러 시 #C32F4A)
+          · 테두리 기본 #E0E0E0 · hover/focus #00A0AF · 에러 #C32F4A · 값이 있으면 X
+        </p>
+        {INPUT_FIELD_SIZES.map(({ size, label }) => (
+          <div key={size} className="ds-demo__stack" style={{ maxWidth: 'none' }}>
+            <span className="ds-demo__label">{label}</span>
+            <div className="ds-demo__row" style={{ alignItems: 'flex-start' }}>
+              <CmsInput inputSize={size} label="라벨" required placeholder="텍스트를 입력하세요" message="메세지" />
+              <CmsInput inputSize={size} label="라벨" defaultValue="입력된 텍스트" message="메세지" />
+              <CmsInput inputSize={size} label="라벨" disabled defaultValue="비활성" message="메세지" />
+              <CmsInput inputSize={size} label="라벨" error defaultValue="에러 상태" message="에러 메세지" />
+            </div>
+            <div className="ds-demo__row" style={{ alignItems: 'flex-start' }}>
+              <CmsSelect
+                inputSize={size}
+                label="Select"
+                placeholder="선택하세요"
+                options={SELECT_OPTIONS}
+                withAllOption={false}
+                allowClear
+                defaultValue="active"
+              />
+              <CmsTimePicker inputSize={size} label="Time" defaultValue={DEMO_TIME} />
+              <CmsInputSearch
+                inputSize={size}
+                label="Search"
+                placeholder="검색어를 입력하세요"
+                options={['서울 강남 프로그램', '부산 해운대 프로그램']}
+              />
+              <CmsDatePicker inputSize={size} label="Date" error message="날짜를 선택하세요" />
+            </div>
+          </div>
+        ))}
       </DsDemo>
 
       <DsDemo label="CmsInput / CmsInputSearch / CmsTextArea">

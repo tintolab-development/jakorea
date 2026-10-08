@@ -1,9 +1,9 @@
 import { Alert } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { CmsButton } from '@/shared/ui'
 
 import { completeAdminSignup } from '@/features/auth/api/admin-register-service'
-import { LoadingButton } from '@/shared/ui'
 import type { AdminRegisterWizardData } from '@/types/admin-register'
 
 import { RegisterReviewSummary } from './register-review-summary'
@@ -37,8 +37,6 @@ export function AdminRegisterStepReview({
       !formData.email ||
       !formData.password ||
       !isIdentityVerified(formData) ||
-      !formData.birthDate ||
-      !formData.gender ||
       !formData.termsOfService ||
       !formData.privacyPolicy ||
       formData.mfaSetupAgreed !== true
@@ -61,34 +59,37 @@ export function AdminRegisterStepReview({
   }
 
   return (
-    <div className="admin-register-step admin-register-step--review">
+    <div>
       <RegisterStepHeader
-        title="입력한 정보를 확인해 주세요"
-        description="내용이 맞다면 가입을 완료할게요."
+        title="입력한 정보를 확인해 주세요."
+        description={
+          <>
+            정보를 확인해 주세요.
+            <br />
+            내용이 맞다면 아래 버튼을 눌러 가입을 완료해 주세요.
+          </>
+        }
       />
 
-      <div className="admin-register-step__content">
+      <div style={{ marginTop: '40px' }}>
         <RegisterReviewSummary formData={formData} />
 
-        {submitError ? (
-          <Alert type="error" message={submitError} showIcon className="admin-register-step__submit-error" />
-        ) : null}
+        {submitError ? <Alert type="error" message={submitError} showIcon /> : null}
 
-        <div className="auth-actions admin-register-step__actions">
-          <LoadingButton
-            type="primary"
-            block
-            className="auth-submit-btn"
+        <div className="auth-actions" style={{ marginTop: '40px' }}>
+          <CmsButton
+            variant="primary"
+            size="h52"
+            width="100%"
             loading={submitting}
             onClick={handleComplete}
           >
             가입 완료하기
-          </LoadingButton>
-          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onBack}>
+          </CmsButton>
+          <CmsButton variant="default" size="h52" width="100%" onClick={onBack}>
             이전으로
-          </LoadingButton>
+          </CmsButton>
         </div>
-        <div className="admin-register-step__trailing" aria-hidden />
       </div>
     </div>
   )
