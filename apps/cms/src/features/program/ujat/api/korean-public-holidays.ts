@@ -4,10 +4,7 @@ import dayjs from 'dayjs'
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
-
-export type KoreanPublicHolidayResponse = {
-  dates: string[]
-}
+import type { KoreanPublicHolidayResponse } from '@/shared/api/generated/dashboard/schemas/koreanPublicHolidayResponse'
 
 /** `year` 또는 `from`+`to`(포함, 최대 2년) 중 하나 */
 export type KoreanPublicHolidayQuery = { year: number } | { from: string; to: string }
