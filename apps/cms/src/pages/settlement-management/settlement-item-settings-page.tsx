@@ -27,7 +27,9 @@ import {
   useUpdateSettlementConfigItemMutation,
 } from '@/features/settlement-management/hooks/use-settlement-config-mutations'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
+import { isPaymentItemCalculationBasisWithSiblings } from '@/features/settlement-management/api/settlement-configs/payment-item-calculation-basis'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import {
   SettlementItemCardMoreIcon,
   SettlementItemSettingIcon,
@@ -63,6 +65,8 @@ export default function SettlementItemSettingsPage() {
     cloneSettlementSections(settlementItemSettingSections)
   )
   const [selectedItem, setSelectedItem] = useState<SettlementItemSettingRow | null>(null)
+  const [pendingBasisDeleteItem, setPendingBasisDeleteItem] =
+    useState<SettlementItemSettingRow | null>(null)
   const [duplicatedItemId, setDuplicatedItemId] = useState<number | null>(null)
   const notifiedDuplicatedItemIdRef = useRef<number | null>(null)
 
@@ -90,6 +94,25 @@ export default function SettlementItemSettingsPage() {
     void message.success('지급 항목이 복제되었습니다.')
   }, [duplicatedItemId, itemById, message])
 
+  const deleteRemotePaymentItem = useCallback(
+    (item: SettlementItemSettingRow, apiItemId: number) => {
+      deletePaymentMutation.mutate(apiItemId, {
+        onSuccess: () => {
+          setPendingBasisDeleteItem(null)
+          setSelectedItem(cur => (cur?.id === item.id ? null : cur))
+        },
+        onError: error => {
+          setPendingBasisDeleteItem(null)
+          void showAlert({
+            title: '삭제 실패',
+            content: resolveSettlementConfigMutationError(error),
+          })
+        },
+      })
+    },
+    [deletePaymentMutation, showAlert]
+  )
+
   const deleteItem = useCallback(
     (sectionKind: SettlementItemSettingCategoryKind, item: SettlementItemSettingRow) => {
       if (settlementConfigsRemote) {
@@ -100,15 +123,11 @@ export default function SettlementItemSettingsPage() {
           })
           return
         }
-        deletePaymentMutation.mutate(item.apiItemId, {
-          onSuccess: () => setSelectedItem(cur => (cur?.id === item.id ? null : cur)),
-          onError: error => {
-            void showAlert({
-              title: '삭제 실패',
-              content: resolveSettlementConfigMutationError(error),
-            })
-          },
-        })
+        if (isPaymentItemCalculationBasisWithSiblings(configQuery.data?.config, item.apiItemId)) {
+          setPendingBasisDeleteItem(item)
+          return
+        }
+        deleteRemotePaymentItem(item, item.apiItemId)
         return
       }
       setSelectedItem(cur => (cur?.id === item.id ? null : cur))
@@ -120,7 +139,7 @@ export default function SettlementItemSettingsPage() {
         )
       )
     },
-    [deletePaymentMutation, settlementConfigsRemote, showAlert]
+    [configQuery.data?.config, deleteRemotePaymentItem, settlementConfigsRemote, showAlert]
   )
 
   const duplicateItem = useCallback(
@@ -302,6 +321,20 @@ export default function SettlementItemSettingsPage() {
                 }
               : undefined
           }
+        />
+        <ConfirmModal
+          open={pendingBasisDeleteItem !== null}
+          title="지급 항목 삭제"
+          content={`「${pendingBasisDeleteItem?.title ?? ''}」은(는) 같은 유형 중 가장 먼저 만든 항목이라 정산 계산 기준으로 쓰입니다. 삭제하면 남은 같은 유형 항목이 계산 기준이 됩니다. 삭제하시겠습니까?`}
+          confirmText="삭제"
+          danger
+          confirmLoading={deletePaymentMutation.isPending}
+          onCancel={() => setPendingBasisDeleteItem(null)}
+          onConfirm={() => {
+            const item = pendingBasisDeleteItem
+            if (item?.apiItemId == null) return
+            deleteRemotePaymentItem(item, item.apiItemId)
+          }}
         />
       </div>
     </SettlementItemSettingDetailSourceProvider>
