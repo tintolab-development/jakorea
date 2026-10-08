@@ -5,6 +5,8 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ClassTimeRow } from './classTimeRow';
+import type { GradeBlock } from './gradeBlock';
 import type { OrganizationApplicationDetailResponsePreviousYearParticipation } from './organizationApplicationDetailResponsePreviousYearParticipation';
 import type { SessionResponse } from './sessionResponse';
 
@@ -83,4 +85,24 @@ export interface OrganizationApplicationDetailResponse {
      * @nullable
      */
   affiliatedFinancialCompany?: string | null;
+  /**
+     * 교사 일반 전화. 휴대전화(teacherPhone)와 별도. 저장된 값이 없으면 null
+     * @nullable
+     */
+  teacherTel?: string | null;
+  /**
+     * 희망 교육일 YYYY-MM-DD. 저장된 희망일이 없으면 null. 빈 배열은 쓰지 않음
+     * @nullable
+     */
+  preferredEducationDates?: string[] | null;
+  /**
+     * 학년별 학급. 저장된 학급 구성이 없으면 null. 학급별 인원이 없으면 classes는 []
+     * @nullable
+     */
+  gradeBlocks?: GradeBlock[] | null;
+  /**
+     * 학년 구간별 수업 시간표. 저장된 4교시가 없으면 null
+     * @nullable
+     */
+  classTimeRows?: ClassTimeRow[] | null;
 }

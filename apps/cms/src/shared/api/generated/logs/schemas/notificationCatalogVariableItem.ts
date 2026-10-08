@@ -10,25 +10,25 @@
  * 카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.
  */
 export interface NotificationCatalogVariableItem {
-  /** 카탈로그 key = #{…} 안쪽 라벨 */
+  /** 카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일. */
   key?: string;
-  /** 본문 삽입용 토큰 */
+  /** 본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입. */
   token?: string;
   /**
      * 보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null
      * @nullable
      */
   description?: string | null;
-  /** true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일 */
+  /** true이면 programId 없이 enabled=false. */
   requiresProgram?: boolean;
-  /** 삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich) */
+  /** 삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능. */
   enabled?: boolean;
   /** 허용 프로그램 유형 그룹. 비면 제한 없음 */
   programGroups?: string[];
   /** 필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음 */
   recruitmentTypes?: string[];
-  /** 허용 참여 유형. 비면 제한 없음 */
+  /** 허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER. */
   participantTypes?: string[];
-  /** 허용 회원 유형. 비면 제한 없음 */
+  /** 허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN. */
   memberTypes?: string[];
 }

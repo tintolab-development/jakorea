@@ -7,6 +7,7 @@
  */
 import type { OrganizationApplicationListItemResponsePreviousYearParticipation } from './organizationApplicationListItemResponsePreviousYearParticipation';
 import type { OrganizationApplicationListItemResponseRecruitHalf } from './organizationApplicationListItemResponseRecruitHalf';
+import type { OrganizationApplicationListItemResponseScheduleConfirmStatus } from './organizationApplicationListItemResponseScheduleConfirmStatus';
 import type { Session } from './session';
 
 export interface OrganizationApplicationListItemResponse {
@@ -63,4 +64,24 @@ export interface OrganizationApplicationListItemResponse {
      * @nullable
      */
   affiliatedFinancialCompany?: string | null;
+  /**
+     * UJAT 교육 지역 코드. 배정 슬롯 또는 신청 지역 답이 하나의 코드로 모이면 그 코드. 없으면 null. regionSido로 대체하지 않음
+     * @nullable
+     */
+  educationRegionCode?: string | null;
+  /**
+     * UJAT 일정 확인 상태. 저장값이 없으면 null. institution_checking으로 기본값을 넣지 않음
+     * @nullable
+     */
+  scheduleConfirmStatus?: OrganizationApplicationListItemResponseScheduleConfirmStatus;
+  /**
+     * 신청에 배정된 강사 수. 0명이면 null
+     * @nullable
+     */
+  assignedInstructorCount?: number | null;
+  /**
+     * 운영 학생 수. 학생 명단 행이 있을 때만 그 수. 신청 총원으로 대체하지 않으며 없으면 null
+     * @nullable
+     */
+  operatingStudentCount?: number | null;
 }

@@ -6,7 +6,28 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 면접 평가 저장. managerAScore 또는 managerBScore가 있으면 슬롯 저장이고 scoreTotal은 무시한다.
+ */
 export interface InterviewEvaluationRequest {
-  scoreTotal?: number;
-  comment?: string;
+  /**
+     * 레거시 평가자 한 명 점수 0~5. 슬롯 점수가 없을 때만 사용. 합계를 넣지 않는다.
+     * @nullable
+     */
+  scoreTotal?: number | null;
+  /**
+     * 이번 요청으로 쓰는 행의 비고. 없으면 null
+     * @nullable
+     */
+  comment?: string | null;
+  /**
+     * 담당자 A 슬롯 점수. 0 이상 5 이하. 없으면 null
+     * @nullable
+     */
+  managerAScore?: number | null;
+  /**
+     * 담당자 B 슬롯 점수. 0 이상 5 이하. 없으면 null
+     * @nullable
+     */
+  managerBScore?: number | null;
 }

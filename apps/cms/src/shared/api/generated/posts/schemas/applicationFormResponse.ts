@@ -7,6 +7,7 @@
  */
 import type { ApplicationFormResponseDraftAnswers } from './applicationFormResponseDraftAnswers';
 import type { ApplicationFormResponseForm } from './applicationFormResponseForm';
+import type { DraftAttachment } from './draftAttachment';
 
 export interface ApplicationFormResponse {
   programId?: number;
@@ -23,4 +24,6 @@ export interface ApplicationFormResponse {
      * @nullable
      */
   draftAnswers?: ApplicationFormResponseDraftAnswers;
+  /** 임시저장 응답에 연결된 문항별 첨부. 임시저장이 없거나 첨부가 없으면 []입니다(null 아님). 다시 저장·제출할 때 이 fileObjectId들을 fileObjectIdsByQuestion으로 다시 보내야 유지됩니다. */
+  draftAttachments?: DraftAttachment[];
 }
