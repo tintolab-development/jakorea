@@ -1,6 +1,6 @@
-import { LoadingButton } from '@/shared/ui'
 
 import { FindEmailSearchIcon } from './find-email-search-icon'
+import { CmsButton } from '@/shared/ui'
 
 interface FindEmailResultViewProps {
   maskedEmail: string
@@ -26,12 +26,12 @@ export function FindEmailResultView({
         </div>
 
         <div className="auth-actions find-email-result__actions">
-          <LoadingButton type="primary" block className="auth-submit-btn" onClick={onGoLogin}>
+          <CmsButton variant="primary" size="h52" width="100%" onClick={onGoLogin}>
             로그인하기
-          </LoadingButton>
-          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onResetPassword}>
+          </CmsButton>
+          <CmsButton variant="default" size="h52" width="100%" onClick={onResetPassword}>
             비밀번호 재설정하기
-          </LoadingButton>
+          </CmsButton>
         </div>
       </div>
     </div>

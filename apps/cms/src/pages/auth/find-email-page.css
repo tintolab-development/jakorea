@@ -139,21 +139,13 @@
   margin-top: 40px;
 }
 
-.find-email-not-found .find-email-result__actions {
-  margin-top: 40px;
+.find-email-not-found .find-email-result__description {
+  color: var(--Color-primary-boundless_blue, #285f74);
 }
 
-.find-email-result__actions .auth-submit-btn,
-.find-email-result__actions .auth-secondary-btn {
-  display: flex;
-  height: 52px;
-  padding: 6px 16px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  align-self: stretch;
-  width: 100%;
+.find-email-not-found .find-email-result__actions {
+  margin-top: 40px;
+  gap: 16px;
 }
 
 @media (max-width: 640px) {

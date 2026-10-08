@@ -1,7 +1,7 @@
 import type { SocialProvider } from '@jakorea/social-auth'
+import { CmsButton } from '@/shared/ui'
 
 import { SocialConnectProviderList } from '@/features/auth/ui/social-connect-provider-list'
-import { LoadingButton } from '@/shared/ui'
 
 import { RegisterStepHeader } from './register-step-header'
 
@@ -44,9 +44,9 @@ export function RegisterSocialConnectView({
         />
 
         <div className="register-social-connect__actions">
-          <LoadingButton type="primary" block className="auth-submit-btn" onClick={onComplete}>
+          <CmsButton variant="primary" size="h52" width="100%" onClick={onComplete}>
             완료
-          </LoadingButton>
+          </CmsButton>
         </div>
       </div>
 
