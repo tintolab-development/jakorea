@@ -37,6 +37,8 @@ import {
   resolveProgramWageDeductionLabel,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
+import { formatAnnouncementLabel } from '@/features/program/shared/lib/announcement-label'
+import dayjs from 'dayjs'
 import { z } from 'zod'
 import { toUjatVolunteerNoticeExposurePayload } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { formatKoreanPhoneNumber, isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
@@ -567,15 +569,50 @@ function firstPlainKoreanPhoneForEdit(
   return undefined
 }
 
-function finalAnnouncementLabelFromParts(
-  dateIso: string | Date | undefined,
-  method: string | undefined
-): string | undefined {
-  const parts = [
-    dateIso ? formatDateOnly(dateIso) : undefined,
-    method?.trim() || undefined,
-  ].filter((part): part is string => Boolean(part) && part !== '-')
-  return parts.length > 0 ? parts.join(' | ') : undefined
+function sameAnnouncementPart(
+  a: string | Date | undefined,
+  b: string | Date | undefined
+): boolean {
+  const left = typeof a === 'string' ? a.trim() : a
+  const right = typeof b === 'string' ? b.trim() : b
+  if (!left && !right) return true
+  if (!left || !right) return false
+  if (left instanceof Date || right instanceof Date || /^\d{4}-\d{2}-\d{2}/.test(String(left))) {
+    return formatDateOnly(left) === formatDateOnly(right)
+  }
+  return left === right
+}
+
+/**
+ * 강사·봉사자 최종 합격자 발표는 상세 폼에서 공용 컬럼(`finalPassAnnouncement*`) 하나로 편집된다.
+ * 값이 바뀌었을 때만 모집별 라벨·분리 필드를 갱신해, 다른 모집의 등록 시 값을 덮지 않는다.
+ */
+function finalPassAnnouncementPatch(
+  values: ProgramDetailEditFormValues,
+  existing: import('@/types/domain').Program,
+  info: { finalPassAnnouncementDate?: string; finalPassAnnouncementMethod?: string } | undefined,
+  options: { nestedFields: boolean }
+): Record<string, string | undefined> {
+  const changed =
+    (values.finalPassAnnouncementDate !== undefined &&
+      !sameAnnouncementPart(values.finalPassAnnouncementDate, existing.finalPassAnnouncementDate)) ||
+    (values.finalPassAnnouncementMethod !== undefined &&
+      !sameAnnouncementPart(values.finalPassAnnouncementMethod, existing.finalPassAnnouncementMethod))
+  if (!changed) return {}
+  const date = values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate
+  const method = values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod
+  const label = formatAnnouncementLabel(date, method)
+  return {
+    resultAnnouncementLabel: label,
+    finalAnnouncementLabel: label,
+    ...(options.nestedFields
+      ? {
+          finalPassAnnouncementDate:
+            date == null ? info?.finalPassAnnouncementDate : dayjs(date).toISOString(),
+          finalPassAnnouncementMethod: method?.trim() || undefined,
+        }
+      : {}),
+  }
 }
 
 function formatCompanySchoolWageAmount(amount: string | number | undefined): string {
@@ -1374,11 +1411,11 @@ export function detailEditValuesToProgramPatch(
           existing.generalCommonInfo?.participantRecruitmentInfo?.educationTargetDetail,
         recruitmentPeriodLabel,
         operationPeriodLabel,
-        resultAnnouncementLabel: finalAnnouncementLabelFromParts(
+        resultAnnouncementLabel: formatAnnouncementLabel(
           resultAnnouncementDate,
           resultAnnouncementMethod
         ),
-        finalAnnouncementLabel: finalAnnouncementLabelFromParts(
+        finalAnnouncementLabel: formatAnnouncementLabel(
           resultAnnouncementDate,
           resultAnnouncementMethod
         ),
@@ -1417,14 +1454,7 @@ export function detailEditValuesToProgramPatch(
         operationPeriodLabel:
           periodLabelFromRange(startDate, endDate) ??
           existing.generalCommonInfo?.instructorRecruitmentInfo?.operationPeriodLabel,
-        resultAnnouncementLabel: finalAnnouncementLabelFromParts(
-          values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
-          values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod
-        ),
-        finalAnnouncementLabel: finalAnnouncementLabelFromParts(
-          values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
-          values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod
-        ),
+        ...finalPassAnnouncementPatch(values, existing, undefined, { nestedFields: false }),
       },
       volunteerRecruitmentInfo: {
         ...existing.generalCommonInfo?.volunteerRecruitmentInfo,
@@ -1469,6 +1499,14 @@ export function detailEditValuesToProgramPatch(
             : values.volunteerRecruitmentInterviewEnabled === 'no'
               ? false
               : existing.generalCommonInfo?.volunteerRecruitmentInfo?.generalVolunteerInterviewEnabled,
+        ...finalPassAnnouncementPatch(
+          values,
+          existing,
+          existing.generalCommonInfo?.volunteerRecruitmentInfo as
+            | { finalPassAnnouncementDate?: string; finalPassAnnouncementMethod?: string }
+            | undefined,
+          { nestedFields: true }
+        ),
       },
     },
     generalVolunteerInterviewEnabled:

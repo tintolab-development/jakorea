@@ -34,7 +34,6 @@ import {
   ProgramDetailContactReadRow,
   ProgramDetailDateMethodReadRow,
 } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
-import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { resolveGeneralProgramParticipantRecruitmentDisplay } from '@/features/program/general/lib/participant-recruitment-display'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
@@ -257,7 +256,10 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             method={program.resultAnnouncementMethod}
           />
         ) : (
-          renderDetailInfoPipeSeparated(display.finalAnnouncementLabel)
+          <ProgramDetailDateMethodReadRow
+            dateIso={display.finalAnnouncementDate}
+            method={display.finalAnnouncementMethod}
+          />
         )
       }
       edit={

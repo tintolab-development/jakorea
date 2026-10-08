@@ -8,7 +8,10 @@
 import { formatKoreanPhoneNumber, isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type { Program } from '@/types/domain'
 import {
-  formatDateOnly,
+  formatAnnouncementLabel,
+  resolveAnnouncement,
+} from '@/features/program/shared/lib/announcement-label'
+import {
   formatDateRange,
   formatTargetLevelsLabel,
   getParticipantRecruitmentLifecycle,
@@ -148,6 +151,8 @@ export type GeneralProgramParticipantRecruitmentDisplay = {
   interviewEndDate?: string | Date
   interviewMethod?: string
   finalAnnouncementLabel: string
+  finalAnnouncementDate?: string | Date
+  finalAnnouncementMethod?: string
   contactOrganizationName: string
   contactPhone: string
   contactEmail: string
@@ -205,20 +210,15 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     labelBool(preEducationValue, '작성', '해당없음')
   )
 
-  const resultDate = program.resultAnnouncementDate
-  const resultMethod = program.resultAnnouncementMethod?.trim()
-  // 날짜·방법 중 하나만 입력돼도 표시해야 함 — 날짜 없다고 방법까지 통째로 버리지 않는다.
-  // (버그: resultDate가 없으면 resultMethod가 있어도 전체가 undefined → '-' 로 노출되던 문제)
-  const finalAnnouncementLabelFromProgram = [
-    resultDate ? formatDateOnly(resultDate) : undefined,
-    resultMethod || undefined,
-  ]
-    .filter((part): part is string => Boolean(part))
-    .join(' | ')
+  const finalAnnouncement = resolveAnnouncement({
+    labels: [info?.finalAnnouncementLabel, info?.resultAnnouncementLabel],
+    column: {
+      date: program.resultAnnouncementDate,
+      method: program.resultAnnouncementMethod,
+    },
+  })
   const finalAnnouncementLabel = pickDisplayString(
-    info?.finalAnnouncementLabel,
-    info?.resultAnnouncementLabel,
-    finalAnnouncementLabelFromProgram || undefined
+    formatAnnouncementLabel(finalAnnouncement.date, finalAnnouncement.method)
   )
 
   const certificateIssuanceLabel =
@@ -306,6 +306,8 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     interviewEndDate: program.interviewEndDate,
     interviewMethod: program.interviewMethod,
     finalAnnouncementLabel,
+    finalAnnouncementDate: finalAnnouncement.date,
+    finalAnnouncementMethod: finalAnnouncement.method,
     contactOrganizationName,
     contactPhone: formatRecruitmentInquiryPhone(
       pickDisplayString(
