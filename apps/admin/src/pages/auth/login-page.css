@@ -36,6 +36,7 @@
   align-items: center;
   align-self: stretch;
   margin-top: 40px;
+  padding: 0 44px;
 }
 
 .login-form .ant-form-item {
