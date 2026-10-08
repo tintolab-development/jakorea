@@ -43,7 +43,6 @@ import { FindPasswordIdentityCallbackPage } from '@/pages/auth/find-password-ide
 import { FindPasswordIdentityMockNicePage } from '@/pages/auth/find-password-identity-mock-nice-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
 import { PasswordChangeRequiredPage } from '@/pages/auth/password-change-required-page'
-import { PasswordChangeRequiredBirthPage } from '@/pages/auth/password-change-required-birth-page'
 import { PasswordChangeRequiredIdentityPage } from '@/pages/auth/password-change-required-identity-page'
 import { PasswordChangeRequiredChangePasswordPage } from '@/pages/auth/password-change-required-change-password-page'
 import { PasswordChangeRequiredCompletePage } from '@/pages/auth/password-change-required-complete-page'
@@ -280,7 +279,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/auth/password-change-required/birth',
-    element: <PasswordChangeRequiredBirthPage />,
+    element: <Navigate to="/auth/password-change-required/identity" replace />,
   },
   {
     path: '/auth/password-change-required/identity',

@@ -1,13 +1,10 @@
 import { Form } from 'antd'
 import { useEffect, useState } from 'react'
-import { LoadingButton } from '@/shared/ui'
+import type { ReactNode } from 'react'
+import { CmsButton } from '@/shared/ui'
 
 import { checkAdminRegisterEmailAvailability } from '@/features/auth/api/admin-register-service'
-import {
-  buildJakoreaEmail,
-  isValidJakoreaEmailLocalPart,
-} from '@/features/auth/lib/jakorea-email'
-import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
+import { buildJakoreaEmail, isValidJakoreaEmailLocalPart } from '@/features/auth/lib/jakorea-email'
 import type { AdminRegisterStep4Data, AdminRegisterWizardData } from '@/types/admin-register'
 
 import { RegisterJakoreaEmailField } from './register-jakorea-email-field'
@@ -20,6 +17,9 @@ interface RegisterJakoreaEmailFormItemProps {
   onChange?: (value: string) => void
   onLocalPartChange?: () => void
   onCheckDuplicate?: () => void
+  label?: ReactNode
+  required?: boolean
+  message?: ReactNode
   checking?: boolean
   hasError?: boolean
 }
@@ -29,11 +29,17 @@ function RegisterJakoreaEmailFormItem({
   onChange,
   onLocalPartChange,
   onCheckDuplicate,
+  label,
+  required,
+  message,
   checking,
   hasError,
 }: RegisterJakoreaEmailFormItemProps) {
   return (
     <RegisterJakoreaEmailField
+      label={label}
+      required={required}
+      message={message}
       value={value}
       onChange={nextValue => {
         onChange?.(nextValue)
@@ -122,7 +128,7 @@ export function AdminRegisterStepEmail({
   const canProceed = duplicateStatus === 'available'
 
   return (
-    <div className="admin-register-step admin-register-step--email">
+    <div>
       <RegisterStepHeader
         title={
           <>
@@ -135,22 +141,21 @@ export function AdminRegisterStepEmail({
           <>
             JA Korea 이메일 주소만 사용 가능합니다.
             <br />
-            소셜 계정은 가입을 마친 뒤 연결할 수 있어요.
+            소셜 계정은 가입을 마친 뒤 연결할 수 있습니다.
           </>
         }
       />
 
       <Form
+        style={{ marginTop: '40px' }}
         form={form}
         layout="vertical"
         requiredMark={false}
-        className="auth-form admin-register-step__form"
+        className="auth-form"
         onFinish={handleFinish}
       >
         <Form.Item
           name="emailLocalPart"
-          label={<AuthFormLabel>이메일</AuthFormLabel>}
-          validateStatus={duplicateStatus === 'unavailable' ? 'error' : undefined}
           rules={[
             { required: true, message: '이메일을 입력해 주세요.' },
             {
@@ -162,23 +167,17 @@ export function AdminRegisterStepEmail({
               },
             },
           ]}
-          extra={
-            duplicateMessage ? (
-              <p
-                className={`register-email-field__message${
-                  duplicateStatus === 'available'
-                    ? ' register-email-field__message--success'
-                    : duplicateStatus === 'unavailable'
-                      ? ' register-email-field__message--error'
-                      : ''
-                }`}
-              >
-                {duplicateMessage}
-              </p>
-            ) : null
-          }
         >
           <RegisterJakoreaEmailFormItem
+            label="이메일"
+            required
+            message={
+              duplicateStatus === 'available' && duplicateMessage ? (
+                <span className="register-email-field__message--success">{duplicateMessage}</span>
+              ) : (
+                duplicateMessage
+              )
+            }
             onLocalPartChange={resetDuplicateCheck}
             onCheckDuplicate={handleDuplicateCheck}
             checking={duplicateStatus === 'checking'}
@@ -186,21 +185,14 @@ export function AdminRegisterStepEmail({
           />
         </Form.Item>
 
-        <div className="auth-actions admin-register-step__actions">
-          <LoadingButton
-            type="primary"
-            htmlType="submit"
-            block
-            className="auth-submit-btn"
-            disabled={!canProceed}
-          >
+        <div className="auth-actions" style={{ marginTop: '40px' }}>
+          <CmsButton variant="primary" size="h52" type="submit" width="100%" disabled={!canProceed}>
             다음
-          </LoadingButton>
-          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onBack}>
+          </CmsButton>
+          <CmsButton variant="default" size="h52" width="100%" onClick={onBack}>
             이전으로
-          </LoadingButton>
+          </CmsButton>
         </div>
-        <div className="admin-register-step__trailing" aria-hidden />
       </Form>
     </div>
   )

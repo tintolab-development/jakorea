@@ -1,12 +1,7 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
-import { toApiBirthDate } from '@jakorea/identity-verification'
 
 import type { AdminSelfSignupRequest } from '@/features/auth/model/admin-register-api.types'
-import type { AdminRegisterGender, AdminRegisterWizardData } from '@/types/admin-register'
-
-function toApiGender(gender: AdminRegisterGender): AdminSelfSignupRequest['gender'] {
-  return gender === 'male' ? 'MALE' : 'FEMALE'
-}
+import type { AdminRegisterWizardData } from '@/types/admin-register'
 
 function resolveSignupName(formData: AdminRegisterWizardData): string {
   if (formData.verifiedName?.trim()) {
@@ -35,8 +30,6 @@ export function buildAdminSelfSignupRequest(
   if (
     !formData.email ||
     !formData.password ||
-    !formData.birthDate ||
-    !formData.gender ||
     formData.termsOfService !== true ||
     formData.privacyPolicy !== true ||
     formData.mfaSetupAgreed !== true
@@ -56,8 +49,6 @@ export function buildAdminSelfSignupRequest(
     phone: formData.verifiedPhone
       ? formatKoreanPhoneNumber(formData.verifiedPhone) || formData.verifiedPhone
       : undefined,
-    gender: toApiGender(formData.gender),
-    birthDate: toApiBirthDate(formData.birthDate),
     identityVerificationSessionUuid: resolveIdentitySessionUuid(formData),
     termsVersion: resolvedTermsVersion,
     termsAgreed: formData.termsOfService,
