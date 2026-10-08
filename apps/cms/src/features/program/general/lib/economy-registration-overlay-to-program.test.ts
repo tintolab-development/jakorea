@@ -230,4 +230,69 @@ describe('applyEconomyRegistrationOverlayToProgram', () => {
     const result = applyEconomyRegistrationOverlayToProgram(withExisting, {})
     expect(result.detailedProgramId).toBe('163099')
   })
+
+  it('KPI overlay 키가 null이면 기존 program KPI로 되돌리지 않는다', () => {
+    const existing = {
+      ...baseProgram(),
+      approvedStudentCount: 11,
+      instructors: 11,
+      instructorCapacity: 11,
+      participatingSchoolCount: 11,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        kpi: {
+          finalParticipants: 11,
+          instructorCount: 11,
+          volunteerCount: 0,
+          finalSchools: 11,
+          finalClasses: 11,
+        },
+      },
+    }
+    const result = applyEconomyRegistrationOverlayToProgram(existing, {
+      'economyRegistration.kpi.participantCount': null,
+      'economyRegistration.kpi.instructor': null,
+      'economyRegistration.kpi.dispatchedSchool': null,
+      'economyRegistration.kpi.dispatchedClass': null,
+    })
+    expect(result.generalCommonInfo?.kpi).toMatchObject({
+      finalParticipants: 0,
+      instructorCount: 0,
+      volunteerCount: 0,
+      finalSchools: 0,
+      finalClasses: 0,
+    })
+    expect(result.approvedStudentCount).toBe(0)
+    expect(result.instructors).toBe(0)
+    expect(result.participatingSchoolCount).toBe(0)
+  })
+
+  it('KPI overlay 키가 없으면 기존 program KPI를 유지한다', () => {
+    const existing = {
+      ...baseProgram(),
+      approvedStudentCount: 11,
+      instructors: 11,
+      participatingSchoolCount: 11,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        kpi: {
+          finalParticipants: 11,
+          instructorCount: 11,
+          volunteerCount: 0,
+          finalSchools: 11,
+          finalClasses: 11,
+        },
+      },
+    }
+    const result = applyEconomyRegistrationOverlayToProgram(existing, {})
+    expect(result.generalCommonInfo?.kpi).toMatchObject({
+      finalParticipants: 11,
+      instructorCount: 11,
+      finalSchools: 11,
+      finalClasses: 11,
+    })
+    expect(result.approvedStudentCount).toBe(11)
+    expect(result.instructors).toBe(11)
+    expect(result.participatingSchoolCount).toBe(11)
+  })
 })

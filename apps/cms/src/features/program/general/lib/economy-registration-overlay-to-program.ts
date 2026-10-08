@@ -68,6 +68,20 @@ function overlayNullableNumber(overlay: Record<string, unknown>, key: string): n
   return undefined
 }
 
+function overlayHasOwn(overlay: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(overlay, key)
+}
+
+/** 키가 있으면 빈 값도 의도된 지움(0). 키가 없을 때만 fallback. */
+function overlayNumberOrFallback(
+  overlay: Record<string, unknown>,
+  key: string,
+  fallback: number | undefined
+): number | undefined {
+  if (!overlayHasOwn(overlay, key)) return fallback
+  return overlayNullableNumber(overlay, key) ?? 0
+}
+
 function seoulCalendarDate(value: string | undefined): string | null {
   if (!value?.trim()) return null
   const dateOnly = value.trim().match(/^(\d{4}-\d{2}-\d{2})$/)
@@ -298,11 +312,27 @@ export function applyEconomyRegistrationOverlayToProgram(
         )
       : base.rounds
 
-  const participantCount = overlayNullableNumber(overlay, `${KPI}.participantCount`)
-  const instructorCount = overlayNullableNumber(overlay, `${KPI}.instructor`)
-  const dispatchedSchool = overlayNullableNumber(overlay, `${KPI}.dispatchedSchool`)
-  const dispatchedClass = overlayNullableNumber(overlay, `${KPI}.dispatchedClass`)
   const prevKpi = baseCommon?.kpi
+  const participantCount = overlayNumberOrFallback(
+    overlay,
+    `${KPI}.participantCount`,
+    prevKpi?.finalParticipants ?? base.approvedStudentCount
+  )
+  const instructorCount = overlayNumberOrFallback(
+    overlay,
+    `${KPI}.instructor`,
+    prevKpi?.instructorCount ?? base.instructors ?? base.instructorCapacity
+  )
+  const dispatchedSchool = overlayNumberOrFallback(
+    overlay,
+    `${KPI}.dispatchedSchool`,
+    prevKpi?.finalSchools ?? base.participatingSchoolCount
+  )
+  const dispatchedClass = overlayNumberOrFallback(
+    overlay,
+    `${KPI}.dispatchedClass`,
+    prevKpi?.finalClasses
+  )
   const surveyKeys = surveyKeysFromOverlay(overlay)
   const sponsorIdFromOverlay = skipUnselected(overlayString(overlay, `${BASIC}.sponsorId`))
   const sponsorId = sponsorIdFromOverlay || base.sponsorId
@@ -354,11 +384,11 @@ export function applyEconomyRegistrationOverlayToProgram(
           ? managerContactIds
           : baseCommon?.sponsorManagerContactIds,
       kpi: {
-        finalParticipants: participantCount ?? prevKpi?.finalParticipants ?? 0,
-        instructorCount: instructorCount ?? prevKpi?.instructorCount ?? 0,
+        finalParticipants: participantCount ?? 0,
+        instructorCount: instructorCount ?? 0,
         volunteerCount: prevKpi?.volunteerCount ?? 0,
-        finalSchools: dispatchedSchool ?? prevKpi?.finalSchools ?? 0,
-        finalClasses: dispatchedClass ?? prevKpi?.finalClasses ?? 0,
+        finalSchools: dispatchedSchool ?? 0,
+        finalClasses: dispatchedClass ?? 0,
       },
     },
   }
