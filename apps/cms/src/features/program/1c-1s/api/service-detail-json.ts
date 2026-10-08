@@ -8,6 +8,7 @@ import type { Program } from '@/types/domain'
 import { normalizeGeneralProgramServiceDetailParsed } from '@/features/program/general/lib/general-program-service-detail-json'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
+import { resolveParticipantRecruitmentRemarks } from '@/features/program/shared/lib/program-update-common-string-fields'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resyncEconomyRegistrationOverlayFromProgram } from '@/features/program/1c-1s/lib/registration-overlay-sync'
@@ -155,18 +156,31 @@ function companySchoolDetails(program: Program): Partial<Program> {
   })
 }
 
-export function serializeCompanySchoolServiceDetailJson(program: Program): string {
-  const synced = {
-    ...program,
-    registrationOverlay: resyncEconomyRegistrationOverlayFromProgram(
-      program,
-      program.registrationOverlay
-    ),
+function persistCompanySchoolRegistrationOverlay(
+  program: Program
+): Record<string, unknown> | undefined {
+  const economy = resyncEconomyRegistrationOverlayFromProgram(
+    program,
+    program.registrationOverlay
+  )
+  const remarks = resolveParticipantRecruitmentRemarks(program)
+  const notesNA = program.generalCommonInfo?.participantRecruitmentInfo?.notesNotApplicable
+  const overlay: Record<string, unknown> = { ...economy }
+  if (remarks) {
+    overlay['recruit.notes'] = remarks
+    overlay['recruit.individual.notes'] = remarks
   }
-  const registrationOverlay = persistScheduleEducationFormByDetailOverlay(
-    buildRegistrationOverlayForPersist(synced),
+  if (notesNA === true || notesNA === false) {
+    overlay['recruit.notesNotApplicable'] = notesNA
+  }
+  return persistScheduleEducationFormByDetailOverlay(
+    buildRegistrationOverlayForPersist({ ...program, registrationOverlay: overlay }),
     program.generalCommonInfo?.scheduleDetails
   )
+}
+
+export function serializeCompanySchoolServiceDetailJson(program: Program): string {
+  const registrationOverlay = persistCompanySchoolRegistrationOverlay(program)
   const payload: CompanySchoolServiceDetailJsonV1 = {
     schemaVersion: COMPANY_SCHOOL_SERVICE_DETAIL_JSON_VERSION,
     program: companySchoolDetails(program),
@@ -418,19 +432,10 @@ export function serializeCompanySchoolServiceDetailJsonForUpdatePatch(
 
   if (
     patchHasKey(patch, 'registrationOverlay') ||
-    patchHasKey(patch, 'ujatRegistrationOverlay')
+    patchHasKey(patch, 'ujatRegistrationOverlay') ||
+    patchHasKey(patch, 'remarks')
   ) {
-    const synced = {
-      ...merged,
-      registrationOverlay: resyncEconomyRegistrationOverlayFromProgram(
-        merged,
-        merged.registrationOverlay
-      ),
-    }
-    const registrationOverlay = persistScheduleEducationFormByDetailOverlay(
-      buildRegistrationOverlayForPersist(synced),
-      merged.generalCommonInfo?.scheduleDetails
-    )
+    const registrationOverlay = persistCompanySchoolRegistrationOverlay(merged)
     if (registrationOverlay) {
       payload.registration = { overlay: registrationOverlay }
     }

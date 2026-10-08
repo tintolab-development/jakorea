@@ -587,9 +587,9 @@ export function applyGeneralRecruitOverlayToProgram(
     keys.detailInfo.participantMethod
   )
   const participantRemarks =
-    overlayParticipantDetailString(overlay, 'otherNotes', keys.detailInfo.participantOtherNotes) ??
+    overlayString(overlay, inst.notes) ??
     overlayString(overlay, keys.individual.notes) ??
-    overlayString(overlay, inst.notes)
+    overlayParticipantDetailString(overlay, 'otherNotes', keys.detailInfo.participantOtherNotes)
   if (participantDescription) {
     participantInfo.programDescription = coalesceString(
       participantInfo.programDescription,
@@ -1202,6 +1202,11 @@ export function applyGeneralRecruitOverlayToProgram(
     posterImage: keyVisualImage ?? program.posterImage,
     attachmentFileNames: attachmentFileNames ?? program.attachmentFileNames,
     otherNotes: program.otherNotes,
+    remarks: coalesceString(
+      program.remarks ?? participantInfo.remarks,
+      participantRemarks,
+      preferOverlay
+    ),
     oneLineIntroduction: coalesceString(
       program.oneLineIntroduction,
       overlayString(overlay, keys.individual.notes) ?? overlayString(overlay, inst.notes),

@@ -17,6 +17,7 @@ import {
   getParticipantRecruitmentLifecycle,
   resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
@@ -259,7 +260,10 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
 
   const notes = info?.notesNotApplicable
     ? '-'
-    : pickDisplayString(info?.remarks, isTrainedTeachers ? program.remarks : undefined)
+    : pickDisplayString(
+        info?.remarks,
+        isTrainedTeachers || isCompanySchoolProgram(program) ? program.remarks : undefined
+      )
 
   const contactOrganizationName = formatRecruitmentInquiryContactName(
     info?.contactOrganizationName,
