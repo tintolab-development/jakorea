@@ -6,6 +6,8 @@
  * OpenAPI spec version: v9
  */
 import type { ApplicationFormAnswers } from './applicationFormAnswers';
+import type { Attachment } from './attachment';
+import type { GeneralProjection } from './generalProjection';
 import type { UjatProjection } from './ujatProjection';
 
 /**
@@ -16,4 +18,8 @@ export interface Application {
   formAnswers?: ApplicationFormAnswers;
   scheduleChangeCancelCount?: number;
   ujat?: UjatProjection;
+  /** 제출 응답에 연결된 문항별 첨부. 첨부가 없거나 제출 응답이 없으면 []입니다(null 아님). */
+  attachments?: Attachment[];
+  /** 일반 봉사자 신청 답변 projection. UJAT 프로그램 신청이면 null */
+  general?: GeneralProjection | null;
 }

@@ -29,7 +29,12 @@ export interface VolunteerApplicationDetailResponse {
   profile?: Profile;
   application?: Application;
   screening?: Screening;
+  /** 신청자가 고른 면접 가능(희망) 시간 구간. program_interview_slot 선택과 CMS 면접 진행 가능 일정에서 고른 interview-option 답을 합쳐 startAt 순으로 반환. 없으면 [] */
   interviewAvailability?: InterviewAvailabilitySlot[];
+  /**
+     * interviewAvailability 항목 수
+     * @minimum 0
+     */
   interviewAvailabilityCount?: number;
   interviewAssignmentId?: number;
   assignedInterviewSlotId?: number;

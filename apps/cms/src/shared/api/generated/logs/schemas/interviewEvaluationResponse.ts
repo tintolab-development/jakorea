@@ -8,7 +8,10 @@
 
 export interface InterviewEvaluationResponse {
   interviewAssignmentId?: number;
+  /** 이번에 쓴 행 중 담당자 A가 있으면 A, 없으면 B */
   evaluationId?: number;
+  /** 저장 후 그 배정의 슬롯 점수 합. 한 슬롯만 있으면 그 점수 */
   scoreTotal?: number;
+  /** SUBMITTED */
   evaluationStatus?: string;
 }

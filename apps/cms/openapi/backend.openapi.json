@@ -49636,6 +49636,52 @@
             }
           },
           {
+            "name": "grade",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "preferredRegion",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hasEducationExperience",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "assignedInterviewDate",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "totalScore",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "description": "페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.",
@@ -50686,6 +50732,53 @@
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "organizationName",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "teacherName",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestedClassCount",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "educationRegionCode",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scheduleDate",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           },
           {
@@ -54545,7 +54638,7 @@
           {
             "name": "category",
             "in": "query",
-            "description": "카테고리 코드 필터",
+            "description": "카탈로그 카테고리 코드.",
             "required": false,
             "schema": {
               "type": "string",
@@ -54560,15 +54653,14 @@
                 "PLACE",
                 "TARGET",
                 "QUANTITY",
-                "AMOUNT",
-                "SYSTEM"
+                "AMOUNT"
               ]
             }
           },
           {
             "name": "keyword",
             "in": "query",
-            "description": "key/description 부분검색",
+            "description": "key/description 부분 검색.",
             "required": false,
             "schema": {
               "type": "string"
@@ -54577,7 +54669,7 @@
           {
             "name": "programId",
             "in": "query",
-            "description": "대상 프로그램. 없으면 requiresProgram=true 항목 enabled=false",
+            "description": "대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -54587,7 +54679,7 @@
           {
             "name": "participantType",
             "in": "query",
-            "description": "참여 유형 필터. 프로그램 선택 시 수신자 유형과 맞춤",
+            "description": "프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "required": false,
             "schema": {
               "type": "string",
@@ -54601,7 +54693,7 @@
           {
             "name": "memberType",
             "in": "query",
-            "description": "회원 유형 필터. 프로그램 미선택(전체) 시 주로 사용",
+            "description": "프로그램 미선택(전체) 시 회원 유형 필터.",
             "required": false,
             "schema": {
               "type": "string",
@@ -54679,7 +54771,8 @@
           "500": {
             "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
           }
-        }
+        },
+        "x-jakorea-fe-notes": "enabled=삽입 허용 SSOT(값 존재와 무관). 누락 시 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}]. QA programId=164003 actorId=1799401."
       }
     },
     "/api/admin/notification-send-batches/recipient-candidates": {
@@ -59553,6 +59646,72 @@
         }
       }
     },
+    "/api/admin/calendar/korean-public-holidays": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "대한민국 공휴일 조회",
+        "description": "### 이 API가 하는 일\n- 대한민국 공휴일 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/calendar/korean-public-holidays`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: UJAT interview calendar holidays. dates is YYYY-MM-DD[] and never null",
+        "operationId": "koreanPublicHolidays",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/KoreanPublicHolidayResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/auth/sso/{provider}/callback": {
       "get": {
         "tags": [
@@ -61727,6 +61886,20 @@
             },
             "maxItems": 10,
             "minItems": 0
+          },
+          "fileObjectIdsByQuestion": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
+            },
+            "description": "문항별 첨부 fileObjectId. 키는 answers와 같은 질문 키입니다. 본인이 올린 CLEAN·사용 가능 파일만 허용합니다. 봉사자 신청은 program-volunteer-application-seed-previous-ja-program(일반), ujat-program-application-volunteer-seed-previous-term(UJAT) 문항에만 첨부할 수 있고 filePurpose=VOLUNTEER_APPLICATION_EVIDENCE(JPG·PNG·PDF, 파일당 15MB) 파일만 받습니다. 숨겨진 문항(일반: JA 경험 「없음」, UJAT: 지원 형태 「신규」)에 첨부하면 400입니다. 생략하거나 {}이면 첨부 없음입니다. 임시저장마다 새 응답을 만들기 때문에 제출 요청에도 첨부를 다시 보내야 합니다."
           }
         },
         "required": [
@@ -69793,6 +69966,56 @@
           },
           "ujat": {
             "$ref": "#/components/schemas/UjatProjection"
+          },
+          "attachments": {
+            "type": "array",
+            "description": "제출 응답에 연결된 문항별 첨부. 첨부가 없거나 제출 응답이 없으면 []입니다(null 아님).",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
+          },
+          "general": {
+            "description": "일반 봉사자 신청 답변 projection. UJAT 프로그램 신청이면 null",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/GeneralProjection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "description": "신청서 문항 첨부 1건. 다운로드는 downloadPolicyPath를 GET해 받은 정책(민감 파일이면 사유 필요)을 따릅니다.",
+        "properties": {
+          "submissionFileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "questionKey": {
+            "type": "string",
+            "description": "첨부가 연결된 질문 키. 예: program-volunteer-application-seed-previous-ja-program"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "downloadPolicyPath": {
+            "type": "string",
+            "description": "GET /api/admin/form-submission-files/{submissionFileId}/download"
           }
         }
       },
@@ -69823,6 +70046,58 @@
           "evaluatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "GeneralProjection": {
+        "type": "null",
+        "description": "일반 봉사자 신청 상세의 named projection. 값이 없거나 notApplicable(지원 형태 때문에 숨긴 단락)인 답은 null. 자유 작성(essay*)은 마스킹·해제 상세 모두 trim한 원문(마스킹하지 않음)입니다. jaExperience·previousJaProgram도 마스킹하지 않습니다.",
+        "properties": {
+          "jaExperience": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "program-volunteer-application-seed-ja-experience …-yes/YES/있음 → true, …-no/NO/없음 → false, 그 외 null"
+          },
+          "previousJaProgram": {
+            "description": "program-volunteer-application-seed-previous-ja-program. 두 값이 모두 비면 null",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PreviousJaProgram"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "essayIntro": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "free-text-items id=intro bodyText. 원문(마스킹하지 않음)"
+          },
+          "essayEducationExperience": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "free-text-items id=educationExperience bodyText. 원문(마스킹하지 않음)"
+          },
+          "essayNecessity": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "free-text-items id=necessity bodyText. 원문(마스킹하지 않음)"
+          },
+          "essayJaExperience": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "free-text-items id=jaExperience bodyText. 원문(마스킹하지 않음)"
           }
         }
       },
@@ -69869,6 +70144,23 @@
           "submittedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "PreviousJaProgram": {
+        "type": "object",
+        "properties": {
+          "applicationYear": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "programName": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -69944,16 +70236,121 @@
       },
       "UjatProjection": {
         "type": "object",
-        "description": "UJAT 봉사자 신청 상세에서 반복 사용되는 안정적인 named projection",
+        "description": "UJAT 봉사자 신청 상세에서 반복 사용되는 안정적인 named projection. 값이 없거나 지원 형태 때문에 숨긴 단락의 값은 null입니다. 마스킹 상세에서는 applicationRouteOther가 마스킹됩니다. 자유 작성(essay*)은 마스킹·해제 상세 모두 원문(마스킹하지 않음)입니다.",
         "properties": {
           "previousActivityTerm": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "previous-term activityTerm (기수)"
           },
           "preferredActivityRegion": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "preferred-region 선택값의 지역명. 지역 마스터에 없으면 저장된 값"
           },
           "educationExperience": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "education-experience 저장 표시값(기존 필드, 형식 유지)"
+          },
+          "educationExperienceYn": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "education-experience …-yes → true, …-no → false"
+          },
+          "previousActivityYear": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "universityName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "1~4, leave, deferred"
+          },
+          "gradeLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "major": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "applicationRoute": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "instagram, school-everytime, linkareer, allcon, campuspick, other"
+          },
+          "applicationRouteLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "applicationRouteOther": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "applicationRoute=other 일 때만 값"
+          },
+          "applicationType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "new | ujat-graduate"
+          },
+          "essayIntro": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "원문(마스킹하지 않음)"
+          },
+          "essayEducationExperience": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "원문(마스킹하지 않음)"
+          },
+          "essayNecessity": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "원문(마스킹하지 않음)"
+          },
+          "essayJaExperience": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "원문(마스킹하지 않음)"
           }
         }
       },
@@ -70017,13 +70414,16 @@
           },
           "interviewAvailability": {
             "type": "array",
+            "description": "신청자가 고른 면접 가능(희망) 시간 구간. program_interview_slot 선택과 CMS 면접 진행 가능 일정에서 고른 interview-option 답을 합쳐 startAt 순으로 반환. 없으면 []",
             "items": {
               "$ref": "#/components/schemas/InterviewAvailabilitySlot"
             }
           },
           "interviewAvailabilityCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "interviewAvailability 항목 수",
+            "minimum": 0
           },
           "interviewAssignmentId": {
             "type": "integer",
@@ -77079,6 +77479,69 @@
           "reason"
         ]
       },
+      "ClassRoom": {
+        "type": "object",
+        "properties": {
+          "classNo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "학급 번호 또는 반 이름"
+          },
+          "studentCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "그 학급의 학생 수. 없으면 null. 총원을 나누어 만들지 않음"
+          }
+        }
+      },
+      "ClassTimeRow": {
+        "type": "object",
+        "properties": {
+          "gradeRangeLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "periods": {
+            "type": "array",
+            "description": "1~4교시 시각 문자열 4개",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GradeBlock": {
+        "type": "object",
+        "description": "학년 한 묶음. classes가 비어 있으면 학급별 인원은 없고 classCount와 신청 총원만 있다.",
+        "properties": {
+          "gradeLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "classCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "classes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassRoom"
+            }
+          }
+        }
+      },
       "OrganizationApplicationDetailResponse": {
         "type": "object",
         "properties": {
@@ -77293,6 +77756,43 @@
               "null"
             ],
             "description": "1사1교 결연 금융회사명. 없거나 다른 프로그램이면 null."
+          },
+          "teacherTel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교사 일반 전화. 휴대전화(teacherPhone)와 별도. 저장된 값이 없으면 null"
+          },
+          "preferredEducationDates": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "희망 교육일 YYYY-MM-DD. 저장된 희망일이 없으면 null. 빈 배열은 쓰지 않음",
+            "items": {
+              "type": "string"
+            }
+          },
+          "gradeBlocks": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "학년별 학급. 저장된 학급 구성이 없으면 null. 학급별 인원이 없으면 classes는 []",
+            "items": {
+              "$ref": "#/components/schemas/GradeBlock"
+            }
+          },
+          "classTimeRows": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "학년 구간별 수업 시간표. 저장된 4교시가 없으면 null",
+            "items": {
+              "$ref": "#/components/schemas/ClassTimeRow"
+            }
           }
         }
       },
@@ -79028,12 +79528,38 @@
       },
       "InterviewEvaluationRequest": {
         "type": "object",
+        "description": "면접 평가 저장. managerAScore 또는 managerBScore가 있으면 슬롯 저장이고 scoreTotal은 무시한다.",
         "properties": {
           "scoreTotal": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "레거시 평가자 한 명 점수 0~5. 슬롯 점수가 없을 때만 사용. 합계를 넣지 않는다.",
+            "example": 3
           },
           "comment": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "이번 요청으로 쓰는 행의 비고. 없으면 null"
+          },
+          "managerAScore": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "담당자 A 슬롯 점수. 0 이상 5 이하. 없으면 null",
+            "example": 5
+          },
+          "managerBScore": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "담당자 B 슬롯 점수. 0 이상 5 이하. 없으면 null",
+            "example": 5
           }
         }
       },
@@ -79046,13 +79572,17 @@
           },
           "evaluationId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "이번에 쓴 행 중 담당자 A가 있으면 A, 없으면 B"
           },
           "scoreTotal": {
-            "type": "number"
+            "type": "number",
+            "description": "저장 후 그 배정의 슬롯 점수 합. 한 슬롯만 있으면 그 점수"
           },
           "evaluationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "SUBMITTED",
+            "example": "SUBMITTED"
           }
         }
       },
@@ -88850,6 +89380,36 @@
             ],
             "additionalProperties": {},
             "description": "임시저장 답. 키 규칙은 SaveApplicationRequest.answers와 같습니다. 임시저장이 없으면 빈 객체입니다."
+          },
+          "draftAttachments": {
+            "type": "array",
+            "description": "임시저장 응답에 연결된 문항별 첨부. 임시저장이 없거나 첨부가 없으면 []입니다(null 아님). 다시 저장·제출할 때 이 fileObjectId들을 fileObjectIdsByQuestion으로 다시 보내야 유지됩니다.",
+            "items": {
+              "$ref": "#/components/schemas/DraftAttachment"
+            }
+          }
+        }
+      },
+      "DraftAttachment": {
+        "type": "object",
+        "description": "임시저장 응답에 연결된 첨부 1건",
+        "properties": {
+          "questionKey": {
+            "type": "string"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -94356,6 +94916,34 @@
           "essaySubmitted": {
             "type": "boolean"
           },
+          "essayIntro": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "일반 봉사자 자유 작성 1번(intro) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null"
+          },
+          "essayEducationExperience": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "일반 봉사자 자유 작성 2번(educationExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null"
+          },
+          "essayNecessity": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "일반 봉사자 자유 작성 3번(necessity) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null"
+          },
+          "essayJaExperience": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "일반 봉사자 자유 작성 4번(jaExperience) 본문. trim한 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. UJAT 봉사자는 null"
+          },
           "rejectReason": {
             "type": "string",
             "description": "현재 반려 사유. 반려 상태가 아니면 null"
@@ -94423,6 +95011,56 @@
             "items": {
               "type": "string"
             }
+          },
+          "grade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 학년 라벨. 1학년|2학년|3학년|4학년|졸업|휴학|졸업유예. 없거나 UJAT이 아니면 null. 추측하지 않음"
+          },
+          "preferredRegion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 희망 교육 지역 라벨. 지역 마스터에 없으면 null"
+          },
+          "preferredRegionCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 희망 교육 지역 코드. 없으면 null"
+          },
+          "hasEducationExperience": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "UJAT 교육 진행 경험. 미응답·판별 불가면 null. false로 채우지 않음"
+          },
+          "birthDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "UJAT 봉사자 생년월일. 없으면 null. 다른 프로그램 목록은 null"
+          },
+          "id1365": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 1365 ID 마스킹 값. 없으면 null. 원문은 상세 unmask profile.external1365Id"
+          },
+          "openingCeremonyAttended": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "발대식 참석. 저장값이 없으면 null. false로 채우지 않음"
           }
         }
       },
@@ -95748,6 +96386,43 @@
               "null"
             ],
             "description": "1사1교 결연 금융회사명. 없거나 다른 프로그램이면 null."
+          },
+          "educationRegionCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 교육 지역 코드. 배정 슬롯 또는 신청 지역 답이 하나의 코드로 모이면 그 코드. 없으면 null. regionSido로 대체하지 않음"
+          },
+          "scheduleConfirmStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 일정 확인 상태. 저장값이 없으면 null. institution_checking으로 기본값을 넣지 않음",
+            "enum": [
+              "institution_checking",
+              "institution_confirmed",
+              "approval_completed",
+              "revision_requested",
+              "application_rejected"
+            ]
+          },
+          "assignedInstructorCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "신청에 배정된 강사 수. 0명이면 null"
+          },
+          "operatingStudentCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "운영 학생 수. 학생 명단 행이 있을 때만 그 수. 신청 총원으로 대체하지 않으며 없으면 null"
           }
         }
       },
@@ -99196,12 +99871,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨",
+            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰",
+            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -99213,11 +99888,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
+            "description": "true이면 programId 없이 enabled=false."
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
+            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
           },
           "programGroups": {
             "type": "array",
@@ -99235,14 +99910,14 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
               "type": "string"
             }
@@ -102482,6 +103157,18 @@
             "example": [
               "출석 기준 미달"
             ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "KoreanPublicHolidayResponse": {
+        "type": "object",
+        "description": "대한민국 관공서 공휴일. dates는 KST YYYY-MM-DD. 해당 없으면 []. null이 아니다.",
+        "properties": {
+          "dates": {
+            "type": "array",
             "items": {
               "type": "string"
             }

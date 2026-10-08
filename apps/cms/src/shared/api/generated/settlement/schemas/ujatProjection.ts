@@ -7,10 +7,77 @@
  */
 
 /**
- * UJAT 봉사자 신청 상세에서 반복 사용되는 안정적인 named projection
+ * UJAT 봉사자 신청 상세에서 반복 사용되는 안정적인 named projection. 값이 없거나 지원 형태 때문에 숨긴 단락의 값은 null입니다. 마스킹 상세에서는 applicationRouteOther가 마스킹됩니다. 자유 작성(essay*)은 마스킹·해제 상세 모두 원문(마스킹하지 않음)입니다.
  */
 export interface UjatProjection {
-  previousActivityTerm?: string;
-  preferredActivityRegion?: string;
-  educationExperience?: string;
+  /**
+     * previous-term activityTerm (기수)
+     * @nullable
+     */
+  previousActivityTerm?: string | null;
+  /**
+     * preferred-region 선택값의 지역명. 지역 마스터에 없으면 저장된 값
+     * @nullable
+     */
+  preferredActivityRegion?: string | null;
+  /**
+     * education-experience 저장 표시값(기존 필드, 형식 유지)
+     * @nullable
+     */
+  educationExperience?: string | null;
+  /**
+     * education-experience …-yes → true, …-no → false
+     * @nullable
+     */
+  educationExperienceYn?: boolean | null;
+  /** @nullable */
+  previousActivityYear?: string | null;
+  /** @nullable */
+  universityName?: string | null;
+  /**
+     * 1~4, leave, deferred
+     * @nullable
+     */
+  grade?: string | null;
+  /** @nullable */
+  gradeLabel?: string | null;
+  /** @nullable */
+  major?: string | null;
+  /**
+     * instagram, school-everytime, linkareer, allcon, campuspick, other
+     * @nullable
+     */
+  applicationRoute?: string | null;
+  /** @nullable */
+  applicationRouteLabel?: string | null;
+  /**
+     * applicationRoute=other 일 때만 값
+     * @nullable
+     */
+  applicationRouteOther?: string | null;
+  /**
+     * new | ujat-graduate
+     * @nullable
+     */
+  applicationType?: string | null;
+  /**
+     * 원문(마스킹하지 않음)
+     * @nullable
+     */
+  essayIntro?: string | null;
+  /**
+     * 원문(마스킹하지 않음)
+     * @nullable
+     */
+  essayEducationExperience?: string | null;
+  /**
+     * 원문(마스킹하지 않음)
+     * @nullable
+     */
+  essayNecessity?: string | null;
+  /**
+     * 원문(마스킹하지 않음)
+     * @nullable
+     */
+  essayJaExperience?: string | null;
 }
