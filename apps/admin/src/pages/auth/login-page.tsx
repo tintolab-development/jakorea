@@ -1,6 +1,6 @@
 /**
  * Homepage Admin 로그인 페이지
- * Mock 로그인 → local mock 데이터 / API 로그인 → CMS auth + Homepage remote API
+ * 로그인 → CMS auth + Homepage remote API
  */
 
 import { Form, Input, Button, Typography, Space, Alert } from 'antd'
@@ -202,21 +202,11 @@ export function LoginPage() {
                 disabled={isLocked || !apiLoginAvailable}
                 onClick={() => void handleLoginClick('api')}
               >
-                API 로그인
-              </LoadingButton>
-              <LoadingButton
-                block
-                className="login-secondary-btn"
-                loading={loading && loginMode === 'mock'}
-                disabled={isLocked}
-                onClick={() => void handleLoginClick('mock')}
-              >
-                Mock 로그인
+                로그인하기
               </LoadingButton>
               {!apiLoginAvailable && (
                 <Text type="secondary" className="login-api-hint">
-                  API 로그인은 `VITE_API_SERVER` 설정 후 사용할 수 있습니다. Mock 로그인은 목
-                  데이터를 사용합니다.
+                  로그인은 `VITE_API_SERVER` 설정 후 사용할 수 있습니다.
                 </Text>
               )}
             </Form.Item>
