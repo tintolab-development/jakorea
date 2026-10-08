@@ -7,7 +7,6 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type Key } f
 import { useSearchParams } from 'react-router-dom'
 import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   ACCOUNT_PAYMENT_STATUS_LABELS,
@@ -56,6 +55,8 @@ import {
 import { AccountPaymentCompleteSuccessModal } from '@/features/settlement/ui/account-payment-complete-success-modal'
 import { AccountPaymentStatusDetailFullPageModal } from './account-payment-status-detail-fullpage-modal'
 import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
+
+import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 
 /** Fortune Sheet·ExcelJS 분리 — lazy 라우트 청크 과대로 인한 dev 동적 import 실패 완화 */
 const BulkTransferPreviewModal = lazy(async () => {
@@ -696,7 +697,7 @@ export default function AccountPaymentsPage() {
             size="large"
             width="auto"
             style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
-            icon={<CalendarOutlined />}
+            icon={<ButtonCalendarIcon />}
             type="button"
             onClick={() => setViewMode('calendar')}
           >
@@ -708,7 +709,7 @@ export default function AccountPaymentsPage() {
             size="large"
             width="auto"
             style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
-            icon={<UnorderedListOutlined />}
+            icon={<ButtonListIcon />}
             type="button"
             onClick={() => setViewMode('list')}
           >
@@ -720,7 +721,7 @@ export default function AccountPaymentsPage() {
           size="large"
           width="auto"
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
-          icon={<DownloadOutlined />}
+          icon={<ButtonDownloadIcon />}
           type="button"
           disabled={selectedRowKeys.length === 0}
           onClick={openBulkTransferPreview}
@@ -732,7 +733,7 @@ export default function AccountPaymentsPage() {
           size="large"
           width="auto"
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
-          icon={<DownloadOutlined />}
+          icon={<ButtonDownloadIcon />}
           type="button"
           disabled={selectedRowKeys.length === 0}
           onClick={openTaxFilingPreview}

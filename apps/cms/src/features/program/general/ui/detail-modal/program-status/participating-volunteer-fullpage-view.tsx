@@ -5,7 +5,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
@@ -45,6 +44,7 @@ import { ParticipatingVolunteerAssignmentSection } from './participating-volunte
 import { ParticipatingIndividualVolunteerAssignmentSection } from './participating-individual-volunteer-assignment-section'
 import { ParticipatingVolunteerSettlementSection } from './participating-volunteer-settlement-section'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './school-detail-fullpage-view.css'
 import './participating-volunteer-fullpage-view.css'
 
@@ -410,7 +410,7 @@ export function ParticipatingVolunteerFullpageView({
                 variant="secondary"
                 size="large"
                 width={180}
-                icon={<DownloadOutlined />}
+                icon={<ButtonDownloadIcon />}
                 onClick={handleActivityCertificateIssueClick}
               >
                 활동인증서 발급

@@ -3,7 +3,6 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/general/ui/program-list'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -77,6 +76,8 @@ import {
   readCompanySchoolTableFilters,
 } from '@/features/program/1c-1s/api/list-params'
 import type { OverviewStatusFilter } from './use-program-list-filters'
+
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY = 'new'
 
@@ -613,7 +614,7 @@ function ProgramListPageContent() {
       <CmsButton
         variant="secondary"
         size="large"
-        icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
+        icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
         onClick={handleViewModeToggle}
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}

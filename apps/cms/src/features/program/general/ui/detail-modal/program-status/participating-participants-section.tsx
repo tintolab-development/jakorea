@@ -4,7 +4,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Table, Spin } from 'antd'
-import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
@@ -45,6 +44,7 @@ import {
 } from './participating-participant-fullpage-view'
 import { ParticipatingParticipantsCalendarView } from './participating-participants-calendar-view'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
+import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
@@ -339,7 +339,7 @@ export function ParticipatingParticipantsSection({
             <CmsButton
               variant="secondary"
               size="large"
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               disabled={certificateExportActive}
               onClick={handleCertificateIssueClick}
             >
@@ -350,7 +350,7 @@ export function ParticipatingParticipantsSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
@@ -360,7 +360,7 @@ export function ParticipatingParticipantsSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={() => setViewMode('list')}
               >
                 리스트 뷰로 보기

@@ -3,7 +3,11 @@
  * (강사비 | 강사 장거리비 2열 × 3행 + 지급/공제 1행 — 스크린 구성)
  */
 import { useEffect, useMemo } from 'react'
-import { useTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
+import {
+  paymentItemSelectPlaceholder,
+  usePaymentItemCatalogState,
+} from '@/features/template/lib/template-registration-payment-item-options'
+import { normalizeProgramPaymentItemIds } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
@@ -16,12 +20,11 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 
 const DEDUCTION_VIEW = '일용근로자 원천징수세액'
 
-/** 화면 라벨 — 카탈로그 원문과 매칭해 실제 마스터 id 를 고른다 (mock `p-1`/`p-7` 은 remote 옵션에 없음). */
+/** 화면 라벨 — 카탈로그 원문과 매칭해 실제 마스터 id 를 고른다 */
 const PAYMENT_LABEL_TRANSPORT_CATALOG = '강사 교통비'
 const PAYMENT_LABEL_LODGING_CATALOG = '숙박비 (1사1교)'
 const PAYMENT_LABEL_TRANSPORT_1C1S = '교통비(일사일교)'
 const PAYMENT_LABEL_LODGING_1C1S = '숙박비(일사일교)'
-const LEGACY_PAYMENT_IDS = new Set(['p-1', 'p-7'])
 
 const WAGE_FEE_ROWS = [
   {
@@ -99,7 +102,8 @@ export function OneCOneSRegistrationWageInfoParagraph() {
     []
   )
 
-  const remotePaymentOptions = useTemplateRegistrationPaymentItemOptions()
+  const paymentCatalog = usePaymentItemCatalogState()
+  const remotePaymentOptions = paymentCatalog.options
   const paymentItemOptions = useMemo((): CmsSelectMultipleOption[] => {
     return remotePaymentOptions.map(opt => {
       const label = opt.label.trim()
@@ -114,29 +118,28 @@ export function OneCOneSRegistrationWageInfoParagraph() {
   }, [remotePaymentOptions])
 
   useEffect(() => {
-    if (remotePaymentOptions.length === 0) return
+    if (!paymentCatalog.ready || remotePaymentOptions.length === 0) return
     const raw = getProgramRegistrationOverlayRecord()['economyRegistration.wageInfo.paymentItemValues']
-    // 사용자가 []로 비운 값은 유지. 미기록(undefined)만 초기 시드.
-    if (Array.isArray(raw) && raw.every(id => String(id ?? '').trim() === '')) return
-    const current = (Array.isArray(raw) ? raw : paymentItemValues)
-      .map(id => String(id ?? '').trim())
-      .filter(Boolean)
-    const known = new Set(remotePaymentOptions.map(opt => opt.value))
-    const allKnown = current.length > 0 && current.every(id => known.has(id))
-    if (allKnown) return
-    const shouldSeed = raw === undefined
-    const shouldMigrate =
-      current.length > 0 && current.every(id => LEGACY_PAYMENT_IDS.has(id) || !known.has(id))
-    if (!shouldSeed && !shouldMigrate) return
-    const transport = remotePaymentOptions.find(
-      opt => opt.label.trim() === PAYMENT_LABEL_TRANSPORT_CATALOG
-    )
-    const lodging = remotePaymentOptions.find(
-      opt => opt.label.trim() === PAYMENT_LABEL_LODGING_CATALOG
-    )
-    const next = [transport?.value, lodging?.value].filter((id): id is string => Boolean(id))
-    if (next.length > 0) setPaymentItemValues(next)
-  }, [paymentItemValues, remotePaymentOptions, setPaymentItemValues])
+    // 미기록(undefined)만 기본 지급 항목(교통비·숙박비 1사1교)으로 시드
+    if (raw === undefined) {
+      const transport = remotePaymentOptions.find(
+        opt => opt.label.trim() === PAYMENT_LABEL_TRANSPORT_CATALOG
+      )
+      const lodging = remotePaymentOptions.find(
+        opt => opt.label.trim() === PAYMENT_LABEL_LODGING_CATALOG
+      )
+      const next = [transport?.value, lodging?.value].filter((id): id is string => Boolean(id))
+      if (next.length > 0) setPaymentItemValues(next)
+      return
+    }
+    // 사용자가 []로 비운 값은 유지. 임시저장·템플릿의 예전 mock id는 실제 id로 교정
+    if (!Array.isArray(raw)) return
+    const current = raw.map(id => String(id ?? '').trim()).filter(Boolean)
+    const next = normalizeProgramPaymentItemIds(current)
+    if (next.length !== current.length || next.some((id, index) => id !== current[index])) {
+      setPaymentItemValues(next)
+    }
+  }, [paymentCatalog.ready, paymentItemValues, remotePaymentOptions, setPaymentItemValues])
 
   return (
     <DetailInfoForm title="임금 정보" hideHeader mode="edit" className="program-registration-paragraph">
@@ -170,7 +173,8 @@ export function OneCOneSRegistrationWageInfoParagraph() {
                 value={paymentItemValues}
                 onChange={next => setPaymentItemValues(next as string[])}
                 options={paymentItemOptions}
-                placeholder="지급 항목을 선택하세요"
+                disabled={!paymentCatalog.ready}
+                placeholder={paymentItemSelectPlaceholder(paymentCatalog)}
                 style={{ width: '100%', minWidth: 0 }}
               />
             </div>

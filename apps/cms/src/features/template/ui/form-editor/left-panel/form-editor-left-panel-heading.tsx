@@ -1,4 +1,3 @@
-import { PlusOutlined } from '@ant-design/icons'
 import { createElement, type ReactNode } from 'react'
 import type { ParagraphCardEditableHeading } from '@/features/template/ui/template-management/template-fullpage-modal'
 import {
@@ -79,6 +78,8 @@ import {
 } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
+
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 
 /** 발급용 등 — 단락 카드 제목의 필수(*) 표시 제거 */
 export function withoutTitleRequired<T extends { titleRequired?: boolean }>(
@@ -290,7 +291,7 @@ export function withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
         variant="secondary"
         size="medium"
         width={160}
-        icon={<PlusOutlined aria-hidden />}
+        icon={<ButtonAddIcon aria-hidden />}
         disabled={!applicationGradeAddEnabled}
         onClick={e => {
           e.stopPropagation()
@@ -327,7 +328,7 @@ export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrai
         variant="secondary"
         size="medium"
         width={160}
-        icon={<PlusOutlined aria-hidden />}
+        icon={<ButtonAddIcon aria-hidden />}
         disabled={!classTimeAddEnabled}
         onClick={e => {
           e.stopPropagation()
@@ -438,7 +439,7 @@ export function withProgramApplicationFormVolunteerTitleTrailing(
           size="medium"
           width={160}
           disabled={opts?.exceptionScheduleAddDisabled}
-          icon={<PlusOutlined aria-hidden />}
+          icon={<ButtonAddIcon aria-hidden />}
           onClick={e => {
             e.stopPropagation()
             opts?.onAddExceptionSchedule?.()

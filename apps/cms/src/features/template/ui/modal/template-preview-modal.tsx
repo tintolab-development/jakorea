@@ -1,4 +1,3 @@
-import { DownloadOutlined } from '@ant-design/icons'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -34,6 +33,7 @@ import {
 } from '@/features/template/lib/generate-form-document-pdf'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { handleError } from '@/shared/utils/error-handler'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 /** 강사 신청 폼 등 `data-paragraph-id` 스코프 스타일(불가 일정 DatePicker 폭 등) — 미리보기 단독 열림에도 적용 */
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
@@ -317,7 +317,7 @@ export function TemplatePreviewModal({
                       type="button"
                       variant="primary"
                       size="large"
-                      icon={<DownloadOutlined />}
+                      icon={<ButtonDownloadIcon />}
                       className="template-preview-modal__notice-download-btn"
                       adminAction="download"
                       loading={pdfLoading}

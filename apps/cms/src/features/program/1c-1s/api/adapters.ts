@@ -47,6 +47,7 @@ import {
   applyRecruitmentParticipantColumnFieldsToUpdateRequest,
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
+  resolveParticipantRecruitmentRemarks,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
 import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
 
@@ -521,6 +522,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     contactEmail: program.contactEmail,
     contactPhone: program.contactPhone,
     oneLineIntroduction: program.oneLineIntroduction,
+    remarks: resolveParticipantRecruitmentRemarks(program),
     keyVisualImage: program.keyVisualImage ?? program.posterImage,
     settlementRuleId: program.settlementRuleId,
     applicationPathId: program.applicationPathId,

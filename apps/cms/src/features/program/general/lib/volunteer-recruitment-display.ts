@@ -8,6 +8,7 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { getVolunteerRecruitmentStatus } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { getGeneralVolunteerInterviewEnabled } from '@/features/program/general/lib/detail-meta'
+import { resolveAnnouncement } from '@/features/program/shared/lib/announcement-label'
 import {
   labelBool,
   pickDisplayString,
@@ -99,12 +100,14 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
     info?.generalVolunteerInterviewEnabled ??
     program.generalVolunteerInterviewEnabled
 
-  const finalPassAnnouncementMethod = pickDisplayString(
-    info?.finalAnnouncementLabel,
-    info?.resultAnnouncementLabel,
-    info?.finalPassAnnouncementMethod,
-    program.finalPassAnnouncementMethod
-  )
+  const finalAnnouncement = resolveAnnouncement({
+    labels: [info?.finalAnnouncementLabel, info?.resultAnnouncementLabel],
+    nested: { date: info?.finalPassAnnouncementDate, method: info?.finalPassAnnouncementMethod },
+    column: {
+      date: program.finalPassAnnouncementDate,
+      method: program.finalPassAnnouncementMethod,
+    },
+  })
 
   const documentPassAnnouncementMethod = pickDisplayString(
     info?.documentPassAnnouncementMethod,
@@ -134,10 +137,8 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
     interviewStartDate: info?.interviewStartDate ?? program.interviewStartDate,
     interviewEndDate: info?.interviewEndDate ?? program.interviewEndDate,
     interviewMethod: interviewMethod === '-' ? undefined : interviewMethod,
-    finalPassAnnouncementDate:
-      info?.finalPassAnnouncementDate ?? program.finalPassAnnouncementDate,
-    finalPassAnnouncementMethod:
-      finalPassAnnouncementMethod === '-' ? undefined : finalPassAnnouncementMethod,
+    finalPassAnnouncementDate: finalAnnouncement.date,
+    finalPassAnnouncementMethod: finalAnnouncement.method,
     contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
     contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
     contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),

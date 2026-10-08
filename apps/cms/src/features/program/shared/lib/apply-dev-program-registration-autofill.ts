@@ -34,15 +34,11 @@ import {
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
   TEMPLATE_FORM_PARTNER_INVOLVEMENT_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
-import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
-import { PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import {
-  getSettlementConfigRemote,
-  type SettlementConfigQueryData,
-} from '@/features/settlement-management/api/settlement-configs/admin-settlement-configs-service'
-import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
-import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
-import { queryClient } from '@/shared/lib/query-client'
+  ensurePaymentItemCatalog,
+  getActivePaymentItemCatalogOptions,
+} from '@/features/template/lib/template-registration-payment-item-options'
+import { PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import {
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
@@ -853,25 +849,8 @@ async function resolveDetailedProgram(
  * mock id(`p-1`)를 remote 옵션에 넣으면 셀렉트가 옵션 밖 값으로 보인다.
  */
 async function resolvePaymentItemOptions(): Promise<{ value: string; label: string }[]> {
-  if (shouldUseSettlementRemote('settlementConfigs')) {
-    try {
-      const cached = queryClient.getQueryData<SettlementConfigQueryData>(
-        settlementQueryKeys.settlementConfigs.current()
-      )
-      if (cached?.sections?.length) {
-        const fromCache = getTemplateRegistrationPaymentItemOptions(cached.sections)
-        if (fromCache.length > 0) return fromCache
-      }
-      const { sections } = await getSettlementConfigRemote()
-      if (sections.length > 0) {
-        const fromRemote = getTemplateRegistrationPaymentItemOptions(sections)
-        if (fromRemote.length > 0) return fromRemote
-      }
-    } catch {
-      /* remote 실패 시 mock 폴백 */
-    }
-  }
-  return getTemplateRegistrationPaymentItemOptions()
+  await ensurePaymentItemCatalog()
+  return getActivePaymentItemCatalogOptions()
 }
 
 async function pickPaymentItemSelection(): Promise<{ ids: string[]; labels: string }> {

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import {
   CmsButton,
   type CmsButtonResolvedSize,
@@ -7,6 +6,12 @@ import {
 } from '@/shared/ui/cms-button'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import { DsDemo, DsSection } from './section'
+
+import {
+  ButtonCalendarIcon,
+  ButtonDownloadIcon,
+  ButtonListIcon,
+} from '@/shared/ui/icons/ButtonIcons'
 
 const BUTTON_SIZES: CmsButtonResolvedSize[] = ['h52', 'h44', 'h40', 'h36', 'h32']
 
@@ -36,9 +41,8 @@ export function ButtonsSection() {
     >
       <p className="ds-note">
         <strong>Size</strong> — h52 · h44(기본) · h40 · h36 · h32. radius h52 10 · h44·h40 8 ·
-        h36·h32 6 · font-weight 600.
-        폭은 사이즈별 min-width(h44 140 · h40 120 · h36 100 · h32 80, h52 없음)부터 라벨 길이만큼
-        늘어나며, <code>width</code> prop으로 고정할 수 있습니다.
+        h36·h32 6 · font-weight 600. 폭은 사이즈별 min-width(h44 140 · h40 120 · h36 100 · h32 80,
+        h52 없음)부터 라벨 길이만큼 늘어나며, <code>width</code> prop으로 고정할 수 있습니다.
         <br />
         <strong>별칭</strong> — <code>large</code>=h44 · <code>medium</code>=h40 ·{' '}
         <code>small</code>=h32 · <code>delete</code>=error · <code>cancel</code>=default. 새 코드는
@@ -64,7 +68,7 @@ export function ButtonsSection() {
                     size={size}
                     variant={state.variant}
                     disabled={state.disabled}
-                    icon={row.icon ? <DownloadOutlined /> : undefined}
+                    icon={row.icon ? <ButtonDownloadIcon /> : undefined}
                     iconPosition={row.iconPosition}
                     aria-label={`${size} ${state.key} ${row.label}`}
                   >
@@ -79,10 +83,10 @@ export function ButtonsSection() {
 
       <DsDemo label="아이콘 + 긴 라벨">
         <div className="ds-demo__row">
-          <CmsButton variant="secondary" icon={<CalendarOutlined />}>
+          <CmsButton variant="secondary" icon={<ButtonCalendarIcon />}>
             캘린더 뷰로 보기
           </CmsButton>
-          <CmsButton variant="secondary" icon={<UnorderedListOutlined />}>
+          <CmsButton variant="secondary" icon={<ButtonListIcon />}>
             리스트 뷰로 보기
           </CmsButton>
           <ExcelButton onClick={() => undefined} />
@@ -104,7 +108,7 @@ export function ButtonsSection() {
           <CmsButton
             variant="secondary"
             size="h44"
-            icon={listView ? <CalendarOutlined /> : <UnorderedListOutlined />}
+            icon={listView ? <ButtonCalendarIcon /> : <ButtonListIcon />}
             onClick={() => setListView(v => !v)}
           >
             {listView ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}

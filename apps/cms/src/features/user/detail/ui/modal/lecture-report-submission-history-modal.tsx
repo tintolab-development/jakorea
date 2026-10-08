@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { Application } from '@/types/domain'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
@@ -21,6 +20,7 @@ import { resolveMemberApplicationIdFromApplication } from '@/features/user/api/m
 import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './lecture-report-submission-history-modal.css'
 
 interface LectureReportSubmissionHistoryModalProps {
@@ -231,7 +231,7 @@ export function LectureReportSubmissionHistoryModal({
             size="medium"
             width={200}
             className="cms-button--footer-auto lecture-report-submission-history-modal__footer-btn lecture-report-submission-history-modal__footer-btn--bulk"
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             loading={bulkDownloading}
             disabled={memberId == null || applicationId == null}
             onClick={() => void handleBulkDownload()}

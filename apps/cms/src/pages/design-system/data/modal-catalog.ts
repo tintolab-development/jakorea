@@ -114,15 +114,6 @@ export const MODAL_CATALOG_IN_USE: ModalCatalogEntry[] = [
     consolidateHint: '도메인 ContentModal — 유지',
   },
   {
-    name: 'InquiryModal',
-    path: 'shared/ui/inquiry-modal',
-    usage: 'in-use',
-    filesApprox: 3,
-    basedOn: 'ContentModal',
-    note: '문의 작성 (공지·문의). ContentModal 셸 이관 완료.',
-    consolidateHint: '도메인 ContentModal — 유지',
-  },
-  {
     name: 'ProgramHistoryDeleteBlockedModal',
     path: 'shared/ui/program-history-delete-blocked-modal',
     usage: 'in-use',

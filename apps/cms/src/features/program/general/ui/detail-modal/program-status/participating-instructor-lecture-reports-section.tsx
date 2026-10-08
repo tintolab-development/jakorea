@@ -5,7 +5,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
@@ -28,6 +27,8 @@ import {
   buildTempMockLectureReportFileContent,
   downloadTempMockTextFile,
 } from '@/features/program/general/lib/temp-mock-local-actions'
+
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
 const STATUS_ACCENT_SCHEDULED = 'var(--color-green, #1e8c29)'
@@ -323,7 +324,7 @@ export function ParticipatingInstructorLectureReportsSection({
             variant="secondary"
             size="large"
             width={220}
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             disabled={bulkDownloading || submittedRows.length === 0}
             loading={bulkDownloading}
             onClick={() => {

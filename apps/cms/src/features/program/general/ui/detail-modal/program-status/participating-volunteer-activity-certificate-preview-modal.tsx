@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import {
   ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
@@ -27,6 +26,7 @@ import {
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { useFormCertificatePdfDownload } from '@/pages/templates/use-form-certificate-pdf-download'
 import { useFormCertificatePreviewProps } from '@/pages/templates/use-form-certificate-preview-props'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/pages/templates/form-certificate-preview.css'
 import './activity-certificate-issuance-preview-modal.css'
@@ -124,7 +124,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
         variant="primary"
         size="medium"
         width={140}
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         disabled={isPdfDownloading || isAllocatingSerial}
         onClick={() => void handleDownloadPdf()}
       >

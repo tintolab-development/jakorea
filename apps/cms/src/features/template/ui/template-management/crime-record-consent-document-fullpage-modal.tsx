@@ -2,7 +2,6 @@
  * 작성 양식 — 성범죄 경력조회 동의서 상세: 정적 A4 문서 미리보기 풀페이지 모달
  */
 
-import { DownloadOutlined } from '@ant-design/icons'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { type ChangeEvent, useCallback, useId, useRef } from 'react'
 import { useAgreementCrimeConsentDocumentEditor } from '@/features/template/hooks/use-agreement-crime-consent-document-editor'
@@ -16,6 +15,7 @@ import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './crime-record-consent-document-fullpage-modal.css'
 
 export const CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE = '성범죄 경력조회 동의서'
@@ -127,7 +127,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
             <div className="crime-consent-doc-modal__actions">
               <CmsButton
                 variant="secondary"
-                icon={<DownloadOutlined />}
+                icon={<ButtonDownloadIcon />}
                 onClick={handleDownload}
                 className="crime-consent-doc-modal__download-btn"
               >

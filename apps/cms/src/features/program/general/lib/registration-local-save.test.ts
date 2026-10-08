@@ -3,6 +3,14 @@ import {
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  patchApplicantRecruitInstitutionOverlay,
+  resetApplicantRecruitInstitutionOverlay,
+} from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import {
+  patchGeneralRecruitOverlay,
+  resetGeneralRecruitOverlay,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { buildGeneralProgramListRowFromRegistrationSnapshot } from './registration-local-save'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 
@@ -15,6 +23,8 @@ const organizationOnlyParticipant: ProgramRegistrationParticipantState = {
 
 beforeEach(() => {
   resetProgramRegistrationOverlay()
+  resetApplicantRecruitInstitutionOverlay()
+  resetGeneralRecruitOverlay()
 })
 
 describe('buildGeneralProgramListRowFromRegistrationSnapshot — 세부 프로그램명 (버그 수정 확인, 일정형)', () => {
@@ -95,6 +105,24 @@ describe('buildGeneralProgramListRowFromRegistrationSnapshot — 세부 프로�
     expect(program.detailedProgramId).toBe('163003')
     // 1사1교는 「교육 진행 구조」 선택 자체가 없다 — 항상 curriculum으로 고정된다
     expect(program.generalProgramEducationStructure).toBe('curriculum')
+  })
+
+  it('1사1교 — 참여 기관 모집 비고를 remarks로 반영한다', () => {
+    patchGeneralRecruitOverlay({
+      'recruit.individual.notes': '일정은 학교 사정에 따라 조율할 수 있습니다.',
+    })
+    patchApplicantRecruitInstitutionOverlay({ 'recruit.notes': '테스토 비고' })
+
+    const program = buildGeneralProgramListRowFromRegistrationSnapshot({
+      id: 'company-school-local-test-notes',
+      participant: organizationOnlyParticipant,
+      programType: 'curriculum',
+      variant: 'economy',
+      sessionRoundType: 'single',
+    })
+
+    expect(program.remarks).toBe('테스토 비고')
+    expect(program.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('테스토 비고')
   })
 
   it('(대조군) 일반 프로그램 — 일정형은 여전히 세부 프로그램명이 스케줄 상세명으로 잠긴다', () => {

@@ -138,7 +138,6 @@ const SettlementItemSettingsPage = lazyLoad(
   () => import('@/pages/settlement-management/settlement-item-settings-page')
 )
 const ProfilePage = lazyLoad(() => import('@/pages/mypage/profile-page'))
-const NoticeListPage = lazyLoad(() => import('@/pages/notices/notice-list-page'))
 const EducationRecordListPage = lazyLoad(
   () => import('@/pages/education-records/education-record-list-page')
 )
@@ -163,8 +162,6 @@ const KakaoAlimtalkPage = lazyLoad(() => import('@/pages/notifications/kakao-ali
 const MailPage = lazyLoad(() => import('@/pages/notifications/mail-page'))
 const SmsPage = lazyLoad(() => import('@/pages/notifications/sms-page'))
 const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
-const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
-const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
 const MemberLoginHistoryPage = lazyLoad(() => import('@/pages/logs/member-login-history-page'))
 const FileDownloadHistoryPage = lazyLoad(() => import('@/pages/logs/file-download-history-page'))
 const PersonalInfoAccessHistoryPage = lazyLoad(
@@ -185,19 +182,19 @@ function LegacyPostsRedirect({
   const isAdmin = user?.role === 'ADMIN'
 
   if (kind === 'root') {
-    return <Navigate to={isAdmin ? '/admin/posts/notices' : '/notices'} replace />
+    return <Navigate to={isAdmin ? '/admin/posts/notices' : '/'} replace />
   }
 
   if (kind === 'faq') {
-    return <Navigate to={isAdmin ? '/admin/posts/faq' : '/notices/faq'} replace />
+    return <Navigate to={isAdmin ? '/admin/posts/faq' : '/'} replace />
   }
 
   if (kind === 'inquiries') {
-    return <Navigate to={isAdmin ? '/admin/posts/inquiries' : '/notices/inquiries'} replace />
+    return <Navigate to={isAdmin ? '/admin/posts/inquiries' : '/'} replace />
   }
 
   if (kind === 'notices') {
-    return <Navigate to={isAdmin ? '/admin/posts/notices' : '/notices'} replace />
+    return <Navigate to={isAdmin ? '/admin/posts/notices' : '/'} replace />
   }
 
   // categories: 관리자 전용이지만 legacy URL 호환을 위해 리다이렉트 유지
@@ -820,29 +817,6 @@ export const router = createBrowserRouter([
           {
             path: 'bug-issue-history',
             element: <BugIssueHistoryPage />,
-          },
-        ],
-      },
-      {
-        path: 'notices',
-        children: [
-          { index: true, element: <NoticeListPage /> },
-          { path: 'faq', element: <FAQPage /> },
-          {
-            path: 'inquiries',
-            children: [
-              { index: true, element: <InquiryPage /> },
-              // 내 문의 내역 (2뎁스)
-              {
-                path: 'my',
-                element: (
-                  <ComingSoonPage
-                    title="내 문의 내역"
-                    description="내 문의 내역 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-                  />
-                ),
-              },
-            ],
           },
         ],
       },

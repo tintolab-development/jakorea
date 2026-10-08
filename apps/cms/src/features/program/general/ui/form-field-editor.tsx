@@ -18,13 +18,10 @@ import {
   Card } from 'antd'
 import { CmsButton } from '@/shared/ui'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined } from '@ant-design/icons'
+import { EditOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
 import type { FormFieldDef, FormFieldType } from '@/types/form-template'
+
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const { TextArea } = Input
 const { Text } = Typography
@@ -231,7 +228,7 @@ export function FormFieldEditor({
           <CmsButton
             variant="primary"
             size="large"
-            icon={<PlusOutlined />}
+            icon={<ButtonAddIcon />}
             onClick={handleAdd}
             style={{ marginBottom: 16 }}
           >

@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
 import { ProgramList } from '@/features/program/general/ui/program-list'
@@ -57,6 +56,7 @@ import {
 } from '@/features/program/trained-teachers/api/hooks'
 import { useTrainedTeachersProgramListFilters } from '@/features/program/trained-teachers/hooks/use-list-filters'
 
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import '../program-list-page.css'
 
 const TRAINED_TEACHERS_NEW_QUERY_KEY = 'new'
@@ -434,7 +434,7 @@ function TrainedTeachersProgramPageContent() {
       <CmsButton
         variant="secondary"
         size="large"
-        icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
+        icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
         onClick={handleViewModeToggle}
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}

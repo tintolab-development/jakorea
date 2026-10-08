@@ -1,6 +1,5 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin, Table } from 'antd'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
@@ -25,6 +24,7 @@ import { mapVolunteerScreeningRowToParticipant } from '@/features/program/genera
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { useGeneralVolunteerDocPassed } from './use-doc-passed'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './doc-passed-section.css'
 import './volunteer-screening.css'
@@ -158,7 +158,7 @@ export function GeneralVolunteerDocPassedSection({
         variant="secondary"
         size="large"
         style={{ minWidth: 180 }}
-        icon={<CalendarOutlined />}
+        icon={<ButtonCalendarIcon />}
         onClick={handleViewCalendar}
       >
         캘린더 뷰로 보기
@@ -169,7 +169,7 @@ export function GeneralVolunteerDocPassedSection({
         variant="secondary"
         size="large"
         style={{ minWidth: 180 }}
-        icon={<UnorderedListOutlined />}
+        icon={<ButtonListIcon />}
         onClick={handleViewList}
       >
         리스트 뷰로 보기

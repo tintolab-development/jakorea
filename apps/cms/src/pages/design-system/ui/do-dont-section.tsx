@@ -147,8 +147,8 @@ export function DoDontSection() {
             <code>ListPageLayout</code>, <code>EditableCell</code>
           </li>
           <li>
-            Domain-only: <code>InquiryModal</code>, <code>ProfileEditModal</code>,{' '}
-            <code>TemplateFullpageModal</code>, <code>ProgramHistoryDeleteBlockedModal</code>
+            Domain-only: <code>ProfileEditModal</code>, <code>TemplateFullpageModal</code>,{' '}
+            <code>ProgramHistoryDeleteBlockedModal</code>
           </li>
           <li>
             Dashboard 위젯 본체(<code>ProgramScheduleWidget</code>,{' '}

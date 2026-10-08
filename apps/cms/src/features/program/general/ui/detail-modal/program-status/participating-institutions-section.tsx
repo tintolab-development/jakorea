@@ -6,7 +6,6 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Spin, Table } from 'antd'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { CmsButton, FilterTableLayout } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -71,6 +70,7 @@ import type { GeneralProgramNavigationCapabilities } from '@/features/program/ge
 import { applyCombinedClassMergeToSchoolDetailWithList } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 
 function formatSessionLine(s: ParticipatingSchoolSession): string {
@@ -603,7 +603,7 @@ export function ParticipatingInstitutionsSection({
               variant="secondary"
               size="large"
               style={{ minWidth: 180 }}
-              icon={<CalendarOutlined />}
+              icon={<ButtonCalendarIcon />}
               onClick={handleCalendarView}
             >
               캘린더 뷰로 보기
@@ -613,7 +613,7 @@ export function ParticipatingInstitutionsSection({
               variant="secondary"
               size="large"
               style={{ minWidth: 180 }}
-              icon={<UnorderedListOutlined />}
+              icon={<ButtonListIcon />}
               onClick={handleListView}
             >
               리스트 뷰로 보기

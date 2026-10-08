@@ -13,6 +13,7 @@ import {
   APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
   getApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { formatAnnouncementLabel } from '@/features/program/shared/lib/announcement-label'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
@@ -285,16 +286,6 @@ function coalesceNumber(
   }
   if (programVal !== undefined) return programVal
   return overlayVal
-}
-
-function formatFinalAnnouncementLabel(
-  iso: string | undefined,
-  method: string | undefined
-): string | undefined {
-  if (!iso?.trim() || !method?.trim()) return undefined
-  const datePart = formatDateOnly(iso)
-  if (datePart === '-') return undefined
-  return `${datePart} | ${method.trim()}`
 }
 
 function formatAvailableTimeSlotsFromSelectedKeys(keys: unknown): string | undefined {
@@ -596,9 +587,9 @@ export function applyGeneralRecruitOverlayToProgram(
     keys.detailInfo.participantMethod
   )
   const participantRemarks =
-    overlayParticipantDetailString(overlay, 'otherNotes', keys.detailInfo.participantOtherNotes) ??
+    overlayString(overlay, inst.notes) ??
     overlayString(overlay, keys.individual.notes) ??
-    overlayString(overlay, inst.notes)
+    overlayParticipantDetailString(overlay, 'otherNotes', keys.detailInfo.participantOtherNotes)
   if (participantDescription) {
     participantInfo.programDescription = coalesceString(
       participantInfo.programDescription,
@@ -665,7 +656,7 @@ export function applyGeneralRecruitOverlayToProgram(
         : undefined
   const institutionFinalAnnounceIso = overlayString(overlay, inst.finalAnnounceIso)
   const institutionFinalAnnounceMethod = overlayString(overlay, inst.finalAnnounceMethod)
-  const institutionFinalAnnouncementLabel = formatFinalAnnouncementLabel(
+  const institutionFinalAnnouncementLabel = formatAnnouncementLabel(
     institutionFinalAnnounceIso,
     institutionFinalAnnounceMethod
   )
@@ -1020,7 +1011,7 @@ export function applyGeneralRecruitOverlayToProgram(
   const volunteerInterviewMethod = overlayString(overlay, keys.volunteer.interviewMethod)
   const volunteerFinalAnnounceIso = overlayString(overlay, keys.volunteer.finalAnnounceIso)
   const volunteerFinalAnnounceMethod = overlayString(overlay, keys.volunteer.finalAnnounceMethod)
-  const volunteerFinalAnnouncementLabel = formatFinalAnnouncementLabel(
+  const volunteerFinalAnnouncementLabel = formatAnnouncementLabel(
     volunteerFinalAnnounceIso,
     volunteerFinalAnnounceMethod
   )
@@ -1211,6 +1202,11 @@ export function applyGeneralRecruitOverlayToProgram(
     posterImage: keyVisualImage ?? program.posterImage,
     attachmentFileNames: attachmentFileNames ?? program.attachmentFileNames,
     otherNotes: program.otherNotes,
+    remarks: coalesceString(
+      program.remarks ?? participantInfo.remarks,
+      participantRemarks,
+      preferOverlay
+    ),
     oneLineIntroduction: coalesceString(
       program.oneLineIntroduction,
       overlayString(overlay, keys.individual.notes) ?? overlayString(overlay, inst.notes),

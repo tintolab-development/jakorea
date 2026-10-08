@@ -25,8 +25,14 @@ import {
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import {
   getUjatProgramRegistrationOverlayRecord,
+  patchUjatProgramRegistrationOverlay,
   resetUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import {
+  normalizeOverlayPaymentItemsBeforeSubmit,
+  PAYMENT_ITEM_RESELECT_ALERT,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { UJAT_WAGE_OVERLAY_PAYMENT_KEY } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { toCreateRequest } from '@/features/program/ujat/api/adapters'
 import {
   buildUjatProgramListRowFromRegistrationSnapshot,
@@ -443,6 +449,17 @@ export function useUjatProgramRegistrationFlow(
     const completion = (async () => {
       const endOverlay = beginBlockingOverlay()
       try {
+        const paymentItems = await normalizeOverlayPaymentItemsBeforeSubmit(
+          getUjatProgramRegistrationOverlayRecord(),
+          [{ valuesKey: UJAT_WAGE_OVERLAY_PAYMENT_KEY }]
+        )
+        if (Object.keys(paymentItems.patch).length > 0) {
+          patchUjatProgramRegistrationOverlay(paymentItems.patch)
+        }
+        if (paymentItems.clearedKeys.length > 0) {
+          showAlert(PAYMENT_ITEM_RESELECT_ALERT)
+          throw new UjatRegistrationRequiredFieldsIncompleteError()
+        }
         const registrationOverlay = collectUjatRegistrationCreateOverlay(
           getUjatProgramRegistrationOverlayRecord()
         )

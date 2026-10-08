@@ -15,7 +15,6 @@ import { useSearchParams } from 'react-router-dom'
 import { Table } from 'antd'
 import type { TableProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { Application, UserHistory } from '@/types/domain'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import {
@@ -62,6 +61,8 @@ import { handleError } from '@/shared/utils/error-handler'
 import { CertificateBulkIssueReasonModal } from './modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from './modal/certificate-bulk-issue-reason-modal'
 import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-submission-history-modal'
+
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
   return (
@@ -638,7 +639,7 @@ export function MemberProgramLectureHistory({
                     variant="secondary"
                     size="large"
                     width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
-                    icon={<DownloadOutlined />}
+                    icon={<ButtonDownloadIcon />}
                     disabled={selectedRowKeys.length === 0}
                     onClick={() =>
                       openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
@@ -653,7 +654,7 @@ export function MemberProgramLectureHistory({
                     variant="secondary"
                     width={180}
                     disabled={selectedRowKeys.length === 0}
-                    icon={<DownloadOutlined />}
+                    icon={<ButtonDownloadIcon />}
                     onClick={() =>
                       openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
                     }
@@ -664,7 +665,7 @@ export function MemberProgramLectureHistory({
                     variant="secondary"
                     size="large"
                     width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
-                    icon={<DownloadOutlined />}
+                    icon={<ButtonDownloadIcon />}
                     disabled={selectedRowKeys.length === 0}
                     onClick={() =>
                       openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
@@ -679,7 +680,7 @@ export function MemberProgramLectureHistory({
                   variant="secondary"
                   width={180}
                   disabled={selectedRowKeys.length === 0}
-                  icon={<DownloadOutlined />}
+                  icon={<ButtonDownloadIcon />}
                   onClick={() =>
                     openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
                   }
@@ -691,7 +692,7 @@ export function MemberProgramLectureHistory({
                 <CmsButton
                   variant="secondary"
                   size="large"
-                  icon={<DownloadOutlined />}
+                  icon={<ButtonDownloadIcon />}
                   className="member-program-lecture-history__bulk-lecture-report-download cms-button--no-label-ellipsis"
                   loading={allLectureReportsDownloading}
                   disabled={allLectureReportsDownloading}

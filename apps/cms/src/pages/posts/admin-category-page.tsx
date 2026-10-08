@@ -19,12 +19,14 @@ import {
   Switch,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsButton, LoadingButton } from '@/shared/ui'
+
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const { Text } = Typography
 const { Option } = Select
@@ -262,7 +264,7 @@ export function AdminCategoryPage() {
         description={`총 ${filteredData.length.toLocaleString()}건`}
         hideExcelDownload
         actions={
-          <CmsButton variant="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
+          <CmsButton variant="primary" icon={<ButtonAddIcon />} onClick={() => showModal()}>
             카테고리 추가
           </CmsButton>
         }

@@ -10,6 +10,7 @@
  *   h40  radius 8  · padding 6×16  · min-width 120  · font 14/125% · icon 20 · gap 6
  *   h36  radius 6  · padding 6×12  · min-width 100  · font 14/125% · icon 20 · gap 4
  *   h32  radius 6  · padding 8×10  · min-width 80   · font 12/115% · icon 16 · gap 4
+ * icon = 아이콘 프레임 크기 (여백은 아이콘 SVG viewBox에 포함)
  */
 
 .cms-button.ant-btn {
@@ -117,6 +118,7 @@
 }
 
 .cms-button.ant-btn .cms-button__icon {
+  box-sizing: border-box;
   display: flex;
   flex-shrink: 0;
   align-items: center;

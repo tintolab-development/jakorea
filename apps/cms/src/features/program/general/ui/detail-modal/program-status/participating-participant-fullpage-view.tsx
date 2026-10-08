@@ -5,7 +5,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type {
@@ -70,6 +69,7 @@ import {
 } from './participating-individual-participant-assignment-section'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import { isSubmissionTeamApplicable } from '@/features/program/general/lib/submission-team-applicable'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './school-detail-fullpage-view.css'
 import './participating-participant-fullpage-view.css'
 
@@ -542,7 +542,7 @@ export function ParticipatingParticipantFullpageView({
               <CmsButton
                 variant="secondary"
                 size="large"
-                icon={<DownloadOutlined />}
+                icon={<ButtonDownloadIcon />}
                 disabled={
                   certificateExportActive ||
                   isApplicationInfoEditing ||
@@ -608,7 +608,7 @@ export function ParticipatingParticipantFullpageView({
                 variant="secondary"
                 size="large"
                 width={200}
-                icon={<DownloadOutlined />}
+                icon={<ButtonDownloadIcon />}
                 adminAction="download"
                 onClick={() => assignmentSectionRef.current?.bulkDownloadAssignments()}
               >

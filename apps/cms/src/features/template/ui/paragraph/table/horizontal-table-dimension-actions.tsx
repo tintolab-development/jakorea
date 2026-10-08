@@ -1,5 +1,5 @@
 import { CmsButton } from '@/shared/ui/cms-button'
-import { FormEditorPlusIcon } from '@/features/template/ui/shared/form-editor-plus-icon'
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import {
   horizontalTableAddColumn,
@@ -29,7 +29,7 @@ export function HorizontalTableDimensionActions({
         type="button"
         size="large"
         width={140}
-        icon={<FormEditorPlusIcon />}
+        icon={<ButtonAddIcon />}
         disabled={disabled}
         title="테이블 최하단에 가로 한 줄(행)을 추가합니다."
         onClick={() => onUpdate(horizontalTableAddRow(paragraph))}
@@ -41,7 +41,7 @@ export function HorizontalTableDimensionActions({
         type="button"
         size="large"
         width={140}
-        icon={<FormEditorPlusIcon />}
+        icon={<ButtonAddIcon />}
         disabled={disabled}
         title="테이블 가장 오른쪽에 세로 한 줄(열)을 추가합니다."
         onClick={() => onUpdate(horizontalTableAddColumn(paragraph))}

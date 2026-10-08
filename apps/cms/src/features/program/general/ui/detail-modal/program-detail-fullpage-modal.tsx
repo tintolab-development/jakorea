@@ -321,10 +321,18 @@ export function ProgramDetailFullPageModal({
   // remote 부모(onUpdateProgram): 로딩 중 목록/stub program으로 본문 채우지 않음
   // legacy Zustand: 상세 GET이 있으면 목록 행보다 우선 (빈 탭 고정 방지)
   const displayProgram = useMemo(() => {
-    if (onUpdateProgram && externalLoading) return null
-    if (onUpdateProgram) return program ?? null
-    return detailProgram ?? program ?? null
-  }, [detailProgram, program, onUpdateProgram, externalLoading])
+    const raw =
+      onUpdateProgram && externalLoading
+        ? null
+        : onUpdateProgram
+          ? program ?? null
+          : detailProgram ?? program ?? null
+    if (!raw) return null
+    if (programVariant === 'company-school' && !raw.backendProgramType) {
+      return { ...raw, backendProgramType: 'COMPANY_SCHOOL' }
+    }
+    return raw
+  }, [detailProgram, program, onUpdateProgram, externalLoading, programVariant])
   const recruitmentEditProgram = useMemo(
     () => (displayProgram ? resolveGeneralProgramForRecruitmentEdit(displayProgram) : null),
     [displayProgram]

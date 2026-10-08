@@ -4,7 +4,6 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -37,6 +36,7 @@ import {
   mapAssignmentSubmissionRowsWithNo,
   useAssignmentSubmissionHistoryColumns,
 } from './assignment-submission-history-table'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './assignment-submission-modal.css'
 
 export interface AssignmentSubmissionModalProps {
@@ -214,7 +214,7 @@ export function AssignmentSubmissionModal({
         size="medium"
         width={160}
         className="cms-button--footer-auto assignment-submission-modal__footer-btn assignment-submission-modal__footer-btn--bulk"
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         loading={bulkDownloadLoading}
         disabled={onBulkDownload == null}
         onClick={() => {

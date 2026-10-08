@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Table } from 'antd'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
@@ -10,6 +9,7 @@ import { UJAT_SCHEDULE_CONFIRM_TABLE_MIN_SCROLL_X } from './columns'
 import { UjatInstitutionScheduleConfirmCalendarView } from './calendar-view'
 import { useUjatScheduleConfirmList } from './use-schedule-confirm-list'
 import type { UjatScheduleConfirmRow } from './types'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './list.css'
 
 export function UjatInstitutionScheduleConfirmList({
@@ -62,7 +62,7 @@ export function UjatInstitutionScheduleConfirmList({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
@@ -73,7 +73,7 @@ export function UjatInstitutionScheduleConfirmList({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={() => setViewMode('table')}
               >
                 리스트 뷰로 보기

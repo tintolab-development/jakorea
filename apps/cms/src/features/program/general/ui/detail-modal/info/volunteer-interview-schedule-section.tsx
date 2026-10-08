@@ -1,5 +1,4 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { PlusOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import type { UseFormReturn } from 'react-hook-form'
@@ -24,6 +23,7 @@ import { RECRUIT_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/r
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-interview-available-schedule-paragraph.css'
 
 const FORM_CLASS = 'program-registration-paragraph'
@@ -219,7 +219,7 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
                 size="medium"
                 width={160}
                 disabled={exceptionScheduleAddDisabled}
-                icon={<PlusOutlined aria-hidden />}
+                icon={<ButtonAddIcon aria-hidden />}
                 onClick={() => setExceptionBlockKeys(prev => [...prev, Date.now()])}
               >
                 예외 일정 추가

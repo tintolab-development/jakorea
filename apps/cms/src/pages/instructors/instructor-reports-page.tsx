@@ -10,7 +10,7 @@ import { Card, Table, Tag, Button, Space, Typography, Tabs } from 'antd'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { ContentModal, EmptyState } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
+import { EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
 import { useReportService } from '@/features/report/hooks/use-report-service'
@@ -25,6 +25,8 @@ import { getReportTypeLabel, getReportTypeColor } from '@/shared/constants/domai
 import dayjs from 'dayjs'
 import type { Schedule, Report } from '@/types/domain'
 import type { ColumnsType } from 'antd/es/table'
+
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const { Title, Paragraph } = Typography
 
@@ -251,7 +253,7 @@ export function InstructorReportsPage() {
           {record.status === 'NOT_SUBMITTED' ? (
             <CmsButton
               size="small"
-              icon={<PlusOutlined />}
+              icon={<ButtonAddIcon />}
               onClick={() => handleView(record)}
             >
               작성
@@ -259,7 +261,7 @@ export function InstructorReportsPage() {
           ) : record.status === 'REJECTED' ? (
             <CmsButton
               size="small"
-              icon={<PlusOutlined />}
+              icon={<ButtonAddIcon />}
               onClick={() => handleView(record)}
             >
               다시 작성

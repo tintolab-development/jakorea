@@ -5,9 +5,11 @@
 import { Space, Card, Tag, Alert, Typography } from 'antd'
 import { CmsButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { EditOutlined } from '@ant-design/icons'
 import type { ApplicationPath } from '@/types/domain'
 import dayjs from 'dayjs'
+
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const { Paragraph } = Typography
 
@@ -39,7 +41,7 @@ export function ProgramApplicationPathTab({
                   수정
                 </CmsButton>
               ) : (
-                <CmsButton icon={<PlusOutlined />} onClick={onCreate}>
+                <CmsButton icon={<ButtonAddIcon />} onClick={onCreate}>
                   신청 경로 등록
                 </CmsButton>
               )}

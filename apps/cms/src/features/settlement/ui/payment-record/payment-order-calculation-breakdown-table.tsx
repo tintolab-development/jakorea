@@ -5,7 +5,6 @@
 import { useMemo, type ReactNode } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
@@ -14,6 +13,7 @@ import type {
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/data/mock/payment-order-admin-list'
 import type { PaymentOrderCalculationBasisDetail } from './payment-order-calculation-basis-detail'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './payment-order-program-calculation-statement-modal.css'
 
 export const PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH = 1200
@@ -293,7 +293,7 @@ export function PaymentOrderCalculationBreakdownTable({
                   variant="primary"
                   size="large"
                   style={{ width: '160px' }}
-                  icon={<DownloadOutlined />}
+                  icon={<ButtonDownloadIcon />}
                   disabled={paymentStatementIssueDisabled}
                   title={
                     paymentStatementIssueDisabled

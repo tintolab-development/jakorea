@@ -45,7 +45,6 @@ export {
   type ProgramProgressHistoryDeleteDomain,
   type ProgramProgressHistoryDeleteGuide,
 } from './program-progress-history-delete-guide'
-export { InquiryModal } from './inquiry-modal'
 export { ProfileEditModal } from './profile-edit-modal'
 export {
   getRoleLabel,
