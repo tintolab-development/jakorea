@@ -473,6 +473,8 @@ export function ParticipatingVolunteerFullpageView({
         )}
       </div>
 
+      <div className="school-detail-fullpage-view__page-bottom-spacer" aria-hidden />
+
       <ActivityWithdrawScheduleModal
         open={activityWithdrawModalOpen}
         scheduleOptions={activityWithdrawScheduleOptions}

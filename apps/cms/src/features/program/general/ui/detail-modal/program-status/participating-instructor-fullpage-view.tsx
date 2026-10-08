@@ -1647,6 +1647,9 @@ export function ParticipatingInstructorFullpageView({
           </div>
         )}
       </div>
+
+      <div className="school-detail-fullpage-view__page-bottom-spacer" aria-hidden />
+
       {personalInfoRevealModal}
       <ActivityCertificateIssuancePreviewModal
         open={activityCertPreviewOpen}
