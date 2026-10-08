@@ -57,6 +57,7 @@ import {
   shouldUseGeneralApplicationsRemoteApi,
 } from '@/features/program/general/api/applications-remote-capabilities'
 import { shouldUseCompanySchoolApplicationsRemoteApi } from '@/features/program/1c-1s/api/capabilities'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -79,16 +80,6 @@ function shouldUseParticipatingInstitutionApplicationPatchRemote(): boolean {
     shouldUseTrainedTeacherProgramsRemoteApi() &&
     isRealApiModuleEnabled('applications') &&
     hasRemoteAdminJwt()
-  )
-}
-
-function isCompanySchoolProgram(program: Program): boolean {
-  return (
-    program.id.startsWith('economy-prog-') ||
-    program.id.startsWith('company-school-prog-') ||
-    program.id.startsWith('company-school-local-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title?.includes('1사1교') === true
   )
 }
 
