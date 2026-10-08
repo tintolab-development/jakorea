@@ -17,7 +17,7 @@ export const EDUCATION_DISPLAY_STATUS_LABEL: Record<EducationDisplayStatus, stri
   rejected: '신청 반려',
 }
 
-/** 교사회원 교육현황 — 승인 전 구간은 「승인대기」로 통일 */
+/** 교사 회원 교육현황 — 승인 전 구간은 「승인대기」로 통일 */
 export const TEACHER_EDUCATION_DISPLAY_STATUS_LABEL: Record<EducationDisplayStatus, string> = {
   waiting_result: '승인대기',
   document_passed: '승인대기',
@@ -58,7 +58,7 @@ export const EDUCATION_DISPLAY_STATUS_TONE_CLASS: Record<EducationDisplayStatusT
 
 /** 탭 분류 — API `statusGroup` 연동 시 동일 기준 유지 */
 export function resolveEducationApplicationTab(
-  status: EducationDisplayStatus,
+  status: EducationDisplayStatus
 ): Exclude<EducationApplicationTab, 'all'> {
   switch (status) {
     case 'waiting_result':
@@ -75,7 +75,7 @@ export function resolveEducationApplicationTab(
 
 export function getEducationDisplayStatusLabel(
   status: EducationDisplayStatus,
-  options?: { audience?: EducationDisplayStatusAudience },
+  options?: { audience?: EducationDisplayStatusAudience }
 ): string {
   const audience = options?.audience ?? 'general'
   if (audience === 'teacher') {
@@ -84,7 +84,9 @@ export function getEducationDisplayStatusLabel(
   return EDUCATION_DISPLAY_STATUS_LABEL[status]
 }
 
-export function getEducationDisplayStatusTone(status: EducationDisplayStatus): EducationDisplayStatusTone {
+export function getEducationDisplayStatusTone(
+  status: EducationDisplayStatus
+): EducationDisplayStatusTone {
   return EDUCATION_DISPLAY_STATUS_TONE[status]
 }
 
@@ -127,7 +129,7 @@ export function isWithdrawnDuringEducation(input: WithdrawalInput): boolean {
 }
 
 export function resolveEducationWithdrawalPhase(
-  input: WithdrawalInput,
+  input: WithdrawalInput
 ): EducationWithdrawalPhase | undefined {
   if (input.displayStatus !== 'withdrawn') return undefined
   return input.withdrawalPhase ?? 'before_education'
@@ -139,7 +141,7 @@ export function resolveEducationWithdrawalPhase(
  */
 export function filterItemsUpToLastParticipatedSession<T extends { sessionNumber: number }>(
   items: readonly T[],
-  lastParticipatedSession: number | undefined,
+  lastParticipatedSession: number | undefined
 ): T[] {
   if (lastParticipatedSession == null || lastParticipatedSession < 1) {
     return [...items]

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { GENERAL_SURVEY_POLL_DOWNLOAD_MODAL_COPY } from '../../lib/survey-management/survey-copy'
 import type { SurveyResultsDownloadModalCopy } from '../../lib/survey-management/survey-copy'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './survey-results-download-modal.css'
 
 export type SurveyResultsDownloadFormat = 'excel' | 'pdf'
@@ -65,7 +65,7 @@ export function SurveyResultsDownloadModal({
             size="medium"
             width={140}
             type="button"
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             adminAction="download"
             loading={downloading}
             onClick={handleDownload}

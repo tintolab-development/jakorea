@@ -1,16 +1,11 @@
-import {
-  getUjatInstitutionApplicationDetail,
-  getUjatInstitutionApplicationRowById,
-  getUjatInstitutionScheduleConfirmStatus,
-} from '@/features/program/ujat/model/ujat-institution-application'
+import { getUjatInstitutionApplicationDetail } from '@/features/program/ujat/model/ujat-institution-application'
+import type { UjatInstitutionApplicationRow } from '../list/types'
+import type { UjatInstitutionApplicationDetail } from '../detail/detail-types'
 import {
   formatGradeClassSectionLabel,
   parseGradeClassSectionValue,
 } from '../list/grade-class-sections'
-import {
-  UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,
-  formatUjatInstitutionFridayDisplay,
-} from '../education-schedule'
+import { formatUjatInstitutionFridayDisplay } from '../education-schedule'
 import { getUjatScheduleAssignRegionState } from '../schedule-assign/store'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { getUjatInstitutionScheduleConfirmConfirmedDetailExtras } from '@/features/program/ujat/model/ujat-institution-application'
@@ -42,7 +37,7 @@ function buildEducationScheduleDays(
   const state = getUjatScheduleAssignRegionState(regionKey)
   const days: UjatScheduleConfirmConfirmedDetail['educationScheduleDays'] = []
 
-  for (const { isoDate } of UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES) {
+  for (const isoDate of Object.keys(state.days).sort()) {
     const day = state.days[isoDate]
     if (!day) continue
     const classLabels: string[] = []
@@ -78,14 +73,15 @@ function buildEducationScheduleDays(
 }
 
 export function buildUjatScheduleConfirmConfirmedDetail(
-  institutionId: string
+  row: UjatInstitutionApplicationRow | null,
+  baseDetail?: UjatInstitutionApplicationDetail | null
 ): UjatScheduleConfirmConfirmedDetail | null {
-  const row = getUjatInstitutionApplicationRowById(institutionId)
   if (!row) return null
+  const institutionId = row.id
 
-  const base = getUjatInstitutionApplicationDetail(row)
+  const base = baseDetail ?? getUjatInstitutionApplicationDetail(row)
   const extras = getUjatInstitutionScheduleConfirmConfirmedDetailExtras(institutionId) ?? {}
-  const scheduleConfirmStatus = getUjatInstitutionScheduleConfirmStatus(institutionId)
+  const scheduleConfirmStatus = row.scheduleConfirmStatus ?? null
 
   const gradeEducationBlocks = base.gradeBlocks.map(block => ({
     ...block,

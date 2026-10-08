@@ -27,8 +27,15 @@ import type {
   GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
+import {
+  extractApiErrorMessage,
+  getApiErrorHttpStatus,
+} from '@/shared/lib/extract-api-error-message'
 import {
   giveUpIndividualApplicationRemote,
+  type ApplicationsListQuery,
+  type InterviewAssignmentEvaluationPayload,
   type InstructorApplicationNotificationRequest,
 } from '@/features/program/general/api/applications-api-client'
 
@@ -41,6 +48,8 @@ type UseGeneralVolunteerApplicationsRemoteOptions = {
   subjectKind?: ScreeningSubjectKind
   /** false면 remote 비활성 — mock 로더는 호출부 유지 */
   enabled?: boolean
+  /** 서버 필터 (volunteer 전용). 지정 시 query key에 포함 */
+  listQuery?: ApplicationsListQuery
   setList: (rows: GeneralVolunteerApplicantRow[]) => void
 }
 
@@ -69,6 +78,7 @@ export function useGeneralVolunteerApplicationsRemote({
   stage,
   subjectKind = 'volunteer',
   enabled = true,
+  listQuery,
   setList,
 }: UseGeneralVolunteerApplicationsRemoteOptions) {
   const queryClient = useQueryClient()
@@ -93,20 +103,27 @@ export function useGeneralVolunteerApplicationsRemote({
     return fetchGeneralVolunteerScreeningApplicationsPage(
       programId,
       stage,
-      pageParam
+      pageParam,
+      listQuery
     )
-  }, [programId, stage, subjectKind])
+  }, [listQuery, programId, stage, subjectKind])
 
   const listQueryKey =
     subjectKind === 'participant'
       ? ([...generalApplicationsQueryKeys.individualList(programId), 'screening', stage] as const)
-      : ([...generalApplicationsQueryKeys.volunteerList(programId), stage] as const)
+      : listQuery
+        ? ([...generalApplicationsQueryKeys.volunteerList(programId), stage, listQuery] as const)
+        : ([...generalApplicationsQueryKeys.volunteerList(programId), stage] as const)
 
   const query = useInfiniteQuery({
     queryKey: listQueryKey,
     queryFn,
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    placeholderData: listQuery
+      ? (previousData, previousQuery) =>
+          previousQuery?.queryKey.includes(programId) ? previousData : undefined
+      : undefined,
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
@@ -118,14 +135,24 @@ export function useGeneralVolunteerApplicationsRemote({
 
   const invalidateApplications = useCallback(async () => {
     if (subjectKind === 'participant') {
-      await queryClient.invalidateQueries({
-        queryKey: generalApplicationsQueryKeys.individualLists(programId),
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.individualLists(programId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.individualDetails(),
+        }),
+      ])
       return
     }
-    await queryClient.invalidateQueries({
-      queryKey: generalApplicationsQueryKeys.volunteerList(programId),
-    })
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.volunteerList(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.volunteerDetails(),
+      }),
+    ])
   }, [programId, queryClient, subjectKind])
 
   const notifyRemoteFailure = useCallback(
@@ -134,9 +161,10 @@ export function useGeneralVolunteerApplicationsRemote({
       showAlert({
         title: '처리 실패',
         content:
-          subjectKind === 'participant'
+          formatApplicationEligibilityConflictMessage(error) ??
+          (subjectKind === 'participant'
             ? '참여자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.'
-            : '봉사자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+            : '봉사자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.'),
       })
     },
     [showAlert, subjectKind]
@@ -255,7 +283,7 @@ export function useGeneralVolunteerApplicationsRemote({
   const applyRemoteInterviewEvaluation = useCallback(
     async (
       assignmentId: number | string | undefined,
-      payload: { scoreTotal: number; comment?: string }
+      payload: InterviewAssignmentEvaluationPayload
     ): Promise<'ok' | 'missing_assignment' | 'error' | 'skipped'> => {
       if (!remoteEnabled) return 'skipped'
       if (assignmentId == null || assignmentId === '') {
@@ -271,11 +299,21 @@ export function useGeneralVolunteerApplicationsRemote({
         await invalidateApplications()
         return 'ok'
       } catch (error) {
-        notifyRemoteFailure(error)
+        console.debug('interview evaluation failed', error)
+        showAlert({
+          title: '면접 평가 실패',
+          content: extractApiErrorMessage(
+            (error as { response?: { data?: unknown } } | null)?.response?.data,
+            {
+              httpStatus: getApiErrorHttpStatus(error),
+              fallback: '면접 평가 저장 중 오류가 발생했습니다. 다시 시도해 주세요.',
+            }
+          ),
+        })
         return 'error'
       }
     },
-    [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert]
+    [invalidateApplications, remoteEnabled, showAlert]
   )
 
   const applyRemoteDocumentCancelApproval = useCallback(

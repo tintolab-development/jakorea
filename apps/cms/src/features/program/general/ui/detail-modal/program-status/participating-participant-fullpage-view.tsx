@@ -5,13 +5,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type {
   GeneralIndividualApplicantRow,
 } from '@/features/program/general/model/individual-applicant'
-import { CmsButton, ExcelButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { MESSAGES } from '@/shared/constants/messages'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -40,7 +39,10 @@ import {
   PROGRAM_API_UNAVAILABLE_TITLE,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
-import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
+import {
+  buildParticipatingParticipantCertificateContext,
+  hydrateParticipatingParticipantCertificateProfile,
+} from '@/features/program/general/lib/participating-individual-participant-certificate'
 import { hydrateParticipatingIndividualLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
@@ -66,6 +68,8 @@ import {
   type ParticipatingIndividualParticipantAssignmentSectionHandle,
 } from './participating-individual-participant-assignment-section'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
+import { isSubmissionTeamApplicable } from '@/features/program/general/lib/submission-team-applicable'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './school-detail-fullpage-view.css'
 import './participating-participant-fullpage-view.css'
 
@@ -108,6 +112,10 @@ export function ParticipatingParticipantFullpageView({
   const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const attendanceSectionRef = useRef<ParticipatingIndividualParticipantAttendanceSectionHandle>(null)
   const assignmentSectionRef = useRef<ParticipatingIndividualParticipantAssignmentSectionHandle>(null)
+  const [submissionTeamRejected, setSubmissionTeamRejected] = useState(false)
+  const submissionTeamApplicable =
+    isSubmissionTeamApplicable(program.businessArea) && !submissionTeamRejected
+  const handleSubmissionTeamNotApplicable = useCallback(() => setSubmissionTeamRejected(true), [])
   const [participantPatches, setParticipantPatches] = useState<
     Partial<ParticipatingIndividualParticipantRow>
   >({})
@@ -403,18 +411,22 @@ export function ParticipatingParticipantFullpageView({
   const handleCertificateIssueConfirm = useCallback(
     async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
       try {
-        const lectureAttendanceSessions =
+        const [lectureAttendanceSessions, profileHydrated] = await Promise.all([
           progressRemoteEnabled && !isTempMockProgram
-            ? await hydrateParticipatingIndividualLectureAttendanceSessions({
+            ? hydrateParticipatingIndividualLectureAttendanceSessions({
                 programId: String(program.id),
                 participantId: mergedParticipant.id,
                 existing: mergedParticipant.lectureAttendanceSessions,
               })
-            : mergedParticipant.lectureAttendanceSessions
+            : mergedParticipant.lectureAttendanceSessions,
+          shouldUseGeneralApplicationsRemoteApi() && !isTempMockProgram
+            ? hydrateParticipatingParticipantCertificateProfile(mergedParticipant)
+            : mergedParticipant,
+        ])
 
         setCertificateExportContext(
           buildParticipatingParticipantCertificateContext({
-            participant: { ...mergedParticipant, lectureAttendanceSessions },
+            participant: { ...profileHydrated, lectureAttendanceSessions },
             program,
             hasStudentSatisfactionSurvey,
             issuanceReasonLabel: reasonLabel,
@@ -530,8 +542,7 @@ export function ParticipatingParticipantFullpageView({
               <CmsButton
                 variant="secondary"
                 size="large"
-                width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
-                icon={<DownloadOutlined />}
+                icon={<ButtonDownloadIcon />}
                 disabled={
                   certificateExportActive ||
                   isApplicationInfoEditing ||
@@ -583,19 +594,21 @@ export function ParticipatingParticipantFullpageView({
             </>
           ) : activeTab === 'assignments' ? (
             <>
-              <CmsButton
-                variant="secondary"
-                size="large"
-                width={140}
-                onClick={() => assignmentSectionRef.current?.openTeamChangeModal()}
-              >
-                팀 변경
-              </CmsButton>
+              {submissionTeamApplicable ? (
+                <CmsButton
+                  variant="secondary"
+                  size="large"
+                  width={140}
+                  onClick={() => assignmentSectionRef.current?.openTeamChangeModal()}
+                >
+                  팀 변경
+                </CmsButton>
+              ) : null}
               <CmsButton
                 variant="secondary"
                 size="large"
                 width={200}
-                icon={<DownloadOutlined />}
+                icon={<ButtonDownloadIcon />}
                 adminAction="download"
                 onClick={() => assignmentSectionRef.current?.bulkDownloadAssignments()}
               >
@@ -647,6 +660,7 @@ export function ParticipatingParticipantFullpageView({
               ref={assignmentSectionRef}
               program={program}
               participant={mergedParticipant}
+              onTeamFeatureNotApplicable={handleSubmissionTeamNotApplicable}
             />
           </div>
         )}

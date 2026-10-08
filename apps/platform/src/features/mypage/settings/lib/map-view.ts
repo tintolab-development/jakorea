@@ -96,7 +96,7 @@ export function formatSettingsText(value: string | undefined): string {
   return value?.trim() || EMPTY_SETTINGS_VALUE
 }
 
-/** 교사회원 설정 — 재직 중 / 휴직 중만 표시 (가입 카피와 동일) */
+/** 교사 회원 설정 — 재직 중 / 휴직 중만 표시 (가입 카피와 동일) */
 export function formatSettingsEmployment(value: string | undefined): string {
   const normalized = value?.trim().toUpperCase()
   if (normalized === 'ACTIVE' || normalized === 'EMPLOYED') return '재직 중'
@@ -111,7 +111,7 @@ function formatSettingsAddress(address: string | undefined, addressDetail: strin
 export function mapPortalProfileToSettingsView(
   profile: SettingsProfileInput,
   guardian?: SettingsGuardianView | null,
-  options?: MapSettingsViewOptions,
+  options?: MapSettingsViewOptions
 ): SettingsViewModel {
   const affiliation = profile.schoolName?.trim() || profile.affiliationName?.trim()
   const address = formatSettingsAddress(profile.address, profile.addressDetail)
@@ -134,6 +134,15 @@ export function mapPortalProfileToSettingsView(
     }
   }
 
+  const enrollment = formatSettingsEnrollment(profile.schoolEnrollmentStatus)
+  const schoolRows: SettingsInfoRow[] =
+    enrollment === '해당 없음'
+      ? [{ label: '소속 기관명', value: profile.affiliationName?.trim() || '소속 없음' }]
+      : [
+          { label: '소속/학교명', value: formatSettingsText(affiliation) },
+          { label: '학년', value: formatSettingsGrade(profile.grade) },
+        ]
+
   return {
     basicRows: [
       { label: '가입일', value: formatSettingsJoinedAt(profile.joinedAt) },
@@ -141,9 +150,8 @@ export function mapPortalProfileToSettingsView(
       { label: '휴대폰 번호', value: formatSettingsPhone(profile.phone) },
       { label: '생년월일', value: formatSettingsDateDot(profile.birthDate) },
       { label: '성별', value: formatSettingsGender(profile.gender) },
-      { label: '재학유무', value: formatSettingsEnrollment(profile.schoolEnrollmentStatus) },
-      { label: '소속/학교명', value: formatSettingsText(affiliation) },
-      { label: '학년', value: formatSettingsGrade(profile.grade) },
+      { label: '재학유무', value: enrollment },
+      ...schoolRows,
       { label: '자택 주소', value: address || EMPTY_SETTINGS_VALUE },
       { label: 'Email', value: formatSettingsText(profile.email) },
       { label: '1365 ID', value: volunteerId, action: '1365-shortcut' },

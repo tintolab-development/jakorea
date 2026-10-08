@@ -248,9 +248,6 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
 
   return (
     <div className="institution-basic-info applicant-institution-basic-info">
-      {validationErrors?.form ? (
-        <div className="institution-basic-info__form-error">{validationErrors.form}</div>
-      ) : null}
       {showAdminComment ? (
         <ApplicantAdminCommentSection
           adminComment={institution.adminComment}

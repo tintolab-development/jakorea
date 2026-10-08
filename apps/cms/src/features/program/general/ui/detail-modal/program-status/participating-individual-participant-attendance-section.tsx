@@ -66,6 +66,10 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { handleError } from '@/shared/utils/error-handler'
+import {
+  ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
+  isInvalidAttendanceArrivalTimeError,
+} from '@/shared/lib/attendance-arrival-time'
 import type { ParticipatingIndividualProgressAttendanceStatus } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
 
 export type ParticipatingIndividualParticipantAttendanceSectionHandle = {
@@ -105,7 +109,7 @@ function mapCorrectionPayloadToAttendanceStatus(
   }
   if (payload.status === 'absence') {
     return {
-      attendanceStatus: 'pending',
+      attendanceStatus: 'absent',
       lateTime: undefined,
       remark: undefined,
     }
@@ -132,7 +136,7 @@ function mapProgressStatusToDetailStatus(
   if (status === 'late') return 'late'
   if (status === 'excused_absence') return 'excused_absence'
   if (status === 'present') return 'present'
-  return 'pending'
+  return 'absent'
 }
 
 function renderAttendanceStatus(row: ParticipatingIndividualParticipantAttendanceRow) {
@@ -298,6 +302,9 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       })
     },
     onError: error => {
+      if (isInvalidAttendanceArrivalTimeError(error)) {
+        showAlert({ title: '안내', content: ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE })
+      }
       handleError(error, { context: 'saveGeneralScheduleAttendances.participantDetail' })
     },
   })

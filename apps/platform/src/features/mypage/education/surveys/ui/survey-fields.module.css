@@ -51,6 +51,10 @@
   border-right: 0;
 }
 
+.scaleItem:disabled {
+  cursor: not-allowed;
+}
+
 .scaleItemSelected {
   background: var(--color-primary-500, #009099);
   color: var(--color-neutral-white, #fff);

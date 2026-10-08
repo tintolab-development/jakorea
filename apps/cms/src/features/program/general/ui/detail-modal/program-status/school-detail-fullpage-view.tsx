@@ -89,6 +89,7 @@ import {
   buildCompanySchoolWaitingInstructorRows,
   buildCompanySchoolAssignedInstructorRows,
 } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
+import { getParticipationConsentRequiredMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
   cancelInstructorAssignmentRemote,
   createInstructorAssignmentRemote,
@@ -494,6 +495,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     files: remotePostFiles,
     isRemoteDataSource: postsRemote,
     invalidatePosts,
+    removeDeletedPost,
   } = useGeneralProgramPosts(program.id)
   // TODO(temp-mock): 열여라 참깨 — 참여 기관 상세 게시글 검증 후 삭제
   const temporarySchoolPosts = useMemo(
@@ -1262,7 +1264,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             title: '배정 실패',
             content: isOneSchoolPerDayConflictErrorCode(code)
               ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
-              : '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+              : (getParticipationConsentRequiredMessage(error) ??
+                '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'),
           })
         }
         return
@@ -2447,7 +2450,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                         title: '배정 실패',
                         content: isOneSchoolPerDayConflictErrorCode(code)
                           ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
-                          : '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+                          : (getParticipationConsentRequiredMessage(error) ??
+                            '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'),
                       })
                     }
                     return
@@ -2636,6 +2640,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               filesOverride={filesForTab}
               onPostWriteSuccess={() => {
                 void invalidatePosts()
+              }}
+              onPostDeleted={postId => {
+                void removeDeletedPost(postId)
               }}
             />
           </div>

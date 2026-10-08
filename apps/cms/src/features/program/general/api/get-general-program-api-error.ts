@@ -31,6 +31,25 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   FORBIDDEN_APPLICATION_ACTION: '이 프로그램 유형에서는 해당 작업을 할 수 없습니다.',
   FORM_RESPONSE_ALREADY_SUBMITTED:
     '이미 제출된 응답입니다. 수정은 응답 수정으로 해 주세요.',
+  INSTRUCTOR_PARTICIPATION_CONSENT_REQUIRED:
+    '강사 활동에 필요한 동의가 부족합니다. 해당 동의를 다시 받은 뒤 처리해 주세요.',
+  UJAT_VOLUNTEER_PARTICIPATION_CONSENT_REQUIRED:
+    'UJAT 봉사 활동에 필요한 동의가 부족합니다. 해당 동의를 다시 받은 뒤 처리해 주세요.',
+}
+
+const PARTICIPATION_CONSENT_REQUIRED_CODES = new Set([
+  'INSTRUCTOR_PARTICIPATION_CONSENT_REQUIRED',
+  'UJAT_VOLUNTEER_PARTICIPATION_CONSENT_REQUIRED',
+])
+
+/**
+ * 연간 참여 동의 부족(409) — 서버 `error.message`에 부족한 동의·사유가 나열되므로 그대로 쓴다.
+ * 동의 코드가 아니면 undefined (화면별 기존 문구 유지).
+ */
+export function getParticipationConsentRequiredMessage(error: unknown): string | undefined {
+  const code = extractApiErrorCode(error)
+  if (!code || !PARTICIPATION_CONSENT_REQUIRED_CODES.has(code)) return undefined
+  return getGeneralProgramApiErrorMessage(error, PROGRESS_INSTRUCTOR_ERROR_MESSAGES[code]!)
 }
 
 const PREFERRED_SCHEDULE_ERROR_MESSAGES: Record<string, string> = {

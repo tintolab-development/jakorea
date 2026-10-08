@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor } from '@/shared/rich-text'
-import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
+import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -18,8 +18,10 @@ import {
   RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import {
+  isRecruitDetailContentPersistSuppressed,
   recruitDetailAdditionalContentOverlayKey,
   registerRecruitDetailRichTextHtml,
+  useRecruitDetailContentResetGeneration,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID,
@@ -44,7 +46,6 @@ import {
 import '@/features/template/ui/form-editor/form-editor.css'
 import './recruit-detail-info-paragraph.css'
 
-const THUMB_UPLOAD_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 const DEFAULT_OVERLAY_KEY_PREFIX = 'recruit.detailInfo'
 const DETAIL_INFO_WYSIWYG_OPTIONS = {
   placeholder: '내용을 작성하세요',
@@ -212,9 +213,11 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
     const readHtml = () => latestHtmlRef.current || getHtmlRef.current()
     registerRecruitDetailRichTextHtml(overlayKey, readHtml)
     return () => {
-      const html = readHtml()
-      if (typeof html === 'string') {
-        patchGeneralRecruitOverlay({ [overlayKey]: html })
+      if (!isRecruitDetailContentPersistSuppressed()) {
+        const html = readHtml()
+        if (typeof html === 'string') {
+          patchGeneralRecruitOverlay({ [overlayKey]: html })
+        }
       }
       registerRecruitDetailRichTextHtml(overlayKey, null)
     }
@@ -222,15 +225,24 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
 
   const [overlayHtml] = useGeneralRecruitOverlayKv<string>(overlayKey, '')
   useEffect(() => {
-    if (editor == null) return
+    if (editor == null || editor.isDestroyed || editor.view == null) return
     const incoming = overlayHtml.trim()
     if (incoming === '') return
-    const current = getHtmlRef
-      .current()
-      .replace(/<p><\/p>/gi, '')
-      .trim()
+    let current = ''
+    try {
+      current = getHtmlRef
+        .current()
+        .replace(/<p><\/p>/gi, '')
+        .trim()
+    } catch {
+      return
+    }
     if (current !== '') return
-    editor.commands.setContent(incoming, { emitUpdate: false, contentType: 'html' })
+    try {
+      editor.commands.setContent(incoming, { emitUpdate: false, contentType: 'html' })
+    } catch {
+      // 템플릿 변경으로 에디터가 destroy된 뒤 overlay hydrate가 늦게 오면 무시
+    }
   }, [editor, overlayHtml])
 
   return (
@@ -271,6 +283,8 @@ export function RecruitDetailInfoParagraph({
   attachmentGuideLines = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
   textFieldControl = 'textarea',
 }: RecruitDetailInfoParagraphProps) {
+  const contentResetGeneration = useRecruitDetailContentResetGeneration()
+  const editorResetKey = `${wysiwygResetKey}::reset-${contentResetGeneration}`
   const thumbObjectUrlKey = recruitDetailThumbObjectUrlKey(overlayKeyPrefix)
   const thumbFileNameKey = recruitDetailThumbFileNameKey(overlayKeyPrefix)
   const thumbFileObjectIdKey = recruitDetailThumbFileObjectIdKey(overlayKeyPrefix)
@@ -430,22 +444,14 @@ export function RecruitDetailInfoParagraph({
             label="썸네일 이미지"
             fullRow
             edit={
-              <div className={THUMB_UPLOAD_CLASS}>
-                {thumbObjectUrl ? (
-                  <img src={thumbObjectUrl} alt="" width={86} height={86} />
-                ) : (
-                  <ProgramThumbnailPlaceholder />
-                )}
-                <ParagraphFileUpload
-                  accept=".jpg,.jpeg,.png"
-                  multiple={false}
-                  style={{ marginLeft: 16 }}
-                  guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
-                  fileNames={thumbFileName ? [thumbFileName] : []}
-                  onFilesChange={uploadingThumbnail ? undefined : handleThumbnailFiles}
-                  onRemoveFile={uploadingThumbnail ? undefined : handleRemoveThumbnail}
-                />
-              </div>
+              <ThumbnailUploadField
+                previewUrl={thumbObjectUrl}
+                fileName={thumbFileName}
+                guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
+                uploading={uploadingThumbnail}
+                onSelectFile={file => handleThumbnailFiles([file])}
+                onRemove={handleRemoveThumbnail}
+              />
             }
             view="-"
           />
@@ -454,7 +460,7 @@ export function RecruitDetailInfoParagraph({
         <RecruitDetailInfoTextFieldRows
           fields={textFields}
           overlayKeyPrefix={overlayKeyPrefix}
-          wysiwygResetKey={wysiwygResetKey}
+          wysiwygResetKey={editorResetKey}
           textFieldControl={textFieldControl}
         />
 
@@ -464,8 +470,8 @@ export function RecruitDetailInfoParagraph({
             fullRow
             edit={
               <RecruitDetailAdditionalContentEditor
-                key={additionalContentKey}
-                wysiwygResetKey={wysiwygResetKey}
+                key={`${additionalContentKey}-${contentResetGeneration}`}
+                wysiwygResetKey={editorResetKey}
                 additionalContentKey={additionalContentKey}
               />
             }
@@ -477,7 +483,7 @@ export function RecruitDetailInfoParagraph({
           <RecruitDetailInfoTextFieldRows
             fields={afterEditorFields}
             overlayKeyPrefix={overlayKeyPrefix}
-            wysiwygResetKey={wysiwygResetKey}
+            wysiwygResetKey={editorResetKey}
             textFieldControl={textFieldControl}
           />
         ) : null}

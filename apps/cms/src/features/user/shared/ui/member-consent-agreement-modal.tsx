@@ -1,4 +1,4 @@
-import { CloseOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
@@ -263,7 +263,7 @@ export function MemberConsentAgreementModal({
             onClick={onClose}
             aria-label="닫기"
           >
-            <CloseOutlined />
+            <ModalCloseIcon tone="white" />
           </button>
         </header>
 

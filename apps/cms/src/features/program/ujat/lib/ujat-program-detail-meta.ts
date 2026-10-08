@@ -7,7 +7,6 @@ import {
   findUjatRegistrationLocalSaveProgramById,
   UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/ujat/lib/ujat-registration-local-save'
-import { mockUjatElementaryListProgramsMap } from '@/features/program/ujat/model/ujat-programs-list'
 import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/ujat-program-display-program'
 import {
   resolveUjatSurveyMenuItems,
@@ -21,11 +20,7 @@ import {
 export type { UjatSurveyMenuItem }
 
 export function isUjatProgramId(programId: string): boolean {
-  return (
-    mockUjatElementaryListProgramsMap.has(programId) ||
-    isUjatPrimaryProgramId(programId) ||
-    looksLikeUjatProgramId(programId)
-  )
+  return isUjatPrimaryProgramId(programId) || looksLikeUjatProgramId(programId)
 }
 
 /** UJAT 목록·상세 URL에 쓸 수 있는 프로그램 id (Primary · mock · 로컬 등록) */
@@ -37,11 +32,9 @@ export function isResolvableUjatProgramId(programId: string): boolean {
   )
 }
 
-/** UJAT 목록·상세 mock 복원 — 템플릿 병합 포함 */
+/** 로컬 임시 저장본만 상세 placeholder로 복원. 시드 mock은 사용하지 않는다. */
 export function resolveUjatProgramForDetail(programId: string): Program | undefined {
-  const base =
-    mockUjatElementaryListProgramsMap.get(programId) ??
-    findUjatRegistrationLocalSaveProgramById(programId)
+  const base = findUjatRegistrationLocalSaveProgramById(programId)
   return base ? resolveUjatProgramDisplayProgram(base) : undefined
 }
 

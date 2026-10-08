@@ -10,7 +10,13 @@ import {
   instructorProfileFormValuesToCmsSettlement,
 } from './map-instructor-cms-profile'
 import { INITIAL_VALUES } from '@/features/user/shared/ui/instructor-profile-form'
-import { toApiBirthDate, toApiGender, toDisplayGender } from './map-member-gender-birth'
+import {
+  toApiBirthDate,
+  toApiGender,
+  toDisplayGender,
+  toGenderLabelOrRaw,
+} from './map-member-gender-birth'
+import { toSchoolEnrollmentStatusLabelOrRaw } from './map-school-enrollment-status'
 
 describe('map-member-gender-birth', () => {
   it('성별을 API 코드로 변환한다', () => {
@@ -38,6 +44,24 @@ describe('map-member-gender-birth', () => {
     expect(toDisplayGender('남자')).toBe('남성')
     expect(toDisplayGender(undefined)).toBe('-')
     expect(toDisplayGender('unknown')).toBe('-')
+  })
+
+  it('어댑터용 성별 라벨은 원시값을 한글로, 빈 값은 undefined로 둔다', () => {
+    expect(toGenderLabelOrRaw('MALE')).toBe('남성')
+    expect(toGenderLabelOrRaw('FEMALE')).toBe('여성')
+    expect(toGenderLabelOrRaw('여성')).toBe('여성')
+    expect(toGenderLabelOrRaw('OTHER')).toBe('OTHER')
+    expect(toGenderLabelOrRaw('  ')).toBeUndefined()
+    expect(toGenderLabelOrRaw(null)).toBeUndefined()
+  })
+})
+
+describe('toSchoolEnrollmentStatusLabelOrRaw', () => {
+  it('재학 여부 API 값을 회원 상세와 같은 라벨로 변환한다', () => {
+    expect(toSchoolEnrollmentStatusLabelOrRaw('ENROLLED')).toBe('재학 중')
+    expect(toSchoolEnrollmentStatusLabelOrRaw('not_enrolled')).toBe('해당 없음')
+    expect(toSchoolEnrollmentStatusLabelOrRaw('휴학 중')).toBe('휴학 중')
+    expect(toSchoolEnrollmentStatusLabelOrRaw(undefined)).toBeUndefined()
   })
 })
 

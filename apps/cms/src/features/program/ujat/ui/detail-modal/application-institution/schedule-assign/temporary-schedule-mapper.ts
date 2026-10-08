@@ -111,7 +111,10 @@ export function applyTemporaryScheduleSlotsToDraft(input: {
       isoByScheduleId.get(Number(scheduleId)) ??
       isoDateFromScheduleInstant(slot.scheduleStartAt) ??
       null
-    if (!iso || !next.days[iso]) continue
+    if (!iso) continue
+    if (!next.days[iso]) {
+      next.days[iso] = { isoDate: iso, rows: [createEmptyRow()] }
+    }
     const value = gradeClassValueFromSlot(slot)
     if (!value) continue
     const list = gradeValuesByIso.get(iso) ?? []

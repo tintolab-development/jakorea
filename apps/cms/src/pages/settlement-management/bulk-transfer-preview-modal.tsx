@@ -4,7 +4,6 @@
  */
 
 import { lazy, Suspense, useCallback, useMemo } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -14,6 +13,7 @@ import {
   BULK_TRANSFER_SHEET_COLUMN_COUNT,
   buildBulkTransferFortuneSheet,
 } from '@/pages/settlement-management/bulk-transfer-fortune-data'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './bulk-transfer-preview-modal.css'
 
 const Workbook = lazy(() => import('./bulk-transfer-fortune-workbook'))
@@ -53,7 +53,7 @@ export function BulkTransferPreviewModal({ open, onCancel, rows }: BulkTransferP
           <CmsButton
             variant="primary"
             size="large"
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             adminAction="download"
             onClick={() => void handleDownload()}
           >

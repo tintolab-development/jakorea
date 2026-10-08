@@ -1,4 +1,3 @@
-import { PlusOutlined } from '@ant-design/icons'
 import { createElement, type ReactNode } from 'react'
 import type { ParagraphCardEditableHeading } from '@/features/template/ui/template-management/template-fullpage-modal'
 import {
@@ -10,8 +9,8 @@ import {
   isStructureLockedPartialShortEssayParagraph,
 } from '@/features/template/lib/structure-locked-paragraph-hint'
 import {
-  formatUserInfoWriteQuestionTitle,
   isAgreementLockedSystemParagraph,
+  isUserInfoParagraph,
   isEducatorFacilitatorPledgeClauseParagraphId,
   EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS,
   LECTURE_REPORT_SEED_PARAGRAPH_IDS,
@@ -80,6 +79,8 @@ import {
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
 
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
+
 /** 발급용 등 — 단락 카드 제목의 필수(*) 표시 제거 */
 export function withoutTitleRequired<T extends { titleRequired?: boolean }>(
   heading: T | undefined,
@@ -110,48 +111,27 @@ export function withMultipleChoiceAllowMultipleTitleHint<
   }
 }
 
-export type UserInfoWriteHeadingField = { key: string; label: string }
-
-/** 설문 write — user_info는 필드 질문 문구, 그 외 단락은 write 순번만 교체 */
+/** 설문 write — write 순번으로 교체. 설문자 정보의 칩 안내 설명은 사용자 화면에 노출하지 않는다. */
 export function withSurveyWriteTitleNumbering<
   T extends {
-    titleValue?: string
     titleLeading?: ReactNode
-    titleRequired?: boolean
     showDescription?: boolean
-    isEditMode?: boolean
-    titleIsEditMode?: boolean
-    descriptionIsEditMode?: boolean
-    onTitleChange?: (next: string) => void
   },
 >(
   heading: T | undefined,
   paragraphs: WritingFormParagraph[],
   paragraph: WritingFormParagraph,
   titleNumbering: FormTitleNumberingStyle,
-  enabled: boolean,
-  writeField?: UserInfoWriteHeadingField
+  enabled: boolean
 ): T | undefined {
   if (!heading || !enabled) return heading
   const prefix = getSurveyWriteFormTitleNumberPrefix(
     paragraphs,
-    writeField != null
-      ? { paragraphId: paragraph.id, fieldKey: writeField.key }
-      : { paragraphId: paragraph.id },
+    { paragraphId: paragraph.id },
     titleNumbering
   )
-  if (writeField != null) {
-    return {
-      ...heading,
-      titleValue: formatUserInfoWriteQuestionTitle(writeField.label),
-      titleLeading: prefix,
-      titleRequired: true,
-      showDescription: false,
-      isEditMode: false,
-      titleIsEditMode: false,
-      descriptionIsEditMode: false,
-      onTitleChange: () => {},
-    }
+  if (isUserInfoParagraph(paragraph)) {
+    return { ...heading, titleLeading: prefix, showDescription: false }
   }
   return { ...heading, titleLeading: prefix }
 }
@@ -311,7 +291,7 @@ export function withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
         variant="secondary"
         size="medium"
         width={160}
-        icon={<PlusOutlined aria-hidden />}
+        icon={<ButtonAddIcon aria-hidden />}
         disabled={!applicationGradeAddEnabled}
         onClick={e => {
           e.stopPropagation()
@@ -348,7 +328,7 @@ export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrai
         variant="secondary"
         size="medium"
         width={160}
-        icon={<PlusOutlined aria-hidden />}
+        icon={<ButtonAddIcon aria-hidden />}
         disabled={!classTimeAddEnabled}
         onClick={e => {
           e.stopPropagation()
@@ -459,7 +439,7 @@ export function withProgramApplicationFormVolunteerTitleTrailing(
           size="medium"
           width={160}
           disabled={opts?.exceptionScheduleAddDisabled}
-          icon={<PlusOutlined aria-hidden />}
+          icon={<ButtonAddIcon aria-hidden />}
           onClick={e => {
             e.stopPropagation()
             opts?.onAddExceptionSchedule?.()

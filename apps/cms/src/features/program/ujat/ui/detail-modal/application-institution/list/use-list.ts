@@ -1,12 +1,8 @@
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useCmsAlert } from '@/shared/ui'
-import {
-  patchUjatInstitutionApplicationRows,
-  UJAT_INSTITUTION_MAX_CLASSES_PER_DAY,
-} from '@/features/program/ujat/model/ujat-institution-application'
+import { patchUjatInstitutionApplicationRows } from '@/features/program/ujat/model/ujat-institution-application'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
-import { UJAT_INSTITUTION_APPLICATION_FILTER_ALL } from './filter-fields'
 import {
   type UjatInstitutionApplicationFilters,
   EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
@@ -15,6 +11,8 @@ import {
 } from './types'
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { useUjatInstitutionApplicationColumns } from './columns'
+import { scheduleColumnsFromDates } from '../education-schedule'
+import { useUjatProgramScheduleDates } from '../use-program-schedule-dates'
 import {
   getUjatInstitutionTempAssignCompleteContent,
   getUjatInstitutionTempRejectCompleteContent,
@@ -35,32 +33,12 @@ import {
   fetchUjatRegionCapacitiesRemote,
 } from '@/features/program/ujat/api/region-capacities-client'
 
-function filterRows(
+/** 필터 조건은 모두 서버 query로 보낸다. 응답이 다른 지역 코드를 섞어 보낼 때만 탭 기준으로 거른다. */
+function filterRowsByRegion(
   rows: UjatInstitutionApplicationRow[],
-  regionKey: UjatInstitutionApplicationRegionKey,
-  filters: UjatInstitutionApplicationFilters
+  regionKey: UjatInstitutionApplicationRegionKey
 ): UjatInstitutionApplicationRow[] {
-  const institutionQ = filters.institutionName.trim().toLowerCase()
-  const teacherQ = filters.teacherName.trim().toLowerCase()
-  const totalQ = filters.totalClassCount.trim()
-
-  return rows.filter(row => {
-    if (row.regionKey !== regionKey) return false
-    if (institutionQ && !row.institutionName.toLowerCase().includes(institutionQ)) return false
-    if (
-      filters.tempAssignmentStatus !== UJAT_INSTITUTION_APPLICATION_FILTER_ALL &&
-      row.tempAssignmentStatus !== filters.tempAssignmentStatus
-    ) {
-      return false
-    }
-    if (totalQ) {
-      const parsed = Number(totalQ)
-      if (!Number.isNaN(parsed) && row.totalClassCount !== parsed) return false
-      if (Number.isNaN(parsed) && !String(row.totalClassCount).includes(totalQ)) return false
-    }
-    if (teacherQ && !row.teacherName.toLowerCase().includes(teacherQ)) return false
-    return true
-  })
+  return rows.filter(row => row.regionKey === regionKey)
 }
 
 export function useUjatInstitutionApplicationList(
@@ -88,8 +66,11 @@ export function useUjatInstitutionApplicationList(
   const [pendingApplicationRejectModal, setPendingApplicationRejectModal] = useState(false)
 
   const listQuery = useMemo(
-    () => buildUjatInstitutionApplicationsListQuery(appliedFilters),
-    [appliedFilters]
+    () =>
+      buildUjatInstitutionApplicationsListQuery(appliedFilters, null, {
+        educationRegionCode: regionKey,
+      }),
+    [appliedFilters, regionKey]
   )
 
   const remoteQuery = useInfiniteQuery({
@@ -117,21 +98,7 @@ export function useUjatInstitutionApplicationList(
     return []
   }, [dataVersion, remoteEnabled, remoteQuery.data])
 
-  const tableData = useMemo(() => {
-    // API keyword/status 외 필드(총 학급 수·교사명 등)는 클라이언트 보강 필터
-    const clientOnly: UjatInstitutionApplicationFilters = {
-      ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
-      totalClassCount: appliedFilters.totalClassCount,
-      teacherName: appliedFilters.teacherName,
-      // institutionName·tempAssignmentStatus는 서버 query로 전달됨 — 지역 탭만 클라 필터
-    }
-    return filterRows(allRows, regionKey, {
-      ...clientOnly,
-      // 서버가 keyword를 무시할 수 있어 기관명·상태는 클라에서도 유지
-      institutionName: appliedFilters.institutionName,
-      tempAssignmentStatus: appliedFilters.tempAssignmentStatus,
-    })
-  }, [allRows, regionKey, appliedFilters])
+  const tableData = useMemo(() => filterRowsByRegion(allRows, regionKey), [allRows, regionKey])
   const infiniteScrollResetKey = useMemo(
     () => `${programId ?? ''}:${regionKey}:${JSON.stringify(appliedFilters)}`,
     [appliedFilters, programId, regionKey]
@@ -142,19 +109,20 @@ export function useUjatInstitutionApplicationList(
     [tableData, selectedRowKeys]
   )
 
-  const columns = useUjatInstitutionApplicationColumns()
+  const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
+  const scheduleColumns = useMemo(() => scheduleColumnsFromDates(scheduleDates), [scheduleDates])
+  const columns = useUjatInstitutionApplicationColumns(scheduleColumns)
 
   const maxClassesPerDay = useMemo(() => {
     if (remoteEnabled && regionCapacityQuery.data) {
       const map = buildUjatRegionCapacityMaxClassMap(regionCapacityQuery.data)
       if (regionKey in map) return map[regionKey]
-      // regionLabel key fallback
       const byLabel = Object.entries(map).find(([key]) =>
         key.toLowerCase().includes(regionKey.toLowerCase())
       )
       if (byLabel) return byLabel[1]
     }
-    return UJAT_INSTITUTION_MAX_CLASSES_PER_DAY[regionKey]
+    return null
   }, [remoteEnabled, regionCapacityQuery.data, regionKey])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
@@ -287,6 +255,7 @@ export function useUjatInstitutionApplicationList(
     handleSearch,
     tableData,
     columns,
+    scheduleColumnCount: scheduleColumns.length,
     selectedRowKeys,
     setSelectedRowKeys,
     viewMode,

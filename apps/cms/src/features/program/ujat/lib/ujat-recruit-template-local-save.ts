@@ -7,6 +7,11 @@ import type { Program } from '@/types/domain'
 import { replaceUjatApplicationInstitutionOverlay } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 import { replaceUjatApplicationVolunteerOverlay } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
+  pickOverlayKeysByPrefix,
+  pickUjatVolunteerRecruitGeneralStoreSidecar,
+  RECRUIT_DETAIL_INFO_OVERLAY_PREFIX,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
+import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
   WRITING_FORM_TEMPLATE_SAVE_EVENT,
@@ -39,6 +44,43 @@ type RecruitTemplateSnapshot = {
 }
 
 const memoryCache = new Map<string, RecruitTemplateSnapshot>()
+const hydrateInflightByProgramId = new Map<string, Promise<void>>()
+const lastHydrateStampByProgramId = new Map<string, string>()
+
+export function resetUjatRecruitTemplateProgramHydrate(programId?: string): void {
+  if (programId) {
+    lastHydrateStampByProgramId.delete(programId)
+    hydrateInflightByProgramId.delete(programId)
+    return
+  }
+  lastHydrateStampByProgramId.clear()
+  hydrateInflightByProgramId.clear()
+}
+
+function recruitHydrateStamp(program: Program): string {
+  const overlay = program.ujatRegistrationOverlay ?? {}
+  const rows = (program.programRecruitments ?? [])
+    .map(row => `${row.id ?? ''}:${row.recruitTerm ?? ''}`)
+    .join('|')
+  return `${program.id}:${Object.keys(overlay).length}:${rows}`
+}
+
+function pickProgramRecruitOverlayForTemplate(
+  program: Program,
+  templateId: string
+): Record<string, unknown> {
+  const overlay = program.ujatRegistrationOverlay ?? {}
+  if (templateId === UJAT_RECRUIT_INSTITUTION_TEMPLATE_ID) {
+    return {
+      ...pickOverlayByPrefix(overlay, 'ujat.recruit.institution.'),
+      ...pickOverlayKeysByPrefix(overlay, RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution),
+    }
+  }
+  return {
+    ...pickOverlayByPrefix(overlay, 'ujat.recruit.volunteer.'),
+    ...pickUjatVolunteerRecruitGeneralStoreSidecar(overlay),
+  }
+}
 
 function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
@@ -205,7 +247,7 @@ export async function hydrateAllUjatRecruitTemplatesFromRemote(): Promise<void> 
   ])
 }
 
-/** UJAT 프로그램 상세 — binding version GET으로 미리보기 hydrate (PATCH 없음) */
+/** UJAT 프로그램 상세 모집 — binding version GET으로 미리보기 hydrate (PATCH 없음). 신청 양식 GET은 신청 탭에서. */
 export async function hydrateUjatRecruitTemplatesForProgram(program: Program): Promise<void> {
   const programOverlay = program.ujatRegistrationOverlay ?? {}
   const applicationInstitution = pickOverlayByPrefix(programOverlay, 'ujatApplication.')
@@ -217,59 +259,111 @@ export async function hydrateUjatRecruitTemplatesForProgram(program: Program): P
     replaceUjatApplicationVolunteerOverlay(applicationVolunteer)
   }
 
-  if (!shouldUseFormsSurveysRemoteApi()) return
-  const { resolveProgramOperationalFormLoadSource } = await import(
-    '@/features/program/general/lib/sync-registration-form-bindings'
-  )
-  const { loadFormTemplateVersionDraftByVersionId } = await import(
-    '@/features/template/api/admin-form-templates-service'
-  )
+  if (!shouldUseFormsSurveysRemoteApi()) {
+    await applyMergedRecruitOverlays(program, null)
+    return
+  }
 
+  const stamp = recruitHydrateStamp(program)
+  const inflight = hydrateInflightByProgramId.get(program.id)
+  if (inflight) {
+    await inflight
+    if (lastHydrateStampByProgramId.get(program.id) === stamp) return
+  } else if (lastHydrateStampByProgramId.get(program.id) === stamp) {
+    return
+  }
+
+  const run = (async () => {
+    const { resolveProgramOperationalFormLoadSource } = await import(
+      '@/features/program/general/lib/sync-registration-form-bindings'
+    )
+    const { loadFormTemplateVersionDraftByVersionId } = await import(
+      '@/features/template/api/admin-form-templates-service'
+    )
+    const { applyOperationalOverlayForCatalogId } = await import(
+      '@/features/program/general/lib/registration-operational-form-drafts'
+    )
+
+    await Promise.all(
+      [UJAT_RECRUIT_INSTITUTION_TEMPLATE_ID, UJAT_RECRUIT_VOLUNTEER_TEMPLATE_ID].map(
+        async templateId => {
+          try {
+            const source = await resolveProgramOperationalFormLoadSource(program, templateId)
+            const programSlice = pickProgramRecruitOverlayForTemplate(program, templateId)
+            if (source.templateVersionId == null) {
+              const catalogSaved = await hydrateUjatRecruitTemplateFromRemote(templateId)
+              await applyMergedRecruitSnapshot({
+                templateId,
+                draft: catalogSaved?.draft,
+                overlay: { ...(catalogSaved?.overlay ?? {}), ...programSlice },
+                applyOperationalOverlayForCatalogId,
+              })
+              return
+            }
+            const saved = await loadFormTemplateVersionDraftByVersionId(
+              templateId,
+              source.templateVersionId
+            )
+            await applyMergedRecruitSnapshot({
+              templateId,
+              draft: saved?.draft,
+              overlay: { ...(saved?.overlay ?? {}), ...programSlice },
+              applyOperationalOverlayForCatalogId,
+            })
+          } catch (error) {
+            console.warn('[ujat-recruit-template] program-scoped hydrate failed', templateId, error)
+          }
+        }
+      )
+    )
+    lastHydrateStampByProgramId.set(program.id, stamp)
+  })().finally(() => {
+    hydrateInflightByProgramId.delete(program.id)
+  })
+  hydrateInflightByProgramId.set(program.id, run)
+  return run
+}
+
+async function applyMergedRecruitOverlays(
+  program: Program,
+  applyOperationalOverlayForCatalogId: typeof import('@/features/program/general/lib/registration-operational-form-drafts').applyOperationalOverlayForCatalogId | null
+): Promise<void> {
+  const apply =
+    applyOperationalOverlayForCatalogId ??
+    (await import('@/features/program/general/lib/registration-operational-form-drafts'))
+      .applyOperationalOverlayForCatalogId
   for (const templateId of [
     UJAT_RECRUIT_INSTITUTION_TEMPLATE_ID,
     UJAT_RECRUIT_VOLUNTEER_TEMPLATE_ID,
-  ]) {
-    try {
-      const source = await resolveProgramOperationalFormLoadSource(program, templateId)
-      if (source.templateVersionId == null) {
-        await hydrateUjatRecruitTemplateFromRemote(templateId)
-        continue
-      }
-      const saved = await loadFormTemplateVersionDraftByVersionId(
-        templateId,
-        source.templateVersionId
-      )
-      if (saved?.draft == null) continue
-      clearUjatRecruitTemplateLocalStorage()
-      rememberUjatRecruitTemplateSave(templateId, {
-        draft: saved.draft,
-        overlay: saved.overlay ?? {},
-      })
-    } catch (error) {
-      console.warn('[ujat-recruit-template] program-scoped hydrate failed', templateId, error)
-    }
-  }
-
-  for (const [templateId, apply] of [
-    ['application-ujat-school', replaceUjatApplicationInstitutionOverlay],
-    ['application-ujat-volunteer', replaceUjatApplicationVolunteerOverlay],
   ] as const) {
-    try {
-      const source = await resolveProgramOperationalFormLoadSource(program, templateId)
-      if (source.templateVersionId == null) continue
-      const saved = await loadFormTemplateVersionDraftByVersionId(
-        templateId,
-        source.templateVersionId
-      )
-      if (saved?.overlay == null || Object.keys(saved.overlay).length === 0) continue
-      apply({
-        ...(templateId === 'application-ujat-school' ? applicationInstitution : applicationVolunteer),
-        ...saved.overlay,
+    const overlay = pickProgramRecruitOverlayForTemplate(program, templateId)
+    if (Object.keys(overlay).length === 0) continue
+    apply(templateId, overlay)
+    const cached = memoryCache.get(templateId)
+    if (cached) {
+      rememberUjatRecruitTemplateSave(templateId, {
+        draft: cached.draft,
+        overlay: { ...cached.overlay, ...overlay },
       })
-    } catch (error) {
-      console.warn('[ujat-application-template] program-scoped hydrate failed', templateId, error)
     }
   }
+}
+
+function applyMergedRecruitSnapshot(args: {
+  templateId: string
+  draft: WritingFormDraft | undefined
+  overlay: Record<string, unknown>
+  applyOperationalOverlayForCatalogId: typeof import('@/features/program/general/lib/registration-operational-form-drafts').applyOperationalOverlayForCatalogId
+}): void {
+  if (Object.keys(args.overlay).length > 0) {
+    args.applyOperationalOverlayForCatalogId(args.templateId, args.overlay)
+  }
+  if (args.draft == null) return
+  clearUjatRecruitTemplateLocalStorage()
+  rememberUjatRecruitTemplateSave(args.templateId, {
+    draft: args.draft,
+    overlay: args.overlay,
+  })
 }
 
 function pickOverlayByPrefix(

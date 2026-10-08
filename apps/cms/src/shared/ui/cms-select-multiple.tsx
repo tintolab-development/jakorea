@@ -4,7 +4,8 @@
 
 import { useCallback, useId, useMemo, useState } from 'react'
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react'
-import { Checkbox, Input, Popover } from 'antd'
+import { Input, Popover } from 'antd'
+import { CmsCheckbox } from './cms-checkbox'
 import { CloseCircleFilled } from '@ant-design/icons'
 import { FilterSelectChevronIcon } from './icons/FilterSelectChevronIcon'
 
@@ -128,7 +129,8 @@ export function CmsSelectMultiple({
                 role="option"
                 aria-selected={checked}
               >
-                <Checkbox
+                <CmsCheckbox
+                  checkboxSize="medium"
                   className="cms-select-multi__checkbox"
                   checked={checked}
                   onChange={e => toggle(opt.value, e.target.checked)}
@@ -139,7 +141,7 @@ export function CmsSelectMultiple({
                   >
                     {opt.label}
                   </span>
-                </Checkbox>
+                </CmsCheckbox>
               </li>
             )
           })

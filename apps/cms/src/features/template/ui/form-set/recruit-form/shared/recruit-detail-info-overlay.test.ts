@@ -14,6 +14,9 @@ import {
   mergeRecruitDetailInfoFromGeneralStore,
   overlayEntriesAbsentFromLive,
   pickOverlayKeysByPrefix,
+  recruitDetailInfoOverlayPrefixForCatalogId,
+  replaceRecruitDetailInfoIntoGeneralStore,
+  replaceUjatVolunteerRecruitGeneralStoreSidecar,
   restoreRecruitDetailInfoIntoGeneralStore,
   restoreUjatVolunteerRecruitGeneralStoreSidecar,
 } from './recruit-detail-info-overlay'
@@ -22,6 +25,15 @@ describe('recruit detail info overlay persist', () => {
   beforeEach(() => {
     resetApplicantRecruitInstitutionOverlay()
     resetGeneralRecruitOverlay()
+  })
+
+  it('resolves detail prefix for copied catalog codes', () => {
+    expect(recruitDetailInfoOverlayPrefixForCatalogId('recruitment-participant-school-custom-2')).toBe(
+      'recruit.detailInfo'
+    )
+    expect(recruitDetailInfoOverlayPrefixForCatalogId('recruitment-economy-copy-1')).toBe(
+      'economyRecruit.detailInfo'
+    )
   })
 
   it('picks only the detailInfo prefix', () => {
@@ -124,6 +136,23 @@ describe('recruit detail info overlay persist', () => {
     })
   })
 
+  it('UJAT 봉사자 sidecar replace는 live 빈 값을 저장본으로 덮는다', () => {
+    patchGeneralRecruitOverlay({
+      'recruitVolunteer.h1.detailInfo.attachmentFileNames': [],
+      'recruitVolunteer.h2.detailInfo.attachmentFileNames': [],
+      'recruit.inquiryContact': '유지',
+    })
+    replaceUjatVolunteerRecruitGeneralStoreSidecar({
+      'recruitVolunteer.h1.detailInfo.attachmentFileNames': ['상반기.pdf'],
+      'recruitVolunteer.h2.detailInfo.attachmentFileNames': ['하반기.pdf'],
+    })
+    expect(getGeneralRecruitOverlayRecord()).toMatchObject({
+      'recruit.inquiryContact': '유지',
+      'recruitVolunteer.h1.detailInfo.attachmentFileNames': ['상반기.pdf'],
+      'recruitVolunteer.h2.detailInfo.attachmentFileNames': ['하반기.pdf'],
+    })
+  })
+
   it('UJAT 봉사자 반기 첨부 복원은 편집 중인 파일명을 유지한다', () => {
     patchGeneralRecruitOverlay({
       'recruitVolunteer.h1.detailInfo.attachmentFileNames': ['상반기-유지.pdf'],
@@ -138,6 +167,26 @@ describe('recruit detail info overlay persist', () => {
     expect(
       getGeneralRecruitOverlayRecord()['recruitVolunteer.h2.detailInfo.attachmentFileNames']
     ).toEqual(['하반기.pdf'])
+  })
+
+  it('replace는 live에 남아 있는 빈 상세 키를 저장본으로 덮는다', () => {
+    patchGeneralRecruitOverlay({
+      'recruit.detailInfo.programDescription': '',
+      'recruit.detailInfo.additionalContentHtml': '',
+      'recruit.inquiryContact': '문의는 유지',
+    })
+    replaceRecruitDetailInfoIntoGeneralStore(
+      {
+        'recruit.detailInfo.programDescription': '저장본 설명',
+        'recruit.detailInfo.additionalContentHtml': '<p>저장본 본문</p>',
+      },
+      'recruit.detailInfo'
+    )
+    expect(getGeneralRecruitOverlayRecord()).toMatchObject({
+      'recruit.inquiryContact': '문의는 유지',
+      'recruit.detailInfo.programDescription': '저장본 설명',
+      'recruit.detailInfo.additionalContentHtml': '<p>저장본 본문</p>',
+    })
   })
 
   it('복원은 이미 편집 중인 첨부 파일명을 덮지 않는다', () => {

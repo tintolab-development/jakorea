@@ -1,12 +1,17 @@
 import { useEffect, useMemo } from 'react'
 import {
-  getUjatWagePaymentItemOptions,
   normalizeUjatPaymentItemSelection,
+  remapUjatWagePaymentItemOptions,
+  resolveUjatDefaultPaymentItemValues,
   resolveUjatWageDeductionLabel,
-  UJAT_DEFAULT_PAYMENT_ITEM_VALUES,
   UJAT_WAGE_OVERLAY_PAYMENT_KEY,
   type UjatWageInfoDisplay,
 } from '@/features/program/ujat/lib/ujat-wage-info-display'
+import {
+  useNormalizeProgramPaymentItemValues,
+  useProgramWagePaymentItemOptionsState,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { paymentItemSelectPlaceholder } from '@/features/template/lib/template-registration-payment-item-options'
 import {
   getUjatProgramRegistrationOverlayRecord,
   useUjatProgramRegistrationOverlayKv,
@@ -25,15 +30,25 @@ export function UjatWageInfoFields({
     UJAT_WAGE_OVERLAY_PAYMENT_KEY,
     []
   )
-  const paymentItemOptions = useMemo(() => getUjatWagePaymentItemOptions(), [])
+  const paymentCatalog = useProgramWagePaymentItemOptionsState()
+  const paymentItemOptions = useMemo(
+    () => remapUjatWagePaymentItemOptions(paymentCatalog.options),
+    [paymentCatalog.options]
+  )
 
   useEffect(() => {
-    if (mode !== 'edit') return
+    if (mode !== 'edit' || !paymentCatalog.ready) return
     const raw = getUjatProgramRegistrationOverlayRecord()[UJAT_WAGE_OVERLAY_PAYMENT_KEY]
     // 사용자가 []로 비운 값은 유지. 미기록(undefined)만 초기 시드.
     if (raw !== undefined) return
-    setPaymentItemValues([...UJAT_DEFAULT_PAYMENT_ITEM_VALUES])
-  }, [mode, setPaymentItemValues])
+    setPaymentItemValues(resolveUjatDefaultPaymentItemValues())
+  }, [mode, paymentCatalog.ready, setPaymentItemValues])
+
+  useNormalizeProgramPaymentItemValues(
+    mode === 'edit' ? paymentItemValues : undefined,
+    setPaymentItemValues,
+    paymentCatalog.ready
+  )
 
   const editPaymentIds = paymentItemValues
   const editDeductionLabel = resolveUjatWageDeductionLabel(editPaymentIds)
@@ -61,7 +76,8 @@ export function UjatWageInfoFields({
                   )
                 }}
                 options={paymentItemOptions}
-                placeholder="지급 항목을 선택하세요"
+                disabled={!paymentCatalog.ready}
+                placeholder={paymentItemSelectPlaceholder(paymentCatalog)}
                 style={{ width: '100%', minWidth: 0 }}
               />
             </div>

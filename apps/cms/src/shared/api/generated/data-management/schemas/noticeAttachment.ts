@@ -13,4 +13,6 @@ export interface NoticeAttachment {
   fileSize?: number;
   mimeType?: string;
   downloadPath?: string;
+  /** 첨부 등록 시각(program_post_attachment.created_at). */
+  createdAt?: string;
 }

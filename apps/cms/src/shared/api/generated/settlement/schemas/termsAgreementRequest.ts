@@ -25,9 +25,9 @@ export interface TermsAgreementRequest {
   version: string;
   /** 클라이언트 표시용 필수 여부 힌트입니다. CMS 개인/강사 pre-register에서는 서버가 등록 유형×termsType 정책으로 필수 여부를 다시 판정하므로 이 값을 신뢰하지 않습니다. */
   required?: boolean;
-  /** 동의 여부. PORTRAIT_RIGHTS에서는 FULL/PARTIAL 작성 제출 완료이면 true, DISAGREED이면 false입니다. */
+  /** 동의 여부. PORTRAIT_RIGHTS에서는 PARTIAL 작성 제출 완료이면 true, DISAGREED이면 false입니다. */
   agreed?: boolean;
-  /** PORTRAIT_RIGHTS 전용 부분동의 상태 힌트 */
+  /** PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. FULL은 deprecated이며 서버가 PARTIAL로 정규화합니다. */
   consentStatus?: TermsAgreementRequestConsentStatus;
   /** PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 힌트. 서버가 filledDocument의 1·2번 항목으로 재계산합니다. */
   programEligible?: boolean;
@@ -35,7 +35,7 @@ export interface TermsAgreementRequest {
   termsSnapshotJson?: string;
   /** 선택 동의서 4종(PORTRAIT/PAYMENT/FACILITATOR/ADMINISTRATIVE)의 작성 완료 WritingFormDraft. 해당 termsType에서 agreed=true이면 필수이고 agreed=false이면 생략합니다. */
   filledDocument?: FilledDocumentRequest;
-  /** 성범죄 경력조회 동의서 작성 완료 첨부 파일 object id */
+  /** 호환 입력 필드입니다. 성범죄 경력 조회 결과/증빙 파일은 저장하지 않으므로 신규 요청에서는 사용하지 않습니다. */
   evidenceFileObjectId?: number;
   /**
      * 호환용 원본 파일명. 서버는 file_object 메타데이터를 우선합니다.

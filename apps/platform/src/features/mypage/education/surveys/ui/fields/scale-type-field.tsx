@@ -6,9 +6,14 @@ import styles from '../survey-fields.module.css'
 type SurveyScaleTypeFieldProps = {
   paragraph: ScaleTypeParagraph
   onUpdateParagraph: FormUpdateParagraph
+  disabled?: boolean
 }
 
-export function SurveyScaleTypeField({ paragraph, onUpdateParagraph }: SurveyScaleTypeFieldProps) {
+export function SurveyScaleTypeField({
+  paragraph,
+  onUpdateParagraph,
+  disabled = false,
+}: SurveyScaleTypeFieldProps) {
   const items = paragraph.items?.length ? paragraph.items : createDefaultScaleTypeItems()
   const selectedId = paragraph.selectedPreviewItemId ?? null
 
@@ -25,7 +30,9 @@ export function SurveyScaleTypeField({ paragraph, onUpdateParagraph }: SurveySca
             .filter(Boolean)
             .join(' ')}
           aria-pressed={selectedId === item.id}
+          disabled={disabled}
           onClick={() => {
+            if (disabled) return
             onUpdateParagraph(paragraph.id, current =>
               current.kind === 'single_item' && current.variant === 'scale_type'
                 ? { ...current, selectedPreviewItemId: item.id }

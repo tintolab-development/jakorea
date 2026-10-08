@@ -7,33 +7,28 @@
  */
 
 /**
- * 프로그램 게시글 응답
+ * 관리자 프로그램 게시글 상세의 post. 식별자 필드는 목록 항목과 같은 postId입니다.
  */
 export interface ProgramPostResponse {
-  /** 게시글 ID */
-  id?: number;
-  /** 프로그램 ID */
+  postId?: number;
   programId?: number;
-  /** 게시글 제목 */
+  organizationApplicationId?: number;
+  organizationId?: number;
+  organizationName?: string;
   title?: string;
-  /** 게시글 본문 */
   content?: string;
-  /** 가시성 유형 */
   visibilityType?: string;
-  /** 읽음 수 */
   readCount?: number;
-  /** 미읽음 대상 수 */
   unreadCount?: number;
-  /** 삭제되지 않은 댓글 수 */
   commentCount?: number;
-  /** 등록된 반응 수 */
   reactionCount?: number;
-  /** 작성자 actor 유형 */
   createdByActorType?: string;
-  /** 작성자 actor ID */
   createdByActorId?: number;
-  /** 게시글 생성 시각 */
+  /**
+     * 작성자 actor 표시명. MEMBER는 회원 이름, ADMIN은 관리자 이름입니다. 탈퇴·삭제·미존재 계정이거나 이름이 비어 있으면 null입니다.
+     * @nullable
+     */
+  createdByDisplayName?: string | null;
   createdAt?: string;
-  /** 게시글 수정 시각 */
   updatedAt?: string;
 }

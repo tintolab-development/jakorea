@@ -4,10 +4,7 @@ import {
   shouldShowInstitutionApplicationScheduleParagraph,
   type InstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
-import {
-  getInstructorApplicationFormHiddenParagraphIds,
-  shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
-} from '@/features/program/general/lib/institution-application-form-visibility'
+import { shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph } from '@/features/program/general/lib/institution-application-form-visibility'
 import {
   buildInstructorAvailableScheduleSlotsFromProgram,
   buildVolunteerActivityAvailableScheduleSlots,
@@ -34,17 +31,12 @@ export function resolveGeneralApplicationFormHiddenParagraphIds(
     program?: Program | null
     paragraphs: readonly WritingFormParagraph[]
     institutionBridge?: InstitutionApplicationProgramBridge
-    /** 템플릿 작성 — 강사 성범죄 단락 등 기본 노출 */
+    /** 템플릿 작성 — 봉사자 이전 참여 단락 등 응답 조건부 단락 기본 노출 */
     isTemplateAuthoringMode?: boolean
   }
 ): ReadonlySet<string> | undefined {
   if (variant === 'institution' && params.institutionBridge) {
     return getInstitutionApplicationFormHiddenParagraphIds(params.institutionBridge)
-  }
-  if (variant === 'instructor') {
-    return getInstructorApplicationFormHiddenParagraphIds({
-      isTemplateAuthoringMode: params.isTemplateAuthoringMode === true,
-    })
   }
   if (variant === 'volunteer') {
     return getVolunteerApplicationFormHiddenParagraphIds(params.paragraphs, {
@@ -52,6 +44,7 @@ export function resolveGeneralApplicationFormHiddenParagraphIds(
         params.program == null
           ? undefined
           : isGeneralProgramVolunteerInterviewScheduleVisible(params.program),
+      isTemplateAuthoringMode: params.isTemplateAuthoringMode === true,
     })
   }
   if (variant === 'individual' && params.program) {

@@ -10,6 +10,7 @@ import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import { VolunteerEvidenceFileList } from './evidence-files'
 import {
   GeneralDocumentScreeningStatusText,
   GeneralInterviewAssignmentStatusText,
@@ -142,6 +143,21 @@ export function GeneralVolunteerApplicantBasicInfo({
             view={formatGeneralJaVolunteerExperienceLabel(applicant.hasJaVolunteerExperience)}
           />
         </DetailInfoForm.Row>
+        {applicant.hasJaVolunteerExperience ? (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="이전 참여 JA 봉사 프로그램"
+              fullRow
+              readOnlyDisplay
+              view={
+                <div className="general-volunteer-applicant-basic-info__previous-ja">
+                  <span>{applicant.previousJaProgram?.trim() || '-'}</span>
+                  <VolunteerEvidenceFileList files={applicant.evidenceAttachments ?? []} />
+                </div>
+              }
+            />
+          </DetailInfoForm.Row>
+        ) : null}
       </DetailInfoForm>
     </section>
   )

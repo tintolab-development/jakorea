@@ -3,7 +3,6 @@
  */
 
 import { lazy, Suspense, useCallback, useMemo } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -13,6 +12,7 @@ import {
   TAX_FILING_SHEET_COLUMN_COUNT,
   buildTaxFilingFortuneSheet,
 } from '@/pages/settlement-management/tax-filing-fortune-data'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './tax-filing-preview-modal.css'
 
 const Workbook = lazy(() => import('./bulk-transfer-fortune-workbook'))
@@ -51,7 +51,7 @@ export function TaxFilingPreviewModal({ open, onCancel, rows }: TaxFilingPreview
           <CmsButton
             variant="primary"
             size="large"
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             adminAction="download"
             onClick={() => void handleDownload()}
           >

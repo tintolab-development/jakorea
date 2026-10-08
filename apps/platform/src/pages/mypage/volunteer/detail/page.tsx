@@ -277,6 +277,7 @@ export function MypageVolunteerDetailPage() {
 
   const handleConfirmCancel = () => {
     if (remoteDetailEnabled && application?.applicationType) {
+      if (cancelMutation.isPending) return
       cancelMutation.mutate(
         { applicationType: application.applicationType, applicationId: application.id },
         {
@@ -404,6 +405,7 @@ export function MypageVolunteerDetailPage() {
             educationTargetLabel={program.educationTargetDetailLabel}
             applicationType={routeApplicationType}
             applicationId={application.id}
+            programId={program.id}
           />
         )
       }
@@ -425,6 +427,7 @@ export function MypageVolunteerDetailPage() {
             educationTargetLabel={program.educationTargetDetailLabel}
             applicationType={routeApplicationType}
             applicationId={application.id}
+            programId={program.id}
           />
         )
       }
@@ -523,8 +526,14 @@ export function MypageVolunteerDetailPage() {
 
       <EducationCancelConfirm
         open={isCancelConfirmOpen}
-        onCancel={() => setIsCancelConfirmOpen(false)}
+        onCancel={() => {
+          if (cancelMutation.isPending) return
+          cancelMutation.reset()
+          setIsCancelConfirmOpen(false)
+        }}
         onConfirm={handleConfirmCancel}
+        pending={cancelMutation.isPending}
+        error={cancelMutation.error}
       />
     </section>
   )

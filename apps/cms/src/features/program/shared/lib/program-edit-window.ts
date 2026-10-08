@@ -20,6 +20,7 @@ export function toProgramRecruitmentWindows(
         recruitmentType?: string
         targetType?: string
         applicationType?: string | null
+        recruitTerm?: string | null
         startAt?: string | null
         endAt?: string | null
         operationStartDate?: string | null
@@ -53,6 +54,9 @@ export function toProgramRecruitmentWindows(
     recruitmentType: row.recruitmentType,
     targetType: row.targetType,
     ...(row.applicationType ? { applicationType: row.applicationType } : {}),
+    ...(row.recruitTerm === 'FIRST_HALF' || row.recruitTerm === 'SECOND_HALF'
+      ? { recruitTerm: row.recruitTerm }
+      : {}),
     startAt: row.startAt ?? null,
     endAt: row.endAt ?? null,
     operationStartDate: row.operationStartDate ?? null,

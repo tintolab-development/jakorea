@@ -3,6 +3,7 @@
  * @see apps/cms/.cursor/rules/process/program-no-fe-mock.mdc
  */
 
+import type { VolunteerApplicationEvidenceAttachment } from '@/features/program/general/model/volunteer-applicant'
 import {
   UJAT_VOLUNTEER_APPLICATION_TYPE_LABELS,
   type UjatDocumentScreeningStatus,
@@ -30,13 +31,15 @@ export interface UjatVolunteerApplicantRow {
   id: string
   no: number
   name: string
-  grade: UjatVolunteerGrade
+  /** 목록 DTO에 학년이 없으면 빈 문자열. 1학년으로 채우지 않는다. */
+  grade: UjatVolunteerGrade | ''
   preferredRegion: UjatVolunteerPreferredRegion
   contact: string
   email: string
   contactRaw: string
   emailRaw: string
-  hasEducationExperience: boolean
+  /** 목록 DTO에 없으면 null. false로 채우지 않는다. */
+  hasEducationExperience: boolean | null
   applicationType: UjatVolunteerApplicationType
   essayIntro: string
   essayEducationExperience: string
@@ -50,6 +53,8 @@ export interface UjatVolunteerApplicantRow {
   programId: string
   half: UjatVolunteerRecruitHalf
   englishName: string
+  /** 원격 응답 memberId — 출석·배정 API(participantId) 조인용 */
+  memberId?: string
   id1365: string
   gender: string
   birthDate: string
@@ -61,6 +66,8 @@ export interface UjatVolunteerApplicantRow {
   scheduleChangeCancelCount: number
   interviewAvailability: UjatVolunteerInterviewAvailabilityDay[]
   previousUjatActivity?: UjatVolunteerPreviousUjatActivity
+  /** 상세 API `application.attachments` */
+  evidenceAttachments?: VolunteerApplicationEvidenceAttachment[]
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
   secondInterviewScreeningStatus?: UjatSecondInterviewScreeningStatus

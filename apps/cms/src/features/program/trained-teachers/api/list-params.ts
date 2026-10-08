@@ -42,6 +42,21 @@ export interface TrainedTeacherListTableFilters {
   operationEndDate?: string
 }
 
+/** URL 쿼리 값 → 목록 테이블 필터 (목록 훅·상단 위젯 프리페치가 같은 쿼리 키를 쓰도록 공용) */
+export function readTrainedTeacherTableFilters(
+  getParam: (key: string) => string | null | undefined
+): TrainedTeacherListTableFilters {
+  const yearRaw = getParam('businessYear')
+  return {
+    title: getParam('title')?.trim() || undefined,
+    businessYear: yearRaw && /^\d{4}$/.test(yearRaw) ? Number.parseInt(yearRaw, 10) : undefined,
+    targetLevel: getParam('targetLevel')?.trim() || undefined,
+    lifecycleStatus: getParam('lifecycleStatus')?.trim() || undefined,
+    operationStartDate: getParam('operationStartDate')?.trim() || undefined,
+    operationEndDate: getParam('operationEndDate')?.trim() || undefined,
+  }
+}
+
 function isIsoDate(value: string | undefined): value is string {
   return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value))
 }

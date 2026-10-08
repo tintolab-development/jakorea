@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
 import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, EmptyState, ExcelButton, useCmsAlert } from '@/shared/ui'
@@ -18,6 +17,7 @@ import {
   useTrainedTeacherEducationJournals,
 } from '@/features/program/trained-teachers/api/education-journals-hooks'
 import { TrainedTeachersEducationJournalViewModal } from './education-journal-view-modal'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './education-journal-section.css'
 
 const VIEW_CELL_CLASSNAME = 'trained-teachers-education-journal-section__view-cell'
@@ -283,7 +283,7 @@ export function TrainedTeachersEducationJournalSection({
             variant="secondary"
             size="large"
             width={200}
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             loading={isBulkDownloading || bulkDownloadMutation.isPending}
             disabled={isBulkDownloading || bulkDownloadMutation.isPending}
             onClick={() => void handleBulkDownload()}

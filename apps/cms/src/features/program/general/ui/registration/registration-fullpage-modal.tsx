@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { RegistrationWizardIncompleteMapVariant } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
 import { resolveRegistrationWizardIncompleteParagraphIds } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
 import {
@@ -23,6 +24,8 @@ import {
 } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
 import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-registration-flow'
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
+import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/registration/step-template-banner'
+import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
 import {
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   clearRegistrationDraftForFreshStart,
@@ -39,6 +42,7 @@ import {
 import { deleteRegistrationProgramDraftRemote } from '@/features/program/general/lib/registration-program-draft-session'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
+import { invalidateProgramListCachesAfterRegistration } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
@@ -92,6 +96,7 @@ function GeneralProgramRegistrationFullpageModalInner({
   onProgramRegistrationSaved,
   registrationFormVariant = 'general',
 }: GeneralProgramRegistrationFullpageModalProps) {
+  const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const { showAlert } = useCmsAlert()
   const { reportIncomplete } = useRegistrationWizardValidationHighlight()
@@ -115,6 +120,7 @@ function GeneralProgramRegistrationFullpageModalInner({
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
   const [recruitmentPreviewOpen, setRecruitmentPreviewOpen] = useState(false)
   const [recruitmentPreviewProgram, setRecruitmentPreviewProgram] = useState<Program | null>(null)
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
     useState<RecruitmentUserPreviewAudience>('institutions')
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
@@ -173,13 +179,19 @@ function GeneralProgramRegistrationFullpageModalInner({
     setCompleteSuccessOpen(false)
     setRecruitmentPreviewOpen(false)
     setRecruitmentPreviewProgram(null)
+    setTemplatePickerOpen(false)
     pendingCreatedProgramRef.current = undefined
   }, [open])
 
-  const handleRegistrationCreated = useCallback((program?: Program) => {
-    pendingCreatedProgramRef.current = program
-    setCompleteSuccessOpen(true)
-  }, [])
+  const handleRegistrationCreated = useCallback(
+    (program?: Program) => {
+      // 등록 위자드는 mutation onSuccess를 타지 않으므로 목록·위젯을 여기서 무효화한다.
+      invalidateProgramListCachesAfterRegistration(queryClient, registrationFormVariant)
+      pendingCreatedProgramRef.current = program
+      setCompleteSuccessOpen(true)
+    },
+    [queryClient, registrationFormVariant]
+  )
 
   const recruitmentPreviewSponsorName = useSponsorNameById(recruitmentPreviewProgram?.sponsorId)
 
@@ -368,6 +380,7 @@ function GeneralProgramRegistrationFullpageModalInner({
         titleReadOnly
         templateTabType="writing"
         registrationUserMode
+        showCloseButton
         onPreview={handlePreview}
         showPreview={showPreview}
         onSave={handleSaveClick}
@@ -376,8 +389,26 @@ function GeneralProgramRegistrationFullpageModalInner({
             activeStep={flow.activeStep}
             visibleRecruitTabKeys={flow.visibleRecruitTabKeys}
             visibleApplicationTabKeys={flow.visibleApplicationTabKeys}
-            onSelectStep={flow.selectStep}
+            onSelectStep={key => {
+              setTemplatePickerOpen(false)
+              flow.selectStep(key)
+            }}
           />
+        }
+        bodyHeaderBelow={
+          flow.phase === 'program' ? undefined : (
+            <RegistrationStepTemplateChrome
+              templateName={flow.stepTemplateName}
+              isDefault={flow.isDefaultStepTemplate}
+              category={flow.phase === 'application' ? 'application_form' : 'application'}
+              pickerOpen={templatePickerOpen}
+              onOpenPicker={() => setTemplatePickerOpen(true)}
+              onClosePicker={() => setTemplatePickerOpen(false)}
+              onUseTemplate={row => {
+                void flow.selectStepTemplate(row).then(() => setTemplatePickerOpen(false))
+              }}
+            />
+          )
         }
         headerActionsLeading={
           <RegistrationDevAutofillButton
@@ -385,7 +416,18 @@ function GeneralProgramRegistrationFullpageModalInner({
           />
         }
         footerActions={footerActions}
-        leftContent={flow.isDraftLoading ? <FormDraftLoading /> : flow.panels.leftContent}
+        leftContent={
+          flow.isDraftLoading ? (
+            <FormDraftLoading />
+          ) : (
+            <HideParagraphSelectionChromeContext.Provider
+              key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
+              value={flow.phase !== 'application'}
+            >
+              {flow.panels.leftContent}
+            </HideParagraphSelectionChromeContext.Provider>
+          )
+        }
         rightNavigation={
           flow.isDraftLoading || hideCustomFieldNav ? null : flow.panels.rightNavigation
         }

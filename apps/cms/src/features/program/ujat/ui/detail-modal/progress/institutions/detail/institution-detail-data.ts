@@ -6,10 +6,9 @@ import { formatUjatInstitutionFridayDisplay } from '@/features/program/ujat/ui/d
 import { formatGradeClassSectionLabel } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
-import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
+import { resolveEducationSemesterForIsoDate } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import { getUjatScheduleAssignRegionState } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-assign/store'
 import { parseGradeClassSectionValue } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
-import { resolveEducationSemesterForIsoDate } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type {
   UjatEducationProgressInstitutionConfirmedScheduleRow,
@@ -38,7 +37,7 @@ function buildConfirmedEducationScheduleRows(
   const state = getUjatScheduleAssignRegionState(regionKey)
   const rows: UjatEducationProgressInstitutionConfirmedScheduleRow[] = []
 
-  for (const { isoDate } of UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES) {
+  for (const isoDate of Object.keys(state.days).sort()) {
     if (resolveEducationSemesterForIsoDate(isoDate) !== half) continue
     const day = state.days[isoDate]
     if (!day) continue

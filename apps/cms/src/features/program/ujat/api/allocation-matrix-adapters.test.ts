@@ -87,6 +87,7 @@ describe('buildUjatAttendanceSessionsFromMatrix', () => {
     expect(sessions).toHaveLength(1)
     expect(sessions[0]?.scheduleId).toBe('10')
     expect(sessions[0]?.volunteers[0]?.status).toBe('late')
+    expect(sessions[0]?.volunteers[0]?.checkInTime).toBe('10:15')
     expect(sessions[0]?.volunteers[0]?.assignedClass).toBe('3-1')
   })
 })

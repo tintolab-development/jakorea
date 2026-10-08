@@ -4,23 +4,31 @@
 
 import type { Cell, CellWithRowAndCol, Sheet } from '@fortune-sheet/core'
 import dayjs from 'dayjs'
-import {
-  getUjatVolunteerMockProfile,
-  parseEducationProgressVolunteerProfileId,
-  regionLabelForVolunteerProfile,
-} from '@/features/program/ujat/model/ujat-volunteer-profile'
-import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
+export type Volunteer1365VolunteerSource = {
+  id: string
+  /** 출석(participantId)과 잇는 키 — allocation-matrix의 memberId */
+  memberId?: string
+  name: string
+  birthDate?: string
+  id1365?: string
+  region?: string
+}
+import type { UjatInstitutionScheduleAssignDateEntry } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
+import { filterScheduleDatesByHalf } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import type { EducationProgressHalfKey } from '../tabs'
-import { getUjatVolunteerAssignmentProgressBundle } from './detail/volunteer-assignment-data'
-import type { UjatVolunteerAssignmentProgressRow } from './detail/assignment-types'
+
+/** key: `volunteer1365AttendanceKey(memberId, isoDate)` */
+export type Volunteer1365AttendanceLookup = ReadonlyMap<string, Volunteer1365SheetCellValue>
+
+export function volunteer1365AttendanceKey(memberId: string, isoDate: string): string {
+  return `${memberId}|${isoDate}`
+}
 
 const FIXED_HEADER_LABELS = ['이름', '생년월일', '1365 ID', '지역', '발대식'] as const
 const MINT_BG = '#01A1AF'
 const HEADER_FG = '#FFFFFF'
 const WARN_FG = '#E03131'
 const DASH = '-'
-const OPENING_CEREMONY_HOURS = '2시간'
-
 export type Volunteer1365ScheduleColumn = {
   isoDate: string
   title: string
@@ -40,27 +48,30 @@ export type Volunteer1365SheetRow = {
   sessions: Volunteer1365SheetCellValue[]
 }
 
-function simpleHash(input: string): number {
-  let hash = 0
-  for (let i = 0; i < input.length; i += 1) {
-    hash = (Math.imul(31, hash) + input.charCodeAt(i)) | 0
-  }
-  return Math.abs(hash)
-}
-
-export function getVolunteer1365ScheduleColumns(half: EducationProgressHalfKey): Volunteer1365ScheduleColumn[] {
-  return UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(entry => ({
+export function getVolunteer1365ScheduleColumns(
+  half: EducationProgressHalfKey,
+  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = []
+): Volunteer1365ScheduleColumn[] {
+  return filterScheduleDatesByHalf(scheduleDates, half).map(entry => ({
     isoDate: entry.isoDate,
     title: entry.title,
   }))
 }
 
-export function getVolunteer1365HeaderLabels(half: EducationProgressHalfKey): string[] {
-  return [...FIXED_HEADER_LABELS, ...getVolunteer1365ScheduleColumns(half).map(column => column.title)]
+export function getVolunteer1365HeaderLabels(
+  half: EducationProgressHalfKey,
+  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = []
+): string[] {
+  return [
+    ...FIXED_HEADER_LABELS,
+    ...getVolunteer1365ScheduleColumns(half, scheduleDates).map(column => column.title),
+  ]
 }
 
-export const buildVolunteer1365SheetColumnCount = (half: EducationProgressHalfKey): number =>
-  getVolunteer1365HeaderLabels(half).length
+export const buildVolunteer1365SheetColumnCount = (
+  half: EducationProgressHalfKey,
+  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = []
+): number => getVolunteer1365HeaderLabels(half, scheduleDates).length
 
 function formatBirthDateFor1365(birthDate: string): string {
   const normalized = birthDate.replace(/\s/g, '').replace(/\./g, '-')
@@ -69,104 +80,37 @@ function formatBirthDateFor1365(birthDate: string): string {
   return `${parsed.format('YYYY')}. ${parsed.format('MM')}. ${parsed.format('DD')}.`
 }
 
-function formatDurationLabel(totalMinutes: number): Volunteer1365SheetCellValue {
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  if (minutes === 0) {
-    return { text: `${hours}시간` }
-  }
-  return { text: `${hours}시간 ${minutes}분`, warn: true }
-}
-
-function parseScheduleLabelMonthDay(label: string): { month: number; day: number } | null {
-  const match = label.match(/(\d{1,2})\.\s*(\d{1,2})/)
-  if (!match) return null
-  return { month: Number(match[1]), day: Number(match[2]) }
-}
-
-function resolveAssignmentForDate(
-  rows: readonly UjatVolunteerAssignmentProgressRow[],
-  isoDate: string
-): UjatVolunteerAssignmentProgressRow | undefined {
-  const target = dayjs(isoDate)
-  return rows.find(row => {
-    const parsed = parseScheduleLabelMonthDay(row.scheduleLabel)
-    if (!parsed) return false
-    return parsed.month === target.month() + 1 && parsed.day === target.date()
-  })
-}
-
 function resolveSessionCell(
-  volunteerId: string,
+  memberId: string | undefined,
   isoDate: string,
-  assignment?: UjatVolunteerAssignmentProgressRow
+  attendance?: Volunteer1365AttendanceLookup
 ): Volunteer1365SheetCellValue {
-  if (!assignment || assignment.educationProgress !== 'completed') {
-    return { text: DASH }
-  }
-
-  if (assignment.attendance.kind === 'excused_absence' || assignment.attendance.kind === 'dash') {
-    return { text: DASH }
-  }
-
-  if (assignment.attendance.kind === 'late') {
-    const seed = simpleHash(`${volunteerId}|${isoDate}|late`)
-    const minutes = 180 + (seed % 90)
-    return formatDurationLabel(minutes)
-  }
-
-  if (assignment.attendance.kind === 'present') {
-    const seed = simpleHash(`${volunteerId}|${isoDate}|present`)
-    const usePartial = seed % 5 === 0
-    const minutes = usePartial ? 280 + (seed % 40) : 300
-    return formatDurationLabel(minutes)
-  }
-
-  return { text: DASH }
-}
-
-function resolveOpeningCeremony(volunteerId: string): string {
-  const profileId = parseEducationProgressVolunteerProfileId(volunteerId)
-  if (!profileId) return DASH
-  const profile = getUjatVolunteerMockProfile(profileId)
-  if (!profile || profile.assignmentStatus === 'activity_abandoned') return DASH
-  return OPENING_CEREMONY_HOURS
+  if (!memberId || !attendance) return { text: DASH }
+  return attendance.get(volunteer1365AttendanceKey(memberId, isoDate)) ?? { text: DASH }
 }
 
 export function buildVolunteer1365SheetRows(
   half: EducationProgressHalfKey,
-  volunteerIds: readonly string[]
+  volunteers: readonly Volunteer1365VolunteerSource[],
+  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = [],
+  attendance?: Volunteer1365AttendanceLookup
 ): Volunteer1365SheetRow[] {
-  const scheduleColumns = getVolunteer1365ScheduleColumns(half)
+  const scheduleColumns = getVolunteer1365ScheduleColumns(half, scheduleDates)
 
-  return [...volunteerIds]
-    .sort((a, b) => {
-      const profileA = parseEducationProgressVolunteerProfileId(a)
-      const profileB = parseEducationProgressVolunteerProfileId(b)
-      const nameA = profileA ? (getUjatVolunteerMockProfile(profileA)?.name ?? a) : a
-      const nameB = profileB ? (getUjatVolunteerMockProfile(profileB)?.name ?? b) : b
-      return nameA.localeCompare(nameB, 'ko')
-    })
-    .map(volunteerId => {
-      const profileId = parseEducationProgressVolunteerProfileId(volunteerId)
-      const profile = profileId ? getUjatVolunteerMockProfile(profileId) : null
-      const assignmentRows = getUjatVolunteerAssignmentProgressBundle(volunteerId).rows
-
-      return {
-        name: profile?.name ?? volunteerId,
-        birthDate: formatBirthDateFor1365(profile?.birthDate ?? DASH),
-        id1365: profile?.id1365 ?? DASH,
-        region: profile ? regionLabelForVolunteerProfile(profile.regionKey) : DASH,
-        openingCeremony: resolveOpeningCeremony(volunteerId),
-        sessions: scheduleColumns.map(column =>
-          resolveSessionCell(
-            volunteerId,
-            column.isoDate,
-            resolveAssignmentForDate(assignmentRows, column.isoDate)
-          )
-        ),
-      }
-    })
+  return [...volunteers]
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+    .map(volunteer => ({
+      name: volunteer.name,
+      birthDate: volunteer.birthDate?.trim()
+        ? formatBirthDateFor1365(volunteer.birthDate.trim())
+        : DASH,
+      id1365: volunteer.id1365?.trim() || DASH,
+      region: volunteer.region?.trim() || DASH,
+      openingCeremony: DASH,
+      sessions: scheduleColumns.map(column =>
+        resolveSessionCell(volunteer.memberId, column.isoDate, attendance)
+      ),
+    }))
 }
 
 function headerCell(text: string): Cell {
@@ -216,11 +160,13 @@ function buildColumnWidths(columnCount: number): Record<string, number> {
 
 export function buildVolunteer1365FortuneSheet(
   half: EducationProgressHalfKey,
-  volunteerIds: readonly string[]
+  volunteers: readonly Volunteer1365VolunteerSource[],
+  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = [],
+  attendance?: Volunteer1365AttendanceLookup
 ): Sheet {
-  const headerLabels = getVolunteer1365HeaderLabels(half)
+  const headerLabels = getVolunteer1365HeaderLabels(half, scheduleDates)
   const columnCount = headerLabels.length
-  const lines = buildVolunteer1365SheetRows(half, volunteerIds)
+  const lines = buildVolunteer1365SheetRows(half, volunteers, scheduleDates, attendance)
   const dataRowCount = lines.length
   const totalRows = Math.max(36, 1 + dataRowCount + 8)
 

@@ -1,5 +1,5 @@
 import '@/shared/ui/cross-table.css'
-import { getUjatEducationProgressVolunteerSummary } from '@/features/program/ujat/model/ujat-education-progress'
+import type { UjatEducationProgressVolunteerSummary } from './types'
 import {
   formatSummaryCellValue,
   summaryToneClassName,
@@ -16,8 +16,11 @@ import {
 
 const DATA = 'cross-table__cell cross-table__cell--data'
 
-export function UjatEducationProgressVolunteerSummaryTable() {
-  const summary = getUjatEducationProgressVolunteerSummary()
+export function UjatEducationProgressVolunteerSummaryTable({
+  summary,
+}: {
+  summary: UjatEducationProgressVolunteerSummary
+}) {
   const regionColCount = 8
   const totalColCount = 1
 

@@ -36,6 +36,8 @@ export function mergeVolunteerApplicationIntoParticipatingRow(
       applicant.scheduleChangeCancelCount ?? base.scheduleChangeCancelCount,
     hasJaVolunteerExperience:
       applicant.hasJaVolunteerExperience ?? base.hasJaVolunteerExperience,
+    previousJaProgram: applicant.previousJaProgram ?? base.previousJaProgram,
+    evidenceAttachments: applicant.evidenceAttachments ?? base.evidenceAttachments,
     adminComment: applicant.adminComment ?? base.adminComment,
     essayIntro: applicant.essayIntro ?? base.essayIntro,
     essayEducationExperience:

@@ -295,6 +295,16 @@ export function migrateProgramApplicationFormInstitutionParagraphs(
       changed = true
       return { ...paragraph, paragraphDescription: SCHEDULE_PARAGRAPH_DESCRIPTION }
     }
+    if (
+      paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod &&
+      paragraph.paragraphDescription !== INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description
+    ) {
+      changed = true
+      return {
+        ...paragraph,
+        paragraphDescription: INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description,
+      }
+    }
     return paragraph
   })
   if (

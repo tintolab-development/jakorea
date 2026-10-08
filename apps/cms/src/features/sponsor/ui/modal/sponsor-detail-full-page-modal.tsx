@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { BulbOutlined, DownloadOutlined, TeamOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { BulbOutlined, TeamOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import {
   addSponsorContact,
   deleteSponsorContacts,
@@ -50,6 +50,7 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './sponsor-detail-full-page-modal.css'
 
 const LNB_DETAIL = 'sponsor-detail'
@@ -343,7 +344,7 @@ function SponsorDetailFullPageModalInner({
               <CmsButton
                 variant="secondary"
                 size="large"
-                icon={<DownloadOutlined />}
+                icon={<ButtonDownloadIcon />}
                 loading={logoBulkDownloading}
                 onClick={handleLogoBulkDownload}
                 adminAction="download"

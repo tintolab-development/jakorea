@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
+import type { Program } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import { queryClient } from '@/shared/lib/query-client'
 import {
   isProgramFormVersionMutable,
   resolveApplicationFormLoadSource,
+  resolveProgramOperationalFormLoadSource,
   saveMutableProgramFormVersion,
 } from './sync-registration-form-bindings'
 
@@ -84,6 +87,48 @@ describe('resolveApplicationFormLoadSource', () => {
       ],
     })
     expect(source).toEqual({ templateVersionId: 501, preferLocalDraft: false })
+  })
+})
+
+describe('resolveProgramOperationalFormLoadSource', () => {
+  beforeEach(() => {
+    queryClient.clear()
+    resolveFormTemplateCatalogIds.mockReset()
+    fetchGeneralProgramFormBindings.mockReset()
+  })
+
+  it('reads the bound recruitment version even when templateId still matches catalog', async () => {
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 22, templateVersionId: 1 })
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      binding({
+        formType: 'RECRUITMENT',
+        templateId: 22,
+        templateVersionId: 392,
+        targetRole: 'ORGANIZATION',
+        templateName: '참여 기관 모집',
+      }),
+    ])
+
+    const source = await resolveProgramOperationalFormLoadSource(
+      { id: 'ujat-1' } as Program,
+      'recruitment-ujat-school'
+    )
+
+    expect(source).toEqual({ templateVersionId: 392, preferLocalDraft: false })
+    expect(resolveApplicationFormLoadSource({
+      programId: 'ujat-1',
+      templateCode: 'recruitment-ujat-school',
+      catalogTemplateId: 22,
+      bindings: [
+        binding({
+          formType: 'RECRUITMENT',
+          templateId: 22,
+          templateVersionId: 392,
+          targetRole: 'ORGANIZATION',
+          templateName: '참여 기관 모집',
+        }),
+      ],
+    })).toEqual({ preferLocalDraft: true })
   })
 })
 

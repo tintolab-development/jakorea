@@ -169,6 +169,58 @@ export function parseGeneralInterviewScheduleFromRemoteSlots(
   }
 }
 
+/**
+ * remote 스케줄에 봉사자가 신청한 면접 가능 일정을 배정 후보로 합친다.
+ * `program_interview_slot`은 배정 시점에 생성되므로(`resolveInterviewSlotId`) 슬롯이 0건이어도
+ * 신청 일정으로 배정할 수 있어야 한다.
+ */
+export function mergeApplicantAvailabilityIntoSchedule(
+  schedule: ParsedInterviewSchedule,
+  interviewAvailability: { dateLabel: string; slots: string[] }[]
+): ParsedInterviewSchedule {
+  if (interviewAvailability.length === 0) return schedule
+
+  const today = dayjs().startOf('day')
+  const slotsByDateKey = new Map(schedule.slotsByDateKey)
+  const clickableDateKeys = new Set(schedule.clickableDateKeys)
+  const availabilityKeys: string[] = []
+
+  for (const day of interviewAvailability) {
+    const date = parseInterviewDisplayDateLabel(day.dateLabel)
+    if (!date || date.isBefore(today, 'day')) continue
+    const dateKey = date.format('YYYY-MM-DD')
+    const daySlots = [...(slotsByDateKey.get(dateKey) ?? [])]
+    for (const raw of day.slots) {
+      if (!/\d{2}:\d{2}/.test(raw)) continue
+      const timeRange = normalizeTimeRangeKey(raw)
+      const key = `${dateKey}|${timeRange}`
+      if (daySlots.some(slot => slot.key === key)) continue
+      daySlots.push({ key, timeRange, displayTimeRange: formatDisplayTimeRange(timeRange) })
+    }
+    if (daySlots.length === 0) continue
+    slotsByDateKey.set(dateKey, daySlots)
+    clickableDateKeys.add(dateKey)
+    availabilityKeys.push(dateKey)
+  }
+
+  if (availabilityKeys.length === 0) return schedule
+
+  const sortedKeys = [...clickableDateKeys].sort()
+  const firstKey = [...availabilityKeys].sort()[0] ?? sortedKeys[0]
+  const rangeStart = dayjs(sortedKeys[0]).startOf('month')
+  const rangeEnd = dayjs(sortedKeys[sortedKeys.length - 1]).endOf('month')
+
+  return {
+    ...schedule,
+    slotsByDateKey,
+    clickableDateKeys,
+    disabledDate: (date: Dayjs) => !clickableDateKeys.has(date.format('YYYY-MM-DD')),
+    rangeStart,
+    rangeEnd,
+    scheduleMonth: dayjs(firstKey).startOf('month'),
+  }
+}
+
 /** 목록 availability·배정 팝업 정합용 — 2026.09~10 DEFAULT mock 스케줄 */
 export function parseGeneralInterviewScheduleFromDefaultMock(): ParsedInterviewSchedule {
   return buildParsedInterviewSchedule(

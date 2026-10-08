@@ -1,10 +1,9 @@
-import { getUjatInstitutionApplicationMockRows } from '@/features/program/ujat/model/ujat-institution-application'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import type {
   UjatInstitutionApplicationRegionKey,
 } from '../list/regions'
 import type { UjatInstitutionApplicationRow } from '../list/types'
-import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '../education-schedule'
+import { formatScheduleColumnTitle } from '../education-schedule'
 import { formatAssignedGradeClassesDisplay } from './format-assigned-grade-classes'
 import { getUjatScheduleAssignRegionState } from './store'
 
@@ -35,7 +34,7 @@ function createEmptyDateColumn(isoDate: string, dateTitle: string): ScheduleShee
 }
 
 export function buildScheduleSheetPreview(
-  applicationRows: readonly UjatInstitutionApplicationRow[] = getUjatInstitutionApplicationMockRows()
+  applicationRows: readonly UjatInstitutionApplicationRow[]
 ): ScheduleSheetPreviewRegion[] {
   const rowById = new Map(applicationRows.map(row => [row.id, row]))
 
@@ -44,7 +43,8 @@ export function buildScheduleSheetPreview(
     const state = getUjatScheduleAssignRegionState(regionKey)
     const columns: ScheduleSheetPreviewColumn[] = []
 
-    for (const { isoDate, title } of UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES) {
+    for (const isoDate of Object.keys(state.days).sort()) {
+      const title = formatScheduleColumnTitle(isoDate)
       const day = state.days[isoDate]
       const assignmentEntries: ScheduleSheetPreviewColumn[] = []
 

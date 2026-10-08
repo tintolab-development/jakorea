@@ -29,6 +29,12 @@ export type PFDatePickerCalendarProps = {
   initialViewMonth?: Date
   onSelectDate?: (isoDate: string) => void
   onSelectRange?: (range: { start: string; end: string }) => void
+  /** 점으로 강조할 날짜 `YYYY-MM-DD` (예: 선택 가능한 일정이 있는 날) */
+  markedDates?: ReadonlySet<string>
+  /** 지정 시 이 집합의 날짜 `YYYY-MM-DD`만 클릭 가능, 나머지는 비활성 */
+  enabledDates?: ReadonlySet<string>
+  /** true면 팝오버 그림자 없이 본문에 인라인 배치 (`role="group"`) */
+  inline?: boolean
   className?: string
   id?: string
   'aria-label'?: string
@@ -56,6 +62,9 @@ export function PFDatePickerCalendar({
   initialViewMonth,
   onSelectDate,
   onSelectRange,
+  markedDates,
+  enabledDates,
+  inline = false,
   className,
   id,
   'aria-label': ariaLabel = '날짜 선택',
@@ -85,8 +94,11 @@ export function PFDatePickerCalendar({
   const hasCompleteRange =
     selectionMode === 'range' && activeStart != null && activeEnd != null
 
+  const isDayDisabled = (date: Date) =>
+    !isDateWithinInputBounds(date) || (enabledDates != null && !enabledDates.has(toIsoDate(date)))
+
   const handleSelectDay = (day: CalendarDay) => {
-    if (!isDateWithinInputBounds(day.date)) return
+    if (isDayDisabled(day.date)) return
 
     const iso = toIsoDate(day.date)
     setViewMonth(new Date(day.date.getFullYear(), day.date.getMonth(), 1))
@@ -113,8 +125,10 @@ export function PFDatePickerCalendar({
   return (
     <div
       id={id}
-      className={[styles.popover, className].filter(Boolean).join(' ')}
-      role="dialog"
+      className={[styles.popover, inline ? styles.popoverInline : undefined, className]
+        .filter(Boolean)
+        .join(' ')}
+      role={inline ? 'group' : 'dialog'}
       aria-label={ariaLabel}
     >
       <div className={styles.header}>
@@ -151,7 +165,7 @@ export function PFDatePickerCalendar({
               <div className={styles.week} key={weekKey}>
                 {week.map((day, dayIndex) => {
                   const iso = toIsoDate(day.date)
-                  const isDisabled = !isDateWithinInputBounds(day.date)
+                  const isDisabled = isDayDisabled(day.date)
                   const isSunday = day.weekday === 0
                   const isSaturday = day.weekday === 6
 
@@ -213,6 +227,7 @@ export function PFDatePickerCalendar({
                     inSelection && nextInSelection ? styles.dayBridgeRight : undefined,
                     inSelection && prevInSelection ? styles.dayBridgeLeft : undefined,
                     selectionMode === 'single' && isSelected ? styles.daySelected : undefined,
+                    day.isCurrentMonth && markedDates?.has(iso) ? styles.dayMarked : undefined,
                   ]
                     .filter(Boolean)
                     .join(' ')

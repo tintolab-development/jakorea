@@ -105,6 +105,7 @@ export function UjatInstitutionScheduleAssignPage({
       <UjatInstitutionScheduleSheetPreviewModal
         open={scheduleSheetOpen}
         refreshKey={scheduleSheetRefreshKey}
+        programId={programId}
         onCancel={() => setScheduleSheetOpen(false)}
       />
     </div>

@@ -22,6 +22,10 @@ category?: ListTemplatesCategory;
  */
 useYn?: boolean;
 /**
+ * true면 template_scope=PROGRAM 템플릿도 포함. REGISTRATION/RECRUITMENT/APPLICATION 프로그램 copy 제외 규칙은 그대로다.
+ */
+includeProgramScoped?: boolean;
+/**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */
 page?: number;

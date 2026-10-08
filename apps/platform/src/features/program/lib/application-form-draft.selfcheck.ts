@@ -6,6 +6,9 @@ import { resolveHorizontalTableCellPlainText } from '@jakorea/form-schema/writin
 import {
   buildApplicationAnswersFromDraft,
   coerceApplicationFormDocument,
+  collectRuntimeConditionalQuestions,
+  collectRuntimeHiddenAnswerKeys,
+  omitRuntimeHiddenAnswers,
   prepareIndividualApplicationDraft,
   writingFormDraftFromApplicationForm,
 } from './application-form-draft.ts'
@@ -270,6 +273,41 @@ assert.equal(
   prepared.paragraphs.some(paragraph => paragraph.paragraphTitle === '면접 진행 가능 일정'),
   false
 )
+const dynamicInterviewId = 'program-participant-application-seed-interview-schedule'
+const preparedWithInterview = prepareIndividualApplicationDraft(
+  {
+    ...visibleDraft!,
+    paragraphs: [
+      visibleDraft!.paragraphs[0]!,
+      {
+        id: dynamicInterviewId,
+        kind: 'single_item',
+        variant: 'horizontal_table',
+        paragraphTitle: '면접 진행 가능 일정',
+        paragraphDescription: '',
+        requiredMark: true,
+        participatesInTitleNumbering: true,
+        tableFlavor: 'text',
+        columnHeaders: ['면접 진행 가능일', ''],
+        dataRows: [['', '']],
+        columnFields: [],
+        fieldDataRows: [],
+        bottomText: '',
+        showBottomText: false,
+        showBottomConsent: false,
+        bottomConsent: 'agree',
+        answerRequired: true,
+      },
+      ...visibleDraft!.paragraphs.slice(1),
+    ],
+  },
+  { keepParagraphIds: new Set([dynamicInterviewId]) },
+)
+assert.deepEqual(
+  preparedWithInterview.paragraphs.map(paragraph => paragraph.id),
+  [visibleId, dynamicInterviewId, hiddenScheduleId, explanationId, hiddenTeamId],
+)
+
 const preparedTeam = prepared.paragraphs.find(paragraph => paragraph.id === hiddenTeamId)
 assert.ok(preparedTeam)
 assert.equal(preparedTeam.requiredMark, true)
@@ -408,5 +446,138 @@ const richerParagraphs = richerVertical.paragraphs
 assert.ok(Array.isArray(richerParagraphs))
 const richerParagraph = richerParagraphs[0] as { rows?: { cells?: string[] }[] }
 assert.equal(richerParagraph.rows?.[0]?.cells?.[0], '중첩 문서 답')
+
+const crimeKey = 'program-instructor-application-seed-crime-record'
+const experienceKey = 'program-volunteer-application-seed-ja-experience'
+const previousJaKey = 'program-volunteer-application-seed-previous-ja-program'
+const audienceForm = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  runtimeContext: {
+    audienceApplication: {
+      version: 1,
+      flavor: 'instructor',
+      hiddenQuestionKeys: [crimeKey],
+      dynamicQuestions: {},
+      conditionalQuestions: {
+        [previousJaKey]: {
+          dependsOnQuestionKey: experienceKey,
+          visibleValues: ['PROGRAM-VOLUNTEER-APPLICATION-JA-EXPERIENCE-YES', 'YES'],
+          hiddenValues: ['PROGRAM-VOLUNTEER-APPLICATION-JA-EXPERIENCE-NO', 'NO'],
+        },
+      },
+    },
+  },
+  paragraphs: runtimeForm.paragraphs.slice(0, 1),
+}
+const audienceHidden = collectRuntimeHiddenAnswerKeys(audienceForm)
+const audienceConditionals = collectRuntimeConditionalQuestions(audienceForm)
+assert.equal(audienceHidden.has(crimeKey), true)
+assert.deepEqual(
+  Object.keys(
+    omitRuntimeHiddenAnswers(
+      {
+        [crimeKey]: '',
+        [experienceKey]: ['program-volunteer-application-ja-experience-no'],
+        [previousJaKey]: [],
+        other: 'x',
+      },
+      audienceHidden,
+      audienceConditionals,
+    ),
+  ),
+  [experienceKey, 'other'],
+)
+assert.deepEqual(
+  Object.keys(
+    omitRuntimeHiddenAnswers(
+      {
+        [experienceKey]: ['program-volunteer-application-ja-experience-yes'],
+        [previousJaKey]: 'answer',
+      },
+      audienceHidden,
+      audienceConditionals,
+    ),
+  ),
+  [experienceKey, previousJaKey],
+)
+
+const ujatBasicKey = 'ujat-program-application-volunteer-seed-basic-info'
+const ujatPreviousTermKey = 'ujat-program-application-volunteer-seed-previous-term'
+const ujatConditionals = collectRuntimeConditionalQuestions({
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  runtimeContext: {
+    audienceApplication: {
+      conditionalQuestions: {
+        [ujatPreviousTermKey]: {
+          dependsOnQuestionKey: ujatBasicKey,
+          dependsOnField: 'applicationType',
+          operator: 'in',
+          visibleValues: ['UJAT-GRADUATE'],
+          hiddenValues: ['NEW'],
+        },
+      },
+    },
+  },
+  paragraphs: runtimeForm.paragraphs.slice(0, 1),
+})
+assert.equal(
+  omitRuntimeHiddenAnswers(
+    {
+      [ujatBasicKey]: { applicationType: 'new' },
+      [ujatPreviousTermKey]: { activityTerm: '3' },
+    },
+    new Set(),
+    ujatConditionals,
+  )[ujatPreviousTermKey],
+  undefined,
+)
+assert.equal(
+  typeof omitRuntimeHiddenAnswers(
+    {
+      [ujatBasicKey]: { applicationType: 'ujat-graduate' },
+      [ujatPreviousTermKey]: { activityTerm: '3' },
+    },
+    new Set(),
+    ujatConditionals,
+  )[ujatPreviousTermKey],
+  'object',
+)
+
+/** 단일 선택은 `selectedPreviewSingleId` 하나를 제출하고, 저장값을 다시 라디오로 복원한다 */
+const singleChoiceForm = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [
+    {
+      id: experienceKey,
+      kind: 'single_item',
+      variant: 'multiple_choice',
+      paragraphTitle: 'JA 봉사 프로그램 진행 경험 여부',
+      answerRequired: true,
+      allowMultiple: false,
+      items: [
+        { id: 'program-volunteer-application-ja-experience-yes', label: '있음' },
+        { id: 'program-volunteer-application-ja-experience-no', label: '없음' },
+      ],
+      selectedPreviewSingleId: 'program-volunteer-application-ja-experience-no',
+      selectedPreviewMultipleIds: [],
+    },
+  ],
+}
+const singleChoiceDraft = writingFormDraftFromApplicationForm(singleChoiceForm)
+assert.ok(singleChoiceDraft)
+assert.equal(
+  buildApplicationAnswersFromDraft(singleChoiceDraft)[experienceKey],
+  'program-volunteer-application-ja-experience-no',
+)
+const restoredSingle = writingFormDraftFromApplicationForm(singleChoiceForm, {
+  [experienceKey]: 'program-volunteer-application-ja-experience-yes',
+})
+assert.equal(
+  buildApplicationAnswersFromDraft(restoredSingle!)[experienceKey],
+  'program-volunteer-application-ja-experience-yes',
+)
 
 console.log('application-form-draft.selfcheck: ok')

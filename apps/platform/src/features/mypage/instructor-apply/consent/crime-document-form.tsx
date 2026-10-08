@@ -2,7 +2,6 @@ import { type ChangeEvent, useCallback, useRef, useState } from 'react'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import { CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE } from './catalog'
 import { downloadCrimeConsentFormDocument } from './crime-consent-form-document'
-import { saveCrimeEvidenceFileObjectId } from './crime-evidence-file'
 import { markInstructorApplyConsentAgreed } from './form-persist'
 import { uploadMemberPortalFile } from '../api/member-file-upload'
 import styles from './consent-form.module.css'
@@ -82,15 +81,13 @@ export function CrimeConsentDocumentForm({
     }
     setUploading(true)
     void uploadMemberPortalFile({ file, filePurpose: 'CRIMINAL_HISTORY_EVIDENCE' })
-      .then(async fileObjectId => {
+      .then(async () => {
         const dataUrl = await readFileAsDataUrl(file)
-        saveCrimeEvidenceFileObjectId(fileObjectId)
         setPreviewSrc(dataUrl)
         setPreviewFileName(file.name)
         onUploadedChange(true)
       })
       .catch(() => {
-        saveCrimeEvidenceFileObjectId(null)
         onUploadedChange(false)
         setAlertMessage('증빙 서류 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
       })

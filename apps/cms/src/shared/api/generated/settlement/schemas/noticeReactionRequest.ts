@@ -11,6 +11,7 @@
  */
 export interface NoticeReactionRequest {
   /**
+     * 반응 유형. 허용값: SMILE, LAUGH, LOVEFACE, SURPRISED, CRY, ANGRY, SCREAM, HEART, CLAP, THUMBSUP, CHECK. 대소문자와 '_', '-', 공백은 무시하고 정규화합니다(loveFace, LOVE_FACE → LOVEFACE). 그 외 값은 400입니다.
      * @minLength 0
      * @maxLength 40
      */

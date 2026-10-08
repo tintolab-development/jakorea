@@ -197,11 +197,6 @@ export function ParticipatingInstructorApplicationInfo({
 
   return (
     <div className="participating-instructor-application-info applicant-general-instructor-basic-info">
-      {validationErrors?.form ? (
-        <div className="applicant-general-instructor-basic-info__form-error">
-          {validationErrors.form}
-        </div>
-      ) : null}
       <ApplicantAdminCommentSection
         adminComment={adminComment}
         mode={isAdminCommentEditing ? 'edit' : 'view'}

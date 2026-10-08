@@ -8,6 +8,7 @@ import type { EducationProgressHalfKey } from '../tabs'
 import {
   buildVolunteer1365SheetRows,
   getVolunteer1365HeaderLabels,
+  type Volunteer1365AttendanceLookup,
 } from './volunteer-1365-fortune-data'
 
 const HEADER_FILL = 'FF01A1AF'
@@ -15,10 +16,12 @@ const WARN_FONT = 'FFE03131'
 
 export async function exportVolunteer1365Excel(
   half: EducationProgressHalfKey,
-  volunteerIds: readonly string[]
+  volunteers: readonly import('./volunteer-1365-fortune-data').Volunteer1365VolunteerSource[],
+  scheduleDates: readonly import('@/features/program/ujat/ui/detail-modal/application-institution/education-schedule').UjatInstitutionScheduleAssignDateEntry[] = [],
+  attendance?: Volunteer1365AttendanceLookup
 ): Promise<void> {
-  const headerLabels = getVolunteer1365HeaderLabels(half)
-  const lines = buildVolunteer1365SheetRows(half, volunteerIds)
+  const headerLabels = getVolunteer1365HeaderLabels(half, scheduleDates)
+  const lines = buildVolunteer1365SheetRows(half, volunteers, scheduleDates, attendance)
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet('Sheet1')
 

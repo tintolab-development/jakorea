@@ -11,8 +11,8 @@
  */
 export interface SensitiveFileDownloadRequest {
   /**
-     * 민감 파일 접근 사유. 감사 로그에 저장됩니다.
-     * @minLength 5
+     * 민감 파일 접근 사유. 개인정보 원문 조회와 같이 1자 이상 500자 이하이며 감사 로그에 저장됩니다.
+     * @minLength 1
      * @maxLength 500
      */
   reason: string;

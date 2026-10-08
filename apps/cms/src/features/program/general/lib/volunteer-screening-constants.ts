@@ -47,7 +47,8 @@ export const GENERAL_MANAGER_EVALUATION_LABELS: Record<GeneralManagerEvaluation,
   unreviewed: '미검토',
 }
 
-export type GeneralInterviewAssignmentStatus = 'waiting' | 'assigned' | 'withdrawn'
+/** `not_required` — API `interviewStatus=NOT_REQUIRED`(면접 미운영 신청). 배정 불가 */
+export type GeneralInterviewAssignmentStatus = 'waiting' | 'assigned' | 'withdrawn' | 'not_required'
 
 export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS: Record<
   GeneralInterviewAssignmentStatus,
@@ -56,6 +57,7 @@ export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS: Record<
   waiting: '배정 대기',
   assigned: '배정 완료',
   withdrawn: '활동 포기',
+  not_required: '면접 불필요',
 }
 
 /** 1차 서류 합격자 캘린더 우측 목록 — 면접일 배정 현황 태그 (짧은 문구) */
@@ -66,6 +68,7 @@ export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_CALENDAR_LIST_TAG_LABELS: Recor
   waiting: '배정 대기',
   assigned: '배정 완료',
   withdrawn: '활동 포기',
+  not_required: '면접 불필요',
 }
 
 export type { SecondInterviewScreeningStatus }
@@ -142,12 +145,28 @@ export function formatGeneralJaVolunteerExperienceLabel(hasExperience: boolean):
   return hasExperience ? '있음' : '없음'
 }
 
-/** 자유 작성 항목(서술형 1~4번) — 신규 봉사자(JA 봉사 진행 경험 없음)만 노출 */
+/**
+ * 자유 작성 항목(서술형 1~4번) — 시안 기준 수료자(`ujat-graduate`)만 비노출.
+ * 제출된 답이 있으면 유형과 무관하게 노출한다.
+ */
 export function shouldShowGeneralVolunteerFreeWriteItems(applicant: {
   hasJaVolunteerExperience: boolean
   applicationType: GeneralVolunteerApplicationType
+  essayIntro?: string
+  essayEducationExperience?: string
+  essayNecessity?: string
+  essayJaExperience?: string
 }): boolean {
-  if (applicant.hasJaVolunteerExperience) return false
+  if (
+    [
+      applicant.essayIntro,
+      applicant.essayEducationExperience,
+      applicant.essayNecessity,
+      applicant.essayJaExperience,
+    ].some(value => value?.trim())
+  ) {
+    return true
+  }
   if (applicant.applicationType === 'ujat-graduate') return false
   return true
 }
@@ -159,15 +178,11 @@ export function formatGeneralVolunteerApplicationType(
 }
 
 export function formatGeneralVolunteerEssayCellValue(
-  applicationType: GeneralVolunteerApplicationType,
-  hasJaVolunteerExperience: boolean,
+  _applicationType: GeneralVolunteerApplicationType,
+  _hasJaVolunteerExperience: boolean,
   value: string | undefined
 ): string {
-  if (!shouldShowGeneralVolunteerFreeWriteItems({ applicationType, hasJaVolunteerExperience })) {
-    return '-'
-  }
-  const trimmed = value?.trim()
-  return trimmed ? trimmed : '-'
+  return value?.trim() || '-'
 }
 
 /** 1차 서류 심사 — 선택 승인: 미선택 시 AlertModal */

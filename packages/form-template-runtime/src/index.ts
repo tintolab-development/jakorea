@@ -28,8 +28,10 @@ export {
   patchVerticalTableMultipleChoice,
   resolveVerticalTablePreviewLayout,
 } from './renderer/vertical-table-preview.js'
+export { FillParagraphBody } from './renderer/fill-paragraph-body.js'
 export type {
   FillParagraphBodyOptions,
+  FillParagraphBodyProps,
   FormUpdateParagraph,
 } from './renderer/fill-paragraph-body.js'
 export { ParagraphCard, paragraphCardStaticHeading } from './paragraph/paragraph-card.js'

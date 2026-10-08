@@ -66,9 +66,10 @@ export function toScheduleConfirmCalendarListRow(
   return {
     id: item.id,
     institutionName: item.institutionName,
-    statusLabel:
-      UJAT_INSTITUTION_SCHEDULE_CONFIRM_CALENDAR_STATUS_LABEL[item.scheduleConfirmStatus],
-    statusKey: item.scheduleConfirmStatus,
+    statusLabel: item.scheduleConfirmStatus
+      ? UJAT_INSTITUTION_SCHEDULE_CONFIRM_CALENDAR_STATUS_LABEL[item.scheduleConfirmStatus]
+      : '',
+    statusKey: item.scheduleConfirmStatus ?? '',
     totalClassSummary: item.calendarTotalClassSummary,
     gradeDetail: item.calendarScheduleDetail,
   }

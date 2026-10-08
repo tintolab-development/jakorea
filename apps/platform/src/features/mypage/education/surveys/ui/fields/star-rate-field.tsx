@@ -29,9 +29,14 @@ function StarIcon({ filled }: { filled: boolean }) {
 type SurveyStarRateFieldProps = {
   paragraph: StarRateParagraph
   onUpdateParagraph: FormUpdateParagraph
+  disabled?: boolean
 }
 
-export function SurveyStarRateField({ paragraph, onUpdateParagraph }: SurveyStarRateFieldProps) {
+export function SurveyStarRateField({
+  paragraph,
+  onUpdateParagraph,
+  disabled = false,
+}: SurveyStarRateFieldProps) {
   const rating = paragraph.selectedPreviewStars ?? 0
 
   return (
@@ -45,7 +50,9 @@ export function SurveyStarRateField({ paragraph, onUpdateParagraph }: SurveyStar
             className={styles.starButton}
             aria-label={`${starIndex}점`}
             aria-pressed={starIndex <= rating}
+            disabled={disabled}
             onClick={() => {
+              if (disabled) return
               onUpdateParagraph(paragraph.id, current =>
                 current.kind === 'single_item' && current.variant === 'star_rate'
                   ? { ...current, selectedPreviewStars: starIndex }

@@ -31,12 +31,12 @@ import {
   withoutPlaceholderDescriptionInPreview,
   withoutTitleRequired,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
-import type { SurveyUserInfoWriteField } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-survey-write'
 import {
   modalCardFooterActions,
   modalCardFooterToggles,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-card-footer'
 import { useRegistrationWizardValidationHighlight } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
+import { useHideParagraphSelectionChrome } from '@/features/template/context/paragraph-selection-chrome-context'
 
 function isAgreementAdminProxyConfirmCard(
   paragraph: WritingFormParagraph,
@@ -98,7 +98,6 @@ export interface PinnedCardProps {
   hideParagraphRequiredChrome?: boolean
   headingDescriptionExtraClassName?: string
   surveyWriteNumbering?: boolean
-  userInfoWriteField?: SurveyUserInfoWriteField
 }
 
 function PinnedFormCardInner({
@@ -124,7 +123,6 @@ function PinnedFormCardInner({
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
   surveyWriteNumbering = false,
-  userInfoWriteField,
 }: PinnedCardProps) {
   useInstitutionApplicationProgramBridge()
   const isSelected = selectedCardId === paragraph.id
@@ -153,8 +151,7 @@ function PinnedFormCardInner({
         paragraphs,
         paragraph,
         titleNumbering,
-        surveyWriteNumbering,
-        userInfoWriteField
+        surveyWriteNumbering
       ),
       hideParagraphRequiredChrome
     ),
@@ -197,6 +194,8 @@ function PinnedFormCardInner({
   const paragraphRequiredIncomplete =
     registrationWizardHighlight.attemptId > 0 &&
     registrationWizardHighlight.isParagraphIncomplete(paragraph.id)
+  const hideSelectionChrome = useHideParagraphSelectionChrome()
+  const showSelectionChrome = showEditorChrome && !hideSelectionChrome
 
   return (
     <ParagraphCard
@@ -204,8 +203,8 @@ function PinnedFormCardInner({
       className={[
         'form-editor-card',
         paragraphRequiredIncomplete ? 'paragraph-card--required-incomplete' : '',
-        showEditorChrome ? 'paragraph-card--selectable' : '',
-        showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
+        showSelectionChrome ? 'paragraph-card--selectable' : '',
+        showSelectionChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
         isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
         paragraph.kind === 'single_item' && paragraph.variant === 'scale_type'
           ? 'paragraph-card--scale-type'
@@ -217,11 +216,11 @@ function PinnedFormCardInner({
         .join(' ')}
       onClick={showEditorChrome ? () => onSelectCard(paragraph.id) : undefined}
       actionSlot={
-        showEditorChrome && !hideDragHandle ? <ParagraphCardDragHandleNonInteractive /> : undefined
+        showSelectionChrome && !hideDragHandle ? <ParagraphCardDragHandleNonInteractive /> : undefined
       }
       editableHeading={editableHeading}
       toggles={
-        showEditorChrome
+        showSelectionChrome
           ? modalCardFooterToggles(
               paragraph,
               isSelected,
@@ -232,7 +231,7 @@ function PinnedFormCardInner({
           : undefined
       }
       actions={
-        showEditorChrome
+        showSelectionChrome
           ? modalCardFooterActions(
               paragraph,
               isSelected,
@@ -257,11 +256,7 @@ function PinnedFormCardInner({
         onVerticalTableBodyRowSelectionChange,
         singleItemListActiveItemId,
         onSelectSingleItemListItem,
-        {
-          ...paragraphBodyOptions,
-          userInfoWriteField,
-          userInfoWritePersist: paragraphBodyOptions?.paragraphInteractionMode === 'user',
-        }
+        paragraphBodyOptions
       )}
     </ParagraphCard>
   )
@@ -291,7 +286,6 @@ export interface SortableMiddleCardProps {
   hideParagraphRequiredChrome?: boolean
   headingDescriptionExtraClassName?: string
   surveyWriteNumbering?: boolean
-  userInfoWriteField?: SurveyUserInfoWriteField
 }
 
 function SortableMiddleFormCardInner({
@@ -317,7 +311,6 @@ function SortableMiddleFormCardInner({
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
   surveyWriteNumbering = false,
-  userInfoWriteField,
 }: SortableMiddleCardProps) {
   useInstitutionApplicationProgramBridge()
   const hideDragHandle =
@@ -356,8 +349,7 @@ function SortableMiddleFormCardInner({
         paragraphs,
         paragraph,
         titleNumbering,
-        surveyWriteNumbering,
-        userInfoWriteField
+        surveyWriteNumbering
       ),
       hideParagraphRequiredChrome
     ),
@@ -400,6 +392,8 @@ function SortableMiddleFormCardInner({
   const paragraphRequiredIncomplete =
     registrationWizardHighlight.attemptId > 0 &&
     registrationWizardHighlight.isParagraphIncomplete(paragraph.id)
+  const hideSelectionChrome = useHideParagraphSelectionChrome()
+  const showSelectionChrome = showEditorChrome && !hideSelectionChrome
 
   return (
     <div
@@ -424,8 +418,8 @@ function SortableMiddleFormCardInner({
         className={[
           'form-editor-card',
           paragraphRequiredIncomplete ? 'paragraph-card--required-incomplete' : '',
-          showEditorChrome ? 'paragraph-card--selectable' : '',
-          showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
+          showSelectionChrome ? 'paragraph-card--selectable' : '',
+          showSelectionChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
           isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
           paragraph.kind === 'single_item' && paragraph.variant === 'scale_type'
             ? 'paragraph-card--scale-type'
@@ -437,7 +431,7 @@ function SortableMiddleFormCardInner({
           .join(' ')}
         onClick={showEditorChrome ? () => onSelectCard(paragraph.id) : undefined}
         actionSlot={
-          showEditorChrome && !hideDragHandle ? (
+          showSelectionChrome && !hideDragHandle ? (
             <button
               ref={setActivatorNodeRef}
               type="button"
@@ -449,13 +443,13 @@ function SortableMiddleFormCardInner({
             >
               <SortOrderDragIcon />
             </button>
-          ) : showEditorChrome && hideDragHandle ? (
+          ) : showSelectionChrome && hideDragHandle ? (
             <ParagraphCardDragHandleNonInteractive />
           ) : undefined
         }
         editableHeading={editableHeading}
         toggles={
-          showEditorChrome
+          showSelectionChrome
             ? modalCardFooterToggles(
                 paragraph,
                 isSelected,
@@ -466,7 +460,7 @@ function SortableMiddleFormCardInner({
             : undefined
         }
         actions={
-          showEditorChrome
+          showSelectionChrome
             ? modalCardFooterActions(
                 paragraph,
                 isSelected,
@@ -491,11 +485,7 @@ function SortableMiddleFormCardInner({
           onVerticalTableBodyRowSelectionChange,
           singleItemListActiveItemId,
           onSelectSingleItemListItem,
-          {
-            ...paragraphBodyOptions,
-            userInfoWriteField,
-            userInfoWritePersist: paragraphBodyOptions?.paragraphInteractionMode === 'user',
-          }
+          paragraphBodyOptions
         )}
       </ParagraphCard>
     </div>

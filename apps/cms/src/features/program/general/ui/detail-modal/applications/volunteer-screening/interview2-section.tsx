@@ -1,6 +1,5 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin, Table } from 'antd'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import type { Program } from '@/types/domain'
@@ -31,11 +30,13 @@ import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-inte
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
 import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { useGeneralVolunteerInterview2 } from './use-interview2'
+import { useGeneralInterviewEvaluationAccess } from '@/features/program/general/hooks/use-interview-evaluation-access'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { isGeneralVolunteerInterview2SelectableForResult } from './general-volunteer-interview2-actions'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './volunteer-screening.css'
 import './interview2-section.css'
@@ -107,6 +108,7 @@ export function GeneralVolunteerInterview2Section({
     isFetchingNextPage,
     fetchNextPage,
   } = useGeneralVolunteerInterview2({ programId, subjectKind })
+  const evaluationAccess = useGeneralInterviewEvaluationAccess(programId)
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
@@ -188,6 +190,8 @@ export function GeneralVolunteerInterview2Section({
       <GeneralVolunteerInterviewEvaluationModal
         open
         applicant={evaluationTarget}
+        canFillBothSlots={evaluationAccess.canFillBothSlots}
+        currentAdminId={evaluationAccess.currentAdminId}
         onCancel={closeEvaluationModal}
         onConfirm={saveInterviewEvaluation}
       />
@@ -309,7 +313,7 @@ export function GeneralVolunteerInterview2Section({
 
   if (applicationsLoading && list.length === 0) {
     return (
-      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+      <div className="detail-fullpage-modal__loading" role="status">
         <Spin size="large" />
       </div>
     )
@@ -372,7 +376,7 @@ export function GeneralVolunteerInterview2Section({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={handleViewCalendar}
               >
                 캘린더 뷰로 보기
@@ -383,7 +387,7 @@ export function GeneralVolunteerInterview2Section({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={handleViewList}
               >
                 리스트 뷰로 보기

@@ -1,6 +1,7 @@
 import type { Program } from '@/types/domain'
 import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
 import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
+import { queryClient } from '@/shared/lib/query-client'
 import {
   fetchProgramAttachments,
   programDetailAttachmentOwner,
@@ -26,6 +27,14 @@ import {
  * 모집 탭 표시용 program(`activeRecruitmentId`)이면 그 모집 행, 아니면 프로그램.
  */
 type ProgramMediaTarget = { programId: number; recruitmentId?: number }
+
+const PROGRAM_MEDIA_ATTACHMENTS_STALE_MS = 30_000
+
+export const programMediaQueryKeys = {
+  all: ['cms', 'programs', 'media'] as const,
+  attachments: (programId: number, recruitmentId?: number) =>
+    [...programMediaQueryKeys.all, 'attachments', programId, recruitmentId ?? 'program'] as const,
+}
 
 /** 모집 행 API는 GENERAL_*·UJAT만 받는다(그 외 400 STRUCTURED_RECRUITMENTS_GENERAL_ONLY). */
 function supportsRecruitmentRowMedia(program: Program): boolean {
@@ -71,9 +80,14 @@ export async function fetchProgramMediaAttachments(
 ): Promise<ProgramAttachmentItem[]> {
   const target = resolveTarget(program)
   if (!target) return []
-  return target.recruitmentId != null
-    ? fetchProgramRecruitmentAttachments(target.programId, target.recruitmentId)
-    : fetchProgramAttachments(target.programId)
+  return queryClient.fetchQuery({
+    queryKey: programMediaQueryKeys.attachments(target.programId, target.recruitmentId),
+    queryFn: () =>
+      target.recruitmentId != null
+        ? fetchProgramRecruitmentAttachments(target.programId, target.recruitmentId)
+        : fetchProgramAttachments(target.programId),
+    staleTime: PROGRAM_MEDIA_ATTACHMENTS_STALE_MS,
+  })
 }
 
 export async function putProgramMediaAttachments(
@@ -82,9 +96,15 @@ export async function putProgramMediaAttachments(
 ): Promise<ProgramAttachmentItem[]> {
   const target = resolveTarget(program)
   if (!target) return []
-  return target.recruitmentId != null
-    ? putProgramRecruitmentAttachments(target.programId, target.recruitmentId, fileObjectIds)
-    : putProgramAttachments(target.programId, fileObjectIds)
+  const linked =
+    target.recruitmentId != null
+      ? await putProgramRecruitmentAttachments(target.programId, target.recruitmentId, fileObjectIds)
+      : await putProgramAttachments(target.programId, fileObjectIds)
+  queryClient.setQueryData(
+    programMediaQueryKeys.attachments(target.programId, target.recruitmentId),
+    linked
+  )
+  return linked
 }
 
 /** 모집 행 대표 이미지는 GET API가 없어 상세 응답 `recruitments[].thumbnailFileObjectId`를 쓴다. */

@@ -42,10 +42,12 @@ function formatScheduleHeader(schedule: GeneralAssignmentSubmissionScheduleDto, 
     start?.isValid() === true
       ? start.format('YYYY.MM.DD')
       : (schedule.scheduleName ?? `${round}회차`)
+  const hasTimeRange = start?.isValid() === true && end?.isValid() === true
+  // 응답에 종일 여부가 없어 시작·종료가 모두 자정이면 종일 회차로 보고 시간을 생략한다.
+  const isAllDay =
+    hasTimeRange && start.format('HH:mm') === '00:00' && end.format('HH:mm') === '00:00'
   const timeLabel =
-    start?.isValid() === true && end?.isValid() === true
-      ? `${start.format('HH:mm')}~${end.format('HH:mm')}`
-      : ''
+    hasTimeRange && !isAllDay ? `${start.format('HH:mm')}~${end.format('HH:mm')}` : ''
   const filterValue = String(schedule.scheduleId ?? round)
   const filterLabel = `${round}회차 · ${dateLabel}${timeLabel ? ` ${timeLabel}` : ''}`
   return {

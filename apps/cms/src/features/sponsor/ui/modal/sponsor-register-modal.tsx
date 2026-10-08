@@ -312,7 +312,6 @@ export function SponsorRegisterModal({
               <FileSelectField
                 multiple={false}
                 accept=".jpg,.jpeg,.png"
-                buttonLabel="파일 추가"
                 fileNames={form.logoFile ? [form.logoFile.name] : []}
                 currentTotalBytes={form.logoFile?.size ?? 0}
                 onFilesChange={files => setField('logoFile', files[0] ?? null)}

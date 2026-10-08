@@ -8,10 +8,18 @@
 import type { RequestedSessionTimeResponse } from './requestedSessionTimeResponse';
 
 export interface RequestedScheduleResponse {
-  id?: number;
+  /**
+     * 희망 일정 행 id. 일반 기관 날짜 지정형(공통정보 줄 선택)은 저장 행이 없어 null.
+     * @nullable
+     */
+  id?: number | null;
   preferenceOrder?: number;
   requestedDate?: string;
-  startPeriod?: number;
+  /**
+     * 시작 교시(1~12). 일반 기관 날짜 지정형은 교시 개념이 없어 null.
+     * @nullable
+     */
+  startPeriod?: number | null;
   sessionCount?: number;
   combinedClassYn?: boolean;
   sessionTimes?: RequestedSessionTimeResponse[];

@@ -1,4 +1,8 @@
 import { SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL } from '@/shared/constants/editable-status-badge-tones'
+import {
+  INSTRUCTOR_FEE_GRADE_LABELS,
+  toInstructorFeeGradeCode,
+} from '@/shared/constants/instructor-fee-grade'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
 
 /** BE가 원문 대신 내려주는 마스킹 플레이스홀더 */
@@ -133,18 +137,6 @@ const INSTRUCTOR_STATUS_CODES = new Set([
   'WITHDRAWN',
 ])
 
-const FEE_GRADE_LEVEL_LABELS: Record<string, string> = {
-  '1': '1급 강사비',
-  '2': '2급 강사비',
-  '3': '3급 강사비',
-  '1급': '1급 강사비',
-  '2급': '2급 강사비',
-  '3급': '3급 강사비',
-  GRADE_1: '1급 강사비',
-  GRADE_2: '2급 강사비',
-  GRADE_3: '3급 강사비',
-}
-
 /**
  * 강사비 등급 표시용.
  * `instructorProfile.defaultFeeGrade`만 사용한다.
@@ -159,11 +151,8 @@ export function toInstructorFeeGradeDisplayLabel(
   if (INSTRUCTOR_STATUS_CODES.has(upper)) return undefined
   if (/승인|반려|대기/.test(trimmed)) return undefined
 
-  if (upper in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[upper]
-
-  const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
-  if (levelKey in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[levelKey]
-  if (/^\d급\s*강사비$/.test(trimmed)) return trimmed
+  const code = toInstructorFeeGradeCode(trimmed)
+  if (code) return INSTRUCTOR_FEE_GRADE_LABELS[code]
 
   return trimmed
 }
@@ -178,14 +167,8 @@ export function toInstructorFeeGradeApiValue(raw: string | undefined | null): st
   const trimmed = raw?.trim()
   if (!trimmed) return undefined
 
-  const fromApprovalCode = /^GRADE_([123])$/i.exec(trimmed)
-  if (fromApprovalCode) return fromApprovalCode[1]
-
-  const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
-  if (/^[123]급$/.test(levelKey)) return levelKey.replace('급', '')
-
-  const fromLabel = /^([123])급\s*강사비$/.exec(trimmed)
-  if (fromLabel) return fromLabel[1]
+  const code = toInstructorFeeGradeCode(trimmed)
+  if (code) return code.replace('GRADE_', '')
 
   return trimmed
 }
@@ -197,10 +180,5 @@ export function toInstructorFeeGradeApiValue(raw: string | undefined | null): st
 export function toInstructorRoleApprovalFeeGradeApiValue(
   raw: string | undefined | null
 ): string | undefined {
-  const level = toInstructorFeeGradeApiValue(raw)
-  if (!level) return undefined
-  if (/^[123]$/.test(level)) return `GRADE_${level}`
-  const upper = level.toUpperCase()
-  if (/^GRADE_[123]$/.test(upper)) return upper
-  return undefined
+  return toInstructorFeeGradeCode(raw)
 }

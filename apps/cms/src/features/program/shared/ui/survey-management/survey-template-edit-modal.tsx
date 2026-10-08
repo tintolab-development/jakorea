@@ -24,12 +24,27 @@ import {
   buildDefaultSurveyWritingDraft,
   saveSurveyWritingTemplate,
 } from '../../lib/survey-management/survey-writing-draft'
+import {
+  resolveProgramSurveyFormEditFailure,
+  saveProgramSurveyFormEdit,
+  type ProgramSurveyFormEditTarget,
+} from '../../lib/survey-management/save-program-survey-form-edit'
+
+/** 프로그램에 바인딩된 설문 version 수정 — 양식 관리 원본 대신 프로그램 전용 복제본에 저장 */
+export type ProgramSurveyFormEdit = {
+  target: ProgramSurveyFormEditTarget
+  initialDraft: WritingFormDraft
+}
 
 export type SurveyTemplateEditModalProps = {
   open: boolean
   templateId: string
   onClose: () => void
-  onSaved?: (templateId: string) => void
+  /** `programEdit`이면 새로 바인딩된 templateVersionId, 아니면 templateId */
+  onSaved?: (savedId: string) => void
+  programEdit?: ProgramSurveyFormEdit
+  /** 서버 바인딩 상태가 바뀌어 저장이 거절됐을 때 — 목록 재조회 */
+  onBindingsStale?: () => void
 }
 
 export function SurveyTemplateEditModal({
@@ -37,38 +52,48 @@ export function SurveyTemplateEditModal({
   templateId,
   onClose,
   onSaved,
+  programEdit,
+  onBindingsStale,
 }: SurveyTemplateEditModalProps) {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
   const templateRow = useMemo(
-    () => (open ? findWritingTemplateRowByDefinitionId(templateId) : null),
-    [open, templateId]
+    () => (open && programEdit == null ? findWritingTemplateRowByDefinitionId(templateId) : null),
+    [open, programEdit, templateId]
   )
   const registryEntry = useMemo(
-    () => (open ? lookupTemplateRegistry(templateId) : undefined),
-    [open, templateId]
+    () => (open && programEdit == null ? lookupTemplateRegistry(templateId) : undefined),
+    [open, programEdit, templateId]
   )
   const headerTitle = useMemo(
-    () => resolvePreviewHeaderTitle(registryEntry, templateRow?.templateName),
-    [registryEntry, templateRow?.templateName]
+    () =>
+      programEdit != null
+        ? programEdit.target.title.trim() || '설문조사'
+        : resolvePreviewHeaderTitle(registryEntry, templateRow?.templateName),
+    [programEdit, registryEntry, templateRow?.templateName]
   )
 
   const getInitialDraft = useCallback(
-    () => buildDefaultSurveyWritingDraft(templateId, { templateName: templateRow?.templateName }),
-    [templateId, templateRow?.templateName]
+    () =>
+      programEdit?.initialDraft ??
+      buildDefaultSurveyWritingDraft(templateId, { templateName: templateRow?.templateName }),
+    [programEdit, templateId, templateRow?.templateName]
   )
   const getDefaultActiveParagraphId = useCallback(
     (_draft: WritingFormDraft) => DEFAULT_SURVEY_PARAGRAPH_IDS.title,
     []
   )
 
+  const canEdit =
+    programEdit != null || (templateRow != null && isSurveyRegistryEntry(registryEntry))
+
   const editor = useWritingFormEditorWithUserPreview({
-    open: open && templateRow != null && isSurveyRegistryEntry(registryEntry),
+    open: open && canEdit,
     getInitialDraft,
     getDefaultActiveParagraphId,
     previewHeaderTitle: headerTitle,
     editorKind: 'survey',
     previewZIndex: 1300,
-    templateCode: templateId,
+    ...(programEdit == null ? { templateCode: templateId } : {}),
   })
 
   const draftRef = useRef(editor.draft)
@@ -76,21 +101,38 @@ export function SurveyTemplateEditModal({
 
   const handleSave = useCallback(() => {
     void (async () => {
-      const result = await saveSurveyWritingTemplate(templateId, draftRef.current)
-      if (!result.ok) {
-        showSaveFailure(new Error(result.message))
-        return
+      try {
+        const result =
+          programEdit != null
+            ? await saveProgramSurveyFormEdit(programEdit.target, draftRef.current)
+            : await saveSurveyWritingTemplate(templateId, draftRef.current)
+        if (!result.ok) {
+          if ('refetchBindings' in result && result.refetchBindings) onBindingsStale?.()
+          showSaveFailure(new Error(result.message))
+          return
+        }
+        const savedId =
+          'templateVersionId' in result ? String(result.templateVersionId) : templateId
+        showSaveSuccess(() => onSaved?.(savedId))
+      } catch (error) {
+        const programFailure =
+          programEdit != null ? resolveProgramSurveyFormEditFailure(error) : undefined
+        if (programFailure == null) {
+          showSaveFailure(error)
+          return
+        }
+        if (programFailure.refetchBindings) onBindingsStale?.()
+        showSaveFailure(new Error(programFailure.message))
       }
-      showSaveSuccess(() => onSaved?.(templateId))
     })()
-  }, [onSaved, showSaveFailure, showSaveSuccess, templateId])
+  }, [onBindingsStale, onSaved, programEdit, showSaveFailure, showSaveSuccess, templateId])
 
   const tableRowSelection = useTableRowSelectionState({
     paragraphs: editor.draft.paragraphs,
     activeParagraphId: editor.activeParagraphId,
   })
 
-  if (templateRow == null || registryEntry == null || !isSurveyRegistryEntry(registryEntry)) {
+  if (!canEdit) {
     return null
   }
 

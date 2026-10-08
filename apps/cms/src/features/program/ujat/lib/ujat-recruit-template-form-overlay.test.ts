@@ -363,10 +363,10 @@ describe('UJAT recruit form overlay', () => {
     const h1 = programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1')
     const h2 = programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h2')
     expect(h1.announcementTitle).toBe('상반기 공고용 프로그램명')
-    expect(h1.volunteerTargets).toEqual(['대학생'])
+    expect(h1.volunteerTargets).toEqual(['university'])
     expect(h1.volunteerTargetDetail).toBe('상반기 대상 상세')
     expect(h2.announcementTitle).toBe('')
-    expect(h2.volunteerTargets ?? []).toEqual([])
+    expect(h2.volunteerTargets).toEqual(['university', 'adult'])
     expect(h2.volunteerTargetDetail ?? '').toBe('')
     expect(resolveUjatRecruitAnnouncementTitle(program, 'volunteer_h2')).toBe('-')
   })
@@ -413,5 +413,55 @@ describe('UJAT recruit form overlay', () => {
     expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h1').recruitmentGuide).toBe('상반기 안내')
     expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h2').recruitmentGuide).toBe('하반기 안내')
     expect(resolveUjatRecruitDisplayProgram(program, 'volunteer_h1').description).toBe('상반기 설명')
+  })
+
+  it('빈 모집 행이 등록 overlay 공고명·설명을 지우지 않는다', () => {
+    const program = {
+      ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      description: '',
+      recruitmentGuide: '',
+      ujatRegistrationOverlay: {
+        [INSTITUTION_KEYS.publicTitle]: '등록한 기관 공고',
+        [INSTITUTION_KEYS.description]: '등록한 프로그램 설명',
+        [INSTITUTION_KEYS.recruitmentGuide]: '등록한 모집 안내',
+      },
+      programRecruitments: [
+        {
+          id: 11,
+          recruitmentType: 'PARTICIPANT',
+          programDescription: '',
+          recruitmentGuide: '',
+          applicationMethod: null,
+          learningSupportContent: null,
+          additionalContentHtml: null,
+          remarks: null,
+        },
+      ],
+    }
+    const displayed = resolveUjatRecruitDisplayProgram(program, 'institution')
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'institution')).toBe('등록한 기관 공고')
+    expect(displayed.description).toBe('등록한 프로그램 설명')
+    expect(displayed.recruitmentGuide).toBe('등록한 모집 안내')
+  })
+
+  it('overlay가 없어도 모집 행 공고명·설명을 쓴다', () => {
+    const program = {
+      ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      description: '',
+      ujatRegistrationOverlay: {},
+      programRecruitments: [
+        {
+          id: 11,
+          recruitmentType: 'PARTICIPANT',
+          announcementTitle: '행에 남은 기관 공고',
+          programDescription: '행에 남은 설명',
+          recruitmentGuide: '행에 남은 안내',
+        },
+      ],
+    }
+    const displayed = resolveUjatRecruitDisplayProgram(program, 'institution')
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'institution')).toBe('행에 남은 기관 공고')
+    expect(displayed.description).toBe('행에 남은 설명')
+    expect(displayed.recruitmentGuide).toBe('행에 남은 안내')
   })
 })

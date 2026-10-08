@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
 import { ProgramList } from '@/features/program/general/ui/program-list'
@@ -32,7 +31,7 @@ import {
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
-import { CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
   PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
@@ -57,6 +56,7 @@ import {
 } from '@/features/program/trained-teachers/api/hooks'
 import { useTrainedTeachersProgramListFilters } from '@/features/program/trained-teachers/hooks/use-list-filters'
 
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import '../program-list-page.css'
 
 const TRAINED_TEACHERS_NEW_QUERY_KEY = 'new'
@@ -122,6 +122,7 @@ function TrainedTeachersProgramPageContent() {
     isTrainedTeachersProgramListPath(normalizedPath) &&
     searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)
   const isScheduledFilter = statusFilter === 'scheduled'
+  const showBulkSelection = statusFilter == null || isScheduledFilter
   const isAdmin = user?.role === 'ADMIN'
   const showCalendarView = isAdmin
 
@@ -147,8 +148,8 @@ function TrainedTeachersProgramPageContent() {
       : selectedProgramForFullPageModal)
 
   useEffect(() => {
-    if (!isScheduledFilter) setSelectedRowKeys([])
-  }, [isScheduledFilter])
+    setSelectedRowKeys([])
+  }, [statusFilter])
 
   useEffect(() => {
     const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -380,6 +381,10 @@ function TrainedTeachersProgramPageContent() {
         await deleteProgramsMutation.mutateAsync(idsToDelete)
         setSelectedRowKeys([])
         refetchPrograms()
+        setBulkDeleteModalOpen(false)
+        setProgramsPendingBulkDelete([])
+        showDeleteCompletedAlert()
+        return
       } catch (error) {
         showAlert(
           isProgramHardDeleteBlockedError(error)
@@ -416,7 +421,7 @@ function TrainedTeachersProgramPageContent() {
 
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
-      {isScheduledFilter && (
+      {showBulkSelection && (
         <CmsButton
           variant="delete"
           width={140}
@@ -429,7 +434,7 @@ function TrainedTeachersProgramPageContent() {
       <CmsButton
         variant="secondary"
         size="large"
-        icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
+        icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
         onClick={handleViewModeToggle}
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
@@ -468,7 +473,7 @@ function TrainedTeachersProgramPageContent() {
         loading={
           listQuery.isFetching &&
           !listQuery.isFetchingNextPage &&
-          filteredPrograms.length === 0
+          (filteredPrograms.length === 0 || listQuery.isPlaceholderData)
         }
         headerTitle={headerTitle}
         headerCount={remoteEnabled ? totalElements : undefined}
@@ -476,9 +481,9 @@ function TrainedTeachersProgramPageContent() {
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         disableUrlSync={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}
-        onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
-        selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
-        showRowSelection={isScheduledFilter}
+        onSelectionChange={showBulkSelection ? setSelectedRowKeys : undefined}
+        selectedRowKeys={showBulkSelection ? selectedRowKeys : undefined}
+        showRowSelection={showBulkSelection}
         showCalendarView={showCalendarView}
         viewMode={viewMode}
         tableVariant="overview"
@@ -517,6 +522,10 @@ function TrainedTeachersProgramPageContent() {
               }
             : undefined
         }
+        onRequestDelete={program => {
+          setProgramsPendingBulkDelete([program])
+          setBulkDeleteModalOpen(true)
+        }}
       />
       </ProgramModalWhenOpen>
 

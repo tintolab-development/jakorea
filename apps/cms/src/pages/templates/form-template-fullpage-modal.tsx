@@ -1,4 +1,4 @@
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   buildCertificateFormSettings,
@@ -38,6 +38,7 @@ import { FormCertificateEditScaleViewport } from './form-certificate-edit-scale-
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { useFormCertificatePdfDownload } from './use-form-certificate-pdf-download'
 import { useFormCertificatePreviewProps } from './use-form-certificate-preview-props'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/modal/template-preview-modal.css'
 
 export interface FormTemplateFullpageModalProps {
@@ -233,7 +234,7 @@ export function FormTemplateFullpageModal({
             onClick={handleClosePreview}
             aria-label="닫기"
           >
-            <CloseOutlined />
+            <ModalCloseIcon tone="white" />
           </button>
         </header>
 
@@ -248,7 +249,7 @@ export function FormTemplateFullpageModal({
                   type="button"
                   variant="primary"
                   size="large"
-                  icon={<DownloadOutlined />}
+                  icon={<ButtonDownloadIcon />}
                   className="template-preview-modal__notice-download-btn"
                   adminAction="download"
                   loading={isPdfDownloading || isAllocatingSerial}

@@ -5,6 +5,7 @@ import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { useGeneralInterviewSlots } from '@/features/program/general/hooks/use-general-interview-slots'
 import {
+  mergeApplicantAvailabilityIntoSchedule,
   parseGeneralInterviewScheduleFromProgram,
   parseGeneralInterviewScheduleFromRemoteSlots,
   shouldUseRemoteInterviewSchedule,
@@ -69,13 +70,22 @@ export function GeneralVolunteerInterviewAssignModal({
 
   const schedule = useMemo(() => {
     if (useRemoteSchedule) {
-      return parseGeneralInterviewScheduleFromRemoteSlots(slotsQuery.data ?? [])
+      return mergeApplicantAvailabilityIntoSchedule(
+        parseGeneralInterviewScheduleFromRemoteSlots(slotsQuery.data ?? []),
+        applicant.interviewAvailability ?? []
+      )
     }
     if (useLocalInterviewSchedule && localProgramDetail) {
       return parseGeneralInterviewScheduleFromProgram(localProgramDetail)
     }
     return parseGeneralInterviewScheduleFromRemoteSlots([])
-  }, [localProgramDetail, slotsQuery.data, useLocalInterviewSchedule, useRemoteSchedule])
+  }, [
+    applicant.interviewAvailability,
+    localProgramDetail,
+    slotsQuery.data,
+    useLocalInterviewSchedule,
+    useRemoteSchedule,
+  ])
 
   const modalApplicant = useMemo(
     () =>

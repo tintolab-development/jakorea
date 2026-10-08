@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import {
-  UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,
+  buildUjatProgramScheduleDates,
   resolveEducationSemesterForIsoDate,
   type UjatInstitutionEducationSemesterKey,
 } from '../education-schedule'
+import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import {
   createEmptyRow,
+  ensureUjatScheduleAssignDays,
   getUjatScheduleAssignDraftRegionState,
   patchUjatScheduleAssignDay,
   patchUjatScheduleAssignEstimation,
@@ -168,7 +170,23 @@ export function useUjatInstitutionScheduleAssign(
 
   const bump = useCallback(() => setVersion(v => v + 1), [])
 
-  const assignDates = UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES
+  const assignDates = useMemo(
+    () =>
+      buildUjatProgramScheduleDates(
+        schedulesQuery.data ?? [],
+        resolveUjatRegistrationBasicInfoOverlay()
+      ),
+    [schedulesQuery.data]
+  )
+
+  useEffect(() => {
+    if (assignDates.length === 0) return
+    ensureUjatScheduleAssignDays(
+      regionKey,
+      assignDates.map(entry => entry.isoDate)
+    )
+    setVersion(v => v + 1)
+  }, [assignDates, regionKey])
 
   const schoolsByDate = useMemo(() => {
     const map: Record<string, ReturnType<typeof listTempAssignedSchoolsForDate>> = {}
@@ -237,7 +255,10 @@ export function useUjatInstitutionScheduleAssign(
     for (const { isoDate } of assignDates) {
       const day = regionState.days[isoDate]
       if (!day) continue
-      const semester = resolveEducationSemesterForIsoDate(isoDate)
+      const semester =
+        assignDates.find(entry => entry.isoDate === isoDate)?.semester ??
+        resolveEducationSemesterForIsoDate(isoDate)
+      if (semester == null) continue
       const daySum = day.rows.reduce(
         (sum, row) => sum + sumSelectedGradeClassCount(row.gradeValues),
         0

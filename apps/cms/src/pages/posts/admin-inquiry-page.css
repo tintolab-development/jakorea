@@ -151,7 +151,7 @@
   width: var(--table-no-column-width, 80px);
   min-width: var(--table-no-column-width, 80px);
   max-width: var(--table-no-column-width, 80px);
-  height: 54px;
+  height: 52px;
   flex-shrink: 0;
   align-self: stretch;
   vertical-align: middle;

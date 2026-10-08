@@ -174,9 +174,9 @@
   overflow-wrap: normal;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: 54px !important;
-  min-height: 54px;
-  max-height: 54px;
+  height: 52px !important;
+  min-height: 52px;
+  max-height: 52px;
   vertical-align: middle;
   line-height: 1.4;
   padding-top: 12px !important;
@@ -234,9 +234,9 @@
   overflow-wrap: normal !important;
   overflow: visible;
   text-overflow: clip;
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   line-height: 1.5;
 }
 
@@ -274,9 +274,9 @@
   overflow-wrap: normal;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: 54px !important;
-  min-height: 54px;
-  max-height: 54px;
+  height: 52px !important;
+  min-height: 52px;
+  max-height: 52px;
   padding-left: 12px !important;
   padding-right: 12px !important;
   line-height: 1.4;
@@ -394,7 +394,7 @@
 }
 
 /*
- * detail-fullpage-modal 공통 th/td height: 54px !important 보다 우선
+ * detail-fullpage-modal 공통 th/td height: 52px !important 보다 우선
  * — 헤더: 말줄임 한 줄 / 본문: 줄바꿈·가운데 정렬
  */
 .detail-fullpage-modal
@@ -403,9 +403,9 @@
   .ant-table-thead
   > tr
   > th:not(.ant-table-cell-scrollbar) {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -418,7 +418,7 @@
   > tr
   > td:not(.ujat-volunteer-doc-screening__nowrap-cell) {
   height: auto !important;
-  min-height: 54px !important;
+  min-height: 52px !important;
   white-space: normal !important;
 }
 
@@ -431,17 +431,17 @@
   white-space: nowrap !important;
   word-break: normal !important;
   overflow-wrap: normal !important;
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
 }
 
 .detail-fullpage-modal
   .ujat-volunteer-doc-screening
   th.ujat-volunteer-doc-screening__essay-cell {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   white-space: nowrap !important;
 }
 
@@ -449,7 +449,7 @@
   .ujat-volunteer-doc-screening
   td.ujat-volunteer-doc-screening__essay-cell {
   height: auto !important;
-  min-height: 54px !important;
+  min-height: 52px !important;
   max-height: 192px !important;
 }
 

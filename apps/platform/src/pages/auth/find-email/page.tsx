@@ -1,5 +1,9 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  IDENTITY_MODULE_IDLE_DESCRIPTION,
+  IDENTITY_MODULE_IDLE_TITLE,
+} from '@jakorea/domain/shared/identity-module-copy'
 import { lookupFindEmail } from '@/features/auth/find-email'
 import {
   useFindEmailIdentityVerification,
@@ -103,9 +107,9 @@ export function FindEmailPage() {
       <div className={styles.content}>
         <div className={styles.identityModule}>
           <PFText as="p" typo="bd-sm-rg" color="neutral-warm-500">
-            통신사 본인인증 모듈 영역
+            {IDENTITY_MODULE_IDLE_TITLE}
             <br />
-            수신: 이름·휴대폰번호·생년월일·CI/DI·인증토큰·인증일시
+            {IDENTITY_MODULE_IDLE_DESCRIPTION}
           </PFText>
         </div>
 

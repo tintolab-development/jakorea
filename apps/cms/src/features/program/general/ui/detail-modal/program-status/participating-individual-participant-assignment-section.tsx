@@ -31,7 +31,15 @@ import { fetchGeneralProgramSurveyResponseDetail } from '@/features/program/gene
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import type { SurveyAnswerResponse } from '@/shared/api/generated/dashboard/schemas/surveyAnswerResponse'
 import { buildProgressAssignmentSessionsFromRemote } from '@/features/program/general/api/adapters/progress-assignment-adapters'
-import { PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-participant-assignment-export'
+import {
+  PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS,
+  PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS_WITHOUT_TEAM,
+} from '@/features/program/general/lib/participating-individual-participant-assignment-export'
+import {
+  isSubmissionTeamApplicable,
+  isSubmissionTeamNotApplicableError,
+} from '@/features/program/general/lib/submission-team-applicable'
+import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   ParticipatingIndividualParticipantAssignmentRow,
@@ -99,15 +107,23 @@ function lectureProgressClassName(
 export interface ParticipatingIndividualParticipantAssignmentSectionProps {
   program: Program
   participant: ParticipatingIndividualParticipantRow
+  /** 서버가 `TEAM_FEATURE_NOT_APPLICABLE`을 돌려줘 팀 UI를 숨겨야 할 때 */
+  onTeamFeatureNotApplicable?: () => void
 }
 
 export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   ParticipatingIndividualParticipantAssignmentSectionHandle,
   ParticipatingIndividualParticipantAssignmentSectionProps
->(function ParticipatingIndividualParticipantAssignmentSection({ program, participant }, ref) {
+>(function ParticipatingIndividualParticipantAssignmentSection(
+  { program, participant, onTeamFeatureNotApplicable },
+  ref
+) {
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
+  const [teamFeatureRejected, setTeamFeatureRejected] = useState(false)
+  const teamFeatureApplicable =
+    isSubmissionTeamApplicable(program.businessArea) && !teamFeatureRejected
 
   useNotifyProgramApiUnavailableOnce(
     !remoteEnabled,
@@ -123,10 +139,22 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   const submissionTeamQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.submissionTeam(program.id, participant.id),
     queryFn: () => fetchGeneralParticipantSubmissionTeam(program.id, participant.id),
-    enabled: remoteEnabled,
+    enabled: remoteEnabled && teamFeatureApplicable,
     staleTime: 15_000,
     retry: false,
   })
+
+  const markTeamFeatureNotApplicable = useCallback(() => {
+    setTeamFeatureRejected(true)
+    setTeamChangeModalOpen(false)
+    onTeamFeatureNotApplicable?.()
+  }, [onTeamFeatureNotApplicable])
+
+  useEffect(() => {
+    if (isSubmissionTeamNotApplicableError(submissionTeamQuery.error)) {
+      markTeamFeatureNotApplicable()
+    }
+  }, [markTeamFeatureNotApplicable, submissionTeamQuery.error])
 
   const assignmentSubmissionsQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.assignmentSubmissions(program.id),
@@ -193,7 +221,9 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   )
 
   const { exportExcel } = useTableExcelExport({
-    columns: PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS,
+    columns: teamFeatureApplicable
+      ? PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS
+      : PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS_WITHOUT_TEAM,
     data: tableData,
     filename: `참여자_과제내역_${participant.applicantName}`,
   })
@@ -216,6 +246,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   }, [participant.detail?.teamName, rows])
 
   const handleOpenTeamChangeModal = useCallback(() => {
+    if (!teamFeatureApplicable) return
     if (teamChangeScheduleOptions.length === 0) {
       showAlert({
         title: '안내',
@@ -224,7 +255,23 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
       return
     }
     setTeamChangeModalOpen(true)
-  }, [showAlert, teamChangeScheduleOptions.length])
+  }, [showAlert, teamChangeScheduleOptions.length, teamFeatureApplicable])
+
+  const handleTeamFeatureNotApplicableError = useCallback(
+    (error: unknown) => {
+      if (!isSubmissionTeamNotApplicableError(error)) return false
+      markTeamFeatureNotApplicable()
+      const data = (error as { response?: { data?: unknown } }).response?.data
+      showAlert({
+        title: '안내',
+        content: extractApiErrorMessage(data, {
+          fallback: '이 프로그램은 팀 제출 기능을 사용하지 않습니다.',
+        }),
+      })
+      return true
+    },
+    [markTeamFeatureNotApplicable, showAlert]
+  )
 
   const downloadAssignmentFile = useCallback(
     async (fileObjectId?: number, fileName?: string, downloadable?: boolean) => {
@@ -293,14 +340,23 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
             queryKey: generalProgramProgressQueryKeys.submissionTeam(program.id, participant.id),
           })
         })
-        .catch(() => {
+        .catch(error => {
+          if (handleTeamFeatureNotApplicableError(error)) return
           showAlert({
             title: '안내',
             content: '팀 역할 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.',
           })
         })
     },
-    [participant.id, program.id, queryClient, remoteEnabled, showAlert, submissionTeamQuery.data]
+    [
+      handleTeamFeatureNotApplicableError,
+      participant.id,
+      program.id,
+      queryClient,
+      remoteEnabled,
+      showAlert,
+      submissionTeamQuery.data,
+    ]
   )
 
   const handleTeamChangeConfirm = useCallback(
@@ -345,14 +401,23 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           title: '안내',
           content: '팀명이 변경되었습니다.',
         })
-      } catch {
+      } catch (error) {
+        if (handleTeamFeatureNotApplicableError(error)) return
         showAlert({
           title: '안내',
           content: '팀 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         })
       }
     },
-    [participant.id, program.id, queryClient, remoteEnabled, showAlert, submissionTeamQuery.data]
+    [
+      handleTeamFeatureNotApplicableError,
+      participant.id,
+      program.id,
+      queryClient,
+      remoteEnabled,
+      showAlert,
+      submissionTeamQuery.data,
+    ]
   )
 
   const showComingSoon = useCallback(() => {
@@ -498,16 +563,9 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     [downloadAssignmentFile, openSurveyResponseView, surveyViewLoading]
   )
 
-  const columns: ColumnsType<ParticipatingIndividualParticipantAssignmentRow & { no: number }> =
+  const teamColumns: ColumnsType<ParticipatingIndividualParticipantAssignmentRow & { no: number }> =
     useMemo(
       () => [
-        {
-          title: 'No.',
-          dataIndex: 'no',
-          key: 'no',
-          width: 80,
-          align: 'center',
-        },
         {
           title: '역할',
           key: 'teamRole',
@@ -556,6 +614,21 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           align: 'center',
           render: (value: string) => value?.trim() || '-',
         },
+      ],
+      [handleTeamRoleChange, openTeamRoleDropdownRowId]
+    )
+
+  const columns: ColumnsType<ParticipatingIndividualParticipantAssignmentRow & { no: number }> =
+    useMemo(
+      () => [
+        {
+          title: 'No.',
+          dataIndex: 'no',
+          key: 'no',
+          width: 80,
+          align: 'center',
+        },
+        ...(teamFeatureApplicable ? teamColumns : []),
         {
           title: '교육 진행 일정',
           dataIndex: 'scheduleLabel',
@@ -590,7 +663,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           ),
         },
       ],
-      [handleTeamRoleChange, openTeamRoleDropdownRowId, renderSubmissionCell]
+      [renderSubmissionCell, teamColumns, teamFeatureApplicable]
     )
 
   return (

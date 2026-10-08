@@ -17,6 +17,7 @@ import {
   useSubmitProgramApplication,
 } from '@/features/program'
 import { usePortalProfileQuery } from '@/features/auth/sign-in/hooks/use-portal-profile-query'
+import { getQueryRetryHttpStatus } from '@/shared/lib/query-retry'
 import {
   getProgramApplicationApiErrorMessage,
   messageForApplicationBlockedReason,
@@ -24,6 +25,11 @@ import {
 import {
   buildApplicationAnswersFromDraft,
   coerceApplicationFormDocument,
+  collectConditionallyHiddenAnswerKeys,
+  collectRuntimeConditionalQuestions,
+  collectRuntimeHiddenAnswerKeys,
+  isRequiredParagraph,
+  omitRuntimeHiddenAnswers,
   prepareIndividualApplicationDraft,
   writingFormDraftFromApplicationForm,
 } from '@/features/program/lib/application-form-draft'
@@ -35,6 +41,17 @@ import {
   isApplicationSexOffenseInquiryParagraphId,
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
+  isDynamicIndividualInterviewParagraph,
+  isDynamicVolunteerInterviewParagraph,
+  isIndividualInterviewScheduleParagraphId,
+  isInstructorAvailableScheduleParagraphId,
+  isInstructorCrimeRecordParagraphId,
+  isVolunteerActivityScheduleParagraphId,
+  isVolunteerFreeTextItemsParagraphId,
+  isVolunteerPreviousJaProgramParagraphId,
+  isUjatVolunteerBasicInfoParagraphId,
+  isUjatVolunteerFreeTextItemsParagraphId,
+  isUjatVolunteerPreviousTermParagraphId,
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
 import {
@@ -91,6 +108,66 @@ import {
   shouldShowSexOffenseInquiry,
   type ApplyInstitutionSexOffenseValues,
 } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense'
+import {
+  ApplyInstructorCrimeRecord,
+  emptyInstructorCrimeRecord,
+  findIncompleteInstructorCrimeRecordMessage,
+  instructorCrimeRecordAnswerFromValues,
+  instructorCrimeRecordValuesFromDraftAnswer,
+  type ApplyInstructorCrimeRecordValues,
+} from '@/features/program/ui/apply-instructor-crime-record/apply-instructor-crime-record'
+import {
+  ApplyInstructorAvailableSchedule,
+  buildInstructorApplyScheduleSlots,
+  emptyInstructorAvailableSchedule,
+  findIncompleteInstructorAvailableScheduleMessage,
+  findIncompleteInterviewScheduleMessage,
+  findIncompleteVolunteerActivityScheduleMessage,
+  INDIVIDUAL_INTERVIEW_SCHEDULE_COPY,
+  VOLUNTEER_ACTIVITY_SCHEDULE_COPY,
+  instructorAvailableScheduleAnswerFromValues,
+  instructorAvailableScheduleOptionValues,
+  instructorAvailableScheduleValuesFromDraftAnswer,
+  readRuntimeInstructorScheduleSlots,
+  type ApplyInstructorAvailableScheduleValues,
+} from '@/features/program/ui/apply-instructor-available-schedule/apply-instructor-available-schedule'
+import {
+  ApplyVolunteerPreviousJaProgram,
+  emptyVolunteerPreviousJaProgram,
+  findIncompleteVolunteerPreviousJaProgramMessage,
+  volunteerPreviousJaProgramAnswerFromValues,
+  volunteerPreviousJaProgramValuesFromDraftAnswer,
+  type ApplyVolunteerPreviousJaProgramValues,
+} from '@/features/program/ui/apply-volunteer-previous-ja-program/apply-volunteer-previous-ja-program'
+import {
+  evidenceFileObjectIdsByQuestion,
+  readDraftEvidenceFiles,
+  type ApplyVolunteerEvidenceFile,
+} from '@/features/program/ui/apply-volunteer-evidence-attach/apply-volunteer-evidence-attach'
+import {
+  ApplyVolunteerFreeTextItems,
+  emptyVolunteerFreeTextItems,
+  findIncompleteVolunteerFreeTextItemsMessage,
+  volunteerFreeTextItemsAnswerFromValues,
+  volunteerFreeTextItemsValuesFromDraftAnswer,
+  type ApplyVolunteerFreeTextItemsValues,
+} from '@/features/program/ui/apply-volunteer-free-text-items/apply-volunteer-free-text-items'
+import {
+  ApplyUjatVolunteerBasicInfo,
+  emptyUjatVolunteerBasicInfo,
+  findIncompleteUjatVolunteerBasicInfoMessage,
+  ujatVolunteerBasicInfoAnswerFromValues,
+  ujatVolunteerBasicInfoValuesFromDraftAnswer,
+  type ApplyUjatVolunteerBasicInfoValues,
+} from '@/features/program/ui/apply-ujat-volunteer-basic-info/apply-ujat-volunteer-basic-info'
+import {
+  ApplyUjatVolunteerPreviousTerm,
+  emptyUjatVolunteerPreviousTerm,
+  findIncompleteUjatVolunteerPreviousTermMessage,
+  ujatVolunteerPreviousTermAnswerFromValues,
+  ujatVolunteerPreviousTermValuesFromDraftAnswer,
+  type ApplyUjatVolunteerPreviousTermValues,
+} from '@/features/program/ui/apply-ujat-volunteer-previous-term/apply-ujat-volunteer-previous-term'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
@@ -119,6 +196,11 @@ function draftAnswerForParagraph(
   if (key && key in answers) return answers[key]
   if (paragraph.id in answers) return answers[paragraph.id]
   return undefined
+}
+
+/** 일반·UJAT 봉사자 자유 작성 항목은 문항이 같아 같은 sidecar 를 쓴다 */
+function isAnyVolunteerFreeTextItemsParagraphId(id: string): boolean {
+  return isVolunteerFreeTextItemsParagraphId(id) || isUjatVolunteerFreeTextItemsParagraphId(id)
 }
 
 export function ProgramApplyPage() {
@@ -175,6 +257,26 @@ export function ProgramApplyPage() {
   const [sexOffense, setSexOffense] = useState<ApplyInstitutionSexOffenseValues>(
     emptyInstitutionSexOffense,
   )
+  const [instructorCrimeRecord, setInstructorCrimeRecord] =
+    useState<ApplyInstructorCrimeRecordValues>(emptyInstructorCrimeRecord)
+  const [instructorSchedule, setInstructorSchedule] =
+    useState<ApplyInstructorAvailableScheduleValues>(emptyInstructorAvailableSchedule)
+  const [interviewSchedule, setInterviewSchedule] =
+    useState<ApplyInstructorAvailableScheduleValues>(emptyInstructorAvailableSchedule)
+  const [volunteerPreviousJa, setVolunteerPreviousJa] =
+    useState<ApplyVolunteerPreviousJaProgramValues>(emptyVolunteerPreviousJaProgram)
+  const [volunteerEvidenceFiles, setVolunteerEvidenceFiles] = useState<
+    ApplyVolunteerEvidenceFile[]
+  >([])
+  const [volunteerEvidenceUploading, setVolunteerEvidenceUploading] = useState(false)
+  const [volunteerFreeText, setVolunteerFreeText] =
+    useState<ApplyVolunteerFreeTextItemsValues>(emptyVolunteerFreeTextItems)
+  const [volunteerActivitySchedule, setVolunteerActivitySchedule] =
+    useState<ApplyInstructorAvailableScheduleValues>(emptyInstructorAvailableSchedule)
+  const [ujatVolunteerBasicInfo, setUjatVolunteerBasicInfo] =
+    useState<ApplyUjatVolunteerBasicInfoValues>(emptyUjatVolunteerBasicInfo)
+  const [ujatVolunteerPreviousTerm, setUjatVolunteerPreviousTerm] =
+    useState<ApplyUjatVolunteerPreviousTermValues>(emptyUjatVolunteerPreviousTerm)
   const [submitError, setSubmitError] = useState<string | null>(null)
   /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
   const hydratedFormKeyRef = useRef<string | null>(null)
@@ -216,6 +318,61 @@ export function ProgramApplyPage() {
   const profileTeacherEmail = profileDefaults.teacherEmail
   const showPreferredEducationForm = program?.educationForm === 'participant_choice'
   const remoteForm = applicationFormQuery.bundle?.form
+  const runtimeInstructorScheduleSlots = useMemo(() => {
+    const paragraphs = coerceApplicationFormDocument(remoteForm)?.paragraphs
+    if (!Array.isArray(paragraphs)) return null
+    const scheduleParagraph = paragraphs.find(
+      paragraph =>
+        paragraph != null &&
+        typeof paragraph === 'object' &&
+        isInstructorAvailableScheduleParagraphId(String((paragraph as { id?: unknown }).id ?? '')),
+    )
+    return readRuntimeInstructorScheduleSlots(scheduleParagraph)
+  }, [remoteForm])
+  const instructorScheduleSlots = useMemo(
+    () =>
+      runtimeInstructorScheduleSlots ??
+      (program
+        ? buildInstructorApplyScheduleSlots({
+            educationScheduleLines: program.educationScheduleLines,
+            educationSchedules: program.educationSchedules,
+          })
+        : []),
+    [program, runtimeInstructorScheduleSlots],
+  )
+  const runtimeInterviewParagraph = useMemo(() => {
+    const paragraphs = coerceApplicationFormDocument(remoteForm)?.paragraphs
+    if (!Array.isArray(paragraphs)) return null
+    const found = paragraphs.find(
+      applyCase === 'individual-volunteer'
+        ? isDynamicVolunteerInterviewParagraph
+        : isDynamicIndividualInterviewParagraph,
+    )
+    return found ? (found as { id: string }) : null
+  }, [applyCase, remoteForm])
+  const interviewSlots = useMemo(
+    () => readRuntimeInstructorScheduleSlots(runtimeInterviewParagraph) ?? [],
+    [runtimeInterviewParagraph],
+  )
+  const volunteerActivitySlots = useMemo(() => {
+    const paragraphs = coerceApplicationFormDocument(remoteForm)?.paragraphs
+    if (!Array.isArray(paragraphs)) return []
+    const activityParagraph = paragraphs.find(
+      paragraph =>
+        paragraph != null &&
+        typeof paragraph === 'object' &&
+        isVolunteerActivityScheduleParagraphId(String((paragraph as { id?: unknown }).id ?? '')),
+    )
+    return readRuntimeInstructorScheduleSlots(activityParagraph) ?? []
+  }, [remoteForm])
+  const runtimeHiddenAnswerKeys = useMemo(
+    () => collectRuntimeHiddenAnswerKeys(remoteForm),
+    [remoteForm],
+  )
+  const runtimeConditionalQuestions = useMemo(
+    () => collectRuntimeConditionalQuestions(remoteForm),
+    [remoteForm],
+  )
   const remoteFormKey =
     remoteApplyEnabled && applicationFormQuery.status === 'ready' && remoteForm
       ? [
@@ -249,10 +406,25 @@ export function ProgramApplyPage() {
           })
           setDraft(
             applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
-              ? prepareIndividualApplicationDraft(remoteDraft)
+              ? prepareIndividualApplicationDraft(remoteDraft, {
+                  keepParagraphIds: runtimeInterviewParagraph
+                    ? new Set([runtimeInterviewParagraph.id])
+                    : undefined,
+                })
               : remoteDraft,
           )
           const draftAnswers = remoteForm.draftAnswers
+          const interviewParagraph = findDraftParagraph(
+            remoteDraft,
+            id =>
+              isIndividualInterviewScheduleParagraphId(id) ||
+              id === runtimeInterviewParagraph?.id,
+          )
+          setInterviewSchedule(
+            instructorAvailableScheduleValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, interviewParagraph),
+            ) ?? emptyInstructorAvailableSchedule(),
+          )
           const preferredParagraph = findDraftParagraph(
             remoteDraft,
             id =>
@@ -303,6 +475,62 @@ export function ProgramApplyPage() {
               draftAnswerForParagraph(draftAnswers, inquiryParagraph),
             ) ?? emptyInstitutionSexOffense(),
           )
+          const crimeParagraph = findDraftParagraph(remoteDraft, isInstructorCrimeRecordParagraphId)
+          setInstructorCrimeRecord(
+            instructorCrimeRecordValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, crimeParagraph),
+            ) ?? emptyInstructorCrimeRecord(),
+          )
+          const instructorScheduleParagraph = findDraftParagraph(
+            remoteDraft,
+            isInstructorAvailableScheduleParagraphId,
+          )
+          setInstructorSchedule(
+            instructorAvailableScheduleValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, instructorScheduleParagraph),
+            ) ?? emptyInstructorAvailableSchedule(),
+          )
+          setVolunteerEvidenceFiles(readDraftEvidenceFiles(remoteForm.draftAttachments))
+          setVolunteerPreviousJa(
+            volunteerPreviousJaProgramValuesFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isVolunteerPreviousJaProgramParagraphId),
+              ),
+            ) ?? emptyVolunteerPreviousJaProgram(),
+          )
+          setVolunteerFreeText(
+            volunteerFreeTextItemsValuesFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isAnyVolunteerFreeTextItemsParagraphId),
+              ),
+            ) ?? emptyVolunteerFreeTextItems(),
+          )
+          setVolunteerActivitySchedule(
+            instructorAvailableScheduleValuesFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isVolunteerActivityScheduleParagraphId),
+              ),
+            ) ?? emptyInstructorAvailableSchedule(),
+          )
+          setUjatVolunteerBasicInfo(
+            ujatVolunteerBasicInfoValuesFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isUjatVolunteerBasicInfoParagraphId),
+              ),
+            ) ?? emptyUjatVolunteerBasicInfo(),
+          )
+          setUjatVolunteerPreviousTerm(
+            ujatVolunteerPreviousTermValuesFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isUjatVolunteerPreviousTermParagraphId),
+              ),
+            ) ?? emptyUjatVolunteerPreviousTerm(),
+          )
           return
         }
         /** 원격 양식은 왔는데 문서를 못 읽으면 카탈로그 시드로 바꾸지 않는다. */
@@ -345,6 +573,15 @@ export function ProgramApplyPage() {
       setTeamInfo(emptyIndividualTeamInfo())
       setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
       setSexOffense(emptyInstitutionSexOffense())
+      setInstructorCrimeRecord(emptyInstructorCrimeRecord())
+      setInstructorSchedule(emptyInstructorAvailableSchedule())
+      setInterviewSchedule(emptyInstructorAvailableSchedule())
+      setVolunteerPreviousJa(emptyVolunteerPreviousJaProgram())
+      setVolunteerEvidenceFiles([])
+      setVolunteerFreeText(emptyVolunteerFreeTextItems())
+      setVolunteerActivitySchedule(emptyInstructorAvailableSchedule())
+      setUjatVolunteerBasicInfo(emptyUjatVolunteerBasicInfo())
+      setUjatVolunteerPreviousTerm(emptyUjatVolunteerPreviousTerm())
       return
     }
 
@@ -362,6 +599,15 @@ export function ProgramApplyPage() {
     setTeamInfo(emptyIndividualTeamInfo())
     setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
     setSexOffense(emptyInstitutionSexOffense())
+    setInstructorCrimeRecord(emptyInstructorCrimeRecord())
+    setInstructorSchedule(emptyInstructorAvailableSchedule())
+    setInterviewSchedule(emptyInstructorAvailableSchedule())
+    setVolunteerPreviousJa(emptyVolunteerPreviousJaProgram())
+    setVolunteerEvidenceFiles([])
+    setVolunteerFreeText(emptyVolunteerFreeTextItems())
+    setVolunteerActivitySchedule(emptyInstructorAvailableSchedule())
+    setUjatVolunteerBasicInfo(emptyUjatVolunteerBasicInfo())
+    setUjatVolunteerPreviousTerm(emptyUjatVolunteerPreviousTerm())
   }, [
     program,
     programId,
@@ -370,6 +616,7 @@ export function ProgramApplyPage() {
     applicationFormQuery.blockedReason,
     remoteForm,
     remoteFormKey,
+    runtimeInterviewParagraph,
     profileDefaults,
     focusedApplicationType,
   ])
@@ -444,6 +691,84 @@ export function ProgramApplyPage() {
       if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
         return (
           <ApplyInstitutionSexOffenseInquiry value={sexOffense} onChange={setSexOffense} />
+        )
+      }
+
+      if (isInstructorCrimeRecordParagraphId(paragraph.id)) {
+        return (
+          <ApplyInstructorCrimeRecord
+            value={instructorCrimeRecord}
+            onChange={setInstructorCrimeRecord}
+          />
+        )
+      }
+
+      if (isInstructorAvailableScheduleParagraphId(paragraph.id)) {
+        return (
+          <ApplyInstructorAvailableSchedule
+            slots={instructorScheduleSlots}
+            value={instructorSchedule}
+            onChange={setInstructorSchedule}
+          />
+        )
+      }
+
+      if (isVolunteerPreviousJaProgramParagraphId(paragraph.id)) {
+        return (
+          <ApplyVolunteerPreviousJaProgram
+            value={volunteerPreviousJa}
+            onChange={setVolunteerPreviousJa}
+            evidenceFiles={volunteerEvidenceFiles}
+            onEvidenceFilesChange={setVolunteerEvidenceFiles}
+            onEvidenceUploadingChange={setVolunteerEvidenceUploading}
+          />
+        )
+      }
+
+      if (isAnyVolunteerFreeTextItemsParagraphId(paragraph.id)) {
+        return <ApplyVolunteerFreeTextItems value={volunteerFreeText} onChange={setVolunteerFreeText} />
+      }
+
+      if (isUjatVolunteerBasicInfoParagraphId(paragraph.id)) {
+        return (
+          <ApplyUjatVolunteerBasicInfo
+            value={ujatVolunteerBasicInfo}
+            onChange={setUjatVolunteerBasicInfo}
+          />
+        )
+      }
+
+      if (isUjatVolunteerPreviousTermParagraphId(paragraph.id)) {
+        return (
+          <ApplyUjatVolunteerPreviousTerm
+            value={ujatVolunteerPreviousTerm}
+            onChange={setUjatVolunteerPreviousTerm}
+            evidenceFiles={volunteerEvidenceFiles}
+            onEvidenceFilesChange={setVolunteerEvidenceFiles}
+            onEvidenceUploadingChange={setVolunteerEvidenceUploading}
+          />
+        )
+      }
+
+      if (isVolunteerActivityScheduleParagraphId(paragraph.id)) {
+        return (
+          <ApplyInstructorAvailableSchedule
+            slots={volunteerActivitySlots}
+            value={volunteerActivitySchedule}
+            onChange={setVolunteerActivitySchedule}
+            copy={VOLUNTEER_ACTIVITY_SCHEDULE_COPY}
+          />
+        )
+      }
+
+      if (runtimeInterviewParagraph && paragraph.id === runtimeInterviewParagraph.id) {
+        return (
+          <ApplyInstructorAvailableSchedule
+            slots={interviewSlots}
+            value={interviewSchedule}
+            onChange={setInterviewSchedule}
+            copy={INDIVIDUAL_INTERVIEW_SCHEDULE_COPY}
+          />
         )
       }
 
@@ -619,6 +944,19 @@ export function ProgramApplyPage() {
       teamInfo,
       guidanceAnswers,
       sexOffense,
+      instructorCrimeRecord,
+      instructorSchedule,
+      instructorScheduleSlots,
+      runtimeInterviewParagraph,
+      interviewSlots,
+      interviewSchedule,
+      volunteerPreviousJa,
+      volunteerEvidenceFiles,
+      volunteerFreeText,
+      volunteerActivitySchedule,
+      volunteerActivitySlots,
+      ujatVolunteerBasicInfo,
+      ujatVolunteerPreviousTerm,
       applyCase,
       showTrainedTeachersApply,
       showGeneralPreferredSchedule,
@@ -662,6 +1000,18 @@ export function ProgramApplyPage() {
         if (isApplicationTeamInfoParagraphId(paragraph.id)) hidden.add(paragraph.id)
       }
     }
+    if (displayDraft) {
+      const ujatApplicationType = ujatVolunteerBasicInfo.applicationType
+      for (const paragraph of displayDraft.paragraphs) {
+        if (
+          (ujatApplicationType === 'new' && isUjatVolunteerPreviousTermParagraphId(paragraph.id)) ||
+          (ujatApplicationType === 'ujat-graduate' &&
+            isUjatVolunteerFreeTextItemsParagraphId(paragraph.id))
+        ) {
+          hidden.add(paragraph.id)
+        }
+      }
+    }
     if (!shouldShowSexOffenseInquiry(sexOffense) && displayDraft) {
       for (const paragraph of displayDraft.paragraphs) {
         if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
@@ -669,8 +1019,47 @@ export function ProgramApplyPage() {
         }
       }
     }
+    if (displayDraft && (runtimeHiddenAnswerKeys.size > 0 || runtimeConditionalQuestions.length > 0)) {
+      const conditionallyHidden = collectConditionallyHiddenAnswerKeys(
+        runtimeConditionalQuestions,
+        buildApplicationAnswersFromDraft(displayDraft),
+      )
+      for (const paragraph of displayDraft.paragraphs) {
+        const key = resolveApplicationAnswerKey(paragraph)
+        if (
+          runtimeHiddenAnswerKeys.has(paragraph.id) ||
+          runtimeHiddenAnswerKeys.has(key) ||
+          conditionallyHidden.has(paragraph.id) ||
+          conditionallyHidden.has(key)
+        ) {
+          hidden.add(paragraph.id)
+        }
+      }
+    }
     return hidden
-  }, [applyCase, displayDraft, program, remoteForm, sexOffense])
+  }, [
+    applyCase,
+    displayDraft,
+    program,
+    remoteForm,
+    runtimeConditionalQuestions,
+    runtimeHiddenAnswerKeys,
+    sexOffense,
+    ujatVolunteerBasicInfo.applicationType,
+  ])
+
+  const evidenceFilesForSubmit = volunteerEvidenceFiles.filter(
+    file =>
+      !displayDraft?.paragraphs.some(
+        paragraph =>
+          hiddenParagraphIds.has(paragraph.id) &&
+          (paragraph.id === file.questionKey ||
+            resolveApplicationAnswerKey(paragraph) === file.questionKey),
+      ),
+  )
+  if (evidenceFilesForSubmit.length !== volunteerEvidenceFiles.length) {
+    setVolunteerEvidenceFiles(evidenceFilesForSubmit)
+  }
 
   const remoteFormUnavailable =
     remoteApplyEnabled &&
@@ -762,6 +1151,114 @@ export function ProgramApplyPage() {
           return
         }
       }
+      const crimeParagraphCandidate = findDraftParagraph(
+        displayDraft,
+        isInstructorCrimeRecordParagraphId,
+      )
+      const instructorCrimeParagraph =
+        crimeParagraphCandidate && !hiddenParagraphIds.has(crimeParagraphCandidate.id)
+          ? crimeParagraphCandidate
+          : null
+      if (instructorCrimeParagraph && isRequiredParagraph(instructorCrimeParagraph)) {
+        const crimeError = findIncompleteInstructorCrimeRecordMessage(instructorCrimeRecord)
+        if (crimeError) {
+          setSubmitError(crimeError)
+          return
+        }
+      }
+      const scheduleParagraphCandidate = findDraftParagraph(
+        displayDraft,
+        isInstructorAvailableScheduleParagraphId,
+      )
+      const instructorScheduleParagraph =
+        scheduleParagraphCandidate && !hiddenParagraphIds.has(scheduleParagraphCandidate.id)
+          ? scheduleParagraphCandidate
+          : null
+      if (instructorScheduleParagraph) {
+        const scheduleError = findIncompleteInstructorAvailableScheduleMessage(
+          instructorSchedule,
+          instructorScheduleSlots,
+        )
+        if (scheduleError) {
+          setSubmitError(scheduleError)
+          return
+        }
+      }
+      const interviewParagraphCandidate = runtimeInterviewParagraph
+        ? findDraftParagraph(displayDraft, id => id === runtimeInterviewParagraph.id)
+        : undefined
+      const interviewParagraph =
+        interviewParagraphCandidate && !hiddenParagraphIds.has(interviewParagraphCandidate.id)
+          ? interviewParagraphCandidate
+          : null
+      if (interviewParagraph && isRequiredParagraph(interviewParagraph)) {
+        const interviewError = findIncompleteInterviewScheduleMessage(
+          interviewSchedule,
+          interviewSlots,
+        )
+        if (interviewError) {
+          setSubmitError(interviewError)
+          return
+        }
+      }
+      const visibleDraftParagraph = (match: (id: string) => boolean) => {
+        const found = findDraftParagraph(displayDraft, match)
+        return found && !hiddenParagraphIds.has(found.id) ? found : null
+      }
+      const volunteerPreviousJaParagraph = visibleDraftParagraph(
+        isVolunteerPreviousJaProgramParagraphId,
+      )
+      if (volunteerEvidenceUploading) {
+        setSubmitError('증빙서류 업로드가 끝난 뒤 신청해 주세요.')
+        return
+      }
+      if (volunteerPreviousJaParagraph && isRequiredParagraph(volunteerPreviousJaParagraph)) {
+        const previousJaError = findIncompleteVolunteerPreviousJaProgramMessage(volunteerPreviousJa)
+        if (previousJaError) {
+          setSubmitError(previousJaError)
+          return
+        }
+      }
+      const volunteerFreeTextParagraph = visibleDraftParagraph(isAnyVolunteerFreeTextItemsParagraphId)
+      if (volunteerFreeTextParagraph && isRequiredParagraph(volunteerFreeTextParagraph)) {
+        const freeTextError = findIncompleteVolunteerFreeTextItemsMessage(volunteerFreeText)
+        if (freeTextError) {
+          setSubmitError(freeTextError)
+          return
+        }
+      }
+      const volunteerActivityParagraph = visibleDraftParagraph(
+        isVolunteerActivityScheduleParagraphId,
+      )
+      if (volunteerActivityParagraph && isRequiredParagraph(volunteerActivityParagraph)) {
+        const activityError = findIncompleteVolunteerActivityScheduleMessage(
+          volunteerActivitySchedule,
+          volunteerActivitySlots,
+        )
+        if (activityError) {
+          setSubmitError(activityError)
+          return
+        }
+      }
+      const ujatBasicInfoParagraph = visibleDraftParagraph(isUjatVolunteerBasicInfoParagraphId)
+      if (ujatBasicInfoParagraph && isRequiredParagraph(ujatBasicInfoParagraph)) {
+        const ujatBasicError = findIncompleteUjatVolunteerBasicInfoMessage(ujatVolunteerBasicInfo)
+        if (ujatBasicError) {
+          setSubmitError(ujatBasicError)
+          return
+        }
+      }
+      const ujatPreviousTermParagraph = visibleDraftParagraph(
+        isUjatVolunteerPreviousTermParagraphId,
+      )
+      if (ujatPreviousTermParagraph && isRequiredParagraph(ujatPreviousTermParagraph)) {
+        const previousTermError =
+          findIncompleteUjatVolunteerPreviousTermMessage(ujatVolunteerPreviousTerm)
+        if (previousTermError) {
+          setSubmitError(previousTermError)
+          return
+        }
+      }
 
       const overrides: Record<string, unknown> = {}
       if (preferredAnswer != null) {
@@ -790,6 +1287,43 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(sexOffenseParagraph)] =
           sexOffenseSubmissionAnswerFromValues(sexOffense)
       }
+      if (instructorCrimeParagraph && instructorCrimeRecord.confirmed) {
+        overrides[resolveApplicationAnswerKey(instructorCrimeParagraph)] =
+          instructorCrimeRecordAnswerFromValues(instructorCrimeRecord)
+      }
+      if (instructorScheduleParagraph) {
+        overrides[resolveApplicationAnswerKey(instructorScheduleParagraph)] =
+          runtimeInstructorScheduleSlots != null
+            ? instructorAvailableScheduleOptionValues(instructorSchedule, instructorScheduleSlots)
+            : instructorAvailableScheduleAnswerFromValues(
+                instructorSchedule,
+                instructorScheduleSlots,
+              )
+      }
+      if (interviewParagraph) {
+        overrides[resolveApplicationAnswerKey(interviewParagraph)] =
+          instructorAvailableScheduleOptionValues(interviewSchedule, interviewSlots)
+      }
+      if (volunteerPreviousJaParagraph) {
+        overrides[resolveApplicationAnswerKey(volunteerPreviousJaParagraph)] =
+          volunteerPreviousJaProgramAnswerFromValues(volunteerPreviousJa)
+      }
+      if (volunteerFreeTextParagraph) {
+        overrides[resolveApplicationAnswerKey(volunteerFreeTextParagraph)] =
+          volunteerFreeTextItemsAnswerFromValues(volunteerFreeText)
+      }
+      if (volunteerActivityParagraph) {
+        overrides[resolveApplicationAnswerKey(volunteerActivityParagraph)] =
+          instructorAvailableScheduleOptionValues(volunteerActivitySchedule, volunteerActivitySlots)
+      }
+      if (ujatBasicInfoParagraph) {
+        overrides[resolveApplicationAnswerKey(ujatBasicInfoParagraph)] =
+          ujatVolunteerBasicInfoAnswerFromValues(ujatVolunteerBasicInfo)
+      }
+      if (ujatPreviousTermParagraph) {
+        overrides[resolveApplicationAnswerKey(ujatPreviousTermParagraph)] =
+          ujatVolunteerPreviousTermAnswerFromValues(ujatVolunteerPreviousTerm)
+      }
       const inquiryParagraph = findDraftParagraph(
         displayDraft,
         isApplicationSexOffenseInquiryParagraphId,
@@ -808,17 +1342,40 @@ export function ProgramApplyPage() {
         omitParagraphIds.add(teamParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(teamParagraph))
       }
+      if (instructorCrimeParagraph && !instructorCrimeRecord.confirmed) {
+        omitParagraphIds.add(instructorCrimeParagraph.id)
+        omitParagraphIds.add(resolveApplicationAnswerKey(instructorCrimeParagraph))
+      }
+      for (const paragraph of displayDraft.paragraphs) {
+        const key = resolveApplicationAnswerKey(paragraph)
+        if (runtimeHiddenAnswerKeys.has(paragraph.id) || (key && runtimeHiddenAnswerKeys.has(key))) {
+          omitParagraphIds.add(paragraph.id)
+          if (key) omitParagraphIds.add(key)
+        }
+      }
       for (const paragraph of displayDraft.paragraphs) {
         if (isApplyScheduleChoiceParagraphId(paragraph.id) && hiddenParagraphIds.has(paragraph.id)) {
           omitParagraphIds.add(paragraph.id)
           omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
         }
+        if (
+          hiddenParagraphIds.has(paragraph.id) &&
+          (isUjatVolunteerPreviousTermParagraphId(paragraph.id) ||
+            isUjatVolunteerFreeTextItemsParagraphId(paragraph.id))
+        ) {
+          omitParagraphIds.add(paragraph.id)
+          omitParagraphIds.add(resolveApplicationAnswerKey(paragraph))
+        }
       }
 
-      const answers = buildApplicationAnswersFromDraft(displayDraft, {
-        overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
-        omitParagraphIds: omitParagraphIds.size > 0 ? omitParagraphIds : undefined,
-      })
+      const answers = omitRuntimeHiddenAnswers(
+        buildApplicationAnswersFromDraft(displayDraft, {
+          overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+          omitParagraphIds: omitParagraphIds.size > 0 ? omitParagraphIds : undefined,
+        }),
+        runtimeHiddenAnswerKeys,
+        runtimeConditionalQuestions,
+      )
 
       const classCount = Number.parseInt(basicInfo.classCount, 10)
       const studentCount = Number.parseInt(basicInfo.studentCount, 10)
@@ -836,10 +1393,38 @@ export function ProgramApplyPage() {
           ...(Number.isFinite(studentCount) && studentCount > 0
             ? { requestedStudentCount: studentCount }
             : {}),
+          ...(() => {
+            const questionKeys = [
+              volunteerPreviousJaParagraph,
+              ujatPreviousTermParagraph,
+            ].flatMap(paragraph =>
+              paragraph ? [paragraph.id, resolveApplicationAnswerKey(paragraph)] : [],
+            )
+            const fileObjectIdsByQuestion = evidenceFileObjectIdsByQuestion(
+              evidenceFilesForSubmit,
+              questionKeys,
+            )
+            return fileObjectIdsByQuestion ? { fileObjectIdsByQuestion } : {}
+          })(),
         })
         navigate(programApplyCompletePath(program.id, focus, fromPath))
       } catch (error) {
-        setSubmitError(getProgramApplicationApiErrorMessage(error))
+        const message = getProgramApplicationApiErrorMessage(error)
+        if (getQueryRetryHttpStatus(error) !== 400) {
+          setSubmitError(message)
+          return
+        }
+        // 런타임 선택지(면접 일정 등)가 렌더 이후 바뀌면 400. 최신 선택지로 다시 불러온다.
+        applicationFormQuery.refetch()
+        const interviewVisible =
+          applyCase === 'individual-volunteer' &&
+          runtimeInterviewParagraph != null &&
+          !hiddenParagraphIds.has(runtimeInterviewParagraph.id)
+        setSubmitError(
+          interviewVisible
+            ? `${message} 면접 진행 가능 일정이 바뀌었을 수 있어 신청서를 새로 불러왔습니다. 일정을 다시 확인한 뒤 신청해 주세요.`
+            : message,
+        )
       }
       return
     }
@@ -851,6 +1436,27 @@ export function ProgramApplyPage() {
     }
     navigate(programApplyCompletePath(program.id, focus, fromPath))
   }
+
+  const visibleInstructorScheduleParagraph = displayDraft
+    ? findDraftParagraph(
+        displayDraft,
+        id => isInstructorAvailableScheduleParagraphId(id) && !hiddenParagraphIds.has(id),
+      )
+    : null
+  const instructorScheduleUnavailable =
+    visibleInstructorScheduleParagraph != null &&
+    runtimeInstructorScheduleSlots != null &&
+    runtimeInstructorScheduleSlots.length === 0
+  const visibleInstructorCrimeParagraph = displayDraft
+    ? findDraftParagraph(
+        displayDraft,
+        id => isInstructorCrimeRecordParagraphId(id) && !hiddenParagraphIds.has(id),
+      )
+    : null
+  const instructorCrimeRecordUnconfirmed =
+    visibleInstructorCrimeParagraph != null &&
+    isRequiredParagraph(visibleInstructorCrimeParagraph) &&
+    !instructorCrimeRecord.confirmed
 
   return (
     <section className={[shell.page, styles.page].join(' ')}>
@@ -903,6 +1509,10 @@ export function ProgramApplyPage() {
             <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
               {submitError}
             </PFText>
+          ) : instructorScheduleUnavailable ? (
+            <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
+              선택 가능한 강의 일정이 없어 신청할 수 없습니다. 관리자에게 문의해 주세요.
+            </PFText>
           ) : null}
 
           <div className={styles.actions}>
@@ -913,6 +1523,8 @@ export function ProgramApplyPage() {
               disabled={
                 submitMutation.isPending ||
                 !displayDraft ||
+                instructorScheduleUnavailable ||
+                instructorCrimeRecordUnconfirmed ||
                 Boolean(blockedMessage && remoteApplyEnabled)
               }
               onClick={() => {

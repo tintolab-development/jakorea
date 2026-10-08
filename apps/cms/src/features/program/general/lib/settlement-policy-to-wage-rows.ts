@@ -12,15 +12,11 @@ import {
   PROGRAM_WAGE_DEDUCTION_LABEL,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
-
-const FEE_GRADE_LABEL: Record<string, string> = {
-  GRADE_1: '1급 강사비',
-  GRADE_2: '2급 강사비',
-  GRADE_3: '3급 강사비',
-  '1': '1급 강사비',
-  '2': '2급 강사비',
-  '3': '3급 강사비',
-}
+import {
+  INSTRUCTOR_FEE_GRADE_CODES,
+  INSTRUCTOR_FEE_GRADE_LABELS,
+  toInstructorFeeGradeCode,
+} from '@/shared/constants/instructor-fee-grade'
 
 const PAYMENT_ITEM_LABEL: Record<string, string> = {
   TRANSPORTATION: '교통비',
@@ -58,10 +54,7 @@ function normalizeFeeKind(kind: string | undefined): 'NORMAL' | 'LONG_DISTANCE' 
 
 function gradeKey(policy: ProgramWagePolicyResponse): string {
   const raw = (policy.feeGrade ?? '').trim().toUpperCase()
-  if (raw in FEE_GRADE_LABEL) return raw
-  if (raw.startsWith('GRADE_')) return raw
-  if (/^[123]$/.test(raw)) return `GRADE_${raw}`
-  return raw || 'UNKNOWN'
+  return toInstructorFeeGradeCode(raw) ?? (raw || 'UNKNOWN')
 }
 
 /** settlementPolicy.wagePolicies → wageGradeRows (1~3급) */
@@ -81,14 +74,15 @@ export function mapSettlementWagePoliciesToGradeRows(
     byGrade.set(key, bucket)
   }
 
-  const orderedKeys = ['GRADE_1', 'GRADE_2', 'GRADE_3'].filter(key => byGrade.has(key))
+  const orderedKeys: string[] = INSTRUCTOR_FEE_GRADE_CODES.filter(key => byGrade.has(key))
   const extraKeys = [...byGrade.keys()].filter(key => !orderedKeys.includes(key))
   const keys = [...orderedKeys, ...extraKeys]
   if (keys.length === 0) return undefined
 
   return keys.map(key => {
     const bucket = byGrade.get(key) ?? {}
-    const grade = FEE_GRADE_LABEL[key] ?? `${key} 강사비`
+    const code = toInstructorFeeGradeCode(key)
+    const grade = code ? INSTRUCTOR_FEE_GRADE_LABELS[code] : `${key} 강사비`
     const normalLabel = formatWon(bucket.normal)
     const longLabel = formatWon(bucket.longDistance)
     const parts: string[] = ['1시간 당']

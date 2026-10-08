@@ -1,7 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
-import { getUjatVolunteerInterviewScheduleMock } from '@/features/program/ujat/model/ujat-volunteer-interview-schedule'
-import { GENERAL_INTERVIEW_MOCK_RANGE } from '@/features/program/general/model/volunteer-interview-schedule'
+import type { UjatVolunteerInterviewScheduleData } from '@/features/program/ujat/model/ujat-volunteer-interview-schedule'
 import { parseUjatInterviewDateLabel } from '../shared/interview-calendar-events'
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -118,29 +117,42 @@ export type ParsedInterviewSchedule = {
   scheduleMonth: Dayjs
 }
 
-/** TODO(api): 프로그램 면접 가능 일정 API 연동 */
-export function parseInterviewScheduleMock(programId: string): ParsedInterviewSchedule {
-  const data = getUjatVolunteerInterviewScheduleMock(programId)
-  const commonSlots = parseTimeSlotsString(data.common.availableTimeSlots)
-  const unavailableKeys = parseUnavailableDateLabels(data.common.specificUnavailableDates)
+/** 프로그램 overlay·상세의 면접 가능 일정만으로 배정 캘린더를 만든다. */
+export function parseInterviewScheduleFromDisplay(
+  data: UjatVolunteerInterviewScheduleData,
+  range?: { startIso?: string | Date | null; endIso?: string | Date | null },
+  publicHolidayDateKeys?: ReadonlySet<string>
+): ParsedInterviewSchedule {
+  const commonSlots = parseTimeSlotsString(
+    data.common.availableTimeSlots === '-' ? '' : data.common.availableTimeSlots
+  )
+  const unavailableKeys = parseUnavailableDateLabels(
+    data.common.specificUnavailableDates === '-' ? '' : data.common.specificUnavailableDates
+  )
   const exceptionSlots = parseExceptionSlots(data.exceptions)
   const blockSunday = data.common.recurringUnavailable.includes('일요일')
-  const includeHolidays = data.common.recurringUnavailable.includes('공휴일')
-  const holidayDateKeys = includeHolidays ? getMockHolidayDateKeys() : new Set<string>()
+  const blockHoliday = data.common.recurringUnavailable.includes('공휴일')
+  const holidayDateKeys = new Set<string>(publicHolidayDateKeys ?? [])
 
   const slotsByDateKey = new Map<string, InterviewAssignSlot[]>()
   const clickableDateKeys = new Set<string>()
 
-  const rangeStart = dayjs(GENERAL_INTERVIEW_MOCK_RANGE.startIso)
-  const rangeEnd = dayjs(GENERAL_INTERVIEW_MOCK_RANGE.endIso)
+  const parsedStart = range?.startIso ? dayjs(range.startIso) : dayjs().startOf('day')
+  const parsedEnd = range?.endIso ? dayjs(range.endIso) : parsedStart
+  const rangeStart = parsedStart.isValid() ? parsedStart.startOf('day') : dayjs().startOf('day')
+  const rangeEnd =
+    parsedEnd.isValid() && !parsedEnd.isBefore(rangeStart, 'day')
+      ? parsedEnd.startOf('day')
+      : rangeStart
   let cursor = rangeStart.startOf('day')
 
   while (!cursor.isAfter(rangeEnd, 'day')) {
     const dateKey = cursor.format('YYYY-MM-DD')
     const isSunday = blockSunday && cursor.day() === 0
     const isUnavailable = unavailableKeys.has(dateKey)
+    const isBlockedHoliday = blockHoliday && holidayDateKeys.has(dateKey)
 
-    if (!isSunday && !isUnavailable) {
+    if (!isSunday && !isUnavailable && !isBlockedHoliday) {
       const slotTimes = exceptionSlots.get(dateKey) ?? commonSlots
       const slots: InterviewAssignSlot[] = slotTimes.map(timeRange => ({
         key: `${dateKey}|${timeRange}`,
@@ -156,7 +168,7 @@ export function parseInterviewScheduleMock(programId: string): ParsedInterviewSc
     cursor = cursor.add(1, 'day')
   }
 
-  /** 면접 기간·슬롯 없는 날·일요일·지정 불가일 → 클릭 비활성(캘린더 opacity 0.5) */
+  /** 면접 기간·슬롯 없는 날·일요일·지정 불가일·(설정 시) 공휴일 → 클릭 비활성(캘린더 opacity 0.5) */
   const disabledDate = (date: Dayjs) => !clickableDateKeys.has(date.format('YYYY-MM-DD'))
 
   return {

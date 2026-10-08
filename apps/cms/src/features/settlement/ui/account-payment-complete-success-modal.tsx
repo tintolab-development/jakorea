@@ -2,10 +2,10 @@
  * 정산 관리 > 계좌 지급 확인 — 일괄「계좌 지급 완료」처리 후 완료 안내 모달
  */
 
-import { DownloadOutlined } from '@ant-design/icons'
 import type { ModalProps } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './account-payment-complete-success-modal.css'
 
 /** 인라인 적용 — teal-header-modal·content-modal 전역 CSS보다 우선 */
@@ -58,7 +58,7 @@ export function AccountPaymentCompleteSuccessModal({
             width="auto"
             className="cms-button--footer-auto cms-button--no-label-ellipsis"
             style={{ minWidth: 180 }}
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             onClick={onIssueBulkTransfer}
           >
             대량이체 양식 발급

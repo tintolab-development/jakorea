@@ -3,6 +3,10 @@ import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/da
 import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
 import type { AttendanceItemRequest } from '@/shared/api/generated/dashboard/schemas/attendanceItemRequest'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
+import {
+  formatArrivalTimeForDisplay,
+  toIsoLocalTime,
+} from '@/shared/lib/attendance-arrival-time'
 import type {
   ParticipatingIndividualProgressAttendanceParticipantRow,
   ParticipatingIndividualProgressAttendanceSessionGroup,
@@ -76,13 +80,8 @@ function mapParticipantRow(
 ): ParticipatingIndividualProgressAttendanceParticipantRow {
   const participantId = String(participant.participantId ?? '')
   const status = mapApiAttendanceStatusToUi(attendance?.status)
-  const arrival = attendance?.arrivalTime
   const lateTime =
-    status === 'late' && arrival
-      ? dayjs(arrival).isValid()
-        ? dayjs(arrival).format('H:mm')
-        : arrival
-      : undefined
+    status === 'late' ? formatArrivalTimeForDisplay(attendance?.arrivalTime) : undefined
   return {
     id: `att-${participantId}`,
     participantId,
@@ -145,7 +144,7 @@ export function buildAttendanceItemRequest(params: {
     participantId: Number.isFinite(participantIdNum) ? participantIdNum : undefined,
     status,
     absenceReason: params.remark,
-    arrivalTime: params.lateTime || undefined,
+    arrivalTime: toIsoLocalTime(params.lateTime) ?? undefined,
     ...(params.fileObjectIds !== undefined ? { fileObjectIds: params.fileObjectIds } : {}),
   }
 }

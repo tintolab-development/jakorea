@@ -1,5 +1,4 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { PlusOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import type { UseFormReturn } from 'react-hook-form'
@@ -24,6 +23,7 @@ import { RECRUIT_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/r
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-interview-available-schedule-paragraph.css'
 
 const FORM_CLASS = 'program-registration-paragraph'
@@ -140,7 +140,7 @@ function GeneralProgramVolunteerInterviewScheduleView({
 }
 
 const INTERVIEW_SCHEDULE_EDIT_DESCRIPTION =
-  '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요'
+  '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요. 신청자 면접 선택지는 2차 면접 심사 기간 안에서 열리며, 기간을 비우면 봉사자 모집 기간이 쓰입니다.'
 
 export function GeneralProgramVolunteerInterviewScheduleSection({
   program,
@@ -219,7 +219,7 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
                 size="medium"
                 width={160}
                 disabled={exceptionScheduleAddDisabled}
-                icon={<PlusOutlined aria-hidden />}
+                icon={<ButtonAddIcon aria-hidden />}
                 onClick={() => setExceptionBlockKeys(prev => [...prev, Date.now()])}
               >
                 예외 일정 추가

@@ -82,10 +82,7 @@ export type InstructorRegisterValidationOptions = {
    * CMS 등록 검증은 기본 false 유지.
    */
   requireCareer?: boolean
-  /**
-   * Platform 강사 신청: 자유 작성 1~4 필수.
-   * CMS 등록 검증은 기본 false 유지.
-   */
+  /** 자유 작성 1~4 필수. CMS 등록·Platform 강사 신청 모두 선택이라 현재 미사용 */
   requireFreeWrite?: boolean
 }
 

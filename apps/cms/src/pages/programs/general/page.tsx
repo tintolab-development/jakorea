@@ -4,7 +4,6 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramList } from '@/features/program/general/ui/program-list'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -22,7 +21,7 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import type { Program } from '@/types/domain'
-import { CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
   PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
@@ -54,6 +53,7 @@ import {
   type RegistrationDraftNoticeChoice,
 } from '@/features/program/shared/ui/registration/draft-notice-modal'
 
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './general-program-list-page.css'
 
 /** `/programs/general?new` — 일반 프로그램 등록 폼 풀페이지 */
@@ -84,6 +84,7 @@ export function GeneralProgramListPageContent() {
     statusFilter,
     refetchPrograms,
     loading: listLoading,
+    isPlaceholderData: isListPlaceholderData,
     isRemoteDataSource,
     isFetchingNextPage,
     fetchNextPage,
@@ -193,6 +194,7 @@ export function GeneralProgramListPageContent() {
   )
 
   const isScheduledFilter = statusFilter === 'scheduled'
+  const showBulkSelection = statusFilter == null || isScheduledFilter
   const [, setHasListFilters] = useState(false)
   const handleDisplayCountChange = useCallback((_count: number, hasActiveFilters: boolean) => {
     setHasListFilters(hasActiveFilters)
@@ -204,8 +206,8 @@ export function GeneralProgramListPageContent() {
   )
 
   useEffect(() => {
-    if (!isScheduledFilter) setSelectedRowKeys([])
-  }, [isScheduledFilter])
+    setSelectedRowKeys([])
+  }, [statusFilter])
 
   useEffect(() => {
     const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -369,7 +371,7 @@ export function GeneralProgramListPageContent() {
 
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
-      {isScheduledFilter && (
+      {showBulkSelection && (
         <CmsButton
           variant="delete"
           width={140}
@@ -382,7 +384,7 @@ export function GeneralProgramListPageContent() {
       <CmsButton
         variant="secondary"
         size="large"
-        icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
+        icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
         onClick={handleViewModeToggle}
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
@@ -417,15 +419,15 @@ export function GeneralProgramListPageContent() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={listLoading && filteredPrograms.length === 0}
+        loading={listLoading && (filteredPrograms.length === 0 || isListPlaceholderData)}
         headerTitle={headerTitle}
         onView={handleView}
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         disableUrlSync={generalDetailModalOpen}
-        onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
-        selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
-        showRowSelection={isScheduledFilter}
+        onSelectionChange={showBulkSelection ? setSelectedRowKeys : undefined}
+        selectedRowKeys={showBulkSelection ? selectedRowKeys : undefined}
+        showRowSelection={showBulkSelection}
         showCalendarView={showCalendarView}
         viewMode={viewMode}
         tableVariant="overview"
@@ -447,6 +449,10 @@ export function GeneralProgramListPageContent() {
           searchParams={searchParams}
           setSearchParams={setSearchParams}
           onClose={handleCloseFullPageModal}
+          onRequestDelete={program => {
+            setProgramsPendingBulkDelete([program])
+            setBulkDeleteModalOpen(true)
+          }}
         />
       </ProgramModalWhenOpen>
 
@@ -481,25 +487,30 @@ export function GeneralProgramListPageContent() {
               if (isRemoteDataSource) {
                 await deleteGeneralProgramsMutation.mutateAsync(idsToDelete)
                 refetchPrograms()
+                setSelectedRowKeys([])
+                setBulkDeleteModalOpen(false)
+                setProgramsPendingBulkDelete([])
+                showDeleteCompletedAlert()
               } else {
                 await handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
+                setSelectedRowKeys([])
+                setBulkDeleteModalOpen(false)
+                setProgramsPendingBulkDelete([])
               }
-              setSelectedRowKeys([])
-              setBulkDeleteModalOpen(false)
-              setProgramsPendingBulkDelete([])
             } catch (error) {
-              showAlert(
-                isProgramHardDeleteBlockedError(error)
-                  ? {
-                      title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
-                      content: error.message,
-                    }
-                  : {
-                      title: '삭제 실패',
-                      content:
-                        '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-                    }
-              )
+              if (isProgramHardDeleteBlockedError(error)) {
+                setBulkDeleteModalOpen(false)
+                setProgramsPendingBulkDelete([])
+                showAlert({
+                  title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+                  content: error.message,
+                })
+                return
+              }
+              showAlert({
+                title: '삭제 실패',
+                content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+              })
             }
           })()
         }}

@@ -212,7 +212,7 @@
 |----|------|---------|----------------|
 | `program-instructor-application-seed-personal-info` | single_item | horizontal_table | 개인정보 수집·이용 |
 | `program-instructor-application-seed-third-party` | single_item | horizontal_table | 개인정보 제3자 정보 제공·이용 동의 |
-| `program-instructor-application-seed-crime-record` | single_item | horizontal_table | 성범죄 경력 조회서 제출 |
+| `program-instructor-application-seed-crime-record` | single_item | horizontal_table | 성범죄경력 조회 동의서 제출 방법 안내 |
 | `program-instructor-application-seed-available-schedule` | single_item | horizontal_table | 강의 진행 가능 일정 |
 
 ### `application-volunteer` — 공통_봉사자 신청 폼

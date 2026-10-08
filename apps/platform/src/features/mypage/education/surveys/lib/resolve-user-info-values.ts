@@ -12,7 +12,7 @@ export type SurveyUserInfoProgramContext = {
   programTitle?: string
   /** 교육 진행 일정(진행 기간) 표시 문자열 */
   educationPeriodLabel?: string
-  /** 신청자 유형 라벨 (일반회원·교사회원 등) */
+  /** 신청자 유형 라벨 (일반회원·교사 회원 등) */
   applicantTypeLabel?: string
   institutionName?: string
   institutionRegion?: string
@@ -38,7 +38,7 @@ function formatAddressRegion(profile: SettingsProfileInput): string {
 /** CMS 설문자 정보 `selectedUserFieldKeys` → Platform 로그인·프로그램 표시값 */
 export function resolveSurveyUserInfoFieldValue(
   fieldKey: string,
-  input: ResolveSurveyUserInfoValuesInput,
+  input: ResolveSurveyUserInfoValuesInput
 ): string {
   const { profile, program } = input
   const affiliation =
@@ -89,7 +89,7 @@ export function resolveSurveyUserInfoFieldValue(
 
 export function resolveSurveyUserInfoValues(
   fieldKeys: readonly string[],
-  input: ResolveSurveyUserInfoValuesInput,
+  input: ResolveSurveyUserInfoValuesInput
 ): Record<string, string> {
   const values: Record<string, string> = {}
   for (const key of fieldKeys) {
@@ -98,7 +98,9 @@ export function resolveSurveyUserInfoValues(
   return values
 }
 
-export function formatEducationPeriodLabel(lines: readonly string[] | undefined): string | undefined {
+export function formatEducationPeriodLabel(
+  lines: readonly string[] | undefined
+): string | undefined {
   const trimmed = (lines ?? []).map(line => line.trim()).filter(Boolean)
   if (trimmed.length === 0) return undefined
   return trimmed.join(', ')

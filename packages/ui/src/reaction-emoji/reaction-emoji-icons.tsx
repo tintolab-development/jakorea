@@ -48,8 +48,19 @@ export function getReactionEmojiTypeForBarIndex(index: number): string | undefin
   return REACTION_EMOJI_TYPES[index]
 }
 
+function toReactionLookupKey(emojiType: string): string {
+  return emojiType.trim().replace(/[_\-\s]/g, '').toLowerCase()
+}
+
+/** 백엔드는 reactionType을 대문자 + `_`·`-`·공백 제거로 정규화해 저장 (예: loveFace → LOVEFACE), 11종 밖은 400 */
+const REACTION_EMOJI_LOOKUP_KEY_TO_INDEX: Record<string, number> = Object.fromEntries(
+  Object.entries(REACTION_EMOJI_TYPE_TO_INDEX).map(([type, idx]) => [toReactionLookupKey(type), idx])
+)
+
 export function getReactionEmojiItemByType(emojiType: string): ReactionEmojiItem | null {
-  const idx = REACTION_EMOJI_TYPE_TO_INDEX[emojiType]
+  const idx =
+    REACTION_EMOJI_TYPE_TO_INDEX[emojiType] ??
+    REACTION_EMOJI_LOOKUP_KEY_TO_INDEX[toReactionLookupKey(emojiType)]
   return idx == null ? null : REACTION_EMOJI_ITEMS[idx]
 }
 

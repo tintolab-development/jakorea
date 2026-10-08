@@ -2,7 +2,8 @@ import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { UjatInstitutionApplicationStatusBadge } from './status-badge'
 import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
-import { UJAT_INSTITUTION_SCHEDULE_COLUMNS, type UjatInstitutionApplicationRow } from './types'
+import type { UjatInstitutionScheduleColumn } from '../education-schedule'
+import type { UjatInstitutionApplicationRow } from './types'
 
 const COL = {
   no: 80,
@@ -34,17 +35,22 @@ function renderGradeClassCounts(row: UjatInstitutionApplicationRow) {
 }
 
 /** 선택 열 + 본문 열 너비 합(가로 스크롤 최소값) */
-export const UJAT_INSTITUTION_APPLICATION_TABLE_MIN_SCROLL_X =
-  COL.selection +
-  COL.no +
-  COL.institution +
-  COL.status +
-  COL.grade +
-  COL.total +
-  COL.schedule * UJAT_INSTITUTION_SCHEDULE_COLUMNS.length +
-  COL.teacher
+export function ujatInstitutionApplicationTableScrollX(scheduleColumnCount: number): number {
+  return (
+    COL.selection +
+    COL.no +
+    COL.institution +
+    COL.status +
+    COL.grade +
+    COL.total +
+    COL.schedule * scheduleColumnCount +
+    COL.teacher
+  )
+}
 
-export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitutionApplicationRow> {
+export function useUjatInstitutionApplicationColumns(
+  scheduleColumns: readonly UjatInstitutionScheduleColumn[]
+): ColumnsType<UjatInstitutionApplicationRow> {
   return useMemo(
     () => [
       {
@@ -95,7 +101,7 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         onCell: () => ({ className: TOTAL_CELL_CLASS }),
         render: (count: number) => `${count}학급`,
       },
-      ...UJAT_INSTITUTION_SCHEDULE_COLUMNS.map(col => ({
+      ...scheduleColumns.map(col => ({
         title: col.title,
         key: col.key,
         width: COL.schedule,
@@ -103,7 +109,7 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         onHeaderCell: () => ({ className: SCHEDULE_CELL_CLASS }),
         onCell: () => ({ className: SCHEDULE_CELL_CLASS }),
         render: (_: unknown, record: UjatInstitutionApplicationRow) =>
-          record.scheduleSlots[col.key],
+          record.scheduleSlots[col.key] ?? '-',
       })),
       {
         title: '신청 교사명',
@@ -113,6 +119,6 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         align: 'center',
       },
     ],
-    []
+    [scheduleColumns]
   )
 }

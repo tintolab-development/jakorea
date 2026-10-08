@@ -56,8 +56,7 @@ export const platformQueryKeys = {
     /** GET /api/public/site/footer — Class B-shell */
     footer: () => [...platformQueryKeys.site.all(), 'footer'] as const,
     /** GET /api/public/participation/links — Class B-shell (GNB·푸터 외부 URL) */
-    participationLinks: () =>
-      [...platformQueryKeys.site.all(), 'participation-links'] as const,
+    participationLinks: () => [...platformQueryKeys.site.all(), 'participation-links'] as const,
   },
 
   impactStory: {
@@ -195,12 +194,7 @@ export const platformQueryKeys = {
        * 공개 보고서 목록 — GET /api/public/ja-korea/transparency/reports/{type}
        * Class C. `type`/`q`/`page`/`size` 가 바뀌면 다른 키.
        */
-      reports: (params: {
-        type: string
-        q: string
-        page: number
-        size: number
-      }) =>
+      reports: (params: { type: string; q: string; page: number; size: number }) =>
         [
           ...platformQueryKeys.jaKorea.transparency.all(),
           'reports',
@@ -227,8 +221,7 @@ export const platformQueryKeys = {
       /** 인접글용 preview (`size=100`, page 0, q 없음) */
       preview: () => [...platformQueryKeys.jaKorea.notices.all(), 'preview'] as const,
       /** 공개 상세 — GET /api/public/ja-korea/notices/{id} (Class D) */
-      detail: (id: string) =>
-        [...platformQueryKeys.jaKorea.notices.all(), 'detail', id] as const,
+      detail: (id: string) => [...platformQueryKeys.jaKorea.notices.all(), 'detail', id] as const,
     },
   },
 
@@ -275,6 +268,8 @@ export const platformQueryKeys = {
       [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current'] as const,
     /** 마이페이지 홈 요약 — GET /api/portal/me/dashboard (Class E, member scoped) */
     dashboard: () => [...platformQueryKeys.mypage.all(), 'dashboard'] as const,
+    /** 내 통합 동의 현황 — GET /api/portal/me/consents (member scoped) */
+    consents: () => [...platformQueryKeys.mypage.all(), 'consents'] as const,
     /** 마이페이지 일정 — GET /api/portal/me/calendar (Class C, member scoped) */
     calendar: (from: string, to: string) =>
       [...platformQueryKeys.mypage.all(), 'calendar', from, to] as const,
@@ -297,9 +292,14 @@ export const platformQueryKeys = {
     /** 내 폼 응답 피드백 — GET /api/portal/me/form-responses/{id}/feedback (Class D) */
     formResponseFeedback: (formResponseId: number) =>
       [...platformQueryKeys.mypage.all(), 'form-response-feedback', formResponseId] as const,
-    /** 교사회원 배정 강사 동의서 — GET .../assigned-instructors (Class D) */
+    /** 교사 회원 배정 강사 동의서 — GET .../assigned-instructors (Class D) */
     assignedInstructors: (applicationId: number) =>
-      [...platformQueryKeys.mypage.all(), 'assigned-instructors', 'ORGANIZATION', applicationId] as const,
+      [
+        ...platformQueryKeys.mypage.all(),
+        'assigned-instructors',
+        'ORGANIZATION',
+        applicationId,
+      ] as const,
     programApplications: {
       all: () => [...platformQueryKeys.mypage.all(), 'program-applications'] as const,
       /**
@@ -346,6 +346,24 @@ export const platformQueryKeys = {
           applicationId,
           postId,
         ] as const,
+      /** 안내 첨부 전체 — GET .../notices/attachments (Class C). keyword 가 응답을 바꾼다 */
+      noticeAttachments: (applicationType: string, applicationId: string, keyword = '') =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notice-attachments',
+          applicationType,
+          applicationId,
+          keyword,
+        ] as const,
+      /** 안내 반응 — GET .../notices/{postId}/reactions (Class E) */
+      noticeReactions: (applicationType: string, applicationId: string, postId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notice-reactions',
+          applicationType,
+          applicationId,
+          postId,
+        ] as const,
       /** 교육·봉사 일정 — GET .../schedules (Class C) */
       schedules: (applicationType: string, applicationId: string) =>
         [
@@ -362,6 +380,14 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
           formType,
+        ] as const,
+      /** 설문 본문 — GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render (Class D) */
+      formBinding: (params: { programId: string; bindingId: number }) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'form-binding',
+          params.programId,
+          params.bindingId,
         ] as const,
       /** 영수증 — GET .../expense-receipts (Class C) */
       expenseReceipts: (applicationType: string, applicationId: string) =>

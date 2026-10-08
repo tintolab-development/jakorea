@@ -87,7 +87,7 @@ export function BirthStep({ signUp }: BirthStepProps) {
               {isTeacherSignup ? (
                 <div className={styles.teacherBirthGuide}>
                   <PFText as="p" typo="bd-sm-rg" color="primary-700">
-                    교사회원은{' '}
+                    교사 회원은{' '}
                     <PFText as="span" typo="bd-sm-sb" color="primary-700">
                       만 14세 이상
                     </PFText>

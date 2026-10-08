@@ -5,7 +5,7 @@
  * 수정 모드 시 form 연동으로 Input 표시.
  */
 
-import { Fragment, type ReactNode, useEffect, useMemo } from 'react'
+import { Fragment, type ReactNode, useEffect, useMemo, useRef } from 'react'
 import { Controller } from 'react-hook-form'
 import { useKpiAchievementList } from '@/features/dashboard/hooks/use-kpi-achievement-list'
 import type { ProgramKpiItem } from '@/features/dashboard/api/admin-dashboard-service'
@@ -120,10 +120,19 @@ export function ProgramKpiTargetSection({
   const isFormEdit = isEditMode && form
   const kpis = kpiItem?.kpis ?? null
   const programKpi = useMemo(() => resolveProgramKpiTargets(program), [program])
+  const kpiSeededForEditRef = useRef(false)
 
-  // 수정 모드 진입 시 API → program KPI 순으로 폼 시드 (한 번만)
+  // 수정 모드 진입 시 API → program KPI 순으로 폼 시드 (한 번만).
+  // null 이면 다시 채우면, 값을 지운 뒤에도 이전 목표로 복원된다.
   useEffect(() => {
-    if (!isFormEdit || !form) return
+    if (!isFormEdit || !form) {
+      kpiSeededForEditRef.current = false
+      return
+    }
+    if (kpiSeededForEditRef.current) return
+    const hasDashboardKpi = kpis != null && kpis.length > 0
+    if (!hasDashboardKpi && !hasProgramKpiTargets(programKpi)) return
+
     const participantsRow = kpis?.find(k => k.key === 'finalParticipants')
     const schoolsRow = kpis?.find(k => k.key === 'finalSchools')
     const classesRow = kpis?.find(k => k.key === 'finalClasses')
@@ -161,6 +170,7 @@ export function ProgramKpiTargetSection({
     ) {
       form.setValue('kpiVolunteerCount', programKpi.volunteerCount)
     }
+    kpiSeededForEditRef.current = true
   }, [isFormEdit, kpis, kpiItem, programKpi, showVolunteerKpi, form])
 
   const participantsRow = kpis?.find(k => k.key === 'finalParticipants')

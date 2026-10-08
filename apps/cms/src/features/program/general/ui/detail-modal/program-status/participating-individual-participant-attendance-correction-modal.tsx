@@ -33,7 +33,7 @@ function toCorrectionStatus(
 ): ProgramAttendanceCorrectionStatus {
   if (row.attendanceStatus === 'late') return 'late'
   if (row.attendanceStatus === 'excused_absence') return 'excused_absence'
-  if (row.attendanceStatus === 'present') return 'present'
+  if (row.attendanceStatus === 'absent') return 'absence'
   return 'present'
 }
 
@@ -236,7 +236,6 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
                           prev.filter((_, currentIndex) => currentIndex !== index)
                         )
                       }
-                      buttonLabel="파일 추가"
                     />
                   </td>
                 </tr>

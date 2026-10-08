@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { Table, Spin } from 'antd'
-import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
@@ -60,6 +59,7 @@ import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/p
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import { renderParticipatingVolunteerCalendarMonthEventContent } from './participating-volunteer-calendar-month-event'
 import { ParticipatingVolunteersCalendarRight } from './participating-volunteers-calendar-right'
+import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
@@ -499,7 +499,7 @@ export function ParticipatingVolunteersSection({
 
   if (applicationsLoading && volunteerList.length === 0) {
     return (
-      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+      <div className="detail-fullpage-modal__loading" role="status">
         <Spin size="large" />
       </div>
     )
@@ -546,7 +546,7 @@ export function ParticipatingVolunteersSection({
               variant="secondary"
               size="large"
               style={{ minWidth: 180 }}
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
               활동확인서 발급
@@ -556,7 +556,7 @@ export function ParticipatingVolunteersSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={handleCalendarView}
               >
                 캘린더 뷰로 보기
@@ -566,7 +566,7 @@ export function ParticipatingVolunteersSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={handleListView}
               >
                 리스트 뷰로 보기

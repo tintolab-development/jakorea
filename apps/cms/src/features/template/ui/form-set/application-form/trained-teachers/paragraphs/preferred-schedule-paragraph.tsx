@@ -185,7 +185,7 @@ function ScheduleBlock({
             sessionOptions={sessionOptions}
             disabledDate={disabledDate}
           />
-          {block.times.map((time, timeIndex) => (
+          {(block.times ?? []).map((time, timeIndex) => (
             <ScheduleTimeRow
               key={timeIndex}
               label={`${timeIndex + 1}차시 희망 교육 시간`}
@@ -308,7 +308,7 @@ function TrainedTeachersPreferredScheduleFields({
         const count = Math.max(1, parseInt(value ?? '1', 10) || 1)
         const times = Array.from(
           { length: count },
-          (_, timeIndex) => b.times[timeIndex] ?? createEmptyTimeState()
+          (_, timeIndex) => b.times?.[timeIndex] ?? createEmptyTimeState()
         )
         return { ...b, session: value, times }
       })
@@ -322,7 +322,7 @@ function TrainedTeachersPreferredScheduleFields({
         i === index
           ? {
               ...b,
-              times: b.times.map((t, ti) => (ti === timeIndex ? { ...t, ...patch } : t)),
+              times: (b.times ?? []).map((t, ti) => (ti === timeIndex ? { ...t, ...patch } : t)),
             }
           : b
       )

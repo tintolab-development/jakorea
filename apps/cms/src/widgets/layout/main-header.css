@@ -5,7 +5,7 @@
 .main-header {
   background: var(--main-WT, #fff);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
-  padding: 0 24px 0 40px;
+  padding: 7px 24px 7px 32px;
   height: var(--header-height);
   line-height: var(--header-height);
   display: flex;

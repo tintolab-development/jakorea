@@ -6,25 +6,38 @@ import {
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
+import { writingFormDraftFromApplicationForm } from '@/features/program/lib/application-form-draft'
+import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
+import { parsePortalProgramId } from '@/features/program/api/mappers'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { getMypageProfileLabel } from '@/features/mypage/lib/member-profile'
 import { useSettingsView } from '@/features/mypage/settings/hooks/use-settings-view'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import {
+  clearEducationSurveyPreviewAnswers,
   createEducationSurveySeedDraft,
   EDUCATION_SURVEY_SEED_CREATED_AT,
   type EducationSatisfactionAudience,
   type EducationSurveySeedKind,
 } from '../lib/seed-survey-draft'
-import { useApplicationFormsQuery } from '../../applications/api/activity-hooks'
+import {
+  useApplicationFormsQuery,
+  useApplicationSurveyFormQuery,
+  useSubmitEducationSurveyMutation,
+} from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
-import { getMockEducationSurveyList } from '../lib/mock-survey-list'
+import { getMockEducationSurveyList, type EducationSurveyListEntry } from '../lib/mock-survey-list'
 import { EducationSurveyEmptyPanel } from './empty-panel'
 import {
   formatEducationPeriodLabel,
   resolveSurveyUserInfoValues,
   type SurveyUserInfoProgramContext,
 } from '../lib/resolve-user-info-values'
+import {
+  applyEducationSurveyAnswersToDraft,
+  buildEducationSurveyAnswers,
+  validateEducationSurveyFill,
+} from '../lib/survey-answers'
 import { EMPTY_SURVEY_SIDECAR, type SurveySidecarState } from '../lib/survey-sidecar'
 import { EducationSurveyFormBody } from './survey-form-body'
 import { EducationSurveyHeader } from './survey-header'
@@ -44,6 +57,29 @@ export type EducationSurveyFillPanelProps = {
   institutionRegion?: string
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
+  programId?: string | null
+}
+
+function resolveFillDraft(options: {
+  kind: EducationSurveySeedKind
+  satisfactionAudience?: EducationSatisfactionAudience
+  selectedEntry?: EducationSurveyListEntry
+  remoteForm?: unknown
+  remoteAnswers?: Record<string, unknown> | null
+}): WritingFormDraft {
+  const remoteDraft = writingFormDraftFromApplicationForm(options.remoteForm)
+  const seeded =
+    remoteDraft ??
+    createEducationSurveySeedDraft(options.kind, {
+      satisfactionAudience: options.satisfactionAudience,
+      listEntry: options.selectedEntry,
+    })
+  const remoteAnswers =
+    options.remoteAnswers ?? options.selectedEntry?.answers ?? options.selectedEntry?.draftAnswers
+  const hasAnswers = Boolean(remoteAnswers && Object.keys(remoteAnswers).length > 0)
+  const submitted = options.selectedEntry?.status === 'submitted'
+  const forFill = submitted || hasAnswers ? seeded : clearEducationSurveyPreviewAnswers(seeded)
+  return applyEducationSurveyAnswersToDraft(forFill, remoteAnswers)
 }
 
 export function EducationSurveyFillPanel({
@@ -57,6 +93,7 @@ export function EducationSurveyFillPanel({
   institutionRegion,
   applicationType,
   applicationId,
+  programId,
 }: EducationSurveyFillPanelProps) {
   const remoteForms = useApplicationFormsQuery(
     applicationType,
@@ -74,27 +111,61 @@ export function EducationSurveyFillPanel({
     () => surveyList.find(entry => entry.id === selectedId) ?? surveyList[0],
     [surveyList, selectedId],
   )
+  const selectedEntryId = selectedEntry?.id ?? ''
+  const listHasForm = selectedEntry?.form != null
+
+  const remoteFormQuery = useApplicationSurveyFormQuery(
+    listHasForm ? null : programId,
+    listHasForm ? null : selectedEntryId,
+  )
+  const submitMutation = useSubmitEducationSurveyMutation(programId, applicationType, applicationId)
+  const readOnly = selectedEntry?.status === 'submitted'
+
+  const remoteFormDocument = listHasForm
+    ? {
+        form: selectedEntry?.form,
+        answers: selectedEntry?.answers,
+        draftAnswers: selectedEntry?.draftAnswers,
+        templateVersionId: selectedEntry?.templateVersionId,
+      }
+    : remoteFormQuery.document
 
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
-    createEducationSurveySeedDraft(kind, {
+    resolveFillDraft({
+      kind,
       satisfactionAudience,
-      listEntry: selectedEntry,
+      selectedEntry,
     }),
   )
   const [sidecar, setSidecar] = useState<SurveySidecarState>(EMPTY_SURVEY_SIDECAR)
   const [alertOpen, setAlertOpen] = useState(false)
+  const [alertTitle, setAlertTitle] = useState('안내')
+  const [alertDescription, setAlertDescription] = useState('')
 
-  // 목록 선택 변경 시 draft·sidecar 교체
   useEffect(() => {
     if (selectedEntry == null) return
     setDraft(
-      createEducationSurveySeedDraft(kind, {
+      resolveFillDraft({
+        kind,
         satisfactionAudience,
-        listEntry: selectedEntry,
+        selectedEntry,
+        remoteForm: remoteFormDocument?.form ?? selectedEntry.form ?? remoteFormDocument,
+        remoteAnswers:
+          remoteFormDocument?.answers ??
+          remoteFormDocument?.draftAnswers ??
+          selectedEntry.answers ??
+          selectedEntry.draftAnswers,
       }),
     )
     setSidecar(EMPTY_SURVEY_SIDECAR)
-  }, [kind, satisfactionAudience, selectedEntry])
+  }, [
+    kind,
+    satisfactionAudience,
+    selectedEntryId,
+    remoteFormDocument?.form,
+    remoteFormDocument?.answers,
+    remoteFormDocument?.draftAnswers,
+  ])
 
   const member = useMypageMember()
   const settings = useSettingsView()
@@ -185,10 +256,56 @@ export function EducationSurveyFillPanel({
   }, [])
 
   const handleSubmit = () => {
+    if (readOnly) return
+    const validation = validateEducationSurveyFill(draft, sidecar)
+    if (!validation.ok) {
+      setAlertTitle('입력 확인')
+      setAlertDescription(validation.message)
+      setAlertOpen(true)
+      return
+    }
+
+    const answers = buildEducationSurveyAnswers(draft, sidecar)
+    const bindingId = parsePortalProgramId(selectedEntryId)
+    const templateVersionId =
+      remoteFormDocument?.templateVersionId ?? selectedEntry?.templateVersionId
+
+    if (remoteForms.enabled && bindingId != null && programId) {
+      submitMutation.mutate(
+        { bindingId, answers, templateVersionId },
+        {
+          onSuccess: () => {
+            setAlertTitle('안내')
+            setAlertDescription(
+              kind === 'satisfaction' ? '만족도조사가 제출되었습니다.' : '설문이 제출되었습니다.',
+            )
+            setAlertOpen(true)
+          },
+          onError: error => {
+            setAlertTitle('제출 실패')
+            setAlertDescription(
+              getProgramApplicationApiErrorMessage(
+                error,
+                kind === 'satisfaction'
+                  ? '만족도조사 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                  : '설문 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+              ),
+            )
+            setAlertOpen(true)
+          },
+        },
+      )
+      return
+    }
+
+    setAlertTitle('안내')
+    setAlertDescription(
+      kind === 'satisfaction' ? '만족도조사가 제출되었습니다.' : '설문이 제출되었습니다.',
+    )
     setAlertOpen(true)
   }
 
-  if (remoteForms.isLoading) return null
+  if (remoteForms.isLoading || (remoteFormQuery.enabled && remoteFormQuery.isLoading)) return null
   if (remoteForms.isError) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
@@ -199,9 +316,17 @@ export function EducationSurveyFillPanel({
   if (remoteForms.enabled && surveyList.length === 0) {
     return <EducationSurveyEmptyPanel kind={kind} />
   }
-
-  const submitDescription =
-    kind === 'satisfaction' ? '만족도조사가 제출되었습니다.' : '설문이 제출되었습니다.'
+  // 실패 시 seed 양식이 대신 보이면 CMS 양식과 다른 설문을 제출하게 된다.
+  if (remoteFormQuery.isError) {
+    return (
+      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+        {getProgramApplicationApiErrorMessage(
+          remoteFormQuery.error,
+          kind === 'satisfaction' ? '만족도조사를 불러오지 못했습니다.' : '설문조사를 불러오지 못했습니다.',
+        )}
+      </PFText>
+    )
+  }
 
   const surveyCreatedAt =
     selectedEntry?.createdAt ?? selectedEntry?.startAt ?? EDUCATION_SURVEY_SEED_CREATED_AT
@@ -219,13 +344,22 @@ export function EducationSurveyFillPanel({
         sidecar={sidecar}
         onSidecarChange={setSidecar}
         userInfoValues={userInfoValues}
+        readOnly={readOnly}
       />
 
-      <div className={styles.actions}>
-        <PFButton size="xlarge" width={240} type="button" onClick={handleSubmit}>
-          제출하기
-        </PFButton>
-      </div>
+      {readOnly ? null : (
+        <div className={styles.actions}>
+          <PFButton
+            size="xlarge"
+            width={240}
+            type="button"
+            disabled={submitMutation.isPending}
+            onClick={handleSubmit}
+          >
+            제출하기
+          </PFButton>
+        </div>
+      )}
     </div>
   )
 
@@ -250,8 +384,8 @@ export function EducationSurveyFillPanel({
 
       <PFAlertModal
         open={alertOpen}
-        title="안내"
-        description={submitDescription}
+        title={alertTitle}
+        description={alertDescription}
         onConfirm={() => setAlertOpen(false)}
       />
     </>

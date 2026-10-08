@@ -164,7 +164,8 @@ export function useUjatVolunteerDocScreeningColumns({
         width: 140,
         minWidth: 140,
         align: 'center',
-        render: (_: unknown, record) => (record.hasEducationExperience ? 'O' : 'X'),
+        render: (_: unknown, record) =>
+          record.hasEducationExperience == null ? '-' : record.hasEducationExperience ? 'O' : 'X',
       },
     ]
 

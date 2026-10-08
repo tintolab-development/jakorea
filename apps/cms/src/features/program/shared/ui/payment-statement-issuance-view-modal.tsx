@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -28,6 +28,7 @@ import { normalizeWritingFormDraft } from '@/features/template/model/writing-for
 import { resolvePaymentStatementIssuanceDocumentParagraphBodyOptions } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { handleError } from '@/shared/utils/error-handler'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/features/program/general/ui/detail-modal/program-status/lecture-report-issuance-preview-modal.css'
 
@@ -199,7 +200,7 @@ export function PaymentStatementIssuanceViewModal({
         variant="primary"
         size="medium"
         width={140}
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         disabled={pdfLoading}
         onClick={() => void handleDownloadPdf()}
       >
@@ -234,7 +235,7 @@ export function PaymentStatementIssuanceViewModal({
               onClick={handleClose}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
 

@@ -34,8 +34,8 @@ import {
   ProgramDetailContactReadRow,
   ProgramDetailDateMethodReadRow,
 } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
-import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { resolveGeneralProgramParticipantRecruitmentDisplay } from '@/features/program/general/lib/participant-recruitment-display'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
@@ -61,16 +61,6 @@ const NEED_OR_NOT_OPTIONS = [
 const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
 
 const FORM_CLASS = 'program-registration-paragraph'
-
-function isCompanySchoolRecruitmentProgram(program: Program): boolean {
-  return (
-    program.id.startsWith('economy-prog-') ||
-    program.id.startsWith('company-school-prog-') ||
-    program.id.startsWith('company-school-local-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title?.includes('1사1교') === true
-  )
-}
 
 function NumberWithSuffixEdit({
   form,
@@ -163,7 +153,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const showLimits = display.showInstitutionApplicationLimits
   const contactOrg = display.contactOrganizationName
   const isIndividual = isGeneralIndividualProgram(program)
-  const isCompanySchool = isCompanySchoolRecruitmentProgram(program)
+  const isCompanySchool = isCompanySchoolProgram(program)
   // 교육받은 교사 — 공고 게시|학생 명단 1행, 사전 안내·수료증 비노출 (기존 유형 렌더 불변)
   const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
   const isGeneralOrg = !isIndividual && !isCompanySchool && !isTrainedTeachers
@@ -257,7 +247,10 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             method={program.resultAnnouncementMethod}
           />
         ) : (
-          renderDetailInfoPipeSeparated(display.finalAnnouncementLabel)
+          <ProgramDetailDateMethodReadRow
+            dateIso={display.finalAnnouncementDate}
+            method={display.finalAnnouncementMethod}
+          />
         )
       }
       edit={

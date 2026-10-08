@@ -8,7 +8,9 @@ import type {
   TimeParagraph,
   WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
+import { getUserInfoSelectedEntries, isUserInfoParagraph } from '@jakorea/form-schema/writing-form'
 import {
+  FillParagraphBody,
   FormTemplateHost,
   type FormUpdateParagraph,
   VerticalTablePreviewBody,
@@ -36,9 +38,9 @@ export type PlatformSurveyParagraphBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   sidecar: SurveySidecarState
   onSidecarChange: (next: SurveySidecarState) => void
-  userInfoWriteField?: { key: string; label: string }
-  /** 설문자 정보 필드 표시값 (로그인·프로그램 컨텍스트) */
-  userInfoDisplayValue?: string
+  /** 설문자 정보 fieldKey → 표시값 (로그인·프로그램 컨텍스트) */
+  userInfoValues?: Record<string, string>
+  readOnly?: boolean
 }
 
 export function PlatformSurveyParagraphBody({
@@ -46,17 +48,13 @@ export function PlatformSurveyParagraphBody({
   onUpdateParagraph,
   sidecar,
   onSidecarChange,
-  userInfoWriteField,
-  userInfoDisplayValue,
+  userInfoValues,
+  readOnly = false,
 }: PlatformSurveyParagraphBodyProps) {
-  if (paragraph.kind === 'single_item' && paragraph.variant === 'user_info') {
-    if (userInfoWriteField == null) return null
-    return (
-      <SurveyUserInfoField
-        label={userInfoWriteField.label}
-        value={userInfoDisplayValue ?? ''}
-      />
-    )
+  if (isUserInfoParagraph(paragraph)) {
+    const entries = getUserInfoSelectedEntries(paragraph)
+    if (entries.length === 0) return null
+    return <SurveyUserInfoField entries={entries} values={userInfoValues} />
   }
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'multiple_choice') {
@@ -64,6 +62,7 @@ export function PlatformSurveyParagraphBody({
       <SurveyMultipleChoiceField
         paragraph={paragraph as MultipleChoiceParagraph}
         onUpdateParagraph={onUpdateParagraph}
+        disabled={readOnly}
       />
     )
   }
@@ -73,6 +72,7 @@ export function PlatformSurveyParagraphBody({
       <SurveyScaleTypeField
         paragraph={paragraph as ScaleTypeParagraph}
         onUpdateParagraph={onUpdateParagraph}
+        disabled={readOnly}
       />
     )
   }
@@ -82,6 +82,7 @@ export function PlatformSurveyParagraphBody({
       <SurveyShortEssayField
         paragraph={paragraph as ShortEssayParagraph}
         onUpdateParagraph={onUpdateParagraph}
+        disabled={readOnly}
       />
     )
   }
@@ -91,6 +92,7 @@ export function PlatformSurveyParagraphBody({
       <SurveyStarRateField
         paragraph={paragraph as StarRateParagraph}
         onUpdateParagraph={onUpdateParagraph}
+        disabled={readOnly}
       />
     )
   }
@@ -101,11 +103,13 @@ export function PlatformSurveyParagraphBody({
         paragraph={paragraph as DateParagraph}
         value={sidecar.dateValues[paragraph.id] ?? ''}
         onValueChange={next => {
+          if (readOnly) return
           onSidecarChange({
             ...sidecar,
             dateValues: { ...sidecar.dateValues, [paragraph.id]: next },
           })
         }}
+        disabled={readOnly}
       />
     )
   }
@@ -116,11 +120,13 @@ export function PlatformSurveyParagraphBody({
         paragraph={paragraph as TimeParagraph}
         value={sidecar.timeValues[paragraph.id] ?? ''}
         onValueChange={next => {
+          if (readOnly) return
           onSidecarChange({
             ...sidecar,
             timeValues: { ...sidecar.timeValues, [paragraph.id]: next },
           })
         }}
+        disabled={readOnly}
       />
     )
   }
@@ -131,11 +137,13 @@ export function PlatformSurveyParagraphBody({
         paragraph={paragraph as FileAttachmentParagraph}
         fileName={sidecar.fileNames[paragraph.id] ?? null}
         onFileNameChange={next => {
+          if (readOnly) return
           onSidecarChange({
             ...sidecar,
             fileNames: { ...sidecar.fileNames, [paragraph.id]: next },
           })
         }}
+        disabled={readOnly}
       />
     )
   }
@@ -145,7 +153,7 @@ export function PlatformSurveyParagraphBody({
       <FormTemplateHost surface="platformUser">
         <VerticalTablePreviewBody
           paragraph={paragraph}
-          interactionMode="user"
+          interactionMode={readOnly ? 'preview' : 'user'}
           onBottomConsentChange={value =>
             onUpdateParagraph(paragraph.id, current =>
               current.kind === 'single_item' && current.variant === 'vertical_table'
@@ -181,6 +189,21 @@ export function PlatformSurveyParagraphBody({
                 : current
             )
           }
+        />
+      </FormTemplateHost>
+    )
+  }
+
+  if (
+    paragraph.kind === 'single_item' &&
+    (paragraph.variant === 'horizontal_table' || paragraph.variant === 'agreement_explanation_text')
+  ) {
+    return (
+      <FormTemplateHost surface="platformUser">
+        <FillParagraphBody
+          paragraph={paragraph}
+          interactionMode={readOnly ? 'preview' : 'user'}
+          onUpdateParagraph={readOnly ? undefined : onUpdateParagraph}
         />
       </FormTemplateHost>
     )

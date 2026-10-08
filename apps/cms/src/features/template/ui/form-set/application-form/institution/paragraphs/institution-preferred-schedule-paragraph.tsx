@@ -20,7 +20,7 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { toValidDayjsOrNull } from '@/shared/components/date-time-picker-shared'
-import { FormEditorPlusIcon } from '@/features/template/ui/shared/form-editor-plus-icon'
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
@@ -210,7 +210,7 @@ export function InstitutionPreferredScheduleCardTitleTrailing({
       variant="secondary"
       size="medium"
       className="cms-button--no-label-ellipsis"
-      icon={<FormEditorPlusIcon />}
+      icon={<ButtonAddIcon />}
       onClick={event => {
         event.stopPropagation()
         addInstitutionPreferredScheduleBlock()

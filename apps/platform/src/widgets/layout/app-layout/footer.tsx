@@ -76,7 +76,7 @@ function PartnerLogoImage({
   const src = remoteSrc ?? localSrc
   if (!src) return null
 
-  const sizeClass = local?.logoClassName ?? (remoteSrc ? styles.partnerLogoRemote : undefined)
+  const sizeClass = remoteSrc ? styles.partnerLogoRemote : local?.logoClassName
 
   return (
     <span className={styles.partnerLogoArea}>

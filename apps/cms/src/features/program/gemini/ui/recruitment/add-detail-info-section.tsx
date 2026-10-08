@@ -15,6 +15,8 @@ export function GeminiRecruitmentAddDetailInfoSection({
   const {
     thumbnailFileName,
     setThumbnailFileName,
+    thumbnailFileObjectId,
+    setThumbnailFileObjectId,
     programDescription,
     setProgramDescription,
     recruitmentGuide,
@@ -57,6 +59,7 @@ export function GeminiRecruitmentAddDetailInfoSection({
     notesNotApplicable,
     notes,
     thumbnailFileName,
+    thumbnailFileObjectId,
     programDescription,
     recruitmentGuide,
     applicationMethod,
@@ -80,6 +83,9 @@ export function GeminiRecruitmentAddDetailInfoSection({
         onRichTextEdit={markRichTextTouched}
         onChange={patch => {
           if (patch.thumbnailFileName !== undefined) setThumbnailFileName(patch.thumbnailFileName)
+          if (patch.thumbnailFileObjectId !== undefined) {
+            setThumbnailFileObjectId(patch.thumbnailFileObjectId)
+          }
           if (patch.programDescription != null) setProgramDescription(patch.programDescription)
           if (patch.attachmentFileNames != null) setAttachmentFileNames(patch.attachmentFileNames)
         }}

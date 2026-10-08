@@ -21,6 +21,9 @@ import './cms-select.css'
 
 const CMS_SELECT_ALL_OPTION = { label: '전체', value: '' as const }
 
+/** 드롭다운은 body 포털이라 래퍼 클래스로 스타일링 불가 — 팝업 루트에 붙인다 */
+const CMS_SELECT_DROPDOWN_CLASS = 'cms-select-dropdown'
+
 /** 필터용 「전체」 센티널 — 등록/필수 선택 폼에서는 제외해야 함 */
 function isAllSentinelOption(opt: unknown): boolean {
   if (opt == null || typeof opt !== 'object') return false
@@ -142,10 +145,16 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
       withAllOption = true,
       allowClear = true,
       placeholder,
+      classNames,
+      popupClassName,
       ...rest
     },
     ref
   ) => {
+    const popupRootCn = [CMS_SELECT_DROPDOWN_CLASS, classNames?.popup?.root, popupClassName]
+      .filter(Boolean)
+      .join(' ')
+
     const hasExplicitWidth = width != null
     const widthStyle: CSSProperties | undefined =
       width == null
@@ -234,6 +243,7 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
           disabled={disabled}
           placeholder={placeholder}
           {...rest}
+          classNames={{ ...classNames, popup: { ...classNames?.popup, root: popupRootCn } }}
           mode={mode}
           options={mergedOptions}
           value={resolvedValue as SelectProps['value']}

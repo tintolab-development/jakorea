@@ -5,7 +5,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
@@ -29,6 +28,7 @@ import {
   getParticipatingVolunteerSettlementBulkDownloadErrorMessage,
 } from '@/features/program/general/lib/participating-volunteer-settlement-download'
 import { useParticipatingVolunteerPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-payment-statement-view-container'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-volunteer-settlement-section.css'
 
 function formatSettlementAmount(amount: number | null): string {
@@ -275,7 +275,7 @@ export function ParticipatingVolunteerSettlementSection({
             variant="secondary"
             size="large"
             width={220}
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
             onClick={() => void handleBulkDownloadPaymentStatements()}
           >

@@ -54,6 +54,8 @@ export function participatingVolunteerToApplicantView(
     scheduleChangeCancelCount: volunteer.scheduleChangeCancelCount ?? 0,
     applicationType: (volunteer.applicationType ?? 'new') as GeneralVolunteerApplicationType,
     hasJaVolunteerExperience: volunteer.hasJaVolunteerExperience ?? false,
+    previousJaProgram: volunteer.previousJaProgram,
+    evidenceAttachments: volunteer.evidenceAttachments,
     essayIntro: volunteer.essayIntro ?? '',
     essayEducationExperience: volunteer.essayEducationExperience ?? '',
     essayNecessity: volunteer.essayNecessity ?? '',

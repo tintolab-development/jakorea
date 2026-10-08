@@ -5,7 +5,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
@@ -32,6 +31,8 @@ import {
   matchesDateRange,
   type AppliedLineStatus,
 } from './payment-order-detail-fullpage-shared'
+
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 interface ProgramDetailAppliedFilters {
   instructorName: string
@@ -322,7 +323,7 @@ export function PaymentOrderProgramSettlementTable({
               variant="primary"
               size="large"
               style={{ minWidth: 180 }}
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               onClick={() => {}}
             >
               지급조서 발급

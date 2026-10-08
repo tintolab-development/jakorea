@@ -7,6 +7,7 @@
  */
 import type { AvailableScheduleSlot } from './availableScheduleSlot';
 import type { FeePolicy } from './feePolicy';
+import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorMemberProfile } from './instructorMemberProfile';
 
 export interface InstructorApplicationDetailResponse {
@@ -61,19 +62,15 @@ export interface InstructorApplicationDetailResponse {
      * @nullable
      */
   affiliationIsCurrentlyEmployed?: boolean | null;
-  /**
-     * 저장된 강사비. basis/measure/amount가 모두 없으면 null
-     * @nullable
-     */
-  feePolicy?: FeePolicy;
+  /** 저장된 강사비. basis/measure/amount가 모두 없으면 null */
+  feePolicy?: FeePolicy | null;
   /**
      * 사업소득자 해당 여부. 해당 | 해당 없음. 없으면 null
      * @nullable
      */
   businessIncomeEarnerStatus?: string | null;
-  /**
-     * 교사 겸직 스냅샷. 교사 프로필이 없으면 null
-     * @nullable
-     */
-  instructorMemberProfile?: InstructorMemberProfile;
+  /** 교사 겸직 스냅샷. 교사 프로필이 없으면 null */
+  instructorMemberProfile?: InstructorMemberProfile | null;
+  /** 강사 회원의 현재 구조화 이력서(학력·경력·JA Korea 활동·자격·수상·자기소개). 회원 관리 강사 상세의 profile과 같은 구조이며 일반 상세에서는 같은 규칙으로 마스킹됩니다. 강사 프로필이 없으면 null */
+  instructorCmsProfile?: InstructorCmsProfile | null;
 }

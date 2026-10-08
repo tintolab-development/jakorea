@@ -9,6 +9,9 @@ export type FormTemplateVersionCacheEntry = {
   templateVersionId?: number
   latestVersionId?: number
   latestVersionNo?: number
+  /** 목록 API — 복제·사용자 생성 행의 카탈로그 원본 */
+  baseTemplateCode?: string
+  templateName?: string
 }
 
 const byTemplateCode = new Map<string, FormTemplateVersionCacheEntry>()
@@ -22,7 +25,13 @@ export function getFormTemplateVersionCacheEntry(
 export function upsertFormTemplateVersionCacheEntry(
   entry: FormTemplateVersionCacheEntry
 ): void {
-  byTemplateCode.set(entry.templateCode, entry)
+  const existing = byTemplateCode.get(entry.templateCode)
+  byTemplateCode.set(entry.templateCode, {
+    ...existing,
+    ...entry,
+    baseTemplateCode: entry.baseTemplateCode ?? existing?.baseTemplateCode,
+    templateName: entry.templateName ?? existing?.templateName,
+  })
 }
 
 export function removeFormTemplateVersionCacheEntry(templateCode: string): void {
@@ -40,6 +49,8 @@ export function upsertFormTemplateVersionCacheFromListItems(
     templateId?: number
     latestVersionId?: number
     latestVersionNo?: number
+    baseTemplateCode?: string
+    templateName?: string
   }>
 ): void {
   for (const item of items) {
@@ -47,12 +58,16 @@ export function upsertFormTemplateVersionCacheFromListItems(
     if (templateCode == null || templateCode === '' || item.templateId == null) continue
     const existing = byTemplateCode.get(templateCode)
     const latestVersionId = item.latestVersionId ?? existing?.latestVersionId
+    const baseTemplateCode = item.baseTemplateCode?.trim() || existing?.baseTemplateCode
+    const templateName = item.templateName?.trim() || existing?.templateName
     byTemplateCode.set(templateCode, {
       templateCode,
       templateId: item.templateId,
       templateVersionId: latestVersionId ?? existing?.templateVersionId,
       latestVersionId,
       latestVersionNo: item.latestVersionNo ?? existing?.latestVersionNo,
+      ...(baseTemplateCode != null && baseTemplateCode !== '' ? { baseTemplateCode } : {}),
+      ...(templateName != null && templateName !== '' ? { templateName } : {}),
     })
   }
 }

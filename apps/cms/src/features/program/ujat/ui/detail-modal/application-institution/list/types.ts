@@ -1,5 +1,6 @@
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import type { UjatInstitutionScheduleSlotKey } from '../education-schedule'
+import type { UjatInstitutionScheduleConfirmStatus } from '../schedule-confirm/types'
 
 /** 임시 배정 평가 상태 */
 export type UjatInstitutionTempAssignmentStatus =
@@ -18,12 +19,8 @@ export const UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL: Record<
   application_rejected: '신청 반려',
 }
 
-export type {
-  UjatInstitutionScheduleSlotKey,
-} from '../education-schedule'
+export type { UjatInstitutionScheduleSlotKey } from '../education-schedule'
 export {
-  UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK,
-  UJAT_INSTITUTION_SCHEDULE_COLUMNS,
   buildEmptyScheduleSlots,
   formatUjatInstitutionFridayDisplay,
   sumGradeClassCounts,
@@ -36,6 +33,7 @@ export type UjatInstitutionGradeClassCount = {
 
 export type UjatInstitutionApplicationRow = {
   id: string
+  /** `educationRegionCode`로만 결정. 코드가 없거나 매칭 실패면 빈 문자열(어느 지역 탭에도 속하지 않음) */
   regionKey: UjatInstitutionApplicationRegionKey
   no: number
   institutionName: string
@@ -44,6 +42,9 @@ export type UjatInstitutionApplicationRow = {
   totalClassCount: number
   scheduleSlots: Record<UjatInstitutionScheduleSlotKey, 'O' | '-'>
   teacherName: string
+  scheduleConfirmStatus?: UjatInstitutionScheduleConfirmStatus | null
+  assignedInstructorCount?: number | null
+  operatingStudentCount?: number | null
 }
 
 export type UjatInstitutionApplicationFilters = {

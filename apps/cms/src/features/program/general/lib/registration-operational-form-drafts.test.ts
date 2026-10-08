@@ -22,7 +22,9 @@ vi.mock('@/features/program/general/lib/registration-wizard-form-draft', () => (
 }))
 
 import {
+  applyOperationalOverlayForCatalogId,
   clearRegistrationOperationalFormDrafts,
+  collectOperationalOverlayForCatalogId,
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   listRegistrationOperationalFormDraftStorageKeys,
   persistRegistrationOperationalOverlaySnapshots,
@@ -30,6 +32,7 @@ import {
 } from './registration-operational-form-drafts'
 import {
   getApplicantRecruitInstitutionOverlayRecord,
+  patchApplicantRecruitInstitutionOverlay,
   resetApplicantRecruitInstitutionOverlay,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
@@ -103,7 +106,10 @@ describe('registration operational draft-owned helpers', () => {
   })
 
   it('persists only visible operational overlays for individual general program', async () => {
-    patchGeneralRecruitOverlay({ 'recruit.instructor.inquiryContact': '강사문의' })
+    patchGeneralRecruitOverlay({
+      'recruit.individual.inquiryContact': '개인문의',
+      'recruit.instructor.inquiryContact': '강사문의',
+    })
     patchGeneralApplicationOverlay({ 'application.volunteer.essay': '에세이' })
     ensureDraftOwnedFormVersionWithBaseline.mockResolvedValue({
       owned: { templateCode: 'recruitment-participant-individual', templateId: 1, draftVersionId: 10 },
@@ -133,5 +139,64 @@ describe('registration operational draft-owned helpers', () => {
           call[0]?.owned != null && call[0]?.baseline !== undefined
       )
     ).toBe(true)
+  })
+
+  it('collects only instructor prefixes from the shared recruit store', () => {
+    patchGeneralRecruitOverlay({
+      'economyRecruit.detailInfo.programDescription': '1사1교 상세',
+      'recruit.instructor.inquiryContact': '강사문의',
+    })
+    const overlay = collectOperationalOverlayForCatalogId('recruitment-instructor')
+    expect(overlay?.['recruit.instructor.inquiryContact']).toBe('강사문의')
+    expect(overlay?.['economyRecruit.detailInfo.programDescription']).toBeUndefined()
+  })
+
+  it('applying instructor overlay does not wipe 1사1교 recruit detail', () => {
+    patchApplicantRecruitInstitutionOverlay({ 'recruit.notes': '1사1교 안내' })
+    patchGeneralRecruitOverlay({
+      'economyRecruit.detailInfo.programDescription': '1사1교 상세',
+      'recruit.instructor.inquiryContact': '이전 강사',
+    })
+    applyOperationalOverlayForCatalogId('recruitment-instructor', {
+      'recruit.instructor.inquiryContact': '새 강사',
+      'economyRecruit.detailInfo.programDescription': '덮이면 안 됨',
+    })
+    expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('1사1교 안내')
+    expect(getGeneralRecruitOverlayRecord()['economyRecruit.detailInfo.programDescription']).toBe(
+      '1사1교 상세'
+    )
+    expect(getGeneralRecruitOverlayRecord()['recruit.instructor.inquiryContact']).toBe('새 강사')
+  })
+
+  it('hydrating instructor draft overlay keeps 1사1교 recruit values', async () => {
+    loadRegistrationWizardFormDraft.mockImplementation(
+      async (args: { templateCode: string }) => {
+        if (args.templateCode === 'recruitment-economy') {
+          return {
+            overlay: {
+              'recruit.notes': '1사1교 안내',
+              'economyRecruit.detailInfo.programDescription': '1사1교 상세',
+            },
+          }
+        }
+        if (args.templateCode === 'recruitment-instructor') {
+          return {
+            overlay: {
+              'recruit.instructor.inquiryContact': '강사문의',
+              'economyRecruit.detailInfo.programDescription': '덮이면 안 됨',
+            },
+          }
+        }
+        return null
+      }
+    )
+
+    await hydrateRegistrationOperationalOverlaysFromLocalDrafts('ECONOMY', 'economy')
+
+    expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('1사1교 안내')
+    expect(getGeneralRecruitOverlayRecord()['economyRecruit.detailInfo.programDescription']).toBe(
+      '1사1교 상세'
+    )
+    expect(getGeneralRecruitOverlayRecord()['recruit.instructor.inquiryContact']).toBe('강사문의')
   })
 })

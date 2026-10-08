@@ -132,19 +132,6 @@ export type ScreeningResultNotifyFields = {
   scheduledAt?: string
 }
 
-export type InstructorApplicationDetailResponseEnriched = InstructorApplicationDetailResponse & {
-  affiliationOrganizationId?: number | null
-  employmentStatus?: string | null
-  affiliationIsCurrentlyEmployed?: boolean | null
-  instructorMemberProfile?: {
-    teacherAffiliated?: boolean
-    employmentStatus?: string | null
-    currentlyEmployed?: boolean | null
-  } | null
-  feePolicy?: InstructorApplicationFeePolicyRequest | null
-  businessIncomeEarnerStatus?: string | null
-}
-
 export type IndividualApplicationUpdatePayload = Omit<
   IndividualApplicationUpdateRequest,
   'textbookId' | 'teamName' | 'teamRole' | 'managerComment'
@@ -263,8 +250,8 @@ export async function fetchInstructorApplicationsRemote(
 
 export async function fetchInstructorApplicationDetailRemote(
   applicationId: string
-): Promise<InstructorApplicationDetailResponseEnriched> {
-  return unwrapApiBody<InstructorApplicationDetailResponseEnriched>(
+): Promise<InstructorApplicationDetailResponse> {
+  return unwrapApiBody<InstructorApplicationDetailResponse>(
     await customInstance({
       url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}`,
       method: 'GET',
@@ -888,10 +875,17 @@ export async function bulkVolunteerFinalResultsRemote(
   )
 }
 
+/** 담당자 A·B는 각 0~5. 마스터·해당 프로그램 PM만 A·B를 한 번에 보낼 수 있다. */
+export type InterviewAssignmentEvaluationPayload =
+  import('@/shared/api/generated/dashboard/schemas/interviewEvaluationRequest').InterviewEvaluationRequest & {
+    managerAScore?: number | null
+    managerBScore?: number | null
+  }
+
 /** POST /api/admin/interview-assignments/{assignmentId}/evaluations */
 export async function submitInterviewAssignmentEvaluationRemote(
   assignmentId: string | number,
-  payload: import('@/shared/api/generated/dashboard/schemas/interviewEvaluationRequest').InterviewEvaluationRequest
+  payload: InterviewAssignmentEvaluationPayload
 ): Promise<
   import('@/shared/api/generated/dashboard/schemas/interviewEvaluationResponse').InterviewEvaluationResponse
 > {

@@ -6,9 +6,15 @@ type SurveyTimeFieldProps = {
   paragraph: TimeParagraph
   value: string
   onValueChange: (next: string) => void
+  disabled?: boolean
 }
 
-export function SurveyTimeField({ paragraph: _paragraph, value, onValueChange }: SurveyTimeFieldProps) {
+export function SurveyTimeField({
+  paragraph: _paragraph,
+  value,
+  onValueChange,
+  disabled = false,
+}: SurveyTimeFieldProps) {
   return (
     <div className={styles.surveyFields}>
       <PFTextInput
@@ -17,6 +23,7 @@ export function SurveyTimeField({ paragraph: _paragraph, value, onValueChange }:
         placeholder="시간 선택"
         value={value}
         onValueChange={onValueChange}
+        disabled={disabled}
       />
     </div>
   )

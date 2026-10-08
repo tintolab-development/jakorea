@@ -91,8 +91,7 @@ export function ModalsExtendedSection() {
 
       <p className="ds-note">
         <strong>Not catalogued</strong> — 화면 상태와 API 의존성이 큰 도메인 모달은 전체 화면에서
-        확인합니다: <code>InquiryModal</code>, <code>ProfileEditModal</code>,{' '}
-        <code>TemplateFullpageModal</code>.
+        확인합니다: <code>ProfileEditModal</code>, <code>TemplateFullpageModal</code>.
       </p>
 
       <PermissionModal

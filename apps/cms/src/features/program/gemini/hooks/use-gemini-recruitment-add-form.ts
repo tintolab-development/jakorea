@@ -62,6 +62,7 @@ function snapshotToFormState(snapshot: GeminiRecruitmentAddFormSnapshot) {
     notesNotApplicable: snapshot.notesNotApplicable,
     notes: snapshot.notes,
     thumbnailFileName: snapshot.thumbnailFileName,
+    thumbnailFileObjectId: snapshot.thumbnailFileObjectId ?? null,
     programDescription: snapshot.programDescription,
     recruitmentGuide: snapshot.recruitmentGuide,
     applicationMethod: snapshot.applicationMethod,
@@ -140,6 +141,7 @@ export function useGeminiRecruitmentAddForm(
   const [notesNotApplicable, setNotesNotApplicable] = useState(false)
   const [notes, setNotes] = useState('')
   const [thumbnailFileName, setThumbnailFileName] = useState<string | null>(null)
+  const [thumbnailFileObjectId, setThumbnailFileObjectId] = useState<number | null>(null)
   const [programDescription, setProgramDescription] = useState('')
   const [recruitmentGuide, setRecruitmentGuide] = useState('')
   const [applicationMethod, setApplicationMethod] = useState('')
@@ -172,6 +174,7 @@ export function useGeminiRecruitmentAddForm(
     setNotesNotApplicable(next.notesNotApplicable)
     setNotes(next.notes)
     setThumbnailFileName(next.thumbnailFileName)
+    setThumbnailFileObjectId(next.thumbnailFileObjectId)
     setProgramDescription(next.programDescription)
     setRecruitmentGuide(next.recruitmentGuide)
     setApplicationMethod(next.applicationMethod)
@@ -256,6 +259,7 @@ export function useGeminiRecruitmentAddForm(
         notesNotApplicable,
         notes,
         thumbnailFileName,
+        ...(thumbnailFileObjectId != null ? { thumbnailFileObjectId } : {}),
         programDescription,
         recruitmentGuide,
         applicationMethod,
@@ -288,6 +292,7 @@ export function useGeminiRecruitmentAddForm(
     programDescription,
     recruitmentGuide,
     thumbnailFileName,
+    thumbnailFileObjectId,
     title,
     trainingRequestPeriod,
   ])
@@ -366,6 +371,8 @@ export function useGeminiRecruitmentAddForm(
     setNotes,
     thumbnailFileName,
     setThumbnailFileName,
+    thumbnailFileObjectId,
+    setThumbnailFileObjectId,
     programDescription,
     setProgramDescription,
     recruitmentGuide,

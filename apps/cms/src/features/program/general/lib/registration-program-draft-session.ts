@@ -14,6 +14,7 @@ import {
   hydrateDraftOwnedFormVersions,
   listDraftOwnedFormVersions,
 } from '@/features/program/general/lib/registration-draft-form-versions'
+import { getRegistrationStepTemplateSelections } from '@/features/program/shared/lib/step-template-selection'
 
 const draftIdByProgramType = new Map<string, number>()
 const lastPayloadByProgramType = new Map<string, RegistrationProgramDraftPayloadV1>()
@@ -203,6 +204,7 @@ function buildRegistrationProgramDraftPayloadForSession(args: {
     activeStep: args.activeStep,
     formVersions,
     programTitleKo: args.programTitleKo,
+    selectedOperationalTemplates: getRegistrationStepTemplateSelections(args.programType),
   })
 }
 

@@ -4,7 +4,8 @@
  * Task 2.4.1: file 타입 지원 추가
  */
 
-import { Form, Input, Select, Checkbox, Upload, Button } from 'antd'
+import { Form, Input, Select, Upload, Button } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { UploadOutlined } from '@ant-design/icons'
 import type { UploadFile } from 'antd/es/upload/interface'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
@@ -87,9 +88,9 @@ export function DynamicFormFields({
               />
             )}
             {field.type === 'checkbox' && (
-              <Checkbox checked={!!val} onChange={e => update(field.id, e.target.checked)}>
+              <CmsCheckbox checked={!!val} onChange={e => update(field.id, e.target.checked)}>
                 {field.placeholder || field.label}
-              </Checkbox>
+              </CmsCheckbox>
             )}
             {field.type === 'date' && (
               <CmsDateTextInput

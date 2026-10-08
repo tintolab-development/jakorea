@@ -7,6 +7,7 @@ import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
+import { formatInstructorFeeGradeLabel } from '@/shared/constants/instructor-fee-grade'
 import { mapSettlementFrontendItemTypeToLineKind } from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
 import { buildParticipatingInstructorEducationScheduleLabel } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
 
@@ -100,7 +101,7 @@ function buildLectureFeeCalculationValues(
   return {
     lectureFeeType: presentText(detail.lectureFeeStandardTitle),
     feeBasisLeft: presentText(detail.wageItemType),
-    feeBasisRight: presentText(detail.feeGrade),
+    feeBasisRight: presentText(formatInstructorFeeGradeLabel(detail.feeGrade)),
     businessIncomeLeft: presentText(detail.businessIncomeEarnerLabel),
     businessIncomeRight: '',
     sessionCount:

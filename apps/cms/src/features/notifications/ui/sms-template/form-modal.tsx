@@ -1,4 +1,4 @@
-import { CloseOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -277,7 +277,7 @@ export function FormModal({
                 onClick={onClose}
                 aria-label="닫기"
               >
-                <CloseOutlined />
+                <ModalCloseIcon />
               </button>
             </div>
           </header>
@@ -445,7 +445,6 @@ export function FormModal({
                                 className="sms-template-form-modal__file-field"
                                 multiple
                                 accept=".jpg,.jpeg"
-                                buttonLabel="파일 추가"
                                 fileNames={form.attachmentsEnabled ? form.attachmentFileNames : []}
                                 guideLines={[...SMS_MMS_ATTACHMENT_GUIDE_LINES]}
                                 onFilesChange={handleAttachmentAdd}

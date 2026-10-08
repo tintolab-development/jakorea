@@ -1,4 +1,5 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
@@ -116,6 +117,10 @@ export function readTrainedTeachersRegistrationOverlayProgramTitleKo(): string {
 
 const ECONOMY_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
   'economyRegistration.basicInfo.sponsorId' as const
+export const ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY =
+  'economyRegistration.basicInfo.repKo' as const
+/** 1사1교 기본정보 국문 대표명 — 입력 전 overlay에 키가 없어도 화면에 보이는 기본값 */
+export const ECONOMY_REGISTRATION_PROGRAM_TITLE_KO_DEFAULT: string = '1사1교 경제금융교육'
 const ECONOMY_REGISTRATION_ALL_VALUE = '__all__'
 
 export function readEconomyRegistrationOverlaySponsorId(): string {
@@ -153,11 +158,25 @@ export function readRegistrationOverlaySponsorContactIds(
   return readGeneralRegistrationOverlaySponsorContactIds()
 }
 
+export function readEconomyRegistrationOverlayProgramTitleKo(): string {
+  const stored = overlayState[ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]
+  if (typeof stored === 'string' && stored.trim()) return stored.trim()
+  if (typeof stored === 'number' && Number.isFinite(stored)) return String(stored)
+  const visible = readOverlayKeyValue(
+    ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+    ECONOMY_REGISTRATION_PROGRAM_TITLE_KO_DEFAULT
+  )
+  return typeof visible === 'string' && visible.trim() ? visible.trim() : ''
+}
+
 export function readRegistrationOverlayProgramTitleKo(
   variant: ProgramRegistrationFormVariant = 'general'
 ): string {
   if (variant === 'trainedTeachers') {
     return readTrainedTeachersRegistrationOverlayProgramTitleKo()
+  }
+  if (variant === 'economy') {
+    return readEconomyRegistrationOverlayProgramTitleKo()
   }
   return readGeneralRegistrationOverlayProgramTitleKo()
 }
@@ -167,6 +186,10 @@ export function patchRegistrationOverlayProgramTitleKo(
   variant: ProgramRegistrationFormVariant,
   title: string
 ): void {
+  if (variant === 'economy') {
+    // 1사1교 제목 SSOT는 `repKo`. 미사용 programTitleKo state로 덮지 않는다.
+    return
+  }
   if (variant === 'trainedTeachers') {
     patchProgramRegistrationOverlay({
       [TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]: title,
@@ -251,8 +274,7 @@ export function replaceProgramRegistrationOverlayPrefix(
 }
 
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
-  const raw = overlayState[key] as T | undefined
-  return raw === undefined ? defaultValue : raw
+  return readOperationalOverlayKvValue('program-registration', overlayState, key, defaultValue)
 }
 
 export function patchProgramRegistrationOverlay(partial: Record<string, unknown>): void {

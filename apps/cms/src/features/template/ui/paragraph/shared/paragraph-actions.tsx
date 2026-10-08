@@ -1,7 +1,6 @@
 import type { MouseEvent } from 'react'
-import { CopyOutlined, DeleteOutlined } from '@ant-design/icons'
-import { FormEditorPlusIcon } from '@/features/template/ui/shared/form-editor-plus-icon'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { ButtonAddIcon, ButtonCopyIcon, ButtonDeleteIcon } from '@/shared/ui/icons/ButtonIcons'
 
 /** 템플릿 단락 카드 푸터 — large+icon 기본 180px 대신 시안 140×44 */
 const PARAGRAPH_CARD_ACTION_BUTTON_CLASS = 'cms-button--action'
@@ -66,7 +65,7 @@ export function FormParagraphCardActions({
         type="button"
         size="large"
         className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
-        icon={<FormEditorPlusIcon />}
+        icon={<ButtonAddIcon />}
         disabled={addOff}
         onClick={e => {
           stopCardClick(e)
@@ -80,7 +79,7 @@ export function FormParagraphCardActions({
         type="button"
         size="large"
         className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
-        icon={<CopyOutlined />}
+        icon={<ButtonCopyIcon />}
         disabled={dupOff}
         onClick={e => {
           stopCardClick(e)
@@ -94,7 +93,7 @@ export function FormParagraphCardActions({
         type="button"
         size="large"
         className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
-        icon={<DeleteOutlined />}
+        icon={<ButtonDeleteIcon />}
         disabled={delOff}
         onClick={e => {
           stopCardClick(e)
@@ -126,7 +125,7 @@ export function FormParagraphCardActionsMinimal({
         type="button"
         size="large"
         className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
-        icon={<FormEditorPlusIcon />}
+        icon={<ButtonAddIcon />}
         disabled={addOff}
         onClick={e => {
           stopCardClick(e)
@@ -140,7 +139,7 @@ export function FormParagraphCardActionsMinimal({
         type="button"
         size="large"
         className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
-        icon={<CopyOutlined />}
+        icon={<ButtonCopyIcon />}
         disabled={dupOff}
         onClick={e => {
           stopCardClick(e)
@@ -154,7 +153,7 @@ export function FormParagraphCardActionsMinimal({
         type="button"
         size="large"
         className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
-        icon={<DeleteOutlined />}
+        icon={<ButtonDeleteIcon />}
         disabled={delOff}
         onClick={e => {
           stopCardClick(e)

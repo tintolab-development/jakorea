@@ -4,12 +4,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Card, Space, Input } from 'antd'
-import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton } from '@/shared/ui'
 import type { CertificateTextField } from '@/types/template'
 import { generateCertificatePdf } from '@/shared/utils/certificate-pdf-generator'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { handleError, unknownErrorText } from '@/shared/utils/error-handler'
+
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 export interface CertificatePreviewProps {
   backgroundImageUrl?: string
@@ -219,7 +220,7 @@ export function CertificatePreview({
         {pdfError ? <Alert type="error" description={pdfError} showIcon /> : null}
 
         <CmsButton
-          icon={<DownloadOutlined />}
+          icon={<ButtonDownloadIcon />}
           onClick={handleDownload}
           loading={generating}
           disabled={disabled || !backgroundImageUrl}

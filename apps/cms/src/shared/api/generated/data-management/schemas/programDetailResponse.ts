@@ -144,11 +144,8 @@ export interface ProgramDetailResponse {
   educationScheduleMode?: ProgramDetailResponseEducationScheduleMode;
   /** 교육 진행 예정일 표시 문자열(공통정보 그대로, 순서 유지). 없으면 []. 신청폼 희망 교육 일정 선택지 line:N의 N은 이 배열의 0-based 인덱스. */
   educationScheduleLines?: string[];
-  /**
-     * 기간 지정(period)일 때 {start,end}. date 모드이거나 값이 없으면 null.
-     * @nullable
-     */
-  educationScheduleRange?: ScheduleRange;
+  /** 기간 지정(period)일 때 {start,end}. date 모드이거나 값이 없으면 null. */
+  educationScheduleRange?: ScheduleRange | null;
   /**
      * recruitmentId 조회일 때 그 모집의 시작. 쿼리가 없으면 null.
      * @nullable

@@ -31,6 +31,8 @@ export type PortalApplicationFormResponse = {
   draftApplicationId?: number | null
   draftFormResponseId?: number | null
   draftAnswers?: Record<string, unknown> | null
+  /** 임시저장에 연결된 증빙. 없으면 [] */
+  draftAttachments?: unknown
 }
 
 export type PortalPreferredScheduleSessionTime = {
@@ -64,6 +66,12 @@ export type PortalSaveApplicationRequest = {
   requestedMaleCount?: number
   requestedFemaleCount?: number
   preferredScheduleBlocks?: PortalPreferredScheduleBlock[]
+  /**
+   * 문항 키 → 본인 파일 id.
+   * 일반 봉사자 이전 JA 프로그램, UJAT 이전 활동 수료증만 받는다. 생략·null·{} 는 첨부 없음.
+   * 임시저장과 제출은 각각 새 응답이라, 제출 때도 목록을 다시 보낸다.
+   */
+  fileObjectIdsByQuestion?: Record<string, number[]>
 }
 
 export type PortalApplicationSaveResponse = {

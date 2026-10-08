@@ -14,6 +14,10 @@ export type EducationSchoolNameFieldProps = {
   onChange: (schoolName: string) => void
   disabled?: boolean
   className?: string
+  /** 검색 모달 제목. 기본은 강사 신청과 같은 「소속/학교 검색」 */
+  modalTitle?: string
+  placeholder?: string
+  ariaLabel?: string
 }
 
 function resolveLockedSchoolLevel(detailKey: EducationDetailKey): string | undefined {
@@ -30,6 +34,9 @@ export function EducationSchoolNameField({
   onChange,
   disabled = false,
   className,
+  modalTitle = '소속/학교 검색',
+  placeholder = PH.educationSchoolName,
+  ariaLabel = '학교명 검색',
 }: EducationSchoolNameFieldProps) {
   const [open, setOpen] = useState(false)
 
@@ -48,9 +55,9 @@ export function EducationSchoolNameField({
         readOnly
         disabled={disabled}
         className={[styles.trigger, className].filter(Boolean).join(' ')}
-        placeholder={PH.educationSchoolName}
+        placeholder={placeholder}
         value={value}
-        aria-label="학교명 검색"
+        aria-label={ariaLabel}
         onClick={openModal}
         onKeyDown={event => {
           if (disabled) return
@@ -67,7 +74,7 @@ export function EducationSchoolNameField({
 
       <SchoolSearchModal
         open={open}
-        title="소속/학교 검색"
+        title={modalTitle}
         schoolKindFilter={resolveLockedSchoolLevel(detailKey)}
         onClose={() => setOpen(false)}
         onSelect={school => {

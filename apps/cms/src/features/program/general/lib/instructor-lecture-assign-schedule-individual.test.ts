@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
+  buildIndividualLectureAssignSlotsFromScheduleSlots,
   formatIndividualLectureAssignSlotLabel,
   formatIndividualLectureAssignTagLabel,
   getIndividualLectureAssignSlots,
@@ -40,9 +41,7 @@ function createIndividualProgram(): Program {
   }
 }
 
-function createInstructor(
-  overrides: Partial<ApplicantInstructorRow> = {}
-): ApplicantInstructorRow {
+function createInstructor(overrides: Partial<ApplicantInstructorRow> = {}): ApplicantInstructorRow {
   return {
     id: 'instructor-1',
     no: 1,
@@ -102,6 +101,57 @@ describe('individual instructor lecture assign schedule', () => {
 
     expect(resolveIndividualProgramEducationScheduleLines(program)).toEqual([])
     expect(parseIndividualInstructorLectureAssignSchedule(program)).toHaveLength(0)
+  })
+
+  it('상세 응답 일정은 assignable인 항목만 scheduleId 키 슬롯으로 만든다', () => {
+    const slots = buildIndividualLectureAssignSlotsFromScheduleSlots(
+      [
+        {
+          scheduleId: 186626,
+          startAt: '2026-04-20T09:30:00',
+          endAt: '2026-04-20T12:20:00',
+          assignable: true,
+        },
+        {
+          scheduleId: 186627,
+          startAt: '2026-04-27T09:30:00',
+          endAt: '2026-04-27T12:20:00',
+          assignable: false,
+        },
+        {
+          scheduleId: 186628,
+          startAt: '2026-04-21T09:00:00',
+          endAt: '2026-04-23T18:00:00',
+          assignable: null,
+        },
+        {
+          scheduleId: 186626,
+          startAt: '2026-04-20T09:30:00',
+          endAt: '2026-04-20T12:20:00',
+          assignable: true,
+        },
+      ],
+      { schoolName: '개인 프로그램', allInstructors: [] }
+    )
+
+    expect(slots.map(slot => slot.key)).toEqual(['186626'])
+    expect(slots[0]?.label).toBe('26년 4월 20일(월) 09:30 ~ 12:20')
+  })
+
+  it('여러 날에 걸친 일정은 종료 날짜까지 라벨에 표시한다', () => {
+    const [slot] = buildIndividualLectureAssignSlotsFromScheduleSlots(
+      [
+        {
+          scheduleId: 1,
+          startAt: '2026-04-20T09:00:00',
+          endAt: '2026-04-22T18:00:00',
+          assignable: true,
+        },
+      ],
+      { schoolName: '개인 프로그램', allInstructors: [] }
+    )
+
+    expect(slot?.label).toBe('26년 4월 20일(월) 09:00 ~ 26년 4월 22일(수) 18:00')
   })
 
   it('개인 프로그램 슬롯·태그 라벨을 시안 형식으로 만든다', () => {

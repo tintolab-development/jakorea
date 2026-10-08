@@ -2,7 +2,11 @@ import { useMemo } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
-import { VOLUNTEER_TARGET_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  normalizeVolunteerTargetList,
+  parseVolunteerTargetsSelectValue,
+  VOLUNTEER_TARGET_OPTIONS,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
@@ -271,8 +275,8 @@ export function RecruitFormVolunteerInfoParagraph() {
                 withAllOption={false}
                 placeholder="모집 대상을 선택하세요"
                 options={[...VOLUNTEER_TARGET_OPTIONS]}
-                value={volunteerTargets}
-                onChange={v => setVolunteerTargets(Array.isArray(v) ? v.map(String) : [])}
+                value={normalizeVolunteerTargetList(volunteerTargets ?? [])}
+                onChange={v => setVolunteerTargets(parseVolunteerTargetsSelectValue(v) ?? [])}
               />
             }
             view="-"

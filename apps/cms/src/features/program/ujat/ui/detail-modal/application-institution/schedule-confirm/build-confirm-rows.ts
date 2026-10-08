@@ -1,8 +1,4 @@
-import {
-  getUjatInstitutionApplicationMockRows,
-  getUjatInstitutionScheduleConfirmStatus,
-} from '@/features/program/ujat/model/ujat-institution-application'
-import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '../education-schedule'
+import { formatScheduleColumnTitle } from '../education-schedule'
 import { parseGradeClassSectionValue } from '../list/grade-class-sections'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { getUjatScheduleAssignRegionState } from '../schedule-assign/store'
@@ -34,7 +30,8 @@ function buildFromScheduleAssignStore(
   let totalEducationClassCount = 0
   let hasStoreAssignment = false
 
-  for (const { isoDate, title } of UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES) {
+  for (const isoDate of Object.keys(state.days).sort()) {
+    const title = formatScheduleColumnTitle(isoDate)
     const day = state.days[isoDate]
     if (!day) continue
     let dayHasInstitution = false
@@ -69,7 +66,7 @@ function buildFromScheduleAssignStore(
 
 export function buildUjatScheduleConfirmRows(
   regionKey: UjatInstitutionApplicationRegionKey,
-  sourceRows: readonly import('../list/types').UjatInstitutionApplicationRow[] = getUjatInstitutionApplicationMockRows()
+  sourceRows: readonly import('../list/types').UjatInstitutionApplicationRow[] = []
 ): UjatScheduleConfirmRow[] {
   const source = sourceRows.filter(
     row => row.regionKey === regionKey && row.tempAssignmentStatus === 'temp_assigned'
@@ -83,7 +80,8 @@ export function buildUjatScheduleConfirmRows(
       regionKey: row.regionKey,
       no: source.length - index,
       institutionName: row.institutionName,
-      scheduleConfirmStatus: getUjatInstitutionScheduleConfirmStatus(row.id),
+      scheduleConfirmStatus: row.scheduleConfirmStatus ?? null,
+      assignedInstructorCount: row.assignedInstructorCount ?? null,
       confirmedScheduleDisplay: snapshot.confirmedScheduleDisplay || '-',
       confirmedScheduleIsoDates: snapshot.confirmedScheduleIsoDates,
       assignedGradeCounts: snapshot.assignedGradeCounts,

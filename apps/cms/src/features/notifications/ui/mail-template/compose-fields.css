@@ -122,9 +122,5 @@
 }
 
 .mail-template-compose__file-field .file-select-field__actions {
-  display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 12px;
 }

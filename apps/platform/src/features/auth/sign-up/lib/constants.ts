@@ -38,14 +38,14 @@ export type SchoolGrade = (typeof schoolGradeOptions)[number]
 export const memberTypeOptions: MemberTypeOption[] = [
   {
     type: 'general',
-    title: '일반회원',
+    title: '일반 회원',
     primaryDescription: 'JA Korea 프로그램과\n소식을 확인하고 참여할 수\n있어요.',
     secondaryDescription: '학생, 청소년, 일반 참여자라면\n일반회원으로 가입해 주세요.',
     imageUrl: illustPeopleUrl,
   },
   {
     type: 'teacher',
-    title: '교사회원',
+    title: '교사 회원',
     primaryDescription: '학교나 기관에서\n교육 활동을 함께하는\n선생님을 위한 가입이에요.',
     secondaryDescription: '만 14세 이상만 가입할 수 있어요.\n가입 후 바로 이용이 가능해요.',
     imageUrl: illustHouseUrl,
@@ -70,7 +70,7 @@ export const teacherAgreementItems: AgreementItem[] = [
   {
     key: 'teacherInfo',
     required: true,
-    label: '교사회원 가입 및 학교/기관 정보 수집·이용 동의',
+    label: '교사 회원 가입 및 학교/기관 정보 수집·이용 동의',
   },
   { key: 'marketing', required: false, label: '마케팅 정보 수신 동의' },
   {

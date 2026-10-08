@@ -29,12 +29,16 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   RECRUITMENT_CLOSED: '모집이 마감되었습니다.',
   /** PUT draft / POST applications — 모집 종료 (options 코드와 다름) */
   RECRUITMENT_ENDED: '모집이 마감되었습니다.',
-  APPLICATION_FORM_NOT_CONFIGURED: '신청 양식이 아직 준비되지 않았습니다.',
+  /** CMS 신청 양식 미설정 — URL/파싱 오류가 아님 */
+  APPLICATION_FORM_NOT_CONFIGURED:
+    '신청 양식이 아직 준비되지 않았습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
   PROGRAM_NOT_APPLICABLE: '현재 신청할 수 없는 프로그램입니다.',
   ORGANIZATION_MEMBERSHIP_REQUIRED: '학교·기관 회원만 신청할 수 있습니다.',
   APPROVED_INSTRUCTOR_REQUIRED: '승인된 강사만 신청할 수 있습니다.',
   MEMBER_NOT_ACTIVE: '활성 회원만 신청할 수 있습니다.',
   APPLICATION_ALREADY_SUBMITTED: '이미 제출한 신청이 있습니다.',
+  /** application-options.blockedReason — APPLICATION_ALREADY_SUBMITTED와 동일 안내 */
+  ALREADY_APPLIED: '이미 제출한 신청이 있습니다.',
   PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE:
     '희망 교육일이 프로그램 교육 가능 기간을 벗어났습니다.',
   PREFERRED_SCHEDULE_EXCEEDS_MAX_SESSIONS_PER_DAY:
@@ -43,6 +47,12 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   OPERATION_NOT_ALLOWED: '제출할 수 없는 답변이 포함되어 있습니다.',
   RECRUITMENT_FORM_BINDING_MISMATCH: '선택한 모집의 신청서가 아닙니다. 모집을 다시 선택해 주세요.',
   RECRUITMENT_NOT_FOUND: '선택한 모집을 찾을 수 없습니다. 모집을 다시 선택해 주세요.',
+  /**
+   * 봉사자 신청 — volunteerTargets 코드와 회원 구분(재학·학교급)이 겹치지 않음.
+   * application-options · 폼 조회 · 임시저장 · 제출 모두 HTTP 403.
+   */
+  VOLUNTEER_RECRUITMENT_TARGET_MISMATCH:
+    '모집 대상과 회원 구분이 일치하지 않아 신청할 수 없습니다.',
 }
 
 export function messageForApplicationBlockedReason(

@@ -22,6 +22,7 @@ export type EducationSurveyFormBodyProps = {
   onSidecarChange: (next: SurveySidecarState) => void
   /** 설문자 정보 fieldKey → 표시값 */
   userInfoValues?: Record<string, string>
+  readOnly?: boolean
 }
 
 function isBodyOnlyParagraph(paragraph: WritingFormParagraph): boolean {
@@ -42,6 +43,7 @@ export function EducationSurveyFormBody({
   sidecar,
   onSidecarChange,
   userInfoValues,
+  readOnly = false,
 }: EducationSurveyFormBodyProps) {
   return (
     <div className={styles.form}>
@@ -50,29 +52,8 @@ export function EducationSurveyFormBody({
           return []
         }
 
-        if (isUserInfoParagraph(paragraph)) {
-          const entries = getUserInfoSelectedEntries(paragraph)
-          return entries.map(entry => {
-            const title = resolveEducationSurveySectionTitle(draft, paragraph, entry)
-            return (
-              <PFFormSection
-                key={`${paragraph.id}::${entry.key}`}
-                id={`${paragraph.id}::${entry.key}`}
-                title={title}
-                required={resolveEducationSurveySectionRequired(paragraph)}
-              >
-                <PlatformSurveyParagraphBody
-                  paragraph={paragraph}
-                  programTitle={programTitle}
-                  onUpdateParagraph={onUpdateParagraph}
-                  sidecar={sidecar}
-                  onSidecarChange={onSidecarChange}
-                  userInfoWriteField={entry}
-                  userInfoDisplayValue={userInfoValues?.[entry.key]}
-                />
-              </PFFormSection>
-            )
-          })
+        if (isUserInfoParagraph(paragraph) && getUserInfoSelectedEntries(paragraph).length === 0) {
+          return []
         }
 
         if (isBodyOnlyParagraph(paragraph)) {
@@ -92,14 +73,18 @@ export function EducationSurveyFormBody({
         }
 
         const title = resolveEducationSurveySectionTitle(draft, paragraph)
-        if (!title) return []
+        if (!title && paragraph.kind === 'description') return []
 
         return [
           <PFFormSection
             key={paragraph.id}
             id={paragraph.id}
-            title={title}
-            description={paragraph.paragraphDescription?.trim() || undefined}
+            title={title || '문항'}
+            description={
+              isUserInfoParagraph(paragraph)
+                ? undefined
+                : paragraph.paragraphDescription?.trim() || undefined
+            }
             required={resolveEducationSurveySectionRequired(paragraph)}
           >
             <PlatformSurveyParagraphBody
@@ -108,6 +93,8 @@ export function EducationSurveyFormBody({
               onUpdateParagraph={onUpdateParagraph}
               sidecar={sidecar}
               onSidecarChange={onSidecarChange}
+              userInfoValues={userInfoValues}
+              readOnly={readOnly}
             />
           </PFFormSection>,
         ]

@@ -76,9 +76,7 @@ export function ApplicantBasicInfo({
   const contactDisplay = maskSensitive ? applicant.contact : applicant.contactRaw
   const emailDisplay = maskSensitive ? applicant.email : applicant.emailRaw
   const id1365Display = maskSensitive ? maskId1365(applicant.id1365) : applicant.id1365
-  const applicationTypeDisplay = formatUjatVolunteerApplicationType(
-    applicant.hasEducationExperience ? 'ujat-graduate' : 'new'
-  )
+  const applicationTypeDisplay = formatUjatVolunteerApplicationType(applicant.applicationType)
   const genderBirthDisplay = withProgramDetailTdDivider([
     applicant.gender,
     formatUjatVolunteerBirthDateAndAge(applicant.birthDate, applicant.age),
@@ -156,7 +154,13 @@ export function ApplicantBasicInfo({
           <DetailInfoForm.Field
             label="교육 진행 경험 여부"
             readOnlyDisplay
-            view={applicant.hasEducationExperience ? '있음' : '없음'}
+            view={
+              applicant.hasEducationExperience == null
+                ? '-'
+                : applicant.hasEducationExperience
+                  ? '있음'
+                  : '없음'
+            }
           />
           <DetailInfoForm.Field
             label="희망 교육 활동 지역"

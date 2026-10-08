@@ -72,9 +72,10 @@ export function ProgramDetailDateMethodReadRow({
   dateIso?: string | Date | null
   method?: string | null
 }) {
-  if (!dateIso) return '-'
+  const methodText = method?.trim()
+  if (!dateIso) return methodText || '-'
   const dateLabel = formatDateOnly(dateIso)
-  const methodLabel = method?.trim() ? method.trim() : '-'
+  const methodLabel = methodText || '-'
   return (
     <div className="program-detail-info-tab__contact-inline">
       <span>{dateLabel}</span>

@@ -1,0 +1,57 @@
+import { useQuery } from '@tanstack/react-query'
+import { platformQueryKeys } from '@/shared/api/query-keys'
+import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
+import { useMypageMember } from '../../hooks/use-mypage-member'
+import { fetchPortalConsents } from '../api/consents'
+import {
+  DOCUMENT_CONSENT_ITEMS,
+  getBasicConsentItems,
+  type SettingsConsentItem,
+} from '../lib/consent-catalog'
+import { isMinorSettingsMember, isTeacherSettingsProfile } from '../lib/consent-visibility'
+import { buildConsentItemsFromSummaries } from '../lib/map-consents'
+
+const CONSENTS_STALE_MS = 30_000
+
+export function useSettingsConsents(): {
+  isRemoteSession: boolean
+  isLoading: boolean
+  isError: boolean
+  basicItems: SettingsConsentItem[]
+  documentItems: SettingsConsentItem[]
+} {
+  const member = useMypageMember()
+  const query = useQuery({
+    queryKey: platformQueryKeys.mypage.consents(),
+    queryFn: ({ signal }) => fetchPortalConsents(signal),
+    enabled: member.isRemoteSession,
+    staleTime: CONSENTS_STALE_MS,
+    refetchOnWindowFocus: false,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
+
+  if (!member.isRemoteSession) {
+    return {
+      isRemoteSession: false,
+      isLoading: false,
+      isError: false,
+      basicItems: getBasicConsentItems({
+        isTeacher: isTeacherSettingsProfile(member.profile),
+        isMinor: isMinorSettingsMember({
+          under14: member.under14,
+          ageGroup: member.ageGroup,
+          birthDate: member.birthDate,
+        }),
+      }),
+      documentItems: DOCUMENT_CONSENT_ITEMS,
+    }
+  }
+
+  return {
+    isRemoteSession: true,
+    isLoading: query.isPending,
+    isError: query.isError && !query.data,
+    ...buildConsentItemsFromSummaries(query.data ?? []),
+  }
+}

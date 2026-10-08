@@ -35,13 +35,7 @@ function listParticipant(program: Program, values: ProgramDetailEditFormValues):
   const keys: string[] = []
   const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
   const isIndividual = isGeneralIndividualProgram(program)
-  const isCompanySchool =
-    isCompanySchoolProgram(program) ||
-    program.id.startsWith('economy-prog-') ||
-    program.id.startsWith('company-school-prog-') ||
-    program.id.startsWith('company-school-local-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title?.includes('1사1교') === true
+  const isCompanySchool = isCompanySchoolProgram(program)
   const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
   const isGeneralOrg = !isIndividual && !isCompanySchool && !isTrainedTeachers
   const prefix = isIndividual ? 'recruit.individual' : 'recruit.institution'

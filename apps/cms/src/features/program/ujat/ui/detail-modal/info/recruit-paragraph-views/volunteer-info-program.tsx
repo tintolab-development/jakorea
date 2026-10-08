@@ -4,8 +4,10 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   formatDateRange,
+  formatVolunteerTargetsLabel,
   getVolunteerRecruitmentLifecycle,
   INTERVIEW_METHOD_OPTIONS,
+  resolveProgramVolunteerTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   ANNOUNCEMENT_PUBLISHED_OPTIONS,
@@ -17,16 +19,17 @@ import {
   resolveUjatRecruitAnnouncementTitle,
   ujatRecruitDisplayKindFromVolunteerHalf,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
-import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import {
   getUjatVolunteerNoticeExposureReadLabel,
+  NOTICE_EXPOSURE_ERROR_STYLE,
   UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS,
 } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import {
   normalizeRecruitmentTargetSelectValues,
-  recruitmentTargetOptionValuesToLabels,
+  recruitmentTargetOptionValuesToStored,
   UJAT_VOLUNTEER_RECRUIT_DEFAULT_TARGET_LABELS,
+  UJAT_VOLUNTEER_RECRUIT_TARGET_OPTIONS,
 } from '../recruit-lib/recruitment-target-values'
 import { UjatRecruitSectionDescriptionHeader } from '../ujat-recruit-section-description-header'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -150,11 +153,17 @@ export function UjatRecruitVolunteerInfoProgramView({
     ujatRecruitDisplayKindFromVolunteerHalf(volunteerHalf)
   )
   const watchedTargets = isEdit && form ? form.watch('volunteerTargets') : undefined
+  const savedTargets = resolveProgramVolunteerTargets(program)
   const volunteerTarget =
-    (watchedTargets?.length ? watchedTargets.join(', ') : undefined) ??
-    (program.volunteerTargets?.length ? program.volunteerTargets.join(', ') : undefined) ??
-    program.volunteerTarget ??
-    (isTemplateAuthoring ? UJAT_VOLUNTEER_RECRUIT_DEFAULT_TARGET_LABELS.join(', ') : '-')
+    isEdit && watchedTargets
+      ? watchedTargets.length
+        ? formatVolunteerTargetsLabel(watchedTargets)
+        : '-'
+      : savedTargets.length
+        ? formatVolunteerTargetsLabel(savedTargets)
+        : isTemplateAuthoring
+          ? UJAT_VOLUNTEER_RECRUIT_DEFAULT_TARGET_LABELS.join(', ')
+          : '-'
   const volunteerTargetDetail =
     program.volunteerTargetDetail?.trim() ||
     program.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail?.trim() ||
@@ -206,17 +215,24 @@ export function UjatRecruitVolunteerInfoProgramView({
       <Controller
         name="volunteerRecruitmentNoticeExposure"
         control={form.control}
-        render={({ field }) => (
-          <CmsRadioGroup
-            value={field.value ?? 'start-day'}
-            onChange={e => field.onChange(String(e.target.value))}
-          >
-            {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
-              <CmsRadio key={o.value} value={o.value}>
-                {o.label}
-              </CmsRadio>
-            ))}
-          </CmsRadioGroup>
+        render={({ field, fieldState }) => (
+          <>
+            <CmsRadioGroup
+              value={field.value ?? undefined}
+              onChange={e => field.onChange(String(e.target.value))}
+            >
+              {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
+                <CmsRadio key={o.value} value={o.value}>
+                  {o.label}
+                </CmsRadio>
+              ))}
+            </CmsRadioGroup>
+            {fieldState.error?.message ? (
+              <span role="alert" style={NOTICE_EXPOSURE_ERROR_STYLE}>
+                {fieldState.error.message}
+              </span>
+            ) : null}
+          </>
         )}
       />
     ) : undefined
@@ -359,11 +375,9 @@ export function UjatRecruitVolunteerInfoProgramView({
                       inputSize="medium"
                       width="100%"
                       value={normalizeRecruitmentTargetSelectValues(field.value)}
-                      onChange={next =>
-                        field.onChange(recruitmentTargetOptionValuesToLabels(next))
-                      }
-                      placeholder="모집 대상"
-                      options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                      onChange={next => field.onChange(recruitmentTargetOptionValuesToStored(next))}
+                      placeholder="모집 대상을 선택하세요"
+                      options={[...UJAT_VOLUNTEER_RECRUIT_TARGET_OPTIONS]}
                     />
                   )}
                 />

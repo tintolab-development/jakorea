@@ -13,6 +13,7 @@ import type {
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import './template-create-modal.css'
@@ -51,6 +52,10 @@ function resolveSelection(
 }
 
 function resolveErrorMessage(error: unknown, fallback: string): string {
+  if (error != null && typeof error === 'object' && 'response' in error) {
+    const data = (error as { response?: { data?: unknown } }).response?.data
+    return extractApiErrorMessage(data, { fallback })
+  }
   if (error instanceof Error && error.message.trim() !== '') {
     return error.message
   }
@@ -66,13 +71,13 @@ export function TemplateCreateModal({
   const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
   const { sections } = useWritingFormSections()
-  const [kind, setKind] = useState<TemplateCreateKind>('survey')
+  const [kind, setKind] = useState<TemplateCreateKind>('application')
   const [selectValue, setSelectValue] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!open) return
-    setKind('survey')
+    setKind('application')
     setSelectValue(null)
     setSubmitting(false)
   }, [open])
@@ -138,6 +143,8 @@ export function TemplateCreateModal({
       const { newTemplateId } = await duplicateWritingTemplate({
         sourceTemplateId: resolved.templateId,
         category: resolved.category,
+        sourceApiTemplateId: sourceRow?.apiTemplateId,
+        sourceVersionId: sourceRow?.latestVersionId,
         templateName,
       })
       await invalidateWritingSections()
@@ -213,10 +220,8 @@ export function TemplateCreateModal({
           value={kind}
           onChange={e => handleKindChange(e.target.value as TemplateCreateKind)}
         >
-          {/* TODO: 모집·신청 양식 신규 등록 임시 비노출
           <CmsRadio value="application">모집 양식</CmsRadio>
           <CmsRadio value="application_form">신청 양식</CmsRadio>
-          */}
           <CmsRadio value="survey">설문 양식</CmsRadio>
           <CmsRadio value="agreement">동의 양식</CmsRadio>
         </CmsRadioGroup>
@@ -225,6 +230,7 @@ export function TemplateCreateModal({
       <div className="template-create-modal__select-wrapper">
         <CmsSelect
           width={'100%'}
+          withAllOption={false}
           placeholder={selectPlaceholder}
           options={selectOptions}
           value={selectValue ?? undefined}

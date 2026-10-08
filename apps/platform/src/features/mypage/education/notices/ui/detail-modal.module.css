@@ -275,6 +275,53 @@
   overflow-wrap: anywhere;
 }
 
+.richContent {
+  width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.richContent :global(img) {
+  max-width: 100%;
+  height: auto;
+}
+
+.richContentLoading {
+  display: none;
+}
+
+/* 임시 스피너 — 디자인 확정 시 교체 */
+.contentLoading {
+  display: flex;
+  min-height: 200px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-neutral-cool-200);
+  border-top-color: var(--color-primary-500);
+  border-radius: 50%;
+  animation: content-spin 0.8s linear infinite;
+}
+
+@keyframes content-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2s;
+  }
+}
+
 .footer {
   position: relative;
   display: flex;
@@ -342,8 +389,9 @@
 }
 
 .commentInput:focus {
-  outline: 2px solid var(--color-border-focus);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: inset 0 0 0 1px var(--color-border-focus);
 }
 
 .sendButton {
@@ -379,6 +427,21 @@
   display: block;
   width: 40px;
   height: 40px;
+}
+
+.emojiPreview {
+  display: flex;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.emojiPreview svg {
+  display: block;
+  width: 30px;
+  height: 30px;
 }
 
 @media (--bp-pc-up) {

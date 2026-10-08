@@ -92,8 +92,43 @@ describe('buildUjatInstitutionApplicationsListQuery', () => {
         tempAssignmentStatus: 'temp_assigned',
       })
     ).toEqual({
-      keyword: '서울초',
+      organizationName: '서울초',
       status: 'TEMP_ASSIGNED',
+    })
+  })
+
+  it('sends teacher, class count and education region code', () => {
+    expect(
+      buildUjatInstitutionApplicationsListQuery(
+        {
+          ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
+          teacherName: ' 김교사 ',
+          totalClassCount: '3',
+        },
+        null,
+        { educationRegionCode: 'seoul' }
+      )
+    ).toEqual({
+      teacherName: '김교사',
+      requestedClassCount: 3,
+      educationRegionCode: 'seoul',
+    })
+  })
+})
+
+describe('volunteer server filters', () => {
+  it('maps grade / region / education experience on doc1', () => {
+    expect(
+      buildUjatVolunteerDoc1ListQuery({
+        ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
+        grade: '휴학생',
+        preferredRegion: '서울',
+        educationExperience: 'no',
+      })
+    ).toEqual({
+      grade: '휴학',
+      preferredRegion: '서울',
+      hasEducationExperience: false,
     })
   })
 })

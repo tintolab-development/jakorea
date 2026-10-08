@@ -54,7 +54,9 @@ export function UjatScheduleConfirmConfirmedDetailView({
                 label="일정 확인 현황"
                 fullRow
                 view={
-                  <UjatInstitutionScheduleConfirmStatusBadge status={detail.scheduleConfirmStatus} />
+                  detail.scheduleConfirmStatus ? (
+                    <UjatInstitutionScheduleConfirmStatusBadge status={detail.scheduleConfirmStatus} />
+                  ) : null
                 }
               />
             </DetailInfoForm.Row>

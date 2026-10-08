@@ -88,6 +88,8 @@ export function parsePortalProfileResponse(payload: unknown): PortalProfileRespo
     memberType: optionalString(root.memberType),
     teacher: optionalBoolean(root.teacher),
     instructor: optionalBoolean(root.instructor),
+    under14: optionalBoolean(root.under14),
+    ageGroup: optionalString(root.ageGroup),
     postalCode: optionalString(root.postalCode),
     address: optionalString(root.address),
     addressDetail: optionalString(root.addressDetail),

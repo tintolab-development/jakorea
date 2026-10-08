@@ -125,7 +125,12 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
     {
       key: 'educationExperience',
       label: '교육 진행 경험 여부',
-      children: applicant.hasEducationExperience ? '있음' : '없음',
+      children:
+        applicant.hasEducationExperience == null
+          ? '-'
+          : applicant.hasEducationExperience
+            ? '있음'
+            : '없음',
     },
     {
       key: 'preferredRegion',

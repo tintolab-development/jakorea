@@ -10,17 +10,21 @@ import {
   syncInstitutionApplicationPreferredEducationFormFromOverlay,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resetApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { resetGeminiRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
 import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { clearOperationalSeedDefaultSuppression } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { resetGeneralApplicationOverlay } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getProgramRegistrationOverlayRecord,
   resetProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
-import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
+import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
+import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
+import { getParticipantApplicationEditorVariantForTemplateCode } from '@/features/template/lib/participant-application-template-id'
 import {
-  lookupTemplateRegistry,
-  resolvePreviewHeaderTitle,
-} from '@/features/template/model/template-registry/template-registry'
+  lookupWritingTemplateRegistry,
+  resolveWritingTemplateDisplayName,
+} from '@/features/template/lib/lookup-writing-template-registry'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
@@ -43,6 +47,11 @@ import {
   clearRegistrationWizardSessionDrafts,
   flushApplicationOperationalOverrides,
 } from '@/features/program/general/lib/registration-wizard-session-drafts'
+import {
+  beginRegistrationWizardVisit,
+  endRegistrationWizardVisit,
+  trackRegistrationWizardVisitSave,
+} from '@/features/program/general/lib/registration-wizard-visit'
 import { describeIncompleteApplicationFormThirdPartyRecipient } from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { registrationPendingSnapshotId } from '@/features/program/general/lib/registration-local-save'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
@@ -58,9 +67,14 @@ import { listIncompleteGeneralProgramRecruitmentRequiredFields } from '@/feature
 import { listIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { listIncompleteApplicationFormThirdPartyRecipientFieldKeys } from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { formatRegistrationStepTransitionLabel } from '@/features/program/shared/lib/log-program-registration-create-payload'
-
-/** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
-const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
+import {
+  clearRegistrationStepTemplateSelections,
+  getRegistrationStepTemplateSelections,
+  getSelectedOperationalTemplateCode,
+  hydrateRegistrationStepTemplateSelections,
+  isDefaultOperationalTemplateSelection,
+} from '@/features/program/shared/lib/step-template-selection'
+import { applyRegistrationStepTemplateChange } from '@/features/program/shared/lib/step-template-apply'
 import {
   coerceGeneralProgramRegistrationStep,
   getDefaultGeneralProgramApplicationStep,
@@ -77,6 +91,19 @@ import {
   type GeneralProgramRegistrationStepKey,
 } from '@/features/program/general/model/registration-flow'
 
+/** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
+const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
+
+function resetGeneralRegistrationWizardMemory(): void {
+  clearOperationalSeedDefaultSuppression()
+  resetGeminiRecruitOverlay()
+  resetInstitutionApplicationProgramBridge()
+  resetApplicantRecruitInstitutionOverlay()
+  resetGeneralRecruitOverlay()
+  resetGeneralApplicationOverlay()
+  resetProgramRegistrationOverlay()
+}
+
 export type UseGeneralProgramRegistrationFlowOptions = {
   onProgramRegistrationSaved?: (program?: Program) => void
   initialStep?: GeneralProgramRegistrationStepKey
@@ -89,10 +116,7 @@ export type UseGeneralProgramRegistrationFlowOptions = {
 }
 
 function resolveStepTemplateName(templateId: string): string {
-  return (
-    findWritingTemplateRowByDefinitionId(templateId)?.templateName ??
-    resolvePreviewHeaderTitle(lookupTemplateRegistry(templateId), undefined)
-  )
+  return resolveWritingTemplateDisplayName(templateId)
 }
 
 /** 1사1교·교육받은 교사 — 봉사자 탭 미노출 */
@@ -119,6 +143,7 @@ export function useGeneralProgramRegistrationFlow(
   options?: UseGeneralProgramRegistrationFlowOptions
 ) {
   const { showAlert } = useCmsAlert()
+  const { sections: writingFormSections } = useWritingFormSections()
   const registrationFormVariant = options?.registrationFormVariant ?? 'general'
   const isCompanySchoolRegistration = registrationFormVariant === 'economy'
   const isTrainedTeachersRegistration = registrationFormVariant === 'trainedTeachers'
@@ -135,6 +160,8 @@ export function useGeneralProgramRegistrationFlow(
   const onStepChangeRef = useRef(options?.onStepChange)
   onStepChangeRef.current = options?.onStepChange
   const continueHydratedRef = useRef(false)
+  const [stepTemplateByKey, setStepTemplateByKey] = useState<Record<string, string>>({})
+  const [wizardDraftRevision, setWizardDraftRevision] = useState(0)
 
   const registrationVm = useProgramRegistrationEditor(
     open,
@@ -174,8 +201,13 @@ export function useGeneralProgramRegistrationFlow(
   })
 
   useEffect(() => {
-    if (!open) continueHydratedRef.current = false
-  }, [open])
+    if (!open) {
+      continueHydratedRef.current = false
+      clearRegistrationStepTemplateSelections(programType)
+      setStepTemplateByKey({})
+      setWizardDraftRevision(0)
+    }
+  }, [open, programType])
 
   useEffect(() => {
     if (!open) return
@@ -188,6 +220,13 @@ export function useGeneralProgramRegistrationFlow(
         programType,
         registrationFormVariant
       )
+      if (payload?.selectedOperationalTemplates != null) {
+        hydrateRegistrationStepTemplateSelections(
+          programType,
+          payload.selectedOperationalTemplates
+        )
+        setStepTemplateByKey(payload.selectedOperationalTemplates)
+      }
       if (payload?.activeStep != null) {
         const restored = coerceRegistrationStepForVariant(
           normalizeGeneralProgramRegistrationStepKey(
@@ -310,15 +349,35 @@ export function useGeneralProgramRegistrationFlow(
     [coercedActiveStep, isCompanySchoolRegistration, isTrainedTeachersRegistration]
   )
 
+  const selectedTemplateCode =
+    stepTemplateByKey[
+      coercedActiveStep === 'recruit-volunteer' ? 'recruit-volunteer' : coercedActiveStep
+    ] ??
+    getSelectedOperationalTemplateCode(programType, coercedActiveStep, currentStepDef.templateId)
+
   const participantTemplateName = useMemo(
-    () => resolveStepTemplateName(currentStepDef.templateId),
-    [currentStepDef.templateId]
+    () => resolveStepTemplateName(selectedTemplateCode),
+    [selectedTemplateCode, writingFormSections]
   )
 
-  const participantVariant = currentStepDef.editorVariant ?? 'applicant-recruit-institution'
+  const participantVariant =
+    getParticipantApplicationEditorVariantForTemplateCode(
+      selectedTemplateCode,
+      getFormTemplateVersionCacheEntry(selectedTemplateCode)?.baseTemplateCode
+    ) ??
+    currentStepDef.editorVariant ??
+    'applicant-recruit-institution'
 
   const isProgramStep = coercedActiveStep === 'program'
   const isParticipantStep = isParticipantRegistrationStep(coercedActiveStep)
+  const { buildCurrentProgramSnapshot } = registrationVm
+  const instructorScheduleSourceProgram = useMemo(
+    () =>
+      open && coercedActiveStep === 'application-instructor'
+        ? buildCurrentProgramSnapshot()
+        : null,
+    [open, coercedActiveStep, buildCurrentProgramSnapshot]
+  )
 
   const participantVm = useProgramParticipantApplicationEditor(
     open && isParticipantStep,
@@ -328,6 +387,8 @@ export function useGeneralProgramRegistrationFlow(
       registrationWizardProgramType: programType,
       registrationWizardOpen: open,
       skipDraftRestore,
+      templateCode: selectedTemplateCode,
+      wizardDraftRevision,
       participantOrganization: participantFlags.organization,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
       programLinkedInstitutionApplicationForm:
@@ -341,6 +402,7 @@ export function useGeneralProgramRegistrationFlow(
         participantVariant === 'volunteer' ||
         participantVariant === 'economy-application-institution' ||
         participantVariant === 'trained-teachers-application-institution',
+      instructorScheduleSourceProgram,
       applicantRecruitInstitutionLayoutVariant: isCompanySchoolRegistration
         ? 'economy'
         : isTrainedTeachersRegistration
@@ -370,6 +432,8 @@ export function useGeneralProgramRegistrationFlow(
 
   useEffect(() => {
     if (!open) {
+      clearOperationalSeedDefaultSuppression()
+      resetGeminiRecruitOverlay()
       resetInstitutionApplicationProgramBridge()
       resetApplicantRecruitInstitutionOverlay()
       resetGeneralRecruitOverlay()
@@ -395,8 +459,8 @@ export function useGeneralProgramRegistrationFlow(
   ])
 
   const registryEntry = useMemo(
-    () => lookupTemplateRegistry(currentStepDef.templateId),
-    [currentStepDef.templateId]
+    () => lookupWritingTemplateRegistry(selectedTemplateCode),
+    [selectedTemplateCode, writingFormSections]
   )
 
   const editorVm = useMemo((): TemplateEditorVm => {
@@ -441,17 +505,19 @@ export function useGeneralProgramRegistrationFlow(
 
   /** 「임시 저장」— 현재 양식과 메타를 localStorage에만 저장한다. */
   const persistDraftSilent = useCallback(async () => {
-    // 공통정보는 다른 단계에서도 React state에 유지되므로 항상 함께 저장한다.
-    await registrationVm.handleSave({ silent: true })
-    if (!isProgramStep && isParticipantStep) {
-      await participantVm.handleSave({ silent: true })
-    }
-    await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
-    syncRegistrationProgramDraftSession({
-      programType,
-      registrationTemplateCode: registrationTemplateId,
-      activeStep: coercedActiveStep,
-      programTitleKo: registrationVm.resolveProgramTitleKo(),
+    await trackRegistrationWizardVisitSave(programType, async () => {
+      // 공통정보는 다른 단계에서도 React state에 유지되므로 항상 함께 저장한다.
+      await registrationVm.handleSave({ silent: true })
+      if (!isProgramStep && isParticipantStep) {
+        await participantVm.handleSave({ silent: true })
+      }
+      await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
+      syncRegistrationProgramDraftSession({
+        programType,
+        registrationTemplateCode: registrationTemplateId,
+        activeStep: coercedActiveStep,
+        programTitleKo: registrationVm.resolveProgramTitleKo(),
+      })
     })
   }, [
     coercedActiveStep,
@@ -583,9 +649,9 @@ export function useGeneralProgramRegistrationFlow(
   const handleCompleteRegistration = useCallback(() => {
     if (!SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK) {
       const current =
-        isParticipantStep && currentStepDef.templateId.startsWith('application-')
+        isParticipantStep && selectedTemplateCode.startsWith('application-')
           ? {
-              templateCode: currentStepDef.templateId,
+              templateCode: selectedTemplateCode,
               draft: participantVm.draft,
             }
           : undefined
@@ -618,7 +684,7 @@ export function useGeneralProgramRegistrationFlow(
       flushApplicationOperationalOverrides({
         current: isParticipantStep
           ? {
-              templateCode: currentStepDef.templateId,
+              templateCode: selectedTemplateCode,
               draft: participantVm.draft,
               editorState: buildParticipantApplicationEditorState({
                 variant: participantVariant,
@@ -671,7 +737,7 @@ export function useGeneralProgramRegistrationFlow(
       })
     })()
   }, [
-    currentStepDef.templateId,
+    selectedTemplateCode,
     isParticipantStep,
     isProgramStep,
     participantVariant,
@@ -680,6 +746,40 @@ export function useGeneralProgramRegistrationFlow(
     registrationVm,
     showAlert,
   ])
+
+  const selectStepTemplate = useCallback(
+    async (next: { id: string; latestVersionId?: number; baseTemplateCode?: string; apiTemplateId?: number }) => {
+      const result = await applyRegistrationStepTemplateChange({
+        programType,
+        stepKey: coercedActiveStep,
+        previousCode: selectedTemplateCode,
+        nextCode: next.id,
+        defaultCode: currentStepDef.templateId,
+        latestVersionId: next.latestVersionId,
+        baseTemplateCode: next.baseTemplateCode,
+        apiTemplateId: next.apiTemplateId,
+      })
+      if (result === 'unchanged') return
+      setStepTemplateByKey(getRegistrationStepTemplateSelections(programType))
+      setWizardDraftRevision(value => value + 1)
+    },
+    [coercedActiveStep, currentStepDef.templateId, programType, selectedTemplateCode]
+  )
+
+  const isDefaultStepTemplate = isDefaultOperationalTemplateSelection(
+    selectedTemplateCode,
+    currentStepDef.templateId
+  )
+
+  // 목록은 모달을 언마운트해서 닫는다. open=false 효과는 그때 실행되지 않으므로
+  // 방문 종료는 이 효과의 cleanup에서 한다. 임시저장하지 않은 양식 변경은 버린다.
+  useEffect(() => {
+    if (!open) return
+    beginRegistrationWizardVisit(programType)
+    return () => {
+      endRegistrationWizardVisit(programType, resetGeneralRegistrationWizardMemory)
+    }
+  }, [open, programType])
 
   const hasRecruitmentPhase = visibleRecruitTabKeys.length > 0
   const hasApplicationPhase = visibleApplicationTabKeys.length > 0
@@ -690,6 +790,11 @@ export function useGeneralProgramRegistrationFlow(
     currentStepDef,
     registrationTemplateId,
     selectStep,
+    selectStepTemplate,
+    stepTemplateName: participantTemplateName,
+    isDefaultStepTemplate,
+    selectedTemplateCode,
+    wizardDraftRevision,
     goToPhase,
     panels,
     isDraftLoading,

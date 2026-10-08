@@ -7,8 +7,6 @@ export const SETTINGS_WITHDRAW_GUIDE = {
   description:
     '탈퇴하시면 서비스 이용이 중단되며, 개인정보는 관련 법령에 따라 보관 후 파기됩니다. 진행 중인 프로그램이 있는 경우 탈퇴가 제한될 수 있습니다.',
   confirmLabel: '확인',
-  /** OpenAPI `PortalWithdrawalRequest.confirmationText` */
-  confirmationText: '탈퇴',
   /** OpenAPI `PortalWithdrawalRequest.reason` */
   reason: '회원 요청에 의한 탈퇴',
 } as const
@@ -29,7 +27,7 @@ export const MOCK_SETTINGS_PROFILE = {
   external1365Id: '',
 } as const
 
-/** 로컬/dev 조회 mock — 교사회원 필드셋 */
+/** 로컬/dev 조회 mock — 교사 회원 필드셋 */
 export const MOCK_TEACHER_SETTINGS_PROFILE = {
   joinedAt: '2026-09-15',
   name: '김교사',

@@ -68,7 +68,6 @@ import {
   UserInfo,
   type UserInfoPreviewValues,
 } from '@/features/template/ui/paragraph/single-item/user-info'
-import { UserInfoWriteField } from '@/features/template/ui/paragraph/single-item/user-info-write-field'
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import {
   UjatJournalEducationInfo,
@@ -214,10 +213,6 @@ export type RenderFormParagraphBodyOptions = {
   ujatJournalEducationInfoAutofill?: UjatJournalEducationInfoAutofill | null
   /** user_info 단락 미리보기 셀 값 — UJAT 문서 뷰어의 선택 봉사자 정보 등 */
   userInfoPreviewValues?: UserInfoPreviewValues
-  /** 설문 write flatten — 설문자 정보 필드 1장 */
-  userInfoWriteField?: { key: string; label: string }
-  /** true면 fieldAnswers를 단락에 저장(강의평가 user). preview는 로컬만 */
-  userInfoWritePersist?: boolean
   /** A4 문서 본문 스코프 클래스 — 템플릿별 preview CSS 오버라이드 */
   documentPreviewClassName?: string
   /**
@@ -871,17 +866,6 @@ export function renderFormParagraphBody(
         />
       )
     case 'user_info':
-      if (options?.userInfoWriteField != null && p.kind === 'single_item' && p.variant === 'user_info') {
-        return (
-          <UserInfoWriteField
-            paragraph={p}
-            fieldKey={options.userInfoWriteField.key}
-            label={options.userInfoWriteField.label}
-            persist={options.userInfoWritePersist === true}
-            onChange={next => updateParagraph(p.id, () => next)}
-          />
-        )
-      }
       /**
        * 구조 잠금 시드(UJAT 봉사자 정보 등)도 authoring에서 노출 필드 칩 토글 허용.
        * (카드 미선택이어도 가능 — 미리보기·저장의 selectedUserFieldKeys 연동)
@@ -898,7 +882,10 @@ export function renderFormParagraphBody(
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isUserInfoFieldSelectEditMode}
           layout={isUserLikeVisible ? 'previewTable' : 'chips'}
-          previewValues={options?.userInfoPreviewValues}
+          previewValues={
+            options?.userInfoPreviewValues ??
+            (p.kind === 'single_item' && p.variant === 'user_info' ? p.fieldAnswers : undefined)
+          }
           forceTwoColumnRow={p.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo}
         />
       )

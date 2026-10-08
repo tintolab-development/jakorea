@@ -1,8 +1,13 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { SettlementItemSettingSection } from '@/data/mock/settlement-item-settings'
 import {
+  ensurePaymentItemCatalog,
+  getActivePaymentItemCatalogOptions,
   getTemplateRegistrationPaymentItemOptions,
-  useTemplateRegistrationPaymentItemOptions,
+  isPaymentItemCatalogReady,
+  isPaymentItemCatalogRemote,
+  usePaymentItemCatalogState,
+  type PaymentItemCatalogState,
 } from '@/features/template/lib/template-registration-payment-item-options'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 
@@ -16,6 +21,8 @@ const PAYMENT_ITEM_CODE_RE = /^(p|w|d)-\d+$/i
 const PAYMENT_ITEM_LABEL_ALIASES: Record<string, string> = {
   교통비: '강사 교통비',
   식비: '식사비',
+  '교통비(일사일교)': '강사 교통비',
+  '숙박비(일사일교)': '숙박비 (1사1교)',
 }
 
 const SETTLEMENT_ITEM_TYPE_LABEL: Record<string, string> = {
@@ -83,13 +90,16 @@ function pickBetterPaymentOption(
   return { ...current, ...incoming, label: incomingIsCode ? currentLabel : incomingLabel }
 }
 
-/** mock + 전달 옵션을 합쳐 `p-3` 같은 코드가 라벨 없이 남지 않게 한다 */
+/**
+ * 전달 옵션 + 「해당없음」.
+ * 백엔드 미설정 로컬 mock 환경에서만 mock 항목을 함께 합친다(실 API 환경에 mock id 노출 금지).
+ */
 export function mergeProgramWagePaymentItemOptions(
   preferred: readonly CmsSelectMultipleOption[] = []
 ): CmsSelectMultipleOption[] {
-  const mock = getTemplateRegistrationPaymentItemOptions()
+  const base = isPaymentItemCatalogRemote() ? [] : getTemplateRegistrationPaymentItemOptions()
   const byValue = new Map<string, CmsSelectMultipleOption>()
-  for (const option of mock) {
+  for (const option of base) {
     byValue.set(option.value, pickBetterPaymentOption(byValue.get(option.value), option))
   }
   for (const option of preferred) {
@@ -102,14 +112,130 @@ export function mergeProgramWagePaymentItemOptions(
 export function getProgramWagePaymentItemOptions(
   sections?: readonly SettlementItemSettingSection[]
 ): CmsSelectMultipleOption[] {
-  return mergeProgramWagePaymentItemOptions(getTemplateRegistrationPaymentItemOptions(sections))
+  return mergeProgramWagePaymentItemOptions(
+    sections ? getTemplateRegistrationPaymentItemOptions(sections) : getActivePaymentItemCatalogOptions()
+  )
 }
 
-/** 정산 항목 설정(지급) 목록 + 「해당없음」 — 등록·상세 편집 UI용 */
-export function useProgramWagePaymentItemOptions(): CmsSelectMultipleOption[] {
-  const paymentOptions = useTemplateRegistrationPaymentItemOptions()
-  return useMemo(() => mergeProgramWagePaymentItemOptions(paymentOptions), [paymentOptions])
+export type ProgramWagePaymentItemOptionsState = PaymentItemCatalogState
+
+/** 정산 항목 설정(지급) 목록 + 「해당없음」 + 로딩·실패 상태 — 등록·상세 편집 UI용 */
+export function useProgramWagePaymentItemOptionsState(): ProgramWagePaymentItemOptionsState {
+  const catalog = usePaymentItemCatalogState()
+  return useMemo(
+    () => ({
+      ...catalog,
+      options: catalog.ready ? mergeProgramWagePaymentItemOptions(catalog.options) : [],
+    }),
+    [catalog]
+  )
 }
+
+export function useProgramWagePaymentItemOptions(): CmsSelectMultipleOption[] {
+  return useProgramWagePaymentItemOptionsState().options
+}
+
+/** 예전 mock 지급 항목 id(`p-1` 등) → mock 항목명. 실제 항목으로 교정할 때 라벨 키로만 쓴다. */
+function legacyMockPaymentItemLabel(id: string): string | undefined {
+  return getTemplateRegistrationPaymentItemOptions().find(option => option.value === id)?.label
+}
+
+function compactPaymentLabel(label: string | undefined): string {
+  return (label ?? '').replace(/\s+/g, '')
+}
+
+/** 현재 카탈로그에서 항목명으로 지급 항목 id 찾기 (공백 무시) */
+export function findProgramPaymentItemIdByLabel(label: string): string | undefined {
+  const target = compactPaymentLabel(label)
+  if (!target) return undefined
+  return getActivePaymentItemCatalogOptions().find(
+    option => compactPaymentLabel(String(option.label)) === target
+  )?.value
+}
+
+/**
+ * 저장된 지급 항목 id를 현재 정산 지급 항목 id로 교정한다.
+ * - 현재 목록에 있으면 유지, 예전 mock id는 mock 항목명으로 실제 항목을 찾아 바꾼다.
+ * - 찾지 못한 id는 제거한다(재선택 유도).
+ * - 실제 목록을 아직 모르면(응답 전) 판정하지 않고 그대로 둔다.
+ */
+export function normalizeProgramPaymentItemIds(ids: readonly unknown[]): string[] {
+  const tokens = ids.map(id => String(id ?? '').trim()).filter(Boolean)
+  if (!isPaymentItemCatalogReady()) return tokens
+  const known = new Set(getActivePaymentItemCatalogOptions().map(option => option.value))
+  const out: string[] = []
+  for (const id of tokens) {
+    let next: string | undefined
+    if (id === PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE || known.has(id)) {
+      next = id
+    } else {
+      const legacyLabel = legacyMockPaymentItemLabel(id)
+      next = legacyLabel ? findProgramPaymentItemIdByLabel(legacyLabel) : undefined
+    }
+    if (next && !out.includes(next)) out.push(next)
+  }
+  return out
+}
+
+function sameIds(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((id, index) => id === b[index])
+}
+
+/** 화면 진입 시 저장값(임시저장·템플릿·기존 프로그램)을 실제 지급 항목 id로 교정 */
+export function useNormalizeProgramPaymentItemValues(
+  values: readonly string[] | undefined,
+  setValues: (next: string[]) => void,
+  catalogReady: boolean
+): void {
+  useEffect(() => {
+    if (!catalogReady || !Array.isArray(values) || values.length === 0) return
+    const next = normalizeProgramPaymentItemIds(values)
+    if (!sameIds(values, next)) setValues(next)
+  }, [catalogReady, values, setValues])
+}
+
+export type PaymentItemOverlayField = {
+  valuesKey: string
+  /** 같이 저장하는 라벨 문자열 키 (일반 등록 `paymentItemLabels`) */
+  labelsKey?: string
+}
+
+export type PaymentItemOverlayNormalization = {
+  patch: Record<string, unknown>
+  /** 저장값이 있었지만 실제 항목을 하나도 찾지 못한 필드 */
+  clearedKeys: string[]
+}
+
+/**
+ * 등록 제출 직전 — 실제 지급 항목 목록을 불러온 뒤 overlay 지급 항목 id를 교정한다.
+ * 호출부는 `patch`를 overlay에 반영하고, `clearedKeys`가 있으면 재선택을 안내하고 제출을 멈춘다.
+ */
+export async function normalizeOverlayPaymentItemsBeforeSubmit(
+  overlay: Record<string, unknown>,
+  fields: readonly PaymentItemOverlayField[]
+): Promise<PaymentItemOverlayNormalization> {
+  await ensurePaymentItemCatalog()
+  const patch: Record<string, unknown> = {}
+  const clearedKeys: string[] = []
+  for (const { valuesKey, labelsKey } of fields) {
+    const raw = overlay[valuesKey]
+    if (!Array.isArray(raw)) continue
+    const current = raw.map(id => String(id ?? '').trim()).filter(Boolean)
+    const next = normalizeProgramPaymentItemIds(current)
+    if (sameIds(current, next)) continue
+    patch[valuesKey] = next
+    if (labelsKey) {
+      patch[labelsKey] = programPaymentItemLabelsFromIds(next) || PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+    }
+    if (current.length > 0 && next.length === 0) clearedKeys.push(valuesKey)
+  }
+  return { patch, clearedKeys }
+}
+
+export const PAYMENT_ITEM_RESELECT_ALERT = {
+  title: '지급 항목 확인 필요',
+  content: '저장된 지급 항목이 현재 정산 항목 설정에 없습니다. 임금 정보에서 지급 항목을 다시 선택해 주세요.',
+} as const
 
 export function isProgramPaymentNoneOnly(ids: string[] | undefined): boolean {
   return ids?.length === 1 && ids[0] === PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE
@@ -132,7 +258,7 @@ export function resolveProgramPaymentItemLabel(
   if (!token) return ''
   if (token === PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE) return PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
   const options = getProgramWagePaymentItemOptions(sections)
-  return options.find(o => o.value === token)?.label || (isPaymentItemCode(token) ? token : token)
+  return options.find(o => o.value === token)?.label || legacyMockPaymentItemLabel(token) || token
 }
 
 export function programPaymentItemLabelsFromIds(
@@ -159,18 +285,31 @@ export function resolveProgramPaymentItemIdsFromLabels(
   ) {
     return [PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE]
   }
-  const options = getProgramWagePaymentItemOptions(sections)
+  // 실제 목록 응답 전에는 항목명 보존용으로 mock 카탈로그를 쓴다. 이 id는 화면 진입·제출 시 실제 id로 교정된다.
+  const options =
+    sections || isPaymentItemCatalogReady()
+      ? getProgramWagePaymentItemOptions(sections)
+      : mergeProgramWagePaymentItemOptions(getTemplateRegistrationPaymentItemOptions())
   return text
     .split(',')
     .map(s => s.trim())
     .filter(Boolean)
-    .map(token => PAYMENT_ITEM_LABEL_ALIASES[token] ?? token)
+    .map(token => PAYMENT_ITEM_LABEL_ALIASES[compactPaymentLabel(token)] ?? token)
     .map(token => {
       const byValue = options.find(o => o.value === token)
       if (byValue) return byValue.value
-      return options.find(o => o.label === token || token.includes(String(o.label)))?.value
+      const target = compactPaymentLabel(token)
+      const exact = options.find(o => compactPaymentLabel(String(o.label)) === target)
+      if (exact) return exact.value
+      // 「숙박비 (1사1교)」가 「숙박비」에 먼저 걸리지 않도록 가장 긴 항목명을 고른다
+      return options
+        .filter(o => {
+          const label = compactPaymentLabel(String(o.label))
+          return label.length > 0 && target.includes(label)
+        })
+        .sort((a, b) => String(b.label).length - String(a.label).length)[0]?.value
     })
-    .filter((v): v is string => Boolean(v))
+    .filter((v, index, all): v is string => Boolean(v) && all.indexOf(v) === index)
 }
 
 export function normalizeProgramPaymentItemSelection(next: string[], prev: string[]): string[] {

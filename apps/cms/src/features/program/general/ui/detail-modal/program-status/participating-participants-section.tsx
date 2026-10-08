@@ -4,10 +4,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Table, Spin } from 'antd'
-import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
@@ -25,10 +24,14 @@ import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/g
 import { useParticipatingIndividualParticipantColumns } from '@/features/program/general/lib/participating-individual-participant-columns'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
+import {
+  buildParticipatingParticipantCertificateContext,
+  hydrateParticipatingParticipantCertificateProfile,
+} from '@/features/program/general/lib/participating-individual-participant-certificate'
 import { hydrateParticipatingIndividualLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
 import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
@@ -41,6 +44,7 @@ import {
 } from './participating-participant-fullpage-view'
 import { ParticipatingParticipantsCalendarView } from './participating-participants-calendar-view'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
+import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
@@ -224,17 +228,22 @@ export function ParticipatingParticipantsSection({
       if (participant == null) return
 
       try {
-        const lectureAttendanceSessions = shouldUseGeneralProgramProgressRemoteApi()
-          ? await hydrateParticipatingIndividualLectureAttendanceSessions({
-              programId: String(program.id),
-              participantId: participant.id,
-              existing: participant.lectureAttendanceSessions,
-            })
-          : participant.lectureAttendanceSessions
+        const [lectureAttendanceSessions, profileHydrated] = await Promise.all([
+          shouldUseGeneralProgramProgressRemoteApi()
+            ? hydrateParticipatingIndividualLectureAttendanceSessions({
+                programId: String(program.id),
+                participantId: participant.id,
+                existing: participant.lectureAttendanceSessions,
+              })
+            : participant.lectureAttendanceSessions,
+          shouldUseGeneralApplicationsRemoteApi()
+            ? hydrateParticipatingParticipantCertificateProfile(participant)
+            : participant,
+        ])
 
         setCertificateExportContext(
           buildParticipatingParticipantCertificateContext({
-            participant: { ...participant, lectureAttendanceSessions },
+            participant: { ...profileHydrated, lectureAttendanceSessions },
             program,
             hasStudentSatisfactionSurvey,
             issuanceReasonLabel: reasonLabel,
@@ -285,7 +294,7 @@ export function ParticipatingParticipantsSection({
 
   if (participantsLoading && participantList.length === 0) {
     return (
-      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+      <div className="detail-fullpage-modal__loading" role="status">
         <Spin size="large" />
       </div>
     )
@@ -330,8 +339,7 @@ export function ParticipatingParticipantsSection({
             <CmsButton
               variant="secondary"
               size="large"
-              width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               disabled={certificateExportActive}
               onClick={handleCertificateIssueClick}
             >
@@ -342,7 +350,7 @@ export function ParticipatingParticipantsSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
@@ -352,7 +360,7 @@ export function ParticipatingParticipantsSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={() => setViewMode('list')}
               >
                 리스트 뷰로 보기

@@ -31,6 +31,8 @@ export type GeneralEffectiveSecondInterviewStatus =
 
 export const GENERAL_INTERVIEW_TOTAL_SCORE_MIN = 1
 export const GENERAL_INTERVIEW_TOTAL_SCORE_MAX = 10
+/** 담당자 A·B 각각. 두 점수의 합이 총합 상한(10)을 넘지 않도록 5로 둔다. */
+export const GENERAL_INTERVIEW_MANAGER_SCORE_MAX = 5
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
@@ -53,13 +55,14 @@ export function formatGeneralAssignedInterviewScheduleDisplay(
   return `${y}년 ${m}월 ${d}일 (${weekday}) ${slot}`
 }
 
+/** 입력된 담당자 슬롯 점수의 합. 한 슬롯만 있으면 그 점수. */
 export function computeGeneralInterviewTotalScore(
   row: Pick<GeneralVolunteerApplicantRow, 'managerAScore' | 'managerBScore'>
 ): number | null {
   const { managerAScore, managerBScore } = row
-  if (managerAScore == null || managerBScore == null) return null
+  if (managerAScore == null && managerBScore == null) return null
 
-  const total = managerAScore + managerBScore
+  const total = (managerAScore ?? 0) + (managerBScore ?? 0)
   if (total < GENERAL_INTERVIEW_TOTAL_SCORE_MIN || total > GENERAL_INTERVIEW_TOTAL_SCORE_MAX) {
     return null
   }

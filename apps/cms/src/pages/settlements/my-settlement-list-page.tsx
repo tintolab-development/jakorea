@@ -11,7 +11,7 @@ import { Space, Card, Table, Tabs, Select, Segmented } from 'antd'
 import { CmsButton, LoadingButton, ContentModal } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
-import { PlusOutlined, CalendarOutlined, TableOutlined } from '@ant-design/icons'
+import { CalendarOutlined, TableOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
 import { getStatusConfigAccentColor, settlementStatusStatusConfig } from '@/shared/constants/status'
@@ -23,6 +23,8 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import dayjs from 'dayjs'
 import type { Settlement, SettlementStatus } from '@/types/domain'
+
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 
 // IA 구조에 맞는 정산 상태별 탭 정의
 // 정산 미신청, 정산 신청 완료 및 대기 중, 정산 이슈 확인 필요, 정산 지급 완료, 정산 이력
@@ -291,7 +293,7 @@ export function MySettlementListPage() {
               },
             ]}
           />
-          <CmsButton variant="primary" icon={<PlusOutlined />} onClick={() => setSubmitModalOpen(true)}>
+          <CmsButton variant="primary" icon={<ButtonAddIcon />} onClick={() => setSubmitModalOpen(true)}>
             정산 제출
           </CmsButton>
         </Space>

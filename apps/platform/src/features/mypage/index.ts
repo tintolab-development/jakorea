@@ -155,11 +155,9 @@ export {
   SettingsEditForm,
   SettingsSocialAccountsView,
   SettingsView,
-  showSettingsInstructorConsentDocuments,
   useSettingsView,
 } from './settings'
 export type {
-  SettingsConsentsViewProps,
   SettingsEditFormProps,
   SettingsProfileInput,
   SettingsViewProps,

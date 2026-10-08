@@ -89,6 +89,13 @@
   min-width: 0;
 }
 
+/* PC: 백 링크를 서브페이지 내용 열 제목(padding-top 100)과 같은 높이에 둔다 */
+@media (--bp-pc-up) {
+  .shellSubpage .sidebarWithLeading {
+    padding-top: var(--spacing-100);
+  }
+}
+
 .sidebarLeading {
   width: 100%;
   min-width: 0;

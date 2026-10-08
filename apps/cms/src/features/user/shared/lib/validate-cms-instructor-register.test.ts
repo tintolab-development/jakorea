@@ -1,6 +1,19 @@
+import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 import { INITIAL_VALUES } from '@/features/user/shared/ui/instructor-profile-form'
 import { collectCmsInstructorRegisterValidation } from './validate-cms-instructor-register'
+
+const FILLED_EDUCATION = {
+  eduSchoolType: 'high',
+  eduStatus: 'graduated',
+  educationDetailKeys: ['high' as const],
+  highSchool: {
+    admitYear: dayjs('2006-01-01'),
+    gradYear: dayjs('2009-01-01'),
+    schoolName: '○○고등학교',
+    major: '',
+  },
+}
 
 describe('collectCmsInstructorRegisterValidation', () => {
   it('기본 정보 미입력 시 missingRequired', () => {
@@ -43,6 +56,7 @@ describe('collectCmsInstructorRegisterValidation', () => {
   it('자유 작성 미입력이어도 missingRequired가 아니다', () => {
     const { missingRequired } = collectCmsInstructorRegisterValidation({
       ...INITIAL_VALUES,
+      ...FILLED_EDUCATION,
       name: '홍길동',
       gender: 'male',
       birthDate: '1990-01-01',
@@ -71,6 +85,7 @@ describe('collectCmsInstructorRegisterValidation', () => {
   it('교사 회원도 자유 작성은 선택이되, 소속은 학교·재직현황으로 분기한다', () => {
     const teacherBase = {
       ...INITIAL_VALUES,
+      ...FILLED_EDUCATION,
       name: '홍길동',
       gender: 'male' as const,
       birthDate: '1990-01-01',
@@ -102,6 +117,41 @@ describe('collectCmsInstructorRegisterValidation', () => {
       collectCmsInstructorRegisterValidation({
         ...teacherBase,
         schoolName: '',
+      }).missingRequired
+    ).toBe(true)
+  })
+
+  it('학력사항 미입력 시 missingRequired', () => {
+    const base = {
+      ...INITIAL_VALUES,
+      ...FILLED_EDUCATION,
+      name: '홍길동',
+      gender: 'male' as const,
+      birthDate: '1990-01-01',
+      contact: '010-1234-5678',
+      email: 'test@example.com',
+      affiliationName: 'JA',
+      homeAddress: '서울',
+      homeAddressDetail: '101',
+      instructorCareer: '5년',
+      bankName: '국민',
+      accountNumber: '123',
+      accountHolder: '홍길동',
+      oneLineIntro: '소개',
+      consentTermsOfService: 'agree' as const,
+      consentPersonal: 'agree' as const,
+      careerLevel: 'new' as const,
+      careers: [],
+    }
+    expect(collectCmsInstructorRegisterValidation(base).missingRequired).toBe(false)
+    expect(
+      collectCmsInstructorRegisterValidation({ ...base, eduSchoolType: '', eduStatus: '' })
+        .missingRequired
+    ).toBe(true)
+    expect(
+      collectCmsInstructorRegisterValidation({
+        ...base,
+        highSchool: { ...base.highSchool, schoolName: '' },
       }).missingRequired
     ).toBe(true)
   })

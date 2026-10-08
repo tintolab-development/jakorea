@@ -10,7 +10,13 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { formatDateDot } from '@/shared/utils'
-import { CmsButton, DeleteGuideModal, ExcelButton, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  DeleteGuideModal,
+  ExcelButton,
+  showDeleteCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
@@ -175,6 +181,7 @@ export function GeminiPerformanceList() {
     geminiPerformanceService.delete(selectedRowKeys.map(key => String(key)))
     setSelectedRowKeys([])
     setDeleteModalOpen(false)
+    showDeleteCompletedAlert()
   }, [selectedRowKeys])
 
   const handleAddReportClick = useCallback(() => {

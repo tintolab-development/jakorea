@@ -15,16 +15,24 @@ import {
   UjatRegistrationRequiredFieldsIncompleteError,
 } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import type { Program } from '@/types/domain'
-import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
+import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
+import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
+import { getParticipantApplicationEditorVariantForTemplateCode } from '@/features/template/lib/participant-application-template-id'
 import {
-  lookupTemplateRegistry,
-  resolvePreviewHeaderTitle,
-} from '@/features/template/model/template-registry/template-registry'
+  lookupWritingTemplateRegistry,
+  resolveWritingTemplateDisplayName,
+} from '@/features/template/lib/lookup-writing-template-registry'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import {
   getUjatProgramRegistrationOverlayRecord,
+  patchUjatProgramRegistrationOverlay,
   resetUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import {
+  normalizeOverlayPaymentItemsBeforeSubmit,
+  PAYMENT_ITEM_RESELECT_ALERT,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { UJAT_WAGE_OVERLAY_PAYMENT_KEY } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { toCreateRequest } from '@/features/program/ujat/api/adapters'
 import {
   buildUjatProgramListRowFromRegistrationSnapshot,
@@ -48,7 +56,13 @@ import {
   clearRegistrationWizardSessionDrafts,
   flushApplicationOperationalOverrides,
 } from '@/features/program/general/lib/registration-wizard-session-drafts'
+import {
+  beginRegistrationWizardVisit,
+  endRegistrationWizardVisit,
+  trackRegistrationWizardVisitSave,
+} from '@/features/program/general/lib/registration-wizard-visit'
 import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { clearOperationalSeedDefaultSuppression } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { resetUjatRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
 import { resetUjatRecruitVolunteerOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import { resetUjatApplicationInstitutionOverlay } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
@@ -69,6 +83,14 @@ import {
   type UjatProgramRegistrationPhaseKey,
   type UjatProgramRegistrationStepKey,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
+import {
+  clearRegistrationStepTemplateSelections,
+  getRegistrationStepTemplateSelections,
+  getSelectedOperationalTemplateCode,
+  hydrateRegistrationStepTemplateSelections,
+  isDefaultOperationalTemplateSelection,
+} from '@/features/program/shared/lib/step-template-selection'
+import { applyRegistrationStepTemplateChange } from '@/features/program/shared/lib/step-template-apply'
 
 export type UseUjatProgramRegistrationFlowOptions = {
   /** 필수 미입력 검증 실패 시 — 인라인 강조용 진단 키 */
@@ -87,10 +109,17 @@ function createRegistrationIdempotencyKey(): string {
 }
 
 function resolveStepTemplateName(templateId: string): string {
-  return (
-    findWritingTemplateRowByDefinitionId(templateId)?.templateName ??
-    resolvePreviewHeaderTitle(lookupTemplateRegistry(templateId), undefined)
-  )
+  return resolveWritingTemplateDisplayName(templateId)
+}
+
+function resetUjatRegistrationWizardMemory(): void {
+  clearOperationalSeedDefaultSuppression()
+  resetUjatProgramRegistrationOverlay()
+  resetUjatRecruitInstitutionOverlay()
+  resetUjatRecruitVolunteerOverlay()
+  resetUjatApplicationInstitutionOverlay()
+  resetUjatApplicationVolunteerOverlay()
+  resetGeneralRecruitOverlay()
 }
 
 export function useUjatProgramRegistrationFlow(
@@ -102,6 +131,7 @@ export function useUjatProgramRegistrationFlow(
     return initial != null ? normalizeUjatProgramRegistrationStepKey(initial) : 'program'
   })
   const { showAlert } = useCmsAlert()
+  const { sections: writingFormSections } = useWritingFormSections()
   const createProgramMutation = useCreateProgram()
   const completionPromiseRef = useRef<Promise<Program> | null>(null)
   const idempotencyKeyRef = useRef(createRegistrationIdempotencyKey())
@@ -110,12 +140,17 @@ export function useUjatProgramRegistrationFlow(
   const continueHydratedRef = useRef(false)
   const skipDraftRestore = options?.skipDraftRestore === true
   const programType = 'UJAT' as const
+  const [stepTemplateByKey, setStepTemplateByKey] = useState<Record<string, string>>({})
+  const [wizardDraftRevision, setWizardDraftRevision] = useState(0)
 
   useEffect(() => {
     if (!open) {
       continueHydratedRef.current = false
+      clearRegistrationStepTemplateSelections(programType)
+      setStepTemplateByKey({})
+      setWizardDraftRevision(0)
     }
-  }, [open])
+  }, [open, programType])
 
   useEffect(() => {
     if (!open || skipDraftRestore) return
@@ -124,6 +159,13 @@ export function useUjatProgramRegistrationFlow(
     void (async () => {
       const payload = await hydrateRegistrationProgramDraft(programType)
       await hydrateRegistrationOperationalOverlaysFromLocalDrafts(programType, 'ujat')
+      if (payload?.selectedOperationalTemplates != null) {
+        hydrateRegistrationStepTemplateSelections(
+          programType,
+          payload.selectedOperationalTemplates
+        )
+        setStepTemplateByKey(payload.selectedOperationalTemplates)
+      }
       if (payload?.activeStep == null) return
       const restored = normalizeUjatProgramRegistrationStepKey(payload.activeStep)
       setActiveStep(restored)
@@ -137,6 +179,7 @@ export function useUjatProgramRegistrationFlow(
     if (open) return
     completionPromiseRef.current = null
     idempotencyKeyRef.current = createRegistrationIdempotencyKey()
+    clearOperationalSeedDefaultSuppression()
     resetUjatProgramRegistrationOverlay()
     resetUjatRecruitInstitutionOverlay()
     resetUjatRecruitVolunteerOverlay()
@@ -162,18 +205,30 @@ export function useUjatProgramRegistrationFlow(
     [activeStep]
   )
 
+  const selectedTemplateCode =
+    stepTemplateByKey[
+      activeStep === 'recruit-volunteer-h1' || activeStep === 'recruit-volunteer-h2'
+        ? 'recruit-volunteer'
+        : activeStep
+    ] ?? getSelectedOperationalTemplateCode(programType, activeStep, currentStepDef.templateId)
+
   const programTemplateName = useMemo(
     () => resolveStepTemplateName('registration-ujat'),
     []
   )
 
   const participantTemplateName = useMemo(
-    () => resolveStepTemplateName(currentStepDef.templateId),
-    [currentStepDef.templateId]
+    () => resolveStepTemplateName(selectedTemplateCode),
+    [selectedTemplateCode, writingFormSections]
   )
 
   const participantVariant =
-    currentStepDef.editorVariant ?? ('ujat-recruit-institution' as const)
+    getParticipantApplicationEditorVariantForTemplateCode(
+      selectedTemplateCode,
+      getFormTemplateVersionCacheEntry(selectedTemplateCode)?.baseTemplateCode
+    ) ??
+    currentStepDef.editorVariant ??
+    ('ujat-recruit-institution' as const)
 
   const isProgramStep = activeStep === 'program'
   const isParticipantStep = isParticipantRegistrationStep(activeStep)
@@ -202,14 +257,16 @@ export function useUjatProgramRegistrationFlow(
       registrationWizardProgramType: programType,
       registrationWizardOpen: open,
       skipDraftRestore,
+      templateCode: selectedTemplateCode,
+      wizardDraftRevision,
       /** UJAT 등록 위저드 — 단락 타이틀 옆 필수(*) */
       forceSeedParagraphsRequired: true,
     }
   )
 
   const registryEntry = useMemo(
-    () => lookupTemplateRegistry(currentStepDef.templateId),
-    [currentStepDef.templateId]
+    () => lookupWritingTemplateRegistry(selectedTemplateCode),
+    [selectedTemplateCode, writingFormSections]
   )
 
   const editorVm = useMemo((): TemplateEditorVm => {
@@ -329,19 +386,21 @@ export function useUjatProgramRegistrationFlow(
 
   /** 「임시 저장」— 현재 양식과 메타를 localStorage에만 저장한다. */
   const persistDraftSilent = useCallback(async () => {
-    await registrationVm.handleSave({ silent: true })
-    if (!isProgramStep && isParticipantStep) {
-      await participantVm.handleSave({ silent: true })
-    }
-    await persistRegistrationOperationalOverlaysToLocal(programType, 'ujat')
-    syncRegistrationProgramDraftSession({
-      programType,
-      registrationTemplateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
-      activeStep,
-      programTitleKo: buildUjatProgramListRowFromRegistrationSnapshot({
-        id: 'ujat-local-draft',
-        overlay: { ...getUjatProgramRegistrationOverlayRecord() },
-      }).title,
+    await trackRegistrationWizardVisitSave(programType, async () => {
+      await registrationVm.handleSave({ silent: true })
+      if (!isProgramStep && isParticipantStep) {
+        await participantVm.handleSave({ silent: true })
+      }
+      await persistRegistrationOperationalOverlaysToLocal(programType, 'ujat')
+      syncRegistrationProgramDraftSession({
+        programType,
+        registrationTemplateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
+        activeStep,
+        programTitleKo: buildUjatProgramListRowFromRegistrationSnapshot({
+          id: 'ujat-local-draft',
+          overlay: { ...getUjatProgramRegistrationOverlayRecord() },
+        }).title,
+      })
     })
   }, [
     activeStep,
@@ -390,6 +449,17 @@ export function useUjatProgramRegistrationFlow(
     const completion = (async () => {
       const endOverlay = beginBlockingOverlay()
       try {
+        const paymentItems = await normalizeOverlayPaymentItemsBeforeSubmit(
+          getUjatProgramRegistrationOverlayRecord(),
+          [{ valuesKey: UJAT_WAGE_OVERLAY_PAYMENT_KEY }]
+        )
+        if (Object.keys(paymentItems.patch).length > 0) {
+          patchUjatProgramRegistrationOverlay(paymentItems.patch)
+        }
+        if (paymentItems.clearedKeys.length > 0) {
+          showAlert(PAYMENT_ITEM_RESELECT_ALERT)
+          throw new UjatRegistrationRequiredFieldsIncompleteError()
+        }
         const registrationOverlay = collectUjatRegistrationCreateOverlay(
           getUjatProgramRegistrationOverlayRecord()
         )
@@ -478,11 +548,49 @@ export function useUjatProgramRegistrationFlow(
     showAlert,
   ])
 
+  const selectStepTemplate = useCallback(
+    async (next: { id: string; latestVersionId?: number; baseTemplateCode?: string; apiTemplateId?: number }) => {
+      const result = await applyRegistrationStepTemplateChange({
+        programType,
+        stepKey: activeStep,
+        previousCode: selectedTemplateCode,
+        nextCode: next.id,
+        defaultCode: currentStepDef.templateId,
+        latestVersionId: next.latestVersionId,
+        baseTemplateCode: next.baseTemplateCode,
+        apiTemplateId: next.apiTemplateId,
+      })
+      if (result === 'unchanged') return
+      setStepTemplateByKey(getRegistrationStepTemplateSelections(programType))
+      setWizardDraftRevision(value => value + 1)
+    },
+    [activeStep, currentStepDef.templateId, programType, selectedTemplateCode]
+  )
+
+  const isDefaultStepTemplate = isDefaultOperationalTemplateSelection(
+    selectedTemplateCode,
+    currentStepDef.templateId
+  )
+
+  // 목록은 모달을 언마운트해서 닫는다. 임시저장하지 않은 양식 변경은 방문 종료 때 버린다.
+  useEffect(() => {
+    if (!open) return
+    beginRegistrationWizardVisit(programType)
+    return () => {
+      endRegistrationWizardVisit(programType, resetUjatRegistrationWizardMemory)
+    }
+  }, [open, programType])
+
   return {
     activeStep,
     phase,
     currentStepDef,
     selectStep,
+    selectStepTemplate,
+    stepTemplateName: participantTemplateName,
+    isDefaultStepTemplate,
+    selectedTemplateCode,
+    wizardDraftRevision,
     goToPhase,
     panels,
     isDraftLoading,

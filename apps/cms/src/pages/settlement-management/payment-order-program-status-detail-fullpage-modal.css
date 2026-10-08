@@ -85,9 +85,9 @@
 }
 
 /*
- * 지급 현황 상세 풀페이지(프로그램별·강사별) — 목록 테이블 행 높이 54px 공통.
+ * 지급 현황 상세 풀페이지(프로그램별·강사별) — 목록 테이블 행 높이 52px 공통.
  * participating-institutions-section.css 의 53px !important 규칙보다 모달 루트로 특이도 우선.
- * 세로 padding 0 + vertical-align middle → 40px 산출 내역 버튼·한 줄 텍스트 모두 54px 안에 수직 정렬.
+ * 세로 padding 0 + vertical-align middle → 40px 산출 내역 버튼·한 줄 텍스트 모두 52px 안에 수직 정렬.
  */
 .payment-order-program-status-detail-fullpage-modal
   .payment-order-program-status-detail__table.participating-institutions-section__table
@@ -109,9 +109,9 @@
   .ant-table-tbody
   > tr
   > td {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   box-sizing: border-box !important;
   vertical-align: middle !important;
   padding-top: 0 !important;
@@ -126,9 +126,9 @@
   .payment-order-program-status-detail__table.participating-institutions-section__table
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status) {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
 }
 
 .payment-order-program-status-detail-fullpage-modal
@@ -141,9 +141,9 @@
   .ant-table-tbody
   > tr:has(td .status-dropdown-cell__status-trigger--open)
   > td {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
 }
 
 .payment-order-program-status-detail-fullpage-modal
@@ -159,9 +159,9 @@
   width: 176px;
   min-width: 176px;
   max-width: 176px;
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   padding-left: 0 !important;

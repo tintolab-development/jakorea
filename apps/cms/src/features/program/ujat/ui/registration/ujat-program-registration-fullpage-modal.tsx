@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { resolveRegistrationWizardIncompleteParagraphIds } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
 import {
   RegistrationWizardValidationHighlightProvider,
@@ -26,6 +27,8 @@ import {
 } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
 import { useUjatProgramRegistrationFlow } from '@/features/program/ujat/hooks/use-ujat-program-registration-flow'
 import { UjatProgramRegistrationBodyHeader } from '@/features/program/ujat/ui/registration/ujat-program-registration-body-header'
+import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/registration/step-template-banner'
+import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
 import type { Program } from '@/types/domain'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { deleteRegistrationProgramDraftRemote } from '@/features/program/general/lib/registration-program-draft-session'
@@ -39,6 +42,7 @@ import {
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
+import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
@@ -78,6 +82,7 @@ function UjatProgramRegistrationFullpageModalInner({
   onClose,
   onProgramRegistrationSaved,
 }: UjatProgramRegistrationFullpageModalProps) {
+  const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const { showAlert } = useCmsAlert()
   const { reportIncomplete } = useRegistrationWizardValidationHighlight()
@@ -95,6 +100,7 @@ function UjatProgramRegistrationFullpageModalInner({
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
   const [recruitmentPreviewOpen, setRecruitmentPreviewOpen] = useState(false)
   const [recruitmentPreviewProgram, setRecruitmentPreviewProgram] = useState<Program | null>(null)
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
     useState<RecruitmentUserPreviewAudience>('institutions')
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
@@ -139,13 +145,18 @@ function UjatProgramRegistrationFullpageModalInner({
     setCompleteSuccessOpen(false)
     setRecruitmentPreviewOpen(false)
     setRecruitmentPreviewProgram(null)
+    setTemplatePickerOpen(false)
     pendingCreatedProgramRef.current = undefined
   }, [open])
 
-  const handleRegistrationCreated = useCallback((program: Program) => {
-    pendingCreatedProgramRef.current = program
-    setCompleteSuccessOpen(true)
-  }, [])
+  const handleRegistrationCreated = useCallback(
+    (program: Program) => {
+      invalidateUjatProgramListCaches(queryClient)
+      pendingCreatedProgramRef.current = program
+      setCompleteSuccessOpen(true)
+    },
+    [queryClient]
+  )
 
   const recruitmentPreviewSponsorName = useSponsorNameById(recruitmentPreviewProgram?.sponsorId)
 
@@ -292,14 +303,33 @@ function UjatProgramRegistrationFullpageModalInner({
         titleReadOnly
         templateTabType="writing"
         registrationUserMode
+        showCloseButton
         onPreview={handlePreview}
         showPreview={flow.phase !== 'program'}
         onSave={handleSaveClick}
         bodyHeaderLeading={
           <UjatProgramRegistrationBodyHeader
             activeStep={flow.activeStep}
-            onSelectStep={flow.selectStep}
+            onSelectStep={key => {
+              setTemplatePickerOpen(false)
+              flow.selectStep(key)
+            }}
           />
+        }
+        bodyHeaderBelow={
+          flow.phase === 'program' ? undefined : (
+            <RegistrationStepTemplateChrome
+              templateName={flow.stepTemplateName}
+              isDefault={flow.isDefaultStepTemplate}
+              category="application"
+              pickerOpen={templatePickerOpen}
+              onOpenPicker={() => setTemplatePickerOpen(true)}
+              onClosePicker={() => setTemplatePickerOpen(false)}
+              onUseTemplate={row => {
+                void flow.selectStepTemplate(row).then(() => setTemplatePickerOpen(false))
+              }}
+            />
+          )
         }
         headerActionsLeading={
           <RegistrationDevAutofillButton
@@ -309,7 +339,18 @@ function UjatProgramRegistrationFullpageModalInner({
           />
         }
         footerActions={flow.isDraftLoading ? undefined : footerActions}
-        leftContent={flow.isDraftLoading ? <FormDraftLoading /> : flow.panels.leftContent}
+        leftContent={
+          flow.isDraftLoading ? (
+            <FormDraftLoading />
+          ) : (
+            <HideParagraphSelectionChromeContext.Provider
+              key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
+              value
+            >
+              {flow.panels.leftContent}
+            </HideParagraphSelectionChromeContext.Provider>
+          )
+        }
         rightNavigation={null} // 공통·모집만 있어 커스텀 필드 우측 패널 미노출
       />
       <RegistrationDraftOverwriteConfirmModal

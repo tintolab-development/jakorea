@@ -284,6 +284,43 @@ function omitRecruitmentWindowFromCommonInfo(
   return next
 }
 
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000
+
+export function toKstDateKey(value: string | Date | undefined | null): string | undefined {
+  if (value == null) return undefined
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return undefined
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+  }
+  const time = new Date(value).getTime()
+  if (Number.isNaN(time)) return undefined
+  return new Date(time + KST_OFFSET_MS).toISOString().slice(0, 10)
+}
+
+/** BE 면접 선택지 펼침 기간 — 봉사자 「2차 면접 심사」 기간을 그대로 쓴다. */
+export function withVolunteerInterviewSchedulePeriod(
+  program: Program,
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  const schedule = common?.volunteerInterviewScheduleInfo
+  if (!common || !schedule) return common
+  const volunteerInfo = common.volunteerRecruitmentInfo
+  const periodStartDate = toKstDateKey(
+    program.interviewStartDate ?? volunteerInfo?.interviewStartDate
+  )
+  const periodEndDate = toKstDateKey(program.interviewEndDate ?? volunteerInfo?.interviewEndDate)
+  const { periodStartDate: _start, periodEndDate: _end, ...rest } = schedule
+  return {
+    ...common,
+    volunteerInterviewScheduleInfo: {
+      ...rest,
+      ...(periodStartDate ? { periodStartDate } : {}),
+      ...(periodEndDate ? { periodEndDate } : {}),
+    },
+  }
+}
+
 export function serializeGeneralProgramServiceDetailJson(
   program: Program,
   options?: { omitRecruitmentWindow?: boolean }
@@ -295,7 +332,7 @@ export function serializeGeneralProgramServiceDetailJson(
   const generalCommonInfo = omitColumnTargetLevelsFromCommonInfo(
     options?.omitRecruitmentWindow
       ? omitRecruitmentWindowFromCommonInfo(withAudienceRule)
-      : withAudienceRule
+      : withVolunteerInterviewSchedulePeriod(program, withAudienceRule)
   )
   const nestedProgram: Program = {
     ...program,
