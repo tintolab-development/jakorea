@@ -35,35 +35,6 @@
   min-width: 0;
 }
 
-.paragraph-file-attachment__files {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 14px;
-  min-height: 24px;
-}
-
-.paragraph-file-attachment__file-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.paragraph-file-attachment__file-name {
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  white-space: nowrap;
-}
-
-.paragraph-file-attachment__file-remove {
-  width: 20px;
-  height: 20px;
-}
-
 @media (max-width: 1200px) {
   .paragraph-file-attachment {
     grid-template-columns: 180px minmax(0, 1fr);
@@ -71,9 +42,5 @@
 
   .paragraph-file-attachment__label {
     font-size: 15px;
-  }
-
-  .paragraph-file-attachment__file-name {
-    font-size: 14px;
   }
 }

@@ -33,9 +33,35 @@ export function formatEducationNoticeFileSize(bytes: number): string {
   return `${Math.max(1, Math.round(kb))}KB`
 }
 
+const HTML_ENTITIES: Record<string, string> = {
+  '&nbsp;': ' ',
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+}
+
+/** CMS 본문(마크다운 + 인라인 HTML)을 카드·제목용 텍스트로 — 이미지·태그·마크다운 기호 제거 */
+export function toEducationNoticePlainText(value: string): string {
+  return value
+    .replace(/<img\b[^>]*>/gi, '')
+    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\[([^\]]*)]\([^)]*\)/g, '$1')
+    .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, '')
+    .replace(/(\*\*|__|~~|`)/g, '')
+    .replace(/&(nbsp|amp|lt|gt|quot|#39);/g, entity => HTML_ENTITIES[entity] ?? entity)
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 export function resolveEducationNoticeTitle(title: string, content: string): string {
-  const trimmedTitle = title.trim()
+  const trimmedTitle = toEducationNoticePlainText(title).split(/\n/)[0]?.trim() ?? ''
   if (trimmedTitle.length > 0) return trimmedTitle
-  const firstLine = content.split(/\n/)[0]?.trim() ?? ''
+  const firstLine = toEducationNoticePlainText(content).split(/\n/)[0]?.trim() ?? ''
   return firstLine
 }

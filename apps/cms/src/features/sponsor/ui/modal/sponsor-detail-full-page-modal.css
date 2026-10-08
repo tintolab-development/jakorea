@@ -24,7 +24,7 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 54px !important;
+  height: 52px !important;
   flex-shrink: 0;
   align-self: stretch;
   vertical-align: middle !important;
@@ -32,9 +32,9 @@
 
 .sponsor-detail-fullpage-modal .cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar),
 .sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   box-sizing: border-box !important;
 }
 
@@ -43,7 +43,7 @@
   padding-bottom: 10px !important;
 }
 
-/* 담당자 유형 등 StatusDropdownCell: 54px 행에서 상하 패딩만 제거 */
+/* 담당자 유형 등 StatusDropdownCell: 52px 행에서 상하 패딩만 제거 */
 .sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.status-dropdown-cell__cell-status {
   padding-top: 0 !important;
   padding-bottom: 0 !important;

@@ -104,5 +104,6 @@ export {
   useMyProgramApplicationDetail,
   useMyProgramApplications,
 } from './api/hooks'
-export type { MypageApplicationScope } from './api/hooks'
-export type { ProgramApplicationType } from './api/types'
+export type { MypageApplicationScope, MyProgramApplicationsListOptions } from './api/hooks'
+export type { ProgramApplicationType, ProgramApplicationStatusGroup } from './api/types'
+export { resolveStatusGroupForTab, resolveStatusGroupsForTab } from './api/status-group'

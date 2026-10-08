@@ -3,16 +3,18 @@
  */
 
 import { lazy, Suspense, useCallback, useMemo } from 'react'
-import { DownloadOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, ExcelButton } from '@/shared/ui'
+import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-modal/application-institution/use-program-schedule-dates'
 import type { EducationProgressHalfKey } from '../tabs'
 import {
   buildVolunteer1365FortuneSheet,
   buildVolunteer1365SheetColumnCount,
+  type Volunteer1365VolunteerSource,
 } from './volunteer-1365-fortune-data'
+import { useVolunteer1365Attendance } from './use-volunteer-1365-attendance'
 import './volunteer-1365-preview-modal.css'
 
 const Workbook = lazy(() => import('@/pages/settlement-management/bulk-transfer-fortune-workbook'))
@@ -21,26 +23,38 @@ export interface Volunteer1365PreviewModalProps {
   open: boolean
   onCancel: () => void
   half: EducationProgressHalfKey
-  volunteerIds: readonly string[]
+  volunteers: readonly Volunteer1365VolunteerSource[]
+  programId?: string | null
 }
 
 export function Volunteer1365PreviewModal({
   open,
   onCancel,
   half,
-  volunteerIds,
+  volunteers,
+  programId,
 }: Volunteer1365PreviewModalProps) {
+  const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
+  const { data: attendance } = useVolunteer1365Attendance({
+    programId,
+    half,
+    scheduleDates,
+    enabled: open,
+  })
   const sheetData: Sheet[] = useMemo(() => {
-    const sheet = buildVolunteer1365FortuneSheet(half, volunteerIds)
+    const sheet = buildVolunteer1365FortuneSheet(half, volunteers, scheduleDates, attendance)
     return [sheet]
-  }, [half, volunteerIds])
+  }, [attendance, half, scheduleDates, volunteers])
 
-  const columnCount = useMemo(() => buildVolunteer1365SheetColumnCount(half), [half])
+  const columnCount = useMemo(
+    () => buildVolunteer1365SheetColumnCount(half, scheduleDates),
+    [half, scheduleDates]
+  )
 
   const handleDownload = useCallback(async () => {
     const { exportVolunteer1365Excel } = await import('./volunteer-1365-excel')
-    await exportVolunteer1365Excel(half, volunteerIds)
-  }, [half, volunteerIds])
+    await exportVolunteer1365Excel(half, volunteers, scheduleDates, attendance)
+  }, [attendance, half, scheduleDates, volunteers])
 
   return (
     <ContentModal
@@ -56,15 +70,7 @@ export function Volunteer1365PreviewModal({
           <CmsButton variant="secondary" size="large" onClick={onCancel}>
             닫기
           </CmsButton>
-          <CmsButton
-            variant="primary"
-            size="large"
-            icon={<DownloadOutlined />}
-            adminAction="download"
-            onClick={() => void handleDownload()}
-          >
-            엑셀 다운로드
-          </CmsButton>
+          <ExcelButton onClick={() => void handleDownload()} />
         </>
       }
     >
@@ -78,7 +84,7 @@ export function Volunteer1365PreviewModal({
             }
           >
             <Workbook
-              key={`${half}-${sheetData[0]?.celldata?.length ?? 0}`}
+              key={`${half}-${sheetData[0]?.celldata?.length ?? 0}-${attendance?.size ?? 0}`}
               data={sheetData}
               column={columnCount}
               showToolbar={false}

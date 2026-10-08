@@ -3,7 +3,7 @@
  * 레이아웃·공통 컴포넌트는 `program-list-page.tsx` / `ProgramList` 와 동일하게 FilterTableLayout + cms-data-table 사용
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -38,11 +38,23 @@ import {
   type RegistrationDraftNoticeChoice,
 } from '@/features/program/shared/ui/registration/draft-notice-modal'
 import {
+  useBulkDeleteUjatPrograms,
+  useDeleteProgram,
   useProgramDetail,
   usePrograms,
   useUjatBusinessYears,
   useUpdateProgram,
 } from '@/features/program/ujat/api/queries'
+import {
+  buildProgramHardDeleteBlockedAlertContent,
+  buildProgramSingleDeleteGuideLines,
+  isProgramHardDeleteBlockedError,
+  PROGRAM_DELETE_GUIDE_TITLE,
+  PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+  resolveProgramDeleteGuideModalCopy,
+} from '@/features/program/shared/lib/program-delete-guide'
+import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
   buildUjatProgressYearFieldOptions,
   UJAT_PROGRESS_YEAR_ALL,
@@ -51,7 +63,7 @@ import {
 import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
 import { getHttpStatus } from '@/features/program/ujat/api/errors'
 import type { Program } from '@/types/domain'
-import { FilterTableLayout, CmsButton } from '@/shared/ui'
+import { FilterTableLayout, CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
@@ -89,6 +101,27 @@ function isUjatProgramListPath(pathnameNormalized: string): boolean {
   )
 }
 
+function clearUjatDetailQueryParams(next: URLSearchParams): URLSearchParams {
+  next.delete('programId')
+  next.delete('lnb')
+  next.delete('tab')
+  next.delete('edit')
+  next.delete(UJAT_INST_APP_ID_PARAM)
+  next.delete(UJAT_APPLICANT_ID_PARAM)
+  next.delete(UJAT_EDU_INST_ID_PARAM)
+  next.delete(UJAT_EDU_INST_TAB_PARAM)
+  next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+  return next
+}
+
+function readErrorResponseMessage(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined
+  const data = (error as { response?: { data?: unknown } }).response?.data
+  if (!data || typeof data !== 'object' || !('message' in data)) return undefined
+  const message = (data as { message?: unknown }).message
+  return typeof message === 'string' ? message : undefined
+}
+
 function UjatProgramListPageContent() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -114,6 +147,8 @@ function UjatProgramListPageContent() {
   const programsQuery = usePrograms(listParams)
   const businessYearsQuery = useUjatBusinessYears()
   const updateProgramMutation = useUpdateProgram()
+  const deleteProgramMutation = useDeleteProgram()
+  const bulkDeleteProgramsMutation = useBulkDeleteUjatPrograms()
   const programs = useMemo(
     () => programsQuery.data?.pages.flatMap(page => page.programs) ?? [],
     [programsQuery.data]
@@ -205,17 +240,9 @@ function UjatProgramListPageContent() {
     if (detailQuery.isError && getHttpStatus(detailQuery.error) !== 404) return
     if (ujatDetailProgram) return
     if (programs.some(p => p.id === programIdFromUrl)) return
-    const next = new URLSearchParams(searchParams)
-    next.delete('programId')
-    next.delete('lnb')
-    next.delete('tab')
-    next.delete('edit')
-    next.delete(UJAT_INST_APP_ID_PARAM)
-    next.delete(UJAT_APPLICANT_ID_PARAM)
-    next.delete(UJAT_EDU_INST_ID_PARAM)
-    next.delete(UJAT_EDU_INST_TAB_PARAM)
-    next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
-    setSearchParams(next, { replace: true })
+    setSearchParams(clearUjatDetailQueryParams(new URLSearchParams(searchParams)), {
+      replace: true,
+    })
   }, [
     programIdFromUrl,
     loading,
@@ -226,6 +253,83 @@ function UjatProgramListPageContent() {
     programs,
     searchParams,
     setSearchParams,
+  ])
+
+  const [programPendingDelete, setProgramPendingDelete] = useState<Program | null>(null)
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!programPendingDelete) return
+    const targetId = programPendingDelete.id
+    try {
+      await deleteProgramMutation.mutateAsync(targetId)
+      setProgramPendingDelete(null)
+      setSearchParams(prev => clearUjatDetailQueryParams(new URLSearchParams(prev)), {
+        replace: true,
+      })
+      void programsQuery.refetch()
+      showDeleteCompletedAlert()
+    } catch (error) {
+      setProgramPendingDelete(null)
+      showAlert(
+        getHttpStatus(error) === 409
+          ? {
+              title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+              content: buildProgramHardDeleteBlockedAlertContent(1, readErrorResponseMessage(error)),
+            }
+          : {
+              title: '삭제 실패',
+              content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            }
+      )
+    }
+  }, [deleteProgramMutation, programPendingDelete, programsQuery, setSearchParams, showAlert])
+
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
+  const bulkDeleteGuide = useMemo(
+    () => resolveProgramDeleteGuideModalCopy(selectedRowKeys.length),
+    [selectedRowKeys.length]
+  )
+
+  const handleBulkDeleteClick = useCallback(() => {
+    if (selectedRowKeys.length === 0) {
+      showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
+      return
+    }
+    setBulkDeleteModalOpen(true)
+  }, [selectedRowKeys.length, showAlert])
+
+  const handleConfirmBulkDelete = useCallback(async () => {
+    const idsToDelete = selectedRowKeys.map(key => String(key))
+    try {
+      if (programIdFromUrl && idsToDelete.includes(programIdFromUrl)) {
+        setSearchParams(prev => clearUjatDetailQueryParams(new URLSearchParams(prev)), {
+          replace: true,
+        })
+      }
+      await bulkDeleteProgramsMutation.mutateAsync(idsToDelete)
+      setSelectedRowKeys([])
+      setBulkDeleteModalOpen(false)
+      void programsQuery.refetch()
+      showDeleteCompletedAlert()
+    } catch (error) {
+      setBulkDeleteModalOpen(false)
+      showAlert(
+        isProgramHardDeleteBlockedError(error)
+          ? { title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE, content: error.message }
+          : {
+              title: '삭제 실패',
+              content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            }
+      )
+    }
+  }, [
+    bulkDeleteProgramsMutation,
+    programIdFromUrl,
+    programsQuery,
+    selectedRowKeys,
+    setSearchParams,
+    showAlert,
   ])
 
   const ujatPrograms = programs
@@ -404,6 +508,11 @@ function UjatProgramListPageContent() {
         bordered={false}
         title="전체 프로그램"
         description={`총 ${totalElements.toLocaleString()}건`}
+        actions={
+          <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
+            선택 삭제
+          </CmsButton>
+        }
         actionsAfterExcel={toolbarActionsAfterExcel}
         excelExport={{
           columns,
@@ -417,8 +526,17 @@ function UjatProgramListPageContent() {
           dataSource={filteredRows}
           columns={columns}
           pagination={false}
+          rowSelection={{
+            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+            selectedRowKeys,
+            onChange: keys => setSelectedRowKeys(keys),
+            getCheckboxProps: record => ({ disabled: record.listDeleteBlocked === true }),
+          }}
           onRow={record => ({
-            onClick: () => handleRowNavigate(record),
+            onClick: (e: MouseEvent<HTMLElement>) => {
+              if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+              handleRowNavigate(record)
+            },
             style: { cursor: 'pointer' },
           })}
         />
@@ -440,6 +558,7 @@ function UjatProgramListPageContent() {
         onUpdateProgram={(programId, program, patch) =>
           updateProgramMutation.mutateAsync({ programId, program, patch })
         }
+        onRequestDelete={setProgramPendingDelete}
       />
       </ProgramModalWhenOpen>
 
@@ -456,6 +575,30 @@ function UjatProgramListPageContent() {
         draftTitle={draftNoticeTitle}
         onConfirm={handleDraftNoticeConfirm}
         onCancel={() => setDraftNoticeOpen(false)}
+      />
+
+      <DeleteGuideModal
+        open={programPendingDelete != null}
+        title={PROGRAM_DELETE_GUIDE_TITLE}
+        lines={buildProgramSingleDeleteGuideLines()}
+        confirmText="삭제"
+        confirmLoading={deleteProgramMutation.isPending}
+        onConfirm={() => {
+          void handleConfirmDelete()
+        }}
+        onCancel={() => setProgramPendingDelete(null)}
+      />
+
+      <DeleteGuideModal
+        open={bulkDeleteModalOpen}
+        title={bulkDeleteGuide.title}
+        lines={bulkDeleteGuide.lines}
+        confirmText="삭제"
+        confirmLoading={bulkDeleteProgramsMutation.isPending}
+        onConfirm={() => {
+          void handleConfirmBulkDelete()
+        }}
+        onCancel={() => setBulkDeleteModalOpen(false)}
       />
     </div>
   )

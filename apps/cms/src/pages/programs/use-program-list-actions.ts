@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { MESSAGES } from '@/shared/constants'
+import { showDeleteCompletedAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
 import { mockApplications, mockMatchings, mockSchedules } from '@/data/mock'
 import { useProgramStore } from '@/features/program/general/model/program-store'
@@ -95,6 +96,7 @@ export function useProgramListActions() {
       await deleteProgram(program.id)
       await fetchPrograms()
       onSuccess()
+      showDeleteCompletedAlert()
     } catch (error) {
       handleError(error, {
         defaultMessage: MESSAGES.error.delete,
@@ -112,6 +114,7 @@ export function useProgramListActions() {
       }
       await fetchPrograms()
       onSuccess()
+      showDeleteCompletedAlert()
     } catch (error) {
       handleError(error, {
         defaultMessage: MESSAGES.error.delete,

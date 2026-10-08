@@ -3,6 +3,7 @@ import type { Program } from '@/types/domain'
 import {
   applyRecruitmentRowCopy,
   hydrateGeneralRecruitmentInfoFromRows,
+  pickRecruitmentCopyRow,
   resolveRecruitmentOtherMatters,
   resolveRecruitmentRemarks,
 } from './recruitment-row-copy'
@@ -147,5 +148,61 @@ describe('applyRecruitmentRowCopy', () => {
     const next = applyRecruitmentRowCopy(program, 'volunteer')
     expect(next.otherNotes).toBe('overlay 비고')
     expect(next.oneLineIntroduction).toBe('행 비고')
+  })
+
+  it('빈 모집 행은 overlay로 채운 설명·안내를 지우지 않는다', () => {
+    const program = baseProgram({
+      description: '등록한 프로그램 설명',
+      recruitmentGuide: '등록한 모집 안내',
+      applicationMethod: '등록한 신청 방법',
+      programRecruitments: [
+        {
+          id: 11,
+          recruitmentType: 'PARTICIPANT',
+          programDescription: '',
+          recruitmentGuide: null,
+          applicationMethod: undefined,
+        },
+      ],
+    })
+
+    const next = applyRecruitmentRowCopy(program, 'participant')
+    expect(next.description).toBe('등록한 프로그램 설명')
+    expect(next.recruitmentGuide).toBe('등록한 모집 안내')
+    expect(next.applicationMethod).toBe('등록한 신청 방법')
+  })
+})
+
+describe('pickRecruitmentCopyRow 봉사자 반기', () => {
+  it('recruitTerm이 있으면 시작일 순서보다 recruitTerm을 우선한다', () => {
+    const program = baseProgram({
+      programRecruitments: [
+        { id: 2, recruitmentType: 'VOLUNTEER', recruitTerm: 'SECOND_HALF', startAt: '2026-01-01' },
+        { id: 1, recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF', startAt: '2026-07-01' },
+      ],
+    })
+
+    expect(pickRecruitmentCopyRow(program, 'volunteer', 'h1')?.id).toBe(1)
+    expect(pickRecruitmentCopyRow(program, 'volunteer', 'h2')?.id).toBe(2)
+  })
+
+  it('하반기 행이 없으면 상반기 행을 하반기로 고르지 않는다', () => {
+    const program = baseProgram({
+      programRecruitments: [{ id: 1, recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' }],
+    })
+
+    expect(pickRecruitmentCopyRow(program, 'volunteer', 'h2')).toBeUndefined()
+  })
+
+  it('recruitTerm이 없으면 시작일 순서로 고른다', () => {
+    const program = baseProgram({
+      programRecruitments: [
+        { id: 2, recruitmentType: 'VOLUNTEER', startAt: '2026-07-01' },
+        { id: 1, recruitmentType: 'VOLUNTEER', startAt: '2026-01-01' },
+      ],
+    })
+
+    expect(pickRecruitmentCopyRow(program, 'volunteer', 'h1')?.id).toBe(1)
+    expect(pickRecruitmentCopyRow(program, 'volunteer', 'h2')?.id).toBe(2)
   })
 })

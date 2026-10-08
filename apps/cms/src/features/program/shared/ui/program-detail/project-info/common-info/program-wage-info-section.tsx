@@ -16,7 +16,6 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import {
   coerceProgramPaymentItemsText,
-  getProgramWagePaymentItemOptions,
   programPaymentItemLabelsFromIds,
   resolveProgramPaymentItemIdsFromLabels,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
@@ -25,7 +24,10 @@ import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import type { Program } from '@/types/domain'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
-import { useTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
+import {
+  paymentItemSelectPlaceholder,
+  usePaymentItemCatalogState,
+} from '@/features/template/lib/template-registration-payment-item-options'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 export interface ProgramWageInfoSectionProps {
@@ -41,9 +43,6 @@ const WAGE_COMPARE_RADIO_OPTIONS = [
   { value: 'over' as const, label: '초과' },
   { value: 'under' as const, label: '이하' },
 ]
-
-const COMPANY_SCHOOL_PAYMENT_ID_TRANSPORT = 'p-1'
-const COMPANY_SCHOOL_PAYMENT_ID_LODGING = 'p-7'
 
 const PAYMENT_LABEL_TRANSPORT_CATALOG = '강사 교통비'
 const PAYMENT_LABEL_LODGING_CATALOG = '숙박비 (1사1교)'
@@ -99,10 +98,10 @@ function remapCompanySchoolPaymentItemOptions(
 ): CmsSelectMultipleOption[] {
   return options.map(opt => {
     const label = opt.label.trim()
-    if (label === PAYMENT_LABEL_TRANSPORT_CATALOG || opt.value === COMPANY_SCHOOL_PAYMENT_ID_TRANSPORT) {
+    if (label === PAYMENT_LABEL_TRANSPORT_CATALOG) {
       return { ...opt, label: PAYMENT_LABEL_TRANSPORT_1C1S }
     }
-    if (label === PAYMENT_LABEL_LODGING_CATALOG || opt.value === COMPANY_SCHOOL_PAYMENT_ID_LODGING) {
+    if (label === PAYMENT_LABEL_LODGING_CATALOG) {
       return { ...opt, label: PAYMENT_LABEL_LODGING_1C1S }
     }
     return opt
@@ -282,13 +281,10 @@ export function ProgramWageInfoSection({
     forceCompanySchoolLayout ||
     (program != null && isCompanySchoolProgram(program)) ||
     isCompanySchoolProgramId(programId)
-  const remotePaymentOptions = useTemplateRegistrationPaymentItemOptions()
+  const paymentCatalog = usePaymentItemCatalogState()
   const companySchoolPaymentItemOptions = useMemo(
-    () =>
-      remapCompanySchoolPaymentItemOptions(
-        remotePaymentOptions.length > 0 ? remotePaymentOptions : getProgramWagePaymentItemOptions()
-      ),
-    [remotePaymentOptions]
+    () => remapCompanySchoolPaymentItemOptions(paymentCatalog.options),
+    [paymentCatalog.options]
   )
   const isFormEdit = isEditMode && form
   const parsedPricing = useMemo(
@@ -396,7 +392,8 @@ export function ProgramWageInfoSection({
                         value={field.value ?? []}
                         onChange={next => field.onChange(next as string[])}
                         options={companySchoolPaymentItemOptions}
-                        placeholder="지급 항목을 선택하세요"
+                        disabled={!paymentCatalog.ready}
+                        placeholder={paymentItemSelectPlaceholder(paymentCatalog)}
                         style={{ width: '100%', minWidth: 0 }}
                       />
                     )}

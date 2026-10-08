@@ -39,6 +39,7 @@ import type {
   ParticipatingIndividualInstructorWaitingScheduleRow,
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { useParticipatingInstructorInstitutionAssignment } from '@/features/program/general/hooks/use-participating-instructor-institution-assignment'
+import { getParticipationConsentRequiredMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
   cancelInstructorAssignmentRemote,
   createInstructorAssignmentRemote,
@@ -429,9 +430,10 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         return true
       } catch (error) {
         const message =
-          error instanceof Error && error.message.trim()
+          getParticipationConsentRequiredMessage(error) ??
+          (error instanceof Error && error.message.trim()
             ? error.message
-            : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+            : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.')
         showAlert({ title: '배정 실패', content: message })
         return false
       }

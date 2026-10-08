@@ -112,6 +112,38 @@ export function removeWritingFormTemplateSave(templateId: string): void {
   }
 }
 
+/** 접두사에 해당하는 로컬 초안을 복제해 둔다. 위저드 방문 스냅샷용. */
+export function captureWritingFormTemplateSavesByPrefix(
+  prefix: string
+): Record<string, WritingFormTemplateSaveRecord> {
+  const file = readFile()
+  const snapshot: Record<string, WritingFormTemplateSaveRecord> = {}
+  for (const [templateId, record] of Object.entries(file.byTemplateId)) {
+    if (!templateId.startsWith(prefix) || record.version !== 1) continue
+    snapshot[templateId] = cloneJson(record)
+  }
+  return snapshot
+}
+
+/**
+ * 접두사 초안을 스냅샷으로 되돌린다.
+ * 스냅샷에 없는 키는 제거하고, 있던 키는 방문 시작(또는 임시저장) 시점으로 덮어쓴다.
+ */
+export function restoreWritingFormTemplateSavesByPrefix(
+  prefix: string,
+  snapshot: Record<string, WritingFormTemplateSaveRecord>
+): void {
+  const file = readFile()
+  for (const templateId of Object.keys(file.byTemplateId)) {
+    if (templateId.startsWith(prefix)) delete file.byTemplateId[templateId]
+  }
+  for (const [templateId, record] of Object.entries(snapshot)) {
+    if (!templateId.startsWith(prefix) || record.version !== 1) continue
+    file.byTemplateId[templateId] = cloneJson(record)
+  }
+  writeFile(file)
+}
+
 /** 프로그램 등록 위저드처럼 접두사로 격리된 localStorage 초안을 일괄 제거한다. */
 export function removeWritingFormTemplateSavesByPrefix(prefix: string): void {
   const file = readFile()

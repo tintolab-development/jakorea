@@ -6,13 +6,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Image } from 'antd'
 import type { Program } from '@/types/domain'
 import { Controller, useFormState } from 'react-hook-form'
 import type { ControllerRenderProps, FieldPath, UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
-import { THUMBNAIL_SIZE_EXCEEDED_MESSAGE } from '@/shared/ui/file-select-field-limits'
+import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
@@ -43,7 +42,6 @@ import {
   DEFAULT_RECRUITMENT_GUIDE,
   getThumbnailFilename,
 } from '@/features/program/shared/lib/program-detail-info-constants'
-import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
 import './project-info-detail-info-section.css'
 
 /** 참여자 정보 탭 등 파일 선택(FileSelectField) 우측 안내 — 썸네일·첨부 공통 */
@@ -517,109 +515,85 @@ function ThumbnailImageRow({
         {showRequiredStar ? <span className="program-detail-info-tab__required">*</span> : null}
       </th>
       <td className="program-detail-info-tab__cell--thumbnail">
-        <div className="program-detail-info-tab__thumbnail-wrap">
-          <div className="program-detail-info-tab__thumbnail-row">
-            {displayThumbnailUrl ? (
-              <Image
-                src={displayThumbnailUrl}
-                alt={program.title}
-                className="program-detail-info-tab__thumbnail-img"
-                preview={{ mask: '확대 보기' }}
-              />
-            ) : (
-              <ProgramThumbnailPlaceholder />
-            )}
-            <div className="program-detail-info-tab__thumbnail-meta">
-              <FileSelectField
-                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                multiple={false}
-                disabled={!isEditMode || uploadingThumbnail}
-                buttonLabel={uploadingThumbnail ? '업로드 중…' : '파일 선택'}
-                uploading={uploadingThumbnail}
-                className={
-                  isEditMode
-                    ? 'program-detail-info-tab__file-select file-select-field--edit'
-                    : 'program-detail-info-tab__file-select'
+        <ThumbnailUploadField
+          previewUrl={displayThumbnailUrl}
+          previewAlt={program.title}
+          fileName={thumbnailFilename}
+          guideLines={guideLines}
+          disabled={!isEditMode}
+          uploading={uploadingThumbnail}
+          onSelectFile={
+            isFormEdit
+              ? async file => {
+                  if (!form) return
+                  setThumbnailPreviewBlobUrl(prev => {
+                    if (prev) URL.revokeObjectURL(prev)
+                    return null
+                  })
+                  const blobUrl = URL.createObjectURL(file)
+                  setThumbnailPreviewBlobUrl(blobUrl)
+                  setUploadingThumbnail(true)
+                  try {
+                    const owner = programMediaThumbnailOwner(program)
+                    if (owner == null) {
+                      throw new Error('프로그램 번호가 없어 대표 이미지를 저장할 수 없습니다.')
+                    }
+                    const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                    await putProgramMediaThumbnail(program, uploaded.fileObjectId)
+                    let previewUrl = blobUrl
+                    try {
+                      previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
+                      if (previewUrl !== blobUrl) URL.revokeObjectURL(blobUrl)
+                    } catch {
+                      previewUrl = blobUrl
+                    }
+                    setLinkedThumbnail(prev => {
+                      if (prev?.url !== previewUrl) revokeBlobUrl(prev?.url)
+                      return { url: previewUrl, fileName: file.name }
+                    })
+                    setThumbnailPreviewBlobUrl(null)
+                  } catch (error) {
+                    URL.revokeObjectURL(blobUrl)
+                    setThumbnailPreviewBlobUrl(null)
+                    showAlert({
+                      title: '안내',
+                      content: extractApiErrorMessage(axiosErrorData(error), {
+                        fallback: '대표 이미지를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                      }),
+                    })
+                  } finally {
+                    setUploadingThumbnail(false)
+                  }
                 }
-                fileNames={thumbnailFilename ? [thumbnailFilename] : []}
-                guideLines={guideLines}
-                sizeExceededMessage={THUMBNAIL_SIZE_EXCEEDED_MESSAGE}
-                onFilesChange={
-                  isFormEdit
-                    ? async files => {
-                        const file = files[0]
-                        if (!file || !form) return
-                        setThumbnailPreviewBlobUrl(prev => {
-                          if (prev) URL.revokeObjectURL(prev)
-                          return null
-                        })
-                        const blobUrl = URL.createObjectURL(file)
-                        setThumbnailPreviewBlobUrl(blobUrl)
-                        setUploadingThumbnail(true)
-                        try {
-                          const owner = programMediaThumbnailOwner(program)
-                          if (owner == null) {
-                            throw new Error('프로그램 번호가 없어 대표 이미지를 저장할 수 없습니다.')
-                          }
-                          const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                          await putProgramMediaThumbnail(program, uploaded.fileObjectId)
-                          let previewUrl = blobUrl
-                          try {
-                            previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
-                            if (previewUrl !== blobUrl) URL.revokeObjectURL(blobUrl)
-                          } catch {
-                            previewUrl = blobUrl
-                          }
-                          setLinkedThumbnail(prev => {
-                            if (prev?.url !== previewUrl) revokeBlobUrl(prev?.url)
-                            return { url: previewUrl, fileName: file.name }
-                          })
-                          setThumbnailPreviewBlobUrl(null)
-                        } catch (error) {
-                          URL.revokeObjectURL(blobUrl)
-                          setThumbnailPreviewBlobUrl(null)
-                          showAlert({
-                            title: '안내',
-                            content: extractApiErrorMessage(axiosErrorData(error), {
-                              fallback: '대표 이미지를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-                            }),
-                          })
-                        } finally {
-                          setUploadingThumbnail(false)
-                        }
-                      }
-                    : undefined
+              : undefined
+          }
+          onRemove={
+            isFormEdit
+              ? () => {
+                  setThumbnailPreviewBlobUrl(prev => {
+                    if (prev) URL.revokeObjectURL(prev)
+                    return null
+                  })
+                  if (form) {
+                    form.setValue('keyVisualImage', undefined)
+                    form.setValue('posterImage', undefined)
+                  }
+                  setLinkedThumbnail(prev => {
+                    revokeBlobUrl(prev?.url)
+                    return null
+                  })
+                  if (hasProgramMediaTarget(program)) {
+                    void putProgramMediaThumbnail(program, null).catch(() => {
+                      showAlert({
+                        title: '안내',
+                        content: '대표 이미지를 지우지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                      })
+                    })
+                  }
                 }
-                onRemoveFile={
-                  isFormEdit
-                    ? () => {
-                        setThumbnailPreviewBlobUrl(prev => {
-                          if (prev) URL.revokeObjectURL(prev)
-                          return null
-                        })
-                        if (form) {
-                          form.setValue('keyVisualImage', undefined)
-                          form.setValue('posterImage', undefined)
-                        }
-                        setLinkedThumbnail(prev => {
-                          revokeBlobUrl(prev?.url)
-                          return null
-                        })
-                        if (hasProgramMediaTarget(program)) {
-                          void putProgramMediaThumbnail(program, null).catch(() => {
-                            showAlert({
-                              title: '안내',
-                              content: '대표 이미지를 지우지 못했습니다. 잠시 후 다시 시도해 주세요.',
-                            })
-                          })
-                        }
-                      }
-                    : undefined
-                }
-              />
-            </div>
-          </div>
-        </div>
+              : undefined
+          }
+        />
       </td>
     </tr>
   )
@@ -747,7 +721,6 @@ function AttachmentRowStandard({
             multiple
             disabled={!isEditMode || uploading}
             uploading={uploading}
-            buttonLabel="파일 선택"
             className={isEditMode ? 'file-select-field--edit' : ''}
             fileNames={displayFileNames}
             guideLines={guideLines}
@@ -1328,7 +1301,6 @@ export function VolunteerDetailInfoSection({
                   multiple
                   disabled={uploadingAttachments}
                   uploading={uploadingAttachments}
-                  buttonLabel="파일 선택"
                   className="file-select-field--edit"
                   fileNames={displayFileNames}
                   guideLines={ATTACHMENT_GUIDE_LINES}

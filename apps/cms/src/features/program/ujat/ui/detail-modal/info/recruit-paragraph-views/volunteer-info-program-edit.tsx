@@ -1,14 +1,18 @@
-import { useMemo } from 'react'
 import { Controller, type UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
+import { resolveProgramVolunteerTargets } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   isUjatVolunteerNoticeExposureValue,
+  NOTICE_EXPOSURE_ERROR_STYLE,
   UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS,
 } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { UjatRecruitSectionDescriptionHeader } from '../ujat-recruit-section-description-header'
-import { recruitmentTargetLabelsToOptionValues } from '../recruit-lib/recruitment-target-values'
+import {
+  normalizeRecruitmentTargetSelectValues,
+  recruitmentTargetOptionValuesToStored,
+  UJAT_VOLUNTEER_RECRUIT_TARGET_OPTIONS,
+} from '../recruit-lib/recruitment-target-values'
 import {
   UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS,
   UJAT_RECRUIT_PROGRESS_HINT,
@@ -45,16 +49,8 @@ export function UjatRecruitVolunteerInfoProgramEdit({
       ? UJAT_RECRUIT_TAB_LABELS.recruit_volunteer_h1
       : UJAT_RECRUIT_TAB_LABELS.recruit_volunteer_h2)
   const activityTermLabel = volunteerHalf === 'h1' ? '상반기 (1학기)' : '하반기 (2학기)'
-  const recruitTargets = useMemo(
-    () => recruitmentTargetLabelsToOptionValues(program.volunteerTarget),
-    [program.volunteerTarget]
-  )
   const recruitStartName = 'volunteerApplicationStartDate' as const
   const recruitEndName = 'volunteerApplicationEndDate' as const
-  const noticeExposureSetting: string | undefined = undefined /* TODO(api) */
-  const noticeExposureValue = isUjatVolunteerNoticeExposureValue(noticeExposureSetting)
-    ? noticeExposureSetting
-    : 'start-day'
   return (
     <>
       <UjatRecruitSectionDescriptionHeader title={resolvedSectionTitle} />
@@ -65,13 +61,31 @@ export function UjatRecruitVolunteerInfoProgramEdit({
               label="모집 공고 노출 시점"
               fullRow
               edit={
-                <CmsRadioGroup value={noticeExposureValue} disabled>
-                  {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
-                    <CmsRadio key={o.value} value={o.value}>
-                      {o.label}
-                    </CmsRadio>
-                  ))}
-                </CmsRadioGroup>
+                <Controller
+                  name="volunteerRecruitmentNoticeExposure"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <>
+                      <CmsRadioGroup
+                        value={
+                          isUjatVolunteerNoticeExposureValue(field.value) ? field.value : undefined
+                        }
+                        onChange={e => field.onChange(String(e.target.value))}
+                      >
+                        {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
+                          <CmsRadio key={o.value} value={o.value}>
+                            {o.label}
+                          </CmsRadio>
+                        ))}
+                      </CmsRadioGroup>
+                      {fieldState.error?.message ? (
+                        <span role="alert" style={NOTICE_EXPOSURE_ERROR_STYLE}>
+                          {fieldState.error.message}
+                        </span>
+                      ) : null}
+                    </>
+                  )}
+                />
               }
               view="-"
             />
@@ -140,15 +154,27 @@ export function UjatRecruitVolunteerInfoProgramEdit({
           <DetailInfoForm.Field
             label="모집 대상"
             edit={
-              <CmsSelect
-                mode="multiple"
-                withAllOption={false}
-                style={{ width: 240 }}
-                value={recruitTargets}
-                onChange={() => undefined}
-                disabled
-                placeholder="모집 대상을 선택하세요"
-                options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+              <Controller
+                name="volunteerTargets"
+                control={form.control}
+                render={({ field }) => (
+                  <CmsSelect
+                    mode="multiple"
+                    withAllOption={false}
+                    inputSize="medium"
+                    width={240}
+                    value={normalizeRecruitmentTargetSelectValues(
+                      field.value?.length
+                        ? field.value
+                        : resolveProgramVolunteerTargets(program).length
+                          ? resolveProgramVolunteerTargets(program)
+                          : field.value ?? null
+                    )}
+                    onChange={next => field.onChange(recruitmentTargetOptionValuesToStored(next))}
+                    placeholder="모집 대상을 선택하세요"
+                    options={[...UJAT_VOLUNTEER_RECRUIT_TARGET_OPTIONS]}
+                  />
+                )}
               />
             }
             view="-"

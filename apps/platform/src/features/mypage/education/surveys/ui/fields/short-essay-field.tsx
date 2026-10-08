@@ -6,9 +6,14 @@ import styles from '../survey-fields.module.css'
 type SurveyShortEssayFieldProps = {
   paragraph: ShortEssayParagraph
   onUpdateParagraph: FormUpdateParagraph
+  disabled?: boolean
 }
 
-export function SurveyShortEssayField({ paragraph, onUpdateParagraph }: SurveyShortEssayFieldProps) {
+export function SurveyShortEssayField({
+  paragraph,
+  onUpdateParagraph,
+  disabled = false,
+}: SurveyShortEssayFieldProps) {
   const placeholder = paragraph.bodyPlaceholder || '질문을 입력해 주세요'
   const items = paragraph.items ?? []
 
@@ -20,6 +25,7 @@ export function SurveyShortEssayField({ paragraph, onUpdateParagraph }: SurveySh
           rows={1}
           placeholder={placeholder}
           value={paragraph.bodyText}
+          disabled={disabled}
           onValueChange={next => {
             onUpdateParagraph(paragraph.id, current =>
               current.kind === 'single_item' &&
@@ -42,6 +48,7 @@ export function SurveyShortEssayField({ paragraph, onUpdateParagraph }: SurveySh
           rows={1}
           placeholder={item.placeholder || placeholder}
           value={item.bodyText}
+          disabled={disabled}
           onValueChange={next => {
             onUpdateParagraph(paragraph.id, current => {
               if (

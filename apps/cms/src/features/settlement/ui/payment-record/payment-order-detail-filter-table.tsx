@@ -2,7 +2,6 @@
  * 지급 현황 상세 — 프로그램 기준 강사별 / 강사 기준 프로그램별 정산 목록(필터·테이블)
  */
 
-import { DownloadOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import { Table } from 'antd'
 import type {
@@ -24,6 +23,7 @@ import {
   usePaymentOrderDetailLinesController,
   type PaymentOrderDetailLineRow,
 } from './use-payment-order-detail-lines'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './payment-order-detail-filter-table.css'
 
 export type { PaymentOrderDetailLineRow }
@@ -137,7 +137,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
               variant="primary"
               size="large"
               style={{ minWidth: 180 }}
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               disabled={selectedRowKeys.length === 0}
               onClick={handlePaymentStatementIssue}
             >

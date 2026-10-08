@@ -56,7 +56,7 @@
   width: 100%;
 }
 
-.account-payment-confirm-modal__footer-actions .cms-button.cms-button--medium {
+.account-payment-confirm-modal__footer-actions .cms-button.cms-button--h40 {
   min-width: 120px;
   width: auto;
 }

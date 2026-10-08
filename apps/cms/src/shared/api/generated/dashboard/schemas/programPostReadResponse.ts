@@ -10,6 +10,11 @@ export interface ProgramPostReadResponse {
   readId?: number;
   readerActorType?: string;
   readerActorId?: number;
+  /**
+     * 읽은 사람 actor 표시명. MEMBER는 회원 이름, ADMIN은 관리자 이름입니다. 탈퇴·삭제·미존재 계정이거나 이름이 비어 있으면 null입니다.
+     * @nullable
+     */
+  readerDisplayName?: string | null;
   readAt?: string;
   firstReadAt?: string;
   lastReadAt?: string;

@@ -49,7 +49,7 @@ function isConfigured(flag: boolean | undefined): boolean {
 
 function appendSurveySatisfactionTabs(
   items: EducationDetailTabItem[],
-  options: ActivityTabOptions,
+  options: ActivityTabOptions
 ): void {
   if (isConfigured(options.surveyConfigured)) {
     items.push({ key: 'survey', label: '설문조사' })
@@ -64,7 +64,7 @@ function appendSurveySatisfactionTabs(
  * 설문·만족도는 진행 중 내용이 없어도 노출하되, 프로그램 미설정(`*Configured === false`)이면 비노출.
  */
 export function buildInProgressDetailTabItems(
-  options: ActivityTabOptions,
+  options: ActivityTabOptions
 ): EducationDetailTabItem[] {
   const items: EducationDetailTabItem[] = [
     { key: 'notice', label: '안내사항' },
@@ -76,11 +76,11 @@ export function buildInProgressDetailTabItems(
 }
 
 /**
- * 교사회원 — 진행 중 / 진행 완료 탭.
+ * 교사 회원 — 진행 중 / 진행 완료 탭.
  * 안내사항 / 교육 일정 / 학생 명단 / 설문·만족도. 정산 비노출.
  */
 export function buildTeacherInProgressDetailTabItems(
-  options: ActivityTabOptions,
+  options: ActivityTabOptions
 ): EducationDetailTabItem[] {
   const items: EducationDetailTabItem[] = [
     { key: 'notice', label: '안내사항' },
@@ -96,17 +96,17 @@ export function buildTeacherInProgressDetailTabItems(
  * 일정·설문·만족도·정산은 포기 이전 회차·활동만 (`lastParticipatedSession`).
  */
 export function buildWithdrawnDuringDetailTabItems(
-  options: ActivityTabOptions,
+  options: ActivityTabOptions
 ): EducationDetailTabItem[] {
   return buildInProgressDetailTabItems(options).filter(item => item.key !== 'notice')
 }
 
 /**
- * 교사회원 — 교육 진행 중 포기 탭.
+ * 교사 회원 — 교육 진행 중 포기 탭.
  * 교육 일정 / 학생 명단 / 설문·만족도. 안내사항·정산 비노출.
  */
 export function buildTeacherWithdrawnDuringDetailTabItems(
-  options: ActivityTabOptions,
+  options: ActivityTabOptions
 ): EducationDetailTabItem[] {
   return buildTeacherInProgressDetailTabItems(options).filter(item => item.key !== 'notice')
 }

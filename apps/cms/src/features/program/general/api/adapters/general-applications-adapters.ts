@@ -9,7 +9,9 @@ import type {
 } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { buildLectureFeeBasisDisplay } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
-import type { InstructorApplicationDetailResponseEnriched } from '@/features/program/general/api/applications-api-client'
+import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
+import { toSchoolEnrollmentStatusLabelOrRaw } from '@/features/user/api/map-school-enrollment-status'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -28,6 +30,8 @@ import type {
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import { mapParticipantSessionsToEducationSchedules } from '@/features/program/general/lib/map-participant-sessions-to-education-schedules'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
+import { readVolunteerApplicationAttachments } from '@/features/program/general/lib/volunteer-application-evidence'
+import { readGeneralVolunteerProjection } from '@/features/program/general/lib/general-volunteer-application-projection'
 import type { VolunteerApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationDetailResponse'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard/schemas/interviewAvailabilitySlot'
@@ -38,6 +42,7 @@ import {
   type ParticipatingIndividualParticipantRow,
 } from '@/features/program/general/model/participating-individual-participants'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
+import { formatInstructorFeeGradeLabel } from '@/shared/constants/instructor-fee-grade'
 import { INSTRUCTOR_SETTLEMENT_STATUS_ORDER } from '@/shared/constants/instructor-settlement-status'
 import type {
   GeneralDocumentScreeningStatus,
@@ -49,10 +54,12 @@ import {
   formatRequestedSchedulesPeriodLabel,
   mapRequestedSchedulesToSessions,
 } from '@/features/program/1c-1s/lib/map-requested-schedules'
-import {
-  resolveStoredAffiliation,
-} from '@/features/program/general/lib/affiliation-organization'
+import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { mapSessionProgressToLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
+import {
+  instructorCmsProfileToApplicantInstructorRowPartial,
+  normalizeInstructorCmsProfileFromApi,
+} from '@/features/user/api/map-instructor-cms-profile'
 
 function toId(value: number | string | null | undefined): string {
   if (value == null || value === '') return ''
@@ -132,9 +139,7 @@ export function readOrganizationApplicationEconomyDisplayFields(dto: object): {
   }
 }
 
-export function formatPreviousYearParticipationLabel(
-  raw?: string | null
-): string | undefined {
+export function formatPreviousYearParticipationLabel(raw?: string | null): string | undefined {
   const trimmed = raw?.trim()
   if (!trimmed) return undefined
   if (trimmed === 'yes' || trimmed === 'Y' || trimmed === '참여') return '참여'
@@ -142,9 +147,7 @@ export function formatPreviousYearParticipationLabel(
   return trimmed
 }
 
-function formatOrganizationResultNotificationSentAt(
-  iso?: string | null
-): string | undefined {
+function formatOrganizationResultNotificationSentAt(iso?: string | null): string | undefined {
   const trimmed = iso?.trim()
   if (!trimmed) return undefined
   const parsed = new Date(trimmed)
@@ -232,9 +235,7 @@ export function readOrganizationApplicationDetailExtendFields(
     ...(applicationReason ? { applicationReason } : {}),
     ...(otherRequests ? { otherRequests } : {}),
     ...(computerInSpace ? { computerInSpace } : {}),
-    ...(waitingPlaceGuide
-      ? { waitingPlaceGuide, waitingRoom: waitingPlaceGuide }
-      : {}),
+    ...(waitingPlaceGuide ? { waitingPlaceGuide, waitingRoom: waitingPlaceGuide } : {}),
     ...(mealInfo ? { mealInfo } : {}),
     ...(parkingInfo ? { parkingInfo, otherSpecialNotes: parkingInfo } : {}),
     ...(textbookId ? { textbookId } : {}),
@@ -331,10 +332,7 @@ export function toRequestedEducationFormatApiValue(
 export function readOrganizationApplicationBasicInfoFields(
   dto: Pick<
     OrganizationApplicationDetailResponse,
-    | 'organizationAddressDetail'
-    | 'requestedEducationFormat'
-    | 'applicationReason'
-    | 'otherRequests'
+    'organizationAddressDetail' | 'requestedEducationFormat' | 'applicationReason' | 'otherRequests'
   >
 ): {
   addressDetail?: string
@@ -425,7 +423,8 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     schoolName: '',
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
-    instructorFeeGradeLabel: dto.instructorFeeGradeSnapshot?.trim() || undefined,
+    instructorFeeGradeLabel:
+      formatInstructorFeeGradeLabel(dto.instructorFeeGradeSnapshot) || undefined,
     rejectionReason: dto.rejectReason?.trim() || undefined,
     distanceKm: dto.distanceKm,
     longDistanceYn: dto.longDistance,
@@ -441,7 +440,7 @@ function mapInstructorFeeBasisType(
 }
 
 function mapInstructorMemberProfileFromDetail(
-  dto: InstructorApplicationDetailResponseEnriched
+  dto: InstructorApplicationDetailResponse
 ): InstructorMemberProfile | undefined {
   const profile = dto.instructorMemberProfile
   if (!profile) return undefined
@@ -460,7 +459,7 @@ function mapAffiliationEmploymentStatus(
 }
 
 export function mapInstructorApplicationDetailToApplicantRow(
-  dto: InstructorApplicationDetailResponseEnriched,
+  dto: InstructorApplicationDetailResponse,
   base: ApplicantInstructorRow
 ): ApplicantInstructorRow {
   const preferredScheduleSlots =
@@ -471,10 +470,16 @@ export function mapInstructorApplicationDetailToApplicantRow(
         return {
           slotKey: String(scheduleId),
           assignable: slot.assignable !== false,
+          ...(slot.startAt ? { startAt: slot.startAt } : {}),
+          ...(slot.endAt ? { endAt: slot.endAt } : {}),
         }
       })
-      .filter((slot): slot is { slotKey: string; assignable: boolean } => slot != null) ??
-    base.preferredScheduleSlots
+      .filter(
+        (
+          slot
+        ): slot is { slotKey: string; assignable: boolean; startAt?: string; endAt?: string } =>
+          slot != null
+      ) ?? base.preferredScheduleSlots
 
   return {
     ...base,
@@ -504,8 +509,8 @@ export function mapInstructorApplicationDetailToApplicantRow(
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade) ?? base.evaluationGrade,
     instructorFeeGradeLabel:
-      dto.feePolicy?.instructorFeeGrade?.trim() ||
-      dto.instructorFeeGradeSnapshot?.trim() ||
+      formatInstructorFeeGradeLabel(dto.feePolicy?.instructorFeeGrade) ||
+      formatInstructorFeeGradeLabel(dto.instructorFeeGradeSnapshot) ||
       base.instructorFeeGradeLabel,
     lectureFeeBasisType:
       mapInstructorFeeBasisType(dto.feePolicy?.basisType) ?? base.lectureFeeBasisType,
@@ -514,7 +519,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
       dto.feePolicy?.amount != null ? String(dto.feePolicy.amount) : base.lectureFeeAmount,
     lectureFeeBasisDisplay:
       dto.feePolicy != null
-        ? buildLectureFeeBasisDisplay(
+        ? (buildLectureFeeBasisDisplay(
             mapInstructorFeeBasisType(dto.feePolicy.basisType) ??
               base.lectureFeeBasisType ??
               'special_lecture',
@@ -522,7 +527,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
             dto.feePolicy.amount != null
               ? String(dto.feePolicy.amount)
               : (base.lectureFeeAmount ?? '')
-          ) ?? base.lectureFeeBasisDisplay
+          ) ?? base.lectureFeeBasisDisplay)
         : base.lectureFeeBasisDisplay,
     businessIncomeEarnerStatus:
       dto.businessIncomeEarnerStatus?.trim() || base.businessIncomeEarnerStatus,
@@ -545,13 +550,38 @@ export function mapInstructorApplicationDetailToApplicantRow(
     nameHanja: dto.nameHanja?.trim() || base.nameHanja,
     nameEnglish: dto.nameEnglish?.trim() || base.nameEnglish,
     birthDate: dto.birthDate?.trim() || base.birthDate,
-    gender: dto.gender?.trim() || base.gender,
+    gender: toGenderLabelOrRaw(dto.gender) || base.gender,
     rejectionReason: dto.rejectReason?.trim() || base.rejectionReason,
     distanceKm: dto.distanceKm ?? base.distanceKm,
     longDistanceYn: dto.longDistance ?? base.longDistanceYn,
     managerComment: dto.managerComment ?? base.managerComment,
     availableActions: dto.availableActions ?? base.availableActions,
     preferredScheduleSlots,
+    ...mapInstructorResumeFromDetail(dto, base),
+  }
+}
+
+/** `instructorCmsProfile` 이력서 섹션 — 기본 정보 필드는 신청 DTO 우선이라 여기서 덮지 않는다. */
+function mapInstructorResumeFromDetail(
+  dto: InstructorApplicationDetailResponse,
+  base: ApplicantInstructorRow
+): Partial<ApplicantInstructorRow> {
+  const profile = normalizeInstructorCmsProfileFromApi(dto.instructorCmsProfile ?? undefined)
+  if (!profile) return {}
+  const resume = instructorCmsProfileToApplicantInstructorRowPartial(profile)
+  const pickList = <T>(next: T[] | undefined, prev: T[] | undefined) =>
+    (next?.length ?? 0) > 0 ? next : prev
+  return {
+    careerDetails: pickList(resume.careerDetails, base.careerDetails),
+    jaKoreaActivities: pickList(resume.jaKoreaActivities, base.jaKoreaActivities),
+    educations: pickList(resume.educations, base.educations),
+    qualifications: pickList(resume.qualifications, base.qualifications),
+    awards: pickList(resume.awards, base.awards),
+    freeWriting1: resume.freeWriting1 || base.freeWriting1,
+    freeWriting2: resume.freeWriting2 || base.freeWriting2,
+    freeWriting3: resume.freeWriting3 || base.freeWriting3,
+    freeWriting4: resume.freeWriting4 || base.freeWriting4,
+    instructorCareerLevel: resume.instructorCareerLevel ?? base.instructorCareerLevel,
   }
 }
 
@@ -757,8 +787,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         ),
         resolvedScheduleId: session.scheduleId ?? session.resolvedScheduleId ?? null,
         requestedScheduleId: session.requestedScheduleId ?? undefined,
-        scheduleUnresolved:
-          session.scheduleId == null && session.resolvedScheduleId == null,
+        scheduleUnresolved: session.scheduleId == null && session.resolvedScheduleId == null,
       }
     })
 }
@@ -834,8 +863,6 @@ export function mapIndividualApplicationDetailToApplicantRow(
     dto.assignedInterviewEndAt
   )
   const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
-  const interviewA = screening?.interviewEvaluations?.find(item => item.evaluatorOrder === 1)
-  const interviewB = screening?.interviewEvaluations?.find(item => item.evaluatorOrder === 2)
   const team = dto.team as
     | {
         name?: string
@@ -868,10 +895,10 @@ export function mapIndividualApplicationDetailToApplicantRow(
       dto.application?.preferredEducationSchedules
     ),
     detail: {
-      gender: profile?.gender ?? undefined,
+      gender: toGenderLabelOrRaw(profile?.gender),
       birthDate: profile?.birthDate ?? undefined,
       age: profile?.age,
-      schoolEnrollmentStatus: profile?.schoolEnrollmentStatus ?? undefined,
+      schoolEnrollmentStatus: toSchoolEnrollmentStatusLabelOrRaw(profile?.schoolEnrollmentStatus),
       affiliationSchool: profile?.affiliationSchool ?? undefined,
       affiliationGrade: profile?.affiliationGrade ?? undefined,
       contact: profile?.contact ?? undefined,
@@ -909,8 +936,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
       screening?.reserveRank
     ),
     totalScore: screening?.interviewTotalScore ?? null,
-    managerAScore: interviewA?.score ?? null,
-    managerBScore: interviewB?.score ?? null,
+    ...mapInterviewEvaluationSlots(screening?.interviewEvaluations),
     interviewEvaluationRemark: screening?.interviewEvaluationRemark ?? undefined,
     assignedInterviewDateLabel: assigned.assignedInterviewDateLabel,
     assignedInterviewTime: assigned.assignedInterviewTime,
@@ -982,6 +1008,8 @@ export function mapParticipantToParticipatingIndividualRow(
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
     detail: {
+      gender: toGenderLabelOrRaw(dto.gender),
+      birthDate: dto.birthDate?.trim() || undefined,
       contact: contact || undefined,
       email: email || undefined,
       homeAddressFull: homeAddress || undefined,
@@ -998,15 +1026,35 @@ export function mapApiDocumentStatusToScreeningStatus(
   return 'pending'
 }
 
+/** 면접 평가 저장 후 서버는 배정 상태를 `PARTIALLY_EVALUATED`(한 슬롯)·`EVALUATED`(두 슬롯)로 바꾼다. */
+const INTERVIEW_ASSIGNED_API_STATUSES = new Set([
+  'ASSIGNED',
+  'INTERVIEW_ASSIGNED',
+  'PARTIALLY_EVALUATED',
+  'EVALUATED',
+  'INTERVIEW_EVALUATED',
+  'COMPLETED',
+])
+
 export function mapApiInterviewStatusToAssignmentStatus(
   status?: string | null,
   giveUpYn?: boolean
 ): GeneralInterviewAssignmentStatus {
   if (giveUpYn) return 'withdrawn'
   const normalized = status?.trim().toUpperCase() ?? ''
-  if (['ASSIGNED', 'COMPLETED'].includes(normalized)) return 'assigned'
+  if (INTERVIEW_ASSIGNED_API_STATUSES.has(normalized)) return 'assigned'
   if (['WITHDRAWN', 'GIVE_UP', 'CANCELLED'].includes(normalized)) return 'withdrawn'
   return 'waiting'
+}
+
+/** 봉사자 신청 — BE가 면접 운영 시 `WAITING`, 미운영 시 `NOT_REQUIRED`로 내려준다 */
+export function mapApiVolunteerInterviewStatusToAssignmentStatus(
+  status?: string | null,
+  giveUpYn?: boolean
+): GeneralInterviewAssignmentStatus {
+  const mapped = mapApiInterviewStatusToAssignmentStatus(status, giveUpYn)
+  if (mapped !== 'waiting') return mapped
+  return status?.trim().toUpperCase() === 'NOT_REQUIRED' ? 'not_required' : 'waiting'
 }
 
 export function mapApiFinalResultToSecondInterviewStatus(
@@ -1027,6 +1075,30 @@ export function mapApiFinalResultToSecondInterviewStatus(
   return 'waiting'
 }
 
+type InterviewEvaluationSlotSource = {
+  evaluatorOrder?: number | null
+  evaluatorAdminId?: number | null
+  score?: number | null
+  scoreTotal?: number | null
+}
+
+/** `evaluatorOrder` 1 = 담당자 A, 2 = 담당자 B. 배열 위치로 추정하지 않는다. */
+export function mapInterviewEvaluationSlots(
+  evaluations: readonly InterviewEvaluationSlotSource[] | null | undefined
+): Pick<
+  GeneralVolunteerApplicantRow,
+  'managerAScore' | 'managerBScore' | 'managerAEvaluatorAdminId' | 'managerBEvaluatorAdminId'
+> {
+  const a = evaluations?.find(item => item.evaluatorOrder === 1)
+  const b = evaluations?.find(item => item.evaluatorOrder === 2)
+  return {
+    managerAScore: a?.score ?? a?.scoreTotal ?? null,
+    managerBScore: b?.score ?? b?.scoreTotal ?? null,
+    managerAEvaluatorAdminId: a?.evaluatorAdminId ?? null,
+    managerBEvaluatorAdminId: b?.evaluatorAdminId ?? null,
+  }
+}
+
 export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
   dto: VolunteerApplicationListItemResponse,
   index: number,
@@ -1037,11 +1109,17 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     assignedInterviewSlotId?: number | null
     assignedInterviewStartAt?: string | null
     assignedInterviewEndAt?: string | null
+    essayIntro?: string | null
+    essayEducationExperience?: string | null
+    essayNecessity?: string | null
+    essayJaExperience?: string | null
+    interviewEvaluations?: InterviewEvaluationSlotSource[] | null
   }
   const assigned = formatAssignedInterviewFromIso(
     enriched.assignedInterviewStartAt,
     enriched.assignedInterviewEndAt
   )
+  const interviewSlots = mapInterviewEvaluationSlots(enriched.interviewEvaluations)
   const affiliation = resolveStoredAffiliation({
     affiliationOrganizationId: dto.affiliationOrganizationId,
   })
@@ -1059,10 +1137,10 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     scheduleChangeCancelCount: 0,
     applicationType: dto.isReparticipation ? 'ujat-graduate' : 'new',
     hasJaVolunteerExperience: Boolean(dto.isReparticipation),
-    essayIntro: '',
-    essayEducationExperience: '',
-    essayNecessity: '',
-    essayJaExperience: '',
+    essayIntro: enriched.essayIntro?.trim() ?? '',
+    essayEducationExperience: enriched.essayEducationExperience?.trim() ?? '',
+    essayNecessity: enriched.essayNecessity?.trim() ?? '',
+    essayJaExperience: enriched.essayJaExperience?.trim() ?? '',
     managerAEvaluation: mapManagerEvaluation(dto.managerAEvaluation),
     managerBEvaluation: mapManagerEvaluation(dto.managerBEvaluation),
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation === true,
@@ -1070,7 +1148,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     availableActions: dto.availableActions ?? [],
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
-    interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
+    interviewAssignmentStatus: mapApiVolunteerInterviewStatusToAssignmentStatus(
       dto.interviewStatus,
       dto.giveUpYn
     ),
@@ -1085,6 +1163,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     interviewAvailability: mapInterviewAvailabilitySlots(dto.interviewAvailability),
     interviewAssignmentId:
       enriched.interviewAssignmentId != null ? Number(enriched.interviewAssignmentId) : undefined,
+    ...interviewSlots,
     ...assigned,
     secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
       dto.finalResultStatus,
@@ -1103,10 +1182,10 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     dto.assignedInterviewStartAt,
     dto.assignedInterviewEndAt
   )
-  const canEditEvaluation =
-    dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
+  const canEditEvaluation = dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
   return {
     ...base,
+    ...readGeneralVolunteerProjection(dto.application, base),
     id: toId(dto.id) || base.id,
     memberId: dto.memberId ?? base.memberId,
     name: profile?.name?.trim() || base.name,
@@ -1117,6 +1196,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     id1365: profile?.external1365Id?.trim() || base.id1365,
     scheduleChangeCancelCount:
       dto.application?.scheduleChangeCancelCount ?? base.scheduleChangeCancelCount,
+    evidenceAttachments: readVolunteerApplicationAttachments(dto.application),
     managerAEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerA),
     managerBEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerB),
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditEvaluation,
@@ -1124,12 +1204,16 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     availableActions: dto.availableActions ?? base.availableActions,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
-    interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
-      dto.assignedInterviewSlotId != null ? 'ASSIGNED' : 'WAITING_ASSIGNMENT',
+    interviewAssignmentStatus: mapApiVolunteerInterviewStatusToAssignmentStatus(
+      dto.assignedInterviewSlotId != null
+        ? 'ASSIGNED'
+        : base.interviewAssignmentStatus === 'not_required'
+          ? 'NOT_REQUIRED'
+          : 'WAITING_ASSIGNMENT',
       screening?.giveUpYn
     ),
     programId: toId(dto.programId) || base.programId,
-    gender: profile?.gender?.trim() || base.gender,
+    gender: toGenderLabelOrRaw(profile?.gender) || base.gender,
     birthDate: profile?.birthDate?.trim() || base.birthDate,
     age: profile?.age ?? base.age,
     interviewAvailability: mapInterviewAvailabilitySlots(dto.interviewAvailability),
@@ -1139,6 +1223,9 @@ export function mapVolunteerApplicationDetailToApplicantRow(
       screening?.reserveRank
     ),
     totalScore: screening?.interviewTotalScore ?? base.totalScore,
+    ...(screening?.interviewEvaluations
+      ? mapInterviewEvaluationSlots(screening.interviewEvaluations)
+      : {}),
     interviewEvaluationRemark:
       screening?.interviewEvaluationRemark ?? base.interviewEvaluationRemark,
     assignedInterviewDateLabel:
@@ -1354,8 +1441,7 @@ export function mapParticipantToParticipatingInstructorRow(
     address: homeAddress,
     region: homeAddress,
     assignedOrganizationNames,
-    jaEvaluationGrade:
-      enriched.jaEvaluationGrade?.trim() || enriched.jaGrade?.trim() || undefined,
+    jaEvaluationGrade: enriched.jaEvaluationGrade?.trim() || enriched.jaGrade?.trim() || undefined,
     lectureExperienceYears:
       typeof enriched.lectureExperienceYears === 'number'
         ? enriched.lectureExperienceYears
@@ -1401,8 +1487,7 @@ export function mapParticipantToParticipatingVolunteerRow(
     (dto.organizationName?.trim() ? [dto.organizationName.trim()] : [])
   const contact = enriched.contact?.trim() || enriched.phone?.trim() || ''
   const email = enriched.email?.trim() || ''
-  const id1365 =
-    enriched.id1365?.trim() || enriched.external1365Id?.trim() || ''
+  const id1365 = enriched.id1365?.trim() || enriched.external1365Id?.trim() || ''
 
   return {
     id: toId(dto.participantId),
@@ -1425,6 +1510,7 @@ export function mapParticipantToParticipatingVolunteerRow(
     email: email || '-',
     contactRaw: contact || undefined,
     emailRaw: email || undefined,
+    birthDate: dto.birthDate?.trim() || undefined,
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
   }

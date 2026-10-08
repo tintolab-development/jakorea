@@ -2,7 +2,10 @@
  * 정산 관리 > 계좌 지급 확인 — 행 클릭 시 [계좌 지급 현황 상세] 풀페이지 모달
  */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -86,6 +89,14 @@ export function AccountPaymentStatusDetailFullPageModal({
   const detail = accountPaymentsRemote ? (detailQuery.data ?? null) : mockDetail
   const detailLoading = accountPaymentsRemote && open && isAwaitingFirstQueryData(detailQuery)
   const detailError = accountPaymentsRemote ? detailQuery.error : null
+  const detailForbidden = getApiErrorHttpStatus(detailError) === 403
+  const { showAlert } = useCmsAlert()
+
+  useEffect(() => {
+    if (!open || !detailForbidden) return
+    onClose()
+    void showAlert({ title: '권한 없음', content: ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE })
+  }, [open, detailForbidden, onClose, showAlert])
 
   const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
@@ -167,7 +178,7 @@ export function AccountPaymentStatusDetailFullPageModal({
         title={title}
         loading={detailLoading}
         error={
-          !detailLoading && (detailError || !detail)
+          !detailLoading && !detailForbidden && (detailError || !detail)
             ? detailError instanceof Error
               ? detailError.message
               : '상세를 불러오지 못했습니다.'

@@ -123,4 +123,32 @@ describe('buildEconomyRegistrationOverlayFromProgram → apply', () => {
     expect(overlay['economyRegistration.wageInfo.paymentItemValues']).not.toEqual(['p-leftover'])
     expect(overlay['recruit.individual.notes']).toBeUndefined()
   })
+
+  it('지운 KPI leftover는 program 값으로 덮어쓰지 않는다', () => {
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        kpi: {
+          finalParticipants: 11,
+          instructorCount: 11,
+          volunteerCount: 0,
+          finalSchools: 11,
+          finalClasses: 11,
+        },
+      },
+    } as Program
+    const overlay = resyncEconomyRegistrationOverlayFromProgram(program, {
+      'economyRegistration.kpi.participantCount': null,
+      'economyRegistration.kpi.instructor': null,
+      'economyRegistration.kpi.dispatchedSchool': null,
+      'economyRegistration.kpi.dispatchedClass': null,
+      'economyRegistration.educationCurriculum.session1.title': '옛 제목',
+    })
+    expect(overlay['economyRegistration.kpi.participantCount']).toBeNull()
+    expect(overlay['economyRegistration.kpi.instructor']).toBeNull()
+    expect(overlay['economyRegistration.kpi.dispatchedSchool']).toBeNull()
+    expect(overlay['economyRegistration.kpi.dispatchedClass']).toBeNull()
+    expect(overlay['economyRegistration.educationCurriculum.session1.title']).toBe('단원1')
+  })
 })

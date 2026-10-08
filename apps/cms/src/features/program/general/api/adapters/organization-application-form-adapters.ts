@@ -6,6 +6,11 @@ import type {
 } from '@/features/program/shared/model/applicant-institution'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { formatPreviousYearParticipationLabel } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS,
+  INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS,
+  INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_OPTIONS,
+} from '@/features/template/lib/institution-sex-offense-consent-field-definitions'
 
 const BASIC_INFO_PARAGRAPH_KEYS = [
   'program-application-trained-teachers-seed-basic-info',
@@ -203,26 +208,27 @@ function parseGuidanceRows(map: Record<string, string>): {
   return {}
 }
 
+function optionLabel(
+  options: readonly { value: string; label: string }[],
+  raw: string
+): string {
+  const trimmed = raw.trim()
+  return options.find(option => option.value === trimmed)?.label ?? trimmed
+}
+
 function formatSexOffenseSubmissionLabel(raw: string | undefined): string | undefined {
-  const trimmed = raw?.trim()
-  if (!trimmed) return undefined
-  if (trimmed === 'request') return '동의서 제출 요청'
-  if (trimmed === 'no_submit') return '동의서 미제출'
-  return trimmed
+  if (!raw?.trim()) return undefined
+  return optionLabel(INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_OPTIONS, raw)
 }
 
 function formatSexOffenseInquiryParts(object: Record<string, unknown> | null): string[] {
   if (!object) return []
   const parts: string[] = []
   const method = typeof object.inquiryMethod === 'string' ? object.inquiryMethod : ''
-  if (method === 'ja_system') parts.push('JA 시스템 내에서 동의서 확인')
-  else if (method === 'criminal_record_site') parts.push('범죄경력회보서 사이트 이용')
-  else if (method.trim()) parts.push(method.trim())
+  if (method.trim()) parts.push(optionLabel(INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS, method))
 
   const site = typeof object.siteSubmission === 'string' ? object.siteSubmission : ''
-  if (site === 'direct') parts.push('직접 제출')
-  else if (site === 'online') parts.push('온라인 제출')
-  else if (site.trim()) parts.push(site.trim())
+  if (site.trim()) parts.push(optionLabel(INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS, site))
 
   const institutionId =
     typeof object.institutionId === 'string' ? object.institutionId.trim() : ''

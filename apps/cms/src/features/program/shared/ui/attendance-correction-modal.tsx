@@ -252,7 +252,6 @@ export function ProgramAttendanceCorrectionModal({
                           prev.filter((_, currentIndex) => currentIndex !== index)
                         )
                       }
-                      buttonLabel="파일 선택"
                     />
                   </td>
                 </tr>

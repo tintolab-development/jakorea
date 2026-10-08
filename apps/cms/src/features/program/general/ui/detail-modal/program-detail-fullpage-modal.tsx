@@ -138,6 +138,7 @@ import {
   LnbIconProjectInfo,
 } from './program-detail-lnb-icons'
 import { GeneralLnbSurveyManagementIcon } from './detail-lnb-icons'
+import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import './applications/participant-applications.css'
 import './program-detail-fullpage-modal.css'
 
@@ -157,6 +158,8 @@ export interface ProgramDetailFullPageModalProps {
     program: Program,
     patch: Partial<Program>
   ) => Promise<void>
+  /** LNB 하단 「프로그램 삭제」 — 미지정 시 버튼 미노출 */
+  onRequestDelete?: (program: Program) => void
 }
 
 const TAB_PARAM = 'tab'
@@ -281,6 +284,7 @@ export function ProgramDetailFullPageModal({
   searchParams: searchParamsProp,
   setSearchParams: setSearchParamsProp,
   onUpdateProgram,
+  onRequestDelete,
 }: ProgramDetailFullPageModalProps) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -317,10 +321,18 @@ export function ProgramDetailFullPageModal({
   // remote 부모(onUpdateProgram): 로딩 중 목록/stub program으로 본문 채우지 않음
   // legacy Zustand: 상세 GET이 있으면 목록 행보다 우선 (빈 탭 고정 방지)
   const displayProgram = useMemo(() => {
-    if (onUpdateProgram && externalLoading) return null
-    if (onUpdateProgram) return program ?? null
-    return detailProgram ?? program ?? null
-  }, [detailProgram, program, onUpdateProgram, externalLoading])
+    const raw =
+      onUpdateProgram && externalLoading
+        ? null
+        : onUpdateProgram
+          ? program ?? null
+          : detailProgram ?? program ?? null
+    if (!raw) return null
+    if (programVariant === 'company-school' && !raw.backendProgramType) {
+      return { ...raw, backendProgramType: 'COMPANY_SCHOOL' }
+    }
+    return raw
+  }, [detailProgram, program, onUpdateProgram, externalLoading, programVariant])
   const recruitmentEditProgram = useMemo(
     () => (displayProgram ? resolveGeneralProgramForRecruitmentEdit(displayProgram) : null),
     [displayProgram]
@@ -1827,6 +1839,11 @@ export function ProgramDetailFullPageModal({
           expandedGroupKeys={sidebarExpandedGroups}
           onSelectTop={handleSidebarSelectTop}
           onSelectChild={handleSidebarSelectChild}
+          footer={
+            onRequestDelete && displayProgram ? (
+              <ProgramDetailLnbDeleteButton onClick={() => onRequestDelete(displayProgram)} />
+            ) : null
+          }
         />
       }
     >

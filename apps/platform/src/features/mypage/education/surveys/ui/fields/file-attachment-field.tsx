@@ -7,12 +7,14 @@ type SurveyFileAttachmentFieldProps = {
   paragraph: FileAttachmentParagraph
   fileName: string | null
   onFileNameChange: (next: string | null) => void
+  disabled?: boolean
 }
 
 export function SurveyFileAttachmentField({
   paragraph: _paragraph,
   fileName,
   onFileNameChange,
+  disabled = false,
 }: SurveyFileAttachmentFieldProps) {
   const inputId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -24,6 +26,7 @@ export function SurveyFileAttachmentField({
         id={inputId}
         className={styles.fileInput}
         type="file"
+        disabled={disabled}
         onChange={event => {
           const file = event.target.files?.[0]
           onFileNameChange(file?.name ?? null)
@@ -33,6 +36,7 @@ export function SurveyFileAttachmentField({
         type="button"
         variant="secondary"
         size="medium"
+        disabled={disabled}
         onClick={() => inputRef.current?.click()}
       >
         파일 선택

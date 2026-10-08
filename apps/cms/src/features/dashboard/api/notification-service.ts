@@ -212,7 +212,7 @@ export async function getNotifications(
         'system',
         '개별 안내사항',
         '신청한 프로그램 관련 안내사항이 도착했습니다.',
-        '/notices',
+        '/',
         true,
         30,
         '공지사항'

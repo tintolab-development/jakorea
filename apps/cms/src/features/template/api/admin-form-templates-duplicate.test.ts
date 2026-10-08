@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const copyMock = vi.fn()
+const duplicateMock = vi.fn()
 const fetchTemplatesMock = vi.fn()
 const fetchPayloadMock = vi.fn()
 const fetchVersionsMock = vi.fn()
@@ -15,7 +15,7 @@ vi.mock('@/shared/config/real-api-modules', () => ({
 }))
 
 vi.mock('@/features/template/api/form-templates-api-client', () => ({
-  copyFormTemplateVersionRemote: (...args: unknown[]) => copyMock(...args),
+  copyFormTemplateVersionRemote: vi.fn(),
   fetchFormTemplatesRemote: (...args: unknown[]) => fetchTemplatesMock(...args),
   fetchFormTemplatePayloadByCodeRemote: (...args: unknown[]) => fetchPayloadMock(...args),
   fetchFormTemplateVersionsRemote: (...args: unknown[]) => fetchVersionsMock(...args),
@@ -23,6 +23,7 @@ vi.mock('@/features/template/api/form-templates-api-client', () => ({
   updateFormTemplateVersionRemote: vi.fn(),
   updateFormTemplateRemote: vi.fn(),
   createFormTemplateRemote: vi.fn(),
+  duplicateFormTemplateRemote: (...args: unknown[]) => duplicateMock(...args),
   deleteFormTemplateRemote: vi.fn(),
   publishFormTemplateVersionRemote: vi.fn(),
 }))
@@ -37,7 +38,7 @@ import {
 describe('duplicateFormTemplateVersionRemote', () => {
   beforeEach(() => {
     clearFormTemplateVersionCache()
-    copyMock.mockReset()
+    duplicateMock.mockReset()
     fetchTemplatesMock.mockReset()
     fetchPayloadMock.mockReset()
     fetchVersionsMock.mockReset()
@@ -45,29 +46,53 @@ describe('duplicateFormTemplateVersionRemote', () => {
     fetchVersionsMock.mockResolvedValue([])
   })
 
-  it('resolves a catalog template by code when the list cache is empty', async () => {
+  it('creates a new catalog row via duplicate API', async () => {
     fetchPayloadMock.mockResolvedValue({
-      templateId: 42,
-      templateVersionId: 7,
+      templateId: 4,
+      templateVersionId: 89,
       versionNo: 1,
     })
-    copyMock.mockResolvedValue({
-      templateId: 99,
-      templateVersionId: 100,
-      templateCode: 'survey-admin-copy',
-      versionNo: 1,
+    duplicateMock.mockResolvedValue({
+      templateId: 512,
+      templateCode: 'recruitment-participant-school-custom-01',
+      latestVersionId: 1203,
+      versions: [{ templateVersionId: 1203, versionNo: 1 }],
     })
 
     const newCode = await duplicateFormTemplateVersionRemote({
-      sourceTemplateCode: 'survey-admin',
+      sourceTemplateCode: 'recruitment-participant-school',
+      sourceApiTemplateId: 4,
+      sourceVersionId: 89,
+      templateName: '일반_참여 기관 모집 폼 (1)',
     })
 
-    expect(newCode).toBe('survey-admin-copy')
-    expect(copyMock).toHaveBeenCalledWith(42, { sourceVersionId: 7, versionLabel: undefined })
-    expect(getFormTemplateVersionCacheEntry('survey-admin-copy')).toMatchObject({
-      templateId: 99,
-      templateVersionId: 100,
+    expect(newCode).toBe('recruitment-participant-school-custom-01')
+    expect(duplicateMock).toHaveBeenCalledWith(4, {
+      templateName: '일반_참여 기관 모집 폼 (1)',
+      sourceVersionId: 89,
     })
+    expect(getFormTemplateVersionCacheEntry('recruitment-participant-school-custom-01')).toMatchObject(
+      {
+        templateId: 512,
+        templateVersionId: 1203,
+      }
+    )
+  })
+
+  it('rejects when the response keeps the source template code', async () => {
+    duplicateMock.mockResolvedValue({
+      templateId: 4,
+      templateCode: 'recruitment-participant-school',
+      latestVersionId: 89,
+    })
+
+    await expect(
+      duplicateFormTemplateVersionRemote({
+        sourceTemplateCode: 'recruitment-participant-school',
+        sourceApiTemplateId: 4,
+        templateName: '일반_참여 기관 모집 폼 (1)',
+      })
+    ).rejects.toThrow('신규 템플릿 코드를 응답에서 찾을 수 없습니다')
   })
 
   it('does not fall back to a local stub when remote duplicate fails', async () => {
@@ -79,5 +104,6 @@ describe('duplicateFormTemplateVersionRemote', () => {
         category: 'survey',
       })
     ).rejects.toThrow('복제할 템플릿 ID를 찾을 수 없습니다')
+    expect(duplicateMock).not.toHaveBeenCalled()
   })
 })

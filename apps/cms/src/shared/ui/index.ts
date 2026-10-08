@@ -45,7 +45,6 @@ export {
   type ProgramProgressHistoryDeleteDomain,
   type ProgramProgressHistoryDeleteGuide,
 } from './program-progress-history-delete-guide'
-export { InquiryModal } from './inquiry-modal'
 export { ProfileEditModal } from './profile-edit-modal'
 export {
   getRoleLabel,
@@ -211,11 +210,15 @@ export {
   FileDownloadRowIcon,
   CommentEmojiToggleIcon,
   CommentSendIcon,
+  FileTypeIcon,
+  resolveFileTypeIconType,
 } from './icons'
 export type {
   AttachmentDownloadIconProps,
   AttachmentClipIconProps,
   FileDownloadRowIconProps,
+  FileTypeIconProps,
+  FileTypeIconType,
 } from './icons'
 export {
   REACTION_EMOJI_ITEMS,

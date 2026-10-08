@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Spin, Table } from 'antd'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
@@ -8,11 +7,12 @@ import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
 import { UjatInstitutionApplicationCalendarView } from './calendar-view'
-import { UJAT_INSTITUTION_APPLICATION_TABLE_MIN_SCROLL_X } from './columns'
+import { ujatInstitutionApplicationTableScrollX } from './columns'
 import type { UjatInstitutionApplicationRow } from './types'
 import { useUjatInstitutionApplicationList } from './use-list'
 import { UjatInstitutionApplicationActionModal } from './action-modal'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './list.css'
 
 export function UjatInstitutionApplicationList({
@@ -31,6 +31,7 @@ export function UjatInstitutionApplicationList({
     handleSearch,
     tableData,
     columns,
+    scheduleColumnCount,
     selectedRowKeys,
     setSelectedRowKeys,
     viewMode,
@@ -59,12 +60,13 @@ export function UjatInstitutionApplicationList({
     resetRegionState()
   }, [activeRegion, resetRegionState])
 
-  const titleNote = (
-    <>
-      예상 1일 최대 학급 수 :{' '}
-      <span className="filter-table-layout__title-note-em">{maxClassesPerDay}</span>학급
-    </>
-  )
+  const titleNote =
+    maxClassesPerDay == null ? null : (
+      <>
+        예상 1일 최대 학급 수 :{' '}
+        <span className="filter-table-layout__title-note-em">{maxClassesPerDay}</span>학급
+      </>
+    )
 
   return (
     <div className="ujat-institution-application-list">
@@ -121,7 +123,7 @@ export function UjatInstitutionApplicationList({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
@@ -132,7 +134,7 @@ export function UjatInstitutionApplicationList({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={() => setViewMode('table')}
               >
                 리스트 뷰로 보기
@@ -154,7 +156,7 @@ export function UjatInstitutionApplicationList({
               dataSource={tableData}
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: UJAT_INSTITUTION_APPLICATION_TABLE_MIN_SCROLL_X }}
+              scroll={{ x: ujatInstitutionApplicationTableScrollX(scheduleColumnCount) }}
               rowSelection={{
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),

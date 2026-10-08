@@ -6,6 +6,7 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import { INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION } from '../lib/instructor-crime-record-guide-definitions.js'
 
 /** 프로그램 강사 신청 폼 — 시드 단락 ID */
 export const PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS = {
@@ -112,15 +113,15 @@ function createInstructorThirdPartyHorizontalTable(): HorizontalTableParagraph {
   })
 }
 
-/** 본문은 `InstructorCrimeRecordParagraph`로 대체 — 카드 메타만 유지 */
+/** 본문은 `InstructorCrimeRecordParagraph`(제출 방법 안내 + 확인)로 대체 — 카드 메타만 유지 */
 function createInstructorCrimeRecordPlaceholderTable(): HorizontalTableParagraph {
   return normalizeHorizontalTableParagraph({
     id: PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord,
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '성범죄 경력 조회서 제출',
-    paragraphDescription: '학교에 전달할 성범죄 경력 조회서 파일을 제출해 주세요.',
+    paragraphTitle: INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION.title,
+    paragraphDescription: INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION.description,
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['항목', '내용'],
@@ -208,6 +209,18 @@ export function migrateProgramApplicationFormInstructorParagraphs(
       const next = patchHorizontalTableTextCell(paragraph, 0, 3, THIRD_PARTY_RETENTION_CELL)
       if (next !== paragraph) changed = true
       return next
+    }
+    if (
+      paragraph.id === PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord &&
+      (paragraph.paragraphTitle !== INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION.title ||
+        paragraph.paragraphDescription !== INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION.description)
+    ) {
+      changed = true
+      return {
+        ...paragraph,
+        paragraphTitle: INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION.title,
+        paragraphDescription: INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION.description,
+      }
     }
     return paragraph
   })

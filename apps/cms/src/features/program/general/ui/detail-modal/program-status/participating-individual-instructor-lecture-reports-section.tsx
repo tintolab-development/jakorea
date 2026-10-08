@@ -5,7 +5,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { Program } from '@/types/domain'
@@ -23,6 +22,8 @@ import {
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
 const STATUS_ACCENT_SCHEDULED = 'var(--color-green, #1e8c29)'
@@ -249,7 +250,7 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
   if (lectureReports.loading) {
     return (
       <div className="school-detail-fullpage-view__instructor-section">
-        <div className="flex min-h-[160px] items-center justify-center py-8" role="status">
+        <div className="detail-fullpage-modal__loading" role="status">
           <Spin size="large" />
         </div>
       </div>
@@ -268,7 +269,7 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
             variant="secondary"
             size="large"
             width={220}
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             disabled={bulkDownloading || submittedRows.length === 0}
             loading={bulkDownloading}
             onClick={() => {

@@ -7,6 +7,7 @@
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { getInstructorRecruitmentStatus } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import { resolveAnnouncement } from '@/features/program/shared/lib/announcement-label'
 import {
   labelBool,
   pickDisplayString,
@@ -68,12 +69,13 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
   const info = common?.instructorRecruitmentInfo as InstructorRecruitmentInfoLoose | undefined
   const lifecycle = resolveInstructorRecruitmentLifecycle(program)
 
-  const finalPassAnnouncementDate = program.finalPassAnnouncementDate
-  const finalPassAnnouncementMethod = pickDisplayString(
-    info?.finalAnnouncementLabel,
-    info?.resultAnnouncementLabel,
-    program.finalPassAnnouncementMethod
-  )
+  const finalAnnouncement = resolveAnnouncement({
+    labels: [info?.finalAnnouncementLabel, info?.resultAnnouncementLabel],
+    column: {
+      date: program.finalPassAnnouncementDate,
+      method: program.finalPassAnnouncementMethod,
+    },
+  })
 
   return {
     announcementPublishedLabel: pickDisplayString(
@@ -86,9 +88,8 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
     instructorTargetLabel: pickDisplayString(info?.recruitmentTarget),
     instructorTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),
     recruitmentPeriodLabel: pickDisplayString(info?.recruitmentPeriodLabel),
-    finalPassAnnouncementDate,
-    finalPassAnnouncementMethod:
-      finalPassAnnouncementMethod === '-' ? undefined : finalPassAnnouncementMethod,
+    finalPassAnnouncementDate: finalAnnouncement.date,
+    finalPassAnnouncementMethod: finalAnnouncement.method,
     contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
     contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
     contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),

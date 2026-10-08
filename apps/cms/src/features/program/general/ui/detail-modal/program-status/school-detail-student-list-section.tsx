@@ -7,10 +7,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { useStudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import type { StudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
-import { CheckOutlined, DownloadOutlined } from '@ant-design/icons'
+import { CheckOutlined } from '@ant-design/icons'
 import { Spin, Table } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
-import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
   PROGRAM_EDIT_INFO_BUTTON_PROPS,
@@ -86,6 +86,8 @@ import {
   STUDENT_LIST_TABLE_SCROLL_X,
   studentListTableDataColumnSize,
 } from './school-detail-student-list-table'
+
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const STUDENT_GENDER_EDIT_OPTIONS = [
   { value: 'male', label: '남' },
@@ -737,8 +739,7 @@ export function SchoolDetailStudentListSection({
       <CmsButton
         variant="secondary"
         size="large"
-        width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         className="school-detail-student-list-section__btn-outline"
         disabled={certificateExportActive}
         onClick={handleCertificateIssueClick}
@@ -1096,7 +1097,7 @@ export function SchoolDetailStudentListSection({
       >
         <div className="school-detail-student-list-section__table-wrap">
           {rosterRemote.isLoading && filteredStudentList.length === 0 ? (
-            <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+            <div className="detail-fullpage-modal__loading" role="status">
               <Spin size="large" />
             </div>
           ) : isStudentListEditMode ? (

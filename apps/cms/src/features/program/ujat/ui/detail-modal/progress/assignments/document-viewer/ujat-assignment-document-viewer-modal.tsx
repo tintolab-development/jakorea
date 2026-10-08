@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
@@ -27,6 +27,7 @@ import {
   type UjatDocumentViewerTarget,
 } from './ujat-document-viewer-types'
 import { createVolunteerFilledDraft } from './ujat-document-volunteer-draft'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import './ujat-assignment-document-viewer-modal.css'
 
@@ -275,7 +276,7 @@ export function UjatAssignmentDocumentViewerModal({
         variant="primary"
         size="medium"
         width={140}
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         disabled={pdfLoading}
         onClick={() => void handleDownloadPdf()}
       >
@@ -310,7 +311,7 @@ export function UjatAssignmentDocumentViewerModal({
               onClick={handleClose}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
 

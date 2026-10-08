@@ -1,4 +1,4 @@
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import { Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
@@ -39,6 +39,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { handleError } from '@/shared/utils/error-handler'
 import type { User } from '@/types/user'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
@@ -185,7 +186,7 @@ function MemberConsentCrimeDocumentView({
             onClick={onClose}
             aria-label="닫기"
           >
-            <CloseOutlined />
+            <ModalCloseIcon />
           </button>
         </header>
 
@@ -207,7 +208,7 @@ function MemberConsentCrimeDocumentView({
                 </CmsButton>
                 <CmsButton
                   variant="secondary"
-                  icon={<DownloadOutlined />}
+                  icon={<ButtonDownloadIcon />}
                   onClick={() => void handleDownload()}
                   className="crime-consent-doc-modal__download-btn"
                   disabled={!displaySrc}
@@ -349,7 +350,7 @@ function MemberConsentAgreementDocumentView({
               onClick={onClose}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
           <div className="full-page-modal__body">

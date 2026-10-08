@@ -63,6 +63,7 @@ import { generalApplicationsQueryKeys } from '@/features/program/general/api/gen
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateResponse'
 import type { IndividualDocumentEvaluationResponse } from '@/shared/api/generated/dashboard/schemas/individualDocumentEvaluationResponse'
@@ -273,7 +274,9 @@ export function GeneralParticipantApplicantDetailView({
       console.debug('participant detail decision remote failed', error)
       void showAlert({
         title: '처리 실패',
-        content: '참여자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        content:
+          formatApplicationEligibilityConflictMessage(error) ??
+          '참여자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
       })
     },
     [showAlert]

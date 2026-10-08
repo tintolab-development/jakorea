@@ -2,6 +2,7 @@ import type {
   ApplicantInstructorLectureFeeBasisType,
   ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
+import type { InstructorApplicationFeePolicyRequest } from '@/features/program/general/api/applications-api-client'
 import { formatCurrencyInput, sanitizeNumericInput } from '@/shared/lib/numeric-input'
 
 export type { ApplicantInstructorLectureFeeBasisType } from '@/features/program/shared/model/applicant-instructor'
@@ -112,6 +113,23 @@ export function normalizeLectureFeeMeasure(
   }
   const matched = LECTURE_FEE_MEASURE_OPTIONS.find(option => option.value === trimmed)
   return matched?.value ?? DEFAULT_LECTURE_FEE_MEASURE
+}
+
+/** 승인 POST·상세 PATCH 공통 `feePolicy` — `measure`에 정산 계산 단위(`SESSION`)를 보내면 422 */
+export function toInstructorApplicationFeePolicy(input: {
+  basisType: ApplicantInstructorLectureFeeBasisType | undefined
+  measure: string | null | undefined
+  amount: string | null | undefined
+  instructorFeeGrade: string | null | undefined
+}): InstructorApplicationFeePolicyRequest {
+  const basisType = input.basisType ?? 'special_lecture'
+  const amount = Number(parseLectureFeeAmountDigits(input.amount ?? undefined) || 0)
+  return {
+    basisType,
+    measure: normalizeLectureFeeMeasure(input.measure ?? undefined, basisType),
+    amount: Number.isFinite(amount) ? amount : 0,
+    instructorFeeGrade: input.instructorFeeGrade?.trim() ?? '',
+  }
 }
 
 export interface ResolvedLectureFeeBasis {

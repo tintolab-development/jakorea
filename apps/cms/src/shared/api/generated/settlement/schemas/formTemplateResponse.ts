@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FormTemplateResponseLatestVersionStatus } from './formTemplateResponseLatestVersionStatus';
 import type { FormTemplateVersionSummaryResponse } from './formTemplateVersionSummaryResponse';
 
 export interface FormTemplateResponse {
@@ -22,4 +23,9 @@ export interface FormTemplateResponse {
   updatedAt?: string;
   availableActions?: string[];
   versions?: FormTemplateVersionSummaryResponse[];
+  latestVersionId?: number;
+  latestVersionStatus?: FormTemplateResponseLatestVersionStatus;
+  /** 최초 카탈로그 원본 templateCode. 원본은 자기 자신. null 아님. */
+  baseTemplateCode?: string;
+  deletable?: boolean;
 }

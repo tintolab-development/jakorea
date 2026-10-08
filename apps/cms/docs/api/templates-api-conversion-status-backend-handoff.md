@@ -13,7 +13,7 @@
 - 연동 명세: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md)
 - JSON 계약: [form-template-json-contract.md](./form-template-json-contract.md)
 - 갭 목록(2026-07, 일부 구식): [forms-surveys-api-backend-gaps.md](./forms-surveys-api-backend-gaps.md)
-- 신규 생성만: [template-create-api-backend-handoff.md](./template-create-api-backend-handoff.md)
+- 신규 생성만: [template-create-api-backend-handoff-2026-10-07.md](./template-create-api-backend-handoff-2026-10-07.md)
 - 발급 후속: [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md)
 - 인증서 이미지: [certificate-image-storage-handoff.md](./certificate-image-storage-handoff.md)
 - 시드 JSON: [form-template-seeds/](./form-template-seeds/)

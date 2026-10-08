@@ -7,6 +7,10 @@ export const PROGRAM_APPLICATION_TYPES = [
 
 export type ProgramApplicationType = (typeof PROGRAM_APPLICATION_TYPES)[number]
 
+/**
+ * GET /api/portal/me/program-applications `statusGroup`.
+ * `CANCELLED`는 BE에서 deprecated(COMPLETED와 동일) — FE 탭 조회에는 쓰지 않는다.
+ */
 export type ProgramApplicationStatusGroup =
   | 'WAITING'
   | 'IN_PROGRESS'
@@ -43,6 +47,8 @@ export type PortalProgramApplicationListItem = {
   displayStatus?: string
   educationStartAt?: string | null
   educationEndAt?: string | null
+  recruitmentStartAt?: string | null
+  recruitmentEndAt?: string | null
   nextScheduleAt?: string | null
   progressPercent?: number | null
   unreadNoticeCount?: number

@@ -11,37 +11,12 @@ import {
   type UjatEducationProgressInstitutionRow,
 } from './types'
 import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
+import type { UjatApplicationsListQuery } from '@/features/program/ujat/api/ujat-applications-contract'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRow } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
-
-function filterRows(
-  rows: UjatEducationProgressInstitutionRow[],
-  filters: UjatEducationProgressInstitutionFilters
-): UjatEducationProgressInstitutionRow[] {
-  const institutionQ = filters.institutionName.trim().toLowerCase()
-  const teacherQ = filters.teacherName.trim().toLowerCase()
-
-  return rows.filter(row => {
-    if (institutionQ && !row.institutionName.toLowerCase().includes(institutionQ)) return false
-    if (
-      filters.educationRegion !== UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL &&
-      row.regionKey !== filters.educationRegion
-    ) {
-      return false
-    }
-    if (
-      filters.educationScheduleIso !== UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL &&
-      !row.educationScheduleIsoDates.includes(filters.educationScheduleIso)
-    ) {
-      return false
-    }
-    if (teacherQ && !row.teacherName.toLowerCase().includes(teacherQ)) return false
-    return true
-  })
-}
 
 function mapOrgRowToProgressInstitution(
   row: UjatInstitutionApplicationRow,
@@ -65,7 +40,9 @@ function mapOrgRowToProgressInstitution(
     regionKey: row.regionKey,
     no: index + 1,
     institutionName: row.institutionName,
-    educationRegion: getUjatEducationRegionLabel(row.regionKey, row.regionKey),
+    educationRegion: row.regionKey
+      ? getUjatEducationRegionLabel(row.regionKey, row.regionKey)
+      : '-',
     educationScheduleDisplay: '-',
     educationScheduleIsoDates: [],
     gradeClassCounts,
@@ -94,20 +71,35 @@ export function useUjatEducationProgressInstitutions(
   )
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 
+  const listQuery = useMemo((): UjatApplicationsListQuery => {
+    const organizationName = appliedFilters.institutionName.trim()
+    const teacherName = appliedFilters.teacherName.trim()
+    const educationRegionCode =
+      appliedFilters.educationRegion !== UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL
+        ? appliedFilters.educationRegion
+        : ''
+    const scheduleDate =
+      appliedFilters.educationScheduleIso !== UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL
+        ? appliedFilters.educationScheduleIso
+        : ''
+    return {
+      status: 'APPROVED',
+      recruitHalf: toUjatRecruitHalfApi(half),
+      ...(organizationName ? { organizationName } : {}),
+      ...(teacherName ? { teacherName } : {}),
+      ...(educationRegionCode ? { educationRegionCode } : {}),
+      ...(scheduleDate ? { scheduleDate } : {}),
+    }
+  }, [appliedFilters, half])
+
   const remoteQuery = useInfiniteQuery({
     queryKey: [
-      ...ujatQueryKeys.organizationApplications(programId, {
-        status: 'APPROVED',
-        recruitHalf: toUjatRecruitHalfApi(half),
-      }),
+      ...ujatQueryKeys.organizationApplications(programId, listQuery),
       'edu-progress',
       half,
     ] as const,
     queryFn: ({ pageParam }) =>
-      listUjatInstitutionApplicationsPage(programId, pageParam, {
-        status: 'APPROVED',
-        recruitHalf: toUjatRecruitHalfApi(half),
-      }),
+      listUjatInstitutionApplicationsPage(programId, pageParam, listQuery),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,
@@ -120,10 +112,7 @@ export function useUjatEducationProgressInstitutions(
     return source.map((row, index) => mapOrgRowToProgressInstitution(row, index, half))
   }, [half, remoteQuery.data])
 
-  const tableData = useMemo(
-    () => filterRows(allRows, appliedFilters),
-    [allRows, appliedFilters]
-  )
+  const tableData = allRows
 
   const columns = useMemo(() => buildUjatEducationProgressInstitutionColumns(), [])
 

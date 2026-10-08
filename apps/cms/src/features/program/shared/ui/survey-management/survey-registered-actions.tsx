@@ -1,5 +1,5 @@
-import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './survey-management.css'
 
 export type SurveyRegisteredActionsSurvey = {
@@ -81,7 +81,7 @@ export function SurveyRegisteredActions({
         variant="secondary"
         size="large"
         width="auto"
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         disabled={!downloadEnabled}
         onClick={onDownloadClick}
       >

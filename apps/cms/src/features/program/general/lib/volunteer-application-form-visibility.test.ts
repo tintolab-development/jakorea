@@ -31,6 +31,28 @@ describe('getVolunteerApplicationFormHiddenParagraphIds', () => {
     }
   })
 
+  it('템플릿 작성 모드에서는 경험 선택과 무관하게 이전 참여 단락을 노출한다', () => {
+    const draft = createProgramApplicationFormVolunteerDraft()
+    for (const selectedPreviewSingleId of [
+      PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS.no,
+      null,
+    ] as const) {
+      const paragraphs = draft.paragraphs.map(p => {
+        if (p.id !== PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.jaVolunteerExperience) return p
+        return {
+          ...(p as MultipleChoiceParagraph),
+          selectedPreviewSingleId,
+        }
+      })
+      const hidden = getVolunteerApplicationFormHiddenParagraphIds(paragraphs, {
+        isTemplateAuthoringMode: true,
+      })
+      expect(hidden?.has(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousJaProgram) ?? false).toBe(
+        false
+      )
+    }
+  })
+
   it('면접 없음 프로그램이면 면접 일정 단락을 숨긴다', () => {
     const draft = createProgramApplicationFormVolunteerDraft()
     const hidden = getVolunteerApplicationFormHiddenParagraphIds(draft.paragraphs, {

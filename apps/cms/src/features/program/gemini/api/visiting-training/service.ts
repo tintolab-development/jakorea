@@ -24,6 +24,7 @@ import {
   mapGeminiRecruitmentSnapshotToCreateRequest,
   toGeminiNumericIds,
 } from './adapters'
+import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import {
   approveGeminiInstructorApplicationRemote,
@@ -230,7 +231,19 @@ export async function createGeminiRecruitment(
   const request = mapGeminiRecruitmentSnapshotToCreateRequest(snapshot)
   console.log('[program registration create] 등록 완료', request)
   const created = await createGeminiRecruitmentRemote(request)
-  return { id: String(created.id ?? '') }
+  const id = String(created.id ?? '')
+  const thumbnailFileObjectId = snapshot.thumbnailFileObjectId
+  const numericId = Number(id)
+  if (thumbnailFileObjectId != null && Number.isFinite(numericId) && numericId > 0) {
+    try {
+      await putProgramThumbnail(numericId, thumbnailFileObjectId)
+    } catch (error) {
+      // 썸네일 없이 등록 완료로 남지 않도록 방금 만든 공고를 지운다.
+      await deleteGeminiRecruitmentRemote(id).catch(() => undefined)
+      throw error
+    }
+  }
+  return { id }
 }
 
 export async function updateGeminiRecruitment(
@@ -239,6 +252,10 @@ export async function updateGeminiRecruitment(
 ): Promise<void> {
   assertRemoteReady()
   await updateGeminiRecruitmentRemote(programId, mapGeminiRecruitmentDetailToUpdateRequest(draft))
+  const numericId = Number(programId)
+  if (draft.thumbnailFileObjectId !== undefined && Number.isFinite(numericId) && numericId > 0) {
+    await putProgramThumbnail(numericId, draft.thumbnailFileObjectId)
+  }
 }
 
 export async function deleteGeminiRecruitments(ids: string[]): Promise<void> {

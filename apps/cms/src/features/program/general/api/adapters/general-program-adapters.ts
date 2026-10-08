@@ -68,6 +68,7 @@ import {
   formatKoreanPhoneNumber,
   isValidKoreanPhoneNumber,
 } from '@jakorea/domain/shared/korean-phone'
+import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
 
 /**
  * BE `applicationTargetMode` — CMS `generalProgramAudience`(기관/개인)와 대응.
@@ -278,6 +279,15 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
     ...resolveBusinessPeriodDates(dto),
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,
+    listDeleteBlocked: resolveProgramListDeleteBlocked({
+      lifecycleStatus,
+      participantApprovedCount: toOptionalNumber(dto.participantApprovedCount),
+      approvedOrganizationApplicationCount: toOptionalNumber(dto.approvedOrganizationApplicationCount),
+      participatingSchoolCount:
+        toOptionalNumber(dto.participatingSchoolCount) ??
+        toOptionalNumber(dto.participatingOrganizationCount),
+      participatingStudentCount: toOptionalNumber(dto.participatingStudentCount),
+    }),
     targetLevel: listTargetLevels[0],
     targetLevels: listTargetLevels.length > 0 ? listTargetLevels : undefined,
     approvedStudentCount:

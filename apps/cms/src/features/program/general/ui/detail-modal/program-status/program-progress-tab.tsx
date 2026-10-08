@@ -5,7 +5,6 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { Card, Table, Row, Col, Select } from 'antd'
-import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton } from '@/shared/ui'
 import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import type { ColumnsType } from 'antd/es/table'
@@ -50,6 +49,7 @@ import { useTrainedTeacherPerformanceSummary } from '@/features/program/trained-
 import { useTrainedTeacherEducationCompletions } from '@/features/program/trained-teachers/api/education-completions-hooks'
 import { countActiveEducationCompletions } from '@/features/program/trained-teachers/api/education-completions-adapters'
 import { TrainedTeachersPerformanceSummaryStrip } from '@/features/program/trained-teachers/ui/progress/performance-summary-strip'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './program-progress-tab.css'
 
 const PARTICIPATING_SCHOOL_TAB = 'schools'
@@ -645,7 +645,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                   <CmsButton
                     variant="secondary"
                     size="large"
-                    icon={<DownloadOutlined />}
+                    icon={<ButtonDownloadIcon />}
                     onClick={() =>
                       window.alert(ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE)
                     }

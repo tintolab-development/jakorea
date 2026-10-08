@@ -24,7 +24,9 @@ export function getPlatformReactionEmojiTypeForIndex(index: number): string | un
   return PLATFORM_REACTION_EMOJI_TYPES[index]
 }
 
+/** BE 정규화 값(`SMILE`)도 받는다 — 6종은 모두 한 단어라 소문자 비교로 충분 */
 export function getPlatformReactionEmojiIndex(emojiType: string): number | null {
-  const index = (PLATFORM_REACTION_EMOJI_TYPES as readonly string[]).indexOf(emojiType)
+  const normalized = emojiType.trim().toLowerCase()
+  const index = (PLATFORM_REACTION_EMOJI_TYPES as readonly string[]).indexOf(normalized)
   return index >= 0 ? index : null
 }

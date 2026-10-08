@@ -327,7 +327,6 @@ export function ApplicantInstitutionBasicInfo({
                       accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                       multiple
                       disabled
-                      buttonLabel="파일 선택"
                       fileNames={
                         detail?.sexOffenseRecordAttachmentFileName
                           ? [detail.sexOffenseRecordAttachmentFileName]

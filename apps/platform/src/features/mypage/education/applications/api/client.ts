@@ -80,9 +80,18 @@ export async function fetchMyProgramApplicationDetail(
   return unwrapEnvelope<PortalProgramApplicationDetail>(data)
 }
 
+/** 서버 `reason`은 필수(@NotBlank)지만 신청 취소 모달에는 사유 입력이 없다. */
+const MEMBER_CANCEL_REQUEST = {
+  reasonCode: 'MEMBER_REQUEST',
+  reason: '회원 요청에 의한 신청 취소',
+} as const
+
 export async function cancelMyProgramApplication(
   applicationType: ProgramApplicationType,
   applicationId: string,
 ): Promise<void> {
-  await axiosClient.post(`${MY_PROGRAM_APPLICATIONS_PATH}/${applicationType}/${applicationId}/cancel`)
+  await axiosClient.post(
+    `${MY_PROGRAM_APPLICATIONS_PATH}/${applicationType}/${applicationId}/cancel`,
+    MEMBER_CANCEL_REQUEST,
+  )
 }

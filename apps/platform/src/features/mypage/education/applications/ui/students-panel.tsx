@@ -6,7 +6,7 @@ export type EducationStudentsPanelProps = {
   lastParticipatedSession?: number
 }
 
-/** 교사회원 교육현황 — 학생 명단 탭 (목록 API 연동 전 placeholder) */
+/** 교사 회원 교육현황 — 학생 명단 탭 (목록 API 연동 전 placeholder) */
 export function EducationStudentsPanel(_props: EducationStudentsPanelProps) {
   return (
     <div className={styles.panel}>

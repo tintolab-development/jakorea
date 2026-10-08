@@ -1,6 +1,7 @@
 export type ParticipatingIndividualParticipantAttendanceStatus =
   | 'present'
   | 'late'
+  | 'absent'
   | 'excused_absence'
   | 'withdrawn'
   | 'pending'
@@ -13,6 +14,7 @@ export const PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_STATUS_LABELS: Reco
 > = {
   present: '출석',
   late: '지각',
+  absent: '결석',
   excused_absence: '사유 불참',
   withdrawn: '활동 포기',
   pending: '-',

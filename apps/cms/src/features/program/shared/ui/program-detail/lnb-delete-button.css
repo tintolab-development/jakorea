@@ -1,0 +1,32 @@
+.program-detail-lnb-delete {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-start;
+  padding: 16px 16px 30px;
+  box-sizing: border-box;
+}
+
+.program-detail-lnb-delete__button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--color-red, #c32f4a);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
+}
+
+.program-detail-lnb-delete__button:focus-visible {
+  outline: 2px solid var(--color-red, #c32f4a);
+  outline-offset: 2px;
+}

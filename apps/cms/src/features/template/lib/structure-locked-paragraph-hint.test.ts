@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@/features/template/model/program-application-form-economy-draft'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
+import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@/features/template/model/program-application-form-trained-teachers-draft'
@@ -80,6 +81,14 @@ describe('resolveStructureLockedParagraphHint', () => {
     ).toBe('* 해당 단락은 삭제 불가하며, 일부 텍스트만 수정이 가능합니다.')
     expect(
       isStructureLockedPartialShortEssayParagraph(PROGRAM_PARTICIPANT_APPLICATION_IDS.selfIntro)
+    ).toBe(true)
+  })
+
+  it('봉사자 JA 봉사 경험 여부 단락은 제목 수정 partial 대상이다', () => {
+    expect(
+      isStructureLockedPartialHeadingParagraph(
+        PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.jaVolunteerExperience
+      )
     ).toBe(true)
   })
 

@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState, type Key } from 'react'
-import { CalendarOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
@@ -20,6 +19,8 @@ import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CrossTable } from '@/shared/ui/cross-table'
 import { DsDemo, DsSection } from './section'
+
+import { ButtonCalendarIcon } from '@/shared/ui/icons/ButtonIcons'
 
 type DemoRow = {
   id: string
@@ -222,7 +223,7 @@ export function FiltersTablesSection() {
               <CmsButton variant="secondary" size="large" className="cms-button--action">
                 선택 승인
               </CmsButton>
-              <CmsButton variant="secondary" size="large" icon={<CalendarOutlined />}>
+              <CmsButton variant="secondary" size="large" icon={<ButtonCalendarIcon />}>
                 캘린더 뷰로 보기
               </CmsButton>
             </div>

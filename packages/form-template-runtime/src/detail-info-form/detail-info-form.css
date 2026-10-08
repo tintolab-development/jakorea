@@ -34,7 +34,8 @@
   height: 40px;
 }
 
-.detail-info-form__header:has(.detail-info-form__description--below) .detail-info-form__header-lead {
+.detail-info-form__header:has(.detail-info-form__description--below)
+  .detail-info-form__header-lead {
   height: auto;
   min-height: 0;
   align-items: flex-start;
@@ -63,7 +64,9 @@
 /* 텍스트 note용 max-width — 액션 버튼/토글 묶음은 한 줄 유지 */
 .detail-info-form__header-trailing:has(.cms-button),
 .detail-info-form__header-trailing:has(.program-registration-paragraph__card-title-actions),
-.detail-info-form__header-trailing:has(.volunteer-interview-available-schedule__card-title-actions) {
+.detail-info-form__header-trailing:has(
+  .volunteer-interview-available-schedule__card-title-actions
+) {
   opacity: 1;
   max-width: none;
 }
@@ -104,7 +107,7 @@
 }
 
 .detail-info-form__body {
-  border: 1px solid var(--table-line, #e0e0e0);
+  border: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
   border-radius: var(--detail-info-form-body-radius, 8px);
   overflow: hidden;
   background: #fff;
@@ -112,7 +115,7 @@
 }
 
 .detail-info-form__row {
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
   box-sizing: border-box;
 }
 
@@ -149,21 +152,21 @@
 
 /* 반쪽 Field 다음 fullRow Field(줄바꿈) — 교육 형태·IPS 등 내부 행 구분선 */
 .detail-info-form__row--double > .detail-info-form__field--full-row:not(:first-child) {
-  border-top: 1px solid var(--table-line, #e0e0e0);
+  border-top: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
 }
 
 .detail-info-form__row--double
   > .detail-info-form__field:not(.detail-info-form__field--full-row):nth-child(odd):not(
     :last-child
   ) {
-  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-right: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
 }
 
 .detail-info-form__field {
   display: grid;
-  grid-template-columns: var(--detail-info-label-w, 200px) minmax(0, 1fr);
+  grid-template-columns: var(--detail-info-label-w, 180px) minmax(0, 1fr);
   align-items: stretch;
-  min-height: 48px;
+  min-height: 52px;
   min-width: 0;
   box-sizing: border-box;
 }
@@ -182,32 +185,58 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: 2px;
-  width: var(--detail-info-label-w, 200px);
-  min-width: var(--detail-info-label-w, 200px);
-  max-width: var(--detail-info-label-w, 200px);
+  width: var(--detail-info-label-w, 180px);
+  min-width: var(--detail-info-label-w, 180px);
+  max-width: var(--detail-info-label-w, 180px);
   padding: 12px 16px;
-  background: var(--BG-header);
-  border-right: 1px solid var(--table-line, #e0e0e0);
-  font-size: 16px;
+  background: var(
+    --Background-header,
+    var(
+      --BG-header,
+      linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+      #fff
+    )
+  );
+  border-right: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
   font-weight: 700;
-  line-height: 140%;
-  color: var(--default-BK, #3d3d3d);
+  line-height: 150%;
+  color: var(--Netural-black, #3d3d3d);
   text-align: center;
   box-sizing: border-box;
 }
 
 .detail-info-form__field-content {
-  padding: 12px 16px;
-  font-size: 16px;
+  min-width: 100px;
+  min-height: 52px;
+  padding: var(--Spacing-12, 12px) var(--Spacing-16, 16px);
+  gap: var(--Spacing-16, 16px);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
   font-weight: 500;
-  line-height: 140%;
-  color: var(--default-BK, #3d3d3d);
+  line-height: 150%;
+  color: var(--Netural-black, #3d3d3d);
   background: #fff;
   display: flex;
   /* 기본: 세로 중앙. 다줄·특수 레이아웃만 소비자에서 flex-start 등 명시 override */
   align-items: center;
-  min-width: 0;
   box-sizing: border-box;
+}
+
+/* 수정 슬롯은 포커스 링·검증 문구·다줄 입력이 잘리지 않도록 보기 모드에만 적용 */
+.detail-info-form__field-content--view {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detail-info-form__field-content--view > span {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /*
@@ -240,24 +269,33 @@
 
 /*
  * 성명 2행 블록
- * - 우측 라벨 열 200px → 아래 Field(기본 200px)와 세로선 정렬
- * - 좌측 100+100 = 200px → Field 단일 라벨 200px과 동일 폭
+ * - 우측 라벨 열 → 아래 Field 라벨 열(기본 180px)과 세로선 정렬
+ * - 좌측 두 열 합 = Field 단일 라벨 폭
  * - gap 대신 border만 사용(세로 구분선 누락 방지), 하단은 Row border와 이중선 없음
  */
 .detail-info-form__name-block {
   display: grid;
   width: 100%;
   box-sizing: border-box;
-  grid-template-columns: 100px 100px minmax(0, 1fr) 200px minmax(0, 1fr);
-  grid-template-rows: minmax(48px, auto) minmax(48px, auto);
+  grid-template-columns:
+    calc(var(--detail-info-label-w, 180px) / 2)
+    calc(var(--detail-info-label-w, 180px) / 2)
+    minmax(0, 1fr)
+    var(--detail-info-label-w, 180px)
+    minmax(0, 1fr);
+  grid-template-rows: minmax(52px, auto) minmax(52px, auto);
   grid-template-areas:
     'nbT nbS1 nbV1 nbL1 nbR1'
     'nbT nbS2 nbV2 nbL2 nbR2';
 }
 
-/* 교사 상세: 성명(한글)·성명(영문) 단일 라벨 열 — Field 라벨 200px과 맞춤 */
+/* 교사 상세: 성명(한글)·성명(영문) 단일 라벨 열 — Field 라벨 폭과 맞춤 */
 .detail-info-form__name-block--no-group-title {
-  grid-template-columns: 200px minmax(0, 1fr) 200px minmax(0, 1fr);
+  grid-template-columns:
+    var(--detail-info-label-w, 180px)
+    minmax(0, 1fr)
+    var(--detail-info-label-w, 180px)
+    minmax(0, 1fr);
   grid-template-areas:
     'nbS1 nbV1 nbL1 nbR1'
     'nbS2 nbV2 nbL2 nbR2';
@@ -269,11 +307,12 @@
   min-width: 0;
   box-sizing: border-box;
   padding: 12px 16px;
-  font-size: 16px;
-  line-height: 140%;
-  color: var(--default-BK, #3d3d3d);
-  border-right: 1px solid var(--table-line, #e0e0e0);
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  line-height: 150%;
+  color: var(--Netural-black, #3d3d3d);
+  border-right: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
+  border-bottom: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
 }
 
 .detail-info-form__name-block-cell--r1,
@@ -299,7 +338,14 @@
   flex-wrap: wrap;
   gap: 2px;
   text-align: center;
-  background: var(--BG-header);
+  background: var(
+    --Background-header,
+    var(
+      --BG-header,
+      linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+      #fff
+    )
+  );
   font-weight: 700;
 }
 

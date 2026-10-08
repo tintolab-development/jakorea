@@ -60,6 +60,45 @@ export const UJAT_PROGRAM_APPLICATION_VOLUNTEER_PREFERRED_REGION_ITEMS: Readonly
   },
 ]
 
+/** 기본 정보 — 학년 (CMS 양식·Platform 작성 공통) */
+export const UJAT_PROGRAM_APPLICATION_VOLUNTEER_GRADE_OPTIONS: ReadonlyArray<{
+  value: string
+  label: string
+}> = [
+  { label: '1학년', value: '1' },
+  { label: '2학년', value: '2' },
+  { label: '3학년', value: '3' },
+  { label: '4학년', value: '4' },
+  { label: '휴학생', value: 'leave' },
+  { label: '졸업유예', value: 'deferred' },
+]
+
+export const UJAT_PROGRAM_APPLICATION_VOLUNTEER_ROUTE_OTHER_VALUE = 'other'
+
+/** 기본 정보 — 지원 경로 */
+export const UJAT_PROGRAM_APPLICATION_VOLUNTEER_ROUTE_OPTIONS: ReadonlyArray<{
+  value: string
+  label: string
+}> = [
+  { label: '인스타그램', value: 'instagram' },
+  { label: '학교 안내 및 에브리타임', value: 'school-everytime' },
+  { label: '링커리어', value: 'linkareer' },
+  { label: '올콘', value: 'allcon' },
+  { label: '캠퍼스픽', value: 'campuspick' },
+  { label: '기타', value: UJAT_PROGRAM_APPLICATION_VOLUNTEER_ROUTE_OTHER_VALUE },
+]
+
+export type UjatProgramApplicationVolunteerApplicationType = 'new' | 'ujat-graduate'
+
+/** 기본 정보 — 지원 형태. 신규는 「이전 UJAT 활동 기수」, 수료자는 「자유 작성 항목」을 숨긴다 */
+export const UJAT_PROGRAM_APPLICATION_VOLUNTEER_APPLICATION_TYPE_OPTIONS: ReadonlyArray<{
+  value: UjatProgramApplicationVolunteerApplicationType
+  label: string
+}> = [
+  { value: 'new', label: '신규 봉사자' },
+  { value: 'ujat-graduate', label: 'UJAT 수료자 봉사자' },
+]
+
 export const UJAT_PROGRAM_APPLICATION_VOLUNTEER_EDUCATION_EXPERIENCE_OPTION_IDS = {
   yes: 'ujat-program-application-volunteer-education-experience-yes',
   no: 'ujat-program-application-volunteer-education-experience-no',

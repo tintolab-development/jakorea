@@ -47,7 +47,9 @@ import {
   applyRecruitmentParticipantColumnFieldsToUpdateRequest,
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
+  resolveParticipantRecruitmentRemarks,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
+import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
 
@@ -116,6 +118,13 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
     ...resolveCompanySchoolOperationDates(dto),
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: resolveCompanySchoolListLifecycle(dto),
+    listDeleteBlocked: resolveProgramListDeleteBlocked({
+      lifecycleStatus: resolveCompanySchoolListLifecycle(dto),
+      participantApprovedCount: dto.participantApprovedCount,
+      approvedOrganizationApplicationCount: dto.approvedOrganizationApplicationCount,
+      participatingSchoolCount: dto.participatingSchoolCount ?? dto.participatingOrganizationCount,
+      participatingStudentCount: dto.participatingStudentCount,
+    }),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     ...mapListParticipantRecruitment(dto),
     instructors: dto.instructorApplicantCount,
@@ -513,6 +522,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     contactEmail: program.contactEmail,
     contactPhone: program.contactPhone,
     oneLineIntroduction: program.oneLineIntroduction,
+    remarks: resolveParticipantRecruitmentRemarks(program),
     keyVisualImage: program.keyVisualImage ?? program.posterImage,
     settlementRuleId: program.settlementRuleId,
     applicationPathId: program.applicationPathId,

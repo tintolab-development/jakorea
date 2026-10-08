@@ -2,3 +2,18 @@
   flex: 1;
   min-height: 0;
 }
+
+/* 탭·카테고리 전환 중 중첩된 로딩 스피너가 본문 남은 높이의 정중앙에 오도록 flex 체인 연결 */
+.general-detail-fullpage-modal .detail-fullpage-modal__content:has(.detail-fullpage-modal__loading) {
+  display: flex;
+  flex-direction: column;
+}
+
+.general-detail-fullpage-modal
+  .detail-fullpage-modal__content
+  div:has(.detail-fullpage-modal__loading) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}

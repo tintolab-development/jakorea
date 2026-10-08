@@ -1,5 +1,9 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import { createDefaultGeminiRecruitmentAddFormSnapshot } from '@/features/program/gemini/lib/recruitment/add-local-save'
+import {
+  isOperationalSeedDefaultSuppressed,
+  readOperationalOverlayKvValue,
+} from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 
 export const GEMINI_RECRUIT_OVERLAY_KEYS = {
   title: 'geminiRecruit.title',
@@ -73,6 +77,12 @@ export function replaceGeminiRecruitOverlay(next: Record<string, unknown>): void
   emitOverlay()
 }
 
+/** 템플릿 변경으로 불러온 overlay. 빠진 키를 시드 기본값(최소 인원 15 등)으로 채우지 않는다. */
+export function replaceGeminiRecruitOverlayExact(next: Record<string, unknown>): void {
+  overlayState = { ...next }
+  emitOverlay()
+}
+
 export function pickGeminiRecruitOverlay(record: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const key of Object.values(GEMINI_RECRUIT_OVERLAY_KEYS)) {
@@ -124,14 +134,16 @@ export function seedGeminiRecruitOverlayFromDetail(detail: {
 export function restoreGeminiRecruitOverlay(overlay: Record<string, unknown>): void {
   const picked = pickGeminiRecruitOverlay(overlay)
   if (Object.keys(picked).length > 0) {
-    replaceGeminiRecruitOverlay(picked)
+    replaceGeminiRecruitOverlayExact(picked)
     return
   }
   replaceGeminiRecruitOverlay(seedGeminiRecruitOverlayFromDetail(overlay))
 }
 
 export function resetGeminiRecruitOverlay(): void {
-  overlayState = createDefaultGeminiRecruitOverlay()
+  overlayState = isOperationalSeedDefaultSuppressed('gemini-recruit', '*')
+    ? {}
+    : createDefaultGeminiRecruitOverlay()
   emitOverlay()
 }
 
@@ -146,7 +158,7 @@ export function useGeminiRecruitOverlayKv<T>(
   )
   void version
   const record = getGeminiRecruitOverlayRecord()
-  const value = (record[key] as T | undefined) ?? defaultValue
+  const value = readOperationalOverlayKvValue('gemini-recruit', record, key, defaultValue)
   const setValue = useCallback(
     (next: T) => {
       patchGeminiRecruitOverlay({ [key]: next })

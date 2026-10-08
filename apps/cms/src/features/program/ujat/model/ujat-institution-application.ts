@@ -25,21 +25,6 @@ export type UjatInstitutionScheduleAssignRegionSeed = {
   assignments: UjatInstitutionScheduleAssignSeedEntry[]
 }
 
-/** 지역별 일 예상 최대 학급 수 (용량 표시용 상수 — 시드 아님) */
-export const UJAT_INSTITUTION_MAX_CLASSES_PER_DAY: Record<
-  UjatInstitutionApplicationRegionKey,
-  number
-> = {
-  seoul: 12,
-  gyeonggi_south: 11,
-  incheon: 10,
-  daejeon: 9,
-  daegu: 10,
-  busan: 11,
-  gwangju: 8,
-  jeonbuk_jeonju: 8,
-}
-
 /** Mock 시드 제거 — 빈 시드 */
 export const UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED: Partial<
   Record<UjatInstitutionApplicationRegionKey, UjatInstitutionScheduleAssignRegionSeed>
@@ -51,32 +36,16 @@ export function getUjatInstitutionScheduleAssignSeed(): Partial<
   return UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED
 }
 
-export function getUjatInstitutionApplicationMockRows(): UjatInstitutionApplicationRow[] {
-  return []
-}
-
 export function getUjatInstitutionApplicationRowById(
   _institutionId: string
 ): UjatInstitutionApplicationRow | null {
   return null
 }
 
-export function getUjatInstitutionApplicationMockRowsByRegion(
-  _regionKey: UjatInstitutionApplicationRegionKey
-): UjatInstitutionApplicationRow[] {
-  return []
-}
-
 export function patchUjatInstitutionApplicationRows(
   _ids: string[],
   _status: UjatInstitutionTempAssignmentStatus
 ): void {}
-
-export function getUjatInstitutionScheduleConfirmStatus(
-  _institutionRowId: string
-): UjatInstitutionScheduleConfirmStatus {
-  return 'institution_checking'
-}
 
 export function patchUjatInstitutionScheduleConfirmStatus(
   _ids: string[],

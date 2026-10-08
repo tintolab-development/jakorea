@@ -47,10 +47,13 @@ export function mapFormTemplateListItemToRow(
     apiTemplateId: item.templateId,
     systemTemplate,
     availableActions: item.availableActions,
+    baseTemplateCode: item.baseTemplateCode?.trim() || templateCode,
+    latestVersionId: item.latestVersionId,
     deletable: resolveWritingFormTemplateDeletable({
       id: templateCode,
       systemTemplate,
       availableActions: item.availableActions,
+      deletable: item.deletable,
     }),
   }
 }

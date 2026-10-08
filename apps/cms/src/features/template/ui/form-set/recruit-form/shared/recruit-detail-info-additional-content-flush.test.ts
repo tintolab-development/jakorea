@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
+  beginRecruitDetailContentReset,
+  consumeWizardContentResetPending,
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay,
   flushRecruitDetailRichTextIntoGeneralRecruitOverlay,
   registerRecruitDetailAdditionalContentHtml,
@@ -19,6 +21,17 @@ describe('recruit-detail-info-additional-content-flush', () => {
       null
     )
     resetGeneralRecruitOverlay()
+    consumeWizardContentResetPending()
+  })
+
+  it('does not flush previous editor HTML during a template-change reset', () => {
+    registerRecruitDetailRichTextHtml(
+      'recruit.detailInfo.recruitmentGuide',
+      () => '<p>이전 모집 안내</p>'
+    )
+    beginRecruitDetailContentReset()
+    flushRecruitDetailRichTextIntoGeneralRecruitOverlay()
+    expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.recruitmentGuide']).toBeUndefined()
   })
 
   it('flushes registered editor HTML into general recruit overlay', () => {

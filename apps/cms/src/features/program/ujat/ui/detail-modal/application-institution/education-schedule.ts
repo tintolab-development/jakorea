@@ -1,34 +1,31 @@
 import dayjs from 'dayjs'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
+import {
+  isoDateFromScheduleInstant,
+  type ProgramScheduleListItem,
+} from '@/features/program/ujat/api/temporary-schedule-api'
+import { resolveUjatEducationScheduleSettingsSemesterDisplay } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
+import type { UjatHalfEventRangeSeal } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
 
 dayjs.extend(isSameOrBefore)
 
-/**
- * 관리자가 프로그램 등록 시 설정한 교육 일정 기간(mock).
- * 실 API 연동 시 프로그램 교육 시작·종료일로 대체.
- */
-export const UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK = {
-  startDate: '2026-04-03',
-  endDate: '2026-06-19',
-} as const
-
-/** 프로그램 등록 시 선택한 교육 진행 불가일(mock) — 임시 배정 화면에서 금요일 목록 제외 */
-export const UJAT_INSTITUTION_EDUCATION_UNAVAILABLE_MOCK = [
-  '2026-05-15',
-  '2026-06-12',
-] as const
-
-export const UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK = {
-  startDate: '2026-09-11',
-  endDate: '2026-11-20',
-} as const
-
-export const UJAT_INSTITUTION_EDUCATION_UNAVAILABLE_H2_MOCK = [
-  '2026-10-23',
-  '2026-10-30',
-] as const
-
 export type UjatInstitutionEducationSemesterKey = 'h1' | 'h2'
+
+export type UjatInstitutionScheduleAssignDateEntry = {
+  isoDate: string
+  title: string
+  semester: UjatInstitutionEducationSemesterKey | null
+  scheduleId?: number
+}
+
+/** 일정 열 키 — 프로그램 schedules API의 날짜(YYYY-MM-DD) */
+export type UjatInstitutionScheduleSlotKey = string
+
+export type UjatInstitutionScheduleColumn = {
+  key: UjatInstitutionScheduleSlotKey
+  title: string
+  isoDate: string
+}
 
 export function listAssignableFridayIsoDatesInPeriod(
   startDate: string,
@@ -39,76 +36,10 @@ export function listAssignableFridayIsoDatesInPeriod(
   return listFridayIsoDatesInPeriod(startDate, endDate).filter(iso => !blocked.has(iso))
 }
 
-export function resolveEducationSemesterForIsoDate(isoDate: string): UjatInstitutionEducationSemesterKey {
-  const d = dayjs(isoDate)
-  const h1Start = dayjs(UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.startDate)
-  const h1End = dayjs(UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.endDate)
-  if (!d.isBefore(h1Start, 'day') && !d.isAfter(h1End, 'day')) {
-    return 'h1'
-  }
-  return 'h2'
-}
-
-/** 신청 기관 목록 — 상·하반기 구분 없이 교육 일정 기간 내 모든 금요일 */
-const FRIDAY_ISO_DATES = [
-  ...listFridayIsoDatesInPeriod(
-    UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.startDate,
-    UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.endDate
-  ),
-  ...listFridayIsoDatesInPeriod(
-    UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK.startDate,
-    UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK.endDate
-  ),
-]
-
-export type UjatInstitutionScheduleAssignDateEntry = {
-  isoDate: string
-  title: string
-  semester: UjatInstitutionEducationSemesterKey
-}
-
-const H1_SCHEDULE_ASSIGN_DATE_ENTRIES: UjatInstitutionScheduleAssignDateEntry[] =
-  listAssignableFridayIsoDatesInPeriod(
-    UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.startDate,
-    UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.endDate,
-    UJAT_INSTITUTION_EDUCATION_UNAVAILABLE_MOCK
-  ).map(iso => ({
-    isoDate: iso,
-    title: formatScheduleColumnTitle(iso),
-    semester: 'h1' as const,
-  }))
-
-const H2_SCHEDULE_ASSIGN_DATE_ENTRIES: UjatInstitutionScheduleAssignDateEntry[] =
-  listAssignableFridayIsoDatesInPeriod(
-    UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK.startDate,
-    UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK.endDate,
-    UJAT_INSTITUTION_EDUCATION_UNAVAILABLE_H2_MOCK
-  ).map(iso => ({
-    isoDate: iso,
-    title: formatScheduleColumnTitle(iso),
-    semester: 'h2' as const,
-  }))
-
-export const UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES: readonly UjatInstitutionScheduleAssignDateEntry[] =
-  [...H1_SCHEDULE_ASSIGN_DATE_ENTRIES, ...H2_SCHEDULE_ASSIGN_DATE_ENTRIES]
-
-export type UjatInstitutionScheduleSlotKey = (typeof FRIDAY_ISO_DATES)[number]
-
-/** 교육 일정 기간 내 모든 금요일 — 테이블 「교육 일자」 열 */
-export const UJAT_INSTITUTION_SCHEDULE_COLUMNS: ReadonlyArray<{
-  key: UjatInstitutionScheduleSlotKey
-  title: string
-  isoDate: UjatInstitutionScheduleSlotKey
-}> = FRIDAY_ISO_DATES.map(iso => ({
-  key: iso,
-  title: formatScheduleColumnTitle(iso),
-  isoDate: iso,
-}))
-
 export function listFridayIsoDatesInPeriod(startDate: string, endDate: string): string[] {
   const start = dayjs(startDate).startOf('day')
   const end = dayjs(endDate).startOf('day')
-  if (end.isBefore(start, 'day')) return []
+  if (!start.isValid() || !end.isValid() || end.isBefore(start, 'day')) return []
 
   let cursor = start
   while (cursor.day() !== 5) {
@@ -124,16 +55,19 @@ export function listFridayIsoDatesInPeriod(startDate: string, endDate: string): 
   return out
 }
 
-function formatScheduleColumnTitle(isoDate: string): string {
+export function formatScheduleColumnTitle(isoDate: string): string {
   const d = dayjs(isoDate)
+  if (!d.isValid()) return isoDate
   return `${d.month() + 1}월 ${d.date()}일`
 }
 
 /** 교육 진행 희망일 등 표시용 — `26년 4월 24일(금)` */
 export function formatUjatInstitutionFridayDisplay(isoDate: string): string {
   const d = dayjs(isoDate)
+  if (!d.isValid()) return isoDate
   const yy = String(d.year()).slice(-2)
-  return `${yy}년 ${d.month() + 1}월 ${d.date()}일(금)`
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토']
+  return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${weekdays[d.day()]})`
 }
 
 export function sumGradeClassCounts(
@@ -142,8 +76,99 @@ export function sumGradeClassCounts(
   return gradeClassCounts.reduce((sum, g) => sum + g.classCount, 0)
 }
 
-export function buildEmptyScheduleSlots(): Record<UjatInstitutionScheduleSlotKey, 'O' | '-'> {
-  return Object.fromEntries(
-    UJAT_INSTITUTION_SCHEDULE_COLUMNS.map(col => [col.key, '-'])
-  ) as Record<UjatInstitutionScheduleSlotKey, 'O' | '-'>
+export function buildEmptyScheduleSlots(): Record<string, 'O' | '-'> {
+  return {}
+}
+
+export function scheduleColumnsFromDates(
+  dates: readonly UjatInstitutionScheduleAssignDateEntry[]
+): UjatInstitutionScheduleColumn[] {
+  return dates.map(entry => ({
+    key: entry.isoDate,
+    title: entry.title,
+    isoDate: entry.isoDate,
+  }))
+}
+
+function readScheduleSemester(item: ProgramScheduleListItem): UjatInstitutionEducationSemesterKey | null {
+  const raw = String(item.semesterType ?? item.half ?? item.semester ?? '')
+    .trim()
+    .toUpperCase()
+  if (!raw) return null
+  if (
+    raw === 'H1' ||
+    raw === 'FIRST' ||
+    raw === 'FIRST_HALF' ||
+    raw.includes('FIRST') ||
+    raw.includes('상반')
+  ) {
+    return 'h1'
+  }
+  if (
+    raw === 'H2' ||
+    raw === 'SECOND' ||
+    raw === 'SECOND_HALF' ||
+    raw.includes('SECOND') ||
+    raw.includes('하반')
+  ) {
+    return 'h2'
+  }
+  return null
+}
+
+function isoInEventRange(isoDate: string, range: UjatHalfEventRangeSeal | undefined): boolean {
+  if (!range?.start || !range.end) return false
+  const d = dayjs(isoDate)
+  const start = dayjs(range.start)
+  const end = dayjs(range.end)
+  if (!d.isValid() || !start.isValid() || !end.isValid()) return false
+  return !d.isBefore(start, 'day') && !d.isAfter(end, 'day')
+}
+
+export function resolveEducationSemesterForIsoDate(
+  isoDate: string,
+  overlay?: Record<string, unknown>
+): UjatInstitutionEducationSemesterKey | null {
+  const h1 = resolveUjatEducationScheduleSettingsSemesterDisplay('h1', overlay).eventRange
+  const h2 = resolveUjatEducationScheduleSettingsSemesterDisplay('h2', overlay).eventRange
+  if (isoInEventRange(isoDate, h1)) return 'h1'
+  if (isoInEventRange(isoDate, h2)) return 'h2'
+  return null
+}
+
+/** GET /programs/{id}/schedules 항목만 날짜 열로 쓴다. 응답이 없으면 빈 배열. */
+export function buildUjatProgramScheduleDates(
+  schedules: readonly ProgramScheduleListItem[],
+  overlay?: Record<string, unknown>
+): UjatInstitutionScheduleAssignDateEntry[] {
+  const seen = new Set<string>()
+  const entries: UjatInstitutionScheduleAssignDateEntry[] = []
+
+  for (const item of schedules) {
+    const iso =
+      isoDateFromScheduleInstant(item.startAt) ??
+      isoDateFromScheduleInstant(item.scheduleStartAt)
+    if (!iso || seen.has(iso)) continue
+    seen.add(iso)
+    const scheduleIdRaw = item.id ?? item.scheduleId
+    const scheduleId =
+      scheduleIdRaw != null && Number.isFinite(Number(scheduleIdRaw))
+        ? Number(scheduleIdRaw)
+        : undefined
+    entries.push({
+      isoDate: iso,
+      title: item.name?.trim() || formatScheduleColumnTitle(iso),
+      semester: readScheduleSemester(item) ?? resolveEducationSemesterForIsoDate(iso, overlay),
+      scheduleId,
+    })
+  }
+
+  return entries.sort((a, b) => a.isoDate.localeCompare(b.isoDate))
+}
+
+export function filterScheduleDatesByHalf(
+  dates: readonly UjatInstitutionScheduleAssignDateEntry[],
+  half: UjatInstitutionEducationSemesterKey
+): UjatInstitutionScheduleAssignDateEntry[] {
+  return dates.filter(entry => entry.semester === half)
 }

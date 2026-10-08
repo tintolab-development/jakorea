@@ -70,6 +70,7 @@ import {
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
+import { toInstructorApplicationFeePolicy } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
   toFlatDecisionNotifyTiming,
   toNestedDecisionNotification,
@@ -107,10 +108,9 @@ import type {
   InstructorColumnPreset,
   SessionLinePreset,
 } from './applicant-list-menu'
+import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './applicants-detail.css'
 import './applicant-list.css'
-import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
-
 export interface ApplicantListProps {
   menu: ApplicantListMenu | ''
   /** 신청 강사 상세 게시글 탭 등에 사용 */
@@ -1789,21 +1789,28 @@ export function ApplicantList({
                   },
                 ]
               })
+              if (useInstructorAssignFlow && remoteAssignments.length === 0) {
+                showAlert({
+                  title: '강사 배정 필요',
+                  content: '배정할 일정을 1개 이상 선택하세요.',
+                })
+                return
+              }
               const remote = await applyRemoteInstructorDecision(
                 [id],
                 'approve',
                 undefined,
                 {
                   assignments: remoteAssignments,
-                  feePolicy: {
+                  feePolicy: toInstructorApplicationFeePolicy({
                     basisType: detail.lectureFeeBasisType,
-                    measure: detail.lectureFeeMeasure?.trim() || 'SESSION',
-                    amount: Number(detail.lectureFeeAmount?.replaceAll(',', '') ?? 0),
+                    measure: detail.lectureFeeMeasure,
+                    amount: detail.lectureFeeAmount,
                     instructorFeeGrade:
                       detail.instructorFeeGradeLabel?.trim() ||
                       instructorApprovalInstructor?.instructorFeeGradeLabel?.trim() ||
                       '미지정',
-                  },
+                  }),
                   notification: {
                     timing: detail.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
                     scheduledAt:
@@ -1874,7 +1881,7 @@ export function ApplicantList({
                 </CmsButton>
                 {showIndividualCalendarToggle && displayViewMode === 'table' && (
                   <CmsButton
-                    icon={<CalendarOutlined />}
+                    icon={<ButtonCalendarIcon />}
                     variant="secondary"
                     size="large"
                     onClick={handleViewCalendar}
@@ -1885,7 +1892,7 @@ export function ApplicantList({
                 {showIndividualCalendarToggle && displayViewMode === 'calendar' && (
                   <CmsButton
                     variant="secondary"
-                    icon={<UnorderedListOutlined />}
+                    icon={<ButtonListIcon />}
                     size="large"
                     onClick={() => setViewMode('table')}
                   >

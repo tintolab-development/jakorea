@@ -32,11 +32,11 @@ flowchart LR
   E -->|ID 없음| G[선택 차단 / 가입 불가]
 ```
 
-| 단계 | 데이터 소스 | 비고 |
-|------|-------------|------|
-| 학교 검색·목록 | **NEIS** (프론트 직접 호출) | CMS 회원 등록과 동일 UX |
+| 단계                     | 데이터 소스                                   | 비고                                        |
+| ------------------------ | --------------------------------------------- | ------------------------------------------- |
+| 학교 검색·목록           | **NEIS** (프론트 직접 호출)                   | CMS 회원 등록과 동일 UX                     |
 | 선택 시 `organizationId` | **`GET /api/homepage/organizations/schools`** | keyword / regionSido / regionSigungu로 매칭 |
-| 가입 요청 | **`POST /api/homepage/auth/signup/general`** | 재학 중이면 `schoolOrganizationId` 필수 |
+| 가입 요청                | **`POST /api/homepage/auth/signup/general`**  | 재학 중이면 `schoolOrganizationId` 필수     |
 
 관련 코드:
 
@@ -109,11 +109,11 @@ OpenAPI 참고 스키마: `MemberSignupRequest.schoolOrganizationId` — “재�
 
 프론트 검색은 이미 NEIS입니다. 가입까지 NEIS만으로 가려면 아래 중 하나가 필요합니다.
 
-| 옵션 | 설명 |
-|------|------|
+| 옵션    | 설명                                                                                                            |
+| ------- | --------------------------------------------------------------------------------------------------------------- |
 | **B-1** | 기관 캐시를 NEIS(또는 전국 학교) 기준으로 **상시 동기화**하고, 기존 `schools` 검색 API로 ID 제공 (현 계약 유지) |
-| **B-2** | 가입 요청에 **NEIS 학교코드**를 받고, 서버가 organization을 **resolve/create** 후 `schoolOrganizationId` 부여 |
-| **B-3** | `GET /api/homepage/organizations/schools`가 NEIS를 프록시하면서 **항상 organizationId**를 내려줌 |
+| **B-2** | 가입 요청에 **NEIS 학교코드**를 받고, 서버가 organization을 **resolve/create** 후 `schoolOrganizationId` 부여   |
+| **B-3** | `GET /api/homepage/organizations/schools`가 NEIS를 프록시하면서 **항상 organizationId**를 내려줌                |
 
 원하시면 프론트는 B-2/B-3에 맞춰 필드(`neisCode` 등)를 추가할 수 있습니다. **현재 OpenAPI에는 가입 요청에 NEIS 코드 필드가 없고**, `schoolOrganizationId`(int64)만 있습니다.
 
@@ -126,11 +126,11 @@ OpenAPI 참고 스키마: `MemberSignupRequest.schoolOrganizationId` — “재�
 
 ## 6. 관련 API (계약 요약)
 
-| Method | Path | 용도 |
-|--------|------|------|
-| `GET` | `/api/homepage/organizations/schools` | 가입용 학교·기관 검색 → `organizationId` |
-| `POST` | `/api/homepage/auth/signup/general` | 일반회원 가입 (`member.schoolOrganizationId` 재학 시 필수) |
-| `POST` | `/api/homepage/auth/signup/teacher` | 교사회원 (`teacher.organizationId` 필수) |
+| Method | Path                                  | 용도                                                       |
+| ------ | ------------------------------------- | ---------------------------------------------------------- |
+| `GET`  | `/api/homepage/organizations/schools` | 가입용 학교·기관 검색 → `organizationId`                   |
+| `POST` | `/api/homepage/auth/signup/general`   | 일반회원 가입 (`member.schoolOrganizationId` 재학 시 필수) |
+| `POST` | `/api/homepage/auth/signup/teacher`   | 교사 회원 (`teacher.organizationId` 필수)                  |
 
 학교 검색 응답 항목(`HomepageOrganizationSearchItem`): `organizationId`, `name`, `organizationCategory`, `regionSido`, `regionSigungu`, `zipcode`, `address`  
 → **NEIS 코드 필드는 응답에 없음.**
@@ -139,8 +139,8 @@ OpenAPI 참고 스키마: `MemberSignupRequest.schoolOrganizationId` — “재�
 
 ## 7. 백엔드 회신 부탁
 
-1. 로컬/ngrok에서 기관 캐시가 비는 것이 **의도(시드 미실행)** 인지, **버그**인지  
-2. 검증용으로 쓸 수 있는 **샘플 `organizationId` + 학교명**  
-3. 장기적으로 **A(캐시 유지)** / **B-2·B-3(NEIS 연동)** 중 어떤 방향을 쓸지  
+1. 로컬/ngrok에서 기관 캐시가 비는 것이 **의도(시드 미실행)** 인지, **버그**인지
+2. 검증용으로 쓸 수 있는 **샘플 `organizationId` + 학교명**
+3. 장기적으로 **A(캐시 유지)** / **B-2·B-3(NEIS 연동)** 중 어떤 방향을 쓸지
 
 회신 주시면 Platform 쪽 매핑·가드를 그에 맞게 맞추겠습니다.

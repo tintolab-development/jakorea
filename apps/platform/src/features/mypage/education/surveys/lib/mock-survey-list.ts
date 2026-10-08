@@ -12,6 +12,11 @@ export type EducationSurveyListEntry = {
   endAt?: string
   /** ISO — immediate 시작일 폴백 */
   createdAt?: string
+  templateVersionId?: number
+  form?: Record<string, unknown> | null
+  formResponseId?: number
+  answers?: Record<string, unknown> | null
+  draftAnswers?: Record<string, unknown> | null
 }
 
 export type EducationSurveySeedKind = 'survey' | 'satisfaction'

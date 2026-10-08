@@ -206,7 +206,7 @@
 }
 
 /* 결과 다운로드 — large+icon · 긴 라벨(max-content) · DS 패딩 6 16 6 10 */
-.survey-management-registered-actions__download-button.cms-button.ant-btn.cms-button--large {
+.survey-management-registered-actions__download-button.cms-button.ant-btn.cms-button--h44 {
   width: max-content !important;
   min-width: fit-content;
   max-width: none;
@@ -230,3 +230,13 @@
   max-width: none;
 }
 
+.ujat-survey-poll-results__required {
+  margin-left: 2px;
+  color: var(--color-red, #c32f4a);
+}
+
+/* 주관식 여러 칸 답은 서버가 줄바꿈(\n)으로 이어 준다 */
+.ujat-survey-text-responses-table__table td.ujat-survey-text-responses-table__cell--content {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

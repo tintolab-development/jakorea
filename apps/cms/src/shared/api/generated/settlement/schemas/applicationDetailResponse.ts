@@ -8,6 +8,7 @@
 import type { ApplicationCapabilities } from './applicationCapabilities';
 import type { ApplicationDetailResponseAnswers } from './applicationDetailResponseAnswers';
 import type { ApplicationDetailResponseDisplayStatus } from './applicationDetailResponseDisplayStatus';
+import type { ApplicationDetailResponseRecruitTerm } from './applicationDetailResponseRecruitTerm';
 import type { EducationScreenSummary } from './educationScreenSummary';
 import type { ParticipationSummary } from './participationSummary';
 import type { ProgramApplicationSupplement } from './programApplicationSupplement';
@@ -22,6 +23,11 @@ export interface ApplicationDetailResponse {
   programGroup?: string;
   recruitmentId?: number;
   recruitmentType?: string;
+  /**
+     * UJAT 봉사자 신청의 상·하반기 모집 식별자. 그 외에는 null.
+     * @nullable
+     */
+  recruitTerm?: ApplicationDetailResponseRecruitTerm;
   applicationStatus?: string;
   submittedAt?: string;
   updatedAt?: string;

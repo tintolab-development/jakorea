@@ -214,7 +214,18 @@ export function resyncEconomyRegistrationOverlayFromProgram(
     ECONOMY_REGISTRATION_OVERLAY_PREFIX,
     extra ?? {}
   )
-  return { ...leftover, ...fromProgram }
+  const merged = { ...leftover, ...fromProgram }
+  for (const key of [
+    `${KPI}.participantCount`,
+    `${KPI}.instructor`,
+    `${KPI}.dispatchedSchool`,
+    `${KPI}.dispatchedClass`,
+  ] as const) {
+    if (Object.prototype.hasOwnProperty.call(leftover, key) && leftover[key] == null) {
+      merged[key] = leftover[key]
+    }
+  }
+  return merged
 }
 
 export function readEconomyRegistrationOverlayForSave(): Record<string, unknown> {

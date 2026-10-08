@@ -196,6 +196,10 @@
     0 14px 23px 0 rgba(14, 42, 53, 0.1);
 }
 
+.popoverInline {
+  box-shadow: none;
+}
+
 .header {
   display: flex;
   width: 100%;
@@ -393,6 +397,22 @@
 .daySelected:hover {
   background: var(--color-primary-500);
   color: var(--color-neutral-white);
+}
+
+.dayMarked::after {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-primary-500);
+  content: '';
+  transform: translateX(-50%);
+}
+
+.daySelected.dayMarked::after {
+  background: var(--color-neutral-white);
 }
 
 .day:focus-visible {

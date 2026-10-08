@@ -9,6 +9,7 @@ import {
   MOCK_MYPAGE_AFFILIATION,
   MOCK_MYPAGE_EMPLOYMENT_LABEL,
 } from '../home/lib/mock-stats'
+import { MOCK_SETTINGS_PROFILE, MOCK_TEACHER_SETTINGS_PROFILE } from '../settings/lib/constants'
 import { MOCK_MYPAGE_USER_NAME } from '../lib/constants'
 import {
   mapPortalMemberToPlatformProfile,
@@ -29,6 +30,10 @@ export type MypageMemberView = {
   displayName: string
   profile: PlatformMemberProfile
   email?: string
+  /** `GET /me/profile` 우선, 없으면 `GET /auth/me` */
+  ageGroup?: string
+  under14?: boolean
+  birthDate?: string
   /** 교사·교사 겸직 강사 — 소속 (학교명 우선) */
   affiliationLabel?: string
   /** 교사·교사 겸직 강사 — 재직 뱃지 */
@@ -53,6 +58,10 @@ export function useMypageMember(): MypageMemberView {
       isError: false,
       displayName: MOCK_MYPAGE_USER_NAME,
       profile,
+      birthDate:
+        profile === 'school_teacher' || profile === 'instructor_dual'
+          ? MOCK_TEACHER_SETTINGS_PROFILE.birthDate
+          : MOCK_SETTINGS_PROFILE.birthDate,
       affiliationLabel: showAffiliationEmployment ? MOCK_MYPAGE_AFFILIATION : undefined,
       employmentStatusLabel: showAffiliationEmployment ? MOCK_MYPAGE_EMPLOYMENT_LABEL : undefined,
     }
@@ -77,6 +86,9 @@ export function useMypageMember(): MypageMemberView {
     }),
     profile,
     email: profileQuery.data?.email ?? meQuery.data?.email,
+    ageGroup: profileQuery.data?.ageGroup ?? meQuery.data?.ageGroup,
+    under14: profileQuery.data?.under14,
+    birthDate: profileQuery.data?.birthDate,
     affiliationLabel: showMypageAffiliationEmployment(profile)
       ? resolveAffiliationLabel({
           schoolName: profileQuery.data?.schoolName,

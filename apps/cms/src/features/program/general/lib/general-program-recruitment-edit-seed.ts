@@ -7,10 +7,12 @@ import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { parseAnnouncementLabel } from '@/features/program/shared/lib/announcement-label'
 import {
   parseTargetLevelsFromDisplayLabel,
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
+  normalizeVolunteerTargetList,
   resolveProgramVolunteerTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 
@@ -66,21 +68,6 @@ function parseMultiSelectFromDisplayLabel(
   return valid.length > 0 ? valid : parts
 }
 
-function parseFinalAnnouncementFromLabel(label: string | undefined): {
-  date?: string
-  method?: string
-} {
-  if (!label?.trim() || label.trim() === '-') return {}
-  const [rawDate, ...methodParts] = label.split('|').map(part => part.trim())
-  if (!rawDate) return {}
-  const parsed = dayjs(rawDate.replace(/\([^)]*\)/g, '').trim())
-  const method = methodParts.join('|').trim()
-  return {
-    ...(parsed.isValid() ? { date: parsed.startOf('day').toISOString() } : {}),
-    ...(method ? { method } : {}),
-  }
-}
-
 function coalesceIso(
   current: string | Date | undefined,
   label: string | undefined
@@ -129,7 +116,7 @@ function enrichParticipantRecruitmentScalars(program: Program): Program {
     endDate: coalesceIsoEnd(next.endDate, info.operationPeriodLabel) ?? next.endDate,
   }
 
-  const finalParts = parseFinalAnnouncementFromLabel(
+  const finalParts = parseAnnouncementLabel(
     info.finalAnnouncementLabel ?? info.resultAnnouncementLabel
   )
   if (!hasIsoDate(next.resultAnnouncementDate) && finalParts.date) {
@@ -172,7 +159,7 @@ function enrichInstructorRecruitmentScalars(program: Program): Program {
     endDate: coalesceIsoEnd(next.endDate, info.operationPeriodLabel) ?? next.endDate,
   }
 
-  const finalParts = parseFinalAnnouncementFromLabel(
+  const finalParts = parseAnnouncementLabel(
     info.finalAnnouncementLabel ?? info.resultAnnouncementLabel
   )
   if (!hasIsoDate(next.finalPassAnnouncementDate) && finalParts.date) {
@@ -193,9 +180,8 @@ function enrichVolunteerRecruitmentScalars(program: Program): Program {
   if (resolveProgramVolunteerTargets(next).length === 0 && info.recruitmentTarget?.trim()) {
     next = {
       ...next,
-      volunteerTargets: parseMultiSelectFromDisplayLabel(
-        info.recruitmentTarget,
-        new Set(['대학(원)생', '일반인', '기타'])
+      volunteerTargets: normalizeVolunteerTargetList(
+        info.recruitmentTarget.split(/[,，·]/)
       ),
       volunteerTarget: info.recruitmentTarget.trim(),
     }

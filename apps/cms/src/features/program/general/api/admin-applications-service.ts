@@ -58,6 +58,7 @@ import {
   type InstructorApplicationNotificationRequest,
   type OrganizationDecisionNotifyRequest,
   type ScreeningResultNotifyFields,
+  type InterviewAssignmentEvaluationPayload,
 } from '@/features/program/general/api/applications-api-client'
 import {
   sortGeneralParticipantDocPassedVolunteerRows,
@@ -321,9 +322,11 @@ export async function fetchGeneralVolunteerInterview2Applications(
 export async function fetchGeneralVolunteerScreeningApplicationsPage(
   programId: string,
   stage: 'doc1' | 'docPassed' | 'interview2',
-  pageParam: number
+  pageParam: number,
+  query?: ApplicationsListQuery
 ): Promise<GeneralApplicationsListPage<GeneralVolunteerApplicantRow>> {
   const page = await fetchGeneralVolunteerApplicationsPage(programId, {
+    ...query,
     page: pageParam,
   })
   const rows =
@@ -638,10 +641,7 @@ export async function submitGeneralVolunteerFinalResultBulk(
 
 export async function submitGeneralInterviewAssignmentEvaluation(
   assignmentId: string | number,
-  payload: {
-    scoreTotal: number
-    comment?: string
-  }
+  payload: InterviewAssignmentEvaluationPayload
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await submitInterviewAssignmentEvaluationRemote(assignmentId, payload)

@@ -35,9 +35,9 @@
 .cms-data-table.user-list-table
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status--tag-160) {
-  height: 54px;
-  min-height: 54px;
-  max-height: 54px;
+  height: 52px;
+  min-height: 52px;
+  max-height: 52px;
   overflow: visible;
 }
 
@@ -45,9 +45,9 @@
   .ant-table-tbody
   > tr:has(td .status-dropdown-cell__status-trigger--open)
   > td {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
 }
 
 .cms-data-table.user-list-table

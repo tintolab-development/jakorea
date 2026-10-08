@@ -11,7 +11,7 @@ import {
   rowToInstructorEditDraft,
   type ApplicantInstructorEditDraft,
 } from '@/features/program/general/lib/applicant-instructor-detail-edit'
-import { LECTURE_FEE_MEASURE_NOT_APPLICABLE } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import { toInstructorApplicationFeePolicy } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
   fetchInstructorApplicationDetailRemote,
   updateInstructorApplication,
@@ -70,19 +70,15 @@ export function useApplicantInstructorDetailEdit({
     }
 
     const payload = draftToInstructorSavePayload(draft)
-    const amount = Number(payload.lectureFeeAmount ?? 0)
     try {
       await updateInstructorApplication(instructor.id, {
         managerComment: payload.managerComment ?? null,
-        feePolicy: {
-          basisType: payload.lectureFeeBasisType ?? 'special_lecture',
-          measure:
-            payload.lectureFeeBasisType === 'program'
-              ? LECTURE_FEE_MEASURE_NOT_APPLICABLE
-              : (payload.lectureFeeMeasure ?? '출강 1회당'),
-          amount: Number.isFinite(amount) ? amount : 0,
-          instructorFeeGrade: payload.instructorFeeGradeLabel ?? '',
-        },
+        feePolicy: toInstructorApplicationFeePolicy({
+          basisType: payload.lectureFeeBasisType,
+          measure: payload.lectureFeeMeasure,
+          amount: payload.lectureFeeAmount,
+          instructorFeeGrade: payload.instructorFeeGradeLabel,
+        }),
         businessIncomeEarnerStatus: payload.businessIncomeEarnerStatus,
       })
       const refreshed = await fetchInstructorApplicationDetailRemote(instructor.id)

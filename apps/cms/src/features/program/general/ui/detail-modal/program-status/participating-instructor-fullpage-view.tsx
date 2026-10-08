@@ -6,7 +6,6 @@
 import { useState, useEffect, useMemo, useCallback, type Key } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type {
@@ -111,6 +110,7 @@ import { ParticipatingIndividualInstructorAssignmentSection } from './participat
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './instructor-assignment-status-text.css'
 import './school-detail-fullpage-view.css'
@@ -1431,7 +1431,7 @@ export function ParticipatingInstructorFullpageView({
                 variant="secondary"
                 size="large"
                 width={180}
-                icon={<DownloadOutlined />}
+                icon={<ButtonDownloadIcon />}
                 onClick={handleActivityCertificateIssueClick}
               >
                 활동인증서 발급
@@ -1647,6 +1647,9 @@ export function ParticipatingInstructorFullpageView({
           </div>
         )}
       </div>
+
+      <div className="school-detail-fullpage-view__page-bottom-spacer" aria-hidden />
+
       {personalInfoRevealModal}
       <ActivityCertificateIssuancePreviewModal
         open={activityCertPreviewOpen}

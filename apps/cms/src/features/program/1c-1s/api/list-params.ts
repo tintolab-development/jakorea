@@ -51,10 +51,26 @@ export function companySchoolListParams(
   }
 }
 
+export interface CompanySchoolListTableFilters {
+  title?: string
+  businessYear?: number
+}
+
+/** URL 검색 파라미터 → 목록 테이블 필터 (목록 페이지·상단 위젯 프리페치가 같은 쿼리 키를 쓰도록 공용) */
+export function readCompanySchoolTableFilters(
+  searchParams: URLSearchParams
+): CompanySchoolListTableFilters {
+  const title = searchParams.get('title') ?? undefined
+  const yearRaw = searchParams.get('businessYear')
+  const businessYear =
+    yearRaw && /^\d{4}$/.test(yearRaw) ? Number.parseInt(yearRaw, 10) : undefined
+  return { title, businessYear }
+}
+
 /** URL 위젯 status → GET /api/admin/programs 쿼리 */
 export function companySchoolListParamsFromOverviewStatus(
   statusFilter: CompanySchoolOverviewStatusFilter | null | undefined,
-  tableFilters: { title?: string; businessYear?: number } = {}
+  tableFilters: CompanySchoolListTableFilters = {}
 ): CompanySchoolListFilters {
   if (statusFilter === 'scheduled') {
     return {

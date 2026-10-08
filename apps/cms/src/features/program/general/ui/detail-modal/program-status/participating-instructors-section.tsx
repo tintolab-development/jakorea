@@ -6,8 +6,8 @@
 import { useCallback, useMemo, useState, useEffect, useRef, type CSSProperties } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { Table, Checkbox, Spin } from 'antd'
-import { CalendarOutlined, UnorderedListOutlined, DownloadOutlined } from '@ant-design/icons'
+import { Table, Spin } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui'
@@ -71,6 +71,7 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
 } from '../../../../shared/ui/program-schedule-colors'
+import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
@@ -632,7 +633,7 @@ export function ParticipatingInstructorsSection({
 
   if (instructorsLoading && instructorList.length === 0) {
     return (
-      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+      <div className="detail-fullpage-modal__loading" role="status">
         <Spin size="large" />
       </div>
     )
@@ -692,7 +693,7 @@ export function ParticipatingInstructorsSection({
               variant="secondary"
               size="large"
               style={{ minWidth: 180 }}
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
               활동인증서 발급
@@ -702,7 +703,7 @@ export function ParticipatingInstructorsSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={handleCalendarView}
               >
                 캘린더 뷰로 보기
@@ -712,7 +713,7 @@ export function ParticipatingInstructorsSection({
                 variant="secondary"
                 size="large"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={handleListView}
               >
                 리스트 뷰로 보기
@@ -872,7 +873,7 @@ export function ParticipatingInstructorsSection({
                               </div>
                             </div>
                             <div className="participating-instructors-section__calendar-card-checkbox-wrap">
-                              <Checkbox
+                              <CmsCheckbox
                                 checked={selectedInstructorRowKeys.includes(row.id)}
                                 onChange={e => {
                                   e.stopPropagation()

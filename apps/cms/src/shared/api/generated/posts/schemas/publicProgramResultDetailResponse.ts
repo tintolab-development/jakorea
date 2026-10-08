@@ -25,14 +25,8 @@ export interface PublicProgramResultDetailResponse {
   content?: string;
   /** 첨부. 없으면 빈 배열입니다. */
   attachments?: PublicProgramResultAttachmentResponse[];
-  /**
-     * 같은 카테고리·같은 정렬에서 이 글보다 앞에 있는 글. 없으면 null.
-     * @nullable
-     */
-  previous?: PublicProgramResultNeighborResponse;
-  /**
-     * 같은 카테고리·같은 정렬에서 이 글보다 뒤에 있는 글. 없으면 null.
-     * @nullable
-     */
-  next?: PublicProgramResultNeighborResponse;
+  /** 같은 카테고리·같은 정렬에서 이 글보다 앞에 있는 글. 없으면 null. */
+  previous?: PublicProgramResultNeighborResponse | null;
+  /** 같은 카테고리·같은 정렬에서 이 글보다 뒤에 있는 글. 없으면 null. */
+  next?: PublicProgramResultNeighborResponse | null;
 }

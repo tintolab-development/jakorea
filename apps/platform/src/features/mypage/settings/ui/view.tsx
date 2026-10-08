@@ -106,7 +106,6 @@ export function SettingsView({ basicRows, guardian, onEditBasic }: SettingsViewP
       await withdrawMutation.mutateAsync({
         currentPassword: password,
         reason: SETTINGS_WITHDRAW_GUIDE.reason,
-        confirmationText: SETTINGS_WITHDRAW_GUIDE.confirmationText,
       })
       clearAuthTokens()
       setDevAuthLoggedIn(false)

@@ -303,8 +303,7 @@ export function ProjectInfoDetailPanels({
   forceCompanySchoolLayout = false,
 }: ProjectInfoDetailPanelsProps) {
   const companySchoolSections = forceCompanySchoolLayout || isCompanySchoolProgram(program)
-  const companySchoolRegistrationEdit =
-    isEditModeInfo && companySchoolSections && isCompanySchoolProgram(program)
+  const companySchoolRegistrationEdit = isEditModeInfo && companySchoolSections
   return (
     <>
       {!hideTabsRow ? (

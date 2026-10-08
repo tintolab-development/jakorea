@@ -551,6 +551,45 @@ describe('general recruitment contact edit', () => {
   })
 })
 
+describe('최종 합격자 발표 수정 저장 (강사·봉사자 공용 컬럼)', () => {
+  const withRecruitLabels = {
+    ...program,
+    finalPassAnnouncementDate: '2026-10-05T00:00:00+09:00',
+    finalPassAnnouncementMethod: '예전 방법',
+    generalCommonInfo: {
+      ...program.generalCommonInfo,
+      instructorRecruitmentInfo: { finalAnnouncementLabel: '2026. 10. 01 (목) | 강사 등록값' },
+      volunteerRecruitmentInfo: {
+        finalAnnouncementLabel: '2026. 10. 05 (월) | 예전 방법',
+        finalPassAnnouncementDate: '2026-10-05T00:00:00+09:00',
+        finalPassAnnouncementMethod: '예전 방법',
+      },
+    },
+  } as unknown as Program
+
+  it('값을 바꾸면 봉사자 라벨·분리 필드도 갱신한다', () => {
+    const values = {
+      ...programToDetailEditValues(withRecruitLabels),
+      finalPassAnnouncementDate: '2026-10-08T00:00:00+09:00',
+      finalPassAnnouncementMethod: '새 방법',
+    }
+    const volunteer = detailEditValuesToProgramPatch(values, withRecruitLabels).generalCommonInfo
+      ?.volunteerRecruitmentInfo as Record<string, unknown>
+    expect(volunteer.finalAnnouncementLabel).toBe('2026. 10. 08 (목) | 새 방법')
+    expect(volunteer.finalPassAnnouncementMethod).toBe('새 방법')
+  })
+
+  it('값을 안 바꾸면 모집별 등록 라벨을 덮지 않는다', () => {
+    const patch = detailEditValuesToProgramPatch(
+      programToDetailEditValues(withRecruitLabels),
+      withRecruitLabels
+    )
+    expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.finalAnnouncementLabel).toBe(
+      '2026. 10. 01 (목) | 강사 등록값'
+    )
+  })
+})
+
 describe('trained teachers recruitment edit round-trip', () => {
   const ttProgram = {
     ...program,

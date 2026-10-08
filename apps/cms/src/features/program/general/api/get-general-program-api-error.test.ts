@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { getGeneralProgramApiErrorMessage } from './get-general-program-api-error'
+import {
+  getGeneralProgramApiErrorMessage,
+  getParticipationConsentRequiredMessage,
+} from './get-general-program-api-error'
 
 describe('getGeneralProgramApiErrorMessage', () => {
   it('business_start_date CONFLICT를 한글 안내로 변환한다', () => {
@@ -180,5 +183,41 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe(
       '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.'
     )
+  })
+})
+
+describe('getParticipationConsentRequiredMessage', () => {
+  const consentMessage =
+    '강사 활동에 필요한 동의가 부족합니다: 성범죄 경력조회 동의(동의 기록 없음), 교육진행자 서약(만료됨). 해당 동의를 다시 받은 뒤 처리해 주세요.'
+
+  it('동의 부족 409는 서버 문구(부족한 동의·사유)를 그대로 쓴다', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          data: null,
+          message: consentMessage,
+          error: {
+            code: 'INSTRUCTOR_PARTICIPATION_CONSENT_REQUIRED',
+            message: consentMessage,
+            field: 'consentType',
+            details: {
+              missingConsentTypes: 'CRIMINAL_HISTORY_CHECK_CONSENT,FACILITATOR_PLEDGE',
+              CRIMINAL_HISTORY_CHECK_CONSENT: 'MISSING',
+              FACILITATOR_PLEDGE: 'EXPIRED',
+            },
+          },
+        },
+      },
+    }
+    expect(getParticipationConsentRequiredMessage(error)).toBe(consentMessage)
+  })
+
+  it('동의 코드가 아니면 undefined', () => {
+    const error = {
+      response: { status: 409, data: { error: { code: 'CONFLICT', message: 'x' } } },
+    }
+    expect(getParticipationConsentRequiredMessage(error)).toBeUndefined()
   })
 })

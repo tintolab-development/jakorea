@@ -5,7 +5,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form'
-import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
+import { ClockCircleOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
@@ -81,8 +81,10 @@ import { isGeneralIndividualParticipantTarget } from '@/features/program/general
 import {
   normalizeProgramPaymentItemSelection,
   resolveProgramWageDeductionLabel,
-  useProgramWagePaymentItemOptions,
+  useNormalizeProgramPaymentItemValues,
+  useProgramWagePaymentItemOptionsState,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { paymentItemSelectPlaceholder } from '@/features/template/lib/template-registration-payment-item-options'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
   parseWageGradeAmount,
@@ -176,6 +178,7 @@ import type { Dayjs } from 'dayjs'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import { GeneralProgramCommonInfoRegistrationEdit } from './common-info-registration-edit'
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 import './common-info-view.css'
 
 const PROGRAM_PROGRESS_STATIC_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
@@ -1293,7 +1296,8 @@ function WageSection({
   const paymentItemIds = resolveWagePaymentItemIds(commonInfo.paymentItems)
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
-  const paymentItemOptions = useProgramWagePaymentItemOptions()
+  const paymentCatalog = useProgramWagePaymentItemOptionsState()
+  const paymentItemOptions = paymentCatalog.options
 
   const editForm =
     form ??
@@ -1306,6 +1310,15 @@ function WageSection({
   const watchedPaymentItemIds = isFormEdit
     ? (editForm.watch('wagePaymentItemIds') ?? [])
     : []
+  const setWagePaymentItemIds = useCallback(
+    (ids: string[]) => form?.setValue('wagePaymentItemIds', ids, { shouldDirty: true }),
+    [form]
+  )
+  useNormalizeProgramPaymentItemValues(
+    isFormEdit ? watchedPaymentItemIds : undefined,
+    setWagePaymentItemIds,
+    paymentCatalog.ready
+  )
   const deductionLabel = isFormEdit
     ? resolveProgramWageDeductionLabel(watchedPaymentItemIds)
     : (mapSettlementDeductionTypeToLabel(commonInfo.deductionItems) ??
@@ -1382,7 +1395,8 @@ function WageSection({
                       )
                     }
                     options={paymentItemOptions}
-                    placeholder="지급 항목을 선택하세요"
+                    disabled={!paymentCatalog.ready}
+                    placeholder={paymentItemSelectPlaceholder(paymentCatalog)}
                     style={{ width: '100%', minWidth: 0 }}
                   />
                 )}
@@ -2902,7 +2916,7 @@ function CurriculumSection({
               size="medium"
               width={180}
               disabled={curriculumChartSessionAtMax}
-              icon={<PlusOutlined aria-hidden />}
+              icon={<ButtonAddIcon aria-hidden />}
               onClick={handleAddSession}
             >
               {isMultiRoundCurriculum ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
@@ -4154,7 +4168,7 @@ function ScheduleProgressEditSection({
               variant="secondary"
               size="medium"
               width={160}
-              icon={<PlusOutlined aria-hidden />}
+              icon={<ButtonAddIcon aria-hidden />}
               onClick={handleAddDetail}
             >
               강의 행사 일정 추가
@@ -4165,7 +4179,7 @@ function ScheduleProgressEditSection({
               variant="secondary"
               size="medium"
               width={160}
-              icon={<PlusOutlined aria-hidden />}
+              icon={<ButtonAddIcon aria-hidden />}
               onClick={handleAddDetail}
             >
               강의 세부 일정 추가
@@ -4190,7 +4204,7 @@ function ScheduleProgressEditSection({
                 variant="secondary"
                 size="medium"
                 width={160}
-                icon={<PlusOutlined aria-hidden />}
+                icon={<ButtonAddIcon aria-hidden />}
                 onClick={handleAddDetail}
               >
                 강의 세부 일정 추가

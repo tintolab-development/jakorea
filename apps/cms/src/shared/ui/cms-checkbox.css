@@ -13,7 +13,6 @@
   font-family: Pretendard, system-ui, sans-serif;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
 }
 
 /* Ant baseline spacer — flex에서 우측 빈칸으로 잡혀 항목 간격이 커 보임 */
@@ -24,7 +23,13 @@
 
 .cms-checkbox .ant-checkbox,
 .cms-checkbox-group .ant-checkbox-wrapper .ant-checkbox {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
   align-self: center;
+  aspect-ratio: 1 / 1;
   top: 0;
   margin-inline-end: 0 !important;
 }
@@ -58,6 +63,13 @@
 .cms-checkbox-group.cms-checkbox-group--large .ant-checkbox-wrapper {
   gap: 8px;
   font-size: 16px;
+  line-height: 130%;
+}
+
+.cms-checkbox.cms-checkbox--large .ant-checkbox,
+.cms-checkbox-group.cms-checkbox-group--large .ant-checkbox {
+  width: 20px;
+  height: 20px;
 }
 
 .cms-checkbox.cms-checkbox--large .ant-checkbox-inner,
@@ -87,7 +99,14 @@
 .cms-checkbox.cms-checkbox--medium.ant-checkbox-wrapper,
 .cms-checkbox-group.cms-checkbox-group--medium .ant-checkbox-wrapper {
   gap: 6px;
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 125%;
+}
+
+.cms-checkbox.cms-checkbox--medium .ant-checkbox,
+.cms-checkbox-group.cms-checkbox-group--medium .ant-checkbox {
+  width: 18px;
+  height: 18px;
 }
 
 .cms-checkbox.cms-checkbox--medium .ant-checkbox-inner,
@@ -127,13 +146,14 @@
   border-color: var(--color-mint-01, #01a1af);
 }
 
-/* 활성 — 선택됨 (스펙 미정, CMS 민트 톤) */
+/* 활성 — 선택됨 */
 .cms-checkbox .ant-checkbox-checked:not(.ant-checkbox-disabled) .ant-checkbox-inner,
 .cms-checkbox-group
   .ant-checkbox-checked:not(.ant-checkbox-disabled)
   .ant-checkbox-inner {
-  background-color: var(--color-mint-01, #01a1af);
-  border-color: var(--color-mint-01, #01a1af);
+  border-radius: var(--Radius-4, 4px);
+  border: 1px solid var(--Border-alpha-10, rgba(61, 61, 61, 0.1));
+  background: var(--Brand-500, #00a0af);
 }
 
 .cms-checkbox .ant-checkbox-checked:not(.ant-checkbox-disabled) .ant-checkbox-inner::after,
@@ -168,39 +188,39 @@
 /* 비활성 — 미선택 박스 */
 .cms-checkbox .ant-checkbox-disabled .ant-checkbox-inner,
 .cms-checkbox-group .ant-checkbox-disabled .ant-checkbox-inner {
-  border-radius: var(--4, 4px);
-  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
-  background-color: #fff;
-  background-image: var(
-    --disabled-default-bg,
-    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%)
+  border-radius: var(--Radius-4, 4px);
+  border: 1px solid var(--Border-alpha-10, rgba(61, 61, 61, 0.1));
+  background: var(
+    --Background-disabled,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
+    #fff
   );
 }
 
 /* 비활성 — 선택됨 박스 */
 .cms-checkbox .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner,
 .cms-checkbox-group .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner {
-  border-radius: var(--4, 4px);
-  border: 1px solid var(--disabled-select-stroke, rgba(34, 64, 75, 0.2));
-  background-color: #fff;
-  background-image: var(
-    --disabled-select-bg,
-    linear-gradient(0deg, rgba(34, 64, 75, 0.2) 0%, rgba(34, 64, 75, 0.2) 100%)
-  );
+  border-radius: var(--Radius-4, 4px);
+  border: 1px solid var(--Border-disabled-selected, rgba(34, 64, 75, 0.2));
+  background: rgba(40, 95, 116, 0.5);
 }
 
+/* 비활성 — 선택됨 체크마크 */
 .cms-checkbox .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner::after,
 .cms-checkbox-group .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner::after {
-  border-color: rgba(34, 64, 75, 0.55);
+  border-color: var(--Brand-800, #22404d);
+  opacity: 0.4;
 }
 
-/* 그룹 레이아웃 */
-.cms-checkbox-group.ant-checkbox-group {
+/* 그룹 레이아웃 — 가로 · 간격 16px (large·medium 동일)
+ * 개별 checked 를 유지해야 하는 나열은 div.cms-checkbox-group 래퍼로 동일 간격 적용 */
+.cms-checkbox-group.ant-checkbox-group,
+.cms-checkbox-group:not(.ant-checkbox-group) {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .cms-checkbox-group .ant-checkbox-group-item {

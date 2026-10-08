@@ -80,12 +80,13 @@ export function GeneralVolunteerDocScreeningSection({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
+    listQuery,
   } = useGeneralVolunteerDocScreening({ programId })
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-    resetKey: programId,
+    resetKey: `${programId}:${JSON.stringify(listQuery)}`,
   })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
@@ -192,7 +193,7 @@ export function GeneralVolunteerDocScreeningSection({
 
   if (applicationsLoading && list.length === 0) {
     return (
-      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+      <div className="detail-fullpage-modal__loading" role="status">
         <Spin size="large" />
       </div>
     )

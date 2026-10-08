@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { ModalCloseIcon } from '@/shared/ui/icons'
 import {
   ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
   buildActivityCertificateFileName,
@@ -14,6 +14,7 @@ import { useCertificateTemplateModalState } from '@/features/template/hooks/use-
 import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
+import { mapApiBirthDateToDisplay } from '@/features/program/general/api/adapters/student-roster-adapters'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -25,6 +26,7 @@ import {
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { useFormCertificatePdfDownload } from '@/pages/templates/use-form-certificate-pdf-download'
 import { useFormCertificatePreviewProps } from '@/pages/templates/use-form-certificate-preview-props'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/pages/templates/form-certificate-preview.css'
 import './activity-certificate-issuance-preview-modal.css'
@@ -50,7 +52,10 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
   const runtimeStringValues = useMemo(
     () =>
       buildActivityCertificateInitialStringValuesForVolunteer(volunteer.volunteerName, {
-        birthDate: volunteer.birthDate,
+        birthDate:
+          volunteer.birthDate && volunteer.birthDate !== '-'
+            ? mapApiBirthDateToDisplay(volunteer.birthDate)
+            : undefined,
         institutionName: volunteer.assignedInstitutionNames[0],
         program,
       }),
@@ -119,7 +124,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
         variant="primary"
         size="medium"
         width={140}
-        icon={<DownloadOutlined />}
+        icon={<ButtonDownloadIcon />}
         disabled={isPdfDownloading || isAllocatingSerial}
         onClick={() => void handleDownloadPdf()}
       >
@@ -154,7 +159,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
               onClick={handleClose}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
 

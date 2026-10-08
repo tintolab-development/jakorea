@@ -10,7 +10,6 @@ import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template
 import {
   getUjatRecruitInstitutionDraft,
   getUjatRecruitVolunteerDraft,
-  hydrateUjatRecruitTemplatesForProgram,
   UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT,
 } from './ujat-recruit-template-draft'
 import type { UjatRecruitParagraphProps } from './ujat-recruit-paragraph-props'
@@ -93,13 +92,10 @@ export function UjatProgramRecruitmentPanels({
   const [draftRevision, setDraftRevision] = useState(0)
 
   useEffect(() => {
-    void hydrateUjatRecruitTemplatesForProgram(program).then(() => {
-      setDraftRevision(v => v + 1)
-    })
     const onChanged = () => setDraftRevision(v => v + 1)
     window.addEventListener(UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT, onChanged)
     return () => window.removeEventListener(UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT, onChanged)
-  }, [program])
+  }, [program.id])
 
   void draftRevision
 

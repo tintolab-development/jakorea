@@ -1,22 +1,30 @@
 /**
  * CMS 토글 (스위치) — 라벨 + 트랙·썸
+ * - large(기본): 트랙 50px · 썸 20px · 라벨 16px/500/130%
+ * - medium: 트랙 42px · 썸 16px · 라벨 14px/500/125%
+ * - 라벨–토글 8px, 켜짐 Brand-500 / 꺼짐 Content-weak
  */
 
 .cms-toggle__root {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   vertical-align: middle;
 }
 
 .cms-toggle__label {
   flex-shrink: 0;
-  color: var(--main-BK, #3d3d3d);
+  color: var(--Netural-black, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 130%;
+}
+
+.cms-toggle__root--medium .cms-toggle__label {
+  font-size: 14px;
+  line-height: 125%;
 }
 
 .cms-toggle {
@@ -54,23 +62,33 @@
     justify-content 0.2s ease;
 }
 
+.cms-toggle__root--medium .cms-toggle__track {
+  width: 42px;
+}
+
 .cms-toggle--checked .cms-toggle__track {
-  background: var(--color-mint-01, #01a1af);
+  background: var(--Brand-500, #00a0af);
   padding: 4px 4px 4px 8px;
   justify-content: flex-end;
 }
 
 .cms-toggle:not(.cms-toggle--checked) .cms-toggle__track {
-  background: var(--table-line, #e0e0e0);
+  background: var(--Content-weak, #bdc6c9);
   padding: 4px 8px 4px 4px;
   justify-content: flex-start;
 }
 
 .cms-toggle__thumb {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   background: var(--main-WT, #fff);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.cms-toggle__root--medium .cms-toggle__thumb {
+  width: 16px;
+  height: 16px;
 }

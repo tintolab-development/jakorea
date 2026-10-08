@@ -2,10 +2,7 @@ import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { isAssignedInterviewSlot, mergeAssignedInterviewIntoAvailability } from '@/features/program/general/lib/interview-availability-utils'
-import {
-  formatDisplayTimeRange,
-  normalizeTimeRangeKey,
-} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
+import { normalizeTimeRangeKey } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -22,7 +19,7 @@ function renderInterviewSlot(
   slot: string
 ): ReactNode {
   if (!isAssignedInterviewSlot(applicant, dateLabel, slot)) {
-    return formatDisplayTimeRange(slot)
+    return normalizeTimeRangeKey(slot)
   }
 
   return (

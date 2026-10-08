@@ -1,8 +1,8 @@
 import {
   fetchOrganizationApplicationsRemote,
   fetchVolunteerApplicationsRemote,
-  type ApplicationsListQuery,
 } from '@/features/program/general/api/applications-api-client'
+import type { UjatApplicationsListQuery as ApplicationsListQuery } from '@/features/program/ujat/api/ujat-applications-contract'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import {
   mapOrganizationApplicationToUjatInstitutionRow,

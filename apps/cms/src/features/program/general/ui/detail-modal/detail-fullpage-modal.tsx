@@ -99,6 +99,7 @@ import {
   programVolunteerRecruitmentSaveSchema,
 } from '@/features/program/general/lib/program-recruitment-save-fields'
 import { saveGeneralProgramDetailSnapshot } from '@/features/program/general/lib/general-program-local-cache'
+import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'
@@ -234,6 +235,8 @@ export interface GeneralProgramDetailFullPageModalProps {
   /** 목록 페이지와 동일한 searchParams 인스턴스 — LNB 라우팅 충돌 방지 */
   searchParams?: URLSearchParams
   setSearchParams?: SetURLSearchParams
+  /** LNB 하단 「프로그램 삭제」 — 미지정 시 버튼 미노출 */
+  onRequestDelete?: (program: Program) => void
 }
 
 function defaultTabForLnb(
@@ -468,6 +471,7 @@ export function GeneralProgramDetailFullPageModal({
   programIdHint = null,
   searchParams: searchParamsProp,
   setSearchParams: setSearchParamsProp,
+  onRequestDelete,
 }: GeneralProgramDetailFullPageModalProps) {
   const navigate = useNavigate()
   const [routerSearchParams, internalSetSearchParams] = useSearchParams()
@@ -1946,6 +1950,13 @@ export function GeneralProgramDetailFullPageModal({
               progressMenuItems={progressMenuItemsFiltered}
               surveyItems={surveyItems}
               onSelectChildTab={setLnbTab}
+              footer={
+                onRequestDelete && displayProgram ? (
+                  <ProgramDetailLnbDeleteButton
+                    onClick={() => onRequestDelete(displayProgram)}
+                  />
+                ) : null
+              }
             />
           ) : null
         }

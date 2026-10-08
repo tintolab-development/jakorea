@@ -3,15 +3,16 @@
  * - checkboxSize: large(기본) | medium
  */
 
-import { forwardRef, type ComponentProps, type ComponentRef } from 'react'
+import { forwardRef, useId, type ComponentProps, type ComponentRef, type ReactNode } from 'react'
 import { Checkbox } from 'antd'
 import type { CheckboxProps } from 'antd'
+import { CMS_CHOICE_FIELD_GROUP_CLASS, CmsChoiceField } from './cms-choice-field'
 import './cms-checkbox.css'
 
 export type CmsCheckboxSize = 'large' | 'medium'
 
 export type CmsCheckboxProps = CheckboxProps & {
-  /** large: 20px 박스·16px 라벨·간격 8px / medium: 18px·15px·6px */
+  /** large: 20px 박스·16px/130% 라벨·간격 8px / medium: 18px·14px/125%·6px */
   checkboxSize?: CmsCheckboxSize
 }
 
@@ -29,14 +30,30 @@ CmsCheckboxInner.displayName = 'CmsCheckbox'
 export type CmsCheckboxGroupProps = ComponentProps<typeof Checkbox.Group> & {
   /** options 로 렌더할 때 자식 래퍼에 동일 박스·타이포 적용 */
   checkboxSize?: CmsCheckboxSize
+  /** 그룹 위 제목 라벨 — 있으면 cms-choice-field 래퍼로 감싼다 */
+  label?: ReactNode
+  /** 제목 라벨 옆 필수(*) 표시 */
+  required?: boolean
 }
 
 const CmsCheckboxGroup = forwardRef<HTMLDivElement, CmsCheckboxGroupProps>(
-  ({ className, checkboxSize = 'large', ...rest }, ref) => {
-    const cn = ['cms-checkbox-group', `cms-checkbox-group--${checkboxSize}`, className]
+  ({ className, checkboxSize = 'large', label, required, ...rest }, ref) => {
+    const labelId = useId()
+    const hasLabel = label != null && label !== false && label !== ''
+    const cn = [
+      'cms-checkbox-group',
+      `cms-checkbox-group--${checkboxSize}`,
+      hasLabel ? CMS_CHOICE_FIELD_GROUP_CLASS : null,
+      className,
+    ]
       .filter(Boolean)
       .join(' ')
-    return <Checkbox.Group ref={ref} className={cn} {...rest} />
+    if (!hasLabel) return <Checkbox.Group ref={ref} className={cn} {...rest} />
+    return (
+      <CmsChoiceField label={label} labelId={labelId} required={required} size={checkboxSize}>
+        <Checkbox.Group ref={ref} className={cn} {...rest} />
+      </CmsChoiceField>
+    )
   }
 )
 

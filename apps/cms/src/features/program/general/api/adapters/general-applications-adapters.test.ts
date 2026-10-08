@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   filterIndividualDoc1Rows,
   mapApiApplicationStatusToApprovalStatus,
+  mapApiInterviewStatusToAssignmentStatus,
+  mapApiVolunteerInterviewStatusToAssignmentStatus,
   mapIndividualApplicationDetailToApplicantRow,
   mapIndividualApplicationToApplicantRow,
+  mapInterviewEvaluationSlots,
+  mapInstructorApplicationDetailToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
   mapMaterialAssignmentStatusToTextbookStatus,
   mapTextbookDeliveryStatusToBadge,
@@ -417,6 +421,24 @@ describe('general-applications-adapters', () => {
     expect(individual.detail?.email).toBe('p***@example.com')
   })
 
+  it('maps list birthDate and gender into detail for certificate issuance', () => {
+    const withProfile = mapParticipantToParticipatingIndividualRow(
+      { participantId: 1694731, memberName: '이건희일반', birthDate: '1994-07-29', gender: 'MALE' },
+      0,
+      '186046'
+    )
+    const legacyGender = mapParticipantToParticipatingIndividualRow(
+      { participantId: 1694732, memberName: '레거시', birthDate: null, gender: 'X' },
+      1,
+      '186046'
+    )
+
+    expect(withProfile.detail?.birthDate).toBe('1994-07-29')
+    expect(withProfile.detail?.gender).toBe('남성')
+    expect(legacyGender.detail?.birthDate).toBeUndefined()
+    expect(legacyGender.detail?.gender).toBe('X')
+  })
+
   it('maps additive survey view keys when present', () => {
     const individual = mapParticipantToParticipatingIndividualRow(
       {
@@ -451,6 +473,7 @@ describe('general-applications-adapters', () => {
         contact: '010-****-9999',
         email: 'vol***@example.com',
         volunteerKind: 'GENERAL',
+        birthDate: '1999-03-04',
         assignedOrganizationNames: ['해봄초등학교', '푸른초등학교'],
         sessions: [
           {
@@ -470,6 +493,7 @@ describe('general-applications-adapters', () => {
     expect(volunteer.id).toBe('1691601')
     expect(volunteer.volunteerApplicationId).toBe('77002')
     expect(volunteer.volunteerKind).toBe('GENERAL')
+    expect(volunteer.birthDate).toBe('1999-03-04')
     expect(volunteer.memberId).toBe(9101)
     expect(volunteer.id1365).toBe('1365-10001')
     expect(volunteer.assignedInstitutionNames).toEqual(['해봄초등학교', '푸른초등학교'])
@@ -610,6 +634,61 @@ describe('general-applications-adapters', () => {
     expect(row.rejectionReason).toBe('서류 미비')
   })
 
+  it('merges instructorCmsProfile resume onto instructor application detail', () => {
+    const base = mapInstructorApplicationToApplicantInstructorRow(
+      {
+        id: 1694639,
+        instructorMemberId: 190001,
+        programId: 186048,
+        instructorName: '이건희',
+        applicationStatus: 'SUBMITTED',
+      },
+      0,
+      '186048'
+    )
+    const instructorCmsProfile = {
+      memberType: 'GENERAL',
+      career: {
+        level: 'experienced',
+        rows: [
+          {
+            companyName: 'JA Korea',
+            roleName: '강사',
+            periodStart: '2020-01',
+            currentlyEmployed: true,
+          },
+        ],
+      },
+      awards: [{ title: '우수강사상', acquiredYear: '2024' }],
+      essays: { freeWrite1: '자기소개', freeWrite4: '대처사례' },
+    }
+
+    const row = mapInstructorApplicationDetailToApplicantRow(
+      { id: 1694639, instructorCmsProfile },
+      { ...base, freeWriting2: '기존 작성' }
+    )
+
+    expect(row.careerDetails).toHaveLength(1)
+    expect(row.awards).toHaveLength(1)
+    expect(row.freeWriting1).toBe('자기소개')
+    expect(row.freeWriting2).toBe('기존 작성')
+    expect(row.freeWriting4).toBe('대처사례')
+    expect(row.instructorCareerLevel).toBe('experienced')
+  })
+
+  it('keeps base resume when instructorCmsProfile is absent', () => {
+    const base = mapInstructorApplicationToApplicantInstructorRow(
+      { id: 1, programId: 1, instructorName: '강사', applicationStatus: 'SUBMITTED' },
+      0,
+      '1'
+    )
+    const row = mapInstructorApplicationDetailToApplicantRow(
+      { id: 1 },
+      { ...base, freeWriting1: '기존' }
+    )
+    expect(row.freeWriting1).toBe('기존')
+  })
+
   it('maps volunteer application list item to screening row', () => {
     const row = mapVolunteerApplicationToGeneralVolunteerApplicantRow(
       {
@@ -645,6 +724,28 @@ describe('general-applications-adapters', () => {
     expect(row.canEditManagerAEvaluation).toBe(true)
     expect(row.canEditManagerBEvaluation).toBe(false)
     expect(row.availableActions).toEqual(['VIEW', 'UPDATE_DOCUMENT_EVALUATION'])
+    expect(row.essayIntro).toBe('')
+  })
+
+  it('maps volunteer list essay fields and keeps null as empty', () => {
+    const row = mapVolunteerApplicationToGeneralVolunteerApplicantRow(
+      {
+        id: 56,
+        programId: 5001,
+        memberName: '김봉사',
+        essayIntro: ' 자기소개 ',
+        essayEducationExperience: '****2312',
+        essayNecessity: null,
+        essayJaExperience: 'JA 경험',
+      } as Parameters<typeof mapVolunteerApplicationToGeneralVolunteerApplicantRow>[0],
+      0,
+      '5001'
+    )
+
+    expect(row.essayIntro).toBe('자기소개')
+    expect(row.essayEducationExperience).toBe('****2312')
+    expect(row.essayNecessity).toBe('')
+    expect(row.essayJaExperience).toBe('JA 경험')
   })
 
   it('maps individual application list item with screening fields', () => {
@@ -868,6 +969,34 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.teamRole).toBe('leader')
     expect(row.interviewSlotCount).toBe(1)
     expect(row.assignedInterviewDateLabel).toBe('2026.09.18')
+  })
+
+  it('keeps evaluated interviews in the assigned state so they stay on the 2nd interview list', () => {
+    for (const status of ['PARTIALLY_EVALUATED', 'EVALUATED', 'INTERVIEW_ASSIGNED']) {
+      expect(mapApiVolunteerInterviewStatusToAssignmentStatus(status)).toBe('assigned')
+      expect(mapApiInterviewStatusToAssignmentStatus(status)).toBe('assigned')
+    }
+    expect(mapApiVolunteerInterviewStatusToAssignmentStatus('EVALUATED', true)).toBe('withdrawn')
+  })
+
+  it('maps interview evaluation slots by evaluatorOrder, not array position', () => {
+    expect(
+      mapInterviewEvaluationSlots([
+        { evaluatorOrder: 2, evaluatorAdminId: 20, scoreTotal: 4 },
+        { evaluatorOrder: 1, evaluatorAdminId: 10, scoreTotal: 5 },
+      ])
+    ).toEqual({
+      managerAScore: 5,
+      managerBScore: 4,
+      managerAEvaluatorAdminId: 10,
+      managerBEvaluatorAdminId: 20,
+    })
+    expect(mapInterviewEvaluationSlots([{ evaluatorOrder: null, scoreTotal: 3 }])).toEqual({
+      managerAScore: null,
+      managerBScore: null,
+      managerAEvaluatorAdminId: null,
+      managerBEvaluatorAdminId: null,
+    })
   })
 
   it('uses the document-evaluation action when slot edit flags are omitted', () => {

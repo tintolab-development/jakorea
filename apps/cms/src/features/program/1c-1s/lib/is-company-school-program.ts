@@ -10,21 +10,23 @@ export function isCompanySchoolPrimaryProgramId(programId: string | null | undef
   return (COMPANY_SCHOOL_PRIMARY_PROGRAM_IDS as readonly string[]).includes(String(programId))
 }
 
-/** mock·local·Primary·제목 휴리스틱 (원격 숫자 id는 Primary 집합·제목·라우트와 병행) */
+function isCompanySchoolBackendType(type: string | undefined): boolean {
+  const normalized = type?.trim().toUpperCase()
+  return normalized === 'COMPANY_SCHOOL' || normalized === 'ONE_COMPANY_ONE_SCHOOL'
+}
+
+/** mock·local·Primary·backendProgramType (제목 휴리스틱 없음) */
 export function isCompanySchoolProgram(
-  program: Pick<Program, 'id' | 'title' | 'mainTitle'> | null | undefined
+  program: Pick<Program, 'id' | 'backendProgramType'> | null | undefined
 ): boolean {
   if (!program?.id) return false
+  if (isCompanySchoolBackendType(program.backendProgramType)) return true
   const id = String(program.id)
   return (
     isCompanySchoolPrimaryProgramId(id) ||
     id.startsWith('economy-prog-') ||
     id.startsWith('company-school-prog-') ||
     id.startsWith('company-school-local-') ||
-    id.startsWith('company-school-primary-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title?.includes('1사1교') === true ||
-    program.mainTitle?.startsWith('ONE-0') === true ||
-    program.title?.includes('ONE-0') === true
+    id.startsWith('company-school-primary-')
   )
 }

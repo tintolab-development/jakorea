@@ -39,6 +39,7 @@ import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/g
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import {
   buildDefaultScheduleDetailsForEdit,
+  coerceScheduleDetailsToEventLayout,
   inferScheduleDetailBlockKind,
   isPreEducationCurriculumSession,
   relabelScheduleDetailFormRowsByKind,
@@ -1679,8 +1680,14 @@ export function generalCommonInfoEditValuesToProgramPatch(
       : 'school'
 
   const isScheduleType = values.educationStructure === 'schedule'
+  // 복수 회차는 행사 일정이다. overlay 적용 결과가 `세부 일정`으로 남으면
+  // 진행 일정(scheduleDate)이 PATCH에서 빠지고 일자 변경이 저장되지 않는다.
+  const scheduleDetailsForSave =
+    isScheduleType && values.sessionRound === 'multi'
+      ? coerceScheduleDetailsToEventLayout(values.scheduleDetails)
+      : values.scheduleDetails
   const relabeledScheduleDetails = isScheduleType
-    ? relabelScheduleDetailFormRows(values.scheduleDetails)
+    ? relabelScheduleDetailFormRows(scheduleDetailsForSave)
     : undefined
   const detailedProgramName = isScheduleType
     ? resolveScheduleTypeDetailedProgramNameFromDetails(relabeledScheduleDetails)

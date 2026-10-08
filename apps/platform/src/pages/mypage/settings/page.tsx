@@ -11,7 +11,6 @@ import {
   SettingsEditForm,
   SettingsSocialAccountsView,
   SettingsView,
-  showSettingsInstructorConsentDocuments,
   useMypageMember,
   useSettingsView,
   type MypageLnbItemKey,
@@ -105,7 +104,7 @@ export function MypageSettingsPage() {
 
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
     if (key === 'settingsConsents' || key === 'settingsSocial') {
-      if (mode === 'edit-basic') return
+      setMode('view')
       selectTab(key === 'settingsSocial' ? 'social' : 'consents')
       return
     }
@@ -115,18 +114,24 @@ export function MypageSettingsPage() {
     }
   }
 
-  const pageHeader = (
+  const backButton = (
+    <ProgramBackButton
+      size="small"
+      label="마이페이지로"
+      onClick={() => navigate(MYPAGE_PATH)}
+    />
+  )
+
+  const pageTitleNode = (
+    <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+      {pageTitle}
+    </PFText>
+  )
+
+  const mobilePageHeader = (
     <>
-      <div className={styles.backLink}>
-        <ProgramBackButton
-          size="small"
-          label="마이페이지로"
-          onClick={() => navigate(MYPAGE_PATH)}
-        />
-      </div>
-      <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
-        {pageTitle}
-      </PFText>
+      <div className={styles.backLink}>{backButton}</div>
+      {pageTitleNode}
     </>
   )
 
@@ -137,11 +142,12 @@ export function MypageSettingsPage() {
       lnbItems={lnbItems}
       lnbAppearance={isBelowPc ? 'category' : undefined}
       lnbAriaLabel="회원정보 설정 메뉴"
-      contentHeading={isBelowPc ? pageHeader : undefined}
+      sidebarLeading={isBelowPc ? undefined : backButton}
+      contentHeading={isBelowPc ? mobilePageHeader : undefined}
       onLnbItemSelect={handleLnbItemSelect}
     >
       <div className={styles.body}>
-        {isBelowPc ? null : pageHeader}
+        {isBelowPc ? null : pageTitleNode}
         {children}
       </div>
     </MypageLayout>
@@ -184,11 +190,7 @@ export function MypageSettingsPage() {
   }
 
   if (tab === 'consents') {
-    return wrap(
-      <SettingsConsentsView
-        showInstructorDocuments={showSettingsInstructorConsentDocuments(member.profile)}
-      />
-    )
+    return wrap(<SettingsConsentsView />)
   }
 
   return wrap(

@@ -171,9 +171,6 @@ export function ApplicantGeneralInstructorBasicInfo({
 
   return (
     <div className="applicant-general-instructor-basic-info">
-      {validationErrors?.form ? (
-        <div className="applicant-general-instructor-basic-info__form-error">{validationErrors.form}</div>
-      ) : null}
       {showAdminComment ? (
         <ApplicantAdminCommentSection
           adminComment={isEditMode && draft ? draft.adminComment : instructor.managerComment}

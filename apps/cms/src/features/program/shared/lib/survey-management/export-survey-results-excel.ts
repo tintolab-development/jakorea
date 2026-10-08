@@ -1,22 +1,30 @@
 import ExcelJS from '@zurmokeeper/exceljs'
 import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
 import { buildSurveyPollResultSections } from './aggregate-survey-poll-results'
-import type { SurveyPollRawResponse } from './survey-management-types'
+import type {
+  SurveyPollRawResponse,
+  SurveyResultQuestionSummary,
+} from './survey-management-types'
 
 export type ExportSurveyResultsExcelArgs = {
   surveyTitle: string
   templateId: string
+  templateVersionId?: number
   responseCount: number
   participantTotal: number
   responses: SurveyPollRawResponse[]
+  /** 비어 있지 않으면 version schema 없이 summary 행으로 시트 구성 */
+  questionSummaries?: SurveyResultQuestionSummary[] | null
 }
 
 export async function exportSurveyResultsExcel({
   surveyTitle,
   templateId,
+  templateVersionId,
   responseCount,
   participantTotal,
   responses,
+  questionSummaries,
 }: ExportSurveyResultsExcelArgs): Promise<void> {
   const workbook = new ExcelJS.Workbook()
   const summarySheet = workbook.addWorksheet('요약')
@@ -28,7 +36,10 @@ export async function exportSurveyResultsExcel({
   summarySheet.addRow({ label: '응답 수', value: `${responseCount}명` })
   summarySheet.addRow({ label: '프로그램 참여', value: `${participantTotal}명` })
 
-  const sections = await buildSurveyPollResultSections(templateId, responses)
+  const sections = await buildSurveyPollResultSections(templateId, responses, {
+    templateVersionId,
+    questionSummaries: questionSummaries ?? undefined,
+  })
   for (const section of sections) {
     const sheetName = section.title.replace(/[[\]\\/*?:]/g, '_').trim().slice(0, 31) || '설문'
     const sheet = workbook.addWorksheet(sheetName)

@@ -1,8 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
-import type { EducationApplicationListItem } from '../model/types'
+import type { EducationApplicationListItem, EducationApplicationTab } from '../model/types'
+import { EDUCATION_APPLICATION_PAGE_SIZE } from '../model/types'
 import {
   cancelMyProgramApplication,
   fetchMyProgramApplicationDetail,
@@ -12,10 +13,12 @@ import {
   mapPortalProgramApplicationDetail,
   mapPortalProgramApplicationListItem,
 } from './mappers'
+import { resolveStatusGroupForTab } from './status-group'
 import type { ProgramApplicationType } from './types'
 
 const APPLICATIONS_STALE_MS = 30_000
 const APPLICATIONS_GC_MS = 10 * 60_000
+/** statusGroup 없이 전체 조회할 때(레거시·탭 미전달) 상한 */
 const APPLICATIONS_FETCH_SIZE = 100
 
 export type MypageApplicationScope = 'education' | 'lecture' | 'volunteer'
@@ -26,11 +29,24 @@ export const APPLICATION_TYPES_BY_SCOPE = {
   volunteer: ['VOLUNTEER'],
 } as const satisfies Record<MypageApplicationScope, readonly ProgramApplicationType[]>
 
+export type MyProgramApplicationsListOptions = {
+  /** 전달 시 탭별 `statusGroup` + 서버 페이지네이션을 사용한다. */
+  tab?: EducationApplicationTab
+  /** 1-base UI 페이지. tab이 있을 때만 사용. */
+  page?: number
+  pageSize?: number
+}
+
 type MyProgramApplicationsQueryResult = {
   items: EducationApplicationListItem[]
+  totalElements: number
+  totalPages: number
+  currentPage: number
   isLoading: boolean
   isError: boolean
   isRemoteEnabled: boolean
+  /** true면 items가 이미 서버 페이지 슬라이스다. 클라이언트 재필터/재페이징 불필요. */
+  isServerPaged: boolean
   refetch: () => void
 }
 
@@ -42,18 +58,57 @@ type MyProgramApplicationDetailQueryResult = {
   refetch: () => void
 }
 
+function mapListItems(
+  rows: Awaited<ReturnType<typeof fetchMyProgramApplications>>['items'],
+): EducationApplicationListItem[] {
+  return (rows ?? []).flatMap(row => {
+    const mapped = mapPortalProgramApplicationListItem(row)
+    return mapped ? [mapped] : []
+  })
+}
+
+function emptyRemoteResult(refetch: () => void): MyProgramApplicationsQueryResult {
+  return {
+    items: [],
+    totalElements: 0,
+    totalPages: 1,
+    currentPage: 1,
+    isLoading: false,
+    isError: true,
+    isRemoteEnabled: false,
+    isServerPaged: false,
+    refetch,
+  }
+}
+
+/**
+ * 내 프로그램 신청 목록.
+ * - `options.tab` 없음: applicationType별 전체(최대 100) 조회 — 교육/봉사 기존 클라이언트 탭 필터용
+ * - `options.tab` 있음: 탭별 statusGroup 1회 + 서버 page/size (강의현황)
+ */
 export function useMyProgramApplications(
   scope: MypageApplicationScope,
+  options?: MyProgramApplicationsListOptions,
 ): MyProgramApplicationsQueryResult {
   const remote = isRemoteApiConfigured()
   const applicationTypes = APPLICATION_TYPES_BY_SCOPE[scope]
+  const tab = options?.tab
+  const pageSize = options?.pageSize ?? EDUCATION_APPLICATION_PAGE_SIZE
+  const uiPage = Math.max(1, options?.page ?? 1)
+  const statusGroup = tab != null ? resolveStatusGroupForTab(tab) : undefined
+  const serverPaged = tab != null
+  const statusGroupKey =
+    tab === 'all' ? 'ALL' : statusGroup == null ? '' : statusGroup
+  const apiPage = serverPaged ? uiPage - 1 : 0
+  const apiSize = serverPaged ? pageSize : APPLICATIONS_FETCH_SIZE
+
   const query = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.list({
       applicationTypes,
-      statusGroup: '',
+      statusGroup: statusGroupKey,
       keyword: '',
-      page: 0,
-      size: APPLICATIONS_FETCH_SIZE,
+      page: apiPage,
+      size: apiSize,
     }),
     queryFn: async ({ signal }) => {
       const pages = await Promise.all(
@@ -61,23 +116,27 @@ export function useMyProgramApplications(
           fetchMyProgramApplications(
             {
               applicationType,
-              page: 0,
-              size: APPLICATIONS_FETCH_SIZE,
+              statusGroup: statusGroup ?? undefined,
+              page: apiPage,
+              size: apiSize,
             },
             signal,
           ),
         ),
       )
-      return pages.flatMap(page =>
-        (page.items ?? []).flatMap(row => {
-          const mapped = mapPortalProgramApplicationListItem(row)
-          return mapped ? [mapped] : []
-        }),
+      const items = pages.flatMap(page => mapListItems(page.items))
+      const totalElements = pages.reduce((sum, page) => sum + (page.totalElements ?? 0), 0)
+      const totalPages = Math.max(
+        1,
+        pages.reduce((max, page) => Math.max(max, page.totalPages ?? 0), 0),
+        Math.ceil(totalElements / apiSize) || 1,
       )
+      return { items, totalElements, totalPages, currentPage: uiPage, serverPaged }
     },
     enabled: remote,
     staleTime: APPLICATIONS_STALE_MS,
     gcTime: APPLICATIONS_GC_MS,
+    placeholderData: serverPaged ? keepPreviousData : undefined,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     retry: shouldRetryQuery,
@@ -89,19 +148,45 @@ export function useMyProgramApplications(
   }
 
   if (!remote) {
-    return { items: [], isLoading: false, isError: true, isRemoteEnabled: false, refetch }
+    return emptyRemoteResult(refetch)
   }
-  if (query.isPending) {
-    return { items: [], isLoading: true, isError: false, isRemoteEnabled: true, refetch }
+  if (query.isPending && !query.data) {
+    return {
+      items: [],
+      totalElements: 0,
+      totalPages: 1,
+      currentPage: uiPage,
+      isLoading: true,
+      isError: false,
+      isRemoteEnabled: true,
+      isServerPaged: serverPaged,
+      refetch,
+    }
   }
-  if (query.isError) {
-    return { items: [], isLoading: false, isError: true, isRemoteEnabled: true, refetch }
+  if (query.isError && !query.data) {
+    return {
+      items: [],
+      totalElements: 0,
+      totalPages: 1,
+      currentPage: uiPage,
+      isLoading: false,
+      isError: true,
+      isRemoteEnabled: true,
+      isServerPaged: serverPaged,
+      refetch,
+    }
   }
+
+  const data = query.data
   return {
-    items: query.data ?? [],
-    isLoading: false,
-    isError: false,
+    items: data?.items ?? [],
+    totalElements: data?.totalElements ?? 0,
+    totalPages: data?.totalPages ?? 1,
+    currentPage: data?.currentPage ?? uiPage,
+    isLoading: query.isPending && !data,
+    isError: query.isError,
     isRemoteEnabled: true,
+    isServerPaged: data?.serverPaged ?? serverPaged,
     refetch,
   }
 }

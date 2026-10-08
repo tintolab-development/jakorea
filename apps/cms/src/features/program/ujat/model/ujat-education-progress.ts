@@ -3,7 +3,8 @@
  * @see apps/cms/.cursor/rules/process/program-no-fe-mock.mdc
  */
 
-import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
+import type { UjatInstitutionScheduleAssignDateEntry } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
+import { filterScheduleDatesByHalf } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type { UjatEducationProgressInstitutionRow } from '@/features/program/ujat/ui/detail-modal/progress/institutions/types'
@@ -15,26 +16,17 @@ import type {
   UjatAttendanceSessionGroup,
   UjatAttendanceVolunteerRow,
 } from '@/features/program/ujat/ui/detail-modal/progress/attendance/types'
-import type {
-  UjatEducationProgressRegionValues,
-  UjatEducationProgressSchoolSummary,
-  UjatEducationProgressVolunteerSummary,
-} from '@/features/program/ujat/ui/detail-modal/progress/progress-summary/types'
-import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import { formatAssignmentDateLabel } from '@/features/program/ujat/ui/detail-modal/progress/assignments/assignment-display'
-import { buildRegionRow } from '@/features/program/ujat/ui/detail-modal/progress/progress-summary/summary-display'
 
-function emptyRegionValues(): UjatEducationProgressRegionValues {
-  return Object.fromEntries(
-    listUjatEducationRegionsActive().map(region => [region.key, null])
-  ) as UjatEducationProgressRegionValues
-}
-
-/** 일정 필터 옵션 — 교육 일정 상수 기반 (시드 row 아님) */
-export function getUjatEducationProgressScheduleFilterOptions(half: EducationProgressHalfKey) {
-  return UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(
-    ({ isoDate, title }) => ({ label: title, value: isoDate })
-  )
+/** 일정 필터 옵션 — 프로그램 schedules 날짜만 */
+export function getUjatEducationProgressScheduleFilterOptions(
+  half: EducationProgressHalfKey,
+  dates: readonly UjatInstitutionScheduleAssignDateEntry[] = []
+) {
+  return filterScheduleDatesByHalf(dates, half).map(({ isoDate, title }) => ({
+    label: title,
+    value: isoDate,
+  }))
 }
 
 export function getUjatEducationProgressInstitutions(
@@ -48,18 +40,6 @@ export function getUjatEducationProgressVolunteerMockRows(
   _half: EducationProgressHalfKey
 ): UjatEducationProgressVolunteerRow[] {
   return []
-}
-
-export function getUjatEducationProgressSchoolSummary(): UjatEducationProgressSchoolSummary {
-  const emptyRow = buildRegionRow(emptyRegionValues())
-  return {
-    appliedSchools: emptyRow,
-    semesters: [],
-  }
-}
-
-export function getUjatEducationProgressVolunteerSummary(): UjatEducationProgressVolunteerSummary {
-  return { rows: [] }
 }
 
 export function getUjatEducationProgressAttendanceSessions(
@@ -94,14 +74,13 @@ export function getUjatEducationProgressAssignmentSessions(
 }
 
 export function getUjatEducationProgressAssignmentDateOptions(
-  half: EducationProgressHalfKey
+  half: EducationProgressHalfKey,
+  dates: readonly UjatInstitutionScheduleAssignDateEntry[] = []
 ): Array<{ label: string; value: string }> {
-  return UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(
-    entry => ({
-      label: formatAssignmentDateLabel(entry.isoDate),
-      value: entry.isoDate,
-    })
-  )
+  return filterScheduleDatesByHalf(dates, half).map(entry => ({
+    label: formatAssignmentDateLabel(entry.isoDate),
+    value: entry.isoDate,
+  }))
 }
 
 export function getUjatEducationProgressAssignmentInstitutionOptions(

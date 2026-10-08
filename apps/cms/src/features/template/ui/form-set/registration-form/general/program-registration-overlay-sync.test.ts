@@ -3,6 +3,8 @@ import {
   getProgramRegistrationOverlayRecord,
   getProgramRegistrationOverlayVersion,
   patchProgramRegistrationOverlay,
+  patchRegistrationOverlayProgramTitleKo,
+  readRegistrationOverlayProgramTitleKo,
   resetProgramRegistrationOverlay,
   subscribeProgramRegistrationOverlayKey,
   updateProgramRegistrationOverlayKey,
@@ -45,5 +47,27 @@ describe('program-registration-overlay-sync', () => {
 
     unsubTitle()
     unsubOther()
+  })
+})
+
+describe('readRegistrationOverlayProgramTitleKo', () => {
+  it('1사1교는 작성한 국문 대표명(repKo)을 임시저장 제목으로 쓴다', () => {
+    patchProgramRegistrationOverlay({
+      'economyRegistration.basicInfo.repKo': '디지털 리터러시 교실',
+      'generalRegistration.basicInfo.localProgramTitleKo': '일반 제목',
+    })
+    expect(readRegistrationOverlayProgramTitleKo('economy')).toBe('디지털 리터러시 교실')
+  })
+
+  it('1사1교에서 제목을 아직 안 바꿨으면 화면 기본 대표명을 쓴다', () => {
+    expect(readRegistrationOverlayProgramTitleKo('economy')).toBe('1사1교 경제금융교육')
+  })
+
+  it('1사1교 제목은 미사용 programTitleKo state로 덮지 않는다', () => {
+    patchProgramRegistrationOverlay({
+      'economyRegistration.basicInfo.repKo': '디지털 리터러시 교실',
+    })
+    patchRegistrationOverlayProgramTitleKo('economy', '')
+    expect(readRegistrationOverlayProgramTitleKo('economy')).toBe('디지털 리터러시 교실')
   })
 })

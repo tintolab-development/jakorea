@@ -1,0 +1,31 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.guideBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.guideBody p {
+  margin: 0;
+}
+
+/*
+ * 신청 양식 FormTemplateHost 안에서 typo-* 가 unset 된다.
+ * 본문 텍스트를 CMS 단락 본문과 동일하게 복구한다.
+ */
+:global(.form-template-host) .guideBody :global(.typo-bd-md-md) {
+  display: block;
+  color: var(--main-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}

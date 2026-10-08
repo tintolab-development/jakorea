@@ -1,0 +1,113 @@
+.step-template-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(1, 161, 175, 0.35);
+  background: linear-gradient(
+      0deg,
+      rgba(1, 161, 175, 0.06) 0%,
+      rgba(1, 161, 175, 0.06) 100%
+    ),
+    #fff;
+}
+
+.step-template-banner__hint {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.step-template-banner__value {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.step-template-banner__name-wrap {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-template-banner__badge {
+  box-sizing: border-box;
+  display: inline-flex;
+  height: 26px;
+  min-height: 26px;
+  padding: 0 12px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background: #fff;
+  color: var(--color-mint-01, #01a1af);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.step-template-banner__name {
+  min-width: 0;
+  color: var(--color-mint-01, #01a1af);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.step-template-banner__divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 16px;
+  background: rgba(61, 61, 61, 0.16);
+}
+
+.step-template-banner .detail-info-form {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* `full-page-modal__body` gap(16px)과 합쳐 탭 행 아래 32px */
+.registration-body-header__banner {
+  margin-top: 16px;
+}
+
+.registration-body-header__template-follow {
+  display: inline-flex;
+  margin: 32px 0 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.registration-body-header__template-follow-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--color-mint-01, #01a1af);
+  opacity: 1;
+}

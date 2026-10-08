@@ -198,12 +198,12 @@
 /**
  * FAQ 수정 모달 — 좌측「FAQ 삭제」라벨
  */
-.faq-form-modal .faq-form-modal__faq-delete.cms-button.cms-button--delete.ant-btn {
+.faq-form-modal .faq-form-modal__faq-delete.cms-button.cms-button--error.ant-btn {
   text-align: center;
 }
 
 .faq-form-modal
-  .faq-form-modal__faq-delete.cms-button.cms-button--delete.ant-btn
+  .faq-form-modal__faq-delete.cms-button.cms-button--error.ant-btn
   .cms-button__label {
   text-align: center !important;
   font-family: Pretendard, var(--font-family-primary, sans-serif) !important;
@@ -214,7 +214,7 @@
 }
 
 .faq-form-modal
-  .faq-form-modal__faq-delete.cms-button.cms-button--delete.ant-btn:not(:disabled):not(.ant-btn-disabled)
+  .faq-form-modal__faq-delete.cms-button.cms-button--error.ant-btn:not(:disabled):not(.ant-btn-disabled)
   .cms-button__label {
   color: #c32f4a !important;
 }

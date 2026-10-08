@@ -16,6 +16,7 @@ import {
   subscribeGeneralRecruitOverlay,
   updateGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 
 export type VolunteerInterviewOverlayStore = 'application' | 'recruit'
 
@@ -92,7 +93,12 @@ export function useVolunteerInterviewOverlayKv<T>(
   const recruitRecord = getGeneralRecruitOverlayRecord()
   const key = store === 'recruit' ? recruitKey : applicationKey
   const record = store === 'recruit' ? recruitRecord : applicationRecord
-  const value = (record[key] as T | undefined) ?? defaultRef.current
+  const value = readOperationalOverlayKvValue(
+    store === 'recruit' ? 'general-recruit' : 'general-application',
+    record,
+    key,
+    defaultRef.current
+  )
 
   const setValue = useCallback(
     (next: T) => {

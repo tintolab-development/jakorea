@@ -101,11 +101,15 @@ export function pickRecruitmentCopyRow(
 ): ProgramRecruitmentWindow | undefined {
   const rows = program.programRecruitments ?? []
   if (audience === 'volunteer' && volunteerHalf) {
-    const volunteers = rows
-      .filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER')
-      .slice()
-      .sort(byStartAt)
-    return volunteerHalf === 'h1' ? volunteers[0] : volunteers[1]
+    const volunteers = rows.filter(
+      row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER'
+    )
+    if (volunteers.some(row => row.recruitTerm != null)) {
+      const term = volunteerHalf === 'h1' ? 'FIRST_HALF' : 'SECOND_HALF'
+      return volunteers.find(row => row.recruitTerm === term)
+    }
+    const ordered = volunteers.slice().sort(byStartAt)
+    return volunteerHalf === 'h1' ? ordered[0] : ordered[1]
   }
   const type =
     audience === 'participant' ? 'PARTICIPANT' : audience === 'instructor' ? 'INSTRUCTOR' : 'VOLUNTEER'
@@ -143,7 +147,7 @@ export function writeRecruitmentRowCopy(
   return rows.map(row => (row === target ? { ...row, ...copy } : row))
 }
 
-/** 모집 탭 문구는 recruitments[] 행만 쓴다. 없으면 프로그램 공통 문장으로 채우지 않는다. */
+/** 모집 탭 문구는 recruitments[] 행의 실제 값이 있으면 그 행을 쓴다. 빈 칸은 overlay 값을 지우지 않는다. */
 export function applyRecruitmentRowCopy(
   program: Program,
   audience: RecruitmentCopyAudience,
@@ -152,16 +156,32 @@ export function applyRecruitmentRowCopy(
   const row = pickRecruitmentCopyRow(program, audience, volunteerHalf)
   if (!row) return program
   const withRow: Program = row.id != null ? { ...program, activeRecruitmentId: row.id } : program
-  if (!hasRecruitmentCopy(row)) return withRow
+  const description = emptyToUndefined(row.programDescription)
+  const recruitmentGuide = emptyToUndefined(row.recruitmentGuide)
+  const applicationMethod = emptyToUndefined(row.applicationMethod)
+  const learningSupportContent = emptyToUndefined(row.learningSupportContent)
+  const additionalContentHtml = emptyToUndefined(row.additionalContentHtml)
   const otherMatters = emptyToUndefined(row.otherMatters)
+  const remarks = emptyToUndefined(row.remarks)
+  if (
+    !description &&
+    !recruitmentGuide &&
+    !applicationMethod &&
+    !learningSupportContent &&
+    !additionalContentHtml &&
+    !otherMatters &&
+    !remarks
+  ) {
+    return withRow
+  }
   return {
     ...withRow,
-    description: emptyToUndefined(row.programDescription),
-    recruitmentGuide: emptyToUndefined(row.recruitmentGuide),
-    applicationMethod: emptyToUndefined(row.applicationMethod),
-    learningSupportContent: emptyToUndefined(row.learningSupportContent),
-    additionalContentHtml: emptyToUndefined(row.additionalContentHtml),
+    ...(description ? { description } : {}),
+    ...(recruitmentGuide ? { recruitmentGuide } : {}),
+    ...(applicationMethod ? { applicationMethod } : {}),
+    ...(learningSupportContent ? { learningSupportContent } : {}),
+    ...(additionalContentHtml ? { additionalContentHtml } : {}),
     ...(otherMatters ? { otherNotes: otherMatters } : {}),
-    oneLineIntroduction: emptyToUndefined(row.remarks),
+    ...(remarks ? { oneLineIntroduction: remarks } : {}),
   }
 }

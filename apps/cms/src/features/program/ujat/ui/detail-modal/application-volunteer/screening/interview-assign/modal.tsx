@@ -11,6 +11,9 @@ import { alertUjatVolunteerInterviewAssignSlotRequired } from '../applicant/guar
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
+import { useProgramDetail } from '@/features/program/ujat/api/queries'
+import { useKoreanPublicHolidayDateKeys } from '@/features/program/ujat/api/korean-public-holidays'
+import { resolveUjatVolunteerInterviewScheduleDisplay } from '@/features/program/ujat/lib/ujat-volunteer-interview-schedule-display'
 import {
   countSlotAssignments,
   formatInterviewSummary,
@@ -19,7 +22,7 @@ import {
   getApplicantInterviewAvailabilityDateKeys,
   getAssignedInterviewDateKeys,
   getSlotsForDate,
-  parseInterviewScheduleMock,
+  parseInterviewScheduleFromDisplay,
   resolveInterviewAssignModalCalendarState,
   type InterviewAssignSlot,
   type ParsedInterviewSchedule,
@@ -44,7 +47,7 @@ export type UjatVolunteerInterviewAssignModalProps = {
   programId: string
   allApplicants: UjatVolunteerApplicantRow[]
   mode: 'assign' | 'reassign'
-  /** 프로그램 유형별 스케줄 주입 (미전달 시 programId mock 사용) */
+  /** 프로그램 유형별 스케줄 주입. 없으면 프로그램 상세의 면접 일정만 사용 */
   schedule?: ParsedInterviewSchedule
   /** 본문 호칭 — 기본 `봉사자`, 참여자 신청 목록에서는 `참여자` */
   subjectNoun?: string
@@ -67,8 +70,36 @@ export function UjatVolunteerInterviewAssignModal({
   onCancel,
   onConfirm,
 }: UjatVolunteerInterviewAssignModalProps) {
-  const scheduleFromProgramId = useMemo(() => parseInterviewScheduleMock(programId), [programId])
-  const schedule = scheduleOverride ?? scheduleFromProgramId
+  const programDetail = useProgramDetail(open ? programId : undefined)
+  const publicHolidayDateKeys = useKoreanPublicHolidayDateKeys({
+    from: programDetail.data?.interviewStartDate,
+    to: programDetail.data?.interviewEndDate,
+    enabled: open && !scheduleOverride,
+  })
+  const scheduleFromProgram = useMemo(() => {
+    const program = programDetail.data
+    if (!program) {
+      return parseInterviewScheduleFromDisplay({
+        common: {
+          recurringUnavailable: '-',
+          specificUnavailableDates: '-',
+          availableTimeSlots: '-',
+        },
+        exceptions: [],
+      })
+    }
+    return parseInterviewScheduleFromDisplay(
+      resolveUjatVolunteerInterviewScheduleDisplay(program, undefined, {
+        allowMockFallback: false,
+      }),
+      {
+        startIso: program.interviewStartDate,
+        endIso: program.interviewEndDate,
+      },
+      publicHolidayDateKeys
+    )
+  }, [programDetail.data, publicHolidayDateKeys])
+  const schedule = scheduleOverride ?? scheduleFromProgram
 
   const assignedDateKeys = useMemo(
     () => getAssignedInterviewDateKeys(allApplicants),

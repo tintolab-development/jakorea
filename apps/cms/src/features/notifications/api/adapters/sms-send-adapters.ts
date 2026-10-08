@@ -56,18 +56,19 @@ export function mapSmsRecipientCandidate(
   const actorType = (candidate.actorType || 'MEMBER').trim() || 'MEMBER'
   if (memberId == null && actorType !== 'DIRECT') return null
 
+  const name = candidate.recipientName?.trim() || candidate.recipientNameMasked?.trim()
+  const contact =
+    candidate.recipientContact?.trim() || candidate.recipientContactMasked?.trim()
   const id =
-    memberId != null
-      ? `actor-${actorType}-${memberId}`
-      : `contact-${candidate.recipientContactMasked ?? Math.random()}`
+    memberId != null ? `actor-${actorType}-${memberId}` : `contact-${contact ?? Math.random()}`
 
   return {
     id,
     participationType: mapParticipationType(candidate),
     memberType: mapMemberType(candidate),
     typeLabel: resolveTypeLabel(candidate),
-    name: candidate.recipientNameMasked?.trim() || '-',
-    phone: candidate.recipientContactMasked?.trim() || '-',
+    name: name || '-',
+    phone: contact || '-',
     source: 'program',
     actorType,
     actorId: memberId ?? undefined,

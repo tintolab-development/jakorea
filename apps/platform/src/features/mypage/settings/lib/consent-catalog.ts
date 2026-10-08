@@ -5,6 +5,9 @@ export type SettingsConsentKind = 'terms' | 'toggle' | 'document'
 export type SettingsConsentItemId =
   | 'serviceTerms'
   | 'privacyCollection'
+  | 'teacherInfo'
+  | 'guardianLegal'
+  | 'childPrivacy'
   | 'marketing'
   | 'portrait'
   | 'paymentStatement'
@@ -22,52 +25,115 @@ export type SettingsConsentItem = {
   validityLabel?: string
   hint?: string
   termsViewType?: TermsViewType
+  /** 전자서명 동의서 ID — 철회·확인 API 대상 */
+  documentId?: number
+  /** 서버 `withdrawable` — 철회 버튼 노출 조건 */
+  withdrawable?: boolean
+}
+
+export type BasicConsentAudience = {
+  isTeacher: boolean
+  isMinor: boolean
 }
 
 const MOCK_AGREED_AT = '2026.07.03 09:23'
 
-/** 일반회원·교사회원(비겸직) 공통 — 서비스·개인정보·마케팅·초상권 */
+const SERVICE_TERMS_ITEM: SettingsConsentItem = {
+  id: 'serviceTerms',
+  title: '서비스 이용약관',
+  required: true,
+  kind: 'terms',
+  agreed: true,
+  agreedAt: MOCK_AGREED_AT,
+  termsViewType: 'serviceTerms',
+}
+
+const PRIVACY_COLLECTION_ITEM: SettingsConsentItem = {
+  id: 'privacyCollection',
+  title: '개인정보 수집·이용 동의',
+  required: true,
+  kind: 'terms',
+  agreed: true,
+  agreedAt: MOCK_AGREED_AT,
+  termsViewType: 'privacyCollection',
+}
+
+const TEACHER_INFO_ITEM: SettingsConsentItem = {
+  id: 'teacherInfo',
+  title: '교사 회원 가입 및 학교/기관 정보 수집·이용 동의',
+  required: true,
+  kind: 'terms',
+  agreed: true,
+  agreedAt: MOCK_AGREED_AT,
+  termsViewType: 'teacherInfo',
+}
+
+const GUARDIAN_LEGAL_ITEM: SettingsConsentItem = {
+  id: 'guardianLegal',
+  title: '만 14세 미만 아동 회원가입 및 개인정보 수집·이용에 대한 법정대리인 동의',
+  required: true,
+  kind: 'terms',
+  agreed: true,
+  agreedAt: MOCK_AGREED_AT,
+  termsViewType: 'guardianLegal',
+}
+
+const CHILD_PRIVACY_ITEM: SettingsConsentItem = {
+  id: 'childPrivacy',
+  title: '만 14세 미만 아동 개인정보 수집·이용 동의',
+  required: false,
+  kind: 'terms',
+  agreed: true,
+  agreedAt: MOCK_AGREED_AT,
+  termsViewType: 'privacyCollection',
+  withdrawable: true,
+}
+
+const MARKETING_ITEM: SettingsConsentItem = {
+  id: 'marketing',
+  title: '마케팅 정보 수신 동의',
+  required: false,
+  kind: 'toggle',
+  agreed: true,
+  agreedAt: MOCK_AGREED_AT,
+  termsViewType: 'marketing',
+}
+
+const PORTRAIT_ITEM: SettingsConsentItem = {
+  id: 'portrait',
+  title: '초상권 수집·이용 동의',
+  required: false,
+  kind: 'document',
+  agreed: true,
+  agreedAt: MOCK_AGREED_AT,
+  validityLabel: '1년',
+  withdrawable: true,
+}
+
+/** 성인 일반회원 기본 4항목 — mock 기본값 */
 export const BASIC_CONSENT_ITEMS: SettingsConsentItem[] = [
-  {
-    id: 'serviceTerms',
-    title: '서비스 이용약관',
-    required: true,
-    kind: 'terms',
-    agreed: true,
-    agreedAt: MOCK_AGREED_AT,
-    termsViewType: 'serviceTerms',
-  },
-  {
-    id: 'privacyCollection',
-    title: '개인정보 수집·이용 동의',
-    required: true,
-    kind: 'terms',
-    agreed: true,
-    agreedAt: MOCK_AGREED_AT,
-    termsViewType: 'privacyCollection',
-  },
-  {
-    id: 'marketing',
-    title: '마케팅 정보 수신 동의',
-    required: false,
-    kind: 'toggle',
-    agreed: true,
-    agreedAt: MOCK_AGREED_AT,
-    termsViewType: 'marketing',
-  },
-  {
-    id: 'portrait',
-    title: '초상권 수집·이용 동의',
-    required: false,
-    kind: 'document',
-    agreed: true,
-    agreedAt: MOCK_AGREED_AT,
-    validityLabel: '1년',
-  },
+  SERVICE_TERMS_ITEM,
+  PRIVACY_COLLECTION_ITEM,
+  MARKETING_ITEM,
+  PORTRAIT_ITEM,
 ]
 
-/** 강사회원(순수·겸직) 전용 — 교사회원(비겸직)에는 노출하지 않음 */
-export const INSTRUCTOR_DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
+export function getBasicConsentItems(audience: BasicConsentAudience): SettingsConsentItem[] {
+  const items: SettingsConsentItem[] = [SERVICE_TERMS_ITEM, PRIVACY_COLLECTION_ITEM]
+
+  if (audience.isTeacher) {
+    items.push(TEACHER_INFO_ITEM)
+  }
+  if (audience.isMinor) {
+    items.push(GUARDIAN_LEGAL_ITEM, CHILD_PRIVACY_ITEM)
+  }
+
+  items.push(MARKETING_ITEM, PORTRAIT_ITEM)
+  return items
+}
+
+/** 유형 무관 — 마이페이지 동의서·서약서 */
+export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
   {
     id: 'paymentStatement',
     title: '지급조서 사전 동의서',
@@ -104,4 +170,10 @@ export const INSTRUCTOR_DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     agreedAt: MOCK_AGREED_AT,
     validityLabel: '1년',
   },
+]
+
+/** 서버 행 → 화면 메타(제목·종류·약관 보기·유효기간) 조회용. 행 구성 자체는 서버가 결정 */
+export const SETTINGS_CONSENT_CATALOG: SettingsConsentItem[] = [
+  ...getBasicConsentItems({ isTeacher: true, isMinor: true }),
+  ...DOCUMENT_CONSENT_ITEMS,
 ]

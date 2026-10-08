@@ -354,6 +354,9 @@ export interface GeneralProgramVolunteerInterviewScheduleInfo {
   specificUnavailableDateIsos?: string[]
   availableTimeSlots?: string
   exceptions?: GeneralProgramVolunteerInterviewScheduleException[]
+  /** 면접 선택지 펼침 기간 — KST `YYYY-MM-DD`. 비면 BE가 봉사자 모집 기간을 쓴다. */
+  periodStartDate?: string
+  periodEndDate?: string
 }
 
 // IPS 분류
@@ -432,6 +435,8 @@ export interface ProgramRecruitmentWindow {
   targetType?: string
   /** INDIVIDUAL | ORGANIZATION | INSTRUCTOR | VOLUNTEER */
   applicationType?: string
+  /** UJAT 봉사자 모집 상·하반기. 그 외 행은 null. */
+  recruitTerm?: 'FIRST_HALF' | 'SECOND_HALF' | null
   startAt?: string | null
   endAt?: string | null
   /** 해당 모집 유형의 프로그램 운영 시작일. 없으면 모집정보를 잠그지 않는다. */
@@ -473,6 +478,8 @@ export interface Program {
   lifecycleStatus?: ProgramLifecycleStatus // 모집 신청 현황(참여자·강사·봉사자 모집 등)
   /** UJAT 전용 프로그램 진행 현황(목록 5종) */
   ujatProgressStatus?: UjatProgramProgressStatus
+  /** 목록 DTO 기준 삭제 불가(교육 예정 참여자·교육 진행 이력) — 목록 체크박스 비활성 */
+  listDeleteBlocked?: boolean
   /** UJAT 목록 — 상반기 봉사자 모집 인원(현재) */
   ujatFirstHalfVolunteerCount?: number
   /** UJAT 목록 — 하반기 봉사자 모집 인원(현재) */

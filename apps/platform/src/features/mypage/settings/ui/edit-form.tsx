@@ -62,6 +62,7 @@ export function SettingsEditForm({
     initial.schoolOrganizationId,
   )
   const [grade, setGrade] = useState(initial.grade)
+  const [affiliationName, setAffiliationName] = useState(initial.affiliationName)
   const [address, setAddress] = useState(initial.address)
   const [addressDetail, setAddressDetail] = useState(initial.addressDetail)
   const [postalCode, setPostalCode] = useState(initial.postalCode)
@@ -164,6 +165,7 @@ export function SettingsEditForm({
   const form = {
     schoolStatus,
     schoolName,
+    affiliationName,
     grade,
     address,
     addressDetail,
@@ -193,6 +195,8 @@ export function SettingsEditForm({
       setSchoolName('')
       setSchoolOrganizationId(null)
       setGrade('')
+    } else {
+      setAffiliationName('')
     }
   }
 
@@ -434,7 +438,16 @@ export function SettingsEditForm({
                     }))}
                   />
                 </>
-              ) : null}
+              ) : (
+                <PFTextInput
+                  size="xlarge"
+                  label="소속 기관명"
+                  placeholder="소속 기관명을 입력해 주세요"
+                  value={affiliationName}
+                  onValueChange={setAffiliationName}
+                  message="소속된 기관이 없으신 경우 비워두셔도 괜찮아요"
+                />
+              )}
 
               <div className={styles.addressField}>
                 <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>

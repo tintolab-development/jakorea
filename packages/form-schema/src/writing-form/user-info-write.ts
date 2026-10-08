@@ -8,7 +8,6 @@ export type UserInfoFieldEntry = { key: string; label: string }
 
 export type SurveyWriteTitleSlot = {
   paragraphId: string
-  fieldKey?: string
 }
 
 /** 설문자 정보 칩 카탈로그 — CMS 편집·write 펼침이 같은 라벨을 씀 */
@@ -55,33 +54,6 @@ export function getUserInfoSelectedEntries(paragraph: UserInfoParagraph): UserIn
   return entries
 }
 
-function lastHangulSyllable(label: string): string | null {
-  const stripped = label.replace(/\)+$/u, '')
-  for (let i = stripped.length - 1; i >= 0; i -= 1) {
-    const code = stripped.charCodeAt(i)
-    if (code >= 0xac00 && code <= 0xd7a3) {
-      return stripped[i] ?? null
-    }
-  }
-  return null
-}
-
-/** 받침 있으면 을, 없으면 를. 끝 `)` 는 무시해 `자택 주소지(지역)` → 역 기준 */
-export function objectParticleEulReul(label: string): '을' | '를' {
-  const syllable = lastHangulSyllable(label)
-  if (syllable == null) return '를'
-  const jongseong = (syllable.charCodeAt(0) - 0xac00) % 28
-  return jongseong !== 0 ? '을' : '를'
-}
-
-export function formatUserInfoWriteQuestionTitle(label: string): string {
-  return `${label}${objectParticleEulReul(label)} 입력해 주세요`
-}
-
-export function formatUserInfoWritePlaceholder(label: string): string {
-  return `${label} 입력`
-}
-
 export function formatFormTitleNumberToken(
   style: FormTitleNumberingStyle,
   sequence: number
@@ -114,8 +86,8 @@ export function formatFormTitleNumberPrefix(
 }
 
 /**
- * 설문 write 번호. `user_info`는 선택 필드 수만큼 순번을 소비한다.
- * 선택 0개면 해당 단락은 번호를 쓰지 않는다.
+ * 설문 write 번호. `user_info`는 템플릿과 같이 자동입력 표 1문항으로 순번 1개를 쓴다.
+ * 선택 0개면 해당 단락은 노출되지 않으므로 번호를 쓰지 않는다.
  */
 export function getSurveyWriteTitleSequence(
   paragraphs: WritingFormParagraph[],
@@ -125,19 +97,8 @@ export function getSurveyWriteTitleSequence(
   for (const paragraph of paragraphs) {
     if (!paragraph.participatesInTitleNumbering) continue
 
-    if (isUserInfoParagraph(paragraph)) {
-      const entries = getUserInfoSelectedEntries(paragraph)
-      if (entries.length === 0) {
-        if (paragraph.id === slot.paragraphId) return null
-        continue
-      }
-      if (paragraph.id === slot.paragraphId) {
-        if (slot.fieldKey == null) return n + 1
-        const fieldIndex = entries.findIndex(entry => entry.key === slot.fieldKey)
-        if (fieldIndex < 0) return null
-        return n + fieldIndex + 1
-      }
-      n += entries.length
+    if (isUserInfoParagraph(paragraph) && getUserInfoSelectedEntries(paragraph).length === 0) {
+      if (paragraph.id === slot.paragraphId) return null
       continue
     }
 

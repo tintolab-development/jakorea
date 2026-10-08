@@ -6,8 +6,8 @@ import {
   filterLectureStatusApplications,
   getMockEducationApplications,
   getMockEducationApplicationsVersion,
-  lectureApplicationDetailPath,
   listEducationApplications,
+  lectureApplicationDetailPath,
   subscribeMockEducationApplications,
   useMyProgramApplications,
   type EducationApplicationListParams,
@@ -23,7 +23,11 @@ type LectureListContentProps = {
 
 export function LectureListContent({ params, onParamsChange }: LectureListContentProps) {
   const navigate = useNavigate()
-  const remoteApplications = useMyProgramApplications('lecture')
+  const remoteApplications = useMyProgramApplications('lecture', {
+    tab: params.tab,
+    page: params.page,
+    pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
+  })
   const applicationsVersion = useSyncExternalStore(
     subscribeMockEducationApplications,
     getMockEducationApplicationsVersion,
@@ -32,6 +36,15 @@ export function LectureListContent({ params, onParamsChange }: LectureListConten
   const mockEnabled = useShouldUsePlatformMockData()
 
   const { items, totalPages, currentPage, totalElements } = useMemo(() => {
+    if (remoteApplications.isRemoteEnabled && remoteApplications.isServerPaged) {
+      return {
+        items: remoteApplications.items,
+        totalPages: remoteApplications.totalPages,
+        currentPage: remoteApplications.currentPage,
+        totalElements: remoteApplications.totalElements,
+      }
+    }
+
     const sourceItems = remoteApplications.isRemoteEnabled
       ? remoteApplications.items
       : filterLectureStatusApplications(getMockEducationApplications())
@@ -45,8 +58,12 @@ export function LectureListContent({ params, onParamsChange }: LectureListConten
     mockEnabled,
     params.page,
     params.tab,
+    remoteApplications.currentPage,
     remoteApplications.isRemoteEnabled,
+    remoteApplications.isServerPaged,
     remoteApplications.items,
+    remoteApplications.totalElements,
+    remoteApplications.totalPages,
   ])
 
   if (remoteApplications.isRemoteEnabled && remoteApplications.isLoading) {

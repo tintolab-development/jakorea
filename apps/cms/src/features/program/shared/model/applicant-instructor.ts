@@ -135,6 +135,8 @@ export interface ApplicantInstructorRow {
   preferredScheduleSlots?: Array<{
     slotKey: string
     assignable: boolean
+    startAt?: string
+    endAt?: string
   }>
   /** 승인 완료 시 배정된 학교 ID (결재 내역 배정 학교 표시용) */
   assignedSchoolId?: string

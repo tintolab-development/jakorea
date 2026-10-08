@@ -1,9 +1,9 @@
 /**
  * UJAT 신청 목록 UI 필터 → Admin applications list query
- * OpenAPI에 없는 필드(학년·희망지역·교육경험 등)는 호출부에서 클라이언트 필터 유지.
+ * 서버 query가 없는 필드(면접 시간, 총점 「-」)만 호출부에서 클라이언트 필터.
  */
 
-import type { ApplicationsListQuery } from '@/features/program/general/api/applications-api-client'
+import type { UjatApplicationsListQuery as ApplicationsListQuery } from '@/features/program/ujat/api/ujat-applications-contract'
 import type { UjatVolunteerDocScreeningFilters } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/doc-screening/filter-fields'
 import { UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/doc-screening/filter-fields'
 import type { UjatVolunteerDocPassedFilters } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/doc-passed/filter-fields'
@@ -60,6 +60,35 @@ function trimKeyword(value: string | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
+function selected(value: string | undefined, all: string): string | undefined {
+  return value && value !== all ? value : undefined
+}
+
+/** 서버 허용값: 1~4학년 · 졸업 · 휴학 · 졸업유예 (그 외 400) */
+function volunteerGradeQuery(value: string | undefined): string | undefined {
+  if (value === '휴학생') return '휴학'
+  return value
+}
+
+function educationExperienceQuery(value: string): { hasEducationExperience?: boolean } {
+  if (value === 'yes') return { hasEducationExperience: true }
+  if (value === 'no') return { hasEducationExperience: false }
+  return {}
+}
+
+/** 목록 표시 `YYYY.MM.DD` → `YYYY-MM-DD` */
+function interviewDateLabelToIso(label: string | undefined): string | undefined {
+  const match = label?.trim().match(/^(\d{4})\.(\d{2})\.(\d{2})$/)
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : undefined
+}
+
+function numericFilter(value: string | undefined, all: string): number | undefined {
+  const raw = selected(value, all)
+  if (!raw) return undefined
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
 function withRecruitHalf(
   query: ApplicationsListQuery,
   half?: UjatVolunteerRecruitHalf | 'h1' | 'h2' | null
@@ -90,6 +119,9 @@ export function buildUjatVolunteerDoc1ListQuery(
       ? undefined
       : filters.applicationType === 'ujat-graduate'
 
+  const grade = volunteerGradeQuery(selected(filters.grade, UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL))
+  const preferredRegion = selected(filters.preferredRegion, UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL)
+
   return withRecruitHalf(
     {
       ...(keyword ? { keyword } : {}),
@@ -97,6 +129,9 @@ export function buildUjatVolunteerDoc1ListQuery(
       ...(managerAEvaluation ? { managerAEvaluation } : {}),
       ...(managerBEvaluation ? { managerBEvaluation } : {}),
       ...(isReparticipation != null ? { isReparticipation } : {}),
+      ...(grade ? { grade } : {}),
+      ...(preferredRegion ? { preferredRegion } : {}),
+      ...educationExperienceQuery(filters.educationExperience),
     },
     half
   )
@@ -112,11 +147,15 @@ export function buildUjatVolunteerDocPassedListQuery(
       ? INTERVIEW_ASSIGN_TO_API[filters.interviewAssignmentStatus]
       : undefined
 
+  const preferredRegion = selected(filters.preferredRegion, UJAT_VOLUNTEER_DOC_PASSED_FILTER_ALL)
+
   return withRecruitHalf(
     {
       documentStatus: 'PASS',
       ...(keyword ? { keyword } : {}),
       ...(interviewStatus ? { interviewStatus } : {}),
+      ...(preferredRegion ? { preferredRegion } : {}),
+      ...educationExperienceQuery(filters.educationExperience),
     },
     half
   )
@@ -133,6 +172,12 @@ export function buildUjatVolunteerInterview2ListQuery(
       ? FINAL_STATUS_TO_API[filters.secondInterviewScreeningStatus]
       : undefined
 
+  const preferredRegion = selected(filters.preferredRegion, UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL)
+  const assignedInterviewDate = interviewDateLabelToIso(
+    selected(filters.interviewDate, UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL)
+  )
+  const totalScore = numericFilter(filters.totalScore, UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL)
+
   return withRecruitHalf(
     {
       documentStatus: 'PASS',
@@ -141,6 +186,9 @@ export function buildUjatVolunteerInterview2ListQuery(
       ...(filters.secondInterviewScreeningStatus === 'withdrawn'
         ? { interviewStatus: 'WITHDRAWN' }
         : {}),
+      ...(preferredRegion ? { preferredRegion } : {}),
+      ...(assignedInterviewDate ? { assignedInterviewDate } : {}),
+      ...(totalScore != null ? { totalScore } : {}),
     },
     half
   )
@@ -156,22 +204,33 @@ export function buildUjatVolunteerStageBaseQuery(
   return withRecruitHalf({}, half)
 }
 
-/** 기관 신청 — keyword/status + 선택적 recruitHalf(교육 진행 상·하반기) */
+/** 기관 신청 — 기관명·교사명·학급 수·교육 지역·상태 + 선택적 recruitHalf */
 export function buildUjatInstitutionApplicationsListQuery(
   filters: UjatInstitutionApplicationFilters,
-  half?: UjatVolunteerRecruitHalf | 'h1' | 'h2' | null
+  half?: UjatVolunteerRecruitHalf | 'h1' | 'h2' | null,
+  options: { educationRegionCode?: string } = {}
 ): ApplicationsListQuery {
-  const keyword =
-    trimKeyword(filters.institutionName) ?? trimKeyword(filters.teacherName) ?? undefined
+  const organizationName = trimKeyword(filters.institutionName)
+  const teacherName = trimKeyword(filters.teacherName)
   const status =
     filters.tempAssignmentStatus !== UJAT_INSTITUTION_APPLICATION_FILTER_ALL
       ? TEMP_ASSIGN_TO_ORG_STATUS[filters.tempAssignmentStatus]
       : undefined
+  const totalClassCount = filters.totalClassCount.trim()
+  const requestedClassCount =
+    totalClassCount && Number.isInteger(Number(totalClassCount))
+      ? Number(totalClassCount)
+      : undefined
 
   return withRecruitHalf(
     {
-      ...(keyword ? { keyword } : {}),
+      ...(organizationName ? { organizationName } : {}),
+      ...(teacherName ? { teacherName } : {}),
       ...(status ? { status } : {}),
+      ...(requestedClassCount != null ? { requestedClassCount } : {}),
+      ...(options.educationRegionCode
+        ? { educationRegionCode: options.educationRegionCode }
+        : {}),
     },
     half
   )

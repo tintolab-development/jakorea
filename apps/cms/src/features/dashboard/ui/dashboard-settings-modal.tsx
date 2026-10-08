@@ -5,7 +5,8 @@
  * ContentModal(흰 헤더), 800×최대 720px(뷰포트 안), 바디 스크롤
  */
 
-import { Checkbox, Collapse, Spin } from 'antd'
+import { Collapse, Spin } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { ContentModal } from '@/shared/ui/content-modal'
 import {
   useCallback,
@@ -74,7 +75,8 @@ function IsolatedCheckbox({
 }) {
   const id = useId()
   return (
-    <Checkbox
+    <CmsCheckbox
+      checkboxSize="medium"
       id={id}
       checked={checked}
       indeterminate={indeterminate}
@@ -84,7 +86,7 @@ function IsolatedCheckbox({
       }}
     >
       {children}
-    </Checkbox>
+    </CmsCheckbox>
   )
 }
 
@@ -389,24 +391,26 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         <section className="dashboard-settings-modal__section">
           <div className="dashboard-settings-modal__section-title">바로가기 아이콘 설정</div>
           <div className="dashboard-settings-modal__shortcuts">
-            <Checkbox
+            <CmsCheckbox
+              checkboxSize="medium"
               checked={shortcutAllEnabled}
               indeterminate={shortcutAllIndeterminate}
               onChange={e => setAllDraftShortcuts(e.target.checked)}
             >
               전체 선택
-            </Checkbox>
+            </CmsCheckbox>
             {shortcutCatalogItems.map(item => {
               const settingsDisabled = !useRemote && isShortcutSettingsDisabled(item.id)
               return (
-                <Checkbox
+                <CmsCheckbox
+                  checkboxSize="medium"
                   key={item.id}
                   checked={isShortcutItemEnabled(shortcutEnabled, item.id)}
                   disabled={settingsDisabled}
                   onChange={e => setDraftShortcut(item.id, e.target.checked)}
                 >
                   {item.label}
-                </Checkbox>
+                </CmsCheckbox>
               )
             })}
           </div>

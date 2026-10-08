@@ -1,10 +1,7 @@
 import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED } from '@/features/program/ujat/model/ujat-institution-application'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
-import {
-  UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,
-  type UjatInstitutionEducationSemesterKey,
-} from '../education-schedule'
+import type { UjatInstitutionEducationSemesterKey } from '../education-schedule'
 import type {
   UjatScheduleAssignDayState,
   UjatScheduleAssignRegionState,
@@ -32,9 +29,6 @@ function createInitialDayState(isoDate: string): UjatScheduleAssignDayState {
 
 function createInitialRegionState(): UjatScheduleAssignRegionState {
   const days: UjatScheduleAssignRegionState['days'] = {}
-  for (const { isoDate } of UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES) {
-    days[isoDate] = createInitialDayState(isoDate)
-  }
   return {
     days,
     maxClassesPerDay: '',
@@ -171,6 +165,23 @@ export function replaceUjatScheduleAssignRegionState(
   const cloned = cloneRegionState(next)
   savedRegionState.set(regionKey, cloned)
   draftRegionState.set(regionKey, cloneRegionState(cloned))
+}
+
+/** remote 일정 날짜를 draft에 비어 있는 날로 추가한다. 기존 배정 행은 유지. */
+export function ensureUjatScheduleAssignDays(
+  regionKey: UjatInstitutionApplicationRegionKey,
+  isoDates: readonly string[]
+): void {
+  const current = ensureDraftRegionState(regionKey)
+  let changed = false
+  const days = { ...current.days }
+  for (const isoDate of isoDates) {
+    if (days[isoDate]) continue
+    days[isoDate] = createInitialDayState(isoDate)
+    changed = true
+  }
+  if (!changed) return
+  updateUjatScheduleAssignDraftRegionState(regionKey, { ...current, days })
 }
 
 export function patchUjatScheduleAssignDay(

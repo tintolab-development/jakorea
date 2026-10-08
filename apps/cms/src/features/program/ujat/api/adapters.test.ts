@@ -6,6 +6,7 @@ import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/
 import {
   fromDetail,
   fromListItem,
+  buildUjatNewVolunteerHalfRowRequests,
   mapUjatProgramRecruitmentsToRequest,
   toCreateRequest,
   toUpdateRequest,
@@ -13,6 +14,7 @@ import {
 import { shouldRetryQuery } from './errors'
 import { toRemoteListParams } from './list-params'
 import { parseRegistrationSnapshot } from './service-detail'
+import { resolveUjatRecruitAnnouncementTitle } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 
 const program: Program = {
   id: 'ujat-1',
@@ -360,6 +362,53 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBe(61)
   })
 
+  it('등록 overlay 모집 공고명·설명을 create body와 상세 매핑에 남긴다', () => {
+    const pending = buildUjatProgramListRowFromRegistrationSnapshot({
+      id: 'ujat-pending-recruit',
+      overlay: {
+        'ujat.basicInfo.repKo': '대학생경제교육봉사단',
+        'ujat.recruit.institution.publicTitle': '등록한 기관 공고',
+        'ujat.recruit.institution.description': '등록한 프로그램 설명',
+        'ujat.recruit.volunteer.h1.publicTitle': '등록한 상반기 공고',
+      },
+    })
+    const request = toCreateRequest(pending, {
+      draft,
+      overlay: pending.ujatRegistrationOverlay ?? {},
+    })
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(detail.registration?.overlay?.['ujat.recruit.institution.publicTitle']).toBe(
+      '등록한 기관 공고'
+    )
+    expect(request.recruitments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          recruitmentType: 'PARTICIPANT',
+          announcementTitle: '등록한 기관 공고',
+          programDescription: '등록한 프로그램 설명',
+        }),
+        expect.objectContaining({
+          recruitmentType: 'VOLUNTEER',
+          announcementTitle: '등록한 상반기 공고',
+        }),
+      ])
+    )
+
+    const mapped = fromDetail({
+      id: '186200',
+      sponsorId: pending.sponsorId,
+      title: pending.title,
+      startDate: String(pending.startDate),
+      endDate: String(pending.endDate),
+      serviceDetailJson: request.serviceDetailJson,
+      recruitments: request.recruitments as Parameters<typeof fromDetail>[0]['recruitments'],
+    })
+    expect(resolveUjatRecruitAnnouncementTitle(mapped, 'institution')).toBe('등록한 기관 공고')
+    expect(resolveUjatRecruitAnnouncementTitle(mapped, 'volunteer_h1')).toBe('등록한 상반기 공고')
+  })
+
   it('BE top-level 대표·관리명·해당없음이 stale overlay보다 우선한다', () => {
     const mapped = fromDetail({
       id: program.id,
@@ -619,6 +668,83 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
     const h1 = rows.find(row => row.id === 182212)
     expect(h1?.startAt).toBe('2026-03-01T00:00:00+09:00')
     expect(h1?.endAt).toBe('2026-03-31T00:00:00+09:00')
+    expect(h1?.recruitTerm).toBe('FIRST_HALF')
     expect(rows.some(row => row.id === 182213)).toBe(false)
+  })
+
+  it('봉사자 행은 recruitTerm FIRST_HALF 행을 상반기로 쓰고 기관 행에는 recruitTerm을 보내지 않는다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      programRecruitments: [
+        { id: 1, recruitmentType: 'PARTICIPANT', applicationType: 'ORGANIZATION' },
+        {
+          id: 2,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          startAt: '2026-01-01T00:00:00+09:00',
+        },
+        {
+          id: 3,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          startAt: '2026-03-01T00:00:00+09:00',
+        },
+      ],
+    })
+    const volunteer = rows.find(row => row.recruitmentType === 'VOLUNTEER')
+    expect(volunteer).toMatchObject({ id: 3, recruitTerm: 'FIRST_HALF' })
+    expect(rows.find(row => row.recruitmentType === 'PARTICIPANT')?.recruitTerm).toBeUndefined()
+  })
+
+  it('신규 생성 시에도 봉사자 행에 recruitTerm FIRST_HALF를 보낸다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({ ...program, programRecruitments: undefined })
+    const volunteer = rows.find(row => row.recruitmentType === 'VOLUNTEER')
+    expect(volunteer?.id).toBeUndefined()
+    expect(volunteer?.recruitTerm).toBe('FIRST_HALF')
+  })
+})
+
+describe('buildUjatNewVolunteerHalfRowRequests', () => {
+  const existing: Program = {
+    ...program,
+    programRecruitments: [
+      { id: 10, recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' },
+    ],
+  }
+
+  it('저장되지 않은 하반기 행을 id 없이 SECOND_HALF로 보낸다', () => {
+    const rows = buildUjatNewVolunteerHalfRowRequests(
+      [
+        ...(existing.programRecruitments ?? []),
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          startAt: '2026-08-01T00:00:00',
+          endAt: '2026-08-31T23:59:59',
+          announcementTitle: '하반기 모집',
+        },
+      ],
+      existing
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      recruitmentType: 'VOLUNTEER',
+      targetType: 'COLLEGE_STUDENT',
+      applicationType: 'VOLUNTEER',
+      recruitTerm: 'SECOND_HALF',
+      startAt: '2026-08-01T00:00:00',
+      announcementTitle: '하반기 모집',
+    })
+    expect(rows[0]).not.toHaveProperty('id')
+  })
+
+  it('이미 저장된 반기는 새 행으로 보내지 않는다', () => {
+    const rows = buildUjatNewVolunteerHalfRowRequests(
+      [{ recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' }],
+      existing
+    )
+    expect(rows).toHaveLength(0)
   })
 })

@@ -9,11 +9,14 @@ import {
   createContext,
   forwardRef,
   useContext,
+  useId,
   type ComponentRef,
+  type ReactNode,
 } from 'react'
 import { Radio } from 'antd'
 import type { RadioGroupProps, RadioProps, RadioRef } from 'antd/es/radio/interface'
 import type { RadioButtonProps } from 'antd/es/radio/radioButton'
+import { CMS_CHOICE_FIELD_GROUP_CLASS, CmsChoiceField } from './cms-choice-field'
 import './app-radio.css'
 
 type CmsRadioRef = ComponentRef<typeof Radio>
@@ -23,7 +26,7 @@ export type CmsRadioSize = 'large' | 'medium'
 const CmsRadioSizeContext = createContext<CmsRadioSize | undefined>(undefined)
 
 export type CmsRadioProps = RadioProps & {
-  /** 기본 large: 원 20px·본문 16px·원–텍스트 8px. medium: 18px / 15px / 6px */
+  /** 기본 large: 원 20px·본문 16px/130%·원–텍스트 8px. medium: 18px / 14px·125% / 6px */
   size?: CmsRadioSize
 }
 
@@ -40,14 +43,34 @@ CmsRadioInner.displayName = 'CmsRadio'
 
 export type CmsRadioGroupProps = Omit<RadioGroupProps, 'size'> & {
   size?: CmsRadioSize
+  /** 그룹 위 제목 라벨 — 있으면 cms-choice-field 래퍼로 감싼다 */
+  label?: ReactNode
+  /** 제목 라벨 옆 필수(*) 표시 */
+  required?: boolean
 }
 
 export const CmsRadioGroup = forwardRef<HTMLDivElement, CmsRadioGroupProps>(
-  ({ className, rootClassName, size = 'large', ...rest }, ref) => {
-    const cn = ['app-radio-group', `app-radio-group--${size}`, className].filter(Boolean).join(' ')
+  ({ className, rootClassName, size = 'large', label, required, ...rest }, ref) => {
+    const labelId = useId()
+    const hasLabel = label != null && label !== false && label !== ''
+    const cn = [
+      'app-radio-group',
+      `app-radio-group--${size}`,
+      hasLabel ? CMS_CHOICE_FIELD_GROUP_CLASS : null,
+      className,
+    ]
+      .filter(Boolean)
+      .join(' ')
+    const group = <Radio.Group ref={ref} className={cn} rootClassName={rootClassName} {...rest} />
     return (
       <CmsRadioSizeContext.Provider value={size}>
-        <Radio.Group ref={ref} className={cn} rootClassName={rootClassName} {...rest} />
+        {hasLabel ? (
+          <CmsChoiceField label={label} labelId={labelId} required={required} size={size}>
+            {group}
+          </CmsChoiceField>
+        ) : (
+          group
+        )}
       </CmsRadioSizeContext.Provider>
     )
   }

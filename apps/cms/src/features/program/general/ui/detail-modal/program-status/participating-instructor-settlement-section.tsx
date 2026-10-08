@@ -5,7 +5,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
@@ -30,6 +29,7 @@ import {
   getParticipatingInstructorSettlementBulkDownloadErrorMessage,
 } from '@/features/program/general/lib/participating-instructor-settlement-download'
 import { useParticipatingInstructorPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-instructor-settlement-section.css'
 
 const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
@@ -268,7 +268,7 @@ export function ParticipatingInstructorSettlementSection({
             variant="secondary"
             size="large"
             width={220}
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
             onClick={() => void handleBulkDownloadPaymentStatements()}
           >

@@ -1,4 +1,4 @@
-import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
+import { ClockCircleOutlined } from '@ant-design/icons'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
   shouldAllowScheduleProgressGroupAdd,
@@ -13,6 +13,8 @@ import type {
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
+
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 
 export type ProgramRegistrationCurriculumTitleActionsProps = {
   variant?: 'general' | 'trainedTeachers'
@@ -105,7 +107,7 @@ export function ProgramRegistrationCurriculumTitleActions({
               variant="secondary"
               size="medium"
               width={160}
-              icon={<PlusOutlined aria-hidden />}
+              icon={<ButtonAddIcon aria-hidden />}
               onClick={e => {
                 e.stopPropagation()
                 onAddScheduleCurriculumDetail()
@@ -120,7 +122,7 @@ export function ProgramRegistrationCurriculumTitleActions({
                 variant="secondary"
                 size="medium"
                 width={160}
-                icon={<PlusOutlined aria-hidden />}
+                icon={<ButtonAddIcon aria-hidden />}
                 onClick={e => {
                   e.stopPropagation()
                   onAddScheduleCurriculumDetail()
@@ -133,7 +135,7 @@ export function ProgramRegistrationCurriculumTitleActions({
                 variant="secondary"
                 size="medium"
                 width={160}
-                icon={<PlusOutlined aria-hidden />}
+                icon={<ButtonAddIcon aria-hidden />}
                 onClick={e => {
                   e.stopPropagation()
                   onAddScheduleCurriculumGroup()
@@ -158,7 +160,7 @@ export function ProgramRegistrationCurriculumTitleActions({
           size="medium"
           width={160}
           disabled={curriculumChartSessionAtMax}
-          icon={<PlusOutlined aria-hidden />}
+          icon={<ButtonAddIcon aria-hidden />}
           onClick={e => {
             e.stopPropagation()
             if (curriculumChartSessionAtMax) return
@@ -189,7 +191,7 @@ export function ProgramRegistrationCurriculumTitleActions({
             variant="secondary"
             size="medium"
             width={160}
-            icon={<PlusOutlined aria-hidden />}
+            icon={<ButtonAddIcon aria-hidden />}
             onClick={e => {
               e.stopPropagation()
               onAddScheduleCurriculumDetail()
@@ -210,7 +212,7 @@ export function ProgramRegistrationCurriculumTitleActions({
             variant="secondary"
             size="medium"
             width={160}
-            icon={<PlusOutlined aria-hidden />}
+            icon={<ButtonAddIcon aria-hidden />}
             onClick={e => {
               e.stopPropagation()
               onAddScheduleCurriculumDetail()
@@ -247,7 +249,7 @@ export function ProgramRegistrationCurriculumTitleActions({
           variant="secondary"
           size="medium"
           width={160}
-          icon={<PlusOutlined aria-hidden />}
+          icon={<ButtonAddIcon aria-hidden />}
           onClick={e => {
             e.stopPropagation()
             onAddScheduleCurriculumDetail()
@@ -271,7 +273,7 @@ export function ProgramRegistrationCurriculumTitleActions({
         size="medium"
         width={isMulti ? 160 : 180}
         disabled={restrictCurriculumSessionStructure || curriculumChartSessionAtMax}
-        icon={<PlusOutlined aria-hidden />}
+        icon={<ButtonAddIcon aria-hidden />}
         onClick={e => {
           e.stopPropagation()
           if (restrictCurriculumSessionStructure || curriculumChartSessionAtMax) return

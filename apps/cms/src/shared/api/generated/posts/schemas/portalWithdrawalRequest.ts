@@ -6,6 +6,9 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 회원 포탈 본인 탈퇴 요청. 본인 확인은 currentPassword만 검증합니다.
+ */
 export interface PortalWithdrawalRequest {
   /**
      * @minLength 0
@@ -18,8 +21,10 @@ export interface PortalWithdrawalRequest {
      */
   reason: string;
   /**
+     * 선택. 무시됩니다. 구 클라이언트가 보내던 확인 문구 호환용. 탈퇴 본인 확인 SoT는 currentPassword입니다.
      * @minLength 0
      * @maxLength 30
+     * @nullable
      */
-  confirmationText: string;
+  confirmationText?: string | null;
 }

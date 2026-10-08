@@ -136,7 +136,7 @@ function DetailInfoFormRow({ type = 'single', className, children }: DetailInfoF
 export type DetailInfoFormFieldProps = {
   label: string
   required?: boolean
-  labelWidth?: 200 | 220 | 240
+  labelWidth?: 180 | 200 | 220 | 240
   fullRow?: boolean
   colSpan?: 2
   view: ReactNode
@@ -154,7 +154,7 @@ export type DetailInfoFormFieldProps = {
 function DetailInfoFormField({
   label,
   required,
-  labelWidth = 200,
+  labelWidth = 180,
   fullRow,
   colSpan,
   view,
@@ -235,7 +235,7 @@ function DetailInfoFormField({
   )
 }
 
-/** 성명 2행 × 5열 — 우측 라벨 열 200px(Field 기본과 정렬), 셀 border로 세로·가로 구분 */
+/** 성명 2행 × 5열 — 우측 라벨 열 180px(Field 기본과 정렬), 셀 border로 세로·가로 구분 */
 export type DetailInfoFormNameBlockRow = {
   subLabel: string
   main: ReactNode

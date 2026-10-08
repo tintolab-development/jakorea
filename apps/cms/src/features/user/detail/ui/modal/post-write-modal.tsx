@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Checkbox } from 'antd'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import {
@@ -21,13 +21,13 @@ import {
   createGeneralProgramPost,
   fetchGeneralProgramPostAttachments,
   putGeneralProgramPostAttachments,
+  putGeneralProgramPostInlineImages,
   updateGeneralProgramPost,
 } from '@/features/program/general/api/admin-general-programs-service'
+import { collectFileObjectIdsFromHtml } from '@/features/program/shared/api/program-inline-images'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import {
-  ADMIN_FILE_PURPOSE,
   contentUrlForFileObjectId,
-  createFileAttachment,
   parseFileObjectId,
   programPostFileOwner,
   programPostInlineImageOwner,
@@ -214,8 +214,27 @@ export function PostWriteModal({
 
     setLoading(true)
     try {
-      const ownerId = parseFileObjectId(programId) ?? 1
-      const owner = programPostFileOwner(ownerId, ADMIN_FILE_PURPOSE.PROGRAM_POST_ATTACHMENT)
+      const editingPostId =
+        isEditMode && editingPost && !editingPost.id.startsWith('temp-')
+          ? parseFileObjectId(editingPost.id)
+          : null
+      if (
+        editingPostId != null &&
+        files.length > 0 &&
+        shouldUseGeneralProgramsRemoteApi() &&
+        loadedAttachmentIdsRef.current == null
+      ) {
+        // PUT attachments 는 전체 교체라 기존 목록 없이 보내면 기존 첨부가 해제된다.
+        showAlert({
+          title: '안내',
+          content: '기존 첨부파일을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+        return
+      }
+      const owner = programPostFileOwner({
+        programId: parseFileObjectId(programId) ?? 1,
+        postId: editingPostId,
+      })
       const uploadResults: Array<{
         fileName: string
         fileUrl: string
@@ -224,12 +243,6 @@ export function PostWriteModal({
       }> = []
       for (const file of files) {
         const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-        await createFileAttachment({
-          fileObjectId: uploaded.fileObjectId,
-          owner,
-          attachmentType: ADMIN_FILE_PURPOSE.PROGRAM_POST_ATTACHMENT,
-          displayOrder: uploadResults.length + 1,
-        })
         uploadResults.push({
           fileName: file.name,
           fileUrl: contentUrlForFileObjectId(uploaded.fileObjectId),
@@ -243,6 +256,7 @@ export function PostWriteModal({
         : audience.filter(key => key !== 'all')
       const title =
         trimmed.replace(/[#*_`>\-[\]()]/g, '').slice(0, 40) || '게시글'
+      const inlineImageIds = collectFileObjectIdsFromHtml(trimmed)
 
       if (isEditMode && editingPost) {
         if (shouldUseGeneralProgramsRemoteApi() && !editingPost.id.startsWith('temp-')) {
@@ -264,6 +278,7 @@ export function PostWriteModal({
           if (attachmentsChanged) {
             await putGeneralProgramPostAttachments(programId, editingPost.id, nextAttachmentIds)
           }
+          await putGeneralProgramPostInlineImages(programId, editingPost.id, inlineImageIds)
         }
         setAudience(defaultPostWriteAudience(program))
         setFiles([])
@@ -285,6 +300,9 @@ export function PostWriteModal({
             String(createdPostId),
             uploadResults.map(r => r.fileObjectId)
           )
+        }
+        if (createdPostId != null && inlineImageIds.length > 0) {
+          await putGeneralProgramPostInlineImages(programId, String(createdPostId), inlineImageIds)
         }
       } else {
         const newPost = createProgramPost({
@@ -336,7 +354,7 @@ export function PostWriteModal({
       open={open}
       onCancel={onCancel}
       title={isEditMode ? '게시글 수정' : '게시글 등록'}
-      width={800}
+      width={1000}
       className="post-write-modal"
       footer={
         <div className="post-write-modal__footer-actions">
@@ -350,15 +368,14 @@ export function PostWriteModal({
       }
     >
       <div className="post-write-modal__body">
-        <div className="post-write-modal__field post-write-modal__field--audience">
-          <label className="post-write-modal__label">
-            게시글 공개 범위 <span className="post-write-modal__required" aria-hidden>*</span>
-          </label>
-          <Checkbox.Group
+        <div className="post-write-modal__field">
+          <CmsCheckbox.Group
+            label="게시글 공개 범위"
+            required
+            checkboxSize="medium"
             options={audienceOptions}
             value={audience}
             onChange={vals => setAudience(vals as PostWriteAudienceApiKey[])}
-            className="post-write-modal__checkbox-group"
           />
         </div>
 
@@ -390,7 +407,6 @@ export function PostWriteModal({
                   onFilesChange={handleFilesChange}
                   onRemoveFile={handleRemoveFile}
                   uploading={loading}
-                  buttonLabel="파일 선택"
                   guideLines={[
                     `- 파일은 총 최대 15MB까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
                     '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',

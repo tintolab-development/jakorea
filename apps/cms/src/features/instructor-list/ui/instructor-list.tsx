@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { Table, Button, Space, Tag, Tooltip, Dropdown } from 'antd'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { MenuProps } from 'antd'
-import { DownloadOutlined, EyeOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons'
+import { EyeOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { User } from '@/types/user'
 import { canDownloadInstructors } from '@/features/permission-request/lib/download-permission'
@@ -20,6 +20,8 @@ import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { DownloadOptions } from '@/types/download'
 import { downloadExcel } from '@/shared/utils/file-download'
 import ExcelJS from '@zurmokeeper/exceljs'
+
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 export interface InstructorListItem {
   id: string
@@ -228,7 +230,7 @@ export function InstructorList({
       <Space style={{ marginBottom: 16, justifyContent: 'flex-end', width: '100%' }}>
         {canDownload && (
           <CmsButton
-            icon={<DownloadOutlined />}
+            icon={<ButtonDownloadIcon />}
             onClick={() => setDownloadModalOpen(true)}
             disabled={data.length === 0}
           >

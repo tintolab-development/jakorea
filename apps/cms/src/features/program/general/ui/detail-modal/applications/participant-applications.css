@@ -186,7 +186,7 @@
   .ant-table-tbody
   > tr
   > td.ant-table-cell.applicant-details__td-sessions {
-  padding: 10px 16px !important;
+  padding: 8px 12px !important;
 }
 
 /* 진행 희망 교육 일정 — 텍스트 블록은 셀 중앙, 블록 내 일정·외 n개는 좌측 정렬 */

@@ -17,6 +17,10 @@ import {
   resyncGeneralRegistrationOverlayFromProgram,
   seedGeneralRegistrationOverlayFromProgram,
 } from './registration-overlay-sync'
+import {
+  generalCommonInfoEditValuesToProgramPatch,
+  programToGeneralCommonInfoEditValues,
+} from '@/features/program/general/model/common-info-edit-schema'
 
 const extras: GeneralRegistrationEditorExtras = {
   programType: 'curriculum',
@@ -416,5 +420,92 @@ describe('일반 공통정보 저장 왕복', () => {
     expect(
       detail.registration?.overlay?.['generalRegistration.educationCurriculum.unitNameBySession']
     ).toEqual({})
+  })
+
+  it('복수 회차 진행 일정 일자 변경은 저장 후 회차 행과 overlay에 남는다', () => {
+    const changedFirst = '26년 5월 4일(월) 9:30 ~ 12:20'
+    const changedSecond = '26년 5월 11일(월) 13:00 ~ 15:00'
+    const overlay: Record<string, unknown> = {
+      'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+        1: '1회차 행사',
+        2: '2회차 행사',
+      },
+      'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
+        1: changedFirst,
+        2: changedSecond,
+      },
+    }
+    const multiScheduleExtras: GeneralRegistrationEditorExtras = {
+      ...extras,
+      programType: 'schedule',
+      sessionRoundType: 'multi',
+      scheduleCurriculumDetailCount: 2,
+      participantOrganization: false,
+    }
+    const existing: Program = {
+      ...baseProgram(),
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'multi',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+      category: 'individual',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        scheduleDetails: [
+          {
+            scheduleLabel: '행사 일정 01',
+            name: '1회차 행사',
+            scheduleDateLabel: '26년 4월 20일(월) 9:30 ~ 12:20',
+          },
+          {
+            scheduleLabel: '행사 일정 02',
+            name: '2회차 행사',
+            scheduleDateLabel: '26년 4월 27일(월) 13:00 ~ 15:00',
+          },
+        ],
+      },
+    }
+    const applied = applyGeneralRegistrationOverlayToProgram(existing, overlay, multiScheduleExtras)
+    const withType: Program = {
+      ...applied,
+      generalProgramEducationStructure: multiScheduleExtras.programType,
+      generalProgramSessionRound: multiScheduleExtras.sessionRoundType,
+      registrationOverlay: overlay,
+    }
+    const syncedOverlay = resyncGeneralRegistrationOverlayFromProgram(withType, overlay)
+    const withOverlay: Program = { ...withType, registrationOverlay: syncedOverlay }
+    const values = {
+      ...programToGeneralCommonInfoEditValues(withOverlay),
+      educationStructure: multiScheduleExtras.programType,
+      sessionRound: multiScheduleExtras.sessionRoundType,
+    }
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, withOverlay)
+    const request = mapGeneralProgramToUpdateRequest(existing, {
+      ...patch,
+      registrationOverlay: syncedOverlay,
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'multi',
+    })
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      generalCommonInfo?: {
+        scheduleDetails?: Array<{ scheduleLabel?: string; scheduleDateLabel?: string }>
+      }
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(detail.generalCommonInfo?.scheduleDetails?.map(row => row.scheduleDateLabel)).toEqual([
+      changedFirst,
+      changedSecond,
+    ])
+    expect(
+      detail.registration?.overlay?.[
+        'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso'
+      ]
+    ).toEqual({ 1: changedFirst, 2: changedSecond })
+
+    const reloaded = reload(request)
+    expect(reloaded.generalCommonInfo?.scheduleDetails?.map(row => row.scheduleDateLabel)).toEqual([
+      changedFirst,
+      changedSecond,
+    ])
   })
 })

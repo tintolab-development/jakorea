@@ -9,6 +9,7 @@ const fetchRemoteMock = vi.fn()
 const fetchVersionsMock = vi.fn()
 const fetchTemplatesMock = vi.fn().mockResolvedValue({ items: [] })
 const getCacheMock = vi.fn()
+const createVersionMock = vi.fn()
 
 vi.mock('@/entities/user/api/auth-service', () => ({
   hasRemoteAdminJwt: () => true,
@@ -25,6 +26,7 @@ vi.mock('@/features/template/api/form-templates-api-client', () => ({
   fetchFormTemplatesRemote: (...args: unknown[]) => fetchTemplatesMock(...args),
   fetchFormTemplatePayloadByCodeRemote: vi.fn(),
   copyFormTemplateVersionRemote: vi.fn(),
+  createFormTemplateVersionRemote: (...args: unknown[]) => createVersionMock(...args),
   createFormTemplateRemote: vi.fn(),
   deleteFormTemplateRemote: vi.fn(),
   publishFormTemplateVersionRemote: vi.fn(),
@@ -75,6 +77,7 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     fetchVersionsMock.mockReset()
     fetchTemplatesMock.mockReset()
     fetchTemplatesMock.mockResolvedValue({ items: [] })
+    createVersionMock.mockReset()
     getCacheMock.mockReset()
     getCacheMock.mockReturnValue({
       templateCode: TEMPLATE_CODE,
@@ -132,6 +135,40 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     expect(updateRemoteMock).toHaveBeenCalled()
     expect(updateRemoteMock.mock.calls[0]?.[1]).not.toHaveProperty('schemaJson')
     expect(loadWritingFormTemplateSave(TEMPLATE_CODE)).toBeNull()
+  })
+
+  it('adds a new draft version to the same template on FORM_VERSION_IMMUTABLE', async () => {
+    updateRemoteMock.mockRejectedValueOnce({
+      response: { data: { error: { code: 'FORM_VERSION_IMMUTABLE' } } },
+    })
+    fetchRemoteMock.mockResolvedValue({
+      templateVersionId: 10,
+      schemaJson: '{"source":true}',
+      extensionJson: null,
+      settingsJson: '{"s":1}',
+    })
+    createVersionMock.mockResolvedValue({ templateId: 1, templateVersionId: 11, versionNo: 2 })
+    const draft = createProgramRegistrationDraft('general')
+
+    await saveFormTemplateVersionDraft({ templateCode: TEMPLATE_CODE, draft })
+
+    expect(updateRemoteMock).toHaveBeenCalledTimes(1)
+    expect(fetchRemoteMock).toHaveBeenCalledWith(10)
+    expect(createVersionMock).toHaveBeenCalledWith(1, {
+      schemaJson: '{"source":true}',
+      extensionJson: undefined,
+      settingsJson: '{"s":1}',
+    })
+  })
+
+  it('rethrows non-immutable PUT errors without copying', async () => {
+    updateRemoteMock.mockRejectedValue({ response: { data: { code: 'VALIDATION_FAILED' } } })
+    const draft = createProgramRegistrationDraft('general')
+
+    await expect(
+      saveFormTemplateVersionDraft({ templateCode: TEMPLATE_CODE, draft })
+    ).rejects.toBeDefined()
+    expect(createVersionMock).not.toHaveBeenCalled()
   })
 
   it('omits schemaJson on PUT for trained-teachers registration', async () => {
@@ -193,5 +230,31 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
 
     const loaded = await loadFormTemplateVersionDraft(TEMPLATE_CODE)
     expect(loaded?.editorState).toEqual({ marker: 'remote' })
+  })
+
+  it('keeps recruitment overlay when schemaJson is omitted', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'recruitment-participant-school-custom-2',
+      templateId: 9,
+      templateVersionId: 22,
+      latestVersionId: 22,
+    })
+    fetchRemoteMock.mockResolvedValue({
+      templateVersionId: 22,
+      versionNo: 1,
+      extensionJson: JSON.stringify({
+        overlay: {
+          'recruit.notes': '양식 안내',
+          'recruit.detailInfo.programDescription': '양식 설명',
+        },
+      }),
+      updatedAt: new Date().toISOString(),
+    })
+
+    const loaded = await loadFormTemplateVersionDraft('recruitment-participant-school-custom-2')
+    expect(loaded?.overlay).toEqual({
+      'recruit.notes': '양식 안내',
+      'recruit.detailInfo.programDescription': '양식 설명',
+    })
   })
 })

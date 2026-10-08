@@ -44,7 +44,7 @@
 
 | 대상 | 메뉴 | 근거 |
 |---|---|---|
-| 강사 (`instructor_only` / `instructor_dual`) | **정산현황** | `lnb-config.ts` — `enabled: false` |
+| 강사 (`instructor_only` / `instructor_dual`) | **정산 현황** | `lnb-config.ts` — `enabled: false` (노출·구분선 있음, `/mypage/settlement` 페이지·navigate 미구현) |
 
 강의현황·교육/봉사/문의는 enabled.
 

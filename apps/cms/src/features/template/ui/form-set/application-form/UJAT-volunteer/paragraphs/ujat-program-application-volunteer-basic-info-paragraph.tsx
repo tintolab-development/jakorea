@@ -1,5 +1,10 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { type ReactNode } from 'react'
+import {
+  UJAT_PROGRAM_APPLICATION_VOLUNTEER_GRADE_OPTIONS,
+  UJAT_PROGRAM_APPLICATION_VOLUNTEER_ROUTE_OPTIONS,
+  UJAT_PROGRAM_APPLICATION_VOLUNTEER_ROUTE_OTHER_VALUE,
+} from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -11,25 +16,13 @@ import {
   useUjatApplicationVolunteerOverlayKv,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
-const GRADE_OPTIONS = [
-  { label: '1학년', value: '1' },
-  { label: '2학년', value: '2' },
-  { label: '3학년', value: '3' },
-  { label: '4학년', value: '4' },
-  { label: '휴학생', value: 'leave' },
-  { label: '졸업유예', value: 'deferred' },
-]
+const GRADE_OPTIONS = UJAT_PROGRAM_APPLICATION_VOLUNTEER_GRADE_OPTIONS.map(option => ({ ...option }))
 
-const APPLICATION_ROUTE_OTHER_VALUE = 'other'
+const APPLICATION_ROUTE_OTHER_VALUE = UJAT_PROGRAM_APPLICATION_VOLUNTEER_ROUTE_OTHER_VALUE
 
-const APPLICATION_ROUTE_OPTIONS = [
-  { label: '인스타그램', value: 'instagram' },
-  { label: '학교 안내 및 에브리타임', value: 'school-everytime' },
-  { label: '링커리어', value: 'linkareer' },
-  { label: '올콘', value: 'allcon' },
-  { label: '캠퍼스픽', value: 'campuspick' },
-  { label: '기타', value: APPLICATION_ROUTE_OTHER_VALUE },
-]
+const APPLICATION_ROUTE_OPTIONS = UJAT_PROGRAM_APPLICATION_VOLUNTEER_ROUTE_OPTIONS.map(option => ({
+  ...option,
+}))
 
 type BasicInfoFieldsProps = {
   applicationType: UjatProgramApplicationVolunteerType

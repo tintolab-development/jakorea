@@ -52,8 +52,9 @@
   .ant-table-cell:not(.ant-table-cell-scrollbar):not(.ant-table-selection-column) {
   box-sizing: border-box !important;
   white-space: nowrap;
-  height: 54px !important;
-  padding: 12px 20px !important;
+  min-width: 80px;
+  height: 52px !important;
+  padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px) !important;
 }
 
 .cms-data-table .ant-table-thead > tr > th.ant-table-cell-scrollbar {
@@ -71,7 +72,7 @@
   min-width: var(--table-selection-column-width, 68px) !important;
   max-width: var(--table-selection-column-width, 68px) !important;
   box-sizing: border-box !important;
-  padding: 12px 4px 12px 8px !important;
+  padding: 8px 4px 8px 8px !important;
   vertical-align: middle !important;
 }
 
@@ -101,7 +102,7 @@
 
 /*
  * No. 열 공통 (Figma Auto Layout):
- * display:flex · height:54px · width:80px · align-items:center · flex-shrink:0 · align-self:stretch
+ * display:flex · height:52px · width:80px · align-items:center · flex-shrink:0 · align-self:stretch
  * td/th에 display:flex를 주면 table-cell 레이아웃이 깨지므로
  * 고정 폭·높이 + flex-shrink:0 + vertical-align:middle 로 동일 시각을 맞춘다.
  */
@@ -129,20 +130,20 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 54px !important;
+  height: 52px !important;
   flex-shrink: 0;
   align-self: stretch;
   vertical-align: middle !important;
 }
 
-/* 사용 여부 열: `className: CMS_TABLE_USAGE_COL_CLASS` — 100px 고정 (시안 width 100 · padding 12×16) */
+/* 사용 여부 열: `className: CMS_TABLE_USAGE_COL_CLASS` — 100px 고정 · padding 8×12 */
 .cms-data-table .ant-table-thead > tr > th.ant-table-cell.cms-table-col--usage,
 .cms-data-table .ant-table-tbody > tr > td.ant-table-cell.cms-table-col--usage {
   width: var(--table-usage-column-width, 100px) !important;
   min-width: var(--table-usage-column-width, 100px) !important;
   max-width: var(--table-usage-column-width, 100px) !important;
   box-sizing: border-box !important;
-  padding: 12px 16px !important;
+  padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px) !important;
   vertical-align: middle !important;
 }
 
@@ -162,32 +163,54 @@
   display: none !important;
 }
 
+/*
+ * th/td (Figma): min-height 52 · padding 8×12 · 가운데 정렬 · 14px/150% · th 700 / td 500
+ * Figma의 display:flex·flex:1 0 0 은 table-cell 레이아웃을 깨므로 height + vertical-align 로 대체
+ */
 .cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar) {
   box-sizing: border-box !important;
-  color: var(--default-BK, #3d3d3d);
+  color: var(--Netural-black, #3d3d3d);
   text-align: center !important;
-  font-size: 16px;
+  vertical-align: middle;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
   font-weight: 700;
+  line-height: 150%;
   white-space: nowrap;
-  border-right: 1px solid var(--table-line, #e0e0e0);
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
-  height: 54px !important;
-  background: var(--BG-header);
+  border-right: 1px solid var(--Border-default, #e0e0e0);
+  border-bottom: 1px solid var(--Border-default, #e0e0e0);
+  height: 52px !important;
+  background: var(
+    --Background-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
 }
 
-/* 본문 셀: 기본·호버 동일 테두리(--table-line) 유지 */
+/* 본문 셀: 기본·호버 동일 테두리 유지 */
 .cms-data-table .ant-table-tbody > tr > td,
 .cms-data-table .ant-table-tbody > tr:hover > td {
   box-sizing: border-box !important;
-  padding: 10px 16px !important;
-  color: var(--default-BK, #3d3d3d);
+  min-width: 80px;
+  padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px) !important;
+  color: var(--Netural-black, #3d3d3d);
   text-align: center;
-  font-size: 16px;
+  vertical-align: middle;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
   font-weight: 500;
+  line-height: 150%;
   white-space: nowrap;
-  border-right: 1px solid var(--table-line, #e0e0e0);
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
-  height: 54px !important;
+  border-right: 1px solid var(--Border-default, #e0e0e0);
+  border-bottom: 1px solid var(--Border-default, #e0e0e0);
+  height: 52px !important;
+}
+
+/* 선택 열은 68px 고정 — 공통 min-width 80 예외 */
+.cms-data-table .ant-table-tbody > tr > td.ant-table-selection-column {
+  min-width: var(--table-selection-column-width, 68px) !important;
 }
 
 /*
@@ -218,7 +241,7 @@
 }
 
 .cms-data-table.cms-data-table--widget .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar) {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   text-align: center;
   border-bottom: 1px solid var(--color-border-light);
@@ -245,7 +268,7 @@
   min-width: var(--table-selection-column-width, 68px) !important;
   max-width: var(--table-selection-column-width, 68px) !important;
   box-sizing: border-box !important;
-  padding: 12px 4px 12px 8px !important;
+  padding: 8px 4px 8px 8px !important;
   vertical-align: middle !important;
 }
 
@@ -276,7 +299,7 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 54px !important;
+  height: 52px !important;
   box-sizing: border-box !important;
   flex-shrink: 0;
   align-self: stretch;
@@ -317,7 +340,7 @@
   min-width: var(--table-selection-column-width, 68px) !important;
   max-width: var(--table-selection-column-width, 68px) !important;
   box-sizing: border-box !important;
-  padding: 12px 4px 12px 8px !important;
+  padding: 8px 4px 8px 8px !important;
   vertical-align: middle !important;
 }
 
@@ -356,7 +379,7 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 54px !important;
+  height: 52px !important;
   box-sizing: border-box !important;
   flex-shrink: 0;
   align-self: stretch;
@@ -382,14 +405,14 @@
   .ant-table-tbody
   > tr
   > td {
-  height: 54px !important;
-  min-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
   box-sizing: border-box !important;
 }
 
 /**
  * FilterTableLayout 목록 카드: `__table` → `ant-table-wrapper.cms-data-table` 체인으로
- * antd Table CSS-in-js(hash 클래스)보다 구체성을 높여 선택·No. 열·행 높이 54px 확정
+ * antd Table CSS-in-js(hash 클래스)보다 구체성을 높여 선택·No. 열·행 높이 52px 확정
  */
 .filter-table-layout .filter-table-layout__table .ant-table-wrapper.cms-data-table col.ant-table-selection-col {
   width: var(--table-selection-column-width, 68px) !important;
@@ -428,7 +451,7 @@
   min-width: var(--table-selection-column-width, 68px) !important;
   max-width: var(--table-selection-column-width, 68px) !important;
   box-sizing: border-box !important;
-  padding: 12px 4px 12px 8px !important;
+  padding: 8px 4px 8px 8px !important;
   vertical-align: middle !important;
 }
 
@@ -473,7 +496,7 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 54px !important;
+  height: 52px !important;
   box-sizing: border-box !important;
   flex-shrink: 0;
   align-self: stretch;
@@ -502,8 +525,8 @@
   .ant-table-tbody
   > tr
   > td {
-  height: 54px !important;
-  min-height: 54px !important;
+  height: 52px !important;
+  min-height: 52px !important;
   box-sizing: border-box !important;
 }
 

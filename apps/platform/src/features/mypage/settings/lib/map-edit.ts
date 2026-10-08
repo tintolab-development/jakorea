@@ -16,6 +16,8 @@ export type SettingsEditSchoolStatus = 'enrolled' | 'none'
 export type SettingsEditFormValues = {
   schoolStatus: SettingsEditSchoolStatus
   schoolName: string
+  /** 미재학(해당 없음) 선택 시 선택 입력 */
+  affiliationName: string
   grade: string
   address: string
   addressDetail: string
@@ -123,6 +125,7 @@ export function mapProfileToSettingsEditForm(
   return {
     schoolStatus,
     schoolName,
+    affiliationName: schoolStatus === 'none' ? profile.affiliationName?.trim() || '' : '',
     grade: schoolStatus === 'enrolled' ? toSettingsGradeOption(profile.grade) : '',
     address: profile.address?.trim() ?? '',
     addressDetail: profile.addressDetail?.trim() ?? '',
@@ -162,7 +165,7 @@ export function applySettingsEditToSnapshot(
     ...previous,
     schoolEnrollmentStatus: enrolled ? 'ENROLLED' : 'NOT_ENROLLED',
     schoolName: enrolled ? form.schoolName.trim() : '',
-    affiliationName: enrolled ? form.schoolName.trim() : '',
+    affiliationName: enrolled ? form.schoolName.trim() : form.affiliationName.trim(),
     grade: enrolled ? form.grade.trim() : '',
     address: form.address.trim(),
     addressDetail: form.addressDetail.trim(),

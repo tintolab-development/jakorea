@@ -63,6 +63,91 @@ export function collectRuntimeHiddenAnswerKeys(form: unknown): Set<string> {
   return hidden
 }
 
+export type RuntimeConditionalQuestion = {
+  questionKey: string
+  dependsOnQuestionKey: string
+  /** 있으면 의존 답 객체의 이 필드 값으로 판정한다. 값은 대문자로 비교한다. */
+  dependsOnField?: string
+  visibleValues: ReadonlySet<string>
+  hiddenValues: ReadonlySet<string>
+}
+
+function normalizeConditionValue(value: unknown): string {
+  return value == null ? '' : String(value).trim().toUpperCase()
+}
+
+function conditionValueSet(value: unknown): Set<string> {
+  const out = new Set<string>()
+  if (!Array.isArray(value)) return out
+  for (const item of value) {
+    const normalized = normalizeConditionValue(item)
+    if (normalized) out.add(normalized)
+  }
+  return out
+}
+
+/** `runtimeContext.audienceApplication.conditionalQuestions` — 다른 문항 답에 따라 숨겨지는 문항 */
+export function collectRuntimeConditionalQuestions(form: unknown): RuntimeConditionalQuestion[] {
+  const document = coerceApplicationFormDocument(form)
+  const runtime = document?.runtimeContext
+  if (!isRecord(runtime)) return []
+  const audience = runtime.audienceApplication
+  if (!isRecord(audience) || !isRecord(audience.conditionalQuestions)) return []
+  const out: RuntimeConditionalQuestion[] = []
+  for (const [questionKey, raw] of Object.entries(audience.conditionalQuestions)) {
+    if (!isRecord(raw) || typeof raw.dependsOnQuestionKey !== 'string') continue
+    out.push({
+      questionKey,
+      dependsOnQuestionKey: raw.dependsOnQuestionKey,
+      dependsOnField: typeof raw.dependsOnField === 'string' ? raw.dependsOnField : undefined,
+      visibleValues: conditionValueSet(raw.visibleValues),
+      hiddenValues: conditionValueSet(raw.hiddenValues),
+    })
+  }
+  return out
+}
+
+/**
+ * BE `ProgramApplicationAudienceRuntimeValidator.state` 와 동일 판정 —
+ * 의존 문항 답에 visible 값이 하나라도 있으면 노출, 없고 hidden 값이 있으면 숨김, 그 외 미정(노출).
+ */
+export function collectConditionallyHiddenAnswerKeys(
+  conditionals: readonly RuntimeConditionalQuestion[],
+  answers: Readonly<Record<string, unknown>>,
+): Set<string> {
+  const hidden = new Set<string>()
+  for (const conditional of conditionals) {
+    const raw = answers[conditional.dependsOnQuestionKey]
+    if (raw == null) continue
+    const field = conditional.dependsOnField
+    const compared =
+      field && raw && typeof raw === 'object' && !Array.isArray(raw)
+        ? (raw as Record<string, unknown>)[field]
+        : raw
+    if (field && (compared == null || compared === '')) continue
+    const values = (Array.isArray(compared) ? compared : [compared]).map(normalizeConditionValue)
+    if (values.some(value => conditional.visibleValues.has(value))) continue
+    if (values.some(value => conditional.hiddenValues.has(value))) {
+      hidden.add(conditional.questionKey)
+    }
+  }
+  return hidden
+}
+
+/** 서버는 숨김 문항 키가 있기만 해도(빈 값 포함) 거절하므로 키째 제거한다. */
+export function omitRuntimeHiddenAnswers(
+  answers: Record<string, unknown>,
+  hiddenKeys: ReadonlySet<string>,
+  conditionals: readonly RuntimeConditionalQuestion[] = [],
+): Record<string, unknown> {
+  const conditionallyHidden = collectConditionallyHiddenAnswerKeys(conditionals, answers)
+  return Object.fromEntries(
+    Object.entries(answers).filter(
+      ([key]) => !hiddenKeys.has(key) && !conditionallyHidden.has(key),
+    ),
+  )
+}
+
 /** CMS 「단락 추가」 설명글·고정 문구 — 숨김 문항으로 제출만 막고 화면에는 남긴다. */
 function isDisplayOnlyApplicationParagraph(paragraph: Record<string, unknown>): boolean {
   if (paragraph.kind === 'description') return true
@@ -355,6 +440,14 @@ function mergeAnswerIntoParagraph(
     if (paragraph.kind === 'single_item' && paragraph.variant === 'short_essay') {
       return { ...paragraph, bodyText: answer }
     }
+    if (
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'multiple_choice' &&
+      !paragraph.allowMultiple &&
+      paragraph.items.some(item => item.id === answer)
+    ) {
+      return { ...paragraph, selectedPreviewSingleId: answer }
+    }
     return paragraph
   }
 
@@ -364,6 +457,10 @@ function mergeAnswerIntoParagraph(
       paragraph.variant === 'multiple_choice' &&
       answer.every(item => typeof item === 'string')
     ) {
+      if (!paragraph.allowMultiple) {
+        const selected = (answer as string[]).find(id => paragraph.items.some(item => item.id === id))
+        return selected ? { ...paragraph, selectedPreviewSingleId: selected } : paragraph
+      }
       return { ...paragraph, selectedPreviewMultipleIds: answer as string[] }
     }
     return paragraph
@@ -438,15 +535,29 @@ function revealIndividualTeamInfoParagraph(paragraph: WritingFormParagraph): Wri
 
 /**
  * CMS 개인 신청 미리보기와 맞춤: 동일 id 중복 제거, 봉사자 면접 단락 제거, 팀 정보 숨김 플래그 해제.
+ * `keepParagraphIds` — 면접 있는 프로그램에서 BE가 슬롯 선택지를 붙인 개인 면접 단락은 제거하지 않는다.
  */
-export function prepareIndividualApplicationDraft(draft: WritingFormDraft): WritingFormDraft {
-  const migrated = migrateProgramParticipantApplicationParagraphs({
-    ...draft,
-    paragraphs: uniqueWritingFormParagraphsById(draft.paragraphs),
-  })
+export function prepareIndividualApplicationDraft(
+  draft: WritingFormDraft,
+  options?: { keepParagraphIds?: ReadonlySet<string> },
+): WritingFormDraft {
+  const unique = uniqueWritingFormParagraphsById(draft.paragraphs)
+  const migrated = migrateProgramParticipantApplicationParagraphs({ ...draft, paragraphs: unique })
+  const keep = options?.keepParagraphIds
+  const migratedIds = new Set(migrated.paragraphs.map(paragraph => paragraph.id))
+  const paragraphs =
+    keep && keep.size > 0
+      ? unique.flatMap(paragraph => {
+          if (migratedIds.has(paragraph.id)) {
+            const next = migrated.paragraphs.find(row => row.id === paragraph.id)
+            return next ? [next] : []
+          }
+          return keep.has(paragraph.id) ? [paragraph] : []
+        })
+      : migrated.paragraphs
   return {
     ...migrated,
-    paragraphs: migrated.paragraphs.map(revealIndividualTeamInfoParagraph),
+    paragraphs: paragraphs.map(revealIndividualTeamInfoParagraph),
   }
 }
 
@@ -490,6 +601,8 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
     }
   }
   if (paragraph.kind === 'single_item' && paragraph.variant === 'multiple_choice') {
+    /** 단일 선택은 라디오가 `selectedPreviewSingleId`에 쓴다. 서버는 선택지 값 하나를 받는다. */
+    if (!paragraph.allowMultiple) return paragraph.selectedPreviewSingleId ?? null
     return paragraph.selectedPreviewMultipleIds ?? []
   }
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
@@ -508,7 +621,7 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
   return undefined
 }
 
-function isRequiredParagraph(paragraph: WritingFormParagraph): boolean {
+export function isRequiredParagraph(paragraph: WritingFormParagraph): boolean {
   if ('answerRequired' in paragraph && paragraph.answerRequired === true) return true
   if ('requiredMark' in paragraph && paragraph.requiredMark === true) return true
   return false

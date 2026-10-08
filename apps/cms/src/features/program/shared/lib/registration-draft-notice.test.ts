@@ -4,6 +4,7 @@ import {
   fetchRegistrationDraftNotice,
   REGISTRATION_DRAFT_MODE_CONTINUE,
   REGISTRATION_DRAFT_MODE_FRESH,
+  PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE,
   PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
   clearRegistrationDraftForFreshStart,
   shouldRemoveRegistrationDraftAfterCompletion,
@@ -77,5 +78,19 @@ describe('fetchRegistrationDraftNotice', () => {
     await expect(
       fetchRegistrationDraftNotice(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
     ).resolves.toBeNull()
+  })
+
+  it('1사1교 안내는 저장한 국문 프로그램명을 그대로 보여 준다', async () => {
+    syncRegistrationProgramDraftSession({
+      programType: 'COMPANY_SCHOOL',
+      registrationTemplateCode: PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE,
+      activeStep: 'program',
+      programTitleKo: '디지털 리터러시 교실',
+    })
+
+    const notice = await fetchRegistrationDraftNotice(PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE)
+
+    expect(notice?.templateCode).toBe(PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE)
+    expect(notice?.title).toBe('디지털 리터러시 교실')
   })
 })

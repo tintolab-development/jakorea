@@ -58,7 +58,7 @@
   .ant-table-tbody
   > tr
   > td.ant-table-cell.detailed-program-page__name-col {
-  padding: 10px 16px !important;
+  padding: 8px 12px !important;
   vertical-align: middle !important;
 }
 

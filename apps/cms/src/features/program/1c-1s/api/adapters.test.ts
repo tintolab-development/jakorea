@@ -67,6 +67,21 @@ describe('company-school adapters', () => {
     expect(request.autoApplyDefaultFormBindings).toBe(true)
   })
 
+  it('create 요청에 참여 기관 모집 비고를 remarks로 싣는다', () => {
+    const request = mapCompanySchoolToCreateRequest({
+      ...program,
+      remarks: '테스토 비고',
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: { remarks: '테스토 비고' },
+      },
+    })
+
+    expect((request as { remarks?: string }).remarks).toBe('테스토 비고')
+    const overlay = JSON.parse(String(request.serviceDetailJson)).registration?.overlay
+    expect(overlay['recruit.notes']).toBe('테스토 비고')
+  })
+
   it('공통정보 패치는 컬럼 targetLevels를 유지하고 모집 라벨로 키우지 않는다', () => {
     const existing: Program = {
       ...program,

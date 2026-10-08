@@ -16,6 +16,7 @@ import {
   extractApiErrorMessage,
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
+import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import {
   institutionFilterFields,
   instructorFilterFields,
@@ -245,7 +246,30 @@ export function useApplicantsDetail({
       console.debug('applications remote decision failed', error)
       showAlert({
         title: '처리 실패',
-        content: '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        content:
+          formatApplicationEligibilityConflictMessage(error) ??
+          '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+      })
+    },
+    [showAlert]
+  )
+
+  /** 강사 승인·반려 — 동의 부족(409 INSTRUCTOR_PARTICIPATION_CONSENT_REQUIRED) 등 서버 문구를 그대로 노출 */
+  const notifyRemoteInstructorDecisionFailure = useCallback(
+    (error: unknown) => {
+      console.debug('instructor applications remote decision failed', error)
+      const responseData =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: unknown } }).response?.data
+          : undefined
+      showAlert({
+        title: '처리 실패',
+        content:
+          formatApplicationEligibilityConflictMessage(error) ??
+          extractApiErrorMessage(responseData, {
+            httpStatus: getApiErrorHttpStatus(error),
+            fallback: '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+          }),
       })
     },
     [showAlert]
@@ -395,11 +419,11 @@ export function useApplicantsDetail({
         await applicationsRemote.invalidateApplications()
         return 'ok'
       } catch (error) {
-        notifyRemoteDecisionFailure(error)
+        notifyRemoteInstructorDecisionFailure(error)
         return 'error'
       }
     },
-    [applicationsRemote, notifyRemoteDecisionFailure, showAlert]
+    [applicationsRemote, notifyRemoteInstructorDecisionFailure, showAlert]
   )
 
   const applyRemoteIndividualDecision = useCallback(

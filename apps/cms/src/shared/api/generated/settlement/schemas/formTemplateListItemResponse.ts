@@ -23,4 +23,7 @@ export interface FormTemplateListItemResponse {
   createdAt?: string;
   updatedAt?: string;
   availableActions?: string[];
+  /** 최초 카탈로그 원본 templateCode. 원본은 자기 자신. null 아님. */
+  baseTemplateCode?: string;
+  deletable?: boolean;
 }

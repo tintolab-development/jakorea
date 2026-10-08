@@ -1,5 +1,4 @@
 import { useLayoutEffect, useState } from 'react'
-import { PlusOutlined } from '@ant-design/icons'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -22,6 +21,7 @@ import {
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { CmsButton } from '@/shared/ui'
+import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-interview-available-schedule-paragraph.css'
 import './interview-schedule-program.css'
@@ -110,7 +110,7 @@ export function UjatRecruitInterviewScheduleProgramView({
                 size="medium"
                 width={160}
                 disabled={exceptionScheduleAddDisabled}
-                icon={<PlusOutlined aria-hidden />}
+                icon={<ButtonAddIcon aria-hidden />}
                 onClick={() => setExceptionBlockKeys(prev => [...prev, Date.now()])}
               >
                 예외 일정 추가

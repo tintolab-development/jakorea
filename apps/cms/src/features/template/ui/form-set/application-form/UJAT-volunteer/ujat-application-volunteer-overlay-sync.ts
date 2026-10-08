@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react'
+import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 
 export const UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS = {
   preferredRegion: 'ujatVolunteerApplication.preferredRegion',
@@ -62,7 +63,12 @@ export function useUjatApplicationVolunteerOverlayKv<T>(
   )
   void version
   const record = getUjatApplicationVolunteerOverlayRecord()
-  const value = (record[key] as T | undefined) ?? defaultValue
+  const value = readOperationalOverlayKvValue(
+    'ujat-application-volunteer',
+    record,
+    key,
+    defaultValue
+  )
   const setValue = useCallback(
     (next: T) => {
       patchUjatApplicationVolunteerOverlay({ [key]: next })

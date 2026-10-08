@@ -102,7 +102,7 @@ function LockedParticipantTypeCheckboxes({
   teacherInstructor?: boolean
 }) {
   return (
-    <div className="detail-info-form-inputs-wrapper">
+    <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--large">
       <CmsCheckbox checkboxSize="large" checked={false} disabled>
         개인
       </CmsCheckbox>

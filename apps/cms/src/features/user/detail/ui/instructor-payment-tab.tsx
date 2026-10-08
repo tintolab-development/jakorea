@@ -1,13 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import {
-  CalendarOutlined,
-  UnorderedListOutlined,
-  DownloadOutlined,
-  LeftOutlined,
-  RightOutlined,
-} from '@ant-design/icons'
+import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { Button } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
@@ -54,6 +48,8 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import '@/shared/components/filter-table-layout.css'
 import './instructor-payment-tab.css'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+
+import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const SETTLEMENT_STATUS_OPTIONS = INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
   label: option.label,
@@ -380,7 +376,7 @@ export function InstructorPaymentTab({
                 size="large"
                 width="auto"
                 style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
+                icon={<ButtonCalendarIcon />}
                 onClick={() => {
                   const today = dayjs()
                   setCurrentMonth(today.startOf('month'))
@@ -396,7 +392,7 @@ export function InstructorPaymentTab({
                 size="large"
                 width="auto"
                 style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
+                icon={<ButtonListIcon />}
                 onClick={() => setViewMode('list')}
               >
                 리스트 뷰로 보기
@@ -407,7 +403,7 @@ export function InstructorPaymentTab({
               size="large"
               width="auto"
               style={{ minWidth: 180 }}
-              icon={<DownloadOutlined />}
+              icon={<ButtonDownloadIcon />}
               loading={bulkDownloadLoading}
               onClick={() => void handleBulkDownload()}
             >

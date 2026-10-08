@@ -7,13 +7,13 @@
  */
 
 /**
- * PORTRAIT_RIGHTS 전용 부분동의 상태 힌트
+ * PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. FULL은 deprecated이며 서버가 PARTIAL로 정규화합니다.
  */
 export type TermsAgreementRequestConsentStatus = typeof TermsAgreementRequestConsentStatus[keyof typeof TermsAgreementRequestConsentStatus];
 
 
 export const TermsAgreementRequestConsentStatus = {
-  FULL: 'FULL',
   PARTIAL: 'PARTIAL',
   DISAGREED: 'DISAGREED',
+  FULL: 'FULL',
 } as const;

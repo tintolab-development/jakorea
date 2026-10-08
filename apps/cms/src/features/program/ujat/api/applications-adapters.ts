@@ -2,9 +2,12 @@
  * UJAT 기관·봉사 신청 — Admin API → 화면 row 어댑터
  */
 
-import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
-import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
-import type { OrganizationApplicationDetailDto } from '@/features/program/general/api/applications-api-client'
+import {
+  parseUjatScheduleConfirmStatus,
+  type UjatOrganizationApplicationDetail as OrganizationApplicationDetailDto,
+  type UjatOrganizationApplicationListItem as OrganizationApplicationListItemResponse,
+  type UjatVolunteerApplicationListItem as VolunteerApplicationListItemResponse,
+} from '@/features/program/ujat/api/ujat-applications-contract'
 import type { UjatInstitutionApplicationRow } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { UjatInstitutionApplicationDetail } from '@/features/program/ujat/ui/detail-modal/application-institution/detail/detail-types'
@@ -21,7 +24,7 @@ import type {
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_VOLUNTEER_GRADE_OPTIONS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { projectUjatVolunteerApplicationStatus } from '@/features/program/ujat/lib/normalize-ujat-volunteer-application-status'
-import { findUjatEducationRegionKeyByLabel } from '@/features/program/ujat/lib/ujat-education-regions'
+import { findUjatEducationRegionKeyByCode } from '@/features/program/ujat/lib/ujat-education-regions'
 import { fromUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 
 function toId(value: number | string | undefined): string {
@@ -60,28 +63,17 @@ function mapOrgStatusToTempAssignment(
   return 'evaluation_pending'
 }
 
+const UNRESOLVED_REGION_KEY = '' as UjatInstitutionApplicationRegionKey
+
 function resolveInstitutionRegionKey(
   dto: OrganizationApplicationListItemResponse,
   options?: {
     regionKey?: UjatInstitutionApplicationRegionKey
-    regionLabel?: string
   }
 ): UjatInstitutionApplicationRegionKey {
   if (options?.regionKey) return options.regionKey
-  const label =
-    options?.regionLabel?.trim() ||
-    [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim() ||
-    ''
-  if (label) {
-    const matched = findUjatEducationRegionKeyByLabel(label)
-    if (matched) return matched as UjatInstitutionApplicationRegionKey
-  }
-  // sido만으로도 교육 지역 키 매칭 시도
-  if (dto.regionSido?.trim()) {
-    const matched = findUjatEducationRegionKeyByLabel(dto.regionSido.trim())
-    if (matched) return matched as UjatInstitutionApplicationRegionKey
-  }
-  return 'seoul'
+  const matched = findUjatEducationRegionKeyByCode(dto.educationRegionCode)
+  return (matched as UjatInstitutionApplicationRegionKey | undefined) ?? UNRESOLVED_REGION_KEY
 }
 
 /**
@@ -93,7 +85,6 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
   index: number,
   options?: {
     regionKey?: UjatInstitutionApplicationRegionKey
-    regionLabel?: string
   }
 ): UjatInstitutionApplicationRow {
   const classCount = dto.requestedClassCount ?? 0
@@ -110,11 +101,17 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
     regionKey,
     no: index + 1,
     institutionName: dto.organizationName?.trim() || '기관명 없음',
-    tempAssignmentStatus: mapOrgStatusToTempAssignment(dto.applicationStatus),
+    tempAssignmentStatus: mapOrgStatusToTempAssignment(
+      dto.applicationStatus,
+      dto.temporaryAssignmentStatus
+    ),
     gradeClassCounts,
     totalClassCount: sumGradeClassCounts(gradeClassCounts) || classCount,
     scheduleSlots: buildEmptyScheduleSlots(),
     teacherName: dto.teacherName?.trim() || '-',
+    scheduleConfirmStatus: parseUjatScheduleConfirmStatus(dto.scheduleConfirmStatus),
+    assignedInstructorCount: dto.assignedInstructorCount ?? null,
+    operatingStudentCount: dto.operatingStudentCount ?? null,
   }
 }
 
@@ -131,6 +128,9 @@ export function enrichUjatInstitutionDetailFromRemote(
     '신청 학급'
   const studentCount = dto.requestedStudentCount ?? 0
 
+  const remoteGradeBlocks = mapRemoteGradeBlocks(dto.gradeBlocks, studentCount)
+  const remoteClassTimeRows = mapRemoteClassTimeRows(dto.classTimeRows)
+
   return {
     ...base,
     address: dto.organizationAddress?.trim() || base.address,
@@ -138,24 +138,73 @@ export function enrichUjatInstitutionDetailFromRemote(
     otherRequests: dto.managerComment?.trim() || base.otherRequests,
     teacherContact: {
       teacherName: dto.teacherName?.trim() || row.teacherName || base.teacherContact.teacherName,
-      tel: base.teacherContact.tel,
+      tel: dto.teacherTel?.trim() || base.teacherContact.tel,
       mobile: dto.teacherPhone?.trim() || base.teacherContact.mobile,
       email: dto.teacherEmail?.trim() || base.teacherContact.email,
     },
+    preferredEducationDates: dto.preferredEducationDates ?? base.preferredEducationDates,
+    classTimeRows: remoteClassTimeRows ?? base.classTimeRows,
     gradeBlocks:
-      classCount > 0
+      remoteGradeBlocks ??
+      (classCount > 0
         ? [
             {
               gradeLabel,
               classCount,
               classes: Array.from({ length: classCount }, (_, index) => ({
                 classNo: index + 1,
-                studentCount: classCount > 0 ? Math.floor(studentCount / classCount) : 0,
+                studentCount: classCount === 1 ? studentCount : 0,
               })),
             },
           ]
-        : base.gradeBlocks,
+        : base.gradeBlocks),
   }
+}
+
+/** `classes`가 비어 있으면 총원을 나누지 않는다 — 학급 1개면 총원, 2개 이상이면 0 */
+function mapRemoteGradeBlocks(
+  blocks: OrganizationApplicationDetailDto['gradeBlocks'],
+  totalStudentCount: number
+): UjatInstitutionApplicationDetail['gradeBlocks'] | null {
+  if (!blocks) return null
+  const singleBlock = blocks.length === 1
+  return blocks.map(block => {
+    const classCount = block.classCount ?? 0
+    const classes = (block.classes ?? []).map((room, index) => {
+      const parsedNo = Number(room.classNo)
+      return {
+        classNo: Number.isFinite(parsedNo) && parsedNo > 0 ? parsedNo : index + 1,
+        studentCount: room.studentCount ?? 0,
+      }
+    })
+    return {
+      gradeLabel: block.gradeLabel?.trim() || '-',
+      classCount,
+      classes:
+        classes.length > 0
+          ? classes
+          : Array.from({ length: classCount }, (_, index) => ({
+              classNo: index + 1,
+              studentCount: singleBlock && classCount === 1 ? totalStudentCount : 0,
+            })),
+    }
+  })
+}
+
+function mapRemoteClassTimeRows(
+  rows: OrganizationApplicationDetailDto['classTimeRows']
+): UjatInstitutionApplicationDetail['classTimeRows'] | null {
+  if (!rows) return null
+  return rows.flatMap(row => {
+    const periods = row.periods ?? []
+    if (periods.length !== 4) return []
+    return [
+      {
+        gradeRangeLabel: row.gradeRangeLabel?.trim() || '-',
+        periods: [periods[0]!, periods[1]!, periods[2]!, periods[3]!] as const,
+      },
+    ]
+  })
 }
 
 function mapManagerEvaluation(value: unknown): UjatManagerEvaluation {
@@ -171,12 +220,13 @@ function mapManagerEvaluation(value: unknown): UjatManagerEvaluation {
   return 'unreviewed'
 }
 
-function mapVolunteerGrade(value: unknown): UjatVolunteerGrade {
-  const raw = typeof value === 'string' ? value.trim() : ''
+function mapVolunteerGrade(value: unknown): UjatVolunteerGrade | '' {
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+  const raw = trimmed === '휴학' ? '휴학생' : trimmed
   if ((UJAT_VOLUNTEER_GRADE_OPTIONS as readonly string[]).includes(raw)) {
     return raw as UjatVolunteerGrade
   }
-  return '1학년'
+  return ''
 }
 
 function formatAssignedInterviewFromIso(
@@ -273,9 +323,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
   }
 
   const preferredRegion =
-    enriched.preferredActivityRegion?.trim() ||
-    enriched.preferredRegion?.trim() ||
-    '서울'
+    enriched.preferredActivityRegion?.trim() || enriched.preferredRegion?.trim() || ''
   const grade = mapVolunteerGrade(enriched.applicationGrade ?? enriched.grade)
   const hasEducationExperience =
     typeof enriched.hasEducationExperience === 'boolean'
@@ -284,7 +332,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
         ? enriched.educationExperience
         : typeof enriched.educationExperience === 'string'
           ? /yes|있|true|y/i.test(enriched.educationExperience)
-          : false
+          : null
 
   const assigned = formatAssignedInterviewFromIso(
     dto.assignedInterviewStartAt,
@@ -326,9 +374,10 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     programId: toId(dto.programId) || programId,
     half: fromUjatRecruitHalfApi(undefined, half),
     englishName: '',
-    id1365: '',
+    ...(dto.memberId != null ? { memberId: String(dto.memberId) } : {}),
+    id1365: dto.id1365?.trim() || '',
     gender: '',
-    birthDate: '',
+    birthDate: dto.birthDate?.trim() || '',
     age: 0,
     universityName: '',
     major: '',

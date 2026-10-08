@@ -4,11 +4,13 @@ export { PFFormSection } from './pf-form-section'
 export type { PFFormSectionProps } from './pf-form-section'
 export {
   PFFormField,
+  PFFormFieldHintText,
   PFFormFieldRow,
   PFFormFieldTable,
   PFFormFieldValueText,
 } from './pf-form-field'
 export type {
+  PFFormFieldHintTextProps,
   PFFormFieldLabelWidth,
   PFFormFieldLayout,
   PFFormFieldProps,
@@ -17,6 +19,8 @@ export type {
   PFFormFieldTableRadius,
   PFFormFieldValueTextProps,
 } from './pf-form-field'
+export { PFFormFileAttach } from './pf-form-file-attach'
+export type { PFFormFileAttachProps } from './pf-form-file-attach'
 export {
   PFFormControlCluster,
   PFFormInlineRow,

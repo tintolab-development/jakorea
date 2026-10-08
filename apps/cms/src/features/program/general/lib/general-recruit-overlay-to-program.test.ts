@@ -38,6 +38,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
       [inst.inquiryContact]: 'JA Korea',
       [inst.inquiryTel]: '02-6085-6028',
       [inst.inquiryEmail]: 'cc@jakorea.org',
+      [inst.notes]: '테스토 비고',
       [GENERAL_RECRUIT_OVERLAY_KEYS.detailInfo.participantDescription]: '모집 양식 프로그램 설명',
     }
 
@@ -57,9 +58,26 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(participantInfo?.educationTargetDetail).toBe('특성화고 3학년')
     expect(participantInfo?.recruitmentPeriodLabel).toContain('2025')
     expect(participantInfo?.programDescription).toBe('모집 양식 프로그램 설명')
+    expect(participantInfo?.remarks).toBe('테스토 비고')
+    expect(next.remarks).toBe('테스토 비고')
     expect(next.contactPhone).toBe('02-6085-6028')
     expect(next.contactEmail).toBe('cc@jakorea.org')
     expect(next.description).toBe('모집 양식 프로그램 설명')
+  })
+
+  it('기관 비고(recruit.notes)가 leftover individual.notes보다 우선한다', () => {
+    const inst = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
+    const next = applyGeneralRecruitOverlayToProgram(
+      baseProgram(),
+      {
+        [inst.notes]: '테스토 비고',
+        [GENERAL_RECRUIT_OVERLAY_KEYS.individual.notes]: '일정은 학교 사정에 따라 조율할 수 있습니다.',
+      },
+      { preferOverlay: true }
+    )
+
+    expect(next.remarks).toBe('테스토 비고')
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('테스토 비고')
   })
 
   it('짧은 overlay 교육 대상이 프로그램의 복수 대상을 덮지 않는다', () => {

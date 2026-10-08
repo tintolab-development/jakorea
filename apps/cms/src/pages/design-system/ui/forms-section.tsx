@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import type { Dayjs } from 'dayjs'
-import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { CmsCheckbox, type CmsCheckboxSize } from '@/shared/ui/cms-checkbox'
 import { CmsDatePicker, CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsInputSearch } from '@/shared/ui/cms-input-search'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { CmsRadio } from '@/shared/ui/cms-radio'
+import { CmsRadio, type CmsRadioSize } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsSelectMultiple } from '@/shared/ui/cms-select-multiple'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
-import { CmsToggle } from '@/shared/ui/cms-toggle'
+import { CmsToggle, type CmsToggleSize } from '@/shared/ui/cms-toggle'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
+import { FileTypeIcon, type FileTypeIconType } from '@/shared/ui/icons/FileTypeIcon'
 import { DsDemo, DsSection } from './section'
 
 const SELECT_OPTIONS = [
@@ -26,6 +28,35 @@ const MULTI_OPTIONS = [
   { value: 'gemini', label: 'Gemini' },
 ]
 
+const CHECKBOX_SIZES: CmsCheckboxSize[] = ['large', 'medium']
+
+const RADIO_SIZES: CmsRadioSize[] = ['large', 'medium']
+
+const TOGGLE_SIZES: CmsToggleSize[] = ['large', 'medium']
+
+const FILE_TYPE_ICON_DEMO: { type: FileTypeIconType; label: string }[] = [
+  { type: 'jpg', label: 'jpg' },
+  { type: 'png', label: 'png' },
+  { type: 'ai', label: 'ai' },
+  { type: 'pdf', label: 'pdf' },
+  { type: 'word', label: 'word' },
+  { type: 'excel', label: 'excel' },
+  { type: 'ppt', label: 'ppt' },
+  { type: 'hwp', label: 'hwp' },
+  { type: 'net', label: 'net' },
+  { type: 'clip', label: 'clip' },
+]
+
+const FILE_SELECT_DEMO_GUIDE_LINES = [
+  '- 파일은 총 최대 15MB까지 업로드 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
+
+const THUMBNAIL_DEMO_GUIDE_LINES = [
+  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
+
 export function FormsSection() {
   const [text, setText] = useState('')
   const [search, setSearch] = useState('')
@@ -33,11 +64,14 @@ export function FormsSection() {
   const [select, setSelect] = useState<string | undefined>()
   const [multi, setMulti] = useState<string[]>([])
   const [radio, setRadio] = useState('a')
+  const [radioGroup, setRadioGroup] = useState('general')
   const [checked, setChecked] = useState(true)
+  const [checkboxGroup, setCheckboxGroup] = useState<string[]>(['general'])
   const [toggle, setToggle] = useState(false)
   const [date, setDate] = useState<Dayjs | null>(null)
   const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
   const [fileNames, setFileNames] = useState<string[]>([])
+  const [thumbDemo, setThumbDemo] = useState<{ url: string; name: string } | null>(null)
   const [integer, setInteger] = useState('')
   const [decimal, setDecimal] = useState('')
   const [currency, setCurrency] = useState('')
@@ -177,6 +211,148 @@ export function FormsSection() {
         </div>
       </DsDemo>
 
+      <DsDemo label="CmsToggle sizes · states">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          large(기본) 트랙 50px · 썸 20×20 · 라벨 16px/500/130% / medium 트랙 42px · 썸 16×16 · 라벨
+          14px/500/125% · 라벨–토글 8px · 켜짐 #00A0AF · 꺼짐 #BDC6C9
+        </p>
+        {TOGGLE_SIZES.map(size => (
+          <div key={size} className="ds-demo__stack">
+            <span className="ds-demo__label">{size}</span>
+            <div className="ds-demo__row">
+              <CmsToggle size={size} checked label="켜짐" />
+              <CmsToggle size={size} checked={false} label="꺼짐" />
+              <CmsToggle size={size} checked disabled label="비활성 켜짐" />
+              <CmsToggle size={size} checked={false} disabled label="비활성 꺼짐" />
+            </div>
+          </div>
+        ))}
+      </DsDemo>
+
+      <DsDemo label="CmsCheckbox sizes · states">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          large(기본) 박스 20×20 · 라벨 16px/500/130% · 간격 8 / medium 박스 18×18 · 라벨
+          14px/500/125% · 간격 6 · 그룹 항목 간격 16px(가로, large·medium 동일)
+        </p>
+        {CHECKBOX_SIZES.map(size => (
+          <div key={size} className="ds-demo__stack">
+            <span className="ds-demo__label">{size}</span>
+            <div className="ds-demo__row">
+              <CmsCheckbox checkboxSize={size} checked={false}>
+                미선택
+              </CmsCheckbox>
+              <CmsCheckbox checkboxSize={size} checked>
+                선택
+              </CmsCheckbox>
+              <CmsCheckbox checkboxSize={size} indeterminate>
+                일부 선택
+              </CmsCheckbox>
+              <CmsCheckbox checkboxSize={size} checked={false} disabled>
+                비활성 미선택
+              </CmsCheckbox>
+              <CmsCheckbox checkboxSize={size} checked disabled>
+                비활성 선택
+              </CmsCheckbox>
+            </div>
+          </div>
+        ))}
+        <div className="ds-demo__stack">
+          <span className="ds-demo__label">CmsCheckbox.Group (medium)</span>
+          <CmsCheckbox.Group
+            checkboxSize="medium"
+            options={MULTI_OPTIONS}
+            value={checkboxGroup}
+            onChange={values => setCheckboxGroup(values as string[])}
+          />
+        </div>
+      </DsDemo>
+
+      <DsDemo label="CmsRadio sizes · states">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          CmsCheckbox와 동일 규격 — large(기본) 원 20×20 · 라벨 16px/500/130% · 간격 8 / medium 원
+          18×18 · 라벨 14px/500/125% · 간격 6 · 그룹 항목 간격 16px(가로)
+        </p>
+        {RADIO_SIZES.map(size => (
+          <div key={size} className="ds-demo__stack">
+            <span className="ds-demo__label">{size}</span>
+            <div className="ds-demo__row">
+              <CmsRadio size={size} checked={false}>
+                미선택
+              </CmsRadio>
+              <CmsRadio size={size} checked>
+                선택
+              </CmsRadio>
+              <CmsRadio size={size} checked={false} disabled>
+                비활성 미선택
+              </CmsRadio>
+              <CmsRadio size={size} checked disabled>
+                비활성 선택
+              </CmsRadio>
+            </div>
+          </div>
+        ))}
+        <div className="ds-demo__stack">
+          <span className="ds-demo__label">CmsRadio.Group (medium)</span>
+          <CmsRadio.Group
+            size="medium"
+            options={MULTI_OPTIONS}
+            value={radioGroup}
+            onChange={e => setRadioGroup(e.target.value)}
+          />
+        </div>
+      </DsDemo>
+
+      <DsDemo label="CmsCheckbox.Group / CmsRadio.Group label">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          label · required prop — 라벨 14px(large 15px)/500/140% · #525252 · 라벨과 그룹 사이 4px ·
+          그룹 높이 40px · 항목 간격 16px
+        </p>
+        {CHECKBOX_SIZES.map(size => (
+          <div key={`checkbox-${size}`} className="ds-demo__stack">
+            <span className="ds-demo__label">CmsCheckbox.Group ({size})</span>
+            <div className="ds-demo__row">
+              <CmsCheckbox.Group
+                label="필수 라벨"
+                required
+                checkboxSize={size}
+                options={MULTI_OPTIONS}
+                value={checkboxGroup}
+                onChange={values => setCheckboxGroup(values as string[])}
+              />
+              <CmsCheckbox.Group
+                label="선택 라벨"
+                checkboxSize={size}
+                options={MULTI_OPTIONS}
+                value={checkboxGroup}
+                onChange={values => setCheckboxGroup(values as string[])}
+              />
+            </div>
+          </div>
+        ))}
+        {RADIO_SIZES.map(size => (
+          <div key={`radio-${size}`} className="ds-demo__stack">
+            <span className="ds-demo__label">CmsRadio.Group ({size})</span>
+            <div className="ds-demo__row">
+              <CmsRadio.Group
+                label="필수 라벨"
+                required
+                size={size}
+                options={MULTI_OPTIONS}
+                value={radioGroup}
+                onChange={e => setRadioGroup(e.target.value)}
+              />
+              <CmsRadio.Group
+                label="선택 라벨"
+                size={size}
+                options={MULTI_OPTIONS}
+                value={radioGroup}
+                onChange={e => setRadioGroup(e.target.value)}
+              />
+            </div>
+          </div>
+        ))}
+      </DsDemo>
+
       <DsDemo label="CmsDatePicker / CmsDateRangePicker">
         <div className="ds-demo__stack">
           <CmsDatePicker value={date} onChange={v => setDate(v)} style={{ width: '100%' }} />
@@ -190,6 +366,7 @@ export function FormsSection() {
 
       <DsDemo label="FileSelectField">
         <div className="ds-demo__stack">
+          <span className="ds-demo__label">선택 가능 (빈 상태에서 시작)</span>
           <FileSelectField
             accept=".pdf,.png,.jpg"
             fileNames={fileNames}
@@ -199,14 +376,90 @@ export function FormsSection() {
             }
             onRemoveFile={index => setFileNames(prev => prev.filter((_, i) => i !== index))}
           />
+          <span className="ds-demo__label">파일 여러 개</span>
+          <FileSelectField
+            fileNames={['사업계획서.pdf', '참가자명단.xlsx', '안내문.hwp', '현장사진.jpg']}
+            guideLines={FILE_SELECT_DEMO_GUIDE_LINES}
+            onFilesChange={() => undefined}
+            onRemoveFile={() => undefined}
+          />
+          <span className="ds-demo__label">disabled (보기 모드)</span>
+          <FileSelectField
+            fileNames={['사업계획서.pdf']}
+            guideLines={FILE_SELECT_DEMO_GUIDE_LINES}
+            disabled
+          />
         </div>
         <p className="ds-note">
           기본 <code>multiple</code>·합계 <code>15MB</code>. <code>accept</code>·가이드는 케이스별.
-          단건만 <code>multiple=&#123;false&#125;</code>. 버튼은 secondary medium(120×40).
+          단건만 <code>multiple=&#123;false&#125;</code>. 파일 행(유형 아이콘·파일명·X)과 빈 상태
+          「첨부된 파일이 없습니다.」는 <code>FileAttachmentRow</code> 공통(썸네일·ParagraphFileUpload
+          동일). 버튼은 「파일 추가」 secondary h32, 가이드 12px · 버튼과 16px.
           DetailInfoForm Field edit 사용 시 layout override —{' '}
           <code>cms-admin-ui/file-select-detail-form</code>. 주소·학교 검색은{' '}
           <a href="#search-modals">Search modals</a>.
         </p>
+      </DsDemo>
+
+      <DsDemo label="FileTypeIcon">
+        <div className="ds-demo__row" style={{ gap: 24 }}>
+          {FILE_TYPE_ICON_DEMO.map(({ type, label }) => (
+            <span
+              key={type}
+              style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+            >
+              <FileTypeIcon type={type} />
+              <span className="ds-demo__label">{label}</span>
+            </span>
+          ))}
+        </div>
+        <p className="ds-note">
+          <code>&lt;FileTypeIcon fileName=&quot;a.pdf&quot; /&gt;</code> — 확장자로 자동 선택(jpeg→jpg,
+          docx→word, xlsx·csv→excel, pptx→ppt, hwpx→hwp, http(s) URL→net). 매핑 없으면 clip. 원본{' '}
+          <code>shared/assets/icons/file-types/file-icon-*.svg</code>
+        </p>
+      </DsDemo>
+
+      <DsDemo label="ThumbnailUploadField">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          썸네일 72×72(클릭 시 확대 보기) · 파일명 14px/500/130% · 「파일 추가」 secondary small(h32) ·
+          가이드 12px/500/150% · 버튼–가이드 16px · 파일이 있으면 버튼 비활성, X로 삭제
+        </p>
+        <div className="ds-demo__stack">
+          <span className="ds-demo__label">빈 상태 · 파일 선택 가능</span>
+          <ThumbnailUploadField
+            previewUrl={thumbDemo?.url}
+            fileName={thumbDemo?.name}
+            guideLines={THUMBNAIL_DEMO_GUIDE_LINES}
+            onSelectFile={file =>
+              setThumbDemo(prev => {
+                if (prev) URL.revokeObjectURL(prev.url)
+                return { url: URL.createObjectURL(file), name: file.name }
+              })
+            }
+            onRemove={() =>
+              setThumbDemo(prev => {
+                if (prev) URL.revokeObjectURL(prev.url)
+                return null
+              })
+            }
+          />
+          <span className="ds-demo__label">파일 있음 (placeholder 이미지)</span>
+          <ThumbnailUploadField
+            fileName="thumbnail.png"
+            guideLines={THUMBNAIL_DEMO_GUIDE_LINES}
+            onSelectFile={() => undefined}
+            onRemove={() => undefined}
+          />
+          <span className="ds-demo__label">disabled (보기 모드)</span>
+          <ThumbnailUploadField
+            fileName="thumbnail.png"
+            guideLines={THUMBNAIL_DEMO_GUIDE_LINES}
+            disabled
+          />
+          <span className="ds-demo__label">disabled · 첨부 없음</span>
+          <ThumbnailUploadField guideLines={THUMBNAIL_DEMO_GUIDE_LINES} disabled />
+        </div>
       </DsDemo>
     </DsSection>
   )

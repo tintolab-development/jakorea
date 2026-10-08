@@ -22,6 +22,7 @@ import type {
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_INTERVIEW2_BULK_PASS_TYPE_OPTIONS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import {
   DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
   UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL,
@@ -200,12 +201,11 @@ export function useUjatVolunteerInterview2({
   }, [pendingFilters])
 
   const filteredSorted = useMemo(() => {
+    // 면접 시간·총점 「-」는 서버 query가 없어 클라이언트에서만 거른다.
     const clientOnly: UjatVolunteerInterview2Filters = {
       ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
-      preferredRegion: appliedFilters.preferredRegion,
-      interviewDate: appliedFilters.interviewDate,
       interviewTime: appliedFilters.interviewTime,
-      totalScore: appliedFilters.totalScore,
+      totalScore: appliedFilters.totalScore === 'empty' ? 'empty' : UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL,
     }
     const filtered = filterInterview2Applicants(list, clientOnly, now)
     return sortUjatVolunteerInterview2Rows(filtered)
@@ -234,10 +234,12 @@ export function useUjatVolunteerInterview2({
       ) {
         void submitUjatVolunteerFinalResultsRemote(ids, status)
           .then(() => invalidateVolunteerLists())
-          .catch(() => {
+          .catch((error: unknown) => {
             showAlert({
               title: '2차 면접 결과 저장 실패',
-              content: '최종 결과 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+              content:
+                formatApplicationEligibilityConflictMessage(error) ??
+                '최종 결과 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
             })
             void invalidateVolunteerLists()
           })
