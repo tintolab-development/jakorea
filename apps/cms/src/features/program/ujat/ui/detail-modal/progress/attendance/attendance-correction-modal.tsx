@@ -32,7 +32,7 @@ export type UjatAttendanceCorrectionModalProps = {
 
 function parseCheckInDayjs(value: string | undefined, fallback: string): Dayjs {
   const raw = value ?? fallback
-  const match = raw.match(/^(\d{1,2}):(\d{2})$/)
+  const match = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)
   if (!match) return dayjs().hour(8).minute(30).second(0).millisecond(0)
   return dayjs().hour(Number(match[1])).minute(Number(match[2])).second(0).millisecond(0)
 }

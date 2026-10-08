@@ -3,6 +3,7 @@
  */
 
 import dayjs from 'dayjs'
+import { formatArrivalTimeForDisplay } from '@/shared/lib/attendance-arrival-time'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import { fromUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
@@ -246,7 +247,7 @@ export function buildUjatAttendanceSessionsFromMatrix(params: {
           contact: '-',
           email: '-',
           status,
-          checkInTime: arrival || undefined,
+          checkInTime: formatArrivalTimeForDisplay(arrival),
           excusedReason: attendance?.absenceReason || undefined,
           isDropout: v.giveUp === true,
         }

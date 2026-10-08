@@ -1,6 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCmsAlert } from '@/shared/ui'
+import {
+  ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
+  isInvalidAttendanceArrivalTimeError,
+  toIsoLocalTime,
+} from '@/shared/lib/attendance-arrival-time'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import {
   buildUjatAttendanceSessionsFromMatrix,
@@ -209,7 +214,7 @@ export function useUjatEducationProgressAttendance(
           participantId: Number(row.id),
           status: mapUjatUiAttendanceStatusToApi(row.status),
           absenceReason: row.excusedReason ?? null,
-          arrivalTime: row.checkInTime ?? null,
+          arrivalTime: toIsoLocalTime(row.checkInTime),
         })),
       })
     },
@@ -224,10 +229,12 @@ export function useUjatEducationProgressAttendance(
       })
       showAlert({ title: '안내', content: '출석이 저장되었습니다.' })
     },
-    onError: () => {
+    onError: error => {
       showAlert({
         title: '오류',
-        content: '출석 저장에 실패했습니다.',
+        content: isInvalidAttendanceArrivalTimeError(error)
+          ? ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE
+          : '출석 저장에 실패했습니다.',
       })
     },
   })
