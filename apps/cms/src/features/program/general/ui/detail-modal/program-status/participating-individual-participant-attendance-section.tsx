@@ -109,7 +109,7 @@ function mapCorrectionPayloadToAttendanceStatus(
   }
   if (payload.status === 'absence') {
     return {
-      attendanceStatus: 'pending',
+      attendanceStatus: 'absent',
       lateTime: undefined,
       remark: undefined,
     }
@@ -136,7 +136,7 @@ function mapProgressStatusToDetailStatus(
   if (status === 'late') return 'late'
   if (status === 'excused_absence') return 'excused_absence'
   if (status === 'present') return 'present'
-  return 'pending'
+  return 'absent'
 }
 
 function renderAttendanceStatus(row: ParticipatingIndividualParticipantAttendanceRow) {
