@@ -225,7 +225,7 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
-  width: 135px;
+  min-width: 135px;
   gap: 21px;
 }
 
@@ -432,15 +432,15 @@
   }
 
   .partnerLogoMinistry,
-  .partnerLogoTax,
-  .partnerLogoRemote {
+  .partnerLogoTax {
     width: 57px;
     height: 60px;
     object-fit: contain;
     object-position: center;
   }
 
-  .partnerLogoRights {
+  .partnerLogoRights,
+  .partnerLogoRemote {
     width: auto;
     height: 60px;
     max-width: 100px;
