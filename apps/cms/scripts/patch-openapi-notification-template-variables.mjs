@@ -82,7 +82,8 @@ if (getOp?.parameters) {
       param.description = description
       changed = true
     }
-    if (enumValues?.length) {
+    const hasServerEnum = Array.isArray(param.schema.enum) && param.schema.enum.length > 0
+    if (enumValues?.length && !hasServerEnum) {
       const prev = Array.isArray(param.schema.enum) ? param.schema.enum.join(',') : ''
       const next = enumValues.join(',')
       if (prev !== next) {

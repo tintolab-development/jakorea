@@ -21,4 +21,5 @@ export const ListNotificationTemplateVariablesCategory = {
   TARGET: 'TARGET',
   QUANTITY: 'QUANTITY',
   AMOUNT: 'AMOUNT',
+  SYSTEM: 'SYSTEM',
 } as const;
