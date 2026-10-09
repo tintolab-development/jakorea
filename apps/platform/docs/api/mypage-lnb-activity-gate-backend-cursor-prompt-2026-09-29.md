@@ -16,7 +16,7 @@ Platform FE는 이미 아래 path를 호출한다. **path·required·enum 라벨
 | Method | Path | FE 사용 |
 |--------|------|---------|
 | GET | `/api/portal/me/dashboard` | 나의 홈 신청/진행/종료 건수 |
-| GET | `/api/portal/me/calendar?from&to` | 나의 홈 월 달력. `from`/`to`는 `YYYY-MM-DDTHH:mm:ss` |
+| GET | `/api/portal/me/calendar?from&to` | 나의 홈 월 달력. `from`/`to`는 offset 포함 date-time (`YYYY-MM-DDTHH:mm:ss+09:00`) |
 | GET | `/api/portal/me/program-applications` | 교육·봉사·강의 목록. query `applicationType` |
 | GET | `/api/portal/me/program-applications/{applicationType}/{applicationId}` | 상세 |
 | GET | `.../notices`, `.../notices/{postId}` | 안내 목록·상세 |
