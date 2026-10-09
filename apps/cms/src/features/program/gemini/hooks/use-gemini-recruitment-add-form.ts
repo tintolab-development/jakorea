@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { resetAllGeminiRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
 import type { GeminiRecruitmentEducationForm } from '../lib/recruitment/add-form-options'
 import {
   createDefaultGeminiRecruitmentAddFormSnapshot,
@@ -216,11 +217,13 @@ export function useGeminiRecruitmentAddForm(
 
   useEffect(() => {
     if (!open) {
+      resetAllGeminiRecruitOverlay()
       setHydrated(false)
       return
     }
 
     if (skipDraftRestore) {
+      resetAllGeminiRecruitOverlay()
       applyFormState(createDefaultGeminiRecruitmentAddFormSnapshot())
     } else {
       const saved = loadGeminiRecruitmentAddDraft()
