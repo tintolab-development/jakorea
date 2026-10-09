@@ -456,7 +456,9 @@ function participantEditorHydrateKey(args: {
 }
 
 /** Notion 모집 양식 — 시드 단락에서 단락 추가·복제·삭제 전부 disabled 노출 */
-function isRecruitmentEditorVariant(variant: ProgramParticipantApplicationEditorVariant): boolean {
+export function isRecruitmentEditorVariant(
+  variant: ProgramParticipantApplicationEditorVariant
+): boolean {
   return (
     variant === 'applicant-recruit-institution' ||
     variant === 'economy-recruit-institution' ||
@@ -822,7 +824,7 @@ export function useProgramParticipantApplicationEditor(
           ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
         }),
       })
-      if (overlay != null && Object.keys(overlay).length > 0) {
+      if (overlay != null && Object.keys(overlay).length > 0 && usesRegistrationWizardDraft) {
         storageHydratedTemplateIdsRef.current.add(draftHydrateKey)
       }
       snapshottedOnSwitchRef.current = draftHydrateKey
@@ -1121,7 +1123,8 @@ export function useProgramParticipantApplicationEditor(
         overlay,
         editorState,
       })
-      if (hasOverlayValues) {
+      // 양식 관리: 저장본 로드 전 cleanup이 스토어 잔여 키로 캐시를 hydrated 처리하면 저장본 적용이 건너뛰어진다.
+      if (hasOverlayValues && usesRegistrationWizardDraft) {
         storageHydratedTemplateIdsRef.current.add(hydrateKey)
       }
       if (usesRegistrationWizardDraft) {
