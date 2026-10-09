@@ -18,7 +18,6 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
-import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
 import {
   PARTICIPATING_INDIVIDUAL_VOLUNTEER_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
   PARTICIPATING_INDIVIDUAL_VOLUNTEER_WAITING_SCHEDULE_EXCEL_COLUMNS,
@@ -147,11 +146,26 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
       () => [
         { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
         {
+          title: '봉사 지역',
+          dataIndex: 'serviceRegion',
+          key: 'serviceRegion',
+          width: 445,
+          align: 'center',
+          ellipsis: true,
+        },
+        {
+          title: '자택과의 거리',
+          dataIndex: 'distanceFromHome',
+          key: 'distanceFromHome',
+          width: 445,
+          align: 'center',
+        },
+        {
           title: '담당 봉사 진행 일정',
           dataIndex: 'scheduleLabel',
           key: 'scheduleLabel',
-          width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-          minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+          width: 500,
+          minWidth: 500,
           className: 'participating-institutions-section__th-sessions',
           onHeaderCell: () => ({
             className: 'participating-institutions-section__th-sessions',
@@ -167,11 +181,26 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
+        title: '봉사 지역',
+        dataIndex: 'serviceRegion',
+        key: 'serviceRegion',
+        width: 285,
+        align: 'center',
+        ellipsis: true,
+      },
+      {
+        title: '자택과의 거리',
+        dataIndex: 'distanceFromHome',
+        key: 'distanceFromHome',
+        width: 285,
+        align: 'center',
+      },
+      {
         title: '봉사 진행 희망 일정',
         dataIndex: 'scheduleLabel',
         key: 'scheduleLabel',
-        width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        width: 500,
+        minWidth: 500,
         className: 'participating-institutions-section__th-sessions',
         onHeaderCell: () => ({
           className: 'participating-institutions-section__th-sessions',
@@ -183,7 +212,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 100,
+        width: 160,
         align: 'center',
         render: (status: ParticipatingIndividualVolunteerWaitingScheduleRow['assignmentStatus']) => (
           <span
@@ -197,7 +226,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '배정 봉사자 수',
         dataIndex: 'assignedVolunteerCountLabel',
         key: 'assignedVolunteerCountLabel',
-        width: 110,
+        width: 160,
         align: 'center',
       },
     ],
@@ -208,6 +237,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
     () =>
       assignedSchedules.map(row => ({
         no: row.no,
+        serviceRegion: row.serviceRegion,
+        distanceFromHome: row.distanceFromHome,
         scheduleLabel: row.scheduleLabel,
       })),
     [assignedSchedules]
@@ -217,6 +248,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
     () =>
       waitingSchedules.map(row => ({
         no: row.no,
+        serviceRegion: row.serviceRegion,
+        distanceFromHome: row.distanceFromHome,
         scheduleLabel: row.scheduleLabel,
         assignmentStatus: WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[row.assignmentStatus],
         assignedVolunteerCountLabel: row.assignedVolunteerCountLabel,

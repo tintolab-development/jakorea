@@ -10,6 +10,7 @@ import {
   type InstructorLectureAssignSlot,
 } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import { formatVolunteerAssignmentScheduleLine } from '@/features/program/general/lib/participating-school-session-display'
+import { formatIndividualInstructorLectureLocation } from '@/features/program/general/lib/participating-individual-instructor-assignment-display'
 import type {
   ParticipatingIndividualVolunteerAssignedScheduleRow,
   ParticipatingIndividualVolunteerWaitingScheduleRow,
@@ -23,6 +24,21 @@ import {
 import type { Program } from '@/types/domain'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
 import { mapSessionProgressToParticipatingSchoolSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
+
+/** 스케줄 locationName / address → 봉사 지역 표시 */
+function resolveVolunteerServiceRegion(input: {
+  locationName?: string | null
+  address?: string | null
+  regionFallback?: string | null
+}): string {
+  const locationName = input.locationName?.trim()
+  if (locationName) return formatIndividualInstructorLectureLocation(locationName)
+  const address = input.address?.trim()
+  if (address) return formatIndividualInstructorLectureLocation(address)
+  const fallback = input.regionFallback?.trim()
+  if (fallback) return formatIndividualInstructorLectureLocation(fallback)
+  return '-'
+}
 
 function formatHopeDate(dateKey: string): string {
   const weekday = ['일', '월', '화', '수', '목', '금', '토'][
@@ -123,6 +139,8 @@ function buildWaitingRowFromDef(
     sessionName?: string
     forceUnavailable?: boolean
     assignedVolunteerCount?: number
+    serviceRegion?: string
+    distanceFromHome?: string
   },
   no: number,
   program: Program,
@@ -142,6 +160,8 @@ function buildWaitingRowFromDef(
     id: def.id,
     no,
     slotKey: def.slotKey,
+    serviceRegion: def.serviceRegion?.trim() || '-',
+    distanceFromHome: def.distanceFromHome?.trim() || '-',
     scheduleLabel: scheduleLabelFromDef(program, def),
     hopeSchedule,
     assignmentStatus,
@@ -160,6 +180,8 @@ function buildAssignedFromVolunteerSessions(
     id: `iv-vol-as-${session.date}-${session.round}-${idx}`,
     no: sessions.length - idx,
     slotKey: `${session.date.replace(/\./g, '-')}|individual-program|${session.round}`,
+    serviceRegion: '-',
+    distanceFromHome: '-',
     scheduleLabel: formatVolunteerAssignmentScheduleLine(session, program),
   }))
 }
@@ -188,6 +210,10 @@ function buildWaitingFromProgramSlots(
         sessionName: slot.sessionLabel,
         forceUnavailable,
         assignedVolunteerCount: countLectureSlotAssignments(slot.key, []),
+        serviceRegion: resolveVolunteerServiceRegion({
+          regionFallback: slot.region || slot.schoolName,
+        }),
+        distanceFromHome: '-',
       },
       0,
       program,
@@ -232,6 +258,8 @@ export function individualVolunteerWaitingRowToAssignedRow(
     id: `iv-as-${waitingRow.slotKey}`,
     no,
     slotKey: waitingRow.slotKey,
+    serviceRegion: waitingRow.serviceRegion,
+    distanceFromHome: waitingRow.distanceFromHome,
     scheduleLabel: waitingRow.scheduleLabel,
     scheduleId: waitingRow.scheduleId,
   }
@@ -255,6 +283,8 @@ export function createIndividualVolunteerWaitingRowFromAssigned(
     id: `iv-w-back-${assignedRow.slotKey}`,
     no,
     slotKey: assignedRow.slotKey,
+    serviceRegion: assignedRow.serviceRegion,
+    distanceFromHome: assignedRow.distanceFromHome,
     scheduleLabel: assignedRow.scheduleLabel,
     hopeSchedule,
     assignmentStatus: resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedHopeSlots),
@@ -311,11 +341,19 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
       if (!session) return
       const slotKey = `${session.date.replace(/\./g, '-')}|individual-program|${session.round}`
       const scheduleLabel = formatVolunteerAssignmentScheduleLine(session, params.program)
+      const serviceRegion = resolveVolunteerServiceRegion({
+        locationName: schedule.locationName,
+        address: schedule.address,
+      })
+      // BE distanceKm enrich 전 — FE invent 금지
+      const distanceFromHome = '-'
       if (assignedIdSet.has(scheduleId)) {
         assigned.push({
           id: `iv-scope-as-${scheduleId}`,
           no: 0,
           slotKey,
+          serviceRegion,
+          distanceFromHome,
           scheduleLabel,
           scheduleId,
         })
@@ -330,6 +368,8 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
         id: `iv-scope-w-${scheduleId}`,
         no: 0,
         slotKey,
+        serviceRegion,
+        distanceFromHome,
         scheduleLabel,
         hopeSchedule,
         assignmentStatus: 'waiting',
