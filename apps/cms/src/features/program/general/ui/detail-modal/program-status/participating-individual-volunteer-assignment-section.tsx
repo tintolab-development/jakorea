@@ -113,6 +113,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
       program,
       assignedScheduleIds,
       schedules: schedulesQuery.data.schedules,
+      scopeScheduleEnrich: scopeQuery.data?.schedules,
     })
   }, [program, remoteEnabled, schedulesQuery.data, scopeQuery.data])
 

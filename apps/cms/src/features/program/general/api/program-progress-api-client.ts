@@ -297,12 +297,24 @@ export async function changeParticipantSchedulesRemote(
   )
 }
 
+/** education-scope GET/PUT additive enrich — CmsParticipantEducationScopeScheduleEnrich */
+export type ParticipantEducationScopeScheduleEnrich = {
+  scheduleId: number
+  locationName?: string | null
+  address?: string | null
+  distanceKm?: number | null
+  /** 동일 scheduleId VOLUNTEER education-scope 인원 — 항상 number, 0 포함 */
+  assignedVolunteerCount: number
+}
+
 export type ParticipantEducationScopeResponse = {
   programId?: number
   participantId?: number
   revision?: number
   configured?: boolean
   scheduleIds?: number[]
+  /** additive — scheduleIds만으로도 배정 분기는 동작 */
+  schedules?: ParticipantEducationScopeScheduleEnrich[]
 }
 
 export type ParticipantEducationScopeUpdateRequest = {

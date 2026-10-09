@@ -23,6 +23,7 @@ import {
 } from '@/features/program/general/lib/waiting-instructor-assignment'
 import type { Program } from '@/types/domain'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
+import type { ParticipantEducationScopeScheduleEnrich } from '@/features/program/general/api/program-progress-api-client'
 import { mapSessionProgressToParticipatingSchoolSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
 
 /** 스케줄 locationName / address → 봉사 지역 표시 */
@@ -38,6 +39,13 @@ function resolveVolunteerServiceRegion(input: {
   const fallback = input.regionFallback?.trim()
   if (fallback) return formatIndividualInstructorLectureLocation(fallback)
   return '-'
+}
+
+/** 강사 배정 `formatDistanceKm` 과 동일 — null/NaN → '-' (FE invent 금지) */
+function formatDistanceKm(km: number | null | undefined): string {
+  if (km == null || Number.isNaN(km)) return '-'
+  const rounded = Math.round(km)
+  return km >= 100 ? `${rounded}km (장거리)` : `${rounded}km`
 }
 
 function formatHopeDate(dateKey: string): string {
@@ -325,11 +333,18 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
   program: Program
   assignedScheduleIds: number[]
   schedules: DashboardProgramScheduleResponse[]
+  /** education-scope additive enrich — 없으면 거리·인원은 '-' */
+  scopeScheduleEnrich?: ParticipantEducationScopeScheduleEnrich[]
 }): {
   assigned: ParticipatingIndividualVolunteerAssignedScheduleRow[]
   waiting: ParticipatingIndividualVolunteerWaitingScheduleRow[]
 } {
   const assignedIdSet = new Set(params.assignedScheduleIds)
+  const enrichByScheduleId = new Map<number, ParticipantEducationScopeScheduleEnrich>()
+  for (const row of params.scopeScheduleEnrich ?? []) {
+    if (row?.scheduleId == null) continue
+    enrichByScheduleId.set(row.scheduleId, row)
+  }
   const assigned: ParticipatingIndividualVolunteerAssignedScheduleRow[] = []
   const waiting: ParticipatingIndividualVolunteerWaitingScheduleRow[] = []
 
@@ -339,14 +354,18 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
       const scheduleId = schedule.scheduleId as number
       const session = dashboardScheduleToSession(schedule, index)
       if (!session) return
+      const enrich = enrichByScheduleId.get(scheduleId)
       const slotKey = `${session.date.replace(/\./g, '-')}|individual-program|${session.round}`
       const scheduleLabel = formatVolunteerAssignmentScheduleLine(session, params.program)
       const serviceRegion = resolveVolunteerServiceRegion({
-        locationName: schedule.locationName,
-        address: schedule.address,
+        locationName: schedule.locationName ?? enrich?.locationName,
+        address: schedule.address ?? enrich?.address,
       })
-      // BE distanceKm enrich 전 — FE invent 금지
-      const distanceFromHome = '-'
+      const distanceFromHome = formatDistanceKm(enrich?.distanceKm)
+      const assignedVolunteerCountLabel =
+        enrich != null && typeof enrich.assignedVolunteerCount === 'number'
+          ? `${enrich.assignedVolunteerCount}명`
+          : '-'
       if (assignedIdSet.has(scheduleId)) {
         assigned.push({
           id: `iv-scope-as-${scheduleId}`,
@@ -373,7 +392,7 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
         scheduleLabel,
         hopeSchedule,
         assignmentStatus: 'waiting',
-        assignedVolunteerCountLabel: '-',
+        assignedVolunteerCountLabel,
         scheduleId,
       })
     })
