@@ -289,6 +289,45 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     expect(next.approvedStudentCount).toBe(40)
   })
 
+  it('does not restore stored kpi when overlay kpi keys were cleared to null', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      {
+        ...baseProgram(),
+        approvedStudentCount: 40,
+        instructors: 3,
+        generalVolunteers: 2,
+        generalCommonInfo: {
+          ...baseProgram().generalCommonInfo,
+          kpi: {
+            finalParticipants: 40,
+            instructorCount: 3,
+            volunteerCount: 2,
+            finalSchools: 6,
+            finalClasses: 9,
+          },
+        },
+      },
+      {
+        'generalRegistration.kpi.participantCount': null,
+        'generalRegistration.kpi.instructor': null,
+        'generalRegistration.kpi.volunteer': null,
+      },
+      {
+        programType: 'curriculum',
+        sessionRoundType: 'single',
+        curriculumChartSessionCount: 1,
+      }
+    )
+    expect(next.generalCommonInfo?.kpi).toMatchObject({
+      finalParticipants: 0,
+      instructorCount: 0,
+      volunteerCount: 0,
+    })
+    expect(next.approvedStudentCount).toBe(0)
+    expect(next.instructors).toBe(0)
+    expect(next.generalVolunteers).toBe(0)
+  })
+
   it('uses overlay detailedProgramName and paymentItemLabels', () => {
     const next = applyGeneralRegistrationOverlayToProgram(
       baseProgram(),
