@@ -90,7 +90,7 @@ export function isRecruitmentOrApplicationWritingTemplateCode(
 
 /**
  * 등록·모집 시스템 양식 PUT — BE `FORM_SCHEMA_IMMUTABLE`.
- * 일정형 제목 등 표시용 schema 변경은 보내지 않고 extensionJson만 갱신한다.
+ * 에디터 draft 전체 schemaJson은 보내지 않고, 시드 구조 + 허용 카피만 schemaJson으로 보낸다(`operational-form-schema-copy-merge`).
  */
 export function shouldOmitImmutableFormSchemaJson(
   templateCode: string | undefined | null
@@ -98,7 +98,9 @@ export function shouldOmitImmutableFormSchemaJson(
   const code = templateCode?.trim() ?? ''
   if (code === '') return false
   if (code.startsWith('registration-')) return true
-  return isRecruitmentWritingTemplateCode(code)
+  if (isRecruitmentWritingTemplateCode(code)) return true
+  // BE 카탈로그 시드에 없는 normalize 필드(maxLength 등)가 붙으면 FORM_SCHEMA_IMMUTABLE
+  return resolveWritingFormBaseTemplateCode(code) === 'application-participant-individual'
 }
 
 /**

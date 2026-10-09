@@ -60,4 +60,28 @@ describe('공통_강사 신청 폼 성범죄경력 조회 동의서 제출 방�
       draft.paragraphs
     )
   })
+
+  it('사용자가 수정한 제목·설명은 API 로드 후에도 유지', () => {
+    const draft = createProgramApplicationFormInstructorDraft()
+    const customized = {
+      ...draft,
+      paragraphs: draft.paragraphs.map(p =>
+        p.id === CRIME_RECORD_ID
+          ? {
+              ...p,
+              paragraphTitle: '맞춤 제목 — 제출 방법 안내',
+              paragraphDescription: '운영팀 안내 문구',
+            }
+          : p
+      ),
+    }
+    const migrated = migrateProgramApplicationFormInstructorParagraphs(customized)
+    const loaded = normalizeWritingFormDraftFromApi('application-instructor', customized)
+    const paragraph = migrated.paragraphs.find(p => p.id === CRIME_RECORD_ID)
+    const loadedParagraph = loaded.paragraphs.find(p => p.id === CRIME_RECORD_ID)
+    expect(paragraph?.paragraphTitle).toBe('맞춤 제목 — 제출 방법 안내')
+    expect(paragraph?.paragraphDescription).toBe('운영팀 안내 문구')
+    expect(loadedParagraph?.paragraphTitle).toBe('맞춤 제목 — 제출 방법 안내')
+    expect(loadedParagraph?.paragraphDescription).toBe('운영팀 안내 문구')
+  })
 })

@@ -24,13 +24,38 @@ function parseJsonTextField(
   }
 }
 
-export function writingFormDraftToSchemaJson(draft: WritingFormDraft): string {
-  const normalized = normalizeWritingFormDraft(draft)
+function stringifyWritingFormDraft(draft: WritingFormDraft): string {
   return JSON.stringify({
     schemaVersion: SCHEMA_VERSION,
-    formSettings: normalized.formSettings,
-    paragraphs: normalized.paragraphs,
+    formSettings: draft.formSettings,
+    paragraphs: draft.paragraphs,
   })
+}
+
+export function writingFormDraftToSchemaJson(draft: WritingFormDraft): string {
+  return stringifyWritingFormDraft(normalizeWritingFormDraft(draft))
+}
+
+/**
+ * FORM_SCHEMA_IMMUTABLE PUT용 — `normalizeWritingFormDraft`가 넣는 maxLength 등을 붙이지 않는다.
+ */
+export function writingFormDraftToCatalogSchemaJson(draft: WritingFormDraft): string {
+  return stringifyWritingFormDraft(draft)
+}
+
+/** GET schemaJson을 normalize 없이 읽는다. COPY의 보호 구조 기준. */
+export function parseCatalogSchemaJson(
+  schemaJson: string | Record<string, unknown> | null | undefined
+): WritingFormDraft | null {
+  const parsed = parseJsonTextField(schemaJson)
+  if (parsed == null || typeof parsed !== 'object') return null
+  const draft = parsed as Partial<WritingFormDraft>
+  if (!Array.isArray(draft.paragraphs)) return null
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    formSettings: draft.formSettings ?? { titleNumbering: 'none' },
+    paragraphs: draft.paragraphs,
+  }
 }
 
 export function schemaJsonToWritingFormDraft(
