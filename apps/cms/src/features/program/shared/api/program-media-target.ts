@@ -21,6 +21,7 @@ import {
   putProgramRecruitmentAttachments,
   putProgramRecruitmentThumbnail,
 } from '@/features/program/shared/api/program-recruitment-rows'
+import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 
 /**
  * 상세 정보 섹션의 첨부·대표 이미지 저장 위치.
@@ -122,7 +123,13 @@ export async function fetchProgramMediaThumbnail(
   if (!target) return empty
   if (target.recruitmentId == null) return fetchProgramThumbnail(target.programId)
   const row = program.programRecruitments?.find(item => item.id === target.recruitmentId)
-  return { ...empty, fileObjectId: row?.thumbnailFileObjectId ?? null }
+  const overlayName = readRecruitDetailMediaFromOverlay(program.registrationOverlay ?? {})
+    .thumbFileName
+  return {
+    ...empty,
+    fileObjectId: row?.thumbnailFileObjectId ?? null,
+    originalFileName: overlayName?.trim() || null,
+  }
 }
 
 export async function putProgramMediaThumbnail(
