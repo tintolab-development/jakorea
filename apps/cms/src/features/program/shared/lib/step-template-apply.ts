@@ -20,6 +20,7 @@ import {
   createSeedDraftForOperationalCatalogId,
   resetOperationalOverlayForCatalogId,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import { setRegistrationStepTemplateSelection } from '@/features/program/shared/lib/step-template-selection'
 
 function resolveSeedCatalogId(templateCode: string): string {
@@ -108,6 +109,7 @@ export async function applyRegistrationStepTemplateChange(args: {
       editorState: saved?.editorState,
       settingsJson: saved?.settingsJson,
     })
+    setOperationalOverlayScope(args.nextCode)
     applyOperationalOverlayForCatalogId(args.nextCode, saved?.overlay)
   }
   commitRecruitDetailContentReset()

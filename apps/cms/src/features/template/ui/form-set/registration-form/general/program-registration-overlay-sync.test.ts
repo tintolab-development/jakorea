@@ -1,17 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { collectOperationalOverlayForCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
 import {
   getProgramRegistrationOverlayRecord,
   getProgramRegistrationOverlayVersion,
   patchProgramRegistrationOverlay,
   patchRegistrationOverlayProgramTitleKo,
+  peekProgramRegistrationOverlayRecord,
   readRegistrationOverlayProgramTitleKo,
-  resetProgramRegistrationOverlay,
+  resetProgramRegistrationOverlayStoreForTests,
+  setProgramRegistrationOverlayScope,
   subscribeProgramRegistrationOverlayKey,
   updateProgramRegistrationOverlayKey,
 } from './program-registration-overlay-sync'
 
 afterEach(() => {
-  resetProgramRegistrationOverlay()
+  resetProgramRegistrationOverlayStoreForTests()
 })
 
 describe('program-registration-overlay-sync', () => {
@@ -47,6 +50,30 @@ describe('program-registration-overlay-sync', () => {
 
     unsubTitle()
     unsubOther()
+  })
+
+  it('isolates values by templateCode and keeps persist keys unprefixed', () => {
+    setProgramRegistrationOverlayScope('registration-general-custom-01')
+    patchProgramRegistrationOverlay({
+      'generalRegistration.basicInfo.localProgramTitleKo': 'A 등록',
+    })
+
+    setProgramRegistrationOverlayScope('registration-general-custom-02')
+    expect(
+      getProgramRegistrationOverlayRecord()['generalRegistration.basicInfo.localProgramTitleKo']
+    ).toBeUndefined()
+
+    setProgramRegistrationOverlayScope('registration-general-custom-01')
+    expect(
+      getProgramRegistrationOverlayRecord()['generalRegistration.basicInfo.localProgramTitleKo']
+    ).toBe('A 등록')
+
+    const overlay = collectOperationalOverlayForCatalogId('registration-general-custom-01')
+    expect(overlay).toEqual({
+      'generalRegistration.basicInfo.localProgramTitleKo': 'A 등록',
+    })
+    expect(Object.keys(overlay ?? {}).some(key => key.includes('custom-01'))).toBe(false)
+    expect(peekProgramRegistrationOverlayRecord('registration-general-custom-02')).toEqual({})
   })
 })
 

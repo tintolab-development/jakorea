@@ -87,6 +87,7 @@ import {
   readRegistrationOverlaySponsorId,
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
+  setProgramRegistrationOverlayScope,
   subscribeProgramRegistrationOverlayKey,
   updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
@@ -491,6 +492,7 @@ export function useProgramRegistrationEditor(
       return
     }
 
+    setProgramRegistrationOverlayScope(templateCode)
     resetProgramRegistrationOverlay()
 
     if (skipDraftRestore) {

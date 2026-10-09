@@ -8,6 +8,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import {
   getGeneralRecruitOverlayRecord,
+  getGeneralRecruitOverlayScope,
   patchGeneralRecruitOverlay,
   useGeneralRecruitOverlayKv,
   updateGeneralRecruitOverlayKey,
@@ -167,6 +168,10 @@ function readOverlayHtml(overlayKey: string): string {
   return typeof raw === 'string' ? raw : ''
 }
 
+function editorHtmlWithoutEmptyParagraphs(html: string): string {
+  return html.replace(/<p><\/p>/gi, '').trim()
+}
+
 const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
   wysiwygResetKey,
   overlayKey,
@@ -234,15 +239,23 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
   useEffect(() => {
     if (editor == null || editor.isDestroyed || editor.view == null) return
     const incoming = overlayHtml.trim()
-    if (incoming === '') return
     let current = ''
     try {
       // resetKey로 새 에디터가 생긴 직후엔 getHTML api가 이전 인스턴스를 가리킬 수 있다.
-      current = editor
-        .getHTML()
-        .replace(/<p><\/p>/gi, '')
-        .trim()
+      current = editorHtmlWithoutEmptyParagraphs(editor.getHTML())
     } catch {
+      return
+    }
+    if (incoming === '') {
+      // overlay가 비면 TipTap 잔여 HTML도 비운다. 미편집 잔여는 저장 flush에 넣지 않는다.
+      if (current === '') return
+      try {
+        editor.commands.setContent('', { emitUpdate: false, contentType: 'html' })
+        latestHtmlRef.current = ''
+        editedRef.current = false
+      } catch {
+        // 템플릿 변경으로 에디터가 destroy된 뒤 overlay hydrate가 늦게 오면 무시
+      }
       return
     }
     if (current !== '') return
@@ -292,7 +305,8 @@ export function RecruitDetailInfoParagraph({
   textFieldControl = 'textarea',
 }: RecruitDetailInfoParagraphProps) {
   const contentResetGeneration = useRecruitDetailContentResetGeneration()
-  const editorResetKey = `${wysiwygResetKey}::reset-${contentResetGeneration}`
+  const overlayScope = getGeneralRecruitOverlayScope()
+  const editorResetKey = `${wysiwygResetKey}::scope-${overlayScope}::reset-${contentResetGeneration}`
   const thumbObjectUrlKey = recruitDetailThumbObjectUrlKey(overlayKeyPrefix)
   const thumbFileNameKey = recruitDetailThumbFileNameKey(overlayKeyPrefix)
   const thumbFileObjectIdKey = recruitDetailThumbFileObjectIdKey(overlayKeyPrefix)

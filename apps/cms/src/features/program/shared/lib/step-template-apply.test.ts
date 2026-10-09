@@ -19,14 +19,16 @@ import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/
 import {
   getApplicantRecruitInstitutionOverlayRecord,
   patchApplicantRecruitInstitutionOverlay,
-  resetApplicantRecruitInstitutionOverlay,
+  peekApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
-  resetGeneralRecruitOverlay,
+  peekGeneralRecruitOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { DEFAULT_OPERATIONAL_OVERLAY_SCOPE } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 import { consumeWizardContentResetPending } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import { resetAllOperationalOverlayStoresForTests } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   getGeminiRecruitOverlayRecord,
   resetGeminiRecruitOverlay,
@@ -43,7 +45,7 @@ import { createUjatRecruitFormInstitutionDraft } from '@/features/template/model
 import {
   getGeneralApplicationOverlayRecord,
   patchGeneralApplicationOverlay,
-  resetGeneralApplicationOverlay,
+  peekGeneralApplicationOverlayRecord,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getInstitutionApplicationProgramBridge,
@@ -51,14 +53,10 @@ import {
   resetInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
+import { getUjatRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
 import {
-  getUjatRecruitInstitutionOverlayRecord,
-  resetUjatRecruitInstitutionOverlay,
-} from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
-import {
-  getUjatRecruitVolunteerOverlayRecord,
   patchUjatRecruitVolunteerOverlay,
-  resetUjatRecruitVolunteerOverlay,
+  peekUjatRecruitVolunteerOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 
 describe('applyRegistrationStepTemplateChange', () => {
@@ -68,14 +66,9 @@ describe('applyRegistrationStepTemplateChange', () => {
       programType: 'GENERAL',
       templateCode: 'recruitment-participant-school-custom-2',
     })
-    resetApplicantRecruitInstitutionOverlay()
-    resetGeneralRecruitOverlay()
-    resetGeneralApplicationOverlay()
+    resetAllOperationalOverlayStoresForTests()
     resetInstitutionApplicationProgramBridge()
-    resetUjatRecruitInstitutionOverlay()
-    resetUjatRecruitVolunteerOverlay()
     clearOperationalSeedDefaultSuppression()
-    resetGeminiRecruitOverlay()
     for (const templateCode of [
       'application-participant-school-custom-2',
       'recruitment-instructor-custom-2',
@@ -276,10 +269,14 @@ describe('applyRegistrationStepTemplateChange', () => {
       defaultCode: 'recruitment-instructor',
     })
 
-    expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('기관 안내')
-    expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.programDescription']).toBe(
-      '기관 상세'
-    )
+    expect(
+      peekApplicantRecruitInstitutionOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)['recruit.notes']
+    ).toBe('기관 안내')
+    expect(
+      peekGeneralRecruitOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)[
+        'recruit.detailInfo.programDescription'
+      ]
+    ).toBe('기관 상세')
     expect(getGeneralRecruitOverlayRecord()['recruit.instructor.inquiryContact']).toBe('새 강사')
   })
 
@@ -309,9 +306,11 @@ describe('applyRegistrationStepTemplateChange', () => {
     })
 
     expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('1사1교 안내')
-    expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.programDescription']).toBe(
-      '일반 기관 상세'
-    )
+    expect(
+      peekGeneralRecruitOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)[
+        'recruit.detailInfo.programDescription'
+      ]
+    ).toBe('일반 기관 상세')
     expect(getGeneralRecruitOverlayRecord()['economyRecruit.detailInfo.programDescription']).toBe(
       '새 1사1교'
     )
@@ -354,9 +353,11 @@ describe('applyRegistrationStepTemplateChange', () => {
     expect(
       saved?.draft.paragraphs.some(paragraph => paragraph.id === 'trained-teachers-custom-field')
     ).toBe(true)
-    expect(getGeneralApplicationOverlayRecord()['application.institution.memo']).toBe(
-      '기관 신청 유지'
-    )
+    expect(
+      peekGeneralApplicationOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)[
+        'application.institution.memo'
+      ]
+    ).toBe('기관 신청 유지')
     expect(getGeneralApplicationOverlayRecord()['application.trainedTeachers.memo']).toBe(
       '새 연수교사'
     )
@@ -388,10 +389,16 @@ describe('applyRegistrationStepTemplateChange', () => {
       baseTemplateCode: 'recruitment-ujat-school',
     })
 
-    expect(getUjatRecruitVolunteerOverlayRecord()['recruit.volunteer.notes']).toBe('봉사자 안내')
-    expect(getGeneralRecruitOverlayRecord()['recruitVolunteer.detailInfo.programDescription']).toBe(
-      '봉사자 상세'
-    )
+    expect(
+      peekUjatRecruitVolunteerOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)[
+        'recruit.volunteer.notes'
+      ]
+    ).toBe('봉사자 안내')
+    expect(
+      peekGeneralRecruitOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)[
+        'recruitVolunteer.detailInfo.programDescription'
+      ]
+    ).toBe('봉사자 상세')
     expect(getUjatRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('UJAT 기관 안내')
     expect(getGeneralRecruitOverlayRecord()['ujatRecruit.detailInfo.programDescription']).toBe(
       '새 기관 상세'

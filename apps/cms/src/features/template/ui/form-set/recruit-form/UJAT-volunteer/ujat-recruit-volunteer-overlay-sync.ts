@@ -1,43 +1,66 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
-let overlayState: Record<string, unknown> = {}
-let overlayVersion = 0
-const overlayListeners = new Set<() => void>()
-function emitOverlay() {
-  overlayVersion += 1
-  overlayListeners.forEach(l => l())
+import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+
+const store = createScopedOverlayStore()
+
+export function setUjatRecruitVolunteerOverlayScope(templateCode: string | undefined | null): void {
+  store.setScope(templateCode)
 }
+
 export function subscribeUjatRecruitVolunteerOverlay(listener: () => void): () => void {
-  overlayListeners.add(listener)
-  return () => overlayListeners.delete(listener)
+  return store.subscribe(listener)
 }
 export function getUjatRecruitVolunteerOverlayVersion(): number {
-  return overlayVersion
+  return store.getVersion()
 }
 export function getUjatRecruitVolunteerOverlayRecord(): Record<string, unknown> {
-  return overlayState
+  return store.getRecord()
+}
+
+export function peekUjatRecruitVolunteerOverlayRecord(
+  templateCode: string | undefined | null
+): Record<string, unknown> {
+  return store.peekRecord(templateCode)
+}
+
+export function replaceUjatRecruitVolunteerOverlayForScope(
+  templateCode: string | undefined | null,
+  next: Record<string, unknown>
+): void {
+  store.replaceFor(templateCode, next)
+}
+
+export function resetUjatRecruitVolunteerOverlayForScope(
+  templateCode: string | undefined | null
+): void {
+  store.resetFor(templateCode)
 }
 export function patchUjatRecruitVolunteerOverlay(partial: Record<string, unknown>): void {
-  overlayState = { ...overlayState, ...partial }
-  emitOverlay()
+  store.patch(partial)
 }
 export function replaceUjatRecruitVolunteerOverlay(next: Record<string, unknown>): void {
-  overlayState = { ...next }
-  emitOverlay()
+  store.replace(next)
 }
 export function updateUjatRecruitVolunteerOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T
 ): void {
-  const prev = overlayState[key] as T | undefined
-  overlayState = { ...overlayState, [key]: updater(prev) }
-  emitOverlay()
+  store.updateKey(key, updater)
 }
 export function resetUjatRecruitVolunteerOverlay(): void {
-  overlayState = {}
-  emitOverlay()
+  store.reset()
 }
-export function useUjatRecruitVolunteerOverlayKv<T>(key: string, defaultValue: T): [T, (next: T) => void] {
+export function resetAllUjatRecruitVolunteerOverlay(): void {
+  store.resetAll()
+}
+export function resetUjatRecruitVolunteerOverlayStoreForTests(): void {
+  store.resetAll()
+}
+export function useUjatRecruitVolunteerOverlayKv<T>(
+  key: string,
+  defaultValue: T
+): [T, (next: T) => void] {
   const version = useSyncExternalStore(
     subscribeUjatRecruitVolunteerOverlay,
     getUjatRecruitVolunteerOverlayVersion,

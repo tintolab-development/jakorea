@@ -3,7 +3,9 @@ import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
+  peekGeneralRecruitOverlayRecord,
   replaceGeneralRecruitOverlay,
+  replaceGeneralRecruitOverlayForScope,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 
 /**
@@ -48,9 +50,13 @@ export function restoreUjatVolunteerRecruitGeneralStoreSidecar(
 
 /** 템플릿 조회 — 반기 sidecar 잔여 키를 지운 뒤 저장본으로 덮어쓴다. */
 export function replaceUjatVolunteerRecruitGeneralStoreSidecar(
-  overlay: Record<string, unknown> | undefined
+  overlay: Record<string, unknown> | undefined,
+  templateCode?: string | null
 ): void {
-  const live = getGeneralRecruitOverlayRecord()
+  const live =
+    templateCode != null
+      ? peekGeneralRecruitOverlayRecord(templateCode)
+      : getGeneralRecruitOverlayRecord()
   const next: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(live)) {
     const keep = UJAT_VOLUNTEER_RECRUIT_GENERAL_STORE_PREFIXES.every(prefix => {
@@ -62,7 +68,8 @@ export function replaceUjatVolunteerRecruitGeneralStoreSidecar(
   if (overlay != null) {
     Object.assign(next, pickUjatVolunteerRecruitGeneralStoreSidecar(overlay))
   }
-  replaceGeneralRecruitOverlay(next)
+  if (templateCode != null) replaceGeneralRecruitOverlayForScope(templateCode, next)
+  else replaceGeneralRecruitOverlay(next)
 }
 
 export function recruitDetailInfoOverlayPrefixForCatalogId(
@@ -74,6 +81,7 @@ export function recruitDetailInfoOverlayPrefixForCatalogId(
   )
   switch (code) {
     case 'recruitment-participant-school':
+    case 'recruitment-participant-individual':
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution
     case 'recruitment-economy':
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.economy
@@ -93,6 +101,7 @@ export function recruitDetailInfoOverlayPrefixForEditorVariant(
 ): string | null {
   switch (variant) {
     case 'applicant-recruit-institution':
+    case 'applicant-recruit-individual':
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution
     case 'economy-recruit-institution':
       return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.economy
@@ -119,8 +128,11 @@ export function pickOverlayKeysByPrefix(
   return out
 }
 
-export function pickRecruitDetailInfoFromGeneralStore(prefix: string): Record<string, unknown> {
-  return pickOverlayKeysByPrefix(getGeneralRecruitOverlayRecord(), prefix)
+export function pickRecruitDetailInfoFromGeneralStore(
+  prefix: string,
+  record: Record<string, unknown> = getGeneralRecruitOverlayRecord()
+): Record<string, unknown> {
+  return pickOverlayKeysByPrefix(record, prefix)
 }
 
 /**
@@ -146,12 +158,13 @@ export function overlayEntriesAbsentFromLive(
  */
 export function mergeRecruitDetailInfoFromGeneralStore(
   overlay: Record<string, unknown>,
-  prefix: string | null
+  prefix: string | null,
+  record: Record<string, unknown> = getGeneralRecruitOverlayRecord()
 ): Record<string, unknown> {
   if (prefix == null) return overlay
   return {
     ...overlay,
-    ...pickRecruitDetailInfoFromGeneralStore(prefix),
+    ...pickRecruitDetailInfoFromGeneralStore(prefix, record),
   }
 }
 
@@ -170,10 +183,14 @@ export function restoreRecruitDetailInfoIntoGeneralStore(
 /** 템플릿 조회·변경 — prefix 잔여 키를 지운 뒤 불러온 상세 정보로 덮어쓴다. */
 export function replaceRecruitDetailInfoIntoGeneralStore(
   overlay: Record<string, unknown> | undefined,
-  prefix: string | null
+  prefix: string | null,
+  templateCode?: string | null
 ): void {
   if (prefix == null) return
-  const live = getGeneralRecruitOverlayRecord()
+  const live =
+    templateCode != null
+      ? peekGeneralRecruitOverlayRecord(templateCode)
+      : getGeneralRecruitOverlayRecord()
   const needle = prefix.endsWith('.') ? prefix : `${prefix}.`
   const next: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(live)) {
@@ -183,5 +200,6 @@ export function replaceRecruitDetailInfoIntoGeneralStore(
   if (overlay != null) {
     Object.assign(next, pickOverlayKeysByPrefix(overlay, prefix))
   }
-  replaceGeneralRecruitOverlay(next)
+  if (templateCode != null) replaceGeneralRecruitOverlayForScope(templateCode, next)
+  else replaceGeneralRecruitOverlay(next)
 }

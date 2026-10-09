@@ -124,6 +124,7 @@ import {
   collectOperationalOverlayForCatalogId,
   resetOperationalOverlayForCatalogId,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   applyParticipantApplicationEditorState,
   buildParticipantApplicationEditorState,
@@ -147,7 +148,7 @@ import {
   persistUjatRecruitInstitutionTemplateSave,
   persistUjatRecruitVolunteerTemplateSave,
 } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
-import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { peekUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE } from '@/features/template/lib/program-registration-editor-state'
 import { coalesceUjatRecruitOverlay } from '@/features/program/ujat/lib/ujat-recruit-overlay-coalesce'
@@ -164,7 +165,6 @@ import {
   resetUjatRecruitVolunteerOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import {
-  getGeminiRecruitOverlayRecord,
   resetGeminiRecruitOverlay,
   restoreGeminiRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
@@ -180,14 +180,13 @@ import {
   subscribeGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import {
+  beginRecruitDetailContentReset,
   commitRecruitDetailContentReset,
   consumeWizardContentResetPending,
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
-  mergeRecruitDetailInfoFromGeneralStore,
   overlayEntriesAbsentFromLive,
-  pickUjatVolunteerRecruitGeneralStoreSidecar,
   recruitDetailInfoOverlayPrefixForEditorVariant,
   replaceRecruitDetailInfoIntoGeneralStore,
   replaceUjatVolunteerRecruitGeneralStoreSidecar,
@@ -200,12 +199,10 @@ import {
   patchGeneralApplicationOverlay,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
-  getUjatApplicationInstitutionOverlayRecord,
   replaceUjatApplicationInstitutionOverlay,
   resetUjatApplicationInstitutionOverlay,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 import {
-  getUjatApplicationVolunteerOverlayRecord,
   replaceUjatApplicationVolunteerOverlay,
   resetUjatApplicationVolunteerOverlay,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
@@ -475,10 +472,12 @@ export function isRecruitmentEditorVariant(
 function restoreParticipantOverlayForVariant(
   variant: ProgramParticipantApplicationEditorVariant,
   overlay: Record<string, unknown> | undefined,
-  options?: { resetIfMissing?: boolean; replace?: boolean }
+  options?: { resetIfMissing?: boolean; replace?: boolean; persistTemplateId?: string }
 ): void {
   const resetIfMissing = options?.resetIfMissing === true
   const replace = options?.replace === true
+  const overlayId =
+    options?.persistTemplateId?.trim() || getTemplateIdForParticipantApplicationVariant(variant)
   if (variant === 'gemini-recruit') {
     if (overlay) {
       restoreGeminiRecruitOverlay(overlay)
@@ -515,10 +514,9 @@ function restoreParticipantOverlayForVariant(
     return
   }
   if (isGeneralRecruitOverlayVariant(variant) || isGeneralApplicationOverlayVariant(variant)) {
-    const catalogId = getTemplateIdForParticipantApplicationVariant(variant)
     if (overlay) {
       if (replace) {
-        applyOperationalOverlayForCatalogId(catalogId, overlay)
+        applyOperationalOverlayForCatalogId(overlayId, overlay)
       } else {
         const live = isGeneralRecruitOverlayVariant(variant)
           ? getGeneralRecruitOverlayRecord()
@@ -529,7 +527,7 @@ function restoreParticipantOverlayForVariant(
         else patchGeneralApplicationOverlay(patch)
       }
     } else if (resetIfMissing) {
-      resetOperationalOverlayForCatalogId(catalogId)
+      resetOperationalOverlayForCatalogId(overlayId)
     }
     return
   }
@@ -545,46 +543,35 @@ function restoreParticipantOverlayForVariant(
 }
 
 export function collectParticipantOverlayForVariant(
-  variant: ProgramParticipantApplicationEditorVariant
+  variant: ProgramParticipantApplicationEditorVariant,
+  persistTemplateId?: string
 ): Record<string, unknown> | undefined {
+  const overlayId =
+    persistTemplateId?.trim() || getTemplateIdForParticipantApplicationVariant(variant)
   if (variant === 'gemini-recruit') {
-    return { ...getGeminiRecruitOverlayRecord() }
+    return collectOperationalOverlayForCatalogId(overlayId) ?? undefined
   }
   if (
     isApplicantRecruitInstitutionVariant(variant) ||
     isGeneralRecruitOverlayVariant(variant) ||
     isGeneralApplicationOverlayVariant(variant)
   ) {
-    return (
-      collectOperationalOverlayForCatalogId(
-        getTemplateIdForParticipantApplicationVariant(variant)
-      ) ?? undefined
-    )
+    return collectOperationalOverlayForCatalogId(overlayId) ?? undefined
   }
   if (variant === 'ujat-recruit-institution') {
-    return mergeRecruitDetailInfoFromGeneralStore(
-      {
-        ...pickUjatRecruitInstitutionOverlay(getUjatProgramRegistrationOverlayRecord()),
-        ...getUjatRecruitInstitutionOverlayRecord(),
-      },
-      recruitDetailInfoOverlayPrefixForEditorVariant(variant)
-    )
+    return {
+      ...pickUjatRecruitInstitutionOverlay(peekUjatProgramRegistrationOverlayRecord(overlayId)),
+      ...(collectOperationalOverlayForCatalogId(overlayId) ?? {}),
+    }
   }
   if (variant === 'ujat-recruit-volunteer') {
-    return mergeRecruitDetailInfoFromGeneralStore(
-      {
-        ...pickUjatRecruitVolunteerOverlay(getUjatProgramRegistrationOverlayRecord()),
-        ...getUjatRecruitVolunteerOverlayRecord(),
-        ...pickUjatVolunteerRecruitGeneralStoreSidecar(),
-      },
-      recruitDetailInfoOverlayPrefixForEditorVariant(variant)
-    )
+    return {
+      ...pickUjatRecruitVolunteerOverlay(peekUjatProgramRegistrationOverlayRecord(overlayId)),
+      ...(collectOperationalOverlayForCatalogId(overlayId) ?? {}),
+    }
   }
-  if (variant === 'ujat-application-institution') {
-    return { ...getUjatApplicationInstitutionOverlayRecord() }
-  }
-  if (variant === 'ujat-application-volunteer') {
-    return { ...getUjatApplicationVolunteerOverlayRecord() }
+  if (variant === 'ujat-application-institution' || variant === 'ujat-application-volunteer') {
+    return collectOperationalOverlayForCatalogId(overlayId) ?? undefined
   }
   return undefined
 }
@@ -811,7 +798,8 @@ export function useProgramParticipantApplicationEditor(
   if (active && draftHydrateKey !== editorHydrateKey) {
     if (draftHydrateKey != null && draft.paragraphs.length > 0) {
       const previousVariant = overlayVariantRef.current
-      const overlay = collectParticipantOverlayForVariant(previousVariant)
+      const previousPersistId = draftHydrateKey.split('::')[0]
+      const overlay = collectParticipantOverlayForVariant(previousVariant, previousPersistId)
       sessionDraftCacheRef.current.set(draftHydrateKey, {
         draft,
         overlay,
@@ -865,6 +853,7 @@ export function useProgramParticipantApplicationEditor(
     /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
     let cancelled = false
     const templateId = editorHydrateTemplateId
+    setOperationalOverlayScope(templateId)
     const hydrateKey = editorHydrateKey
     const clearOverlaysOnHydrate = consumeWizardContentResetPending()
     const replaceHydratedOverlay = clearOverlaysOnHydrate || !usesRegistrationWizardDraft
@@ -902,7 +891,9 @@ export function useProgramParticipantApplicationEditor(
         )
         restoreUjatVolunteerRecruitGeneralStoreSidecar(volunteerCached)
       } else {
-        restoreParticipantOverlayForVariant(variant, cached.overlay)
+        restoreParticipantOverlayForVariant(variant, cached.overlay, {
+          persistTemplateId: templateId,
+        })
         applyParticipantApplicationEditorState({
           variant,
           editorState: cached.editorState,
@@ -919,6 +910,15 @@ export function useProgramParticipantApplicationEditor(
     }
 
     const preferSessionCache = cached != null && cacheIsHydrated && !clearOverlaysOnHydrate
+
+    if (!usesRegistrationWizardDraft && !preferSessionCache) {
+      restoreParticipantOverlayForVariant(variant, undefined, {
+        resetIfMissing: true,
+        replace: true,
+        persistTemplateId: templateId,
+      })
+      commitRecruitDetailContentReset()
+    }
 
     const loadOptions = {
       localOnly: localOnlyDraftPersistence,
@@ -1032,6 +1032,22 @@ export function useProgramParticipantApplicationEditor(
           if (variant === 'ujat-recruit-volunteer') {
             restoreUjatVolunteerRecruitGeneralStoreSidecar(volunteerLegacy)
           }
+        } else if (replaceHydratedOverlay) {
+          if (variant === 'ujat-recruit-institution') {
+            replaceUjatRecruitInstitutionOverlay({})
+            replaceRecruitDetailInfoIntoGeneralStore(
+              undefined,
+              recruitDetailInfoOverlayPrefixForEditorVariant(variant)
+            )
+          } else {
+            replaceUjatRecruitVolunteerOverlay({})
+            replaceRecruitDetailInfoIntoGeneralStore(
+              undefined,
+              recruitDetailInfoOverlayPrefixForEditorVariant(variant)
+            )
+            replaceUjatVolunteerRecruitGeneralStoreSidecar(undefined)
+          }
+          commitRecruitDetailContentReset()
         }
         storageHydratedTemplateIdsRef.current.add(hydrateKey)
       })
@@ -1059,6 +1075,7 @@ export function useProgramParticipantApplicationEditor(
           restoreParticipantOverlayForVariant(variant, saved.overlay, {
             resetIfMissing: replaceHydratedOverlay,
             replace: replaceHydratedOverlay,
+            persistTemplateId: templateId,
           })
           if (replaceHydratedOverlay) commitRecruitDetailContentReset()
           applyParticipantApplicationEditorState({
@@ -1081,6 +1098,14 @@ export function useProgramParticipantApplicationEditor(
           setUjatApplicationGradeByBlockId({})
           setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
         }
+        if (replaceHydratedOverlay) {
+          restoreParticipantOverlayForVariant(variant, undefined, {
+            resetIfMissing: true,
+            replace: true,
+            persistTemplateId: templateId,
+          })
+          commitRecruitDetailContentReset()
+        }
         storageHydratedTemplateIdsRef.current.add(hydrateKey)
       })
     }
@@ -1098,7 +1123,7 @@ export function useProgramParticipantApplicationEditor(
           ? { ...getUjatRecruitInstitutionOverlayRecord() }
           : variant === 'ujat-recruit-volunteer'
             ? { ...getUjatRecruitVolunteerOverlayRecord() }
-            : collectParticipantOverlayForVariant(variant)
+            : collectParticipantOverlayForVariant(variant, templateId)
       const hasOverlayValues = overlay != null && Object.keys(overlay).length > 0
       // hydrate 완료 전 cleanup(Strict Mode 등)은 시드+빈 overlay로 캐시를 오염시키지 않음
       if (!storageHydratedTemplateIdsRef.current.has(hydrateKey) && !hasOverlayValues) return
@@ -1194,6 +1219,8 @@ export function useProgramParticipantApplicationEditor(
     if (!active) {
       // 등록 위저드: 일반과 같이 모집/신청 overlay는 모달이 닫힐 때까지 유지
       if (!keepSessionCacheAcrossParticipantDeactivate) {
+        beginRecruitDetailContentReset()
+        resetOperationalOverlayForCatalogId(editorHydrateTemplateId)
         if (variant === 'ujat-recruit-institution') resetUjatRecruitInstitutionOverlay()
         if (variant === 'ujat-recruit-volunteer') resetUjatRecruitVolunteerOverlay()
         if (variant === 'gemini-recruit') {
@@ -1201,10 +1228,18 @@ export function useProgramParticipantApplicationEditor(
         }
         if (variant === 'ujat-application-institution') resetUjatApplicationInstitutionOverlay()
         if (variant === 'ujat-application-volunteer') resetUjatApplicationVolunteerOverlay()
+        commitRecruitDetailContentReset()
+        consumeWizardContentResetPending()
       }
       closeWritingUserPreview()
     }
-  }, [active, closeWritingUserPreview, keepSessionCacheAcrossParticipantDeactivate, variant])
+  }, [
+    active,
+    closeWritingUserPreview,
+    editorHydrateTemplateId,
+    keepSessionCacheAcrossParticipantDeactivate,
+    variant,
+  ])
 
   const updateParagraph = useCallback(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
@@ -1798,7 +1833,7 @@ export function useProgramParticipantApplicationEditor(
           ujatApplicationGradeByBlockId,
           ujatGradeClassTimeBlockIds,
         })
-        const overlay = collectParticipantOverlayForVariant(variant)
+        const overlay = collectParticipantOverlayForVariant(variant, templateId)
         const { persistRegistrationWizardFormDraft } = await import(
           '@/features/program/general/lib/registration-wizard-form-draft'
         )
@@ -1811,7 +1846,7 @@ export function useProgramParticipantApplicationEditor(
         })
       } else if (variant === 'ujat-recruit-institution') {
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-        const overlay = collectParticipantOverlayForVariant(variant) ?? {}
+        const overlay = collectParticipantOverlayForVariant(variant, templateId) ?? {}
         await persistBoundForm({
           draft,
           overlay,
@@ -1829,7 +1864,7 @@ export function useProgramParticipantApplicationEditor(
         }
       } else if (variant === 'ujat-recruit-volunteer') {
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-        const overlay = collectParticipantOverlayForVariant(variant) ?? {}
+        const overlay = collectParticipantOverlayForVariant(variant, templateId) ?? {}
         await persistBoundForm({
           draft,
           overlay,
@@ -1855,7 +1890,7 @@ export function useProgramParticipantApplicationEditor(
           ujatGradeClassTimeBlockIds,
         })
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-        const overlay = collectParticipantOverlayForVariant(variant)
+        const overlay = collectParticipantOverlayForVariant(variant, templateId)
         await persistBoundForm({
           draft,
           editorState,

@@ -1,15 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { collectOperationalOverlayForCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { resetAllOperationalOverlayStores } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   getGeneralRecruitOverlayRecord,
   getGeneralRecruitOverlayVersion,
   patchGeneralRecruitOverlay,
+  peekGeneralRecruitOverlayRecord,
   resetGeneralRecruitOverlay,
+  resetGeneralRecruitOverlayStoreForTests,
+  setGeneralRecruitOverlayScope,
   subscribeGeneralRecruitOverlayKey,
   updateGeneralRecruitOverlayKey,
 } from './general-recruit-overlay-sync'
 
 afterEach(() => {
-  resetGeneralRecruitOverlay()
+  resetGeneralRecruitOverlayStoreForTests()
 })
 
 describe('general-recruit-overlay-sync', () => {
@@ -45,5 +50,48 @@ describe('general-recruit-overlay-sync', () => {
 
     unsubTitle()
     unsubOther()
+  })
+
+  it('isolates values by templateCode and keeps persist keys unprefixed', () => {
+    setGeneralRecruitOverlayScope('recruitment-instructor-custom-01')
+    patchGeneralRecruitOverlay({
+      'recruitInstructor.detailInfo.programDescription': '<p>A 상세</p>',
+    })
+
+    setGeneralRecruitOverlayScope('recruitment-instructor-custom-02')
+    expect(getGeneralRecruitOverlayRecord()['recruitInstructor.detailInfo.programDescription']).toBe(
+      undefined
+    )
+
+    setGeneralRecruitOverlayScope('recruitment-instructor-custom-01')
+    expect(getGeneralRecruitOverlayRecord()['recruitInstructor.detailInfo.programDescription']).toBe(
+      '<p>A 상세</p>'
+    )
+
+    const overlay = collectOperationalOverlayForCatalogId('recruitment-instructor-custom-01')
+    expect(overlay).toEqual({
+      'recruitInstructor.detailInfo.programDescription': '<p>A 상세</p>',
+    })
+    expect(Object.keys(overlay ?? {}).some(key => key.includes('custom-01'))).toBe(false)
+    expect(peekGeneralRecruitOverlayRecord('recruitment-instructor-custom-02')).toEqual({})
+  })
+
+  it('신규 등록 진입 시 이전 위저드의 비활성 모집 버킷까지 비운다', () => {
+    setGeneralRecruitOverlayScope('recruitment-instructor')
+    patchGeneralRecruitOverlay({ 'recruitInstructor.title': '이전 등록' })
+    setGeneralRecruitOverlayScope('recruitment-volunteer')
+    patchGeneralRecruitOverlay({ 'recruitVolunteer.title': '이전 봉사자' })
+    resetGeneralRecruitOverlay()
+    expect(peekGeneralRecruitOverlayRecord('recruitment-instructor')['recruitInstructor.title']).toBe(
+      '이전 등록'
+    )
+
+    resetAllOperationalOverlayStores()
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-instructor')['recruitInstructor.title']
+    ).toBeUndefined()
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-volunteer')['recruitVolunteer.title']
+    ).toBeUndefined()
   })
 })
