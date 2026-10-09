@@ -9,10 +9,10 @@ import {
   cancelMockEducationApplication,
   educationApplicationDetailPath,
   EducationApplicationContent,
+  resolvePreferredEducationScheduleDisplayLabel,
   EducationCancelConfirm,
   EducationDetailBack,
   EducationDetailHeader,
-  EducationSchedulePanel,
   EducationSettlementPanel,
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
@@ -23,6 +23,7 @@ import {
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
   MYPAGE_VOLUNTEER_PATH,
+  resolveVolunteerActivityDetailCase,
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
@@ -156,14 +157,14 @@ export function MypageVolunteerDetailPage() {
 
   const activityTabOptions = useMemo(
     () =>
-      program
+      program && application
         ? {
-            detailCase: program.detailCase,
+            detailCase: resolveVolunteerActivityDetailCase(application.detailCase),
             surveyConfigured: program.surveyConfigured,
             satisfactionConfigured: program.satisfactionConfigured,
           }
         : null,
-    [program],
+    [application, program],
   )
 
   const inProgressTabItems = useMemo(
@@ -340,11 +341,18 @@ export function MypageVolunteerDetailPage() {
       ? (withdrawnDuringKeys[0] ?? 'schedule')
       : (inProgressKeys[0] ?? 'notice')
 
+  const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
+    preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
+    preferredScheduleOptionValues: application.preferredScheduleOptionValues,
+    educationScheduleLines: program.educationScheduleLines,
+    schedules: program.eventSchedules,
+  })
+
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
       <EducationApplicationContent
         selfIntroMotivation={application.selfIntroMotivation}
-        preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+        preferredEducationScheduleLabel={preferredEducationScheduleLabel}
       />
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
@@ -358,7 +366,7 @@ export function MypageVolunteerDetailPage() {
         <VolunteerNoticePanel
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
-          preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+          preferredEducationScheduleLabel={preferredEducationScheduleLabel}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
@@ -368,22 +376,11 @@ export function MypageVolunteerDetailPage() {
       )
     }
     if (active === 'schedule') {
-      if (remoteDetailEnabled) {
-        return (
-          <EducationSchedulePanel
-            programId={program.id}
-            applicationType={routeApplicationType}
-            applicationId={application.id}
-            lastParticipatedSession={
-              isWithdrawnDuring ? application.lastParticipatedSession : undefined
-            }
-            listTitle="배정현황"
-          />
-        )
-      }
       return (
         <VolunteerAssignmentPanel
           programAudience={program.programAudience}
+          applicationType={routeApplicationType}
+          applicationId={application.id}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
