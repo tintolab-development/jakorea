@@ -7,15 +7,19 @@
 
 `apps/cms/docs/api/general-instructor-approve-preferred-schedule-not-osa-backend-request-2026-10-09.md`
 
+> **결과 (2026-10-09):** BE가 희망 일정 스코프로 정렬했고 FE 핸드오프를 냈다.  
+> FE 「할 일」1–4는 이미 반영됨. 로컬은 Flyway `V26__…` 적용 후 bootRun 재시작 → program `186068` 강사승인 재현으로 연동 확인.
+
 | 항목 | 값 |
 |------|-----|
 | 작성일 | 2026-10-09 |
-| 상태 | **BE 계약 정렬 요청** (FE: OSA 사전 필터 제거 완료) |
+| 상태 | **반영 완료 (BE 핸드오프 수신)** — 추가 BE 작업 불필요 |
 | 대상 | CMS 백엔드 `JABACK` (`localhost:8080`) |
-| 우선순위 | **P0** (강사 승인 모달·approve가 기획과 불일치) |
+| 우선순위 | ~~P0~~ 완료 |
 | 프로그램 유형 | **`GENERAL_ORGANIZATION`만** — UJAT·1사1교와 섞지 마라 |
 | 재현 | programId `186068`, 기관 `1691189`(강서초, 승인·희망 10/23·10/30), 강사신청 `1694641` |
-| 관련 BE 핸드오프 (재검토) | `JABACK/docs/frontend/instructor-approve-organization-schedule-scope-frontend-handoff-2026-10-09.md` |
+| BE 핸드오프 (SSOT) | `JABACK/docs/frontend/general-instructor-approve-preferred-schedule-scope-frontend-handoff-2026-10-09.md` |
+| 폐기된 이전 핸드오프 | `instructor-approve-organization-schedule-scope-frontend-handoff-2026-10-09.md` (활성 OSA만 선택지) |
 
 ---
 
