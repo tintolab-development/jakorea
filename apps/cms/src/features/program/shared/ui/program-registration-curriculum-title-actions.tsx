@@ -1,4 +1,3 @@
-import { ClockCircleOutlined } from '@ant-design/icons'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
   shouldAllowScheduleProgressGroupAdd,
@@ -14,7 +13,7 @@ import type {
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 
-import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
+import { ButtonAddIcon, ButtonClockIcon } from '@/shared/ui/icons/ButtonIcons'
 
 export type ProgramRegistrationCurriculumTitleActionsProps = {
   variant?: 'general' | 'trainedTeachers'
@@ -235,7 +234,7 @@ export function ProgramRegistrationCurriculumTitleActions({
           size="medium"
           width={160}
           disabled={groupAtMax}
-          icon={<ClockCircleOutlined aria-hidden />}
+          icon={<ButtonClockIcon />}
           onClick={e => {
             e.stopPropagation()
             if (groupAtMax) return

@@ -5,7 +5,6 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form'
-import { ClockCircleOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
@@ -178,7 +177,7 @@ import type { Dayjs } from 'dayjs'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import { GeneralProgramCommonInfoRegistrationEdit } from './common-info-registration-edit'
-import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
+import { ButtonAddIcon, ButtonClockIcon } from '@/shared/ui/icons/ButtonIcons'
 import './common-info-view.css'
 
 const PROGRAM_PROGRESS_STATIC_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
@@ -4194,7 +4193,7 @@ function ScheduleProgressEditSection({
                 disabled={
                   scheduleGroupCount >= PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
                 }
-                icon={<ClockCircleOutlined aria-hidden />}
+                icon={<ButtonClockIcon />}
                 onClick={handleAddGroup}
               >
                 진행 그룹 구분 추가
