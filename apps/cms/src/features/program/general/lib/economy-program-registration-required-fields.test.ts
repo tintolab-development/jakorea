@@ -7,14 +7,15 @@ import {
   listIncompleteEconomyProgramRegistrationRequiredFields,
 } from './economy-program-registration-required-fields'
 import {
-  replaceApplicantRecruitInstitutionOverlay,
-  resetApplicantRecruitInstitutionOverlay,
+  replaceApplicantRecruitInstitutionOverlayForScope,
+  resetApplicantRecruitInstitutionOverlayStoreForTests,
   APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS as RK,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
-  replaceGeneralRecruitOverlay,
-  resetGeneralRecruitOverlay,
+  replaceGeneralRecruitOverlayForScope,
+  resetGeneralRecruitOverlayStoreForTests,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { clearRegistrationStepTemplateSelections } from '@/features/program/shared/lib/step-template-selection'
 import {
   replaceGeneralApplicationOverlay,
   resetGeneralApplicationOverlay,
@@ -138,12 +139,13 @@ describe('economy registration required fields', () => {
 
 describe('economy recruitment required fields', () => {
   beforeEach(() => {
-    resetApplicantRecruitInstitutionOverlay()
-    resetGeneralRecruitOverlay()
+    resetApplicantRecruitInstitutionOverlayStoreForTests()
+    resetGeneralRecruitOverlayStoreForTests()
+    clearRegistrationStepTemplateSelections()
   })
 
   it('기관 모집만 채우면 완료 (상세 정보·썸네일 미입력 허용)', () => {
-    replaceApplicantRecruitInstitutionOverlay({
+    replaceApplicantRecruitInstitutionOverlayForScope('recruitment-economy', {
       [RK.announcementPublished]: 'published',
       [RK.maxAssignableInstructors]: 2,
       [RK.maxClassCount]: 4,
@@ -162,7 +164,7 @@ describe('economy recruitment required fields', () => {
   })
 
   it('dev autofill처럼 상세 썸네일이 null이어도 기관 모집만 채우면 완료', () => {
-    replaceApplicantRecruitInstitutionOverlay({
+    replaceApplicantRecruitInstitutionOverlayForScope('recruitment-economy', {
       [RK.announcementPublished]: 'published',
       [RK.maxAssignableInstructors]: 2,
       [RK.maxClassCount]: 4,
@@ -177,7 +179,7 @@ describe('economy recruitment required fields', () => {
       [RK.inquiryEmail]: 'a@b.com',
       [RK.notesNotApplicable]: true,
     })
-    replaceGeneralRecruitOverlay({
+    replaceGeneralRecruitOverlayForScope('recruitment-economy', {
       'economyRecruit.detailInfo.programDescription': '설명',
       'economyRecruit.detailInfo.recruitmentGuide': '안내',
       'economyRecruit.detailInfo.applicationMethod': '지원',

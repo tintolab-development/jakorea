@@ -25,6 +25,7 @@ import {
   applyOperationalOverlayForCatalogId,
   clearRegistrationOperationalFormDrafts,
   collectOperationalOverlayForCatalogId,
+  collectSelectedRecruitOverlaysForProgram,
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   listRegistrationOperationalFormDraftStorageKeys,
   persistRegistrationOperationalOverlaySnapshots,
@@ -110,6 +111,21 @@ describe('registration operational draft-owned helpers', () => {
         'recruit.detailInfo.additionalContentHtml'
       ]
     ).toBe('<p>에디터</p>')
+  })
+
+  it('collectSelectedRecruitOverlaysForProgram peeks the recruit bucket after application scope', () => {
+    setOperationalOverlayScope('recruitment-participant-individual')
+    patchGeneralRecruitOverlay({
+      'recruit.individual.inquiryContact': '박지훈',
+      'recruit.detailInfo.programDescription': '모집 설명',
+    })
+    setOperationalOverlayScope('application-participant-individual')
+    const overlay = collectSelectedRecruitOverlaysForProgram({
+      id: '100001',
+      generalParticipantTypes: ['individual'],
+    } as Program)
+    expect(overlay['recruit.individual.inquiryContact']).toBe('박지훈')
+    expect(overlay['recruit.detailInfo.programDescription']).toBe('모집 설명')
   })
 
   it('collects individual recruit detailInfo with participant fields', () => {

@@ -6,11 +6,13 @@ import {
 import {
   patchApplicantRecruitInstitutionOverlay,
   resetApplicantRecruitInstitutionOverlay,
+  setApplicantRecruitInstitutionOverlayScope,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
   patchGeneralRecruitOverlay,
-  resetGeneralRecruitOverlay,
+  setGeneralRecruitOverlayScope,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { resetAllOperationalOverlayStoresForTests } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import { buildGeneralProgramListRowFromRegistrationSnapshot } from './registration-local-save'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 
@@ -21,10 +23,17 @@ const organizationOnlyParticipant: ProgramRegistrationParticipantState = {
   volunteer: false,
 }
 
+const individualOnlyParticipant: ProgramRegistrationParticipantState = {
+  individual: true,
+  organization: false,
+  teacherInstructor: false,
+  volunteer: false,
+}
+
 beforeEach(() => {
+  resetAllOperationalOverlayStoresForTests()
   resetProgramRegistrationOverlay()
   resetApplicantRecruitInstitutionOverlay()
-  resetGeneralRecruitOverlay()
 })
 
 describe('buildGeneralProgramListRowFromRegistrationSnapshot — 세부 프로그램명 (버그 수정 확인, 일정형)', () => {
@@ -108,9 +117,11 @@ describe('buildGeneralProgramListRowFromRegistrationSnapshot — 세부 프로�
   })
 
   it('1사1교 — 참여 기관 모집 비고를 remarks로 반영한다', () => {
+    setGeneralRecruitOverlayScope('recruitment-economy')
     patchGeneralRecruitOverlay({
       'recruit.individual.notes': '일정은 학교 사정에 따라 조율할 수 있습니다.',
     })
+    setApplicantRecruitInstitutionOverlayScope('recruitment-economy')
     patchApplicantRecruitInstitutionOverlay({ 'recruit.notes': '테스토 비고' })
 
     const program = buildGeneralProgramListRowFromRegistrationSnapshot({
@@ -142,6 +153,40 @@ describe('buildGeneralProgramListRowFromRegistrationSnapshot — 세부 프로�
 
     expect(program.generalCommonInfo?.detailedProgramName).not.toBe(
       '일반 프로그램에서 고른 값 (무시되어야 함)'
+    )
+  })
+})
+
+describe('buildGeneralProgramListRowFromRegistrationSnapshot — 모집 overlay peek', () => {
+  it('신청 단계 스코프여도 선택된 모집 버킷 문의처·설명을 스냅샷에 남긴다', () => {
+    setGeneralRecruitOverlayScope('recruitment-participant-individual')
+    patchGeneralRecruitOverlay({
+      'recruit.individual.inquiryContact': '박지훈',
+      'recruit.detailInfo.programDescription':
+        '디지털 리터러시 교실은 학교에서 경제·금융 기초를 익히는 참여형 교육입니다.',
+    })
+    replaceProgramRegistrationOverlay({
+      'recruit.individual.inquiryContact': '',
+      'recruit.detailInfo.programDescription': '',
+    })
+    setGeneralRecruitOverlayScope('application-participant-individual')
+
+    const program = buildGeneralProgramListRowFromRegistrationSnapshot({
+      id: 'general-local-test-recruit-peek',
+      participant: individualOnlyParticipant,
+      programType: 'curriculum',
+      variant: 'general',
+    })
+
+    expect(program.registrationOverlay?.['recruit.individual.inquiryContact']).toBe('박지훈')
+    expect(program.registrationOverlay?.['recruit.detailInfo.programDescription']).toBe(
+      '디지털 리터러시 교실은 학교에서 경제·금융 기초를 익히는 참여형 교육입니다.'
+    )
+    expect(program.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName).toBe(
+      '박지훈'
+    )
+    expect(program.description).toBe(
+      '디지털 리터러시 교실은 학교에서 경제·금융 기초를 익히는 참여형 교육입니다.'
     )
   })
 })

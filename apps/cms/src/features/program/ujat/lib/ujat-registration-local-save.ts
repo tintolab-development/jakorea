@@ -16,12 +16,11 @@ import {
   pickUjatRecruitVolunteerOverlay,
   stampUjatVolunteerActivityTermsOnRounds,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
-import { getUjatRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
-import { getUjatRecruitVolunteerOverlayRecord } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
+import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { completeUjatRecruitDateSelections } from '@/features/program/ujat/lib/complete-recruit-date-selections'
-import { pickUjatVolunteerRecruitGeneralStoreSidecar } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 import { getUjatApplicationInstitutionOverlayRecord } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 import { getUjatApplicationVolunteerOverlayRecord } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
+
 export const UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'ujat-local-'
 
 const STORAGE_KEY = 'cms.jakorea.ujatRegistrationLocalSaves.v1'
@@ -61,6 +60,11 @@ function newLocalProgramId(): string {
   return `${UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}${uuid ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`
 }
 
+const UJAT_RECRUIT_SNAPSHOT_PROGRAM = {
+  id: 'ujat-registration-snapshot',
+  ujatProgressStatus: 'EDUCATION_SCHEDULED',
+} as Program
+
 /** 등록 공통 + 모집·신청 탭 overlay. 상세·formBindings가 같은 스냅샷을 보게 한다. */
 export function collectUjatRegistrationCreateOverlay(
   registrationOverlay: Record<string, unknown> = {}
@@ -68,10 +72,8 @@ export function collectUjatRegistrationCreateOverlay(
   return completeUjatRecruitDateSelections({
     ...getUjatApplicationInstitutionOverlayRecord(),
     ...getUjatApplicationVolunteerOverlayRecord(),
-    ...getUjatRecruitInstitutionOverlayRecord(),
-    ...getUjatRecruitVolunteerOverlayRecord(),
-    ...pickUjatVolunteerRecruitGeneralStoreSidecar(),
     ...registrationOverlay,
+    ...collectSelectedRecruitOverlaysForProgram(UJAT_RECRUIT_SNAPSHOT_PROGRAM),
   })
 }
 

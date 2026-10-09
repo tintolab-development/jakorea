@@ -19,6 +19,7 @@ export function subscribeUjatRecruitInstitutionOverlay(listener: () => void): ()
 export function getUjatRecruitInstitutionOverlayVersion(): number {
   return store.getVersion()
 }
+/** UI·활성 스코프 전용. persist/create 스냅샷에는 `collectSelectedRecruitOverlaysForProgram` / `collectOperationalOverlayForCatalogId`를 쓴다. */
 export function getUjatRecruitInstitutionOverlayRecord(): Record<string, unknown> {
   return store.getRecord()
 }

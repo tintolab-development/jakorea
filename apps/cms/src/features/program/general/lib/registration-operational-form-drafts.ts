@@ -493,6 +493,23 @@ export function collectOperationalOverlayForCatalogId(
   return overlayRecordForKind(kind, catalogTemplateId)
 }
 
+/**
+ * 등록 완료 스냅샷용 — 지금 선택된 모집 양식 버킷만 peek.
+ * 활성 스코프(`getRecord`)는 신청 단계로 넘어가면 비므로 persist에 쓰지 않는다.
+ */
+export function collectSelectedRecruitOverlaysForProgram(
+  program: Program
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = {}
+  for (const spec of listVisibleOperationalFormSpecs(program)) {
+    if (spec.formType !== 'RECRUITMENT') continue
+    const overlay = collectOperationalOverlayForCatalogId(spec.templateCode)
+    if (overlay == null) continue
+    Object.assign(merged, overlay)
+  }
+  return merged
+}
+
 export function applyOperationalOverlayForCatalogId(
   catalogTemplateId: string,
   overlay: Record<string, unknown> | undefined

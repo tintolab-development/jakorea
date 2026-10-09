@@ -10,7 +10,6 @@ import {
   syncInstitutionApplicationPreferredEducationFormFromOverlay,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { clearOperationalSeedDefaultSuppression } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
-import { beginRecruitDetailContentReset } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { resetAllOperationalOverlayStores } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
@@ -92,7 +91,6 @@ const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
 function resetGeneralRegistrationWizardMemory(): void {
   clearOperationalSeedDefaultSuppression()
   resetInstitutionApplicationProgramBridge()
-  beginRecruitDetailContentReset()
   resetAllOperationalOverlayStores()
 }
 
@@ -587,6 +585,7 @@ export function useGeneralProgramRegistrationFlow(
           sessionRoundType: registrationVm.sessionRoundType,
           educationScheduleMode: registrationVm.educationScheduleMode,
           volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+          registrationProgramType: programType,
         }
         const recruitIncompleteKeys =
           registrationFormVariant === 'economy'
@@ -617,6 +616,7 @@ export function useGeneralProgramRegistrationFlow(
       participantFlags,
       participantVm.volunteerExceptionScheduleCount,
       phase,
+      programType,
       registrationFormVariant,
       options,
       registrationVm,
