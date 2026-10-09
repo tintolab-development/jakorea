@@ -83,13 +83,20 @@ export function ParagraphFileUpload({
   }
 
   const hasFiles = Array.isArray(fileNames) && fileNames.length > 0
+  const interactionLocked = disabled
 
   return (
     <div
-      className={['paragraph-file-upload', className].filter(Boolean).join(' ')}
+      className={[
+        'paragraph-file-upload',
+        interactionLocked ? 'paragraph-file-upload--locked' : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={style}
     >
-      {!disabled ? (
+      {!interactionLocked ? (
         <input
           ref={inputRef}
           type="file"
@@ -108,7 +115,7 @@ export function ParagraphFileUpload({
               key={`${index}-${name}`}
               fileName={name}
               onRemove={
-                onRemoveFile && !disabled
+                onRemoveFile && !interactionLocked
                   ? event => {
                       event.stopPropagation()
                       onRemoveFile(index)
@@ -127,8 +134,11 @@ export function ParagraphFileUpload({
           variant="secondary"
           size="h32"
           type="button"
-          disabled={disabled}
-          onClick={() => inputRef.current?.click()}
+          aria-disabled={interactionLocked || undefined}
+          onClick={() => {
+            if (interactionLocked) return
+            inputRef.current?.click()
+          }}
         >
           {buttonLabel}
         </CmsButton>

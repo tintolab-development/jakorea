@@ -1,0 +1,16 @@
+.paragraph-body-static-text {
+  display: inline-block;
+  width: 100%;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.paragraph-body-static-text--placeholder {
+  color: var(--gray-85969-d, #85969d);
+}

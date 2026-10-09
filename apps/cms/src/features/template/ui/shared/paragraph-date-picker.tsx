@@ -86,6 +86,8 @@ interface ParagraphDatePickerBaseProps {
   className?: string
   style?: CSSProperties
   disabled?: boolean
+  /** 입력 불가·열림 차단. disabled와 달리 회색 비활성 스킨을 쓰지 않는다(템플릿 편집 비선택 단락). */
+  readOnly?: boolean
   /** true를 반환하는 날짜는 캘린더에서 비활성화하고 선택을 막는다. */
   disabledDate?: (date: Dayjs) => boolean
 }
@@ -200,6 +202,7 @@ interface ParagraphDatePickerSingleInnerProps {
   width?: number | string
   inputSize?: CmsControlSize
   disabled?: boolean
+  readOnly?: boolean
   disabledDate?: (date: Dayjs) => boolean
   appliedSurfaceRange?: [Dayjs, Dayjs] | null
   appliedSurfaceWithTime?: boolean
@@ -228,6 +231,7 @@ function ParagraphDatePickerSingleInner({
   width,
   inputSize = 'medium',
   disabled,
+  readOnly,
   disabledDate,
   appliedSurfaceRange,
   appliedSurfaceWithTime = false,
@@ -407,8 +411,10 @@ function ParagraphDatePickerSingleInner({
       ? effectivePlaceholder
       : triggerDisplayText
 
+  const locked = Boolean(disabled || readOnly)
+
   const handleOpen = () => {
-    if (disabled) return
+    if (locked) return
 
     const allowSurfaceRestore = presetMode === 'period' || presetMode === 'schedule' || customizable
     const surfaceHasDisabledDate =
@@ -622,17 +628,18 @@ function ParagraphDatePickerSingleInner({
   const triggerShellProps = {
     ref: triggerRef,
     role: 'button' as const,
-    tabIndex: disabled ? -1 : 0,
-    'aria-disabled': disabled,
+    tabIndex: locked ? -1 : 0,
+    'aria-disabled': locked,
+    'aria-readonly': readOnly && !disabled ? true : undefined,
     'aria-haspopup': 'dialog' as const,
     'aria-expanded': open,
     'aria-controls': open ? panelId : undefined,
     onClick: () => {
-      if (disabled) return
+      if (locked) return
       handleOpen()
     },
     onKeyDown: (event: KeyboardEvent) => {
-      if (disabled) return
+      if (locked) return
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
         handleOpen()
@@ -648,7 +655,8 @@ function ParagraphDatePickerSingleInner({
           className={cn(
             'paragraph-date-picker__trigger',
             'paragraph-date-picker__trigger--dual-shell',
-            disabled && 'paragraph-date-picker__trigger--disabled'
+            disabled && 'paragraph-date-picker__trigger--disabled',
+            readOnly && !disabled && 'paragraph-date-picker__trigger--readonly'
           )}
           aria-label={dualTriggerAriaLabel}
         >
@@ -672,7 +680,8 @@ function ParagraphDatePickerSingleInner({
           className={cn(
             'paragraph-date-picker__trigger',
             `paragraph-date-picker__trigger--${inputSize}`,
-            disabled && 'paragraph-date-picker__trigger--disabled'
+            disabled && 'paragraph-date-picker__trigger--disabled',
+            readOnly && !disabled && 'paragraph-date-picker__trigger--readonly'
           )}
           style={{ ...triggerWidthStyle }}
           aria-label={triggerAriaLabel}
@@ -809,6 +818,7 @@ function ParagraphDatePickerRangeBridge({
   width,
   inputSize,
   disabled,
+  readOnly,
   disabledDate,
 }: {
   rootRef: RefObject<HTMLDivElement | null>
@@ -818,6 +828,7 @@ function ParagraphDatePickerRangeBridge({
   width?: number | string
   inputSize?: CmsControlSize
   disabled?: boolean
+  readOnly?: boolean
   disabledDate?: (date: Dayjs) => boolean
 }) {
   const valueRef = useRef(value)
@@ -856,6 +867,7 @@ function ParagraphDatePickerRangeBridge({
       width={width}
       inputSize={inputSize}
       disabled={disabled}
+      readOnly={readOnly}
       disabledDate={disabledDate}
       appliedSurfaceRange={appliedSurfaceRange}
       appliedSurfaceWithTime={false}
@@ -866,7 +878,7 @@ function ParagraphDatePickerRangeBridge({
 }
 
 export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
-  const { label, className, style, disabled } = props
+  const { label, className, style, disabled, readOnly } = props
   const rootRef = useRef<HTMLDivElement>(null)
 
   const singlePresetMode =
@@ -896,6 +908,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           width={resolvedWidth}
           inputSize={props.inputSize}
           disabled={disabled}
+          readOnly={readOnly}
           disabledDate={props.disabledDate}
         />
       ) : (
@@ -910,6 +923,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           width={resolvedWidth}
           inputSize={props.inputSize}
           disabled={disabled}
+          readOnly={readOnly}
           disabledDate={props.disabledDate}
           appliedSurfaceRange={props.appliedSurfaceRange}
           appliedSurfaceWithTime={props.appliedSurfaceWithTime}

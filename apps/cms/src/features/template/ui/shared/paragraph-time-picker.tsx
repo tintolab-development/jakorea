@@ -31,6 +31,8 @@ export interface ParagraphTimePickerProps {
   onTimeRangeChange?: (range: [Dayjs, Dayjs]) => void
   placeholder?: string
   disabled?: boolean
+  /** 입력 불가·열림 차단. disabled와 달리 회색 비활성 스킨을 쓰지 않는다. */
+  readOnly?: boolean
   className?: string
   style?: CSSProperties
   width?: number | string
@@ -51,6 +53,7 @@ export function ParagraphTimePicker({
   onTimeRangeChange,
   placeholder = '시간 선택',
   disabled,
+  readOnly,
   className,
   style,
   width,
@@ -143,8 +146,10 @@ export function ParagraphTimePicker({
     setEMin(String(end.minute()))
   }, [])
 
+  const locked = Boolean(disabled || readOnly)
+
   const handleOpen = () => {
-    if (disabled) return
+    if (locked) return
     if (surfaceTimeRange) {
       populateDraftFromRange(surfaceTimeRange[0], surfaceTimeRange[1])
       setEndTimeOn(true)
@@ -203,6 +208,7 @@ export function ParagraphTimePicker({
           hasExplicitWidth && 'cms-datepicker--explicit-width',
           disabled && 'cms-datepicker--disabled',
           disabled && 'cms-field__box--disabled',
+          readOnly && !disabled && 'cms-datepicker--readonly',
           className
         )}
         style={{ ...widthStyle, ...style }}
@@ -210,8 +216,14 @@ export function ParagraphTimePicker({
         <button
           ref={triggerRef}
           type="button"
-          className="paragraph-time-picker__trigger"
+          className={cn(
+            'paragraph-time-picker__trigger',
+            readOnly && !disabled && 'paragraph-time-picker__trigger--readonly'
+          )}
           disabled={disabled}
+          aria-disabled={locked}
+          aria-readonly={readOnly && !disabled ? true : undefined}
+          tabIndex={locked ? -1 : 0}
           onClick={handleOpen}
           aria-haspopup="dialog"
           aria-expanded={open}

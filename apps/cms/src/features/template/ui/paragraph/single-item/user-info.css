@@ -5,6 +5,10 @@
   width: 100%;
 }
 
+.user-info-grid--non-interactive {
+  pointer-events: none;
+}
+
 @media (max-width: 1280px) {
   .user-info-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
