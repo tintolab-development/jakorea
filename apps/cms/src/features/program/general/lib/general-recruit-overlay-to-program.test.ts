@@ -201,6 +201,45 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     )
   })
 
+  it('maps individual participant final announce and announcement published from overlay', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const overlay: Record<string, unknown> = {
+      [keys.individual.announcementPublished]: 'unpublished',
+      [keys.individual.finalAnnounceIso]: '2026-05-01T00:00:00+09:00',
+      [keys.individual.finalAnnounceMethod]: '문자 안내',
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(baseProgram(), overlay, {
+      preferOverlay: true,
+    })
+
+    const participantInfo = next.generalCommonInfo?.participantRecruitmentInfo
+    expect(participantInfo?.announcementPublished).toBe(false)
+    expect(participantInfo?.announcementPublishedLabel).toBe('미게시')
+    expect(participantInfo?.finalAnnouncementLabel).toContain('2026')
+    expect(participantInfo?.finalAnnouncementLabel).toContain('문자 안내')
+    expect(next.resultAnnouncementDate).toBe('2026-05-01T00:00:00+09:00')
+    expect(next.resultAnnouncementMethod).toBe('문자 안내')
+  })
+
+  it('maps instructor final pass announcement from overlay to nested info and program columns', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const overlay: Record<string, unknown> = {
+      [keys.instructor.finalAnnounceIso]: '2026-04-01T00:00:00+09:00',
+      [keys.instructor.finalAnnounceMethod]: '홈페이지 공지 및 개별 연락',
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(baseProgram(), overlay, {
+      preferOverlay: true,
+    })
+
+    const instructorInfo = next.generalCommonInfo?.instructorRecruitmentInfo
+    expect(instructorInfo?.finalAnnouncementLabel).toContain('2026')
+    expect(instructorInfo?.finalAnnouncementLabel).toContain('홈페이지 공지 및 개별 연락')
+    expect(next.finalPassAnnouncementDate).toBe('2026-04-01T00:00:00+09:00')
+    expect(next.finalPassAnnouncementMethod).toBe('홈페이지 공지 및 개별 연락')
+  })
+
   it('maps volunteer announcement, interview flags, final announce, and interview schedule', () => {
     const keys = GENERAL_RECRUIT_OVERLAY_KEYS
     const slotStart = dayjs().startOf('day').hour(9).minute(0).second(0).millisecond(0)
