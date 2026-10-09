@@ -280,6 +280,24 @@ function TextbookEducationField({ half }: { half: UjatHalfSemesterKey }) {
   )
 }
 
+function UjatScheduleNameField({
+  overlayKey,
+  fallback,
+}: {
+  overlayKey: string
+  fallback: string
+}) {
+  const [scheduleName, setScheduleName] = useUjatProgramRegistrationOverlayKv(overlayKey, fallback)
+  return (
+    <CmsInput
+      inputSize="medium"
+      width="100%"
+      value={scheduleName}
+      onChange={event => setScheduleName(event.target.value)}
+    />
+  )
+}
+
 function UjatPreEducationBlock({
   half,
   mode,
@@ -290,10 +308,6 @@ function UjatPreEducationBlock({
   viewRow: UjatHalfScheduleTableRow
 }) {
   const keys = ujatHalfScheduleOverlayKeys(half)
-  const [scheduleName, setScheduleName] = useUjatProgramRegistrationOverlayKv(
-    keys.preName,
-    '사전교육(발대식)'
-  )
 
   return (
     <div className="half-education-schedule__block half-education-schedule__block--first">
@@ -311,12 +325,7 @@ function UjatPreEducationBlock({
             view={viewRow.scheduleName}
             edit={
               mode === 'edit' ? (
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  value={scheduleName}
-                  onChange={e => setScheduleName(e.target.value)}
-                />
+                <UjatScheduleNameField overlayKey={keys.preName} fallback="사전교육(발대식)" />
               ) : undefined
             }
           />
@@ -367,10 +376,6 @@ function UjatEventScheduleBlock({
   viewRow: UjatHalfScheduleTableRow
 }) {
   const keys = ujatHalfScheduleOverlayKeys(half)
-  const [scheduleName, setScheduleName] = useUjatProgramRegistrationOverlayKv(
-    keys.eventName,
-    '교육 진행'
-  )
   const [seal, setSeal] = useUjatProgramRegistrationOverlayKv<UjatHalfEventRangeSeal>(
     keys.eventRange,
     EMPTY_UJAT_HALF_EVENT_RANGE_SEAL
@@ -396,12 +401,7 @@ function UjatEventScheduleBlock({
             view={viewRow.scheduleName}
             edit={
               mode === 'edit' ? (
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  value={scheduleName}
-                  onChange={e => setScheduleName(e.target.value)}
-                />
+                <UjatScheduleNameField overlayKey={keys.eventName} fallback="교육 진행" />
               ) : undefined
             }
           />
@@ -455,10 +455,6 @@ function UjatClosingCeremonyBlock({
   viewRow: UjatHalfScheduleTableRow
 }) {
   const keys = ujatHalfScheduleOverlayKeys(half)
-  const [scheduleName, setScheduleName] = useUjatProgramRegistrationOverlayKv(
-    keys.closingName,
-    '해단식'
-  )
 
   return (
     <div className="half-education-schedule__block">
@@ -475,12 +471,7 @@ function UjatClosingCeremonyBlock({
             view={viewRow.scheduleName}
             edit={
               mode === 'edit' ? (
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  value={scheduleName}
-                  onChange={e => setScheduleName(e.target.value)}
-                />
+                <UjatScheduleNameField overlayKey={keys.closingName} fallback="해단식" />
               ) : undefined
             }
           />

@@ -59,6 +59,63 @@ const EMPTY_SCHEDULE_EVENT_ASSIGNMENT: ScheduleEventAssignmentValue = {
 }
 
 const PRE_EDUCATION_DETAIL_INDEX = 0
+const EMPTY_EVENT_NAME_BY_DETAIL: Record<number, string> = {}
+const SCHEDULE_EVENT_NAME_KEY = 'generalRegistration.educationScheduleCurriculum.eventNameByDetail'
+const SCHEDULE_PRE_EDUCATION_NAME_KEY =
+  'generalRegistration.educationScheduleCurriculum.preEducationName'
+
+function ScheduleEventNameInput({
+  detailIndex,
+  disabled = false,
+  placeholder,
+  forcedValue,
+}: {
+  detailIndex: number
+  disabled?: boolean
+  placeholder: string
+  forcedValue?: string
+}) {
+  const [eventNameByDetail] = useProgramRegistrationOverlayKv<Record<number, string>>(
+    SCHEDULE_EVENT_NAME_KEY,
+    EMPTY_EVENT_NAME_BY_DETAIL
+  )
+  return (
+    <CmsInput
+      inputSize="medium"
+      placeholder={placeholder}
+      width="100%"
+      style={{ minWidth: 0, flex: '1 1 0' }}
+      value={forcedValue ?? eventNameByDetail[detailIndex] ?? ''}
+      disabled={disabled}
+      onChange={event => {
+        if (disabled) return
+        const nextValue = event.target.value
+        updateProgramRegistrationOverlayKey<Record<number, string>>(SCHEDULE_EVENT_NAME_KEY, prev => {
+          const current = prev ?? EMPTY_EVENT_NAME_BY_DETAIL
+          if ((current[detailIndex] ?? '') === nextValue) return current
+          return { ...current, [detailIndex]: nextValue }
+        })
+      }}
+    />
+  )
+}
+
+function SchedulePreEducationNameInput({ fallback }: { fallback: string }) {
+  const [preEducationName, setPreEducationName] = useProgramRegistrationOverlayKv(
+    SCHEDULE_PRE_EDUCATION_NAME_KEY,
+    fallback
+  )
+  return (
+    <CmsInput
+      inputSize="medium"
+      value={preEducationName}
+      placeholder="행사 일정명을 작성하세요"
+      width="100%"
+      style={{ minWidth: 0, flex: '1 1 0' }}
+      onChange={event => setPreEducationName(event.target.value)}
+    />
+  )
+}
 
 function reindexDetailRecordAfterDelete<T>(
   record: Record<number, T>,
@@ -284,21 +341,13 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     'generalRegistration.educationScheduleCurriculum.participationByDetail',
     {}
   )
-  const [eventNameByDetail] = useProgramRegistrationOverlayKv<Record<number, string>>(
-    'generalRegistration.educationScheduleCurriculum.eventNameByDetail',
-    {}
-  )
-
-  const [preEducationName, setPreEducationName] = useProgramRegistrationOverlayKv(
-    'generalRegistration.educationScheduleCurriculum.preEducationName',
-    preEducationBlockLabel
-  )
-
   // UI 기본 일정명을 overlay에 기록 — 미터치 시에도 등록 완료·검증에 반영
   useEffect(() => {
     if (!scheduleCurriculumPreEducation) return
-    setPreEducationName(preEducationName.trim() ? preEducationName : preEducationBlockLabel)
-  }, [scheduleCurriculumPreEducation]) // eslint-disable-line react-hooks/exhaustive-deps -- seed when toggle on
+    updateProgramRegistrationOverlayKey<string>(SCHEDULE_PRE_EDUCATION_NAME_KEY, prev =>
+      typeof prev === 'string' && prev.trim() ? prev : preEducationBlockLabel
+    )
+  }, [preEducationBlockLabel, scheduleCurriculumPreEducation])
 
   const setIpsForDetail = (detailIndex: number, next: ProgramRegistrationIpsTypeValue) => {
     updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationIpsTypeValue>>(
@@ -921,16 +970,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                 <DetailInfoForm.Field
                   label="일정명"
                   validationKey="scheduleCurriculum.preEducationName"
-                  edit={
-                    <CmsInput
-                      inputSize="medium"
-                      value={preEducationName}
-                      placeholder="행사 일정명을 작성하세요"
-                      width="100%"
-                      style={{ minWidth: 0, flex: '1 1 0' }}
-                      onChange={event => setPreEducationName(event.target.value)}
-                    />
-                  }
+                  edit={<SchedulePreEducationNameInput fallback={preEducationBlockLabel} />}
                   view="-"
                 />
                 <DetailInfoForm.Field
@@ -958,9 +998,6 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           const eventHeading = isTrainingDetail
             ? preEducationBlockLabel
             : `행사 일정 ${pad2(n)}`
-          const eventNameValue = isTrainingDetail
-            ? preEducationBlockLabel
-            : (eventNameByDetail[n] ?? '')
           return (
             <div key={n} className="program-registration-schedule-curriculum__block">
               {showEventHeadings || isTrainingDetail ? (
@@ -981,20 +1018,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                         label="일정명"
                         validationKey={`scheduleCurriculum.eventName[${n}]`}
                         edit={
-                          <CmsInput
-                            inputSize="medium"
-                            placeholder="행사 일정명을 작성하세요"
-                            width="100%"
-                            style={{ minWidth: 0, flex: '1 1 0' }}
-                            value={eventNameValue}
+                          <ScheduleEventNameInput
+                            detailIndex={n}
                             disabled={isTrainingDetail}
-                            onChange={event => {
-                              if (isTrainingDetail) return
-                              updateProgramRegistrationOverlayKey<Record<number, string>>(
-                                'generalRegistration.educationScheduleCurriculum.eventNameByDetail',
-                                prev => ({ ...(prev ?? {}), [n]: event.target.value })
-                              )
-                            }}
+                            placeholder="행사 일정명을 작성하세요"
+                            forcedValue={isTrainingDetail ? preEducationBlockLabel : undefined}
                           />
                         }
                         view="-"
@@ -1029,9 +1057,6 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
         const detailHeading = isTrainingDetail
           ? preEducationBlockLabel
           : `세부 일정 ${pad2(n)}`
-        const detailNameValue = isTrainingDetail
-          ? preEducationBlockLabel
-          : (eventNameByDetail[n] ?? '')
         return (
           <div key={n} className="program-registration-schedule-curriculum__block">
             {detailCount > 1 || scheduleCurriculumPreEducation || isTrainingDetail ? (
@@ -1053,23 +1078,15 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                       validationKey={`scheduleCurriculum.eventName[${n}]`}
                       fullRow
                       edit={
-                        <CmsInput
-                          inputSize="medium"
+                        <ScheduleEventNameInput
+                          detailIndex={n}
+                          disabled={isTrainingDetail}
                           placeholder={
                             groupCount > 1
                               ? '세부 일정명을 작성하세요'
                               : '일정 상세 내용을 작성하세요'
                           }
-                          width="100%"
-                          value={detailNameValue}
-                          disabled={isTrainingDetail}
-                          onChange={event => {
-                            if (isTrainingDetail) return
-                            updateProgramRegistrationOverlayKey<Record<number, string>>(
-                              'generalRegistration.educationScheduleCurriculum.eventNameByDetail',
-                              prev => ({ ...(prev ?? {}), [n]: event.target.value })
-                            )
-                          }}
+                          forcedValue={isTrainingDetail ? preEducationBlockLabel : undefined}
                         />
                       }
                       view="-"

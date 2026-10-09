@@ -26,6 +26,10 @@ import {
 
 const ASSIGN_ORG_PAGE_LIMIT = 40
 
+/**
+ * GENERAL 기관 강사 배정 후보 = 승인된 기관의 희망 일정(+ resolvedScheduleId).
+ * OSA(`schedule-assignments`) 선배정은 필수가 아니다 (노션 기획).
+ */
 async function fetchApprovedOrganizationApplicationsForLectureAssign(
   programId: string
 ): Promise<ApplicantSchoolRow[]> {
@@ -207,6 +211,11 @@ export function useInstructorLectureAssignModal(params: {
 
   const canConfirm = assignedItems.length > 0
 
+  const organizationSlotsEmptyText =
+    !isIndividual && organizationRemoteEnabled && organizationApplicationsQuery.isPending
+      ? '배정 가능한 기관·일정을 불러오는 중입니다.'
+      : '이 날짜에 배정 가능한 기관이 없습니다.'
+
   return {
     variant,
     isIndividual,
@@ -220,6 +229,7 @@ export function useInstructorLectureAssignModal(params: {
     individualRemote,
     individualSlotsLoading,
     individualSlotsError,
+    organizationSlotsEmptyText,
     preferredDateKeys,
     assignedDateKeys,
     assignedItems,

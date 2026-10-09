@@ -206,23 +206,25 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
       _notifyTiming?: PermissionModalPayload['notifyTiming'],
       reason?: string,
       scheduledAt?: string
-    ) => {
-      const notify = toScreeningNotifyFields(_notifyTiming)
-      const remoteOk = await volunteerRemote.applyRemoteDocumentResult(
-        ids,
-        status === 'pass' ? 'PASS' : 'FAIL',
-        reason,
-        notify.notifyTiming ?? _notifyTiming,
-        scheduledAt ?? notify.scheduledAt
-      )
-      if (remoteOk) return
+    ): Promise<boolean> => {
+      if (volunteerRemote.remoteEnabled) {
+        const notify = toScreeningNotifyFields(_notifyTiming)
+        return volunteerRemote.applyRemoteDocumentResult(
+          ids,
+          status === 'pass' ? 'PASS' : 'FAIL',
+          reason,
+          notify.notifyTiming ?? _notifyTiming,
+          scheduledAt ?? notify.scheduledAt
+        )
+      }
       if (isGeneralProgramTempMockProgramId(programId)) {
         setList(prev =>
           patchGeneralVolunteerDocumentScreeningStatus(prev, ids, status, _notifyTiming)
         )
-        return
+        return true
       }
       notifyProgramApiUnavailable('general-volunteer-doc-screening-action', '봉사자 1차 서류 심사')
+      return false
     },
     [programId, volunteerRemote]
   )
@@ -307,15 +309,16 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     async (payload: PermissionModalPayload) => {
       const ids = selectedRowKeys.map(String)
       if (ids.length === 0) return
-      await applyDocumentScreeningStatus(
+      const ok = await applyDocumentScreeningStatus(
         ids,
         'pass',
         payload.notifyTiming,
         undefined,
         toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt).scheduledAt
       )
-      setSelectedRowKeys([])
       setBulkApproveOpen(false)
+      if (!ok) return
+      setSelectedRowKeys([])
       showApplicationApprovalCompletedAlert()
     },
     [applyDocumentScreeningStatus, selectedRowKeys]
@@ -325,15 +328,16 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     async (payload: PermissionModalPayload) => {
       const ids = selectedRowKeys.map(String)
       if (ids.length === 0) return
-      await applyDocumentScreeningStatus(
+      const ok = await applyDocumentScreeningStatus(
         ids,
         'fail',
         payload.notifyTiming,
         payload.reason,
         toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt).scheduledAt
       )
-      setSelectedRowKeys([])
       setBulkRejectOpen(false)
+      if (!ok) return
+      setSelectedRowKeys([])
       showApplicationRejectionCompletedAlert()
     },
     [applyDocumentScreeningStatus, selectedRowKeys]
@@ -342,15 +346,17 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   const handleApproveModalConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (!approveModalVolunteer) return
-      await applyDocumentScreeningStatus(
-        [approveModalVolunteer.id],
+      const { id } = approveModalVolunteer
+      const ok = await applyDocumentScreeningStatus(
+        [id],
         'pass',
         payload.notifyTiming,
         undefined,
         toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt).scheduledAt
       )
-      setSelectedRowKeys(prev => prev.filter(key => String(key) !== approveModalVolunteer.id))
       setApproveModalVolunteer(null)
+      if (!ok) return
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       showApplicationApprovalCompletedAlert()
     },
     [applyDocumentScreeningStatus, approveModalVolunteer]
@@ -360,15 +366,16 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     async (payload: PermissionModalPayload) => {
       if (!rejectModalVolunteer) return
       const { id } = rejectModalVolunteer
-      await applyDocumentScreeningStatus(
+      const ok = await applyDocumentScreeningStatus(
         [id],
         'fail',
         payload.notifyTiming,
         payload.reason,
         toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt).scheduledAt
       )
-      setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       setRejectModalVolunteer(null)
+      if (!ok) return
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       showApplicationRejectionCompletedAlert()
     },
     [applyDocumentScreeningStatus, rejectModalVolunteer]

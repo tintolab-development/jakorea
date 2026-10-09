@@ -263,33 +263,37 @@ export function useUjatVolunteerDocPassed({
   }, [])
 
   const confirmWithdrawActivity = useCallback(
-    (_payload: ActivityWithdrawScheduleModalPayload) => {
+    async (_payload: ActivityWithdrawScheduleModalPayload) => {
       if (!withdrawTargetId) return
       const row = list.find(item => item.id === withdrawTargetId)
       if (!row) {
         setWithdrawTargetId(null)
         return
       }
-      updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
-      void giveUpUjatVolunteerApplicationRemote(
-        withdrawTargetId,
-        _payload.stopScheduleLabel
-          ? `활동 포기 (${_payload.stopScheduleLabel})`
-          : '활동 포기'
-      )
-        .then(() => invalidateVolunteerLists())
-        .catch(() => {
-          showAlert({
-            title: '활동 포기 처리 실패',
-            content: '활동 포기 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
-          })
-          void invalidateVolunteerLists()
+      const applicationId = withdrawTargetId
+      const volunteerName = row.name
+      updateRow(applicationId, { interviewAssignmentStatus: 'withdrawn' })
+      setWithdrawTargetId(null)
+      try {
+        await giveUpUjatVolunteerApplicationRemote(
+          applicationId,
+          _payload.stopScheduleLabel
+            ? `활동 포기 (${_payload.stopScheduleLabel})`
+            : '활동 포기'
+        )
+        await invalidateVolunteerLists()
+      } catch {
+        showAlert({
+          title: '활동 포기 처리 실패',
+          content: '활동 포기 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
         })
+        await invalidateVolunteerLists()
+        return
+      }
       showAlert({
         title: '활동 포기',
-        content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
+        content: `${volunteerName} 봉사자가 활동 포기 처리되었습니다.`,
       })
-      setWithdrawTargetId(null)
     },
     [invalidateVolunteerLists, list, showAlert, updateRow, withdrawTargetId]
   )

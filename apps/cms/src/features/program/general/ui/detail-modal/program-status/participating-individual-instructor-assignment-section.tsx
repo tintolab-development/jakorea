@@ -40,6 +40,7 @@ import type {
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { useParticipatingInstructorInstitutionAssignment } from '@/features/program/general/hooks/use-participating-instructor-institution-assignment'
 import { getParticipationConsentRequiredMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   cancelInstructorAssignmentRemote,
   createInstructorAssignmentRemote,
@@ -422,6 +423,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         return true
       } catch (error) {
         const message =
+          formatInstructorOrganizationScheduleScopeMessage(error) ??
           getParticipationConsentRequiredMessage(error) ??
           (error instanceof Error && error.message.trim()
             ? error.message

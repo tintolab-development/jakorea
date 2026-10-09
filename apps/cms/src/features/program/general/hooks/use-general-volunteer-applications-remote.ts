@@ -158,13 +158,18 @@ export function useGeneralVolunteerApplicationsRemote({
   const notifyRemoteFailure = useCallback(
     (error: unknown) => {
       console.debug('applications remote decision failed', error)
+      const data = (error as { response?: { data?: unknown } } | null)?.response?.data
       showAlert({
         title: '처리 실패',
         content:
           formatApplicationEligibilityConflictMessage(error) ??
-          (subjectKind === 'participant'
-            ? '참여자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.'
-            : '봉사자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.'),
+          extractApiErrorMessage(data, {
+            httpStatus: getApiErrorHttpStatus(error),
+            fallback:
+              subjectKind === 'participant'
+                ? '참여자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.'
+                : '봉사자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+          }),
       })
     },
     [showAlert, subjectKind]
@@ -214,6 +219,7 @@ export function useGeneralVolunteerApplicationsRemote({
         await invalidateApplications()
         return true
       } catch (error) {
+        await invalidateApplications()
         notifyRemoteFailure(error)
         return false
       }
@@ -273,6 +279,7 @@ export function useGeneralVolunteerApplicationsRemote({
         await invalidateApplications()
         return true
       } catch (error) {
+        await invalidateApplications()
         notifyRemoteFailure(error)
         return false
       }

@@ -73,7 +73,12 @@ const keys = {
     notes: 'recruit.volunteer.notes',
     notesNotApplicable: 'recruit.volunteer.notesNotApplicable',
     interviewRequired: 'recruit.volunteer.interviewRequired',
+    docDeadlineIso: 'recruit.volunteer.docDeadlineIso',
+    docAnnounceMethod: 'recruit.volunteer.docAnnounceMethod',
     interviewRangeSeal: 'recruit.volunteer.interviewRangeSeal',
+    interviewMethod: 'recruit.volunteer.interviewMethod',
+    finalAnnounceIso: 'recruit.volunteer.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.volunteer.finalAnnounceMethod',
   },
   detailInfo: {
     participantDescription: 'recruit.detailInfo.programDescription',
@@ -193,8 +198,8 @@ export function buildGeneralRecruitOverlayFromProgram(
     volunteer?.recruitmentPeriodLabel
   )
   const volunteerInterviewRange = rangeSeal(
-    program.interviewStartDate ?? volunteer?.interviewStartDate,
-    program.interviewEndDate ?? volunteer?.interviewEndDate
+    volunteer?.interviewStartDate ?? program.interviewStartDate,
+    volunteer?.interviewEndDate ?? program.interviewEndDate
   )
   const inquiryContact =
     participant?.contactOrganizationName?.trim() ||
@@ -301,6 +306,26 @@ export function buildGeneralRecruitOverlayFromProgram(
   if (volunteerRecruit) overlay[keys.volunteer.recruitRangeSeal] = volunteerRecruit
   if (participantProgram) overlay[keys.volunteer.programRangeSeal] = participantProgram
   if (volunteerInterviewRange) overlay[keys.volunteer.interviewRangeSeal] = volunteerInterviewRange
+
+  const volunteerDocDeadline = isoOrUndefined(
+    volunteer?.documentPassAnnouncementDate ?? program.documentPassAnnouncementDate
+  )
+  if (volunteerDocDeadline) overlay[keys.volunteer.docDeadlineIso] = volunteerDocDeadline
+  const volunteerDocMethod =
+    volunteer?.documentPassAnnouncementMethod?.trim() ||
+    program.documentPassAnnouncementMethod?.trim()
+  if (volunteerDocMethod) overlay[keys.volunteer.docAnnounceMethod] = volunteerDocMethod
+  const volunteerInterviewMethod =
+    volunteer?.interviewMethod?.trim() || program.interviewMethod?.trim()
+  if (volunteerInterviewMethod) overlay[keys.volunteer.interviewMethod] = volunteerInterviewMethod
+  const volunteerFinalIso = isoOrUndefined(
+    volunteer?.finalPassAnnouncementDate ?? program.finalPassAnnouncementDate
+  )
+  if (volunteerFinalIso) overlay[keys.volunteer.finalAnnounceIso] = volunteerFinalIso
+  const volunteerFinalMethod =
+    volunteer?.finalPassAnnouncementMethod?.trim() ||
+    program.finalPassAnnouncementMethod?.trim()
+  if (volunteerFinalMethod) overlay[keys.volunteer.finalAnnounceMethod] = volunteerFinalMethod
 
   const participantFinalResolved = resolveAnnouncement({
     labels: [participant?.finalAnnouncementLabel, participant?.resultAnnouncementLabel],

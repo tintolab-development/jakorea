@@ -231,7 +231,18 @@ export function programToRecruitmentTabEditValues(
   const recruitmentRow = pickRecruitmentCopyRow(merged, audience)
   const recruitmentCopy = recruitmentRow != null && hasRecruitmentCopy(recruitmentRow)
   const participantInfo = merged.generalCommonInfo?.participantRecruitmentInfo
-  const volunteerInfo = merged.generalCommonInfo?.volunteerRecruitmentInfo
+  const volunteerInfo = merged.generalCommonInfo?.volunteerRecruitmentInfo as
+    | {
+        notesNotApplicable?: boolean
+        documentPassAnnouncementDate?: string
+        documentPassAnnouncementMethod?: string
+        interviewStartDate?: string
+        interviewEndDate?: string
+        interviewMethod?: string
+        finalPassAnnouncementDate?: string
+        finalPassAnnouncementMethod?: string
+      }
+    | undefined
   return {
     ...base,
     description: recruitmentCopy ? (detail.description ?? '') : (detail.description ?? base.description),
@@ -264,6 +275,41 @@ export function programToRecruitmentTabEditValues(
           ? ''
           : (resolveRecruitmentRemarks(merged, 'volunteer') || base.oneLineIntroduction)
         : base.oneLineIntroduction,
+    // 봉사자 표시 SSOT는 nested volunteerRecruitmentInfo — 공용 컬럼(강사와 공유)보다 우선 시드
+    ...(audience === 'volunteer'
+      ? {
+          ...(hasIsoDate(volunteerInfo?.documentPassAnnouncementDate)
+            ? {
+                documentPassAnnouncementDate: String(volunteerInfo!.documentPassAnnouncementDate),
+              }
+            : {}),
+          ...(volunteerInfo?.documentPassAnnouncementMethod?.trim()
+            ? {
+                documentPassAnnouncementMethod:
+                  volunteerInfo.documentPassAnnouncementMethod.trim(),
+              }
+            : {}),
+          ...(hasIsoDate(volunteerInfo?.interviewStartDate)
+            ? { interviewStartDate: String(volunteerInfo!.interviewStartDate) }
+            : {}),
+          ...(hasIsoDate(volunteerInfo?.interviewEndDate)
+            ? { interviewEndDate: String(volunteerInfo!.interviewEndDate) }
+            : {}),
+          ...(volunteerInfo?.interviewMethod?.trim()
+            ? { interviewMethod: volunteerInfo.interviewMethod.trim() }
+            : {}),
+          ...(hasIsoDate(volunteerInfo?.finalPassAnnouncementDate)
+            ? {
+                finalPassAnnouncementDate: String(volunteerInfo!.finalPassAnnouncementDate),
+              }
+            : {}),
+          ...(volunteerInfo?.finalPassAnnouncementMethod?.trim()
+            ? {
+                finalPassAnnouncementMethod: volunteerInfo.finalPassAnnouncementMethod.trim(),
+              }
+            : {}),
+        }
+      : {}),
     ...(isGeneralRowCopyProgram(merged)
       ? generalRecruitmentRowFormSeed(recruitmentRow, audience)
       : {}),

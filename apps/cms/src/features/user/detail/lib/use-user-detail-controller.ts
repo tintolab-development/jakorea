@@ -103,6 +103,7 @@ import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-commen
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import {
   applyPrivacyUnmaskResponseToUser,
+  enrichSchoolTeacherAffiliationFromOrganization,
   mergeAdminApprovalDetailWithPrivacyUnmask,
 } from '@/features/user/api/apply-privacy-unmask-to-user'
 import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
@@ -204,6 +205,10 @@ export function useUserDetailController({
   const currentUser = useAuthStore(state => state.user)
   const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
+  /** unmask 후 async 소속 보강 — 다른 회원으로 전환됐는지 판별 */
+  const displayUserIdentityRef = useRef<string | null>(null)
+  displayUserIdentityRef.current =
+    displayUser != null ? `${displayUser.id}:${displayUser.memberId ?? ''}` : null
 
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
   /** 권한 승인 상세는 신청 정보(기본/약관/이력서)만 — 프로그램 신청·참여 이력 API 생략 */
@@ -519,19 +524,33 @@ export function useUserDetailController({
         )
       }
 
+      const applyMergedUser = (merged: Omit<User, 'password'>) => {
+        if (displayUser.memberId != null) {
+          queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
+        }
+        queryClient.setQueryData(
+          [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+          merged
+        )
+        onMemberBasicInfoSaved?.(merged, { skipListInvalidate: true })
+      }
+
       const merged = stripRestrictedPiiForSessionUser(
         applyPrivacyUnmaskResponseToUser(displayUser, payload, role ?? displayUser.role),
         displayUser,
         useAuthStore.getState().user
       )
-      if (displayUser.memberId != null) {
-        queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
-      }
-      queryClient.setQueryData(
-        [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
-        merged
-      )
-      onMemberBasicInfoSaved?.(merged, { skipListInvalidate: true })
+      applyMergedUser(merged)
+
+      // legacy member unmask에 소속 원문이 없으면 organization 조회로 보강 (개인정보 상세보기 후)
+      const enrichForIdentity = `${displayUser.id}:${displayUser.memberId ?? ''}`
+      void enrichSchoolTeacherAffiliationFromOrganization(merged).then(enriched => {
+        if (enriched.affiliatedSchoolName === merged.affiliatedSchoolName) return
+        if (displayUserIdentityRef.current !== enrichForIdentity) return
+        applyMergedUser(
+          stripRestrictedPiiForSessionUser(enriched, displayUser, useAuthStore.getState().user)
+        )
+      })
     },
     [displayUser, onMemberBasicInfoSaved, queryClient]
   )

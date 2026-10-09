@@ -270,7 +270,11 @@ export function mergeListUserWithFetchedDetail(
       (fetchedRevoked || listRevoked ? undefined : listUser.instructorMemberProfile),
     affiliatedSchoolUserId:
       fetched.affiliatedSchoolUserId ?? listUser.affiliatedSchoolUserId,
-    affiliatedSchoolName: fetched.affiliatedSchoolName ?? listUser.affiliatedSchoolName,
+    // 목록/URL 마스킹(`**초등학교`)보다 상세·unmask 원문을 우선
+    affiliatedSchoolName: preferUnmasked1365Id(
+      fetched.affiliatedSchoolName,
+      listUser.affiliatedSchoolName
+    ),
     affiliation: resolveMergedAffiliation(listUser, fetched),
     detailAddress: resolveMergedDetailAddress(listUser, fetched),
     detailAddressDetail: resolveMergedDetailAddressDetail(listUser, fetched),

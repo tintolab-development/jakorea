@@ -22,6 +22,7 @@ import {
   detailEditValuesToProgramPatch,
   narrowProgramDetailPatchForCommonInfoSave,
   programToDetailEditValues,
+  volunteerDocumentInterviewNestedPatch,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import { showUpdateCompletedAlert } from '@/shared/ui'
 import {
@@ -34,7 +35,9 @@ import {
   type ProgramDetailRecruitmentNotesField,
 } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
+import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { isGeneralRecruitmentRowProgram } from '@/features/program/general/lib/is-general-recruitment-row-program'
+import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 
 export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
@@ -174,6 +177,31 @@ export function useProgramDetailInfoSave({
                 : {}),
             }
           )
+          if (recruitmentAudience === 'volunteer') {
+            const existingVolunteer = program.generalCommonInfo?.volunteerRecruitmentInfo as
+              | {
+                  documentPassAnnouncementDate?: string
+                  documentPassAnnouncementMethod?: string
+                  interviewStartDate?: string
+                  interviewEndDate?: string
+                  interviewMethod?: string
+                }
+              | undefined
+            const nestedInterview = volunteerDocumentInterviewNestedPatch(
+              values,
+              existingVolunteer
+            )
+            remotePatch = {
+              ...remotePatch,
+              generalCommonInfo: {
+                ...remotePatch.generalCommonInfo,
+                volunteerRecruitmentInfo: {
+                  ...remotePatch.generalCommonInfo?.volunteerRecruitmentInfo,
+                  ...nestedInterview,
+                },
+              },
+            }
+          }
           if (writesRowFields && notesField !== 'remarks') {
             // 비고는 모집 행 remarks 전용 — 프로그램 oneLineIntroduction·otherMatters로 새지 않게 한다.
             const { [notesField]: _rowNotes, ...withoutNotes } = remotePatch as Record<string, unknown>
@@ -189,6 +217,48 @@ export function useProgramDetailInfoSave({
               },
             }
           }
+          // 등록 플로우와 동일 — 편집 UI가 in-memory overlay에만 쓴 면접 일정 키를 저장에 합친다.
+          const liveRecruitOverlay = getGeneralRecruitOverlayRecord()
+          const mergedRegistrationOverlay = {
+            ...(program.registrationOverlay ?? {}),
+            ...liveRecruitOverlay,
+            ...(remotePatch.registrationOverlay ?? {}),
+          }
+
+          if (recruitmentAudience === 'volunteer') {
+            const draftWithLiveOverlay = applyGeneralRecruitOverlayToProgram(
+              {
+                ...program,
+                ...remotePatch,
+                generalCommonInfo: {
+                  ...program.generalCommonInfo,
+                  ...remotePatch.generalCommonInfo,
+                },
+                registrationOverlay: mergedRegistrationOverlay,
+              },
+              mergedRegistrationOverlay,
+              { preferOverlay: true }
+            )
+            const scheduleFromOverlay =
+              draftWithLiveOverlay.generalCommonInfo?.volunteerInterviewScheduleInfo
+            remotePatch = {
+              ...remotePatch,
+              generalCommonInfo: {
+                ...remotePatch.generalCommonInfo,
+                volunteerRecruitmentInfo: {
+                  ...remotePatch.generalCommonInfo?.volunteerRecruitmentInfo,
+                  ...draftWithLiveOverlay.generalCommonInfo?.volunteerRecruitmentInfo,
+                },
+                // 면접 없음이면 nested 일정도 비운다 (옛 schedule 잔존 방지)
+                volunteerInterviewScheduleInfo:
+                  values.volunteerRecruitmentInterviewEnabled === 'no'
+                    ? undefined
+                    : (scheduleFromOverlay ??
+                      remotePatch.generalCommonInfo?.volunteerInterviewScheduleInfo),
+              },
+            }
+          }
+
           if (writesRowFields) {
             const draftForResync: Program = {
               ...program,
@@ -200,10 +270,15 @@ export function useProgramDetailInfoSave({
             }
             remotePatch = {
               ...remotePatch,
-              registrationOverlay: resyncGeneralRecruitOverlayFromProgram(draftForResync, {
-                ...(program.registrationOverlay ?? {}),
-                ...(remotePatch.registrationOverlay ?? {}),
-              }),
+              registrationOverlay: resyncGeneralRecruitOverlayFromProgram(
+                draftForResync,
+                mergedRegistrationOverlay
+              ),
+            }
+          } else if (Object.keys(liveRecruitOverlay).length > 0) {
+            remotePatch = {
+              ...remotePatch,
+              registrationOverlay: mergedRegistrationOverlay,
             }
           }
         }

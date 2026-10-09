@@ -713,7 +713,8 @@ export function mapInstructorMemberDetailToUser(
   const schoolName = pickTrimmed(
     profileLoose?.affiliatedSchoolName,
     profileLoose?.schoolName,
-    looseDetail.affiliatedSchoolName
+    looseDetail.affiliatedSchoolName,
+    (looseDetail as { organizationName?: string }).organizationName
   )
   if (schoolName) {
     user.affiliatedSchoolName = schoolName

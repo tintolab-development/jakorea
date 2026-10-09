@@ -163,6 +163,7 @@ export function InstructorLectureAssignModal({
     individualRemote,
     individualSlotsLoading,
     individualSlotsError,
+    organizationSlotsEmptyText,
     preferredDateKeys,
     assignedDateKeys,
     assignedItems,
@@ -305,7 +306,7 @@ export function InstructorLectureAssignModal({
           <div className="instructor-lecture-assign-modal__slots-list">
             {visibleSlots.length === 0 ? (
               <div className="instructor-lecture-assign-modal__slots-empty" role="status">
-                {isIndividual ? individualEmptyText : '이 날짜에 배정 가능한 기관이 없습니다.'}
+                {isIndividual ? individualEmptyText : organizationSlotsEmptyText}
               </div>
             ) : (
               visibleSlots.map(slot => {

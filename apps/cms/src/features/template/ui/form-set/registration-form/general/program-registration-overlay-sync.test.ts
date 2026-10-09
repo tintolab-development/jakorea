@@ -7,6 +7,7 @@ import {
   patchRegistrationOverlayProgramTitleKo,
   peekProgramRegistrationOverlayRecord,
   readRegistrationOverlayProgramTitleKo,
+  readStoredRegistrationProgramTitleKo,
   resetProgramRegistrationOverlayStoreForTests,
   setProgramRegistrationOverlayScope,
   subscribeProgramRegistrationOverlayKey,
@@ -88,6 +89,17 @@ describe('readRegistrationOverlayProgramTitleKo', () => {
 
   it('1사1교에서 제목을 아직 안 바꿨으면 화면 기본 대표명을 쓴다', () => {
     expect(readRegistrationOverlayProgramTitleKo('economy')).toBe('1사1교 경제금융교육')
+  })
+
+  it('키가 있으면 빈 국문명도 React state fallback보다 우선한다', () => {
+    patchProgramRegistrationOverlay({
+      'generalRegistration.basicInfo.localProgramTitleKo': '',
+    })
+    expect(readStoredRegistrationProgramTitleKo('general', '이전 제목')).toBe('')
+  })
+
+  it('키가 없으면 React state fallback을 쓴다', () => {
+    expect(readStoredRegistrationProgramTitleKo('general', '이전 제목')).toBe('이전 제목')
   })
 
   it('1사1교 제목은 미사용 programTitleKo state로 덮지 않는다', () => {

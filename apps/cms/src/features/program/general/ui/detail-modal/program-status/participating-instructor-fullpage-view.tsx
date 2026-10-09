@@ -83,6 +83,7 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
+import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   fetchGeneralInstructorAssignmentBoard,
   findScheduleIdForLectureDate,
@@ -1019,9 +1020,10 @@ export function ParticipatingInstructorFullpageView({
       closeAssignGuideModal()
     } catch (error) {
       const message =
-        error instanceof Error && error.message.trim()
+        formatInstructorOrganizationScheduleScopeMessage(error) ??
+        (error instanceof Error && error.message.trim()
           ? error.message
-          : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.')
       showAlert({ title: '배정 실패', content: message })
     }
   }, [

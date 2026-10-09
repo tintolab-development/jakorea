@@ -39,6 +39,13 @@ export function subscribeUjatProgramRegistrationOverlay(listener: () => void): (
   return store.subscribe(listener)
 }
 
+export function subscribeUjatProgramRegistrationOverlayKey(
+  key: string,
+  listener: () => void
+): () => void {
+  return store.subscribeKey(key, listener)
+}
+
 export function getUjatProgramRegistrationOverlayVersion(): number {
   return store.getVersion()
 }

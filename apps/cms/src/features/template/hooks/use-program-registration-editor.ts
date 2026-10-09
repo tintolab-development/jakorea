@@ -81,7 +81,7 @@ import {
   patchProgramRegistrationOverlay,
   readGeneralRegistrationOverlayScheduleLines,
   readGeneralRegistrationOverlaySponsorIds,
-  readRegistrationOverlayProgramTitleKo,
+  readStoredRegistrationProgramTitleKo,
   patchRegistrationOverlayProgramTitleKo,
   readRegistrationOverlaySponsorContactId,
   readRegistrationOverlaySponsorId,
@@ -322,15 +322,7 @@ export function useProgramRegistrationEditor(
     programRegistrationFormVariant === 'general' && !restrictCurriculumSessionStructure
 
   const resolveProgramTitleKo = useCallback(
-    () => {
-      if (programRegistrationFormVariant === 'economy') {
-        return readRegistrationOverlayProgramTitleKo('economy')
-      }
-      return (
-        programTitleKo.trim() ||
-        readRegistrationOverlayProgramTitleKo(programRegistrationFormVariant)
-      )
-    },
+    () => readStoredRegistrationProgramTitleKo(programRegistrationFormVariant, programTitleKo),
     [programTitleKo, programRegistrationFormVariant]
   )
 
@@ -996,14 +988,6 @@ export function useProgramRegistrationEditor(
     })
   }, [])
 
-  const onProgramTitleKoChange = useCallback(
-    (next: string) => {
-      setProgramTitleKo(next)
-      patchRegistrationOverlayProgramTitleKo(programRegistrationFormVariant, next)
-    },
-    [programRegistrationFormVariant]
-  )
-
   const paragraphBodyOptions = useMemo(
     () =>
       buildProgramRegistrationParagraphBodyOptions(
@@ -1052,8 +1036,6 @@ export function useProgramRegistrationEditor(
                 onSponsorIdChange,
                 sponsorContactId,
                 onSponsorContactIdChange,
-                programTitleKo,
-                onProgramTitleKoChange,
               }
             : {}),
         },
@@ -1111,8 +1093,6 @@ export function useProgramRegistrationEditor(
             onSponsorIdChange,
             sponsorContactId,
             onSponsorContactIdChange,
-            programTitleKo,
-            onProgramTitleKoChange,
           ]
         : []),
     ]
