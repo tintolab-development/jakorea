@@ -9,11 +9,8 @@ import { isDetailedProgramMasterId } from '@/features/program/general/lib/detail
 import { shouldDisableEducationSchedulePeriodMode } from '@/features/program/general/lib/schedule-detail-form'
 import { completeTrainedTeachersDevAutofillOverlay } from '@/features/program/trained-teachers/lib/dev-autofill-required'
 import type { TrainedTeachersRegistrationRequiredFieldContext } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
-import {
-  APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
-  patchApplicantRecruitInstitutionOverlay,
-} from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
-import { patchGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { applyDevAutofillRecruitOverlayPartials } from '@/features/program/shared/lib/dev-autofill-recruit-overlay'
 import { getDetailedProgramOptionsList } from '@/features/detailed-program/api/admin-detailed-programs-service'
 import {
   getSponsorContacts,
@@ -84,8 +81,6 @@ import {
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import { UJAT_VOLUNTEER_NOTICE_EXPOSURE_VALUES } from '@/features/template/lib/ujat-volunteer-notice-exposure'
-import { patchUjatRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
-import { patchUjatRecruitVolunteerOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import {
   UJAT_REGION_CAPACITY_OVERLAY_KEY,
   type UjatRegionCapacityBySemesterState,
@@ -428,8 +423,14 @@ function recruitDetailPatch(
 function patchRecruitDatePlan(
   plan: ReturnType<typeof buildRegistrationDatePlan>,
   titleKo: string,
-  economy?: EconomyAutofillPhraseSelection
+  args: {
+    variant: ProgramRegistrationFormVariant | 'ujat'
+    participant?: ProgramRegistrationDevAutofillLayout['participant']
+    economy?: EconomyAutofillPhraseSelection
+  }
 ): void {
+  if (args.variant === 'ujat') return
+  const economy = args.economy
   const programSeal = { ...plan.program }
   const recruitSeal = { ...plan.recruit }
   const interviewSeal = { ...plan.interview }
@@ -453,7 +454,7 @@ function patchRecruitDatePlan(
   const firstSlotEnd = interviewClockStart.add(30, 'minute')
   const institutionInquiry = recruitInquiryPatch('recruit')
 
-  patchApplicantRecruitInstitutionOverlay({
+  const institutionPartial = {
     [institutionKeys.announcementPublished]: 'published',
     [institutionKeys.studentListRequired]: economy ? 'none' : pick(['need', 'none']),
     [institutionKeys.preguidanceRequired]: economy ? 'need' : pick(['need', 'none']),
@@ -474,12 +475,12 @@ function patchRecruitDatePlan(
     [institutionKeys.inquiryEmail]: institutionInquiry['recruit.inquiryEmail'],
     [institutionKeys.notesNotApplicable]: false,
     [institutionKeys.notes]: economyRecruit?.notes ?? institutionInquiry['recruit.notes'],
-  })
+  }
 
   const individualInquiry = recruitInquiryPatch('recruit.individual')
   const instructorInquiry = recruitInquiryPatch('recruit.instructor')
   const volunteerInquiry = recruitInquiryPatch('recruit.volunteer')
-  patchGeneralRecruitOverlay({
+  const generalPartial = {
     ...individualInquiry,
     ...instructorInquiry,
     ...volunteerInquiry,
@@ -575,6 +576,10 @@ function patchRecruitDatePlan(
           'recruit.instructor.notes': economyRecruit.notes,
         }
       : {}),
+  }
+  applyDevAutofillRecruitOverlayPartials(args.variant, args.participant, {
+    institution: institutionPartial,
+    general: generalPartial,
   })
 }
 
@@ -1566,7 +1571,11 @@ export async function applyDevProgramRegistrationAutofill(
     sample.operationRange = { ...sample.recruitDates.business }
     sample.periodRange = { ...sample.recruitDates.business }
   }
-  patchRecruitDatePlan(sample.recruitDates, sample.titleKo, economyPhrases)
+  patchRecruitDatePlan(sample.recruitDates, sample.titleKo, {
+    variant,
+    participant: layout.participant,
+    economy: economyPhrases,
+  })
   const typeSettings = finalizeTypeSettings(variant, layout)
   const educationScheduleLines = buildEducationSchedulePreviewLines(
     typeSettings.educationScheduleMode
@@ -1581,8 +1590,6 @@ export async function applyDevProgramRegistrationAutofill(
     )
     const ujatOverlay = buildUjatOverlay(sample, { ...resolved, contactId: contactSelectId })
     patchUjatProgramRegistrationOverlay(ujatOverlay)
-    patchUjatRecruitInstitutionOverlay(pickUjatRecruitInstitutionOverlay(ujatOverlay))
-    patchUjatRecruitVolunteerOverlay(pickUjatRecruitVolunteerOverlay(ujatOverlay))
     const interviewUnavailable = buildInterviewUnavailableSelection(
       dayjs(sample.recruitDates.interview.start),
       dayjs(sample.recruitDates.interview.end)
@@ -1590,32 +1597,36 @@ export async function applyDevProgramRegistrationAutofill(
     const interviewClockStart = dayjs().startOf('day').hour(10).minute(0).second(0).millisecond(0)
     const interviewClockEnd = interviewClockStart.hour(12)
     const firstSlotEnd = interviewClockStart.add(30, 'minute')
-    patchGeneralRecruitOverlay({
-      ...(['h1', 'h2'] as const).reduce((acc, half) => {
-        const interviewNs = ujatVolunteerRecruitInterviewNamespace(half)
-        const detailPrefix = ujatVolunteerRecruitDetailInfoPrefix(half)
-        return {
-          ...acc,
-          [ujatVolunteerRecruitInterviewRangeSealKey(half)]: { ...sample.recruitDates.interview },
-          [`${interviewNs}.timeUnit`]: '30',
-          [`${interviewNs}.interviewTimeRange`]: [
-            interviewClockStart.toISOString(),
-            interviewClockEnd.toISOString(),
-          ],
-          [`${interviewNs}.interviewTime`]: interviewClockStart.toISOString(),
-          [`${interviewNs}.selectedSlotKeys`]: [
-            `${interviewClockStart.valueOf()}-${firstSlotEnd.valueOf()}`,
-          ],
-          [`${interviewNs}.exclusionState`]: interviewUnavailable.exclusion,
-          [`${interviewNs}.appliedUnavailableDates`]: interviewUnavailable.dates,
-          ...recruitDetailPatch(detailPrefix, [
-            'programDescription',
-            'recruitmentGuide',
-            'applicationMethod',
-            'otherNotes',
-          ], `${sample.titleKo} ${half === 'h1' ? '상반기' : '하반기'}`),
-        }
-      }, {} as Record<string, unknown>),
+    applyDevAutofillRecruitOverlayPartials('ujat', undefined, {
+      ujatInstitution: pickUjatRecruitInstitutionOverlay(ujatOverlay),
+      ujatVolunteer: pickUjatRecruitVolunteerOverlay(ujatOverlay),
+      general: {
+        ...(['h1', 'h2'] as const).reduce((acc, half) => {
+          const interviewNs = ujatVolunteerRecruitInterviewNamespace(half)
+          const detailPrefix = ujatVolunteerRecruitDetailInfoPrefix(half)
+          return {
+            ...acc,
+            [ujatVolunteerRecruitInterviewRangeSealKey(half)]: { ...sample.recruitDates.interview },
+            [`${interviewNs}.timeUnit`]: '30',
+            [`${interviewNs}.interviewTimeRange`]: [
+              interviewClockStart.toISOString(),
+              interviewClockEnd.toISOString(),
+            ],
+            [`${interviewNs}.interviewTime`]: interviewClockStart.toISOString(),
+            [`${interviewNs}.selectedSlotKeys`]: [
+              `${interviewClockStart.valueOf()}-${firstSlotEnd.valueOf()}`,
+            ],
+            [`${interviewNs}.exclusionState`]: interviewUnavailable.exclusion,
+            [`${interviewNs}.appliedUnavailableDates`]: interviewUnavailable.dates,
+            ...recruitDetailPatch(detailPrefix, [
+              'programDescription',
+              'recruitmentGuide',
+              'applicationMethod',
+              'otherNotes',
+            ], `${sample.titleKo} ${half === 'h1' ? '상반기' : '하반기'}`),
+          }
+        }, {} as Record<string, unknown>),
+      },
     })
     return {
       programTitleKo: sample.titleKo,
