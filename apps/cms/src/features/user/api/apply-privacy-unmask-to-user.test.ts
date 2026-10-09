@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { User } from '@/types/user'
-import { applyPrivacyUnmaskResponseToUser } from './apply-privacy-unmask-to-user'
+import {
+  applyPrivacyUnmaskResponseToUser,
+  enrichSchoolTeacherAffiliationFromOrganization,
+} from './apply-privacy-unmask-to-user'
+
+vi.mock('@/features/user/api/members-api-client', () => ({
+  fetchSchoolOrganizationRemote: vi.fn(),
+}))
+
+import { fetchSchoolOrganizationRemote } from '@/features/user/api/members-api-client'
 
 function baseInstructorUser(): Omit<User, 'password'> {
   return {
@@ -24,6 +33,26 @@ function baseInstructorUser(): Omit<User, 'password'> {
       accountHolder: '최**',
       isBusinessIncome: true,
     },
+  }
+}
+
+function baseSchoolTeacherUser(): Omit<User, 'password'> {
+  return {
+    id: 'qa-roster-34-teacher-mun-hayoung',
+    memberId: 190034,
+    email: 'company***@test.com',
+    name: '문하영',
+    phone: '010-****-9470',
+    role: 'INSTRUCTOR',
+    roles: ['SCHOOL_TEACHER'],
+    instructorMemberProfile: 'school_teacher',
+    affiliatedSchoolName: '**초등학교',
+    organizationId: 165101,
+    isActive: true,
+    createdAt: '2026-10-01T00:00:00.000Z',
+    updatedAt: '2026-10-01T00:00:00.000Z',
+    birthDate: '1984-05-20',
+    gender: '여성',
   }
 }
 
@@ -94,5 +123,78 @@ describe('applyPrivacyUnmaskResponseToUser', () => {
       accountHolder: '최지원',
       isBusinessIncome: true,
     })
+  })
+
+  it('순수 교사 — TeacherMemberDetail unmask의 organizationName 원문이 목록 마스킹 소속을 덮는다', () => {
+    const merged = applyPrivacyUnmaskResponseToUser(
+      baseSchoolTeacherUser(),
+      {
+        member: {
+          memberId: 190034,
+          uuid: 'qa-roster-34-teacher-mun-hayoung',
+          email: 'company@test.com',
+          name: '문하영',
+          phone: '01057649470',
+          birthDate: '1984-05-20',
+          gender: 'FEMALE',
+          status: 'ACTIVE',
+          roles: ['SCHOOL_TEACHER'],
+        },
+        organizationId: 165101,
+        organizationName: '강서초등학교',
+        employmentStatus: 'ACTIVE',
+      },
+      'INSTRUCTOR'
+    )
+
+    expect(merged.email).toBe('company@test.com')
+    expect(merged.phone).toBe('01057649470')
+    expect(merged.affiliatedSchoolName).toBe('강서초등학교')
+    expect(merged.organizationId).toBe(165101)
+  })
+
+  it('순수 교사 — MemberDetail unmask에 organizationName만 있어도 마스킹 소속을 원문으로 교체한다', () => {
+    const merged = applyPrivacyUnmaskResponseToUser(
+      baseSchoolTeacherUser(),
+      {
+        memberId: 190034,
+        uuid: 'qa-roster-34-teacher-mun-hayoung',
+        email: 'company@test.com',
+        name: '문하영',
+        phone: '01057649470',
+        organizationName: '강서초등학교',
+      },
+      'INSTRUCTOR'
+    )
+
+    expect(merged.affiliatedSchoolName).toBe('강서초등학교')
+  })
+})
+
+describe('enrichSchoolTeacherAffiliationFromOrganization', () => {
+  beforeEach(() => {
+    vi.mocked(fetchSchoolOrganizationRemote).mockReset()
+  })
+
+  it('마스킹된 소속이면 organization 상세 name으로 보강한다', async () => {
+    vi.mocked(fetchSchoolOrganizationRemote).mockResolvedValue({
+      organizationId: 165101,
+      name: '강서초등학교',
+    })
+
+    const enriched = await enrichSchoolTeacherAffiliationFromOrganization(baseSchoolTeacherUser())
+
+    expect(fetchSchoolOrganizationRemote).toHaveBeenCalledWith(165101)
+    expect(enriched.affiliatedSchoolName).toBe('강서초등학교')
+  })
+
+  it('이미 원문 소속이면 organization 조회를 하지 않는다', async () => {
+    const enriched = await enrichSchoolTeacherAffiliationFromOrganization({
+      ...baseSchoolTeacherUser(),
+      affiliatedSchoolName: '강서초등학교',
+    })
+
+    expect(fetchSchoolOrganizationRemote).not.toHaveBeenCalled()
+    expect(enriched.affiliatedSchoolName).toBe('강서초등학교')
   })
 })
