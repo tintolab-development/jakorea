@@ -17,6 +17,7 @@ import {
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
+import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   institutionFilterFields,
   instructorFilterFields,
@@ -254,7 +255,7 @@ export function useApplicantsDetail({
     [showAlert]
   )
 
-  /** 강사 승인·반려 — 동의 부족(409 INSTRUCTOR_PARTICIPATION_CONSENT_REQUIRED) 등 서버 문구를 그대로 노출 */
+  /** 강사 승인·반려 — 동의 부족·기관-일정 스코프 등 서버 문구를 그대로 노출 */
   const notifyRemoteInstructorDecisionFailure = useCallback(
     (error: unknown) => {
       console.debug('instructor applications remote decision failed', error)
@@ -266,6 +267,7 @@ export function useApplicantsDetail({
         title: '처리 실패',
         content:
           formatApplicationEligibilityConflictMessage(error) ??
+          formatInstructorOrganizationScheduleScopeMessage(error) ??
           extractApiErrorMessage(responseData, {
             httpStatus: getApiErrorHttpStatus(error),
             fallback: '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
