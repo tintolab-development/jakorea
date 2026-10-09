@@ -988,8 +988,6 @@ export function HorizontalTableParagraphBody({
           aria-selected={canvasInteractive && isHeaderRowSelected()}
         >
           {headers.map((h, i) => {
-            const headerFieldLocked =
-              isField && getEffectiveHorizontalCellField(p, 0, i).kind !== 'text'
             const ph = suppressPlaceholderText ? '' : tableHeaderPlaceholder(i)
             return (
               <div
@@ -1002,7 +1000,7 @@ export function HorizontalTableParagraphBody({
                         if (isEventFromTableInteractive(e.target)) return
                         if (isTextTable) {
                           activateTextTableHeaderCell(i)
-                        } else if (headerEditMode && !headerFieldLocked) {
+                        } else if (headerEditMode) {
                           activateFieldTableHeaderCell(i)
                         } else {
                           toggleHeaderRow()
@@ -1011,7 +1009,7 @@ export function HorizontalTableParagraphBody({
                     : undefined
                 }
               >
-                {headerEditMode && !headerFieldLocked ? (
+                {headerEditMode ? (
                   isTextTable || canvasInteractive ? (
                     isTextCellEditing({ area: 'header', col: i }) ? (
                       <TextCellInput
