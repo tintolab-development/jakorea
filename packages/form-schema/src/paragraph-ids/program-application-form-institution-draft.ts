@@ -6,6 +6,7 @@ import {
 import {
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION,
   INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION,
+  isLegacyInstitutionSexOffenseConsentInquiryDescription,
 } from '../lib/institution-sex-offense-consent-field-definitions.js'
 import {
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
@@ -287,17 +288,8 @@ export function migrateProgramApplicationFormInstitutionParagraphs(
       return next
     }
     if (
-      paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice &&
-      paragraph.kind === 'single_item' &&
-      paragraph.variant === 'multiple_choice' &&
-      paragraph.paragraphDescription !== SCHEDULE_PARAGRAPH_DESCRIPTION
-    ) {
-      changed = true
-      return { ...paragraph, paragraphDescription: SCHEDULE_PARAGRAPH_DESCRIPTION }
-    }
-    if (
       paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod &&
-      paragraph.paragraphDescription !== INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description
+      isLegacyInstitutionSexOffenseConsentInquiryDescription(paragraph.paragraphDescription)
     ) {
       changed = true
       return {

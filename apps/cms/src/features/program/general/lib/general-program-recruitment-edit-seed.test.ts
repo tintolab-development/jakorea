@@ -246,7 +246,7 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
     } as Program
 
     const values = programToRecruitmentTabEditValues(program, 'instructor')
-    expect(values.instructorTargets).toEqual(['성인', '대학생'])
+    expect(values.instructorTargets).toEqual(['adult', 'university'])
     expect(values.instructorTargetDetail).toBe('상세')
     expect(values.description).toBe('강사 모집 설명')
     expect(values.instructorApplicationStartDate).toBeTruthy()

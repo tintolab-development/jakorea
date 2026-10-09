@@ -30,10 +30,6 @@ import {
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { EMPTY_TABLE_PAGE_CONTEXT } from '@/shared/components/table-system/model/use-table-page'
-import {
-  buildSponsorBulkDeleteMessageLines,
-  buildSponsorDeleteMessageLines,
-} from '@/features/sponsor/lib/sponsor-delete-guide-messages'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import './sponsor-page.css'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -41,8 +37,6 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   ActionResultModal,
   CmsButton,
-  DeleteGuideModal,
-  buildBulkDeleteGuideTitle,
   buildDeleteCompletedMessageBulk,
   buildDeleteCompletedMessageSingle,
   buildDeleteCompletedTitle,
@@ -51,6 +45,7 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 import { SponsorDeleteBlockedModal } from '@/features/sponsor/ui/modal/sponsor-delete-blocked-modal'
+import { SponsorDeleteModal } from '@/features/sponsor/ui/modal/sponsor-delete-modal'
 import { SponsorRegisterModal } from '@/features/sponsor/ui/modal/sponsor-register-modal'
 import { SponsorDetailFullPageModal } from '@/features/sponsor/ui/sponsor-detail-fullpage-modal'
 import {
@@ -182,17 +177,10 @@ export default function SponsorPage() {
     return rows.filter(r => keySet.has(r.id))
   }, [rows, selectedRowKeys])
 
-  const { title: bulkSponsorDeleteTitle, lines: bulkSponsorDeleteLines } = useMemo(() => {
-    const isMulti = selectedSponsors.length >= 2
-    const title = isMulti ? buildBulkDeleteGuideTitle('후원사') : '후원사 삭제 안내'
-    if (selectedSponsors.length === 0) {
-      return { title, lines: [] as string[] }
-    }
-    const lines = isMulti
-      ? buildSponsorBulkDeleteMessageLines(selectedSponsors.length)
-      : buildSponsorDeleteMessageLines([selectedSponsors[0]?.name ?? ''])
-    return { title, lines }
-  }, [selectedSponsors])
+  const bulkSponsorDeleteNames = useMemo(
+    () => selectedSponsors.map(sponsor => sponsor.name ?? ''),
+    [selectedSponsors]
+  )
 
   const handleBulkDelete = useCallback(() => {
     if (!canWrite) return
@@ -480,13 +468,13 @@ export default function SponsorPage() {
         onDeleteSponsor={handleDeleteSponsor}
       />
 
-      <DeleteGuideModal
+      <SponsorDeleteModal
         open={bulkSponsorDeleteModalOpen}
         onCancel={handleCancelBulkSponsorDelete}
         onConfirm={handleConfirmBulkSponsorDelete}
-        title={bulkSponsorDeleteTitle}
-        lines={bulkSponsorDeleteLines}
-        confirmText="후원사 삭제"
+        sponsorNames={bulkSponsorDeleteNames}
+        presentation="list"
+        confirmLoading={bulkDeleteMutation.isPending}
       />
       <SponsorDeleteBlockedModal
         open={bulkSponsorDeleteBlockedOpen}

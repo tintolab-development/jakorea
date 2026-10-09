@@ -235,10 +235,10 @@ const subjectiveVariantDef: ParagraphEditorDefinition = {
 }
 
 const dropdownDef: ParagraphEditorDefinition = {
-  detail: 'subjective',
+  detail: 'dropdown',
   kind: 'single_item',
   label: '드롭다운형',
-  create: id => createParagraphByDetail('multiple_choice', id),
+  create: id => createParagraphByDetail('dropdown', id),
   match: p => p.kind === 'single_item' && p.variant === 'dropdown',
 }
 
@@ -281,6 +281,7 @@ const PRIMARY_DETAIL_DEFINITION: Partial<Record<DetailSelectValue, ParagraphEdit
   session_plan_short_essay: sessionPlanShortEssayDef,
   subjective: shortEssayDef,
   multiple_choice: multipleChoiceDef,
+  dropdown: dropdownDef,
   date_only: dateOnlyDef,
   time_only: timeOnlyDef,
   star_rate: starRateDef,

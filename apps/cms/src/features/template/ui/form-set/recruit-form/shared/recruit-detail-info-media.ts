@@ -91,6 +91,7 @@ function readNumberArray(value: unknown): number[] | undefined {
 export type RecruitDetailMediaFromOverlay = {
   keyVisualImage?: string
   thumbFileObjectId?: number
+  thumbFileName?: string
   /** 등록 중 미리보기용 blob. create payload에는 넣지 않는다. */
   thumbObjectUrl?: string
   attachmentFileNames?: string[]
@@ -104,6 +105,7 @@ export function readRecruitDetailMediaFromOverlay(
 ): RecruitDetailMediaFromOverlay {
   let keyVisualImage: string | undefined
   let thumbFileObjectId: number | undefined
+  let thumbFileName: string | undefined
   let thumbObjectUrl: string | undefined
   let attachmentFileNames: string[] | undefined
   let attachmentFileObjectIds: number[] | undefined
@@ -124,6 +126,10 @@ export function readRecruitDetailMediaFromOverlay(
     if (thumbFileObjectId == null) {
       thumbFileObjectId = readFiniteNumber(overlay[recruitDetailThumbFileObjectIdKey(prefix)])
     }
+    if (!thumbFileName) {
+      const name = overlay[recruitDetailThumbFileNameKey(prefix)]
+      if (typeof name === 'string' && name.trim()) thumbFileName = name.trim()
+    }
     if (!attachmentFileNames) {
       attachmentFileNames = readStringArray(overlay[recruitDetailAttachmentFileNamesKey(prefix)])
     }
@@ -137,6 +143,7 @@ export function readRecruitDetailMediaFromOverlay(
   return {
     ...(keyVisualImage ? { keyVisualImage } : {}),
     ...(thumbFileObjectId != null ? { thumbFileObjectId } : {}),
+    ...(thumbFileName ? { thumbFileName } : {}),
     ...(thumbObjectUrl ? { thumbObjectUrl } : {}),
     ...(attachmentFileNames ? { attachmentFileNames } : {}),
     ...(attachmentFileObjectIds ? { attachmentFileObjectIds } : {}),

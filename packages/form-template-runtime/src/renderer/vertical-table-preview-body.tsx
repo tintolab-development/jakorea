@@ -1,7 +1,11 @@
 import { Checkbox, Input, Radio } from 'antd'
 import type { ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
 import { isFormPreviewReadonlyMode } from '@jakorea/form-schema/surface'
-import type { TableBottomConsent, VerticalTableParagraph } from '@jakorea/form-schema/writing-form'
+import {
+  SHORT_ESSAY_MAX_LENGTH,
+  type TableBottomConsent,
+  type VerticalTableParagraph,
+} from '@jakorea/form-schema/writing-form'
 import {
   resolveVerticalTablePreviewLayout,
   type VerticalTablePreviewStage,
@@ -133,8 +137,13 @@ function VerticalTableStageBody({
     )
   }
 
-  if (stage.kind === 'date_time') {
-    const mode = stage.dateTimeMode ?? 'date'
+  if (stage.kind === 'date' || stage.kind === 'time' || stage.kind === 'date_time') {
+    const mode =
+      stage.kind === 'time'
+        ? 'time'
+        : stage.kind === 'date'
+          ? 'date'
+          : (stage.dateTimeMode ?? 'date')
     if (!interactive) {
       const display =
         mode === 'date_time'
@@ -238,6 +247,7 @@ function VerticalTableStageBody({
         size="large"
         value={stage.cell}
         placeholder={stage.cellPlaceholder}
+        maxLength={SHORT_ESSAY_MAX_LENGTH}
         onChange={event => onCellChange?.(event.target.value)}
       />
     )

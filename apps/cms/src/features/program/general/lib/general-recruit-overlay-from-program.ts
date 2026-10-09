@@ -11,6 +11,7 @@ import {
   resolveProgramVolunteerTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { pickRecruitmentCopyRow } from '@/features/program/shared/lib/recruitment-row-copy'
+import { resolveAnnouncement } from '@/features/program/shared/lib/announcement-label'
 
 const inst = {
   targetLevels: 'recruit.targetLevels',
@@ -32,8 +33,15 @@ const keys = {
   individual: {
     recruitRangeSeal: 'recruit.individual.recruitRangeSeal',
     programRangeSeal: 'recruit.individual.programRangeSeal',
+    announcementPublished: 'recruit.individual.announcementPublished',
     targetLevels: 'recruit.individual.targetLevels',
     targetLevelDetail: 'recruit.individual.targetLevelDetail',
+    docDeadlineIso: 'recruit.individual.docDeadlineIso',
+    docAnnounceMethod: 'recruit.individual.docAnnounceMethod',
+    interviewRangeSeal: 'recruit.individual.interviewRangeSeal',
+    interviewMethod: 'recruit.individual.interviewMethod',
+    finalAnnounceIso: 'recruit.individual.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.individual.finalAnnounceMethod',
     inquiryContact: 'recruit.individual.inquiryContact',
     inquiryTel: 'recruit.individual.inquiryTel',
     inquiryEmail: 'recruit.individual.inquiryEmail',
@@ -50,6 +58,8 @@ const keys = {
     inquiryTel: 'recruit.instructor.inquiryTel',
     inquiryEmail: 'recruit.instructor.inquiryEmail',
     notes: 'recruit.instructor.notes',
+    finalAnnounceIso: 'recruit.instructor.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.instructor.finalAnnounceMethod',
   },
   volunteer: {
     recruitRangeSeal: 'recruit.volunteer.recruitRangeSeal',
@@ -261,7 +271,10 @@ export function buildGeneralRecruitOverlayFromProgram(
   }
 
   const published = publishedOverlay(participant?.announcementPublished)
-  if (published) overlay[inst.announcementPublished] = published
+  if (published) {
+    overlay[inst.announcementPublished] = published
+    overlay[keys.individual.announcementPublished] = published
+  }
   const instructorPublished = publishedOverlay(instructor?.announcementPublished)
   if (instructorPublished) overlay[keys.instructor.announcementPublished] = instructorPublished
   const volunteerPublished = publishedOverlay(volunteer?.announcementPublished)
@@ -314,11 +327,54 @@ export function buildGeneralRecruitOverlayFromProgram(
     program.finalPassAnnouncementMethod?.trim()
   if (volunteerFinalMethod) overlay[keys.volunteer.finalAnnounceMethod] = volunteerFinalMethod
 
-  if (program.resultAnnouncementDate) {
-    overlay[inst.finalAnnounceIso] = isoOrUndefined(program.resultAnnouncementDate)
+  const participantFinalResolved = resolveAnnouncement({
+    labels: [participant?.finalAnnouncementLabel, participant?.resultAnnouncementLabel],
+    column: {
+      date: program.resultAnnouncementDate,
+      method: program.resultAnnouncementMethod,
+    },
+  })
+  if (participantFinalResolved.date) {
+    const iso = isoOrUndefined(participantFinalResolved.date)
+    overlay[inst.finalAnnounceIso] = iso
+    overlay[keys.individual.finalAnnounceIso] = iso
   }
-  if (program.resultAnnouncementMethod?.trim()) {
-    overlay[inst.finalAnnounceMethod] = program.resultAnnouncementMethod.trim()
+  if (participantFinalResolved.method?.trim()) {
+    const method = participantFinalResolved.method.trim()
+    overlay[inst.finalAnnounceMethod] = method
+    overlay[keys.individual.finalAnnounceMethod] = method
+  }
+
+  if (program.documentPassAnnouncementDate) {
+    overlay[keys.individual.docDeadlineIso] = isoOrUndefined(
+      program.documentPassAnnouncementDate
+    )
+  }
+  if (program.documentPassAnnouncementMethod?.trim()) {
+    overlay[keys.individual.docAnnounceMethod] = program.documentPassAnnouncementMethod.trim()
+  }
+  if (program.interviewStartDate && program.interviewEndDate) {
+    overlay[keys.individual.interviewRangeSeal] = {
+      start: isoOrUndefined(program.interviewStartDate) ?? '',
+      end: isoOrUndefined(program.interviewEndDate) ?? '',
+    }
+  }
+  if (program.interviewMethod?.trim()) {
+    overlay[keys.individual.interviewMethod] = program.interviewMethod.trim()
+  }
+
+  const instructorFinalResolved = resolveAnnouncement({
+    labels: [instructor?.finalAnnouncementLabel, instructor?.resultAnnouncementLabel],
+    column: {
+      date: program.finalPassAnnouncementDate,
+      method: program.finalPassAnnouncementMethod,
+    },
+  })
+  if (instructorFinalResolved.date) {
+    overlay[keys.instructor.finalAnnounceIso] = isoOrUndefined(instructorFinalResolved.date)
+  }
+  if (instructorFinalResolved.method?.trim()) {
+    overlay[keys.instructor.finalAnnounceMethod] = instructorFinalResolved.method.trim()
   }
 
   return overlay

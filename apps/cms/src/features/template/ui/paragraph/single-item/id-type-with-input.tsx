@@ -115,8 +115,9 @@ export function IdTypeWithInputBody({
     selectedId != null
       ? placeholderForOption(selectedId, paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요')
       : paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
-  const radiosDisabled = documentMode || !isEditMode || lockResidentIdType
-  const inputsDisabled = documentMode || !isEditMode
+  const inputsLocked = documentMode || !isEditMode
+  const radiosDisabled = documentMode || lockResidentIdType
+  const shellNonInteractive = !isEditMode && !documentMode
 
   const setSelected = (nextId: string) => {
     clearTimer()
@@ -151,7 +152,14 @@ export function IdTypeWithInputBody({
   }
 
   return (
-    <div className="id-type-with-input">
+    <div
+      className={[
+        'id-type-with-input',
+        shellNonInteractive ? 'id-type-with-input--non-interactive' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <CmsRadio.Group
         className={[
           'id-type-with-input__radios',
@@ -181,7 +189,7 @@ export function IdTypeWithInputBody({
             width="100%"
             value={residentParts.front}
             placeholder="주민등록 앞 6자리"
-            disabled={inputsDisabled}
+            readOnly={inputsLocked}
             maxLength={6}
             aria-label="주민등록번호 앞자리"
             onValueChange={value =>
@@ -199,7 +207,7 @@ export function IdTypeWithInputBody({
             width="100%"
             value={residentParts.back}
             placeholder="주민등록 뒤 7자리"
-            disabled={inputsDisabled}
+            readOnly={inputsLocked}
             maxLength={7}
             aria-label="주민등록번호 뒷자리"
             onValueChange={value =>
@@ -215,7 +223,7 @@ export function IdTypeWithInputBody({
           width={280}
           value={localInputValue}
           placeholder={ph}
-          disabled={inputsDisabled}
+          readOnly={inputsLocked}
           onChange={e => patchInputValue(e.target.value)}
           onBlur={flushInputValue}
         />

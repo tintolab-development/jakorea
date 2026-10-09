@@ -14,6 +14,25 @@ export function truncateForDeleteGuideDisplay(
   return `${t.slice(0, maxLen)}...`
 }
 
+/** DeleteGuideModal 본문용 표시 이름 목록 (trim · 길이 제한) */
+export function normalizeDeleteGuideEntityDisplayNames(entityNames: string[]): string[] {
+  const trimmed = entityNames.map(n => n.trim()).filter(Boolean)
+  return trimmed.map(n => truncateForDeleteGuideDisplay(n)).filter(Boolean)
+}
+
+/**
+ * 다건(2건 이상) 삭제 안내 1줄 — `**[대표명] 외 N개**` + suffix
+ * @param suffix 조사·꼬리문장 (예: `를 후원사에서 삭제하시겠습니까?`)
+ */
+export function buildDeleteGuideOverflowHeadline(
+  primaryDisplayName: string,
+  totalCount: number,
+  suffix: string
+): string {
+  const othersCount = Math.max(0, totalCount - 1)
+  return `**[${primaryDisplayName}] 외 ${othersCount}개**${suffix}`
+}
+
 export function buildDomainEntityDeleteMessageLines(
   entityNames: string[],
   domainLabel: string

@@ -6,16 +6,16 @@
 import { INSTITUTION_GUIDANCE_FIELDS } from '@/features/template/lib/institution-guidance-field-definitions'
 import type { ProgramRegistrationParticipantSelection } from '@/features/template/lib/program-registration-editor-state'
 import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
-import {
-  APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS as RK,
-  getApplicantRecruitInstitutionOverlayRecord,
-} from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS as RK } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralApplicationOverlayRecord } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getInstitutionSexOffenseConsentSubmissionRequest,
   shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
 } from '@/features/program/general/lib/institution-application-form-visibility'
-import { listIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
+import {
+  listIncompleteGeneralProgramRecruitmentRequiredFields,
+  peekSelectedInstitutionRecruitOverlay,
+} from '@/features/program/general/lib/registration-recruitment-required-fields'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 
 const ALL = '__all__'
@@ -278,7 +278,9 @@ export function listIncompleteEconomyProgramRecruitmentRequiredFields(
   const reasons: string[] = []
   if (participant.organization) {
     reasons.push(
-      ...listIncompleteEconomyInstitutionRecruit(getApplicantRecruitInstitutionOverlayRecord())
+      ...listIncompleteEconomyInstitutionRecruit(
+        peekSelectedInstitutionRecruitOverlay('COMPANY_SCHOOL')
+      )
     )
   }
   if (participant.teacherInstructor || participant.individual || participant.volunteer) {
@@ -294,6 +296,7 @@ export function listIncompleteEconomyProgramRecruitmentRequiredFields(
         sessionRoundType: 'single',
         educationScheduleMode: 'period',
         volunteerExceptionScheduleCount: 0,
+        registrationProgramType: 'COMPANY_SCHOOL',
       })
     )
   }

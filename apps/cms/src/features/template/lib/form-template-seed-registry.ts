@@ -1,4 +1,5 @@
 import { CERTIFICATE_ISSUANCE_TEMPLATE_CODES } from '@/features/template/api/form-template-catalog'
+import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import { createApplicantRecruitFormIndividualDraft } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import { createGeminiVisitingTrainingApplicationFormInstructorDraft } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
@@ -44,6 +45,7 @@ import { createUjatRecruitFormInstitutionDraft } from '@/features/template/model
 import { createUjatRecruitFormVolunteerDraft } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import { createTrainedTeachersRecruitFormInstitutionDraft } from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
 import { createEconomyRecruitFormInstitutionDraft } from '@/features/template/model/economy-recruit-form-institution-draft'
+import { buildOperationalImmutableFormSchemaDraft } from '@/features/template/lib/operational-form-schema-copy-merge'
 import { createPaymentStatementIssuanceDraft } from '@/features/template/model/payment-statement-issuance-draft'
 import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { createSettlementApplicationIssuanceDraft } from '@/features/template/model/settlement-application-issuance-draft'
@@ -119,39 +121,52 @@ export function getFormTemplateSeedDraft(templateCode: string): WritingFormDraft
 
 export function normalizeWritingFormDraftFromApi(
   templateCode: string,
-  draft: WritingFormDraft
+  draft: WritingFormDraft,
+  baseTemplateCode?: string | null
 ): WritingFormDraft {
-  if (draft.paragraphs.length > 0 || EMPTY_PARAGRAPHS_ALLOWED.has(templateCode)) {
-    if (templateCode === 'application-ujat-volunteer') {
+  const catalogCode = resolveWritingFormBaseTemplateCode(templateCode, baseTemplateCode)
+  if (draft.paragraphs.length > 0 || EMPTY_PARAGRAPHS_ALLOWED.has(catalogCode)) {
+    if (catalogCode === 'application-ujat-volunteer') {
       return migrateUjatProgramApplicationVolunteerChoiceParagraphs(draft)
     }
-    if (templateCode === 'application-ujat-school') {
+    if (catalogCode === 'application-ujat-school') {
       return migrateUjatProgramApplicationInstitutionParagraphs(draft)
     }
-    if (templateCode === 'application-gemini-visiting-training-school') {
+    if (catalogCode === 'application-gemini-visiting-training-school') {
       return migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(draft)
     }
-    if (templateCode === 'application-economy') {
+    if (catalogCode === 'application-economy') {
       return migrateProgramApplicationFormEconomyParagraphs(draft)
     }
-    if (templateCode === 'application-participant-school') {
+    if (catalogCode === 'application-participant-school') {
       return migrateProgramApplicationFormInstitutionParagraphs(draft)
     }
-    if (templateCode === 'application-instructor') {
+    if (catalogCode === 'application-instructor') {
       return migrateProgramApplicationFormInstructorParagraphs(draft)
     }
-    if (templateCode === 'application-volunteer') {
+    if (catalogCode === 'application-volunteer') {
       return migrateProgramApplicationFormVolunteerParagraphs(draft)
     }
-    if (templateCode === 'application-participant-individual') {
+    if (catalogCode === 'application-participant-individual') {
       return migrateProgramParticipantApplicationParagraphs(draft)
     }
-    if (templateCode === 'application-trained-teachers') {
+    if (catalogCode === 'application-trained-teachers') {
       return migrateProgramApplicationFormTrainedTeachersParagraphs(draft)
+    }
+    if (
+      catalogCode.startsWith('recruitment-') ||
+      catalogCode.startsWith('registration-')
+    ) {
+      const merged = buildOperationalImmutableFormSchemaDraft({
+        templateCode: catalogCode,
+        editorDraft: draft,
+        baseTemplateCode,
+      })
+      if (merged != null) return merged
     }
     return draft
   }
-  const seed = getFormTemplateSeedDraft(templateCode)
+  const seed = getFormTemplateSeedDraft(catalogCode)
   if (seed == null) return draft
   return {
     ...draft,

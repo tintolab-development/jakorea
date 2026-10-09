@@ -97,6 +97,10 @@
   max-width: 100%;
 }
 
+.form-editor-user-grid--non-interactive {
+  pointer-events: none;
+}
+
 .form-editor-user-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -130,6 +134,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.form-editor-likert--non-interactive {
+  pointer-events: none;
 }
 
 .form-editor-likert__btn {

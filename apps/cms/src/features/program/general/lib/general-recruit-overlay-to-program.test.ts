@@ -119,7 +119,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
   it('maps instructor and volunteer recruit overlays', () => {
     const keys = GENERAL_RECRUIT_OVERLAY_KEYS
     const overlay: Record<string, unknown> = {
-      [keys.instructor.recruitTargets]: ['성인'],
+      [keys.instructor.recruitTargets]: ['adult'],
       [keys.instructor.recruitTargetDetail]: '현직 멘토',
       [keys.instructor.recruitRangeSeal]: {
         start: '2026-02-01T00:00:00+09:00',
@@ -127,7 +127,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
       },
       [keys.instructor.inquiryContact]: '강사 문의처',
       [keys.instructor.inquiryTel]: '010-1111-2222',
-      [keys.volunteer.volunteerTargets]: ['대학(원)생'],
+      [keys.volunteer.volunteerTargets]: ['university'],
       [keys.volunteer.volunteerTargetDetail]: '봉사 가능자',
       [keys.volunteer.recruitRangeSeal]: {
         start: '2026-03-01T00:00:00+09:00',
@@ -141,7 +141,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
       preferOverlay: true,
     })
 
-    expect(next.instructorTargets).toEqual(['성인'])
+    expect(next.instructorTargets).toEqual(['adult'])
     expect(next.instructorTargetDetail).toBe('현직 멘토')
     expect(next.instructorApplicationStartDate).toBe('2026-02-01T00:00:00+09:00')
     expect(next.instructorApplicationEndDate).toBe('2026-02-28T00:00:00+09:00')
@@ -151,7 +151,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(instructorInfo?.recruitmentTarget).toBe('성인')
     expect(instructorInfo?.recruitmentTargetDetail).toBe('현직 멘토')
     expect(instructorInfo?.programDescription).toBe('강사 모집 설명')
-    expect(next.volunteerTargets).toEqual(['대학(원)생'])
+    expect(next.volunteerTargets).toEqual(['university'])
     expect(next.volunteerTargetDetail).toBe('봉사 가능자')
     expect(next.volunteerApplicationStartDate).toBe('2026-03-01T00:00:00+09:00')
     const volunteerInfo = next.generalCommonInfo?.volunteerRecruitmentInfo
@@ -199,6 +199,45 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(display.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName).toBe(
       '강사 문의처'
     )
+  })
+
+  it('maps individual participant final announce and announcement published from overlay', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const overlay: Record<string, unknown> = {
+      [keys.individual.announcementPublished]: 'unpublished',
+      [keys.individual.finalAnnounceIso]: '2026-05-01T00:00:00+09:00',
+      [keys.individual.finalAnnounceMethod]: '문자 안내',
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(baseProgram(), overlay, {
+      preferOverlay: true,
+    })
+
+    const participantInfo = next.generalCommonInfo?.participantRecruitmentInfo
+    expect(participantInfo?.announcementPublished).toBe(false)
+    expect(participantInfo?.announcementPublishedLabel).toBe('미게시')
+    expect(participantInfo?.finalAnnouncementLabel).toContain('2026')
+    expect(participantInfo?.finalAnnouncementLabel).toContain('문자 안내')
+    expect(next.resultAnnouncementDate).toBe('2026-05-01T00:00:00+09:00')
+    expect(next.resultAnnouncementMethod).toBe('문자 안내')
+  })
+
+  it('maps instructor final pass announcement from overlay to nested info and program columns', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const overlay: Record<string, unknown> = {
+      [keys.instructor.finalAnnounceIso]: '2026-04-01T00:00:00+09:00',
+      [keys.instructor.finalAnnounceMethod]: '홈페이지 공지 및 개별 연락',
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(baseProgram(), overlay, {
+      preferOverlay: true,
+    })
+
+    const instructorInfo = next.generalCommonInfo?.instructorRecruitmentInfo
+    expect(instructorInfo?.finalAnnouncementLabel).toContain('2026')
+    expect(instructorInfo?.finalAnnouncementLabel).toContain('홈페이지 공지 및 개별 연락')
+    expect(next.finalPassAnnouncementDate).toBe('2026-04-01T00:00:00+09:00')
+    expect(next.finalPassAnnouncementMethod).toBe('홈페이지 공지 및 개별 연락')
   })
 
   it('maps volunteer announcement, interview flags, final announce, and interview schedule', () => {

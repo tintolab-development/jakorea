@@ -110,9 +110,10 @@ export function MultipleChoice({
   const singleId = choiceDisplayOnly ? null : (paragraph.selectedPreviewSingleId ?? null)
   const multiIds = choiceDisplayOnly ? [] : (paragraph.selectedPreviewMultipleIds ?? [])
   const isPreviewReadonly = isFormPreviewReadonlyMode(paragraphInteractionMode)
-  /** displayOnly: 일반 스킨 유지. preview: 동일. 그 외 비interactive는 disabled 스킨 */
-  const controlDisabled =
-    choiceDisplayOnly || isPreviewReadonly ? false : !isBodyInteractive
+  /** displayOnly·preview·카드 비선택 — disabled 회색 스킨 없이 pointer-events만 차단 */
+  const blockChoicePointer =
+    choiceDisplayOnly || isPreviewReadonly || !isBodyInteractive
+  const controlDisabled = false
 
   const patch = (partial: Partial<MultipleChoiceParagraph>) => {
     if (choiceDisplayOnly || !isBodyInteractive) return
@@ -145,7 +146,7 @@ export function MultipleChoice({
         role="presentation"
         className={bodyClass}
         onClick={handleBodyClick}
-        style={choiceDisplayOnly ? { pointerEvents: 'none' } : undefined}
+        style={blockChoicePointer ? { pointerEvents: 'none' } : undefined}
       >
         <MultipleChoiceBodyDescription paragraph={paragraph} />
         {items.map(item => (
@@ -169,7 +170,7 @@ export function MultipleChoice({
       role="presentation"
       className={bodyClass}
       onClick={handleBodyClick}
-      style={choiceDisplayOnly ? { pointerEvents: 'none' } : undefined}
+      style={blockChoicePointer ? { pointerEvents: 'none' } : undefined}
     >
       <MultipleChoiceBodyDescription paragraph={paragraph} />
       <CmsRadioGroup

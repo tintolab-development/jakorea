@@ -108,6 +108,8 @@ const PERSONAL_INFO_RETENTION_CELL =
   '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
 const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
 const FREE_TEXT_ITEMS_DESCRIPTION = '1~4번 문항은 자유롭게 작성 가능합니다.'
+/** 일반 봉사 신청 시드와 동일했던 구 설명 */
+const LEGACY_FREE_TEXT_ITEMS_DESCRIPTION = '1~3번 문항은 자유롭게 작성 가능합니다.'
 
 const PERSONAL_INFO_COLLECTION_BOTTOM =
   '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
@@ -351,7 +353,7 @@ export function migrateUjatProgramApplicationVolunteerChoiceParagraphs(
     if (
       paragraph.id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems &&
       paragraph.kind === 'single_item' &&
-      paragraph.paragraphDescription !== FREE_TEXT_ITEMS_DESCRIPTION
+      paragraph.paragraphDescription === LEGACY_FREE_TEXT_ITEMS_DESCRIPTION
     ) {
       changed = true
       return { ...paragraph, paragraphDescription: FREE_TEXT_ITEMS_DESCRIPTION }

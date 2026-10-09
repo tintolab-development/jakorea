@@ -1,38 +1,52 @@
 import {
-  buildBulkDomainDeleteMessageLines,
-  truncateForDeleteGuideDisplay,
+  buildBulkDeleteGuideTitle,
+  buildDeleteGuideOverflowHeadline,
+  normalizeDeleteGuideEntityDisplayNames,
 } from '@/shared/ui/delete-guide-messages'
 
-const SPONSOR_DELETE_IMPACT_LINE =
-  '삭제 시 후원금을 비롯한 모든 프로그램 관련 정보가 삭제됩니다.'
-const SPONSOR_DELETE_IRREVERSIBLE_LINE = '삭제된 정보는 되돌릴 수 없습니다.'
+const SPONSOR_DELETE_IMPACT_LINE = '삭제 시 모든 정보가 삭제되며, 삭제된 정보는 되돌릴 수 없습니다.'
 
-/** 후원사 단건·소수 건 삭제 안내 본문 */
-export function buildSponsorDeleteMessageLines(entityNames: string[]): string[] {
-  const trimmed = entityNames.map(n => n.trim()).filter(Boolean)
-  if (trimmed.length === 0) return []
+/** 목록·상세 삭제 안내 카피 구분 */
+export type SponsorDeleteMessagePreset = 'list' | 'detail'
 
-  const displayNames = trimmed.map(n => truncateForDeleteGuideDisplay(n)).filter(Boolean)
-  if (displayNames.length === 0) return []
-
-  const tail = [SPONSOR_DELETE_IMPACT_LINE, SPONSOR_DELETE_IRREVERSIBLE_LINE]
-
-  if (displayNames.length === 1) {
-    return [`[${displayNames[0]}]를 후원사에서 삭제하시겠습니까?`, ...tail]
-  }
-
-  const count = displayNames.length
-  const nameList = displayNames.map(n => `[${n}]`).join(', ')
-  return [`선택한 ${count}건(${nameList})을 후원사에서 삭제하시겠습니까?`, ...tail]
+function resolveHeadlineSuffix(preset: SponsorDeleteMessagePreset): string {
+  return preset === 'list' ? '를 삭제하시겠습니까?' : '를 후원사에서 삭제하시겠습니까?'
 }
 
-/** 후원사 목록 일괄 삭제 안내 본문 (2건 이상) */
-export function buildSponsorBulkDeleteMessageLines(count: number): string[] {
-  const [line1] = buildBulkDomainDeleteMessageLines(
-    count,
-    '개의 후원사',
-    '후원사',
-    '후원사'
-  )
-  return [line1, SPONSOR_DELETE_IMPACT_LINE, SPONSOR_DELETE_IRREVERSIBLE_LINE]
+/** 후원사 단건·일괄 삭제 안내 본문 */
+export function buildSponsorDeleteMessageLines(
+  entityNames: string[],
+  preset: SponsorDeleteMessagePreset = 'detail'
+): string[] {
+  const displayNames = normalizeDeleteGuideEntityDisplayNames(entityNames)
+  if (displayNames.length === 0) return []
+
+  const suffix = resolveHeadlineSuffix(preset)
+  const tail = [SPONSOR_DELETE_IMPACT_LINE]
+
+  if (displayNames.length === 1) {
+    return [`[${displayNames[0]}]${suffix}`, ...tail]
+  }
+
+  return [
+    buildDeleteGuideOverflowHeadline(displayNames[0], displayNames.length, suffix),
+    ...tail,
+  ]
+}
+
+export function resolveSponsorDeleteModalTitle(
+  preset: SponsorDeleteMessagePreset,
+  entityNameCount: number
+): string {
+  const isBulk = entityNameCount >= 2
+  if (preset === 'list') {
+    return isBulk ? buildBulkDeleteGuideTitle('후원사') : '후원사 삭제 안내'
+  }
+  return isBulk ? buildBulkDeleteGuideTitle('후원사') : '후원사 삭제 안내'
+}
+
+export function resolveSponsorDeleteModalConfirmText(
+  preset: SponsorDeleteMessagePreset
+): string {
+  return preset === 'list' ? '삭제' : '후원사 삭제'
 }

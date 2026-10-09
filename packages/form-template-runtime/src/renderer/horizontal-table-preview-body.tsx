@@ -3,6 +3,7 @@ import {
   type HorizontalTableParagraph,
   type IdTypeWithInputParagraph,
   type TableBottomConsent,
+  SHORT_ESSAY_MAX_LENGTH,
   isIdTypeResidentOptionId,
   joinIdTypeResidentInputValue,
   splitIdTypeResidentInputValue,
@@ -120,6 +121,7 @@ export function HorizontalTablePreviewBody({
                       autoSize={{ minRows: 2, maxRows: 6 }}
                       value={fieldCell.kind === 'subjective' ? fieldCell.value : cellValue}
                       placeholder="답변을 입력해 주세요"
+                      maxLength={SHORT_ESSAY_MAX_LENGTH}
                       onChange={event =>
                         onFieldCellChange?.(rowIndex, colIndex, event.target.value)
                       }

@@ -38,6 +38,7 @@ export function useWritingFormSections() {
   return {
     sections,
     isLoading: remoteEnabled && query.isLoading,
+    isFetching: remoteEnabled && query.isFetching,
     isRemote: remoteEnabled && !query.isError && query.data != null,
     isMockCatalog: !remoteEnabled,
     isError: remoteEnabled && query.isError,

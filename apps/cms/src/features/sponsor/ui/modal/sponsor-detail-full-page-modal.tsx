@@ -394,7 +394,7 @@ function SponsorDetailFullPageModalInner({
         open={sponsorDelete.deleteModalOpen}
         onCancel={sponsorDelete.cancelDelete}
         onConfirm={sponsorDelete.handleConfirm}
-        sponsorName={detail.nameDisplayKo}
+        sponsorNames={[detail.nameDisplayKo]}
       />
       <SponsorDeleteBlockedModal open={sponsorDelete.deleteBlockedModalOpen} onClose={sponsorDelete.closeBlockedModal} />
       <SponsorContactRegisterModal

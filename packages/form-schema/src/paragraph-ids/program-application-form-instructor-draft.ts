@@ -31,6 +31,9 @@ const PERSONAL_INFO_RETENTION_CELL =
 
 const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
 
+/** 2026-10 reseed 이전 강사 신청 시드 — 이 제목만 현행 카피로 교체 */
+const LEGACY_CRIME_RECORD_PARAGRAPH_TITLE = '성범죄 경력 조회서 제출'
+
 function createInstructorPersonalInfoHorizontalTable(): HorizontalTableParagraph {
   const colCount = 3
   const columnFields = Array.from({ length: colCount }, () => ({
@@ -212,8 +215,7 @@ export function migrateProgramApplicationFormInstructorParagraphs(
     }
     if (
       paragraph.id === PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord &&
-      (paragraph.paragraphTitle !== INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION.title ||
-        paragraph.paragraphDescription !== INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION.description)
+      paragraph.paragraphTitle === LEGACY_CRIME_RECORD_PARAGRAPH_TITLE
     ) {
       changed = true
       return {

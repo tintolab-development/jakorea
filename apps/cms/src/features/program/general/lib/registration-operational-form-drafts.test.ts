@@ -25,32 +25,32 @@ import {
   applyOperationalOverlayForCatalogId,
   clearRegistrationOperationalFormDrafts,
   collectOperationalOverlayForCatalogId,
+  collectSelectedRecruitOverlaysForProgram,
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   listRegistrationOperationalFormDraftStorageKeys,
   persistRegistrationOperationalOverlaySnapshots,
+  resetOperationalOverlayForCatalogId,
   resolveOperationalDraftStorageKey,
 } from './registration-operational-form-drafts'
 import {
-  getApplicantRecruitInstitutionOverlayRecord,
+  peekApplicantRecruitInstitutionOverlayRecord,
   patchApplicantRecruitInstitutionOverlay,
-  resetApplicantRecruitInstitutionOverlay,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
-  getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
-  resetGeneralRecruitOverlay,
+  peekGeneralRecruitOverlayRecord,
+  setGeneralRecruitOverlayScope,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { patchGeneralApplicationOverlay } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
-  patchGeneralApplicationOverlay,
-  resetGeneralApplicationOverlay,
-} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+  resetAllOperationalOverlayStoresForTests,
+  setOperationalOverlayScope,
+} from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 
 describe('registration operational draft-owned helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetApplicantRecruitInstitutionOverlay()
-    resetGeneralRecruitOverlay()
-    resetGeneralApplicationOverlay()
+    resetAllOperationalOverlayStoresForTests()
   })
 
   it('clearRegistrationOperationalFormDrafts is no-op (local draft clear is centralized)', () => {
@@ -96,20 +96,69 @@ describe('registration operational draft-owned helpers', () => {
     await hydrateRegistrationOperationalOverlaysFromLocalDrafts('GENERAL', 'general')
 
     expect(loadRegistrationWizardFormDraft).toHaveBeenCalled()
-    expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.inquiryContact']).toBe('기관문의')
-    expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.programDescription']).toBe(
-      '프로그램 설명'
-    )
-    expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.additionalContentHtml']).toBe(
-      '<p>에디터</p>'
-    )
+    expect(
+      peekApplicantRecruitInstitutionOverlayRecord('recruitment-participant-school')[
+        'recruit.inquiryContact'
+      ]
+    ).toBe('기관문의')
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-participant-school')[
+        'recruit.detailInfo.programDescription'
+      ]
+    ).toBe('프로그램 설명')
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-participant-school')[
+        'recruit.detailInfo.additionalContentHtml'
+      ]
+    ).toBe('<p>에디터</p>')
+  })
+
+  it('collectSelectedRecruitOverlaysForProgram peeks the recruit bucket after application scope', () => {
+    setOperationalOverlayScope('recruitment-participant-individual')
+    patchGeneralRecruitOverlay({
+      'recruit.individual.inquiryContact': '박지훈',
+      'recruit.detailInfo.programDescription': '모집 설명',
+    })
+    setOperationalOverlayScope('application-participant-individual')
+    const overlay = collectSelectedRecruitOverlaysForProgram({
+      id: '100001',
+      generalParticipantTypes: ['individual'],
+    } as Program)
+    expect(overlay['recruit.individual.inquiryContact']).toBe('박지훈')
+    expect(overlay['recruit.detailInfo.programDescription']).toBe('모집 설명')
+  })
+
+  it('collects individual recruit detailInfo with participant fields', () => {
+    setOperationalOverlayScope('recruitment-participant-individual')
+    patchGeneralRecruitOverlay({
+      'recruit.individual.inquiryContact': '개인문의',
+      'recruit.detailInfo.programDescription': '개인 프로그램 설명',
+      'recruit.detailInfo.additionalContentHtml': '<p>추가</p>',
+    })
+    const overlay = collectOperationalOverlayForCatalogId('recruitment-participant-individual')
+    expect(overlay?.['recruit.individual.inquiryContact']).toBe('개인문의')
+    expect(overlay?.['recruit.detailInfo.programDescription']).toBe('개인 프로그램 설명')
+    expect(overlay?.['recruit.detailInfo.additionalContentHtml']).toBe('<p>추가</p>')
+
+    setOperationalOverlayScope('recruitment-instructor')
+    applyOperationalOverlayForCatalogId('recruitment-participant-individual', overlay ?? {})
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-participant-individual')[
+        'recruit.detailInfo.programDescription'
+      ]
+    ).toBe('개인 프로그램 설명')
   })
 
   it('persists only visible operational overlays for individual general program', async () => {
+    setOperationalOverlayScope('recruitment-participant-individual')
     patchGeneralRecruitOverlay({
       'recruit.individual.inquiryContact': '개인문의',
+    })
+    setOperationalOverlayScope('recruitment-instructor')
+    patchGeneralRecruitOverlay({
       'recruit.instructor.inquiryContact': '강사문의',
     })
+    setOperationalOverlayScope('application-volunteer')
     patchGeneralApplicationOverlay({ 'application.volunteer.essay': '에세이' })
     ensureDraftOwnedFormVersionWithBaseline.mockResolvedValue({
       owned: { templateCode: 'recruitment-participant-individual', templateId: 1, draftVersionId: 10 },
@@ -141,9 +190,38 @@ describe('registration operational draft-owned helpers', () => {
     ).toBe(true)
   })
 
-  it('collects only instructor prefixes from the shared recruit store', () => {
+  it('clears instructor detail-info HTML so a new template does not persist leftover editors', () => {
+    setGeneralRecruitOverlayScope('recruitment-instructor')
+    patchGeneralRecruitOverlay({
+      'recruitInstructor.detailInfo.programDescription': '<p>이전 프로그램 설명</p>',
+      'recruitInstructor.detailInfo.recruitmentGuide': '<p>이전 모집 안내</p>',
+      'recruitInstructor.detailInfo.additionalContentHtml': '<p>이전 추가</p>',
+      'recruit.instructor.notes': '이전 비고',
+    })
+    setGeneralRecruitOverlayScope('recruitment-economy')
     patchGeneralRecruitOverlay({
       'economyRecruit.detailInfo.programDescription': '1사1교 상세',
+    })
+    resetOperationalOverlayForCatalogId('recruitment-instructor')
+    const overlay = collectOperationalOverlayForCatalogId('recruitment-instructor')
+    expect(overlay?.['recruitInstructor.detailInfo.programDescription']).toBeUndefined()
+    expect(overlay?.['recruitInstructor.detailInfo.recruitmentGuide']).toBeUndefined()
+    expect(overlay?.['recruitInstructor.detailInfo.additionalContentHtml']).toBeUndefined()
+    expect(overlay?.['recruit.instructor.notes']).toBeUndefined()
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-economy')[
+        'economyRecruit.detailInfo.programDescription'
+      ]
+    ).toBe('1사1교 상세')
+  })
+
+  it('collects only instructor prefixes from the instructor bucket', () => {
+    setGeneralRecruitOverlayScope('recruitment-economy')
+    patchGeneralRecruitOverlay({
+      'economyRecruit.detailInfo.programDescription': '1사1교 상세',
+    })
+    setGeneralRecruitOverlayScope('recruitment-instructor')
+    patchGeneralRecruitOverlay({
       'recruit.instructor.inquiryContact': '강사문의',
     })
     const overlay = collectOperationalOverlayForCatalogId('recruitment-instructor')
@@ -152,20 +230,30 @@ describe('registration operational draft-owned helpers', () => {
   })
 
   it('applying instructor overlay does not wipe 1사1교 recruit detail', () => {
+    setOperationalOverlayScope('recruitment-economy')
     patchApplicantRecruitInstitutionOverlay({ 'recruit.notes': '1사1교 안내' })
     patchGeneralRecruitOverlay({
       'economyRecruit.detailInfo.programDescription': '1사1교 상세',
+    })
+    setOperationalOverlayScope('recruitment-instructor')
+    patchGeneralRecruitOverlay({
       'recruit.instructor.inquiryContact': '이전 강사',
     })
     applyOperationalOverlayForCatalogId('recruitment-instructor', {
       'recruit.instructor.inquiryContact': '새 강사',
       'economyRecruit.detailInfo.programDescription': '덮이면 안 됨',
     })
-    expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('1사1교 안내')
-    expect(getGeneralRecruitOverlayRecord()['economyRecruit.detailInfo.programDescription']).toBe(
-      '1사1교 상세'
+    expect(peekApplicantRecruitInstitutionOverlayRecord('recruitment-economy')['recruit.notes']).toBe(
+      '1사1교 안내'
     )
-    expect(getGeneralRecruitOverlayRecord()['recruit.instructor.inquiryContact']).toBe('새 강사')
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-economy')[
+        'economyRecruit.detailInfo.programDescription'
+      ]
+    ).toBe('1사1교 상세')
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-instructor')['recruit.instructor.inquiryContact']
+    ).toBe('새 강사')
   })
 
   it('hydrating instructor draft overlay keeps 1사1교 recruit values', async () => {
@@ -193,10 +281,16 @@ describe('registration operational draft-owned helpers', () => {
 
     await hydrateRegistrationOperationalOverlaysFromLocalDrafts('ECONOMY', 'economy')
 
-    expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('1사1교 안내')
-    expect(getGeneralRecruitOverlayRecord()['economyRecruit.detailInfo.programDescription']).toBe(
-      '1사1교 상세'
+    expect(peekApplicantRecruitInstitutionOverlayRecord('recruitment-economy')['recruit.notes']).toBe(
+      '1사1교 안내'
     )
-    expect(getGeneralRecruitOverlayRecord()['recruit.instructor.inquiryContact']).toBe('강사문의')
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-economy')[
+        'economyRecruit.detailInfo.programDescription'
+      ]
+    ).toBe('1사1교 상세')
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-instructor')['recruit.instructor.inquiryContact']
+    ).toBe('강사문의')
   })
 })

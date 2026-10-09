@@ -33,6 +33,8 @@ import {
   formatInstructorTargetsLabel,
   formatTargetLevelsLabel,
   formatVolunteerTargetsLabel,
+  normalizeInstructorTargetList,
+  normalizeVolunteerTargetList,
   parseTargetLevelsFromDisplayLabel,
   resolvePersistedProgramTargetLevels,
   resolveProgramTargetLevels,
@@ -57,8 +59,15 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
   individual: {
     recruitRangeSeal: 'recruit.individual.recruitRangeSeal',
     programRangeSeal: 'recruit.individual.programRangeSeal',
+    announcementPublished: 'recruit.individual.announcementPublished',
     targetLevels: 'recruit.individual.targetLevels',
     targetLevelDetail: 'recruit.individual.targetLevelDetail',
+    docDeadlineIso: 'recruit.individual.docDeadlineIso',
+    docAnnounceMethod: 'recruit.individual.docAnnounceMethod',
+    interviewRangeSeal: 'recruit.individual.interviewRangeSeal',
+    interviewMethod: 'recruit.individual.interviewMethod',
+    finalAnnounceIso: 'recruit.individual.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.individual.finalAnnounceMethod',
     inquiryContact: 'recruit.individual.inquiryContact',
     inquiryTel: 'recruit.individual.inquiryTel',
     inquiryEmail: 'recruit.individual.inquiryEmail',
@@ -75,6 +84,8 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
     inquiryTel: 'recruit.instructor.inquiryTel',
     inquiryEmail: 'recruit.instructor.inquiryEmail',
     notes: 'recruit.instructor.notes',
+    finalAnnounceIso: 'recruit.instructor.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.instructor.finalAnnounceMethod',
   },
   volunteer: {
     recruitRangeSeal: 'recruit.volunteer.recruitRangeSeal',
@@ -408,9 +419,17 @@ export function applyGeneralRecruitOverlayToProgram(
     overlayString(overlay, inst.targetLevelDetail) ??
     overlayString(overlay, keys.individual.targetLevelDetail)
 
-  const instructorTargets = overlayStringArray(overlay, keys.instructor.recruitTargets)
+  const instructorTargetsRaw = overlayStringArray(overlay, keys.instructor.recruitTargets)
+  const instructorTargets =
+    instructorTargetsRaw?.length && instructorTargetsRaw.length > 0
+      ? normalizeInstructorTargetList(instructorTargetsRaw)
+      : instructorTargetsRaw
   const instructorTargetDetail = overlayString(overlay, keys.instructor.recruitTargetDetail)
-  const volunteerTargets = overlayStringArray(overlay, keys.volunteer.volunteerTargets)
+  const volunteerTargetsRaw = overlayStringArray(overlay, keys.volunteer.volunteerTargets)
+  const volunteerTargets =
+    volunteerTargetsRaw?.length && volunteerTargetsRaw.length > 0
+      ? normalizeVolunteerTargetList(volunteerTargetsRaw)
+      : volunteerTargetsRaw
   const volunteerTargetDetail = overlayString(overlay, keys.volunteer.volunteerTargetDetail)
 
   const participantContact =
@@ -639,9 +658,17 @@ export function applyGeneralRecruitOverlayToProgram(
     participantInfo.remarks = coalesceString(participantInfo.remarks, participantRemarks, preferOverlay)
   }
 
-  // ── 기관 모집 전용 (공고·사전안내·명단·상한·최종발표) ──────────────
+  const individualFinalAnnounceIso = overlayString(overlay, keys.individual.finalAnnounceIso)
+  const individualFinalAnnounceMethod = overlayString(overlay, keys.individual.finalAnnounceMethod)
+  const individualDocDeadlineIso = overlayString(overlay, keys.individual.docDeadlineIso)
+  const individualDocAnnounceMethod = overlayString(overlay, keys.individual.docAnnounceMethod)
+  const individualInterviewRange = readRangeSeal(overlay, keys.individual.interviewRangeSeal)
+  const individualInterviewMethod = overlayString(overlay, keys.individual.interviewMethod)
+
+  // ── 기관·개인 참여자 모집 (공고·사전안내·명단·상한·최종발표) ─────
   const institutionAnnouncementPublished =
     overlayAnnouncementPublished(overlay, inst.announcementPublished) ??
+    overlayAnnouncementPublished(overlay, keys.individual.announcementPublished) ??
     (participantRecruitRange || participantContact ? true : undefined)
   const institutionPreguidance = overlayNeedNoneBool(overlay, inst.preguidanceRequired)
   const institutionStudentList = overlayStudentListRequired(overlay, inst.studentListRequired)
@@ -656,9 +683,13 @@ export function applyGeneralRecruitOverlayToProgram(
         : undefined
   const institutionFinalAnnounceIso = overlayString(overlay, inst.finalAnnounceIso)
   const institutionFinalAnnounceMethod = overlayString(overlay, inst.finalAnnounceMethod)
-  const institutionFinalAnnouncementLabel = formatAnnouncementLabel(
-    institutionFinalAnnounceIso,
-    institutionFinalAnnounceMethod
+  const participantFinalAnnounceIso =
+    institutionFinalAnnounceIso ?? individualFinalAnnounceIso
+  const participantFinalAnnounceMethod =
+    institutionFinalAnnounceMethod ?? individualFinalAnnounceMethod
+  const participantFinalAnnouncementLabel = formatAnnouncementLabel(
+    participantFinalAnnounceIso,
+    participantFinalAnnounceMethod
   )
   const institutionMaxInstructors = overlayFiniteNumber(overlay, inst.maxAssignableInstructors)
   const institutionMaxClassCount = overlayFiniteNumber(overlay, inst.maxClassCount)
@@ -734,10 +765,10 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
-  if (institutionFinalAnnouncementLabel) {
+  if (participantFinalAnnouncementLabel) {
     const nextFinal = coalesceString(
       participantInfo.finalAnnouncementLabel ?? participantInfo.resultAnnouncementLabel,
-      institutionFinalAnnouncementLabel,
+      participantFinalAnnouncementLabel,
       preferOverlay
     )
     if (nextFinal) {
@@ -881,6 +912,27 @@ export function applyGeneralRecruitOverlayToProgram(
     if (nextPublished !== undefined) {
       instructorInfo.announcementPublished = nextPublished
       instructorInfo.announcementPublishedLabel = nextPublished ? '게시' : '미게시'
+    }
+  }
+
+  const instructorFinalAnnounceIso = overlayString(overlay, keys.instructor.finalAnnounceIso)
+  const instructorFinalAnnounceMethod = overlayString(
+    overlay,
+    keys.instructor.finalAnnounceMethod
+  )
+  const instructorFinalAnnouncementLabel = formatAnnouncementLabel(
+    instructorFinalAnnounceIso,
+    instructorFinalAnnounceMethod
+  )
+  if (instructorFinalAnnouncementLabel) {
+    const nextFinal = coalesceString(
+      instructorInfo.finalAnnouncementLabel ?? instructorInfo.resultAnnouncementLabel,
+      instructorFinalAnnouncementLabel,
+      preferOverlay
+    )
+    if (nextFinal) {
+      instructorInfo.finalAnnouncementLabel = nextFinal
+      instructorInfo.resultAnnouncementLabel = nextFinal
     }
   }
 
@@ -1268,47 +1320,47 @@ export function applyGeneralRecruitOverlayToProgram(
     ) as Program['studentListRequired'],
     resultAnnouncementDate: coalesceIso(
       program.resultAnnouncementDate,
-      institutionFinalAnnounceIso ?? volunteerFinalAnnounceIso,
+      participantFinalAnnounceIso ?? volunteerFinalAnnounceIso,
       preferOverlay
     ),
     resultAnnouncementMethod: coalesceString(
       program.resultAnnouncementMethod,
-      institutionFinalAnnounceMethod ?? volunteerFinalAnnounceMethod,
+      participantFinalAnnounceMethod ?? volunteerFinalAnnounceMethod,
       preferOverlay
     ),
     documentPassAnnouncementDate: coalesceIso(
       program.documentPassAnnouncementDate,
-      volunteerDocDeadlineIso,
+      individualDocDeadlineIso ?? volunteerDocDeadlineIso,
       preferOverlay
     ),
     documentPassAnnouncementMethod: coalesceString(
       program.documentPassAnnouncementMethod,
-      volunteerDocAnnounceMethod,
+      individualDocAnnounceMethod ?? volunteerDocAnnounceMethod,
       preferOverlay
     ),
     interviewStartDate: coalesceIso(
       program.interviewStartDate,
-      volunteerInterviewRange?.start,
+      individualInterviewRange?.start ?? volunteerInterviewRange?.start,
       preferOverlay
     ),
     interviewEndDate: coalesceIso(
       program.interviewEndDate,
-      volunteerInterviewRange?.end,
+      individualInterviewRange?.end ?? volunteerInterviewRange?.end,
       preferOverlay
     ),
     interviewMethod: coalesceString(
       program.interviewMethod,
-      volunteerInterviewMethod,
+      individualInterviewMethod ?? volunteerInterviewMethod,
       preferOverlay
     ),
     finalPassAnnouncementDate: coalesceIso(
       program.finalPassAnnouncementDate,
-      volunteerFinalAnnounceIso,
+      volunteerFinalAnnounceIso ?? instructorFinalAnnounceIso,
       preferOverlay
     ),
     finalPassAnnouncementMethod: coalesceString(
       program.finalPassAnnouncementMethod,
-      volunteerFinalAnnounceMethod,
+      volunteerFinalAnnounceMethod ?? instructorFinalAnnounceMethod,
       preferOverlay
     ),
     generalVolunteerInterviewEnabled: coalesceBool(

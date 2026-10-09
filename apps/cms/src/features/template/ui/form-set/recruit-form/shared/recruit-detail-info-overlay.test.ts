@@ -10,6 +10,7 @@ import {
   resetGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { collectOperationalOverlayForCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   mergeRecruitDetailInfoFromGeneralStore,
   overlayEntriesAbsentFromLive,
@@ -25,6 +26,7 @@ describe('recruit detail info overlay persist', () => {
   beforeEach(() => {
     resetApplicantRecruitInstitutionOverlay()
     resetGeneralRecruitOverlay()
+    setOperationalOverlayScope('recruitment-participant-school')
   })
 
   it('resolves detail prefix for copied catalog codes', () => {

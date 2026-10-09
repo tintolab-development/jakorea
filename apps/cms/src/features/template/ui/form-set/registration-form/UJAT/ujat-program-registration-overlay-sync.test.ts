@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getUjatProgramRegistrationOverlayVersion,
   patchUjatProgramRegistrationOverlay,
-  resetUjatProgramRegistrationOverlay,
+  resetUjatProgramRegistrationOverlayStoreForTests,
   subscribeUjatProgramRegistrationOverlayKey,
 } from './ujat-program-registration-overlay-sync'
 
 afterEach(() => {
-  resetUjatProgramRegistrationOverlay()
+  resetUjatProgramRegistrationOverlayStoreForTests()
 })
 
 describe('ujat-program-registration-overlay-sync', () => {

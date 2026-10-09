@@ -3,15 +3,13 @@ import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-inp
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import type {
-  DateTimeFieldMode,
   VerticalTableParagraph,
   VerticalTableStageKind,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
-  DATE_TIME_FIELD_MODE_OPTIONS,
   DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
-  effectiveVerticalRowDateTimeModes,
   effectiveVerticalStageKinds,
+  isVerticalDateOrTimeStageKind,
   normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
   verticalTablePanelStageTitle,
@@ -32,7 +30,8 @@ import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/rende
 const VERTICAL_TABLE_CELL_KIND_OPTIONS: { value: VerticalTableStageKind; label: string }[] = [
   { value: 'text', label: '텍스트형' },
   { value: 'subjective', label: '주관식형' },
-  { value: 'date_time', label: '날짜/시간형' },
+  { value: 'date', label: '날짜형' },
+  { value: 'time', label: '시간형' },
   { value: 'single_choice', label: '단일선택형' },
   { value: 'multiple_choice', label: '다중선택형' },
   { value: 'file_attachment', label: '파일첨부형' },
@@ -87,8 +86,6 @@ function FormEditorVerticalTableRowFieldsBody({
     setCell,
     setStageKind,
     setPlaceholderHint,
-    setCompositeTimeHint,
-    setDateTimeStageMode,
   } = useVerticalTableRowFieldActions({
     paragraphId,
     rowIndex,
@@ -136,14 +133,10 @@ function FormEditorVerticalTableRowFieldsBody({
       >
         <FormEditorFieldList>
           {stages.map(si => {
-            const dtModes =
-              effectiveVerticalStageKinds(row, p.verticalTableFlavor)[si as 0 | 1] === 'date_time'
-                ? effectiveVerticalRowDateTimeModes(row)
-                : null
-            const stageMode: DateTimeFieldMode | null = dtModes ? dtModes[si as 0 | 1] ?? 'date' : null
             const stageKind = effectiveVerticalStageKinds(row, p.verticalTableFlavor)[
               si as 0 | 1
             ] ?? 'text'
+            const isDateOrTime = isVerticalDateOrTimeStageKind(stageKind)
 
             return (
               <FormEditorFieldListItem key={`vt-${rowIndex}-s-${si}`}>
@@ -155,7 +148,7 @@ function FormEditorVerticalTableRowFieldsBody({
                     className="form-editor-horizontal-table-body-fields__cms-select"
                     inputSize="large"
                     width="100%"
-                    value={stageKind}
+                    value={stageKind === 'date_time' ? 'date' : stageKind}
                     options={VERTICAL_TABLE_CELL_KIND_OPTIONS}
                     allowClear={false}
                     onChange={v => setStageKind(si, v as VerticalTableStageKind)}
@@ -175,72 +168,20 @@ function FormEditorVerticalTableRowFieldsBody({
                     placeholder="항목명을 입력해 주세요"
                   />
                 </Form.Item>
-                {stageKind === 'date_time' && stageMode !== null ? (
-                  <>
-                    <Form.Item
-                      className="form-editor-horizontal-table-body-fields__content-form-item"
-                      label="유형"
-                    >
-                      <CmsRadioGroup
-                        className="form-editor-vertical-table-row-fields__datetime-mode-radios"
-                        size="medium"
-                        value={stageMode}
-                        onChange={e =>
-                          setDateTimeStageMode(si as 0 | 1, e.target.value as DateTimeFieldMode)
-                        }
-                      >
-                        {DATE_TIME_FIELD_MODE_OPTIONS.map(opt => (
-                          <CmsRadio key={opt.value} value={opt.value} size="medium">
-                            {opt.label}
-                          </CmsRadio>
-                        ))}
-                      </CmsRadioGroup>
-                    </Form.Item>
-                    {stageMode === 'date_time' ? (
-                      <>
-                        <Form.Item
-                          className="form-editor-horizontal-table-body-fields__content-form-item"
-                          label="날짜 입력창 안내 텍스트"
-                        >
-                          <DeferredCmsInput
-                            width="100%"
-                            inputSize="large"
-                            className="form-editor-horizontal-table-body-fields__content-input"
-                            value={row.placeholderHints?.[si] ?? ''}
-                            onCommit={next => setPlaceholderHint(si, next)}
-                            placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
-                          />
-                        </Form.Item>
-                        <Form.Item
-                          className="form-editor-horizontal-table-body-fields__content-form-item"
-                          label="시간 입력창 안내 텍스트"
-                        >
-                          <DeferredCmsInput
-                            width="100%"
-                            inputSize="large"
-                            className="form-editor-horizontal-table-body-fields__content-input"
-                            value={row.dateTimeCompositeTimeHints?.[si] ?? ''}
-                            onCommit={next => setCompositeTimeHint(si as 0 | 1, next)}
-                            placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
-                          />
-                        </Form.Item>
-                      </>
-                    ) : (
-                      <Form.Item
-                        className="form-editor-horizontal-table-body-fields__content-form-item"
-                        label="입력창 안내 텍스트"
-                      >
-                        <DeferredCmsInput
-                          width="100%"
-                          inputSize="large"
-                          className="form-editor-horizontal-table-body-fields__content-input"
-                          value={row.placeholderHints?.[si] ?? ''}
-                          onCommit={next => setPlaceholderHint(si, next)}
-                          placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
-                        />
-                      </Form.Item>
-                    )}
-                  </>
+                {isDateOrTime ? (
+                  <Form.Item
+                    className="form-editor-horizontal-table-body-fields__content-form-item"
+                    label="입력창 안내 텍스트"
+                  >
+                    <DeferredCmsInput
+                      width="100%"
+                      inputSize="large"
+                      className="form-editor-horizontal-table-body-fields__content-input"
+                      value={row.placeholderHints?.[si] ?? ''}
+                      onCommit={next => setPlaceholderHint(si, next)}
+                      placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
+                    />
+                  </Form.Item>
                 ) : stageKind === 'subjective' ? (
                   <Form.Item
                     className="form-editor-horizontal-table-body-fields__content-form-item"

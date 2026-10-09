@@ -1,6 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
+import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 
 export const APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
   maxAssignableInstructors: 'recruit.maxAssignableInstructors',
@@ -53,26 +54,46 @@ export type ApplicantRecruitInstitutionOverlay = ApplicantRecruitInstitutionLimi
   notes?: string
 }
 
-let overlayState: Record<string, unknown> = {}
-let overlayVersion = 0
-const overlayListeners = new Set<() => void>()
+const store = createScopedOverlayStore({
+  onRecordChange: record => syncOverlayLimitsToBridge(record),
+})
 
-function emitOverlay() {
-  overlayVersion += 1
-  overlayListeners.forEach(l => l())
+export function setApplicantRecruitInstitutionOverlayScope(
+  templateCode: string | undefined | null
+): void {
+  store.setScope(templateCode)
 }
 
 export function subscribeApplicantRecruitInstitutionOverlay(listener: () => void): () => void {
-  overlayListeners.add(listener)
-  return () => overlayListeners.delete(listener)
+  return store.subscribe(listener)
 }
 
 export function getApplicantRecruitInstitutionOverlayVersion(): number {
-  return overlayVersion
+  return store.getVersion()
 }
 
+/** UI·활성 스코프 전용. persist/create 스냅샷에는 `collectSelectedRecruitOverlaysForProgram` / `collectOperationalOverlayForCatalogId`를 쓴다. */
 export function getApplicantRecruitInstitutionOverlayRecord(): Record<string, unknown> {
-  return overlayState
+  return store.getRecord()
+}
+
+export function peekApplicantRecruitInstitutionOverlayRecord(
+  templateCode: string | undefined | null
+): Record<string, unknown> {
+  return store.peekRecord(templateCode)
+}
+
+export function replaceApplicantRecruitInstitutionOverlayForScope(
+  templateCode: string | undefined | null,
+  next: Record<string, unknown>
+): void {
+  store.replaceFor(templateCode, next)
+}
+
+export function resetApplicantRecruitInstitutionOverlayForScope(
+  templateCode: string | undefined | null
+): void {
+  store.resetFor(templateCode)
 }
 
 function syncOverlayLimitsToBridge(record: Record<string, unknown>): void {
@@ -91,20 +112,23 @@ function syncOverlayLimitsToBridge(record: Record<string, unknown>): void {
 }
 
 export function patchApplicantRecruitInstitutionOverlay(partial: Record<string, unknown>): void {
-  overlayState = { ...overlayState, ...partial }
-  syncOverlayLimitsToBridge(overlayState)
-  emitOverlay()
+  store.patch(partial)
 }
 
 export function replaceApplicantRecruitInstitutionOverlay(next: Record<string, unknown>): void {
-  overlayState = { ...next }
-  syncOverlayLimitsToBridge(overlayState)
-  emitOverlay()
+  store.replace(next)
 }
 
 export function resetApplicantRecruitInstitutionOverlay(): void {
-  overlayState = {}
-  emitOverlay()
+  store.reset()
+}
+
+export function resetAllApplicantRecruitInstitutionOverlay(): void {
+  store.resetAll()
+}
+
+export function resetApplicantRecruitInstitutionOverlayStoreForTests(): void {
+  store.resetAll()
 }
 
 export function getApplicantRecruitInstitutionLimitsFromOverlay(): ApplicantRecruitInstitutionLimitsOverlay {

@@ -95,8 +95,10 @@
   vertical-align: -0.2em;
 }
 
-.form-editor-horizontal-table-header-fields__hint-x-inline .form-editor-horizontal-table-hint-button.item-delete-button,
-.form-editor-horizontal-table-body-fields__hint-x-inline .form-editor-horizontal-table-hint-button.item-delete-button {
+.form-editor-horizontal-table-header-fields__hint-x-inline
+  .form-editor-horizontal-table-hint-button.item-delete-button,
+.form-editor-horizontal-table-body-fields__hint-x-inline
+  .form-editor-horizontal-table-hint-button.item-delete-button {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
@@ -455,8 +457,7 @@
 }
 
 /* 항목 간 디바이더: 내용 아래 20px → 선 → 다음 블록 위 20px */
-.form-editor-horizontal-table-body-fields__item
-  + .form-editor-horizontal-table-body-fields__item {
+.form-editor-horizontal-table-body-fields__item + .form-editor-horizontal-table-body-fields__item {
   padding-top: 20px;
 }
 
@@ -485,88 +486,22 @@
   margin: 0;
 }
 
-/* 항목 유형 드롭다운: 기본 340px, 우측 삭제 아이콘이 있으면 310px */
+/* 항목 유형 셀렉트 — 행(삭제 버튼 제외) 전체 너비. 부모 폭 없으면 CmsSelect 100%→240px로 축소됨 */
 .form-editor-horizontal-table-body-fields__select-wrap {
-  display: flex;
-  flex: 0 0 auto;
-  width: 340px;
-  max-width: 340px;
-  min-width: 340px;
-  min-height: 44px;
-  height: 44px;
-  align-items: center;
-  box-sizing: border-box;
-}
-
-.form-editor-horizontal-table-body-fields__type-row:has(
-    .form-editor-horizontal-table-body-fields__cell-clear
-  )
-  .form-editor-horizontal-table-body-fields__select-wrap {
-  width: 310px;
-  max-width: 310px;
-  min-width: 310px;
-}
-
-/* CmsSelect 래퍼(span.cms-select)가 인풋 박스 — ant-select-selector는 보더 없음(전역 cms-select.css) */
-.form-editor-horizontal-table-body-fields__select-wrap
-  .form-editor-horizontal-table-body-fields__cms-select.cms-select {
-  display: flex;
-  min-width: 120px;
+  flex: 1 1 0;
+  min-width: 0;
   width: 100%;
-  flex: 1 0 0;
-  height: 44px;
-  min-height: 44px;
-  max-height: 44px;
-  align-items: center;
-  gap: 8px;
+  max-width: 100%;
   box-sizing: border-box;
-  padding: 0 12px 0 14px;
-  border-radius: var(--8, 8px);
-  border: 1px solid var(--table-line, #e0e0e0);
-  background: var(--main-WT, #fff);
-}
-
-/* 이 패널: 호버/포커스 시에도 중립 보더(스펙 #E0E0E0) */
-.form-editor-horizontal-table-body-fields__select-wrap
-  .form-editor-horizontal-table-body-fields__cms-select.cms-select:hover:not(.cms-select--disabled),
-.form-editor-horizontal-table-body-fields__select-wrap
-  .form-editor-horizontal-table-body-fields__cms-select.cms-select:focus-within:not(
-    .cms-select--disabled
-  ),
-.form-editor-horizontal-table-body-fields__select-wrap
-  .form-editor-horizontal-table-body-fields__cms-select.cms-select:has(.ant-select-open):not(
-    .cms-select--disabled
-  ) {
-  border-color: var(--table-line, #e0e0e0);
-}
-
-/* 텍스트형 드롭다운 우측 화살표 24×24 */
-.form-editor-horizontal-table-body-fields__select-wrap
-  .form-editor-horizontal-table-body-fields__cms-select.cms-select
-  .ant-select-arrow {
-  width: 24px;
-  height: 24px;
-  margin-top: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .form-editor-horizontal-table-body-fields__select-wrap
-  .form-editor-horizontal-table-body-fields__cms-select.cms-select
-  .ant-select-arrow
-  .anticon {
-  width: 24px;
-  height: 24px;
-  font-size: 24px;
-}
-
+  .form-editor-horizontal-table-body-fields__cms-select,
 .form-editor-horizontal-table-body-fields__select-wrap
-  .form-editor-horizontal-table-body-fields__cms-select.cms-select
-  .ant-select-arrow
-  svg {
-  width: 24px;
-  height: 24px;
+  .form-editor-horizontal-table-body-fields__cms-select.cms-select--explicit-width {
+  width: 100% !important;
+  min-width: 0;
+  max-width: none;
 }
 
 .form-editor-horizontal-table-body-fields__cell-clear.item-delete-button {

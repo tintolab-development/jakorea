@@ -1,9 +1,10 @@
 import type { OperationalFormFlushOverride } from '@/features/program/general/lib/prepare-registration-create-form-bindings'
+import { isRecruitmentOrApplicationWritingTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 
 /**
- * 등록 위저드에서 탭을 떠난 신청 양식 draft.
- * 모집 양식은 overlay 스토어가 탭과 무관하게 남지만, 신청 단락 수정은 편집기 draft에만 있다.
+ * 등록 위저드에서 탭을 떠난 모집·신청 양식 draft.
+ * overlay(기간·상세 등)는 공유 스토어에 두지만, 단락 타이틀·설명은 편집기 draft에만 있다.
  * 등록 완료 시 활성 탭이 아니어도 이 맵의 draft를 formBindings PUT에 넣는다.
  */
 type RegistrationWizardSessionDraft = {
@@ -21,7 +22,7 @@ const applicationDraftListeners = new Set<
 export function rememberRegistrationWizardSessionDraft(
   entry: RegistrationWizardSessionDraft
 ): void {
-  if (!entry.templateCode.startsWith('application-')) return
+  if (!isRecruitmentOrApplicationWritingTemplateCode(entry.templateCode)) return
   if (entry.draft.paragraphs.length === 0) return
   sessionDrafts.set(entry.templateCode, {
     templateCode: entry.templateCode,

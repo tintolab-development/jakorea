@@ -1,5 +1,6 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
+import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
@@ -29,13 +30,39 @@ export const GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY =
 export const GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY =
   'generalRegistration.educationScheduleCurriculum.groupTimesByDetail' as const
 
-let overlayState: Record<string, unknown> = {}
-let overlayVersion = 0
-const overlayListeners = new Set<() => void>()
-const overlayKeyListeners = new Map<string, Set<() => void>>()
+const store = createScopedOverlayStore()
+
+export function setProgramRegistrationOverlayScope(
+  templateCode: string | undefined | null
+): void {
+  store.setScope(templateCode)
+}
+
+export function peekProgramRegistrationOverlayRecord(
+  templateCode: string | undefined | null
+): Record<string, unknown> {
+  return store.peekRecord(templateCode)
+}
+
+export function replaceProgramRegistrationOverlayForScope(
+  templateCode: string | undefined | null,
+  next: Record<string, unknown>
+): void {
+  store.replaceFor(templateCode, next)
+}
+
+export function resetProgramRegistrationOverlayForScope(
+  templateCode: string | undefined | null
+): void {
+  store.resetFor(templateCode)
+}
+
+function overlayState(): Record<string, unknown> {
+  return store.getRecord()
+}
 
 function readOverlayString(key: string): string {
-  const raw = overlayState[key]
+  const raw = overlayState()[key]
   if (typeof raw === 'string' && raw.trim()) return raw.trim()
   if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
   return ''
@@ -47,7 +74,7 @@ export function readGeneralRegistrationOverlaySponsorId(): string {
 }
 
 export function readGeneralRegistrationOverlaySponsorIds(): string[] {
-  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]
+  const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]
   if (Array.isArray(raw)) {
     return raw.map(String).map(id => id.trim()).filter(Boolean)
   }
@@ -61,7 +88,7 @@ export function readGeneralRegistrationOverlaySponsorContactId(): string {
 }
 
 export function readGeneralRegistrationOverlaySponsorContactIds(): string[] {
-  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
+  const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
   if (Array.isArray(raw)) {
     return [...new Set(raw.map(String).map(id => id.trim()).filter(Boolean))]
   }
@@ -95,7 +122,7 @@ export function readTrainedTeachersRegistrationOverlaySponsorContactId(): string
 }
 
 export function readTrainedTeachersRegistrationOverlaySponsorContactIds(): string[] {
-  const raw = overlayState[TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
+  const raw = overlayState()[TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
   if (Array.isArray(raw)) {
     return [
       ...new Set(
@@ -159,7 +186,7 @@ export function readRegistrationOverlaySponsorContactIds(
 }
 
 export function readEconomyRegistrationOverlayProgramTitleKo(): string {
-  const stored = overlayState[ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]
+  const stored = overlayState()[ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]
   if (typeof stored === 'string' && stored.trim()) return stored.trim()
   if (typeof stored === 'number' && Number.isFinite(stored)) return String(stored)
   const visible = readOverlayKeyValue(
@@ -219,7 +246,7 @@ export function patchRegistrationOverlayProgramTitleKo(
 }
 
 export function readGeneralRegistrationOverlayScheduleLines(): string[] {
-  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
+  const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
   if (!Array.isArray(raw)) return []
   return raw
     .filter((line): line is string => typeof line === 'string')
@@ -227,55 +254,29 @@ export function readGeneralRegistrationOverlayScheduleLines(): string[] {
     .filter(Boolean)
 }
 
-function notifyOverlayListeners(changedKeys?: Iterable<string>) {
-  overlayVersion += 1
-  const notified = new Set<() => void>()
-  if (changedKeys != null) {
-    for (const key of changedKeys) {
-      overlayKeyListeners.get(key)?.forEach(listener => notified.add(listener))
-    }
-  } else {
-    overlayKeyListeners.forEach(listeners => listeners.forEach(listener => notified.add(listener)))
-  }
-  overlayListeners.forEach(listener => notified.add(listener))
-  notified.forEach(listener => listener())
-}
-
 export function subscribeProgramRegistrationOverlay(listener: () => void): () => void {
-  overlayListeners.add(listener)
-  return () => overlayListeners.delete(listener)
+  return store.subscribe(listener)
 }
 
 export function subscribeProgramRegistrationOverlayKey(
   key: string,
   listener: () => void
 ): () => void {
-  let listeners = overlayKeyListeners.get(key)
-  if (listeners == null) {
-    listeners = new Set()
-    overlayKeyListeners.set(key, listeners)
-  }
-  listeners.add(listener)
-  return () => {
-    listeners?.delete(listener)
-    if (listeners != null && listeners.size === 0) {
-      overlayKeyListeners.delete(key)
-    }
-  }
+  return store.subscribeKey(key, listener)
 }
 
 export function getProgramRegistrationOverlayVersion(): number {
-  return overlayVersion
+  return store.getVersion()
 }
 
 export function getProgramRegistrationOverlayRecord(): Record<string, unknown> {
-  return overlayState
+  return overlayState()
 }
 
 /** 상세 수정 seed/복원용 — 등록 위저드 동작은 바꾸지 않는다. */
 export function pickProgramRegistrationOverlayByPrefix(
   prefix: string,
-  record: Record<string, unknown> = overlayState
+  record: Record<string, unknown> = overlayState()
 ): Record<string, unknown> {
   return Object.fromEntries(Object.entries(record).filter(([key]) => key.startsWith(prefix)))
 }
@@ -285,47 +286,40 @@ export function replaceProgramRegistrationOverlayPrefix(
   nextPrefixValues: Record<string, unknown>
 ): void {
   const kept = Object.fromEntries(
-    Object.entries(overlayState).filter(([key]) => !key.startsWith(prefix))
+    Object.entries(overlayState()).filter(([key]) => !key.startsWith(prefix))
   )
   replaceProgramRegistrationOverlay({ ...kept, ...nextPrefixValues })
 }
 
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
-  return readOperationalOverlayKvValue('program-registration', overlayState, key, defaultValue)
+  return readOperationalOverlayKvValue('program-registration', overlayState(), key, defaultValue)
 }
 
 export function patchProgramRegistrationOverlay(partial: Record<string, unknown>): void {
-  const changedKeys: string[] = []
-  const next: Record<string, unknown> = { ...overlayState }
-  for (const [key, value] of Object.entries(partial)) {
-    if (Object.is(overlayState[key], value)) continue
-    next[key] = value
-    changedKeys.push(key)
-  }
-  if (changedKeys.length === 0) return
-  overlayState = next
-  notifyOverlayListeners(changedKeys)
+  store.patch(partial)
 }
 
 export function updateProgramRegistrationOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T
 ): void {
-  const prev = overlayState[key] as T | undefined
-  const next = updater(prev)
-  if (Object.is(prev, next)) return
-  overlayState = { ...overlayState, [key]: next }
-  notifyOverlayListeners([key])
+  store.updateKey(key, updater)
 }
 
 export function replaceProgramRegistrationOverlay(next: Record<string, unknown>): void {
-  overlayState = { ...next }
-  notifyOverlayListeners()
+  store.replace(next)
 }
 
 export function resetProgramRegistrationOverlay(): void {
-  overlayState = {}
-  notifyOverlayListeners()
+  store.reset()
+}
+
+export function resetAllProgramRegistrationOverlay(): void {
+  store.resetAll()
+}
+
+export function resetProgramRegistrationOverlayStoreForTests(): void {
+  store.resetAll()
 }
 
 /**

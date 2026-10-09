@@ -16,6 +16,7 @@ import {
   persistDraftOwnedFormVersion,
   type DraftOwnedFormVersion,
 } from '@/features/program/general/lib/registration-draft-form-versions'
+import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
 import { ensureRegistrationProgramDraftId } from '@/features/program/general/lib/registration-program-draft-session'
 import { resolveFormBindingTargetType } from '@/features/program/general/lib/resolve-form-binding-target-type'
 import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
@@ -50,6 +51,11 @@ export async function prepareRegistrationCreateFormBindings(args: {
 
   const programDraftType = resolveRegistrationProgramDraftProgramType(args.program)
   const programDraftId = await ensureRegistrationProgramDraftId(programDraftType)
+  const loadWizardOperationalDraft = (templateCode: string) =>
+    loadRegistrationWizardFormDraft({
+      programType: programDraftType,
+      templateCode,
+    })
   const specs = listAllRegistrationCreateFormSpecs(args.program)
   if (specs.length === 0) return null
 
@@ -69,9 +75,17 @@ export async function prepareRegistrationCreateFormBindings(args: {
     const override = overrideByCode.get(spec.templateCode)
     const overlay =
       spec.formType === 'REGISTRATION' ? null : collectOperationalOverlayForCatalogId(spec.templateCode)
+    const wizardSaved =
+      spec.formType !== 'REGISTRATION'
+        ? await loadWizardOperationalDraft(spec.templateCode)
+        : null
+    const hasWizardOperationalDraft =
+      wizardSaved?.draft != null && wizardSaved.draft.paragraphs.length > 0
     const needsOperationalPut =
       spec.formType !== 'REGISTRATION' &&
-      (override != null || (overlay != null && Object.keys(overlay).length > 0))
+      (override != null ||
+        hasWizardOperationalDraft ||
+        (overlay != null && Object.keys(overlay).length > 0))
 
     if (!needsRegistrationPut && !needsOperationalPut) {
       continue
@@ -110,7 +124,9 @@ export async function prepareRegistrationCreateFormBindings(args: {
       continue
     }
 
-    const draft = baseline?.draft ?? createSeedDraftForOperationalCatalogId(spec.templateCode)
+    const draft = hasWizardOperationalDraft
+      ? wizardSaved!.draft
+      : (baseline?.draft ?? createSeedDraftForOperationalCatalogId(spec.templateCode))
     if (draft == null || overlay == null) {
       ownedByCode.set(spec.templateCode, owned)
       continue
@@ -123,7 +139,7 @@ export async function prepareRegistrationCreateFormBindings(args: {
       baseline,
       draft,
       overlay,
-      editorState: baseline?.editorState,
+      editorState: wizardSaved?.editorState ?? baseline?.editorState,
     })
     ownedByCode.set(spec.templateCode, persisted)
   }

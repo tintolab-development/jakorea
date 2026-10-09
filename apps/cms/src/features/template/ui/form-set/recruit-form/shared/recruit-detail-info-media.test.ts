@@ -36,6 +36,7 @@ describe('readRecruitDetailMediaFromOverlay', () => {
     })
     expect(media.keyVisualImage).toBe('/api/admin/files/42/content')
     expect(media.thumbFileObjectId).toBe(42)
+    expect(media.thumbFileName).toBeUndefined()
     expect(media.attachmentFileNames).toEqual(['a.pdf', 'b.pdf'])
     expect(media.attachmentFileObjectIds).toEqual([101, 102])
   })
@@ -49,6 +50,15 @@ describe('readRecruitDetailMediaFromOverlay', () => {
     expect(media.keyVisualImage).toBeUndefined()
     expect(media.thumbObjectUrl).toBe('blob:http://localhost/preview')
     expect(media.thumbFileObjectId).toBe(9)
+  })
+
+  it('reads thumbFileName from recruit.detailInfo overlay', () => {
+    const media = readRecruitDetailMediaFromOverlay({
+      'recruit.detailInfo.thumbFileObjectId': 2055850,
+      'recruit.detailInfo.thumbFileName': 'KakaoTalk_Photo_2026-09-23-15-45-05 (1) (1).jpeg',
+    })
+    expect(media.thumbFileObjectId).toBe(2055850)
+    expect(media.thumbFileName).toBe('KakaoTalk_Photo_2026-09-23-15-45-05 (1) (1).jpeg')
   })
 })
 

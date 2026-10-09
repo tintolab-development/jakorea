@@ -64,7 +64,7 @@ export function ThumbnailUploadField({
   }, [uploading])
 
   const name = fileName?.trim() ?? ''
-  const hasFile = name !== ''
+  const hasFile = name !== '' || Boolean(previewUrl?.trim())
   const locked = disabled || uploading
   const canSelect = !locked && !hasFile && typeof onSelectFile === 'function'
   const canRemove = !locked && hasFile && typeof onRemove === 'function'
@@ -103,7 +103,7 @@ export function ThumbnailUploadField({
       <div className="thumbnail-upload-field__body">
         {hasFile ? (
           <FileAttachmentRow
-            fileName={name}
+            fileName={name || '썸네일.jpg'}
             onRemove={canRemove ? () => onRemove?.() : undefined}
           />
         ) : (

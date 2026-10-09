@@ -10,6 +10,10 @@
   gap: 16px;
 }
 
+.id-type-with-input--non-interactive {
+  pointer-events: none;
+}
+
 .id-type-with-input__radios {
   display: flex;
   flex-direction: row;

@@ -42237,7 +42237,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApplicationDetailResponse"
+                  "$ref": "#/components/schemas/MemberPortalApplicationDetail"
                 }
               }
             }
@@ -43039,6 +43039,61 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PortalFormListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/program-applications/{applicationType}/{applicationId}/assignments": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "내 봉사 배정현황 조회",
+        "description": "### 이 API가 하는 일\n- 내 봉사 배정현황 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 일반회원 봉사현황 배정현황 (`null`)\n- 프론트 담당 영역: member-portal-volunteer (`member-portal-volunteer`)\n- 호출 방식: `GET /api/portal/me/program-applications/{applicationType}/{applicationId}/assignments`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 로그인 회원 VOLUNTEER 선정 신청\n- 응답 사용 위치: assigned/waiting 테이블 렌더\n- 프론트 조회 키: `get_api_portal_me_volunteer_assignments`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: MEMBER_PORTAL_VOLUNTEER_ASSIGNMENT_SMOKE\n- 목데이터 대체: 배정현황은 assignments canonical 응답만 사용합니다(schedules invent 금지).\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Portal volunteer assignment-status tab (배정현황); individual education-scope + organization volunteer assignment",
+        "operationId": "volunteerAssignments",
+        "parameters": [
+          {
+            "name": "applicationType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 요청값 출처: 로그인 회원 VOLUNTEER 선정 신청",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolunteerAssignmentsResponse"
                 }
               }
             }
@@ -63917,6 +63972,28 @@
           }
         }
       },
+      "ScheduleEnrich": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "locationName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "distanceKm": {
+            "type": "number"
+          },
+          "assignedVolunteerCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ScopeResponse": {
         "type": "object",
         "properties": {
@@ -63940,6 +64017,12 @@
             "items": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEnrich"
             }
           }
         }
@@ -73067,10 +73150,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -90170,8 +90253,38 @@
           }
         }
       },
-      "ApplicationDetailResponse": {
+      "EducationScreenSummary": {
         "type": "object",
+        "properties": {
+          "unreadNoticeCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "surveyPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "satisfactionPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "receiptSubmissionCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MemberPortalApplicationDetail": {
+        "type": "object",
+        "description": "회원 포탈 내 프로그램 신청 상세. 신청 내용 탭은 answers(및 preferredScheduleBlocks fallback), 서류 합격 면접 배너는 assignedInterviewStartAt·hasInterview·program.interviewEnabled를 사용한다.",
         "properties": {
           "applicationId": {
             "type": "integer",
@@ -90242,13 +90355,49 @@
           },
           "answers": {
             "type": "object",
-            "additionalProperties": {}
+            "additionalProperties": {},
+            "description": "제출 양식 답변 맵. 키는 문단 id. 없으면 빈 객체 {}."
+          },
+          "preferredScheduleBlocks": {
+            "type": "array",
+            "description": "희망 교육 일정 블록. ORGANIZATION 전용 저장값 또는 answers 투영. 없으면 [].",
+            "items": {
+              "$ref": "#/components/schemas/PreferredScheduleBlock"
+            }
+          },
+          "assignedInterviewStartAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "관리자 배정 면접 시작 시각(ISO-8601). 미배정이면 null."
+          },
+          "assignedInterviewEndAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "관리자 배정 면접 종료 시각(ISO-8601). 미배정이면 null. 배너 표시는 start만 사용."
+          },
+          "hasInterview": {
+            "type": "boolean",
+            "description": "면접 프로그램·배정 여부. program.interviewEnabled==true 이거나 배정 슬롯이 있으면 true."
+          },
+          "interviewAtLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "서류 합격 배너용 서버 포맷 면접 시각. Asia/Seoul `YYYY년 MM월 DD일(요일), HH시`. 미배정이면 null.",
+            "example": "2026년 03월 15일(일), 09시"
           },
           "cancellable": {
             "type": "boolean"
           },
           "program": {
-            "$ref": "#/components/schemas/ProgramSummary"
+            "$ref": "#/components/schemas/MemberPortalProgramSummary"
           },
           "participation": {
             "$ref": "#/components/schemas/ParticipationSummary"
@@ -90279,67 +90428,9 @@
           }
         }
       },
-      "EducationScreenSummary": {
+      "MemberPortalProgramSummary": {
         "type": "object",
-        "properties": {
-          "unreadNoticeCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "scheduleCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "assignmentPendingCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "surveyPendingCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "satisfactionPendingCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "receiptSubmissionCount": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ParticipationSummary": {
-        "type": "object",
-        "properties": {
-          "participantId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "status": {
-            "type": "string"
-          },
-          "progressPercent": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "firstEducationAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastEducationAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "completionStatus": {
-            "type": "string"
-          },
-          "certificateStatus": {
-            "type": "string"
-          }
-        }
-      },
-      "ProgramSummary": {
-        "type": "object",
+        "description": "회원 포털 교육현황 신청 상세 nested program 요약. Platform 공개 목록 GET /api/portal/programs 행은 PortalProgramListItem 을 쓴다.",
         "properties": {
           "programId": {
             "type": "integer",
@@ -90379,6 +90470,43 @@
           "posterFileObjectId": {
             "type": "integer",
             "format": "int64"
+          },
+          "interviewEnabled": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "해당 모집 행의 면접 여부. null이면 미설정(면접 없음으로 취급). false면 서류 합격 면접 배너를 숨긴다."
+          }
+        }
+      },
+      "ParticipationSummary": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "progressPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstEducationAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastEducationAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completionStatus": {
+            "type": "string"
+          },
+          "certificateStatus": {
+            "type": "string"
           }
         }
       },
@@ -91151,6 +91279,158 @@
             "items": {
               "$ref": "#/components/schemas/ExpenseReceiptItem"
             }
+          }
+        }
+      },
+      "AssignedItem": {
+        "type": "object",
+        "description": "배정 확정 항목",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "행 안정 키",
+            "example": "assigned-group-1"
+          },
+          "locationName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "개인: 봉사 지역"
+          },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관: 소재지(지역). 개인은 locationName과 동일 축약일 수 있음"
+          },
+          "schoolName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관명"
+          },
+          "educationGrade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "담당학년"
+          },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "자택↔장소 편도 km. 없으면 null → FE '-'"
+          },
+          "scheduleLines": {
+            "type": "array",
+            "description": "표시용 일정 라벨 목록. 없으면 빈 배열",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "VolunteerAssignmentsResponse": {
+        "type": "object",
+        "description": "회원 포탈 봉사 배정현황. assigned/waiting은 항상 배열(빈 배열 허용, omit 금지).",
+        "properties": {
+          "programAudience": {
+            "type": "string",
+            "description": "프로그램 관점",
+            "enum": [
+              "individual",
+              "organization"
+            ],
+            "example": "individual"
+          },
+          "assigned": {
+            "type": "array",
+            "description": "배정 확정 행. 개인은 지역(+거리) 그룹, 기관은 기관 그룹.",
+            "items": {
+              "$ref": "#/components/schemas/AssignedItem"
+            }
+          },
+          "waiting": {
+            "type": "array",
+            "description": "배정 대기·취소 행. 배정 확정 건은 포함하지 않음.",
+            "items": {
+              "$ref": "#/components/schemas/WaitingItem"
+            }
+          }
+        }
+      },
+      "WaitingItem": {
+        "type": "object",
+        "description": "배정 대기/취소 항목",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "행 안정 키",
+            "example": "waiting-5"
+          },
+          "scheduleId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "일정 ID"
+          },
+          "locationName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "개인: 기관 소재지/봉사 지역"
+          },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관: 소재지"
+          },
+          "schoolName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관명"
+          },
+          "desiredGrade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "희망 학년"
+          },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "자택↔장소 편도 km. 없으면 null"
+          },
+          "scheduleLine": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "표시용 일정 1줄"
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "description": "WAITING | CANCELLED",
+            "enum": [
+              "WAITING",
+              "CANCELLED"
+            ],
+            "example": "WAITING"
           }
         }
       },
@@ -100417,15 +100697,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },

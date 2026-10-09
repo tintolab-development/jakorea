@@ -11,9 +11,12 @@ import type {
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import {
   APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
-  getApplicantRecruitInstitutionOverlayRecord,
+  peekApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
-import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { GENERAL_PROGRAM_REGISTRATION_STEPS } from '@/features/program/general/model/registration-flow'
+import type { RegistrationProgramTypeKey } from '@/features/program/shared/lib/registration-draft-notice'
+import { getSelectedOperationalTemplateCode } from '@/features/program/shared/lib/step-template-selection'
 import {
   buildVolunteerInterviewOverlayKey,
   listVolunteerInterviewExceptionBlockIds,
@@ -31,6 +34,43 @@ export type GeneralProgramRecruitmentRequiredFieldContext = {
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
   /** 봉사자 면접 예외 일정 블록 수 — 0이면 예외 필드 미검사 */
   volunteerExceptionScheduleCount: number
+  /** 위저드 양식 선택 맵. 기본 GENERAL */
+  registrationProgramType?: RegistrationProgramTypeKey
+}
+
+function defaultRecruitTemplateCode(
+  registrationProgramType: RegistrationProgramTypeKey,
+  stepKey: string
+): string {
+  const step = GENERAL_PROGRAM_REGISTRATION_STEPS.find(entry => entry.key === stepKey)
+  const stepTemplateId = step?.templateId ?? stepKey
+  if (registrationProgramType === 'COMPANY_SCHOOL' && stepKey === 'recruit-participant-school') {
+    return 'recruitment-economy'
+  }
+  if (registrationProgramType === 'TRAINED_TEACHER' && stepKey === 'recruit-participant-school') {
+    return 'recruitment-trained-teachers'
+  }
+  return stepTemplateId
+}
+
+function peekSelectedRecruitOverlay(
+  registrationProgramType: RegistrationProgramTypeKey,
+  stepKey: string,
+  peek: (templateCode: string) => Record<string, unknown>
+): Record<string, unknown> {
+  const defaultCode = defaultRecruitTemplateCode(registrationProgramType, stepKey)
+  return peek(getSelectedOperationalTemplateCode(registrationProgramType, stepKey, defaultCode))
+}
+
+/** 선택된 기관 모집 양식 버킷. 활성 탭 getRecord와 섞지 않는다. */
+export function peekSelectedInstitutionRecruitOverlay(
+  registrationProgramType: RegistrationProgramTypeKey = 'GENERAL'
+): Record<string, unknown> {
+  return peekSelectedRecruitOverlay(
+    registrationProgramType,
+    'recruit-participant-school',
+    peekApplicantRecruitInstitutionOverlayRecord
+  )
 }
 
 function pushReason(reasons: string[], condition: boolean, key: string): void {
@@ -309,20 +349,48 @@ export function listIncompleteGeneralProgramRecruitmentRequiredFields(
 ): string[] {
   const reasons: string[] = []
   const { participant } = ctx
+  const registrationProgramType = ctx.registrationProgramType ?? 'GENERAL'
   if (participant.organization) {
     reasons.push(
-      ...listIncompleteInstitutionRecruitInfo(getApplicantRecruitInstitutionOverlayRecord(), ctx)
+      ...listIncompleteInstitutionRecruitInfo(
+        peekSelectedInstitutionRecruitOverlay(registrationProgramType),
+        ctx
+      )
     )
   }
-  const general = getGeneralRecruitOverlayRecord()
   if (participant.individual) {
-    reasons.push(...listIncompleteIndividualRecruitInfo(general))
+    reasons.push(
+      ...listIncompleteIndividualRecruitInfo(
+        peekSelectedRecruitOverlay(
+          registrationProgramType,
+          'recruit-participant-individual',
+          peekGeneralRecruitOverlayRecord
+        )
+      )
+    )
   }
   if (participant.teacherInstructor) {
-    reasons.push(...listIncompleteInstructorRecruitInfo(general))
+    reasons.push(
+      ...listIncompleteInstructorRecruitInfo(
+        peekSelectedRecruitOverlay(
+          registrationProgramType,
+          'recruit-instructor',
+          peekGeneralRecruitOverlayRecord
+        )
+      )
+    )
   }
   if (participant.volunteer) {
-    reasons.push(...listIncompleteVolunteerRecruitInfo(general, ctx))
+    reasons.push(
+      ...listIncompleteVolunteerRecruitInfo(
+        peekSelectedRecruitOverlay(
+          registrationProgramType,
+          'recruit-volunteer',
+          peekGeneralRecruitOverlayRecord
+        ),
+        ctx
+      )
+    )
   }
   return reasons
 }

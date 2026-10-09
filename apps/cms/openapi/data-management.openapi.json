@@ -5400,6 +5400,28 @@
           }
         }
       },
+      "ScheduleEnrich": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "locationName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "distanceKm": {
+            "type": "number"
+          },
+          "assignedVolunteerCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ScopeResponse": {
         "type": "object",
         "properties": {
@@ -5423,6 +5445,12 @@
             "items": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEnrich"
             }
           }
         }
@@ -14550,10 +14578,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -31653,8 +31681,38 @@
           }
         }
       },
-      "ApplicationDetailResponse": {
+      "EducationScreenSummary": {
         "type": "object",
+        "properties": {
+          "unreadNoticeCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "surveyPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "satisfactionPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "receiptSubmissionCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MemberPortalApplicationDetail": {
+        "type": "object",
+        "description": "회원 포탈 내 프로그램 신청 상세. 신청 내용 탭은 answers(및 preferredScheduleBlocks fallback), 서류 합격 면접 배너는 assignedInterviewStartAt·hasInterview·program.interviewEnabled를 사용한다.",
         "properties": {
           "applicationId": {
             "type": "integer",
@@ -31725,13 +31783,49 @@
           },
           "answers": {
             "type": "object",
-            "additionalProperties": {}
+            "additionalProperties": {},
+            "description": "제출 양식 답변 맵. 키는 문단 id. 없으면 빈 객체 {}."
+          },
+          "preferredScheduleBlocks": {
+            "type": "array",
+            "description": "희망 교육 일정 블록. ORGANIZATION 전용 저장값 또는 answers 투영. 없으면 [].",
+            "items": {
+              "$ref": "#/components/schemas/PreferredScheduleBlock"
+            }
+          },
+          "assignedInterviewStartAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "관리자 배정 면접 시작 시각(ISO-8601). 미배정이면 null."
+          },
+          "assignedInterviewEndAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "관리자 배정 면접 종료 시각(ISO-8601). 미배정이면 null. 배너 표시는 start만 사용."
+          },
+          "hasInterview": {
+            "type": "boolean",
+            "description": "면접 프로그램·배정 여부. program.interviewEnabled==true 이거나 배정 슬롯이 있으면 true."
+          },
+          "interviewAtLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "서류 합격 배너용 서버 포맷 면접 시각. Asia/Seoul `YYYY년 MM월 DD일(요일), HH시`. 미배정이면 null.",
+            "example": "2026년 03월 15일(일), 09시"
           },
           "cancellable": {
             "type": "boolean"
           },
           "program": {
-            "$ref": "#/components/schemas/ProgramSummary"
+            "$ref": "#/components/schemas/MemberPortalProgramSummary"
           },
           "participation": {
             "$ref": "#/components/schemas/ParticipationSummary"
@@ -31762,67 +31856,9 @@
           }
         }
       },
-      "EducationScreenSummary": {
+      "MemberPortalProgramSummary": {
         "type": "object",
-        "properties": {
-          "unreadNoticeCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "scheduleCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "assignmentPendingCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "surveyPendingCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "satisfactionPendingCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "receiptSubmissionCount": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ParticipationSummary": {
-        "type": "object",
-        "properties": {
-          "participantId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "status": {
-            "type": "string"
-          },
-          "progressPercent": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "firstEducationAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastEducationAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "completionStatus": {
-            "type": "string"
-          },
-          "certificateStatus": {
-            "type": "string"
-          }
-        }
-      },
-      "ProgramSummary": {
-        "type": "object",
+        "description": "회원 포털 교육현황 신청 상세 nested program 요약. Platform 공개 목록 GET /api/portal/programs 행은 PortalProgramListItem 을 쓴다.",
         "properties": {
           "programId": {
             "type": "integer",
@@ -31862,6 +31898,43 @@
           "posterFileObjectId": {
             "type": "integer",
             "format": "int64"
+          },
+          "interviewEnabled": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "해당 모집 행의 면접 여부. null이면 미설정(면접 없음으로 취급). false면 서류 합격 면접 배너를 숨긴다."
+          }
+        }
+      },
+      "ParticipationSummary": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "progressPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstEducationAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastEducationAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completionStatus": {
+            "type": "string"
+          },
+          "certificateStatus": {
+            "type": "string"
           }
         }
       },
@@ -32634,6 +32707,158 @@
             "items": {
               "$ref": "#/components/schemas/ExpenseReceiptItem"
             }
+          }
+        }
+      },
+      "AssignedItem": {
+        "type": "object",
+        "description": "배정 확정 항목",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "행 안정 키",
+            "example": "assigned-group-1"
+          },
+          "locationName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "개인: 봉사 지역"
+          },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관: 소재지(지역). 개인은 locationName과 동일 축약일 수 있음"
+          },
+          "schoolName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관명"
+          },
+          "educationGrade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "담당학년"
+          },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "자택↔장소 편도 km. 없으면 null → FE '-'"
+          },
+          "scheduleLines": {
+            "type": "array",
+            "description": "표시용 일정 라벨 목록. 없으면 빈 배열",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "VolunteerAssignmentsResponse": {
+        "type": "object",
+        "description": "회원 포탈 봉사 배정현황. assigned/waiting은 항상 배열(빈 배열 허용, omit 금지).",
+        "properties": {
+          "programAudience": {
+            "type": "string",
+            "description": "프로그램 관점",
+            "enum": [
+              "individual",
+              "organization"
+            ],
+            "example": "individual"
+          },
+          "assigned": {
+            "type": "array",
+            "description": "배정 확정 행. 개인은 지역(+거리) 그룹, 기관은 기관 그룹.",
+            "items": {
+              "$ref": "#/components/schemas/AssignedItem"
+            }
+          },
+          "waiting": {
+            "type": "array",
+            "description": "배정 대기·취소 행. 배정 확정 건은 포함하지 않음.",
+            "items": {
+              "$ref": "#/components/schemas/WaitingItem"
+            }
+          }
+        }
+      },
+      "WaitingItem": {
+        "type": "object",
+        "description": "배정 대기/취소 항목",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "행 안정 키",
+            "example": "waiting-5"
+          },
+          "scheduleId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "일정 ID"
+          },
+          "locationName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "개인: 기관 소재지/봉사 지역"
+          },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관: 소재지"
+          },
+          "schoolName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관명"
+          },
+          "desiredGrade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "희망 학년"
+          },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "자택↔장소 편도 km. 없으면 null"
+          },
+          "scheduleLine": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "표시용 일정 1줄"
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "description": "WAITING | CANCELLED",
+            "enum": [
+              "WAITING",
+              "CANCELLED"
+            ],
+            "example": "WAITING"
           }
         }
       },
@@ -41900,15 +42125,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },

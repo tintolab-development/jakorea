@@ -20,14 +20,23 @@ export function UserProfileParagraphBody({
 
   return (
     <div className="form-editor-body">
-      <div className="form-editor-user-grid">
+      <div
+        className={[
+          'form-editor-user-grid',
+          !isEditMode ? 'form-editor-user-grid--non-interactive' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         {paragraph.fields.map(f => (
           <label key={f.key} className="form-editor-user-grid__cell">
             <CmsCheckbox
               checkboxSize="large"
               checked={f.enabled}
-              disabled={!isEditMode}
-              onChange={e => toggleField(f.key, e.target.checked)}
+              onChange={e => {
+                if (!isEditMode) return
+                toggleField(f.key, e.target.checked)
+              }}
             />
             <span>{f.label}</span>
           </label>

@@ -47,6 +47,7 @@ export function FileAttachment({
             isEducationDocumentPhotos ? EDUCATION_DOCUMENT_PHOTOS_GUIDE_LINES : undefined
           }
           multiple
+          disabled={!isEditMode}
           fileNames={fileNames}
           onRemoveFile={
             isEditMode
@@ -54,6 +55,7 @@ export function FileAttachment({
               : undefined
           }
           onFilesChange={files => {
+            if (!isEditMode) return
             setFileNames(prev => [...prev, ...files.map(file => file.name)])
             const owner = buildAdminFileOwner(
               ADMIN_FILE_OWNER.EDUCATION_JOURNAL,

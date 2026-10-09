@@ -32,6 +32,11 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        /** CSS는 package exports가 dist만 가리킴 — CMS dev에서 src 수정이 바로 반영되도록 */
+        '@jakorea/form-template-runtime/detail-info-form.css': path.resolve(
+          __dirname,
+          '../../packages/form-template-runtime/src/detail-info-form/detail-info-form.css'
+        ),
         '@jakorea/social-auth': path.resolve(__dirname, '../../packages/social-auth/src/index.ts'),
         '@jakorea/rich-text/react': path.resolve(
           __dirname,

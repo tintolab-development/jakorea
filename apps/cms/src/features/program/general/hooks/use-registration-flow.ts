@@ -9,15 +9,9 @@ import {
   resetInstitutionApplicationProgramBridge,
   syncInstitutionApplicationPreferredEducationFormFromOverlay,
 } from '@/features/program/general/lib/institution-application-program-bridge'
-import { resetApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
-import { resetGeminiRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
-import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { clearOperationalSeedDefaultSuppression } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
-import { resetGeneralApplicationOverlay } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
-import {
-  getProgramRegistrationOverlayRecord,
-  resetProgramRegistrationOverlay,
-} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { resetAllOperationalOverlayStores } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
+import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { getParticipantApplicationEditorVariantForTemplateCode } from '@/features/template/lib/participant-application-template-id'
@@ -96,12 +90,8 @@ const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
 
 function resetGeneralRegistrationWizardMemory(): void {
   clearOperationalSeedDefaultSuppression()
-  resetGeminiRecruitOverlay()
   resetInstitutionApplicationProgramBridge()
-  resetApplicantRecruitInstitutionOverlay()
-  resetGeneralRecruitOverlay()
-  resetGeneralApplicationOverlay()
-  resetProgramRegistrationOverlay()
+  resetAllOperationalOverlayStores()
 }
 
 export type UseGeneralProgramRegistrationFlowOptions = {
@@ -156,6 +146,14 @@ export function useGeneralProgramRegistrationFlow(
   const programType = registrationProgramTypeForTemplateCode(
     registrationTemplateId as ProgramRegistrationDraftTemplateCode
   )
+  const freshOverlayResetRef = useRef(false)
+  if (!open) {
+    freshOverlayResetRef.current = false
+  } else if (skipDraftRestore && !freshOverlayResetRef.current) {
+    freshOverlayResetRef.current = true
+    resetGeneralRegistrationWizardMemory()
+    clearRegistrationWizardSessionDrafts()
+  }
 
   const onStepChangeRef = useRef(options?.onStepChange)
   onStepChangeRef.current = options?.onStepChange
@@ -431,17 +429,13 @@ export function useGeneralProgramRegistrationFlow(
   )
 
   useEffect(() => {
-    if (!open) {
-      clearOperationalSeedDefaultSuppression()
-      resetGeminiRecruitOverlay()
-      resetInstitutionApplicationProgramBridge()
-      resetApplicantRecruitInstitutionOverlay()
-      resetGeneralRecruitOverlay()
-      resetGeneralApplicationOverlay()
-      resetProgramRegistrationOverlay()
-      clearRegistrationWizardSessionDrafts()
-      return
-    }
+    if (open) return
+    resetGeneralRegistrationWizardMemory()
+    clearRegistrationWizardSessionDrafts()
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
     patchInstitutionApplicationProgramBridge({
       educationStructure: registrationVm.programType,
       sessionRound: registrationVm.sessionRoundType,
@@ -591,6 +585,7 @@ export function useGeneralProgramRegistrationFlow(
           sessionRoundType: registrationVm.sessionRoundType,
           educationScheduleMode: registrationVm.educationScheduleMode,
           volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+          registrationProgramType: programType,
         }
         const recruitIncompleteKeys =
           registrationFormVariant === 'economy'
@@ -621,6 +616,7 @@ export function useGeneralProgramRegistrationFlow(
       participantFlags,
       participantVm.volunteerExceptionScheduleCount,
       phase,
+      programType,
       registrationFormVariant,
       options,
       registrationVm,
