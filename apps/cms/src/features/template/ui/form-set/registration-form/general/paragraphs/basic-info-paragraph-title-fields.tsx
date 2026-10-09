@@ -18,8 +18,6 @@ import {
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
 type ControlledTitleProps = {
-  programTitleKo?: string
-  onProgramTitleKoChange?: (title: string) => void
   /** 교육받은 교사 등록 폼 — overlay 키 분리. 신규는 빈 값+플레이스홀더, 수정은 overlay 복원 */
   trainedTeachersDefaults?: boolean
   /**
@@ -29,9 +27,37 @@ type ControlledTitleProps = {
   lockDetailedProgramToNone?: boolean
 }
 
+function RegistrationOverlayTextField({
+  label,
+  validationKey,
+  overlayKey,
+  placeholder,
+}: {
+  label: string
+  validationKey: string
+  overlayKey: string
+  placeholder: string
+}) {
+  const [value, setValue] = useProgramRegistrationOverlayKv(overlayKey, '')
+  return (
+    <DetailInfoForm.Field
+      label={label}
+      validationKey={validationKey}
+      edit={
+        <CmsInput
+          inputSize="medium"
+          placeholder={placeholder}
+          width="100%"
+          value={value}
+          onChange={event => setValue(event.target.value)}
+        />
+      }
+      view="-"
+    />
+  )
+}
+
 function ProgramRegistrationBasicInfoTitleFieldsInner({
-  programTitleKo: programTitleKoProp,
-  onProgramTitleKoChange,
   trainedTeachersDefaults = false,
   lockDetailedProgramToNone = false,
 }: ControlledTitleProps) {
@@ -51,18 +77,6 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
     ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.detailedProgramName`
     : 'generalRegistration.basicInfo.detailedProgramName'
 
-  const [localProgramTitleKo, setLocalProgramTitleKo] = useProgramRegistrationOverlayKv(
-    titleKoKey,
-    ''
-  )
-  const [programTitleEn, setProgramTitleEn] = useProgramRegistrationOverlayKv(
-    titleEnKey,
-    ''
-  )
-  const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
-    publicTitleKey,
-    ''
-  )
   const [detailedProgramId, setDetailedProgramId] = useProgramRegistrationOverlayKv<string>(
     detailedIdKey,
     ''
@@ -122,16 +136,6 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
     patchProgramRegistrationOverlay({ [detailedNameKey]: label })
   }
 
-  const isTitleControlled = onProgramTitleKoChange != null
-  const programTitleKo = isTitleControlled ? (programTitleKoProp ?? '') : localProgramTitleKo
-  const setProgramTitleKo = (next: string) => {
-    if (isTitleControlled) {
-      onProgramTitleKoChange(next)
-      return
-    }
-    setLocalProgramTitleKo(next)
-  }
-
   const detailedProgramSelectValue = lockDetailedProgramToNone
     ? TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
     : detailedProgramId
@@ -139,49 +143,25 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
   return (
     <>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
+        <RegistrationOverlayTextField
           label="대표 프로그램명 (국문)"
           validationKey="basicInfo.programTitleKo"
-          edit={
-            <CmsInput
-              inputSize="medium"
-              placeholder="대표 프로그램명을 입력하세요"
-              width="100%"
-              value={programTitleKo}
-              onChange={e => setProgramTitleKo(e.target.value)}
-            />
-          }
-          view="-"
+          overlayKey={titleKoKey}
+          placeholder="대표 프로그램명을 입력하세요"
         />
-        <DetailInfoForm.Field
+        <RegistrationOverlayTextField
           label="대표 프로그램명 (영문)"
           validationKey="basicInfo.programTitleEn"
-          edit={
-            <CmsInput
-              inputSize="medium"
-              placeholder="대표 프로그램명을 입력하세요"
-              width="100%"
-              value={programTitleEn}
-              onChange={e => setProgramTitleEn(e.target.value)}
-            />
-          }
-          view="-"
+          overlayKey={titleEnKey}
+          placeholder="대표 프로그램명을 입력하세요"
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
+        <RegistrationOverlayTextField
           label="공고용 프로그램명"
           validationKey="basicInfo.publicProgramTitle"
-          edit={
-            <CmsInput
-              inputSize="medium"
-              placeholder="모집 시 노출될 프로그램명을 입력하세요"
-              width="100%"
-              value={publicProgramTitle}
-              onChange={e => setPublicProgramTitle(e.target.value)}
-            />
-          }
-          view="-"
+          overlayKey={publicTitleKey}
+          placeholder="모집 시 노출될 프로그램명을 입력하세요"
         />
         <DetailInfoForm.Field
           label="세부 프로그램명"

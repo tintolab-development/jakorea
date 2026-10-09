@@ -57,6 +57,23 @@ function participantTypeLabel(
   return TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.find(o => o.value === value)?.label ?? value
 }
 
+function EducationVenueDetailInput({ overlayKey }: { overlayKey: string }) {
+  const [educationVenueDetail, setEducationVenueDetail] = useProgramRegistrationOverlayKv(
+    overlayKey,
+    ''
+  )
+  return (
+    <CmsInput
+      inputSize="medium"
+      placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+      width="100%"
+      style={{ flex: '1 1 0', minWidth: 0 }}
+      value={educationVenueDetail}
+      onChange={event => setEducationVenueDetail(event.target.value)}
+    />
+  )
+}
+
 type ProgramRegistrationBasicInfoParagraphProps = {
   participant: ProgramRegistrationParticipantState
   onIndividualChange: (checked: boolean) => void
@@ -74,9 +91,6 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   onSponsorIdChange?: (sponsorId: string) => void
   sponsorContactId?: string
   onSponsorContactIdChange?: (contactId: string) => void
-  /** controlled — 부모(editor)에서 등록 완료 스냅샷으로 전달 */
-  programTitleKo?: string
-  onProgramTitleKoChange?: (title: string) => void
   /** 교육받은 교사 등록 폼 — overlay 키·기본값 분리 (일반 폼 기본값 유지) */
   trainedTeachersDefaults?: boolean
   /** 일반 등록 — 교육 진행 구조(일정형이면 세부 프로그램명「해당없음」) */
@@ -98,8 +112,6 @@ export function ProgramRegistrationBasicInfoParagraph({
   onSponsorIdChange,
   sponsorContactId: sponsorContactIdProp,
   onSponsorContactIdChange,
-  programTitleKo: programTitleKoProp,
-  onProgramTitleKoChange,
   trainedTeachersDefaults = false,
   programType,
   lockParticipantTypes = false,
@@ -156,10 +168,7 @@ export function ProgramRegistrationBasicInfoParagraph({
   const [educationVenueKind, setEducationVenueKind] = useProgramRegistrationOverlayKv<
     'inside' | 'outside' | 'other'
   >(`${overlayPrefix}.educationVenueKind`, 'inside')
-  const [educationVenueDetail, setEducationVenueDetail] = useProgramRegistrationOverlayKv(
-    `${overlayPrefix}.educationVenueDetail`,
-    ''
-  )
+  const educationVenueDetailKey = `${overlayPrefix}.educationVenueDetail`
   const [educationCourseRaw, setEducationCourse] = useProgramRegistrationOverlayKv(
     `${overlayPrefix}.educationCourse`,
     trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
@@ -208,8 +217,6 @@ export function ProgramRegistrationBasicInfoParagraph({
         className="program-registration-paragraph"
       >
         <ProgramRegistrationBasicInfoTitleFields
-          programTitleKo={programTitleKoProp}
-          onProgramTitleKoChange={onProgramTitleKoChange}
           trainedTeachersDefaults={trainedTeachersDefaults}
           lockDetailedProgramToNone={programType === 'schedule'}
         />
@@ -330,14 +337,7 @@ export function ProgramRegistrationBasicInfoParagraph({
                     <CmsRadio value="other">기타(직접입력)</CmsRadio>
                   </CmsRadioGroup>
                   <DetailInfoForm.InputsSeparator />
-                  <CmsInput
-                    inputSize="medium"
-                    placeholder="교육이 진행될 상세 장소를 입력해 주세요"
-                    width="100%"
-                    style={{ flex: '1 1 0', minWidth: 0 }}
-                    value={educationVenueDetail}
-                    onChange={e => setEducationVenueDetail(e.target.value)}
-                  />
+                  <EducationVenueDetailInput overlayKey={educationVenueDetailKey} />
                 </div>
               }
               view="-"

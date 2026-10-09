@@ -181,6 +181,23 @@ export function readRegistrationOverlayProgramTitleKo(
   return readGeneralRegistrationOverlayProgramTitleKo()
 }
 
+/**
+ * 입력 중 React state로 올리지 않기 위한 조회.
+ * overlay에 키가 있으면 빈 문자열도 그 값을 쓰고, 없을 때만 fallback을 쓴다.
+ */
+export function readStoredRegistrationProgramTitleKo(
+  variant: ProgramRegistrationFormVariant = 'general',
+  fallback = ''
+): string {
+  if (variant === 'economy') return readEconomyRegistrationOverlayProgramTitleKo()
+  const key =
+    variant === 'trainedTeachers'
+      ? TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY
+      : GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY
+  if (!Object.prototype.hasOwnProperty.call(overlayState, key)) return fallback.trim()
+  return readRegistrationOverlayProgramTitleKo(variant)
+}
+
 /** controlled 제목 state → overlay 동기화 (임시저장 programTitleKo SSOT) */
 export function patchRegistrationOverlayProgramTitleKo(
   variant: ProgramRegistrationFormVariant,
