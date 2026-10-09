@@ -31,12 +31,15 @@ function resolveSeedCatalogId(templateCode: string): string {
 async function loadSelectedTemplateDraft(args: {
   templateCode: string
   latestVersionId?: number
+  /** 동일 템플릿 재선택 시 React Query 캐시를 무시하고 최신 본문을 받는다 */
+  forceRefresh?: boolean
 }): Promise<Awaited<ReturnType<typeof loadFormTemplateVersionDraft>>> {
   if (args.latestVersionId != null) {
     try {
       const byVersion = await loadFormTemplateVersionDraftByVersionId(
         args.templateCode,
-        args.latestVersionId
+        args.latestVersionId,
+        { invalidateCache: args.forceRefresh === true }
       )
       if (byVersion != null) return byVersion
     } catch {
@@ -64,7 +67,7 @@ export async function applyRegistrationStepTemplateChange(args: {
   baseTemplateCode?: string
   apiTemplateId?: number
 }): Promise<'unchanged' | 'applied'> {
-  if (args.nextCode === args.previousCode) return 'unchanged'
+  const isSameTemplateReselect = args.nextCode === args.previousCode
 
   const cached = getFormTemplateVersionCacheEntry(args.nextCode)
   if (args.baseTemplateCode != null || args.latestVersionId != null || args.apiTemplateId != null) {
@@ -93,6 +96,7 @@ export async function applyRegistrationStepTemplateChange(args: {
     templateCode: args.nextCode,
     latestVersionId:
       args.latestVersionId ?? cached?.latestVersionId ?? cached?.templateVersionId,
+    forceRefresh: isSameTemplateReselect,
   })
   const seed = resolveLoadedDraft(saved, args.nextCode)
   if (seed != null) {

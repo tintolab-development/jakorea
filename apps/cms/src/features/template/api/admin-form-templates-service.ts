@@ -320,9 +320,15 @@ export async function loadFormTemplateVersionDraft(
 
 export async function loadFormTemplateVersionDraftByVersionId(
   templateCode: string,
-  versionId: number
+  versionId: number,
+  options?: { invalidateCache?: boolean }
 ): Promise<WritingFormTemplateSaveRecord | null> {
   assertFormsSurveysRemoteReady()
+  if (options?.invalidateCache === true) {
+    await queryClient.invalidateQueries({
+      queryKey: formTemplateQueryKeys.versionById(versionId),
+    })
+  }
   const version = await queryClient.fetchQuery({
     queryKey: formTemplateQueryKeys.versionById(versionId),
     queryFn: () => fetchFormTemplateVersionRemote(versionId),

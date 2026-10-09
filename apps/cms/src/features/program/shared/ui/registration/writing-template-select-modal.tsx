@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { SearchOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput } from '@/shared/ui'
+import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import type { TemplateRow } from '@/features/template/model/template.schema'
 import { TemplatePreviewModal } from '@/features/template/ui/modal/template-preview-modal'
@@ -44,12 +46,23 @@ export function WritingTemplateSelectModal({
   onClose,
   onUse,
 }: WritingTemplateSelectModalProps) {
-  const { sections } = useWritingFormSections()
+  const queryClient = useQueryClient()
+  const { sections, isFetching } = useWritingFormSections()
   const [keyword, setKeyword] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
   const [page, setPage] = useState(1)
   const [previewRow, setPreviewRow] = useState<TemplateRow | null>(null)
   const [previewDraft, setPreviewDraft] = useState<WritingFormDraft | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    setKeyword('')
+    setAppliedKeyword('')
+    setPage(1)
+    setPreviewRow(null)
+    setPreviewDraft(null)
+    void queryClient.invalidateQueries({ queryKey: formTemplateQueryKeys.writingSections() })
+  }, [open, queryClient])
 
   const rows = useMemo(() => {
     const section = sections.find(item => item.key === category)
@@ -181,7 +194,11 @@ export function WritingTemplateSelectModal({
             </CmsButton>
           </div>
 
-          {hasResults ? (
+          {isFetching && !hasResults ? (
+            <div className="writing-template-select-modal__empty" role="status">
+              템플릿 목록을 불러오는 중입니다.
+            </div>
+          ) : hasResults ? (
             <>
               <div className="writing-template-select-modal__table-section">
                 <p className="writing-template-select-modal__count">총 {filtered.length}건</p>

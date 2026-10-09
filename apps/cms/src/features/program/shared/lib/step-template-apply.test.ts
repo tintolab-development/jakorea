@@ -194,7 +194,8 @@ describe('applyRegistrationStepTemplateChange', () => {
 
     expect(loadFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
       'recruitment-participant-school-custom-2',
-      22
+      22,
+      { invalidateCache: false }
     )
     expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('버전에서 온 안내')
     expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.programDescription']).toBe(
@@ -476,9 +477,9 @@ describe('applyRegistrationStepTemplateChange', () => {
         'general-recruit',
         getGeneralRecruitOverlayRecord(),
         'recruit.instructor.recruitTargets',
-        ['성인']
+        ['adult']
       )
-    ).toEqual(['성인'])
+    ).toEqual(['adult'])
   })
 
   it('clears volunteer, instructor, and gemini seed defaults on their own template change', async () => {
@@ -505,9 +506,9 @@ describe('applyRegistrationStepTemplateChange', () => {
         'general-recruit',
         getGeneralRecruitOverlayRecord(),
         'recruit.instructor.recruitTargets',
-        ['성인']
+        ['adult']
       )
-    ).toEqual(['성인'])
+    ).toEqual(['adult'])
 
     clearOperationalSeedDefaultSuppression()
     await applyRegistrationStepTemplateChange({
@@ -523,7 +524,7 @@ describe('applyRegistrationStepTemplateChange', () => {
         'general-recruit',
         getGeneralRecruitOverlayRecord(),
         'recruit.instructor.recruitTargets',
-        ['성인']
+        ['adult']
       )
     ).toEqual([])
 
@@ -556,7 +557,16 @@ describe('applyRegistrationStepTemplateChange', () => {
     ).toBe('')
   })
 
-  it('is a no-op when the same template is selected again', async () => {
+  it('reloads from remote when the same template is selected again', async () => {
+    const draft = createApplicantRecruitFormInstitutionDraft()
+    loadFormTemplateVersionDraft.mockResolvedValue({
+      version: 2,
+      templateId: 'recruitment-participant-school',
+      savedAt: '2026-10-09T00:00:00.000Z',
+      draft,
+      overlay: { 'recruit.notes': '양식 관리에서 수정된 안내' },
+    })
+
     const result = await applyRegistrationStepTemplateChange({
       programType: 'GENERAL',
       stepKey: 'recruit-participant-school',
@@ -564,7 +574,10 @@ describe('applyRegistrationStepTemplateChange', () => {
       nextCode: 'recruitment-participant-school',
       defaultCode: 'recruitment-participant-school',
     })
-    expect(result).toBe('unchanged')
-    expect(loadFormTemplateVersionDraft).not.toHaveBeenCalled()
+    expect(result).toBe('applied')
+    expect(loadFormTemplateVersionDraft).toHaveBeenCalledWith('recruitment-participant-school')
+    expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe(
+      '양식 관리에서 수정된 안내'
+    )
   })
 })
