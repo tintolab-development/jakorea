@@ -554,7 +554,7 @@ function buildProgram(): Program {
     instructorCapacity: 16,
     instructorApplicationStartDate: '2026-09-01',
     instructorApplicationEndDate: '2026-09-20',
-    instructorTargets: ['성인', '대학생'],
+    instructorTargets: ['adult', 'university'],
     instructorTargetDetail: '경제·금융 교육 경험 보유자 우대',
     volunteerApplicationStartDate: '2026-09-01',
     volunteerApplicationEndDate: '2026-09-25',

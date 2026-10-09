@@ -362,9 +362,11 @@ const EDUCATION_TARGET_DETAIL: Record<string, string> = {
   adult: '성인 일반',
 }
 const INSTRUCTOR_TARGET_DETAIL: Record<string, string> = {
-  성인: '경제 교육 경력 강사',
-  대학생: '관련 학과 재학생',
-  기타: '지역 봉사 강사',
+  adult: '경제 교육 경력 강사',
+  university: '관련 학과 재학생',
+  elementary: '초등 대상 강의 경험',
+  middle: '중등 대상 강의 경험',
+  high: '고등 대상 강의 경험',
 }
 const VOLUNTEER_TARGET_DETAIL: Record<string, string> = {
   elementary: '초등학교 4~6학년',

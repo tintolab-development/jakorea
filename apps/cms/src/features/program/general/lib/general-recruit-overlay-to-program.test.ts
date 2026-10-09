@@ -119,7 +119,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
   it('maps instructor and volunteer recruit overlays', () => {
     const keys = GENERAL_RECRUIT_OVERLAY_KEYS
     const overlay: Record<string, unknown> = {
-      [keys.instructor.recruitTargets]: ['성인'],
+      [keys.instructor.recruitTargets]: ['adult'],
       [keys.instructor.recruitTargetDetail]: '현직 멘토',
       [keys.instructor.recruitRangeSeal]: {
         start: '2026-02-01T00:00:00+09:00',
@@ -127,7 +127,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
       },
       [keys.instructor.inquiryContact]: '강사 문의처',
       [keys.instructor.inquiryTel]: '010-1111-2222',
-      [keys.volunteer.volunteerTargets]: ['대학(원)생'],
+      [keys.volunteer.volunteerTargets]: ['university'],
       [keys.volunteer.volunteerTargetDetail]: '봉사 가능자',
       [keys.volunteer.recruitRangeSeal]: {
         start: '2026-03-01T00:00:00+09:00',
@@ -141,7 +141,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
       preferOverlay: true,
     })
 
-    expect(next.instructorTargets).toEqual(['성인'])
+    expect(next.instructorTargets).toEqual(['adult'])
     expect(next.instructorTargetDetail).toBe('현직 멘토')
     expect(next.instructorApplicationStartDate).toBe('2026-02-01T00:00:00+09:00')
     expect(next.instructorApplicationEndDate).toBe('2026-02-28T00:00:00+09:00')
@@ -151,7 +151,7 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(instructorInfo?.recruitmentTarget).toBe('성인')
     expect(instructorInfo?.recruitmentTargetDetail).toBe('현직 멘토')
     expect(instructorInfo?.programDescription).toBe('강사 모집 설명')
-    expect(next.volunteerTargets).toEqual(['대학(원)생'])
+    expect(next.volunteerTargets).toEqual(['university'])
     expect(next.volunteerTargetDetail).toBe('봉사 가능자')
     expect(next.volunteerApplicationStartDate).toBe('2026-03-01T00:00:00+09:00')
     const volunteerInfo = next.generalCommonInfo?.volunteerRecruitmentInfo

@@ -33,6 +33,8 @@ import {
   formatInstructorTargetsLabel,
   formatTargetLevelsLabel,
   formatVolunteerTargetsLabel,
+  normalizeInstructorTargetList,
+  normalizeVolunteerTargetList,
   parseTargetLevelsFromDisplayLabel,
   resolvePersistedProgramTargetLevels,
   resolveProgramTargetLevels,
@@ -408,9 +410,17 @@ export function applyGeneralRecruitOverlayToProgram(
     overlayString(overlay, inst.targetLevelDetail) ??
     overlayString(overlay, keys.individual.targetLevelDetail)
 
-  const instructorTargets = overlayStringArray(overlay, keys.instructor.recruitTargets)
+  const instructorTargetsRaw = overlayStringArray(overlay, keys.instructor.recruitTargets)
+  const instructorTargets =
+    instructorTargetsRaw?.length && instructorTargetsRaw.length > 0
+      ? normalizeInstructorTargetList(instructorTargetsRaw)
+      : instructorTargetsRaw
   const instructorTargetDetail = overlayString(overlay, keys.instructor.recruitTargetDetail)
-  const volunteerTargets = overlayStringArray(overlay, keys.volunteer.volunteerTargets)
+  const volunteerTargetsRaw = overlayStringArray(overlay, keys.volunteer.volunteerTargets)
+  const volunteerTargets =
+    volunteerTargetsRaw?.length && volunteerTargetsRaw.length > 0
+      ? normalizeVolunteerTargetList(volunteerTargetsRaw)
+      : volunteerTargetsRaw
   const volunteerTargetDetail = overlayString(overlay, keys.volunteer.volunteerTargetDetail)
 
   const participantContact =

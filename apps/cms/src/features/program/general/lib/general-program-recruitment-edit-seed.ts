@@ -10,6 +10,7 @@ import { programToDetailEditValues } from '@/features/program/shared/model/progr
 import { parseAnnouncementLabel } from '@/features/program/shared/lib/announcement-label'
 import {
   parseTargetLevelsFromDisplayLabel,
+  normalizeInstructorTargetList,
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
   normalizeVolunteerTargetList,
@@ -55,17 +56,13 @@ export function parseDisplayPeriodLabelToIsoRange(
   }
 }
 
-function parseMultiSelectFromDisplayLabel(
-  label: string | undefined,
-  allowed: ReadonlySet<string>
-): string[] {
+function instructorTargetsFromRecruitmentTargetLabel(label: string | undefined): string[] {
   if (!label?.trim() || label.trim() === '-') return []
   const parts = label
     .split(/[,，·]/)
     .map(part => part.trim())
     .filter(Boolean)
-  const valid = parts.filter(part => allowed.has(part))
-  return valid.length > 0 ? valid : parts
+  return normalizeInstructorTargetList(parts)
 }
 
 function coalesceIso(
@@ -137,7 +134,7 @@ function enrichInstructorRecruitmentScalars(program: Program): Program {
   if (resolveProgramInstructorTargets(next).length === 0 && info.recruitmentTarget?.trim()) {
     next = {
       ...next,
-      instructorTargets: parseMultiSelectFromDisplayLabel(info.recruitmentTarget, new Set(['성인', '대학생', '기타'])),
+      instructorTargets: instructorTargetsFromRecruitmentTargetLabel(info.recruitmentTarget),
       instructorTarget: info.recruitmentTarget.trim(),
     }
   }

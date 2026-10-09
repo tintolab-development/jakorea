@@ -46,7 +46,7 @@ describe('readOperationalOverlayKvValue', () => {
         'general-recruit',
         {},
         'recruit.instructor.recruitTargets',
-        ['성인']
+        ['adult']
       )
     ).toEqual([])
   })

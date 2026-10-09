@@ -78,47 +78,14 @@ export function getRecruitmentStatusValue(program: Program): 'scheduled' | 'recr
   return v ?? 'scheduled'
 }
 
+import { EDUCATION_TARGET_OPTIONS } from '@jakorea/domain/recruitment/education-target'
+import type { EducationTarget } from '@jakorea/domain/recruitment/education-target'
 import { RECRUITMENT_STATUS_OPTIONS } from '@jakorea/domain/recruitment/recruitment-status'
 
 export const RECRUITMENT_RADIO_OPTIONS = RECRUITMENT_STATUS_OPTIONS
 
-/** 강사 모집 대상 옵션 (강사 정보 탭) */
-export const INSTRUCTOR_TARGET_OPTIONS = [
-  { value: '성인', label: '성인' },
-  { value: '대학생', label: '대학생' },
-  { value: '기타', label: '기타' },
-] as const
-
-const INSTRUCTOR_TARGET_VALUES = new Set<string>(
-  INSTRUCTOR_TARGET_OPTIONS.map(option => option.value)
-)
-
-export function resolveProgramInstructorTargets(program: {
-  instructorTargets?: string[]
-  instructorTarget?: string
-}): string[] {
-  if (program.instructorTargets?.length) return program.instructorTargets
-  const raw = program.instructorTarget?.trim()
-  if (!raw) return []
-  const parts = raw
-    .split(/[,，·]/)
-    .map(part => part.trim())
-    .filter(Boolean)
-  const valid = parts.filter(part => INSTRUCTOR_TARGET_VALUES.has(part))
-  if (valid.length > 0) return valid
-  return [raw]
-}
-
-export function formatInstructorTargetsLabel(targets: string[]): string {
-  if (targets.length === 0) return '-'
-  return targets.join(', ')
-}
-
-export function parseInstructorTargetsSelectValue(value: unknown): string[] | undefined {
-  if (!Array.isArray(value)) return undefined
-  const targets = value.map(String).filter(item => INSTRUCTOR_TARGET_VALUES.has(item))
-  return targets.length > 0 ? targets : undefined
-}
+/** 강사 모집 대상 — 교육 대상 5종과 동일 (저장 value = 코드) */
+export const INSTRUCTOR_TARGET_OPTIONS = EDUCATION_TARGET_OPTIONS
 
 /** 2차 면접 심사 방법 옵션 */
 export const INTERVIEW_METHOD_OPTIONS = [
@@ -251,15 +218,9 @@ export const TYPE_LABEL: Record<string, string> = {
 }
 
 /** 봉사자 모집 대상. 저장 값은 교육 대상 코드와 같다. */
-export const VOLUNTEER_TARGET_OPTIONS = [
-  { value: 'elementary', label: '초등학생' },
-  { value: 'middle', label: '중학생' },
-  { value: 'high', label: '고등학생' },
-  { value: 'university', label: '대학(원)생' },
-  { value: 'adult', label: '성인' },
-] as const
+export const VOLUNTEER_TARGET_OPTIONS = EDUCATION_TARGET_OPTIONS
 
-export type VolunteerTargetCode = (typeof VOLUNTEER_TARGET_OPTIONS)[number]['value']
+export type VolunteerTargetCode = EducationTarget
 
 const VOLUNTEER_TARGET_VALUES = new Set<string>(
   VOLUNTEER_TARGET_OPTIONS.map(option => option.value)
@@ -333,6 +294,42 @@ export function parseVolunteerTargetsSelectValue(value: unknown): string[] | und
   const targets = normalizeVolunteerTargetList(value.map(String)).filter(
     item => VOLUNTEER_TARGET_VALUES.has(item) || item === '기타'
   )
+  return targets.length > 0 ? targets : undefined
+}
+
+const INSTRUCTOR_TARGET_VALUES = new Set<string>(
+  INSTRUCTOR_TARGET_OPTIONS.map(option => option.value)
+)
+
+export function normalizeInstructorTargetList(raw: readonly string[]): string[] {
+  return normalizeVolunteerTargetList(raw).filter(item => INSTRUCTOR_TARGET_VALUES.has(item))
+}
+
+export function resolveProgramInstructorTargets(program: {
+  instructorTargets?: string[]
+  instructorTarget?: string
+}): string[] {
+  if (program.instructorTargets?.length) {
+    return normalizeInstructorTargetList(program.instructorTargets)
+  }
+  const raw = program.instructorTarget?.trim()
+  if (!raw) return []
+  return normalizeInstructorTargetList(
+    raw
+      .split(/[,，·]/)
+      .map(part => part.trim())
+      .filter(Boolean)
+  )
+}
+
+export function formatInstructorTargetsLabel(targets: string[]): string {
+  if (targets.length === 0) return '-'
+  return targets.map(formatVolunteerTargetLabel).join(', ')
+}
+
+export function parseInstructorTargetsSelectValue(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const targets = normalizeInstructorTargetList(value.map(String))
   return targets.length > 0 ? targets : undefined
 }
 
