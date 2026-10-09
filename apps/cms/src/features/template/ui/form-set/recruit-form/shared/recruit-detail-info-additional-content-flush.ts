@@ -6,7 +6,7 @@
 import { useSyncExternalStore } from 'react'
 import { patchGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 
-const gettersByOverlayKey = new Map<string, () => string>()
+const gettersByOverlayKey = new Map<string, () => string | null>()
 const resetGenerationListeners = new Set<() => void>()
 let persistSuppressed = false
 let contentResetGeneration = 0
@@ -66,7 +66,7 @@ export function useRecruitDetailContentResetGeneration(): number {
 /** `${overlayKeyPrefix}.*` HTML 키에 getHTML 등록 */
 export function registerRecruitDetailRichTextHtml(
   overlayKey: string,
-  getter: (() => string) | null
+  getter: (() => string | null) | null
 ): void {
   if (getter == null) {
     gettersByOverlayKey.delete(overlayKey)
