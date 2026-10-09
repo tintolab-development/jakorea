@@ -195,11 +195,17 @@
 
 .form-editor-horizontal-table__td--field,
 .form-editor-horizontal-table__td--field-subjective {
-  align-items: center;
+  align-items: center !important;
 }
 
 .form-editor-horizontal-table__td--field {
   justify-content: center;
+}
+
+/* 주관식·드롭다운 — 셀 전체 너비, 인풋 왼쪽 정렬 · 세로는 중앙 */
+.form-editor-horizontal-table__td--field-full {
+  justify-content: stretch;
+  text-align: left;
 }
 
 .form-editor-horizontal-table__cell-input-shell--field {
@@ -208,14 +214,55 @@
   flex-direction: row;
   flex-wrap: wrap;
   gap: 16px;
+  /* 셸은 콘텐츠 높이만 — stretch 시 TextArea가 셀을 채워 텍스트가 상단으로 붙음 */
+  align-self: center !important;
+  height: fit-content;
+  max-height: none;
 }
 
-/* 단일·다중: 셸은 셀 너비를 채우되 옵션 그룹은 중앙 정렬 */
+.form-editor-horizontal-table__cell-input-shell--field-full {
+  flex: 1 1 0 !important;
+  align-self: center !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: fit-content;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+
+.form-editor-horizontal-table__cell-input-shell--field-full
+  .form-editor-horizontal-table__field-cms-input,
+.form-editor-horizontal-table__cell-input-shell--field-full
+  .form-editor-horizontal-table__field-cms-select,
+.form-editor-horizontal-table__cell-input-shell--field-full
+  .form-editor-horizontal-table__field-paragraph-date {
+  flex: 1 1 auto;
+  align-self: center;
+  width: 100% !important;
+  min-width: 0;
+  max-width: none !important;
+}
+
+.form-editor-horizontal-table__field-paragraph-date {
+  width: 100%;
+  min-width: 0;
+}
+
+.form-editor-horizontal-table__field-paragraph-date .paragraph-date-picker__trigger {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 단일·다중: 셸은 셀 너비·높이를 채우되 옵션 그룹은 중앙 정렬 */
 .form-editor-horizontal-table__td--field
   > .form-editor-horizontal-table__cell-input-shell--field-choices {
   flex: 1 1 auto;
-  align-self: stretch;
+  align-self: stretch !important;
   width: 100%;
+  height: auto;
   min-height: 0;
   justify-content: center;
   align-items: center;
@@ -251,107 +298,37 @@
   padding: 0 12px 0 14px;
 }
 
-/* 주관식형: 기본 높이는 다른 필드와 맞추고, 입력 내용이 길 때만 확장 */
-.form-editor-horizontal-table__field-box--subjective {
-  height: auto;
-  min-height: var(--ht-field-height);
-  align-items: center;
-  padding: 7px 12px 7px 14px;
-}
-
+/* 주관식·드롭다운 — CmsInput / CmsSelect (small = 36px), td 100% */
 .form-editor-horizontal-table__cell-input-shell--field-subjective {
   align-items: center;
   align-self: center;
   width: 100%;
-  max-width: var(--ht-field-max-width);
+  max-width: none;
 }
 
-.form-editor-horizontal-table__field-subjective-input.ant-input,
-.form-editor-horizontal-table__field-text-input.ant-input {
-  flex: 1 0 0;
+.form-editor-horizontal-table__field-cms-input,
+.form-editor-horizontal-table__field-cms-select {
+  width: 100% !important;
   min-width: 0;
-  min-height: 24px !important;
-  padding: 0 !important;
-  margin: 0;
-  text-align: left;
-  color: var(--ht-color-text);
-  font-family: var(--ht-font);
-  font-size: var(--ht-font-size);
-  font-style: normal;
-  font-weight: 500;
-  line-height: var(--ht-line-height);
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  resize: none;
+  max-width: none;
+  box-sizing: border-box;
 }
 
-.form-editor-horizontal-table__field-text-input.ant-input {
-  height: auto !important;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  overflow: hidden;
+.form-editor-horizontal-table__field-cms-input > .cms-field__box,
+.form-editor-horizontal-table__field-cms-input .cms-input__control {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
 }
 
-.form-editor-horizontal-table__field-subjective-input.ant-input::placeholder,
-.form-editor-horizontal-table__field-text-input.ant-input::placeholder {
-  color: var(--ht-color-text);
-  opacity: 0.45;
-}
-
-.form-editor-horizontal-table__field-subjective-input.ant-input:focus,
-.form-editor-horizontal-table__field-subjective-input.ant-input-focused,
-.form-editor-horizontal-table__field-text-input.ant-input:focus,
-.form-editor-horizontal-table__field-text-input.ant-input-focused {
-  box-shadow: none !important;
-}
-
-.form-editor-horizontal-table__field-box--dropdown.ant-select .ant-select-selector {
-  padding: 0 12px 0 14px !important;
-}
-
-/* 드롭다운 — 박스는 .ant-select 루트 */
-.form-editor-horizontal-table__field-box.ant-select {
-  min-width: var(--ht-field-min-width);
-  max-width: var(--ht-field-max-width);
-  align-self: center;
-}
-
-.form-editor-horizontal-table__field-box.ant-select .ant-select-selector {
-  height: 38px !important;
-  min-height: 38px !important;
-  display: flex !important;
-  align-items: center !important;
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.form-editor-horizontal-table__field-box.ant-select .ant-select-selection-item,
-.form-editor-horizontal-table__field-box.ant-select .ant-select-selection-placeholder {
-  display: flex;
-  align-items: center;
-  color: var(--ht-color-text);
-  font-family: var(--ht-font);
-  font-size: var(--ht-font-size);
-  font-style: normal;
-  font-weight: 500;
-  line-height: var(--ht-line-height);
-}
-
-.form-editor-horizontal-table__field-box.ant-select .ant-select-selection-placeholder {
-  opacity: 0.45;
-}
-
-.form-editor-horizontal-table__field-box.ant-select.ant-select-focused .ant-select-selector,
-.form-editor-horizontal-table__field-box.ant-select:hover .ant-select-selector {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.form-editor-horizontal-table__field-box.ant-select .ant-select-arrow {
-  color: var(--ht-color-text);
+/* 셸 공통 `.cell-input-shell .ant-input { text-align: center }` 덮어쓰기 */
+.form-editor-horizontal-table__cell-input-shell
+  .form-editor-horizontal-table__field-cms-input
+  .ant-input,
+.form-editor-horizontal-table__cell-input-shell
+  .form-editor-horizontal-table__field-cms-input
+  .ant-input::placeholder {
+  text-align: left !important;
 }
 
 /* 날짜·시간 피커 — 루트가 박스 */
@@ -378,7 +355,6 @@
   border-color: var(--ht-color-line) !important;
 }
 
-.form-editor-horizontal-table__field-select,
 .form-editor-horizontal-table__field-date,
 .form-editor-horizontal-table__field-datetime,
 .form-editor-horizontal-table__field-time {
@@ -598,18 +574,57 @@
   box-shadow: none !important;
 }
 
-.form-editor-horizontal-table-wrap--text-canvas-edit .form-editor-horizontal-table__cell-text-hit,
-.form-editor-horizontal-table-wrap--canvas-interactive
-  .form-editor-horizontal-table__th
-  > .form-editor-horizontal-table__cell-text-hit {
+/* 텍스트형 — 콘텐츠 박스만 두고 td(align-items:center)로 세로 중앙 */
+.form-editor-horizontal-table__td > .form-editor-horizontal-table__cell-text-hit,
+.form-editor-horizontal-table__th > .form-editor-horizontal-table__cell-text-hit {
   flex: 1 1 auto;
+  align-self: center !important;
   min-width: 0;
   width: 100%;
-  min-height: 44px;
+  height: fit-content;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: text;
+  box-sizing: border-box;
+}
+
+.form-editor-horizontal-table__td > .form-editor-horizontal-table__cell-text,
+.form-editor-horizontal-table__th > .form-editor-horizontal-table__cell-text {
+  align-self: center !important;
+  height: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-editor-horizontal-table__td > .text-cell-input {
+  align-self: center !important;
+}
+
+/*
+ * 텍스트형 TextArea — 셸/셀 높이를 따라가지 않음.
+ * height:auto + stretch 조합이면 autosize가 셀 전체 높이로 커지고 글자가 상단에 붙음.
+ */
+.form-editor-horizontal-table__cell-input-shell
+  .form-editor-horizontal-table__cell-textarea.ant-input {
+  flex: 0 1 auto !important;
+  align-self: center !important;
+  width: 100%;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  line-height: 24px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+.form-editor-horizontal-table-wrap--text-canvas-edit .form-editor-horizontal-table__cell-text-hit,
+.form-editor-horizontal-table-wrap--canvas-interactive
+  .form-editor-horizontal-table__th
+  > .form-editor-horizontal-table__cell-text-hit {
+  min-height: 24px;
 }
 
 /* 시스템 설정(partial) — 필드형 표도 텍스트 가로형과 동일 테두리 셀 인풋 레이아웃 */
