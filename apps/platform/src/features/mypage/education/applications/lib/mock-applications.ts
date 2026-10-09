@@ -215,7 +215,7 @@ function toEducationApplication(
 
   if (displayStatus === 'document_passed') {
     item.hasInterview = true
-    item.interviewAtLabel = '2026년 04월 12일(일) 14시'
+    item.interviewAtLabel = '2026년 04월 12일(일), 14시'
   }
 
   if (displayStatus === 'withdrawn') {
@@ -237,7 +237,8 @@ function toEducationApplication(
     displayStatus === 'waiting_result' ||
     displayStatus === 'document_passed' ||
     displayStatus === 'in_progress' ||
-    displayStatus === 'completed'
+    displayStatus === 'completed' ||
+    displayStatus === 'rejected'
   ) {
     item.selfIntroMotivation = MOCK_SELF_INTRO_MOTIVATION
     item.preferredEducationScheduleLabel = MOCK_PREFERRED_EDUCATION_SCHEDULE

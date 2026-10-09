@@ -62,12 +62,14 @@ export {
   resolveEducationWithdrawalPhase,
   filterItemsUpToLastParticipatedSession,
 } from './lib/display-status'
+export { resolvePreferredEducationScheduleDisplayLabel } from './lib/application-content-from-answers'
 export {
   buildInProgressDetailTabItems,
   buildTeacherInProgressDetailTabItems,
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
   resolveEducationScheduleTabLabel,
+  resolveVolunteerActivityDetailCase,
 } from './lib/detail-tabs'
 export type { EducationActivitySection, EducationDetailTabItem } from './lib/detail-tabs'
 export {

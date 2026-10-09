@@ -11,6 +11,7 @@ import {
   cancelMockEducationApplication,
   educationApplicationDetailPath,
   EducationApplicationContent,
+  resolvePreferredEducationScheduleDisplayLabel,
   EducationCancelConfirm,
   EducationDetailBack,
   EducationDetailHeader,
@@ -411,6 +412,13 @@ export function MypageEducationDetailPage() {
       ? (withdrawnDuringKeys[0] ?? 'schedule')
       : (inProgressKeys[0] ?? 'notice')
 
+  const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
+    preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
+    preferredScheduleOptionValues: application.preferredScheduleOptionValues,
+    educationScheduleLines: program.educationScheduleLines,
+    schedules: program.eventSchedules,
+  })
+
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
       isTeacher && application.teacherApplicationContent ? (
@@ -421,7 +429,7 @@ export function MypageEducationDetailPage() {
       ) : (
         <EducationApplicationContent
           selfIntroMotivation={application.selfIntroMotivation}
-          preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+          preferredEducationScheduleLabel={preferredEducationScheduleLabel}
         />
       )
     ) : (
@@ -436,7 +444,7 @@ export function MypageEducationDetailPage() {
         <EducationInProgressNoticePanel
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
-          preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+          preferredEducationScheduleLabel={preferredEducationScheduleLabel}
           applicationType={routeApplicationType}
           applicationId={application.id}
         />

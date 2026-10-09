@@ -263,10 +263,10 @@ alwaysApply: false
 
 ## 신청 내용 탭
 
-노출: `waiting_result` | `document_passed` 만 실 UI.  
-`rejected` 등 그 외 신청-계열 상태는 placeholder.  
+노출: `waiting_result` | `document_passed` | `rejected` | `withdrawn`(교육 전·중 팝업/탭).  
 컴포넌트: [`EducationApplicationContent`](apps/platform/src/features/mypage/education/applications/ui/content.tsx)  
-분기: `canShowEducationApplicationContent`
+분기: `canShowEducationApplicationContent`  
+remote: 상세 `answers` → [`application-content-from-answers.ts`](apps/platform/src/features/mypage/education/applications/lib/application-content-from-answers.ts)
 
 | 블록                     | 규칙                                                 | 스타일                                                                              |
 | ------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------------------------- |

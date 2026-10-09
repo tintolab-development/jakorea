@@ -1,3 +1,5 @@
+import type { PortalPreferredScheduleBlock } from '@/features/program/api/application-types'
+
 export const PROGRAM_APPLICATION_TYPES = [
   'INDIVIDUAL',
   'ORGANIZATION',
@@ -67,13 +69,27 @@ export type PortalProgramApplicationListPage = {
   totalPages?: number
 }
 
+/**
+ * `MemberPortalApplicationDetail` (Portal me program-application detail).
+ * @see JABACK `docs/frontend/mypage-application-content-interview-banner-frontend-handoff-2026-10-09.md`
+ */
 export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & {
   resultReason?: string | null
   formResponseId?: number
   formBindingId?: number
   templateVersionId?: number
   formResponseStatus?: string
+  /** 없으면 BE `{}` */
   answers?: Record<string, unknown>
+  /** 관리자 배정 2차 면접 — 미배정 `null` */
+  assignedInterviewStartAt?: string | null
+  assignedInterviewEndAt?: string | null
+  /** Asia/Seoul `YYYY년 MM월 DD일(요일), HH시` — 미배정 `null` */
+  interviewAtLabel?: string | null
+  /** 항상 존재(신규). `program.interviewEnabled === true` 또는 배정 슬롯 있음 */
+  hasInterview?: boolean | null
+  /** 없으면 BE `[]` — answers에 일정 키 없을 때 fallback */
+  preferredScheduleBlocks?: PortalPreferredScheduleBlock[] | null
   program?: {
     programId?: number
     title?: string
@@ -84,6 +100,8 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
     recruitmentEndAt?: string | null
     educationStartAt?: string | null
     educationEndAt?: string | null
+    /** 모집 미설정 `null` */
+    interviewEnabled?: boolean | null
   }
   participation?: {
     status?: string
