@@ -13,6 +13,7 @@ export type SingleItemDetailSelectValue =
   | 'subjective'
   | 'session_plan_short_essay'
   | 'multiple_choice'
+  | 'dropdown'
   | 'date_only'
   | 'time_only'
   | 'star_rate'
@@ -57,6 +58,7 @@ export const TABLE_DETAIL_OPTIONS: { value: TableDetailSelectValue; label: strin
 
 /** 셀렉트에 없는 전용 유형 — 잠금·기존 단락 표시용 라벨 */
 const HIDDEN_DETAIL_OPTION_LABELS: Partial<Record<DetailSelectValue, string>> = {
+  dropdown: '드롭다운형',
   id_type_with_input: '식별번호 입력',
   static_description_lines: '정적 설명(다줄)',
   session_plan_short_essay: '교육계획 차시형',
@@ -110,6 +112,7 @@ export function paragraphDetailSelectValue(p: WritingFormParagraph): DetailSelec
     return 'session_plan_short_essay'
   if (p.kind === 'single_item' && p.variant === 'short_essay') return 'subjective'
   if (p.kind === 'single_item' && p.variant === 'multiple_choice') return 'multiple_choice'
+  if (p.kind === 'single_item' && p.variant === 'dropdown') return 'dropdown'
   if (p.kind === 'single_item' && p.variant === 'date') return 'date_only'
   if (p.kind === 'single_item' && p.variant === 'time') return 'time_only'
   if (p.kind === 'single_item' && p.variant === 'star_rate') return 'star_rate'

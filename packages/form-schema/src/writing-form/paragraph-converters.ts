@@ -64,6 +64,9 @@ export function convertParagraphByDetail(
       )
     case 'multiple_choice':
       return preserveParagraphCommonFields(createParagraphByDetail('multiple_choice', id), prev)
+    case 'dropdown':
+      if (prev.kind === 'single_item' && prev.variant === 'dropdown') return prev
+      return preserveParagraphCommonFields(createParagraphByDetail('dropdown', id), prev)
     case 'date_only':
       return preserveParagraphCommonFields(createParagraphByDetail('date_only', id), prev)
     case 'time_only':

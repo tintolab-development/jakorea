@@ -226,16 +226,33 @@ export type DropdownParagraph = WritingFormParagraphBase & {
   answerRequired?: boolean
 }
 
-/** 세로형(날짜/시간형) 스테이지·가로형 dateTime 열 등 — 스테이지별 입력 유형 */
+/** 주관식형(단일항목·테이블 셀) 입력 글자 수 상한 */
+export const SHORT_ESSAY_MAX_LENGTH = 2000
+
+/**
+ * 테이블 셀 날짜/시간 모드.
+ * `date_time`(날짜+시간)은 레거시 — normalize 시 `date`로 승격.
+ */
 export type DateTimeFieldMode = 'date' | 'time' | 'date_time'
 
-/** 세로형 날짜/시간형 스테이지·커스텀 필드용 라벨 */
-export const DATE_TIME_FIELD_MODE_OPTIONS: readonly { value: DateTimeFieldMode; label: string }[] =
-  [
-    { value: 'date', label: '날짜' },
-    { value: 'time', label: '시간' },
-    { value: 'date_time', label: '날짜+시간' },
-  ] as const
+/** 선택 UI용 — 날짜 / 시간만 (날짜+시간 제거) */
+export const DATE_TIME_FIELD_MODE_OPTIONS: readonly {
+  value: Exclude<DateTimeFieldMode, 'date_time'>
+  label: string
+}[] = [
+  { value: 'date', label: '날짜' },
+  { value: 'time', label: '시간' },
+] as const
+
+/** @deprecated 레거시 호환 — 신규 UI는 DATE_TIME_FIELD_MODE_OPTIONS 사용 */
+export const LEGACY_DATE_TIME_FIELD_MODE_OPTIONS: readonly {
+  value: DateTimeFieldMode
+  label: string
+}[] = [
+  { value: 'date', label: '날짜' },
+  { value: 'time', label: '시간' },
+  { value: 'date_time', label: '날짜+시간' },
+] as const
 
 /** 합성(날짜+시간) 시간 인풋 기본 플레이스홀더 — 본문·패널에서 공통 */
 export const VERTICAL_DT_COMPOSITE_TIME_PLACEHOLDER = '시간을 선택해 주세요'
@@ -366,12 +383,15 @@ export type HorizontalTableRowSelection =
 /** 텍스트형: 모든 셀 `Input` / 필드형: 열마다 입력 유형 + 필드 셀 값 */
 export type HorizontalTableFlavor = 'text' | 'field'
 
+/** 가로형 날짜/시간 열 모드 — 레거시 `dateTime`(날짜+시간)은 normalize 시 `date`로 승격 */
+export type HorizontalTableDateTimeMode = 'date' | 'time'
+
 /** 열(칸) 단위 필드 정의 — 헤더는 별도 `columnHeaders` 텍스트 */
 export type HorizontalTableColumnField =
   | { kind: 'text'; placeholder: string }
   | { kind: 'subjective'; placeholder: string }
   | { kind: 'dropdown'; placeholder: string; options: string[] }
-  | { kind: 'dateTime'; dateTimeMode: 'date' | 'time' | 'dateTime'; placeholder: string }
+  | { kind: 'dateTime'; dateTimeMode: HorizontalTableDateTimeMode; placeholder: string }
   | { kind: 'single'; options: string[] }
   | { kind: 'multiple'; options: string[] }
 
@@ -540,18 +560,25 @@ export interface HorizontalTableParagraph extends WritingFormParagraphBase {
 export type VerticalTableStageKind =
   | 'text'
   | 'subjective'
+  | 'date'
+  | 'time'
+  /** @deprecated 레거시 — normalize 시 mode에 따라 `date`/`time`으로 승격 */
   | 'date_time'
   | 'single_choice'
   | 'multiple_choice'
   | 'file_attachment'
 
+/** 날짜·시간 셀 kind 여부 (`date_time` 레거시 포함) */
+export function isVerticalDateOrTimeStageKind(kind: VerticalTableStageKind): boolean {
+  return kind === 'date' || kind === 'time' || kind === 'date_time'
+}
+
 /** 세로형 테이블 한 행: 1단(항목·입력 1쌍) 또는 2단(같은 행에 두 쌍, 폭 분배).
  * `stageKinds`: 단락 전체 flavor와 다르게 특정 스테이지(항목)만 다른 유형일 때 사용.
- * `placeholderHints`: 주관식·날짜/시간형 「입력창 안내」— 스테이지별 문자열 튜플(날짜/날짜+시합성의 날짜 인풋에 사용 등).
- * `dateTimeStageModes`: 날짜/시간형 — 스테이지별 「유형」(`length === stageCount`). 생략 시 `effectiveVerticalRowDateTimeModes`가 레거시·기본값으로 채움.
- * `dateTimeCompositeTimeHints`: 날짜/시간형 — 스테이지가 「날짜+시간」일 때 시간 픽커 안내 문자열 튜플(인덱스=스테이지).
- * `dateTimeStage0AuxTime`: 합성이 **첫 스테이지**에 놓일 때 시간(HH:mm) 값.
- * `dateTimeStage1Time`: 합성이 **둘째 스테이지**일 때 시간(HH:mm)·레거시.
+ * `placeholderHints`: 주관식·날짜/시간형 「입력창 안내」— 스테이지별 문자열 튜플.
+ * `dateTimeStageModes`: 레거시 — `date_time` kind 승격에만 사용. normalize 후 kind(`date`/`time`)로 대체.
+ * `dateTimeCompositeTimeHints`: 레거시 날짜+시간 합성 시 시간 픽커 안내(승격 후 미사용).
+ * `dateTimeStage0AuxTime` / `dateTimeStage1Time`: 레거시 합성 시간값.
  * 레거시 `dateTimeSingleStageMode`는 스테이지 1행에서 `dateTimeStageModes`로 승격.
  * `choiceMultipleSelections`: 다중선택형(`multiple_choice`) — 스테이지별 선택값 배열(`length === stageCount`). */
 export type VerticalTableRow =
@@ -591,15 +618,20 @@ export type VerticalTableRow =
 export const DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER = '내용을 입력해 주세요'
 
 /**
- * 세로형 단락 종류.
- * - `text`: 테이블_세로형(텍스트형) — 행별 `stageKinds`로 세부 유형(파일첨부 포함)
- * - `subjective`: 테이블_세로형(주관식형) — 행별 주관식(자유 서술) 입력
- * - `date_time`: 테이블_세로형(날짜/시간형)
- * - `single_choice` / `multiple_choice`: 테이블_세로형(단일·다중 선택형) — `verticalChoiceOptions` 공통 선택지
- * - `file_attachment`: **레거시** 단락 단위 파일첨부 — `normalizeVerticalTableParagraph`가
- *   `text` + 행 `stageKinds: file_attachment`로 승격(고정 1행 제약 해제)
+ * 세로형 단락 종류(스테이지 kind와 분리).
+ * - `text`: 테이블_세로형(텍스트형) — 행별 `stageKinds`로 세부 유형(파일첨부·날짜·시간 포함)
+ * - `subjective`: 테이블_세로형(주관식형)
+ * - `date_time`: 테이블_세로형(날짜/시간형) — 셀 kind는 `date`/`time`
+ * - `single_choice` / `multiple_choice`: 테이블_세로형(단일·다중 선택형)
+ * - `file_attachment`: **레거시** — normalize 시 `text` + 행 `stageKinds: file_attachment`로 승격
  */
-export type VerticalTableFlavor = VerticalTableStageKind
+export type VerticalTableFlavor =
+  | 'text'
+  | 'subjective'
+  | 'date_time'
+  | 'single_choice'
+  | 'multiple_choice'
+  | 'file_attachment'
 
 /** 파일첨부형 세로 테이블 좌측 th 기본 라벨 (레거시 단락 flavor·스테이지 플레이스홀더) */
 export const DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL = '파일첨부형'
@@ -626,6 +658,12 @@ export interface VerticalTableParagraph extends WritingFormParagraphBase {
   answerRequired: boolean
 }
 
+/** 가로형 `dateTime` 열 — 레거시 `dateTime`/`date_time` 모드 → `date` */
+export function normalizeHorizontalDateTimeMode(raw: unknown): HorizontalTableDateTimeMode {
+  if (raw === 'time') return 'time'
+  return 'date'
+}
+
 function repairColumnField(
   f: HorizontalTableColumnField | undefined,
   _idx: number
@@ -637,6 +675,15 @@ function repairColumnField(
       placeholder: f.placeholder?.trim()
         ? f.placeholder
         : HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
+    }
+  }
+  if (f.kind === 'dateTime') {
+    return {
+      kind: 'dateTime',
+      dateTimeMode: normalizeHorizontalDateTimeMode(
+        (f as { dateTimeMode?: unknown }).dateTimeMode
+      ),
+      placeholder: f.placeholder ?? '',
     }
   }
   if (f.kind === 'dropdown' && (!f.options || f.options.length === 0)) {
@@ -1373,6 +1420,8 @@ export function coerceVerticalTableFlavor(raw: unknown): VerticalTableFlavor {
 
 export function coerceVerticalTableStageKind(raw: unknown): VerticalTableStageKind {
   if (raw === 'subjective') return 'subjective'
+  if (raw === 'date') return 'date'
+  if (raw === 'time') return 'time'
   if (raw === 'date_time') return 'date_time'
   if (raw === 'single_choice') return 'single_choice'
   if (raw === 'multiple_choice') return 'multiple_choice'
@@ -1380,7 +1429,18 @@ export function coerceVerticalTableStageKind(raw: unknown): VerticalTableStageKi
   return 'text'
 }
 
+/** 레거시 `date_time` kind + mode → `date` | `time` */
+export function migrateVerticalDateTimeStageKind(
+  kind: VerticalTableStageKind,
+  mode: DateTimeFieldMode | undefined
+): VerticalTableStageKind {
+  if (kind !== 'date_time') return kind
+  if (mode === 'time') return 'time'
+  return 'date'
+}
+
 function defaultVerticalStageKindForFlavor(flavor: VerticalTableFlavor): VerticalTableStageKind {
+  if (flavor === 'date_time') return 'date'
   return flavor
 }
 
@@ -1400,8 +1460,7 @@ export function defaultVerticalTableRowForFlavor(flavor: VerticalTableFlavor): V
       stageCount: 1,
       headers: [''],
       cells: [''],
-      stageKinds: ['date_time'],
-      dateTimeSingleStageMode: 'date',
+      stageKinds: ['date'],
       placeholderHints: ['일정 선택'],
     }
   }
@@ -1503,6 +1562,32 @@ function isDateTimeFieldMode(x: unknown): x is DateTimeFieldMode {
   return x === 'date' || x === 'time' || x === 'date_time'
 }
 
+function persistMigratedVerticalStageKinds(row: VerticalTableRow): VerticalTableRow {
+  if (row.stageKinds == null) return row
+  const hasLegacyDateTime = row.stageKinds.some(k => k === 'date_time')
+  const hasDateOrTimeKind = row.stageKinds.some(k => k === 'date' || k === 'time')
+  const hasModes =
+    row.dateTimeStageModes != null ||
+    (row.stageCount === 1 && row.dateTimeSingleStageMode != null)
+  if (!hasLegacyDateTime && !(hasDateOrTimeKind && hasModes)) return row
+
+  const modes = effectiveVerticalRowDateTimeModes(row)
+  if (row.stageCount === 1) {
+    const next = migrateVerticalDateTimeStageKind(row.stageKinds[0]!, modes[0])
+    const {
+      dateTimeStageModes: _m,
+      dateTimeSingleStageMode: _s,
+      stageKinds: _sk,
+      ...rest
+    } = row
+    return { ...rest, stageCount: 1, stageKinds: [next] }
+  }
+  const k0 = migrateVerticalDateTimeStageKind(row.stageKinds[0]!, modes[0])
+  const k1 = migrateVerticalDateTimeStageKind(row.stageKinds[1]!, modes[1])
+  const { dateTimeStageModes: _m, stageKinds: _sk, ...rest } = row
+  return { ...rest, stageCount: 2, stageKinds: [k0, k1] }
+}
+
 export function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
   if (raw != null && typeof raw === 'object' && 'stageCount' in raw) {
     const sc = (raw as { stageCount?: number }).stageCount
@@ -1559,7 +1644,7 @@ export function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
       if (typeof r.dateTimeStage0AuxTime === 'string') {
         row.dateTimeStage0AuxTime = r.dateTimeStage0AuxTime
       }
-      return row
+      return persistMigratedVerticalStageKinds(row)
     }
   }
   const h =
@@ -1622,29 +1707,53 @@ export function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
       row1.dateTimeStage1Time = rawObj.dateTimeStage1Time
     }
   }
-  return row1
+  return persistMigratedVerticalStageKinds(row1)
 }
 
-/** 날짜/시간형 세로 테이블 행 — 스테이지별 우측 패널 「유형」 (레거시·생략 시 기본) */
+/** 날짜/시간형 세로 테이블 행 — 레거시 mode 해석 (신규는 stage kind `date`/`time` 사용) */
 export function effectiveVerticalRowDateTimeModes(
   row: VerticalTableRow
 ): [DateTimeFieldMode] | [DateTimeFieldMode, DateTimeFieldMode] {
   if (row.stageCount === 1) {
+    const kind0 = row.stageKinds?.[0]
+    if (kind0 === 'time') return ['time']
+    if (kind0 === 'date') return ['date']
     const dm = row.dateTimeStageModes
     if (dm && dm.length >= 1 && isDateTimeFieldMode(dm[0])) {
-      return [dm[0]]
+      return [dm[0] === 'date_time' ? 'date' : dm[0]]
     }
     const legacy = row.dateTimeSingleStageMode
     if (isDateTimeFieldMode(legacy)) {
-      return [legacy]
+      return [legacy === 'date_time' ? 'date' : legacy]
     }
     return ['date']
   }
+  const kind0 = row.stageKinds?.[0]
+  const kind1 = row.stageKinds?.[1]
+  if (isVerticalDateOrTimeStageKind(kind0 ?? 'text') || isVerticalDateOrTimeStageKind(kind1 ?? 'text')) {
+    const m0: DateTimeFieldMode =
+      kind0 === 'time' ? 'time' : kind0 === 'date' || kind0 === 'date_time' ? 'date' : 'date'
+    const m1: DateTimeFieldMode =
+      kind1 === 'time' ? 'time' : kind1 === 'date' || kind1 === 'date_time' ? 'date' : 'date'
+    if (kind0 === 'date_time' || kind1 === 'date_time') {
+      const dm = row.dateTimeStageModes
+      if (dm && dm.length >= 2 && isDateTimeFieldMode(dm[0]) && isDateTimeFieldMode(dm[1])) {
+        return [
+          dm[0] === 'date_time' ? 'date' : dm[0],
+          dm[1] === 'date_time' ? 'date' : dm[1],
+        ]
+      }
+    }
+    return [m0, m1]
+  }
   const dm = row.dateTimeStageModes
   if (dm && dm.length >= 2 && isDateTimeFieldMode(dm[0]) && isDateTimeFieldMode(dm[1])) {
-    return [dm[0], dm[1]]
+    return [
+      dm[0] === 'date_time' ? 'date' : dm[0],
+      dm[1] === 'date_time' ? 'date' : dm[1],
+    ]
   }
-  return ['date', 'date_time']
+  return ['date', 'date']
 }
 
 export function effectiveVerticalStageKinds(
@@ -1653,11 +1762,20 @@ export function effectiveVerticalStageKinds(
 ): [VerticalTableStageKind] | [VerticalTableStageKind, VerticalTableStageKind] {
   const fallback = defaultVerticalStageKindForFlavor(paragraphFlavor)
   if (row.stageCount === 1) {
-    return [coerceVerticalTableStageKind(row.stageKinds?.[0] ?? fallback)]
+    const raw = coerceVerticalTableStageKind(row.stageKinds?.[0] ?? fallback)
+    const mode = effectiveVerticalRowDateTimeModes(row)[0]
+    return [migrateVerticalDateTimeStageKind(raw, mode)]
   }
+  const modes = effectiveVerticalRowDateTimeModes(row)
   return [
-    coerceVerticalTableStageKind(row.stageKinds?.[0] ?? fallback),
-    coerceVerticalTableStageKind(row.stageKinds?.[1] ?? fallback),
+    migrateVerticalDateTimeStageKind(
+      coerceVerticalTableStageKind(row.stageKinds?.[0] ?? fallback),
+      modes[0]
+    ),
+    migrateVerticalDateTimeStageKind(
+      coerceVerticalTableStageKind(row.stageKinds?.[1] ?? fallback),
+      modes[1]
+    ),
   ]
 }
 
@@ -1957,15 +2075,11 @@ export function verticalTableRowWithStageCount(
   const stageKinds = effectiveVerticalStageKinds(b, flavor)
 
   if (stageCount === 1) {
-    const modes = effectiveVerticalRowDateTimeModes(b)
-    const m0 = modes[0] ?? 'date'
     const r: VerticalTableRow = {
       stageCount: 1,
       headers: [h0],
       cells: [c0],
       stageKinds: [stageKinds[0]],
-      dateTimeStageModes: [m0],
-      dateTimeSingleStageMode: m0,
     }
     if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
       r.placeholderHints = [ph0 ?? '']
@@ -1976,13 +2090,8 @@ export function verticalTableRowWithStageCount(
       }
       if (b.dateTimeStage0AuxTime !== undefined) r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime
       if (b.dateTimeStage1Time !== undefined) r.dateTimeStage1Time = b.dateTimeStage1Time
-    } else {
-      if (m0 === 'date_time') {
-        r.dateTimeCompositeTimeHints = [b.dateTimeCompositeTimeHints?.[0] ?? '']
-        r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime ?? ''
-      }
     }
-    return r
+    return normalizeVerticalTableRow(r)
   }
 
   if (b.stageCount === 2) {
@@ -1996,34 +2105,21 @@ export function verticalTableRowWithStageCount(
       r.placeholderHints = [ph0 ?? '', ph1 ?? '']
     }
     if (b.dateTimeStage1Time !== undefined) r.dateTimeStage1Time = b.dateTimeStage1Time
-    if (b.dateTimeStageModes) {
-      r.dateTimeStageModes = [...b.dateTimeStageModes] as [DateTimeFieldMode, DateTimeFieldMode]
-    }
     if (b.dateTimeCompositeTimeHints) {
       r.dateTimeCompositeTimeHints = [...b.dateTimeCompositeTimeHints] as [string, string]
     }
     if (b.dateTimeStage0AuxTime !== undefined) r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime
-    return r
+    return normalizeVerticalTableRow(r)
   }
 
-  const m0 = effectiveVerticalRowDateTimeModes(b)[0]
   const r: VerticalTableRow = {
     stageCount: 2,
     headers: [h0, ''],
     cells: [c0, ''],
     stageKinds: [stageKinds[0], defaultVerticalStageKindForFlavor(flavor)],
-    dateTimeStage1Time: '',
-    dateTimeStageModes: [m0, 'date_time'],
     placeholderHints: [ph0 ?? '', ''],
-    dateTimeCompositeTimeHints: [
-      m0 === 'date_time' ? (b.dateTimeCompositeTimeHints?.[0] ?? '') : '',
-      '',
-    ],
   }
-  if (m0 === 'date_time') {
-    r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime ?? ''
-  }
-  return r
+  return normalizeVerticalTableRow(r)
 }
 
 /** 테이블 본문 th — 편집 placeholder (`1. 항목명 입력` / `2-1. 항목명 입력`) */
@@ -2848,6 +2944,12 @@ function migrateSettlementAccommodationParagraphCopy(
   }
 }
 
+function normalizeShortEssayMaxLength(p: WritingFormParagraph): WritingFormParagraph {
+  if (p.kind !== 'single_item' || p.variant !== 'short_essay') return p
+  if (p.maxLength != null && p.maxLength > 0) return p
+  return { ...p, maxLength: SHORT_ESSAY_MAX_LENGTH }
+}
+
 function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormParagraph {
   let next = migrateLegacySingleItemDateTimeParagraph(p)
   next = normalizeUjatJournalEducationInfoParagraph(next)
@@ -2869,6 +2971,13 @@ function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormPara
   next = migrateSettlementTransportParagraphCopy(next)
   next = migrateSettlementAccommodationParagraphCopy(next)
   next = migrateUjatEducationExplanationOptionalTitle(next)
+  next = normalizeShortEssayMaxLength(next)
+  if (next.kind === 'single_item' && next.variant === 'horizontal_table') {
+    return normalizeHorizontalTableParagraph(next)
+  }
+  if (next.kind === 'single_item' && next.variant === 'vertical_table') {
+    return normalizeVerticalTableParagraph(next)
+  }
   if (next.kind === 'description' && next.variant === 'survey_title_with_period') {
     return normalizeTitleWithPeriodParagraph(next)
   }
