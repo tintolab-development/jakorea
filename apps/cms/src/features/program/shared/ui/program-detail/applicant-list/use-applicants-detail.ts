@@ -1010,9 +1010,9 @@ export function useApplicantsDetail({
   })
 
   const confirmBulkParticipantReject = useCallback(
-    async (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload): Promise<'ok' | 'error' | 'skipped'> => {
       if (selectedRowKeys.length === 0) {
-        return
+        return 'skipped'
       }
       const keys = selectedRowKeys as string[]
       const remote = await applyRemoteIndividualDecision(
@@ -1023,7 +1023,7 @@ export function useApplicantsDetail({
       )
       if (remote !== 'skipped') {
         if (remote === 'ok') setSelectedRowKeys([])
-        return
+        return remote
       }
       const notifyOptions = toParticipantNotifyOptions(payload, payload.reason)
       setIndividualList(prev =>
@@ -1034,14 +1034,15 @@ export function useApplicantsDetail({
         )
       )
       setSelectedRowKeys([])
+      return 'ok'
     },
     [applyRemoteIndividualDecision, selectedRowKeys]
   )
 
   const confirmBulkParticipantApprove = useCallback(
-    async (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload): Promise<'ok' | 'error' | 'skipped'> => {
       if (selectedRowKeys.length === 0) {
-        return
+        return 'skipped'
       }
       const keys = selectedRowKeys as string[]
       const remote = await applyRemoteIndividualDecision(
@@ -1052,7 +1053,7 @@ export function useApplicantsDetail({
       )
       if (remote !== 'skipped') {
         if (remote === 'ok') setSelectedRowKeys([])
-        return
+        return remote
       }
       const notifyOptions = toParticipantNotifyOptions(payload)
       setIndividualList(prev =>
@@ -1063,6 +1064,7 @@ export function useApplicantsDetail({
         )
       )
       setSelectedRowKeys([])
+      return 'ok'
     },
     [applyRemoteIndividualDecision, selectedRowKeys]
   )

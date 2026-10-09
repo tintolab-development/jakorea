@@ -1165,9 +1165,12 @@ export function ApplicantList({
         selectionCount={selectedRowKeys.length}
         onCancel={() => setParticipantBulkRejectOpen(false)}
         onConfirm={payload => {
-          confirmBulkParticipantReject(payload)
-          setParticipantBulkRejectOpen(false)
-          showApplicationRejectionCompletedAlert()
+          void (async () => {
+            const result = await confirmBulkParticipantReject(payload)
+            if (result !== 'ok') return
+            setParticipantBulkRejectOpen(false)
+            showApplicationRejectionCompletedAlert()
+          })()
         }}
       />
       <ParticipantBulkApproveModal
@@ -1175,9 +1178,12 @@ export function ApplicantList({
         selectionCount={selectedRowKeys.length}
         onCancel={() => setParticipantBulkApproveOpen(false)}
         onConfirm={payload => {
-          confirmBulkParticipantApprove(payload)
-          setParticipantBulkApproveOpen(false)
-          showApplicationApprovalCompletedAlert()
+          void (async () => {
+            const result = await confirmBulkParticipantApprove(payload)
+            if (result !== 'ok') return
+            setParticipantBulkApproveOpen(false)
+            showApplicationApprovalCompletedAlert()
+          })()
         }}
       />
       <ParticipantApproveModal
