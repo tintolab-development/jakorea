@@ -61,7 +61,6 @@ import {
   trackRegistrationWizardVisitSave,
 } from '@/features/program/general/lib/registration-wizard-visit'
 import { clearOperationalSeedDefaultSuppression } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
-import { beginRecruitDetailContentReset } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { resetAllOperationalOverlayStores } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   hydrateRegistrationProgramDraft,
@@ -110,7 +109,6 @@ function resolveStepTemplateName(templateId: string): string {
 
 function resetUjatRegistrationWizardMemory(): void {
   clearOperationalSeedDefaultSuppression()
-  beginRecruitDetailContentReset()
   resetAllOperationalOverlayStores()
 }
 

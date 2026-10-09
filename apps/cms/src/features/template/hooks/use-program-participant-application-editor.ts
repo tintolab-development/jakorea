@@ -184,6 +184,7 @@ import {
   commitRecruitDetailContentReset,
   consumeWizardContentResetPending,
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay,
+  peekWizardContentResetPending,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   overlayEntriesAbsentFromLive,
@@ -224,6 +225,7 @@ import {
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { resolveGeneralProgramVolunteerInterviewScheduleEditSeed } from '@/features/program/general/lib/volunteer-interview-schedule-display'
 import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
+import { shouldSkipFreshWizardDraftLoad } from '@/features/program/shared/lib/skip-fresh-wizard-draft-load'
 import { applyDevAutofillThirdPartyRecipient } from '@/features/program/general/lib/fill-application-form-third-party-recipient'
 import { hasIncompleteApplicationFormThirdPartyRecipient } from '@/features/template/model/application-form-third-party-recipient'
 import {
@@ -855,8 +857,12 @@ export function useProgramParticipantApplicationEditor(
     const templateId = editorHydrateTemplateId
     setOperationalOverlayScope(templateId)
     const hydrateKey = editorHydrateKey
-    const clearOverlaysOnHydrate = consumeWizardContentResetPending()
+    const clearOverlaysOnHydrate = peekWizardContentResetPending()
     const replaceHydratedOverlay = clearOverlaysOnHydrate || !usesRegistrationWizardDraft
+    const finishWizardDetailHydrate = () => {
+      if (replaceHydratedOverlay) commitRecruitDetailContentReset()
+      if (clearOverlaysOnHydrate) consumeWizardContentResetPending()
+    }
 
     const applyDraftNow = (next: WritingFormDraft) => {
       const normalized = normalizeEditorDraft(next)
@@ -926,20 +932,27 @@ export function useProgramParticipantApplicationEditor(
       preferLocal: preferLocalDraft,
     }
 
-    const loadDraftPromise = skipDraftRestore
-      ? Promise.resolve(null)
-      : usesRegistrationWizardDraft
-        ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
-            m.loadRegistrationWizardFormDraft({
-              programType: registrationWizardProgramType!,
-              templateCode: templateId,
-            })
-          )
+    const skipFreshWizardDraftLoad = shouldSkipFreshWizardDraftLoad({
+      skipDraftRestore,
+      wizardDraftRevision: editorOptions?.wizardDraftRevision ?? 0,
+    })
+    const loadDraftPromise = usesRegistrationWizardDraft
+      ? skipFreshWizardDraftLoad
+        ? Promise.resolve(null)
+        : loadRegistrationWizardFormDraft({
+            programType: registrationWizardProgramType!,
+            templateCode: templateId,
+          })
+      : skipDraftRestore
+        ? Promise.resolve(null)
         : loadWritingFormTemplateDraft(templateId, loadOptions)
 
     if (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') {
       void loadDraftPromise.then(saved => {
-        if (cancelled) return
+        if (cancelled) {
+          if (clearOverlaysOnHydrate) consumeWizardContentResetPending()
+          return
+        }
         if (preferSessionCache) return
         if (saved?.draft || saved?.overlay) {
           if (saved.draft != null && saved.draft.paragraphs.length > 0) {
@@ -992,7 +1005,7 @@ export function useProgramParticipantApplicationEditor(
               restoreUjatVolunteerRecruitGeneralStoreSidecar(volunteerSaved)
             }
           }
-          if (replaceHydratedOverlay) commitRecruitDetailContentReset()
+          finishWizardDetailHydrate()
           storageHydratedTemplateIdsRef.current.add(hydrateKey)
           return
         }
@@ -1047,13 +1060,18 @@ export function useProgramParticipantApplicationEditor(
             )
             replaceUjatVolunteerRecruitGeneralStoreSidecar(undefined)
           }
-          commitRecruitDetailContentReset()
+          finishWizardDetailHydrate()
+        } else if (clearOverlaysOnHydrate) {
+          consumeWizardContentResetPending()
         }
         storageHydratedTemplateIdsRef.current.add(hydrateKey)
       })
     } else {
       void loadDraftPromise.then(saved => {
-        if (cancelled) return
+        if (cancelled) {
+          if (clearOverlaysOnHydrate) consumeWizardContentResetPending()
+          return
+        }
         if (preferSessionCache) return
         if (saved?.draft || saved?.overlay) {
           const autofilled = clearOverlaysOnHydrate
@@ -1077,7 +1095,7 @@ export function useProgramParticipantApplicationEditor(
             replace: replaceHydratedOverlay,
             persistTemplateId: templateId,
           })
-          if (replaceHydratedOverlay) commitRecruitDetailContentReset()
+          finishWizardDetailHydrate()
           applyParticipantApplicationEditorState({
             variant,
             editorState: saved.editorState,
@@ -1104,7 +1122,9 @@ export function useProgramParticipantApplicationEditor(
             replace: true,
             persistTemplateId: templateId,
           })
-          commitRecruitDetailContentReset()
+          finishWizardDetailHydrate()
+        } else if (clearOverlaysOnHydrate) {
+          consumeWizardContentResetPending()
         }
         storageHydratedTemplateIdsRef.current.add(hydrateKey)
       })
@@ -1115,8 +1135,12 @@ export function useProgramParticipantApplicationEditor(
     return () => {
       cancelled = true
       // 위저드를 닫는 중이면 세션 초안을 다시 심지 않는다. 닫기 cleanup이 먼저 초기화한다.
-      if (usesRegistrationWizardDraft && isRegistrationWizardVisitEnding()) return
+      if (usesRegistrationWizardDraft && isRegistrationWizardVisitEnding()) {
+        if (clearOverlaysOnHydrate) consumeWizardContentResetPending()
+        return
+      }
       // 추가 내용 에디터는 키 입력마다 overlay에 안 쓴다. 단계 캐시보다 먼저 넣는다.
+      // suppress는 overlay 적용 후 consume. cleanup에서 풀면 Strict Mode 재마운트가 peek를 놓친다.
       flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
       const overlay =
         variant === 'ujat-recruit-institution'

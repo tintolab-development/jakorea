@@ -7,10 +7,7 @@ import {
   upsertFormTemplateVersionCacheEntry,
 } from '@/features/template/api/form-template-version-cache'
 import { stripWritingTemplateCopySuffix } from '@/features/template/lib/form-template-delete-policy'
-import {
-  beginRecruitDetailContentReset,
-  commitRecruitDetailContentReset,
-} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import { beginRecruitDetailContentReset } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   clearRegistrationWizardFormDraft,
   persistRegistrationWizardFormDraft,
@@ -112,7 +109,6 @@ export async function applyRegistrationStepTemplateChange(args: {
     setOperationalOverlayScope(args.nextCode)
     applyOperationalOverlayForCatalogId(args.nextCode, saved?.overlay)
   }
-  commitRecruitDetailContentReset()
 
   return 'applied'
 }

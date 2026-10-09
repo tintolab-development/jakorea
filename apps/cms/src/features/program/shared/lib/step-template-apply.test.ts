@@ -27,7 +27,11 @@ import {
   peekGeneralRecruitOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { DEFAULT_OPERATIONAL_OVERLAY_SCOPE } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
-import { consumeWizardContentResetPending } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import {
+  consumeWizardContentResetPending,
+  getRecruitDetailContentResetGeneration,
+  peekWizardContentResetPending,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { resetAllOperationalOverlayStoresForTests } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   getGeminiRecruitOverlayRecord,
@@ -121,6 +125,41 @@ describe('applyRegistrationStepTemplateChange', () => {
     expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.programDescription']).toBe(
       '템플릿 프로그램 설명'
     )
+  })
+
+  it('persists the selected template draft so hydrate can load it after a wizard template change', async () => {
+    const draft = createApplicantRecruitFormInstitutionDraft()
+    loadFormTemplateVersionDraft.mockResolvedValue({
+      version: 1,
+      templateId: 'recruitment-participant-school-custom-2',
+      savedAt: '2026-10-07T00:00:00.000Z',
+      draft,
+      overlay: {
+        'recruit.notes': '복사본 안내',
+        'recruit.detailInfo.programDescription': '템플릿 프로그램 설명',
+      },
+    })
+
+    const generationBefore = getRecruitDetailContentResetGeneration()
+    await applyRegistrationStepTemplateChange({
+      programType: 'GENERAL',
+      stepKey: 'recruit-participant-school',
+      previousCode: 'recruitment-participant-school',
+      nextCode: 'recruitment-participant-school-custom-2',
+      defaultCode: 'recruitment-participant-school',
+    })
+
+    const saved = await loadRegistrationWizardFormDraft({
+      programType: 'GENERAL',
+      templateCode: 'recruitment-participant-school-custom-2',
+    })
+    expect(saved?.draft?.paragraphs.length).toBeGreaterThan(0)
+    expect(saved?.overlay?.['recruit.notes']).toBe('복사본 안내')
+    expect(saved?.overlay?.['recruit.detailInfo.programDescription']).toBe(
+      '템플릿 프로그램 설명'
+    )
+    expect(peekWizardContentResetPending()).toBe(true)
+    expect(getRecruitDetailContentResetGeneration()).toBe(generationBefore)
   })
 
   it('replaces previously written values with the loaded template overlay', async () => {
