@@ -5,6 +5,34 @@
  * CMS 모집 미리보기도 같은 형태로 조립해 Platform 미리보기 번들에 전달한다.
  */
 
+/** 봉사자 면접 진행 가능 일정 한 칸. 신청폼 items[]와 id/label 규칙이 같다. */
+export type PortalVolunteerInterviewScheduleOption = {
+  id?: string
+  label?: string
+  source?: 'SLOT' | 'SCHEDULE_INFO' | string
+  slotDate?: string | null
+  startAt?: string | null
+  endAt?: string | null
+}
+
+/**
+ * 봉사자 모집 행의 「면접 진행 가능 일정」.
+ * 신청폼 면접 선택지와 같은 출처(슬롯 우선, 없으면 CMS volunteerInterviewScheduleInfo).
+ * VOLUNTEER이 아니거나 면접 미운영이면 상위 필드가 null/생략.
+ */
+export type PortalVolunteerInterviewSchedule = {
+  source?: 'SLOT' | 'SCHEDULE_INFO' | 'EMPTY' | string
+  /** YYYY-MM-DD(KST). 슬롯만 있거나 기간을 못 정하면 null. */
+  periodStartDate?: string | null
+  periodEndDate?: string | null
+  /** CMS availableTimeSlots 원문. 예: 10:00 ~ 10:30. 슬롯만 있으면 null. */
+  availableTimeSlots?: string | null
+  /** CMS recurringUnavailable 원문. 예: 공휴일. */
+  recurringUnavailable?: string | null
+  /** 오늘 이후 선택 가능 일정. 없으면 []. null 금지. */
+  options?: PortalVolunteerInterviewScheduleOption[]
+}
+
 export type PortalRecruitment = {
   recruitmentId?: number
   recruitmentType?: string
@@ -22,6 +50,11 @@ export type PortalRecruitment = {
   interviewStartAt?: string | null
   interviewEndAt?: string | null
   finalPassAnnouncementAt?: string | null
+  /**
+   * VOLUNTEER 면접 운영 행만. 그 외 null/생략.
+   * 상세 「면접 진행 가능 일정」 표시용(표시 전용, 선택은 신청폼).
+   */
+  volunteerInterviewSchedule?: PortalVolunteerInterviewSchedule | null
   /** GENERAL_*·UJAT 모집 행 값. 비어 있으면 null이며 프로그램 값으로 채우지 않는다. */
   applicationType?: string | null
   announcementTitle?: string | null

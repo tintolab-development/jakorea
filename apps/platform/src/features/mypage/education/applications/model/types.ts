@@ -106,6 +106,11 @@ export type EducationApplicationListItem = {
   selfIntroMotivation?: string
   /** 신청 내용 — 진행 희망 교육 일정 표시 문구 */
   preferredEducationScheduleLabel?: string
+  /**
+   * answers의 scheduleChoice 등 opaque option_value (`schedule:186626`, `line:0`).
+   * 표시 시 프로그램 일정·교육 진행 예정일로 해석한다.
+   */
+  preferredScheduleOptionValues?: string[]
   /** `displayStatus === 'withdrawn'` 일 때 포기 시점 */
   withdrawalPhase?: EducationWithdrawalPhase
   /**

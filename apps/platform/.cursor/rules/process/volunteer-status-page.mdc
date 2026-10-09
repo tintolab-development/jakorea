@@ -27,6 +27,16 @@ alwaysApply: false
 - 신청 계열 / 진행 계열 탭은 교육현황과 동일. 진행 탭 라벨 **배정현황**
 - 정산 작성 경로는 `/mypage/education/:id/settlement/*` 유지. return·탭 복귀는 봉사 상세 `?section=settlement`
 
+## 신청 내용
+
+Notion: 교육현황 상세_신청 내용과 동일. Figma `tiDywBHEhTkruOHjh1ctuT` / `11005:340344` (서류 합격 기준).
+
+- 탭 노출: `waiting_result` · `document_passed` · `rejected` · 교육 전 `withdrawn` → 프로그램 정보 / 신청 내용
+- 본문: [`EducationApplicationContent`](apps/platform/src/features/mypage/education/applications/ui/content.tsx) — 자기소개 및 지원동기 · 진행 희망 교육 일정(미기재 시 해당 블록 비노출)
+- remote: 상세 `answers` → [`application-content-from-answers.ts`](apps/platform/src/features/mypage/education/applications/lib/application-content-from-answers.ts)
+- 서류 합격 배너: `hasInterview` + `interviewAtLabel` / `assignedInterviewStartAt` (`shouldShowDocumentPassBanner`) — 활동 포기·결과 대기·반려에서는 비노출
+- 진행중·완료: 신청 내용 탭 대신 안내사항의 신청 정보 팝업
+
 ## 프로그램 정보
 
 - `ProgramInfoBody` 재사용 (`showPeriodSponsor` — 운영 기간·후원사). `detailCase === 'volunteer'` SSOT:
@@ -49,13 +59,16 @@ alwaysApply: false
 
 [`VolunteerAssignmentPanel`](apps/platform/src/features/mypage/volunteer/assignments/ui/panel.tsx)
 
+- 시안: Figma `tiDywBHEhTkruOHjh1ctuT` / `11005:341176`. 기획: Notion 봉사현황 상세_배정 현황 탭
+- **EducationSchedulePanel 사용 금지** (교육일정형 리스트). remote·mock 모두 본 패널
+- remote: `GET .../program-applications/VOLUNTEER/{id}/assignments` — BE 완료. 계약: [mypage-volunteer-assignment-status-backend-request-2026-10-09.md](../../../docs/api/mypage-volunteer-assignment-status-backend-request-2026-10-09.md) · BE 핸드오프 `JABACK/docs/frontend/mypage-volunteer-assignment-status-frontend-handoff-2026-10-09.md`
 - 읽기 전용. 배정 취소·추가 배정·선택 배정·엑셀·배정 봉사자 수 **비노출**
 - 그리드: 4목록 모두 `VolunteerAssignmentTable` + `PFDataTable`
 - `programAudience === 'organization'`
   - 배정된 기관 목록: No. / 기관명 / 담당학년 / 기관 소재지 / 자택과의 거리 / 담당 봉사 진행 일정
   - 배정된 대기 기관 목록: + 희망 학년 / 배정 상태
 - `programAudience === 'individual'`
-  - 배정된 봉사 일정: No. / 봉사 지역 / 자택과의 거리 / 담당 봉사 진행 일정
+  - 배정된 봉사 일정: No. / 봉사 지역 / 자택과의 거리 / 담당 봉사 진행 일정(`scheduleLines` 복수)
   - 배정된 봉사 일정 목록: 기관 소재지 / 자택과의 거리 / 담당 봉사 진행 일정 / 배정 상태
 - 배정 상태: `배정 대기`(element-orange) / `배정 취소`(cool-500)
 - 진행중 포기: `lastParticipatedSession` 이하 일정만

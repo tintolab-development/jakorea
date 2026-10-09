@@ -13,6 +13,8 @@ export type {
   PortalProgramDetail,
   PortalRecruitment,
   PortalSchedule,
+  PortalVolunteerInterviewSchedule,
+  PortalVolunteerInterviewScheduleOption,
 } from '@jakorea/domain/portal/program-detail'
 
 /** GET /api/portal/programs 목록 행 (OpenAPI PortalProgramListItem) */

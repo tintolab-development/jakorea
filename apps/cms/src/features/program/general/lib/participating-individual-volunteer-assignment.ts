@@ -41,7 +41,11 @@ function resolveVolunteerServiceRegion(input: {
   return '-'
 }
 
-/** 강사 배정 `formatDistanceKm` 과 동일 — null/NaN → '-' (FE invent 금지) */
+/**
+ * 강사 배정과 동일. null/NaN → '-'.
+ * education-scope enrich `distanceKm`만 사용 (FE invent/0 coerce 금지).
+ * local `LOCAL_DISTANCE`는 BE 옵션 A: 자택·장소 모두 있으면 1.0–99.9 deterministic mock number.
+ */
 function formatDistanceKm(km: number | null | undefined): string {
   if (km == null || Number.isNaN(km)) return '-'
   const rounded = Math.round(km)

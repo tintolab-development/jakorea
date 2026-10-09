@@ -1,8 +1,35 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { IdentityVerificationClient } from '../client'
+import { IdentityVerificationApiError } from '../errors'
 import { NiceAuthPopupBlockedError } from '../popup'
 import type { IdentityChallengeCompleteResult } from '../types'
+
+const DEFAULT_START_FAILED_MESSAGE = '본인인증을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.'
+
+/** BE ClientErrorMessageResolver가 INVALID_CREDENTIALS에 쓰는 로그인 카피 */
+function isLoginCredentialsCopy(message: string): boolean {
+  return message.includes('이메일 또는 비밀번호')
+}
+
+function toStartChallengeErrorMessage(error: unknown): string {
+  if (error instanceof NiceAuthPopupBlockedError) {
+    return error.message
+  }
+  if (error instanceof IdentityVerificationApiError) {
+    if (error.code === 'INVALID_CREDENTIALS' || isLoginCredentialsCopy(error.message)) {
+      return DEFAULT_START_FAILED_MESSAGE
+    }
+    return error.message.trim() || DEFAULT_START_FAILED_MESSAGE
+  }
+  if (error instanceof Error && error.message.trim()) {
+    if (isLoginCredentialsCopy(error.message)) {
+      return DEFAULT_START_FAILED_MESSAGE
+    }
+    return error.message.trim()
+  }
+  return DEFAULT_START_FAILED_MESSAGE
+}
 
 function isAbortLikeMessage(message: string | undefined): boolean {
   if (!message) {
@@ -196,13 +223,7 @@ export function useIdentityVerification({
       client.state.clearPendingChallenge()
       completingRef.current = false
       setStatus('error')
-      if (error instanceof NiceAuthPopupBlockedError) {
-        setErrorMessage(error.message)
-        return
-      }
-      setErrorMessage(
-        error instanceof Error ? error.message : '본인인증을 시작할 수 없습니다.'
-      )
+      setErrorMessage(toStartChallengeErrorMessage(error))
     }
   }, [
     birthDate,

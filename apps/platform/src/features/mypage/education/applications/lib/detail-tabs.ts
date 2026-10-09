@@ -35,6 +35,16 @@ export function resolveEducationScheduleTabLabel(detailCase: ProgramDetailCase):
   }
 }
 
+/**
+ * 봉사현황 상세 탭용 detailCase.
+ * 신청 역할(`VOLUNTEER`) 기준 — 프로그램 `detailCase`가 `general`이어도 일정 탭이「교육일정」이 되지 않게 한다.
+ */
+export function resolveVolunteerActivityDetailCase(
+  applicationDetailCase: ProgramDetailCase | undefined,
+): ProgramDetailCase {
+  return applicationDetailCase === 'ujat-volunteer' ? 'ujat-volunteer' : 'volunteer'
+}
+
 type ActivityTabOptions = {
   detailCase: ProgramDetailCase
   /** 프로그램에 설문조사 항목이 설정된 경우. false면 탭 비노출. 기본 true */

@@ -9,6 +9,7 @@ import {
   cancelMockEducationApplication,
   educationApplicationDetailPath,
   EducationApplicationContent,
+  resolvePreferredEducationScheduleDisplayLabel,
   EducationCancelConfirm,
   EducationDetailBack,
   EducationDetailHeader,
@@ -338,11 +339,18 @@ export function MypageLectureDetailPage() {
       ? (withdrawnDuringKeys[0] ?? 'schedule')
       : (inProgressKeys[0] ?? 'notice')
 
+  const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
+    preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
+    preferredScheduleOptionValues: application.preferredScheduleOptionValues,
+    educationScheduleLines: program.educationScheduleLines,
+    schedules: program.eventSchedules,
+  })
+
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
       <EducationApplicationContent
         selfIntroMotivation={application.selfIntroMotivation}
-        preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+        preferredEducationScheduleLabel={preferredEducationScheduleLabel}
       />
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
@@ -356,7 +364,7 @@ export function MypageLectureDetailPage() {
         <EducationInProgressNoticePanel
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
-          preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+          preferredEducationScheduleLabel={preferredEducationScheduleLabel}
           applicationType={routeApplicationType}
           applicationId={application.id}
         />
