@@ -413,7 +413,6 @@ function recruitDetailPatch(
   }
   const patch: Record<string, unknown> = {
     [`${prefix}.thumbFileName`]: null,
-    [`${prefix}.attachmentFileNames`]: ['모집안내.pdf'],
     [`${prefix}.additionalContentHtml`]:
       copyOverride?.additionalContentHtml ??
       `<p>${titleKo} 참여를 희망하는 학교와 강사는 모집 기간 안에 신청해 주세요.</p>`,
