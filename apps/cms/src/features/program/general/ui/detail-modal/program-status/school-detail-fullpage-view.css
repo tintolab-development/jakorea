@@ -352,6 +352,10 @@
   width: 100%;
 }
 
+.school-detail-fullpage-view__instructor-section + .school-detail-fullpage-view__instructor-section {
+  margin-top: 32px;
+}
+
 .school-detail-fullpage-view__instructor-section--waiting {
   margin-top: 0;
 }
@@ -449,7 +453,11 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--table-header-bg, #fafafa);
+  background: var(
+    --Background-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  ) !important;
 }
 
 .school-detail-fullpage-view__waiting-table-empty {

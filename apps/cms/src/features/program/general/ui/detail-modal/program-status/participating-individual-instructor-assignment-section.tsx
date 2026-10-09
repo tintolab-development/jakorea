@@ -54,26 +54,18 @@ import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
-import './participating-individual-instructor-assignment-section.css'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 const ASSIGNED_EMPTY_TEXT = '배정된 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 일정이 없습니다.'
 
 function renderScheduleCell(label: string) {
-  return (
-    <div className="participating-individual-instructor-assignment-section__schedule-cell">
-      {renderProgramDetailPipeSeparated(label)}
-    </div>
-  )
+  return renderProgramDetailPipeSeparated(label)
 }
 
 function renderTableEmpty(text: string) {
   return (
-    <div
-      className="participating-individual-instructor-assignment-section__table-empty"
-      role="status"
-    >
+    <div className="school-detail-fullpage-view__waiting-table-empty" role="status">
       {text}
     </div>
   )
@@ -541,7 +533,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   )
 
   return (
-    <div className="participating-individual-instructor-assignment-section school-detail-fullpage-view__instructor-tab">
+    <div className="school-detail-fullpage-view__instructor-tab">
       <div className="school-detail-fullpage-view__instructor-section">
         <div className="table-header-actions">
           <div className="table-header-title--wrapper">
@@ -599,7 +591,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <ExcelButton onClick={exportWaitingExcel} loading={isWaitingExcelExporting} />
           </div>
         </div>
-        <div className="participating-institutions-section__table-wrap participating-individual-instructor-assignment-section__table-scroll">
+        <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__waiting-table-scroll">
           <Table<ParticipatingIndividualInstructorWaitingScheduleRow>
             className="participating-institutions-section__table cms-data-table"
             rowKey="id"

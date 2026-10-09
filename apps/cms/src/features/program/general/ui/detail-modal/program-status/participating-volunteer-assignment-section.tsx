@@ -581,7 +581,7 @@ export function ParticipatingVolunteerAssignmentSection({
             <ExcelButton onClick={exportAssignedExcel} loading={isAssignedExcelExporting} />
           </div>
         </div>
-        <div className="participating-institutions-section__table-wrap participating-volunteer-assignment-section__table-scroll">
+        <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
           {assignedInstitutions.length === 0 ? (
             <div
               className="school-detail-fullpage-view__instructor-list-empty"
@@ -623,7 +623,7 @@ export function ParticipatingVolunteerAssignmentSection({
             <ExcelButton onClick={exportWaitingExcel} loading={isWaitingExcelExporting} />
           </div>
         </div>
-        <div className="participating-institutions-section__table-wrap participating-volunteer-assignment-section__table-scroll">
+        <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__waiting-table-scroll">
           {waitingInstitutions.length === 0 ? (
             <div
               className="school-detail-fullpage-view__instructor-list-empty"
