@@ -1185,6 +1185,7 @@ export function UjatProgramDetailFullPageModal({
   const infoForm = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeInfo,
+    holdValuesWhileEditing: true,
   })
   const { triggerSave: infoTriggerSave, resetToProgram: infoResetToProgram } =
     useProgramDetailInfoSave({
@@ -1256,7 +1257,7 @@ export function UjatProgramDetailFullPageModal({
       })
     }
     const mergedProgram: Program = {
-      ...applyUjatRegistrationOverlayToProgram(displayProgram, overlay),
+      ...applyUjatRegistrationOverlayToProgram(displayProgram, overlay, { kpiClearedAsZero: true }),
       ujatRegistrationOverlay: overlay,
     }
     if (hasIncompleteUjatProgramRegistrationRequiredFields(overlay)) {

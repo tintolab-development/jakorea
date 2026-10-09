@@ -70,4 +70,28 @@ describe('syncUjatDetailEditFormKpiToOverlay', () => {
     expect(next.generalCommonInfo?.kpi?.finalSchools).toBe(4)
     expect(next.generalCommonInfo?.kpi?.finalClasses).toBe(12)
   })
+
+  it('상세 저장(kpiClearedAsZero)에서는 지운 KPI를 이전 값으로 되돌리지 않는다', () => {
+    const overlay = buildUjatKpiOverlayFromDetailEditForm({})
+    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), overlay, {
+      kpiClearedAsZero: true,
+    })
+    expect(next.generalCommonInfo?.kpi).toMatchObject({
+      finalParticipants: 0,
+      volunteerCount: 0,
+      finalSchools: 0,
+      finalClasses: 0,
+    })
+  })
+
+  it('표시용 병합(옵션 없음)에서는 null KPI 키가 기존 값을 유지한다', () => {
+    const overlay = buildUjatKpiOverlayFromDetailEditForm({})
+    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), overlay)
+    expect(next.generalCommonInfo?.kpi).toMatchObject({
+      finalParticipants: 10,
+      volunteerCount: 2,
+      finalSchools: 1,
+      finalClasses: 3,
+    })
+  })
 })

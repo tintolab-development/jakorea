@@ -689,7 +689,7 @@ export function applyGeneralRegistrationOverlayToProgram(
   const prevKpi = program.generalCommonInfo?.kpi
   const kpiNumber = (key: string, fallback: number | undefined) => {
     if (!Object.prototype.hasOwnProperty.call(overlay, key)) return fallback ?? 0
-    return overlayNullableNumber(overlay, key) ?? fallback ?? 0
+    return overlayNullableNumber(overlay, key) ?? 0
   }
   const kpi = {
     finalParticipants: kpiNumber(

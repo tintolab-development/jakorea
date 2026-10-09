@@ -9,6 +9,7 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   getGeneralRecruitOverlayRecord,
+  patchGeneralRecruitOverlay,
   resetGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 
@@ -61,6 +62,19 @@ describe('recruit-detail-info-additional-content-flush', () => {
 
     expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.recruitmentGuide']).toBe(
       '<p>모집 안내</p>'
+    )
+  })
+
+  it('skips getters that return null so unedited empty editors do not wipe saved overlay HTML', () => {
+    patchGeneralRecruitOverlay({
+      'recruit.detailInfo.recruitmentGuide': '<p><strong>모집 안내11</strong></p>',
+    })
+    registerRecruitDetailRichTextHtml('recruit.detailInfo.recruitmentGuide', () => null)
+
+    flushRecruitDetailRichTextIntoGeneralRecruitOverlay()
+
+    expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.recruitmentGuide']).toBe(
+      '<p><strong>모집 안내11</strong></p>'
     )
   })
 })

@@ -116,7 +116,9 @@ export function FormEditorLeftPanel({
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
   const structureControlsDisabled =
-    editorKind === 'horizontal_table' && structureLockedParagraphIds != null
+    editorKind === 'horizontal_table' &&
+    structureLockedParagraphIds != null &&
+    !allowAddAfterStructureLockedParagraphs
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (structureControlsDisabled) return

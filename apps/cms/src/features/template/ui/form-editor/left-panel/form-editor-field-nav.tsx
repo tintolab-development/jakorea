@@ -25,6 +25,8 @@ interface FormEditorFieldNavProps {
   sortableMiddle: FormEditorFieldNavItem[]
   /** sortable 목록 중 핸들을 숨길 단락 id(좌측 `hideDragHandleForParagraphIds`와 맞춤) */
   hideSortableDragHandleForIds?: ReadonlySet<string>
+  /** 구조 잠금(가로형 시드)이어도 단락 순서 변경은 허용 — 신청 양식 */
+  allowReorderWhenStructureLocked?: boolean
   /** 가로형(테이블만) 등 하단 고정 항이 없을 때 생략 — 동의 양식은 복수 고정(날짜·서명·마무리) */
   pinnedBottom?: FormEditorFieldNavItem | FormEditorFieldNavItem[] | null
   selectedItemId: string | null
@@ -121,6 +123,7 @@ export function FormEditorFieldNav({
   pinnedTop,
   sortableMiddle,
   hideSortableDragHandleForIds,
+  allowReorderWhenStructureLocked = false,
   pinnedBottom,
   selectedItemId,
   onSelectItem,
@@ -138,13 +141,14 @@ export function FormEditorFieldNav({
   const structureControlsDisabled =
     childProps?.editorKind === 'horizontal_table' &&
     childProps.structureLockedParagraphIds != null
+  const reorderDisabled = structureControlsDisabled && !allowReorderWhenStructureLocked
   const pinnedBottomList =
     pinnedBottom == null ? [] : Array.isArray(pinnedBottom) ? pinnedBottom : [pinnedBottom]
   const sortableIds = sortableMiddle.map(i => i.id)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    if (structureControlsDisabled) return
+    if (reorderDisabled) return
     if (over == null || active.id === over.id) return
     const activeId = String(active.id)
     const overId = String(over.id)
@@ -182,7 +186,7 @@ export function FormEditorFieldNav({
                 selected={selectedItemId === item.id}
                 onSelect={() => onSelectItem(item.id)}
                 hideDragHandle={
-                  structureControlsDisabled ||
+                  reorderDisabled ||
                   (hideSortableDragHandleForIds?.has(item.id) ?? false)
                 }
               />

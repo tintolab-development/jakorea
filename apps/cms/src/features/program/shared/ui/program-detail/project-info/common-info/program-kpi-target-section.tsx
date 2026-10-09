@@ -227,7 +227,7 @@ export function ProgramKpiTargetSection({
                           min={0}
                           value={field.value == null ? '' : String(field.value)}
                           onValueChange={raw =>
-                            field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                            field.onChange(raw === '' ? null : Number.parseInt(raw, 10))
                           }
                           status={form.formState.errors.kpiFinalParticipants ? 'error' : undefined}
                         />
@@ -256,7 +256,7 @@ export function ProgramKpiTargetSection({
                             min={0}
                             value={field.value == null ? '' : String(field.value)}
                             onValueChange={raw =>
-                              field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                              field.onChange(raw === '' ? null : Number.parseInt(raw, 10))
                             }
                             status={form.formState.errors.kpiInstructorCount ? 'error' : undefined}
                           />
@@ -277,7 +277,7 @@ export function ProgramKpiTargetSection({
                               min={0}
                               value={field.value == null ? '' : String(field.value)}
                               onValueChange={raw =>
-                                field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                                field.onChange(raw === '' ? null : Number.parseInt(raw, 10))
                               }
                               status={form.formState.errors.kpiVolunteerCount ? 'error' : undefined}
                             />
@@ -311,7 +311,7 @@ export function ProgramKpiTargetSection({
                           min={0}
                           value={field.value == null ? '' : String(field.value)}
                           onValueChange={raw =>
-                            field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                            field.onChange(raw === '' ? null : Number.parseInt(raw, 10))
                           }
                           status={form.formState.errors.kpiFinalSchools ? 'error' : undefined}
                         />
@@ -338,7 +338,7 @@ export function ProgramKpiTargetSection({
                           min={0}
                           value={field.value == null ? '' : String(field.value)}
                           onValueChange={raw =>
-                            field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                            field.onChange(raw === '' ? null : Number.parseInt(raw, 10))
                           }
                           status={form.formState.errors.kpiFinalClasses ? 'error' : undefined}
                         />

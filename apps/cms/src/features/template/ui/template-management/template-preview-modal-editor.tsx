@@ -16,7 +16,11 @@ import { resolveTemplateEditorPanels } from '@/features/template/ui/template-ren
 import type { TemplateRendererContext } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
-import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
+import {
+  isRecruitmentEditorVariant,
+  useProgramParticipantApplicationEditor,
+} from '@/features/template/hooks/use-program-participant-application-editor'
+import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
 import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT'
@@ -330,6 +334,7 @@ function ParticipantApplicationTemplatePreviewEditor({
     rendererContext,
     programParticipantApplicationVm.isDraftLoading
   )
+  const isRecruitment = isRecruitmentEditorVariant(variant)
 
   return (
     <TemplatePreviewModalShell
@@ -345,8 +350,16 @@ function ParticipantApplicationTemplatePreviewEditor({
       onPreview={handlePreview}
       onSave={programParticipantApplicationVm.handleSave}
       isDraftLoading={programParticipantApplicationVm.isDraftLoading}
-      leftContent={leftContent}
-      rightNavigation={rightNavigation}
+      leftContent={
+        isRecruitment ? (
+          <HideParagraphSelectionChromeContext.Provider value>
+            {leftContent}
+          </HideParagraphSelectionChromeContext.Provider>
+        ) : (
+          leftContent
+        )
+      }
+      rightNavigation={isRecruitment ? null : rightNavigation}
     />
   )
 }

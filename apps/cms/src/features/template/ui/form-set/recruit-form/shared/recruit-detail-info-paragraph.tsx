@@ -188,6 +188,8 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
   const getHtmlRef = useRef(getHTML)
   getHtmlRef.current = getHTML
   const latestHtmlRef = useRef(initialHtmlRef.current)
+  /** 사용자가 편집한 적 없으면 overlay에 되쓰지 않는다 — 저장본 hydrate 전 빈 HTML이 덮어쓰는 것 방지 */
+  const editedRef = useRef(false)
 
   useEffect(() => {
     if (editor == null) return
@@ -199,22 +201,27 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
         // 탭 전환 시 TipTap이 먼저 destroy되면 getHTML이 schema.cached에서 실패한다.
       }
     }
+    const onUpdate = () => {
+      editedRef.current = true
+      remember()
+    }
     remember()
-    editor.on('update', remember)
+    editor.on('update', onUpdate)
     return () => {
       remember()
       if (!editor.isDestroyed) {
-        editor.off('update', remember)
+        editor.off('update', onUpdate)
       }
     }
   }, [editor])
 
   useEffect(() => {
     const readHtml = () => latestHtmlRef.current || getHtmlRef.current()
-    registerRecruitDetailRichTextHtml(overlayKey, readHtml)
+    const readEditedHtml = () => (editedRef.current ? readHtml() : null)
+    registerRecruitDetailRichTextHtml(overlayKey, readEditedHtml)
     return () => {
       if (!isRecruitDetailContentPersistSuppressed()) {
-        const html = readHtml()
+        const html = readEditedHtml()
         if (typeof html === 'string') {
           patchGeneralRecruitOverlay({ [overlayKey]: html })
         }
@@ -230,8 +237,9 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
     if (incoming === '') return
     let current = ''
     try {
-      current = getHtmlRef
-        .current()
+      // resetKey로 새 에디터가 생긴 직후엔 getHTML api가 이전 인스턴스를 가리킬 수 있다.
+      current = editor
+        .getHTML()
         .replace(/<p><\/p>/gi, '')
         .trim()
     } catch {

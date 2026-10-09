@@ -615,7 +615,18 @@ export function resyncGeneralRegistrationOverlayFromProgram(
 ): Record<string, unknown> {
   const fromNested = buildGeneralRegistrationOverlayFromProgram(program)
   const extra = editOverlay ?? overlayFromProgram(program)
-  return { ...extra, ...fromNested }
+  const merged = { ...extra, ...fromNested }
+  if (!editOverlay) return merged
+  for (const key of [
+    `${KPI}.participantCount`,
+    `${KPI}.instructor`,
+    `${KPI}.volunteer`,
+  ] as const) {
+    if (Object.prototype.hasOwnProperty.call(editOverlay, key) && editOverlay[key] == null) {
+      merged[key] = editOverlay[key]
+    }
+  }
+  return merged
 }
 
 export function seedGeneralRegistrationOverlayFromProgram(program: Program): void {
