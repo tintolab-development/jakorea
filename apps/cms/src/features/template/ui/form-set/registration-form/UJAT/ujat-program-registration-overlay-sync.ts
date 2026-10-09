@@ -8,15 +8,43 @@ import { useCallback, useRef, useSyncExternalStore } from 'react'
 let overlayState: Record<string, unknown> = {}
 let overlayVersion = 0
 const overlayListeners = new Set<() => void>()
+const overlayKeyListeners = new Map<string, Set<() => void>>()
 
-function emitOverlay() {
+function notifyOverlayListeners(changedKeys?: Iterable<string>) {
   overlayVersion += 1
-  overlayListeners.forEach(l => l())
+  const notified = new Set<() => void>()
+  if (changedKeys != null) {
+    for (const key of changedKeys) {
+      overlayKeyListeners.get(key)?.forEach(listener => notified.add(listener))
+    }
+  } else {
+    overlayKeyListeners.forEach(listeners => listeners.forEach(listener => notified.add(listener)))
+  }
+  overlayListeners.forEach(listener => notified.add(listener))
+  notified.forEach(listener => listener())
 }
 
 export function subscribeUjatProgramRegistrationOverlay(listener: () => void): () => void {
   overlayListeners.add(listener)
   return () => overlayListeners.delete(listener)
+}
+
+export function subscribeUjatProgramRegistrationOverlayKey(
+  key: string,
+  listener: () => void
+): () => void {
+  let listeners = overlayKeyListeners.get(key)
+  if (listeners == null) {
+    listeners = new Set()
+    overlayKeyListeners.set(key, listeners)
+  }
+  listeners.add(listener)
+  return () => {
+    listeners?.delete(listener)
+    if (listeners != null && listeners.size === 0) {
+      overlayKeyListeners.delete(key)
+    }
+  }
 }
 
 export function getUjatProgramRegistrationOverlayVersion(): number {
@@ -28,8 +56,16 @@ export function getUjatProgramRegistrationOverlayRecord(): Record<string, unknow
 }
 
 export function patchUjatProgramRegistrationOverlay(partial: Record<string, unknown>): void {
-  overlayState = { ...overlayState, ...partial }
-  emitOverlay()
+  const changedKeys: string[] = []
+  const next: Record<string, unknown> = { ...overlayState }
+  for (const [key, value] of Object.entries(partial)) {
+    if (Object.is(overlayState[key], value)) continue
+    next[key] = value
+    changedKeys.push(key)
+  }
+  if (changedKeys.length === 0) return
+  overlayState = next
+  notifyOverlayListeners(changedKeys)
 }
 
 export function updateUjatProgramRegistrationOverlayKey<T>(
@@ -37,29 +73,41 @@ export function updateUjatProgramRegistrationOverlayKey<T>(
   updater: (prev: T | undefined) => T
 ): void {
   const prev = overlayState[key] as T | undefined
-  overlayState = { ...overlayState, [key]: updater(prev) }
-  emitOverlay()
+  const next = updater(prev)
+  if (Object.is(prev, next)) return
+  overlayState = { ...overlayState, [key]: next }
+  notifyOverlayListeners([key])
 }
 
 export function resetUjatProgramRegistrationOverlay(): void {
   overlayState = {}
-  emitOverlay()
+  notifyOverlayListeners()
 }
 
-/** `useSyncExternalStore`용 — 버전만 구독하고 렌더 시 `getUjatProgramRegistrationOverlayRecord()`로 값을 읽는다. */
-export function useUjatProgramRegistrationOverlayKv<T>(key: string, defaultValue: T): [T, (next: T) => void] {
+/**
+ * `useSyncExternalStore`용 — 변경된 overlay 키만 구독한다.
+ * 전역 version 구독이면 대표 프로그램명 입력마다 다른 단락까지 리렌더된다.
+ */
+export function useUjatProgramRegistrationOverlayKv<T>(
+  key: string,
+  defaultValue: T
+): [T, (next: T) => void] {
   const defaultRef = useRef(defaultValue)
-  const version = useSyncExternalStore(
-    subscribeUjatProgramRegistrationOverlay,
-    getUjatProgramRegistrationOverlayVersion,
-    getUjatProgramRegistrationOverlayVersion
+  const getSnapshot = useCallback(() => {
+    const raw = overlayState[key] as T | undefined
+    return raw === undefined ? defaultRef.current : raw
+  }, [key])
+
+  const value = useSyncExternalStore(
+    listener => subscribeUjatProgramRegistrationOverlayKey(key, listener),
+    getSnapshot,
+    getSnapshot
   )
-  void version
-  const record = getUjatProgramRegistrationOverlayRecord()
-  const raw = record[key] as T | undefined
-  const value = raw === undefined ? defaultRef.current : raw
+
   const setValue = useCallback(
     (next: T) => {
+      const prev = overlayState[key]
+      if (Object.is(prev, next)) return
       patchUjatProgramRegistrationOverlay({ [key]: next })
     },
     [key]
