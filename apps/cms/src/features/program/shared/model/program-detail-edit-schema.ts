@@ -615,6 +615,40 @@ function finalPassAnnouncementPatch(
   }
 }
 
+type VolunteerInterviewNestedInfo = {
+  documentPassAnnouncementDate?: string
+  documentPassAnnouncementMethod?: string
+  interviewStartDate?: string
+  interviewEndDate?: string
+  interviewMethod?: string
+}
+
+/**
+ * 봉사자 서류·면접 필드는 조회 SSOT가 nested `volunteerRecruitmentInfo`다.
+ * 공용 컬럼만 갱신하면 표시가 옛 nested 값을 우선해 「수정 미반영」처럼 보인다.
+ * 봉사자 탭 저장(`recruitmentAudience=volunteer`)에서만 호출한다.
+ */
+export function volunteerDocumentInterviewNestedPatch(
+  values: ProgramDetailEditFormValues,
+  existingNested: VolunteerInterviewNestedInfo | undefined
+): VolunteerInterviewNestedInfo {
+  return {
+    documentPassAnnouncementDate: values.documentPassAnnouncementDate
+      ? dayjs(values.documentPassAnnouncementDate).toISOString()
+      : existingNested?.documentPassAnnouncementDate,
+    documentPassAnnouncementMethod:
+      values.documentPassAnnouncementMethod?.trim() ||
+      existingNested?.documentPassAnnouncementMethod,
+    interviewStartDate: values.interviewStartDate
+      ? dayjs(values.interviewStartDate).toISOString()
+      : existingNested?.interviewStartDate,
+    interviewEndDate: values.interviewEndDate
+      ? dayjs(values.interviewEndDate).toISOString()
+      : existingNested?.interviewEndDate,
+    interviewMethod: values.interviewMethod?.trim() || existingNested?.interviewMethod,
+  }
+}
+
 function formatCompanySchoolWageAmount(amount: string | number | undefined): string {
   if (amount == null || amount === '') return ''
   const num = typeof amount === 'number' ? amount : Number(String(amount).replace(/,/g, ''))

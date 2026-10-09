@@ -10,6 +10,41 @@ import {
   resolveGeneralProgramForRecruitmentEdit,
 } from './general-program-recruitment-edit-seed'
 
+describe('programToRecruitmentTabEditValues volunteer nested seed', () => {
+  it('봉사자 탭은 nested 서류·면접 값을 공용 컬럼보다 우선 시드한다', () => {
+    const program = {
+      id: '186068',
+      title: '테스트',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      documentPassAnnouncementDate: '2026-01-01T00:00:00+09:00',
+      documentPassAnnouncementMethod: '공용',
+      interviewStartDate: '2026-01-10T00:00:00+09:00',
+      interviewEndDate: '2026-01-12T00:00:00+09:00',
+      interviewMethod: '대면',
+      generalCommonInfo: {
+        volunteerRecruitmentInfo: {
+          documentPassAnnouncementDate: '2026-11-05T00:00:00+09:00',
+          documentPassAnnouncementMethod: '이메일',
+          interviewStartDate: '2026-11-10T00:00:00+09:00',
+          interviewEndDate: '2026-11-12T00:00:00+09:00',
+          interviewMethod: '온라인',
+          finalPassAnnouncementDate: '2026-11-20T00:00:00+09:00',
+          finalPassAnnouncementMethod: '문자',
+        },
+      },
+    } as Program
+
+    const values = programToRecruitmentTabEditValues(program, 'volunteer')
+    expect(values.documentPassAnnouncementMethod).toBe('이메일')
+    expect(values.interviewMethod).toBe('온라인')
+    expect(values.finalPassAnnouncementMethod).toBe('문자')
+    expect(String(values.documentPassAnnouncementDate)).toContain('2026-11-05')
+    expect(String(values.interviewStartDate)).toContain('2026-11-10')
+  })
+})
+
 describe('resolveGeneralProgramForRecruitmentEdit', () => {
   it('participantRecruitmentInfo 라벨만 있을 때 targetLevels·기간을 폼 시드용 program에 채운다', () => {
     const program = {
