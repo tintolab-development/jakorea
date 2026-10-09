@@ -3,6 +3,7 @@ export {
   isIdentityCallbackHandled,
   markIdentityCallbackHandled,
 } from './identity-callback-once'
+export { getIdentityApiErrorMessage } from './get-identity-api-error-message'
 export {
   clearMypagePhoneIdentityConfirmPending,
   isMypagePhoneIdentityConfirmPending,
