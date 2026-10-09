@@ -10,7 +10,7 @@
 | 항목 | 값 |
 |------|-----|
 | 작성일 | 2026-10-09 |
-| 상태 | BE enrich 반영 · FE 연동 (`education-scope.schedules[]`) |
+| 상태 | BE enrich 반영 · FE 연동 완료. **후속(장소·시드):** [general-individual-volunteer-assignment-schedule-location-seed-backend-request-2026-10-09.md](./general-individual-volunteer-assignment-schedule-location-seed-backend-request-2026-10-09.md) |
 | 대상 | CMS 백엔드 `JABACK` (`localhost:8080`) |
 | 우선순위 | **P1** |
 | 화면 | CMS 일반 프로그램 상세 → 프로그램 진행 현황 → 참여 봉사자 상세 → **봉사 배정 현황** (`volunteerTab=assignment`) |
