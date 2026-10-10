@@ -23,6 +23,7 @@ import type {
   ParticipatingIndividualInstructorWaitingScheduleRow,
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { extractLectureDateKey } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
+import { getParticipatingSchoolAssignmentSessions } from '@/features/program/general/lib/participating-school-assignment-sessions'
 
 function formatDistanceKm(km: number | undefined): string {
   if (km == null || Number.isNaN(km)) return '-'
@@ -31,7 +32,9 @@ function formatDistanceKm(km: number | undefined): string {
 }
 
 function scheduleLinesForSchool(school: ParticipatingSchoolRow): string[] {
-  const fromSessions = buildParticipatingSchoolSessionLines(school.sessions)
+  const fromSessions = buildParticipatingSchoolSessionLines(
+    getParticipatingSchoolAssignmentSessions(school)
+  )
   return fromSessions.length > 0 ? fromSessions : ['-']
 }
 
@@ -146,13 +149,14 @@ export function buildParticipatingInstructorAssignedSchoolRowsFromBoard(input: {
 
 function buildScheduleGroups(school: ParticipatingSchoolRow) {
   const groups = new Map<string, ParticipatingSchoolSession[]>()
-  for (const session of school.sessions?.filter(s => s.status !== 'not_planned') ?? []) {
+  for (const session of getParticipatingSchoolAssignmentSessions(school)) {
     const scheduleKey = `${session.date}|${session.dayOfWeek}`
     const prev = groups.get(scheduleKey)
     if (prev) prev.push(session)
     else groups.set(scheduleKey, [session])
   }
-  const preferredLines = buildParticipatingSchoolPreferredScheduleLines(school.sessions)
+  const assignmentSessions = getParticipatingSchoolAssignmentSessions(school)
+  const preferredLines = buildParticipatingSchoolPreferredScheduleLines(assignmentSessions)
   return Array.from(groups.entries()).map(([scheduleKey, sessions], index) => ({
     scheduleKey,
     sessions,
@@ -222,7 +226,7 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
       id: school.id,
       no: rowNo,
       schoolId: school.id,
-      sessions: school.sessions?.filter(s => s.status !== 'not_planned'),
+      sessions: getParticipatingSchoolAssignmentSessions(school),
       schoolName: school.schoolName,
       desiredGrade: school.educationGrade,
       region: school.region,

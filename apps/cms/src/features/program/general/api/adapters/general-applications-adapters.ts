@@ -54,6 +54,10 @@ import {
   formatRequestedSchedulesPeriodLabel,
   mapRequestedSchedulesToSessions,
 } from '@/features/program/1c-1s/lib/map-requested-schedules'
+import {
+  isCompanySchoolOrganizationApplication,
+  readOrganizationApplicationPreferredEducationSchedules,
+} from '@/features/program/general/lib/organization-application-preferred-education-schedules'
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { supplementApplicantInstructorBasicInfoFromApplicationDetail } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import { mapSessionProgressToLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
@@ -90,8 +94,14 @@ export function mapApiApplicationStatusToApprovalStatus(
   if (['APPROVED', 'ASSIGNED', 'WAITING_ASSIGNMENT'].includes(normalized)) {
     return 'approved'
   }
-  if (['REJECTED', 'AUTO_REJECTED', 'CANCELLED'].includes(normalized)) {
+  if (['REJECTED', 'AUTO_REJECTED'].includes(normalized)) {
     return 'rejected'
+  }
+  if (['CANCELLED', 'CANCELED'].includes(normalized)) {
+    return 'cancelled'
+  }
+  if (normalized === 'REJECTION_CANCELLED') {
+    return 'pending'
   }
   return 'pending'
 }
@@ -105,6 +115,8 @@ export function mapApprovalStatusToApiFilter(
       return 'APPROVED'
     case 'rejected':
       return 'REJECTED'
+    case 'cancelled':
+      return 'CANCELLED'
     case 'pending':
       return 'WAITING_REVIEW'
     default:
@@ -166,6 +178,19 @@ function readOrganizationApplicationListGrade(
   return formatApplicantGradeLabel(raw) || ''
 }
 
+function resolveOrganizationApplicationAssignmentSessions(
+  dto: OrganizationApplicationListItemResponse,
+  preferred: PreferredEducationSchedule[],
+  requestedSchedules?: RequestedScheduleResponse[]
+): ParticipatingSchoolSession[] {
+  if (isCompanySchoolOrganizationApplication(dto)) {
+    return mapRequestedSchedulesToSessions(requestedSchedules) ?? []
+  }
+  const fromPreferred = mapPreferredEducationSchedulesToSessions(preferred)
+  if (fromPreferred.length > 0) return fromPreferred
+  return mapRequestedSchedulesToSessions(requestedSchedules) ?? []
+}
+
 export function mapOrganizationApplicationToApplicantSchoolRow(
   dto: OrganizationApplicationListItemResponse,
   index: number,
@@ -174,7 +199,12 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     requestedSchedules?: RequestedScheduleResponse[]
   }
 ): ApplicantSchoolRow {
-  const sessions = mapRequestedSchedulesToSessions(options?.requestedSchedules)
+  const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const sessions = resolveOrganizationApplicationAssignmentSessions(
+    dto,
+    preferred,
+    options?.requestedSchedules
+  )
   const desiredEducationPeriod = formatRequestedSchedulesPeriodLabel(options?.requestedSchedules)
   const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
 
@@ -198,6 +228,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     availableActions: dto.availableActions ?? [],
     programId,
     sessions,
+    preferredEducationSchedules: preferred.length > 0 ? preferred : undefined,
     desiredEducationPeriod,
     detail: {
       ...readOrganizationApplicationEconomyDisplayFields(dto),
@@ -264,6 +295,16 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   const teacherEmail = dto.teacherEmail?.trim()
   const detailFields = readOrganizationApplicationDetailExtendFields(dto)
   const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
+  const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const assignmentSessions = resolveOrganizationApplicationAssignmentSessions(
+    dto as OrganizationApplicationListItemResponse,
+    preferred.length > 0 ? preferred : (base.preferredEducationSchedules ?? []),
+    undefined
+  )
+  const sessions =
+    assignmentSessions.length > 0
+      ? assignmentSessions
+      : base.sessions
   return {
     ...base,
     id: toId(dto.id) || base.id,
@@ -283,6 +324,8 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
       formatOrganizationResultNotificationSentAt(readResultNotificationSentAt(dto)) ??
       base.approvalNotificationSentAt,
     availableActions: dto.availableActions ?? base.availableActions,
+    sessions,
+    ...(preferred.length > 0 ? { preferredEducationSchedules: preferred } : {}),
     ...(requestedScheduleMemo
       ? { desiredEducationPeriod: requestedScheduleMemo }
       : base.desiredEducationPeriod
@@ -754,15 +797,22 @@ export function mapPreferredEducationSchedulesToSessions(
       validStart && validEnd && end.getTime() > start.getTime()
         ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
         : '-'
+    const scheduleId = schedule.scheduleId
+    const hasResolvedSchedule =
+      scheduleId != null && Number.isFinite(scheduleId) && scheduleId > 0
+    const label = scheduleLabel || undefined
+    const scheduleUnresolved = !hasResolvedSchedule && Boolean(label)
+    const round = schedule.round ?? index + 1
     return {
-      round: schedule.round ?? index + 1,
+      round,
       ...dateParts,
       duration,
       format: '-',
-      classNum: '-',
+      classNum: `${round}지망`,
       timeRange,
-      ...(scheduleLabel ? { scheduleLabel } : {}),
-      ...(schedule.scheduleId != null ? { requestedScheduleId: schedule.scheduleId } : {}),
+      ...(label ? { scheduleLabel: label } : {}),
+      resolvedScheduleId: hasResolvedSchedule ? scheduleId : null,
+      ...(scheduleUnresolved ? { scheduleUnresolved: true } : {}),
     }
   })
 }
@@ -790,6 +840,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
       return byStart || (a.sessionNo ?? 0) - (b.sessionNo ?? 0)
     })
     .map((session, index) => {
+      const scheduleName = session.scheduleName?.trim() || ''
       const start = session.startAt ? new Date(session.startAt) : null
       const end = session.endAt ? new Date(session.endAt) : null
       const validStart = start != null && !Number.isNaN(start.getTime())
@@ -806,19 +857,25 @@ export function mapSessionProgressToParticipatingSchoolSessions(
           ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
           : '-'
       const round = session.sessionNo ?? index + 1
+      const resolvedScheduleId = session.resolvedScheduleId ?? session.scheduleId ?? null
+      const scheduleUnresolved =
+        session.scheduleUnresolved ??
+        (resolvedScheduleId == null && session.requestedScheduleId != null)
+      const scheduleLabel = !validStart && scheduleName ? scheduleName : undefined
       return {
         round,
         ...dateParts,
         duration,
-        format: session.scheduleName?.trim() || '-',
+        format: scheduleName || '-',
         classNum: `${round}교시`,
         timeRange,
+        ...(scheduleLabel ? { scheduleLabel } : {}),
         status: mapSessionProgressStatusToParticipating(
           session.attendanceStatus ?? session.assignmentStatus
         ),
-        resolvedScheduleId: session.scheduleId ?? session.resolvedScheduleId ?? null,
+        resolvedScheduleId,
         requestedScheduleId: session.requestedScheduleId ?? undefined,
-        scheduleUnresolved: session.scheduleId == null && session.resolvedScheduleId == null,
+        scheduleUnresolved,
       }
     })
 }
@@ -1342,7 +1399,7 @@ export function mapParticipantToParticipatingSchoolRow(
   const teacherPhone = dto.phone?.trim() || dto.contact?.trim() || undefined
   const teacherEmail = dto.email?.trim() || undefined
   const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
-  const sessions = mapSessionProgressToParticipatingSchoolSessions(dto.sessions)
+  const sessions = mapSessionProgressToParticipatingSchoolSessions(dto.sessions ?? [])
   return {
     id: toId(dto.participantId),
     organizationId: dto.organizationId ?? undefined,

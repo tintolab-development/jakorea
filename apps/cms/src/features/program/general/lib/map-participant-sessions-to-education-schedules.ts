@@ -27,9 +27,18 @@ export function mapParticipantSessionsToEducationSchedules(
   sessions?: SessionProgress[] | null
 ): ParticipatingInstructorEducationScheduleRow[] {
   if (!sessions?.length) return []
-  return sessions.map((session, index) => ({
-    id: session.scheduleId != null ? String(session.scheduleId) : `session-${index}`,
-    scheduleLabel: formatSessionProgressLabel(session, index),
-    progress: mapSessionProgressStatus(session.attendanceStatus ?? session.assignmentStatus),
-  }))
+  return sessions.map((session, index) => {
+    const resolvedId = session.resolvedScheduleId ?? session.scheduleId
+    const id =
+      resolvedId != null
+        ? String(resolvedId)
+        : session.requestedScheduleId != null
+          ? `requested-${session.requestedScheduleId}`
+          : `session-${index}`
+    return {
+      id,
+      scheduleLabel: formatSessionProgressLabel(session, index),
+      progress: mapSessionProgressStatus(session.attendanceStatus ?? session.assignmentStatus),
+    }
+  })
 }

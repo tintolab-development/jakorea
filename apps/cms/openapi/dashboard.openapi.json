@@ -19957,7 +19957,15 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SessionResponse"
-            }
+            },
+            "description": "OSA 학급·회차"
+          },
+          "preferredEducationSchedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreferredEducationScheduleResponse"
+            },
+            "description": "신청 희망 교육 일정 B. 없으면 빈 배열."
           },
           "previousYearParticipation": {
             "type": [
@@ -38729,7 +38737,8 @@
         "properties": {
           "scheduleId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "requestedScheduleId": {
             "type": "integer",
@@ -38737,7 +38746,8 @@
           },
           "resolvedScheduleId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "scheduleUnresolved": {
             "type": "boolean"
@@ -38884,7 +38894,15 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Session"
-            }
+            },
+            "description": "OSA 학급·회차 (program_organization_schedule_assignment)"
+          },
+          "preferredEducationSchedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreferredEducationScheduleResponse"
+            },
+            "description": "신청 희망 교육 일정 B. 없으면 빈 배열."
           },
           "mergeGroupId": {
             "type": "integer",

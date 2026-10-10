@@ -8,6 +8,7 @@
 import type { OrganizationApplicationListItemResponsePreviousYearParticipation } from './organizationApplicationListItemResponsePreviousYearParticipation';
 import type { OrganizationApplicationListItemResponseRecruitHalf } from './organizationApplicationListItemResponseRecruitHalf';
 import type { OrganizationApplicationListItemResponseScheduleConfirmStatus } from './organizationApplicationListItemResponseScheduleConfirmStatus';
+import type { PreferredEducationScheduleResponse } from './preferredEducationScheduleResponse';
 import type { Session } from './session';
 
 export interface OrganizationApplicationListItemResponse {
@@ -51,6 +52,7 @@ export interface OrganizationApplicationListItemResponse {
   regionSido?: string;
   regionSigungu?: string;
   sessions?: Session[];
+  preferredEducationSchedules?: PreferredEducationScheduleResponse[];
   mergeGroupId?: number;
   mergeStatus?: string;
   mergeLead?: boolean;

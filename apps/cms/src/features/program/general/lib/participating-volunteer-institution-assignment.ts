@@ -19,6 +19,7 @@ import {
 } from './waiting-instructor-assignment'
 import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
 import { isTempMockOrgProgressVolunteerId } from '@/features/program/general/lib/temp-mock-org-program'
+import { getParticipatingSchoolAssignmentSessions } from '@/features/program/general/lib/participating-school-assignment-sessions'
 
 /** 배정 대기 목록 — 기관+일정별 행 식별자 */
 export type VolunteerWaitingAssignmentStatus = WaitingInstructorAssignmentStatus
@@ -72,7 +73,9 @@ function scheduleLinesForSchool(
   volunteer: ParticipatingVolunteerRow,
   program?: Program
 ): string[] {
-  const fromSchool = school.sessions?.map(s => scheduleLineForSession(s, program)) ?? []
+  const fromSchool = getParticipatingSchoolAssignmentSessions(school).map(s =>
+    scheduleLineForSession(s, program)
+  )
   if (fromSchool.length > 0) return fromSchool
 
   const volunteerSessions = volunteer.sessions ?? []
@@ -163,7 +166,7 @@ function expandSchoolSessionsToWaitingRows(
   occupiedSlots: Set<string>,
   program?: Program
 ): VolunteerWaitingInstitutionRow[] {
-  const sessions = school.sessions?.filter(s => s.status !== 'not_planned') ?? []
+  const sessions = getParticipatingSchoolAssignmentSessions(school)
   if (sessions.length === 0) return []
 
   return sessions.map((session, sessionIdx) => {

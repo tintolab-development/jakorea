@@ -27,6 +27,9 @@ import {
 } from '@/features/program/general/api/program-progress-api-client'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import { fetchOrganizationApplicationsRemote } from '@/features/program/general/api/applications-api-client'
+import { readOrganizationApplicationPreferredEducationSchedules } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
+import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 
@@ -106,6 +109,49 @@ export async function fetchGeneralParticipatingInstitutions(
   return (await fetchGeneralParticipatingInstitutionsPage(programId)).rows
 }
 
+const ORG_APPLICATIONS_ENRICH_PAGE_SIZE = 100
+const ORG_APPLICATIONS_ENRICH_PAGE_LIMIT = 40
+
+async function fetchOrganizationPreferredEducationSchedulesByApplicationId(
+  programId: string
+): Promise<Map<string, PreferredEducationSchedule[]>> {
+  const index = new Map<string, PreferredEducationSchedule[]>()
+  let page = 0
+  for (;;) {
+    const response = await fetchOrganizationApplicationsRemote(programId, {
+      page,
+      size: ORG_APPLICATIONS_ENRICH_PAGE_SIZE,
+    })
+    const items = response.items ?? []
+    for (const item of items) {
+      if (item.id == null) continue
+      const preferred = readOrganizationApplicationPreferredEducationSchedules(item)
+      if (preferred.length > 0) {
+        index.set(String(item.id), preferred)
+      }
+    }
+    const totalPages = response.totalPages ?? 0
+    if (page + 1 >= totalPages || items.length === 0) break
+    page += 1
+    if (page > ORG_APPLICATIONS_ENRICH_PAGE_LIMIT) break
+  }
+  return index
+}
+
+function attachPreferredEducationSchedulesToParticipatingSchools(
+  rows: ParticipatingSchoolRow[],
+  preferredByApplicationId: Map<string, PreferredEducationSchedule[]>
+): ParticipatingSchoolRow[] {
+  if (preferredByApplicationId.size === 0) return rows
+  return rows.map(row => {
+    const applicationId = row.organizationApplicationId
+    if (!applicationId) return row
+    const preferred = preferredByApplicationId.get(applicationId)
+    if (!preferred?.length) return row
+    return { ...row, preferredEducationSchedules: preferred }
+  })
+}
+
 export async function fetchGeneralParticipatingInstitutionsPage(
   programId: string,
   pageParam = 0
@@ -116,12 +162,17 @@ export async function fetchGeneralParticipatingInstitutionsPage(
     size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
     participantType: 'ORGANIZATION',
   })
-  const rows = (page.items ?? []).map((item, index) =>
-    mapParticipantToParticipatingSchoolRow(
-      item,
-      pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
-      programId
-    )
+  const preferredByApplicationId =
+    await fetchOrganizationPreferredEducationSchedulesByApplicationId(programId)
+  const rows = attachPreferredEducationSchedulesToParticipatingSchools(
+    (page.items ?? []).map((item, index) =>
+      mapParticipantToParticipatingSchoolRow(
+        item,
+        pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
+        programId
+      )
+    ),
+    preferredByApplicationId
   )
   return resolveProgressListPage(rows, page, pageParam)
 }

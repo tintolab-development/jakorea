@@ -1,9 +1,10 @@
 import type { Dayjs } from 'dayjs'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 
 /** 신청 기관(학교) — 타입·승인 상태 패치 도우미 */
 
-export type ApplicantApprovalStatusKey = 'pending' | 'rejected' | 'approved'
+export type ApplicantApprovalStatusKey = 'pending' | 'rejected' | 'approved' | 'cancelled'
 
 export type ApplicantSchoolApprovalNotifyTiming = 'immediate' | 'on_announcement' | 'manual'
 
@@ -97,6 +98,8 @@ export interface ApplicantSchoolRow {
   programId?: string
   /** 강의 회차 별 희망 교육 날짜 및 시간 (참여 기관과 동일 형식) */
   sessions?: ParticipatingSchoolSession[]
+  /** 기관 신청 희망 교육 일정 B (배정 후보 SSOT) */
+  preferredEducationSchedules?: PreferredEducationSchedule[]
   /**
    * 기관 신청 상세 — Admin `requested-schedules` SSOT 동기화 상태.
    * OAS `OrganizationApplicationDetailResponse.sessions`와 혼동하지 않는다.

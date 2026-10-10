@@ -7,9 +7,11 @@
  */
 
 export interface SessionProgress {
-  scheduleId?: number;
+  /** program_schedule id. 희망 일정만 있으면 null */
+  scheduleId?: number | null;
   requestedScheduleId?: number;
-  resolvedScheduleId?: number;
+  /** program_schedule id. 희망 일정만 있으면 null */
+  resolvedScheduleId?: number | null;
   scheduleUnresolved?: boolean;
   sessionNo?: number;
   scheduleName?: string;

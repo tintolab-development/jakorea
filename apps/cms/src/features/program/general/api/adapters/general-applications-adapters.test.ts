@@ -154,6 +154,8 @@ describe('general-applications-adapters', () => {
     expect(mapApiApplicationStatusToApprovalStatus('APPROVED')).toBe('approved')
     expect(mapApiApplicationStatusToApprovalStatus('WAITING_REVIEW')).toBe('pending')
     expect(mapApiApplicationStatusToApprovalStatus('REJECTED')).toBe('rejected')
+    expect(mapApiApplicationStatusToApprovalStatus('CANCELLED')).toBe('cancelled')
+    expect(mapApiApplicationStatusToApprovalStatus('REJECTION_CANCELLED')).toBe('pending')
   })
 
   it('maps organization application list item to applicant row', () => {
@@ -201,6 +203,41 @@ describe('general-applications-adapters', () => {
     expect(row.approvalStatus).toBe('approved')
     expect(row.availableActions).toContain('RESEND_NOTIFICATION')
     expect(row.approvalNotificationSentAt).toMatch(/2026\.\d{2}\.\d{2}/)
+  })
+
+  it('maps organization preferredEducationSchedules (B) to assignment sessions', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691206,
+        programType: 'GENERAL_ORGANIZATION',
+        organizationName: '서울공항초',
+        applicationStatus: 'APPROVED',
+        preferredEducationSchedules: [
+          {
+            scheduleId: 801,
+            round: 1,
+            startAt: '2026-10-26T01:00:00Z',
+            endAt: '2026-10-26T03:00:00Z',
+            label: null,
+          },
+          {
+            scheduleId: null,
+            round: 2,
+            startAt: null,
+            endAt: null,
+            label: '26년 11월 2일(월) 13:30 ~ 16:00',
+          },
+        ],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186084'
+    )
+
+    expect(row.preferredEducationSchedules).toHaveLength(2)
+    expect(row.sessions).toHaveLength(2)
+    expect(row.sessions?.[0]?.resolvedScheduleId).toBe(801)
+    expect(row.sessions?.[1]?.scheduleUnresolved).toBe(true)
+    expect(row.sessions?.[1]?.scheduleLabel).toBe('26년 11월 2일(월) 13:30 ~ 16:00')
   })
 
   it('maps ORGANIZATION participant give-up fields to participating school row', () => {
@@ -283,6 +320,40 @@ describe('general-applications-adapters', () => {
     expect(row.textbookStatus).toBe('shipping')
     expect(row.sessions).toHaveLength(1)
     expect(row.sessions?.[0]?.resolvedScheduleId).toBe(801)
+  })
+
+  it('maps unresolved requested schedule sessions for 참여 기관 목록', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1694743,
+        organizationApplicationId: 1691206,
+        organizationName: '서울공항초등학교',
+        grade: '2',
+        sessions: [
+          {
+            scheduleId: null,
+            requestedScheduleId: 184833,
+            resolvedScheduleId: null,
+            scheduleUnresolved: true,
+            sessionNo: 1,
+            scheduleName: '26년 10월 26일(월) 10:00 ~ 12:00',
+            startAt: '2026-10-26T01:00:00Z',
+            endAt: '2026-10-26T03:00:00Z',
+            attendanceStatus: null,
+            assignmentStatus: null,
+          },
+        ],
+      } as never,
+      0,
+      '186084'
+    )
+
+    expect(row.educationGrade).toBe('2학년')
+    expect(row.sessions).toHaveLength(1)
+    expect(row.sessions?.[0]?.scheduleUnresolved).toBe(true)
+    expect(row.sessions?.[0]?.resolvedScheduleId).toBeNull()
+    expect(row.sessions?.[0]?.requestedScheduleId).toBe(184833)
+    expect(row.sessions?.[0]?.timeRange).toContain('~')
   })
 
   it.each([
@@ -847,7 +918,7 @@ describe('general-applications-adapters', () => {
         round: 2,
         date: '2026.09.22',
         timeRange: '10:00 ~ 12:00',
-        requestedScheduleId: 168362,
+        resolvedScheduleId: 168362,
       }),
     ])
     expect(row.documentScreeningStatus).toBe('pass')

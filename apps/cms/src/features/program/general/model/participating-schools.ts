@@ -1,4 +1,5 @@
 import type { ApplicantPreferredScheduleBlock } from '@/features/program/shared/model/applicant-institution'
+import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 
 /**
  * 참여 학교 — 타입 및 라벨/옵션 상수
@@ -58,6 +59,8 @@ export interface ParticipatingSchoolRow {
   instructors: string
   /** 강의 회차 별 교육 진행 날짜 및 시간 (참여 기관 페이지 컬럼용) */
   sessions?: ParticipatingSchoolSession[]
+  /** 기관 신청 B — 강사·봉사 배정 후보 (organization-applications preferredEducationSchedules) */
+  preferredEducationSchedules?: PreferredEducationSchedule[]
   /** 프로그램 ID (교육받은 교사 등 프로그램별 참여 기관 필터용) */
   programId?: string
   /** 기관 신청 ID — 강사 배정 create/list 스코프 */

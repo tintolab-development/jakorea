@@ -17,6 +17,10 @@ import { shouldUseApplicationsHttpRemoteApi } from '@/features/program/general/a
 import type { QueryClient } from '@tanstack/react-query'
 import { ensureOrganizationRequestedSchedules } from '@/features/program/general/api/organization-requested-schedules-query'
 import {
+  isCompanySchoolOrganizationApplication,
+  readOrganizationApplicationPreferredEducationSchedules,
+} from '@/features/program/general/lib/organization-application-preferred-education-schedules'
+import {
   approveIndividualApplicationRemote,
   approveInstructorApplicationRemote,
   approveOrganizationApplicationRemote,
@@ -153,6 +157,13 @@ export async function fetchGeneralOrganizationApplicationsPage(
   const { queryClient } = options
   const scheduleResults = await Promise.all(
     items.map(async item => {
+      const preferred = readOrganizationApplicationPreferredEducationSchedules(item)
+      if (
+        !isCompanySchoolOrganizationApplication(item) &&
+        preferred.length > 0
+      ) {
+        return undefined
+      }
       const applicationId = item.id == null ? '' : String(item.id)
       return ensureOrganizationRequestedSchedules(queryClient, applicationId)
     })
