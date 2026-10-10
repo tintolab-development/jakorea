@@ -79,7 +79,7 @@
  */
 .content-modal .teal-header-modal__body:has(> .content-modal__description),
 .content-modal.content-modal--title-body-gap-always .teal-header-modal__body {
-  padding-top: 16px;
+  padding-top: 12px;
 }
 
 .content-modal.content-modal--description-gap-compact
@@ -89,6 +89,48 @@
 
 .content-modal.content-modal--title-body-gap-none .teal-header-modal__body {
   padding-top: 0;
+}
+
+/* 카테고리·사업 분야 등 테이블 설정 모달 — 타이틀 아래 30px */
+.content-modal.content-modal--title-body-gap-list-settings .teal-header-modal__body {
+  padding-top: 30px;
+}
+
+/* 테이블 «관리» 열 인라인 버튼 */
+.content-modal__table-cell-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/*
+ * 목록 설정 모달(카테고리·사업 분야) — 항목 추가(summary) 행
+ * cms-data-table: tbody 마지막 행 border-bottom 없음 → summary 상단 구분선
+ */
+.content-modal.content-modal--title-body-gap-list-settings
+  .cms-data-table
+  .ant-table-summary
+  .ant-table-cell {
+  box-sizing: border-box;
+  min-height: 64px;
+  height: 64px !important;
+  padding: 12px 8px !important;
+  vertical-align: middle !important;
+  text-align: center;
+  background: var(--main-WT, #fff) !important;
+  border-color: var(--Border-default, #e0e0e0) !important;
+  border-top: 1px solid var(--Border-default, #e0e0e0) !important;
+  border-bottom: none !important;
+  border-right: 1px solid var(--Border-default, #e0e0e0) !important;
+}
+
+.content-modal.content-modal--title-body-gap-list-settings
+  .cms-data-table
+  .ant-table-summary
+  .ant-table-cell:last-child {
+  border-right: none !important;
 }
 
 /* 푸터: 테이블–버튼 갭 30px, padding/보더 없음, 전체 너비 */

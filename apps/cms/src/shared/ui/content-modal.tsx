@@ -16,6 +16,9 @@ import type { ModalSize } from '@/shared/ui/teal-header-modal'
 import { renderContentModalDescription } from '@/shared/ui/content-modal-description'
 import './content-modal.css'
 
+/** 테이블 관리 모달 «관리» 열 버튼 래퍼 — gap 8px */
+export const CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS = 'content-modal__table-cell-actions'
+
 /** 기본 닫기 버튼 X 아이콘 24×24, opacity 0.5 */
 const DEFAULT_CLOSE_ICON = (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -57,8 +60,9 @@ export interface ContentModalProps {
    * - `always`(기본): description 유무와 관계없이 16px
    * - `auto`: `description`이 있을 때만 16px
    * - `none`: 여백 없음
+   * - `list-settings`: 테이블형 설정 모달(카테고리·사업 분야 관리 등) 타이틀 아래 30px
    */
-  titleBodyGap?: 'auto' | 'always' | 'none'
+  titleBodyGap?: 'auto' | 'always' | 'none' | 'list-settings'
   /** 다른 모달 위에 겹칠 때 (예: 이중 모달) */
   zIndex?: number
   /** TealHeaderModal → Modal `wrapClassName` (뷰포트 정렬 등) */
@@ -94,6 +98,7 @@ export function ContentModal({
     description != null && descriptionGap === 'compact' ? 'content-modal--description-gap-compact' : '',
     titleBodyGap === 'always' ? 'content-modal--title-body-gap-always' : '',
     titleBodyGap === 'none' ? 'content-modal--title-body-gap-none' : '',
+    titleBodyGap === 'list-settings' ? 'content-modal--title-body-gap-list-settings' : '',
     className,
   ]
     .filter(Boolean)

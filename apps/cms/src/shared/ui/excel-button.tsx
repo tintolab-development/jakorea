@@ -21,6 +21,7 @@ export const ExcelButton = forwardRef<HTMLButtonElement, ExcelButtonProps>(
         type={type}
         variant="primary"
         size="h40"
+        width={140}
         icon={<ButtonDownloadIcon />}
         className={['excel-button', className].filter(Boolean).join(' ')}
         {...rest}

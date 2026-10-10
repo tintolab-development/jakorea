@@ -45,6 +45,8 @@ export {
 } from './action-result-messages'
 export { DeleteGuideModal } from './delete-guide-modal'
 export type { DeleteGuideModalProps } from './delete-guide-modal'
+export { DeleteBlockedGuideModal } from './delete-blocked-guide-modal'
+export type { DeleteBlockedGuideModalProps } from './delete-blocked-guide-modal'
 export { ProgramHistoryDeleteBlockedModal } from './program-history-delete-blocked-modal'
 export type { ProgramHistoryDeleteBlockedModalProps } from './program-history-delete-blocked-modal'
 export {
@@ -102,7 +104,7 @@ export {
 } from './file-select-field-limits'
 export { TealHeaderModal } from './teal-header-modal'
 export type { ModalSize, TealHeaderModalProps } from './teal-header-modal'
-export { ContentModal } from './content-modal'
+export { ContentModal, CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS } from './content-modal'
 export type { ContentModalProps } from './content-modal'
 export { SortOrderDragIcon } from './sort-order-drag-icon'
 export type { SortOrderDragIconProps } from './sort-order-drag-icon'
