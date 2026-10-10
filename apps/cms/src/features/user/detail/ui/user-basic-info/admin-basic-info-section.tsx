@@ -14,6 +14,10 @@ import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { formatDate } from '@/shared/utils'
 import { detailEmailDisplay, detailPhoneDisplay, genderBirthView, socialView } from './display'
 import { AdminPermissionTypeField } from './admin-permission-type-field'
+import {
+  normalizePermissionApprovalStatus,
+  PermissionApprovalStatusWithResend,
+} from './status'
 import { useAdminProfileForm } from './use-admin-profile-form'
 
 const FORM_ITEM_STYLE = { marginBottom: 0, width: '100%' } as const
@@ -59,6 +63,9 @@ export function AdminBasicInfoSection({
     mode === 'edit' && adminMemberProfileFieldsEditableWhenEditing
   const profileReadOnly = mode === 'edit' && !profileFieldsEditable
 
+  const isApproved =
+    normalizePermissionApprovalStatus(user.permissionApprovalStatus) === 'APPROVED'
+
   const { form, initialValues, syncDraftFromForm } = useAdminProfileForm({
     user,
     mode,
@@ -66,12 +73,10 @@ export function AdminBasicInfoSection({
     onMemberInfoDraftChange,
   })
 
-  const permissionField = (
+  const permissionTypeField = (
     <AdminPermissionTypeField
       mode={mode}
       user={user}
-      isAdminPermissionDetail={isAdminPermissionDetail}
-      onPermissionResendNotification={onPermissionResendNotification}
       adminPermissionVariantPatching={adminPermissionVariantPatching}
       onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
       memberInfoDraft={memberInfoDraft}
@@ -79,24 +84,107 @@ export function AdminBasicInfoSection({
     />
   )
 
+  const managedProgramCountField = (
+    <DetailInfoForm.Field
+      label="담당 프로그램 수"
+      view={
+        <span className="user-basic-info-section__admin-managed-programs">
+          <ManagedProgramCountDisplay user={user} />
+        </span>
+      }
+      edit={
+        <span className="user-basic-info-section__admin-managed-programs">
+          <ManagedProgramCountDisplay user={user} />
+        </span>
+      }
+      readOnlyDisplay
+    />
+  )
+
+  const metaCard = isAdminPermissionDetail ? (
+    <DetailInfoForm title="기본 정보" description={caption} mode={mode}>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          fullRow
+          label="권한 승인 현황"
+          view={
+            <PermissionApprovalStatusWithResend
+              user={user}
+              onPermissionResendNotification={onPermissionResendNotification}
+              notifyPermissionRole="admin"
+            />
+          }
+          edit={
+            <PermissionApprovalStatusWithResend
+              user={user}
+              onPermissionResendNotification={onPermissionResendNotification}
+              notifyPermissionRole="admin"
+            />
+          }
+          readOnlyDisplay
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="가입일"
+          view={<span>{formatDate(user.createdAt)}</span>}
+          edit={<span>{formatDate(user.createdAt)}</span>}
+          readOnlyDisplay
+        />
+        <DetailInfoForm.Field
+          label="연동된 소셜 계정"
+          view={socialView(user)}
+          edit={<span>{socialView(user)}</span>}
+          readOnlyDisplay
+        />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
+  ) : (
+    <DetailInfoForm title="기본 정보" description={caption} mode={mode}>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="가입일"
+          view={<span>{formatDate(user.createdAt)}</span>}
+          edit={<span>{formatDate(user.createdAt)}</span>}
+          readOnlyDisplay
+        />
+        <DetailInfoForm.Field
+          label="연동된 소셜 계정"
+          view={socialView(user)}
+          edit={<span>{socialView(user)}</span>}
+          readOnlyDisplay
+        />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
+  )
+
+  const permissionAndProgramRow = isAdminPermissionDetail ? (
+    isApproved ? (
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="권한 유형"
+          view={permissionTypeField}
+          edit={permissionTypeField}
+          readOnlyDisplay
+        />
+        {managedProgramCountField}
+      </DetailInfoForm.Row>
+    ) : null
+  ) : (
+    <DetailInfoForm.Row type="double">
+      <DetailInfoForm.Field
+        label="권한 유형"
+        view={permissionTypeField}
+        edit={permissionTypeField}
+        readOnlyDisplay
+      />
+      {managedProgramCountField}
+    </DetailInfoForm.Row>
+  )
+
   const splitCards = (
     <div className="user-basic-info-section__split-cards">
-      <DetailInfoForm title="기본 정보" description={caption} mode={mode}>
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="가입일"
-            view={<span>{formatDate(user.createdAt)}</span>}
-            edit={<span>{formatDate(user.createdAt)}</span>}
-            readOnlyDisplay
-          />
-          <DetailInfoForm.Field
-            label="연동된 소셜 계정"
-            view={socialView(user)}
-            edit={<span>{socialView(user)}</span>}
-            readOnlyDisplay
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
+      {metaCard}
 
       <DetailInfoForm
         title="기본 정보 — 성명·연락처 등"
@@ -186,37 +274,7 @@ export function AdminBasicInfoSection({
           />
         </DetailInfoForm.Row>
 
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label={isAdminPermissionDetail ? '권한 승인 현황' : '권한 유형'}
-            view={permissionField}
-            edit={permissionField}
-            readOnlyDisplay
-          />
-          {isAdminPermissionDetail ? (
-            <DetailInfoForm.Field
-              label="성별 및 생년월일"
-              view={genderBirthView(user)}
-              edit={<span>{genderBirthView(user)}</span>}
-              readOnlyDisplay
-            />
-          ) : (
-            <DetailInfoForm.Field
-              label="담당 프로그램 수"
-              view={
-                <span className="user-basic-info-section__admin-managed-programs">
-                  <ManagedProgramCountDisplay user={user} />
-                </span>
-              }
-              edit={
-                <span className="user-basic-info-section__admin-managed-programs">
-                  <ManagedProgramCountDisplay user={user} />
-                </span>
-              }
-              readOnlyDisplay
-            />
-          )}
-        </DetailInfoForm.Row>
+        {permissionAndProgramRow}
       </DetailInfoForm>
     </div>
   )

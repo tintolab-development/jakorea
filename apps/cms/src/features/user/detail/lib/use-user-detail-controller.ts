@@ -62,6 +62,7 @@ import {
   isCmsInstructorFeeJaRestrictedEditTarget,
   shouldShowCmsMemberInfoEditButton,
   shouldShowCmsMemberInfoEditButtonOrInstructorRestricted,
+  shouldShowAdminCommentForAdminPermissionApplicationDetail,
   shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
@@ -1036,9 +1037,11 @@ export function useUserDetailController({
   const startAdminCommentEdit = useCallback(() => {
     if (!displayUser) return
     if (!shouldShowAdminCommentSectionForViewer(currentUser, displayUser)) return
-    // 권한 승인 상세 · 승인 대기: 코멘트 영역은 열람만, 작성 진입 불가
+    if (!shouldShowAdminCommentForAdminPermissionApplicationDetail(mode, displayUser)) return
+    // 강사 권한 승인 상세 · 승인 대기: 코멘트 작성 진입 불가
     if (
       mode === 'permission' &&
+      displayUser.role !== 'ADMIN' &&
       (displayUser.permissionApprovalStatus === 'PENDING' || !displayUser.permissionApprovalStatus)
     ) {
       return

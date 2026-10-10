@@ -21,6 +21,7 @@ import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detai
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import {
   canEditAdminMemberInfo,
+  shouldShowAdminCommentForAdminPermissionApplicationDetail,
   shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -124,7 +125,9 @@ export function UserDetailFullpageBasicTabContent({
   memberInfoDraftRef.current = memberInfoDraft
   const adminMemberProfileFieldsEditableWhenEditing =
     user.role !== 'ADMIN' || canEditAdminMemberInfo(currentUser, user)
-  const canShowAdminCommentForTarget = shouldShowAdminCommentSectionForViewer(currentUser, user)
+  const canShowAdminCommentForTarget =
+    shouldShowAdminCommentSectionForViewer(currentUser, user) &&
+    shouldShowAdminCommentForAdminPermissionApplicationDetail(mode, user)
 
   const consentPreset = resolveUserConsentAgreementPreset(user)
   const consentViewVariant =

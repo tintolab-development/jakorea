@@ -11,18 +11,12 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import { PermissionApprovalStatusWithResend } from './status'
 
 const ADMIN_PERM_BADGE_WIDTH = 132
 
 export type AdminPermissionTypeFieldProps = {
   mode: 'view' | 'edit'
   user: Omit<User, 'password'>
-  isAdminPermissionDetail?: boolean
-  onPermissionResendNotification?: (ctx: {
-    userId: string
-    permissionRole: 'instructor' | 'admin'
-  }) => void
   adminPermissionVariantPatching?: boolean
   onPatchAdminPermissionVariantFromDetailView?: (
     nextPermission: AdminPermissionTagVariant
@@ -43,8 +37,6 @@ function renderAdminPermBadge(variant: AdminPermissionTagVariant) {
 export function AdminPermissionTypeField({
   mode,
   user,
-  isAdminPermissionDetail = false,
-  onPermissionResendNotification,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
   memberInfoDraft,
@@ -52,16 +44,6 @@ export function AdminPermissionTypeField({
 }: AdminPermissionTypeFieldProps) {
   const [adminPermissionOpen, setAdminPermissionOpen] = useState(false)
   const permVariant = getAdminPermissionVariant(user)
-
-  if (isAdminPermissionDetail) {
-    return (
-      <PermissionApprovalStatusWithResend
-        user={user}
-        onPermissionResendNotification={onPermissionResendNotification}
-        notifyPermissionRole="admin"
-      />
-    )
-  }
 
   const selectedPerm =
     mode === 'edit' &&
