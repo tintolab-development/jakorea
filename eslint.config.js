@@ -96,6 +96,35 @@ export default tseslint.config(
     },
   },
   {
+    files: [
+      'apps/cms/src/features/program/**/hooks/use-*save*.ts',
+      'apps/cms/src/features/program/**/hooks/use-program-detail-info-save.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync',
+              importNames: ['getGeneralRecruitOverlayRecord'],
+              message:
+                'Do not use active-scope getGeneralRecruitOverlayRecord() in program detail save hooks. Use peekGeneralRecruitOverlayRecord / buildMergedRegistrationOverlayForRecruitSave (apps/cms/.cursor/rules/process/program-detail-overlay-save-ssot.mdc).',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.name='getGeneralRecruitOverlayRecord']",
+          message:
+            'getGeneralRecruitOverlayRecord() is UI/active-scope only; not for persist in save hooks. See program-detail-overlay-save-ssot.mdc.',
+        },
+      ],
+    },
+  },
+  {
     files: ['packages/**/*.{ts,tsx}'],
     linterOptions: {
       reportUnusedDisableDirectives: true
