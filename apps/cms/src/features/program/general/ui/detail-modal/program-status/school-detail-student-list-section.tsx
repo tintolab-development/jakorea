@@ -10,7 +10,14 @@ import type { StudentListFilterParams } from '../../../hooks/use-student-list-fi
 import { CheckOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
-import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert } from '@/shared/ui'
+import {
+  CmsInput,
+  CmsRadio,
+  CmsSelect,
+  FilterTableLayout,
+  FilterTableToolbarButton,
+  useCmsAlert,
+} from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
@@ -726,9 +733,8 @@ export function SchoolDetailStudentListSection({
 
   const studentListToolbarActions = (
     <div className="school-detail-student-list-section__toolbar-actions">
-      <CmsButton
+      <FilterTableToolbarButton
         variant="secondary"
-        size="large"
         width={180}
         icon={<CheckOutlined />}
         className="school-detail-student-list-section__btn-outline"
@@ -736,20 +742,20 @@ export function SchoolDetailStudentListSection({
         onClick={handlePortraitConsentConfirmClick}
       >
         초상권 동의 확인
-      </CmsButton>
-      <CmsButton
+      </FilterTableToolbarButton>
+      <FilterTableToolbarButton
         variant="secondary"
-        size="large"
         icon={<ButtonDownloadIcon />}
         className="school-detail-student-list-section__btn-outline"
         disabled={certificateExportActive}
         onClick={handleCertificateIssueClick}
       >
         수료증/참여인증서 발급
-      </CmsButton>
+      </FilterTableToolbarButton>
       {!readOnly ? (
         <>
           <ProgramEditInfoActions
+            useToolbarButton
             isEditing={isStudentListEditMode}
             idleVariant="secondary"
             saving={rosterRemote.isCommitting}
@@ -759,9 +765,8 @@ export function SchoolDetailStudentListSection({
               void handleStudentListSave()
             }}
           />
-          <CmsButton
+          <FilterTableToolbarButton
             variant="primary"
-            size="large"
             width={140}
             onClick={() => {
               if (isStudentListEditMode) {
@@ -772,22 +777,23 @@ export function SchoolDetailStudentListSection({
             }}
           >
             학생 추가
-          </CmsButton>
+          </FilterTableToolbarButton>
         </>
       ) : (
         <>
           {onEditInfo && (
-            <CmsButton
-              {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
+            <FilterTableToolbarButton
+              variant={PROGRAM_EDIT_INFO_BUTTON_PROPS.variant}
+              width={PROGRAM_EDIT_INFO_BUTTON_PROPS.width}
               onClick={onEditInfo}
             >
               {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-            </CmsButton>
+            </FilterTableToolbarButton>
           )}
           {onAddStudent && (
-            <CmsButton variant="primary" size="large" width={140} onClick={onAddStudent}>
+            <FilterTableToolbarButton variant="primary" width={140} onClick={onAddStudent}>
               학생 추가
-            </CmsButton>
+            </FilterTableToolbarButton>
           )}
         </>
       )}

@@ -33,6 +33,7 @@ import {
   cmsAlertModal,
   showRegisterCompletedAlert,
   useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import '@/pages/programs/program-list-page.css'
@@ -375,15 +376,15 @@ export default function DetailedProgramPage() {
         contentLoading={isInitialListLoading}
         actions={
           <>
-            <CmsButton variant="delete" onClick={handleBulkDelete}>
+            <FilterTableToolbarButton variant="delete" onClick={handleBulkDelete}>
               항목 삭제
-            </CmsButton>
-            <CmsButton variant="secondary" onClick={isEditMode ? handleSave : enterEditMode}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={isEditMode ? handleSave : enterEditMode}>
               {isEditMode ? '수정 완료' : '정보 수정'}
-            </CmsButton>
-            <CmsButton variant="primary" onClick={handleAddClick} disabled={isEditMode}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="primary" onClick={handleAddClick} disabled={isEditMode}>
               신규 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{

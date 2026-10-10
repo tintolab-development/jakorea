@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import {
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../list/region-tabs'
@@ -57,27 +59,25 @@ export function UjatInstitutionScheduleConfirmList({
         actions={
           <div className="ujat-schedule-confirm-list__actions">
             {viewMode === 'table' ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={() => setViewMode('table')}
               >
                 리스트 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             )}
           </div>
         }

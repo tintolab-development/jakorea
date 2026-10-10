@@ -8,11 +8,11 @@ import { navigateToProgramAdminDetail } from '@/features/program/general/lib/nav
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  CmsButton,
   DeleteGuideModal,
   ProgramHistoryDeleteBlockedModal,
   buildProgramProgressHistoryDeleteGuide,
   useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import {
@@ -251,14 +251,14 @@ export function SponsorProgramHistoryPanel({
         description={`총 ${(totalCount ?? filteredRows.length).toLocaleString()}건`}
         actions={
           SHOW_PROGRAM_HISTORY_DELETE ? (
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               onClick={handleDeleteProgramHistory}
               disabled={!canWrite || deleteDisabled}
               loading={deleteDisabled}
             >
               이력 삭제
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : null
         }
         excelExport={{

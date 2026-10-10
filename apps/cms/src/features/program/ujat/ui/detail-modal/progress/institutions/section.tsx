@@ -1,7 +1,9 @@
 import { useEffect, useMemo, type MouseEvent } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import {
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { EducationProgressHalfKey } from '../tabs'
 import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-modal/application-institution/use-program-schedule-dates'
@@ -69,27 +71,25 @@ export function UjatEducationProgressInstitutionsSection({
         actions={
           <div className="ujat-education-progress-institutions__actions">
             {viewMode === 'table' ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={() => setViewMode('table')}
               >
                 리스트 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             )}
           </div>
         }

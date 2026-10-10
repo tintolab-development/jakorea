@@ -38,10 +38,10 @@ import {
 } from '@/shared/constants'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
-  CmsButton,
   DeleteGuideModal,
   ProgramHistoryDeleteBlockedModal,
   buildProgramProgressHistoryDeleteGuide,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { buildProgressYearSelectOptions } from '@/shared/utils'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
@@ -448,13 +448,13 @@ export function AdminManagedProgramHistory({
         description={`총 ${displayedCount}건`}
         actions={
           SHOW_PROGRAM_HISTORY_DELETE ? (
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               disabled={selectedRowKeys.length === 0}
               onClick={handleOpenDeleteModal}
             >
               이력 삭제
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : null
         }
         excelExport={{

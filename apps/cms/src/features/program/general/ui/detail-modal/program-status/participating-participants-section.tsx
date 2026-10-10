@@ -6,7 +6,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
@@ -337,35 +339,32 @@ export function ParticipatingParticipantsSection({
         description={`${filteredParticipants.length}건`}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               icon={<ButtonDownloadIcon />}
               disabled={certificateExportActive}
               onClick={handleCertificateIssueClick}
             >
               수료증/참여인증서 발급
-            </CmsButton>
+            </FilterTableToolbarButton>
             {viewMode === 'list' ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={() => setViewMode('list')}
               >
                 리스트 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             )}
           </>
         }

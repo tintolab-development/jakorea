@@ -7,7 +7,9 @@ import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } f
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, CmsModal, useCmsAlert } from '@/shared/ui'
+import { CmsModal, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import {
   ALIMTALK_ROOT_CATEGORY_ID,
   type AlimtalkCategory,
@@ -641,37 +643,33 @@ export function AlimtalkTemplateList({
         actions={
           <>
             {remote ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 type="button"
                 disabled={busy}
                 onClick={() => void runNhnSync('manual')}
               >
                 {isSyncing ? '동기화 중…' : '동기화'}
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : null}
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
-              size="large"
               type="button"
               disabled={!canDeleteSelection || busy}
               onClick={handleRequestDelete}
             >
               선택 삭제
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               type="button"
               disabled={!editCategoryId || busy}
               onClick={() => setCategoryModal({ mode: 'edit', categoryId: editCategoryId })}
             >
               카테고리 수정
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               type="button"
               disabled={busy}
               onClick={() =>
@@ -682,10 +680,9 @@ export function AlimtalkTemplateList({
               }
             >
               카테고리 추가
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="primary"
-              size="large"
               type="button"
               onClick={() =>
                 window.open(
@@ -696,7 +693,7 @@ export function AlimtalkTemplateList({
               }
             >
               템플릿 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
       >

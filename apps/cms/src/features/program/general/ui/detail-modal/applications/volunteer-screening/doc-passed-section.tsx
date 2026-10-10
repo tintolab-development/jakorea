@@ -1,7 +1,7 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
@@ -154,27 +154,25 @@ export function GeneralVolunteerDocPassedSection({
 
   const viewToggleButton =
     viewMode === 'list' ? (
-      <CmsButton
+      <FilterTableToolbarButton
         type="button"
         variant="secondary"
-        size="large"
         style={{ minWidth: 180 }}
         icon={<ButtonCalendarIcon />}
         onClick={handleViewCalendar}
       >
         캘린더 뷰로 보기
-      </CmsButton>
+      </FilterTableToolbarButton>
     ) : (
-      <CmsButton
+      <FilterTableToolbarButton
         type="button"
         variant="secondary"
-        size="large"
         style={{ minWidth: 180 }}
         icon={<ButtonListIcon />}
         onClick={handleViewList}
       >
         리스트 뷰로 보기
-      </CmsButton>
+      </FilterTableToolbarButton>
     )
 
   if (selectedApplicant) {

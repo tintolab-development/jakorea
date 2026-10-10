@@ -42,7 +42,8 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
 import './payment-orders-page.css'
@@ -86,7 +87,7 @@ const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
 /** 계좌 지급 풀페이지 상세 — URL 동기화(뒤로가기로 목록 복귀) */
 const AP_DETAIL_ID = 'ap_detail'
 
-/** `FilterTableLayout` 툴바 — `CmsButton` size=large, width=auto에 최소 폭 180px 적용 */
+/** `FilterTableLayout` 툴바 — `FilterTableToolbarButton` h40, width=auto에 최소 폭 180px 적용 */
 const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 180 } as const
 
 /** 세 번째 요약 위젯 — 이체 예정일 구간 표기 `YY. MM. DD ~ YY. MM. DD` */
@@ -693,9 +694,8 @@ export default function AccountPaymentsPage() {
     () => (
       <>
         {viewMode === 'list' ? (
-          <CmsButton
+          <FilterTableToolbarButton
             variant="secondary"
-            size="large"
             width="auto"
             style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
             icon={<ButtonCalendarIcon />}
@@ -703,11 +703,10 @@ export default function AccountPaymentsPage() {
             onClick={() => setViewMode('calendar')}
           >
             캘린더 뷰로 보기
-          </CmsButton>
+          </FilterTableToolbarButton>
         ) : (
-          <CmsButton
+          <FilterTableToolbarButton
             variant="secondary"
-            size="large"
             width="auto"
             style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
             icon={<ButtonListIcon />}
@@ -715,11 +714,10 @@ export default function AccountPaymentsPage() {
             onClick={() => setViewMode('list')}
           >
             리스트 뷰로 보기
-          </CmsButton>
+          </FilterTableToolbarButton>
         )}
-        <CmsButton
+        <FilterTableToolbarButton
           variant="primary"
-          size="large"
           width="auto"
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
@@ -728,10 +726,9 @@ export default function AccountPaymentsPage() {
           onClick={openBulkTransferPreview}
         >
           대량이체 양식 발급
-        </CmsButton>
-        <CmsButton
+        </FilterTableToolbarButton>
+        <FilterTableToolbarButton
           variant="primary"
-          size="large"
           width="auto"
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
@@ -740,7 +737,7 @@ export default function AccountPaymentsPage() {
           onClick={openTaxFilingPreview}
         >
           세금 신고 양식 발급
-        </CmsButton>
+        </FilterTableToolbarButton>
       </>
     ),
     [
@@ -753,16 +750,15 @@ export default function AccountPaymentsPage() {
 
   const accountPaymentsAfterActions = useMemo(
     () => (
-      <CmsButton
+      <FilterTableToolbarButton
         variant="primary"
-        size="large"
         width={CMS_ACTION_BUTTON_WIDTH}
         type="button"
         disabled={selectedRowKeys.length === 0}
         onClick={openAccountPaymentConfirmFromSelection}
       >
         일괄 지급 처리
-      </CmsButton>
+      </FilterTableToolbarButton>
     ),
     [selectedRowKeys.length, openAccountPaymentConfirmFromSelection]
   )

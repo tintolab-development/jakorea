@@ -10,7 +10,9 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import {
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import type { ColumnsType } from 'antd/es/table'
@@ -347,22 +349,20 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
         description={`${filteredManagers.length}건`}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
-              size="large"
               loading={isMutating && deleteGuideModalOpen}
               onClick={handleDeleteClick}
             >
               담당자 삭제
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="primary"
-              size="large"
               disabled={isMutating}
               onClick={() => setAddModalOpen(true)}
             >
               담당자 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
       >

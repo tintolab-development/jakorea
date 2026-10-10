@@ -4,11 +4,11 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  CmsButton,
   CMS_ACTION_BUTTON_WIDTH,
   showApplicationApprovalCompletedAlert,
   showApplicationRejectionCompletedAlert,
   useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import {
   patchApplicantSchoolForApprovalStatus,
@@ -1867,43 +1867,41 @@ export function ApplicantList({
             description={`${tableData.length}건`}
             actions={
               <div style={{ display: 'flex', gap: '8px' }}>
-                <CmsButton
+                <FilterTableToolbarButton
                   variant="delete"
-                  size="large"
                   className="cms-button--action"
                   width={CMS_ACTION_BUTTON_WIDTH}
                   onClick={handleBulkRejectClick}
                 >
                   선택 반려
-                </CmsButton>
-                <CmsButton
+                </FilterTableToolbarButton>
+                <FilterTableToolbarButton
                   variant="secondary"
-                  size="large"
                   className="cms-button--action"
                   width={CMS_ACTION_BUTTON_WIDTH}
                   onClick={handleBulkApproveClick}
                 >
                   선택 승인
-                </CmsButton>
+                </FilterTableToolbarButton>
                 {showIndividualCalendarToggle && displayViewMode === 'table' && (
-                  <CmsButton
+                  <FilterTableToolbarButton
                     icon={<ButtonCalendarIcon />}
                     variant="secondary"
-                    size="large"
+
                     onClick={handleViewCalendar}
                   >
                     캘린더 뷰로 보기
-                  </CmsButton>
+                  </FilterTableToolbarButton>
                 )}
                 {showIndividualCalendarToggle && displayViewMode === 'calendar' && (
-                  <CmsButton
+                  <FilterTableToolbarButton
                     variant="secondary"
                     icon={<ButtonListIcon />}
-                    size="large"
+
                     onClick={() => setViewMode('table')}
                   >
                     리스트 뷰로 보기
-                  </CmsButton>
+                  </FilterTableToolbarButton>
                 )}
               </div>
             }

@@ -12,7 +12,9 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
+import { CMS_ACTION_BUTTON_WIDTH, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../../api/visiting-training/capabilities'
@@ -444,26 +446,24 @@ export function GeminiInstitutionApplicationTab({
         actions={
           canWrite ? (
             <>
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="delete"
-                size="large"
                 className="cms-button--action"
                 width={CMS_ACTION_BUTTON_WIDTH}
                 disabled={rejectDisabled}
                 onClick={handleBulkReject}
               >
                 선택 반려
-              </CmsButton>
-              <CmsButton
+              </FilterTableToolbarButton>
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 className="cms-button--action"
                 width={CMS_ACTION_BUTTON_WIDTH}
                 disabled={approveDisabled}
                 onClick={handleBulkApprove}
               >
                 선택 승인
-              </CmsButton>
+              </FilterTableToolbarButton>
             </>
           ) : null
         }

@@ -9,7 +9,10 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { CmsButton, ContentModal, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton, ContentModal, DeleteGuideModal, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useTextbookListQuery } from '@/features/textbook/hooks/use-textbook-list-query'
@@ -517,26 +520,26 @@ export default function TextbookPage() {
         contentLoading={isInitialListLoading}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               onClick={handleDeleteSelected}
             >
               교재 삭제
-            </CmsButton>
-            <CmsButton variant="secondary" onClick={() => setKitQuantityModalOpen(true)}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={() => setKitQuantityModalOpen(true)}>
               키트 수량 관리
-            </CmsButton>
-            <CmsButton variant="secondary" onClick={() => setBusinessAreaModalOpen(true)}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={() => setBusinessAreaModalOpen(true)}>
               사업 분야 관리
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="primary"
               onClick={() => {
                 setRegisterModalOpen(true)
               }}
             >
               교재 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{

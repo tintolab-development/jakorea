@@ -63,7 +63,12 @@ import {
 import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
 import { getHttpStatus } from '@/features/program/ujat/api/errors'
 import type { Program } from '@/types/domain'
-import { FilterTableLayout, CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
+import {
+  FilterTableLayout,
+  DeleteGuideModal,
+  showDeleteCompletedAlert,
+  FilterTableToolbarButton,
+} from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
@@ -493,9 +498,9 @@ function UjatProgramListPageContent() {
   )
 
   const toolbarActionsAfterExcel = (
-    <CmsButton width={180} onClick={handleProgramCreateClick}>
+    <FilterTableToolbarButton width={180} onClick={handleProgramCreateClick}>
       프로그램 신규 등록
-    </CmsButton>
+    </FilterTableToolbarButton>
   )
 
   return (
@@ -509,9 +514,9 @@ function UjatProgramListPageContent() {
         title="전체 프로그램"
         description={`총 ${totalElements.toLocaleString()}건`}
         actions={
-          <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
+          <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
             선택 삭제
-          </CmsButton>
+          </FilterTableToolbarButton>
         }
         actionsAfterExcel={toolbarActionsAfterExcel}
         excelExport={{

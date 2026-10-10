@@ -17,6 +17,7 @@ import {
   ExcelButton,
   showDeleteCompletedAlert,
   useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
@@ -458,14 +459,14 @@ export function GeminiPerformanceList() {
         actions={
           <>
             {showBulkDelete ? (
-              <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
+              <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
                 선택 삭제
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : null}
             <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
-            <CmsButton variant="primary" onClick={handleAddReportClick}>
+            <FilterTableToolbarButton variant="primary" onClick={handleAddReportClick}>
               연수 보고서 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         hideExcelDownload

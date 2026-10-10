@@ -6,7 +6,9 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Spin } from 'antd'
-import { CmsButton, FilterTableLayout } from '@/shared/ui'
+import { FilterTableLayout,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -600,25 +602,23 @@ export function ParticipatingInstitutionsSection({
         description={`${filteredSchools.length}건`}
         actions={
           viewMode === 'list' ? (
-            <CmsButton
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               style={{ minWidth: 180 }}
               icon={<ButtonCalendarIcon />}
               onClick={handleCalendarView}
             >
               캘린더 뷰로 보기
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : (
-            <CmsButton
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               style={{ minWidth: 180 }}
               icon={<ButtonListIcon />}
               onClick={handleListView}
             >
               리스트 뷰로 보기
-            </CmsButton>
+            </FilterTableToolbarButton>
           )
         }
         excelExport={{

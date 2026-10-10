@@ -7,7 +7,10 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -334,9 +337,9 @@ export function GeminiApprovedTrainingList() {
         description={`총 ${(remoteEnabled ? totalElements : filteredRows.length).toLocaleString()}건`}
         actions={
           <>
-            <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
+            <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
               선택 삭제
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{

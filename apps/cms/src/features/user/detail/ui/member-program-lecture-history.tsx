@@ -54,6 +54,7 @@ import {
   buildProgramProgressHistoryDeleteGuide,
   useCmsAlert,
   type ProgramProgressHistoryDeleteDomain,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { downloadAllMemberLectureReportsRemote } from '@/features/user/api/members-api-client'
 import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
@@ -627,19 +628,18 @@ export function MemberProgramLectureHistory({
           <div className="member-program-lecture-history__toolbar-actions-inner">
             <div className="member-program-lecture-history__toolbar-actions-buttons">
               {SHOW_PROGRAM_HISTORY_DELETE ? (
-                <CmsButton
+                <FilterTableToolbarButton
                   variant="delete"
                   disabled={selectedRowKeys.length === 0}
                   onClick={handleOpenHistoryDeleteModal}
                 >
                   이력 삭제
-                </CmsButton>
+                </FilterTableToolbarButton>
               ) : null}
               {(mode === 'studentEnrollment' || mode === 'schoolProgramParticipation') &&
                 showCertificateBulkIssue && (
-                  <CmsButton
+                  <FilterTableToolbarButton
                     variant="secondary"
-                    size="large"
                     width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
                     icon={<ButtonDownloadIcon />}
                     disabled={selectedRowKeys.length === 0}
@@ -648,11 +648,11 @@ export function MemberProgramLectureHistory({
                     }
                   >
                     수료증/참여인증서 발급
-                  </CmsButton>
+                  </FilterTableToolbarButton>
                 )}
               {mode === 'volunteerProgram' && showCertificateBulkIssue && (
                 <>
-                  <CmsButton
+                  <FilterTableToolbarButton
                     variant="secondary"
                     width={180}
                     disabled={selectedRowKeys.length === 0}
@@ -662,10 +662,9 @@ export function MemberProgramLectureHistory({
                     }
                   >
                     활동인증서 발급
-                  </CmsButton>
-                  <CmsButton
+                  </FilterTableToolbarButton>
+                  <FilterTableToolbarButton
                     variant="secondary"
-                    size="large"
                     width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
                     icon={<ButtonDownloadIcon />}
                     disabled={selectedRowKeys.length === 0}
@@ -674,11 +673,11 @@ export function MemberProgramLectureHistory({
                     }
                   >
                     수료증/참여인증서 발급
-                  </CmsButton>
+                  </FilterTableToolbarButton>
                 </>
               )}
               {mode === 'instructorLecture' && showCertificateBulkIssue && (
-                <CmsButton
+                <FilterTableToolbarButton
                   variant="secondary"
                   width={180}
                   disabled={selectedRowKeys.length === 0}
@@ -688,12 +687,11 @@ export function MemberProgramLectureHistory({
                   }
                 >
                   활동인증서 발급
-                </CmsButton>
+                </FilterTableToolbarButton>
               )}
               {mode === 'instructorLecture' && memberId != null && isMembersRemoteEnabled() && (
-                <CmsButton
+                <FilterTableToolbarButton
                   variant="secondary"
-                  size="large"
                   icon={<ButtonDownloadIcon />}
                   className="member-program-lecture-history__bulk-lecture-report-download cms-button--no-label-ellipsis"
                   loading={allLectureReportsDownloading}
@@ -703,7 +701,7 @@ export function MemberProgramLectureHistory({
                   }}
                 >
                   전체 강의보고서 일괄 다운로드
-                </CmsButton>
+                </FilterTableToolbarButton>
               )}
             </div>
           </div>

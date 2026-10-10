@@ -1,7 +1,9 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CMS_ACTION_BUTTON_WIDTH,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
@@ -249,48 +251,44 @@ export function Interview2Section({
         description={`${count.toLocaleString()}건`}
         actions={
           <div className="ujat-volunteer-interview2__actions">
-            <CmsButton
+            <FilterTableToolbarButton
               type="button"
               variant="delete"
-              size="large"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkFail}
             >
               선택 불합격
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              size="large"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkPass}
             >
               선택 합격
-            </CmsButton>
+            </FilterTableToolbarButton>
             {viewMode === 'list' ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={handleViewCalendar}
               >
                 캘린더뷰 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={handleViewList}
               >
                 리스트로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             )}
           </div>
         }

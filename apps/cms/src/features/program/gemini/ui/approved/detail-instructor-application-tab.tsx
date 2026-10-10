@@ -5,7 +5,9 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
+import { CMS_ACTION_BUTTON_WIDTH, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -321,15 +323,14 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         description={`총 ${totalElements.toLocaleString()}건`}
         actions={
           canWrite ? (
-            <CmsButton
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkApprove}
             >
               {approveButtonLabel}
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : null
         }
         excelExport={{

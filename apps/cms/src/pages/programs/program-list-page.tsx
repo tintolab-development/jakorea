@@ -56,7 +56,9 @@ import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 
 import './program-list-page.css'
-import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
+import { DeleteGuideModal, showDeleteCompletedAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
   PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
@@ -602,30 +604,29 @@ function ProgramListPageContent() {
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
       {showBulkSelection && (
-        <CmsButton
+        <FilterTableToolbarButton
           variant="delete"
           width={140}
           onClick={handleBulkDeleteClick}
           className="program-list-page__bulk-delete-button"
         >
           선택 삭제
-        </CmsButton>
+        </FilterTableToolbarButton>
       )}
-      <CmsButton
+      <FilterTableToolbarButton
         variant="secondary"
-        size="large"
         icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
         onClick={handleViewModeToggle}
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
-      </CmsButton>
+      </FilterTableToolbarButton>
     </div>
   )
 
   const programListToolbarActionsAfterExcel = (
-    <CmsButton variant="primary" size="large" width={180} onClick={handleProgramCreateClick}>
+    <FilterTableToolbarButton variant="primary" width={180} onClick={handleProgramCreateClick}>
       프로그램 신규 등록
-    </CmsButton>
+    </FilterTableToolbarButton>
   )
 
   return (

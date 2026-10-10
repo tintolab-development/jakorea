@@ -8,7 +8,9 @@ import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -543,52 +545,47 @@ export function ParticipatingVolunteersSection({
         description={`${filteredVolunteers.length}건`}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
               활동확인서 발급
-            </CmsButton>
+            </FilterTableToolbarButton>
             {viewMode === 'list' ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={handleCalendarView}
               >
                 캘린더 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={handleListView}
               >
                 리스트 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             )}
-            <CmsButton
+            <FilterTableToolbarButton
               variant="primary"
-              size="large"
               width={220}
               onClick={handleRegisterEmployeeVolunteerClick}
             >
               임직원 자원봉사자 등록
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="primary"
-              size="large"
               width={140}
               onClick={handleRegisterVolunteerClick}
             >
               봉사자 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{

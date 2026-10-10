@@ -13,7 +13,10 @@ import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   RegistrationDraftNoticeModal,
@@ -292,12 +295,12 @@ export function GeminiRecruitmentList() {
         description={`총 ${(remoteEnabled ? totalElements : displayedCount).toLocaleString()}건`}
         actions={
           <>
-            <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
+            <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
               선택 삭제
-            </CmsButton>
-            <CmsButton variant="primary" onClick={handleAddRecruitment}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="primary" onClick={handleAddRecruitment}>
               모집 공고 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{

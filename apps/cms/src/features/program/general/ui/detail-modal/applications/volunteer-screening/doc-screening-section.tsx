@@ -1,7 +1,9 @@
 import { useCallback, type CSSProperties, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CMS_ACTION_BUTTON_WIDTH,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { GeneralVolunteerDocumentApproveModal } from './general-volunteer-document-approve-modal'
 import { GeneralVolunteerDocumentBulkApproveModal } from './general-volunteer-document-bulk-approve-modal'
@@ -215,26 +217,24 @@ export function GeneralVolunteerDocScreeningSection({
           title={`봉사자 신청 목록 (${count.toLocaleString()})`}
           actions={
             <div className="general-volunteer-screening__actions">
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="delete"
-                size="large"
                 className="cms-button--action"
                 width={CMS_ACTION_BUTTON_WIDTH}
                 onClick={handleBulkReject}
               >
                 선택 반려
-              </CmsButton>
-              <CmsButton
+              </FilterTableToolbarButton>
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 className="cms-button--action"
                 width={CMS_ACTION_BUTTON_WIDTH}
                 onClick={handleBulkApprove}
               >
                 선택 승인
-              </CmsButton>
+              </FilterTableToolbarButton>
             </div>
           }
           excelExport={excelExport}

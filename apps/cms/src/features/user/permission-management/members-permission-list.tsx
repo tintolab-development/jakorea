@@ -50,7 +50,10 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 
 /** 강사 권한승인 목록 — BE `학교/기관`은 UI `학교(교사)`로 표시 */
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
@@ -648,22 +651,22 @@ export const MembersPermissionList = forwardRef<
         description={`총 ${displayedCount.toLocaleString()}건`}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={bulkReject}
             >
               신청 반려
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="secondary"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={bulkApprove}
             >
               신청 승인
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{

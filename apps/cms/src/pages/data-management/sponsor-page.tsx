@@ -37,13 +37,13 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   ActionResultModal,
-  CmsButton,
   buildDeleteCompletedMessageBulk,
   buildDeleteCompletedMessageSingle,
   buildDeleteCompletedTitle,
   buildRegisterCompletedMessage,
   buildRegisterCompletedTitle,
   useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { SponsorDeleteBlockedModal } from '@/features/sponsor/ui/modal/sponsor-delete-blocked-modal'
 import { SponsorDeleteModal } from '@/features/sponsor/ui/modal/sponsor-delete-modal'
@@ -402,15 +402,15 @@ export default function SponsorPage() {
         contentLoading={isInitialListLoading}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               onClick={handleBulkDelete}
             >
               후원사 삭제
-            </CmsButton>
-            <CmsButton variant="primary" onClick={handleRegister}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="primary" onClick={handleRegister}>
               후원사 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{

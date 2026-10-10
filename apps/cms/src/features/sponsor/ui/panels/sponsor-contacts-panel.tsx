@@ -20,7 +20,9 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 
 const contactFilterFields: FilterFieldConfig[] = [
@@ -182,34 +184,31 @@ export function SponsorContactsPanel({
         excelExport={{ columns: excelColumns, data: tableRows }}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
-              size="medium"
               onClick={handleDeleteClick}
               disabled={!canWrite || isEditing || isDeleting}
               loading={isDeleting}
               adminAction="sponsorContactWrite"
             >
               담당자 삭제
-            </CmsButton>
+            </FilterTableToolbarButton>
             {canWrite ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="medium"
                 onClick={() => void handleToggleEdit()}
                 disabled={isSavingEdits}
               >
                 {isEditing ? '수정 완료' : '정보 수정'}
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : null}
-            <CmsButton
+            <FilterTableToolbarButton
               variant="primary"
-              size="medium"
               onClick={handleRegisterClick}
               disabled={isEditing}
             >
               담당자 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
       >
