@@ -96,7 +96,17 @@ export function resetApplicantRecruitInstitutionOverlayForScope(
   store.resetFor(templateCode)
 }
 
+function readPreguidanceRequiredFromOverlay(
+  record: Record<string, unknown>
+): boolean | undefined {
+  const raw = record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.preguidanceRequired]
+  if (raw === 'need') return true
+  if (raw === 'none') return false
+  return undefined
+}
+
 function syncOverlayLimitsToBridge(record: Record<string, unknown>): void {
+  const preEducationNoticeRequired = readPreguidanceRequiredFromOverlay(record)
   patchInstitutionApplicationProgramBridge({
     maxAssignableInstructors: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxAssignableInstructors] as
       | number
@@ -108,6 +118,41 @@ function syncOverlayLimitsToBridge(record: Record<string, unknown>): void {
     maxSessionsPerDay: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxSessionsPerDay] as
       | number
       | undefined,
+    ...(preEducationNoticeRequired !== undefined
+      ? { preEducationNoticeRequired }
+      : {}),
+  })
+}
+
+/** 등록 위저드 — 모집 탭을 열지 않았어도 스코프 overlay → 신청 폼 단락 노출 브리지 동기화 */
+export function syncInstitutionApplicationBridgeFromApplicantRecruitOverlay(
+  recruitTemplateCode: string | null | undefined,
+  options?: {
+    preEducationNoticeRequired?: boolean
+    maxAssignableInstructors?: number
+  }
+): void {
+  const record = peekApplicantRecruitInstitutionOverlayRecord(recruitTemplateCode)
+  const fromOverlay = readPreguidanceRequiredFromOverlay(record)
+  const preEducationNoticeRequired =
+    options?.preEducationNoticeRequired ?? fromOverlay
+  const maxAssignableInstructors =
+    options?.maxAssignableInstructors ??
+    (record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxAssignableInstructors] as
+      | number
+      | undefined)
+  patchInstitutionApplicationProgramBridge({
+    maxAssignableInstructors,
+    maxClassCount: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxClassCount] as
+      | number
+      | undefined,
+    maxScheduleCount: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxScheduleCount] as
+      | number
+      | undefined,
+    maxSessionsPerDay: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxSessionsPerDay] as
+      | number
+      | undefined,
+    ...(preEducationNoticeRequired !== undefined ? { preEducationNoticeRequired } : {}),
   })
 }
 
