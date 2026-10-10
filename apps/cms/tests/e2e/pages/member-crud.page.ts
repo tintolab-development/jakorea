@@ -50,7 +50,7 @@ const KIND_UI: Record<MemberListCrudKind, KindUi> = {
     nameEditLabel: '기관명',
     deleteButton: '학교 삭제',
     deleteGuideTitle: '학교 삭제 안내',
-    deleteConfirmButton: '학교 삭제',
+    deleteConfirmButton: '삭제',
     deleteDoneTitle: '학교 삭제 완료',
   },
   instructors: {

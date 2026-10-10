@@ -122,7 +122,7 @@ function memberDeleteGuideDomain(kind: MemberListKind) {
         domainLabel: '학교',
         singleTitle: '학교 삭제 안내',
         bulkTitle: '학교 일괄 삭제 안내',
-        confirmText: '학교 삭제',
+        confirmText: '삭제',
       }
     case 'instructors':
       return {

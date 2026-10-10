@@ -21,9 +21,8 @@ describe('member-withdraw-delete-guide', () => {
   it('buildSchoolDeleteMessageLines — 학교 삭제 문구', () => {
     const lines = buildSchoolDeleteMessageLines({ displayName: '진월초등학교' })
     expect(lines).toEqual([
-      '[진월초등학교]를 삭제하시겠습니까?',
-      '삭제 시 등록 및 관련된 정보는 모두 삭제됩니다.',
-      '삭제된 목록 및 정보는 되돌릴 수 없습니다.',
+      '**[진월초등학교]**를 삭제하시겠습니까?',
+      '삭제 시 모든 정보가 삭제되며, 삭제된 정보는 되돌릴 수 없습니다.',
     ])
   })
 
@@ -35,7 +34,7 @@ describe('member-withdraw-delete-guide', () => {
 
   it('buildMemberListDeleteGuideLines — 회원 단일', () => {
     const lines = buildMemberListDeleteGuideLines(['홍길동'], 'all')
-    expect(lines[0]).toBe('[홍길동] 님을 삭제하시겠습니까?')
+    expect(lines[0]).toBe('**[홍길동] 님**을 삭제하시겠습니까?')
   })
 
   it('buildMemberListDeleteGuideLines — 회원 복수', () => {
@@ -51,6 +50,9 @@ describe('member-withdraw-delete-guide', () => {
 
   it('buildMemberListDeleteGuideLines — 학교 복수', () => {
     const lines = buildMemberListDeleteGuideLines(['A초', 'B초'], 'institutions')
-    expect(lines[0]).toBe('선택한 2개의 학교를 삭제하시겠습니까?')
+    expect(lines).toEqual([
+      '**[A초] 외 1개**를 삭제하시겠습니까?',
+      '삭제 시 모든 정보가 삭제되며, 삭제된 정보는 되돌릴 수 없습니다.',
+    ])
   })
 })
