@@ -3,12 +3,20 @@
  */
 
 import ExcelJS from '@zurmokeeper/exceljs'
-import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
+import dayjs from 'dayjs'
+import { downloadExcel } from '@/shared/utils/file-download'
 import {
   BULK_TRANSFER_HEADER_LABELS,
   buildBulkTransferSheetRows,
 } from '@/pages/settlement-management/bulk-transfer-fortune-data'
 import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
+
+/** 기획 파일명: `[JA Korea] CMS 어드민_대량이체 양식_YYMMDD` */
+export const BULK_TRANSFER_EXCEL_PREFIX = '[JA Korea] CMS 어드민_대량이체 양식'
+
+export function buildBulkTransferExcelFilename(now: dayjs.Dayjs | Date = dayjs()): string {
+  return `${BULK_TRANSFER_EXCEL_PREFIX}_${dayjs(now).format('YYMMDD')}.xlsx`
+}
 
 const HEADER_FILL = 'FF01A1AF'
 
@@ -73,5 +81,5 @@ export async function exportBulkTransferExcel(rows: AccountPaymentRow[]): Promis
   ]
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, generateFilename('대량이체', 'xlsx'))
+  await downloadExcel(buffer, buildBulkTransferExcelFilename())
 }

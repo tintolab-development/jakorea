@@ -1,7 +1,6 @@
 /**
  * 정산 관리 > 계좌 지급 확인 — 캘린더 뷰
- * `calendar-set` + 좌측 미니캘린더·프로그램 검색(`CalendarMini` / `CalendarSearch`) + 메인 + 정산 우측 목록
- * 메인 캘린더는 **월간만** (주간 토글 없음).
+ * `calendar-set` + 좌측 미니캘린더 + 메인(월간) + 정산 우측 목록 (프로그램 검색 필터 없음)
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
@@ -14,7 +13,6 @@ import {
   type AccountPaymentRow,
 } from '@/data/mock/account-payments-list'
 import {
-  settlementCalendarPrimaryTitle,
   type InstructorSettlementInvoiceDetail,
   type InstructorSettlementListRow,
   type InstructorSettlementUiStatus,
@@ -22,15 +20,14 @@ import {
 import {
   CalendarMain,
   CalendarMini,
-  CalendarSearch,
   CalendarSubRightSettlementList,
   settlementEventStatusColorPair,
   settlementRowFromCalendarItem,
-  useCalendarMiniState,
   type CalendarItem,
 } from '@/shared/components/calendar'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import '@/shared/components/calendar/styles/calendar.css'
+import './account-payments-calendar-view.css'
 
 function pickAnchorDate(rows: AccountPaymentRow[]): Dayjs {
   if (rows.length === 0) return dayjs()
@@ -74,7 +71,9 @@ function renderAccountPaymentEventsTooltipContent({ events: dayEvents }: { event
         return (
           <div key={String(ev.id)} className="instructor-settlement-preview">
             <div className="instructor-settlement-preview__title">
-              {settlementCalendarPrimaryTitle(row)}
+              {row.instructorName?.trim()
+                ? `${row.instructorName.trim()} | ${row.programName}`
+                : row.programName}
             </div>
             <div>
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
@@ -132,6 +131,7 @@ function accountPaymentRowToSettlementListRow(row: AccountPaymentRow): Instructo
     no: row.no,
     programName: row.programName,
     instructorName: row.instructorName,
+    settlementListTitleVariant: 'pipe-program',
     institutionName: formatAccountPaymentInstitutionDisplay(row.institutionName),
     lectureDateDisplay: `${formatAccountPaymentSessionLabelDisplay(row.sessionLabel)} · ${row.instructorName}`,
     calendarDate,
@@ -165,76 +165,32 @@ export function AccountPaymentsCalendarView({
   onSelectionChange,
   onAccountPaymentRowClick,
 }: AccountPaymentsCalendarViewProps) {
-  const [calendarSearchKeyword, setCalendarSearchKeyword] = useState('')
-  const [calendarProgramSelection, setCalendarProgramSelection] = useState<string[] | null>(null)
+  const anchor = useMemo(() => pickAnchorDate(rows), [rows])
 
-  const normalizedKeyword = useMemo(
-    () => calendarSearchKeyword.trim().toLowerCase(),
-    [calendarSearchKeyword]
-  )
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => anchor)
+  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => anchor.startOf('month'))
+  const isFirstRowsEffect = useRef(true)
 
-  const allProgramIds = useMemo(
-    () => [...new Set(rows.map(r => r.programName))].sort((a, b) => a.localeCompare(b, 'ko')),
-    [rows]
-  )
-
-  const programFilterOptions = useMemo(() => {
-    const keywordFiltered = normalizedKeyword
-      ? rows.filter(
-          r =>
-            r.programName.toLowerCase().includes(normalizedKeyword) ||
-            r.instructorName.toLowerCase().includes(normalizedKeyword)
-        )
-      : rows
-    const names = [...new Set(keywordFiltered.map(r => r.programName))].sort((a, b) =>
-      a.localeCompare(b, 'ko')
-    )
-    return names.map(title => ({ id: title, title }))
-  }, [rows, normalizedKeyword])
-
-  const effectiveProgramSelection = useMemo(
-    () => calendarProgramSelection ?? allProgramIds,
-    [calendarProgramSelection, allProgramIds]
-  )
-
-  const programColorMap = useMemo(() => {
-    const map = new Map<string, ScheduleColorPair>()
-    allProgramIds.forEach(id => {
-      const firstRow = rows.find(r => r.programName === id)
-      if (!firstRow) return
-      map.set(id, settlementEventStatusColorPair(accountPaymentStatusToUiStatus(firstRow.accountPaymentStatus)))
-    })
-    return map
-  }, [allProgramIds, rows])
-
-  const filteredRows = useMemo(() => {
-    let r = rows
-    if (normalizedKeyword) {
-      r = r.filter(
-        row =>
-          row.programName.toLowerCase().includes(normalizedKeyword) ||
-          row.instructorName.toLowerCase().includes(normalizedKeyword)
-      )
+  useEffect(() => {
+    if (isFirstRowsEffect.current) {
+      isFirstRowsEffect.current = false
+      return
     }
-    if (calendarProgramSelection !== null) {
-      const set = new Set(calendarProgramSelection)
-      r = r.filter(row => set.has(row.programName))
-    }
-    return r
-  }, [rows, normalizedKeyword, calendarProgramSelection])
+    onSelectionChange([])
+  }, [rows, onSelectionChange])
 
   const programDates = useMemo(() => {
     const dates = new Set<string>()
-    for (const row of filteredRows) {
+    for (const row of rows) {
       const d = resolveAccountPaymentCalendarDate(row)
       if (d) dates.add(d)
     }
     return dates
-  }, [filteredRows])
+  }, [rows])
 
   const settlementRows = useMemo(
-    () => filteredRows.map(accountPaymentRowToSettlementListRow),
-    [filteredRows]
+    () => rows.map(accountPaymentRowToSettlementListRow),
+    [rows]
   )
 
   const calendarMainEvents = useMemo((): CalendarMainSettlementEventRow[] => {
@@ -246,41 +202,6 @@ export function AccountPaymentsCalendarView({
       originalItem: row,
     }))
   }, [settlementRows])
-
-  const anchor = useMemo(() => pickAnchorDate(rows), [rows])
-
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => anchor)
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => anchor.startOf('month'))
-  const {
-    selectedDate: miniSelectedDate,
-    currentMonth: miniCurrentMonth,
-    onSelectDate: onMiniSelectDate,
-    onMonthChange: onMiniMonthChange,
-  } = useCalendarMiniState(anchor)
-  const isFirstFilteredRowsEffect = useRef(true)
-
-  useEffect(() => {
-    if (isFirstFilteredRowsEffect.current) {
-      isFirstFilteredRowsEffect.current = false
-      return
-    }
-    onSelectionChange([])
-  }, [filteredRows, onSelectionChange])
-
-  const handleProgramFilterChange = useCallback(
-    (programId: string, checked: boolean) => {
-      setCalendarProgramSelection(prev => {
-        const base = prev ?? allProgramIds
-        const next = checked
-          ? [...new Set([...base, programId])]
-          : base.filter(id => id !== programId)
-        const allSelected =
-          next.length === allProgramIds.length && allProgramIds.every(id => next.includes(id))
-        return allSelected ? null : next
-      })
-    },
-    [allProgramIds]
-  )
 
   const onSelectDate = useCallback(
     (date: Dayjs) => {
@@ -321,23 +242,19 @@ export function AccountPaymentsCalendarView({
     [rows, onAccountPaymentRowClick]
   )
 
+  const resolveBadgeLabel = useCallback((row: InstructorSettlementListRow) => {
+    return accountPaymentStatusShortLabel(row.status as AccountPaymentRow['accountPaymentStatus'])
+  }, [])
+
   return (
-    <div className="calendar-set">
-      <div className="calendar-sub-left">
+    <div className="calendar-set account-payments-calendar-view">
+      <div className="calendar-sub-left account-payments-calendar-view__sub-left">
         <CalendarMini
-          currentMonth={miniCurrentMonth}
-          selectedDate={miniSelectedDate}
-          onMonthChange={onMiniMonthChange}
-          onSelectDate={onMiniSelectDate}
+          currentMonth={currentMonth}
+          selectedDate={selectedDate}
+          onMonthChange={onMonthChange}
+          onSelectDate={onSelectDate}
           programDates={programDates}
-        />
-        <CalendarSearch
-          keyword={calendarSearchKeyword}
-          options={programFilterOptions}
-          selectedIds={effectiveProgramSelection}
-          programColorMap={programColorMap}
-          onKeywordChange={setCalendarSearchKeyword}
-          onOptionToggle={handleProgramFilterChange}
         />
       </div>
       <div className="calendar-main-container">
@@ -367,6 +284,7 @@ export function AccountPaymentsCalendarView({
           selectedRowKeys={selectedRowKeys}
           onSelectionChange={onSelectionChange}
           onRowClick={handleSettlementRowClick}
+          resolveBadgeLabel={resolveBadgeLabel}
         />
       </div>
     </div>

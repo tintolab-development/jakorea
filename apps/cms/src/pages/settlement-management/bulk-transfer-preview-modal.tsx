@@ -41,18 +41,19 @@ export function BulkTransferPreviewModal({ open, onCancel, rows }: BulkTransferP
       open={open}
       onCancel={onCancel}
       title="대량이체 양식 미리보기"
-      description="계좌 지급 완료 처리된 항목에 한해서 양식에 반영됩니다."
+      description="계좌 지급이 완료 처리된 항목만 양식에 반영됩니다."
       width={1400}
       size="large"
       className="bulk-transfer-preview-modal"
       footer={
         <>
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="h40" onClick={onCancel}>
             닫기
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
+            width={140}
             icon={<ButtonDownloadIcon />}
             adminAction="download"
             onClick={() => void handleDownload()}
