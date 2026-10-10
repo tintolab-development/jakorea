@@ -3,8 +3,9 @@ import {
   mapCreatedCategory,
   type CategoryRow,
 } from '@/features/posts/api/shared/category-adapters'
+import type { PostsListPage } from '@/features/posts/api/posts-list-page'
+import { mapPostsListPage } from '@/features/posts/api/shared/map-posts-list-page'
 import {
-  mapNoticeListResponse,
   mapNoticeResponse,
   toNoticeRequestFromForm,
   toNoticeRequestFromNotice,
@@ -49,10 +50,18 @@ export function shouldUseNoticesRemoteApi(): boolean {
   return isRealApiModuleEnabled('notices') && hasRemoteAdminJwt()
 }
 
-export async function getNoticeList(searchParams: URLSearchParams): Promise<Notice[]> {
+export async function getNoticeListPage(
+  searchParams: URLSearchParams,
+  page: number
+): Promise<PostsListPage<Notice>> {
   assertNoticesRemoteReady()
-  const dto = await fetchNoticesRemote(noticesParamsFromSearchParams(searchParams))
-  return mapNoticeListResponse(dto)
+  const dto = await fetchNoticesRemote(noticesParamsFromSearchParams(searchParams, page))
+  return mapPostsListPage(dto, mapNoticeResponse)
+}
+
+export async function getNoticeList(searchParams: URLSearchParams): Promise<Notice[]> {
+  const page = await getNoticeListPage(searchParams, 0)
+  return page.items
 }
 
 export async function getNoticeDetail(id: string): Promise<Notice> {

@@ -1,14 +1,18 @@
+import { POSTS_LIST_PAGE_SIZE } from '@/features/posts/api/posts-list-page'
 import type { NoticesParams } from '@/shared/api/generated/posts/schemas'
 
-export const NOTICE_LIST_PAGE_SIZE = 500
+export const NOTICE_LIST_PAGE_SIZE = POSTS_LIST_PAGE_SIZE
 
 function parseVisibility(raw: string | null): 'public' | 'private' {
   return raw === 'private' ? 'private' : 'public'
 }
 
-export function noticesParamsFromSearchParams(searchParams: URLSearchParams): NoticesParams {
+export function noticesParamsFromSearchParams(
+  searchParams: URLSearchParams,
+  page = 0
+): NoticesParams {
   const params: NoticesParams = {
-    page: 0,
+    page,
     size: NOTICE_LIST_PAGE_SIZE,
     visibility: parseVisibility(searchParams.get('an_vis')),
   }
