@@ -23,10 +23,15 @@ import {
   removeVolunteerInterviewExceptionBlock,
   updateVolunteerInterviewOverlayKey,
   useVolunteerInterviewOverlayKv,
+  volunteerInterviewOverlayHasKey,
   type VolunteerInterviewOverlayStore,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { useCmsAlert } from '@/shared/ui'
+import {
+  isOutsideInclusiveLocalDayRange,
+  normalizeRangeSealToLocalDayBounds,
+} from '@/features/template/ui/form-set/shared/unavailable-dates-calendar-range'
 import './volunteer-interview-available-schedule-paragraph.css'
 
 type InterviewTimeUnit = '15' | '30' | '60'
@@ -140,20 +145,21 @@ function VolunteerInterviewScheduleBlock({
     overlayStore === 'recruit' && !freezeUnavailableCalendar
   const interviewPeriodRange = useMemo((): [Dayjs, Dayjs] | null => {
     if (!applyInterviewPeriodConstraint) return null
-    if (interviewPeriodFromParent != null) return interviewPeriodFromParent
-    if (interviewRangeSeal?.start == null || interviewRangeSeal?.end == null) return null
-    const start = dayjs(interviewRangeSeal.start)
-    const end = dayjs(interviewRangeSeal.end)
-    if (!start.isValid() || !end.isValid()) return null
-    return start.isBefore(end, 'day') ? [start, end] : [end, start]
+    if (interviewPeriodFromParent != null) {
+      const [a, b] = interviewPeriodFromParent
+      const start = a.startOf('day')
+      const end = b.startOf('day')
+      return start.isAfter(end, 'day') ? [end, start] : [start, end]
+    }
+    return normalizeRangeSealToLocalDayBounds(interviewRangeSeal)
   }, [applyInterviewPeriodConstraint, interviewPeriodFromParent, interviewRangeSeal])
   const interviewPeriodComplete = interviewPeriodRange != null
   const disableOutsideInterviewPeriod = useCallback(
     (date: Dayjs) => {
       if (!applyInterviewPeriodConstraint) return false
-      if (interviewPeriodRange == null) return true
-      const [start, end] = interviewPeriodRange
-      return date.isBefore(start, 'day') || date.isAfter(end, 'day')
+      // 기간 미정일 때 isOutsideInclusiveLocalDayRange(null)은 전일 차단 — 모달 오픈은 canOpen으로 막고 달력은 막지 않음
+      if (interviewPeriodRange == null) return false
+      return isOutsideInclusiveLocalDayRange(date, interviewPeriodRange)
     },
     [applyInterviewPeriodConstraint, interviewPeriodRange]
   )
@@ -291,7 +297,15 @@ function VolunteerInterviewScheduleBlock({
             next = []
           }
         } else if (!seed) {
-          next = [interviewTimeSlots[0]?.key ?? '']
+          const hasStoredSelection = volunteerInterviewOverlayHasKey(
+            overlayStore,
+            'selectedSlotKeys',
+            overlayNamespace
+          )
+          next =
+            hasStoredSelection || interviewTimeSlots.length === 0
+              ? filtered
+              : [interviewTimeSlots[0]?.key ?? '']
         } else {
           next = []
         }
@@ -350,7 +364,11 @@ function VolunteerInterviewScheduleBlock({
               edit={
                 <UnavailableDatesBulkExclusionsRow
                   modalUnavailableDescriptionLead="면접 진행 불가한 날짜를 모두 선택해 주세요."
-                  modalUnavailableDescriptionSecond="선택된 날짜는 면접 일정으로 신청할 수 없습니다."
+                  modalUnavailableDescriptionSecond={
+                    applyInterviewPeriodConstraint
+                      ? '2차 면접 기간(봉사자 모집 정보) 안의 날짜만 선택할 수 있습니다. 선택된 날짜는 면접 일정으로 신청할 수 없습니다. 오른쪽 칩(토·일·공휴일 제외)은 요일·공휴일 전체 제외이며, 달력에서 해당 날짜는 클릭할 수 없습니다.'
+                      : '선택된 날짜는 면접 일정으로 신청할 수 없습니다.'
+                  }
                   appliedDates={appliedUnavailableDates}
                   onApplyDatesChange={setAppliedUnavailableDates}
                   exclusionState={exclusionState}

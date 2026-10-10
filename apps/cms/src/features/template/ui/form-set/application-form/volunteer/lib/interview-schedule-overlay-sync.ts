@@ -36,6 +36,17 @@ export function buildVolunteerInterviewOverlayKey(
   return `${getInterviewOverlayKeyPrefix(store, namespace)}.${suffix}`
 }
 
+export function volunteerInterviewOverlayHasKey(
+  store: VolunteerInterviewOverlayStore,
+  suffix: string,
+  namespace?: string
+): boolean {
+  const key = buildVolunteerInterviewOverlayKey(store, suffix, namespace)
+  const record =
+    store === 'recruit' ? getGeneralRecruitOverlayRecord() : getGeneralApplicationOverlayRecord()
+  return Object.prototype.hasOwnProperty.call(record, key)
+}
+
 export function serializeVolunteerInterviewOverlayValue(value: unknown): unknown {
   if (value == null) return value
   if (dayjs.isDayjs(value)) return value.isValid() ? value.toISOString() : null
