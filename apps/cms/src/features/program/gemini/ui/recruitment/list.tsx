@@ -36,9 +36,10 @@ import { formatRecruitmentPeriodRange } from '../../lib/recruitment/format-perio
 import { resolveRecruitmentDisplayStatus } from '../../lib/recruitment/resolve-status'
 import {
   geminiRecruitmentDeleteBlocked,
-  resolveGeminiDeleteBlockedAlert,
+  resolveGeminiDeleteBlockedModalCopy,
   resolveGeminiDeleteGuideModalCopy,
 } from '../../lib/delete-guide'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { peekGeminiRecruitmentAddDraftOverwrite } from '../../lib/recruitment/add-local-save'
 import { useGeminiRecruitmentDetailUrl } from '../detail/recruitment-detail-url'
 import { useGeminiRecruitmentAddUrl } from './recruitment-add-url'
@@ -97,6 +98,8 @@ export function GeminiRecruitmentList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
+  const [deleteBlockedCopy, setDeleteBlockedCopy] = useState({ title: '', description: '' })
   const todayKey = useToday()
   const searchParamsKey = searchParams.toString()
   const { recruitmentId, openDetail } = useGeminiRecruitmentDetailUrl()
@@ -173,8 +176,8 @@ export function GeminiRecruitmentList() {
     const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
     const selectedRows = tableData.filter(row => selectedIds.has(row.id))
     if (selectedRows.some(geminiRecruitmentDeleteBlocked)) {
-      const blocked = resolveGeminiDeleteBlockedAlert('공고', selectedRows.length)
-      showAlert(blocked)
+      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('공고', selectedRows.length))
+      setDeleteBlockedOpen(true)
       return
     }
     setDeleteModalOpen(true)
@@ -353,6 +356,12 @@ export function GeminiRecruitmentList() {
         draftTitle={draftNoticeTitle}
         onCancel={() => setDraftNoticeOpen(false)}
         onConfirm={handleDraftNoticeConfirm}
+      />
+      <DeleteBlockedGuideModal
+        open={deleteBlockedOpen}
+        onClose={() => setDeleteBlockedOpen(false)}
+        title={deleteBlockedCopy.title}
+        description={deleteBlockedCopy.description}
       />
     </div>
   )

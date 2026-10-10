@@ -46,13 +46,13 @@ import {
   useUpdateProgram,
 } from '@/features/program/ujat/api/queries'
 import {
-  buildProgramHardDeleteBlockedAlertContent,
   buildProgramSingleDeleteGuideLines,
   isProgramHardDeleteBlockedError,
   PROGRAM_DELETE_GUIDE_TITLE,
-  PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
   resolveProgramDeleteGuideModalCopy,
+  resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
@@ -261,6 +261,11 @@ function UjatProgramListPageContent() {
   ])
 
   const [programPendingDelete, setProgramPendingDelete] = useState<Program | null>(null)
+  const [programDeleteBlockedOpen, setProgramDeleteBlockedOpen] = useState(false)
+  const [programDeleteBlockedCopy, setProgramDeleteBlockedCopy] = useState({
+    title: '',
+    description: '',
+  })
 
   const handleConfirmDelete = useCallback(async () => {
     if (!programPendingDelete) return
@@ -275,17 +280,17 @@ function UjatProgramListPageContent() {
       showDeleteCompletedAlert()
     } catch (error) {
       setProgramPendingDelete(null)
-      showAlert(
-        getHttpStatus(error) === 409
-          ? {
-              title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
-              content: buildProgramHardDeleteBlockedAlertContent(1, readErrorResponseMessage(error)),
-            }
-          : {
-              title: '삭제 실패',
-              content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-            }
-      )
+      if (getHttpStatus(error) === 409 || isProgramHardDeleteBlockedError(error)) {
+        setProgramDeleteBlockedCopy(
+          resolveProgramHardDeleteBlockedModalCopy(1, readErrorResponseMessage(error))
+        )
+        setProgramDeleteBlockedOpen(true)
+        return
+      }
+      showAlert({
+        title: '삭제 실패',
+        content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      })
     }
   }, [deleteProgramMutation, programPendingDelete, programsQuery, setSearchParams, showAlert])
 
@@ -319,14 +324,17 @@ function UjatProgramListPageContent() {
       showDeleteCompletedAlert()
     } catch (error) {
       setBulkDeleteModalOpen(false)
-      showAlert(
-        isProgramHardDeleteBlockedError(error)
-          ? { title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE, content: error.message }
-          : {
-              title: '삭제 실패',
-              content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-            }
-      )
+      if (isProgramHardDeleteBlockedError(error)) {
+        setProgramDeleteBlockedCopy(
+          resolveProgramHardDeleteBlockedModalCopy(selectedRowKeys.length)
+        )
+        setProgramDeleteBlockedOpen(true)
+        return
+      }
+      showAlert({
+        title: '삭제 실패',
+        content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      })
     }
   }, [
     bulkDeleteProgramsMutation,
@@ -604,6 +612,12 @@ function UjatProgramListPageContent() {
           void handleConfirmBulkDelete()
         }}
         onCancel={() => setBulkDeleteModalOpen(false)}
+      />
+      <DeleteBlockedGuideModal
+        open={programDeleteBlockedOpen}
+        onClose={() => setProgramDeleteBlockedOpen(false)}
+        title={programDeleteBlockedCopy.title}
+        description={programDeleteBlockedCopy.description}
       />
     </div>
   )

@@ -9,8 +9,10 @@ export const PROGRAM_PROGRESS_HISTORY_DOMAIN = '프로그램 진행 이력'
 
 const PROGRAM_ENROLLMENT_HISTORY_DOMAIN = '프로그램 수강 이력'
 
-/** `progress`: 진행 이력(후원사·관리자 담당 등) / `enrollment`: 회원 상세 프로그램 수강 이력 테이블 */
-export type ProgramProgressHistoryDeleteDomain = 'progress' | 'enrollment'
+const SPONSOR_PROGRAM_SPONSORSHIP_HISTORY_DOMAIN = '프로그램 후원 이력'
+
+/** `progress`: 진행 이력(관리자 담당 등) / `enrollment`: 회원 상세 프로그램 수강 이력 / `sponsor`: 후원사 상세 */
+export type ProgramProgressHistoryDeleteDomain = 'progress' | 'enrollment' | 'sponsor'
 
 export type ProgramProgressHistoryDeleteGuide = {
   title: string
@@ -18,7 +20,9 @@ export type ProgramProgressHistoryDeleteGuide = {
 }
 
 function domainLabelFor(kind: ProgramProgressHistoryDeleteDomain): string {
-  return kind === 'enrollment' ? PROGRAM_ENROLLMENT_HISTORY_DOMAIN : PROGRAM_PROGRESS_HISTORY_DOMAIN
+  if (kind === 'enrollment') return PROGRAM_ENROLLMENT_HISTORY_DOMAIN
+  if (kind === 'sponsor') return SPONSOR_PROGRAM_SPONSORSHIP_HISTORY_DOMAIN
+  return PROGRAM_PROGRESS_HISTORY_DOMAIN
 }
 
 /**
@@ -36,7 +40,11 @@ export function buildProgramProgressHistoryDeleteGuide(
 
   const domainLabel = domainLabelFor(domainKind)
   const counterNounPhrase =
-    domainKind === 'enrollment' ? '건의 프로그램 수강 이력' : '건의 프로그램 진행 이력'
+    domainKind === 'enrollment'
+      ? '건의 프로그램 수강 이력'
+      : domainKind === 'sponsor'
+        ? '건의 프로그램 후원 이력'
+        : '건의 프로그램 진행 이력'
 
   if (titles.length >= 2) {
     return {

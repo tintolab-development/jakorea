@@ -26,9 +26,10 @@ import { DeleteGuideModal, showDeleteCompletedAlert,
 } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
-  PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
   resolveProgramDeleteGuideModalCopy,
+  resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
 import {
@@ -194,6 +195,11 @@ export function GeneralProgramListPageContent() {
     () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
     [programsPendingBulkDelete.length]
   )
+  const [programDeleteBlockedOpen, setProgramDeleteBlockedOpen] = useState(false)
+  const [programDeleteBlockedCopy, setProgramDeleteBlockedCopy] = useState({
+    title: '',
+    description: '',
+  })
 
   const isScheduledFilter = statusFilter === 'scheduled'
   const showBulkSelection = statusFilter == null || isScheduledFilter
@@ -500,12 +506,11 @@ export function GeneralProgramListPageContent() {
               }
             } catch (error) {
               if (isProgramHardDeleteBlockedError(error)) {
+                const count = programsPendingBulkDelete.length
+                setProgramDeleteBlockedCopy(resolveProgramHardDeleteBlockedModalCopy(count))
                 setBulkDeleteModalOpen(false)
                 setProgramsPendingBulkDelete([])
-                showAlert({
-                  title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
-                  content: error.message,
-                })
+                setProgramDeleteBlockedOpen(true)
                 return
               }
               showAlert({
@@ -519,6 +524,12 @@ export function GeneralProgramListPageContent() {
           setBulkDeleteModalOpen(false)
           setProgramsPendingBulkDelete([])
         }}
+      />
+      <DeleteBlockedGuideModal
+        open={programDeleteBlockedOpen}
+        onClose={() => setProgramDeleteBlockedOpen(false)}
+        title={programDeleteBlockedCopy.title}
+        description={programDeleteBlockedCopy.description}
       />
     </div>
   )
