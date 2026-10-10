@@ -2,7 +2,17 @@ import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
 import { buildGeneralApplicationFormPreviewParagraphBodyOptions } from './application-form-preview-options'
-import { resolveInstitutionApplicationProgramBridge } from './institution-application-program-bridge'
+import {
+  getInstitutionApplicationProgramBridge,
+  resetInstitutionApplicationProgramBridge,
+  resolveInstitutionApplicationProgramBridge,
+} from './institution-application-program-bridge'
+import { syncInstitutionApplicationBridgeForRegistrationWizard } from './registration-institution-bridge-sync'
+import {
+  GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
+  replaceProgramRegistrationOverlay,
+  resetProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
 const emptyVm = {
   structureLockedParagraphIds: undefined,
@@ -56,6 +66,34 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
     ])
     expect(options.hiddenParagraphIds?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(
       false
+    )
+  })
+
+  it('등록 위저드 sync 후 개인 신청 — 고유 일자 1일이면 scheduleChoice를 숨긴다', () => {
+    resetInstitutionApplicationProgramBridge()
+    resetProgramRegistrationOverlay()
+    replaceProgramRegistrationOverlay({
+      [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: [
+        '26년 4월 20일(월) 09:30 ~ 12:20',
+        '26년 4월 20일(월) 13:00 ~ 15:50',
+      ],
+    })
+    syncInstitutionApplicationBridgeForRegistrationWizard({
+      registrationFormVariant: 'general',
+      programType: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      recruitTemplateCode: 'recruitment-participant-school',
+    })
+    const bridge = getInstitutionApplicationProgramBridge()
+    const options = buildGeneralApplicationFormPreviewParagraphBodyOptions('individual', emptyVm, {
+      program: null,
+      paragraphs: [],
+      institutionBridge: bridge,
+      programLinkedApplicationFormPreview: true,
+    })
+    expect(options.hiddenParagraphIds?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(
+      true
     )
   })
 
