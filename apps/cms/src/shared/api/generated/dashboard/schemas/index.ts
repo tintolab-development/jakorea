@@ -20,6 +20,7 @@ export * from './accountEmailCheckResponse';
 export * from './accountPaymentDetailResponse';
 export * from './accountPaymentListItemResponse';
 export * from './accountPaymentSensitiveDetailResponse';
+export * from './activityScheduleSlot';
 export * from './addressSearchItem';
 export * from './addressSearchResponse';
 export * from './adminAccountApprovalDecisionRequest';

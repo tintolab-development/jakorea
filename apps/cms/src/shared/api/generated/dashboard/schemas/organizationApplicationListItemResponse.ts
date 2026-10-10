@@ -48,10 +48,15 @@ export interface OrganizationApplicationListItemResponse {
   defaultScheduleName?: string;
   ujatPartnerAssignmentsPath?: string;
   ujatPartnerRecommendationPath?: string;
-  grade?: string;
+  /**
+     * 신청 학년 우선. requested_grade 원문(예: 1, 학년 접미사 없음). 비어 있으면 배정/명단 학년, 그것도 없으면 프로그램 대상 학년(예: 3학년, 3~6학년). 둘 다 없으면 null.
+     * @nullable
+     */
+  grade?: string | null;
   regionSido?: string;
   regionSigungu?: string;
   sessions?: Session[];
+  /** 승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 학급·회차 확정 전에도 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개. */
   preferredEducationSchedules?: PreferredEducationScheduleResponse[];
   mergeGroupId?: number;
   mergeStatus?: string;
