@@ -26,6 +26,7 @@ import {
 import {
   buildApplicationAnswersFromDraft,
   coerceApplicationFormDocument,
+  mergeApplicationBindingRuntimeParagraphs,
   collectConditionallyHiddenAnswerKeys,
   collectRuntimeConditionalQuestions,
   collectRuntimeHiddenAnswerKeys,
@@ -43,8 +44,10 @@ import {
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
   isDynamicIndividualInterviewParagraph,
+  isDynamicVolunteerActivityScheduleParagraph,
   isDynamicVolunteerInterviewParagraph,
   isIndividualInterviewScheduleParagraphId,
+  isVolunteerInterviewScheduleParagraphId,
   isInstructorAvailableScheduleParagraphId,
   isInstructorCrimeRecordParagraphId,
   isVolunteerActivityScheduleParagraphId,
@@ -57,7 +60,7 @@ import {
 } from '@/features/program/lib/apply-form-paragraph-ids'
 import { applyProgramLinkedApplicationDraftPatches } from '@/features/program/lib/application-form-program-link'
 import { resolvePortalApplicationHiddenParagraphIds } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
-import { shouldIncludeInterviewStages } from '@/features/program/lib/detail-case'
+import { resolveVolunteerPortalInterviewEnabledForHidden } from '@/features/program/lib/portal-volunteer-interview-visibility'
 import {
   isApplyScheduleChoiceParagraphId,
   isInstitutionApplyScheduleChoiceParagraphId,
@@ -138,6 +141,7 @@ import {
   instructorAvailableScheduleAnswerFromValues,
   instructorAvailableScheduleOptionValues,
   instructorAvailableScheduleValuesFromDraftAnswer,
+  readPortalApplicationBindingOptionSlots,
   readRuntimeInstructorScheduleSlots,
   type ApplyInstructorAvailableScheduleValues,
 } from '@/features/program/ui/apply-instructor-available-schedule/apply-instructor-available-schedule'
@@ -407,7 +411,7 @@ export function ProgramApplyPage() {
         : []),
     [program, runtimeInstructorScheduleSlots],
   )
-  const runtimeInterviewParagraph = useMemo(() => {
+  const interviewBindingParagraph = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
     const found = paragraphs.find(
@@ -418,20 +422,25 @@ export function ProgramApplyPage() {
     return found ? (found as { id: string }) : null
   }, [applyCase, applicationFormDocument])
   const interviewSlots = useMemo(
-    () => readRuntimeInstructorScheduleSlots(runtimeInterviewParagraph) ?? [],
-    [runtimeInterviewParagraph],
+    () => readPortalApplicationBindingOptionSlots(interviewBindingParagraph),
+    [interviewBindingParagraph],
   )
-  const volunteerActivitySlots = useMemo(() => {
+  const volunteerActivityBindingParagraph = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
-    if (!Array.isArray(paragraphs)) return []
-    const activityParagraph = paragraphs.find(
-      paragraph =>
-        paragraph != null &&
-        typeof paragraph === 'object' &&
-        isVolunteerActivityScheduleParagraphId(String((paragraph as { id?: unknown }).id ?? '')),
+    if (!Array.isArray(paragraphs)) return null
+    return (
+      paragraphs.find(
+        paragraph =>
+          paragraph != null &&
+          typeof paragraph === 'object' &&
+          isDynamicVolunteerActivityScheduleParagraph(paragraph),
+      ) ?? null
     )
-    return readRuntimeInstructorScheduleSlots(activityParagraph) ?? []
   }, [applicationFormDocument])
+  const volunteerActivitySlots = useMemo(
+    () => readPortalApplicationBindingOptionSlots(volunteerActivityBindingParagraph),
+    [volunteerActivityBindingParagraph],
+  )
   const runtimeHiddenAnswerKeys = useMemo(
     () => collectRuntimeHiddenAnswerKeys(remoteForm),
     [remoteForm],
@@ -476,21 +485,25 @@ export function ProgramApplyPage() {
             program,
             runtimeContext: coerceApplicationFormDocument(remoteForm)?.runtimeContext,
           })
+          const bindingMergedDraft =
+            applyCaseForDraft === 'individual-volunteer'
+              ? mergeApplicationBindingRuntimeParagraphs(programLinkedDraft, remoteForm)
+              : programLinkedDraft
           setDraft(
             applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
-              ? prepareIndividualApplicationDraft(programLinkedDraft, {
-                  keepParagraphIds: runtimeInterviewParagraph
-                    ? new Set([runtimeInterviewParagraph.id])
+              ? prepareIndividualApplicationDraft(bindingMergedDraft, {
+                  keepParagraphIds: interviewBindingParagraph
+                    ? new Set([interviewBindingParagraph.id])
                     : undefined,
                 })
-              : programLinkedDraft,
+              : bindingMergedDraft,
           )
           const draftAnswers = remoteForm.draftAnswers
           const interviewParagraph = findDraftParagraph(
             remoteDraft,
             id =>
               isIndividualInterviewScheduleParagraphId(id) ||
-              id === runtimeInterviewParagraph?.id,
+              isVolunteerInterviewScheduleParagraphId(id),
           )
           setInterviewSchedule(
             instructorAvailableScheduleValuesFromDraftAnswer(
@@ -688,7 +701,7 @@ export function ProgramApplyPage() {
     applicationFormQuery.blockedReason,
     remoteForm,
     remoteFormKey,
-    runtimeInterviewParagraph,
+    interviewBindingParagraph,
     profileDefaults,
     focusedApplicationType,
   ])
@@ -823,7 +836,10 @@ export function ProgramApplyPage() {
         )
       }
 
-      if (isVolunteerActivityScheduleParagraphId(paragraph.id)) {
+      if (
+        volunteerActivityBindingParagraph &&
+        paragraph.id === volunteerActivityBindingParagraph.id
+      ) {
         return (
           <ApplyInstructorAvailableSchedule
             slots={volunteerActivitySlots}
@@ -834,7 +850,7 @@ export function ProgramApplyPage() {
         )
       }
 
-      if (runtimeInterviewParagraph && paragraph.id === runtimeInterviewParagraph.id) {
+      if (interviewBindingParagraph && paragraph.id === interviewBindingParagraph.id) {
         return (
           <ApplyInstructorAvailableSchedule
             slots={interviewSlots}
@@ -1046,7 +1062,8 @@ export function ProgramApplyPage() {
       instructorCrimeRecord,
       instructorSchedule,
       instructorScheduleSlots,
-      runtimeInterviewParagraph,
+      interviewBindingParagraph,
+      volunteerActivityBindingParagraph,
       interviewSlots,
       interviewSchedule,
       volunteerPreviousJa,
@@ -1091,11 +1108,10 @@ export function ProgramApplyPage() {
         paragraphs: displayDraft?.paragraphs ?? [],
         showSexOffenseConsentInquiryParagraph: shouldShowSexOffenseInquiry(sexOffense),
         volunteerInterviewEnabled:
-          applyCase === 'individual-volunteer' && program
-            ? shouldIncludeInterviewStages(
-                'volunteer',
-                program as import('@/features/program/model/cms-program.types').CmsProgramLike,
-              )
+          applyCase === 'individual-volunteer'
+            ? resolveVolunteerPortalInterviewEnabledForHidden({
+                formBinding: remoteForm,
+              })
             : undefined,
       }),
     )
@@ -1134,6 +1150,7 @@ export function ProgramApplyPage() {
     applicationFormDocument,
     displayDraft,
     program,
+    remoteForm,
     runtimeConditionalQuestions,
     runtimeHiddenAnswerKeys,
     sexOffense,
@@ -1254,7 +1271,11 @@ export function ProgramApplyPage() {
       const teamParagraph = findDraftParagraph(displayDraft, isApplicationTeamInfoParagraphId)
       const showTeamInfo =
         applyCase != null && shouldShowIndividualTeamInfoParagraph(applyCase)
-      if (showTeamInfo && teamParagraph) {
+      const teamInfoVisible =
+        showTeamInfo &&
+        teamParagraph != null &&
+        !hiddenParagraphIds.has(teamParagraph.id)
+      if (teamInfoVisible) {
         const teamError = findIncompleteIndividualTeamInfoMessage(teamInfo)
         if (teamError) {
           setSubmitError(teamError)
@@ -1305,14 +1326,17 @@ export function ProgramApplyPage() {
           return
         }
       }
-      const interviewParagraphCandidate = runtimeInterviewParagraph
-        ? findDraftParagraph(displayDraft, id => id === runtimeInterviewParagraph.id)
-        : undefined
-      const interviewParagraph =
-        interviewParagraphCandidate && !hiddenParagraphIds.has(interviewParagraphCandidate.id)
-          ? interviewParagraphCandidate
-          : null
-      if (interviewParagraph && isRequiredParagraph(interviewParagraph)) {
+      const interviewSubmitVisible =
+        interviewBindingParagraph != null &&
+        !hiddenParagraphIds.has(interviewBindingParagraph.id)
+      const interviewDraftParagraph = interviewSubmitVisible
+        ? findDraftParagraph(displayDraft, id => id === interviewBindingParagraph!.id)
+        : null
+      const interviewRequired =
+        interviewSubmitVisible &&
+        ((interviewDraftParagraph != null && isRequiredParagraph(interviewDraftParagraph)) ||
+          isRequiredParagraph(interviewBindingParagraph as WritingFormParagraph))
+      if (interviewRequired) {
         const interviewError = findIncompleteInterviewScheduleMessage(
           interviewSchedule,
           interviewSlots,
@@ -1348,9 +1372,11 @@ export function ProgramApplyPage() {
           return
         }
       }
-      const volunteerActivityParagraph = visibleDraftParagraph(
-        isVolunteerActivityScheduleParagraphId,
-      )
+      const volunteerActivityParagraph =
+        volunteerActivityBindingParagraph &&
+        !hiddenParagraphIds.has(volunteerActivityBindingParagraph.id)
+          ? visibleDraftParagraph(id => id === volunteerActivityBindingParagraph.id)
+          : null
       if (volunteerActivityParagraph && isRequiredParagraph(volunteerActivityParagraph)) {
         const activityError = findIncompleteVolunteerActivityScheduleMessage(
           volunteerActivitySchedule,
@@ -1423,7 +1449,7 @@ export function ProgramApplyPage() {
       if (basicAnswer != null && basicParagraph) {
         overrides[resolveApplicationAnswerKey(basicParagraph)] = basicAnswer
       }
-      if (showTeamInfo && teamParagraph) {
+      if (teamInfoVisible) {
         overrides[resolveApplicationAnswerKey(teamParagraph)] = teamInfoAnswerFromValues(teamInfo)
       }
       const guidanceParagraph = findDraftParagraph(displayDraft, isApplicationGuidanceParagraphId)
@@ -1448,9 +1474,14 @@ export function ProgramApplyPage() {
                 instructorScheduleSlots,
               )
       }
-      if (interviewParagraph) {
-        overrides[resolveApplicationAnswerKey(interviewParagraph)] =
-          instructorAvailableScheduleOptionValues(interviewSchedule, interviewSlots)
+      if (interviewSubmitVisible && interviewBindingParagraph) {
+        const interviewAnswerKey = resolveApplicationAnswerKey(
+          (interviewDraftParagraph ?? interviewBindingParagraph) as object,
+        )
+        overrides[interviewAnswerKey] = instructorAvailableScheduleOptionValues(
+          interviewSchedule,
+          interviewSlots,
+        )
       }
       if (volunteerPreviousJaParagraph) {
         overrides[resolveApplicationAnswerKey(volunteerPreviousJaParagraph)] =
@@ -1486,7 +1517,7 @@ export function ProgramApplyPage() {
         omitParagraphIds.add(inquiryParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(inquiryParagraph))
       }
-      if (!showTeamInfo && teamParagraph) {
+      if (!teamInfoVisible && teamParagraph) {
         omitParagraphIds.add(teamParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(teamParagraph))
       }
@@ -1566,8 +1597,8 @@ export function ProgramApplyPage() {
         applicationFormQuery.refetch()
         const interviewVisible =
           applyCase === 'individual-volunteer' &&
-          runtimeInterviewParagraph != null &&
-          !hiddenParagraphIds.has(runtimeInterviewParagraph.id)
+          interviewBindingParagraph != null &&
+          !hiddenParagraphIds.has(interviewBindingParagraph.id)
         setSubmitError(
           interviewVisible
             ? `${message} 면접 진행 가능 일정이 바뀌었을 수 있어 신청서를 새로 불러왔습니다. 일정을 다시 확인한 뒤 신청해 주세요.`

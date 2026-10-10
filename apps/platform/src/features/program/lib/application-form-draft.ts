@@ -16,7 +16,10 @@ import {
 } from '@jakorea/form-schema/writing-form'
 import { migrateProgramParticipantApplicationParagraphs } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { resolveApplicationAnswerKey } from './application-answer-key.ts'
-import { isApplicationTeamInfoParagraphId } from './apply-form-paragraph-ids.ts'
+import {
+  isApplicationTeamInfoParagraphId,
+  isPortalDynamicOptionArrayParagraphId,
+} from './apply-form-paragraph-ids.ts'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -430,6 +433,34 @@ export function coerceApplicationFormDocument(form: unknown): Record<string, unk
   return best && paragraphCount(best) > 0 ? mergeFilledParagraphContent(best, documents) : null
 }
 
+/** form-binding 문단의 런타임 선택지·플래그를 draft 문단 id에 병합한다. */
+export function mergeApplicationBindingRuntimeParagraphs(
+  draft: WritingFormDraft,
+  formBinding: unknown,
+): WritingFormDraft {
+  const document = coerceApplicationFormDocument(formBinding)
+  if (!document || !Array.isArray(document.paragraphs)) return draft
+  const bindingById = new Map<string, Record<string, unknown>>()
+  for (const paragraph of document.paragraphs) {
+    if (!isRecord(paragraph) || typeof paragraph.id !== 'string' || !paragraph.id.trim()) continue
+    bindingById.set(paragraph.id.trim(), paragraph)
+  }
+  if (bindingById.size === 0) return draft
+  const merged = draft.paragraphs.map(paragraph => {
+    const binding = bindingById.get(paragraph.id)
+    if (!binding) return paragraph
+    return { ...paragraph, ...binding } as WritingFormParagraph
+  })
+  const mergedIds = new Set(merged.map(paragraph => paragraph.id))
+  const appended = document.paragraphs.flatMap(paragraph => {
+    if (!isRecord(paragraph) || typeof paragraph.id !== 'string' || !paragraph.id.trim()) {
+      return []
+    }
+    return mergedIds.has(paragraph.id.trim()) ? [] : [paragraph as unknown as WritingFormParagraph]
+  })
+  return appended.length > 0 ? { ...draft, paragraphs: [...merged, ...appended] } : { ...draft, paragraphs: merged }
+}
+
 function mergeAnswerIntoParagraph(
   paragraph: WritingFormParagraph,
   answer: unknown,
@@ -605,6 +636,16 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
     if (!paragraph.allowMultiple) return paragraph.selectedPreviewSingleId ?? null
     return paragraph.selectedPreviewMultipleIds ?? []
   }
+  if (isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
+    /** 면접·봉사 일정 placeholder — BE는 option id 문자열 배열만 받는다. */
+    if ('selectedPreviewMultipleIds' in paragraph) {
+      return paragraph.selectedPreviewMultipleIds ?? []
+    }
+    if ('selectedPreviewSingleId' in paragraph && paragraph.selectedPreviewSingleId) {
+      return [paragraph.selectedPreviewSingleId]
+    }
+    return []
+  }
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     /** 동의 없는 표(기본 정보 등) — 키가 빠지면 submit REQUIRED 실패 */
     return {
@@ -656,7 +697,7 @@ export function buildApplicationAnswersFromDraft(
       answers[key] = value
       continue
     }
-    if (isRequiredParagraph(paragraph)) {
+    if (isRequiredParagraph(paragraph) && !isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
       answers[key] = {}
     }
   }

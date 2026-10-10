@@ -580,4 +580,28 @@ assert.equal(
   'program-volunteer-application-ja-experience-yes',
 )
 
+const volunteerInterviewKey = 'program-volunteer-application-seed-interview-schedule'
+const volunteerInterviewForm = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [
+    {
+      id: volunteerInterviewKey,
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      requiredMark: true,
+      paragraphTitle: '면접 진행 가능 일정',
+      tableFlavor: 'text',
+      columnHeaders: ['면접 진행 가능일', ''],
+      dataRows: [['', '']],
+      fieldDataRows: [],
+      showBottomConsent: false,
+      answerRequired: true,
+    },
+  ],
+}
+const volunteerInterviewDraft = writingFormDraftFromApplicationForm(volunteerInterviewForm)
+assert.ok(volunteerInterviewDraft)
+assert.equal(volunteerInterviewKey in buildApplicationAnswersFromDraft(volunteerInterviewDraft!), false)
+
 console.log('application-form-draft.selfcheck: ok')
