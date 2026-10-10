@@ -483,6 +483,7 @@ export default function SponsorPage() {
       <SponsorDeleteBlockedModal
         open={bulkSponsorDeleteBlockedOpen}
         onClose={handleCloseBulkSponsorDeleteBlocked}
+        selectedCount={selectedSponsors.length}
       />
       <SponsorRegisterModal
         open={registerModalOpen}

@@ -10,16 +10,6 @@ import type { SponsorContactType } from '@/features/sponsor/model/sponsor-manage
 export const SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE =
   '전화번호 형식이 올바르지 않습니다. 010/070은 4-4자리, 02 및 지역번호는 3~4-4자리 형식으로 입력해 주세요.'
 
-export const SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE =
-  '내선번호 형식이 올바르지 않습니다. 02 및 지역번호는 3~4-4자리, 010/070은 4-4자리 형식으로 입력해 주세요.'
-
-/** 내선번호 — 연락처와 동일한 한국 전화번호 형식. 빈 값 허용. */
-export function isValidSponsorOfficePhone(value: string): boolean {
-  const trimmed = value.trim()
-  if (!trimmed) return true
-  return isValidKoreanPhoneNumber(trimmed)
-}
-
 const optionalTrimmedString = z.union([z.string().trim(), z.literal('')])
 
 export const sponsorContactRegisterFormSchema = z.object({
@@ -42,8 +32,7 @@ export const sponsorContactRegisterFormSchema = z.object({
   officePhone: z
     .string()
     .trim()
-    .max(20, '내선번호는 20자 이내로 입력해 주세요.')
-    .refine(isValidSponsorOfficePhone, SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE),
+    .max(20, '내선번호는 20자 이내로 입력해 주세요.'),
   phone: z
     .string()
     .trim()

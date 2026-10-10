@@ -44,6 +44,7 @@ import type {
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
 import { uploadSponsorLogoFile } from '@/features/sponsor/api/sponsor-logo-upload'
+import { enrichSponsorLogoFiles } from '@/features/sponsor/lib/sponsor-logo-files'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -71,7 +72,9 @@ export async function getSponsorList(
 export async function getSponsorDetail(id: string): Promise<SponsorManagementDetailView> {
   assertSponsorsRemoteReady()
   const dto = await fetchSponsorRemote(id)
-  return mapSponsorDetailResponse(dto)
+  const detail = mapSponsorDetailResponse(dto)
+  const logos = await enrichSponsorLogoFiles(detail.logos)
+  return logos === detail.logos ? detail : { ...detail, logos }
 }
 
 /** 연도별 후원금 — 상세 GET과 분리. 상세 탭 패널에서만 호출한다. */
@@ -124,6 +127,17 @@ export async function updateSponsorBasicInfo(
   const address = [basicInfo.district.trim(), basicInfo.detailAddress.trim()]
     .filter(Boolean)
     .join(' ')
+  const nextLogos =
+    logoFileId != null
+      ? [
+          {
+            id: logoFileId,
+            fileName: pendingLogo?.name.trim() || existing.logos[0]?.fileName || '',
+          },
+        ]
+      : existing.logos
+  const logos =
+    nextLogos.length > 0 ? await enrichSponsorLogoFiles(nextLogos) : nextLogos
   return {
     ...existing,
     id: existing.id || sponsorId,
@@ -140,6 +154,7 @@ export async function updateSponsorBasicInfo(
       basicInfo.sponsorshipStartDate != null
         ? basicInfo.sponsorshipStartDate
         : existing.sponsorshipStartDate,
+    logos,
   }
 }
 

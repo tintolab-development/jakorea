@@ -1,7 +1,6 @@
 import type React from 'react'
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
-import { isValidSponsorOfficePhone } from '@/features/sponsor/model/sponsor-contact-register-schema'
 import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-management.types'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
 import { normalizeSponsorContactsSingleLead } from '@/features/sponsor/utils/normalize-sponsor-contacts-single-lead'
@@ -26,9 +25,7 @@ function hasMissingRequiredContactFields(row: SponsorContactRow): boolean {
 }
 
 function hasInvalidContactPhoneFields(row: SponsorContactRow): boolean {
-  if (!isValidKoreanPhoneNumber(row.phone.trim())) return true
-  const officePhone = row.officePhone.trim()
-  return officePhone.length > 0 && !isValidSponsorOfficePhone(officePhone)
+  return !isValidKoreanPhoneNumber(row.phone.trim())
 }
 
 export interface UseSponsorContactsReturn {

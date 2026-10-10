@@ -26,6 +26,7 @@ import {
   getEnrollmentDisplayStatusFromProgramLifecycle,
   isProgramHistoryDeleteBlockedByDisplayStatus,
 } from '@/shared/constants/status'
+import { SPONSOR_PROGRAM_HISTORY_TAB_LABEL } from '@/features/sponsor/lib/sponsor-program-history-copy'
 
 /** 임시: 이력 삭제 UI 비노출. true로 되돌리면 버튼·삭제용 선택이 다시 보인다. */
 const SHOW_PROGRAM_HISTORY_DELETE = false
@@ -112,7 +113,7 @@ export type SponsorProgramHistoryPanelProps = UseProgramHistoryFilterReturn & {
 }
 
 /**
- * 후원사 상세 LNB의 “프로그램 진행 이력” 탭 본문입니다.
+ * 후원사 상세 LNB의 “프로그램 후원 이력” 탭 본문입니다.
  */
 export function SponsorProgramHistoryPanel({
   pendingFilters,
@@ -140,7 +141,8 @@ export function SponsorProgramHistoryPanel({
 
   const deleteGuide = useMemo(() => {
     return buildProgramProgressHistoryDeleteGuide(
-      selectedRows.map(r => (r.title?.trim() ? r.title.trim() : '(제목 없음)'))
+      selectedRows.map(r => (r.title?.trim() ? r.title.trim() : '(제목 없음)')),
+      'sponsor'
     )
   }, [selectedRows])
 
@@ -205,7 +207,7 @@ export function SponsorProgramHistoryPanel({
         title: '안내',
         content: getDataManagementApiErrorMessage(
           error,
-          '프로그램 진행 이력 삭제에 실패했습니다.'
+          `${SPONSOR_PROGRAM_HISTORY_TAB_LABEL} 삭제에 실패했습니다.`
         ),
       })
     }
@@ -247,7 +249,7 @@ export function SponsorProgramHistoryPanel({
         }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title="프로그램 진행 이력"
+        title={SPONSOR_PROGRAM_HISTORY_TAB_LABEL}
         description={`총 ${(totalCount ?? filteredRows.length).toLocaleString()}건`}
         actions={
           SHOW_PROGRAM_HISTORY_DELETE ? (

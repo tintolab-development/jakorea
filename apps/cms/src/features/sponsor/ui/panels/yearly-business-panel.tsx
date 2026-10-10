@@ -221,11 +221,11 @@ export function YearlyBusinessPanel({
           {canWrite ? (
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               onClick={() => void handleToggleEdit()}
               disabled={isSaving}
             >
-              {isEditing ? '수정 완료' : '후원정보 수정'}
+              후원정보 수정
             </CmsButton>
           ) : null}
           <ExcelButton onClick={() => void exportExcel()} loading={isExporting} />
