@@ -1,0 +1,623 @@
+{
+  "removed_count": 227,
+  "removed": [
+    "apps/cms/docs/api/posts-dummy-seed-backend-request.md",
+    "apps/cms/docs/api/general-individual-progress-assignment-admin-api-frontend-handoff-2026-10-02.md",
+    "apps/cms/docs/api/program-participant-list-birth-date-gender-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/general-individual-application-detail-edit-document-evaluation-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/program-common-info-update-persistence-backend-prompt-2026-09-29.md",
+    "apps/cms/docs/api/general-individual-volunteer-assignment-local-distance-km-backend-request-2026-10-09.md",
+    "apps/cms/docs/api/trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/program-recruitment-independent-management-backend-prompt-2026-10-01.md",
+    "apps/cms/docs/api/rich-text-and-file-size-limits-backend-request-2026-10-01.md",
+    "apps/cms/docs/api/notification-delivery-list-title-content-backend-cursor-prompt.md",
+    "apps/cms/docs/api/sponsor-sponsorship-status-4way-backend-cursor-prompt.md",
+    "apps/cms/docs/api/trained-teacher-survey-menu-keys-lnb-sync-backend-prompt-2026-09-28.md",
+    "apps/cms/docs/api/form-template-document-download-backend-handoff.md",
+    "apps/cms/docs/api/program-navigation-progress-lnb-enabled-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/cms-stored-file-domain-gaps-backend-cursor-prompt-2026-09-23.md",
+    "apps/cms/docs/api/programs-gemini-visiting-training-api-backend-handoff.md",
+    "apps/cms/docs/api/application-sex-offense-paragraphs-reseed-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/program-business-period-any-dates-backend-request-2026-09-28.md",
+    "apps/cms/docs/api/program-recruitment-portal-interview-other-matters-backend-prompt-2026-10-01.md",
+    "apps/cms/docs/api/ujat-education-regions-list-filters-backend-prompt-2026-10-02.md",
+    "apps/cms/docs/api/program-survey-binding-submission-period-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/program-survey-form-edit-program-scoped-copy-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/program-business-area-update-backend-prompt-2026-09-29.md",
+    "apps/cms/docs/api/programs-create-api-backend-handoff.md",
+    "apps/cms/docs/api/general-program-dummy-seed-backend-request.md",
+    "apps/cms/docs/api/gemini-recruitment-detail-field-roundtrip-backend-prompt-2026-09-30.md",
+    "apps/cms/docs/api/notice-attachment-orphan-gc-audit-backend-prompt-2026-09-29.md",
+    "apps/cms/docs/api/trained-teacher-progress-institution-mutations-frontend-handoff-2026-09-28.md",
+    "apps/cms/docs/api/program-survey-form-version-fetch-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/program-organization-notification-resend-all-types-frontend-handoff-2026-09-27.md",
+    "apps/cms/docs/api/general-individual-volunteer-assignment-region-distance-backend-request-2026-10-09.md",
+    "apps/cms/docs/api/trained-teacher-organization-application-notification-resend-backend-prompt-2026-09-27.md",
+    "apps/cms/docs/api/programs-seed-case-api-coverage-backend-handoff-2026-07-30.md",
+    "apps/cms/docs/api/survey-user-info-autofill-snapshot-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/organization-application-education-format-patch-backend-prompt-2026-09-29.md",
+    "apps/cms/docs/api/trained-teacher-progress-institution-mutations-backend-prompt-2026-09-22.md",
+    "apps/cms/docs/api/gemini-approved-training-list-filters-backend-prompt-2026-10-02.md",
+    "apps/cms/docs/api/files-upload-scan-failed-quarantined-backend-request-2026-09-18.md",
+    "apps/cms/docs/api/company-school-program-progress-instructor-remaining-backend-request-2026-10-02.md",
+    "apps/cms/docs/api/ujat-program-business-years-backend-prompt-2026-10-02.md",
+    "apps/cms/docs/api/programs-navigation-volunteer-lnb-participant-types-backend-request-2026-09-15.md",
+    "apps/cms/docs/api/general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/e2e-admin-auth-mfa-concurrency-handoff.md",
+    "apps/cms/docs/api/program-sponsors-patch-replace-semantics-backend-prompt-2026-09-29.md",
+    "apps/cms/docs/api/program-registration-staging-attachment-rebind-backend-prompt-2026-10-07.md",
+    "apps/cms/docs/api/volunteer-interview-evaluation-master-pm-both-scores-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/program-common-info-edit-roundtrip-backend-prompt-2026-09-28.md",
+    "apps/cms/docs/api/trained-teacher-list-widget-fields-backend-request-2026-09-22.md",
+    "apps/cms/docs/api/cms-table-bulk-approve-api-backend-handoff.md",
+    "apps/cms/docs/api/company-school-program-progress-institution-remaining-backend-request-2026-10-02.md",
+    "apps/cms/docs/api/trained-teacher-survey-lnb-cases-dummy-seed-backend-prompt-2026-09-27.md",
+    "apps/cms/docs/api/program-post-actor-display-name-backend-cursor-prompt-2026-10-06.md",
+    "apps/cms/docs/api/program-same-date-institution-schedule-frontend-handoff-2026-10-02.md",
+    "apps/cms/docs/api/form-template-db-seed-backend-handoff.md",
+    "apps/cms/docs/api/programs-trained-teachers-api-backend-handoff.md",
+    "apps/cms/docs/api/gemini-organization-application-list-preferred-schedule-backend-prompt-2026-09-30.md",
+    "apps/cms/docs/api/account-payments-backend-seed-handoff-2026-08-27.md",
+    "apps/cms/docs/api/payment-orders-backend-seed-handoff-2026-08-27.md",
+    "apps/cms/docs/api/trained-teacher-application-basic-info-projection-backend-prompt-2026-09-27.md",
+    "apps/cms/docs/api/trained-teacher-kpi-venue-mirror-openapi-backend-request-2026-09-17.md",
+    "apps/cms/docs/api/certificate-serial-allocate-backend-prompt.md",
+    "apps/cms/docs/api/general-program-service-detail-json-ssot-backend-request-2026-09-28.md",
+    "apps/cms/docs/api/dashboard-settings-dummy-seed-backend-request.md",
+    "apps/cms/docs/api/recruit-detail-rich-text-html-storage-backend-confirm-2026-10-01.md",
+    "apps/cms/docs/api/ujat-structured-recruitments-backend-prompt-2026-09-30.md",
+    "apps/cms/docs/api/general-volunteer-document-manager-evaluation-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/general-individual-application-cancel-approval-backend-request-2026-10-02.md",
+    "apps/cms/docs/api/general-individual-progress-assignment-admin-api-backend-request-2026-10-02.md",
+    "apps/cms/docs/api/programs-gemini-performance-api-backend-handoff.md",
+    "apps/cms/docs/api/form-schema-immutable-put-backend-request-2026-09-18.md",
+    "apps/cms/docs/api/general-org-application-form-answers-masking-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/trained-teachers-notion-fe-align-backend-request-2026-09-18.md",
+    "apps/cms/docs/api/form-template-db-seed-backend-cursor-prompt.md",
+    "apps/cms/docs/api/openapi-local-sync-backend-cursor-prompt-2026-10-06.md",
+    "apps/cms/docs/api/data-management-dummy-seed-backend-request.md",
+    "apps/cms/docs/api/e2e-programs-create-database-error-handoff.md",
+    "apps/cms/docs/api/product-deferred-and-hold-backend-cursor-prompt.md",
+    "apps/cms/docs/api/logs-api-backend-cursor-prompt.md",
+    "apps/cms/docs/api/general-primary-168006-individual-interview-availability-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/general-program-progress-remaining-backend-request-2026-10-02.md",
+    "apps/cms/docs/api/sponsor-management-api-backend-handoff.md",
+    "apps/cms/docs/api/ujat-education-progress-assignments-backend-prompt-2026-10-02.md",
+    "apps/cms/docs/api/education-records-api-backend-cursor-prompt.md",
+    "apps/cms/docs/api/payment-orders-openapi-p0-backend-cursor-prompt.md",
+    "apps/cms/docs/api/program-recruitment-form-remaining-fields-backend-prompt-2026-09-30.md",
+    "apps/cms/docs/api/account-payments-openapi-p0-backend-cursor-prompt.md",
+    "apps/cms/docs/api/agreement-expense-reseed-backend-cursor-prompt.md",
+    "apps/cms/docs/api/volunteer-interview-slot-options-from-schedule-info-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/portal-program-venue-kind-backend-prompt-2026-09-29.md",
+    "apps/cms/docs/api/program-draft-registration-backend-handoff-2026-09-21.md",
+    "apps/cms/docs/api/general-individual-application-display-fields-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/programs-general-list-missing-fields-backend-request-2026-09-15.md",
+    "apps/cms/docs/api/portal-apply-education-schedule-lines-backend-request-2026-09-29.md",
+    "apps/cms/docs/api/program-survey-results-aggregation-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/company-school-program-dummy-seed-backend-request.md",
+    "apps/cms/docs/api/issuance-form-seeds-backend-handoff.md",
+    "apps/cms/docs/api/ujat-education-progress-assignment-admin-api-frontend-handoff-2026-10-02.md",
+    "apps/cms/docs/api/certificate-form-seeds-backend-handoff.md",
+    "apps/cms/docs/api/gemini-approved-training-detail-empty-fields-backend-prompt-2026-10-02.md",
+    "apps/cms/docs/api/template-create-api-backend-handoff-2026-10-07.md",
+    "apps/cms/docs/api/settlement-item-settings-backend-seed-handoff-2026-08-27.md",
+    "apps/cms/docs/api/programs-ujat-education-regions-api-backend-handoff.md",
+    "apps/cms/docs/api/program-recruitment-row-seed-preserve-backend-prompt-2026-10-01.md",
+    "apps/cms/docs/api/ujat-education-progress-p2-openapi-half-backend-request-2026-09-17.md",
+    "apps/cms/docs/api/settlement-item-settings-category-backend-cursor-prompt.md",
+    "apps/cms/docs/api/general-organization-institution-remote-gaps-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/trained-teacher-common-info-field-roundtrip-backend-prompt-2026-09-22.md",
+    "apps/cms/docs/api/trained-teacher-common-info-json-mirror-backend-prompt-2026-09-21.md",
+    "apps/cms/docs/api/files-upload-fe-integration-backend-handoff-2026-09-07.md",
+    "apps/cms/docs/api/general-organization-application-decision-notify-timing-backend-request-2026-10-02.md",
+    "apps/cms/docs/api/ujat-program-remote-only-gaps-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/notice-inline-image-unbound-upload-backend-request-2026-10-01.md",
+    "apps/cms/docs/api/general-program-full-graph-seed-rework-request-2026-09-17.md",
+    "apps/cms/docs/api/volunteer-recruitment-target-member-classification-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/gemini-recruitment-create-patch-toplevel-fields-backend-prompt-2026-09-30.md",
+    "apps/cms/docs/api/gemini-approved-training-privacy-unmask-backend-prompt-2026-10-02.md",
+    "apps/cms/docs/api/trained-teacher-common-recruit-edit-roundtrip-backend-request-2026-09-17.md",
+    "apps/cms/docs/api/program-common-info-live-roundtrip-backend-prompt-2026-09-29.md",
+    "apps/cms/docs/api/settlement-ledger-link-p0-backend-cursor-prompt.md",
+    "apps/cms/docs/api/general-organization-applications-navigation-enabled-backend-request-2026-09-17.md",
+    "apps/cms/docs/api/general-organization-application-guidance-fields-empty-backend-request-2026-10-09.md",
+    "apps/cms/docs/api/programs-detail-edit-list-title-backend-handoff-2026-09-23.md",
+    "apps/cms/docs/api/general-program-survey-management-frontend-handoff-2026-10-02.md",
+    "apps/cms/docs/api/portal-platform-programs-backend-cursor-prompt-2026-09-20.md",
+    "apps/cms/docs/api/general-organization-fixed-date-requested-schedules-backend-cursor-prompt-2026-10-06.md",
+    "apps/cms/docs/api/payment-statement-pre-consent-reseed-backend-cursor-prompt.md",
+    "apps/cms/docs/api/cms-table-bulk-download-api-backend-handoff.md",
+    "apps/cms/docs/api/trained-teacher-sponsor-venue-roundtrip-backend-prompt-2026-09-22.md",
+    "apps/cms/docs/api/programs-gemini-dummy-seed-backend-request.md",
+    "apps/cms/docs/api/gemini-visiting-training-detail-category-api-field-mismatch-backend-prompt-2026-10-01.md",
+    "apps/cms/docs/api/gemini-approved-training-detail-backend-prompt-2026-09-30.md",
+    "apps/cms/docs/api/education-records-dummy-seed-backend-request.md",
+    "apps/cms/docs/api/program-recruitment-detail-per-case-backend-prompt-2026-10-01.md",
+    "apps/cms/docs/api/member-file-promotion-openaction-stuck-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/general-instructor-application-remote-gaps-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/ujat-survey-menu-keys-4way-backend-prompt-2026-10-02.md",
+    "apps/cms/docs/api/programs-company-school-api-backend-handoff.md",
+    "apps/cms/docs/api/general-individual-application-notification-resend-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/program-same-date-institution-schedule-change-all-types-backend-request-2026-10-02.md",
+    "apps/cms/docs/api/company-school-service-detail-json-ssot-backend-request-2026-09-28.md",
+    "apps/cms/docs/api/programs-registration-flow-api-backend-handoff.md",
+    "apps/cms/docs/api/ujat-detail-remaining-api-gaps-backend-request-2026-09-17.md",
+    "apps/cms/docs/api/program-post-reaction-type-contract-backend-cursor-prompt-2026-10-06.md",
+    "apps/cms/docs/api/trained-teacher-basic-info-column-projection-backend-prompt-2026-09-28.md",
+    "apps/cms/docs/api/general-primary-168006-nested-seed-backend-request-2026-09-15.md",
+    "apps/cms/docs/api/general-individual-assignment-submission-status-period-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/program-navigation-survey-lnb-enabled-backend-request-2026-09-28.md",
+    "apps/cms/docs/api/company-school-registration-roundtrip-backend-handoff-2026-09-27.md",
+    "apps/cms/docs/api/form-schema-immutable-application-put-backend-request-2026-09-18.md",
+    "apps/cms/docs/api/posts-dummy-seed-backend-cursor-prompt.md",
+    "apps/cms/docs/api/e2e-backend-fixes-index.md",
+    "apps/cms/docs/api/cms-table-bulk-delete-api-backend-handoff.md",
+    "apps/cms/docs/api/program-same-date-institution-schedule-change-backend-prompt-2026-09-29.md",
+    "apps/cms/docs/api/programs-ujat-api-backend-handoff.md",
+    "apps/cms/docs/api/trained-teacher-organization-notification-resend-database-error-backend-prompt-2026-09-27.md",
+    "apps/cms/docs/api/general-organization-application-notification-resend-backend-request-2026-09-27.md",
+    "apps/cms/docs/api/general-program-survey-management-remaining-backend-request-2026-10-02.md",
+    "apps/cms/docs/api/programs-non-general-registration-form-bindings-backend-request-2026-09-18.md",
+    "apps/cms/docs/api/gemini-organization-application-list-fields-backend-prompt-2026-09-30.md",
+    "apps/cms/docs/api/trained-teacher-common-info-json-replace-wipes-fields-backend-prompt-2026-09-22.md",
+    "apps/cms/docs/api/general-volunteer-application-give-up-decision-conflict-backend-request-2026-10-09.md",
+    "apps/cms/docs/api/programs-list-period-lifecycle-parity-backend-request-2026-09-17.md",
+    "apps/cms/docs/api/program-target-levels-column-ignored-backend-prompt-2026-09-30.md",
+    "apps/cms/docs/api/program-survey-binding-progress-status-delete-guard-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/program-recruitment-row-other-matters-cms-backend-request-2026-10-01.md",
+    "apps/cms/docs/api/certificate-image-storage-handoff.md",
+    "apps/cms/docs/api/education-records-dummy-seed-backend-cursor-prompt.md",
+    "apps/cms/docs/api/volunteer-application-list-essay-fields-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/agreement-consent-a4-sync-reseed-backend-cursor-prompt.md",
+    "apps/cms/docs/api/portal-instructor-role-request-create-structured-handoff-2026-08-13.md",
+    "apps/cms/docs/api/general-participant-application-screening-remote-gaps-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/volunteer-application-platform-sync-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/program-organization-application-notification-resend-all-types-backend-prompt-2026-09-27.md",
+    "apps/cms/docs/api/general-primary-168006-instructor-applications-backend-contract-2026-09-16.md",
+    "apps/cms/docs/api/client-file-access-log-backend-handoff.md",
+    "apps/cms/docs/api/settlement-item-settings-obsolete-catalog-removal-backend-request-2026-08-28.md",
+    "apps/cms/docs/api/company-school-application-remaining-backend-request-2026-10-02.md",
+    "apps/cms/docs/api/general-individual-volunteer-assignment-schedule-location-seed-backend-request-2026-10-09.md",
+    "apps/cms/docs/api/programs-registration-form-program-scoped-copy-backend-request-2026-09-15.md",
+    "apps/cms/docs/api/general-individual-progress-survey-remote-gaps-backend-request-2026-09-17.md",
+    "apps/cms/docs/api/program-post-detail-response-schema-collision-backend-cursor-prompt-2026-10-06.md",
+    "apps/cms/docs/api/general-individual-application-admin-comment-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/writing-form-seeds-backend-handoff.md",
+    "apps/cms/docs/api/trained-teacher-recruitment-info-edit-roundtrip-backend-prompt-2026-09-23.md",
+    "apps/cms/docs/api/volunteer-application-essay-unmasked-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/trained-teacher-inline-form-bindings-backend-prompt-2026-09-21.md",
+    "apps/cms/docs/api/trained-teacher-program-draft-database-error-backend-prompt-2026-09-21.md",
+    "apps/cms/docs/api/volunteer-application-general-projection-backend-cursor-prompt-2026-10-07.md",
+    "apps/cms/docs/api/settlement-payment-order-detail-ui-fields-backend-handoff.md",
+    "apps/cms/docs/api/general-instructor-approve-preferred-schedule-not-osa-backend-request-2026-10-09.md",
+    "apps/cms/docs/api/ujat-education-progress-assignment-admin-api-backend-request-2026-10-02.md",
+    "apps/cms/docs/api/program-multi-role-application-partitioning-backend-request-2026-09-19.md",
+    "apps/cms/docs/api/form-template-draft-loading-handoff.md",
+    "apps/cms/docs/api/settlement-payment-item-duplicate-noop-backend-request-2026-09-16.md",
+    "apps/cms/docs/api/backend-handoff.md",
+    "apps/cms/docs/api/program-common-info-after-recruitment-start-backend-prompt-2026-09-29.md",
+    "apps/cms/docs/api/mail-management-fe-integration-backend-handoff-2026-09-08.md",
+    "apps/cms/docs/api/settlement-payment-order-detail-backend-handoff.md",
+    "apps/cms/docs/api/members/member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md",
+    "apps/cms/docs/api/members/school-detail-admin-comment-404-backend-request-2026-09-07.md",
+    "apps/cms/docs/api/members/school-organization-program-enrollment-history-backend-handoff-2026-08-25.md",
+    "apps/cms/docs/api/members/instructor-list-settlement-status-label-ssot-backend-request-2026-09-28.md",
+    "apps/cms/docs/api/members/member-portal-consents-settings-backend-request-2026-10-06.md",
+    "apps/cms/docs/api/members/member-delete-confirmation-text-mismatch-backend-request-2026-09-10.md",
+    "apps/cms/docs/api/members/member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md",
+    "apps/cms/docs/api/members/admin-member-managed-program-history-backend-handoff-2026-08-25.md",
+    "apps/cms/docs/api/members/member-management-backend-seed-handoff-2026-08-28.md",
+    "apps/cms/docs/api/members/member-pre-register-filled-document-500-backend-request-2026-08-26.md",
+    "apps/cms/docs/api/members/member-management-fe-be-integration-handoff-2026-08-28.md",
+    "apps/cms/docs/api/members/member-consent-filled-document-backend-handoff-2026-08-25.md",
+    "apps/cms/docs/api/members/instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md",
+    "apps/cms/docs/api/members/individual-member-not-enrolled-school-name-clear-backend-request-2026-09-10.md",
+    "apps/cms/docs/api/members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md",
+    "apps/cms/docs/api/members/member-portrait-partial-consent-backend-handoff-2026-09-10.md",
+    "apps/cms/docs/api/members/member-portal-marketing-reconsent-fix-request-2026-10-06.md",
+    "apps/cms/docs/api/members/instructor-ja-grade-policy-not-initialized-backend-cursor-prompt.md",
+    "apps/cms/docs/api/members/portal-identity-onboarding-backend-request-2026-08-18.md",
+    "apps/cms/docs/api/members/member-permission-management-backend-seed-handoff-2026-08-28.md",
+    "apps/cms/docs/api/members/admin-register-signup-type-portal-profile-backend-request-2026-08-14.md",
+    "apps/cms/docs/api/members/members-all-list-email-phone-masking-backend-request-2026-08-31.md",
+    "apps/cms/docs/api/members/admin-member-server-modification-request-2026-08-12.md",
+    "apps/cms/docs/api/members/member-program-history-ui-api-parity-backend-handoff-2026-08-25.md",
+    "apps/cms/docs/api/members/instructor-cancel-approval-blocked-by-active-program-backend-cursor-prompt.md",
+    "apps/cms/docs/api/members/instructor-ja-evaluation-database-error-backend-cursor-prompt.md",
+    "apps/cms/docs/api/members/admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md",
+    "apps/cms/docs/api/members/individual-member-basic-info-patch-unmask-1365-backend-request-2026-09-04.md",
+    "apps/cms/docs/api/members/admin-me-profile-terms-backend-handoff-2026-09-16.md"
+  ],
+  "kept_count": 97,
+  "kept": [
+    {
+      "path": "apps/cms/docs/api/form-template-json-contract.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/faqs-seed.payload.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/notices-seed.payload.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/settlement-ledger-link-db-seed-update-2026-08-27.md",
+      "why": "other"
+    },
+    {
+      "path": "apps/cms/docs/api/logs-api-integration.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/inquiries-seed.payload.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/ujat-primary-case-fe-adapter-2026-09-15.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/cms-admin-sso-local-fe-checklist-prompt.md",
+      "why": "other"
+    },
+    {
+      "path": "apps/cms/docs/api/detailed-programs-seed.payload.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/education-records-seed.payload.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/notification-template-variables-openapi-qa-remaining.md",
+      "why": "other"
+    },
+    {
+      "path": "apps/cms/docs/api/forms-surveys-api-integration.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/general-primary-case-fe-adapter-2026-09-15.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/.DS_Store",
+      "why": "ds_store"
+    },
+    {
+      "path": "apps/cms/docs/api/company-school-primary-fe-adapter-2026-09-15.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/posts-api-integration.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/general-org-application-vs-participant-give-up-fe-acceptance-2026-09-16.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-remote-ssot.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/general-org-application-detail-form-seed-fe-acceptance-2026-09-16.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/trained-teacher-primary-case-fe-adapter-2026-09-15.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/program-draft-local-storage-follow-up.md",
+      "why": "other"
+    },
+    {
+      "path": "apps/cms/docs/api/dashboard-settings-seed.payload.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/textbooks-seed.payload.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/trained-teacher-common-info-edit-method-2026-09-23.md",
+      "why": "other"
+    },
+    {
+      "path": "apps/cms/docs/api/api-routes-and-client.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/education-records-seed.db-rows.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/account-payments-seed-v1.spec.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/programs-detail-lnb-crud-api-gaps.md",
+      "why": "other"
+    },
+    {
+      "path": "apps/cms/docs/api/dashboard-api-integration.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/forms-surveys-api-migration-guide.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/issuance-form-api-follow-up.md",
+      "why": "other"
+    },
+    {
+      "path": "apps/cms/docs/api/programs-api-integration.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/settlement-item-settings-seed.payload.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/data-management-api-integration.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/sponsors-seed.payload.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/orval-codegen.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/programs-api-migration-guide.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/settlement-api-integration.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/settlement-ledger-link-fe-seed-ssot-2026-08-27.md",
+      "why": "other"
+    },
+    {
+      "path": "apps/cms/docs/api/payment-orders-seed-v1.spec.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/registration-general.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/survey-student.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/document-participation-certificate.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/issuance-1.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/document-4.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/registration-economy.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/application-economy.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/document-5.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/recruitment-participant-individual.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/.DS_Store",
+      "why": "ds_store"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/survey-teacher.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/application-ujat-volunteer.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/agreement-crime.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/document-2.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/recruitment-gemini-visiting-training.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/agreement-notice.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/application-gemini-visiting-training-school.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/recruitment-economy.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/recruitment-volunteer.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/recruitment-ujat-school.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/recruitment-ujat-volunteer.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/application-trained-teachers.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/application-participant-school.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/issuance-5.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/application-volunteer.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/recruitment-instructor.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/application-gemini-visiting-training-instructor.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/registration-ujat.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/recruitment-trained-teachers.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/recruitment-participant-school.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/application-participant-individual.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/issuance-4.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/document-1.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/application-instructor.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/agreement-third-party.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/document-payment-order-pre-consent.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/agreement-expense.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/issuance-3.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/survey-admin.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/document-3-certificate.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/agreement-portrait.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/survey-default.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/issuance-2.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/document-payment-order-issue.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/registration-trained-teachers.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/issuance-ujat-edu-journal.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/form-template-seeds/application-ujat-school.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/members/qa-roster-individuals-volunteers-190045-190076.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/members/member-permission-management-seed-v1.spec.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/members/member-management-notion-parity-2026-08-28.md",
+      "why": "other"
+    },
+    {
+      "path": "apps/cms/docs/api/members/qa-roster-instructors-190022-190033.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/members/README.md",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/members/member-detail-history-seed-v1.spec.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/members/member-management-seed-v1.spec.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/members/member-permission-management-fe-be-integration-2026-08-28.md",
+      "why": "other"
+    },
+    {
+      "path": "apps/cms/docs/api/members/qa-roster-teachers-190034-190044.json",
+      "why": "forced_keep"
+    },
+    {
+      "path": "apps/cms/docs/api/be-handoff-program-dummy-seeds/README.md",
+      "why": "forced_keep"
+    }
+  ]
+}
