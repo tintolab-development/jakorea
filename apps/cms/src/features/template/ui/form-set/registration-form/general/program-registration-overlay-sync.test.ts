@@ -102,6 +102,12 @@ describe('readRegistrationOverlayProgramTitleKo', () => {
     expect(readStoredRegistrationProgramTitleKo('general', '이전 제목')).toBe('이전 제목')
   })
 
+  it('continue hydrate payload programTitleKo를 overlay에 반영한다', () => {
+    patchRegistrationOverlayProgramTitleKo('general', '이어서 작성 프로그램명')
+    expect(readRegistrationOverlayProgramTitleKo('general')).toBe('이어서 작성 프로그램명')
+    expect(readStoredRegistrationProgramTitleKo('general')).toBe('이어서 작성 프로그램명')
+  })
+
   it('1사1교 제목은 미사용 programTitleKo state로 덮지 않는다', () => {
     patchProgramRegistrationOverlay({
       'economyRegistration.basicInfo.repKo': '디지털 리터러시 교실',

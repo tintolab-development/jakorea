@@ -221,7 +221,7 @@ export function readStoredRegistrationProgramTitleKo(
     variant === 'trainedTeachers'
       ? TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY
       : GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY
-  if (!Object.prototype.hasOwnProperty.call(overlayState, key)) return fallback.trim()
+  if (!Object.prototype.hasOwnProperty.call(overlayState(), key)) return fallback.trim()
   return readRegistrationOverlayProgramTitleKo(variant)
 }
 

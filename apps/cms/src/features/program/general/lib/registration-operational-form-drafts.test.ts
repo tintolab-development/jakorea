@@ -128,6 +128,27 @@ describe('registration operational draft-owned helpers', () => {
     expect(overlay['recruit.detailInfo.programDescription']).toBe('모집 설명')
   })
 
+  it('round-trips recruitment-volunteer interview overlay keys', () => {
+    setGeneralRecruitOverlayScope('recruitment-volunteer')
+    patchGeneralRecruitOverlay({
+      'recruit.volunteer.interview.selectedSlotKeys': ['slot-a', 'slot-b'],
+      'recruit.volunteer.interview.appliedUnavailableDates': ['2026-01-01'],
+      'recruit.volunteer.interview.exclusionState': { mode: 'weekends' },
+    })
+    const collected = collectOperationalOverlayForCatalogId('recruitment-volunteer')
+    expect(collected?.['recruit.volunteer.interview.selectedSlotKeys']).toEqual([
+      'slot-a',
+      'slot-b',
+    ])
+
+    resetAllOperationalOverlayStoresForTests()
+    applyOperationalOverlayForCatalogId('recruitment-volunteer', collected ?? {})
+    setGeneralRecruitOverlayScope('recruitment-volunteer')
+    const again = collectOperationalOverlayForCatalogId('recruitment-volunteer')
+    expect(again?.['recruit.volunteer.interview.selectedSlotKeys']).toEqual(['slot-a', 'slot-b'])
+    expect(again?.['recruit.volunteer.interview.appliedUnavailableDates']).toEqual(['2026-01-01'])
+  })
+
   it('collects individual recruit detailInfo with participant fields', () => {
     setOperationalOverlayScope('recruitment-participant-individual')
     patchGeneralRecruitOverlay({

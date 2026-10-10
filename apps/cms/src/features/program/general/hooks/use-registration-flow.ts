@@ -18,7 +18,11 @@ import {
   lookupWritingTemplateRegistry,
   resolveWritingTemplateDisplayName,
 } from '@/features/template/lib/lookup-writing-template-registry'
-import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
+import {
+  flushParticipantSessionOverlaysToOperationalStores,
+  useProgramParticipantApplicationEditor,
+} from '@/features/template/hooks/use-program-participant-application-editor'
+import { patchRegistrationOverlayProgramTitleKo } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
 import {
@@ -236,6 +240,10 @@ export function useGeneralProgramRegistrationFlow(
         )
         setActiveStep(restored)
         onStepChangeRef.current?.(restored)
+      }
+      const titleKo = payload?.programTitleKo?.trim()
+      if (titleKo) {
+        patchRegistrationOverlayProgramTitleKo(registrationFormVariant, titleKo)
       }
     })().catch(error => {
       console.warn('[registration-program-draft] hydrate failed', error)
@@ -519,6 +527,7 @@ export function useGeneralProgramRegistrationFlow(
       if (!isProgramStep && isParticipantStep) {
         await participantVm.handleSave({ silent: true })
       }
+      flushParticipantSessionOverlaysToOperationalStores()
       await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
       syncRegistrationProgramDraftSession({
         programType,
