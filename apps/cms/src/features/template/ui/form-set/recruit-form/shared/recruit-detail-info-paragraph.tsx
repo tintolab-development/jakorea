@@ -25,6 +25,7 @@ import {
   useRecruitDetailContentResetGeneration,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
+  isEphemeralThumbPreviewUrl,
   RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID,
   recruitDetailAttachmentFileNamesKey,
   recruitDetailAttachmentFileObjectIdsKey,
@@ -34,6 +35,7 @@ import {
   recruitDetailThumbObjectUrlKey,
   trackRecruitDetailMediaUpload,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
+import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
 import { resolveRecruitDetailTextFieldOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-text-field-keys'
 import {
   contentUrlForFileObjectId,
@@ -315,30 +317,75 @@ export function RecruitDetailInfoParagraph({
   const attachmentFileObjectIdsKey = recruitDetailAttachmentFileObjectIdsKey(overlayKeyPrefix)
   const additionalContentKey = recruitDetailAdditionalContentOverlayKey(overlayKeyPrefix)
 
-  const [thumbObjectUrl, setThumbObjectUrl] = useGeneralRecruitOverlayKv<string | null>(
-    thumbObjectUrlKey,
-    null
-  )
+  const [persistedThumbObjectUrl, setPersistedThumbObjectUrl] = useGeneralRecruitOverlayKv<
+    string | null
+  >(thumbObjectUrlKey, null)
   const [thumbFileName, setThumbFileName] = useGeneralRecruitOverlayKv<string | null>(
     thumbFileNameKey,
     null
   )
+  const [thumbFileObjectId] = useGeneralRecruitOverlayKv<number | null>(thumbFileObjectIdKey, null)
   const [attachmentFileNames] = useGeneralRecruitOverlayKv<string[]>(attachmentFileNamesKey, [])
+  const [livePreviewUrl, setLivePreviewUrl] = useState<string | null>(null)
+  const [storedPreviewUrl, setStoredPreviewUrl] = useState<string | null>(null)
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
   const [uploadingAttachments, setUploadingAttachments] = useState(false)
 
-  const revokeThumb = useCallback((url: string | null) => {
+  const revokeThumb = useCallback((url: string | null | undefined) => {
     if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
   }, [])
+
+  useEffect(() => {
+    if (!isEphemeralThumbPreviewUrl(persistedThumbObjectUrl)) return
+    setPersistedThumbObjectUrl(null)
+  }, [persistedThumbObjectUrl, setPersistedThumbObjectUrl])
+
+  useEffect(() => {
+    if (livePreviewUrl) return
+    const id =
+      typeof thumbFileObjectId === 'number' && Number.isFinite(thumbFileObjectId)
+        ? thumbFileObjectId
+        : Number(thumbFileObjectId)
+    if (!Number.isFinite(id) || id <= 0) {
+      setStoredPreviewUrl(prev => {
+        revokeThumb(prev)
+        return null
+      })
+      return
+    }
+    let cancelled = false
+    void loadProgramThumbnailPreviewUrl(id)
+      .then(url => {
+        if (cancelled) return
+        setStoredPreviewUrl(prev => {
+          if (prev !== url) revokeThumb(prev)
+          return url
+        })
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setStoredPreviewUrl(prev => {
+            revokeThumb(prev)
+            return null
+          })
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [livePreviewUrl, revokeThumb, thumbFileObjectId])
 
   const handleThumbnailFiles = useCallback(
     (files: File[]) => {
       const image = files.find(f => /^image\//u.test(f.type)) ?? files[0]
       if (!image) return
-      const previousPreview = thumbObjectUrl
       const blobUrl = URL.createObjectURL(image)
+      setLivePreviewUrl(prev => {
+        revokeThumb(prev)
+        return blobUrl
+      })
       setThumbFileName(image.name)
-      setThumbObjectUrl(blobUrl)
+      setPersistedThumbObjectUrl(null)
       setUploadingThumbnail(true)
       trackRecruitDetailMediaUpload(
         (async () => {
@@ -350,13 +397,19 @@ export function RecruitDetailInfoParagraph({
             patchGeneralRecruitOverlay({
               [thumbFileObjectIdKey]: uploaded.fileObjectId,
               [thumbContentUrlKey]: contentUrlForFileObjectId(uploaded.fileObjectId),
+              [thumbObjectUrlKey]: null,
             })
-            revokeThumb(previousPreview)
           } catch {
             patchGeneralRecruitOverlay({
               [thumbFileObjectIdKey]: null,
               [thumbContentUrlKey]: null,
+              [thumbObjectUrlKey]: null,
             })
+            setLivePreviewUrl(prev => {
+              revokeThumb(prev)
+              return null
+            })
+            setThumbFileName(null)
           } finally {
             setUploadingThumbnail(false)
           }
@@ -365,29 +418,37 @@ export function RecruitDetailInfoParagraph({
     },
     [
       revokeThumb,
+      setPersistedThumbObjectUrl,
       setThumbFileName,
-      setThumbObjectUrl,
       thumbContentUrlKey,
       thumbFileObjectIdKey,
-      thumbObjectUrl,
+      thumbObjectUrlKey,
     ]
   )
 
   const handleRemoveThumbnail = useCallback(() => {
-    revokeThumb(thumbObjectUrl)
+    setLivePreviewUrl(prev => {
+      revokeThumb(prev)
+      return null
+    })
+    setStoredPreviewUrl(prev => {
+      revokeThumb(prev)
+      return null
+    })
     setThumbFileName(null)
-    setThumbObjectUrl(null)
+    setPersistedThumbObjectUrl(null)
     patchGeneralRecruitOverlay({
       [thumbFileObjectIdKey]: null,
       [thumbContentUrlKey]: null,
+      [thumbObjectUrlKey]: null,
     })
   }, [
     revokeThumb,
+    setPersistedThumbObjectUrl,
     setThumbFileName,
-    setThumbObjectUrl,
     thumbContentUrlKey,
     thumbFileObjectIdKey,
-    thumbObjectUrl,
+    thumbObjectUrlKey,
   ])
 
   const handleAttachmentFiles = useCallback(
@@ -455,8 +516,7 @@ export function RecruitDetailInfoParagraph({
     [attachmentFileNamesKey, attachmentFileObjectIdsKey]
   )
 
-  // unmount 시 blob revoke 금지 — overlay 에 URL 이 남아 미리보기에서 깨짐 (StrictMode 포함).
-  // 교체·삭제 시에만 revokeThumb.
+  const thumbnailPreviewUrl = livePreviewUrl ?? storedPreviewUrl
 
   return (
     <div className="recruit-detail-info-paragraph__forms">
@@ -467,7 +527,7 @@ export function RecruitDetailInfoParagraph({
             fullRow
             edit={
               <ThumbnailUploadField
-                previewUrl={thumbObjectUrl}
+                previewUrl={thumbnailPreviewUrl}
                 fileName={thumbFileName}
                 guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
                 uploading={uploadingThumbnail}

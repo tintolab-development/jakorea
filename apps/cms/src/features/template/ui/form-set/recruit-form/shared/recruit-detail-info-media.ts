@@ -57,6 +57,11 @@ export function recruitDetailThumbObjectUrlKey(prefix: string): string {
   return `${prefix}.thumbObjectUrl`
 }
 
+/** overlay에 남은 blob 주소는 세션이 끝나면 무효다. img src로 쓰지 않는다. */
+export function isEphemeralThumbPreviewUrl(url: string | null | undefined): boolean {
+  return Boolean(url?.trim().startsWith('blob:'))
+}
+
 export function recruitDetailAttachmentFileNamesKey(prefix: string): string {
   return `${prefix}.attachmentFileNames`
 }

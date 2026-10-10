@@ -28,7 +28,7 @@ export function AdminRegisterStepIdentity({
   idleDescription,
 }: AdminRegisterStepIdentityProps) {
   return (
-    <div>
+    <div style={{ width: '100%' }}>
       <RegisterStepHeader
         title="본인인증을 진행해 주세요"
         description={

@@ -103,7 +103,7 @@ export function PasswordChangeRequiredChangePasswordPage() {
       <div>
         <RegisterStepHeader
           title="비밀번호를 변경해 주세요."
-          description="현재 비밀번호는 가입된 이메일 주소와 동일합니다."
+          description="안전한 계정 이용을 위해 주기적으로 변경해 주세요."
         />
 
         <Form
@@ -115,7 +115,7 @@ export function PasswordChangeRequiredChangePasswordPage() {
             void handleSubmit(values)
           }}
         >
-          <div className="password-change-required-change-form__field">
+          <div style={{ marginTop: '40px' }}>
             <CmsInput
               label="이메일"
               value={email}
@@ -129,7 +129,6 @@ export function PasswordChangeRequiredChangePasswordPage() {
 
           <Form.Item
             name="newPassword"
-            className="password-change-required-change-form__item"
             rules={[{ required: true, message: '새 비밀번호를 입력해 주세요.' }]}
           >
             <CmsInput
@@ -138,6 +137,7 @@ export function PasswordChangeRequiredChangePasswordPage() {
               type="password"
               inputSize="xlarge"
               width="100%"
+              style={{ marginTop: '20px' }}
               placeholder="새 비밀번호를 입력해 주세요"
               autoComplete="new-password"
               allowClear
@@ -146,7 +146,6 @@ export function PasswordChangeRequiredChangePasswordPage() {
 
           <Form.Item
             name="newPasswordConfirm"
-            className="password-change-required-change-form__item"
             rules={[{ required: true, message: '새 비밀번호를 한 번 더 입력해 주세요.' }]}
           >
             <CmsInput
@@ -161,7 +160,7 @@ export function PasswordChangeRequiredChangePasswordPage() {
             />
           </Form.Item>
 
-          <div className="auth-actions">
+          <div className="auth-actions" style={{ marginTop: '20px' }}>
             <CmsButton variant="primary" size="h52" type="submit" width="100%" loading={submitting}>
               비밀번호 변경하기
             </CmsButton>

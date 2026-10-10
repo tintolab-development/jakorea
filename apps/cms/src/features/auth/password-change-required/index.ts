@@ -19,5 +19,3 @@ export {
 } from './validate-change-password'
 
 export { usePasswordChangeRequiredGuard } from './use-password-change-required-guard'
-
-export { PasswordChangeRequiredCompleteView } from './complete-view'

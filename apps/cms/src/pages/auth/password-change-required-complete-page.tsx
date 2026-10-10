@@ -10,11 +10,11 @@ import {
   clearPasswordChangeRequiredComplete,
   clearPasswordChangeRequiredWizardState,
   hasPasswordChangeRequiredComplete,
-  PasswordChangeRequiredCompleteView,
 } from '@/features/auth/password-change-required'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
+import { FindPasswordCompleteView } from '@/features/auth/ui/find-password/complete-view'
 
-import './password-change-required-complete-page.css'
+import '@/pages/auth/find-password-page.css'
 
 export function PasswordChangeRequiredCompletePage() {
   const navigate = useNavigate()
@@ -39,8 +39,8 @@ export function PasswordChangeRequiredCompletePage() {
   }
 
   return (
-    <AuthPageShell showLogo={false} cardClassName="auth-card--password-change-required-complete">
-      <PasswordChangeRequiredCompleteView onGoLogin={handleGoLogin} />
+    <AuthPageShell showLogo={false} cardClassName="auth-card--find-password-complete">
+      <FindPasswordCompleteView onGoLogin={handleGoLogin} />
     </AuthPageShell>
   )
 }
