@@ -65,3 +65,9 @@ function CurriculumSection({ structure, sessions, isEdit }) {
 - 컴포넌트를 함수로 호출 금지 (`Should have a queue`): [react-component-render-as-jsx.mdc](./react-component-render-as-jsx.mdc)
 - CMS: [custom-hooks.md](../../apps/cms/.cursor/rules/coding/custom-hooks.md) · [CMS 위임 규칙](../../apps/cms/.cursor/rules/coding/react-hooks-after-early-return.mdc)
 - ESLint: `react-hooks/rules-of-hooks` (비활성화하지 말 것)
+
+---
+
+## CMS 래퍼 이관 (2026-10-10)
+
+`apps/cms/.cursor/rules/coding/react-hooks-after-early-return.mdc` 위임 래퍼를 제거하고 발췌는 [`docs/audit/extracted-ssot-2026-10-10/merge-rules.md`](../docs/audit/extracted-ssot-2026-10-10/merge-rules.md) 에 보관했다. CMS 경로는 이 루트 규칙을 따른다.

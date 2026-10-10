@@ -87,3 +87,9 @@ const getSubject = () => subjectRef.current
 - [ ] 툴바 bold 등 active는 `useEditorState`로 갱신되는가
 
 **Last updated:** 2026-09-10
+
+---
+
+## CMS 래퍼 이관 (2026-10-10)
+
+`apps/cms/.cursor/rules/coding/rich-text-compose-input-perf.mdc` 위임 래퍼를 제거하고 발췌는 [`docs/audit/extracted-ssot-2026-10-10/merge-rules.md`](../docs/audit/extracted-ssot-2026-10-10/merge-rules.md) 에 보관했다. CMS 경로는 이 루트 규칙을 따른다.
