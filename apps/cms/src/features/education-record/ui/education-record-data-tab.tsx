@@ -6,11 +6,11 @@
  * - 세로는 합계 탭과 같이 레이아웃(페이지) 스크롤. 가로는 테이블만 스크롤.
  */
 
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { EducationRecordRow } from '@/features/education-record/model/education-record-types'
 import '@/shared/components/list-page/list-page-layout.css'
 import './education-record-data-tab.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 /** 실적 데이터 테이블 가로 스크롤 기준(33개 컬럼 width 합 + 여유) */
 const EDUCATION_RECORD_TABLE_SCROLL_X = 5250
@@ -38,7 +38,7 @@ export function EducationRecordDataTab({
       </div>
 
       <div className="list-page-layout__table-shell">
-        <Table<EducationRecordRow>
+        <CmsDataTable<EducationRecordRow>
           rowKey="id"
           className="cms-data-table cms-data-table--skip-auto-no-col"
           columns={antdColumns}

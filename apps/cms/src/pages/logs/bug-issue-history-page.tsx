@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -8,15 +7,14 @@ import { bugIssueHistoryTablePageConfig } from '@/features/download/model/bug-is
 import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
 import { useBugIssueHistoryQuery } from '@/features/logs/hooks/use-bug-issue-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
-import { LOGS_EMPTY_SEARCH_TEXT } from '@/features/logs/lib/logs-empty-copy'
 import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   EMPTY_TABLE_PAGE_CONTEXT,
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
-import { EmptyState } from '@/shared/ui'
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -46,7 +44,9 @@ export default function BugIssueHistoryPage() {
     fetchNextPage,
   } = useBugIssueHistoryQuery(searchParams)
 
-  const { pendingFilters, handleFilterChange, applySearch, tableData } = useTablePage(
+  const { pendingFilters, handleFilterChange, applySearch, tableData,
+    hasActiveFilters,
+  } = useTablePage(
     bugIssueHistoryTablePageConfig,
     {
       data: rows,
@@ -103,6 +103,7 @@ export default function BugIssueHistoryPage() {
 
   return (
     <FilterTableLayout
+      hasActiveFilters={hasActiveFilters}
       bordered={false}
       fields={bugIssueHistoryFilterFields}
       filters={{
@@ -127,7 +128,7 @@ export default function BugIssueHistoryPage() {
         />
       ) : (
         <>
-          <Table<BugIssueLog>
+          <CmsDataTable<BugIssueLog>
             rowKey="id"
             className="cms-data-table"
             tableLayout="fixed"
@@ -135,9 +136,6 @@ export default function BugIssueHistoryPage() {
             columns={columns}
             dataSource={tableData}
             pagination={false}
-            locale={{
-              emptyText: <EmptyState description={LOGS_EMPTY_SEARCH_TEXT} />,
-            }}
           />
           <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
         </>
