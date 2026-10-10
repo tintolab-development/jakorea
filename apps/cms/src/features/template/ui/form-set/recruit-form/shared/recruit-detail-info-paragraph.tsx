@@ -33,6 +33,7 @@ import {
   recruitDetailThumbFileNameKey,
   recruitDetailThumbFileObjectIdKey,
   recruitDetailThumbObjectUrlKey,
+  resolveRecruitDetailThumbFileObjectId,
   trackRecruitDetailMediaUpload,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
@@ -324,8 +325,16 @@ export function RecruitDetailInfoParagraph({
     thumbFileNameKey,
     null
   )
-  const [thumbFileObjectId] = useGeneralRecruitOverlayKv<number | null>(thumbFileObjectIdKey, null)
+  const [thumbFileObjectId, setThumbFileObjectId] = useGeneralRecruitOverlayKv<number | null>(
+    thumbFileObjectIdKey,
+    null
+  )
+  const [thumbContentUrl] = useGeneralRecruitOverlayKv<string | null>(thumbContentUrlKey, null)
   const [attachmentFileNames] = useGeneralRecruitOverlayKv<string[]>(attachmentFileNamesKey, [])
+  const resolvedThumbFileObjectId = resolveRecruitDetailThumbFileObjectId(
+    thumbFileObjectId,
+    thumbContentUrl
+  )
   const [livePreviewUrl, setLivePreviewUrl] = useState<string | null>(null)
   const [storedPreviewUrl, setStoredPreviewUrl] = useState<string | null>(null)
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
@@ -341,12 +350,16 @@ export function RecruitDetailInfoParagraph({
   }, [persistedThumbObjectUrl, setPersistedThumbObjectUrl])
 
   useEffect(() => {
+    if (resolvedThumbFileObjectId == null || thumbFileObjectId === resolvedThumbFileObjectId) {
+      return
+    }
+    setThumbFileObjectId(resolvedThumbFileObjectId)
+  }, [resolvedThumbFileObjectId, setThumbFileObjectId, thumbFileObjectId])
+
+  useEffect(() => {
     if (livePreviewUrl) return
-    const id =
-      typeof thumbFileObjectId === 'number' && Number.isFinite(thumbFileObjectId)
-        ? thumbFileObjectId
-        : Number(thumbFileObjectId)
-    if (!Number.isFinite(id) || id <= 0) {
+    const id = resolvedThumbFileObjectId
+    if (id == null) {
       setStoredPreviewUrl(prev => {
         revokeThumb(prev)
         return null
@@ -373,7 +386,7 @@ export function RecruitDetailInfoParagraph({
     return () => {
       cancelled = true
     }
-  }, [livePreviewUrl, revokeThumb, thumbFileObjectId])
+  }, [livePreviewUrl, resolvedThumbFileObjectId, revokeThumb])
 
   const handleThumbnailFiles = useCallback(
     (files: File[]) => {

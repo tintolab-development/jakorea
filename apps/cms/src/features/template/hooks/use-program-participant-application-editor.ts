@@ -186,6 +186,7 @@ import {
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay,
   peekWizardContentResetPending,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import { awaitRecruitDetailMediaUploads } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import {
   overlayEntriesAbsentFromLive,
   recruitDetailInfoOverlayPrefixForEditorVariant,
@@ -1812,6 +1813,8 @@ export function useProgramParticipantApplicationEditor(
 
   const handleSave = useCallback(async (options?: { silent?: boolean }) => {
     try {
+      // 파일명만 먼저 overlay에 남는다. id·contentUrl은 업로드 완료 후이므로 저장 전에 기다린다.
+      await awaitRecruitDetailMediaUploads()
       const templateId = usesRegistrationWizardDraft
         ? resolvePersistTemplateId()
         : localOnlyDraftPersistence

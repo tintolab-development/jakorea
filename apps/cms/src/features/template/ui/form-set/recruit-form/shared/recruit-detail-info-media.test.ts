@@ -25,6 +25,7 @@ import {
   bindRecruitDetailMediaAfterProgramCreate,
   isEphemeralThumbPreviewUrl,
   readRecruitDetailMediaFromOverlay,
+  resolveRecruitDetailThumbFileObjectId,
 } from './recruit-detail-info-media'
 
 describe('isEphemeralThumbPreviewUrl', () => {
@@ -68,6 +69,35 @@ describe('readRecruitDetailMediaFromOverlay', () => {
     })
     expect(media.thumbFileObjectId).toBe(2055850)
     expect(media.thumbFileName).toBe('KakaoTalk_Photo_2026-09-23-15-45-05 (1) (1).jpeg')
+  })
+
+  it('resolves thumbFileObjectId from content URL when overlay id is missing', () => {
+    const media = readRecruitDetailMediaFromOverlay({
+      'recruit.detailInfo.thumbContentUrl': '/api/admin/files/77/content',
+      'recruit.detailInfo.thumbFileName': 'poster.png',
+    })
+    expect(media.thumbFileObjectId).toBe(77)
+    expect(media.keyVisualImage).toBe('/api/admin/files/77/content')
+  })
+})
+
+describe('resolveRecruitDetailThumbFileObjectId', () => {
+  it('prefers numeric overlay id over content URL', () => {
+    expect(
+      resolveRecruitDetailThumbFileObjectId(9, '/api/admin/files/77/content')
+    ).toBe(9)
+  })
+
+  it('parses id from content URL', () => {
+    expect(
+      resolveRecruitDetailThumbFileObjectId(null, '/api/admin/files/77/content')
+    ).toBe(77)
+  })
+
+  it('ignores blob preview URLs', () => {
+    expect(
+      resolveRecruitDetailThumbFileObjectId(null, 'blob:http://localhost/preview')
+    ).toBeUndefined()
   })
 })
 
