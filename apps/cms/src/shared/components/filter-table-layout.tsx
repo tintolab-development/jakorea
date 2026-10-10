@@ -12,6 +12,7 @@
 
 import { useMemo, type ReactNode } from 'react'
 import { Spin } from 'antd'
+import { CmsTableEmptyVariantProvider } from '@/shared/ui/cms-table-empty-variant-context'
 import './filter-table-layout.css'
 import { resolveFilterTableExcelFilename } from './filter-table-excel-filename'
 import {
@@ -83,6 +84,11 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
    * 조회 버튼 스피너는 TableFilterGroup의 `loading`을 그대로 쓴다.
    */
   contentLoading?: boolean
+  /**
+   * `useTablePage`의 `hasActiveFilters` — 자식 `CmsDataTable` empty variant 자동 분기
+   * (false: 등록 데이터 없음 / true: 검색 결과 없음). 미전달 시 기본 `no-data`.
+   */
+  hasActiveFilters?: boolean
   /** 필터·헤더 아래 테이블 본문 */
   children?: ReactNode
   className?: string
@@ -106,6 +112,7 @@ export function FilterTableLayout({
   topNav,
   contentVariant = 'table',
   contentLoading = false,
+  hasActiveFilters,
   children,
   className,
   multiRowGridMode,
@@ -115,6 +122,26 @@ export function FilterTableLayout({
   ...tableFilterGroupRest
 }: FilterTableLayoutProps) {
   const roleCode = useSessionAdminRoleCode()
+
+  const tableBody =
+    contentLoading ? (
+      <div className="page-content-loading page-content-loading--table-slot" role="status">
+        <Spin size="large" />
+      </div>
+    ) : contentVariant === 'calendar' ? (
+      <div className="filter-table-layout__calendar-body">{children}</div>
+    ) : (
+      children
+    )
+
+  const tableSlot =
+    hasActiveFilters === undefined ? (
+      tableBody
+    ) : (
+      <CmsTableEmptyVariantProvider hasActiveFilters={hasActiveFilters}>
+        {tableBody}
+      </CmsTableEmptyVariantProvider>
+    )
   const hasExplicitRows = rows != null && rows.length > 0
   const singleRowFields = tableFilterGroupRest.fields ?? []
   const hasPctWidthFields = singleRowFields.some(isFilterFieldPctWidth)
@@ -245,17 +272,7 @@ export function FilterTableLayout({
         </div>
       ) : null}
 
-      <div className="filter-table-layout__table">
-        {contentLoading ? (
-          <div className="page-content-loading page-content-loading--table-slot" role="status">
-            <Spin size="large" />
-          </div>
-        ) : contentVariant === 'calendar' ? (
-          <div className="filter-table-layout__calendar-body">{children}</div>
-        ) : (
-          children
-        )}
-      </div>
+      <div className="filter-table-layout__table">{tableSlot}</div>
     </div>
   )
 }
