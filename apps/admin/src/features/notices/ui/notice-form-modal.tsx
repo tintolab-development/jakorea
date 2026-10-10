@@ -7,11 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import type {
-  Notice,
-  NoticeAttachment,
-  NoticeCreateInput,
-} from '@/entities/notices/model/types'
+import type { Notice, NoticeAttachment, NoticeCreateInput } from '@/entities/notices/model/types'
 import { DEFAULT_AUTHOR } from '@/features/notices/api/store'
 import { shouldUseNoticesRemoteApi } from '@/features/notices/api/capabilities'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
@@ -223,9 +219,7 @@ export function NoticeFormModal({
       return
     }
     const contentMarkdown = (
-      shouldUseNoticesRemoteApi() || editorContentFormat === 'html'
-        ? getHTML()
-        : getMarkdown()
+      shouldUseNoticesRemoteApi() || editorContentFormat === 'html' ? getHTML() : getMarkdown()
     ).trim()
     if (!contentMarkdown) {
       showAlert({ title: '입력 확인', content: '공지사항 내용을 입력해 주세요.' })
@@ -272,7 +266,6 @@ export function NoticeFormModal({
         onCancel={onCancel}
         title={titleText}
         size="large"
-        className="notice-form-modal"
         footer={
           <div className="notice-form-modal__footer">
             {mode === 'edit' && onDelete ? (
