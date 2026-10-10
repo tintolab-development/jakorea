@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
@@ -544,7 +544,7 @@ export default function TextbookPage() {
           data: filteredRows,
         }}
       >
-        <Table<TextbookRow>
+        <CmsDataTable<TextbookRow>
           rowKey="id"
           className="cms-data-table textbook-page__table"
           tableLayout="fixed"

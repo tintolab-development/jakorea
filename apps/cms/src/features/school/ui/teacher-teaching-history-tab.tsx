@@ -3,8 +3,8 @@
  */
 
 import { useState, useCallback, useMemo } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   type TeachingHistoryRow,
   type TeachingProgramStatus,
@@ -145,7 +145,7 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
         </h3>
       </div>
       {data.length > 0 ? (
-        <Table<TeachingHistoryRow>
+        <CmsDataTable<TeachingHistoryRow>
           columns={columns}
           dataSource={data}
           rowKey="id"

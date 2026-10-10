@@ -3,12 +3,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -332,7 +332,7 @@ export function PaymentOrderInstructorSettlementTable({
         }
       >
         <div className="payment-order-program-status-detail__table-wrap participating-institutions-section__table-wrap">
-          <Table<PaymentOrderAdminInstructorDetailProgramRow>
+          <CmsDataTable<PaymentOrderAdminInstructorDetailProgramRow>
             className="payment-order-program-status-detail__table participating-institutions-section__table cms-data-table"
             rowKey="id"
             columns={columns}

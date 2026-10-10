@@ -1,7 +1,8 @@
 import { useState, type Key } from 'react'
-import { Flex, Space, Table } from 'antd'
+import { Flex, Space } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   SponsorContactRow,
   SponsorLogoFile,
@@ -418,7 +419,7 @@ export function SponsorContactsSection({
           </CmsButton>
         </div>
       </div>
-      <Table<SponsorContactRow>
+      <CmsDataTable<SponsorContactRow>
         rowKey="id"
         className="cms-data-table"
         columns={columns}

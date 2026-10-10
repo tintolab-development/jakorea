@@ -3,8 +3,9 @@
  */
 
 import { useState, useMemo, useCallback } from 'react'
-import { Table, Input, Calendar } from 'antd'
+import { Input, Calendar } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   LeftOutlined,
   RightOutlined,
@@ -368,7 +369,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
       {viewMode === 'list' && (
         <div className="settlement-tab__list-wrap">
           {filteredRows.length > 0 ? (
-            <Table<SettlementRow>
+            <CmsDataTable<SettlementRow>
               columns={columns}
               dataSource={filteredRows}
               rowKey="id"

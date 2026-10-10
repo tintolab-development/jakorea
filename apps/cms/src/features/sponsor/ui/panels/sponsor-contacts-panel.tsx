@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { Flex, Table } from 'antd'
+import { Flex } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-management.types'
 import { buildContactColumns } from '@/features/sponsor/columns/sponsor-contact-columns'
@@ -8,6 +8,7 @@ import type { UseContactsListReturn } from '@/features/sponsor/hooks/use-contact
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { SponsorContactDeleteModal } from '@/features/sponsor/ui/modal/sponsor-contact-delete-modal'
 import { SponsorContactTypeChangeBlockedModal } from '@/features/sponsor/ui/modal/sponsor-contact-type-change-blocked-modal'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE,
   SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE,
@@ -212,7 +213,7 @@ export function SponsorContactsPanel({
           </>
         }
       >
-        <Table<SponsorContactRow>
+        <CmsDataTable<SponsorContactRow>
           rowKey="id"
           className="cms-data-table"
           columns={columns}

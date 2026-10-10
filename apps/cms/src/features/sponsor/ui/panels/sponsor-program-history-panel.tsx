@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState, type MouseEvent } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { TableRowSelection } from 'antd/es/table/interface'
 import { useNavigate } from 'react-router-dom'
@@ -7,6 +6,7 @@ import type { UseProgramHistoryFilterReturn } from '@/features/sponsor/hooks/use
 import type { SponsorProgramHistoryRow } from '@/features/sponsor/model/sponsor-management.types'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   CmsButton,
   DeleteGuideModal,
@@ -266,7 +266,7 @@ export function SponsorProgramHistoryPanel({
           data: filteredRows,
         }}
       >
-        <Table<SponsorProgramHistoryRow>
+        <CmsDataTable<SponsorProgramHistoryRow>
           rowKey="id"
           className="cms-data-table"
           columns={columns}

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -10,6 +9,7 @@ import { useDetailedProgramMutations } from '@/features/detailed-program/hooks/u
 import { isDetailedProgramInUseDeleteError } from '@/features/detailed-program/lib/is-detailed-program-in-use-delete-error'
 import { detailedProgramManagementFilterFields } from '@/features/detailed-program/model/detailed-program-management-filter-fields'
 import { detailedProgramManagementTablePageConfig } from '@/features/detailed-program/model/detailed-program-management-table.config'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   DetailedProgramDraft,
   DetailedProgramManagementRow,
@@ -391,7 +391,7 @@ export default function DetailedProgramPage() {
           data: tableDisplayData,
         }}
       >
-        <Table<DetailedProgramManagementRow>
+        <CmsDataTable<DetailedProgramManagementRow>
           rowKey="id"
           className={
             isEditMode

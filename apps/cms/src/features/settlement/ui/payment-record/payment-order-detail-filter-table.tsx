@@ -3,7 +3,7 @@
  */
 
 import type { Dayjs } from 'dayjs'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   PaymentOrderAdminInstructorDetailProgramRow,
   PaymentOrderAdminInstructorRow,
@@ -146,7 +146,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
           </>
         }
       >
-        <Table<PaymentOrderDetailLineRow>
+        <CmsDataTable<PaymentOrderDetailLineRow>
           className="cms-data-table"
           rowKey="id"
           columns={columns}

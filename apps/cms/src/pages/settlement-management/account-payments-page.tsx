@@ -5,9 +5,10 @@
 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   ACCOUNT_PAYMENT_STATUS_LABELS,
   mockAccountPaymentRows,
@@ -966,7 +967,7 @@ export default function AccountPaymentsPage() {
                   : '목록을 불러오지 못했습니다.'}
               </div>
             ) : (
-              <Table<AccountPaymentRow>
+              <CmsDataTable<AccountPaymentRow>
               className="cms-data-table"
               rowKey="id"
               columns={columns}

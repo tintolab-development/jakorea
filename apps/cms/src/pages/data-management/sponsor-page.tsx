@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { CSSProperties, MouseEvent } from 'react'
-import { Table, Typography } from 'antd'
+import { Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams, useNavigate } from 'react-router-dom'
@@ -8,6 +8,7 @@ import { getDataManagementApiErrorMessage } from '@/features/data-management/api
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useSponsorListQuery } from '@/features/sponsor/hooks/use-sponsor-list-query'
 import { useSponsorMutations } from '@/features/sponsor/hooks/use-sponsor-mutations'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   donationAmountColumnWidth,
   formatDonationAmount,
@@ -104,7 +105,9 @@ export default function SponsorPage() {
     applySearch: handleSearch,
     handleFilterChange,
     displayedCount,
-    tableData } = useTablePage(sponsorManagementTablePageConfig, {
+    tableData,
+    hasActiveFilters,
+  } = useTablePage(sponsorManagementTablePageConfig, {
     data: rows,
     searchParams,
     setSearchParams,
@@ -381,6 +384,7 @@ export default function SponsorPage() {
   return (
     <>
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         className="sponsor-page"
         bordered={false}
         fields={sponsorManagementFilterFields}
@@ -414,7 +418,7 @@ export default function SponsorPage() {
           data: tableData,
         }}
       >
-        <Table<SponsorManagementRow>
+        <CmsDataTable<SponsorManagementRow>
           rowKey="id"
           className="sponsor-page__table cms-data-table cms-data-table--hoverable"
           style={
