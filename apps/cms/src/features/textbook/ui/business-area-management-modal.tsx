@@ -1,13 +1,18 @@
 import type { ColumnsType } from 'antd/es/table'
-import { ActionResultModal, ContentModal, CmsButton } from '@/shared/ui'
+import {
+  ActionResultModal,
+  ContentModal,
+  CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS,
+  CmsButton,
+} from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { useBusinessAreaManagementModal } from '@/features/textbook/hooks/use-business-area-management-modal'
 import type { TextbookBusinessAreaRow } from '@/features/textbook/model/business-area.types'
 import { BusinessAreaDeleteBlockedModal } from '@/features/textbook/ui/business-area-delete-blocked-modal'
 import { BusinessAreaDuplicateAlertModal } from '@/features/textbook/ui/business-area-duplicate-alert-modal'
-import './business-area-management-modal.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
+/** 모달 가로 패딩 30×2 제외한 테이블 영역 (600 − 60) */
 const TABLE_INNER_WIDTH = 540
 const NAME_COL_WIDTH = 324
 const ACTIONS_COL_WIDTH = TABLE_INNER_WIDTH - NAME_COL_WIDTH
@@ -31,6 +36,17 @@ export function BusinessAreaManagementModal({
     onSaved,
   })
 
+  const {
+    editingId,
+    editDraft,
+    setEditDraft,
+    editInputRef,
+    startEdit,
+    cancelEdit,
+    submitEdit,
+    requestDelete,
+  } = ctrl
+
   const columns: ColumnsType<TextbookBusinessAreaRow> = [
     {
       title: '사업 분야명',
@@ -39,20 +55,20 @@ export function BusinessAreaManagementModal({
       width: NAME_COL_WIDTH,
       align: 'center',
       render: (_: string, row) =>
-        ctrl.editingId === row.id ? (
+        editingId === row.id ? (
           <CmsInput
-            ref={ctrl.editInputRef}
+            ref={editInputRef}
             inputSize="medium"
             width="100%"
-            value={ctrl.editDraft}
-            onChange={e => ctrl.setEditDraft(e.target.value)}
+            value={editDraft}
+            onChange={e => setEditDraft(e.target.value)}
             onPressEnter={() => {
-              void ctrl.submitEdit()
+              void submitEdit()
             }}
             aria-label="사업 분야명 편집"
           />
         ) : (
-          <span className="business-area-management-modal__name-text">{row.name}</span>
+          <span>{row.name}</span>
         ),
     },
     {
@@ -61,51 +77,41 @@ export function BusinessAreaManagementModal({
       width: ACTIONS_COL_WIDTH,
       align: 'center',
       render: (_: unknown, row) =>
-        ctrl.editingId === row.id ? (
-          <div className="business-area-management-modal__actions">
-            <CmsButton
-              type="button"
-              variant="default"
-              size="medium"
-              width={80}
-              className="business-area-management-modal__action-btn"
-              onClick={ctrl.cancelEdit}
-            >
+        editingId === row.id ? (
+          <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
+            <CmsButton type="button" variant="default" size="h32" width={80} onClick={cancelEdit}>
               취소
             </CmsButton>
             <CmsButton
               type="button"
               variant="secondary"
-              size="medium"
+              size="h32"
               width={80}
-              className="business-area-management-modal__action-btn"
               onClick={() => {
-                void ctrl.submitEdit()
+                void submitEdit()
               }}
             >
               등록
             </CmsButton>
           </div>
         ) : (
-          <div className="business-area-management-modal__actions">
+          <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
             <CmsButton
               type="button"
               variant="default"
-              size="medium"
+              size="h32"
               width={80}
-              className="business-area-management-modal__action-btn"
-              onClick={() => ctrl.startEdit(row)}
+              onClick={() => startEdit(row)}
             >
               수정
             </CmsButton>
             <CmsButton
               type="button"
               variant="delete"
-              size="medium"
+              size="h32"
               width={80}
-              className="business-area-management-modal__action-btn"
               onClick={() => {
-                void ctrl.requestDelete(row)
+                void requestDelete(row)
               }}
             >
               삭제
@@ -115,6 +121,39 @@ export function BusinessAreaManagementModal({
     },
   ]
 
+  const footer = (
+    <>
+      <CmsButton
+        variant="default"
+        size="h40"
+        type="button"
+        onClick={ctrl.handleClose}
+        disabled={ctrl.saving || ctrl.loading}
+      >
+        닫기
+      </CmsButton>
+      <CmsButton
+        variant="secondary"
+        size="h40"
+        type="button"
+        onClick={ctrl.openCompose}
+        disabled={ctrl.saving || ctrl.loading}
+      >
+        항목 추가
+      </CmsButton>
+      <CmsButton
+        variant="primary"
+        size="h40"
+        className="cms-button--footer-auto"
+        type="button"
+        onClick={ctrl.applySettings}
+        disabled={ctrl.saving || ctrl.loading}
+      >
+        저장
+      </CmsButton>
+    </>
+  )
+
   return (
     <>
       <ContentModal
@@ -122,81 +161,47 @@ export function BusinessAreaManagementModal({
         onCancel={ctrl.handleClose}
         title="사업 분야 관리"
         width={600}
+        titleBodyGap="list-settings"
+        footer={footer}
         zIndex={MODAL_Z}
-        titleBodyGap="none"
-        className="business-area-management-modal"
-        footer={
-          <>
-            <CmsButton
-              variant="secondary"
-              size="large"
-              type="button"
-              onClick={ctrl.handleClose}
-              disabled={ctrl.saving || ctrl.loading}
-            >
-              닫기
-            </CmsButton>
-            <CmsButton
-              variant="secondary"
-              size="large"
-              type="button"
-              onClick={ctrl.openCompose}
-              disabled={ctrl.saving || ctrl.loading}
-            >
-              사업 분야 추가
-            </CmsButton>
-            <CmsButton
-              variant="primary"
-              size="large"
-              type="button"
-              onClick={ctrl.applySettings}
-              disabled={ctrl.saving || ctrl.loading}
-            >
-              사업 분야 저장
-            </CmsButton>
-          </>
-        }
       >
-        <div className="business-area-management-modal__table-wrap">
-          <div className="business-area-management-modal__table-scroll">
+        <div>
+          <div>
             <CmsDataTable<TextbookBusinessAreaRow>
               rowKey="id"
-              bordered
-              className="cms-data-table cms-data-table--skip-auto-no-col business-area-management-modal__table"
+              className="cms-data-table cms-data-table--skip-auto-no-col"
               tableLayout="fixed"
               pagination={false}
               columns={columns}
               dataSource={ctrl.rows}
+              loading={ctrl.loading}
               locale={{ emptyText: '등록된 사업 분야가 없습니다.' }}
               summary={
                 ctrl.composeOpen
                   ? () => (
                       <CmsDataTable.Summary>
-                        <CmsDataTable.Summary.Row className="business-area-management-modal__summary">
+                        <CmsDataTable.Summary.Row>
                           <CmsDataTable.Summary.Cell index={0} align="center">
-                            <div className="business-area-management-modal__compose">
-                              <CmsInput
-                                ref={ctrl.newInputRef}
-                                inputSize="medium"
-                                width="100%"
-                                placeholder="사업 분야명을 입력해주세요"
-                                value={ctrl.newDraft}
-                                onChange={e => ctrl.setNewDraft(e.target.value)}
-                                onPressEnter={() => {
-                                  void ctrl.submitNew()
-                                }}
-                                aria-label="새 사업 분야명"
-                              />
-                            </div>
+                            <CmsInput
+                              ref={ctrl.newInputRef}
+                              inputSize="medium"
+                              width="100%"
+                              placeholder="사업 분야명을 입력해주세요"
+                              value={ctrl.newDraft}
+                              onChange={e => ctrl.setNewDraft(e.target.value)}
+                              onPressEnter={() => {
+                                void ctrl.submitNew()
+                              }}
+                              aria-label="새 사업 분야명"
+                            />
                           </CmsDataTable.Summary.Cell>
                           <CmsDataTable.Summary.Cell index={1} align="center">
-                            <div className="business-area-management-modal__actions">
+                            <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
                               <CmsButton
                                 type="button"
                                 variant="default"
-                                size="medium"
+                                size="h32"
                                 width={80}
-                                className="business-area-management-modal__action-btn"
                                 onClick={ctrl.cancelNew}
                               >
                                 취소
@@ -204,9 +209,8 @@ export function BusinessAreaManagementModal({
                               <CmsButton
                                 type="button"
                                 variant="secondary"
-                                size="medium"
+                                size="h32"
                                 width={80}
-                                className="business-area-management-modal__action-btn"
                                 onClick={() => {
                                   void ctrl.submitNew()
                                 }}
@@ -222,9 +226,7 @@ export function BusinessAreaManagementModal({
               }
             />
           </div>
-          {ctrl.saveError ? (
-            <p className="business-area-management-modal__error">{ctrl.saveError}</p>
-          ) : null}
+          {ctrl.saveError ? <p role="alert">{ctrl.saveError}</p> : null}
         </div>
       </ContentModal>
 

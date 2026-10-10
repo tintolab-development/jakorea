@@ -96,25 +96,21 @@
 }
 
 .textbook-register-modal__field {
+  width: 100%;
+  min-width: 0;
+}
+
+.textbook-register-modal__field .cms-field,
+.textbook-register-modal__field .cms-choice-field,
+.textbook-register-modal__field .cms-select-field {
   display: flex;
   width: 100%;
-  flex-direction: column;
-  gap: 10px;
+  max-width: 100%;
 }
 
-.textbook-register-modal__label {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.textbook-register-modal__label--required::after {
-  content: '*';
-  margin-left: 2px;
-  color: var(--color-required-mark, var(--color-red, #ff4d4f));
+.textbook-register-modal__field .cms-field--explicit-width > .cms-field__box {
+  width: 100%;
+  max-width: 100%;
 }
 
 .textbook-register-modal__footer {

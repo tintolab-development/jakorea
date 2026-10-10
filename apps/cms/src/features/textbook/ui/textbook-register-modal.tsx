@@ -112,8 +112,8 @@ export function TextbookRegisterModal({
     >
       <div className="textbook-register-modal__form">
         <div className="textbook-register-modal__field">
-          <span className="textbook-register-modal__label">사용 여부</span>
           <CmsRadio.Group
+            label="사용 여부"
             value={form.useStatus}
             onChange={e => setForm(prev => ({ ...prev, useStatus: e.target.value }))}
           >
@@ -124,10 +124,9 @@ export function TextbookRegisterModal({
 
         <div className="textbook-register-modal__row">
           <div className="textbook-register-modal__field">
-            <span className="textbook-register-modal__label textbook-register-modal__label--required">
-              교재명(국문)
-            </span>
             <CmsInput
+              label="교재명(국문)"
+              required
               value={form.textbookName}
               onChange={e => setForm(prev => ({ ...prev, textbookName: e.target.value }))}
               placeholder="교재명을 입력해 주세요."
@@ -136,10 +135,9 @@ export function TextbookRegisterModal({
             />
           </div>
           <div className="textbook-register-modal__field">
-            <span className="textbook-register-modal__label textbook-register-modal__label--required">
-              교재명(영문)
-            </span>
             <CmsInput
+              label="교재명(영문)"
+              required
               value={form.textbookNameEn}
               onChange={e => setForm(prev => ({ ...prev, textbookNameEn: e.target.value }))}
               placeholder="교재명을 입력해 주세요."
@@ -151,10 +149,9 @@ export function TextbookRegisterModal({
 
         <div className="textbook-register-modal__row">
           <div className="textbook-register-modal__field">
-            <span className="textbook-register-modal__label textbook-register-modal__label--required">
-              사업 분야
-            </span>
             <CmsSelect
+              label="사업 분야"
+              required
               inputSize="large"
               placeholder="사업 분야를 선택해 주세요."
               value={form.businessArea || undefined}
@@ -165,14 +162,13 @@ export function TextbookRegisterModal({
                 }))
               }
               options={businessAreaOptions}
-              style={{ width: '100%' }}
+              width="100%"
             />
           </div>
           <div className="textbook-register-modal__field">
-            <span className="textbook-register-modal__label textbook-register-modal__label--required">
-              교육 대상
-            </span>
             <CmsSelect
+              label="교육 대상"
+              required
               inputSize="large"
               placeholder="교육 대상을 선택해 주세요."
               value={form.educationTarget || undefined}
@@ -186,22 +182,21 @@ export function TextbookRegisterModal({
                 }))
               }}
               options={TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS}
-              style={{ width: '100%' }}
+              width="100%"
             />
           </div>
         </div>
 
         <div className="textbook-register-modal__field">
-          <span className="textbook-register-modal__label textbook-register-modal__label--required">
-            대상 학년
-          </span>
           <CmsSelect
+            label="대상 학년"
+            required
             inputSize="large"
             placeholder="대상 학년을 선택해 주세요."
             value={form.grade || undefined}
             onChange={value => setForm(prev => ({ ...prev, grade: String(value ?? '') }))}
             options={gradeOptions}
-            style={{ width: '100%' }}
+            width="100%"
           />
         </div>
       </div>
