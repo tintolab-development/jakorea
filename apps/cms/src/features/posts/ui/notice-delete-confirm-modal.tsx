@@ -4,6 +4,9 @@ import './notice-delete-confirm-modal.css'
 
 const DEFAULT_LINE1 = '해당 공지사항을 삭제하시겠습니까?'
 
+/** 삭제 확인(안내) 모달 — 시안 SSOT */
+export const DELETE_CONFIRM_MODAL_WIDTH = 600
+
 export interface NoticeDeleteConfirmModalProps {
   open: boolean
   onCancel: () => void
@@ -17,9 +20,9 @@ export interface NoticeDeleteConfirmModalProps {
   line1?: string
   /** 본문 둘째 줄 (미지정 시 기본 문구) */
   line2?: string
-  /** ContentModal 가로(px). `inquiry` | `faq` | `notice`일 때 기본 600 */
+  /** ContentModal 가로(px). 기본 600 */
   width?: number
-  /** `inquiry`: 문의 삭제 600×230 · `faq` | `notice`: 600px 너비(각각 CSS 클래스) */
+  /** `inquiry`: 문의 삭제 600×230(높이 CSS) · `faq` | `notice`: 동일 600px 너비 클래스 */
   preset?: 'default' | 'inquiry' | 'faq' | 'notice'
   /** 확인(삭제) 버튼 라벨 (기본: 삭제) */
   confirmLabel?: string
@@ -40,8 +43,7 @@ export function NoticeDeleteConfirmModal({
   confirmLabel = '삭제',
   confirmLoading = false,
 }: NoticeDeleteConfirmModalProps) {
-  const width =
-    preset === 'inquiry' || preset === 'faq' || preset === 'notice' ? (widthProp ?? 600) : widthProp
+  const width = widthProp ?? DELETE_CONFIRM_MODAL_WIDTH
 
   const wrapClassName = [
     'notice-delete-confirm-modal-wrap',

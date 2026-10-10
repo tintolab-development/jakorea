@@ -3,7 +3,12 @@
  */
 
 import type { ColumnsType } from 'antd/es/table'
-import { ActionResultModal, ContentModal, CmsButton } from '@/shared/ui'
+import {
+  ActionResultModal,
+  ContentModal,
+  CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS,
+  CmsButton,
+} from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import type { CategoryRemoteActions } from '@/features/posts/hooks/category-remote-actions'
@@ -95,13 +100,12 @@ export function CategoryManagementModal({
       align: 'center',
       render: (_: unknown, row) =>
         editingId === row.id ? (
-          <div className="notice-category-management-modal__actions">
+          <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
             <CmsButton
               type="button"
               variant="default"
               size="h32"
               width={80}
-              className="notice-category-management-modal__action-btn"
               onClick={cancelEdit}
             >
               취소
@@ -111,20 +115,18 @@ export function CategoryManagementModal({
               variant="secondary"
               size="h32"
               width={80}
-              className="notice-category-management-modal__action-btn"
               onClick={submitEdit}
             >
               등록
             </CmsButton>
           </div>
         ) : (
-          <div className="notice-category-management-modal__actions">
+          <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
             <CmsButton
               type="button"
               variant="default"
               size="h32"
               width={80}
-              className="notice-category-management-modal__action-btn"
               onClick={() => startEdit(row)}
             >
               수정
@@ -134,7 +136,6 @@ export function CategoryManagementModal({
               variant="delete"
               size="h32"
               width={80}
-              className="notice-category-management-modal__action-btn"
               onClick={() => requestDeleteCategory(row)}
             >
               삭제
@@ -183,7 +184,7 @@ export function CategoryManagementModal({
         onCancel={ctrl.handleClose}
         title="카테고리 관리"
         width={600}
-        titleBodyGap="none"
+        titleBodyGap="list-settings"
         footer={footer}
         className="notice-category-management-modal"
         zIndex={CATEGORY_MODAL_Z}
@@ -218,13 +219,12 @@ export function CategoryManagementModal({
                             </div>
                           </CmsDataTable.Summary.Cell>
                           <CmsDataTable.Summary.Cell index={1} align="center">
-                            <div className="notice-category-management-modal__actions">
+                            <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
                               <CmsButton
                                 type="button"
                                 variant="default"
                                 size="h32"
                                 width={80}
-                                className="notice-category-management-modal__action-btn"
                                 onClick={ctrl.cancelNew}
                               >
                                 취소
@@ -234,7 +234,6 @@ export function CategoryManagementModal({
                                 variant="secondary"
                                 size="h32"
                                 width={80}
-                                className="notice-category-management-modal__action-btn"
                                 onClick={ctrl.submitNew}
                               >
                                 등록

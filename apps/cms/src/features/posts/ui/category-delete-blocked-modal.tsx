@@ -2,14 +2,15 @@
  * 카테고리 삭제 불가 — 해당 카테고리에 게시물·문의·FAQ 등이 있을 때
  */
 
-import { ContentModal, CmsButton } from '@/shared/ui'
+import { useMemo } from 'react'
 import {
   type CategoryDeleteBlockedKind,
   resolveCategoryDeleteBlockedDescription,
 } from '@/features/posts/ui/category-delete-blocked-copy'
+import { resolveDeleteBlockedGuideCopy } from '@/shared/lib/delete-blocked-guide-copy'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 
 const DEFAULT_Z = 1100
-const WIDTH = 600
 
 export type CategoryDeleteBlockedModalProps = {
   open: boolean
@@ -28,22 +29,25 @@ export function CategoryDeleteBlockedModal({
   kind = 'notice',
   description,
 }: CategoryDeleteBlockedModalProps) {
+  const reasonLine = resolveCategoryDeleteBlockedDescription(kind, description)
+  const copy = useMemo(
+    () =>
+      resolveDeleteBlockedGuideCopy({
+        entityLabel: '카테고리',
+        reasonLine,
+        selectedCount: 1,
+      }),
+    [reasonLine]
+  )
+
   return (
-    <ContentModal
+    <DeleteBlockedGuideModal
       open={open}
-      onCancel={onClose}
-      title="카테고리 삭제 불가 안내"
-      width={WIDTH}
+      onClose={onClose}
+      title={copy.title}
+      description={copy.description}
       zIndex={zIndex}
       className="notice-category-delete-blocked-modal"
-      description={resolveCategoryDeleteBlockedDescription(kind, description)}
-      footer={
-        <CmsButton variant="secondary" size="h40" type="button" onClick={onClose}>
-          확인
-        </CmsButton>
-      }
-    >
-      {null}
-    </ContentModal>
+    />
   )
 }
