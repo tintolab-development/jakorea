@@ -29,3 +29,7 @@
 |-----------|------------|
 | `git commit --no-verify` | 커밋 전 `pnpm typecheck` 및 `pnpm lint` 실행 |
 | 훅 실패 시 스킵하고 커밋 | 에러 수정 후 훅이 통과할 때만 커밋 |
+
+## Related
+
+Handoff / Cursor prompt delivery markdown must not be committed; delete if still present at commit time → [.cursor/rules/no-commit-handoff-prompt-docs.mdc](./no-commit-handoff-prompt-docs.mdc)
