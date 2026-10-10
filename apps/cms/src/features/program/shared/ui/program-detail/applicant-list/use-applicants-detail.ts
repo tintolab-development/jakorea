@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import {
   useTablePage,
@@ -17,6 +18,8 @@ import {
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
+import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { formatInstructorOrganizationApprovalErrorMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   institutionFilterFields,
@@ -241,6 +244,7 @@ export function useApplicantsDetail({
     '프로그램 신청'
   )
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
 
   const notifyRemoteDecisionFailure = useCallback(
     (error: unknown) => {
@@ -1218,6 +1222,18 @@ export function useApplicantsDetail({
       await applicationsRemote.invalidateApplications()
       return true
     } catch (error) {
+      const statusConflict = formatApplicationStatusConflictMessage(error)
+      if (statusConflict) {
+        await queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.instructorDetail(id),
+        })
+        await applicationsRemote.invalidateApplications()
+        showAlert({
+          title: '안내',
+          content: statusConflict,
+        })
+        return false
+      }
       notifyRemoteDecisionFailure(error)
       return false
     }

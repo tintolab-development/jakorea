@@ -225,6 +225,15 @@
   overflow: hidden;
 }
 
+.applicant-details__table .ant-table-thead > tr > th.applicant-details__th-sessions--general-detail,
+.applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions--general-detail {
+  width: 480px !important;
+  min-width: 480px !important;
+  max-width: none !important;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
 .applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
   white-space: normal;
   padding-top: 10px !important;

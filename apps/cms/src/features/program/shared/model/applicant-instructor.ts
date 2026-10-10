@@ -8,7 +8,11 @@ import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/t
 
 export type ApplicantInstructorLectureFeeBasisType = 'program' | 'special_lecture' | 'other_labor'
 
-export type ApplicantInstructorApprovalStatusKey = 'pending' | 'rejected' | 'approved'
+export type ApplicantInstructorApprovalStatusKey =
+  | 'pending'
+  | 'rejected'
+  | 'approved'
+  | 'cancelled'
 
 export type ApplicantInstructorApprovalNotifyTiming = 'immediate' | 'on_announcement' | 'manual'
 

@@ -654,6 +654,13 @@ export function ApplicantList({
     if (menu === 'instructors' && 'instructorName' in item) {
       const row = item as ApplicantInstructorRow
       if (row.approvalStatus !== 'approved' && row.approvalStatus !== 'rejected') return
+      if (
+        row.availableActions != null &&
+        row.availableActions.length > 0 &&
+        !row.availableActions.includes('RESEND_NOTIFICATION')
+      ) {
+        return
+      }
       setNotificationResendTarget({
         id: row.id,
         name: row.instructorName,
