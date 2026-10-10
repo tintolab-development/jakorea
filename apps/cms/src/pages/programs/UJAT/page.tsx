@@ -506,8 +506,8 @@ function UjatProgramListPageContent() {
   )
 
   const toolbarActionsAfterExcel = (
-    <FilterTableToolbarButton width={180} onClick={handleProgramCreateClick}>
-      프로그램 신규 등록
+    <FilterTableToolbarButton width={120} onClick={handleProgramCreateClick}>
+      신규 등록
     </FilterTableToolbarButton>
   )
 

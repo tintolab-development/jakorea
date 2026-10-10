@@ -56,9 +56,7 @@ import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 
 import './program-list-page.css'
-import { DeleteGuideModal, showDeleteCompletedAlert,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { DeleteGuideModal, showDeleteCompletedAlert, FilterTableToolbarButton } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
   resolveProgramDeleteGuideModalCopy,
@@ -132,8 +130,8 @@ function ProgramListPageContent() {
   const { sentinelRef: companySchoolLoadMoreRef } = useGatedInfiniteScroll({
     hasNextPage: Boolean(
       isCompanySchoolPath &&
-        !companySchoolListQuery.isPlaceholderData &&
-        companySchoolListQuery.hasNextPage
+      !companySchoolListQuery.isPlaceholderData &&
+      companySchoolListQuery.hasNextPage
     ),
     isFetchingNextPage: Boolean(isCompanySchoolPath && companySchoolListQuery.isFetchingNextPage),
     fetchNextPage: companySchoolListQuery.fetchNextPage,
@@ -420,7 +418,8 @@ function ProgramListPageContent() {
 
   const isAdmin = user?.role === 'ADMIN'
 
-  const showCalendarView = isAdmin && (programType === 'education' || programType === 'company_school')
+  const showCalendarView =
+    isAdmin && (programType === 'education' || programType === 'company_school')
 
   const programListConfig = useMemo(() => {
     const listView: ProgramListView =
@@ -490,15 +489,14 @@ function ProgramListPageContent() {
     [searchParams, setSearchParams]
   )
 
-  const handleCompanySchoolRegistrationSaved = useCallback((_program?: Program) => {
-    void companySchoolListQuery.refetch()
-    closeWritingUserPreview()
-    handleCloseCompanySchoolRegistrationFullpage()
-  }, [
-    closeWritingUserPreview,
-    companySchoolListQuery,
-    handleCloseCompanySchoolRegistrationFullpage,
-  ])
+  const handleCompanySchoolRegistrationSaved = useCallback(
+    (_program?: Program) => {
+      void companySchoolListQuery.refetch()
+      closeWritingUserPreview()
+      handleCloseCompanySchoolRegistrationFullpage()
+    },
+    [closeWritingUserPreview, companySchoolListQuery, handleCloseCompanySchoolRegistrationFullpage]
+  )
 
   const handleProgramCreateClick = () => {
     if (programType === 'company_school') {
@@ -555,7 +553,10 @@ function ProgramListPageContent() {
       return
     }
 
-    if (pNorm === '/programs/education/student-recruitment' || pNorm === '/programs/general/student-recruitment') {
+    if (
+      pNorm === '/programs/education/student-recruitment' ||
+      pNorm === '/programs/general/student-recruitment'
+    ) {
       setSelectedProgramForModal(program)
       return
     }
@@ -600,10 +601,9 @@ function ProgramListPageContent() {
   const handleCloseFullPageModal = useCallback(() => {
     setSelectedProgramForFullPageModal(null)
     // functional clear — 모달 LNB sync 클로저가 stale programId를 다시 싣는 레이스 방지
-    setSearchParams(
-      prev => clearGeneralProgramDetailQueryParams(new URLSearchParams(prev)),
-      { replace: true }
-    )
+    setSearchParams(prev => clearGeneralProgramDetailQueryParams(new URLSearchParams(prev)), {
+      replace: true,
+    })
   }, [setSearchParams])
 
   /** ProgramList `FilterTableLayout`의 `actions` 슬롯 — 제목·건수는 `headerTitle`·목록 내부 건수로 표시 */
@@ -630,8 +630,8 @@ function ProgramListPageContent() {
   )
 
   const programListToolbarActionsAfterExcel = (
-    <FilterTableToolbarButton variant="primary" width={180} onClick={handleProgramCreateClick}>
-      프로그램 신규 등록
+    <FilterTableToolbarButton variant="primary" width={120} onClick={handleProgramCreateClick}>
+      신규 등록
     </FilterTableToolbarButton>
   )
 
@@ -687,54 +687,54 @@ function ProgramListPageContent() {
             : !!selectedProgramForFullPageModal
         }
       >
-      <LazyProgramDetailFullPageModal
-        open={
-          isCompanySchoolPath
-            ? Boolean(companySchoolProgramIdFromUrl)
-            : !!selectedProgramForFullPageModal
-        }
-        program={companySchoolDetailProgram}
-        programVariant={isCompanySchoolPath ? 'company-school' : undefined}
-        externalLoading={
-          isCompanySchoolPath
-            ? Boolean(companySchoolProgramIdFromUrl) &&
-              !companySchoolDetailData &&
-              !companySchoolDetailQuery.isError &&
-              (companySchoolDetailQuery.isFetching || companySchoolDetailQuery.isLoading)
-            : undefined
-        }
-        externalError={
-          isCompanySchoolPath
-            ? companySchoolDetailQuery.isError && !companySchoolDetailData
-            : undefined
-        }
-        onClose={handleCloseFullPageModal}
-        onUpdateProgram={
-          isCompanySchoolPath
-            ? async (programId, program, patch) => {
-                await updateCompanySchoolMutation.mutateAsync({
-                  programId,
-                  program,
-                  patch,
-                })
-                void companySchoolListQuery.refetch()
-              }
-            : undefined
-        }
-        onRequestDelete={program => {
-          setProgramsPendingBulkDelete([program])
-          setBulkDeleteModalOpen(true)
-        }}
-      />
+        <LazyProgramDetailFullPageModal
+          open={
+            isCompanySchoolPath
+              ? Boolean(companySchoolProgramIdFromUrl)
+              : !!selectedProgramForFullPageModal
+          }
+          program={companySchoolDetailProgram}
+          programVariant={isCompanySchoolPath ? 'company-school' : undefined}
+          externalLoading={
+            isCompanySchoolPath
+              ? Boolean(companySchoolProgramIdFromUrl) &&
+                !companySchoolDetailData &&
+                !companySchoolDetailQuery.isError &&
+                (companySchoolDetailQuery.isFetching || companySchoolDetailQuery.isLoading)
+              : undefined
+          }
+          externalError={
+            isCompanySchoolPath
+              ? companySchoolDetailQuery.isError && !companySchoolDetailData
+              : undefined
+          }
+          onClose={handleCloseFullPageModal}
+          onUpdateProgram={
+            isCompanySchoolPath
+              ? async (programId, program, patch) => {
+                  await updateCompanySchoolMutation.mutateAsync({
+                    programId,
+                    program,
+                    patch,
+                  })
+                  void companySchoolListQuery.refetch()
+                }
+              : undefined
+          }
+          onRequestDelete={program => {
+            setProgramsPendingBulkDelete([program])
+            setBulkDeleteModalOpen(true)
+          }}
+        />
       </ProgramModalWhenOpen>
 
       <ProgramModalWhenOpen open={isCompanySchoolRegistrationOpen}>
-      <LazyGeneralProgramRegistrationFullpageModal
-        open={isCompanySchoolRegistrationOpen}
-        onClose={handleCloseCompanySchoolRegistrationFullpage}
-        onProgramRegistrationSaved={handleCompanySchoolRegistrationSaved}
-        registrationFormVariant="economy"
-      />
+        <LazyGeneralProgramRegistrationFullpageModal
+          open={isCompanySchoolRegistrationOpen}
+          onClose={handleCloseCompanySchoolRegistrationFullpage}
+          onProgramRegistrationSaved={handleCompanySchoolRegistrationSaved}
+          registrationFormVariant="economy"
+        />
       </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal
@@ -814,9 +814,7 @@ function ProgramListPageContent() {
                 setProgramsPendingBulkDelete([])
                 showDeleteCompletedAlert()
               } else {
-                await handleBulkDelete(programsPendingBulkDelete, () =>
-                  setSelectedRowKeys([])
-                )
+                await handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
                 setBulkDeleteModalOpen(false)
                 setProgramsPendingBulkDelete([])
               }
