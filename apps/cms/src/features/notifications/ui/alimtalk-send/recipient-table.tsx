@@ -1,9 +1,9 @@
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { alimtalkSendRecipientTypeLabel } from '@/features/notifications/model/alimtalk-send/recipients'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
 import './recipient-table.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const TABLE_MAX_HEIGHT = 400
 const TABLE_HEADER_HEIGHT = 54
@@ -61,7 +61,7 @@ export function RecipientTable({
   ]
 
   return (
-    <Table
+    <CmsDataTable
       className="cms-data-table cms-data-table--skip-auto-no-col alimtalk-send-recipient-table"
       columns={columns}
       dataSource={recipients}

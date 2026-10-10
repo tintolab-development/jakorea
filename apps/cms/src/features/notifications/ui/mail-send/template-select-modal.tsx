@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
 import { MAIL_SEND_PICKER_PAGE_SIZE } from '@/features/notifications/model/mail-send/types'
 import { NOTIFICATION_SEND_SELECTABLE_NOT_SUCCESS_HINT } from '@/features/notifications/model/shared/send-ux-copy'
 import './template-select-modal.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 type TemplateSelectModalProps = {
   open: boolean
@@ -170,7 +170,7 @@ export function TemplateSelectModal({
           <>
             <div className="mail-send-template-select-modal__table-section">
               <p className="mail-send-template-select-modal__count">총 {filtered.length}건</p>
-              <Table
+              <CmsDataTable
                 className="cms-data-table cms-data-table--skip-auto-no-col mail-send-template-select-modal__table"
                 columns={columns}
                 dataSource={paged}

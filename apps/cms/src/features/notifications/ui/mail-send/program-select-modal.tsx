@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   listMailSendProgramPickerRows,
   programYearLabel,
@@ -141,7 +141,7 @@ export function ProgramSelectModal({
           <>
             <div className="mail-send-program-select-modal__table-section">
               <p className="mail-send-program-select-modal__count">총 {filtered.length}건</p>
-              <Table
+              <CmsDataTable
                 className="cms-data-table cms-data-table--skip-auto-no-col mail-send-program-select-modal__table"
                 columns={columns}
                 dataSource={paged}
