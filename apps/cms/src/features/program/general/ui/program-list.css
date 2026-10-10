@@ -724,6 +724,24 @@
   white-space: normal;
 }
 
+/* 교육 대상 2줄 이상 — 고정 height(52px)와 호버 시 배경만 바뀌며 행 높이가 튀지 않게 */
+.program-list-card--program-list-overview
+  .cms-data-table--program-list-overview
+  .ant-table-tbody
+  > tr
+  > td.program-list-table__col-target,
+.program-list-card--program-list-overview
+  .cms-data-table--program-list-overview
+  .ant-table-tbody
+  > tr:hover
+  > td.program-list-table__col-target {
+  height: auto !important;
+  min-height: 50px;
+  white-space: normal;
+  line-height: 150%;
+  vertical-align: middle;
+}
+
 /* 4탭 목록 · 「진행 중」「완료」 — 요청 min-width 합계 1554px (+행 선택 시 1622px) */
 .program-list-table-wrapper--program-list-in-progress,
 .program-list-table-wrapper--program-list-completed {
