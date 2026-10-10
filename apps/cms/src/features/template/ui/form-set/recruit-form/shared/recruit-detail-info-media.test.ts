@@ -23,8 +23,17 @@ import { putProgramAttachments } from '@/features/program/shared/api/program-att
 import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
 import {
   bindRecruitDetailMediaAfterProgramCreate,
+  isEphemeralThumbPreviewUrl,
   readRecruitDetailMediaFromOverlay,
 } from './recruit-detail-info-media'
+
+describe('isEphemeralThumbPreviewUrl', () => {
+  it('blob 주소만 세션용으로 본다', () => {
+    expect(isEphemeralThumbPreviewUrl('blob:http://localhost/preview')).toBe(true)
+    expect(isEphemeralThumbPreviewUrl('/api/admin/files/1/content')).toBe(false)
+    expect(isEphemeralThumbPreviewUrl(null)).toBe(false)
+  })
+})
 
 describe('readRecruitDetailMediaFromOverlay', () => {
   it('reads trainedTeachers prefix thumb and attachments', () => {

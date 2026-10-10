@@ -254,6 +254,10 @@
   margin-top: -16px;
 }
 
+.login-social-not-linked .login-utility-links + .login-social-section {
+  margin-top: 28px;
+}
+
 .login-social-already-linked__icon {
   width: 70px;
   height: 70px;

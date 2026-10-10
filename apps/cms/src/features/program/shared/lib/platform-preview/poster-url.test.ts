@@ -13,7 +13,7 @@ describe('resolvePreviewPosterSeed', () => {
       programKeyVisualImage: '/api/admin/files/12/content',
     })
     expect(seed.fileObjectId).toBe(99)
-    expect(seed.displayUrl).toBe('blob:http://localhost/revoked')
+    expect(seed.displayUrl).toBeUndefined()
   })
 
   it('rejects admin content paths as direct img src', () => {

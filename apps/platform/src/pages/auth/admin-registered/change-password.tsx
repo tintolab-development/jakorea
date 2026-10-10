@@ -100,16 +100,14 @@ export function AdminRegisteredChangePasswordPage() {
         const step =
           normalizeAdminProvisionedOnboardingStep(tokens.adminProvisionedOnboardingStep) ??
           'PROFILE_REVIEW'
-        navigate(
-          resolveAdminProvisionedOnboardingPath(step) ?? '/auth/admin-registered/confirm',
-        )
+        navigate(resolveAdminProvisionedOnboardingPath(step) ?? '/auth/admin-registered/confirm')
         return
       } catch (error) {
         setSubmitError(
           getLoginApiErrorMessage(
             error,
-            '비밀번호는 변경되었습니다. 가입 정보 확인으로 이어가지 못했습니다. 다시 시도해 주세요.',
-          ),
+            '비밀번호는 변경되었습니다. 가입 정보 확인으로 이어가지 못했습니다. 다시 시도해 주세요.'
+          )
         )
         return
       } finally {
@@ -126,7 +124,12 @@ export function AdminRegisteredChangePasswordPage() {
         <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
           비밀번호를 변경해 주세요.
         </PFText>
-        <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
+        <PFText
+          as="p"
+          typo="bd-lg-rg"
+          color="primary-800"
+          className={authPageCopyClass('description')}
+        >
           안전한 계정 이용을 위해 주기적으로 변경해 주세요.
         </PFText>
       </div>
