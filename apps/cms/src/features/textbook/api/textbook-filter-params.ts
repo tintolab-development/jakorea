@@ -1,3 +1,4 @@
+import { DATA_MANAGEMENT_LIST_PAGE_SIZE } from '@/features/data-management/api/data-management-list-page'
 import type { TextbooksParams } from '@/shared/api/generated/data-management/schemas'
 
 export type TextbookListFilters = {
@@ -9,11 +10,14 @@ export type TextbookListFilters = {
   useStatus: 'USED' | 'UNUSED'
 }
 
-export const TEXTBOOK_LIST_PAGE_SIZE = 500
+export const TEXTBOOK_LIST_PAGE_SIZE = DATA_MANAGEMENT_LIST_PAGE_SIZE
 
-export function textbooksParamsFromFilters(filters: TextbookListFilters): TextbooksParams {
+export function textbooksParamsFromFilters(
+  filters: TextbookListFilters,
+  page = 0
+): TextbooksParams {
   const params: TextbooksParams = {
-    page: 0,
+    page,
     size: TEXTBOOK_LIST_PAGE_SIZE,
     useStatus: filters.useStatus,
   }
