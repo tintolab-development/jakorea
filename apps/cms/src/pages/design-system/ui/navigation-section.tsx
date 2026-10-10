@@ -5,7 +5,7 @@ import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { PageHeader } from '@/shared/ui/page-header'
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import { ViewModeToggle } from '@/shared/components/view-mode'
-import { CmsButton } from '@/shared/ui/cms-button'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import { DsDemo, DsSection } from './section'
 
 export function NavigationSection() {
@@ -24,9 +24,9 @@ export function NavigationSection() {
           title="디자인 시스템"
           description="CMS 공통 UI 쇼케이스"
           actions={
-            <CmsButton variant="primary" size="medium">
+            <FilterTableToolbarButton variant="primary">
               액션
-            </CmsButton>
+            </FilterTableToolbarButton>
           }
         />
       </DsDemo>

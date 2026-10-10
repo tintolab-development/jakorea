@@ -18,18 +18,20 @@ export function SponsorContactTypeChangeBlockedModal({
     <ContentModal
       open={open}
       onCancel={onClose}
-      title="담당자 유형 변경 불가 안내"
+      title="후원 담당자 유형 변경 불가 안내"
       width={600}
       footer={
-        <CmsButton variant="secondary" size="medium" onClick={onClose}>
+        <CmsButton variant="secondary" size="h40" onClick={onClose}>
           확인
         </CmsButton>
       }
     >
       <div className="sponsor-contact-type-change-blocked-modal__content">
-        <span>주 담당자는 1명이 필수 지정되어야 합니다.</span>
+        <span>주 담당자는 반드시 1명이 지정되어야 합니다.</span>
         <br />
-        <span>다른 담당자를 주 담당자로 변경한 후 다시 시도해 주세요.</span>
+        <span>다른 구성원을 주 담당자로 지정해 주세요.</span>
+        <br />
+        <span>기존의 주 담당자는 자동으로 일반 담당자로 전환됩니다.</span>
       </div>
     </ContentModal>
   )

@@ -1,4 +1,5 @@
 import type { AdminPostsPendingDateRange } from '@/features/posts/lib/url-date-range-pending-sync'
+import type { PostsCategoryRow } from '@/features/posts/model/posts-category-row'
 
 /** 문의 관리 목록 — 필터·URL 동기화 */
 export type AdminInquiryStatusFilter = 'ALL' | 'PENDING' | 'ANSWERED'
@@ -15,10 +16,7 @@ export interface AdminInquiryPendingFilters extends Record<string, unknown> {
   dateRange: AdminPostsPendingDateRange
 }
 
-export type InquiryCategoryRow = {
-  id: string
-  name: string
-}
+export type InquiryCategoryRow = PostsCategoryRow
 
 export type AdminInquiryTableContext = {
   allowedCategoryLabels: readonly string[]

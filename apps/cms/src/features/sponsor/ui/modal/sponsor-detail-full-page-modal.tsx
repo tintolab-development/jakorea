@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { BulbOutlined, TeamOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { LnbIconProjectInfo } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
+import {
+  SponsorContactsInfoLnbIcon,
+  SponsorProgramSponsorshipHistoryLnbIcon,
+} from '@/features/sponsor/ui/sponsor-detail-lnb-icons'
 import {
   addSponsorContact,
   deleteSponsorContacts,
@@ -19,6 +23,7 @@ import {
   removeContactsById,
 } from '@/features/sponsor/lib/contact-query-cache'
 import { downloadSponsorLogos } from '@/features/sponsor/lib/download-sponsor-logos'
+import { SPONSOR_PROGRAM_HISTORY_TAB_LABEL } from '@/features/sponsor/lib/sponsor-program-history-copy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { useSponsorProgramHistoryFilter } from '@/features/sponsor/hooks/use-sponsor-program-history-filter'
@@ -35,17 +40,14 @@ import { SponsorContactsPanel } from '@/features/sponsor/ui/panels/sponsor-conta
 import { SponsorProgramHistoryPanel } from '@/features/sponsor/ui/panels/sponsor-program-history-panel'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import { buildSearchParams, makeBreadcrumbItem } from '@/shared/lib/detail-fullpage-query-stack'
 import {
-  buildSearchParams,
-  makeBreadcrumbItem,
-} from '@/shared/lib/detail-fullpage-query-stack'
-import { DetailModalSidebar, type DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
+  DetailModalSidebar,
+  type DetailModalSidebarNavItem,
+} from '@/shared/ui/detail-modal-sidebar'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import {
-  canAdminAction,
-  resolveAdminRoleCodeFromUser,
-} from '@/shared/lib/admin-role-policy'
+import { canAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -68,17 +70,17 @@ const SPONSOR_DETAIL_MODAL_SIDEBAR_ITEMS: DetailModalSidebarNavItem[] = [
   {
     key: LNB_DETAIL,
     label: '후원사 상세 정보',
-    icon: <BulbOutlined className="detail-fullpage-modal__lnb-icon" />,
+    icon: <LnbIconProjectInfo />,
   },
   {
     key: LNB_PROGRAMS,
-    label: '프로그램 진행 이력',
-    icon: <UnorderedListOutlined className="detail-fullpage-modal__lnb-icon" />,
+    label: SPONSOR_PROGRAM_HISTORY_TAB_LABEL,
+    icon: <SponsorProgramSponsorshipHistoryLnbIcon />,
   },
   {
     key: LNB_CONTACTS,
     label: '후원사 담당자 정보',
-    icon: <TeamOutlined className="detail-fullpage-modal__lnb-icon" />,
+    icon: <SponsorContactsInfoLnbIcon />,
   },
 ]
 
@@ -94,7 +96,9 @@ export interface SponsorDetailFullPageModalProps {
  */
 export function SponsorDetailFullPageModal(props: SponsorDetailFullPageModalProps) {
   if (!props.open || !props.sponsor) return null
-  return <SponsorDetailFullPageModalInner key={props.sponsor.id} {...props} sponsor={props.sponsor} />
+  return (
+    <SponsorDetailFullPageModalInner key={props.sponsor.id} {...props} sponsor={props.sponsor} />
+  )
 }
 
 type SponsorDetailFullPageModalInnerProps = Omit<SponsorDetailFullPageModalProps, 'sponsor'> & {
@@ -211,10 +215,7 @@ function SponsorDetailFullPageModalInner({
     remoteContactActions
   )
   const { registerModalOpen, setRegisterModalOpen, handleRegister } = sponsorContacts
-  const programHistory = useSponsorProgramHistoryFilter(
-    sponsor.id,
-    lnbKey === LNB_PROGRAMS
-  )
+  const programHistory = useSponsorProgramHistoryFilter(sponsor.id, lnbKey === LNB_PROGRAMS)
   const { contactColumns, programHistoryColumns } = useSponsorDetailModalTableColumns({
     contacts: contactsList.allContacts,
     canWrite: canManageSponsorContacts,
@@ -284,7 +285,7 @@ function SponsorDetailFullPageModalInner({
   }, [basicInfo?.logos, detail.logos, showAlert])
 
   const titleName = detail.nameDisplayKo.trim() || sponsor.name.trim()
-  const title = titleName ? `후원사 상세_${titleName}` : '후원사 상세'
+  const title = titleName ? `후원사 상세 (${titleName})` : '후원사 상세'
   const showDetailBody = Boolean(basicInfo) && !isDetailLoading && !isDetailError
   const activeLnbItem =
     SPONSOR_DETAIL_MODAL_SIDEBAR_ITEMS.find(item => item.key === lnbKey) ??
@@ -396,7 +397,11 @@ function SponsorDetailFullPageModalInner({
         onConfirm={sponsorDelete.handleConfirm}
         sponsorNames={[detail.nameDisplayKo]}
       />
-      <SponsorDeleteBlockedModal open={sponsorDelete.deleteBlockedModalOpen} onClose={sponsorDelete.closeBlockedModal} />
+      <SponsorDeleteBlockedModal
+        open={sponsorDelete.deleteBlockedModalOpen}
+        onClose={sponsorDelete.closeBlockedModal}
+        selectedCount={1}
+      />
       <SponsorContactRegisterModal
         open={registerModalOpen}
         onCancel={handleCloseContactRegisterModal}

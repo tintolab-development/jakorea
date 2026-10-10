@@ -1,48 +1,35 @@
 /**
- * 문의 카테고리 관리 모달 — 공지용 훅과 동일 플로우, 문의 목록으로 사용 여부 판단
+ * 카테고리 관리 모달 — 공지·FAQ·문의 공통 편집·삭제 플로우
  */
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { InputRef } from 'antd'
+import type { CategoryRemoteActions } from '@/features/posts/hooks/category-remote-actions'
+import {
+  isCategoryDuplicateError,
+  isCategoryInUseError,
+  type CategoryManagementKind,
+  type PostWithCategoryLabel,
+  getPostCategoryLabel,
+} from '@/features/posts/model/category-management-config'
 import {
   countByCategoryLabel,
   createNoticeCategoryId,
   hasDuplicateCategoryName,
 } from '@/features/posts/model/notice-category-domain'
-import type { InquiryCategoryRemoteActions } from '@/features/posts/hooks/use-admin-inquiry-categories'
-import type {
-  AdminInquiryRow,
-  InquiryCategoryRow,
-} from '@/features/posts/model/admin-inquiry-management.types'
-import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import type { PostsCategoryRow } from '@/features/posts/model/posts-category-row'
 
-const INQUIRY_CATEGORY_IN_USE = 'INQUIRY_CATEGORY_IN_USE'
-const INQUIRY_CATEGORY_NAME_ALREADY_EXISTS = 'INQUIRY_CATEGORY_NAME_ALREADY_EXISTS'
-
-function isConflictStatus(error: unknown): boolean {
-  return getApiErrorHttpStatus(error) === 409
-}
-
-function isInquiryCategoryInUseError(error: unknown): boolean {
-  return getApiErrorCode(error) === INQUIRY_CATEGORY_IN_USE || isConflictStatus(error)
-}
-
-function isInquiryCategoryDuplicateError(error: unknown): boolean {
-  return (
-    getApiErrorCode(error) === INQUIRY_CATEGORY_NAME_ALREADY_EXISTS || isConflictStatus(error)
-  )
-}
-
-export type UseInquiryCategoryManagementModalParams = {
+export type UseCategoryManagementModalParams = {
+  kind: CategoryManagementKind
   open: boolean
-  categories: InquiryCategoryRow[]
-  onCategoriesChange: (next: InquiryCategoryRow[]) => void
-  inquiries: readonly AdminInquiryRow[]
+  categories: PostsCategoryRow[]
+  onCategoriesChange: (next: PostsCategoryRow[]) => void
+  posts: readonly PostWithCategoryLabel[]
   onClose: () => void
-  remoteActions?: InquiryCategoryRemoteActions
+  remoteActions?: CategoryRemoteActions
 }
 
-export type UseInquiryCategoryManagementModalResult = {
+export type UseCategoryManagementModalResult = {
   newInputRef: RefObject<InputRef | null>
   editInputRef: RefObject<InputRef | null>
   editingId: string | null
@@ -55,15 +42,15 @@ export type UseInquiryCategoryManagementModalResult = {
   duplicateAlertOpen: boolean
   deleteConfirmOpen: boolean
   settingsCompleteOpen: boolean
-  pendingDeleteRow: InquiryCategoryRow | null
+  pendingDeleteRow: PostsCategoryRow | null
   closeDeleteBlocked: () => void
   closeDuplicateAlert: () => void
   closeSettingsComplete: () => void
   handleClose: () => void
-  startEdit: (row: InquiryCategoryRow) => void
+  startEdit: (row: PostsCategoryRow) => void
   cancelEdit: () => void
   submitEdit: () => void
-  requestDeleteCategory: (row: InquiryCategoryRow) => void
+  requestDeleteCategory: (row: PostsCategoryRow) => void
   cancelDeleteConfirm: () => void
   confirmDeleteCategory: () => void
   cancelNew: () => void
@@ -72,14 +59,15 @@ export type UseInquiryCategoryManagementModalResult = {
   applySettings: () => void
 }
 
-export function useInquiryCategoryManagementModal({
+export function useCategoryManagementModal({
+  kind,
   open,
   categories,
   onCategoriesChange,
-  inquiries,
+  posts,
   onClose,
   remoteActions,
-}: UseInquiryCategoryManagementModalParams): UseInquiryCategoryManagementModalResult {
+}: UseCategoryManagementModalParams): UseCategoryManagementModalResult {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState('')
   const [newDraft, setNewDraft] = useState('')
@@ -88,7 +76,7 @@ export function useInquiryCategoryManagementModal({
   const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [settingsCompleteOpen, setSettingsCompleteOpen] = useState(false)
-  const [pendingDeleteRow, setPendingDeleteRow] = useState<InquiryCategoryRow | null>(null)
+  const [pendingDeleteRow, setPendingDeleteRow] = useState<PostsCategoryRow | null>(null)
   const newInputRef = useRef<InputRef>(null)
   const editInputRef = useRef<InputRef>(null)
 
@@ -115,7 +103,7 @@ export function useInquiryCategoryManagementModal({
     onClose()
   }, [onClose, resetEphemeralUi])
 
-  const startEdit = useCallback((row: InquiryCategoryRow) => {
+  const startEdit = useCallback((row: PostsCategoryRow) => {
     setComposeOpen(false)
     setNewDraft('')
     setEditingId(row.id)
@@ -143,7 +131,7 @@ export function useInquiryCategoryManagementModal({
         await remoteActions.onUpdate(editingId, trimmed)
         cancelEdit()
       } catch (error) {
-        if (isInquiryCategoryDuplicateError(error)) {
+        if (isCategoryDuplicateError(error, kind)) {
           setDuplicateAlertOpen(true)
         }
       }
@@ -153,19 +141,23 @@ export function useInquiryCategoryManagementModal({
       categories.map(c => (c.id === editingId ? { ...c, name: trimmed } : c))
     )
     cancelEdit()
-  }, [cancelEdit, categories, editDraft, editingId, onCategoriesChange, remoteActions])
+  }, [cancelEdit, categories, editDraft, editingId, kind, onCategoriesChange, remoteActions])
 
   const removeCategory = useCallback(
     (id: string) => {
       onCategoriesChange(categories.filter(c => c.id !== id))
       if (editingId === id) cancelEdit()
-      },
+    },
     [cancelEdit, categories, editingId, onCategoriesChange]
   )
 
   const requestDeleteCategory = useCallback(
-    (row: InquiryCategoryRow) => {
-      const used = countByCategoryLabel(inquiries, i => i.category, row.name)
+    (row: PostsCategoryRow) => {
+      const used = countByCategoryLabel(
+        posts,
+        post => getPostCategoryLabel(post) ?? '',
+        row.name
+      )
       if (used > 0) {
         setDeleteBlockedOpen(true)
         return
@@ -173,7 +165,7 @@ export function useInquiryCategoryManagementModal({
       setPendingDeleteRow(row)
       setDeleteConfirmOpen(true)
     },
-    [inquiries]
+    [posts]
   )
 
   const cancelDeleteConfirm = useCallback(() => {
@@ -189,7 +181,7 @@ export function useInquiryCategoryManagementModal({
         setDeleteConfirmOpen(false)
         setPendingDeleteRow(null)
       } catch (error) {
-        if (isInquiryCategoryInUseError(error)) {
+        if (isCategoryInUseError(error, kind)) {
           setDeleteConfirmOpen(false)
           setPendingDeleteRow(null)
           setDeleteBlockedOpen(true)
@@ -200,7 +192,7 @@ export function useInquiryCategoryManagementModal({
     removeCategory(pendingDeleteRow.id)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
-  }, [pendingDeleteRow, remoteActions, removeCategory])
+  }, [kind, pendingDeleteRow, remoteActions, removeCategory])
 
   const cancelNew = useCallback(() => {
     setNewDraft('')
@@ -222,7 +214,7 @@ export function useInquiryCategoryManagementModal({
         setNewDraft('')
         setComposeOpen(false)
       } catch (error) {
-        if (isInquiryCategoryDuplicateError(error)) {
+        if (isCategoryDuplicateError(error, kind)) {
           setDuplicateAlertOpen(true)
         }
       }
@@ -232,7 +224,7 @@ export function useInquiryCategoryManagementModal({
     onCategoriesChange([...categories, { id, name: trimmed }])
     setNewDraft('')
     setComposeOpen(false)
-  }, [categories, newDraft, onCategoriesChange, remoteActions])
+  }, [categories, kind, newDraft, onCategoriesChange, remoteActions])
 
   const openCompose = useCallback(() => {
     cancelEdit()

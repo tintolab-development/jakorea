@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import {
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
@@ -136,15 +138,14 @@ export function UjatEducationProgressAttendanceSection({
         title={firstSessionTitle}
         actions={
           firstSessionTitle != null ? (
-            <CmsButton
+            <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              size="large"
               width={120}
               onClick={() => openFirstSessionCorrection?.()}
             >
               출결 정정
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : null
         }
         excelExport={{

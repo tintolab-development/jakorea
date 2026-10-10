@@ -1,3 +1,5 @@
+import { resolveDeleteBlockedGuideCopy } from '@/shared/lib/delete-blocked-guide-copy'
+
 /** Gemini 찾아가는 연수·실적 — 텍스트 삭제 안내 (공통 프로그램 삭제 문구와 분리) */
 
 export const GEMINI_DELETE_IRREVERSIBLE_LINE = '삭제된 정보는 되돌릴 수 없습니다.'
@@ -50,13 +52,22 @@ export function resolveGeminiDeleteBlockedAlert(
   kind: GeminiDeleteBlockedKind,
   selectedCount: number
 ): { title: string; content: string } {
-  const body = DELETE_BLOCKED_BODY[kind]
-  const lead =
-    selectedCount >= 2
-      ? `선택한 ${selectedCount}개의 항목 중 삭제가 불가한 항목이 포함되어 있습니다.\n`
-      : ''
-  return {
-    title: `${kind} 삭제 불가 안내`,
-    content: `${lead}${body}`,
-  }
+  const copy = resolveDeleteBlockedGuideCopy({
+    entityLabel: kind,
+    reasonLine: DELETE_BLOCKED_BODY[kind],
+    selectedCount,
+  })
+  return { title: copy.title, content: copy.description }
+}
+
+export function resolveGeminiDeleteBlockedModalCopy(
+  kind: GeminiDeleteBlockedKind,
+  selectedCount: number
+): { title: string; description: string } {
+  const copy = resolveDeleteBlockedGuideCopy({
+    entityLabel: kind,
+    reasonLine: DELETE_BLOCKED_BODY[kind],
+    selectedCount,
+  })
+  return { title: copy.title, description: copy.description }
 }

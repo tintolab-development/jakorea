@@ -5,9 +5,10 @@
 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   ACCOUNT_PAYMENT_STATUS_LABELS,
   mockAccountPaymentRows,
@@ -41,7 +42,8 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
 import './payment-orders-page.css'
@@ -85,7 +87,7 @@ const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
 /** 계좌 지급 풀페이지 상세 — URL 동기화(뒤로가기로 목록 복귀) */
 const AP_DETAIL_ID = 'ap_detail'
 
-/** `FilterTableLayout` 툴바 — `CmsButton` size=large, width=auto에 최소 폭 180px 적용 */
+/** `FilterTableLayout` 툴바 — `FilterTableToolbarButton` h40, width=auto에 최소 폭 180px 적용 */
 const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 180 } as const
 
 /** 세 번째 요약 위젯 — 이체 예정일 구간 표기 `YY. MM. DD ~ YY. MM. DD` */
@@ -692,9 +694,8 @@ export default function AccountPaymentsPage() {
     () => (
       <>
         {viewMode === 'list' ? (
-          <CmsButton
+          <FilterTableToolbarButton
             variant="secondary"
-            size="large"
             width="auto"
             style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
             icon={<ButtonCalendarIcon />}
@@ -702,11 +703,10 @@ export default function AccountPaymentsPage() {
             onClick={() => setViewMode('calendar')}
           >
             캘린더 뷰로 보기
-          </CmsButton>
+          </FilterTableToolbarButton>
         ) : (
-          <CmsButton
+          <FilterTableToolbarButton
             variant="secondary"
-            size="large"
             width="auto"
             style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
             icon={<ButtonListIcon />}
@@ -714,11 +714,10 @@ export default function AccountPaymentsPage() {
             onClick={() => setViewMode('list')}
           >
             리스트 뷰로 보기
-          </CmsButton>
+          </FilterTableToolbarButton>
         )}
-        <CmsButton
+        <FilterTableToolbarButton
           variant="primary"
-          size="large"
           width="auto"
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
@@ -727,10 +726,9 @@ export default function AccountPaymentsPage() {
           onClick={openBulkTransferPreview}
         >
           대량이체 양식 발급
-        </CmsButton>
-        <CmsButton
+        </FilterTableToolbarButton>
+        <FilterTableToolbarButton
           variant="primary"
-          size="large"
           width="auto"
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
@@ -739,7 +737,7 @@ export default function AccountPaymentsPage() {
           onClick={openTaxFilingPreview}
         >
           세금 신고 양식 발급
-        </CmsButton>
+        </FilterTableToolbarButton>
       </>
     ),
     [
@@ -752,16 +750,15 @@ export default function AccountPaymentsPage() {
 
   const accountPaymentsAfterActions = useMemo(
     () => (
-      <CmsButton
+      <FilterTableToolbarButton
         variant="primary"
-        size="large"
         width={CMS_ACTION_BUTTON_WIDTH}
         type="button"
         disabled={selectedRowKeys.length === 0}
         onClick={openAccountPaymentConfirmFromSelection}
       >
         일괄 지급 처리
-      </CmsButton>
+      </FilterTableToolbarButton>
     ),
     [selectedRowKeys.length, openAccountPaymentConfirmFromSelection]
   )
@@ -966,7 +963,7 @@ export default function AccountPaymentsPage() {
                   : '목록을 불러오지 못했습니다.'}
               </div>
             ) : (
-              <Table<AccountPaymentRow>
+              <CmsDataTable<AccountPaymentRow>
               className="cms-data-table"
               rowKey="id"
               columns={columns}

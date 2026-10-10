@@ -2,6 +2,7 @@
  * Ant Design Table drag-sorting-handler 패턴
  * @see https://ant.design/components/table#table-demo-drag-sorting-handler
  */
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import React, {
   createContext,
   useContext,
@@ -29,7 +30,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { UjatEducationRegion } from '@/features/program/ujat/model/education-region.types'
 
@@ -166,7 +166,7 @@ export function UjatEducationRegionsSortableTable({
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
-        <Table<UjatEducationRegion>
+        <CmsDataTable<UjatEducationRegion>
           className="cms-data-table"
           rowKey="id"
           loading={loading}

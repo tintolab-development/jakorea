@@ -4,11 +4,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   UJAT_APPLICANT_ID_PARAM,
   UJAT_EDU_INST_ID_PARAM,
@@ -46,13 +46,13 @@ import {
   useUpdateProgram,
 } from '@/features/program/ujat/api/queries'
 import {
-  buildProgramHardDeleteBlockedAlertContent,
   buildProgramSingleDeleteGuideLines,
   isProgramHardDeleteBlockedError,
   PROGRAM_DELETE_GUIDE_TITLE,
-  PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
   resolveProgramDeleteGuideModalCopy,
+  resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
@@ -63,7 +63,12 @@ import {
 import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
 import { getHttpStatus } from '@/features/program/ujat/api/errors'
 import type { Program } from '@/types/domain'
-import { FilterTableLayout, CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
+import {
+  FilterTableLayout,
+  DeleteGuideModal,
+  showDeleteCompletedAlert,
+  FilterTableToolbarButton,
+} from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
@@ -256,6 +261,11 @@ function UjatProgramListPageContent() {
   ])
 
   const [programPendingDelete, setProgramPendingDelete] = useState<Program | null>(null)
+  const [programDeleteBlockedOpen, setProgramDeleteBlockedOpen] = useState(false)
+  const [programDeleteBlockedCopy, setProgramDeleteBlockedCopy] = useState({
+    title: '',
+    description: '',
+  })
 
   const handleConfirmDelete = useCallback(async () => {
     if (!programPendingDelete) return
@@ -270,17 +280,17 @@ function UjatProgramListPageContent() {
       showDeleteCompletedAlert()
     } catch (error) {
       setProgramPendingDelete(null)
-      showAlert(
-        getHttpStatus(error) === 409
-          ? {
-              title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
-              content: buildProgramHardDeleteBlockedAlertContent(1, readErrorResponseMessage(error)),
-            }
-          : {
-              title: '삭제 실패',
-              content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-            }
-      )
+      if (getHttpStatus(error) === 409 || isProgramHardDeleteBlockedError(error)) {
+        setProgramDeleteBlockedCopy(
+          resolveProgramHardDeleteBlockedModalCopy(1, readErrorResponseMessage(error))
+        )
+        setProgramDeleteBlockedOpen(true)
+        return
+      }
+      showAlert({
+        title: '삭제 실패',
+        content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      })
     }
   }, [deleteProgramMutation, programPendingDelete, programsQuery, setSearchParams, showAlert])
 
@@ -314,14 +324,17 @@ function UjatProgramListPageContent() {
       showDeleteCompletedAlert()
     } catch (error) {
       setBulkDeleteModalOpen(false)
-      showAlert(
-        isProgramHardDeleteBlockedError(error)
-          ? { title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE, content: error.message }
-          : {
-              title: '삭제 실패',
-              content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-            }
-      )
+      if (isProgramHardDeleteBlockedError(error)) {
+        setProgramDeleteBlockedCopy(
+          resolveProgramHardDeleteBlockedModalCopy(selectedRowKeys.length)
+        )
+        setProgramDeleteBlockedOpen(true)
+        return
+      }
+      showAlert({
+        title: '삭제 실패',
+        content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      })
     }
   }, [
     bulkDeleteProgramsMutation,
@@ -493,9 +506,9 @@ function UjatProgramListPageContent() {
   )
 
   const toolbarActionsAfterExcel = (
-    <CmsButton width={180} onClick={handleProgramCreateClick}>
+    <FilterTableToolbarButton width={180} onClick={handleProgramCreateClick}>
       프로그램 신규 등록
-    </CmsButton>
+    </FilterTableToolbarButton>
   )
 
   return (
@@ -509,9 +522,9 @@ function UjatProgramListPageContent() {
         title="전체 프로그램"
         description={`총 ${totalElements.toLocaleString()}건`}
         actions={
-          <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
+          <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
             선택 삭제
-          </CmsButton>
+          </FilterTableToolbarButton>
         }
         actionsAfterExcel={toolbarActionsAfterExcel}
         excelExport={{
@@ -519,7 +532,7 @@ function UjatProgramListPageContent() {
           data: filteredRows,
         }}
       >
-        <Table<Program>
+        <CmsDataTable<Program>
           className="cms-data-table"
           rowKey="id"
           loading={loading && filteredRows.length === 0}
@@ -599,6 +612,12 @@ function UjatProgramListPageContent() {
           void handleConfirmBulkDelete()
         }}
         onCancel={() => setBulkDeleteModalOpen(false)}
+      />
+      <DeleteBlockedGuideModal
+        open={programDeleteBlockedOpen}
+        onClose={() => setProgramDeleteBlockedOpen(false)}
+        title={programDeleteBlockedCopy.title}
+        description={programDeleteBlockedCopy.description}
       />
     </div>
   )

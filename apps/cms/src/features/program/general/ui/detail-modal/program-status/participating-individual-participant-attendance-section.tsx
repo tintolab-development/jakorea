@@ -1,3 +1,4 @@
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   forwardRef,
   useCallback,
@@ -7,7 +8,6 @@ import {
   useState,
 } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
@@ -496,7 +496,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
         description={`${rows.length}건`}
         hideExcelDownload
       >
-        <Table<ParticipatingIndividualParticipantAttendanceRow & { no: number }>
+        <CmsDataTable<ParticipatingIndividualParticipantAttendanceRow & { no: number }>
           rowKey="id"
           className="cms-data-table"
           columns={columns}

@@ -3,11 +3,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { Table, Select } from 'antd'
+import { Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
@@ -62,14 +63,6 @@ const WAITING_EMPTY_TEXT = '배정 대기 중인 일정이 없습니다.'
 
 function renderScheduleCell(label: string) {
   return renderProgramDetailPipeSeparated(label)
-}
-
-function renderTableEmpty(text: string) {
-  return (
-    <div className="school-detail-fullpage-view__waiting-table-empty" role="status">
-      {text}
-    </div>
-  )
 }
 
 export interface ParticipatingIndividualInstructorAssignmentSectionProps {
@@ -562,7 +555,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           </div>
         </div>
         <div className="participating-institutions-section__table-wrap">
-          <Table<ParticipatingIndividualInstructorAssignedScheduleRow>
+          <CmsDataTable<ParticipatingIndividualInstructorAssignedScheduleRow>
             className="participating-institutions-section__table cms-data-table"
             rowKey="id"
             size="middle"
@@ -575,7 +568,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             }}
             columns={assignedColumns}
             dataSource={assignedSchedules}
-            locale={{ emptyText: renderTableEmpty(ASSIGNED_EMPTY_TEXT) }}
+            emptyTitle={ASSIGNED_EMPTY_TEXT}
+            emptyDescription={null}
           />
         </div>
       </div>
@@ -594,7 +588,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           </div>
         </div>
         <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__waiting-table-scroll">
-          <Table<ParticipatingIndividualInstructorWaitingScheduleRow>
+          <CmsDataTable<ParticipatingIndividualInstructorWaitingScheduleRow>
             className="participating-institutions-section__table cms-data-table"
             rowKey="id"
             size="middle"
@@ -610,7 +604,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             }}
             columns={waitingColumns}
             dataSource={waitingSchedules}
-            locale={{ emptyText: renderTableEmpty(WAITING_EMPTY_TEXT) }}
+            emptyTitle={WAITING_EMPTY_TEXT}
+            emptyDescription={null}
             rowClassName={record =>
               record.assignmentStatus === 'unavailable'
                 ? 'school-detail-fullpage-view__waiting-row--unavailable'

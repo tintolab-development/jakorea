@@ -1,9 +1,12 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CMS_ACTION_BUTTON_WIDTH,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   buildGeneralVolunteerInterview2CalendarFilterRows,
   buildGeneralVolunteerInterview2FilterRows,
@@ -350,48 +353,44 @@ export function GeneralVolunteerInterview2Section({
         }
         actions={
           <div className="general-volunteer-interview2__actions">
-            <CmsButton
+            <FilterTableToolbarButton
               type="button"
               variant="delete"
-              size="large"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkFail}
             >
               선택 불합격
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              size="large"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkPass}
             >
               선택 합격
-            </CmsButton>
+            </FilterTableToolbarButton>
             {viewMode === 'list' ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={handleViewCalendar}
               >
                 캘린더 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={handleViewList}
               >
                 리스트 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             )}
           </div>
         }
@@ -402,7 +401,7 @@ export function GeneralVolunteerInterview2Section({
       >
         {viewMode === 'list' ? (
           <div className="general-volunteer-interview2__table-wrap">
-            <Table<GeneralVolunteerApplicantRow>
+            <CmsDataTable<GeneralVolunteerApplicantRow>
               rowKey="id"
               className="cms-data-table cms-data-table--fluid clickable-table"
               columns={columns}

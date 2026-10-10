@@ -1,9 +1,9 @@
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { TemplateRow } from '@/features/template/model/template.schema'
 import './template-table.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 /**
  * 작성·발급 양식 탭 공통 컬럼 폭 — 등록 양식 시안 기준
@@ -97,7 +97,7 @@ export function TemplateTable({ rows, onPreview }: TemplateTableProps) {
   )
 
   return (
-    <Table
+    <CmsDataTable
       className="cms-data-table template-table"
       rowKey="key"
       columns={columns}

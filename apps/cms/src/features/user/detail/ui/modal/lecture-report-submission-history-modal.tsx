@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application } from '@/types/domain'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -8,6 +7,7 @@ import { CmsButton } from '@/shared/ui'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   bulkDownloadMemberLectureReportsRemote,
   downloadFormSubmissionFileRemote,
@@ -256,7 +256,7 @@ export function LectureReportSubmissionHistoryModal({
           contentLoading={reportsQuery.isLoading}
         >
           <div className="lecture-report-submission-history-modal__table-outer">
-            <Table<MemberLectureReportTableRow>
+            <CmsDataTable<MemberLectureReportTableRow>
               className="cms-data-table cms-data-table--fluid"
               rowKey="id"
               dataSource={rows}

@@ -1,4 +1,5 @@
 import {
+  getFileContentPath,
   getFileDownload,
   loadAdminFileBlob,
   toSameOriginApiPath,
@@ -34,11 +35,30 @@ export async function fetchProgramThumbnail(programId: number): Promise<ProgramT
   )
 }
 
-/** img에 넣을 주소. 바이트를 받으면 blob, 아니면 서명된 downloadUrl. `/content`는 쓰지 않는다. */
+function isPreviewableImageBlob(blob: Blob): boolean {
+  return blob.size > 0 && blob.type !== 'application/json'
+}
+
+/** img에 넣을 주소. 바이트를 받으면 blob, 아니면 서명된 downloadUrl. `/content`는 img src로 쓰지 않는다. */
 export async function loadProgramThumbnailPreviewUrl(fileObjectId: number): Promise<string> {
   try {
     const blob = await loadAdminFileBlob(fileObjectId)
-    if (blob.size > 0 && blob.type !== 'application/json') {
+    if (isPreviewableImageBlob(blob)) {
+      return URL.createObjectURL(blob)
+    }
+  } catch {
+    /* 인증된 /content 조회로 재시도 */
+  }
+  try {
+    const blob = await customInstance<Blob>(
+      {
+        url: getFileContentPath(fileObjectId),
+        method: 'GET',
+        responseType: 'blob',
+      },
+      { skipGlobalErrorAlert: true }
+    )
+    if (isPreviewableImageBlob(blob)) {
       return URL.createObjectURL(blob)
     }
   } catch {

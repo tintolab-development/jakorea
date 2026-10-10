@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { AffiliatedTeacherLinkTarget, SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { CmsButton } from '@/shared/ui'
@@ -11,6 +10,7 @@ import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import { formatDateSpaced } from '@/shared/utils'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
   SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
@@ -229,7 +229,7 @@ export function SchoolAffiliatedTeachersSection({
       <DetailInfoForm title="소속 교사 목록" hideHeader className="school-affiliated-teachers-section__form">
         <DetailInfoForm.Row type="custom">
           <div className="school-affiliated-teachers-section__body">
-            <Table
+            <CmsDataTable
               className="cms-data-table cms-data-table--fluid school-affiliated-teachers-section__table"
               rowSelection={{
                 columnWidth: TABLE_COLUMN_WIDTHS.checkbox,

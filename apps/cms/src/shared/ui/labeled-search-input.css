@@ -13,7 +13,7 @@
 
 .labeled-search-input--filter {
   min-height: calc(
-    var(--filter-label-height, 23px) + var(--filter-label-control-gap, 6px) + var(--filter-control-height, 44px)
+    var(--filter-label-height, 22px) + var(--filter-label-control-gap, 6px) + var(--filter-control-height, 40px)
   );
 }
 

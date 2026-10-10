@@ -89,7 +89,7 @@ export async function bulkDeleteSponsorProgramHistoriesRemote(
         data: { ids: numericProgramIds },
       })
     )
-    assertBulkDeleteSucceeded(result, '후원사 프로그램 진행 이력 삭제에 실패했습니다.')
+    assertBulkDeleteSucceeded(result, '후원사 프로그램 후원 이력 삭제에 실패했습니다.')
   })
 }
 

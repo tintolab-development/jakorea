@@ -1,4 +1,4 @@
-import { Card, Table, Typography } from 'antd'
+import { Card, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FileTextOutlined, UserOutlined } from '@ant-design/icons'
 import { ProgressStagesWidget } from '@/features/dashboard/ui/progress-stages-widget'
@@ -14,6 +14,7 @@ import '@/features/dashboard/ui/dashboard-widget-table.css'
 import '@/features/dashboard/ui/widget-card.css'
 import '@/shared/ui/widget-more-button.css'
 import { DsDemo, DsSection } from './section'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 type DashboardTableRow = {
   id: string
@@ -180,7 +181,7 @@ export function DashboardSection() {
             </LoadingButton>
           }
         >
-          <Table<DashboardTableRow>
+          <CmsDataTable<DashboardTableRow>
             className="cms-data-table cms-data-table--widget dashboard-widget-table__data"
             rowKey="id"
             columns={DASHBOARD_TABLE_COLUMNS}

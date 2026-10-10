@@ -1,4 +1,8 @@
 .table-filter-group__container {
+  /* CmsField M(h40) — `--cms-label-font` 14px 등은 `cms-control--medium` */
+  --filter-control-height: 40px;
+  /* 14px × 140% + padding-bottom 2px (`.cms-field__label`) */
+  --filter-label-height: 22px;
   --table-filter-field-gap: var(--filter-field-gap, 12px);
   --table-filter-field-min-width: 240px;
   --table-filter-field-max-width: 260px;
@@ -150,14 +154,14 @@
   width: 100%;
 }
 
-/* 필터 영역 조회 — 시안 160×44 (CmsButton large 기본 140px 덮어씀) */
-.table-filter-group__fields-shell .table-filter-group__search-button.cms-button.cms-button--h44 {
+/* 필터 영역 조회 — 시안 160×40 (CmsButton medium) */
+.table-filter-group__fields-shell .table-filter-group__search-button.cms-button.cms-button--h40 {
   width: 160px !important;
   min-width: 160px !important;
   max-width: 160px !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  max-height: 44px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
   box-sizing: border-box;
 }
 
@@ -239,7 +243,7 @@
   box-sizing: border-box;
 }
 
-/* 필드 — 레이블(23px) + gap 6px + 컨트롤(44px) 세로 스택 */
+/* 필드 — 레이블(23px) + gap 6px + 컨트롤(40px) 세로 스택 */
 .table-filter-group__field,
 .table-filter-group__grid-cell .table-filter-group__field {
   display: flex;
@@ -247,7 +251,7 @@
   align-items: stretch;
   gap: var(--filter-label-control-gap, 6px);
   min-height: calc(
-    var(--filter-label-height, 23px) + var(--filter-label-control-gap, 6px) + var(--filter-control-height, 44px)
+    var(--filter-label-height, 23px) + var(--filter-label-control-gap, 6px) + var(--filter-control-height, 40px)
   );
   box-sizing: border-box;
 }
@@ -266,8 +270,8 @@
   display: flex;
   align-items: center;
   flex: 0 0 auto;
-  min-height: var(--filter-control-height, 44px);
-  height: var(--filter-control-height, 44px);
+  min-height: var(--filter-control-height, 40px);
+  height: var(--filter-control-height, 40px);
   min-width: 0;
   max-width: 100%;
 }
@@ -761,7 +765,7 @@
   max-width: 100% !important;
 }
 
-/* table-filter-group 라디오 — 시안 래퍼(44px · padding 0 16 0 4 · 옵션 gap 16).
+/* table-filter-group 라디오 — 시안 래퍼(40px · padding 0 16 0 4 · 옵션 gap 16).
  * Col은 콘텐츠 허그. 칸 사이(사용 여부↔다음 필터)는 Row --filter-field-gap 12px */
 .table-filter-group__container
   .table-filter-group__field--radio
@@ -770,7 +774,7 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: nowrap;
-  height: var(--filter-control-height, 44px);
+  height: var(--filter-control-height, 40px);
   min-width: 0;
   max-width: none;
   width: max-content;

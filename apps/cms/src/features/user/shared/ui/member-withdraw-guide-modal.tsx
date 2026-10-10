@@ -47,7 +47,7 @@ function resolveGuide(props: MemberWithdrawGuideModalProps): {
     return {
       title: '학교 삭제 안내',
       lines: buildSchoolDeleteMessageLines({ displayName }),
-      confirmText: confirmTextOverride ?? '학교 삭제',
+      confirmText: confirmTextOverride ?? '삭제',
       requiredConfirmInput: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
       confirmInputPlaceholder: DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
       confirmInputMode: 'phrase',

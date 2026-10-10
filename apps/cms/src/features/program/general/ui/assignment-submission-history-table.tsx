@@ -4,8 +4,8 @@
  */
 
 import { useMemo, type ReactNode } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -242,7 +242,7 @@ export function AssignmentSubmissionHistoryTable({
 }) {
   return (
     <div className="assignment-submission-modal__table-outer">
-      <Table<AssignmentSubmissionHistoryTableRow>
+      <CmsDataTable<AssignmentSubmissionHistoryTableRow>
         rowKey="id"
         className="cms-data-table cms-data-table--fluid"
         columns={columns}

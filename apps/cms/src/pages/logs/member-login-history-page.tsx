@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -7,17 +6,17 @@ import { exportMemberLoginLogs, getLogsApiErrorMessage } from '@/features/logs/a
 import { memberLoginLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { useMemberLoginHistoryQuery } from '@/features/logs/hooks/use-member-login-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
-import { LOGS_EMPTY_SEARCH_TEXT } from '@/features/logs/lib/logs-empty-copy'
 import { memberLoginHistoryFilterFields } from '@/features/logs/model/member-login-history-filter-fields'
 import { memberLoginHistoryTablePageConfig } from '@/features/logs/model/member-login-history-table.config'
 import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   EMPTY_TABLE_PAGE_CONTEXT,
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
-import { EmptyState, useCmsAlert } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -48,7 +47,9 @@ export default function MemberLoginHistoryPage() {
     fetchNextPage,
   } = useMemberLoginHistoryQuery(searchParams)
 
-  const { pendingFilters, handleFilterChange, applySearch, tableData } = useTablePage(
+  const { pendingFilters, handleFilterChange, applySearch, tableData,
+    hasActiveFilters,
+  } = useTablePage(
     memberLoginHistoryTablePageConfig,
     {
       data: rows,
@@ -129,6 +130,7 @@ export default function MemberLoginHistoryPage() {
 
   return (
     <FilterTableLayout
+      hasActiveFilters={hasActiveFilters}
       bordered={false}
       fields={memberLoginHistoryFilterFields}
       filters={{
@@ -152,7 +154,7 @@ export default function MemberLoginHistoryPage() {
         />
       ) : (
         <>
-          <Table<MemberLoginLog>
+          <CmsDataTable<MemberLoginLog>
             rowKey="id"
             className="cms-data-table"
             tableLayout="fixed"
@@ -160,9 +162,6 @@ export default function MemberLoginHistoryPage() {
             columns={columns}
             dataSource={tableData}
             pagination={false}
-            locale={{
-              emptyText: <EmptyState description={LOGS_EMPTY_SEARCH_TEXT} />,
-            }}
           />
           <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
         </>

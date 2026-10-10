@@ -1,15 +1,26 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import {
-  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
-  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
-} from '@/shared/constants'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { CmsButton, ContentModal, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  ContentModal,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  useCmsAlert,
+  FilterTableToolbarButton,
+} from '@/shared/ui'
+import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+import { resolveTextbookDeleteConfirmCopy } from '@/features/textbook/lib/textbook-delete-confirm-copy'
+import {
+  isTextbookInUseDeleteError,
+  TEXTBOOK_DELETE_BLOCKED_REASON,
+} from '@/features/textbook/lib/is-textbook-in-use-delete-error'
+import { resolveDeleteBlockedGuideCopy } from '@/shared/lib/delete-blocked-guide-copy'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useTextbookListQuery } from '@/features/textbook/hooks/use-textbook-list-query'
@@ -80,6 +91,8 @@ export default function TextbookPage() {
   }))
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
+  const [deleteBlockedSelectedCount, setDeleteBlockedSelectedCount] = useState(1)
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
   const [kitQuantityModalOpen, setKitQuantityModalOpen] = useState(false)
   const [businessAreaModalOpen, setBusinessAreaModalOpen] = useState(false)
@@ -98,7 +111,6 @@ export default function TextbookPage() {
   const [pendingKitQuantities, setPendingKitQuantities] =
     useState<TextbookKitQuantityValues | null>(null)
   const [kitSaveError, setKitSaveError] = useState<string | null>(null)
-
   /** 최초 진입 시 `tb_use` 없으면 사용(USED)으로 URL 고정 */
   useEffect(() => {
     if (tbUseParam === 'USED' || tbUseParam === 'UNUSED') return
@@ -257,18 +269,29 @@ export default function TextbookPage() {
       await deleteMutation.mutateAsync(Array.from(selectedIds))
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      if (detailTextbookId && selectedIds.has(detailTextbookId)) {
+        setDetailRoute(null)
+      }
+      showDeleteCompletedAlert()
     } catch (error) {
+      if (isTextbookInUseDeleteError(error)) {
+        setDeleteConfirmOpen(false)
+        setDeleteBlockedSelectedCount(selectedIds.size)
+        setDeleteBlockedOpen(true)
+        return
+      }
       console.debug(
         'textbookPage bulkDelete failed',
         getDataManagementApiErrorMessage(error, '삭제에 실패했습니다.')
       )
     }
-  }, [deleteMutation, selectedRowKeys])
+  }, [deleteMutation, detailTextbookId, selectedRowKeys, setDetailRoute])
 
   const handleRegisterSubmit = useCallback(async (payload: TextbookRegisterPayload) => {
     try {
       await createMutation.mutateAsync(payload)
       setRegisterModalOpen(false)
+      showRegisterCompletedAlert()
     } catch (error) {
       console.debug(
         'textbookPage register failed',
@@ -302,28 +325,23 @@ export default function TextbookPage() {
     setKitQuantityModalOpen(false)
   }, [kitQuantitiesMutation, pendingKitQuantities, remoteKitEnabled])
 
-  const { deleteGuideTitle, deleteGuideLines } = useMemo(() => {
+  const deleteConfirmCopy = useMemo(() => {
     const n = selectedRowKeys.length
-    if (n === 1) {
-      const id = String(selectedRowKeys[0])
-      const row = rows.find(r => r.id === id)
-      const name = row?.textbookName?.trim() || '해당 교재'
-      return {
-        deleteGuideTitle: '교재 삭제 안내',
-        deleteGuideLines: [
-          `[${name}] 교재를 삭제하시겠습니까?`,
-          '삭제된 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
-        ],
-      }
+    if (n <= 1) {
+      return resolveTextbookDeleteConfirmCopy('single')
     }
-    return {
-      deleteGuideTitle: '교재 일괄 삭제 안내',
-      deleteGuideLines: [
-        `**선택한 ${n}개의 교재**를 목록에서 모두 삭제하시겠습니까?`,
-        '삭제된 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
-      ],
-    }
-  }, [rows, selectedRowKeys])
+    return resolveTextbookDeleteConfirmCopy('bulk', n)
+  }, [selectedRowKeys.length])
+
+  const deleteBlockedCopy = useMemo(
+    () =>
+      resolveDeleteBlockedGuideCopy({
+        entityLabel: '교재',
+        reasonLine: TEXTBOOK_DELETE_BLOCKED_REASON,
+        selectedCount: deleteBlockedSelectedCount,
+      }),
+    [deleteBlockedSelectedCount]
+  )
 
   const columns: ColumnsType<TextbookRow> = useMemo(
     () => [
@@ -399,16 +417,18 @@ export default function TextbookPage() {
 
   return (
     <div className="textbook-page">
-      <DeleteGuideModal
+      <NoticeDeleteConfirmModal
         open={deleteConfirmOpen}
         onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDeleteSelected}
-        title={deleteGuideTitle}
-        lines={deleteGuideLines}
-        confirmText="삭제"
-        confirmVariant="delete"
-        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
-        confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+        confirmLoading={deleteMutation.isPending}
+        {...deleteConfirmCopy}
+      />
+      <DeleteBlockedGuideModal
+        open={deleteBlockedOpen}
+        onClose={() => setDeleteBlockedOpen(false)}
+        title={deleteBlockedCopy.title}
+        description={deleteBlockedCopy.description}
       />
       <TextbookRegisterModal
         open={registerModalOpen}
@@ -517,26 +537,26 @@ export default function TextbookPage() {
         contentLoading={isInitialListLoading}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               onClick={handleDeleteSelected}
             >
               교재 삭제
-            </CmsButton>
-            <CmsButton variant="secondary" onClick={() => setKitQuantityModalOpen(true)}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={() => setKitQuantityModalOpen(true)}>
               키트 수량 관리
-            </CmsButton>
-            <CmsButton variant="secondary" onClick={() => setBusinessAreaModalOpen(true)}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={() => setBusinessAreaModalOpen(true)}>
               사업 분야 관리
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="primary"
               onClick={() => {
                 setRegisterModalOpen(true)
               }}
             >
               교재 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -544,7 +564,7 @@ export default function TextbookPage() {
           data: filteredRows,
         }}
       >
-        <Table<TextbookRow>
+        <CmsDataTable<TextbookRow>
           rowKey="id"
           className="cms-data-table textbook-page__table"
           tableLayout="fixed"

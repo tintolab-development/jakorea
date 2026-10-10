@@ -3,6 +3,7 @@
  * 공지사항 관리(admin-notice-list-page)와 동일: FilterTableLayout + useTablePage + CmsButton
  */
 
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useCallback,
   useEffect,
@@ -12,7 +13,6 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { AdminFaq } from '@/data/mock/admin-faqs'
@@ -28,9 +28,14 @@ import { useTablePage } from '@/shared/components/table-system/model/use-table-p
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { ActionResultModal, CmsButton, useCmsAlert } from '@/shared/ui'
+import {
+  ActionResultModal,
+  useCmsAlert,
+  FilterTableToolbarButton,
+} from '@/shared/ui'
+import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
-import { FaqCategoryManagementModal } from '@/features/posts/ui/faq-category-management-modal'
+import { CategoryManagementModal } from '@/features/posts/ui/category-management-modal'
 import { FaqFormModal } from '@/features/posts/ui/faq-form-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -95,6 +100,7 @@ function AdminFAQPage() {
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(adminFaqManagementTablePageConfig, {
     data: rows,
     searchParams,
@@ -232,10 +238,10 @@ function AdminFAQPage() {
     [tableData.length]
   )
 
-  const bulkDeleteLine1 =
-    selectedRowKeys.length > 0
-      ? `선택한 ${selectedRowKeys.length}건의 FAQ를 삭제하시겠습니까?`
-      : '선택한 FAQ를 삭제하시겠습니까?'
+  const bulkDeleteCopy = useMemo(
+    () => resolvePostsDeleteConfirmCopy('faq', 'bulk', selectedRowKeys.length),
+    [selectedRowKeys.length]
+  )
 
   return (
     <div className="admin-faq-list-page">
@@ -244,16 +250,15 @@ function AdminFAQPage() {
         onCancel={() => setBulkDeleteConfirmOpen(false)}
         onConfirm={handleConfirmBulkDelete}
         preset="faq"
-        title="FAQ 삭제"
-        line1={bulkDeleteLine1}
-        line2="삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?"
+        {...bulkDeleteCopy}
       />
-      <FaqCategoryManagementModal
+      <CategoryManagementModal
+        kind="faq"
         open={categoryModalOpen}
         onCancel={() => setCategoryModalOpen(false)}
         categories={categoryRows}
         onCategoriesChange={() => {}}
-        faqs={rows}
+        posts={rows}
         remoteActions={faqCategoryRemoteActions}
       />
       <FaqFormModal
@@ -270,6 +275,7 @@ function AdminFAQPage() {
         onClose={() => setActionResultOpen(false)}
       />
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
         filters={{
@@ -286,19 +292,15 @@ function AdminFAQPage() {
         contentLoading={contentLoading}
         actions={
           <>
-            <CmsButton
-              variant="delete"
-              className="admin-faq-delete-btn"
-              onClick={handleBulkDelete}
-            >
+            <FilterTableToolbarButton variant="delete" className="admin-faq-delete-btn" onClick={handleBulkDelete}>
               FAQ 삭제
-            </CmsButton>
-            <CmsButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
               카테고리 관리
-            </CmsButton>
-            <CmsButton variant="primary" onClick={handleRegister}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="primary" onClick={handleRegister}>
               FAQ 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -311,7 +313,7 @@ function AdminFAQPage() {
             {contentError}
           </div>
         ) : (
-          <Table<AdminFaq>
+          <CmsDataTable<AdminFaq>
             rowKey="id"
             className="cms-data-table admin-faq-list-page__table"
             tableLayout="fixed"

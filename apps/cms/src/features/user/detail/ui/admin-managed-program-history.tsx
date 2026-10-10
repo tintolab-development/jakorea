@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { Table, Spin } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program, TargetLevel } from '@/types/domain'
 import type { User } from '@/types/user'
@@ -12,6 +12,7 @@ import { programService } from '@/entities/program/api/program-service'
 import { mockPrograms } from '@/data/mock'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { useMemberAdminProgramsQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   deleteAdminAccountProgramRoleRemote,
   deleteMemberAdminProgramRemote,
@@ -37,10 +38,10 @@ import {
 } from '@/shared/constants'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
-  CmsButton,
   DeleteGuideModal,
   ProgramHistoryDeleteBlockedModal,
   buildProgramProgressHistoryDeleteGuide,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { buildProgressYearSelectOptions } from '@/shared/utils'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
@@ -242,6 +243,7 @@ export function AdminManagedProgramHistory({
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(adminManagedProgramTablePageConfig, {
     data: localPrograms,
     searchParams,
@@ -430,6 +432,7 @@ export function AdminManagedProgramHistory({
         <MemberDetailMockDataBanner message="adminAccountId 또는 memberId가 없어 담당 프로그램 이력 API를 호출할 수 없습니다." />
       ) : null}
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
         filters={{
@@ -445,13 +448,13 @@ export function AdminManagedProgramHistory({
         description={`총 ${displayedCount}건`}
         actions={
           SHOW_PROGRAM_HISTORY_DELETE ? (
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               disabled={selectedRowKeys.length === 0}
               onClick={handleOpenDeleteModal}
             >
               이력 삭제
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : null
         }
         excelExport={{
@@ -460,7 +463,7 @@ export function AdminManagedProgramHistory({
         }}
       >
         <Spin spinning={membersRemote && remoteProgramsLoading}>
-          <Table<Program>
+          <CmsDataTable<Program>
             rowSelection={
               SHOW_PROGRAM_HISTORY_DELETE
                 ? {

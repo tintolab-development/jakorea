@@ -2,6 +2,7 @@
  * 회원 권한 신청 목록 — 강사·관리자 공통 UI (`FilterTableLayout` / user-list·program-list 스타일 정렬)
  */
 
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useMemo,
   useState,
@@ -13,7 +14,6 @@ import {
   type Key,
   type MouseEvent,
 } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -50,7 +50,10 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 
 /** 강사 권한승인 목록 — BE `학교/기관`은 UI `학교(교사)`로 표시 */
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
@@ -231,6 +234,7 @@ export const MembersPermissionList = forwardRef<
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(membersPermissionTablePageConfig, {
     data: rows,
     searchParams,
@@ -632,6 +636,7 @@ export const MembersPermissionList = forwardRef<
   return (
     <>
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
         filters={{
@@ -646,22 +651,22 @@ export const MembersPermissionList = forwardRef<
         description={`총 ${displayedCount.toLocaleString()}건`}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={bulkReject}
             >
               신청 반려
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="secondary"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={bulkApprove}
             >
               신청 승인
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -669,7 +674,7 @@ export const MembersPermissionList = forwardRef<
           data: tableData,
         }}
       >
-        <Table<MemberPermissionApplicationRow>
+        <CmsDataTable<MemberPermissionApplicationRow>
           rowKey="id"
           className="cms-data-table members-permission-list__table"
           columns={columns}

@@ -42,8 +42,10 @@
 
 .sponsor-detail-basic-info__logos {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
   margin: 0;
   padding: 0;
   list-style: none;

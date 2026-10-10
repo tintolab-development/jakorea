@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   ALIMTALK_SEND_MEMBER_TYPE_OPTIONS,
   ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS,
@@ -271,7 +271,7 @@ export function RecipientSelectModal({
         {hasResults ? (
           <>
             <div className="mail-send-recipient-select-modal__table-wrap">
-              <Table
+              <CmsDataTable
                 className="cms-data-table cms-data-table--skip-auto-no-col mail-send-recipient-select-modal__table"
                 columns={columns}
                 dataSource={paged}

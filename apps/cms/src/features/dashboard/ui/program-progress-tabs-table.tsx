@@ -5,11 +5,12 @@
  */
 
 import { useMemo } from 'react'
-import { Card, Tabs, Table, Select, Space } from 'antd'
+import { Card, Tabs, Select, Space } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { FilterDropdownProps } from 'antd/es/table/interface'
 import { FilterFilled } from '@ant-design/icons'
 import { CmsButton } from '@/shared/ui'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   mockProgramProgressByTab,
   PROGRAM_PROGRESS_TAB_LABELS,
@@ -139,7 +140,7 @@ export function ProgramProgressTabsTable() {
         </span>
       ),
       children: (
-        <Table
+        <CmsDataTable
           dataSource={data}
           rowKey="id"
           columns={columns}

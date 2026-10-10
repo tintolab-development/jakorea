@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   assignmentSubmissionStatusClassName,
   assignmentSubmissionStatusLabel,
@@ -190,7 +190,7 @@ export function UjatEducationProgressAssignmentTable({
 
   return (
     <>
-      <Table<UjatAssignmentVolunteerRow & { no: number }>
+      <CmsDataTable<UjatAssignmentVolunteerRow & { no: number }>
         rowKey="id"
         className="cms-data-table ujat-education-progress-assignments__table"
         columns={columns}

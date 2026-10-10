@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -680,7 +680,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         hideExcelDownload
       >
         <div className="participating-individual-participant-assignment-section__table-outer assignment-submission-modal__table-outer">
-          <Table<ParticipatingIndividualParticipantAssignmentRow & { no: number }>
+          <CmsDataTable<ParticipatingIndividualParticipantAssignmentRow & { no: number }>
             rowKey="id"
             className="cms-data-table cms-data-table--fluid"
             columns={columns}

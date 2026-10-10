@@ -18,13 +18,13 @@ export function NoticeCategoryDuplicateAlertModal({
     <ContentModal
       open={open}
       onCancel={onClose}
-      title="카테고리 중복 안내"
+      title="카테고리명 중복 안내"
       width={WIDTH}
       zIndex={zIndex}
       className="notice-category-delete-blocked-modal"
-      description={'동일한 카테고리명이 이미 등록되어 있습니다.\n다른 명칭으로 입력해 주세요.'}
+      description={'동일한 카테고리명이 존재합니다.'}
       footer={
-        <CmsButton variant="primary" size="large" type="button" onClick={onClose}>
+        <CmsButton variant="secondary" size="h40" type="button" onClick={onClose}>
           확인
         </CmsButton>
       }

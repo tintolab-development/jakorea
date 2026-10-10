@@ -7,16 +7,17 @@ import {
   type GeminiApprovedTrainingPrivacyUnmasked,
 } from '../../api/visiting-training/service'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
-import { DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
 import {
   geminiApprovedTrainingDeleteBlocked,
-  resolveGeminiDeleteBlockedAlert,
+  resolveGeminiDeleteBlockedModalCopy,
   resolveGeminiDeleteGuideModalCopy,
 } from '../../lib/delete-guide'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
@@ -63,8 +64,9 @@ export function GeminiApprovedTrainingDetailFullPageModal({
   const [unmasked, setUnmasked] = useState<GeminiApprovedTrainingPrivacyUnmasked | null>(null)
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const { showAlert } = useCmsAlert()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
+  const [deleteBlockedCopy, setDeleteBlockedCopy] = useState({ title: '', description: '' })
   const { mutateAsync: deleteApprovedTrainings } = useDeleteGeminiApprovedTrainingsMutation()
 
   const {
@@ -149,25 +151,36 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     [setActiveLnb]
   )
 
+  const handleDeleteClick = useCallback(() => {
+    if (detail && geminiApprovedTrainingDeleteBlocked(detail)) {
+      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
+      setDeleteBlockedOpen(true)
+      return
+    }
+    setDeleteModalOpen(true)
+  }, [detail])
+
   const handleConfirmDelete = useCallback(async () => {
     setDeleteModalOpen(false)
-    const blockedAlert = resolveGeminiDeleteBlockedAlert('연수', 1)
     if (detail && geminiApprovedTrainingDeleteBlocked(detail)) {
-      showAlert(blockedAlert)
+      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
+      setDeleteBlockedOpen(true)
       return
     }
     try {
       const result = await deleteApprovedTrainings([approvedTrainingId])
       if (result.failureCount > 0) {
-        showAlert(blockedAlert)
+        setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
+        setDeleteBlockedOpen(true)
         return
       }
       onClose()
       showDeleteCompletedAlert()
     } catch {
-      showAlert(blockedAlert)
+      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
+      setDeleteBlockedOpen(true)
     }
-  }, [approvedTrainingId, deleteApprovedTrainings, detail, onClose, showAlert])
+  }, [approvedTrainingId, deleteApprovedTrainings, detail, onClose])
 
   const deleteGuide = resolveGeminiDeleteGuideModalCopy('연수', 1)
 
@@ -190,7 +203,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
             onSelectChild={() => undefined}
             footer={
               canWrite && detail ? (
-                <ProgramDetailLnbDeleteButton onClick={() => setDeleteModalOpen(true)} />
+                <ProgramDetailLnbDeleteButton onClick={handleDeleteClick} />
               ) : null
             }
           />
@@ -242,6 +255,12 @@ export function GeminiApprovedTrainingDetailFullPageModal({
             void handleConfirmDelete()
           }}
           onCancel={() => setDeleteModalOpen(false)}
+        />
+        <DeleteBlockedGuideModal
+          open={deleteBlockedOpen}
+          onClose={() => setDeleteBlockedOpen(false)}
+          title={deleteBlockedCopy.title}
+          description={deleteBlockedCopy.description}
         />
     </DetailFullPageModal>
   )

@@ -21,12 +21,15 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import type { Program } from '@/types/domain'
-import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
+import { DeleteGuideModal, showDeleteCompletedAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
-  PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
   resolveProgramDeleteGuideModalCopy,
+  resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
 import {
@@ -192,6 +195,11 @@ export function GeneralProgramListPageContent() {
     () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
     [programsPendingBulkDelete.length]
   )
+  const [programDeleteBlockedOpen, setProgramDeleteBlockedOpen] = useState(false)
+  const [programDeleteBlockedCopy, setProgramDeleteBlockedCopy] = useState({
+    title: '',
+    description: '',
+  })
 
   const isScheduledFilter = statusFilter === 'scheduled'
   const showBulkSelection = statusFilter == null || isScheduledFilter
@@ -372,30 +380,29 @@ export function GeneralProgramListPageContent() {
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
       {showBulkSelection && (
-        <CmsButton
+        <FilterTableToolbarButton
           variant="delete"
           width={140}
           onClick={handleBulkDeleteClick}
           className="program-list-page__bulk-delete-button"
         >
           선택 삭제
-        </CmsButton>
+        </FilterTableToolbarButton>
       )}
-      <CmsButton
+      <FilterTableToolbarButton
         variant="secondary"
-        size="large"
         icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
         onClick={handleViewModeToggle}
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
-      </CmsButton>
+      </FilterTableToolbarButton>
     </div>
   )
 
   const programListToolbarActionsAfterExcel = (
-    <CmsButton variant="primary" size="large" width={180} onClick={handleProgramCreateClick}>
+    <FilterTableToolbarButton variant="primary" width={180} onClick={handleProgramCreateClick}>
       프로그램 신규 등록
-    </CmsButton>
+    </FilterTableToolbarButton>
   )
 
   return (
@@ -499,12 +506,11 @@ export function GeneralProgramListPageContent() {
               }
             } catch (error) {
               if (isProgramHardDeleteBlockedError(error)) {
+                const count = programsPendingBulkDelete.length
+                setProgramDeleteBlockedCopy(resolveProgramHardDeleteBlockedModalCopy(count))
                 setBulkDeleteModalOpen(false)
                 setProgramsPendingBulkDelete([])
-                showAlert({
-                  title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
-                  content: error.message,
-                })
+                setProgramDeleteBlockedOpen(true)
                 return
               }
               showAlert({
@@ -518,6 +524,12 @@ export function GeneralProgramListPageContent() {
           setBulkDeleteModalOpen(false)
           setProgramsPendingBulkDelete([])
         }}
+      />
+      <DeleteBlockedGuideModal
+        open={programDeleteBlockedOpen}
+        onClose={() => setProgramDeleteBlockedOpen(false)}
+        title={programDeleteBlockedCopy.title}
+        description={programDeleteBlockedCopy.description}
       />
     </div>
   )

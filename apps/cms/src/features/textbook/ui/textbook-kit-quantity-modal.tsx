@@ -13,13 +13,10 @@ const KIT_LEVELS = [
 type KitLevelKey = (typeof KIT_LEVELS)[number]['key']
 export type TextbookKitQuantityValues = Record<KitLevelKey, string>
 
-export const DEFAULT_KIT_QUANTITIES: TextbookKitQuantityValues = KIT_LEVELS.reduce(
-  (acc, level) => {
-    acc[level.key] = level.defaultValue
-    return acc
-  },
-  {} as TextbookKitQuantityValues
-)
+export const DEFAULT_KIT_QUANTITIES: TextbookKitQuantityValues = KIT_LEVELS.reduce((acc, level) => {
+  acc[level.key] = level.defaultValue
+  return acc
+}, {} as TextbookKitQuantityValues)
 
 const createDefaultQuantities = (): TextbookKitQuantityValues => ({ ...DEFAULT_KIT_QUANTITIES })
 
@@ -51,7 +48,8 @@ export function TextbookKitQuantityModal({
       open={open}
       onCancel={onCancel}
       title="키트 수량 관리"
-      description="키트 1개에 해당하는 교재 권수를 입력해 주세요."
+      description={`키트 1개에 해당하는 교재 권수를 입력해 주세요.
+수량 변경 시 기존 프로그램에는 반영되지 않으며, **신규 프로그램부터 적용**됩니다.`}
       width={600}
       className="textbook-kit-quantity-modal"
       wrapClassName="textbook-kit-quantity-modal-wrap"
@@ -81,7 +79,7 @@ export function TextbookKitQuantityModal({
                 mode="integer"
                 min={0}
                 inputSize="medium"
-                width={190}
+                width={'100%'}
                 aria-label={`${level.label} 키트 수량`}
                 value={quantities[level.key]}
                 onValueChange={nextValue => {

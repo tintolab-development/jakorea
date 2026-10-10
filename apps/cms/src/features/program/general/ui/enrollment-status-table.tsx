@@ -4,11 +4,11 @@
  *       신청자 모집 기간, 프로그램 운영 기간, 후원사, 담당자
  */
 
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { getApplicationCountByProgram, getCapacity } from '../lib/program-helpers'
 import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   programTypes,
   businessAreaOptions,
@@ -138,7 +138,7 @@ export function EnrollmentStatusTable({ data, loading }: EnrollmentStatusTablePr
   ]
 
   return (
-    <Table<Program>
+    <CmsDataTable<Program>
       className="cms-data-table"
       rowKey="id"
       dataSource={programs}

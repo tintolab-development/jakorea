@@ -55,6 +55,7 @@ export function EducationRecordListPage() {
     displayedCount,
     tableData,
     antdColumns,
+    hasActiveFilters,
   } = useTablePage(educationRecordTablePageConfig, {
     data: sourceRows,
     searchParams,
@@ -148,6 +149,7 @@ export function EducationRecordListPage() {
       />
 
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         className={[
           'education-record-list-page__layout',
           isDataTab ? undefined : 'education-record-list-page__layout--summary',

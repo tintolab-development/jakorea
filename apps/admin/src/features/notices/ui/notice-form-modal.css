@@ -4,56 +4,6 @@
  * 첨부만 th/td · 나머지 vertical 폼
  */
 
-/* 뷰포트 정중앙 */
-.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.notice-form-modal) {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  padding: 16px !important;
-  box-sizing: border-box !important;
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-}
-
-.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.notice-form-modal)
-  .ant-modal.teal-header-modal--large.notice-form-modal {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  right: auto !important;
-  bottom: auto !important;
-  transform: translate(-50%, -50%) !important;
-  margin: 0 !important;
-  padding-bottom: 0 !important;
-  width: min(1400px, calc(100vw - 32px)) !important;
-  max-width: min(1400px, calc(100vw - 32px)) !important;
-  flex: none !important;
-  box-sizing: border-box !important;
-}
-
-/*
- * 셸 패딩 시안: top 26 · sides 30 · bottom 34
- * (content-modal 공통 스펙)
- */
-.content-modal.notice-form-modal.teal-header-modal--large .ant-modal-content,
-.notice-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
-  display: flex;
-  flex-direction: column;
-  padding: 26px 30px 34px !important;
-  border-radius: 12px;
-  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
-  max-height: min(880px, calc(100vh - 48px));
-  max-height: min(880px, calc(100dvh - 48px));
-  min-height: 0;
-  height: auto;
-  overflow: hidden;
-}
-
 .content-modal.notice-form-modal.teal-header-modal--large .ant-modal-body,
 .notice-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-body {
   flex: 1 1 auto;

@@ -8,10 +8,10 @@
 import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   changeGeneralParticipatingInstitutionSchedules,
   giveUpGeneralParticipatingInstitution,
@@ -2234,7 +2234,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
-                <Table<AssignedInstructorDisplayRow>
+                <CmsDataTable<AssignedInstructorDisplayRow>
                   className="participating-institutions-section__table cms-data-table"
                   rowKey="id"
                   size="middle"
@@ -2275,7 +2275,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__waiting-table-scroll">
-                <Table<WaitingInstructorRow>
+                <CmsDataTable<WaitingInstructorRow>
                   className="participating-institutions-section__table cms-data-table"
                   rowKey="id"
                   size="middle"

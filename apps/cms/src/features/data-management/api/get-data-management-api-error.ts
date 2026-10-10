@@ -4,6 +4,8 @@ const BUSINESS_AREA_NOT_FOUND_MESSAGE =
   '등록되지 않은 사업 분야입니다. 마스터에 있는 사업 분야를 선택해 주세요.'
 
 const DATA_MANAGEMENT_ERROR_CODE_MESSAGES: Record<string, string> = {
+  SPONSOR_CONTACT_IN_USE:
+    '프로그램에 담당자로 지정되어 있는 후원 담당자는 삭제할 수 없습니다.',
   SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED:
     '지원하지 않는 후원 상태입니다. 후원 중·논의중·휴면·종료 중 하나를 선택해 주세요.',
   TEXTBOOK_BUSINESS_AREA_NOT_FOUND: BUSINESS_AREA_NOT_FOUND_MESSAGE,

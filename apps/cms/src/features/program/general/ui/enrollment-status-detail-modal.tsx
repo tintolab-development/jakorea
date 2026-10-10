@@ -9,11 +9,11 @@ import { Image } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { getCapacity } from '../lib/program-helpers'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   getRecruitmentStatus,
   formatDateOnly,
@@ -386,7 +386,7 @@ export function EnrollmentStatusDetailModal({
             </span>
           </div>
           <div className="enrollment-status-detail-modal__table-wrap">
-            <Table<ApplicantSchoolRow>
+            <CmsDataTable<ApplicantSchoolRow>
               className="enrollment-status-detail-modal__table cms-data-table"
               rowKey="id"
               dataSource={schoolList}

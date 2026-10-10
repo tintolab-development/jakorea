@@ -2,9 +2,9 @@
  * 지급조서 확인 등 — 클릭 가능한 정산 목록 테이블 (공통 Table props 캡슐화)
  */
 
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { TableProps } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const TABLE_CLASS = 'cms-data-table cms-data-table--fluid'
 
@@ -25,7 +25,7 @@ export function PaymentOrdersTable<T extends object>({
   scroll,
 }: PaymentOrdersTableProps<T>) {
   return (
-    <Table<T>
+    <CmsDataTable<T>
       className={TABLE_CLASS}
       columns={columns}
       dataSource={dataSource}

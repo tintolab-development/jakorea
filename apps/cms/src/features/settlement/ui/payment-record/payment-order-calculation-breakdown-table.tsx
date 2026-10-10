@@ -3,10 +3,10 @@
  */
 
 import { useMemo, type ReactNode } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   PaymentOrderAdminLineProcessingStatus,
   PaymentOrderCalculationLineKind,
@@ -262,7 +262,7 @@ export function PaymentOrderCalculationBreakdownTable({
         ) : null}
       </div>
 
-      <Table<PaymentOrderCalculationTableRow>
+      <CmsDataTable<PaymentOrderCalculationTableRow>
         className="payment-order-calc-statement-modal__table cms-data-table cms-data-table--skip-auto-no-col"
         rowKey="key"
         columns={columns}
@@ -273,22 +273,22 @@ export function PaymentOrderCalculationBreakdownTable({
         rowHoverable={false}
         scroll={{ x: PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH }}
         summary={() => (
-          <Table.Summary fixed="bottom">
-            <Table.Summary.Row className="payment-order-calc-statement-modal__summary-row">
-              <Table.Summary.Cell index={0} colSpan={2} align="center">
+          <CmsDataTable.Summary fixed="bottom">
+            <CmsDataTable.Summary.Row className="payment-order-calc-statement-modal__summary-row">
+              <CmsDataTable.Summary.Cell index={0} colSpan={2} align="center">
                 <span className="payment-order-calc-statement-modal__summary-label">합계</span>
-              </Table.Summary.Cell>
-              <Table.Summary.Cell index={2} colSpan={2} align="center">
+              </CmsDataTable.Summary.Cell>
+              <CmsDataTable.Summary.Cell index={2} colSpan={2} align="center">
                 <span className="payment-order-calc-statement-modal__summary-formula">
                   {formulaLabel}
                 </span>
-              </Table.Summary.Cell>
-              <Table.Summary.Cell index={4} align="center">
+              </CmsDataTable.Summary.Cell>
+              <CmsDataTable.Summary.Cell index={4} align="center">
                 <span className="payment-order-calc-statement-modal__summary-total">
                   {formatPaymentOrderCalculationWonPlain(totalAmount)}
                 </span>
-              </Table.Summary.Cell>
-              <Table.Summary.Cell index={5} align="center">
+              </CmsDataTable.Summary.Cell>
+              <CmsDataTable.Summary.Cell index={5} align="center">
                 <CmsButton
                   variant="primary"
                   size="large"
@@ -304,9 +304,9 @@ export function PaymentOrderCalculationBreakdownTable({
                 >
                   지급조서 발급
                 </CmsButton>
-              </Table.Summary.Cell>
-            </Table.Summary.Row>
-          </Table.Summary>
+              </CmsDataTable.Summary.Cell>
+            </CmsDataTable.Summary.Row>
+          </CmsDataTable.Summary>
         )}
       />
     </div>

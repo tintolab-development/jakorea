@@ -12,7 +12,10 @@ import { useFaqDetailQuery } from '@/features/posts/hooks/use-faq-detail-query'
 import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
 import { useLeaveDeletedDetail } from '@/features/posts/hooks/use-leave-deleted-detail'
 import { FaqFormModal } from '@/features/posts/ui/faq-form-modal'
+import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+
+const FAQ_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('faq', 'single')
 import { RichTextViewer } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -102,7 +105,7 @@ export function AdminFaqDetailPage() {
         onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         preset="faq"
-        title="FAQ 삭제"
+        {...FAQ_SINGLE_DELETE_COPY}
       />
       <FaqFormModal
         open={editModalOpen}

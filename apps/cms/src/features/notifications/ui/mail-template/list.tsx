@@ -6,7 +6,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, CmsModal, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton, CmsModal, ConfirmModal, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import {
   MAIL_ROOT_CATEGORY_ID,
   type MailCategory,
@@ -724,37 +727,33 @@ export function MailTemplateList() {
         actions={
           <>
             {remote ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 type="button"
                 disabled={busy}
                 onClick={() => void runMailSync()}
               >
                 {isSyncing ? '동기화 중…' : '동기화'}
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : null}
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
-              size="large"
               type="button"
               disabled={deletableCheckedCount === 0 || busy}
               onClick={handleRequestDelete}
             >
               선택 삭제
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               type="button"
               disabled={!editCategoryId || busy}
               onClick={() => setCategoryModal({ mode: 'edit', categoryId: editCategoryId })}
             >
               카테고리 수정
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               type="button"
               disabled={busy}
               onClick={() =>
@@ -765,16 +764,15 @@ export function MailTemplateList() {
               }
             >
               카테고리 추가
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="primary"
-              size="large"
               type="button"
               disabled={busy}
               onClick={handleOpenCreate}
             >
               템플릿 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
       >

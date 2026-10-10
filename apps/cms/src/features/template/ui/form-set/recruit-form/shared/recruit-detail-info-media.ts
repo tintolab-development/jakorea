@@ -3,7 +3,7 @@
  * 등록 중에는 staging owner 로 업로드하고, 생성 직후 실제 programId 에 연결한다.
  */
 
-import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
+import { fileObjectIdFromAdminFileUrl, parseFileObjectId } from '@/shared/lib/admin-file-upload'
 import { putProgramAttachments } from '@/features/program/shared/api/program-attachments'
 import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
 import {
@@ -79,6 +79,19 @@ function readFiniteNumber(value: unknown): number | undefined {
   return undefined
 }
 
+/** overlay fileObjectId가 없으면 content URL에서 id를 읽는다. blob 주소는 무시. */
+export function resolveRecruitDetailThumbFileObjectId(
+  fileObjectId: unknown,
+  contentUrl: unknown
+): number | undefined {
+  const fromId = readFiniteNumber(fileObjectId)
+  if (fromId != null) return fromId
+  if (typeof contentUrl !== 'string') return undefined
+  const trimmed = contentUrl.trim()
+  if (!trimmed || trimmed.startsWith('blob:')) return undefined
+  return fileObjectIdFromAdminFileUrl(trimmed) ?? undefined
+}
+
 function readStringArray(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined
   const out = value.map(String).map(s => s.trim()).filter(Boolean)
@@ -129,7 +142,10 @@ export function readRecruitDetailMediaFromOverlay(
       }
     }
     if (thumbFileObjectId == null) {
-      thumbFileObjectId = readFiniteNumber(overlay[recruitDetailThumbFileObjectIdKey(prefix)])
+      thumbFileObjectId = resolveRecruitDetailThumbFileObjectId(
+        overlay[recruitDetailThumbFileObjectIdKey(prefix)],
+        overlay[recruitDetailThumbContentUrlKey(prefix)]
+      )
     }
     if (!thumbFileName) {
       const name = overlay[recruitDetailThumbFileNameKey(prefix)]

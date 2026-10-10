@@ -3,12 +3,15 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import {
+  CmsButton,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -307,9 +310,8 @@ export function PaymentOrderInstructorSettlementTable({
         description={`총 ${filteredRows.length}건`}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               style={{ minWidth: 180 }}
               disabled={selectedRowKeys.length === 0}
               onClick={() => {
@@ -318,21 +320,20 @@ export function PaymentOrderInstructorSettlementTable({
               }}
             >
               일괄 확인
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="primary"
-              size="large"
               style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
               onClick={() => {}}
             >
               지급조서 발급
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
       >
         <div className="payment-order-program-status-detail__table-wrap participating-institutions-section__table-wrap">
-          <Table<PaymentOrderAdminInstructorDetailProgramRow>
+          <CmsDataTable<PaymentOrderAdminInstructorDetailProgramRow>
             className="payment-order-program-status-detail__table participating-institutions-section__table cms-data-table"
             rowKey="id"
             columns={columns}

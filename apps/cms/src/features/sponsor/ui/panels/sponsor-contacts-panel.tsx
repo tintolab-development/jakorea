@@ -1,17 +1,21 @@
-import { useCallback, useMemo } from 'react'
-import { Flex, Table } from 'antd'
+import { useCallback, useMemo, useState } from 'react'
+import { Flex } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-management.types'
 import { buildContactColumns } from '@/features/sponsor/columns/sponsor-contact-columns'
 import type { UseSponsorContactsReturn } from '@/features/sponsor/hooks/use-sponsor-contacts'
 import type { UseContactsListReturn } from '@/features/sponsor/hooks/use-contacts-list'
-import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import {
+  isSponsorContactInUseDeleteError,
+  SPONSOR_CONTACT_DELETE_IN_USE_MESSAGE,
+} from '@/features/sponsor/lib/sponsor-contact-delete-copy'
+import { resolveDeleteBlockedGuideCopy } from '@/shared/lib/delete-blocked-guide-copy'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { SponsorContactDeleteModal } from '@/features/sponsor/ui/modal/sponsor-contact-delete-modal'
 import { SponsorContactTypeChangeBlockedModal } from '@/features/sponsor/ui/modal/sponsor-contact-type-change-blocked-modal'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE,
   SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE,
-  isValidSponsorOfficePhone,
 } from '@/features/sponsor/model/sponsor-contact-register-schema'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
@@ -19,7 +23,9 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 
 const contactFilterFields: FilterFieldConfig[] = [
@@ -81,6 +87,18 @@ export function SponsorContactsPanel({
   } = contactsProps
   const { showAlert } = useCmsAlert()
   const { pendingFilters, filteredRows, isLoading, handleFilterChange, handleSearch } = contactsList
+  const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
+  const [deleteBlockedSelectedCount, setDeleteBlockedSelectedCount] = useState(1)
+
+  const deleteBlockedCopy = useMemo(
+    () =>
+      resolveDeleteBlockedGuideCopy({
+        entityLabel: '후원 담당자',
+        reasonLine: SPONSOR_CONTACT_DELETE_IN_USE_MESSAGE,
+        selectedCount: deleteBlockedSelectedCount,
+      }),
+    [deleteBlockedSelectedCount]
+  )
 
   const handleRegisterClick = useCallback((): void => {
     if (!canWrite) return
@@ -115,15 +133,18 @@ export function SponsorContactsPanel({
     try {
       await handleDelete()
     } catch (error) {
+      if (isSponsorContactInUseDeleteError(error)) {
+        setDeleteModalOpen(false)
+        setDeleteBlockedSelectedCount(selectedKeys.length)
+        setDeleteBlockedOpen(true)
+        return
+      }
       showAlert({
         title: '안내',
-        content: getDataManagementApiErrorMessage(
-          error,
-          '후원사 담당자 삭제에 실패했습니다.'
-        ),
+        content: '후원사 담당자 삭제에 실패했습니다.',
       })
     }
-  }, [handleDelete, showAlert])
+  }, [handleDelete, selectedKeys.length, setDeleteModalOpen, showAlert])
 
   const handleToggleEdit = useCallback(async (): Promise<void> => {
     if (!canWrite || isSavingEdits) return
@@ -140,15 +161,9 @@ export function SponsorContactsPanel({
       return
     }
     if (result === 'invalid-format') {
-      const officeInvalid = draftRows.some(row => {
-        const officePhone = row.officePhone.trim()
-        return officePhone.length > 0 && !isValidSponsorOfficePhone(officePhone)
-      })
       showAlert({
         title: '안내',
-        content: officeInvalid
-          ? SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE
-          : SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE,
+        content: SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE,
       })
     }
   }, [canWrite, draftRows, filteredRows, isEditing, isSavingEdits, saveEdits, showAlert, startEdit])
@@ -181,38 +196,35 @@ export function SponsorContactsPanel({
         excelExport={{ columns: excelColumns, data: tableRows }}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
-              size="medium"
               onClick={handleDeleteClick}
               disabled={!canWrite || isEditing || isDeleting}
               loading={isDeleting}
               adminAction="sponsorContactWrite"
             >
               담당자 삭제
-            </CmsButton>
+            </FilterTableToolbarButton>
             {canWrite ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="medium"
                 onClick={() => void handleToggleEdit()}
                 disabled={isSavingEdits}
               >
                 {isEditing ? '수정 완료' : '정보 수정'}
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : null}
-            <CmsButton
+            <FilterTableToolbarButton
               variant="primary"
-              size="medium"
               onClick={handleRegisterClick}
               disabled={isEditing}
             >
               담당자 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
       >
-        <Table<SponsorContactRow>
+        <CmsDataTable<SponsorContactRow>
           rowKey="id"
           className="cms-data-table"
           columns={columns}
@@ -242,6 +254,12 @@ export function SponsorContactsPanel({
       <SponsorContactTypeChangeBlockedModal
         open={typeChangeBlockedModalOpen}
         onClose={() => setTypeChangeBlockedModalOpen(false)}
+      />
+      <DeleteBlockedGuideModal
+        open={deleteBlockedOpen}
+        onClose={() => setDeleteBlockedOpen(false)}
+        title={deleteBlockedCopy.title}
+        description={deleteBlockedCopy.description}
       />
     </Flex>
   )

@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useRef, type MouseEvent } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CMS_ACTION_BUTTON_WIDTH,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
@@ -15,6 +17,7 @@ import { ApplicantDetailView } from '../applicant/detail-view'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import './section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const TABLE_SCROLL_X = computeDocScreeningTableScrollX(UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS)
 
@@ -151,32 +154,30 @@ export function DocScreeningSection({
           title={`봉사자 신청 목록 (${count.toLocaleString()})`}
           actions={
             <div className="ujat-volunteer-doc-screening__actions">
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="delete"
-                size="large"
                 className="cms-button--action"
                 width={CMS_ACTION_BUTTON_WIDTH}
                 onClick={handleBulkReject}
               >
                 선택 반려
-              </CmsButton>
-              <CmsButton
+              </FilterTableToolbarButton>
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 className="cms-button--action"
                 width={CMS_ACTION_BUTTON_WIDTH}
                 onClick={handleBulkApprove}
               >
                 선택 승인
-              </CmsButton>
+              </FilterTableToolbarButton>
             </div>
           }
           excelExport={excelExport}
         >
           <div ref={tableWrapRef} className="ujat-volunteer-doc-screening__table-wrap">
-            <Table<UjatVolunteerApplicantRow>
+            <CmsDataTable<UjatVolunteerApplicantRow>
               rowKey="id"
               className="cms-data-table ujat-volunteer-doc-screening__table clickable-table"
               columns={columns}

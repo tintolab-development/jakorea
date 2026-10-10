@@ -7,8 +7,9 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Flex, Table } from 'antd'
+import { Flex } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   CAREER_NET_UNIV_SCH1,
   filterCareerNetUniversitiesBySigungu,
@@ -543,7 +544,7 @@ export function SchoolSearch({
               {hasResults && isHigherEd ? (
                 <>
                   <div aria-label="대학교 검색 결과">
-                    <Table
+                    <CmsDataTable
                       className="cms-data-table cms-data-table--skip-auto-no-col school-search__table"
                       columns={universityColumns}
                       dataSource={pagedUniversities}
@@ -565,7 +566,7 @@ export function SchoolSearch({
               {hasResults && !isHigherEd ? (
                 <>
                   <div aria-label="학교 검색 결과">
-                    <Table
+                    <CmsDataTable
                       className="cms-data-table cms-data-table--skip-auto-no-col school-search__table"
                       columns={neisColumns}
                       dataSource={pagedFilteredSchools}

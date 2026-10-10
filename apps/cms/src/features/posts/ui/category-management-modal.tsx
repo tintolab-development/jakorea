@@ -1,19 +1,27 @@
 /**
- * 공지 카테고리 관리 모달 — 레이아웃·테이블만; 상태·분기는 useNoticeCategoryManagementModal
+ * 공지·FAQ·문의 카테고리 관리 모달 — 레이아웃·테이블; 상태·분기는 useCategoryManagementModal
  */
 
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { Notice } from '@/data/mock/notices'
-import { ActionResultModal, ContentModal, CmsButton } from '@/shared/ui'
+import {
+  ActionResultModal,
+  ContentModal,
+  CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS,
+  CmsButton,
+} from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
-import type { NoticeCategoryRemoteActions } from '@/features/posts/hooks/use-admin-notice-categories'
-import { useNoticeCategoryManagementModal } from '@/features/posts/hooks/use-notice-category-management-modal'
-import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
-import { NoticeCategoryDeleteBlockedModal } from '@/features/posts/ui/notice-category-management/notice-category-delete-blocked-modal'
+import type { CategoryRemoteActions } from '@/features/posts/hooks/category-remote-actions'
+import { useCategoryManagementModal } from '@/features/posts/hooks/use-category-management-modal'
+import type {
+  CategoryManagementKind,
+  PostWithCategoryLabel,
+} from '@/features/posts/model/category-management-config'
+import type { PostsCategoryRow } from '@/features/posts/model/posts-category-row'
+import { CategoryDeleteBlockedModal } from '@/features/posts/ui/category-delete-blocked-modal'
 import { NoticeCategoryDuplicateAlertModal } from '@/features/posts/ui/notice-category-management/notice-category-duplicate-alert-modal'
 import '@/features/posts/ui/notice-category-management-modal.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 /** 모달 가로 패딩 30×2 제외한 테이블 영역 (600 − 60) */
 const TABLE_INNER_WIDTH = 540
@@ -22,28 +30,32 @@ const ACTIONS_COL_WIDTH = TABLE_INNER_WIDTH - NAME_COL_WIDTH
 const CATEGORY_MODAL_Z = 1000
 const CATEGORY_SUB_MODAL_Z = 1100
 
-export type NoticeCategoryManagementModalProps = {
+export type CategoryManagementModalProps = {
+  kind: CategoryManagementKind
   open: boolean
   onCancel: () => void
-  categories: NoticeCategoryRow[]
-  onCategoriesChange: (next: NoticeCategoryRow[]) => void
-  notices: readonly Notice[]
-  remoteActions?: NoticeCategoryRemoteActions
+  categories: PostsCategoryRow[]
+  onCategoriesChange: (next: PostsCategoryRow[]) => void
+  /** 삭제 전 로컬 사용 여부 — notice/faq/inquiry 목록 rows */
+  posts: readonly PostWithCategoryLabel[]
+  remoteActions?: CategoryRemoteActions
 }
 
-export function NoticeCategoryManagementModal({
+export function CategoryManagementModal({
+  kind,
   open,
   onCancel,
   categories,
   onCategoriesChange,
-  notices,
+  posts,
   remoteActions,
-}: NoticeCategoryManagementModalProps) {
-  const ctrl = useNoticeCategoryManagementModal({
+}: CategoryManagementModalProps) {
+  const ctrl = useCategoryManagementModal({
+    kind,
     open,
     categories,
     onCategoriesChange,
-    notices,
+    posts,
     onClose: onCancel,
     remoteActions,
   })
@@ -59,7 +71,7 @@ export function NoticeCategoryManagementModal({
     requestDeleteCategory,
   } = ctrl
 
-  const columns: ColumnsType<NoticeCategoryRow> = [
+  const columns: ColumnsType<PostsCategoryRow> = [
     {
       title: '카테고리명',
       dataIndex: 'name',
@@ -88,13 +100,12 @@ export function NoticeCategoryManagementModal({
       align: 'center',
       render: (_: unknown, row) =>
         editingId === row.id ? (
-          <div className="notice-category-management-modal__actions">
+          <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
             <CmsButton
               type="button"
               variant="default"
-              size="medium"
+              size="h32"
               width={80}
-              className="notice-category-management-modal__action-btn"
               onClick={cancelEdit}
             >
               취소
@@ -102,22 +113,20 @@ export function NoticeCategoryManagementModal({
             <CmsButton
               type="button"
               variant="secondary"
-              size="medium"
+              size="h32"
               width={80}
-              className="notice-category-management-modal__action-btn"
               onClick={submitEdit}
             >
               등록
             </CmsButton>
           </div>
         ) : (
-          <div className="notice-category-management-modal__actions">
+          <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
             <CmsButton
               type="button"
               variant="default"
-              size="medium"
+              size="h32"
               width={80}
-              className="notice-category-management-modal__action-btn"
               onClick={() => startEdit(row)}
             >
               수정
@@ -125,9 +134,8 @@ export function NoticeCategoryManagementModal({
             <CmsButton
               type="button"
               variant="delete"
-              size="medium"
+              size="h32"
               width={80}
-              className="notice-category-management-modal__action-btn"
               onClick={() => requestDeleteCategory(row)}
             >
               삭제
@@ -139,14 +147,32 @@ export function NoticeCategoryManagementModal({
 
   const footer = (
     <>
-      <CmsButton variant="secondary" size="large" type="button" onClick={ctrl.handleClose}>
+      <CmsButton
+        variant="default"
+        size="h40"
+        className="cms-button--footer-auto"
+        type="button"
+        onClick={ctrl.handleClose}
+      >
         닫기
       </CmsButton>
-      <CmsButton variant="secondary" size="large" type="button" onClick={ctrl.openCompose}>
-        카테고리 추가
+      <CmsButton
+        variant="secondary"
+        size="h40"
+        className="cms-button--footer-auto"
+        type="button"
+        onClick={ctrl.openCompose}
+      >
+        항목 추가
       </CmsButton>
-      <CmsButton variant="primary" size="large" type="button" onClick={ctrl.applySettings}>
-        카테고리 저장
+      <CmsButton
+        variant="primary"
+        size="h40"
+        className="cms-button--footer-auto"
+        type="button"
+        onClick={ctrl.applySettings}
+      >
+        저장
       </CmsButton>
     </>
   )
@@ -158,15 +184,15 @@ export function NoticeCategoryManagementModal({
         onCancel={ctrl.handleClose}
         title="카테고리 관리"
         width={600}
+        titleBodyGap="list-settings"
         footer={footer}
         className="notice-category-management-modal"
         zIndex={CATEGORY_MODAL_Z}
       >
         <div className="notice-category-management-modal__table-wrap">
           <div className="notice-category-management-modal__table-scroll">
-            <Table<NoticeCategoryRow>
+            <CmsDataTable<PostsCategoryRow>
               rowKey="id"
-              bordered
               className="cms-data-table cms-data-table--skip-auto-no-col notice-category-management-modal__table"
               tableLayout="fixed"
               pagination={false}
@@ -176,9 +202,9 @@ export function NoticeCategoryManagementModal({
               summary={
                 ctrl.composeOpen
                   ? () => (
-                      <Table.Summary>
-                        <Table.Summary.Row className="notice-category-management-modal__summary">
-                          <Table.Summary.Cell index={0} align="center">
+                      <CmsDataTable.Summary>
+                        <CmsDataTable.Summary.Row className="notice-category-management-modal__summary">
+                          <CmsDataTable.Summary.Cell index={0} align="center">
                             <div className="notice-category-management-modal__compose">
                               <CmsInput
                                 ref={ctrl.newInputRef}
@@ -191,15 +217,14 @@ export function NoticeCategoryManagementModal({
                                 aria-label="새 카테고리명"
                               />
                             </div>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell index={1} align="center">
-                            <div className="notice-category-management-modal__actions">
+                          </CmsDataTable.Summary.Cell>
+                          <CmsDataTable.Summary.Cell index={1} align="center">
+                            <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
                               <CmsButton
                                 type="button"
                                 variant="default"
-                                size="medium"
+                                size="h32"
                                 width={80}
-                                className="notice-category-management-modal__action-btn"
                                 onClick={ctrl.cancelNew}
                               >
                                 취소
@@ -207,17 +232,16 @@ export function NoticeCategoryManagementModal({
                               <CmsButton
                                 type="button"
                                 variant="secondary"
-                                size="medium"
+                                size="h32"
                                 width={80}
-                                className="notice-category-management-modal__action-btn"
                                 onClick={ctrl.submitNew}
                               >
                                 등록
                               </CmsButton>
                             </div>
-                          </Table.Summary.Cell>
-                        </Table.Summary.Row>
-                      </Table.Summary>
+                          </CmsDataTable.Summary.Cell>
+                        </CmsDataTable.Summary.Row>
+                      </CmsDataTable.Summary>
                     )
                   : undefined
               }
@@ -226,7 +250,8 @@ export function NoticeCategoryManagementModal({
         </div>
       </ContentModal>
 
-      <NoticeCategoryDeleteBlockedModal
+      <CategoryDeleteBlockedModal
+        kind={kind}
         open={ctrl.deleteBlockedOpen}
         onClose={ctrl.closeDeleteBlocked}
         zIndex={CATEGORY_SUB_MODAL_Z}
