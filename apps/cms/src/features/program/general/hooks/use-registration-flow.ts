@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useCmsAlert } from '@/shared/ui'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -22,7 +22,11 @@ import {
   flushParticipantSessionOverlaysToOperationalStores,
   useProgramParticipantApplicationEditor,
 } from '@/features/template/hooks/use-program-participant-application-editor'
-import { patchRegistrationOverlayProgramTitleKo } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  getProgramRegistrationOverlayVersion,
+  patchRegistrationOverlayProgramTitleKo,
+  subscribeProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
 import {
@@ -376,6 +380,22 @@ export function useGeneralProgramRegistrationFlow(
   const isProgramStep = coercedActiveStep === 'program'
   const isParticipantStep = isParticipantRegistrationStep(coercedActiveStep)
   const { buildCurrentProgramSnapshot } = registrationVm
+  const registrationOverlayVersion = useSyncExternalStore(
+    subscribeProgramRegistrationOverlay,
+    getProgramRegistrationOverlayVersion,
+    getProgramRegistrationOverlayVersion
+  )
+  const registrationWizardLinkedProgram = useMemo(() => {
+    if (!open || !isParticipantStep) return null
+    return buildCurrentProgramSnapshot(registrationPendingSnapshotId(registrationFormVariant))
+  }, [
+    open,
+    isParticipantStep,
+    buildCurrentProgramSnapshot,
+    registrationFormVariant,
+    registrationOverlayVersion,
+    wizardDraftRevision,
+  ])
   const instructorScheduleSourceProgram = useMemo(
     () =>
       open && coercedActiveStep === 'application-instructor'
@@ -395,6 +415,8 @@ export function useGeneralProgramRegistrationFlow(
       templateCode: selectedTemplateCode,
       wizardDraftRevision,
       participantOrganization: participantFlags.organization,
+      /** 유형 설정 참여 방식 등 → 개인 신청 팀 정보 단락 노출 (상세 미리보기와 동일) */
+      program: registrationWizardLinkedProgram,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
       programLinkedInstitutionApplicationForm:
         participantVariant === 'institution' ||
