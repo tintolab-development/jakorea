@@ -1,19 +1,16 @@
 import {
-  PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
-  PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS,
-} from '@/features/template/model/program-application-form-volunteer-draft'
+  getVolunteerApplicationFormHiddenParagraphIds as getVolunteerApplicationFormHiddenParagraphIdsFromSchema,
+  resolveJaVolunteerExperienceFromParagraph as resolveJaVolunteerExperienceFromParagraphFromSchema,
+  type JaVolunteerExperience,
+} from '@jakorea/form-schema/program-application'
 import type { WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
 
-export type JaVolunteerExperience = 'yes' | 'no' | undefined
+export type { JaVolunteerExperience }
 
 export function resolveJaVolunteerExperienceFromParagraph(
   paragraph: WritingFormParagraph | undefined
 ): JaVolunteerExperience {
-  if (!paragraph || paragraph.variant !== 'multiple_choice') return undefined
-  const selectedId = paragraph.selectedPreviewSingleId
-  if (selectedId === PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS.yes) return 'yes'
-  if (selectedId === PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS.no) return 'no'
-  return undefined
+  return resolveJaVolunteerExperienceFromParagraphFromSchema(paragraph)
 }
 
 /**
@@ -24,21 +21,5 @@ export function getVolunteerApplicationFormHiddenParagraphIds(
   paragraphs: readonly WritingFormParagraph[],
   options?: { interviewEnabled?: boolean; isTemplateAuthoringMode?: boolean }
 ): ReadonlySet<string> | undefined {
-  const hidden = new Set<string>()
-
-  if (options?.isTemplateAuthoringMode !== true) {
-    const experienceParagraph = paragraphs.find(
-      p => p.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.jaVolunteerExperience
-    )
-    const experience = resolveJaVolunteerExperienceFromParagraph(experienceParagraph)
-    if (experience !== 'yes') {
-      hidden.add(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousJaProgram)
-    }
-  }
-
-  if (options?.interviewEnabled === false) {
-    hidden.add(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule)
-  }
-
-  return hidden.size > 0 ? hidden : undefined
+  return getVolunteerApplicationFormHiddenParagraphIdsFromSchema(paragraphs, options)
 }
