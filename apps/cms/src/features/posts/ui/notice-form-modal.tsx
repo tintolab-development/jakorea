@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
-import { Form, Select } from 'antd'
-import type { RefSelectProps } from 'antd/es/select'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Form } from 'antd'
 import type { Notice, NoticeAttachment } from '@/data/mock/notices'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
@@ -31,71 +30,20 @@ import {
 import {
   ContentModal,
   CmsButton,
+  CmsFieldFrame,
   CmsInput,
   CmsRadioGroup,
+  CmsSelect,
   FileSelectField,
   useCmsAlert,
 } from '@/shared/ui'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import './notice-register-modal.css'
 
-function requiredNoticeLabel(text: string) {
-  return (
-    <>
-      {text}
-      <span className="notice-register-modal__required" aria-hidden>
-        *
-      </span>
-    </>
-  )
-}
-
 function isRegisterableNoticeCategoryId(value: string): boolean {
   const v = value.trim()
   return v.length > 0 && v !== 'ALL' && v !== '전체'
 }
-
-/** 등록/수정 전용 — CmsSelect의 「전체」 자동삽입을 쓰지 않음. value = category.id */
-const NoticeCategorySelect = forwardRef<
-  RefSelectProps,
-  {
-    value?: string
-    onChange?: (value: string | undefined) => void
-    options: { label: string; value: string }[]
-    id?: string
-    'aria-describedby'?: string
-    status?: '' | 'warning' | 'error'
-  }
->(function NoticeCategorySelect(
-  { value, onChange, options, id, status: _status, ...rest },
-  ref
-) {
-  const resolved =
-    typeof value === 'string' && isRegisterableNoticeCategoryId(value) ? value : undefined
-  return (
-    <span className="cms-select cms-select--large cms-select--explicit-width" style={{ width: 240 }}>
-      <Select
-        {...rest}
-        id={id}
-        ref={ref}
-        variant="borderless"
-        placeholder="카테고리 선택"
-        options={options}
-        value={resolved}
-        allowClear={false}
-        popupMatchSelectWidth
-        onChange={next => {
-          if (typeof next !== 'string' || !isRegisterableNoticeCategoryId(next)) {
-            onChange?.(undefined)
-            return
-          }
-          onChange?.(next.trim())
-        }}
-      />
-    </span>
-  )
-})
-NoticeCategorySelect.displayName = 'NoticeCategorySelect'
 
 export type NoticeFormModalMode = 'create' | 'edit'
 
@@ -426,23 +374,26 @@ export function NoticeFormModal({
             <div className="notice-register-modal__filter-inner">
               <Form.Item
                 name="categoryId"
-                label={requiredNoticeLabel('카테고리')}
-                required
-                className="notice-register-modal__filter-field notice-register-modal__filter-field--category"
                 normalize={(value: unknown) => {
                   if (typeof value !== 'string') return undefined
                   return isRegisterableNoticeCategoryId(value) ? value.trim() : undefined
                 }}
               >
-                <NoticeCategorySelect options={categorySelectOptions} />
+                <CmsSelect
+                  label="카테고리"
+                  required
+                  inputSize="large"
+                  width={240}
+                  withAllOption={false}
+                  allowClear={false}
+                  placeholder="카테고리 선택"
+                  options={categorySelectOptions}
+                />
               </Form.Item>
-              <Form.Item
-                name="visibility"
-                label={requiredNoticeLabel('공개 여부')}
-                required
-                className="notice-register-modal__filter-field"
-              >
+              <Form.Item name="visibility">
                 <CmsRadioGroup
+                  label="공개 여부"
+                  required
                   size="large"
                   options={[
                     { label: '공개', value: 'public' },
@@ -450,13 +401,10 @@ export function NoticeFormModal({
                   ]}
                 />
               </Form.Item>
-              <Form.Item
-                name="pinTop"
-                label={requiredNoticeLabel('상단 고정')}
-                required
-                className="notice-register-modal__filter-field"
-              >
+              <Form.Item name="pinTop">
                 <CmsRadioGroup
+                  label="상단 고정"
+                  required
                   size="large"
                   options={[
                     { label: '고정 안함', value: 'off' },
@@ -467,22 +415,25 @@ export function NoticeFormModal({
             </div>
           </div>
 
-          <Form.Item
-            name="title"
-            label={requiredNoticeLabel('제목')}
-            required
-            className="notice-register-modal__section"
-          >
-            <CmsInput placeholder="제목을 입력하세요" inputSize="large" width="100%" />
+          <Form.Item name="title" className="notice-register-modal__section">
+            <CmsInput
+              label="제목"
+              required
+              placeholder="제목을 입력하세요"
+              inputSize="large"
+              width="100%"
+            />
           </Form.Item>
 
-          <div className="notice-register-modal__section notice-register-modal__section--editor">
-            <div className="notice-register-modal__editor-label">
-              내용
-              <span className="notice-register-modal__required" aria-hidden>
-                *
-              </span>
-            </div>
+          <CmsFieldFrame
+            size="large"
+            label="내용"
+            required
+            className="notice-register-modal__section notice-register-modal__section--editor"
+            message={contentError}
+            isError={Boolean(contentError)}
+            messageClassName="notice-register-modal__error"
+          >
             <div className="notice-register-modal__editor-host">
               <RichTextEditor
                 editor={editor}
@@ -490,12 +441,7 @@ export function NoticeFormModal({
                 fileUploadOwner={noticeInlineOwner}
               />
             </div>
-            {contentError ? (
-              <p className="notice-register-modal__error" role="alert">
-                {contentError}
-              </p>
-            ) : null}
-          </div>
+          </CmsFieldFrame>
 
           {errorMessage ? (
             <p className="notice-register-modal__error" role="alert">
@@ -504,7 +450,11 @@ export function NoticeFormModal({
           ) : null}
 
           <div className="notice-register-modal__attachment">
-            <div className="notice-register-modal__attachment-label">첨부 파일</div>
+            <div className="notice-register-modal__attachment-label">
+              <span className="cms-field__label notice-register-modal__attachment-field-label">
+                <span className="cms-field__label-text">첨부 파일</span>
+              </span>
+            </div>
             <div className="notice-register-modal__attachment-body">
               <FileSelectField
                 className="notice-register-modal__file-field"
