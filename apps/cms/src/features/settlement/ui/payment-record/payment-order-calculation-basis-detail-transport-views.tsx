@@ -1,8 +1,7 @@
 /**
- * 교통비 — 산정 기준 상세 read-only 표 (학생 왕복·편도, 강사 1사1교)
+ * 교통비 — 산정 기준 상세 read-only (학생 왕복·편도, 강사 1사1교)
  */
 
-import { ModalSpecTable, ModalSpecTableRow } from '@/shared/ui/modal-spec-table'
 import type {
   PaymentOrderCalculationBasisDetailTransportInstructor,
   PaymentOrderCalculationBasisDetailTransportOneWay,
@@ -10,6 +9,8 @@ import type {
   PaymentOrderCalculationBasisDetailTransportTripLeg,
 } from './payment-order-calculation-basis-detail'
 import {
+  BasisDetailInfoForm,
+  BasisDetailInfoFormRow,
   BasisDetailPublicTransitValue,
   BasisDetailReadOnlyValue,
   BasisDetailSectionLabel,
@@ -20,20 +21,20 @@ import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program
 
 function TransportParticipantTripLegTable({
   leg,
-  ariaLabel,
+  title,
 }: {
   leg: PaymentOrderCalculationBasisDetailTransportTripLeg
-  ariaLabel: string
+  title: string
 }) {
   return (
-    <ModalSpecTable aria-label={ariaLabel}>
-      <ModalSpecTableRow label="구분" labelVariant="basis">
+    <BasisDetailInfoForm title={title}>
+      <BasisDetailInfoFormRow label="구분">
         <BasisDetailReadOnlyValue>{leg.categoryLabel}</BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="대중교통비" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="대중교통비">
         <BasisDetailPublicTransitValue segment={leg.publicTransit} />
-      </ModalSpecTableRow>
-    </ModalSpecTable>
+      </BasisDetailInfoFormRow>
+    </BasisDetailInfoForm>
   )
 }
 
@@ -48,13 +49,13 @@ export function PaymentOrderCalculationBasisDetailTransportRoundTripView({
         <BasisDetailSectionLabel id="transport-basis-outbound-label">
           가는 편(출발)
         </BasisDetailSectionLabel>
-        <TransportParticipantTripLegTable leg={detail.outbound} ariaLabel="가는 편 산정 기준" />
+        <TransportParticipantTripLegTable leg={detail.outbound} title="가는 편 산정 기준" />
       </section>
       <section aria-labelledby="transport-basis-inbound-label">
         <BasisDetailSectionLabel id="transport-basis-inbound-label">
           오는 편(귀가)
         </BasisDetailSectionLabel>
-        <TransportParticipantTripLegTable leg={detail.inbound} ariaLabel="오는 편 산정 기준" />
+        <TransportParticipantTripLegTable leg={detail.inbound} title="오는 편 산정 기준" />
       </section>
       <BasisDetailTotalRow totalWon={detail.totalWon} />
     </div>
@@ -66,9 +67,7 @@ export function PaymentOrderCalculationBasisDetailTransportOneWayView({
 }: {
   detail: PaymentOrderCalculationBasisDetailTransportOneWay
 }) {
-  return (
-    <TransportParticipantTripLegTable leg={detail.trip} ariaLabel="교통비 산정 기준" />
-  )
+  return <TransportParticipantTripLegTable leg={detail.trip} title="교통비 산정 기준" />
 }
 
 export function PaymentOrderCalculationBasisDetailTransportInstructorView({
@@ -77,28 +76,28 @@ export function PaymentOrderCalculationBasisDetailTransportInstructorView({
   detail: PaymentOrderCalculationBasisDetailTransportInstructor
 }) {
   return (
-    <ModalSpecTable aria-label="강사 교통비 산정 기준">
-      <ModalSpecTableRow label="구분" labelVariant="basis">
+    <BasisDetailInfoForm title="강사 교통비 산정 기준">
+      <BasisDetailInfoFormRow label="구분">
         <BasisDetailReadOnlyValue>{detail.categoryLabel}</BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="이동 거리 및 유류비" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="이동 거리 및 유류비">
         <BasisDetailReadOnlyValue>
           {withProgramDetailTdDivider([
             `${detail.distanceKm}km`,
             formatPaymentOrderCalculationWonPlain(detail.fuelCostWon),
           ])}
         </BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="톨게이트비" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="톨게이트비">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(detail.tollFeeWon)}
         </BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="합계" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="합계">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(detail.totalWon)}
         </BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-    </ModalSpecTable>
+      </BasisDetailInfoFormRow>
+    </BasisDetailInfoForm>
   )
 }

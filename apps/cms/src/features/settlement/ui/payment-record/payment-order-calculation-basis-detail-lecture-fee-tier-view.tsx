@@ -1,14 +1,17 @@
 /**
- * 강사비 1~3급 · 특강 — 산정 기준 상세 read-only 표
+ * 강사비 1~3급 · 특강 — 산정 기준 상세 read-only
  */
 
-import { ModalSpecTable, ModalSpecTableRow } from '@/shared/ui/modal-spec-table'
 import type {
   PaymentOrderCalculationBasisDetailLectureFeeGemini,
   PaymentOrderCalculationBasisDetailLectureFeeSpecial,
   PaymentOrderCalculationBasisDetailLectureFeeTier,
 } from './payment-order-calculation-basis-detail'
-import { BasisDetailReadOnlyValue } from './payment-order-calculation-basis-detail-shared'
+import {
+  BasisDetailInfoForm,
+  BasisDetailInfoFormRow,
+  BasisDetailReadOnlyValue,
+} from './payment-order-calculation-basis-detail-shared'
 import { formatPaymentOrderCalculationWonPlain } from './payment-order-calculation-breakdown-table'
 
 interface LectureFeeBasisTableDetail {
@@ -20,30 +23,30 @@ interface LectureFeeBasisTableDetail {
 
 function PaymentOrderCalculationBasisDetailLectureFeeTable({
   detail,
-  ariaLabel,
+  title,
 }: {
   detail: LectureFeeBasisTableDetail
-  ariaLabel: string
+  title: string
 }) {
   return (
-    <ModalSpecTable aria-label={ariaLabel}>
-      <ModalSpecTableRow label="구분" labelVariant="basis">
+    <BasisDetailInfoForm title={title}>
+      <BasisDetailInfoFormRow label="구분">
         <BasisDetailReadOnlyValue>{detail.categoryLabel}</BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="강의비 책정" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="강의비 책정">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(detail.feeAssessmentWon)}
         </BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="강의 시간" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="강의 시간">
         <BasisDetailReadOnlyValue>{detail.lectureTimeDisplay}</BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="합계" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="합계">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(detail.totalWon)}
         </BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-    </ModalSpecTable>
+      </BasisDetailInfoFormRow>
+    </BasisDetailInfoForm>
   )
 }
 
@@ -57,7 +60,7 @@ export function PaymentOrderCalculationBasisDetailLectureFeeTierView({
   return (
     <PaymentOrderCalculationBasisDetailLectureFeeTable
       detail={detail}
-      ariaLabel="강사비 산정 기준"
+      title="강사비 산정 기준"
     />
   )
 }
@@ -72,7 +75,7 @@ export function PaymentOrderCalculationBasisDetailLectureFeeSpecialView({
   return (
     <PaymentOrderCalculationBasisDetailLectureFeeTable
       detail={detail}
-      ariaLabel="특강 강사비 산정 기준"
+      title="특강 강사비 산정 기준"
     />
   )
 }
@@ -85,18 +88,18 @@ export function PaymentOrderCalculationBasisDetailLectureFeeGeminiView({
   detail,
 }: PaymentOrderCalculationBasisDetailLectureFeeGeminiViewProps) {
   return (
-    <ModalSpecTable aria-label="제미나이 강사비 산정 기준">
-      <ModalSpecTableRow label="구분" labelVariant="basis">
+    <BasisDetailInfoForm title="제미나이 강사비 산정 기준">
+      <BasisDetailInfoFormRow label="구분">
         <BasisDetailReadOnlyValue>{detail.categoryLabel}</BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="강의 시간" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="강의 시간">
         <BasisDetailReadOnlyValue>{detail.lectureTimeDisplay}</BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="강의비 책정" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="강의비 책정">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(detail.feeAssessmentWon)}
         </BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-    </ModalSpecTable>
+      </BasisDetailInfoFormRow>
+    </BasisDetailInfoForm>
   )
 }
