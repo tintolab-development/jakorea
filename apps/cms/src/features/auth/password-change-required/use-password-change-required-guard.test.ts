@@ -3,24 +3,10 @@ import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 import { resolvePasswordChangeRequiredGuardPath } from './use-password-change-required-guard'
 
 describe('resolvePasswordChangeRequiredGuardPath', () => {
-  it('소셜 온보딩 중이면 소셜 연결 화면을 우선한다', () => {
-    expect(
-      resolvePasswordChangeRequiredGuardPath({
-        complete: true,
-        socialOnboarding: true,
-        isAuthenticated: true,
-        hasUser: true,
-        passwordChangeRequired: false,
-        dashboardPath: '/',
-      })
-    ).toBe(passwordChangeRequiredPaths.socialConnect)
-  })
-
   it('완료 플래그가 있으면 대시보드·로그인보다 완료 화면을 우선한다', () => {
     expect(
       resolvePasswordChangeRequiredGuardPath({
         complete: true,
-        socialOnboarding: false,
         isAuthenticated: true,
         hasUser: true,
         passwordChangeRequired: false,
@@ -31,7 +17,6 @@ describe('resolvePasswordChangeRequiredGuardPath', () => {
     expect(
       resolvePasswordChangeRequiredGuardPath({
         complete: true,
-        socialOnboarding: false,
         isAuthenticated: false,
         hasUser: false,
         passwordChangeRequired: false,
@@ -44,7 +29,6 @@ describe('resolvePasswordChangeRequiredGuardPath', () => {
     expect(
       resolvePasswordChangeRequiredGuardPath({
         complete: false,
-        socialOnboarding: false,
         isAuthenticated: false,
         hasUser: false,
         passwordChangeRequired: true,
@@ -57,7 +41,6 @@ describe('resolvePasswordChangeRequiredGuardPath', () => {
     expect(
       resolvePasswordChangeRequiredGuardPath({
         complete: false,
-        socialOnboarding: false,
         isAuthenticated: true,
         hasUser: true,
         passwordChangeRequired: false,
@@ -70,7 +53,6 @@ describe('resolvePasswordChangeRequiredGuardPath', () => {
     expect(
       resolvePasswordChangeRequiredGuardPath({
         complete: false,
-        socialOnboarding: false,
         isAuthenticated: true,
         hasUser: true,
         passwordChangeRequired: true,
