@@ -10,8 +10,12 @@ import {
   mapOrganizationApplicationToApplicantSchoolRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { readOrganizationApplicationGradeFromFormResponse } from '@/features/program/general/api/adapters/organization-application-form-adapters'
+import { fetchLatestFormResponseByContextRemote } from '@/features/program/general/api/form-responses-api-client'
 import { mapParticipantsToVolunteerScreeningRows } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { shouldUseApplicationsHttpRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import type { QueryClient } from '@tanstack/react-query'
+import { ensureOrganizationRequestedSchedules } from '@/features/program/general/api/organization-requested-schedules-query'
 import {
   approveIndividualApplicationRemote,
   approveInstructorApplicationRemote,
@@ -29,7 +33,6 @@ import {
   fetchIndividualApplicationsRemote,
   fetchInstructorApplicationsRemote,
   fetchOrganizationApplicationsRemote,
-  fetchOrganizationApplicationRequestedSchedulesRemote,
   fetchVolunteerApplicationsRemote,
   giveUpVolunteerApplicationRemote,
   listInterviewSlotsRemote,
@@ -122,15 +125,21 @@ function assertApplicationsRemoteReady(): void {
   }
 }
 
+export type FetchGeneralOrganizationApplicationsPageOptions = {
+  queryClient: QueryClient
+}
+
 export async function fetchGeneralOrganizationApplications(
   programId: string,
+  options: FetchGeneralOrganizationApplicationsPageOptions,
   params?: ApplicationsListQuery
 ): Promise<ApplicantSchoolRow[]> {
-  return (await fetchGeneralOrganizationApplicationsPage(programId, params)).rows
+  return (await fetchGeneralOrganizationApplicationsPage(programId, options, params)).rows
 }
 
 export async function fetchGeneralOrganizationApplicationsPage(
   programId: string,
+  options: FetchGeneralOrganizationApplicationsPageOptions,
   params?: ApplicationsListQuery
 ): Promise<GeneralApplicationsListPage<ApplicantSchoolRow>> {
   assertApplicationsRemoteReady()
@@ -141,18 +150,11 @@ export async function fetchGeneralOrganizationApplicationsPage(
     ...params,
   })
   const items = page.items ?? []
+  const { queryClient } = options
   const scheduleResults = await Promise.all(
     items.map(async item => {
       const applicationId = item.id == null ? '' : String(item.id)
-      if (!applicationId)
-        return [] as Awaited<
-          ReturnType<typeof fetchOrganizationApplicationRequestedSchedulesRemote>
-        >
-      try {
-        return await fetchOrganizationApplicationRequestedSchedulesRemote(applicationId)
-      } catch {
-        return []
-      }
+      return ensureOrganizationRequestedSchedules(queryClient, applicationId)
     })
   )
   const rows = items.map((item, index) =>
@@ -165,7 +167,30 @@ export async function fetchGeneralOrganizationApplicationsPage(
       }
     )
   )
-  return resolveApplicationsListPage(rows, page, requestedPage)
+  const numericProgramId = Number(programId)
+  const rowsWithGrade =
+    Number.isFinite(numericProgramId)
+      ? await Promise.all(
+          rows.map(async (row, index) => {
+            if (row.educationGrade?.trim()) return row
+            const applicationId = items[index]?.id
+            if (applicationId == null) return row
+            try {
+              const form = await fetchLatestFormResponseByContextRemote({
+                programId: numericProgramId,
+                contextType: 'ORGANIZATION_APPLICATION',
+                contextId: applicationId,
+              })
+              const educationGrade = readOrganizationApplicationGradeFromFormResponse(form)
+              if (!educationGrade) return row
+              return { ...row, educationGrade }
+            } catch {
+              return row
+            }
+          }),
+        )
+      : rows
+  return resolveApplicationsListPage(rowsWithGrade, page, requestedPage)
 }
 
 export async function fetchGeneralInstructorApplications(

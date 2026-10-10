@@ -73,7 +73,7 @@ export function useGeneralProgramApplicationsRemoteSync({
   const organizationQuery = useInfiniteQuery({
     queryKey: generalApplicationsQueryKeys.organizationList(programId ?? ''),
     queryFn: ({ pageParam }) =>
-      fetchGeneralOrganizationApplicationsPage(programId!, { page: pageParam }),
+      fetchGeneralOrganizationApplicationsPage(programId!, { queryClient }, { page: pageParam }),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled && menu === 'institutions' && usesProgramInstitutionApplications,

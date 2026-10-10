@@ -44,7 +44,7 @@ function isJsonContainer(raw: string): boolean {
   }
 }
 
-function formatApplicantGradeLabel(raw: string | undefined): string {
+export function formatApplicantGradeLabel(raw: string | undefined): string {
   const trimmed = raw?.trim() ?? ''
   if (!trimmed) return ''
   if (trimmed.endsWith('학년')) return trimmed
@@ -311,6 +311,17 @@ function sessionsFromDesiredEducationDate(
   ]
 }
 
+/** form_response answers → 신청 학년 표시문 (기관 기본정보 nested JSON 포함) */
+export function readOrganizationApplicationGradeFromFormResponse(
+  formResponse: FormResponseResponse | null | undefined,
+): string {
+  const map = buildFormAnswerMap(formResponse?.answers)
+  const nestedBasic = parseNestedBasicInfo(map)
+  return formatApplicantGradeLabel(
+    pickAnswerWithNested(map, nestedBasic, 'applicationGrade', 'educationGrade', 'grade'),
+  )
+}
+
 /**
  * ORGANIZATION_APPLICATION form_response → 기관 신청 상세 필드 hydrate.
  * 목록·상세 DTO 필드는 유지하고, 비어 있는 칸만 form/코멘트로 채운다.
@@ -331,7 +342,7 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
 
   const textbookName = pickAnswerWithNested(map, nestedBasic, 'textbookName')
   const educationGradeFromForm = formatApplicantGradeLabel(
-    pickAnswer(map, 'applicationGrade', 'educationGrade', 'grade')
+    pickAnswerWithNested(map, nestedBasic, 'applicationGrade', 'educationGrade', 'grade')
   )
   const regionFromForm = pickAnswer(map, 'organizationRegion', 'regionLabel')
   const addressDetailFromForm = pickAnswer(

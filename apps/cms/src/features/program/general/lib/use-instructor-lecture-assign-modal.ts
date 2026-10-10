@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import type { Dayjs } from 'dayjs'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
@@ -31,12 +31,17 @@ const ASSIGN_ORG_PAGE_LIMIT = 40
  * OSA(`schedule-assignments`) 선배정은 필수가 아니다 (노션 기획).
  */
 async function fetchApprovedOrganizationApplicationsForLectureAssign(
-  programId: string
+  programId: string,
+  queryClient: QueryClient
 ): Promise<ApplicantSchoolRow[]> {
   const rows: ApplicantSchoolRow[] = []
   let page = 0
   for (;;) {
-    const result = await fetchGeneralOrganizationApplicationsPage(programId, { page })
+    const result = await fetchGeneralOrganizationApplicationsPage(
+      programId,
+      { queryClient },
+      { page }
+    )
     rows.push(...result.rows)
     if (!result.hasMore) break
     page += 1
@@ -87,10 +92,12 @@ export function useInstructorLectureAssignModal(params: {
 
   const isIndividual = variant === 'individual'
   const organizationRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
+  const queryClient = useQueryClient()
 
   const organizationApplicationsQuery = useQuery({
     queryKey: generalApplicationsQueryKeys.instructorLectureAssignInstitutions(programId),
-    queryFn: () => fetchApprovedOrganizationApplicationsForLectureAssign(programId),
+    queryFn: () =>
+      fetchApprovedOrganizationApplicationsForLectureAssign(programId, queryClient),
     enabled: open && !isIndividual && organizationRemoteEnabled && Boolean(programId.trim()),
     staleTime: 30_000,
     retry: false,

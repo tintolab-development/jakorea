@@ -156,6 +156,16 @@ function formatOrganizationResultNotificationSentAt(iso?: string | null): string
   return formatApplicantSchoolApprovalNotificationSentAt(parsed)
 }
 
+function readOrganizationApplicationListGrade(
+  dto: OrganizationApplicationListItemResponse,
+): string {
+  const extended = dto as OrganizationApplicationListItemResponse & {
+    requestedGrade?: string | null
+  }
+  const raw = dto.grade?.trim() || extended.requestedGrade?.trim() || ''
+  return formatApplicantGradeLabel(raw) || ''
+}
+
 export function mapOrganizationApplicationToApplicantSchoolRow(
   dto: OrganizationApplicationListItemResponse,
   index: number,
@@ -175,7 +185,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     no: index + 1,
     schoolName: dto.organizationName?.trim() || '기관명 없음',
     region,
-    educationGrade: dto.grade?.trim() || '',
+    educationGrade: readOrganizationApplicationListGrade(dto),
     classCount: dto.requestedClassCount ?? 0,
     studentCount: dto.requestedStudentCount ?? 0,
     teacherName: dto.teacherName?.trim() || '-',
