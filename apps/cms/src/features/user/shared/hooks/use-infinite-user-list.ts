@@ -16,7 +16,7 @@ import type { User } from '@/types/user'
 export type UseInfiniteUserListFilters = GetUsersPageParams
 
 /**
- * Class C 목록. 동일 LNB 재클릭은 sidebar에서 `invalidateMemberListQueries`로 강제 갱신한다.
+ * Class C 목록. LNB·대시보드 바로가기 진입은 `invalidateQueriesForMemberManagementNavigation`으로 강제 갱신한다.
  * `refetchOnMount: 'always'`는 필터 조회·탭 왕복마다 page0을 재치므로 쓰지 않는다.
  */
 const MEMBER_LIST_STALE_TIME_MS = 30_000

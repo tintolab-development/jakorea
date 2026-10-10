@@ -110,7 +110,13 @@ export interface MembersPermissionListProps {
   onInstructorRejectRequest?: (
     ctx:
       | { mode: 'single'; userId: string; requestId?: number; displayName: string }
-      | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
+      | {
+          mode: 'bulk'
+          userIds: string[]
+          requestIds?: number[]
+          memberCount: number
+          displayName: string
+        }
   ) => void
   /** 관리자 탭: [신청 승인] — 강사 탭과 동일하게 단건·일괄 승인 모달 */
   onAdminApproveRequest?: (
@@ -122,7 +128,13 @@ export interface MembersPermissionListProps {
   onAdminRejectRequest?: (
     ctx:
       | { mode: 'single'; userId: string; requestId?: number; displayName: string }
-      | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
+      | {
+          mode: 'bulk'
+          userIds: string[]
+          requestIds?: number[]
+          memberCount: number
+          displayName: string
+        }
   ) => void
 }
 
@@ -451,6 +463,7 @@ export const MembersPermissionList = forwardRef<
         userIds: pendingRows.map(r => r.userId),
         requestIds: pendingRows.map(r => r.requestId).filter((id): id is number => id != null),
         memberCount: pendingRows.length,
+        displayName: (pendingRows[0]?.name ?? '').trim() || '회원',
       })
       return
     }
@@ -480,6 +493,7 @@ export const MembersPermissionList = forwardRef<
           .map(r => r.requestId ?? r.adminId)
           .filter((id): id is number => id != null),
         memberCount: pendingRows.length,
+        displayName: (pendingRows[0]?.name ?? '').trim() || '회원',
       })
       return
     }
