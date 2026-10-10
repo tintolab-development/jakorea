@@ -4,14 +4,13 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
+import { resetInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
-  patchInstitutionApplicationProgramBridge,
-  resetInstitutionApplicationProgramBridge,
-  syncInstitutionApplicationPreferredEducationFormFromOverlay,
-} from '@/features/program/general/lib/institution-application-program-bridge'
+  subscribeInstitutionApplicationBridgeForRegistrationWizard,
+  syncInstitutionApplicationBridgeForRegistrationWizard,
+} from '@/features/program/general/lib/registration-institution-bridge-sync'
 import { clearOperationalSeedDefaultSuppression } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { resetAllOperationalOverlayStores } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
-import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { getParticipantApplicationEditorVariantForTemplateCode } from '@/features/template/lib/participant-application-template-id'
@@ -434,23 +433,38 @@ export function useGeneralProgramRegistrationFlow(
     clearRegistrationWizardSessionDrafts()
   }, [open])
 
-  useEffect(() => {
-    if (!open) return
-    patchInstitutionApplicationProgramBridge({
-      educationStructure: registrationVm.programType,
+  const applicantRecruitTemplateCodeForBridge = useMemo(() => {
+    if (isTrainedTeachersRegistration) return 'recruitment-trained-teachers'
+    if (isCompanySchoolRegistration) return 'recruitment-economy'
+    return 'recruitment-participant-school'
+  }, [isCompanySchoolRegistration, isTrainedTeachersRegistration])
+
+  const institutionBridgeSyncArgs = useMemo(
+    () => ({
+      registrationFormVariant,
+      programType: registrationVm.programType,
       sessionRound: registrationVm.sessionRoundType,
       educationScheduleMode: registrationVm.educationScheduleMode,
-    })
-    syncInstitutionApplicationPreferredEducationFormFromOverlay(
-      getProgramRegistrationOverlayRecord()
-    )
-  }, [
-    open,
-    isParticipantStep,
-    registrationVm.programType,
-    registrationVm.sessionRoundType,
-    registrationVm.educationScheduleMode,
-  ])
+      recruitTemplateCode: applicantRecruitTemplateCodeForBridge,
+    }),
+    [
+      registrationFormVariant,
+      applicantRecruitTemplateCodeForBridge,
+      registrationVm.programType,
+      registrationVm.sessionRoundType,
+      registrationVm.educationScheduleMode,
+    ]
+  )
+
+  useEffect(() => {
+    if (!open) return
+    syncInstitutionApplicationBridgeForRegistrationWizard(institutionBridgeSyncArgs)
+  }, [open, institutionBridgeSyncArgs])
+
+  useEffect(() => {
+    if (!open || !isParticipantStep) return
+    return subscribeInstitutionApplicationBridgeForRegistrationWizard(institutionBridgeSyncArgs)
+  }, [open, isParticipantStep, institutionBridgeSyncArgs])
 
   const registryEntry = useMemo(
     () => lookupWritingTemplateRegistry(selectedTemplateCode),
