@@ -8,6 +8,8 @@
  * - `hideExcelDownload`: 엑셀 버튼을 다른 위치에 둘 때 숨김 (예: 탭 nav 우측, 풀페이지 헤더)
  * - `excelExport`: columns·data 전달 시 {@link useTableExcelExport} 자동 연결 (파일명은 `title` 기반)
  * - `onExcelDownload`가 있으면 `excelExport`보다 우선
+ *
+ * **툴바 액션 버튼:** `actions` / `actionsAfterExcel`에는 {@link FilterTableToolbarButton} 사용 (h40, 엑셀과 동일 높이).
  */
 
 import { useMemo, type ReactNode } from 'react'

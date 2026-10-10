@@ -16,7 +16,7 @@ import {
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
-import { CmsButton } from '@/shared/ui'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import { CrossTable } from '@/shared/ui/cross-table'
 import { DsDemo, DsSection } from './section'
 
@@ -198,8 +198,8 @@ export function FiltersTablesSection() {
     >
       <p className="ds-note">
         필터 컨트롤 기본 폭 240×44, 조회 버튼 160×44. UnifiedFilterCard는 사용하지 않습니다.
-        검색·셀렉트는 조회 클릭 시 반영(커밋)됩니다. 테이블 상단 액션 버튼은{' '}
-        <a href="#buttons">Buttons</a> — 반려/승인 140 · 캘린더·엑셀 180(large+icon).
+        검색·셀렉트는 조회 클릭 시 반영(커밋)됩니다.         테이블 상단 액션은 <code>FilterTableToolbarButton</code>(h40) — 반려/승인 140(
+        <code>cms-button--action</code>) · 엑셀은 <code>ExcelButton</code>(h40).
       </p>
 
       <DsDemo label="FilterTableLayout + cms-data-table + StatusDropdownCell" className="ds-demo--table">
@@ -217,15 +217,15 @@ export function FiltersTablesSection() {
           }}
           actions={
             <div style={{ display: 'flex', gap: 8 }}>
-              <CmsButton variant="delete" size="large" className="cms-button--action">
+              <FilterTableToolbarButton variant="delete" className="cms-button--action">
                 선택 반려
-              </CmsButton>
-              <CmsButton variant="secondary" size="large" className="cms-button--action">
+              </FilterTableToolbarButton>
+              <FilterTableToolbarButton variant="secondary" className="cms-button--action">
                 선택 승인
-              </CmsButton>
-              <CmsButton variant="secondary" size="large" icon={<ButtonCalendarIcon />}>
+              </FilterTableToolbarButton>
+              <FilterTableToolbarButton variant="secondary" icon={<ButtonCalendarIcon />}>
                 캘린더 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             </div>
           }
           fields={[

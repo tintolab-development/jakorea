@@ -27,7 +27,7 @@ Homepage Admin 스택은 공유 의도를 따르되 구현은 [admin list-page-c
 - `useSearchParams` → pass `searchParams` / `setSearchParams` into `useTablePage`.
 - Optional CSS chain for full-width list shell (match sponsor): `program-list-page.css`, `user-list-page.css`, `program-list.css`.
 - **Table**: `className="cms-data-table"`, `dataSource={tableData}`, `TABLE_COLUMN_WIDTHS` from `@/shared/constants/table`, `pagination={false}` unless PM asks otherwise, `rowSelection` only when `canWrite`.
-- **Toolbar**: `CmsButton` (`delete` / `secondary` / `primary`), gate with `canPerformWriteAction`.
+- **Toolbar**: `FilterTableToolbarButton` (`delete` / `secondary` / `primary` / `default`), h40 고정 — `size` 지정 금지. `canPerformWriteAction`으로 게이트. 엑셀은 `ExcelButton`.
 
 ## Calendar view (list + calendar toggle)
 

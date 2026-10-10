@@ -78,6 +78,8 @@ export type {
   FilterTableLayoutProps,
   FilterTableExcelExportConfig,
 } from '../components/filter-table-layout'
+export { FilterTableToolbarButton } from '../components/filter-table-toolbar-button'
+export type { FilterTableToolbarButtonProps } from '../components/filter-table-toolbar-button'
 export { ListPageLayout } from '../components/list-page'
 export type { ListPageLayoutProps } from '../components/list-page'
 export { LabeledSearchInput } from './labeled-search-input'
