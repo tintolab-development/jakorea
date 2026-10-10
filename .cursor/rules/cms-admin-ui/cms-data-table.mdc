@@ -47,6 +47,7 @@ alwaysApply: false
 
 - 비활성 행 클래스: `cms-data-table__row--disabled` / `CMS_DATA_TABLE_ROW_DISABLED_CLASS`
 - 조회만: non-clickable row hover 비활성 관례
+- 공통 `cms-data-table.css` tbody **치수(padding·height)** 는 `:hover` 선택자로 중복하지 않음 — 호버는 **배경색만** 변경. 화면별 padding override 시 `tr > td`와 `tr:hover > td`를 **쌍으로** 동일 값 지정 (호버 시 shift 방지).
 
 ## 금지
 

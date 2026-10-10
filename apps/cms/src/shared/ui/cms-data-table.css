@@ -191,12 +191,8 @@
   );
 }
 
-/* 본문 셀: 기본·호버 동일 테두리 유지 (empty·measure 행 제외) */
-.cms-data-table .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) > td,
-.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
-  > td {
+/* 본문 셀: 기본·호버 동일 테두리 유지 (empty·measure 행 제외). :hover 선택자 미사용 — 화면 오버라이드 shift 방지 */
+.cms-data-table .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) > td {
   box-sizing: border-box !important;
   min-width: 80px;
   padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px) !important;
@@ -221,10 +217,6 @@
 .cms-data-table.cms-data-table--variable-row-height
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td,
-.cms-data-table.cms-data-table--variable-row-height
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
   > td {
   vertical-align: top;
   height: auto !important;
@@ -234,10 +226,6 @@
 .cms-data-table.cms-data-table--variable-row-height
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td.status-dropdown-cell__cell-status,
-.cms-data-table.cms-data-table--variable-row-height
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
   > td.status-dropdown-cell__cell-status {
   vertical-align: middle !important;
 }
@@ -246,10 +234,6 @@
 .cms-data-table.cms-data-table--fixed-row-height
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td,
-.cms-data-table.cms-data-table--fixed-row-height
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
   > td {
   height: 52px !important;
   min-height: 52px !important;
@@ -493,11 +477,6 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td,
-.detail-fullpage-modal
-  .ant-table-wrapper.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
   > td {
   min-height: 52px !important;
   height: auto !important;
@@ -624,12 +603,6 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td,
-.filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
   > td {
   min-height: 52px !important;
   height: auto !important;
