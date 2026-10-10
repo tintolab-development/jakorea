@@ -48,6 +48,7 @@ import {
   resolveGeneralRegistrationCommonEducationForm,
   resolveGeneralRegistrationCommonParticipation,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
+import { trimTrailingBlankRegularCurriculumSessions } from '@/features/program/general/lib/schedule-detail-form'
 import {
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -456,7 +457,7 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
           : undefined,
     })
   }
-  return sessions
+  return trimTrailingBlankRegularCurriculumSessions(sessions)
 }
 
 function formatScheduleDateLabel(iso: string | null | undefined): string | undefined {

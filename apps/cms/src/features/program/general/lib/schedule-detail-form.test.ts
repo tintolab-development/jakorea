@@ -11,6 +11,7 @@ import {
   inferScheduleDetailBlockKind,
   isIndividualAllPerScheduleLayout,
   PRE_EDUCATION_SCHEDULE_LABEL,
+  trimTrailingBlankRegularCurriculumSessions,
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
@@ -335,6 +336,32 @@ describe('applySchedulePreEducationBlock', () => {
     const next = applySchedulePreEducationBlock(withPre, true, { groupCount: 1 })
     expect(next[0]?.blockKind).toBe('preEducation')
     expect(next[0]?.name).toBe('오리엔테이션')
+  })
+})
+
+describe('trimTrailingBlankRegularCurriculumSessions', () => {
+  it('맨 끝 빈 차시 행은 제거하고 최소 1개는 유지한다', () => {
+    const trimmed = trimTrailingBlankRegularCurriculumSessions([
+      {
+        sessionLabel: '1차시',
+        title: '필요와 욕구, 현명한 소비',
+        description: '본문',
+      },
+      { sessionLabel: '2차시', title: '', description: '' },
+    ])
+    expect(trimmed).toHaveLength(1)
+    expect(trimmed[0]?.sessionLabel).toBe('1차시')
+  })
+
+  it('사전 교육 뒤의 빈 차시만 제거한다', () => {
+    const trimmed = trimTrailingBlankRegularCurriculumSessions([
+      { sessionLabel: PRE_EDUCATION_SCHEDULE_LABEL, title: '사전 교육', description: '' },
+      { sessionLabel: '1차시', title: '1차시', description: '내용' },
+      { sessionLabel: '2차시', title: '', description: '' },
+    ])
+    expect(trimmed).toHaveLength(2)
+    expect(trimmed[0]?.sessionLabel).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
+    expect(trimmed[1]?.sessionLabel).toBe('1차시')
   })
 })
 

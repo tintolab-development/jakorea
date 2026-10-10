@@ -64,7 +64,7 @@ export async function prepareRegistrationCreateFormBindings(args: {
   const overrideByCode = new Map(
     (args.operationalOverrides ?? []).map(item => [item.templateCode, item])
   )
-  const ownedByCode = new Map<string, DraftOwnedFormVersion>()
+  const formBindings: ProgramFormBindingRequest[] = []
 
   for (const spec of specs) {
     const needsRegistrationPut =
@@ -87,72 +87,58 @@ export async function prepareRegistrationCreateFormBindings(args: {
         hasWizardOperationalDraft ||
         (overlay != null && Object.keys(overlay).length > 0))
 
-    if (!needsRegistrationPut && !needsOperationalPut) {
-      continue
-    }
+    let owned: DraftOwnedFormVersion
 
-    const { owned, baseline } = await ensureDraftOwnedFormVersionWithBaseline({
-      programDraftId,
-      templateCode: spec.templateCode,
-    })
-
-    if (needsRegistrationPut && args.registration != null) {
-      const persisted = await persistDraftOwnedFormVersion({
+    if (needsRegistrationPut || needsOperationalPut) {
+      const { owned: ensuredOwned, baseline } = await ensureDraftOwnedFormVersionWithBaseline({
         programDraftId,
         templateCode: spec.templateCode,
-        owned,
-        baseline,
-        draft: args.registration.draft,
-        overlay: args.registration.overlay,
-        editorState: args.registration.editorState,
       })
-      ownedByCode.set(spec.templateCode, persisted)
-      continue
-    }
 
-    if (override != null) {
-      const persisted = await persistDraftOwnedFormVersion({
+      if (needsRegistrationPut && args.registration != null) {
+        owned = await persistDraftOwnedFormVersion({
+          programDraftId,
+          templateCode: spec.templateCode,
+          owned: ensuredOwned,
+          baseline,
+          draft: args.registration.draft,
+          overlay: args.registration.overlay,
+          editorState: args.registration.editorState,
+        })
+      } else if (override != null) {
+        owned = await persistDraftOwnedFormVersion({
+          programDraftId,
+          templateCode: spec.templateCode,
+          owned: ensuredOwned,
+          baseline,
+          draft: override.draft,
+          overlay: override.overlay,
+          editorState: override.editorState,
+        })
+      } else {
+        const draft = hasWizardOperationalDraft
+          ? wizardSaved!.draft
+          : (baseline?.draft ?? createSeedDraftForOperationalCatalogId(spec.templateCode))
+        if (draft == null || overlay == null) {
+          owned = ensuredOwned
+        } else {
+          owned = await persistDraftOwnedFormVersion({
+            programDraftId,
+            templateCode: spec.templateCode,
+            owned: ensuredOwned,
+            baseline,
+            draft,
+            overlay,
+            editorState: wizardSaved?.editorState ?? baseline?.editorState,
+          })
+        }
+      }
+    } else {
+      owned = await ensureDraftOwnedFormVersion({
         programDraftId,
         templateCode: spec.templateCode,
-        owned,
-        baseline,
-        draft: override.draft,
-        overlay: override.overlay,
-        editorState: override.editorState,
       })
-      ownedByCode.set(spec.templateCode, persisted)
-      continue
     }
-
-    const draft = hasWizardOperationalDraft
-      ? wizardSaved!.draft
-      : (baseline?.draft ?? createSeedDraftForOperationalCatalogId(spec.templateCode))
-    if (draft == null || overlay == null) {
-      ownedByCode.set(spec.templateCode, owned)
-      continue
-    }
-
-    const persisted = await persistDraftOwnedFormVersion({
-      programDraftId,
-      templateCode: spec.templateCode,
-      owned,
-      baseline,
-      draft,
-      overlay,
-      editorState: wizardSaved?.editorState ?? baseline?.editorState,
-    })
-    ownedByCode.set(spec.templateCode, persisted)
-  }
-
-  const formBindings: ProgramFormBindingRequest[] = []
-
-  for (const spec of specs) {
-    const owned =
-      ownedByCode.get(spec.templateCode) ??
-      (await ensureDraftOwnedFormVersion({
-        programDraftId,
-        templateCode: spec.templateCode,
-      }))
 
     const publishedVersionId = await publishFormTemplateVersionById(owned.draftVersionId)
 

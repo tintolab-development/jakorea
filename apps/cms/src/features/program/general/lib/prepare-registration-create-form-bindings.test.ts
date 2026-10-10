@@ -10,6 +10,28 @@ const publishFormTemplateVersionById = vi.fn()
 const ensureRegistrationProgramDraftId = vi.fn()
 const collectOperationalOverlayForCatalogId = vi.fn()
 const createSeedDraftForOperationalCatalogId = vi.fn()
+const listAllRegistrationCreateFormSpecs = vi.fn()
+const loadRegistrationWizardFormDraft = vi.fn()
+
+const individualProgramBindingSpecs = [
+  {
+    templateCode: 'registration-general',
+    formType: 'REGISTRATION' as const,
+    nameHints: [] as const,
+  },
+  {
+    templateCode: 'recruitment-participant-individual',
+    formType: 'RECRUITMENT' as const,
+    targetRole: 'INDIVIDUAL',
+    nameHints: [] as const,
+  },
+  {
+    templateCode: 'application-participant-individual',
+    formType: 'APPLICATION' as const,
+    targetRole: 'INDIVIDUAL',
+    nameHints: [] as const,
+  },
+]
 
 vi.mock('@/features/program/general/lib/registration-draft-form-versions', () => ({
   ensureDraftOwnedFormVersion: (...args: unknown[]) => ensureDraftOwnedFormVersion(...args),
@@ -29,6 +51,19 @@ vi.mock('@/features/program/general/lib/registration-program-draft-session', () 
 
 vi.mock('@/features/program/general/lib/registration-create-form-bindings-capabilities', () => ({
   shouldUseRegistrationCreateFormBindings: vi.fn(() => true),
+}))
+
+vi.mock('@/features/program/general/lib/operational-form-bindings', () => ({
+  listAllRegistrationCreateFormSpecs: (...args: unknown[]) =>
+    listAllRegistrationCreateFormSpecs(...args),
+}))
+
+vi.mock('@/features/program/general/lib/registration-wizard-form-draft', () => ({
+  loadRegistrationWizardFormDraft: (...args: unknown[]) => loadRegistrationWizardFormDraft(...args),
+}))
+
+vi.mock('@/features/program/general/lib/resolve-program-api-type-for-draft', () => ({
+  resolveRegistrationProgramDraftProgramType: () => 'GENERAL',
 }))
 
 vi.mock('@/features/program/general/lib/registration-operational-form-drafts', () => ({
@@ -71,6 +106,8 @@ describe('prepareRegistrationCreateFormBindings', () => {
     publishFormTemplateVersionById.mockImplementation(async (versionId: number) => versionId + 1000)
     collectOperationalOverlayForCatalogId.mockReturnValue(null)
     createSeedDraftForOperationalCatalogId.mockReturnValue(createProgramRegistrationDraft())
+    listAllRegistrationCreateFormSpecs.mockReturnValue(individualProgramBindingSpecs)
+    loadRegistrationWizardFormDraft.mockResolvedValue(null)
   })
 
   it('flushes registration input once then publishes without re-copy', async () => {
@@ -94,6 +131,9 @@ describe('prepareRegistrationCreateFormBindings', () => {
     expect(persistDraftOwnedFormVersion).toHaveBeenCalled()
     expect(publishFormTemplateVersionById).toHaveBeenCalled()
     expect(ensureDraftOwnedFormVersionWithBaseline).toHaveBeenCalled()
+    expect(ensureDraftOwnedFormVersion).not.toHaveBeenCalledWith(
+      expect.objectContaining({ templateCode: 'registration-general' })
+    )
     type PersistCallArg = { templateCode?: string; baseline?: unknown; owned?: unknown }
     const registrationPersist = persistDraftOwnedFormVersion.mock.calls.find(
       (call: PersistCallArg[]) => call[0]?.templateCode === 'registration-general'
@@ -109,5 +149,44 @@ describe('prepareRegistrationCreateFormBindings', () => {
     for (const binding of roleBoundBindings) {
       expect(binding.targetType).toBe(binding.targetRole)
     }
+  })
+
+  it('uses ensure once per publish-only spec and withBaseline once per flushed spec', async () => {
+    collectOperationalOverlayForCatalogId.mockImplementation((code: string) =>
+      code === 'recruitment-participant-individual' ? { 'recruit.foo': 'bar' } : null
+    )
+
+    const program = {
+      id: '100001',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    } as Program
+    const registrationDraft = createProgramRegistrationDraft()
+
+    await prepareRegistrationCreateFormBindings({
+      program,
+      registration: {
+        templateCode: 'registration-general',
+        draft: registrationDraft,
+        overlay: { 'program.titleKo': '테스트' },
+      },
+    })
+
+    expect(ensureDraftOwnedFormVersionWithBaseline).toHaveBeenCalledWith({
+      programDraftId: 99,
+      templateCode: 'registration-general',
+    })
+    expect(ensureDraftOwnedFormVersionWithBaseline).toHaveBeenCalledWith({
+      programDraftId: 99,
+      templateCode: 'recruitment-participant-individual',
+    })
+
+    const ensureOnlyCodes = ensureDraftOwnedFormVersion.mock.calls.map(call => {
+      const [payload] = call as [{ templateCode: string }]
+      return payload.templateCode
+    })
+    expect(ensureOnlyCodes).not.toContain('registration-general')
+    expect(ensureOnlyCodes).not.toContain('recruitment-participant-individual')
+    expect(ensureOnlyCodes.length).toBeGreaterThan(0)
   })
 })

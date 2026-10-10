@@ -458,7 +458,13 @@ export type GeneralAssignmentSubmissionScheduleDto = {
 
 export type GeneralAssignmentSubmissionListResponse = {
   items?: GeneralAssignmentSubmissionScheduleDto[] | null
+  page?: number
+  size?: number
+  totalElements?: number
+  totalPages?: number
 }
+
+const GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE = 200
 
 /** GET /api/admin/programs/{programId}/assignment-submissions — 일반 개인 LNB 과제 관리 */
 export async function fetchProgramAssignmentSubmissionsRemote(
@@ -473,17 +479,25 @@ export async function fetchProgramAssignmentSubmissionsRemote(
     size?: number
   }
 ): Promise<GeneralAssignmentSubmissionListResponse> {
+  const query = {
+    page: params?.page ?? 0,
+    size: params?.size ?? GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE,
+    ...params,
+  }
   const body = await unwrapApiBody<
     GeneralAssignmentSubmissionListResponse | GeneralAssignmentSubmissionScheduleDto[]
   >(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/assignment-submissions`,
       method: 'GET',
-      params,
+      params: query,
     })
   )
   if (Array.isArray(body)) return { items: body }
-  return { items: body.items ?? [] }
+  return {
+    ...body,
+    items: body.items ?? [],
+  }
 }
 
 /** POST /api/admin/programs/{programId}/submission-teams */

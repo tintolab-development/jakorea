@@ -17,6 +17,7 @@ import { participantFlagsFromGeneralProgram } from '@/features/program/general/l
 import {
   isPreEducationCurriculumSession,
   isPreEducationScheduleBlock,
+  trimTrailingBlankRegularCurriculumSessions,
 } from '@/features/program/general/lib/schedule-detail-form'
 import {
   resolveWageGradeFee,
@@ -302,7 +303,9 @@ function ipsValueFromSummary(summary: string | undefined): { category: string; d
 }
 
 function curriculumOverlayFromProgram(program: Program): Record<string, unknown> {
-  const rows = program.generalCommonInfo?.curriculumSessions ?? []
+  const rows = trimTrailingBlankRegularCurriculumSessions(
+    program.generalCommonInfo?.curriculumSessions ?? []
+  )
   if (rows.length === 0) return {}
   const unitNameBySession: Record<number, string> = {}
   const unitContentBySession: Record<number, string> = {}
@@ -493,7 +496,9 @@ export function extrasFromGeneralProgram(program: Program): GeneralRegistrationE
     registrationOverlay: overlay,
   })
   const participant = participantFlagsFromGeneralProgram(program)
-  const regularSessionCount = countRegularCurriculumSessions(common?.curriculumSessions)
+  const regularSessionCount = countRegularCurriculumSessions(
+    trimTrailingBlankRegularCurriculumSessions(common?.curriculumSessions ?? [])
+  )
   const overlaySessionCount = countGeneralCurriculumOverlaySessions(overlay)
   const overlayUnitCount = countGeneralCurriculumUnitSessionsFromOverlay(overlay)
   const labeledRoundCount = (common?.curriculumSessions ?? []).filter(
