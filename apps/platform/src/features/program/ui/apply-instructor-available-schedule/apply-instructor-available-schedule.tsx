@@ -34,6 +34,25 @@ const SEOUL_PARTS_FORMAT = new Intl.DateTimeFormat('en-CA', {
   hourCycle: 'h23',
 })
 
+const ISO_DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/
+
+function readIsoDateOnly(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return ISO_DATE_ONLY_RE.test(trimmed) ? trimmed : undefined
+}
+
+function isEducationPeriodScheduleValue(id: string): boolean {
+  return /:education-period:\d+$/i.test(id)
+}
+
+function optionMetadata(option: Record<string, unknown>): Record<string, unknown> {
+  const meta = option.metadata
+  return meta && typeof meta === 'object' && !Array.isArray(meta)
+    ? (meta as Record<string, unknown>)
+    : option
+}
+
 function seoulDateTimeParts(value: unknown): { dateKey: string; time: string } | null {
   if (typeof value !== 'string' || !value.trim()) return null
   const date = new Date(value)
@@ -52,17 +71,33 @@ function runtimeScheduleSlotFromOption(
   id: string,
   label: string,
 ): ApplyInstructorScheduleSlot {
-  const start = seoulDateTimeParts(option.startAt)
-  if (!start) return { id, label }
-  const end = seoulDateTimeParts(option.endAt)
-  const organizationName = String(option.organizationName ?? '').trim()
+  const meta = optionMetadata(option)
+  const displayLabel = label || String(option.label ?? option.option_label ?? '').trim() || id
+  const isEducationPeriod =
+    isEducationPeriodScheduleValue(id) || meta.educationPeriodIndex != null
+
+  if (isEducationPeriod) {
+    const periodStart =
+      readIsoDateOnly(meta.periodStartDate) ?? readIsoDateOnly(option.periodStartDate)
+    return {
+      id,
+      label: displayLabel,
+      dateKey: periodStart,
+      title: displayLabel,
+    }
+  }
+
+  const start = seoulDateTimeParts(option.startAt ?? meta.startAt)
+  if (!start) return { id, label: displayLabel }
+  const end = seoulDateTimeParts(option.endAt ?? meta.endAt)
+  const organizationName = String(option.organizationName ?? meta.organizationName ?? '').trim()
   const allDay =
     end != null && start.time === '00:00' && end.time === '00:00' && end.dateKey > start.dateKey
   return {
     id,
-    label,
+    label: displayLabel,
     dateKey: start.dateKey,
-    title: organizationName || label.split(' | ')[0] || label,
+    title: organizationName || displayLabel.split(' | ')[0] || displayLabel,
     detail: allDay ? '종일' : end ? `${start.time} ~ ${end.time}` : start.time,
   }
 }

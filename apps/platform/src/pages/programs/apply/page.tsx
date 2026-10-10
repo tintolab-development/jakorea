@@ -59,10 +59,13 @@ import {
   isApplyScheduleChoiceParagraphId,
   isInstitutionApplyScheduleChoiceParagraphId,
   readApplyScheduleInputMode,
+  buildEnabledDatesFromAllowedSchedulePeriods,
+  readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyScheduleParagraph,
+  shouldUseInstitutionAllowedSchedulePeriodDates,
 } from '@/features/program/lib/apply-form-schedule'
 import {
   preferredScheduleBlocksFromDraftAnswers,
@@ -344,6 +347,20 @@ export function ProgramApplyPage() {
       ),
     [applicationFormDocument, institutionScheduleParagraph],
   )
+  const institutionAllowedSchedulePeriods = useMemo(
+    () =>
+      readInstitutionAllowedSchedulePeriods(
+        applicationFormDocument?.runtimeContext,
+        institutionScheduleParagraph,
+      ),
+    [applicationFormDocument, institutionScheduleParagraph],
+  )
+  const institutionScheduleEnabledDates = useMemo(() => {
+    if (!shouldUseInstitutionAllowedSchedulePeriodDates(institutionAllowedSchedulePeriods)) {
+      return null
+    }
+    return buildEnabledDatesFromAllowedSchedulePeriods(institutionAllowedSchedulePeriods!)
+  }, [institutionAllowedSchedulePeriods])
   /**
    * CMS 개인 신청은 기간 지정 지망 UI가 없다 (institution-schedule 전용).
    * 일반 기관 + 기간 지정(또는 render `date_time_requests`)일 때만 1·2지망을 덮어쓴다.
@@ -853,6 +870,9 @@ export function ProgramApplyPage() {
                 ? institutionScheduleDateBounds.maxScheduleDate
                 : null
             }
+            enabledDates={
+              useInstitutionScheduleBounds ? institutionScheduleEnabledDates : null
+            }
           />
         )
       }
@@ -1023,6 +1043,7 @@ export function ProgramApplyPage() {
       showPreferredEducationForm,
       institutionScheduleDateBounds.minScheduleDate,
       institutionScheduleDateBounds.maxScheduleDate,
+      institutionScheduleEnabledDates,
       applicationFormDocument,
       profileSchoolLocked,
       profileSchool,
@@ -1178,6 +1199,31 @@ export function ProgramApplyPage() {
       if (showPreferredScheduleInput && !preferredAnswer) {
         setSubmitError('진행 희망 교육 일정을 한 개 이상 입력해 주세요.')
         return
+      }
+      if (
+        applyCase === 'institution-general' &&
+        !showGeneralPreferredSchedule &&
+        displayDraft &&
+        institutionScheduleParagraph &&
+        !hiddenParagraphIds.has(institutionScheduleParagraph.id)
+      ) {
+        const scheduleParagraph = displayDraft.paragraphs.find(
+          paragraph =>
+            isInstitutionApplyScheduleChoiceParagraphId(paragraph.id) &&
+            !hiddenParagraphIds.has(paragraph.id),
+        )
+        if (
+          scheduleParagraph &&
+          isRequiredParagraph(scheduleParagraph) &&
+          scheduleParagraph.kind === 'single_item' &&
+          scheduleParagraph.variant === 'multiple_choice'
+        ) {
+          const selected = scheduleParagraph.selectedPreviewMultipleIds ?? []
+          if (selected.length === 0) {
+            setSubmitError('진행 희망 교육 일정을 한 개 이상 선택해 주세요.')
+            return
+          }
+        }
       }
       const basicParagraph = findDraftParagraph(displayDraft, isApplicationBasicInfoParagraphId)
       const basicAnswer = basicParagraph ? basicInfoAnswerFromValues(basicInfo) : null

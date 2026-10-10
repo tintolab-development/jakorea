@@ -100,6 +100,11 @@ export type ApplyScheduleDateBounds = {
   maxScheduleDate: string | null
 }
 
+export type ApplySchedulePeriodBounds = {
+  startDate: string
+  endDate: string
+}
+
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
 function readIsoDateOrNull(value: unknown): string | null {
@@ -141,6 +146,80 @@ export function readApplyScheduleInputMode(
  * 문항 `runtimeMinDate`/`runtimeMaxDate` → 루트 `minScheduleDate`/`maxScheduleDate`.
  * null이면 제한하지 않는다(빈 문자열로 치환 금지).
  */
+function parseLocalIsoDate(iso: string): Date | null {
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null
+  return new Date(year, month - 1, day)
+}
+
+function toLocalIsoDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function readSchedulePeriodBoundsList(raw: unknown): ApplySchedulePeriodBounds[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const periods: ApplySchedulePeriodBounds[] = []
+  for (const item of raw) {
+    if (!isRecord(item)) continue
+    const startDate = readIsoDateOrNull(item.startDate)
+    const endDate = readIsoDateOrNull(item.endDate)
+    if (startDate && endDate) periods.push({ startDate, endDate })
+  }
+  return periods
+}
+
+/**
+ * 참여기관 `date_time_requests` — 교육 예정일 구간 합집합.
+ * 문항 `runtimeAllowedSchedulePeriods` → 루트 `allowedSchedulePeriods`.
+ * 필드가 없으면 null(기존 min/max만). `[]`이면 빈 배열(역시 min/max만).
+ */
+export function readInstitutionAllowedSchedulePeriods(
+  runtime: unknown,
+  paragraph?: unknown
+): ApplySchedulePeriodBounds[] | null {
+  const fromParagraph =
+    isRecord(paragraph) && 'runtimeAllowedSchedulePeriods' in paragraph
+      ? readSchedulePeriodBoundsList(paragraph.runtimeAllowedSchedulePeriods)
+      : undefined
+  const fromRuntime =
+    isRecord(runtime) && 'allowedSchedulePeriods' in runtime
+      ? readSchedulePeriodBoundsList(runtime.allowedSchedulePeriods)
+      : undefined
+  const raw = fromParagraph !== undefined ? fromParagraph : fromRuntime
+  if (raw === undefined) return null
+  return raw
+}
+
+/** 구간이 1개 이상일 때만 달력 `enabledDates`로 쓴다. */
+export function shouldUseInstitutionAllowedSchedulePeriodDates(
+  periods: ApplySchedulePeriodBounds[] | null
+): boolean {
+  return periods != null && periods.length > 0
+}
+
+export function buildEnabledDatesFromAllowedSchedulePeriods(
+  periods: readonly ApplySchedulePeriodBounds[]
+): ReadonlySet<string> {
+  const set = new Set<string>()
+  for (const period of periods) {
+    let cursor = parseLocalIsoDate(period.startDate)
+    const end = parseLocalIsoDate(period.endDate)
+    if (!cursor || !end) continue
+    while (cursor <= end) {
+      set.add(toLocalIsoDate(cursor))
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1)
+    }
+  }
+  return set
+}
+
 export function readInstitutionApplyScheduleDateBounds(
   runtime: unknown,
   paragraph?: unknown

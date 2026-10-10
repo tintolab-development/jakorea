@@ -4,7 +4,9 @@
  */
 
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
@@ -24,6 +26,8 @@ const PREFERRED_SCHEDULE_ANSWER_KEYS = [
   PROGRAM_APPLICATION_FORM_ECONOMY_IDS.preferredSchedule,
   PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
   PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule,
+  PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+  GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
   'preferredEducationSchedule',
   'preferredScheduleBlocks',
 ] as const
@@ -164,6 +168,11 @@ function formatPreferredScheduleBlock(block: Record<string, unknown>): string | 
 export function isOpaqueScheduleOptionToken(value: string): boolean {
   const trimmed = value.trim()
   if (!trimmed) return false
+  if (
+    /^schedule:\d+(?::organization-application:\d+)?(?::education-period:\d+)?$/i.test(trimmed)
+  ) {
+    return true
+  }
   if (/^schedule:\d+(?::organization-application:\d+)?$/i.test(trimmed)) return true
   if (/^line:\d+$/i.test(trimmed)) return true
   if (/^interview-slot:/i.test(trimmed)) return true
@@ -208,7 +217,17 @@ function flattenAnswerStrings(raw: unknown): string[] {
 function formatPreferredScheduleAnswer(raw: unknown): string | undefined {
   if (typeof raw === 'string') {
     const trimmed = raw.trim()
-    if (!trimmed || isOpaqueScheduleOptionToken(trimmed)) return undefined
+    if (!trimmed) return undefined
+    if (trimmed.includes('\n')) {
+      const lines = trimmed
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean)
+      const visible = lines.filter(line => !isOpaqueScheduleOptionToken(line))
+      if (visible.length > 0) return visible.join('\n')
+      return undefined
+    }
+    if (isOpaqueScheduleOptionToken(trimmed)) return undefined
     return trimmed
   }
   if (Array.isArray(raw)) {
@@ -237,6 +256,14 @@ function formatPreferredScheduleAnswer(raw: unknown): string | undefined {
   }
   const row = asRecord(raw)
   if (!row) return undefined
+  if (Array.isArray(row.selectedLabels)) {
+    const labels = row.selectedLabels
+      .map(item => readTrimmedString(item))
+      .filter((value): value is string => Boolean(value && !isOpaqueScheduleOptionToken(value)))
+    if (labels.length > 0) return labels.join('\n')
+  }
+  const summary = readTrimmedString(row.summary)
+  if (summary && !isOpaqueScheduleOptionToken(summary)) return summary
   const labeled =
     readTrimmedString(row.label) ||
     readTrimmedString(row.displayLabel) ||
@@ -272,6 +299,10 @@ export type PreferredScheduleProgramLookup = {
     scheduleName?: string
     /** 이미 포맷된 일시 문구가 있으면 우선 */
     dateLabel?: string
+    educationPeriodIndex?: number
+    periodStartDate?: string
+    periodEndDate?: string
+    periodLabel?: string
   }>
 }
 
@@ -329,8 +360,25 @@ function resolveOneScheduleOptionToken(
     const line = lookup.educationScheduleLines?.[index]?.trim()
     return line || undefined
   }
-  const scheduleMatch = token.trim().match(/^schedule:(\d+)(?::organization-application:\d+)?$/i)
-  const bareId = /^\d{4,}$/.test(token.trim()) ? Number(token.trim()) : null
+  const trimmed = token.trim()
+  const educationPeriodMatch = trimmed.match(
+    /^schedule:(\d+)(?::organization-application:\d+)?(?::education-period:(\d+))?$/i,
+  )
+  if (educationPeriodMatch?.[3] != null) {
+    const scheduleId = Number(educationPeriodMatch[1])
+    const periodIndex = Number(educationPeriodMatch[3])
+    if (!Number.isFinite(scheduleId) || !Number.isFinite(periodIndex)) return undefined
+    const hit = lookup.schedules?.find(
+      row =>
+        row.scheduleId === scheduleId &&
+        (row.educationPeriodIndex == null || row.educationPeriodIndex === periodIndex),
+    )
+    const periodLabel = readTrimmedString(hit?.periodLabel)
+    if (periodLabel) return periodLabel
+    return undefined
+  }
+  const scheduleMatch = trimmed.match(/^schedule:(\d+)(?::organization-application:\d+)?$/i)
+  const bareId = /^\d{4,}$/.test(trimmed) ? Number(trimmed) : null
   const scheduleId = scheduleMatch ? Number(scheduleMatch[1]) : bareId
   if (scheduleId == null || !Number.isFinite(scheduleId)) return undefined
   const hit = lookup.schedules?.find(row => row.scheduleId === scheduleId)
