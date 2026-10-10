@@ -47,6 +47,9 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
     '선택 가능한 희망 교육 일정 수를 초과했습니다.',
   ORGANIZATION_REQUESTED_SCHEDULE_REQUIRED:
     '진행 희망 교육 일정을 한 개 이상 선택해 주세요.',
+  /** 토큰은 인정됐으나 운영 일정으로 materialize 실패 (BE ProgramFormRuntimeSubmissionValidator) */
+  INVALID_SCHEDULE_OPTION_TOKEN:
+    '선택한 교육 일정을 더 이상 사용할 수 없습니다. 일정을 다시 선택해 주세요.',
   PREFERRED_SCHEDULE_EXCEEDS_MAX_SESSIONS_PER_DAY:
     '하루 최대 수업 시수를 초과했습니다.',
   VALIDATION_FAILED: '필수 항목을 모두 입력해 주세요.',

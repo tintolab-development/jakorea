@@ -13,6 +13,7 @@ import {
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
+  normalizeInstitutionFixedScheduleAnswerTokens,
   shouldUseInstitutionAllowedSchedulePeriodDates,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyScheduleParagraph,
@@ -188,13 +189,52 @@ const fixedItems = readInstitutionFixedScheduleChoiceItems(
 )
 assert.ok(fixedItems)
 assert.equal(fixedItems![0]?.id, 'line:1')
-assert.equal(fixedItems![1]?.id, '42')
+assert.equal(fixedItems![1]?.id, 'schedule:42')
+
+const normalized = normalizeInstitutionFixedScheduleAnswerTokens(
+  ['line:1'],
+  {
+    scheduleOptions: [
+      { id: 'line:1', label: '10/20', scheduleId: 99 },
+      { id: 'line:2', option_value: 'schedule:186626', label: '운영' },
+    ],
+  },
+  { items: [] },
+)
+assert.deepEqual(normalized, ['schedule:99'])
 
 const keepOriginalLineIndex = readInstitutionFixedScheduleChoiceItems(null, {
   items: [{ id: 'line:1', label: '10/20' }],
 })
 assert.ok(keepOriginalLineIndex)
 assert.equal(keepOriginalLineIndex![0]?.id, 'line:1')
+
+const runtimeOverridesStaleSeed = readInstitutionFixedScheduleChoiceItems(
+  {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: 'line:0', label: '26년 10월 26일(월) 10:00 ~ 12:00' },
+      { id: 'line:1', label: '26년 11월 2일(월) 13:30 ~ 16:00' },
+      { id: 'line:2', label: '26년 11월 9일(월) 9:30 ~ 11:30' },
+    ],
+  },
+  { items: [{ id: 'line:2', label: '26년 11월 9일(월) 9:30 ~ 11:30' }] },
+)
+assert.equal(runtimeOverridesStaleSeed?.length, 3)
+
+const educationLinesFallback = readInstitutionFixedScheduleChoiceItems(
+  { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+  { items: [{ id: 'line:2', label: 'only seed' }] },
+  {
+    educationScheduleLines: [
+      '26년 10월 26일(월) 10:00 ~ 12:00',
+      '26년 11월 2일(월) 13:30 ~ 16:00',
+      '26년 11월 9일(월) 9:30 ~ 11:30',
+    ],
+  },
+)
+assert.equal(educationLinesFallback?.length, 3)
+assert.equal(educationLinesFallback![0]?.id, 'line:0')
 
 assert.equal(readInstitutionAllowedSchedulePeriods(null, null), null)
 

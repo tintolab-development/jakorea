@@ -71,6 +71,8 @@ type ApplyTrainedTeachersBasicInfoProps = {
   showEducationPlace?: boolean
   maxClassCount?: number
   profile?: ApplyTrainedTeachersBasicInfoProfile
+  /** 자동입력(잠금·disabled) 칸 placeholder에 answers JSON 키 표시 */
+  answerKeyPlaceholders?: boolean
 }
 
 function buildClassCountOptions(maxClassCount: number) {
@@ -129,6 +131,7 @@ export function ApplyTrainedTeachersBasicInfo({
   showEducationPlace = true,
   maxClassCount = DEFAULT_MAX_CLASS_COUNT,
   profile,
+  answerKeyPlaceholders = false,
 }: ApplyTrainedTeachersBasicInfoProps) {
   const patch = (partial: Partial<ApplyTrainedTeachersBasicInfoValues>) => {
     onChange({ ...value, ...partial })
@@ -147,7 +150,9 @@ export function ApplyTrainedTeachersBasicInfo({
             variant="formPage"
             size="large"
             width="200px"
-            placeholder="로그인 교사의 소속 학교"
+            placeholder={
+              answerKeyPlaceholders && schoolNameLocked ? 'schoolName' : '로그인 교사의 소속 학교'
+            }
             value={schoolDisplay}
             disabled={schoolNameLocked}
             onValueChange={next => patch({ schoolName: next })}
@@ -172,7 +177,7 @@ export function ApplyTrainedTeachersBasicInfo({
             variant="formPage"
             size="large"
             width="200px"
-            placeholder="기관 등록 주소"
+            placeholder={answerKeyPlaceholders ? 'regionLabel' : '기관 등록 주소'}
             value={regionDisplay}
             disabled
             onValueChange={() => {}}
@@ -277,7 +282,7 @@ export function ApplyTrainedTeachersBasicInfo({
                   variant="formPage"
                   size="large"
                   width={120}
-                  placeholder="교사명"
+                  placeholder={answerKeyPlaceholders ? 'teacherName' : '교사명'}
                   value={teacherNameDisplay}
                   disabled
                   onValueChange={() => {}}

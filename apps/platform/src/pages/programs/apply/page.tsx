@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
@@ -54,8 +55,10 @@ import {
   isUjatVolunteerPreviousTermParagraphId,
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
+import { applyProgramLinkedApplicationDraftPatches } from '@/features/program/lib/application-form-program-link'
+import { resolvePortalApplicationHiddenParagraphIds } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
+import { shouldIncludeInterviewStages } from '@/features/program/lib/detail-case'
 import {
-  applyScheduleVisibilityFieldsFromRuntimeContext,
   isApplyScheduleChoiceParagraphId,
   isInstitutionApplyScheduleChoiceParagraphId,
   readApplyScheduleInputMode,
@@ -63,8 +66,8 @@ import {
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
+  normalizeInstitutionFixedScheduleAnswerTokens,
   shouldShowApplyPreferredSchedule,
-  shouldShowApplyScheduleParagraph,
   shouldUseInstitutionAllowedSchedulePeriodDates,
 } from '@/features/program/lib/apply-form-schedule'
 import {
@@ -317,6 +320,14 @@ export function ProgramApplyPage() {
     () => coerceApplicationFormDocument(remoteForm),
     [remoteForm],
   )
+  const educationScheduleLinesForApply = useMemo(
+    () =>
+      readEducationScheduleLinesForApplicationForm(
+        applicationFormDocument?.runtimeContext,
+        program?.educationScheduleLines,
+      ) ?? program?.educationScheduleLines ?? [],
+    [applicationFormDocument, program?.educationScheduleLines],
+  )
   const institutionScheduleParagraph = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
@@ -460,14 +471,19 @@ export function ProgramApplyPage() {
             ...program,
             applicationType: focusedApplicationType,
           })
+          const programLinkedDraft = applyProgramLinkedApplicationDraftPatches(remoteDraft, {
+            applyCase: applyCaseForDraft,
+            program,
+            runtimeContext: coerceApplicationFormDocument(remoteForm)?.runtimeContext,
+          })
           setDraft(
             applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
-              ? prepareIndividualApplicationDraft(remoteDraft, {
+              ? prepareIndividualApplicationDraft(programLinkedDraft, {
                   keepParagraphIds: runtimeInterviewParagraph
                     ? new Set([runtimeInterviewParagraph.id])
                     : undefined,
                 })
-              : remoteDraft,
+              : programLinkedDraft,
           )
           const draftAnswers = remoteForm.draftAnswers
           const interviewParagraph = findDraftParagraph(
@@ -493,7 +509,7 @@ export function ProgramApplyPage() {
               PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
           )
           setPreferredBlocks(fromPreferred ?? [createEmptyPreferredBlock()])
-          const basicParagraph = findDraftParagraph(remoteDraft, isApplicationBasicInfoParagraphId)
+          const basicParagraph = findDraftParagraph(programLinkedDraft, isApplicationBasicInfoParagraphId)
           const fromBasic = basicInfoValuesFromDraftAnswer(
             draftAnswerForParagraph(draftAnswers, basicParagraph),
           )
@@ -715,6 +731,7 @@ export function ProgramApplyPage() {
             value={basicInfo}
             onChange={setBasicInfo}
             schoolNameLocked={profileSchoolLocked}
+            answerKeyPlaceholders
             showPreferredEducationForm={showPreferredEducationForm}
             showEducationPlace={shouldShowEducationPlaceOnBasicInfo(paragraph.id)}
             profile={{
@@ -894,10 +911,13 @@ export function ProgramApplyPage() {
         const selectedIds = paragraph.selectedPreviewMultipleIds ?? []
         const choiceItems =
           isInstitutionApplyScheduleChoiceParagraphId(paragraph.id)
-            ? (readInstitutionFixedScheduleChoiceItems(
-                applicationFormDocument?.runtimeContext,
-                paragraph,
-              ) ?? paragraph.items)
+            ? paragraph.items.length > 0
+              ? paragraph.items
+              : (readInstitutionFixedScheduleChoiceItems(
+                  applicationFormDocument?.runtimeContext,
+                  institutionScheduleParagraph ?? paragraph,
+                  { educationScheduleLines: educationScheduleLinesForApply },
+                ) ?? paragraph.items)
             : paragraph.items
         if (choiceItems.length === 0) {
           return (
@@ -1063,26 +1083,22 @@ export function ProgramApplyPage() {
   const displayDraft = draft
 
   const hiddenParagraphIds = useMemo(() => {
-    const hidden = new Set<string>()
-    const runtimeFields = applyScheduleVisibilityFieldsFromRuntimeContext(
-      applicationFormDocument?.runtimeContext,
+    const hidden = new Set(
+      resolvePortalApplicationHiddenParagraphIds({
+        applyCase,
+        program: program ?? null,
+        runtimeContext: applicationFormDocument?.runtimeContext,
+        paragraphs: displayDraft?.paragraphs ?? [],
+        showSexOffenseConsentInquiryParagraph: shouldShowSexOffenseInquiry(sexOffense),
+        volunteerInterviewEnabled:
+          applyCase === 'individual-volunteer' && program
+            ? shouldIncludeInterviewStages(
+                'volunteer',
+                program as import('@/features/program/model/cms-program.types').CmsProgramLike,
+              )
+            : undefined,
+      }),
     )
-    const scheduleFields = {
-      educationStructure: runtimeFields?.educationStructure ?? program?.educationStructure,
-      sessionRound: runtimeFields?.sessionRound ?? program?.sessionRound,
-      educationScheduleMode: runtimeFields?.educationScheduleMode ?? program?.educationScheduleMode,
-      educationScheduleLines: program?.educationScheduleLines,
-    }
-    if (displayDraft && !shouldShowApplyScheduleParagraph(scheduleFields)) {
-      for (const paragraph of displayDraft.paragraphs) {
-        if (isApplyScheduleChoiceParagraphId(paragraph.id)) hidden.add(paragraph.id)
-      }
-    }
-    if (applyCase && !shouldShowIndividualTeamInfoParagraph(applyCase) && displayDraft) {
-      for (const paragraph of displayDraft.paragraphs) {
-        if (isApplicationTeamInfoParagraphId(paragraph.id)) hidden.add(paragraph.id)
-      }
-    }
     if (displayDraft) {
       const ujatApplicationType = ujatVolunteerBasicInfo.applicationType
       for (const paragraph of displayDraft.paragraphs) {
@@ -1091,13 +1107,6 @@ export function ProgramApplyPage() {
           (ujatApplicationType === 'ujat-graduate' &&
             isUjatVolunteerFreeTextItemsParagraphId(paragraph.id))
         ) {
-          hidden.add(paragraph.id)
-        }
-      }
-    }
-    if (!shouldShowSexOffenseInquiry(sexOffense) && displayDraft) {
-      for (const paragraph of displayDraft.paragraphs) {
-        if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) {
           hidden.add(paragraph.id)
         }
       }
@@ -1218,7 +1227,11 @@ export function ProgramApplyPage() {
           scheduleParagraph.kind === 'single_item' &&
           scheduleParagraph.variant === 'multiple_choice'
         ) {
-          const selected = scheduleParagraph.selectedPreviewMultipleIds ?? []
+          const selected = normalizeInstitutionFixedScheduleAnswerTokens(
+            scheduleParagraph.selectedPreviewMultipleIds ?? [],
+            applicationFormDocument?.runtimeContext,
+            institutionScheduleParagraph,
+          )
           if (selected.length === 0) {
             setSubmitError('진행 희망 교육 일정을 한 개 이상 선택해 주세요.')
             return
@@ -1379,6 +1392,33 @@ export function ProgramApplyPage() {
           ? resolveApplicationAnswerKey(scheduleParagraph)
           : ''
         if (scheduleKey) overrides[scheduleKey] = preferredAnswer
+      }
+      if (
+        applyCase === 'institution-general' &&
+        !showGeneralPreferredSchedule &&
+        institutionScheduleParagraph &&
+        institutionScheduleInputMode === 'fixed_schedule_options'
+      ) {
+        const scheduleParagraph = displayDraft.paragraphs.find(
+          paragraph =>
+            isInstitutionApplyScheduleChoiceParagraphId(paragraph.id) &&
+            !hiddenParagraphIds.has(paragraph.id),
+        )
+        if (
+          scheduleParagraph &&
+          scheduleParagraph.kind === 'single_item' &&
+          scheduleParagraph.variant === 'multiple_choice'
+        ) {
+          const scheduleKey = resolveApplicationAnswerKey(scheduleParagraph)
+          const normalized = normalizeInstitutionFixedScheduleAnswerTokens(
+            scheduleParagraph.selectedPreviewMultipleIds ?? [],
+            applicationFormDocument?.runtimeContext,
+            institutionScheduleParagraph,
+          )
+          if (normalized.length > 0) {
+            overrides[scheduleKey] = normalized
+          }
+        }
       }
       if (basicAnswer != null && basicParagraph) {
         overrides[resolveApplicationAnswerKey(basicParagraph)] = basicAnswer
