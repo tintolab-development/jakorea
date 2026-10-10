@@ -2,6 +2,7 @@
  * 회원 권한 신청 목록 — 강사·관리자 공통 UI (`FilterTableLayout` / user-list·program-list 스타일 정렬)
  */
 
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useMemo,
   useState,
@@ -13,7 +14,6 @@ import {
   type Key,
   type MouseEvent,
 } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -231,6 +231,7 @@ export const MembersPermissionList = forwardRef<
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(membersPermissionTablePageConfig, {
     data: rows,
     searchParams,
@@ -632,6 +633,7 @@ export const MembersPermissionList = forwardRef<
   return (
     <>
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
         filters={{
@@ -669,7 +671,7 @@ export const MembersPermissionList = forwardRef<
           data: tableData,
         }}
       >
-        <Table<MemberPermissionApplicationRow>
+        <CmsDataTable<MemberPermissionApplicationRow>
           rowKey="id"
           className="cms-data-table members-permission-list__table"
           columns={columns}

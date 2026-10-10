@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -10,6 +10,7 @@ import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-gr
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { ExcelButton } from '@/shared/ui/excel-button'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
   getInstructorSettlementStatusLabel,
@@ -444,7 +445,7 @@ export function InstructorPaymentTab({
 
         <div className="instructor-payment-tab__content">
           {viewMode === 'list' ? (
-            <Table<InstructorSettlementListRow>
+            <CmsDataTable<InstructorSettlementListRow>
               rowKey="id"
               columns={columns}
               dataSource={filteredRows}

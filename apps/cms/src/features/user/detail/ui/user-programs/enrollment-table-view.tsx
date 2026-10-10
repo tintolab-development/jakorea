@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
 import type { Application } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { EmptyState } from '@/shared/ui'
@@ -8,6 +7,7 @@ import { useTablePage } from '@/shared/components/table-system/model/use-table-p
 import { userProgramsEnrollmentStubTableConfig } from '../user-programs-stub-table.config'
 import { createProgramHistoryColumns } from '../detail-info/user-detail-program-history-columns'
 import type { RendererProps } from '../user-programs-view-renderer'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export function EnrollmentTableView(props: RendererProps) {
   const {
@@ -24,8 +24,12 @@ export function EnrollmentTableView(props: RendererProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const enrollmentTableContext = useMemo(() => ({} as const), [])
 
-  const { handleFilterChange, applySearch: handleEnrollmentSearchStub, displayedCount } =
-    useTablePage(userProgramsEnrollmentStubTableConfig, {
+  const {
+    handleFilterChange,
+    applySearch: handleEnrollmentSearchStub,
+    displayedCount,
+    hasActiveFilters,
+  } = useTablePage(userProgramsEnrollmentStubTableConfig, {
       data: enrollmentTableRows,
       searchParams,
       setSearchParams,
@@ -46,6 +50,7 @@ export function EnrollmentTableView(props: RendererProps) {
 
   return (
     <FilterTableLayout
+      hasActiveFilters={hasActiveFilters}
       bordered={false}
       className="user-detail-fullpage-modal__enrollment-layout"
       fields={[]}
@@ -63,7 +68,7 @@ export function EnrollmentTableView(props: RendererProps) {
         {loading ? (
           <div className="user-detail-modal__loading">로딩 중...</div>
         ) : enrollmentTableRows.length > 0 ? (
-          <Table
+          <CmsDataTable
             className="cms-data-table"
             columns={programHistoryColumns}
             dataSource={enrollmentTableRows}

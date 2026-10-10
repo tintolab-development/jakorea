@@ -2,6 +2,7 @@
  * 회원 상세 — 프로그램 수강 이력 / 봉사 프로그램 참여 이력
  */
 
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useCallback,
   useEffect,
@@ -12,7 +13,6 @@ import {
   type ReactNode,
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
 import type { TableProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application, UserHistory } from '@/types/domain'
@@ -237,6 +237,7 @@ export function MemberProgramLectureHistory({
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(tablePageConfig, {
     data: listData,
     searchParams,
@@ -598,6 +599,7 @@ export function MemberProgramLectureHistory({
   return (
     <>
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         className="member-program-lecture-history"
         bordered={false}
         fields={filterFields}
@@ -711,7 +713,7 @@ export function MemberProgramLectureHistory({
           data: tableDataSource,
         }}
       >
-        <Table<Application | UserHistory>
+        <CmsDataTable<Application | UserHistory>
           className="cms-data-table"
           scroll={{ x: 'max-content' }}
           loading={loading}

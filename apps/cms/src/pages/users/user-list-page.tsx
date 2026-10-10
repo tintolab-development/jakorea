@@ -209,7 +209,9 @@ export function UserListPage() {
     []
   )
 
-  const { pendingFilters, handleFilterChange, applySearch } = useTablePage(
+  const { pendingFilters, handleFilterChange, applySearch,
+    hasActiveFilters,
+  } = useTablePage(
     userListTablePageConfig,
     {
       data: listUsers,
@@ -1193,6 +1195,7 @@ export function UserListPage() {
   return (
     <div>
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={userListFilterFields}
         filters={
