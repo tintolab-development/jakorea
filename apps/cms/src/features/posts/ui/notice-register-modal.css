@@ -22,7 +22,8 @@
   margin: 0 !important;
 }
 
-.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.notice-register-modal) .ant-modal.teal-header-modal--large.notice-register-modal {
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.notice-register-modal)
+  .ant-modal.teal-header-modal--large.notice-register-modal {
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
@@ -112,27 +113,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
-  gap: 16px;
+  gap: 24px;
   width: 100%;
-  box-sizing: border-box;
-}
-
-.notice-register-modal__filter-inner > .ant-form-item {
-  flex: 0 0 auto;
-  margin-bottom: 0;
-}
-
-/* 카테고리: 컨트롤 240×44 (CmsSelect large = 44px 높이) */
-.notice-register-modal__filter-field--category {
-  width: 240px;
-  max-width: 240px;
-}
-
-/* 공개 여부 · 상단 고정 라디오 영역 */
-.notice-register-modal__filter-inner
-  > .ant-form-item:not(.notice-register-modal__filter-field--category) {
-  width: 200px;
-  max-width: 200px;
   box-sizing: border-box;
 }
 
@@ -156,18 +138,17 @@
   margin-bottom: 24px;
 }
 
-/* 내용 라벨 ↔ 에디터 간격 10px */
-.notice-register-modal__editor-label {
-  margin-bottom: 10px;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 14px;
-  line-height: 1.5;
+.notice-register-modal__section--editor.cms-field {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.notice-register-modal__required {
-  margin-left: var(--spacing-4);
-  color: var(--color-required-mark, #ff4d4f);
-  font-size: var(--font-size-14);
+.notice-register-modal__section--editor .cms-field__message--error {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  color: var(--Status-red-main, #c32f4a);
 }
 
 .notice-register-modal__form .ant-form-item-label {
@@ -213,7 +194,7 @@
   flex-shrink: 0;
 }
 
-/* 첨부 라벨 — th 스펙 */
+/* 첨부 라벨 — th 셀 + cms-field 라벨 타이포 */
 .notice-register-modal__attachment-label {
   display: flex;
   box-sizing: border-box;
@@ -225,17 +206,19 @@
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  gap: 2px;
   border-right: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
   background: #edf0f2;
+}
+
+.notice-register-modal__attachment-field-label {
+  justify-content: center;
+  width: 100%;
+  padding: 0;
   color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
   font-size: 16px;
-  font-style: normal;
   font-weight: 700;
-  line-height: 140%;
+  text-align: center;
 }
 
 .notice-register-modal__attachment-body {
