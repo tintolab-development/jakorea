@@ -10139,6 +10139,100 @@
         }
       }
     },
+    "/api/portal/auth/password-reset/start": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "회원 비밀번호 찾기 시작",
+        "description": "### 이 API가 하는 일\n- 회원 비밀번호 찾기 시작\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그인/회원가입/내 계정 (`null`)\n- 프론트 담당 영역: auth/account-recovery (`auth/account-recovery`)\n- 호출 방식: `POST /api/portal/auth/password-reset/start`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: email\n- 응답 사용 위치: accepted=true를 확인한 뒤 회원 NICE 본인인증 단계로 이동\n- 프론트 조회 키: `post_api_auth_password_reset_start`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: NICE 연동 검증 필요\n- 스테이징 점검 기준: STAGE6_PASSWORD_RESET_RECOVERY\n- 목데이터 대체: 기존 email/check PASSWORD_RESET 분기 제거\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 공개 API 또는 로그인 전 호출 가능\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Enumeration-safe password-reset entry point; does not reveal account existence",
+        "operationId": "memberPasswordResetStart",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetStartResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/portal/auth/password-reset/eligibility": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "회원 비밀번호 재설정 계정 확인",
+        "description": "### 이 API가 하는 일\n- 회원 비밀번호 재설정 계정 확인\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그인/회원가입/내 계정 (`null`)\n- 프론트 담당 영역: auth/account-recovery (`auth/account-recovery`)\n- 호출 방식: `POST /api/portal/auth/password-reset/eligibility`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: email, identityVerificationSessionId, profileToken\n- 응답 사용 위치: eligible=true만 SET_NEW_PASSWORD; false면 REENTER_EMAIL\n- 프론트 조회 키: `post_api_auth_password_reset_eligibility`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: NICE 연동 검증 필요\n- 스테이징 점검 기준: STAGE6_PASSWORD_RESET_RECOVERY\n- 목데이터 대체: 본인인증 후 임시 계정존재 추측 로직 제거\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 공개 API 또는 로그인 전 호출 가능\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Post-identity-verification ownership match boundary before new-password UI",
+        "operationId": "memberPasswordResetEligibility",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetEligibilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetEligibilityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/portal/auth/password-reset/confirm": {
       "post": {
         "tags": [
@@ -30540,6 +30634,100 @@
             "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
             "content": {
               "application/json": {}
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/auth/password-reset/start": {
+      "post": {
+        "tags": [
+          "인증/세션"
+        ],
+        "summary": "관리자 비밀번호 찾기 시작",
+        "description": "### 이 API가 하는 일\n- 관리자 비밀번호 찾기 시작\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그인/회원가입/내 계정 (`null`)\n- 프론트 담당 영역: 관리자/auth/account-recovery (`admin/auth/account-recovery`)\n- 호출 방식: `POST /api/admin/auth/password-reset/start`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: email\n- 응답 사용 위치: accepted=true를 확인한 뒤 관리자 NICE 본인인증 단계로 이동\n- 프론트 조회 키: `post_api_admin_auth_password_reset_start`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: NICE 연동 검증 필요\n- 스테이징 점검 기준: STAGE6_PASSWORD_RESET_RECOVERY\n- 목데이터 대체: 기존 email/check PASSWORD_RESET 분기 제거\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Enumeration-safe password-reset entry point; does not reveal account existence",
+        "operationId": "adminPasswordResetStart",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetStartResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/auth/password-reset/eligibility": {
+      "post": {
+        "tags": [
+          "인증/세션"
+        ],
+        "summary": "관리자 비밀번호 재설정 계정 확인",
+        "description": "### 이 API가 하는 일\n- 관리자 비밀번호 재설정 계정 확인\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그인/회원가입/내 계정 (`null`)\n- 프론트 담당 영역: 관리자/auth/account-recovery (`admin/auth/account-recovery`)\n- 호출 방식: `POST /api/admin/auth/password-reset/eligibility`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: email, identityVerificationSessionId, profileToken\n- 응답 사용 위치: eligible=true만 SET_NEW_PASSWORD; false면 REENTER_EMAIL\n- 프론트 조회 키: `post_api_admin_auth_password_reset_eligibility`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: NICE 연동 검증 필요\n- 스테이징 점검 기준: STAGE6_PASSWORD_RESET_RECOVERY\n- 목데이터 대체: 본인인증 후 임시 계정존재 추측 로직 제거\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Post-identity-verification ownership match boundary before new-password UI",
+        "operationId": "adminPasswordResetEligibility",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetEligibilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetEligibilityResponse"
+                }
+              }
             }
           },
           "400": {
@@ -54693,7 +54881,7 @@
           {
             "name": "category",
             "in": "query",
-            "description": "카탈로그 카테고리 코드.",
+            "description": "카테고리 코드 필터",
             "required": false,
             "schema": {
               "type": "string",
@@ -54716,7 +54904,7 @@
           {
             "name": "keyword",
             "in": "query",
-            "description": "key/description 부분 검색.",
+            "description": "key/description 부분검색",
             "required": false,
             "schema": {
               "type": "string"
@@ -54725,7 +54913,7 @@
           {
             "name": "programId",
             "in": "query",
-            "description": "대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.",
+            "description": "대상 프로그램. 없으면 requiresProgram=true 항목 enabled=false",
             "required": false,
             "schema": {
               "type": "integer",
@@ -54735,7 +54923,7 @@
           {
             "name": "participantType",
             "in": "query",
-            "description": "프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "description": "참여 유형 필터. 프로그램 선택 시 수신자 유형과 맞춤",
             "required": false,
             "schema": {
               "type": "string",
@@ -54749,7 +54937,7 @@
           {
             "name": "memberType",
             "in": "query",
-            "description": "프로그램 미선택(전체) 시 회원 유형 필터.",
+            "description": "회원 유형 필터. 프로그램 미선택(전체) 시 주로 사용",
             "required": false,
             "schema": {
               "type": "string",
@@ -54827,8 +55015,7 @@
           "500": {
             "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
           }
-        },
-        "x-jakorea-fe-notes": "enabled=삽입 허용 SSOT(값 존재와 무관). 누락 시 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}]. QA programId=164003 actorId=1799401."
+        }
       }
     },
     "/api/admin/notification-send-batches/recipient-candidates": {
@@ -65243,6 +65430,29 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "PERIOD 교육 예정일 구간 라벨. 없으면 null."
+          },
+          "periodStartDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "PERIOD 구간 시작일. 없으면 null."
+          },
+          "periodEndDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "PERIOD 구간 종료일. 없으면 null."
           }
         }
       },
@@ -69511,6 +69721,73 @@
           "newPassword"
         ]
       },
+      "PasswordResetStartRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "PasswordResetStartResponse": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "nextAction": {
+            "type": "string"
+          }
+        }
+      },
+      "PasswordResetEligibilityRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "profileToken": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "email",
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
+      },
+      "PasswordResetEligibilityResponse": {
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "nextAction": {
+            "type": "string"
+          }
+        }
+      },
       "PasswordResetConfirmRequest": {
         "type": "object",
         "properties": {
@@ -73150,10 +73427,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -77782,22 +78059,38 @@
             "type": "string"
           },
           "computerInRoom": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "강의 공간 내 컴퓨터 여부 스냅샷. Portal guidance(computer-in-room 등)에서 프로젝션. 없으면 null. form_response만 있고 컬럼이 비면 hydrate fallback 대상."
           },
           "waitingRoomAvailable": {
             "type": "boolean"
           },
           "waitingRoomLocation": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "대기 장소 안내 스냅샷. Portal guidance(waiting-place 등)에서 프로젝션. 없으면 null."
           },
           "mealProvided": {
             "type": "boolean"
           },
           "mealNotice": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "식사 가능 여부 및 안내 스냅샷. Portal guidance(meal 등)에서 프로젝션. 없으면 null."
           },
           "parkingInfo": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. 성범죄 조회서 요청은 detail 전용 컬럼 없음(form sex-offense 단락)."
           },
           "textbookGrade": {
             "type": "string"
@@ -80230,6 +80523,13 @@
           },
           "assignable": {
             "type": "boolean"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교육 진행 예정일 구간 표시 문자열. PERIOD 단일/다중 구간 선택이면 non-null. 지정일·운영일정만 선택한 경우 null."
           }
         }
       },
@@ -89290,6 +89590,17 @@
               "null"
             ],
             "description": "이 모집 행의 요약. 없으면 null."
+          },
+          "volunteerInterviewSchedule": {
+            "description": "봉사자(VOLUNTEER) 모집이고 면접이 켜진 경우 「면접 진행 가능 일정」. 신청폼 면접 선택지와 같은 규칙(슬롯 우선, 없으면 CMS volunteerInterviewScheduleInfo 펼침). 그 외 모집 유형·면접 미운영은 null(필드 생략). options는 없으면 [].",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/VolunteerInterviewScheduleResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -89419,6 +89730,98 @@
               "null"
             ],
             "description": "false인 일정은 공개 상세 배열에 포함하지 않습니다. 미저장이면 null이고 배열에는 포함합니다."
+          }
+        }
+      },
+      "VolunteerInterviewScheduleOptionResponse": {
+        "type": "object",
+        "description": "봉사자 면접 진행 가능 일정 한 칸. 신청폼 items[]와 id/label 규칙이 같다.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "interview-slot:{id} 또는 interview-option:{YYYY-MM-DD}T{HH:mm}-{HH:mm}"
+          },
+          "label": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "description": "SLOT 또는 SCHEDULE_INFO",
+            "enum": [
+              "SLOT",
+              "SCHEDULE_INFO"
+            ]
+          },
+          "slotDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "YYYY-MM-DD(KST). 없으면 null."
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "VolunteerInterviewScheduleResponse": {
+        "type": "object",
+        "description": "포털 프로그램 상세의 봉사자 면접 진행 가능 일정. 신청폼 선택지와 동일 출처.",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "선택지 출처. SLOT=program_interview_slot, SCHEDULE_INFO=CMS 설정, EMPTY=미래 선택지 없음",
+            "enum": [
+              "SLOT",
+              "SCHEDULE_INFO",
+              "EMPTY"
+            ]
+          },
+          "periodStartDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "가능 기간 시작(YYYY-MM-DD, KST). 슬롯만 있거나 기간을 못 정하면 null."
+          },
+          "periodEndDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "가능 기간 종료(YYYY-MM-DD, KST). 슬롯만 있거나 기간을 못 정하면 null."
+          },
+          "availableTimeSlots": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "CMS availableTimeSlots 원문. 예: \"10:00 ~ 10:30\". 슬롯만 있으면 null."
+          },
+          "recurringUnavailable": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "CMS recurringUnavailable 원문. 예: \"공휴일\". 없으면 null."
+          },
+          "options": {
+            "type": "array",
+            "description": "오늘 이후 선택 가능 일정. 없으면 []. null 금지.",
+            "items": {
+              "$ref": "#/components/schemas/VolunteerInterviewScheduleOptionResponse"
+            }
           }
         }
       },
@@ -100152,12 +100555,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
+            "description": "카탈로그 key = #{…} 안쪽 라벨",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
+            "description": "본문 삽입용 토큰",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -100169,11 +100572,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true이면 programId 없이 enabled=false."
+            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
+            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
           },
           "programGroups": {
             "type": "array",
@@ -100191,14 +100594,14 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "description": "허용 참여 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
+            "description": "허용 회원 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
@@ -100697,15 +101100,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
