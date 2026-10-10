@@ -48,7 +48,13 @@ export function FindPasswordChangeForm({
     <div className="find-password-change-step">
       <RegisterStepHeader
         title="새 비밀번호를 입력해 주세요"
-        description="이제 새 비밀번호로 로그인할 수 있어요."
+        description={
+          <>
+            안전한 계정 이용을 위해
+            <br />
+            다른 곳에서 쓰지 않는 비밀번호를 추천합니다.
+          </>
+        }
       />
 
       <Form
