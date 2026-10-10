@@ -405,6 +405,7 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
       : {}),
   }
 
+  /** 희망 일정 sessions는 Admin requested-schedules SSOT — form으로 채우지 않는다 */
   const sessions =
     row.sessions && row.sessions.length > 0
       ? row.sessions

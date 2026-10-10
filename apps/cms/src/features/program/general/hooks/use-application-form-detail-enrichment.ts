@@ -14,8 +14,10 @@ import {
   fetchIndividualApplicationDetailRemote,
   fetchInstructorApplicationDetailRemote,
   fetchOrganizationApplicationDetailRemote,
+  fetchOrganizationApplicationRequestedSchedulesRemote,
   fetchVolunteerApplicationDetailRemote,
 } from '@/features/program/general/api/applications-api-client'
+import { mapRequestedSchedulesToSessions } from '@/features/program/1c-1s/lib/map-requested-schedules'
 import {
   listAdminCommentsByTargetRemote,
   resolveLatestAdminCommentText,
@@ -31,8 +33,16 @@ import {
   hydrateInstructorApplicationRowFromForm,
   hydrateVolunteerApplicationRowFromForm,
 } from '@/features/program/general/api/adapters/application-form-detail-adapters'
-import { fetchTeacherMemberDetailRemote } from '@/features/user/api/members-api-client'
+import {
+  fetchInstructorMemberDetailRemote,
+  fetchTeacherMemberDetailRemote,
+} from '@/features/user/api/members-api-client'
+import { mapInstructorMemberDetailToUser } from '@/features/user/api/map-member-detail-to-user'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import {
+  instructorApplicationRowNeedsMemberBasicInfoSupplement,
+  supplementApplicantInstructorBasicInfoFromMember,
+} from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -176,11 +186,67 @@ export function useOrganizationApplicationDetailEnrichment(
     })
   }, [row, detailQuery.data, formResponse, adminComment, softMerge, skipDetail])
 
-  const teacherMemberId = hydrated?.teacherMemberId
+  const organizationRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
+
+  const requestedSchedulesQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.organizationRequestedSchedules(
+      String(contextId ?? '')
+    ),
+    queryFn: () => fetchOrganizationApplicationRequestedSchedulesRemote(String(contextId)),
+    enabled: Boolean(
+      options?.enabled !== false && organizationRemoteEnabled && contextId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const hydratedWithSchedules = useMemo(() => {
+    if (!hydrated) return null
+    if (!organizationRemoteEnabled) return hydrated
+
+    if (requestedSchedulesQuery.isPending) {
+      if (softMerge) {
+        return { ...hydrated, requestedSchedulesSyncState: 'loading' as const }
+      }
+      return {
+        ...hydrated,
+        sessions: undefined,
+        requestedSchedulesSyncState: 'loading' as const,
+      }
+    }
+
+    const fromRequested =
+      mapRequestedSchedulesToSessions(requestedSchedulesQuery.data ?? []) ?? []
+    if (fromRequested.length > 0) {
+      return {
+        ...hydrated,
+        sessions: fromRequested,
+        requestedSchedulesSyncState: 'ready' as const,
+      }
+    }
+
+    if (softMerge) {
+      return { ...hydrated, requestedSchedulesSyncState: 'ready' as const }
+    }
+
+    return {
+      ...hydrated,
+      sessions: undefined,
+      requestedSchedulesSyncState: 'ready' as const,
+    }
+  }, [
+    hydrated,
+    organizationRemoteEnabled,
+    requestedSchedulesQuery.data,
+    requestedSchedulesQuery.isPending,
+    softMerge,
+  ])
+
+  const teacherMemberId = hydratedWithSchedules?.teacherMemberId
   const needsMemberEmail =
     softMerge &&
     teacherMemberId != null &&
-    !(hydrated?.detail?.teacherEmail?.trim())
+    !(hydratedWithSchedules?.detail?.teacherEmail?.trim())
 
   const memberEmailQuery = useQuery({
     queryKey: ['organization-application-teacher-member-email', teacherMemberId],
@@ -199,18 +265,20 @@ export function useOrganizationApplicationDetailEnrichment(
   })
 
   return useMemo(() => {
-    if (!hydrated) return null
+    if (!hydratedWithSchedules) return null
     const memberEmail = memberEmailQuery.data?.trim()
-    if (!memberEmail || hydrated.detail?.teacherEmail?.trim()) return hydrated
+    if (!memberEmail || hydratedWithSchedules.detail?.teacherEmail?.trim()) {
+      return hydratedWithSchedules
+    }
     return {
-      ...hydrated,
+      ...hydratedWithSchedules,
       detail: {
-        ...hydrated.detail,
+        ...hydratedWithSchedules.detail,
         teacherEmail: memberEmail,
         teacherInfo: undefined,
       },
     }
-  }, [hydrated, memberEmailQuery.data])
+  }, [hydratedWithSchedules, memberEmailQuery.data])
 }
 
 /** 일반 강사 신청 상세 — form_response + admin_comment hydrate */
@@ -240,18 +308,51 @@ export function useInstructorApplicationDetailEnrichment(
     targetType: 'INSTRUCTOR_APPLICATION',
   })
 
-  return useMemo(() => {
+  const instructorMemberId = row?.instructorMemberId
+  const mergedFromApplicationDetail = useMemo(() => {
     if (!row) return null
-    const canonical = detailQuery.data
+    return detailQuery.data
       ? mapInstructorApplicationDetailToApplicantRow(detailQuery.data, row)
       : row
+  }, [row, detailQuery.data])
+
+  const needsMemberBasicInfo = useMemo(
+    () =>
+      mergedFromApplicationDetail != null &&
+      instructorMemberId != null &&
+      Number.isFinite(instructorMemberId) &&
+      isMembersRemoteEnabled() &&
+      instructorApplicationRowNeedsMemberBasicInfoSupplement(mergedFromApplicationDetail),
+    [instructorMemberId, mergedFromApplicationDetail]
+  )
+
+  const memberBasicInfoQuery = useQuery({
+    queryKey: ['instructor-application-member-basic-info', instructorMemberId],
+    queryFn: async () => {
+      const detail = await fetchInstructorMemberDetailRemote(instructorMemberId!)
+      return mapInstructorMemberDetailToUser(detail)
+    },
+    enabled: Boolean(options?.enabled !== false && needsMemberBasicInfo && instructorMemberId != null),
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  return useMemo(() => {
+    if (!mergedFromApplicationDetail) return null
+    let canonical = mergedFromApplicationDetail
+    if (memberBasicInfoQuery.data) {
+      canonical = supplementApplicantInstructorBasicInfoFromMember(
+        canonical,
+        memberBasicInfoQuery.data
+      )
+    }
     if (!formResponse && !adminComment) return canonical
     return hydrateInstructorApplicationRowFromForm({
       row: canonical,
       formResponse,
       adminComment,
     })
-  }, [row, detailQuery.data, formResponse, adminComment])
+  }, [mergedFromApplicationDetail, formResponse, adminComment, memberBasicInfoQuery.data])
 }
 
 /** 참여 강사 상세 — 신청 정보 탭 (instructor-applications GET + form_response hydrate) */
