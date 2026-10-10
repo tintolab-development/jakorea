@@ -44,6 +44,7 @@ import {
   shouldUseDashboardRemoteApi,
 } from '../api/admin-dashboard-service'
 import { dashboardQueryKeys } from '../api/dashboard-query-keys'
+import { invalidateQueriesForMemberManagementNavigation } from '@/features/user/api/invalidate-member-management-navigation-queries'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
 import { useDashboardShortcutBadges } from '../hooks/use-dashboard-shortcut-badges'
@@ -141,6 +142,7 @@ export function MenuShortcutWidget() {
                   } else {
                     setShortcutBadgeCount(item.id, 0)
                   }
+                  invalidateQueriesForMemberManagementNavigation(queryClient, item.path)
                   navigate(item.path)
                 }}
               >

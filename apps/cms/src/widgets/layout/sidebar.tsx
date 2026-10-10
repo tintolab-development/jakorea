@@ -5,17 +5,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { invalidateMemberListQueries } from '@/features/user/api/invalidate-member-list-queries'
+import { invalidateQueriesForMemberManagementNavigation } from '@/features/user/api/invalidate-member-management-navigation-queries'
 import { getMenuItemsByRole } from '@/shared/config/menu-config'
 import {
   isPrefetchableProgramListHref,
   prefetchProgramListChunk,
 } from '@/pages/programs/prefetch-program-list-chunks'
-import {
-  isMemberListMenuHref,
-  memberListHref,
-  normalizeMemberListKind,
-} from '@/shared/config/member-list-kinds'
+import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 import {
   canAdminAction,
   isPermissionRequestsPath,
@@ -257,12 +253,8 @@ export function Sidebar() {
               showAdminAccessDeniedAlert()
               return
             }
-            const alreadyOnExactHref = `${location.pathname}${location.search}` === key
             navigate(key)
-            // 동일 유형 메뉴 재클릭은 URL이 안 바뀌어 observer remount가 없다.
-            if (alreadyOnExactHref && isMemberListMenuHref(key)) {
-              invalidateMemberListQueries(queryClient)
-            }
+            invalidateQueriesForMemberManagementNavigation(queryClient, key)
           }}
         />
       </div>
