@@ -34,8 +34,10 @@ export async function fetchSponsorsRemote(
   params: SponsorsParams & {
     sponsorshipStartDateFrom?: string
     sponsorshipStartDateTo?: string
+    page?: number
+    size?: number
   }
-): Promise<SponsorResponse[]> {
+): Promise<unknown> {
   return unwrapApiBody(await dmApi.sponsors(params))
 }
 

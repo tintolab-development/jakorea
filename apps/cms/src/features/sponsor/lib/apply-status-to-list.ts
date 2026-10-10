@@ -1,4 +1,5 @@
-import type { QueryClient } from '@tanstack/react-query'
+import type { InfiniteData, QueryClient } from '@tanstack/react-query'
+import type { DataManagementListPage } from '@/features/data-management/api/data-management-list-page'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 import { parseSponsorSponsorshipStatusFilter } from '@/features/sponsor/model/sponsorship-status'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
@@ -29,23 +30,49 @@ function searchKeyFromListQueryKey(queryKey: readonly unknown[]): string {
   return typeof last === 'string' ? last : ''
 }
 
+function isInfiniteSponsorListCache(
+  value: unknown
+): value is InfiniteData<DataManagementListPage<SponsorManagementRow>> {
+  return (
+    value != null &&
+    typeof value === 'object' &&
+    'pages' in value &&
+    Array.isArray((value as InfiniteData<DataManagementListPage<SponsorManagementRow>>).pages)
+  )
+}
+
 export function applySponsorStatusToCachedLists(
   queryClient: QueryClient,
   sponsorId: string,
   sponsorshipStatus: SponsorSponsorshipStatus
 ): void {
-  for (const [queryKey, old] of queryClient.getQueriesData<SponsorManagementRow[]>({
+  for (const [queryKey, old] of queryClient.getQueriesData({
     queryKey: dataManagementQueryKeys.sponsors.listAll(),
   })) {
+    const listStatusFilter = listStatusFilterFromSearchKey(searchKeyFromListQueryKey(queryKey))
+    if (isInfiniteSponsorListCache(old)) {
+      queryClient.setQueryData<InfiniteData<DataManagementListPage<SponsorManagementRow>>>(
+        queryKey,
+        {
+          ...old,
+          pages: old.pages.map(page => ({
+            ...page,
+            items:
+              applySponsorStatusToList(
+                page.items,
+                sponsorId,
+                sponsorshipStatus,
+                listStatusFilter
+              ) ?? page.items,
+          })),
+        }
+      )
+      continue
+    }
     if (!Array.isArray(old)) continue
     queryClient.setQueryData(
       queryKey,
-      applySponsorStatusToList(
-        old,
-        sponsorId,
-        sponsorshipStatus,
-        listStatusFilterFromSearchKey(searchKeyFromListQueryKey(queryKey))
-      )
+      applySponsorStatusToList(old, sponsorId, sponsorshipStatus, listStatusFilter)
     )
   }
 }

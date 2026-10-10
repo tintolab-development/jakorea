@@ -6,7 +6,9 @@ import dayjs from 'dayjs'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
+import { serializeSponsorListFilters } from '@/features/sponsor/api/sponsor-filter-params'
 import { useSponsorListQuery } from '@/features/sponsor/hooks/use-sponsor-list-query'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useSponsorMutations } from '@/features/sponsor/hooks/use-sponsor-mutations'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -94,17 +96,35 @@ export default function SponsorPage() {
     )
   }, [organizationKindParam, setSearchParams])
 
-  const listQuery = useSponsorListQuery(searchParams, true)
-  const isInitialListLoading = isDataManagementListLoading(listQuery)
-  const isListFetching = listQuery.isFetching
+  const listFilterKey = serializeSponsorListFilters(searchParams)
+  const {
+    rows,
+    totalElements,
+    isLoading: isListLoading,
+    isFetching: isListFetching,
+    isError: isListError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useSponsorListQuery(searchParams, true)
+  const isInitialListLoading = isDataManagementListLoading({
+    data: isListLoading ? undefined : rows,
+    isError: isListError,
+    isPending: isListLoading,
+  })
   const { createMutation, deleteMutation, bulkDeleteMutation, updateStatusMutation } = useSponsorMutations()
-  const rows = listQuery.data ?? []
+
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: listFilterKey,
+  })
 
   const {
     pendingFilters,
     applySearch: handleSearch,
     handleFilterChange,
-    displayedCount,
     tableData,
     hasActiveFilters,
   } = useTablePage(sponsorManagementTablePageConfig, {
@@ -398,7 +418,7 @@ export default function SponsorPage() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="후원사 목록"
-        description={`총 ${displayedCount.toLocaleString()}건`}
+        description={`총 ${totalElements.toLocaleString()}건`}
         contentLoading={isInitialListLoading}
         actions={
           <>
@@ -463,6 +483,7 @@ export default function SponsorPage() {
               : undefined
           }
         />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <SponsorDetailFullPageModal

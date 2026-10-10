@@ -110,6 +110,9 @@ export type SponsorProgramHistoryPanelProps = UseProgramHistoryFilterReturn & {
   deleteDisabled?: boolean
   totalCount?: number
   loading?: boolean
+  page?: number
+  pageSize?: number
+  onPageChange?: (page: number) => void
 }
 
 /**
@@ -128,6 +131,9 @@ export function SponsorProgramHistoryPanel({
   deleteDisabled = false,
   totalCount,
   loading = false,
+  page = 0,
+  pageSize = 20,
+  onPageChange,
 }: SponsorProgramHistoryPanelProps) {
   const navigate = useNavigate()
   const { showAlert } = useCmsAlert()
@@ -274,7 +280,17 @@ export function SponsorProgramHistoryPanel({
           columns={columns}
           dataSource={filteredRows}
           loading={loading}
-          pagination={false}
+          pagination={
+            onPageChange
+              ? {
+                  current: page + 1,
+                  pageSize,
+                  total: totalCount ?? filteredRows.length,
+                  showSizeChanger: false,
+                  onChange: nextPage => onPageChange(nextPage - 1),
+                }
+              : false
+          }
           scroll={{ x: 'max-content' }}
           rowSelection={rowSelection}
           onRow={programHistoryTableOnRow}
