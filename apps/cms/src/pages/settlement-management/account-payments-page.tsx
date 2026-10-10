@@ -30,9 +30,7 @@ import { useSettlementBudgetSummaryQuery } from '@/features/settlement-managemen
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
-import {
-  ACCOUNT_PAYMENT_LIST_FILTER_STATUSES,
-} from '@/shared/constants/payment-order-aggregate-status'
+import { ACCOUNT_PAYMENT_LIST_FILTER_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import {
   FilterTableLayout,
   type FilterFieldConfig,
@@ -42,7 +40,6 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
-import { CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import { FilterTableToolbarButton } from '@/shared/ui'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
@@ -54,11 +51,19 @@ import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentConfirmationPayloadForSelection,
 } from '@/features/settlement/ui/account-payment-confirmation-modal'
-import { AccountPaymentCompleteSuccessModal } from '@/features/settlement/ui/account-payment-complete-success-modal'
+import {
+  AccountPaymentCompleteSuccessModal,
+  buildAccountPaymentCompleteSuccessContext,
+  type AccountPaymentCompleteSuccessContext,
+} from '@/features/settlement/ui/account-payment-complete-success-modal'
 import { AccountPaymentStatusDetailFullPageModal } from './account-payment-status-detail-fullpage-modal'
 import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
 
-import { ButtonCalendarIcon, ButtonDownloadIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
+import {
+  ButtonCalendarIcon,
+  ButtonDownloadIcon,
+  ButtonListIcon,
+} from '@/shared/ui/icons/ButtonIcons'
 
 /** Fortune Sheet·ExcelJS 분리 — lazy 라우트 청크 과대로 인한 dev 동적 import 실패 완화 */
 const BulkTransferPreviewModal = lazy(async () => {
@@ -88,7 +93,7 @@ const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
 const AP_DETAIL_ID = 'ap_detail'
 
 /** `FilterTableLayout` 툴바 — `FilterTableToolbarButton` h40, width=auto에 최소 폭 180px 적용 */
-const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 180 } as const
+const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 160 } as const
 
 /** 세 번째 요약 위젯 — 이체 예정일 구간 표기 `YY. MM. DD ~ YY. MM. DD` */
 function formatYyMmDd(d: Dayjs): string {
@@ -224,13 +229,15 @@ export default function AccountPaymentsPage() {
   >('multi')
   const [accountFormIssueBlockedSelectedCount, setAccountFormIssueBlockedSelectedCount] =
     useState(0)
-  const [accountPaymentCompleteSuccessOpen, setAccountPaymentCompleteSuccessOpen] = useState(false)
+  const [accountPaymentCompleteSuccessContext, setAccountPaymentCompleteSuccessContext] =
+    useState<AccountPaymentCompleteSuccessContext | null>(null)
   /** mock 배열을 직접 수정하지 않도록 복사본 유지 — 계좌 지급 완료 시 상태 반영 (mock 전용) */
-  const [mockAccountPaymentRowsState, setMockAccountPaymentRowsState] = useState<AccountPaymentRow[]>(
-    () =>
-      mockAccountPaymentRows
-        .filter(isPaymentOrderStatementConfirmedForAccountPayments)
-        .map(r => ({ ...r }))
+  const [mockAccountPaymentRowsState, setMockAccountPaymentRowsState] = useState<
+    AccountPaymentRow[]
+  >(() =>
+    mockAccountPaymentRows
+      .filter(isPaymentOrderStatementConfirmedForAccountPayments)
+      .map(r => ({ ...r }))
   )
 
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
@@ -336,11 +343,7 @@ export default function AccountPaymentsPage() {
       return accountPaymentsListQuery.data ?? []
     }
     return mockAccountPaymentRowsState
-  }, [
-    accountPaymentsRemote,
-    accountPaymentsListQuery.data,
-    mockAccountPaymentRowsState,
-  ])
+  }, [accountPaymentsRemote, accountPaymentsListQuery.data, mockAccountPaymentRowsState])
 
   const accountPaymentDetailRow = useMemo(() => {
     const id = searchParams.get(AP_DETAIL_ID)?.trim()
@@ -514,6 +517,10 @@ export default function AccountPaymentsPage() {
    */
   const resolveToolbarFormIssueRows = useCallback((): AccountPaymentRow[] | null => {
     if (selectedRowKeys.length === 0) {
+      cmsAlertModal.show({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
       return null
     }
     const keySet = new Set(selectedRowKeys.map(String))
@@ -643,10 +650,7 @@ export default function AccountPaymentsPage() {
     if (isGlobalApiErrorAlertShown(error)) return
     cmsAlertModal.show({
       title: '처리 불가',
-      content: getSettlementApiErrorMessage(
-        error,
-        '계좌 지급 완료 처리에 실패했습니다.'
-      ),
+      content: getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.'),
     })
   }, [])
 
@@ -680,6 +684,10 @@ export default function AccountPaymentsPage() {
 
   const openAccountPaymentConfirmFromSelection = useCallback(() => {
     if (selectedRowKeys.length === 0) {
+      cmsAlertModal.show({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
       return
     }
     const keySet = new Set(selectedRowKeys.map(String))
@@ -722,7 +730,6 @@ export default function AccountPaymentsPage() {
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
           type="button"
-          disabled={selectedRowKeys.length === 0}
           onClick={openBulkTransferPreview}
         >
           대량이체 양식 발급
@@ -733,34 +740,26 @@ export default function AccountPaymentsPage() {
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
           type="button"
-          disabled={selectedRowKeys.length === 0}
           onClick={openTaxFilingPreview}
         >
           세금 신고 양식 발급
         </FilterTableToolbarButton>
       </>
     ),
-    [
-      viewMode,
-      selectedRowKeys.length,
-      openBulkTransferPreview,
-      openTaxFilingPreview,
-    ]
+    [viewMode, openBulkTransferPreview, openTaxFilingPreview]
   )
 
   const accountPaymentsAfterActions = useMemo(
     () => (
       <FilterTableToolbarButton
         variant="primary"
-        width={CMS_ACTION_BUTTON_WIDTH}
         type="button"
-        disabled={selectedRowKeys.length === 0}
         onClick={openAccountPaymentConfirmFromSelection}
       >
         일괄 지급 처리
       </FilterTableToolbarButton>
     ),
-    [selectedRowKeys.length, openAccountPaymentConfirmFromSelection]
+    [openAccountPaymentConfirmFromSelection]
   )
 
   const accountPaymentsExcelExport = useMemo((): FilterTableExcelExportConfig => {
@@ -788,7 +787,9 @@ export default function AccountPaymentsPage() {
           const ids = new Set(selection.map(r => r.id))
           setSelectedRowKeys(prev => prev.filter(k => !ids.has(String(k))))
           closeAccountPaymentConfirmModal()
-          setAccountPaymentCompleteSuccessOpen(true)
+          setAccountPaymentCompleteSuccessContext(
+            buildAccountPaymentCompleteSuccessContext(selection)
+          )
         })
         .catch(notifyAccountPaymentPaidError)
       return
@@ -800,7 +801,7 @@ export default function AccountPaymentsPage() {
     )
     setSelectedRowKeys(prev => prev.filter(k => !ids.has(String(k))))
     closeAccountPaymentConfirmModal()
-    setAccountPaymentCompleteSuccessOpen(true)
+    setAccountPaymentCompleteSuccessContext(buildAccountPaymentCompleteSuccessContext(selection))
   }, [
     accountPayConfirmSelection,
     accountPaymentsRemote,
@@ -810,14 +811,16 @@ export default function AccountPaymentsPage() {
   ])
 
   const closeAccountPaymentCompleteSuccess = useCallback(() => {
-    setAccountPaymentCompleteSuccessOpen(false)
+    setAccountPaymentCompleteSuccessContext(null)
   }, [])
 
   const handleIssueBulkTransferFromSuccessModal = useCallback(() => {
-    setAccountPaymentCompleteSuccessOpen(false)
-    const completed = filteredRows.filter(r => r.accountPaymentStatus === 'account_paid')
-    if (completed.length === 0) {
-      console.debug('accountPaymentsPage no completed rows for bulk transfer')
+    const ctx = accountPaymentCompleteSuccessContext
+    if (ctx?.kind !== 'bulk') return
+    const rowsForPreview = ctx.completedRows
+    setAccountPaymentCompleteSuccessContext(null)
+    if (rowsForPreview.length === 0) {
+      console.debug('accountPaymentsPage no rows from bulk payment success for bulk transfer')
       return
     }
     void (async () => {
@@ -826,10 +829,10 @@ export default function AccountPaymentsPage() {
       } catch {
         return
       }
-      setIssuedFormPreviewRows(completed)
+      setIssuedFormPreviewRows(rowsForPreview)
       setBulkTransferPreviewOpen(true)
     })()
-  }, [filteredRows, requestExportForKind])
+  }, [accountPaymentCompleteSuccessContext, requestExportForKind])
 
   const filterLayoutClassName = 'account-payments-page__filter-table'
 
@@ -938,9 +941,17 @@ export default function AccountPaymentsPage() {
         </div>
       </div>
 
-      <div className="payment-orders-page__content-wrapper">
+      <div
+        className={[
+          'payment-orders-page__content-wrapper',
+          viewMode === 'calendar' ? 'payment-orders-page__content-wrapper--calendar' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <FilterTableLayout
           className={filterLayoutClassName}
+          showFilter={viewMode === 'list'}
           contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
           bordered={false}
           cardStyle={{ marginBottom: 0 }}
@@ -964,21 +975,21 @@ export default function AccountPaymentsPage() {
               </div>
             ) : (
               <CmsDataTable<AccountPaymentRow>
-              className="cms-data-table"
-              rowKey="id"
-              columns={columns}
-              dataSource={filteredRows}
-              pagination={false}
-              rowSelection={rowSelection}
-              rowClassName={() => 'account-payments-page__table-row--clickable'}
-              onRow={record => ({
-                onClick: e => {
-                  const t = e.target as HTMLElement
-                  if (t.closest('.ant-table-selection-column')) return
-                  openAccountPaymentDetail(record)
-                },
-              })}
-            />
+                className="cms-data-table"
+                rowKey="id"
+                columns={columns}
+                dataSource={filteredRows}
+                pagination={false}
+                rowSelection={rowSelection}
+                rowClassName={() => 'account-payments-page__table-row--clickable'}
+                onRow={record => ({
+                  onClick: e => {
+                    const t = e.target as HTMLElement
+                    if (t.closest('.ant-table-selection-column')) return
+                    openAccountPaymentDetail(record)
+                  },
+                })}
+              />
             )
           ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
             <div className="page-content-error" role="alert">
@@ -1012,7 +1023,8 @@ export default function AccountPaymentsPage() {
       />
 
       <AccountPaymentCompleteSuccessModal
-        open={accountPaymentCompleteSuccessOpen}
+        open={accountPaymentCompleteSuccessContext !== null}
+        context={accountPaymentCompleteSuccessContext}
         onCancel={closeAccountPaymentCompleteSuccess}
         onIssueBulkTransfer={handleIssueBulkTransferFromSuccessModal}
       />

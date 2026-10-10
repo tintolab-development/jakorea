@@ -13,8 +13,10 @@
   padding-top: 30px;
 }
 
-.payment-order-calculation-basis-detail-modal .modal-spec-table {
-  border-radius: 8px;
+.payment-order-calculation-basis-detail-modal
+  .payment-order-calculation-basis-detail-modal__detail-form {
+  width: 100%;
+  min-width: 0;
 }
 
 .payment-order-calculation-basis-detail-modal__value {

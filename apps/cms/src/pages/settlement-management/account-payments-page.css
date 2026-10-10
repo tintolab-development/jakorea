@@ -11,6 +11,28 @@
   gap: 0;
 }
 
+/*
+ * 캘린더 뷰 — 시안: 요약 카드만 흰 shell, 툴바·calendar-set은 layout-content 회색 위.
+ * content-wrapper 흰 카드(하단 빈 여백) 제거.
+ */
+.account-payments-page .payment-orders-page__content-wrapper--calendar {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.account-payments-page .payment-orders-page__content-wrapper--calendar
+  .account-payments-page__filter-table.filter-table-layout {
+  background: transparent;
+  box-shadow: none;
+}
+
+.account-payments-page .payment-orders-page__content-wrapper--calendar .filter-table-layout__toolbar {
+  margin-bottom: var(--spacing-16, 16px);
+  padding: 0;
+}
+
 /* content-wrapper = 흰 카드 — 내부 FilterTableLayout 이중 카드 제거 (payment-orders-page.css 패턴) */
 .payment-orders-page__content-wrapper .account-payments-page__filter-table.filter-table-layout {
   background: transparent;

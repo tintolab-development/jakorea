@@ -156,6 +156,8 @@ function buildAccountPaymentStatusDetail(
     basic: {
       nameKo: row.instructorName,
       nameEn: '-',
+      genderBirthDisplay: '-',
+      scheduleChangeCancelCount: undefined,
       phoneDisplay: '-',
       emailDisplay: '-',
       addressDisplay: '-',

@@ -21,9 +21,7 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import type { Program } from '@/types/domain'
-import { DeleteGuideModal, showDeleteCompletedAlert,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { DeleteGuideModal, showDeleteCompletedAlert, FilterTableToolbarButton } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
   resolveProgramDeleteGuideModalCopy,
@@ -238,9 +236,7 @@ export function GeneralProgramListPageContent() {
     }
     if (!isGeneralProgramId(pid, filteredPrograms)) return
     const resolved =
-      filteredPrograms.find(p => p.id === pid) ??
-      resolveGeneralProgramForDetail(pid) ??
-      null
+      filteredPrograms.find(p => p.id === pid) ?? resolveGeneralProgramForDetail(pid) ?? null
     if (resolved) setSelectedProgramForDetail(resolved)
   }, [searchParams, filteredPrograms])
 
@@ -267,7 +263,9 @@ export function GeneralProgramListPageContent() {
     // 다시 실어 모달이 안 닫히는 레이스가 난다 — 상세 쿼리만 제거한다.
     setSearchParams(
       prev =>
-        clearGeneralProgramDetailQueryParams(clearSponsorDetailQueryStack(new URLSearchParams(prev))),
+        clearGeneralProgramDetailQueryParams(
+          clearSponsorDetailQueryStack(new URLSearchParams(prev))
+        ),
       { replace: true }
     )
   }, [setSearchParams])
@@ -400,8 +398,8 @@ export function GeneralProgramListPageContent() {
   )
 
   const programListToolbarActionsAfterExcel = (
-    <FilterTableToolbarButton variant="primary" width={180} onClick={handleProgramCreateClick}>
-      프로그램 신규 등록
+    <FilterTableToolbarButton variant="primary" width={120} onClick={handleProgramCreateClick}>
+      신규 등록
     </FilterTableToolbarButton>
   )
 
@@ -419,9 +417,7 @@ export function GeneralProgramListPageContent() {
       <div className="program-progress-widget-container">
         <ProgramStatusWidget
           title={null}
-          onBeforeStageChange={
-            generalDetailModalOpen ? handleCloseFullPageModal : undefined
-          }
+          onBeforeStageChange={generalDetailModalOpen ? handleCloseFullPageModal : undefined}
         />
       </div>
       <ProgramList
@@ -444,9 +440,7 @@ export function GeneralProgramListPageContent() {
       >
         {programListToolbarActions}
       </ProgramList>
-      {isRemoteDataSource ? (
-        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
-      ) : null}
+      {isRemoteDataSource ? <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} /> : null}
 
       <ProgramModalWhenOpen open={generalDetailModalOpen}>
         <LazyGeneralProgramDetailFullPageModal
@@ -544,4 +538,3 @@ export function GeneralProgramListPage() {
 }
 
 export default GeneralProgramListPage
-

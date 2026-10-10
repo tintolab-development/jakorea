@@ -114,6 +114,10 @@ export function isPaymentOrderStatementConfirmedForAccountPayments(
 export interface AccountPaymentStatusDetailBasic {
   nameKo: string
   nameEn: string
+  /** 예: `남성 | 1990.09.15 (만 36세)` */
+  genderBirthDisplay?: string
+  /** 1 이상이면 성명 옆 일정 변경·취소 이력 배지 */
+  scheduleChangeCancelCount?: number
   phoneDisplay: string
   emailDisplay: string
   addressDisplay: string
@@ -281,6 +285,8 @@ export function getMockAccountPaymentStatusDetail(row: AccountPaymentRow): Accou
     basic: {
       nameKo: row.instructorName || ib.nameKo,
       nameEn: ib.nameEn,
+      genderBirthDisplay: ib.genderBirthDisplay,
+      scheduleChangeCancelCount: ib.scheduleChangeCancelCount,
       phoneDisplay: ib.phoneDisplay,
       emailDisplay: ib.emailDisplay,
       addressDisplay: ib.addressDisplay,

@@ -31,9 +31,7 @@ import {
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
-import { DeleteGuideModal, showDeleteCompletedAlert,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { DeleteGuideModal, showDeleteCompletedAlert, FilterTableToolbarButton } from '@/shared/ui'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import {
   isProgramHardDeleteBlockedError,
@@ -151,9 +149,7 @@ function TrainedTeachersProgramPageContent() {
   const detailData = detailQuery.data ?? null
   const detailProgram =
     detailData ??
-    (programIdFromUrl
-      ? ({ id: programIdFromUrl } as Program)
-      : selectedProgramForFullPageModal)
+    (programIdFromUrl ? ({ id: programIdFromUrl } as Program) : selectedProgramForFullPageModal)
 
   useEffect(() => {
     setSelectedRowKeys([])
@@ -178,7 +174,14 @@ function TrainedTeachersProgramPageContent() {
     if (filteredPrograms.length === 0) return
     const program = filteredPrograms.find(item => item.id === programIdFromUrl)
     if (program) setSelectedProgramForFullPageModal(program)
-  }, [detailQuery.data, detailQuery.isFetching, detailQuery.isLoading, filteredPrograms, programIdFromUrl, searchParams])
+  }, [
+    detailQuery.data,
+    detailQuery.isFetching,
+    detailQuery.isLoading,
+    filteredPrograms,
+    programIdFromUrl,
+    searchParams,
+  ])
 
   useEffect(() => {
     if (!listQuery.isError || listQuery.isFetching) return
@@ -195,13 +198,7 @@ function TrainedTeachersProgramPageContent() {
       title: '상세 조회 실패',
       content: '프로그램 상세를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
     })
-  }, [
-    detailQuery.isError,
-    detailQuery.isFetching,
-    programIdFromUrl,
-    remoteEnabled,
-    showAlert,
-  ])
+  }, [detailQuery.isError, detailQuery.isFetching, programIdFromUrl, remoteEnabled, showAlert])
 
   const userPreviewSyncParams = useMemo(
     () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
@@ -370,7 +367,9 @@ function TrainedTeachersProgramPageContent() {
   }, [setSearchParams])
 
   const handleBulkDeleteClick = useCallback(() => {
-    const programsToDelete = filteredPrograms.filter(program => selectedRowKeys.includes(program.id))
+    const programsToDelete = filteredPrograms.filter(program =>
+      selectedRowKeys.includes(program.id)
+    )
     if (programsToDelete.length === 0) {
       showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
       return
@@ -449,8 +448,8 @@ function TrainedTeachersProgramPageContent() {
   )
 
   const programListToolbarActionsAfterExcel = (
-    <FilterTableToolbarButton variant="primary" width={180} onClick={handleProgramCreateClick}>
-      프로그램 신규 등록
+    <FilterTableToolbarButton variant="primary" width={120} onClick={handleProgramCreateClick}>
+      신규 등록
     </FilterTableToolbarButton>
   )
 
@@ -504,44 +503,41 @@ function TrainedTeachersProgramPageContent() {
       <ProgramModalWhenOpen
         open={Boolean(programIdFromUrl) && !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)}
       >
-      <LazyProgramDetailFullPageModal
-        open={
-          Boolean(programIdFromUrl) &&
-          !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)
-        }
-        program={detailProgram}
-        programVariant="trained-teachers"
-        searchParams={searchParams}
-        setSearchParams={setSearchParams}
-        externalLoading={
-          Boolean(programIdFromUrl) &&
-          !detailData &&
-          (detailQuery.isFetching || detailQuery.isLoading)
-        }
-        externalError={detailQuery.isError && !detailData}
-        onClose={handleCloseFullPageModal}
-        onUpdateProgram={
-          remoteEnabled
-            ? async (programId, program, patch) => {
-                await updateMutation.mutateAsync({ programId, program, patch })
-                refetchPrograms()
-              }
-            : undefined
-        }
-        onRequestDelete={program => {
-          setProgramsPendingBulkDelete([program])
-          setBulkDeleteModalOpen(true)
-        }}
-      />
+        <LazyProgramDetailFullPageModal
+          open={Boolean(programIdFromUrl) && !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)}
+          program={detailProgram}
+          programVariant="trained-teachers"
+          searchParams={searchParams}
+          setSearchParams={setSearchParams}
+          externalLoading={
+            Boolean(programIdFromUrl) &&
+            !detailData &&
+            (detailQuery.isFetching || detailQuery.isLoading)
+          }
+          externalError={detailQuery.isError && !detailData}
+          onClose={handleCloseFullPageModal}
+          onUpdateProgram={
+            remoteEnabled
+              ? async (programId, program, patch) => {
+                  await updateMutation.mutateAsync({ programId, program, patch })
+                  refetchPrograms()
+                }
+              : undefined
+          }
+          onRequestDelete={program => {
+            setProgramsPendingBulkDelete([program])
+            setBulkDeleteModalOpen(true)
+          }}
+        />
       </ProgramModalWhenOpen>
 
       <ProgramModalWhenOpen open={isTrainedTeachersRegistrationOpen}>
-      <LazyGeneralProgramRegistrationFullpageModal
-        open={isTrainedTeachersRegistrationOpen}
-        onClose={handleCloseRegistrationFullpage}
-        onProgramRegistrationSaved={handleRegistrationSaved}
-        registrationFormVariant="trainedTeachers"
-      />
+        <LazyGeneralProgramRegistrationFullpageModal
+          open={isTrainedTeachersRegistrationOpen}
+          onClose={handleCloseRegistrationFullpage}
+          onProgramRegistrationSaved={handleRegistrationSaved}
+          registrationFormVariant="trainedTeachers"
+        />
       </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal

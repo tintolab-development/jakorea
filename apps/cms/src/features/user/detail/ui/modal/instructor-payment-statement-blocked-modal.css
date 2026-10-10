@@ -7,9 +7,11 @@
   font-size: 16px;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
 }
 
-.instructor-payment-statement-blocked-modal .instructor-payment-statement-blocked-modal__selection-emphasis {
+.instructor-payment-statement-blocked-modal
+  .instructor-payment-statement-blocked-modal__selection-emphasis {
   font-weight: 700;
 }
 
@@ -33,9 +35,11 @@
 }
 
 /* 헤더·본문·푸터가 모달 가로 전체를 쓰도록 */
-.instructor-payment-statement-blocked-modal--detail-fullpage.content-modal .teal-header-modal__header,
+.instructor-payment-statement-blocked-modal--detail-fullpage.content-modal
+  .teal-header-modal__header,
 .instructor-payment-statement-blocked-modal--detail-fullpage.content-modal .teal-header-modal__body,
-.instructor-payment-statement-blocked-modal--detail-fullpage.content-modal .teal-header-modal__footer {
+.instructor-payment-statement-blocked-modal--detail-fullpage.content-modal
+  .teal-header-modal__footer {
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;

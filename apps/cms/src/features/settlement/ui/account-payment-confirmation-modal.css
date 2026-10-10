@@ -77,7 +77,7 @@
 .account-payment-confirm-modal__inner {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 30px;
   min-height: 0;
   flex: 1 1 auto;
 }
@@ -106,77 +106,14 @@
   font-weight: 700;
 }
 
-/* 요약: 2열 그리드 — 목록 테이블(cms-data-table)과 동일 --table-line 보더 */
-.account-payment-confirm-modal__summary {
+.account-payment-confirm-modal__detail-form {
   flex: 0 0 auto;
-  box-sizing: border-box;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: var(--radius-8, 8px);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
   align-self: stretch;
   width: 100%;
   max-width: 100%;
-  background: var(--color-bg-base, #fff);
 }
 
-.account-payment-confirm-modal__summary-row {
-  display: grid;
-  grid-template-columns: 160px 1fr;
-  align-items: stretch;
-  min-height: 48px;
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-.account-payment-confirm-modal__summary-row + .account-payment-confirm-modal__summary-row {
-  border-top: 1px solid var(--table-line, #e0e0e0);
-}
-
-.account-payment-confirm-modal__summary-th {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 16px;
-  background: #f9f9fb;
-  border-right: 1px solid var(--table-line, #e0e0e0);
-  box-sizing: border-box;
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-.account-payment-confirm-modal__summary-td {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-width: 0;
-  width: 100%;
-  padding: 12px 16px;
-  background: var(--color-bg-base, #fff);
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%; /* 21px */
-  box-sizing: border-box;
-  word-break: break-word;
-  border-left: none;
-}
-
-.account-payment-confirm-modal__summary-td--amount {
+.account-payment-confirm-modal__amount-value {
   color: var(--JA-mint-01, #01a1af);
   font-weight: 700;
-}
-
-/* ProgramDetailTdDivider + 두 세그먼트 가로 배치(줄바꿈 시에도 정렬 유지) */
-.account-payment-confirm-modal__summary-td--divider-inline {
-  flex-wrap: wrap;
-  row-gap: 4px;
 }
