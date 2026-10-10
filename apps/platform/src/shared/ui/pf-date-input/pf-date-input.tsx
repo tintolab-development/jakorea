@@ -57,6 +57,16 @@ export type PFDateInputProps = {
   error?: boolean
   message?: string
   messageStatus?: PFDateInputMessageStatus
+  /**
+   * 선택 가능 최소일 `YYYY-MM-DD` (inclusive).
+   * `null`/`undefined`면 제한하지 않는다. 빈 문자열로 바꾸지 말 것.
+   */
+  minDate?: string | null
+  /**
+   * 선택 가능 최대일 `YYYY-MM-DD` (inclusive).
+   * `null`/`undefined`면 제한하지 않는다. 빈 문자열로 바꾸지 말 것.
+   */
+  maxDate?: string | null
   className?: string
   style?: CSSProperties
   id?: string
@@ -174,6 +184,8 @@ export function PFDateInput({
   error = false,
   message,
   messageStatus = 'neutral',
+  minDate = null,
+  maxDate = null,
   className,
   style,
   id,
@@ -362,6 +374,8 @@ export function PFDateInput({
         id={popoverId}
         selectionMode="single"
         selectedDate={hasValue ? currentValue : null}
+        minDate={minDate}
+        maxDate={maxDate}
         initialViewMonth={
           selectedDate
             ? new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)

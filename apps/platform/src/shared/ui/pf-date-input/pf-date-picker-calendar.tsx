@@ -33,6 +33,16 @@ export type PFDatePickerCalendarProps = {
   markedDates?: ReadonlySet<string>
   /** 지정 시 이 집합의 날짜 `YYYY-MM-DD`만 클릭 가능, 나머지는 비활성 */
   enabledDates?: ReadonlySet<string>
+  /**
+   * 선택 가능 최소일 `YYYY-MM-DD` (inclusive).
+   * `null`/`undefined`면 제한하지 않는다. 빈 문자열로 바꾸지 말 것.
+   */
+  minDate?: string | null
+  /**
+   * 선택 가능 최대일 `YYYY-MM-DD` (inclusive).
+   * `null`/`undefined`면 제한하지 않는다. 빈 문자열로 바꾸지 말 것.
+   */
+  maxDate?: string | null
   /** true면 팝오버 그림자 없이 본문에 인라인 배치 (`role="group"`) */
   inline?: boolean
   className?: string
@@ -55,6 +65,13 @@ function resolveRangeBounds(range: DateRangeValue | undefined): {
     : { start: range.end, end: range.start }
 }
 
+function resolveSelectableBoundIso(value: string | null | undefined): string | null {
+  if (value == null) return null
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  return parseIsoDate(trimmed) ? trimmed : null
+}
+
 export function PFDatePickerCalendar({
   selectionMode = 'single',
   selectedDate = null,
@@ -64,6 +81,8 @@ export function PFDatePickerCalendar({
   onSelectRange,
   markedDates,
   enabledDates,
+  minDate = null,
+  maxDate = null,
   inline = false,
   className,
   id,
@@ -71,9 +90,12 @@ export function PFDatePickerCalendar({
 }: PFDatePickerCalendarProps) {
   const selected = selectedDate ? parseIsoDate(selectedDate) : null
   const bounds = resolveRangeBounds(range)
+  const selectableMin = resolveSelectableBoundIso(minDate)
+  const selectableMax = resolveSelectableBoundIso(maxDate)
   const anchorDate =
     selected ??
     (bounds.start ? parseIsoDate(bounds.start) : null) ??
+    (selectableMin ? parseIsoDate(selectableMin) : null) ??
     new Date()
 
   const [viewMonth, setViewMonth] = useState(() =>
@@ -94,8 +116,14 @@ export function PFDatePickerCalendar({
   const hasCompleteRange =
     selectionMode === 'range' && activeStart != null && activeEnd != null
 
-  const isDayDisabled = (date: Date) =>
-    !isDateWithinInputBounds(date) || (enabledDates != null && !enabledDates.has(toIsoDate(date)))
+  const isDayDisabled = (date: Date) => {
+    if (!isDateWithinInputBounds(date)) return true
+    const iso = toIsoDate(date)
+    if (selectableMin != null && iso < selectableMin) return true
+    if (selectableMax != null && iso > selectableMax) return true
+    if (enabledDates != null && !enabledDates.has(iso)) return true
+    return false
+  }
 
   const handleSelectDay = (day: CalendarDay) => {
     if (isDayDisabled(day.date)) return
