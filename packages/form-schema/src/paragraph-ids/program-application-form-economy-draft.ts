@@ -296,5 +296,23 @@ export function migrateProgramApplicationFormEconomyParagraphs(
     }
     return paragraph
   })
+  if (
+    !paragraphs.some(paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance)
+  ) {
+    changed = true
+    const guidance = createEconomyPlaceholderTable(
+      PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance,
+      '안내 사항',
+      '강사님들에게 제공 또는 요청할 사전 정보를 작성해 주세요.'
+    )
+    const basicInfoIndex = paragraphs.findIndex(
+      paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo
+    )
+    if (basicInfoIndex >= 0) {
+      paragraphs.splice(basicInfoIndex + 1, 0, guidance)
+    } else {
+      paragraphs.push(guidance)
+    }
+  }
   return changed ? { ...draft, paragraphs } : draft
 }

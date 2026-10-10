@@ -50,6 +50,43 @@ describe('성범죄 경력 조회 동의서 조회 방식 단락 설명 migratio
     expect(migrateProgramApplicationFormInstitutionParagraphs(draft).paragraphs).toEqual(draft.paragraphs)
   })
 
+  it('1사1교 — 안내 사항 단락이 없으면 기본 정보 다음에 placeholder를 삽입한다', () => {
+    const draft = createProgramApplicationFormEconomyDraft()
+    const withoutGuidance = {
+      ...draft,
+      paragraphs: draft.paragraphs.filter(
+        p => p.id !== PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance
+      ),
+    }
+    const migrated = migrateProgramApplicationFormEconomyParagraphs(withoutGuidance)
+    const guidanceIndex = migrated.paragraphs.findIndex(
+      p => p.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance
+    )
+    const basicInfoIndex = migrated.paragraphs.findIndex(
+      p => p.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo
+    )
+    expect(guidanceIndex).toBe(basicInfoIndex + 1)
+  })
+
+  it('일반 기관 — 안내 사항 단락이 없으면 기본 정보 다음에 시드 단락을 삽입한다', () => {
+    const draft = createProgramApplicationFormInstitutionDraft()
+    const withoutGuidance = {
+      ...draft,
+      paragraphs: draft.paragraphs.filter(
+        p => p.id !== PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
+      ),
+    }
+    const migrated = migrateProgramApplicationFormInstitutionParagraphs(withoutGuidance)
+    const guidanceIndex = migrated.paragraphs.findIndex(
+      p => p.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
+    )
+    const basicInfoIndex = migrated.paragraphs.findIndex(
+      p => p.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo
+    )
+    expect(guidanceIndex).toBe(basicInfoIndex + 1)
+    expect(migrated.paragraphs[guidanceIndex]?.paragraphTitle).toBe('안내 사항')
+  })
+
   it('사용자가 수정한 설명·제목은 유지', () => {
     const id = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod
     const draft = createProgramApplicationFormInstitutionDraft()

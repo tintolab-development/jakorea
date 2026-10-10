@@ -301,6 +301,22 @@ export function migrateProgramApplicationFormInstitutionParagraphs(
   })
   if (
     !paragraphs.some(
+      paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
+    )
+  ) {
+    changed = true
+    const guidance = createInstitutionGuidanceHorizontalTable()
+    const basicInfoIndex = paragraphs.findIndex(
+      paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo
+    )
+    if (basicInfoIndex >= 0) {
+      paragraphs.splice(basicInfoIndex + 1, 0, guidance)
+    } else {
+      paragraphs.push(guidance)
+    }
+  }
+  if (
+    !paragraphs.some(
       paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
     )
   ) {
