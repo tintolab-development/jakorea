@@ -1,0 +1,41 @@
+/** TermsViewModal 패널(880) 대신 소셜 연결 안내는 최대 998px */
+
+.terms-view-modal__panel.social-connect-consent-modal__panel {
+  max-height: 760px;
+}
+
+/** TermsViewModal 푸터(닫기 1개) 대신 소셜 연결 확인 액션 2열 */
+
+.terms-view-modal__footer.social-connect-consent-modal__footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  justify-content: stretch;
+}
+
+.social-connect-consent-modal__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.social-connect-consent-modal__list .terms-view-modal__paragraph {
+  position: relative;
+  padding-left: 12px;
+}
+
+.social-connect-consent-modal__list .terms-view-modal__paragraph::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+}
+
+.social-connect-consent-modal__list .terms-view-modal__paragraph + .terms-view-modal__paragraph {
+  margin-top: 4px;
+}
+
+@media (max-width: 767px) {
+  .terms-view-modal__footer.social-connect-consent-modal__footer {
+    grid-template-columns: 1fr;
+  }
+}

@@ -29,7 +29,6 @@ import { clearNotificationsQueryCache } from '@/features/notifications/api/clear
 import { flushSocialPendingLinks } from '@/features/auth/social-auth/flush-pending-links'
 import { fetchAdminMe } from '@/features/auth/api/fetch-admin-me'
 import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
-import { clearPasswordChangeRequiredSocialOnboarding } from '@/features/auth/password-change-required/wizard-state'
 import { withSessionAdminRole } from '@/shared/lib/admin-role-policy'
 import {
   PASSWORD_CHANGE_REQUIRED_STORAGE_KEY,
@@ -402,8 +401,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
         localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY)
       }
-      clearPasswordChangeRequiredSocialOnboarding()
-
       set({
         passwordChangeRequired: false,
         user: null,

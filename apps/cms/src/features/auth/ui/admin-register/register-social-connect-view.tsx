@@ -9,14 +9,12 @@ interface RegisterSocialConnectViewProps {
   redirectPath?: string
   onComplete: () => void
   onConnectSuccess: (provider: SocialProvider) => void
-  skipRemoteSync?: boolean
 }
 
 export function RegisterSocialConnectView({
   redirectPath,
   onComplete,
   onConnectSuccess,
-  skipRemoteSync = false,
 }: RegisterSocialConnectViewProps) {
   return (
     <div className="register-social-connect">
@@ -24,14 +22,14 @@ export function RegisterSocialConnectView({
         title={
           <>
             소셜 계정을 연결하면
-            <br />더 쉽게 로그인할 수 있어요
+            <br />더 쉽게 로그인할 수 있습니다.
           </>
         }
         description={
           <>
-            다음부터 이메일과 비밀번호 없이 로그인할 수 있어요.
+            다음부터 이메일과 비밀번호 없이 로그인할 수 있습니다.
             <br />
-            연결은 선택 사항이며, 나중에 [내 정보 수정]에서도 할 수 있어요.
+            연결은 선택 사항이며, 나중에 [내 정보 수정]에서도 할 수 있습니다.
           </>
         }
       />
@@ -40,7 +38,6 @@ export function RegisterSocialConnectView({
         <SocialConnectProviderList
           redirectPath={redirectPath}
           onConnectSuccess={onConnectSuccess}
-          skipRemoteSync={skipRemoteSync}
         />
 
         <div className="register-social-connect__actions">
@@ -49,8 +46,6 @@ export function RegisterSocialConnectView({
           </CmsButton>
         </div>
       </div>
-
-      <div className="register-social-connect__trailing" aria-hidden />
     </div>
   )
 }
