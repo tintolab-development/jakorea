@@ -119,6 +119,8 @@ export async function getSmsSendTemplatePicker(): Promise<SmsTemplateItem[]> {
 
   const dto = await fetchNotificationTemplatesRemote({
     channelType: SMS_API_CHANNEL_TYPE,
+    page: '0',
+    size: '100',
   })
   const fromList = (dto.items ?? [])
     .filter(item => (item.channelType ?? SMS_API_CHANNEL_TYPE).toUpperCase() === SMS_API_CHANNEL_TYPE)
