@@ -1,8 +1,8 @@
+import { SIMPLE_DELETE_IRREVERSIBLE_LINE } from '@/shared/constants/simple-delete-confirm'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import './notice-delete-confirm-modal.css'
 
 const DEFAULT_LINE1 = '해당 공지사항을 삭제하시겠습니까?'
-const DEFAULT_LINE2 = '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?'
 
 export interface NoticeDeleteConfirmModalProps {
   open: boolean
@@ -23,6 +23,8 @@ export interface NoticeDeleteConfirmModalProps {
   preset?: 'default' | 'inquiry' | 'faq' | 'notice'
   /** 확인(삭제) 버튼 라벨 (기본: 삭제) */
   confirmLabel?: string
+  /** 삭제 API 대기 중 */
+  confirmLoading?: boolean
 }
 
 export function NoticeDeleteConfirmModal({
@@ -30,17 +32,16 @@ export function NoticeDeleteConfirmModal({
   onCancel,
   onConfirm,
   zIndex = 1100,
-  title = '공지사항 삭제',
+  title = '공지사항 삭제 안내',
   line1 = DEFAULT_LINE1,
-  line2 = DEFAULT_LINE2,
+  line2 = SIMPLE_DELETE_IRREVERSIBLE_LINE,
   width: widthProp,
   preset = 'default',
   confirmLabel = '삭제',
+  confirmLoading = false,
 }: NoticeDeleteConfirmModalProps) {
   const width =
-    preset === 'inquiry' || preset === 'faq' || preset === 'notice'
-      ? (widthProp ?? 600)
-      : widthProp
+    preset === 'inquiry' || preset === 'faq' || preset === 'notice' ? (widthProp ?? 600) : widthProp
 
   const wrapClassName = [
     'notice-delete-confirm-modal-wrap',
@@ -72,14 +73,15 @@ export function NoticeDeleteConfirmModal({
       description={`${line1}\n${line2}`}
       footer={
         <>
-          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
+          <CmsButton variant="secondary" size="h40" onClick={onCancel}>
             취소
           </CmsButton>
           <CmsButton
             variant="delete"
-            size="medium"
-            className="notice-delete-confirm-modal__delete-btn"
+            size="h40"
             onClick={onConfirm}
+            loading={confirmLoading}
+            disabled={confirmLoading}
           >
             {confirmLabel}
           </CmsButton>

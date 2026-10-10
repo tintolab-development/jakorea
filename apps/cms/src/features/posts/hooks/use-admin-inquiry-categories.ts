@@ -3,13 +3,10 @@ import {
   useInquiryCategoriesQuery,
   useInquiryCategoryMutations,
 } from '@/features/posts/hooks/use-inquiry-categories-query'
+import type { CategoryRemoteActions } from '@/features/posts/hooks/category-remote-actions'
 import type { InquiryCategoryRow } from '@/features/posts/model/admin-inquiry-management.types'
 
-export type InquiryCategoryRemoteActions = {
-  onCreate: (name: string) => Promise<void>
-  onUpdate: (id: string, name: string) => Promise<void>
-  onDelete: (id: string) => Promise<void>
-}
+export type InquiryCategoryRemoteActions = CategoryRemoteActions
 
 export type UseAdminInquiryCategoriesResult = {
   categoryRows: InquiryCategoryRow[]

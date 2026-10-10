@@ -12,7 +12,9 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { CmsButton, LoadingButton } from '@/shared/ui'
+import { LoadingButton,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
@@ -253,9 +255,9 @@ export function AdminCategoryPage() {
         description={`총 ${filteredData.length.toLocaleString()}건`}
         hideExcelDownload
         actions={
-          <CmsButton variant="primary" icon={<ButtonAddIcon />} onClick={() => showModal()}>
+          <FilterTableToolbarButton variant="primary" icon={<ButtonAddIcon />} onClick={() => showModal()}>
             카테고리 추가
-          </CmsButton>
+          </FilterTableToolbarButton>
         }
       >
         <CmsDataTable

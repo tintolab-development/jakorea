@@ -3,13 +3,10 @@ import {
   useFaqCategoriesQuery,
   useFaqCategoryMutations,
 } from '@/features/posts/hooks/use-faq-categories-query'
+import type { CategoryRemoteActions } from '@/features/posts/hooks/category-remote-actions'
 import type { FaqCategoryRow } from '@/features/posts/model/admin-faq-management.types'
 
-export type FaqCategoryRemoteActions = {
-  onCreate: (name: string) => Promise<void>
-  onUpdate: (id: string, name: string) => Promise<void>
-  onDelete: (id: string) => Promise<void>
-}
+export type FaqCategoryRemoteActions = CategoryRemoteActions
 
 export type UseAdminFaqCategoriesResult = {
   categoryRows: FaqCategoryRow[]

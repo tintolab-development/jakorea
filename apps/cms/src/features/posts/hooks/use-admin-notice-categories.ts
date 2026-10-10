@@ -5,11 +5,9 @@ import {
 } from '@/features/posts/hooks/use-notice-categories-query'
 import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
 
-export type NoticeCategoryRemoteActions = {
-  onCreate: (name: string) => Promise<void>
-  onUpdate: (id: string, name: string) => Promise<void>
-  onDelete: (id: string) => Promise<void>
-}
+import type { CategoryRemoteActions } from '@/features/posts/hooks/category-remote-actions'
+
+export type NoticeCategoryRemoteActions = CategoryRemoteActions
 
 export type UseAdminNoticeCategoriesResult = {
   categoryRows: NoticeCategoryRow[]

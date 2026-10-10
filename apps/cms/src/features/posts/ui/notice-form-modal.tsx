@@ -37,7 +37,11 @@ import {
   FileSelectField,
   useCmsAlert,
 } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+
+const NOTICE_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('notice', 'single')
 import './notice-register-modal.css'
 
 function isRegisterableNoticeCategoryId(value: string): boolean {
@@ -333,6 +337,7 @@ export function NoticeFormModal({
         onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         preset="notice"
+        {...NOTICE_SINGLE_DELETE_COPY}
       />
       <ContentModal
         open={open}
@@ -343,17 +348,28 @@ export function NoticeFormModal({
         footer={
           <div className="notice-register-modal__footer-row">
             {mode === 'edit' ? (
-              <CmsButton variant="delete" size="large" onClick={handleRequestDelete}>
-                공지사항 삭제
+              <CmsButton
+                variant="delete"
+                size="h40"
+                className="cms-button--footer-auto"
+                onClick={handleRequestDelete}
+              >
+                삭제
               </CmsButton>
             ) : null}
             <div className="notice-register-modal__footer-actions-right">
-              <CmsButton variant="secondary" size="large" onClick={handleCancel}>
+              <CmsButton
+                variant="secondary"
+                size="h40"
+                className="cms-button--footer-auto"
+                onClick={handleCancel}
+              >
                 취소
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
+                className="cms-button--footer-auto"
                 adminAction="write"
                 onClick={() => form.submit()}
               >
@@ -449,35 +465,44 @@ export function NoticeFormModal({
             </p>
           ) : null}
 
-          <div className="notice-register-modal__attachment">
-            <div className="notice-register-modal__attachment-label">
-              <span className="cms-field__label notice-register-modal__attachment-field-label">
-                <span className="cms-field__label-text">첨부 파일</span>
-              </span>
-            </div>
-            <div className="notice-register-modal__attachment-body">
-              <FileSelectField
-                className="notice-register-modal__file-field"
-                multiple
-                accept={NOTICE_ATTACHMENT_ACCEPT}
-                fileNames={attachmentDisplayNames}
-                currentTotalBytes={attachmentTotalBytes}
-                maxTotalBytes={NOTICE_ATTACHMENT_MAX_BYTES}
-                uploading={uploadingAttachments}
-                onFilesChange={handleAttachmentAdd}
-                onRemoveFile={handleAttachmentRemove}
-                guideLines={[
-                  '파일은 총 최대 15MB까지 업로드 가능하며,',
-                  'JPG, PNG, PDF, Word, Excel 파일 형식만 지원됩니다.',
-                ]}
+          <DetailInfoForm
+            title="첨부 파일"
+            hideHeader
+            mode="edit"
+            className="notice-register-modal__attachment-form"
+          >
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="첨부 파일"
+                colSpan={2}
+                view=""
+                edit={
+                  <>
+                    <FileSelectField
+                      className="notice-register-modal__file-field"
+                      multiple
+                      accept={NOTICE_ATTACHMENT_ACCEPT}
+                      fileNames={attachmentDisplayNames}
+                      currentTotalBytes={attachmentTotalBytes}
+                      maxTotalBytes={NOTICE_ATTACHMENT_MAX_BYTES}
+                      uploading={uploadingAttachments}
+                      onFilesChange={handleAttachmentAdd}
+                      onRemoveFile={handleAttachmentRemove}
+                      guideLines={[
+                        '파일은 총 최대 15MB까지 업로드 가능하며,',
+                        'JPG, PNG, PDF, Word, Excel 파일 형식만 지원됩니다.',
+                      ]}
+                    />
+                    {attachmentError ? (
+                      <p className="notice-register-modal__error" role="alert">
+                        {attachmentError}
+                      </p>
+                    ) : null}
+                  </>
+                }
               />
-              {attachmentError ? (
-                <p className="notice-register-modal__error" role="alert">
-                  {attachmentError}
-                </p>
-              ) : null}
-            </div>
-          </div>
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
         </Form>
       </ContentModal>
     </>

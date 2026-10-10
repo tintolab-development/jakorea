@@ -30,11 +30,12 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   ActionResultModal,
-  CmsButton,
   useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { NoticePinnedIcon } from '@/features/posts/ui/notice-pinned-icon'
-import { NoticeCategoryManagementModal } from '@/features/posts/ui/notice-category-management-modal'
+import { CategoryManagementModal } from '@/features/posts/ui/category-management-modal'
+import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import '@/pages/programs/program-list-page.css'
@@ -252,10 +253,10 @@ export function AdminNoticeListPage() {
     [tableData.length]
   )
 
-  const bulkDeleteLine1 =
-    selectedRowKeys.length > 0
-      ? `선택한 ${selectedRowKeys.length}건의 공지사항을 삭제하시겠습니까?`
-      : '선택한 공지사항을 삭제하시겠습니까?'
+  const bulkDeleteCopy = useMemo(
+    () => resolvePostsDeleteConfirmCopy('notice', 'bulk', selectedRowKeys.length),
+    [selectedRowKeys.length]
+  )
 
   return (
     <div className="admin-notice-list-page">
@@ -264,14 +265,15 @@ export function AdminNoticeListPage() {
         onCancel={() => setBulkDeleteConfirmOpen(false)}
         onConfirm={handleConfirmBulkDelete}
         preset="notice"
-        line1={bulkDeleteLine1}
+        {...bulkDeleteCopy}
       />
-      <NoticeCategoryManagementModal
+      <CategoryManagementModal
+        kind="notice"
         open={categoryModalOpen}
         onCancel={() => setCategoryModalOpen(false)}
         categories={categoryRows}
         onCategoriesChange={() => {}}
-        notices={rows}
+        posts={rows}
         remoteActions={noticeCategoryRemoteActions}
       />
       <NoticeFormModal
@@ -306,18 +308,18 @@ export function AdminNoticeListPage() {
         contentLoading={contentLoading}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               onClick={handleBulkDelete}
             >
               공지사항 삭제
-            </CmsButton>
-            <CmsButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
               카테고리 관리
-            </CmsButton>
-            <CmsButton variant="primary" onClick={handleRegister}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="primary" onClick={handleRegister}>
               공지사항 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{

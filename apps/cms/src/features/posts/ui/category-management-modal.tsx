@@ -1,48 +1,56 @@
 /**
- * FAQ 카테고리 관리 모달 — 공지 카테고리 모달과 동일 레이아웃
+ * 공지·FAQ·문의 카테고리 관리 모달 — 레이아웃·테이블; 상태·분기는 useCategoryManagementModal
  */
 
 import type { ColumnsType } from 'antd/es/table'
-import type { AdminFaq } from '@/data/mock/admin-faqs'
 import { ActionResultModal, ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
-import type { FaqCategoryRemoteActions } from '@/features/posts/hooks/use-admin-faq-categories'
-import { useFaqCategoryManagementModal } from '@/features/posts/hooks/use-faq-category-management-modal'
-import type { FaqCategoryRow } from '@/features/posts/model/admin-faq-management.types'
-import { NoticeCategoryDeleteBlockedModal } from '@/features/posts/ui/notice-category-management/notice-category-delete-blocked-modal'
+import type { CategoryRemoteActions } from '@/features/posts/hooks/category-remote-actions'
+import { useCategoryManagementModal } from '@/features/posts/hooks/use-category-management-modal'
+import type {
+  CategoryManagementKind,
+  PostWithCategoryLabel,
+} from '@/features/posts/model/category-management-config'
+import type { PostsCategoryRow } from '@/features/posts/model/posts-category-row'
+import { CategoryDeleteBlockedModal } from '@/features/posts/ui/category-delete-blocked-modal'
 import { NoticeCategoryDuplicateAlertModal } from '@/features/posts/ui/notice-category-management/notice-category-duplicate-alert-modal'
 import '@/features/posts/ui/notice-category-management-modal.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
+/** 모달 가로 패딩 30×2 제외한 테이블 영역 (600 − 60) */
 const TABLE_INNER_WIDTH = 540
 const NAME_COL_WIDTH = 324
 const ACTIONS_COL_WIDTH = TABLE_INNER_WIDTH - NAME_COL_WIDTH
 const CATEGORY_MODAL_Z = 1000
 const CATEGORY_SUB_MODAL_Z = 1100
 
-export type FaqCategoryManagementModalProps = {
+export type CategoryManagementModalProps = {
+  kind: CategoryManagementKind
   open: boolean
   onCancel: () => void
-  categories: FaqCategoryRow[]
-  onCategoriesChange: (next: FaqCategoryRow[]) => void
-  faqs: readonly AdminFaq[]
-  remoteActions?: FaqCategoryRemoteActions
+  categories: PostsCategoryRow[]
+  onCategoriesChange: (next: PostsCategoryRow[]) => void
+  /** 삭제 전 로컬 사용 여부 — notice/faq/inquiry 목록 rows */
+  posts: readonly PostWithCategoryLabel[]
+  remoteActions?: CategoryRemoteActions
 }
 
-export function FaqCategoryManagementModal({
+export function CategoryManagementModal({
+  kind,
   open,
   onCancel,
   categories,
   onCategoriesChange,
-  faqs,
+  posts,
   remoteActions,
-}: FaqCategoryManagementModalProps) {
-  const ctrl = useFaqCategoryManagementModal({
+}: CategoryManagementModalProps) {
+  const ctrl = useCategoryManagementModal({
+    kind,
     open,
     categories,
     onCategoriesChange,
-    faqs,
+    posts,
     onClose: onCancel,
     remoteActions,
   })
@@ -51,13 +59,14 @@ export function FaqCategoryManagementModal({
     editingId,
     editDraft,
     setEditDraft,
+    editInputRef,
     startEdit,
     cancelEdit,
     submitEdit,
     requestDeleteCategory,
   } = ctrl
 
-  const columns: ColumnsType<FaqCategoryRow> = [
+  const columns: ColumnsType<PostsCategoryRow> = [
     {
       title: '카테고리명',
       dataIndex: 'name',
@@ -67,7 +76,7 @@ export function FaqCategoryManagementModal({
       render: (_: string, row) =>
         editingId === row.id ? (
           <CmsInput
-            ref={ctrl.editInputRef}
+            ref={editInputRef}
             inputSize="medium"
             width="100%"
             value={editDraft}
@@ -90,7 +99,7 @@ export function FaqCategoryManagementModal({
             <CmsButton
               type="button"
               variant="default"
-              size="medium"
+              size="h32"
               width={80}
               className="notice-category-management-modal__action-btn"
               onClick={cancelEdit}
@@ -100,7 +109,7 @@ export function FaqCategoryManagementModal({
             <CmsButton
               type="button"
               variant="secondary"
-              size="medium"
+              size="h32"
               width={80}
               className="notice-category-management-modal__action-btn"
               onClick={submitEdit}
@@ -113,7 +122,7 @@ export function FaqCategoryManagementModal({
             <CmsButton
               type="button"
               variant="default"
-              size="medium"
+              size="h32"
               width={80}
               className="notice-category-management-modal__action-btn"
               onClick={() => startEdit(row)}
@@ -123,7 +132,7 @@ export function FaqCategoryManagementModal({
             <CmsButton
               type="button"
               variant="delete"
-              size="medium"
+              size="h32"
               width={80}
               className="notice-category-management-modal__action-btn"
               onClick={() => requestDeleteCategory(row)}
@@ -137,14 +146,32 @@ export function FaqCategoryManagementModal({
 
   const footer = (
     <>
-      <CmsButton variant="secondary" size="large" type="button" onClick={ctrl.handleClose}>
+      <CmsButton
+        variant="default"
+        size="h40"
+        className="cms-button--footer-auto"
+        type="button"
+        onClick={ctrl.handleClose}
+      >
         닫기
       </CmsButton>
-      <CmsButton variant="secondary" size="large" type="button" onClick={ctrl.openCompose}>
-        카테고리 추가
+      <CmsButton
+        variant="secondary"
+        size="h40"
+        className="cms-button--footer-auto"
+        type="button"
+        onClick={ctrl.openCompose}
+      >
+        항목 추가
       </CmsButton>
-      <CmsButton variant="primary" size="large" type="button" onClick={ctrl.applySettings}>
-        카테고리 저장
+      <CmsButton
+        variant="primary"
+        size="h40"
+        className="cms-button--footer-auto"
+        type="button"
+        onClick={ctrl.applySettings}
+      >
+        저장
       </CmsButton>
     </>
   )
@@ -156,15 +183,15 @@ export function FaqCategoryManagementModal({
         onCancel={ctrl.handleClose}
         title="카테고리 관리"
         width={600}
+        titleBodyGap="none"
         footer={footer}
         className="notice-category-management-modal"
         zIndex={CATEGORY_MODAL_Z}
       >
         <div className="notice-category-management-modal__table-wrap">
           <div className="notice-category-management-modal__table-scroll">
-            <CmsDataTable<FaqCategoryRow>
+            <CmsDataTable<PostsCategoryRow>
               rowKey="id"
-              bordered
               className="cms-data-table cms-data-table--skip-auto-no-col notice-category-management-modal__table"
               tableLayout="fixed"
               pagination={false}
@@ -195,7 +222,7 @@ export function FaqCategoryManagementModal({
                               <CmsButton
                                 type="button"
                                 variant="default"
-                                size="medium"
+                                size="h32"
                                 width={80}
                                 className="notice-category-management-modal__action-btn"
                                 onClick={ctrl.cancelNew}
@@ -205,7 +232,7 @@ export function FaqCategoryManagementModal({
                               <CmsButton
                                 type="button"
                                 variant="secondary"
-                                size="medium"
+                                size="h32"
                                 width={80}
                                 className="notice-category-management-modal__action-btn"
                                 onClick={ctrl.submitNew}
@@ -224,13 +251,11 @@ export function FaqCategoryManagementModal({
         </div>
       </ContentModal>
 
-      <NoticeCategoryDeleteBlockedModal
+      <CategoryDeleteBlockedModal
+        kind={kind}
         open={ctrl.deleteBlockedOpen}
         onClose={ctrl.closeDeleteBlocked}
         zIndex={CATEGORY_SUB_MODAL_Z}
-        description={
-          '현재 해당 카테고리에 등록된 FAQ가 있습니다.\n카테고리를 삭제하려면 등록된 FAQ를 삭제하거나 다른 카테고리로 변경해 주세요.'
-        }
       />
 
       <NoticeCategoryDuplicateAlertModal
