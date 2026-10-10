@@ -15,6 +15,8 @@ export interface ParagraphCalendarMiniProps
    * `programDates`(시각 강조)와 의미 분리.
    */
   clickableDates?: Set<string>
+  /** 진행 불가일 모달 등 — 강조는 `programDates`만 */
+  multiSelectHighlight?: boolean
 }
 
 /**
@@ -30,6 +32,7 @@ export interface ParagraphCalendarMiniProps
 export function ParagraphCalendarMini({
   size = 'large',
   clickableDates,
+  multiSelectHighlight,
   disabledDate: disabledDateProp,
   ...rest
 }: ParagraphCalendarMiniProps) {
@@ -41,7 +44,11 @@ export function ParagraphCalendarMini({
 
   return (
     <div className={`paragraph-calendar-mini paragraph-calendar-mini--${size}`}>
-      <CalendarMini {...rest} disabledDate={disabledDate} />
+      <CalendarMini
+        {...rest}
+        disabledDate={disabledDate}
+        multiSelectHighlight={multiSelectHighlight}
+      />
     </div>
   )
 }

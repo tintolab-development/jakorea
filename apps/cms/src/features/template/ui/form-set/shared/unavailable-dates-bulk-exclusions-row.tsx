@@ -188,7 +188,6 @@ export function UnavailableDatesBulkExclusionsRow({
     <div className="unavailable-dates-bulk-exclusions-row">
       <DirectUnavailableDateAddButton
         appliedDatesDisplay="chips"
-        disabled={exclusionState.excludeNone}
         disabledDate={disabledDate}
         initialCalendarDate={initialCalendarDate}
         appliedDates={appliedDates}

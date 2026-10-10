@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { UjatVolunteerInterviewAssignCalendarMini } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/calendar-mini'
+import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
 import { getMockHolidayDateKeys } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
@@ -207,7 +207,7 @@ export function DirectUnavailableDateAddButton({
   const appliedDates = isControlled ? appliedDatesProp! : uncontrolledAppliedDates
 
   useEffect(() => {
-    if (!disabledDate) return
+    if (!disabledDate || open) return
 
     setSelectedDates(prev => {
       const next = filterEnabledDateValues(prev, disabledDate)
@@ -226,7 +226,7 @@ export function DirectUnavailableDateAddButton({
       const next = filterEnabledDateValues(prev, disabledDate)
       return areSameStringArray(prev, next) ? prev : next
     })
-  }, [appliedDatesProp, disabledDate, isControlled, onApplyDatesChange])
+  }, [appliedDatesProp, disabledDate, isControlled, onApplyDatesChange, open])
 
   const selectedDateSet = useMemo(
     () =>
@@ -398,13 +398,14 @@ export function DirectUnavailableDateAddButton({
               .join(' ')}
           >
             {/* 선택일·지정일·토/일/공휴 색 — 강사 배정 안내 캘린더와 동일 조건 */}
-            <UjatVolunteerInterviewAssignCalendarMini
+            <ParagraphCalendarMini
+              size="small"
+              multiSelectHighlight
               currentMonth={currentMonth}
               selectedDate={selectedDate}
               onMonthChange={handleMonthChange}
               onSelectDate={handleCalendarSelect}
               programDates={selectedDateSet}
-              holidayDateKeys={UNAVAILABLE_MODAL_HOLIDAY_DATE_KEYS}
               disabledDate={calendarDisabledDate}
             />
           </div>
