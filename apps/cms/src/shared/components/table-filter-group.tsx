@@ -4,7 +4,7 @@
  * - dateRange: 부모 `onFilterChange` 직접 반영 · 기본값은 `filters[key] == null && defaultValue !== null`일 때만 시드
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Row, Col } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -14,6 +14,7 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsRadio } from '@/shared/ui/cms-radio'
+import { cmsControlSizeClass } from '@/shared/ui/cms-field'
 import {
   buildFilterFieldWidthStyle,
   isFilterFieldPctWidth,
@@ -22,6 +23,7 @@ import {
   isAddressRegionLayoutField,
   isCompactSelectPairField,
 } from './table-filter-group-field-width'
+import { TableFilterFieldLabel } from './table-filter-group-field-label'
 import './table-filter-group.css'
 
 /** 필터 칸(검색·셀렉트·기간 등) 기본 고정 너비 — `table-filter-group.css` 토큰과 동일 */
@@ -319,13 +321,33 @@ export function TableFilterGroup({
     return `repeat(${rowFieldCount}, minmax(0, 1fr))`
   }
 
+  const filterFieldIdPrefix = useId()
+  const getFilterFieldControlIds = (fieldKey: string) => {
+    const safe = fieldKey.replace(/[^\w-]/g, '-')
+    const base = `${filterFieldIdPrefix}-${safe}`
+    return {
+      label: `${base}-label`,
+      control: `${base}-control`,
+      dateStart: `${base}-start`,
+      dateEnd: `${base}-end`,
+      primary: `${base}-primary`,
+      secondary: `${base}-secondary`,
+      sido: `${base}-sido`,
+      sigungu: `${base}-sigungu`,
+    }
+  }
+
   const renderFieldInner = (field: FilterFieldConfig) => {
+    const fieldIds = getFilterFieldControlIds(field.key)
+
     if (field.type === 'radio') {
       return (
         <div className="table-filter-group__field table-filter-group__field--radio">
-          <span className="table-filter-group__label">{field.label}</span>
+          <TableFilterFieldLabel id={fieldIds.label}>{field.label}</TableFilterFieldLabel>
           <div className="table-filter-group__radio-control">
             <CmsRadio.Group
+              size="medium"
+              aria-labelledby={fieldIds.label}
               value={filters[field.key]}
               onChange={e => onFilterChange(field.key, e.target.value)}
             >
@@ -347,6 +369,8 @@ export function TableFilterGroup({
           placeholder={field.placeholder || `${field.label}을(를) 입력하세요`}
           value={searchDrafts[field.key] ?? ''}
           numericOnly={field.searchNumericOnly}
+          uiVariant="filter"
+          inputId={fieldIds.control}
           onChange={value =>
             setSearchDrafts(prev =>
               prev[field.key] === value ? prev : { ...prev, [field.key]: value }
@@ -366,10 +390,13 @@ export function TableFilterGroup({
       const districtOptions = ar.getSigunguOptions(sido)
       return (
         <div className="table-filter-group__field table-filter-group__field--select table-filter-group__field--address-region">
-          <span className="table-filter-group__label">{field.label}</span>
+          <TableFilterFieldLabel htmlFor={fieldIds.sido} id={fieldIds.label}>
+            {field.label}
+          </TableFilterFieldLabel>
           <div className="table-filter-group__address-region-selects">
             <CmsSelect
-              inputSize="large"
+              id={fieldIds.sido}
+              inputSize="medium"
               placeholder={ar.sidoPlaceholder ?? '시/도'}
               value={sidoEmpty ? undefined : sido}
               selectClassName="table-filter-group__select"
@@ -379,7 +406,8 @@ export function TableFilterGroup({
               options={ar.sidoOptions.map(opt => ({ label: opt.label, value: opt.value }))}
             />
             <CmsSelect
-              inputSize="large"
+              id={fieldIds.sigungu}
+              inputSize="medium"
               placeholder={ar.sigunguPlaceholder ?? '시/군/구'}
               value={sigungu == null || sigungu === '' ? undefined : sigungu}
               selectClassName="table-filter-group__select"
@@ -388,6 +416,7 @@ export function TableFilterGroup({
               popupMatchSelectWidth={false}
               style={{ width: '100%', ...field.style }}
               options={districtOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+              aria-label={ar.sigunguPlaceholder ?? '시/군/구'}
             />
           </div>
         </div>
@@ -414,7 +443,9 @@ export function TableFilterGroup({
             .filter(Boolean)
             .join(' ')}
         >
-          <span className="table-filter-group__label">{field.label}</span>
+          <TableFilterFieldLabel htmlFor={fieldIds.primary} id={fieldIds.label}>
+            {field.label}
+          </TableFilterFieldLabel>
           <div
             className={
               compact
@@ -423,7 +454,8 @@ export function TableFilterGroup({
             }
           >
             <CmsSelect
-              inputSize="large"
+              id={fieldIds.primary}
+              inputSize="medium"
               placeholder={sp.primary.placeholder ?? '선택'}
               value={primaryEmpty ? undefined : (primaryRaw as string | number)}
               selectClassName="table-filter-group__select"
@@ -433,7 +465,8 @@ export function TableFilterGroup({
               options={sp.primary.options.map(opt => ({ label: opt.label, value: opt.value }))}
             />
             <CmsSelect
-              inputSize="large"
+              id={fieldIds.secondary}
+              inputSize="medium"
               placeholder={sp.secondary.placeholder ?? '선택'}
               value={
                 secondaryRaw == null || secondaryRaw === ''
@@ -446,6 +479,7 @@ export function TableFilterGroup({
               popupMatchSelectWidth
               style={{ width: '100%', ...field.style }}
               options={secondaryOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+              aria-label={sp.secondary.placeholder ?? '선택'}
             />
           </div>
         </div>
@@ -455,9 +489,12 @@ export function TableFilterGroup({
     if (field.type === 'select') {
       return (
         <div className="table-filter-group__field table-filter-group__field--select">
-          <span className="table-filter-group__label">{field.label}</span>
+          <TableFilterFieldLabel htmlFor={fieldIds.control} id={fieldIds.label}>
+            {field.label}
+          </TableFilterFieldLabel>
           <CmsSelect
-            inputSize="large"
+            id={fieldIds.control}
+            inputSize="medium"
             placeholder={field.placeholder || '전체'}
             value={filters[field.key]}
             selectClassName="table-filter-group__select"
@@ -477,9 +514,12 @@ export function TableFilterGroup({
     if (field.type === 'dateRange') {
       return (
         <div className="table-filter-group__field">
-          <span className="table-filter-group__label">{field.label}</span>
+          <TableFilterFieldLabel htmlFor={fieldIds.dateStart} id={fieldIds.label}>
+            {field.label}
+          </TableFilterFieldLabel>
           <CmsDateRangePicker
-            inputSize="large"
+            id={{ start: fieldIds.dateStart, end: fieldIds.dateEnd }}
+            inputSize="medium"
             style={field.style}
             value={filters[field.key]}
             onChange={dates => onFilterChange(field.key, dates as DateRangeFilterValue)}
@@ -496,12 +536,13 @@ export function TableFilterGroup({
       const arr = Array.isArray(raw) ? (raw as string[]) : []
       return (
         <div className="table-filter-group__field">
-          <span className="table-filter-group__label">{field.label}</span>
+          <TableFilterFieldLabel id={fieldIds.label}>{field.label}</TableFilterFieldLabel>
           <CmsSelect
             mode="multiple"
             withAllOption={false}
-            inputSize="large"
+            inputSize="medium"
             className="table-filter-group__multi-select"
+            aria-labelledby={fieldIds.label}
             placeholder={field.placeholder || '선택하세요'}
             value={arr}
             onChange={next => onFilterChange(field.key, next as string[])}
@@ -650,6 +691,7 @@ export function TableFilterGroup({
     <div className="table-filter-group__shell-actions">
       <CmsButton
         variant="primary"
+        size="medium"
         type="button"
         className="table-filter-group__search-button"
         width={160}
@@ -849,7 +891,9 @@ export function TableFilterGroup({
   const hideStandaloneSearchShell = isMultiRowLayout || useSingleRowResponsiveInlineSearch
 
   return (
-    <div className="table-filter-group__container">
+    <div
+      className={['table-filter-group__container', cmsControlSizeClass('medium')].join(' ')}
+    >
       <div className={fieldsContainerClassName}>{fieldsBody}</div>
       {!hideStandaloneSearchShell ? (
         <div className="table-filter-group__fields-shell">{actionButtons}</div>
