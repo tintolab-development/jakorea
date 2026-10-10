@@ -2,13 +2,13 @@
  * 문의 카테고리 관리 모달 — 공지 카테고리 모달과 동일 레이아웃
  */
 
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ActionResultModal, ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import type { InquiryCategoryRemoteActions } from '@/features/posts/hooks/use-admin-inquiry-categories'
 import { useInquiryCategoryManagementModal } from '@/features/posts/hooks/use-inquiry-category-management-modal'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   AdminInquiryRow,
   InquiryCategoryRow,
@@ -165,7 +165,7 @@ export function InquiryCategoryManagementModal({
       >
         <div className="notice-category-management-modal__table-wrap">
           <div className="notice-category-management-modal__table-scroll">
-            <Table<InquiryCategoryRow>
+            <CmsDataTable<InquiryCategoryRow>
               rowKey="id"
               bordered
               className="cms-data-table cms-data-table--skip-auto-no-col notice-category-management-modal__table"
@@ -177,9 +177,9 @@ export function InquiryCategoryManagementModal({
               summary={
                 ctrl.composeOpen
                   ? () => (
-                      <Table.Summary>
-                        <Table.Summary.Row className="notice-category-management-modal__summary">
-                          <Table.Summary.Cell index={0} align="center">
+                      <CmsDataTable.Summary>
+                        <CmsDataTable.Summary.Row className="notice-category-management-modal__summary">
+                          <CmsDataTable.Summary.Cell index={0} align="center">
                             <div className="notice-category-management-modal__compose">
                               <CmsInput
                                 ref={ctrl.newInputRef}
@@ -192,8 +192,8 @@ export function InquiryCategoryManagementModal({
                                 aria-label="새 카테고리명"
                               />
                             </div>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell index={1} align="center">
+                          </CmsDataTable.Summary.Cell>
+                          <CmsDataTable.Summary.Cell index={1} align="center">
                             <div className="notice-category-management-modal__actions">
                               <CmsButton
                                 type="button"
@@ -216,9 +216,9 @@ export function InquiryCategoryManagementModal({
                                 등록
                               </CmsButton>
                             </div>
-                          </Table.Summary.Cell>
-                        </Table.Summary.Row>
-                      </Table.Summary>
+                          </CmsDataTable.Summary.Cell>
+                        </CmsDataTable.Summary.Row>
+                      </CmsDataTable.Summary>
                     )
                   : undefined
               }

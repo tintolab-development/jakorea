@@ -1,4 +1,3 @@
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ActionResultModal, ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -7,6 +6,7 @@ import type { TextbookBusinessAreaRow } from '@/features/textbook/model/business
 import { BusinessAreaDeleteBlockedModal } from '@/features/textbook/ui/business-area-delete-blocked-modal'
 import { BusinessAreaDuplicateAlertModal } from '@/features/textbook/ui/business-area-duplicate-alert-modal'
 import './business-area-management-modal.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const TABLE_INNER_WIDTH = 540
 const NAME_COL_WIDTH = 324
@@ -159,7 +159,7 @@ export function BusinessAreaManagementModal({
       >
         <div className="business-area-management-modal__table-wrap">
           <div className="business-area-management-modal__table-scroll">
-            <Table<TextbookBusinessAreaRow>
+            <CmsDataTable<TextbookBusinessAreaRow>
               rowKey="id"
               bordered
               className="cms-data-table cms-data-table--skip-auto-no-col business-area-management-modal__table"
@@ -171,9 +171,9 @@ export function BusinessAreaManagementModal({
               summary={
                 ctrl.composeOpen
                   ? () => (
-                      <Table.Summary>
-                        <Table.Summary.Row className="business-area-management-modal__summary">
-                          <Table.Summary.Cell index={0} align="center">
+                      <CmsDataTable.Summary>
+                        <CmsDataTable.Summary.Row className="business-area-management-modal__summary">
+                          <CmsDataTable.Summary.Cell index={0} align="center">
                             <div className="business-area-management-modal__compose">
                               <CmsInput
                                 ref={ctrl.newInputRef}
@@ -188,8 +188,8 @@ export function BusinessAreaManagementModal({
                                 aria-label="새 사업 분야명"
                               />
                             </div>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell index={1} align="center">
+                          </CmsDataTable.Summary.Cell>
+                          <CmsDataTable.Summary.Cell index={1} align="center">
                             <div className="business-area-management-modal__actions">
                               <CmsButton
                                 type="button"
@@ -214,9 +214,9 @@ export function BusinessAreaManagementModal({
                                 등록
                               </CmsButton>
                             </div>
-                          </Table.Summary.Cell>
-                        </Table.Summary.Row>
-                      </Table.Summary>
+                          </CmsDataTable.Summary.Cell>
+                        </CmsDataTable.Summary.Row>
+                      </CmsDataTable.Summary>
                     )
                   : undefined
               }

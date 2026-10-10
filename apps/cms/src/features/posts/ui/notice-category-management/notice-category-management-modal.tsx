@@ -2,7 +2,6 @@
  * 공지 카테고리 관리 모달 — 레이아웃·테이블만; 상태·분기는 useNoticeCategoryManagementModal
  */
 
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Notice } from '@/data/mock/notices'
 import { ActionResultModal, ContentModal, CmsButton } from '@/shared/ui'
@@ -14,6 +13,7 @@ import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-mana
 import { NoticeCategoryDeleteBlockedModal } from '@/features/posts/ui/notice-category-management/notice-category-delete-blocked-modal'
 import { NoticeCategoryDuplicateAlertModal } from '@/features/posts/ui/notice-category-management/notice-category-duplicate-alert-modal'
 import '@/features/posts/ui/notice-category-management-modal.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 /** 모달 가로 패딩 30×2 제외한 테이블 영역 (600 − 60) */
 const TABLE_INNER_WIDTH = 540
@@ -164,7 +164,7 @@ export function NoticeCategoryManagementModal({
       >
         <div className="notice-category-management-modal__table-wrap">
           <div className="notice-category-management-modal__table-scroll">
-            <Table<NoticeCategoryRow>
+            <CmsDataTable<NoticeCategoryRow>
               rowKey="id"
               bordered
               className="cms-data-table cms-data-table--skip-auto-no-col notice-category-management-modal__table"
@@ -176,9 +176,9 @@ export function NoticeCategoryManagementModal({
               summary={
                 ctrl.composeOpen
                   ? () => (
-                      <Table.Summary>
-                        <Table.Summary.Row className="notice-category-management-modal__summary">
-                          <Table.Summary.Cell index={0} align="center">
+                      <CmsDataTable.Summary>
+                        <CmsDataTable.Summary.Row className="notice-category-management-modal__summary">
+                          <CmsDataTable.Summary.Cell index={0} align="center">
                             <div className="notice-category-management-modal__compose">
                               <CmsInput
                                 ref={ctrl.newInputRef}
@@ -191,8 +191,8 @@ export function NoticeCategoryManagementModal({
                                 aria-label="새 카테고리명"
                               />
                             </div>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell index={1} align="center">
+                          </CmsDataTable.Summary.Cell>
+                          <CmsDataTable.Summary.Cell index={1} align="center">
                             <div className="notice-category-management-modal__actions">
                               <CmsButton
                                 type="button"
@@ -215,9 +215,9 @@ export function NoticeCategoryManagementModal({
                                 등록
                               </CmsButton>
                             </div>
-                          </Table.Summary.Cell>
-                        </Table.Summary.Row>
-                      </Table.Summary>
+                          </CmsDataTable.Summary.Cell>
+                        </CmsDataTable.Summary.Row>
+                      </CmsDataTable.Summary>
                     )
                   : undefined
               }

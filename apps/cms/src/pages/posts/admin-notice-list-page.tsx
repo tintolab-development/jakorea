@@ -3,6 +3,7 @@
  * 데이터 관리 > 후원사 관리(sponsor-page)와 동일: FilterTableLayout + useTablePage + CmsButton + 목록용 CSS 체인
  */
 
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useCallback,
   useEffect,
@@ -12,7 +13,6 @@ import {
   type MouseEvent,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { Notice } from '@/data/mock/notices'
@@ -101,6 +101,7 @@ export function AdminNoticeListPage() {
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(adminNoticeManagementTablePageConfig, {
     data: rows,
     searchParams,
@@ -288,6 +289,7 @@ export function AdminNoticeListPage() {
         onClose={() => setActionResultOpen(false)}
       />
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
         filters={{
@@ -328,7 +330,7 @@ export function AdminNoticeListPage() {
             {contentError}
           </div>
         ) : (
-          <Table<Notice>
+          <CmsDataTable<Notice>
             rowKey="id"
             className="cms-data-table admin-notice-list-page__table"
             tableLayout="fixed"

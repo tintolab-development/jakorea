@@ -5,7 +5,6 @@
 
 import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
@@ -14,6 +13,7 @@ import { useInquiryListQuery } from '@/features/posts/hooks/use-inquiry-list-que
 import { useInquiryMutations } from '@/features/posts/hooks/use-inquiry-mutations'
 import { buildAdminInquiryFilterRows } from '@/features/posts/model/admin-inquiry-management-filter-fields'
 import { adminInquiryManagementTablePageConfig } from '@/features/posts/model/admin-inquiry-management-table.config'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   AdminInquiryRow,
   AdminInquiryTableContext,
@@ -101,6 +101,7 @@ export function AdminInquiryPage() {
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(adminInquiryManagementTablePageConfig, {
     data: rows,
     searchParams,
@@ -377,6 +378,7 @@ export function AdminInquiryPage() {
         onClose={() => setActionResultOpen(false)}
       />
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         className="admin-inquiry-page__filter-layout"
         rows={filterRowsConfig}
@@ -420,7 +422,7 @@ export function AdminInquiryPage() {
             {contentError}
           </div>
         ) : (
-          <Table<AdminInquiryRow>
+          <CmsDataTable<AdminInquiryRow>
             rowKey="id"
             className="cms-data-table admin-inquiry-page__table"
             tableLayout="fixed"

@@ -3,6 +3,7 @@
  * 공지사항 관리(admin-notice-list-page)와 동일: FilterTableLayout + useTablePage + CmsButton
  */
 
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useCallback,
   useEffect,
@@ -12,7 +13,6 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { AdminFaq } from '@/data/mock/admin-faqs'
@@ -95,6 +95,7 @@ function AdminFAQPage() {
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(adminFaqManagementTablePageConfig, {
     data: rows,
     searchParams,
@@ -270,6 +271,7 @@ function AdminFAQPage() {
         onClose={() => setActionResultOpen(false)}
       />
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
         filters={{
@@ -311,7 +313,7 @@ function AdminFAQPage() {
             {contentError}
           </div>
         ) : (
-          <Table<AdminFaq>
+          <CmsDataTable<AdminFaq>
             rowKey="id"
             className="cms-data-table admin-faq-list-page__table"
             tableLayout="fixed"
