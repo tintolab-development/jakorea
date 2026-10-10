@@ -93,7 +93,8 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 54px !important;
+  min-height: 54px !important;
+  height: auto;
   box-sizing: border-box !important;
   flex-shrink: 0;
   align-self: stretch;
@@ -160,9 +161,12 @@
   background: var(--table-th-bg, #f5f6f7);
 }
 
-/* 본문 셀: 기본·호버 동일 테두리(--table-line) 유지 */
-.cms-data-table .ant-table-tbody > tr > td,
-.cms-data-table .ant-table-tbody > tr:hover > td {
+/* 본문 셀: 기본·호버 동일 테두리(--table-line) 유지 (empty·measure 행 제외) */
+.cms-data-table .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) > td,
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td {
   box-sizing: border-box !important;
   padding: 10px 16px !important;
   color: var(--default-BK, #3d3d3d);
@@ -172,7 +176,22 @@
   white-space: nowrap;
   border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
+  min-height: 54px !important;
+  height: auto !important;
+}
+
+/* 단줄 고정 행이 필요한 테이블(StatusDropdown 등) */
+.cms-data-table.cms-data-table--fixed-row-height
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.cms-data-table.cms-data-table--fixed-row-height
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td {
   height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
 }
 
 /*
@@ -185,6 +204,22 @@
   > td {
   background: var(--color-bg-base, #fff) !important;
 }
+
+.cms-data-table.cms-data-table--hoverable
+  .ant-table-tbody
+  > tr.ant-table-row:not(.ant-table-placeholder):not(.ant-table-measure-row):not(
+    .cms-data-table__row--disabled
+  ):hover:not(.ant-table-row-selected)
+  > td,
+.cms-data-table[class*='--clickable']
+  .ant-table-tbody
+  > tr.ant-table-row:not(.ant-table-placeholder):not(.ant-table-measure-row):not(
+    .cms-data-table__row--disabled
+  ):hover:not(.ant-table-row-selected)
+  > td {
+  background-color: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
+}
+
 /* 마지막 열: scroll.y 시 thead 마지막 th는 스크롤바 맞춤 셀 — 우측 보더 없음 */
 .cms-data-table .ant-table-thead > tr > th:last-child,
 .cms-data-table .ant-table-tbody > tr > td:last-child {
@@ -307,14 +342,24 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-thead
   > tr
-  > th:not(.ant-table-cell-scrollbar),
+  > th:not(.ant-table-cell-scrollbar) {
+  height: 54px !important;
+  min-height: 54px !important;
+  box-sizing: border-box !important;
+}
+
 .detail-fullpage-modal
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
-  > tr
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.detail-fullpage-modal
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
   > td {
-  height: 54px !important;
   min-height: 54px !important;
+  height: auto !important;
   box-sizing: border-box !important;
 }
 
@@ -385,15 +430,26 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-thead
   > tr
-  > th:not(.ant-table-cell-scrollbar),
+  > th:not(.ant-table-cell-scrollbar) {
+  height: 54px !important;
+  min-height: 54px !important;
+  box-sizing: border-box !important;
+}
+
 .filter-table-layout
   .filter-table-layout__table
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
-  > tr
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
   > td {
-  height: 54px !important;
   min-height: 54px !important;
+  height: auto !important;
   box-sizing: border-box !important;
 }
 

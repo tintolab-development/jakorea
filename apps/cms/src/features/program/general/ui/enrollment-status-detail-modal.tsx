@@ -61,6 +61,7 @@ const APPROVAL_STATUS_MAP: Record<ApplicantApprovalStatusKey, ApprovalStatusKey>
   pending: 'pending',
   rejected: 'rejected',
   approved: 'approved',
+  cancelled: 'cancelled',
 }
 
 const APPROVAL_STATUS_KEYS: ApprovalStatusKey[] = ['pending', 'rejected', 'approved']

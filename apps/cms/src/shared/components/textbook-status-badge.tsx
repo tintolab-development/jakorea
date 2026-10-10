@@ -32,7 +32,7 @@ export const APPROVAL_STATUS_LABELS: Record<ApprovalStatusKey, string> = {
   pending: '승인 대기',
   rejected: '신청 반려',
   approved: '승인 완료',
-  cancelled: '승인 취소',
+  cancelled: '신청 취소',
 }
 
 type TextbookBadgeChrome = { className?: string; style?: CSSProperties }
