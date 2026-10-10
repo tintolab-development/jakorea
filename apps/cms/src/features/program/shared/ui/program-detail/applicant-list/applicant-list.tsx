@@ -1,8 +1,8 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   CmsButton,
   CMS_ACTION_BUTTON_WIDTH,
@@ -1917,7 +1917,7 @@ export function ApplicantList({
                 ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}
                 className="applicant-details__table-wrap"
               >
-                <Table<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
+                <CmsDataTable<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
                   rowKey="id"
                   columns={
                     columns as ColumnsType<

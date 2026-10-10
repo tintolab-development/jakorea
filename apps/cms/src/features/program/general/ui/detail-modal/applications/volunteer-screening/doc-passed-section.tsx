@@ -1,11 +1,12 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { buildGeneralVolunteerDocPassedFilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   screeningDocPassedListTitle,
   type ScreeningSubjectKind,
@@ -246,7 +247,7 @@ export function GeneralVolunteerDocPassedSection({
       >
         {viewMode === 'list' ? (
           <div className="general-volunteer-doc-passed__table-wrap">
-            <Table<GeneralVolunteerApplicantRow>
+            <CmsDataTable<GeneralVolunteerApplicantRow>
               rowKey="id"
               className="cms-data-table cms-data-table--fluid clickable-table general-volunteer-doc-passed__table"
               columns={columns}

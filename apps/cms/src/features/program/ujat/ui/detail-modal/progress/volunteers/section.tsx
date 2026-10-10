@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { UJAT_EDU_VOL_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
@@ -263,7 +263,7 @@ export function UjatEducationProgressVolunteersSection({
         }}
       >
         <div ref={tableWrapRef} className="ujat-education-progress-volunteers__table-wrap">
-          <Table<UjatEducationProgressVolunteerRow>
+          <CmsDataTable<UjatEducationProgressVolunteerRow>
             rowKey="id"
             className="cms-data-table ujat-education-progress-volunteers__table ujat-education-progress-volunteers__table--clickable"
             columns={columns}

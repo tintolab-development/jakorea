@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { Alert, Spin, Table } from 'antd'
+import { Alert, Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -9,6 +9,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   geminiApprovedTrainingDeleteBlocked,
   resolveGeminiDeleteBlockedAlert,
@@ -343,7 +344,7 @@ export function GeminiApprovedTrainingList() {
           data: excelRows,
         }}
       >
-        <Table<GeminiApprovedTrainingRow>
+        <CmsDataTable<GeminiApprovedTrainingRow>
           rowKey="id"
           className="cms-data-table gemini-approved-training-list__table"
           tableLayout="fixed"

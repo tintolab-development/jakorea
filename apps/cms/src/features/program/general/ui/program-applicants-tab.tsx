@@ -4,10 +4,11 @@
  */
 
 import { useMemo, useState, useCallback, useEffect } from 'react'
-import { Card, Table, Row, Col, Select } from 'antd'
+import { Card, Row, Col, Select } from 'antd'
 import { CmsButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   type ApplicantApprovalStatusKey,
   type ApplicantSchoolRow,
@@ -695,7 +696,7 @@ export function ProgramApplicantsTab({
                   </CmsButton>
                 </div>
               </div>
-              <Table<ApplicantSchoolRow>
+              <CmsDataTable<ApplicantSchoolRow>
                 className="program-applicants-tab__table program-applicants-tab__table--clickable cms-data-table"
                 rowKey="id"
                 size="middle"
@@ -755,7 +756,7 @@ export function ProgramApplicantsTab({
                   </CmsButton>
                 </div>
               </div>
-              <Table<ApplicantInstructorRow>
+              <CmsDataTable<ApplicantInstructorRow>
                 className="program-applicants-tab__table program-applicants-tab__table--clickable cms-data-table"
                 rowKey="id"
                 size="middle"

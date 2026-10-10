@@ -1,5 +1,5 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
@@ -22,6 +22,7 @@ import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcon
 import './section.css'
 import '../doc-screening/section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const noopApplyDocumentScreeningStatus = () => undefined
 const noopShowDocumentScreeningConfirm = () => undefined
@@ -223,7 +224,7 @@ export function DocPassedSection({
       >
         {viewMode === 'list' ? (
           <div className="ujat-volunteer-doc-passed__table-wrap">
-            <Table<UjatVolunteerApplicantRow>
+            <CmsDataTable<UjatVolunteerApplicantRow>
               rowKey="id"
               className="cms-data-table cms-data-table--fluid clickable-table ujat-volunteer-doc-passed__table"
               columns={columns}

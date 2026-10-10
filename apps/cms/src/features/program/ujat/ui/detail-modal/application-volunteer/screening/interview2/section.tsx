@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
@@ -21,6 +21,7 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const noopApplyDocumentScreeningStatus = () => undefined
 const noopShowDocumentScreeningConfirm = () => undefined
@@ -300,7 +301,7 @@ export function Interview2Section({
       >
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="ujat-volunteer-interview2__table-wrap">
-            <Table<UjatVolunteerApplicantRow>
+            <CmsDataTable<UjatVolunteerApplicantRow>
               rowKey="id"
               className="cms-data-table cms-data-table--fluid clickable-table"
               columns={columns}

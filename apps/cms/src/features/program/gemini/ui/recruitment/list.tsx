@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs from 'dayjs'
-import { Alert, Spin, Table } from 'antd'
+import { Alert, Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -14,6 +14,7 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   RegistrationDraftNoticeModal,
   type RegistrationDraftNoticeChoice,
@@ -136,6 +137,7 @@ export function GeminiRecruitmentList() {
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(geminiRecruitmentTablePageConfig, {
     data: recruitmentRows,
     searchParams,
@@ -275,6 +277,7 @@ export function GeminiRecruitmentList() {
         />
       ) : null}
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         filterResponsiveWrap={false}
         fields={GEMINI_RECRUITMENT_FILTER_FIELDS}
@@ -302,7 +305,7 @@ export function GeminiRecruitmentList() {
           data: tableData,
         }}
       >
-        <Table<GeminiRecruitmentRow>
+        <CmsDataTable<GeminiRecruitmentRow>
           rowKey="id"
           className="cms-data-table gemini-recruitment-list__table"
           tableLayout="fixed"

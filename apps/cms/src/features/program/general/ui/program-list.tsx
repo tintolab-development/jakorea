@@ -2,12 +2,13 @@
  * CMS 프로그램 목록 (필터 카드 + 테이블/캘린더)
  */
 
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { Suspense, lazy, useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { TableSearchSetSearchParams } from '@/shared/hooks/use-table-search'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import './program-list.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 /** 캘린더 CSS는 캘린더 뷰일 때만 로드 — 목록만 거쳐도 대시보드 위젯 보더에 영향 주지 않음 */
 const ProgramCalendarView = lazy(async () => {
@@ -231,6 +232,7 @@ export function ProgramList({
     <>
       {viewMode === 'list' ? (
         <FilterTableLayout
+          hasActiveFilters={hasActiveFilters}
           fields={filterFieldsForLayout}
           filters={buildProgramListFilters(
             pendingFilters,
@@ -250,7 +252,7 @@ export function ProgramList({
             data: filteredRows,
           }}
         >
-          <Table
+          <CmsDataTable
             className={tableClassName}
             rowSelection={
               showRowSelection && (onBulkDelete != null || onSelectionChange != null)

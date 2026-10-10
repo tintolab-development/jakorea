@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ChangeEvent, type Key } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { Alert, Table } from 'antd'
+import { Alert } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { resolveFilterTableExcelFilename } from '@/shared/components/filter-table-excel-filename'
@@ -10,6 +10,7 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { formatDateDot } from '@/shared/utils'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   CmsButton,
   DeleteGuideModal,
@@ -469,7 +470,7 @@ export function GeminiPerformanceList() {
         }
         hideExcelDownload
       >
-        <Table<GeminiPerformanceRow>
+        <CmsDataTable<GeminiPerformanceRow>
           rowKey="id"
           className="cms-data-table gemini-performance-list__table"
           tableLayout="fixed"

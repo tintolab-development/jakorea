@@ -8,13 +8,14 @@
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useProgramManagersParams,
   type ProgramManagersFilters,
@@ -365,7 +366,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
           </>
         }
       >
-        <Table<ProgramManagerRow>
+        <CmsDataTable<ProgramManagerRow>
           className="cms-data-table cms-data-table--fluid program-managers-tab__managers-table"
           rowKey="id"
           pagination={false}

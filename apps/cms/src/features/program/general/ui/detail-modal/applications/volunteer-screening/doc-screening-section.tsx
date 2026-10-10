@@ -1,5 +1,5 @@
 import { useCallback, type CSSProperties, type MouseEvent } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
@@ -15,6 +15,7 @@ import { GENERAL_DOC_SCREENING_TABLE_SCROLL_X } from './doc-screening-columns'
 import { useGeneralVolunteerDocScreening } from './use-doc-screening'
 import { isDocumentScreeningPendingForBulkSelect } from '@/features/program/general/lib/application-processed-selection-alert'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
@@ -246,7 +247,7 @@ export function GeneralVolunteerDocScreeningSection({
               } as CSSProperties
             }
           >
-            <Table<GeneralVolunteerApplicantRow>
+            <CmsDataTable<GeneralVolunteerApplicantRow>
               rowKey="id"
               className="cms-data-table general-volunteer-screening__table clickable-table"
               columns={columns}

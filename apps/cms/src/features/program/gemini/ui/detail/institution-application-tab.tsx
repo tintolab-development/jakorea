@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState, type Key } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -471,7 +472,7 @@ export function GeminiInstitutionApplicationTab({
           data: filteredRows,
         }}
       >
-        <Table<GeminiInstitutionApplicationRow>
+        <CmsDataTable<GeminiInstitutionApplicationRow>
           rowKey="id"
           className="cms-data-table"
           tableLayout="fixed"

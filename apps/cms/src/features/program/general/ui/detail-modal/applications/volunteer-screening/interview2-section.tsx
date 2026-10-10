@@ -1,9 +1,10 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   buildGeneralVolunteerInterview2CalendarFilterRows,
   buildGeneralVolunteerInterview2FilterRows,
@@ -402,7 +403,7 @@ export function GeneralVolunteerInterview2Section({
       >
         {viewMode === 'list' ? (
           <div className="general-volunteer-interview2__table-wrap">
-            <Table<GeneralVolunteerApplicantRow>
+            <CmsDataTable<GeneralVolunteerApplicantRow>
               rowKey="id"
               className="cms-data-table cms-data-table--fluid clickable-table"
               columns={columns}

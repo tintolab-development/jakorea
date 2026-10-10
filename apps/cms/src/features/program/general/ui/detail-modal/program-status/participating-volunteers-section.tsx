@@ -5,11 +5,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { Table, Spin } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE,
@@ -607,7 +608,7 @@ export function ParticipatingVolunteersSection({
                 : undefined
             }
           >
-            <Table<ParticipatingVolunteerRow>
+            <CmsDataTable<ParticipatingVolunteerRow>
               className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"

@@ -3,10 +3,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table, Spin } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
@@ -375,7 +376,7 @@ export function ParticipatingParticipantsSection({
       >
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
-            <Table<ParticipatingIndividualParticipantRow>
+            <CmsDataTable<ParticipatingIndividualParticipantRow>
               className="cms-data-table participating-institutions-section__table participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"

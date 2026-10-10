@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
@@ -11,6 +10,7 @@ import { useUjatScheduleConfirmList } from './use-schedule-confirm-list'
 import type { UjatScheduleConfirmRow } from './types'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './list.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export function UjatInstitutionScheduleConfirmList({
   programId,
@@ -88,7 +88,7 @@ export function UjatInstitutionScheduleConfirmList({
       >
         {viewMode === 'table' ? (
           <div className="ujat-schedule-confirm-list__table-wrap">
-            <Table<UjatScheduleConfirmRow>
+            <CmsDataTable<UjatScheduleConfirmRow>
               rowKey="id"
               className="cms-data-table ujat-schedule-confirm-list__table"
               columns={columns}

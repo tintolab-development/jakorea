@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
@@ -14,6 +14,7 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useProgramLectureReports } from '@/features/program/general/hooks/use-program-lecture-reports'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   downloadGeneralProgramLectureReportFiles,
   downloadGeneralProgramLectureReports,
@@ -337,7 +338,7 @@ export function ParticipatingInstructorLectureReportsSection({
         </div>
       </div>
       <div className="participating-institutions-section__table-wrap">
-        <Table<ParticipatingInstructorLectureReportRow>
+        <CmsDataTable<ParticipatingInstructorLectureReportRow>
           className="participating-institutions-section__table cms-data-table"
           rowKey="id"
           size="middle"

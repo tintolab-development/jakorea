@@ -5,9 +5,10 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { CmsButton, FilterTableLayout } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
@@ -627,7 +628,7 @@ export function ParticipatingInstitutionsSection({
       >
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
-            <Table<ParticipatingSchoolRow>
+            <CmsDataTable<ParticipatingSchoolRow>
               className="cms-data-table participating-institutions-section__table participating-institutions-section__table--textbook-dropdown"
               rowKey="id"
               size="middle"

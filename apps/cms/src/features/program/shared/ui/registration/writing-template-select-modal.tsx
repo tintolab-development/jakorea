@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { SearchOutlined } from '@ant-design/icons'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput } from '@/shared/ui'
 import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
@@ -14,6 +13,7 @@ import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import './writing-template-select-modal.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const PAGE_SIZE = 5
 const PICKER_Z_INDEX = 1200
@@ -202,7 +202,7 @@ export function WritingTemplateSelectModal({
             <>
               <div className="writing-template-select-modal__table-section">
                 <p className="writing-template-select-modal__count">총 {filtered.length}건</p>
-                <Table
+                <CmsDataTable
                   className="cms-data-table cms-data-table--skip-auto-no-col writing-template-select-modal__table"
                   columns={columns}
                   dataSource={paged}

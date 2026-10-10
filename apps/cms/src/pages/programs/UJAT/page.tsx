@@ -4,11 +4,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   UJAT_APPLICANT_ID_PARAM,
   UJAT_EDU_INST_ID_PARAM,
@@ -519,7 +519,7 @@ function UjatProgramListPageContent() {
           data: filteredRows,
         }}
       >
-        <Table<Program>
+        <CmsDataTable<Program>
           className="cms-data-table"
           rowKey="id"
           loading={loading && filteredRows.length === 0}

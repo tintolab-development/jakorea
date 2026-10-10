@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   STUDENT_GENDER_LABELS,
   type SchoolDetailAttendanceStudentRow,
@@ -144,7 +144,7 @@ export function SchoolDetailAttendanceTable({
   )
 
   return (
-    <Table<SchoolDetailAttendanceStudentRow & { no: number }>
+    <CmsDataTable<SchoolDetailAttendanceStudentRow & { no: number }>
       rowKey="id"
       className="cms-data-table school-detail-attendance-table"
       columns={columns}

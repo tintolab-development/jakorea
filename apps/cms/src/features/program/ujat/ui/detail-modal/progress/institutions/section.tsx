@@ -1,5 +1,4 @@
 import { useEffect, useMemo, type MouseEvent } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
@@ -12,6 +11,7 @@ import { useUjatEducationProgressInstitutions } from './use-list'
 import type { UjatEducationProgressInstitutionRow } from './types'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export function UjatEducationProgressInstitutionsSection({
   programId,
@@ -103,7 +103,7 @@ export function UjatEducationProgressInstitutionsSection({
             ref={tableWrapRef}
             className="ujat-education-progress-institutions__table-wrap"
           >
-            <Table<UjatEducationProgressInstitutionRow>
+            <CmsDataTable<UjatEducationProgressInstitutionRow>
               rowKey="id"
               className="cms-data-table ujat-education-progress-institutions__table clickable-table"
               columns={columns}

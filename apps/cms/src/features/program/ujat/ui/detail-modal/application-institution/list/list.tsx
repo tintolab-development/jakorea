@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
@@ -14,6 +14,7 @@ import { UjatInstitutionApplicationActionModal } from './action-modal'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './list.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export function UjatInstitutionApplicationList({
   onOpenDetail,
@@ -149,7 +150,7 @@ export function UjatInstitutionApplicationList({
       >
         {viewMode === 'table' ? (
           <div className="ujat-institution-application-list__table-wrap">
-            <Table<UjatInstitutionApplicationRow>
+            <CmsDataTable<UjatInstitutionApplicationRow>
               rowKey="id"
               className="cms-data-table ujat-institution-application-list__table"
               columns={columns}

@@ -5,9 +5,9 @@
 
 import { useState, useEffect, useMemo, useCallback, type Key } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   ParticipatingInstructorRow,
   ParticipatingInstructorCareerDetail,
@@ -1526,7 +1526,7 @@ export function ParticipatingInstructorFullpageView({
                     배정된 학교가 없습니다.
                   </div>
                 ) : (
-                  <Table<InstructorAssignedSchoolRow>
+                  <CmsDataTable<InstructorAssignedSchoolRow>
                     className="participating-institutions-section__table cms-data-table"
                     rowKey="id"
                     size="middle"
@@ -1561,7 +1561,7 @@ export function ParticipatingInstructorFullpageView({
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap participating-instructor-fullpage-view__waiting-table-scroll">
-                <Table<InstructorWaitingSchoolRow>
+                <CmsDataTable<InstructorWaitingSchoolRow>
                   className="participating-institutions-section__table cms-data-table"
                   rowKey="id"
                   size="middle"
