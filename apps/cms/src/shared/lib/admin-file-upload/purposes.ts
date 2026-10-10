@@ -63,12 +63,25 @@ export function buildAdminFileOwner(
   }
 }
 
+const XLSX_STANDARD_MIME =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+/** 브라우저가 `.xlsx`에 붙이는 확인된 별칭만. 그 외 명시 MIME은 덮지 않는다. */
+const XLSX_MIME_ALIASES = new Set(['application/haansoftxlsx'])
+
+function fileExtension(fileName: string): string {
+  const name = fileName.trim().toLowerCase()
+  return name.includes('.') ? name.slice(name.lastIndexOf('.') + 1) : ''
+}
+
 /** 브라우저 `file.type`이 비어 있는 HWP 등 — 확장자로 허용 MIME 추정 */
 export function resolveUploadContentType(file: File): string {
   const typed = file.type.trim()
+  const ext = fileExtension(file.name)
+  if (ext === 'xlsx' && XLSX_MIME_ALIASES.has(typed.toLowerCase())) {
+    return XLSX_STANDARD_MIME
+  }
   if (typed && typed !== 'application/octet-stream') return typed
-  const name = file.name.trim().toLowerCase()
-  const ext = name.includes('.') ? name.slice(name.lastIndexOf('.') + 1) : ''
   const byExt: Record<string, string> = {
     pdf: 'application/pdf',
     txt: 'text/plain',
