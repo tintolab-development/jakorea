@@ -55,6 +55,7 @@ import {
   mapRequestedSchedulesToSessions,
 } from '@/features/program/1c-1s/lib/map-requested-schedules'
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
+import { supplementApplicantInstructorBasicInfoFromApplicationDetail } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import { mapSessionProgressToLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
 import {
   instructorCmsProfileToApplicantInstructorRowPartial,
@@ -252,6 +253,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   const teacherPhone = dto.teacherPhone?.trim()
   const teacherEmail = dto.teacherEmail?.trim()
   const detailFields = readOrganizationApplicationDetailExtendFields(dto)
+  const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
   return {
     ...base,
     id: toId(dto.id) || base.id,
@@ -271,6 +273,11 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
       formatOrganizationResultNotificationSentAt(readResultNotificationSentAt(dto)) ??
       base.approvalNotificationSentAt,
     availableActions: dto.availableActions ?? base.availableActions,
+    ...(requestedScheduleMemo
+      ? { desiredEducationPeriod: requestedScheduleMemo }
+      : base.desiredEducationPeriod
+        ? { desiredEducationPeriod: base.desiredEducationPeriod }
+        : {}),
     detail: {
       ...base.detail,
       ...detailFields,
@@ -362,6 +369,7 @@ export function softMergeOrganizationApplicationDetailOntoRow(
   const requestedGrade = formatApplicantGradeLabel(dto.requestedGrade)
   const rejectReason = dto.rejectReason?.trim()
   const detailFields = readOrganizationApplicationDetailExtendFields(dto)
+  const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
 
   return {
     ...base,
@@ -374,6 +382,9 @@ export function softMergeOrganizationApplicationDetailOntoRow(
       formatOrganizationResultNotificationSentAt(readResultNotificationSentAt(dto)) ??
       base.approvalNotificationSentAt,
     availableActions: dto.availableActions ?? base.availableActions,
+    ...(requestedScheduleMemo && !base.desiredEducationPeriod?.trim()
+      ? { desiredEducationPeriod: requestedScheduleMemo }
+      : {}),
     detail: {
       ...base.detail,
       ...detailFields,
@@ -464,22 +475,33 @@ export function mapInstructorApplicationDetailToApplicantRow(
 ): ApplicantInstructorRow {
   const preferredScheduleSlots =
     dto.availableScheduleSlots
-      ?.map(slot => {
+      ?.map((slot, index) => {
         const scheduleId = slot.scheduleId
         if (scheduleId == null || !Number.isFinite(scheduleId)) return null
+        const periodLabel = slot.label?.trim()
+        const startAt = slot.startAt?.trim()
+        const slotKey = startAt ? `${scheduleId}:${startAt}` : `${scheduleId}:${index}`
         return {
-          slotKey: String(scheduleId),
+          slotKey,
           assignable: slot.assignable !== false,
-          ...(slot.startAt ? { startAt: slot.startAt } : {}),
-          ...(slot.endAt ? { endAt: slot.endAt } : {}),
+          ...(startAt ? { startAt } : {}),
+          ...(slot.endAt?.trim() ? { endAt: slot.endAt.trim() } : {}),
+          ...(periodLabel ? { label: periodLabel } : {}),
         }
       })
       .filter(
         (
           slot
-        ): slot is { slotKey: string; assignable: boolean; startAt?: string; endAt?: string } =>
-          slot != null
+        ): slot is {
+          slotKey: string
+          assignable: boolean
+          startAt?: string
+          endAt?: string
+          label?: string
+        } => slot != null
       ) ?? base.preferredScheduleSlots
+
+  const basicInfoSupplement = supplementApplicantInstructorBasicInfoFromApplicationDetail(dto, base)
 
   return {
     ...base,
@@ -505,7 +527,10 @@ export function mapInstructorApplicationDetailToApplicantRow(
         .filter(Boolean)
         .join(' ') || base.address,
     appliedAt: dto.submittedAt ?? base.appliedAt,
-    affiliation: dto.affiliation?.trim() || base.affiliation,
+    affiliation: basicInfoSupplement.affiliation,
+    bankName: basicInfoSupplement.bankName,
+    accountNumber: basicInfoSupplement.accountNumber,
+    accountHolder: basicInfoSupplement.accountHolder,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade) ?? base.evaluationGrade,
     instructorFeeGradeLabel:
@@ -529,12 +554,8 @@ export function mapInstructorApplicationDetailToApplicantRow(
               : (base.lectureFeeAmount ?? '')
           ) ?? base.lectureFeeBasisDisplay)
         : base.lectureFeeBasisDisplay,
-    businessIncomeEarnerStatus:
-      dto.businessIncomeEarnerStatus?.trim() || base.businessIncomeEarnerStatus,
-    affiliationOrganizationId:
-      dto.affiliationOrganizationId !== undefined
-        ? dto.affiliationOrganizationId
-        : base.affiliationOrganizationId,
+    businessIncomeEarnerStatus: basicInfoSupplement.businessIncomeEarnerStatus,
+    affiliationOrganizationId: basicInfoSupplement.affiliationOrganizationId,
     instructorMemberProfile:
       mapInstructorMemberProfileFromDetail(dto) ?? base.instructorMemberProfile,
     affiliationEmploymentStatus:

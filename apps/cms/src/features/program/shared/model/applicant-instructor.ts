@@ -137,6 +137,8 @@ export interface ApplicantInstructorRow {
     assignable: boolean
     startAt?: string
     endAt?: string
+    /** PERIOD 교육 예정일 구간 라벨 — 있으면 표시·배정 UI에서 우선 */
+    label?: string | null
   }>
   /** 승인 완료 시 배정된 학교 ID (결재 내역 배정 학교 표시용) */
   assignedSchoolId?: string

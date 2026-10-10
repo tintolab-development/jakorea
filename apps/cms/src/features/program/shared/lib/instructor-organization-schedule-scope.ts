@@ -16,6 +16,12 @@ import {
 export const INSTRUCTOR_ORGANIZATION_SCHEDULE_SCOPE_INVALID =
   'INSTRUCTOR_ORGANIZATION_SCHEDULE_SCOPE_INVALID'
 
+export const INSTRUCTOR_ORGANIZATION_CONTEXT_REQUIRED =
+  'INSTRUCTOR_ORGANIZATION_CONTEXT_REQUIRED'
+
+export const ORGANIZATION_CONTEXT_GUIDE =
+  '같은 일정에 여러 기관이 있어 강사를 배정할 기관을 선택해 주세요.'
+
 /**
  * 409 fallback — 서버 message가 없을 때만 사용. OSA 선배정 UI로 유도하지 않는다.
  * @see general-instructor-approve-preferred-schedule-scope-frontend-handoff-2026-10-09.md
@@ -38,4 +44,29 @@ export function formatInstructorOrganizationScheduleScopeMessage(error: unknown)
     fallback: ORGANIZATION_SCHEDULE_SCOPE_GUIDE,
   }).trim()
   return serverMessage || ORGANIZATION_SCHEDULE_SCOPE_GUIDE
+}
+
+export function formatInstructorOrganizationContextRequiredMessage(
+  error: unknown
+): string | null {
+  if (getApiErrorCode(error) !== INSTRUCTOR_ORGANIZATION_CONTEXT_REQUIRED) return null
+  const data =
+    error && typeof error === 'object' && 'response' in error
+      ? (error as { response?: { data?: unknown } }).response?.data
+      : undefined
+  const serverMessage = extractApiErrorMessage(data, {
+    httpStatus: getApiErrorHttpStatus(error),
+    fallback: ORGANIZATION_CONTEXT_GUIDE,
+  }).trim()
+  return serverMessage || ORGANIZATION_CONTEXT_GUIDE
+}
+
+/** 강사 승인·배정 API 409 — 기관-일정 스코프·기관 선택 필수 */
+export function formatInstructorOrganizationApprovalErrorMessage(
+  error: unknown
+): string | null {
+  return (
+    formatInstructorOrganizationScheduleScopeMessage(error) ??
+    formatInstructorOrganizationContextRequiredMessage(error)
+  )
 }

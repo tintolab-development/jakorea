@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatInstructorOrganizationContextRequiredMessage,
   formatInstructorOrganizationScheduleScopeMessage,
+  INSTRUCTOR_ORGANIZATION_CONTEXT_REQUIRED,
   INSTRUCTOR_ORGANIZATION_SCHEDULE_SCOPE_INVALID,
+  ORGANIZATION_CONTEXT_GUIDE,
 } from './instructor-organization-schedule-scope'
 
 function scopeError(code = INSTRUCTOR_ORGANIZATION_SCHEDULE_SCOPE_INVALID) {
@@ -34,5 +37,25 @@ describe('formatInstructorOrganizationScheduleScopeMessage', () => {
     expect(
       formatInstructorOrganizationScheduleScopeMessage(scopeError('INSTRUCTOR_ASSIGNMENT_CONFLICT'))
     ).toBeNull()
+  })
+})
+
+describe('formatInstructorOrganizationContextRequiredMessage', () => {
+  it('INSTRUCTOR_ORGANIZATION_CONTEXT_REQUIRED면 안내 문구를 반환한다', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          error: {
+            code: INSTRUCTOR_ORGANIZATION_CONTEXT_REQUIRED,
+            message: ORGANIZATION_CONTEXT_GUIDE,
+          },
+        },
+      },
+    }
+    expect(formatInstructorOrganizationContextRequiredMessage(error)).toBe(
+      ORGANIZATION_CONTEXT_GUIDE
+    )
   })
 })

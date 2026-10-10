@@ -51,6 +51,23 @@ export type InstructorLectureAssignConfirmPayload = {
   assignments: InstructorLectureAssignItem[]
 }
 
+function resolveAvailableScheduleSlotsEmptyText(params: {
+  loading: boolean
+  error: boolean
+  applicationStatus?: string
+  submittedAt?: string | null
+  instructorSubmittedScheduleHint: boolean
+}): string {
+  if (params.loading) return '배정 가능한 일정을 불러오는 중입니다.'
+  if (params.error) return '배정 가능한 일정을 불러오지 못했습니다. 다시 시도해 주세요.'
+  const submitted =
+    Boolean(params.submittedAt?.trim()) ||
+    params.applicationStatus === 'SUBMITTED' ||
+    params.instructorSubmittedScheduleHint
+  if (!submitted) return '강사가 강의 가능 일정을 제출하지 않았습니다.'
+  return '제출된 일정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
+}
+
 export function useInstructorLectureAssignModal(params: {
   open: boolean
   variant?: InstructorLectureAssignModalVariant
@@ -126,52 +143,89 @@ export function useInstructorLectureAssignModal(params: {
   )
 
   const instructorApplicationId = instructor.id.trim()
-  const individualRemote =
-    isIndividual && organizationRemoteEnabled && Number.isFinite(Number(instructorApplicationId))
+  const useRemoteInstructorDetail =
+    organizationRemoteEnabled &&
+    open &&
+    Boolean(instructorApplicationId) &&
+    Number.isFinite(Number(instructorApplicationId))
 
   const instructorDetailQuery = useQuery({
     queryKey: generalApplicationsQueryKeys.instructorDetail(instructorApplicationId),
     queryFn: () => fetchInstructorApplicationDetailRemote(instructorApplicationId),
-    enabled: open && individualRemote && Boolean(instructorApplicationId),
+    enabled: useRemoteInstructorDetail,
     staleTime: 30_000,
     retry: false,
   })
 
-  const individualSlots = useMemo(() => {
-    if (individualRemote) {
-      return buildIndividualLectureAssignSlotsFromScheduleSlots(
-        instructorDetailQuery.data?.availableScheduleSlots ?? [],
-        {
-          schoolName:
-            individualProgram?.mainTitle?.trim() ||
-            individualProgram?.title?.trim() ||
-            '개인 프로그램',
-          allInstructors,
-          excludeInstructorId: instructor.id,
-        }
-      )
-    }
-    if (!isIndividual || !individualProgram) return []
+  const programDisplayName =
+    program?.mainTitle?.trim() ||
+    program?.title?.trim() ||
+    (isIndividual ? '개인 프로그램' : '프로그램')
+
+  const detailScheduleSlots = useMemo(() => {
+    if (!useRemoteInstructorDetail || !instructorDetailQuery.isSuccess) return []
+    return buildIndividualLectureAssignSlotsFromScheduleSlots(
+      instructorDetailQuery.data?.availableScheduleSlots ?? [],
+      {
+        schoolName: programDisplayName,
+        allInstructors,
+        excludeInstructorId: instructor.id,
+      }
+    )
+  }, [
+    useRemoteInstructorDetail,
+    instructorDetailQuery.isSuccess,
+    instructorDetailQuery.data,
+    programDisplayName,
+    allInstructors,
+    instructor.id,
+  ])
+
+  const useAvailableScheduleSlotsUi =
+    useRemoteInstructorDetail && instructorDetailQuery.isSuccess
+
+  const legacyIndividualSlots = useMemo(() => {
+    if (!isIndividual || !individualProgram || useRemoteInstructorDetail) return []
     return getIndividualLectureAssignSlots(
       individualProgram,
       instructor,
       allInstructors,
       instructor.id
     )
+  }, [isIndividual, individualProgram, useRemoteInstructorDetail, instructor, allInstructors])
+
+  const availableSlots = useMemo(() => {
+    if (useAvailableScheduleSlotsUi) return detailScheduleSlots
+    if (isIndividual) return legacyIndividualSlots
+    return slotsForDay
   }, [
-    individualRemote,
-    instructorDetailQuery.data,
+    useAvailableScheduleSlotsUi,
+    detailScheduleSlots,
     isIndividual,
-    individualProgram,
-    instructor,
-    allInstructors,
+    legacyIndividualSlots,
+    slotsForDay,
   ])
 
-  const individualSlotsLoading = individualRemote && instructorDetailQuery.isPending
-  const individualSlotsError = individualRemote && instructorDetailQuery.isError
+  const detailSlotsLoading = useRemoteInstructorDetail && instructorDetailQuery.isPending
+  const detailSlotsError = useRemoteInstructorDetail && instructorDetailQuery.isError
+
+  const instructorSubmittedScheduleHint =
+    (instructor.preferredScheduleSlots?.length ?? 0) > 0 ||
+    Boolean(instructorDetailQuery.data?.availableScheduleMemo?.trim())
+
+  const scheduleSlotsEmptyText = resolveAvailableScheduleSlotsEmptyText({
+    loading: detailSlotsLoading,
+    error: detailSlotsError,
+    applicationStatus: instructorDetailQuery.data?.applicationStatus,
+    submittedAt: instructorDetailQuery.data?.submittedAt,
+    instructorSubmittedScheduleHint,
+  })
 
   const singleRemoteSlot =
-    individualRemote && individualSlots.length === 1 ? individualSlots[0] : undefined
+    useAvailableScheduleSlotsUi && detailScheduleSlots.length === 1
+      ? detailScheduleSlots[0]
+      : undefined
+
   useEffect(() => {
     if (!open || !singleRemoteSlot) return
     setAssignedItems(prev =>
@@ -196,13 +250,15 @@ export function useInstructorLectureAssignModal(params: {
       if (slot.disabled) return
       setAssignedItems(prev => {
         if (prev.some(item => item.slotKey === slot.key)) return prev
-        const nextItem = isIndividual
+        const usePeriodStyleItem =
+          isIndividual || useAvailableScheduleSlotsUi || Boolean(slot.label?.trim())
+        const nextItem = usePeriodStyleItem
           ? toIndividualLectureAssignItem(slot)
           : toLectureAssignItem(slot)
         return [...prev, nextItem]
       })
     },
-    [isIndividual]
+    [isIndividual, useAvailableScheduleSlotsUi]
   )
 
   const handleRemoveAssignment = useCallback((slotKey: string) => {
@@ -216,6 +272,22 @@ export function useInstructorLectureAssignModal(params: {
       ? '배정 가능한 기관·일정을 불러오는 중입니다.'
       : '이 날짜에 배정 가능한 기관이 없습니다.'
 
+  const approvedOrganizationCount = organizationApplicationsQuery.data?.length ?? 0
+  const showNoApprovedOrganizationBanner =
+    !isIndividual &&
+    organizationRemoteEnabled &&
+    organizationApplicationsQuery.isSuccess &&
+    approvedOrganizationCount === 0 &&
+    useAvailableScheduleSlotsUi
+
+  const useSlotListLayout = isIndividual || useAvailableScheduleSlotsUi
+
+  const slotsEmptyText = useAvailableScheduleSlotsUi
+    ? scheduleSlotsEmptyText
+    : isIndividual
+      ? '등록된 교육 일정이 없습니다.'
+      : organizationSlotsEmptyText
+
   return {
     variant,
     isIndividual,
@@ -225,10 +297,14 @@ export function useInstructorLectureAssignModal(params: {
     selectedDate,
     selectedDateKey,
     slotsForDay,
-    individualSlots,
-    individualRemote,
-    individualSlotsLoading,
-    individualSlotsError,
+    availableSlots,
+    useAvailableScheduleSlotsUi,
+    useSlotListLayout,
+    detailSlotsLoading,
+    detailSlotsError,
+    scheduleSlotsEmptyText,
+    slotsEmptyText,
+    showNoApprovedOrganizationBanner,
     organizationSlotsEmptyText,
     preferredDateKeys,
     assignedDateKeys,
