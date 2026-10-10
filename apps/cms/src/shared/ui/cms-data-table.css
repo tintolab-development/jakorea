@@ -1,6 +1,8 @@
 /**
  * CMS 모달·풀페이지 섹션·대시보드 위젯용 Ant Design Table 스코프.
  * 목록 페이지(.program-list-card / .member-table-card)는 program-list.css 유지.
+ *
+ * 표 마크업·empty 기본값: {@link CmsDataTable} (`shared/ui/cms-data-table.tsx`)
  */
 
 .cms-data-table {
