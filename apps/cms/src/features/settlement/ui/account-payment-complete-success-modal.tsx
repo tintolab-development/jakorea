@@ -1,8 +1,11 @@
 /**
- * 정산 관리 > 계좌 지급 확인 — 일괄「계좌 지급 완료」처리 후 완료 안내 모달
+ * 정산 관리 > 계좌 지급 확인 —「계좌 지급 완료」처리 후 완료 안내 모달
+ * - 단건: 확인만
+ * - 다건: 닫기 + 대량이체 양식 발급
  */
 
 import type { ModalProps } from 'antd'
+import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
@@ -27,48 +30,116 @@ const ACCOUNT_PAYMENT_COMPLETE_SUCCESS_MODAL_STYLES: NonNullable<ModalProps['sty
   },
 }
 
+export type AccountPaymentCompleteSuccessContext =
+  | {
+      kind: 'single'
+      recipientName: string
+    }
+  | {
+      kind: 'bulk'
+      recipientName: string
+      otherRecipientCount: number
+      /** 일괄 지급 완료 직후 대량이체 양식 — 이번에 처리한 건만 */
+      completedRows: AccountPaymentRow[]
+    }
+
+function mapRowsToAccountPaid(rows: AccountPaymentRow[]): AccountPaymentRow[] {
+  return rows.map(row => ({ ...row, accountPaymentStatus: 'account_paid' }))
+}
+
+export function buildAccountPaymentCompleteSuccessContext(
+  rows: AccountPaymentRow[]
+): AccountPaymentCompleteSuccessContext | null {
+  if (rows.length === 0) return null
+  const recipientName = rows[0].instructorName?.trim() || '신청자'
+  if (rows.length === 1) {
+    return { kind: 'single', recipientName }
+  }
+  return {
+    kind: 'bulk',
+    recipientName,
+    otherRecipientCount: rows.length - 1,
+    completedRows: mapRowsToAccountPaid(rows),
+  }
+}
+
 export interface AccountPaymentCompleteSuccessModalProps {
   open: boolean
+  context: AccountPaymentCompleteSuccessContext | null
   onCancel: () => void
-  /** 성공 모달을 닫은 뒤 대량이체 미리보기 등 기존 동작 */
+  /** 다건 완료 모달 — 대량이체 양식 발급 */
   onIssueBulkTransfer: () => void
 }
 
 export function AccountPaymentCompleteSuccessModal({
   open,
+  context,
   onCancel,
   onIssueBulkTransfer,
 }: AccountPaymentCompleteSuccessModalProps) {
+  const canShow = open && context !== null
+  const isBulk = context?.kind === 'bulk'
+
+  const title = isBulk ? '계좌 지급 일괄 확인 완료' : '계좌 지급 확인 완료'
+
+  const modalClassName = [
+    'account-payment-complete-success-modal',
+    isBulk ? 'account-payment-complete-success-modal--bulk' : 'account-payment-complete-success-modal--single',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <ContentModal
-      open={open}
+      open={canShow}
       onCancel={onCancel}
-      title="계좌 지급 확인 완료"
+      title={title}
       width={600}
-      className="account-payment-complete-success-modal"
+      className={modalClassName}
       modalStyles={ACCOUNT_PAYMENT_COMPLETE_SUCCESS_MODAL_STYLES}
       footer={
-        <>
+        isBulk ? (
+          <>
+            <CmsButton variant="secondary" size="large" onClick={onCancel}>
+              닫기
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="large"
+              width="auto"
+              className="cms-button--footer-auto cms-button--no-label-ellipsis"
+              icon={<ButtonDownloadIcon />}
+              onClick={onIssueBulkTransfer}
+            >
+              대량이체 양식 발급
+            </CmsButton>
+          </>
+        ) : (
           <CmsButton variant="secondary" size="large" onClick={onCancel}>
-            취소
+            확인
           </CmsButton>
-          <CmsButton
-            variant="primary"
-            size="large"
-            width="auto"
-            className="cms-button--footer-auto cms-button--no-label-ellipsis"
-            style={{ minWidth: 180 }}
-            icon={<ButtonDownloadIcon />}
-            onClick={onIssueBulkTransfer}
-          >
-            대량이체 양식 발급
-          </CmsButton>
-        </>
+        )
       }
     >
-      <p className="account-payment-complete-success-modal__message">
-        선택하신 모든 항목에 대한 강의비 계좌 지급 처리가 완료 되었습니다.
-      </p>
+      {context ? (
+        <p className="account-payment-complete-success-modal__message">
+          {context.kind === 'bulk' ? (
+            <>
+              <strong className="account-payment-complete-success-modal__name">
+                [{context.recipientName}]
+              </strong>
+              님 외 {context.otherRecipientCount}명의 강의비 계좌 지급 처리가 완료되었습니다.
+            </>
+          ) : (
+            <>
+              <strong className="account-payment-complete-success-modal__name">
+                [{context.recipientName}]
+              </strong>
+              님의 강의비 계좌 지급 처리가 완료되었습니다.
+            </>
+          )}
+        </p>
+      ) : null}
     </ContentModal>
   )
 }
