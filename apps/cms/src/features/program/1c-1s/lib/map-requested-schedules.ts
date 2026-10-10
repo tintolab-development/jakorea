@@ -41,20 +41,25 @@ function isClockTimeRequestedSchedule(
   return schedule.startPeriod == null
 }
 
+type RequestedScheduleRow = RequestedScheduleWithResolved &
+  Pick<RequestedScheduleResponse, 'label' | 'periodStartDate' | 'periodEndDate'>
+
 function mapClockTimeRequestedScheduleToSession(
-  schedule: RequestedScheduleWithResolved,
+  schedule: RequestedScheduleRow,
   order: number
 ): ParticipatingSchoolSession {
+  const periodLabel = schedule.label?.trim()
   const { date, dayOfWeek } = formatRequestedDate(schedule.requestedDate)
   const firstTime = schedule.sessionTimes?.[0]
   const start = toClockLabel(firstTime?.startTime)
   const end = toClockLabel(firstTime?.endTime)
-  const timeRange = start && end ? `${start} ~ ${end}` : start ?? '종일'
+  const timeRange =
+    start && end ? `${start} ~ ${end}` : start ?? (periodLabel ? '' : '종일')
   const scheduleUnresolved =
     hasResolvedScheduleField(schedule) && schedule.resolvedScheduleId == null
   return {
     round: order,
-    date,
+    date: periodLabel || date,
     dayOfWeek,
     duration: '1차시',
     format: schedule.combinedClassYn ? '합반' : '단독',
@@ -66,6 +71,7 @@ function mapClockTimeRequestedScheduleToSession(
       ? (schedule.resolvedScheduleId ?? null)
       : undefined,
     scheduleUnresolved: scheduleUnresolved || undefined,
+    ...(periodLabel ? { scheduleLabel: periodLabel } : {}),
   }
 }
 
@@ -85,7 +91,7 @@ export function mapRequestedSchedulesToSessions(
   if (sorted.every(schedule => isClockTimeRequestedSchedule(schedule))) {
     return sorted.map((raw, index) =>
       mapClockTimeRequestedScheduleToSession(
-        raw as RequestedScheduleWithResolved,
+        raw as RequestedScheduleRow,
         raw.preferenceOrder ?? index + 1
       )
     )

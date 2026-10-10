@@ -63,12 +63,28 @@ export interface OrganizationApplicationDetailResponse {
   regionSigungu?: string;
   applicationReason?: string;
   otherRequests?: string;
-  computerInRoom?: string;
+  /**
+     * 강의 공간 내 컴퓨터 여부 스냅샷. Portal guidance(computer-in-room 등)에서 프로젝션. 없으면 null. form_response만 있고 컬럼이 비면 hydrate fallback 대상.
+     * @nullable
+     */
+  computerInRoom?: string | null;
   waitingRoomAvailable?: boolean;
-  waitingRoomLocation?: string;
+  /**
+     * 대기 장소 안내 스냅샷. Portal guidance(waiting-place 등)에서 프로젝션. 없으면 null.
+     * @nullable
+     */
+  waitingRoomLocation?: string | null;
   mealProvided?: boolean;
-  mealNotice?: string;
-  parkingInfo?: string;
+  /**
+     * 식사 가능 여부 및 안내 스냅샷. Portal guidance(meal 등)에서 프로젝션. 없으면 null.
+     * @nullable
+     */
+  mealNotice?: string | null;
+  /**
+     * 기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. 성범죄 조회서 요청은 detail 전용 컬럼 없음(form sex-offense 단락).
+     * @nullable
+     */
+  parkingInfo?: string | null;
   textbookGrade?: string;
   textbookKits?: number;
   textbookQuantity?: number;

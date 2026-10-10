@@ -634,6 +634,41 @@ describe('general-applications-adapters', () => {
     expect(row.rejectionReason).toBe('서류 미비')
   })
 
+  it('fills affiliation and settlement from instructorCmsProfile and settlement on detail', () => {
+    const base = mapInstructorApplicationToApplicantInstructorRow(
+      {
+        id: 1,
+        instructorMemberId: 9001,
+        programId: 186081,
+        instructorName: '이강사',
+        applicationStatus: 'SUBMITTED',
+      },
+      0,
+      '186081'
+    )
+    const row = mapInstructorApplicationDetailToApplicantRow(
+      {
+        id: 1,
+        instructorCmsProfile: {
+          affiliation: {
+            organizationNames: ['JA Korea 본부'],
+          },
+        },
+        settlement: {
+          bankName: '국민은행',
+          accountNumber: '123-456-7890',
+          accountHolder: '이강사',
+          businessIncome: false,
+        },
+      } as never,
+      base
+    )
+    expect(row.affiliation).toBe('JA Korea 본부')
+    expect(row.bankName).toBe('국민은행')
+    expect(row.accountNumber).toBe('123-456-7890')
+    expect(row.businessIncomeEarnerStatus).toBe('해당 없음')
+  })
+
   it('merges instructorCmsProfile resume onto instructor application detail', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
       {

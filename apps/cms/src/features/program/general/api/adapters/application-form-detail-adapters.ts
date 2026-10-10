@@ -34,11 +34,15 @@ export function hydrateInstructorApplicationRowFromForm(input: {
     map,
     'program-instructor-application-seed-available-schedule'
   )
+  const legacyScheduleSlotKey =
+    scheduleLabel && /^schedule:\d+(?::organization-application:\d+)?$/i.test(scheduleLabel)
+      ? scheduleLabel
+      : undefined
   const preferredScheduleSlots =
     input.row.preferredScheduleSlots && input.row.preferredScheduleSlots.length > 0
       ? input.row.preferredScheduleSlots
-      : scheduleLabel
-        ? [{ slotKey: scheduleLabel, assignable: true }]
+      : legacyScheduleSlotKey
+        ? [{ slotKey: legacyScheduleSlotKey, assignable: true }]
         : input.row.preferredScheduleSlots
 
   return {

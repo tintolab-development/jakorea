@@ -4,6 +4,12 @@ export const generalApplicationsQueryKeys = {
     [...generalApplicationsQueryKeys.all, 'organization', programId, status ?? 'all'] as const,
   organizationDetail: (applicationId: string) =>
     [...generalApplicationsQueryKeys.all, 'organization-detail', applicationId] as const,
+  organizationRequestedSchedules: (applicationId: string) =>
+    [
+      ...generalApplicationsQueryKeys.all,
+      'organization-requested-schedules',
+      applicationId,
+    ] as const,
   instructorList: (programId: string, status?: string | null) =>
     [...generalApplicationsQueryKeys.all, 'instructor', programId, status ?? 'all'] as const,
   instructorDetail: (applicationId: string) =>

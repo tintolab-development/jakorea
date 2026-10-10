@@ -98,9 +98,8 @@ function renderSlotChip(params: {
   const { slot, isSelected, isIndividual, onAdd } = params
 
   if (isIndividual) {
-    return (
+    const chip = (
       <InstructorAssignSessionSlotChip
-        key={slot.key}
         scheduleLabel={
           slot.label ?? formatIndividualLectureAssignTagLabel(dayjs(slot.dateKey), slot.timeRange)
         }
@@ -110,6 +109,14 @@ function renderSlotChip(params: {
         disabled={slot.disabled}
         onClick={onAdd}
       />
+    )
+    if (!slot.disabled) {
+      return <div key={slot.key}>{chip}</div>
+    }
+    return (
+      <span key={slot.key} title="배정할 수 없는 일정입니다.">
+        {chip}
+      </span>
     )
   }
 
@@ -158,12 +165,10 @@ export function InstructorLectureAssignModal({
     currentMonth,
     setCurrentMonth,
     selectedDate,
-    slotsForDay,
-    individualSlots,
-    individualRemote,
-    individualSlotsLoading,
-    individualSlotsError,
-    organizationSlotsEmptyText,
+    availableSlots,
+    useSlotListLayout,
+    slotsEmptyText,
+    showNoApprovedOrganizationBanner,
     preferredDateKeys,
     assignedDateKeys,
     assignedItems,
@@ -213,27 +218,19 @@ export function InstructorLectureAssignModal({
     ? `**[${instructor.instructorName}]** 강사님의 프로그램 참여를 승인하시려면 강의를 배정할 일정을 선택해 주세요.`
     : `**[${instructor.instructorName}]** 강사님의 프로그램 참여를 승인하시려면 강의를 배정할 기관 및 일정을 선택해 주세요.\n강의는 **동일한 날짜에 1개의 기관에만 배정 가능**합니다.`
 
-  const summaryLabel = isIndividual ? '배정된 일정' : '배정된 항목 수'
+  const summaryLabel = isIndividual || useSlotListLayout ? '배정된 일정' : '배정된 항목 수'
 
-  const visibleSlots = isIndividual ? individualSlots : slotsForDay
-
-  const individualEmptyText = individualSlotsLoading
-    ? '배정 가능한 일정을 불러오는 중입니다.'
-    : individualSlotsError
-      ? '배정 가능한 일정을 불러오지 못했습니다.'
-      : individualRemote
-        ? '배정 가능한 일정이 없습니다.'
-        : '등록된 교육 일정이 없습니다.'
+  const usePeriodSlotChip = isIndividual || useSlotListLayout
 
   return (
     <ContentModal
       open={open}
       onCancel={onCancel}
       title="강사 배정 안내"
-      width={isIndividual ? INDIVIDUAL_MODAL_WIDTH : 800}
+      width={useSlotListLayout ? INDIVIDUAL_MODAL_WIDTH : 800}
       className={[
         'instructor-lecture-assign-modal',
-        isIndividual ? 'instructor-lecture-assign-modal--individual' : '',
+        useSlotListLayout ? 'instructor-lecture-assign-modal--individual' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -252,7 +249,7 @@ export function InstructorLectureAssignModal({
               },
             }
       }
-      descriptionGap={isIndividual ? 'compact' : 'default'}
+      descriptionGap={useSlotListLayout ? 'compact' : 'default'}
       description={description}
       footer={
         <div className="instructor-lecture-assign-modal__footer">
@@ -275,12 +272,18 @@ export function InstructorLectureAssignModal({
         ref={scheduleTopRef}
         className={[
           'instructor-lecture-assign-modal__schedule-top',
-          isIndividual ? 'instructor-lecture-assign-modal__schedule-top--individual' : '',
+          useSlotListLayout ? 'instructor-lecture-assign-modal__schedule-top--individual' : '',
         ]
           .filter(Boolean)
           .join(' ')}
       >
-        {!isIndividual ? (
+        {showNoApprovedOrganizationBanner ? (
+          <p className="instructor-lecture-assign-modal__org-empty-notice" role="status">
+            승인된 참여기관이 없어 기관 단위 배정 일정을 표시할 수 없습니다. 강사가 선택한 가능
+            구간은 아래와 같습니다.
+          </p>
+        ) : null}
+        {!useSlotListLayout ? (
           <div ref={calendarWrapRef} className="instructor-lecture-assign-modal__calendar-panel">
             <UjatVolunteerInterviewAssignCalendarMini
               currentMonth={currentMonth}
@@ -298,23 +301,23 @@ export function InstructorLectureAssignModal({
         <div
           className={[
             'instructor-lecture-assign-modal__slots-panel',
-            isIndividual ? 'instructor-lecture-assign-modal__slots-panel--individual' : '',
+            useSlotListLayout ? 'instructor-lecture-assign-modal__slots-panel--individual' : '',
           ]
             .filter(Boolean)
             .join(' ')}
         >
           <div className="instructor-lecture-assign-modal__slots-list">
-            {visibleSlots.length === 0 ? (
+            {availableSlots.length === 0 ? (
               <div className="instructor-lecture-assign-modal__slots-empty" role="status">
-                {isIndividual ? individualEmptyText : organizationSlotsEmptyText}
+                {slotsEmptyText}
               </div>
             ) : (
-              visibleSlots.map(slot => {
+              availableSlots.map(slot => {
                 const isSelected = assignedItems.some(item => item.slotKey === slot.key)
                 return renderSlotChip({
                   slot,
                   isSelected,
-                  isIndividual,
+                  isIndividual: usePeriodSlotChip,
                   onAdd: () => handleAddSlot(slot),
                 })
               })

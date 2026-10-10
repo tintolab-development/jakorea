@@ -41,6 +41,12 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   ALREADY_APPLIED: '이미 제출한 신청이 있습니다.',
   PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE:
     '희망 교육일이 프로그램 교육 가능 기간을 벗어났습니다.',
+  OUTSIDE_EDUCATION_SCHEDULE_PERIODS:
+    '희망 교육일이 선택 가능한 교육 예정일 구간을 벗어났습니다.',
+  PREFERRED_SCHEDULE_EXCEEDS_MAX_SCHEDULE_COUNT:
+    '선택 가능한 희망 교육 일정 수를 초과했습니다.',
+  ORGANIZATION_REQUESTED_SCHEDULE_REQUIRED:
+    '진행 희망 교육 일정을 한 개 이상 선택해 주세요.',
   PREFERRED_SCHEDULE_EXCEEDS_MAX_SESSIONS_PER_DAY:
     '하루 최대 수업 시수를 초과했습니다.',
   VALIDATION_FAILED: '필수 항목을 모두 입력해 주세요.',
@@ -83,6 +89,9 @@ export function getProgramApplicationApiErrorMessage(
     }
     if (message.includes('stale or unavailable schedule')) {
       return '선택할 수 없는 교육 일정입니다. 일정을 다시 확인해 주세요.'
+    }
+    if (message.includes('outside the education schedule periods')) {
+      return '희망 교육일이 선택 가능한 교육 예정일 구간을 벗어났습니다.'
     }
     return message
   }

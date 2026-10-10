@@ -42,6 +42,14 @@ assert.ok(interview?.includes('15일'))
 assert.ok(interview?.includes('09시'))
 
 assert.equal(isOpaqueScheduleOptionToken('schedule:186626'), true)
+assert.equal(
+  isOpaqueScheduleOptionToken('schedule:186659:education-period:0'),
+  true,
+)
+assert.equal(
+  isOpaqueScheduleOptionToken('schedule:186659:organization-application:42:education-period:1'),
+  true,
+)
 assert.equal(isOpaqueScheduleOptionToken('line:0'), true)
 assert.equal(isOpaqueScheduleOptionToken('2026년 04월 20일(월) 9:30 ~ 12:20'), false)
 
@@ -72,5 +80,21 @@ const lineResolved = resolvePreferredEducationScheduleDisplayLabel({
   educationScheduleLines: ['첫째 날', '2026년 04월 20일(월) 9:30 ~ 12:20'],
 })
 assert.equal(lineResolved, '2026년 04월 20일(월) 9:30 ~ 12:20')
+
+const fromSelectedLabels = resolveApplicationContentFromAnswers({
+  'program-instructor-application-seed-available-schedule': {
+    selectedSlotIds: ['schedule:186659:education-period:0'],
+    selectedLabels: ['26년 10월 28일(수) ~ 26년 11월 12일(목)'],
+  },
+})
+assert.equal(
+  fromSelectedLabels.preferredEducationScheduleLabel,
+  '26년 10월 28일(수) ~ 26년 11월 12일(목)',
+)
+
+const multilineDisplay = resolveApplicationContentFromAnswers({
+  scheduleChoice: '26년 10월 28일(수) ~ 26년 11월 12일(목)\n26년 11월 25일(수) ~ 26년 12월 11일(금)',
+})
+assert.ok(multilineDisplay.preferredEducationScheduleLabel?.includes('11월 25일'))
 
 console.log('application-content-from-answers.selfcheck: ok')

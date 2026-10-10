@@ -71,6 +71,7 @@ import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/d
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
 import { toInstructorApplicationFeePolicy } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import { mapLectureAssignItemsToApprovalAssignments } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import {
   toFlatDecisionNotifyTiming,
   toNestedDecisionNotification,
@@ -1780,21 +1781,7 @@ export function ApplicantList({
           }
           const run = async () => {
             if (instructorRemoteEnabled) {
-              const remoteAssignments = assignments.flatMap((assignment, index) => {
-                const scheduleId = Number(assignment.slotKey)
-                const organizationApplicationId = Number(assignment.schoolId)
-                if (!Number.isFinite(scheduleId) || scheduleId < 1) return []
-                return [
-                  {
-                    scheduleId,
-                    ...(Number.isFinite(organizationApplicationId) &&
-                    organizationApplicationId > 0
-                      ? { organizationApplicationId }
-                      : {}),
-                    scheduleLead: index === 0,
-                  },
-                ]
-              })
+              const remoteAssignments = mapLectureAssignItemsToApprovalAssignments(assignments)
               if (useInstructorAssignFlow && remoteAssignments.length === 0) {
                 showAlert({
                   title: '강사 배정 필요',

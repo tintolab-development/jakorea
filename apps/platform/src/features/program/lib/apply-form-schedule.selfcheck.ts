@@ -9,8 +9,11 @@ import {
   countUniqueEducationScheduleCalendarDays,
   isInstitutionApplyScheduleChoiceParagraphId,
   readApplyScheduleInputMode,
+  buildEnabledDatesFromAllowedSchedulePeriods,
+  readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
+  shouldUseInstitutionAllowedSchedulePeriodDates,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyScheduleParagraph,
 } from './apply-form-schedule.ts'
@@ -192,5 +195,26 @@ const keepOriginalLineIndex = readInstitutionFixedScheduleChoiceItems(null, {
 })
 assert.ok(keepOriginalLineIndex)
 assert.equal(keepOriginalLineIndex![0]?.id, 'line:1')
+
+assert.equal(readInstitutionAllowedSchedulePeriods(null, null), null)
+
+const periods = readInstitutionAllowedSchedulePeriods(
+  {
+    allowedSchedulePeriods: [
+      { startDate: '2026-10-28', endDate: '2026-10-29' },
+      { startDate: '2026-11-11', endDate: '2026-11-12' },
+    ],
+  },
+  null,
+)
+assert.ok(periods)
+assert.equal(periods!.length, 2)
+assert.equal(shouldUseInstitutionAllowedSchedulePeriodDates(periods), true)
+assert.equal(shouldUseInstitutionAllowedSchedulePeriodDates([]), false)
+
+const enabled = buildEnabledDatesFromAllowedSchedulePeriods(periods!)
+assert.equal(enabled.has('2026-10-28'), true)
+assert.equal(enabled.has('2026-10-30'), false)
+assert.equal(enabled.has('2026-11-11'), true)
 
 console.log('apply-form-schedule.selfcheck: ok')

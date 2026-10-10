@@ -98,6 +98,11 @@ export interface ApplicantSchoolRow {
   /** 강의 회차 별 희망 교육 날짜 및 시간 (참여 기관과 동일 형식) */
   sessions?: ParticipatingSchoolSession[]
   /**
+   * 기관 신청 상세 — Admin `requested-schedules` SSOT 동기화 상태.
+   * OAS `OrganizationApplicationDetailResponse.sessions`와 혼동하지 않는다.
+   */
+  requestedSchedulesSyncState?: 'loading' | 'ready'
+  /**
    * 교육받은 교사 희망 교육 일정 structured blocks.
    * remote SoT — desiredEducationScheduleMemo를 파싱해 채우지 않음.
    */

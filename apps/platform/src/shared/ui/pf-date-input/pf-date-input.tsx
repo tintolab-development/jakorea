@@ -67,6 +67,10 @@ export type PFDateInputProps = {
    * `null`/`undefined`면 제한하지 않는다. 빈 문자열로 바꾸지 말 것.
    */
   maxDate?: string | null
+  /**
+   * 지정 시 이 날짜만 선택 가능 (`YYYY-MM-DD` set). min/max와 함께 쓸 수 있다.
+   */
+  enabledDates?: ReadonlySet<string> | null
   className?: string
   style?: CSSProperties
   id?: string
@@ -186,6 +190,7 @@ export function PFDateInput({
   messageStatus = 'neutral',
   minDate = null,
   maxDate = null,
+  enabledDates = null,
   className,
   style,
   id,
@@ -376,6 +381,7 @@ export function PFDateInput({
         selectedDate={hasValue ? currentValue : null}
         minDate={minDate}
         maxDate={maxDate}
+        enabledDates={enabledDates ?? undefined}
         initialViewMonth={
           selectedDate
             ? new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
