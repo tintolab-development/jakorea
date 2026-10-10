@@ -4,6 +4,7 @@ import { formatParticipatingSchoolSessionLine } from '@/features/program/general
 import type { ActivityWithdrawScheduleOption } from '@/features/program/shared/lib/activity-withdraw-schedule'
 import type { GeneralVolunteerApplicationType } from '@/features/program/general/lib/volunteer-screening-constants'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 
 export type ParticipatingVolunteerDetailRow = ParticipatingVolunteerRow
 
@@ -70,7 +71,7 @@ export function participatingVolunteerToApplicantView(
     interviewAssignmentStatus: 'assigned',
     programId: '',
     englishName: volunteer.volunteerName,
-    gender: volunteer.gender ?? '-',
+    gender: toDisplayGender(volunteer.gender),
     birthDate: volunteer.birthDate ?? '-',
     age: volunteer.age ?? 0,
     universityName: '-',

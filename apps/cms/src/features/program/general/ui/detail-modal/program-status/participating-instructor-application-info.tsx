@@ -23,6 +23,7 @@ import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { resolveInstructorAffiliationEmploymentStatus } from '@/features/program/general/lib/instructor-affiliation-employment-display'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import {
   ProgramDetailTdSegmentWrap,
   withProgramDetailTdDivider,
@@ -108,7 +109,7 @@ export function ParticipatingInstructorApplicationInfo({
     )
 
   const genderBirthDisplay = withProgramDetailTdDivider([
-    instructor.gender ?? '-',
+    toDisplayGender(instructor.gender),
     formatBirthDateAndAge(instructor.birthDate, instructor.age),
   ])
 

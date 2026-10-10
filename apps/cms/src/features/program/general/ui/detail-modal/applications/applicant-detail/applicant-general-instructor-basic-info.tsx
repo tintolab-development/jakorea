@@ -15,6 +15,7 @@ import {
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { ApplicantInstructorEditDraft } from '@/features/program/general/lib/applicant-instructor-detail-edit'
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import {
@@ -94,7 +95,7 @@ export function ApplicantGeneralInstructorBasicInfo({
     )
 
   const genderBirthDisplay = withProgramDetailTdDivider([
-    instructor.gender ?? '-',
+    toDisplayGender(instructor.gender),
     formatBirthDateAndAge(instructor.birthDate, instructor.age),
   ])
 

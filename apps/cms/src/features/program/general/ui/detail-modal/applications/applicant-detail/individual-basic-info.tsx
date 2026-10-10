@@ -12,6 +12,7 @@ import type {
 } from '@/features/program/general/model/individual-applicant'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
 import type { ApplicantIndividualEditDraft } from '@/features/program/general/lib/applicant-individual-detail-edit'
@@ -117,7 +118,7 @@ function IndividualApplicantScreeningBasicInfo({
     )
 
   const genderBirthDisplay = withProgramDetailTdDivider([
-    detail?.gender ?? '-',
+    toDisplayGender(detail?.gender),
     formatBirthDateAndAge(detail?.birthDate, detail?.age),
   ])
 
@@ -458,7 +459,7 @@ export function ApplicantGeneralIndividualBasicInfo({
     )
 
   const genderBirthDisplay = withProgramDetailTdDivider([
-    detail?.gender ?? '-',
+    toDisplayGender(detail?.gender),
     formatBirthDateAndAge(detail?.birthDate, detail?.age),
   ])
 

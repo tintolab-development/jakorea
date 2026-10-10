@@ -1,4 +1,5 @@
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { ProgramAttendanceStatusTextKind } from '@/features/program/shared/ui/program-attendance-status-text'
 import {
   PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL,
@@ -12,7 +13,7 @@ export function formatIndividualProgressAttendanceGenderBirthLabel(
   gender?: string,
   birthDate?: string
 ): string {
-  const genderLabel = gender?.trim() || '-'
+  const genderLabel = toDisplayGender(gender)
   const birthLabel = birthDate?.trim() || '-'
   return `${genderLabel} | ${birthLabel}`
 }
