@@ -28,7 +28,10 @@ export interface InstructorSettlementInvoiceDetail {
   totalAmount: number
 }
 
-export type SettlementCalendarListTitleVariant = 'plain-instructor' | 'bracket-program'
+export type SettlementCalendarListTitleVariant =
+  | 'plain-instructor'
+  | 'bracket-program'
+  | 'pipe-program'
 
 export interface SummarizeSettlementRowsOptions {
   allRowsForTotal?: InstructorSettlementListRow[]
