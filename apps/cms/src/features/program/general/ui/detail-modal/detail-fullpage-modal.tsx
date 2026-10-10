@@ -37,6 +37,7 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { seedGeneralRegistrationOverlayFromProgram } from '@/features/program/general/lib/registration-overlay-sync'
+import { seedOperationalRecruitOverlaysFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
 import { logGeneralProgramCommonInfoEditCurrentPayload } from '@/features/program/general/lib/common-info-edit-payload-log'
 import {
   defaultParticipantApplicationTab,
@@ -1030,6 +1031,7 @@ export function GeneralProgramDetailFullPageModal({
       })
       return
     }
+    seedOperationalRecruitOverlaysFromProgram(displayProgram)
     if (recruitSubTab === 'institutions') {
       institutionsResetToProgram()
       setEditMode('institutions')

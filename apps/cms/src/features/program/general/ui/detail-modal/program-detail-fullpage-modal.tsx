@@ -81,8 +81,9 @@ import {
   readEconomyRegistrationOverlayForSave,
   resyncEconomyRegistrationOverlayFromProgram,
   seedEconomyRegistrationOverlayFromProgram,
+  writeEconomyRegistrationOverlayFromProgramDraft,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
-import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
+import { seedOperationalRecruitOverlaysFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
 import { listIncompleteDetailRecruitmentHighlightKeys } from '@/features/program/general/lib/detail-recruitment-required-highlight'
 import {
   hasIncompleteEconomyProgramRegistrationRequiredFields,
@@ -94,7 +95,10 @@ import {
   RegistrationWizardValidationHighlightSync,
   useDetailEditRequiredHighlightRequest,
 } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
-import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  detailEditValuesToProgramPatch,
+  narrowProgramDetailPatchForCommonInfoSave,
+} from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   programToRecruitmentTabEditValues,
   resolveGeneralProgramForRecruitmentEdit,
@@ -1393,12 +1397,11 @@ export function ProgramDetailFullPageModal({
           ? async (draft, patch) => {
               try {
                 if (isCompanySchoolDetail && !isTrainedTeachersDetail) {
-                  const overlay = readEconomyRegistrationOverlayForSave()
-                  const merged = applyEconomyRegistrationOverlayToProgram(draft, overlay)
-                  const registrationOverlay = resyncEconomyRegistrationOverlayFromProgram(merged, {
+                  const registrationOverlay = resyncEconomyRegistrationOverlayFromProgram(draft, {
                     ...(draft.registrationOverlay ?? {}),
-                    ...overlay,
+                    ...readEconomyRegistrationOverlayForSave(),
                   })
+                  const merged = { ...draft, registrationOverlay }
                   const roundsChanged =
                     JSON.stringify(merged.rounds ?? []) !== JSON.stringify(draft.rounds ?? [])
                   const periodUnchanged =
@@ -1412,7 +1415,7 @@ export function ProgramDetailFullPageModal({
                       )
                     : patch
                   await persistProgramPatch(
-                    { ...merged, registrationOverlay },
+                    merged,
                     {
                       ...patchForSave,
                       registrationOverlay,
@@ -1432,6 +1435,11 @@ export function ProgramDetailFullPageModal({
 
   const handleInfoSave = useCallback(async () => {
     if (isCompanySchoolDetail && !isTrainedTeachersDetail && displayProgram) {
+      const patch = narrowProgramDetailPatchForCommonInfoSave(
+        detailEditValuesToProgramPatch(infoForm.getValues(), displayProgram)
+      )
+      const draftFromForm = { ...displayProgram, ...patch }
+      writeEconomyRegistrationOverlayFromProgramDraft(draftFromForm)
       const overlay = readEconomyRegistrationOverlayForSave()
       const economyParticipant = {
         individual: false,
@@ -1449,16 +1457,6 @@ export function ProgramDetailFullPageModal({
         })
         return
       }
-      const merged = applyEconomyRegistrationOverlayToProgram(displayProgram, overlay)
-      infoForm.reset(
-        programToDetailEditValues({
-          ...merged,
-          registrationOverlay: {
-            ...(displayProgram.registrationOverlay ?? {}),
-            ...overlay,
-          },
-        })
-      )
     }
     const endOverlay = beginBlockingOverlay()
     try {
@@ -1583,10 +1581,12 @@ export function ProgramDetailFullPageModal({
       }
       if (activeTab === 'institutions') {
         if (isCompanySchoolRecruitmentInstructorTab) {
+          seedOperationalRecruitOverlaysFromProgram(displayProgram)
           instructorsResetToProgram()
           setEditMode('instructors')
           return
         }
+        seedOperationalRecruitOverlaysFromProgram(displayProgram)
         institutionsResetToProgram()
         setEditMode('institutions')
         return
@@ -1611,21 +1611,25 @@ export function ProgramDetailFullPageModal({
       return
     }
     if (isCompanySchoolRecruitmentInstructorTab) {
+      seedOperationalRecruitOverlaysFromProgram(displayProgram)
       instructorsResetToProgram()
       setEditMode('instructors')
       return
     }
     if (activeTab === 'institutions') {
+      seedOperationalRecruitOverlaysFromProgram(displayProgram)
       institutionsResetToProgram()
       setEditMode('institutions')
       return
     }
     if (activeTab === 'instructors') {
+      seedOperationalRecruitOverlaysFromProgram(displayProgram)
       instructorsResetToProgram()
       setEditMode('instructors')
       return
     }
     if (activeTab === 'volunteers') {
+      seedOperationalRecruitOverlaysFromProgram(displayProgram)
       volunteersResetToProgram()
       setEditMode('volunteers')
     }

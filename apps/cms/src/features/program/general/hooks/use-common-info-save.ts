@@ -10,13 +10,13 @@ import {
   programToGeneralCommonInfoEditValues,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
-import { applyGeneralRegistrationOverlayToProgram } from '@/features/program/general/lib/registration-overlay-to-program'
 import { listIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
 import {
   generalRegistrationRequiredFieldContextFromDetailEdit,
   getGeneralRegistrationDetailEditExtras,
   readGeneralRegistrationOverlayForSave,
   resyncGeneralRegistrationOverlayFromProgram,
+  writeGeneralRegistrationOverlayFromCommonInfoFormValues,
 } from '@/features/program/general/lib/registration-overlay-sync'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useDetailedProgramOptionsQuery } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
@@ -54,8 +54,32 @@ export function useGeneralProgramCommonInfoSave({
     }
     savingRef.current = true
     try {
-      const overlay = readGeneralRegistrationOverlayForSave()
       const extras = getGeneralRegistrationDetailEditExtras()
+      const values = {
+        ...form.getValues(),
+        educationStructure: extras.programType,
+        sessionRound: extras.sessionRoundType,
+      }
+      const patch = generalCommonInfoEditValuesToProgramPatch(
+        values,
+        program,
+        sponsorContext,
+        detailedProgramCatalog,
+        paymentItemOptions
+      )
+      const draftFromForm: Program = {
+        ...program,
+        ...patch,
+        generalProgramEducationStructure: extras.programType,
+        generalProgramSessionRound: extras.sessionRoundType,
+        generalCommonInfo: {
+          ...program.generalCommonInfo,
+          ...patch.generalCommonInfo,
+        },
+        updatedAt: new Date().toISOString(),
+      }
+      writeGeneralRegistrationOverlayFromCommonInfoFormValues(draftFromForm)
+      const overlay = readGeneralRegistrationOverlayForSave()
       const incompleteKeys = listIncompleteGeneralProgramRegistrationRequiredFields(
         overlay,
         generalRegistrationRequiredFieldContextFromDetailEdit(overlay, extras)
@@ -63,44 +87,11 @@ export function useGeneralProgramCommonInfoSave({
       if (incompleteKeys.length > 0) {
         return { ok: false, kind: 'validation', keys: incompleteKeys }
       }
-      const applied = applyGeneralRegistrationOverlayToProgram(program, overlay, extras)
-      const withType: Program = {
-        ...applied,
-        generalProgramEducationStructure: extras.programType,
-        generalProgramSessionRound: extras.sessionRoundType,
-        registrationOverlay: overlay,
-        updatedAt: new Date().toISOString(),
-      }
-      const syncedOverlay = resyncGeneralRegistrationOverlayFromProgram(withType, overlay)
-      const withOverlay: Program = {
-        ...withType,
-        registrationOverlay: syncedOverlay,
-      }
-      const values = {
-        ...programToGeneralCommonInfoEditValues(
-          withOverlay,
-          sponsorContext,
-          detailedProgramCatalog
-        ),
-        educationStructure: extras.programType,
-        sessionRound: extras.sessionRoundType,
-      }
-      const patch = generalCommonInfoEditValuesToProgramPatch(
-        values,
-        withOverlay,
-        sponsorContext,
-        detailedProgramCatalog,
-        paymentItemOptions
-      )
+      const syncedOverlay = resyncGeneralRegistrationOverlayFromProgram(draftFromForm, overlay)
       const persistedTargetLevels = resolvePersistedProgramTargetLevels(program)
       const draftToSave: Program = {
-        ...withOverlay,
-        ...patch,
+        ...draftFromForm,
         registrationOverlay: syncedOverlay,
-        generalCommonInfo: {
-          ...withOverlay.generalCommonInfo,
-          ...patch.generalCommonInfo,
-        },
         ...(persistedTargetLevels.length > 0
           ? { targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
           : {}),

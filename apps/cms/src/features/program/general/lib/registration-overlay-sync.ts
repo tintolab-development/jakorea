@@ -676,6 +676,26 @@ export function seedGeneralRegistrationOverlayFromProgram(program: Program): voi
   setGeneralRegistrationDetailEditExtras(extrasFromGeneralProgram(program))
 }
 
+/** 공통정보 RHF 저장 직전 — 폼이 반영한 Program 스냅샷으로 overlay KV 동기화 */
+export function writeGeneralRegistrationOverlayFromCommonInfoFormValues(
+  draftFromForm: Program
+): void {
+  const fromForm = buildGeneralRegistrationOverlayFromProgram(draftFromForm)
+  const saved = readGeneralRegistrationOverlayForSave()
+  const merged = { ...saved, ...fromForm }
+  for (const key of [
+    `${KPI}.participantCount`,
+    `${KPI}.instructor`,
+    `${KPI}.volunteer`,
+  ] as const) {
+    if (Object.prototype.hasOwnProperty.call(saved, key) && saved[key] == null) {
+      merged[key] = saved[key]
+    }
+  }
+  replaceProgramRegistrationOverlayPrefix(GENERAL_REGISTRATION_OVERLAY_PREFIX, merged)
+  setGeneralRegistrationDetailEditExtras(extrasFromGeneralProgram(draftFromForm))
+}
+
 export function readGeneralRegistrationOverlayForSave(): Record<string, unknown> {
   return pickProgramRegistrationOverlayByPrefix(
     GENERAL_REGISTRATION_OVERLAY_PREFIX,

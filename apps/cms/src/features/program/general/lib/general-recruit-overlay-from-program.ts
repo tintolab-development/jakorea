@@ -12,6 +12,7 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { pickRecruitmentCopyRow } from '@/features/program/shared/lib/recruitment-row-copy'
 import { resolveAnnouncement } from '@/features/program/shared/lib/announcement-label'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 
 const inst = {
   targetLevels: 'recruit.targetLevels',
@@ -378,6 +379,20 @@ export function buildGeneralRecruitOverlayFromProgram(
   }
 
   return overlay
+}
+
+/** 상세 모집 폼(RHF) → in-memory overlay. 등록 위저드 KV와 달리 편집 UI는 overlay에 안 쓴다 */
+export function volunteerRecruitOverlayPatchFromDetailEditValues(
+  values: Pick<ProgramDetailEditFormValues, 'volunteerTargets' | 'volunteerTargetDetail'>
+): Record<string, unknown> {
+  const patch: Record<string, unknown> = {}
+  if (values.volunteerTargets != null) {
+    patch[keys.volunteer.volunteerTargets] = values.volunteerTargets
+  }
+  if (values.volunteerTargetDetail != null) {
+    patch[keys.volunteer.volunteerTargetDetail] = values.volunteerTargetDetail.trim()
+  }
+  return patch
 }
 
 export function resyncGeneralRecruitOverlayFromProgram(
