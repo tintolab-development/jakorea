@@ -57,6 +57,10 @@ import {
 import {
   applyScheduleVisibilityFieldsFromRuntimeContext,
   isApplyScheduleChoiceParagraphId,
+  isInstitutionApplyScheduleChoiceParagraphId,
+  readApplyScheduleInputMode,
+  readInstitutionApplyScheduleDateBounds,
+  readInstitutionFixedScheduleChoiceItems,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyScheduleParagraph,
 } from '@/features/program/lib/apply-form-schedule'
@@ -295,18 +299,6 @@ export function ProgramApplyPage() {
     applyCase === 'trained-teachers' ||
     program?.registrationKind === 'trainedTeachers' ||
     program?.programType === 'TRAINED_TEACHER'
-  /**
-   * CMS 개인 신청은 기간 지정 지망 UI가 없다 (institution-schedule 전용).
-   * 일반 기관 + 기간 지정일 때만 1·2지망을 덮어쓴다.
-   */
-  const showGeneralPreferredSchedule =
-    applyCase === 'institution-general' &&
-    program != null &&
-    shouldShowApplyPreferredSchedule(program)
-  const showEconomyPreferredSchedule = applyCase === 'institution-economy'
-  const showPreferredScheduleInput =
-    showTrainedTeachersApply || showGeneralPreferredSchedule || showEconomyPreferredSchedule
-
   const profileDefaults = useMemo(
     () => trainedTeachersProfileDefaults(profileQuery.data),
     [profileQuery.data],
@@ -318,8 +310,55 @@ export function ProgramApplyPage() {
   const profileTeacherEmail = profileDefaults.teacherEmail
   const showPreferredEducationForm = program?.educationForm === 'participant_choice'
   const remoteForm = applicationFormQuery.bundle?.form
+  const applicationFormDocument = useMemo(
+    () => coerceApplicationFormDocument(remoteForm),
+    [remoteForm],
+  )
+  const institutionScheduleParagraph = useMemo(() => {
+    const paragraphs = applicationFormDocument?.paragraphs
+    if (!Array.isArray(paragraphs)) return null
+    return (
+      paragraphs.find(
+        paragraph =>
+          paragraph != null &&
+          typeof paragraph === 'object' &&
+          isInstitutionApplyScheduleChoiceParagraphId(
+            String((paragraph as { id?: unknown }).id ?? ''),
+          ),
+      ) ?? null
+    )
+  }, [applicationFormDocument])
+  const institutionScheduleInputMode = useMemo(
+    () =>
+      readApplyScheduleInputMode(
+        applicationFormDocument?.runtimeContext,
+        institutionScheduleParagraph,
+      ),
+    [applicationFormDocument, institutionScheduleParagraph],
+  )
+  const institutionScheduleDateBounds = useMemo(
+    () =>
+      readInstitutionApplyScheduleDateBounds(
+        applicationFormDocument?.runtimeContext,
+        institutionScheduleParagraph,
+      ),
+    [applicationFormDocument, institutionScheduleParagraph],
+  )
+  /**
+   * CMS 개인 신청은 기간 지정 지망 UI가 없다 (institution-schedule 전용).
+   * 일반 기관 + 기간 지정(또는 render `date_time_requests`)일 때만 1·2지망을 덮어쓴다.
+   * `fixed_schedule_options`이면 서버가 내려준 선택지만 쓴다(교육일정 전체 재부착 금지).
+   */
+  const showGeneralPreferredSchedule =
+    applyCase === 'institution-general' &&
+    program != null &&
+    (institutionScheduleInputMode === 'date_time_requests' ||
+      (institutionScheduleInputMode == null && shouldShowApplyPreferredSchedule(program)))
+  const showEconomyPreferredSchedule = applyCase === 'institution-economy'
+  const showPreferredScheduleInput =
+    showTrainedTeachersApply || showGeneralPreferredSchedule || showEconomyPreferredSchedule
   const runtimeInstructorScheduleSlots = useMemo(() => {
-    const paragraphs = coerceApplicationFormDocument(remoteForm)?.paragraphs
+    const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
     const scheduleParagraph = paragraphs.find(
       paragraph =>
@@ -328,7 +367,7 @@ export function ProgramApplyPage() {
         isInstructorAvailableScheduleParagraphId(String((paragraph as { id?: unknown }).id ?? '')),
     )
     return readRuntimeInstructorScheduleSlots(scheduleParagraph)
-  }, [remoteForm])
+  }, [applicationFormDocument])
   const instructorScheduleSlots = useMemo(
     () =>
       runtimeInstructorScheduleSlots ??
@@ -341,7 +380,7 @@ export function ProgramApplyPage() {
     [program, runtimeInstructorScheduleSlots],
   )
   const runtimeInterviewParagraph = useMemo(() => {
-    const paragraphs = coerceApplicationFormDocument(remoteForm)?.paragraphs
+    const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
     const found = paragraphs.find(
       applyCase === 'individual-volunteer'
@@ -349,13 +388,13 @@ export function ProgramApplyPage() {
         : isDynamicIndividualInterviewParagraph,
     )
     return found ? (found as { id: string }) : null
-  }, [applyCase, remoteForm])
+  }, [applyCase, applicationFormDocument])
   const interviewSlots = useMemo(
     () => readRuntimeInstructorScheduleSlots(runtimeInterviewParagraph) ?? [],
     [runtimeInterviewParagraph],
   )
   const volunteerActivitySlots = useMemo(() => {
-    const paragraphs = coerceApplicationFormDocument(remoteForm)?.paragraphs
+    const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return []
     const activityParagraph = paragraphs.find(
       paragraph =>
@@ -364,7 +403,7 @@ export function ProgramApplyPage() {
         isVolunteerActivityScheduleParagraphId(String((paragraph as { id?: unknown }).id ?? '')),
     )
     return readRuntimeInstructorScheduleSlots(activityParagraph) ?? []
-  }, [remoteForm])
+  }, [applicationFormDocument])
   const runtimeHiddenAnswerKeys = useMemo(
     () => collectRuntimeHiddenAnswerKeys(remoteForm),
     [remoteForm],
@@ -796,11 +835,24 @@ export function ProgramApplyPage() {
           paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule)
 
       if (isPreferredScheduleSlot && showPreferredScheduleInput) {
+        const useInstitutionScheduleBounds =
+          showGeneralPreferredSchedule &&
+          isInstitutionApplyScheduleChoiceParagraphId(paragraph.id)
         return (
           <ApplyPreferredSchedule
             maxBlocks={program.maxPreferredScheduleCount}
             value={preferredBlocks}
             onChange={setPreferredBlocks}
+            minDate={
+              useInstitutionScheduleBounds
+                ? institutionScheduleDateBounds.minScheduleDate
+                : null
+            }
+            maxDate={
+              useInstitutionScheduleBounds
+                ? institutionScheduleDateBounds.maxScheduleDate
+                : null
+            }
           />
         )
       }
@@ -820,7 +872,14 @@ export function ProgramApplyPage() {
         paragraph.allowMultiple
       ) {
         const selectedIds = paragraph.selectedPreviewMultipleIds ?? []
-        if (paragraph.items.length === 0) {
+        const choiceItems =
+          isInstitutionApplyScheduleChoiceParagraphId(paragraph.id)
+            ? (readInstitutionFixedScheduleChoiceItems(
+                applicationFormDocument?.runtimeContext,
+                paragraph,
+              ) ?? paragraph.items)
+            : paragraph.items
+        if (choiceItems.length === 0) {
           return (
             <PFText as="p" typo="bd-md-md" color="neutral-cool-600">
               선택 가능한 교육 일정이 없습니다.
@@ -829,7 +888,7 @@ export function ProgramApplyPage() {
         }
         return (
           <div className={styles.multipleChoice}>
-            {paragraph.items.map(item => (
+            {choiceItems.map(item => (
               <PFCheckbox
                 key={item.id}
                 className={styles.multipleChoiceItem}
@@ -962,6 +1021,9 @@ export function ProgramApplyPage() {
       showGeneralPreferredSchedule,
       showPreferredScheduleInput,
       showPreferredEducationForm,
+      institutionScheduleDateBounds.minScheduleDate,
+      institutionScheduleDateBounds.maxScheduleDate,
+      applicationFormDocument,
       profileSchoolLocked,
       profileSchool,
       profileRegionLabel,
@@ -982,7 +1044,7 @@ export function ProgramApplyPage() {
   const hiddenParagraphIds = useMemo(() => {
     const hidden = new Set<string>()
     const runtimeFields = applyScheduleVisibilityFieldsFromRuntimeContext(
-      coerceApplicationFormDocument(remoteForm)?.runtimeContext,
+      applicationFormDocument?.runtimeContext,
     )
     const scheduleFields = {
       educationStructure: runtimeFields?.educationStructure ?? program?.educationStructure,
@@ -1039,9 +1101,9 @@ export function ProgramApplyPage() {
     return hidden
   }, [
     applyCase,
+    applicationFormDocument,
     displayDraft,
     program,
-    remoteForm,
     runtimeConditionalQuestions,
     runtimeHiddenAnswerKeys,
     sexOffense,

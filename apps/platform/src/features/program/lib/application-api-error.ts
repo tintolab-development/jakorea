@@ -74,7 +74,18 @@ export function getProgramApplicationApiErrorMessage(
     return BLOCKED_REASON_MESSAGES[code]
   }
   const message = extractErrorMessage(data)
-  if (message) return message
+  if (message) {
+    if (
+      message.includes('before the program period') ||
+      message.includes('after the program period')
+    ) {
+      return '희망 교육일이 프로그램 운영 기간을 벗어났습니다.'
+    }
+    if (message.includes('stale or unavailable schedule')) {
+      return '선택할 수 없는 교육 일정입니다. 일정을 다시 확인해 주세요.'
+    }
+    return message
+  }
   return fallback
 }
 

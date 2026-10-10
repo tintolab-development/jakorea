@@ -61,12 +61,18 @@ type ApplyPreferredScheduleProps = {
   maxBlocks: number
   value?: ApplyPreferredScheduleBlock[]
   onChange?: (blocks: ApplyPreferredScheduleBlock[]) => void
+  /** 희망 교육일 선택 최소 `YYYY-MM-DD`. null이면 제한 없음 */
+  minDate?: string | null
+  /** 희망 교육일 선택 최대 `YYYY-MM-DD`. null이면 제한 없음 */
+  maxDate?: string | null
 }
 
 export function ApplyPreferredSchedule({
   maxBlocks,
   value,
   onChange,
+  minDate = null,
+  maxDate = null,
 }: ApplyPreferredScheduleProps) {
   const cap = Math.max(1, Math.min(maxBlocks, 10))
   const [uncontrolled, setUncontrolled] = useState<ApplyPreferredScheduleBlock[]>(() => [
@@ -118,6 +124,8 @@ export function ApplyPreferredSchedule({
                   picker="date"
                   placeholder="희망 교육 날짜를 선택하세요"
                   value={block.date}
+                  minDate={minDate}
+                  maxDate={maxDate}
                   onValueChange={next => patchBlock(index, { date: next })}
                 />
               </div>

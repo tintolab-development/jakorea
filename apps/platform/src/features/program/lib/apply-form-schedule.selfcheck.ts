@@ -7,9 +7,15 @@ import assert from 'node:assert/strict'
 import {
   applyScheduleVisibilityFieldsFromRuntimeContext,
   countUniqueEducationScheduleCalendarDays,
+  isInstitutionApplyScheduleChoiceParagraphId,
+  readApplyScheduleInputMode,
+  readInstitutionApplyScheduleDateBounds,
+  readInstitutionFixedScheduleChoiceItems,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyScheduleParagraph,
 } from './apply-form-schedule.ts'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
+import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 
 function testUniqueCalendarDays() {
   assert.equal(
@@ -126,5 +132,65 @@ assert.equal(
   }),
   false
 )
+
+assert.equal(
+  isInstitutionApplyScheduleChoiceParagraphId(
+    PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+  ),
+  true,
+)
+assert.equal(
+  isInstitutionApplyScheduleChoiceParagraphId(
+    PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice,
+  ),
+  false,
+)
+
+assert.equal(readApplyScheduleInputMode({ scheduleInputMode: 'date_time_requests' }), 'date_time_requests')
+assert.equal(
+  readApplyScheduleInputMode({ scheduleInputMode: 'fixed_schedule_options' }),
+  'fixed_schedule_options',
+)
+assert.equal(readApplyScheduleInputMode({}), null)
+
+const boundsFromRuntime = readInstitutionApplyScheduleDateBounds({
+  minScheduleDate: '2026-10-20',
+  maxScheduleDate: '2026-10-31',
+})
+assert.equal(boundsFromRuntime.minScheduleDate, '2026-10-20')
+assert.equal(boundsFromRuntime.maxScheduleDate, '2026-10-31')
+
+const boundsPreferParagraph = readInstitutionApplyScheduleDateBounds(
+  { minScheduleDate: '2026-10-01', maxScheduleDate: '2026-11-30' },
+  { runtimeMinDate: '2026-10-20', runtimeMaxDate: '2026-10-31' },
+)
+assert.equal(boundsPreferParagraph.minScheduleDate, '2026-10-20')
+assert.equal(boundsPreferParagraph.maxScheduleDate, '2026-10-31')
+
+const boundsNull = readInstitutionApplyScheduleDateBounds({
+  minScheduleDate: null,
+  maxScheduleDate: null,
+})
+assert.equal(boundsNull.minScheduleDate, null)
+assert.equal(boundsNull.maxScheduleDate, null)
+
+const fixedItems = readInstitutionFixedScheduleChoiceItems(
+  {
+    scheduleOptions: [
+      { id: 'line:1', label: '26년 10월 20일(화) 13:30 ~ 16:00' },
+      { scheduleId: 42, label: '운영 일정' },
+    ],
+  },
+  { items: [] },
+)
+assert.ok(fixedItems)
+assert.equal(fixedItems![0]?.id, 'line:1')
+assert.equal(fixedItems![1]?.id, '42')
+
+const keepOriginalLineIndex = readInstitutionFixedScheduleChoiceItems(null, {
+  items: [{ id: 'line:1', label: '10/20' }],
+})
+assert.ok(keepOriginalLineIndex)
+assert.equal(keepOriginalLineIndex![0]?.id, 'line:1')
 
 console.log('apply-form-schedule.selfcheck: ok')

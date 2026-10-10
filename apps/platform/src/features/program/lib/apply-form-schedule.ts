@@ -91,6 +91,106 @@ export function applyScheduleVisibilityFieldsFromRuntimeContext(
   return { educationStructure, sessionRound, educationScheduleMode }
 }
 
+/** Portal render — 희망 일정 입력 모드 */
+export type ApplyScheduleInputMode = 'date_time_requests' | 'fixed_schedule_options'
+
+export type ApplyScheduleDateBounds = {
+  /** `YYYY-MM-DD` 또는 null(제한 없음). 빈 문자열로 바꾸지 않는다. */
+  minScheduleDate: string | null
+  maxScheduleDate: string | null
+}
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+function readIsoDateOrNull(value: unknown): string | null {
+  if (value == null) return null
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  return ISO_DATE_RE.test(trimmed) ? trimmed : null
+}
+
+/**
+ * form-bindings render `scheduleInputMode`.
+ * 문항·루트 runtimeContext 순으로 읽고, 없으면 null(기존 educationScheduleMode 추론 유지).
+ */
+export function readApplyScheduleInputMode(
+  runtime: unknown,
+  paragraph?: unknown
+): ApplyScheduleInputMode | null {
+  const fromParagraph =
+    isRecord(paragraph) && typeof paragraph.scheduleInputMode === 'string'
+      ? paragraph.scheduleInputMode
+      : isRecord(paragraph) && typeof paragraph.runtimeInputMode === 'string'
+        ? paragraph.runtimeInputMode
+        : null
+  const fromRuntime =
+    isRecord(runtime) && typeof runtime.scheduleInputMode === 'string'
+      ? runtime.scheduleInputMode
+      : null
+  const raw = String(fromParagraph ?? fromRuntime ?? '')
+    .trim()
+    .toLowerCase()
+  if (raw === 'date_time_requests') return 'date_time_requests'
+  if (raw === 'fixed_schedule_options') return 'fixed_schedule_options'
+  return null
+}
+
+/**
+ * 참여기관 「진행 희망 교육 일정」달력 범위.
+ * 문항 `runtimeMinDate`/`runtimeMaxDate` → 루트 `minScheduleDate`/`maxScheduleDate`.
+ * null이면 제한하지 않는다(빈 문자열로 치환 금지).
+ */
+export function readInstitutionApplyScheduleDateBounds(
+  runtime: unknown,
+  paragraph?: unknown
+): ApplyScheduleDateBounds {
+  const paragraphMin = isRecord(paragraph) ? readIsoDateOrNull(paragraph.runtimeMinDate) : null
+  const paragraphMax = isRecord(paragraph) ? readIsoDateOrNull(paragraph.runtimeMaxDate) : null
+  const runtimeMin = isRecord(runtime) ? readIsoDateOrNull(runtime.minScheduleDate) : null
+  const runtimeMax = isRecord(runtime) ? readIsoDateOrNull(runtime.maxScheduleDate) : null
+  return {
+    minScheduleDate: paragraphMin ?? runtimeMin,
+    maxScheduleDate: paragraphMax ?? runtimeMax,
+  }
+}
+
+/** 참여기관 일정 단락 id만 — 개인 `program-participant-application-seed-schedule` 제외 */
+export function isInstitutionApplyScheduleChoiceParagraphId(id: string): boolean {
+  return id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
+}
+
+/**
+ * 지정일 선택지 — 응답 `items`/`options`/`scheduleOptions` 의 value·id 를 그대로 쓴다.
+ * 원본 `line:N` 인덱스를 앞에서부터 다시 매기지 않는다. educationScheduleLines 로 재구성하지 않는다.
+ */
+export function readInstitutionFixedScheduleChoiceItems(
+  runtime: unknown,
+  paragraph: unknown
+): ReadonlyArray<{ id: string; label: string }> | null {
+  if (!isRecord(paragraph)) return null
+  const fromParagraph = Array.isArray(paragraph.items)
+    ? paragraph.items
+    : Array.isArray(paragraph.options)
+      ? paragraph.options
+      : null
+  const fromRuntime =
+    isRecord(runtime) && Array.isArray(runtime.scheduleOptions) ? runtime.scheduleOptions : null
+  const rawItems = fromParagraph && fromParagraph.length > 0 ? fromParagraph : fromRuntime
+  if (!rawItems) return null
+  const items: Array<{ id: string; label: string }> = []
+  for (const item of rawItems) {
+    if (!isRecord(item)) continue
+    const id = String(item.id ?? item.option_value ?? item.value ?? item.scheduleId ?? '').trim()
+    if (!id) continue
+    const label = String(
+      item.label ?? item.option_label ?? item.scheduleId ?? item.startAt ?? id
+    ).trim()
+    items.push({ id, label: label || id })
+  }
+  return items
+}
+
 export function shouldShowApplyPreferredSchedule(program: ApplyScheduleVisibilityFields): boolean {
   return shouldShowApplicationPreferredScheduleParagraph(program)
 }
