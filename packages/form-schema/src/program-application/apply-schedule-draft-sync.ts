@@ -3,9 +3,9 @@ import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '../paragraph-ids/progr
 import type { MultipleChoiceParagraph, WritingFormDraft } from '../writing-form/index.js'
 import { readInstitutionFixedScheduleChoiceItems } from './fixed-schedule-choice-items.js'
 import { readApplicationScheduleInputMode } from './schedule-form-binding.js'
+import { shouldShowApplicationScheduleParagraphResolved } from './application-schedule-visibility-input.js'
 import {
   shouldShowApplicationPreferredScheduleParagraph,
-  shouldShowApplicationScheduleParagraph,
   type ApplicationScheduleVisibilityInput,
 } from './schedule-paragraph-visibility.js'
 
@@ -46,7 +46,19 @@ export function syncApplicationScheduleChoiceParagraphsInDraft(
   draft: WritingFormDraft,
   input: ApplyScheduleDraftSyncInput
 ): WritingFormDraft {
-  if (!shouldShowApplicationScheduleParagraph(input)) {
+  const scheduleParagraphRaw =
+    input.scheduleParagraphRaw ??
+    draft.paragraphs.find(
+      paragraph => isApplicationScheduleChoiceParagraphId(paragraph.id)
+    )
+
+  if (
+    !shouldShowApplicationScheduleParagraphResolved({
+      ...input,
+      runtimeContext: input.runtimeContext,
+      scheduleParagraphRaw,
+    })
+  ) {
     return {
       ...draft,
       paragraphs: draft.paragraphs.filter(

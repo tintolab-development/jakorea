@@ -1,4 +1,9 @@
-import type { ApplicationScheduleVisibilityInput } from './schedule-paragraph-visibility.js'
+import { readInstitutionFixedScheduleChoiceItems } from './fixed-schedule-choice-items.js'
+import { readApplicationScheduleInputMode } from './schedule-form-binding.js'
+import {
+  shouldShowApplicationScheduleParagraph,
+  type ApplicationScheduleVisibilityInput,
+} from './schedule-paragraph-visibility.js'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -100,4 +105,39 @@ export function mergeApplicationScheduleVisibilityInput(
       fromRuntime.educationScheduleMode ?? fromProgram.educationScheduleMode,
     educationScheduleLines: lines,
   }
+}
+
+export type ApplicationScheduleParagraphVisibilityContext = ApplicationScheduleVisibilityInput & {
+  runtimeContext?: unknown
+  scheduleParagraphRaw?: unknown
+}
+
+/**
+ * 프로그램 상세·form-bindings runtime·고정 일정 선택지를 함께 본다.
+ * Portal은 program.educationScheduleLines 가 비어도 runtime.scheduleOptions 로 노출해야 한다.
+ */
+export function shouldShowApplicationScheduleParagraphResolved(
+  input: ApplicationScheduleParagraphVisibilityContext
+): boolean {
+  const base: ApplicationScheduleVisibilityInput = {
+    educationStructure: input.educationStructure,
+    sessionRound: input.sessionRound,
+    educationScheduleMode: input.educationScheduleMode,
+    educationScheduleLines: input.educationScheduleLines,
+  }
+  if (shouldShowApplicationScheduleParagraph(base)) return true
+
+  const mode = readApplicationScheduleInputMode(
+    input.runtimeContext,
+    input.scheduleParagraphRaw
+  )
+  if (mode !== 'fixed_schedule_options') return false
+
+  const items =
+    readInstitutionFixedScheduleChoiceItems(
+      input.runtimeContext,
+      input.scheduleParagraphRaw,
+      { educationScheduleLines: input.educationScheduleLines ?? [] }
+    ) ?? []
+  return items.length > 1
 }

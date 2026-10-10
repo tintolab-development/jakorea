@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import {
   getInstitutionApplicationFormHiddenParagraphIds,
   readInstitutionFixedScheduleChoiceItems,
+  shouldShowApplicationScheduleParagraphResolved,
   syncApplicationScheduleChoiceParagraphsInDraft,
 } from '../../dist/program-application/index.js'
 import type { MultipleChoiceParagraph, WritingFormDraft } from '../../dist/writing-form/index.js'
@@ -72,5 +73,23 @@ const patchedSchedule = patched.paragraphs.find(
 assert.ok(patchedSchedule && patchedSchedule.variant === 'multiple_choice')
 const patchedItems = (patchedSchedule as MultipleChoiceParagraph).items
 assert.equal(patchedItems.length, 3)
+
+assert.equal(
+  shouldShowApplicationScheduleParagraphResolved({
+    educationStructure: 'curriculum',
+    sessionRound: 'single',
+    educationScheduleMode: 'date',
+    educationScheduleLines: [],
+    runtimeContext: {
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleOptions: [
+        { id: 'line:0', label: '26년 10월 26일(월) 10:00 ~ 12:00' },
+        { id: 'line:1', label: '26년 11월 2일(월) 13:30 ~ 16:00' },
+      ],
+    },
+    scheduleParagraphRaw: scheduleParagraph,
+  }),
+  true
+)
 
 console.log('program-application-parity.test: ok')

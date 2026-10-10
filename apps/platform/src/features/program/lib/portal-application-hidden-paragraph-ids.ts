@@ -6,7 +6,8 @@ import {
   getInstitutionApplicationFormHiddenParagraphIds,
   getVolunteerApplicationFormHiddenParagraphIds,
   mergeApplicationScheduleVisibilityInput,
-  shouldShowApplicationScheduleParagraph,
+  readEducationScheduleLinesForApplicationForm,
+  shouldShowApplicationScheduleParagraphResolved,
 } from '@jakorea/form-schema/program-application'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
@@ -50,6 +51,13 @@ export function resolvePortalApplicationHiddenParagraphIds(
   const hidden = new Set<string>()
   const { applyCase, program, runtimeContext, paragraphs } = input
 
+  const scheduleParagraphRaw = paragraphs.find(paragraph =>
+    isApplyScheduleChoiceParagraphId(paragraph.id)
+  )
+  const scheduleLines = readEducationScheduleLinesForApplicationForm(
+    runtimeContext,
+    program?.educationScheduleLines
+  )
   const scheduleVisibility = mergeApplicationScheduleVisibilityInput({
     runtime: runtimeContext,
     program: program
@@ -59,10 +67,16 @@ export function resolvePortalApplicationHiddenParagraphIds(
           educationScheduleMode: program.educationScheduleMode,
         }
       : undefined,
-    educationScheduleLines: program?.educationScheduleLines,
+    educationScheduleLines: scheduleLines,
   })
 
-  if (!shouldShowApplicationScheduleParagraph(scheduleVisibility)) {
+  if (
+    !shouldShowApplicationScheduleParagraphResolved({
+      ...scheduleVisibility,
+      runtimeContext,
+      scheduleParagraphRaw,
+    })
+  ) {
     for (const paragraph of paragraphs) {
       if (isApplyScheduleChoiceParagraphId(paragraph.id)) hidden.add(paragraph.id)
     }
@@ -89,7 +103,11 @@ export function resolvePortalApplicationHiddenParagraphIds(
 
   if (
     (applyCase === 'individual-general' || applyCase === 'individual-team') &&
-    !shouldShowApplicationScheduleParagraph(scheduleVisibility)
+    !shouldShowApplicationScheduleParagraphResolved({
+      ...scheduleVisibility,
+      runtimeContext,
+      scheduleParagraphRaw,
+    })
   ) {
     hidden.add(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
   }
