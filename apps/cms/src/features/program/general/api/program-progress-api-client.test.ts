@@ -45,6 +45,50 @@ describe('createProgramInstructorParticipantRemote', () => {
   })
 })
 
+describe('registerVolunteerParticipantRemote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('POST volunteer-participants/register body를 보낸다', async () => {
+    const { registerVolunteerParticipantRemote } = await import(
+      '@/features/program/general/api/program-progress-api-client'
+    )
+    vi.mocked(customInstance).mockResolvedValue({
+      participantId: 1,
+      volunteerApplicationId: 2,
+      sourceApplicationId: 2,
+      volunteerKind: 'GENERAL',
+      participantStatus: 'APPROVED',
+    })
+
+    await registerVolunteerParticipantRemote('168001', {
+      memberId: 190084,
+      volunteerKind: 'GENERAL',
+      registrationChannel: 'CMS_PROGRESS_ADD',
+      personalInfoConsent: 'AGREE',
+      thirdPartyConsent: 'AGREE',
+      jaProgramExperienceConsentRequest: 'NOT_REQUESTED',
+      freeTextItems: {
+        items: [{ id: 'intro', label: '1.', bodyText: 'x' }],
+      },
+      reason: 'CMS 참여 봉사자 추가 등록',
+    })
+
+    expect(customInstance).toHaveBeenCalled()
+    expect(vi.mocked(customInstance).mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        url: '/api/admin/programs/168001/volunteer-participants/register',
+        method: 'POST',
+        data: expect.objectContaining({
+          memberId: 190084,
+          volunteerKind: 'GENERAL',
+        }),
+      })
+    )
+  })
+})
+
 describe('createProgramParticipantRemote volunteer', () => {
   beforeEach(() => {
     vi.mocked(customInstance).mockReset()

@@ -417,6 +417,7 @@ export async function createGeneralProgramInstructorParticipant(
   })
 }
 
+/** @deprecated 진행 현황 봉사자 추가 등록 — `registerGeneralVolunteerParticipant` 사용 */
 export async function createGeneralProgramVolunteerParticipant(
   programId: string,
   memberId: number,
@@ -428,6 +429,39 @@ export async function createGeneralProgramVolunteerParticipant(
     memberId,
     volunteerKind,
   })
+}
+
+export async function registerGeneralVolunteerParticipant(
+  programId: string,
+  payload: import('@/features/program/general/api/program-progress-api-client').VolunteerParticipantRegisterRequest
+) {
+  assertProgramProgressRemoteReady()
+  const { registerVolunteerParticipantRemote } = await import(
+    '@/features/program/general/api/program-progress-api-client'
+  )
+  return registerVolunteerParticipantRemote(programId, payload)
+}
+
+export async function fetchGeneralEmployeeVolunteerCounts(
+  programId: string,
+  organizationApplicationId?: number
+) {
+  assertProgramProgressRemoteReady()
+  const { fetchEmployeeVolunteerCountsRemote } = await import(
+    '@/features/program/general/api/program-progress-api-client'
+  )
+  return fetchEmployeeVolunteerCountsRemote(programId, organizationApplicationId)
+}
+
+export async function saveGeneralEmployeeVolunteerCounts(
+  programId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/employeeVolunteerCountReplaceRequest').EmployeeVolunteerCountReplaceRequest
+) {
+  assertProgramProgressRemoteReady()
+  const { putEmployeeVolunteerCountsRemote } = await import(
+    '@/features/program/general/api/program-progress-api-client'
+  )
+  return putEmployeeVolunteerCountsRemote(programId, payload)
 }
 
 export async function updateGeneralParticipatingInstitutionTextbookDelivery(
