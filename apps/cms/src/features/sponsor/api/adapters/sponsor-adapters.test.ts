@@ -88,6 +88,32 @@ describe('mapSponsorDetailResponse', () => {
     })
     expect(detail.logos).toEqual([{ id: '2055855', fileName: '' }])
   })
+
+  it('maps logoFiles array by sortOrder', () => {
+    const detail = mapSponsorDetailResponse({
+      id: 'sp-1',
+      name: '로고',
+      logoFileId: '2055855',
+      logoFiles: [
+        { fileObjectId: 2055856, originalFileName: 'symbol.ai', sortOrder: 1 },
+        { fileObjectId: 2055855, originalFileName: 'main.png', sortOrder: 0 },
+      ],
+    })
+    expect(detail.logos).toEqual([
+      { id: '2055855', fileName: 'main.png' },
+      { id: '2055856', fileName: 'symbol.ai' },
+    ])
+  })
+
+  it('keeps empty logoFiles without legacy fallback', () => {
+    const detail = mapSponsorDetailResponse({
+      id: 'sp-1',
+      name: '로고',
+      logoFileId: '2055855',
+      logoFiles: [],
+    })
+    expect(detail.logos).toEqual([])
+  })
 })
 
 describe('toSponsorRequestFromBasicInfo', () => {
@@ -170,7 +196,7 @@ describe('toSponsorRequestFromRegister', () => {
         detailAddress: '을지로 100',
         homepageUrl: 'https://www.starbucks.co.kr',
         securityMemo: '비고',
-        logoFile: null,
+        logoFiles: [],
       })
     ).toEqual({
       name: '스타벅스',
