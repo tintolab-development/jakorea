@@ -1,13 +1,13 @@
-import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { useParticipatingVolunteerAddRegistrationPluginState } from '@/features/program/general/lib/participating-volunteer-add-registration-plugin-state'
 import type { ParticipatingVolunteerAddRegistrationSectionContext } from './add-registration-form-types'
 
 /** 참여 봉사자 추가 등록 — 기본 정보(1365 ID) plugin 본문 */
 export function ParticipatingVolunteerAddRegistrationBasicInfoParagraph(
   _props: ParticipatingVolunteerAddRegistrationSectionContext
 ) {
-  const [id1365, setId1365] = useState('')
+  const { values, setId1365 } = useParticipatingVolunteerAddRegistrationPluginState()
 
   return (
     <div className="participating-volunteer-add-registration-modal__basic-info-form-stack">
@@ -21,7 +21,7 @@ export function ParticipatingVolunteerAddRegistrationBasicInfoParagraph(
                 inputSize="medium"
                 width="100%"
                 placeholder="1365 ID"
-                value={id1365}
+                value={values.id1365}
                 onChange={e => setId1365(e.target.value)}
               />
             }
