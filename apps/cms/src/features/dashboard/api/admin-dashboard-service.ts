@@ -3,26 +3,15 @@
  * Phase 4.5: 관리자 홈 대시보드
  * FR-C01: 전체 프로그램 진행 현황 7단계 세분화
  *
- * 데이터 소스: 현재는 `@/data/mock/*` 기반(로컬 목). API 연동 시 이 모듈에서 분기·어댑터만 교체.
+ * 데이터 소스: dashboard remote API. 미연동 시 빈 집계.
  */
 
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import type { Program } from '@/types/domain'
 import { countGeneralProgramOverviewStages } from '@/features/program/general/lib/overview-stage-counts'
 import { countCompanySchoolOverviewStages } from '@/features/program/1c-1s/lib/overview-stage-counts'
-import { mockApplications } from '@/data/mock/applications'
-import { mockMatchings } from '@/data/mock/matchings'
-import { mockSettlements } from '@/data/mock/settlements'
 import { MOCK_APPLICANT_INSTITUTIONS } from '@/features/program/shared/model/applicant-institution'
 import { MOCK_APPLICANT_INSTRUCTORS } from '@/features/program/shared/model/applicant-instructor'
-import { mockInquiries } from '@/data/mock/inquiries'
-import { mockInstructors } from '@/data/mock/instructors'
-import { mockPermissionRequests } from '@/data/mock/permission-requests'
-import {
-  mockPaymentOrderAdminProgramList,
-  mockPaymentOrderAdminInstructorList,
-} from '@/data/mock/payment-order-admin-list'
-import { mockAccountPaymentRows } from '@/data/mock/account-payments-list'
 import { SHORTCUT_ITEMS, DASHBOARD_HOME_PATH } from '@/features/dashboard/model/dashboard-settings-store'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -286,26 +275,7 @@ export async function getRecruitmentStatusList(options?: {
  * 대기 중인 작업 카운트
  */
 export async function getPendingActionCounts(): Promise<PendingActionCounts> {
-  await new Promise(resolve => setTimeout(resolve, 200))
-
-  // 대기 중인 신청 (submitted, reviewing)
-  const pendingApplications = mockApplications.filter(
-    app => app.status === 'submitted' || app.status === 'reviewing'
-  ).length
-
-  // 대기 중인 매칭 (pending)
-  const pendingMatchings = mockMatchings.filter(m => m.status === 'pending').length
-
-  // 대기 중인 정산 (pending, calculated)
-  const pendingSettlements = mockSettlements.filter(
-    s => s.status === 'pending' || s.status === 'calculated'
-  ).length
-
-  return {
-    pendingApplications,
-    pendingMatchings,
-    pendingSettlements,
-  }
+  return getPendingActionCountsSync()
 }
 
 /**
@@ -375,17 +345,10 @@ function accumulateLifecycleStages(programs: Program[]): ProgramProgressStages {
 }
 
 function getPendingActionCountsSync(): PendingActionCounts {
-  const pendingApplications = mockApplications.filter(
-    app => app.status === 'submitted' || app.status === 'reviewing'
-  ).length
-  const pendingMatchings = mockMatchings.filter(m => m.status === 'pending').length
-  const pendingSettlements = mockSettlements.filter(
-    s => s.status === 'pending' || s.status === 'calculated'
-  ).length
   return {
-    pendingApplications,
-    pendingMatchings,
-    pendingSettlements,
+    pendingApplications: 0,
+    pendingMatchings: 0,
+    pendingSettlements: 0,
   }
 }
 
@@ -400,16 +363,10 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
   const institutionPending = MOCK_APPLICANT_INSTITUTIONS.filter(s => s.approvalStatus === 'pending').length
   const instructorApplicantPending = MOCK_APPLICANT_INSTRUCTORS.filter(s => s.approvalStatus === 'pending')
     .length
-  const inquiryPending = mockInquiries.filter(i => i.status === 'PENDING').length
-  const permissionPending = mockPermissionRequests.filter(r => r.status === 'PENDING').length
-
-  const paymentOrderPending =
-    mockPaymentOrderAdminProgramList.filter(r => r.processingStatus === 'pending').length +
-    mockPaymentOrderAdminInstructorList.filter(r => r.processingStatus === 'pending').length
-
-  const accountPaymentPending = mockAccountPaymentRows.filter(
-    r => r.accountPaymentStatus !== 'account_paid'
-  ).length
+  const inquiryPending = 0
+  const permissionPending = 0
+  const paymentOrderPending = 0
+  const accountPaymentPending = 0
 
   const mapped: Record<string, number> = {
     'programs-general-education': emptyStages.studentRecruitment,
@@ -461,7 +418,7 @@ export async function getDashboardHomeSummary(): Promise<DashboardHomeSummary> {
   return {
     version: 'mock',
     programCount: 0,
-    memberCount: mockInstructors.length,
+    memberCount: 0,
     unreadNotificationCount: 0,
   }
 }
@@ -488,21 +445,7 @@ export async function getProgramInquiryStatusList(options?: {
 }
 
 function getProgramInquiryStatusListFromMock(): ProgramInquiryRow[] {
-  const grouped = new Map<string, { pending: number; answered: number; total: number }>()
-  for (const inquiry of mockInquiries) {
-    const programName = inquiry.category
-    const bucket = grouped.get(programName) ?? { pending: 0, answered: 0, total: 0 }
-    bucket.total += 1
-    if (inquiry.status === 'PENDING') bucket.pending += 1
-    else bucket.answered += 1
-    grouped.set(programName, bucket)
-  }
-  return [...grouped.entries()].map(([programName, counts]) => ({
-    key: programName,
-    programName,
-    unreadCount: counts.pending,
-    ...counts,
-  }))
+  return []
 }
 
 /** Swagger: GET /api/admin/dashboard/program-schedules */

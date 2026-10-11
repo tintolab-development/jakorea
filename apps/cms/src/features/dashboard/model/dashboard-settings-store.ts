@@ -9,7 +9,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ProgramScheduleKind } from '@/data/mock/program-schedule-keys'
+import type { ProgramScheduleKind } from '@/features/dashboard/model/program-schedule-keys'
 
 /** 대시보드 홈(임시 미구현 라우트 대체) */
 export const DASHBOARD_HOME_PATH = '/'

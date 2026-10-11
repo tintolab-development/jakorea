@@ -8,25 +8,16 @@ import { Card, List, Tag, Space, Typography, Pagination } from 'antd'
 import { EmptyState } from '@/shared/ui'
 import { useNavigate } from 'react-router-dom'
 import { useState, useMemo } from 'react'
-import {
-  FileTextOutlined,
-  TeamOutlined,
-  CalendarOutlined,
-  DollarOutlined,
-} from '@ant-design/icons'
-import { mockApplications, mockMatchings, mockSchedules, mockSettlements } from '@/data/mock'
+import { FileTextOutlined, CalendarOutlined } from '@ant-design/icons'
 import { programService } from '@/entities/program/api/program-service'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { applicationService } from '@/entities/application/api/application-service'
 import dayjs from 'dayjs'
 import {
   applicationStatusStatusConfig,
-  commonStatusStatusConfig,
-  settlementStatusStatusConfig,
   getApplicationStatusLabel,
   getCommonStatusLabel,
   getSettlementStatusLabel,
 } from '@/shared/constants/status'
-import { domainColorsHex } from '@/shared/constants/colors'
 
 const { Text } = Typography
 
@@ -53,7 +44,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
   // 모든 활동 데이터 준비 (페이지네이션 전 전체 데이터)
   const allActivities: ActivityItem[] = useMemo(() => {
     // 최근 신청
-    const recentApplications: ActivityItem[] = [...mockApplications]
+    const recentApplications: ActivityItem[] = [...applicationService.getAllSync()]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .map(application => {
         const program = programService.getByIdSync(application.programId)
@@ -73,78 +64,9 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
         }
       })
 
-    // 최근 매칭
-    const recentMatchings: ActivityItem[] = [...mockMatchings]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .map(matching => {
-        const program = programService.getByIdSync(matching.programId)
-        const instructor = instructorService.getByIdSync(matching.instructorId)
-        return {
-          id: matching.id,
-          type: 'matching' as const,
-          action: '매칭 확정',
-          programName: program?.title || '프로그램 없음',
-          details: {
-            status: matching.status,
-            instructorName: instructor?.name || '-',
-          },
-          createdAt: typeof matching.createdAt === 'string' ? matching.createdAt : matching.createdAt.toISOString(),
-          icon: <TeamOutlined />,
-          color: commonStatusStatusConfig[matching.status]?.color || 'default',
-          path: '/programs/general?status=recruiting_instructors',
-        }
-      })
-
-    // 최근 일정
-    const recentSchedules: ActivityItem[] = [...mockSchedules]
-      .sort((a, b) => {
-        const dateA = typeof a.date === 'string' ? new Date(a.date) : a.date
-        const dateB = typeof b.date === 'string' ? new Date(b.date) : b.date
-        return dateB.getTime() - dateA.getTime()
-      })
-      .map(schedule => {
-        const program = programService.getByIdSync(schedule.programId)
-        const scheduleDate = typeof schedule.date === 'string' ? dayjs(schedule.date) : dayjs(schedule.date)
-        return {
-          id: schedule.id,
-          type: 'schedule' as const,
-          action: '일정 등록',
-          programName: program?.title || '프로그램 없음',
-          details: {
-            title: schedule.title,
-            date: scheduleDate.format('YYYY-MM-DD'),
-            time: `${schedule.startTime} - ${schedule.endTime}`,
-            instructorName: schedule.instructorId
-              ? instructorService.getNameById(schedule.instructorId)
-              : undefined,
-          },
-          createdAt: typeof schedule.createdAt === 'string' ? schedule.createdAt : schedule.createdAt.toISOString(),
-          icon: <CalendarOutlined />,
-          color: domainColorsHex.schedule.primary,
-          path: '/schedules/my',
-        }
-      })
-
-    // 최근 정산
-    const recentSettlements: ActivityItem[] = [...mockSettlements]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .map(settlement => {
-        const program = programService.getByIdSync(settlement.programId)
-        return {
-          id: settlement.id,
-          type: 'settlement' as const,
-          action: '정산 승인',
-          programName: program?.title || '프로그램 없음',
-          details: {
-            status: settlement.status,
-            amount: settlement.totalAmount,
-          },
-          createdAt: typeof settlement.createdAt === 'string' ? settlement.createdAt : settlement.createdAt.toISOString(),
-          icon: <DollarOutlined />,
-          color: settlementStatusStatusConfig[settlement.status]?.color || 'default',
-          path: '/programs/education/enrollment',
-        }
-      })
+    const recentMatchings: ActivityItem[] = []
+    const recentSchedules: ActivityItem[] = []
+    const recentSettlements: ActivityItem[] = []
 
     // 모든 활동을 시간순으로 통합
     return [
