@@ -1,5 +1,10 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import {
+  hydrateOrganizationApplicationSchedules,
+  mergeHydratedOrganizationRows,
+  schoolRowNeedsScheduleHydration,
+} from '@/features/program/general/api/admin-applications-service'
 import { useSearchParams } from 'react-router-dom'
 import {
   useTablePage,
@@ -35,6 +40,7 @@ import {
   filterGeneralIndividualApplications,
   filterGeneralInstructorApplications,
   filterGeneralInstructorCalendarApplications,
+  mergeGeneralInstructorFiltersOnViewModeChange,
 } from '@/features/program/general/lib/application-table-filter'
 import {
   APPLICANTS_CALENDAR_RANGE_PARAM,
@@ -594,6 +600,7 @@ export function useApplicantsDetail({
   }, [onRegisterApplicantCloseHandler, setSelectedItem])
 
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
+  const [institutionSchedulesHydrating, setInstitutionSchedulesHydrating] = useState(false)
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
@@ -692,17 +699,57 @@ export function useApplicantsDetail({
 
   const prevViewModeRef = useRef(viewMode)
   useEffect(() => {
-    if (
-      menu === 'instructors' &&
-      instructorColumnPreset === 'general-detail' &&
-      prevViewModeRef.current !== viewMode
-    ) {
+    if (menu !== 'instructors' || instructorColumnPreset !== 'general-detail') {
       prevViewModeRef.current = viewMode
-      setPendingFilters({})
-      setAppliedFilters({})
-      setSelectedRowKeys([])
+      return
     }
+    if (prevViewModeRef.current === viewMode) return
+    prevViewModeRef.current = viewMode
+    setAppliedFilters(prev => mergeGeneralInstructorFiltersOnViewModeChange(prev, viewMode))
+    setPendingFilters(prev => mergeGeneralInstructorFiltersOnViewModeChange(prev, viewMode))
+    setSelectedRowKeys([])
   }, [viewMode, menu, instructorColumnPreset, setPendingFilters])
+
+  useEffect(() => {
+    if (
+      menu !== 'institutions' ||
+      !usesProgramInstitutionApplications ||
+      viewMode !== 'calendar' ||
+      !programId ||
+      institutionList.length === 0
+    ) {
+      return
+    }
+    if (!institutionList.some(schoolRowNeedsScheduleHydration)) {
+      setInstitutionSchedulesHydrating(false)
+      return
+    }
+
+    let cancelled = false
+    setInstitutionSchedulesHydrating(true)
+    void hydrateOrganizationApplicationSchedules(institutionList, queryClient, {
+      companySchool: institutionColumnPreset === 'company-school',
+    })
+      .then(hydrated => {
+        if (cancelled) return
+        setInstitutionList(prev => mergeHydratedOrganizationRows(prev, hydrated))
+      })
+      .finally(() => {
+        if (!cancelled) setInstitutionSchedulesHydrating(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    institutionColumnPreset,
+    institutionList,
+    menu,
+    programId,
+    queryClient,
+    usesProgramInstitutionApplications,
+    viewMode,
+  ])
 
   const fields = useMemo((): FilterFieldConfig[] => {
     if (
@@ -1500,7 +1547,8 @@ export function useApplicantsDetail({
     tableScrollX,
     applicationsLoading:
       applicationsRemote.applicationsLoading ||
-      trainedTeacherApplicationsRemote.applicationsLoading,
+      trainedTeacherApplicationsRemote.applicationsLoading ||
+      institutionSchedulesHydrating,
     hasNextPage: !isTrainedTeachersSurface && applicationsRemote.hasNextPage,
     isFetchingNextPage: !isTrainedTeachersSurface && applicationsRemote.isFetchingNextPage,
     fetchNextPage: applicationsRemote.fetchNextPage,

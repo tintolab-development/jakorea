@@ -176,6 +176,23 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* 개인 참여자 신청 목록 — 열 폭 확대에 맞춰 셀 패딩 여유 */
+.applicant-details__table-wrap--individual-applications
+  .cms-data-table
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-selection-column):not(.applicant-details__th-sessions) {
+  padding: 12px 16px !important;
+}
+
+.applicant-details__table-wrap--individual-applications
+  .cms-data-table
+  .ant-table-tbody
+  > tr
+  > td:not(.ant-table-selection-column):not(.applicant-details__td-sessions) {
+  padding: 12px 16px !important;
+}
+
 /* fluid 전역 min-width:1080이 좁은 상세에서도 강제 스크롤을 만들지 않도록 */
 .applicant-details .cms-data-table.cms-data-table--fluid .ant-table-container {
   min-width: 0;

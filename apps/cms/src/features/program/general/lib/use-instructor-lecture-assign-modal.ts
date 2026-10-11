@@ -5,7 +5,10 @@ import type { ApplicantInstructorRow } from '@/features/program/shared/model/app
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { fetchGeneralOrganizationApplicationsPage } from '@/features/program/general/api/admin-applications-service'
+import {
+  fetchGeneralOrganizationApplicationsPage,
+  hydrateOrganizationApplicationSchedules,
+} from '@/features/program/general/api/admin-applications-service'
 import { fetchInstructorApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
@@ -47,7 +50,8 @@ async function fetchApprovedOrganizationApplicationsForLectureAssign(
     page += 1
     if (page > ASSIGN_ORG_PAGE_LIMIT) break
   }
-  return rows.filter(row => row.approvalStatus === 'approved')
+  const approved = rows.filter(row => row.approvalStatus === 'approved')
+  return hydrateOrganizationApplicationSchedules(approved, queryClient)
 }
 
 export type InstructorLectureAssignModalVariant = 'organization' | 'individual'

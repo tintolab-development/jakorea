@@ -1907,7 +1907,11 @@ export function ApplicantList({
             {displayViewMode === 'table' ? (
               <div
                 ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}
-                className="applicant-details__table-wrap"
+                className={
+                  menu === 'individual-applications'
+                    ? 'applicant-details__table-wrap applicant-details__table-wrap--individual-applications'
+                    : 'applicant-details__table-wrap'
+                }
               >
                 <CmsDataTable<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
                   rowKey="id"

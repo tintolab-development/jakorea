@@ -207,6 +207,39 @@ describe('general-applications-adapters', () => {
     expect(row.approvalNotificationSentAt).toMatch(/2026\.\d{2}\.\d{2}/)
   })
 
+  it('uses requested schedules when preferred rows have no calendar date', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691207,
+        programType: 'GENERAL_ORGANIZATION',
+        organizationName: '서울공항초등학교',
+        applicationStatus: 'SUBMITTED',
+        preferredEducationSchedules: [
+          { scheduleId: null, round: 1, startAt: null, endAt: null, label: null },
+        ],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186091',
+      {
+        requestedSchedules: [
+          {
+            id: 9001,
+            preferenceOrder: 1,
+            requestedDate: '2026-10-26',
+            startPeriod: null,
+            sessionCount: 1,
+            combinedClassYn: false,
+            sessionTimes: [{ sessionOrder: 1, startTime: '13:30:00', endTime: '15:30:00' }],
+            resolvedScheduleId: undefined,
+          },
+        ],
+      }
+    )
+
+    expect(row.sessions).toHaveLength(1)
+    expect(row.sessions?.[0]?.date).toBe('2026. 10. 26')
+  })
+
   it('maps organization preferredEducationSchedules (B) to assignment sessions', () => {
     const row = mapOrganizationApplicationToApplicantSchoolRow(
       {

@@ -60,6 +60,7 @@ import {
   isCompanySchoolOrganizationApplication,
   readOrganizationApplicationPreferredEducationSchedules,
 } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
+import { resolveSessionCalendarDateKey } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { supplementApplicantInstructorBasicInfoFromApplicationDetail } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import { mapSessionProgressToLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
@@ -220,6 +221,10 @@ export function readIndividualApplicationListAffiliationDisplayName(
   )
 }
 
+function preferredSessionsHaveCalendarDate(sessions: ParticipatingSchoolSession[]): boolean {
+  return sessions.some(session => resolveSessionCalendarDateKey(session) != null)
+}
+
 function resolveOrganizationApplicationAssignmentSessions(
   dto: OrganizationApplicationListItemResponse,
   preferred: PreferredEducationSchedule[],
@@ -229,8 +234,31 @@ function resolveOrganizationApplicationAssignmentSessions(
     return mapRequestedSchedulesToSessions(requestedSchedules) ?? []
   }
   const fromPreferred = mapPreferredEducationSchedulesToSessions(preferred)
-  if (fromPreferred.length > 0) return fromPreferred
-  return mapRequestedSchedulesToSessions(requestedSchedules) ?? []
+  if (fromPreferred.length > 0 && preferredSessionsHaveCalendarDate(fromPreferred)) {
+    return fromPreferred
+  }
+  const fromRequested = mapRequestedSchedulesToSessions(requestedSchedules) ?? []
+  if (fromRequested.length > 0) return fromRequested
+  return fromPreferred
+}
+
+export function applyRequestedSchedulesToApplicantSchoolRow(
+  row: ApplicantSchoolRow,
+  requestedSchedules: RequestedScheduleResponse[] | undefined,
+  options?: { companySchool?: boolean }
+): ApplicantSchoolRow {
+  const preferred = row.preferredEducationSchedules ?? []
+  const dto: OrganizationApplicationListItemResponse = {
+    programType: options?.companySchool ? 'ONE_COMPANY_ONE_SCHOOL' : 'GENERAL_ORGANIZATION',
+  }
+  const sessions = resolveOrganizationApplicationAssignmentSessions(
+    dto,
+    preferred,
+    requestedSchedules
+  )
+  const desiredEducationPeriod =
+    formatRequestedSchedulesPeriodLabel(requestedSchedules) ?? row.desiredEducationPeriod
+  return { ...row, sessions, desiredEducationPeriod }
 }
 
 export function mapOrganizationApplicationToApplicantSchoolRow(

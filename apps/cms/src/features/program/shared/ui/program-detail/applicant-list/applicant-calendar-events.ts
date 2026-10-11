@@ -4,6 +4,7 @@ import type { ApplicantSchoolRow } from '@/features/program/shared/model/applica
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { ApplicantListMenu } from './applicant-list-menu'
+import { resolveSessionCalendarIsoRange } from './applicant-institution-calendar-session'
 
 /** 강사 캘린더 집계 이벤트용 — `calendarInstitutionSummary` 있으면 팝오버는 기관·인원, 우측 목록은 `calendarInstitutionInstructors`로 강사별 행 */
 export type ApplicantInstructorCalendarEventItem = ApplicantInstructorRow & {
@@ -31,28 +32,6 @@ function regionTokenFromAddress(address: string): string {
   const t = address.trim()
   if (!t) return '-'
   return t.split(/\s+/)[0] ?? '-'
-}
-
-function parseSessionDate(dateStr: string): dayjs.Dayjs {
-  const normalized = dateStr.replace(/\s/g, '').replace(/\./g, '-')
-  return dayjs(normalized)
-}
-
-function parseTimeRangeToIso(
-  datePart: string,
-  timeRange: string
-): { startDate: string; endDate: string } {
-  const match = timeRange.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
-  if (match) {
-    return {
-      startDate: `${datePart}T${match[1]}:00`,
-      endDate: `${datePart}T${match[2]}:00`,
-    }
-  }
-  return {
-    startDate: `${datePart}T00:00:00`,
-    endDate: `${datePart}T23:59:59`,
-  }
 }
 
 function parseInstructorPreferredDateRange(
@@ -141,28 +120,19 @@ function buildSessionBasedCalendarEvents<
     const sessions = (row.sessions ?? []).filter(s => s.status !== 'not_planned')
     if (sessions.length === 0) continue
 
-    const byDate = new Map<string, ParticipatingSchoolSession[]>()
-    for (const session of sessions) {
-      const d = parseSessionDate(session.date)
-      if (!d.isValid()) continue
-      const dateKey = d.format('YYYY-MM-DD')
-      const prev = byDate.get(dateKey)
-      if (prev) prev.push(session)
-      else byDate.set(dateKey, [session])
-    }
-
-    for (const [dateKey, daySessions] of byDate) {
-      const first = daySessions[0]!
-      const datePart = parseSessionDate(first.date).format('YYYY-MM-DD')
-      const { startDate, endDate } = parseTimeRangeToIso(datePart, first.timeRange)
+    sessions.forEach((session, sessionIndex) => {
+      const resolved = resolveSessionCalendarIsoRange(session)
+      if (!resolved) return
+      const { dateKey, startDate, endDate } = resolved
+      const roundKey = session.round ?? sessionIndex + 1
       events.push({
-        id: `${row.id}__${dateKey}`,
+        id: `${row.id}__${dateKey}__${roundKey}`,
         title: `${titlePrefix} ${getLabel(row)}`.trim(),
         startDate,
         endDate,
         originalItem: row as unknown as ApplicantCalendarEvent['originalItem'],
       })
-    }
+    })
   }
 
   return events

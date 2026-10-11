@@ -10,16 +10,14 @@ import {
   mapOrganizationApplicationToApplicantSchoolRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { readOrganizationApplicationGradeFromFormResponse } from '@/features/program/general/api/adapters/organization-application-form-adapters'
-import { fetchLatestFormResponseByContextRemote } from '@/features/program/general/api/form-responses-api-client'
 import { mapParticipantsToVolunteerScreeningRows } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { shouldUseApplicationsHttpRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import type { QueryClient } from '@tanstack/react-query'
-import { ensureOrganizationRequestedSchedules } from '@/features/program/general/api/organization-requested-schedules-query'
-import {
-  isCompanySchoolOrganizationApplication,
-  readOrganizationApplicationPreferredEducationSchedules,
-} from '@/features/program/general/lib/organization-application-preferred-education-schedules'
+export {
+  hydrateOrganizationApplicationSchedules,
+  mergeHydratedOrganizationRows,
+  schoolRowNeedsScheduleHydration,
+} from '@/features/program/general/api/organization-application-schedules-hydrate'
 import {
   approveIndividualApplicationRemote,
   approveInstructorApplicationRemote,
@@ -130,7 +128,8 @@ function assertApplicationsRemoteReady(): void {
 }
 
 export type FetchGeneralOrganizationApplicationsPageOptions = {
-  queryClient: QueryClient
+  /** @deprecated 목록 fetch는 queryClient를 사용하지 않음. hydrate 시에만 필요 */
+  queryClient?: QueryClient
 }
 
 export async function fetchGeneralOrganizationApplications(
@@ -143,7 +142,7 @@ export async function fetchGeneralOrganizationApplications(
 
 export async function fetchGeneralOrganizationApplicationsPage(
   programId: string,
-  options: FetchGeneralOrganizationApplicationsPageOptions,
+  _options: FetchGeneralOrganizationApplicationsPageOptions,
   params?: ApplicationsListQuery
 ): Promise<GeneralApplicationsListPage<ApplicantSchoolRow>> {
   assertApplicationsRemoteReady()
@@ -154,54 +153,14 @@ export async function fetchGeneralOrganizationApplicationsPage(
     ...params,
   })
   const items = page.items ?? []
-  const { queryClient } = options
-  const scheduleResults = await Promise.all(
-    items.map(async item => {
-      const preferred = readOrganizationApplicationPreferredEducationSchedules(item)
-      if (
-        !isCompanySchoolOrganizationApplication(item) &&
-        preferred.length > 0
-      ) {
-        return undefined
-      }
-      const applicationId = item.id == null ? '' : String(item.id)
-      return ensureOrganizationRequestedSchedules(queryClient, applicationId)
-    })
-  )
   const rows = items.map((item, index) =>
     mapOrganizationApplicationToApplicantSchoolRow(
       item,
       requestedPage * GENERAL_PROGRAM_DETAIL_PAGE_SIZE + index,
-      programId,
-      {
-        requestedSchedules: scheduleResults[index],
-      }
+      programId
     )
   )
-  const numericProgramId = Number(programId)
-  const rowsWithGrade =
-    Number.isFinite(numericProgramId)
-      ? await Promise.all(
-          rows.map(async (row, index) => {
-            if (row.educationGrade?.trim()) return row
-            const applicationId = items[index]?.id
-            if (applicationId == null) return row
-            try {
-              const form = await fetchLatestFormResponseByContextRemote({
-                programId: numericProgramId,
-                contextType: 'ORGANIZATION_APPLICATION',
-                contextId: applicationId,
-              })
-              const educationGrade = readOrganizationApplicationGradeFromFormResponse(form)
-              if (!educationGrade) return row
-              return { ...row, educationGrade }
-            } catch {
-              return row
-            }
-          }),
-        )
-      : rows
-  return resolveApplicationsListPage(rowsWithGrade, page, requestedPage)
+  return resolveApplicationsListPage(rows, page, requestedPage)
 }
 
 export async function fetchGeneralInstructorApplications(
