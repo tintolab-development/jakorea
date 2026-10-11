@@ -3,7 +3,7 @@
  * 프로그램 진행 현황 > 참여 봉사자 > 임직원 자원봉사자 등록
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Form } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -116,6 +116,8 @@ export function RegisterEmployeeVolunteerModal({
   const [form] = Form.useForm<RegisterEmployeeVolunteerFormValues>()
   const [submitting, setSubmitting] = useState(false)
   const selectedInstitutionId = Form.useWatch('institutionId', form)
+  const appliedScopeIdRef = useRef<string | null>(null)
+  const appliedSavedSnapshotRef = useRef<string>('')
 
   const resetCountsForSessionRows = useCallback(() => {
     form.setFieldValue('countsBySessionId', createEmptyEmployeeVolunteerFormCounts(sessionRows))
@@ -145,15 +147,25 @@ export function RegisterEmployeeVolunteerModal({
   )
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      appliedScopeIdRef.current = null
+      appliedSavedSnapshotRef.current = ''
+      return
+    }
+
     form.setFieldsValue({
       institutionId: undefined,
       countsBySessionId: createEmptyEmployeeVolunteerFormCounts(sessionRows),
     })
+    appliedScopeIdRef.current = null
+    appliedSavedSnapshotRef.current = ''
+
     if (hideInstitutionSelect) {
       onProgramLevelOpen?.()
     }
-  }, [hideInstitutionSelect, onProgramLevelOpen, open, form, sessionRows])
+    // open 전환 시에만 초기화 — onProgramLevelOpen 인라인 참조 변경으로 폼이 리셋되지 않도록 deps 제외
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, hideInstitutionSelect, sessionRows])
 
   useEffect(() => {
     if (!open || hideInstitutionSelect || !selectedInstitutionId) return
@@ -162,15 +174,32 @@ export function RegisterEmployeeVolunteerModal({
 
   useEffect(() => {
     if (!open) return
-    if (hideInstitutionSelect) {
-      applySavedCountsForScope(programLevelRegistrationScopeId)
+
+    const scopeId = hideInstitutionSelect
+      ? programLevelRegistrationScopeId
+      : selectedInstitutionId
+
+    if (!hideInstitutionSelect && !scopeId) {
+      if (appliedScopeIdRef.current !== null) {
+        resetCountsForSessionRows()
+        appliedScopeIdRef.current = null
+        appliedSavedSnapshotRef.current = ''
+      }
       return
     }
-    if (!selectedInstitutionId) {
-      resetCountsForSessionRows()
-      return
-    }
-    applySavedCountsForScope(selectedInstitutionId)
+
+    if (!scopeId) return
+
+    const saved = getEmployeeVolunteerCountsForInstitution(savedRegistrations, scopeId)
+    const savedSnapshot = JSON.stringify(saved ?? null)
+    const scopeChanged = appliedScopeIdRef.current !== scopeId
+    const savedChanged = appliedSavedSnapshotRef.current !== savedSnapshot
+
+    if (!scopeChanged && !savedChanged) return
+
+    applySavedCountsForScope(scopeId)
+    appliedScopeIdRef.current = scopeId
+    appliedSavedSnapshotRef.current = savedSnapshot
   }, [
     applySavedCountsForScope,
     hideInstitutionSelect,
@@ -179,7 +208,6 @@ export function RegisterEmployeeVolunteerModal({
     resetCountsForSessionRows,
     savedRegistrations,
     selectedInstitutionId,
-    sessionRows,
   ])
 
   const handleCancel = () => {

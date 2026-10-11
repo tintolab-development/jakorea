@@ -47,6 +47,20 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
     '이 프로그램에 봉사 모집·신청 양식이 설정되지 않았습니다. 프로그램 모집 설정을 확인해 주세요.',
   CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY:
     '진행 현황 봉사자 추가 등록은 일반 봉사자만 지원합니다.',
+  EMPLOYEE_VOLUNTEER_ORGANIZATION_SCOPE_REQUIRED:
+    '기관을 선택한 뒤 임직원 자원봉사자 수를 저장해 주세요.',
+  EMPLOYEE_VOLUNTEER_ORGANIZATION_NOT_APPROVED:
+    '승인된 기관만 임직원 자원봉사자 수를 등록할 수 있습니다.',
+  EMPLOYEE_VOLUNTEER_ORGANIZATION_SCOPE_NOT_ALLOWED:
+    '개인 프로그램에는 기관 정보를 함께 저장할 수 없습니다.',
+  EMPLOYEE_VOLUNTEER_SCHEDULE_SET_MISMATCH:
+    '교육 일정 구성이 변경되어 저장할 수 없습니다. 화면을 닫은 뒤 다시 열어 최신 일정을 확인해 주세요.',
+  EMPLOYEE_VOLUNTEER_REVISION_CONFLICT:
+    '다른 관리자가 먼저 저장했습니다. 화면을 닫은 뒤 다시 열어 최신 값을 확인해 주세요.',
+  EMPLOYEE_VOLUNTEER_PERFORMANCE_ALREADY_REBUILT:
+    '실적이 이미 생성되어 임직원 자원봉사자 수를 수정할 수 없습니다. 정산·실적 정책에 따라 정정해 주세요.',
+  EMPLOYEE_VOLUNTEER_NOT_APPLICABLE:
+    '이 프로그램에서는 임직원 자원봉사자 수 등록을 사용할 수 없습니다.',
 }
 
 const PARTICIPATION_CONSENT_REQUIRED_CODES = new Set([

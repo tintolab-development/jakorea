@@ -41,6 +41,7 @@ import {
   type ParticipatingVolunteerMemberCandidate,
 } from '@/features/program/general/lib/participating-volunteer-member-candidates'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { EmployeeVolunteerScheduleMappingError } from '@/features/program/general/lib/employee-volunteer-counts-remote'
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
@@ -312,6 +313,33 @@ export function ParticipatingVolunteersSection({
   const handleRegisterVolunteerClick = useCallback(() => {
     openVolunteerRegister()
   }, [openVolunteerRegister])
+
+  const handleEmployeeVolunteerProgramLevelOpen = useCallback(() => {
+    void loadIndividualProgramRegistration().catch(error => {
+      showAlert({
+        title: '임직원 자원봉사자 조회 실패',
+        content: getGeneralProgramApiErrorMessage(
+          error,
+          '저장된 임직원 자원봉사자 수를 불러오지 못했습니다. 다시 시도해 주세요.'
+        ),
+      })
+    })
+  }, [loadIndividualProgramRegistration, showAlert])
+
+  const handleEmployeeVolunteerInstitutionChange = useCallback(
+    (institutionId: string) => {
+      void loadRegistrationForInstitution(institutionId).catch(error => {
+        showAlert({
+          title: '임직원 자원봉사자 조회 실패',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '저장된 임직원 자원봉사자 수를 불러오지 못했습니다. 다시 시도해 주세요.'
+          ),
+        })
+      })
+    },
+    [loadRegistrationForInstitution, showAlert]
+  )
 
   const handleProceedToVolunteerConsent = useCallback((memberId: string) => {
     setPendingVolunteerMemberId(memberId)
@@ -716,28 +744,8 @@ export function ParticipatingVolunteersSection({
             content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE,
           })
         }
-        onProgramLevelOpen={() => {
-          void loadIndividualProgramRegistration().catch(error => {
-            showAlert({
-              title: '임직원 자원봉사자 조회 실패',
-              content: getGeneralProgramApiErrorMessage(
-                error,
-                '저장된 임직원 자원봉사자 수를 불러오지 못했습니다. 다시 시도해 주세요.'
-              ),
-            })
-          })
-        }}
-        onInstitutionChange={institutionId => {
-          void loadRegistrationForInstitution(institutionId).catch(error => {
-            showAlert({
-              title: '임직원 자원봉사자 조회 실패',
-              content: getGeneralProgramApiErrorMessage(
-                error,
-                '저장된 임직원 자원봉사자 수를 불러오지 못했습니다. 다시 시도해 주세요.'
-              ),
-            })
-          })
-        }}
+        onProgramLevelOpen={handleEmployeeVolunteerProgramLevelOpen}
+        onInstitutionChange={handleEmployeeVolunteerInstitutionChange}
         onRegister={async payload => {
           try {
             await saveEmployeeVolunteerRegistration(
@@ -749,12 +757,16 @@ export function ParticipatingVolunteersSection({
               content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE,
             })
           } catch (error) {
+            const content =
+              error instanceof EmployeeVolunteerScheduleMappingError
+                ? error.message
+                : getGeneralProgramApiErrorMessage(
+                    error,
+                    '임직원 자원봉사자 수 저장에 실패했습니다. 다시 시도해 주세요.'
+                  )
             showAlert({
               title: '임직원 자원봉사자 등록 실패',
-              content: getGeneralProgramApiErrorMessage(
-                error,
-                '임직원 자원봉사자 수 저장에 실패했습니다. 다시 시도해 주세요.'
-              ),
+              content,
             })
             throw error
           }

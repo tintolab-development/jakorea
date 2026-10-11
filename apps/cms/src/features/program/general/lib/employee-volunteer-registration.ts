@@ -13,8 +13,8 @@ export function isEmployeeVolunteerIndividualProgramScope(scopeId: string): bool
 }
 
 export type EmployeeVolunteerSessionCounts = {
-  newCount: number
-  returningCount: number
+  newCount?: number
+  returningCount?: number
 }
 
 export type EmployeeVolunteerInstitutionRegistration = {
@@ -123,6 +123,12 @@ export function aggregateEmployeeVolunteerEducationMetrics(input: {
     for (const sessionRow of input.sessionRows) {
       const counts = registration.countsBySessionId[sessionRow.id]
       if (!counts) continue
+      if (
+        !isEmployeeVolunteerCountFilled(counts.newCount) ||
+        !isEmployeeVolunteerCountFilled(counts.returningCount)
+      ) {
+        continue
+      }
 
       staffVolunteers += counts.newCount
       const generalReturning = countGeneralReturningVolunteersForInstitutionSession(

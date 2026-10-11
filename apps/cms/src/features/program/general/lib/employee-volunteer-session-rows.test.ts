@@ -56,6 +56,7 @@ describe('resolveEmployeeVolunteerSessionRows', () => {
   it('복수 일정형은 scheduleDetails name을 노출한다', () => {
     const rows = resolveEmployeeVolunteerSessionRows(
       baseProgram({
+        generalProgramAudience: 'individual',
         generalProgramSessionRound: 'multi',
         generalProgramEducationStructure: 'schedule',
         generalCommonInfo: {
@@ -85,9 +86,70 @@ describe('resolveEmployeeVolunteerSessionRows', () => {
     expect(rows.map(row => row.label)).toEqual(['사전교육'])
   })
 
+  it('기관 복수 커리큘럼형은 회차명 대신 N회차 교육으로 표기한다', () => {
+    const rows = resolveEmployeeVolunteerSessionRows(
+      baseProgram({
+        generalProgramAudience: 'organization',
+        generalProgramSessionRound: 'multi',
+        generalProgramEducationStructure: 'curriculum',
+        generalCommonInfo: {
+          scheduleCurriculumPreEducation: true,
+          curriculumSessions: [
+            { sessionLabel: '필요와 욕구, 현명한 소비', title: '1차시', description: '' },
+            { sessionLabel: '학교 / 기관 프로그램 제목', title: '2차시', description: '' },
+            { sessionLabel: '학교 / 기관 프로그램 제목 2', title: '3차시', description: '' },
+          ],
+        },
+      })
+    )
+
+    expect(rows.map(row => row.label)).toEqual([
+      '사전교육',
+      '1회차 교육',
+      '2회차 교육',
+      '3회차 교육',
+    ])
+  })
+
+  it('기관 복수 일정형은 실제 scheduleDetails name을 노출한다', () => {
+    const rows = resolveEmployeeVolunteerSessionRows(
+      baseProgram({
+        generalProgramAudience: 'organization',
+        generalProgramSessionRound: 'multi',
+        generalProgramEducationStructure: 'schedule',
+        generalCommonInfo: {
+          scheduleDetails: [
+            { scheduleLabel: '세부 일정 01', name: '오리엔테이션' },
+            { scheduleLabel: '세부 일정 02', name: '국내대회' },
+            { scheduleLabel: '세부 일정 03', name: '발표회' },
+          ],
+        },
+      })
+    )
+
+    expect(rows.map(row => row.label)).toEqual(['오리엔테이션', '국내대회', '발표회'])
+  })
+
+  it('단일 회차 커리큘럼형은 프로그램 진행 1행만 노출한다', () => {
+    const rows = resolveEmployeeVolunteerSessionRows(
+      baseProgram({
+        generalProgramSessionRound: 'single',
+        generalProgramEducationStructure: 'curriculum',
+        generalCommonInfo: {
+          curriculumSessions: [{ sessionLabel: '1회차 교육', title: '1차시', description: '' }],
+        },
+      })
+    )
+
+    expect(rows).toEqual([
+      expect.objectContaining({ id: 'program_progress', label: '프로그램 진행' }),
+    ])
+  })
+
   it('복수 일정형 사전 교육 블록은 합성 사전교육 행과 중복하지 않는다', () => {
     const rows = resolveEmployeeVolunteerSessionRows(
       baseProgram({
+        generalProgramAudience: 'individual',
         generalProgramSessionRound: 'multi',
         generalProgramEducationStructure: 'schedule',
         generalCommonInfo: {
