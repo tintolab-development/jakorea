@@ -1,13 +1,14 @@
 /**
- * 숙박비 — 산정 기준 상세 read-only 표 (일반 · 1사1교)
+ * 숙박비 — 산정 기준 상세 read-only (일반 · 1사1교)
  */
 
-import { ModalSpecTable, ModalSpecTableRow } from '@/shared/ui/modal-spec-table'
 import type {
   PaymentOrderCalculationBasisDetailLodging1s1g,
   PaymentOrderCalculationBasisDetailLodgingGeneral,
 } from './payment-order-calculation-basis-detail'
 import {
+  BasisDetailInfoForm,
+  BasisDetailInfoFormRow,
   BasisDetailLodgingFeeValue,
   BasisDetailReadOnlyValue,
 } from './payment-order-calculation-basis-detail-shared'
@@ -15,28 +16,28 @@ import { formatPaymentOrderCalculationWonPlain } from './payment-order-calculati
 
 function LodgingBasisDetailTable({
   detail,
-  ariaLabel,
+  title,
 }: {
   detail: PaymentOrderCalculationBasisDetailLodgingGeneral | PaymentOrderCalculationBasisDetailLodging1s1g
-  ariaLabel: string
+  title: string
 }) {
   return (
-    <ModalSpecTable aria-label={ariaLabel}>
-      <ModalSpecTableRow label="구분" labelVariant="basis">
+    <BasisDetailInfoForm title={title}>
+      <BasisDetailInfoFormRow label="구분">
         <BasisDetailReadOnlyValue>{detail.categoryLabel}</BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="숙박일수" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="숙박일수">
         <BasisDetailReadOnlyValue>{detail.nightsDisplay}</BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="숙박비" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="숙박비">
         <BasisDetailLodgingFeeValue fee={detail.lodgingFee} />
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="합계" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="합계">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(detail.totalWon)}
         </BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-    </ModalSpecTable>
+      </BasisDetailInfoFormRow>
+    </BasisDetailInfoForm>
   )
 }
 
@@ -45,7 +46,7 @@ export function PaymentOrderCalculationBasisDetailLodgingGeneralView({
 }: {
   detail: PaymentOrderCalculationBasisDetailLodgingGeneral
 }) {
-  return <LodgingBasisDetailTable detail={detail} ariaLabel="숙박비 산정 기준" />
+  return <LodgingBasisDetailTable detail={detail} title="숙박비 산정 기준" />
 }
 
 export function PaymentOrderCalculationBasisDetailLodging1s1gView({
@@ -53,5 +54,5 @@ export function PaymentOrderCalculationBasisDetailLodging1s1gView({
 }: {
   detail: PaymentOrderCalculationBasisDetailLodging1s1g
 }) {
-  return <LodgingBasisDetailTable detail={detail} ariaLabel="1사1교 숙박비 산정 기준" />
+  return <LodgingBasisDetailTable detail={detail} title="1사1교 숙박비 산정 기준" />
 }

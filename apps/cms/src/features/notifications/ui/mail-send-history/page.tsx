@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { MAIL_SEND_HISTORY_FILTER_FIELDS } from '@/features/notifications/model/mail-send-history/filter-fields'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   applyMailSendHistoryFiltersToSearchParams,
   readMailSendHistoryFiltersFromParams,
@@ -209,7 +209,7 @@ export function MailSendHistoryPage() {
         description={`총 ${displayTotal.toLocaleString()}건`}
         contentLoading={isLoading}
       >
-        <Table<MailSendHistoryRow>
+        <CmsDataTable<MailSendHistoryRow>
           rowKey="id"
           className="cms-data-table cms-data-table--hoverable alimtalk-send-history-page__table"
           tableLayout="fixed"

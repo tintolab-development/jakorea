@@ -19,14 +19,9 @@ import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
 import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
-import {
-  hasPasswordChangeRequiredComplete,
-  hasPasswordChangeRequiredSocialOnboarding,
-  markPasswordChangeRequiredSocialOnboarding,
-} from '@/features/auth/password-change-required/wizard-state'
+import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import {
-  isPasswordChangeRequiredSocialConnectPath,
   passwordChangeRequiredPaths,
   resolvePostAuthRedirectPath,
 } from '@/shared/utils/post-auth-redirect'
@@ -97,7 +92,6 @@ export function LoginPage() {
   } = useLoginAttempts()
 
   const redirectPath = params.redirect
-  const nextPath = params.next
   const showSocialNotLinked = params.socialNotLinked === '1' || params.socialNotLinked === 'true'
   const showSocialAlreadyLinked =
     params.socialAlreadyLinked === '1' || params.socialAlreadyLinked === 'true'
@@ -112,22 +106,7 @@ export function LoginPage() {
   }, [requiresMfa, isAuthenticated])
 
   useEffect(() => {
-    // 세션 만료로 login?next=/register/social-connect?flow=... 에 떨어진 경우 → 소셜 연결 화면 복귀
-    if (nextPath?.startsWith('/')) {
-      const nextUrl = new URL(nextPath, 'http://local.invalid')
-      if (isPasswordChangeRequiredSocialConnectPath(nextUrl.pathname, nextUrl.search)) {
-        markPasswordChangeRequiredSocialOnboarding()
-        navigate(nextPath, { replace: true })
-        return
-      }
-    }
-
-    const socialOnboarding = hasPasswordChangeRequiredSocialOnboarding()
     const complete = hasPasswordChangeRequiredComplete()
-    if (socialOnboarding) {
-      navigate(passwordChangeRequiredPaths.socialConnect, { replace: true })
-      return
-    }
     if (complete) {
       navigate(passwordChangeRequiredPaths.complete, { replace: true })
       return
@@ -137,14 +116,13 @@ export function LoginPage() {
       navigate(
         resolvePostAuthRedirectPath({
           complete,
-          socialOnboarding,
           passwordChangeRequired,
           fallbackPath: fallback,
         }),
         { replace: true }
       )
     }
-  }, [isAuthenticated, user, navigate, redirectPath, passwordChangeRequired, nextPath])
+  }, [isAuthenticated, user, navigate, redirectPath, passwordChangeRequired])
 
   const submitLogin = async (values: LoginRequest, mode: LoginMode) => {
     if (checkLocked()) {
@@ -178,7 +156,6 @@ export function LoginPage() {
       navigate(
         resolvePostAuthRedirectPath({
           complete: hasPasswordChangeRequiredComplete(),
-          socialOnboarding: hasPasswordChangeRequiredSocialOnboarding(),
           passwordChangeRequired: useAuthStore.getState().passwordChangeRequired,
           fallbackPath: fallback,
         }),
@@ -232,7 +209,6 @@ export function LoginPage() {
         navigate(
           resolvePostAuthRedirectPath({
             complete: hasPasswordChangeRequiredComplete(),
-            socialOnboarding: hasPasswordChangeRequiredSocialOnboarding(),
             passwordChangeRequired: latest.passwordChangeRequired,
             fallbackPath: fallback,
           }),
@@ -253,7 +229,6 @@ export function LoginPage() {
         navigate(
           resolvePostAuthRedirectPath({
             complete: hasPasswordChangeRequiredComplete(),
-            socialOnboarding: hasPasswordChangeRequiredSocialOnboarding(),
             passwordChangeRequired: authState.passwordChangeRequired,
             fallbackPath: fallback,
           }),
@@ -272,7 +247,9 @@ export function LoginPage() {
           showSocialAlreadyLinked ? 'login-card login-card--social-already-linked' : 'login-card'
         }
       >
-        <AuthLogoLink wrapperClassName="login-logo-wrapper" logoClassName="login-logo" />
+        {showSocialNotLinked || showSocialAlreadyLinked ? null : (
+          <AuthLogoLink wrapperClassName="login-logo-wrapper" logoClassName="login-logo" />
+        )}
 
         {showSocialAlreadyLinked ? (
           <LoginSocialAlreadyLinkedView

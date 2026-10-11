@@ -4,7 +4,7 @@ import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProcessingStatus,
   PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderCalendarEvent } from '@/features/settlement/ui/payment-record/payment-orders-calendar-view'
 import { mapStatementStatusToProcessingStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import type { SettlementCalendarItemResponse } from '@/shared/api/generated/settlement/schemas'

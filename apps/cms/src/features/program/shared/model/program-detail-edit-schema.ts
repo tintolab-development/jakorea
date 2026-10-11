@@ -615,6 +615,40 @@ function finalPassAnnouncementPatch(
   }
 }
 
+type VolunteerInterviewNestedInfo = {
+  documentPassAnnouncementDate?: string
+  documentPassAnnouncementMethod?: string
+  interviewStartDate?: string
+  interviewEndDate?: string
+  interviewMethod?: string
+}
+
+/**
+ * 봉사자 서류·면접 필드는 조회 SSOT가 nested `volunteerRecruitmentInfo`다.
+ * 공용 컬럼만 갱신하면 표시가 옛 nested 값을 우선해 「수정 미반영」처럼 보인다.
+ * 봉사자 탭 저장(`recruitmentAudience=volunteer`)에서만 호출한다.
+ */
+export function volunteerDocumentInterviewNestedPatch(
+  values: ProgramDetailEditFormValues,
+  existingNested: VolunteerInterviewNestedInfo | undefined
+): VolunteerInterviewNestedInfo {
+  return {
+    documentPassAnnouncementDate: values.documentPassAnnouncementDate
+      ? dayjs(values.documentPassAnnouncementDate).toISOString()
+      : existingNested?.documentPassAnnouncementDate,
+    documentPassAnnouncementMethod:
+      values.documentPassAnnouncementMethod?.trim() ||
+      existingNested?.documentPassAnnouncementMethod,
+    interviewStartDate: values.interviewStartDate
+      ? dayjs(values.interviewStartDate).toISOString()
+      : existingNested?.interviewStartDate,
+    interviewEndDate: values.interviewEndDate
+      ? dayjs(values.interviewEndDate).toISOString()
+      : existingNested?.interviewEndDate,
+    interviewMethod: values.interviewMethod?.trim() || existingNested?.interviewMethod,
+  }
+}
+
 function formatCompanySchoolWageAmount(amount: string | number | undefined): string {
   if (amount == null || amount === '') return ''
   const num = typeof amount === 'number' ? amount : Number(String(amount).replace(/,/g, ''))
@@ -1440,12 +1474,15 @@ export function detailEditValuesToProgramPatch(
         contactPhone: instructorContactPhone?.trim() || undefined,
         contactEmail: instructorContactEmail?.trim() || undefined,
         recruitmentTarget:
-          values.instructorTargets?.length
-            ? formatInstructorTargetsLabel(values.instructorTargets)
+          values.instructorTargets != null
+            ? values.instructorTargets.length
+              ? formatInstructorTargetsLabel(values.instructorTargets)
+              : undefined
             : existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTarget,
         recruitmentTargetDetail:
-          values.instructorTargetDetail?.trim() ||
-          existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTargetDetail,
+          values.instructorTargetDetail != null
+            ? values.instructorTargetDetail.trim() || undefined
+            : existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTargetDetail,
         recruitmentPeriodLabel:
           periodLabelFromRange(
             values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
@@ -1473,12 +1510,15 @@ export function detailEditValuesToProgramPatch(
         contactPhone: volunteerContactPhone?.trim() || undefined,
         contactEmail: volunteerContactEmail?.trim() || undefined,
         recruitmentTarget:
-          values.volunteerTargets?.length
-            ? formatVolunteerTargetsLabel(values.volunteerTargets)
+          values.volunteerTargets != null
+            ? values.volunteerTargets.length
+              ? formatVolunteerTargetsLabel(values.volunteerTargets)
+              : undefined
             : existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTarget,
         recruitmentTargetDetail:
-          values.volunteerTargetDetail?.trim() ||
-          existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail,
+          values.volunteerTargetDetail != null
+            ? values.volunteerTargetDetail.trim() || undefined
+            : existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail,
         recruitmentPeriodLabel:
           periodLabelFromRange(
             values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
@@ -1537,20 +1577,33 @@ export function detailEditValuesToProgramPatch(
       values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
     finalPassAnnouncementMethod:
       values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod,
-    instructorTargets: values.instructorTargets?.length ? values.instructorTargets : undefined,
-    instructorTarget: values.instructorTargets?.length
-      ? values.instructorTargets.join(', ')
-      : undefined,
-    instructorTargetDetail: values.instructorTargetDetail ?? existing.instructorTargetDetail,
+    instructorTargets:
+      values.instructorTargets != null ? values.instructorTargets : undefined,
+    instructorTarget:
+      values.instructorTargets != null
+        ? values.instructorTargets.length
+          ? values.instructorTargets.join(', ')
+          : undefined
+        : undefined,
+    instructorTargetDetail:
+      values.instructorTargetDetail != null
+        ? values.instructorTargetDetail
+        : existing.instructorTargetDetail,
     volunteerApplicationStartDate:
       values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
     volunteerApplicationEndDate:
       values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate,
-    volunteerTargets: values.volunteerTargets?.length ? values.volunteerTargets : undefined,
-    volunteerTarget: values.volunteerTargets?.length
-      ? formatVolunteerTargetsLabel(values.volunteerTargets)
-      : undefined,
-    volunteerTargetDetail: values.volunteerTargetDetail ?? existing.volunteerTargetDetail,
+    volunteerTargets: values.volunteerTargets != null ? values.volunteerTargets : undefined,
+    volunteerTarget:
+      values.volunteerTargets != null
+        ? values.volunteerTargets.length
+          ? formatVolunteerTargetsLabel(values.volunteerTargets)
+          : undefined
+        : undefined,
+    volunteerTargetDetail:
+      values.volunteerTargetDetail != null
+        ? values.volunteerTargetDetail
+        : existing.volunteerTargetDetail,
     applicationMethod: values.applicationMethod ?? existing.applicationMethod,
     otherNotes: values.otherNotes ?? existing.otherNotes,
     additionalContentHtml: values.additionalContentHtml ?? existing.additionalContentHtml,

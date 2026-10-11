@@ -12,6 +12,7 @@ import type {
   ProgramParticipationMethod,
   ProgramSession,
   ProgramTab,
+  ProgramVolunteerInterviewSchedule,
 } from '../model/types'
 import { PROGRAM_TAB_LABEL, programTabLabels } from '../lib/constants.ts'
 import {
@@ -27,6 +28,7 @@ import type {
   PortalProgramListItem,
   PortalRecruitment,
   PortalSchedule,
+  PortalVolunteerInterviewSchedule,
 } from './types'
 import { extraSection, rewriteAdminFileContentSrcsForPortal } from '../lib/html-body.ts'
 
@@ -380,6 +382,22 @@ function recruitmentTypeLabel(value: string | undefined): string {
   }
 }
 
+function recruitmentRoleShort(value: string | undefined): string {
+  switch ((value ?? '').trim().toUpperCase()) {
+    case 'INSTRUCTOR':
+      return '강사'
+    case 'VOLUNTEER':
+      return '봉사자'
+    default:
+      return '참여자'
+  }
+}
+
+function recruitmentTypeKey(value: string | undefined): string {
+  const key = (value ?? '').trim().toUpperCase()
+  return key || 'PARTICIPANT'
+}
+
 const SCHEDULE_KIND_LABEL: Record<string, string> = {
   PRE_EDUCATION: '사전교육',
   EDUCATION: '교육',
@@ -421,6 +439,9 @@ function mapEventSchedules(schedules: PortalSchedule[] | undefined) {
     scheduleLabel: `일정 ${schedule.sessionNo ?? index + 1}`,
     name: scheduleTitle(schedule, index),
     dateLabel: formatRange(toDate(schedule.startAt), toDate(schedule.endAt)),
+    ...(schedule.scheduleId != null ? { scheduleId: schedule.scheduleId } : {}),
+    ...(readString(schedule.startAt) ? { startAt: readString(schedule.startAt)! } : {}),
+    ...(readString(schedule.endAt) ? { endAt: readString(schedule.endAt)! } : {}),
   }))
 }
 
@@ -436,36 +457,63 @@ function venueFromSchedules(schedules: PortalSchedule[] | undefined): string {
 }
 
 function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
-  return (recruitments ?? []).flatMap(row => {
-    const phases = [
+  const rows = recruitments ?? []
+  const qualify = rows.length > 1
+  const typeCounts = new Map<string, number>()
+  for (const row of rows) {
+    const key = recruitmentTypeKey(row.recruitmentType)
+    typeCounts.set(key, (typeCounts.get(key) ?? 0) + 1)
+  }
+  const typeSeen = new Map<string, number>()
+
+  return rows.flatMap(row => {
+    const typeKey = recruitmentTypeKey(row.recruitmentType)
+    const seen = (typeSeen.get(typeKey) ?? 0) + 1
+    typeSeen.set(typeKey, seen)
+    const role = recruitmentRoleShort(row.recruitmentType)
+    const roleTag =
+      qualify && (typeCounts.get(typeKey) ?? 0) > 1 ? `${role}${seen}` : qualify ? role : null
+    const selectionLabel = (base: string) => (roleTag ? `${roleTag} ${base}` : base)
+    const periodLabel =
+      roleTag && (typeCounts.get(typeKey) ?? 0) > 1
+        ? `${roleTag} 모집 기간`
+        : recruitmentTypeLabel(row.recruitmentType)
+
+    const phases: ProgramLabeledValue[] = [
       {
-        label: recruitmentTypeLabel(row.recruitmentType),
+        label: periodLabel,
         value: formatCompactRange(toDate(row.startAt), toDate(row.endAt)),
       },
     ]
     const interviewOff = row.interviewEnabled === false
     const hasInterviewDates = Boolean(
       readString(row.documentPassAnnouncementAt ?? undefined) ||
-      readString(row.interviewStartAt ?? undefined) ||
-      readString(row.interviewEndAt ?? undefined)
+        readString(row.interviewStartAt ?? undefined) ||
+        readString(row.interviewEndAt ?? undefined)
     )
     if (!interviewOff && (row.interviewEnabled === true || hasInterviewDates)) {
       const documentAt = toDate(row.documentPassAnnouncementAt ?? undefined)
       if (documentAt) {
-        phases.push({ label: '1차 합격자 발표일', value: formatYmdCompact(documentAt) })
+        phases.push({
+          label: selectionLabel('1차 합격자 발표일'),
+          value: formatYmdCompact(documentAt),
+        })
       }
       const interviewStart = toDate(row.interviewStartAt ?? undefined)
       const interviewEnd = toDate(row.interviewEndAt ?? undefined)
       if (interviewStart || interviewEnd) {
         phases.push({
-          label: '면접 기간',
+          label: selectionLabel('면접 기간'),
           value: formatCompactRange(interviewStart, interviewEnd),
         })
       }
     }
     const finalAt = toDate(row.finalPassAnnouncementAt ?? undefined)
     if (finalAt) {
-      phases.push({ label: '최종 합격자 발표', value: formatYmdCompact(finalAt) })
+      phases.push({
+        label: selectionLabel('최종 합격자 발표'),
+        value: formatYmdCompact(finalAt),
+      })
     }
     return phases
   })
@@ -476,9 +524,7 @@ function mapParticipationMethod(remote: PortalProgramDetail): ProgramParticipati
     .trim()
     .toLowerCase()
   if (raw === 'team') return 'team'
-  if (raw === 'individual') return 'individual'
-  /** Portal GET에 아직 없으면 CMS 개인 신청 시드(팀 정보 단락)와 맞춤 */
-  if (remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL') return 'team'
+  /** CMS·map-from-cms와 동일 — 미전달 시 개인 참여(팀 정보 단락 비노출) */
   return 'individual'
 }
 
@@ -683,6 +729,56 @@ function mapPortalEducationScheduleCards(remote: PortalProgramDetail): ProgramLa
   }))
 }
 
+/** YYYY-MM-DD(KST date-only) → local Date. ISO datetime은 toDate. */
+function toDateOnly(value: string | null | undefined): Date | null {
+  const raw = value?.trim()
+  if (!raw) return null
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
+  if (match) {
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+  return toDate(raw)
+}
+
+/**
+ * 봉사자 모집 행 `volunteerInterviewSchedule` → 상세 표시 모델.
+ * VOLUNTEER 면접 운영 행에만 온다. 없으면 undefined(섹션 숨김).
+ */
+function mapVolunteerInterviewSchedule(
+  recruitments: PortalRecruitment[] | undefined
+): ProgramVolunteerInterviewSchedule | undefined {
+  const remote = (recruitments ?? [])
+    .map(row => row.volunteerInterviewSchedule)
+    .find((schedule): schedule is PortalVolunteerInterviewSchedule => schedule != null)
+  if (remote == null) return undefined
+
+  const periodLabel = formatCompactRange(
+    toDateOnly(remote.periodStartDate),
+    toDateOnly(remote.periodEndDate)
+  )
+  const availableTimeSlots = readString(remote.availableTimeSlots ?? undefined)
+  const recurringUnavailable = readString(remote.recurringUnavailable ?? undefined)
+  const options = (remote.options ?? []).flatMap(option => {
+    const id = readString(option.id)
+    const label = readString(option.label)
+    if (!id || !label) return []
+    return [{ id, label }]
+  })
+
+  const hasPeriod = periodLabel !== '-'
+  if (!hasPeriod && !availableTimeSlots && !recurringUnavailable && options.length === 0) {
+    return undefined
+  }
+
+  return {
+    ...(hasPeriod ? { periodLabel } : {}),
+    ...(availableTimeSlots ? { availableTimeSlots } : {}),
+    ...(recurringUnavailable ? { recurringUnavailable } : {}),
+    options,
+  }
+}
+
 function buildPortalBasicInfoFields(args: {
   usesEducationProgressFields: boolean
   businessFieldLabel: string
@@ -859,6 +955,13 @@ export function mapPortalProgramDetail(
     ...(showsOtherMatters(detailCase) ? [extraSection('기타사항', otherMatters)] : []),
     extraSection('비고', remarks),
   ].filter(section => visibleCopy(section.body).length > 0)
+  const volunteerInterviewSchedule = mapVolunteerInterviewSchedule(
+    selected?.ambiguous
+      ? undefined
+      : recruitmentResolved
+        ? recruitmentRows
+        : remote.recruitments
+  )
 
   return {
     id: String(programId),
@@ -958,6 +1061,7 @@ export function mapPortalProgramDetail(
           label: `교육 일정 ${index + 1}`,
           value: `${item.name} · ${item.dateLabel}`,
         })),
+    ...(volunteerInterviewSchedule ? { volunteerInterviewSchedule } : {}),
     extraSections,
     contactValue: contactValue(
       independentRow?.contactName !== undefined ? independentRow.contactName : remote.contactName,

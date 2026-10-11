@@ -5,8 +5,7 @@
 
 import type { Matching } from '@/types/domain'
 import type { UUID } from '@/types'
-import { mockMatchings, mockMatchingsMap } from '@/data/mock'
-import { createCrudService } from '@/shared/utils/create-service'
+import { createEmptyCrudService } from '@/shared/utils/create-service'
 
 export interface MatchingFormData {
   programId: string
@@ -16,11 +15,11 @@ export interface MatchingFormData {
   status: Matching['status']
 }
 
-// 기본 CRUD 서비스 생성
-const baseService = createCrudService<Matching>({
+const mockMatchings: Matching[] = []
+const mockMatchingsMap = new Map<string, Matching>()
+
+const baseService = createEmptyCrudService<Matching>({
   prefix: 'matching',
-  mockData: mockMatchings,
-  mockDataMap: mockMatchingsMap,
 })
 
 export const matchingService = {

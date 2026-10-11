@@ -3,7 +3,7 @@ import {
   formatPaymentOrderInstitutionDisplay,
   sumCountablePaymentOrderLineAmounts,
 } from './payment-order-line-amounts'
-import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
 
 function row(
   estimatedAmount: number,

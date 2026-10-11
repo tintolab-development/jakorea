@@ -1,4 +1,4 @@
-import bubbleIconImage from '@/assets/images/logo/bubble.png'
+import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
 import { CmsButton } from '@/shared/ui'
 
 interface LoginSocialAlreadyLinkedViewProps {
@@ -13,17 +13,18 @@ export function LoginSocialAlreadyLinkedView({
   return (
     <div className="login-social-already-linked">
       <img
-        src={bubbleIconImage}
+        src={illustExclamationUrl}
         alt=""
         className="login-social-already-linked__icon"
-        width={70}
-        height={70}
+        width={84}
+        height={84}
+        aria-hidden="true"
       />
 
       <h2 className="login-social-already-linked__title">
         이 소셜 계정은 이미 다른
         <br />
-        JA Korea 계정에 연결되어 있어요
+        JA Korea 계정에 연결되어 있습니다.
       </h2>
 
       <p className="login-social-already-linked__description">

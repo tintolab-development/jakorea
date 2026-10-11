@@ -4,6 +4,7 @@ import {
   buildTeacherInProgressDetailTabItems,
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
+  resolveVolunteerActivityDetailCase,
 } from './detail-tabs.ts'
 import { hasTeacherAssignmentAsideContent } from '../model/types.ts'
 
@@ -17,6 +18,21 @@ const general = buildInProgressDetailTabItems(options)
 assert.deepEqual(
   general.map(item => item.key),
   ['notice', 'schedule', 'survey', 'satisfaction', 'settlement'],
+)
+
+assert.equal(resolveVolunteerActivityDetailCase('general'), 'volunteer')
+assert.equal(resolveVolunteerActivityDetailCase('volunteer'), 'volunteer')
+assert.equal(resolveVolunteerActivityDetailCase('ujat-volunteer'), 'ujat-volunteer')
+assert.equal(resolveVolunteerActivityDetailCase(undefined), 'volunteer')
+
+const volunteerTabs = buildInProgressDetailTabItems({
+  detailCase: resolveVolunteerActivityDetailCase('general'),
+  surveyConfigured: true,
+  satisfactionConfigured: true,
+})
+assert.deepEqual(
+  volunteerTabs.map(item => item.label),
+  ['안내사항', '배정현황', '설문조사', '만족도조사', '정산현황'],
 )
 
 const teacher = buildTeacherInProgressDetailTabItems(options)

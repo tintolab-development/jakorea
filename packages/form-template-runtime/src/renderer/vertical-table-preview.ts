@@ -76,9 +76,9 @@ function resolveStagePlaceholder(
   if (kind === 'subjective') {
     return hint.trim() !== '' ? hint : DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER
   }
-  if (kind === 'date_time') {
+  if (kind === 'date' || kind === 'time' || kind === 'date_time') {
     if (hint.trim() !== '') return hint
-    if (dateTimeMode === 'time') return VT_TIME_PLACEHOLDER
+    if (kind === 'time' || dateTimeMode === 'time') return VT_TIME_PLACEHOLDER
     if (flavorIsDateTime) return '일정 선택'
     return VT_DATE_PLACEHOLDER
   }
@@ -97,7 +97,13 @@ function resolvePreviewStage(
   const kinds = effectiveVerticalStageKinds(row, paragraph.verticalTableFlavor)
   const kind = kinds[stageIdx as 0 | 1] ?? 'text'
   const dateTimeMode =
-    kind === 'date_time' ? (effectiveVerticalRowDateTimeModes(row)[stageIdx as 0 | 1] ?? 'date') : null
+    kind === 'time'
+      ? 'time'
+      : kind === 'date'
+        ? 'date'
+        : kind === 'date_time'
+          ? (effectiveVerticalRowDateTimeModes(row)[stageIdx as 0 | 1] ?? 'date')
+          : null
   const cell = row.cells[stageIdx] ?? ''
   return {
     header: row.headers[stageIdx] ?? '',

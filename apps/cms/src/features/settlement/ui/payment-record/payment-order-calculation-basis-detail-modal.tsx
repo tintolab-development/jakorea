@@ -62,8 +62,8 @@ export function PaymentOrderCalculationBasisDetailModal({
       titleBodyGap="always"
       zIndex={zIndex}
       footer={
-        <CmsButton variant="primary" size="large" onClick={onCancel}>
-          취소
+        <CmsButton variant="secondary" size="h40" onClick={onCancel}>
+          닫기
         </CmsButton>
       }
     >
@@ -105,8 +105,7 @@ export function PaymentOrderCalculationBasisDetailModal({
 }
 
 export type PaymentOrderCalculationBasisDetailModalContext =
-  PaymentOrderCalculationStatementDetailContext &
-    PaymentOrderCalculationBasisDetailResolveContext
+  PaymentOrderCalculationStatementDetailContext & PaymentOrderCalculationBasisDetailResolveContext
 
 export function usePaymentOrderCalculationBasisDetailModal(
   parentOpen = true,

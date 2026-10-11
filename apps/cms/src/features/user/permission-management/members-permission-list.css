@@ -1,11 +1,15 @@
 /*
  * 권한 승인 목록: Ant CSS-in-js·colgroup 차이 대비 — 체크박스 68px(좌 8px 패딩 포함), No. 80px
  */
-.members-permission-list__table.cms-data-table:has(.ant-table-selection-column) colgroup > col:nth-child(1) {
+.members-permission-list__table.cms-data-table:has(.ant-table-selection-column)
+  colgroup
+  > col:nth-child(1) {
   width: var(--table-selection-column-width, 68px) !important;
   min-width: var(--table-selection-column-width, 68px) !important;
 }
-.members-permission-list__table.cms-data-table:has(.ant-table-selection-column) colgroup > col:nth-child(2) {
+.members-permission-list__table.cms-data-table:has(.ant-table-selection-column)
+  colgroup
+  > col:nth-child(2) {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
@@ -18,8 +22,14 @@
   max-width: var(--table-no-column-width, 80px) !important;
 }
 
-.members-permission-list__table.cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
-.members-permission-list__table.cms-data-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-selection-column {
+.members-permission-list__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.ant-table-selection-column,
+.members-permission-list__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.ant-table-selection-column {
   width: var(--table-selection-column-width, 68px) !important;
   min-width: var(--table-selection-column-width, 68px) !important;
   max-width: var(--table-selection-column-width, 68px) !important;
@@ -38,11 +48,11 @@
 /* 권한 승인 현황 · 상태값 (회원 권한 승인 — 피그마 타이포) */
 .members-permission-list__approval-status {
   text-align: center;
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  font-family: Pretendard;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 150%; /* 21px */
 }
 
 .members-permission-list__approval-status--pending {

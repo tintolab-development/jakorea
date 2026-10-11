@@ -12,9 +12,6 @@ import {
   buildParticipatingSchoolPreferredScheduleLines,
   buildParticipatingSchoolSessionLines,
 } from './participating-school-session-display'
-import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
-import { isTempMockOrgProgressInstructorId } from '@/features/program/general/lib/temp-mock-org-program'
-
 function hash(s: string): number {
   let h = 0
   for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i)
@@ -125,19 +122,7 @@ export function buildInitialAssignedSchoolRows(
       .filter((name): name is string => Boolean(name))
   )
 
-  let pickedSchools = schools.filter(school => assignedNames.has(school.schoolName))
-
-  // TODO(temp-mock): 열여라 참깨 — 참여 강사·배정 현황 검증 후 삭제
-  const isTemporaryInstructor =
-    isGeneralProgramTempMockEnabled() &&
-    (isTempMockOrgProgressInstructorId(instructor.id) ||
-      instructor.id.startsWith('temp-progress-instructor-'))
-  if (pickedSchools.length === 0 && isTemporaryInstructor) {
-    const seed = hash(instructor.id)
-    const primary =
-      schools.find(s => s.schoolName === instructor.schoolName) ?? schools[seed % schools.length]
-    pickedSchools = primary ? [primary] : []
-  }
+  const pickedSchools = schools.filter(school => assignedNames.has(school.schoolName))
 
   return pickedSchools.map((school, idx) => {
     return {
@@ -177,13 +162,7 @@ export function buildWaitingSchoolRows(
         region: school.region,
         distanceFromHome: '-',
         educationScheduleLines: scheduleLinesForSchool(school),
-        // TODO(temp-mock): 열여라 참깨 — 배정 대기/불가/완료 검증 후 삭제
-        assignmentStatus:
-          isGeneralProgramTempMockEnabled() &&
-          (isTempMockOrgProgressInstructorId(instructor.id) ||
-            instructor.id.startsWith('temp-progress-instructor-'))
-            ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
-            : ('waiting' as const),
+        assignmentStatus: 'waiting' as const,
         assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
       }
     })

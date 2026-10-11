@@ -3,11 +3,11 @@
  * (목록/캘린더 `PaymentOrderAdminProcessingStatus` 와 분리)
  */
 
-import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE,
   type InstructorSettlementUiStatus,
-} from '@/data/mock/instructor-member-settlements'
+} from '@/features/settlement-management/model/instructor-member-settlements'
 
 /** 테이블·상세 목록 라인 — 전체 문구 (캘린더는 `PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST` 함축형만 사용) */
 export const PAYMENT_ORDER_LINE_STATUS_LABELS_FULL: Record<

@@ -7,9 +7,8 @@ import { useMemo, useState } from 'react'
 import {
   getReactionsByPostId,
   getReactionUsersByPostId,
-  mockProgramFiles,
-  mockProgramPostsMap,
-} from '@/data/mock'
+} from '@/features/user/detail/lib/program-post-interaction-stubs'
+
 import { PostDetailModal } from '@/features/user/detail/ui/modal/post-detail-modal'
 import { PostReadStatusPopoverContent } from '@/features/user/detail/ui/post-read-status-popover'
 import {
@@ -24,10 +23,44 @@ import {
   CmsButton,
 } from '@/shared/ui'
 import type { UUID } from '@/types'
+import type { ProgramFile, ProgramPost } from '@/types/domain'
 import { DsDemo, DsSection } from './section'
 
-/** 첨부·댓글·반응이 있는 mock 게시글 */
+/** 첨부·댓글·반응 데모 게시글 (inline fixture) */
 const DS_POST_DETAIL_DEMO_ID = 'post-hsbc-gs-002' as UUID
+
+const now = new Date().toISOString()
+
+const demoPostFixture: ProgramPost = {
+  id: DS_POST_DETAIL_DEMO_ID,
+  programId: 'program-demo' as UUID,
+  title: 'Design system — 게시글 상세 데모',
+  content: '<p>첨부·댓글·반응 UI 샘플입니다.</p>',
+  authorName: '관리자',
+  read: false,
+  viewCount: 12,
+  reactionCount: 3,
+  commentCount: 0,
+  attachmentCount: 1,
+  postType: 'notice',
+  audience: ['all'],
+  publishedAt: now,
+  createdAt: now,
+  updatedAt: now,
+}
+
+const demoFilesFixture: ProgramFile[] = [
+  {
+    id: 'file-demo-1' as UUID,
+    programId: 'program-demo' as UUID,
+    postId: DS_POST_DETAIL_DEMO_ID,
+    fileName: 'sample-guide.pdf',
+    fileUrl: '#',
+    uploadedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  },
+]
 
 export function PostsAttachmentsSection() {
   const [fileNames, setFileNames] = useState<string[]>(['sample-guide.pdf'])
@@ -36,15 +69,9 @@ export function PostsAttachmentsSection() {
   const [selectedEmoji, setSelectedEmoji] = useState<number | null>(null)
   const [postDetailOpen, setPostDetailOpen] = useState(false)
 
-  const demoPost = mockProgramPostsMap.get(DS_POST_DETAIL_DEMO_ID) ?? null
-  const demoFiles = useMemo(
-    () => mockProgramFiles.filter(file => file.postId === DS_POST_DETAIL_DEMO_ID),
-    []
-  )
-  const demoReactions = useMemo(
-    () => getReactionsByPostId(DS_POST_DETAIL_DEMO_ID).sort((a, b) => b.count - a.count),
-    []
-  )
+  const demoPost = demoPostFixture
+  const demoFiles = useMemo(() => demoFilesFixture, [])
+  const demoReactions = useMemo(() => [...getReactionsByPostId(DS_POST_DETAIL_DEMO_ID)], [])
   const demoReactionUsers = useMemo(
     () => getReactionUsersByPostId(DS_POST_DETAIL_DEMO_ID),
     []

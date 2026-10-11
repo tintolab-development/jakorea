@@ -1,6 +1,9 @@
 import { mapSettlementConfigToSections } from '@/features/settlement-management/api/settlement-configs/map-settlement-config-sections'
 import { fetchCurrentSettlementConfigRemote } from '@/features/settlement-management/api/settlement-api-client'
-import type { SettlementItemSettingSection } from '@/data/mock/settlement-item-settings'
+import {
+  replaceSettlementItemSettingSections,
+  type SettlementItemSettingSection,
+} from '@/features/settlement-management/model/settlement-item-settings'
 import type { SettlementConfigResponse } from '@/shared/api/generated/settlement/schemas'
 
 export interface SettlementConfigQueryData {
@@ -11,9 +14,11 @@ export interface SettlementConfigQueryData {
 export function buildSettlementConfigQueryData(
   config: SettlementConfigResponse
 ): SettlementConfigQueryData {
+  const sections = mapSettlementConfigToSections(config)
+  replaceSettlementItemSettingSections(sections)
   return {
     config,
-    sections: mapSettlementConfigToSections(config),
+    sections,
   }
 }
 

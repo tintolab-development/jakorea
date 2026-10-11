@@ -165,6 +165,26 @@ describe('getInstitutionApplicationFormHiddenParagraphIds', () => {
     })
     expect(hidden?.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)).toBe(true)
   })
+
+  it('사전 안내 불필요이면 guidance 단락 id를 숨긴다', () => {
+    const hidden = getInstitutionApplicationFormHiddenParagraphIds({
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      preEducationNoticeRequired: false,
+    })
+    expect(hidden?.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance)).toBe(true)
+  })
+
+  it('사전 안내 필요이면 guidance 단락을 숨기지 않는다', () => {
+    const hidden = getInstitutionApplicationFormHiddenParagraphIds({
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      educationScheduleMode: 'date',
+      preEducationNoticeRequired: true,
+    })
+    expect(hidden?.has(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance)).toBeFalsy()
+  })
 })
 
 describe('syncInstitutionApplicationPreferredEducationFormFromOverlay', () => {

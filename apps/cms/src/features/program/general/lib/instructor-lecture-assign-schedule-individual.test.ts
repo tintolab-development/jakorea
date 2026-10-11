@@ -3,6 +3,9 @@ import type { Program } from '@/types/domain'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
   buildIndividualLectureAssignSlotsFromScheduleSlots,
+  mapLectureAssignItemsToApprovalAssignments,
+  parseScheduleIdFromSlotKey,
+  toIndividualLectureAssignItem,
   formatIndividualLectureAssignSlotLabel,
   formatIndividualLectureAssignTagLabel,
   getIndividualLectureAssignSlots,
@@ -103,7 +106,7 @@ describe('individual instructor lecture assign schedule', () => {
     expect(parseIndividualInstructorLectureAssignSchedule(program)).toHaveLength(0)
   })
 
-  it('상세 응답 일정은 assignable인 항목만 scheduleId 키 슬롯으로 만든다', () => {
+  it('상세 응답 일정은 assignable false도 비활성 슬롯으로 포함한다', () => {
     const slots = buildIndividualLectureAssignSlotsFromScheduleSlots(
       [
         {
@@ -134,8 +137,64 @@ describe('individual instructor lecture assign schedule', () => {
       { schoolName: '개인 프로그램', allInstructors: [] }
     )
 
-    expect(slots.map(slot => slot.key)).toEqual(['186626'])
-    expect(slots[0]?.label).toBe('26년 4월 20일(월) 09:30 ~ 12:20')
+    expect(slots.map(slot => slot.key)).toEqual([
+      '186626:2026-04-20T09:30:00',
+      '186628:2026-04-21T09:00:00',
+      '186627:2026-04-27T09:30:00',
+    ])
+    expect(slots[0]?.disabled).toBe(false)
+    expect(slots.find(slot => slot.key === '186627:2026-04-27T09:30:00')?.disabled).toBe(true)
+    expect(slots[0]?.scheduleId).toBe(186626)
+  })
+
+  it('PERIOD composite slotKey에서 scheduleId를 추출해 승인 payload를 만든다', () => {
+    const slot = buildIndividualLectureAssignSlotsFromScheduleSlots(
+      [
+        {
+          scheduleId: 186659,
+          startAt: '2026-10-28T00:00:00+09:00',
+          endAt: '2026-11-12T23:59:59+09:00',
+          assignable: true,
+          label: '26년 10월 28일(수) ~ 26년 11월 12일(목)',
+        },
+      ],
+      { schoolName: '프로그램', allInstructors: [] }
+    )[0]!
+
+    expect(parseScheduleIdFromSlotKey(slot.key)).toBe(186659)
+    const [assignment] = mapLectureAssignItemsToApprovalAssignments([
+      toIndividualLectureAssignItem(slot),
+    ])
+    expect(assignment).toEqual({
+      scheduleId: 186659,
+      scheduleLead: true,
+    })
+  })
+
+  it('같은 scheduleId의 PERIOD 구간은 각각 슬롯으로 만든다', () => {
+    const slots = buildIndividualLectureAssignSlotsFromScheduleSlots(
+      [
+        {
+          scheduleId: 186659,
+          startAt: '2026-10-28T00:00:00+09:00',
+          endAt: '2026-11-12T23:59:59+09:00',
+          assignable: true,
+          label: '26년 10월 28일(수) ~ 26년 11월 12일(목)',
+        },
+        {
+          scheduleId: 186659,
+          startAt: '2026-11-25T00:00:00+09:00',
+          endAt: '2026-12-11T23:59:59+09:00',
+          assignable: true,
+          label: '26년 11월 25일(수) ~ 26년 12월 11일(금)',
+        },
+      ],
+      { schoolName: '개인 프로그램', allInstructors: [] }
+    )
+
+    expect(slots).toHaveLength(2)
+    expect(slots[0]?.label).toBe('26년 10월 28일(수) ~ 26년 11월 12일(목)')
+    expect(slots[1]?.label).toBe('26년 11월 25일(수) ~ 26년 12월 11일(금)')
   })
 
   it('여러 날에 걸친 일정은 종료 날짜까지 라벨에 표시한다', () => {

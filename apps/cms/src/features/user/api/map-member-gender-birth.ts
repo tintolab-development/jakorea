@@ -34,9 +34,19 @@ export function toApiGender(gender: string | undefined | null): 'M' | 'F' | unde
   return undefined
 }
 
-/** 회원 상세·목록 표시용 성별 — 항상 `남성` | `여성` | `-` */
+/** BE 마스킹 성별(`**`, `*`만 등) */
+export function isMaskedGenderValue(gender: string | undefined | null): boolean {
+  const raw = gender?.trim()
+  if (!raw) return false
+  return raw === '**' || /^\*+$/.test(raw)
+}
+
+/** 회원 상세·목록 표시용 성별 — `남성` | `여성` | `**` | `-` */
 export function toDisplayGender(gender: string | undefined | null): string {
-  const api = toApiGender(gender)
+  const raw = gender?.trim()
+  if (!raw) return '-'
+  if (isMaskedGenderValue(raw)) return '**'
+  const api = toApiGender(raw)
   if (api === 'M') return '남성'
   if (api === 'F') return '여성'
   return '-'

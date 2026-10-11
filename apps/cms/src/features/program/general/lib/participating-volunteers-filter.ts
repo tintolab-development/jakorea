@@ -1,4 +1,6 @@
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import type { Program } from '@/types/domain'
 
 export interface ParticipatingVolunteersFilters {
   volunteerName: string
@@ -29,4 +31,22 @@ export function formatParticipatingVolunteerAssignedInstitutions(names: string[]
   if (!unique.length) return '-'
   if (unique.length === 1) return unique[0]
   return `${unique[0]} 외 ${unique.length - 1}개`
+}
+
+/** 참여 봉사자 목록 — 기관명(기관형) / 배정 기관(개인형) 셀 */
+export function formatParticipatingVolunteerInstitutionCell(
+  row: ParticipatingVolunteerRow,
+  program?: Program | null
+): string {
+  const assigned = formatParticipatingVolunteerAssignedInstitutions(row.assignedInstitutionNames)
+  if (assigned !== '-') return assigned
+  if (program && isGeneralIndividualProgram(program)) {
+    const affiliation = row.affiliation?.trim()
+    if (affiliation) return affiliation
+  }
+  return '-'
+}
+
+export function participatingVolunteerInstitutionColumnTitle(program?: Program | null): string {
+  return program && isGeneralIndividualProgram(program) ? '배정 기관' : '기관명'
 }

@@ -1,4 +1,4 @@
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, FilterTableToolbarButton } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
   PROGRAM_EDIT_INFO_BUTTON_PROPS,
@@ -12,6 +12,8 @@ export interface ProgramEditInfoActionsProps {
   saving?: boolean
   disabled?: boolean
   idleVariant?: 'primary' | 'secondary'
+  /** FilterTableLayout 툴바 등 h40 SSOT */
+  useToolbarButton?: boolean
 }
 
 /** 조회/편집 상태 모두 단일 「정보 수정」 버튼을 사용하고 색상으로 동작을 구분한다. */
@@ -22,17 +24,26 @@ export function ProgramEditInfoActions({
   saving = false,
   disabled = false,
   idleVariant = 'secondary',
+  useToolbarButton = false,
 }: ProgramEditInfoActionsProps) {
-  return (
-    <CmsButton
-      {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-      variant={isEditing ? 'secondary' : idleVariant}
-      disabled={disabled}
-      loading={saving}
-      onClick={isEditing ? onSave : onEdit}
-      aria-label={PROGRAM_EDIT_INFO_BUTTON_LABEL}
-    >
-      {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-    </CmsButton>
-  )
+  const resolvedVariant = isEditing ? 'secondary' : idleVariant
+  const shared = {
+    variant: resolvedVariant,
+    disabled,
+    loading: saving,
+    onClick: isEditing ? onSave : onEdit,
+    'aria-label': PROGRAM_EDIT_INFO_BUTTON_LABEL,
+    children: PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  }
+
+  if (useToolbarButton) {
+    return (
+      <FilterTableToolbarButton
+        {...shared}
+        width={PROGRAM_EDIT_INFO_BUTTON_PROPS.width}
+      />
+    )
+  }
+
+  return <CmsButton {...PROGRAM_EDIT_INFO_BUTTON_PROPS} {...shared} />
 }

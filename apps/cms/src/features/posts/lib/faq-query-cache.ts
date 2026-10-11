@@ -1,5 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query'
-import type { AdminFaq } from '@/data/mock/admin-faqs'
+import type { AdminFaq } from '@/features/posts/model/admin-faq'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import {
   statusMatchesListVisibility,

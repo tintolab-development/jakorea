@@ -1,9 +1,35 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
+  parseGeneralProgramServiceDetailJson,
   toKstDateKey,
   withVolunteerInterviewSchedulePeriod,
 } from './general-program-service-detail-json'
+
+describe('parseGeneralProgramServiceDetailJson registration overlay', () => {
+  it('merges registration.overlay with root registrationOverlay (root wins)', () => {
+    const raw = JSON.stringify({
+      schemaVersion: 1,
+      generalCommonInfo: {},
+      registration: {
+        overlay: {
+          'recruit.volunteer.interview.selectedSlotKeys': [],
+          'recruit.volunteer.interview.timeUnit': '30',
+        },
+      },
+      registrationOverlay: {
+        'recruit.volunteer.interviewRequired': 'yes',
+        'recruit.volunteer.interview.timeUnit': '60',
+      },
+    })
+    const parsed = parseGeneralProgramServiceDetailJson(raw)
+    expect(parsed.registrationOverlay).toEqual({
+      'recruit.volunteer.interview.selectedSlotKeys': [],
+      'recruit.volunteer.interview.timeUnit': '60',
+      'recruit.volunteer.interviewRequired': 'yes',
+    })
+  })
+})
 
 describe('toKstDateKey', () => {
   it('UTC ISO를 KST 날짜로 바꾼다', () => {

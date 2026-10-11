@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { InstructorPreferredOrganizationResponse } from './instructorPreferredOrganizationResponse';
 
 export interface InstructorApplicationListItemResponse {
   id?: number;
@@ -39,4 +40,6 @@ export interface InstructorApplicationListItemResponse {
   rejectedAt?: string;
   rejectReason?: string;
   availableActions?: string[];
+  /** 희망 배정 기관·일정 요약(캘린더·목록). 없으면 빈 배열. */
+  preferredOrganizations: InstructorPreferredOrganizationResponse[];
 }

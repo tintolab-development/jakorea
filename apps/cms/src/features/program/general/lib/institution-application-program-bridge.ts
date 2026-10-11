@@ -9,8 +9,8 @@ import { shouldShowInstitutionApplicationEducationFormatField } from '@/features
 import { isParticipantSelectionEducationFormInOverlay } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import { shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph } from '@/features/program/general/lib/institution-application-form-visibility'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
-import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import {
+  getInstitutionApplicationFormHiddenParagraphIds as getInstitutionApplicationFormHiddenParagraphIdsFromSchema,
   shouldShowApplicationMaxScheduleFields,
   shouldShowApplicationMaxSessionsPerDayField,
   shouldShowApplicationPreferredScheduleParagraph,
@@ -304,17 +304,17 @@ export function shouldShowInstitutionApplicationScheduleParagraph(
 export function getInstitutionApplicationFormHiddenParagraphIds(
   bridge: InstitutionApplicationProgramBridge
 ): ReadonlySet<string> | undefined {
-  const hidden = new Set<string>()
-  if (!shouldShowInstitutionApplicationGuidanceParagraph(bridge)) {
-    hidden.add(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance)
-  }
-  if (!shouldShowInstitutionApplicationScheduleParagraph(bridge)) {
-    hidden.add(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)
-  }
-  if (!shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph()) {
-    hidden.add(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod)
-  }
-  return hidden.size > 0 ? hidden : undefined
+  return getInstitutionApplicationFormHiddenParagraphIdsFromSchema({
+    educationStructure: bridge.educationStructure,
+    sessionRound: bridge.sessionRound,
+    educationScheduleMode: bridge.educationScheduleMode,
+    educationScheduleLines: bridge.educationScheduleLines,
+    preEducationNoticeRequired: shouldShowInstitutionApplicationGuidanceParagraph(bridge)
+      ? true
+      : false,
+    showSexOffenseConsentInquiryParagraph:
+      shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph(),
+  })
 }
 
 export function useInstitutionApplicationProgramBridge(): InstitutionApplicationProgramBridge {

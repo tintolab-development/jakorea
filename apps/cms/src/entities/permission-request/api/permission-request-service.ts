@@ -9,12 +9,11 @@ import type {
   ReviewPermissionRequestInput,
   TemporaryPermission,
 } from '@/types/permission-request'
-import { mockPermissionRequests, mockTemporaryPermissions } from '@/data/mock/permission-requests'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 
 // Mock: 메모리 기반 저장소
-const requests: PermissionRequest[] = [...mockPermissionRequests]
-const temporaryPermissions: TemporaryPermission[] = [...mockTemporaryPermissions]
+const requests: PermissionRequest[] = []
+const temporaryPermissions: TemporaryPermission[] = []
 
 /**
  * 권한 요청 목록 조회
@@ -53,19 +52,12 @@ export async function createPermissionRequest(
     throw new Error('로그인이 필요합니다.')
   }
 
-  // 프로그램 정보 조회 (Mock)
-  const { mockPrograms } = await import('@/data/mock/programs')
-  const program = mockPrograms.find(p => p.id === input.programId)
-  if (!program) {
-    throw new Error('프로그램을 찾을 수 없습니다.')
-  }
-
   const newRequest: PermissionRequest = {
     id: `perm-req-${Date.now()}`,
     requesterId: user.id,
     requesterName: user.name,
     programId: input.programId,
-    programName: program.title,
+    programName: input.programId,
     requestedRole: input.requestedRole,
     requestedAction: input.requestedAction,
     reason: input.reason,
@@ -119,9 +111,6 @@ export async function reviewPermissionRequest(
   let temporaryPermission: TemporaryPermission | undefined
 
   if (input.approved) {
-    const { mockPrograms } = await import('@/data/mock/programs')
-    const program = mockPrograms.find(p => p.id === request.programId)
-    
     const period = input.grantedPeriod || request.requestedPeriod || {
       startDate: new Date().toISOString(),
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30일 후
@@ -132,7 +121,7 @@ export async function reviewPermissionRequest(
       userId: request.requesterId,
       userName: request.requesterName,
       programId: request.programId,
-      programName: program?.title || request.programName,
+      programName: request.programName,
       grantedRole: request.requestedRole,
       grantedActions: [request.requestedAction],
       expiresAt: period.endDate,

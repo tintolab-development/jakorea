@@ -11,7 +11,8 @@ export type CalendarGeneralInstructorApplicationListRow = {
   instructorName: string
   approvalStatus: ApprovalStatusKey
   sessionLabel: string
-  distanceKm: number
+  distanceKm: number | null
+  distanceDisplay: string
   isNearDistance: boolean
   dispatchCount: number
   longDistanceCount: number
@@ -56,7 +57,7 @@ export function CalendarListItemContentGeneralInstructorApplication({
               .filter(Boolean)
               .join(' ')}
           >
-            거리 : {row.distanceKm}km
+            거리 : {row.distanceDisplay}
           </span>
           <span className="general-instructor-application-list-item__tag">
             출강 : {row.dispatchCount}회

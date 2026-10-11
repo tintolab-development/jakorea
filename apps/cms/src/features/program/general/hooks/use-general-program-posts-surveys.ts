@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useMemo } from 'react'
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createGeneralProgramFormBinding,
   createGeneralProgramPost,
@@ -14,6 +14,7 @@ import {
   deleteGeneralProgramPost,
   deleteGeneralProgramPostReaction,
   fetchGeneralProgramFormBindings,
+  fetchGeneralProgramAllPostAttachments,
   fetchGeneralProgramPostAttachments,
   fetchGeneralProgramPostComments,
   fetchGeneralProgramPostDetail,
@@ -38,6 +39,7 @@ import {
   type ClassifiedFormBinding,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
 import {
+  groupProgramPostAttachmentsByPostId,
   mapProgramPostAttachmentToFile,
   mapProgramPostCommentToDomain,
   mapProgramPostListItemToDomain,
@@ -123,58 +125,60 @@ export function useGeneralProgramPosts(programId: string | undefined) {
     return query.data.map(item => mapProgramPostListItemToDomain(item, programId))
   }, [programId, query.data, remoteEnabled])
 
-  const postIds = useMemo(() => (postsBase ?? []).map(post => post.id).filter(Boolean), [postsBase])
-
-  const attachmentQueries = useQueries({
-    queries: postIds.map(postId => ({
-      queryKey: generalProgramQueryKeys.postAttachments(programId ?? '', postId),
-      queryFn: () => fetchGeneralProgramPostAttachments(programId!, postId),
-      enabled: remoteEnabled && Boolean(programId) && postIds.length > 0,
-      staleTime: 30_000,
-      retry: false,
-    })),
+  const programAttachmentsQuery = useQuery({
+    queryKey: generalProgramQueryKeys.postFiles(programId ?? ''),
+    queryFn: () => fetchGeneralProgramAllPostAttachments(programId!),
+    enabled: remoteEnabled && Boolean(programId),
+    staleTime: 30_000,
+    retry: false,
   })
 
-  const attachmentCountByPostId = useMemo(() => {
-    const map = new Map<string, number>()
-    postIds.forEach((postId, index) => {
-      const items = attachmentQueries[index]?.data
-      map.set(postId, Array.isArray(items) ? items.length : 0)
-    })
-    return map
-  }, [attachmentQueries, postIds])
+  const attachmentsByPostId = useMemo(() => {
+    if (programAttachmentsQuery.data == null) return null
+    return groupProgramPostAttachmentsByPostId(programAttachmentsQuery.data)
+  }, [programAttachmentsQuery.data])
 
   const posts = useMemo(() => {
     if (!postsBase) return null
+    if (attachmentsByPostId == null) return postsBase
     return postsBase.map(post => ({
       ...post,
-      attachmentCount: attachmentCountByPostId.get(post.id) ?? post.attachmentCount,
+      attachmentCount: attachmentsByPostId.get(post.id)?.length ?? post.attachmentCount,
     }))
-  }, [attachmentCountByPostId, postsBase])
+  }, [attachmentsByPostId, postsBase])
 
   const files = useMemo((): ProgramFile[] | null => {
     if (!remoteEnabled || !programId || postsBase == null) return null
-    if (postIds.length === 0) return []
-    if (attachmentQueries.some(q => q.data === undefined && (q.isFetching || q.isLoading))) {
-      return null
+    if (programAttachmentsQuery.isError) return null
+    if (programAttachmentsQuery.data === undefined) {
+      if (programAttachmentsQuery.isFetching || programAttachmentsQuery.isLoading) return null
+      return []
     }
     const collected: ProgramFile[] = []
-    postIds.forEach((postId, index) => {
-      const items = attachmentQueries[index]?.data ?? []
-      for (const item of items) {
-        const file = mapProgramPostAttachmentToFile(item, programId)
-        if (file) collected.push({ ...file, postId: file.postId ?? postId })
-      }
-    })
+    for (const item of programAttachmentsQuery.data) {
+      const file = mapProgramPostAttachmentToFile(item, programId)
+      if (file) collected.push(file)
+    }
     collected.sort(
       (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
     )
     return collected
-  }, [attachmentQueries, postIds, postsBase, programId, remoteEnabled])
+  }, [
+    postsBase,
+    programAttachmentsQuery.data,
+    programAttachmentsQuery.isError,
+    programAttachmentsQuery.isFetching,
+    programAttachmentsQuery.isLoading,
+    programId,
+    remoteEnabled,
+  ])
 
   const invalidatePosts = useCallback(async () => {
     if (!programId) return
-    await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) })
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) }),
+      queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.postFiles(programId) }),
+    ])
   }, [programId, queryClient])
 
   /**
@@ -199,10 +203,15 @@ export function useGeneralProgramPosts(programId: string | undefined) {
         generalProgramQueryKeys.posts(programId),
         prev => prev?.filter(item => String(item.postId) !== postId)
       )
-      await queryClient.invalidateQueries({
-        queryKey: generalProgramQueryKeys.posts(programId),
-        exact: true,
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: generalProgramQueryKeys.posts(programId),
+          exact: true,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: generalProgramQueryKeys.postFiles(programId),
+        }),
+      ])
     },
     [programId, queryClient]
   )
@@ -210,7 +219,11 @@ export function useGeneralProgramPosts(programId: string | undefined) {
   return {
     posts,
     files,
-    loading: remoteEnabled ? query.isFetching && query.data === undefined : false,
+    attachmentsError: programAttachmentsQuery.isError ? programAttachmentsQuery.error : null,
+    loading:
+      remoteEnabled &&
+      ((query.isFetching && query.data === undefined) ||
+        (programAttachmentsQuery.isFetching && programAttachmentsQuery.data === undefined)),
     isRemoteDataSource: remoteEnabled && !query.isError,
     invalidatePosts,
     removeDeletedPost,

@@ -1,5 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
+import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 
 export const UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS = {
   applicationRegion: 'ujatApplication.applicationRegion',
@@ -20,52 +21,70 @@ export type UjatApplicationClassTimePeriods = Record<
   { start: string | null; end: string | null }
 >
 
-let overlayState: Record<string, unknown> = {}
-let overlayVersion = 0
-const overlayListeners = new Set<() => void>()
+const store = createScopedOverlayStore()
 
-function emitOverlay() {
-  overlayVersion += 1
-  overlayListeners.forEach(l => l())
+export function setUjatApplicationInstitutionOverlayScope(
+  templateCode: string | undefined | null
+): void {
+  store.setScope(templateCode)
 }
 
 export function subscribeUjatApplicationInstitutionOverlay(listener: () => void): () => void {
-  overlayListeners.add(listener)
-  return () => overlayListeners.delete(listener)
+  return store.subscribe(listener)
 }
 
 export function getUjatApplicationInstitutionOverlayVersion(): number {
-  return overlayVersion
+  return store.getVersion()
 }
 
 export function getUjatApplicationInstitutionOverlayRecord(): Record<string, unknown> {
-  return overlayState
+  return store.getRecord()
+}
+
+export function peekUjatApplicationInstitutionOverlayRecord(
+  templateCode: string | undefined | null
+): Record<string, unknown> {
+  return store.peekRecord(templateCode)
+}
+
+export function replaceUjatApplicationInstitutionOverlayForScope(
+  templateCode: string | undefined | null,
+  next: Record<string, unknown>
+): void {
+  store.replaceFor(templateCode, next)
+}
+
+export function resetUjatApplicationInstitutionOverlayForScope(
+  templateCode: string | undefined | null
+): void {
+  store.resetFor(templateCode)
 }
 
 export function patchUjatApplicationInstitutionOverlay(partial: Record<string, unknown>): void {
-  overlayState = { ...overlayState, ...partial }
-  emitOverlay()
+  store.patch(partial)
 }
 
 export function updateUjatApplicationInstitutionOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T
 ): void {
-  const prev = overlayState[key] as T | undefined
-  const next = updater(prev)
-  if (Object.is(prev, next)) return
-  overlayState = { ...overlayState, [key]: next }
-  emitOverlay()
+  store.updateKey(key, updater)
 }
 
 export function replaceUjatApplicationInstitutionOverlay(next: Record<string, unknown>): void {
-  overlayState = { ...next }
-  emitOverlay()
+  store.replace(next)
 }
 
 export function resetUjatApplicationInstitutionOverlay(): void {
-  overlayState = {}
-  emitOverlay()
+  store.reset()
+}
+
+export function resetAllUjatApplicationInstitutionOverlay(): void {
+  store.resetAll()
+}
+
+export function resetUjatApplicationInstitutionOverlayStoreForTests(): void {
+  store.resetAll()
 }
 
 export function useUjatApplicationInstitutionOverlayKv<T>(

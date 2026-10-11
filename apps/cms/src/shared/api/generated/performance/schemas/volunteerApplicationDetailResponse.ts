@@ -5,6 +5,7 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ActivityScheduleSlot } from './activityScheduleSlot';
 import type { Application } from './application';
 import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
 import type { Profile } from './profile';
@@ -40,4 +41,11 @@ export interface VolunteerApplicationDetailResponse {
   assignedInterviewSlotId?: number;
   assignedInterviewStartAt?: string;
   assignedInterviewEndAt?: string;
+  /** 신청자가 고른 봉사 진행 가능 일정(C). form_response_answer 기반 read model. UJAT·면접 일정과 분리. 없으면 [] */
+  activityScheduleSlots?: ActivityScheduleSlot[];
+  /**
+     * activityScheduleSlots 항목 수
+     * @minimum 0
+     */
+  activityScheduleCount?: number;
 }

@@ -60,11 +60,16 @@ export function buildVolunteerInterviewTimeSlots(
   return slots
 }
 
+const DEFAULT_MOCK_SLOT_LABELS = DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.availableTimeSlots
+  .split(',')
+  .map(label => label.trim())
+  .filter(Boolean)
+
 export const DEFAULT_VOLUNTEER_INTERVIEW_APPLICANT_SCHEDULE_SEED =
   buildVolunteerInterviewScheduleEditSeed({
     recurringUnavailable: DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.recurringUnavailable,
     specificUnavailableDateIsos: ['2026-03-06', '2026-03-15'],
-    availableTimeSlots: DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.availableTimeSlots,
+    selectedTimeSlotLabels: DEFAULT_MOCK_SLOT_LABELS,
   })
 
 const DEFAULT_SCHEDULE_RANGE_START = dayjs('2026-03-01')

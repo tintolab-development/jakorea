@@ -46,6 +46,7 @@ export type CmsSelectMultipleProps = {
   className?: string
   id?: string
   style?: CSSProperties
+  'aria-labelledby'?: string
 }
 
 export function CmsSelectMultiple({
@@ -59,6 +60,7 @@ export function CmsSelectMultiple({
   className,
   id: idProp,
   style,
+  'aria-labelledby': ariaLabelledBy,
 }: CmsSelectMultipleProps) {
   const reactId = useId()
   const listId = idProp ?? `cms-select-multi-${reactId.replace(/:/g, '')}`
@@ -183,6 +185,7 @@ export function CmsSelectMultiple({
           aria-expanded={open}
           aria-haspopup="listbox"
           aria-controls={listId}
+          aria-labelledby={ariaLabelledBy}
         >
           <span
             className={[

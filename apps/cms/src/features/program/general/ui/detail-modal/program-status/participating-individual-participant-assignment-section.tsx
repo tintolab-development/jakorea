@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -131,7 +131,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     '참여자 상세 · 과제 팀 변경'
   )
 
-  const bundle = useMemo(
+  const offlineBundle = useMemo(
     () => getParticipatingIndividualParticipantAssignmentBundle(participant, program),
     [participant, program]
   )
@@ -170,7 +170,9 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
       : []
     const withSubmissions = mergeParticipantDetailAssignmentRowsWithRemote({
       participantId: participant.id,
-      localRows: sortParticipatingIndividualParticipantAssignmentRows(bundle.rows),
+      localRows: remoteEnabled
+        ? []
+        : sortParticipatingIndividualParticipantAssignmentRows(offlineBundle.rows),
       remoteSessions,
       surveyResponse: participant.surveyResponse,
       satisfactionResponse: participant.satisfactionResponse,
@@ -186,11 +188,12 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     }))
   }, [
     assignmentSubmissionsQuery.data,
-    bundle.rows,
+    offlineBundle.rows,
     participant.id,
+    remoteEnabled,
+    submissionTeamQuery.data,
     participant.satisfactionResponse,
     participant.surveyResponse,
-    submissionTeamQuery.data,
   ])
 
   const [rows, setRows] = useState(() => overlayRows)
@@ -680,7 +683,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         hideExcelDownload
       >
         <div className="participating-individual-participant-assignment-section__table-outer assignment-submission-modal__table-outer">
-          <Table<ParticipatingIndividualParticipantAssignmentRow & { no: number }>
+          <CmsDataTable<ParticipatingIndividualParticipantAssignmentRow & { no: number }>
             rowKey="id"
             className="cms-data-table cms-data-table--fluid"
             columns={columns}

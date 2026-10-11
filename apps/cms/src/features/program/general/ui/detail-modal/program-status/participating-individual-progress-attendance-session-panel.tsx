@@ -18,6 +18,7 @@ import type {
   ParticipatingIndividualProgressAttendanceSessionGroup,
   ParticipatingIndividualProgressAttendanceStatus,
 } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
+import { ATTENDANCE_RECORDING_NOT_OPEN_MESSAGE } from '@/features/program/general/lib/attendance-recording-not-open'
 import {
   ParticipatingIndividualProgressAttendanceCorrectionModal,
   type ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload,
@@ -106,6 +107,13 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
   })
 
   const handleOpenCorrectionModal = useCallback(() => {
+    if (!session.attendanceRecordingOpen) {
+      showAlert({
+        title: '안내',
+        content: ATTENDANCE_RECORDING_NOT_OPEN_MESSAGE,
+      })
+      return
+    }
     if (participantCorrectionOptions.length === 0) {
       showAlert({
         title: '안내',
@@ -114,7 +122,11 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
       return
     }
     setCorrectionModalOpen(true)
-  }, [participantCorrectionOptions.length, showAlert])
+  }, [
+    participantCorrectionOptions.length,
+    session.attendanceRecordingOpen,
+    showAlert,
+  ])
 
   const handleConfirmCorrection = useCallback(
     (payload: ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload) => {

@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict'
+import { createProgramApplicationFormInstitutionDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
+import { applyProgramLinkedApplicationDraftPatches } from './application-form-program-link.ts'
+
+const draft = createProgramApplicationFormInstitutionDraft()
+const program = {
+  detailCase: 'general' as const,
+  educationStructure: 'curriculum' as const,
+  sessionRound: 'single' as const,
+  educationScheduleMode: 'date' as const,
+  educationScheduleLines: [
+    '26년 10월 26일(월) 10:00 ~ 12:00',
+    '26년 11월 2일(월) 13:30 ~ 16:00',
+    '26년 11월 9일(월) 9:30 ~ 11:30',
+  ],
+  maxPreferredScheduleCount: 1,
+  id: '186083',
+  category: 'program' as const,
+  title: 'test',
+  educationForm: 'online' as const,
+}
+
+const patched = applyProgramLinkedApplicationDraftPatches(draft, {
+  applyCase: 'institution-general',
+  program: program as unknown as import('../model/types.ts').ProgramDetail,
+  runtimeContext: {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: 'line:0', label: '26년 10월 26일(월) 10:00 ~ 12:00' },
+      { id: 'line:1', label: '26년 11월 2일(월) 13:30 ~ 16:00' },
+      { id: 'line:2', label: '26년 11월 9일(월) 9:30 ~ 11:30' },
+    ],
+  },
+})
+
+const schedule = patched.paragraphs.find(p => p.id === 'program-application-institution-seed-schedule')
+assert.ok(schedule && schedule.kind === 'single_item' && schedule.variant === 'multiple_choice')
+assert.equal(schedule.items.length, 3)
+
+console.log('application-form-program-link.selfcheck: ok')

@@ -1,8 +1,7 @@
 import { Form } from 'antd'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
-import { paragraphKindLabel } from '@/features/template/model/writing-form/paragraph-labels'
+import { formEditorRightPanelSectionTitle, paragraphKindLabel } from '@/features/template/model/writing-form/paragraph-labels'
 import {
   PARAGRAPH_KIND_OPTIONS,
   detailSelectOptionsForValue,
@@ -44,7 +43,7 @@ export function StructureLockedParagraphSection({
   const outline =
     paragraph.kind === 'description' && paragraph.variant === 'closing'
       ? `${paragraphKindLabel(paragraph)}_${paragraphVariantLabel(paragraph)}`
-      : writingOutlineLabel(paragraph)
+      : formEditorRightPanelSectionTitle(paragraph)
   const useTableSystemSettings = typeSelectPreset === 'table_system_settings'
   const useParagraphKindSystemSettings = typeSelectPreset === 'paragraph_kind_system_settings'
   const useSystemSettingsDetail = useTableSystemSettings || useParagraphKindSystemSettings

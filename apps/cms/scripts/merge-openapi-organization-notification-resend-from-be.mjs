@@ -54,8 +54,9 @@ for (const key of PATH_KEYS) {
     console.warn(`BE missing path ${key}`)
     continue
   }
-  // Merge methods: keep FE-only methods, overwrite overlapping with BE
-  fe.paths[key] = { ...(fe.paths[key] ?? {}), ...bePathOp }
+  // Live `/v3/api-docs` snapshot is SSOT when already present; JABACK only fills gaps.
+  if (fe.paths[key]) continue
+  fe.paths[key] = bePathOp
   pathCount += 1
 }
 
@@ -69,6 +70,7 @@ for (const key of SCHEMA_KEYS) {
     console.warn(`BE missing schema ${key}`)
     continue
   }
+  if (fe.components.schemas[key]) continue
   fe.components.schemas[key] = schema
   merged += 1
 }

@@ -1,95 +1,39 @@
-import {
-  SPONSOR_DETAIL_SEED_CONTACTS,
-  SPONSOR_DETAIL_SEED_PROGRAM_HISTORIES,
-  SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES,
-} from '@/data/mock/sponsor-management-detail'
 import detailedProgramsSeedPayload from '../../../../docs/api/detailed-programs-seed.payload.json'
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
-import { TEXTBOOK_LNB_SEED_ROWS } from '@/features/textbook/api/textbook-mock-store'
+import { TEXTBOOK_LNB_SEED_ROWS } from '@/features/textbook/api/textbook-lnb-seed-catalog'
 
-/** mock `dp-131` → 예약 numeric PK `900131` */
 export function detailedProgramMockIdToSeedPk(mockId: string): number {
   const m = /^dp-(\d+)$/.exec(mockId)
   if (!m) throw new Error(`unexpected detailed program mock id: ${mockId}`)
   return 900_000 + Number(m[1])
 }
 
-/** 상세 child seed를 붙일 대표 후원사 (목록 선두 = 제이에이코리아) */
-export function getSponsorDetailSampleListRow() {
-  const row = mockSponsorManagementListRows[0]
-  if (!row) throw new Error('mockSponsorManagementListRows is empty')
-  return row
+export function getSponsorDetailSampleListRow(): null {
+  return null
 }
 
-export function buildSponsorsSeedPayload() {
-  const sample = getSponsorDetailSampleListRow()
+export interface SponsorsSeedRow {
+  nameKo: string
+  seedKey?: string
+}
+
+export interface SponsorsSeedPayload {
+  meta: Record<string, unknown>
+  rows: SponsorsSeedRow[]
+  detailSamples: Array<Record<string, unknown>>
+}
+
+export function buildSponsorsSeedPayload(): SponsorsSeedPayload {
   return {
     meta: {
       domain: 'sponsors',
-      ssot: 'apps/cms/src/data/mock/sponsor-management-list.ts',
-      detailSsot: 'apps/cms/src/data/mock/sponsor-management-detail.ts',
-      note: 'LNB 후원사 관리 목록. sponsors.ts(프로그램 폼 30건)와 병합하지 말 것 — 이름 교집합만 링크.',
+      ssot: 'remote API export',
+      detailSsot: 'remote API export',
+      note: 'FE mock removed — export from staging API.',
       upsertKeys: ['nameKoNormalized', 'businessRegistrationNumber'],
       childSeedOrder: ['contacts', 'yearlyBusinesses', 'programHistories'],
     },
-    rows: mockSponsorManagementListRows.map((row, index) => ({
-      seedKey: row.id,
-      suggestedNumericId: 800_001 + index,
-      nameKo: row.name,
-      nameEn: row.nameEn ?? null,
-      organizationKind: row.organizationKind ?? 'corporate',
-      sponsorshipStatus: row.sponsorshipStatus ?? 'active',
-      sponsorshipStartDate: row.sponsorshipStartDate ?? null,
-      programCount: row.programCount,
-      totalDonationAmount: row.totalDonationAmount,
-      totalBeneficiaryCount: row.totalBeneficiaryCount,
-      mainContact: row.managers?.[0]
-        ? { name: row.managers[0].name, phone: row.managers[0].phone }
-        : null,
-    })),
-    detailSamples: [
-      {
-        seedKey: sample.id,
-        suggestedNumericId: 800_001,
-        nameKo: sample.name,
-        businessNumber: '124-81-00998',
-        executives: '전영현, 노태문',
-        address: '경기도 수원시 영통구 삼성로 129(매탄동)',
-        contacts: SPONSOR_DETAIL_SEED_CONTACTS.map(c => ({
-          seedKey: c.id,
-          name: c.name,
-          department: c.department,
-          position: c.position,
-          officePhone: c.officePhone,
-          phone: c.phone,
-          email: c.email,
-          companyAddress: c.companyAddress,
-          memo: c.memo,
-          contactType: c.contactType,
-          registeredAt: c.registeredAt,
-        })),
-        yearlyBusinesses: SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES.map(y => ({
-          seedKey: y.id,
-          businessYear: y.year,
-          donationAmount: y.donationAmount,
-          beneficiaryCount: y.beneficiaryCount,
-          memo: y.memo,
-          businessName: y.businessName,
-          managerNameSnapshot: y.managerNameSnapshot,
-        })),
-        programHistories: SPONSOR_DETAIL_SEED_PROGRAM_HISTORIES.map(h => ({
-          seedKey: h.id,
-          programIdHint: h.programId,
-          title: h.title,
-          year: h.year,
-          lifecycleStatus: h.lifecycleStatus,
-          managerName: h.managerName,
-          participantCount: h.participantCount,
-          participantType: h.participantType,
-          educationTarget: h.educationTarget,
-        })),
-      },
-    ],
+    rows: [],
+    detailSamples: [],
   }
 }
 
@@ -97,7 +41,7 @@ export function buildTextbooksSeedPayload() {
   return {
     meta: {
       domain: 'textbooks',
-      ssot: 'apps/cms/src/features/textbook/api/textbook-mock-store.ts TEXTBOOK_LNB_SEED_ROWS',
+      ssot: 'apps/cms/src/features/textbook/api/textbook-lnb-seed-catalog.ts TEXTBOOK_LNB_SEED_ROWS',
       upsertKeys: ['nameKo', 'businessArea', 'educationTarget', 'grade'],
       materialKitPolicy: 'global kit only (textbookId null) — do not clone kit per textbook',
     },

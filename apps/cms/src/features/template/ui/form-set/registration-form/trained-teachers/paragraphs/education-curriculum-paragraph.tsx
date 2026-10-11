@@ -151,20 +151,46 @@ function TrainedTeachersTeacherTrainingBlock() {
   )
 }
 
+function TrainedTeachersUnitInput({
+  recordKey,
+  sessionIndex,
+  placeholder,
+  style,
+}: {
+  recordKey: string
+  sessionIndex: number
+  placeholder: string
+  style?: { minWidth: number; flex: string }
+}) {
+  const [record] = useProgramRegistrationOverlayKv<Record<number, string>>(
+    recordKey,
+    EMPTY_UNIT_BY_SESSION
+  )
+  return (
+    <CmsInput
+      inputSize="medium"
+      placeholder={placeholder}
+      width="100%"
+      style={style}
+      value={record[sessionIndex] ?? ''}
+      onChange={event => {
+        const nextValue = event.target.value
+        updateProgramRegistrationOverlayKey<Record<number, string>>(recordKey, prev => {
+          const current = prev ?? EMPTY_UNIT_BY_SESSION
+          if ((current[sessionIndex] ?? '') === nextValue) return current
+          return { ...current, [sessionIndex]: nextValue }
+        })
+      }}
+    />
+  )
+}
+
 function TrainedTeachersCurriculumSessionBlock({
   sessionIndex,
   onDelete,
-  unitName,
-  unitContent,
-  onUnitNameChange,
-  onUnitContentChange,
 }: {
   sessionIndex: number
   onDelete: (sessionIndex: number) => void
-  unitName: string
-  unitContent: string
-  onUnitNameChange: (value: string) => void
-  onUnitContentChange: (value: string) => void
 }) {
   const showDelete = sessionIndex > 1
 
@@ -188,22 +214,18 @@ function TrainedTeachersCurriculumSessionBlock({
               fullRow
               edit={
                 <div className="detail-info-form-inputs-wrapper">
-                  <CmsInput
-                    inputSize="medium"
+                  <TrainedTeachersUnitInput
+                    recordKey={TT_UNIT_NAME_KEY}
+                    sessionIndex={sessionIndex}
                     placeholder="단원명을 입력하세요"
-                    width="100%"
                     style={{ minWidth: 0, flex: '1 1 160px' }}
-                    value={unitName}
-                    onChange={event => onUnitNameChange(event.target.value)}
                   />
                   <DetailInfoForm.InputsSeparator />
-                  <CmsInput
-                    inputSize="medium"
+                  <TrainedTeachersUnitInput
+                    recordKey={TT_UNIT_CONTENT_KEY}
+                    sessionIndex={sessionIndex}
                     placeholder="교육 내용을 작성하세요"
-                    width="100%"
                     style={{ minWidth: 0, flex: '2 1 260px' }}
-                    value={unitContent}
-                    onChange={event => onUnitContentChange(event.target.value)}
                   />
                 </div>
               }
@@ -231,15 +253,6 @@ export function TrainedTeachersRegistrationEducationCurriculumParagraph({
   curriculumSessionCount,
   onDeleteCurriculumSession,
 }: TrainedTeachersRegistrationEducationCurriculumParagraphProps) {
-  const [unitNameBySession] = useProgramRegistrationOverlayKv<Record<number, string>>(
-    TT_UNIT_NAME_KEY,
-    EMPTY_UNIT_BY_SESSION
-  )
-  const [unitContentBySession] = useProgramRegistrationOverlayKv<Record<number, string>>(
-    TT_UNIT_CONTENT_KEY,
-    EMPTY_UNIT_BY_SESSION
-  )
-
   useEffect(() => {
     if (!teacherTrainingEnabled) return
     updateProgramRegistrationOverlayKey<string>(TT_PRE_EDUCATION_NAME_KEY, prev =>
@@ -269,20 +282,6 @@ export function TrainedTeachersRegistrationEducationCurriculumParagraph({
             key={sessionIndex}
             sessionIndex={sessionIndex}
             onDelete={handleDeleteSession}
-            unitName={unitNameBySession[sessionIndex] ?? ''}
-            unitContent={unitContentBySession[sessionIndex] ?? ''}
-            onUnitNameChange={value =>
-              updateProgramRegistrationOverlayKey<Record<number, string>>(
-                TT_UNIT_NAME_KEY,
-                prev => ({ ...(prev ?? {}), [sessionIndex]: value })
-              )
-            }
-            onUnitContentChange={value =>
-              updateProgramRegistrationOverlayKey<Record<number, string>>(
-                TT_UNIT_CONTENT_KEY,
-                prev => ({ ...(prev ?? {}), [sessionIndex]: value })
-              )
-            }
           />
         )
       })}

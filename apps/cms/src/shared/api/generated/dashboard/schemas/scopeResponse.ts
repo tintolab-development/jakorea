@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { ScheduleEnrich } from './scheduleEnrich';
 
 export interface ScopeResponse {
   programId?: number;
@@ -12,4 +13,5 @@ export interface ScopeResponse {
   revision?: number;
   configured?: boolean;
   scheduleIds?: number[];
+  schedules?: ScheduleEnrich[];
 }

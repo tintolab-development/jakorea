@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
 import type { SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
 import { NOTIFICATION_SEND_SELECTABLE_NOT_SUCCESS_HINT } from '@/features/notifications/model/shared/send-ux-copy'
 import '@/features/notifications/ui/mail-send/template-select-modal.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 /** 메일·알림톡 템플릿 선택과 동일. 수신자 피커(SMS_SEND_PICKER_PAGE_SIZE)와 분리 */
 const TEMPLATE_PICKER_PAGE_SIZE = 5
@@ -178,7 +178,7 @@ export function TemplateSelectModal({
           <>
             <div className="mail-send-template-select-modal__table-section">
               <p className="mail-send-template-select-modal__count">총 {filtered.length}건</p>
-              <Table
+              <CmsDataTable
                 className="cms-data-table cms-data-table--skip-auto-no-col mail-send-template-select-modal__table"
                 columns={columns}
                 dataSource={paged}

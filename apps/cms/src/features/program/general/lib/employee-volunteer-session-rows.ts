@@ -19,21 +19,44 @@ function buildRoundId(round: number): EmployeeVolunteerSessionRowId {
   return `round_${round}`
 }
 
+function formatRoundEducationLabel(roundIndex: number): string {
+  return `${roundIndex}회차 교육`
+}
+
+/** 기관 + 복수 회차 + 커리큘럼형 — 과목명 대신 N회차 교육으로 표기 (일정형은 실제 일정명) */
+function shouldUseRoundIndexLabelsForOrganizationCurriculum(
+  audience: Program['generalProgramAudience'],
+  sessionRound: 'single' | 'multi',
+  educationStructure: 'schedule' | 'curriculum'
+): boolean {
+  return (
+    sessionRound === 'multi' &&
+    audience === 'organization' &&
+    educationStructure === 'curriculum'
+  )
+}
+
 /**
  * 프로그램 교육 구조(일정형/커리큘럼형·단일/복수 회차)에 따라 모달 일정 행을 결정한다.
  * - 단일 회차: 일정/커리큘럼형 무관 `프로그램 진행` 1행
  * - 복수 회차 + 사전교육 설정: `사전교육` 선행
- * - 일정형: scheduleDetails[].name (없으면 scheduleLabel → 세부 일정 NN)
+ * - 일정형: scheduleDetails[].name (없으면 scheduleLabel → 세부 일정 NN) — 기관·개인 동일
  * - 커리큘럼형: curriculumSessions[].sessionLabel (없으면 N회차 교육)
+ * - 기관 + 복수 + 커리큘럼: `N회차 교육` (사전교육은 `사전교육`)
  */
 export function resolveEmployeeVolunteerSessionRows(program: Program): EmployeeVolunteerSessionRow[] {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
-  const { educationStructure, sessionRound } = resolveEffectiveGeneralProgramTypeFields({
+  const { educationStructure, sessionRound, audience } = resolveEffectiveGeneralProgramTypeFields({
     generalProgramAudience: program.generalProgramAudience,
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: commonInfo.curriculumSessions,
   })
+  const useRoundIndexLabels = shouldUseRoundIndexLabelsForOrganizationCurriculum(
+    audience,
+    sessionRound,
+    educationStructure
+  )
 
   if (sessionRound === 'single') {
     return [
@@ -61,17 +84,22 @@ export function resolveEmployeeVolunteerSessionRows(program: Program): EmployeeV
 
   if (educationStructure === 'schedule') {
     const details = commonInfo.scheduleDetails ?? []
-    const count = Math.max(details.length, 1)
-    for (let index = 0; index < count; index += 1) {
+    let roundIndex = 0
+    for (let index = 0; index < details.length; index += 1) {
       const detail = details[index]
       if (detail?.scheduleLabel?.includes('사전 교육')) continue
-      const name = detail?.name?.trim()
-      const scheduleLabel = detail?.scheduleLabel?.trim()
-      const label = name || scheduleLabel || `세부 일정 ${String(index + 1).padStart(2, '0')}`
+      roundIndex += 1
+      const label = useRoundIndexLabels
+        ? formatRoundEducationLabel(roundIndex)
+        : (() => {
+            const name = detail?.name?.trim()
+            const scheduleLabel = detail?.scheduleLabel?.trim()
+            return name || scheduleLabel || `세부 일정 ${String(roundIndex).padStart(2, '0')}`
+          })()
       rows.push({
-        id: buildRoundId(index + 1),
+        id: buildRoundId(roundIndex),
         label,
-        round: index + 1,
+        round: roundIndex,
         isPreEducation: false,
         countsTowardParticipants: false,
       })
@@ -83,10 +111,12 @@ export function resolveEmployeeVolunteerSessionRows(program: Program): EmployeeV
   const regularSessions = sessions.filter(
     session => !session.sessionLabel?.includes('사전 교육')
   )
-  const count = Math.max(regularSessions.length, 1)
-  for (let index = 0; index < count; index += 1) {
+  for (let index = 0; index < regularSessions.length; index += 1) {
+    const roundIndex = index + 1
     const sessionLabel = regularSessions[index]?.sessionLabel?.trim()
-    const label = sessionLabel || `${index + 1}회차 교육`
+    const label = useRoundIndexLabels
+      ? formatRoundEducationLabel(roundIndex)
+      : sessionLabel || formatRoundEducationLabel(roundIndex)
     rows.push({
       id: buildRoundId(index + 1),
       label,

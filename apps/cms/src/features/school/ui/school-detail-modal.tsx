@@ -7,17 +7,17 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   getSchoolDetailStats,
   getAffiliatedTeachers,
   getSchoolProgramHistory,
   type AffiliatedTeacherRow,
   type ProgramParticipationRow,
-} from '@/data/mock/school-detail'
+} from '@/features/school/model/school-detail-types'
 import { formatDate } from '@/shared/utils'
 import type { User } from '@/types/user'
 import { TeacherDetailModal } from './teacher-detail-modal'
@@ -179,7 +179,7 @@ export function SchoolDetailModal({
               </CmsButton>
             )}
           </div>
-          <Table<AffiliatedTeacherRow>
+          <CmsDataTable<AffiliatedTeacherRow>
             className="cms-data-table"
             rowSelection={{
               selectedRowKeys: selectedTeacherKeys,
@@ -208,7 +208,7 @@ export function SchoolDetailModal({
               총 {programHistory.length}건
             </span>
           </h3>
-          <Table<ProgramParticipationRow>
+          <CmsDataTable<ProgramParticipationRow>
             className="cms-data-table"
             rowSelection={{
               selectedRowKeys: selectedHistoryKeys,

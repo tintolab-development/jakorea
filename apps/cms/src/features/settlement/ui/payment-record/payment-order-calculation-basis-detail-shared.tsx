@@ -3,13 +3,50 @@
  */
 
 import type { ReactNode } from 'react'
-import { ModalSpecTable, ModalSpecTableRow } from '@/shared/ui/modal-spec-table'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   PaymentOrderCalculationBasisDetailLodgingReceipt,
   PaymentOrderCalculationBasisDetailTransportPublicTransit,
 } from './payment-order-calculation-basis-detail'
 import { formatPaymentOrderCalculationWonPlain } from './payment-order-calculation-breakdown-table'
+
+export const BASIS_DETAIL_INFO_FORM_CLASS =
+  'payment-order-calculation-basis-detail-modal__detail-form'
+
+/** 산정 기준 상세 — read-only 단일 열 격자 (`hideHeader`, `title` = aria-label) */
+export function BasisDetailInfoForm({
+  title,
+  children,
+}: {
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <DetailInfoForm
+      title={title}
+      hideHeader
+      mode="view"
+      className={BASIS_DETAIL_INFO_FORM_CLASS}
+    >
+      {children}
+    </DetailInfoForm>
+  )
+}
+
+export function BasisDetailInfoFormRow({
+  label,
+  children,
+}: {
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field label={label} view={children} />
+    </DetailInfoForm.Row>
+  )
+}
 
 export function BasisDetailReadOnlyValue({ children }: { children: ReactNode }) {
   return (
@@ -36,13 +73,13 @@ export function BasisDetailSectionLabel({
 
 export function BasisDetailTotalRow({ totalWon }: { totalWon: number }) {
   return (
-    <ModalSpecTable aria-label="합계">
-      <ModalSpecTableRow label="합계" labelVariant="basis">
+    <BasisDetailInfoForm title="합계">
+      <BasisDetailInfoFormRow label="합계">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(totalWon)}
         </BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-    </ModalSpecTable>
+      </BasisDetailInfoFormRow>
+    </BasisDetailInfoForm>
   )
 }
 

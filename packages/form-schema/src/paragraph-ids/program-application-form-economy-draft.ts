@@ -9,6 +9,7 @@ import {
 import {
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION,
   INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION,
+  isLegacyInstitutionSexOffenseConsentInquiryDescription,
 } from '../lib/institution-sex-offense-consent-field-definitions.js'
 
 /** 1사1교 프로그램 참여자 신청 폼 — 시드 단락 ID */
@@ -285,7 +286,7 @@ export function migrateProgramApplicationFormEconomyParagraphs(
     }
     if (
       paragraph.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentInquiryMethod &&
-      paragraph.paragraphDescription !== INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description
+      isLegacyInstitutionSexOffenseConsentInquiryDescription(paragraph.paragraphDescription)
     ) {
       changed = true
       return {
@@ -295,5 +296,23 @@ export function migrateProgramApplicationFormEconomyParagraphs(
     }
     return paragraph
   })
+  if (
+    !paragraphs.some(paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance)
+  ) {
+    changed = true
+    const guidance = createEconomyPlaceholderTable(
+      PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance,
+      '안내 사항',
+      '강사님들에게 제공 또는 요청할 사전 정보를 작성해 주세요.'
+    )
+    const basicInfoIndex = paragraphs.findIndex(
+      paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo
+    )
+    if (basicInfoIndex >= 0) {
+      paragraphs.splice(basicInfoIndex + 1, 0, guidance)
+    } else {
+      paragraphs.push(guidance)
+    }
+  }
   return changed ? { ...draft, paragraphs } : draft
 }

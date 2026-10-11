@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
@@ -14,6 +14,7 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useProgramLectureReports } from '@/features/program/general/hooks/use-program-lecture-reports'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   downloadGeneralProgramLectureReportFiles,
   downloadGeneralProgramLectureReports,
@@ -22,12 +23,6 @@ import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import {
-  buildTempMockLectureReportFileContent,
-  downloadTempMockTextFile,
-} from '@/features/program/general/lib/temp-mock-local-actions'
-
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
 const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
@@ -79,7 +74,6 @@ export function ParticipatingInstructorLectureReportsSection({
 }: ParticipatingInstructorLectureReportsSectionProps) {
   const { showAlert } = useCmsAlert()
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program?.id)
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(program?.id)
   const instructorMemberId = resolveInstructorMemberId(instructor)
   const lectureReports = useProgramLectureReports(program?.id, {
     instructorMemberId,
@@ -115,18 +109,6 @@ export function ParticipatingInstructorLectureReportsSection({
   const handleViewReport = useCallback(
     async (row: ParticipatingInstructorLectureReportRow) => {
       if (!row.canViewReport) return
-      if (isTempMockProgram) {
-        downloadTempMockTextFile(
-          `강의보고서_${row.reportId ?? row.id}.txt`,
-          buildTempMockLectureReportFileContent({
-            programTitle: program?.title,
-            instructorName: instructor.instructorName,
-            schoolName: row.schoolName,
-            scheduleLabel: row.educationScheduleLabel,
-          })
-        )
-        return
-      }
       if (!remoteEnabled || !program?.id) {
         notifyProgramApiUnavailable(
           'general-lecture-report-view',
@@ -156,30 +138,11 @@ export function ParticipatingInstructorLectureReportsSection({
         setViewDownloadingId(null)
       }
     },
-    [instructor.instructorName, isTempMockProgram, program?.id, program?.title, remoteEnabled, showAlert]
+    [instructor.instructorName, program?.id, remoteEnabled, showAlert]
   )
 
   const handleBulkDownload = useCallback(async () => {
     if (bulkDownloading) return
-    if (isTempMockProgram) {
-      setBulkDownloading(true)
-      try {
-        for (const row of submittedRows) {
-          downloadTempMockTextFile(
-            `강의보고서_${row.reportId ?? row.id}.txt`,
-            buildTempMockLectureReportFileContent({
-              programTitle: program?.title,
-              instructorName: instructor.instructorName,
-              schoolName: row.schoolName,
-              scheduleLabel: row.educationScheduleLabel,
-            })
-          )
-        }
-      } finally {
-        setBulkDownloading(false)
-      }
-      return
-    }
     if (!remoteEnabled || !program?.id) {
       notifyProgramApiUnavailable(
         'general-lecture-report-bulk-download',
@@ -212,9 +175,7 @@ export function ParticipatingInstructorLectureReportsSection({
     bulkDownloading,
     instructor.instructorName,
     instructorMemberId,
-    isTempMockProgram,
     program?.id,
-    program?.title,
     remoteEnabled,
     showAlert,
     submittedRows,
@@ -337,7 +298,7 @@ export function ParticipatingInstructorLectureReportsSection({
         </div>
       </div>
       <div className="participating-institutions-section__table-wrap">
-        <Table<ParticipatingInstructorLectureReportRow>
+        <CmsDataTable<ParticipatingInstructorLectureReportRow>
           className="participating-institutions-section__table cms-data-table"
           rowKey="id"
           size="middle"

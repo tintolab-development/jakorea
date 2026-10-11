@@ -9,7 +9,8 @@
  * - addressRegion(기관 소재지): 열 235.5px (시/도·시/군/구 각 114.75px + 사이 gap 6px)
  * - 필터 칸 사이 gap: --filter-field-gap (12px)
  * - 레이블·컨트롤 gap: --filter-label-control-gap (6px)
- * - 조회 버튼: 160×44px (table-filter-group.css)
+ * - TableFilterGroup 레이블: CmsField M (14px) — `cms-control--medium` · `.cms-field__label`
+ * - 조회 버튼: 160×40px (table-filter-group.css)
  *
  * FilterFieldConfig.width: 단일 검색·셀렉트는 `FILTER_CONTROL_MAX_WIDTH_PX`(260), 기간·이중셀렉트는
  * `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX`(540). **radio에는 width를 두지 않음.** `%` 폭은 행 전체 stretch — 목록 필터에 쓰지 않음.
@@ -74,9 +75,17 @@
   }
 }
 
-/* 필터 영역 레이블 공통 타이포 (CmsField L 라벨과 동일 — `cms-field.css` `.cms-field__label`) */
-.table-filter-group__label,
-.labeled-search-input__label,
+/* 필터 영역 레이블 — TableFilterGroup은 `.cms-field__label` + `cms-control--medium` (CmsField M) */
+.table-filter-group__container .table-filter-group__label.cms-field__label,
+.table-filter-group__container .labeled-search-input__label.cms-field__label {
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* TableFilterGroup 밖·레거시 span 라벨 (CmsField L 15px) */
+.labeled-search-input__label:not(.cms-field__label),
 .program-progress-tab__filter-field .program-progress-tab__filter-label,
 .program-applicants-tab__filter-label,
 .program-filter-label,
@@ -89,8 +98,7 @@
   line-height: var(--filter-area-label-line-height);
 }
 
-.table-filter-group__label,
-.table-filter-group .labeled-search-input__label {
+.labeled-search-input__label:not(.cms-field__label) {
   box-sizing: border-box;
   padding-bottom: var(--filter-area-label-padding-bottom, 2px);
   overflow: hidden;

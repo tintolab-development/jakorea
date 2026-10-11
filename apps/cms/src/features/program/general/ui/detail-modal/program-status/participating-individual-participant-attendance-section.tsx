@@ -1,3 +1,4 @@
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   forwardRef,
   useCallback,
@@ -7,7 +8,6 @@ import {
   useState,
 } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
@@ -58,6 +58,7 @@ import {
 import {
   buildAttendanceItemRequest,
   buildProgressAttendanceSessionsFromRemote,
+  mapDashboardScheduleStatusToEducationProgress,
 } from '@/features/program/general/api/adapters/progress-attendance-adapters'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -66,6 +67,7 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { handleError } from '@/shared/utils/error-handler'
+import { formatAttendanceRecordingNotOpenMessage } from '@/features/program/general/lib/attendance-recording-not-open'
 import {
   ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
   isInvalidAttendanceArrivalTimeError,
@@ -189,9 +191,13 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
     return sortParticipatingIndividualParticipantAttendanceRows(
       remoteSessions.map(session => {
         const self = session.participants.find(row => row.participantId === participant.id)
-        const status = self
-          ? mapProgressStatusToDetailStatus(self.attendanceStatus)
-          : 'pending'
+        const status =
+          self?.attendanceRecorded && self.attendanceStatus != null
+            ? mapProgressStatusToDetailStatus(self.attendanceStatus)
+            : 'pending'
+        const educationProgress =
+          session.scheduleEducationProgress ??
+          mapDashboardScheduleStatusToEducationProgress(undefined)
         return {
           id: session.id,
           scheduleId: session.id,
@@ -199,7 +205,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
           attendanceStatus: participant.activityWithdrawn ? 'withdrawn' : status,
           lateTime: self?.lateTime,
           remark: self?.remark,
-          educationProgress: self != null && status !== 'pending' ? 'completed' : 'scheduled',
+          educationProgress,
         } satisfies ParticipatingIndividualParticipantAttendanceRow
       })
     )
@@ -267,17 +273,22 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       > & { evidenceFileObjectIds?: number[] }
     }) => {
       const session = remoteSessions?.find(item => item.id === payload.scheduleId)
-      const requests = (session?.participants ?? []).map(row => {
+      const requests = (session?.participants ?? []).flatMap(row => {
         const isTarget = row.participantId === participant.id
-        return buildAttendanceItemRequest({
-          participantId: row.participantId,
-          attendanceStatus: isTarget
-            ? mapDetailStatusToProgressStatus(payload.patch.attendanceStatus)
-            : row.attendanceStatus,
-          lateTime: isTarget ? payload.patch.lateTime : row.lateTime,
-          remark: isTarget ? payload.patch.remark : row.remark,
-          fileObjectIds: isTarget ? payload.patch.evidenceFileObjectIds : undefined,
-        })
+        if (!isTarget && !row.attendanceRecorded) return []
+        const attendanceStatus = isTarget
+          ? mapDetailStatusToProgressStatus(payload.patch.attendanceStatus)
+          : row.attendanceStatus
+        if (attendanceStatus == null) return []
+        return [
+          buildAttendanceItemRequest({
+            participantId: row.participantId,
+            attendanceStatus,
+            lateTime: isTarget ? payload.patch.lateTime : row.lateTime,
+            remark: isTarget ? payload.patch.remark : row.remark,
+            fileObjectIds: isTarget ? payload.patch.evidenceFileObjectIds : undefined,
+          }),
+        ]
       })
       const hasSelf = requests.some(item => String(item.participantId) === participant.id)
       if (!hasSelf) {
@@ -294,16 +305,29 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       await saveGeneralScheduleAttendances(payload.scheduleId, requests)
     },
     onSuccess: async () => {
+      const programId = String(program.id)
       await queryClient.invalidateQueries({
-        queryKey: generalProgramProgressQueryKeys.schedules(String(program.id)),
+        queryKey: generalProgramProgressQueryKeys.schedules(programId),
       })
       await queryClient.invalidateQueries({
-        queryKey: generalProgramProgressQueryKeys.absenceReasons(String(program.id)),
+        queryKey: [...generalProgramProgressQueryKeys.all, 'attendances', programId],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: [...generalProgramProgressQueryKeys.all, 'program-attendances-bulk', programId],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.absenceReasons(programId),
       })
     },
     onError: error => {
+      const notOpenMessage = formatAttendanceRecordingNotOpenMessage(error)
+      if (notOpenMessage) {
+        showAlert({ title: '안내', content: notOpenMessage })
+        return
+      }
       if (isInvalidAttendanceArrivalTimeError(error)) {
         showAlert({ title: '안내', content: ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE })
+        return
       }
       handleError(error, { context: 'saveGeneralScheduleAttendances.participantDetail' })
     },
@@ -496,7 +520,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
         description={`${rows.length}건`}
         hideExcelDownload
       >
-        <Table<ParticipatingIndividualParticipantAttendanceRow & { no: number }>
+        <CmsDataTable<ParticipatingIndividualParticipantAttendanceRow & { no: number }>
           rowKey="id"
           className="cms-data-table"
           columns={columns}

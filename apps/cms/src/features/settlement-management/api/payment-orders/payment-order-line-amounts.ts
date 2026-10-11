@@ -1,4 +1,4 @@
-import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
 
 /**
  * 지급 현황 상세 · 목록 총액과 동일:

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { SEND_HISTORY_FILTER_FIELDS } from '@/features/notifications/model/alimtalk-send-history/filter-fields'
 import { formatDeliveryDateTimeSeoul } from '@/features/notifications/model/alimtalk-send-history/format-datetime'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   applySendHistoryFiltersToSearchParams,
   readSendHistoryFiltersFromParams,
@@ -201,7 +201,7 @@ export function Page() {
         description={`총 ${displayTotal.toLocaleString()}건`}
         contentLoading={isLoading}
       >
-        <Table<AlimtalkSendHistoryRow>
+        <CmsDataTable<AlimtalkSendHistoryRow>
           rowKey="id"
           className="cms-data-table cms-data-table--hoverable alimtalk-send-history-page__table"
           tableLayout="fixed"

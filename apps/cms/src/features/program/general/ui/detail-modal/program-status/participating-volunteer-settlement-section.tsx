@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { Program } from '@/types/domain'
@@ -17,6 +17,7 @@ import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructo
 import { lectureProgressAccent } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-display'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   shouldShowVolunteerSettlementDash,
   type ParticipatingVolunteerSettlementApiRow,
@@ -291,7 +292,7 @@ export function ParticipatingVolunteerSettlementSection({
 
       <div className="participating-institutions-section__table-wrap">
         <Spin spinning={isLoading}>
-          <Table<ParticipatingVolunteerSettlementApiRow>
+          <CmsDataTable<ParticipatingVolunteerSettlementApiRow>
             className="participating-institutions-section__table cms-data-table"
             rowKey="id"
             size="middle"

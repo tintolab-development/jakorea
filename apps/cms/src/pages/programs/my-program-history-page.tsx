@@ -26,9 +26,9 @@ import {
   settlementStatusStatusConfig,
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/components/status-badge'
-import { mockApplications, mockMatchings } from '@/data/mock'
 import { useProgramService } from '@/features/program/general/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
+import { applicationService } from '@/entities/application/api/application-service'
 import { CmsButton, EmptyState, LoadingButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import dayjs from 'dayjs'
@@ -119,10 +119,9 @@ export function MyProgramHistoryPage() {
   }
 
   const fullProgram = getProgramByIdSync(program.id)
-  const matching = mockMatchings.find(
-    m => m.programId === program.id && m.instructorId === user?.instructorId
-  )
-  const applications = mockApplications.filter(app => app.programId === program.id)
+  const applications = applicationService
+    .getAllSync()
+    .filter(app => app.programId === program.id)
 
   // 타임라인 이벤트 생성
   const timelineEvents = [
@@ -141,15 +140,6 @@ export function MyProgramHistoryPage() {
       label: '신청 접수',
       time: dayjs(firstApp.submittedAt).format('YYYY.MM.DD HH:mm'),
       description: '프로그램 신청이 접수되었습니다.',
-    })
-  }
-
-  if (matching) {
-    timelineEvents.push({
-      color: 'purple',
-      label: '매칭 완료',
-      time: dayjs(matching.matchedAt).format('YYYY.MM.DD HH:mm'),
-      description: '강사와 프로그램이 매칭되었습니다.',
     })
   }
 

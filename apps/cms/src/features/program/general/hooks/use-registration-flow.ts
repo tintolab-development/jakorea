@@ -1,23 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useCmsAlert } from '@/shared/ui'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
+import { resetInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
-  patchInstitutionApplicationProgramBridge,
-  resetInstitutionApplicationProgramBridge,
-  syncInstitutionApplicationPreferredEducationFormFromOverlay,
-} from '@/features/program/general/lib/institution-application-program-bridge'
-import { resetApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
-import { resetGeminiRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
-import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+  subscribeInstitutionApplicationBridgeForRegistrationWizard,
+  syncInstitutionApplicationBridgeForRegistrationWizard,
+} from '@/features/program/general/lib/registration-institution-bridge-sync'
 import { clearOperationalSeedDefaultSuppression } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
-import { resetGeneralApplicationOverlay } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
-import {
-  getProgramRegistrationOverlayRecord,
-  resetProgramRegistrationOverlay,
-} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { resetAllOperationalOverlayStores } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { getParticipantApplicationEditorVariantForTemplateCode } from '@/features/template/lib/participant-application-template-id'
@@ -25,7 +18,15 @@ import {
   lookupWritingTemplateRegistry,
   resolveWritingTemplateDisplayName,
 } from '@/features/template/lib/lookup-writing-template-registry'
-import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
+import {
+  flushParticipantSessionOverlaysToOperationalStores,
+  useProgramParticipantApplicationEditor,
+} from '@/features/template/hooks/use-program-participant-application-editor'
+import {
+  getProgramRegistrationOverlayVersion,
+  patchRegistrationOverlayProgramTitleKo,
+  subscribeProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
 import {
@@ -96,12 +97,8 @@ const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
 
 function resetGeneralRegistrationWizardMemory(): void {
   clearOperationalSeedDefaultSuppression()
-  resetGeminiRecruitOverlay()
   resetInstitutionApplicationProgramBridge()
-  resetApplicantRecruitInstitutionOverlay()
-  resetGeneralRecruitOverlay()
-  resetGeneralApplicationOverlay()
-  resetProgramRegistrationOverlay()
+  resetAllOperationalOverlayStores()
 }
 
 export type UseGeneralProgramRegistrationFlowOptions = {
@@ -156,6 +153,14 @@ export function useGeneralProgramRegistrationFlow(
   const programType = registrationProgramTypeForTemplateCode(
     registrationTemplateId as ProgramRegistrationDraftTemplateCode
   )
+  const freshOverlayResetRef = useRef(false)
+  if (!open) {
+    freshOverlayResetRef.current = false
+  } else if (skipDraftRestore && !freshOverlayResetRef.current) {
+    freshOverlayResetRef.current = true
+    resetGeneralRegistrationWizardMemory()
+    clearRegistrationWizardSessionDrafts()
+  }
 
   const onStepChangeRef = useRef(options?.onStepChange)
   onStepChangeRef.current = options?.onStepChange
@@ -239,6 +244,10 @@ export function useGeneralProgramRegistrationFlow(
         )
         setActiveStep(restored)
         onStepChangeRef.current?.(restored)
+      }
+      const titleKo = payload?.programTitleKo?.trim()
+      if (titleKo) {
+        patchRegistrationOverlayProgramTitleKo(registrationFormVariant, titleKo)
       }
     })().catch(error => {
       console.warn('[registration-program-draft] hydrate failed', error)
@@ -371,6 +380,22 @@ export function useGeneralProgramRegistrationFlow(
   const isProgramStep = coercedActiveStep === 'program'
   const isParticipantStep = isParticipantRegistrationStep(coercedActiveStep)
   const { buildCurrentProgramSnapshot } = registrationVm
+  const registrationOverlayVersion = useSyncExternalStore(
+    subscribeProgramRegistrationOverlay,
+    getProgramRegistrationOverlayVersion,
+    getProgramRegistrationOverlayVersion
+  )
+  const registrationWizardLinkedProgram = useMemo(() => {
+    if (!open || !isParticipantStep) return null
+    return buildCurrentProgramSnapshot(registrationPendingSnapshotId(registrationFormVariant))
+  }, [
+    open,
+    isParticipantStep,
+    buildCurrentProgramSnapshot,
+    registrationFormVariant,
+    registrationOverlayVersion,
+    wizardDraftRevision,
+  ])
   const instructorScheduleSourceProgram = useMemo(
     () =>
       open && coercedActiveStep === 'application-instructor'
@@ -390,6 +415,8 @@ export function useGeneralProgramRegistrationFlow(
       templateCode: selectedTemplateCode,
       wizardDraftRevision,
       participantOrganization: participantFlags.organization,
+      /** 유형 설정 참여 방식 등 → 개인 신청 팀 정보 단락 노출 (상세 미리보기와 동일) */
+      program: registrationWizardLinkedProgram,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
       programLinkedInstitutionApplicationForm:
         participantVariant === 'institution' ||
@@ -431,32 +458,43 @@ export function useGeneralProgramRegistrationFlow(
   )
 
   useEffect(() => {
-    if (!open) {
-      clearOperationalSeedDefaultSuppression()
-      resetGeminiRecruitOverlay()
-      resetInstitutionApplicationProgramBridge()
-      resetApplicantRecruitInstitutionOverlay()
-      resetGeneralRecruitOverlay()
-      resetGeneralApplicationOverlay()
-      resetProgramRegistrationOverlay()
-      clearRegistrationWizardSessionDrafts()
-      return
-    }
-    patchInstitutionApplicationProgramBridge({
-      educationStructure: registrationVm.programType,
+    if (open) return
+    resetGeneralRegistrationWizardMemory()
+    clearRegistrationWizardSessionDrafts()
+  }, [open])
+
+  const applicantRecruitTemplateCodeForBridge = useMemo(() => {
+    if (isTrainedTeachersRegistration) return 'recruitment-trained-teachers'
+    if (isCompanySchoolRegistration) return 'recruitment-economy'
+    return 'recruitment-participant-school'
+  }, [isCompanySchoolRegistration, isTrainedTeachersRegistration])
+
+  const institutionBridgeSyncArgs = useMemo(
+    () => ({
+      registrationFormVariant,
+      programType: registrationVm.programType,
       sessionRound: registrationVm.sessionRoundType,
       educationScheduleMode: registrationVm.educationScheduleMode,
-    })
-    syncInstitutionApplicationPreferredEducationFormFromOverlay(
-      getProgramRegistrationOverlayRecord()
-    )
-  }, [
-    open,
-    isParticipantStep,
-    registrationVm.programType,
-    registrationVm.sessionRoundType,
-    registrationVm.educationScheduleMode,
-  ])
+      recruitTemplateCode: applicantRecruitTemplateCodeForBridge,
+    }),
+    [
+      registrationFormVariant,
+      applicantRecruitTemplateCodeForBridge,
+      registrationVm.programType,
+      registrationVm.sessionRoundType,
+      registrationVm.educationScheduleMode,
+    ]
+  )
+
+  useEffect(() => {
+    if (!open) return
+    syncInstitutionApplicationBridgeForRegistrationWizard(institutionBridgeSyncArgs)
+  }, [open, institutionBridgeSyncArgs])
+
+  useEffect(() => {
+    if (!open || !isParticipantStep) return
+    return subscribeInstitutionApplicationBridgeForRegistrationWizard(institutionBridgeSyncArgs)
+  }, [open, isParticipantStep, institutionBridgeSyncArgs])
 
   const registryEntry = useMemo(
     () => lookupWritingTemplateRegistry(selectedTemplateCode),
@@ -511,6 +549,7 @@ export function useGeneralProgramRegistrationFlow(
       if (!isProgramStep && isParticipantStep) {
         await participantVm.handleSave({ silent: true })
       }
+      flushParticipantSessionOverlaysToOperationalStores()
       await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
       syncRegistrationProgramDraftSession({
         programType,
@@ -591,6 +630,7 @@ export function useGeneralProgramRegistrationFlow(
           sessionRoundType: registrationVm.sessionRoundType,
           educationScheduleMode: registrationVm.educationScheduleMode,
           volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+          registrationProgramType: programType,
         }
         const recruitIncompleteKeys =
           registrationFormVariant === 'economy'
@@ -621,6 +661,7 @@ export function useGeneralProgramRegistrationFlow(
       participantFlags,
       participantVm.volunteerExceptionScheduleCount,
       phase,
+      programType,
       registrationFormVariant,
       options,
       registrationVm,

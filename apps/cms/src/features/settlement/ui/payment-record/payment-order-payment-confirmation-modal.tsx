@@ -8,7 +8,7 @@ import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import { defaultLectureFeePaymentScheduledDate } from '@/features/settlement/lib/third-tuesday-of-month'
 import './payment-order-payment-confirmation-modal.css'
 

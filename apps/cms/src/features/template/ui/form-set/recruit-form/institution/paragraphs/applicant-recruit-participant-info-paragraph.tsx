@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import {
   isInstitutionApplicationBridgeTemplateAuthoring,
-  patchInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
   useInstitutionApplicationProgramBridge,
@@ -14,6 +13,7 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import {
   APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
+  syncInstitutionApplicationBridgeFromApplicantRecruitOverlay,
   useApplicantRecruitInstitutionOverlayKv,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
@@ -267,14 +267,9 @@ export function ApplicantRecruitParticipantInfoParagraph({
   )
 
   useEffect(() => {
-    patchInstitutionApplicationProgramBridge({
-      // TT: 사전 안내 비정책 — 모집 UI에 없으므로 false. 일반은 라디오 값 반영
+    syncInstitutionApplicationBridgeFromApplicantRecruitOverlay(undefined, {
       preEducationNoticeRequired: isTrainedTeachers ? false : preguidanceRequired === 'need',
-      // TT: BE ignore · UI 비노출 · echo/default 0 유지
       maxAssignableInstructors: isTrainedTeachers ? 0 : maxInstructors,
-      maxClassCount,
-      maxScheduleCount,
-      maxSessionsPerDay,
     })
   }, [
     isTrainedTeachers,

@@ -5,7 +5,7 @@
  */
 
 import type { Program } from '@/types/domain'
-import { mockApplications } from '@/data/mock'
+import { applicationService } from '@/entities/application/api/application-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { parseRegionTokens, resolveSidoFromSigunguTokens } from '@jakorea/location/sido-sigungu'
 import type {
@@ -33,7 +33,7 @@ export function buildProgramRegionMap(): Map<string, EducationRecordProgramRegio
   const map = new Map<string, EducationRecordProgramRegion>()
   const schools = schoolService.getAllSync()
 
-  for (const app of mockApplications) {
+  for (const app of applicationService.getAllSync()) {
     if (app.subjectType !== 'school' || !app.programId) continue
     if (map.has(app.programId)) continue
 

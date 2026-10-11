@@ -9,6 +9,7 @@ import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { writingFormDraftFromApplicationForm } from '@/features/program/lib/application-form-draft'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
 import { parsePortalProgramId } from '@/features/program/api/mappers'
+import { EducationSurveyPanelSkeleton } from '@/features/mypage/shared/ui'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import { getMypageProfileLabel } from '@/features/mypage/lib/member-profile'
 import { useSettingsView } from '@/features/mypage/settings/hooks/use-settings-view'
@@ -305,7 +306,15 @@ export function EducationSurveyFillPanel({
     setAlertOpen(true)
   }
 
-  if (remoteForms.isLoading || (remoteFormQuery.enabled && remoteFormQuery.isLoading)) return null
+  if (remoteForms.isLoading || (remoteFormQuery.enabled && remoteFormQuery.isLoading)) {
+    return (
+      <EducationSurveyPanelSkeleton
+        statusMessage={
+          kind === 'satisfaction' ? '만족도조사를 불러오는 중입니다.' : '설문조사를 불러오는 중입니다.'
+        }
+      />
+    )
+  }
   if (remoteForms.isError) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

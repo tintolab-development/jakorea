@@ -72,4 +72,67 @@ describe('mapRequestedSchedulesToSessions', () => {
     expect(sessions?.[2]?.scheduleUnresolved).toBe(true)
     expect(formatRequestedSchedulesPeriodLabel([schedules[0]!])).toBe('2026. 10. 20(화) 10:00 ~ 12:00')
   })
+
+  it('startPeriod가 있어도 sessionTimes·label이 있으면 시각 지정형으로 매핑한다', () => {
+    const sessions = mapRequestedSchedulesToSessions([
+      {
+        id: 184839,
+        preferenceOrder: 1,
+        requestedDate: '2026-10-26',
+        startPeriod: 1,
+        sessionCount: 1,
+        combinedClassYn: false,
+        sessionTimes: [
+          {
+            sessionOrder: 1,
+            period: 1,
+            startTime: '10:00:00',
+            endTime: '12:00:00',
+          },
+        ],
+        resolvedScheduleId: null,
+        label: '26년 10월 26일(월) 10:00 ~ 12:00',
+        periodStartDate: '2026-10-26',
+        periodEndDate: '2026-10-26',
+      },
+    ])
+
+    expect(sessions).toHaveLength(1)
+    expect(sessions?.[0]?.scheduleLabel).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
+    expect(sessions?.[0]?.timeRange).toBe('10:00 ~ 12:00')
+    expect(sessions?.[0]?.date).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
+  })
+
+  it('PERIOD 구간 label을 scheduleLabel로 매핑한다', () => {
+    const sessions = mapRequestedSchedulesToSessions([
+      {
+        id: 10001,
+        preferenceOrder: 1,
+        requestedDate: '2026-10-28',
+        startPeriod: null,
+        sessionCount: 1,
+        combinedClassYn: false,
+        sessionTimes: [],
+        resolvedScheduleId: 186659,
+        label: '26년 10월 28일(수) ~ 26년 11월 12일(목)',
+        periodStartDate: '2026-10-28',
+        periodEndDate: '2026-11-12',
+      },
+      {
+        id: 10002,
+        preferenceOrder: 2,
+        requestedDate: '2026-11-25',
+        startPeriod: null,
+        sessionCount: 1,
+        combinedClassYn: false,
+        sessionTimes: [],
+        resolvedScheduleId: 186659,
+        label: '26년 11월 25일(수) ~ 26년 12월 11일(금)',
+      },
+    ])
+
+    expect(sessions).toHaveLength(2)
+    expect(sessions?.[0]?.scheduleLabel).toBe('26년 10월 28일(수) ~ 26년 11월 12일(목)')
+    expect(sessions?.[1]?.scheduleLabel).toBe('26년 11월 25일(수) ~ 26년 12월 11일(금)')
+  })
 })

@@ -30,13 +30,13 @@ export function renderDetailInfoPipeSeparated(text: string | undefined | null): 
   if (parts.length === 0) return '-'
   if (parts.length === 1) return parts[0]
   return (
-    <>
+    <ProgramDetailTdSegmentWrap>
       {parts.reduce<ReactNode[]>((acc, part, index) => {
         if (index > 0) acc.push(<DetailInfoFormTdDivider key={`di-div-${index}`} />)
         acc.push(<span key={`di-seg-${index}`}>{part}</span>)
         return acc
       }, [])}
-    </>
+    </ProgramDetailTdSegmentWrap>
   )
 }
 

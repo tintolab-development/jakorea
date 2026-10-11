@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
+import { ExcelButton, FilterTableToolbarButton } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
 import type { EducationProgressHalfKey } from '../tabs'
 import {
-  attendanceStatusLabel,
-  formatAttendanceRemarks,
-  maskAttendanceContact,
-  maskAttendanceEmail,
-} from './attendance-display'
+  UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS,
+  buildUjatAttendanceSessionExcelRows,
+  resolveUjatAttendanceSessionExcelFilename,
+} from './attendance-excel'
 import { filterAttendanceVolunteersForDisplay } from './use-list'
 import {
   UjatAttendanceSessionGroupHeader,
@@ -19,28 +18,6 @@ import {
 } from './session-group-panel'
 import { useUjatEducationProgressAttendance } from './use-list'
 import './section.css'
-
-type UjatAttendanceExcelRow = {
-  sessionLabel: string
-  no: number
-  name: string
-  assignedClass: string
-  contact: string
-  email: string
-  statusLabel: string
-  remarks: string
-}
-
-const UJAT_ATTENDANCE_EXCEL_COLUMNS: ColumnsType<UjatAttendanceExcelRow> = [
-  { title: '교육 일정', dataIndex: 'sessionLabel', key: 'sessionLabel' },
-  { title: 'No.', dataIndex: 'no', key: 'no' },
-  { title: '봉사자명', dataIndex: 'name', key: 'name' },
-  { title: '배정 학급', dataIndex: 'assignedClass', key: 'assignedClass' },
-  { title: '연락처', dataIndex: 'contact', key: 'contact' },
-  { title: '이메일', dataIndex: 'email', key: 'email' },
-  { title: '교육 출결 현황', dataIndex: 'statusLabel', key: 'statusLabel' },
-  { title: '비고', dataIndex: 'remarks', key: 'remarks' },
-]
 
 export function UjatEducationProgressAttendanceSection({
   programId,
@@ -68,47 +45,40 @@ export function UjatEducationProgressAttendanceSection({
     getSessionVolunteers,
   } = useUjatEducationProgressAttendance(programId, half, activeRegion)
 
-  const attendanceExcelRows = useMemo(() => {
-    const rows: UjatAttendanceExcelRow[] = []
+  const firstSession = sessionGroups[0]
 
-    for (const session of sessionGroups) {
-      const volunteers = filterAttendanceVolunteersForDisplay(
-        getSessionVolunteers(session.id),
-        appliedFilters
-      )
-      const total = volunteers.length
-      volunteers.forEach((volunteer, index) => {
-        rows.push({
-          sessionLabel: session.dateLabel,
-          no: total - index,
-          name: volunteer.name,
-          assignedClass: volunteer.assignedClass,
-          contact: maskAttendanceContact(volunteer.contact),
-          email: maskAttendanceEmail(volunteer.email),
-          statusLabel: attendanceStatusLabel(volunteer.status),
-          remarks: formatAttendanceRemarks(volunteer),
-        })
-      })
-    }
-
-    return rows
-  }, [appliedFilters, getSessionVolunteers, sessionGroups])
-
-  const firstSessionTitle = useMemo(() => {
-    const [firstSession] = sessionGroups
-    if (!firstSession) return null
-    const firstSessionRows = filterAttendanceVolunteersForDisplay(
+  const firstSessionDisplayRows = useMemo(() => {
+    if (!firstSession) return []
+    return filterAttendanceVolunteersForDisplay(
       getSessionVolunteers(firstSession.id),
       appliedFilters
     )
+  }, [appliedFilters, firstSession, getSessionVolunteers])
+
+  const firstSessionExcelRows = useMemo(
+    () => buildUjatAttendanceSessionExcelRows(firstSessionDisplayRows),
+    [firstSessionDisplayRows]
+  )
+
+  const { exportExcel: exportFirstSessionExcel, isExporting: isFirstSessionExporting } =
+    useTableExcelExport({
+      columns: UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS,
+      data: firstSessionExcelRows,
+      filename: firstSession
+        ? resolveUjatAttendanceSessionExcelFilename(firstSession)
+        : '출석관리',
+    })
+
+  const firstSessionTitle = useMemo(() => {
+    if (!firstSession) return null
 
     return (
       <UjatAttendanceSessionGroupHeader
         session={firstSession}
-        totalCount={firstSessionRows.length}
+        totalCount={firstSessionDisplayRows.length}
       />
     )
-  }, [appliedFilters, getSessionVolunteers, sessionGroups])
+  }, [firstSession, firstSessionDisplayRows])
 
   useEffect(() => {
     resetRegionState()
@@ -134,23 +104,25 @@ export function UjatEducationProgressAttendanceSection({
         onSearch={handleSearch}
         showFilter
         title={firstSessionTitle}
+        hideExcelDownload
         actions={
           firstSessionTitle != null ? (
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="large"
-              width={120}
-              onClick={() => openFirstSessionCorrection?.()}
-            >
-              출결 정정
-            </CmsButton>
+            <>
+              <FilterTableToolbarButton
+                type="button"
+                variant="secondary"
+                width={120}
+                onClick={() => openFirstSessionCorrection?.()}
+              >
+                출결 정정
+              </FilterTableToolbarButton>
+              <ExcelButton
+                loading={isFirstSessionExporting}
+                onClick={exportFirstSessionExcel}
+              />
+            </>
           ) : null
         }
-        excelExport={{
-          columns: UJAT_ATTENDANCE_EXCEL_COLUMNS,
-          data: attendanceExcelRows,
-        }}
       >
         {sessionGroups.length === 0 ? (
           <div className="ujat-education-progress-attendance__empty">조회 결과가 없습니다.</div>

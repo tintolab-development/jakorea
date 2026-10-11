@@ -84,6 +84,7 @@ export function collectRegistrationWizardRecruitmentPhaseIncompleteKeys(args: {
     sessionRoundType: args.sessionRoundType,
     educationScheduleMode: args.educationScheduleMode,
     volunteerExceptionScheduleCount: args.volunteerExceptionScheduleCount,
+    registrationProgramType: args.variant === 'trainedTeachers' ? 'TRAINED_TEACHER' : 'GENERAL',
   })
 }
 

@@ -1,9 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { fetchGeneralProgramParticipantsPage } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import { getTempMockShowcaseIndividualProgressParticipants } from '@/features/program/general/lib/temp-mock-program-resolve'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { type ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 
@@ -13,11 +11,10 @@ export function useProgressIndividualParticipantList(
   _program?: unknown
 ) {
   void _program
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled && !isTempMockProgram,
+    !remoteEnabled,
     'general-progress-individual-participants',
     '프로그램 진행 현황 · 개인 참여자'
   )
@@ -33,20 +30,14 @@ export function useProgressIndividualParticipantList(
     retry: false,
   })
 
-  const participantList: ParticipatingIndividualParticipantRow[] = isTempMockProgram
-    ? getTempMockShowcaseIndividualProgressParticipants(programId)
-    : remoteEnabled
-      ? (remoteQuery.data?.pages.flatMap(page => page.rows) ?? [])
-      : []
+  const participantList: ParticipatingIndividualParticipantRow[] = remoteEnabled
+    ? (remoteQuery.data?.pages.flatMap(page => page.rows) ?? [])
+    : []
 
   return {
     participantList,
-    loading: isTempMockProgram
-      ? false
-      : remoteEnabled
-        ? remoteQuery.isFetching && remoteQuery.data === undefined
-        : false,
-    isRemoteDataSource: remoteEnabled && !isTempMockProgram,
+    loading: remoteEnabled ? remoteQuery.isFetching && remoteQuery.data === undefined : false,
+    isRemoteDataSource: remoteEnabled,
     hasNextPage: remoteQuery.hasNextPage ?? false,
     isFetchingNextPage: remoteQuery.isFetchingNextPage,
     fetchNextPage: remoteQuery.fetchNextPage,

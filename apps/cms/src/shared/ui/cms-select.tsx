@@ -173,6 +173,7 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
     message,
     error = false,
     status,
+    'aria-labelledby': ariaLabelledBy,
     ...rest
   } = props
 
@@ -304,6 +305,7 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>((props, ref)
           if (!isControlled) setUncontrolledValue(next)
           onChange?.(next as never, [] as never)
         }}
+        aria-labelledby={ariaLabelledBy}
       />
     )
   }

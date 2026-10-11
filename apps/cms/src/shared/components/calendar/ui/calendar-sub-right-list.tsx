@@ -9,7 +9,7 @@ import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
   INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE,
   type InstructorSettlementListRow,
-} from '@/data/mock/instructor-member-settlements'
+} from '@/features/settlement-management/model/instructor-member-settlements'
 import { CalendarListItemContentProgram } from './item-list/program'
 import { CalendarListItemContentGeneralProgramEvent } from './item-list/general-program-event'
 import { CalendarListItemContentSettlement } from './item-list/settlement'
@@ -257,22 +257,25 @@ export type CalendarSubRightGeneralInstitutionApplicationListProps = {
     row: CalendarGeneralInstitutionApplicationListRow
   ) => ScheduleColorPair | undefined
   toolbar?: ReactNode
+  emptyDescription?: string
 }
 
 function CalendarListShell({
   toolbar,
   isEmpty,
+  emptyDescription = '해당 날짜에 일정이 없습니다',
   children,
 }: {
   toolbar?: ReactNode
   isEmpty: boolean
+  emptyDescription?: string
   children: ReactNode
 }) {
   if (!toolbar) {
     return (
       <div className={isEmpty ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
         {isEmpty ? (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyDescription} />
         ) : (
           children
         )}
@@ -292,7 +295,7 @@ function CalendarListShell({
           .join(' ')}
       >
         {isEmpty ? (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyDescription} />
         ) : (
           children
         )}
@@ -308,6 +311,7 @@ export function CalendarSubRightGeneralInstitutionApplicationList({
   onRowClick,
   resolveRowColors,
   toolbar,
+  emptyDescription,
 }: CalendarSubRightGeneralInstitutionApplicationListProps) {
   const selectedSet = useMemo(() => new Set(selectedRowKeys.map(String)), [selectedRowKeys])
 
@@ -326,7 +330,11 @@ export function CalendarSubRightGeneralInstitutionApplicationList({
   )
 
   return (
-    <CalendarListShell toolbar={toolbar} isEmpty={rows.length === 0}>
+    <CalendarListShell
+      toolbar={toolbar}
+      isEmpty={rows.length === 0}
+      emptyDescription={emptyDescription}
+    >
       {rows.map(row => {
         const colors = resolveRowColors?.(row) ?? SCHEDULE_COLORS[0]
         return (

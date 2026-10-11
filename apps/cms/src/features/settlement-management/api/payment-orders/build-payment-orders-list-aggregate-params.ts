@@ -1,4 +1,4 @@
-import type { PaymentOrderAdminProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
 import type {
   ListSettlementAggregatesParams,
   ListSettlementAggregatesStatementStatus,

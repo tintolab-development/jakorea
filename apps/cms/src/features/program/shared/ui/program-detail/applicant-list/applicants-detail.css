@@ -70,11 +70,28 @@
   overflow: visible;
 }
 
+/* 일반 프로그램 기관 신청 목록 — legacy 일정 열 480px */
+.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-sessions--general-detail,
+.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-sessions--general-detail {
+  width: 480px !important;
+  min-width: 480px !important;
+  max-width: none !important;
+  overflow: visible;
+}
+
 .applicant-details__td-sessions--schedule .applicant-details__sessions-cell,
 .applicant-details__td-sessions--schedule .applicant-details__session-line--nowrap,
 .applicant-details__td-sessions--schedule .applicant-details__session-line--nowrap .program-detail-td-segment-wrap,
 .applicant-details__td-sessions--schedule
   .applicant-details__session-line--nowrap
+  .program-detail-td-segment-wrap
+  > span,
+.applicant-details__td-sessions--general-detail .applicant-details__sessions-cell,
+.applicant-details__td-sessions--general-detail .applicant-details__session-line,
+.applicant-details__td-sessions--general-detail .general-detail-session-line,
+.applicant-details__td-sessions--general-detail .applicant-details__session-line .program-detail-td-segment-wrap,
+.applicant-details__td-sessions--general-detail
+  .applicant-details__session-line
   .program-detail-td-segment-wrap
   > span {
   max-width: none;
@@ -89,6 +106,12 @@
   min-width: 360px;
   box-sizing: border-box;
   overflow: hidden;
+}
+
+.applicant-details .ant-table-thead > tr > th.applicant-details__th-sessions--general-detail,
+.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions--general-detail {
+  min-width: 480px;
+  overflow: visible;
 }
 
 .applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions {

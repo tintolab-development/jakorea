@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs from 'dayjs'
-import { Alert, Spin, Table } from 'antd'
+import { Alert, Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -13,7 +13,11 @@ import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   RegistrationDraftNoticeModal,
   type RegistrationDraftNoticeChoice,
@@ -32,9 +36,10 @@ import { formatRecruitmentPeriodRange } from '../../lib/recruitment/format-perio
 import { resolveRecruitmentDisplayStatus } from '../../lib/recruitment/resolve-status'
 import {
   geminiRecruitmentDeleteBlocked,
-  resolveGeminiDeleteBlockedAlert,
+  resolveGeminiDeleteBlockedModalCopy,
   resolveGeminiDeleteGuideModalCopy,
 } from '../../lib/delete-guide'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { peekGeminiRecruitmentAddDraftOverwrite } from '../../lib/recruitment/add-local-save'
 import { useGeminiRecruitmentDetailUrl } from '../detail/recruitment-detail-url'
 import { useGeminiRecruitmentAddUrl } from './recruitment-add-url'
@@ -93,6 +98,8 @@ export function GeminiRecruitmentList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
+  const [deleteBlockedCopy, setDeleteBlockedCopy] = useState({ title: '', description: '' })
   const todayKey = useToday()
   const searchParamsKey = searchParams.toString()
   const { recruitmentId, openDetail } = useGeminiRecruitmentDetailUrl()
@@ -136,6 +143,7 @@ export function GeminiRecruitmentList() {
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(geminiRecruitmentTablePageConfig, {
     data: recruitmentRows,
     searchParams,
@@ -168,8 +176,8 @@ export function GeminiRecruitmentList() {
     const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
     const selectedRows = tableData.filter(row => selectedIds.has(row.id))
     if (selectedRows.some(geminiRecruitmentDeleteBlocked)) {
-      const blocked = resolveGeminiDeleteBlockedAlert('공고', selectedRows.length)
-      showAlert(blocked)
+      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('공고', selectedRows.length))
+      setDeleteBlockedOpen(true)
       return
     }
     setDeleteModalOpen(true)
@@ -275,6 +283,7 @@ export function GeminiRecruitmentList() {
         />
       ) : null}
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         filterResponsiveWrap={false}
         fields={GEMINI_RECRUITMENT_FILTER_FIELDS}
@@ -289,12 +298,12 @@ export function GeminiRecruitmentList() {
         description={`총 ${(remoteEnabled ? totalElements : displayedCount).toLocaleString()}건`}
         actions={
           <>
-            <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
+            <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
               선택 삭제
-            </CmsButton>
-            <CmsButton variant="primary" onClick={handleAddRecruitment}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="primary" onClick={handleAddRecruitment}>
               모집 공고 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -302,7 +311,7 @@ export function GeminiRecruitmentList() {
           data: tableData,
         }}
       >
-        <Table<GeminiRecruitmentRow>
+        <CmsDataTable<GeminiRecruitmentRow>
           rowKey="id"
           className="cms-data-table gemini-recruitment-list__table"
           tableLayout="fixed"
@@ -347,6 +356,12 @@ export function GeminiRecruitmentList() {
         draftTitle={draftNoticeTitle}
         onCancel={() => setDraftNoticeOpen(false)}
         onConfirm={handleDraftNoticeConfirm}
+      />
+      <DeleteBlockedGuideModal
+        open={deleteBlockedOpen}
+        onClose={() => setDeleteBlockedOpen(false)}
+        title={deleteBlockedCopy.title}
+        description={deleteBlockedCopy.description}
       />
     </div>
   )

@@ -4,15 +4,13 @@ import {
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail'
 import type { PaymentOrdersDetailContextData } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import {
-  getMockPaymentOrderInstructorDetail,
-  getMockPaymentOrderProgramDetail,
   type PaymentOrderAdminInstructorDetail,
   type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProgramDetail,
   type PaymentOrderAdminProgramDetailInstructorRow,
   type PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 
 export type PaymentOrderDetailLineRow =
   | PaymentOrderAdminProgramDetailInstructorRow
@@ -31,7 +29,7 @@ export function resolvePaymentOrderProgramDetailForLines(
       contextData.statements ?? []
     )
   }
-  return getMockPaymentOrderProgramDetail(programRow)
+  return null
 }
 
 export function resolvePaymentOrderInstructorDetailForLines(
@@ -47,7 +45,7 @@ export function resolvePaymentOrderInstructorDetailForLines(
       contextData.statements ?? []
     )
   }
-  return getMockPaymentOrderInstructorDetail(instructorRow)
+  return null
 }
 
 export function resolvePaymentOrderProgramDetailLineRows(

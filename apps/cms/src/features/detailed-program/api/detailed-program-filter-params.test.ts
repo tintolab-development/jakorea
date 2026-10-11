@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  DETAILED_PROGRAM_API_PAGE_SIZE,
   detailedProgramsParamsFromSearchParams,
   serializeDetailedProgramListFilters,
 } from './detailed-program-filter-params'
@@ -9,6 +10,7 @@ describe('detailed-program-filter-params', () => {
     expect(detailedProgramsParamsFromSearchParams(new URLSearchParams('dp_use=active'))).toMatchObject({
       useYn: true,
       page: 0,
+      size: DETAILED_PROGRAM_API_PAGE_SIZE,
     })
     expect(
       detailedProgramsParamsFromSearchParams(new URLSearchParams('dp_use=inactive'))

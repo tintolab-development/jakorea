@@ -1,5 +1,10 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import type { ProgramDetailCase } from '@/features/program'
+import {
+  formatInterviewAtLabel,
+  resolveApplicationContentFromAnswers,
+  resolvePreferredEducationScheduleLabelFromAnswers,
+} from '../lib/application-content-from-answers'
 import type { EducationApplicationListItem, EducationDisplayStatus } from '../model/types'
 import type {
   PortalProgramApplicationDetail,
@@ -222,6 +227,44 @@ export function mapPortalProgramApplicationListItem(
   }
 }
 
+/**
+ * BE handoff: `interviewAtLabel` 우선, 없으면 `assignedInterviewStartAt` FE 포맷.
+ * `hasInterview === false`면 배너용 라벨을 붙이지 않는다.
+ */
+function resolveInterviewFields(
+  detail: PortalProgramApplicationDetail,
+  displayStatus: EducationDisplayStatus,
+): {
+  hasInterview: boolean
+  interviewAtLabel?: string
+} {
+  const interviewAtLabel =
+    (typeof detail.interviewAtLabel === 'string' && detail.interviewAtLabel.trim()) ||
+    formatInterviewAtLabel(detail.assignedInterviewStartAt) ||
+    undefined
+
+  const interviewEnabledOnProgram = detail.program?.interviewEnabled === true
+  const hasAssignedSlot = Boolean(detail.assignedInterviewStartAt?.trim())
+
+  if (typeof detail.hasInterview === 'boolean') {
+    const hasInterview =
+      detail.hasInterview ||
+      (displayStatus === 'document_passed' &&
+        (interviewEnabledOnProgram || hasAssignedSlot || Boolean(interviewAtLabel)))
+    return {
+      hasInterview,
+      ...(interviewAtLabel ? { interviewAtLabel } : {}),
+    }
+  }
+
+  const hasInterview =
+    interviewEnabledOnProgram || Boolean(interviewAtLabel) || hasAssignedSlot
+  return {
+    hasInterview,
+    ...(interviewAtLabel ? { interviewAtLabel } : {}),
+  }
+}
+
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
 ): EducationApplicationListItem | null {
@@ -248,5 +291,27 @@ export function mapPortalProgramApplicationDetail(
     detail.program?.recruitmentEndAt,
   )
   if (recruitmentLabel !== '-') mapped.recruitmentPeriodLabel = recruitmentLabel
+
+  const answers = detail.answers ?? {}
+  const fromAnswers = resolveApplicationContentFromAnswers(answers)
+  const preferredFromBlocks = resolvePreferredEducationScheduleLabelFromAnswers({
+    preferredScheduleBlocks: detail.preferredScheduleBlocks ?? [],
+  })
+  if (fromAnswers.selfIntroMotivation) {
+    mapped.selfIntroMotivation = fromAnswers.selfIntroMotivation
+  }
+  const preferredLabel =
+    fromAnswers.preferredEducationScheduleLabel ?? preferredFromBlocks
+  if (preferredLabel) {
+    mapped.preferredEducationScheduleLabel = preferredLabel
+  }
+  if (fromAnswers.preferredScheduleOptionValues?.length) {
+    mapped.preferredScheduleOptionValues = fromAnswers.preferredScheduleOptionValues
+  }
+
+  const interview = resolveInterviewFields(detail, displayStatus)
+  mapped.hasInterview = interview.hasInterview
+  if (interview.interviewAtLabel) mapped.interviewAtLabel = interview.interviewAtLabel
+
   return mapped
 }

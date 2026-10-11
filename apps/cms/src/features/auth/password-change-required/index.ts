@@ -1,14 +1,11 @@
 export {
   clearPasswordChangeRequiredComplete,
-  clearPasswordChangeRequiredSocialOnboarding,
   clearPasswordChangeRequiredWizardState,
   getPasswordChangeRequiredWizardState,
   hasIdentityVerified,
   hasPasswordChangeRequiredComplete,
-  hasPasswordChangeRequiredSocialOnboarding,
   initPasswordChangeRequiredWizardState,
   markPasswordChangeRequiredComplete,
-  markPasswordChangeRequiredSocialOnboarding,
   requirePasswordChangeRequiredWizardState,
   updatePasswordChangeRequiredWizardState,
   PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS,
@@ -22,5 +19,3 @@ export {
 } from './validate-change-password'
 
 export { usePasswordChangeRequiredGuard } from './use-password-change-required-guard'
-
-export { PasswordChangeRequiredCompleteView } from './complete-view'

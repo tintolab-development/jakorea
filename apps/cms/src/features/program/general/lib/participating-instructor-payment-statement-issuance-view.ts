@@ -1,5 +1,5 @@
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
-import type { PaymentOrderCalculationStatementLine } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderCalculationStatementLine } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   isInstructorSettlementEligibleForPaymentStatementIssue,
   type InstructorSettlementUiStatus,

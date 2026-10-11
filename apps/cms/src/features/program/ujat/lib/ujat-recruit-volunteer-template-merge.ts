@@ -7,34 +7,13 @@ import {
   type UjatVolunteerNoticeExposureValue,
 } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { loadUjatRecruitVolunteerTemplateSave } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
+import { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
+
+export { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS }
+
 type RangeSeal = { start: string | null; end: string | null }
 type ResultSeal = { date: string | null; method: string }
 type ContactSeal = { name: string; phone: string; email: string }
-export const UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS = {
-  announcementPublished: 'ujat.recruit.volunteer.announcementPublished',
-  noticeExposure: 'ujat.recruit.volunteer.noticeExposure',
-  publicTitle: 'ujat.recruit.volunteer.publicTitle',
-  programRange: 'ujat.recruit.volunteer.programRange',
-  volunteerTargets: 'ujat.recruit.volunteer.volunteerTargets',
-  targetDetail: 'ujat.recruit.volunteer.targetDetail',
-  recruitRange: 'ujat.recruit.volunteer.recruitRange',
-  recruitRangeH1: 'ujat.recruit.volunteer.h1.recruitRange',
-  recruitRangeH2: 'ujat.recruit.volunteer.h2.recruitRange',
-  activityTermH1: 'ujat.recruit.volunteer.h1.activityTerm',
-  activityTermH2: 'ujat.recruit.volunteer.h2.activityTerm',
-  docAnnounce: 'ujat.recruit.volunteer.docAnnounce',
-  interviewRange: 'ujat.recruit.volunteer.interviewRange',
-  interviewMethod: 'ujat.recruit.volunteer.interviewMethod',
-  finalAnnounce: 'ujat.recruit.volunteer.finalAnnounce',
-  contact: 'ujat.recruit.volunteer.contact',
-  notes: 'ujat.recruit.volunteer.notes',
-  description: 'ujat.recruit.volunteer.description',
-  recruitmentGuide: 'ujat.recruit.volunteer.recruitmentGuide',
-  applicationMethod: 'ujat.recruit.volunteer.applicationMethod',
-  otherNotes: 'ujat.recruit.volunteer.otherNotes',
-  additionalContentHtml: 'ujat.recruit.volunteer.additionalContentHtml',
-  attachmentFileNames: 'ujat.recruit.volunteer.attachmentFileNames',
-} as const
 
 const KEYS = UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {

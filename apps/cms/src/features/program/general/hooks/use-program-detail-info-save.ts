@@ -22,6 +22,7 @@ import {
   detailEditValuesToProgramPatch,
   narrowProgramDetailPatchForCommonInfoSave,
   programToDetailEditValues,
+  volunteerDocumentInterviewNestedPatch,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import { showUpdateCompletedAlert } from '@/shared/ui'
 import {
@@ -35,6 +36,13 @@ import {
 } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
 import { isGeneralRecruitmentRowProgram } from '@/features/program/general/lib/is-general-recruitment-row-program'
+import {
+  buildMergedRegistrationOverlayForRecruitSave,
+  mergeOverlayOnlyVolunteerInterviewSchedule,
+  mergeVolunteerRecruitmentInfoAfterOverlayApply,
+} from '@/features/program/general/lib/detail-operational-save-merge'
+
+export { mergeVolunteerRecruitmentInfoAfterOverlayApply }
 
 export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
@@ -174,6 +182,31 @@ export function useProgramDetailInfoSave({
                 : {}),
             }
           )
+          if (recruitmentAudience === 'volunteer') {
+            const existingVolunteer = program.generalCommonInfo?.volunteerRecruitmentInfo as
+              | {
+                  documentPassAnnouncementDate?: string
+                  documentPassAnnouncementMethod?: string
+                  interviewStartDate?: string
+                  interviewEndDate?: string
+                  interviewMethod?: string
+                }
+              | undefined
+            const nestedInterview = volunteerDocumentInterviewNestedPatch(
+              values,
+              existingVolunteer
+            )
+            remotePatch = {
+              ...remotePatch,
+              generalCommonInfo: {
+                ...remotePatch.generalCommonInfo,
+                volunteerRecruitmentInfo: {
+                  ...remotePatch.generalCommonInfo?.volunteerRecruitmentInfo,
+                  ...nestedInterview,
+                },
+              },
+            }
+          }
           if (writesRowFields && notesField !== 'remarks') {
             // 비고는 모집 행 remarks 전용 — 프로그램 oneLineIntroduction·otherMatters로 새지 않게 한다.
             const { [notesField]: _rowNotes, ...withoutNotes } = remotePatch as Record<string, unknown>
@@ -189,22 +222,36 @@ export function useProgramDetailInfoSave({
               },
             }
           }
-          if (writesRowFields) {
-            const draftForResync: Program = {
-              ...program,
-              ...remotePatch,
-              generalCommonInfo: {
-                ...program.generalCommonInfo,
-                ...remotePatch.generalCommonInfo,
-              },
-            }
-            remotePatch = {
-              ...remotePatch,
-              registrationOverlay: resyncGeneralRecruitOverlayFromProgram(draftForResync, {
-                ...(program.registrationOverlay ?? {}),
-                ...(remotePatch.registrationOverlay ?? {}),
-              }),
-            }
+          const mergedRegistrationOverlay = buildMergedRegistrationOverlayForRecruitSave({
+            program,
+            remotePatch,
+            values,
+            audience: recruitmentAudience,
+          })
+
+          if (recruitmentAudience === 'volunteer') {
+            remotePatch = mergeOverlayOnlyVolunteerInterviewSchedule(
+              program,
+              remotePatch,
+              mergedRegistrationOverlay,
+              values
+            )
+          }
+
+          const draftForResync: Program = {
+            ...program,
+            ...remotePatch,
+            generalCommonInfo: {
+              ...program.generalCommonInfo,
+              ...remotePatch.generalCommonInfo,
+            },
+          }
+          remotePatch = {
+            ...remotePatch,
+            registrationOverlay: resyncGeneralRecruitOverlayFromProgram(
+              draftForResync,
+              mergedRegistrationOverlay
+            ),
           }
         }
         if (commonInfoPatchOnly) {

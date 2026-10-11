@@ -1,4 +1,4 @@
-import type { PaymentOrderCalculationLineKind } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderCalculationLineKind } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   isSupportedBasisDetailLayout,
   type PaymentOrderCalculationBasisDetail,
@@ -176,6 +176,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function coerceTransportStudentBasisLayout(value: unknown): unknown {
+  if (!isRecord(value) || value.layout !== 'transportStudent') return value
+  if ('outbound' in value) return { ...value, layout: 'transportRoundTrip' }
+  if ('trip' in value) return { ...value, layout: 'transportOneWay' }
+  return { ...value, layout: 'transportOneWay' }
+}
+
 function hasTypedBasisDetailFields(value: unknown): boolean {
   if (!isRecord(value)) return false
   switch (value.layout) {
@@ -221,11 +228,12 @@ export function mapCalculationDetailToBasisDetail(
   candidates.push(detail)
 
   for (const candidate of candidates) {
+    const coerced = coerceTransportStudentBasisLayout(candidate)
     if (
-      isSupportedBasisDetailLayout(candidate as PaymentOrderCalculationBasisDetail) &&
-      hasTypedBasisDetailFields(candidate)
+      isSupportedBasisDetailLayout(coerced as PaymentOrderCalculationBasisDetail) &&
+      hasTypedBasisDetailFields(coerced)
     ) {
-      return candidate as PaymentOrderCalculationBasisDetail
+      return coerced as PaymentOrderCalculationBasisDetail
     }
   }
 

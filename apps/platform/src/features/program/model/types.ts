@@ -85,6 +85,11 @@ export type ProgramEventSchedule = {
   name: string
   /** 일시·그룹 시간 요약 */
   dateLabel: string
+  /** Portal `schedules[].scheduleId` — 신청 내용 `schedule:{id}` 해석용 */
+  scheduleId?: number
+  /** Portal 원본 시각 — 신청 내용 표시 포맷용 */
+  startAt?: string
+  endAt?: string
   blockKind?: ProgramScheduleBlockKind
   educationFormLabel?: string
   participationMethodLabel?: string
@@ -95,6 +100,19 @@ export type ProgramEventSchedule = {
 export type ProgramLabeledValue = {
   label: string
   value: string
+}
+
+/** 프로그램 상세 「면접 진행 가능 일정」 — Portal `volunteerInterviewSchedule` */
+export type ProgramVolunteerInterviewScheduleOption = {
+  id: string
+  label: string
+}
+
+export type ProgramVolunteerInterviewSchedule = {
+  periodLabel?: string
+  availableTimeSlots?: string
+  recurringUnavailable?: string
+  options: ProgramVolunteerInterviewScheduleOption[]
 }
 
 /** 교육 진행 구조 (커리큘럼형 | 일정형). 없거나 비일반 시 커리큘럼 폴백 매핑. */
@@ -205,6 +223,12 @@ export type ProgramDetail = ProgramListItem & {
   recruitmentPhases: ProgramLabeledValue[]
   /** 세부내용 「교육 일정 N」 카드 — 보통 educationScheduleLines */
   educationSchedules: ProgramLabeledValue[]
+  /**
+   * 봉사자 모집 상세 「면접 진행 가능 일정」.
+   * VOLUNTEER 면접 운영 행의 `volunteerInterviewSchedule`이 있을 때만.
+   * `schedules[]`·`educationScheduleLines`·면접 기간만으로 만들지 않는다.
+   */
+  volunteerInterviewSchedule?: ProgramVolunteerInterviewSchedule
   extraSections: ProgramExtraSection[]
   /**
    * 문의처 표시 줄. 비어 있으면 상세에서 비노출.

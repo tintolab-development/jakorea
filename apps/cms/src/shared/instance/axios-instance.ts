@@ -10,13 +10,8 @@
  */
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
 import {
-  hasPasswordChangeRequiredComplete,
-  hasPasswordChangeRequiredSocialOnboarding,
-  markPasswordChangeRequiredSocialOnboarding,
-} from '@/features/auth/password-change-required/wizard-state'
-import {
-  isPasswordChangeRequiredSocialConnectPath,
   passwordChangeRequiredPaths,
   resolveSessionAuthFailureRedirect,
 } from '@/shared/utils/post-auth-redirect'
@@ -217,39 +212,19 @@ function persistRefreshToken(refreshToken: string) {
 function handleAuthFailure() {
   const complete =
     typeof window !== 'undefined' ? hasPasswordChangeRequiredComplete() : false
-  const socialOnboarding =
-    typeof window !== 'undefined' ? hasPasswordChangeRequiredSocialOnboarding() : false
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
   const search = typeof window !== 'undefined' ? window.location.search : ''
-  const onPasswordChangeSocialConnect = isPasswordChangeRequiredSocialConnectPath(
-    pathname,
-    search
-  )
 
-  // 비번변경→소셜 연결 중 401은 로그인으로 보내지 않는다.
-  // logout하면 access token이 지워져, 이어서 「연결하기」가 API를 호출하지 않고 끝난다.
-  const keepSocialConnectSession = socialOnboarding || onPasswordChangeSocialConnect
-  if (keepSocialConnectSession) {
-    markPasswordChangeRequiredSocialOnboarding()
-  } else {
-    useAuthStore.getState().logout()
-  }
+  useAuthStore.getState().logout()
   if (typeof window === 'undefined') return
 
   const target = resolveSessionAuthFailureRedirect({
     pathname,
     search,
     complete,
-    socialOnboarding: socialOnboarding || onPasswordChangeSocialConnect,
   })
   if (target == null) return
   if (target === passwordChangeRequiredPaths.complete && pathname === target) return
-  if (
-    target === passwordChangeRequiredPaths.socialConnect &&
-    (onPasswordChangeSocialConnect || `${pathname}${search}` === target)
-  ) {
-    return
-  }
   window.location.assign(target)
 }
 

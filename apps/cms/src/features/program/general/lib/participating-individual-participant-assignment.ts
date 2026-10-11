@@ -13,6 +13,7 @@ import type {
   ParticipatingIndividualParticipantAssignmentSummary,
   ParticipatingIndividualParticipantAssignmentSubmission,
 } from '@/features/program/general/lib/participating-individual-participant-assignment-types'
+import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 
 function isSubmissionCountedAsSubmitted(
   submission: ParticipatingIndividualParticipantAssignmentSubmission
@@ -52,23 +53,29 @@ function buildRowsFromParticipant(
         ? ('member' as const)
         : ('individual' as const)
 
-  return (participant.sessions ?? []).map((session, index) => ({
-    id: `asg-${participant.id}-${index}`,
-    scheduleId:
-      session.resolvedScheduleId != null && session.resolvedScheduleId > 0
-        ? String(session.resolvedScheduleId)
-        : undefined,
-    sessionOrder: index + 1,
-    teamRole,
-    teamName: teamRole !== 'individual' ? teamName : '-',
-    scheduleLabel: `${session.date} (${session.dayOfWeek}) | ${session.classNum}`,
-    assignmentPeriodLabel: null,
-    submission: { kind: 'none' as const },
-    educationProgress: session.status === 'completed' ? ('completed' as const) : ('scheduled' as const),
-    countsTowardAssignmentDenominator: session.status === 'completed',
-    isTeamSchedule: teamRole !== 'individual',
-    countsTowardSurveyDenominator: false,
-  }))
+  return (participant.sessions ?? []).map((session, index) => {
+    const educationProgress = mapDashboardScheduleDeliveryToEducationProgress(
+      session.deliveryScheduleStatus ??
+        (session.status === 'completed' ? 'COMPLETED' : 'SCHEDULED')
+    )
+    return {
+      id: `asg-${participant.id}-${index}`,
+      scheduleId:
+        session.resolvedScheduleId != null && session.resolvedScheduleId > 0
+          ? String(session.resolvedScheduleId)
+          : undefined,
+      sessionOrder: index + 1,
+      teamRole,
+      teamName: teamRole !== 'individual' ? teamName : '-',
+      scheduleLabel: `${session.date} (${session.dayOfWeek}) | ${session.classNum}`,
+      assignmentPeriodLabel: null,
+      submission: { kind: 'none' as const },
+      educationProgress,
+      countsTowardAssignmentDenominator: educationProgress === 'completed',
+      isTeamSchedule: teamRole !== 'individual',
+      countsTowardSurveyDenominator: false,
+    }
+  })
 }
 
 export function getParticipatingIndividualParticipantAssignmentBundle(

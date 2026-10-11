@@ -4,7 +4,7 @@ import {
   INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE,
   settlementCalendarPrimaryTitle,
   type InstructorSettlementListRow,
-} from '@/data/mock/instructor-member-settlements'
+} from '@/features/settlement-management/model/instructor-member-settlements'
 import type { CalendarItem } from '../../model/calendar-item'
 
 import './settlement-preview-tooltip.css'

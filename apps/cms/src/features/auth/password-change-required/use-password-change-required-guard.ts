@@ -6,24 +6,17 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import {
-  hasPasswordChangeRequiredComplete,
-  hasPasswordChangeRequiredSocialOnboarding,
-} from '@/features/auth/password-change-required/wizard-state'
+import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
 export function resolvePasswordChangeRequiredGuardPath(input: {
   complete: boolean
-  socialOnboarding: boolean
   isAuthenticated: boolean
   hasUser: boolean
   passwordChangeRequired: boolean
   dashboardPath: string
 }): string | null {
-  if (input.socialOnboarding) {
-    return passwordChangeRequiredPaths.socialConnect
-  }
   if (input.complete) {
     return passwordChangeRequiredPaths.complete
   }
@@ -43,7 +36,6 @@ export function usePasswordChangeRequiredGuard() {
   useEffect(() => {
     const nextPath = resolvePasswordChangeRequiredGuardPath({
       complete: hasPasswordChangeRequiredComplete(),
-      socialOnboarding: hasPasswordChangeRequiredSocialOnboarding(),
       isAuthenticated,
       hasUser: Boolean(user),
       passwordChangeRequired,
@@ -56,9 +48,7 @@ export function usePasswordChangeRequiredGuard() {
 
   return {
     isReady: Boolean(
-      (isAuthenticated && passwordChangeRequired && user) ||
-        hasPasswordChangeRequiredComplete() ||
-        hasPasswordChangeRequiredSocialOnboarding()
+      (isAuthenticated && passwordChangeRequired && user) || hasPasswordChangeRequiredComplete()
     ),
     user,
     noticePath: passwordChangeRequiredPaths.notice,

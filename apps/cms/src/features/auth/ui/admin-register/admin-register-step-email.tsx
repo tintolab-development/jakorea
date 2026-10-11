@@ -75,7 +75,7 @@ export function AdminRegisterStepEmail({
     if (initialValues?.email && initialValues.emailLocalPart) {
       setVerifiedEmail(initialValues.email)
       setDuplicateStatus('available')
-      setDuplicateMessage('사용할 수 있는 이메일이에요.')
+      setDuplicateMessage('사용할 수 있는 이메일입니다.')
     }
   }, [form, initialValues?.email, initialValues?.emailLocalPart])
 
@@ -100,17 +100,17 @@ export function AdminRegisterStepEmail({
 
       if (isAvailable) {
         setDuplicateStatus('available')
-        setDuplicateMessage('사용할 수 있는 이메일이에요.')
+        setDuplicateMessage('사용할 수 있는 이메일입니다.')
         setVerifiedEmail(email)
         return
       }
 
       setDuplicateStatus('unavailable')
-      setDuplicateMessage('이미 가입 된 이메일이에요.')
+      setDuplicateMessage('이미 가입 된 이메일입니다.')
       setVerifiedEmail('')
     } catch {
       setDuplicateStatus('idle')
-      setDuplicateMessage('중복 확인에 실패했어요. 다시 시도해 주세요.')
+      setDuplicateMessage('중복 확인에 실패했습니다. 다시 시도해 주세요.')
       setVerifiedEmail('')
     }
   }
@@ -163,7 +163,7 @@ export function AdminRegisterStepEmail({
                 if (!value || isValidJakoreaEmailLocalPart(value)) {
                   return
                 }
-                throw new Error('영문, 숫자, ., _, - 만 입력할 수 있어요.')
+                throw new Error('영문, 숫자, ., _, - 만 입력할 수 있습니다.')
               },
             },
           ]}

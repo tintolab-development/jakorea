@@ -75,6 +75,38 @@ const educationCourseSelectOptions = [...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS]
 
 const BLOCK_GAP_STYLE = { marginTop: 16 } as const
 
+function UjatOverlayTextField({
+  label,
+  validationKey,
+  overlayKey,
+  placeholder,
+  defaultValue,
+}: {
+  label: string
+  validationKey: string
+  overlayKey: string
+  placeholder: string
+  defaultValue: string
+}) {
+  const [value, setValue] = useUjatProgramRegistrationOverlayKv(overlayKey, defaultValue)
+  return (
+    <DetailInfoForm.Field
+      label={label}
+      validationKey={validationKey}
+      edit={
+        <CmsInput
+          inputSize="medium"
+          value={value}
+          onChange={event => setValue(event.target.value)}
+          placeholder={placeholder}
+          width="100%"
+        />
+      }
+      view="-"
+    />
+  )
+}
+
 type OperationRangeSeal = { start: string; end: string } | null
 
 export type UjatBasicInfoParagraphProps = {
@@ -88,12 +120,6 @@ export type UjatBasicInfoParagraphProps = {
 export function UjatBasicInfoParagraph({
   lockDetailedProgramToNone = false,
 }: UjatBasicInfoParagraphProps = {}) {
-  const [repKo, setRepKo] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.repKo', UJAT_BASIC_INFO_REP_KO_DEFAULT)
-  const [repEn, setRepEn] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.repEn', UJAT_BASIC_INFO_REP_EN_DEFAULT)
-  const [programManagementName, setProgramManagementName] = useUjatProgramRegistrationOverlayKv(
-    'ujat.basicInfo.programManagementName',
-    UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT
-  )
   const [detailedProgramId, setDetailedProgramId] = useUjatProgramRegistrationOverlayKv<string>(
     'ujat.basicInfo.detailedProgramId',
     UJAT_DETAILED_PROGRAM_UJAT_VALUE
@@ -343,49 +369,28 @@ export function UjatBasicInfoParagraph({
         className="program-registration-paragraph"
       >
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
+          <UjatOverlayTextField
             label="대표 프로그램명 (국문)"
             validationKey="basicInfo.repKo"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                value={repKo}
-                onChange={e => setRepKo(e.target.value)}
-                placeholder="대표 프로그램명을 입력하세요"
-                width="100%"
-              />
-            }
-            view="-"
+            overlayKey="ujat.basicInfo.repKo"
+            placeholder="대표 프로그램명을 입력하세요"
+            defaultValue={UJAT_BASIC_INFO_REP_KO_DEFAULT}
           />
-          <DetailInfoForm.Field
+          <UjatOverlayTextField
             label="대표 프로그램명 (영문)"
             validationKey="basicInfo.repEn"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                value={repEn}
-                onChange={e => setRepEn(e.target.value)}
-                placeholder="대표 프로그램명을 입력하세요"
-                width="100%"
-              />
-            }
-            view="-"
+            overlayKey="ujat.basicInfo.repEn"
+            placeholder="대표 프로그램명을 입력하세요"
+            defaultValue={UJAT_BASIC_INFO_REP_EN_DEFAULT}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
+          <UjatOverlayTextField
             label="프로그램 관리명"
             validationKey="basicInfo.programManagementName"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                value={programManagementName}
-                onChange={e => setProgramManagementName(e.target.value)}
-                placeholder="프로그램 관리명을 입력하세요"
-                width="100%"
-              />
-            }
-            view="-"
+            overlayKey="ujat.basicInfo.programManagementName"
+            placeholder="프로그램 관리명을 입력하세요"
+            defaultValue={UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT}
           />
           <DetailInfoForm.Field
             label="세부 프로그램명"

@@ -92,6 +92,18 @@
   justify-content: flex-start;
   gap: var(--spacing-16);
   min-width: 0;
+  position: relative;
+}
+
+/* 타이틀·breadcrumb — 좌측 한 줄; 닫기(X)와 겹치지 않도록 남은 폭만 사용 */
+.detail-fullpage-modal__header-leading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: var(--spacing-16);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .detail-fullpage-modal__title {
@@ -112,9 +124,10 @@
 .detail-fullpage-modal__header-trailing {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   min-width: 0;
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
 }
 
 .detail-fullpage-breadcrumb {
@@ -201,7 +214,8 @@
     background 0.2s,
     color 0.2s;
   flex-shrink: 0;
-  margin-left: auto;
+  position: relative;
+  z-index: 2;
 }
 
 .detail-fullpage-modal__close:hover {

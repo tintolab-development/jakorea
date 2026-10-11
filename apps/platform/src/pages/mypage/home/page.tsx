@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
@@ -6,22 +6,17 @@ import {
   getMockMypageProgramStats,
   getMockMypageScheduleEvents,
   MYPAGE_PATH,
+  MypageHomeContentSkeleton,
+  MypageLayoutBootSkeleton,
   navigateMypageLnb,
   showInstructorApplyCta,
   useMypageMember,
+  useMypagePageAuthReady,
   type MypageLnbItemKey,
 } from '@/features/mypage'
 import { usePortalCalendarQuery, usePortalDashboardQuery } from '@/features/mypage/home/api/hooks'
-import {
-  getAccessToken,
-  getDevAuthLoggedIn,
-  isRemoteApiConfigured,
-  resolveLoginRequiredPath,
-} from '@/shared/lib'
 import { MypageLayout } from '@/widgets/mypage-layout'
-import { PFText } from '@/shared/ui'
 import { MypageHomeContent } from './home-content'
-import styles from './page.module.css'
 
 const EMPTY_PROGRAM_STATS = {
   applied: 0,
@@ -30,11 +25,11 @@ const EMPTY_PROGRAM_STATS = {
 }
 export function MypageHomePage() {
   const navigate = useNavigate()
-  const [isAuthReady, setIsAuthReady] = useState(false)
   const [calendarMonth, setCalendarMonth] = useState(() => new Date())
   const member = useMypageMember()
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile)
+  const isAuthReady = useMypagePageAuthReady(MYPAGE_PATH)
   const dashboard = usePortalDashboardQuery(member.isRemoteSession)
   const calendar = usePortalCalendarQuery(calendarMonth, member.isRemoteSession)
   const programStats = member.isRemoteSession
@@ -42,27 +37,20 @@ export function MypageHomePage() {
     : getMockMypageProgramStats()
   const scheduleEvents = member.isRemoteSession ? calendar.events : getMockMypageScheduleEvents()
 
-  useEffect(() => {
-    const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
-    if (hasRemoteToken) {
-      setIsAuthReady(true)
-      return
-    }
-
-    if (!getDevAuthLoggedIn()) {
-      navigate(resolveLoginRequiredPath(MYPAGE_PATH))
-      return
-    }
-
-    setIsAuthReady(true)
-  }, [navigate])
-
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
     navigateMypageLnb(navigate, key)
   }
 
   if (!isAuthReady || isChecking || isRedirecting) {
-    return null
+    return (
+      <MypageLayout
+        lnbItems={lnbItems}
+        showInstructorApply={showInstructorApplyCta(member.profile)}
+        onLnbItemSelect={handleLnbItemSelect}
+      >
+        <MypageLayoutBootSkeleton />
+      </MypageLayout>
+    )
   }
 
   if (member.isRemoteSession && (member.isLoading || dashboard.isLoading)) {
@@ -72,11 +60,7 @@ export function MypageHomePage() {
         showInstructorApply={showInstructorApplyCta(member.profile)}
         onLnbItemSelect={handleLnbItemSelect}
       >
-        <div className={styles.placeholder}>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            회원 정보를 불러오는 중이에요…
-          </PFText>
-        </div>
+        <MypageHomeContentSkeleton />
       </MypageLayout>
     )
   }
@@ -91,6 +75,7 @@ export function MypageHomePage() {
         member={member}
         programStats={programStats}
         scheduleEvents={scheduleEvents}
+        scheduleEventsLoading={member.isRemoteSession && calendar.isLoading}
         useMockDemoMonth={!member.isRemoteSession}
         onViewMonthChange={member.isRemoteSession ? setCalendarMonth : undefined}
       />

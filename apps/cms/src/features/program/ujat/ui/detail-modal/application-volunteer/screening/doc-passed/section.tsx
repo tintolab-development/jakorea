@@ -1,7 +1,9 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import {
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { buildUjatVolunteerDocPassedFilterRows } from './filter-fields'
@@ -22,6 +24,7 @@ import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcon
 import './section.css'
 import '../doc-screening/section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const noopApplyDocumentScreeningStatus = () => undefined
 const noopShowDocumentScreeningConfirm = () => undefined
@@ -193,27 +196,25 @@ export function DocPassedSection({
         description={`${count.toLocaleString()}건`}
         actions={
           viewMode === 'list' ? (
-            <CmsButton
+            <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              size="large"
               style={{ minWidth: 180 }}
               icon={<ButtonCalendarIcon />}
               onClick={handleViewCalendar}
             >
               캘린더 뷰로 보기
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : (
-            <CmsButton
+            <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              size="large"
               style={{ minWidth: 180 }}
               icon={<ButtonListIcon />}
               onClick={handleViewList}
             >
               리스트로 보기
-            </CmsButton>
+            </FilterTableToolbarButton>
           )
         }
         excelExport={{
@@ -223,7 +224,7 @@ export function DocPassedSection({
       >
         {viewMode === 'list' ? (
           <div className="ujat-volunteer-doc-passed__table-wrap">
-            <Table<UjatVolunteerApplicantRow>
+            <CmsDataTable<UjatVolunteerApplicantRow>
               rowKey="id"
               className="cms-data-table cms-data-table--fluid clickable-table ujat-volunteer-doc-passed__table"
               columns={columns}

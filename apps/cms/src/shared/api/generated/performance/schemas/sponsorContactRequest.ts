@@ -10,6 +10,11 @@ export interface SponsorContactRequest {
   name?: string;
   department?: string;
   position?: string;
+  /**
+     * 내선번호. 형식 제한 없음(숫자·한글·하이픈 등 자유 입력).
+     * @minLength 0
+     * @maxLength 20
+     */
   officePhone?: string;
   email?: string;
   mobilePhone?: string;

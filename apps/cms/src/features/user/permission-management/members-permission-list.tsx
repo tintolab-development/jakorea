@@ -2,6 +2,7 @@
  * 회원 권한 신청 목록 — 강사·관리자 공통 UI (`FilterTableLayout` / user-list·program-list 스타일 정렬)
  */
 
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useMemo,
   useState,
@@ -13,7 +14,6 @@ import {
   type Key,
   type MouseEvent,
 } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -27,10 +27,6 @@ import type {
   MemberPermissionApplicationRow,
   MemberPermissionApplicationStatus,
 } from '@/types/member-permission-application'
-import {
-  mockMemberPermissionApplicationsAdmin,
-  mockMemberPermissionApplicationsInstructor,
-} from '@/data/mock/member-permission-applications'
 import { useInstructorRoleRequestsQuery } from '@/features/user/api/hooks/use-instructor-role-requests-query'
 import { useAdminApprovalRequestsQuery } from '@/features/user/api/hooks/use-admin-approval-requests-query'
 import {
@@ -50,7 +46,10 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 
 /** 강사 권한승인 목록 — BE `학교/기관`은 UI `학교(교사)`로 표시 */
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
@@ -110,7 +109,13 @@ export interface MembersPermissionListProps {
   onInstructorRejectRequest?: (
     ctx:
       | { mode: 'single'; userId: string; requestId?: number; displayName: string }
-      | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
+      | {
+          mode: 'bulk'
+          userIds: string[]
+          requestIds?: number[]
+          memberCount: number
+          displayName: string
+        }
   ) => void
   /** 관리자 탭: [신청 승인] — 강사 탭과 동일하게 단건·일괄 승인 모달 */
   onAdminApproveRequest?: (
@@ -122,7 +127,13 @@ export interface MembersPermissionListProps {
   onAdminRejectRequest?: (
     ctx:
       | { mode: 'single'; userId: string; requestId?: number; displayName: string }
-      | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
+      | {
+          mode: 'bulk'
+          userIds: string[]
+          requestIds?: number[]
+          memberCount: number
+          displayName: string
+        }
   ) => void
 }
 
@@ -196,9 +207,7 @@ export const MembersPermissionList = forwardRef<
     if (adminRemote) {
       return adminRemoteQuery.data?.rows ?? []
     }
-    return memberType === 'instructor'
-      ? [...mockMemberPermissionApplicationsInstructor]
-      : [...mockMemberPermissionApplicationsAdmin]
+    return []
   }, [
     adminRemote,
     adminRemoteQuery.data?.rows,
@@ -219,6 +228,7 @@ export const MembersPermissionList = forwardRef<
     handleFilterChange,
     displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(membersPermissionTablePageConfig, {
     data: rows,
     searchParams,
@@ -451,6 +461,7 @@ export const MembersPermissionList = forwardRef<
         userIds: pendingRows.map(r => r.userId),
         requestIds: pendingRows.map(r => r.requestId).filter((id): id is number => id != null),
         memberCount: pendingRows.length,
+        displayName: (pendingRows[0]?.name ?? '').trim() || '회원',
       })
       return
     }
@@ -480,6 +491,7 @@ export const MembersPermissionList = forwardRef<
           .map(r => r.requestId ?? r.adminId)
           .filter((id): id is number => id != null),
         memberCount: pendingRows.length,
+        displayName: (pendingRows[0]?.name ?? '').trim() || '회원',
       })
       return
     }
@@ -618,6 +630,7 @@ export const MembersPermissionList = forwardRef<
   return (
     <>
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
         filters={{
@@ -632,22 +645,22 @@ export const MembersPermissionList = forwardRef<
         description={`총 ${displayedCount.toLocaleString()}건`}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={bulkReject}
             >
               신청 반려
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="secondary"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={bulkApprove}
             >
               신청 승인
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -655,7 +668,7 @@ export const MembersPermissionList = forwardRef<
           data: tableData,
         }}
       >
-        <Table<MemberPermissionApplicationRow>
+        <CmsDataTable<MemberPermissionApplicationRow>
           rowKey="id"
           className="cms-data-table members-permission-list__table"
           columns={columns}

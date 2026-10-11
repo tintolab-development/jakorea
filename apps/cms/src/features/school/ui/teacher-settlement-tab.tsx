@@ -3,8 +3,9 @@
  */
 
 import { useState, useMemo, useCallback } from 'react'
-import { Table, Input, Calendar } from 'antd'
+import { Input, Calendar } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   LeftOutlined,
   RightOutlined,
@@ -24,11 +25,12 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import {
+  type SettlementDetail,
   type SettlementOverviewData,
   type SettlementRow,
   type SettlementRowStatus,
   SETTLEMENT_ROW_STATUS_LABELS,
-} from '@/data/mock/school-detail'
+} from '@/features/school/model/school-detail-types'
 import { SettlementDetailModal, type BankInfo } from './settlement-detail-modal'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
@@ -51,7 +53,7 @@ const STATUS_TAG_STYLE: Record<SettlementRowStatus, { bg: string; color: string 
 
 export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSettlementTabProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
-  const [currentMonth, setCurrentMonth] = useState(() => dayjs(data.month))
+  const [currentMonth, setCurrentMonth] = useState(() => dayjs(data.month ?? undefined))
   const [searchText, setSearchText] = useState('')
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [overrides, setOverrides] = useState<Record<string, { status?: SettlementRowStatus }>>({})
@@ -82,11 +84,14 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
     }))
   }, [detailModalRowId])
 
-  const rows = useMemo(() => {
+  const rows = useMemo((): SettlementRow[] => {
     if (Object.keys(overrides).length === 0) return data.rows
     return data.rows.map(row => {
       const override = overrides[row.id]
       if (!override) return row
+      if (!row.detail) {
+        return { ...row, ...override }
+      }
       return {
         ...row,
         ...override,
@@ -101,7 +106,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
   const detailModalData = useMemo(() => {
     if (!detailModalRowId) return null
     const row = rows.find(r => r.id === detailModalRowId)
-    return row?.detail ?? null
+    return (row?.detail ?? null) as SettlementDetail | null
   }, [rows, detailModalRowId])
 
   const filteredRows = useMemo(() => {
@@ -342,14 +347,14 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
             정산 예정금
           </span>
           <span className="settlement-tab__summary-value settlement-tab__summary-value--expected">
-            {data.expectedAmount.toLocaleString()}
+            {(data.expectedAmount ?? 0).toLocaleString()}
             <span className="settlement-tab__summary-unit">원</span>
           </span>
         </div>
         <div className="settlement-tab__summary-card">
           <span className="settlement-tab__summary-label">정산 완료금</span>
           <span className="settlement-tab__summary-value">
-            {data.completedAmount.toLocaleString()}
+            {(data.completedAmount ?? 0).toLocaleString()}
             <span className="settlement-tab__summary-unit">건</span>
           </span>
         </div>
@@ -368,7 +373,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
       {viewMode === 'list' && (
         <div className="settlement-tab__list-wrap">
           {filteredRows.length > 0 ? (
-            <Table<SettlementRow>
+            <CmsDataTable<SettlementRow>
               columns={columns}
               dataSource={filteredRows}
               rowKey="id"

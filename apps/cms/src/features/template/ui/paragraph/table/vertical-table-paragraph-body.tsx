@@ -16,8 +16,10 @@ import {
   effectiveVerticalCompositeTimeHint,
   effectiveVerticalRowDateTimeModes,
   effectiveVerticalStageKinds,
+  isVerticalDateOrTimeStageKind,
   normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
+  SHORT_ESSAY_MAX_LENGTH,
   verticalTableHeaderPlaceholder,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
@@ -391,7 +393,8 @@ export function VerticalTableParagraphBody({
       isPortraitPersonalConsentTable && header.trim() === '보유 기간'
     const hPh = verticalTableHeaderPlaceholder(rowIdx, stageIdx, row.stageCount)
     const hint = row.placeholderHints?.[stageIdx] ?? ''
-    const stageKind = effectiveVerticalStageKinds(row, p.verticalTableFlavor)[stageIdx as 0 | 1]
+    const stageKind =
+      effectiveVerticalStageKinds(row, p.verticalTableFlavor)[stageIdx as 0 | 1] ?? 'text'
     const cPh =
       stageKind === 'subjective'
         ? hint.trim() !== ''
@@ -399,16 +402,28 @@ export function VerticalTableParagraphBody({
           : DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER
         : VERTICAL_TABLE_TEXT_CELL_PLACEHOLDER
 
-    const isDateTime = stageKind === 'date_time'
+    const isDateOrTime = isVerticalDateOrTimeStageKind(stageKind)
+    const isTimeKind = stageKind === 'time'
+    const isLegacyDateTimeComposite =
+      stageKind === 'date_time' &&
+      (effectiveVerticalRowDateTimeModes(row)[stageIdx as 0 | 1] ?? 'date') === 'date_time'
     const isSingleChoice = stageKind === 'single_choice'
     const isMultipleChoice = stageKind === 'multiple_choice'
     const isFileAttachment = stageKind === 'file_attachment'
-    const dtModes = isDateTime ? effectiveVerticalRowDateTimeModes(row) : null
-    const dtModeAtStage = dtModes ? (dtModes[stageIdx as 0 | 1] ?? 'date') : 'date'
     const defaultDatePlaceholder =
       p.verticalTableFlavor === 'date_time' ? '일정 선택' : VT_DATE_PLACEHOLDER
+    const datePlaceholder =
+      hint.trim() !== ''
+        ? hint
+        : isTimeKind
+          ? VT_TIME_PLACEHOLDER
+          : defaultDatePlaceholder
+    const dateDisplayValue = isLegacyDateTimeComposite
+      ? [cell, verticalCompositeTimeValue(row, stageIdx)].filter(part => part.trim()).join(' ')
+      : cell
+    const showDateTimePicker = rowBodyEditMode && dtCellsInteractive && !forceStatic
 
-    const renderDateSingleStageBody = (
+    const renderLegacyCompositeBody = (
       pickerKeySuffix: string,
       datePlaceholder: string,
       timeValForComposite: string,
@@ -423,11 +438,10 @@ export function VerticalTableParagraphBody({
           styles={verticalTablePickerPopupStyles}
           getPopupContainer={verticalTableFieldPopupContainer}
           value={toDayjs('date', cell)}
-          onChange={dtCellsInteractive ? d => setCell(rowIdx, stageIdx, fromDayjs('date', d)) : undefined}
+          onChange={d => setCell(rowIdx, stageIdx, fromDayjs('date', d))}
           onOpenChange={notifyPickerRowFocused(rowIdx)}
           format="YYYY-MM-DD"
           placeholder={datePlaceholder}
-          disabled={!dtCellsInteractive}
         />
         <div className="form-editor-vertical-table__dt-divider-wrap">
           <DividerVertical />
@@ -440,35 +454,26 @@ export function VerticalTableParagraphBody({
           styles={verticalTablePickerPopupStyles}
           getPopupContainer={verticalTableFieldPopupContainer}
           value={toDayjs('time', timeValForComposite)}
-          onChange={
-            dtCellsInteractive
-              ? d => setVerticalCompositeTime(rowIdx, stageIdx, fromDayjs('time', d))
-              : undefined
-          }
+          onChange={d => setVerticalCompositeTime(rowIdx, stageIdx, fromDayjs('time', d))}
           onOpenChange={notifyPickerRowFocused(rowIdx)}
           format="HH:mm"
           minuteStep={5}
           placeholder={timePlaceholder}
-          disabled={!dtCellsInteractive}
         />
       </div>
     )
 
     const renderDateTimeBody = () => {
-      if (!isDateTime || !dtModes) return null
+      if (!isDateOrTime) return null
 
       const hintDateOrTime =
         hint.trim() !== ''
           ? hint
-          : dtModeAtStage === 'time'
+          : isTimeKind
             ? VT_TIME_PLACEHOLDER
             : VT_DATE_PLACEHOLDER
-      const timePlaceholderComposite = effectiveVerticalCompositeTimeHint(
-        row,
-        stageIdx as 0 | 1
-      )
 
-      if (dtModeAtStage === 'time') {
+      if (isTimeKind) {
         return (
           <TimePicker
             key={`vt-dt-${rowIdx}-${stageIdx}-t`}
@@ -478,26 +483,24 @@ export function VerticalTableParagraphBody({
             styles={verticalTablePickerPopupStyles}
             getPopupContainer={verticalTableFieldPopupContainer}
             value={toDayjs('time', cell)}
-            onChange={
-              dtCellsInteractive ? d => setCell(rowIdx, stageIdx, fromDayjs('time', d)) : undefined
-            }
+            onChange={d => setCell(rowIdx, stageIdx, fromDayjs('time', d))}
             onOpenChange={notifyPickerRowFocused(rowIdx)}
             format="HH:mm"
             minuteStep={5}
             placeholder={hintDateOrTime}
-            disabled={!dtCellsInteractive}
           />
         )
       }
 
-      if (dtModeAtStage === 'date_time') {
+      /** 레거시 date_time + date_time mode — normalize 전 폴백 */
+      if (isLegacyDateTimeComposite) {
         const timeVal = verticalCompositeTimeValue(row, stageIdx)
         const datePlaceholder = hint.trim() !== '' ? hint : defaultDatePlaceholder
-        return renderDateSingleStageBody(
+        return renderLegacyCompositeBody(
           `composite-${stageIdx}`,
           datePlaceholder,
           timeVal,
-          timePlaceholderComposite
+          effectiveVerticalCompositeTimeHint(row, stageIdx as 0 | 1)
         )
       }
 
@@ -515,14 +518,9 @@ export function VerticalTableParagraphBody({
             'form-editor-vertical-table__dt-picker--full',
           ].join(' ')}
           value={toDayjs('date', cell)}
-          onChange={
-            dtCellsInteractive
-              ? next => setCell(rowIdx, stageIdx, fromDayjs('date', next))
-              : () => {}
-          }
+          onChange={next => setCell(rowIdx, stageIdx, fromDayjs('date', next))}
           onOpenChange={notifyPickerRowFocused(rowIdx)}
           placeholder={datePlaceholder}
-          disabled={!dtCellsInteractive}
           suppressAutoTodayWhenEmpty
           width="100%"
         />
@@ -534,7 +532,8 @@ export function VerticalTableParagraphBody({
         ? 'form-editor-vertical-table__cell-input-shell--body-subjective'
         : ''
 
-    const isDateTimeCompositeShell = isDateTime && dtModeAtStage === 'date_time'
+    const isDateTimeCompositeShell = isLegacyDateTimeComposite
+    const isDateTime = isDateOrTime
 
     return (
       <div key={`${rowIdx}-s-${stageIdx}`} className="form-editor-vertical-table__stage">
@@ -638,7 +637,7 @@ export function VerticalTableParagraphBody({
                 }}
               />
             </div>
-          ) : isDateTime ? (
+          ) : isDateTime && showDateTimePicker ? (
             <div
               className={[
                 'form-editor-vertical-table__cell-input-shell',
@@ -653,6 +652,14 @@ export function VerticalTableParagraphBody({
             >
               {renderDateTimeBody()}
             </div>
+          ) : isDateTime ? (
+            <VerticalTableCellText
+              value={dateDisplayValue}
+              placeholder={datePlaceholder}
+              variant="body"
+            />
+          ) : !rowBodyEditMode && (isSingleChoice || isMultipleChoice) ? (
+            <VerticalTableCellText value={cell} placeholder={cPh} variant="body" />
           ) : isSingleChoice ? (
             <div
               className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-choice"
@@ -662,13 +669,11 @@ export function VerticalTableParagraphBody({
                 size="large"
                 value={cell.trim() !== '' ? cell : undefined}
                 onChange={(e: RadioChangeEvent) => {
-                  if (!rowBodyEditMode) return
                   setCell(rowIdx, stageIdx, e.target.value)
                 }}
                 onFocus={() => {
                   if (canvasInteractive) setSelectedRow(rowIdx)
                 }}
-                disabled={!rowBodyEditMode}
               >
                 {choiceOpts.map((o, i) => (
                   <CmsRadio key={`${rowIdx}-${stageIdx}-${i}`} size="large" value={o}>
@@ -739,6 +744,7 @@ export function VerticalTableParagraphBody({
                   variant="borderless"
                   value={cell}
                   placeholder={cPh}
+                  maxLength={SHORT_ESSAY_MAX_LENGTH}
                   onChange={e => setCell(rowIdx, stageIdx, e.target.value)}
                   onFocus={() => {
                     if (canvasInteractive) setSelectedRow(rowIdx)

@@ -128,6 +128,12 @@
   color: var(--color-error, #d92d20);
 }
 
+.submitErrorFollowUp {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-12);
+}
+
 .blockedNotice {
   margin: 0 0 var(--spacing-24);
   padding: var(--spacing-12) var(--spacing-16);

@@ -1,5 +1,5 @@
 import { Spin } from 'antd'
-import { EmptyState } from '@/shared/ui/empty-state'
+import { CmsTableEmptyState, EmptyState } from '@/shared/ui'
 import { DsDemo, DsSection } from './section'
 
 export function FeedbackSection() {
@@ -7,18 +7,26 @@ export function FeedbackSection() {
     <DsSection
       id="feedback"
       title="Empty & Loading"
-      description="빈 목록은 EmptyState, 상세/페이지 로딩은 page-content-loading + Spin입니다. 풀페이지 모달은 detail-fullpage-modal__loading을 씁니다. 로딩 전에 empty를 먼저 보여주지 마세요."
+      description="cms-data-table 빈 목록은 CmsTableEmptyState(no-data / no-search). 페이지·카드 빈 화면은 EmptyState. 상세/페이지 로딩은 page-content-loading + Spin. 로딩 전에 empty를 먼저 보여주지 마세요."
     >
       <p className="ds-note">
         올바른 순서: <code>isLoading</code> → Spin → 로드 완료 후 <code>!data</code>일 때만 Empty /
         not-found. 풀페이지 로딩 데모는 Modals (core)를 참고하세요.
       </p>
 
-      <DsDemo label="EmptyState">
+      <DsDemo label="EmptyState (페이지·카드)">
         <EmptyState
           description="검색 결과가 없습니다."
           cta={{ label: '필터 초기화', onClick: () => undefined }}
         />
+      </DsDemo>
+
+      <DsDemo label="CmsTableEmptyState — 등록 데이터 없음">
+        <CmsTableEmptyState variant="no-data" />
+      </DsDemo>
+
+      <DsDemo label="CmsTableEmptyState — 검색 결과 없음">
+        <CmsTableEmptyState variant="no-search" />
       </DsDemo>
 
       <DsDemo label="page-content-loading (인라인)">

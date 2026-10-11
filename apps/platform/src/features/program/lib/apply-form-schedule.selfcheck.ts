@@ -7,9 +7,19 @@ import assert from 'node:assert/strict'
 import {
   applyScheduleVisibilityFieldsFromRuntimeContext,
   countUniqueEducationScheduleCalendarDays,
+  isInstitutionApplyScheduleChoiceParagraphId,
+  readApplyScheduleInputMode,
+  buildEnabledDatesFromAllowedSchedulePeriods,
+  readInstitutionAllowedSchedulePeriods,
+  readInstitutionApplyScheduleDateBounds,
+  readInstitutionFixedScheduleChoiceItems,
+  normalizeInstitutionFixedScheduleAnswerTokens,
+  shouldUseInstitutionAllowedSchedulePeriodDates,
   shouldShowApplyPreferredSchedule,
   shouldShowApplyScheduleParagraph,
 } from './apply-form-schedule.ts'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
+import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 
 function testUniqueCalendarDays() {
   assert.equal(
@@ -126,5 +136,125 @@ assert.equal(
   }),
   false
 )
+
+assert.equal(
+  isInstitutionApplyScheduleChoiceParagraphId(
+    PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+  ),
+  true,
+)
+assert.equal(
+  isInstitutionApplyScheduleChoiceParagraphId(
+    PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice,
+  ),
+  false,
+)
+
+assert.equal(readApplyScheduleInputMode({ scheduleInputMode: 'date_time_requests' }), 'date_time_requests')
+assert.equal(
+  readApplyScheduleInputMode({ scheduleInputMode: 'fixed_schedule_options' }),
+  'fixed_schedule_options',
+)
+assert.equal(readApplyScheduleInputMode({}), null)
+
+const boundsFromRuntime = readInstitutionApplyScheduleDateBounds({
+  minScheduleDate: '2026-10-20',
+  maxScheduleDate: '2026-10-31',
+})
+assert.equal(boundsFromRuntime.minScheduleDate, '2026-10-20')
+assert.equal(boundsFromRuntime.maxScheduleDate, '2026-10-31')
+
+const boundsPreferParagraph = readInstitutionApplyScheduleDateBounds(
+  { minScheduleDate: '2026-10-01', maxScheduleDate: '2026-11-30' },
+  { runtimeMinDate: '2026-10-20', runtimeMaxDate: '2026-10-31' },
+)
+assert.equal(boundsPreferParagraph.minScheduleDate, '2026-10-20')
+assert.equal(boundsPreferParagraph.maxScheduleDate, '2026-10-31')
+
+const boundsNull = readInstitutionApplyScheduleDateBounds({
+  minScheduleDate: null,
+  maxScheduleDate: null,
+})
+assert.equal(boundsNull.minScheduleDate, null)
+assert.equal(boundsNull.maxScheduleDate, null)
+
+const fixedItems = readInstitutionFixedScheduleChoiceItems(
+  {
+    scheduleOptions: [
+      { id: 'line:1', label: '26년 10월 20일(화) 13:30 ~ 16:00' },
+      { scheduleId: 42, label: '운영 일정' },
+    ],
+  },
+  { items: [] },
+)
+assert.ok(fixedItems)
+assert.equal(fixedItems![0]?.id, 'line:1')
+assert.equal(fixedItems![1]?.id, 'schedule:42')
+
+const normalized = normalizeInstitutionFixedScheduleAnswerTokens(
+  ['line:1'],
+  {
+    scheduleOptions: [
+      { id: 'line:1', label: '10/20', scheduleId: 99 },
+      { id: 'line:2', option_value: 'schedule:186626', label: '운영' },
+    ],
+  },
+  { items: [] },
+)
+assert.deepEqual(normalized, ['schedule:99'])
+
+const keepOriginalLineIndex = readInstitutionFixedScheduleChoiceItems(null, {
+  items: [{ id: 'line:1', label: '10/20' }],
+})
+assert.ok(keepOriginalLineIndex)
+assert.equal(keepOriginalLineIndex![0]?.id, 'line:1')
+
+const runtimeOverridesStaleSeed = readInstitutionFixedScheduleChoiceItems(
+  {
+    scheduleInputMode: 'fixed_schedule_options',
+    scheduleOptions: [
+      { id: 'line:0', label: '26년 10월 26일(월) 10:00 ~ 12:00' },
+      { id: 'line:1', label: '26년 11월 2일(월) 13:30 ~ 16:00' },
+      { id: 'line:2', label: '26년 11월 9일(월) 9:30 ~ 11:30' },
+    ],
+  },
+  { items: [{ id: 'line:2', label: '26년 11월 9일(월) 9:30 ~ 11:30' }] },
+)
+assert.equal(runtimeOverridesStaleSeed?.length, 3)
+
+const educationLinesFallback = readInstitutionFixedScheduleChoiceItems(
+  { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+  { items: [{ id: 'line:2', label: 'only seed' }] },
+  {
+    educationScheduleLines: [
+      '26년 10월 26일(월) 10:00 ~ 12:00',
+      '26년 11월 2일(월) 13:30 ~ 16:00',
+      '26년 11월 9일(월) 9:30 ~ 11:30',
+    ],
+  },
+)
+assert.equal(educationLinesFallback?.length, 3)
+assert.equal(educationLinesFallback![0]?.id, 'line:0')
+
+assert.equal(readInstitutionAllowedSchedulePeriods(null, null), null)
+
+const periods = readInstitutionAllowedSchedulePeriods(
+  {
+    allowedSchedulePeriods: [
+      { startDate: '2026-10-28', endDate: '2026-10-29' },
+      { startDate: '2026-11-11', endDate: '2026-11-12' },
+    ],
+  },
+  null,
+)
+assert.ok(periods)
+assert.equal(periods!.length, 2)
+assert.equal(shouldUseInstitutionAllowedSchedulePeriodDates(periods), true)
+assert.equal(shouldUseInstitutionAllowedSchedulePeriodDates([]), false)
+
+const enabled = buildEnabledDatesFromAllowedSchedulePeriods(periods!)
+assert.equal(enabled.has('2026-10-28'), true)
+assert.equal(enabled.has('2026-10-30'), false)
+assert.equal(enabled.has('2026-11-11'), true)
 
 console.log('apply-form-schedule.selfcheck: ok')

@@ -31,7 +31,15 @@ alwaysApply: true
 4. **「공통화·통합·중복 제거」 리팩터**는 유저가 명시적으로 요청한 경우에만 한다.
 5. **필터·테이블 컬럼·LNB·breadcrumb**은 유형별로 다를 수 있다. 한쪽 스펙에 맞춰 다른 쪽 필드를 **무조건 삭제·축소하지 않는다.** (프로그램 FE Mock 시드는 [program-no-fe-mock.mdc](./program-no-fe-mock.mdc) — 복원 금지)
 
-## 3. 크로스 재사용 패턴 (필수)
+## 3. 상세 저장 — overlay vs 폼 SSOT
+
+공통정보·모집·신청 **상세 수정** 저장 시 stale in-memory overlay가 RHF를 덮지 않도록 한다.
+
+→ **[program-detail-overlay-save-ssot.mdc](./program-detail-overlay-save-ssot.mdc)**
+
+- 저장 훅·상세 모달 `onSaveEdit` 변경 시 위 rule + round-trip 테스트 확인.
+
+## 4. 크로스 재사용 패턴 (필수)
 
 다른 유형 컴ponent/훅을 쓸 때 **명시적 분기 prop**으로 격리한다.
 
@@ -48,7 +56,7 @@ alwaysApply: true
 - 분기 prop 추가 시 **기존 호출부(UJAT)는 prop 생략 가능 = 기존 동작 유지**
 - 일반·1사1교·Gemini 전용 분기는 **`general/`·`1c-1s/`·`gemini/` 호출부** 또는 해당 preset에서만 활성화
 
-## 4. 유저 확인이 필요한 경우 (AskQuestion)
+## 5. 유저 확인이 필요한 경우 (AskQuestion)
 
 아래에 해당하면 **코드 변경 전** 유저에게 영향 유형과 방향을 확인받는다.
 
@@ -60,14 +68,14 @@ alwaysApply: true
 
 확인 예시: 「일반 프로그램만 컬럼을 줄이고, UJAT 기존 컬럼은 유지할까요?」
 
-## 5. 작업 완료 전 체크
+## 6. 작업 완료 전 체크
 
 - [ ] 수정 파일이 **대상 유형과 일치**하는가
 - [ ] `shared/`·`ujat/`·`general/`·`gemini/` **교차 수정**이 있으면 유형별 **회귀 가능 화면**을 요약했는가
 - [ ] 새 prop 분기 추가 시 **기존 호출부(UJAT·1사1교·Gemini) 기본 동작**이 그대로인가
 - [ ] mock id·라우트·LNB key 변경 시 **다른 유형 목록/상세가 빈 화면·404** 되지 않는가
 
-## 6. 알려진 크로스 의존 (주의)
+## 7. 알려진 크로스 의존 (주의)
 
 일반 → UJAT 재사용 예 (이 파일들 수정 시 **양쪽 영향** 검토):
 

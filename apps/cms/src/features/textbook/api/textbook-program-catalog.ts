@@ -1,4 +1,4 @@
-import { listTextbooks } from '@/features/textbook/api/textbook-mock-store'
+import { listTextbooks } from '@/features/textbook/api/textbook-lnb-seed-catalog'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import {

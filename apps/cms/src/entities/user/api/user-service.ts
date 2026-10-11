@@ -24,8 +24,6 @@ import {
   canAssignUserProgramRoleForProgram,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE,
 } from '@/entities/program/lib/program-pm-role-policy'
-import { mockUsers } from '@/data/mock/users'
-import { mockUserHistories } from '@/data/mock/mypage'
 import type { UUID } from '@/types/index'
 import {
   isAdminPermissionVariantPatchRemoteEnabled,
@@ -137,6 +135,22 @@ import {
 } from '@/features/user/api/fetch-admin-member-detail'
 import { mapAdminAccountListItems } from '@/features/user/api/map-admin-account-list-item-to-user'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import type { UserHistory } from '@/types/domain'
+
+/** Members remote OFF 시 in-memory stub (빈 목록) */
+const mockUsers: User[] = []
+const mockUserHistories: UserHistory[] = []
+
+/** Members remote OFF — in-memory 사용자 패치 (권한 승인 등) */
+export function updateMockUserById(userId: string, patch: Partial<User>): void {
+  const idx = mockUsers.findIndex(u => u.id === userId)
+  if (idx === -1) return
+  mockUsers[idx] = {
+    ...mockUsers[idx],
+    ...patch,
+    updatedAt: new Date().toISOString(),
+  }
+}
 
 /**
  * 사용자 목록 조회

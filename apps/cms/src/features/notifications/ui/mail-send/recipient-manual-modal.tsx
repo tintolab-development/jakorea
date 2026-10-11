@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 import { isMailSendEmail, normalizeMailSendEmail } from '@/features/notifications/model/mail-send/recipients'
 import './recipient-manual-modal.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const PICKER_Z_INDEX = 1100
 const TABLE_MAX_HEIGHT = 400
@@ -235,7 +235,7 @@ export function RecipientManualModal({
         </>
       }
     >
-      <Table
+      <CmsDataTable
         className="cms-data-table cms-data-table--skip-auto-no-col mail-send-recipient-manual-modal__table"
         columns={columns}
         dataSource={rows}

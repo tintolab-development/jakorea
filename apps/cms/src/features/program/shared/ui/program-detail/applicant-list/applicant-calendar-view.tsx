@@ -32,7 +32,11 @@ import { renderGeneralInstitutionCalendarPreviewTooltipContent } from './applica
 import { renderGeneralIndividualCalendarPreviewTooltipContent } from './applicant-general-individual-calendar-popover'
 import { renderGeneralInstructorCalendarPreviewTooltipContent } from './applicant-general-instructor-calendar-popover'
 import { renderProgramCalendarEventsDefaultTooltipContent } from '@/shared/components/calendar/ui/preview-tooltip/program'
-import type { ApplicantCalendarEvent } from './applicant-calendar-events'
+import {
+  resolveGeneralInstructorCalendarEventTitle,
+  type ApplicantCalendarEvent,
+  type ApplicantInstructorCalendarEventItem,
+} from './applicant-calendar-events'
 import type { ApplicantListMenu } from './applicant-list-menu'
 import {
   buildGeneralInstitutionCalendarListRows,
@@ -60,6 +64,8 @@ interface ApplicantCalendarViewProps {
   showEntityFilter?: boolean
   /** 일반 프로그램 상세 풀페이지 모달 — split-card + page-scroll sticky */
   useSplitCardPageScroll?: boolean
+  /** 캘린더 이벤트 0건이지만 신청 목록은 있을 때(기관 일정 미투영) 우측 빈 상태 문구 */
+  scheduleListEmptyDescription?: string
 }
 
 function findInstitutionForRow(
@@ -125,6 +131,7 @@ export function ApplicantCalendarView({
   menu = '',
   showEntityFilter = true,
   useSplitCardPageScroll = false,
+  scheduleListEmptyDescription,
 }: ApplicantCalendarViewProps) {
   const isGeneralInstructor = calendarVariant === 'general-instructor'
   const isGeneralInstitution = calendarVariant === 'general-institution'
@@ -165,6 +172,13 @@ export function ApplicantCalendarView({
 
   const resolveFilterLabel = useCallback(
     (ev: ApplicantCalendarEvent): string => {
+      if (isGeneralInstructor) {
+        const instructorTitle = resolveGeneralInstructorCalendarEventTitle(
+          ev.originalItem as ApplicantInstructorCalendarEventItem,
+          ev.title
+        )
+        if (instructorTitle) return instructorTitle
+      }
       const item = ev.originalItem
       if (!item || typeof item !== 'object') return ''
       if (filterEntity === 'participant' && 'applicantName' in item) {
@@ -178,7 +192,7 @@ export function ApplicantCalendarView({
       }
       return ''
     },
-    [filterEntity]
+    [filterEntity, isGeneralInstructor]
   )
 
   const dayEvents = useMemo(
@@ -206,13 +220,15 @@ export function ApplicantCalendarView({
 
   const filteredDayEvents = useMemo(() => {
     if (!showEntityFilter) return dayEvents
-    if (selectedSchools.length === 0) return []
+    if (selectedSchools.length === 0) {
+      return entityFilterOptions.length === 0 ? dayEvents : []
+    }
     const selectedSet = new Set(selectedSchools)
     return dayEvents.filter(ev => {
       const label = resolveFilterLabel(ev)
       return label !== '' && selectedSet.has(label)
     })
-  }, [dayEvents, selectedSchools, resolveFilterLabel, showEntityFilter])
+  }, [dayEvents, selectedSchools, resolveFilterLabel, showEntityFilter, entityFilterOptions.length])
 
   const scheduleListColorMap = useMemo(
     () => buildResolvedColorMap(filteredDayEvents),
@@ -274,7 +290,9 @@ export function ApplicantCalendarView({
     [filteredDayEvents, onItemClick]
   )
 
-  const entityFilterSelect = showEntityFilter ? (
+  const showEntityFilterToolbar = showEntityFilter && events.length > 0
+
+  const entityFilterSelect = showEntityFilterToolbar ? (
     <CmsSelect
       mode="multiple"
       withAllOption={false}
@@ -286,6 +304,11 @@ export function ApplicantCalendarView({
     />
   ) : undefined
 
+  const institutionListEmptyDescription =
+    events.length === 0 && scheduleListEmptyDescription
+      ? scheduleListEmptyDescription
+      : undefined
+
   const rightListContent = isGeneralInstitution ? (
     <CalendarSubRightGeneralInstitutionApplicationList
       rows={institutionListRows}
@@ -294,6 +317,7 @@ export function ApplicantCalendarView({
       onRowClick={handleInstitutionRowClick}
       resolveRowColors={resolveGeneralRowColors}
       toolbar={entityFilterSelect}
+      emptyDescription={institutionListEmptyDescription}
     />
   ) : isGeneralInstructor ? (
     <CalendarSubRightGeneralInstructorApplicationList

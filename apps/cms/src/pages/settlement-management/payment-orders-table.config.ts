@@ -7,7 +7,7 @@ import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProcessingStatus,
   PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   matchesPendingItemBucket,
   PAYMENT_ORDER_PENDING_ITEM_BUCKETS,

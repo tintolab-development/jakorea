@@ -1,5 +1,6 @@
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { Spin } from 'antd'
+import { CmsButton } from '@/shared/ui'
+import { Alert, Spin } from 'antd'
 import type { Program } from '@/types/domain'
 import { useParticipatingIndividualProgressAttendance } from '@/features/program/general/hooks/use-participating-individual-progress-attendance'
 import { ParticipatingIndividualProgressAttendanceSessionPanel } from './participating-individual-progress-attendance-session-panel'
@@ -18,6 +19,11 @@ export function ParticipatingIndividualProgressAttendanceSection({ program }: { 
     saveSessionParticipant,
     getSessionParticipants,
     loading,
+    loadError,
+    backgroundRefetchError,
+    isEmptyResult,
+    refetchAttendance,
+    isRefetching,
   } = useParticipatingIndividualProgressAttendance(program)
 
   if (loading) {
@@ -28,8 +34,48 @@ export function ParticipatingIndividualProgressAttendanceSection({ program }: { 
     )
   }
 
+  if (loadError) {
+    return (
+      <div className="participating-individual-progress-attendance-section school-detail-attendance-section">
+        <Alert
+          type="error"
+          showIcon
+          message="출석 정보를 불러오지 못했습니다."
+          description="잠시 후 다시 시도해 주세요."
+          action={
+            <CmsButton
+              variant="secondary"
+              loading={isRefetching}
+              onClick={() => refetchAttendance()}
+            >
+              다시 시도
+            </CmsButton>
+          }
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="participating-individual-progress-attendance-section school-detail-attendance-section">
+      {backgroundRefetchError ? (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="최신 출석 정보를 불러오지 못했습니다."
+          description="아래는 이전에 조회된 정보입니다."
+          action={
+            <CmsButton
+              variant="secondary"
+              loading={isRefetching}
+              onClick={() => refetchAttendance()}
+            >
+              다시 시도
+            </CmsButton>
+          }
+        />
+      ) : null}
       <FilterTableLayout
         className="school-detail-attendance-section__filter-layout"
         bordered={false}
@@ -42,7 +88,7 @@ export function ParticipatingIndividualProgressAttendanceSection({ program }: { 
         showTitle={false}
         hideExcelDownload
       >
-        {sessionGroups.length === 0 ? (
+        {isEmptyResult ? (
           <div className="school-detail-attendance-section__empty">조회 결과가 없습니다.</div>
         ) : (
           <div className="school-detail-attendance-section__groups">

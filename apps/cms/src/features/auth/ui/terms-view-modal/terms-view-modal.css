@@ -57,9 +57,12 @@
 }
 
 .terms-view-modal__logo {
+  display: block;
   flex-shrink: 0;
   width: 154px;
-  height: 48px;
+  height: auto;
+  aspect-ratio: 195 / 60;
+  object-fit: contain;
 }
 
 .terms-view-modal__title {
@@ -103,21 +106,22 @@
 
 .terms-view-modal__section-heading {
   margin: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  color: var(--Content-black, #000);
+  font-family: Pretendard;
   font-size: 16px;
+  font-style: normal;
   font-weight: 700;
-  line-height: 150%;
+  line-height: 150%; /* 24px */
 }
 
 .terms-view-modal__paragraph {
   margin: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 15px;
+  color: var(--Netural-black, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 400;
-  line-height: 150%;
-  white-space: pre-wrap;
+  line-height: 150%; /* 24px */
 }
 
 .terms-view-modal__footer {
@@ -185,6 +189,5 @@
 
   .terms-view-modal__logo {
     width: 120px;
-    height: auto;
   }
 }

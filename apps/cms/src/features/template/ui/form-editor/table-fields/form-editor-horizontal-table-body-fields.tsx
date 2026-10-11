@@ -1,7 +1,6 @@
 import { Form } from 'antd'
 import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import type {
   HorizontalTableColumnField,
   HorizontalTableFieldColumnKind,
@@ -29,14 +28,41 @@ import { useHorizontalTableBodyFieldActions } from '@/features/template/ui/form-
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
-const FIELD_TYPE_OPTIONS: { value: HorizontalTableFieldColumnKind; label: string }[] = [
+/** 셀렉트에 노출하는 유형 — dropdown·날짜+시간은 시드/레거시만 */
+type HorizontalFieldTypeSelectValue =
+  | Exclude<HorizontalTableFieldColumnKind, 'dateTime' | 'dropdown'>
+  | 'date'
+  | 'time'
+  | 'dropdown'
+
+const FIELD_TYPE_OPTIONS: { value: HorizontalFieldTypeSelectValue; label: string }[] = [
   { value: 'text', label: '텍스트형' },
   { value: 'subjective', label: '주관식형' },
-  { value: 'dropdown', label: '드롭다운형' },
-  { value: 'dateTime', label: '날짜형' },
+  { value: 'date', label: '날짜형' },
+  { value: 'time', label: '시간형' },
   { value: 'single', label: '단일 선택형' },
   { value: 'multiple', label: '다중 선택형' },
 ]
+
+function fieldToSelectValue(field: HorizontalTableColumnField): HorizontalFieldTypeSelectValue {
+  if (field.kind === 'dateTime') {
+    return field.dateTimeMode === 'time' ? 'time' : 'date'
+  }
+  return field.kind
+}
+
+function selectValueToField(value: HorizontalFieldTypeSelectValue): HorizontalTableColumnField {
+  if (value === 'date') {
+    return { kind: 'dateTime', dateTimeMode: 'date', placeholder: '' }
+  }
+  if (value === 'time') {
+    return { kind: 'dateTime', dateTimeMode: 'time', placeholder: '' }
+  }
+  if (value === 'dropdown') {
+    return defaultFieldForColumnKind('dropdown')
+  }
+  return defaultFieldForColumnKind(value)
+}
 
 function FieldModeConfigBlock({
   field,
@@ -56,6 +82,10 @@ function FieldModeConfigBlock({
   const setColumnField = (next: HorizontalTableColumnField) => {
     setColumnFieldAt(colIdx, next)
   }
+  const isSeedDropdown = field.kind === 'dropdown'
+  const selectOptions = isSeedDropdown
+    ? [...FIELD_TYPE_OPTIONS, { value: 'dropdown' as const, label: '드롭다운형' }]
+    : FIELD_TYPE_OPTIONS
 
   return (
     <FormEditorFieldListItem className="form-editor-horizontal-table-body-fields__item">
@@ -80,10 +110,12 @@ function FieldModeConfigBlock({
           className="form-editor-horizontal-table-body-fields__cms-select"
           inputSize="large"
           width="100%"
-          value={field.kind}
-          options={FIELD_TYPE_OPTIONS}
+          value={fieldToSelectValue(field)}
+          options={selectOptions}
+          disabled={isSeedDropdown}
           onChange={v => {
-            setColumnField(defaultFieldForColumnKind(v as HorizontalTableFieldColumnKind))
+            if (isSeedDropdown) return
+            setColumnField(selectValueToField(v as HorizontalFieldTypeSelectValue))
           }}
           withAllOption={false}
         />
@@ -110,65 +142,19 @@ function FieldModeConfigBlock({
         </Form.Item>
       )}
 
-      {field.kind === 'dropdown' ? (
-        <>
-          <Form.Item
-            className="form-editor-horizontal-table-body-fields__content-form-item"
-            label="입력창 안내 텍스트"
-          >
-            <DeferredCmsInput
-              width="100%"
-              inputSize="large"
-              value={field.placeholder}
-              onCommit={next => setColumnField({ ...field, placeholder: next })}
-              placeholder={HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER}
-            />
-          </Form.Item>
-          <Form.Item
-            className="form-editor-horizontal-table-body-fields__content-form-item"
-            label="드롭다운 옵션"
-          >
-            <FormEditorOptionListEditor
-              values={field.options}
-              onChange={options => setColumnField({ ...field, options })}
-              addLabel="+ 항목 추가"
-              addButtonIcon={false}
-            />
-          </Form.Item>
-        </>
-      ) : null}
-
       {field.kind === 'dateTime' ? (
-        <>
-          <Form.Item
-            className="form-editor-horizontal-table-body-fields__content-form-item"
-            label="유형"
+        <Form.Item
+          className="form-editor-horizontal-table-body-fields__content-form-item"
+          label="입력 미리보기"
+        >
+          <div
+            className="form-editor-horizontal-table-body-fields__date-preview"
+            onClick={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
           >
-            <CmsRadioGroup
-              value={field.dateTimeMode}
-              onChange={e => {
-                const v = e.target.value as 'date' | 'time' | 'dateTime'
-                setColumnField({ ...field, dateTimeMode: v })
-              }}
-            >
-              <CmsRadio value="date">날짜</CmsRadio>
-              <CmsRadio value="time">시간</CmsRadio>
-              <CmsRadio value="dateTime">날짜+시간</CmsRadio>
-            </CmsRadioGroup>
-          </Form.Item>
-          <Form.Item
-            className="form-editor-horizontal-table-body-fields__content-form-item"
-            label="입력 미리보기"
-          >
-            <div
-              className="form-editor-horizontal-table-body-fields__date-preview"
-              onClick={e => e.stopPropagation()}
-              onMouseDown={e => e.stopPropagation()}
-            >
-              <FormEditorDateTimeFieldPreview field={field} />
-            </div>
-          </Form.Item>
-        </>
+            <FormEditorDateTimeFieldPreview field={field} />
+          </div>
+        </Form.Item>
       ) : null}
 
       {(field.kind === 'single' || field.kind === 'multiple') && (

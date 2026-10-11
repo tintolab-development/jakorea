@@ -5,9 +5,12 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Spin, Table } from 'antd'
-import { CmsButton, FilterTableLayout } from '@/shared/ui'
+import { Spin } from 'antd'
+import { FilterTableLayout,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
@@ -599,25 +602,23 @@ export function ParticipatingInstitutionsSection({
         description={`${filteredSchools.length}건`}
         actions={
           viewMode === 'list' ? (
-            <CmsButton
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               style={{ minWidth: 180 }}
               icon={<ButtonCalendarIcon />}
               onClick={handleCalendarView}
             >
               캘린더 뷰로 보기
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : (
-            <CmsButton
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               style={{ minWidth: 180 }}
               icon={<ButtonListIcon />}
               onClick={handleListView}
             >
               리스트 뷰로 보기
-            </CmsButton>
+            </FilterTableToolbarButton>
           )
         }
         excelExport={{
@@ -627,8 +628,8 @@ export function ParticipatingInstitutionsSection({
       >
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
-            <Table<ParticipatingSchoolRow>
-              className="cms-data-table participating-institutions-section__table participating-institutions-section__table--textbook-dropdown"
+            <CmsDataTable<ParticipatingSchoolRow>
+              className="cms-data-table cms-data-table--variable-row-height participating-institutions-section__table participating-institutions-section__table--textbook-dropdown participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"
               pagination={false}

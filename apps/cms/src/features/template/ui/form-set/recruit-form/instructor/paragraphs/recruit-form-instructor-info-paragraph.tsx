@@ -66,7 +66,7 @@ export function RecruitFormInstructorInfoParagraph() {
     )
   const [recruitTargets, setRecruitTargets] = useGeneralRecruitOverlayKv<string[]>(
     'recruit.instructor.recruitTargets',
-    ['성인']
+    ['adult']
   )
 
   const [programAnchorIso, setProgramAnchorIso] = useGeneralRecruitOverlayKv<string | null>(

@@ -1,18 +1,16 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
-import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
+import { getDataManagementSubsetApi } from '@/features/data-management/api/data-management-subset-api'
 import type {
   PageResponseTextbookBusinessAreaResponse,
   TextbookBusinessAreaRequest,
   TextbookBusinessAreaResponse,
 } from '@/shared/api/generated/data-management/schemas'
 
-const dmApi = getJAKoreaCMSBackendAPIDataManagementSubset()
-
 const LIST_PAGE_SIZE = 100
 
 export async function fetchTextbookBusinessAreasRemote(): Promise<TextbookBusinessAreaResponse[]> {
   const page = unwrapApiBody<PageResponseTextbookBusinessAreaResponse>(
-    await dmApi.list1({ page: 0, size: LIST_PAGE_SIZE })
+    await getDataManagementSubsetApi().list1({ page: 0, size: LIST_PAGE_SIZE })
   )
   return page.items ?? []
 }
@@ -21,7 +19,7 @@ export async function createTextbookBusinessAreaRemote(
   name: string
 ): Promise<TextbookBusinessAreaResponse> {
   const body: TextbookBusinessAreaRequest = { name, businessAreaName: name }
-  return unwrapApiBody(await dmApi.create2(body))
+  return unwrapApiBody(await getDataManagementSubsetApi().create2(body))
 }
 
 export async function updateTextbookBusinessAreaRemote(
@@ -29,9 +27,9 @@ export async function updateTextbookBusinessAreaRemote(
   name: string
 ): Promise<TextbookBusinessAreaResponse> {
   const body: TextbookBusinessAreaRequest = { name, businessAreaName: name }
-  return unwrapApiBody(await dmApi.update2(id, body))
+  return unwrapApiBody(await getDataManagementSubsetApi().update2(id, body))
 }
 
 export async function deleteTextbookBusinessAreaRemote(id: string): Promise<void> {
-  await dmApi.delete1(id)
+  await getDataManagementSubsetApi().delete1(id)
 }

@@ -24,6 +24,7 @@
 
 .register-step-header__description {
   margin: 0;
+  white-space: pre-line;
   color: var(--Color-primary-boundless_blue, #285f74);
   font-family: Pretendard, system-ui, sans-serif;
   font-size: 18px;

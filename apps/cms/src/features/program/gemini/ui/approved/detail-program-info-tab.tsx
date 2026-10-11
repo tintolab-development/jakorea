@@ -1,5 +1,4 @@
 import { useMemo, type ReactNode } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
@@ -8,6 +7,7 @@ import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/prog
 import { formatCountLabel } from '@/features/program/general/lib/detail-value-helpers'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { buildGeminiApprovedManagerTableItems } from '../../lib/approved/build-manager-profile-fields'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   approvedTrainingStatusModifier,
   formatStatusLabel,
@@ -231,7 +231,7 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
       {detail.instructorAssigned ? (
         <>
           <DetailInfoForm title="연수 담당 강사" mode="view">
-            <Table
+            <CmsDataTable
               className="cms-data-table gemini-approved-training-detail-info__instructor-table"
               rowKey="key"
               pagination={false}

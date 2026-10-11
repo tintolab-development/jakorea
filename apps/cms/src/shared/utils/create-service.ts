@@ -87,6 +87,23 @@ function defaultGenerateId(prefix: string): string {
  * })
  * ```
  */
+const EMPTY_CRUD_MAP = new Map<string, never>()
+
+/** Remote-only stub — empty lists, mutating calls throw not found. */
+export function createEmptyCrudService<
+  T extends { id: string; createdAt: string | Date; updatedAt: string | Date },
+>(options: {
+  prefix: string
+  generateId?: (prefix: string) => string
+  nameField?: keyof T
+}): ExtendedCrudService<T> {
+  return createCrudService<T>({
+    ...options,
+    mockData: [],
+    mockDataMap: EMPTY_CRUD_MAP as unknown as Map<string, T>,
+  })
+}
+
 export function createCrudService<
   T extends { id: string; createdAt: string | Date; updatedAt: string | Date },
 >(options: {

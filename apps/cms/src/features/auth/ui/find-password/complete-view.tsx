@@ -1,4 +1,4 @@
-import { FindEmailSearchIcon } from '@/features/auth/ui/find-email/find-email-search-icon'
+import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { CmsButton } from '@/shared/ui'
 
 interface FindPasswordCompleteViewProps {
@@ -9,11 +9,16 @@ export function FindPasswordCompleteView({ onGoLogin }: FindPasswordCompleteView
   return (
     <div className="find-password-complete">
       <div className="find-password-complete__body">
-        <FindEmailSearchIcon />
+        <img
+          className="find-password-complete__illustration"
+          src={illustCheckUrl}
+          alt=""
+          aria-hidden="true"
+        />
 
-        <h1 className="find-password-complete__title">비밀번호 변경이 완료 되었어요</h1>
+        <h1 className="find-password-complete__title">비밀번호 변경이 완료되었습니다.</h1>
         <p className="find-password-complete__description">
-          변경된 비밀번호로 다시 로그인 해주세요.
+          변경된 비밀번호로 다시 로그인해 주세요.
         </p>
 
         <div className="auth-actions find-password-complete__actions">

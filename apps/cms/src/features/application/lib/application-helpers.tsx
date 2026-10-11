@@ -8,7 +8,6 @@ import type { MenuProps } from 'antd'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { schoolService } from '@/entities/school/api/school-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
-import { mockUsers } from '@/data/mock/users'
 import { canTransitionApplicationStatus } from '@/shared/lib/status-transition'
 
 /**
@@ -22,7 +21,7 @@ export function getApplicationSubjectName(application: Application): string {
   } else if (application.subjectType === 'instructor') {
     return instructorService.getNameById(application.subjectId)
   } else if (application.subjectType === 'volunteer') {
-    return mockUsers.find(u => u.id === application.subjectId)?.name || '-'
+    return '-'
   }
   return '-'
 }

@@ -39,7 +39,7 @@
 | **신청자 상세 body PATCH** | — | ✅(목록) | ⛔ | — | organization/instructor application **필드** PATCH | approve/reject만. **코멘트**는 FE 연결: `POST/PATCH/DELETE /api/admin/comments`(기관·봉사) · `PATCH …/instructor-applications/{id}`(강사 managerComment) · `PATCH …/individual-applications/{id}`(managerComment·교재/팀). 기관/강사 **신청 정보 필드** 수정 UI는 미연동 안내 (P2-6) |
 | **진행 — 참여 기관 중첩 mutation** | ⛔ | 🟡목록 | ⛔ | ⛔ | 학생 명단·배정·출석·신청 상세 mutation | participants 목록만. **관리자 코멘트**는 comments API로 FE 연결 |
 | **진행 — 참여 강사 중첩·정산** | ⛔ | 🟡목록 | ⛔ | — | 기관 배정·강의보고 저장·정산(교통/숙박/100km) | lecture-reports 목록 일부만. **관리자 코멘트**는 instructor-applications PATCH로 FE 연결 |
-| **진행 — 참여 봉사자 C/U/D** | ⛔ | ✅목록 | ⛔ | ⛔ | 회원→참여 봉사자 등록, 임직원 세션 인원, 삭제, 확인서 | 목록 `participants?VOLUNTEER`만 |
+| **진행 — 참여 봉사자 C/U/D** | ✅POST 등록·후보 GET | ✅목록 | ✅임직원 인원 PUT/GET | ⛔ | `POST …/participants`, `GET …/participant-register-candidates`, `GET/PUT …/employee-volunteer-counts`, 삭제·활동확인서 | 삭제·VOLUNTEER kind 변경·certificates 연동 |
 | **진행 — 정식 schedules GET** | — | ⛔ | — | — | `GET …/programs/{id}/schedules` | 출석은 dashboard schedules 우회 (P2-2) |
 | **진행 — 과제** | ⛔ | ⛔ | ⛔ | ⛔ | 프로그램 단위 과제 세션·제출 admin API | 회원 assignment-submissions만 (P2-5) |
 | **게시글 댓글/반응 UI 계약** | — | 부분 | — | — | 목록 DTO에 content·comment/reaction count 보강 | PATCH/DELETE post FE hook 준비됨. 댓글 UI는 DTO 확인 후 |

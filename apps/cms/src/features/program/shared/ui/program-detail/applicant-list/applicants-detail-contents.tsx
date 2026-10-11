@@ -28,6 +28,7 @@ import {
   buildProgramApiUnavailableSaveContent,
   PROGRAM_API_UNAVAILABLE_TITLE,
 } from '@/features/program/shared/lib/program-api-unavailable'
+import { canPerformApplicationAction } from '@/features/program/shared/lib/application-available-actions'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
@@ -268,25 +269,30 @@ function headerBtnsPendingParticipation(
   applicantId: string,
   onApprove: (id: string) => void,
   onReject: (id: string) => void,
-  onRevealPersonalInfo: () => void
+  onRevealPersonalInfo: () => void,
+  availableActions?: string[]
 ): ApplicantHeaderActionItem[] {
-  return [
-    {
+  const items: ApplicantHeaderActionItem[] = []
+  if (canPerformApplicationAction(availableActions, 'REJECT')) {
+    items.push({
       key: 'reject',
       variant: 'delete',
       label: '참여 반려',
       width: CMS_ACTION_BUTTON_WIDTH,
       onClick: () => onReject(applicantId),
-    },
-    {
+    })
+  }
+  if (canPerformApplicationAction(availableActions, 'APPROVE')) {
+    items.push({
       key: 'approve',
       variant: 'secondary',
       label: '참여 승인',
       width: CMS_ACTION_BUTTON_WIDTH,
       onClick: () => onApprove(applicantId),
-    },
-    headerBtnPrivacy(onRevealPersonalInfo),
-  ]
+    })
+  }
+  items.push(headerBtnPrivacy(onRevealPersonalInfo))
+  return items
 }
 
 function resolveApplicantHeaderItems(params: {
@@ -321,6 +327,10 @@ function resolveApplicantHeaderItems(params: {
   isAdminCommentWriteEnabled?: boolean
   onEnterAdminCommentEdit?: () => void
   individualAvailableActions?: string[]
+  institutionAvailableActions?: string[]
+  instructorAvailableActions?: string[]
+  isCancelledInstitution?: boolean
+  isCancelledInstructor?: boolean
 }): ApplicantHeaderActionItem[] | null {
   const {
     applicantId,
@@ -354,7 +364,15 @@ function resolveApplicantHeaderItems(params: {
     isAdminCommentWriteEnabled = false,
     onEnterAdminCommentEdit,
     individualAvailableActions,
+    institutionAvailableActions,
+    instructorAvailableActions,
+    isCancelledInstitution = false,
+    isCancelledInstructor = false,
   } = params
+
+  if (isCancelledInstitution || isCancelledInstructor) {
+    return [headerBtnPrivacy(onRevealPersonalInfo)]
+  }
 
   if (isApprovedInstitution) {
     const editButton =
@@ -366,10 +384,15 @@ function resolveApplicantHeaderItems(params: {
           )
         : headerBtnEditInfoDisabled()
 
-    const items: ApplicantHeaderActionItem[] = [
-      headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState),
-      editButton,
-    ]
+    const items: ApplicantHeaderActionItem[] = []
+
+    if (
+      onCancelApproval &&
+      canPerformApplicationAction(institutionAvailableActions, 'CANCEL_APPROVAL')
+    ) {
+      items.push(headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState))
+    }
+    items.push(editButton)
 
     if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
       items.push(headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstitutionDetail))
@@ -409,10 +432,15 @@ function resolveApplicantHeaderItems(params: {
           )
         : headerBtnEditInfoPreparing()
 
-    const items: ApplicantHeaderActionItem[] = [
-      headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState),
-      editButton,
-    ]
+    const items: ApplicantHeaderActionItem[] = []
+
+    if (
+      onCancelApproval &&
+      canPerformApplicationAction(instructorAvailableActions, 'CANCEL_APPROVAL')
+    ) {
+      items.push(headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState))
+    }
+    items.push(editButton)
 
     if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
       items.push(headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstructorDetail))
@@ -422,17 +450,24 @@ function resolveApplicantHeaderItems(params: {
     return items
   }
   if (isRejectedInstructor || isRejectedInstitution) {
-    return [
-      headerBtnCancelReject(applicantId, onCancelReject),
-      headerBtnPrivacy(onRevealPersonalInfo),
-    ]
+    const availableActions = isRejectedInstructor
+      ? instructorAvailableActions
+      : institutionAvailableActions
+    const items: ApplicantHeaderActionItem[] = []
+    if (
+      onCancelReject &&
+      canPerformApplicationAction(availableActions, 'CANCEL_REJECTION')
+    ) {
+      items.push(headerBtnCancelReject(applicantId, onCancelReject))
+    }
+    items.push(headerBtnPrivacy(onRevealPersonalInfo))
+    return items
   }
   if (isRejectedIndividual) {
     const items: ApplicantHeaderActionItem[] = []
     if (
       onCancelReject &&
-      (individualAvailableActions == null ||
-        individualAvailableActions.includes('CANCEL_REJECTION'))
+      canPerformApplicationAction(individualAvailableActions, 'CANCEL_REJECTION')
     ) {
       items.push(headerBtnCancelReject(applicantId, onCancelReject))
     }
@@ -440,7 +475,18 @@ function resolveApplicantHeaderItems(params: {
     return items
   }
   if (isInstitution || isInstructor || isIndividual) {
-    return headerBtnsPendingParticipation(applicantId, onApprove, onReject, onRevealPersonalInfo)
+    const availableActions = isInstructor
+      ? instructorAvailableActions
+      : isInstitution
+        ? institutionAvailableActions
+        : individualAvailableActions
+    return headerBtnsPendingParticipation(
+      applicantId,
+      onApprove,
+      onReject,
+      onRevealPersonalInfo,
+      availableActions
+    )
   }
   return null
 }
@@ -581,6 +627,10 @@ export function ApplicantsDetailContents({
 
   /** 신청 강사 반려: [반려 취소] [개인정보 상세보기] */
   const isRejectedInstructor = isInstructor && instructorData?.approvalStatus === 'rejected'
+
+  const isCancelledInstitution =
+    isInstitution && institutionData?.approvalStatus === 'cancelled'
+  const isCancelledInstructor = isInstructor && instructorData?.approvalStatus === 'cancelled'
 
   const isApprovedIndividual = isIndividual && individualData?.approvalStatus === 'approved'
   const isRejectedIndividual = isIndividual && individualData?.approvalStatus === 'rejected'
@@ -1208,6 +1258,8 @@ export function ApplicantsDetailContents({
       isRejectedInstitution,
       isRejectedInstructor,
       isRejectedIndividual,
+      isCancelledInstitution,
+      isCancelledInstructor,
       isInstitution,
       isInstructor,
       isIndividual,
@@ -1245,6 +1297,8 @@ export function ApplicantsDetailContents({
           ? handleInstructorAdminCommentEditEnter
           : handleAdminCommentEditEnter,
       individualAvailableActions: individualData?.availableActions,
+      institutionAvailableActions: institutionData?.availableActions,
+      instructorAvailableActions: instructorData?.availableActions,
     })
     if (!items) return null
     const visibleItems =
@@ -1279,6 +1333,8 @@ export function ApplicantsDetailContents({
     isRejectedInstitution,
     isRejectedInstructor,
     isRejectedIndividual,
+    isCancelledInstitution,
+    isCancelledInstructor,
     isInstitution,
     isInstructor,
     isIndividual,
@@ -1289,6 +1345,8 @@ export function ApplicantsDetailContents({
     onCancelReject,
     personalInfoRevealed,
     individualData,
+    institutionData,
+    instructorData,
     showIndividualPrivacyReveal,
     handleAdminCommentEditEnter,
     handleIndividualAdminCommentEditEnter,

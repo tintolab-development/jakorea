@@ -1,14 +1,18 @@
+import { POSTS_LIST_PAGE_SIZE } from '@/features/posts/api/posts-list-page'
 import type { FaqsParams } from '@/shared/api/generated/posts/schemas'
 
-export const FAQ_LIST_PAGE_SIZE = 500
+export const FAQ_LIST_PAGE_SIZE = POSTS_LIST_PAGE_SIZE
 
 function parseVisibility(raw: string | null): 'public' | 'private' {
   return raw === 'private' ? 'private' : 'public'
 }
 
-export function faqsParamsFromSearchParams(searchParams: URLSearchParams): FaqsParams {
+export function faqsParamsFromSearchParams(
+  searchParams: URLSearchParams,
+  page = 0
+): FaqsParams {
   const params: FaqsParams = {
-    page: 0,
+    page,
     size: FAQ_LIST_PAGE_SIZE,
     visibility: parseVisibility(searchParams.get('af_vis')),
   }

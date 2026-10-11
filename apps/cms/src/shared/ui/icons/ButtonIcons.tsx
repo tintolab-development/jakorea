@@ -6,6 +6,7 @@
 
 import addUrl from '@/shared/assets/icons/buttons/add-mint.svg'
 import calendarUrl from '@/shared/assets/icons/buttons/calendar-mint.svg'
+import clockUrl from '@/shared/assets/icons/inputs/clock-mint.svg'
 import copyUrl from '@/shared/assets/icons/buttons/copy-mint.svg'
 import deleteUrl from '@/shared/assets/icons/buttons/delete-mint.svg'
 import downloadUrl from '@/shared/assets/icons/buttons/download-white.svg'
@@ -37,6 +38,11 @@ export function ButtonDownloadIcon(props: ButtonIconProps) {
 /** 20 프레임 */
 export function ButtonCalendarIcon(props: ButtonIconProps) {
   return <MaskIcon src={calendarUrl} {...props} />
+}
+
+/** 20 프레임 */
+export function ButtonClockIcon(props: ButtonIconProps) {
+  return <MaskIcon src={clockUrl} {...props} />
 }
 
 /** 20 프레임 */

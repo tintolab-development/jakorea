@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getSponsorProgramHistories } from '@/features/sponsor/api/admin-sponsors-service'
-import { programHistoriesParamsFromFilters } from '@/features/sponsor/api/program-histories-filter-params'
+import {
+  programHistoriesParamsFromFilters,
+  SPONSOR_PROGRAM_HISTORY_PAGE_SIZE,
+} from '@/features/sponsor/api/program-histories-filter-params'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import { useDataManagementRemoteEnabled } from '@/features/data-management/hooks/use-data-management-remote-enabled'
 import type {
@@ -27,6 +30,9 @@ export type UseSponsorProgramHistoryFilterReturn = UseProgramHistoryFilterReturn
   isLoading: boolean
   isError: boolean
   totalElements: number
+  page: number
+  pageSize: number
+  handlePageChange: (page: number) => void
 }
 
 /**
@@ -44,10 +50,12 @@ export function useSponsorProgramHistoryFilter(
     INITIAL_PROGRAM_HISTORY_FILTERS
   )
   const [selectedKeys, setSelectedKeysState] = useState<Key[]>([])
+  const [page, setPage] = useState(0)
 
   const paramsKey = useMemo(
-    () => JSON.stringify(programHistoriesParamsFromFilters(appliedFilters)),
-    [appliedFilters]
+    () =>
+      JSON.stringify(programHistoriesParamsFromFilters(appliedFilters, page)),
+    [appliedFilters, page]
   )
   /**
    * BE educationTarget 필터는 복수 대상 문자열에서 일치하지 않는 경우가 있어,
@@ -69,7 +77,13 @@ export function useSponsorProgramHistoryFilter(
 
   const query = useQuery({
     queryKey: dataManagementQueryKeys.sponsors.programHistories(sponsorId, paramsKey),
-    queryFn: () => getSponsorProgramHistories(sponsorId, serverFilters),
+    queryFn: () =>
+      getSponsorProgramHistories(
+        sponsorId,
+        serverFilters,
+        page,
+        SPONSOR_PROGRAM_HISTORY_PAGE_SIZE
+      ),
     enabled: remoteEnabled && enabled && Boolean(sponsorId),
     staleTime: 30_000,
     retry: false,
@@ -90,8 +104,15 @@ export function useSponsorProgramHistoryFilter(
   }, [])
 
   const handleSearch = useCallback((): void => {
+    setPage(0)
+    setSelectedKeysState([])
     setAppliedFilters(pendingFilters)
   }, [pendingFilters])
+
+  const handlePageChange = useCallback((nextPage: number): void => {
+    setPage(Math.max(0, nextPage))
+    setSelectedKeysState([])
+  }, [])
 
   return {
     pendingFilters,
@@ -103,5 +124,8 @@ export function useSponsorProgramHistoryFilter(
     isLoading: query.isLoading,
     isError: query.isError,
     totalElements: query.data?.totalElements ?? filteredRows.length,
+    page,
+    pageSize: SPONSOR_PROGRAM_HISTORY_PAGE_SIZE,
+    handlePageChange,
   }
 }

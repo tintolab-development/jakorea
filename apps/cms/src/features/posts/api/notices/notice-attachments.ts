@@ -1,4 +1,4 @@
-import type { Notice, NoticeAttachment } from '@/data/mock/notices'
+import type { Notice, NoticeAttachment } from '@/features/posts/model/notice'
 import { dedupeFileObjectIds } from '@/features/posts/api/notices/notice-file-ids'
 import {
   fetchNoticeAttachmentsRemote,

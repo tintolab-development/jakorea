@@ -48,6 +48,7 @@ import {
   resolveGeneralRegistrationCommonEducationForm,
   resolveGeneralRegistrationCommonParticipation,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
+import { trimTrailingBlankRegularCurriculumSessions } from '@/features/program/general/lib/schedule-detail-form'
 import {
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -456,7 +457,7 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
           : undefined,
     })
   }
-  return sessions
+  return trimTrailingBlankRegularCurriculumSessions(sessions)
 }
 
 function formatScheduleDateLabel(iso: string | null | undefined): string | undefined {
@@ -689,7 +690,7 @@ export function applyGeneralRegistrationOverlayToProgram(
   const prevKpi = program.generalCommonInfo?.kpi
   const kpiNumber = (key: string, fallback: number | undefined) => {
     if (!Object.prototype.hasOwnProperty.call(overlay, key)) return fallback ?? 0
-    return overlayNullableNumber(overlay, key) ?? fallback ?? 0
+    return overlayNullableNumber(overlay, key) ?? 0
   }
   const kpi = {
     finalParticipants: kpiNumber(

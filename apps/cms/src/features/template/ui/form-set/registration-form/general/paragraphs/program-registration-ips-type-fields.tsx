@@ -12,6 +12,12 @@ export type ProgramRegistrationIpsTypeValue = {
   detail: string
 }
 
+/** 일정·차시별 IPS 미기록 시 UI·create 매핑·필수 검증 공통 기본 (Prepare / 해당 없음) */
+export const PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT: ProgramRegistrationIpsTypeValue = {
+  category: 'prepare',
+  detail: 'none',
+}
+
 export type ProgramRegistrationIpsTypeFieldsProps = {
   value: ProgramRegistrationIpsTypeValue
   onChange: (next: ProgramRegistrationIpsTypeValue) => void

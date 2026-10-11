@@ -28,7 +28,11 @@ export interface ParticipantListItemResponse {
   completedAt?: string;
   giveUpAt?: string;
   availableActions?: string[];
-  grade?: string;
+  /**
+     * 기관 참여자 학년. requested_grade 원문(예: 1, 학년 접미사 없음)을 우선하고, 비어 있으면 양식 applicationGrade/educationGrade/grade, 그다음 배정·명단 학년, 그것도 없으면 프로그램 대상 학년(예: 3학년, 3~6학년). 개인 참여자는 명단·신청 스냅샷. 없으면 null. 빈 문자열은 반환하지 않는다.
+     * @nullable
+     */
+  grade?: string | null;
   regionSido?: string;
   regionSigungu?: string;
   className?: string;

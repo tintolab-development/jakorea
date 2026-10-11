@@ -16,6 +16,7 @@ import {
   persistDraftOwnedFormVersion,
   type DraftOwnedFormVersion,
 } from '@/features/program/general/lib/registration-draft-form-versions'
+import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
 import { ensureRegistrationProgramDraftId } from '@/features/program/general/lib/registration-program-draft-session'
 import { resolveFormBindingTargetType } from '@/features/program/general/lib/resolve-form-binding-target-type'
 import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
@@ -50,6 +51,11 @@ export async function prepareRegistrationCreateFormBindings(args: {
 
   const programDraftType = resolveRegistrationProgramDraftProgramType(args.program)
   const programDraftId = await ensureRegistrationProgramDraftId(programDraftType)
+  const loadWizardOperationalDraft = (templateCode: string) =>
+    loadRegistrationWizardFormDraft({
+      programType: programDraftType,
+      templateCode,
+    })
   const specs = listAllRegistrationCreateFormSpecs(args.program)
   if (specs.length === 0) return null
 
@@ -58,7 +64,7 @@ export async function prepareRegistrationCreateFormBindings(args: {
   const overrideByCode = new Map(
     (args.operationalOverrides ?? []).map(item => [item.templateCode, item])
   )
-  const ownedByCode = new Map<string, DraftOwnedFormVersion>()
+  const formBindings: ProgramFormBindingRequest[] = []
 
   for (const spec of specs) {
     const needsRegistrationPut =
@@ -69,74 +75,70 @@ export async function prepareRegistrationCreateFormBindings(args: {
     const override = overrideByCode.get(spec.templateCode)
     const overlay =
       spec.formType === 'REGISTRATION' ? null : collectOperationalOverlayForCatalogId(spec.templateCode)
+    const wizardSaved =
+      spec.formType !== 'REGISTRATION'
+        ? await loadWizardOperationalDraft(spec.templateCode)
+        : null
+    const hasWizardOperationalDraft =
+      wizardSaved?.draft != null && wizardSaved.draft.paragraphs.length > 0
     const needsOperationalPut =
       spec.formType !== 'REGISTRATION' &&
-      (override != null || (overlay != null && Object.keys(overlay).length > 0))
+      (override != null ||
+        hasWizardOperationalDraft ||
+        (overlay != null && Object.keys(overlay).length > 0))
 
-    if (!needsRegistrationPut && !needsOperationalPut) {
-      continue
-    }
+    let owned: DraftOwnedFormVersion
 
-    const { owned, baseline } = await ensureDraftOwnedFormVersionWithBaseline({
-      programDraftId,
-      templateCode: spec.templateCode,
-    })
-
-    if (needsRegistrationPut && args.registration != null) {
-      const persisted = await persistDraftOwnedFormVersion({
+    if (needsRegistrationPut || needsOperationalPut) {
+      const { owned: ensuredOwned, baseline } = await ensureDraftOwnedFormVersionWithBaseline({
         programDraftId,
         templateCode: spec.templateCode,
-        owned,
-        baseline,
-        draft: args.registration.draft,
-        overlay: args.registration.overlay,
-        editorState: args.registration.editorState,
       })
-      ownedByCode.set(spec.templateCode, persisted)
-      continue
-    }
 
-    if (override != null) {
-      const persisted = await persistDraftOwnedFormVersion({
+      if (needsRegistrationPut && args.registration != null) {
+        owned = await persistDraftOwnedFormVersion({
+          programDraftId,
+          templateCode: spec.templateCode,
+          owned: ensuredOwned,
+          baseline,
+          draft: args.registration.draft,
+          overlay: args.registration.overlay,
+          editorState: args.registration.editorState,
+        })
+      } else if (override != null) {
+        owned = await persistDraftOwnedFormVersion({
+          programDraftId,
+          templateCode: spec.templateCode,
+          owned: ensuredOwned,
+          baseline,
+          draft: override.draft,
+          overlay: override.overlay,
+          editorState: override.editorState,
+        })
+      } else {
+        const draft = hasWizardOperationalDraft
+          ? wizardSaved!.draft
+          : (baseline?.draft ?? createSeedDraftForOperationalCatalogId(spec.templateCode))
+        if (draft == null || overlay == null) {
+          owned = ensuredOwned
+        } else {
+          owned = await persistDraftOwnedFormVersion({
+            programDraftId,
+            templateCode: spec.templateCode,
+            owned: ensuredOwned,
+            baseline,
+            draft,
+            overlay,
+            editorState: wizardSaved?.editorState ?? baseline?.editorState,
+          })
+        }
+      }
+    } else {
+      owned = await ensureDraftOwnedFormVersion({
         programDraftId,
         templateCode: spec.templateCode,
-        owned,
-        baseline,
-        draft: override.draft,
-        overlay: override.overlay,
-        editorState: override.editorState,
       })
-      ownedByCode.set(spec.templateCode, persisted)
-      continue
     }
-
-    const draft = baseline?.draft ?? createSeedDraftForOperationalCatalogId(spec.templateCode)
-    if (draft == null || overlay == null) {
-      ownedByCode.set(spec.templateCode, owned)
-      continue
-    }
-
-    const persisted = await persistDraftOwnedFormVersion({
-      programDraftId,
-      templateCode: spec.templateCode,
-      owned,
-      baseline,
-      draft,
-      overlay,
-      editorState: baseline?.editorState,
-    })
-    ownedByCode.set(spec.templateCode, persisted)
-  }
-
-  const formBindings: ProgramFormBindingRequest[] = []
-
-  for (const spec of specs) {
-    const owned =
-      ownedByCode.get(spec.templateCode) ??
-      (await ensureDraftOwnedFormVersion({
-        programDraftId,
-        templateCode: spec.templateCode,
-      }))
 
     const publishedVersionId = await publishFormTemplateVersionById(owned.draftVersionId)
 

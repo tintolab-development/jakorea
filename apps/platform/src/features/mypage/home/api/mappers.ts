@@ -76,10 +76,18 @@ export function mapPortalScheduleItems(items: PortalScheduleItem[] | undefined):
   })
 }
 
+/** BE Instant/OffsetDateTime — offset 필수. 로컬 월 경계를 그대로 보낸다. */
+function formatOffset(date: Date): string {
+  const offsetMin = -date.getTimezoneOffset()
+  const sign = offsetMin >= 0 ? '+' : '-'
+  const abs = Math.abs(offsetMin)
+  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
+}
+
 export function portalCalendarRange(month: Date): { from: string; to: string } {
   const start = new Date(month.getFullYear(), month.getMonth(), 1, 0, 0, 0)
   const end = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59)
   const format = (date: Date) =>
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}${formatOffset(date)}`
   return { from: format(start), to: format(end) }
 }

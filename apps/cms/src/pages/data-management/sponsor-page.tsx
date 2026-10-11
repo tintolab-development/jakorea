@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { CSSProperties, MouseEvent } from 'react'
-import { Table, Typography } from 'antd'
+import { Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
+import { serializeSponsorListFilters } from '@/features/sponsor/api/sponsor-filter-params'
 import { useSponsorListQuery } from '@/features/sponsor/hooks/use-sponsor-list-query'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useSponsorMutations } from '@/features/sponsor/hooks/use-sponsor-mutations'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   donationAmountColumnWidth,
   formatDonationAmount,
@@ -30,27 +33,22 @@ import {
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { EMPTY_TABLE_PAGE_CONTEXT } from '@/shared/components/table-system/model/use-table-page'
-import {
-  buildSponsorBulkDeleteMessageLines,
-  buildSponsorDeleteMessageLines,
-} from '@/features/sponsor/lib/sponsor-delete-guide-messages'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import './sponsor-page.css'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   ActionResultModal,
-  CmsButton,
-  DeleteGuideModal,
-  buildBulkDeleteGuideTitle,
   buildDeleteCompletedMessageBulk,
   buildDeleteCompletedMessageSingle,
   buildDeleteCompletedTitle,
   buildRegisterCompletedMessage,
   buildRegisterCompletedTitle,
   useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { SponsorDeleteBlockedModal } from '@/features/sponsor/ui/modal/sponsor-delete-blocked-modal'
+import { SponsorDeleteModal } from '@/features/sponsor/ui/modal/sponsor-delete-modal'
 import { SponsorRegisterModal } from '@/features/sponsor/ui/modal/sponsor-register-modal'
 import { SponsorDetailFullPageModal } from '@/features/sponsor/ui/sponsor-detail-fullpage-modal'
 import {
@@ -98,18 +96,38 @@ export default function SponsorPage() {
     )
   }, [organizationKindParam, setSearchParams])
 
-  const listQuery = useSponsorListQuery(searchParams, true)
-  const isInitialListLoading = isDataManagementListLoading(listQuery)
-  const isListFetching = listQuery.isFetching
+  const listFilterKey = serializeSponsorListFilters(searchParams)
+  const {
+    rows,
+    totalElements,
+    isLoading: isListLoading,
+    isFetching: isListFetching,
+    isError: isListError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useSponsorListQuery(searchParams, true)
+  const isInitialListLoading = isDataManagementListLoading({
+    data: isListLoading ? undefined : rows,
+    isError: isListError,
+    isPending: isListLoading,
+  })
   const { createMutation, deleteMutation, bulkDeleteMutation, updateStatusMutation } = useSponsorMutations()
-  const rows = listQuery.data ?? []
+
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: listFilterKey,
+  })
 
   const {
     pendingFilters,
     applySearch: handleSearch,
     handleFilterChange,
-    displayedCount,
-    tableData } = useTablePage(sponsorManagementTablePageConfig, {
+    tableData,
+    hasActiveFilters,
+  } = useTablePage(sponsorManagementTablePageConfig, {
     data: rows,
     searchParams,
     setSearchParams,
@@ -182,17 +200,10 @@ export default function SponsorPage() {
     return rows.filter(r => keySet.has(r.id))
   }, [rows, selectedRowKeys])
 
-  const { title: bulkSponsorDeleteTitle, lines: bulkSponsorDeleteLines } = useMemo(() => {
-    const isMulti = selectedSponsors.length >= 2
-    const title = isMulti ? buildBulkDeleteGuideTitle('후원사') : '후원사 삭제 안내'
-    if (selectedSponsors.length === 0) {
-      return { title, lines: [] as string[] }
-    }
-    const lines = isMulti
-      ? buildSponsorBulkDeleteMessageLines(selectedSponsors.length)
-      : buildSponsorDeleteMessageLines([selectedSponsors[0]?.name ?? ''])
-    return { title, lines }
-  }, [selectedSponsors])
+  const bulkSponsorDeleteNames = useMemo(
+    () => selectedSponsors.map(sponsor => sponsor.name ?? ''),
+    [selectedSponsors]
+  )
 
   const handleBulkDelete = useCallback(() => {
     if (!canWrite) return
@@ -393,6 +404,7 @@ export default function SponsorPage() {
   return (
     <>
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         className="sponsor-page"
         bordered={false}
         fields={sponsorManagementFilterFields}
@@ -406,19 +418,19 @@ export default function SponsorPage() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="후원사 목록"
-        description={`총 ${displayedCount.toLocaleString()}건`}
+        description={`총 ${totalElements.toLocaleString()}건`}
         contentLoading={isInitialListLoading}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               onClick={handleBulkDelete}
             >
               후원사 삭제
-            </CmsButton>
-            <CmsButton variant="primary" onClick={handleRegister}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="primary" onClick={handleRegister}>
               후원사 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -426,7 +438,7 @@ export default function SponsorPage() {
           data: tableData,
         }}
       >
-        <Table<SponsorManagementRow>
+        <CmsDataTable<SponsorManagementRow>
           rowKey="id"
           className="sponsor-page__table cms-data-table cms-data-table--hoverable"
           style={
@@ -471,6 +483,7 @@ export default function SponsorPage() {
               : undefined
           }
         />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <SponsorDetailFullPageModal
@@ -480,17 +493,18 @@ export default function SponsorPage() {
         onDeleteSponsor={handleDeleteSponsor}
       />
 
-      <DeleteGuideModal
+      <SponsorDeleteModal
         open={bulkSponsorDeleteModalOpen}
         onCancel={handleCancelBulkSponsorDelete}
         onConfirm={handleConfirmBulkSponsorDelete}
-        title={bulkSponsorDeleteTitle}
-        lines={bulkSponsorDeleteLines}
-        confirmText="후원사 삭제"
+        sponsorNames={bulkSponsorDeleteNames}
+        presentation="list"
+        confirmLoading={bulkDeleteMutation.isPending}
       />
       <SponsorDeleteBlockedModal
         open={bulkSponsorDeleteBlockedOpen}
         onClose={handleCloseBulkSponsorDeleteBlocked}
+        selectedCount={selectedSponsors.length}
       />
       <SponsorRegisterModal
         open={registerModalOpen}

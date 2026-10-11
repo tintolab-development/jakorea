@@ -15,12 +15,6 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 10px;
-}
-
-/* 타이틀 하단 description → 본문 블록 16px (모집 상세 정보 수정 모드 등) */
-.detail-info-form__header:has(.detail-info-form__description--below) {
-  align-items: flex-start;
   margin-bottom: 16px;
 }
 

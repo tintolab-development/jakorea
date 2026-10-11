@@ -42,6 +42,7 @@ import {
   formatInstitutionApplicationScheduleRowLabel,
   shouldShowInstitutionApplicationDetailScheduleSection,
 } from '@/features/program/general/lib/institution-application-session-display'
+import { institutionHopeScheduleEmptyMessage } from '@/features/program/general/lib/institution-hope-schedule-empty-message'
 import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
@@ -536,7 +537,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
                     colSpan={2}
                     className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
                   >
-                    등록된 교육 일정이 없습니다.
+                    {institutionHopeScheduleEmptyMessage(institution)}
                   </td>
                 </tr>
               ) : (

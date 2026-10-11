@@ -9,23 +9,12 @@ export function dateTimeFieldPlaceholder(
 ): string {
   const t = field.placeholder?.trim() ?? ''
   if (t.length > 0) return field.placeholder
-  if (field.dateTimeMode === 'date') return '날짜를 선택해 주세요'
   if (field.dateTimeMode === 'time') return '시간을 선택해 주세요'
-  return '날짜·시간을 선택해 주세요'
+  return '날짜를 선택해 주세요'
 }
 
 const horizontalTableCustomFieldPickerStyles = {
   popup: { root: { minWidth: 340 } },
-} as const
-
-/** 날짜+시간: 캘린더+시간 열이 함께 보이도록 팝업 폭 확보 */
-const horizontalTableDateTimePickerStyles = {
-  popup: { root: { minWidth: 560 } },
-} as const
-
-const horizontalTableDateTimeShowTime = {
-  format: 'HH:mm',
-  minuteStep: 5,
 } as const
 
 function horizontalTableBodyFieldsPickerContainer(): HTMLElement {
@@ -65,24 +54,12 @@ export function FormEditorDateTimeFieldPreview({
       />
     )
   }
-  if (field.dateTimeMode === 'date') {
-    return (
-      <DatePicker
-        {...common}
-        rootClassName="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--picker"
-        className="form-editor-horizontal-table__field-date"
-        format="YYYY-MM-DD"
-      />
-    )
-  }
   return (
     <DatePicker
       {...common}
-      styles={horizontalTableDateTimePickerStyles}
-      showTime={horizontalTableDateTimeShowTime}
       rootClassName="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--picker"
-      className="form-editor-horizontal-table__field-datetime"
-      format="YYYY-MM-DD HH:mm"
+      className="form-editor-horizontal-table__field-date"
+      format="YYYY-MM-DD"
     />
   )
 }

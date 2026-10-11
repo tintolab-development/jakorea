@@ -1,19 +1,24 @@
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { Alert, Spin, Table } from 'antd'
+import { Alert, Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   geminiApprovedTrainingDeleteBlocked,
-  resolveGeminiDeleteBlockedAlert,
+  resolveGeminiDeleteBlockedModalCopy,
   resolveGeminiDeleteGuideModalCopy,
 } from '../../lib/delete-guide'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import {
   buildApprovedTrainingExcelRows,
   GEMINI_APPROVED_TRAINING_EXCEL_COLUMNS,
@@ -109,6 +114,8 @@ export function GeminiApprovedTrainingList() {
   const todayKey = useToday()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
+  const [deleteBlockedCopy, setDeleteBlockedCopy] = useState({ title: '', description: '' })
   const { mutateAsync: deleteApprovedTrainings } = useDeleteGeminiApprovedTrainingsMutation()
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
@@ -165,17 +172,26 @@ export function GeminiApprovedTrainingList() {
       showNoSelectionAlert()
       return
     }
+    const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
+    const selectedRows = filteredRows.filter(row => selectedIds.has(row.id))
+    if (selectedRows.some(geminiApprovedTrainingDeleteBlocked)) {
+      setDeleteBlockedCopy(
+        resolveGeminiDeleteBlockedModalCopy('연수', selectedRowKeys.length)
+      )
+      setDeleteBlockedOpen(true)
+      return
+    }
     setDeleteModalOpen(true)
-  }, [canWrite, selectedRowKeys, showNoSelectionAlert])
+  }, [canWrite, filteredRows, selectedRowKeys, showNoSelectionAlert])
 
   const handleConfirmDelete = useCallback(async () => {
     setDeleteModalOpen(false)
     const selectedIds = selectedRowKeys.map(key => String(key))
     const selectedIdSet = new Set(selectedIds)
     const selectedRows = filteredRows.filter(row => selectedIdSet.has(row.id))
-    const blockedAlert = resolveGeminiDeleteBlockedAlert('연수', selectedIds.length)
     if (selectedRows.some(geminiApprovedTrainingDeleteBlocked)) {
-      showAlert(blockedAlert)
+      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', selectedIds.length))
+      setDeleteBlockedOpen(true)
       return
     }
     try {
@@ -183,14 +199,16 @@ export function GeminiApprovedTrainingList() {
       const deletedIds = new Set(result.successIds)
       setSelectedRowKeys(selectedIds.filter(id => !deletedIds.has(id)))
       if (result.failureCount > 0) {
-        showAlert(blockedAlert)
+        setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', selectedIds.length))
+        setDeleteBlockedOpen(true)
         return
       }
       showDeleteCompletedAlert()
     } catch {
-      showAlert(blockedAlert)
+      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', selectedIds.length))
+      setDeleteBlockedOpen(true)
     }
-  }, [deleteApprovedTrainings, filteredRows, selectedRowKeys, showAlert])
+  }, [deleteApprovedTrainings, filteredRows, selectedRowKeys])
 
   const columns: ColumnsType<GeminiApprovedTrainingRow> = useMemo(
     () => [
@@ -333,9 +351,9 @@ export function GeminiApprovedTrainingList() {
         description={`총 ${(remoteEnabled ? totalElements : filteredRows.length).toLocaleString()}건`}
         actions={
           <>
-            <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
+            <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
               선택 삭제
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -343,7 +361,7 @@ export function GeminiApprovedTrainingList() {
           data: excelRows,
         }}
       >
-        <Table<GeminiApprovedTrainingRow>
+        <CmsDataTable<GeminiApprovedTrainingRow>
           rowKey="id"
           className="cms-data-table gemini-approved-training-list__table"
           tableLayout="fixed"
@@ -381,6 +399,12 @@ export function GeminiApprovedTrainingList() {
         confirmText="삭제"
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteModalOpen(false)}
+      />
+      <DeleteBlockedGuideModal
+        open={deleteBlockedOpen}
+        onClose={() => setDeleteBlockedOpen(false)}
+        title={deleteBlockedCopy.title}
+        description={deleteBlockedCopy.description}
       />
     </div>
   )

@@ -10,8 +10,7 @@ import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import { Controller, useForm, useFieldArray, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { settlementSchema, type SettlementFormData } from '@/entities/settlement/model/schema'
-import type { Settlement } from '@/types/domain'
-import { mockPrograms, mockMatchings } from '@/data/mock'
+import type { Matching, Program, Settlement } from '@/types/domain'
 import { calculateSettlementTotal } from '../lib/settlement-helpers'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMemo, useState } from 'react'
@@ -86,20 +85,19 @@ export function InstructorSettlementForm({
   const selectedProgramId = watch('programId')
 
   // 본인이 담당한 프로그램만 필터링
-  const availablePrograms = useMemo(() => {
+  const availablePrograms = useMemo((): Program[] => {
     if (!instructorId) return []
     // 본인이 매칭된 프로그램만 필터링
-    const myMatchings = mockMatchings.filter(m => m.instructorId === instructorId)
-    const myProgramIds = new Set(myMatchings.map(m => m.programId))
-    return mockPrograms.filter(p => myProgramIds.has(p.id))
+    void instructorId
+    return []
   }, [instructorId])
 
   // 선택된 프로그램에 맞는 매칭 필터링 (본인 매칭만)
-  const availableMatchings = useMemo(() => {
+  const availableMatchings = useMemo((): Matching[] => {
     if (!selectedProgramId || !instructorId) return []
-    return mockMatchings.filter(
-      m => m.programId === selectedProgramId && m.instructorId === instructorId
-    )
+    void selectedProgramId
+    void instructorId
+    return []
   }, [selectedProgramId, instructorId])
 
   const onFormSubmit: SubmitHandler<SettlementFormData> = async (data) => {

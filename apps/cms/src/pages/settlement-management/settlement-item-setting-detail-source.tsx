@@ -10,8 +10,8 @@ import {
   getSettlementItemSettingDetail,
   saveSettlementItemSettingDetail,
   type SettlementItemSettingDetail,
-} from '@/data/mock/settlement-item-setting-detail.mock'
-import type { SettlementItemSettingRow } from '@/data/mock/settlement-item-settings'
+} from '@/features/settlement-management/model/settlement-item-setting-detail'
+import type { SettlementItemSettingRow } from '@/features/settlement-management/model/settlement-item-settings'
 import { resolveSettingDetailFromConfig } from '@/features/settlement-management/api/settlement-configs/map-settlement-config-detail-to-upsert'
 import type { SettlementConfigResponse } from '@/shared/api/generated/settlement/schemas'
 

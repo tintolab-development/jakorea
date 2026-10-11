@@ -1,8 +1,9 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import type { UseFormReturn } from 'react-hook-form'
+import { useWatch, type UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
+import type { DateValue } from '@/types'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import type { GeneralProgramVolunteerInterviewScheduleDisplay } from '@/features/program/general/lib/volunteer-interview-schedule-display'
 import {
@@ -18,6 +19,7 @@ import {
   listFilledVolunteerInterviewExceptionBlockIds,
   syncVolunteerInterviewRangeSealOverlay,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import { ensureRecruitOperationalEditScope } from '@/features/program/general/lib/detail-operational-save-merge'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/recruit-form-volunteer-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
@@ -27,6 +29,9 @@ import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 import '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-interview-available-schedule-paragraph.css'
 
 const FORM_CLASS = 'program-registration-paragraph'
+
+const INTERVIEW_SCHEDULE_EDIT_DESCRIPTION =
+  '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요. 신청자 면접 선택지는 2차 면접 심사 기간 안에서 열리며, 기간을 비우면 봉사자 모집 기간이 쓰입니다.'
 
 function UnavailableDatesReadRow({
   recurring,
@@ -50,7 +55,7 @@ function UnavailableDatesReadRow({
   )
 }
 
-function GeneralProgramVolunteerInterviewScheduleView({
+function GeneralProgramVolunteerInterviewScheduleBody({
   display,
   isEdit,
   exceptionBlockKeys,
@@ -139,29 +144,23 @@ function GeneralProgramVolunteerInterviewScheduleView({
   )
 }
 
-const INTERVIEW_SCHEDULE_EDIT_DESCRIPTION =
-  '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요. 신청자 면접 선택지는 2차 면접 심사 기간 안에서 열리며, 기간을 비우면 봉사자 모집 기간이 쓰입니다.'
+function coerceInterviewBoundary(value: DateValue | undefined): string | undefined {
+  if (value == null) return undefined
+  if (typeof value === 'string') return value
+  if (value instanceof Date) return value.toISOString()
+  return undefined
+}
 
-export function GeneralProgramVolunteerInterviewScheduleSection({
-  program,
-  form,
-  isEdit,
-}: {
-  program: Program
-  form?: UseFormReturn<ProgramDetailEditFormValues>
-  isEdit: boolean
-}) {
-  const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
-  const editSeed = resolveGeneralProgramVolunteerInterviewScheduleEditSeed(program)
-  const recruitmentDisplay = resolveGeneralProgramVolunteerRecruitmentDisplay(program)
-  const interviewEnabledField = form?.watch('volunteerRecruitmentInterviewEnabled')
-  const interviewStart = form?.watch('interviewStartDate') ?? program.interviewStartDate
-  const interviewEnd = form?.watch('interviewEndDate') ?? program.interviewEndDate
+function useVolunteerInterviewOverlayHydration(
+  program: Program,
+  interviewStart: DateValue | undefined,
+  interviewEnd: DateValue | undefined
+) {
+  const interviewStartIso = coerceInterviewBoundary(interviewStart)
+  const interviewEndIso = coerceInterviewBoundary(interviewEnd)
   const [exceptionBlockKeys, setExceptionBlockKeys] = useState<number[]>([])
-  const [exceptionScheduleAddDisabled, setExceptionScheduleAddDisabled] = useState(
-    () => editSeed?.excludeNone ?? false
-  )
   const programIdRef = useRef(program.id)
+
   useLayoutEffect(() => {
     const source =
       program.registrationOverlay != null &&
@@ -170,7 +169,7 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
         ? program.registrationOverlay
         : undefined
     hydrateMissingVolunteerInterviewOverlay({ source, store: 'recruit' })
-    syncVolunteerInterviewRangeSealOverlay(interviewStart, interviewEnd)
+    syncVolunteerInterviewRangeSealOverlay(interviewStartIso, interviewEndIso)
     const filled = listFilledVolunteerInterviewExceptionBlockIds(
       { ...(source ?? {}), ...getGeneralRecruitOverlayRecord() },
       'recruit'
@@ -183,16 +182,78 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
       if (prev.length === 0) return filled
       return [...filled, ...prev.filter(id => !filled.includes(id))]
     })
-  }, [interviewEnd, interviewStart, program.id, program.registrationOverlay])
-  const showInterviewSchedule =
-    isEdit && form
-      ? interviewEnabledField === 'yes'
-      : isGeneralProgramVolunteerInterviewScheduleVisible(program) &&
-        recruitmentDisplay.interviewEnabledLabel === '면접 있음'
+  }, [interviewEndIso, interviewStartIso, program.id, program.registrationOverlay])
 
-  if (!showInterviewSchedule) return null
+  return { exceptionBlockKeys, setExceptionBlockKeys }
+}
 
-  const isFormEdit = Boolean(isEdit && form)
+function GeneralProgramVolunteerInterviewScheduleReadSection({ program }: { program: Program }) {
+  const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
+  const interviewStart = program.interviewStartDate
+  const interviewEnd = program.interviewEndDate
+  const { exceptionBlockKeys, setExceptionBlockKeys } = useVolunteerInterviewOverlayHydration(
+    program,
+    interviewStart,
+    interviewEnd
+  )
+
+  return (
+    <section aria-label="면접 진행 가능 일정">
+      <FormParagraphSectionHeader
+        title="면접 진행 가능 일정"
+        surface="responseEntry"
+        titleAligned
+        highlightParagraphId={RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule}
+      />
+      <GeneralProgramVolunteerInterviewScheduleBody
+        display={display}
+        isEdit={false}
+        exceptionBlockKeys={exceptionBlockKeys}
+        onRemoveExceptionBlock={key =>
+          setExceptionBlockKeys(prev => prev.filter(blockKey => blockKey !== key))
+        }
+      />
+    </section>
+  )
+}
+
+function GeneralProgramVolunteerInterviewScheduleEditSection({
+  program,
+  form,
+}: {
+  program: Program
+  form: UseFormReturn<ProgramDetailEditFormValues>
+}) {
+  const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
+  const editSeed = resolveGeneralProgramVolunteerInterviewScheduleEditSeed(program)
+  const interviewEnabledField = useWatch({
+    control: form.control,
+    name: 'volunteerRecruitmentInterviewEnabled',
+  }) as ProgramDetailEditFormValues['volunteerRecruitmentInterviewEnabled'] | undefined
+  const watchedInterviewStart = useWatch({
+    control: form.control,
+    name: 'interviewStartDate',
+  }) as string | undefined
+  const watchedInterviewEnd = useWatch({
+    control: form.control,
+    name: 'interviewEndDate',
+  }) as string | undefined
+  const interviewStart = watchedInterviewStart ?? program.interviewStartDate
+  const interviewEnd = watchedInterviewEnd ?? program.interviewEndDate
+  const [exceptionScheduleAddDisabled, setExceptionScheduleAddDisabled] = useState(
+    () => editSeed?.excludeNone ?? false
+  )
+
+  useLayoutEffect(() => {
+    ensureRecruitOperationalEditScope(program, 'volunteer')
+  }, [program])
+
+  const { exceptionBlockKeys, setExceptionBlockKeys } = useVolunteerInterviewOverlayHydration(
+    program,
+    interviewStart,
+    interviewEnd
+  )
+
   const interviewPeriodRange = useMemo((): [Dayjs, Dayjs] | null => {
     if (interviewStart == null || interviewEnd == null) return null
     const start = dayjs(interviewStart)
@@ -201,36 +262,36 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
     return start.isBefore(end, 'day') ? [start, end] : [end, start]
   }, [interviewEnd, interviewStart])
 
+  if (interviewEnabledField !== 'yes') return null
+
   return (
     <section aria-label="면접 진행 가능 일정">
       <FormParagraphSectionHeader
         title="면접 진행 가능 일정"
         surface="responseEntry"
         titleAligned
-        required={isFormEdit}
+        required
         highlightParagraphId={RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule}
-        description={isFormEdit ? INTERVIEW_SCHEDULE_EDIT_DESCRIPTION : undefined}
+        description={INTERVIEW_SCHEDULE_EDIT_DESCRIPTION}
         titleTrailing={
-          isFormEdit ? (
-            <div className="volunteer-interview-available-schedule__card-title-actions">
-              <CmsButton
-                type="button"
-                variant="secondary"
-                size="medium"
-                width={160}
-                disabled={exceptionScheduleAddDisabled}
-                icon={<ButtonAddIcon aria-hidden />}
-                onClick={() => setExceptionBlockKeys(prev => [...prev, Date.now()])}
-              >
-                예외 일정 추가
-              </CmsButton>
-            </div>
-          ) : undefined
+          <div className="volunteer-interview-available-schedule__card-title-actions">
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="medium"
+              width={160}
+              disabled={exceptionScheduleAddDisabled}
+              icon={<ButtonAddIcon aria-hidden />}
+              onClick={() => setExceptionBlockKeys(prev => [...prev, Date.now()])}
+            >
+              예외 일정 추가
+            </CmsButton>
+          </div>
         }
       />
-      <GeneralProgramVolunteerInterviewScheduleView
+      <GeneralProgramVolunteerInterviewScheduleBody
         display={display}
-        isEdit={isFormEdit}
+        isEdit
         exceptionBlockKeys={exceptionBlockKeys}
         onRemoveExceptionBlock={key =>
           setExceptionBlockKeys(prev => prev.filter(blockKey => blockKey !== key))
@@ -241,4 +302,27 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
       />
     </section>
   )
+}
+
+export function GeneralProgramVolunteerInterviewScheduleSection({
+  program,
+  form,
+  isEdit,
+}: {
+  program: Program
+  form?: UseFormReturn<ProgramDetailEditFormValues>
+  isEdit: boolean
+}) {
+  if (isEdit && form) {
+    return <GeneralProgramVolunteerInterviewScheduleEditSection program={program} form={form} />
+  }
+
+  const recruitmentDisplay = resolveGeneralProgramVolunteerRecruitmentDisplay(program)
+  const showInterviewSchedule =
+    isGeneralProgramVolunteerInterviewScheduleVisible(program) &&
+    recruitmentDisplay.interviewEnabledLabel === '면접 있음'
+
+  if (!showInterviewSchedule) return null
+
+  return <GeneralProgramVolunteerInterviewScheduleReadSection program={program} />
 }

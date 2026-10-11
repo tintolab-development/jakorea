@@ -4,10 +4,10 @@
 
 import type { SecondInterviewScreeningStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
 
+import { UJAT_DEFAULT_EDUCATION_REGIONS } from '@/features/program/ujat/lib/ujat-default-education-region-rows'
 import {
   getUjatEducationRegionSortOrderMap,
   getUjatVolunteerPreferredRegionLabels,
-  UJAT_DEFAULT_EDUCATION_REGIONS,
 } from '@/features/program/ujat/lib/ujat-education-regions'
 
 /** 기본 희망 교육 활동 지역 라벨 — 런타임 목록은 `getUjatVolunteerPreferredRegionLabels()` */

@@ -30,10 +30,12 @@ export interface LabeledSearchInputProps {
   showLabel?: boolean
   /** 포커스 해제 시 콜백 (한글 IME 등 입력 완료 후 URL 동기화용) */
   onBlur?: () => void
-  /** default: 일반 폼 높이. filter: 통일 필터 카드(44px 등) */
+  /** default: 일반 폼 높이(large). filter: TableFilterGroup 등 필터 카드(medium / 40px) */
   uiVariant?: 'default' | 'filter'
   /** true면 숫자만 입력 가능(비숫자 문자·붙여넣기 즉시 제거) */
   numericOnly?: boolean
+  /** 레이블–인풋 연결용 id (`CmsInput` id). 미지정 시 CmsInput 내부 useId */
+  inputId?: string
 }
 
 /**
@@ -51,7 +53,9 @@ export function LabeledSearchInput({
   disabled = false,
   showPrefixIcon = false,
   showLabel = true,
+  uiVariant = 'default',
   numericOnly = false,
+  inputId,
 }: LabeledSearchInputProps) {
   const handleChange = (raw: string) => {
     const next = numericOnly ? raw.replace(/\D/g, '') : raw
@@ -59,6 +63,7 @@ export function LabeledSearchInput({
   }
   const wrapperClassName = [
     'labeled-search-input',
+    uiVariant === 'filter' && 'labeled-search-input--filter',
     !showPrefixIcon && 'labeled-search-input--no-icon',
     !showLabel && 'labeled-search-input--no-label',
   ]
@@ -67,12 +72,21 @@ export function LabeledSearchInput({
 
   return (
     <div className={wrapperClassName} style={style}>
-      {showLabel && <span className="labeled-search-input__label">{label}</span>}
+      {showLabel ? (
+        inputId ? (
+          <label className="labeled-search-input__label cms-field__label" htmlFor={inputId}>
+            <span className="cms-field__label-text">{label}</span>
+          </label>
+        ) : (
+          <span className="labeled-search-input__label">{label}</span>
+        )
+      ) : null}
       <CmsInput
         className="labeled-search-input__control labeled-search-input__input"
         placeholder={placeholder}
         value={value}
-        inputSize="large"
+        id={inputId}
+        inputSize={uiVariant === 'filter' ? 'medium' : 'large'}
         onChange={e => handleChange(e.target.value)}
         onBlur={onBlur}
         inputMode={numericOnly ? 'numeric' : undefined}

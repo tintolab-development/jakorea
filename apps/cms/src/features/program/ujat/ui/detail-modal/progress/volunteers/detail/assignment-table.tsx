@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui'
 import { STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME } from '@/shared/components/status-dropdown-cell'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   UjatVolunteerAssignmentRoleCell,
   UJAT_VOLUNTEER_ASSIGNMENT_ROLE_CELL_CLASSNAME,
@@ -307,7 +307,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
   return (
     <>
       <div className="ujat-volunteer-assignment-table">
-        <Table<UjatVolunteerAssignmentProgressRow & { no: number }>
+        <CmsDataTable<UjatVolunteerAssignmentProgressRow & { no: number }>
           rowKey="id"
           className="cms-data-table ujat-volunteer-assignment-table__table"
           columns={columns}

@@ -12,6 +12,7 @@ import {
   useMyProgramApplications,
   type EducationApplicationListParams,
   type EducationDisplayStatusAudience,
+  EducationApplicationListSkeleton,
 } from '@/features/mypage'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFPagination, PFText } from '@/shared/ui'
@@ -56,7 +57,7 @@ export function EducationListContent({
   ])
 
   if (remoteApplications.isRemoteEnabled && remoteApplications.isLoading) {
-    return null
+    return <EducationApplicationListSkeleton rowCount={3} />
   }
 
   return (

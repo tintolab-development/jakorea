@@ -7,11 +7,12 @@ import { isSocialAuthSignupRemoteEnabled } from '@/features/auth/api/social-auth
 import { ADMIN_REGISTER_TERMS_VERSION } from '@/features/auth/lib/admin-register.constants'
 import {
   addConnectedProvider,
-  buildRegisterSocialConnectCompletePath,
   buildRegisterSocialConnectFailedPath,
+  buildRegisterSocialConnectPath,
   buildSocialConnectCompletePath,
   clearOAuthIntent,
   getRegisterSocialRedirect,
+  resolveSocialConnectFinishPath,
 } from '@/features/auth/lib/register-social-connect-state'
 import {
   clearSignupSocialLinkHandoff,
@@ -46,7 +47,11 @@ export function RegisterSocialSignupCallbackPage() {
       const isAuthenticated = useAuthStore.getState().isAuthenticated
       const linkCompletePath = isAuthenticated
         ? buildSocialConnectCompletePath(registerRedirect)
-        : buildRegisterSocialConnectCompletePath(registerRedirect)
+        : resolveSocialConnectFinishPath({
+            isAuthenticated: false,
+            redirectPath: buildRegisterSocialConnectPath(registerRedirect),
+            fallbackPath: '/login',
+          })
 
       if (!isSocialAuthSignupRemoteEnabled()) {
         if (searchParams.has('socialVerificationSessionId')) {

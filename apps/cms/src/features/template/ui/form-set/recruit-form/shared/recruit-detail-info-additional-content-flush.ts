@@ -6,7 +6,7 @@
 import { useSyncExternalStore } from 'react'
 import { patchGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 
-const gettersByOverlayKey = new Map<string, () => string>()
+const gettersByOverlayKey = new Map<string, () => string | null>()
 const resetGenerationListeners = new Set<() => void>()
 let persistSuppressed = false
 let contentResetGeneration = 0
@@ -31,6 +31,16 @@ export function commitRecruitDetailContentReset(): void {
 
 export function endRecruitDetailContentReset(): void {
   persistSuppressed = false
+}
+
+/**
+ * pending만 읽는다. flush 금지는 overlay 적용 후 `consumeWizardContentResetPending`에서 푼다.
+ *
+ * 수동 회귀: 신규 leftover 없음 · 복사본 단락+상세 WYSIWYG · 탭 전환 시 상세 유지 ·
+ * 임시저장 후 모집 유지 · 등록 완료 양식 매핑/상세 조회 · 상세 수정 격리 · DEV 자동입력.
+ */
+export function peekWizardContentResetPending(): boolean {
+  return wizardContentResetPending
 }
 
 export function consumeWizardContentResetPending(): boolean {
@@ -66,7 +76,7 @@ export function useRecruitDetailContentResetGeneration(): number {
 /** `${overlayKeyPrefix}.*` HTML 키에 getHTML 등록 */
 export function registerRecruitDetailRichTextHtml(
   overlayKey: string,
-  getter: (() => string) | null
+  getter: (() => string | null) | null
 ): void {
   if (getter == null) {
     gettersByOverlayKey.delete(overlayKey)

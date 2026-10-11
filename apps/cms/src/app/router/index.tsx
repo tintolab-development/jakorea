@@ -29,7 +29,6 @@ const lazyLoad = <T extends React.ComponentType<any>>(importFunc: () => Promise<
 import { LoginPage } from '@/pages/auth/login-page'
 import { RegisterPage } from '@/pages/auth/register-page'
 import { RegisterCompletePage } from '@/pages/auth/register-complete-page'
-import { RegisterSocialConnectCompletePage } from '@/pages/auth/register-social-connect-complete-page'
 import { RegisterSocialConnectFailedPage } from '@/pages/auth/register-social-connect-failed-page'
 import { RegisterSocialConnectPage } from '@/pages/auth/register-social-connect-page'
 import { SocialConnectCompletePage } from '@/pages/auth/social-connect-complete-page'
@@ -215,7 +214,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/register/social-connect/complete',
-    element: <RegisterSocialConnectCompletePage />,
+    element: <Navigate to="/social-connect/complete" replace />,
   },
   {
     path: '/register/social-connect/failed',

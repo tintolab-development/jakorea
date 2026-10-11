@@ -402,6 +402,20 @@ export async function fetchAdminProgramPostAttachmentsRemote(
   )
 }
 
+/** GET /api/admin/programs/{programId}/post-attachments — 프로그램 단위 첨부 목록 */
+export async function fetchAdminProgramAllPostAttachmentsRemote(
+  programId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostAttachmentListResponse').ProgramPostAttachmentListResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/post-attachments`,
+      method: 'GET',
+    })
+  )
+}
+
 export async function putAdminProgramPostAttachmentsRemote(
   programId: string,
   postId: string,

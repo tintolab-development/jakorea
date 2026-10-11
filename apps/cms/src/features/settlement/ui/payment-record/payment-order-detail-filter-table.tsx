@@ -3,13 +3,13 @@
  */
 
 import type { Dayjs } from 'dayjs'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   PaymentOrderAdminInstructorDetailProgramRow,
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProgramDetailInstructorRow,
   PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
@@ -18,7 +18,9 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { PaymentOrderBatchConfirmModal } from './payment-order-batch-confirm-modal'
 import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
 import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
-import { CmsButton } from '@/shared/ui'
+import {
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import {
   usePaymentOrderDetailLinesController,
   type PaymentOrderDetailLineRow,
@@ -121,9 +123,8 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         description={`총 ${filteredRows.length}건`}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               width={160}
               disabled={!canBatchConfirm}
               onClick={() => {
@@ -132,21 +133,20 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
               }}
             >
               일괄 확인
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               variant="primary"
-              size="large"
               style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
               disabled={selectedRowKeys.length === 0}
               onClick={handlePaymentStatementIssue}
             >
               지급조서 발급
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
       >
-        <Table<PaymentOrderDetailLineRow>
+        <CmsDataTable<PaymentOrderDetailLineRow>
           className="cms-data-table"
           rowKey="id"
           columns={columns}

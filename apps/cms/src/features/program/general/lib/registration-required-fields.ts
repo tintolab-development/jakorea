@@ -25,6 +25,10 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
+import {
+  PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT,
+  type ProgramRegistrationIpsTypeValue,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 
 export type GeneralProgramRegistrationRequiredFieldContext = {
   participant: ProgramRegistrationParticipantSelection
@@ -70,6 +74,17 @@ function isIpsIncomplete(value: unknown): boolean {
   const row = value as { category?: unknown }
   // 2차(detail) 미선택·none은 create 요약「해당 없음」과 동일 — 1차 IPS 유형만 필수
   return isEmptyText(row.category)
+}
+
+function resolveScheduleCurriculumIpsByDetail(
+  ipsByDetail: Record<number, unknown>,
+  index: number
+): ProgramRegistrationIpsTypeValue {
+  const raw = ipsByDetail[index]
+  if (raw != null && typeof raw === 'object' && !isEmptyText((raw as { category?: unknown }).category)) {
+    return raw as ProgramRegistrationIpsTypeValue
+  }
+  return PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT
 }
 
 function isRecord(value: unknown): value is Record<number, unknown> {
@@ -392,9 +407,8 @@ function findIncompleteScheduleCurriculumReasons(
 
   const replaceFirstTraining =
     ctx.scheduleCurriculumPreEducation && ctx.preEducationDisplayMode === 'replaceFirst'
-  const useEventScheduleDate =
-    ctx.sessionRoundType === 'multi' &&
-    (ctx.educationFormScheduleDetail === 'perSchedule' || replaceFirstTraining)
+  /** `shouldUseScheduleEventBlockLayout` — 복수 회차 일정형은 유형 설정과 무관하게 진행 일정(date) 필드 */
+  const useEventScheduleDate = ctx.sessionRoundType === 'multi'
 
   for (let index = 1; index <= detailCount; index += 1) {
     const skipFixedTrainingName = replaceFirstTraining && index === 1
@@ -419,7 +433,8 @@ function findIncompleteScheduleCurriculumReasons(
     }
     pushReason(
       reasons,
-      ctx.ipsScheduleDetail === 'perSchedule' && isIpsIncomplete(ipsByDetail[index]),
+      ctx.ipsScheduleDetail === 'perSchedule' &&
+        isIpsIncomplete(resolveScheduleCurriculumIpsByDetail(ipsByDetail, index)),
       `scheduleCurriculum.ips[${index}]`
     )
     pushReason(

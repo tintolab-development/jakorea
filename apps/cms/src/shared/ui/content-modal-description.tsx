@@ -24,9 +24,13 @@ function parseBoldSegments(line: string, lineKey: number): ReactNode[] {
   return parts.length > 0 ? parts : [line]
 }
 
+function normalizeDescriptionNewlines(text: string): string {
+  return text.replace(/\\n/g, '\n')
+}
+
 /** ContentModal `description` — `\n` 개행, `**텍스트**` 볼드(700) */
 export function renderContentModalDescription(text: string): ReactNode {
-  const lines = text.split('\n')
+  const lines = normalizeDescriptionNewlines(text).split('\n')
 
   return (
     <p className="content-modal__description-text">

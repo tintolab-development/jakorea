@@ -44,7 +44,7 @@ assert.equal(twoLayout.rows.length, 1)
 assert.equal(twoLayout.rows[0]?.stageCount, 2)
 assert.equal(twoLayout.rows[0]?.stages.length, 2)
 assert.equal(twoLayout.rows[0]?.stages[0]?.kind, 'subjective')
-assert.equal(twoLayout.rows[0]?.stages[1]?.kind, 'date_time')
+assert.equal(twoLayout.rows[0]?.stages[1]?.kind, 'date')
 assert.equal(twoLayout.rows[0]?.stages[0]?.header, '시작')
 assert.equal(twoLayout.rows[0]?.stages[1]?.header, '종료')
 
@@ -111,11 +111,27 @@ const dateRow: VerticalTableParagraph = normalizeVerticalTableParagraph({
     },
   ],
 })
+assert.deepEqual(dateRow.rows[0]?.stageKinds, ['date'])
+assert.equal(dateRow.rows[0]?.dateTimeStageModes, undefined)
 const patchedTime = patchVerticalTableCompositeTime(dateRow, 0, 0, '14:30')
 assertNormalizedPreserved(patchedTime)
 assert.equal(patchedTime.rows[0]?.dateTimeStage0AuxTime, '14:30')
 assert.equal(patchedTime.rows[0]?.dateTimeStage1Time, '14:30')
 assert.equal(patchedTime.rows[0]?.cells[0], '2026-10-02')
+
+const timeFromLegacy: VerticalTableParagraph = normalizeVerticalTableParagraph({
+  ...createVerticalTableParagraph('vt-time', 'date_time'),
+  rows: [
+    {
+      stageCount: 1,
+      headers: ['시각'],
+      cells: [''],
+      stageKinds: ['date_time'],
+      dateTimeStageModes: ['time'],
+    },
+  ],
+})
+assert.deepEqual(timeFromLegacy.rows[0]?.stageKinds, ['time'])
 
 const choiceRow: VerticalTableParagraph = normalizeVerticalTableParagraph({
   ...createVerticalTableParagraph('vt-choice', 'multiple_choice'),

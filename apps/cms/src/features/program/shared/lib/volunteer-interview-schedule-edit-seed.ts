@@ -16,13 +16,6 @@ export type VolunteerInterviewScheduleEditSeed = UnavailableDatesExclusionState 
   timeUnit: '15' | '30' | '60'
 }
 
-function parseTimeSlotLabels(slots: string): string[] {
-  return slots
-    .split(',')
-    .map(label => label.trim())
-    .filter(Boolean)
-}
-
 function inferTimeRangeFromSlotLabels(
   labels: string[]
 ): VolunteerInterviewScheduleEditSeed['interviewTimeRange'] | null {
@@ -54,12 +47,14 @@ function inferTimeRangeFromSlotLabels(
 export function buildVolunteerInterviewScheduleEditSeed(input: {
   recurringUnavailable: string
   specificUnavailableDateIsos?: string[]
-  availableTimeSlots: string
+  /** SSOT — overlay selectedSlotKeys에서만 복원. availableTimeSlots split 금지 */
+  selectedTimeSlotLabels?: string[]
+  interviewTimeRange?: VolunteerInterviewScheduleEditSeed['interviewTimeRange']
+  timeUnit?: VolunteerInterviewScheduleEditSeed['timeUnit']
 }): VolunteerInterviewScheduleEditSeed | undefined {
-  if (!input.availableTimeSlots.trim() || input.availableTimeSlots === '-') return undefined
-
-  const selectedTimeSlotLabels = parseTimeSlotLabels(input.availableTimeSlots)
-  const interviewTimeRange = inferTimeRangeFromSlotLabels(selectedTimeSlotLabels)
+  const selectedTimeSlotLabels = (input.selectedTimeSlotLabels ?? []).filter(Boolean)
+  const interviewTimeRange =
+    input.interviewTimeRange ?? inferTimeRangeFromSlotLabels(selectedTimeSlotLabels)
   if (!interviewTimeRange) return undefined
 
   const recurring = input.recurringUnavailable
@@ -73,6 +68,6 @@ export function buildVolunteerInterviewScheduleEditSeed(input: {
     ...exclusion,
     selectedTimeSlotLabels,
     interviewTimeRange,
-    timeUnit: '30',
+    timeUnit: input.timeUnit ?? '30',
   }
 }

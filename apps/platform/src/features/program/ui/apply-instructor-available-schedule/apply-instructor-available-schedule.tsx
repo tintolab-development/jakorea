@@ -34,6 +34,25 @@ const SEOUL_PARTS_FORMAT = new Intl.DateTimeFormat('en-CA', {
   hourCycle: 'h23',
 })
 
+const ISO_DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/
+
+function readIsoDateOnly(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return ISO_DATE_ONLY_RE.test(trimmed) ? trimmed : undefined
+}
+
+function isEducationPeriodScheduleValue(id: string): boolean {
+  return /:education-period:\d+$/i.test(id)
+}
+
+function optionMetadata(option: Record<string, unknown>): Record<string, unknown> {
+  const meta = option.metadata
+  return meta && typeof meta === 'object' && !Array.isArray(meta)
+    ? (meta as Record<string, unknown>)
+    : option
+}
+
 function seoulDateTimeParts(value: unknown): { dateKey: string; time: string } | null {
   if (typeof value !== 'string' || !value.trim()) return null
   const date = new Date(value)
@@ -52,17 +71,33 @@ function runtimeScheduleSlotFromOption(
   id: string,
   label: string,
 ): ApplyInstructorScheduleSlot {
-  const start = seoulDateTimeParts(option.startAt)
-  if (!start) return { id, label }
-  const end = seoulDateTimeParts(option.endAt)
-  const organizationName = String(option.organizationName ?? '').trim()
+  const meta = optionMetadata(option)
+  const displayLabel = label || String(option.label ?? option.option_label ?? '').trim() || id
+  const isEducationPeriod =
+    isEducationPeriodScheduleValue(id) || meta.educationPeriodIndex != null
+
+  if (isEducationPeriod) {
+    const periodStart =
+      readIsoDateOnly(meta.periodStartDate) ?? readIsoDateOnly(option.periodStartDate)
+    return {
+      id,
+      label: displayLabel,
+      dateKey: periodStart,
+      title: displayLabel,
+    }
+  }
+
+  const start = seoulDateTimeParts(option.startAt ?? meta.startAt)
+  if (!start) return { id, label: displayLabel }
+  const end = seoulDateTimeParts(option.endAt ?? meta.endAt)
+  const organizationName = String(option.organizationName ?? meta.organizationName ?? '').trim()
   const allDay =
     end != null && start.time === '00:00' && end.time === '00:00' && end.dateKey > start.dateKey
   return {
     id,
-    label,
+    label: displayLabel,
     dateKey: start.dateKey,
-    title: organizationName || label.split(' | ')[0] || label,
+    title: organizationName || displayLabel.split(' | ')[0] || displayLabel,
     detail: allDay ? '종일' : end ? `${start.time} ~ ${end.time}` : start.time,
   }
 }
@@ -94,16 +129,9 @@ export function buildInstructorApplyScheduleSlots(input: {
     .filter((row): row is ApplyInstructorScheduleSlot => row != null)
 }
 
-/**
- * form-bindings 응답의 강사 일정 런타임 선택지 (`items[].id/label` 또는 `options[].option_value/option_label`).
- * `runtimeResolved`가 없는 문항은 런타임 선택지 대상이 아니므로 null — 프로그램 일정 줄로 만든다.
- */
-export function readRuntimeInstructorScheduleSlots(
-  paragraph: unknown,
-): ApplyInstructorScheduleSlot[] | null {
-  if (!paragraph || typeof paragraph !== 'object') return null
-  const row = paragraph as Record<string, unknown>
-  if (typeof row.runtimeResolved !== 'boolean') return null
+function bindingOptionSlotsFromParagraphRow(
+  row: Record<string, unknown>,
+): ApplyInstructorScheduleSlot[] {
   const rawItems = Array.isArray(row.items)
     ? row.items
     : Array.isArray(row.options)
@@ -116,6 +144,30 @@ export function readRuntimeInstructorScheduleSlots(
     const label = String(option.label ?? option.option_label ?? '').trim()
     return id ? [runtimeScheduleSlotFromOption(option, id, label || id)] : []
   })
+}
+
+/**
+ * form-bindings 동적 선택지 — 면접·봉사 일정 등 (`items[].id` / `options[].option_value`).
+ * `runtimeResolved` 없이도 items가 있으면 파싱한다.
+ */
+export function readPortalApplicationBindingOptionSlots(
+  paragraph: unknown,
+): ApplyInstructorScheduleSlot[] {
+  if (!paragraph || typeof paragraph !== 'object') return []
+  return bindingOptionSlotsFromParagraphRow(paragraph as Record<string, unknown>)
+}
+
+/**
+ * form-bindings 응답의 강사 일정 런타임 선택지 (`items[].id/label` 또는 `options[].option_value/option_label`).
+ * `runtimeResolved`가 없는 문항은 런타임 선택지 대상이 아니므로 null — 프로그램 일정 줄로 만든다.
+ */
+export function readRuntimeInstructorScheduleSlots(
+  paragraph: unknown,
+): ApplyInstructorScheduleSlot[] | null {
+  if (!paragraph || typeof paragraph !== 'object') return null
+  const row = paragraph as Record<string, unknown>
+  if (typeof row.runtimeResolved !== 'boolean') return null
+  return bindingOptionSlotsFromParagraphRow(row)
 }
 
 /** 런타임 선택지 제출값 — 백엔드는 목록에 있는 `option_value` 배열만 받는다. */

@@ -36,8 +36,7 @@ import {
 } from '@/features/program/general/lib/registration-overlay-to-program'
 import { readRegistrationOverlaySponsorId } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
-import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
-import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   awaitRecruitDetailMediaUploads,
@@ -48,12 +47,12 @@ import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/gen
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 
 function persistRegistrationAndRecruitOverlay(
+  program: Program,
   generalOverlay: Record<string, unknown>
 ): Record<string, unknown> {
   return {
-    ...getApplicantRecruitInstitutionOverlayRecord(),
-    ...getGeneralRecruitOverlayRecord(),
     ...generalOverlay,
+    ...collectSelectedRecruitOverlaysForProgram(program),
   }
 }
 
@@ -392,11 +391,11 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
       registrationOverlay
     )
     flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-    const recruitOverlay = {
-      ...getApplicantRecruitInstitutionOverlayRecord(),
-      ...getGeneralRecruitOverlayRecord(),
-    }
-    const persistedOverlay = persistRegistrationAndRecruitOverlay(registrationOverlay)
+    const recruitOverlay = collectSelectedRecruitOverlaysForProgram(withEconomyRegistration)
+    const persistedOverlay = persistRegistrationAndRecruitOverlay(
+      withEconomyRegistration,
+      registrationOverlay
+    )
     return withPersistedTargetLevels({
       ...applyGeneralRecruitOverlayToProgram(withEconomyRegistration, recruitOverlay, {
         preferOverlay: true,
@@ -421,12 +420,10 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   })
 
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+  const recruitOverlay = collectSelectedRecruitOverlaysForProgram(withRegistration)
   const withRecruit = applyGeneralRecruitOverlayToProgram(
     withRegistration,
-    {
-      ...getApplicantRecruitInstitutionOverlayRecord(),
-      ...getGeneralRecruitOverlayRecord(),
-    },
+    recruitOverlay,
     { preferOverlay: true }
   )
 
@@ -434,6 +431,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     return withPersistedTargetLevels({
       ...withRecruit,
       registrationOverlay: persistRegistrationAndRecruitOverlay(
+        withRecruit,
         getProgramRegistrationOverlayRecord()
       ),
     })
@@ -459,6 +457,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   return withPersistedTargetLevels({
     ...withRecruit,
     registrationOverlay: persistRegistrationAndRecruitOverlay(
+      withRecruit,
       getProgramRegistrationOverlayRecord()
     ),
     generalParticipantTypes: ['school_institution'],
@@ -683,7 +682,7 @@ export async function persistGeneralProgramRegistration(args: {
   })
 
   // 생성 요청 전에 스냅샷 — create 후 overlay 초기화돼도 썸네일·첨부 바인딩 가능
-  const recruitMediaOverlay = { ...getGeneralRecruitOverlayRecord() }
+  const recruitMediaOverlay = collectSelectedRecruitOverlaysForProgram(program)
 
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {
     const { createCompanySchoolProgram } = await import(

@@ -25,13 +25,12 @@ import {
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { Instructor } from '@/types/domain'
 import { formatInstructorSettlementAccountParts } from '@/features/user/detail/ui/user-basic-info/display'
-import type { Settlement, Matching, Program } from '@/types/domain'
+import type { Settlement, Matching, Program, Schedule } from '@/types/domain'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { getStatusConfigAccentColor, settlementStatusStatusConfig } from '@/shared/constants/status'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { programService } from '@/entities/program/api/program-service'
-import { mockMatchings, mockSchedules } from '@/data/mock'
 import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -67,7 +66,7 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
 
   // 강사별 매칭 목록 (프로그램 정보 포함)
   const instructorMatchings = useMemo(() => {
-    const allMatchings = mockMatchings
+    const allMatchings: Matching[] = []
     return allMatchings
       .filter((m: Matching) => m.instructorId === instructor.id)
       .map((m: Matching) => {
@@ -78,14 +77,8 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
   }, [instructor.id])
 
   // 강사별 스케줄 목록 (매칭과 연계)
-  const instructorSchedules = useMemo(() => {
-    return mockSchedules
-      .filter(schedule => schedule.instructorId === instructor.id)
-      .map(schedule => {
-        const matching = instructorMatchings.find(m => m.scheduleId === schedule.id)
-        const program = programService.getByIdSync(schedule.programId)
-        return { ...schedule, matching, program }
-      })
+  const instructorSchedules = useMemo((): Schedule[] => {
+    return []
   }, [instructor.id, instructorMatchings])
 
   // 일정 변경 및 취소 횟수 집계

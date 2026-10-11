@@ -31,10 +31,11 @@ import {
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
-import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
+import { DeleteGuideModal, showDeleteCompletedAlert, FilterTableToolbarButton } from '@/shared/ui'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import {
   isProgramHardDeleteBlockedError,
-  PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
+  resolveProgramHardDeleteBlockedModalCopy,
   resolveProgramDeleteGuideModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
 import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
@@ -114,6 +115,11 @@ function TrainedTeachersProgramPageContent() {
     () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
     [programsPendingBulkDelete.length]
   )
+  const [programDeleteBlockedOpen, setProgramDeleteBlockedOpen] = useState(false)
+  const [programDeleteBlockedCopy, setProgramDeleteBlockedCopy] = useState({
+    title: '',
+    description: '',
+  })
   const [, setHasListFilters] = useState(false)
   const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
   const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
@@ -143,9 +149,7 @@ function TrainedTeachersProgramPageContent() {
   const detailData = detailQuery.data ?? null
   const detailProgram =
     detailData ??
-    (programIdFromUrl
-      ? ({ id: programIdFromUrl } as Program)
-      : selectedProgramForFullPageModal)
+    (programIdFromUrl ? ({ id: programIdFromUrl } as Program) : selectedProgramForFullPageModal)
 
   useEffect(() => {
     setSelectedRowKeys([])
@@ -170,7 +174,14 @@ function TrainedTeachersProgramPageContent() {
     if (filteredPrograms.length === 0) return
     const program = filteredPrograms.find(item => item.id === programIdFromUrl)
     if (program) setSelectedProgramForFullPageModal(program)
-  }, [detailQuery.data, detailQuery.isFetching, detailQuery.isLoading, filteredPrograms, programIdFromUrl, searchParams])
+  }, [
+    detailQuery.data,
+    detailQuery.isFetching,
+    detailQuery.isLoading,
+    filteredPrograms,
+    programIdFromUrl,
+    searchParams,
+  ])
 
   useEffect(() => {
     if (!listQuery.isError || listQuery.isFetching) return
@@ -187,13 +198,7 @@ function TrainedTeachersProgramPageContent() {
       title: '상세 조회 실패',
       content: '프로그램 상세를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
     })
-  }, [
-    detailQuery.isError,
-    detailQuery.isFetching,
-    programIdFromUrl,
-    remoteEnabled,
-    showAlert,
-  ])
+  }, [detailQuery.isError, detailQuery.isFetching, programIdFromUrl, remoteEnabled, showAlert])
 
   const userPreviewSyncParams = useMemo(
     () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
@@ -362,7 +367,9 @@ function TrainedTeachersProgramPageContent() {
   }, [setSearchParams])
 
   const handleBulkDeleteClick = useCallback(() => {
-    const programsToDelete = filteredPrograms.filter(program => selectedRowKeys.includes(program.id))
+    const programsToDelete = filteredPrograms.filter(program =>
+      selectedRowKeys.includes(program.id)
+    )
     if (programsToDelete.length === 0) {
       showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
       return
@@ -386,17 +393,16 @@ function TrainedTeachersProgramPageContent() {
         showDeleteCompletedAlert()
         return
       } catch (error) {
-        showAlert(
-          isProgramHardDeleteBlockedError(error)
-            ? {
-                title: PROGRAM_HARD_DELETE_BLOCKED_ALERT_TITLE,
-                content: error.message,
-              }
-            : {
-                title: '삭제 실패',
-                content: '선택한 프로그램 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-              }
-        )
+        if (isProgramHardDeleteBlockedError(error)) {
+          const count = programsPendingBulkDelete.length
+          setProgramDeleteBlockedCopy(resolveProgramHardDeleteBlockedModalCopy(count))
+          setProgramDeleteBlockedOpen(true)
+        } else {
+          showAlert({
+            title: '삭제 실패',
+            content: '선택한 프로그램 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          })
+        }
       }
       setBulkDeleteModalOpen(false)
       setProgramsPendingBulkDelete([])
@@ -422,30 +428,29 @@ function TrainedTeachersProgramPageContent() {
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
       {showBulkSelection && (
-        <CmsButton
+        <FilterTableToolbarButton
           variant="delete"
           width={140}
           onClick={handleBulkDeleteClick}
           className="program-list-page__bulk-delete-button"
         >
           선택 삭제
-        </CmsButton>
+        </FilterTableToolbarButton>
       )}
-      <CmsButton
+      <FilterTableToolbarButton
         variant="secondary"
-        size="large"
         icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
         onClick={handleViewModeToggle}
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
-      </CmsButton>
+      </FilterTableToolbarButton>
     </div>
   )
 
   const programListToolbarActionsAfterExcel = (
-    <CmsButton variant="primary" size="large" width={180} onClick={handleProgramCreateClick}>
-      프로그램 신규 등록
-    </CmsButton>
+    <FilterTableToolbarButton variant="primary" width={120} onClick={handleProgramCreateClick}>
+      신규 등록
+    </FilterTableToolbarButton>
   )
 
   return (
@@ -498,44 +503,41 @@ function TrainedTeachersProgramPageContent() {
       <ProgramModalWhenOpen
         open={Boolean(programIdFromUrl) && !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)}
       >
-      <LazyProgramDetailFullPageModal
-        open={
-          Boolean(programIdFromUrl) &&
-          !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)
-        }
-        program={detailProgram}
-        programVariant="trained-teachers"
-        searchParams={searchParams}
-        setSearchParams={setSearchParams}
-        externalLoading={
-          Boolean(programIdFromUrl) &&
-          !detailData &&
-          (detailQuery.isFetching || detailQuery.isLoading)
-        }
-        externalError={detailQuery.isError && !detailData}
-        onClose={handleCloseFullPageModal}
-        onUpdateProgram={
-          remoteEnabled
-            ? async (programId, program, patch) => {
-                await updateMutation.mutateAsync({ programId, program, patch })
-                refetchPrograms()
-              }
-            : undefined
-        }
-        onRequestDelete={program => {
-          setProgramsPendingBulkDelete([program])
-          setBulkDeleteModalOpen(true)
-        }}
-      />
+        <LazyProgramDetailFullPageModal
+          open={Boolean(programIdFromUrl) && !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)}
+          program={detailProgram}
+          programVariant="trained-teachers"
+          searchParams={searchParams}
+          setSearchParams={setSearchParams}
+          externalLoading={
+            Boolean(programIdFromUrl) &&
+            !detailData &&
+            (detailQuery.isFetching || detailQuery.isLoading)
+          }
+          externalError={detailQuery.isError && !detailData}
+          onClose={handleCloseFullPageModal}
+          onUpdateProgram={
+            remoteEnabled
+              ? async (programId, program, patch) => {
+                  await updateMutation.mutateAsync({ programId, program, patch })
+                  refetchPrograms()
+                }
+              : undefined
+          }
+          onRequestDelete={program => {
+            setProgramsPendingBulkDelete([program])
+            setBulkDeleteModalOpen(true)
+          }}
+        />
       </ProgramModalWhenOpen>
 
       <ProgramModalWhenOpen open={isTrainedTeachersRegistrationOpen}>
-      <LazyGeneralProgramRegistrationFullpageModal
-        open={isTrainedTeachersRegistrationOpen}
-        onClose={handleCloseRegistrationFullpage}
-        onProgramRegistrationSaved={handleRegistrationSaved}
-        registrationFormVariant="trainedTeachers"
-      />
+        <LazyGeneralProgramRegistrationFullpageModal
+          open={isTrainedTeachersRegistrationOpen}
+          onClose={handleCloseRegistrationFullpage}
+          onProgramRegistrationSaved={handleRegistrationSaved}
+          registrationFormVariant="trainedTeachers"
+        />
       </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal
@@ -557,6 +559,12 @@ function TrainedTeachersProgramPageContent() {
           setBulkDeleteModalOpen(false)
           setProgramsPendingBulkDelete([])
         }}
+      />
+      <DeleteBlockedGuideModal
+        open={programDeleteBlockedOpen}
+        onClose={() => setProgramDeleteBlockedOpen(false)}
+        title={programDeleteBlockedCopy.title}
+        description={programDeleteBlockedCopy.description}
       />
     </div>
   )

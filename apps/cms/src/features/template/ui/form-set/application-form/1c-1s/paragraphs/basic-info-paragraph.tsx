@@ -28,11 +28,11 @@ const EDUCATION_PLACE_OPTIONS = [
   { value: 'custom', label: '기타(직접입력)' },
 ] as const
 
-/** 미리보기·프로그램 연동 — 신청 교사/기관 자동 반영 예시 */
+/** 플랫폼 로그인 자동 반영 필드 — CMS 미리보기·신청정보 노출용 플레이스홀더(필드명) */
 const PREVIEW_AUTO_USER_INFO_SAMPLE = {
-  institutionName: '진일초등학교',
-  institutionAddress: '광주광역시 남구 광복마을4길 40',
-  teacherName: '홍길동',
+  institutionName: '신청 기관명',
+  institutionAddress: '기관 소재지',
+  teacherName: '담당 교사',
   tel: '',
   mobile: '',
   email: '',

@@ -26,3 +26,7 @@
   line-height: 150%;
   text-align: left;
 }
+
+.account-payment-complete-success-modal__name {
+  font-weight: 700;
+}

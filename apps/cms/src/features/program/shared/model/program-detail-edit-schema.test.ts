@@ -8,6 +8,7 @@ import {
   programDetailEditSchema,
   programDetailTrainedTeachersCommonInfoEditSchema,
   programToDetailEditValues,
+  volunteerDocumentInterviewNestedPatch,
 } from './program-detail-edit-schema'
 import { mapCompanySchoolToUpdateRequest } from '@/features/program/1c-1s/api/adapters'
 
@@ -548,6 +549,33 @@ describe('general recruitment contact edit', () => {
     expect(patch.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail).toBe(
       'volunteer@jakorea.org'
     )
+  })
+})
+
+describe('봉사자 서류·면접 nested 저장', () => {
+  it('폼 값을 volunteerRecruitmentInfo nested에 반영한다', () => {
+    const existing = {
+      documentPassAnnouncementDate: '2026-09-01T00:00:00+09:00',
+      documentPassAnnouncementMethod: '공용 예전',
+      interviewStartDate: '2026-09-10T00:00:00+09:00',
+      interviewEndDate: '2026-09-12T00:00:00+09:00',
+      interviewMethod: '대면',
+    }
+    const values = {
+      ...programToDetailEditValues(program),
+      documentPassAnnouncementDate: '2026-11-05T00:00:00+09:00',
+      documentPassAnnouncementMethod: '이메일',
+      interviewStartDate: '2026-11-10T00:00:00+09:00',
+      interviewEndDate: '2026-11-12T00:00:00+09:00',
+      interviewMethod: '온라인',
+    }
+    const nested = volunteerDocumentInterviewNestedPatch(values, existing)
+    expect(nested.documentPassAnnouncementMethod).toBe('이메일')
+    expect(nested.interviewMethod).toBe('온라인')
+    expect(nested.documentPassAnnouncementDate).toBe(
+      new Date('2026-11-05T00:00:00+09:00').toISOString()
+    )
+    expect(nested.interviewStartDate).toBe(new Date('2026-11-10T00:00:00+09:00').toISOString())
   })
 })
 

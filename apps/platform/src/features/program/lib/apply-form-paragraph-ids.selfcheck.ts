@@ -12,6 +12,7 @@ import {
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
   isDynamicIndividualInterviewParagraph,
+  isDynamicVolunteerActivityScheduleParagraph,
   isDynamicVolunteerInterviewParagraph,
   isInstructorAvailableScheduleParagraphId,
   isInstructorCrimeRecordParagraphId,
@@ -104,6 +105,21 @@ assert.equal(
   isDynamicVolunteerInterviewParagraph({
     id: 'program-volunteer-application-seed-interview-schedule',
     runtimeInputMode: 'dynamic_interview_slots',
+  }),
+  true,
+)
+assert.equal(
+  isDynamicVolunteerInterviewParagraph({
+    id: 'program-volunteer-application-seed-interview-schedule',
+    runtimeResolved: true,
+    items: [{ id: 'interview-option:2026-10-13T10:00-10:30', label: '10:00~10:30' }],
+  }),
+  true,
+)
+assert.equal(
+  isDynamicVolunteerActivityScheduleParagraph({
+    id: 'program-volunteer-application-seed-activity-schedule',
+    items: [{ id: 'schedule:186668', label: '일정' }],
   }),
   true,
 )

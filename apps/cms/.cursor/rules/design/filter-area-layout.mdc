@@ -18,10 +18,11 @@ category: design
 | 항목 | 값 | 토큰/상수 |
 |------|-----|-----------|
 | 단일 검색·셀렉트 폭 | **240px** (공유 SSOT) | `--filter-control-width` · `--filter-control-max-width` · `FILTER_CONTROL_MAX_WIDTH_PX` |
-| 컨트롤 높이 | 44px (≤768px: 40px) | `--filter-control-height` |
+| 컨트롤 높이 | **40px** (CmsField M) | `--filter-control-height` · `TableFilterGroup` `cms-control--medium` |
 | 필터 칸 사이 gap | 12px | `--filter-field-gap` |
 | 레이블·컨트롤 gap | 6px | `--filter-label-control-gap` |
-| 레이블 | 15px / 500 / 140% · `var(--Content-secondary)` #525252 · 높이 23px(21+padding-bottom 2px) · 1줄 말줄임 · 좌측 정렬 · 좌우 패딩 없음 | `--filter-area-label-*` (CmsInput 등 `CmsFieldFrame` 라벨과 동일 규격) || 조회 버튼 | 160×44px | `table-filter-group__search-button` |
+| 레이블 | **CmsField M** — 14px / 500 / 140% · `#525252` · 높이 22px(19.6+padding-bottom 2px) · `.cms-field__label` | `cms-control--medium` · `--filter-label-height` |
+| 조회 버튼 | 160×40px | `table-filter-group__search-button` · `size="medium"` |
 | 분리형 `dateRange`·`selectPair` 열 | 500px | `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (2×240+20) |
 | **`addressRegion` 열 전체** | **235.5px** | `FILTER_ADDRESS_REGION_FIELD_WIDTH_PX` |
 | **`addressRegion` 하위 셀렉트 각** | **114.75px** | `FILTER_ADDRESS_REGION_SEGMENT_WIDTH_PX` |

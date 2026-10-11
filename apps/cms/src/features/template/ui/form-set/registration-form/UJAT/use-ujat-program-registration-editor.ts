@@ -26,6 +26,7 @@ import {
   getUjatProgramRegistrationOverlayRecord,
   patchUjatProgramRegistrationOverlay,
   resetUjatProgramRegistrationOverlay,
+  setUjatProgramRegistrationOverlayScope,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import {
   loadUjatRegistrationTemplateSave,
@@ -105,6 +106,10 @@ export function useUjatProgramRegistrationEditor(
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const [isDraftLoading, setIsDraftLoading] = useState(() => active)
 
+  if (active) {
+    setUjatProgramRegistrationOverlayScope(templateCode)
+  }
+
   const resetToSeed = useCallback(() => {
     resetUjatProgramRegistrationOverlay()
     const next = withForcedUjatRegistrationSeedTitleRequired(
@@ -122,6 +127,7 @@ export function useUjatProgramRegistrationEditor(
     }
 
     let cancelled = false
+    setUjatProgramRegistrationOverlayScope(templateCode)
     resetUjatProgramRegistrationOverlay()
 
     if (skipDraftRestore) {

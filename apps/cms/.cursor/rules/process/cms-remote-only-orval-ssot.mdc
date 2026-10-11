@@ -1,0 +1,42 @@
+---
+description: CMS mock 제거 · remote-only · OpenAPI/Orval SSOT 작업 시 필수 절차
+alwaysApply: false
+---
+
+# CMS FE — remote-only · Orval SSOT
+
+**SSOT:** `apps/cms/openapi/backend.openapi.json` (BE `openapi/backend.openapi.json` 동기화본)
+
+**검증:** `pnpm check:no-mock-imports`, `pnpm test` (apps/cms) green
+
+## 금지
+
+- `@/data/mock`, 프로그램 temp-mock, 정산/후원사/UJAT 하드코딩 카탈로그 복구
+- API 미구현 필드용 가짜 데이터 (`applicationNameChangeCount` 등)
+- 정산 payment id를 enum 문자열로 추측
+- `docs/**`*handoff*.md` 커밋
+
+## 작업 순서
+
+1. OpenAPI sync → `pnpm generate:api` (또는 subset 스크립트)
+2. 정산: `GET /api/admin/settlement-configs/current` → `wageItems` / `paymentItems` / `deductionItems`를 `mapSettlementConfigToSections`로 section 매핑 (BE에 `sections` 필드 없음)
+3. 지급 항목 id·`eligiblePayeeTypes`는 OpenAPI enum만
+4. 참여자 실비: `GET .../participants/{participantId}/settlements`
+5. UJAT: `korean-public-holidays`, `ujat/education-regions` — mock 상수 제거
+6. 데이터 관리 LNB: list/detail API only, empty state (mock fallback 없음)
+
+## 정산 상세
+
+- `mapWageItemToSettingDetail`: FE 카탈로그 기본값 복구 금지 — API `qualificationLines` / `remarkLines` / `maxLimitWon` / `detailJson`
+- `normalizeProgramPaymentItemIds`: 정산 설정 캐시 로드 후만 교정
+
+## 프로그램 진행
+
+- `scheduleStatus`: `UNSCHEDULED | SCHEDULED | IN_PROGRESS | COMPLETED` (출석 `attendanceStatus`와 혼용 금지)
+- `applicationNameChangeCount`: OpenAPI 없으면 omit/숨김
+
+## 회원
+
+- 재학 `ENROLLED`: `PortalSchoolSelectionRequest` shape (`externalSchoolCode`, `educationOfficeCode` 등)
+
+상세 체크리스트는 팀 채팅/PR 설명의 「CMS FE 적용 프롬프트」 전체 블록을 참고한다.

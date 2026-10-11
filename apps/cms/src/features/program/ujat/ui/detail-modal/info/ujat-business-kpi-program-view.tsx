@@ -23,8 +23,9 @@ function NotApplicableText() {
   return <span className="detail-info-form--text">{UJAT_BUSINESS_KPI_INSTRUCTOR_NOT_APPLICABLE}</span>
 }
 
-function parseOptionalNonNegativeInt(raw: string): number | undefined {
-  return raw === '' ? undefined : Number.parseInt(raw, 10)
+/** 빈 값은 null — RHF Controller는 undefined면 defaultValues(이전 KPI)를 다시 보여 준다. */
+function parseOptionalNonNegativeInt(raw: string): number | null {
+  return raw === '' ? null : Number.parseInt(raw, 10)
 }
 
 /** UJAT 사업 KPI 목표 — 등록 양식(`UjatBusinessKpiParagraph`)과 동일 레이아웃 */

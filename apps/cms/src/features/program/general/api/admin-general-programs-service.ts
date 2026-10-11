@@ -32,6 +32,7 @@ import {
   fetchAdminProgramFormBindingsRemote,
   fetchAdminProgramManagersRemote,
   fetchAdminProgramNavigationRemote,
+  fetchAdminProgramAllPostAttachmentsRemote,
   fetchAdminProgramPostAttachmentsRemote,
   fetchAdminProgramPostCommentsRemote,
   fetchAdminProgramPostDetailRemote,
@@ -319,6 +320,13 @@ export async function fetchGeneralProgramPostAttachments(programId: string, post
   if (!shouldUseProgramsHttpRemoteApi()) return []
   assertProgramsHttpRemoteReady()
   const page = await fetchAdminProgramPostAttachmentsRemote(programId, postId)
+  return page.items ?? []
+}
+
+export async function fetchGeneralProgramAllPostAttachments(programId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
+  const page = await fetchAdminProgramAllPostAttachmentsRemote(programId)
   return page.items ?? []
 }
 

@@ -228,6 +228,23 @@ export function resyncEconomyRegistrationOverlayFromProgram(
   return merged
 }
 
+/** 1사1교 공통정보 RHF 저장 직전 — 폼이 반영한 Program으로 economy overlay 동기화 */
+export function writeEconomyRegistrationOverlayFromProgramDraft(draftFromForm: Program): void {
+  const fromProgram = buildEconomyRegistrationOverlayFromProgram(draftFromForm)
+  const saved = readEconomyRegistrationOverlayForSave()
+  const merged = { ...saved, ...fromProgram }
+  const surveyKeys = resolveProgramSurveyMenuKeys({
+    generalSurveyMenuKeys: draftFromForm.generalSurveyMenuKeys,
+    registrationOverlay: merged,
+  })
+  merged[`${BASIC}.surveyItems`] = {
+    survey: surveyKeys.includes('survey'),
+    satisfaction: surveyKeys.includes('satisfaction'),
+    lecture_evaluation: surveyKeys.includes('lecture_evaluation'),
+  }
+  replaceProgramRegistrationOverlayPrefix(ECONOMY_REGISTRATION_OVERLAY_PREFIX, merged)
+}
+
 export function readEconomyRegistrationOverlayForSave(): Record<string, unknown> {
   return pickProgramRegistrationOverlayByPrefix(
     ECONOMY_REGISTRATION_OVERLAY_PREFIX,

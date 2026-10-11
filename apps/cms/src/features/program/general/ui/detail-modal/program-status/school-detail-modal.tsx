@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { Tabs, Table, Input } from 'antd'
+import { Tabs, Input } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, CmsRadio } from '@/shared/ui'
@@ -15,6 +15,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   formatClassCountLabel,
   formatTotalStudentCountLabel,
@@ -778,7 +779,7 @@ export function SchoolDetailModal({
                 </p>
               )}
               {isInstructorEditMode ? (
-                <Table<InstructorListFormInstructor>
+                <CmsDataTable<InstructorListFormInstructor>
                   rowKey="id"
                   size="middle"
                   pagination={false}
@@ -791,7 +792,7 @@ export function SchoolDetailModal({
                   className="school-detail-modal__instructor-table cms-data-table cms-data-table--skip-auto-no-col"
                 />
               ) : (
-                <Table<SchoolDetailInstructorRow>
+                <CmsDataTable<SchoolDetailInstructorRow>
                   rowKey="id"
                   size="middle"
                   pagination={false}

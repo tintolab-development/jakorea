@@ -16,7 +16,14 @@ export function ScoreSelectParagraphBody({
 
   return (
     <div className="form-editor-body">
-      <div className="form-editor-likert">
+      <div
+        className={[
+          'form-editor-likert',
+          !isEditMode ? 'form-editor-likert--non-interactive' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <div className="form-editor-likert__labels">
           <span>{scaleLabels[String(scaleMin)] ?? ''}</span>
           <span>{scaleLabels[String(scaleMax)] ?? ''}</span>
@@ -26,7 +33,6 @@ export function ScoreSelectParagraphBody({
             <button
               key={v}
               type="button"
-              disabled={!isEditMode}
               className={`form-editor-likert__btn ${selectedPreviewValue === v ? 'form-editor-likert__btn--active' : ''}`}
               onClick={() => {
                 if (!isEditMode) return

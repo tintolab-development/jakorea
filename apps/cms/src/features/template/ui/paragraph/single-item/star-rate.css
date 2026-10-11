@@ -6,6 +6,10 @@
   gap: 12px;
 }
 
+.star-rate-body--non-interactive {
+  pointer-events: none;
+}
+
 .star-rate-body__star {
   display: inline-flex;
   padding: 0;

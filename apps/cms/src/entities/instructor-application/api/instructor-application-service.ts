@@ -5,12 +5,8 @@
 
 import type { UUID } from '@/types'
 import type { Application } from '@/types/domain'
-import { mockApplications, mockApplicationsMap } from '@/data/mock'
-import { mockInstructors } from '@/data/mock/instructors'
-import { mockPrograms } from '@/data/mock/programs'
-import { mockInstructorUsers } from '@/data/mock/instructor-users'
-import { mockUsers } from '@/data/mock/users'
 import { applicationService } from '@/entities/application/api/application-service'
+import { programService } from '@/entities/program/api/program-service'
 
 export interface InstructorApplicationItem {
   id: string
@@ -30,9 +26,6 @@ export interface InstructorApplicationFilters {
   instructorId?: UUID
 }
 
-/**
- * Application 상태를 InstructorApplication 상태로 변환
- */
 function mapApplicationStatusToInstructorStatus(
   status: Application['status']
 ): 'PENDING' | 'APPROVED' | 'REJECTED' | 'CLOSED' {
@@ -51,18 +44,31 @@ function mapApplicationStatusToInstructorStatus(
   }
 }
 
-/**
- * 강사 신청 목록 조회
- */
+function toInstructorApplicationItem(app: Application): InstructorApplicationItem {
+  const program = programService.getByIdSync(app.programId)
+  return {
+    id: app.id,
+    instructorName: '알 수 없음',
+    instructorId: app.subjectId,
+    programName: program?.title || '알 수 없음',
+    programId: app.programId,
+    appliedAt:
+      typeof app.submittedAt === 'string' ? app.submittedAt : app.submittedAt.toISOString(),
+    status: mapApplicationStatusToInstructorStatus(app.status),
+    preferredSchedule: [],
+    notes: app.notes,
+  }
+}
+
 export async function getInstructorApplications(
   filters?: InstructorApplicationFilters
 ): Promise<InstructorApplicationItem[]> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  // 강사 신청만 필터링 (subjectType === 'instructor')
-  let applications = mockApplications.filter(app => app.subjectType === 'instructor')
+  let applications = applicationService
+    .getAllSync()
+    .filter(app => app.subjectType === 'instructor')
 
-  // 필터 적용
   if (filters?.programId) {
     applications = applications.filter(app => app.programId === filters.programId)
   }
@@ -90,32 +96,9 @@ export async function getInstructorApplications(
     applications = applications.filter(app => targetStatuses.includes(app.status))
   }
 
-  // InstructorApplicationItem로 변환
-  return applications.map(app => {
-    const instructor = mockInstructors.find(inst => inst.id === app.subjectId)
-    const program = mockPrograms.find(prog => prog.id === app.programId)
-    const user =
-      mockInstructorUsers.find(u => u.instructorId === app.subjectId) ||
-      mockUsers.find(u => u.instructorId === app.subjectId)
-
-    return {
-      id: app.id,
-      instructorName: instructor?.name || user?.name || '알 수 없음',
-      instructorId: app.subjectId,
-      programName: program?.title || '알 수 없음',
-      programId: app.programId,
-      appliedAt:
-        typeof app.submittedAt === 'string' ? app.submittedAt : app.submittedAt.toISOString(),
-      status: mapApplicationStatusToInstructorStatus(app.status),
-      preferredSchedule: [], // TODO: 실제 일정 정보 연결
-      notes: app.notes,
-    }
-  })
+  return applications.map(toInstructorApplicationItem)
 }
 
-/**
- * Phase 0.3.3: 강사 신청 승인/마감 처리
- */
 export async function reviewInstructorApplication(
   applicationId: UUID,
   action: 'APPROVE' | 'REJECT' | 'CLOSE',
@@ -123,12 +106,6 @@ export async function reviewInstructorApplication(
 ): Promise<void> {
   await new Promise(resolve => setTimeout(resolve, 500))
 
-  const application = mockApplications.find(app => app.id === applicationId)
-  if (!application) {
-    throw new Error('신청을 찾을 수 없습니다.')
-  }
-
-  // Phase 0.3.3: application-service.updateStatus 사용 (progressStatus, appendReceivedLog 등 자동 처리)
   switch (action) {
     case 'APPROVE':
       await applicationService.updateStatus(applicationId, 'approved')
@@ -142,13 +119,9 @@ export async function reviewInstructorApplication(
   }
 }
 
-/**
- * 추가 배정 (관리자 직접 입력)
- * Task 3.3.1: 검증 로직 및 중복 배정 방지
- */
 export interface ManualAssignmentData {
   programId: UUID
-  instructorId?: UUID // 기존 강사 선택
+  instructorId?: UUID
   newInstructor?: {
     name: string
     phone: string
@@ -164,78 +137,47 @@ export interface ManualAssignmentValidation {
   error?: string
 }
 
-/**
- * 수동 배정 검증: 중복 배정 방지 및 필수 필드 검증
- * 동일 강사가 같은 프로그램에 대해 이미 승인된 강사 신청이 있으면 중복
- */
 export function validateManualAssignment(data: ManualAssignmentData): ManualAssignmentValidation {
-  // 필수 필드 검증
   if (!data.programId || data.programId.trim().length === 0) {
-    return {
-      valid: false,
-      error: '프로그램을 선택해주세요.',
-    }
+    return { valid: false, error: '프로그램을 선택해주세요.' }
   }
 
   if (!data.assignedBy || data.assignedBy.trim().length === 0) {
-    return {
-      valid: false,
-      error: '배정자 정보가 없습니다.',
-    }
+    return { valid: false, error: '배정자 정보가 없습니다.' }
   }
 
-  // instructorId 또는 newInstructor 중 하나는 필수
   if (!data.instructorId && !data.newInstructor) {
-    return {
-      valid: false,
-      error: '기존 강사를 선택하거나 신규 강사 정보를 입력해주세요.',
-    }
+    return { valid: false, error: '기존 강사를 선택하거나 신규 강사 정보를 입력해주세요.' }
   }
 
-  // 기존 강사 선택 시 중복 배정 검증
   if (data.instructorId) {
-    const duplicate = mockApplications.find(
-      a =>
-        a.subjectType === 'instructor' &&
-        a.subjectId === data.instructorId &&
-        a.programId === data.programId &&
-        a.status === 'approved'
-    )
+    const duplicate = applicationService
+      .getAllSync()
+      .find(
+        a =>
+          a.subjectType === 'instructor' &&
+          a.subjectId === data.instructorId &&
+          a.programId === data.programId &&
+          a.status === 'approved'
+      )
     if (duplicate) {
-      return {
-        valid: false,
-        error: '이미 해당 프로그램에 배정된 강사입니다. 중복 배정할 수 없습니다.',
-      }
+      return { valid: false, error: '이미 해당 프로그램에 배정된 강사입니다. 중복 배정할 수 없습니다.' }
     }
   }
 
-  // 신규 강사 정보 검증
   if (data.newInstructor) {
-    if (!data.newInstructor.name || data.newInstructor.name.trim().length === 0) {
-      return {
-        valid: false,
-        error: '신규 강사 이름을 입력해주세요.',
-      }
+    if (!data.newInstructor.name?.trim()) {
+      return { valid: false, error: '신규 강사 이름을 입력해주세요.' }
     }
-    if (!data.newInstructor.phone || data.newInstructor.phone.trim().length === 0) {
-      return {
-        valid: false,
-        error: '신규 강사 전화번호를 입력해주세요.',
-      }
+    if (!data.newInstructor.phone?.trim()) {
+      return { valid: false, error: '신규 강사 전화번호를 입력해주세요.' }
     }
-    if (!data.newInstructor.email || data.newInstructor.email.trim().length === 0) {
-      return {
-        valid: false,
-        error: '신규 강사 이메일을 입력해주세요.',
-      }
+    if (!data.newInstructor.email?.trim()) {
+      return { valid: false, error: '신규 강사 이메일을 입력해주세요.' }
     }
-    // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(data.newInstructor.email)) {
-      return {
-        valid: false,
-        error: '올바른 이메일 형식이 아닙니다.',
-      }
+      return { valid: false, error: '올바른 이메일 형식이 아닙니다.' }
     }
   }
 
@@ -251,21 +193,12 @@ export async function createManualAssignment(data: ManualAssignmentData): Promis
   await new Promise(resolve => setTimeout(resolve, 500))
 
   const subjectId = data.instructorId || `instructor-new-${Date.now()}`
-  const newApplication: Application = {
-    id: `app-manual-${Date.now()}`,
+  return applicationService.create({
     programId: data.programId,
     subjectType: 'instructor',
     subjectId,
     status: 'approved',
     notes: data.notes || '관리자 직접 배정',
-    submittedAt: new Date().toISOString(),
-    reviewedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-
-  mockApplications.push(newApplication)
-  mockApplicationsMap.set(newApplication.id, newApplication)
-
-  return newApplication
+    roundId: '',
+  })
 }

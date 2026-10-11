@@ -9,8 +9,6 @@ import {
   summarizeParticipatingInstructorSettlementProgress,
   type ParticipatingInstructorSettlementApiRow,
 } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
-import { buildTemporaryParticipatingInstructorSettlementRows } from '@/features/program/general/lib/participating-instructor-temp-settlement'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
@@ -33,21 +31,8 @@ export function useParticipatingInstructorSettlementList(input: {
     input.enabled !== false && remoteEnabled && input.programId && instructorMemberId
   )
 
-  // TODO(temp-mock): 열여라 참깨 — 참여 강사 정산 현황 검증 후 삭제
-  const temporaryRows = useMemo(
-    () =>
-      input.enabled === false || !isGeneralProgramTempMockProgramId(input.programId)
-        ? []
-        : buildTemporaryParticipatingInstructorSettlementRows(input.instructor),
-    [input.enabled, input.programId, input.instructor]
-  )
-
   useNotifyProgramApiUnavailableOnce(
-    Boolean(
-      input.enabled !== false &&
-        temporaryRows.length === 0 &&
-        (!remoteEnabled || !instructorMemberId)
-    ),
+    Boolean(input.enabled !== false && (!remoteEnabled || !instructorMemberId)),
     'general-participating-instructor-settlement',
     '참여 강사 · 정산 현황'
   )
@@ -67,12 +52,9 @@ export function useParticipatingInstructorSettlementList(input: {
   }, [queryEnabled, settlementsQuery.data])
 
   const rows = useMemo(() => {
-    const remoteRows = queryEnabled
-      ? mapSettlementsToParticipatingInstructorSettlementRows(settlementItems)
-      : []
-    if (temporaryRows.length === 0) return remoteRows
-    return [...temporaryRows, ...remoteRows]
-  }, [queryEnabled, settlementItems, temporaryRows])
+    if (!queryEnabled) return []
+    return mapSettlementsToParticipatingInstructorSettlementRows(settlementItems)
+  }, [queryEnabled, settlementItems])
 
   const progressSummary = useMemo(
     () => summarizeParticipatingInstructorSettlementProgress(rows),
@@ -91,8 +73,8 @@ export function useParticipatingInstructorSettlementList(input: {
   }
 
   return {
-    remoteEnabled: remoteEnabled || temporaryRows.length > 0,
-    isLoading: queryEnabled && settlementsQuery.isPending && temporaryRows.length === 0,
+    remoteEnabled,
+    isLoading: queryEnabled && settlementsQuery.isPending,
     rows,
     settlementItems,
     progressSummary,

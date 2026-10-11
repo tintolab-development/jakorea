@@ -136,10 +136,13 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
   background: transparent !important;
 }
 
-table:not(.ant-picker-content) tr[class*='clickable']:hover:not(.ant-table-row-selected),
-table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-selected),
-[class*='--clickable'] .ant-table-tbody > tr:hover:not(.ant-table-row-selected) {
-  background: var(--color-table-row-hover) !important;
+table:not(.ant-picker-content) tr[class*='clickable']:hover:not(.ant-table-row-selected) > td,
+table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-selected) > td,
+[class*='--clickable']
+  .ant-table-tbody
+  > tr:hover:not(.ant-table-row-selected):not(.ant-table-placeholder)
+  > td {
+  background-color: var(--color-table-row-hover) !important;
 }
 
 .table-header-actions {

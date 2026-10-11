@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { DashboardProgramScheduleResponseScheduleStatus } from './dashboardProgramScheduleResponseScheduleStatus';
 
 export interface DashboardProgramScheduleResponse {
   scheduleId?: number;
@@ -19,5 +20,6 @@ export interface DashboardProgramScheduleResponse {
   allDay?: boolean;
   locationName?: string;
   address?: string;
-  scheduleStatus?: string;
+  /** 교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. program_schedule.schedule_status 컬럼과 다를 수 있음. 출석 코드와 혼용하지 않음. */
+  scheduleStatus?: DashboardProgramScheduleResponseScheduleStatus;
 }

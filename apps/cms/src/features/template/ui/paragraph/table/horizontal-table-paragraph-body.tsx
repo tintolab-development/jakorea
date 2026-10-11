@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { DatePicker, Select, TimePicker } from 'antd'
+import { TimePicker } from 'antd'
 import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -18,6 +18,7 @@ import {
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   horizontalTableSetFieldCellValue,
   normalizeHorizontalTableParagraph,
+  SHORT_ESSAY_MAX_LENGTH,
 } from '@/features/template/model/writing-form-draft.schema'
 import { PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS } from '@/features/template/lib/personal-info-horizontal-table-disclaimer-paragraph-ids'
 import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
@@ -77,10 +78,13 @@ import { useHideParagraphSelectionChrome } from '@/features/template/context/par
 import { IdTypeWithInputBody } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-editor/form-editor-horizontal-table.css'
 import { TextCellInput } from '@/features/template/ui/paragraph/table/text-cell-input'
 import { DeferredBorderlessTextArea } from '@/features/template/ui/shared/deferred-borderless-text-area'
+import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 
 dayjs.extend(customParseFormat)
 
@@ -96,27 +100,14 @@ const horizontalTablePickerPopupStyles = {
   },
 } as const
 
-/** 날짜+시간: 시간 패널이 캘린더 옆에 같이 노출되도록 팝업 폭 확보 */
-const horizontalTableDateTimePickerPopupStyles = {
-  popup: {
-    root: { minWidth: 560 },
-  },
-} as const
-
-const horizontalTableDateTimeShowTime = {
-  format: 'HH:mm',
-  minuteStep: 5,
-} as const
-
-/** 우측 패널 `유형` 라디오(날짜/시간/날짜+시간)에 맞는 placeholder — 비어 있을 때만 모드별 기본 */
+/** 날짜형/시간형 placeholder — 비어 있을 때만 모드별 기본 */
 function dateTimeFieldPlaceholder(
   field: Extract<HorizontalTableColumnField, { kind: 'dateTime' }>
 ): string {
   const t = field.placeholder?.trim() ?? ''
   if (t.length > 0) return field.placeholder
-  if (field.dateTimeMode === 'date') return '날짜를 선택해 주세요'
   if (field.dateTimeMode === 'time') return '시간을 선택해 주세요'
-  return '날짜·시간을 선택해 주세요'
+  return '날짜를 선택해 주세요'
 }
 
 /** 캔버스 테이블 셀 전용 — 우측 커스텀 필드는 비번호 고정 문구 유지 */
@@ -193,6 +184,11 @@ function isEventFromTableInteractive(target: EventTarget | null) {
         '.ant-checkbox-wrapper',
         '.ant-radio',
         '.ant-radio-wrapper',
+        '.cms-field__box',
+        '.cms-input',
+        '.cms-select',
+        '.paragraph-date-picker',
+        '.paragraph-date-picker__trigger',
         '.paragraph-input',
         '.text-cell-input',
         'input',
@@ -212,25 +208,20 @@ function rehomeForDisplay(
   return createEmptyFieldCellValue(f)
 }
 
-function toDayjs(mode: 'date' | 'time' | 'dateTime', raw: string): Dayjs | null {
+function toDayjs(mode: 'date' | 'time', raw: string): Dayjs | null {
   if (!raw?.trim()) return null
   if (mode === 'date') {
     const d = dayjs(raw, 'YYYY-MM-DD', true)
     return d.isValid() ? d : null
   }
-  if (mode === 'time') {
-    const d = dayjs(raw, 'HH:mm', true)
-    return d.isValid() ? d : null
-  }
-  const d = dayjs(raw, 'YYYY-MM-DD HH:mm', true)
+  const d = dayjs(raw, 'HH:mm', true)
   return d.isValid() ? d : null
 }
 
-function fromDayjs(mode: 'date' | 'time' | 'dateTime', d: Dayjs | null): string {
+function fromDayjs(mode: 'date' | 'time', d: Dayjs | null): string {
   if (!d || !d.isValid()) return ''
   if (mode === 'date') return d.format('YYYY-MM-DD')
-  if (mode === 'time') return d.format('HH:mm')
-  return d.format('YYYY-MM-DD HH:mm')
+  return d.format('HH:mm')
 }
 
 function FieldTableBodyCell({
@@ -287,18 +278,18 @@ function FieldTableBodyCell({
   if (field.kind === 'subjective') {
     const essayValue = cell.kind === 'subjective' || cell.kind === 'text' ? cell.value : ''
     return (
-      <div
-        className="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--subjective"
+      <DeferredCmsInput
+        className="form-editor-horizontal-table__field-cms-input"
         title="주관식형"
-      >
-        <DeferredBorderlessTextArea
-          className="form-editor-horizontal-table__field-subjective-input"
-          value={essayValue}
-          placeholder={ph}
-          onCommit={next => onFieldChange({ kind: 'subjective', value: next })}
-          onFocus={onSelectBodyRow}
-        />
-      </div>
+        inputSize="small"
+        width="100%"
+        allowClear={false}
+        value={essayValue}
+        placeholder={ph}
+        maxLength={SHORT_ESSAY_MAX_LENGTH}
+        onCommit={next => onFieldChange({ kind: 'subjective', value: next })}
+        onFocus={onSelectBodyRow}
+      />
     )
   }
 
@@ -321,47 +312,35 @@ function FieldTableBodyCell({
     )
   }
 
-  if (field.kind === 'dateTime' && field.dateTimeMode === 'date') {
+  if (field.kind === 'dateTime') {
     return (
-      <DatePicker
+      <ParagraphDatePicker
         key={`ht-dt-${field.dateTimeMode}-c${_colIdx}-r${_rowIdx}`}
-        rootClassName="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--picker"
-        className="form-editor-horizontal-table__field-date"
-        needConfirm={false}
-        styles={horizontalTablePickerPopupStyles}
-        getPopupContainer={horizontalTableFieldPopupContainer}
+        mode="single"
+        presetMode="date"
+        customizable={false}
+        inputSize="small"
+        width="100%"
+        className="form-editor-horizontal-table__field-paragraph-date"
         value={toDayjs('date', cell.kind === 'dateTime' ? cell.value : '')}
         onChange={d => onFieldChange({ kind: 'dateTime', value: fromDayjs('date', d) })}
-        onFocus={onSelectBodyRow}
-        format="YYYY-MM-DD"
+        onOpenChange={open => {
+          if (open) onSelectBodyRow()
+        }}
         placeholder={ph}
-      />
-    )
-  }
-
-  if (field.kind === 'dateTime' && field.dateTimeMode === 'dateTime') {
-    return (
-      <DatePicker
-        key={`ht-dt-${field.dateTimeMode}-c${_colIdx}-r${_rowIdx}`}
-        rootClassName="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--picker"
-        className="form-editor-horizontal-table__field-datetime"
-        showTime={horizontalTableDateTimeShowTime}
-        needConfirm={false}
-        styles={horizontalTableDateTimePickerPopupStyles}
-        getPopupContainer={horizontalTableFieldPopupContainer}
-        value={toDayjs('dateTime', cell.kind === 'dateTime' ? cell.value : '')}
-        onChange={d => onFieldChange({ kind: 'dateTime', value: fromDayjs('dateTime', d) })}
-        onFocus={onSelectBodyRow}
-        format="YYYY-MM-DD HH:mm"
-        placeholder={ph}
+        suppressAutoTodayWhenEmpty
       />
     )
   }
 
   if (field.kind === 'dropdown') {
     return (
-      <Select
-        className="form-editor-horizontal-table__field-select form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--dropdown"
+      <CmsSelect
+        className="form-editor-horizontal-table__field-cms-select"
+        inputSize="small"
+        width="100%"
+        withAllOption={false}
+        allowClear={false}
         value={cell.kind === 'dropdown' && cell.value ? cell.value : undefined}
         options={field.options.map(o => ({ value: o, label: o }))}
         placeholder={ph}
@@ -988,8 +967,6 @@ export function HorizontalTableParagraphBody({
           aria-selected={canvasInteractive && isHeaderRowSelected()}
         >
           {headers.map((h, i) => {
-            const headerFieldLocked =
-              isField && getEffectiveHorizontalCellField(p, 0, i).kind !== 'text'
             const ph = suppressPlaceholderText ? '' : tableHeaderPlaceholder(i)
             return (
               <div
@@ -1002,7 +979,7 @@ export function HorizontalTableParagraphBody({
                         if (isEventFromTableInteractive(e.target)) return
                         if (isTextTable) {
                           activateTextTableHeaderCell(i)
-                        } else if (headerEditMode && !headerFieldLocked) {
+                        } else if (headerEditMode) {
                           activateFieldTableHeaderCell(i)
                         } else {
                           toggleHeaderRow()
@@ -1011,7 +988,7 @@ export function HorizontalTableParagraphBody({
                     : undefined
                 }
               >
-                {headerEditMode && !headerFieldLocked ? (
+                {headerEditMode ? (
                   isTextTable || canvasInteractive ? (
                     isTextCellEditing({ area: 'header', col: i }) ? (
                       <TextCellInput
@@ -1148,6 +1125,11 @@ export function HorizontalTableParagraphBody({
                 bodyColumnEditable &&
                 (field.kind === 'text' || field.kind === 'subjective')
               const isSubjectiveField = field.kind === 'subjective' && !usePartialLockTextCellInput
+              /** 주관식·드롭다운·날짜형 — td 너비 100% */
+              const isFullWidthField =
+                (field.kind === 'subjective' && !usePartialLockTextCellInput) ||
+                field.kind === 'dropdown' ||
+                (field.kind === 'dateTime' && field.dateTimeMode === 'date')
               const fieldPlainText = fieldCellValueToPlainText(rehomeForDisplay(field, cell))
               const systemSettingsTextEditing =
                 usePartialLockTextCellInput &&
@@ -1171,6 +1153,9 @@ export function HorizontalTableParagraphBody({
                     bodyColumnEditable &&
                       isSubjectiveField &&
                       'form-editor-horizontal-table__td--field-subjective',
+                    bodyColumnEditable &&
+                      isFullWidthField &&
+                      'form-editor-horizontal-table__td--field-full',
                   ]
                     .filter(Boolean)
                     .join(' ')}
@@ -1229,6 +1214,8 @@ export function HorizontalTableParagraphBody({
                           'form-editor-horizontal-table__cell-input-shell--field-choices',
                         isSubjectiveField &&
                           'form-editor-horizontal-table__cell-input-shell--field-subjective',
+                        isFullWidthField &&
+                          'form-editor-horizontal-table__cell-input-shell--field-full',
                       ]
                         .filter(Boolean)
                         .join(' ')}

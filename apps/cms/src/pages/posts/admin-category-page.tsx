@@ -5,26 +5,17 @@
 
 import { useState, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import {
-  Table,
-  Tag,
-  Space,
-  Input,
-  Select,
-  Typography,
-  Popconfirm,
-  Tooltip,
-  Modal,
-  Form,
-  Switch,
-} from 'antd'
+import { Tag, Space, Input, Select, Typography, Popconfirm, Tooltip, Modal, Form, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { CmsButton, LoadingButton } from '@/shared/ui'
+import { LoadingButton,
+  FilterTableToolbarButton
+} from '@/shared/ui'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 import { ButtonAddIcon } from '@/shared/ui/icons/ButtonIcons'
 
@@ -264,12 +255,12 @@ export function AdminCategoryPage() {
         description={`총 ${filteredData.length.toLocaleString()}건`}
         hideExcelDownload
         actions={
-          <CmsButton variant="primary" icon={<ButtonAddIcon />} onClick={() => showModal()}>
+          <FilterTableToolbarButton variant="primary" icon={<ButtonAddIcon />} onClick={() => showModal()}>
             카테고리 추가
-          </CmsButton>
+          </FilterTableToolbarButton>
         }
       >
-        <Table
+        <CmsDataTable
           className="cms-data-table cms-data-table--skip-auto-no-col"
           columns={columns}
           dataSource={filteredData}

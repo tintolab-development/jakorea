@@ -1,4 +1,5 @@
-import type { QueryClient } from '@tanstack/react-query'
+import type { InfiniteData, QueryClient } from '@tanstack/react-query'
+import type { DataManagementListPage } from '@/features/data-management/api/data-management-list-page'
 import {
   getSponsorDetail,
   getSponsorList,
@@ -9,7 +10,12 @@ import { dataManagementQueryKeys } from '@/features/data-management/api/data-man
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 
 function readSponsorRowsFromQueryCache(data: unknown): SponsorManagementRow[] {
-  return Array.isArray(data) ? data : []
+  if (Array.isArray(data)) return data
+  if (data != null && typeof data === 'object' && 'pages' in data) {
+    const pages = (data as InfiniteData<DataManagementListPage<SponsorManagementRow>>).pages
+    return pages.flatMap(page => page.items ?? [])
+  }
+  return []
 }
 
 export function getSponsorNameFromCache(queryClient: QueryClient, sponsorId: string): string | undefined {

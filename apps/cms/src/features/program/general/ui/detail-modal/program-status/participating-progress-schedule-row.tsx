@@ -8,12 +8,38 @@ import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  resolveDashboardScheduleDeliveryProgressLabel,
+  resolveDashboardScheduleDeliveryProgressStatusClass,
+} from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import './participating-institution-application-info.css'
 
 const SESSION_STATUS_LABELS: Record<string, string> = {
   completed: '진행 완료',
   pending: '진행 대기',
   not_planned: '미진행 희망',
+}
+
+function resolveSessionProgressDisplay(session: ParticipatingSchoolSession): {
+  label: string
+  statusClass: string
+} {
+  if (session.deliveryScheduleStatus?.trim()) {
+    const kind = resolveDashboardScheduleDeliveryProgressStatusClass(session.deliveryScheduleStatus)
+    return {
+      label: resolveDashboardScheduleDeliveryProgressLabel(session.deliveryScheduleStatus),
+      statusClass: `participating-institution-application-info__session-status--${kind}`,
+    }
+  }
+  const status = session.status
+  const label = status ? (SESSION_STATUS_LABELS[status] ?? status) : '미진행 희망'
+  const statusClass =
+    status === 'completed'
+      ? 'participating-institution-application-info__session-status--completed'
+      : status === 'pending'
+        ? 'participating-institution-application-info__session-status--pending'
+        : 'participating-institution-application-info__session-status--not_planned'
+  return { label, statusClass }
 }
 
 function padScheduleTimePart(part: string): string {
@@ -32,16 +58,8 @@ export function ParticipatingProgressScheduleRow({
   session,
 }: ParticipatingProgressScheduleRowProps) {
   const scheduleLabel = session.scheduleLabel?.trim()
+  const { label: statusLabel, statusClass } = resolveSessionProgressDisplay(session)
   if (scheduleLabel) {
-    const statusLabel = session.status
-      ? (SESSION_STATUS_LABELS[session.status] ?? session.status)
-      : '미진행 희망'
-    const statusClass =
-      session.status === 'completed'
-        ? 'participating-institution-application-info__session-status--completed'
-        : session.status === 'pending'
-          ? 'participating-institution-application-info__session-status--pending'
-          : 'participating-institution-application-info__session-status--not_planned'
     return (
       <tr>
         <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
@@ -51,10 +69,7 @@ export function ParticipatingProgressScheduleRow({
           <ProgramDetailTdSegmentWrap>
             {withProgramDetailTdDivider([
               scheduleLabel,
-              <span
-                key="status"
-                className={`participating-institution-application-info__session-status ${statusClass}`}
-              >
+              <span key="status" className={`participating-institution-application-info__session-status ${statusClass}`}>
                 {statusLabel}
               </span>,
             ])}
@@ -67,16 +82,6 @@ export function ParticipatingProgressScheduleRow({
   const { datePart, periodPart } = getSessionLineParts(session, 'general-detail')
   const [startRaw, endRaw] = session.timeRange.split('~')
   const timePart = `${padScheduleTimePart(startRaw)} ~ ${padScheduleTimePart(endRaw ?? startRaw)}`
-  const statusLabel = session.status
-    ? (SESSION_STATUS_LABELS[session.status] ?? session.status)
-    : '미진행 희망'
-  const statusClass =
-    session.status === 'completed'
-      ? 'participating-institution-application-info__session-status--completed'
-      : session.status === 'pending'
-        ? 'participating-institution-application-info__session-status--pending'
-        : 'participating-institution-application-info__session-status--not_planned'
-
   return (
     <tr>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">

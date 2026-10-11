@@ -14,7 +14,7 @@ import {
   updateAdminPermission,
   updateProgramRolePermission,
   resetPermissionCustomization,
-} from '@/data/mock/permission-customization'
+} from '@/features/permission/api/permission-customization-local'
 
 /**
  * 권한 커스터마이징 설정 조회

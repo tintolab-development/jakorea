@@ -48,3 +48,9 @@ return isAdmin ? <AdminSection {...ctx} /> : <AllUsersSection {...ctx} />
 - early return 뒤 훅: [.cursor/rules/react-hooks-after-early-return.mdc](./react-hooks-after-early-return.mdc)
 - 발생 예: `apps/cms/.../user-basic-info-section-renderer.tsx` → `AdminSection` 등
 - ESLint: `react-hooks/rules-of-hooks` (비활성화하지 말 것)
+
+---
+
+## CMS 래퍼 이관 (2026-10-10)
+
+`apps/cms/.cursor/rules/coding/react-component-render-as-jsx.mdc` 위임 래퍼를 제거하고 발췌는 [`docs/audit/extracted-ssot-2026-10-10/merge-rules.md`](../docs/audit/extracted-ssot-2026-10-10/merge-rules.md) 에 보관했다. CMS 경로는 이 루트 규칙을 따른다.

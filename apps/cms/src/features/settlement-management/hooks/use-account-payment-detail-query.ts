@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'
 import { getAccountPaymentDetailRemote } from '@/features/settlement-management/api/account-payments/admin-account-payments-service'
 import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
 import { useSettlementRemoteEnabled } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
-import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
+import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 
 const ACCOUNT_PAYMENT_DETAIL_STALE_TIME_MS = 60_000
 const ACCOUNT_PAYMENT_DETAIL_GC_TIME_MS = 10 * 60_000

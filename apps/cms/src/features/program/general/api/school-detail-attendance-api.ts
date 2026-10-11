@@ -21,11 +21,11 @@ import { mapStudentRosterResponseToRows } from '@/features/program/general/api/a
 import { fetchOrganizationStudentRosterRemote } from '@/features/program/general/api/student-roster-api-client'
 import {
   bulkUpsertProgramAttendancesRemote,
-  fetchScheduleAttendancesRemote,
+  fetchAttendancesByScheduleIdsRemote,
 } from '@/features/program/general/api/program-progress-api-client'
 
 export function mapApiStatusToSchoolSessionAttendance(
-  status?: string
+  status?: string | null
 ): SchoolSessionAttendanceStatusKey {
   const normalized = (status ?? '').trim().toUpperCase()
   if (normalized === 'LATE') return 'late'
@@ -185,19 +185,9 @@ export async function fetchSchoolDetailAttendanceBundle(input: {
     ),
   ]
 
-  const attendancesByScheduleId: Record<string, AttendanceItemResponse[]> = {}
-  await Promise.all(
-    scheduleIds.map(async scheduleId => {
-      const key = String(scheduleId)
-      try {
-        attendancesByScheduleId[key] = await fetchScheduleAttendancesRemote(
-          input.programId,
-          key
-        )
-      } catch {
-        attendancesByScheduleId[key] = []
-      }
-    })
+  const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
+    input.programId,
+    scheduleIds
   )
 
   return { rosterStudents, attendancesByScheduleId }

@@ -54,6 +54,7 @@ export function TrainedTeachersProgramApplicationEditorRightColumn({
       hideSortableDragHandleForIds={
         vm.allowReorderWhenStructureLocked ? undefined : vm.structureLockedParagraphIds
       }
+      allowReorderWhenStructureLocked={vm.allowReorderWhenStructureLocked}
       fieldListBottomSlot={
         <FormEditorTitleNumberingField
           value={vm.draft.formSettings.titleNumbering}

@@ -13,7 +13,7 @@ import type {
   PaymentOrderAdminProgramDetailInstructorRow,
   PaymentOrderAdminProgramRow,
   PaymentOrderProgramCalculationStatement,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import { usePaymentOrderDetailInstructorPrivacyReveal } from './use-payment-order-detail-instructor-privacy'

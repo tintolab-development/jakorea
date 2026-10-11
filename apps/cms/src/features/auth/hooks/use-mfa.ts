@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react'
 import type { MfaState } from '@/types/mfa'
-import { createTotpMfaState } from '@/data/mock/mfa'
+import { createTotpMfaState } from '@/features/auth/lib/create-totp-mfa-state'
 
 interface UseMfaResult {
   /** MFA 상태 */

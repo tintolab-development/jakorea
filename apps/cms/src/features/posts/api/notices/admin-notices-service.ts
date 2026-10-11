@@ -3,8 +3,9 @@ import {
   mapCreatedCategory,
   type CategoryRow,
 } from '@/features/posts/api/shared/category-adapters'
+import type { PostsListPage } from '@/features/posts/api/posts-list-page'
+import { mapPostsListPage } from '@/features/posts/api/shared/map-posts-list-page'
 import {
-  mapNoticeListResponse,
   mapNoticeResponse,
   toNoticeRequestFromForm,
   toNoticeRequestFromNotice,
@@ -22,7 +23,7 @@ import {
   updateNoticeCategoryRemote,
   updateNoticeRemote,
 } from '@/features/posts/api/notices/notices-api-client'
-import type { Notice } from '@/data/mock/notices'
+import type { Notice } from '@/features/posts/model/notice'
 import type { BuildNoticeBodyParams } from '@/features/posts/model/notice-form-mapper'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
@@ -49,10 +50,18 @@ export function shouldUseNoticesRemoteApi(): boolean {
   return isRealApiModuleEnabled('notices') && hasRemoteAdminJwt()
 }
 
-export async function getNoticeList(searchParams: URLSearchParams): Promise<Notice[]> {
+export async function getNoticeListPage(
+  searchParams: URLSearchParams,
+  page: number
+): Promise<PostsListPage<Notice>> {
   assertNoticesRemoteReady()
-  const dto = await fetchNoticesRemote(noticesParamsFromSearchParams(searchParams))
-  return mapNoticeListResponse(dto)
+  const dto = await fetchNoticesRemote(noticesParamsFromSearchParams(searchParams, page))
+  return mapPostsListPage(dto, mapNoticeResponse)
+}
+
+export async function getNoticeList(searchParams: URLSearchParams): Promise<Notice[]> {
+  const page = await getNoticeListPage(searchParams, 0)
+  return page.items
 }
 
 export async function getNoticeDetail(id: string): Promise<Notice> {

@@ -4,7 +4,7 @@
  * - DETAIL: 상세 라벨 배지(`payment-order-line-detail`) — LIST와 동일, `rejected`만 중립 톤
  */
 
-import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
 
 /** 본문·라벨 텍스트 */
 export const PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR: Record<

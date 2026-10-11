@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import { mapAggregatesToInstructorRows, mapAggregatesToProgramRows } from './map-settlement-aggregates'
 
 describe('map-settlement-aggregates', () => {

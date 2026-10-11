@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   maskProgressAttendanceContact,
   maskProgressAttendanceEmail,
@@ -86,7 +86,7 @@ export function ParticipatingIndividualProgressAttendanceTable({
         align: 'center',
         render: (_value, record) => (
           <ProgramAttendanceStatusText
-            kind={toProgressAttendanceStatusTextKind(record.attendanceStatus)}
+            kind={toProgressAttendanceStatusTextKind(record)}
             label={resolveProgressAttendanceStatusLabel(record)}
             lateTime={record.lateTime}
           />
@@ -105,7 +105,7 @@ export function ParticipatingIndividualProgressAttendanceTable({
   )
 
   return (
-    <Table<ParticipatingIndividualProgressAttendanceParticipantRow & { no: number }>
+    <CmsDataTable<ParticipatingIndividualProgressAttendanceParticipantRow & { no: number }>
       rowKey="id"
       className="cms-data-table participating-individual-progress-attendance-table"
       columns={columns}

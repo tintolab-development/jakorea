@@ -1,5 +1,6 @@
 import type {
   DateParagraph,
+  DropdownParagraph,
   FileAttachmentParagraph,
   MultipleChoiceItem,
   MultipleChoiceParagraph,
@@ -9,6 +10,7 @@ import type {
   ShortEssayParagraph,
   WritingFormParagraph,
 } from './draft-schema.js'
+import { SHORT_ESSAY_MAX_LENGTH } from './draft-schema.js'
 import { DEFAULT_USER_INFO_FIELD_CATALOG } from './user-info-write.js'
 import {
   createDefaultIdTypeWithInputOptions,
@@ -33,6 +35,7 @@ export function createShortEssayDefault(id: string): ShortEssayParagraph {
     participatesInTitleNumbering: true,
     answerRequired: true,
     showItemTitle: false,
+    maxLength: SHORT_ESSAY_MAX_LENGTH,
     items: [
       {
         id: 'short-essay-item-1',
@@ -44,6 +47,20 @@ export function createShortEssayDefault(id: string): ShortEssayParagraph {
     bodyPlaceholder: '답변을 입력해 주세요',
     bodyText: '',
     itemInputRows: 1,
+  }
+}
+
+/** 시드/시스템 전용 — 유형 셀렉트에는 노출하지 않음 */
+export function createDropdownDefault(id: string): DropdownParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'dropdown',
+    requiredMark: true,
+    paragraphTitle: '드롭다운형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
   }
 }
 
@@ -234,6 +251,8 @@ export function createParagraphByDetail(detail: DetailSelectValue, id: string): 
       return createSessionPlanShortEssayDefault(id)
     case 'multiple_choice':
       return createMultipleChoiceDefault(id)
+    case 'dropdown':
+      return createDropdownDefault(id)
     case 'date_only':
       return createDateDefault(id)
     case 'time_only':

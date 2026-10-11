@@ -22,11 +22,13 @@ import {
   lookupWritingTemplateRegistry,
   resolveWritingTemplateDisplayName,
 } from '@/features/template/lib/lookup-writing-template-registry'
-import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
+import {
+  flushParticipantSessionOverlaysToOperationalStores,
+  useProgramParticipantApplicationEditor,
+} from '@/features/template/hooks/use-program-participant-application-editor'
 import {
   getUjatProgramRegistrationOverlayRecord,
   patchUjatProgramRegistrationOverlay,
-  resetUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import {
   normalizeOverlayPaymentItemsBeforeSubmit,
@@ -61,12 +63,8 @@ import {
   endRegistrationWizardVisit,
   trackRegistrationWizardVisitSave,
 } from '@/features/program/general/lib/registration-wizard-visit'
-import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { clearOperationalSeedDefaultSuppression } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
-import { resetUjatRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
-import { resetUjatRecruitVolunteerOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
-import { resetUjatApplicationInstitutionOverlay } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
-import { resetUjatApplicationVolunteerOverlay } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
+import { resetAllOperationalOverlayStores } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   hydrateRegistrationProgramDraft,
   syncRegistrationProgramDraftSession,
@@ -114,12 +112,7 @@ function resolveStepTemplateName(templateId: string): string {
 
 function resetUjatRegistrationWizardMemory(): void {
   clearOperationalSeedDefaultSuppression()
-  resetUjatProgramRegistrationOverlay()
-  resetUjatRecruitInstitutionOverlay()
-  resetUjatRecruitVolunteerOverlay()
-  resetUjatApplicationInstitutionOverlay()
-  resetUjatApplicationVolunteerOverlay()
-  resetGeneralRecruitOverlay()
+  resetAllOperationalOverlayStores()
 }
 
 export function useUjatProgramRegistrationFlow(
@@ -140,6 +133,14 @@ export function useUjatProgramRegistrationFlow(
   const continueHydratedRef = useRef(false)
   const skipDraftRestore = options?.skipDraftRestore === true
   const programType = 'UJAT' as const
+  const freshOverlayResetRef = useRef(false)
+  if (!open) {
+    freshOverlayResetRef.current = false
+  } else if (skipDraftRestore && !freshOverlayResetRef.current) {
+    freshOverlayResetRef.current = true
+    resetUjatRegistrationWizardMemory()
+    clearRegistrationWizardSessionDrafts()
+  }
   const [stepTemplateByKey, setStepTemplateByKey] = useState<Record<string, string>>({})
   const [wizardDraftRevision, setWizardDraftRevision] = useState(0)
 
@@ -166,6 +167,12 @@ export function useUjatProgramRegistrationFlow(
         )
         setStepTemplateByKey(payload.selectedOperationalTemplates)
       }
+      const titleKo = payload?.programTitleKo?.trim()
+      if (titleKo) {
+        patchUjatProgramRegistrationOverlay({
+          'ujat.basicInfo.programManagementName': titleKo,
+        })
+      }
       if (payload?.activeStep == null) return
       const restored = normalizeUjatProgramRegistrationStepKey(payload.activeStep)
       setActiveStep(restored)
@@ -179,13 +186,7 @@ export function useUjatProgramRegistrationFlow(
     if (open) return
     completionPromiseRef.current = null
     idempotencyKeyRef.current = createRegistrationIdempotencyKey()
-    clearOperationalSeedDefaultSuppression()
-    resetUjatProgramRegistrationOverlay()
-    resetUjatRecruitInstitutionOverlay()
-    resetUjatRecruitVolunteerOverlay()
-    resetUjatApplicationInstitutionOverlay()
-    resetUjatApplicationVolunteerOverlay()
-    resetGeneralRecruitOverlay()
+    resetUjatRegistrationWizardMemory()
     clearRegistrationWizardSessionDrafts()
   }, [open])
 
@@ -391,6 +392,7 @@ export function useUjatProgramRegistrationFlow(
       if (!isProgramStep && isParticipantStep) {
         await participantVm.handleSave({ silent: true })
       }
+      flushParticipantSessionOverlaysToOperationalStores()
       await persistRegistrationOperationalOverlaysToLocal(programType, 'ujat')
       syncRegistrationProgramDraftSession({
         programType,

@@ -1,3 +1,4 @@
-/** Notion: 검색 결과가 없는 경우 검색 조건을 변경하도록 안내 */
-export const LOGS_EMPTY_SEARCH_TEXT =
-  '검색 결과가 없습니다. 검색 조건을 변경해 주세요.'
+import { CMS_TABLE_EMPTY_COPY } from '@/shared/ui/cms-table-empty-copy'
+
+/** @deprecated 테이블 empty는 `renderCmsTableEmpty('no-search')` 사용 */
+export const LOGS_EMPTY_SEARCH_TEXT = `${CMS_TABLE_EMPTY_COPY['no-search'].title}. ${CMS_TABLE_EMPTY_COPY['no-search'].description}`

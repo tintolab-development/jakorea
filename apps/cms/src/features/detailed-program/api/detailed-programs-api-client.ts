@@ -4,7 +4,7 @@ import {
   forEachBulkIdChunk,
   toBulkNumericIds,
 } from '@/features/data-management/api/bulk-delete'
-import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
+import { getDataManagementSubsetApi } from '@/features/data-management/api/data-management-subset-api'
 import type {
   BulkActionResponse,
   DetailedProgramRequest,
@@ -13,25 +13,24 @@ import type {
   PageResponseDetailedProgramResponse,
 } from '@/shared/api/generated/data-management/schemas'
 
-const dmApi = getJAKoreaCMSBackendAPIDataManagementSubset()
 
 export async function fetchDetailedProgramsRemote(
   params: DetailedProgramsParams
 ): Promise<PageResponseDetailedProgramResponse> {
-  return unwrapApiBody(await dmApi.detailedPrograms(params))
+  return unwrapApiBody(await getDataManagementSubsetApi().detailedPrograms(params))
 }
 
 export async function fetchDetailedProgramRemote(
   id: number
 ): Promise<DetailedProgramResponse> {
-  return unwrapApiBody(await dmApi.detailedProgram(id))
+  return unwrapApiBody(await getDataManagementSubsetApi().detailedProgram(id))
 }
 
 export async function createDetailedProgramRemote(
   body: DetailedProgramRequest
 ): Promise<DetailedProgramResponse> {
   // POST /api/admin/detailed-programs (Orval create10 — create9는 material-kits POST, 혼동 금지)
-  return unwrapApiBody(await dmApi.create10(body))
+  return unwrapApiBody(await getDataManagementSubsetApi().create10(body))
 }
 
 export async function updateDetailedProgramRemote(
@@ -39,17 +38,17 @@ export async function updateDetailedProgramRemote(
   body: DetailedProgramRequest
 ): Promise<DetailedProgramResponse> {
   // PATCH /api/admin/detailed-programs/{id} (Orval update6 — material-kits update5와 혼동 금지)
-  return unwrapApiBody(await dmApi.update6(id, body))
+  return unwrapApiBody(await getDataManagementSubsetApi().update6(id, body))
 }
 
 export async function deleteDetailedProgramRemote(id: number): Promise<void> {
-  await dmApi.delete4(id)
+  await getDataManagementSubsetApi().delete4(id)
 }
 
 export async function bulkDeleteDetailedProgramsRemote(ids: string[]): Promise<void> {
   await forEachBulkIdChunk(ids, async chunk => {
     const result = unwrapApiBody<BulkActionResponse>(
-      await dmApi.bulkDelete3({ ids: toBulkNumericIds(chunk) })
+      await getDataManagementSubsetApi().bulkDelete3({ ids: toBulkNumericIds(chunk) })
     )
     assertBulkDeleteSucceeded(result, '세부 프로그램 일괄 삭제에 실패했습니다.')
   })

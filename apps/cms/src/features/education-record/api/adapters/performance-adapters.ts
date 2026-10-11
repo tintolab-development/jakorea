@@ -1,5 +1,4 @@
 import type { Program } from '@/types/domain'
-import { mockPrograms } from '@/data/mock/programs'
 import {
   buildProgramRegionMap,
   parseRegionTokens,
@@ -178,5 +177,5 @@ export function mapProgramsToEducationRecordRows(
 }
 
 export function getMockEducationRecordRows(): EducationRecordRow[] {
-  return mapProgramsToEducationRecordRows(mockPrograms)
+  return []
 }

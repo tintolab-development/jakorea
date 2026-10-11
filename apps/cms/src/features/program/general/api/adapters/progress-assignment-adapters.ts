@@ -20,6 +20,7 @@ import type {
   ParticipatingIndividualProgressAssignmentSubmission,
 } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
 import { parseParticipantSurveyViewKey } from '@/features/program/general/model/participating-individual-participants'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 
 function formatDateLabel(value: string | null | undefined, pattern: string): string {
   if (!value?.trim()) return ''
@@ -68,7 +69,7 @@ function formatScheduleHeader(schedule: GeneralAssignmentSubmissionScheduleDto, 
 function mapGenderLabel(gender?: string | null): string {
   const key = mapApiGenderToStudentGenderKey(gender)
   if (key) return STUDENT_GENDER_LABELS[key]
-  return gender?.trim() || '-'
+  return toDisplayGender(gender)
 }
 
 function mapBirthLabel(birthDate?: string | null): string {

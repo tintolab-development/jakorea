@@ -14,7 +14,10 @@ import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import { useLeaveDeletedDetail } from '@/features/posts/hooks/use-leave-deleted-detail'
 import { useNoticeDetailQuery } from '@/features/posts/hooks/use-notice-detail-query'
 import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
+import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+
+const NOTICE_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('notice', 'single')
 import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -112,6 +115,7 @@ export function AdminNoticeDetailPage() {
         onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         preset="notice"
+        {...NOTICE_SINGLE_DELETE_COPY}
       />
       <NoticeFormModal
         open={editModalOpen}

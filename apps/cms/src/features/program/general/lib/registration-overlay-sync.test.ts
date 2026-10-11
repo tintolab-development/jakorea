@@ -177,7 +177,7 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
       },
     })
     expect(extras.sessionRoundType).toBe('single')
-    expect(extras.curriculumChartSessionCount).toBe(2)
+    expect(extras.curriculumChartSessionCount).toBe(1)
   })
 
   it('sessionRound가 multi여도 차시 행이면 extras 회차 수는 overlay다', () => {
@@ -229,19 +229,15 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     const saved = readGeneralRegistrationOverlayForSave()
     expect(saved['generalRegistration.educationCurriculum.unitNameBySession']).toEqual({
       1: '필요와 욕구, 현명한 소비',
-      2: '',
     })
     expect(saved['generalRegistration.educationCurriculum.unitContentBySession']).toEqual({
       1: '본문',
-      2: '',
     })
     expect(saved['generalRegistration.educationCurriculum.progressSessionByRound']).toEqual({
       1: '필요와 욕구, 현명한 소비',
-      2: '2',
     })
     expect(saved['generalRegistration.educationCurriculum.roundContentByRound']).toEqual({
       1: '본문',
-      2: '',
     })
   })
 
@@ -272,19 +268,15 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     const saved = readGeneralRegistrationOverlayForSave()
     expect(saved['generalRegistration.educationCurriculum.unitNameBySession']).toEqual({
       1: '필요와 욕구, 현명한 소비',
-      2: '',
     })
     expect(saved['generalRegistration.educationCurriculum.progressSessionByRound']).toEqual({
       1: '필요와 욕구, 현명한 소비',
-      2: '2',
     })
     expect(saved['generalRegistration.educationCurriculum.roundContentByRound']).toEqual({
       1: '본문',
-      2: '',
     })
     expect(saved['generalRegistration.educationCurriculum.assignmentByRound']).toEqual({
       1: { enabled: false, period: '' },
-      2: { enabled: false, period: '' },
     })
     expect(saved['generalRegistration.educationCurriculum.ipsBySession']).toEqual({})
     expect(extrasFromGeneralProgram(program).curriculumSessionCount).toBe(1)

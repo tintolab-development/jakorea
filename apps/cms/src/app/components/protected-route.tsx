@@ -10,10 +10,7 @@
 
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import {
-  hasPasswordChangeRequiredComplete,
-  hasPasswordChangeRequiredSocialOnboarding,
-} from '@/features/auth/password-change-required/wizard-state'
+import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import {
   PASSWORD_CHANGE_REQUIRED_PATH,
@@ -33,10 +30,6 @@ export function ProtectedRoute({
   requireAuth = true,
 }: ProtectedRouteProps) {
   const { isAuthenticated, user, requiresMfa, mfaState, passwordChangeRequired } = useAuthStore()
-
-  if (hasPasswordChangeRequiredSocialOnboarding()) {
-    return <Navigate to={passwordChangeRequiredPaths.socialConnect} replace />
-  }
 
   if (hasPasswordChangeRequiredComplete()) {
     return <Navigate to={passwordChangeRequiredPaths.complete} replace />

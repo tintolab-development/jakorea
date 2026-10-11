@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import type { TimeParagraph } from '@/features/template/model/writing-form-draft.schema'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import { ParagraphBodyStaticText } from '@/features/template/ui/shared/paragraph-body-static-text'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import './time.css'
 
@@ -36,6 +37,17 @@ export function TimeField({
   }, [isCardSelected, paragraphInteractionMode])
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  const staticDisplayText =
+    time != null && time.isValid() ? time.format('HH:mm') : null
+
+  if (!isBodyInteractive) {
+    return (
+      <div className="time-field-paragraph-body">
+        <ParagraphBodyStaticText value={staticDisplayText} placeholder="시간 선택" />
+      </div>
+    )
+  }
+
   return (
     <div className="time-field-paragraph-body">
       <ParagraphTimePicker
@@ -43,7 +55,6 @@ export function TimeField({
         onChange={setTime}
         placeholder="시간 선택"
         width={PICKER_WIDTH}
-        disabled={!isBodyInteractive}
       />
     </div>
   )

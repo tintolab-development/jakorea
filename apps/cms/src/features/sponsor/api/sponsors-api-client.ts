@@ -4,7 +4,7 @@ import {
   forEachBulkIdChunk,
   toBulkNumericIds,
 } from '@/features/data-management/api/bulk-delete'
-import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
+import { getDataManagementSubsetApi } from '@/features/data-management/api/data-management-subset-api'
 import customInstance from '@/shared/api/orval-mutator'
 import type { SponsorWriteRequest } from '@/features/sponsor/api/adapters/sponsor-adapters'
 import type {
@@ -22,7 +22,6 @@ import type {
 } from '@/shared/api/generated/data-management/schemas'
 import type { PageResponseSponsorProgramHistoryResponse } from '@/shared/api/generated/data-management/schemas/pageResponseSponsorProgramHistoryResponse'
 
-const dmApi = getJAKoreaCMSBackendAPIDataManagementSubset()
 
 /** OpenAPI path param은 number이나 실제 id는 string(UUID/문자열)일 수 있음 */
 function pathId(id: string): number {
@@ -34,34 +33,36 @@ export async function fetchSponsorsRemote(
   params: SponsorsParams & {
     sponsorshipStartDateFrom?: string
     sponsorshipStartDateTo?: string
+    page?: number
+    size?: number
   }
-): Promise<SponsorResponse[]> {
-  return unwrapApiBody(await dmApi.sponsors(params))
+): Promise<unknown> {
+  return unwrapApiBody(await getDataManagementSubsetApi().sponsors(params))
 }
 
 export async function fetchSponsorRemote(id: string): Promise<SponsorDetailResponse> {
-  return unwrapApiBody(await dmApi.sponsor(pathId(id)))
+  return unwrapApiBody(await getDataManagementSubsetApi().sponsor(pathId(id)))
 }
 
 export async function createSponsorRemote(body: SponsorWriteRequest): Promise<SponsorResponse> {
-  return unwrapApiBody(await dmApi.create4(body))
+  return unwrapApiBody(await getDataManagementSubsetApi().create4(body))
 }
 
 export async function updateSponsorRemote(
   id: string,
   body: SponsorRequest
 ): Promise<SponsorResponse> {
-  return unwrapApiBody(await dmApi.update4(pathId(id), body))
+  return unwrapApiBody(await getDataManagementSubsetApi().update4(pathId(id), body))
 }
 
 export async function deleteSponsorRemote(id: string): Promise<void> {
-  await dmApi.delete2(pathId(id))
+  await getDataManagementSubsetApi().delete2(pathId(id))
 }
 
 export async function bulkDeleteSponsorsRemote(ids: string[]): Promise<void> {
   await forEachBulkIdChunk(ids, async chunk => {
     const result = unwrapApiBody<BulkActionResponse>(
-      await dmApi.bulkDeleteSponsors({ ids: toBulkNumericIds(chunk) })
+      await getDataManagementSubsetApi().bulkDeleteSponsors({ ids: toBulkNumericIds(chunk) })
     )
     assertBulkDeleteSucceeded(result, '후원사 일괄 삭제에 실패했습니다.')
   })
@@ -89,12 +90,12 @@ export async function bulkDeleteSponsorProgramHistoriesRemote(
         data: { ids: numericProgramIds },
       })
     )
-    assertBulkDeleteSucceeded(result, '후원사 프로그램 진행 이력 삭제에 실패했습니다.')
+    assertBulkDeleteSucceeded(result, '후원사 프로그램 후원 이력 삭제에 실패했습니다.')
   })
 }
 
 export async function endSponsorRemote(id: string): Promise<void> {
-  await dmApi.end(pathId(id))
+  await getDataManagementSubsetApi().end(pathId(id))
 }
 
 export type SponsorContactsQueryParams = {
@@ -126,7 +127,7 @@ export async function fetchSponsorContactsRemote(
     : undefined
   const contactsParams =
     query && Object.keys(query).length > 0 ? (query as ContactsParams) : undefined
-  const payload = await dmApi.contacts(pathId(sponsorId), contactsParams)
+  const payload = await getDataManagementSubsetApi().contacts(pathId(sponsorId), contactsParams)
   return unwrapSponsorContactList(payload)
 }
 
@@ -134,24 +135,24 @@ export async function addSponsorContactRemote(
   sponsorId: string,
   body: SponsorContactRequest
 ): Promise<SponsorContactResponse> {
-  return unwrapApiBody(await dmApi.addContact(pathId(sponsorId), body))
+  return unwrapApiBody(await getDataManagementSubsetApi().addContact(pathId(sponsorId), body))
 }
 
 export async function updateSponsorContactRemote(
   contactId: string,
   body: SponsorContactRequest
 ): Promise<SponsorContactResponse> {
-  return unwrapApiBody(await dmApi.updateContact(pathId(contactId), body))
+  return unwrapApiBody(await getDataManagementSubsetApi().updateContact(pathId(contactId), body))
 }
 
 export async function deleteSponsorContactRemote(contactId: string): Promise<void> {
-  await dmApi.deleteContact(pathId(contactId))
+  await getDataManagementSubsetApi().deleteContact(pathId(contactId))
 }
 
 export async function bulkDeleteSponsorContactsRemote(ids: string[]): Promise<void> {
   await forEachBulkIdChunk(ids, async chunk => {
     const result = unwrapApiBody<BulkActionResponse>(
-      await dmApi.bulkDeleteContacts({ ids: toBulkNumericIds(chunk) })
+      await getDataManagementSubsetApi().bulkDeleteContacts({ ids: toBulkNumericIds(chunk) })
     )
     assertBulkDeleteSucceeded(result, '담당자 일괄 삭제에 실패했습니다.')
   })
@@ -160,7 +161,7 @@ export async function bulkDeleteSponsorContactsRemote(ids: string[]): Promise<vo
 export async function fetchYearlyBusinessesRemote(
   sponsorId: string
 ): Promise<SponsorYearlyBusinessResponse[]> {
-  return unwrapApiBody(await dmApi.yearlyBusinesses(pathId(sponsorId)))
+  return unwrapApiBody(await getDataManagementSubsetApi().yearlyBusinesses(pathId(sponsorId)))
 }
 
 export async function addYearlyBusinessRemote(
@@ -182,7 +183,7 @@ export async function updateYearlyBusinessRemote(
   yearlyBusinessId: string,
   body: SponsorYearlyBusinessRequest
 ): Promise<SponsorYearlyBusinessResponse> {
-  return unwrapApiBody(await dmApi.updateYearlyBusiness(pathId(yearlyBusinessId), body))
+  return unwrapApiBody(await getDataManagementSubsetApi().updateYearlyBusiness(pathId(yearlyBusinessId), body))
 }
 
 export async function deleteYearlyBusinessRemote(yearlyBusinessId: string): Promise<void> {
@@ -197,5 +198,5 @@ export async function fetchProgramHistoriesRemote(
   sponsorId: string,
   params?: ProgramHistoriesParams & { participantType?: string }
 ): Promise<PageResponseSponsorProgramHistoryResponse> {
-  return unwrapApiBody(await dmApi.programHistories(pathId(sponsorId), params))
+  return unwrapApiBody(await getDataManagementSubsetApi().programHistories(pathId(sponsorId), params))
 }

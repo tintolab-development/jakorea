@@ -100,7 +100,17 @@ assert.equal(
 assert.equal(mapped.thumbnailUrl, portalPublicFileContentUrl(77))
 assert.equal(mapped.attachments[0]?.url, '/api/portal/public/files/88/download')
 assert.equal(mapped.contactValue, 'JA Korea, Tel : 02-6085-6028, E-mail : cc@jakorea.org')
-assert.equal(mapped.participationMethod, 'team')
+assert.equal(mapped.participationMethod, 'individual')
+
+const individualTeam = mapPortalProgramDetail({
+  programId: 186087,
+  programType: 'GENERAL_INDIVIDUAL',
+  applicationTargetMode: 'INDIVIDUAL',
+  participationMethod: 'team',
+  title: '팀 참여 개인',
+})
+assert.ok(individualTeam)
+assert.equal(individualTeam.participationMethod, 'team')
 assert.deepEqual(
   mapped.extraSections.map(section => section.title),
   ['모집 안내', '추가 내용']
@@ -1087,5 +1097,148 @@ assert.equal(
   volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '최종 합격자 발표'),
   true
 )
+
+const multiRecruitmentPhases = mapPortalProgramDetail({
+  programId: 186080,
+  title: '강사·봉사자 동시 모집',
+  recruitments: [
+    {
+      recruitmentType: 'INSTRUCTOR',
+      startAt: '2026-09-01T00:00:00Z',
+      endAt: '2026-09-10T00:00:00Z',
+      interviewEnabled: true,
+      documentPassAnnouncementAt: '2026-09-12T00:00:00Z',
+      interviewStartAt: '2026-09-13T00:00:00Z',
+      interviewEndAt: '2026-09-14T00:00:00Z',
+      finalPassAnnouncementAt: '2026-09-20T00:00:00Z',
+    },
+    {
+      recruitmentType: 'VOLUNTEER',
+      startAt: '2026-09-01T00:00:00Z',
+      endAt: '2026-09-15T00:00:00Z',
+      interviewEnabled: true,
+      documentPassAnnouncementAt: '2026-09-16T00:00:00Z',
+      interviewStartAt: '2026-09-17T00:00:00Z',
+      interviewEndAt: '2026-09-18T00:00:00Z',
+      finalPassAnnouncementAt: '2026-09-25T00:00:00Z',
+    },
+  ],
+})
+assert.ok(multiRecruitmentPhases)
+const multiPhaseLabels = multiRecruitmentPhases.recruitmentPhases.map(phase => phase.label)
+assert.equal(new Set(multiPhaseLabels).size, multiPhaseLabels.length)
+assert.equal(
+  multiRecruitmentPhases.recruitmentPhases.some(phase => phase.label === '강사 1차 합격자 발표일'),
+  true
+)
+assert.equal(
+  multiRecruitmentPhases.recruitmentPhases.some(phase => phase.label === '봉사자 면접 기간'),
+  true
+)
+assert.equal(
+  multiRecruitmentPhases.recruitmentPhases.some(phase => phase.label === '1차 합격자 발표일'),
+  false
+)
+
+const volunteerInterviewSchedule = mapPortalProgramDetail(
+  {
+    programId: 186068,
+    programType: 'GENERAL_ORGANIZATION',
+    title: '봉사자 면접 일정',
+    recruitments: [
+      {
+        recruitmentId: 186142,
+        recruitmentType: 'VOLUNTEER',
+        applicationTypes: ['VOLUNTEER'],
+        interviewEnabled: true,
+        interviewStartAt: '2026-11-05T15:00:00Z',
+        interviewEndAt: '2026-11-08T15:00:00Z',
+        volunteerInterviewSchedule: {
+          source: 'SCHEDULE_INFO',
+          periodStartDate: '2026-10-01',
+          periodEndDate: '2026-11-09',
+          availableTimeSlots: '10:00 ~ 10:30',
+          recurringUnavailable: '공휴일',
+          options: [
+            {
+              id: 'interview-option:2026-10-12T10:00-10:30',
+              label: '26년 10월 12일(월) 10:00 ~ 10:30',
+              source: 'SCHEDULE_INFO',
+              slotDate: '2026-10-12',
+              startAt: '2026-10-12T01:00:00Z',
+              endAt: '2026-10-12T01:30:00Z',
+            },
+          ],
+        },
+      },
+      {
+        recruitmentId: 186143,
+        recruitmentType: 'INSTRUCTOR',
+        applicationTypes: ['INSTRUCTOR'],
+        interviewEnabled: false,
+      },
+    ],
+  },
+  { recruitmentIds: [186142], applicationTypes: ['VOLUNTEER'] },
+)
+assert.ok(volunteerInterviewSchedule)
+assert.equal(volunteerInterviewSchedule.volunteerInterviewSchedule?.periodLabel, '2026.10.01 – 2026.11.09')
+assert.equal(volunteerInterviewSchedule.volunteerInterviewSchedule?.availableTimeSlots, '10:00 ~ 10:30')
+assert.equal(volunteerInterviewSchedule.volunteerInterviewSchedule?.recurringUnavailable, '공휴일')
+assert.equal(volunteerInterviewSchedule.volunteerInterviewSchedule?.options.length, 1)
+assert.equal(
+  volunteerInterviewSchedule.volunteerInterviewSchedule?.options[0]?.label,
+  '26년 10월 12일(월) 10:00 ~ 10:30'
+)
+
+const instructorScopedNoInterviewSchedule = mapPortalProgramDetail(
+  {
+    programId: 186068,
+    title: '강사 스코프',
+    recruitments: [
+      {
+        recruitmentId: 186142,
+        recruitmentType: 'VOLUNTEER',
+        volunteerInterviewSchedule: {
+          source: 'SCHEDULE_INFO',
+          periodStartDate: '2026-10-01',
+          periodEndDate: '2026-11-09',
+          availableTimeSlots: '10:00 ~ 10:30',
+          options: [],
+        },
+      },
+      {
+        recruitmentId: 186143,
+        recruitmentType: 'INSTRUCTOR',
+      },
+    ],
+  },
+  { recruitmentIds: [186143], applicationTypes: ['INSTRUCTOR'] },
+)
+assert.ok(instructorScopedNoInterviewSchedule)
+assert.equal(instructorScopedNoInterviewSchedule.volunteerInterviewSchedule, undefined)
+
+const emptyInterviewOptions = mapPortalProgramDetail({
+  programId: 186069,
+  title: '면접 일정 EMPTY',
+  recruitments: [
+    {
+      recruitmentType: 'VOLUNTEER',
+      interviewEnabled: true,
+      volunteerInterviewSchedule: {
+        source: 'EMPTY',
+        periodStartDate: '2026-10-01',
+        periodEndDate: '2026-10-31',
+        availableTimeSlots: '10:00 ~ 10:30',
+        options: [],
+      },
+    },
+  ],
+})
+assert.ok(emptyInterviewOptions)
+assert.equal(emptyInterviewOptions.volunteerInterviewSchedule?.options.length, 0)
+assert.equal(emptyInterviewOptions.volunteerInterviewSchedule?.availableTimeSlots, '10:00 ~ 10:30')
+
+assert.equal(volunteerInterviewOff.volunteerInterviewSchedule, undefined)
 
 console.log('program portal mappers.selfcheck: ok')

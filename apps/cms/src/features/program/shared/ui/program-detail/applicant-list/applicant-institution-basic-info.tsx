@@ -41,6 +41,7 @@ const APPROVAL_STATUS_LABELS: Record<ApplicantSchoolRow['approvalStatus'], strin
   pending: '대기 중',
   approved: '승인 완료',
   rejected: '신청 반려',
+  cancelled: '신청 취소',
 }
 
 export type { ApplicantInstitutionDetailExtend } from '@/features/program/shared/model/applicant-institution'

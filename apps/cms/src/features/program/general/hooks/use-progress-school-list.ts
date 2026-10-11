@@ -39,8 +39,6 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import type { Program } from '@/types/domain'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockOrgParticipatingSchools } from '@/features/program/general/lib/temp-mock-org-program'
 import { extractApiErrorCode, extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import axios from 'axios'
@@ -64,7 +62,7 @@ export function useProgressSchoolList({
   const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
-  const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
+  void useIsCompanySchoolProgramsSurface()
   const remoteEnabled =
     enabled && useProgramProgressRemoteEnabledForSurface(programId)
   const ttRemoteEnabled =
@@ -73,10 +71,8 @@ export function useProgressSchoolList({
     shouldUseTrainedTeacherProgramsRemoteApi() &&
     Boolean(programId)
 
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
-
   useNotifyProgramApiUnavailableOnce(
-    enabled && !remoteEnabled && !ttRemoteEnabled && !isTempMockProgram,
+    enabled && !remoteEnabled && !ttRemoteEnabled,
     'general-progress-schools',
     '프로그램 진행 현황 · 참여 기관'
   )
@@ -104,22 +100,11 @@ export function useProgressSchoolList({
     ttRemoteEnabled,
     ttListFilters
   )
-  const temporaryProgressSchools = useMemo(
-    () =>
-      enabled && isTempMockProgram && !isTrainedTeachersSurface && !isCompanySchoolSurface
-        ? getTempMockOrgParticipatingSchools(programId)
-        : [],
-    [enabled, isCompanySchoolSurface, isTempMockProgram, isTrainedTeachersSurface, programId]
-  )
   const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>([])
 
   useEffect(() => {
     if (ttRemoteEnabled) {
       if (ttParticipatingQuery.data) setSchoolList(ttParticipatingQuery.data)
-      return
-    }
-    if (isTempMockProgram) {
-      setSchoolList(temporaryProgressSchools)
       return
     }
     if (remoteEnabled) {
@@ -129,14 +114,7 @@ export function useProgressSchoolList({
       return
     }
     setSchoolList([])
-  }, [
-    isTempMockProgram,
-    remoteEnabled,
-    remoteQuery.data,
-    ttRemoteEnabled,
-    ttParticipatingQuery.data,
-    temporaryProgressSchools,
-  ])
+  }, [remoteEnabled, remoteQuery.data, ttRemoteEnabled, ttParticipatingQuery.data])
 
   const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
   const [selectedSchoolForDetail, setSelectedSchoolForDetail] =
@@ -207,12 +185,6 @@ export function useProgressSchoolList({
 
   const handleTextbookStatusChange = useCallback(
     (recordId: string, status: TextbookStatusKey) => {
-      if (isTempMockProgram) {
-        setSchoolList(prev =>
-          prev.map(row => (row.id === recordId ? { ...row, textbookStatus: status } : row))
-        )
-        return
-      }
       if (!remoteEnabled || !programId) {
         notifyProgramApiUnavailable(
           'general-participating-institution-textbook-delivery-status',
@@ -252,7 +224,7 @@ export function useProgressSchoolList({
         }
       })()
     },
-    [isTempMockProgram, programId, queryClient, remoteEnabled, schoolList, showAlert]
+    [programId, queryClient, remoteEnabled, schoolList, showAlert]
   )
 
   const handleSchoolDeleteClick = useCallback(() => {
@@ -372,23 +344,14 @@ export function useProgressSchoolList({
 
   /** 잔여 모달 승인 취소. 진행 현황 SSOT는 활동 포기. 로컬 성공 위장 금지. */
   const handleSchoolApprovalCancel = useCallback(
-    (schoolId: string) => {
-      if (isTempMockProgram) {
-        setSchoolList(prev =>
-          prev.map(row =>
-            row.id === schoolId
-              ? { ...row, approvalStatus: 'cancelled' as ParticipatingSchoolApprovalStatusKey }
-              : row
-          )
-        )
-        return
-      }
+    (_schoolId: string) => {
+      void _schoolId
       notifyProgramApiUnavailable(
         'general-participating-institution-cancel-approval',
         '일반 프로그램 · 참여 기관 진행 현황 승인 취소'
       )
     },
-    [isTempMockProgram]
+    []
   )
 
   /** 학교별 배정 강사 요약 (대표강사명 외 N명, 저장 패치 우선) */

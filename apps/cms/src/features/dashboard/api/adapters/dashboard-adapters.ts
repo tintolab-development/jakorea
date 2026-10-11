@@ -11,6 +11,7 @@ import type {
   DashboardRecruitmentListResponse,
   DashboardProgramScheduleResponse,
 } from '@/shared/api/generated/dashboard/schemas'
+import { getDashboardProgramTypeParamForWidget } from '@/features/dashboard/lib/dashboard-widget-program-type'
 import type { KpiMetric, KpiMetricKey, ProgramKpiItem } from '../admin-dashboard-service'
 
 export interface DashboardHomeSummary {
@@ -292,6 +293,49 @@ export function mapProgramOptionsFromRecruitmentList(
   }
 
   return [...byProgram.values()]
+}
+
+function normalizeRecruitmentProgramType(value?: string): string {
+  return (value ?? '').trim().toLowerCase().replace(/-/g, '_')
+}
+
+export function recruitmentItemMatchesWidgetProgramType(
+  itemProgramType: string | undefined,
+  widgetProgramTypeParam: string
+): boolean {
+  const item = normalizeRecruitmentProgramType(itemProgramType)
+  const param = normalizeRecruitmentProgramType(widgetProgramTypeParam)
+  if (!param) return true
+  if (item === param) return true
+  if (param === 'general' && item.includes('general')) return true
+  if (
+    param === 'company_school' &&
+    (item.includes('company_school') || item.includes('one_company'))
+  ) {
+    return true
+  }
+  if (param === 'ujat' && item.includes('ujat')) return true
+  if (param === 'gemini' && item.includes('gemini')) return true
+  return false
+}
+
+export function filterRecruitmentListForWidget(
+  widgetKey: string,
+  dto: DashboardRecruitmentListResponse
+): DashboardRecruitmentListResponse {
+  const programType = getDashboardProgramTypeParamForWidget(widgetKey)
+  if (!programType) return dto
+  const items = (dto.items ?? []).filter(item =>
+    recruitmentItemMatchesWidgetProgramType(item.programType, programType)
+  )
+  return { ...dto, items }
+}
+
+export function mapProgramOptionsForWidget(
+  widgetKey: string,
+  dto: DashboardRecruitmentListResponse
+): DashboardProgramOption[] {
+  return mapProgramOptionsFromRecruitmentList(filterRecruitmentListForWidget(widgetKey, dto))
 }
 
 export function mapKpiProgressListResponse(

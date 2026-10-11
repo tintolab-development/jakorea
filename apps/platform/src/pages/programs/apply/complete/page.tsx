@@ -4,6 +4,7 @@ import {
   PROGRAMS_PATH,
   readPortalRecruitmentFocus,
   useProgramDetail,
+  ProgramApplyCompleteLoading,
 } from '@/features/program'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
@@ -19,7 +20,7 @@ export function ProgramApplyCompletePage() {
   const { program, isLoading } = useProgramDetail(programId, { focus })
 
   if (isLoading && !program) {
-    return null
+    return <ProgramApplyCompleteLoading />
   }
 
   if (!program) {

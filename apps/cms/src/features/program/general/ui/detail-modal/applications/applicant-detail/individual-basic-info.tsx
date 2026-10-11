@@ -4,7 +4,7 @@
 
 import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput, CmsNumericInput, CmsSelect } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsNumericInput, CmsSelect } from '@/shared/ui'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import type {
   GeneralIndividualApplicantDetail,
@@ -12,6 +12,7 @@ import type {
 } from '@/features/program/general/model/individual-applicant'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
 import type { ApplicantIndividualEditDraft } from '@/features/program/general/lib/applicant-individual-detail-edit'
@@ -37,7 +38,7 @@ import { ParticipatingProgressScheduleRow } from '@/features/program/general/ui/
 import '@/features/program/general/ui/detail-modal/program-status/participating-institution-application-info.css'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { formatInstitutionApplicationScheduleRowLabel } from '@/features/program/general/lib/institution-application-session-display'
-import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
+import { renderIndividualApplicantNameWithHistoryBadges } from '@/features/program/general/lib/individual-application-name-change-count'
 import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
 import {
   withProgramDetailTdDivider,
@@ -53,7 +54,11 @@ import {
   IndividualApplicantId1365Cell,
   IndividualApplicantManagerEvaluationSection,
 } from './individual-screening-sections'
-import { GeneralIndividualTeamRoleDropdown } from './individual-team-role-dropdown'
+import {
+  GeneralIndividualTeamRoleDropdown,
+  GeneralIndividualTeamRoleView,
+} from './individual-team-role-dropdown'
+import { openPortal1365Main } from '@/shared/constants/external-urls'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import '@/features/user/detail/ui/instructor-resume/resume.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
@@ -102,22 +107,14 @@ function IndividualApplicantScreeningBasicInfo({
   const detail = applicant.detail
   const shouldMask = maskSensitive && applicant.privacyMaskingLevel == null
 
-  const scheduleChangeCount = detail?.scheduleChangeCancelCount ?? 0
-  const nameCell =
-    scheduleChangeCount > 0 ? (
-      <>
-        {applicant.applicantName}
-        <ScheduleChangeHistoryBadge
-          count={scheduleChangeCount}
-          className="applicant-instructor-basic-info__name-badge"
-        />
-      </>
-    ) : (
-      applicant.applicantName
-    )
+  const nameCell = renderIndividualApplicantNameWithHistoryBadges({
+    applicantName: applicant.applicantName,
+    detail,
+    badgeClassName: 'applicant-instructor-basic-info__name-badge',
+  })
 
   const genderBirthDisplay = withProgramDetailTdDivider([
-    detail?.gender ?? '-',
+    toDisplayGender(detail?.gender),
     formatBirthDateAndAge(detail?.birthDate, detail?.age),
   ])
 
@@ -235,7 +232,7 @@ function IndividualApplicantScreeningTeamSection({
     <DetailInfoForm title="팀 정보" mode="view">
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="팀 명 및 인원"
+          label="팀 명 및 팀원"
           fullRow
           readOnlyDisplay
           view={
@@ -254,19 +251,18 @@ function IndividualApplicantScreeningTeamSection({
           fullRow
           readOnlyDisplay
           view={
-            detail?.teamRole ? (
-              <GeneralIndividualTeamRoleDropdown
-                applicantId={applicant.id}
-                teamRole={detail.teamRole}
-                canEdit={
-                  applicant.availableActions == null ||
-                  applicant.availableActions.includes('UPDATE_APPLICATION')
-                }
-                onChange={onTeamRoleChange}
-              />
-            ) : (
-              '-'
-            )
+            detail?.teamRole
+              ? onTeamRoleChange != null
+                ? (
+                    <GeneralIndividualTeamRoleDropdown
+                      applicantId={applicant.id}
+                      teamRole={detail.teamRole}
+                      canEdit
+                      onChange={onTeamRoleChange}
+                    />
+                  )
+                : <GeneralIndividualTeamRoleView teamRole={detail.teamRole} />
+              : '-'
           }
         />
       </DetailInfoForm.Row>
@@ -442,23 +438,14 @@ export function ApplicantGeneralIndividualBasicInfo({
     : null
   const sessions = applicant.sessions ?? []
 
-  const scheduleChangeCount = detail?.scheduleChangeCancelCount ?? 0
-
-  const nameCell =
-    scheduleChangeCount > 0 ? (
-      <>
-        {applicant.applicantName}
-        <ScheduleChangeHistoryBadge
-          count={scheduleChangeCount}
-          className="applicant-instructor-basic-info__name-badge"
-        />
-      </>
-    ) : (
-      applicant.applicantName
-    )
+  const nameCell = renderIndividualApplicantNameWithHistoryBadges({
+    applicantName: applicant.applicantName,
+    detail,
+    badgeClassName: 'applicant-instructor-basic-info__name-badge',
+  })
 
   const genderBirthDisplay = withProgramDetailTdDivider([
-    detail?.gender ?? '-',
+    toDisplayGender(detail?.gender),
     formatBirthDateAndAge(detail?.birthDate, detail?.age),
   ])
 
@@ -488,9 +475,20 @@ export function ApplicantGeneralIndividualBasicInfo({
   )
 
   const id1365Raw = detail?.id1365?.trim()
-  const id1365Display = id1365Raw ? (shouldMask ? maskId1365(id1365Raw) : id1365Raw) : '-'
-  const id1365Cell =
-    !shouldMask && id1365Raw ? <IndividualApplicantId1365Cell id1365={id1365Raw} /> : id1365Display
+  const id1365Cell = !id1365Raw
+    ? '-'
+    : shouldMask
+      ? (
+          <ProgramDetailTdSegmentWrap>
+            {withProgramDetailTdDivider([
+              maskId1365(id1365Raw),
+              <CmsButton key="1365-link" type="button" size="medium" onClick={openPortal1365Main}>
+                1365 바로가기
+              </CmsButton>,
+            ])}
+          </ProgramDetailTdSegmentWrap>
+        )
+      : <IndividualApplicantId1365Cell id1365={id1365Raw} />
 
   const textbookDisplay = resolveIndividualApplicantTextbookDisplay(
     program,
@@ -648,7 +646,7 @@ export function ApplicantGeneralIndividualBasicInfo({
           {colgroup}
           <tbody>
             <TableRowFullWidth
-              label="팀 명 및 인원"
+              label="팀 명 및 팀원"
               value={
                 isEditMode ? (
                   teamNameAndMemberEditCell
@@ -665,19 +663,18 @@ export function ApplicantGeneralIndividualBasicInfo({
             <TableRowFullWidth
               label="역할"
               value={
-                detail?.teamRole ? (
-                  <GeneralIndividualTeamRoleDropdown
-                    applicantId={applicant.id}
-                    teamRole={detail.teamRole}
-                    canEdit={
-                      applicant.availableActions == null ||
-                      applicant.availableActions.includes('UPDATE_APPLICATION')
-                    }
-                    onChange={onTeamRoleChange}
-                  />
-                ) : (
-                  '-'
-                )
+                detail?.teamRole
+                  ? onTeamRoleChange != null
+                    ? (
+                        <GeneralIndividualTeamRoleDropdown
+                          applicantId={applicant.id}
+                          teamRole={detail.teamRole}
+                          canEdit
+                          onChange={onTeamRoleChange}
+                        />
+                      )
+                    : <GeneralIndividualTeamRoleView teamRole={detail.teamRole} />
+                  : '-'
               }
             />
           </tbody>
@@ -720,7 +717,9 @@ export function ApplicantGeneralIndividualBasicInfo({
 
   const progressScheduleSection =
     showProgressScheduleSection && program ? (
-      <section className="applicant-institution-basic-info__section">
+      <section
+        className="applicant-institution-basic-info__section applicant-institution-basic-info__section--progress-schedule"
+      >
         <h3 className="applicant-institution-basic-info__title">교육 진행 일정</h3>
         <div className="applicant-institution-basic-info__table-wrap">
           <table className="applicant-institution-basic-info__table">
@@ -835,7 +834,7 @@ export function ApplicantGeneralIndividualBasicInfo({
                     )
                   }
                 />
-                {showTextbookField ? (
+                {!isProgressContext && showTextbookField ? (
                   <TableRowFullWidth label="교재명" value={textbookEditValue} />
                 ) : null}
               </tbody>
@@ -845,6 +844,9 @@ export function ApplicantGeneralIndividualBasicInfo({
             <table className="applicant-institution-basic-info__table">
               {colgroup}
               <tbody>
+                {isProgressContext && showTextbookField ? (
+                  <TableRowFullWidth label="교재명" value={textbookEditValue} />
+                ) : null}
                 <TableRowTwoCols
                   label1="성명"
                   value1={nameCell}

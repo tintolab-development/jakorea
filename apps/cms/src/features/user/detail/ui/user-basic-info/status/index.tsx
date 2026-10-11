@@ -62,62 +62,37 @@ export function normalizePermissionApprovalStatus(
   return 'PENDING'
 }
 
-function permissionApprovalStatusTextClass(status: User['permissionApprovalStatus']) {
+function approvalStatusClass(status: User['permissionApprovalStatus']) {
   const normalized = normalizePermissionApprovalStatus(status)
   if (normalized === 'APPROVED') {
-    return 'user-basic-info-section__permission-approval-status user-basic-info-section__permission-approval-status--approved'
+    return 'user-basic-info-section__approval-status user-basic-info-section__approval-status--approved'
   }
   if (normalized === 'REJECTED') {
-    return 'user-basic-info-section__permission-approval-status user-basic-info-section__permission-approval-status--rejected'
+    return 'user-basic-info-section__approval-status user-basic-info-section__approval-status--rejected'
   }
-  return 'user-basic-info-section__permission-approval-status user-basic-info-section__permission-approval-status--pending'
+  return 'user-basic-info-section__approval-status user-basic-info-section__approval-status--pending'
 }
 
 export function permissionApprovalStatusTextView(user: Omit<User, 'password'>) {
   if (isInstructorPermissionRevoked(user)) {
     return (
-      <span className="user-basic-info-section__permission-approval-status user-basic-info-section__permission-approval-status--rejected">
+      <span className="user-basic-info-section__approval-status user-basic-info-section__approval-status--rejected">
         권한 박탈
       </span>
     )
   }
   const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
   if (status === 'APPROVED') {
-    return <span className={permissionApprovalStatusTextClass(status)}>승인 완료</span>
+    return <span className={approvalStatusClass(status)}>승인 완료</span>
   }
   if (status === 'REJECTED') {
-    return <span className={permissionApprovalStatusTextClass(status)}>신청 반려</span>
+    return <span className={approvalStatusClass(status)}>신청 반려</span>
   }
-  return <span className={permissionApprovalStatusTextClass(status)}>승인 대기</span>
-}
-
-function permissionApprovalStatusListToneClass(user: Omit<User, 'password'>) {
-  const normalized = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
-  if (normalized === 'APPROVED') {
-    return 'user-basic-info-section__permission-approval-status-list-tone user-basic-info-section__permission-approval-status-list-tone--approved'
-  }
-  if (normalized === 'REJECTED') {
-    return 'user-basic-info-section__permission-approval-status-list-tone user-basic-info-section__permission-approval-status-list-tone--rejected'
-  }
-  return 'user-basic-info-section__permission-approval-status-list-tone user-basic-info-section__permission-approval-status-list-tone--pending'
+  return <span className={approvalStatusClass(status)}>승인 대기</span>
 }
 
 export function permissionApprovalStatusListToneView(user: Omit<User, 'password'>) {
-  if (isInstructorPermissionRevoked(user)) {
-    return (
-      <span className="user-basic-info-section__permission-approval-status-list-tone user-basic-info-section__permission-approval-status-list-tone--rejected">
-        권한 박탈
-      </span>
-    )
-  }
-  const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
-  if (status === 'APPROVED') {
-    return <span className={permissionApprovalStatusListToneClass(user)}>승인 완료</span>
-  }
-  if (status === 'REJECTED') {
-    return <span className={permissionApprovalStatusListToneClass(user)}>신청 반려</span>
-  }
-  return <span className={permissionApprovalStatusListToneClass(user)}>승인 대기</span>
+  return permissionApprovalStatusTextView(user)
 }
 
 function permissionApprovalHistoryTimestamp(user: Omit<User, 'password'>) {
@@ -129,7 +104,7 @@ function permissionApprovalHistoryTimestamp(user: Omit<User, 'password'>) {
 function permissionApprovalHistoryTimestampLabel(user: Omit<User, 'password'>) {
   const target = permissionApprovalHistoryTimestamp(user)
   if (!target) return '-'
-  return dayjs(target).format('YYYY.MM.DD HH:mm')
+  return dayjs(target).format('YYYY.MM.DD HH:mm:ss')
 }
 
 export function PermissionApprovalStatusWithResend({

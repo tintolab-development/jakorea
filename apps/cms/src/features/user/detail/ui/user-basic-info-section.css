@@ -36,17 +36,13 @@
   grid-template-rows: 56px 56px;
 }
 
-.user-basic-info-section--instructor-profile-card
-  .detail-info-form__name-block-cell,
-.user-basic-info-section--school-teacher-profile-card
-  .detail-info-form__name-block-cell {
+.user-basic-info-section--instructor-profile-card .detail-info-form__name-block-cell,
+.user-basic-info-section--school-teacher-profile-card .detail-info-form__name-block-cell {
   min-height: 0;
 }
 
-.user-basic-info-section--instructor-profile-card
-  .detail-info-form__name-block-cell--r1,
-.user-basic-info-section--school-teacher-profile-card
-  .detail-info-form__name-block-cell--r1 {
+.user-basic-info-section--instructor-profile-card .detail-info-form__name-block-cell--r1,
+.user-basic-info-section--school-teacher-profile-card .detail-info-form__name-block-cell--r1 {
   overflow: visible;
 }
 
@@ -71,8 +67,7 @@
   flex: 0 0 100px;
 }
 
-.user-basic-info-section__teacher-employment-dropdown
-  .ant-dropdown-trigger,
+.user-basic-info-section__teacher-employment-dropdown .ant-dropdown-trigger,
 .user-basic-info-section__teacher-employment-dropdown
   .status-dropdown-cell__status-trigger--tag-100,
 .user-basic-info-section__teacher-employment-dropdown
@@ -138,29 +133,25 @@
   min-width: 0;
 }
 
-/* 권한 승인 현황(상세) — 목록·회원 권한 승인 페이지와 동일 색/타이포 */
-.user-basic-info-section__permission-approval-status,
-.user-basic-info-section__permission-approval-status-list-tone {
+/* 권한 승인 현황 — 목록·상세 동일 색/타이포 */
+.user-basic-info-section__approval-status {
   text-align: center;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
 }
 
-.user-basic-info-section__permission-approval-status--pending,
-.user-basic-info-section__permission-approval-status-list-tone--pending {
+.user-basic-info-section__approval-status--pending {
   color: var(--color-green, #1e8c29);
 }
 
-.user-basic-info-section__permission-approval-status--approved,
-.user-basic-info-section__permission-approval-status-list-tone--approved {
+.user-basic-info-section__approval-status--approved {
   color: var(--main-BK, #3d3d3d);
 }
 
-.user-basic-info-section__permission-approval-status--rejected,
-.user-basic-info-section__permission-approval-status-list-tone--rejected {
+.user-basic-info-section__approval-status--rejected {
   color: #c32f4a;
 }
 
@@ -178,8 +169,7 @@
   min-width: 0;
 }
 
-.user-basic-info-section__permission-approval-dropdown-wrap
-  .detail-info-form-inputs-separator {
+.user-basic-info-section__permission-approval-dropdown-wrap .detail-info-form-inputs-separator {
   margin-block: 0;
   margin-inline: 0;
 }
