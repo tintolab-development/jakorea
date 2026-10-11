@@ -804,7 +804,7 @@
             "schema": {
               "type": "integer",
               "format": "int32",
-              "default": 100
+              "default": 20
             }
           },
           {
@@ -1300,7 +1300,7 @@
             "schema": {
               "type": "integer",
               "format": "int32",
-              "default": 100
+              "default": 20
             }
           },
           {
@@ -1625,7 +1625,7 @@
             "schema": {
               "type": "integer",
               "format": "int32",
-              "default": 100
+              "default": 20
             }
           },
           {
@@ -3830,6 +3830,16 @@
           },
           "detailJson": {
             "type": "string"
+          },
+          "eligiblePayeeTypes": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "정산 신청 가능 payee 역할. INSTRUCTOR|STUDENT|PARTICIPANT_INDIVIDUAL|PARTICIPANT_ORGANIZATION",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -5571,7 +5581,17 @@
             "format": "int64"
           },
           "status": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "출석 코드만: PRESENT|LATE|ABSENT|EXCUSED. 미기록·비출석 값(COMPLETED·SCHEDULED 등)은 null.",
+            "enum": [
+              "PRESENT",
+              "LATE",
+              "ABSENT",
+              "EXCUSED"
+            ]
           },
           "absenceReason": {
             "type": "string"
@@ -6069,6 +6089,29 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "PERIOD 교육 예정일 구간 라벨. 없으면 null."
+          },
+          "periodStartDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "PERIOD 구간 시작일. 없으면 null."
+          },
+          "periodEndDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "PERIOD 구간 종료일. 없으면 null."
           }
         }
       },
@@ -10337,6 +10380,73 @@
           "newPassword"
         ]
       },
+      "PasswordResetStartRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "PasswordResetStartResponse": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "nextAction": {
+            "type": "string"
+          }
+        }
+      },
+      "PasswordResetEligibilityRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "profileToken": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "email",
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
+      },
+      "PasswordResetEligibilityResponse": {
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "nextAction": {
+            "type": "string"
+          }
+        }
+      },
       "PasswordResetConfirmRequest": {
         "type": "object",
         "properties": {
@@ -10859,6 +10969,96 @@
           "reason"
         ]
       },
+      "ActivityScheduleSlot": {
+        "type": "object",
+        "description": "봉사자 신청 폼의 program-volunteer-application-seed-activity-schedule 선택값을 구조화한 행",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "기관형 선택값의 organization-application id. 개인형이면 null"
+          },
+          "educationPeriodIndex": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "PERIOD 교육 구간 index. 없으면 null"
+          },
+          "sourceAnswerValue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "제출 답변 원문 옵션 값"
+          },
+          "scheduleName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "program_schedule.schedule_name. 일정이 삭제되면 null"
+          },
+          "sessionNo": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "program_schedule.session_no. 없으면 null"
+          },
+          "organizationName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관명. organizationApplicationId가 없거나 조회 실패면 null"
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "표시용 시작 시각. PERIOD 구간 또는 program_schedule.start_at"
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "표시용 종료 시각"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교육 진행 예정일 구간 라벨(PERIOD). 없으면 null"
+          },
+          "relationshipValid": {
+            "type": "boolean",
+            "description": "현재 프로그램·기관·일정 관계가 유효하면 true. 과거 증빙은 false일 수 있음"
+          },
+          "scheduleMissing": {
+            "type": "boolean",
+            "description": "program_schedule 행이 없으면 true"
+          },
+          "organizationApplicationMissing": {
+            "type": "boolean",
+            "description": "organizationApplicationId가 있으나 기관 신청이 없으면 true"
+          }
+        }
+      },
       "Application": {
         "type": "object",
         "description": "신청 당시 저장된 폼 응답. 개인정보 직접 식별자는 별도 profile/unmask 정책을 따릅니다.",
@@ -11350,6 +11550,19 @@
           "assignedInterviewEndAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "activityScheduleSlots": {
+            "type": "array",
+            "description": "신청자가 고른 봉사 진행 가능 일정(C). form_response_answer 기반 read model. UJAT·면접 일정과 분리. 없으면 []",
+            "items": {
+              "$ref": "#/components/schemas/ActivityScheduleSlot"
+            }
+          },
+          "activityScheduleCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "activityScheduleSlots 항목 수",
+            "minimum": 0
           }
         }
       },
@@ -13181,6 +13394,16 @@
             "type": "string",
             "description": "후원 시작일. POST 등록 시 필수. ISO-8601 날짜(YYYY-MM-DD) 또는 offset datetime.",
             "example": "2026-09-09"
+          },
+          "logoFileIds": {
+            "type": "array",
+            "description": "로고 전체 교체용 파일 ID 목록. 생략하면 유지, []이면 모두 해제. 최대 20개, 배열 순서가 표시 순서이며 중복 불가. logoFileId와 동시 지정 불가.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 20,
+            "minItems": 0
           }
         }
       },
@@ -13316,7 +13539,11 @@
             "type": "string"
           },
           "officePhone": {
-            "type": "string"
+            "type": "string",
+            "description": "내선번호. 형식 제한 없음(숫자·한글·하이픈 등 자유 입력).",
+            "example": "123",
+            "maxLength": 20,
+            "minLength": 0
           },
           "email": {
             "type": "string"
@@ -13976,10 +14203,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -14768,6 +14995,165 @@
           },
           "maxAmount": {
             "type": "number"
+          }
+        }
+      },
+      "FreeTextItemRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bodyText": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "bodyText",
+          "id",
+          "label"
+        ]
+      },
+      "FreeTextItemsRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FreeTextItemRequest"
+            },
+            "maxItems": 4,
+            "minItems": 4
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "PreviousJaProgramRequest": {
+        "type": "object",
+        "properties": {
+          "programYear": {
+            "type": "string",
+            "minLength": 1
+          },
+          "programName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "certificateFileIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 2147483647,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "certificateFileIds",
+          "programName",
+          "programYear"
+        ]
+      },
+      "VolunteerParticipantRegisterRequest": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "volunteerKind": {
+            "type": "string",
+            "default": "GENERAL",
+            "enum": [
+              "GENERAL",
+              "EMPLOYEE"
+            ]
+          },
+          "registrationChannel": {
+            "type": "string",
+            "enum": [
+              "CMS_PROGRESS_ADD"
+            ]
+          },
+          "personalInfoConsent": {
+            "type": "string",
+            "enum": [
+              "AGREE"
+            ],
+            "minLength": 1
+          },
+          "thirdPartyConsent": {
+            "type": "string",
+            "enum": [
+              "AGREE"
+            ],
+            "minLength": 1
+          },
+          "id1365": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "회원에 1365 ID가 없을 때만"
+          },
+          "jaProgramExperienceConsentRequest": {
+            "type": "string",
+            "enum": [
+              "REQUESTED",
+              "NOT_REQUESTED"
+            ],
+            "minLength": 1
+          },
+          "previousJaProgram": {
+            "$ref": "#/components/schemas/PreviousJaProgramRequest"
+          },
+          "freeTextItems": {
+            "$ref": "#/components/schemas/FreeTextItemsRequest"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5
+          }
+        },
+        "required": [
+          "jaProgramExperienceConsentRequest",
+          "memberId",
+          "personalInfoConsent",
+          "reason",
+          "thirdPartyConsent"
+        ]
+      },
+      "VolunteerParticipantRegisterResponse": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "volunteerApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sourceApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "volunteerKind": {
+            "type": "string"
+          },
+          "participantStatus": {
+            "type": "string"
           }
         }
       },
@@ -18608,22 +18994,38 @@
             "type": "string"
           },
           "computerInRoom": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "강의 공간 내 컴퓨터 여부 스냅샷. Portal guidance(computer-in-room 등)에서 프로젝션. 없으면 null. form_response만 있고 컬럼이 비면 hydrate fallback 대상."
           },
           "waitingRoomAvailable": {
             "type": "boolean"
           },
           "waitingRoomLocation": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "대기 장소 안내 스냅샷. Portal guidance(waiting-place 등)에서 프로젝션. 없으면 null."
           },
           "mealProvided": {
             "type": "boolean"
           },
           "mealNotice": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "식사 가능 여부 및 안내 스냅샷. Portal guidance(meal 등)에서 프로젝션. 없으면 null."
           },
           "parkingInfo": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. 성범죄 조회서 요청은 detail 전용 컬럼 없음(form sex-offense 단락)."
           },
           "textbookGrade": {
             "type": "string"
@@ -18647,6 +19049,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SessionResponse"
+            }
+          },
+          "preferredEducationSchedules": {
+            "type": "array",
+            "description": "승인 기관 희망 교육 일정(B). OSA sessions와 별개. 없으면 [].",
+            "items": {
+              "$ref": "#/components/schemas/PreferredEducationScheduleResponse"
             }
           },
           "previousYearParticipation": {
@@ -18703,6 +19112,50 @@
             "items": {
               "$ref": "#/components/schemas/ClassTimeRow"
             }
+          }
+        }
+      },
+      "PreferredEducationScheduleResponse": {
+        "type": "object",
+        "description": "신청자가 해당 신청 건에서 선택한 교육 일정. 운영 일정(program_schedule) 선택이면 scheduleId/round/startAt/endAt, 공통정보 교육 진행 예정일(line:N) 선택이면 label만 채운다.",
+        "properties": {
+          "scheduleId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "program_schedule id. line:N 선택이면 null."
+          },
+          "round": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "line:N 선택이면 null."
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "line:N 선택이면 null."
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "공통정보 educationScheduleLines 표시 문자열. program_schedule 선택이면 null."
           }
         }
       },
@@ -21056,6 +21509,13 @@
           },
           "assignable": {
             "type": "boolean"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교육 진행 예정일 구간 표시 문자열. PERIOD 단일/다중 구간 선택이면 non-null. 지정일·운영일정만 선택한 경우 null."
           }
         }
       },
@@ -21588,50 +22048,6 @@
           "assignedInterviewEndAt": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "PreferredEducationScheduleResponse": {
-        "type": "object",
-        "description": "신청자가 해당 신청 건에서 선택한 교육 일정. 운영 일정(program_schedule) 선택이면 scheduleId/round/startAt/endAt, 공통정보 교육 진행 예정일(line:N) 선택이면 label만 채운다.",
-        "properties": {
-          "scheduleId": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64",
-            "description": "program_schedule id. line:N 선택이면 null."
-          },
-          "round": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32"
-          },
-          "startAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "description": "line:N 선택이면 null."
-          },
-          "endAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "description": "line:N 선택이면 null."
-          },
-          "label": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "공통정보 educationScheduleLines 표시 문자열. program_schedule 선택이면 null."
           }
         }
       },
@@ -29878,7 +30294,7 @@
               "string",
               "null"
             ],
-            "description": "참여 방식. participationScheduleDetail=common일 때만 값이 있고 GENERAL_ORGANIZATION·perSchedule은 null.",
+            "description": "개인 대상(GENERAL_INDIVIDUAL·GENERAL+INDIVIDUAL) 참여 방식. CMS generalCommonInfo.participationMethod 또는 일정별 participationMethodLabel을 반영. 미설정·perSchedule 개인 라벨만 있으면 individual. GENERAL_ORGANIZATION·비일반 유형은 null.",
             "enum": [
               "individual",
               "team"
@@ -30116,6 +30532,17 @@
               "null"
             ],
             "description": "이 모집 행의 요약. 없으면 null."
+          },
+          "volunteerInterviewSchedule": {
+            "description": "봉사자(VOLUNTEER) 모집이고 면접이 켜진 경우 「면접 진행 가능 일정」. 신청폼 면접 선택지와 같은 규칙(슬롯 우선, 없으면 CMS volunteerInterviewScheduleInfo 펼침). 그 외 모집 유형·면접 미운영은 null(필드 생략). options는 없으면 [].",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/VolunteerInterviewScheduleResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -30245,6 +30672,98 @@
               "null"
             ],
             "description": "false인 일정은 공개 상세 배열에 포함하지 않습니다. 미저장이면 null이고 배열에는 포함합니다."
+          }
+        }
+      },
+      "VolunteerInterviewScheduleOptionResponse": {
+        "type": "object",
+        "description": "봉사자 면접 진행 가능 일정 한 칸. 신청폼 items[]와 id/label 규칙이 같다.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "interview-slot:{id} 또는 interview-option:{YYYY-MM-DD}T{HH:mm}-{HH:mm}"
+          },
+          "label": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "description": "SLOT 또는 SCHEDULE_INFO",
+            "enum": [
+              "SLOT",
+              "SCHEDULE_INFO"
+            ]
+          },
+          "slotDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "YYYY-MM-DD(KST). 없으면 null."
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "VolunteerInterviewScheduleResponse": {
+        "type": "object",
+        "description": "포털 프로그램 상세의 봉사자 면접 진행 가능 일정. 신청폼 선택지와 동일 출처.",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "선택지 출처. SLOT=program_interview_slot, SCHEDULE_INFO=CMS 설정, EMPTY=미래 선택지 없음",
+            "enum": [
+              "SLOT",
+              "SCHEDULE_INFO",
+              "EMPTY"
+            ]
+          },
+          "periodStartDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "가능 기간 시작(YYYY-MM-DD, KST). 슬롯만 있거나 기간을 못 정하면 null."
+          },
+          "periodEndDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "가능 기간 종료(YYYY-MM-DD, KST). 슬롯만 있거나 기간을 못 정하면 null."
+          },
+          "availableTimeSlots": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "CMS availableTimeSlots 원문. 예: \"10:00 ~ 10:30\". 슬롯만 있으면 null."
+          },
+          "recurringUnavailable": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "CMS recurringUnavailable 원문. 예: \"공휴일\". 없으면 null."
+          },
+          "options": {
+            "type": "array",
+            "description": "오늘 이후 선택 가능 일정. 없으면 []. null 금지.",
+            "items": {
+              "$ref": "#/components/schemas/VolunteerInterviewScheduleOptionResponse"
+            }
           }
         }
       },
@@ -34250,6 +34769,33 @@
           }
         }
       },
+      "PageResponseSponsorResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SponsorResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "SponsorDetailResponse": {
         "type": "object",
         "properties": {
@@ -34355,6 +34901,29 @@
             "items": {
               "$ref": "#/components/schemas/SponsorYearlyBusinessResponse"
             }
+          },
+          "logoFiles": {
+            "type": "array",
+            "description": "후원사에 연결된 로고 전체 목록(순서 보장). 없으면 []입니다. logoFileId는 레거시 호환용 첫 파일 ID입니다.",
+            "items": {
+              "$ref": "#/components/schemas/SponsorLogoFileResponse"
+            }
+          }
+        }
+      },
+      "SponsorLogoFileResponse": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -37174,7 +37743,12 @@
             }
           },
           "grade": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관 참여자 학년. requested_grade 원문(예: 1, 학년 접미사 없음)을 우선하고, 비어 있으면 양식 applicationGrade/educationGrade/grade, 그다음 배정·명단 학년, 그것도 없으면 프로그램 대상 학년(예: 3학년, 3~6학년). 개인 참여자는 명단·신청 스냅샷. 없으면 null. 빈 문자열은 반환하지 않는다.",
+            "example": "1"
           },
           "regionSido": {
             "type": "string"
@@ -37306,42 +37880,249 @@
       },
       "SessionProgress": {
         "type": "object",
+        "description": "참여 일정. 기관 참여자는 배정·출석이 붙은 프로그램 일정과 신청 희망 일정(GET .../requested-schedules 와 같은 program_application_requested_schedule)을 함께 반환한다. 희망 시각이 있으면 startAt/endAt은 Asia/Seoul 기준 ISO-8601이고 scheduleName은 신청 표기(dateText)다. 프로그램 일정과 시각이 맞지 않으면 scheduleId·resolvedScheduleId는 null, scheduleUnresolved는 true. 신청 답이 없는 고정 1일 프로그램은 일정을 만들지 않고 빈 배열이다. null은 반환하지 않는다.",
         "properties": {
           "scheduleId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "시각이 일치하는 program_schedule id. 희망 일정만 있으면 null"
           },
           "requestedScheduleId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "program_application_requested_schedule id. 배정 일정만 있으면 null"
           },
           "resolvedScheduleId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "출석/배정 mutation에 쓰는 program_schedule id. 미해결이면 null"
           },
           "scheduleUnresolved": {
-            "type": "boolean"
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "희망 일정은 있으나 같은 시각의 프로그램 일정이 없으면 true"
           },
           "sessionNo": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "프로그램 일정 회차. 희망 일정은 preference_order"
+          },
+          "scheduleName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "일정명. 희망 일정은 dateText, 없으면 YYYY-MM-DD"
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "시작 시각. 희망 일정은 신청일+시작시각(Asia/Seoul). 시각이 없으면 null"
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "종료 시각. 희망 일정은 신청일+종료시각(Asia/Seoul). 시각이 없으면 null"
+          },
+          "scheduleStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus 와 동일 규칙. 출석과 별개.",
+            "enum": [
+              "UNSCHEDULED",
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ]
+          },
+          "attendanceStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "PRESENT|LATE|ABSENT|EXCUSED. 없으면 null"
+          },
+          "assignmentStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "배정 상태. 없으면 null이며 화면은 대기 처리"
+          }
+        }
+      },
+      "PageResponseParticipantSettlementListItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParticipantSettlementListItemResponse"
+            }
+          },
+          "page": {
             "type": "integer",
             "format": "int32"
           },
-          "scheduleName": {
-            "type": "string"
+          "size": {
+            "type": "integer",
+            "format": "int32"
           },
-          "startAt": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ParticipantSettlementListItemResponse": {
+        "type": "object",
+        "description": "참여자(학생·개인) 실비 정산 행. 숙박(LODGING) 유형은 포함하지 않습니다.",
+        "properties": {
+          "receiptId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalReceiptId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "latestRevision": {
+            "type": "boolean"
+          },
+          "submittedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "신청(제출) 일시"
           },
-          "endAt": {
+          "itemSummary": {
             "type": "string",
-            "format": "date-time"
+            "description": "항목 요약 라벨(학생 교통비·참여자 활동비·식사비)"
           },
-          "attendanceStatus": {
+          "itemType": {
+            "type": "string",
+            "description": "settlementFrontend.items[].type 호환: transportation|activity|meal"
+          },
+          "expenseType": {
             "type": "string"
           },
-          "assignmentStatus": {
-            "type": "string"
+          "expenseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "receiptStatus": {
+            "type": "string",
+            "description": "영수증 검토 상태: SUBMITTED|APPROVED|REJECTED"
+          },
+          "settlementId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "지급조서/정산 테이블 연결 전까지 null"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "description": "지급 처리 전까지 null"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PageResponseProgramParticipantRegisterCandidateResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramParticipantRegisterCandidateResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProgramParticipantRegisterCandidateResponse": {
+        "type": "object",
+        "description": "봉사자 추가 등록 모달 회원 후보",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "회원 ID"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "표시 이름"
+          },
+          "hasRegisteredId1365": {
+            "type": "boolean",
+            "description": "1365 아이디 등록 여부"
+          },
+          "hasVolunteerApplicationForProgram": {
+            "type": "boolean",
+            "description": "이 프로그램 봉사 신청 존재 여부"
+          },
+          "hasVolunteerApplicationAnyProgram": {
+            "type": "boolean",
+            "description": "다른 프로그램 봉사 신청 존재 여부"
+          },
+          "eligible": {
+            "type": "boolean",
+            "description": "등록 가능 여부. eligible 후보만 반환 시 항상 true"
+          },
+          "ineligibleReason": {
+            "type": "string",
+            "description": "등록 불가 사유. eligible 후보만 반환 시 null"
           }
         }
       },
@@ -37452,7 +38233,11 @@
             "type": "string"
           },
           "grade": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신청 학년 우선. requested_grade 원문(예: 1, 학년 접미사 없음). 비어 있으면 배정/명단 학년, 그것도 없으면 프로그램 대상 학년(예: 3학년, 3~6학년). 둘 다 없으면 null."
           },
           "regionSido": {
             "type": "string"
@@ -37464,6 +38249,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Session"
+            }
+          },
+          "preferredEducationSchedules": {
+            "type": "array",
+            "description": "승인 기관이 신청·선택한 교육 일정(B). program_organization_schedule_assignment(OSA) 학급·회차 확정 전에도 배정 후보로 사용한다. 미승인·일정 없음은 []. OSA sessions[]와 별개.",
+            "items": {
+              "$ref": "#/components/schemas/PreferredEducationScheduleResponse"
             }
           },
           "mergeGroupId": {
@@ -37973,6 +38765,13 @@
           "availableScheduleMemo": {
             "type": "string"
           },
+          "preferredOrganizations": {
+            "type": "array",
+            "description": "캘린더용 희망 기관·교육 일정. form answer 기반. 없으면 [].",
+            "items": {
+              "$ref": "#/components/schemas/InstructorPreferredOrganizationResponse"
+            }
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time"
@@ -37993,6 +38792,65 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "InstructorPreferredOrganizationResponse": {
+        "type": "object",
+        "description": "강사 신청이 선택한 희망 기관·교육 일정(캘린더 SSOT).",
+        "properties": {
+          "preferenceOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "선택 순서(1부터)."
+          },
+          "organizationName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "희망 기관(학교)명."
+          },
+          "educationGrade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신청 학년 등. 없으면 null."
+          },
+          "dateRangeLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "FE 캘린더 파서용 기간 표시 문자열(공통정보 PERIOD 라인 또는 일정 라벨)."
+          },
+          "scheduleId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "program_schedule id."
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "운영 일정 시작. dateRangeLabel 파싱 실패 시 FE fallback."
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "운영 일정 종료."
           }
         }
       },
@@ -38064,7 +38922,7 @@
           },
           "applicationGrade": {
             "type": "string",
-            "description": "신청 시점 학년 또는 교육 단계"
+            "description": "재학(ENROLLED) 신청자의 신청 시점 학년. TEACHER_SCHOOL·NOT_ENROLLED·강사 등 학년 없는 유형은 null"
           },
           "homeAddressSummary": {
             "type": "string",
@@ -41523,15 +42381,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -43271,6 +44129,33 @@
           }
         }
       },
+      "PageResponseFormResponseProjectionResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormResponseProjectionResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "FormAutoFillKeyResponse": {
         "type": "object",
         "properties": {
@@ -43829,7 +44714,14 @@
             "type": "string"
           },
           "scheduleStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. program_schedule.schedule_status 컬럼과 다를 수 있음. 출석 코드와 혼용하지 않음.",
+            "enum": [
+              "UNSCHEDULED",
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ]
           }
         }
       },

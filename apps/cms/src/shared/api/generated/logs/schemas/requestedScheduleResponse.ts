@@ -28,4 +28,19 @@ export interface RequestedScheduleResponse {
   createdByActorId?: number;
   createdAt?: string;
   updatedAt?: string;
+  /**
+     * PERIOD 교육 예정일 구간 라벨. 없으면 null.
+     * @nullable
+     */
+  label?: string | null;
+  /**
+     * PERIOD 구간 시작일. 없으면 null.
+     * @nullable
+     */
+  periodStartDate?: string | null;
+  /**
+     * PERIOD 구간 종료일. 없으면 null.
+     * @nullable
+     */
+  periodEndDate?: string | null;
 }

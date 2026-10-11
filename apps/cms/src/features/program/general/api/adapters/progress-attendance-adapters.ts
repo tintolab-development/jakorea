@@ -21,7 +21,7 @@ const UI_TO_API_STATUS: Record<ParticipatingIndividualProgressAttendanceStatus, 
 }
 
 export function mapApiAttendanceStatusToUi(
-  status: string | undefined
+  status?: string | null
 ): ParticipatingIndividualProgressAttendanceStatus {
   const normalized = (status ?? '').trim().toUpperCase()
   if (normalized === 'LATE') return 'late'

@@ -7,6 +7,7 @@
  */
 import type { SponsorContactResponse } from './sponsorContactResponse';
 import type { SponsorDetailResponseSponsorshipStatus } from './sponsorDetailResponseSponsorshipStatus';
+import type { SponsorLogoFileResponse } from './sponsorLogoFileResponse';
 import type { SponsorManager } from './sponsorManager';
 import type { SponsorProgramHistoryResponse } from './sponsorProgramHistoryResponse';
 import type { SponsorYearlyBusinessResponse } from './sponsorYearlyBusinessResponse';
@@ -39,4 +40,6 @@ export interface SponsorDetailResponse {
   contacts?: SponsorContactResponse[];
   programHistories?: SponsorProgramHistoryResponse[];
   yearlyBusinesses?: SponsorYearlyBusinessResponse[];
+  /** 후원사에 연결된 로고 전체 목록(순서 보장). 없으면 []입니다. logoFileId는 레거시 호환용 첫 파일 ID입니다. */
+  logoFiles?: SponsorLogoFileResponse[];
 }

@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorPreferredOrganizationResponse } from './instructorPreferredOrganizationResponse';
 
 export interface InstructorApplicationListItemResponse {
   id?: number;
@@ -34,6 +35,8 @@ export interface InstructorApplicationListItemResponse {
   primaryActivityType?: string;
   availableScheduleIds?: number[];
   availableScheduleMemo?: string;
+  /** 캘린더용 희망 기관·교육 일정. form answer 기반. 없으면 []. */
+  preferredOrganizations?: InstructorPreferredOrganizationResponse[];
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;

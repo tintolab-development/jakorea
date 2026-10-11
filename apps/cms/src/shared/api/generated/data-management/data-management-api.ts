@@ -42,6 +42,7 @@ import type {
   PageResponseDetailedProgramResponse,
   PageResponseMaterialKitResponse,
   PageResponseSponsorProgramHistoryResponse,
+  PageResponseSponsorResponse,
   PageResponseTextbookBusinessAreaResponse,
   PageResponseTextbookResponse,
   ProgramHistoriesParams,
@@ -50,7 +51,6 @@ import type {
   SponsorDetailResponse,
   SponsorLogoBulkDownloadRequest,
   SponsorRequest,
-  SponsorResponse,
   SponsorYearlyBusinessRequest,
   SponsorYearlyBusinessResponse,
   SponsorsParams,
@@ -599,8 +599,8 @@ const create2 = (
  */
 const sponsors = (
     params?: SponsorsParams,
- options?: SecondParameter<typeof customInstance<SponsorResponse[]>>,) => {
-      return customInstance<SponsorResponse[]>(
+ options?: SecondParameter<typeof customInstance<PageResponseSponsorResponse>>,) => {
+      return customInstance<PageResponseSponsorResponse>(
       {url: `/api/admin/sponsors`, method: 'GET',
         params
     },
