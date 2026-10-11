@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
+import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import {
+  UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS,
+  buildUjatAttendanceSessionExcelRows,
+  resolveUjatAttendanceSessionExcelFilename,
+} from './attendance-excel'
 import { UjatInlineDividedSegments } from '@/features/program/ujat/ui/detail-modal/shared/ujat-inline-divided-segments'
 import {
   cloneAttendanceVolunteerRows,
@@ -72,6 +78,17 @@ export function UjatAttendanceSessionGroupPanel({
     [appliedFilters, workingRows]
   )
 
+  const excelRows = useMemo(
+    () => buildUjatAttendanceSessionExcelRows(displayRows),
+    [displayRows]
+  )
+
+  const { exportExcel, isExporting } = useTableExcelExport({
+    columns: UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS,
+    data: excelRows,
+    filename: resolveUjatAttendanceSessionExcelFilename(session),
+  })
+
   useEffect(() => {
     const rows = cloneAttendanceVolunteerRows(getSessionVolunteers(session.id))
     setWorkingRows(rows)
@@ -106,9 +123,9 @@ export function UjatAttendanceSessionGroupPanel({
   return (
     <section className="ujat-attendance-session-group">
       {showHeader ? (
-        <div className="ujat-attendance-session-group__header">
+        <div className="table-header-actions ujat-attendance-session-group__header">
           <UjatAttendanceSessionGroupHeader session={session} totalCount={displayRows.length} />
-          <div className="ujat-attendance-session-group__actions">
+          <div className="info-section-buttons--wrapper">
             <CmsButton
               type="button"
               variant="secondary"
@@ -118,6 +135,7 @@ export function UjatAttendanceSessionGroupPanel({
             >
               출결 정정
             </CmsButton>
+            <ExcelButton loading={isExporting} onClick={exportExcel} />
           </div>
         </div>
       ) : null}
