@@ -1,6 +1,13 @@
-/** CMS 개인 봉사 배정과 동일. null/NaN → '-'. FE invent/0 coerce 금지. */
+/**
+ * CMS 개인 봉사 배정과 동일 semantics.
+ * BE `distanceKm`만 표시 — 실측 number 또는 null(지오코딩/경로 실패) → '-'. 클라이언트 재계산 금지.
+ * 자택 geocoding query 규칙: `@jakorea/location/juso` `BE_MEMBER_ADDRESS_GEOCODING_QA_ONE_LINER`
+ */
+export const VOLUNTEER_DISTANCE_UNAVAILABLE_TOOLTIP = '주소 미등록 또는 거리 미산출'
+
 export function formatVolunteerDistanceKm(km: number | null | undefined): string {
   if (km == null || Number.isNaN(km)) return '-'
-  const rounded = Math.round(km)
-  return km >= 100 ? `${rounded}km (장거리)` : `${rounded}km`
+  const oneDecimal = Math.round(km * 10) / 10
+  const label = `${oneDecimal.toFixed(1).replace(/\.0$/, '')}km`
+  return oneDecimal >= 100 ? `${label} (장거리)` : label
 }

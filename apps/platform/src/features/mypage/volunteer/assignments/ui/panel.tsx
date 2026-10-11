@@ -6,6 +6,7 @@ import {
   getMockVolunteerIndividualAssignment,
   getMockVolunteerInstitutionAssignment,
 } from '../lib/mock-assignments'
+import { VOLUNTEER_DISTANCE_UNAVAILABLE_TOOLTIP } from '../lib/format-distance'
 import type {
   VolunteerIndividualAssignment,
   VolunteerInstitutionAssignment,
@@ -17,6 +18,17 @@ import {
   VolunteerScheduleLines,
 } from './assignment-table'
 import styles from './panel.module.css'
+
+function DistanceCell({ value }: { value: string }) {
+  if (value === '-') {
+    return (
+      <span title={VOLUNTEER_DISTANCE_UNAVAILABLE_TOOLTIP}>
+        <VolunteerCellText>{value}</VolunteerCellText>
+      </span>
+    )
+  }
+  return <VolunteerCellText>{value}</VolunteerCellText>
+}
 
 type VolunteerAssignmentPanelProps = {
   programAudience: 'organization' | 'individual'
@@ -52,7 +64,7 @@ function IndividualTables({ data }: { data: VolunteerIndividualAssignment }) {
             key: 'distance',
             label: '자택과의 거리',
             width: '120px',
-            render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
+            render: row => <DistanceCell value={row.distanceFromHome} />,
           },
           {
             key: 'schedule',
@@ -84,7 +96,7 @@ function IndividualTables({ data }: { data: VolunteerIndividualAssignment }) {
             key: 'distance',
             label: '자택과의 거리',
             width: '120px',
-            render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
+            render: row => <DistanceCell value={row.distanceFromHome} />,
           },
           {
             key: 'schedule',
@@ -139,7 +151,7 @@ function InstitutionTables({ data }: { data: VolunteerInstitutionAssignment }) {
             key: 'distance',
             label: '자택과의 거리',
             width: '120px',
-            render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
+            render: row => <DistanceCell value={row.distanceFromHome} />,
           },
           {
             key: 'schedule',
@@ -181,7 +193,7 @@ function InstitutionTables({ data }: { data: VolunteerInstitutionAssignment }) {
             key: 'distance',
             label: '자택과의 거리',
             width: '120px',
-            render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
+            render: row => <DistanceCell value={row.distanceFromHome} />,
           },
           {
             key: 'schedule',

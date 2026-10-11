@@ -37,7 +37,7 @@ const individual = mapPortalVolunteerAssignments(
 
 assert.equal(individual.audience, 'individual')
 assert.equal(individual.data.assigned.length, 1)
-assert.equal(individual.data.assigned[0]?.distanceFromHome, '10km')
+assert.equal(individual.data.assigned[0]?.distanceFromHome, '10.2km')
 assert.equal(individual.data.assigned[0]?.scheduleLines.length, 2)
 assert.equal(individual.data.waiting.length, 2)
 assert.equal(individual.data.waiting[0]?.assignmentStatus, 'waiting')
