@@ -110,6 +110,9 @@ describe('general-program-detail-route', () => {
     expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('programId')
     expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('subTab')
     expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('participantView')
+    expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('institutionApplicationView')
+    expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('instructorApplicationView')
+    expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('participantApplicationView')
   })
 
   it('detects recruitment preview audience from search params', () => {
