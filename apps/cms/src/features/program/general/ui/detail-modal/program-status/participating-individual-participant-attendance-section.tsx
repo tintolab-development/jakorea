@@ -305,11 +305,18 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       await saveGeneralScheduleAttendances(payload.scheduleId, requests)
     },
     onSuccess: async () => {
+      const programId = String(program.id)
       await queryClient.invalidateQueries({
-        queryKey: generalProgramProgressQueryKeys.schedules(String(program.id)),
+        queryKey: generalProgramProgressQueryKeys.schedules(programId),
       })
       await queryClient.invalidateQueries({
-        queryKey: generalProgramProgressQueryKeys.absenceReasons(String(program.id)),
+        queryKey: [...generalProgramProgressQueryKeys.all, 'attendances', programId],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: [...generalProgramProgressQueryKeys.all, 'program-attendances-bulk', programId],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.absenceReasons(programId),
       })
     },
     onError: error => {

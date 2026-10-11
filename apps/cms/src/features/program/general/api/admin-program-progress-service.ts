@@ -8,6 +8,7 @@ import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/genera
 import {
   fetchProgramAssignmentSubmissionsRemote,
   fetchProgramParticipantsRemote,
+  fetchAttendancesByScheduleIdsRemote,
   fetchProgramSchedulesViaDashboardRemote,
   fetchScheduleAttendancesRemote,
   giveUpProgramParticipantRemote,
@@ -276,24 +277,14 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
     })
     participantItems.push(...(nextPage.items ?? []))
   }
-  const attendancesByScheduleId: Record<
-    string,
-    import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
-  > = {}
-  await Promise.all(
-    schedules
-      .filter(s => s.scheduleId != null)
-      .map(async s => {
-        const scheduleId = String(s.scheduleId)
-        try {
-          attendancesByScheduleId[scheduleId] = await fetchScheduleAttendancesRemote(
-            programId,
-            scheduleId
-          )
-        } catch {
-          attendancesByScheduleId[scheduleId] = []
-        }
-      })
+  const scheduleIdList = schedules
+    .map(s => s.scheduleId)
+    .filter((id): id is number => id != null && Number.isFinite(Number(id)) && Number(id) > 0)
+    .map(id => Number(id))
+
+  const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
+    programId,
+    scheduleIdList
   )
   return {
     schedules,

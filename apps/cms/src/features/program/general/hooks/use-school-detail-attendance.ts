@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
@@ -30,6 +30,7 @@ import {
   type SchoolDetailAttendanceSessionGroup,
   type SchoolDetailAttendanceStudentRow,
 } from '../model/school-detail-types'
+import { getProgressAttendanceViewState } from './use-participating-individual-progress-attendance'
 
 export const EMPTY_SCHOOL_DETAIL_ATTENDANCE_FILTERS: SchoolDetailAttendanceFilters = {
   educationSchedule: SCHOOL_ATTENDANCE_FILTER_ALL,
@@ -123,12 +124,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     retry: false,
   })
 
-  useEffect(() => {
-    if (remoteQuery.isError && remoteQuery.error) {
-      handleError(remoteQuery.error, { context: 'useSchoolDetailAttendance.load' })
-    }
-  }, [remoteQuery.error, remoteQuery.isError])
-
   const [pendingFilters, setPendingFilters] = useState<SchoolDetailAttendanceFilters>(
     () => ({ ...EMPTY_SCHOOL_DETAIL_ATTENDANCE_FILTERS })
   )
@@ -206,6 +201,9 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
         ],
       })
       await queryClient.invalidateQueries({
+        queryKey: [...generalProgramProgressQueryKeys.all, 'program-attendances-bulk', programId],
+      })
+      await queryClient.invalidateQueries({
         queryKey: generalProgramProgressQueryKeys.studentRoster(organizationApplicationId),
       })
     },
@@ -229,6 +227,28 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     [remoteSessionGroups]
   )
 
+  const viewState = useMemo(
+    () =>
+      getProgressAttendanceViewState({
+        remoteEnabled,
+        isLoading: remoteQuery.isLoading,
+        isError: remoteQuery.isError,
+        hasQueryData: remoteQuery.data != null,
+        sessionGroupCount: sessionGroups.length,
+      }),
+    [
+      remoteEnabled,
+      remoteQuery.data,
+      remoteQuery.isError,
+      remoteQuery.isLoading,
+      sessionGroups.length,
+    ]
+  )
+
+  const refetchAttendance = useCallback(() => {
+    void remoteQuery.refetch()
+  }, [remoteQuery])
+
   return {
     pendingFilters,
     appliedFilters,
@@ -238,7 +258,13 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     sessionGroups,
     saveSessionStudents,
     getSessionStudents,
-    loading: remoteEnabled && remoteQuery.isFetching && remoteQuery.data == null,
+    loading: viewState.kind === 'loading',
+    loadError: viewState.kind === 'load_error',
+    backgroundRefetchError:
+      viewState.kind === 'content' ? viewState.backgroundRefetchError : false,
+    isEmptyResult: viewState.kind === 'empty',
+    refetchAttendance,
+    isRefetching: remoteQuery.isRefetching,
     isSaving: saveMutation.isPending,
     remoteEnabled,
   }

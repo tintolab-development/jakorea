@@ -13,11 +13,67 @@ import customInstance from '@/shared/api/orval-mutator'
 import {
   createProgramInstructorParticipantRemote,
   createProgramParticipantRemote,
+  fetchAttendancesByScheduleIdsRemote,
   fetchEmployeeVolunteerCountsRemote,
+  fetchProgramAttendancesBulkRemote,
   patchParticipantTextbookDeliveryRemote,
   putEmployeeVolunteerCountsRemote,
   putParticipantAssignedOrganizationsRemote,
 } from './program-progress-api-client'
+
+describe('fetchProgramAttendancesBulkRemote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('scheduleIds를 반복 query로 직렬화한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue([])
+    await fetchProgramAttendancesBulkRemote('14201', [14302, 14301, 14301])
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/program-execution/programs/14201/attendances?scheduleIds=14301&scheduleIds=14302',
+      method: 'GET',
+    })
+  })
+
+  it('빈 scheduleIds는 HTTP 호출 없이 []', async () => {
+    const result = await fetchProgramAttendancesBulkRemote('14201', [])
+    expect(result).toEqual([])
+    expect(customInstance).not.toHaveBeenCalled()
+  })
+
+  it('scheduleIds 미지정은 프로그램 전체 조회 URL', async () => {
+    vi.mocked(customInstance).mockResolvedValue([{ scheduleId: 1 }])
+    await fetchProgramAttendancesBulkRemote('14201')
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/program-execution/programs/14201/attendances',
+      method: 'GET',
+    })
+  })
+})
+
+describe('fetchAttendancesByScheduleIdsRemote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('Bulk GET 오류를 전파한다', async () => {
+    vi.mocked(customInstance).mockRejectedValue(new Error('403'))
+    await expect(fetchAttendancesByScheduleIdsRemote('p1', [10])).rejects.toThrow('403')
+  })
+
+  it('동일 programId·scheduleIds in-flight 요청은 HTTP 1회', async () => {
+    let resolveGate!: (value: unknown) => void
+    const gate = new Promise<unknown>(resolve => {
+      resolveGate = resolve
+    })
+    vi.mocked(customInstance).mockImplementation(() => gate)
+    const first = fetchAttendancesByScheduleIdsRemote('p1', [2, 1])
+    const second = fetchAttendancesByScheduleIdsRemote('p1', [1, 2])
+    resolveGate([])
+    await Promise.all([first, second])
+    expect(customInstance).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe('createProgramInstructorParticipantRemote', () => {
   beforeEach(() => {

@@ -1,6 +1,8 @@
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { CmsButton } from '@/shared/ui'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
+import { Alert } from 'antd'
 import { useSchoolDetailAttendance } from '../../../hooks/use-school-detail-attendance'
 import { SchoolDetailAttendanceSessionPanel } from './school-detail-attendance-session-panel'
 import '@/shared/components/detail-info-form/detail-info-form.css'
@@ -23,11 +25,56 @@ export function SchoolDetailAttendanceSection({
     saveSessionStudents,
     getSessionStudents,
     loading,
+    loadError,
+    backgroundRefetchError,
+    isEmptyResult,
+    refetchAttendance,
+    isRefetching,
     isSaving,
   } = useSchoolDetailAttendance(row, program)
 
+  if (loadError) {
+    return (
+      <div className="school-detail-attendance-section">
+        <Alert
+          type="error"
+          showIcon
+          message="출석 정보를 불러오지 못했습니다."
+          description="잠시 후 다시 시도해 주세요."
+          action={
+            <CmsButton
+              variant="secondary"
+              loading={isRefetching}
+              onClick={() => refetchAttendance()}
+            >
+              다시 시도
+            </CmsButton>
+          }
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="school-detail-attendance-section">
+      {backgroundRefetchError ? (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="최신 출석 정보를 불러오지 못했습니다."
+          description="아래는 이전에 조회된 정보입니다."
+          action={
+            <CmsButton
+              variant="secondary"
+              loading={isRefetching}
+              onClick={() => refetchAttendance()}
+            >
+              다시 시도
+            </CmsButton>
+          }
+        />
+      ) : null}
       <FilterTableLayout
         className="school-detail-attendance-section__filter-layout"
         bordered={false}
@@ -42,7 +89,7 @@ export function SchoolDetailAttendanceSection({
       >
         {loading ? (
           <div className="school-detail-attendance-section__empty">출석 정보를 불러오는 중…</div>
-        ) : sessionGroups.length === 0 ? (
+        ) : isEmptyResult ? (
           <div className="school-detail-attendance-section__empty">조회 결과가 없습니다.</div>
         ) : (
           <div className="school-detail-attendance-section__groups">

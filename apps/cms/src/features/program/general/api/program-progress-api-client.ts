@@ -11,6 +11,26 @@ import type { PageResponseParticipantListItemResponse } from '@/shared/api/gener
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import type { ChangeRequest } from '@/shared/api/generated/dashboard/schemas/changeRequest'
 import type { ChangeResponse } from '@/shared/api/generated/dashboard/schemas/changeResponse'
+import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
+import {
+  bulkAttendanceScheduleIdsCacheKey,
+  ensureAttendancesByScheduleIdKeys,
+  groupAttendancesByScheduleId,
+  normalizeBulkAttendanceScheduleIds,
+  type BulkAttendanceScheduleIdsInput,
+} from '@/features/program/general/lib/program-attendance-bulk'
+
+const inFlightAttendancesByScheduleIds = new Map<
+  string,
+  Promise<Record<string, AttendanceItemResponse[]>>
+>()
+
+function attendancesByScheduleIdsInFlightKey(
+  programId: string,
+  normalized: ReturnType<typeof normalizeBulkAttendanceScheduleIds>
+): string {
+  return `${programId}:${bulkAttendanceScheduleIdsCacheKey(normalized)}`
+}
 
 const programProgressApi = getJAKoreaCMSBackendAPIProgramProgressSubset()
 
@@ -53,14 +73,9 @@ export async function fetchProgramParticipantsRemote(
 export async function fetchScheduleAttendancesRemote(
   programId: string,
   scheduleId: string
-): Promise<
-  import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
-> {
+): Promise<AttendanceItemResponse[]> {
   const body = await unwrapApiBody<
-    | import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
-    | {
-        items?: import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
-      }
+    AttendanceItemResponse[] | { items?: AttendanceItemResponse[] }
   >(
     await customInstance({
       url: `/api/admin/program-execution/programs/${encodeURIComponent(programId)}/schedules/${encodeURIComponent(scheduleId)}/attendances`,
@@ -69,6 +84,69 @@ export async function fetchScheduleAttendancesRemote(
   )
   if (Array.isArray(body)) return body
   return body.items ?? []
+}
+
+function buildProgramAttendancesBulkUrl(
+  programId: string,
+  normalized: ReturnType<typeof normalizeBulkAttendanceScheduleIds>
+): string {
+  const base = `/api/admin/program-execution/programs/${encodeURIComponent(programId)}/attendances`
+  if (normalized.kind !== 'filtered') {
+    return base
+  }
+  const search = new URLSearchParams()
+  for (const scheduleId of normalized.scheduleIds) {
+    search.append('scheduleIds', String(scheduleId))
+  }
+  return `${base}?${search.toString()}`
+}
+
+/** GET /api/admin/program-execution/programs/{programId}/attendances */
+export async function fetchProgramAttendancesBulkRemote(
+  programId: string,
+  scheduleIds?: BulkAttendanceScheduleIdsInput
+): Promise<AttendanceItemResponse[]> {
+  const normalized = normalizeBulkAttendanceScheduleIds(scheduleIds)
+  if (normalized.kind === 'empty') {
+    return []
+  }
+  const body = await unwrapApiBody<AttendanceItemResponse[] | { items?: AttendanceItemResponse[] }>(
+    await customInstance({
+      url: buildProgramAttendancesBulkUrl(programId, normalized),
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}
+
+export async function fetchAttendancesByScheduleIdsRemote(
+  programId: string,
+  scheduleIds: BulkAttendanceScheduleIdsInput
+): Promise<Record<string, AttendanceItemResponse[]>> {
+  const normalized = normalizeBulkAttendanceScheduleIds(scheduleIds)
+  if (normalized.kind === 'empty') {
+    return {}
+  }
+  const inFlightKey = attendancesByScheduleIdsInFlightKey(programId, normalized)
+  const existing = inFlightAttendancesByScheduleIds.get(inFlightKey)
+  if (existing) {
+    return existing
+  }
+  const promise = (async () => {
+    const items = await fetchProgramAttendancesBulkRemote(programId, scheduleIds)
+    const grouped = groupAttendancesByScheduleId(items)
+    if (normalized.kind === 'filtered') {
+      return ensureAttendancesByScheduleIdKeys(grouped, normalized.scheduleIds)
+    }
+    return grouped
+  })()
+  inFlightAttendancesByScheduleIds.set(inFlightKey, promise)
+  try {
+    return await promise
+  } finally {
+    inFlightAttendancesByScheduleIds.delete(inFlightKey)
+  }
 }
 
 export async function putScheduleAttendancesRemote(

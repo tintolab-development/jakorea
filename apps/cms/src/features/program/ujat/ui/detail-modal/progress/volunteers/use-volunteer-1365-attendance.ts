@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import {
   fetchUjatAllocationMatrix,
-  fetchUjatScheduleAttendances,
+  fetchUjatProgramAttendancesBulk,
   type UjatAttendanceItemDto,
 } from '@/features/program/ujat/api/education-execution-api'
+import { groupAttendancesByScheduleId } from '@/features/program/general/lib/program-attendance-bulk'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import type { UjatInstitutionScheduleAssignDateEntry } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
@@ -35,28 +36,27 @@ export function useVolunteer1365Attendance(input: {
     (entry): entry is UjatInstitutionScheduleAssignDateEntry & { scheduleId: number } =>
       typeof entry.scheduleId === 'number'
   )
+  const scheduleIdsKey = schedules.map(entry => entry.scheduleId).join(',')
   const remoteEnabled =
     enabled && shouldUseUjatApplicationsRemoteApi() && Boolean(programId) && schedules.length > 0
 
   return useQuery({
-    queryKey: [
-      ...ujatQueryKeys.all,
-      'volunteer-1365-attendance',
-      programId ?? '',
-      half,
-      schedules.map(entry => entry.scheduleId).join(','),
-    ] as const,
+    queryKey: ujatQueryKeys.volunteer1365Attendance(String(programId ?? ''), half, scheduleIdsKey),
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
     queryFn: async (): Promise<Volunteer1365AttendanceLookup> => {
       const id = String(programId)
-      const [matrix, attendanceLists] = await Promise.all([
+      const scheduleIds = schedules.map(entry => entry.scheduleId)
+      const [matrix, bulkAttendanceItems] = await Promise.all([
         fetchUjatAllocationMatrix(id, {
           semesterType: half === 'h1' ? 'FIRST_HALF' : 'SECOND_HALF',
         }),
-        Promise.all(schedules.map(entry => fetchUjatScheduleAttendances(id, entry.scheduleId))),
+        fetchUjatProgramAttendancesBulk(id, scheduleIds),
       ])
+      const attendancesByScheduleId = groupAttendancesByScheduleId(
+        bulkAttendanceItems as Parameters<typeof groupAttendancesByScheduleId>[0]
+      )
 
       const memberIdByParticipant = new Map<number, string>()
       for (const volunteer of matrix.volunteers ?? []) {
@@ -66,8 +66,8 @@ export function useVolunteer1365Attendance(input: {
       }
 
       const lookup = new Map<string, Volunteer1365SheetCellValue>()
-      schedules.forEach((entry, index) => {
-        for (const item of attendanceLists[index] ?? []) {
+      schedules.forEach(entry => {
+        for (const item of attendancesByScheduleId[String(entry.scheduleId)] ?? []) {
           if (item.participantId == null) continue
           const memberId = memberIdByParticipant.get(item.participantId)
           if (!memberId) continue

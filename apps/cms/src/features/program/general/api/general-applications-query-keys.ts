@@ -63,6 +63,13 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'volunteers', programId] as const,
   attendances: (programId: string, scheduleId: string) =>
     [...generalProgramProgressQueryKeys.all, 'attendances', programId, scheduleId] as const,
+  programAttendancesBulk: (programId: string, scheduleIdsKey: string) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'program-attendances-bulk',
+      programId,
+      scheduleIdsKey,
+    ] as const,
   assignmentSubmissions: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'assignment-submissions', programId] as const,
   schedules: (programId: string) =>

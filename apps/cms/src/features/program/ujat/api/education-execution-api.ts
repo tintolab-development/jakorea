@@ -5,6 +5,10 @@
  */
 
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import {
+  fetchAttendancesByScheduleIdsRemote,
+  fetchProgramAttendancesBulkRemote,
+} from '@/features/program/general/api/program-progress-api-client'
 import customInstance from '@/shared/api/orval-mutator'
 
 function executionUjatPath(programId: string, suffix: string): string {
@@ -452,6 +456,23 @@ export async function fetchUjatScheduleAttendances(
   )
   if (Array.isArray(body)) return body
   return body.items ?? []
+}
+
+/** 프로그램 단위 출석 Bulk GET — scheduleIds 필터(빈 배열이면 호출 없음) */
+export async function fetchUjatProgramAttendancesBulk(
+  programId: string,
+  scheduleIds: readonly number[]
+): Promise<UjatAttendanceItemDto[]> {
+  const items = await fetchProgramAttendancesBulkRemote(programId, scheduleIds)
+  return items as UjatAttendanceItemDto[]
+}
+
+export async function fetchUjatAttendancesByScheduleIds(
+  programId: string,
+  scheduleIds: readonly number[]
+): Promise<Record<string, UjatAttendanceItemDto[]>> {
+  const grouped = await fetchAttendancesByScheduleIdsRemote(programId, scheduleIds)
+  return grouped as Record<string, UjatAttendanceItemDto[]>
 }
 
 export async function bulkUpsertUjatAttendances(
