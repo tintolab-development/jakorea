@@ -9,6 +9,7 @@ import {
   readEducationScheduleLinesForApplicationForm,
   shouldShowApplicationScheduleParagraphResolved,
 } from '@jakorea/form-schema/program-application'
+import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import type { WritingFormParagraph } from '@jakorea/form-schema/writing-form'
@@ -42,6 +43,8 @@ export type ResolvePortalApplicationHiddenParagraphIdsInput = {
   /** 성범죄 조회 방식 단락 — 동의서 제출 요청이 아니면 false */
   showSexOffenseConsentInquiryParagraph?: boolean
   volunteerInterviewEnabled?: boolean
+  /** 봉사 진행 가능 일정 — 면접과 독립 (optionCount 0이면 false) */
+  volunteerActivityScheduleEnabled?: boolean
   volunteerJaExperienceParagraph?: WritingFormParagraph
 }
 
@@ -125,6 +128,9 @@ export function resolvePortalApplicationHiddenParagraphIds(
       isTemplateAuthoringMode: false,
     })
     volunteerHidden?.forEach(id => hidden.add(id))
+    if (input.volunteerActivityScheduleEnabled === false) {
+      hidden.add(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule)
+    }
   }
 
   if (applyCase === 'institution-economy') {

@@ -219,6 +219,78 @@ function filledParagraphContentScore(document: Record<string, unknown>): number 
 }
 
 /** CMS 등록본이 중첩 schemaJson 에만 있을 때 — 문단 수, 그다음 채워진 셀을 고른다. */
+function scoreRuntimeContext(runtime: unknown): number {
+  if (!isRecord(runtime)) return 0
+  let score = 0
+  const audience = runtime.audienceApplication
+  if (isRecord(audience) && isRecord(audience.dynamicQuestions)) {
+    for (const value of Object.values(audience.dynamicQuestions)) {
+      if (!isRecord(value)) continue
+      const count = value.optionCount
+      if (typeof count === 'number' && Number.isFinite(count)) score += count
+      if (value.resolved === true) score += 0.5
+    }
+  }
+  if (Array.isArray(runtime.hiddenQuestionKeys)) score += runtime.hiddenQuestionKeys.length * 0.01
+  if (isRecord(audience) && Array.isArray(audience.hiddenQuestionKeys)) {
+    score += audience.hiddenQuestionKeys.length * 0.01
+  }
+  return score
+}
+
+function pickBestRuntimeContext(candidates: readonly unknown[]): unknown | undefined {
+  let best: unknown | undefined
+  let bestScore = -1
+  for (const candidate of candidates) {
+    const score = scoreRuntimeContext(candidate)
+    if (score > bestScore) {
+      best = candidate
+      bestScore = score
+    }
+  }
+  return best
+}
+
+function collectRuntimeContextCandidates(form: unknown, depth: number, collected: unknown[]): void {
+  if (!form || depth > 4) return
+  if (typeof form === 'string' && form.trim()) {
+    try {
+      collectRuntimeContextCandidates(JSON.parse(form), depth + 1, collected)
+    } catch {
+      return
+    }
+    return
+  }
+  if (!isRecord(form)) return
+  if (form.runtimeContext != null) collected.push(form.runtimeContext)
+  for (const key of NESTED_FORM_KEYS) {
+    const nested = form[key]
+    if (nested == null) continue
+    collectRuntimeContextCandidates(nested, depth + 1, collected)
+  }
+}
+
+/**
+ * Portal form-binding SSOT: `response.form.runtimeContext` (envelope 최상위만 보면 비어 보일 수 있음).
+ */
+export function resolvePortalApplicationFormRuntimeContext(formBinding: unknown): unknown | undefined {
+  const candidates: unknown[] = []
+  collectRuntimeContextCandidates(formBinding, 0, candidates)
+  return pickBestRuntimeContext(candidates)
+}
+
+function attachBestRuntimeContext(
+  document: Record<string, unknown>,
+  formBindingRoot: unknown,
+): Record<string, unknown> {
+  const candidates: unknown[] = []
+  collectRuntimeContextCandidates(formBindingRoot, 0, candidates)
+  if (document.runtimeContext != null) candidates.push(document.runtimeContext)
+  const best = pickBestRuntimeContext(candidates)
+  if (!best) return document
+  return { ...document, runtimeContext: best }
+}
+
 function pickRicherFormDocument(
   current: Record<string, unknown> | null,
   next: Record<string, unknown> | null,
@@ -430,7 +502,9 @@ export function coerceApplicationFormDocument(form: unknown): Record<string, unk
   for (const document of documents.slice(1)) {
     best = pickRicherFormDocument(best, document)
   }
-  return best && paragraphCount(best) > 0 ? mergeFilledParagraphContent(best, documents) : null
+  if (!best || paragraphCount(best) <= 0) return null
+  const merged = mergeFilledParagraphContent(best, documents)
+  return attachBestRuntimeContext(merged, form)
 }
 
 /** form-binding 문단의 런타임 선택지·플래그를 draft 문단 id에 병합한다. */

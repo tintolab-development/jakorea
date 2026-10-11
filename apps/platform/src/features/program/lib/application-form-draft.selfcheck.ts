@@ -6,6 +6,7 @@ import { resolveHorizontalTableCellPlainText } from '@jakorea/form-schema/writin
 import {
   buildApplicationAnswersFromDraft,
   coerceApplicationFormDocument,
+  resolvePortalApplicationFormRuntimeContext,
   collectRuntimeConditionalQuestions,
   collectRuntimeHiddenAnswerKeys,
   omitRuntimeHiddenAnswers,
@@ -141,6 +142,41 @@ const envelopeRecipient = envelopeParagraphs[0] as {
   fieldDataRows?: { kind: string; value?: string }[][]
 }
 assert.equal(envelopeRecipient.fieldDataRows?.[0]?.[0]?.value, '배정된 교육 대상 학교')
+
+const nestedRuntimeBinding = {
+  programId: 186089,
+  formBindingId: 187323,
+  form: {
+    paragraphs: [{ id: 'program-volunteer-application-seed-interview-schedule', kind: 'single_item' }],
+    runtimeContext: {
+      audienceApplication: {
+        dynamicQuestions: {
+          'program-volunteer-application-seed-interview-schedule': { optionCount: 8 },
+        },
+      },
+    },
+  },
+}
+const nestedRuntimeEnvelope = coerceApplicationFormDocument(nestedRuntimeBinding)
+assert.ok(nestedRuntimeEnvelope)
+const runtimeFromDoc = nestedRuntimeEnvelope!.runtimeContext as {
+  audienceApplication?: { dynamicQuestions?: Record<string, { optionCount?: number }> }
+}
+assert.equal(
+  runtimeFromDoc.audienceApplication?.dynamicQuestions?.[
+    'program-volunteer-application-seed-interview-schedule'
+  ]?.optionCount,
+  8,
+)
+const resolvedRuntime = resolvePortalApplicationFormRuntimeContext(nestedRuntimeBinding) as {
+  audienceApplication?: { dynamicQuestions?: Record<string, { optionCount?: number }> }
+}
+assert.equal(
+  resolvedRuntime.audienceApplication?.dynamicQuestions?.[
+    'program-volunteer-application-seed-interview-schedule'
+  ]?.optionCount,
+  8,
+)
 
 const draft = writingFormDraftFromApplicationForm(formDoc, {
   'program-application-trained-teachers-seed-personal-info': { bottomConsent: 'agree' },

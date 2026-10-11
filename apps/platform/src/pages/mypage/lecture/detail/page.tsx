@@ -457,7 +457,7 @@ export function MypageLectureDetailPage() {
         educationFormLabel={program.educationFormLabel}
       />
 
-      {showBanner && application.interviewAtLabel ? (
+      {showBanner ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
       ) : null}
 

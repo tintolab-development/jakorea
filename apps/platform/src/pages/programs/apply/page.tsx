@@ -60,7 +60,10 @@ import {
 } from '@/features/program/lib/apply-form-paragraph-ids'
 import { applyProgramLinkedApplicationDraftPatches } from '@/features/program/lib/application-form-program-link'
 import { resolvePortalApplicationHiddenParagraphIds } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
-import { resolveVolunteerPortalInterviewEnabledForHidden } from '@/features/program/lib/portal-volunteer-interview-visibility'
+import {
+  resolveVolunteerPortalActivityScheduleEnabledForHidden,
+  resolveVolunteerPortalInterviewEnabledForHidden,
+} from '@/features/program/lib/portal-volunteer-interview-visibility'
 import {
   isApplyScheduleChoiceParagraphId,
   isInstitutionApplyScheduleChoiceParagraphId,
@@ -1110,6 +1113,12 @@ export function ProgramApplyPage() {
         volunteerInterviewEnabled:
           applyCase === 'individual-volunteer'
             ? resolveVolunteerPortalInterviewEnabledForHidden({
+                formBinding: remoteForm,
+              })
+            : undefined,
+        volunteerActivityScheduleEnabled:
+          applyCase === 'individual-volunteer'
+            ? resolveVolunteerPortalActivityScheduleEnabledForHidden({
                 formBinding: remoteForm,
               })
             : undefined,
