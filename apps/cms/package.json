@@ -12,6 +12,7 @@
     "build": "vite build",
     "lint": "eslint . --max-warnings=-1",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "check:no-mock-imports": "node scripts/check-no-mock-imports.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

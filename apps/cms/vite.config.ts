@@ -135,6 +135,7 @@ export default defineConfig(({ mode }) => {
       environment: 'node',
       include: ['src/**/*.test.ts'],
       passWithNoTests: true,
+      setupFiles: ['src/test/vitest-setup.ts'],
     },
   }
 })

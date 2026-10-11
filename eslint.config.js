@@ -74,6 +74,11 @@ export default tseslint.config(
   },
   {
     files: ['apps/cms/**/*.{ts,tsx}'],
+    ignores: [
+      'apps/cms/src/**/*.test.ts',
+      'apps/cms/src/**/*.test.tsx',
+      'apps/cms/src/pages/design-system/**',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -89,6 +94,22 @@ export default tseslint.config(
               name: '@/shared/ui/cms-message',
               message:
                 'cms-message was removed. Do not show toast messages in CMS.',
+            },
+            {
+              name: '@/data/mock',
+              message:
+                'CMS runtime must not import @/data/mock. Use remote API clients and feature model types.',
+            },
+            {
+              name: '@/data/mock/users',
+              message:
+                'CMS runtime must not import mock users. Use members API.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['**/temp-mock-*', '**/*-mock-store*'],
+              message: 'CMS runtime mock modules are removed. Use remote API only.',
             },
           ],
         },
