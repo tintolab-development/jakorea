@@ -12,7 +12,18 @@ import type {
   ParticipatingIndividualProgressAttendanceSessionGroup,
   ParticipatingIndividualProgressAttendanceStatus,
 } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
-import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
+import {
+  isScheduleAttendanceOpenForDisplay,
+  mapDashboardScheduleDeliveryToEducationProgress,
+} from '@/features/program/general/lib/dashboard-schedule-delivery-status'
+import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
+import {
+  formatIndividualProgressAttendanceAffiliationGradeLabel,
+  formatIndividualProgressAttendanceGenderBirthLabel,
+} from '@/features/program/general/lib/participating-individual-progress-attendance-display'
+import { mapApiGenderToStudentGenderKey } from '@/features/program/general/api/adapters/student-roster-adapters'
+import { STUDENT_GENDER_LABELS } from '@/features/program/general/model/school-detail-types'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 
 const UI_TO_API_STATUS: Record<ParticipatingIndividualProgressAttendanceStatus, string> = {
   present: 'PRESENT',
@@ -39,8 +50,9 @@ export const mapDashboardScheduleStatusToEducationProgress =
 
 /** 출석 API status → UI. 일정 진행값·빈 값은 출석 미기록(null). */
 export function mapApiAttendanceStatusToUi(
-  status: string | undefined
+  status: string | null | undefined
 ): ParticipatingIndividualProgressAttendanceStatus | null {
+  if (status == null) return null
   const normalized = (status ?? '').trim().toUpperCase()
   if (!normalized || SCHEDULE_PROGRESS_STATUSES.has(normalized)) return null
   if (normalized === 'LATE') return 'late'
@@ -71,6 +83,22 @@ export function mapUiAttendanceStatusToApi(
   status: ParticipatingIndividualProgressAttendanceStatus
 ): string {
   return UI_TO_API_STATUS[status]
+}
+
+function formatDateLabel(value: string | null | undefined, pattern: string): string {
+  if (!value?.trim()) return ''
+  const parsed = dayjs(value)
+  return parsed.isValid() ? parsed.format(pattern) : value.trim()
+}
+
+function mapGenderLabel(gender?: string | null): string {
+  const key = mapApiGenderToStudentGenderKey(gender)
+  if (key) return STUDENT_GENDER_LABELS[key]
+  return toDisplayGender(gender)
+}
+
+function mapBirthLabel(birthDate?: string | null): string {
+  return formatDateLabel(birthDate, 'YYYY.MM.DD') || '-'
 }
 
 function formatScheduleHeader(schedule: DashboardProgramScheduleResponse, index: number): {
@@ -106,21 +134,39 @@ function formatScheduleHeader(schedule: DashboardProgramScheduleResponse, index:
 
 function mapParticipantRow(
   participant: ParticipantListItemResponse,
-  attendance: AttendanceItemResponse | undefined
+  attendance: AttendanceItemResponse | undefined,
+  schedule: Pick<DashboardProgramScheduleResponse, 'scheduleStatus' | 'startAt'>
 ): ParticipatingIndividualProgressAttendanceParticipantRow {
   const participantId = String(participant.participantId ?? '')
   const status = mapApiAttendanceStatusToUi(attendance?.status)
-  const attendanceRecorded = status != null
+  const attendanceRecorded =
+    status != null && isScheduleAttendanceOpenForDisplay(schedule)
   const lateTime =
     status === 'late' ? formatArrivalTimeForDisplay(attendance?.arrivalTime) : undefined
+  const affiliationResolved = resolveStoredAffiliation({
+    affiliationOrganizationId: participant.organizationId,
+    affiliationDisplayName: participant.organizationName,
+  })
+  const affiliation = affiliationResolved.affiliation?.trim() || '-'
+  const educationGrade = participant.grade?.trim() || '-'
+  const contact = participant.contact?.trim() || participant.phone?.trim() || undefined
+  const email = participant.email?.trim() || undefined
   return {
     id: `att-${participantId}`,
     participantId,
     name: participant.memberName?.trim() || `참여자 ${participantId}`,
-    genderBirthLabel: '-',
-    affiliationGradeLabel: '-',
-    affiliation: '-',
-    educationGrade: '-',
+    genderBirthLabel: formatIndividualProgressAttendanceGenderBirthLabel(
+      mapGenderLabel(participant.gender),
+      mapBirthLabel(participant.birthDate)
+    ),
+    affiliationGradeLabel: formatIndividualProgressAttendanceAffiliationGradeLabel(
+      affiliation,
+      educationGrade
+    ),
+    affiliation,
+    educationGrade,
+    contact,
+    email,
     attendanceRecorded,
     ...(attendanceRecorded ? { attendanceStatus: status } : {}),
     lateTime,
@@ -150,13 +196,17 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
           .map(a => [String(a.participantId), a] as const)
       )
       const header = formatScheduleHeader(schedule, index)
+      const attendanceRecordingOpen = isScheduleAttendanceOpenForDisplay(schedule)
       return {
         id: scheduleId,
         ...header,
         scheduleEducationProgress: mapDashboardScheduleDeliveryToEducationProgress(
           schedule.scheduleStatus
         ),
-        participants: roster.map(p => mapParticipantRow(p, byParticipant.get(String(p.participantId)))),
+        attendanceRecordingOpen,
+        participants: roster.map(p =>
+          mapParticipantRow(p, byParticipant.get(String(p.participantId)), schedule)
+        ),
       }
     })
 }

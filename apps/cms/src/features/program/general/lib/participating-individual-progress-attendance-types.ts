@@ -52,5 +52,7 @@ export type ParticipatingIndividualProgressAttendanceSessionGroup = {
   headerPrefix: string
   /** 프로그램 일정 `scheduleStatus` 기반 교육 진행 (출석과 분리) */
   scheduleEducationProgress: 'completed' | 'scheduled'
+  /** 출결 정정·표시 가능 회차 (일정 시작 전·진행 대기는 false) */
+  attendanceRecordingOpen: boolean
   participants: ParticipatingIndividualProgressAttendanceParticipantRow[]
 }

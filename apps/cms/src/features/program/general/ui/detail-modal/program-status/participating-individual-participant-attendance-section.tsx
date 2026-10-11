@@ -67,6 +67,7 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { handleError } from '@/shared/utils/error-handler'
+import { formatAttendanceRecordingNotOpenMessage } from '@/features/program/general/lib/attendance-recording-not-open'
 import {
   ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
   isInvalidAttendanceArrivalTimeError,
@@ -312,8 +313,14 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       })
     },
     onError: error => {
+      const notOpenMessage = formatAttendanceRecordingNotOpenMessage(error)
+      if (notOpenMessage) {
+        showAlert({ title: '안내', content: notOpenMessage })
+        return
+      }
       if (isInvalidAttendanceArrivalTimeError(error)) {
         showAlert({ title: '안내', content: ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE })
+        return
       }
       handleError(error, { context: 'saveGeneralScheduleAttendances.participantDetail' })
     },
