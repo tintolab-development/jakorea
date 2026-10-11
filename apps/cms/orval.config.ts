@@ -161,4 +161,20 @@ export default defineConfig({
       },
     },
   },
+  programProgress: {
+    input: './openapi/program-progress.openapi.json',
+    output: {
+      mode: 'split',
+      target: './src/shared/api/generated/program-progress/program-progress-api.ts',
+      schemas: './src/shared/api/generated/program-progress/schemas',
+      client: 'axios',
+      prettier: false,
+      override: {
+        mutator: {
+          path: './src/shared/api/orval-mutator.ts',
+          name: 'customInstance',
+        },
+      },
+    },
+  },
 })
