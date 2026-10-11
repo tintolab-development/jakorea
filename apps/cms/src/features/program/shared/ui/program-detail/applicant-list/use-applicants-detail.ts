@@ -43,6 +43,15 @@ import {
   mergeGeneralInstructorFiltersOnViewModeChange,
 } from '@/features/program/general/lib/application-table-filter'
 import {
+  applyApplicationListViewMode,
+  APPLICATION_LIST_VIEW_PARAMS,
+  clearInactiveApplicationListViewParams,
+  INSTITUTION_APPLICATION_VIEW_PARAM,
+  INSTRUCTOR_APPLICATION_VIEW_PARAM,
+  PARTICIPANT_APPLICATION_VIEW_PARAM,
+  parseApplicationListViewMode,
+} from '@/features/program/general/hooks/application-list-view-params'
+import {
   APPLICANTS_CALENDAR_RANGE_PARAM,
   parseCalendarRangeParam,
   applyCalendarRangeParam,
@@ -216,6 +225,8 @@ export function useApplicantsDetail({
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
 
   const [institutionList, setInstitutionList] = useState<ApplicantSchoolRow[]>([])
+  const institutionListRef = useRef(institutionList)
+  institutionListRef.current = institutionList
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>([])
   const [individualList, setIndividualList] = useState<GeneralIndividualApplicantRow[]>([])
 
@@ -599,8 +610,53 @@ export function useApplicantsDetail({
     return () => onRegisterApplicantCloseHandler(null)
   }, [onRegisterApplicantCloseHandler, setSelectedItem])
 
-  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
+  const applicationListViewParam = useMemo(() => {
+    if (detailVariant !== 'general') return null
+    if (menu === 'institutions') return INSTITUTION_APPLICATION_VIEW_PARAM
+    if (menu === 'individual-applications') return PARTICIPANT_APPLICATION_VIEW_PARAM
+    if (menu === 'instructors' && instructorColumnPreset === 'general-detail') {
+      return INSTRUCTOR_APPLICATION_VIEW_PARAM
+    }
+    return null
+  }, [detailVariant, menu, instructorColumnPreset])
+
+  useEffect(() => {
+    if (detailVariant !== 'general' || !applicationListViewParam) return
+    const hasStaleSibling = APPLICATION_LIST_VIEW_PARAMS.some(
+      key => key !== applicationListViewParam && searchParams.get(key) === 'calendar'
+    )
+    if (!hasStaleSibling) return
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        clearInactiveApplicationListViewParams(next, applicationListViewParam)
+        return next.toString() === prev.toString() ? prev : next
+      },
+      { replace: true }
+    )
+  }, [applicationListViewParam, detailVariant, searchParams, setSearchParams])
+
+  const [legacyViewMode, setLegacyViewMode] = useState<'table' | 'calendar'>('table')
+
+  const viewMode = applicationListViewParam
+    ? parseApplicationListViewMode(searchParams, applicationListViewParam)
+    : legacyViewMode
+
+  const setViewMode = useCallback(
+    (mode: 'table' | 'calendar') => {
+      if (applicationListViewParam) {
+        const next = new URLSearchParams(searchParams)
+        applyApplicationListViewMode(next, applicationListViewParam, mode)
+        setSearchParams(next, { replace: true })
+        return
+      }
+      setLegacyViewMode(mode)
+    },
+    [applicationListViewParam, searchParams, setSearchParams]
+  )
   const [institutionSchedulesHydrating, setInstitutionSchedulesHydrating] = useState(false)
+  /** 캘린더 일정 hydrate가 API에서 날짜를 못 채운 행 — 무한 재시도 방지 */
+  const institutionScheduleHydrationAttemptedRef = useRef<Set<string>>(new Set())
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
@@ -698,17 +754,64 @@ export function useApplicantsDetail({
   ])
 
   const prevViewModeRef = useRef(viewMode)
+  const appliedFiltersRef = useRef(appliedFilters)
+  appliedFiltersRef.current = appliedFilters
+
   useEffect(() => {
-    if (menu !== 'instructors' || instructorColumnPreset !== 'general-detail') {
+    const isGeneralApplicationMenu =
+      detailVariant === 'general' &&
+      (menu === 'institutions' ||
+        menu === 'individual-applications' ||
+        (menu === 'instructors' && instructorColumnPreset === 'general-detail'))
+
+    if (!isGeneralApplicationMenu) {
       prevViewModeRef.current = viewMode
       return
     }
     if (prevViewModeRef.current === viewMode) return
     prevViewModeRef.current = viewMode
-    setAppliedFilters(prev => mergeGeneralInstructorFiltersOnViewModeChange(prev, viewMode))
-    setPendingFilters(prev => mergeGeneralInstructorFiltersOnViewModeChange(prev, viewMode))
+
+    if (menu === 'instructors' && instructorColumnPreset === 'general-detail') {
+      setAppliedFilters(prev => mergeGeneralInstructorFiltersOnViewModeChange(prev, viewMode))
+      setPendingFilters(prev => mergeGeneralInstructorFiltersOnViewModeChange(prev, viewMode))
+    } else {
+      setPendingFilters({ ...appliedFiltersRef.current })
+    }
     setSelectedRowKeys([])
-  }, [viewMode, menu, instructorColumnPreset, setPendingFilters])
+  }, [viewMode, menu, instructorColumnPreset, detailVariant, setPendingFilters])
+
+  useEffect(() => {
+    institutionScheduleHydrationAttemptedRef.current.clear()
+  }, [programId, viewMode])
+
+  useEffect(() => {
+    if (viewMode !== 'calendar' || !programId) return
+    if (menu === 'institutions' && usesProgramInstitutionApplications) {
+      void queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.organizationList(programId),
+      })
+    }
+    if (menu === 'instructors' && instructorColumnPreset === 'general-detail') {
+      void queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.instructorList(programId),
+      })
+    }
+  }, [
+    instructorColumnPreset,
+    menu,
+    programId,
+    queryClient,
+    usesProgramInstitutionApplications,
+    viewMode,
+  ])
+
+  const institutionScheduleHydrationSignature = useMemo(
+    () =>
+      institutionList
+        .map(row => `${row.id}:${schoolRowNeedsScheduleHydration(row) ? 1 : 0}`)
+        .join('|'),
+    [institutionList]
+  )
 
   useEffect(() => {
     if (
@@ -720,22 +823,35 @@ export function useApplicantsDetail({
     ) {
       return
     }
-    if (!institutionList.some(schoolRowNeedsScheduleHydration)) {
+
+    const rowsPendingHydration = institutionListRef.current.filter(row => {
+      if (!schoolRowNeedsScheduleHydration(row)) return false
+      return !institutionScheduleHydrationAttemptedRef.current.has(row.id)
+    })
+
+    if (rowsPendingHydration.length === 0) {
       setInstitutionSchedulesHydrating(false)
       return
     }
 
+    const pendingApplicationIds = rowsPendingHydration.map(row => row.id)
+
     let cancelled = false
     setInstitutionSchedulesHydrating(true)
-    void hydrateOrganizationApplicationSchedules(institutionList, queryClient, {
+    void hydrateOrganizationApplicationSchedules(institutionListRef.current, queryClient, {
       companySchool: institutionColumnPreset === 'company-school',
+      applicationIds: pendingApplicationIds,
     })
       .then(hydrated => {
         if (cancelled) return
         setInstitutionList(prev => mergeHydratedOrganizationRows(prev, hydrated))
       })
       .finally(() => {
-        if (!cancelled) setInstitutionSchedulesHydrating(false)
+        if (cancelled) return
+        for (const id of pendingApplicationIds) {
+          institutionScheduleHydrationAttemptedRef.current.add(id)
+        }
+        setInstitutionSchedulesHydrating(false)
       })
 
     return () => {
@@ -743,7 +859,8 @@ export function useApplicantsDetail({
     }
   }, [
     institutionColumnPreset,
-    institutionList,
+    institutionScheduleHydrationSignature,
+    institutionList.length,
     menu,
     programId,
     queryClient,
@@ -1408,9 +1525,15 @@ export function useApplicantsDetail({
     void applyRemoteIndividualCancelRejection(id, '반려 취소')
   }
 
-  const handleViewCalendar = () => {
+  const handleViewList = useCallback(() => {
+    applySearch()
+    setViewMode('table')
+  }, [applySearch, setViewMode])
+
+  const handleViewCalendar = useCallback(() => {
+    applySearch()
     setViewMode('calendar')
-  }
+  }, [applySearch, setViewMode])
 
   const title = useMemo(() => {
     if (listTitle) return listTitle
@@ -1540,6 +1663,7 @@ export function useApplicantsDetail({
     handleCancelApprovalIndividual,
     handleCancelRejectIndividual,
     handleViewCalendar,
+    handleViewList,
     detailVariant,
     title,
     tableData,

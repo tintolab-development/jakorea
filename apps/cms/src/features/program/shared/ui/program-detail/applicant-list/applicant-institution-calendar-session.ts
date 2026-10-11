@@ -11,12 +11,14 @@ function padHourMinute(hour: string, minute: string): string {
   return `${String(Number.parseInt(hour, 10)).padStart(2, '0')}:${minute}`
 }
 
-function parseSessionTimeRange(timeRange: string): {
+function parseSessionTimeRange(timeRange: string | undefined | null): {
   startMinutes: number
   endMinutes: number
   display: string
 } | null {
-  const compact = timeRange.replace(/\s/g, '')
+  const raw = timeRange?.trim()
+  if (!raw || raw === '-') return null
+  const compact = raw.replace(/\s/g, '')
   const match = /^(\d{1,2}):(\d{2})[~\-–—]+(\d{1,2}):(\d{2})$/.exec(compact)
   if (!match) return null
   const startHour = Number.parseInt(match[1], 10)
@@ -44,12 +46,14 @@ function tryResolveInstitutionSessionRound(session: ParticipatingSchoolSession):
   if (session.round != null && session.round > 0) {
     return `${session.round}차시`
   }
-  const classRoundMatch = session.classNum.match(/(\d+)\s*차시/)
+  const classNum = session.classNum?.trim()
+  if (!classNum) return null
+  const classRoundMatch = classNum.match(/(\d+)\s*차시/)
   if (classRoundMatch) {
     return `${classRoundMatch[1]}차시`
   }
-  if (session.classNum.trim().endsWith('차시')) {
-    return session.classNum.trim().replace(/\s+/g, '')
+  if (classNum.endsWith('차시')) {
+    return classNum.replace(/\s+/g, '')
   }
   return null
 }

@@ -23,7 +23,11 @@ import {
   getInstructorScheduleDistanceKm,
   isInstructorNearDistanceKm,
 } from './applicant-instructor-schedule-meta'
-import type { ApplicantCalendarEvent } from './applicant-calendar-events'
+import {
+  resolveInstructorCalendarInstitutionName,
+  type ApplicantCalendarEvent,
+  type ApplicantInstructorCalendarEventItem,
+} from './applicant-calendar-events'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -119,7 +123,9 @@ function flattenInstructorCalendarCards(
   for (const event of events) {
     const originalItem = event.originalItem as unknown as Record<string, unknown> | undefined
     if (!originalItem) continue
-    const schoolName = String(originalItem.schoolName ?? '').trim() || '기관'
+    const schoolName = resolveInstructorCalendarInstitutionName(
+      originalItem as unknown as ApplicantInstructorCalendarEventItem
+    )
     const institutionRows = originalItem.calendarInstitutionInstructors as
       | ApplicantInstructorRow[]
       | undefined

@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
 import type { CalendarMonthCellRow } from '@/shared/components/calendar/model/calendar-month-cell-row'
 import { defaultCalendarMonthEventTitle } from '@/shared/components/calendar/ui/calendar-month-event-title'
-
-type InstructorCalendarEventOriginal = {
-  schoolName?: string
-}
+import {
+  resolveGeneralInstructorCalendarEventTitle,
+  type ApplicantInstructorCalendarEventItem,
+} from './applicant-calendar-events'
 
 export function renderGeneralInstructorCalendarMonthEventContent({
   row,
@@ -14,12 +14,11 @@ export function renderGeneralInstructorCalendarMonthEventContent({
   colors: { text: string }
 }): ReactNode {
   const nested = row.sourceEvent?.original as { originalItem?: unknown } | undefined
-  const item = (nested?.originalItem ?? nested) as InstructorCalendarEventOriginal | undefined
-  const schoolName = String(item?.schoolName ?? row.sourceEvent?.title ?? '').trim()
+  const item = (nested?.originalItem ?? nested) as ApplicantInstructorCalendarEventItem | undefined
+  const label = resolveGeneralInstructorCalendarEventTitle(
+    item,
+    String(row.sourceEvent?.title ?? '')
+  )
 
-  if (schoolName) {
-    return defaultCalendarMonthEventTitle(schoolName, colors.text)
-  }
-
-  return defaultCalendarMonthEventTitle(String(row.sourceEvent?.title ?? ''), colors.text)
+  return defaultCalendarMonthEventTitle(label || '강사', colors.text)
 }

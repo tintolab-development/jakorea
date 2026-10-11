@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { mapRequestedSchedulesToSessions } from '@/features/program/1c-1s/lib/map-requested-schedules'
 import { applyRequestedSchedulesToApplicantSchoolRow } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { mapApplicantDataToCalendarEvents } from './applicant-calendar-events'
+import {
+  formatGeneralInstructorCalendarEventTitle,
+  mapApplicantDataToCalendarEvents,
+} from './applicant-calendar-events'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 
@@ -193,5 +197,73 @@ describe('mapApplicantDataToCalendarEvents', () => {
     const events = mapApplicantDataToCalendarEvents([row], 'institutions')
     expect(events).toHaveLength(1)
     expect(events[0]?.startDate).toBe('2026-10-28T09:00:00')
+  })
+
+  it('maps instructor calendar events with instructor names as titles', () => {
+    const row: ApplicantInstructorRow = {
+      id: 'inst-1',
+      no: 1,
+      instructorName: '홍강사',
+      lectureExperienceYears: 0,
+      educationLevel: '-',
+      educationSchoolName: '-',
+      contact: '-',
+      email: '-',
+      address: '서울특별시',
+      approvalStatus: 'pending',
+      schoolName: '학교 / 기관 / 봉사 / 복수 회차 [기관]',
+      preferredSchools: [
+        {
+          schoolId: '1',
+          schoolName: '학교 / 기관 / 봉사 / 복수 회차 [기관]',
+          rank: 1,
+          assignable: true,
+          dateRange: '2026.10.01(목) ~ 2026.10.01(목)',
+        },
+      ],
+    }
+    const events = mapApplicantDataToCalendarEvents([row], 'instructors')
+    expect(events).toHaveLength(1)
+    expect(events[0]?.title).toBe('홍강사')
+    const item = events[0]?.originalItem as { calendarBucketSchoolName?: string; schoolName?: string }
+    expect(item.calendarBucketSchoolName).toBe('학교 / 기관 / 봉사 / 복수 회차 [기관]')
+    expect(item.schoolName).toBe('학교 / 기관 / 봉사 / 복수 회차 [기관]')
+  })
+
+  it('plots instructor calendar when organizationName is missing but dateRange exists', () => {
+    const row: ApplicantInstructorRow = {
+      id: 'inst-2',
+      no: 2,
+      instructorName: '김강사',
+      lectureExperienceYears: 0,
+      educationLevel: '-',
+      educationSchoolName: '-',
+      contact: '-',
+      email: '-',
+      address: '서울',
+      approvalStatus: 'pending',
+      schoolName: '',
+      preferredSchools: [
+        {
+          schoolId: '1',
+          schoolName: '',
+          rank: 1,
+          assignable: true,
+          dateRange: '2026.10.02(금) ~ 2026.10.02(금)',
+        },
+      ],
+    }
+    const events = mapApplicantDataToCalendarEvents([row], 'instructors')
+    expect(events).toHaveLength(1)
+    expect(events[0]?.title).toBe('김강사')
+  })
+
+  it('formats multiple instructor names for one calendar bucket', () => {
+    expect(
+      formatGeneralInstructorCalendarEventTitle([
+        { id: '1', instructorName: '김강사' } as ApplicantInstructorRow,
+        { id: '2', instructorName: '이강사' } as ApplicantInstructorRow,
+      ])
+    ).toBe('김강사 외 1명')
   })
 })

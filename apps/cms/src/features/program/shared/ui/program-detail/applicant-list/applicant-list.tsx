@@ -161,7 +161,6 @@ export function ApplicantList({
     selectedItem,
     setSelectedItem,
     viewMode,
-    setViewMode,
     selectedRowKeys,
     setSelectedRowKeys,
     instructorApprovalTarget,
@@ -195,6 +194,7 @@ export function ApplicantList({
     handleCancelApprovalIndividual,
     handleCancelRejectIndividual,
     handleViewCalendar,
+    handleViewList,
     title,
     tableData,
     columns,
@@ -336,6 +336,14 @@ export function ApplicantList({
   )
   const displayViewMode = isIndividualDoc1Screening ? 'table' : viewMode
   const showIndividualCalendarToggle = !isIndividualDoc1Screening
+
+  const usesGeneralApplicationListViewSync =
+    detailVariant === 'general' &&
+    (menu === 'institutions' ||
+      menu === 'individual-applications' ||
+      (menu === 'instructors' && instructorColumnPreset === 'general-detail'))
+
+  const showApplicationListViewToggle = showIndividualCalendarToggle
 
   const useOrganizationInstructorAssignFlow =
     menu === 'instructors' &&
@@ -616,6 +624,23 @@ export function ApplicantList({
 
   const isGeneralProgramCalendarView =
     detailVariant === 'general' && displayViewMode === 'calendar' && !selectedItem
+
+  const applicantCalendarEvents = useMemo(
+    () =>
+      mapApplicantDataToCalendarEvents(
+        tableData as
+          | ApplicantSchoolRow[]
+          | ApplicantInstructorRow[]
+          | GeneralIndividualApplicantRow[],
+        menu
+      ),
+    [tableData, menu]
+  )
+
+  const institutionCalendarScheduleEmptyHint =
+    menu === 'institutions' && tableData.length > 0 && applicantCalendarEvents.length === 0
+      ? '신청은 있으나 교육 일정(preferredEducationSchedules·requested-schedules)이 없어 캘린더에 표시할 수 없습니다.'
+      : undefined
 
   const showInstitutionDetail =
     selectedItem != null && menu === 'institutions' && 'schoolName' in selectedItem
@@ -1840,8 +1865,8 @@ export function ApplicantList({
         <>
           <FilterTableLayout
             key={
-              menu === 'instructors' && instructorColumnPreset === 'general-detail'
-                ? `applicant-filter-${viewMode}`
+              usesGeneralApplicationListViewSync
+                ? `applicant-filter-${menu}-${viewMode}`
                 : 'applicant-filter'
             }
             className={
@@ -1877,7 +1902,7 @@ export function ApplicantList({
                 >
                   선택 승인
                 </FilterTableToolbarButton>
-                {showIndividualCalendarToggle && displayViewMode === 'table' && (
+                {showApplicationListViewToggle && displayViewMode === 'table' && (
                   <FilterTableToolbarButton
                     icon={<ButtonCalendarIcon />}
                     variant="secondary"
@@ -1887,12 +1912,12 @@ export function ApplicantList({
                     캘린더 뷰로 보기
                   </FilterTableToolbarButton>
                 )}
-                {showIndividualCalendarToggle && displayViewMode === 'calendar' && (
+                {showApplicationListViewToggle && displayViewMode === 'calendar' && (
                   <FilterTableToolbarButton
                     variant="secondary"
                     icon={<ButtonListIcon />}
 
-                    onClick={() => setViewMode('table')}
+                    onClick={handleViewList}
                   >
                     리스트 뷰로 보기
                   </FilterTableToolbarButton>
@@ -1965,13 +1990,8 @@ export function ApplicantList({
               <div className="applicant-details__calendar-wrap">
                 <ApplicantCalendarView
                   useSplitCardPageScroll={detailVariant === 'general'}
-                  events={mapApplicantDataToCalendarEvents(
-                    tableData as
-                      | ApplicantSchoolRow[]
-                      | ApplicantInstructorRow[]
-                      | GeneralIndividualApplicantRow[],
-                    menu
-                  )}
+                  events={applicantCalendarEvents}
+                  scheduleListEmptyDescription={institutionCalendarScheduleEmptyHint}
                   loading={applicationsLoading}
                   selectedRowKeys={selectedRowKeys}
                   onSelectionChange={setSelectedRowKeys}
