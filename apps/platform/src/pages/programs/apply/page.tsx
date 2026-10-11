@@ -16,13 +16,13 @@ import {
   useProgramApplicationForm,
   useProgramDetail,
   useSubmitProgramApplication,
+  ProgramApplyLoading,
 } from '@/features/program'
 import { usePortalProfileQuery } from '@/features/auth/sign-in/hooks/use-portal-profile-query'
 import { getQueryRetryHttpStatus } from '@/shared/lib/query-retry'
 import {
   getProgramApplicationApiErrorMessage,
   isIndividualApplicationEnrolledGradeRequiredError,
-  messageForApplicationBlockedReason,
 } from '@/features/program/lib/application-api-error'
 import {
   buildApplicationAnswersFromDraft,
@@ -727,9 +727,7 @@ export function ProgramApplyPage() {
     })
   }, [])
 
-  const blockedMessage = messageForApplicationBlockedReason(
-    applicationFormQuery.blockedReason,
-  )
+  const blockedMessage = applicationFormQuery.blockedMessage
   const canSubmitRemote =
     remoteApplyEnabled &&
     applicationFormQuery.status === 'ready' &&
@@ -1190,7 +1188,7 @@ export function ProgramApplyPage() {
       applicationFormQuery.status === 'ready')
 
   if (!isReady || isLoading || formLoading || !program) {
-    return null
+    return <ProgramApplyLoading />
   }
 
   if (!displayDraft && !remoteFormUnavailable) {

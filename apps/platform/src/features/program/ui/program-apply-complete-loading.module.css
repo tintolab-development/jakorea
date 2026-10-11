@@ -1,0 +1,40 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-height: calc(100dvh - var(--app-header-height));
+  align-items: center;
+  justify-content: center;
+  padding: var(--page-padding-y) var(--page-padding-x);
+}
+
+.container {
+  display: flex;
+  width: 100%;
+  max-width: var(--width-page-sm);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.illustration {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-999);
+}
+
+.title {
+  width: min(100%, 240px);
+  height: 36px;
+}
+
+.description {
+  width: min(100%, 320px);
+  height: 48px;
+}
+
+.button {
+  width: 280px;
+  height: 56px;
+  margin-top: var(--spacing-16);
+  border-radius: var(--radius-12);
+}

@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict'
 import { AxiosError } from 'axios'
 import {
+  getApiErrorMessageFromBody,
   getApplicationApiErrorCode,
   getProgramApplicationApiErrorMessage,
   isIndividualApplicationEnrolledGradeRequiredError,
@@ -24,11 +25,42 @@ function axiosErr(data: unknown) {
 
 const mismatchBody = {
   success: false,
+  message: MISMATCH,
   error: {
     code: 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH',
-    message: 'Volunteer recruitment target does not match member classification',
+    message: MISMATCH,
   },
 }
+
+const affiliationBody = {
+  success: false,
+  data: null,
+  message: '활성 학교·기관 소속이 필요합니다.',
+  error: {
+    code: 'ACTIVE_ORGANIZATION_AFFILIATION_REQUIRED',
+    message: '활성 학교·기관 소속이 필요합니다.',
+    field: null,
+    traceId: 'test-trace',
+    details: null,
+  },
+}
+
+assert.equal(
+  getApiErrorMessageFromBody(affiliationBody),
+  '활성 학교·기관 소속이 필요합니다.',
+)
+assert.equal(
+  getProgramApplicationApiErrorMessage(axiosErr(affiliationBody)),
+  '활성 학교·기관 소속이 필요합니다.',
+)
+assert.equal(
+  messageForApplicationBlockedReason('ACTIVE_ORGANIZATION_AFFILIATION_REQUIRED'),
+  '활성 학교·기관 소속이 필요합니다.',
+)
+assert.equal(
+  (messageForApplicationBlockedReason('UNKNOWN_FUTURE_CODE') ?? '').includes('UNKNOWN'),
+  false,
+)
 
 assert.equal(messageForApplicationBlockedReason('VOLUNTEER_RECRUITMENT_TARGET_MISMATCH'), MISMATCH)
 assert.equal(getProgramApplicationApiErrorMessage(axiosErr(mismatchBody)), MISMATCH)
