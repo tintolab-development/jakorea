@@ -11,9 +11,9 @@ import type { BadgeProps } from 'antd'
 import { SessionFormatBadge } from '@/shared/components/session-format-badge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { SingleCTA } from '@/shared/ui'
-import { mockSchedulesMap, mockProgramsMap, mockApplications } from '@/data/mock'
 import dayjs from 'dayjs'
 import type { Schedule } from '@/types/domain'
+import { programService } from '@/entities/program/api/program-service'
 
 const { Title, Paragraph, Text } = Typography
 
@@ -49,8 +49,7 @@ export function MyScheduleDetailPage() {
       }
 
       try {
-        const found = mockSchedulesMap.get(id)
-        setSchedule(found || null)
+        setSchedule(null)
       } catch (error) {
         console.error('Failed to load schedule:', error)
       } finally {
@@ -87,7 +86,7 @@ export function MyScheduleDetailPage() {
     )
   }
 
-  const program = mockProgramsMap.get(schedule.programId)
+  const program = programService.getByIdSync(schedule.programId)
   const programName = program?.title || '알 수 없는 프로그램'
 
   // 일정 상태 결정 (Mock: 날짜 기반)
@@ -101,18 +100,8 @@ export function MyScheduleDetailPage() {
     status = 'SCH_02' // 진행 중
   }
 
-  // 승인된 신청 확인
-  const approvedApplication = mockApplications.find(
-    app => app.programId === schedule.programId && app.status === 'approved'
-  )
-
-  // 참여 역할 결정
-  const role =
-    approvedApplication?.subjectType === 'instructor'
-      ? '강사'
-      : approvedApplication?.subjectType === 'student'
-        ? '참여자'
-        : '봉사자'
+  // 참여 역할 (mock 제거 — API 연동 전 기본값)
+  const role = '봉사자'
 
   // 온라인 참여 가능 여부
   const canJoinOnline = schedule.onlineLink && (status === 'SCH_01' || status === 'SCH_02')

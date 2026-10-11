@@ -9,7 +9,6 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Program, TargetLevel } from '@/types/domain'
 import type { User } from '@/types/user'
 import { programService } from '@/entities/program/api/program-service'
-import { mockPrograms } from '@/data/mock'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { useMemberAdminProgramsQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -125,7 +124,7 @@ function resolveManagedPrograms(user: AdminUser): Program[] {
     .map(id => programService.getByIdSync(id))
     .filter((p): p is Program => Boolean(p))
   if (fromRoles.length > 0) return fromRoles
-  return mockPrograms.slice(0, 5)
+  return programService.getAllSync().slice(0, 5)
 }
 
 export interface AdminManagedProgramHistoryProps {

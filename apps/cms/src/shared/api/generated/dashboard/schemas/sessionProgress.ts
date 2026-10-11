@@ -51,6 +51,12 @@ export interface SessionProgress {
      */
   endAt?: string | null;
   /**
+     * 교육 진행(UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED). 대시보드 program-schedules와 동일 규칙. 출석과 별개.
+     * Orval 재생성 후 OpenAPI에 필드 유지 확인.
+     * @nullable
+     */
+  scheduleStatus?: string | null;
+  /**
      * PRESENT|LATE|ABSENT|EXCUSED. 없으면 null
      * @nullable
      */

@@ -9,7 +9,7 @@ import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
   INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE,
   type InstructorSettlementListRow,
-} from '@/data/mock/instructor-member-settlements'
+} from '@/features/settlement-management/model/instructor-member-settlements'
 import { CalendarListItemContentProgram } from './item-list/program'
 import { CalendarListItemContentGeneralProgramEvent } from './item-list/general-program-event'
 import { CalendarListItemContentSettlement } from './item-list/settlement'

@@ -23,7 +23,6 @@ import {
   removeVolunteerInterviewExceptionBlock,
   updateVolunteerInterviewOverlayKey,
   useVolunteerInterviewOverlayKv,
-  volunteerInterviewOverlayHasKey,
   type VolunteerInterviewOverlayStore,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
@@ -42,6 +41,30 @@ type InterviewTimeSlot = {
 }
 
 type RecruitInterviewRangeSeal = { start: string; end: string } | null
+
+function slotLabelFromKey(key: string): string | null {
+  const match = /^(\d+)-(\d+)$/.exec(key.trim())
+  if (!match) return null
+  const start = dayjs(Number(match[1]))
+  const end = dayjs(Number(match[2]))
+  if (!start.isValid() || !end.isValid()) return null
+  return `${start.format('HH:mm')} ~ ${end.format('HH:mm')}`
+}
+
+function remapSelectedSlotKeys(prev: string[], slots: InterviewTimeSlot[]): string[] {
+  if (slots.length === 0) return prev
+  const byKey = new Set(slots.map(slot => slot.key))
+  const byLabel = new Map(slots.map(slot => [slot.label, slot.key]))
+  const next: string[] = []
+  const seen = new Set<string>()
+  for (const key of prev) {
+    const remapped = byKey.has(key) ? key : byLabel.get(slotLabelFromKey(key) ?? '')
+    if (!remapped || seen.has(remapped)) continue
+    seen.add(remapped)
+    next.push(remapped)
+  }
+  return next
+}
 
 function buildInterviewTimeSlots(
   range: [Dayjs, Dayjs] | null,
@@ -278,9 +301,8 @@ function VolunteerInterviewScheduleBlock({
       overlayStore,
       'selectedSlotKeys',
       prev => {
-        const availableKeys = new Set(interviewTimeSlots.map(slot => slot.key))
         const currentSlots = prev ?? []
-        const filtered = currentSlots.filter(key => availableKeys.has(key))
+        const filtered = remapSelectedSlotKeys(currentSlots, interviewTimeSlots)
 
         let next: string[]
         if (filtered.length > 0 || interviewTimeSlots.length === 0) {
@@ -296,18 +318,8 @@ function VolunteerInterviewScheduleBlock({
           } else {
             next = []
           }
-        } else if (!seed) {
-          const hasStoredSelection = volunteerInterviewOverlayHasKey(
-            overlayStore,
-            'selectedSlotKeys',
-            overlayNamespace
-          )
-          next =
-            hasStoredSelection || interviewTimeSlots.length === 0
-              ? filtered
-              : [interviewTimeSlots[0]?.key ?? '']
         } else {
-          next = []
+          next = filtered
         }
 
         if (

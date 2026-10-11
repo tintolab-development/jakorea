@@ -16,7 +16,10 @@ import {
   sumFileBytes,
 } from '@/shared/ui/file-select-field-limits'
 import type { Program, ProgramPost } from '@/types/domain'
-import { createProgramPost, addProgramFiles } from '@/data/mock'
+import {
+  addProgramFiles,
+  createProgramPost,
+} from '@/features/user/detail/lib/program-post-interaction-stubs'
 import {
   createGeneralProgramPost,
   fetchGeneralProgramPostAttachments,

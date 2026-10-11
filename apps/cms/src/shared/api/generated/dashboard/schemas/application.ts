@@ -17,6 +17,8 @@ export interface Application {
   jaVolunteerExperience?: boolean;
   formAnswers?: ApplicationFormAnswers;
   scheduleChangeCancelCount?: number;
+  /** 신청서 이름 변경 이력 건수. Orval 재생성 시 OpenAPI 유지 확인 */
+  applicationNameChangeCount?: number;
   ujat?: UjatProjection;
   /** 제출 응답에 연결된 문항별 첨부. 첨부가 없거나 제출 응답이 없으면 []입니다(null 아님). */
   attachments?: Attachment[];

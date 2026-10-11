@@ -145,7 +145,6 @@ import { updateTeacherMemberEmploymentStatusAndRefresh } from '@/features/user/a
 import { invalidateMemberDetailHistoryQueries } from '@/features/user/api/invalidate-member-detail-history-queries'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
-import { mockUserHistories } from '@/data/mock/mypage'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
@@ -636,10 +635,7 @@ export function useUserDetailController({
 
     if (shouldLoadProgramHistoryTab && loadProgramHistory && displayUser?.id) {
       setMockVolunteerHistoriesLoading(true)
-      const volunteerOnly = mockUserHistories.filter(
-        h => h.userId === displayUser.id && h.role === 'VOLUNTEER'
-      )
-      setMockVolunteerHistories(volunteerOnly)
+      setMockVolunteerHistories([])
       setMockVolunteerHistoriesLoading(false)
       return
     }

@@ -29,7 +29,7 @@ import {
   addProgramPostReaction,
   getReactionEmojiTypeForBarIndex,
   removeProgramPostReactionUser,
-} from '@/data/mock'
+} from '@/features/user/detail/lib/program-post-interaction-stubs'
 import { downloadFile } from '@/shared/lib/file-download'
 import { PostReadStatusPopoverContent } from '../post-read-status-popover'
 import { formatProgramPostAudienceBadgeLabel } from '../../lib/post-audience-display'
@@ -262,7 +262,7 @@ export function PostDetailModal({
       void (async () => {
         if (emojiType) {
           try {
-            await remoteDetail.putReaction(emojiType)
+            await remoteDetail.putReaction(String(emojiType))
           } catch (error) {
             setSelectedEmojiIndex(null)
             cmsAlertModal.show({

@@ -110,7 +110,7 @@ opacity: 0.6;
 
 **마스킹**: `maskSensitive && approvalStatus !== 'approved'` (승인 완료 또는 개인정보 상세보기 후 해제).
 
-**성명 배지**: `detail.scheduleChangeCancelCount > 0` → `[일정 변경&취소 이력 N회]` (`ScheduleChangeHistoryBadge`).
+**성명 배지**: `detail.applicationNameChangeCount > 0` → `[이름 변경&취소 이력 N회]`; `detail.scheduleChangeCancelCount > 0` → `[일정 변경&취소 이력 N회]` (`ScheduleChangeHistoryBadge`, 각각 별도 배지).
 
 ### 섹션 2 — 자기소개 및 지원동기
 

@@ -6,8 +6,9 @@
 
 import type { RegisterRequest, RegisterResponse } from '@/types/register'
 import type { User } from '@/types/user'
-import { mockUsers } from '@/data/mock/users'
-import { saveConsent } from '@/data/mock/consents'
+
+/** 로컬 stub — remote 회원가입 API 연동 전 in-memory만 */
+const localRegisteredUsers: User[] = []
 
 // UUID 생성 함수 (users.ts와 동일)
 function generateUUID(): string {
@@ -24,7 +25,7 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
   const { formData, consent, socialProvider } = request
 
   // 이메일 중복 체크
-  const existingUser = mockUsers.find(u => u.email === formData.email)
+  const existingUser = localRegisteredUsers.find(u => u.email === formData.email)
   if (existingUser) {
     throw new Error('이미 사용 중인 이메일입니다.')
   }
@@ -83,17 +84,7 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
       programRoles: {} }) }
 
   // Mock 데이터에 추가 (실제로는 API 호출)
-  mockUsers.push(newUser)
-
-  // 동의 내역 저장
-  saveConsent({
-    userId: newUser.id,
-    termsVersion: '1.0',
-    privacyVersion: '1.0',
-    termsOfService: consent.termsOfService,
-    privacyPolicy: consent.privacyPolicy,
-    marketingConsent: consent.marketingConsent,
-    consentedAt: new Date().toISOString() })
+  localRegisteredUsers.push(newUser)
 
   return {
     success: true,
@@ -106,6 +97,6 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
 export async function checkEmailAvailability(email: string): Promise<boolean> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  const existingUser = mockUsers.find(u => u.email === email)
+  const existingUser = localRegisteredUsers.find(u => u.email === email)
   return !existingUser
 }

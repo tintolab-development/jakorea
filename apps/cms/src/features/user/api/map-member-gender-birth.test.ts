@@ -99,6 +99,11 @@ describe('mapCreateUserRequestToPreRegisterIndividual', () => {
       address: '서울시 강서구 화곡동',
       detailAddress: '101호',
       schoolEnrollmentStatus: 'ENROLLED',
+      affiliation: '서울초등학교',
+      schoolExternalCode: '7010056',
+      schoolProvider: 'NEIS',
+      schoolEducationOfficeCode: 'B10',
+      schoolRegionSido: '서울특별시',
       id1365: '13650001',
       isActive: true,
     })

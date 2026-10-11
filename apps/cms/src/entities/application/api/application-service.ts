@@ -1,21 +1,29 @@
 /**
- * 신청 Mock 서비스
- * Phase 2.2: Mock API 서비스
+ * 신청 in-memory stub (remote 미연동 시 빈 목록)
  */
 
-import type { Application, ApplicationRejectionKind, ApplicationStatus } from '@/types/domain'
-import { mockApplications, mockApplicationsMap } from '@/data/mock'
+import type {
+  Application,
+  ApplicationRejectionKind,
+  ApplicationStatus,
+  Program,
+} from '@/types/domain'
+
+const mockApplications: Application[] = []
+const mockPrograms: Program[] = []
+const mockApplicationsMap = new Map<string, Application>()
 import {
   getWaitingList,
   getNextWaitingListOrder,
   isCapacityFull,
 } from '@/features/program/general/lib/program-helpers'
-import { mockPrograms } from '@/data/mock'
 import { appendReceivedLog } from '@/entities/application-progress/api/status-change-service'
 import { createAuditLog } from '@/entities/audit-log/api/audit-log-service'
 import { getNotificationStatus } from './application-notification-service'
 
 export const applicationService = {
+  getAllSync: (): Application[] => [...mockApplications],
+
   getAll: async (): Promise<Application[]> => {
     // 알림 발송 상태를 함께 조회하여 Application에 포함
     const applicationsWithNotificationStatus = await Promise.all(

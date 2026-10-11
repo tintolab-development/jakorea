@@ -11,7 +11,6 @@ import type { BadgeProps } from 'antd'
 import { SessionFormatBadge } from '@/shared/components/session-format-badge'
 import { CalendarOutlined } from '@ant-design/icons'
 import { EmptyState, SingleCTA } from '@/shared/ui'
-import { mockSchedules, mockProgramsMap, mockApplications } from '@/data/mock'
 import dayjs from 'dayjs'
 import type { Schedule } from '@/types/domain'
 
@@ -63,44 +62,7 @@ export function MyScheduleListPage() {
     const loadUserSchedules = () => {
       try {
         // 승인 완료된 신청만 필터링
-        const approvedApplications = mockApplications.filter(app => app.status === 'approved')
-
-        // 각 승인된 신청에 대해 일정 찾기
         const userSchedules: UserSchedule[] = []
-        approvedApplications.forEach(app => {
-          const programSchedules = mockSchedules.filter(s => s.programId === app.programId)
-
-          programSchedules.forEach(schedule => {
-            // 일정 상태 결정 (Mock: 날짜 기반)
-            const scheduleDate = dayjs(schedule.date)
-            const now = dayjs()
-            let status: ScheduleStatus = 'SCH_01'
-
-            if (scheduleDate.isBefore(now, 'day')) {
-              status = 'SCH_03' // 종료
-            } else if (scheduleDate.isSame(now, 'day')) {
-              status = 'SCH_02' // 진행 중
-            }
-
-            // 참여 역할 결정 (Mock: subjectType 기반)
-            const role: ParticipationRole =
-              app.subjectType === 'instructor'
-                ? 'INSTRUCTOR'
-                : app.subjectType === 'student'
-                  ? 'PARTICIPANT'
-                  : 'VOLUNTEER'
-
-            const program = mockProgramsMap.get(schedule.programId)
-            if (program) {
-              userSchedules.push({
-                schedule,
-                programName: program.title,
-                role,
-                status,
-              })
-            }
-          })
-        })
 
         // 날짜순 정렬 (가까운 일정부터)
         userSchedules.sort((a, b) => {

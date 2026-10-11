@@ -9,11 +9,9 @@ import type {
   AuditLogQueryResult,
   CreateAuditLogInput,
 } from '@/types/audit-log'
-import { mockAuditLogs } from '@/data/mock/audit-logs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 
-// Mock: 메모리 기반 저장소
-const logs: AuditLog[] = [...mockAuditLogs]
+const logs: AuditLog[] = []
 
 /**
  * 감사 로그 목록 조회

@@ -6,8 +6,8 @@
 
 import { Tag } from 'antd'
 import type { CSSProperties } from 'react'
-import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
-import { PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
+import { PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import { TEXTBOOK_STATUS_LABELS } from '@/features/program/general/model/participating-schools'
 import {

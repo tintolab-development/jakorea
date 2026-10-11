@@ -27,10 +27,6 @@ import type {
   MemberPermissionApplicationRow,
   MemberPermissionApplicationStatus,
 } from '@/types/member-permission-application'
-import {
-  mockMemberPermissionApplicationsAdmin,
-  mockMemberPermissionApplicationsInstructor,
-} from '@/data/mock/member-permission-applications'
 import { useInstructorRoleRequestsQuery } from '@/features/user/api/hooks/use-instructor-role-requests-query'
 import { useAdminApprovalRequestsQuery } from '@/features/user/api/hooks/use-admin-approval-requests-query'
 import {
@@ -211,9 +207,7 @@ export const MembersPermissionList = forwardRef<
     if (adminRemote) {
       return adminRemoteQuery.data?.rows ?? []
     }
-    return memberType === 'instructor'
-      ? [...mockMemberPermissionApplicationsInstructor]
-      : [...mockMemberPermissionApplicationsAdmin]
+    return []
   }, [
     adminRemote,
     adminRemoteQuery.data?.rows,

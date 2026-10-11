@@ -12,8 +12,10 @@ import './direct-unavailable-date-add-button.css'
 const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
-/** 강사 배정 안내 캘린더와 동일 — 공휴일 숫자 색(빨강)용 */
-const UNAVAILABLE_MODAL_HOLIDAY_DATE_KEYS = getMockHolidayDateKeys()
+/** 강사 배정 안내 캘린더와 동일 — 공휴일 숫자 색(빨강)용 (모듈 top-level 호출 금지 — schedule-utils 순환 import) */
+function unavailableModalHolidayDateKeys(): Set<string> {
+  return getMockHolidayDateKeys()
+}
 
 /** 모달 칩 토큰 — 폼 체크박스(토·일·공휴일 제외)와 양방향 연동 */
 const RECURRING_SATURDAY = '토요일'
@@ -67,7 +69,7 @@ function isDateBlockedByRecurringTokens(date: Dayjs, selected: string[]): boolea
   if (selected.includes(RECURRING_SUNDAY) && date.day() === 0) return true
   if (
     selected.includes(RECURRING_HOLIDAY) &&
-    UNAVAILABLE_MODAL_HOLIDAY_DATE_KEYS.has(date.format('YYYY-MM-DD'))
+    unavailableModalHolidayDateKeys().has(date.format('YYYY-MM-DD'))
   ) {
     return true
   }

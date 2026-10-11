@@ -5,14 +5,24 @@
 
 import './schedule-change-history-badge.css'
 
+export type ScheduleChangeHistoryBadgeLabelVariant = 'schedule' | 'name'
+
 interface ScheduleChangeHistoryBadgeProps {
   /** 이력 횟수 (1 이상만 배지 표시 권장) */
   count: number
   className?: string
+  /** progress 참여자 상세 시안: 이름 변경&취소 / 신청·강사 등: 일정 변경&취소 */
+  labelVariant?: ScheduleChangeHistoryBadgeLabelVariant
 }
 
-export function ScheduleChangeHistoryBadge({ count, className }: ScheduleChangeHistoryBadgeProps) {
-  const label = count <= 0 ? '0회' : `일정 변경&취소 이력 ${count}회`
+export function ScheduleChangeHistoryBadge({
+  count,
+  className,
+  labelVariant = 'schedule',
+}: ScheduleChangeHistoryBadgeProps) {
+  const prefix =
+    labelVariant === 'name' ? '이름 변경&취소 이력' : '일정 변경&취소 이력'
+  const label = count <= 0 ? '0회' : `${prefix} ${count}회`
   return (
     <span
       className={`schedule-change-history-badge ${className ?? ''}`.trim()}
