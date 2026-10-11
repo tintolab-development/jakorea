@@ -4,6 +4,8 @@ import type {
   CurrentKitCalculationParams,
   KitsParams,
   MaterialKitCalculationResponse,
+  MaterialKitCurrentConfigRequest,
+  MaterialKitCurrentConfigResponse,
   MaterialKitRequest,
   MaterialKitResponse,
   MaterialKitTargetCountRequest,
@@ -60,4 +62,15 @@ export async function fetchCurrentKitCalculationRemote(
 ): Promise<MaterialKitCalculationResponse> {
   // GET /api/admin/material-kits/{kitId}/versions/current/calculate
   return unwrapApiBody(await getDataManagementSubsetApi().currentKitCalculation(kitId, params))
+}
+
+export async function fetchGlobalMaterialKitCurrentConfigRemote(): Promise<MaterialKitCurrentConfigResponse> {
+  return unwrapApiBody(await getDataManagementSubsetApi().globalCurrentConfig())
+}
+
+export async function putGlobalMaterialKitCurrentConfigRemote(
+  body: MaterialKitCurrentConfigRequest
+): Promise<MaterialKitCurrentConfigResponse> {
+  const payload = await getDataManagementSubsetApi().replaceGlobalCurrentConfig(body)
+  return unwrapApiBody(payload)
 }
