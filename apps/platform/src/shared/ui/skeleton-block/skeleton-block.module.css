@@ -9,10 +9,10 @@
   );
   background-size: 200% 100%;
   background-repeat: no-repeat;
-  animation: shimmer 1.4s ease-in-out infinite;
+  animation: pf-skeleton-shimmer 1.4s ease-in-out infinite;
 }
 
-@keyframes shimmer {
+@keyframes pf-skeleton-shimmer {
   from {
     background-position: 100% 0;
   }

@@ -43,6 +43,7 @@ import {
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
   useMypageMember,
+  EducationApplicationDetailLoading,
   type EducationActivitySection,
   type EducationDisplayStatus,
   type ProgramApplicationType,
@@ -128,37 +129,6 @@ function buildDetailPath(
   const base = educationApplicationDetailPath(applicationId, applicationType)
   if (section === 'program' || section === 'notice') return base
   return `${base}?section=${section}`
-}
-
-function EducationDetailLoading({ onBack }: { onBack: () => void }) {
-  return (
-    <section className={styles.page} aria-busy="true">
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.loadingStatus}>
-        신청 정보를 불러오는 중입니다.
-      </PFText>
-      <EducationDetailBack onClick={onBack} />
-      <div className={styles.loadingHeader}>
-        <span className={[styles.skeleton, styles.skeletonTitle].join(' ')} />
-        <span className={[styles.skeleton, styles.skeletonTitleShort].join(' ')} />
-        <span className={[styles.skeleton, styles.skeletonStatus].join(' ')} />
-        <span className={[styles.skeleton, styles.skeletonMeta].join(' ')} />
-      </div>
-      <div className={styles.loadingTabs} aria-hidden="true">
-        <span className={[styles.skeleton, styles.skeletonTab].join(' ')} />
-        <span className={[styles.skeleton, styles.skeletonTab].join(' ')} />
-      </div>
-      <div className={styles.loadingBody}>
-        <div className={styles.loadingMain}>
-          <span className={[styles.skeleton, styles.skeletonSummary].join(' ')} />
-          <span className={[styles.skeleton, styles.skeletonBlock].join(' ')} />
-        </div>
-        <div className={styles.loadingAside}>
-          <span className={[styles.skeleton, styles.skeletonBanner].join(' ')} />
-          <span className={[styles.skeleton, styles.skeletonApply].join(' ')} />
-        </div>
-      </div>
-    </section>
-  )
 }
 
 export function MypageEducationDetailPage() {
@@ -369,7 +339,7 @@ export function MypageEducationDetailPage() {
   }
 
   if (isDetailLoading) {
-    return <EducationDetailLoading onBack={handleBack} />
+    return <EducationApplicationDetailLoading onBack={handleBack} />
   }
 
   if (!application) {
@@ -604,7 +574,7 @@ export function MypageEducationDetailPage() {
             size="large"
             ariaLabel="활동 포기 교육 상세 탭"
           />
-          {renderActivityBody(activitySection)}
+          <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
         </>
       ) : isActivityStatus ? (
         <>
@@ -617,7 +587,7 @@ export function MypageEducationDetailPage() {
             size="large"
             ariaLabel="진행중 교육 상세 탭"
           />
-          {renderActivityBody(activitySection)}
+          <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
         </>
       ) : (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>

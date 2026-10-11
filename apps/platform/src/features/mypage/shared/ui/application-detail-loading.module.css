@@ -1,0 +1,154 @@
+.page {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100dvh - var(--app-header-height));
+  flex-direction: column;
+  margin-inline: auto;
+  padding-top: var(--spacing-100);
+  padding-bottom: var(--spacing-80);
+  padding-inline: var(--page-padding-x);
+  overflow: visible;
+}
+
+.loadingHeader {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  margin-top: 30px;
+}
+
+.loadingTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+  margin-top: var(--spacing-48);
+  margin-bottom: var(--spacing-56);
+}
+
+.loadingBody {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+.loadingMain {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  order: 1;
+}
+
+.loadingAside {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  order: -1;
+}
+
+.boneTitle {
+  width: min(100%, 520px);
+  height: 40px;
+}
+
+.boneTitleShort {
+  width: min(70%, 360px);
+  height: 40px;
+}
+
+.boneStatus {
+  width: 120px;
+  height: 28px;
+  margin-bottom: var(--spacing-8);
+}
+
+.boneMeta {
+  width: min(100%, 280px);
+  height: 24px;
+}
+
+.boneTab {
+  width: 112px;
+  height: 44px;
+  border-radius: var(--radius-999);
+}
+
+.boneSummary {
+  width: 100%;
+  height: 96px;
+}
+
+.boneBlock {
+  width: 100%;
+  height: 180px;
+  margin-top: var(--spacing-8);
+  border-radius: var(--radius-16);
+}
+
+.boneBanner {
+  width: 100%;
+  height: 450px;
+  border-radius: var(--radius-24);
+}
+
+.boneApply {
+  width: 100%;
+  height: 80px;
+  border-radius: var(--radius-16);
+}
+
+@media (--bp-below-pc) {
+  .loadingTabs {
+    margin-top: var(--spacing-20);
+    margin-bottom: var(--spacing-32);
+  }
+
+  .page {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--width-page-sm);
+    margin-inline: auto;
+    padding-top: var(--spacing-40);
+    padding-bottom: var(--spacing-48);
+  }
+}
+
+@media (--bp-pc-up) {
+  .loadingBody {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 120px;
+  }
+
+  .loadingMain {
+    order: 0;
+  }
+
+  .loadingAside {
+    flex: 0 0 361px;
+    width: 361px;
+    order: 0;
+  }
+
+  .page {
+    padding-inline: 80px;
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .page {
+    width: 100%;
+    max-width: var(--content-shell-max-width);
+    padding-inline: 0;
+  }
+}

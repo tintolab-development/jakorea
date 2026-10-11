@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
+import { VolunteerAssignmentPanelSkeleton } from '@/features/mypage/shared/ui'
 import { PFText } from '@/shared/ui'
 import { useVolunteerAssignmentsQuery } from '../api/use-assignments-query'
 import {
@@ -235,7 +236,9 @@ export function VolunteerAssignmentPanel({
   )
 
   if (remoteQuery.enabled) {
-    if (remoteQuery.isLoading) return null
+    if (remoteQuery.isLoading) {
+      return <VolunteerAssignmentPanelSkeleton />
+    }
     if (remoteQuery.isError || !remoteQuery.bundle) {
       return (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

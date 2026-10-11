@@ -6,19 +6,15 @@ import {
   EDUCATION_APPLICATION_TAB_ITEMS,
   getMypageLnbItems,
   MYPAGE_LECTURE_PATH,
+  MypageLayoutBootSkeleton,
   navigateMypageLnb,
   readEducationApplicationListParams,
   useMypageMember,
+  useMypagePageAuthReady,
   type EducationApplicationListParams,
   type EducationApplicationTab,
   type MypageLnbItemKey,
 } from '@/features/mypage'
-import {
-  getAccessToken,
-  getDevAuthLoggedIn,
-  isRemoteApiConfigured,
-  resolveLoginRequiredPath,
-} from '@/shared/lib'
 import illustFlagUrl from '@/shared/assets/illustration/illust-flag.svg'
 import { PFTabs, PFText } from '@/shared/ui'
 import { MypageLayout } from '@/widgets/mypage-layout'
@@ -27,26 +23,11 @@ import styles from '../volunteer/page.module.css'
 
 export function MypageLecturePage() {
   const navigate = useNavigate()
-  const [isAuthReady, setIsAuthReady] = useState(false)
+  const isAuthReady = useMypagePageAuthReady(MYPAGE_LECTURE_PATH)
   const [params, setParams] = useState(readEducationApplicationListParams)
   const member = useMypageMember()
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile, 'lectures')
-
-  useEffect(() => {
-    const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
-    if (hasRemoteToken) {
-      setIsAuthReady(true)
-      return
-    }
-
-    if (!getDevAuthLoggedIn()) {
-      navigate(resolveLoginRequiredPath(MYPAGE_LECTURE_PATH))
-      return
-    }
-
-    setIsAuthReady(true)
-  }, [navigate])
 
   useEffect(() => {
     const onPopState = () => {
@@ -75,7 +56,11 @@ export function MypageLecturePage() {
   }
 
   if (!isAuthReady || isChecking || isRedirecting) {
-    return null
+    return (
+      <MypageLayout variant="subpage" lnbItems={lnbItems} onLnbItemSelect={handleLnbItemSelect}>
+        <MypageLayoutBootSkeleton />
+      </MypageLayout>
+    )
   }
 
   return (
