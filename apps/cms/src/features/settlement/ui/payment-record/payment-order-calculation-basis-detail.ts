@@ -563,7 +563,7 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
   }
 
   if (row.kind === 'travel' || row.itemLabel === '교통비') {
-    return buildTravelBasisDetail(seed)
+    return undefined
   }
 
   if (row.kind === 'lodging' || row.itemLabel === '숙박비') {

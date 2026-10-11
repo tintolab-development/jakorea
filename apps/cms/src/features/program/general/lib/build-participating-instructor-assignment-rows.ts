@@ -24,12 +24,7 @@ import type {
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { extractLectureDateKey } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import { getParticipatingSchoolAssignmentSessions } from '@/features/program/general/lib/participating-school-assignment-sessions'
-
-function formatDistanceKm(km: number | undefined): string {
-  if (km == null || Number.isNaN(km)) return '-'
-  const rounded = Math.round(km)
-  return km >= 100 ? `${rounded}km (장거리)` : `${rounded}km`
-}
+import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 
 function scheduleLinesForSchool(school: ParticipatingSchoolRow): string[] {
   const fromSessions = buildParticipatingSchoolSessionLines(
@@ -124,7 +119,7 @@ export function buildParticipatingInstructorAssignedSchoolRowsFromBoard(input: {
       schoolName: school?.schoolName ?? primary.organizationName?.trim() ?? '-',
       educationGrade: school?.educationGrade ?? '-',
       region: school?.region ?? '-',
-      distanceFromHome: formatDistanceKm(primary.distanceKm),
+      distanceFromHome: formatApiDistanceKmDisplay(primary.distanceKm, { longDistanceSuffix: true }),
       educationScheduleLines: [...new Set(scheduleLines.length > 0 ? scheduleLines : ['-'])],
       assignmentId:
         primary.assignmentId != null ? String(primary.assignmentId) : undefined,
@@ -273,7 +268,7 @@ export function buildParticipatingInstructorAssignedScheduleRowsFromBoard(input:
       slotKey: scheduleId || assignmentId,
       schoolId,
       lectureLocation: school?.schoolName ?? a.organizationName?.trim() ?? '-',
-      distanceFromHome: formatDistanceKm(a.distanceKm),
+      distanceFromHome: formatApiDistanceKmDisplay(a.distanceKm, { longDistanceSuffix: true }),
       scheduleLabel,
       assignmentId,
       instructorMemberId: input.instructorMemberId,

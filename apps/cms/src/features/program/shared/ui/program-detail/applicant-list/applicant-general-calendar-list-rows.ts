@@ -17,6 +17,7 @@ import {
   getInstitutionRegionShort,
 } from './applicant-institution-calendar-session'
 import { getInstructorCalendarSessionCardLabel } from './applicant-instructor-calendar-session'
+import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 import {
   getInstructorScheduleDispatchStats,
   getInstructorScheduleDistanceKm,
@@ -166,7 +167,8 @@ export function buildGeneralInstructorCalendarListRows(
         instructor.approvalStatus as ApprovalStatusKey | undefined
       ),
       sessionLabel,
-      distanceKm: distanceKm ?? 0,
+      distanceKm,
+      distanceDisplay: formatApiDistanceKmDisplay(distanceKm),
       isNearDistance: distanceKm != null ? isInstructorNearDistanceKm(distanceKm) : false,
       dispatchCount,
       longDistanceCount,

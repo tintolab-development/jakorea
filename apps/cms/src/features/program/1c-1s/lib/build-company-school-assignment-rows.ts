@@ -13,6 +13,7 @@ import { resolveOneSchoolPerDayAssignmentStatus } from '@/features/program/1c-1s
 import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import { extractLectureDateKey } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
+import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 
 export type CompanySchoolWaitingInstructorRow = {
   id: string
@@ -57,9 +58,8 @@ export type CompanySchoolAssignedInstructorRow = {
 }
 
 function formatDistanceKm(km: number | undefined): string | undefined {
-  if (km == null || Number.isNaN(km)) return undefined
-  const rounded = Math.round(km)
-  return `${rounded}km`
+  const label = formatApiDistanceKmDisplay(km)
+  return label === '-' ? undefined : label
 }
 
 function hopeScheduleLineFromSession(session: ParticipatingSchoolSession): string {
