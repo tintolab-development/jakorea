@@ -25,6 +25,19 @@ export type IndividualApplicationListItemEnriched = Omit<
   assignedInterviewStartAt?: string | null
   assignedInterviewEndAt?: string | null
   preferredEducationSchedules?: PreferredEducationSchedule[]
+  /** codegen 선행 — 목록 스냅샷 소속·학년 (BE가 applicationGrade 외 키로 내려줄 때) */
+  affiliationSchool?: string | null
+  schoolName?: string | null
+  requestedGrade?: string | null
+  educationGrade?: string | null
+  grade?: string | null
+  affiliationGrade?: string | null
+  profile?: {
+    affiliationSchool?: string | null
+    affiliationGrade?: string | null
+    schoolName?: string | null
+    grade?: string | null
+  }
 }
 
 /** POST /api/admin/interview-assignments — volunteer ↔ individual 상호 배타 */

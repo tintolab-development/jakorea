@@ -184,6 +184,42 @@ function readOrganizationApplicationListGrade(
   return formatApplicantGradeLabel(raw) || ''
 }
 
+function pickFirstTrimmed(...values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    const trimmed = value?.trim()
+    if (trimmed) return trimmed
+  }
+  return ''
+}
+
+/** 개인 신청 목록 — applicationGrade 우선, BE 스냅샷·profile 보조 키 fallback */
+export function readIndividualApplicationListGrade(
+  dto: IndividualApplicationListItemEnriched
+): string {
+  const raw = pickFirstTrimmed(
+    dto.applicationGrade,
+    dto.affiliationGrade,
+    dto.profile?.affiliationGrade,
+    dto.profile?.grade,
+    dto.requestedGrade,
+    dto.educationGrade,
+    dto.grade
+  )
+  return formatApplicantGradeLabel(raw) || ''
+}
+
+export function readIndividualApplicationListAffiliationDisplayName(
+  dto: IndividualApplicationListItemEnriched
+): string {
+  return pickFirstTrimmed(
+    dto.affiliationName,
+    dto.affiliationSchool,
+    dto.schoolName,
+    dto.profile?.affiliationSchool,
+    dto.profile?.schoolName
+  )
+}
+
 function resolveOrganizationApplicationAssignmentSessions(
   dto: OrganizationApplicationListItemResponse,
   preferred: PreferredEducationSchedule[],
@@ -895,9 +931,10 @@ export function mapIndividualApplicationToApplicantRow(
     dto.assignedInterviewEndAt
   )
   const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
+  const affiliationDisplayName = readIndividualApplicationListAffiliationDisplayName(dto)
   const affiliation = resolveStoredAffiliation({
     affiliationOrganizationId: dto.affiliationOrganizationId,
-    affiliationDisplayName: dto.affiliationName,
+    affiliationDisplayName,
   })
   return {
     id: toId(dto.id),
@@ -905,7 +942,7 @@ export function mapIndividualApplicationToApplicantRow(
     applicantName: dto.memberName?.trim() || '이름 없음',
     availableActions: dto.availableActions,
     affiliation: affiliation.affiliation,
-    educationGrade: dto.applicationGrade?.trim() || '',
+    educationGrade: readIndividualApplicationListGrade(dto),
     homeAddress: dto.homeAddressSummary?.trim() || '',
     appliedAt: dto.submittedAt,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
@@ -955,15 +992,16 @@ export function mapIndividualApplicationDetailToApplicantRow(
     ...base,
     id: toId(dto.id) || base.id,
     memberId: toId(dto.memberId) || undefined,
-    applicantName: profile?.name?.trim() || '',
+    applicantName: profile?.name?.trim() || base.applicantName || '',
     availableActions: dto.availableActions ?? [],
     privacyMaskingLevel: dto.privacyMaskingLevel === 'UNMASKED' ? 'UNMASKED' : 'MASKED',
     canRevealPersonalInfo: dto.canRevealPersonalInfo === true,
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditDocumentEvaluation,
     canEditManagerBEvaluation: dto.canEditManagerBEvaluation ?? canEditDocumentEvaluation,
-    affiliation: profile?.affiliationSchool?.trim() || '',
-    educationGrade: profile?.affiliationGrade?.trim() || '',
-    homeAddress: profile?.homeAddress?.trim() || '',
+    affiliation: profile?.affiliationSchool?.trim() || base.affiliation || '',
+    educationGrade:
+      formatApplicantGradeLabel(profile?.affiliationGrade) || base.educationGrade || '',
+    homeAddress: profile?.homeAddress?.trim() || base.homeAddress || '',
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || base.programId,

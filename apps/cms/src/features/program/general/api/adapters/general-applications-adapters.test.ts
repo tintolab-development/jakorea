@@ -6,6 +6,8 @@ import {
   mapApiVolunteerInterviewStatusToAssignmentStatus,
   mapIndividualApplicationDetailToApplicantRow,
   mapIndividualApplicationToApplicantRow,
+  readIndividualApplicationListAffiliationDisplayName,
+  readIndividualApplicationListGrade,
   mapInterviewEvaluationSlots,
   mapInstructorApplicationDetailToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
@@ -880,6 +882,45 @@ describe('general-applications-adapters', () => {
     expect(row.essayEducationExperience).toBe('****2312')
     expect(row.essayNecessity).toBe('')
     expect(row.essayJaExperience).toBe('JA 경험')
+  })
+
+  it('reads list grade and affiliation from BE snapshot fallback keys', () => {
+    const dto = {
+      applicationGrade: '',
+      affiliationName: '',
+      affiliationSchool: '오리엔테이션 초등학교',
+      requestedGrade: '3',
+    } as Parameters<typeof mapIndividualApplicationToApplicantRow>[0]
+
+    expect(readIndividualApplicationListGrade(dto)).toBe('3학년')
+    expect(readIndividualApplicationListAffiliationDisplayName(dto)).toBe('오리엔테이션 초등학교')
+
+    const row = mapIndividualApplicationToApplicantRow(dto, 0, '5001')
+    expect(row.educationGrade).toBe('3학년')
+    expect(row.affiliation).toBe('오리엔테이션 초등학교')
+  })
+
+  it('keeps list affiliation and grade when detail profile fields are empty', () => {
+    const row = mapIndividualApplicationDetailToApplicantRow(
+      {
+        id: 1,
+        profile: { name: '김*자' },
+      } as never,
+      {
+        id: '1',
+        no: 1,
+        applicantName: '김참여',
+        affiliation: '목록 소속 학교',
+        educationGrade: '4학년',
+        homeAddress: '서울특별시 강서구',
+        approvalStatus: 'pending',
+      }
+    )
+
+    expect(row.applicantName).toBe('김*자')
+    expect(row.affiliation).toBe('목록 소속 학교')
+    expect(row.educationGrade).toBe('4학년')
+    expect(row.homeAddress).toBe('서울특별시 강서구')
   })
 
   it('maps individual application list item with screening fields', () => {
