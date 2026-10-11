@@ -16,11 +16,45 @@ function extractErrorCode(data: unknown): string | undefined {
 function extractErrorMessage(data: unknown): string | undefined {
   if (!data || typeof data !== 'object') return undefined
   const body = data as { message?: unknown; error?: { message?: unknown } }
+  if (typeof body.message === 'string' && body.message.trim()) {
+    return body.message.trim()
+  }
   if (typeof body.error?.message === 'string' && body.error.message.trim()) {
     return body.error.message.trim()
   }
-  if (typeof body.message === 'string' && body.message.trim()) return body.message.trim()
   return undefined
+}
+
+export const DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE =
+  '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+
+function normalizeLegacyEnglishApplicationMessage(message: string): string {
+  if (
+    message.includes('before the program period') ||
+    message.includes('after the program period')
+  ) {
+    return '희망 교육일이 프로그램 운영 기간을 벗어났습니다.'
+  }
+  if (message.includes('stale or unavailable schedule')) {
+    return '선택할 수 없는 교육 일정입니다. 일정을 다시 확인해 주세요.'
+  }
+  if (message.includes('outside the education schedule periods')) {
+    return '희망 교육일이 선택 가능한 교육 예정일 구간을 벗어났습니다.'
+  }
+  return message
+}
+
+export function getApiErrorMessageFromBody(
+  data: unknown,
+  fallback = DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE,
+): string {
+  const message = extractErrorMessage(data)
+  if (message) return normalizeLegacyEnglishApplicationMessage(message)
+  const code = extractErrorCode(data)
+  if (code && BLOCKED_REASON_MESSAGES[code]) {
+    return BLOCKED_REASON_MESSAGES[code]
+  }
+  return fallback
 }
 
 const BLOCKED_REASON_MESSAGES: Record<string, string> = {
@@ -33,6 +67,9 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   APPLICATION_FORM_NOT_CONFIGURED:
     '신청 양식이 아직 준비되지 않았습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
   PROGRAM_NOT_APPLICABLE: '현재 신청할 수 없는 프로그램입니다.',
+  ACTIVE_ORGANIZATION_AFFILIATION_REQUIRED: '활성 학교·기관 소속이 필요합니다.',
+  APPLICATION_TYPE_NOT_ALLOWED: '해당 모집에 허용되지 않은 지원 유형입니다.',
+  RECRUITMENT_NOT_OPEN: '현재 신청할 수 없는 모집입니다.',
   ORGANIZATION_MEMBERSHIP_REQUIRED: '학교·기관 회원만 신청할 수 있습니다.',
   APPROVED_INSTRUCTOR_REQUIRED: '승인된 강사만 신청할 수 있습니다.',
   MEMBER_NOT_ACTIVE: '활성 회원만 신청할 수 있습니다.',
@@ -47,6 +84,9 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
     '선택 가능한 희망 교육 일정 수를 초과했습니다.',
   ORGANIZATION_REQUESTED_SCHEDULE_REQUIRED:
     '진행 희망 교육 일정을 한 개 이상 선택해 주세요.',
+  /** 토큰은 인정됐으나 운영 일정으로 materialize 실패 (BE ProgramFormRuntimeSubmissionValidator) */
+  INVALID_SCHEDULE_OPTION_TOKEN:
+    '선택한 교육 일정을 더 이상 사용할 수 없습니다. 일정을 다시 선택해 주세요.',
   PREFERRED_SCHEDULE_EXCEEDS_MAX_SESSIONS_PER_DAY:
     '하루 최대 수업 시수를 초과했습니다.',
   VALIDATION_FAILED: '필수 항목을 모두 입력해 주세요.',
@@ -59,14 +99,20 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
    */
   VOLUNTEER_RECRUITMENT_TARGET_MISMATCH:
     '모집 대상과 회원 구분이 일치하지 않아 신청할 수 없습니다.',
+  /** 개인 프로그램 — 재학(ENROLLED)인데 회원 프로필 학년 없음 */
+  INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED:
+    '재학 중인 회원은 학년 정보를 등록한 후 개인 프로그램에 신청할 수 있습니다.',
 }
+
+export const INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE =
+  'INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED'
 
 export function messageForApplicationBlockedReason(
   reason: string | null | undefined,
 ): string | null {
   if (!reason?.trim()) return null
   const key = reason.trim().toUpperCase()
-  return BLOCKED_REASON_MESSAGES[key] ?? `신청할 수 없습니다. (${reason})`
+  return BLOCKED_REASON_MESSAGES[key] ?? DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE
 }
 
 export function getProgramApplicationApiErrorMessage(
@@ -74,31 +120,28 @@ export function getProgramApplicationApiErrorMessage(
   fallback = '신청 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.',
 ): string {
   if (!isAxiosError(error)) return fallback
-  const data = error.response?.data
-  const code = extractErrorCode(data)
-  if (code && BLOCKED_REASON_MESSAGES[code]) {
-    return BLOCKED_REASON_MESSAGES[code]
+  return getApiErrorMessageFromBody(error.response?.data, fallback)
+}
+
+export function resolveApplicationBlockedDisplayMessage(
+  reason: string | null | undefined,
+  apiError?: unknown,
+): string | null {
+  if (apiError) {
+    return getProgramApplicationApiErrorMessage(
+      apiError,
+      messageForApplicationBlockedReason(reason) ??
+        DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE,
+    )
   }
-  const message = extractErrorMessage(data)
-  if (message) {
-    if (
-      message.includes('before the program period') ||
-      message.includes('after the program period')
-    ) {
-      return '희망 교육일이 프로그램 운영 기간을 벗어났습니다.'
-    }
-    if (message.includes('stale or unavailable schedule')) {
-      return '선택할 수 없는 교육 일정입니다. 일정을 다시 확인해 주세요.'
-    }
-    if (message.includes('outside the education schedule periods')) {
-      return '희망 교육일이 선택 가능한 교육 예정일 구간을 벗어났습니다.'
-    }
-    return message
-  }
-  return fallback
+  return messageForApplicationBlockedReason(reason)
 }
 
 export function getApplicationApiErrorCode(error: unknown): string | null {
   if (!isAxiosError(error)) return null
   return extractErrorCode(error.response?.data) ?? null
+}
+
+export function isIndividualApplicationEnrolledGradeRequiredError(error: unknown): boolean {
+  return getApplicationApiErrorCode(error) === INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE
 }

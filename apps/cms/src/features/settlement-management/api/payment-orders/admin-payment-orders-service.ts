@@ -19,7 +19,7 @@ import type { ListSettlementsParams } from '@/shared/api/generated/settlement/sc
 import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import { needsPaymentStatementJoin } from '@/features/settlement-management/api/shared/map-frontend-fields'
 
 export interface PaymentOrdersListData {

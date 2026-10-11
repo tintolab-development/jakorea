@@ -4,5 +4,6 @@
     "outDir": "dist",
     "noEmit": false,
     "sourceMap": true
-  }
+  },
+  "exclude": ["src/**/*.test.ts"]
 }

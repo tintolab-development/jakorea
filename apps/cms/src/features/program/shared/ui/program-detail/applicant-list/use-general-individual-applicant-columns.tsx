@@ -4,14 +4,18 @@ import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { getInstitutionApplicationSessionsTableSlice } from '@/features/program/general/lib/institution-application-session-display'
 import { PARTICIPANT_APPLICANT_NAME_COL_WIDTH } from '@/features/program/general/lib/participant-screening-table-widths'
 import { GeneralDetailSessionLine } from './general-detail-session-line'
 
-const GENERAL_DETAIL_INDIVIDUAL_TEXT_COL_MIN_WIDTH = 185
-const GENERAL_DETAIL_INDIVIDUAL_GRADE_COL_WIDTH = 120
-const GENERAL_DETAIL_INDIVIDUAL_SESSIONS_COL_MIN_WIDTH = 360
-const GENERAL_DETAIL_INDIVIDUAL_APPROVAL_COL_WIDTH = 180
+/** 기관 신청 목록(general-detail)과 동일한 여유 폭 */
+const GENERAL_DETAIL_INDIVIDUAL_AFFILIATION_COL_WIDTH = 200
+const GENERAL_DETAIL_INDIVIDUAL_HOME_ADDRESS_COL_WIDTH = 220
+const GENERAL_DETAIL_INDIVIDUAL_GRADE_COL_WIDTH = 128
+const GENERAL_DETAIL_INDIVIDUAL_SESSIONS_COL_MIN_WIDTH = 480
+const GENERAL_DETAIL_INDIVIDUAL_APPROVAL_COL_WIDTH = 196
+const GENERAL_DETAIL_INDIVIDUAL_NO_COL_WIDTH = 72
 
 /**
  * 일반(개인) 참여자 신청 목록 컬럼.
@@ -21,12 +25,18 @@ const GENERAL_DETAIL_INDIVIDUAL_APPROVAL_COL_WIDTH = 180
 export function useGeneralIndividualApplicantColumns(
   programBridge?: InstitutionApplicationProgramBridge | null
 ): ColumnsType<GeneralIndividualApplicantRow> {
-  const textColWidth = GENERAL_DETAIL_INDIVIDUAL_TEXT_COL_MIN_WIDTH
   const applicantNameColWidth = PARTICIPANT_APPLICANT_NAME_COL_WIDTH
 
   return useMemo(() => {
     const columns: ColumnsType<GeneralIndividualApplicantRow> = [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
+      {
+        title: 'No.',
+        dataIndex: 'no',
+        key: 'no',
+        width: GENERAL_DETAIL_INDIVIDUAL_NO_COL_WIDTH,
+        minWidth: GENERAL_DETAIL_INDIVIDUAL_NO_COL_WIDTH,
+        align: 'center',
+      },
       {
         title: '신청자명',
         dataIndex: 'applicantName',
@@ -40,8 +50,8 @@ export function useGeneralIndividualApplicantColumns(
         title: '소속',
         dataIndex: 'affiliation',
         key: 'affiliation',
-        width: textColWidth,
-        minWidth: textColWidth,
+        width: GENERAL_DETAIL_INDIVIDUAL_AFFILIATION_COL_WIDTH,
+        minWidth: GENERAL_DETAIL_INDIVIDUAL_AFFILIATION_COL_WIDTH,
         align: 'center',
         ellipsis: true,
       },
@@ -52,13 +62,14 @@ export function useGeneralIndividualApplicantColumns(
         width: GENERAL_DETAIL_INDIVIDUAL_GRADE_COL_WIDTH,
         minWidth: GENERAL_DETAIL_INDIVIDUAL_GRADE_COL_WIDTH,
         align: 'center',
+        render: (value: string) => formatInstitutionApplicationGradeDisplay(value ?? '') || '-',
       },
       {
         title: '자택 주소지',
         dataIndex: 'homeAddress',
         key: 'homeAddress',
-        width: textColWidth,
-        minWidth: textColWidth,
+        width: GENERAL_DETAIL_INDIVIDUAL_HOME_ADDRESS_COL_WIDTH,
+        minWidth: GENERAL_DETAIL_INDIVIDUAL_HOME_ADDRESS_COL_WIDTH,
         align: 'center',
         ellipsis: true,
       },
@@ -78,10 +89,15 @@ export function useGeneralIndividualApplicantColumns(
         width: GENERAL_DETAIL_INDIVIDUAL_SESSIONS_COL_MIN_WIDTH,
         minWidth: GENERAL_DETAIL_INDIVIDUAL_SESSIONS_COL_MIN_WIDTH,
         align: 'center',
-        className: 'applicant-details__th-sessions',
-        onHeaderCell: () => ({ className: 'applicant-details__th-sessions' }),
+        className:
+          'applicant-details__th-sessions applicant-details__th-sessions--general-detail',
+        onHeaderCell: () => ({
+          className:
+            'applicant-details__th-sessions applicant-details__th-sessions--general-detail',
+        }),
         onCell: () => ({
-          className: 'applicant-details__td-sessions applicant-details__td-sessions--center',
+          className:
+            'applicant-details__td-sessions applicant-details__td-sessions--general-detail',
         }),
         render: (_: unknown, record: GeneralIndividualApplicantRow) => {
           const sessions = record.sessions ?? []
@@ -105,5 +121,5 @@ export function useGeneralIndividualApplicantColumns(
     ]
 
     return columns
-  }, [programBridge, textColWidth, applicantNameColWidth])
+  }, [programBridge, applicantNameColWidth])
 }

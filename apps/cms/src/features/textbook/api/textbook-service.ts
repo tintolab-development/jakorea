@@ -10,4 +10,4 @@ export {
   updateTextbook,
 } from '@/features/textbook/api/admin-textbooks-service'
 
-export { listTextbooks as listTextbooksFromStore } from '@/features/textbook/api/textbook-mock-store'
+export { listTextbooks as listTextbooksFromStore } from '@/features/textbook/api/textbook-lnb-seed-catalog'

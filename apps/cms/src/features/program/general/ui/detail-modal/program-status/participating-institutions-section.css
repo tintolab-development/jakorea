@@ -41,6 +41,7 @@
   overflow-y: visible;
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
 }
 
 .participating-institutions-section__table-wrap
@@ -104,11 +105,33 @@
   .participating-institutions-section__table
   .ant-table-tbody
   > tr
+  > td.participating-institutions-section__td-sessions,
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr:hover
   > td.participating-institutions-section__td-sessions {
-  white-space: normal;
+  white-space: normal !important;
   padding: 12px 24px !important;
-  vertical-align: top;
+  vertical-align: top !important;
   overflow: hidden;
+  height: auto !important;
+  max-height: none !important;
+}
+
+/* 기관 목록: hover 시 공통 cms-data-table 치수·정렬이 덮어쓰지 않도록 (다줄 행) */
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
+  > td {
+  height: auto !important;
+  max-height: none !important;
 }
 
 /* 강의 회차 별 교육 진행 날짜 및 시간 셀: 회차별 한 줄, 셀 내 줄바꿈·가로 스크롤 없음 */
@@ -175,23 +198,13 @@
  */
 .participating-institutions-section__table--textbook-dropdown.cms-data-table
   .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status),
-.participating-institutions-section__table--textbook-dropdown.cms-data-table
-  .ant-table-tbody
-  > tr:has(td .status-dropdown-cell__status-trigger--open) {
-  height: 53px;
-  min-height: 53px;
-  max-height: 53px;
-  overflow: visible;
-}
-
-.participating-institutions-section__table--textbook-dropdown.cms-data-table
-  .ant-table-tbody
   > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td {
+  > td.status-dropdown-cell__cell-status {
   height: 53px !important;
   min-height: 53px !important;
   max-height: 53px !important;
+  vertical-align: middle !important;
+  overflow: visible;
 }
 
 .participating-institutions-section__table--textbook-dropdown.cms-data-table

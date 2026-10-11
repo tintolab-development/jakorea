@@ -12,7 +12,7 @@ import {
   validateToken,
   type LoginOptions,
 } from '@/entities/user/api/auth-service'
-import { updateMockUserById } from '@/data/mock/users'
+import { updateMockUserById } from '@/entities/user/api/user-service'
 import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
 import { fetchAdminAuthLogout } from '@/features/auth/api/admin-auth-fetcher'
 import { AUTH_REFRESH_TOKEN_KEY, refreshAccessTokenSession } from '@/shared/instance/axios-instance'

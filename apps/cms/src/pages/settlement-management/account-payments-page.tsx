@@ -17,7 +17,7 @@ import {
   isPaymentOrderStatementConfirmedForAccountPayments,
   type AccountPaymentRow,
   type AccountPaymentTransferStatus,
-} from '@/data/mock/account-payments-list'
+} from '@/features/settlement-management/model/account-payments-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { buildAccountPaymentExportRequest } from '@/features/settlement-management/api/account-payments/build-account-payment-export-request'
 import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'

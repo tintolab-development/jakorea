@@ -5,12 +5,6 @@ import { fetchGeneralProgressAssignmentBundle } from '@/features/program/general
 import { buildProgressAssignmentSessionsFromRemote } from '@/features/program/general/api/adapters/progress-assignment-adapters'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import {
-  getParticipatingIndividualProgressAssignmentEducationScheduleOptions,
-  getParticipatingIndividualProgressAssignmentSessionParticipants,
-  getParticipatingIndividualProgressAssignmentSessions,
-} from '@/features/program/general/lib/participating-individual-progress-assignment-local'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { buildParticipatingIndividualProgressAssignmentFilterFields } from '@/features/program/general/lib/participating-individual-progress-assignment-filter-fields'
 import { filterProgressAssignmentParticipantsForDisplay } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
@@ -48,11 +42,10 @@ function filterSessionGroups(
 }
 
 export function useParticipatingIndividualProgressAssignment(program: Program) {
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled && !isTempMockProgram,
+    !remoteEnabled,
     'general-progress-assignment',
     '프로그램 진행 현황 · 과제'
   )
@@ -81,40 +74,23 @@ export function useParticipatingIndividualProgressAssignment(program: Program) {
 
   const isRemoteDataSource = remoteEnabled && remoteSessions != null && !remoteQuery.isError
 
-  const localSessions = useMemo(
-    () => getParticipatingIndividualProgressAssignmentSessions(program),
-    [program]
-  )
-
   const educationScheduleOptions = useMemo(() => {
-    if (isRemoteDataSource && remoteSessions) {
-      return remoteSessions.map(session => ({
-        value: session.filterValue,
-        label: session.filterLabel,
-      }))
-    }
-    if (isTempMockProgram) {
-      return getParticipatingIndividualProgressAssignmentEducationScheduleOptions(program)
-    }
-    return []
-  }, [isRemoteDataSource, isTempMockProgram, program, remoteSessions])
+    if (!isRemoteDataSource || !remoteSessions) return []
+    return remoteSessions.map(session => ({
+      value: session.filterValue,
+      label: session.filterLabel,
+    }))
+  }, [isRemoteDataSource, remoteSessions])
 
   const filterFields = useMemo(
     () => buildParticipatingIndividualProgressAssignmentFilterFields(educationScheduleOptions),
     [educationScheduleOptions]
   )
 
-  const mockSessionGroups = useMemo(() => {
-    const base = isTempMockProgram ? localSessions : []
-    return filterSessionGroups(base, appliedFilters)
-  }, [appliedFilters, isTempMockProgram, localSessions])
-
   const sessionGroups = useMemo(() => {
-    if (isRemoteDataSource && remoteSessions) {
-      return filterSessionGroups(remoteSessions, appliedFilters)
-    }
-    return mockSessionGroups
-  }, [appliedFilters, isRemoteDataSource, mockSessionGroups, remoteSessions])
+    if (!isRemoteDataSource || !remoteSessions) return []
+    return filterSessionGroups(remoteSessions, appliedFilters)
+  }, [appliedFilters, isRemoteDataSource, remoteSessions])
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -126,15 +102,9 @@ export function useParticipatingIndividualProgressAssignment(program: Program) {
 
   const getSessionParticipants = useCallback(
     (sessionId: string): ParticipatingIndividualProgressAssignmentParticipantRow[] => {
-      if (isTempMockProgram) {
-        return (
-          localSessions.find(s => s.id === sessionId)?.participants ??
-          getParticipatingIndividualProgressAssignmentSessionParticipants(program, sessionId)
-        )
-      }
       return remoteSessions?.find(s => s.id === sessionId)?.participants ?? []
     },
-    [isTempMockProgram, localSessions, program, remoteSessions]
+    [remoteSessions]
   )
 
   return {
@@ -145,8 +115,7 @@ export function useParticipatingIndividualProgressAssignment(program: Program) {
     filterFields,
     sessionGroups,
     getSessionParticipants,
-    loading:
-      !isTempMockProgram && remoteEnabled && remoteQuery.isFetching && remoteSessions == null,
-    isRemoteDataSource: isRemoteDataSource && !isTempMockProgram,
+    loading: remoteEnabled && remoteQuery.isFetching && remoteSessions == null,
+    isRemoteDataSource,
   }
 }

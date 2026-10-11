@@ -195,6 +195,8 @@ export async function getAlimtalkSendTemplatePicker(): Promise<AlimtalkTemplateI
   const dto = await fetchNotificationTemplatesRemote({
     channelType: ALIMTALK_API_CHANNEL_TYPE,
     approvalStatus: 'APPROVED',
+    page: '0',
+    size: '100',
   })
   const fromList = (dto.items ?? [])
     .filter(

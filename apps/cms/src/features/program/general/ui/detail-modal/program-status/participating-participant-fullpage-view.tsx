@@ -17,7 +17,12 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { unmaskIndividualApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
+import {
+  unmaskIndividualApplicationPrivacyRemote,
+  updateIndividualApplication,
+} from '@/features/program/general/api/applications-api-client'
+import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
+import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
 import {
@@ -30,8 +35,6 @@ import {
 } from '@/features/program/general/api/general-applications-query-keys'
 import { mapIndividualApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-individual-application-detail'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { patchGeneralIndividualApplicantDetail } from '@/features/program/general/model/individual-applicant'
 import { useParticipatingIndividualApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
 import {
   buildProgramApiUnavailableSaveContent,
@@ -67,13 +70,19 @@ import {
   ParticipatingIndividualParticipantAssignmentSection,
   type ParticipatingIndividualParticipantAssignmentSectionHandle,
 } from './participating-individual-participant-assignment-section'
+import { ParticipatingParticipantSettlementSection } from './participating-participant-settlement-section'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import { isSubmissionTeamApplicable } from '@/features/program/general/lib/submission-team-applicable'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './school-detail-fullpage-view.css'
 import './participating-participant-fullpage-view.css'
 
-export const PARTICIPANT_DETAIL_TAB_KEYS = ['application', 'attendance', 'assignments'] as const
+export const PARTICIPANT_DETAIL_TAB_KEYS = [
+  'application',
+  'attendance',
+  'assignments',
+  'settlement',
+] as const
 export type ParticipantDetailTabKey = (typeof PARTICIPANT_DETAIL_TAB_KEYS)[number]
 
 export function normalizeParticipantDetailTab(
@@ -89,6 +98,7 @@ const TAB_LABELS: Record<ParticipantDetailTabKey, string> = {
   application: '신청 정보',
   attendance: '출석 관리',
   assignments: '과제 관리',
+  settlement: '정산 현황',
 }
 
 export interface ParticipatingParticipantFullpageViewProps {
@@ -109,7 +119,6 @@ export function ParticipatingParticipantFullpageView({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const attendanceSectionRef = useRef<ParticipatingIndividualParticipantAttendanceSectionHandle>(null)
   const assignmentSectionRef = useRef<ParticipatingIndividualParticipantAssignmentSectionHandle>(null)
   const [submissionTeamRejected, setSubmissionTeamRejected] = useState(false)
@@ -271,9 +280,6 @@ export function ParticipatingParticipantFullpageView({
     program,
     onSaved: handleParticipantSaved,
     saveApplicant: async payload => {
-      if (isTempMockProgram) {
-        return patchGeneralIndividualApplicantDetail(mergedParticipant.id, payload)
-      }
       if (!shouldUseGeneralApplicationsRemoteApi() || !hasIndividualApplicationId) {
         return null
       }
@@ -337,17 +343,15 @@ export function ParticipatingParticipantFullpageView({
       const stopScheduleIdNum =
         stopScheduleIdRaw != null ? Number(stopScheduleIdRaw) : Number.NaN
 
-      if (progressRemoteEnabled || isTempMockProgram) {
+      if (progressRemoteEnabled) {
         setActivityWithdrawSubmitting(true)
         try {
-          if (progressRemoteEnabled) {
-            await giveUpGeneralParticipatingInstitution(program.id, mergedParticipant.id, reason, {
-              stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
-            })
-            await queryClient.invalidateQueries({
-              queryKey: generalProgramProgressQueryKeys.participants(program.id, 'INDIVIDUAL'),
-            })
-          }
+          await giveUpGeneralParticipatingInstitution(program.id, mergedParticipant.id, reason, {
+            stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
+          })
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.participants(program.id, 'INDIVIDUAL'),
+          })
           setParticipantPatches(prev => ({
             ...prev,
             activityWithdrawn: true,
@@ -383,7 +387,6 @@ export function ParticipatingParticipantFullpageView({
       mergedParticipant.applicantName,
       mergedParticipant.id,
       program.id,
-      isTempMockProgram,
       progressRemoteEnabled,
       queryClient,
       sessions,
@@ -412,14 +415,14 @@ export function ParticipatingParticipantFullpageView({
     async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
       try {
         const [lectureAttendanceSessions, profileHydrated] = await Promise.all([
-          progressRemoteEnabled && !isTempMockProgram
+          progressRemoteEnabled
             ? hydrateParticipatingIndividualLectureAttendanceSessions({
                 programId: String(program.id),
                 participantId: mergedParticipant.id,
                 existing: mergedParticipant.lectureAttendanceSessions,
               })
             : mergedParticipant.lectureAttendanceSessions,
-          shouldUseGeneralApplicationsRemoteApi() && !isTempMockProgram
+          shouldUseGeneralApplicationsRemoteApi()
             ? hydrateParticipatingParticipantCertificateProfile(mergedParticipant)
             : mergedParticipant,
         ])
@@ -439,13 +442,7 @@ export function ParticipatingParticipantFullpageView({
         })
       }
     },
-    [
-      hasStudentSatisfactionSurvey,
-      isTempMockProgram,
-      mergedParticipant,
-      program,
-      progressRemoteEnabled,
-    ]
+    [hasStudentSatisfactionSurvey, mergedParticipant, program, progressRemoteEnabled]
   )
 
   const handleCertificateExportComplete = useCallback((success: boolean) => {
@@ -485,19 +482,13 @@ export function ParticipatingParticipantFullpageView({
         return
       }
     }
-    if (isTempMockProgram) {
-      setSavedAdminComment(trimmed)
-      setParticipantPatches(prev => ({ ...prev, adminComment: trimmed || undefined }))
-      setAdminCommentModalOpen(false)
-      return
-    }
     void showAlert({
       title: PROGRAM_API_UNAVAILABLE_TITLE,
       content: hasIndividualApplicationId
         ? buildProgramApiUnavailableSaveContent('참여자 관리자 코멘트')
         : '개인 신청 ID가 없어 코멘트를 저장할 수 없습니다. participants API에 sourceApplicationId 매핑이 필요합니다.',
     })
-  }, [adminCommentDraft, hasIndividualApplicationId, isTempMockProgram, mergedParticipant, showAlert])
+  }, [adminCommentDraft, hasIndividualApplicationId, mergedParticipant, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -511,6 +502,58 @@ export function ParticipatingParticipantFullpageView({
     isApplicationInfoEditing && draft
       ? draft.adminComment
       : savedAdminComment || mergedParticipant.adminComment
+
+  const saveTeamRole = useCallback(
+    async (teamRole: 'leader' | 'member') => {
+      if (!shouldUseGeneralApplicationsRemoteApi() || !hasIndividualApplicationId) {
+        void showAlert({
+          title: PROGRAM_API_UNAVAILABLE_TITLE,
+          content: buildProgramApiUnavailableSaveContent('참여자 팀 역할'),
+        })
+        return
+      }
+      try {
+        const response = await updateIndividualApplication(individualApplicationId, {
+          teamRole: teamRole.toUpperCase() as 'LEADER' | 'MEMBER',
+        })
+        const teamDetail = resolveIndividualApplicationTeamDetail({ team: response.team })
+        setParticipantPatches(prev => ({
+          ...prev,
+          detail: {
+            ...mergedParticipant.detail,
+            ...prev.detail,
+            teamRole: teamDetail.teamRole ?? teamRole,
+            teamName: teamDetail.teamName ?? mergedParticipant.detail?.teamName,
+            teamMemberCount:
+              teamDetail.teamMemberCount ?? mergedParticipant.detail?.teamMemberCount,
+          },
+        }))
+        await queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.individualDetail(individualApplicationId),
+        })
+      } catch (error) {
+        const responseData =
+          error && typeof error === 'object' && 'response' in error
+            ? (error as { response?: { data?: unknown } }).response?.data
+            : undefined
+        void showAlert({
+          title: '팀 역할 저장 실패',
+          content: extractApiErrorMessage(responseData, {
+            httpStatus: getApiErrorHttpStatus(error),
+            fallback: '팀 역할을 저장하지 못했습니다. 다시 시도해 주세요.',
+          }),
+        })
+        throw error
+      }
+    },
+    [
+      hasIndividualApplicationId,
+      individualApplicationId,
+      mergedParticipant.detail,
+      queryClient,
+      showAlert,
+    ]
+  )
 
   return (
     <div className="participating-participant-fullpage-view school-detail-fullpage-view">
@@ -637,6 +680,11 @@ export function ParticipatingParticipantFullpageView({
                 onDraftChange={isApplicationInfoEditing ? updateDraft : undefined}
                 validationErrors={validationErrors}
                 textbookOptions={textbookOptions}
+                onTeamRoleChange={
+                  shouldUseGeneralApplicationsRemoteApi() && hasIndividualApplicationId
+                    ? saveTeamRole
+                    : undefined
+                }
               />
             </div>
           </div>
@@ -651,7 +699,7 @@ export function ParticipatingParticipantFullpageView({
               participant={mergedParticipant}
             />
           </div>
-        ) : (
+        ) : activeTab === 'assignments' ? (
           <div
             className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab"
             aria-label="과제 관리"
@@ -663,7 +711,17 @@ export function ParticipatingParticipantFullpageView({
               onTeamFeatureNotApplicable={handleSubmissionTeamNotApplicable}
             />
           </div>
-        )}
+        ) : activeTab === 'settlement' ? (
+          <div
+            className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab"
+            aria-label="정산 현황"
+          >
+            <ParticipatingParticipantSettlementSection
+              program={program}
+              participantId={mergedParticipant.id}
+            />
+          </div>
+        ) : null}
       </div>
 
       <ActivityWithdrawScheduleModal
@@ -694,6 +752,7 @@ export function ParticipatingParticipantFullpageView({
         onCancel={handleAdminCommentModalCancel}
         onConfirm={handleAdminCommentSave}
       />
+      <div className="school-detail-fullpage-view__page-bottom-spacer" aria-hidden />
     </div>
   )
 }

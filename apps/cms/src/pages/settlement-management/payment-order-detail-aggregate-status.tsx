@@ -2,7 +2,7 @@
  * 지급조서 처리 현황 집계 문구 (기본정보 등)
  */
 
-import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   PAYMENT_ORDER_DETAIL_AGGREGATE_LABELS,
   PAYMENT_ORDER_LINE_STATUS_LABELS_FULL,

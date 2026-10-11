@@ -9,20 +9,12 @@ import {
   readActiveUjatEducationRegionsOrdered,
   readUjatEducationRegions,
 } from '@/features/program/ujat/lib/education-region-store'
+import {
+  UJAT_DEFAULT_EDUCATION_REGIONS,
+  type UjatDefaultEducationRegionKey,
+} from '@/features/program/ujat/lib/ujat-default-education-region-rows'
 
-export const UJAT_DEFAULT_EDUCATION_REGIONS = [
-  { key: 'seoul', label: '서울' },
-  { key: 'gyeonggi_south', label: '경기(남부)' },
-  { key: 'incheon', label: '인천' },
-  { key: 'daejeon', label: '대전' },
-  { key: 'daegu', label: '대구' },
-  { key: 'busan', label: '부산' },
-  { key: 'gwangju', label: '광주' },
-  { key: 'jeonbuk_jeonju', label: '전북(전주)' },
-] as const
-
-export type UjatDefaultEducationRegionKey =
-  (typeof UJAT_DEFAULT_EDUCATION_REGIONS)[number]['key']
+export { UJAT_DEFAULT_EDUCATION_REGIONS, type UjatDefaultEducationRegionKey }
 
 export type UjatEducationRegionOption = {
   key: string

@@ -61,10 +61,20 @@
 }
 
 /* cms-data-table: placeholder 셀 안에서만 패딩·보더 정리 */
-.cms-data-table .ant-table-tbody > tr.ant-table-placeholder > td {
+.cms-data-table .ant-table-tbody > tr.ant-table-placeholder > td,
+.cms-data-table .ant-table-tbody > tr.ant-table-placeholder:hover > td {
+  box-sizing: border-box !important;
   padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
   vertical-align: middle !important;
   border-bottom: none !important;
+  border-right: none !important;
+  background: var(--color-bg-base, #fff) !important;
+}
+
+.cms-data-table .ant-table-tbody > tr.ant-table-placeholder {
+  cursor: default !important;
 }
 
 .cms-data-table .ant-table-tbody > tr.ant-table-placeholder > td .cms-table-empty-state {

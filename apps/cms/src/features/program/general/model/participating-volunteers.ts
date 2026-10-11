@@ -24,6 +24,8 @@ export interface ParticipatingVolunteerRow {
   volunteerName: string
   id1365: string
   assignedInstitutionNames: string[]
+  /** participants `homeAddressSummary` / 시·도·군·구 — 배정 탭 봉사 지역 폴백 */
+  homeRegion?: string
   sessions: ParticipatingSchoolSession[]
   contact: string
   email: string

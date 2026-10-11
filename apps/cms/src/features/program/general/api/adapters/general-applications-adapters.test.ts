@@ -6,6 +6,8 @@ import {
   mapApiVolunteerInterviewStatusToAssignmentStatus,
   mapIndividualApplicationDetailToApplicantRow,
   mapIndividualApplicationToApplicantRow,
+  readIndividualApplicationListAffiliationDisplayName,
+  readIndividualApplicationListGrade,
   mapInterviewEvaluationSlots,
   mapInstructorApplicationDetailToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
@@ -154,6 +156,8 @@ describe('general-applications-adapters', () => {
     expect(mapApiApplicationStatusToApprovalStatus('APPROVED')).toBe('approved')
     expect(mapApiApplicationStatusToApprovalStatus('WAITING_REVIEW')).toBe('pending')
     expect(mapApiApplicationStatusToApprovalStatus('REJECTED')).toBe('rejected')
+    expect(mapApiApplicationStatusToApprovalStatus('CANCELLED')).toBe('cancelled')
+    expect(mapApiApplicationStatusToApprovalStatus('REJECTION_CANCELLED')).toBe('pending')
   })
 
   it('maps organization application list item to applicant row', () => {
@@ -201,6 +205,74 @@ describe('general-applications-adapters', () => {
     expect(row.approvalStatus).toBe('approved')
     expect(row.availableActions).toContain('RESEND_NOTIFICATION')
     expect(row.approvalNotificationSentAt).toMatch(/2026\.\d{2}\.\d{2}/)
+  })
+
+  it('uses requested schedules when preferred rows have no calendar date', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691207,
+        programType: 'GENERAL_ORGANIZATION',
+        organizationName: '서울공항초등학교',
+        applicationStatus: 'SUBMITTED',
+        preferredEducationSchedules: [
+          { scheduleId: null, round: 1, startAt: null, endAt: null, label: null },
+        ],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186091',
+      {
+        requestedSchedules: [
+          {
+            id: 9001,
+            preferenceOrder: 1,
+            requestedDate: '2026-10-26',
+            startPeriod: null,
+            sessionCount: 1,
+            combinedClassYn: false,
+            sessionTimes: [{ sessionOrder: 1, startTime: '13:30:00', endTime: '15:30:00' }],
+            resolvedScheduleId: undefined,
+          },
+        ],
+      }
+    )
+
+    expect(row.sessions).toHaveLength(1)
+    expect(row.sessions?.[0]?.date).toBe('2026. 10. 26')
+  })
+
+  it('maps organization preferredEducationSchedules (B) to assignment sessions', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691206,
+        programType: 'GENERAL_ORGANIZATION',
+        organizationName: '서울공항초',
+        applicationStatus: 'APPROVED',
+        preferredEducationSchedules: [
+          {
+            scheduleId: 801,
+            round: 1,
+            startAt: '2026-10-26T01:00:00Z',
+            endAt: '2026-10-26T03:00:00Z',
+            label: null,
+          },
+          {
+            scheduleId: null,
+            round: 2,
+            startAt: null,
+            endAt: null,
+            label: '26년 11월 2일(월) 13:30 ~ 16:00',
+          },
+        ],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186084'
+    )
+
+    expect(row.preferredEducationSchedules).toHaveLength(2)
+    expect(row.sessions).toHaveLength(2)
+    expect(row.sessions?.[0]?.resolvedScheduleId).toBe(801)
+    expect(row.sessions?.[1]?.scheduleUnresolved).toBe(true)
+    expect(row.sessions?.[1]?.scheduleLabel).toBe('26년 11월 2일(월) 13:30 ~ 16:00')
   })
 
   it('maps ORGANIZATION participant give-up fields to participating school row', () => {
@@ -285,6 +357,40 @@ describe('general-applications-adapters', () => {
     expect(row.sessions?.[0]?.resolvedScheduleId).toBe(801)
   })
 
+  it('maps unresolved requested schedule sessions for 참여 기관 목록', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1694743,
+        organizationApplicationId: 1691206,
+        organizationName: '서울공항초등학교',
+        grade: '2',
+        sessions: [
+          {
+            scheduleId: null,
+            requestedScheduleId: 184833,
+            resolvedScheduleId: null,
+            scheduleUnresolved: true,
+            sessionNo: 1,
+            scheduleName: '26년 10월 26일(월) 10:00 ~ 12:00',
+            startAt: '2026-10-26T01:00:00Z',
+            endAt: '2026-10-26T03:00:00Z',
+            attendanceStatus: null,
+            assignmentStatus: null,
+          },
+        ],
+      } as never,
+      0,
+      '186084'
+    )
+
+    expect(row.educationGrade).toBe('2학년')
+    expect(row.sessions).toHaveLength(1)
+    expect(row.sessions?.[0]?.scheduleUnresolved).toBe(true)
+    expect(row.sessions?.[0]?.resolvedScheduleId).toBeNull()
+    expect(row.sessions?.[0]?.requestedScheduleId).toBe(184833)
+    expect(row.sessions?.[0]?.timeRange).toContain('~')
+  })
+
   it.each([
     ['BEFORE_SHIPPING', 'preparing'],
     ['SHIPPING', 'shipping'],
@@ -356,6 +462,7 @@ describe('general-applications-adapters', () => {
             scheduleName: '1회차',
             startAt: '2026-10-12T09:00:00+09:00',
             endAt: '2026-10-12T11:00:00+09:00',
+            scheduleStatus: 'COMPLETED',
             attendanceStatus: 'COMPLETED',
           },
         ],
@@ -371,8 +478,34 @@ describe('general-applications-adapters', () => {
     expect(individual.homeAddress).toBe('서울특별시 강서구')
     expect(individual.sessions).toHaveLength(1)
     expect(individual.sessions?.[0]?.resolvedScheduleId).toBe(601)
+    expect(individual.sessions?.[0]?.status).toBe('completed')
+    expect(individual.sessions?.[0]?.deliveryScheduleStatus).toBe('COMPLETED')
     expect(individual.lectureAttendanceSessions).toEqual([])
     expect(individual.satisfactionSurveyCompleted).toBe(false)
+  })
+
+  it('derives session education progress from scheduleStatus only', () => {
+    const individual = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 1694745,
+        memberName: '일반회원2',
+        sessions: [
+          {
+            scheduleId: 9001,
+            sessionNo: 1,
+            scheduleStatus: 'SCHEDULED',
+            attendanceStatus: 'COMPLETED',
+            startAt: '2026-10-15T00:00:00+09:00',
+            endAt: '2026-10-15T23:59:00+09:00',
+          },
+        ],
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '186089'
+    )
+
+    expect(individual.sessions?.[0]?.status).toBe('pending')
+    expect(individual.sessions?.[0]?.deliveryScheduleStatus).toBe('SCHEDULED')
   })
 
   it('maps individual person attendance onto lectureAttendanceSessions', () => {
@@ -482,6 +615,7 @@ describe('general-applications-adapters', () => {
             scheduleName: '1회차',
             startAt: '2026-10-12T09:00:00+09:00',
             endAt: '2026-10-12T11:00:00+09:00',
+            scheduleStatus: 'COMPLETED',
             attendanceStatus: 'COMPLETED',
           },
         ],
@@ -619,6 +753,7 @@ describe('general-applications-adapters', () => {
         instructorFeeGradeSnapshot: '3급 강사비',
         submittedAt: '2026-04-02T00:00:00Z',
         rejectReason: '서류 미비',
+        preferredOrganizations: [],
       },
       0,
       '5001'
@@ -634,6 +769,31 @@ describe('general-applications-adapters', () => {
     expect(row.rejectionReason).toBe('서류 미비')
   })
 
+  it('maps instructor preferredOrganizations to preferredSchools for calendar', () => {
+    const row = mapInstructorApplicationToApplicantInstructorRow(
+      {
+        id: 88,
+        programId: 5001,
+        instructorName: '김강사',
+        applicationStatus: 'SUBMITTED',
+        preferredOrganizations: [
+          {
+            preferenceOrder: 1,
+            organizationName: '테스트초',
+            educationGrade: '4학년',
+            dateRangeLabel: '2026.06.01(월) ~ 2026.06.02(화)',
+          },
+        ],
+      },
+      0,
+      '5001'
+    )
+
+    expect(row.schoolName).toBe('테스트초')
+    expect(row.preferredSchools).toHaveLength(1)
+    expect(row.preferredSchools?.[0]?.dateRange).toContain('2026.06.01')
+  })
+
   it('fills affiliation and settlement from instructorCmsProfile and settlement on detail', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
       {
@@ -642,6 +802,7 @@ describe('general-applications-adapters', () => {
         programId: 186081,
         instructorName: '이강사',
         applicationStatus: 'SUBMITTED',
+        preferredOrganizations: [],
       },
       0,
       '186081'
@@ -677,6 +838,7 @@ describe('general-applications-adapters', () => {
         programId: 186048,
         instructorName: '이건희',
         applicationStatus: 'SUBMITTED',
+        preferredOrganizations: [],
       },
       0,
       '186048'
@@ -713,7 +875,13 @@ describe('general-applications-adapters', () => {
 
   it('keeps base resume when instructorCmsProfile is absent', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
-      { id: 1, programId: 1, instructorName: '강사', applicationStatus: 'SUBMITTED' },
+      {
+        id: 1,
+        programId: 1,
+        instructorName: '강사',
+        applicationStatus: 'SUBMITTED',
+        preferredOrganizations: [],
+      },
       0,
       '1'
     )
@@ -783,6 +951,45 @@ describe('general-applications-adapters', () => {
     expect(row.essayJaExperience).toBe('JA 경험')
   })
 
+  it('reads list grade and affiliation from BE snapshot fallback keys', () => {
+    const dto = {
+      applicationGrade: '',
+      affiliationName: '',
+      affiliationSchool: '오리엔테이션 초등학교',
+      requestedGrade: '3',
+    } as Parameters<typeof mapIndividualApplicationToApplicantRow>[0]
+
+    expect(readIndividualApplicationListGrade(dto)).toBe('3학년')
+    expect(readIndividualApplicationListAffiliationDisplayName(dto)).toBe('오리엔테이션 초등학교')
+
+    const row = mapIndividualApplicationToApplicantRow(dto, 0, '5001')
+    expect(row.educationGrade).toBe('3학년')
+    expect(row.affiliation).toBe('오리엔테이션 초등학교')
+  })
+
+  it('keeps list affiliation and grade when detail profile fields are empty', () => {
+    const row = mapIndividualApplicationDetailToApplicantRow(
+      {
+        id: 1,
+        profile: { name: '김*자' },
+      } as never,
+      {
+        id: '1',
+        no: 1,
+        applicantName: '김참여',
+        affiliation: '목록 소속 학교',
+        educationGrade: '4학년',
+        homeAddress: '서울특별시 강서구',
+        approvalStatus: 'pending',
+      }
+    )
+
+    expect(row.applicantName).toBe('김*자')
+    expect(row.affiliation).toBe('목록 소속 학교')
+    expect(row.educationGrade).toBe('4학년')
+    expect(row.homeAddress).toBe('서울특별시 강서구')
+  })
+
   it('maps individual application list item with screening fields', () => {
     const row = mapIndividualApplicationToApplicantRow(
       {
@@ -847,7 +1054,7 @@ describe('general-applications-adapters', () => {
         round: 2,
         date: '2026.09.22',
         timeRange: '10:00 ~ 12:00',
-        requestedScheduleId: 168362,
+        resolvedScheduleId: 168362,
       }),
     ])
     expect(row.documentScreeningStatus).toBe('pass')
@@ -975,7 +1182,7 @@ describe('general-applications-adapters', () => {
         assignedInterviewSlotId: 1690961,
         assignedInterviewStartAt: '2026-09-18T01:00:00Z',
         assignedInterviewEndAt: '2026-09-18T02:00:00Z',
-      },
+      } as any,
       {
         id: '1690625',
         no: 1,
@@ -1004,6 +1211,83 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.teamRole).toBe('leader')
     expect(row.interviewSlotCount).toBe(1)
     expect(row.assignedInterviewDateLabel).toBe('2026.09.18')
+  })
+
+  it('maps applicationNameChangeCount separately from scheduleChangeCancelCount', () => {
+    const row = mapIndividualApplicationDetailToApplicantRow(
+      {
+        id: 1694745,
+        application: {
+          scheduleChangeCancelCount: 1,
+          applicationNameChangeCount: 2,
+        },
+      } as any,
+      {
+        id: '1694745',
+        no: 1,
+        applicantName: '일반회원2',
+        affiliation: '',
+        educationGrade: '',
+        homeAddress: '',
+        approvalStatus: 'approved',
+      } as import('@/features/program/general/model/individual-applicant').GeneralIndividualApplicantRow
+    )
+
+    expect(row.detail?.scheduleChangeCancelCount).toBe(1)
+    expect(row.detail?.applicationNameChangeCount).toBe(2)
+  })
+
+  it('maps team info from API team.name projection (BE resolveTeam)', () => {
+    const row = mapIndividualApplicationDetailToApplicantRow(
+      {
+        id: 1694634,
+        team: { name: '신청 팀', memberCount: 4, role: 'MEMBER' },
+      } as never,
+      {
+        id: '1694634',
+        no: 1,
+        applicantName: '테스트',
+        affiliation: '',
+        educationGrade: '',
+        homeAddress: '',
+        approvalStatus: 'pending',
+      }
+    )
+
+    expect(row.detail?.teamName).toBe('신청 팀')
+    expect(row.detail?.teamMemberCount).toBe(4)
+    expect(row.detail?.teamRole).toBe('member')
+  })
+
+  it('maps team info from application formAnswers when API team is empty', () => {
+    const row = mapIndividualApplicationDetailToApplicantRow(
+      {
+        id: 1694634,
+        application: {
+          formAnswers: {
+            'program-participant-application-seed-team-info': {
+              teamName: '신청서 팀',
+              memberCountSelect: '4',
+              teamRole: 'member',
+            },
+          },
+        },
+      } as never,
+      {
+        id: '1694634',
+        no: 1,
+        applicantName: '테스트',
+        affiliation: '',
+        educationGrade: '',
+        homeAddress: '',
+        approvalStatus: 'pending',
+      }
+    )
+
+    expect(row.detail?.teamName).toBe('신청서 팀')
+    expect(row.detail?.teamMemberCount).toBe(4)
+    expect(row.detail?.teamMemberCountSelect).toBe('4')
+    expect(row.detail?.teamRole).toBe('member')
   })
 
   it('keeps evaluated interviews in the assigned state so they stay on the 2nd interview list', () => {

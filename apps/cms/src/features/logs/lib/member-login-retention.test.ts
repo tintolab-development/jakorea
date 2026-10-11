@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import dayjs from 'dayjs'
-import { listMockMemberLoginLogs } from '@/data/mock/member-login-logs'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import {
   applyMemberLoginRetentionFromFilter,
@@ -44,12 +43,6 @@ describe('member-login-retention', () => {
     const kept = row('in', now.subtract(10, 'day').toISOString())
     const dropped = row('out', now.subtract(2, 'month').toISOString())
     expect(filterMemberLoginLogsByRetention([kept, dropped], now)).toEqual([kept])
-  })
-
-  it('keeps the mock seed inside the one-month window', () => {
-    const rows = listMockMemberLoginLogs()
-    expect(rows).toHaveLength(130)
-    expect(filterMemberLoginLogsByRetention(rows)).toHaveLength(130)
   })
 
   it('clamps member-login from to the one-month cutoff', () => {

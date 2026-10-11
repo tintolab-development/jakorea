@@ -6,7 +6,7 @@ import {
   updateNotice,
 } from '@/features/posts/api/notices/admin-notices-service'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
-import type { Notice } from '@/data/mock/notices'
+import type { Notice } from '@/features/posts/model/notice'
 import type { BuildNoticeBodyParams } from '@/features/posts/model/notice-form-mapper'
 import { discardDeletedDetailQuery } from '@/features/posts/lib/leave-deleted-detail'
 import {

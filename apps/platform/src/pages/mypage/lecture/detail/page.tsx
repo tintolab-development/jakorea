@@ -30,6 +30,7 @@ import {
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  EducationApplicationDetailLoading,
   type EducationActivitySection,
   type EducationDisplayStatus,
   type ProgramApplicationType,
@@ -140,9 +141,16 @@ export function MypageLectureDetailPage() {
     { fresh: true },
   )
   const program = remoteDetailEnabled ? remoteProgramQuery.program : mockProgramQuery.program
+  const isApplicationLoading = remoteDetailEnabled && remoteApplicationQuery.isLoading
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
     : mockProgramQuery.isLoading
+  const isDetailLoading =
+    !isAuthReady ||
+    isChecking ||
+    isRedirecting ||
+    isApplicationLoading ||
+    (Boolean(application) && isProgramLoading && !program)
 
   const isWithdrawnBefore = application ? isWithdrawnBeforeEducation(application) : false
   const isWithdrawnDuring = application ? isWithdrawnDuringEducation(application) : false
@@ -293,8 +301,13 @@ export function MypageLectureDetailPage() {
     navigate(MYPAGE_LECTURE_PATH, { replace: true })
   }
 
-  if (!isAuthReady || isChecking || isRedirecting) {
-    return null
+  if (isDetailLoading) {
+    return (
+      <EducationApplicationDetailLoading
+        backLabel="강의현황"
+        onBack={handleBack}
+      />
+    )
   }
 
   if (!application || !isInstructorRoleApplication(application)) {
@@ -309,10 +322,6 @@ export function MypageLectureDetailPage() {
         </PFButton>
       </section>
     )
-  }
-
-  if (isProgramLoading && !program) {
-    return null
   }
 
   if (!program) {
@@ -457,7 +466,7 @@ export function MypageLectureDetailPage() {
         educationFormLabel={program.educationFormLabel}
       />
 
-      {showBanner && application.interviewAtLabel ? (
+      {showBanner ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
       ) : null}
 
@@ -496,7 +505,7 @@ export function MypageLectureDetailPage() {
             size="large"
             ariaLabel="활동 포기 강의 상세 탭"
           />
-          {renderActivityBody(activitySection)}
+          <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
         </>
       ) : isActivityStatus ? (
         <>
@@ -509,7 +518,7 @@ export function MypageLectureDetailPage() {
             size="large"
             ariaLabel="진행중 강의 상세 탭"
           />
-          {renderActivityBody(activitySection)}
+          <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
         </>
       ) : (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>

@@ -11,8 +11,8 @@ import type {
 import { countLectureAttendanceHeldAndAttended } from '@/features/program/general/lib/lecture-attendance-count'
 import {
   bulkUpsertProgramAttendancesRemote,
+  fetchAttendancesByScheduleIdsRemote,
   fetchProgramSchedulesViaDashboardRemote,
-  fetchScheduleAttendancesRemote,
 } from '@/features/program/general/api/program-progress-api-client'
 
 function mapApiStatusToLecture(status?: string | null): LectureAttendanceStatusKey {
@@ -59,23 +59,21 @@ export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
     )
     .sort((a, b) => a.roundNumber - b.roundNumber)
 
-  const sessions: LectureAttendanceSession[] = await Promise.all(
-    withIds.map(async row => {
-      const scheduleId = String(row.scheduleId)
-      let items: Awaited<ReturnType<typeof fetchScheduleAttendancesRemote>> = []
-      try {
-        items = await fetchScheduleAttendancesRemote(input.programId, scheduleId)
-      } catch {
-        items = []
-      }
-      const mine = items.find(item => Number(item.participantId) === input.participantId)
-      return {
-        roundNumber: row.roundNumber,
-        scheduleId: row.scheduleId,
-        status: mine ? mapApiStatusToLecture(mine.status) : 'not_held',
-      }
-    })
+  const scheduleIdList = withIds.map(row => row.scheduleId)
+  const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
+    input.programId,
+    scheduleIdList
   )
+
+  const sessions: LectureAttendanceSession[] = withIds.map(row => {
+    const items = attendancesByScheduleId[String(row.scheduleId)] ?? []
+    const mine = items.find(item => Number(item.participantId) === input.participantId)
+    return {
+      roundNumber: row.roundNumber,
+      scheduleId: row.scheduleId,
+      status: mine ? mapApiStatusToLecture(mine.status) : 'not_held',
+    }
+  })
 
   const { attended, held } = countLectureAttendanceHeldAndAttended(sessions)
   return {

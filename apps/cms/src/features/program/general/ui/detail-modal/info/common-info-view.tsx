@@ -26,6 +26,7 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { SponsorManagerLineInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
 import { useEducationScheduleModeLineStash } from '@/features/program/shared/lib/education-schedule-mode-lines'
@@ -84,6 +85,10 @@ import {
   useProgramWagePaymentItemOptionsState,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { paymentItemSelectPlaceholder } from '@/features/template/lib/template-registration-payment-item-options'
+import {
+  filterProgramWagePaymentItemOptionsForPayees,
+  GENERAL_PROGRAM_PARTICIPANT_PAYEE_TYPES,
+} from '@/features/settlement-management/lib/settlement-payment-item-payee'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
   parseWageGradeAmount,
@@ -286,19 +291,7 @@ function ProgramRegistrationDetailSection({
 }
 
 function PipeSeparatedInlineView({ text }: { text: string | undefined | null }) {
-  const trimmed = text?.trim()
-  if (!trimmed || trimmed === '-') return <>-</>
-  const parts = trimmed.split(/\s*\|\s*/)
-  return (
-    <>
-      {parts.map((part, index) => (
-        <Fragment key={`${part}-${index}`}>
-          {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
-          {part}
-        </Fragment>
-      ))}
-    </>
-  )
+  return renderDetailInfoPipeSeparated(text)
 }
 
 function ProgramProgressView({ program }: { program: Program }) {
@@ -1296,7 +1289,15 @@ function WageSection({
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
   const paymentCatalog = useProgramWagePaymentItemOptionsState()
-  const paymentItemOptions = paymentCatalog.options
+  const paymentItemOptions = useMemo(
+    () =>
+      filterProgramWagePaymentItemOptionsForPayees(
+        paymentCatalog.options,
+        paymentCatalog.sections,
+        GENERAL_PROGRAM_PARTICIPANT_PAYEE_TYPES
+      ),
+    [paymentCatalog.options, paymentCatalog.sections]
+  )
 
   const editForm =
     form ??

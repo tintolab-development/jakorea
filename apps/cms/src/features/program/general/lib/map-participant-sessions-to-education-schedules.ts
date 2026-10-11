@@ -1,11 +1,12 @@
 import type { ParticipatingInstructorEducationScheduleRow } from '@/features/program/general/model/participating-instructors'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
+import { normalizeDashboardScheduleDeliveryStatus } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 
 function mapSessionProgressStatus(
   raw?: string | null
 ): ParticipatingInstructorEducationScheduleRow['progress'] {
-  const upper = raw?.trim().toUpperCase()
-  if (upper === 'COMPLETED' || upper === 'DONE') return 'completed'
+  const upper = normalizeDashboardScheduleDeliveryStatus(raw)
+  if (upper === 'COMPLETED' || upper === 'DONE' || upper === 'FINISHED') return 'completed'
   if (upper === 'IN_PROGRESS' || upper === 'ONGOING') return 'in_progress'
   return 'scheduled'
 }
@@ -27,9 +28,18 @@ export function mapParticipantSessionsToEducationSchedules(
   sessions?: SessionProgress[] | null
 ): ParticipatingInstructorEducationScheduleRow[] {
   if (!sessions?.length) return []
-  return sessions.map((session, index) => ({
-    id: session.scheduleId != null ? String(session.scheduleId) : `session-${index}`,
-    scheduleLabel: formatSessionProgressLabel(session, index),
-    progress: mapSessionProgressStatus(session.attendanceStatus ?? session.assignmentStatus),
-  }))
+  return sessions.map((session, index) => {
+    const resolvedId = session.resolvedScheduleId ?? session.scheduleId
+    const id =
+      resolvedId != null
+        ? String(resolvedId)
+        : session.requestedScheduleId != null
+          ? `requested-${session.requestedScheduleId}`
+          : `session-${index}`
+    return {
+      id,
+      scheduleLabel: formatSessionProgressLabel(session, index),
+      progress: mapSessionProgressStatus(session.scheduleStatus),
+    }
+  })
 }

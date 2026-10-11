@@ -79,6 +79,11 @@
   height: auto;
 }
 
+.register-employee-volunteer-modal__required {
+  margin-left: 2px;
+  color: var(--color-required-mark, #ff4d4f);
+}
+
 .register-employee-volunteer-modal__field .cms-select {
   width: 100%;
 }
@@ -105,7 +110,10 @@
 }
 
 .register-employee-volunteer-modal__session-label {
-  flex: 0 0 132px;
+  flex: 0 0 148px;
+  width: 148px;
+  min-width: 148px;
+  max-width: 148px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -118,6 +126,7 @@
   line-height: 150%;
   border-right: 1px solid var(--table-line, #e0e0e0);
   box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
 
 .register-employee-volunteer-modal__counts {
@@ -161,6 +170,10 @@
 
 .register-employee-volunteer-modal__count-pair .cms-input {
   width: 100%;
+}
+
+.register-employee-volunteer-modal__count-pair .cms-input__control {
+  min-width: 0;
 }
 
 .register-employee-volunteer-modal__empty {

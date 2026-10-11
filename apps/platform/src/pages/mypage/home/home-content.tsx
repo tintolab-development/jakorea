@@ -8,6 +8,7 @@ export type MypageHomeContentProps = {
   member: MypageMemberView
   programStats: MypageProgramStats
   scheduleEvents: MypageScheduleEvent[]
+  scheduleEventsLoading?: boolean
   useMockDemoMonth: boolean
   onViewMonthChange?: (month: Date) => void
 }
@@ -16,6 +17,7 @@ export function MypageHomeContent({
   member,
   programStats,
   scheduleEvents,
+  scheduleEventsLoading = false,
   useMockDemoMonth,
   onViewMonthChange,
 }: MypageHomeContentProps) {
@@ -33,6 +35,7 @@ export function MypageHomeContent({
       <div className={styles.schedule}>
         <ScheduleSection
           events={scheduleEvents}
+          eventsLoading={scheduleEventsLoading}
           useMockDemoMonth={useMockDemoMonth}
           onViewMonthChange={onViewMonthChange}
         />

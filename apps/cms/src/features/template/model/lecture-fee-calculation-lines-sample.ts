@@ -3,7 +3,7 @@
  * 스크린샷 예시(기관명·일자·차시·항목 라벨)에 맞추고, 금액 합계는 라인 amount 합과 일치한다.
  */
 
-import type { PaymentOrderCalculationStatementSessionBlock } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderCalculationStatementSessionBlock } from '@/features/settlement-management/model/payment-order-admin-list'
 
 /** 발급용 「강의비 산출 내역」테이블에 바인딩할 데이터 */
 export type PaymentStatementCalculationLinesViewModel = {

@@ -4,6 +4,7 @@ import {
   syncSelectedDateToMonth,
   type MypageScheduleEvent,
 } from '@/features/mypage'
+import { SkeletonBlock } from '@/shared/ui/skeleton-block'
 import { CALENDAR_EVENT_COLORS, PFCalendar, PFText, type PFCalendarEvent } from '@/shared/ui'
 import styles from './schedule-section.module.css'
 
@@ -33,6 +34,7 @@ function toDayStart(date: Date): Date {
 
 type ScheduleSectionProps = {
   events?: readonly MypageScheduleEvent[]
+  eventsLoading?: boolean
   /** true면 mock 데모 월(2026-01)로 시작 — API 세션에서는 false */
   useMockDemoMonth?: boolean
   /** 보이는 달이 바뀌면 캘린더 API 조회 범위를 맞춘다 */
@@ -41,6 +43,7 @@ type ScheduleSectionProps = {
 
 export function ScheduleSection({
   events = [],
+  eventsLoading = false,
   useMockDemoMonth = false,
   onViewMonthChange,
 }: ScheduleSectionProps) {
@@ -83,8 +86,18 @@ export function ScheduleSection({
         onChange={handleDateChange}
         onMonthChange={handleMonthChange}
       />
-      <aside className={styles.listSlot} aria-label="일정 목록">
-        {selectedEvents.length > 0 ? (
+      <aside
+        className={styles.listSlot}
+        aria-label="일정 목록"
+        aria-busy={eventsLoading || undefined}
+      >
+        {eventsLoading ? (
+          <div className={styles.listLoading} aria-hidden="true">
+            <SkeletonBlock className={styles.listLoadingItem} />
+            <SkeletonBlock className={styles.listLoadingItem} />
+            <SkeletonBlock className={styles.listLoadingItem} />
+          </div>
+        ) : selectedEvents.length > 0 ? (
           <div className={styles.list}>
             <div className={styles.listHeader}>
               <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600" className={styles.listLead}>

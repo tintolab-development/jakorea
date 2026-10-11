@@ -216,6 +216,16 @@ function createInstitutionScheduleMultipleChoice(): MultipleChoiceParagraph {
   }
 }
 
+/** Platform 신청 작성·CMS와 동일 안내 사항 필드 정의 */
+export {
+  INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH,
+  INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER,
+  INSTITUTION_GUIDANCE_FIELDS,
+  INSTITUTION_GUIDANCE_SECTION_DESCRIPTION,
+  type InstitutionGuidanceFieldDefinition,
+  type InstitutionGuidanceFieldId,
+} from '../lib/institution-guidance-field-definitions.js'
+
 export function createProgramApplicationFormInstitutionDraft(): WritingFormDraft {
   const paragraphs: WritingFormParagraph[] = [
     createInstitutionPersonalInfoHorizontalTable(),

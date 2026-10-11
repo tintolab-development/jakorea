@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { PFText } from '@/shared/ui'
 import { useApplicationSchedulesQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
@@ -42,7 +43,9 @@ export function EducationSchedulePanel({
     return allItems.slice(start, start + EDUCATION_SCHEDULE_PAGE_SIZE)
   }, [allItems, currentPage])
 
-  if (remoteSchedules.isLoading) return null
+  if (remoteSchedules.isLoading) {
+    return <EducationSessionListSkeleton statusMessage={`${listTitle}을 불러오는 중입니다.`} />
+  }
   if (remoteSchedules.isError) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

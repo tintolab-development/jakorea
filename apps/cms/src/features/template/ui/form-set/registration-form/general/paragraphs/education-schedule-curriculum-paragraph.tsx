@@ -29,6 +29,7 @@ import {
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
   ProgramRegistrationIpsTypeFields,
+  PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT,
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 import { CurriculumAssignmentSettingView } from '@/features/template/ui/shared/curriculum-assignment-setting-view'
@@ -249,11 +250,6 @@ function ScheduleCurriculumGroupTimeRow({
   )
 }
 
-const IPS_PREPARE_NONE_VALUE: ProgramRegistrationIpsTypeValue = {
-  category: 'prepare',
-  detail: 'none',
-}
-
 export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   scheduleDetailCount: number
   onDeleteScheduleCurriculumDetail: (detailIndex: number) => void
@@ -361,8 +357,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     locked = false
   ): ProgramRegistrationIpsTypeValue =>
     locked
-      ? IPS_PREPARE_NONE_VALUE
-      : (ipsByDetailIndex[detailIndex] ?? { category: '', detail: '' })
+      ? PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT
+      : (ipsByDetailIndex[detailIndex] ?? PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT)
 
   const setIpsForDetailUnlessLocked = (
     detailIndex: number,

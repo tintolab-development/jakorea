@@ -13,14 +13,14 @@ import {
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import { getPaymentOrdersMonthFilterRange } from '@/pages/settlement-management/payment-orders-date-range'
 import {
   settlementCalendarPrimaryTitle,
   type InstructorSettlementInvoiceDetail,
   type InstructorSettlementListRow,
   type InstructorSettlementUiStatus,
-} from '@/data/mock/instructor-member-settlements'
+} from '@/features/settlement-management/model/instructor-member-settlements'
 import {
   CalendarMain,
   CalendarSubRightSettlementList,

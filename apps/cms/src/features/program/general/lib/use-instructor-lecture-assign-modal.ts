@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import type { Dayjs } from 'dayjs'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { fetchGeneralOrganizationApplicationsPage } from '@/features/program/general/api/admin-applications-service'
+import {
+  fetchGeneralOrganizationApplicationsPage,
+  hydrateOrganizationApplicationSchedules,
+} from '@/features/program/general/api/admin-applications-service'
 import { fetchInstructorApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
@@ -31,18 +34,24 @@ const ASSIGN_ORG_PAGE_LIMIT = 40
  * OSA(`schedule-assignments`) 선배정은 필수가 아니다 (노션 기획).
  */
 async function fetchApprovedOrganizationApplicationsForLectureAssign(
-  programId: string
+  programId: string,
+  queryClient: QueryClient
 ): Promise<ApplicantSchoolRow[]> {
   const rows: ApplicantSchoolRow[] = []
   let page = 0
   for (;;) {
-    const result = await fetchGeneralOrganizationApplicationsPage(programId, { page })
+    const result = await fetchGeneralOrganizationApplicationsPage(
+      programId,
+      { queryClient },
+      { page }
+    )
     rows.push(...result.rows)
     if (!result.hasMore) break
     page += 1
     if (page > ASSIGN_ORG_PAGE_LIMIT) break
   }
-  return rows.filter(row => row.approvalStatus === 'approved')
+  const approved = rows.filter(row => row.approvalStatus === 'approved')
+  return hydrateOrganizationApplicationSchedules(approved, queryClient)
 }
 
 export type InstructorLectureAssignModalVariant = 'organization' | 'individual'
@@ -87,10 +96,12 @@ export function useInstructorLectureAssignModal(params: {
 
   const isIndividual = variant === 'individual'
   const organizationRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
+  const queryClient = useQueryClient()
 
   const organizationApplicationsQuery = useQuery({
     queryKey: generalApplicationsQueryKeys.instructorLectureAssignInstitutions(programId),
-    queryFn: () => fetchApprovedOrganizationApplicationsForLectureAssign(programId),
+    queryFn: () =>
+      fetchApprovedOrganizationApplicationsForLectureAssign(programId, queryClient),
     enabled: open && !isIndividual && organizationRemoteEnabled && Boolean(programId.trim()),
     staleTime: 30_000,
     retry: false,

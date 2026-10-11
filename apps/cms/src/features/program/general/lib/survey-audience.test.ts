@@ -261,7 +261,7 @@ describe('general survey audience', () => {
     expect(getGeneralSurveyMenuItems(org)).toEqual([])
   })
 
-  it('overlay에서 0개 선택이면 컬럼 키가 있어도 2depth가 없다', () => {
+  it('generalSurveyMenuKeys가 정의되면 overlay surveyItems false여도 keys가 LNB SSOT', () => {
     const org = program({
       generalProgramAudience: 'organization',
       generalParticipantTypes: ['school_institution'],
@@ -275,7 +275,11 @@ describe('general survey audience', () => {
       },
     })
 
-    expect(getGeneralSurveyMenuItems(org)).toEqual([])
+    expect(getGeneralSurveyMenuItems(org).map(item => item.key)).toEqual([
+      'survey',
+      'satisfaction',
+      'lecture_evaluation',
+    ])
   })
 
   it('봉사자 포함 프로그램은 학생 만족도 대신 상·하반기 봉사자 탭을 제공한다', () => {

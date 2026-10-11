@@ -5,7 +5,7 @@ import type {
   PaymentOrderAdminProgramDetail,
   PaymentOrderAdminProgramDetailInstructorRow,
   PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type {
   PaymentStatementListItemResponse,
   SettlementListItemResponse,

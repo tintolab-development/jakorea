@@ -5,8 +5,6 @@
 
 import type { Program } from '@/types/domain'
 import { findGeneralRegistrationLocalSaveProgramById } from '@/features/program/general/lib/registration-local-save'
-import { getTempMockShowcaseProgramIfId } from '@/features/program/general/lib/temp-mock-program-resolve'
-
 const generalProgramDetailSaves = new Map<string, Program>()
 
 export function saveGeneralProgramDetailSnapshot(program: Program): void {
@@ -14,9 +12,5 @@ export function saveGeneralProgramDetailSnapshot(program: Program): void {
 }
 
 export function resolveGeneralProgramLocalById(id: string): Program | undefined {
-  return (
-    getTempMockShowcaseProgramIfId(id) ??
-    findGeneralRegistrationLocalSaveProgramById(id) ??
-    generalProgramDetailSaves.get(id)
-  )
+  return findGeneralRegistrationLocalSaveProgramById(id) ?? generalProgramDetailSaves.get(id)
 }

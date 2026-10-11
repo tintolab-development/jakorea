@@ -7,27 +7,11 @@ import {
 import { getApplicantInstructorsByProgramId } from '@/features/program/shared/model/applicant-instructor'
 import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import {
-  isGeneralProgramTempMockIndividualProgramId,
-} from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockShowcaseApplicantInstructors } from '@/features/program/general/lib/temp-mock-program-resolve'
-import { getTempMockIndividualApplicants } from '@/features/program/general/lib/temp-mock-individual-program'
 import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
 import { resolveGeneralParticipantApplicantDetailTitle } from '@/features/program/general/lib/screening-subject-kind'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 
-function findIndividualApplicant(
-  programId: string,
-  activeTab: string,
-  applicantId: string
-) {
-  if (isGeneralProgramTempMockIndividualProgramId(programId)) {
-    return (
-      getTempMockIndividualApplicants(programId).find(row => row.id === applicantId) ??
-      null
-    )
-  }
+function findIndividualApplicant(programId: string, activeTab: string, applicantId: string) {
   const rows =
     activeTab === 'part_doc1'
       ? getGeneralParticipantDoc1Applicants(programId)
@@ -53,14 +37,14 @@ export function resolveGeneralApplicantDetailMetaFromUrl(params: {
   const { programId, activeLnb, activeTab, applicantId } = params
   if (!applicantId) return null
 
-  if (shouldUseGeneralApplicationsRemoteApi() && !isGeneralProgramTempMockProgramId(programId)) {
+  if (shouldUseGeneralApplicationsRemoteApi()) {
     return null
   }
 
   if (activeLnb === 'instructor_applications') {
-    const instructor = getTempMockShowcaseApplicantInstructors(programId)
-      .concat(getApplicantInstructorsByProgramId(programId))
-      .find(row => row.id === applicantId)
+    const instructor = getApplicantInstructorsByProgramId(programId).find(
+      row => row.id === applicantId
+    )
     if (!instructor) return null
     return {
       title: `강사 신청 상세 (${instructor.instructorName})`,

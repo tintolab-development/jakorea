@@ -5,7 +5,7 @@
  */
 
 import type { ModalProps } from 'antd'
-import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
+import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'

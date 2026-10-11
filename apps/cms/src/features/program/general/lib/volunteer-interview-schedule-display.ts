@@ -8,6 +8,14 @@ import {
   buildVolunteerInterviewScheduleEditSeed,
   type VolunteerInterviewScheduleEditSeed,
 } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
+import {
+  applyGeneralRecruitOverlayToProgram,
+  formatAvailableTimeSlotsFromSelectedKeys,
+  resolveVolunteerInterviewAvailableTimeSlotsForDisplay,
+  volunteerInterviewHasSelectedSlotKeys,
+} from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import { buildVolunteerInterviewOverlayKey } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import dayjs from 'dayjs'
 import { mapVolunteerInterviewExceptionsFromOverlay } from '@/features/program/shared/lib/volunteer-interview-exception-overlay'
 
 export type { VolunteerInterviewScheduleEditSeed }
@@ -38,16 +46,79 @@ function dashOr(value: string | undefined | null): string {
   return trimmed ? trimmed : '-'
 }
 
+function resolveAvailableTimeSlotsDisplay(
+  nestedAvailableTimeSlots: string | undefined,
+  overlay: Record<string, unknown>
+): string {
+  return dashOr(
+    resolveVolunteerInterviewAvailableTimeSlotsForDisplay(
+      nestedAvailableTimeSlots,
+      overlay,
+      'recruit'
+    )
+  )
+}
+
+function resolveVolunteerInterviewScheduleProgramForDisplay(program: Program): Program {
+  const overlay = readRegistrationOverlay(program)
+  if (Object.keys(overlay).length === 0) return program
+  return applyGeneralRecruitOverlayToProgram(program, overlay, { preferOverlay: false })
+}
+
+function parseInterviewTimeRangeFromOverlay(
+  overlay: Record<string, unknown>
+): VolunteerInterviewScheduleEditSeed['interviewTimeRange'] | undefined {
+  const raw = overlay[buildVolunteerInterviewOverlayKey('recruit', 'interviewTimeRange')]
+  if (!Array.isArray(raw) || raw.length < 2) return undefined
+  const start = dayjs(raw[0] as string | number | Date)
+  const end = dayjs(raw[1] as string | number | Date)
+  if (!start.isValid() || !end.isValid()) return undefined
+  return {
+    startHour: start.hour(),
+    startMinute: start.minute(),
+    endHour: end.hour(),
+    endMinute: end.minute(),
+  }
+}
+
+function parseInterviewTimeUnitFromOverlay(
+  overlay: Record<string, unknown>
+): VolunteerInterviewScheduleEditSeed['timeUnit'] | undefined {
+  const raw = overlay[buildVolunteerInterviewOverlayKey('recruit', 'timeUnit')]
+  if (raw === '15' || raw === 15) return '15'
+  if (raw === '60' || raw === 60) return '60'
+  if (raw === '30' || raw === 30) return '30'
+  return undefined
+}
+
+function selectedSlotLabelsFromOverlay(overlay: Record<string, unknown>): string[] {
+  if (!volunteerInterviewHasSelectedSlotKeys(overlay, 'recruit')) return []
+  const formatted = formatAvailableTimeSlotsFromSelectedKeys(
+    overlay[buildVolunteerInterviewOverlayKey('recruit', 'selectedSlotKeys')]
+  )
+  if (!formatted) return []
+  return formatted
+    .split(',')
+    .map(label => label.trim())
+    .filter(Boolean)
+}
+
 export function resolveGeneralProgramVolunteerInterviewScheduleDisplay(
   program: Program
 ): GeneralProgramVolunteerInterviewScheduleDisplay {
-  const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+  const overlay = readRegistrationOverlay(program)
+  const merged = resolveVolunteerInterviewScheduleProgramForDisplay(program)
+  const nestedInfo = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+  const mergedInfo = merged.generalCommonInfo?.volunteerInterviewScheduleInfo
 
   return {
-    recurringUnavailable: dashOr(info?.recurringUnavailable),
-    specificUnavailableDates: dashOr(info?.specificUnavailableDates),
-    availableTimeSlots: dashOr(info?.availableTimeSlots),
-    exceptions: resolveVolunteerInterviewExceptions(program),
+    recurringUnavailable: dashOr(mergedInfo?.recurringUnavailable),
+    specificUnavailableDates: dashOr(mergedInfo?.specificUnavailableDates),
+    availableTimeSlots: resolveAvailableTimeSlotsDisplay(
+      nestedInfo?.availableTimeSlots,
+      overlay
+    ),
+    exceptions: resolveVolunteerInterviewExceptions(merged),
   }
 }
 
@@ -55,13 +126,19 @@ export function resolveGeneralProgramVolunteerInterviewScheduleEditSeed(
   program: Program
 ): VolunteerInterviewScheduleEditSeed | undefined {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
-  const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+  const overlay = readRegistrationOverlay(program)
+  const info = resolveVolunteerInterviewScheduleProgramForDisplay(program).generalCommonInfo
+    ?.volunteerInterviewScheduleInfo
+  const interviewTimeRange = parseInterviewTimeRangeFromOverlay(overlay)
+  const selectedTimeSlotLabels = selectedSlotLabelsFromOverlay(overlay)
 
   if (
     display.recurringUnavailable === '-' &&
     display.specificUnavailableDates === '-' &&
     display.availableTimeSlots === '-' &&
-    !info?.specificUnavailableDateIsos?.length
+    !info?.specificUnavailableDateIsos?.length &&
+    selectedTimeSlotLabels.length === 0 &&
+    !interviewTimeRange
   ) {
     return undefined
   }
@@ -70,8 +147,9 @@ export function resolveGeneralProgramVolunteerInterviewScheduleEditSeed(
     recurringUnavailable:
       display.recurringUnavailable === '-' ? '' : display.recurringUnavailable,
     specificUnavailableDateIsos: info?.specificUnavailableDateIsos,
-    availableTimeSlots:
-      display.availableTimeSlots === '-' ? '' : display.availableTimeSlots,
+    selectedTimeSlotLabels,
+    interviewTimeRange,
+    timeUnit: parseInterviewTimeUnitFromOverlay(overlay),
   })
 }
 

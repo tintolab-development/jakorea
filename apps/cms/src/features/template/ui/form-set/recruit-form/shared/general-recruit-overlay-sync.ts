@@ -61,6 +61,14 @@ export function patchGeneralRecruitOverlay(partial: Record<string, unknown>): vo
   store.patch(partial)
 }
 
+export function patchGeneralRecruitOverlayForScope(
+  templateCode: string | undefined | null,
+  partial: Record<string, unknown>
+): void {
+  const current = store.peekRecord(templateCode)
+  store.replaceFor(templateCode, { ...current, ...partial })
+}
+
 export function updateGeneralRecruitOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T

@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
-import type { SettlementItemSettingSection } from '@/data/mock/settlement-item-settings'
-import { settlementItemSettingSections } from '@/data/mock/settlement-item-settings'
+import type { SettlementItemSettingSection } from '@/features/settlement-management/model/settlement-item-settings'
 import {
   getSettlementConfigRemote,
   type SettlementConfigQueryData,
@@ -11,12 +10,27 @@ import { shouldUseSettlementRemote } from '@/features/settlement-management/hook
 import { queryClient } from '@/shared/lib/query-client'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 
+/** 제거된 FE mock id → 라벨 (로컬 레거시 교정용, API 카탈로그 없을 때만) */
+export const LEGACY_LOCAL_PAYMENT_ITEM_OPTIONS: CmsSelectMultipleOption[] = [
+  { value: 'p-1', label: '강사 교통비' },
+  { value: 'p-3', label: '숙박비' },
+  { value: 'p-6', label: '참여자 활동비' },
+  { value: 'p-7', label: '숙박비 (1사1교)' },
+]
+
+function localPaymentItemCatalogFallback(
+  sections: readonly SettlementItemSettingSection[]
+): CmsSelectMultipleOption[] {
+  const fromSections = getTemplateRegistrationPaymentItemOptions(sections)
+  return fromSections.length > 0 ? fromSections : LEGACY_LOCAL_PAYMENT_ITEM_OPTIONS
+}
+
 /**
  * 정산 항목 설정(`/settlement-management/item-settings`)의 `지급 항목` 섹션 → 셀렉트 옵션.
- * `sections` 미전달 시 mock SSOT.
+ * `sections` 미전달 시 빈 목록.
  */
 export function getTemplateRegistrationPaymentItemOptions(
-  sections: readonly SettlementItemSettingSection[] = settlementItemSettingSections
+  sections: readonly SettlementItemSettingSection[] = []
 ): CmsSelectMultipleOption[] {
   const section = sections.find(s => s.kind === 'payment')
   return (section?.items ?? []).map(item => ({
@@ -46,7 +60,7 @@ export function isPaymentItemCatalogReady(): boolean {
  * 실 API 환경에서 응답 전이면 `[]` — mock 으로 대체하지 않는다.
  */
 export function getActivePaymentItemCatalogOptions(): CmsSelectMultipleOption[] {
-  if (!isPaymentItemCatalogRemote()) return getTemplateRegistrationPaymentItemOptions()
+  if (!isPaymentItemCatalogRemote()) return localPaymentItemCatalogFallback([])
   const sections = cachedRemotePaymentSections()
   return sections ? getTemplateRegistrationPaymentItemOptions(sections) : []
 }
@@ -65,6 +79,7 @@ export async function ensurePaymentItemCatalog(): Promise<void> {
 
 export type PaymentItemCatalogState = {
   options: CmsSelectMultipleOption[]
+  sections?: SettlementItemSettingSection[]
   /** 실제 목록으로 선택·교정할 수 있음 */
   ready: boolean
   isLoading: boolean
@@ -83,6 +98,7 @@ export function usePaymentItemCatalogState(): PaymentItemCatalogState {
     if (!remote) {
       return {
         options: getTemplateRegistrationPaymentItemOptions(),
+        sections: [],
         ready: true,
         isLoading: false,
         isError: false,
@@ -91,6 +107,7 @@ export function usePaymentItemCatalogState(): PaymentItemCatalogState {
     const sections = sectionsQuery.data
     return {
       options: sections ? getTemplateRegistrationPaymentItemOptions(sections) : [],
+      sections,
       ready: sections != null,
       isLoading: sectionsQuery.isLoading,
       isError: sectionsQuery.isError,

@@ -5,9 +5,14 @@ export function getInstructorCalendarSessionSummary(
   instructor: ApplicantInstructorRow,
   schoolName: string
 ): string {
+  const normalizedSchool = schoolName.trim()
   const pref =
-    instructor.preferredSchools?.find(p => p.schoolName === schoolName) ??
-    instructor.preferredSchools?.[0]
+    instructor.preferredSchools?.find(
+      p =>
+        normalizedSchool &&
+        normalizedSchool !== '기관 미지정' &&
+        p.schoolName?.trim() === normalizedSchool
+    ) ?? instructor.preferredSchools?.[0]
   if (pref?.grade) {
     const timeMatch = pref.dateRange?.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
     if (timeMatch) {
@@ -27,9 +32,14 @@ export function getInstructorCalendarRoundLabel(
   instructor: ApplicantInstructorRow,
   schoolName: string
 ): string {
+  const normalizedSchool = schoolName.trim()
   const pref =
-    instructor.preferredSchools?.find(p => p.schoolName === schoolName) ??
-    instructor.preferredSchools?.[0]
+    instructor.preferredSchools?.find(
+      p =>
+        normalizedSchool &&
+        normalizedSchool !== '기관 미지정' &&
+        p.schoolName?.trim() === normalizedSchool
+    ) ?? instructor.preferredSchools?.[0]
   if (!pref) return '-'
   if (pref.rank) return `${pref.rank}차시`
   const timeMatch = pref.dateRange?.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)

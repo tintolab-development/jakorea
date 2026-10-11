@@ -126,35 +126,84 @@ const VOLUNTEER_INTERVIEW_SCHEDULE_IDS = new Set<string>([
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
 ])
 
+/** Portal 제출 answers — `string[]` (테이블 `fieldDataRows` 금지) */
+const PORTAL_DYNAMIC_OPTION_ARRAY_PARAGRAPH_IDS = new Set<string>([
+  ...VOLUNTEER_INTERVIEW_SCHEDULE_IDS,
+  PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule,
+  ...INDIVIDUAL_INTERVIEW_SCHEDULE_IDS,
+])
+
+function isVisibleApplicationParagraphRow(row: Record<string, unknown>): boolean {
+  return row.runtimeHidden !== true && row.hidden !== true
+}
+
+function paragraphHasRuntimeBindingOptions(row: Record<string, unknown>): boolean {
+  const rawItems = Array.isArray(row.items)
+    ? row.items
+    : Array.isArray(row.options)
+      ? row.options
+      : []
+  return rawItems.some(item => {
+    if (!item || typeof item !== 'object') return false
+    const option = item as Record<string, unknown>
+    const id = String(option.id ?? option.option_value ?? '').trim()
+    return id.length > 0
+  })
+}
+
+function isRuntimeDynamicInterviewParagraphRow(
+  row: Record<string, unknown>,
+  idAllowed: (id: string) => boolean,
+): boolean {
+  if (typeof row.id !== 'string' || !idAllowed(row.id) || !isVisibleApplicationParagraphRow(row)) {
+    return false
+  }
+  if (row.runtimeInputMode === DYNAMIC_INTERVIEW_SLOTS_INPUT_MODE) return true
+  if (row.runtimeResolved === true) return true
+  return paragraphHasRuntimeBindingOptions(row)
+}
+
+export function isVolunteerInterviewScheduleParagraphId(id: string): boolean {
+  return VOLUNTEER_INTERVIEW_SCHEDULE_IDS.has(id)
+}
+
+/** form-binding 동적 선택 문항 — answers는 option id 문자열 배열 */
+export function isPortalDynamicOptionArrayParagraphId(id: string): boolean {
+  return PORTAL_DYNAMIC_OPTION_ARRAY_PARAGRAPH_IDS.has(id)
+}
+
 /** 일반 봉사자 신청 — 봉사 진행 가능 일정 (BE `dynamic_schedule_options`) */
 export function isVolunteerActivityScheduleParagraphId(id: string): boolean {
   return id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule
+}
+
+/** 일반 봉사자 신청 — BE form-binding 동적 일정 선택지 */
+export function isDynamicVolunteerActivityScheduleParagraph(paragraph: unknown): boolean {
+  if (!paragraph || typeof paragraph !== 'object') return false
+  const row = paragraph as Record<string, unknown>
+  if (
+    typeof row.id !== 'string' ||
+    !isVolunteerActivityScheduleParagraphId(row.id) ||
+    !isVisibleApplicationParagraphRow(row)
+  ) {
+    return false
+  }
+  if (row.runtimeResolved === true) return true
+  return paragraphHasRuntimeBindingOptions(row)
 }
 
 /** 일반·UJAT 봉사자 신청 — BE가 면접 슬롯 선택지(`items`)를 붙여 내려준 면접 단락 */
 export function isDynamicVolunteerInterviewParagraph(paragraph: unknown): boolean {
   if (!paragraph || typeof paragraph !== 'object') return false
   const row = paragraph as Record<string, unknown>
-  return (
-    typeof row.id === 'string' &&
-    VOLUNTEER_INTERVIEW_SCHEDULE_IDS.has(row.id) &&
-    row.runtimeInputMode === DYNAMIC_INTERVIEW_SLOTS_INPUT_MODE &&
-    row.runtimeHidden !== true &&
-    row.hidden !== true
-  )
+  return isRuntimeDynamicInterviewParagraphRow(row, id => VOLUNTEER_INTERVIEW_SCHEDULE_IDS.has(id))
 }
 
 /** 면접 있는 프로그램에서 BE가 슬롯 선택지(`items`)를 붙여 내려준 개인 면접 단락 */
 export function isDynamicIndividualInterviewParagraph(paragraph: unknown): boolean {
   if (!paragraph || typeof paragraph !== 'object') return false
   const row = paragraph as Record<string, unknown>
-  return (
-    typeof row.id === 'string' &&
-    isIndividualInterviewScheduleParagraphId(row.id) &&
-    row.runtimeInputMode === DYNAMIC_INTERVIEW_SLOTS_INPUT_MODE &&
-    row.runtimeHidden !== true &&
-    row.hidden !== true
-  )
+  return isRuntimeDynamicInterviewParagraphRow(row, isIndividualInterviewScheduleParagraphId)
 }
 
 export function shouldShowEducationPlaceOnBasicInfo(paragraphId: string): boolean {

@@ -11,8 +11,16 @@ import {
   toSponsorRequestFromRegister,
   toYearlyBusinessRequest,
 } from '@/features/sponsor/api/adapters/sponsor-adapters'
-import { programHistoriesParamsFromFilters } from '@/features/sponsor/api/program-histories-filter-params'
-import { sponsorsParamsFromSearchParams } from '@/features/sponsor/api/sponsor-filter-params'
+import {
+  programHistoriesParamsFromFilters,
+  SPONSOR_PROGRAM_HISTORY_PAGE_SIZE,
+} from '@/features/sponsor/api/program-histories-filter-params'
+import { mapSponsorListPage } from '@/features/sponsor/api/map-sponsor-list-page'
+import {
+  SPONSOR_OPTIONS_LIST_SIZE,
+  sponsorsParamsFromSearchParams,
+} from '@/features/sponsor/api/sponsor-filter-params'
+import type { DataManagementListPage } from '@/features/data-management/api/data-management-list-page'
 import {
   addSponsorContactRemote,
   addYearlyBusinessRemote,
@@ -61,12 +69,20 @@ export function shouldUseSponsorsRemoteApi(): boolean {
   return isRealApiModuleEnabled('sponsors') && hasRemoteAdminJwt()
 }
 
+export async function getSponsorListPage(
+  searchParams: URLSearchParams,
+  page = 0
+): Promise<DataManagementListPage<SponsorManagementRow>> {
+  assertSponsorsRemoteReady()
+  const payload = await fetchSponsorsRemote(sponsorsParamsFromSearchParams(searchParams, page))
+  return mapSponsorListPage(payload)
+}
+
 export async function getSponsorList(
   searchParams: URLSearchParams
 ): Promise<SponsorManagementRow[]> {
-  assertSponsorsRemoteReady()
-  const dtos = await fetchSponsorsRemote(sponsorsParamsFromSearchParams(searchParams))
-  return dtos.map(mapSponsorResponse)
+  const listPage = await getSponsorListPage(searchParams, 0)
+  return listPage.items
 }
 
 export async function getSponsorDetail(id: string): Promise<SponsorManagementDetailView> {
@@ -269,7 +285,7 @@ export async function getSponsorProgramHistories(
   sponsorId: string,
   filters: SponsorProgramHistoryFilters,
   page = 0,
-  size = 50
+  size = SPONSOR_PROGRAM_HISTORY_PAGE_SIZE
 ): Promise<SponsorProgramHistoriesPage> {
   assertSponsorsRemoteReady()
   const dto = await fetchProgramHistoriesRemote(
@@ -285,7 +301,12 @@ export async function getSponsorProgramHistories(
   }
 }
 
-/** 후원사 셀렉트·이름 조회용 전체 목록 (필터 없음) */
+/** 후원사 셀렉트·이름 조회용 목록 (구분 필터 없음, size=100) */
 export async function getSponsorOptionsList(): Promise<SponsorManagementRow[]> {
-  return getSponsorList(new URLSearchParams())
+  assertSponsorsRemoteReady()
+  const payload = await fetchSponsorsRemote({
+    page: 0,
+    size: SPONSOR_OPTIONS_LIST_SIZE,
+  })
+  return mapSponsorListPage(payload).items
 }

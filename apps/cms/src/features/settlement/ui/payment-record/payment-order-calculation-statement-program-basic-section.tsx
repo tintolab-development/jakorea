@@ -5,7 +5,7 @@
 import type { CSSProperties } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
-import type { PaymentOrderCalculationStatementProgramBasicInfo } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderCalculationStatementProgramBasicInfo } from '@/features/settlement-management/model/payment-order-admin-list'
 import { PaymentOrderCalculationStatementProcessingStatusView } from './payment-order-calculation-statement-processing-status-view'
 
 export interface PaymentOrderCalculationStatementProgramBasicSectionProps {

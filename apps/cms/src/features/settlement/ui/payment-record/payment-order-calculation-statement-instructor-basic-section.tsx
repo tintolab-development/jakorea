@@ -10,7 +10,7 @@ import {
   ProgramDetailTdSegmentWrap,
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
-import type { PaymentOrderCalculationStatementInstructorBasicInfo } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderCalculationStatementInstructorBasicInfo } from '@/features/settlement-management/model/payment-order-admin-list'
 import { PaymentOrderCalculationStatementProcessingStatusView } from './payment-order-calculation-statement-processing-status-view'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 

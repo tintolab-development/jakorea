@@ -5,12 +5,15 @@
 import { useMemo, useState } from 'react'
 import type { UUID } from '@/types'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
-import { getPostReadRows, getReadUnreadCountsForPost } from '@/data/mock'
 import { truncateDisplayNameForList } from '@/shared/lib/truncate-display-name'
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useGeneralProgramPostReads } from '@/features/program/general/hooks/use-general-program-posts-surveys'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import {
+  getPostReadRows,
+  getReadUnreadCountsForPost,
+} from '@/features/user/detail/lib/program-post-interaction-stubs'
 import './post-read-status-popover.css'
 
 export type PostReadStatusTab = 'read' | 'unread'

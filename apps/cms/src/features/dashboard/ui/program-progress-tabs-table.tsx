@@ -17,7 +17,7 @@ import {
   PROGRAM_PROGRESS_TAB_ORDER,
   PROGRAM_PROGRESS_TABLE_STATUS_FILTER_OPTIONS,
   type ProgramProgressTabRow,
-} from '@/data/mock/program-progress-tabs'
+} from '@/features/dashboard/model/program-progress-tabs'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import './program-progress-tabs-table.css'
 

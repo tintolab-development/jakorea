@@ -17,31 +17,14 @@ import { usePaymentOrdersDetailContextQuery } from '@/features/settlement-manage
 import { useSettlementDetailQuery } from '@/features/settlement-management/hooks/use-settlement-detail-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
-import {
-  getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
-  getMockPaymentOrderCalculationStatementFromProgramDetailPage,
-  getMockPaymentOrderInstructorDetail,
-  getMockPaymentOrderProgramDetail,
-  type PaymentOrderAdminInstructorDetailProgramRow,
-  type PaymentOrderAdminInstructorRow,
-  type PaymentOrderAdminProgramDetailInstructorRow,
-  type PaymentOrderAdminProgramRow,
-  type PaymentOrderProgramCalculationStatement,
-} from '@/data/mock/payment-order-admin-list'
+import type {
+  PaymentOrderAdminInstructorDetailProgramRow,
+  PaymentOrderAdminInstructorRow,
+  PaymentOrderAdminProgramDetailInstructorRow,
+  PaymentOrderAdminProgramRow,
+  PaymentOrderProgramCalculationStatement,
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
-
-const MOCK_CONFIG = {
-  program: {
-    getDetail: getMockPaymentOrderProgramDetail,
-    getCalc: getMockPaymentOrderCalculationStatementFromProgramDetailPage,
-    getTitle: (detail: { programName: string }) => `지급 현황 상세_${detail.programName}`,
-  },
-  instructor: {
-    getDetail: getMockPaymentOrderInstructorDetail,
-    getCalc: getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
-    getTitle: (detail: { nameKo: string }) => `지급 현황 상세_${detail.nameKo}`,
-  },
-} as const
 
 type CalcLineRow =
   | PaymentOrderAdminProgramDetailInstructorRow
@@ -93,11 +76,6 @@ export function usePaymentOrderDetailFullPageModalState(
     setLineCountableAmount(amount)
   }, [])
 
-  const mockDetail = useMemo(() => {
-    if (!row || paymentOrdersRemote) return null
-    return MOCK_CONFIG[type].getDetail(row as never)
-  }, [row, paymentOrdersRemote, type])
-
   const remoteProgramDetail = useMemo(() => {
     if (!paymentOrdersRemote || type !== 'program' || !row || !detailContextQuery.data) return null
     return buildProgramDetailFromSettlements(
@@ -121,7 +99,7 @@ export function usePaymentOrderDetailFullPageModalState(
     ? type === 'program'
       ? remoteProgramDetail
       : remoteInstructorDetail
-    : mockDetail
+    : null
 
   /* eslint-disable react-hooks/set-state-in-effect -- 모달 열림 시 산출·집계 상태 의도적 리셋 */
   useEffect(() => {
@@ -196,10 +174,8 @@ export function usePaymentOrderDetailFullPageModalState(
         return
       }
 
-      const current = MOCK_CONFIG[type]
-      setCalcLineRow(lineRow)
-      setCalcStatementData(current.getCalc(row as never, detail as never, lineRow as never))
-      setCalcStatementOpen(true)
+      void row
+      void lineRow
     },
     [row, detail, paymentOrdersRemote, type]
   )

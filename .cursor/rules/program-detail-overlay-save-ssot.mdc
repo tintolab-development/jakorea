@@ -1,0 +1,16 @@
+---
+description: CMS 프로그램 상세 저장 overlay SSOT — 상세 규칙은 apps/cms process rule 참조
+alwaysApply: true
+---
+
+# 프로그램 상세 — overlay vs 폼 SSOT
+
+**CMS에서 프로그램 상세(공통·모집·신청) 저장·`registrationOverlay`를 수정할 때** 아래 process rule을 따른다.
+
+→ **[apps/cms/.cursor/rules/process/program-detail-overlay-save-ssot.mdc](../apps/cms/.cursor/rules/process/program-detail-overlay-save-ssot.mdc)**
+
+요약:
+
+- RHF가 있으면 `detailEditValuesToProgramPatch` / `generalCommonInfoEditValuesToProgramPatch`가 Program 정본.
+- persist 시 `getGeneralRecruitOverlayRecord()` 금지 → catalog `peek` + `detail-operational-save-merge`.
+- `preferOverlay` 병합 결과로 폼 PATCH를 덮지 않는다.

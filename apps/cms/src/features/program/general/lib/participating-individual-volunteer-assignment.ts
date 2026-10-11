@@ -26,6 +26,14 @@ import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/da
 import type { ParticipantEducationScopeScheduleEnrich } from '@/features/program/general/api/program-progress-api-client'
 import { mapSessionProgressToParticipatingSchoolSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
 
+/** 프로그램 공통 정보 진행 장소 — 개인형 봉사 지역 폴백 */
+export function resolveProgramVolunteerServiceRegionFallback(program: Program): string | undefined {
+  const parts = [program.venue?.trim(), program.generalCommonInfo?.venueDetail?.trim()].filter(
+    Boolean
+  ) as string[]
+  return parts.length > 0 ? parts.join(' ') : undefined
+}
+
 /** 스케줄 locationName / address → 봉사 지역 표시 */
 function resolveVolunteerServiceRegion(input: {
   locationName?: string | null
@@ -41,15 +49,35 @@ function resolveVolunteerServiceRegion(input: {
   return '-'
 }
 
+/** 조회가 끝나기 전, 아직 km가 없는 칸. 확정 null의 '-'와 구분한다. */
+export const VOLUNTEER_ASSIGNMENT_DISTANCE_CALCULATING_LABEL = '계산 중'
+
+/** education-scope 응답이 null로 확정된 뒤의 안내. 에러 코드는 없다. */
+export const VOLUNTEER_ASSIGNMENT_DISTANCE_UNAVAILABLE_TOOLTIP =
+  '자택 주소 또는 일정 장소가 없거나, 거리를 산출할 수 없습니다. 회원 프로필 자택과 일정 장소를 확인하세요.'
+
 /**
- * 강사 배정과 동일. null/NaN → '-'.
- * education-scope enrich `distanceKm`만 사용 (FE invent/0 coerce 금지).
- * local `LOCAL_DISTANCE`는 BE 옵션 A: 자택·장소 모두 있으면 1.0–99.9 deterministic mock number.
+ * education-scope `distanceKm`만 표시. FE 반올림·재계산 없음.
+ * null/undefined → '-'. 0은 '0km'. 100 이상이면 장거리 접미사.
  */
-function formatDistanceKm(km: number | null | undefined): string {
+export function formatVolunteerAssignmentDistanceKm(km: number | null | undefined): string {
   if (km == null || Number.isNaN(km)) return '-'
-  const rounded = Math.round(km)
-  return km >= 100 ? `${rounded}km (장거리)` : `${rounded}km`
+  const label = `${km}km`
+  return km >= 100 ? `${label} (장거리)` : label
+}
+
+/**
+ * education-scope 조회 중이고 칸이 아직 '-'이면 '계산 중'.
+ * 이미 숫자 km인 칸은 재조회 중에도 그 값을 유지한다.
+ */
+export function resolveVolunteerAssignmentDistanceCellLabel(
+  distanceFromHome: string,
+  educationScopeFetching: boolean
+): string {
+  if (educationScopeFetching && distanceFromHome === '-') {
+    return VOLUNTEER_ASSIGNMENT_DISTANCE_CALCULATING_LABEL
+  }
+  return distanceFromHome
 }
 
 function formatHopeDate(dateKey: string): string {
@@ -333,12 +361,39 @@ function dashboardScheduleToSession(schedule: DashboardProgramScheduleResponse, 
   return mapped[0]
 }
 
+function participantSessionsByScheduleId(
+  sessions: ParticipatingSchoolSession[] | undefined
+): Map<number, ParticipatingSchoolSession> {
+  const map = new Map<number, ParticipatingSchoolSession>()
+  for (const session of sessions ?? []) {
+    if (session.resolvedScheduleId == null) continue
+    map.set(session.resolvedScheduleId, session)
+  }
+  return map
+}
+
+/** schedules·education-scope가 모두 준비된 후에만 배정/대기 분할을 한다. */
+export function canBuildIndividualVolunteerAssignmentRows(input: {
+  remoteEnabled: boolean
+  schedulesData: { schedules: DashboardProgramScheduleResponse[] } | null | undefined
+  scopeData: unknown | undefined
+}): boolean {
+  if (!input.remoteEnabled) return false
+  if (input.schedulesData == null) return false
+  if (input.scopeData === undefined) return false
+  return true
+}
+
 export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params: {
   program: Program
   assignedScheduleIds: number[]
   schedules: DashboardProgramScheduleResponse[]
-  /** education-scope additive enrich — 없으면 거리·인원은 '-' */
+  /** education-scope additive enrich — 거리는 enrich.distanceKm만 사용 */
   scopeScheduleEnrich?: ParticipantEducationScopeScheduleEnrich[]
+  /** participants sessions — dashboard 일정과 scheduleId가 같으면 표시·slotKey SSOT */
+  participantSessions?: ParticipatingSchoolSession[]
+  /** 일정·enrich에 장소 없을 때 (자택 지역·프로그램 진행 장소) */
+  serviceRegionFallback?: string | null
 }): {
   assigned: ParticipatingIndividualVolunteerAssignedScheduleRow[]
   waiting: ParticipatingIndividualVolunteerWaitingScheduleRow[]
@@ -349,6 +404,10 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
     if (row?.scheduleId == null) continue
     enrichByScheduleId.set(row.scheduleId, row)
   }
+  const sessionByScheduleId = participantSessionsByScheduleId(params.participantSessions)
+  const regionFallback =
+    params.serviceRegionFallback?.trim() ||
+    resolveProgramVolunteerServiceRegionFallback(params.program)
   const assigned: ParticipatingIndividualVolunteerAssignedScheduleRow[] = []
   const waiting: ParticipatingIndividualVolunteerWaitingScheduleRow[] = []
 
@@ -356,7 +415,8 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
     .filter(schedule => schedule.scheduleId != null)
     .forEach((schedule, index) => {
       const scheduleId = schedule.scheduleId as number
-      const session = dashboardScheduleToSession(schedule, index)
+      const session =
+        sessionByScheduleId.get(scheduleId) ?? dashboardScheduleToSession(schedule, index)
       if (!session) return
       const enrich = enrichByScheduleId.get(scheduleId)
       const slotKey = `${session.date.replace(/\./g, '-')}|individual-program|${session.round}`
@@ -364,12 +424,13 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
       const serviceRegion = resolveVolunteerServiceRegion({
         locationName: schedule.locationName ?? enrich?.locationName,
         address: schedule.address ?? enrich?.address,
+        regionFallback,
       })
-      const distanceFromHome = formatDistanceKm(enrich?.distanceKm)
+      const distanceFromHome = formatVolunteerAssignmentDistanceKm(enrich?.distanceKm)
       const assignedVolunteerCountLabel =
-        enrich != null && typeof enrich.assignedVolunteerCount === 'number'
+        typeof enrich?.assignedVolunteerCount === 'number'
           ? `${enrich.assignedVolunteerCount}명`
-          : '-'
+          : '0명'
       if (assignedIdSet.has(scheduleId)) {
         assigned.push({
           id: `iv-scope-as-${scheduleId}`,

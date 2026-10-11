@@ -1,5 +1,5 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { ADMIN_FAQ_CATEGORY_SEED_NAMES } from '@/data/mock/admin-faq-seeds'
+import { ADMIN_FAQ_CATEGORY_SEED_NAMES } from '@/features/posts/model/admin-faq-category-seeds'
 import type { FaqCategoryRow } from '@/features/posts/model/admin-faq-management.types'
 
 /** 카테고리 관리 모달 초기 행 — 목록 시드·필터 옵션과 동일 라벨 */

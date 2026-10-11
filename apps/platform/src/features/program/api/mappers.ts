@@ -524,9 +524,7 @@ function mapParticipationMethod(remote: PortalProgramDetail): ProgramParticipati
     .trim()
     .toLowerCase()
   if (raw === 'team') return 'team'
-  if (raw === 'individual') return 'individual'
-  /** Portal GET에 아직 없으면 CMS 개인 신청 시드(팀 정보 단락)와 맞춤 */
-  if (remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL') return 'team'
+  /** CMS·map-from-cms와 동일 — 미전달 시 개인 참여(팀 정보 단락 비노출) */
   return 'individual'
 }
 

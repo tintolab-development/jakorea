@@ -38,6 +38,8 @@ export interface GeneralIndividualApplicantDetail {
   teamRole?: 'leader' | 'member'
   interviewAvailability?: GeneralIndividualApplicantInterviewAvailabilityDay[]
   scheduleChangeCancelCount?: number
+  /** 신청서 이름 변경 이력 — BE `applicationNameChangeCount` (없으면 배지 미표시) */
+  applicationNameChangeCount?: number
 }
 
 export interface GeneralIndividualApplicantRow {

@@ -775,6 +775,8 @@ export * from './organizationApplicationNotificationResendRequest';
 export * from './organizationApplicationRejectRequest';
 export * from './organizationApplications1Params';
 export * from './organizationApplications2Params';
+export * from './organizationApplicationSession';
+export * from './organizationApplicationSessionResponse';
 export * from './organizationApplicationUpdateRequest';
 export * from './organizationProgressRemovalRequest';
 export * from './organizationScheduleListResponse';

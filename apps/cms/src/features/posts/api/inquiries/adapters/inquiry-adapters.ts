@@ -20,7 +20,7 @@ function mapInquiryStatus(value: string | undefined): AdminInquiryRow['status'] 
   return 'PENDING'
 }
 
-function mapInquiryBase(dto: InquiryResponse): AdminInquiryRow {
+export function mapInquiryListItem(dto: InquiryResponse): AdminInquiryRow {
   return {
     id: dto.id != null ? String(dto.id) : '',
     title: dto.title ?? '',
@@ -46,14 +46,14 @@ function mapInquiryBase(dto: InquiryResponse): AdminInquiryRow {
 export function mapInquiryListResponse(dto: PageResponse): AdminInquiryRow[] {
   return (dto.items ?? [])
     .filter((item): item is InquiryResponse => item != null && typeof item === 'object')
-    .map(item => mapInquiryBase(item as InquiryResponse))
+    .map(item => mapInquiryListItem(item as InquiryResponse))
 }
 
 export function mapInquiryDetail(
   dto: InquiryResponse,
   answers: InquiryAnswerResponse[]
 ): AdminInquiryDetail {
-  const base = mapInquiryBase(dto)
+  const base = mapInquiryListItem(dto)
   const latestAnswer = [...answers].sort((a, b) => {
     const aTime = a.createdAt ? Date.parse(a.createdAt) : 0
     const bTime = b.createdAt ? Date.parse(b.createdAt) : 0

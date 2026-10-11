@@ -7,6 +7,7 @@ import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import '@/shared/ui/detail-fullpage-modal.css'
 import type { User } from '@/types/user'
+import { updateMockUserById } from '@/entities/user/api/user-service'
 import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
 import {
   MembersPermissionList,
@@ -38,7 +39,6 @@ import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-moda
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
-import { updateMockUserById } from '@/data/mock/users'
 import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
 import {
   isInstructorPermissionRevoked,

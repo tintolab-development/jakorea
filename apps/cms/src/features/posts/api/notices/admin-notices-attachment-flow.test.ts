@@ -32,7 +32,7 @@ vi.mock('@/features/posts/api/notices/notice-attachments', () => ({
   hydrateNoticeAttachments: vi.fn(),
 }))
 
-import type { Notice } from '@/data/mock/notices'
+import type { Notice } from '@/features/posts/model/notice'
 import type { BuildNoticeBodyParams } from '@/features/posts/model/notice-form-mapper'
 import { createNotice, updateNotice } from './admin-notices-service'
 

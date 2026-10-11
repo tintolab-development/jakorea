@@ -1474,12 +1474,15 @@ export function detailEditValuesToProgramPatch(
         contactPhone: instructorContactPhone?.trim() || undefined,
         contactEmail: instructorContactEmail?.trim() || undefined,
         recruitmentTarget:
-          values.instructorTargets?.length
-            ? formatInstructorTargetsLabel(values.instructorTargets)
+          values.instructorTargets != null
+            ? values.instructorTargets.length
+              ? formatInstructorTargetsLabel(values.instructorTargets)
+              : undefined
             : existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTarget,
         recruitmentTargetDetail:
-          values.instructorTargetDetail?.trim() ||
-          existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTargetDetail,
+          values.instructorTargetDetail != null
+            ? values.instructorTargetDetail.trim() || undefined
+            : existing.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTargetDetail,
         recruitmentPeriodLabel:
           periodLabelFromRange(
             values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
@@ -1507,12 +1510,15 @@ export function detailEditValuesToProgramPatch(
         contactPhone: volunteerContactPhone?.trim() || undefined,
         contactEmail: volunteerContactEmail?.trim() || undefined,
         recruitmentTarget:
-          values.volunteerTargets?.length
-            ? formatVolunteerTargetsLabel(values.volunteerTargets)
+          values.volunteerTargets != null
+            ? values.volunteerTargets.length
+              ? formatVolunteerTargetsLabel(values.volunteerTargets)
+              : undefined
             : existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTarget,
         recruitmentTargetDetail:
-          values.volunteerTargetDetail?.trim() ||
-          existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail,
+          values.volunteerTargetDetail != null
+            ? values.volunteerTargetDetail.trim() || undefined
+            : existing.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail,
         recruitmentPeriodLabel:
           periodLabelFromRange(
             values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
@@ -1571,20 +1577,33 @@ export function detailEditValuesToProgramPatch(
       values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
     finalPassAnnouncementMethod:
       values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod,
-    instructorTargets: values.instructorTargets?.length ? values.instructorTargets : undefined,
-    instructorTarget: values.instructorTargets?.length
-      ? values.instructorTargets.join(', ')
-      : undefined,
-    instructorTargetDetail: values.instructorTargetDetail ?? existing.instructorTargetDetail,
+    instructorTargets:
+      values.instructorTargets != null ? values.instructorTargets : undefined,
+    instructorTarget:
+      values.instructorTargets != null
+        ? values.instructorTargets.length
+          ? values.instructorTargets.join(', ')
+          : undefined
+        : undefined,
+    instructorTargetDetail:
+      values.instructorTargetDetail != null
+        ? values.instructorTargetDetail
+        : existing.instructorTargetDetail,
     volunteerApplicationStartDate:
       values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
     volunteerApplicationEndDate:
       values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate,
-    volunteerTargets: values.volunteerTargets?.length ? values.volunteerTargets : undefined,
-    volunteerTarget: values.volunteerTargets?.length
-      ? formatVolunteerTargetsLabel(values.volunteerTargets)
-      : undefined,
-    volunteerTargetDetail: values.volunteerTargetDetail ?? existing.volunteerTargetDetail,
+    volunteerTargets: values.volunteerTargets != null ? values.volunteerTargets : undefined,
+    volunteerTarget:
+      values.volunteerTargets != null
+        ? values.volunteerTargets.length
+          ? formatVolunteerTargetsLabel(values.volunteerTargets)
+          : undefined
+        : undefined,
+    volunteerTargetDetail:
+      values.volunteerTargetDetail != null
+        ? values.volunteerTargetDetail
+        : existing.volunteerTargetDetail,
     applicationMethod: values.applicationMethod ?? existing.applicationMethod,
     otherNotes: values.otherNotes ?? existing.otherNotes,
     additionalContentHtml: values.additionalContentHtml ?? existing.additionalContentHtml,

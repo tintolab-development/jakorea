@@ -242,14 +242,15 @@ export function buildUjatProgramDraftWithSessionOverlay(
   draft: Program,
   options?: { includeRecruitSession?: boolean }
 ): Program {
+  const sessionFromStore = readUjatRegistrationBasicInfoOverlayForSave()
   const session = options?.includeRecruitSession
     ? collectUjatRegistrationCreateOverlay({
+        ...sessionFromStore,
         ...(draft.ujatRegistrationOverlay ?? {}),
-        ...readUjatRegistrationBasicInfoOverlayForSave(),
       })
     : {
+        ...sessionFromStore,
         ...(draft.ujatRegistrationOverlay ?? {}),
-        ...readUjatRegistrationBasicInfoOverlayForSave(),
       }
   return {
     ...draft,

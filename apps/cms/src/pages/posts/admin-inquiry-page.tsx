@@ -20,6 +20,7 @@ import type {
 } from '@/features/posts/model/admin-inquiry-management.types'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -71,13 +72,28 @@ export function AdminInquiryPage() {
   const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const listQuery = useInquiryListQuery(searchParams, true)
+  const searchParamsKey = searchParams.toString()
+  const {
+    rows,
+    totalElements,
+    isLoading: contentLoading,
+    isError: listIsError,
+    error: listError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInquiryListQuery(searchParams, true)
   const { deleteMutation, bulkDeleteMutation } = useInquiryMutations()
-  const rows = listQuery.data ?? []
-  const contentLoading = listQuery.isLoading
-  const contentError = listQuery.isError
-    ? getPostsApiErrorMessage(listQuery.error, '문의 목록을 불러오지 못했습니다.')
+  const contentError = listIsError
+    ? getPostsApiErrorMessage(listError, '문의 목록을 불러오지 못했습니다.')
     : null
+
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: searchParamsKey,
+  })
 
   const {
     categoryRows,
@@ -104,7 +120,6 @@ export function AdminInquiryPage() {
     setPendingFilters,
     applySearch: handleSearch,
     handleFilterChange,
-    displayedCount,
     tableData,
     hasActiveFilters,
   } = useTablePage(adminInquiryManagementTablePageConfig, {
@@ -206,7 +221,7 @@ export function AdminInquiryPage() {
         className: 'admin-inquiry-page__col-no',
         onHeaderCell: () => ({ className: 'admin-inquiry-page__col-no' }),
         render: (_: unknown, __: AdminInquiryRow, index: number) =>
-          tableData.length === 0 ? '-' : tableData.length - index,
+          totalElements === 0 ? '-' : totalElements - index,
       },
       {
         title: '답변 현황',
@@ -322,7 +337,7 @@ export function AdminInquiryPage() {
         render: (v: string | null) => (v == null || v === '' ? '-' : v),
       },
     ],
-    [tableData.length]
+    [totalElements]
   )
 
   const singleDeleteCopy = useMemo(() => resolvePostsDeleteConfirmCopy('inquiry', 'single'), [])
@@ -391,7 +406,7 @@ export function AdminInquiryPage() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="문의내역 목록"
-        description={`총 ${displayedCount.toLocaleString()}건`}
+        description={`총 ${totalElements.toLocaleString()}건`}
         contentLoading={contentLoading}
         actions={
           <>
@@ -413,41 +428,44 @@ export function AdminInquiryPage() {
             {contentError}
           </div>
         ) : (
-          <CmsDataTable<AdminInquiryRow>
-            rowKey="id"
-            className="cms-data-table admin-inquiry-page__table"
-            tableLayout="fixed"
-            scroll={{ x: INQUIRY_LIST_TABLE_SCROLL_X }}
-            columns={columns}
-            dataSource={tableData}
-            pagination={false}
-            onRow={record => ({
-              className: 'admin-inquiry-page__row--clickable',
-              onClick: (e: MouseEvent) => {
-                const el = e.target as HTMLElement
-                if (
-                  el.closest('.ant-checkbox-wrapper') ||
-                  el.closest('.ant-table-selection-column')
-                ) {
-                  return
-                }
-                openDetailModal(record.id)
-              },
-            })}
-            rowSelection={
-              canWrite
-                ? {
-                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                    selectedRowKeys,
-                    onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                    preserveSelectedRowKeys: false,
-                    getCheckboxProps: (record: AdminInquiryRow) => ({
-                      disabled: record.status === 'ANSWERED',
-                    }),
+          <>
+            <CmsDataTable<AdminInquiryRow>
+              rowKey="id"
+              className="cms-data-table admin-inquiry-page__table"
+              tableLayout="fixed"
+              scroll={{ x: INQUIRY_LIST_TABLE_SCROLL_X }}
+              columns={columns}
+              dataSource={tableData}
+              pagination={false}
+              onRow={record => ({
+                className: 'admin-inquiry-page__row--clickable',
+                onClick: (e: MouseEvent) => {
+                  const el = e.target as HTMLElement
+                  if (
+                    el.closest('.ant-checkbox-wrapper') ||
+                    el.closest('.ant-table-selection-column')
+                  ) {
+                    return
                   }
-                : undefined
-            }
-          />
+                  openDetailModal(record.id)
+                },
+              })}
+              rowSelection={
+                canWrite
+                  ? {
+                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                      selectedRowKeys,
+                      onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                      preserveSelectedRowKeys: false,
+                      getCheckboxProps: (record: AdminInquiryRow) => ({
+                        disabled: record.status === 'ANSWERED',
+                      }),
+                    }
+                  : undefined
+              }
+            />
+            <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+          </>
         )}
       </FilterTableLayout>
     </div>

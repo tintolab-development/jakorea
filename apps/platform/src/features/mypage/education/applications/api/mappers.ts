@@ -231,7 +231,10 @@ export function mapPortalProgramApplicationListItem(
  * BE handoff: `interviewAtLabel` 우선, 없으면 `assignedInterviewStartAt` FE 포맷.
  * `hasInterview === false`면 배너용 라벨을 붙이지 않는다.
  */
-function resolveInterviewFields(detail: PortalProgramApplicationDetail): {
+function resolveInterviewFields(
+  detail: PortalProgramApplicationDetail,
+  displayStatus: EducationDisplayStatus,
+): {
   hasInterview: boolean
   interviewAtLabel?: string
 } {
@@ -240,20 +243,25 @@ function resolveInterviewFields(detail: PortalProgramApplicationDetail): {
     formatInterviewAtLabel(detail.assignedInterviewStartAt) ||
     undefined
 
+  const interviewEnabledOnProgram = detail.program?.interviewEnabled === true
+  const hasAssignedSlot = Boolean(detail.assignedInterviewStartAt?.trim())
+
   if (typeof detail.hasInterview === 'boolean') {
+    const hasInterview =
+      detail.hasInterview ||
+      (displayStatus === 'document_passed' &&
+        (interviewEnabledOnProgram || hasAssignedSlot || Boolean(interviewAtLabel)))
     return {
-      hasInterview: detail.hasInterview,
-      ...(detail.hasInterview && interviewAtLabel ? { interviewAtLabel } : {}),
+      hasInterview,
+      ...(interviewAtLabel ? { interviewAtLabel } : {}),
     }
   }
 
   const hasInterview =
-    detail.program?.interviewEnabled === true ||
-    Boolean(interviewAtLabel) ||
-    Boolean(detail.assignedInterviewStartAt?.trim())
+    interviewEnabledOnProgram || Boolean(interviewAtLabel) || hasAssignedSlot
   return {
     hasInterview,
-    ...(hasInterview && interviewAtLabel ? { interviewAtLabel } : {}),
+    ...(interviewAtLabel ? { interviewAtLabel } : {}),
   }
 }
 
@@ -301,7 +309,7 @@ export function mapPortalProgramApplicationDetail(
     mapped.preferredScheduleOptionValues = fromAnswers.preferredScheduleOptionValues
   }
 
-  const interview = resolveInterviewFields(detail)
+  const interview = resolveInterviewFields(detail, displayStatus)
   mapped.hasInterview = interview.hasInterview
   if (interview.interviewAtLabel) mapped.interviewAtLabel = interview.interviewAtLabel
 

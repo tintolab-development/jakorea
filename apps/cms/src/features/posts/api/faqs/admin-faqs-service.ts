@@ -3,8 +3,9 @@ import {
   mapCreatedCategory,
   type CategoryRow,
 } from '@/features/posts/api/shared/category-adapters'
+import type { PostsListPage } from '@/features/posts/api/posts-list-page'
+import { mapPostsListPage } from '@/features/posts/api/shared/map-posts-list-page'
 import {
-  mapFaqListResponse,
   mapFaqResponse,
   toFaqRequest,
   type FaqCreatePayload,
@@ -23,7 +24,7 @@ import {
   updateFaqCategoryRemote,
   updateFaqRemote,
 } from '@/features/posts/api/faqs/faqs-api-client'
-import type { AdminFaq } from '@/data/mock/admin-faqs'
+import type { AdminFaq } from '@/features/posts/model/admin-faq'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -40,10 +41,18 @@ export function shouldUseFaqsRemoteApi(): boolean {
   return isRealApiModuleEnabled('faqs') && hasRemoteAdminJwt()
 }
 
-export async function getFaqList(searchParams: URLSearchParams): Promise<AdminFaq[]> {
+export async function getFaqListPage(
+  searchParams: URLSearchParams,
+  page: number
+): Promise<PostsListPage<AdminFaq>> {
   assertFaqsRemoteReady()
-  const dto = await fetchFaqsRemote(faqsParamsFromSearchParams(searchParams))
-  return mapFaqListResponse(dto)
+  const dto = await fetchFaqsRemote(faqsParamsFromSearchParams(searchParams, page))
+  return mapPostsListPage(dto, mapFaqResponse)
+}
+
+export async function getFaqList(searchParams: URLSearchParams): Promise<AdminFaq[]> {
+  const page = await getFaqListPage(searchParams, 0)
+  return page.items
 }
 
 export async function getFaqDetail(id: string): Promise<AdminFaq> {
@@ -124,7 +133,7 @@ export async function deleteFaqs(ids: string[]): Promise<void> {
 
 export async function getFaqCategories(): Promise<CategoryRow[]> {
   assertFaqsRemoteReady()
-  const dto = await fetchFaqCategoriesRemote({ page: 0, size: 50 })
+  const dto = await fetchFaqCategoriesRemote({ page: 0, size: 100 })
   return mapCategoryItems(dto.items)
 }
 

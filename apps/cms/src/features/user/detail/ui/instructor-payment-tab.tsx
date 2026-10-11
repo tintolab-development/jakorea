@@ -125,15 +125,29 @@ export function InstructorPaymentTab({
     isFetching: settlementsFetching,
   } = useMemberInstructorSettlementsQuery(instructorMemberId, true, { manualFetch })
 
+  const needsStatementJoin = useMemo(
+    () =>
+      remoteSettlementItems.some(
+        item => item.settlementId != null && item.statementId == null
+      ),
+    [remoteSettlementItems]
+  )
+
   const {
     data: statementIdBySettlementId = new Map<number, number>(),
     isPending: statementsPending,
     isFetching: statementsFetching,
-  } = useInstructorSettlementStatementJoinQuery(instructorMemberId, true, { manualFetch })
+  } = useInstructorSettlementStatementJoinQuery(
+    instructorMemberId,
+    needsStatementJoin,
+    { manualFetch }
+  )
 
   const settlementsQueryLoading =
     manualFetch &&
-    (settlementsPending || settlementsFetching || statementsPending || statementsFetching)
+    (settlementsPending ||
+      settlementsFetching ||
+      (needsStatementJoin && (statementsPending || statementsFetching)))
 
   const baseRows = useMemo(() => {
     if (!settlementsRemote || instructorMemberId == null) return []

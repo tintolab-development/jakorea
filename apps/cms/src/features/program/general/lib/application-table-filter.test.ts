@@ -7,6 +7,7 @@ import {
   filterGeneralInstructorApplications,
   filterGeneralInstructorCalendarApplications,
   filterGeneralOrganizationApplications,
+  mergeGeneralInstructorFiltersOnViewModeChange,
 } from './application-table-filter'
 
 function schoolRow(overrides: Partial<ApplicantSchoolRow>): ApplicantSchoolRow {
@@ -234,5 +235,43 @@ describe('general application table filters', () => {
     })
     expect(filtered).toHaveLength(1)
     expect(filtered[0]?.schoolName).toBe('강서초등학교')
+  })
+})
+
+describe('mergeGeneralInstructorFiltersOnViewModeChange', () => {
+  it('캘린더로 전환 시 리스트 전용 필터만 제거한다', () => {
+    expect(
+      mergeGeneralInstructorFiltersOnViewModeChange(
+        {
+          approvalStatus: 'pending',
+          homeSido: '서울특별시',
+          instructorName: '김',
+          experienceYears: '3',
+          evaluationGrade: 'A',
+        },
+        'calendar'
+      )
+    ).toEqual({
+      approvalStatus: 'pending',
+      homeSido: '서울특별시',
+      instructorName: '김',
+    })
+  })
+
+  it('리스트로 전환 시 캘린더 전용 필터만 제거한다', () => {
+    expect(
+      mergeGeneralInstructorFiltersOnViewModeChange(
+        {
+          approvalStatus: 'pending',
+          organizationName: '강서',
+          grade: '5학년',
+          instructorName: '김',
+        },
+        'table'
+      )
+    ).toEqual({
+      approvalStatus: 'pending',
+      instructorName: '김',
+    })
   })
 })

@@ -10,7 +10,6 @@ import {
   fetchSchoolTeachersRemote,
   fetchSchoolOrganizationProgramEnrollmentHistoryRemote,
 } from '@/features/user/api/members-api-client'
-import { fetchSchoolOrganizationProgramEnrollmentHistoryMock } from '@/features/user/api/fetch-school-organization-program-enrollment-history-mock'
 import { mapSchoolOrganizationProgramEnrollmentHistoryItems } from '@/features/user/api/map-school-organization-program-enrollment-history'
 import type { ListSchoolOrganizationProgramEnrollmentHistoryParams } from '@/features/user/api/school-organization-program-enrollment-history.types'
 import { mapAffiliatedTeacherRows } from '@/features/user/api/map-affiliated-teacher-row'
@@ -111,7 +110,7 @@ export function schoolOrganizationProgramEnrollmentHistoryQueryOptions(
     staleTime: MEMBER_DETAIL_SUBRESOURCE_STALE_MS,
     queryFn: async (): Promise<Application[]> => {
       if (!membersRemote) {
-        return fetchSchoolOrganizationProgramEnrollmentHistoryMock(organizationUserId)
+        return []
       }
       const res = await fetchSchoolOrganizationProgramEnrollmentHistoryRemote(organizationId, {
         page: 0,

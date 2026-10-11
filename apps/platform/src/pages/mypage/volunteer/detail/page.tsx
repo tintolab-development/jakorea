@@ -27,6 +27,7 @@ import {
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  EducationApplicationDetailLoading,
   volunteerApplicationDetailPath,
   type EducationActivitySection,
   type EducationDisplayStatus,
@@ -142,9 +143,16 @@ export function MypageVolunteerDetailPage() {
     { fresh: true },
   )
   const program = remoteDetailEnabled ? remoteProgramQuery.program : mockProgramQuery.program
+  const isApplicationLoading = remoteDetailEnabled && remoteApplicationQuery.isLoading
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
     : mockProgramQuery.isLoading
+  const isDetailLoading =
+    !isAuthReady ||
+    isChecking ||
+    isRedirecting ||
+    isApplicationLoading ||
+    (Boolean(application) && isProgramLoading && !program)
 
   const isWithdrawnBefore = application ? isWithdrawnBeforeEducation(application) : false
   const isWithdrawnDuring = application ? isWithdrawnDuringEducation(application) : false
@@ -295,8 +303,13 @@ export function MypageVolunteerDetailPage() {
     navigate(MYPAGE_VOLUNTEER_PATH, { replace: true })
   }
 
-  if (!isAuthReady || isChecking || isRedirecting) {
-    return null
+  if (isDetailLoading) {
+    return (
+      <EducationApplicationDetailLoading
+        backLabel="봉사현황"
+        onBack={handleBack}
+      />
+    )
   }
 
   if (!application || !isVolunteerRoleApplication(application)) {
@@ -311,10 +324,6 @@ export function MypageVolunteerDetailPage() {
         </PFButton>
       </section>
     )
-  }
-
-  if (isProgramLoading && !program) {
-    return null
   }
 
   if (!program) {
@@ -461,7 +470,7 @@ export function MypageVolunteerDetailPage() {
         educationFormLabel={program.educationFormLabel}
       />
 
-      {showBanner && application.interviewAtLabel ? (
+      {showBanner ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
       ) : null}
 
@@ -500,7 +509,7 @@ export function MypageVolunteerDetailPage() {
             size="large"
             ariaLabel="활동 포기 봉사 상세 탭"
           />
-          {renderActivityBody(activitySection)}
+          <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
         </>
       ) : isActivityStatus ? (
         <>
@@ -513,7 +522,7 @@ export function MypageVolunteerDetailPage() {
             size="large"
             ariaLabel="진행중 봉사 상세 탭"
           />
-          {renderActivityBody(activitySection)}
+          <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
         </>
       ) : (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>

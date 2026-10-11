@@ -6,7 +6,6 @@
 
 import type { Application, Program } from '@/types/domain'
 import type { UUID } from '@/types'
-import { mockApplications } from '@/data/mock/applications'
 import { schoolService } from '@/entities/school/api/school-service'
 
 export interface DuplicateCheckResult {
@@ -75,7 +74,7 @@ function checkCase2(
 export function checkDuplicateApplication(
   program: Program,
   userId: UUID,
-  applications: Application[] = mockApplications
+  applications: Application[] = []
 ): DuplicateCheckResult {
   const case1Result = checkCase1(program.id, userId, applications)
   if (case1Result) {

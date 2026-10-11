@@ -334,16 +334,7 @@
   overflow-y: visible;
 }
 
-/* StatusDropdownCell 사용 시 행/셀 53px 고정 (정산 상세 override의 기준 규칙) */
-.participating-institutions-section
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status) {
-  height: 53px;
-  min-height: 53px;
-  max-height: 53px;
-  overflow: visible;
-}
-
+/* StatusDropdownCell — 상태 열 치수만 고정 (다줄 일정 행 높이는 콘텐츠에 맞춤) */
 .participating-institutions-section
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
@@ -374,10 +365,11 @@
 .participating-institutions-section
   .ant-table-tbody
   > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td {
+  > td.status-dropdown-cell__cell-status {
   height: 53px !important;
   min-height: 53px !important;
   max-height: 53px !important;
+  vertical-align: middle !important;
 }
 
 .participating-institutions-section

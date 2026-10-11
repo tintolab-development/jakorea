@@ -26,7 +26,9 @@ import type {
   ProgramListView,
 } from './table/program-table-column-resolver'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/ui'
+import type { ColumnsType } from 'antd/es/table'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
@@ -228,6 +230,18 @@ export function ProgramList({
     filename: headerTitle ?? '프로그램 목록',
   })
 
+  const overviewFitScrollEnabled = isOverviewTable
+  const overviewRowSelectionActive =
+    showRowSelection && (onBulkDelete != null || onSelectionChange != null)
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    antdColumns as ColumnsType<unknown>,
+    {
+      enabled: overviewFitScrollEnabled,
+      includeSelection: overviewRowSelectionActive,
+      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
+    }
+  )
+
   return (
     <>
       {viewMode === 'list' ? (
@@ -252,42 +266,34 @@ export function ProgramList({
             data: filteredRows,
           }}
         >
-          <CmsDataTable
-            className={tableClassName}
-            rowSelection={
-              showRowSelection && (onBulkDelete != null || onSelectionChange != null)
-                ? {
-                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                    selectedRowKeys: effectiveSelectedRowKeys,
-                    onChange: handleSelectionChange,
-                    getCheckboxProps: (record: Program) => ({
-                      disabled: record.listDeleteBlocked === true,
-                    }),
-                  }
-                : undefined
-            }
-            dataSource={filteredRows}
-            columns={antdColumns}
-            rowKey="id"
-            loading={loading}
-            scroll={
-              isOverviewTable && listView !== 'SCHEDULED'
-                ? { x: 'max-content' }
-                : undefined
-            }
-            tableLayout={
-              isOverviewTable
-                ? listView === 'SCHEDULED'
-                  ? 'fixed'
-                  : 'auto'
-                : undefined
-            }
-            onRow={record => ({
-              onClick: () => onView(record),
-              style: { cursor: 'pointer' },
-            })}
-            pagination={false}
-          />
+          <div ref={tableWrapRef} className="program-list-table__scroll-measure">
+            <CmsDataTable
+              className={tableClassName}
+              rowSelection={
+                overviewRowSelectionActive
+                  ? {
+                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                      selectedRowKeys: effectiveSelectedRowKeys,
+                      onChange: handleSelectionChange,
+                      getCheckboxProps: (record: Program) => ({
+                        disabled: record.listDeleteBlocked === true,
+                      }),
+                    }
+                  : undefined
+              }
+              dataSource={filteredRows}
+              columns={antdColumns}
+              rowKey="id"
+              loading={loading}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
+              tableLayout={isOverviewTable ? 'auto' : undefined}
+              onRow={record => ({
+                onClick: () => onView(record),
+                style: { cursor: 'pointer' },
+              })}
+              pagination={false}
+            />
+          </div>
         </FilterTableLayout>
       ) : null}
 

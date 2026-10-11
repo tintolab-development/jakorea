@@ -36,6 +36,8 @@ export interface GeneralProgramServiceDetailJsonV1 {
   generalVolunteerInterviewEnabled?: Program['generalVolunteerInterviewEnabled']
   /** 등록 폼 overlay — 공고용명 등 BE가 title로 덮어쓴 announcementTitle 복원 */
   registration?: { overlay?: Record<string, unknown> }
+  /** BE GET echo — DB SSOT는 `registration.overlay`. 파싱 시 overlay와 병합(루트 우선). */
+  registrationOverlay?: Record<string, unknown>
   /** TT / Primary seed alias — nested로 승격 */
   participantRecruitment?: NonNullable<Program['generalCommonInfo']>['participantRecruitmentInfo']
   instructorRecruitment?: NonNullable<Program['generalCommonInfo']>['instructorRecruitmentInfo']
@@ -386,7 +388,12 @@ export function serializeGeneralProgramServiceDetailJson(
     studentListRequired: isIndividual ? 'not_required' : program.studentListRequired,
     generalParticipantInterviewEnabled: program.generalParticipantInterviewEnabled,
     generalVolunteerInterviewEnabled: program.generalVolunteerInterviewEnabled,
-    ...(registrationOverlay ? { registration: { overlay: registrationOverlay } } : {}),
+    ...(registrationOverlay
+      ? {
+          registration: { overlay: registrationOverlay },
+          registrationOverlay: { ...registrationOverlay },
+        }
+      : {}),
   }
   if (options?.omitRecruitmentWindow) {
     for (const key of RECRUITMENT_WINDOW_JSON_KEYS) {
@@ -408,6 +415,22 @@ export function serializeGeneralProgramServiceDetailJson(
 
 function isServiceDetailRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+/** `registration.overlay`(DB) + 루트 `registrationOverlay`(GET echo). 루트 키가 우선한다. */
+export function mergeServiceDetailRegistrationOverlay(
+  parsed: Record<string, unknown>
+): Record<string, unknown> | undefined {
+  const fromNested =
+    isServiceDetailRecord(parsed.registration) &&
+    isServiceDetailRecord(parsed.registration.overlay)
+      ? parsed.registration.overlay
+      : undefined
+  const fromRoot = isServiceDetailRecord(parsed.registrationOverlay)
+    ? parsed.registrationOverlay
+    : undefined
+  if (!fromNested && !fromRoot) return undefined
+  return { ...(fromNested ?? {}), ...(fromRoot ?? {}) }
 }
 
 function unwrapGeneralServiceDetailRoot(
@@ -451,10 +474,9 @@ export function parseGeneralProgramServiceDetailJson(
       return {}
     }
 
-    const registrationOverlay = isServiceDetailRecord(parsed.registration) &&
-      isServiceDetailRecord(parsed.registration.overlay)
-      ? parsed.registration.overlay
-      : undefined
+    const registrationOverlay = mergeServiceDetailRegistrationOverlay(
+      parsed as Record<string, unknown>
+    )
     const normalized = normalizeGeneralProgramServiceDetailParsed(parsed)
 
     return {

@@ -6,7 +6,7 @@ import {
 import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 
 const programRow: PaymentOrderAdminProgramRow = {

@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
+import { useParticipatingVolunteerAddRegistrationPluginState } from '@/features/program/general/lib/participating-volunteer-add-registration-plugin-state'
 import type { ParticipatingVolunteerAddRegistrationSectionContext } from './add-registration-form-types'
 import {
   ADMIN_FILE_OWNER,
@@ -11,7 +11,7 @@ import {
 } from '@/shared/lib/admin-file-upload'
 
 const CERTIFICATE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
@@ -21,9 +21,16 @@ const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
 export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
   _props: ParticipatingVolunteerAddRegistrationSectionContext
 ) {
-  const [applicationYear, setApplicationYear] = useState('')
-  const [programName, setProgramName] = useState('')
-  const [fileNames, setFileNames] = useState<string[]>([])
+  const {
+    values,
+    setPreviousJaProgramYear,
+    setPreviousJaProgramName,
+    appendPreviousJaCertificateFileIds,
+    removePreviousJaCertificateFileAt,
+  } = useParticipatingVolunteerAddRegistrationPluginState()
+
+  const { previousJaProgram } = values
+  const fileNames = previousJaProgram.certificateFileIds.map(id => `파일 ${id}`)
 
   return (
     <DetailInfoForm title="이전 참여 JA 봉사 프로그램" hideHeader mode="edit">
@@ -37,18 +44,18 @@ export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
                 inputSize="medium"
                 width="100%"
                 style={{ flex: '3 1 0', minWidth: 0 }}
-                placeholder="신청년도"
-                value={applicationYear}
-                onChange={e => setApplicationYear(e.target.value)}
+                placeholder="진행년도"
+                value={previousJaProgram.programYear}
+                onChange={e => setPreviousJaProgramYear(e.target.value)}
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 inputSize="medium"
                 width="100%"
                 style={{ flex: '7 1 0', minWidth: 0 }}
-                placeholder="프로그램명"
-                value={programName}
-                onChange={e => setProgramName(e.target.value)}
+                placeholder="참여한 봉사 프로그램명을 입력해 주세요"
+                value={previousJaProgram.programName}
+                onChange={e => setPreviousJaProgramName(e.target.value)}
               />
             </div>
           }
@@ -67,19 +74,25 @@ export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
               guideLines={CERTIFICATE_GUIDE_LINES}
               fileNames={fileNames}
               onFilesChange={files => {
-                setFileNames(prev => [...prev, ...files.map(file => file.name)])
                 const owner = buildAdminFileOwner(
                   ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
                   1,
                   ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
                 )
                 void (async () => {
+                  const ids: string[] = []
                   for (const file of files) {
-                    await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                    const result = await uploadAdminFileMaybeMock({ file, owner }).catch(
+                      () => undefined
+                    )
+                    if (result?.fileObjectId != null) {
+                      ids.push(String(result.fileObjectId))
+                    }
                   }
+                  appendPreviousJaCertificateFileIds(ids)
                 })()
               }}
-              onRemoveFile={index => setFileNames(prev => prev.filter((_, i) => i !== index))}
+              onRemoveFile={index => removePreviousJaCertificateFileAt(index)}
             />
           }
           view="-"

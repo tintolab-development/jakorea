@@ -1,5 +1,5 @@
-import type { SettlementItemSettingDetail } from '@/data/mock/settlement-item-setting-detail.mock'
-import type { SettlementItemSettingRow } from '@/data/mock/settlement-item-settings'
+import type { SettlementItemSettingDetail } from '@/features/settlement-management/model/settlement-item-setting-detail'
+import type { SettlementItemSettingRow } from '@/features/settlement-management/model/settlement-item-settings'
 import {
   mapDeductionItemToSettingDetail,
   mapPaymentItemToSettingDetail,

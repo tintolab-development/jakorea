@@ -138,7 +138,10 @@ function slotFromInstitutionSession(
   institution: ApplicantSchoolRow,
   session: ParticipatingSchoolSession
 ): InstructorLectureAssignSlot | null {
-  const dateKey = parseSessionDateKey(session.date)
+  const labelParsed = session.scheduleLabel
+    ? parseEducationScheduleLine(session.scheduleLabel)
+    : null
+  const dateKey = parseSessionDateKey(session.date) ?? labelParsed?.dateKey ?? null
   if (!dateKey) return null
   const sessionRound = session.round
   const resolvedScheduleId = session.resolvedScheduleId
@@ -159,7 +162,12 @@ function slotFromInstitutionSession(
     region: regionDisplay(institution.region),
     sessionRound,
     sessionLabel: sessionLabelFromSession(session),
-    timeRange: normalizeTimeRange(session.timeRange),
+    timeRange:
+      session.timeRange && session.timeRange !== '-'
+        ? normalizeTimeRange(session.timeRange)
+        : labelParsed?.startTime && labelParsed?.endTime
+          ? normalizeTimeRange(`${labelParsed.startTime} ~ ${labelParsed.endTime}`)
+          : normalizeTimeRange(session.timeRange),
     assignedCount: 0,
     disabled: session.status === 'completed' || remoteScheduleUnresolved,
   }

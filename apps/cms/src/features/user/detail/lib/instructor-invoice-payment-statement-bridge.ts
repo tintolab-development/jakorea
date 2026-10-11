@@ -6,7 +6,7 @@ import type {
   PaymentOrderAdminLineProcessingStatus,
   PaymentOrderCalculationStatementLine,
   PaymentOrderProgramCalculationStatement,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type {
   InstructorSettlementInvoiceDetail,
   InstructorSettlementUiStatus,

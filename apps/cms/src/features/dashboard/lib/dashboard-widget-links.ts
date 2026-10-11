@@ -1,4 +1,4 @@
-import type { ProgramScheduleKind } from '@/data/mock/program-schedule-keys'
+import type { ProgramScheduleKind } from '@/features/dashboard/model/program-schedule-keys'
 
 const ADMIN_POSTS_INQUIRIES_PATH = '/admin/posts/inquiries'
 const EDUCATION_RECORDS_PATH = '/education-records'

@@ -24,10 +24,11 @@ import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/p
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 
 const GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH = 185
-const GENERAL_DETAIL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 360
+/** legacy 기관 목록 일정 열 `480px`와 동일 — 한 줄 일정·디바이더·차시 말줄임 방지 */
+const GENERAL_DETAIL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 480
 /**
  * `2026.11.13(금) 07:10 ~ 08:15 | 12차시` 한 줄(Pretendard 16/500 + 디바이더 + 셀 패딩).
- * fluid 테이블이 이 열을 줄여 말줄임하지 않도록 CSS min-width와 쌍으로 둔다.
+ * fluid 테이블이 이 열을 줄이지 않도록 column width·`--schedule` CSS와 쌍으로 둔다.
  */
 const COMPANY_SCHOOL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 400
 /** 헤더 16px/700 + 좌우 패딩 20px. fluid 테이블이 남는 폭을 나눠 먹지 않도록 max-width와 쌍으로 둔다. */
@@ -296,12 +297,16 @@ export function useInstitutionApplicantColumns(params: {
             }
           : { width: '480px' }),
         align: 'center',
-        className: isGeneralDetail ? 'applicant-details__th-sessions' : undefined,
+        className: isGeneralDetail
+          ? 'applicant-details__th-sessions applicant-details__th-sessions--general-detail'
+          : undefined,
         onHeaderCell: () =>
-          isGeneralDetail ? { className: 'applicant-details__th-sessions' } : {},
+          isGeneralDetail
+            ? { className: 'applicant-details__th-sessions applicant-details__th-sessions--general-detail' }
+            : {},
         onCell: () => ({
           className: isGeneralDetail
-            ? 'applicant-details__td-sessions applicant-details__td-sessions--center'
+            ? 'applicant-details__td-sessions applicant-details__td-sessions--general-detail applicant-details__td-sessions--center'
             : 'applicant-details__td-sessions',
         }),
         render: (_: unknown, record: ApplicantSchoolRow) => {
@@ -341,6 +346,15 @@ export function useInstitutionApplicantColumns(params: {
         dataIndex: 'educationGrade',
         key: 'educationGrade',
         align: 'center',
+        ...(isGeneralDetail
+          ? {
+              width: COMPANY_SCHOOL_GRADE_COL_WIDTH,
+              minWidth: COMPANY_SCHOOL_GRADE_COL_WIDTH,
+              className: 'applicant-details__th-grade',
+              onHeaderCell: () => ({ className: 'applicant-details__th-grade' }),
+              onCell: () => ({ className: 'applicant-details__td-grade' }),
+            }
+          : {}),
         render: (value: string) => formatInstitutionApplicationGradeDisplay(value ?? '') || '-',
       },
       {
@@ -348,6 +362,15 @@ export function useInstitutionApplicantColumns(params: {
         dataIndex: 'classCount',
         key: 'classCount',
         align: 'center',
+        ...(isGeneralDetail
+          ? {
+              width: COMPANY_SCHOOL_CLASS_COUNT_COL_WIDTH,
+              minWidth: COMPANY_SCHOOL_CLASS_COUNT_COL_WIDTH,
+              className: 'applicant-details__th-class-count',
+              onHeaderCell: () => ({ className: 'applicant-details__th-class-count' }),
+              onCell: () => ({ className: 'applicant-details__td-class-count' }),
+            }
+          : {}),
         render: (v: number) => (v != null ? `${v}개` : '-'),
       },
       {
@@ -355,14 +378,31 @@ export function useInstitutionApplicantColumns(params: {
         dataIndex: 'studentCount',
         key: 'studentCount',
         align: 'center',
+        ...(isGeneralDetail
+          ? {
+              width: COMPANY_SCHOOL_STUDENT_COUNT_COL_WIDTH,
+              minWidth: COMPANY_SCHOOL_STUDENT_COUNT_COL_WIDTH,
+              className: 'applicant-details__th-student-count',
+              onHeaderCell: () => ({ className: 'applicant-details__th-student-count' }),
+              onCell: () => ({ className: 'applicant-details__td-student-count' }),
+            }
+          : {}),
         render: (v: number) => (v != null ? `${v}명` : '-'),
       },
       {
         title: isGeneralDetail ? '신청 교사명' : '담당 교사명',
         dataIndex: 'teacherName',
         key: 'teacherName',
-
         align: 'center',
+        ...(isGeneralDetail
+          ? {
+              width: COMPANY_SCHOOL_TEACHER_COL_WIDTH,
+              minWidth: COMPANY_SCHOOL_TEACHER_COL_WIDTH,
+              className: 'applicant-details__th-teacher',
+              onHeaderCell: () => ({ className: 'applicant-details__th-teacher' }),
+              onCell: () => ({ className: 'applicant-details__td-teacher' }),
+            }
+          : {}),
       },
       ...(isGeneralDetail
         ? []

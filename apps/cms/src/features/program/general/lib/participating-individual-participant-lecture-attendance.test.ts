@@ -2,15 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
   fetchProgramSchedulesViaDashboardRemoteMock,
-  fetchScheduleAttendancesRemoteMock,
+  fetchAttendancesByScheduleIdsRemoteMock,
 } = vi.hoisted(() => ({
   fetchProgramSchedulesViaDashboardRemoteMock: vi.fn(),
-  fetchScheduleAttendancesRemoteMock: vi.fn(),
+  fetchAttendancesByScheduleIdsRemoteMock: vi.fn(),
 }))
 
 vi.mock('@/features/program/general/api/program-progress-api-client', () => ({
   fetchProgramSchedulesViaDashboardRemote: fetchProgramSchedulesViaDashboardRemoteMock,
-  fetchScheduleAttendancesRemote: fetchScheduleAttendancesRemoteMock,
+  fetchAttendancesByScheduleIdsRemote: fetchAttendancesByScheduleIdsRemoteMock,
 }))
 
 import {
@@ -22,7 +22,7 @@ import {
 describe('participating-individual-participant-lecture-attendance', () => {
   beforeEach(() => {
     fetchProgramSchedulesViaDashboardRemoteMock.mockReset()
-    fetchScheduleAttendancesRemoteMock.mockReset()
+    fetchAttendancesByScheduleIdsRemoteMock.mockReset()
   })
 
   it('maps participant attendance and treats excused as attended', () => {
@@ -64,9 +64,10 @@ describe('participating-individual-participant-lecture-attendance', () => {
       { scheduleId: 10, sessionNo: 1 },
       { scheduleId: 11, sessionNo: 2 },
     ])
-    fetchScheduleAttendancesRemoteMock
-      .mockResolvedValueOnce([{ participantId: 1691701, status: 'PRESENT' }])
-      .mockResolvedValueOnce([{ participantId: 1691701, status: 'EXCUSED' }])
+    fetchAttendancesByScheduleIdsRemoteMock.mockResolvedValue({
+      '10': [{ participantId: 1691701, status: 'PRESENT' }],
+      '11': [{ participantId: 1691701, status: 'EXCUSED' }],
+    })
 
     const sessions = await hydrateParticipatingIndividualLectureAttendanceSessions({
       programId: '168001',
@@ -78,5 +79,22 @@ describe('participating-individual-participant-lecture-attendance', () => {
       { roundNumber: 1, scheduleId: 10, status: 'attended' },
       { roundNumber: 2, scheduleId: 11, status: 'attended' },
     ])
+    expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledTimes(1)
+    expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledWith('168001', [10, 11])
+  })
+
+  it('bulk 출석 조회 실패 시 오류를 전파한다', async () => {
+    fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
+      { scheduleId: 10, sessionNo: 1 },
+    ])
+    fetchAttendancesByScheduleIdsRemoteMock.mockRejectedValue(new Error('403'))
+
+    await expect(
+      hydrateParticipatingIndividualLectureAttendanceSessions({
+        programId: '168001',
+        participantId: '1691701',
+        existing: [],
+      })
+    ).rejects.toThrow('403')
   })
 })

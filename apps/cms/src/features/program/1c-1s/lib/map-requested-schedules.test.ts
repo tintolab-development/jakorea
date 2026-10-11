@@ -73,6 +73,36 @@ describe('mapRequestedSchedulesToSessions', () => {
     expect(formatRequestedSchedulesPeriodLabel([schedules[0]!])).toBe('2026. 10. 20(화) 10:00 ~ 12:00')
   })
 
+  it('startPeriod가 있어도 sessionTimes·label이 있으면 시각 지정형으로 매핑한다', () => {
+    const sessions = mapRequestedSchedulesToSessions([
+      {
+        id: 184839,
+        preferenceOrder: 1,
+        requestedDate: '2026-10-26',
+        startPeriod: 1,
+        sessionCount: 1,
+        combinedClassYn: false,
+        sessionTimes: [
+          {
+            sessionOrder: 1,
+            period: 1,
+            startTime: '10:00:00',
+            endTime: '12:00:00',
+          },
+        ],
+        resolvedScheduleId: null,
+        label: '26년 10월 26일(월) 10:00 ~ 12:00',
+        periodStartDate: '2026-10-26',
+        periodEndDate: '2026-10-26',
+      },
+    ])
+
+    expect(sessions).toHaveLength(1)
+    expect(sessions?.[0]?.scheduleLabel).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
+    expect(sessions?.[0]?.timeRange).toBe('10:00 ~ 12:00')
+    expect(sessions?.[0]?.date).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
+  })
+
   it('PERIOD 구간 label을 scheduleLabel로 매핑한다', () => {
     const sessions = mapRequestedSchedulesToSessions([
       {

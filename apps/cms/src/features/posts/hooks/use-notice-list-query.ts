@@ -1,17 +1,17 @@
-import { useQuery } from '@tanstack/react-query'
-import { getNoticeList } from '@/features/posts/api/notices/admin-notices-service'
+import { getNoticeListPage } from '@/features/posts/api/notices/admin-notices-service'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import { usePostsRemoteEnabled } from '@/features/posts/hooks/use-posts-remote-enabled'
+import { useInfiniteLogList } from '@/features/logs/hooks/use-infinite-log-list'
 
 export function useNoticeListQuery(searchParams: URLSearchParams, enabled = true) {
   const searchParamsKey = searchParams.toString()
   const remoteEnabled = usePostsRemoteEnabled('notices', enabled)
 
-  return useQuery({
+  return useInfiniteLogList({
     queryKey: postsQueryKeys.notices.list(searchParamsKey),
-    queryFn: () => getNoticeList(new URLSearchParams(searchParamsKey)),
+    queryKeyIdentity: searchParamsKey,
+    queryFn: page =>
+      getNoticeListPage(new URLSearchParams(searchParamsKey), page),
     enabled: remoteEnabled,
-    staleTime: 30_000,
-    retry: false,
   })
 }

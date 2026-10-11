@@ -49,6 +49,7 @@ import type { UseUserDetailModalsResult } from './use-user-detail-modals'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
 import { stashMemberDetailReturnForProgramNavigation } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import type {
@@ -145,7 +146,6 @@ import { updateTeacherMemberEmploymentStatusAndRefresh } from '@/features/user/a
 import { invalidateMemberDetailHistoryQueries } from '@/features/user/api/invalidate-member-detail-history-queries'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
-import { mockUserHistories } from '@/data/mock/mypage'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
@@ -636,10 +636,7 @@ export function useUserDetailController({
 
     if (shouldLoadProgramHistoryTab && loadProgramHistory && displayUser?.id) {
       setMockVolunteerHistoriesLoading(true)
-      const volunteerOnly = mockUserHistories.filter(
-        h => h.userId === displayUser.id && h.role === 'VOLUNTEER'
-      )
-      setMockVolunteerHistories(volunteerOnly)
+      setMockVolunteerHistories([])
       setMockVolunteerHistoriesLoading(false)
       return
     }
@@ -1292,6 +1289,11 @@ export function useUserDetailController({
             queryKey: memberQueryKeys.consentRecords(displayUser.memberId),
           })
         }
+      }
+      if (basicInfoEditScope === 'profile') {
+        void queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.educationScopes(),
+        })
       }
       queryClient.setQueryData(
         [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],

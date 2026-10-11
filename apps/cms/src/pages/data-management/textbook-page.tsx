@@ -23,7 +23,9 @@ import { resolveDeleteBlockedGuideCopy } from '@/shared/lib/delete-blocked-guide
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
+import { getTextbookListFilterKey } from '@/features/textbook/api/admin-textbooks-service'
 import { useTextbookListQuery } from '@/features/textbook/hooks/use-textbook-list-query'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { usePrefetchTextbookDetail } from '@/features/textbook/hooks/use-textbook-detail-query'
 import { useTextbookMutations } from '@/features/textbook/hooks/use-textbook-mutations'
 import { useMaterialKitQuantitiesQuery } from '@/features/textbook/hooks/use-material-kit-quantities-query'
@@ -131,11 +133,30 @@ export default function TextbookPage() {
     setAppliedFilters(prev => (prev.useStatus === useStatus ? prev : { ...prev, useStatus }))
   }, [tbUseParam])
 
-  const listQuery = useTextbookListQuery(appliedFilters, true)
-  const isInitialListLoading = isDataManagementListLoading(listQuery)
-  const isListFetching = listQuery.isFetching
+  const listFilterKey = getTextbookListFilterKey(appliedFilters)
+  const {
+    rows,
+    totalElements,
+    isLoading: isListLoading,
+    isFetching: isListFetching,
+    isError: isListError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useTextbookListQuery(appliedFilters, true)
+  const isInitialListLoading = isDataManagementListLoading({
+    data: isListLoading ? undefined : rows,
+    isError: isListError,
+    isPending: isListLoading,
+  })
   const { createMutation, updateMutation, deleteMutation } = useTextbookMutations()
-  const rows = listQuery.data ?? []
+
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: listFilterKey,
+  })
 
   const gradeOptions = useMemo(
     () => textbookFilterGradeOptions(pendingFilters.educationTarget),
@@ -352,7 +373,7 @@ export default function TextbookPage() {
         className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
         render: (_: unknown, __: TextbookRow, index: number) =>
-          filteredRows.length === 0 ? '—' : filteredRows.length - index,
+          totalElements === 0 ? '—' : totalElements - index,
       },
       {
         title: '사용 여부',
@@ -412,7 +433,7 @@ export default function TextbookPage() {
         render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
       },
     ],
-    [filteredRows.length]
+    [totalElements]
   )
 
   return (
@@ -533,7 +554,7 @@ export default function TextbookPage() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="교재 목록"
-        description={`총 ${filteredRows.length.toLocaleString()}건`}
+        description={`총 ${totalElements.toLocaleString()}건`}
         contentLoading={isInitialListLoading}
         actions={
           <>
@@ -596,6 +617,7 @@ export default function TextbookPage() {
             style: { cursor: 'pointer' },
           })}
         />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
     </div>
   )

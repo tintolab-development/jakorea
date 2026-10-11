@@ -6,7 +6,7 @@ import {
   fetchAccountPaymentDetailRemote,
   fetchAllAccountPaymentsRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
-import type { AccountPaymentRow, AccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
+import type { AccountPaymentRow, AccountPaymentStatusDetail } from '@/features/settlement-management/model/account-payments-list'
 
 export async function getAccountPaymentsListRemote(
   filters: AccountPaymentsListFilterInput = {}

@@ -6,21 +6,17 @@ import {
   EDUCATION_APPLICATION_TAB_ITEMS,
   getMypageLnbItems,
   MYPAGE_EDUCATION_PATH,
+  MypageLayoutBootSkeleton,
   navigateMypageLnb,
   readEducationApplicationListParams,
   showInstructorApplyCta,
   useMypageMember,
+  useMypagePageAuthReady,
   isSchoolTeacherMypageProfile,
   type EducationApplicationListParams,
   type EducationApplicationTab,
   type MypageLnbItemKey,
 } from '@/features/mypage'
-import {
-  getAccessToken,
-  getDevAuthLoggedIn,
-  isRemoteApiConfigured,
-  resolveLoginRequiredPath,
-} from '@/shared/lib'
 import illustBookUrl from '@/shared/assets/illustration/illust-book.svg'
 import { PFTabs, PFText } from '@/shared/ui'
 import { MypageLayout } from '@/widgets/mypage-layout'
@@ -29,7 +25,7 @@ import styles from './page.module.css'
 
 export function MypageEducationPage() {
   const navigate = useNavigate()
-  const [isAuthReady, setIsAuthReady] = useState(false)
+  const isAuthReady = useMypagePageAuthReady(MYPAGE_EDUCATION_PATH)
   const [params, setParams] = useState(readEducationApplicationListParams)
   const member = useMypageMember()
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
@@ -37,21 +33,6 @@ export function MypageEducationPage() {
   const educationStatusAudience = isSchoolTeacherMypageProfile(member.profile)
     ? ('teacher' as const)
     : ('general' as const)
-
-  useEffect(() => {
-    const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
-    if (hasRemoteToken) {
-      setIsAuthReady(true)
-      return
-    }
-
-    if (!getDevAuthLoggedIn()) {
-      navigate(resolveLoginRequiredPath(MYPAGE_EDUCATION_PATH))
-      return
-    }
-
-    setIsAuthReady(true)
-  }, [navigate])
 
   useEffect(() => {
     const onPopState = () => {
@@ -80,7 +61,16 @@ export function MypageEducationPage() {
   }
 
   if (!isAuthReady || isChecking || isRedirecting) {
-    return null
+    return (
+      <MypageLayout
+        variant="subpage"
+        lnbItems={lnbItems}
+        showInstructorApply={showInstructorApplyCta(member.profile)}
+        onLnbItemSelect={handleLnbItemSelect}
+      >
+        <MypageLayoutBootSkeleton />
+      </MypageLayout>
+    )
   }
 
   return (

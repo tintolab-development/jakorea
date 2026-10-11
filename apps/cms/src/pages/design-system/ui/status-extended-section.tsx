@@ -23,7 +23,7 @@ import {
   UJAT_MANAGER_EVALUATION_ORDER,
   type UjatManagerEvaluation,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/participating-schools'
 import { EditableStatusBadge } from '@/shared/components/editable-status-badge'

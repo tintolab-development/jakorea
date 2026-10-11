@@ -82,7 +82,7 @@ export const PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_SECTIONS: ParticipatingVol
       kind: 'plugin',
       paragraphId: PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.freeTextItems,
       title: '자유 작성 항목',
-      fallbackDescription: '1~3번 문항은 자유롭게 작성 가능합니다.',
+      fallbackDescription: '1~4번 문항은 자유롭게 작성 가능합니다.',
       body: 'free-text',
     },
   ]

@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import type { AdminFaq } from '@/data/mock/admin-faqs'
+import type { AdminFaq } from '@/features/posts/model/admin-faq'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 import type {

@@ -1,9 +1,11 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
-import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
+import { getDataManagementSubsetApi } from '@/features/data-management/api/data-management-subset-api'
 import type {
   CurrentKitCalculationParams,
   KitsParams,
   MaterialKitCalculationResponse,
+  MaterialKitCurrentConfigRequest,
+  MaterialKitCurrentConfigResponse,
   MaterialKitRequest,
   MaterialKitResponse,
   MaterialKitTargetCountRequest,
@@ -12,27 +14,25 @@ import type {
   PageResponseMaterialKitResponse,
 } from '@/shared/api/generated/data-management/schemas'
 
-const dmApi = getJAKoreaCMSBackendAPIDataManagementSubset()
-
 export async function fetchMaterialKitsRemote(
   params?: KitsParams
 ): Promise<PageResponseMaterialKitResponse> {
   // GET /api/admin/material-kits
-  return unwrapApiBody(await dmApi.kits(params))
+  return unwrapApiBody(await getDataManagementSubsetApi().kits(params))
 }
 
 export async function createMaterialKitRemote(
   body: MaterialKitRequest
 ): Promise<MaterialKitResponse> {
   // POST /api/admin/material-kits (Orval create10 — 번호는 OpenAPI 재생성 시 변동)
-  return unwrapApiBody(await dmApi.create10(body))
+  return unwrapApiBody(await getDataManagementSubsetApi().create10(body))
 }
 
 export async function fetchMaterialKitVersionsRemote(
   kitId: number
 ): Promise<MaterialKitVersionResponse[]> {
   // GET /api/admin/material-kits/{kitId}/versions
-  const payload = await dmApi.versions(kitId)
+  const payload = await getDataManagementSubsetApi().versions(kitId)
   const body = unwrapApiBody<MaterialKitVersionResponse[] | { items?: MaterialKitVersionResponse[] }>(
     payload
   )
@@ -45,7 +45,7 @@ export async function createMaterialKitVersionRemote(
   body: MaterialKitVersionRequest
 ): Promise<MaterialKitVersionResponse> {
   // POST /api/admin/material-kits/{kitId}/versions
-  return unwrapApiBody(await dmApi.createVersion(kitId, body))
+  return unwrapApiBody(await getDataManagementSubsetApi().createVersion(kitId, body))
 }
 
 export async function addMaterialKitTargetCountRemote(
@@ -53,7 +53,7 @@ export async function addMaterialKitTargetCountRemote(
   body: MaterialKitTargetCountRequest
 ): Promise<void> {
   // POST /api/admin/material-kits/versions/{versionId}/target-counts
-  await dmApi.addTargetCount(versionId, body)
+  await getDataManagementSubsetApi().addTargetCount(versionId, body)
 }
 
 export async function fetchCurrentKitCalculationRemote(
@@ -61,5 +61,16 @@ export async function fetchCurrentKitCalculationRemote(
   params: CurrentKitCalculationParams
 ): Promise<MaterialKitCalculationResponse> {
   // GET /api/admin/material-kits/{kitId}/versions/current/calculate
-  return unwrapApiBody(await dmApi.currentKitCalculation(kitId, params))
+  return unwrapApiBody(await getDataManagementSubsetApi().currentKitCalculation(kitId, params))
+}
+
+export async function fetchGlobalMaterialKitCurrentConfigRemote(): Promise<MaterialKitCurrentConfigResponse> {
+  return unwrapApiBody(await getDataManagementSubsetApi().globalCurrentConfig())
+}
+
+export async function putGlobalMaterialKitCurrentConfigRemote(
+  body: MaterialKitCurrentConfigRequest
+): Promise<MaterialKitCurrentConfigResponse> {
+  const payload = await getDataManagementSubsetApi().replaceGlobalCurrentConfig(body)
+  return unwrapApiBody(payload)
 }

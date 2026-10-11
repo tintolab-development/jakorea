@@ -3,7 +3,7 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import {
   settlementCalendarPrimaryTitle,
   type InstructorSettlementListRow,
-} from '@/data/mock/instructor-member-settlements'
+} from '@/features/settlement-management/model/instructor-member-settlements'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 
 import './settlement-list-item.css'

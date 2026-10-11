@@ -6,43 +6,13 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 강사 신청이 선택한 희망 기관·교육 일정(캘린더 SSOT).
- */
 export interface InstructorPreferredOrganizationResponse {
-  /**
-     * 선택 순서(1부터).
-     * @nullable
-     */
   preferenceOrder?: number | null;
-  /**
-     * 희망 기관(학교)명.
-     * @nullable
-     */
   organizationName?: string | null;
-  /**
-     * 신청 학년 등. 없으면 null.
-     * @nullable
-     */
   educationGrade?: string | null;
-  /**
-     * FE 캘린더 파서용 기간 표시 문자열(공통정보 PERIOD 라인 또는 일정 라벨).
-     * @nullable
-     */
+  /** FE applicant-calendar-events dateRange 파서 입력 */
   dateRangeLabel?: string | null;
-  /**
-     * program_schedule id.
-     * @nullable
-     */
   scheduleId?: number | null;
-  /**
-     * 운영 일정 시작. dateRangeLabel 파싱 실패 시 FE fallback.
-     * @nullable
-     */
   startAt?: string | null;
-  /**
-     * 운영 일정 종료.
-     * @nullable
-     */
   endAt?: string | null;
 }

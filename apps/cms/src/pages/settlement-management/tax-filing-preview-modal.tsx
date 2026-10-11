@@ -7,7 +7,7 @@ import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
+import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import {
   TAX_FILING_SHEET_COLUMN_COUNT,
   buildTaxFilingFortuneSheet,

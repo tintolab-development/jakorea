@@ -629,7 +629,7 @@ export function ParticipatingInstitutionsSection({
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
             <CmsDataTable<ParticipatingSchoolRow>
-              className="cms-data-table participating-institutions-section__table participating-institutions-section__table--textbook-dropdown"
+              className="cms-data-table cms-data-table--variable-row-height participating-institutions-section__table participating-institutions-section__table--textbook-dropdown participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"
               pagination={false}

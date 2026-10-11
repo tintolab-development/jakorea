@@ -13,7 +13,11 @@ import type {
   PortalApplicationFormBundle,
   PortalSaveApplicationRequest,
 } from './application-types'
-import { getApplicationApiErrorCode } from '../lib/application-api-error'
+import {
+  getApplicationApiErrorCode,
+  messageForApplicationBlockedReason,
+  resolveApplicationBlockedDisplayMessage,
+} from '../lib/application-api-error'
 import { parsePortalProgramId } from './mappers'
 import {
   pickApplicationOption,
@@ -39,6 +43,8 @@ export type ProgramApplicationFormQuery = {
   bundle: PortalApplicationFormBundle | null
   /** 제출 불가 사유 — options.`canApply=false` 의 blockedReason. GET 양식 성공과 무관. */
   blockedReason: string | null
+  /** 화면 배너용 한글 안내 — API `message` 우선, machine code 미노출 */
+  blockedMessage: string | null
   refetch: () => void
 }
 
@@ -136,6 +142,7 @@ export function useProgramApplicationForm(
       isRemoteEnabled: false,
       bundle: null,
       blockedReason: null,
+      blockedMessage: null,
       refetch,
     }
   }
@@ -146,70 +153,89 @@ export function useProgramApplicationForm(
       isRemoteEnabled: true,
       bundle: null,
       blockedReason: null,
+      blockedMessage: null,
       refetch,
     }
   }
 
   if (optionsQuery.isError) {
+    const blockedReason = getApplicationApiErrorCode(optionsQuery.error)
     return {
       status: 'error',
       isRemoteEnabled: true,
       bundle: null,
-      blockedReason: getApplicationApiErrorCode(optionsQuery.error),
+      blockedReason,
+      blockedMessage: resolveApplicationBlockedDisplayMessage(
+        blockedReason,
+        optionsQuery.error,
+      ),
       refetch,
     }
   }
 
   if (!option) {
+    const blockedReason =
+      selection?.recruitmentId != null || (selection?.recruitmentIds?.length ?? 0) > 0
+        ? 'RECRUITMENT_NOT_FOUND'
+        : 'APPLICATION_FORM_NOT_CONFIGURED'
     return {
       status: 'unavailable',
       isRemoteEnabled: true,
       bundle: null,
-      blockedReason:
-        selection?.recruitmentId != null || (selection?.recruitmentIds?.length ?? 0) > 0
-          ? 'RECRUITMENT_NOT_FOUND'
-          : 'APPLICATION_FORM_NOT_CONFIGURED',
+      blockedReason,
+      blockedMessage: messageForApplicationBlockedReason(blockedReason),
       refetch,
     }
   }
 
   if (bindingId == null || recruitmentId == null || !applicationType) {
+    const blockedReason = option.blockedReason ?? 'APPLICATION_FORM_NOT_CONFIGURED'
     return {
       status: 'unavailable',
       isRemoteEnabled: true,
       bundle: null,
-      blockedReason: option.blockedReason ?? 'APPLICATION_FORM_NOT_CONFIGURED',
+      blockedReason,
+      blockedMessage: messageForApplicationBlockedReason(blockedReason),
       refetch,
     }
   }
 
   if (formQuery.isPending) {
+    const blockedReason = option.canApply === false ? (option.blockedReason ?? null) : null
     return {
       status: 'loading',
       isRemoteEnabled: true,
       bundle: null,
-      blockedReason: option.canApply === false ? (option.blockedReason ?? null) : null,
+      blockedReason,
+      blockedMessage: messageForApplicationBlockedReason(blockedReason),
       refetch,
     }
   }
 
   if (formQuery.isError || !formQuery.data || !readyBundle) {
+    const blockedReason =
+      getApplicationApiErrorCode(formQuery.error) ??
+      (option.canApply === false ? (option.blockedReason ?? null) : null)
     return {
       status: 'error',
       isRemoteEnabled: true,
       bundle: null,
-      blockedReason:
-        getApplicationApiErrorCode(formQuery.error) ??
-        (option.canApply === false ? (option.blockedReason ?? null) : null),
+      blockedReason,
+      blockedMessage: resolveApplicationBlockedDisplayMessage(
+        blockedReason,
+        formQuery.error,
+      ),
       refetch,
     }
   }
 
+  const blockedReason = option.canApply === false ? (option.blockedReason ?? null) : null
   return {
     status: 'ready',
     isRemoteEnabled: true,
     bundle: readyBundle,
-    blockedReason: option.canApply === false ? (option.blockedReason ?? null) : null,
+    blockedReason,
+    blockedMessage: messageForApplicationBlockedReason(blockedReason),
     refetch,
   }
 }

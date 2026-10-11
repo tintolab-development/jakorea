@@ -51,7 +51,8 @@ export const useSettlementStore = create<SettlementState>(set => ({
   createSettlement: async (data) => {
     set({ loading: true, error: null })
     try {
-      const newSettlement = await settlementService.create(data)
+      const totalAmount = (data.items ?? []).reduce((sum, item) => sum + (item.amount ?? 0), 0)
+      const newSettlement = await settlementService.create({ ...data, totalAmount })
       set(state => ({
         settlements: [...state.settlements, newSettlement],
         loading: false,

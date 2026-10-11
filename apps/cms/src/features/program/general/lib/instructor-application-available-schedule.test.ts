@@ -1,4 +1,25 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+const mockApprovedSlots = vi.hoisted(() => [
+  {
+    key: 'applicant-school-1|2026-04-15|1',
+    dateKey: '2026-04-15',
+    schoolId: 'applicant-school-1',
+    schoolName: '진월초등학교',
+    region: '광주',
+    sessionRound: 1,
+    sessionLabel: '1차시',
+    timeRange: '09:00 - 10:00',
+    assignedCount: 0,
+  },
+])
+
+vi.mock('./instructor-lecture-assign-schedule', () => ({
+  getApprovedInstitutionLectureScheduleSlots: (programId: string) =>
+    programId === 'general-prog-scheduled-1' ? mockApprovedSlots : [],
+  parseIndividualInstructorLectureAssignSchedule: vi.fn(() => []),
+}))
+
 import { buildInstructorAvailableScheduleSlots } from './instructor-application-available-schedule'
 
 describe('buildInstructorAvailableScheduleSlots', () => {

@@ -9,6 +9,7 @@ import type {
 } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { buildLectureFeeBasisDisplay } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 import { toSchoolEnrollmentStatusLabelOrRaw } from '@/features/user/api/map-school-enrollment-status'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
@@ -37,6 +38,7 @@ import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard
 import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard/schemas/interviewAvailabilitySlot'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
 import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
+import type { IndividualApplicationTeam } from '@/shared/api/generated/dashboard/schemas/individualApplicationTeam'
 import {
   parseParticipantSurveyViewKey,
   type ParticipatingIndividualParticipantRow,
@@ -54,9 +56,17 @@ import {
   formatRequestedSchedulesPeriodLabel,
   mapRequestedSchedulesToSessions,
 } from '@/features/program/1c-1s/lib/map-requested-schedules'
+import {
+  isCompanySchoolOrganizationApplication,
+  readOrganizationApplicationPreferredEducationSchedules,
+} from '@/features/program/general/lib/organization-application-preferred-education-schedules'
+import { resolveSessionCalendarDateKey } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { supplementApplicantInstructorBasicInfoFromApplicationDetail } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
+import { mapInstructorPreferredOrganizationsToPreferredSchools } from '@/features/program/general/lib/map-instructor-preferred-organizations'
 import { mapSessionProgressToLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
+import { mapDashboardScheduleDeliveryToSessionStatus } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
+import { readApplicationNameChangeCount } from '@/features/program/general/lib/individual-application-name-change-count'
 import {
   instructorCmsProfileToApplicantInstructorRowPartial,
   normalizeInstructorCmsProfileFromApi,
@@ -67,10 +77,12 @@ function toId(value: number | string | null | undefined): string {
   return String(value)
 }
 
-type IndividualApplicationDetailEnriched = Omit<
+export type IndividualApplicationDetailEnriched = Omit<
   IndividualApplicationDetailResponse,
-  'profile' | 'application'
+  'profile' | 'application' | 'team'
 > & {
+  /** BE IndividualApplicationTeam — codegen `Team`(teamName만)보다 넓음 */
+  team?: IndividualApplicationTeam | null
   profile?: NonNullable<IndividualApplicationDetailResponse['profile']> & {
     schoolEnrollmentStatus?: string
     affiliationSchool?: string
@@ -90,8 +102,14 @@ export function mapApiApplicationStatusToApprovalStatus(
   if (['APPROVED', 'ASSIGNED', 'WAITING_ASSIGNMENT'].includes(normalized)) {
     return 'approved'
   }
-  if (['REJECTED', 'AUTO_REJECTED', 'CANCELLED'].includes(normalized)) {
+  if (['REJECTED', 'AUTO_REJECTED'].includes(normalized)) {
     return 'rejected'
+  }
+  if (['CANCELLED', 'CANCELED'].includes(normalized)) {
+    return 'cancelled'
+  }
+  if (normalized === 'REJECTION_CANCELLED') {
+    return 'pending'
   }
   return 'pending'
 }
@@ -105,6 +123,8 @@ export function mapApprovalStatusToApiFilter(
       return 'APPROVED'
     case 'rejected':
       return 'REJECTED'
+    case 'cancelled':
+      return 'CANCELLED'
     case 'pending':
       return 'WAITING_REVIEW'
     default:
@@ -156,6 +176,98 @@ function formatOrganizationResultNotificationSentAt(iso?: string | null): string
   return formatApplicantSchoolApprovalNotificationSentAt(parsed)
 }
 
+function readOrganizationApplicationListGrade(
+  dto: OrganizationApplicationListItemResponse,
+): string {
+  const extended = dto as OrganizationApplicationListItemResponse & {
+    requestedGrade?: string | null
+  }
+  const raw = dto.grade?.trim() || extended.requestedGrade?.trim() || ''
+  return formatApplicantGradeLabel(raw) || ''
+}
+
+function pickFirstTrimmed(...values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    const trimmed = value?.trim()
+    if (trimmed) return trimmed
+  }
+  return ''
+}
+
+/** 개인 신청 목록 — applicationGrade 우선, BE 스냅샷·profile 보조 키 fallback */
+export function readIndividualApplicationListGrade(
+  dto: IndividualApplicationListItemEnriched
+): string {
+  const raw = pickFirstTrimmed(
+    dto.applicationGrade,
+    dto.affiliationGrade,
+    dto.profile?.affiliationGrade,
+    dto.profile?.grade,
+    dto.requestedGrade,
+    dto.educationGrade,
+    dto.grade
+  )
+  return formatApplicantGradeLabel(raw) || ''
+}
+
+export function readIndividualApplicationListAffiliationDisplayName(
+  dto: IndividualApplicationListItemEnriched
+): string {
+  return pickFirstTrimmed(
+    dto.affiliationName,
+    dto.affiliationSchool,
+    dto.schoolName,
+    dto.profile?.affiliationSchool,
+    dto.profile?.schoolName
+  )
+}
+
+function preferredSessionsHaveCalendarDate(sessions: ParticipatingSchoolSession[]): boolean {
+  return sessions.some(session => resolveSessionCalendarDateKey(session) != null)
+}
+
+function resolveOrganizationApplicationAssignmentSessions(
+  dto: OrganizationApplicationListItemResponse,
+  preferred: PreferredEducationSchedule[],
+  requestedSchedules?: RequestedScheduleResponse[]
+): ParticipatingSchoolSession[] {
+  if (isCompanySchoolOrganizationApplication(dto)) {
+    return mapRequestedSchedulesToSessions(requestedSchedules) ?? []
+  }
+  /** 신청 희망/선택 일정(B). OSA `sessions[]`와 별개 — 캘린더·목록은 preferred 우선 */
+  const fromPreferred = mapPreferredEducationSchedulesToSessions(preferred)
+  if (fromPreferred.length > 0) {
+    if (preferredSessionsHaveCalendarDate(fromPreferred)) {
+      return fromPreferred
+    }
+    const fromRequested = mapRequestedSchedulesToSessions(requestedSchedules) ?? []
+    if (fromRequested.length > 0) return fromRequested
+    return fromPreferred
+  }
+  const fromRequested = mapRequestedSchedulesToSessions(requestedSchedules) ?? []
+  if (fromRequested.length > 0) return fromRequested
+  return fromPreferred
+}
+
+export function applyRequestedSchedulesToApplicantSchoolRow(
+  row: ApplicantSchoolRow,
+  requestedSchedules: RequestedScheduleResponse[] | undefined,
+  options?: { companySchool?: boolean }
+): ApplicantSchoolRow {
+  const preferred = row.preferredEducationSchedules ?? []
+  const dto: OrganizationApplicationListItemResponse = {
+    programType: options?.companySchool ? 'ONE_COMPANY_ONE_SCHOOL' : 'GENERAL_ORGANIZATION',
+  }
+  const sessions = resolveOrganizationApplicationAssignmentSessions(
+    dto,
+    preferred,
+    requestedSchedules
+  )
+  const desiredEducationPeriod =
+    formatRequestedSchedulesPeriodLabel(requestedSchedules) ?? row.desiredEducationPeriod
+  return { ...row, sessions, desiredEducationPeriod }
+}
+
 export function mapOrganizationApplicationToApplicantSchoolRow(
   dto: OrganizationApplicationListItemResponse,
   index: number,
@@ -164,7 +276,12 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     requestedSchedules?: RequestedScheduleResponse[]
   }
 ): ApplicantSchoolRow {
-  const sessions = mapRequestedSchedulesToSessions(options?.requestedSchedules)
+  const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const sessions = resolveOrganizationApplicationAssignmentSessions(
+    dto,
+    preferred,
+    options?.requestedSchedules
+  )
   const desiredEducationPeriod = formatRequestedSchedulesPeriodLabel(options?.requestedSchedules)
   const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
 
@@ -175,7 +292,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     no: index + 1,
     schoolName: dto.organizationName?.trim() || '기관명 없음',
     region,
-    educationGrade: dto.grade?.trim() || '',
+    educationGrade: readOrganizationApplicationListGrade(dto),
     classCount: dto.requestedClassCount ?? 0,
     studentCount: dto.requestedStudentCount ?? 0,
     teacherName: dto.teacherName?.trim() || '-',
@@ -188,6 +305,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     availableActions: dto.availableActions ?? [],
     programId,
     sessions,
+    preferredEducationSchedules: preferred.length > 0 ? preferred : undefined,
     desiredEducationPeriod,
     detail: {
       ...readOrganizationApplicationEconomyDisplayFields(dto),
@@ -254,6 +372,16 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   const teacherEmail = dto.teacherEmail?.trim()
   const detailFields = readOrganizationApplicationDetailExtendFields(dto)
   const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
+  const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const assignmentSessions = resolveOrganizationApplicationAssignmentSessions(
+    dto as OrganizationApplicationListItemResponse,
+    preferred.length > 0 ? preferred : (base.preferredEducationSchedules ?? []),
+    undefined
+  )
+  const sessions =
+    assignmentSessions.length > 0
+      ? assignmentSessions
+      : base.sessions
   return {
     ...base,
     id: toId(dto.id) || base.id,
@@ -273,6 +401,8 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
       formatOrganizationResultNotificationSentAt(readResultNotificationSentAt(dto)) ??
       base.approvalNotificationSentAt,
     availableActions: dto.availableActions ?? base.availableActions,
+    sessions,
+    ...(preferred.length > 0 ? { preferredEducationSchedules: preferred } : {}),
     ...(requestedScheduleMemo
       ? { desiredEducationPeriod: requestedScheduleMemo }
       : base.desiredEducationPeriod
@@ -410,6 +540,10 @@ export function mapInstructorApplicationToApplicantInstructorRow(
   const affiliation = resolveStoredAffiliation({
     affiliationOrganizationId: dto.affiliationOrganizationId,
   })
+  const preferredSchools = mapInstructorPreferredOrganizationsToPreferredSchools(
+    dto.preferredOrganizations ?? []
+  )
+  const primarySchoolName = preferredSchools[0]?.schoolName?.trim()
   return {
     id: toId(dto.id),
     instructorMemberId:
@@ -431,7 +565,8 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     email: dto.email?.trim() || '',
     address: dto.homeAddress?.trim() || '',
     appliedAt: dto.submittedAt,
-    schoolName: '',
+    schoolName: primarySchoolName && primarySchoolName !== '-' ? primarySchoolName : '',
+    preferredSchools: preferredSchools.length > 0 ? preferredSchools : undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
     instructorFeeGradeLabel:
@@ -573,8 +708,8 @@ export function mapInstructorApplicationDetailToApplicantRow(
     birthDate: dto.birthDate?.trim() || base.birthDate,
     gender: toGenderLabelOrRaw(dto.gender) || base.gender,
     rejectionReason: dto.rejectReason?.trim() || base.rejectionReason,
-    distanceKm: dto.distanceKm ?? base.distanceKm,
-    longDistanceYn: dto.longDistance ?? base.longDistanceYn,
+    distanceKm: dto.distanceKm !== undefined ? dto.distanceKm : base.distanceKm,
+    longDistanceYn: dto.longDistance !== undefined ? dto.longDistance : base.longDistanceYn,
     managerComment: dto.managerComment ?? base.managerComment,
     availableActions: dto.availableActions ?? base.availableActions,
     preferredScheduleSlots,
@@ -744,30 +879,24 @@ export function mapPreferredEducationSchedulesToSessions(
       validStart && validEnd && end.getTime() > start.getTime()
         ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
         : '-'
+    const scheduleId = schedule.scheduleId
+    const hasResolvedSchedule =
+      scheduleId != null && Number.isFinite(scheduleId) && scheduleId > 0
+    const label = scheduleLabel || undefined
+    const scheduleUnresolved = !hasResolvedSchedule && Boolean(label)
+    const round = schedule.round ?? index + 1
     return {
-      round: schedule.round ?? index + 1,
+      round,
       ...dateParts,
       duration,
       format: '-',
-      classNum: '-',
+      classNum: `${round}지망`,
       timeRange,
-      ...(scheduleLabel ? { scheduleLabel } : {}),
-      ...(schedule.scheduleId != null ? { requestedScheduleId: schedule.scheduleId } : {}),
+      ...(label ? { scheduleLabel: label } : {}),
+      resolvedScheduleId: hasResolvedSchedule ? scheduleId : null,
+      ...(scheduleUnresolved ? { scheduleUnresolved: true } : {}),
     }
   })
-}
-
-function mapSessionProgressStatusToParticipating(
-  raw?: string | null
-): ParticipatingSchoolSession['status'] {
-  const upper = (raw ?? '').trim().toUpperCase()
-  if (upper === 'COMPLETED' || upper === 'DONE' || upper === 'ATTENDED' || upper === 'PRESENT') {
-    return 'completed'
-  }
-  if (upper === 'NOT_PLANNED' || upper === 'CANCELLED' || upper === 'CANCELED') {
-    return 'not_planned'
-  }
-  return 'pending'
 }
 
 /** participants `sessions[]` (SessionProgress) → 참여 봉사자/캘린더용 세션 */
@@ -780,6 +909,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
       return byStart || (a.sessionNo ?? 0) - (b.sessionNo ?? 0)
     })
     .map((session, index) => {
+      const scheduleName = session.scheduleName?.trim() || ''
       const start = session.startAt ? new Date(session.startAt) : null
       const end = session.endAt ? new Date(session.endAt) : null
       const validStart = start != null && !Number.isNaN(start.getTime())
@@ -796,19 +926,25 @@ export function mapSessionProgressToParticipatingSchoolSessions(
           ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
           : '-'
       const round = session.sessionNo ?? index + 1
+      const resolvedScheduleId = session.resolvedScheduleId ?? session.scheduleId ?? null
+      const scheduleUnresolved =
+        session.scheduleUnresolved ??
+        (resolvedScheduleId == null && session.requestedScheduleId != null)
+      const scheduleLabel = !validStart && scheduleName ? scheduleName : undefined
+      const deliveryScheduleStatus = session.scheduleStatus?.trim() || undefined
       return {
         round,
         ...dateParts,
         duration,
-        format: session.scheduleName?.trim() || '-',
+        format: scheduleName || '-',
         classNum: `${round}교시`,
         timeRange,
-        status: mapSessionProgressStatusToParticipating(
-          session.attendanceStatus ?? session.assignmentStatus
-        ),
-        resolvedScheduleId: session.scheduleId ?? session.resolvedScheduleId ?? null,
+        ...(scheduleLabel ? { scheduleLabel } : {}),
+        ...(deliveryScheduleStatus ? { deliveryScheduleStatus } : {}),
+        status: mapDashboardScheduleDeliveryToSessionStatus(session.scheduleStatus),
+        resolvedScheduleId,
         requestedScheduleId: session.requestedScheduleId ?? undefined,
-        scheduleUnresolved: session.scheduleId == null && session.resolvedScheduleId == null,
+        scheduleUnresolved,
       }
     })
 }
@@ -835,9 +971,10 @@ export function mapIndividualApplicationToApplicantRow(
     dto.assignedInterviewEndAt
   )
   const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
+  const affiliationDisplayName = readIndividualApplicationListAffiliationDisplayName(dto)
   const affiliation = resolveStoredAffiliation({
     affiliationOrganizationId: dto.affiliationOrganizationId,
-    affiliationDisplayName: dto.affiliationName,
+    affiliationDisplayName,
   })
   return {
     id: toId(dto.id),
@@ -845,7 +982,7 @@ export function mapIndividualApplicationToApplicantRow(
     applicantName: dto.memberName?.trim() || '이름 없음',
     availableActions: dto.availableActions,
     affiliation: affiliation.affiliation,
-    educationGrade: dto.applicationGrade?.trim() || '',
+    educationGrade: readIndividualApplicationListGrade(dto),
     homeAddress: dto.homeAddressSummary?.trim() || '',
     appliedAt: dto.submittedAt,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
@@ -884,15 +1021,10 @@ export function mapIndividualApplicationDetailToApplicantRow(
     dto.assignedInterviewEndAt
   )
   const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
-  const team = dto.team as
-    | {
-        name?: string
-        teamName?: string
-        memberCount?: number
-        role?: string
-      }
-    | undefined
-  const teamRole = team?.role?.trim().toUpperCase()
+  const teamDetail = resolveIndividualApplicationTeamDetail({
+    team: dto.team,
+    formAnswers: dto.application?.formAnswers,
+  })
   const canEditDocumentEvaluation =
     dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
 
@@ -900,15 +1032,16 @@ export function mapIndividualApplicationDetailToApplicantRow(
     ...base,
     id: toId(dto.id) || base.id,
     memberId: toId(dto.memberId) || undefined,
-    applicantName: profile?.name?.trim() || '',
+    applicantName: profile?.name?.trim() || base.applicantName || '',
     availableActions: dto.availableActions ?? [],
     privacyMaskingLevel: dto.privacyMaskingLevel === 'UNMASKED' ? 'UNMASKED' : 'MASKED',
     canRevealPersonalInfo: dto.canRevealPersonalInfo === true,
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditDocumentEvaluation,
     canEditManagerBEvaluation: dto.canEditManagerBEvaluation ?? canEditDocumentEvaluation,
-    affiliation: profile?.affiliationSchool?.trim() || '',
-    educationGrade: profile?.affiliationGrade?.trim() || '',
-    homeAddress: profile?.homeAddress?.trim() || '',
+    affiliation: profile?.affiliationSchool?.trim() || base.affiliation || '',
+    educationGrade:
+      formatApplicantGradeLabel(profile?.affiliationGrade) || base.educationGrade || '',
+    homeAddress: profile?.homeAddress?.trim() || base.homeAddress || '',
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || base.programId,
@@ -927,17 +1060,13 @@ export function mapIndividualApplicationDetailToApplicantRow(
       homeAddressFull: profile?.homeAddress ?? undefined,
       id1365: profile?.external1365Id ?? undefined,
       selfIntroduction: dto.application?.selfIntroduction ?? undefined,
-      teamName: team?.name ?? team?.teamName ?? undefined,
-      teamMemberCount: team?.memberCount,
-      teamMemberCountSelect:
-        team?.memberCount != null && team.memberCount >= 1 && team.memberCount <= 5
-          ? (String(team.memberCount) as '1' | '2' | '3' | '4' | '5')
-          : team?.memberCount != null
-            ? 'custom'
-            : undefined,
-      teamRole: teamRole === 'LEADER' ? 'leader' : teamRole === 'MEMBER' ? 'member' : undefined,
+      teamName: teamDetail.teamName,
+      teamMemberCount: teamDetail.teamMemberCount,
+      teamMemberCountSelect: teamDetail.teamMemberCountSelect,
+      teamRole: teamDetail.teamRole,
       interviewAvailability,
       scheduleChangeCancelCount: dto.application?.scheduleChangeCancelCount ?? 0,
+      applicationNameChangeCount: readApplicationNameChangeCount(dto.application),
     },
     textbookId: toId(dto.textbook?.id) || undefined,
     textbookName: dto.textbook?.name ?? undefined,
@@ -1332,7 +1461,7 @@ export function mapParticipantToParticipatingSchoolRow(
   const teacherPhone = dto.phone?.trim() || dto.contact?.trim() || undefined
   const teacherEmail = dto.email?.trim() || undefined
   const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
-  const sessions = mapSessionProgressToParticipatingSchoolSessions(dto.sessions)
+  const sessions = mapSessionProgressToParticipatingSchoolSessions(dto.sessions ?? [])
   return {
     id: toId(dto.participantId),
     organizationId: dto.organizationId ?? undefined,
@@ -1509,6 +1638,10 @@ export function mapParticipantToParticipatingVolunteerRow(
   const contact = enriched.contact?.trim() || enriched.phone?.trim() || ''
   const email = enriched.email?.trim() || ''
   const id1365 = enriched.id1365?.trim() || enriched.external1365Id?.trim() || ''
+  const homeRegion =
+    dto.homeAddressSummary?.trim() ||
+    [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim() ||
+    undefined
 
   return {
     id: toId(dto.participantId),
@@ -1526,6 +1659,7 @@ export function mapParticipantToParticipatingVolunteerRow(
     affiliation: affiliation.affiliation,
     id1365,
     assignedInstitutionNames,
+    homeRegion,
     sessions: mapSessionProgressToParticipatingSchoolSessions(dto.sessions),
     contact: contact || '-',
     email: email || '-',

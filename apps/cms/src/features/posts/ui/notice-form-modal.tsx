@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Form } from 'antd'
-import type { Notice, NoticeAttachment } from '@/data/mock/notices'
+import type { Notice, NoticeAttachment } from '@/features/posts/model/notice'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
 import {

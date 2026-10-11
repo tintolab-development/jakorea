@@ -1,5 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query'
-import type { Notice } from '@/data/mock/notices'
+import type { Notice } from '@/features/posts/model/notice'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import {
   statusMatchesListVisibility,

@@ -1,10 +1,6 @@
 import {
-  addMaterialKitTargetCountRemote,
-  createMaterialKitRemote,
-  createMaterialKitVersionRemote,
-  fetchCurrentKitCalculationRemote,
-  fetchMaterialKitVersionsRemote,
-  fetchMaterialKitsRemote,
+  fetchGlobalMaterialKitCurrentConfigRemote,
+  putGlobalMaterialKitCurrentConfigRemote,
 } from '@/features/textbook/api/material-kits-api-client'
 import { shouldUseTextbooksRemoteApi } from '@/features/textbook/api/admin-textbooks-service'
 import {
@@ -13,8 +9,8 @@ import {
 } from '@/features/textbook/ui/textbook-kit-quantity-modal'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
-
-const GLOBAL_KIT_NAME = '교재 키트 수량'
+import type { MaterialKitCurrentConfigRequest } from '@/shared/api/generated/data-management/schemas'
+import type { MaterialKitCurrentConfigResponse } from '@/shared/api/generated/data-management/schemas'
 
 export const MATERIAL_KIT_TARGET_LEVELS = [
   'kindergarten',
@@ -23,11 +19,6 @@ export const MATERIAL_KIT_TARGET_LEVELS = [
   'high',
   'university',
 ] as const satisfies ReadonlyArray<keyof TextbookKitQuantityValues>
-
-/** 세션 내 글로벌 키트 id — GET /material-kits 반복 방지 */
-let cachedGlobalKitId: number | null = null
-/** 세션 내 current version id (kitId별) */
-const cachedVersionIdByKitId = new Map<number, number>()
 
 function assertMaterialKitsRemoteReady(): void {
   if (!isRealApiModuleEnabled('textbooks')) {
@@ -44,94 +35,66 @@ export function shouldUseMaterialKitsRemoteApi(): boolean {
   return shouldUseTextbooksRemoteApi()
 }
 
-/** 테스트·로그아웃 시 모듈 캐시 초기화 */
+/** 테스트·로그아웃 시 모듈 캐시 초기화 (레거시 kit id 캐시 호환) */
 export function clearMaterialKitIdCache(): void {
-  cachedGlobalKitId = null
-  cachedVersionIdByKitId.clear()
+  // global current-config 경로에서는 kit id 캐시를 사용하지 않음
 }
 
-async function resolveGlobalMaterialKitId(): Promise<number> {
-  if (cachedGlobalKitId != null) return cachedGlobalKitId
-
-  const page = await fetchMaterialKitsRemote({
-    page: 0,
-    size: 100,
-    useYn: true,
-    globalOnly: true,
-  })
-  const items = page.items ?? []
-  const globalKit = items.find(kit => kit.textbookId == null) ?? items[0]
-  if (globalKit?.id != null) {
-    cachedGlobalKitId = globalKit.id
-    return cachedGlobalKitId
-  }
-
-  const created = await createMaterialKitRemote({ kitName: GLOBAL_KIT_NAME, useYn: true })
-  if (created.id == null) {
-    throw new Error('키트를 생성하지 못했습니다.')
-  }
-  cachedGlobalKitId = created.id
-  return cachedGlobalKitId
+function readLevelCount(
+  config: MaterialKitCurrentConfigResponse,
+  level: keyof TextbookKitQuantityValues
+): number | undefined {
+  if (level === 'kindergarten') return config.infant
+  return config[level]
 }
 
-async function resolveCurrentVersionId(kitId: number): Promise<number> {
-  const cached = cachedVersionIdByKitId.get(kitId)
-  if (cached != null) return cached
-
-  const versions = await fetchMaterialKitVersionsRemote(kitId)
-  const current = versions.find(version => version.current) ?? versions.at(-1)
-  if (current?.id != null) {
-    cachedVersionIdByKitId.set(kitId, current.id)
-    return current.id
+export function materialKitCurrentConfigToQuantities(
+  config: MaterialKitCurrentConfigResponse
+): TextbookKitQuantityValues {
+  const values: TextbookKitQuantityValues = { ...DEFAULT_KIT_QUANTITIES }
+  for (const level of MATERIAL_KIT_TARGET_LEVELS) {
+    const count = readLevelCount(config, level)
+    if (count != null && count >= 0) {
+      values[level] = String(count)
+    }
   }
+  return values
+}
 
-  const created = await createMaterialKitVersionRemote(kitId, { current: true })
-  if (created.id == null) {
-    throw new Error('키트 버전을 생성하지 못했습니다.')
+export function quantitiesToMaterialKitCurrentConfigRequest(
+  values: TextbookKitQuantityValues,
+  options?: { effectiveFrom?: string }
+): MaterialKitCurrentConfigRequest {
+  const parsed = (level: keyof TextbookKitQuantityValues) => {
+    const n = Number.parseInt(values[level], 10)
+    if (Number.isNaN(n) || n < 0) {
+      throw new Error('키트 수량은 0 이상의 숫자로 입력해 주세요.')
+    }
+    return n
   }
-  cachedVersionIdByKitId.set(kitId, created.id)
-  return created.id
+  return {
+    infant: parsed('kindergarten'),
+    elementary: parsed('elementary'),
+    middle: parsed('middle'),
+    high: parsed('high'),
+    university: parsed('university'),
+    ...(options?.effectiveFrom?.trim() ? { effectiveFrom: options.effectiveFrom.trim() } : {}),
+  }
 }
 
 export async function getMaterialKitQuantities(): Promise<TextbookKitQuantityValues> {
   assertMaterialKitsRemoteReady()
-  const kitId = await resolveGlobalMaterialKitId()
-  const values: TextbookKitQuantityValues = { ...DEFAULT_KIT_QUANTITIES }
-
-  await Promise.all(
-    MATERIAL_KIT_TARGET_LEVELS.map(async level => {
-      try {
-        const calculation = await fetchCurrentKitCalculationRemote(kitId, {
-          targetLevel: level,
-          targetStudentCount: 0,
-        })
-        if (calculation.bookCountPerKit != null && calculation.bookCountPerKit >= 0) {
-          values[level] = String(calculation.bookCountPerKit)
-        }
-      } catch {
-        // 미설정 레벨은 기본값 유지
-      }
-    })
-  )
-
-  return values
+  const config = await fetchGlobalMaterialKitCurrentConfigRemote()
+  return materialKitCurrentConfigToQuantities(config)
 }
 
 export async function saveMaterialKitQuantities(
   values: TextbookKitQuantityValues
 ): Promise<void> {
   assertMaterialKitsRemoteReady()
-  const kitId = await resolveGlobalMaterialKitId()
-  const versionId = await resolveCurrentVersionId(kitId)
-
-  for (const level of MATERIAL_KIT_TARGET_LEVELS) {
-    const parsed = Number.parseInt(values[level], 10)
-    if (Number.isNaN(parsed) || parsed < 0) {
-      throw new Error('키트 수량은 0 이상의 숫자로 입력해 주세요.')
-    }
-    await addMaterialKitTargetCountRemote(versionId, {
-      targetLevel: level,
-      bookCountPerKit: parsed,
-    })
-  }
+  const current = await fetchGlobalMaterialKitCurrentConfigRemote()
+  const body = quantitiesToMaterialKitCurrentConfigRequest(values, {
+    effectiveFrom: current.effectiveFrom,
+  })
+  await putGlobalMaterialKitCurrentConfigRemote(body)
 }

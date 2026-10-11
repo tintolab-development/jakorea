@@ -29,6 +29,12 @@
   margin: var(--spacing-40) 0 var(--spacing-24);
 }
 
+.tabPanelBody {
+  width: 100%;
+  min-width: 0;
+  min-height: 280px;
+}
+
 .placeholder {
   margin: 0;
   padding-block: var(--spacing-40);

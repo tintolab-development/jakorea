@@ -1,4 +1,4 @@
-.list {
+.root {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-16);
@@ -6,22 +6,11 @@
   min-width: 0;
 }
 
-.card {
+.answer {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-12);
   width: 100%;
   min-width: 0;
-}
-
-.header {
-  display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.title,
-.description {
-  margin: 0;
+  align-items: stretch;
+  gap: var(--spacing-8);
 }

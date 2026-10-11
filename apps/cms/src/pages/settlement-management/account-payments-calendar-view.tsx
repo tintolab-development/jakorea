@@ -11,12 +11,12 @@ import {
   formatAccountPaymentSessionLabelDisplay,
   resolveAccountPaymentCalendarDate,
   type AccountPaymentRow,
-} from '@/data/mock/account-payments-list'
+} from '@/features/settlement-management/model/account-payments-list'
 import {
   type InstructorSettlementInvoiceDetail,
   type InstructorSettlementListRow,
   type InstructorSettlementUiStatus,
-} from '@/data/mock/instructor-member-settlements'
+} from '@/features/settlement-management/model/instructor-member-settlements'
 import {
   CalendarMain,
   CalendarMini,

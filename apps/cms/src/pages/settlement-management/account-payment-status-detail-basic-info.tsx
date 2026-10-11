@@ -2,7 +2,7 @@
  * 계좌 지급 현황 상세 — 기본 정보(인적 1블록 + 프로그램·지급 1블록)
  */
 
-import type { AccountPaymentStatusDetailBasic } from '@/data/mock/account-payments-list'
+import type { AccountPaymentStatusDetailBasic } from '@/features/settlement-management/model/account-payments-list'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import {

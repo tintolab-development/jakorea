@@ -15,3 +15,4 @@ alwaysApply: true
 - **프로그램 관리 FE Mock 시드는 금지** — [program-no-fe-mock.mdc](apps/cms/.cursor/rules/process/program-no-fe-mock.mdc)
 - `shared/`·타 유형에서 import한 컴포넌트 수정 시 **`variant` / `columnPreset` / `programMode` 등으로 분기**하고, **기본값은 원래 유형 유지**.
 - 영향 유형이 불명확하거나 **2개 이상 유형에 닿으면 코드 변경 전 유저에게 확인**한다.
+- 상세 **공통·모집·신청 저장**은 [program-detail-overlay-save-ssot.mdc](program-detail-overlay-save-ssot.mdc) SSOT를 따른다.

@@ -14,9 +14,9 @@ import {
   fetchIndividualApplicationDetailRemote,
   fetchInstructorApplicationDetailRemote,
   fetchOrganizationApplicationDetailRemote,
-  fetchOrganizationApplicationRequestedSchedulesRemote,
   fetchVolunteerApplicationDetailRemote,
 } from '@/features/program/general/api/applications-api-client'
+import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
 import { mapRequestedSchedulesToSessions } from '@/features/program/1c-1s/lib/map-requested-schedules'
 import {
   listAdminCommentsByTargetRemote,
@@ -189,15 +189,10 @@ export function useOrganizationApplicationDetailEnrichment(
   const organizationRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
 
   const requestedSchedulesQuery = useQuery({
-    queryKey: generalApplicationsQueryKeys.organizationRequestedSchedules(
-      String(contextId ?? '')
-    ),
-    queryFn: () => fetchOrganizationApplicationRequestedSchedulesRemote(String(contextId)),
+    ...organizationRequestedSchedulesQueryOptions(String(contextId ?? '')),
     enabled: Boolean(
       options?.enabled !== false && organizationRemoteEnabled && contextId != null
     ),
-    staleTime: 30_000,
-    retry: false,
   })
 
   const hydratedWithSchedules = useMemo(() => {

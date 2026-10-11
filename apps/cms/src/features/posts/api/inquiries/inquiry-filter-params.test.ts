@@ -5,7 +5,7 @@ describe('inquiriesParamsFromSearchParams', () => {
   it('omits empty optional filters', () => {
     expect(inquiriesParamsFromSearchParams(new URLSearchParams())).toEqual({
       page: 0,
-      size: 500,
+      size: 20,
     })
   })
 
@@ -17,7 +17,7 @@ describe('inquiriesParamsFromSearchParams', () => {
     )
     expect(params).toEqual({
       page: 0,
-      size: 500,
+      size: 20,
       status: 'pending',
       category: '정산',
       programName: 'UJAT',
@@ -39,12 +39,12 @@ describe('inquiriesParamsFromSearchParams', () => {
   it('sends createdFrom or createdTo when only one URL date is set', () => {
     expect(inquiriesParamsFromSearchParams(new URLSearchParams('inq_from=2026-01-01'))).toEqual({
       page: 0,
-      size: 500,
+      size: 20,
       createdFrom: '2026-01-01',
     })
     expect(inquiriesParamsFromSearchParams(new URLSearchParams('inq_to=2026-01-31'))).toEqual({
       page: 0,
-      size: 500,
+      size: 20,
       createdTo: '2026-01-31',
     })
   })

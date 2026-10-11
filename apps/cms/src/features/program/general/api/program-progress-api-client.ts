@@ -1,9 +1,46 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import { getJAKoreaCMSBackendAPIProgramProgressSubset } from '@/shared/api/generated/program-progress/program-progress-api'
+import type { EmployeeVolunteerCountReplaceRequest } from '@/shared/api/generated/program-progress/schemas/employeeVolunteerCountReplaceRequest'
+import type { EmployeeVolunteerCountSetResponse } from '@/shared/api/generated/program-progress/schemas/employeeVolunteerCountSetResponse'
+import type { PageResponseProgramParticipantRegisterCandidateResponse } from '@/shared/api/generated/program-progress/schemas/pageResponseProgramParticipantRegisterCandidateResponse'
+import type { VolunteerParticipantRegisterRequest } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequest'
+import type { VolunteerParticipantRegisterResponse } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterResponse'
+
 import type { PageResponseParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseParticipantListItemResponse'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import type { ChangeRequest } from '@/shared/api/generated/dashboard/schemas/changeRequest'
 import type { ChangeResponse } from '@/shared/api/generated/dashboard/schemas/changeResponse'
+import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
+import {
+  bulkAttendanceScheduleIdsCacheKey,
+  ensureAttendancesByScheduleIdKeys,
+  groupAttendancesByScheduleId,
+  normalizeBulkAttendanceScheduleIds,
+  type BulkAttendanceScheduleIdsInput,
+} from '@/features/program/general/lib/program-attendance-bulk'
+
+const inFlightAttendancesByScheduleIds = new Map<
+  string,
+  Promise<Record<string, AttendanceItemResponse[]>>
+>()
+
+function attendancesByScheduleIdsInFlightKey(
+  programId: string,
+  normalized: ReturnType<typeof normalizeBulkAttendanceScheduleIds>
+): string {
+  return `${programId}:${bulkAttendanceScheduleIdsCacheKey(normalized)}`
+}
+
+const programProgressApi = getJAKoreaCMSBackendAPIProgramProgressSubset()
+
+function toNumericProgramId(programId: string): number {
+  const parsed = Number(programId)
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`Invalid programId: ${programId}`)
+  }
+  return parsed
+}
 
 export type ProgramParticipantsListQuery = {
   participantType?: string
@@ -36,14 +73,9 @@ export async function fetchProgramParticipantsRemote(
 export async function fetchScheduleAttendancesRemote(
   programId: string,
   scheduleId: string
-): Promise<
-  import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
-> {
+): Promise<AttendanceItemResponse[]> {
   const body = await unwrapApiBody<
-    | import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
-    | {
-        items?: import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
-      }
+    AttendanceItemResponse[] | { items?: AttendanceItemResponse[] }
   >(
     await customInstance({
       url: `/api/admin/program-execution/programs/${encodeURIComponent(programId)}/schedules/${encodeURIComponent(scheduleId)}/attendances`,
@@ -52,6 +84,69 @@ export async function fetchScheduleAttendancesRemote(
   )
   if (Array.isArray(body)) return body
   return body.items ?? []
+}
+
+function buildProgramAttendancesBulkUrl(
+  programId: string,
+  normalized: ReturnType<typeof normalizeBulkAttendanceScheduleIds>
+): string {
+  const base = `/api/admin/program-execution/programs/${encodeURIComponent(programId)}/attendances`
+  if (normalized.kind !== 'filtered') {
+    return base
+  }
+  const search = new URLSearchParams()
+  for (const scheduleId of normalized.scheduleIds) {
+    search.append('scheduleIds', String(scheduleId))
+  }
+  return `${base}?${search.toString()}`
+}
+
+/** GET /api/admin/program-execution/programs/{programId}/attendances */
+export async function fetchProgramAttendancesBulkRemote(
+  programId: string,
+  scheduleIds?: BulkAttendanceScheduleIdsInput
+): Promise<AttendanceItemResponse[]> {
+  const normalized = normalizeBulkAttendanceScheduleIds(scheduleIds)
+  if (normalized.kind === 'empty') {
+    return []
+  }
+  const body = await unwrapApiBody<AttendanceItemResponse[] | { items?: AttendanceItemResponse[] }>(
+    await customInstance({
+      url: buildProgramAttendancesBulkUrl(programId, normalized),
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}
+
+export async function fetchAttendancesByScheduleIdsRemote(
+  programId: string,
+  scheduleIds: BulkAttendanceScheduleIdsInput
+): Promise<Record<string, AttendanceItemResponse[]>> {
+  const normalized = normalizeBulkAttendanceScheduleIds(scheduleIds)
+  if (normalized.kind === 'empty') {
+    return {}
+  }
+  const inFlightKey = attendancesByScheduleIdsInFlightKey(programId, normalized)
+  const existing = inFlightAttendancesByScheduleIds.get(inFlightKey)
+  if (existing) {
+    return existing
+  }
+  const promise = (async () => {
+    const items = await fetchProgramAttendancesBulkRemote(programId, scheduleIds)
+    const grouped = groupAttendancesByScheduleId(items)
+    if (normalized.kind === 'filtered') {
+      return ensureAttendancesByScheduleIdKeys(grouped, normalized.scheduleIds)
+    }
+    return grouped
+  })()
+  inFlightAttendancesByScheduleIds.set(inFlightKey, promise)
+  try {
+    return await promise
+  } finally {
+    inFlightAttendancesByScheduleIds.delete(inFlightKey)
+  }
 }
 
 export async function putScheduleAttendancesRemote(
@@ -297,13 +392,24 @@ export async function changeParticipantSchedulesRemote(
   )
 }
 
-/** education-scope GET/PUT additive enrich — CmsParticipantEducationScopeScheduleEnrich */
+/**
+ * education-scope GET/PUT additive enrich — CmsParticipantEducationScopeScheduleEnrich.
+ * GENERAL_INDIVIDUAL VOLUNTEER는 configured/scheduleIds와 무관하게
+ * 프로그램 ACTIVE/COMPLETED 일정이 들어올 수 있다 (배정 대기 행의 distanceKm용).
+ */
 export type ParticipantEducationScopeScheduleEnrich = {
   scheduleId: number
+  /** 일정 장소 표시. distanceKm와 별개 */
   locationName?: string | null
+  /** 일정 주소 표시. distanceKm와 별개 */
   address?: string | null
+  /**
+   * member_personal_profile 자택 ↔ 일정 장소 편도 km. NAVER Maps 실측, 소수 1자리.
+   * null: LOCAL_DISTANCE, 자택·일정 주소 없음, 지오코딩·경로 실패,
+   * 자택과 장소가 같아 서버가 0km 이하로 버린 경우. FE는 재계산하지 않는다.
+   */
   distanceKm?: number | null
-  /** 동일 scheduleId VOLUNTEER education-scope 인원 — 항상 number, 0 포함 */
+  /** 동일 scheduleId VOLUNTEER education-scope 인원. 항상 number, 0 포함 (omit 금지) */
   assignedVolunteerCount: number
 }
 
@@ -313,7 +419,7 @@ export type ParticipantEducationScopeResponse = {
   revision?: number
   configured?: boolean
   scheduleIds?: number[]
-  /** additive — scheduleIds만으로도 배정 분기는 동작 */
+  /** additive. [] 가능, null 아님. 없으면 FE는 []로 취급 */
   schedules?: ParticipantEducationScopeScheduleEnrich[]
 }
 
@@ -458,7 +564,13 @@ export type GeneralAssignmentSubmissionScheduleDto = {
 
 export type GeneralAssignmentSubmissionListResponse = {
   items?: GeneralAssignmentSubmissionScheduleDto[] | null
+  page?: number
+  size?: number
+  totalElements?: number
+  totalPages?: number
 }
+
+const GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE = 200
 
 /** GET /api/admin/programs/{programId}/assignment-submissions — 일반 개인 LNB 과제 관리 */
 export async function fetchProgramAssignmentSubmissionsRemote(
@@ -473,17 +585,25 @@ export async function fetchProgramAssignmentSubmissionsRemote(
     size?: number
   }
 ): Promise<GeneralAssignmentSubmissionListResponse> {
+  const query = {
+    page: params?.page ?? 0,
+    size: params?.size ?? GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE,
+    ...params,
+  }
   const body = await unwrapApiBody<
     GeneralAssignmentSubmissionListResponse | GeneralAssignmentSubmissionScheduleDto[]
   >(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/assignment-submissions`,
       method: 'GET',
-      params,
+      params: query,
     })
   )
   if (Array.isArray(body)) return { items: body }
-  return { items: body.items ?? [] }
+  return {
+    ...body,
+    items: body.items ?? [],
+  }
 }
 
 /** POST /api/admin/programs/{programId}/submission-teams */
@@ -497,5 +617,65 @@ export async function createProgramSubmissionTeamRemote(
       method: 'POST',
       data: payload,
     })
+  )
+}
+
+export type { VolunteerParticipantRegisterRequest } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequest'
+export type { VolunteerParticipantRegisterResponse } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterResponse'
+export type { ProgramParticipantRegisterCandidateResponse } from '@/shared/api/generated/program-progress/schemas/programParticipantRegisterCandidateResponse'
+
+/** @deprecated Use `PageResponseProgramParticipantRegisterCandidateResponse` from generated program-progress schemas */
+export type ProgramParticipantRegisterCandidatesPage =
+  PageResponseProgramParticipantRegisterCandidateResponse
+
+/**
+ * POST /api/admin/programs/{programId}/volunteer-participants/register
+ * CMS 참여 봉사자 추가 등록 — 신청서·동의·participant 일괄 생성
+ */
+export async function registerVolunteerParticipantRemote(
+  programId: string,
+  payload: VolunteerParticipantRegisterRequest
+): Promise<VolunteerParticipantRegisterResponse> {
+  return unwrapApiBody<VolunteerParticipantRegisterResponse>(
+    await programProgressApi.registerVolunteerParticipant(programId, payload)
+  )
+}
+
+/** GET /api/admin/programs/{programId}/participant-register-candidates */
+export async function fetchProgramParticipantRegisterCandidatesRemote(
+  programId: string,
+  params: {
+    participantType: 'VOLUNTEER'
+    volunteerKind: VolunteerKind
+    keyword?: string
+    page?: number
+    size?: number
+  }
+): Promise<PageResponseProgramParticipantRegisterCandidateResponse> {
+  return unwrapApiBody<PageResponseProgramParticipantRegisterCandidateResponse>(
+    await programProgressApi.participantRegisterCandidates(programId, params)
+  )
+}
+
+/** GET /api/admin/programs/{programId}/employee-volunteer-counts */
+export async function fetchEmployeeVolunteerCountsRemote(
+  programId: string,
+  organizationApplicationId?: number
+): Promise<EmployeeVolunteerCountSetResponse> {
+  return unwrapApiBody(
+    await programProgressApi.get1(
+      toNumericProgramId(programId),
+      organizationApplicationId != null ? { organizationApplicationId } : undefined
+    )
+  )
+}
+
+/** PUT /api/admin/programs/{programId}/employee-volunteer-counts */
+export async function putEmployeeVolunteerCountsRemote(
+  programId: string,
+  payload: EmployeeVolunteerCountReplaceRequest
+): Promise<EmployeeVolunteerCountSetResponse> {
+  return unwrapApiBody(
+    await programProgressApi.replace2(toNumericProgramId(programId), payload)
   )
 }

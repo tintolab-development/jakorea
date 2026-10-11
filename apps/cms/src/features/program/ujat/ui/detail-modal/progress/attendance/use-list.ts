@@ -14,7 +14,7 @@ import {
 import {
   bulkUpsertUjatAttendances,
   fetchUjatAllocationMatrix,
-  fetchUjatScheduleAttendances,
+  fetchUjatAttendancesByScheduleIds,
 } from '@/features/program/ujat/api/education-execution-api'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
@@ -132,17 +132,11 @@ export function useUjatEducationProgressAttendance(
             .filter((id): id is number => id != null)
         ),
       ]
-      const attendancesByScheduleId: Record<
-        string,
-        Awaited<ReturnType<typeof fetchUjatScheduleAttendances>>
-      > = {}
-      await Promise.all(
-        scheduleIds.map(async scheduleId => {
-          attendancesByScheduleId[String(scheduleId)] = await fetchUjatScheduleAttendances(
-            programId,
-            scheduleId
-          ).catch(() => [])
-        })
+      const attendancesByScheduleId = await fetchUjatAttendancesByScheduleIds(
+        programId,
+        scheduleIds
+      ).catch(() =>
+        Object.fromEntries(scheduleIds.map(scheduleId => [String(scheduleId), []]))
       )
       return buildUjatAttendanceSessionsFromMatrix({
         matrix,
@@ -226,6 +220,9 @@ export function useUjatEducationProgressAttendance(
       })
       await queryClient.invalidateQueries({
         queryKey: ujatQueryKeys.allocationMatrix(programId, educationRegionCode, semesterType),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.volunteer1365AttendanceAll(programId),
       })
       showAlert({ title: '안내', content: '출석이 저장되었습니다.' })
     },

@@ -1,9 +1,4 @@
 import type { ProgramFile, ProgramPost } from '@/types/domain'
-import {
-  getProgramPostsByProgramId,
-  getProgramPostsByProgramIdAndSchoolId,
-  getProgramFilesByProgramId,
-} from '@/data/mock'
 
 export function resolveEnrollmentProgramPostsList(options: {
   membersRemote: boolean
@@ -11,12 +6,10 @@ export function resolveEnrollmentProgramPostsList(options: {
   programId: string
   schoolId?: string
 }): ProgramPost[] {
-  const { membersRemote, postsOverride, programId, schoolId } = options
+  const { membersRemote, postsOverride } = options
   if (postsOverride != null) return postsOverride
   if (membersRemote) return []
-  return schoolId
-    ? getProgramPostsByProgramIdAndSchoolId(programId, schoolId)
-    : getProgramPostsByProgramId(programId)
+  return []
 }
 
 export function resolveEnrollmentProgramFilesList(options: {
@@ -25,8 +18,8 @@ export function resolveEnrollmentProgramFilesList(options: {
   filesOverride?: ProgramFile[] | null
   programId: string
 }): ProgramFile[] {
-  const { membersRemote, postsOverride, filesOverride, programId } = options
+  const { membersRemote, postsOverride, filesOverride } = options
   if (filesOverride != null) return filesOverride
   if (membersRemote && postsOverride == null) return []
-  return getProgramFilesByProgramId(programId)
+  return []
 }

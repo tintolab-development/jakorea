@@ -61,7 +61,7 @@ async function fetchProgramFormBindingsCached(
   })
 }
 
-function invalidateProgramFormBindingsCache(programId: string): void {
+export function invalidateProgramFormBindingsCache(programId: string): void {
   void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.formBindings(programId) })
 }
 

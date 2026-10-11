@@ -12,8 +12,20 @@ import { Input, Dropdown, Popover, type MenuProps } from 'antd'
 import type { Program, ProgramPost, ProgramFile } from '@/types/domain'
 import {
   getReactionTotalCountByPostId,
-  getPostViewCountForContext,
-} from '@/data/mock'
+} from '@/features/user/detail/lib/program-post-interaction-stubs'
+
+function getPostViewCountForContext(
+  _postId: string,
+  _programId?: unknown,
+  _postSchoolId?: unknown,
+  _schoolId?: unknown
+): number {
+  void _postId
+  void _programId
+  void _postSchoolId
+  void _schoolId
+  return 0
+}
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import {

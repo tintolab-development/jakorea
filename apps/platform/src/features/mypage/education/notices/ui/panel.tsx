@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { ProgramDetail } from '@/features/program'
+import { EducationNoticePanelSkeleton } from '@/features/mypage/shared/ui'
 import {
   useApplicationNoticeDetailQuery,
   useApplicationNoticeFiles,
@@ -172,7 +173,9 @@ export function EducationInProgressNoticePanel({
     closeNoticeDetail()
   }
 
-  if (remoteNotices.isLoading) return null
+  if (remoteNotices.isLoading) {
+    return <EducationNoticePanelSkeleton />
+  }
   if (remoteNotices.isError) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

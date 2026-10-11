@@ -129,16 +129,9 @@ export function buildInstructorApplyScheduleSlots(input: {
     .filter((row): row is ApplyInstructorScheduleSlot => row != null)
 }
 
-/**
- * form-bindings 응답의 강사 일정 런타임 선택지 (`items[].id/label` 또는 `options[].option_value/option_label`).
- * `runtimeResolved`가 없는 문항은 런타임 선택지 대상이 아니므로 null — 프로그램 일정 줄로 만든다.
- */
-export function readRuntimeInstructorScheduleSlots(
-  paragraph: unknown,
-): ApplyInstructorScheduleSlot[] | null {
-  if (!paragraph || typeof paragraph !== 'object') return null
-  const row = paragraph as Record<string, unknown>
-  if (typeof row.runtimeResolved !== 'boolean') return null
+function bindingOptionSlotsFromParagraphRow(
+  row: Record<string, unknown>,
+): ApplyInstructorScheduleSlot[] {
   const rawItems = Array.isArray(row.items)
     ? row.items
     : Array.isArray(row.options)
@@ -151,6 +144,30 @@ export function readRuntimeInstructorScheduleSlots(
     const label = String(option.label ?? option.option_label ?? '').trim()
     return id ? [runtimeScheduleSlotFromOption(option, id, label || id)] : []
   })
+}
+
+/**
+ * form-bindings 동적 선택지 — 면접·봉사 일정 등 (`items[].id` / `options[].option_value`).
+ * `runtimeResolved` 없이도 items가 있으면 파싱한다.
+ */
+export function readPortalApplicationBindingOptionSlots(
+  paragraph: unknown,
+): ApplyInstructorScheduleSlot[] {
+  if (!paragraph || typeof paragraph !== 'object') return []
+  return bindingOptionSlotsFromParagraphRow(paragraph as Record<string, unknown>)
+}
+
+/**
+ * form-bindings 응답의 강사 일정 런타임 선택지 (`items[].id/label` 또는 `options[].option_value/option_label`).
+ * `runtimeResolved`가 없는 문항은 런타임 선택지 대상이 아니므로 null — 프로그램 일정 줄로 만든다.
+ */
+export function readRuntimeInstructorScheduleSlots(
+  paragraph: unknown,
+): ApplyInstructorScheduleSlot[] | null {
+  if (!paragraph || typeof paragraph !== 'object') return null
+  const row = paragraph as Record<string, unknown>
+  if (typeof row.runtimeResolved !== 'boolean') return null
+  return bindingOptionSlotsFromParagraphRow(row)
 }
 
 /** 런타임 선택지 제출값 — 백엔드는 목록에 있는 `option_value` 배열만 받는다. */

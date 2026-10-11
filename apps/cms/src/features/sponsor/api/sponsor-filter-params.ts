@@ -1,5 +1,6 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { DATA_MANAGEMENT_LIST_PAGE_SIZE } from '@/features/data-management/api/data-management-list-page'
 import type { SponsorsParams } from '@/shared/api/generated/data-management/schemas'
 import {
   isSponsorSponsorshipStatus,
@@ -12,7 +13,14 @@ import type { DateValue } from '@/types'
 export type SponsorsListQueryParams = SponsorsParams & {
   sponsorshipStartDateFrom?: string
   sponsorshipStartDateTo?: string
+  page?: number
+  size?: number
 }
+
+export const SPONSOR_LIST_PAGE_SIZE = DATA_MANAGEMENT_LIST_PAGE_SIZE
+
+/** 후원사 셀렉트·드롭다운 전량 로드 (BE max 100) */
+export const SPONSOR_OPTIONS_LIST_SIZE = 100
 
 function parseKind(raw: string | null): SponsorOrganizationKind {
   if (raw === 'foundation') return 'foundation'
@@ -24,9 +32,14 @@ function parseStatus(raw: string | null): 'ALL' | SponsorSponsorshipStatus {
 }
 
 export function sponsorsParamsFromSearchParams(
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
+  page = 0,
+  size = SPONSOR_LIST_PAGE_SIZE
 ): SponsorsListQueryParams {
-  const params: SponsorsListQueryParams = {}
+  const params: SponsorsListQueryParams = {
+    page,
+    size,
+  }
 
   params.organizationKind = parseKind(searchParams.get('sp_kind'))
 

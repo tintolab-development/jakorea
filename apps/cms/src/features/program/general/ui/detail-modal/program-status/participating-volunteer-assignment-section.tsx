@@ -14,7 +14,6 @@ import { generalProgramProgressQueryKeys } from '@/features/program/general/api/
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
@@ -97,7 +96,6 @@ export function ParticipatingVolunteerAssignmentSection({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const [assignedInstitutions, setAssignedInstitutions] = useState<VolunteerAssignedInstitutionRow[]>(
     []
   )
@@ -355,7 +353,6 @@ export function ParticipatingVolunteerAssignmentSection({
       nextAssigned: VolunteerAssignedInstitutionRow[],
       reason: string
     ): Promise<boolean> => {
-      if (isTempMockProgram) return true
       if (!remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-progress-volunteer-assigned-organizations',
@@ -400,7 +397,6 @@ export function ParticipatingVolunteerAssignmentSection({
     },
     [
       assignedInstitutions.length,
-      isTempMockProgram,
       program.id,
       queryClient,
       remoteEnabled,

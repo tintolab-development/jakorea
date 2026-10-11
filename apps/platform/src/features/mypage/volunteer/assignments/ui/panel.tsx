@@ -1,11 +1,13 @@
 import { useMemo } from 'react'
 import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
+import { VolunteerAssignmentPanelSkeleton } from '@/features/mypage/shared/ui'
 import { PFText } from '@/shared/ui'
 import { useVolunteerAssignmentsQuery } from '../api/use-assignments-query'
 import {
   getMockVolunteerIndividualAssignment,
   getMockVolunteerInstitutionAssignment,
 } from '../lib/mock-assignments'
+import { VOLUNTEER_DISTANCE_UNAVAILABLE_TOOLTIP } from '../lib/format-distance'
 import type {
   VolunteerIndividualAssignment,
   VolunteerInstitutionAssignment,
@@ -17,6 +19,17 @@ import {
   VolunteerScheduleLines,
 } from './assignment-table'
 import styles from './panel.module.css'
+
+function DistanceCell({ value }: { value: string }) {
+  if (value === '-') {
+    return (
+      <span title={VOLUNTEER_DISTANCE_UNAVAILABLE_TOOLTIP}>
+        <VolunteerCellText>{value}</VolunteerCellText>
+      </span>
+    )
+  }
+  return <VolunteerCellText>{value}</VolunteerCellText>
+}
 
 type VolunteerAssignmentPanelProps = {
   programAudience: 'organization' | 'individual'
@@ -52,7 +65,7 @@ function IndividualTables({ data }: { data: VolunteerIndividualAssignment }) {
             key: 'distance',
             label: '자택과의 거리',
             width: '120px',
-            render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
+            render: row => <DistanceCell value={row.distanceFromHome} />,
           },
           {
             key: 'schedule',
@@ -84,7 +97,7 @@ function IndividualTables({ data }: { data: VolunteerIndividualAssignment }) {
             key: 'distance',
             label: '자택과의 거리',
             width: '120px',
-            render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
+            render: row => <DistanceCell value={row.distanceFromHome} />,
           },
           {
             key: 'schedule',
@@ -139,7 +152,7 @@ function InstitutionTables({ data }: { data: VolunteerInstitutionAssignment }) {
             key: 'distance',
             label: '자택과의 거리',
             width: '120px',
-            render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
+            render: row => <DistanceCell value={row.distanceFromHome} />,
           },
           {
             key: 'schedule',
@@ -181,7 +194,7 @@ function InstitutionTables({ data }: { data: VolunteerInstitutionAssignment }) {
             key: 'distance',
             label: '자택과의 거리',
             width: '120px',
-            render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
+            render: row => <DistanceCell value={row.distanceFromHome} />,
           },
           {
             key: 'schedule',
@@ -223,7 +236,9 @@ export function VolunteerAssignmentPanel({
   )
 
   if (remoteQuery.enabled) {
-    if (remoteQuery.isLoading) return null
+    if (remoteQuery.isLoading) {
+      return <VolunteerAssignmentPanelSkeleton />
+    }
     if (remoteQuery.isError || !remoteQuery.bundle) {
       return (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

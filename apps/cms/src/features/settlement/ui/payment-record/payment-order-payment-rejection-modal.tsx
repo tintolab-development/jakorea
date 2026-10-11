@@ -10,7 +10,7 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
-import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import type {
   PaymentOrderRejectNotificationType,
   PaymentOrderRejectSubmitPayload,

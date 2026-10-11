@@ -41,6 +41,9 @@ function formatMinutes(totalMinutes: number): string {
 
 /** 스크린샷 형식: YYYY. MM. DD(요일) HH:mm ~ HH:mm | N차시 */
 export function formatParticipatingSchoolSessionLine(s: ParticipatingSchoolSession): string {
+  const scheduleLabel = s.scheduleLabel?.trim()
+  if (scheduleLabel) return scheduleLabel
+
   const datePart = s.date.replace(/\./g, '. ')
   const [startRaw, endRaw] = s.timeRange.split('~')
   const timePart = `${padTimePart(startRaw)} ~ ${padTimePart(endRaw ?? startRaw)}`

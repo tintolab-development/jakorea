@@ -7,10 +7,13 @@ export type ProgramHistoriesQueryParams = ProgramHistoriesParams & {
   participantType?: string
 }
 
+/** BE program-histories 기본 size 20, max 100 */
+export const SPONSOR_PROGRAM_HISTORY_PAGE_SIZE = 20
+
 export function programHistoriesParamsFromFilters(
   filters: SponsorProgramHistoryFilters,
   page = 0,
-  size = 50
+  size = SPONSOR_PROGRAM_HISTORY_PAGE_SIZE
 ): ProgramHistoriesQueryParams {
   const params: ProgramHistoriesQueryParams = { page, size }
   const title = filters.title.trim()

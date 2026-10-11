@@ -12,13 +12,15 @@ import { z } from 'zod'
 import {
   type ManualAssignmentData,
   validateManualAssignment } from '@/entities/instructor-application/api/instructor-application-service'
-import { mockInstructors } from '@/data/mock/instructors'
-import { mockPrograms } from '@/data/mock/programs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
+import { programService } from '@/entities/program/api/program-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
 
 const { Option } = Select
+const programOptions = () => programService.getAllSync()
+const instructorOptions = () => instructorService.getAllSync()
 const { TextArea } = Input
 
 const assignmentSchema = z
@@ -211,7 +213,7 @@ export function ManualAssignmentModal({
                   placeholder="프로그램을 선택해주세요"
                   status={errors.programId ? 'error' : ''}
                 >
-                  {mockPrograms.map(program => (
+                  {programOptions().map(program => (
                     <Option key={program.id} value={program.id}>
                       {program.title}
                     </Option>
@@ -249,7 +251,7 @@ export function ManualAssignmentModal({
                   status={errors.instructorId ? 'error' : ''}
                   allowClear
                 >
-                  {mockInstructors.map(instructor => (
+                  {instructorOptions().map(instructor => (
                     <Option key={instructor.id} value={instructor.id}>
                       {instructor.name}
                     </Option>

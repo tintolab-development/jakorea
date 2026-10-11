@@ -111,15 +111,13 @@
   pointer-events: none;
 }
 
-/* 강사 배정 안내 캘린더 시각 조건 유지 · 모달 300px 슬롯에 맞춤 */
-.direct-unavailable-date-modal__calendar .ujat-volunteer-interview-assign-calendar-mini {
+/* 단락 미니 캘린더 · 모달 300px 슬롯에 맞춤 */
+.direct-unavailable-date-modal__calendar .paragraph-calendar-mini--small {
   width: 300px;
   max-width: 300px;
 }
 
-.direct-unavailable-date-modal__calendar
-  .ujat-volunteer-interview-assign-calendar-mini
-  .calendar-mini {
+.direct-unavailable-date-modal__calendar .paragraph-calendar-mini--small .calendar-mini {
   --calendar-mini-padding: 16px;
   --calendar-mini-width: 300px;
   --calendar-mini-height: 332px;
@@ -137,7 +135,7 @@
 }
 
 .direct-unavailable-date-modal__calendar
-  .ujat-volunteer-interview-assign-calendar-mini
+  .paragraph-calendar-mini--small
   .calendar-mini
   .ant-picker-content
   tbody

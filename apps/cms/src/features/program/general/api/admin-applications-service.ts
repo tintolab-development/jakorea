@@ -12,6 +12,12 @@ import {
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { mapParticipantsToVolunteerScreeningRows } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { shouldUseApplicationsHttpRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import type { QueryClient } from '@tanstack/react-query'
+export {
+  hydrateOrganizationApplicationSchedules,
+  mergeHydratedOrganizationRows,
+  schoolRowNeedsScheduleHydration,
+} from '@/features/program/general/api/organization-application-schedules-hydrate'
 import {
   approveIndividualApplicationRemote,
   approveInstructorApplicationRemote,
@@ -29,7 +35,6 @@ import {
   fetchIndividualApplicationsRemote,
   fetchInstructorApplicationsRemote,
   fetchOrganizationApplicationsRemote,
-  fetchOrganizationApplicationRequestedSchedulesRemote,
   fetchVolunteerApplicationsRemote,
   giveUpVolunteerApplicationRemote,
   listInterviewSlotsRemote,
@@ -122,15 +127,22 @@ function assertApplicationsRemoteReady(): void {
   }
 }
 
+export type FetchGeneralOrganizationApplicationsPageOptions = {
+  /** @deprecated 목록 fetch는 queryClient를 사용하지 않음. hydrate 시에만 필요 */
+  queryClient?: QueryClient
+}
+
 export async function fetchGeneralOrganizationApplications(
   programId: string,
+  options: FetchGeneralOrganizationApplicationsPageOptions,
   params?: ApplicationsListQuery
 ): Promise<ApplicantSchoolRow[]> {
-  return (await fetchGeneralOrganizationApplicationsPage(programId, params)).rows
+  return (await fetchGeneralOrganizationApplicationsPage(programId, options, params)).rows
 }
 
 export async function fetchGeneralOrganizationApplicationsPage(
   programId: string,
+  _options: FetchGeneralOrganizationApplicationsPageOptions,
   params?: ApplicationsListQuery
 ): Promise<GeneralApplicationsListPage<ApplicantSchoolRow>> {
   assertApplicationsRemoteReady()
@@ -141,28 +153,11 @@ export async function fetchGeneralOrganizationApplicationsPage(
     ...params,
   })
   const items = page.items ?? []
-  const scheduleResults = await Promise.all(
-    items.map(async item => {
-      const applicationId = item.id == null ? '' : String(item.id)
-      if (!applicationId)
-        return [] as Awaited<
-          ReturnType<typeof fetchOrganizationApplicationRequestedSchedulesRemote>
-        >
-      try {
-        return await fetchOrganizationApplicationRequestedSchedulesRemote(applicationId)
-      } catch {
-        return []
-      }
-    })
-  )
   const rows = items.map((item, index) =>
     mapOrganizationApplicationToApplicantSchoolRow(
       item,
       requestedPage * GENERAL_PROGRAM_DETAIL_PAGE_SIZE + index,
-      programId,
-      {
-        requestedSchedules: scheduleResults[index],
-      }
+      programId
     )
   )
   return resolveApplicationsListPage(rows, page, requestedPage)

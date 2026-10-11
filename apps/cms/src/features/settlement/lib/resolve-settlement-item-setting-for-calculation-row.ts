@@ -1,7 +1,7 @@
 import {
   settlementItemSettingSections,
   type SettlementItemSettingRow,
-} from '@/data/mock/settlement-item-settings'
+} from '@/features/settlement-management/model/settlement-item-settings'
 import type { PaymentOrderCalculationTableRow } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 
 export { mapSettlementFrontendItemTypeToLineKind } from '@/features/settlement-management/api/shared/map-frontend-fields'

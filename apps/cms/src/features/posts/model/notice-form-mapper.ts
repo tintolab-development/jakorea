@@ -1,4 +1,4 @@
-import type { Notice, NoticeAttachment } from '@/data/mock/notices'
+import type { Notice, NoticeAttachment } from '@/features/posts/model/notice'
 
 /** 폼 필드(에디터·첨부 제외) — 셀렉트 value는 category.id */
 export type NoticeFormFieldValues = {

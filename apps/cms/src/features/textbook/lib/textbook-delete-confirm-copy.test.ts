@@ -15,7 +15,7 @@ describe('resolveTextbookDeleteConfirmCopy', () => {
   it('일괄', () => {
     expect(resolveTextbookDeleteConfirmCopy('bulk', 3)).toEqual({
       title: '교재 일괄 삭제 안내',
-      line1: '선택한 3개의 교재를 삭제하시겠습니까?',
+      line1: '**선택한 3개**의 교재를 삭제하시겠습니까?',
       line2: LINE2,
     })
   })

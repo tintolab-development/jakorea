@@ -1,0 +1,78 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1220px;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.boneName {
+  width: min(100%, 240px);
+  height: 36px;
+}
+
+.boneSub {
+  width: min(100%, 180px);
+  height: 22px;
+}
+
+.stats {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-16);
+}
+
+.statCard {
+  height: 120px;
+  border-radius: var(--radius-16);
+}
+
+.schedule {
+  margin-top: 54px;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  gap: var(--spacing-32);
+}
+
+.calendar {
+  flex: 1 1 auto;
+  min-height: 360px;
+  border-radius: var(--radius-16);
+}
+
+.eventList {
+  flex: 0 0 min(100%, 320px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.eventItem {
+  height: 72px;
+  border-radius: var(--radius-12);
+}
+
+@media (--bp-below-pc) {
+  .stats {
+    margin-top: 20px;
+    grid-template-columns: 1fr;
+  }
+
+  .schedule {
+    margin-top: 32px;
+    flex-direction: column;
+  }
+
+  .eventList {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}

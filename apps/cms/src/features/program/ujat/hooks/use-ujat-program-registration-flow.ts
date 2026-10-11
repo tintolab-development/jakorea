@@ -22,7 +22,10 @@ import {
   lookupWritingTemplateRegistry,
   resolveWritingTemplateDisplayName,
 } from '@/features/template/lib/lookup-writing-template-registry'
-import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
+import {
+  flushParticipantSessionOverlaysToOperationalStores,
+  useProgramParticipantApplicationEditor,
+} from '@/features/template/hooks/use-program-participant-application-editor'
 import {
   getUjatProgramRegistrationOverlayRecord,
   patchUjatProgramRegistrationOverlay,
@@ -163,6 +166,12 @@ export function useUjatProgramRegistrationFlow(
           payload.selectedOperationalTemplates
         )
         setStepTemplateByKey(payload.selectedOperationalTemplates)
+      }
+      const titleKo = payload?.programTitleKo?.trim()
+      if (titleKo) {
+        patchUjatProgramRegistrationOverlay({
+          'ujat.basicInfo.programManagementName': titleKo,
+        })
       }
       if (payload?.activeStep == null) return
       const restored = normalizeUjatProgramRegistrationStepKey(payload.activeStep)
@@ -383,6 +392,7 @@ export function useUjatProgramRegistrationFlow(
       if (!isProgramStep && isParticipantStep) {
         await participantVm.handleSave({ silent: true })
       }
+      flushParticipantSessionOverlaysToOperationalStores()
       await persistRegistrationOperationalOverlaysToLocal(programType, 'ujat')
       syncRegistrationProgramDraftSession({
         programType,

@@ -1,5 +1,5 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import type { Notice } from '@/data/mock/notices'
+import type { Notice } from '@/features/posts/model/notice'
 import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
 
 /** 목록 필터용: 전체 + 카테고리 (정적 기본값) */

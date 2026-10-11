@@ -1,11 +1,13 @@
-import { Calendar } from 'antd'
-import enUS from 'antd/es/calendar/locale/en_US'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useMemo, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import updateLocale from 'dayjs/plugin/updateLocale'
-import { countMiniCalendarWeekRows } from '../lib/calendar-mini-layout'
+import {
+  buildMiniCalendarGridDays,
+  countMiniCalendarWeekRows,
+  miniCalendarWeekdayLabels,
+} from '../lib/calendar-mini-layout'
 import '../styles/calendar.css'
 
 dayjs.extend(updateLocale)
@@ -22,8 +24,100 @@ interface CalendarMiniProps {
   programDates: Set<string>
   /** 구간 선택 UI — 지정 시 해당 구간 셀에 범위 전용 클래스(스타일은 소비측 CSS) */
   rangeSelection?: { start: Dayjs; end: Dayjs } | null
-  /** 비활성 날짜 판정 — true 반환 시 antd가 셀 비활성(클릭/선택 차단) + `.ant-picker-cell-disabled` 부여 */
+  /**
+   * true면 선택 강조는 `programDates`만 사용(다중 선택 모달). false면 `selectedDate` 포커스 링도 표시.
+   */
+  multiSelectHighlight?: boolean
+  /**
+   * 비활성 날짜 판정 — true면 셀에 `calendar-mini-cell--disabled` + 클릭 차단.
+   */
   disabledDate?: (date: Dayjs) => boolean
+}
+
+function renderCalendarMiniCell(
+  date: Dayjs,
+  currentMonth: Dayjs,
+  selectedDate: Dayjs,
+  programDates: Set<string>,
+  rangeSelection: { start: Dayjs; end: Dayjs } | null,
+  disabledDate: ((date: Dayjs) => boolean) | undefined,
+  onSelectDate: (date: Dayjs) => void,
+  multiSelectHighlight: boolean
+) {
+  const isCurrentMonth = date.isSame(currentMonth, 'month')
+  const hasSchedule = isCurrentMonth && programDates.has(date.format('YYYY-MM-DD'))
+  const dayOfWeek = date.day()
+  const weekendClass =
+    dayOfWeek === 0 ? 'calendar-mini-cell--sunday' : dayOfWeek === 6 ? 'calendar-mini-cell--saturday' : ''
+
+  if (rangeSelection != null) {
+    const a = rangeSelection.start
+    const b = rangeSelection.end
+    const s = a.isBefore(b) || a.isSame(b, 'day') ? a : b
+    const e = a.isBefore(b) || a.isSame(b, 'day') ? b : a
+    const inRange = !date.isBefore(s, 'day') && !date.isAfter(e, 'day')
+    if (inRange) {
+      const isStart = date.isSame(s, 'day')
+      const isEnd = date.isSame(e, 'day')
+      const rangeClass = isStart && isEnd
+        ? 'calendar-mini-cell--range-single'
+        : isStart
+          ? 'calendar-mini-cell--range-start'
+          : isEnd
+            ? 'calendar-mini-cell--range-end'
+            : 'calendar-mini-cell--range-middle'
+      return (
+        <div
+          className={[
+            'calendar-mini-cell',
+            !isCurrentMonth ? 'calendar-mini-cell--other-month' : '',
+            hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
+            weekendClass,
+            rangeClass,
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <span className="calendar-mini-date">{date.date()}</span>
+        </div>
+      )
+    }
+  }
+
+  const isFocusDay = isCurrentMonth && date.isSame(selectedDate, 'day')
+  const isSelected = multiSelectHighlight ? hasSchedule : isFocusDay
+  const isDisabled = !isCurrentMonth || (disabledDate?.(date) ?? false)
+
+  const activateDate = () => {
+    if (!isCurrentMonth) return
+    if (isDisabled) return
+    onSelectDate(date)
+  }
+
+  return (
+    <button
+      type="button"
+      aria-disabled={isDisabled}
+      tabIndex={isDisabled ? -1 : 0}
+      className={[
+        'calendar-mini-cell',
+        !isCurrentMonth ? 'calendar-mini-cell--other-month' : '',
+        hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
+        isSelected ? 'calendar-mini-cell--selected' : '',
+        isDisabled ? 'calendar-mini-cell--disabled' : '',
+        weekendClass,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      onClick={event => {
+        event.preventDefault()
+        event.stopPropagation()
+        activateDate()
+      }}
+    >
+      <span className="calendar-mini-date">{date.date()}</span>
+    </button>
+  )
 }
 
 export function CalendarMini({
@@ -33,6 +127,7 @@ export function CalendarMini({
   onSelectDate,
   programDates,
   rangeSelection = null,
+  multiSelectHighlight = false,
   disabledDate,
 }: CalendarMiniProps) {
   const handlePrevMonth = () => {
@@ -44,70 +139,20 @@ export function CalendarMini({
   }
 
   const weekRows = useMemo(() => countMiniCalendarWeekRows(currentMonth), [currentMonth])
+  const gridDays = useMemo(() => buildMiniCalendarGridDays(currentMonth), [currentMonth])
+  const weekdayLabels = miniCalendarWeekdayLabels()
 
   const miniStyle = {
     '--calendar-mini-week-rows': weekRows,
   } as CSSProperties
 
-  const dateFullCellRender = (date: Dayjs) => {
-    const isCurrentMonth = date.isSame(currentMonth, 'month')
-    const hasSchedule = isCurrentMonth && programDates.has(date.format('YYYY-MM-DD'))
-    const dayOfWeek = date.day()
-    const weekendClass =
-      dayOfWeek === 0 ? 'calendar-mini-cell--sunday' : dayOfWeek === 6 ? 'calendar-mini-cell--saturday' : ''
-
-    if (rangeSelection != null) {
-      const a = rangeSelection.start
-      const b = rangeSelection.end
-      const s = a.isBefore(b) || a.isSame(b, 'day') ? a : b
-      const e = a.isBefore(b) || a.isSame(b, 'day') ? b : a
-      const inRange = !date.isBefore(s, 'day') && !date.isAfter(e, 'day')
-      if (inRange) {
-        const isStart = date.isSame(s, 'day')
-        const isEnd = date.isSame(e, 'day')
-        const rangeClass = isStart && isEnd
-          ? 'calendar-mini-cell--range-single'
-          : isStart
-            ? 'calendar-mini-cell--range-start'
-            : isEnd
-              ? 'calendar-mini-cell--range-end'
-              : 'calendar-mini-cell--range-middle'
-        return (
-          <div
-            className={[
-              'calendar-mini-cell',
-              !isCurrentMonth ? 'calendar-mini-cell--other-month' : '',
-              hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
-              weekendClass,
-              rangeClass,
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            <span className="calendar-mini-date">{date.date()}</span>
-          </div>
-        )
-      }
+  const weeks = useMemo(() => {
+    const rows: Dayjs[][] = []
+    for (let row = 0; row < weekRows; row += 1) {
+      rows.push(gridDays.slice(row * 7, row * 7 + 7))
     }
-
-    const isSelected = isCurrentMonth && date.isSame(selectedDate, 'day')
-
-    return (
-      <div
-        className={[
-          'calendar-mini-cell',
-          !isCurrentMonth ? 'calendar-mini-cell--other-month' : '',
-          hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
-          isSelected ? 'calendar-mini-cell--selected' : '',
-          weekendClass,
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <span className="calendar-mini-date">{date.date()}</span>
-      </div>
-    )
-  }
+    return rows
+  }, [gridDays, weekRows])
 
   return (
     <div className="calendar-mini" style={miniStyle} data-week-rows={weekRows}>
@@ -120,20 +165,52 @@ export function CalendarMini({
           <RightOutlined />
         </button>
       </div>
-      <Calendar
-        fullscreen={false}
-        value={currentMonth}
-        locale={enUS}
-        fullCellRender={dateFullCellRender}
-        headerRender={() => null}
-        disabledDate={disabledDate}
-        onSelect={(date, { source }) => {
-          if (source === 'date') {
-            if (disabledDate?.(date)) return
-            onSelectDate(date)
-          }
-        }}
-      />
+      <div className="calendar-mini-grid" aria-label="달력">
+        <table className="calendar-mini-grid-table">
+          <thead>
+            <tr>
+              {weekdayLabels.map(label => (
+                <th key={label} scope="col">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {weeks.map((week, weekIndex) => (
+              <tr key={weekIndex}>
+                {week.map(date => (
+                  <td
+                    key={date.format('YYYY-MM-DD')}
+                    className="calendar-mini-grid-cell"
+                    onClick={event => {
+                      if ((event.target as HTMLElement).closest('button.calendar-mini-cell')) return
+                      const isOtherMonth = !date.isSame(currentMonth, 'month')
+                      const cellDisabled =
+                        isOtherMonth || (disabledDate?.(date) ?? false)
+                      if (cellDisabled) return
+                      event.preventDefault()
+                      event.stopPropagation()
+                      onSelectDate(date)
+                    }}
+                  >
+                    {renderCalendarMiniCell(
+                      date,
+                      currentMonth,
+                      selectedDate,
+                      programDates,
+                      rangeSelection,
+                      disabledDate,
+                      onSelectDate,
+                      multiSelectHighlight
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

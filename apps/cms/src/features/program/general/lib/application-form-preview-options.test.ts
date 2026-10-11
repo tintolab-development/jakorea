@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
-import { buildGeneralApplicationFormPreviewParagraphBodyOptions } from './application-form-preview-options'
+import {
+  buildGeneralApplicationFormPreviewParagraphBodyOptions,
+  resolveGeneralApplicationFormHiddenParagraphIds,
+} from './application-form-preview-options'
+import { buildGeneralProgramListRowFromRegistrationSnapshot } from '@/features/program/general/lib/registration-local-save'
+import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import {
   getInstitutionApplicationProgramBridge,
   resetInstitutionApplicationProgramBridge,
@@ -13,6 +18,13 @@ import {
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+
+const individualOnlyParticipant: ProgramRegistrationParticipantState = {
+  individual: true,
+  organization: false,
+  teacherInstructor: false,
+  volunteer: false,
+}
 
 const emptyVm = {
   structureLockedParagraphIds: undefined,
@@ -95,6 +107,56 @@ describe('buildGeneralApplicationFormPreviewParagraphBodyOptions', () => {
     expect(options.hiddenParagraphIds?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)).toBe(
       true
     )
+  })
+
+  it('등록 스냅샷 — 개인 참여면 teamInfo를 숨기고 팀 참여면 노출한다', () => {
+    resetProgramRegistrationOverlay()
+    replaceProgramRegistrationOverlay({
+      'generalRegistration.typeSettings.singleParticipation': 'individual',
+    })
+    const individualProgram = buildGeneralProgramListRowFromRegistrationSnapshot({
+      id: 'registration-wizard-individual',
+      participant: individualOnlyParticipant,
+      programType: 'curriculum',
+      variant: 'general',
+      sessionRoundType: 'single',
+      editorExtras: {
+        participationScheduleDetail: 'common',
+        educationFormScheduleDetail: 'common',
+        ipsScheduleDetail: 'common',
+        participantOrganization: false,
+      },
+    })
+    const individualHidden = resolveGeneralApplicationFormHiddenParagraphIds('individual', {
+      program: individualProgram,
+      paragraphs: [],
+      institutionBridge: resolveInstitutionApplicationProgramBridge(individualProgram),
+    })
+    expect(individualHidden?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.teamInfo)).toBe(true)
+
+    resetProgramRegistrationOverlay()
+    replaceProgramRegistrationOverlay({
+      'generalRegistration.typeSettings.singleParticipation': 'team',
+    })
+    const teamProgram = buildGeneralProgramListRowFromRegistrationSnapshot({
+      id: 'registration-wizard-team',
+      participant: individualOnlyParticipant,
+      programType: 'curriculum',
+      variant: 'general',
+      sessionRoundType: 'single',
+      editorExtras: {
+        participationScheduleDetail: 'common',
+        educationFormScheduleDetail: 'common',
+        ipsScheduleDetail: 'common',
+        participantOrganization: false,
+      },
+    })
+    const teamHidden = resolveGeneralApplicationFormHiddenParagraphIds('individual', {
+      program: teamProgram,
+      paragraphs: [],
+      institutionBridge: resolveInstitutionApplicationProgramBridge(teamProgram),
+    })
+    expect(teamHidden?.has(PROGRAM_PARTICIPANT_APPLICATION_IDS.teamInfo)).toBe(false)
   })
 
   it('schema snapshot 플래그가 켜지면 일정 연동 UI를 끈다', () => {

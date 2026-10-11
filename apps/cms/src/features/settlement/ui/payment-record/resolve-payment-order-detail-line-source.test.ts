@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   resolvePaymentOrderInstructorDetailForLines,
   resolvePaymentOrderInstructorDetailLineRows,
@@ -63,9 +63,8 @@ describe('resolvePaymentOrderDetailLineSource — remote mock 금지', () => {
     expect(JSON.stringify(rows)).not.toContain('김민준')
   })
 
-  it('로컬(remote 아님)은 mock 상세를 쓴다', () => {
-    const detail = resolvePaymentOrderProgramDetailForLines(false, programRow, undefined)
-    expect(detail).not.toBeNull()
-    expect(detail?.instructorRows.length).toBeGreaterThan(0)
+  it('로컬(remote 아님)도 FE mock 상세 없이 context 없으면 null', () => {
+    expect(resolvePaymentOrderProgramDetailForLines(false, programRow, undefined)).toBeNull()
+    expect(resolvePaymentOrderProgramDetailLineRows(false, programRow, undefined)).toEqual([])
   })
 })

@@ -238,7 +238,7 @@ describe('resolveAgreementWritingFormConfig', () => {
     expect(config?.initialDraft).toBeDefined()
     expect(config?.structureLockedParagraphIds).toBeUndefined()
     expect(config?.hideDragHandleForParagraphIds).toBeUndefined()
-    expect(config?.paragraphBodyOptions).toBeUndefined()
+    expect(config?.paragraphBodyOptions?.agreementAdminProxyConfirm).toBe(true)
   })
 
   it('strips structure locks for agreement-portrait-copy without numeric suffix', () => {
@@ -258,6 +258,6 @@ describe('resolveAgreementWritingFormConfig', () => {
     expect(catalog?.structureLockedParagraphIds).toBeDefined()
     const editable = stripAgreementWritingFormStructureLocks(catalog!)
     expect(editable.structureLockedParagraphIds).toBeUndefined()
-    expect(editable.paragraphBodyOptions).toBeUndefined()
+    expect(editable.paragraphBodyOptions?.agreementAdminProxyConfirm).toBe(true)
   })
 })

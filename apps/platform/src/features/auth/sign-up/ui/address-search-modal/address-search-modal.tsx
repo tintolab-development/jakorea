@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { pickJusoRoadAddressLine } from '@jakorea/location/juso'
 import {
   getPlatformJusoMissingKeyMessage,
   readJusoApiUrlFromEnv,
@@ -19,6 +20,7 @@ function isKeywordTooShortError(message: string) {
   return message.includes(KEYWORD_TOO_SHORT_MESSAGE) || message.includes('두글자')
 }
 
+/** `address`=도로명(roadAddr), 상세는 별도 `addressDetail` — BE geocoding: road + detail, 우편번호 제외 */
 export type SelectedAddress = {
   address: string
   postalCode?: string
@@ -87,7 +89,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
 
   const handleSelect = (item: JusoAddressItem) => {
     onSelect({
-      address: item.roadAddr || item.jibunAddr,
+      address: pickJusoRoadAddressLine(item.roadAddr, item.jibunAddr),
       postalCode: item.zipNo?.trim() || undefined,
       regionSido: item.siNm?.trim() || undefined,
       regionSigungu: item.sggNm?.trim() || undefined,

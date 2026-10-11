@@ -120,15 +120,6 @@ import {
 } from '@/shared/constants/status'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { useGeneralProgramPosts } from '@/features/program/general/hooks/use-general-program-posts-surveys'
-import {
-  buildTemporaryParticipatingInstitutionPostFiles,
-  buildTemporaryParticipatingInstitutionPosts,
-} from '@/features/program/general/lib/participating-institution-temp-posts'
-import {
-  isGeneralProgramTempMockEnabled,
-  isGeneralProgramTempMockProgramId,
-} from '@/features/program/general/api/temp-mock-capabilities'
-import { isTempMockOrgSchoolRowId } from '@/features/program/general/lib/temp-mock-org-program'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
@@ -498,33 +489,14 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     invalidatePosts,
     removeDeletedPost,
   } = useGeneralProgramPosts(program.id)
-  // TODO(temp-mock): 열여라 참깨 — 참여 기관 상세 게시글 검증 후 삭제
-  const temporarySchoolPosts = useMemo(
-    () =>
-      isGeneralProgramTempMockEnabled() && isTempMockOrgSchoolRowId(detail.id)
-        ? buildTemporaryParticipatingInstitutionPosts(String(program.id), detail.id)
-        : [],
-    [detail.id, program.id]
+  const postsForTab = useMemo(
+    () => (postsRemote ? remotePosts : null),
+    [postsRemote, remotePosts]
   )
-  const temporarySchoolPostFiles = useMemo(
-    () =>
-      isGeneralProgramTempMockEnabled() && isTempMockOrgSchoolRowId(detail.id)
-        ? buildTemporaryParticipatingInstitutionPostFiles(String(program.id), detail.id)
-        : [],
-    [detail.id, program.id]
+  const filesForTab = useMemo(
+    () => (postsRemote ? remotePostFiles : null),
+    [postsRemote, remotePostFiles]
   )
-  const postsForTab = useMemo(() => {
-    if (temporarySchoolPosts.length === 0) {
-      return postsRemote ? remotePosts : null
-    }
-    return [...temporarySchoolPosts, ...(remotePosts ?? [])]
-  }, [postsRemote, remotePosts, temporarySchoolPosts])
-  const filesForTab = useMemo(() => {
-    if (temporarySchoolPostFiles.length === 0) {
-      return postsRemote ? remotePostFiles : null
-    }
-    return [...temporarySchoolPostFiles, ...(remotePostFiles ?? [])]
-  }, [postsRemote, remotePostFiles, temporarySchoolPostFiles])
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [scheduleChangeModalOpen, setScheduleChangeModalOpen] = useState(false)
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
@@ -596,7 +568,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const isCompanySchool = isCompanySchoolProgram(program)
   const requiredInstructorCount = resolveRequiredInstructorCount(program)
   const programId = String(program.id)
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
   const companySchoolAssignmentConflictsEnabled =
     isCompanySchool && shouldUseCompanySchoolProgramProgressRemoteApi()
@@ -848,12 +819,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         return
       }
     }
-    if (isTempMockProgram) {
-      onSaveBasicInfo?.({ id: detail.id, adminComment: trimmed })
-      setAdminCommentModalOpen(false)
-      setAdminCommentError(undefined)
-      return
-    }
     void showAlert({
       title: PROGRAM_API_UNAVAILABLE_TITLE,
       content: buildProgramApiUnavailableSaveContent('참여 기관 관리자 코멘트'),
@@ -862,7 +827,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     adminCommentDraft,
     detail.id,
     hasOrganizationApplicationId,
-    isTempMockProgram,
     onSaveBasicInfo,
     organizationApplicationId,
     queryClient,
@@ -910,7 +874,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         payload.stopScheduleLabel ||
         '활동 포기'
 
-      if (progressRemoteEnabled || isTempMockProgram) {
+      if (progressRemoteEnabled) {
         setActivityWithdrawSubmitting(true)
         try {
           if (progressRemoteEnabled) {
@@ -957,7 +921,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       onSaveBasicInfo,
       program,
       programId,
-      isTempMockProgram,
       progressRemoteEnabled,
       queryClient,
       sessions,
@@ -1040,28 +1003,17 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       }))
     }
     // 일반 remote OFF — FE mock 프로그램만 로컬 시드
-    if (!isCompanySchool && !isTempMockProgram) return []
+    if (!isCompanySchool) return []
     const rows = getAssignedInstructorDisplayRows(instructors)
     const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
     return rows.map(assignedRow => ({
       ...assignedRow,
       assignedScheduleLine:
         assignedScheduleLinesByInstructorId[assignedRow.id] ?? defaultScheduleLine,
-      ...(isTempMockProgram
-        ? {
-            homeAddress:
-              instructorList.find(item => item.id === assignedRow.id)?.address?.trim() || '-',
-            distanceToSchool: `${(assignedRow.no % 4) + 1}.${(assignedRow.no % 9) + 1}km`,
-            assignedDate: row.sessions?.[0]?.date ?? '-',
-            assignedTime: row.sessions?.[0]?.timeRange ?? '-',
-            assignedSession: row.sessions?.[0]?.classNum ?? '-',
-          }
-        : {}),
     }))
   }, [
     instructors,
     isCompanySchool,
-    isTempMockProgram,
     assignmentBoardRemoteEnabled,
     instructorList,
     row.sessions,
@@ -1103,7 +1055,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     }
 
     // 일반 remote OFF — FE mock 프로그램만 로컬 시드
-    if (!isCompanySchool && !isTempMockProgram) return []
+    if (!isCompanySchool) return []
 
     return getWaitingInstructorRows(row.schoolName, instructorList, participatingSchoolList).filter(
       waitingRow => !assignedInstructorIdSet.has(getWaitingInstructorRowInstructorId(waitingRow))
@@ -1115,7 +1067,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     instructorList,
     participatingSchoolList,
     isCompanySchool,
-    isTempMockProgram,
     assignmentBoardRemoteEnabled,
     occupiedLectureDatesByInstructorId,
     completedWaitingRowKeys,
@@ -1273,7 +1224,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         return
       }
 
-      if (!isCompanySchool && !isTempMockProgram) {
+      if (!isCompanySchool) {
         void showAlert({
           title: PROGRAM_API_UNAVAILABLE_TITLE,
           content: buildProgramApiUnavailableSaveContent('강사 배정'),
@@ -1450,7 +1401,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           })
           return
         }
-      } else if (!isCompanySchool && !isTempMockProgram) {
+      } else if (!isCompanySchool) {
         void showAlert({
           title: PROGRAM_API_UNAVAILABLE_TITLE,
           content: buildProgramApiUnavailableSaveContent('강사 배정 취소'),
@@ -1536,7 +1487,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         }
       }
 
-      if (!isCompanySchool && !isTempMockProgram) {
+      if (!isCompanySchool) {
         void showAlert({
           title: PROGRAM_API_UNAVAILABLE_TITLE,
           content: buildProgramApiUnavailableSaveContent('대표 강사 변경'),
@@ -2672,14 +2623,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           setScheduleChangeModalOpen(false)
         }}
         onConfirm={payload => {
-          if (isTempMockProgram) {
-            setScheduleChangeModalOpen(false)
-            showAlert({
-              title: '일정 변경',
-              content: '교육 진행 일정 변경이 저장되었습니다. (temp mock)',
-            })
-            return
-          }
           if (!progressRemoteEnabled) {
             notifyProgramApiUnavailable(
               'general-participating-institution-schedule-change',

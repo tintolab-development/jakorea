@@ -10,13 +10,30 @@ import {
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getGeneralRecruitOverlayRecord,
+  getGeneralRecruitOverlayScope,
   getGeneralRecruitOverlayVersion,
   patchGeneralRecruitOverlay,
+  patchGeneralRecruitOverlayForScope,
   replaceGeneralRecruitOverlay,
   subscribeGeneralRecruitOverlay,
-  updateGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
+
+const VOLUNTEER_RECRUIT_CATALOG = 'recruitment-volunteer'
+
+function patchRecruitVolunteerInterviewOverlay(partial: Record<string, unknown>): void {
+  patchGeneralRecruitOverlay(partial)
+  const activeScope = getGeneralRecruitOverlayScope()
+  if (activeScope !== VOLUNTEER_RECRUIT_CATALOG) {
+    patchGeneralRecruitOverlayForScope(VOLUNTEER_RECRUIT_CATALOG, partial)
+  }
+  if (
+    activeScope.startsWith('recruitment-volunteer') &&
+    activeScope !== VOLUNTEER_RECRUIT_CATALOG
+  ) {
+    patchGeneralRecruitOverlayForScope(activeScope, partial)
+  }
+}
 
 export type VolunteerInterviewOverlayStore = 'application' | 'recruit'
 
@@ -34,6 +51,17 @@ export function buildVolunteerInterviewOverlayKey(
   namespace?: string
 ): string {
   return `${getInterviewOverlayKeyPrefix(store, namespace)}.${suffix}`
+}
+
+export function volunteerInterviewOverlayHasKey(
+  store: VolunteerInterviewOverlayStore,
+  suffix: string,
+  namespace?: string
+): boolean {
+  const key = buildVolunteerInterviewOverlayKey(store, suffix, namespace)
+  const record =
+    store === 'recruit' ? getGeneralRecruitOverlayRecord() : getGeneralApplicationOverlayRecord()
+  return Object.prototype.hasOwnProperty.call(record, key)
 }
 
 export function serializeVolunteerInterviewOverlayValue(value: unknown): unknown {
@@ -59,7 +87,7 @@ export function persistMissingVolunteerInterviewOverlayDefaults(args: {
   }
   if (Object.keys(patch).length === 0) return
   if (args.store === 'recruit') {
-    patchGeneralRecruitOverlay(patch)
+    patchRecruitVolunteerInterviewOverlay(patch)
     return
   }
   patchGeneralApplicationOverlay(patch)
@@ -104,7 +132,7 @@ export function useVolunteerInterviewOverlayKv<T>(
     (next: T) => {
       const serialized = serializeVolunteerInterviewOverlayValue(next) as T
       if (store === 'recruit') {
-        patchGeneralRecruitOverlay({ [recruitKey]: serialized })
+        patchRecruitVolunteerInterviewOverlay({ [recruitKey]: serialized })
         return
       }
       patchGeneralApplicationOverlay({ [applicationKey]: serialized })
@@ -124,7 +152,9 @@ export function updateVolunteerInterviewOverlayKey<T>(
   const key = buildVolunteerInterviewOverlayKey(store, suffix, namespace)
   const wrap = (prev: T | undefined) => serializeVolunteerInterviewOverlayValue(updater(prev)) as T
   if (store === 'recruit') {
-    updateGeneralRecruitOverlayKey<T>(key, wrap)
+    const live = getGeneralRecruitOverlayRecord()
+    const next = wrap(live[key] as T | undefined)
+    patchRecruitVolunteerInterviewOverlay({ [key]: next })
     return
   }
   updateGeneralApplicationOverlayKey<T>(key, wrap)
@@ -313,7 +343,7 @@ export function hydrateMissingVolunteerInterviewOverlay(args: {
   }
   if (Object.keys(patch).length === 0) return
   if (args.store === 'recruit') {
-    patchGeneralRecruitOverlay(patch)
+    patchRecruitVolunteerInterviewOverlay(patch)
     return
   }
   patchGeneralApplicationOverlay(patch)

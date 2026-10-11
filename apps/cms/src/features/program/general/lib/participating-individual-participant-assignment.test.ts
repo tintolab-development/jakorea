@@ -57,6 +57,16 @@ const remoteSession = (
 })
 
 describe('mergeParticipantDetailAssignmentRowsWithRemote', () => {
+  it('builds rows from remote only when local rows are empty', () => {
+    const merged = mergeParticipantDetailAssignmentRowsWithRemote({
+      participantId: '11',
+      localRows: [],
+      remoteSessions: [remoteSession()],
+    })
+    expect(merged).toHaveLength(1)
+    expect(merged[0]?.submission).toMatchObject({ kind: 'file', fileName: '과제.pdf' })
+  })
+
   it('joins assignment-submissions files onto the matching participant row', () => {
     const merged = mergeParticipantDetailAssignmentRowsWithRemote({
       participantId: '11',

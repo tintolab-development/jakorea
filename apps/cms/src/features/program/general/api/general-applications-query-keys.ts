@@ -63,6 +63,13 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'volunteers', programId] as const,
   attendances: (programId: string, scheduleId: string) =>
     [...generalProgramProgressQueryKeys.all, 'attendances', programId, scheduleId] as const,
+  programAttendancesBulk: (programId: string, scheduleIdsKey: string) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'program-attendances-bulk',
+      programId,
+      scheduleIdsKey,
+    ] as const,
   assignmentSubmissions: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'assignment-submissions', programId] as const,
   schedules: (programId: string) =>
@@ -90,8 +97,10 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'student-roster', organizationApplicationId] as const,
   instructorAssignments: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'instructor-assignments', programId] as const,
+  educationScopes: () =>
+    [...generalProgramProgressQueryKeys.all, 'education-scope'] as const,
   educationScope: (programId: string, participantId: string) =>
-    [...generalProgramProgressQueryKeys.all, 'education-scope', programId, participantId] as const,
+    [...generalProgramProgressQueryKeys.educationScopes(), programId, participantId] as const,
   submissionTeam: (programId: string, participantId: string) =>
     [...generalProgramProgressQueryKeys.all, 'submission-team', programId, participantId] as const,
   submissionTeams: (programId: string) =>
@@ -102,6 +111,13 @@ export const generalProgramProgressQueryKeys = {
       'instructor-settlements',
       programId,
       instructorMemberId,
+    ] as const,
+  participantSettlements: (programId: string, participantId: string) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'participant-settlements',
+      programId,
+      participantId,
     ] as const,
 }
 

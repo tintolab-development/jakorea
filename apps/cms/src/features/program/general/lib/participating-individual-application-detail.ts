@@ -1,4 +1,7 @@
-import { mapIndividualApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  mapIndividualApplicationDetailToApplicantRow,
+  type IndividualApplicationDetailEnriched,
+} from '@/features/program/general/api/adapters/general-applications-adapters'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
@@ -43,6 +46,9 @@ export function mapIndividualApplicationDetailToParticipatingRow(
   base: ParticipatingIndividualParticipantRow
 ): ParticipatingIndividualParticipantRow {
   const seed = participatingRowToIndividualApplicationSeed(base)
-  const applicant = mapIndividualApplicationDetailToApplicantRow(dto, seed)
+  const applicant = mapIndividualApplicationDetailToApplicantRow(
+    dto as IndividualApplicationDetailEnriched,
+    seed
+  )
   return mergeIndividualApplicationIntoParticipatingRow(base, applicant)
 }

@@ -49,4 +49,16 @@ export const queryKeys = {
     ] as const,
   scheduleAttendances: (programId: string, scheduleId: string) =>
     [...queryKeys.execution(), 'attendances', programId, scheduleId] as const,
+  volunteer1365AttendanceAll: (programId: string) =>
+    [...queryKeys.all, 'volunteer-1365-attendance', programId] as const,
+  volunteer1365Attendance: (
+    programId: string,
+    half: string,
+    scheduleIdsKey: string
+  ) =>
+    [
+      ...queryKeys.volunteer1365AttendanceAll(programId),
+      half,
+      scheduleIdsKey,
+    ] as const,
 }

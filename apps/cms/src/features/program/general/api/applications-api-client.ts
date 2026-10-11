@@ -67,6 +67,14 @@ export interface ApplicationsPageDto<T> {
   totalPages?: number
 }
 
+/** Spring Page `content` vs CMS OpenAPI `items` — 목록 adapter 공통 */
+export function normalizeApplicationsPageDto<T>(
+  body: ApplicationsPageDto<T> & { content?: T[] }
+): ApplicationsPageDto<T> {
+  const items = body.items ?? body.content ?? []
+  return { ...body, items }
+}
+
 export type IndividualApplicationNotificationResendRequest = {
   timing: 'IMMEDIATE' | 'SCHEDULED'
   scheduledAt: string | null
@@ -146,13 +154,14 @@ async function fetchApplicationsPage<T>(
   url: string,
   params?: ApplicationsListQuery
 ): Promise<ApplicationsPageDto<T>> {
-  return unwrapApiBody<ApplicationsPageDto<T>>(
+  const body = unwrapApiBody<ApplicationsPageDto<T> & { content?: T[] }>(
     await customInstance({
       url,
       method: 'GET',
       params,
     })
   )
+  return normalizeApplicationsPageDto(body)
 }
 
 export async function fetchOrganizationApplicationsRemote(
