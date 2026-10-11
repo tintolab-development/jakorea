@@ -13,7 +13,9 @@ import customInstance from '@/shared/api/orval-mutator'
 import {
   createProgramInstructorParticipantRemote,
   createProgramParticipantRemote,
+  fetchEmployeeVolunteerCountsRemote,
   patchParticipantTextbookDeliveryRemote,
+  putEmployeeVolunteerCountsRemote,
   putParticipantAssignedOrganizationsRemote,
 } from './program-progress-api-client'
 
@@ -83,6 +85,60 @@ describe('registerVolunteerParticipantRemote', () => {
         data: expect.objectContaining({
           memberId: 190084,
           volunteerKind: 'GENERAL',
+        }),
+      })
+    )
+  })
+})
+
+describe('employee volunteer counts remote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('GET employee-volunteer-counts를 숫자 programId로 호출한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      programId: 168001,
+      entries: [],
+    })
+
+    await fetchEmployeeVolunteerCountsRemote('168001', 42)
+
+    expect(vi.mocked(customInstance).mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        url: '/api/admin/programs/168001/employee-volunteer-counts',
+        method: 'GET',
+        params: { organizationApplicationId: 42 },
+      })
+    )
+  })
+
+  it('PUT employee-volunteer-counts body를 보낸다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      success: true,
+      data: { programId: 168001, entries: [] },
+    })
+
+    await putEmployeeVolunteerCountsRemote('168001', {
+      organizationApplicationId: 42,
+      entries: [
+        {
+          scheduleId: 1,
+          newVolunteerCount: 2,
+          reparticipationVolunteerCount: 1,
+          expectedRevision: 0,
+        },
+      ],
+      reason: 'CMS 참여 봉사자 임직원 자원봉사자 인원 등록',
+    })
+
+    expect(vi.mocked(customInstance).mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        url: '/api/admin/programs/168001/employee-volunteer-counts',
+        method: 'PUT',
+        data: expect.objectContaining({
+          organizationApplicationId: 42,
+          reason: 'CMS 참여 봉사자 임직원 자원봉사자 인원 등록',
         }),
       })
     )

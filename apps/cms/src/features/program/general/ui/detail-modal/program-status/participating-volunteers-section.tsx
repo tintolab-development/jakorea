@@ -159,8 +159,11 @@ export function ParticipatingVolunteersSection({
     sessionRows: employeeVolunteerSessionRows,
     approvedInstitutionOptions,
     registrations: employeeVolunteerRegistrations,
+    isIndividualProgram: isEmployeeVolunteerIndividualProgram,
+    individualProgramRegistrationScopeId,
     saveRegistration: saveEmployeeVolunteerRegistration,
     loadRegistrationForInstitution,
+    loadIndividualProgramRegistration,
   } = useEmployeeVolunteerRegistration(program, schoolRows, volunteerList, {
     programId,
     remoteEnabled: progressRemoteEnabled,
@@ -296,8 +299,15 @@ export function ParticipatingVolunteersSection({
       )
       return
     }
+    if (!progressRemoteEnabled) {
+      notifyProgramApiUnavailable(
+        'general-progress-volunteer-employee-register',
+        '참여 봉사자 · 임직원 자원봉사자 등록'
+      )
+      return
+    }
     setEmployeeVolunteerModalOpen(true)
-  }, [programId])
+  }, [programId, progressRemoteEnabled])
 
   const handleRegisterVolunteerClick = useCallback(() => {
     openVolunteerRegister()
@@ -692,6 +702,8 @@ export function ParticipatingVolunteersSection({
         sessionRows={employeeVolunteerSessionRows}
         institutionOptions={approvedInstitutionOptions}
         savedRegistrations={employeeVolunteerRegistrations}
+        hideInstitutionSelect={isEmployeeVolunteerIndividualProgram}
+        programLevelRegistrationScopeId={individualProgramRegistrationScopeId}
         onNoInstitutionSelected={() =>
           showAlert({
             title: '안내',
@@ -704,6 +716,17 @@ export function ParticipatingVolunteersSection({
             content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE,
           })
         }
+        onProgramLevelOpen={() => {
+          void loadIndividualProgramRegistration().catch(error => {
+            showAlert({
+              title: '임직원 자원봉사자 조회 실패',
+              content: getGeneralProgramApiErrorMessage(
+                error,
+                '저장된 임직원 자원봉사자 수를 불러오지 못했습니다. 다시 시도해 주세요.'
+              ),
+            })
+          })
+        }}
         onInstitutionChange={institutionId => {
           void loadRegistrationForInstitution(institutionId).catch(error => {
             showAlert({
@@ -715,26 +738,26 @@ export function ParticipatingVolunteersSection({
             })
           })
         }}
-        onRegister={payload => {
-          void saveEmployeeVolunteerRegistration(
-            payload.institutionId,
-            payload.countsBySessionId
-          )
-            .then(() => {
-              showAlert({
-                title: '안내',
-                content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE,
-              })
+        onRegister={async payload => {
+          try {
+            await saveEmployeeVolunteerRegistration(
+              payload.institutionId,
+              payload.countsBySessionId
+            )
+            showAlert({
+              title: '안내',
+              content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE,
             })
-            .catch(error => {
-              showAlert({
-                title: '임직원 자원봉사자 등록 실패',
-                content: getGeneralProgramApiErrorMessage(
-                  error,
-                  '임직원 자원봉사자 수 저장에 실패했습니다. 다시 시도해 주세요.'
-                ),
-              })
+          } catch (error) {
+            showAlert({
+              title: '임직원 자원봉사자 등록 실패',
+              content: getGeneralProgramApiErrorMessage(
+                error,
+                '임직원 자원봉사자 수 저장에 실패했습니다. 다시 시도해 주세요.'
+              ),
             })
+            throw error
+          }
         }}
       />
       <AddParticipatingVolunteerModal

@@ -59,7 +59,7 @@ describe('buildVolunteerParticipantRegisterRequest', () => {
     expect(result.request.memberId).toBe(190084)
     expect(result.request.jaProgramExperienceConsentRequest).toBe('REQUESTED')
     expect(result.request.previousJaProgram?.certificateFileIds).toEqual(['90001'])
-    expect(result.request.freeTextItems.items).toHaveLength(4)
+    expect(result.request.freeTextItems?.items).toHaveLength(4)
     expect(result.request.reason.length).toBeGreaterThanOrEqual(5)
   })
 

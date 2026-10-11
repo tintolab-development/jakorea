@@ -40,7 +40,7 @@ describe('progress-attendance-adapters', () => {
       ],
       participants: [{ participantId: 1694745, memberName: '일반회원2', participantType: 'INDIVIDUAL' }],
       attendancesByScheduleId: {
-        '9001': [{ participantId: 1694745, status: 'COMPLETED' }],
+        '9001': [{ participantId: 1694745, status: null }],
       },
     })
 

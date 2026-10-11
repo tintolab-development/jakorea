@@ -1,6 +1,6 @@
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
-import type { EmployeeVolunteerCountEntryResponse } from '@/shared/api/generated/dashboard/schemas/employeeVolunteerCountEntryResponse'
-import type { EmployeeVolunteerCountReplaceRequest } from '@/shared/api/generated/dashboard/schemas/employeeVolunteerCountReplaceRequest'
+import type { EmployeeVolunteerCountEntryResponse } from '@/shared/api/generated/program-progress/schemas/employeeVolunteerCountEntryResponse'
+import type { EmployeeVolunteerCountReplaceRequest } from '@/shared/api/generated/program-progress/schemas/employeeVolunteerCountReplaceRequest'
 import type {
   EmployeeVolunteerSessionRow,
   EmployeeVolunteerSessionRowId,
@@ -17,9 +17,13 @@ function sortedSchedules(
     .sort((a, b) => (a.sessionNo ?? 0) - (b.sessionNo ?? 0))
 }
 
+function isPreEducationScheduleName(scheduleName: string | undefined): boolean {
+  return (scheduleName ?? '').includes('사전')
+}
+
 /**
  * 프로그램 구조 기반 모달 행 ↔ dashboard scheduleId 매핑.
- * 사전교육 행은 scheduleName에 「사전」 포함 일정, 없으면 첫 일정.
+ * sessionNo가 있으면 회차(round)와 우선 매칭하고, 없으면 사전교육 제외 정렬 인덱스로 매칭한다.
  */
 export function buildEmployeeVolunteerSessionRowScheduleMap(
   sessionRows: ReadonlyArray<EmployeeVolunteerSessionRow>,
@@ -30,10 +34,11 @@ export function buildEmployeeVolunteerSessionRowScheduleMap(
   if (ordered.length === 0) return map
 
   const preEducationSchedule =
-    ordered.find(s => (s.scheduleName ?? '').includes('사전')) ?? ordered[0]
-  const regularSchedules = ordered.filter(s => s.scheduleId !== preEducationSchedule?.scheduleId)
+    ordered.find(s => isPreEducationScheduleName(s.scheduleName)) ?? ordered[0]
+  const regularSchedules = ordered.filter(
+    s => s.scheduleId !== preEducationSchedule?.scheduleId && !isPreEducationScheduleName(s.scheduleName)
+  )
 
-  let regularIndex = 0
   for (const row of sessionRows) {
     if (row.id === 'pre_education') {
       if (preEducationSchedule?.scheduleId != null) {
@@ -46,9 +51,12 @@ export function buildEmployeeVolunteerSessionRowScheduleMap(
       if (schedule?.scheduleId != null) map.set(row.id, schedule.scheduleId)
       continue
     }
-    const schedule = regularSchedules[regularIndex] ?? ordered[regularIndex] ?? ordered[0]
-    regularIndex += 1
-    if (schedule?.scheduleId != null) map.set(row.id, schedule.scheduleId)
+    if (row.round != null) {
+      const bySessionNo = regularSchedules.find(s => s.sessionNo === row.round)
+      const byIndex = regularSchedules[row.round - 1] ?? ordered[row.round - 1]
+      const schedule = bySessionNo ?? byIndex ?? ordered[0]
+      if (schedule?.scheduleId != null) map.set(row.id, schedule.scheduleId)
+    }
   }
 
   return map

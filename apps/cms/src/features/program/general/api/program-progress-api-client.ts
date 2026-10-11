@@ -1,15 +1,26 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
-import { getJABackendAdminAPIProgramProgressSubset } from '@/shared/api/generated/program-progress/program-progress-api'
-import type { ProgramParticipantRegisterCandidatePageResponse } from '@/shared/api/generated/program-progress/schemas/programParticipantRegisterCandidatePageResponse'
+import { getJAKoreaCMSBackendAPIProgramProgressSubset } from '@/shared/api/generated/program-progress/program-progress-api'
+import type { EmployeeVolunteerCountReplaceRequest } from '@/shared/api/generated/program-progress/schemas/employeeVolunteerCountReplaceRequest'
+import type { EmployeeVolunteerCountSetResponse } from '@/shared/api/generated/program-progress/schemas/employeeVolunteerCountSetResponse'
+import type { PageResponseProgramParticipantRegisterCandidateResponse } from '@/shared/api/generated/program-progress/schemas/pageResponseProgramParticipantRegisterCandidateResponse'
 import type { VolunteerParticipantRegisterRequest } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequest'
 import type { VolunteerParticipantRegisterResponse } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterResponse'
 
-const programProgressApi = getJABackendAdminAPIProgramProgressSubset()
 import type { PageResponseParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseParticipantListItemResponse'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import type { ChangeRequest } from '@/shared/api/generated/dashboard/schemas/changeRequest'
 import type { ChangeResponse } from '@/shared/api/generated/dashboard/schemas/changeResponse'
+
+const programProgressApi = getJAKoreaCMSBackendAPIProgramProgressSubset()
+
+function toNumericProgramId(programId: string): number {
+  const parsed = Number(programId)
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`Invalid programId: ${programId}`)
+  }
+  return parsed
+}
 
 export type ProgramParticipantsListQuery = {
   participantType?: string
@@ -535,9 +546,9 @@ export type { VolunteerParticipantRegisterRequest } from '@/shared/api/generated
 export type { VolunteerParticipantRegisterResponse } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterResponse'
 export type { ProgramParticipantRegisterCandidateResponse } from '@/shared/api/generated/program-progress/schemas/programParticipantRegisterCandidateResponse'
 
-/** @deprecated Use `ProgramParticipantRegisterCandidatePageResponse` from generated program-progress schemas */
+/** @deprecated Use `PageResponseProgramParticipantRegisterCandidateResponse` from generated program-progress schemas */
 export type ProgramParticipantRegisterCandidatesPage =
-  ProgramParticipantRegisterCandidatePageResponse
+  PageResponseProgramParticipantRegisterCandidateResponse
 
 /**
  * POST /api/admin/programs/{programId}/volunteer-participants/register
@@ -562,12 +573,9 @@ export async function fetchProgramParticipantRegisterCandidatesRemote(
     page?: number
     size?: number
   }
-): Promise<ProgramParticipantRegisterCandidatePageResponse> {
-  return unwrapApiBody<ProgramParticipantRegisterCandidatePageResponse>(
-    await programProgressApi.getApiAdminProgramsProgramIdParticipantRegisterCandidates(
-      programId,
-      params
-    )
+): Promise<PageResponseProgramParticipantRegisterCandidateResponse> {
+  return unwrapApiBody<PageResponseProgramParticipantRegisterCandidateResponse>(
+    await programProgressApi.participantRegisterCandidates(programId, params)
   )
 }
 
@@ -575,31 +583,21 @@ export async function fetchProgramParticipantRegisterCandidatesRemote(
 export async function fetchEmployeeVolunteerCountsRemote(
   programId: string,
   organizationApplicationId?: number
-): Promise<
-  import('@/shared/api/generated/dashboard/schemas/employeeVolunteerCountSetResponse').EmployeeVolunteerCountSetResponse
-> {
+): Promise<EmployeeVolunteerCountSetResponse> {
   return unwrapApiBody(
-    await customInstance({
-      url: `/api/admin/programs/${encodeURIComponent(programId)}/employee-volunteer-counts`,
-      method: 'GET',
-      params:
-        organizationApplicationId != null ? { organizationApplicationId } : undefined,
-    })
+    await programProgressApi.get1(
+      toNumericProgramId(programId),
+      organizationApplicationId != null ? { organizationApplicationId } : undefined
+    )
   )
 }
 
 /** PUT /api/admin/programs/{programId}/employee-volunteer-counts */
 export async function putEmployeeVolunteerCountsRemote(
   programId: string,
-  payload: import('@/shared/api/generated/dashboard/schemas/employeeVolunteerCountReplaceRequest').EmployeeVolunteerCountReplaceRequest
-): Promise<
-  import('@/shared/api/generated/dashboard/schemas/employeeVolunteerCountSetResponse').EmployeeVolunteerCountSetResponse
-> {
+  payload: EmployeeVolunteerCountReplaceRequest
+): Promise<EmployeeVolunteerCountSetResponse> {
   return unwrapApiBody(
-    await customInstance({
-      url: `/api/admin/programs/${encodeURIComponent(programId)}/employee-volunteer-counts`,
-      method: 'PUT',
-      data: payload,
-    })
+    await programProgressApi.replace2(toNumericProgramId(programId), payload)
   )
 }

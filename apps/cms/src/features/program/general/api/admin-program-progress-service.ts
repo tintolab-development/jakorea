@@ -455,7 +455,7 @@ export async function fetchGeneralEmployeeVolunteerCounts(
 
 export async function saveGeneralEmployeeVolunteerCounts(
   programId: string,
-  payload: import('@/shared/api/generated/dashboard/schemas/employeeVolunteerCountReplaceRequest').EmployeeVolunteerCountReplaceRequest
+  payload: import('@/shared/api/generated/program-progress/schemas/employeeVolunteerCountReplaceRequest').EmployeeVolunteerCountReplaceRequest
 ) {
   assertProgramProgressRemoteReady()
   const { putEmployeeVolunteerCountsRemote } = await import(

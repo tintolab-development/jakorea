@@ -3464,6 +3464,16 @@
           },
           "detailJson": {
             "type": "string"
+          },
+          "eligiblePayeeTypes": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "정산 신청 가능 payee 역할. INSTRUCTOR|STUDENT|PARTICIPANT_INDIVIDUAL|PARTICIPANT_ORGANIZATION",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -5205,7 +5215,17 @@
             "format": "int64"
           },
           "status": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "출석 코드만: PRESENT|LATE|ABSENT|EXCUSED. 미기록·비출석 값(COMPLETED·SCHEDULED 등)은 null.",
+            "enum": [
+              "PRESENT",
+              "LATE",
+              "ABSENT",
+              "EXCUSED"
+            ]
           },
           "absenceReason": {
             "type": "string"
@@ -13807,10 +13827,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -14599,6 +14619,165 @@
           },
           "maxAmount": {
             "type": "number"
+          }
+        }
+      },
+      "FreeTextItemRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bodyText": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "bodyText",
+          "id",
+          "label"
+        ]
+      },
+      "FreeTextItemsRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FreeTextItemRequest"
+            },
+            "maxItems": 4,
+            "minItems": 4
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "PreviousJaProgramRequest": {
+        "type": "object",
+        "properties": {
+          "programYear": {
+            "type": "string",
+            "minLength": 1
+          },
+          "programName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "certificateFileIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 2147483647,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "certificateFileIds",
+          "programName",
+          "programYear"
+        ]
+      },
+      "VolunteerParticipantRegisterRequest": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "volunteerKind": {
+            "type": "string",
+            "default": "GENERAL",
+            "enum": [
+              "GENERAL",
+              "EMPLOYEE"
+            ]
+          },
+          "registrationChannel": {
+            "type": "string",
+            "enum": [
+              "CMS_PROGRESS_ADD"
+            ]
+          },
+          "personalInfoConsent": {
+            "type": "string",
+            "enum": [
+              "AGREE"
+            ],
+            "minLength": 1
+          },
+          "thirdPartyConsent": {
+            "type": "string",
+            "enum": [
+              "AGREE"
+            ],
+            "minLength": 1
+          },
+          "id1365": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "회원에 1365 ID가 없을 때만"
+          },
+          "jaProgramExperienceConsentRequest": {
+            "type": "string",
+            "enum": [
+              "REQUESTED",
+              "NOT_REQUESTED"
+            ],
+            "minLength": 1
+          },
+          "previousJaProgram": {
+            "$ref": "#/components/schemas/PreviousJaProgramRequest"
+          },
+          "freeTextItems": {
+            "$ref": "#/components/schemas/FreeTextItemsRequest"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5
+          }
+        },
+        "required": [
+          "jaProgramExperienceConsentRequest",
+          "memberId",
+          "personalInfoConsent",
+          "reason",
+          "thirdPartyConsent"
+        ]
+      },
+      "VolunteerParticipantRegisterResponse": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "volunteerApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sourceApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "volunteerKind": {
+            "type": "string"
+          },
+          "participantStatus": {
+            "type": "string"
           }
         }
       },
@@ -29739,7 +29918,7 @@
               "string",
               "null"
             ],
-            "description": "참여 방식. participationScheduleDetail=common일 때만 값이 있고 GENERAL_ORGANIZATION·perSchedule은 null.",
+            "description": "개인 대상(GENERAL_INDIVIDUAL·GENERAL+INDIVIDUAL) 참여 방식. CMS generalCommonInfo.participationMethod 또는 일정별 participationMethodLabel을 반영. 미설정·perSchedule 개인 라벨만 있으면 individual. GENERAL_ORGANIZATION·비일반 유형은 null.",
             "enum": [
               "individual",
               "team"
@@ -34214,6 +34393,33 @@
           }
         }
       },
+      "PageResponseSponsorResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SponsorResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "SponsorDetailResponse": {
         "type": "object",
         "properties": {
@@ -37339,6 +37545,19 @@
             "format": "date-time",
             "description": "종료 시각. 희망 일정은 신청일+종료시각(Asia/Seoul). 시각이 없으면 null"
           },
+          "scheduleStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus 와 동일 규칙. 출석과 별개.",
+            "enum": [
+              "UNSCHEDULED",
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ]
+          },
           "attendanceStatus": {
             "type": [
               "string",
@@ -37352,6 +37571,159 @@
               "null"
             ],
             "description": "배정 상태. 없으면 null이며 화면은 대기 처리"
+          }
+        }
+      },
+      "PageResponseParticipantSettlementListItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParticipantSettlementListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ParticipantSettlementListItemResponse": {
+        "type": "object",
+        "description": "참여자(학생·개인) 실비 정산 행. 숙박(LODGING) 유형은 포함하지 않습니다.",
+        "properties": {
+          "receiptId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalReceiptId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "latestRevision": {
+            "type": "boolean"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "신청(제출) 일시"
+          },
+          "itemSummary": {
+            "type": "string",
+            "description": "항목 요약 라벨(학생 교통비·참여자 활동비·식사비)"
+          },
+          "itemType": {
+            "type": "string",
+            "description": "settlementFrontend.items[].type 호환: transportation|activity|meal"
+          },
+          "expenseType": {
+            "type": "string"
+          },
+          "expenseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "receiptStatus": {
+            "type": "string",
+            "description": "영수증 검토 상태: SUBMITTED|APPROVED|REJECTED"
+          },
+          "settlementId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "지급조서/정산 테이블 연결 전까지 null"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "description": "지급 처리 전까지 null"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PageResponseProgramParticipantRegisterCandidateResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramParticipantRegisterCandidateResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProgramParticipantRegisterCandidateResponse": {
+        "type": "object",
+        "description": "봉사자 추가 등록 모달 회원 후보",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "회원 ID"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "표시 이름"
+          },
+          "hasRegisteredId1365": {
+            "type": "boolean",
+            "description": "1365 아이디 등록 여부"
+          },
+          "hasVolunteerApplicationForProgram": {
+            "type": "boolean",
+            "description": "이 프로그램 봉사 신청 존재 여부"
+          },
+          "hasVolunteerApplicationAnyProgram": {
+            "type": "boolean",
+            "description": "다른 프로그램 봉사 신청 존재 여부"
+          },
+          "eligible": {
+            "type": "boolean",
+            "description": "등록 가능 여부. eligible 후보만 반환 시 항상 true"
+          },
+          "ineligibleReason": {
+            "type": "string",
+            "description": "등록 불가 사유. eligible 후보만 반환 시 null"
           }
         }
       },
@@ -43292,6 +43664,33 @@
           }
         }
       },
+      "PageResponseFormResponseProjectionResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormResponseProjectionResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "FormAutoFillKeyResponse": {
         "type": "object",
         "properties": {
@@ -43850,7 +44249,14 @@
             "type": "string"
           },
           "scheduleStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. program_schedule.schedule_status 컬럼과 다를 수 있음. 출석 코드와 혼용하지 않음.",
+            "enum": [
+              "UNSCHEDULED",
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ]
           }
         }
       },
@@ -45185,6 +45591,97 @@
           },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "OrganizationApplicationSession": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OrganizationApplicationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "requestedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "resolvedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleUnresolved": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
           }
         }
       }

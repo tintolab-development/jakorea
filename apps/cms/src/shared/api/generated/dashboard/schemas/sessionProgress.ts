@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { SessionProgressScheduleStatus } from './sessionProgressScheduleStatus';
 
 /**
  * 참여 일정. 기관 참여자는 배정·출석이 붙은 프로그램 일정과 신청 희망 일정(GET .../requested-schedules 와 같은 program_application_requested_schedule)을 함께 반환한다. 희망 시각이 있으면 startAt/endAt은 Asia/Seoul 기준 ISO-8601이고 scheduleName은 신청 표기(dateText)다. 프로그램 일정과 시각이 맞지 않으면 scheduleId·resolvedScheduleId는 null, scheduleUnresolved는 true. 신청 답이 없는 고정 1일 프로그램은 일정을 만들지 않고 빈 배열이다. null은 반환하지 않는다.
@@ -51,11 +52,10 @@ export interface SessionProgress {
      */
   endAt?: string | null;
   /**
-     * 교육 진행(UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED). 대시보드 program-schedules와 동일 규칙. 출석과 별개.
-     * Orval 재생성 후 OpenAPI에 필드 유지 확인.
+     * 교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus 와 동일 규칙. 출석과 별개.
      * @nullable
      */
-  scheduleStatus?: string | null;
+  scheduleStatus?: SessionProgressScheduleStatus;
   /**
      * PRESENT|LATE|ABSENT|EXCUSED. 없으면 null
      * @nullable

@@ -21,6 +21,9 @@ export interface PaymentItemResponse {
   maxLimitWon?: number;
   description?: string;
   detailJson?: string;
-  /** 수급 대상 — Orval 재생성 후 OpenAPI 유지 확인 */
-  eligiblePayeeTypes?: string[];
+  /**
+     * 정산 신청 가능 payee 역할. INSTRUCTOR|STUDENT|PARTICIPANT_INDIVIDUAL|PARTICIPANT_ORGANIZATION
+     * @nullable
+     */
+  eligiblePayeeTypes?: string[] | null;
 }

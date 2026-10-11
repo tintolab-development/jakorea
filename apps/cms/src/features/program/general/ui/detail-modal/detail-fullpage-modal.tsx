@@ -1412,23 +1412,7 @@ export function GeneralProgramDetailFullPageModal({
    * 프로그램 상세 전체 닫기는 breadcrumb「프로그램 목록」또는 중첩이 없을 때만.
    */
   const handleHeaderClose = useCallback(() => {
-    if (applicantCloseHandlerRef.current?.()) return
-    if (volunteerApplicantCloseHandlerRef.current?.()) return
-    if (applicantIdFromUrl) {
-      setSearchParams(
-        prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
-          if (!prev.has(APPLICANT_ID_PARAM)) return prev
-          const next = new URLSearchParams(prev)
-          next.delete(APPLICANT_ID_PARAM)
-          next.delete(DETAIL_TAB_PARAM)
-          preserveGeneralProgramDetailProgramId(prev, next)
-          return next
-        },
-        { replace: true }
-      )
-      return
-    }
+    // 진행 현황 중첩 상세는 신청 목록 close handler·stale applicantId보다 우선 (X 1회로 목록 복귀)
     if (activeLnb === 'progress') {
       if (schoolIdFromUrl) {
         setSchoolId(null)
@@ -1447,8 +1431,33 @@ export function GeneralProgramDetailFullPageModal({
         return
       }
     }
+    const onParticipantApplicationLnb =
+      activeLnb === 'institution_applications' || activeLnb === 'instructor_applications'
+    if (onParticipantApplicationLnb && applicantCloseHandlerRef.current?.()) return
+    if (
+      isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab) &&
+      volunteerApplicantCloseHandlerRef.current?.()
+    ) {
+      return
+    }
+    if (applicantIdFromUrl) {
+      setSearchParams(
+        prev => {
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (!prev.has(APPLICANT_ID_PARAM)) return prev
+          const next = new URLSearchParams(prev)
+          next.delete(APPLICANT_ID_PARAM)
+          next.delete(DETAIL_TAB_PARAM)
+          preserveGeneralProgramDetailProgramId(prev, next)
+          return next
+        },
+        { replace: true }
+      )
+      return
+    }
     handleRequestClose()
   }, [
+    activeTab,
     activeLnb,
     applicantIdFromUrl,
     handleRequestClose,

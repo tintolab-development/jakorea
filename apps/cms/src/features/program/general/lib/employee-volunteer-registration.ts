@@ -4,6 +4,14 @@ import type {
   EmployeeVolunteerSessionRowId,
 } from '@/features/program/general/lib/employee-volunteer-session-rows'
 
+/** 개인 프로그램 — 기관 없이 프로그램 단위 임직원 봉사자 수 저장 스코프 */
+export const EMPLOYEE_VOLUNTEER_INDIVIDUAL_PROGRAM_REGISTRATION_ID =
+  '__employee_volunteer_individual_program__'
+
+export function isEmployeeVolunteerIndividualProgramScope(scopeId: string): boolean {
+  return scopeId === EMPLOYEE_VOLUNTEER_INDIVIDUAL_PROGRAM_REGISTRATION_ID
+}
+
 export type EmployeeVolunteerSessionCounts = {
   newCount: number
   returningCount: number

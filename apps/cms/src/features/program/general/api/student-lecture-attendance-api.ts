@@ -15,7 +15,7 @@ import {
   fetchScheduleAttendancesRemote,
 } from '@/features/program/general/api/program-progress-api-client'
 
-function mapApiStatusToLecture(status?: string): LectureAttendanceStatusKey {
+function mapApiStatusToLecture(status?: string | null): LectureAttendanceStatusKey {
   const normalized = (status ?? '').trim().toUpperCase()
   if (normalized === 'LATE') return 'late'
   if (normalized === 'ABSENT' || normalized === 'EXCUSED' || normalized === 'EXCUSED_ABSENCE') {

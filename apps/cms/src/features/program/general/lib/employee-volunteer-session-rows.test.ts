@@ -70,6 +70,21 @@ describe('resolveEmployeeVolunteerSessionRows', () => {
     expect(rows.map(row => row.label)).toEqual(['오리엔테이션', '국내대회'])
   })
 
+  it('복수 일정형에서 scheduleDetails가 비어 있으면 사전교육 외 행을 만들지 않는다', () => {
+    const rows = resolveEmployeeVolunteerSessionRows(
+      baseProgram({
+        generalProgramSessionRound: 'multi',
+        generalProgramEducationStructure: 'schedule',
+        generalCommonInfo: {
+          scheduleCurriculumPreEducation: true,
+          scheduleDetails: [],
+        },
+      })
+    )
+
+    expect(rows.map(row => row.label)).toEqual(['사전교육'])
+  })
+
   it('복수 일정형 사전 교육 블록은 합성 사전교육 행과 중복하지 않는다', () => {
     const rows = resolveEmployeeVolunteerSessionRows(
       baseProgram({

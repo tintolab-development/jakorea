@@ -25,7 +25,7 @@ import {
 } from '@/features/program/general/api/program-progress-api-client'
 
 export function mapApiStatusToSchoolSessionAttendance(
-  status?: string
+  status?: string | null
 ): SchoolSessionAttendanceStatusKey {
   const normalized = (status ?? '').trim().toUpperCase()
   if (normalized === 'LATE') return 'late'

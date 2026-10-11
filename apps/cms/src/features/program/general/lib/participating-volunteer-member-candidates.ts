@@ -73,7 +73,15 @@ async function fetchAllVolunteerRegisterCandidatesRemote(
       size: CANDIDATE_PAGE_SIZE,
     })
     const items = response.items ?? []
-    aggregated.push(...items)
+    for (const item of items) {
+      if (item.memberId == null) continue
+      aggregated.push({
+        memberId: item.memberId,
+        displayName: item.displayName,
+        hasRegisteredId1365: item.hasRegisteredId1365,
+        eligible: item.eligible,
+      })
+    }
     const totalPages = response.totalPages ?? 1
     if (page + 1 >= totalPages || items.length === 0) break
   }

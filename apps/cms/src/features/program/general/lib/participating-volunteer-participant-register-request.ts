@@ -7,10 +7,11 @@ import {
 } from '@/features/program/general/lib/participating-volunteer-add-registration-draft'
 import type { ParticipatingVolunteerAddRegistrationPluginValues } from '@/features/program/general/lib/participating-volunteer-add-registration-plugin-state'
 import type { VolunteerParticipantRegisterRequest } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequest'
-import { VolunteerParticipantRegisterConsent } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterConsent'
+import { VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest'
+import { VolunteerParticipantRegisterRequestPersonalInfoConsent } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestPersonalInfoConsent'
 import { VolunteerParticipantRegisterRequestRegistrationChannel } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestRegistrationChannel'
+import { VolunteerParticipantRegisterRequestThirdPartyConsent } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestThirdPartyConsent'
 import { VolunteerParticipantRegisterRequestVolunteerKind } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestVolunteerKind'
-import { VolunteerParticipantJaConsentRequest } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantJaConsentRequest'
 
 const REGISTER_REASON = 'CMS 참여 봉사자 추가 등록'
 
@@ -39,8 +40,12 @@ function resolveConsentAgreed(
 function mapJaExperienceToConsentRequest(
   experience: JaVolunteerExperience
 ): VolunteerParticipantRegisterRequest['jaProgramExperienceConsentRequest'] | undefined {
-  if (experience === 'yes') return VolunteerParticipantJaConsentRequest.REQUESTED
-  if (experience === 'no') return VolunteerParticipantJaConsentRequest.NOT_REQUESTED
+  if (experience === 'yes') {
+    return VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest.REQUESTED
+  }
+  if (experience === 'no') {
+    return VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest.NOT_REQUESTED
+  }
   return undefined
 }
 
@@ -77,7 +82,10 @@ export function buildVolunteerParticipantRegisterRequest(
   }
 
   const previousJa = input.pluginValues.previousJaProgram
-  if (jaProgramExperienceConsentRequest === VolunteerParticipantJaConsentRequest.REQUESTED) {
+  if (
+    jaProgramExperienceConsentRequest ===
+    VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest.REQUESTED
+  ) {
     if (!previousJa.programYear.trim() || !previousJa.programName.trim()) {
       return { ok: false, message: '이전 참여 JA 봉사 프로그램의 진행년도와 프로그램명을 입력해 주세요.' }
     }
@@ -109,8 +117,8 @@ export function buildVolunteerParticipantRegisterRequest(
     memberId: input.memberId,
     volunteerKind: VolunteerParticipantRegisterRequestVolunteerKind.GENERAL,
     registrationChannel: VolunteerParticipantRegisterRequestRegistrationChannel.CMS_PROGRESS_ADD,
-    personalInfoConsent: VolunteerParticipantRegisterConsent.AGREE,
-    thirdPartyConsent: VolunteerParticipantRegisterConsent.AGREE,
+    personalInfoConsent: VolunteerParticipantRegisterRequestPersonalInfoConsent.AGREE,
+    thirdPartyConsent: VolunteerParticipantRegisterRequestThirdPartyConsent.AGREE,
     jaProgramExperienceConsentRequest,
     freeTextItems: { items: freeTextItems },
     reason: REGISTER_REASON,
@@ -120,7 +128,10 @@ export function buildVolunteerParticipantRegisterRequest(
     request.id1365 = trimmedId1365
   }
 
-  if (jaProgramExperienceConsentRequest === VolunteerParticipantJaConsentRequest.REQUESTED) {
+  if (
+    jaProgramExperienceConsentRequest ===
+    VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest.REQUESTED
+  ) {
     request.previousJaProgram = {
       programYear: previousJa.programYear.trim(),
       programName: previousJa.programName.trim(),

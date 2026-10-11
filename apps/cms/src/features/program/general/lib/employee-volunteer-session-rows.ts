@@ -61,17 +61,18 @@ export function resolveEmployeeVolunteerSessionRows(program: Program): EmployeeV
 
   if (educationStructure === 'schedule') {
     const details = commonInfo.scheduleDetails ?? []
-    const count = Math.max(details.length, 1)
-    for (let index = 0; index < count; index += 1) {
+    let roundIndex = 0
+    for (let index = 0; index < details.length; index += 1) {
       const detail = details[index]
       if (detail?.scheduleLabel?.includes('사전 교육')) continue
+      roundIndex += 1
       const name = detail?.name?.trim()
       const scheduleLabel = detail?.scheduleLabel?.trim()
-      const label = name || scheduleLabel || `세부 일정 ${String(index + 1).padStart(2, '0')}`
+      const label = name || scheduleLabel || `세부 일정 ${String(roundIndex).padStart(2, '0')}`
       rows.push({
-        id: buildRoundId(index + 1),
+        id: buildRoundId(roundIndex),
         label,
-        round: index + 1,
+        round: roundIndex,
         isPreEducation: false,
         countsTowardParticipants: false,
       })
@@ -83,8 +84,7 @@ export function resolveEmployeeVolunteerSessionRows(program: Program): EmployeeV
   const regularSessions = sessions.filter(
     session => !session.sessionLabel?.includes('사전 교육')
   )
-  const count = Math.max(regularSessions.length, 1)
-  for (let index = 0; index < count; index += 1) {
+  for (let index = 0; index < regularSessions.length; index += 1) {
     const sessionLabel = regularSessions[index]?.sessionLabel?.trim()
     const label = sessionLabel || `${index + 1}회차 교육`
     rows.push({

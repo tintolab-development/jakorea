@@ -93,9 +93,20 @@ Content-Type: application/json
 
 ---
 
+## 스테이징 E2E (실적 연동)
+
+PUT `/api/admin/programs/{programId}/employee-volunteer-counts` 성공 후:
+
+1. 실적 관리 목록에서 해당 프로그램·기관의 `employeeVolunteerCount`(임직원 자원봉사자)가 입력값과 일치하는지 확인
+2. 프로그램 상세 교육 실적 탭 `staffVolunteers` / `returningVolunteers`가 BE 집계와 일치하는지 확인 (FE 로컬 합산 사용 금지)
+3. 개인 프로그램은 `organizationApplicationId` 없이 저장·조회되는지 확인
+
+자동 E2E는 스테이징 데이터·권한에 의존하므로 CI 미포함. 위 항목은 릴리스 전 수동 QA.
+
 ## 수동 검증 체크리스트
 
 - [ ] 승인 기관만 셀렉트 옵션에 표시
+- [ ] 개인 프로그램 — 배정 기관 셀렉 비노출, 일정만 입력
 - [ ] 기관 재선택 시 이전 저장값 프리필 (mock: `school-3` / 마포초등학교)
 - [ ] 단일 회차 프로그램 → `프로그램 진행` 1행
 - [ ] 일정형 복수 → 오리엔테이션/국내대회 등 `scheduleDetails` 라벨

@@ -3,7 +3,7 @@
  * 프로그램 진행 현황 > 참여 봉사자 > 임직원 자원봉사자 등록
  */
 
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Form } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -46,14 +46,26 @@ export interface RegisterEmployeeVolunteerModalProps {
   sessionRows: ReadonlyArray<EmployeeVolunteerSessionRow>
   institutionOptions: RegisterEmployeeVolunteerInstitutionOption[]
   savedRegistrations: ReadonlyArray<EmployeeVolunteerInstitutionRegistration>
+  /** 개인 프로그램 — 배정 기관 셀렉 비노출 */
+  hideInstitutionSelect?: boolean
+  /** 개인 프로그램 — savedRegistrations 조회·저장 스코프 id */
+  programLevelRegistrationScopeId?: string
   onNoInstitutionSelected: () => void
   onIncompleteCounts: () => void
-  onRegister: (payload: RegisterEmployeeVolunteerPayload) => void
+  onRegister: (payload: RegisterEmployeeVolunteerPayload) => void | Promise<void>
   /** 기관 선택 시 remote 저장값 프리필 */
   onInstitutionChange?: (institutionId: string) => void
+  /** 개인 프로그램 — 모달 오픈 시 프로그램 단위 저장값 프리필 */
+  onProgramLevelOpen?: () => void
 }
 
 const MODAL_WIDTH = 880
+
+const INSTITUTION_DESCRIPTION =
+  '각 배정 기관의 진행 일정별로 신규 및 재참여 임직원 자원봉사자 수를 입력해 주세요.\n배정된 자원봉사자가 없는 경우 0으로 입력해 주세요.'
+
+const INDIVIDUAL_PROGRAM_DESCRIPTION =
+  '프로그램 교육 진행 일정별로 신규 및 재참여 임직원 자원봉사자 수를 입력해 주세요.\n배정된 자원봉사자가 없는 경우 0으로 입력해 주세요.'
 
 function SessionVolunteerCountPair({
   sessionRow,
@@ -93,17 +105,44 @@ export function RegisterEmployeeVolunteerModal({
   sessionRows,
   institutionOptions,
   savedRegistrations,
+  hideInstitutionSelect = false,
+  programLevelRegistrationScopeId,
   onNoInstitutionSelected,
   onIncompleteCounts,
   onRegister,
   onInstitutionChange,
+  onProgramLevelOpen,
 }: RegisterEmployeeVolunteerModalProps) {
   const [form] = Form.useForm<RegisterEmployeeVolunteerFormValues>()
+  const [submitting, setSubmitting] = useState(false)
   const selectedInstitutionId = Form.useWatch('institutionId', form)
 
   const resetCountsForSessionRows = useCallback(() => {
     form.setFieldValue('countsBySessionId', createEmptyEmployeeVolunteerFormCounts(sessionRows))
   }, [form, sessionRows])
+
+  const applySavedCountsForScope = useCallback(
+    (scopeId: string | undefined) => {
+      const nextCounts = createEmptyEmployeeVolunteerFormCounts(sessionRows)
+      if (!scopeId) {
+        form.setFieldValue('countsBySessionId', nextCounts)
+        return
+      }
+      const saved = getEmployeeVolunteerCountsForInstitution(savedRegistrations, scopeId)
+      if (saved) {
+        for (const row of sessionRows) {
+          const entry = saved[row.id]
+          if (!entry) continue
+          nextCounts[row.id] = {
+            newCount: entry.newCount,
+            returningCount: entry.returningCount,
+          }
+        }
+      }
+      form.setFieldValue('countsBySessionId', nextCounts)
+    },
+    [form, savedRegistrations, sessionRows]
+  )
 
   useEffect(() => {
     if (!open) return
@@ -111,51 +150,64 @@ export function RegisterEmployeeVolunteerModal({
       institutionId: undefined,
       countsBySessionId: createEmptyEmployeeVolunteerFormCounts(sessionRows),
     })
-  }, [open, form, sessionRows])
+    if (hideInstitutionSelect) {
+      onProgramLevelOpen?.()
+    }
+  }, [hideInstitutionSelect, onProgramLevelOpen, open, form, sessionRows])
 
   useEffect(() => {
-    if (!open || !selectedInstitutionId) return
+    if (!open || hideInstitutionSelect || !selectedInstitutionId) return
     onInstitutionChange?.(selectedInstitutionId)
-  }, [onInstitutionChange, open, selectedInstitutionId])
+  }, [hideInstitutionSelect, onInstitutionChange, open, selectedInstitutionId])
 
   useEffect(() => {
-    if (!open || !selectedInstitutionId) {
+    if (!open) return
+    if (hideInstitutionSelect) {
+      applySavedCountsForScope(programLevelRegistrationScopeId)
+      return
+    }
+    if (!selectedInstitutionId) {
       resetCountsForSessionRows()
       return
     }
-
-    const saved = getEmployeeVolunteerCountsForInstitution(
-      savedRegistrations,
-      selectedInstitutionId
-    )
-    const nextCounts = createEmptyEmployeeVolunteerFormCounts(sessionRows)
-    if (saved) {
-      for (const row of sessionRows) {
-        const entry = saved[row.id]
-        if (!entry) continue
-        nextCounts[row.id] = {
-          newCount: entry.newCount,
-          returningCount: entry.returningCount,
-        }
-      }
-    }
-    form.setFieldValue('countsBySessionId', nextCounts)
-  }, [form, open, resetCountsForSessionRows, savedRegistrations, selectedInstitutionId, sessionRows])
+    applySavedCountsForScope(selectedInstitutionId)
+  }, [
+    applySavedCountsForScope,
+    hideInstitutionSelect,
+    open,
+    programLevelRegistrationScopeId,
+    resetCountsForSessionRows,
+    savedRegistrations,
+    selectedInstitutionId,
+    sessionRows,
+  ])
 
   const handleCancel = () => {
+    if (submitting) return
     form.resetFields()
     onCancel()
   }
 
-  const handleSubmit = () => {
-    const institutionId = form.getFieldValue('institutionId')
-    if (!institutionId) {
-      onNoInstitutionSelected()
-      return
-    }
+  const handleSubmit = async () => {
+    if (submitting) return
 
-    const institutionName =
-      institutionOptions.find(option => option.value === institutionId)?.label ?? institutionId
+    let institutionId: string
+    let institutionName: string
+
+    if (hideInstitutionSelect) {
+      if (!programLevelRegistrationScopeId) return
+      institutionId = programLevelRegistrationScopeId
+      institutionName = ''
+    } else {
+      const selectedId = form.getFieldValue('institutionId')
+      if (!selectedId) {
+        onNoInstitutionSelected()
+        return
+      }
+      institutionId = selectedId
+      institutionName =
+        institutionOptions.find(option => option.value === institutionId)?.label ?? institutionId
+    }
 
     const countsBySessionId = form.getFieldValue('countsBySessionId') ?? {}
     if (!hasCompleteEmployeeVolunteerCounts(sessionRows, countsBySessionId)) {
@@ -174,21 +226,32 @@ export function RegisterEmployeeVolunteerModal({
       }
     }
 
-    onRegister({
-      institutionId,
-      institutionName,
-      countsBySessionId: normalizedCounts,
-    })
-    form.resetFields()
-    onCancel()
+    setSubmitting(true)
+    try {
+      await onRegister({
+        institutionId,
+        institutionName,
+        countsBySessionId: normalizedCounts,
+      })
+      form.resetFields()
+      onCancel()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const footer = (
     <>
-      <CmsButton variant="secondary" size="large" onClick={handleCancel}>
+      <CmsButton variant="secondary" size="large" onClick={handleCancel} disabled={submitting}>
         취소
       </CmsButton>
-      <CmsButton variant="primary" size="large" onClick={handleSubmit}>
+      <CmsButton
+        variant="primary"
+        size="large"
+        onClick={() => void handleSubmit()}
+        loading={submitting}
+        disabled={submitting}
+      >
         등록
       </CmsButton>
     </>
@@ -202,9 +265,7 @@ export function RegisterEmployeeVolunteerModal({
       width={MODAL_WIDTH}
       footer={footer}
       className="register-employee-volunteer-modal"
-      description={
-        '각 배정 기관의 진행 일정별로 신규 및 재참여 임직원 자원봉사자 수를 입력해 주세요.\n배정된 자원봉사자가 없는 경우 0으로 입력해 주세요.'
-      }
+      description={hideInstitutionSelect ? INDIVIDUAL_PROGRAM_DESCRIPTION : INSTITUTION_DESCRIPTION}
     >
       <div className="register-employee-volunteer-modal__body">
         <Form<RegisterEmployeeVolunteerFormValues>
@@ -214,30 +275,32 @@ export function RegisterEmployeeVolunteerModal({
           requiredMark={false}
           initialValues={{ countsBySessionId: createEmptyEmployeeVolunteerFormCounts(sessionRows) }}
         >
-          <Form.Item
-            name="institutionId"
-            label={
-              <span>
-                배정 기관
-                <span className="register-employee-volunteer-modal__required" aria-hidden>
-                  *
+          {!hideInstitutionSelect ? (
+            <Form.Item
+              name="institutionId"
+              label={
+                <span>
+                  배정 기관
+                  <span className="register-employee-volunteer-modal__required" aria-hidden>
+                    *
+                  </span>
                 </span>
-              </span>
-            }
-            className="register-employee-volunteer-modal__field"
-          >
-            <CmsSelect
-              inputSize="large"
-              width="100%"
-              withAllOption={false}
-              placeholder="자원봉사자를 배정할 기관을 선택해 주세요"
-              options={institutionOptions}
-              notFoundContent={
-                institutionOptions.length === 0 ? '배정 가능한 기관이 없습니다' : undefined
               }
-              getPopupContainer={() => document.body}
-            />
-          </Form.Item>
+              className="register-employee-volunteer-modal__field"
+            >
+              <CmsSelect
+                inputSize="large"
+                width="100%"
+                withAllOption={false}
+                placeholder="자원봉사자를 배정할 기관을 선택해 주세요"
+                options={institutionOptions}
+                notFoundContent={
+                  institutionOptions.length === 0 ? '배정 가능한 기관이 없습니다' : undefined
+                }
+                getPopupContainer={() => document.body}
+              />
+            </Form.Item>
+          ) : null}
 
           {sessionRows.length > 0 ? (
             <div
