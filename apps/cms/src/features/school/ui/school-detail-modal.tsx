@@ -17,7 +17,7 @@ import {
   getSchoolProgramHistory,
   type AffiliatedTeacherRow,
   type ProgramParticipationRow,
-} from '@/data/mock/school-detail'
+} from '@/features/school/model/school-detail-types'
 import { formatDate } from '@/shared/utils'
 import type { User } from '@/types/user'
 import { TeacherDetailModal } from './teacher-detail-modal'

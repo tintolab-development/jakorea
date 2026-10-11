@@ -5,7 +5,7 @@
 import { CmsButton } from '@/shared/ui'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { formatDate } from '@/shared/utils'
-import type { TeacherDetailData } from '@/data/mock/school-detail'
+import type { TeacherDetailData } from '@/features/school/model/school-detail-types'
 import { inlineSegmentsWithDividers } from '@/features/user/detail/ui/user-basic-info/display'
 import { RestrictedPiiClickable } from '@/features/user/detail/ui/restricted-pii-clickable'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -67,8 +67,8 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                 </td>
                 <td className="teacher-detail-modal__cell--input">
                   {detail.name}
-                  {detail.scheduleChangeCount > 0 && (
-                    <ScheduleChangeHistoryBadge count={detail.scheduleChangeCount} />
+                  {(detail.scheduleChangeCount ?? 0) > 0 && (
+                    <ScheduleChangeHistoryBadge count={detail.scheduleChangeCount ?? 0} />
                   )}
                 </td>
                 <td className="teacher-detail-modal__cell--label teacher-detail-modal__cell--label-right">

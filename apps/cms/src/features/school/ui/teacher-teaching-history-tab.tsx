@@ -9,7 +9,7 @@ import {
   type TeachingHistoryRow,
   type TeachingProgramStatus,
   type TeachingSettlementStatus,
-} from '@/data/mock/school-detail'
+} from '@/features/school/model/school-detail-types'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { EmptyState } from '@/shared/ui'
 import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'

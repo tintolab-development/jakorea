@@ -8,7 +8,7 @@ import { Input } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
-import { SETTLEMENT_ROW_STATUS_LABELS, type SettlementDetail } from '@/data/mock/school-detail'
+import { SETTLEMENT_ROW_STATUS_LABELS, type SettlementDetail } from '@/features/school/model/school-detail-types'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import './settlement-detail-modal.css'
 
@@ -49,7 +49,7 @@ export function SettlementDetailModal({
   if (!detail) return null
 
   const withholdingAmount = Math.round(
-    detail.items.reduce((s, i) => s + i.amount, 0) * (detail.withholdingRate / 100),
+    detail.items.reduce((s, i) => s + i.amount, 0) * ((detail.withholdingRate ?? 0) / 100),
   )
   const netTotal =
     detail.items.reduce((s, i) => s + i.amount, 0) - withholdingAmount
@@ -114,7 +114,9 @@ export function SettlementDetailModal({
                 <div className="settlement-detail__info-split">
                   <div className="settlement-detail__info-split-cell">
                     <span className="settlement-detail__info-split-label">정산 금액</span>
-                    <span className="settlement-detail__info-split-value">{detail.settlementAmount.toLocaleString()}원</span>
+                    <span className="settlement-detail__info-split-value">
+                      {(detail.settlementAmount ?? detail.totalAmount ?? 0).toLocaleString()}원
+                    </span>
                   </div>
                   <div className="settlement-detail__info-split-cell">
                     <span className="settlement-detail__info-split-label">정산 상태</span>
