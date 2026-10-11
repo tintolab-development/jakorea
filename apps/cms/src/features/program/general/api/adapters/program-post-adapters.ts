@@ -231,6 +231,20 @@ export function mapProgramPostReadsToDomainRows(
   return [...readers, ...unread]
 }
 
+export function groupProgramPostAttachmentsByPostId(
+  items: ProgramPostAttachmentResponse[]
+): Map<string, ProgramPostAttachmentResponse[]> {
+  const map = new Map<string, ProgramPostAttachmentResponse[]>()
+  for (const item of items) {
+    if (item.postId == null) continue
+    const postId = String(item.postId)
+    const bucket = map.get(postId) ?? []
+    bucket.push(item)
+    map.set(postId, bucket)
+  }
+  return map
+}
+
 export function mapProgramPostAttachmentToFile(
   dto: ProgramPostAttachmentResponse,
   programId: string
