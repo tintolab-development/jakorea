@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  filterRecruitmentListForWidget,
   mapKpiProgressListResponse,
   mapProgramInquiryListResponse,
+  mapProgramOptionsForWidget,
   mapRecruitmentListResponse,
   recruitmentStatusFromPeriod,
 } from './dashboard-adapters'
@@ -194,5 +196,34 @@ describe('recruitmentStatusFromPeriod', () => {
     expect(
       recruitmentStatusFromPeriod('2000-01-01T00:00:00Z', '2099-01-01T00:00:00Z')
     ).toBe('recruiting_students')
+  })
+})
+
+describe('filterRecruitmentListForWidget', () => {
+  const dto = {
+    items: [
+      { programId: 1, nameKo: '일반', programType: 'general' },
+      { programId: 2, nameKo: '1사1교', programType: 'company_school' },
+      { programId: 3, nameKo: 'UJAT', programType: 'ujat' },
+    ],
+  }
+
+  it('programType 위젯은 해당 유형만 남긴다', () => {
+    const filtered = filterRecruitmentListForWidget('program-schedule-general-widget', dto)
+    expect(filtered.items?.map(i => i.programId)).toEqual([1])
+  })
+
+  it('programType 없는 위젯은 전체를 유지한다', () => {
+    const filtered = filterRecruitmentListForWidget('recruitment-status-widget', dto)
+    expect(filtered.items).toHaveLength(3)
+  })
+})
+
+describe('mapProgramOptionsForWidget', () => {
+  it('위젯별 옵션 목록을 만든다', () => {
+    const options = mapProgramOptionsForWidget('program-schedule-ujat-widget', {
+      items: [{ programId: 9, nameKo: 'UJAT 프로그램', programType: 'ujat' }],
+    })
+    expect(options).toEqual([{ id: '9', title: 'UJAT 프로그램' }])
   })
 })

@@ -39,6 +39,9 @@ export const dashboardQueryKeys = {
   /** Swagger: get_admin_dashboard_widgets_widgetKey_program-filters (options via recruitments) */
   programOptions: (source: DashboardQueryScope, widgetKey: string) =>
     [...dashboardQueryKeys.scope(source), 'get_admin_dashboard_program_options', widgetKey] as const,
+  /** 무필터 recruitments 1회 — 위젯별 programType은 FE에서 분류 */
+  programOptionsCatalog: (source: DashboardQueryScope) =>
+    [...dashboardQueryKeys.scope(source), 'dashboard_program_options_catalog'] as const,
   /** Swagger: get_admin_dashboard_shortcuts */
   shortcuts: (source: DashboardQueryScope) =>
     [...dashboardQueryKeys.scope(source), 'get_admin_dashboard_shortcuts'] as const,

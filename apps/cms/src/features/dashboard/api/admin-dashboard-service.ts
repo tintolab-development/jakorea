@@ -35,7 +35,7 @@ import {
   mapDashboardHomeResponse,
   mapKpiProgressListResponse,
   mapProgramInquiryListResponse,
-  mapProgramOptionsFromRecruitmentList,
+  mapProgramOptionsForWidget,
   mapProgramScheduleListResponse,
   mapRecruitmentListResponse,
   type DashboardHomeSummary,
@@ -45,8 +45,6 @@ import {
 } from '@/features/dashboard/api/adapters/dashboard-adapters'
 import { mapNotificationInboxPage } from '@/features/dashboard/api/adapters/notification-adapters'
 import type { Notification } from '@/features/dashboard/api/notification-service'
-import { getDashboardProgramTypeParamForWidget } from '@/features/dashboard/lib/dashboard-widget-program-type'
-
 export type { DashboardHomeSummary, ProgramInquiryRow, DashboardScheduleEventDto, DashboardProgramOption }
 
 /** dashboard 실 API — 유효 JWT 없으면 mock fallback (403 방지) */
@@ -470,14 +468,27 @@ export async function getDashboardScheduleEvents(options?: {
   return []
 }
 
+/** Swagger: GET /api/admin/dashboard/recruitments — 프로그램 옵션 카탈로그(무필터) */
+export async function fetchDashboardRecruitmentsCatalog() {
+  if (!shouldUseDashboardRemoteApi()) {
+    return { items: [] }
+  }
+  const queryParams = toDashboardQueryParams({})
+  return fetchDashboardRecruitmentsRemote(queryParams)
+}
+
+export function getDashboardProgramOptionsFromRecruitmentList(
+  widgetKey: string,
+  dto: Awaited<ReturnType<typeof fetchDashboardRecruitmentsCatalog>>
+): DashboardProgramOption[] {
+  return mapProgramOptionsForWidget(widgetKey, dto)
+}
+
 /** Swagger: GET /api/admin/dashboard/recruitments — 위젯별 프로그램 선택 옵션 */
 export async function getDashboardProgramOptions(widgetKey: string): Promise<DashboardProgramOption[]> {
   if (shouldUseDashboardRemoteApi()) {
-    const programType = getDashboardProgramTypeParamForWidget(widgetKey)
-    const extra = programType ? { programType } : undefined
-    const queryParams = toDashboardQueryParams({ extra })
-    const dto = await fetchDashboardRecruitmentsRemote(queryParams)
-    return mapProgramOptionsFromRecruitmentList(dto)
+    const dto = await fetchDashboardRecruitmentsCatalog()
+    return getDashboardProgramOptionsFromRecruitmentList(widgetKey, dto)
   }
   return []
 }
