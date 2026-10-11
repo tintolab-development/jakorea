@@ -569,7 +569,8 @@
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-all-programs {
-  --program-list-table-min-width: 1414px;
+  /* 전체 탭: 컨테이너에 맞춤 — 고정 합계는 여유 폭에서도 가로 스크롤을 유발 */
+  --program-list-table-min-width: 0px;
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-overview-selection {
@@ -581,7 +582,12 @@
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-all-programs.program-list-table-wrapper--program-list-overview-selection {
-  --program-list-table-min-width: 1482px;
+  --program-list-table-min-width: 0px;
+}
+
+.program-list-table__scroll-measure {
+  width: 100%;
+  min-width: 0;
 }
 
 .program-list-card--program-list-overview .cms-data-table--program-list-overview .ant-table {

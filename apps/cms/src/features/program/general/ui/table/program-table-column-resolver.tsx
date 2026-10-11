@@ -52,6 +52,7 @@ const WIDTH_RECRUITMENT_COUNT = 160
 const WIDTH_TARGET_LEVEL = 160
 const WIDTH_OPERATION_PERIOD = 320
 const WIDTH_PARTICIPATION_COUNT = 160
+const WIDTH_PROGRESS = 180
 
 /** 전 유형 공통. 회차 합·학생 수·봉사 수로 다시 세지 않는다. */
 function participantCountRender(_: unknown, record: Program) {
@@ -142,6 +143,7 @@ function createProgramListAllColumns() {
     {
       title: '프로그램 진행 현황',
       key: 'lifecycleProgress',
+      minWidth: WIDTH_PROGRESS,
       align: 'center' as const,
       className: 'program-list-table__col-progress',
       render: (_: unknown, record: Program) =>
