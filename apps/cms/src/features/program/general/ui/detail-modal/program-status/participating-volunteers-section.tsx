@@ -48,7 +48,8 @@ import { useParticipatingVolunteersParams } from '../../../hooks/use-participati
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
 import {
   filterParticipatingVolunteers,
-  formatParticipatingVolunteerAssignedInstitutions,
+  formatParticipatingVolunteerInstitutionCell,
+  participatingVolunteerInstitutionColumnTitle,
   type ParticipatingVolunteersFilters,
 } from '../../../lib/participating-volunteers-filter'
 import { formatParticipatingSchoolSessionLine } from '../../../lib/participating-school-session-display'
@@ -381,6 +382,8 @@ export function ParticipatingVolunteersSection({
   }
   const handleListView = () => setViewMode('list')
 
+  const institutionColumnTitle = participatingVolunteerInstitutionColumnTitle(program)
+
   const columns = useMemo((): ColumnsType<ParticipatingVolunteerRow> => {
     return [
       {
@@ -408,13 +411,13 @@ export function ParticipatingVolunteersSection({
         align: 'center',
       },
       {
-        title: '기관명',
+        title: institutionColumnTitle,
         key: 'assignedInstitutionNames',
         width: 220,
         minWidth: 220,
         align: 'center',
         render: (_: unknown, record) =>
-          formatParticipatingVolunteerAssignedInstitutions(record.assignedInstitutionNames),
+          formatParticipatingVolunteerInstitutionCell(record, program),
       },
       {
         title: '봉사 진행 일정',
@@ -478,7 +481,7 @@ export function ParticipatingVolunteersSection({
         render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
     ]
-  }, [])
+  }, [institutionColumnTitle, program])
 
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
     columns as ColumnsType<unknown>,

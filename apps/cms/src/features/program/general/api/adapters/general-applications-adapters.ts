@@ -632,8 +632,8 @@ export function mapInstructorApplicationDetailToApplicantRow(
     birthDate: dto.birthDate?.trim() || base.birthDate,
     gender: toGenderLabelOrRaw(dto.gender) || base.gender,
     rejectionReason: dto.rejectReason?.trim() || base.rejectionReason,
-    distanceKm: dto.distanceKm ?? base.distanceKm,
-    longDistanceYn: dto.longDistance ?? base.longDistanceYn,
+    distanceKm: dto.distanceKm !== undefined ? dto.distanceKm : base.distanceKm,
+    longDistanceYn: dto.longDistance !== undefined ? dto.longDistance : base.longDistanceYn,
     managerComment: dto.managerComment ?? base.managerComment,
     availableActions: dto.availableActions ?? base.availableActions,
     preferredScheduleSlots,
@@ -1560,6 +1560,10 @@ export function mapParticipantToParticipatingVolunteerRow(
   const contact = enriched.contact?.trim() || enriched.phone?.trim() || ''
   const email = enriched.email?.trim() || ''
   const id1365 = enriched.id1365?.trim() || enriched.external1365Id?.trim() || ''
+  const homeRegion =
+    dto.homeAddressSummary?.trim() ||
+    [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim() ||
+    undefined
 
   return {
     id: toId(dto.participantId),
@@ -1577,6 +1581,7 @@ export function mapParticipantToParticipatingVolunteerRow(
     affiliation: affiliation.affiliation,
     id1365,
     assignedInstitutionNames,
+    homeRegion,
     sessions: mapSessionProgressToParticipatingSchoolSessions(dto.sessions),
     contact: contact || '-',
     email: email || '-',

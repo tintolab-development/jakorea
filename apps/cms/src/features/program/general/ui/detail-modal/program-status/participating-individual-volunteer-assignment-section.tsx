@@ -25,6 +25,7 @@ import {
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment-export'
 import {
   buildIndividualVolunteerAssignmentRowsFromEducationScope,
+  resolveProgramVolunteerServiceRegionFallback,
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment'
 import type {
   ParticipatingIndividualVolunteerAssignedScheduleRow,
@@ -44,7 +45,15 @@ import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
+import { API_DISTANCE_UNAVAILABLE_TOOLTIP } from '@/shared/lib/format-api-distance-km'
 import './instructor-assignment-status-text.css'
+
+function renderDistanceFromHomeCell(value: string) {
+  if (value === '-') {
+    return <span title={API_DISTANCE_UNAVAILABLE_TOOLTIP}>{value}</span>
+  }
+  return value
+}
 
 const ASSIGNED_EMPTY_TEXT = '배정된 봉사 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 봉사 일정이 없습니다.'
@@ -99,8 +108,11 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
       assignedScheduleIds,
       schedules: schedulesQuery.data.schedules,
       scopeScheduleEnrich: scopeQuery.data?.schedules,
+      participantSessions: volunteer.sessions,
+      serviceRegionFallback:
+        volunteer.homeRegion?.trim() || resolveProgramVolunteerServiceRegionFallback(program),
     })
-  }, [program, remoteEnabled, schedulesQuery.data, scopeQuery.data])
+  }, [program, remoteEnabled, schedulesQuery.data, scopeQuery.data, volunteer.homeRegion, volunteer.sessions])
 
   const [assignedSchedules, setAssignedSchedules] = useState<
     ParticipatingIndividualVolunteerAssignedScheduleRow[]
@@ -145,6 +157,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
           key: 'distanceFromHome',
           width: 445,
           align: 'center',
+          render: (value: string) => renderDistanceFromHomeCell(value),
         },
         {
           title: '담당 봉사 진행 일정',
@@ -180,6 +193,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         key: 'distanceFromHome',
         width: 285,
         align: 'center',
+        render: (value: string) => renderDistanceFromHomeCell(value),
       },
       {
         title: '봉사 진행 희망 일정',

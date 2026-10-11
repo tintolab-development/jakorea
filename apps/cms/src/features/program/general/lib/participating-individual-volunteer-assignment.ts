@@ -25,6 +25,15 @@ import type { Program } from '@/types/domain'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
 import type { ParticipantEducationScopeScheduleEnrich } from '@/features/program/general/api/program-progress-api-client'
 import { mapSessionProgressToParticipatingSchoolSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
+
+/** 프로그램 공통 정보 진행 장소 — 개인형 봉사 지역 폴백 */
+export function resolveProgramVolunteerServiceRegionFallback(program: Program): string | undefined {
+  const parts = [program.venue?.trim(), program.generalCommonInfo?.venueDetail?.trim()].filter(
+    Boolean
+  ) as string[]
+  return parts.length > 0 ? parts.join(' ') : undefined
+}
 
 /** 스케줄 locationName / address → 봉사 지역 표시 */
 function resolveVolunteerServiceRegion(input: {
@@ -42,16 +51,9 @@ function resolveVolunteerServiceRegion(input: {
 }
 
 /**
- * 강사 배정과 동일. null/NaN → '-'.
- * education-scope enrich `distanceKm`만 사용 (FE invent/0 coerce 금지).
- * local `LOCAL_DISTANCE`는 BE 옵션 A: 자택·장소 모두 있으면 1.0–99.9 deterministic mock number.
+ * education-scope enrich `distanceKm`만 표시 (FE 계산·mock 금지).
+ * BE DistanceProvider 실측(편도 km) — NAVER_MAPS 성공 시 number, 그 외 null → '-'.
  */
-function formatDistanceKm(km: number | null | undefined): string {
-  if (km == null || Number.isNaN(km)) return '-'
-  const rounded = Math.round(km)
-  return km >= 100 ? `${rounded}km (장거리)` : `${rounded}km`
-}
-
 function formatHopeDate(dateKey: string): string {
   const weekday = ['일', '월', '화', '수', '목', '금', '토'][
     new Date(`${dateKey}T12:00:00`).getDay()
@@ -333,12 +335,27 @@ function dashboardScheduleToSession(schedule: DashboardProgramScheduleResponse, 
   return mapped[0]
 }
 
+function participantSessionsByScheduleId(
+  sessions: ParticipatingSchoolSession[] | undefined
+): Map<number, ParticipatingSchoolSession> {
+  const map = new Map<number, ParticipatingSchoolSession>()
+  for (const session of sessions ?? []) {
+    if (session.resolvedScheduleId == null) continue
+    map.set(session.resolvedScheduleId, session)
+  }
+  return map
+}
+
 export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params: {
   program: Program
   assignedScheduleIds: number[]
   schedules: DashboardProgramScheduleResponse[]
-  /** education-scope additive enrich — 없으면 거리·인원은 '-' */
+  /** education-scope additive enrich — 거리는 enrich.distanceKm만 사용 */
   scopeScheduleEnrich?: ParticipantEducationScopeScheduleEnrich[]
+  /** participants sessions — dashboard 일정과 scheduleId가 같으면 표시·slotKey SSOT */
+  participantSessions?: ParticipatingSchoolSession[]
+  /** 일정·enrich에 장소 없을 때 (자택 지역·프로그램 진행 장소) */
+  serviceRegionFallback?: string | null
 }): {
   assigned: ParticipatingIndividualVolunteerAssignedScheduleRow[]
   waiting: ParticipatingIndividualVolunteerWaitingScheduleRow[]
@@ -349,6 +366,10 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
     if (row?.scheduleId == null) continue
     enrichByScheduleId.set(row.scheduleId, row)
   }
+  const sessionByScheduleId = participantSessionsByScheduleId(params.participantSessions)
+  const regionFallback =
+    params.serviceRegionFallback?.trim() ||
+    resolveProgramVolunteerServiceRegionFallback(params.program)
   const assigned: ParticipatingIndividualVolunteerAssignedScheduleRow[] = []
   const waiting: ParticipatingIndividualVolunteerWaitingScheduleRow[] = []
 
@@ -356,7 +377,8 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
     .filter(schedule => schedule.scheduleId != null)
     .forEach((schedule, index) => {
       const scheduleId = schedule.scheduleId as number
-      const session = dashboardScheduleToSession(schedule, index)
+      const session =
+        sessionByScheduleId.get(scheduleId) ?? dashboardScheduleToSession(schedule, index)
       if (!session) return
       const enrich = enrichByScheduleId.get(scheduleId)
       const slotKey = `${session.date.replace(/\./g, '-')}|individual-program|${session.round}`
@@ -364,12 +386,15 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
       const serviceRegion = resolveVolunteerServiceRegion({
         locationName: schedule.locationName ?? enrich?.locationName,
         address: schedule.address ?? enrich?.address,
+        regionFallback,
       })
-      const distanceFromHome = formatDistanceKm(enrich?.distanceKm)
+      const distanceFromHome = formatApiDistanceKmDisplay(enrich?.distanceKm, {
+        longDistanceSuffix: true,
+      })
       const assignedVolunteerCountLabel =
-        enrich != null && typeof enrich.assignedVolunteerCount === 'number'
+        typeof enrich?.assignedVolunteerCount === 'number'
           ? `${enrich.assignedVolunteerCount}명`
-          : '-'
+          : '0명'
       if (assignedIdSet.has(scheduleId)) {
         assigned.push({
           id: `iv-scope-as-${scheduleId}`,
