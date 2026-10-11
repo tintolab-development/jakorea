@@ -25,7 +25,6 @@ import type { Program } from '@/types/domain'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
 import type { ParticipantEducationScopeScheduleEnrich } from '@/features/program/general/api/program-progress-api-client'
 import { mapSessionProgressToParticipatingSchoolSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 
 /** 프로그램 공통 정보 진행 장소 — 개인형 봉사 지역 폴백 */
 export function resolveProgramVolunteerServiceRegionFallback(program: Program): string | undefined {
@@ -50,10 +49,37 @@ function resolveVolunteerServiceRegion(input: {
   return '-'
 }
 
+/** 조회가 끝나기 전, 아직 km가 없는 칸. 확정 null의 '-'와 구분한다. */
+export const VOLUNTEER_ASSIGNMENT_DISTANCE_CALCULATING_LABEL = '계산 중'
+
+/** education-scope 응답이 null로 확정된 뒤의 안내. 에러 코드는 없다. */
+export const VOLUNTEER_ASSIGNMENT_DISTANCE_UNAVAILABLE_TOOLTIP =
+  '자택 주소 또는 일정 장소가 없거나, 거리를 산출할 수 없습니다. 회원 프로필 자택과 일정 장소를 확인하세요.'
+
 /**
- * education-scope enrich `distanceKm`만 표시 (FE 계산·mock 금지).
- * BE DistanceProvider 실측(편도 km) — NAVER_MAPS 성공 시 number, 그 외 null → '-'.
+ * education-scope `distanceKm`만 표시. FE 반올림·재계산 없음.
+ * null/undefined → '-'. 0은 '0km'. 100 이상이면 장거리 접미사.
  */
+export function formatVolunteerAssignmentDistanceKm(km: number | null | undefined): string {
+  if (km == null || Number.isNaN(km)) return '-'
+  const label = `${km}km`
+  return km >= 100 ? `${label} (장거리)` : label
+}
+
+/**
+ * education-scope 조회 중이고 칸이 아직 '-'이면 '계산 중'.
+ * 이미 숫자 km인 칸은 재조회 중에도 그 값을 유지한다.
+ */
+export function resolveVolunteerAssignmentDistanceCellLabel(
+  distanceFromHome: string,
+  educationScopeFetching: boolean
+): string {
+  if (educationScopeFetching && distanceFromHome === '-') {
+    return VOLUNTEER_ASSIGNMENT_DISTANCE_CALCULATING_LABEL
+  }
+  return distanceFromHome
+}
+
 function formatHopeDate(dateKey: string): string {
   const weekday = ['일', '월', '화', '수', '목', '금', '토'][
     new Date(`${dateKey}T12:00:00`).getDay()
@@ -346,6 +372,18 @@ function participantSessionsByScheduleId(
   return map
 }
 
+/** schedules·education-scope가 모두 준비된 후에만 배정/대기 분할을 한다. */
+export function canBuildIndividualVolunteerAssignmentRows(input: {
+  remoteEnabled: boolean
+  schedulesData: { schedules: DashboardProgramScheduleResponse[] } | null | undefined
+  scopeData: unknown | undefined
+}): boolean {
+  if (!input.remoteEnabled) return false
+  if (input.schedulesData == null) return false
+  if (input.scopeData === undefined) return false
+  return true
+}
+
 export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params: {
   program: Program
   assignedScheduleIds: number[]
@@ -388,9 +426,7 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
         address: schedule.address ?? enrich?.address,
         regionFallback,
       })
-      const distanceFromHome = formatApiDistanceKmDisplay(enrich?.distanceKm, {
-        longDistanceSuffix: true,
-      })
+      const distanceFromHome = formatVolunteerAssignmentDistanceKm(enrich?.distanceKm)
       const assignedVolunteerCountLabel =
         typeof enrich?.assignedVolunteerCount === 'number'
           ? `${enrich.assignedVolunteerCount}명`

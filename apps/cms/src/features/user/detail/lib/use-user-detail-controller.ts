@@ -49,6 +49,7 @@ import type { UseUserDetailModalsResult } from './use-user-detail-modals'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
 import { stashMemberDetailReturnForProgramNavigation } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import type {
@@ -1288,6 +1289,11 @@ export function useUserDetailController({
             queryKey: memberQueryKeys.consentRecords(displayUser.memberId),
           })
         }
+      }
+      if (basicInfoEditScope === 'profile') {
+        void queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.educationScopes(),
+        })
       }
       queryClient.setQueryData(
         [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],

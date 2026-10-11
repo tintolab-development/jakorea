@@ -3,8 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Select } from 'antd'
+import { Select, Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
@@ -24,9 +23,10 @@ import {
   PARTICIPATING_INDIVIDUAL_VOLUNTEER_WAITING_SCHEDULE_EXCEL_COLUMNS,
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment-export'
 import {
-  buildIndividualVolunteerAssignmentRowsFromEducationScope,
-  resolveProgramVolunteerServiceRegionFallback,
+  resolveVolunteerAssignmentDistanceCellLabel,
+  VOLUNTEER_ASSIGNMENT_DISTANCE_UNAVAILABLE_TOOLTIP,
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment'
+import { useParticipatingIndividualVolunteerAssignment } from '@/features/program/general/hooks/use-participating-individual-volunteer-assignment'
 import type {
   ParticipatingIndividualVolunteerAssignedScheduleRow,
   ParticipatingIndividualVolunteerWaitingScheduleRow,
@@ -34,25 +34,16 @@ import type {
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
-import {
-  fetchGeneralParticipantEducationScope,
-  fetchGeneralProgressAttendanceBundle,
-  saveGeneralParticipantEducationScope,
-} from '@/features/program/general/api/admin-program-progress-service'
-import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import {
-  notifyProgramApiUnavailable,
-  useNotifyProgramApiUnavailableOnce,
-} from '@/features/program/shared/lib/program-api-unavailable'
-import { API_DISTANCE_UNAVAILABLE_TOOLTIP } from '@/shared/lib/format-api-distance-km'
+import { saveGeneralParticipantEducationScope } from '@/features/program/general/api/admin-program-progress-service'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import './instructor-assignment-status-text.css'
 
-function renderDistanceFromHomeCell(value: string) {
-  if (value === '-') {
-    return <span title={API_DISTANCE_UNAVAILABLE_TOOLTIP}>{value}</span>
+function renderDistanceFromHomeCell(value: string, educationScopeFetching: boolean) {
+  const label = resolveVolunteerAssignmentDistanceCellLabel(value, educationScopeFetching)
+  if (label === '-') {
+    return <span title={VOLUNTEER_ASSIGNMENT_DISTANCE_UNAVAILABLE_TOOLTIP}>{label}</span>
   }
-  return value
+  return label
 }
 
 const ASSIGNED_EMPTY_TEXT = '배정된 봉사 일정이 없습니다.'
@@ -72,47 +63,14 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   volunteer,
 }: ParticipatingIndividualVolunteerAssignmentSectionProps) {
   const { showAlert } = useCmsAlert()
-  const queryClient = useQueryClient()
-  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
-
-  useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled,
-    'general-individual-volunteer-education-scope',
-    '참여 봉사자 상세 · 봉사 배정'
-  )
-
-  const scopeQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.educationScope(program.id, volunteer.id),
-    queryFn: () => fetchGeneralParticipantEducationScope(program.id, volunteer.id),
-    enabled: remoteEnabled,
-    staleTime: 15_000,
-    retry: false,
-  })
-
-  const schedulesQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.schedules(String(program.id)),
-    queryFn: () => fetchGeneralProgressAttendanceBundle(String(program.id)),
-    enabled: remoteEnabled,
-    staleTime: 15_000,
-    retry: false,
-  })
-
-  const remoteRows = useMemo(() => {
-    if (!remoteEnabled || schedulesQuery.data == null) {
-      return { assigned: [], waiting: [] }
-    }
-    const assignedScheduleIds =
-      scopeQuery.data?.configured === false ? [] : (scopeQuery.data?.scheduleIds ?? [])
-    return buildIndividualVolunteerAssignmentRowsFromEducationScope({
-      program,
-      assignedScheduleIds,
-      schedules: schedulesQuery.data.schedules,
-      scopeScheduleEnrich: scopeQuery.data?.schedules,
-      participantSessions: volunteer.sessions,
-      serviceRegionFallback:
-        volunteer.homeRegion?.trim() || resolveProgramVolunteerServiceRegionFallback(program),
-    })
-  }, [program, remoteEnabled, schedulesQuery.data, scopeQuery.data, volunteer.homeRegion, volunteer.sessions])
+  const {
+    remoteEnabled,
+    isLoading,
+    assignedSchedules: remoteAssignedSchedules,
+    waitingSchedules: remoteWaitingSchedules,
+    scopeQuery,
+    invalidateScope,
+  } = useParticipatingIndividualVolunteerAssignment({ program, volunteer })
 
   const [assignedSchedules, setAssignedSchedules] = useState<
     ParticipatingIndividualVolunteerAssignedScheduleRow[]
@@ -133,11 +91,18 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   const [addAssignWaitingRowId, setAddAssignWaitingRowId] = useState<string | null>(null)
 
   useEffect(() => {
-    setAssignedSchedules(remoteRows.assigned)
-    setWaitingSchedules(remoteRows.waiting)
+    if (isLoading) return
+    setAssignedSchedules(remoteAssignedSchedules)
+    setWaitingSchedules(remoteWaitingSchedules)
     setSelectedAssignedKeys([])
     setSelectedWaitingKeys([])
-  }, [remoteRows, volunteer.id, program.id])
+  }, [
+    isLoading,
+    remoteAssignedSchedules,
+    remoteWaitingSchedules,
+    volunteer.id,
+    program.id,
+  ])
 
   const assignedColumns: ColumnsType<ParticipatingIndividualVolunteerAssignedScheduleRow> =
     useMemo(
@@ -157,7 +122,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
           key: 'distanceFromHome',
           width: 445,
           align: 'center',
-          render: (value: string) => renderDistanceFromHomeCell(value),
+          render: (value: string) =>
+            renderDistanceFromHomeCell(value, scopeQuery.isFetching),
         },
         {
           title: '담당 봉사 진행 일정',
@@ -173,7 +139,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
           render: (label: string) => renderScheduleCell(label),
         },
       ],
-      []
+      [scopeQuery.isFetching]
     )
 
   const waitingColumns: ColumnsType<ParticipatingIndividualVolunteerWaitingScheduleRow> = useMemo(
@@ -193,7 +159,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         key: 'distanceFromHome',
         width: 285,
         align: 'center',
-        render: (value: string) => renderDistanceFromHomeCell(value),
+        render: (value: string) => renderDistanceFromHomeCell(value, scopeQuery.isFetching),
       },
       {
         title: '봉사 진행 희망 일정',
@@ -230,7 +196,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         align: 'center',
       },
     ],
-    []
+    [scopeQuery.isFetching]
   )
 
   const assignedExportRows = useMemo(
@@ -286,9 +252,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
           expectedRevision: scopeQuery.data?.revision ?? 0,
           reason,
         })
-        await queryClient.invalidateQueries({
-          queryKey: generalProgramProgressQueryKeys.educationScope(program.id, volunteer.id),
-        })
+        await invalidateScope()
         return true
       } catch {
         showAlert({
@@ -298,7 +262,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         return false
       }
     },
-    [program.id, queryClient, remoteEnabled, scopeQuery.data?.revision, showAlert, volunteer.id]
+    [invalidateScope, program.id, remoteEnabled, scopeQuery.data?.revision, showAlert, volunteer.id]
   )
 
   const handleUnassignClick = useCallback(() => {
@@ -408,6 +372,14 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         .map(w => w.scheduleLabel),
     [waitingSchedules, selectedWaitingKeys]
   )
+
+  if (isLoading) {
+    return (
+      <div className="detail-fullpage-modal__loading" role="status">
+        <Spin size="large" />
+      </div>
+    )
+  }
 
   return (
     <div className="school-detail-fullpage-view__instructor-tab">
