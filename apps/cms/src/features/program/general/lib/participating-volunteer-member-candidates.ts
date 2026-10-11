@@ -1,5 +1,8 @@
-import { getUserById, getUsers } from '@/entities/user/api/user-service'
-import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
+import {
+  fetchProgramParticipantRegisterCandidatesRemote,
+  type VolunteerKind,
+} from '@/features/program/general/api/program-progress-api-client'
+import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 
 export type ParticipatingVolunteerMemberCandidate = {
   memberId: string
@@ -12,50 +15,85 @@ export function hasRegisteredVolunteerId1365(id1365: string | undefined | null):
   return Boolean(id1365?.trim())
 }
 
-function resolveMemberId1365(user: { id1365?: string | null }): string | undefined {
-  const trimmed = user.id1365?.trim()
-  return trimmed || undefined
+export type FetchParticipatingVolunteerMemberCandidatesParams = {
+  programId: string
+  volunteerKind: VolunteerKind
+  /** BE가 제외하나, 목록 갱신 전 중복 방지용 */
+  excludedMemberIds: readonly number[]
+  keyword?: string
 }
 
-function buildFallbackId1365FromMemberId(memberId: string): string {
-  return `1365${String(memberId).replace(/\D/g, '').slice(-6).padStart(6, '0')}`
-}
+const CANDIDATE_PAGE_SIZE = 100
+const MAX_CANDIDATE_PAGES = 50
 
-/** 개인 회원 목록 — 이미 참여 봉사자로 등록된 이름 제외 */
-export async function fetchParticipatingVolunteerMemberCandidates(
-  excludeVolunteerNames: readonly string[]
-): Promise<ParticipatingVolunteerMemberCandidate[]> {
-  const users = await getUsers({ role: 'INDIVIDUAL' })
-  const excluded = new Set(excludeVolunteerNames.map(name => name.trim()))
-  return users
-    .filter(user => !excluded.has(user.name.trim()))
-    .map(user => ({
-      memberId: user.id,
-      volunteerName: user.name,
-      hasRegisteredId1365: hasRegisteredVolunteerId1365(user.id1365),
+function mapRemoteCandidateItems(
+  items: Array<{
+    memberId: number
+    displayName?: string
+    hasRegisteredId1365?: boolean
+    eligible?: boolean
+  }>,
+  excludedMemberIds: ReadonlySet<number>
+): ParticipatingVolunteerMemberCandidate[] {
+  return items
+    .filter(item => item.memberId > 0 && !excludedMemberIds.has(item.memberId))
+    .filter(item => item.eligible !== false)
+    .map(item => ({
+      memberId: String(item.memberId),
+      volunteerName: item.displayName?.trim() || `회원 ${item.memberId}`,
+      hasRegisteredId1365: item.hasRegisteredId1365 === true,
     }))
 }
 
-export async function buildParticipatingVolunteerRowFromMember(
-  memberId: string,
-  nextNo: number,
-  nextId: string
-): Promise<ParticipatingVolunteerRow | null> {
-  const user = await getUserById(memberId)
-  if (!user || user.role !== 'INDIVIDUAL') return null
+async function fetchAllVolunteerRegisterCandidatesRemote(
+  programId: string,
+  volunteerKind: VolunteerKind,
+  keyword?: string
+): Promise<
+  Array<{
+    memberId: number
+    displayName?: string
+    hasRegisteredId1365?: boolean
+    eligible?: boolean
+  }>
+> {
+  const aggregated: Array<{
+    memberId: number
+    displayName?: string
+    hasRegisteredId1365?: boolean
+    eligible?: boolean
+  }> = []
 
-  const primarySchool = '배정 기관 미정'
-
-  const registeredId1365 = resolveMemberId1365(user)
-
-  return {
-    id: nextId,
-    no: nextNo,
-    volunteerName: user.name,
-    id1365: registeredId1365 ?? buildFallbackId1365FromMemberId(memberId),
-    assignedInstitutionNames: [primarySchool],
-    sessions: [],
-    contact: user.phone ?? '',
-    email: user.email,
+  for (let page = 0; page < MAX_CANDIDATE_PAGES; page += 1) {
+    const response = await fetchProgramParticipantRegisterCandidatesRemote(programId, {
+      participantType: 'VOLUNTEER',
+      volunteerKind,
+      keyword: keyword?.trim() || undefined,
+      page,
+      size: CANDIDATE_PAGE_SIZE,
+    })
+    const items = response.items ?? []
+    aggregated.push(...items)
+    const totalPages = response.totalPages ?? 1
+    if (page + 1 >= totalPages || items.length === 0) break
   }
+
+  return aggregated
+}
+
+/** 참여 봉사자 추가 등록 — GET …/participant-register-candidates (SSOT) */
+export async function fetchParticipatingVolunteerMemberCandidates(
+  params: FetchParticipatingVolunteerMemberCandidatesParams
+): Promise<ParticipatingVolunteerMemberCandidate[]> {
+  if (!shouldUseProgramProgressHttpRemoteApi()) {
+    throw new Error('참여 봉사자 등록은 실 API 환경에서만 지원합니다.')
+  }
+
+  const excluded = new Set(params.excludedMemberIds.filter(id => Number.isFinite(id) && id > 0))
+  const items = await fetchAllVolunteerRegisterCandidatesRemote(
+    params.programId,
+    params.volunteerKind,
+    params.keyword
+  )
+  return mapRemoteCandidateItems(items, excluded)
 }

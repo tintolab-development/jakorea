@@ -1,4 +1,7 @@
-import { getUserById, getUsers } from '@/entities/user/api/user-service'
+import { getUserById } from '@/entities/user/api/user-service'
+import { fetchAllMembersPagesRemote } from '@/features/user/api/fetch-all-members-pages-remote'
+import { rolesExactAnyOfForAllTabRoleFilter } from '@/features/user/api/map-roles-exact-any-of'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { USER_AFFILIATION_PIPE_SEP } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
@@ -73,7 +76,12 @@ export function mapIndividualUserToVolunteerMemberCandidate(
 export async function fetchUjatEducationProgressVolunteerMemberCandidates(
   excludeVolunteerNames: string[]
 ): Promise<UjatEducationProgressVolunteerMemberCandidate[]> {
-  const users = await getUsers({ role: 'INDIVIDUAL' })
+  if (!isMembersRemoteEnabled()) {
+    throw new Error('회원 목록은 실 API만 지원합니다. VITE_API_SERVER 또는 VITE_API_BASE_URL을 설정하세요.')
+  }
+  const users = await fetchAllMembersPagesRemote({
+    rolesExactAnyOf: rolesExactAnyOfForAllTabRoleFilter('INDIVIDUAL'),
+  })
   const excluded = new Set(excludeVolunteerNames.map(name => name.trim()))
   return users
     .filter(user => !excluded.has(user.name.trim()))
