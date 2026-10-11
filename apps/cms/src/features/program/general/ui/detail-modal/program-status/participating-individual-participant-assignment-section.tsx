@@ -131,7 +131,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     '참여자 상세 · 과제 팀 변경'
   )
 
-  const bundle = useMemo(
+  const offlineBundle = useMemo(
     () => getParticipatingIndividualParticipantAssignmentBundle(participant, program),
     [participant, program]
   )
@@ -170,7 +170,9 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
       : []
     const withSubmissions = mergeParticipantDetailAssignmentRowsWithRemote({
       participantId: participant.id,
-      localRows: sortParticipatingIndividualParticipantAssignmentRows(bundle.rows),
+      localRows: remoteEnabled
+        ? []
+        : sortParticipatingIndividualParticipantAssignmentRows(offlineBundle.rows),
       remoteSessions,
       surveyResponse: participant.surveyResponse,
       satisfactionResponse: participant.satisfactionResponse,
@@ -186,11 +188,12 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     }))
   }, [
     assignmentSubmissionsQuery.data,
-    bundle.rows,
+    offlineBundle.rows,
     participant.id,
+    remoteEnabled,
+    submissionTeamQuery.data,
     participant.satisfactionResponse,
     participant.surveyResponse,
-    submissionTeamQuery.data,
   ])
 
   const [rows, setRows] = useState(() => overlayRows)

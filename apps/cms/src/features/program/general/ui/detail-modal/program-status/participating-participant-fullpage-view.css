@@ -5,3 +5,9 @@
 .participating-participant-fullpage-view__section-block {
   padding-top: 0;
 }
+
+/* 참여자 상세 신청 정보 — 교육 진행 일정 하단 스크롤 여백 */
+.applicant-institution-basic-info__section--progress-schedule {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}

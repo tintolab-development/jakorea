@@ -43,7 +43,6 @@ import {
 } from '@/features/program/shared/lib/program-pii-display'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import {
   useParticipatingInstructorsParams,
   type ParticipatingInstructorsFilters,
@@ -723,10 +722,7 @@ export function ParticipatingInstructorsSection({
               variant="primary"
               width={160}
               onClick={() => {
-                if (
-                  !isRemoteDataSource &&
-                  !(programId != null && isGeneralProgramTempMockProgramId(programId))
-                ) {
+                if (!isRemoteDataSource) {
                   notifyProgramApiUnavailable(
                     'general-progress-instructor-register',
                     '참여 강사 등록'

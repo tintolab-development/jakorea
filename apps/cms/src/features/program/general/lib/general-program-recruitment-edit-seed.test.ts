@@ -79,7 +79,7 @@ describe('resolveGeneralProgramForRecruitmentEdit', () => {
     const values = programToRecruitmentTabEditValues(program, 'participant')
     expect(values.targetLevels).toEqual(['high'])
     expect(values.educationTargetDetail).toBe('모집 상세')
-    expect(values.description).toBe('공통 설명')
+    expect(values.description).toBe('모집 전용 설명')
     expect(values.recruitmentContactOrganizationName).toBe('모집 문의처')
     expect(values.contactPhone).toBe('02-6085-6028')
   })

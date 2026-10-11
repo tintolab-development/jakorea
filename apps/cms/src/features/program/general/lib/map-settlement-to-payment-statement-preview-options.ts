@@ -1,6 +1,6 @@
 import type { SettlementFrontendResponse, SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
-import type { PaymentOrderCalculationStatementLine } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderCalculationStatementLine } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import { PAYMENT_STATEMENT_PRE_CONSENT_BASIC_INFO_AUTHORING_VALUES } from '@/features/template/model/payment-statement-basic-info-sample'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'

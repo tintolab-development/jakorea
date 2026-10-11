@@ -11,6 +11,7 @@ import type {
   ParticipatingIndividualParticipantAttendanceRow,
   ParticipatingIndividualParticipantAttendanceSummary,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-types'
+import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 
 function resolveCompletionStatusLabel(
   participant: ParticipatingIndividualParticipantRow,
@@ -61,8 +62,10 @@ function buildRowsFromParticipantSessions(
   if (sessions.length === 0) return []
 
   return sessions.map((session, index) => {
-    const sessionProgress =
-      session.status === 'completed' ? ('completed' as const) : ('scheduled' as const)
+    const sessionProgress = mapDashboardScheduleDeliveryToEducationProgress(
+      session.deliveryScheduleStatus ??
+        (session.status === 'completed' ? 'COMPLETED' : 'SCHEDULED')
+    )
     const isWithdrawn =
       participant.activityWithdrawn &&
       participant.activityWithdrawStopSessionKey != null &&
@@ -76,11 +79,7 @@ function buildRowsFromParticipantSessions(
       scheduleId:
         session.resolvedScheduleId != null ? String(session.resolvedScheduleId) : null,
       scheduleLabel: formatParticipatingIndividualParticipantAttendanceScheduleLabel(program, session),
-      attendanceStatus: isWithdrawn
-        ? 'withdrawn'
-        : sessionProgress === 'completed'
-          ? 'present'
-          : 'pending',
+      attendanceStatus: isWithdrawn ? 'withdrawn' : 'pending',
       educationProgress: sessionProgress,
     }
   })

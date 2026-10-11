@@ -34,7 +34,9 @@ export type ParticipatingIndividualProgressAttendanceParticipantRow = {
   educationGrade: string
   contact?: string
   email?: string
-  attendanceStatus: ParticipatingIndividualProgressAttendanceStatus
+  /** 출석 API에 기록이 있을 때만 설정 */
+  attendanceStatus?: ParticipatingIndividualProgressAttendanceStatus
+  attendanceRecorded: boolean
   lateTime?: string
   remark?: string
 }
@@ -48,5 +50,7 @@ export type ParticipatingIndividualProgressAttendanceSessionGroup = {
   headerScheduleSummary: string
   headerPeriodRangeLabel: string
   headerPrefix: string
+  /** 프로그램 일정 `scheduleStatus` 기반 교육 진행 (출석과 분리) */
+  scheduleEducationProgress: 'completed' | 'scheduled'
   participants: ParticipatingIndividualProgressAttendanceParticipantRow[]
 }

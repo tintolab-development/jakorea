@@ -299,7 +299,7 @@ function coalesceNumber(
   return overlayVal
 }
 
-function formatAvailableTimeSlotsFromSelectedKeys(keys: unknown): string | undefined {
+export function formatAvailableTimeSlotsFromSelectedKeys(keys: unknown): string | undefined {
   if (!Array.isArray(keys) || keys.length === 0) return undefined
   const labels = keys
     .map(key => {
@@ -313,6 +313,106 @@ function formatAvailableTimeSlotsFromSelectedKeys(keys: unknown): string | undef
     })
     .filter((label): label is string => label != null)
   return labels.length > 0 ? labels.join(', ') : undefined
+}
+
+function parseInterviewScheduleTimeUnitMinutes(value: unknown): number {
+  if (value === '15' || value === 15) return 15
+  if (value === '60' || value === 60) return 60
+  return 30
+}
+
+/** overlay `interviewTimeRange` + `timeUnit` — BE hydrate와 동일(슬롯 키 없을 때). */
+export function formatAvailableTimeSlotsFromInterviewTimeRange(
+  rangeRaw: unknown,
+  timeUnitRaw: unknown
+): string | undefined {
+  if (!Array.isArray(rangeRaw) || rangeRaw.length < 2) return undefined
+  const start = dayjs(rangeRaw[0] as string | number | Date)
+  const end = dayjs(rangeRaw[1] as string | number | Date)
+  if (!start.isValid() || !end.isValid()) return undefined
+
+  const minutes = parseInterviewScheduleTimeUnitMinutes(timeUnitRaw)
+  const labels: string[] = []
+  let cursor = start
+
+  while (labels.length < 96) {
+    const next = cursor.add(minutes, 'minute')
+    if (next.isAfter(end)) break
+    labels.push(`${cursor.format('HH:mm')} ~ ${next.format('HH:mm')}`)
+    cursor = next
+  }
+
+  return labels.length > 0 ? labels.join(', ') : undefined
+}
+
+export function resolveVolunteerInterviewAvailableTimeSlotsFromOverlay(
+  overlay: Record<string, unknown>,
+  store: 'recruit' | 'application' = 'recruit'
+): string | undefined {
+  const key = (suffix: string) => buildVolunteerInterviewOverlayKey(store, suffix)
+  return (
+    formatAvailableTimeSlotsFromSelectedKeys(overlay[key('selectedSlotKeys')]) ??
+    formatAvailableTimeSlotsFromInterviewTimeRange(
+      overlay[key('interviewTimeRange')],
+      overlay[key('timeUnit')]
+    )
+  )
+}
+
+export function countVolunteerInterviewTimeSlotLabels(value: string | undefined): number {
+  if (!value?.trim()) return 0
+  return value.split(',').map(part => part.trim()).filter(Boolean).length
+}
+
+export function volunteerInterviewHasSelectedSlotKeys(
+  overlay: Record<string, unknown>,
+  store: 'recruit' | 'application' = 'recruit'
+): boolean {
+  const raw = overlay[buildVolunteerInterviewOverlayKey(store, 'selectedSlotKeys')]
+  return Array.isArray(raw) && raw.length > 0
+}
+
+/**
+ * 조회 표시 SSOT — 편집에서 고른 슬롯(selectedSlotKeys) 우선,
+ * 그다음 nested availableTimeSlots, 마지막 interviewTimeRange 펼침.
+ */
+export function resolveVolunteerInterviewAvailableTimeSlotsForDisplay(
+  nestedAvailableTimeSlots: string | undefined,
+  overlay: Record<string, unknown>,
+  store: 'recruit' | 'application' = 'recruit'
+): string | undefined {
+  const nested = nestedAvailableTimeSlots?.trim()
+  const nestedCount = countVolunteerInterviewTimeSlotLabels(nested)
+  const fromRange = formatAvailableTimeSlotsFromInterviewTimeRange(
+    overlay[buildVolunteerInterviewOverlayKey(store, 'interviewTimeRange')],
+    overlay[buildVolunteerInterviewOverlayKey(store, 'timeUnit')]
+  )
+  const rangeCount = countVolunteerInterviewTimeSlotLabels(fromRange)
+
+  if (volunteerInterviewHasSelectedSlotKeys(overlay, store)) {
+    const fromKeys = formatAvailableTimeSlotsFromSelectedKeys(
+      overlay[buildVolunteerInterviewOverlayKey(store, 'selectedSlotKeys')]
+    )
+    if (fromKeys) return fromKeys
+  }
+  if (fromRange) {
+    if (rangeCount > nestedCount) return fromRange
+  }
+  if (nested) return nested
+  return fromRange
+}
+
+function pickRicherAvailableTimeSlots(
+  nested?: string,
+  fromOverlay?: string
+): string | undefined {
+  const n = nested?.trim()
+  const o = fromOverlay?.trim()
+  if (!n) return o
+  if (!o) return n
+  return countVolunteerInterviewTimeSlotLabels(o) >= countVolunteerInterviewTimeSlotLabels(n)
+    ? o
+    : n
 }
 
 function formatSpecificUnavailableDateLabel(isos: string[]): string | undefined {
@@ -351,9 +451,9 @@ function buildVolunteerInterviewScheduleFromOverlay(
   const recurringUnavailable = exclusion
     ? buildRecurringUnavailableLabel(exclusion)
     : undefined
-  const availableTimeSlots = formatAvailableTimeSlotsFromSelectedKeys(
-    overlay[key('selectedSlotKeys')]
-  )
+  const availableTimeSlots = volunteerInterviewHasSelectedSlotKeys(overlay, 'recruit')
+    ? formatAvailableTimeSlotsFromSelectedKeys(overlay[key('selectedSlotKeys')])
+    : resolveVolunteerInterviewAvailableTimeSlotsFromOverlay(overlay, 'recruit')
   const specificUnavailableDates = formatSpecificUnavailableDateLabel(
     specificUnavailableDateIsos
   )
@@ -375,6 +475,67 @@ function buildVolunteerInterviewScheduleFromOverlay(
     ...(specificUnavailableDateIsos.length > 0 ? { specificUnavailableDateIsos } : {}),
     ...(availableTimeSlots ? { availableTimeSlots } : {}),
     ...(exceptions.length > 0 ? { exceptions } : {}),
+  }
+}
+
+/** 저장·PATCH — keys가 있으면 nested availableTimeSlots는 keys만 반영(첫 슬롯만 merge 금지). */
+export function alignVolunteerInterviewScheduleInfoWithSelectedSlotKeys(
+  overlay: Record<string, unknown>,
+  schedule?: GeneralProgramVolunteerInterviewScheduleInfo
+): GeneralProgramVolunteerInterviewScheduleInfo | undefined {
+  if (!volunteerInterviewHasSelectedSlotKeys(overlay, 'recruit')) return schedule
+  const fromKeys = formatAvailableTimeSlotsFromSelectedKeys(
+    overlay[buildVolunteerInterviewOverlayKey('recruit', 'selectedSlotKeys')]
+  )
+  if (!fromKeys) return schedule
+  if (!schedule) return { availableTimeSlots: fromKeys }
+  return { ...schedule, availableTimeSlots: fromKeys }
+}
+
+function pickNonEmptyScheduleString(
+  nested?: string,
+  fromOverlay?: string
+): string | undefined {
+  const nestedTrim = nested?.trim()
+  if (nestedTrim) return nested
+  const overlayTrim = fromOverlay?.trim()
+  return overlayTrim ? fromOverlay : nested
+}
+
+/** nested·overlay 각각에 일부 필드만 있을 때(예: 불가일만 JSON, 슬롯은 overlay) 병합 */
+export function mergeVolunteerInterviewScheduleInfo(
+  nested: GeneralProgramVolunteerInterviewScheduleInfo | undefined,
+  fromOverlay: GeneralProgramVolunteerInterviewScheduleInfo | undefined,
+  preferOverlay: boolean
+): GeneralProgramVolunteerInterviewScheduleInfo | undefined {
+  if (!nested && !fromOverlay) return undefined
+  if (!nested) return fromOverlay
+  if (!fromOverlay) return nested
+
+  return {
+    ...fromOverlay,
+    ...nested,
+    recurringUnavailable: pickNonEmptyScheduleString(
+      preferOverlay ? fromOverlay.recurringUnavailable : nested.recurringUnavailable,
+      preferOverlay ? nested.recurringUnavailable : fromOverlay.recurringUnavailable
+    ),
+    specificUnavailableDates: pickNonEmptyScheduleString(
+      preferOverlay ? fromOverlay.specificUnavailableDates : nested.specificUnavailableDates,
+      preferOverlay ? nested.specificUnavailableDates : fromOverlay.specificUnavailableDates
+    ),
+    specificUnavailableDateIsos: preferOverlay
+      ? fromOverlay.specificUnavailableDateIsos?.length
+        ? fromOverlay.specificUnavailableDateIsos
+        : nested.specificUnavailableDateIsos
+      : nested.specificUnavailableDateIsos?.length
+        ? nested.specificUnavailableDateIsos
+        : fromOverlay.specificUnavailableDateIsos,
+    availableTimeSlots: preferOverlay
+      ? pickNonEmptyScheduleString(fromOverlay.availableTimeSlots, nested.availableTimeSlots)
+      : pickRicherAvailableTimeSlots(nested.availableTimeSlots, fromOverlay.availableTimeSlots),
+    exceptions: nested.exceptions?.length ? nested.exceptions : fromOverlay.exceptions,
+    periodStartDate: nested.periodStartDate ?? fromOverlay.periodStartDate,
+    periodEndDate: nested.periodEndDate ?? fromOverlay.periodEndDate,
   }
 }
 
@@ -1175,10 +1336,11 @@ export function applyGeneralRecruitOverlayToProgram(
     )
   }
 
-  const nextVolunteerInterviewSchedule =
-    preferOverlay && volunteerInterviewScheduleFromOverlay
-      ? volunteerInterviewScheduleFromOverlay
-      : common.volunteerInterviewScheduleInfo ?? volunteerInterviewScheduleFromOverlay
+  const nextVolunteerInterviewSchedule = mergeVolunteerInterviewScheduleInfo(
+    common.volunteerInterviewScheduleInfo,
+    volunteerInterviewScheduleFromOverlay,
+    preferOverlay
+  )
 
   const contactPhone = coalesceString(
     typeof program.contactPhone === 'string' ? program.contactPhone : undefined,

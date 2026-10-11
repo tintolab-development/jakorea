@@ -6,6 +6,7 @@ import {
   GENERAL_RECRUIT_OVERLAY_KEYS,
   resolveGeneralRecruitDetailDisplayProgram,
 } from './general-recruit-overlay-to-program'
+import { resolveGeneralProgramVolunteerInterviewScheduleDisplay } from './volunteer-interview-schedule-display'
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 
 function baseProgram(): Program {
@@ -296,6 +297,167 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(schedule?.recurringUnavailable).toBe('토요일, 일요일, 공휴일')
     expect(schedule?.specificUnavailableDateIsos).toEqual(['2026-03-26'])
     expect(schedule?.availableTimeSlots).toBe('09:00 ~ 09:30')
+  })
+
+  it('keeps nested 불가일 when overlay only has selectedSlotKeys (save preferOverlay)', () => {
+    const slotStart = dayjs('2026-03-26T10:00:00')
+    const slotEnd = slotStart.add(30, 'minute')
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        volunteerInterviewScheduleInfo: {
+          recurringUnavailable: '공휴일',
+        },
+      },
+    } as Program
+    const overlay = {
+      'recruit.volunteer.interview.selectedSlotKeys': [
+        `${slotStart.valueOf()}-${slotEnd.valueOf()}`,
+      ],
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(program, overlay, { preferOverlay: true })
+    const schedule = next.generalCommonInfo?.volunteerInterviewScheduleInfo
+    expect(schedule?.recurringUnavailable).toBe('공휴일')
+    expect(schedule?.availableTimeSlots).toBe('10:00 ~ 10:30')
+  })
+
+  it('formats available time from interviewTimeRange when selectedSlotKeys is empty', () => {
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        volunteerInterviewScheduleInfo: {
+          recurringUnavailable: '토요일, 일요일, 공휴일',
+        },
+      },
+      registrationOverlay: {
+        'recruit.volunteer.interview.selectedSlotKeys': [],
+        'recruit.volunteer.interview.interviewTimeRange': [
+          '2026-10-11T01:00:00.000Z',
+          '2026-10-11T06:00:00.000Z',
+        ],
+        'recruit.volunteer.interview.timeUnit': '30',
+      },
+    } as Program
+
+    const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
+    expect(display.availableTimeSlots).not.toBe('-')
+    expect(display.availableTimeSlots.split(', ').length).toBe(10)
+  })
+
+  it('prefers selectedSlotKeys over stale nested availableTimeSlots on display', () => {
+    const slots = [
+      `${dayjs('2026-03-26T10:00:00').valueOf()}-${dayjs('2026-03-26T10:30:00').valueOf()}`,
+      `${dayjs('2026-03-26T10:30:00').valueOf()}-${dayjs('2026-03-26T11:00:00').valueOf()}`,
+      `${dayjs('2026-03-26T11:00:00').valueOf()}-${dayjs('2026-03-26T11:30:00').valueOf()}`,
+      `${dayjs('2026-03-26T11:30:00').valueOf()}-${dayjs('2026-03-26T12:00:00').valueOf()}`,
+    ]
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        volunteerInterviewScheduleInfo: {
+          availableTimeSlots: '10:00 ~ 10:30',
+        },
+      },
+      registrationOverlay: {
+        'recruit.volunteer.interview.selectedSlotKeys': slots,
+      },
+    } as Program
+
+    const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
+    expect(display.availableTimeSlots.split(', ').length).toBe(4)
+    expect(display.availableTimeSlots).toContain('11:30 ~ 12:00')
+  })
+
+  it('uses interviewTimeRange when nested has fewer slots than range expansion', () => {
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        volunteerInterviewScheduleInfo: {
+          availableTimeSlots: '10:00 ~ 10:30',
+        },
+      },
+      registrationOverlay: {
+        'recruit.volunteer.interview.selectedSlotKeys': [],
+        'recruit.volunteer.interview.interviewTimeRange': [
+          '2026-10-11T01:00:00.000Z',
+          '2026-10-11T03:00:00.000Z',
+        ],
+        'recruit.volunteer.interview.timeUnit': '30',
+      },
+    } as Program
+
+    const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
+    expect(display.availableTimeSlots.split(', ').length).toBe(4)
+  })
+
+  it('shows one slot when selectedSlotKeys has one entry (partial selection SSOT)', () => {
+    const slotStart = dayjs('2026-03-26T10:00:00')
+    const slotEnd = slotStart.add(30, 'minute')
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        volunteerInterviewScheduleInfo: {
+          availableTimeSlots: '10:00 ~ 10:30, 10:30 ~ 11:00',
+        },
+      },
+      registrationOverlay: {
+        'recruit.volunteer.interview.selectedSlotKeys': [
+          `${slotStart.valueOf()}-${slotEnd.valueOf()}`,
+        ],
+        'recruit.volunteer.interview.interviewTimeRange': [
+          '2026-10-11T01:00:00.000Z',
+          '2026-10-11T03:00:00.000Z',
+        ],
+        'recruit.volunteer.interview.timeUnit': '30',
+      },
+    } as Program
+
+    const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
+    expect(display.availableTimeSlots).toBe('10:00 ~ 10:30')
+  })
+
+  it('shows nested availableTimeSlots when selectedSlotKeys is empty (BE hydrate)', () => {
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        volunteerInterviewScheduleInfo: {
+          recurringUnavailable: '토요일, 일요일, 공휴일',
+          availableTimeSlots: '10:00 ~ 10:30, 10:30 ~ 11:00',
+        },
+      },
+      registrationOverlay: {
+        'recruit.volunteer.interview.selectedSlotKeys': [],
+        'recruit.volunteer.interview.timeUnit': '30',
+      },
+    } as Program
+
+    const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
+    expect(display.availableTimeSlots).toBe('10:00 ~ 10:30, 10:30 ~ 11:00')
+  })
+
+  it('merges volunteer interview time slots from overlay when nested JSON only has unavailable dates', () => {
+    const slotStart = dayjs('2026-03-26T09:00:00')
+    const slotEnd = slotStart.add(30, 'minute')
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        volunteerInterviewScheduleInfo: {
+          recurringUnavailable: '토요일, 일요일, 공휴일',
+          specificUnavailableDates: '2026. 03. 26 (목)',
+          specificUnavailableDateIsos: ['2026-03-26'],
+        },
+      },
+      registrationOverlay: {
+        'recruit.volunteer.interview.selectedSlotKeys': [
+          `${slotStart.valueOf()}-${slotEnd.valueOf()}`,
+        ],
+      },
+    } as Program
+
+    const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
+    expect(display.recurringUnavailable).toBe('토요일, 일요일, 공휴일')
+    expect(display.availableTimeSlots).toBe('09:00 ~ 09:30')
   })
 
   it('maps volunteer interview exception blocks into the saved schedule', () => {

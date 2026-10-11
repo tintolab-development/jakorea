@@ -9,6 +9,7 @@ import {
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
+  alignVolunteerInterviewScheduleInfoWithSelectedSlotKeys,
   applyGeneralRecruitOverlayToProgram,
   GENERAL_RECRUIT_OVERLAY_KEYS,
 } from '@/features/program/general/lib/general-recruit-overlay-to-program'
@@ -17,14 +18,22 @@ import {
   volunteerRecruitOverlayPatchFromDetailEditValues,
 } from '@/features/program/general/lib/general-recruit-overlay-from-program'
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
-import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  getGeneralRecruitOverlayScope,
+  peekGeneralRecruitOverlayRecord,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { DEFAULT_OPERATIONAL_OVERLAY_SCOPE } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   applyOperationalOverlayForCatalogId,
+  collectOperationalOverlayForCatalogId,
   keyMatchesOperationalOverlayPrefixes,
   operationalOverlayKeyPrefixesForCatalogId,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 
+const VOLUNTEER_RECRUIT_CATALOG = 'recruitment-volunteer'
+const VOLUNTEER_INTERVIEW_PREFIX = 'recruit.volunteer.interview'
 const keys = GENERAL_RECRUIT_OVERLAY_KEYS
 const inst = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
 
@@ -194,11 +203,60 @@ function peekRecruitOverlaySlicesForCatalogs(
 ): Record<string, unknown> {
   const merged: Record<string, unknown> = {}
   for (const catalogId of catalogTemplateCodes) {
+    const collected = collectOperationalOverlayForCatalogId(catalogId)
+    if (collected != null) {
+      Object.assign(merged, collected)
+      continue
+    }
     const prefixes = operationalOverlayKeyPrefixesForCatalogId(catalogId)
     const peeked = peekGeneralRecruitOverlayRecord(catalogId)
     Object.assign(merged, pickOverlayKeysByPrefixes(peeked, prefixes))
   }
   return merged
+}
+
+function selectedSlotKeyCount(value: unknown): number {
+  return Array.isArray(value)
+    ? value.filter(item => typeof item === 'string' && item.trim() !== '').length
+    : -1
+}
+
+/** 면접 selectedSlotKeys는 그리드가 쓴 버킷(default/active/catalog) 중 가장 긴 배열을 택한다. */
+function mergeVolunteerInterviewOverlaySources(
+  ...sources: Array<Record<string, unknown>>
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = {}
+  const richestSlotKeys = new Map<string, unknown>()
+  for (const source of sources) {
+    for (const [key, value] of Object.entries(source)) {
+      if (key !== VOLUNTEER_INTERVIEW_PREFIX && !key.startsWith(`${VOLUNTEER_INTERVIEW_PREFIX}.`)) {
+        continue
+      }
+      if (key === 'selectedSlotKeys' || key.endsWith('.selectedSlotKeys')) {
+        const prev = richestSlotKeys.get(key)
+        if (selectedSlotKeyCount(value) >= selectedSlotKeyCount(prev)) {
+          richestSlotKeys.set(key, value)
+        }
+        continue
+      }
+      merged[key] = value
+    }
+  }
+  for (const [key, value] of richestSlotKeys) merged[key] = value
+  return merged
+}
+
+function peekVolunteerInterviewOverlayForSave(catalogCodes: readonly string[]): Record<string, unknown> {
+  const catalogSources = [...new Set([VOLUNTEER_RECRUIT_CATALOG, ...catalogCodes])]
+  const liveSources = [...new Set([DEFAULT_OPERATIONAL_OVERLAY_SCOPE, getGeneralRecruitOverlayScope()])]
+  return mergeVolunteerInterviewOverlaySources(
+    ...catalogSources.map(code =>
+      pickOverlayKeysByPrefixes(peekGeneralRecruitOverlayRecord(code), [VOLUNTEER_INTERVIEW_PREFIX])
+    ),
+    ...liveSources.map(code =>
+      pickOverlayKeysByPrefixes(peekGeneralRecruitOverlayRecord(code), [VOLUNTEER_INTERVIEW_PREFIX])
+    )
+  )
 }
 
 export function buildMergedRegistrationOverlayForRecruitSave(args: {
@@ -209,11 +267,18 @@ export function buildMergedRegistrationOverlayForRecruitSave(args: {
 }): Record<string, unknown> {
   const catalogCodes = recruitCatalogTemplateCodesForAudience(args.program, args.audience)
   const formPatch = recruitOverlayPatchFromDetailEditValues(args.values, args.audience)
-  const peeked = peekRecruitOverlaySlicesForCatalogs(catalogCodes)
+  const peeked = peekRecruitOverlaySlicesForCatalogs(
+    args.audience === 'volunteer' && catalogCodes.length === 0
+      ? [VOLUNTEER_RECRUIT_CATALOG]
+      : catalogCodes
+  )
+  const volunteerInterview =
+    args.audience === 'volunteer' ? peekVolunteerInterviewOverlayForSave(catalogCodes) : {}
   return {
     ...(args.program.registrationOverlay ?? {}),
     ...(args.remotePatch.registrationOverlay ?? {}),
     ...peeked,
+    ...volunteerInterview,
     ...formPatch,
   }
 }
@@ -250,8 +315,10 @@ export function mergeOverlayOnlyVolunteerInterviewSchedule(
     scopedOverlay,
     { preferOverlay: true }
   )
-  const scheduleFromOverlay =
+  const scheduleFromOverlay = alignVolunteerInterviewScheduleInfoWithSelectedSlotKeys(
+    scopedOverlay,
     draftWithLiveOverlay.generalCommonInfo?.volunteerInterviewScheduleInfo
+  )
   const formVolunteerInfo = remotePatch.generalCommonInfo?.volunteerRecruitmentInfo
   return {
     ...remotePatch,
@@ -272,6 +339,31 @@ export function mergeOverlayOnlyVolunteerInterviewSchedule(
   }
 }
 
+/** 모집 편집 UI·KV patch가 저장 시 peek와 같은 catalog 버킷을 쓰도록 스코프를 맞춘다. */
+export function ensureRecruitOperationalEditScope(
+  program: Program,
+  audience: ProgramDetailRecruitmentAudience
+): string | undefined {
+  const catalogCode =
+    recruitCatalogTemplateCodeForAudience(program, audience) ??
+    (audience === 'volunteer'
+      ? VOLUNTEER_RECRUIT_CATALOG
+      : audience === 'instructor'
+        ? 'recruitment-instructor'
+        : undefined)
+  if (catalogCode) setOperationalOverlayScope(catalogCode)
+  return catalogCode
+}
+
+/** 스코프 설정 후 program.registrationOverlay를 audience별 catalog에 시드 */
+export function prepareRecruitOperationalEditFromProgram(
+  program: Program,
+  audience: ProgramDetailRecruitmentAudience
+): void {
+  ensureRecruitOperationalEditScope(program, audience)
+  seedOperationalRecruitOverlaysFromProgram(program)
+}
+
 /** 모집 편집 진입 — program.registrationOverlay를 audience별 catalog scope에 시드 */
 export function seedOperationalRecruitOverlaysFromProgram(program: Program): void {
   const registrationOverlay =
@@ -281,11 +373,19 @@ export function seedOperationalRecruitOverlaysFromProgram(program: Program): voi
   const fromProgram = buildGeneralRecruitOverlayFromProgram(program)
   const mergedSource = { ...registrationOverlay, ...fromProgram }
 
+  const seeded = new Set<string>()
   for (const spec of listVisibleOperationalFormSpecs(program)) {
     if (spec.formType !== 'RECRUITMENT') continue
     const prefixes = operationalOverlayKeyPrefixesForCatalogId(spec.templateCode)
     const slice = pickOverlayKeysByPrefixes(mergedSource, prefixes)
     applyOperationalOverlayForCatalogId(spec.templateCode, slice)
+    seeded.add(spec.templateCode)
+  }
+  if (!seeded.has(VOLUNTEER_RECRUIT_CATALOG)) {
+    applyOperationalOverlayForCatalogId(
+      VOLUNTEER_RECRUIT_CATALOG,
+      pickOverlayKeysByPrefixes(mergedSource, ['recruit.volunteer', 'recruitVolunteer'])
+    )
   }
 }
 

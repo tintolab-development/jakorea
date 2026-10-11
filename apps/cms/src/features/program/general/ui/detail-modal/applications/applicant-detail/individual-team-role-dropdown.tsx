@@ -9,6 +9,24 @@ import { updateGeneralIndividualApplicantTeamRole } from '@/features/program/gen
 import { assignmentTeamRoleTagClassName } from '@/features/program/general/lib/assignment-team-role-tag'
 import { ASSIGNMENT_TEAM_ROLE_LABELS } from '@/features/program/general/model/school-detail-types'
 import '@/features/program/general/ui/assignment-submission-modal.css'
+import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-role-tag.css'
+
+/** 시안: 팀장 민트 태그, 팀원 일반 텍스트 (읽기 전용) */
+export function GeneralIndividualTeamRoleView({
+  teamRole,
+}: {
+  teamRole: GeneralIndividualTeamRoleKey
+}) {
+  const label = ASSIGNMENT_TEAM_ROLE_LABELS[teamRole]
+  if (teamRole === 'leader') {
+    return (
+      <span className="school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--lead">
+        {label}
+      </span>
+    )
+  }
+  return <span>{label}</span>
+}
 
 export type GeneralIndividualTeamRoleKey = NonNullable<GeneralIndividualApplicantDetail['teamRole']>
 
@@ -37,6 +55,33 @@ export function GeneralIndividualTeamRoleDropdown({
     return <>-</>
   }
 
+  const handleChange =
+    canEdit && onChange != null
+      ? async (newRole: GeneralIndividualTeamRoleKey) => {
+          if (isSaving) return
+          setIsSaving(true)
+          try {
+            await onChange(newRole)
+            setRole(newRole)
+          } catch {
+            // 상위 원격 저장 핸들러가 오류 안내와 서버값 refetch를 처리한다.
+          } finally {
+            setIsSaving(false)
+          }
+        }
+      : canEdit
+        ? async (newRole: GeneralIndividualTeamRoleKey) => {
+            if (isSaving) return
+            setIsSaving(true)
+            try {
+              updateGeneralIndividualApplicantTeamRole(applicantId, newRole)
+              setRole(newRole)
+            } finally {
+              setIsSaving(false)
+            }
+          }
+        : undefined
+
   return (
     <StatusDropdownCell<GeneralIndividualTeamRoleKey>
       status={role}
@@ -47,23 +92,8 @@ export function GeneralIndividualTeamRoleDropdown({
         </span>
       )}
       isItemDisabled={(cur, opt) => cur === opt}
-      isUpdating={!canEdit || isSaving}
-      onChange={async newRole => {
-        if (!canEdit || isSaving) return
-        setIsSaving(true)
-        try {
-          if (onChange) {
-            await onChange(newRole)
-          } else {
-            updateGeneralIndividualApplicantTeamRole(applicantId, newRole)
-          }
-          setRole(newRole)
-        } catch {
-          // 상위 원격 저장 핸들러가 오류 안내와 서버값 refetch를 처리한다.
-        } finally {
-          setIsSaving(false)
-        }
-      }}
+      isUpdating={isSaving}
+      onChange={handleChange}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       emptyPlaceholder="-"

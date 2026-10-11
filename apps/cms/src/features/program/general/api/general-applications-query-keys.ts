@@ -103,6 +103,13 @@ export const generalProgramProgressQueryKeys = {
       programId,
       instructorMemberId,
     ] as const,
+  participantSettlements: (programId: string, participantId: string) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'participant-settlements',
+      programId,
+      participantId,
+    ] as const,
 }
 
 export const generalInterviewSlotsQueryKeys = {

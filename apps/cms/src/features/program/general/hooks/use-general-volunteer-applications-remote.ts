@@ -19,7 +19,6 @@ import {
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import type {
@@ -84,11 +83,7 @@ export function useGeneralVolunteerApplicationsRemote({
   const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
   const remoteEnabled = useMemo(
-    () =>
-      enabled &&
-      shouldUseGeneralApplicationsRemoteApi() &&
-      Boolean(programId) &&
-      !isGeneralProgramTempMockProgramId(programId),
+    () => enabled && shouldUseGeneralApplicationsRemoteApi() && Boolean(programId),
     [enabled, programId]
   )
 

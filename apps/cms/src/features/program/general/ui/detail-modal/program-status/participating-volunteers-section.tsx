@@ -37,7 +37,6 @@ import {
   type ParticipatingVolunteerMemberCandidate,
 } from '@/features/program/general/lib/participating-volunteer-member-candidates'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
@@ -221,7 +220,6 @@ export function ParticipatingVolunteersSection({
     [volunteerCalendarEvents, calendarSelectedDate]
   )
 
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
   const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
   const [volunteerConsentOpen, setVolunteerConsentOpen] = useState(false)
   const [pendingVolunteerMemberId, setPendingVolunteerMemberId] = useState<string | null>(null)
@@ -234,16 +232,6 @@ export function ParticipatingVolunteersSection({
 
   const openVolunteerRegister = useCallback(
     (kind: 'GENERAL' | 'EMPLOYEE') => {
-      if (isTempMockProgram) {
-        showAlert({
-          title: '등록 완료',
-          content:
-            kind === 'EMPLOYEE'
-              ? '임직원 자원봉사자 등록이 완료되었습니다. (temp mock)'
-              : '봉사자 등록이 완료되었습니다. (temp mock)',
-        })
-        return
-      }
       if (!programId) {
         notifyProgramApiUnavailable(
           kind === 'EMPLOYEE'
@@ -273,7 +261,7 @@ export function ParticipatingVolunteersSection({
           })
         })
     },
-    [isTempMockProgram, programId, showAlert, volunteerList]
+    [programId, showAlert, volunteerList]
   )
 
   const handleRegisterEmployeeVolunteerClick = useCallback(() => {

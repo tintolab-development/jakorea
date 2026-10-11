@@ -83,7 +83,7 @@ import {
   seedEconomyRegistrationOverlayFromProgram,
   writeEconomyRegistrationOverlayFromProgramDraft,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
-import { seedOperationalRecruitOverlaysFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
+import { prepareRecruitOperationalEditFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
 import { listIncompleteDetailRecruitmentHighlightKeys } from '@/features/program/general/lib/detail-recruitment-required-highlight'
 import {
   hasIncompleteEconomyProgramRegistrationRequiredFields,
@@ -1581,12 +1581,12 @@ export function ProgramDetailFullPageModal({
       }
       if (activeTab === 'institutions') {
         if (isCompanySchoolRecruitmentInstructorTab) {
-          seedOperationalRecruitOverlaysFromProgram(displayProgram)
+          prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor')
           instructorsResetToProgram()
           setEditMode('instructors')
           return
         }
-        seedOperationalRecruitOverlaysFromProgram(displayProgram)
+        prepareRecruitOperationalEditFromProgram(displayProgram, 'participant')
         institutionsResetToProgram()
         setEditMode('institutions')
         return
@@ -1611,25 +1611,25 @@ export function ProgramDetailFullPageModal({
       return
     }
     if (isCompanySchoolRecruitmentInstructorTab) {
-      seedOperationalRecruitOverlaysFromProgram(displayProgram)
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor')
       instructorsResetToProgram()
       setEditMode('instructors')
       return
     }
     if (activeTab === 'institutions') {
-      seedOperationalRecruitOverlaysFromProgram(displayProgram)
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'participant')
       institutionsResetToProgram()
       setEditMode('institutions')
       return
     }
     if (activeTab === 'instructors') {
-      seedOperationalRecruitOverlaysFromProgram(displayProgram)
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor')
       instructorsResetToProgram()
       setEditMode('instructors')
       return
     }
     if (activeTab === 'volunteers') {
-      seedOperationalRecruitOverlaysFromProgram(displayProgram)
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'volunteer')
       volunteersResetToProgram()
       setEditMode('volunteers')
     }

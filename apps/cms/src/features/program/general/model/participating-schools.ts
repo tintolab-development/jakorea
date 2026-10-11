@@ -24,6 +24,8 @@ export interface ParticipatingSchoolSession {
   timeRange: string
   /** 진행 완료 | 진행 대기 | 미진행 희망 (상세 뷰용, 선택) */
   status?: ParticipatingSchoolSessionStatusKey
+  /** BE sessions[].scheduleStatus 원본 — 교육 진행 라벨 SSOT */
+  deliveryScheduleStatus?: string
   /**
    * `line:N` 희망 일정 표시 문자열.
    * 있으면 날짜·시간 포맷 대신 이 값을 보여 준다.

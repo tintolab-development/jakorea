@@ -37,7 +37,7 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { seedGeneralRegistrationOverlayFromProgram } from '@/features/program/general/lib/registration-overlay-sync'
-import { seedOperationalRecruitOverlaysFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
+import { prepareRecruitOperationalEditFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
 import { logGeneralProgramCommonInfoEditCurrentPayload } from '@/features/program/general/lib/common-info-edit-payload-log'
 import {
   defaultParticipantApplicationTab,
@@ -1031,18 +1031,20 @@ export function GeneralProgramDetailFullPageModal({
       })
       return
     }
-    seedOperationalRecruitOverlaysFromProgram(displayProgram)
     if (recruitSubTab === 'institutions') {
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'participant')
       institutionsResetToProgram()
       setEditMode('institutions')
       return
     }
     if (recruitSubTab === 'instructors') {
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor')
       instructorsResetToProgram()
       setEditMode('instructors')
       return
     }
     if (recruitSubTab === 'volunteers') {
+      prepareRecruitOperationalEditFromProgram(displayProgram, 'volunteer')
       volunteersResetToProgram()
       setEditMode('volunteers')
     }

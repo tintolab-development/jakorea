@@ -6,7 +6,6 @@ import {
   getApplicantInstructorsByProgramId,
   type ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
-import { getTempMockShowcaseApplicantInstructors } from '@/features/program/general/lib/temp-mock-program-resolve'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
@@ -155,8 +154,6 @@ function isSessionDisabledForInstructor(params: {
 }
 
 function instructorsForProgram(programId: string): ApplicantInstructorRow[] {
-  const mock = getTempMockShowcaseApplicantInstructors(programId)
-  if (mock.length > 0) return mock
   return getApplicantInstructorsByProgramId(programId)
 }
 

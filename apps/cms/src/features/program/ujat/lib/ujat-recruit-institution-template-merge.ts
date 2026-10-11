@@ -4,25 +4,13 @@ import type { DateValue } from '@/types'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { loadUjatRecruitInstitutionTemplateSave } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
+import { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
+
+export { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS }
+
 type RangeSeal = { start: string | null; end: string | null }
 type ResultSeal = { date: string | null; method: string }
 type ContactSeal = { name: string; phone: string; email: string }
-export const UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
-  announcementPublished: 'ujat.recruit.institution.announcementPublished',
-  publicTitle: 'ujat.recruit.institution.publicTitle',
-  programRange: 'ujat.recruit.institution.programRange',
-  targetLevels: 'ujat.recruit.institution.targetLevels',
-  district: 'ujat.recruit.institution.district',
-  recruitRange: 'ujat.recruit.institution.recruitRange',
-  resultAnnounce: 'ujat.recruit.institution.resultAnnounce',
-  contact: 'ujat.recruit.institution.contact',
-  notes: 'ujat.recruit.institution.notes',
-  description: 'ujat.recruit.institution.description',
-  recruitmentGuide: 'ujat.recruit.institution.recruitmentGuide',
-  learningSupportContent: 'ujat.recruit.institution.learningSupportContent',
-  additionalContentHtml: 'ujat.recruit.institution.additionalContentHtml',
-  attachmentFileNames: 'ujat.recruit.institution.attachmentFileNames',
-} as const
 
 const OVERLAY_KEYS = UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {

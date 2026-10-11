@@ -86,7 +86,7 @@ export function ParticipatingIndividualProgressAttendanceTable({
         align: 'center',
         render: (_value, record) => (
           <ProgramAttendanceStatusText
-            kind={toProgressAttendanceStatusTextKind(record.attendanceStatus)}
+            kind={toProgressAttendanceStatusTextKind(record)}
             label={resolveProgressAttendanceStatusLabel(record)}
             lateTime={record.lateTime}
           />

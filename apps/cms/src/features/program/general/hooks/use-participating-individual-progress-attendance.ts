@@ -12,12 +12,6 @@ import {
 } from '@/features/program/general/api/adapters/progress-attendance-adapters'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import {
-  getParticipatingIndividualProgressAttendanceEducationScheduleOptions,
-  getParticipatingIndividualProgressAttendanceSessions,
-  patchParticipatingIndividualProgressAttendanceParticipant,
-} from '@/features/program/general/lib/participating-individual-progress-attendance-local'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { buildParticipatingIndividualProgressAttendanceFilterFields } from '@/features/program/general/lib/participating-individual-progress-attendance-filter-fields'
 import { filterProgressAttendanceParticipantsForDisplay } from '@/features/program/general/lib/participating-individual-progress-attendance-display'
@@ -56,17 +50,15 @@ function filterSessionGroups(
 }
 
 export function useParticipatingIndividualProgressAttendance(program: Program) {
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled && !isTempMockProgram,
+    !remoteEnabled,
     'general-progress-attendance',
     '프로그램 진행 현황 · 출석'
   )
 
   const queryClient = useQueryClient()
-  const [dataVersion, setDataVersion] = useState(0)
   const [pendingFilters, setPendingFilters] =
     useState<ParticipatingIndividualProgressAttendanceFilters>(() => ({
       ...EMPTY_PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTERS,
@@ -91,41 +83,23 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
 
   const isRemoteDataSource = remoteEnabled && remoteSessions != null && !remoteQuery.isError
 
-  const localSessions = useMemo(() => {
-    void dataVersion
-    return getParticipatingIndividualProgressAttendanceSessions(program)
-  }, [dataVersion, program])
-
   const educationScheduleOptions = useMemo(() => {
-    if (isRemoteDataSource && remoteSessions) {
-      return remoteSessions.map(session => ({
-        value: session.filterValue,
-        label: session.filterLabel,
-      }))
-    }
-    if (isTempMockProgram) {
-      return getParticipatingIndividualProgressAttendanceEducationScheduleOptions(program)
-    }
-    return []
-  }, [isRemoteDataSource, isTempMockProgram, program, remoteSessions])
+    if (!isRemoteDataSource || !remoteSessions) return []
+    return remoteSessions.map(session => ({
+      value: session.filterValue,
+      label: session.filterLabel,
+    }))
+  }, [isRemoteDataSource, remoteSessions])
 
   const filterFields = useMemo(
     () => buildParticipatingIndividualProgressAttendanceFilterFields(educationScheduleOptions),
     [educationScheduleOptions]
   )
 
-  const mockSessionGroups = useMemo(() => {
-    void dataVersion
-    const base = isTempMockProgram ? localSessions : []
-    return filterSessionGroups(base, appliedFilters)
-  }, [appliedFilters, dataVersion, isTempMockProgram, localSessions])
-
   const sessionGroups = useMemo(() => {
-    if (isRemoteDataSource && remoteSessions) {
-      return filterSessionGroups(remoteSessions, appliedFilters)
-    }
-    return mockSessionGroups
-  }, [appliedFilters, isRemoteDataSource, mockSessionGroups, remoteSessions])
+    if (!isRemoteDataSource || !remoteSessions) return []
+    return filterSessionGroups(remoteSessions, appliedFilters)
+  }, [appliedFilters, isRemoteDataSource, remoteSessions])
 
   const saveMutation = useMutation({
     mutationFn: async (payload: {
@@ -141,37 +115,30 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
       const session = remoteSessions?.find(s => s.id === payload.sessionId)
       const participant = session?.participants.find(p => p.id === payload.participantRowId)
 
-      if (isTempMockProgram) {
-        patchParticipatingIndividualProgressAttendanceParticipant(
-          String(program.id),
-          payload.sessionId,
-          payload.participantRowId,
-          payload.patch
-        )
-        return
-      }
-
       if (!isRemoteDataSource || !participant) {
         return
       }
 
-      const requests = (session?.participants ?? []).map(row => {
-        const patch =
-          row.id === payload.participantRowId
-            ? payload.patch
-            : {
-                attendanceStatus: row.attendanceStatus,
-                lateTime: row.lateTime,
-                remark: row.remark,
-              }
-        return buildAttendanceItemRequest({
-          participantId: row.participantId,
-          attendanceStatus: patch.attendanceStatus,
-          lateTime: patch.lateTime,
-          remark: patch.remark,
-          fileObjectIds:
-            row.id === payload.participantRowId ? payload.patch.evidenceFileObjectIds : undefined,
-        })
+      const requests = (session?.participants ?? []).flatMap(row => {
+        const isTarget = row.id === payload.participantRowId
+        if (!isTarget && !row.attendanceRecorded) return []
+        const patch = isTarget
+          ? payload.patch
+          : {
+              attendanceStatus: row.attendanceStatus,
+              lateTime: row.lateTime,
+              remark: row.remark,
+            }
+        if (patch.attendanceStatus == null) return []
+        return [
+          buildAttendanceItemRequest({
+            participantId: row.participantId,
+            attendanceStatus: patch.attendanceStatus,
+            lateTime: patch.lateTime,
+            remark: patch.remark,
+            fileObjectIds: isTarget ? payload.patch.evidenceFileObjectIds : undefined,
+          }),
+        ]
       })
       await saveGeneralScheduleAttendances(payload.sessionId, requests)
     },
@@ -180,8 +147,6 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
         await queryClient.invalidateQueries({
           queryKey: generalProgramProgressQueryKeys.schedules(String(program.id)),
         })
-      } else {
-        setDataVersion(version => version + 1)
       }
     },
     onError: error => {
@@ -215,18 +180,9 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
 
   const getSessionParticipants = useCallback(
     (sessionId: string): ParticipatingIndividualProgressAttendanceParticipantRow[] => {
-      if (isTempMockProgram) {
-        return (
-          localSessions.find(s => s.id === sessionId)?.participants ??
-          getParticipatingIndividualProgressAttendanceSessions(program).find(
-            s => s.id === sessionId
-          )?.participants ??
-          []
-        )
-      }
       return remoteSessions?.find(s => s.id === sessionId)?.participants ?? []
     },
-    [isTempMockProgram, localSessions, program, remoteSessions]
+    [remoteSessions]
   )
 
   return {
@@ -238,8 +194,7 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
     sessionGroups,
     saveSessionParticipant,
     getSessionParticipants,
-    loading:
-      !isTempMockProgram && remoteEnabled && remoteQuery.isFetching && remoteSessions == null,
-    isRemoteDataSource: isRemoteDataSource && !isTempMockProgram,
+    loading: remoteEnabled && remoteQuery.isFetching && remoteSessions == null,
+    isRemoteDataSource,
   }
 }

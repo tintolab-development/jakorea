@@ -86,7 +86,6 @@ import {
   toScreeningNotifyFields,
 } from '@/features/program/general/lib/application-decision-notify-timing'
 import type { OrganizationDecisionNotifyRequest } from '@/features/program/general/api/applications-api-client'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
 import {
@@ -237,9 +236,7 @@ export function useApplicantsDetail({
     ? trainedTeacherApplicationsRemote
     : applicationsRemote
   useNotifyProgramApiUnavailableOnce(
-    !institutionApplicationsRemote.remoteEnabled &&
-      !applicationsRemote.remoteEnabled &&
-      !isGeneralProgramTempMockProgramId(programId),
+    !institutionApplicationsRemote.remoteEnabled && !applicationsRemote.remoteEnabled,
     'program-applicants-list',
     '프로그램 신청'
   )
@@ -665,7 +662,6 @@ export function useApplicantsDetail({
   useEffect(() => {
     if (menu !== 'individual-applications' || individualScreeningStage !== 'doc1') return
     if (applicationsRemote.individualRemoteEnabled) return
-    if (isGeneralProgramTempMockProgramId(programId)) return
     setIndividualList([])
     setPendingFilters({})
     setAppliedFilters({})
@@ -682,7 +678,6 @@ export function useApplicantsDetail({
   useEffect(() => {
     if (menu !== 'instructors' || instructorColumnPreset !== 'general-detail') return
     if (applicationsRemote.instructorRemoteEnabled) return
-    if (isGeneralProgramTempMockProgramId(programId)) return
     setInstructorList([])
     setPendingFilters({})
     setAppliedFilters({})

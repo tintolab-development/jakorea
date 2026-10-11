@@ -1,10 +1,9 @@
 /**
  * 프로그램 진행현황 탭 — 참여 봉사자 목록
  * remote only · mock/로컬 append 금지
- * TODO(temp-mock): 열여라 참깨 — FE 전용 기관 프로그램 id 에만 시드
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { type ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import {
@@ -17,22 +16,14 @@ import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { getTempMockShowcaseProgressVolunteers } from '@/features/program/general/lib/temp-mock-program-resolve'
 import type { Program } from '@/types/domain'
 
 export function useProgressVolunteerList(programId?: string, _program?: Program | null) {
   const queryClient = useQueryClient()
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
 
-  const temporaryProgressVolunteers = useMemo(
-    () => (isTempMockProgram ? getTempMockShowcaseProgressVolunteers(programId) : []),
-    [isTempMockProgram, programId]
-  )
-
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled && !isTempMockProgram,
+    !remoteEnabled,
     'general-progress-volunteers',
     '프로그램 진행 현황 · 봉사자'
   )
@@ -51,10 +42,6 @@ export function useProgressVolunteerList(programId?: string, _program?: Program 
   const [volunteerList, setVolunteerList] = useState<ParticipatingVolunteerRow[]>(() => [])
 
   useEffect(() => {
-    if (isTempMockProgram) {
-      setVolunteerList(temporaryProgressVolunteers)
-      return
-    }
     if (remoteEnabled) {
       if (remoteQuery.data) {
         setVolunteerList(remoteQuery.data.pages.flatMap(page => page.rows))
@@ -62,11 +49,10 @@ export function useProgressVolunteerList(programId?: string, _program?: Program 
       return
     }
     setVolunteerList([])
-  }, [isTempMockProgram, remoteEnabled, remoteQuery.data, temporaryProgressVolunteers])
+  }, [remoteEnabled, remoteQuery.data])
 
   const handleAddVolunteerByMemberId = useCallback(
     async (memberId: string, volunteerKind: 'GENERAL' | 'EMPLOYEE' = 'GENERAL'): Promise<boolean> => {
-      if (isTempMockProgram) return true
       if (!remoteEnabled || !programId) {
         notifyProgramApiUnavailable(
           volunteerKind === 'EMPLOYEE'
@@ -88,7 +74,7 @@ export function useProgressVolunteerList(programId?: string, _program?: Program 
       })
       return true
     },
-    [isTempMockProgram, programId, queryClient, remoteEnabled]
+    [programId, queryClient, remoteEnabled]
   )
 
   return {

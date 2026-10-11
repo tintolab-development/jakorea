@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { MESSAGES } from '@/shared/constants'
 import { showDeleteCompletedAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
-import { mockApplications, mockMatchings, mockSchedules } from '@/data/mock'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import { useProgramStatusManager } from '@/features/program/general/hooks/use-program-status-manager'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { ProgramFormData } from '@/entities/program/model/schema'
+import { applicationService } from '@/entities/application/api/application-service'
 
 export function useProgramListActions() {
   const {
@@ -57,17 +57,17 @@ export function useProgramListActions() {
   }
 
   const checkProgramRelatedData = (programId: string) => {
-    const relatedApplications = mockApplications.filter(app => app.programId === programId)
-    const relatedMatchings = mockMatchings.filter(m => m.programId === programId)
-    const relatedSchedules = mockSchedules.filter(s => s.programId === programId)
+    const relatedApplications = applicationService
+      .getAllSync()
+      .filter(app => app.programId === programId)
 
     return {
       hasApplications: relatedApplications.length > 0,
-      hasMatchings: relatedMatchings.length > 0,
-      hasSchedules: relatedSchedules.length > 0,
+      hasMatchings: false,
+      hasSchedules: false,
       applicationCount: relatedApplications.length,
-      matchingCount: relatedMatchings.length,
-      scheduleCount: relatedSchedules.length,
+      matchingCount: 0,
+      scheduleCount: 0,
     }
   }
 
@@ -78,20 +78,7 @@ export function useProgramListActions() {
     if (!program) return
 
     try {
-      const relatedData = checkProgramRelatedData(program.id)
-      
-      // Mock data cleanup logic
-      if (relatedData.hasApplications) {
-        const relatedAppIds = mockApplications
-          .filter(app => app.programId === program.id)
-          .map(app => app.id)
-        relatedAppIds.forEach(appId => {
-          const index = mockApplications.findIndex(a => a.id === appId)
-          if (index !== -1) mockApplications.splice(index, 1)
-        })
-      }
-      // ... (repeat for matchings and schedules as in original code)
-      // Note: In a real app, this would be handled by the backend.
+      void checkProgramRelatedData(program.id)
 
       await deleteProgram(program.id)
       await fetchPrograms()

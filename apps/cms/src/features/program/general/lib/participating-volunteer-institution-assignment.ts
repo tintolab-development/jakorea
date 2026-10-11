@@ -17,8 +17,6 @@ import {
   type WaitingInstructorAssignmentStatus,
   type WaitingInstructorHopeSchedule,
 } from './waiting-instructor-assignment'
-import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
-import { isTempMockOrgProgressVolunteerId } from '@/features/program/general/lib/temp-mock-org-program'
 import { getParticipatingSchoolAssignmentSessions } from '@/features/program/general/lib/participating-school-assignment-sessions'
 
 /** 배정 대기 목록 — 기관+일정별 행 식별자 */
@@ -161,20 +159,17 @@ export function buildInitialVolunteerAssignedRows(
 
 function expandSchoolSessionsToWaitingRows(
   school: ParticipatingSchoolRow,
-  volunteer: ParticipatingVolunteerRow,
+  _volunteer: ParticipatingVolunteerRow,
   volunteerList: ParticipatingVolunteerRow[],
   occupiedSlots: Set<string>,
   program?: Program
 ): VolunteerWaitingInstitutionRow[] {
+  void _volunteer
   const sessions = getParticipatingSchoolAssignmentSessions(school)
   if (sessions.length === 0) return []
 
-  return sessions.map((session, sessionIdx) => {
+  return sessions.map(session => {
     const hopeSchedule = participatingSchoolSessionToHopeSchedule(session)
-    const isTemporaryVolunteer =
-      isGeneralProgramTempMockEnabled() &&
-      (isTempMockOrgProgressVolunteerId(volunteer.id) ||
-        volunteer.id.startsWith('temp-progress-volunteer-'))
     return {
       id: `${school.id}__${session.date}__${session.round}`,
       no: 0,
@@ -185,12 +180,7 @@ function expandSchoolSessionsToWaitingRows(
       distanceFromHome: '-',
       hopeScheduleLine: scheduleLineForSession(session, program),
       hopeSchedule,
-      // TODO(temp-mock): 열여라 참깨 — 봉사 배정 대기/불가 검증 후 삭제
-      assignmentStatus: isTemporaryVolunteer
-        ? sessionIdx % 2 === 0
-          ? 'waiting'
-          : 'unavailable'
-        : resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots),
+      assignmentStatus: resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots),
       assignedVolunteerCountLabel: volunteerCountLabel(volunteerList, school.schoolName, session),
     }
   })

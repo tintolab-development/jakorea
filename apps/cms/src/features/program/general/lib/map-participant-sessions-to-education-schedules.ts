@@ -1,11 +1,12 @@
 import type { ParticipatingInstructorEducationScheduleRow } from '@/features/program/general/model/participating-instructors'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
+import { normalizeDashboardScheduleDeliveryStatus } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 
 function mapSessionProgressStatus(
   raw?: string | null
 ): ParticipatingInstructorEducationScheduleRow['progress'] {
-  const upper = raw?.trim().toUpperCase()
-  if (upper === 'COMPLETED' || upper === 'DONE') return 'completed'
+  const upper = normalizeDashboardScheduleDeliveryStatus(raw)
+  if (upper === 'COMPLETED' || upper === 'DONE' || upper === 'FINISHED') return 'completed'
   if (upper === 'IN_PROGRESS' || upper === 'ONGOING') return 'in_progress'
   return 'scheduled'
 }
@@ -38,7 +39,7 @@ export function mapParticipantSessionsToEducationSchedules(
     return {
       id,
       scheduleLabel: formatSessionProgressLabel(session, index),
-      progress: mapSessionProgressStatus(session.attendanceStatus ?? session.assignmentStatus),
+      progress: mapSessionProgressStatus(session.scheduleStatus),
     }
   })
 }

@@ -11,14 +11,16 @@ import {
 import {
   buildUjatRecruitInstitutionOverlayFromDetailEditValues,
   pickUjatRecruitInstitutionOverlay,
-  UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import {
   applyUjatRecruitVolunteerOverlayOntoProgram,
   buildUjatRecruitVolunteerOverlayFromDetailEditValues,
   pickUjatRecruitVolunteerOverlay,
-  UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import {
+  UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
+  UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
+} from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
 import { isOperationalSeedDefaultSuppressed } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import {
   blankUjatVolunteerRecruitProgramFields,

@@ -128,8 +128,6 @@ import {
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { getGeneralSurveyMenuItems } from '@/features/program/general/lib/detail-meta'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
-import { buildTempMockSurveyShareUrl } from '@/features/program/general/lib/temp-mock-local-actions'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
@@ -222,7 +220,6 @@ function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: 
 }
 
 export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurveyManagementViewProps) {
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const initialMock = useMemo(() => buildGeneralSurveyEmptyState(program), [program])
   const {
     registeredSurveys: remoteRegisteredSurveys,
@@ -742,7 +739,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     }
     setSubmitting(true)
     try {
-      const selectedRow = findWritingTemplateRowByDefinitionId(selectedTemplateId)
+      void findWritingTemplateRowByDefinitionId(selectedTemplateId)
 
       if (surveysRemote) {
         const resolved = await resolvePublishedSurveyBinding(selectedTemplateId)
@@ -781,49 +778,6 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         return
       }
 
-      if (isTempMockProgram) {
-        const titleBase = selectedRow?.templateName ?? '설문조사'
-        if (createModalKind === 'survey') {
-          const surveyIndex = registeredSurveys.length + 1
-          const newSurvey: RegisteredSurvey = {
-            id: `temp-mock-org-survey-poll-${Date.now()}`,
-            title: `${titleBase} ${String(surveyIndex).padStart(2, '0')}`,
-            templateId: selectedTemplateId,
-            status: 'before_start',
-            responseCount: 0,
-            participantTotal: program.totalParticipants ?? 0,
-          }
-          setRegisteredSurveys(prev => [...prev, newSurvey])
-          setActiveRegisteredSurveyId(newSurvey.id)
-        } else if (createModalKind === 'satisfaction' && pendingSatisfactionAudience != null) {
-          const newSurvey: RegisteredSurvey = {
-            id: `temp-mock-org-survey-satisfaction-${pendingSatisfactionAudience}-${Date.now()}`,
-            title: `${titleBase} (${getGeneralSatisfactionAudienceLabel(pendingSatisfactionAudience)})`,
-            templateId:
-              selectedTemplateId ||
-              GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[pendingSatisfactionAudience],
-            status: 'before_start',
-            responseCount: 0,
-            participantTotal: program.totalParticipants ?? 0,
-          }
-          setSatisfactionSurveysByAudience(prev => ({
-            ...prev,
-            [pendingSatisfactionAudience]: newSurvey,
-          }))
-        } else if (createModalKind === 'lecture') {
-          setLectureEvalSurvey({
-            id: `temp-mock-org-survey-lecture-${Date.now()}`,
-            title: titleBase,
-            templateId: selectedTemplateId,
-            status: 'before_start',
-            responseCount: 0,
-            participantTotal: 1,
-          })
-        }
-        setCreateModalKind(null)
-        return
-      }
-
       notifyProgramApiUnavailable(
         'general-survey-create-binding',
         '설문 관리 · 설문 등록'
@@ -846,7 +800,6 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     createModalKind,
     invalidateSurveyCaches,
     individualProgram,
-    isTempMockProgram,
     pendingSatisfactionAudience,
     program.id,
     program.totalParticipants,
@@ -932,11 +885,6 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const shareRegisteredSurveyUrl = useCallback(
     async (survey: RegisteredSurvey) => {
-      if (isTempMockProgram) {
-        void copyText(buildTempMockSurveyShareUrl(program.id, survey.id))
-        showShareCopyToast()
-        return
-      }
       const bindingId = survey.bindingId?.trim()
       if (!bindingId) {
         notifyProgramApiUnavailable(
@@ -967,17 +915,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         })
       }
     },
-    [copyText, isTempMockProgram, program.id, showAlert, showShareCopyToast]
+    [copyText, program.id, showAlert, showShareCopyToast]
   )
 
   const shareSatisfactionSurveyUrl = useCallback(
     async (audience: GeneralSatisfactionAudienceKey) => {
       const survey = satisfactionSurveysByAudience[audience]
-      if (isTempMockProgram && survey) {
-        void copyText(buildTempMockSurveyShareUrl(program.id, survey.id))
-        showShareCopyToast(GENERAL_SATISFACTION_SHARE_TOAST_COPY)
-        return
-      }
       const bindingId = survey?.bindingId?.trim()
       if (!bindingId) {
         notifyProgramApiUnavailable(
@@ -1008,7 +951,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         })
       }
     },
-    [copyText, isTempMockProgram, program.id, satisfactionSurveysByAudience, showAlert, showShareCopyToast]
+    [copyText, program.id, satisfactionSurveysByAudience, showAlert, showShareCopyToast]
   )
 
   const handleDownloadSatisfactionResults = useCallback(

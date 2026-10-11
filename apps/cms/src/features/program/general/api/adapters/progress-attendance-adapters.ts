@@ -12,6 +12,7 @@ import type {
   ParticipatingIndividualProgressAttendanceSessionGroup,
   ParticipatingIndividualProgressAttendanceStatus,
 } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
+import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 
 const UI_TO_API_STATUS: Record<ParticipatingIndividualProgressAttendanceStatus, string> = {
   present: 'PRESENT',
@@ -20,21 +21,50 @@ const UI_TO_API_STATUS: Record<ParticipatingIndividualProgressAttendanceStatus, 
   excused_absence: 'EXCUSED',
 }
 
+const SCHEDULE_PROGRESS_STATUSES = new Set([
+  'COMPLETED',
+  'SCHEDULED',
+  'UNSCHEDULED',
+  'PENDING',
+  'NOT_STARTED',
+  'IN_PROGRESS',
+  'ONGOING',
+  'DONE',
+  'FINISHED',
+])
+
+/** @deprecated 이름 호환 — `mapDashboardScheduleDeliveryToEducationProgress` 사용 */
+export const mapDashboardScheduleStatusToEducationProgress =
+  mapDashboardScheduleDeliveryToEducationProgress
+
+/** 출석 API status → UI. 일정 진행값·빈 값은 출석 미기록(null). */
 export function mapApiAttendanceStatusToUi(
   status: string | undefined
-): ParticipatingIndividualProgressAttendanceStatus {
+): ParticipatingIndividualProgressAttendanceStatus | null {
   const normalized = (status ?? '').trim().toUpperCase()
+  if (!normalized || SCHEDULE_PROGRESS_STATUSES.has(normalized)) return null
   if (normalized === 'LATE') return 'late'
   if (normalized === 'ABSENT') return 'absent'
-  if (normalized === 'EXCUSED' || normalized === 'EXCUSED_ABSENCE' || normalized === 'REASON_ABSENT') {
+  if (
+    normalized === 'EXCUSED' ||
+    normalized === 'EXCUSED_ABSENCE' ||
+    normalized === 'REASON_ABSENT'
+  ) {
     return 'excused_absence'
   }
-  if (normalized === 'PRESENT' || normalized === 'ATTEND') return 'present'
+  if (
+    normalized === 'PRESENT' ||
+    normalized === 'ATTEND' ||
+    normalized === 'ATTENDED'
+  ) {
+    return 'present'
+  }
   const lower = (status ?? '').trim().toLowerCase()
   if (lower === 'late') return 'late'
   if (lower === 'absent') return 'absent'
   if (lower === 'excused_absence' || lower === 'excused') return 'excused_absence'
-  return 'present'
+  if (lower === 'present' || lower === 'attend' || lower === 'attended') return 'present'
+  return null
 }
 
 export function mapUiAttendanceStatusToApi(
@@ -80,6 +110,7 @@ function mapParticipantRow(
 ): ParticipatingIndividualProgressAttendanceParticipantRow {
   const participantId = String(participant.participantId ?? '')
   const status = mapApiAttendanceStatusToUi(attendance?.status)
+  const attendanceRecorded = status != null
   const lateTime =
     status === 'late' ? formatArrivalTimeForDisplay(attendance?.arrivalTime) : undefined
   return {
@@ -90,7 +121,8 @@ function mapParticipantRow(
     affiliationGradeLabel: '-',
     affiliation: '-',
     educationGrade: '-',
-    attendanceStatus: status,
+    attendanceRecorded,
+    ...(attendanceRecorded ? { attendanceStatus: status } : {}),
     lateTime,
     remark: attendance?.absenceReason,
   }
@@ -121,6 +153,9 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
       return {
         id: scheduleId,
         ...header,
+        scheduleEducationProgress: mapDashboardScheduleDeliveryToEducationProgress(
+          schedule.scheduleStatus
+        ),
         participants: roster.map(p => mapParticipantRow(p, byParticipant.get(String(p.participantId)))),
       }
     })

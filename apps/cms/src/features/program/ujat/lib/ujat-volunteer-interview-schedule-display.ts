@@ -131,7 +131,7 @@ function interviewScheduleFromOverlay(
     readInterviewTimeRange(overlay[`${ns}.interviewTimeRange`]) ??
     buildVolunteerInterviewScheduleEditSeed({
       recurringUnavailable: '',
-      availableTimeSlots,
+      selectedTimeSlotLabels,
     })?.interviewTimeRange
   if (interviewTimeRange == null) return { display }
 
@@ -196,7 +196,7 @@ export function resolveUjatVolunteerInterviewScheduleEditSeed(
     return buildVolunteerInterviewScheduleEditSeed({
       recurringUnavailable: info?.recurringUnavailable ?? '',
       specificUnavailableDateIsos: info?.specificUnavailableDateIsos,
-      availableTimeSlots,
+      selectedTimeSlotLabels: availableTimeSlots.split(',').map(label => label.trim()).filter(Boolean),
     })
   }
 

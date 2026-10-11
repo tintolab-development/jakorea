@@ -9,6 +9,7 @@ import type {
 } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { buildLectureFeeBasisDisplay } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 import { toSchoolEnrollmentStatusLabelOrRaw } from '@/features/user/api/map-school-enrollment-status'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
@@ -37,6 +38,7 @@ import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard
 import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard/schemas/interviewAvailabilitySlot'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
 import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
+import type { IndividualApplicationTeam } from '@/shared/api/generated/dashboard/schemas/individualApplicationTeam'
 import {
   parseParticipantSurveyViewKey,
   type ParticipatingIndividualParticipantRow,
@@ -61,6 +63,8 @@ import {
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { supplementApplicantInstructorBasicInfoFromApplicationDetail } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import { mapSessionProgressToLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
+import { mapDashboardScheduleDeliveryToSessionStatus } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
+import { readApplicationNameChangeCount } from '@/features/program/general/lib/individual-application-name-change-count'
 import {
   instructorCmsProfileToApplicantInstructorRowPartial,
   normalizeInstructorCmsProfileFromApi,
@@ -71,10 +75,12 @@ function toId(value: number | string | null | undefined): string {
   return String(value)
 }
 
-type IndividualApplicationDetailEnriched = Omit<
+export type IndividualApplicationDetailEnriched = Omit<
   IndividualApplicationDetailResponse,
-  'profile' | 'application'
+  'profile' | 'application' | 'team'
 > & {
+  /** BE IndividualApplicationTeam — codegen `Team`(teamName만)보다 넓음 */
+  team?: IndividualApplicationTeam | null
   profile?: NonNullable<IndividualApplicationDetailResponse['profile']> & {
     schoolEnrollmentStatus?: string
     affiliationSchool?: string
@@ -817,19 +823,6 @@ export function mapPreferredEducationSchedulesToSessions(
   })
 }
 
-function mapSessionProgressStatusToParticipating(
-  raw?: string | null
-): ParticipatingSchoolSession['status'] {
-  const upper = (raw ?? '').trim().toUpperCase()
-  if (upper === 'COMPLETED' || upper === 'DONE' || upper === 'ATTENDED' || upper === 'PRESENT') {
-    return 'completed'
-  }
-  if (upper === 'NOT_PLANNED' || upper === 'CANCELLED' || upper === 'CANCELED') {
-    return 'not_planned'
-  }
-  return 'pending'
-}
-
 /** participants `sessions[]` (SessionProgress) → 참여 봉사자/캘린더용 세션 */
 export function mapSessionProgressToParticipatingSchoolSessions(
   sessions: SessionProgress[] | undefined | null
@@ -862,6 +855,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         session.scheduleUnresolved ??
         (resolvedScheduleId == null && session.requestedScheduleId != null)
       const scheduleLabel = !validStart && scheduleName ? scheduleName : undefined
+      const deliveryScheduleStatus = session.scheduleStatus?.trim() || undefined
       return {
         round,
         ...dateParts,
@@ -870,9 +864,8 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         classNum: `${round}교시`,
         timeRange,
         ...(scheduleLabel ? { scheduleLabel } : {}),
-        status: mapSessionProgressStatusToParticipating(
-          session.attendanceStatus ?? session.assignmentStatus
-        ),
+        ...(deliveryScheduleStatus ? { deliveryScheduleStatus } : {}),
+        status: mapDashboardScheduleDeliveryToSessionStatus(session.scheduleStatus),
         resolvedScheduleId,
         requestedScheduleId: session.requestedScheduleId ?? undefined,
         scheduleUnresolved,
@@ -951,15 +944,10 @@ export function mapIndividualApplicationDetailToApplicantRow(
     dto.assignedInterviewEndAt
   )
   const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
-  const team = dto.team as
-    | {
-        name?: string
-        teamName?: string
-        memberCount?: number
-        role?: string
-      }
-    | undefined
-  const teamRole = team?.role?.trim().toUpperCase()
+  const teamDetail = resolveIndividualApplicationTeamDetail({
+    team: dto.team,
+    formAnswers: dto.application?.formAnswers,
+  })
   const canEditDocumentEvaluation =
     dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
 
@@ -994,17 +982,13 @@ export function mapIndividualApplicationDetailToApplicantRow(
       homeAddressFull: profile?.homeAddress ?? undefined,
       id1365: profile?.external1365Id ?? undefined,
       selfIntroduction: dto.application?.selfIntroduction ?? undefined,
-      teamName: team?.name ?? team?.teamName ?? undefined,
-      teamMemberCount: team?.memberCount,
-      teamMemberCountSelect:
-        team?.memberCount != null && team.memberCount >= 1 && team.memberCount <= 5
-          ? (String(team.memberCount) as '1' | '2' | '3' | '4' | '5')
-          : team?.memberCount != null
-            ? 'custom'
-            : undefined,
-      teamRole: teamRole === 'LEADER' ? 'leader' : teamRole === 'MEMBER' ? 'member' : undefined,
+      teamName: teamDetail.teamName,
+      teamMemberCount: teamDetail.teamMemberCount,
+      teamMemberCountSelect: teamDetail.teamMemberCountSelect,
+      teamRole: teamDetail.teamRole,
       interviewAvailability,
       scheduleChangeCancelCount: dto.application?.scheduleChangeCancelCount ?? 0,
+      applicationNameChangeCount: readApplicationNameChangeCount(dto.application),
     },
     textbookId: toId(dto.textbook?.id) || undefined,
     textbookName: dto.textbook?.name ?? undefined,

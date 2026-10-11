@@ -14,10 +14,6 @@ import {
   serializeGeneralProgramTableFilters,
 } from '@/features/program/general/api/general-program-list-query'
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
-import { clientFilterGeneralPrograms } from '@/features/program/general/api/general-program-list-filter-params'
-import { getTempMockShowcasePrograms } from '@/features/program/general/lib/temp-mock-program-resolve'
-import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
-import { programMatchesProgressPhase } from '@/features/program/general/ui/constants/program-list-constants'
 import {
   GENERAL_PROGRAM_OVERVIEW_STATUS_VALUES,
   type GeneralProgramOverviewStatusFilter,
@@ -98,31 +94,12 @@ export function useGeneralProgramListFilters() {
     return remoteListQuery.data?.pages.flatMap(page => page.programs) ?? []
   }, [remoteEnabled, remoteListQuery.data])
 
-  // TODO(temp-mock): 열여라 참깨 — FE 전용 기관·개인 쇼케이스 목록 주입. 원격 행과 섞지 않음.
-  const mockPrograms = useMemo(() => {
-    if (!isGeneralProgramTempMockEnabled()) return []
-    const seeds = getTempMockShowcasePrograms()
-    const titleKeyword = tableFilters.title?.trim()
-    return seeds.filter(program => {
-      if (statusFilter && !programMatchesProgressPhase(program, statusFilter)) return false
-      if (titleKeyword && !program.title.includes(titleKeyword)) return false
-      return clientFilterGeneralPrograms([program], tableFilters).length > 0
-    })
-  }, [statusFilter, tableFilters])
-
-  const filteredPrograms = useMemo(() => {
-    if (mockPrograms.length === 0) return remotePrograms
-    const mockIds = new Set(mockPrograms.map(program => program.id))
-    if (remotePrograms.some(program => mockIds.has(program.id))) return remotePrograms
-    return [...mockPrograms, ...remotePrograms]
-  }, [mockPrograms, remotePrograms])
+  const filteredPrograms = remotePrograms
 
   const totalElements = useMemo(() => {
-    const remoteTotal = remoteEnabled
-      ? (remoteListQuery.data?.pages[0]?.totalElements ?? remotePrograms.length)
-      : 0
-    return remoteTotal + mockPrograms.length
-  }, [mockPrograms.length, remoteEnabled, remoteListQuery.data, remotePrograms.length])
+    if (!remoteEnabled) return 0
+    return remoteListQuery.data?.pages[0]?.totalElements ?? remotePrograms.length
+  }, [remoteEnabled, remoteListQuery.data, remotePrograms.length])
 
   const refetchPrograms = useCallback(() => {
     if (!remoteEnabled) return
