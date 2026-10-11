@@ -684,52 +684,7 @@
   min-width: var(--table-no-column-width, 80px);
 }
 
-.program-list-page--overview
-  .program-list-card--program-list-period-columns
-  .program-list-table__col-title,
-.program-list-card--program-list-overview.program-list-card--program-list-period-columns
-  .program-list-table__col-title {
-  min-width: 0;
-}
-
-/* 예정 프로그램: 뷰포트 안에 맞춤 — 가로 스크롤 없음, 프로그램명은 ellipsis */
-.program-list-card--program-list-overview.program-list-card--program-list-period-columns
-  .cms-data-table--program-list-overview {
-  overflow-x: hidden;
-}
-
-.program-list-card--program-list-overview.program-list-card--program-list-period-columns
-  .cms-data-table--program-list-overview
-  .ant-table,
-.program-list-card--program-list-overview.program-list-card--program-list-period-columns
-  .cms-data-table--program-list-overview
-  .ant-table-container
-  table {
-  width: 100% !important;
-  min-width: 0 !important;
-  table-layout: fixed !important;
-}
-
-.program-list-card--program-list-overview.program-list-card--program-list-period-columns
-  .program-list-table__col-period {
-  min-width: 0;
-  width: 320px;
-}
-
-.program-list-card--program-list-overview.program-list-card--program-list-period-columns
-  .program-list-table__col-recruitment,
-.program-list-card--program-list-overview.program-list-card--program-list-period-columns
-  .program-list-table__col-participant-type {
-  min-width: 0;
-  width: 160px;
-}
-
-.program-list-card--program-list-overview.program-list-card--program-list-period-columns
-  .program-list-table__col-target {
-  min-width: 0;
-  width: 240px;
-  white-space: normal;
-}
+/* 예정 프로그램 — 전체 프로그램과 동일하게 열 min-width·가로 스크롤(필요 시)로 단일 행 유지 */
 
 .program-list-card--program-list-overview .program-list-table__col-period {
   min-width: 320px;
@@ -747,16 +702,20 @@
 
 .program-list-card--program-list-overview .program-list-table__col-target {
   min-width: 240px;
+}
+
+.program-list-card--program-list-overview:not(.program-list-card--program-list-period-columns)
+  .program-list-table__col-target {
   white-space: normal;
 }
 
-/* 교육 대상 2줄 이상 — 고정 height(52px)와 호버 시 배경만 바뀌며 행 높이가 튀지 않게 */
-.program-list-card--program-list-overview
+/* 교육 대상 2줄 이상 — 고정 height(52px)와 호버 시 배경만 바뀌며 행 높이가 튀지 않게 (예정 탭은 ellipsis 단일 행) */
+.program-list-card--program-list-overview:not(.program-list-card--program-list-period-columns)
   .cms-data-table--program-list-overview
   .ant-table-tbody
   > tr
   > td.program-list-table__col-target,
-.program-list-card--program-list-overview
+.program-list-card--program-list-overview:not(.program-list-card--program-list-period-columns)
   .cms-data-table--program-list-overview
   .ant-table-tbody
   > tr:hover
@@ -766,6 +725,21 @@
   white-space: normal;
   line-height: 150%;
   vertical-align: middle;
+}
+
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns
+  .cms-data-table--program-list-overview
+  .ant-table-tbody
+  > tr
+  > td.program-list-table__col-target,
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns
+  .cms-data-table--program-list-overview
+  .ant-table-tbody
+  > tr:hover
+  > td.program-list-table__col-target {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 4탭 목록 · 「진행 중」「완료」 — 요청 min-width 합계 1554px (+행 선택 시 1622px) */

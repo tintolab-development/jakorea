@@ -198,7 +198,7 @@ function createProgramListScheduledColumns() {
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      // 컨테이너 폭에 맞춤 — 고정 minWidth(690)는 가로 스크롤을 유발함
+      minWidth: WIDTH_PROGRAM_TITLE,
       align: 'center' as const,
       className: 'program-list-table__col-title',
       render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
@@ -206,7 +206,7 @@ function createProgramListScheduledColumns() {
     {
       title: '참여자 모집 인원',
       key: 'participantCapacity',
-      width: WIDTH_RECRUITMENT_COUNT,
+      minWidth: WIDTH_RECRUITMENT_COUNT,
       align: 'center' as const,
       className: 'program-list-table__col-recruitment',
       render: participantCountRender,
@@ -214,7 +214,7 @@ function createProgramListScheduledColumns() {
     {
       title: '참여자 유형',
       key: 'participantType',
-      width: WIDTH_TARGET_LEVEL,
+      minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
       className: 'program-list-table__col-participant-type',
       render: participantTypeColumnRender,
@@ -223,7 +223,8 @@ function createProgramListScheduledColumns() {
       title: '교육 대상',
       dataIndex: 'targetLevel',
       key: 'targetLevel',
-      width: WIDTH_TARGET_LEVEL,
+      ellipsis: true,
+      minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
       className: 'program-list-table__col-target',
       render: educationTargetColumnRender,
@@ -231,7 +232,7 @@ function createProgramListScheduledColumns() {
     {
       title: '사업 운영 기간',
       key: 'operationPeriod',
-      width: WIDTH_OPERATION_PERIOD,
+      minWidth: WIDTH_OPERATION_PERIOD,
       align: 'center' as const,
       className: 'program-list-table__col-period',
       render: (_: unknown, record: Program) => formatDateRange(record.startDate, record.endDate),

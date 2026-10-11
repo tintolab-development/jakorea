@@ -230,7 +230,7 @@ export function ProgramList({
     filename: headerTitle ?? '프로그램 목록',
   })
 
-  const overviewFitScrollEnabled = isOverviewTable && listView !== 'SCHEDULED'
+  const overviewFitScrollEnabled = isOverviewTable
   const overviewRowSelectionActive =
     showRowSelection && (onBulkDelete != null || onSelectionChange != null)
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
@@ -286,13 +286,7 @@ export function ProgramList({
               rowKey="id"
               loading={loading}
               scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
-              tableLayout={
-                isOverviewTable
-                  ? listView === 'SCHEDULED'
-                    ? 'fixed'
-                    : 'auto'
-                  : undefined
-              }
+              tableLayout={isOverviewTable ? 'auto' : undefined}
               onRow={record => ({
                 onClick: () => onView(record),
                 style: { cursor: 'pointer' },
