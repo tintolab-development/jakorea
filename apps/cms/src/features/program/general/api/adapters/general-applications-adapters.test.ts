@@ -753,6 +753,7 @@ describe('general-applications-adapters', () => {
         instructorFeeGradeSnapshot: '3급 강사비',
         submittedAt: '2026-04-02T00:00:00Z',
         rejectReason: '서류 미비',
+        preferredOrganizations: [],
       },
       0,
       '5001'
@@ -768,6 +769,31 @@ describe('general-applications-adapters', () => {
     expect(row.rejectionReason).toBe('서류 미비')
   })
 
+  it('maps instructor preferredOrganizations to preferredSchools for calendar', () => {
+    const row = mapInstructorApplicationToApplicantInstructorRow(
+      {
+        id: 88,
+        programId: 5001,
+        instructorName: '김강사',
+        applicationStatus: 'SUBMITTED',
+        preferredOrganizations: [
+          {
+            preferenceOrder: 1,
+            organizationName: '테스트초',
+            educationGrade: '4학년',
+            dateRangeLabel: '2026.06.01(월) ~ 2026.06.02(화)',
+          },
+        ],
+      },
+      0,
+      '5001'
+    )
+
+    expect(row.schoolName).toBe('테스트초')
+    expect(row.preferredSchools).toHaveLength(1)
+    expect(row.preferredSchools?.[0]?.dateRange).toContain('2026.06.01')
+  })
+
   it('fills affiliation and settlement from instructorCmsProfile and settlement on detail', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
       {
@@ -776,6 +802,7 @@ describe('general-applications-adapters', () => {
         programId: 186081,
         instructorName: '이강사',
         applicationStatus: 'SUBMITTED',
+        preferredOrganizations: [],
       },
       0,
       '186081'
@@ -811,6 +838,7 @@ describe('general-applications-adapters', () => {
         programId: 186048,
         instructorName: '이건희',
         applicationStatus: 'SUBMITTED',
+        preferredOrganizations: [],
       },
       0,
       '186048'
@@ -847,7 +875,13 @@ describe('general-applications-adapters', () => {
 
   it('keeps base resume when instructorCmsProfile is absent', () => {
     const base = mapInstructorApplicationToApplicantInstructorRow(
-      { id: 1, programId: 1, instructorName: '강사', applicationStatus: 'SUBMITTED' },
+      {
+        id: 1,
+        programId: 1,
+        instructorName: '강사',
+        applicationStatus: 'SUBMITTED',
+        preferredOrganizations: [],
+      },
       0,
       '1'
     )

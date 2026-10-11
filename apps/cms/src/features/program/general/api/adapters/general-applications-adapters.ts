@@ -63,6 +63,7 @@ import {
 import { resolveSessionCalendarDateKey } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { supplementApplicantInstructorBasicInfoFromApplicationDetail } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
+import { mapInstructorPreferredOrganizationsToPreferredSchools } from '@/features/program/general/lib/map-instructor-preferred-organizations'
 import { mapSessionProgressToLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
 import { mapDashboardScheduleDeliveryToSessionStatus } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import { readApplicationNameChangeCount } from '@/features/program/general/lib/individual-application-name-change-count'
@@ -233,8 +234,14 @@ function resolveOrganizationApplicationAssignmentSessions(
   if (isCompanySchoolOrganizationApplication(dto)) {
     return mapRequestedSchedulesToSessions(requestedSchedules) ?? []
   }
+  /** 신청 희망/선택 일정(B). OSA `sessions[]`와 별개 — 캘린더·목록은 preferred 우선 */
   const fromPreferred = mapPreferredEducationSchedulesToSessions(preferred)
-  if (fromPreferred.length > 0 && preferredSessionsHaveCalendarDate(fromPreferred)) {
+  if (fromPreferred.length > 0) {
+    if (preferredSessionsHaveCalendarDate(fromPreferred)) {
+      return fromPreferred
+    }
+    const fromRequested = mapRequestedSchedulesToSessions(requestedSchedules) ?? []
+    if (fromRequested.length > 0) return fromRequested
     return fromPreferred
   }
   const fromRequested = mapRequestedSchedulesToSessions(requestedSchedules) ?? []
@@ -533,6 +540,10 @@ export function mapInstructorApplicationToApplicantInstructorRow(
   const affiliation = resolveStoredAffiliation({
     affiliationOrganizationId: dto.affiliationOrganizationId,
   })
+  const preferredSchools = mapInstructorPreferredOrganizationsToPreferredSchools(
+    dto.preferredOrganizations ?? []
+  )
+  const primarySchoolName = preferredSchools[0]?.schoolName?.trim()
   return {
     id: toId(dto.id),
     instructorMemberId:
@@ -554,7 +565,8 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     email: dto.email?.trim() || '',
     address: dto.homeAddress?.trim() || '',
     appliedAt: dto.submittedAt,
-    schoolName: '',
+    schoolName: primarySchoolName && primarySchoolName !== '-' ? primarySchoolName : '',
+    preferredSchools: preferredSchools.length > 0 ? preferredSchools : undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
     instructorFeeGradeLabel:
