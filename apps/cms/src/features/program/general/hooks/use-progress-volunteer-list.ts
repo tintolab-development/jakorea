@@ -7,9 +7,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { type ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import {
-  createGeneralProgramVolunteerParticipant,
   fetchGeneralParticipatingVolunteersPage,
+  registerGeneralVolunteerParticipant,
 } from '@/features/program/general/api/admin-program-progress-service'
+import type { VolunteerParticipantRegisterRequest } from '@/features/program/general/api/program-progress-api-client'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import {
@@ -51,26 +52,21 @@ export function useProgressVolunteerList(programId?: string, _program?: Program 
     setVolunteerList([])
   }, [remoteEnabled, remoteQuery.data])
 
-  const handleAddVolunteerByMemberId = useCallback(
-    async (memberId: string, volunteerKind: 'GENERAL' | 'EMPLOYEE' = 'GENERAL'): Promise<boolean> => {
+  const registerVolunteerParticipant = useCallback(
+    async (payload: VolunteerParticipantRegisterRequest): Promise<boolean> => {
       if (!remoteEnabled || !programId) {
         notifyProgramApiUnavailable(
-          volunteerKind === 'EMPLOYEE'
-            ? 'general-progress-volunteer-employee-register'
-            : 'general-progress-volunteer-register',
-          volunteerKind === 'EMPLOYEE'
-            ? '참여 봉사자 · 임직원 자원봉사자 등록'
-            : '참여 봉사자 · 봉사자 등록'
+          'general-progress-volunteer-register',
+          '참여 봉사자 · 봉사자 등록'
         )
         return false
       }
-      const numericMemberId = Number(memberId)
-      if (!Number.isFinite(numericMemberId) || numericMemberId <= 0) {
-        throw new Error('봉사자 회원 ID가 올바르지 않습니다.')
-      }
-      await createGeneralProgramVolunteerParticipant(programId, numericMemberId, volunteerKind)
+      await registerGeneralVolunteerParticipant(programId, payload)
       await queryClient.invalidateQueries({
         queryKey: generalProgramProgressQueryKeys.volunteers(programId),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.educationScopes(),
       })
       return true
     },
@@ -86,6 +82,6 @@ export function useProgressVolunteerList(programId?: string, _program?: Program 
     hasNextPage: remoteQuery.hasNextPage ?? false,
     isFetchingNextPage: remoteQuery.isFetchingNextPage,
     fetchNextPage: remoteQuery.fetchNextPage,
-    handleAddVolunteerByMemberId,
+    registerVolunteerParticipant,
   }
 }
