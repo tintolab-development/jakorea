@@ -62,7 +62,13 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
    */
   VOLUNTEER_RECRUITMENT_TARGET_MISMATCH:
     '모집 대상과 회원 구분이 일치하지 않아 신청할 수 없습니다.',
+  /** 개인 프로그램 — 재학(ENROLLED)인데 회원 프로필 학년 없음 */
+  INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED:
+    '재학 중인 회원은 학년 정보를 등록한 후 개인 프로그램에 신청할 수 있습니다.',
 }
+
+export const INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE =
+  'INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED'
 
 export function messageForApplicationBlockedReason(
   reason: string | null | undefined,
@@ -104,4 +110,8 @@ export function getProgramApplicationApiErrorMessage(
 export function getApplicationApiErrorCode(error: unknown): string | null {
   if (!isAxiosError(error)) return null
   return extractErrorCode(error.response?.data) ?? null
+}
+
+export function isIndividualApplicationEnrolledGradeRequiredError(error: unknown): boolean {
+  return getApplicationApiErrorCode(error) === INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE
 }

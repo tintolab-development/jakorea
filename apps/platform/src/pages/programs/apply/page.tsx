@@ -21,6 +21,7 @@ import { usePortalProfileQuery } from '@/features/auth/sign-in/hooks/use-portal-
 import { getQueryRetryHttpStatus } from '@/shared/lib/query-retry'
 import {
   getProgramApplicationApiErrorMessage,
+  isIndividualApplicationEnrolledGradeRequiredError,
   messageForApplicationBlockedReason,
 } from '@/features/program/lib/application-api-error'
 import {
@@ -295,6 +296,7 @@ export function ProgramApplyPage() {
   const [ujatVolunteerPreviousTerm, setUjatVolunteerPreviousTerm] =
     useState<ApplyUjatVolunteerPreviousTermValues>(emptyUjatVolunteerPreviousTerm)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitErrorPromptSettingsGrade, setSubmitErrorPromptSettingsGrade] = useState(false)
   /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
   const hydratedFormKeyRef = useRef<string | null>(null)
 
@@ -1201,6 +1203,7 @@ export function ProgramApplyPage() {
 
   const handleSubmit = async () => {
     setSubmitError(null)
+    setSubmitErrorPromptSettingsGrade(false)
     if (displayDraft == null) {
       setSubmitError(
         blockedMessage ?? '신청 양식을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -1598,12 +1601,16 @@ export function ProgramApplyPage() {
         navigate(programApplyCompletePath(program.id, focus, fromPath))
       } catch (error) {
         const message = getProgramApplicationApiErrorMessage(error)
+        const promptSettingsGrade = isIndividualApplicationEnrolledGradeRequiredError(error)
         if (getQueryRetryHttpStatus(error) !== 400) {
           setSubmitError(message)
+          setSubmitErrorPromptSettingsGrade(promptSettingsGrade)
           return
         }
         // 런타임 선택지(면접 일정 등)가 렌더 이후 바뀌면 400. 최신 선택지로 다시 불러온다.
-        applicationFormQuery.refetch()
+        if (!promptSettingsGrade) {
+          applicationFormQuery.refetch()
+        }
         const interviewVisible =
           applyCase === 'individual-volunteer' &&
           interviewBindingParagraph != null &&
@@ -1613,6 +1620,7 @@ export function ProgramApplyPage() {
             ? `${message} 면접 진행 가능 일정이 바뀌었을 수 있어 신청서를 새로 불러왔습니다. 일정을 다시 확인한 뒤 신청해 주세요.`
             : message,
         )
+        setSubmitErrorPromptSettingsGrade(promptSettingsGrade)
       }
       return
     }
@@ -1694,9 +1702,24 @@ export function ProgramApplyPage() {
           ) : null}
 
           {submitError ? (
-            <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
-              {submitError}
-            </PFText>
+            <>
+              <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
+                {submitError}
+              </PFText>
+              {submitErrorPromptSettingsGrade ? (
+                <div className={styles.submitErrorFollowUp}>
+                  <PFButton
+                    type="button"
+                    size="large"
+                    variant="secondary"
+                    width={280}
+                    onClick={() => navigate('/mypage/settings')}
+                  >
+                    회원 정보에서 학년 등록
+                  </PFButton>
+                </div>
+              ) : null}
+            </>
           ) : instructorScheduleUnavailable ? (
             <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.submitError}>
               선택 가능한 강의 일정이 없어 신청할 수 없습니다. 관리자에게 문의해 주세요.
