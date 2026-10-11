@@ -14,18 +14,9 @@ describe('mapWageItemToSettingDetail', () => {
 
     expect(detail.layout).toBe('tier1')
     expect(detail.basisHours).toBe(1)
-    expect(detail.maxLimitWon).toBe(500_000)
-    expect(detail.qualificationLines).toEqual([
-      '해당분야 최고의 전문가',
-      '전·현직 장관(급) 및 대학총장(급)',
-      '전·현직 국회의원, 대기업 총수, 국영기업체',
-      '정부 출연 연구기관장, 기업·기관, 단체의 장',
-      '사회 통념상 상기 자격에 준하는 자로서 교육운영본부 사무총장이 인정하는 자',
-    ])
-    expect(detail.remarkLines).toEqual([
-      '유급의 내부직원에게는 지급 불가',
-      '강의에 필요한 교재의 원고료, 강사 교통비(실비)는 필요사유에 따라 별도 지급 가능',
-    ])
+    expect(detail.maxLimitWon).toBeNull()
+    expect(detail.qualificationLines).toEqual([])
+    expect(detail.remarkLines).toEqual([])
   })
 
   it('flat 필드가 있으면 카탈로그를 덮어쓰지 않는다', () => {

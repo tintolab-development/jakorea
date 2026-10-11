@@ -4,7 +4,7 @@ import {
   mapSettlementDetailToInstructorPageCalculationStatement,
   mapSettlementDetailToProgramCalculationStatement,
 } from './map-settlement-detail-to-calculation-statement'
-import type { PaymentOrderAdminProgramDetailInstructorRow } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminProgramDetailInstructorRow } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { SettlementFrontendResponse } from '@/shared/api/generated/settlement/schemas'
 
 const lineRow: PaymentOrderAdminProgramDetailInstructorRow = {

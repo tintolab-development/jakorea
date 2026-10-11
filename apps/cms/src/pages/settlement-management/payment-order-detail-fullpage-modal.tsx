@@ -6,7 +6,7 @@ import type { Dayjs } from 'dayjs'
 import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   PaymentOrderDetailView,
   type PaymentOrderDetailViewProps,

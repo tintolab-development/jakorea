@@ -2,7 +2,7 @@
  * 산출 내역서 — 산정 기준 상세 모달 payload (read-only viewer SSOT)
  */
 
-import type { PaymentOrderCalculationStatementSessionBlock } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderCalculationStatementSessionBlock } from '@/features/settlement-management/model/payment-order-admin-list'
 
 export interface PaymentOrderCalculationBasisDetailLectureFeeTier {
   layout: 'lectureFeeTier'
@@ -148,7 +148,7 @@ const DEFAULT_PARTICIPANT_TRANSIT: PaymentOrderCalculationBasisDetailTransportPu
 
 function defaultParticipantTripLeg(): PaymentOrderCalculationBasisDetailTransportTripLeg {
   return {
-    categoryLabel: '참여자 교통비',
+    categoryLabel: '학생 교통비',
     publicTransit: { ...DEFAULT_PARTICIPANT_TRANSIT },
   }
 }
@@ -171,7 +171,7 @@ export function resolveBasisDetailModalTitle(detail: PaymentOrderCalculationBasi
     case 'meal':
       return '식사비 산정 기준 상세'
     case 'activity':
-      return '활동비 산정 기준 상세'
+      return '참여자 활동비 산정 기준 상세'
     case 'withholding':
       return '원천징수 산정 기준 상세'
     default:
@@ -317,10 +317,10 @@ export function buildActivityBasisDetail(): PaymentOrderCalculationBasisDetailAc
   const amountWon = 50000
   return {
     layout: 'activity',
-    categoryLabel: '활동비',
+    categoryLabel: '참여자 활동비',
     activityFee: {
       amountWon,
-      receiptFileName: '활동비 영수증.pdf',
+      receiptFileName: '참여자 활동비 영수증.pdf',
     },
     totalWon: amountWon,
   }
@@ -574,7 +574,7 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     return buildMealBasisDetail()
   }
 
-  if (row.kind === 'activity' || row.itemLabel === '활동비') {
+  if (row.kind === 'activity' || row.itemLabel === '활동비' || row.itemLabel === '참여자 활동비') {
     return buildActivityBasisDetail()
   }
 

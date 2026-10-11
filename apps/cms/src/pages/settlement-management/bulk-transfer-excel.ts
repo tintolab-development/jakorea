@@ -9,7 +9,7 @@ import {
   BULK_TRANSFER_HEADER_LABELS,
   buildBulkTransferSheetRows,
 } from '@/pages/settlement-management/bulk-transfer-fortune-data'
-import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
+import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 
 /** 기획 파일명: `[JA Korea] CMS 어드민_대량이체 양식_YYMMDD` */
 export const BULK_TRANSFER_EXCEL_PREFIX = '[JA Korea] CMS 어드민_대량이체 양식'

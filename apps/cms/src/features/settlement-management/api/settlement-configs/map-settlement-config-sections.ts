@@ -3,12 +3,13 @@ import type {
   SettlementItemSettingIconKey,
   SettlementItemSettingRow,
   SettlementItemSettingSection,
-} from '@/data/mock/settlement-item-settings'
+} from '@/features/settlement-management/model/settlement-item-settings'
 import {
   PAYMENT_ITEM_TYPE_ORDER,
   sortByCatalogOrder,
   WAGE_ITEM_TYPE_ORDER,
 } from '@/features/settlement-management/api/settlement-configs/settlement-config-catalog-order'
+import { readPaymentItemEligiblePayeeTypes } from '@/features/settlement-management/lib/settlement-payment-item-payee'
 import type { SettlementConfigResponse } from '@/shared/api/generated/settlement/schemas'
 import { PaymentItemResponsePaymentItemType } from '@/shared/api/generated/settlement/schemas/paymentItemResponsePaymentItemType'
 import { WageItemResponseWageItemType } from '@/shared/api/generated/settlement/schemas/wageItemResponseWageItemType'
@@ -131,6 +132,7 @@ export function mapSettlementConfigToSections(
       description: formatPaymentDescription(item),
       iconKey,
       emojiOverride: item.emojiOverride ?? null,
+      eligiblePayeeTypes: readPaymentItemEligiblePayeeTypes(item),
     }
   })
 

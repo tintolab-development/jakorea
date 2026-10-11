@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   buildPaymentStatementIssuancePayloadFromCalculationStatement,
   mapInstructorCalculationStatementToIssuanceInput,

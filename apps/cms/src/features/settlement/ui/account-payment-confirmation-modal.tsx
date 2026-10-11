@@ -12,7 +12,7 @@ import {
   getMockAccountPaymentStatusDetail,
   type AccountPaymentRow,
   type AccountPaymentStatusDetail,
-} from '@/data/mock/account-payments-list'
+} from '@/features/settlement-management/model/account-payments-list'
 import './account-payment-confirmation-modal.css'
 
 /** 일괄: 지급 대상자 행 포함 */

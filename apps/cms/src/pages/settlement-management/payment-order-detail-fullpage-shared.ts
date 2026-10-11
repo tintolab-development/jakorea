@@ -6,7 +6,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import {
   PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS,
   type PaymentOrderAdminLineProcessingStatus,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 
 export const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const

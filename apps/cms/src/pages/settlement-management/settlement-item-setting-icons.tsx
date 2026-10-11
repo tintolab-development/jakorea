@@ -3,7 +3,7 @@
  */
 
 import { useId } from 'react'
-import type { SettlementItemSettingIconKey } from '@/data/mock/settlement-item-settings'
+import type { SettlementItemSettingIconKey } from '@/features/settlement-management/model/settlement-item-settings'
 import multiInstructorIconUrl from './settlement-item-multi-instructor.svg'
 
 export function SettlementItemCardMoreIcon() {

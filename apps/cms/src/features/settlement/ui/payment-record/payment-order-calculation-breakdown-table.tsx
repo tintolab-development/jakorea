@@ -11,7 +11,7 @@ import type {
   PaymentOrderAdminLineProcessingStatus,
   PaymentOrderCalculationLineKind,
   PaymentOrderCalculationStatementSessionBlock,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderCalculationBasisDetail } from './payment-order-calculation-basis-detail'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './payment-order-program-calculation-statement-modal.css'

@@ -4,7 +4,7 @@ import {
   deriveAggregateFromLines,
   resolveDetailInitialDateRange,
 } from './payment-order-detail-fullpage-shared'
-import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
 
 describe('resolveDetailInitialDateRange', () => {
   it('목록 조회 기간이 유효하면 그대로 반환', () => {

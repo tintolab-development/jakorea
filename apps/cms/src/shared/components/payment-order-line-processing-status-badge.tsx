@@ -4,7 +4,7 @@
  */
 
 import type { CSSProperties } from 'react'
-import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
 import { TextbookStatusBadge } from './textbook-status-badge'
 
 export type { PaymentOrderAdminLineProcessingStatus }

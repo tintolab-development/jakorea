@@ -21,4 +21,6 @@ export interface PaymentItemResponse {
   maxLimitWon?: number;
   description?: string;
   detailJson?: string;
+  /** 수급 대상 — Orval 재생성 후 OpenAPI 유지 확인 */
+  eligiblePayeeTypes?: string[];
 }

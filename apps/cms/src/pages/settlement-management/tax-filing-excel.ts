@@ -4,7 +4,7 @@
 
 import ExcelJS from '@zurmokeeper/exceljs'
 import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
-import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
+import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import {
   buildTaxFilingSheetLines,
   computeTaxFilingGrandTotals,

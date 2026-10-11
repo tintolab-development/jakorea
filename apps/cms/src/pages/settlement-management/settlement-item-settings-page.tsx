@@ -8,13 +8,12 @@ import type { MenuProps } from 'antd'
 import {
   getSettlementItemSettingDetail,
   saveSettlementItemSettingDetail,
-} from '@/data/mock/settlement-item-setting-detail.mock'
+} from '@/features/settlement-management/model/settlement-item-setting-detail'
 import {
-  settlementItemSettingSections,
   type SettlementItemSettingCategoryKind,
   type SettlementItemSettingRow,
   type SettlementItemSettingSection,
-} from '@/data/mock/settlement-item-settings'
+} from '@/features/settlement-management/model/settlement-item-settings'
 import {
   useSettlementConfigQuery,
   useSettlementConfigSectionsQuery,
@@ -38,13 +37,6 @@ import { SettlementItemSettingDetailModal } from './settlement-item-setting-deta
 import { SettlementItemSettingDetailSourceProvider } from './settlement-item-setting-detail-source'
 import './settlement-item-settings-page.css'
 
-function cloneSettlementSections(src: SettlementItemSettingSection[]): SettlementItemSettingSection[] {
-  return src.map(section => ({
-    ...section,
-    items: section.items.map(item => ({ ...item })),
-  }))
-}
-
 const cardOptionMenuItems: MenuProps['items'] = [
   { key: 'delete', label: '삭제', danger: true },
   { key: 'duplicate', label: '복제' },
@@ -61,9 +53,7 @@ export default function SettlementItemSettingsPage() {
   const duplicatePaymentMutation = useDuplicateSettlementConfigPaymentItemMutation()
   const deletePaymentMutation = useDeleteSettlementConfigPaymentItemMutation()
 
-  const [mockSections, setMockSections] = useState<SettlementItemSettingSection[]>(() =>
-    cloneSettlementSections(settlementItemSettingSections)
-  )
+  const [mockSections, setMockSections] = useState<SettlementItemSettingSection[]>(() => [])
   const [selectedItem, setSelectedItem] = useState<SettlementItemSettingRow | null>(null)
   const [pendingBasisDeleteItem, setPendingBasisDeleteItem] =
     useState<SettlementItemSettingRow | null>(null)

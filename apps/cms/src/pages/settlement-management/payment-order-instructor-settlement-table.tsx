@@ -17,11 +17,10 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import {
-  getMockPaymentOrderInstructorDetail,
   type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminLineProcessingStatus,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import { PaymentOrderBatchConfirmModal } from '@/features/settlement/ui/payment-record/payment-order-batch-confirm-modal'
 import { PaymentOrderLectureDateSessionCell } from '@/features/settlement/ui/payment-record/payment-order-lecture-date-session-cell'
 import {
@@ -103,8 +102,7 @@ export function PaymentOrderInstructorSettlementTable({
       })
       setSelectedRowKeys([])
       setBatchConfirmOpen(false)
-      const d = getMockPaymentOrderInstructorDetail(instructorRow)
-      setProgramRowsState(d.programRows.map(r => ({ ...r })))
+      setProgramRowsState([])
       setOpenStatusRowId(null)
     }
   }, [isOpen, instructorRow.no])

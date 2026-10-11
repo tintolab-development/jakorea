@@ -1,8 +1,8 @@
 import type {
   PaymentOrderAdminLineProcessingStatus,
   PaymentOrderAdminProcessingStatus,
-} from '@/data/mock/payment-order-admin-list'
-import type { AccountPaymentTransferStatus } from '@/data/mock/account-payments-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
+import type { AccountPaymentTransferStatus } from '@/features/settlement-management/model/account-payments-list'
 
 /** BE settlement/payment-statement availableActions */
 export const CONFIRM_PAYMENT_STATEMENT_ACTION = 'CONFIRM_PAYMENT_STATEMENT'

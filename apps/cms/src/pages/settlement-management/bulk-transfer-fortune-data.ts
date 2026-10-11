@@ -7,7 +7,7 @@
  */
 
 import type { Cell, CellWithRowAndCol, Sheet } from '@fortune-sheet/core'
-import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
+import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 
 export const BULK_TRANSFER_HEADER_LABELS = [
   '입금은행',
