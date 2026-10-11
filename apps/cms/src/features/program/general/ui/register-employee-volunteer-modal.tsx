@@ -49,9 +49,11 @@ export interface RegisterEmployeeVolunteerModalProps {
   onNoInstitutionSelected: () => void
   onIncompleteCounts: () => void
   onRegister: (payload: RegisterEmployeeVolunteerPayload) => void
+  /** 기관 선택 시 remote 저장값 프리필 */
+  onInstitutionChange?: (institutionId: string) => void
 }
 
-const MODAL_WIDTH = 800
+const MODAL_WIDTH = 880
 
 function SessionVolunteerCountPair({
   sessionRow,
@@ -77,7 +79,7 @@ function SessionVolunteerCountPair({
           inputSize="large"
           pattern="[0-9]*"
           width="100%"
-          placeholder="자원봉사자 수 입력"
+          placeholder="자원봉사자 수"
           aria-label={`${sessionRow.label} ${label} 자원봉사자 수`}
         />
       </Form.Item>
@@ -94,6 +96,7 @@ export function RegisterEmployeeVolunteerModal({
   onNoInstitutionSelected,
   onIncompleteCounts,
   onRegister,
+  onInstitutionChange,
 }: RegisterEmployeeVolunteerModalProps) {
   const [form] = Form.useForm<RegisterEmployeeVolunteerFormValues>()
   const selectedInstitutionId = Form.useWatch('institutionId', form)
@@ -109,6 +112,11 @@ export function RegisterEmployeeVolunteerModal({
       countsBySessionId: createEmptyEmployeeVolunteerFormCounts(sessionRows),
     })
   }, [open, form, sessionRows])
+
+  useEffect(() => {
+    if (!open || !selectedInstitutionId) return
+    onInstitutionChange?.(selectedInstitutionId)
+  }, [onInstitutionChange, open, selectedInstitutionId])
 
   useEffect(() => {
     if (!open || !selectedInstitutionId) {
@@ -195,7 +203,7 @@ export function RegisterEmployeeVolunteerModal({
       footer={footer}
       className="register-employee-volunteer-modal"
       description={
-        '배정된 기관에 배정된 신규/재참여 임직원 자원봉사자 수를 일정 별로 입력해 주세요.\n배정된 자원봉사자가 없는 경우, 0으로 입력해 주세요.'
+        '각 배정 기관의 진행 일정별로 신규 및 재참여 임직원 자원봉사자 수를 입력해 주세요.\n배정된 자원봉사자가 없는 경우 0으로 입력해 주세요.'
       }
     >
       <div className="register-employee-volunteer-modal__body">
@@ -208,7 +216,14 @@ export function RegisterEmployeeVolunteerModal({
         >
           <Form.Item
             name="institutionId"
-            label="배정 기관"
+            label={
+              <span>
+                배정 기관
+                <span className="register-employee-volunteer-modal__required" aria-hidden>
+                  *
+                </span>
+              </span>
+            }
             className="register-employee-volunteer-modal__field"
           >
             <CmsSelect

@@ -10,11 +10,26 @@ import {
 import { resolveEmployeeVolunteerSessionRows } from '../lib/employee-volunteer-session-rows'
 import type { Program } from '@/types/domain'
 import type { EmployeeVolunteerSessionRowId } from '../lib/employee-volunteer-session-rows'
+import {
+  buildEmployeeVolunteerCountsPutRequest,
+  mapEmployeeVolunteerCountsGetToSessionCounts,
+} from '../lib/employee-volunteer-counts-remote'
+import {
+  fetchGeneralEmployeeVolunteerCounts,
+  fetchGeneralProgressAttendanceBundle,
+  saveGeneralEmployeeVolunteerCounts,
+} from '../api/admin-program-progress-service'
+
+export type UseEmployeeVolunteerRegistrationOptions = {
+  programId?: string
+  remoteEnabled?: boolean
+}
 
 export function useEmployeeVolunteerRegistration(
   program: Program | null | undefined,
   schools: ParticipatingSchoolRow[],
-  volunteerList: ParticipatingVolunteerRow[]
+  volunteerList: ParticipatingVolunteerRow[],
+  options?: UseEmployeeVolunteerRegistrationOptions
 ) {
   const [registrations, setRegistrations] = useState<EmployeeVolunteerInstitutionRegistration[]>(
     () => []
@@ -52,16 +67,75 @@ export function useEmployeeVolunteerRegistration(
     [institutionIdToName, registrations, sessionRows, volunteerList]
   )
 
-  const saveRegistration = useCallback(
-    (
-      institutionId: string,
-      countsBySessionId: Partial<Record<EmployeeVolunteerSessionRowId, EmployeeVolunteerSessionCounts>>
-    ) => {
+  const resolveOrganizationApplicationId = useCallback(
+    (institutionId: string): number | undefined => {
+      const school = schools.find(row => row.id === institutionId)
+      const raw = school?.organizationApplicationId?.trim()
+      if (!raw) return undefined
+      const parsed = Number.parseInt(raw, 10)
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+    },
+    [schools]
+  )
+
+  const loadRegistrationForInstitution = useCallback(
+    async (institutionId: string) => {
+      if (!options?.remoteEnabled || !options.programId) return
+
+      const organizationApplicationId = resolveOrganizationApplicationId(institutionId)
+      const [countsResponse, scheduleBundle] = await Promise.all([
+        fetchGeneralEmployeeVolunteerCounts(options.programId, organizationApplicationId),
+        fetchGeneralProgressAttendanceBundle(options.programId),
+      ])
+
+      const countsBySessionId = mapEmployeeVolunteerCountsGetToSessionCounts(
+        sessionRows,
+        scheduleBundle.schedules,
+        countsResponse.entries
+      )
+
       setRegistrations(prev =>
         upsertEmployeeVolunteerInstitutionRegistration(prev, institutionId, countsBySessionId)
       )
     },
-    []
+    [options?.programId, options?.remoteEnabled, resolveOrganizationApplicationId, sessionRows]
+  )
+
+  const saveRegistration = useCallback(
+    async (
+      institutionId: string,
+      countsBySessionId: Partial<Record<EmployeeVolunteerSessionRowId, EmployeeVolunteerSessionCounts>>
+    ) => {
+      if (options?.remoteEnabled && options.programId) {
+        const organizationApplicationId = resolveOrganizationApplicationId(institutionId)
+        const scheduleBundle = await fetchGeneralProgressAttendanceBundle(options.programId)
+        const previous = await fetchGeneralEmployeeVolunteerCounts(
+          options.programId,
+          organizationApplicationId
+        )
+        const payload = buildEmployeeVolunteerCountsPutRequest({
+          organizationApplicationId,
+          sessionRows,
+          schedules: scheduleBundle.schedules,
+          countsBySessionId,
+          previousEntries: previous.entries,
+        })
+        await saveGeneralEmployeeVolunteerCounts(options.programId, payload)
+        await loadRegistrationForInstitution(institutionId)
+        return
+      }
+
+      setRegistrations(prev =>
+        upsertEmployeeVolunteerInstitutionRegistration(prev, institutionId, countsBySessionId)
+      )
+    },
+    [
+      loadRegistrationForInstitution,
+      options?.programId,
+      options?.remoteEnabled,
+      resolveOrganizationApplicationId,
+      sessionRows,
+    ]
   )
 
   return {
@@ -70,5 +144,6 @@ export function useEmployeeVolunteerRegistration(
     registrations,
     educationMetrics,
     saveRegistration,
+    loadRegistrationForInstitution,
   }
 }

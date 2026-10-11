@@ -1,0 +1,117 @@
+import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
+import type { EmployeeVolunteerCountEntryResponse } from '@/shared/api/generated/dashboard/schemas/employeeVolunteerCountEntryResponse'
+import type { EmployeeVolunteerCountReplaceRequest } from '@/shared/api/generated/dashboard/schemas/employeeVolunteerCountReplaceRequest'
+import type {
+  EmployeeVolunteerSessionRow,
+  EmployeeVolunteerSessionRowId,
+} from '@/features/program/general/lib/employee-volunteer-session-rows'
+import type { EmployeeVolunteerSessionCounts } from '@/features/program/general/lib/employee-volunteer-registration'
+
+const EMPLOYEE_VOLUNTEER_COUNT_PUT_REASON = 'CMS 참여 봉사자 임직원 자원봉사자 인원 등록'
+
+function sortedSchedules(
+  schedules: DashboardProgramScheduleResponse[]
+): DashboardProgramScheduleResponse[] {
+  return [...schedules]
+    .filter(s => s.scheduleId != null)
+    .sort((a, b) => (a.sessionNo ?? 0) - (b.sessionNo ?? 0))
+}
+
+/**
+ * 프로그램 구조 기반 모달 행 ↔ dashboard scheduleId 매핑.
+ * 사전교육 행은 scheduleName에 「사전」 포함 일정, 없으면 첫 일정.
+ */
+export function buildEmployeeVolunteerSessionRowScheduleMap(
+  sessionRows: ReadonlyArray<EmployeeVolunteerSessionRow>,
+  schedules: DashboardProgramScheduleResponse[]
+): Map<EmployeeVolunteerSessionRowId, number> {
+  const ordered = sortedSchedules(schedules)
+  const map = new Map<EmployeeVolunteerSessionRowId, number>()
+  if (ordered.length === 0) return map
+
+  const preEducationSchedule =
+    ordered.find(s => (s.scheduleName ?? '').includes('사전')) ?? ordered[0]
+  const regularSchedules = ordered.filter(s => s.scheduleId !== preEducationSchedule?.scheduleId)
+
+  let regularIndex = 0
+  for (const row of sessionRows) {
+    if (row.id === 'pre_education') {
+      if (preEducationSchedule?.scheduleId != null) {
+        map.set(row.id, preEducationSchedule.scheduleId)
+      }
+      continue
+    }
+    if (row.id === 'program_progress') {
+      const schedule = regularSchedules[0] ?? ordered[0]
+      if (schedule?.scheduleId != null) map.set(row.id, schedule.scheduleId)
+      continue
+    }
+    const schedule = regularSchedules[regularIndex] ?? ordered[regularIndex] ?? ordered[0]
+    regularIndex += 1
+    if (schedule?.scheduleId != null) map.set(row.id, schedule.scheduleId)
+  }
+
+  return map
+}
+
+export function mapEmployeeVolunteerCountsGetToSessionCounts(
+  sessionRows: ReadonlyArray<EmployeeVolunteerSessionRow>,
+  schedules: DashboardProgramScheduleResponse[],
+  entries: EmployeeVolunteerCountEntryResponse[] | undefined
+): Partial<Record<EmployeeVolunteerSessionRowId, EmployeeVolunteerSessionCounts>> {
+  const rowToScheduleId = buildEmployeeVolunteerSessionRowScheduleMap(sessionRows, schedules)
+  const entryByScheduleId = new Map<number, EmployeeVolunteerCountEntryResponse>()
+  for (const entry of entries ?? []) {
+    if (entry.scheduleId == null) continue
+    entryByScheduleId.set(entry.scheduleId, entry)
+  }
+
+  const counts: Partial<Record<EmployeeVolunteerSessionRowId, EmployeeVolunteerSessionCounts>> = {}
+  for (const row of sessionRows) {
+    const scheduleId = rowToScheduleId.get(row.id)
+    if (scheduleId == null) continue
+    const entry = entryByScheduleId.get(scheduleId)
+    counts[row.id] = {
+      newCount: entry?.newVolunteerCount ?? 0,
+      returningCount: entry?.reparticipationVolunteerCount ?? 0,
+    }
+  }
+  return counts
+}
+
+export function buildEmployeeVolunteerCountsPutRequest(params: {
+  organizationApplicationId?: number
+  sessionRows: ReadonlyArray<EmployeeVolunteerSessionRow>
+  schedules: DashboardProgramScheduleResponse[]
+  countsBySessionId: Partial<Record<EmployeeVolunteerSessionRowId, EmployeeVolunteerSessionCounts>>
+  previousEntries?: EmployeeVolunteerCountEntryResponse[]
+}): EmployeeVolunteerCountReplaceRequest {
+  const rowToScheduleId = buildEmployeeVolunteerSessionRowScheduleMap(
+    params.sessionRows,
+    params.schedules
+  )
+  const revisionByScheduleId = new Map<number, number>()
+  for (const entry of params.previousEntries ?? []) {
+    if (entry.scheduleId == null || entry.revision == null) continue
+    revisionByScheduleId.set(entry.scheduleId, entry.revision)
+  }
+
+  const entries: EmployeeVolunteerCountReplaceRequest['entries'] = []
+  for (const row of params.sessionRows) {
+    const scheduleId = rowToScheduleId.get(row.id)
+    if (scheduleId == null) continue
+    const counts = params.countsBySessionId[row.id]
+    entries.push({
+      scheduleId,
+      newVolunteerCount: counts?.newCount ?? 0,
+      reparticipationVolunteerCount: counts?.returningCount ?? 0,
+      expectedRevision: revisionByScheduleId.get(scheduleId) ?? 0,
+    })
+  }
+
+  return {
+    organizationApplicationId: params.organizationApplicationId,
+    entries,
+    reason: EMPLOYEE_VOLUNTEER_COUNT_PUT_REASON,
+  }
+}
