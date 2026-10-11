@@ -23,7 +23,7 @@ import {
   updateNoticeCategoryRemote,
   updateNoticeRemote,
 } from '@/features/posts/api/notices/notices-api-client'
-import type { Notice } from '@/data/mock/notices'
+import type { Notice } from '@/features/posts/model/notice'
 import type { BuildNoticeBodyParams } from '@/features/posts/model/notice-form-mapper'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'

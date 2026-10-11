@@ -15,7 +15,7 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import type { AdminFaq } from '@/data/mock/admin-faqs'
+import type { AdminFaq } from '@/features/posts/model/admin-faq'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminFaqCategories } from '@/features/posts/hooks/use-admin-faq-categories'
 import { useFaqListQuery } from '@/features/posts/hooks/use-faq-list-query'

@@ -15,7 +15,7 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import type { Notice } from '@/data/mock/notices'
+import type { Notice } from '@/features/posts/model/notice'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminNoticeCategories } from '@/features/posts/hooks/use-admin-notice-categories'
 import { useNoticeListQuery } from '@/features/posts/hooks/use-notice-list-query'

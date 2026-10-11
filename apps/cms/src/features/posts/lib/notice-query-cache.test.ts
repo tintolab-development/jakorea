@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
-import type { Notice } from '@/data/mock/notices'
+import type { Notice } from '@/features/posts/model/notice'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import {
   applyCreatedNoticeToLists,

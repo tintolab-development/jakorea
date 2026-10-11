@@ -24,7 +24,7 @@ import {
   updateFaqCategoryRemote,
   updateFaqRemote,
 } from '@/features/posts/api/faqs/faqs-api-client'
-import type { AdminFaq } from '@/data/mock/admin-faqs'
+import type { AdminFaq } from '@/features/posts/model/admin-faq'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 

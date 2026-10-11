@@ -1,4 +1,4 @@
-import type { Notice } from '@/data/mock/notices'
+import type { Notice } from '@/features/posts/model/notice'
 import { dedupeFileObjectIds } from '@/features/posts/api/notices/notice-file-ids'
 import type { BuildNoticeBodyParams } from '@/features/posts/model/notice-form-mapper'
 import type {
