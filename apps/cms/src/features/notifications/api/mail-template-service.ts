@@ -122,6 +122,8 @@ export async function getMailSendTemplatePicker(): Promise<MailTemplateItem[]> {
 
   const dto = await fetchNotificationTemplatesRemote({
     channelType: MAIL_API_CHANNEL_TYPE,
+    page: '0',
+    size: '100',
   })
   const fromList = (dto.items ?? [])
     .filter(item => (item.channelType ?? MAIL_API_CHANNEL_TYPE).toUpperCase() === MAIL_API_CHANNEL_TYPE)

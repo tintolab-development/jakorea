@@ -1,4 +1,10 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import {
+  hydrateOrganizationApplicationSchedules,
+  mergeHydratedOrganizationRows,
+  schoolRowNeedsScheduleHydration,
+} from '@/features/program/general/api/admin-applications-service'
 import { useSearchParams } from 'react-router-dom'
 import {
   useTablePage,
@@ -17,6 +23,9 @@ import {
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
+import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { formatInstructorOrganizationApprovalErrorMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   institutionFilterFields,
   instructorFilterFields,
@@ -31,7 +40,17 @@ import {
   filterGeneralIndividualApplications,
   filterGeneralInstructorApplications,
   filterGeneralInstructorCalendarApplications,
+  mergeGeneralInstructorFiltersOnViewModeChange,
 } from '@/features/program/general/lib/application-table-filter'
+import {
+  applyApplicationListViewMode,
+  APPLICATION_LIST_VIEW_PARAMS,
+  clearInactiveApplicationListViewParams,
+  INSTITUTION_APPLICATION_VIEW_PARAM,
+  INSTRUCTOR_APPLICATION_VIEW_PARAM,
+  PARTICIPANT_APPLICATION_VIEW_PARAM,
+  parseApplicationListViewMode,
+} from '@/features/program/general/hooks/application-list-view-params'
 import {
   APPLICANTS_CALENDAR_RANGE_PARAM,
   parseCalendarRangeParam,
@@ -82,7 +101,6 @@ import {
   toScreeningNotifyFields,
 } from '@/features/program/general/lib/application-decision-notify-timing'
 import type { OrganizationDecisionNotifyRequest } from '@/features/program/general/api/applications-api-client'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
 import {
@@ -207,6 +225,8 @@ export function useApplicantsDetail({
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
 
   const [institutionList, setInstitutionList] = useState<ApplicantSchoolRow[]>([])
+  const institutionListRef = useRef(institutionList)
+  institutionListRef.current = institutionList
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>([])
   const [individualList, setIndividualList] = useState<GeneralIndividualApplicantRow[]>([])
 
@@ -233,13 +253,12 @@ export function useApplicantsDetail({
     ? trainedTeacherApplicationsRemote
     : applicationsRemote
   useNotifyProgramApiUnavailableOnce(
-    !institutionApplicationsRemote.remoteEnabled &&
-      !applicationsRemote.remoteEnabled &&
-      !isGeneralProgramTempMockProgramId(programId),
+    !institutionApplicationsRemote.remoteEnabled && !applicationsRemote.remoteEnabled,
     'program-applicants-list',
     '프로그램 신청'
   )
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
 
   const notifyRemoteDecisionFailure = useCallback(
     (error: unknown) => {
@@ -254,7 +273,7 @@ export function useApplicantsDetail({
     [showAlert]
   )
 
-  /** 강사 승인·반려 — 동의 부족(409 INSTRUCTOR_PARTICIPATION_CONSENT_REQUIRED) 등 서버 문구를 그대로 노출 */
+  /** 강사 승인·반려 — 동의 부족·기관-일정 스코프 등 서버 문구를 그대로 노출 */
   const notifyRemoteInstructorDecisionFailure = useCallback(
     (error: unknown) => {
       console.debug('instructor applications remote decision failed', error)
@@ -266,6 +285,7 @@ export function useApplicantsDetail({
         title: '처리 실패',
         content:
           formatApplicationEligibilityConflictMessage(error) ??
+          formatInstructorOrganizationApprovalErrorMessage(error) ??
           extractApiErrorMessage(responseData, {
             httpStatus: getApiErrorHttpStatus(error),
             fallback: '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
@@ -590,7 +610,53 @@ export function useApplicantsDetail({
     return () => onRegisterApplicantCloseHandler(null)
   }, [onRegisterApplicantCloseHandler, setSelectedItem])
 
-  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
+  const applicationListViewParam = useMemo(() => {
+    if (detailVariant !== 'general') return null
+    if (menu === 'institutions') return INSTITUTION_APPLICATION_VIEW_PARAM
+    if (menu === 'individual-applications') return PARTICIPANT_APPLICATION_VIEW_PARAM
+    if (menu === 'instructors' && instructorColumnPreset === 'general-detail') {
+      return INSTRUCTOR_APPLICATION_VIEW_PARAM
+    }
+    return null
+  }, [detailVariant, menu, instructorColumnPreset])
+
+  useEffect(() => {
+    if (detailVariant !== 'general' || !applicationListViewParam) return
+    const hasStaleSibling = APPLICATION_LIST_VIEW_PARAMS.some(
+      key => key !== applicationListViewParam && searchParams.get(key) === 'calendar'
+    )
+    if (!hasStaleSibling) return
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        clearInactiveApplicationListViewParams(next, applicationListViewParam)
+        return next.toString() === prev.toString() ? prev : next
+      },
+      { replace: true }
+    )
+  }, [applicationListViewParam, detailVariant, searchParams, setSearchParams])
+
+  const [legacyViewMode, setLegacyViewMode] = useState<'table' | 'calendar'>('table')
+
+  const viewMode = applicationListViewParam
+    ? parseApplicationListViewMode(searchParams, applicationListViewParam)
+    : legacyViewMode
+
+  const setViewMode = useCallback(
+    (mode: 'table' | 'calendar') => {
+      if (applicationListViewParam) {
+        const next = new URLSearchParams(searchParams)
+        applyApplicationListViewMode(next, applicationListViewParam, mode)
+        setSearchParams(next, { replace: true })
+        return
+      }
+      setLegacyViewMode(mode)
+    },
+    [applicationListViewParam, searchParams, setSearchParams]
+  )
+  const [institutionSchedulesHydrating, setInstitutionSchedulesHydrating] = useState(false)
+  /** 캘린더 일정 hydrate가 API에서 날짜를 못 채운 행 — 무한 재시도 방지 */
+  const institutionScheduleHydrationAttemptedRef = useRef<Set<string>>(new Set())
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
@@ -659,7 +725,6 @@ export function useApplicantsDetail({
   useEffect(() => {
     if (menu !== 'individual-applications' || individualScreeningStage !== 'doc1') return
     if (applicationsRemote.individualRemoteEnabled) return
-    if (isGeneralProgramTempMockProgramId(programId)) return
     setIndividualList([])
     setPendingFilters({})
     setAppliedFilters({})
@@ -676,7 +741,6 @@ export function useApplicantsDetail({
   useEffect(() => {
     if (menu !== 'instructors' || instructorColumnPreset !== 'general-detail') return
     if (applicationsRemote.instructorRemoteEnabled) return
-    if (isGeneralProgramTempMockProgramId(programId)) return
     setInstructorList([])
     setPendingFilters({})
     setAppliedFilters({})
@@ -690,18 +754,119 @@ export function useApplicantsDetail({
   ])
 
   const prevViewModeRef = useRef(viewMode)
+  const appliedFiltersRef = useRef(appliedFilters)
+  appliedFiltersRef.current = appliedFilters
+
+  useEffect(() => {
+    const isGeneralApplicationMenu =
+      detailVariant === 'general' &&
+      (menu === 'institutions' ||
+        menu === 'individual-applications' ||
+        (menu === 'instructors' && instructorColumnPreset === 'general-detail'))
+
+    if (!isGeneralApplicationMenu) {
+      prevViewModeRef.current = viewMode
+      return
+    }
+    if (prevViewModeRef.current === viewMode) return
+    prevViewModeRef.current = viewMode
+
+    if (menu === 'instructors' && instructorColumnPreset === 'general-detail') {
+      setAppliedFilters(prev => mergeGeneralInstructorFiltersOnViewModeChange(prev, viewMode))
+      setPendingFilters(prev => mergeGeneralInstructorFiltersOnViewModeChange(prev, viewMode))
+    } else {
+      setPendingFilters({ ...appliedFiltersRef.current })
+    }
+    setSelectedRowKeys([])
+  }, [viewMode, menu, instructorColumnPreset, detailVariant, setPendingFilters])
+
+  useEffect(() => {
+    institutionScheduleHydrationAttemptedRef.current.clear()
+  }, [programId, viewMode])
+
+  useEffect(() => {
+    if (viewMode !== 'calendar' || !programId) return
+    if (menu === 'institutions' && usesProgramInstitutionApplications) {
+      void queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.organizationList(programId),
+      })
+    }
+    if (menu === 'instructors' && instructorColumnPreset === 'general-detail') {
+      void queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.instructorList(programId),
+      })
+    }
+  }, [
+    instructorColumnPreset,
+    menu,
+    programId,
+    queryClient,
+    usesProgramInstitutionApplications,
+    viewMode,
+  ])
+
+  const institutionScheduleHydrationSignature = useMemo(
+    () =>
+      institutionList
+        .map(row => `${row.id}:${schoolRowNeedsScheduleHydration(row) ? 1 : 0}`)
+        .join('|'),
+    [institutionList]
+  )
+
   useEffect(() => {
     if (
-      menu === 'instructors' &&
-      instructorColumnPreset === 'general-detail' &&
-      prevViewModeRef.current !== viewMode
+      menu !== 'institutions' ||
+      !usesProgramInstitutionApplications ||
+      viewMode !== 'calendar' ||
+      !programId ||
+      institutionList.length === 0
     ) {
-      prevViewModeRef.current = viewMode
-      setPendingFilters({})
-      setAppliedFilters({})
-      setSelectedRowKeys([])
+      return
     }
-  }, [viewMode, menu, instructorColumnPreset, setPendingFilters])
+
+    const rowsPendingHydration = institutionListRef.current.filter(row => {
+      if (!schoolRowNeedsScheduleHydration(row)) return false
+      return !institutionScheduleHydrationAttemptedRef.current.has(row.id)
+    })
+
+    if (rowsPendingHydration.length === 0) {
+      setInstitutionSchedulesHydrating(false)
+      return
+    }
+
+    const pendingApplicationIds = rowsPendingHydration.map(row => row.id)
+
+    let cancelled = false
+    setInstitutionSchedulesHydrating(true)
+    void hydrateOrganizationApplicationSchedules(institutionListRef.current, queryClient, {
+      companySchool: institutionColumnPreset === 'company-school',
+      applicationIds: pendingApplicationIds,
+    })
+      .then(hydrated => {
+        if (cancelled) return
+        setInstitutionList(prev => mergeHydratedOrganizationRows(prev, hydrated))
+      })
+      .finally(() => {
+        if (cancelled) return
+        for (const id of pendingApplicationIds) {
+          institutionScheduleHydrationAttemptedRef.current.add(id)
+        }
+        setInstitutionSchedulesHydrating(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    institutionColumnPreset,
+    institutionScheduleHydrationSignature,
+    institutionList.length,
+    menu,
+    programId,
+    queryClient,
+    usesProgramInstitutionApplications,
+    viewMode,
+  ])
 
   const fields = useMemo((): FilterFieldConfig[] => {
     if (
@@ -1010,9 +1175,9 @@ export function useApplicantsDetail({
   })
 
   const confirmBulkParticipantReject = useCallback(
-    async (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload): Promise<'ok' | 'error' | 'skipped'> => {
       if (selectedRowKeys.length === 0) {
-        return
+        return 'skipped'
       }
       const keys = selectedRowKeys as string[]
       const remote = await applyRemoteIndividualDecision(
@@ -1023,7 +1188,7 @@ export function useApplicantsDetail({
       )
       if (remote !== 'skipped') {
         if (remote === 'ok') setSelectedRowKeys([])
-        return
+        return remote
       }
       const notifyOptions = toParticipantNotifyOptions(payload, payload.reason)
       setIndividualList(prev =>
@@ -1034,14 +1199,15 @@ export function useApplicantsDetail({
         )
       )
       setSelectedRowKeys([])
+      return 'ok'
     },
     [applyRemoteIndividualDecision, selectedRowKeys]
   )
 
   const confirmBulkParticipantApprove = useCallback(
-    async (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload): Promise<'ok' | 'error' | 'skipped'> => {
       if (selectedRowKeys.length === 0) {
-        return
+        return 'skipped'
       }
       const keys = selectedRowKeys as string[]
       const remote = await applyRemoteIndividualDecision(
@@ -1052,7 +1218,7 @@ export function useApplicantsDetail({
       )
       if (remote !== 'skipped') {
         if (remote === 'ok') setSelectedRowKeys([])
-        return
+        return remote
       }
       const notifyOptions = toParticipantNotifyOptions(payload)
       setIndividualList(prev =>
@@ -1063,6 +1229,7 @@ export function useApplicantsDetail({
         )
       )
       setSelectedRowKeys([])
+      return 'ok'
     },
     [applyRemoteIndividualDecision, selectedRowKeys]
   )
@@ -1214,6 +1381,18 @@ export function useApplicantsDetail({
       await applicationsRemote.invalidateApplications()
       return true
     } catch (error) {
+      const statusConflict = formatApplicationStatusConflictMessage(error)
+      if (statusConflict) {
+        await queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.instructorDetail(id),
+        })
+        await applicationsRemote.invalidateApplications()
+        showAlert({
+          title: '안내',
+          content: statusConflict,
+        })
+        return false
+      }
       notifyRemoteDecisionFailure(error)
       return false
     }
@@ -1346,9 +1525,15 @@ export function useApplicantsDetail({
     void applyRemoteIndividualCancelRejection(id, '반려 취소')
   }
 
-  const handleViewCalendar = () => {
+  const handleViewList = useCallback(() => {
+    applySearch()
+    setViewMode('table')
+  }, [applySearch, setViewMode])
+
+  const handleViewCalendar = useCallback(() => {
+    applySearch()
     setViewMode('calendar')
-  }
+  }, [applySearch, setViewMode])
 
   const title = useMemo(() => {
     if (listTitle) return listTitle
@@ -1478,6 +1663,7 @@ export function useApplicantsDetail({
     handleCancelApprovalIndividual,
     handleCancelRejectIndividual,
     handleViewCalendar,
+    handleViewList,
     detailVariant,
     title,
     tableData,
@@ -1485,7 +1671,8 @@ export function useApplicantsDetail({
     tableScrollX,
     applicationsLoading:
       applicationsRemote.applicationsLoading ||
-      trainedTeacherApplicationsRemote.applicationsLoading,
+      trainedTeacherApplicationsRemote.applicationsLoading ||
+      institutionSchedulesHydrating,
     hasNextPage: !isTrainedTeachersSurface && applicationsRemote.hasNextPage,
     isFetchingNextPage: !isTrainedTeachersSurface && applicationsRemote.isFetchingNextPage,
     fetchNextPage: applicationsRemote.fetchNextPage,

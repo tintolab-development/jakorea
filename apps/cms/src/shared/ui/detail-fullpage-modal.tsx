@@ -113,10 +113,12 @@ export function DetailFullPageModal({
         <div className="detail-fullpage-modal__main">
           <header className="detail-fullpage-modal__header">
             <div className="detail-fullpage-modal__header-top">
-              <h2 className="detail-fullpage-modal__title">{title}</h2>
-              {headerTrailing ? (
-                <div className="detail-fullpage-modal__header-trailing">{headerTrailing}</div>
-              ) : null}
+              <div className="detail-fullpage-modal__header-leading">
+                <h2 className="detail-fullpage-modal__title">{title}</h2>
+                {headerTrailing ? (
+                  <div className="detail-fullpage-modal__header-trailing">{headerTrailing}</div>
+                ) : null}
+              </div>
               <button
                 type="button"
                 className="detail-fullpage-modal__close"

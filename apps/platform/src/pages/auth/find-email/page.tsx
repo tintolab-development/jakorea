@@ -6,6 +6,7 @@ import {
 } from '@jakorea/domain/shared/identity-module-copy'
 import { lookupFindEmail } from '@/features/auth/find-email'
 import {
+  getIdentityApiErrorMessage,
   useFindEmailIdentityVerification,
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
@@ -86,7 +87,8 @@ export function FindEmailPage() {
     try {
       await verify()
     } catch (error) {
-      setSubmitError(getLoginApiErrorMessage(error, IDENTITY_ERROR_MESSAGE))
+      // BE가 NICE start 실패를 INVALID_CREDENTIALS(로그인 문구)로 내릴 수 있음 → 본인인증 문구로 치환
+      setSubmitError(getIdentityApiErrorMessage(error, IDENTITY_ERROR_MESSAGE))
     }
   }
 

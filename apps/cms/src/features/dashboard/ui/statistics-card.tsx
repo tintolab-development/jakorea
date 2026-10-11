@@ -4,7 +4,9 @@
  */
 
 import { Card, Statistic, Row, Col, Tag } from 'antd'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
+import { invalidateQueriesForMemberManagementNavigation } from '@/features/user/api/invalidate-member-management-navigation-queries'
 
 export interface StatisticsCardTag {
   color: string
@@ -32,9 +34,11 @@ export function StatisticsCard({
   loading = false,
 }: StatisticsCardProps) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const hasTags = (tags?.length ?? 0) > 0
 
   const handleClick = () => {
+    invalidateQueriesForMemberManagementNavigation(queryClient, to)
     navigate(to)
   }
 

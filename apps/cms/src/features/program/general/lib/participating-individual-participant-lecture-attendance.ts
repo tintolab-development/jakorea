@@ -1,8 +1,8 @@
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
 import type { LectureAttendanceSession, LectureAttendanceStatusKey } from '@/features/program/general/model/school-detail-types'
 import {
+  fetchAttendancesByScheduleIdsRemote,
   fetchProgramSchedulesViaDashboardRemote,
-  fetchScheduleAttendancesRemote,
 } from '@/features/program/general/api/program-progress-api-client'
 
 const SCHEDULE_PROGRESS_STATUSES = new Set([
@@ -80,20 +80,19 @@ export async function hydrateParticipatingIndividualLectureAttendanceSessions(in
     )
     .sort((a, b) => a.roundNumber - b.roundNumber)
 
-  return Promise.all(
-    withIds.map(async row => {
-      let items: Awaited<ReturnType<typeof fetchScheduleAttendancesRemote>> = []
-      try {
-        items = await fetchScheduleAttendancesRemote(input.programId, String(row.scheduleId))
-      } catch {
-        items = []
-      }
-      const mine = items.find(item => Number(item.participantId) === participantId)
-      return {
-        roundNumber: row.roundNumber,
-        scheduleId: row.scheduleId,
-        status: mapParticipantAttendanceStatusToLectureCertificate(mine?.status) ?? 'not_held',
-      }
-    })
+  const scheduleIdList = withIds.map(row => row.scheduleId)
+  const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
+    input.programId,
+    scheduleIdList
   )
+
+  return withIds.map(row => {
+    const items = attendancesByScheduleId[String(row.scheduleId)] ?? []
+    const mine = items.find(item => Number(item.participantId) === participantId)
+    return {
+      roundNumber: row.roundNumber,
+      scheduleId: row.scheduleId,
+      status: mapParticipantAttendanceStatusToLectureCertificate(mine?.status) ?? 'not_held',
+    }
+  })
 }

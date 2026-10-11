@@ -4,8 +4,10 @@
 import assert from 'node:assert/strict'
 import { AxiosError } from 'axios'
 import {
+  getApiErrorMessageFromBody,
   getApplicationApiErrorCode,
   getProgramApplicationApiErrorMessage,
+  isIndividualApplicationEnrolledGradeRequiredError,
   messageForApplicationBlockedReason,
 } from './application-api-error.ts'
 
@@ -23,14 +25,67 @@ function axiosErr(data: unknown) {
 
 const mismatchBody = {
   success: false,
+  message: MISMATCH,
   error: {
     code: 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH',
-    message: 'Volunteer recruitment target does not match member classification',
+    message: MISMATCH,
   },
 }
+
+const affiliationBody = {
+  success: false,
+  data: null,
+  message: '활성 학교·기관 소속이 필요합니다.',
+  error: {
+    code: 'ACTIVE_ORGANIZATION_AFFILIATION_REQUIRED',
+    message: '활성 학교·기관 소속이 필요합니다.',
+    field: null,
+    traceId: 'test-trace',
+    details: null,
+  },
+}
+
+assert.equal(
+  getApiErrorMessageFromBody(affiliationBody),
+  '활성 학교·기관 소속이 필요합니다.',
+)
+assert.equal(
+  getProgramApplicationApiErrorMessage(axiosErr(affiliationBody)),
+  '활성 학교·기관 소속이 필요합니다.',
+)
+assert.equal(
+  messageForApplicationBlockedReason('ACTIVE_ORGANIZATION_AFFILIATION_REQUIRED'),
+  '활성 학교·기관 소속이 필요합니다.',
+)
+assert.equal(
+  (messageForApplicationBlockedReason('UNKNOWN_FUTURE_CODE') ?? '').includes('UNKNOWN'),
+  false,
+)
 
 assert.equal(messageForApplicationBlockedReason('VOLUNTEER_RECRUITMENT_TARGET_MISMATCH'), MISMATCH)
 assert.equal(getProgramApplicationApiErrorMessage(axiosErr(mismatchBody)), MISMATCH)
 assert.equal(getApplicationApiErrorCode(axiosErr(mismatchBody)), 'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH')
+
+const enrolledGradeBody = {
+  error: {
+    code: 'INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED',
+    message: '재학 중인 회원은 학년 정보를 등록한 후 개인 프로그램에 신청할 수 있습니다.',
+  },
+  message: '재학 중인 회원은 학년 정보를 등록한 후 개인 프로그램에 신청할 수 있습니다.',
+}
+
+const enrolledGradeErr = new AxiosError('Request failed', undefined, undefined, undefined, {
+  status: 400,
+  data: enrolledGradeBody,
+  statusText: 'Bad Request',
+  headers: {},
+  config: {} as never,
+})
+
+assert.equal(
+  getProgramApplicationApiErrorMessage(enrolledGradeErr),
+  enrolledGradeBody.message,
+)
+assert.equal(isIndividualApplicationEnrolledGradeRequiredError(enrolledGradeErr), true)
 
 console.log('application-api-error.selfcheck: ok')

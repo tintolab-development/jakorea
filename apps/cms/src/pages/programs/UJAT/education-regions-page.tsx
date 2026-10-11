@@ -4,7 +4,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import { FilterTableLayout, CmsButton, CmsInput, CmsRadio, CmsRadioGroup } from '@/shared/ui'
+import {
+  FilterTableLayout, CmsButton, CmsInput, CmsRadio, CmsRadioGroup,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -416,7 +419,7 @@ export default function UjatEducationRegionsPage() {
   )
 
   const toolbarActions = (
-    <CmsButton
+    <FilterTableToolbarButton
       variant="secondary"
       width={160}
       adminAction="write"
@@ -424,7 +427,7 @@ export default function UjatEducationRegionsPage() {
       onClick={() => setRegisterOpen(true)}
     >
       교육 지역 등록
-    </CmsButton>
+    </FilterTableToolbarButton>
   )
 
   return (

@@ -4,10 +4,11 @@
  */
 
 import { useMemo, useState, useEffect } from 'react'
-import { Card, Table, Row, Col, Select } from 'antd'
+import { Card, Row, Col, Select } from 'antd'
 import { CmsButton } from '@/shared/ui'
 import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useProgramProgressParams,
   type ProgressFilters,
@@ -600,7 +601,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                   학교 삭제
                 </CmsButton>
               </div>
-              <Table<ParticipatingSchoolRow>
+              <CmsDataTable<ParticipatingSchoolRow>
                 className="program-progress-tab__table cms-data-table"
                 rowKey="id"
                 size="middle"
@@ -669,7 +670,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                   </CmsButton>
                 </div>
               </div>
-              <Table<ParticipatingInstructorRow>
+              <CmsDataTable<ParticipatingInstructorRow>
                 className="program-progress-tab__table cms-data-table"
                 rowKey="id"
                 size="middle"

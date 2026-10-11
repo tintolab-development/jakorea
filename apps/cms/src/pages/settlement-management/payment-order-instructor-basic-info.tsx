@@ -4,7 +4,7 @@
  */
 
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import type { PaymentOrderAdminInstructorDetail } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminInstructorDetail } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'

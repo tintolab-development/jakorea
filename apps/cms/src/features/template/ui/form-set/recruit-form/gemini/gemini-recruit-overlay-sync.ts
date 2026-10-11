@@ -4,6 +4,7 @@ import {
   isOperationalSeedDefaultSuppressed,
   readOperationalOverlayKvValue,
 } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
+import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 
 export const GEMINI_RECRUIT_OVERLAY_KEYS = {
   title: 'geminiRecruit.title',
@@ -45,42 +46,59 @@ export function createDefaultGeminiRecruitOverlay(): Record<string, unknown> {
   }
 }
 
-let overlayState: Record<string, unknown> = createDefaultGeminiRecruitOverlay()
-let overlayVersion = 0
-const overlayListeners = new Set<() => void>()
+const store = createScopedOverlayStore()
 
-function emitOverlay() {
-  overlayVersion += 1
-  overlayListeners.forEach(l => l())
+export function setGeminiRecruitOverlayScope(templateCode: string | undefined | null): void {
+  store.setScope(templateCode)
 }
 
 export function subscribeGeminiRecruitOverlay(listener: () => void): () => void {
-  overlayListeners.add(listener)
-  return () => overlayListeners.delete(listener)
+  return store.subscribe(listener)
 }
 
 export function getGeminiRecruitOverlayVersion(): number {
-  return overlayVersion
+  return store.getVersion()
 }
 
 export function getGeminiRecruitOverlayRecord(): Record<string, unknown> {
-  return overlayState
+  return store.getRecord()
+}
+
+export function peekGeminiRecruitOverlayRecord(
+  templateCode: string | undefined | null
+): Record<string, unknown> {
+  return store.peekRecord(templateCode)
+}
+
+export function replaceGeminiRecruitOverlayForScope(
+  templateCode: string | undefined | null,
+  next: Record<string, unknown>
+): void {
+  store.replaceFor(templateCode, next)
+}
+
+export function resetGeminiRecruitOverlayForScope(
+  templateCode: string | undefined | null
+): void {
+  store.replaceFor(
+    templateCode,
+    isOperationalSeedDefaultSuppressed('gemini-recruit', '*')
+      ? {}
+      : createDefaultGeminiRecruitOverlay()
+  )
 }
 
 export function patchGeminiRecruitOverlay(partial: Record<string, unknown>): void {
-  overlayState = { ...overlayState, ...partial }
-  emitOverlay()
+  store.patch(partial)
 }
 
 export function replaceGeminiRecruitOverlay(next: Record<string, unknown>): void {
-  overlayState = { ...createDefaultGeminiRecruitOverlay(), ...next }
-  emitOverlay()
+  store.replace({ ...createDefaultGeminiRecruitOverlay(), ...next })
 }
 
 /** 템플릿 변경으로 불러온 overlay. 빠진 키를 시드 기본값(최소 인원 15 등)으로 채우지 않는다. */
 export function replaceGeminiRecruitOverlayExact(next: Record<string, unknown>): void {
-  overlayState = { ...next }
-  emitOverlay()
+  store.replace(next)
 }
 
 export function pickGeminiRecruitOverlay(record: Record<string, unknown>): Record<string, unknown> {
@@ -141,10 +159,19 @@ export function restoreGeminiRecruitOverlay(overlay: Record<string, unknown>): v
 }
 
 export function resetGeminiRecruitOverlay(): void {
-  overlayState = isOperationalSeedDefaultSuppressed('gemini-recruit', '*')
-    ? {}
-    : createDefaultGeminiRecruitOverlay()
-  emitOverlay()
+  store.replace(
+    isOperationalSeedDefaultSuppressed('gemini-recruit', '*')
+      ? {}
+      : createDefaultGeminiRecruitOverlay()
+  )
+}
+
+export function resetAllGeminiRecruitOverlay(): void {
+  store.resetAll()
+}
+
+export function resetGeminiRecruitOverlayStoreForTests(): void {
+  store.resetAll()
 }
 
 export function useGeminiRecruitOverlayKv<T>(

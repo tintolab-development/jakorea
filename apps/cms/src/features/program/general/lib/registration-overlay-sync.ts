@@ -17,6 +17,7 @@ import { participantFlagsFromGeneralProgram } from '@/features/program/general/l
 import {
   isPreEducationCurriculumSession,
   isPreEducationScheduleBlock,
+  trimTrailingBlankRegularCurriculumSessions,
 } from '@/features/program/general/lib/schedule-detail-form'
 import {
   resolveWageGradeFee,
@@ -302,7 +303,9 @@ function ipsValueFromSummary(summary: string | undefined): { category: string; d
 }
 
 function curriculumOverlayFromProgram(program: Program): Record<string, unknown> {
-  const rows = program.generalCommonInfo?.curriculumSessions ?? []
+  const rows = trimTrailingBlankRegularCurriculumSessions(
+    program.generalCommonInfo?.curriculumSessions ?? []
+  )
   if (rows.length === 0) return {}
   const unitNameBySession: Record<number, string> = {}
   const unitContentBySession: Record<number, string> = {}
@@ -493,7 +496,9 @@ export function extrasFromGeneralProgram(program: Program): GeneralRegistrationE
     registrationOverlay: overlay,
   })
   const participant = participantFlagsFromGeneralProgram(program)
-  const regularSessionCount = countRegularCurriculumSessions(common?.curriculumSessions)
+  const regularSessionCount = countRegularCurriculumSessions(
+    trimTrailingBlankRegularCurriculumSessions(common?.curriculumSessions ?? [])
+  )
   const overlaySessionCount = countGeneralCurriculumOverlaySessions(overlay)
   const overlayUnitCount = countGeneralCurriculumUnitSessionsFromOverlay(overlay)
   const labeledRoundCount = (common?.curriculumSessions ?? []).filter(
@@ -615,7 +620,18 @@ export function resyncGeneralRegistrationOverlayFromProgram(
 ): Record<string, unknown> {
   const fromNested = buildGeneralRegistrationOverlayFromProgram(program)
   const extra = editOverlay ?? overlayFromProgram(program)
-  return { ...extra, ...fromNested }
+  const merged = { ...extra, ...fromNested }
+  if (!editOverlay) return merged
+  for (const key of [
+    `${KPI}.participantCount`,
+    `${KPI}.instructor`,
+    `${KPI}.volunteer`,
+  ] as const) {
+    if (Object.prototype.hasOwnProperty.call(editOverlay, key) && editOverlay[key] == null) {
+      merged[key] = editOverlay[key]
+    }
+  }
+  return merged
 }
 
 export function seedGeneralRegistrationOverlayFromProgram(program: Program): void {
@@ -663,6 +679,26 @@ export function seedGeneralRegistrationOverlayFromProgram(program: Program): voi
   fillPerScheduleEducationFormMaps(merged, program)
   replaceProgramRegistrationOverlayPrefix(GENERAL_REGISTRATION_OVERLAY_PREFIX, merged)
   setGeneralRegistrationDetailEditExtras(extrasFromGeneralProgram(program))
+}
+
+/** 공통정보 RHF 저장 직전 — 폼이 반영한 Program 스냅샷으로 overlay KV 동기화 */
+export function writeGeneralRegistrationOverlayFromCommonInfoFormValues(
+  draftFromForm: Program
+): void {
+  const fromForm = buildGeneralRegistrationOverlayFromProgram(draftFromForm)
+  const saved = readGeneralRegistrationOverlayForSave()
+  const merged = { ...saved, ...fromForm }
+  for (const key of [
+    `${KPI}.participantCount`,
+    `${KPI}.instructor`,
+    `${KPI}.volunteer`,
+  ] as const) {
+    if (Object.prototype.hasOwnProperty.call(saved, key) && saved[key] == null) {
+      merged[key] = saved[key]
+    }
+  }
+  replaceProgramRegistrationOverlayPrefix(GENERAL_REGISTRATION_OVERLAY_PREFIX, merged)
+  setGeneralRegistrationDetailEditExtras(extrasFromGeneralProgram(draftFromForm))
 }
 
 export function readGeneralRegistrationOverlayForSave(): Record<string, unknown> {

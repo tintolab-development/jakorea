@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { PFText } from '@/shared/ui'
 import { useApplicationSettlementsQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
@@ -48,7 +49,9 @@ export function EducationSettlementPanel({
     return allItems.slice(start, start + EDUCATION_SETTLEMENT_PAGE_SIZE)
   }, [allItems, currentPage])
 
-  if (remoteSettlements.isLoading) return null
+  if (remoteSettlements.isLoading) {
+    return <EducationSessionListSkeleton statusMessage="정산현황을 불러오는 중입니다." />
+  }
   if (remoteSettlements.isError) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

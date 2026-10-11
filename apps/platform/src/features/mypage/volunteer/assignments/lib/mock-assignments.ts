@@ -99,37 +99,45 @@ const INSTITUTION_WAITING: VolunteerWaitingInstitutionRow[] = [
   },
 ]
 
+/** Figma 11005:341176 — 배정된 봉사 일정 (지역별 복수 일정) */
 const INDIVIDUAL_ASSIGNED: VolunteerAssignedScheduleRow[] = [
   {
     id: 'ind-assigned-3',
     no: 3,
     location: '서울특별시 강서구',
     distanceFromHome: '10km',
-    scheduleLine: '2026년 01월 09일(금) 09:00~12:20 | 2차시',
+    scheduleLines: [
+      '2026년 01월 09일(금) 09:00~12:20 | 2차시',
+      '2026년 01월 09일(금) 10:00~11:20 | 1차시',
+    ],
   },
   {
     id: 'ind-assigned-2',
     no: 2,
     location: '서울특별시 강서구',
     distanceFromHome: '10km',
-    scheduleLine: '2026년 01월 16일(금) 09:00~12:20 | 1차시',
+    scheduleLines: [
+      '2026년 01월 09일(금) 09:00~12:20 | 1차시',
+      '2026년 01월 09일(금) 10:00~11:20 | 3차시',
+    ],
   },
   {
     id: 'ind-assigned-1',
     no: 1,
     location: '서울특별시 강서구',
     distanceFromHome: '10km',
-    scheduleLine: '2026년 01월 23일(금) 09:00~12:20 | 1차시',
+    scheduleLines: ['2026년 01월 09일(금) 09:00~12:20 | 1차시'],
   },
 ]
 
+/** Figma — 배정된 봉사 일정 목록 (기관 소재지 · 배정 대기/취소) */
 const INDIVIDUAL_WAITING: VolunteerWaitingScheduleRow[] = [
   {
     id: 'ind-waiting-5',
     no: 5,
     location: '서울특별시 양천구',
     distanceFromHome: '10km',
-    scheduleLine: '2026년 02월 06일(금) 09:00~12:20 | 1차시',
+    scheduleLine: '2026년 01월 09일(금) 09:00~12:20 | 2차시',
     assignmentStatus: 'waiting',
   },
   {
@@ -137,7 +145,7 @@ const INDIVIDUAL_WAITING: VolunteerWaitingScheduleRow[] = [
     no: 4,
     location: '서울특별시 양천구',
     distanceFromHome: '10km',
-    scheduleLine: '2026년 02월 13일(금) 09:00~12:20 | 3차시',
+    scheduleLine: '2026년 01월 09일(금) 10:00~11:20 | 1차시',
     assignmentStatus: 'waiting',
   },
   {
@@ -145,7 +153,7 @@ const INDIVIDUAL_WAITING: VolunteerWaitingScheduleRow[] = [
     no: 3,
     location: '서울특별시 영등포구',
     distanceFromHome: '10km',
-    scheduleLine: '2026년 02월 20일(금) 09:00~12:20 | 4차시',
+    scheduleLine: '2026년 01월 09일(금) 09:00~12:20 | 1차시',
     assignmentStatus: 'cancelled',
   },
   {
@@ -153,7 +161,7 @@ const INDIVIDUAL_WAITING: VolunteerWaitingScheduleRow[] = [
     no: 2,
     location: '서울특별시 영등포구',
     distanceFromHome: '10km',
-    scheduleLine: '2026년 02월 27일(금) 09:00~12:20 | 5차시',
+    scheduleLine: '2026년 01월 09일(금) 10:00~11:20 | 3차시',
     assignmentStatus: 'cancelled',
   },
   {
@@ -161,7 +169,7 @@ const INDIVIDUAL_WAITING: VolunteerWaitingScheduleRow[] = [
     no: 1,
     location: '서울특별시 마포구',
     distanceFromHome: '10km',
-    scheduleLine: '2026년 03월 06일(금) 09:00~12:20 | 6차시',
+    scheduleLine: '2026년 01월 09일(금) 09:00~12:20 | 1차시',
     assignmentStatus: 'cancelled',
   },
 ]
@@ -193,9 +201,13 @@ export function getMockVolunteerInstitutionAssignment(
 export function getMockVolunteerIndividualAssignment(
   lastParticipatedSession?: number,
 ): VolunteerIndividualAssignment {
-  const assigned = INDIVIDUAL_ASSIGNED.filter(row =>
-    isScheduleLineWithinLastSession(row.scheduleLine, lastParticipatedSession),
-  )
+  const assigned = INDIVIDUAL_ASSIGNED.map(row => ({
+    ...row,
+    scheduleLines: row.scheduleLines.filter(line =>
+      isScheduleLineWithinLastSession(line, lastParticipatedSession),
+    ),
+  })).filter(row => row.scheduleLines.length > 0)
+
   const waiting = INDIVIDUAL_WAITING.filter(row =>
     isScheduleLineWithinLastSession(row.scheduleLine, lastParticipatedSession),
   )

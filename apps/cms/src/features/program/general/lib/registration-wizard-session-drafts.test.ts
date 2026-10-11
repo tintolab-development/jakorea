@@ -14,7 +14,7 @@ describe('registration wizard session drafts', () => {
     clearRegistrationWizardSessionDrafts()
   })
 
-  it('keeps every visited application draft and ignores recruitment templates', () => {
+  it('keeps every visited application and recruitment draft for registration complete', () => {
     const institution = createProgramApplicationFormInstitutionDraft()
     const volunteer = createProgramApplicationFormVolunteerDraft()
     institution.paragraphs[0] = {
@@ -35,25 +35,37 @@ describe('registration wizard session drafts', () => {
       draft: volunteer,
       editorState: { volunteerExceptionScheduleCount: 2 },
     })
+    const recruit = createRecruitFormInstructorDraft()
+    recruit.paragraphs[0] = {
+      ...recruit.paragraphs[0],
+      paragraphTitle: '강사 모집 수정',
+    }
     rememberRegistrationWizardSessionDraft({
       templateCode: 'recruitment-instructor',
-      draft: createRecruitFormInstructorDraft(),
+      draft: recruit,
     })
 
     const overrides = flushApplicationOperationalOverrides({
       overlayForTemplateCode: code =>
-        code === 'application-volunteer' ? { 'application.volunteer.interview': [] } : {},
+        code === 'application-volunteer'
+          ? { 'application.volunteer.interview': [] }
+          : code === 'recruitment-instructor'
+            ? { 'recruit.instructor.notes': '안내' }
+            : {},
     })
 
     expect(overrides.map(item => item.templateCode)).toEqual([
       'application-participant-school',
       'application-volunteer',
+      'recruitment-instructor',
     ])
     expect(overrides[0]?.draft.paragraphs[0]?.paragraphTitle).toBe('기관 신청 수정')
     expect(overrides[0]?.overlay).toBeUndefined()
     expect(overrides[1]?.draft.paragraphs[0]?.paragraphTitle).toBe('봉사자 신청 수정')
     expect(overrides[1]?.overlay).toEqual({ 'application.volunteer.interview': [] })
     expect(overrides[1]?.editorState).toEqual({ volunteerExceptionScheduleCount: 2 })
+    expect(overrides[2]?.draft.paragraphs[0]?.paragraphTitle).toBe('강사 모집 수정')
+    expect(overrides[2]?.overlay).toEqual({ 'recruit.instructor.notes': '안내' })
   })
 
   it('peeks remembered application drafts without flushing', () => {

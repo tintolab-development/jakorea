@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
+  formatParticipatingSchoolSessionLine,
   formatVolunteerAssignmentScheduleLine,
   resolveParticipatingInstitutionScheduleRowLabel,
 } from './participating-school-session-display'
@@ -32,6 +33,18 @@ function baseSession(overrides: Partial<ParticipatingSchoolSession> = {}): Parti
     ...overrides,
   }
 }
+
+describe('formatParticipatingSchoolSessionLine', () => {
+  it('scheduleLabel이 있으면 날짜 포맷 대신 그 문자열을 쓴다', () => {
+    expect(
+      formatParticipatingSchoolSessionLine(
+        baseSession({
+          scheduleLabel: '26년 10월 26일(월) 10:00 ~ 12:00',
+        })
+      )
+    ).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
+  })
+})
 
 describe('resolveParticipatingInstitutionScheduleRowLabel', () => {
   it('단일 회차는 교육 일정을 노출한다', () => {

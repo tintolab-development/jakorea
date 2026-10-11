@@ -1,4 +1,4 @@
-import type { AdminFaq } from '@/data/mock/admin-faqs'
+import type { AdminFaq } from '@/features/posts/model/admin-faq'
 import type {
   FaqRequest,
   FaqResponse,

@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -38,6 +38,64 @@ import {
   updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import './program-registration-paragraph.css'
+
+const EMPTY_STRING_BY_INDEX: Record<number, string> = {}
+const CURRICULUM_UNIT_NAME_KEY = 'generalRegistration.educationCurriculum.unitNameBySession'
+const CURRICULUM_UNIT_CONTENT_KEY = 'generalRegistration.educationCurriculum.unitContentBySession'
+const CURRICULUM_ROUND_CONTENT_KEY = 'generalRegistration.educationCurriculum.roundContentByRound'
+const CURRICULUM_PRE_EDUCATION_NAME_KEY =
+  'generalRegistration.educationCurriculum.preEducationScheduleName'
+
+function CurriculumOverlayTextInput({
+  recordKey,
+  index,
+  placeholder,
+  style,
+}: {
+  recordKey: string
+  index: number
+  placeholder: string
+  style?: CSSProperties
+}) {
+  const [record] = useProgramRegistrationOverlayKv<Record<number, string>>(
+    recordKey,
+    EMPTY_STRING_BY_INDEX
+  )
+  return (
+    <CmsInput
+      inputSize="medium"
+      placeholder={placeholder}
+      width="100%"
+      style={style}
+      value={record[index] ?? ''}
+      onChange={event => {
+        const nextValue = event.target.value
+        updateProgramRegistrationOverlayKey<Record<number, string>>(recordKey, prev => {
+          const current = prev ?? EMPTY_STRING_BY_INDEX
+          if ((current[index] ?? '') === nextValue) return current
+          return { ...current, [index]: nextValue }
+        })
+      }}
+    />
+  )
+}
+
+function PreEducationScheduleNameInput() {
+  const [name, setName] = useProgramRegistrationOverlayKv(
+    CURRICULUM_PRE_EDUCATION_NAME_KEY,
+    PRE_EDUCATION_SCHEDULE_LABEL
+  )
+  return (
+    <CmsInput
+      inputSize="medium"
+      value={name}
+      placeholder="행사 일정명을 작성하세요"
+      width="100%"
+      style={{ minWidth: 0, flex: '1 1 0' }}
+      onChange={event => setName(event.target.value)}
+    />
+  )
+}
 
 const PRE_EDUCATION_SESSION_INDEX = 0
 
@@ -98,35 +156,21 @@ export function getProgramRegistrationCurriculumMultiSessionRowPlan(
   return 'p_eduPer_piAnyPer'
 }
 
-function ProgramRegistrationCurriculumUnitContentInputs({
-  unitName,
-  unitContent,
-  onUnitNameChange,
-  onUnitContentChange,
-}: {
-  unitName: string
-  unitContent: string
-  onUnitNameChange: (value: string) => void
-  onUnitContentChange: (value: string) => void
-}) {
+function ProgramRegistrationCurriculumUnitContentInputs({ chartIndex }: { chartIndex: number }) {
   return (
     <div className="detail-info-form-inputs-wrapper">
-      <CmsInput
-        inputSize="medium"
+      <CurriculumOverlayTextInput
+        recordKey={CURRICULUM_UNIT_NAME_KEY}
+        index={chartIndex}
         placeholder="단원명을 입력하세요"
-        width="100%"
         style={{ minWidth: 0, flex: '1 1 0' }}
-        value={unitName}
-        onChange={event => onUnitNameChange(event.target.value)}
       />
       <DetailInfoForm.InputsSeparator />
-      <CmsInput
-        inputSize="medium"
+      <CurriculumOverlayTextInput
+        recordKey={CURRICULUM_UNIT_CONTENT_KEY}
+        index={chartIndex}
         placeholder="교육 내용을 작성하세요"
-        width="100%"
         style={{ minWidth: 0, flex: '1 1 160px' }}
-        value={unitContent}
-        onChange={event => onUnitContentChange(event.target.value)}
       />
     </div>
   )
@@ -150,15 +194,11 @@ function ProgramRegistrationMultiRoundClassRow({
   fieldLabel,
   progressSession,
   onProgressSessionChange,
-  roundContent,
-  onRoundContentChange,
 }: {
   roundIndex: number
   fieldLabel?: string
   progressSession: string
   onProgressSessionChange: (value: string) => void
-  roundContent: string
-  onRoundContentChange: (value: string) => void
 }) {
   return (
     <DetailInfoForm.Row type="single">
@@ -181,13 +221,11 @@ function ProgramRegistrationMultiRoundClassRow({
               onChange={v => onProgressSessionChange(String(v ?? ''))}
             />
             <DetailInfoForm.InputsSeparator />
-            <CmsInput
-              inputSize="medium"
+            <CurriculumOverlayTextInput
+              recordKey={CURRICULUM_ROUND_CONTENT_KEY}
+              index={roundIndex}
               placeholder="교육 내용을 작성하세요"
-              width="100%"
               style={{ minWidth: 0, flex: '1 1 0' }}
-              value={roundContent}
-              onChange={event => onRoundContentChange(event.target.value)}
             />
           </div>
         }
@@ -203,20 +241,12 @@ function ProgramRegistrationCurriculumChartSessionBlock({
   onDeleteCurriculumChartSession,
   extraRows,
   showHeading = true,
-  unitName,
-  unitContent,
-  onUnitNameChange,
-  onUnitContentChange,
 }: {
   chartIndex: number
   headingLabel?: string
   onDeleteCurriculumChartSession: (chartIndex: number) => void
   extraRows?: ReactNode
   showHeading?: boolean
-  unitName: string
-  unitContent: string
-  onUnitNameChange: (value: string) => void
-  onUnitContentChange: (value: string) => void
 }) {
   const heading = headingLabel ?? `${chartIndex}차시`
   const showDelete = headingLabel == null && chartIndex > 1
@@ -242,12 +272,7 @@ function ProgramRegistrationCurriculumChartSessionBlock({
               ]}
               fullRow
               edit={
-                <ProgramRegistrationCurriculumUnitContentInputs
-                  unitName={unitName}
-                  unitContent={unitContent}
-                  onUnitNameChange={onUnitNameChange}
-                  onUnitContentChange={onUnitContentChange}
-                />
+                <ProgramRegistrationCurriculumUnitContentInputs chartIndex={chartIndex} />
               }
               view="-"
             />
@@ -304,34 +329,17 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     Record<number, ProgramRegistrationMultiRoundAssignmentValue>
   >('generalRegistration.educationCurriculum.assignmentByRound', {})
 
-  const [unitNameBySession] = useProgramRegistrationOverlayKv<Record<number, string>>(
-    'generalRegistration.educationCurriculum.unitNameBySession',
-    {}
-  )
-  const [unitContentBySession] = useProgramRegistrationOverlayKv<Record<number, string>>(
-    'generalRegistration.educationCurriculum.unitContentBySession',
-    {}
-  )
-  const [roundContentByRound] = useProgramRegistrationOverlayKv<Record<number, string>>(
-    'generalRegistration.educationCurriculum.roundContentByRound',
-    {}
-  )
-
   const [preEducationScheduleLine] = useProgramRegistrationOverlayKv<string | null>(
     'generalRegistration.educationCurriculum.preEducationScheduleLine',
     null
   )
-  const [preEducationScheduleName, setPreEducationScheduleName] = useProgramRegistrationOverlayKv(
-    'generalRegistration.educationCurriculum.preEducationScheduleName',
-    PRE_EDUCATION_SCHEDULE_LABEL
-  )
 
   useEffect(() => {
     if (!scheduleCurriculumPreEducation) return
-    setPreEducationScheduleName(
-      preEducationScheduleName.trim() ? preEducationScheduleName : PRE_EDUCATION_SCHEDULE_LABEL
+    updateProgramRegistrationOverlayKey<string>(CURRICULUM_PRE_EDUCATION_NAME_KEY, prev =>
+      typeof prev === 'string' && prev.trim() ? prev : PRE_EDUCATION_SCHEDULE_LABEL
     )
-  }, [scheduleCurriculumPreEducation]) // eslint-disable-line react-hooks/exhaustive-deps -- seed when toggle on
+  }, [scheduleCurriculumPreEducation])
 
   const educationFormForSession = (sessionIndex: number) =>
     educationFormBySession[sessionIndex] ?? 'online'
@@ -506,16 +514,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                 <DetailInfoForm.Field
                   label="일정명"
                   validationKey="curriculum.preEducationScheduleName"
-                  edit={
-                    <CmsInput
-                      inputSize="medium"
-                      value={preEducationScheduleName}
-                      placeholder="행사 일정명을 작성하세요"
-                      width="100%"
-                      style={{ minWidth: 0, flex: '1 1 0' }}
-                      onChange={event => setPreEducationScheduleName(event.target.value)}
-                    />
-                  }
+                  edit={<PreEducationScheduleNameInput />}
                   view="-"
                 />
                 <DetailInfoForm.Field
@@ -580,20 +579,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                 chartIndex={chartIndex}
                 showHeading={showChartSessionHeading}
                 onDeleteCurriculumChartSession={handleDeleteChartSession}
-                unitName={unitNameBySession[chartIndex] ?? ''}
-                unitContent={unitContentBySession[chartIndex] ?? ''}
-                onUnitNameChange={value =>
-                  updateProgramRegistrationOverlayKey<Record<number, string>>(
-                    'generalRegistration.educationCurriculum.unitNameBySession',
-                    prev => ({ ...(prev ?? {}), [chartIndex]: value })
-                  )
-                }
-                onUnitContentChange={value =>
-                  updateProgramRegistrationOverlayKey<Record<number, string>>(
-                    'generalRegistration.educationCurriculum.unitContentBySession',
-                    prev => ({ ...(prev ?? {}), [chartIndex]: value })
-                  )
-                }
                 extraRows={
                   <DetailInfoForm.Row type="single">
                     <DetailInfoForm.Field
@@ -630,20 +615,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
               chartIndex={chartIndex}
               showHeading={showChartSessionHeading}
               onDeleteCurriculumChartSession={handleDeleteChartSession}
-              unitName={unitNameBySession[chartIndex] ?? ''}
-              unitContent={unitContentBySession[chartIndex] ?? ''}
-              onUnitNameChange={value =>
-                updateProgramRegistrationOverlayKey<Record<number, string>>(
-                  'generalRegistration.educationCurriculum.unitNameBySession',
-                  prev => ({ ...(prev ?? {}), [chartIndex]: value })
-                )
-              }
-              onUnitContentChange={value =>
-                updateProgramRegistrationOverlayKey<Record<number, string>>(
-                  'generalRegistration.educationCurriculum.unitContentBySession',
-                  prev => ({ ...(prev ?? {}), [chartIndex]: value })
-                )
-              }
             />
           )
         })}
@@ -841,13 +812,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                   onProgressSessionChange={value =>
                     updateProgramRegistrationOverlayKey<Record<number, string>>(
                       'generalRegistration.educationCurriculum.progressSessionByRound',
-                      prev => ({ ...(prev ?? {}), [roundIndex]: value })
-                    )
-                  }
-                  roundContent={roundContentByRound[roundIndex] ?? ''}
-                  onRoundContentChange={value =>
-                    updateProgramRegistrationOverlayKey<Record<number, string>>(
-                      'generalRegistration.educationCurriculum.roundContentByRound',
                       prev => ({ ...(prev ?? {}), [roundIndex]: value })
                     )
                   }

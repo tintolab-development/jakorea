@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { CmsRadio } from '@/shared/ui/cms-radio'
-import { JaKoreaLogo } from '@/shared/ui/icons/JaKoreaLogo'
+import { JaKoreaMemberLogo } from '@/shared/ui/icons/JaKoreaMemberLogo'
 import { TermsContentPlaceholder } from '../../lib/terms-content-placeholder'
 import {
   TERMS_CONSENT_OPTIONS,
@@ -80,7 +80,7 @@ export function TermsViewModal({
               {TERMS_VIEW_TITLES[type]}
             </h2>
           </div>
-          <JaKoreaLogo className="terms-view-modal__logo" width={154} height={48} aria-hidden />
+          <JaKoreaMemberLogo className="terms-view-modal__logo" />
         </header>
 
         <div className="terms-view-modal__body">

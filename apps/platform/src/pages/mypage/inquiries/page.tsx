@@ -13,17 +13,13 @@ import {
 import {
   getMypageLnbItems,
   MYPAGE_INQUIRIES_PATH,
+  MypageLayoutBootSkeleton,
   navigateMypageLnb,
   showInstructorApplyCta,
   useMypageMember,
+  useMypagePageAuthReady,
   type MypageLnbItemKey,
 } from '@/features/mypage'
-import {
-  getAccessToken,
-  getDevAuthLoggedIn,
-  isRemoteApiConfigured,
-  resolveLoginRequiredPath,
-} from '@/shared/lib'
 import illustWordballoonsUrl from '@/shared/assets/illustration/illust-wordballoons.svg'
 import { PFTabs, PFText } from '@/shared/ui'
 import { MypageLayout } from '@/widgets/mypage-layout'
@@ -31,26 +27,11 @@ import styles from './page.module.css'
 
 export function MypageInquiriesPage() {
   const navigate = useNavigate()
-  const [isAuthReady, setIsAuthReady] = useState(false)
+  const isAuthReady = useMypagePageAuthReady(MYPAGE_INQUIRIES_PATH)
   const [params, setParams] = useState(readInquiryListParams)
   const member = useMypageMember()
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile, 'inquiries')
-
-  useEffect(() => {
-    const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
-    if (hasRemoteToken) {
-      setIsAuthReady(true)
-      return
-    }
-
-    if (!getDevAuthLoggedIn()) {
-      navigate(resolveLoginRequiredPath(MYPAGE_INQUIRIES_PATH))
-      return
-    }
-
-    setIsAuthReady(true)
-  }, [navigate])
 
   useEffect(() => {
     const onPopState = () => {
@@ -79,7 +60,16 @@ export function MypageInquiriesPage() {
   }
 
   if (!isAuthReady || isChecking || isRedirecting) {
-    return null
+    return (
+      <MypageLayout
+        variant="subpage"
+        lnbItems={lnbItems}
+        showInstructorApply={showInstructorApplyCta(member.profile)}
+        onLnbItemSelect={handleLnbItemSelect}
+      >
+        <MypageLayoutBootSkeleton />
+      </MypageLayout>
+    )
   }
 
   return (

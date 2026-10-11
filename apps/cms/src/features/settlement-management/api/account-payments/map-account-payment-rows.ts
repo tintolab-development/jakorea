@@ -1,4 +1,4 @@
-import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
+import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import type { AccountPaymentListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { mapPaymentStatusToAccountPaymentStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'

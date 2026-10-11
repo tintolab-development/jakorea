@@ -16,7 +16,10 @@ import {
 } from '@jakorea/form-schema/writing-form'
 import { migrateProgramParticipantApplicationParagraphs } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { resolveApplicationAnswerKey } from './application-answer-key.ts'
-import { isApplicationTeamInfoParagraphId } from './apply-form-paragraph-ids.ts'
+import {
+  isApplicationTeamInfoParagraphId,
+  isPortalDynamicOptionArrayParagraphId,
+} from './apply-form-paragraph-ids.ts'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -216,6 +219,78 @@ function filledParagraphContentScore(document: Record<string, unknown>): number 
 }
 
 /** CMS 등록본이 중첩 schemaJson 에만 있을 때 — 문단 수, 그다음 채워진 셀을 고른다. */
+function scoreRuntimeContext(runtime: unknown): number {
+  if (!isRecord(runtime)) return 0
+  let score = 0
+  const audience = runtime.audienceApplication
+  if (isRecord(audience) && isRecord(audience.dynamicQuestions)) {
+    for (const value of Object.values(audience.dynamicQuestions)) {
+      if (!isRecord(value)) continue
+      const count = value.optionCount
+      if (typeof count === 'number' && Number.isFinite(count)) score += count
+      if (value.resolved === true) score += 0.5
+    }
+  }
+  if (Array.isArray(runtime.hiddenQuestionKeys)) score += runtime.hiddenQuestionKeys.length * 0.01
+  if (isRecord(audience) && Array.isArray(audience.hiddenQuestionKeys)) {
+    score += audience.hiddenQuestionKeys.length * 0.01
+  }
+  return score
+}
+
+function pickBestRuntimeContext(candidates: readonly unknown[]): unknown | undefined {
+  let best: unknown | undefined
+  let bestScore = -1
+  for (const candidate of candidates) {
+    const score = scoreRuntimeContext(candidate)
+    if (score > bestScore) {
+      best = candidate
+      bestScore = score
+    }
+  }
+  return best
+}
+
+function collectRuntimeContextCandidates(form: unknown, depth: number, collected: unknown[]): void {
+  if (!form || depth > 4) return
+  if (typeof form === 'string' && form.trim()) {
+    try {
+      collectRuntimeContextCandidates(JSON.parse(form), depth + 1, collected)
+    } catch {
+      return
+    }
+    return
+  }
+  if (!isRecord(form)) return
+  if (form.runtimeContext != null) collected.push(form.runtimeContext)
+  for (const key of NESTED_FORM_KEYS) {
+    const nested = form[key]
+    if (nested == null) continue
+    collectRuntimeContextCandidates(nested, depth + 1, collected)
+  }
+}
+
+/**
+ * Portal form-binding SSOT: `response.form.runtimeContext` (envelope 최상위만 보면 비어 보일 수 있음).
+ */
+export function resolvePortalApplicationFormRuntimeContext(formBinding: unknown): unknown | undefined {
+  const candidates: unknown[] = []
+  collectRuntimeContextCandidates(formBinding, 0, candidates)
+  return pickBestRuntimeContext(candidates)
+}
+
+function attachBestRuntimeContext(
+  document: Record<string, unknown>,
+  formBindingRoot: unknown,
+): Record<string, unknown> {
+  const candidates: unknown[] = []
+  collectRuntimeContextCandidates(formBindingRoot, 0, candidates)
+  if (document.runtimeContext != null) candidates.push(document.runtimeContext)
+  const best = pickBestRuntimeContext(candidates)
+  if (!best) return document
+  return { ...document, runtimeContext: best }
+}
+
 function pickRicherFormDocument(
   current: Record<string, unknown> | null,
   next: Record<string, unknown> | null,
@@ -427,7 +502,37 @@ export function coerceApplicationFormDocument(form: unknown): Record<string, unk
   for (const document of documents.slice(1)) {
     best = pickRicherFormDocument(best, document)
   }
-  return best && paragraphCount(best) > 0 ? mergeFilledParagraphContent(best, documents) : null
+  if (!best || paragraphCount(best) <= 0) return null
+  const merged = mergeFilledParagraphContent(best, documents)
+  return attachBestRuntimeContext(merged, form)
+}
+
+/** form-binding 문단의 런타임 선택지·플래그를 draft 문단 id에 병합한다. */
+export function mergeApplicationBindingRuntimeParagraphs(
+  draft: WritingFormDraft,
+  formBinding: unknown,
+): WritingFormDraft {
+  const document = coerceApplicationFormDocument(formBinding)
+  if (!document || !Array.isArray(document.paragraphs)) return draft
+  const bindingById = new Map<string, Record<string, unknown>>()
+  for (const paragraph of document.paragraphs) {
+    if (!isRecord(paragraph) || typeof paragraph.id !== 'string' || !paragraph.id.trim()) continue
+    bindingById.set(paragraph.id.trim(), paragraph)
+  }
+  if (bindingById.size === 0) return draft
+  const merged = draft.paragraphs.map(paragraph => {
+    const binding = bindingById.get(paragraph.id)
+    if (!binding) return paragraph
+    return { ...paragraph, ...binding } as WritingFormParagraph
+  })
+  const mergedIds = new Set(merged.map(paragraph => paragraph.id))
+  const appended = document.paragraphs.flatMap(paragraph => {
+    if (!isRecord(paragraph) || typeof paragraph.id !== 'string' || !paragraph.id.trim()) {
+      return []
+    }
+    return mergedIds.has(paragraph.id.trim()) ? [] : [paragraph as unknown as WritingFormParagraph]
+  })
+  return appended.length > 0 ? { ...draft, paragraphs: [...merged, ...appended] } : { ...draft, paragraphs: merged }
 }
 
 function mergeAnswerIntoParagraph(
@@ -605,6 +710,16 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
     if (!paragraph.allowMultiple) return paragraph.selectedPreviewSingleId ?? null
     return paragraph.selectedPreviewMultipleIds ?? []
   }
+  if (isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
+    /** 면접·봉사 일정 placeholder — BE는 option id 문자열 배열만 받는다. */
+    if ('selectedPreviewMultipleIds' in paragraph) {
+      return paragraph.selectedPreviewMultipleIds ?? []
+    }
+    if ('selectedPreviewSingleId' in paragraph && paragraph.selectedPreviewSingleId) {
+      return [paragraph.selectedPreviewSingleId]
+    }
+    return []
+  }
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     /** 동의 없는 표(기본 정보 등) — 키가 빠지면 submit REQUIRED 실패 */
     return {
@@ -656,7 +771,7 @@ export function buildApplicationAnswersFromDraft(
       answers[key] = value
       continue
     }
-    if (isRequiredParagraph(paragraph)) {
+    if (isRequiredParagraph(paragraph) && !isPortalDynamicOptionArrayParagraphId(paragraph.id)) {
       answers[key] = {}
     }
   }

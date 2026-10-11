@@ -1,10 +1,10 @@
 import { memo } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { mailSendRecipientTypeLabel } from '@/features/notifications/model/mail-send/recipients'
 import type { MailSendRecipient } from '@/features/notifications/model/mail-send/types'
 import './recipient-table.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const TABLE_MAX_HEIGHT = 400
 const TABLE_HEADER_HEIGHT = 54
@@ -61,7 +61,7 @@ export const RecipientTable = memo(function RecipientTable({
   ]
 
   return (
-    <Table
+    <CmsDataTable
       className="cms-data-table cms-data-table--skip-auto-no-col mail-send-recipient-table"
       columns={columns}
       dataSource={recipients}

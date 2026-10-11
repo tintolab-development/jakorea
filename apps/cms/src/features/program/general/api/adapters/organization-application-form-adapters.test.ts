@@ -100,6 +100,24 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     expect(hydrated.sessions?.[0]?.date).toBe('2026.03.10(화) 오전')
   })
 
+  it('fills empty list grade from institution basic-info nested JSON', () => {
+    const form = formWithAnswers([
+      {
+        questionKeySnapshot: 'program-application-institution-seed-basic-info',
+        answerValueJson: JSON.stringify({
+          schoolName: '부명초등학교',
+          applicationGrade: '1',
+          educationGrade: '1',
+        }),
+      },
+    ])
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: { ...baseRow, educationGrade: '' },
+      formResponse: form,
+    })
+    expect(hydrated.educationGrade).toBe('1학년')
+  })
+
   it('keeps list grade/address/teacher and fills empty reason from nested basic-info', () => {
     const form = formWithAnswers([
       {

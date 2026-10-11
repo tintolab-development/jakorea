@@ -5,8 +5,10 @@ import {
 } from '@/features/posts/api/shared/category-adapters'
 import {
   mapInquiryDetail,
-  mapInquiryListResponse,
+  mapInquiryListItem,
 } from '@/features/posts/api/inquiries/adapters/inquiry-adapters'
+import type { PostsListPage } from '@/features/posts/api/posts-list-page'
+import { mapPostsListPage } from '@/features/posts/api/shared/map-posts-list-page'
 import { inquiriesParamsFromSearchParams } from '@/features/posts/api/inquiries/inquiry-filter-params'
 import {
   bulkDeleteInquiriesRemote,
@@ -42,10 +44,18 @@ export function shouldUseInquiriesRemoteApi(): boolean {
   return isRealApiModuleEnabled('inquiries') && hasRemoteAdminJwt()
 }
 
-export async function getInquiryList(searchParams: URLSearchParams): Promise<AdminInquiryRow[]> {
+export async function getInquiryListPage(
+  searchParams: URLSearchParams,
+  page: number
+): Promise<PostsListPage<AdminInquiryRow>> {
   assertInquiriesRemoteReady()
-  const dto = await fetchInquiriesRemote(inquiriesParamsFromSearchParams(searchParams))
-  return mapInquiryListResponse(dto)
+  const dto = await fetchInquiriesRemote(inquiriesParamsFromSearchParams(searchParams, page))
+  return mapPostsListPage(dto, mapInquiryListItem)
+}
+
+export async function getInquiryList(searchParams: URLSearchParams): Promise<AdminInquiryRow[]> {
+  const page = await getInquiryListPage(searchParams, 0)
+  return page.items
 }
 
 export async function getInquiryDetail(id: string): Promise<AdminInquiryDetail> {

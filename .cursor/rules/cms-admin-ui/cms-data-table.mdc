@@ -25,8 +25,8 @@ alwaysApply: false
 | thead 타이포 | 16px / 700 / center (관례) |
 | thead 배경 | `var(--table-th-bg)` → `var(--BG-header)` — [table-th.mdc](./table-th.mdc) |
 | thead/tbody 보더 | `1px solid var(--table-line)` |
-| tbody 패딩 | **10px 16px** |
-| tbody 높이 | **54px** |
+| tbody 패딩 | **10px 16px** (CMS 공통 8×12) |
+| tbody 높이 | **min-height 52px(CMS) / 54px(Admin)**, 다줄 셀은 `height: auto`; 단줄 고정은 `cms-data-table--fixed-row-height` |
 | 외곽 | `1px solid var(--table-line)` · radius **8px** 관례 |
 | 선택 열 폭 | **68px** (`--table-selection-column-width` 또는 앱 상수) |
 | No. 열 폭 | **~80px** (앱 `TABLE_COLUMN_WIDTHS.index`) |
@@ -47,6 +47,7 @@ alwaysApply: false
 
 - 비활성 행 클래스: `cms-data-table__row--disabled` / `CMS_DATA_TABLE_ROW_DISABLED_CLASS`
 - 조회만: non-clickable row hover 비활성 관례
+- 공통 `cms-data-table.css` tbody **치수(padding·height)** 는 `:hover` 선택자로 중복하지 않음 — 호버는 **배경색만** 변경. 화면별 padding override 시 `tr > td`와 `tr:hover > td`를 **쌍으로** 동일 값 지정 (호버 시 shift 방지).
 
 ## 금지
 

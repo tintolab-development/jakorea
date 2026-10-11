@@ -40,6 +40,9 @@ import type { TemplateEditorVm } from '@/features/template/ui/template-renderers
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
+import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
+import { seedOperationalOverlayFromProgramCatalog } from '@/features/program/general/lib/detail-operational-save-merge'
+import { invalidateProgramFormBindingsCache } from '@/features/program/general/lib/sync-registration-form-bindings'
 
 export function GeneralProgramApplicationTemplateEditModal({
   open,
@@ -83,6 +86,12 @@ export function GeneralProgramApplicationTemplateEditModal({
       resetInstitutionApplicationProgramBridge()
     }
   }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    setOperationalOverlayScope(definitionId)
+    seedOperationalOverlayFromProgramCatalog(scopedProgram, definitionId)
+  }, [open, definitionId, scopedProgram])
 
   useEffect(() => {
     if (!open) return
@@ -175,12 +184,13 @@ export function GeneralProgramApplicationTemplateEditModal({
     try {
       await vm.handleSave()
       detailRequiredHighlight.clear()
+      invalidateProgramFormBindingsCache(scopedProgram.id)
       onSaved?.()
       showUpdateCompletedAlert()
     } catch {
       // useProgramParticipantApplicationEditor / form-template-save-feedback에서 안내
     }
-  }, [detailRequiredHighlight, onSaved, showAlert, vm])
+  }, [detailRequiredHighlight, onSaved, scopedProgram.id, showAlert, vm])
 
   if (registryEntry == null) return null
 

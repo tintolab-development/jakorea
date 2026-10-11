@@ -372,6 +372,14 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
         ] as const,
+      /** 봉사 배정현황 — GET .../assignments (Class C). 교육일정 UI와 분리 */
+      assignments: (applicationType: string, applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'assignments',
+          applicationType,
+          applicationId,
+        ] as const,
       /** 설문·만족도 — GET .../forms (Class C) */
       forms: (applicationType: string, applicationId: string, formType: string) =>
         [

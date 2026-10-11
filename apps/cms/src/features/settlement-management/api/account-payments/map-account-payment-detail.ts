@@ -1,12 +1,12 @@
 import type {
   AccountPaymentRow,
   AccountPaymentStatusDetail,
-} from '@/data/mock/account-payments-list'
-import { ACCOUNT_PAYMENT_STATUS_LABELS } from '@/data/mock/account-payments-list'
+} from '@/features/settlement-management/model/account-payments-list'
+import { ACCOUNT_PAYMENT_STATUS_LABELS } from '@/features/settlement-management/model/account-payments-list'
 import type {
   PaymentOrderCalculationStatementLine,
   PaymentOrderCalculationStatementSessionBlock,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type {
   AccountPaymentDetailResponse,
   SettlementFrontendItemResponse,
@@ -156,6 +156,8 @@ function buildAccountPaymentStatusDetail(
     basic: {
       nameKo: row.instructorName,
       nameEn: '-',
+      genderBirthDisplay: '-',
+      scheduleChangeCancelCount: undefined,
       phoneDisplay: '-',
       emailDisplay: '-',
       addressDisplay: '-',

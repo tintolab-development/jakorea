@@ -3,11 +3,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Table, Select } from 'antd'
+import { Select, Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
@@ -18,14 +18,15 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
-import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
 import {
   PARTICIPATING_INDIVIDUAL_VOLUNTEER_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
   PARTICIPATING_INDIVIDUAL_VOLUNTEER_WAITING_SCHEDULE_EXCEL_COLUMNS,
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment-export'
 import {
-  buildIndividualVolunteerAssignmentRowsFromEducationScope,
+  resolveVolunteerAssignmentDistanceCellLabel,
+  VOLUNTEER_ASSIGNMENT_DISTANCE_UNAVAILABLE_TOOLTIP,
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment'
+import { useParticipatingIndividualVolunteerAssignment } from '@/features/program/general/hooks/use-participating-individual-volunteer-assignment'
 import type {
   ParticipatingIndividualVolunteerAssignedScheduleRow,
   ParticipatingIndividualVolunteerWaitingScheduleRow,
@@ -33,40 +34,23 @@ import type {
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
-import {
-  fetchGeneralParticipantEducationScope,
-  fetchGeneralProgressAttendanceBundle,
-  saveGeneralParticipantEducationScope,
-} from '@/features/program/general/api/admin-program-progress-service'
-import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import {
-  notifyProgramApiUnavailable,
-  useNotifyProgramApiUnavailableOnce,
-} from '@/features/program/shared/lib/program-api-unavailable'
+import { saveGeneralParticipantEducationScope } from '@/features/program/general/api/admin-program-progress-service'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import './instructor-assignment-status-text.css'
-import './participating-individual-volunteer-assignment-section.css'
+
+function renderDistanceFromHomeCell(value: string, educationScopeFetching: boolean) {
+  const label = resolveVolunteerAssignmentDistanceCellLabel(value, educationScopeFetching)
+  if (label === '-') {
+    return <span title={VOLUNTEER_ASSIGNMENT_DISTANCE_UNAVAILABLE_TOOLTIP}>{label}</span>
+  }
+  return label
+}
 
 const ASSIGNED_EMPTY_TEXT = '배정된 봉사 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 봉사 일정이 없습니다.'
 
 function renderScheduleCell(label: string) {
-  return (
-    <div className="participating-individual-volunteer-assignment-section__schedule-cell">
-      {renderProgramDetailPipeSeparated(label)}
-    </div>
-  )
-}
-
-function renderTableEmpty(text: string) {
-  return (
-    <div
-      className="participating-individual-volunteer-assignment-section__table-empty"
-      role="status"
-    >
-      {text}
-    </div>
-  )
+  return renderProgramDetailPipeSeparated(label)
 }
 
 export interface ParticipatingIndividualVolunteerAssignmentSectionProps {
@@ -79,43 +63,14 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   volunteer,
 }: ParticipatingIndividualVolunteerAssignmentSectionProps) {
   const { showAlert } = useCmsAlert()
-  const queryClient = useQueryClient()
-  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
-
-  useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled,
-    'general-individual-volunteer-education-scope',
-    '참여 봉사자 상세 · 봉사 배정'
-  )
-
-  const scopeQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.educationScope(program.id, volunteer.id),
-    queryFn: () => fetchGeneralParticipantEducationScope(program.id, volunteer.id),
-    enabled: remoteEnabled,
-    staleTime: 15_000,
-    retry: false,
-  })
-
-  const schedulesQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.schedules(String(program.id)),
-    queryFn: () => fetchGeneralProgressAttendanceBundle(String(program.id)),
-    enabled: remoteEnabled,
-    staleTime: 15_000,
-    retry: false,
-  })
-
-  const remoteRows = useMemo(() => {
-    if (!remoteEnabled || schedulesQuery.data == null) {
-      return { assigned: [], waiting: [] }
-    }
-    const assignedScheduleIds =
-      scopeQuery.data?.configured === false ? [] : (scopeQuery.data?.scheduleIds ?? [])
-    return buildIndividualVolunteerAssignmentRowsFromEducationScope({
-      program,
-      assignedScheduleIds,
-      schedules: schedulesQuery.data.schedules,
-    })
-  }, [program, remoteEnabled, schedulesQuery.data, scopeQuery.data])
+  const {
+    remoteEnabled,
+    isLoading,
+    assignedSchedules: remoteAssignedSchedules,
+    waitingSchedules: remoteWaitingSchedules,
+    scopeQuery,
+    invalidateScope,
+  } = useParticipatingIndividualVolunteerAssignment({ program, volunteer })
 
   const [assignedSchedules, setAssignedSchedules] = useState<
     ParticipatingIndividualVolunteerAssignedScheduleRow[]
@@ -136,22 +91,46 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   const [addAssignWaitingRowId, setAddAssignWaitingRowId] = useState<string | null>(null)
 
   useEffect(() => {
-    setAssignedSchedules(remoteRows.assigned)
-    setWaitingSchedules(remoteRows.waiting)
+    if (isLoading) return
+    setAssignedSchedules(remoteAssignedSchedules)
+    setWaitingSchedules(remoteWaitingSchedules)
     setSelectedAssignedKeys([])
     setSelectedWaitingKeys([])
-  }, [remoteRows, volunteer.id, program.id])
+  }, [
+    isLoading,
+    remoteAssignedSchedules,
+    remoteWaitingSchedules,
+    volunteer.id,
+    program.id,
+  ])
 
   const assignedColumns: ColumnsType<ParticipatingIndividualVolunteerAssignedScheduleRow> =
     useMemo(
       () => [
         { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
         {
+          title: '봉사 지역',
+          dataIndex: 'serviceRegion',
+          key: 'serviceRegion',
+          width: 445,
+          align: 'center',
+          ellipsis: true,
+        },
+        {
+          title: '자택과의 거리',
+          dataIndex: 'distanceFromHome',
+          key: 'distanceFromHome',
+          width: 445,
+          align: 'center',
+          render: (value: string) =>
+            renderDistanceFromHomeCell(value, scopeQuery.isFetching),
+        },
+        {
           title: '담당 봉사 진행 일정',
           dataIndex: 'scheduleLabel',
           key: 'scheduleLabel',
-          width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-          minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+          width: 500,
+          minWidth: 500,
           className: 'participating-institutions-section__th-sessions',
           onHeaderCell: () => ({
             className: 'participating-institutions-section__th-sessions',
@@ -160,18 +139,34 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
           render: (label: string) => renderScheduleCell(label),
         },
       ],
-      []
+      [scopeQuery.isFetching]
     )
 
   const waitingColumns: ColumnsType<ParticipatingIndividualVolunteerWaitingScheduleRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
+        title: '봉사 지역',
+        dataIndex: 'serviceRegion',
+        key: 'serviceRegion',
+        width: 285,
+        align: 'center',
+        ellipsis: true,
+      },
+      {
+        title: '자택과의 거리',
+        dataIndex: 'distanceFromHome',
+        key: 'distanceFromHome',
+        width: 285,
+        align: 'center',
+        render: (value: string) => renderDistanceFromHomeCell(value, scopeQuery.isFetching),
+      },
+      {
         title: '봉사 진행 희망 일정',
         dataIndex: 'scheduleLabel',
         key: 'scheduleLabel',
-        width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        width: 500,
+        minWidth: 500,
         className: 'participating-institutions-section__th-sessions',
         onHeaderCell: () => ({
           className: 'participating-institutions-section__th-sessions',
@@ -183,7 +178,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 100,
+        width: 160,
         align: 'center',
         render: (status: ParticipatingIndividualVolunteerWaitingScheduleRow['assignmentStatus']) => (
           <span
@@ -197,17 +192,19 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '배정 봉사자 수',
         dataIndex: 'assignedVolunteerCountLabel',
         key: 'assignedVolunteerCountLabel',
-        width: 110,
+        width: 160,
         align: 'center',
       },
     ],
-    []
+    [scopeQuery.isFetching]
   )
 
   const assignedExportRows = useMemo(
     () =>
       assignedSchedules.map(row => ({
         no: row.no,
+        serviceRegion: row.serviceRegion,
+        distanceFromHome: row.distanceFromHome,
         scheduleLabel: row.scheduleLabel,
       })),
     [assignedSchedules]
@@ -217,6 +214,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
     () =>
       waitingSchedules.map(row => ({
         no: row.no,
+        serviceRegion: row.serviceRegion,
+        distanceFromHome: row.distanceFromHome,
         scheduleLabel: row.scheduleLabel,
         assignmentStatus: WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[row.assignmentStatus],
         assignedVolunteerCountLabel: row.assignedVolunteerCountLabel,
@@ -253,9 +252,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
           expectedRevision: scopeQuery.data?.revision ?? 0,
           reason,
         })
-        await queryClient.invalidateQueries({
-          queryKey: generalProgramProgressQueryKeys.educationScope(program.id, volunteer.id),
-        })
+        await invalidateScope()
         return true
       } catch {
         showAlert({
@@ -265,7 +262,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         return false
       }
     },
-    [program.id, queryClient, remoteEnabled, scopeQuery.data?.revision, showAlert, volunteer.id]
+    [invalidateScope, program.id, remoteEnabled, scopeQuery.data?.revision, showAlert, volunteer.id]
   )
 
   const handleUnassignClick = useCallback(() => {
@@ -376,8 +373,16 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
     [waitingSchedules, selectedWaitingKeys]
   )
 
+  if (isLoading) {
+    return (
+      <div className="detail-fullpage-modal__loading" role="status">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
   return (
-    <div className="participating-individual-volunteer-assignment-section school-detail-fullpage-view__instructor-tab">
+    <div className="school-detail-fullpage-view__instructor-tab">
       <div className="school-detail-fullpage-view__instructor-section">
         <div className="table-header-actions">
           <div className="table-header-title--wrapper">
@@ -404,7 +409,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
           </div>
         </div>
         <div className="participating-institutions-section__table-wrap">
-          <Table<ParticipatingIndividualVolunteerAssignedScheduleRow>
+          <CmsDataTable<ParticipatingIndividualVolunteerAssignedScheduleRow>
             className="participating-institutions-section__table cms-data-table"
             rowKey="id"
             size="middle"
@@ -417,7 +422,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
             }}
             columns={assignedColumns}
             dataSource={assignedSchedules}
-            locale={{ emptyText: renderTableEmpty(ASSIGNED_EMPTY_TEXT) }}
+            emptyTitle={ASSIGNED_EMPTY_TEXT}
+            emptyDescription={null}
           />
         </div>
       </div>
@@ -435,8 +441,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
             <ExcelButton onClick={exportWaitingExcel} loading={isWaitingExcelExporting} />
           </div>
         </div>
-        <div className="participating-institutions-section__table-wrap participating-individual-volunteer-assignment-section__table-scroll">
-          <Table<ParticipatingIndividualVolunteerWaitingScheduleRow>
+        <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__waiting-table-scroll">
+          <CmsDataTable<ParticipatingIndividualVolunteerWaitingScheduleRow>
             className="participating-institutions-section__table cms-data-table"
             rowKey="id"
             size="middle"
@@ -452,7 +458,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
             }}
             columns={waitingColumns}
             dataSource={waitingSchedules}
-            locale={{ emptyText: renderTableEmpty(WAITING_EMPTY_TEXT) }}
+            emptyTitle={WAITING_EMPTY_TEXT}
+            emptyDescription={null}
             rowClassName={record =>
               record.assignmentStatus === 'unavailable'
                 ? 'school-detail-fullpage-view__waiting-row--unavailable'

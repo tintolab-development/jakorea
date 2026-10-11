@@ -279,7 +279,11 @@ export function resolveUjatRegistrationBasicInfoDisplay(
 /** 등록 양식 overlay → Program 필드 (상세·목록 mock 병합) */
 export function applyUjatRegistrationOverlayToProgram(
   program: Program,
-  overlayInput: Record<string, unknown>
+  overlayInput: Record<string, unknown>,
+  options?: {
+    /** 상세 수정 저장 — overlay에 KPI 키가 있으면 빈 값을 지움(0)으로 본다. 표시용 병합에서는 끈다. */
+    kpiClearedAsZero?: boolean
+  }
 ): Program {
   const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
   const seal = readOperationRangeSeal(overlayInput)
@@ -356,14 +360,15 @@ export function applyUjatRegistrationOverlayToProgram(
   const generalSurveyMenuKeys =
     (persistedSurveyMenuKeys as Program['generalSurveyMenuKeys'] | undefined) ??
     program.generalSurveyMenuKeys
-  const overlayKpi = {
-    finalParticipants: overlayNullableNumber(overlayInput, 'ujat.kpi.participantCount'),
-    instructorCount: overlayNullableNumber(overlayInput, 'ujat.kpi.instructor'),
-    volunteerCount: overlayNullableNumber(overlayInput, 'ujat.kpi.volunteer'),
-    finalSchools: overlayNullableNumber(overlayInput, 'ujat.kpi.dispatchedSchool'),
-    finalClasses: overlayNullableNumber(overlayInput, 'ujat.kpi.dispatchedClass'),
-  }
   const prevKpi = program.generalCommonInfo?.kpi
+  const kpiNumber = (key: string, fallback: number | undefined): number => {
+    const value = overlayNullableNumber(overlayInput, key)
+    if (value != null) return value
+    if (options?.kpiClearedAsZero && Object.prototype.hasOwnProperty.call(overlayInput, key)) {
+      return 0
+    }
+    return fallback ?? 0
+  }
   const participantFlags = resolveUjatParticipantTypeFlags(program, overlayInput)
 
   return {
@@ -396,11 +401,11 @@ export function applyUjatRegistrationOverlayToProgram(
         sponsorContactIds.length > 0 ? sponsorContactIds : undefined,
       sponsorManagerContactId: sponsorContactIds[0],
       kpi: {
-        finalParticipants: overlayKpi.finalParticipants ?? prevKpi?.finalParticipants ?? 0,
-        instructorCount: overlayKpi.instructorCount ?? prevKpi?.instructorCount ?? 0,
-        volunteerCount: overlayKpi.volunteerCount ?? prevKpi?.volunteerCount ?? 0,
-        finalSchools: overlayKpi.finalSchools ?? prevKpi?.finalSchools ?? 0,
-        finalClasses: overlayKpi.finalClasses ?? prevKpi?.finalClasses ?? 0,
+        finalParticipants: kpiNumber('ujat.kpi.participantCount', prevKpi?.finalParticipants),
+        instructorCount: kpiNumber('ujat.kpi.instructor', prevKpi?.instructorCount),
+        volunteerCount: kpiNumber('ujat.kpi.volunteer', prevKpi?.volunteerCount),
+        finalSchools: kpiNumber('ujat.kpi.dispatchedSchool', prevKpi?.finalSchools),
+        finalClasses: kpiNumber('ujat.kpi.dispatchedClass', prevKpi?.finalClasses),
       },
     },
   }

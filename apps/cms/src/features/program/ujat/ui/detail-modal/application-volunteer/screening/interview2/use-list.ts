@@ -221,28 +221,32 @@ export function useUjatVolunteerInterview2({
   )
 
   const applySecondInterviewStatus = useCallback(
-    (ids: string[], status: UjatSecondInterviewScreeningStatus) => {
+    async (ids: string[], status: UjatSecondInterviewScreeningStatus): Promise<boolean> => {
       setList(prev => patchUjatVolunteerSecondInterviewScreeningStatus(prev, ids, status))
       setSelectedRowKeys([])
       if (
-        status === 'pass' ||
-        status === 'fail' ||
-        status === 'reserve1' ||
-        status === 'reserve2' ||
-        status === 'reserve3' ||
-        status === 'reserve4'
+        status !== 'pass' &&
+        status !== 'fail' &&
+        status !== 'reserve1' &&
+        status !== 'reserve2' &&
+        status !== 'reserve3' &&
+        status !== 'reserve4'
       ) {
-        void submitUjatVolunteerFinalResultsRemote(ids, status)
-          .then(() => invalidateVolunteerLists())
-          .catch((error: unknown) => {
-            showAlert({
-              title: '2차 면접 결과 저장 실패',
-              content:
-                formatApplicationEligibilityConflictMessage(error) ??
-                '최종 결과 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
-            })
-            void invalidateVolunteerLists()
-          })
+        return true
+      }
+      try {
+        await submitUjatVolunteerFinalResultsRemote(ids, status)
+        await invalidateVolunteerLists()
+        return true
+      } catch (error: unknown) {
+        showAlert({
+          title: '2차 면접 결과 저장 실패',
+          content:
+            formatApplicationEligibilityConflictMessage(error) ??
+            '최종 결과 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+        })
+        await invalidateVolunteerLists()
+        return false
       }
     },
     [invalidateVolunteerLists, showAlert]
@@ -277,9 +281,11 @@ export function useUjatVolunteerInterview2({
   }, [])
 
   const confirmBulkPass = useCallback(
-    (payload: UjatInterview2BulkPassConfirmPayload) => {
+    async (payload: UjatInterview2BulkPassConfirmPayload) => {
       const ids = selectedRowKeys.map(String)
-      applySecondInterviewStatus(ids, payload.passType)
+      const ok = await applySecondInterviewStatus(ids, payload.passType)
+      setBulkPassModalOpen(false)
+      if (!ok) return
       const passTypeLabel =
         UJAT_INTERVIEW2_BULK_PASS_TYPE_OPTIONS.find(option => option.value === payload.passType)
           ?.label ?? payload.passType
@@ -293,7 +299,6 @@ export function useUjatVolunteerInterview2({
         title: '일괄 합격',
         content: `선택한 ${ids.length}건이 ${passTypeLabel} 처리되었습니다. (알림: ${notifyLabel})`,
       })
-      setBulkPassModalOpen(false)
     },
     [applySecondInterviewStatus, selectedRowKeys, showAlert]
   )
@@ -332,33 +337,37 @@ export function useUjatVolunteerInterview2({
   }, [])
 
   const confirmWithdrawActivity = useCallback(
-    (_payload: ActivityWithdrawScheduleModalPayload) => {
+    async (_payload: ActivityWithdrawScheduleModalPayload) => {
       if (!withdrawTargetId) return
       const row = list.find(item => item.id === withdrawTargetId)
       if (!row) {
         setWithdrawTargetId(null)
         return
       }
-      updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
-      void giveUpUjatVolunteerApplicationRemote(
-        withdrawTargetId,
-        _payload.stopScheduleLabel
-          ? `활동 포기 (${_payload.stopScheduleLabel})`
-          : '활동 포기'
-      )
-        .then(() => invalidateVolunteerLists())
-        .catch(() => {
-          showAlert({
-            title: '활동 포기 처리 실패',
-            content: '활동 포기 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
-          })
-          void invalidateVolunteerLists()
+      const applicationId = withdrawTargetId
+      const volunteerName = row.name
+      updateRow(applicationId, { interviewAssignmentStatus: 'withdrawn' })
+      setWithdrawTargetId(null)
+      try {
+        await giveUpUjatVolunteerApplicationRemote(
+          applicationId,
+          _payload.stopScheduleLabel
+            ? `활동 포기 (${_payload.stopScheduleLabel})`
+            : '활동 포기'
+        )
+        await invalidateVolunteerLists()
+      } catch {
+        showAlert({
+          title: '활동 포기 처리 실패',
+          content: '활동 포기 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
         })
+        await invalidateVolunteerLists()
+        return
+      }
       showAlert({
         title: '활동 포기',
-        content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
+        content: `${volunteerName} 봉사자가 활동 포기 처리되었습니다.`,
       })
-      setWithdrawTargetId(null)
     },
     [invalidateVolunteerLists, list, showAlert, updateRow, withdrawTargetId]
   )

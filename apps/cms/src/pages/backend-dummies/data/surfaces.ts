@@ -17,7 +17,7 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     weight: 2,
     completionPct: 100,
     gateKeys: ['programs'],
-    mockFiles: ['data/mock/general-programs.ts', 'entities/program/api/program-service.ts'],
+    mockFiles: ['entities/program/api/program-service.ts'],
     apiPaths: ['GET/POST /api/admin/programs', 'GET/PATCH/DELETE /api/admin/programs/{id}'],
   },
   {
@@ -137,7 +137,7 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     mutationStatus: 'hybrid',
     completionPct: 60,
     gateKeys: ['programProgress', 'programs'],
-    mockFiles: ['participating-individual-progress-attendance-local'],
+    mockFiles: [],
     apiPaths: [
       'GET/PUT attendances',
       'GET …/programs/{id}/schedules',
@@ -155,7 +155,7 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     mutationStatus: 'mock-only',
     completionPct: 0,
     gateKeys: [],
-    mockFiles: ['participating-individual-progress-assignment-local'],
+    mockFiles: [],
     apiPaths: [],
     notes: 'P2-5 과제 admin API 없음',
   },
@@ -770,7 +770,7 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     weight: 2,
     completionPct: 90,
     gateKeys: ['members'],
-    mockFiles: ['data/mock/users.ts'],
+    mockFiles: ['entities/user/api/user-service.ts'],
     apiPaths: ['GET/POST /api/admin/users*', 'pre-register'],
   },
   {

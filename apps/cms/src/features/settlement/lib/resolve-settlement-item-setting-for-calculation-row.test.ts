@@ -1,9 +1,45 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { settlementItemSettingSections } from '@/features/settlement-management/model/settlement-item-settings'
 import {
   findSettlementItemSettingByTitle,
   mapSettlementFrontendItemTypeToLineKind,
   resolveSettlementItemSettingForCalculationRow,
 } from './resolve-settlement-item-setting-for-calculation-row'
+
+beforeAll(() => {
+  settlementItemSettingSections.push(
+    {
+      kind: 'wage',
+      sectionTitle: '임금',
+      items: [
+        {
+          id: 'w-1',
+          title: '1급 강사비',
+          description: '',
+          iconKey: 'wage_tier1',
+        },
+        {
+          id: 'w-2',
+          title: '2급 강사비',
+          description: '',
+          iconKey: 'wage_tier2',
+        },
+      ],
+    },
+    {
+      kind: 'deduction',
+      sectionTitle: '공제',
+      items: [
+        {
+          id: 'd-1',
+          title: '원천징수',
+          description: '',
+          iconKey: 'deduct_business_33',
+        },
+      ],
+    }
+  )
+})
 import type { PaymentOrderCalculationTableRow } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 
 function mockRow(

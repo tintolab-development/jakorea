@@ -7,6 +7,7 @@ import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import '@/shared/ui/detail-fullpage-modal.css'
 import type { User } from '@/types/user'
+import { updateMockUserById } from '@/entities/user/api/user-service'
 import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
 import {
   MembersPermissionList,
@@ -38,7 +39,6 @@ import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-moda
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
-import { updateMockUserById } from '@/data/mock/users'
 import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
 import {
   isInstructorPermissionRevoked,
@@ -65,6 +65,57 @@ const PERMISSION_NOTIFICATION_RESEND_MODAL_Z = 2100
 /** 권한 승인 — 회원 풀페이지 상세 URL (`replace: false`로 열어 뒤로가기 복귀) */
 const PR_DETAIL_USER = 'pr_detail_user'
 const PR_DETAIL_ROLE = 'pr_detail_role'
+/** 목록 없이 상세 GET — adminAccountId 또는 instructor requestId */
+const PR_DETAIL_REQUEST = 'pr_detail_request'
+
+type PermissionListTabKey = 'instructor' | 'admin'
+
+function resolveInitialPermissionListTab(searchParams: URLSearchParams): PermissionListTabKey {
+  const role = searchParams.get(PR_DETAIL_ROLE)
+  return role === 'admin' ? 'admin' : 'instructor'
+}
+
+function parsePermissionDetailRequestId(raw: string | null): number | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  const n = Number(trimmed)
+  return Number.isFinite(n) ? n : undefined
+}
+
+function createPermissionDetailStubRow(
+  permissionRole: UserDetailPermissionRole,
+  userId: string,
+  requestId: number
+): MemberPermissionApplicationRow {
+  const appliedAt = new Date().toISOString()
+  if (permissionRole === 'admin') {
+    return {
+      id: `aa-${requestId}`,
+      requestId,
+      adminId: requestId,
+      userId,
+      name: '-',
+      phone: '',
+      email: '',
+      memberCategory: 'ADMIN',
+      applicationTypeLabel: '-',
+      approvalStatus: 'PENDING',
+      appliedAt,
+    }
+  }
+  return {
+    id: `ir-${requestId}`,
+    requestId,
+    userId,
+    name: '-',
+    phone: '',
+    email: '',
+    memberCategory: 'INSTRUCTOR',
+    applicationTypeLabel: '-',
+    approvalStatus: 'PENDING',
+    appliedAt,
+  }
+}
 
 type InstructorApproveModalState =
   | {
@@ -99,6 +150,7 @@ type InstructorRejectModalState =
       userIds: string[]
       requestIds?: number[]
       memberCount: number
+      displayName: string
       source: 'list'
     }
 
@@ -130,8 +182,6 @@ type PermissionNotificationResendModalState = {
   permissionRole: UserDetailPermissionRole
   approvalStatus: PermissionNotificationResendApprovalStatus
 }
-
-type PermissionListTabKey = 'instructor' | 'admin'
 
 function resolveInstructorMemberIdForRevoke(
   userId: string,
@@ -202,6 +252,11 @@ export function PermissionRequestListPage() {
     return id && id.length > 0 ? id : null
   }, [searchParams])
 
+  const detailRequestIdFromUrl = useMemo(
+    () => parsePermissionDetailRequestId(searchParams.get(PR_DETAIL_REQUEST)),
+    [searchParams]
+  )
+
   const detailOpen = detailUserId != null && urlPermissionRole != null
   const permissionRole = urlPermissionRole
   const [instructorApproveModal, setInstructorApproveModal] =
@@ -218,21 +273,53 @@ export function PermissionRequestListPage() {
     useState<PermissionStatusResetConfirmState | null>(null)
   const [permissionNotificationResend, setPermissionNotificationResend] =
     useState<PermissionNotificationResendModalState | null>(null)
-  const [activeListTab, setActiveListTab] = useState<PermissionListTabKey>('instructor')
+  const [activeListTab, setActiveListTab] = useState<PermissionListTabKey>(() =>
+    resolveInitialPermissionListTab(searchParams)
+  )
   const [detailTargetRow, setDetailTargetRow] = useState<MemberPermissionApplicationRow | null>(
     null
   )
+
+  useEffect(() => {
+    if (urlPermissionRole === 'admin') {
+      setActiveListTab('admin')
+    } else if (urlPermissionRole === 'instructor') {
+      setActiveListTab('instructor')
+    }
+  }, [urlPermissionRole])
   /** revoke 직후 React 리렌더용 — BE 신청 row는 APPROVED 이력으로 남을 수 있음 */
   const [revokedInstructorSessionKeys, setRevokedInstructorSessionKeys] = useState(
     () => new Set<string>()
   )
 
   const detailInstructorRequestId =
-    permissionRole === 'instructor' ? detailTargetRow?.requestId : undefined
+    permissionRole === 'instructor'
+      ? (detailTargetRow?.requestId ?? detailRequestIdFromUrl)
+      : undefined
   const detailAdminAccountId =
     permissionRole === 'admin'
-      ? (detailTargetRow?.requestId ?? detailTargetRow?.adminId)
+      ? (detailTargetRow?.requestId ?? detailTargetRow?.adminId ?? detailRequestIdFromUrl)
       : undefined
+
+  const resolvedDetailTargetRow = useMemo((): MemberPermissionApplicationRow | null => {
+    if (detailTargetRow) return detailTargetRow
+    if (!detailOpen || !detailUserId || !permissionRole) return null
+    const requestId =
+      permissionRole === 'admin'
+        ? detailAdminAccountId
+        : permissionRole === 'instructor'
+          ? detailInstructorRequestId
+          : undefined
+    if (requestId == null) return null
+    return createPermissionDetailStubRow(permissionRole, detailUserId, requestId)
+  }, [
+    detailAdminAccountId,
+    detailInstructorRequestId,
+    detailOpen,
+    detailTargetRow,
+    detailUserId,
+    permissionRole,
+  ])
 
   const instructorDetailQuery = useInstructorRoleRequestDetailQuery(
     detailInstructorRequestId,
@@ -244,7 +331,7 @@ export function PermissionRequestListPage() {
   )
 
   const detailUser = useMemo((): Omit<User, 'password'> | null => {
-    if (!detailOpen || !detailTargetRow || !permissionRole) return null
+    if (!detailOpen || !resolvedDetailTargetRow || !permissionRole) return null
 
     const withRevokedSession = (user: Omit<User, 'password'>): Omit<User, 'password'> => {
       const sessionRevoked =
@@ -262,19 +349,19 @@ export function PermissionRequestListPage() {
         if (instructorDetailQuery.data) {
           return withRevokedSession(
             mapInstructorRoleRequestDetailToUser(instructorDetailQuery.data, {
-              fallbackId: detailTargetRow.userId,
+              fallbackId: resolvedDetailTargetRow.userId,
             })
           )
         }
         if (instructorDetailQuery.isError) {
           return withRevokedSession(
-            mapPermissionApplicationRowToDetailUser(detailTargetRow, 'instructor')
+            mapPermissionApplicationRowToDetailUser(resolvedDetailTargetRow, 'instructor')
           )
         }
         return null
       }
       return withRevokedSession(
-        mapPermissionApplicationRowToDetailUser(detailTargetRow, 'instructor')
+        mapPermissionApplicationRowToDetailUser(resolvedDetailTargetRow, 'instructor')
       )
     }
 
@@ -282,22 +369,22 @@ export function PermissionRequestListPage() {
       if (adminDetailQuery.isLoading) return null
       if (adminDetailQuery.data) {
         return mapAdminAccountDetailToUser(adminDetailQuery.data, {
-          fallbackId: detailTargetRow.userId,
+          fallbackId: resolvedDetailTargetRow.userId,
         })
       }
       if (adminDetailQuery.isError) {
-        return mapPermissionApplicationRowToDetailUser(detailTargetRow, 'admin')
+        return mapPermissionApplicationRowToDetailUser(resolvedDetailTargetRow, 'admin')
       }
       return null
     }
-    return mapPermissionApplicationRowToDetailUser(detailTargetRow, 'admin')
+    return mapPermissionApplicationRowToDetailUser(resolvedDetailTargetRow, 'admin')
   }, [
     adminDetailQuery.data,
     adminDetailQuery.isError,
     adminDetailQuery.isLoading,
     adminRemote,
     detailOpen,
-    detailTargetRow,
+    resolvedDetailTargetRow,
     instructorDetailQuery.data,
     instructorDetailQuery.isError,
     instructorDetailQuery.isLoading,
@@ -334,15 +421,26 @@ export function PermissionRequestListPage() {
   const handleOpenUserDetail = useCallback(
     (userId: string, role: UserDetailPermissionRole, row: MemberPermissionApplicationRow) => {
       applyDetailRow(row)
+      const requestId = row.requestId ?? row.adminId
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
           next.set(PR_DETAIL_USER, userId)
           next.set(PR_DETAIL_ROLE, role)
+          if (requestId != null) {
+            next.set(PR_DETAIL_REQUEST, String(requestId))
+          } else {
+            next.delete(PR_DETAIL_REQUEST)
+          }
           return next
         },
         { replace: false }
       )
+      if (role === 'admin') {
+        setActiveListTab('admin')
+      } else {
+        setActiveListTab('instructor')
+      }
     },
     [applyDetailRow, setSearchParams]
   )
@@ -351,8 +449,19 @@ export function PermissionRequestListPage() {
     (row: MemberPermissionApplicationRow) => {
       if (!urlPermissionRole) return
       applyDetailRow(row)
+      const requestId = row.requestId ?? row.adminId
+      if (requestId == null) return
+      setSearchParams(
+        prev => {
+          if (prev.get(PR_DETAIL_REQUEST) === String(requestId)) return prev
+          const next = new URLSearchParams(prev)
+          next.set(PR_DETAIL_REQUEST, String(requestId))
+          return next
+        },
+        { replace: true }
+      )
     },
-    [applyDetailRow, urlPermissionRole]
+    [applyDetailRow, setSearchParams, urlPermissionRole]
   )
 
   const handleCloseDetail = useCallback(() => {
@@ -362,6 +471,7 @@ export function PermissionRequestListPage() {
         const next = new URLSearchParams(prev)
         next.delete(PR_DETAIL_USER)
         next.delete(PR_DETAIL_ROLE)
+        next.delete(PR_DETAIL_REQUEST)
         return next
       },
       { replace: true }
@@ -1127,6 +1237,7 @@ export function PermissionRequestListPage() {
                     userIds: payload.userIds,
                     requestIds: payload.requestIds,
                     memberCount: payload.memberCount,
+                    displayName: payload.displayName,
                     source: 'list',
                   }
             setAdminApproveModal(null)
@@ -1179,6 +1290,7 @@ export function PermissionRequestListPage() {
                     userIds: payload.userIds,
                     requestIds: payload.requestIds,
                     memberCount: payload.memberCount,
+                    displayName: payload.displayName,
                     source: 'list',
                   }
             setInstructorApproveModal(null)
@@ -1260,6 +1372,7 @@ export function PermissionRequestListPage() {
               }
             : {
                 variant: 'bulk' as const,
+                userDisplayName: instructorRejectModal.displayName,
                 memberCount: instructorRejectModal.memberCount,
               })}
         />
@@ -1284,6 +1397,7 @@ export function PermissionRequestListPage() {
               }
             : {
                 variant: 'bulk' as const,
+                userDisplayName: adminRejectModal.displayName,
                 memberCount: adminRejectModal.memberCount,
               })}
         />

@@ -4,7 +4,10 @@ import {
   toDetailedProgramPatchRequest,
   toDetailedProgramRequest,
 } from '@/features/detailed-program/api/adapters/detailed-program-adapters'
-import { detailedProgramsParamsFromSearchParams } from '@/features/detailed-program/api/detailed-program-filter-params'
+import {
+  DETAILED_PROGRAM_LIST_MAX_PAGES,
+  detailedProgramsParamsFromSearchParams,
+} from '@/features/detailed-program/api/detailed-program-filter-params'
 import {
   createDetailedProgramRemote,
   bulkDeleteDetailedProgramsRemote,
@@ -30,14 +33,30 @@ export function shouldUseDetailedProgramsRemoteApi(): boolean {
   return isRealApiModuleEnabled('detailedPrograms') && hasRemoteAdminJwt()
 }
 
+async function fetchAllDetailedProgramRows(
+  searchParams: URLSearchParams
+): Promise<DetailedProgramManagementRow[]> {
+  const rows: DetailedProgramManagementRow[] = []
+  let page = 0
+  let totalPages = 1
+  while (page < totalPages && page < DETAILED_PROGRAM_LIST_MAX_PAGES) {
+    const dto = await fetchDetailedProgramsRemote(
+      detailedProgramsParamsFromSearchParams(searchParams, page)
+    )
+    const pageRows = mapDetailedProgramListResponse(dto)
+    rows.push(...pageRows)
+    totalPages = dto.totalPages ?? page + 1
+    if (pageRows.length === 0) break
+    page += 1
+  }
+  return rows
+}
+
 export async function getDetailedProgramList(
   searchParams: URLSearchParams
 ): Promise<DetailedProgramManagementRow[]> {
   assertDetailedProgramsRemoteReady()
-  const dto = await fetchDetailedProgramsRemote(
-    detailedProgramsParamsFromSearchParams(searchParams)
-  )
-  return mapDetailedProgramListResponse(dto)
+  return fetchAllDetailedProgramRows(searchParams)
 }
 
 /** 등록·공통정보 셀렉트 — 사용(active)만. remote 미연동 시 빈 목록. */

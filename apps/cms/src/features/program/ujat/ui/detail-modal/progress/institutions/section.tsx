@@ -1,8 +1,9 @@
 import { useEffect, useMemo, type MouseEvent } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import {
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { EducationProgressHalfKey } from '../tabs'
 import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-modal/application-institution/use-program-schedule-dates'
@@ -12,6 +13,7 @@ import { useUjatEducationProgressInstitutions } from './use-list'
 import type { UjatEducationProgressInstitutionRow } from './types'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export function UjatEducationProgressInstitutionsSection({
   programId,
@@ -69,27 +71,25 @@ export function UjatEducationProgressInstitutionsSection({
         actions={
           <div className="ujat-education-progress-institutions__actions">
             {viewMode === 'table' ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={() => setViewMode('table')}
               >
                 리스트 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             )}
           </div>
         }
@@ -103,7 +103,7 @@ export function UjatEducationProgressInstitutionsSection({
             ref={tableWrapRef}
             className="ujat-education-progress-institutions__table-wrap"
           >
-            <Table<UjatEducationProgressInstitutionRow>
+            <CmsDataTable<UjatEducationProgressInstitutionRow>
               rowKey="id"
               className="cms-data-table ujat-education-progress-institutions__table clickable-table"
               columns={columns}

@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { UJAT_EDU_VOL_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
 } from '@/shared/constants'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-activity-certificate-preview-modal'
@@ -217,44 +219,40 @@ export function UjatEducationProgressVolunteersSection({
         description={`${tableData.length}건`}
         actions={
           <div className="ujat-education-progress-volunteers__actions">
-            <CmsButton
+            <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              size="large"
               width={180}
               icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
               활동인증서 발급
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              size="large"
               icon={<ButtonDownloadIcon />}
               disabled={studentCertificateExportActive}
               onClick={handleStudentCertificateIssueClick}
             >
               수료증/참여인증서 발급
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              size="large"
               icon={<ButtonDownloadIcon />}
               onClick={() => setVolunteer1365PreviewOpen(true)}
             >
               1365 봉사시간 등록 양식
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               type="button"
               variant="primary"
-              size="large"
               width={140}
               onClick={() => setAddVolunteerModalOpen(true)}
             >
               봉사자 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </div>
         }
         excelExport={{
@@ -263,7 +261,7 @@ export function UjatEducationProgressVolunteersSection({
         }}
       >
         <div ref={tableWrapRef} className="ujat-education-progress-volunteers__table-wrap">
-          <Table<UjatEducationProgressVolunteerRow>
+          <CmsDataTable<UjatEducationProgressVolunteerRow>
             rowKey="id"
             className="cms-data-table ujat-education-progress-volunteers__table ujat-education-progress-volunteers__table--clickable"
             columns={columns}

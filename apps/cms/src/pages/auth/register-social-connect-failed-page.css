@@ -23,11 +23,11 @@
 }
 
 .register-social-connect-failed__icon {
-  width: 70px;
-  height: 70px;
+  width: 84px;
+  height: 84px;
   flex-shrink: 0;
   display: block;
-  margin-top: 40px;
+  object-fit: contain;
 }
 
 .register-social-connect-failed__title {
@@ -43,14 +43,15 @@
 }
 
 .register-social-connect-failed__description {
-  margin: 12px 0 0;
-  color: var(--Color-netural-cool-500, #85969d);
+  color: var(--Brand-700, #285f74);
   text-align: center;
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 16px;
+  font-family: Pretendard;
+  font-size: 18px;
   font-style: normal;
   font-weight: 400;
-  line-height: 150%;
+  line-height: 150%; /* 27px */
+  letter-spacing: -0.18px;
+  margin: 16px 0 0;
 }
 
 .register-social-connect-failed__actions {

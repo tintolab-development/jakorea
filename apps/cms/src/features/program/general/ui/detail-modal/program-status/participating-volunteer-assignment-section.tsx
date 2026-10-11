@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Table, Select } from 'antd'
+import { Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
@@ -14,7 +14,7 @@ import { generalProgramProgressQueryKeys } from '@/features/program/general/api/
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
@@ -96,7 +96,6 @@ export function ParticipatingVolunteerAssignmentSection({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const [assignedInstitutions, setAssignedInstitutions] = useState<VolunteerAssignedInstitutionRow[]>(
     []
   )
@@ -354,7 +353,6 @@ export function ParticipatingVolunteerAssignmentSection({
       nextAssigned: VolunteerAssignedInstitutionRow[],
       reason: string
     ): Promise<boolean> => {
-      if (isTempMockProgram) return true
       if (!remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-progress-volunteer-assigned-organizations',
@@ -399,7 +397,6 @@ export function ParticipatingVolunteerAssignmentSection({
     },
     [
       assignedInstitutions.length,
-      isTempMockProgram,
       program.id,
       queryClient,
       remoteEnabled,
@@ -581,7 +578,7 @@ export function ParticipatingVolunteerAssignmentSection({
             <ExcelButton onClick={exportAssignedExcel} loading={isAssignedExcelExporting} />
           </div>
         </div>
-        <div className="participating-institutions-section__table-wrap participating-volunteer-assignment-section__table-scroll">
+        <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
           {assignedInstitutions.length === 0 ? (
             <div
               className="school-detail-fullpage-view__instructor-list-empty"
@@ -591,7 +588,7 @@ export function ParticipatingVolunteerAssignmentSection({
               배정된 기관이 없습니다.
             </div>
           ) : (
-            <Table<VolunteerAssignedInstitutionRow>
+            <CmsDataTable<VolunteerAssignedInstitutionRow>
               className="participating-institutions-section__table cms-data-table"
               rowKey="id"
               size="middle"
@@ -623,7 +620,7 @@ export function ParticipatingVolunteerAssignmentSection({
             <ExcelButton onClick={exportWaitingExcel} loading={isWaitingExcelExporting} />
           </div>
         </div>
-        <div className="participating-institutions-section__table-wrap participating-volunteer-assignment-section__table-scroll">
+        <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__waiting-table-scroll">
           {waitingInstitutions.length === 0 ? (
             <div
               className="school-detail-fullpage-view__instructor-list-empty"
@@ -633,7 +630,7 @@ export function ParticipatingVolunteerAssignmentSection({
               배정 대기 중인 기관이 없습니다.
             </div>
           ) : (
-            <Table<VolunteerWaitingInstitutionRow>
+            <CmsDataTable<VolunteerWaitingInstitutionRow>
               className="participating-institutions-section__table cms-data-table"
               rowKey="id"
               size="middle"

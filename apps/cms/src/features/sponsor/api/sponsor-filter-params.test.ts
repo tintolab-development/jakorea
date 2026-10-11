@@ -75,6 +75,8 @@ describe('sponsorsParamsFromSearchParams', () => {
   it('always sends organizationKind and optional date range', () => {
     expect(sponsorsParamsFromSearchParams(new URLSearchParams())).toEqual({
       organizationKind: 'corporate',
+      page: 0,
+      size: 20,
     })
     expect(
       sponsorsParamsFromSearchParams(
@@ -84,6 +86,8 @@ describe('sponsorsParamsFromSearchParams', () => {
       organizationKind: 'foundation',
       sponsorshipStartDateFrom: '2025-09-15',
       sponsorshipStartDateTo: '2026-01-30',
+      page: 0,
+      size: 20,
     })
   })
 })

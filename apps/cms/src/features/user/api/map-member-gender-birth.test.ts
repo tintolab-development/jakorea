@@ -44,6 +44,9 @@ describe('map-member-gender-birth', () => {
     expect(toDisplayGender('남자')).toBe('남성')
     expect(toDisplayGender(undefined)).toBe('-')
     expect(toDisplayGender('unknown')).toBe('-')
+    expect(toDisplayGender('**')).toBe('**')
+    expect(toDisplayGender('***')).toBe('**')
+    expect(toDisplayGender('*')).toBe('**')
   })
 
   it('어댑터용 성별 라벨은 원시값을 한글로, 빈 값은 undefined로 둔다', () => {
@@ -96,6 +99,11 @@ describe('mapCreateUserRequestToPreRegisterIndividual', () => {
       address: '서울시 강서구 화곡동',
       detailAddress: '101호',
       schoolEnrollmentStatus: 'ENROLLED',
+      affiliation: '서울초등학교',
+      schoolExternalCode: '7010056',
+      schoolProvider: 'NEIS',
+      schoolEducationOfficeCode: 'B10',
+      schoolRegionSido: '서울특별시',
       id1365: '13650001',
       isActive: true,
     })

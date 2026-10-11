@@ -15,7 +15,10 @@ export function renderApplicantRecruitFormIndividualParagraphBody(
       return <ApplicantRecruitIndividualParticipantInfoParagraph />
     case APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS.detailInfo:
       return (
-        <ApplicantRecruitDetailInfoParagraph wysiwygResetKey="applicant-recruit-individual-extra-body" />
+        <ApplicantRecruitDetailInfoParagraph
+          wysiwygResetKey="applicant-recruit-individual-extra-body"
+          overlayKeyPrefix="recruit.detailInfo"
+        />
       )
     default:
       return null

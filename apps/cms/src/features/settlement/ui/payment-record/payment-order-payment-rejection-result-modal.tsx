@@ -4,7 +4,7 @@
 
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import './payment-order-payment-rejection-result-modal.css'
 
 export interface PaymentOrderPaymentRejectionResultModalProps {

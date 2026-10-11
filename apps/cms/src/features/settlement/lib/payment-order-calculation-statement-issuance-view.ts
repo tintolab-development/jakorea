@@ -12,12 +12,10 @@ import type {
   PaymentOrderAdminProgramRow,
   PaymentOrderCalculationStatementSessionBlock,
   PaymentOrderProgramCalculationStatement,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import {
-  getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
-  getMockPaymentOrderCalculationStatementFromProgramDetailPage,
-} from '@/data/mock/payment-order-admin-list'
-import type { AccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
+import type { AccountPaymentStatusDetail } from '@/features/settlement-management/model/account-payments-list'
 import { PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE } from '@/features/program/general/lib/participating-instructor-payment-statement-issuance-view'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
@@ -277,16 +275,10 @@ export function buildMockProgramDetailLinePaymentStatementIssuancePayload(
   programDetail: PaymentOrderAdminProgramDetail,
   lineRow: PaymentOrderAdminProgramDetailInstructorRow
 ): PaymentStatementIssuancePayload {
-  const statement = getMockPaymentOrderCalculationStatementFromProgramDetailPage(
-    programRow,
-    programDetail,
-    lineRow
-  )
-  const payload = buildPaymentStatementIssuancePayloadFromCalculationStatement(statement)
-  if (!payload) {
-    throw new Error('program detail line issuance payload could not be built')
-  }
-  return payload
+  void programRow
+  void programDetail
+  void lineRow
+  throw new Error('지급조서 발급 mock 경로가 제거되었습니다. settlement remote API를 사용하세요.')
 }
 
 export function buildMockInstructorDetailLinePaymentStatementIssuancePayload(
@@ -294,14 +286,8 @@ export function buildMockInstructorDetailLinePaymentStatementIssuancePayload(
   instructorDetail: PaymentOrderAdminInstructorDetail,
   lineRow: PaymentOrderAdminInstructorDetailProgramRow
 ): PaymentStatementIssuancePayload {
-  const statement = getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
-    instructorRow,
-    instructorDetail,
-    lineRow
-  )
-  const payload = buildPaymentStatementIssuancePayloadFromCalculationStatement(statement)
-  if (!payload) {
-    throw new Error('instructor detail line issuance payload could not be built')
-  }
-  return payload
+  void instructorRow
+  void instructorDetail
+  void lineRow
+  throw new Error('지급조서 발급 mock 경로가 제거되었습니다. settlement remote API를 사용하세요.')
 }

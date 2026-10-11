@@ -23,15 +23,13 @@ import type {
   ParticipatingIndividualInstructorWaitingScheduleRow,
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { extractLectureDateKey } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
-
-function formatDistanceKm(km: number | undefined): string {
-  if (km == null || Number.isNaN(km)) return '-'
-  const rounded = Math.round(km)
-  return km >= 100 ? `${rounded}km (장거리)` : `${rounded}km`
-}
+import { getParticipatingSchoolAssignmentSessions } from '@/features/program/general/lib/participating-school-assignment-sessions'
+import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 
 function scheduleLinesForSchool(school: ParticipatingSchoolRow): string[] {
-  const fromSessions = buildParticipatingSchoolSessionLines(school.sessions)
+  const fromSessions = buildParticipatingSchoolSessionLines(
+    getParticipatingSchoolAssignmentSessions(school)
+  )
   return fromSessions.length > 0 ? fromSessions : ['-']
 }
 
@@ -121,7 +119,7 @@ export function buildParticipatingInstructorAssignedSchoolRowsFromBoard(input: {
       schoolName: school?.schoolName ?? primary.organizationName?.trim() ?? '-',
       educationGrade: school?.educationGrade ?? '-',
       region: school?.region ?? '-',
-      distanceFromHome: formatDistanceKm(primary.distanceKm),
+      distanceFromHome: formatApiDistanceKmDisplay(primary.distanceKm, { longDistanceSuffix: true }),
       educationScheduleLines: [...new Set(scheduleLines.length > 0 ? scheduleLines : ['-'])],
       assignmentId:
         primary.assignmentId != null ? String(primary.assignmentId) : undefined,
@@ -146,13 +144,14 @@ export function buildParticipatingInstructorAssignedSchoolRowsFromBoard(input: {
 
 function buildScheduleGroups(school: ParticipatingSchoolRow) {
   const groups = new Map<string, ParticipatingSchoolSession[]>()
-  for (const session of school.sessions?.filter(s => s.status !== 'not_planned') ?? []) {
+  for (const session of getParticipatingSchoolAssignmentSessions(school)) {
     const scheduleKey = `${session.date}|${session.dayOfWeek}`
     const prev = groups.get(scheduleKey)
     if (prev) prev.push(session)
     else groups.set(scheduleKey, [session])
   }
-  const preferredLines = buildParticipatingSchoolPreferredScheduleLines(school.sessions)
+  const assignmentSessions = getParticipatingSchoolAssignmentSessions(school)
+  const preferredLines = buildParticipatingSchoolPreferredScheduleLines(assignmentSessions)
   return Array.from(groups.entries()).map(([scheduleKey, sessions], index) => ({
     scheduleKey,
     sessions,
@@ -222,7 +221,7 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
       id: school.id,
       no: rowNo,
       schoolId: school.id,
-      sessions: school.sessions?.filter(s => s.status !== 'not_planned'),
+      sessions: getParticipatingSchoolAssignmentSessions(school),
       schoolName: school.schoolName,
       desiredGrade: school.educationGrade,
       region: school.region,
@@ -269,7 +268,7 @@ export function buildParticipatingInstructorAssignedScheduleRowsFromBoard(input:
       slotKey: scheduleId || assignmentId,
       schoolId,
       lectureLocation: school?.schoolName ?? a.organizationName?.trim() ?? '-',
-      distanceFromHome: formatDistanceKm(a.distanceKm),
+      distanceFromHome: formatApiDistanceKmDisplay(a.distanceKm, { longDistanceSuffix: true }),
       scheduleLabel,
       assignmentId,
       instructorMemberId: input.instructorMemberId,

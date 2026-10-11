@@ -1,27 +1,38 @@
-import { JaKoreaLogo } from '@/shared/ui/icons/JaKoreaLogo'
+import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { CmsButton } from '@/shared/ui'
 
 interface SocialConnectCompleteViewProps {
-  onGoHome: () => void
+  maskedEmail: string
+  onGoLogin: () => void
   onConnectMore: () => void
 }
 
 export function SocialConnectCompleteView({
-  onGoHome,
+  maskedEmail,
+  onGoLogin,
   onConnectMore,
 }: SocialConnectCompleteViewProps) {
   return (
     <div className="register-complete">
       <div className="register-complete__body">
-        <JaKoreaLogo className="register-complete__logo" />
-        <h1 className="register-complete__title">소셜 계정이 연결되었어요!</h1>
+        <img
+          className="register-complete__illustration"
+          src={illustCheckUrl}
+          alt=""
+          aria-hidden="true"
+        />
+        <h1 className="register-complete__title">소셜 계정이 연결되었습니다.</h1>
         <p className="register-complete__description">
-          다음부터 이 계정으로 간편하게 로그인할 수 있어요.
+          다음부터 이 계정으로 간편하게 로그인할 수 있습니다.
         </p>
 
+        <div className="register-complete__email-box" aria-label="연결된 계정 이메일">
+          {maskedEmail}
+        </div>
+
         <div className="auth-actions register-complete__actions">
-          <CmsButton variant="primary" size="h52" width="100%" onClick={onGoHome}>
-            홈으로 이동하기
+          <CmsButton variant="primary" size="h52" width="100%" onClick={onGoLogin}>
+            로그인하기
           </CmsButton>
           <CmsButton variant="default" size="h52" width="100%" onClick={onConnectMore}>
             다른 소셜 계정도 연결하기

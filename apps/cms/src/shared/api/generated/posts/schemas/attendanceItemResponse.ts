@@ -5,13 +5,18 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AttendanceItemResponseStatus } from './attendanceItemResponseStatus';
 
 export interface AttendanceItemResponse {
   attendanceId?: number;
   programId?: number;
   scheduleId?: number;
   participantId?: number;
-  status?: string;
+  /**
+     * 출석 코드만: PRESENT|LATE|ABSENT|EXCUSED. 미기록·비출석 값(COMPLETED·SCHEDULED 등)은 null.
+     * @nullable
+     */
+  status?: AttendanceItemResponseStatus;
   absenceReason?: string;
   checkedByAdminId?: number;
   checkedAt?: string;

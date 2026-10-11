@@ -6,7 +6,7 @@ import { useCallback } from 'react'
 import type {
   PaymentOrderAdminInstructorDetail,
   PaymentOrderAdminProgramDetail,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 
 type DetailForPrivacy = PaymentOrderAdminProgramDetail | PaymentOrderAdminInstructorDetail

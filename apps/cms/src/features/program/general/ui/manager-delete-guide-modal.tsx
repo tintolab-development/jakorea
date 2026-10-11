@@ -58,7 +58,7 @@ export function buildSchoolMessageLines(names: string[]): string[] {
 export function buildParticipatingInstitutionDeleteMessageLines(schoolNames: string[]): string[] {
   if (schoolNames.length === 0) return []
   const line2 = '삭제 시 승인 철회 처리되며, 등록된 정보는 모두 삭제됩니다.'
-  const line3 = '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?'
+  const line3 = '삭제된 목록 및 정보는 되돌릴 수 없습니다.'
   if (schoolNames.length === 1) {
     const name = schoolNames[0]
     return [`[${name}]를 참여 기관 목록에서 삭제하시겠습니까?`, line2, line3]

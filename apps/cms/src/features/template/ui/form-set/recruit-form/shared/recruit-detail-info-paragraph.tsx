@@ -8,6 +8,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import {
   getGeneralRecruitOverlayRecord,
+  getGeneralRecruitOverlayScope,
   patchGeneralRecruitOverlay,
   useGeneralRecruitOverlayKv,
   updateGeneralRecruitOverlayKey,
@@ -24,6 +25,7 @@ import {
   useRecruitDetailContentResetGeneration,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
+  isEphemeralThumbPreviewUrl,
   RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID,
   recruitDetailAttachmentFileNamesKey,
   recruitDetailAttachmentFileObjectIdsKey,
@@ -31,8 +33,10 @@ import {
   recruitDetailThumbFileNameKey,
   recruitDetailThumbFileObjectIdKey,
   recruitDetailThumbObjectUrlKey,
+  resolveRecruitDetailThumbFileObjectId,
   trackRecruitDetailMediaUpload,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
+import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
 import { resolveRecruitDetailTextFieldOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-text-field-keys'
 import {
   contentUrlForFileObjectId,
@@ -167,6 +171,10 @@ function readOverlayHtml(overlayKey: string): string {
   return typeof raw === 'string' ? raw : ''
 }
 
+function editorHtmlWithoutEmptyParagraphs(html: string): string {
+  return html.replace(/<p><\/p>/gi, '').trim()
+}
+
 const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
   wysiwygResetKey,
   overlayKey,
@@ -188,6 +196,8 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
   const getHtmlRef = useRef(getHTML)
   getHtmlRef.current = getHTML
   const latestHtmlRef = useRef(initialHtmlRef.current)
+  /** 사용자가 편집한 적 없으면 overlay에 되쓰지 않는다 — 저장본 hydrate 전 빈 HTML이 덮어쓰는 것 방지 */
+  const editedRef = useRef(false)
 
   useEffect(() => {
     if (editor == null) return
@@ -199,22 +209,27 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
         // 탭 전환 시 TipTap이 먼저 destroy되면 getHTML이 schema.cached에서 실패한다.
       }
     }
+    const onUpdate = () => {
+      editedRef.current = true
+      remember()
+    }
     remember()
-    editor.on('update', remember)
+    editor.on('update', onUpdate)
     return () => {
       remember()
       if (!editor.isDestroyed) {
-        editor.off('update', remember)
+        editor.off('update', onUpdate)
       }
     }
   }, [editor])
 
   useEffect(() => {
     const readHtml = () => latestHtmlRef.current || getHtmlRef.current()
-    registerRecruitDetailRichTextHtml(overlayKey, readHtml)
+    const readEditedHtml = () => (editedRef.current ? readHtml() : null)
+    registerRecruitDetailRichTextHtml(overlayKey, readEditedHtml)
     return () => {
       if (!isRecruitDetailContentPersistSuppressed()) {
-        const html = readHtml()
+        const html = readEditedHtml()
         if (typeof html === 'string') {
           patchGeneralRecruitOverlay({ [overlayKey]: html })
         }
@@ -227,14 +242,23 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
   useEffect(() => {
     if (editor == null || editor.isDestroyed || editor.view == null) return
     const incoming = overlayHtml.trim()
-    if (incoming === '') return
     let current = ''
     try {
-      current = getHtmlRef
-        .current()
-        .replace(/<p><\/p>/gi, '')
-        .trim()
+      // resetKey로 새 에디터가 생긴 직후엔 getHTML api가 이전 인스턴스를 가리킬 수 있다.
+      current = editorHtmlWithoutEmptyParagraphs(editor.getHTML())
     } catch {
+      return
+    }
+    if (incoming === '') {
+      // overlay가 비면 TipTap 잔여 HTML도 비운다. 미편집 잔여는 저장 flush에 넣지 않는다.
+      if (current === '') return
+      try {
+        editor.commands.setContent('', { emitUpdate: false, contentType: 'html' })
+        latestHtmlRef.current = ''
+        editedRef.current = false
+      } catch {
+        // 템플릿 변경으로 에디터가 destroy된 뒤 overlay hydrate가 늦게 오면 무시
+      }
       return
     }
     if (current !== '') return
@@ -284,7 +308,8 @@ export function RecruitDetailInfoParagraph({
   textFieldControl = 'textarea',
 }: RecruitDetailInfoParagraphProps) {
   const contentResetGeneration = useRecruitDetailContentResetGeneration()
-  const editorResetKey = `${wysiwygResetKey}::reset-${contentResetGeneration}`
+  const overlayScope = getGeneralRecruitOverlayScope()
+  const editorResetKey = `${wysiwygResetKey}::scope-${overlayScope}::reset-${contentResetGeneration}`
   const thumbObjectUrlKey = recruitDetailThumbObjectUrlKey(overlayKeyPrefix)
   const thumbFileNameKey = recruitDetailThumbFileNameKey(overlayKeyPrefix)
   const thumbFileObjectIdKey = recruitDetailThumbFileObjectIdKey(overlayKeyPrefix)
@@ -293,30 +318,87 @@ export function RecruitDetailInfoParagraph({
   const attachmentFileObjectIdsKey = recruitDetailAttachmentFileObjectIdsKey(overlayKeyPrefix)
   const additionalContentKey = recruitDetailAdditionalContentOverlayKey(overlayKeyPrefix)
 
-  const [thumbObjectUrl, setThumbObjectUrl] = useGeneralRecruitOverlayKv<string | null>(
-    thumbObjectUrlKey,
-    null
-  )
+  const [persistedThumbObjectUrl, setPersistedThumbObjectUrl] = useGeneralRecruitOverlayKv<
+    string | null
+  >(thumbObjectUrlKey, null)
   const [thumbFileName, setThumbFileName] = useGeneralRecruitOverlayKv<string | null>(
     thumbFileNameKey,
     null
   )
+  const [thumbFileObjectId, setThumbFileObjectId] = useGeneralRecruitOverlayKv<number | null>(
+    thumbFileObjectIdKey,
+    null
+  )
+  const [thumbContentUrl] = useGeneralRecruitOverlayKv<string | null>(thumbContentUrlKey, null)
   const [attachmentFileNames] = useGeneralRecruitOverlayKv<string[]>(attachmentFileNamesKey, [])
+  const resolvedThumbFileObjectId = resolveRecruitDetailThumbFileObjectId(
+    thumbFileObjectId,
+    thumbContentUrl
+  )
+  const [livePreviewUrl, setLivePreviewUrl] = useState<string | null>(null)
+  const [storedPreviewUrl, setStoredPreviewUrl] = useState<string | null>(null)
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
   const [uploadingAttachments, setUploadingAttachments] = useState(false)
 
-  const revokeThumb = useCallback((url: string | null) => {
+  const revokeThumb = useCallback((url: string | null | undefined) => {
     if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
   }, [])
+
+  useEffect(() => {
+    if (!isEphemeralThumbPreviewUrl(persistedThumbObjectUrl)) return
+    setPersistedThumbObjectUrl(null)
+  }, [persistedThumbObjectUrl, setPersistedThumbObjectUrl])
+
+  useEffect(() => {
+    if (resolvedThumbFileObjectId == null || thumbFileObjectId === resolvedThumbFileObjectId) {
+      return
+    }
+    setThumbFileObjectId(resolvedThumbFileObjectId)
+  }, [resolvedThumbFileObjectId, setThumbFileObjectId, thumbFileObjectId])
+
+  useEffect(() => {
+    if (livePreviewUrl) return
+    const id = resolvedThumbFileObjectId
+    if (id == null) {
+      setStoredPreviewUrl(prev => {
+        revokeThumb(prev)
+        return null
+      })
+      return
+    }
+    let cancelled = false
+    void loadProgramThumbnailPreviewUrl(id)
+      .then(url => {
+        if (cancelled) return
+        setStoredPreviewUrl(prev => {
+          if (prev !== url) revokeThumb(prev)
+          return url
+        })
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setStoredPreviewUrl(prev => {
+            revokeThumb(prev)
+            return null
+          })
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [livePreviewUrl, resolvedThumbFileObjectId, revokeThumb])
 
   const handleThumbnailFiles = useCallback(
     (files: File[]) => {
       const image = files.find(f => /^image\//u.test(f.type)) ?? files[0]
       if (!image) return
-      const previousPreview = thumbObjectUrl
       const blobUrl = URL.createObjectURL(image)
+      setLivePreviewUrl(prev => {
+        revokeThumb(prev)
+        return blobUrl
+      })
       setThumbFileName(image.name)
-      setThumbObjectUrl(blobUrl)
+      setPersistedThumbObjectUrl(null)
       setUploadingThumbnail(true)
       trackRecruitDetailMediaUpload(
         (async () => {
@@ -328,13 +410,19 @@ export function RecruitDetailInfoParagraph({
             patchGeneralRecruitOverlay({
               [thumbFileObjectIdKey]: uploaded.fileObjectId,
               [thumbContentUrlKey]: contentUrlForFileObjectId(uploaded.fileObjectId),
+              [thumbObjectUrlKey]: null,
             })
-            revokeThumb(previousPreview)
           } catch {
             patchGeneralRecruitOverlay({
               [thumbFileObjectIdKey]: null,
               [thumbContentUrlKey]: null,
+              [thumbObjectUrlKey]: null,
             })
+            setLivePreviewUrl(prev => {
+              revokeThumb(prev)
+              return null
+            })
+            setThumbFileName(null)
           } finally {
             setUploadingThumbnail(false)
           }
@@ -343,29 +431,37 @@ export function RecruitDetailInfoParagraph({
     },
     [
       revokeThumb,
+      setPersistedThumbObjectUrl,
       setThumbFileName,
-      setThumbObjectUrl,
       thumbContentUrlKey,
       thumbFileObjectIdKey,
-      thumbObjectUrl,
+      thumbObjectUrlKey,
     ]
   )
 
   const handleRemoveThumbnail = useCallback(() => {
-    revokeThumb(thumbObjectUrl)
+    setLivePreviewUrl(prev => {
+      revokeThumb(prev)
+      return null
+    })
+    setStoredPreviewUrl(prev => {
+      revokeThumb(prev)
+      return null
+    })
     setThumbFileName(null)
-    setThumbObjectUrl(null)
+    setPersistedThumbObjectUrl(null)
     patchGeneralRecruitOverlay({
       [thumbFileObjectIdKey]: null,
       [thumbContentUrlKey]: null,
+      [thumbObjectUrlKey]: null,
     })
   }, [
     revokeThumb,
+    setPersistedThumbObjectUrl,
     setThumbFileName,
-    setThumbObjectUrl,
     thumbContentUrlKey,
     thumbFileObjectIdKey,
-    thumbObjectUrl,
+    thumbObjectUrlKey,
   ])
 
   const handleAttachmentFiles = useCallback(
@@ -433,8 +529,7 @@ export function RecruitDetailInfoParagraph({
     [attachmentFileNamesKey, attachmentFileObjectIdsKey]
   )
 
-  // unmount 시 blob revoke 금지 — overlay 에 URL 이 남아 미리보기에서 깨짐 (StrictMode 포함).
-  // 교체·삭제 시에만 revokeThumb.
+  const thumbnailPreviewUrl = livePreviewUrl ?? storedPreviewUrl
 
   return (
     <div className="recruit-detail-info-paragraph__forms">
@@ -445,7 +540,7 @@ export function RecruitDetailInfoParagraph({
             fullRow
             edit={
               <ThumbnailUploadField
-                previewUrl={thumbObjectUrl}
+                previewUrl={thumbnailPreviewUrl}
                 fileName={thumbFileName}
                 guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
                 uploading={uploadingThumbnail}

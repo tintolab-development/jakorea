@@ -36,12 +36,15 @@
   padding: 0 12px 0 14px;
 }
 
+/* CmsDatePicker `inputSize="small"`(=36px)과 동일 */
 .paragraph-date-picker__trigger--small {
-  height: 32px;
-  padding: 0 10px 0 12px;
+  height: 36px;
+  padding: 0 12px 0 14px;
 }
 
-.paragraph-date-picker__trigger:hover:not(.paragraph-date-picker__trigger--disabled) {
+.paragraph-date-picker__trigger:hover:not(.paragraph-date-picker__trigger--disabled):not(
+  .paragraph-date-picker__trigger--readonly
+) {
   border-color: var(--color-mint-01, #01a1af);
 }
 
@@ -57,6 +60,10 @@
     linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
   );
   cursor: not-allowed;
+}
+
+.paragraph-date-picker__trigger--readonly {
+  cursor: default;
 }
 
 .paragraph-date-picker__trigger-icon {
@@ -538,7 +545,9 @@
   background: transparent;
 }
 
-.paragraph-date-picker__trigger--dual-shell:hover:not(.paragraph-date-picker__trigger--disabled) {
+.paragraph-date-picker__trigger--dual-shell:hover:not(.paragraph-date-picker__trigger--disabled):not(
+  .paragraph-date-picker__trigger--readonly
+) {
   border-color: transparent;
 }
 
@@ -564,7 +573,9 @@
   background: var(--main-WT, #fff);
 }
 
-.paragraph-date-picker__trigger--dual-shell:hover:not(.paragraph-date-picker__trigger--disabled)
+.paragraph-date-picker__trigger--dual-shell:hover:not(.paragraph-date-picker__trigger--disabled):not(
+    .paragraph-date-picker__trigger--readonly
+  )
   .paragraph-date-picker__trigger-dual-cell {
   border-color: var(--color-mint-01, #01a1af);
 }

@@ -23,6 +23,10 @@
   cursor: not-allowed;
 }
 
+.paragraph-time-picker__trigger--readonly {
+  cursor: default;
+}
+
 .paragraph-time-picker__trigger-icon {
   margin-inline-end: 8px;
   color: #9fafb5;

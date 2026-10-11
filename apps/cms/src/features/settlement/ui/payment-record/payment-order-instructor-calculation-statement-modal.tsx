@@ -2,7 +2,7 @@
  * 산출 내역서 모달 — 신청자형 기본정보 (신청자별 정산 목록에서 연 때)
  */
 
-import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import { PaymentOrderCalculationStatementModalImpl } from './payment-order-calculation-statement-modal-impl'
 

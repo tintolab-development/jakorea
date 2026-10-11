@@ -35,6 +35,12 @@
   overflow: hidden;
 }
 
+.ujat-volunteer-interview-assign-calendar-mini
+  .ant-picker-cell:not(.ant-picker-cell-disabled)
+  .calendar-mini-cell[role='button'] {
+  cursor: pointer;
+}
+
 .ujat-volunteer-interview-assign-calendar-mini .calendar-mini-cell {
   display: flex;
   width: var(--calendar-mini-cell-size);

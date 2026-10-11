@@ -13,14 +13,14 @@ import {
   type DependencyList,
   type MutableRefObject,
 } from 'react'
-import type { SettlementItemSettingRow } from '@/data/mock/settlement-item-settings'
+import type { SettlementItemSettingRow } from '@/features/settlement-management/model/settlement-item-settings'
 import {
   parseEditableLines,
   parseWonStringToNumber,
   type SettlementItemEvidenceSubmission,
   type SettlementItemSettingDetail,
   type SettlementItemTransportCommuteMode,
-} from '@/data/mock/settlement-item-setting-detail.mock'
+} from '@/features/settlement-management/model/settlement-item-setting-detail'
 import {
   usePersistSettlementItemSettingDetail,
   useSettlementItemSettingDetailSource,

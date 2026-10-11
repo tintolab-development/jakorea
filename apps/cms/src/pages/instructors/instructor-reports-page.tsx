@@ -15,9 +15,6 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
 import { useReportService } from '@/features/report/hooks/use-report-service'
 import { useProgramService } from '@/features/program/general/hooks/use-program-service'
-import { schoolService } from '@/entities/school/api/school-service'
-import { mockLectureActivities } from '@/data/mock'
-import { mockApplications } from '@/data/mock'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { getStatusConfigAccentColor, reportStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/components/status-badge'
@@ -112,24 +109,11 @@ export function InstructorReportsPage() {
         const program = getProgramByIdSync(schedule.programId)
         const programName = program?.title || '-'
 
-        // 학교 정보 찾기
-        const application = mockApplications.find(
-          app =>
-            app.programId === schedule.programId &&
-            app.subjectType === 'school' &&
-            app.status === 'approved'
-        )
-        const school = application ? schoolService.getByIdSync(application.subjectId) : null
-        const schoolName = school?.name
+        const schoolName: string | undefined = undefined
 
-        // 강의보고서 찾기: activityId 또는 scheduleId, 동일 일정 복수 제출 시 최신만 사용 (FR-E03)
-        const activity = mockLectureActivities.find(
-          act => act.scheduleId === schedule.id && act.instructorId === user?.instructorId
-        )
         const matchingReports = reports
           .filter(r => {
             if (r.type !== 'lecture') return false
-            if (activity && r.activityId === activity.id) return true
             return r.scheduleId === schedule.id
           })
           .sort((a, b) => dayjs(b.updatedAt).valueOf() - dayjs(a.updatedAt).valueOf())
@@ -183,11 +167,7 @@ export function InstructorReportsPage() {
   const scheduleToFormParams = (scheduleId: string) => {
     const schedule = schedules.find(s => s.id === scheduleId)
     const program = schedule ? getProgramByIdSync(schedule.programId) : null
-    const activity = mockLectureActivities.find(
-      act => act.scheduleId === scheduleId && act.instructorId === user?.instructorId
-    )
     const params = new URLSearchParams({ type: 'lecture' })
-    if (activity) params.set('activityId', activity.id)
     params.set('scheduleId', scheduleId)
     if (program?.id) params.set('programId', program.id)
     return params

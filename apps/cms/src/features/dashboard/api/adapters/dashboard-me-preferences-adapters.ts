@@ -3,7 +3,7 @@
  */
 import type { DashboardMePreferencesRequest } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesRequest'
 import type { DashboardMePreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesResponse'
-import { parseAssignedProgramTypes } from '@/data/mock/program-schedule-keys'
+import { parseAssignedProgramTypes } from '@/features/dashboard/model/program-schedule-keys'
 import {
   useDashboardSettingsStore,
 } from '@/features/dashboard/model/dashboard-settings-store'

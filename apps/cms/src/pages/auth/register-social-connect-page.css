@@ -11,8 +11,6 @@
   height: auto;
   min-height: 0;
   box-sizing: border-box;
-  /* 나중에하기 제거 후 상단 여백 60px (ee0bae582) */
-  padding: 60px 60px 0;
   align-items: stretch;
   justify-content: flex-start;
   overflow-x: hidden;
@@ -41,18 +39,4 @@
 .register-social-connect__actions {
   margin-top: auto;
   padding-top: 52px;
-}
-
-.register-social-connect__trailing {
-  height: 60px;
-  flex-shrink: 0;
-  width: 100%;
-}
-
-@media (max-width: 640px) {
-  .auth-card.auth-card--register-social-connect {
-    height: auto;
-    min-height: 0;
-    padding: 40px 24px 0;
-  }
 }

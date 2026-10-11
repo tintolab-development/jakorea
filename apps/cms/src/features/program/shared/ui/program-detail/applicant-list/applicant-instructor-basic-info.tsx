@@ -17,12 +17,14 @@ import {
   PrivacyHomeAddressDisplay,
 } from '@/features/program/shared/lib/program-pii-display'
 import { LectureFeeBasisView } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-fee-fields'
+import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import './applicant-instructor-basic-info.css'
 
 const APPROVAL_STATUS_LABELS: Record<ApplicantInstructorRow['approvalStatus'], string> = {
   pending: '대기 중',
   approved: '승인 완료',
   rejected: '참여 반려',
+  cancelled: '신청 취소',
 }
 
 function ProgramApprovalStatusValue({
@@ -52,6 +54,9 @@ function ProgramApprovalStatusValue({
         ) : null}
       </div>
     )
+  }
+  if (status === 'cancelled') {
+    return <ApprovalStatusText status="cancelled" />
   }
   if (status === 'rejected') {
     const reason = instructor.rejectionReason ?? '-'

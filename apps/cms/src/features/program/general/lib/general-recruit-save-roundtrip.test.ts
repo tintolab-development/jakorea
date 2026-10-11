@@ -29,7 +29,7 @@ function baseProgram(): Program {
     contactPhone: '02-1111-2222',
     contactEmail: 'new@jakorea.org',
     contactName: '새 문의처',
-    instructorTargets: ['성인'],
+    instructorTargets: ['adult'],
     volunteerTargets: ['대학(원)생'],
     instructorApplicationStartDate: '2026-01-05T00:00:00.000Z',
     instructorApplicationEndDate: '2026-01-20T00:00:00.000Z',

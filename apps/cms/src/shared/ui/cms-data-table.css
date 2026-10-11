@@ -1,6 +1,8 @@
 /**
  * CMS 모달·풀페이지 섹션·대시보드 위젯용 Ant Design Table 스코프.
  * 목록 페이지(.program-list-card / .member-table-card)는 program-list.css 유지.
+ *
+ * 표 마크업·empty 기본값: {@link CmsDataTable} (`shared/ui/cms-data-table.tsx`)
  */
 
 .cms-data-table {
@@ -130,7 +132,8 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 52px !important;
+  min-height: 52px !important;
+  height: auto;
   flex-shrink: 0;
   align-self: stretch;
   vertical-align: middle !important;
@@ -188,9 +191,8 @@
   );
 }
 
-/* 본문 셀: 기본·호버 동일 테두리 유지 */
-.cms-data-table .ant-table-tbody > tr > td,
-.cms-data-table .ant-table-tbody > tr:hover > td {
+/* 본문 셀: 기본·호버 동일 테두리 유지 (empty·measure 행 제외). :hover 선택자 미사용 — 화면 오버라이드 shift 방지 */
+.cms-data-table .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) > td {
   box-sizing: border-box !important;
   min-width: 80px;
   padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px) !important;
@@ -205,7 +207,37 @@
   white-space: nowrap;
   border-right: 1px solid var(--Border-default, #e0e0e0);
   border-bottom: 1px solid var(--Border-default, #e0e0e0);
+  min-height: 52px !important;
+  height: auto !important;
+  background-color: var(--color-bg-base, #fff);
+  transition: background-color 0s !important;
+}
+
+/* 다줄·콘텐츠 높이 가변 행 (참여 기관 일정 열 등) */
+.cms-data-table.cms-data-table--variable-row-height
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
+  vertical-align: top;
+  height: auto !important;
+  max-height: none !important;
+}
+
+.cms-data-table.cms-data-table--variable-row-height
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.status-dropdown-cell__cell-status {
+  vertical-align: middle !important;
+}
+
+/* 단줄 고정 행이 필요한 테이블(StatusDropdown 등) */
+.cms-data-table.cms-data-table--fixed-row-height
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
   height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
 }
 
 /* 선택 열은 68px 고정 — 공통 min-width 80 예외 */
@@ -223,6 +255,40 @@
   > td {
   background: var(--color-bg-base, #fff) !important;
 }
+
+/*
+ * hoverable / --clickable: 배경색만 변경 (padding·height·border는 기본·hover 동일 — shift 방지)
+ */
+.cms-data-table.cms-data-table--hoverable
+  .ant-table-tbody
+  > tr.ant-table-row:not(.ant-table-placeholder):not(.ant-table-measure-row):not(
+    .cms-data-table__row--disabled
+  ):hover:not(.ant-table-row-selected)
+  > td,
+.cms-data-table[class*='--clickable']
+  .ant-table-tbody
+  > tr.ant-table-row:not(.ant-table-placeholder):not(.ant-table-measure-row):not(
+    .cms-data-table__row--disabled
+  ):hover:not(.ant-table-row-selected)
+  > td,
+.cms-data-table
+  .ant-table-tbody
+  > tr.ant-table-row:not(.ant-table-placeholder):not(.ant-table-measure-row):not(
+    .cms-data-table__row--disabled
+  )[style*='cursor: pointer']:hover:not(.ant-table-row-selected)
+  > td {
+  background-color: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
+}
+
+.cms-data-table
+  .ant-table-tbody
+  > tr.ant-table-row:not(.ant-table-placeholder):not(.ant-table-measure-row):not(
+    .cms-data-table__row--disabled
+  )[style*='cursor: pointer']:not(:hover):not(.ant-table-row-selected)
+  > td {
+  background-color: var(--color-bg-base, #fff) !important;
+}
+
 /* 마지막 열: scroll.y 시 thead 마지막 th는 스크롤바 맞춤 셀 — 우측 보더 없음 */
 .cms-data-table .ant-table-thead > tr > th:last-child,
 .cms-data-table .ant-table-tbody > tr > td:last-child {
@@ -299,7 +365,8 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 52px !important;
+  min-height: 52px !important;
+  height: auto;
   box-sizing: border-box !important;
   flex-shrink: 0;
   align-self: stretch;
@@ -379,7 +446,8 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 52px !important;
+  min-height: 52px !important;
+  height: auto;
   box-sizing: border-box !important;
   flex-shrink: 0;
   align-self: stretch;
@@ -399,14 +467,19 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-thead
   > tr
-  > th:not(.ant-table-cell-scrollbar),
+  > th:not(.ant-table-cell-scrollbar) {
+  height: 52px !important;
+  min-height: 52px !important;
+  box-sizing: border-box !important;
+}
+
 .detail-fullpage-modal
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
-  > tr
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td {
-  height: 52px !important;
   min-height: 52px !important;
+  height: auto !important;
   box-sizing: border-box !important;
 }
 
@@ -496,7 +569,8 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
-  height: 52px !important;
+  min-height: 52px !important;
+  height: auto;
   box-sizing: border-box !important;
   flex-shrink: 0;
   align-self: stretch;
@@ -518,15 +592,20 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-thead
   > tr
-  > th:not(.ant-table-cell-scrollbar),
+  > th:not(.ant-table-cell-scrollbar) {
+  height: 52px !important;
+  min-height: 52px !important;
+  box-sizing: border-box !important;
+}
+
 .filter-table-layout
   .filter-table-layout__table
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
-  > tr
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td {
-  height: 52px !important;
   min-height: 52px !important;
+  height: auto !important;
   box-sizing: border-box !important;
 }
 

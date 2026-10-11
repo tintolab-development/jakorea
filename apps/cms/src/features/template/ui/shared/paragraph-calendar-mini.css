@@ -123,6 +123,16 @@
   line-height: 130%;
 }
 
+/* 네이티브 그리드 — disabledDate 셀 */
+.paragraph-calendar-mini .calendar-mini-cell--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.paragraph-calendar-mini .calendar-mini-cell--disabled .calendar-mini-date {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+}
+
 /* 비활성 날짜 — antd가 disabledDate에 따라 td에 .ant-picker-cell-disabled 부여 */
 .paragraph-calendar-mini .ant-picker-cell-disabled,
 .paragraph-calendar-mini .ant-picker-cell-disabled::before,

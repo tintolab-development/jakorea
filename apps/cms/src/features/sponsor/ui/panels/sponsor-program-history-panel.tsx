@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState, type MouseEvent } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { TableRowSelection } from 'antd/es/table/interface'
 import { useNavigate } from 'react-router-dom'
@@ -7,12 +6,13 @@ import type { UseProgramHistoryFilterReturn } from '@/features/sponsor/hooks/use
 import type { SponsorProgramHistoryRow } from '@/features/sponsor/model/sponsor-management.types'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  CmsButton,
   DeleteGuideModal,
   ProgramHistoryDeleteBlockedModal,
   buildProgramProgressHistoryDeleteGuide,
   useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import {
@@ -26,6 +26,7 @@ import {
   getEnrollmentDisplayStatusFromProgramLifecycle,
   isProgramHistoryDeleteBlockedByDisplayStatus,
 } from '@/shared/constants/status'
+import { SPONSOR_PROGRAM_HISTORY_TAB_LABEL } from '@/features/sponsor/lib/sponsor-program-history-copy'
 
 /** 임시: 이력 삭제 UI 비노출. true로 되돌리면 버튼·삭제용 선택이 다시 보인다. */
 const SHOW_PROGRAM_HISTORY_DELETE = false
@@ -109,10 +110,13 @@ export type SponsorProgramHistoryPanelProps = UseProgramHistoryFilterReturn & {
   deleteDisabled?: boolean
   totalCount?: number
   loading?: boolean
+  page?: number
+  pageSize?: number
+  onPageChange?: (page: number) => void
 }
 
 /**
- * 후원사 상세 LNB의 “프로그램 진행 이력” 탭 본문입니다.
+ * 후원사 상세 LNB의 “프로그램 후원 이력” 탭 본문입니다.
  */
 export function SponsorProgramHistoryPanel({
   pendingFilters,
@@ -127,6 +131,9 @@ export function SponsorProgramHistoryPanel({
   deleteDisabled = false,
   totalCount,
   loading = false,
+  page = 0,
+  pageSize = 20,
+  onPageChange,
 }: SponsorProgramHistoryPanelProps) {
   const navigate = useNavigate()
   const { showAlert } = useCmsAlert()
@@ -140,7 +147,8 @@ export function SponsorProgramHistoryPanel({
 
   const deleteGuide = useMemo(() => {
     return buildProgramProgressHistoryDeleteGuide(
-      selectedRows.map(r => (r.title?.trim() ? r.title.trim() : '(제목 없음)'))
+      selectedRows.map(r => (r.title?.trim() ? r.title.trim() : '(제목 없음)')),
+      'sponsor'
     )
   }, [selectedRows])
 
@@ -205,7 +213,7 @@ export function SponsorProgramHistoryPanel({
         title: '안내',
         content: getDataManagementApiErrorMessage(
           error,
-          '프로그램 진행 이력 삭제에 실패했습니다.'
+          `${SPONSOR_PROGRAM_HISTORY_TAB_LABEL} 삭제에 실패했습니다.`
         ),
       })
     }
@@ -247,18 +255,18 @@ export function SponsorProgramHistoryPanel({
         }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title="프로그램 진행 이력"
+        title={SPONSOR_PROGRAM_HISTORY_TAB_LABEL}
         description={`총 ${(totalCount ?? filteredRows.length).toLocaleString()}건`}
         actions={
           SHOW_PROGRAM_HISTORY_DELETE ? (
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               onClick={handleDeleteProgramHistory}
               disabled={!canWrite || deleteDisabled}
               loading={deleteDisabled}
             >
               이력 삭제
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : null
         }
         excelExport={{
@@ -266,13 +274,23 @@ export function SponsorProgramHistoryPanel({
           data: filteredRows,
         }}
       >
-        <Table<SponsorProgramHistoryRow>
+        <CmsDataTable<SponsorProgramHistoryRow>
           rowKey="id"
           className="cms-data-table"
           columns={columns}
           dataSource={filteredRows}
           loading={loading}
-          pagination={false}
+          pagination={
+            onPageChange
+              ? {
+                  current: page + 1,
+                  pageSize,
+                  total: totalCount ?? filteredRows.length,
+                  showSizeChanger: false,
+                  onChange: nextPage => onPageChange(nextPage - 1),
+                }
+              : false
+          }
           scroll={{ x: 'max-content' }}
           rowSelection={rowSelection}
           onRow={programHistoryTableOnRow}

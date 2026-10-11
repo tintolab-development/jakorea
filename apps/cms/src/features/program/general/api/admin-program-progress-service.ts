@@ -8,6 +8,7 @@ import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/genera
 import {
   fetchProgramAssignmentSubmissionsRemote,
   fetchProgramParticipantsRemote,
+  fetchAttendancesByScheduleIdsRemote,
   fetchProgramSchedulesViaDashboardRemote,
   fetchScheduleAttendancesRemote,
   giveUpProgramParticipantRemote,
@@ -27,6 +28,9 @@ import {
 } from '@/features/program/general/api/program-progress-api-client'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import { fetchOrganizationApplicationsRemote } from '@/features/program/general/api/applications-api-client'
+import { readOrganizationApplicationPreferredEducationSchedules } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
+import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 
@@ -106,6 +110,49 @@ export async function fetchGeneralParticipatingInstitutions(
   return (await fetchGeneralParticipatingInstitutionsPage(programId)).rows
 }
 
+const ORG_APPLICATIONS_ENRICH_PAGE_SIZE = 100
+const ORG_APPLICATIONS_ENRICH_PAGE_LIMIT = 40
+
+async function fetchOrganizationPreferredEducationSchedulesByApplicationId(
+  programId: string
+): Promise<Map<string, PreferredEducationSchedule[]>> {
+  const index = new Map<string, PreferredEducationSchedule[]>()
+  let page = 0
+  for (;;) {
+    const response = await fetchOrganizationApplicationsRemote(programId, {
+      page,
+      size: ORG_APPLICATIONS_ENRICH_PAGE_SIZE,
+    })
+    const items = response.items ?? []
+    for (const item of items) {
+      if (item.id == null) continue
+      const preferred = readOrganizationApplicationPreferredEducationSchedules(item)
+      if (preferred.length > 0) {
+        index.set(String(item.id), preferred)
+      }
+    }
+    const totalPages = response.totalPages ?? 0
+    if (page + 1 >= totalPages || items.length === 0) break
+    page += 1
+    if (page > ORG_APPLICATIONS_ENRICH_PAGE_LIMIT) break
+  }
+  return index
+}
+
+function attachPreferredEducationSchedulesToParticipatingSchools(
+  rows: ParticipatingSchoolRow[],
+  preferredByApplicationId: Map<string, PreferredEducationSchedule[]>
+): ParticipatingSchoolRow[] {
+  if (preferredByApplicationId.size === 0) return rows
+  return rows.map(row => {
+    const applicationId = row.organizationApplicationId
+    if (!applicationId) return row
+    const preferred = preferredByApplicationId.get(applicationId)
+    if (!preferred?.length) return row
+    return { ...row, preferredEducationSchedules: preferred }
+  })
+}
+
 export async function fetchGeneralParticipatingInstitutionsPage(
   programId: string,
   pageParam = 0
@@ -116,12 +163,17 @@ export async function fetchGeneralParticipatingInstitutionsPage(
     size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
     participantType: 'ORGANIZATION',
   })
-  const rows = (page.items ?? []).map((item, index) =>
-    mapParticipantToParticipatingSchoolRow(
-      item,
-      pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
-      programId
-    )
+  const preferredByApplicationId =
+    await fetchOrganizationPreferredEducationSchedulesByApplicationId(programId)
+  const rows = attachPreferredEducationSchedulesToParticipatingSchools(
+    (page.items ?? []).map((item, index) =>
+      mapParticipantToParticipatingSchoolRow(
+        item,
+        pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
+        programId
+      )
+    ),
+    preferredByApplicationId
   )
   return resolveProgressListPage(rows, page, pageParam)
 }
@@ -225,24 +277,14 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
     })
     participantItems.push(...(nextPage.items ?? []))
   }
-  const attendancesByScheduleId: Record<
-    string,
-    import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
-  > = {}
-  await Promise.all(
-    schedules
-      .filter(s => s.scheduleId != null)
-      .map(async s => {
-        const scheduleId = String(s.scheduleId)
-        try {
-          attendancesByScheduleId[scheduleId] = await fetchScheduleAttendancesRemote(
-            programId,
-            scheduleId
-          )
-        } catch {
-          attendancesByScheduleId[scheduleId] = []
-        }
-      })
+  const scheduleIdList = schedules
+    .map(s => s.scheduleId)
+    .filter((id): id is number => id != null && Number.isFinite(Number(id)) && Number(id) > 0)
+    .map(id => Number(id))
+
+  const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
+    programId,
+    scheduleIdList
   )
   return {
     schedules,
@@ -366,6 +408,7 @@ export async function createGeneralProgramInstructorParticipant(
   })
 }
 
+/** @deprecated 진행 현황 봉사자 추가 등록 — `registerGeneralVolunteerParticipant` 사용 */
 export async function createGeneralProgramVolunteerParticipant(
   programId: string,
   memberId: number,
@@ -377,6 +420,39 @@ export async function createGeneralProgramVolunteerParticipant(
     memberId,
     volunteerKind,
   })
+}
+
+export async function registerGeneralVolunteerParticipant(
+  programId: string,
+  payload: import('@/features/program/general/api/program-progress-api-client').VolunteerParticipantRegisterRequest
+) {
+  assertProgramProgressRemoteReady()
+  const { registerVolunteerParticipantRemote } = await import(
+    '@/features/program/general/api/program-progress-api-client'
+  )
+  return registerVolunteerParticipantRemote(programId, payload)
+}
+
+export async function fetchGeneralEmployeeVolunteerCounts(
+  programId: string,
+  organizationApplicationId?: number
+) {
+  assertProgramProgressRemoteReady()
+  const { fetchEmployeeVolunteerCountsRemote } = await import(
+    '@/features/program/general/api/program-progress-api-client'
+  )
+  return fetchEmployeeVolunteerCountsRemote(programId, organizationApplicationId)
+}
+
+export async function saveGeneralEmployeeVolunteerCounts(
+  programId: string,
+  payload: import('@/shared/api/generated/program-progress/schemas/employeeVolunteerCountReplaceRequest').EmployeeVolunteerCountReplaceRequest
+) {
+  assertProgramProgressRemoteReady()
+  const { putEmployeeVolunteerCountsRemote } = await import(
+    '@/features/program/general/api/program-progress-api-client'
+  )
+  return putEmployeeVolunteerCountsRemote(programId, payload)
 }
 
 export async function updateGeneralParticipatingInstitutionTextbookDelivery(

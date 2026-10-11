@@ -3,7 +3,7 @@
  * 등록 중에는 staging owner 로 업로드하고, 생성 직후 실제 programId 에 연결한다.
  */
 
-import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
+import { fileObjectIdFromAdminFileUrl, parseFileObjectId } from '@/shared/lib/admin-file-upload'
 import { putProgramAttachments } from '@/features/program/shared/api/program-attachments'
 import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
 import {
@@ -57,6 +57,11 @@ export function recruitDetailThumbObjectUrlKey(prefix: string): string {
   return `${prefix}.thumbObjectUrl`
 }
 
+/** overlay에 남은 blob 주소는 세션이 끝나면 무효다. img src로 쓰지 않는다. */
+export function isEphemeralThumbPreviewUrl(url: string | null | undefined): boolean {
+  return Boolean(url?.trim().startsWith('blob:'))
+}
+
 export function recruitDetailAttachmentFileNamesKey(prefix: string): string {
   return `${prefix}.attachmentFileNames`
 }
@@ -72,6 +77,19 @@ function readFiniteNumber(value: unknown): number | undefined {
     if (Number.isFinite(n) && n > 0) return n
   }
   return undefined
+}
+
+/** overlay fileObjectId가 없으면 content URL에서 id를 읽는다. blob 주소는 무시. */
+export function resolveRecruitDetailThumbFileObjectId(
+  fileObjectId: unknown,
+  contentUrl: unknown
+): number | undefined {
+  const fromId = readFiniteNumber(fileObjectId)
+  if (fromId != null) return fromId
+  if (typeof contentUrl !== 'string') return undefined
+  const trimmed = contentUrl.trim()
+  if (!trimmed || trimmed.startsWith('blob:')) return undefined
+  return fileObjectIdFromAdminFileUrl(trimmed) ?? undefined
 }
 
 function readStringArray(value: unknown): string[] | undefined {
@@ -91,6 +109,7 @@ function readNumberArray(value: unknown): number[] | undefined {
 export type RecruitDetailMediaFromOverlay = {
   keyVisualImage?: string
   thumbFileObjectId?: number
+  thumbFileName?: string
   /** 등록 중 미리보기용 blob. create payload에는 넣지 않는다. */
   thumbObjectUrl?: string
   attachmentFileNames?: string[]
@@ -104,6 +123,7 @@ export function readRecruitDetailMediaFromOverlay(
 ): RecruitDetailMediaFromOverlay {
   let keyVisualImage: string | undefined
   let thumbFileObjectId: number | undefined
+  let thumbFileName: string | undefined
   let thumbObjectUrl: string | undefined
   let attachmentFileNames: string[] | undefined
   let attachmentFileObjectIds: number[] | undefined
@@ -122,7 +142,14 @@ export function readRecruitDetailMediaFromOverlay(
       }
     }
     if (thumbFileObjectId == null) {
-      thumbFileObjectId = readFiniteNumber(overlay[recruitDetailThumbFileObjectIdKey(prefix)])
+      thumbFileObjectId = resolveRecruitDetailThumbFileObjectId(
+        overlay[recruitDetailThumbFileObjectIdKey(prefix)],
+        overlay[recruitDetailThumbContentUrlKey(prefix)]
+      )
+    }
+    if (!thumbFileName) {
+      const name = overlay[recruitDetailThumbFileNameKey(prefix)]
+      if (typeof name === 'string' && name.trim()) thumbFileName = name.trim()
     }
     if (!attachmentFileNames) {
       attachmentFileNames = readStringArray(overlay[recruitDetailAttachmentFileNamesKey(prefix)])
@@ -137,6 +164,7 @@ export function readRecruitDetailMediaFromOverlay(
   return {
     ...(keyVisualImage ? { keyVisualImage } : {}),
     ...(thumbFileObjectId != null ? { thumbFileObjectId } : {}),
+    ...(thumbFileName ? { thumbFileName } : {}),
     ...(thumbObjectUrl ? { thumbObjectUrl } : {}),
     ...(attachmentFileNames ? { attachmentFileNames } : {}),
     ...(attachmentFileObjectIds ? { attachmentFileObjectIds } : {}),

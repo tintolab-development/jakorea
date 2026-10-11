@@ -33,6 +33,8 @@ import {
   formatInstructorTargetsLabel,
   formatTargetLevelsLabel,
   formatVolunteerTargetsLabel,
+  normalizeInstructorTargetList,
+  normalizeVolunteerTargetList,
   parseTargetLevelsFromDisplayLabel,
   resolvePersistedProgramTargetLevels,
   resolveProgramTargetLevels,
@@ -57,8 +59,15 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
   individual: {
     recruitRangeSeal: 'recruit.individual.recruitRangeSeal',
     programRangeSeal: 'recruit.individual.programRangeSeal',
+    announcementPublished: 'recruit.individual.announcementPublished',
     targetLevels: 'recruit.individual.targetLevels',
     targetLevelDetail: 'recruit.individual.targetLevelDetail',
+    docDeadlineIso: 'recruit.individual.docDeadlineIso',
+    docAnnounceMethod: 'recruit.individual.docAnnounceMethod',
+    interviewRangeSeal: 'recruit.individual.interviewRangeSeal',
+    interviewMethod: 'recruit.individual.interviewMethod',
+    finalAnnounceIso: 'recruit.individual.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.individual.finalAnnounceMethod',
     inquiryContact: 'recruit.individual.inquiryContact',
     inquiryTel: 'recruit.individual.inquiryTel',
     inquiryEmail: 'recruit.individual.inquiryEmail',
@@ -75,6 +84,8 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
     inquiryTel: 'recruit.instructor.inquiryTel',
     inquiryEmail: 'recruit.instructor.inquiryEmail',
     notes: 'recruit.instructor.notes',
+    finalAnnounceIso: 'recruit.instructor.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.instructor.finalAnnounceMethod',
   },
   volunteer: {
     recruitRangeSeal: 'recruit.volunteer.recruitRangeSeal',
@@ -288,7 +299,7 @@ function coalesceNumber(
   return overlayVal
 }
 
-function formatAvailableTimeSlotsFromSelectedKeys(keys: unknown): string | undefined {
+export function formatAvailableTimeSlotsFromSelectedKeys(keys: unknown): string | undefined {
   if (!Array.isArray(keys) || keys.length === 0) return undefined
   const labels = keys
     .map(key => {
@@ -302,6 +313,106 @@ function formatAvailableTimeSlotsFromSelectedKeys(keys: unknown): string | undef
     })
     .filter((label): label is string => label != null)
   return labels.length > 0 ? labels.join(', ') : undefined
+}
+
+function parseInterviewScheduleTimeUnitMinutes(value: unknown): number {
+  if (value === '15' || value === 15) return 15
+  if (value === '60' || value === 60) return 60
+  return 30
+}
+
+/** overlay `interviewTimeRange` + `timeUnit` — BE hydrate와 동일(슬롯 키 없을 때). */
+export function formatAvailableTimeSlotsFromInterviewTimeRange(
+  rangeRaw: unknown,
+  timeUnitRaw: unknown
+): string | undefined {
+  if (!Array.isArray(rangeRaw) || rangeRaw.length < 2) return undefined
+  const start = dayjs(rangeRaw[0] as string | number | Date)
+  const end = dayjs(rangeRaw[1] as string | number | Date)
+  if (!start.isValid() || !end.isValid()) return undefined
+
+  const minutes = parseInterviewScheduleTimeUnitMinutes(timeUnitRaw)
+  const labels: string[] = []
+  let cursor = start
+
+  while (labels.length < 96) {
+    const next = cursor.add(minutes, 'minute')
+    if (next.isAfter(end)) break
+    labels.push(`${cursor.format('HH:mm')} ~ ${next.format('HH:mm')}`)
+    cursor = next
+  }
+
+  return labels.length > 0 ? labels.join(', ') : undefined
+}
+
+export function resolveVolunteerInterviewAvailableTimeSlotsFromOverlay(
+  overlay: Record<string, unknown>,
+  store: 'recruit' | 'application' = 'recruit'
+): string | undefined {
+  const key = (suffix: string) => buildVolunteerInterviewOverlayKey(store, suffix)
+  return (
+    formatAvailableTimeSlotsFromSelectedKeys(overlay[key('selectedSlotKeys')]) ??
+    formatAvailableTimeSlotsFromInterviewTimeRange(
+      overlay[key('interviewTimeRange')],
+      overlay[key('timeUnit')]
+    )
+  )
+}
+
+export function countVolunteerInterviewTimeSlotLabels(value: string | undefined): number {
+  if (!value?.trim()) return 0
+  return value.split(',').map(part => part.trim()).filter(Boolean).length
+}
+
+export function volunteerInterviewHasSelectedSlotKeys(
+  overlay: Record<string, unknown>,
+  store: 'recruit' | 'application' = 'recruit'
+): boolean {
+  const raw = overlay[buildVolunteerInterviewOverlayKey(store, 'selectedSlotKeys')]
+  return Array.isArray(raw) && raw.length > 0
+}
+
+/**
+ * 조회 표시 SSOT — 편집에서 고른 슬롯(selectedSlotKeys) 우선,
+ * 그다음 nested availableTimeSlots, 마지막 interviewTimeRange 펼침.
+ */
+export function resolveVolunteerInterviewAvailableTimeSlotsForDisplay(
+  nestedAvailableTimeSlots: string | undefined,
+  overlay: Record<string, unknown>,
+  store: 'recruit' | 'application' = 'recruit'
+): string | undefined {
+  const nested = nestedAvailableTimeSlots?.trim()
+  const nestedCount = countVolunteerInterviewTimeSlotLabels(nested)
+  const fromRange = formatAvailableTimeSlotsFromInterviewTimeRange(
+    overlay[buildVolunteerInterviewOverlayKey(store, 'interviewTimeRange')],
+    overlay[buildVolunteerInterviewOverlayKey(store, 'timeUnit')]
+  )
+  const rangeCount = countVolunteerInterviewTimeSlotLabels(fromRange)
+
+  if (volunteerInterviewHasSelectedSlotKeys(overlay, store)) {
+    const fromKeys = formatAvailableTimeSlotsFromSelectedKeys(
+      overlay[buildVolunteerInterviewOverlayKey(store, 'selectedSlotKeys')]
+    )
+    if (fromKeys) return fromKeys
+  }
+  if (fromRange) {
+    if (rangeCount > nestedCount) return fromRange
+  }
+  if (nested) return nested
+  return fromRange
+}
+
+function pickRicherAvailableTimeSlots(
+  nested?: string,
+  fromOverlay?: string
+): string | undefined {
+  const n = nested?.trim()
+  const o = fromOverlay?.trim()
+  if (!n) return o
+  if (!o) return n
+  return countVolunteerInterviewTimeSlotLabels(o) >= countVolunteerInterviewTimeSlotLabels(n)
+    ? o
+    : n
 }
 
 function formatSpecificUnavailableDateLabel(isos: string[]): string | undefined {
@@ -340,9 +451,9 @@ function buildVolunteerInterviewScheduleFromOverlay(
   const recurringUnavailable = exclusion
     ? buildRecurringUnavailableLabel(exclusion)
     : undefined
-  const availableTimeSlots = formatAvailableTimeSlotsFromSelectedKeys(
-    overlay[key('selectedSlotKeys')]
-  )
+  const availableTimeSlots = volunteerInterviewHasSelectedSlotKeys(overlay, 'recruit')
+    ? formatAvailableTimeSlotsFromSelectedKeys(overlay[key('selectedSlotKeys')])
+    : resolveVolunteerInterviewAvailableTimeSlotsFromOverlay(overlay, 'recruit')
   const specificUnavailableDates = formatSpecificUnavailableDateLabel(
     specificUnavailableDateIsos
   )
@@ -364,6 +475,67 @@ function buildVolunteerInterviewScheduleFromOverlay(
     ...(specificUnavailableDateIsos.length > 0 ? { specificUnavailableDateIsos } : {}),
     ...(availableTimeSlots ? { availableTimeSlots } : {}),
     ...(exceptions.length > 0 ? { exceptions } : {}),
+  }
+}
+
+/** 저장·PATCH — keys가 있으면 nested availableTimeSlots는 keys만 반영(첫 슬롯만 merge 금지). */
+export function alignVolunteerInterviewScheduleInfoWithSelectedSlotKeys(
+  overlay: Record<string, unknown>,
+  schedule?: GeneralProgramVolunteerInterviewScheduleInfo
+): GeneralProgramVolunteerInterviewScheduleInfo | undefined {
+  if (!volunteerInterviewHasSelectedSlotKeys(overlay, 'recruit')) return schedule
+  const fromKeys = formatAvailableTimeSlotsFromSelectedKeys(
+    overlay[buildVolunteerInterviewOverlayKey('recruit', 'selectedSlotKeys')]
+  )
+  if (!fromKeys) return schedule
+  if (!schedule) return { availableTimeSlots: fromKeys }
+  return { ...schedule, availableTimeSlots: fromKeys }
+}
+
+function pickNonEmptyScheduleString(
+  nested?: string,
+  fromOverlay?: string
+): string | undefined {
+  const nestedTrim = nested?.trim()
+  if (nestedTrim) return nested
+  const overlayTrim = fromOverlay?.trim()
+  return overlayTrim ? fromOverlay : nested
+}
+
+/** nested·overlay 각각에 일부 필드만 있을 때(예: 불가일만 JSON, 슬롯은 overlay) 병합 */
+export function mergeVolunteerInterviewScheduleInfo(
+  nested: GeneralProgramVolunteerInterviewScheduleInfo | undefined,
+  fromOverlay: GeneralProgramVolunteerInterviewScheduleInfo | undefined,
+  preferOverlay: boolean
+): GeneralProgramVolunteerInterviewScheduleInfo | undefined {
+  if (!nested && !fromOverlay) return undefined
+  if (!nested) return fromOverlay
+  if (!fromOverlay) return nested
+
+  return {
+    ...fromOverlay,
+    ...nested,
+    recurringUnavailable: pickNonEmptyScheduleString(
+      preferOverlay ? fromOverlay.recurringUnavailable : nested.recurringUnavailable,
+      preferOverlay ? nested.recurringUnavailable : fromOverlay.recurringUnavailable
+    ),
+    specificUnavailableDates: pickNonEmptyScheduleString(
+      preferOverlay ? fromOverlay.specificUnavailableDates : nested.specificUnavailableDates,
+      preferOverlay ? nested.specificUnavailableDates : fromOverlay.specificUnavailableDates
+    ),
+    specificUnavailableDateIsos: preferOverlay
+      ? fromOverlay.specificUnavailableDateIsos?.length
+        ? fromOverlay.specificUnavailableDateIsos
+        : nested.specificUnavailableDateIsos
+      : nested.specificUnavailableDateIsos?.length
+        ? nested.specificUnavailableDateIsos
+        : fromOverlay.specificUnavailableDateIsos,
+    availableTimeSlots: preferOverlay
+      ? pickNonEmptyScheduleString(fromOverlay.availableTimeSlots, nested.availableTimeSlots)
+      : pickRicherAvailableTimeSlots(nested.availableTimeSlots, fromOverlay.availableTimeSlots),
+    exceptions: nested.exceptions?.length ? nested.exceptions : fromOverlay.exceptions,
+    periodStartDate: nested.periodStartDate ?? fromOverlay.periodStartDate,
+    periodEndDate: nested.periodEndDate ?? fromOverlay.periodEndDate,
   }
 }
 
@@ -408,9 +580,17 @@ export function applyGeneralRecruitOverlayToProgram(
     overlayString(overlay, inst.targetLevelDetail) ??
     overlayString(overlay, keys.individual.targetLevelDetail)
 
-  const instructorTargets = overlayStringArray(overlay, keys.instructor.recruitTargets)
+  const instructorTargetsRaw = overlayStringArray(overlay, keys.instructor.recruitTargets)
+  const instructorTargets =
+    instructorTargetsRaw?.length && instructorTargetsRaw.length > 0
+      ? normalizeInstructorTargetList(instructorTargetsRaw)
+      : instructorTargetsRaw
   const instructorTargetDetail = overlayString(overlay, keys.instructor.recruitTargetDetail)
-  const volunteerTargets = overlayStringArray(overlay, keys.volunteer.volunteerTargets)
+  const volunteerTargetsRaw = overlayStringArray(overlay, keys.volunteer.volunteerTargets)
+  const volunteerTargets =
+    volunteerTargetsRaw?.length && volunteerTargetsRaw.length > 0
+      ? normalizeVolunteerTargetList(volunteerTargetsRaw)
+      : volunteerTargetsRaw
   const volunteerTargetDetail = overlayString(overlay, keys.volunteer.volunteerTargetDetail)
 
   const participantContact =
@@ -639,9 +819,17 @@ export function applyGeneralRecruitOverlayToProgram(
     participantInfo.remarks = coalesceString(participantInfo.remarks, participantRemarks, preferOverlay)
   }
 
-  // ── 기관 모집 전용 (공고·사전안내·명단·상한·최종발표) ──────────────
+  const individualFinalAnnounceIso = overlayString(overlay, keys.individual.finalAnnounceIso)
+  const individualFinalAnnounceMethod = overlayString(overlay, keys.individual.finalAnnounceMethod)
+  const individualDocDeadlineIso = overlayString(overlay, keys.individual.docDeadlineIso)
+  const individualDocAnnounceMethod = overlayString(overlay, keys.individual.docAnnounceMethod)
+  const individualInterviewRange = readRangeSeal(overlay, keys.individual.interviewRangeSeal)
+  const individualInterviewMethod = overlayString(overlay, keys.individual.interviewMethod)
+
+  // ── 기관·개인 참여자 모집 (공고·사전안내·명단·상한·최종발표) ─────
   const institutionAnnouncementPublished =
     overlayAnnouncementPublished(overlay, inst.announcementPublished) ??
+    overlayAnnouncementPublished(overlay, keys.individual.announcementPublished) ??
     (participantRecruitRange || participantContact ? true : undefined)
   const institutionPreguidance = overlayNeedNoneBool(overlay, inst.preguidanceRequired)
   const institutionStudentList = overlayStudentListRequired(overlay, inst.studentListRequired)
@@ -656,9 +844,13 @@ export function applyGeneralRecruitOverlayToProgram(
         : undefined
   const institutionFinalAnnounceIso = overlayString(overlay, inst.finalAnnounceIso)
   const institutionFinalAnnounceMethod = overlayString(overlay, inst.finalAnnounceMethod)
-  const institutionFinalAnnouncementLabel = formatAnnouncementLabel(
-    institutionFinalAnnounceIso,
-    institutionFinalAnnounceMethod
+  const participantFinalAnnounceIso =
+    institutionFinalAnnounceIso ?? individualFinalAnnounceIso
+  const participantFinalAnnounceMethod =
+    institutionFinalAnnounceMethod ?? individualFinalAnnounceMethod
+  const participantFinalAnnouncementLabel = formatAnnouncementLabel(
+    participantFinalAnnounceIso,
+    participantFinalAnnounceMethod
   )
   const institutionMaxInstructors = overlayFiniteNumber(overlay, inst.maxAssignableInstructors)
   const institutionMaxClassCount = overlayFiniteNumber(overlay, inst.maxClassCount)
@@ -734,10 +926,10 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
-  if (institutionFinalAnnouncementLabel) {
+  if (participantFinalAnnouncementLabel) {
     const nextFinal = coalesceString(
       participantInfo.finalAnnouncementLabel ?? participantInfo.resultAnnouncementLabel,
-      institutionFinalAnnouncementLabel,
+      participantFinalAnnouncementLabel,
       preferOverlay
     )
     if (nextFinal) {
@@ -881,6 +1073,27 @@ export function applyGeneralRecruitOverlayToProgram(
     if (nextPublished !== undefined) {
       instructorInfo.announcementPublished = nextPublished
       instructorInfo.announcementPublishedLabel = nextPublished ? '게시' : '미게시'
+    }
+  }
+
+  const instructorFinalAnnounceIso = overlayString(overlay, keys.instructor.finalAnnounceIso)
+  const instructorFinalAnnounceMethod = overlayString(
+    overlay,
+    keys.instructor.finalAnnounceMethod
+  )
+  const instructorFinalAnnouncementLabel = formatAnnouncementLabel(
+    instructorFinalAnnounceIso,
+    instructorFinalAnnounceMethod
+  )
+  if (instructorFinalAnnouncementLabel) {
+    const nextFinal = coalesceString(
+      instructorInfo.finalAnnouncementLabel ?? instructorInfo.resultAnnouncementLabel,
+      instructorFinalAnnouncementLabel,
+      preferOverlay
+    )
+    if (nextFinal) {
+      instructorInfo.finalAnnouncementLabel = nextFinal
+      instructorInfo.resultAnnouncementLabel = nextFinal
     }
   }
 
@@ -1123,10 +1336,11 @@ export function applyGeneralRecruitOverlayToProgram(
     )
   }
 
-  const nextVolunteerInterviewSchedule =
-    preferOverlay && volunteerInterviewScheduleFromOverlay
-      ? volunteerInterviewScheduleFromOverlay
-      : common.volunteerInterviewScheduleInfo ?? volunteerInterviewScheduleFromOverlay
+  const nextVolunteerInterviewSchedule = mergeVolunteerInterviewScheduleInfo(
+    common.volunteerInterviewScheduleInfo,
+    volunteerInterviewScheduleFromOverlay,
+    preferOverlay
+  )
 
   const contactPhone = coalesceString(
     typeof program.contactPhone === 'string' ? program.contactPhone : undefined,
@@ -1268,47 +1482,47 @@ export function applyGeneralRecruitOverlayToProgram(
     ) as Program['studentListRequired'],
     resultAnnouncementDate: coalesceIso(
       program.resultAnnouncementDate,
-      institutionFinalAnnounceIso ?? volunteerFinalAnnounceIso,
+      participantFinalAnnounceIso ?? volunteerFinalAnnounceIso,
       preferOverlay
     ),
     resultAnnouncementMethod: coalesceString(
       program.resultAnnouncementMethod,
-      institutionFinalAnnounceMethod ?? volunteerFinalAnnounceMethod,
+      participantFinalAnnounceMethod ?? volunteerFinalAnnounceMethod,
       preferOverlay
     ),
     documentPassAnnouncementDate: coalesceIso(
       program.documentPassAnnouncementDate,
-      volunteerDocDeadlineIso,
+      individualDocDeadlineIso ?? volunteerDocDeadlineIso,
       preferOverlay
     ),
     documentPassAnnouncementMethod: coalesceString(
       program.documentPassAnnouncementMethod,
-      volunteerDocAnnounceMethod,
+      individualDocAnnounceMethod ?? volunteerDocAnnounceMethod,
       preferOverlay
     ),
     interviewStartDate: coalesceIso(
       program.interviewStartDate,
-      volunteerInterviewRange?.start,
+      individualInterviewRange?.start ?? volunteerInterviewRange?.start,
       preferOverlay
     ),
     interviewEndDate: coalesceIso(
       program.interviewEndDate,
-      volunteerInterviewRange?.end,
+      individualInterviewRange?.end ?? volunteerInterviewRange?.end,
       preferOverlay
     ),
     interviewMethod: coalesceString(
       program.interviewMethod,
-      volunteerInterviewMethod,
+      individualInterviewMethod ?? volunteerInterviewMethod,
       preferOverlay
     ),
     finalPassAnnouncementDate: coalesceIso(
       program.finalPassAnnouncementDate,
-      volunteerFinalAnnounceIso,
+      volunteerFinalAnnounceIso ?? instructorFinalAnnounceIso,
       preferOverlay
     ),
     finalPassAnnouncementMethod: coalesceString(
       program.finalPassAnnouncementMethod,
-      volunteerFinalAnnounceMethod,
+      volunteerFinalAnnounceMethod ?? instructorFinalAnnounceMethod,
       preferOverlay
     ),
     generalVolunteerInterviewEnabled: coalesceBool(

@@ -8,7 +8,10 @@ import {
   resolveAdminCommentResource,
 } from '@/features/user/api/resolve-admin-comment-resource'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
-import { shouldShowAdminCommentSectionForViewer } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import {
+  shouldShowAdminCommentForAdminPermissionApplicationDetail,
+  shouldShowAdminCommentSectionForViewer,
+} from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import type { User } from '@/types/user'
 
 /** 관리자 계정은 admin-accounts 상세 `termsAgreements`가 SSOT. member consent-records API를 쓰지 않는다. */
@@ -28,7 +31,7 @@ export async function fetchMemberDetailBasicTabResources(
     membersRemote: boolean
     displayUser: Pick<
       User,
-      'role' | 'memberId' | 'organizationId' | 'adminAccountId' | 'id'
+      'role' | 'memberId' | 'organizationId' | 'adminAccountId' | 'id' | 'permissionApprovalStatus'
     > | null | undefined
     mode: 'default' | 'permission'
     showConsentAgreement: boolean
@@ -77,7 +80,8 @@ export async function fetchMemberDetailBasicTabResources(
 
   if (
     currentUser &&
-    shouldShowAdminCommentSectionForViewer(currentUser, displayUser)
+    shouldShowAdminCommentSectionForViewer(currentUser, displayUser) &&
+    shouldShowAdminCommentForAdminPermissionApplicationDetail(mode, displayUser)
   ) {
     const commentResource = resolveAdminCommentResource(displayUser)
     if (commentResource) {

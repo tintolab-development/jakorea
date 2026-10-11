@@ -4,7 +4,7 @@
 
 import type { Cell, CellWithRowAndCol, Sheet } from '@fortune-sheet/core'
 import dayjs from 'dayjs'
-import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
+import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import { getCompletedRowsOrderedForBulkTransfer } from '@/pages/settlement-management/bulk-transfer-fortune-data'
 
 export const TAX_FILING_HEADER_LABELS = [

@@ -1,11 +1,12 @@
-import type { TemplateFormSelectOption } from '@/features/template/lib/template-form-select-options'
+import {
+  TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS,
+  type TemplateFormSelectOption,
+} from '@/features/template/lib/template-form-select-options'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 
-/** Gemini 찾아가는 연수 — 교육 대상 (성인 / 대학생만) */
-export const GEMINI_RECRUITMENT_EDUCATION_TARGET_OPTIONS: TemplateFormSelectOption[] = [
-  { value: 'adult', label: '성인' },
-  { value: 'university', label: '대학생' },
-]
+/** Gemini 찾아가는 연수 — 교육 대상 (모집 양식과 동일 5종) */
+export const GEMINI_RECRUITMENT_EDUCATION_TARGET_OPTIONS: TemplateFormSelectOption[] =
+  TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS
 
 /** Gemini 찾아가는 연수 — 교육 형태 (온라인 / 오프라인만) */
 export const GEMINI_RECRUITMENT_EDUCATION_FORM_OPTIONS = getProgramRegistrationEducationFormOptions(

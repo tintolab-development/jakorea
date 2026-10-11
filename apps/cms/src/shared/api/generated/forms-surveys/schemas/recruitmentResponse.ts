@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { RecruitmentResponseRecruitTerm } from './recruitmentResponseRecruitTerm';
+import type { VolunteerInterviewScheduleResponse } from './volunteerInterviewScheduleResponse';
 
 export interface RecruitmentResponse {
   recruitmentId?: number;
@@ -96,4 +97,6 @@ export interface RecruitmentResponse {
      * @nullable
      */
   summary?: string | null;
+  /** 봉사자(VOLUNTEER) 모집이고 면접이 켜진 경우 「면접 진행 가능 일정」. 신청폼 면접 선택지와 같은 규칙(슬롯 우선, 없으면 CMS volunteerInterviewScheduleInfo 펼침). 그 외 모집 유형·면접 미운영은 null(필드 생략). options는 없으면 []. */
+  volunteerInterviewSchedule?: VolunteerInterviewScheduleResponse | null;
 }

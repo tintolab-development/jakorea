@@ -181,15 +181,15 @@ describe('payment-order-calculation-basis-detail', () => {
     const activity = buildActivityBasisDetail()
     expect(activity).toEqual({
       layout: 'activity',
-      categoryLabel: '활동비',
+      categoryLabel: '참여자 활동비',
       activityFee: {
         amountWon: 50000,
-        receiptFileName: '활동비 영수증.pdf',
+        receiptFileName: '참여자 활동비 영수증.pdf',
       },
       totalWon: 50000,
     })
     expect(resolveActivityBasisDetailTotalWon(activity)).toBe(50000)
-    expect(resolveBasisDetailModalTitle(activity)).toBe('활동비 산정 기준 상세')
+    expect(resolveBasisDetailModalTitle(activity)).toBe('참여자 활동비 산정 기준 상세')
   })
 
   it('buildWithholdingBasisDetail returns withholding breakdown for daily salary total', () => {
@@ -219,7 +219,7 @@ describe('payment-order-calculation-basis-detail', () => {
     )
   })
 
-  it('resolvePaymentOrderCalculationBasisDetailForRow builds travel fallback', () => {
+  it('resolvePaymentOrderCalculationBasisDetailForRow does not invent travel mock without basisDetail', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow({
       kind: 'travel',
       itemLabel: '교통비',
@@ -227,13 +227,12 @@ describe('payment-order-calculation-basis-detail', () => {
       lineId: 'travel-1',
       lectureSessionDisplay: '1 ~ 2차시',
     })
-    expect(detail?.layout).toMatch(/^transport/)
+    expect(detail).toBeUndefined()
   })
 
-  it('row.basisDetail 없어도 모든 산정 항목은 산정 기준 상세를 만든다', () => {
+  it('row.basisDetail 없어도 강의비·원천징수 등은 산정 기준 상세를 만든다 (교통비는 서버 basis만)', () => {
     const kinds = [
       { kind: 'lecture_fee', itemLabel: '강의비', amount: 200000 },
-      { kind: 'travel', itemLabel: '교통비', amount: 30000 },
       { kind: 'lodging', itemLabel: '숙박비', amount: 150000 },
       { kind: 'meal', itemLabel: '식사비', amount: 30000 },
       { kind: 'activity', itemLabel: '활동비', amount: 50000 },
@@ -249,6 +248,15 @@ describe('payment-order-calculation-basis-detail', () => {
       expect(detail, row.itemLabel).toBeDefined()
       expect(isSupportedBasisDetailLayout(detail), row.itemLabel).toBe(true)
     }
+
+    const travelWithoutBasis = resolvePaymentOrderCalculationBasisDetailForRow({
+      kind: 'travel',
+      itemLabel: '교통비',
+      amount: 0,
+      lineId: 'travel-empty',
+      lectureSessionDisplay: '1 ~ 2차시',
+    })
+    expect(travelWithoutBasis).toBeUndefined()
   })
 
   it('resolvePaymentOrderCalculationBasisDetailForRow builds activity fallback', () => {

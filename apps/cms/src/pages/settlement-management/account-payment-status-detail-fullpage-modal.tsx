@@ -9,20 +9,15 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
-import {
-  buildSearchParams,
-  makeBreadcrumbItem,
-} from '@/shared/lib/detail-fullpage-query-stack'
+import { buildSearchParams, makeBreadcrumbItem } from '@/shared/lib/detail-fullpage-query-stack'
 import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
 import { CmsButton } from '@/shared/ui'
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
-import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
-import { getMockAccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
+import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
+import { getMockAccountPaymentStatusDetail } from '@/features/settlement-management/model/account-payments-list'
 import { useAccountPaymentDetailQuery } from '@/features/settlement-management/hooks/use-account-payment-detail-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
@@ -46,22 +41,8 @@ import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentSingleConfirmationPayload,
 } from '@/features/settlement/ui/account-payment-confirmation-modal'
+import { AccountPaymentStatusDetailBasicInfo } from './account-payment-status-detail-basic-info'
 import './account-payment-status-detail-fullpage-modal.css'
-
-function getAccountPaymentStatusClassName(status: AccountPaymentRow['accountPaymentStatus']): string {
-  switch (status) {
-    case 'awaiting_confirmation':
-      return 'account-payments-page__status-text--awaiting-confirmation'
-    case 'partial_confirmation':
-      return 'account-payments-page__status-text--partial-confirmation'
-    case 'account_paid':
-      return 'account-payments-page__status-text--account-paid'
-    case 'payment_correction_requested':
-      return 'account-payments-page__status-text--payment-correction-requested'
-    default:
-      return ''
-  }
-}
 
 export interface AccountPaymentStatusDetailFullPageModalProps {
   open: boolean
@@ -111,12 +92,8 @@ export function AccountPaymentStatusDetailFullPageModal({
     }
   }, [detail])
 
-  const {
-    basisDetailOpen,
-    selectedBasisDetail,
-    handleBasisDetailClick,
-    closeBasisDetailModal,
-  } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
+  const { basisDetailOpen, selectedBasisDetail, handleBasisDetailClick, closeBasisDetailModal } =
+    usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
 
   const singlePaymentConfirmPayload = useMemo(
     () => (detail ? buildAccountPaymentSingleConfirmationPayload(detail) : null),
@@ -160,14 +137,16 @@ export function AccountPaymentStatusDetailFullPageModal({
   }
 
   const { basic } = detail ?? { basic: null }
-  const title = '계좌 지급 현황 상세'
+  const instructorDisplayName =
+    basic?.nameKo?.trim() || row.instructorName?.trim() || '신청자'
+  const title = `계좌 지급 확인 현황 상세 (${instructorDisplayName})`
   const headerBreadcrumbItems = [
     makeBreadcrumbItem(
       '계좌 지급 확인',
       location.pathname,
       buildSearchParams(searchParams, { delete: ['ap_detail'] })
     ),
-    { label: title },
+    { label: instructorDisplayName },
   ]
 
   return (
@@ -199,135 +178,35 @@ export function AccountPaymentStatusDetailFullPageModal({
         }
       >
         {detail && basic ? (
-        <div className="account-payment-status-detail-fullpage-modal__root">
-          <div className="account-payment-status-detail-fullpage-modal__basic-stack">
-            <DetailInfoForm
-              title="기본 정보"
-              className="account-payment-status-detail-fullpage-modal__detail-form-card"
-            >
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field label="성명" view={<span>{basic.nameKo}</span>} />
-                <DetailInfoForm.Field label="연락처" view={<span>{basic.phoneDisplay}</span>} />
-              </DetailInfoForm.Row>
-              <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field label="이메일" view={<span>{basic.emailDisplay}</span>} />
-              </DetailInfoForm.Row>
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="자택 주소"
-                  view={
-                    basic.addressBlurredTail ? (
-                      <>
-                        {basic.addressDisplay}
-                        <span
-                          className="applicant-instructor-basic-info__address-blur"
-                          aria-hidden="true"
-                        >
-                          {' '}
-                          {basic.addressBlurredTail}
-                        </span>
-                      </>
-                    ) : (
-                      <span>{basic.addressDisplay}</span>
-                    )
-                  }
-                />
-                <DetailInfoForm.Field
-                  label="정산 계좌 정보"
-                  view={
-                    <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--start">
-                      {withProgramDetailTdDivider([
-                        basic.settlementAccountBankNumberPart,
-                        basic.settlementAccountHolderPart,
-                      ])}
-                    </div>
-                  }
-                />
-              </DetailInfoForm.Row>
-            </DetailInfoForm>
+          <div className="account-payment-status-detail-fullpage-modal__root">
+            <AccountPaymentStatusDetailBasicInfo basic={basic} />
 
-            <DetailInfoForm
-              title="프로그램명, 진행 회차, 사업 운영 기간"
-              hideHeader
-              className="account-payment-status-detail-fullpage-modal__detail-form-card"
-            >
-              <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field label="프로그램명" view={<span>{basic.programName}</span>} />
-              </DetailInfoForm.Row>
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="프로그램 진행 회차"
-                  view={<span>{basic.programSessionProgressDisplay}</span>}
-                />
-                <DetailInfoForm.Field
-                  label="사업 운영 기간"
-                  view={<span>{basic.businessPeriodDisplay}</span>}
-                />
-              </DetailInfoForm.Row>
-            </DetailInfoForm>
-
-            <DetailInfoForm
-              title="계좌 지급 현황, 이체 예정일, 강의비, 사업소득자"
-              hideHeader
-              className="account-payment-status-detail-fullpage-modal__detail-form-card"
-            >
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="계좌 지급 현황"
-                  view={
-                    <span className={getAccountPaymentStatusClassName(basic.accountPaymentStatus)}>
-                      {basic.accountPaymentStatusLabel}
-                    </span>
-                  }
-                />
-                <DetailInfoForm.Field
-                  label="이체 예정일"
-                  view={<span>{basic.transferScheduledDateDisplay}</span>}
-                />
-              </DetailInfoForm.Row>
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="강의비 책정 기준"
-                  view={
-                    <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--start">
-                      {withProgramDetailTdDivider([
-                        basic.lectureFeeStandardTitle,
-                        basic.lectureFeeStandardAmount,
-                      ])}
-                    </div>
-                  }
-                />
-                <DetailInfoForm.Field
-                  label="사업소득자 여부"
-                  view={<span>{basic.businessIncomeEarnerLabel}</span>}
-                />
-              </DetailInfoForm.Row>
-            </DetailInfoForm>
+            <div className="account-payment-status-detail-fullpage-modal__calc-host">
+              <PaymentOrderCalculationBreakdownTable
+                blocks={detail.blocks}
+                formulaLabel={detail.formulaLabel}
+                totalAmount={detail.totalAmount}
+                lectureSessionSegmentLabel="round"
+                actionButtonSize="h32"
+                actionButtonWidth={176}
+                tableCellSpec="cms-data-table"
+                onBasisDetailClick={handleBasisDetailClick}
+                onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
+                headerActions={
+                  row.accountPaymentStatus === 'account_paid' ? undefined : (
+                    <CmsButton
+                      variant="primary"
+                      size="large"
+                      width={160}
+                      onClick={() => setPaymentCompleteConfirmOpen(true)}
+                    >
+                      지급 완료 처리
+                    </CmsButton>
+                  )
+                }
+              />
+            </div>
           </div>
-
-          <div className="account-payment-status-detail-fullpage-modal__calc-host">
-            <PaymentOrderCalculationBreakdownTable
-              blocks={detail.blocks}
-              formulaLabel={detail.formulaLabel}
-              totalAmount={detail.totalAmount}
-              lectureSessionSegmentLabel="round"
-              onBasisDetailClick={handleBasisDetailClick}
-              onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
-              headerActions={
-                row.accountPaymentStatus === 'account_paid' ? undefined : (
-                  <CmsButton
-                    variant="primary"
-                    size="large"
-                    width={160}
-                    onClick={() => setPaymentCompleteConfirmOpen(true)}
-                  >
-                    지급 완료 처리
-                  </CmsButton>
-                )
-              }
-            />
-          </div>
-        </div>
         ) : null}
       </DetailFullPageModal>
 

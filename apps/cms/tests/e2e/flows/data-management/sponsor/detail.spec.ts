@@ -47,7 +47,7 @@ test.describe('후원사 상세 LNB', () => {
       beneficiary: SPONSOR_SEED_YEARLY_BENEFICIARY,
     })
 
-    await sponsors.clickLnb('프로그램 진행 이력')
+    await sponsors.clickLnb('프로그램 후원 이력')
     await sponsors.expectLnbUrl('sponsor-programs')
     await sponsors.expectHistoryShell()
 
@@ -82,7 +82,7 @@ test.describe('후원사 상세 LNB', () => {
     } else {
       test.info().annotations.push({
         type: 'note',
-        description: '프로그램 진행 이력 행 없음',
+        description: '프로그램 후원 이력 행 없음',
       })
     }
 

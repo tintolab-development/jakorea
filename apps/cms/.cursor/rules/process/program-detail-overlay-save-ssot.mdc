@@ -1,0 +1,74 @@
+---
+description: 프로그램 상세 수정 — RHF/폼 PATCH vs in-memory overlay 저장 SSOT (stale overlay 재발 방지)
+globs: apps/cms/src/features/program/**/hooks/*save*.ts,apps/cms/src/features/program/**/hooks/use-program-detail-info-save.ts,apps/cms/src/features/program/**/lib/*overlay*sync*.ts,apps/cms/src/features/program/**/lib/detail-operational-save-merge.ts,apps/cms/src/features/program/**/ui/detail-modal/**,apps/cms/src/features/template/hooks/use-program-participant-application-editor.ts
+alwaysApply: false
+---
+
+# 프로그램 상세 수정 — overlay vs 폼 SSOT
+
+**Scope:** CMS 프로그램 **상세** 공통정보·모집·신청 저장·`registrationOverlay` / operational overlay store.
+
+등록 **위저드**는 별도 플로우다. 상세 모달에서 RHF가 있으면 아래를 **반드시** 따른다.
+
+## 정본 (SSOT)
+
+| 화면 | PATCH 생성 | baseline `Program` |
+|------|------------|-------------------|
+| 공통정보 (일반) | `generalCommonInfoEditValuesToProgramPatch(form.getValues(), …)` | 편집 진입 시점 `program` (overlay roundtrip 금지) |
+| 공통정보 (1사1교) | `detailEditValuesToProgramPatch` / 공통 스키마 + `writeEconomyRegistrationOverlayFromProgramDraft` | 동일 |
+| 모집 탭 | `detailEditValuesToProgramPatch(form.getValues(), program)` | 동일 |
+| 교받교 공통 | `detailEditValuesToProgramPatch` | 동일 |
+
+**금지:** `read*OverlayForSave()`만으로 PATCH·`programTo*EditValues(withOverlay)`를 만들어 저장하는 패턴.
+
+## Overlay store 역할
+
+1. 폼에 **없는** 키만 보강 (면접 일정 KV, 양식 paragraph overlay, 등록 단락 등).
+2. 저장 직전: **폼→overlay patch** → `resync*FromProgram(draft)`로 `registrationOverlay` 재생성.
+3. 편집 진입: `setOperationalOverlayScope(catalogTemplateCode)` + program의 overlay **slice 시드**  
+   - 모집: `seedOperationalRecruitOverlaysFromProgram(program)`  
+   - 신청: `seedOperationalOverlayFromProgramCatalog(program, templateCode)`
+
+## 모집 persist — 필수 API
+
+- 병합: `apps/cms/src/features/program/general/lib/detail-operational-save-merge.ts`  
+  - `buildMergedRegistrationOverlayForRecruitSave`  
+  - `recruitOverlayPatchFromDetailEditValues`  
+  - 봉사 면접: `mergeOverlayOnlyVolunteerInterviewSchedule` (전체 nested에 `preferOverlay` spread 금지)
+- resync: **모든** `recruitmentAudience`에서 `resyncGeneralRecruitOverlayFromProgram(draft, merged)`.
+
+### 절대 금지 (모집 저장·persist)
+
+- `getGeneralRecruitOverlayRecord()` — **활성 스코프** 전체를 `registrationOverlay`에 merge (다른 탭·신청 스코프 stale 유입).  
+  - UI·KV 구독·면접 섹션 표시는 허용.  
+  - persist는 catalog별 **`peekGeneralRecruitOverlayRecord(templateCode)`** / `collectOperationalOverlayForCatalogId`만.
+- `applyGeneralRecruitOverlayToProgram(..., { preferOverlay: true })` 결과를 **폼 PATCH nested/컬럼 위에** spread.
+
+주석 SSOT: `apps/cms/src/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync.ts` — `getGeneralRecruitOverlayRecord`는 UI·활성 스코프 전용.
+
+## 공통정보 overlay
+
+- 일반: `writeGeneralRegistrationOverlayFromCommonInfoFormValues(draftFromForm)` → 검증 → `resyncGeneralRegistrationOverlayFromProgram`.
+- 1사1교: `writeEconomyRegistrationOverlayFromProgramDraft(draftFromForm)` — overlay-first `applyEconomyRegistrationOverlayToProgram` + 저장 전 `form.reset(merged)` 금지.
+- UJAT: `buildUjatProgramDraftWithSessionOverlay` — **draft의 `ujatRegistrationOverlay`가** `readUjatRegistrationBasicInfoOverlayForSave()`보다 merge 시 **우선**.
+
+## 신청 양식 (상세 모달)
+
+- 모달 `open`: scope + seed (위 시드 함수).
+- 저장 성공 후: `invalidateProgramFormBindingsCache(programId)` (binding PUT 반영).
+
+## PR·테스트
+
+저장 훅·`detail-operational-save-merge`·overlay sync 변경 시 최소 1개 실행:
+
+- `detail-operational-save-merge.test.ts`
+- `use-program-detail-info-save.volunteer.test.ts`
+- `common-info-save-roundtrip.test.ts` / `1c-1s/.../common-info-save-roundtrip.test.ts`
+
+시나리오: **폼 값 변경 + 다른 catalog/active-scope에 stale overlay** → 저장 후 overlay·nested가 **폼**을 따르는지.
+
+## ESLint
+
+`apps/cms/src/features/program/**/hooks/use-*save*.ts`에서 `getGeneralRecruitOverlayRecord` import·호출은 **error** (루트 `eslint.config.js`).
+
+**Last updated:** 2026-10-10

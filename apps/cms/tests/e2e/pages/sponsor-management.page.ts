@@ -164,9 +164,9 @@ export class SponsorManagementPage {
     await expect(dialog).toBeHidden({ timeout: 15_000 })
   }
 
-  async clickLnb(label: '후원사 상세 정보' | '프로그램 진행 이력' | '후원사 담당자 정보') {
+  async clickLnb(label: '후원사 상세 정보' | '프로그램 후원 이력' | '후원사 담당자 정보') {
     const dialog = this.detailDialog()
-    if (label === '프로그램 진행 이력') {
+    if (label === '프로그램 후원 이력') {
       const pending = waitForAdminGet(this.page, '/program-histories', 30_000, { exact: false })
       await dialog.getByRole('button', { name: label }).click()
       await pending
@@ -218,7 +218,7 @@ export class SponsorManagementPage {
 
   async expectHistoryShell() {
     const dialog = this.detailDialog()
-    await expect(dialog.getByText('프로그램 진행 이력').first()).toBeVisible({ timeout: 15_000 })
+    await expect(dialog.getByText('프로그램 후원 이력').first()).toBeVisible({ timeout: 15_000 })
     await expect(dialog.getByPlaceholder('프로그램명을 입력하세요')).toBeVisible()
     await expect(dialog.getByRole('button', { name: '이력 삭제' })).toHaveCount(0)
     await expectColumnTitles(this.page, HISTORY_COLUMNS, dialog)

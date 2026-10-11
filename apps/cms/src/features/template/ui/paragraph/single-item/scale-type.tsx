@@ -75,7 +75,6 @@ function ScaleTypeInner({
           <button
             key={item.id}
             type="button"
-            disabled={!isBodyInteractive}
             className={[
               'scale-type-item',
               selectedId === item.id ? 'scale-type-item--selected' : '',

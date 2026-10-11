@@ -19,14 +19,20 @@ import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/
 import {
   getApplicantRecruitInstitutionOverlayRecord,
   patchApplicantRecruitInstitutionOverlay,
-  resetApplicantRecruitInstitutionOverlay,
+  peekApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
-  resetGeneralRecruitOverlay,
+  peekGeneralRecruitOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
-import { consumeWizardContentResetPending } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import { DEFAULT_OPERATIONAL_OVERLAY_SCOPE } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import {
+  consumeWizardContentResetPending,
+  getRecruitDetailContentResetGeneration,
+  peekWizardContentResetPending,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import { resetAllOperationalOverlayStoresForTests } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   getGeminiRecruitOverlayRecord,
   resetGeminiRecruitOverlay,
@@ -43,7 +49,7 @@ import { createUjatRecruitFormInstitutionDraft } from '@/features/template/model
 import {
   getGeneralApplicationOverlayRecord,
   patchGeneralApplicationOverlay,
-  resetGeneralApplicationOverlay,
+  peekGeneralApplicationOverlayRecord,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getInstitutionApplicationProgramBridge,
@@ -51,14 +57,10 @@ import {
   resetInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
+import { getUjatRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
 import {
-  getUjatRecruitInstitutionOverlayRecord,
-  resetUjatRecruitInstitutionOverlay,
-} from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
-import {
-  getUjatRecruitVolunteerOverlayRecord,
   patchUjatRecruitVolunteerOverlay,
-  resetUjatRecruitVolunteerOverlay,
+  peekUjatRecruitVolunteerOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 
 describe('applyRegistrationStepTemplateChange', () => {
@@ -68,14 +70,9 @@ describe('applyRegistrationStepTemplateChange', () => {
       programType: 'GENERAL',
       templateCode: 'recruitment-participant-school-custom-2',
     })
-    resetApplicantRecruitInstitutionOverlay()
-    resetGeneralRecruitOverlay()
-    resetGeneralApplicationOverlay()
+    resetAllOperationalOverlayStoresForTests()
     resetInstitutionApplicationProgramBridge()
-    resetUjatRecruitInstitutionOverlay()
-    resetUjatRecruitVolunteerOverlay()
     clearOperationalSeedDefaultSuppression()
-    resetGeminiRecruitOverlay()
     for (const templateCode of [
       'application-participant-school-custom-2',
       'recruitment-instructor-custom-2',
@@ -128,6 +125,41 @@ describe('applyRegistrationStepTemplateChange', () => {
     expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.programDescription']).toBe(
       '템플릿 프로그램 설명'
     )
+  })
+
+  it('persists the selected template draft so hydrate can load it after a wizard template change', async () => {
+    const draft = createApplicantRecruitFormInstitutionDraft()
+    loadFormTemplateVersionDraft.mockResolvedValue({
+      version: 1,
+      templateId: 'recruitment-participant-school-custom-2',
+      savedAt: '2026-10-07T00:00:00.000Z',
+      draft,
+      overlay: {
+        'recruit.notes': '복사본 안내',
+        'recruit.detailInfo.programDescription': '템플릿 프로그램 설명',
+      },
+    })
+
+    const generationBefore = getRecruitDetailContentResetGeneration()
+    await applyRegistrationStepTemplateChange({
+      programType: 'GENERAL',
+      stepKey: 'recruit-participant-school',
+      previousCode: 'recruitment-participant-school',
+      nextCode: 'recruitment-participant-school-custom-2',
+      defaultCode: 'recruitment-participant-school',
+    })
+
+    const saved = await loadRegistrationWizardFormDraft({
+      programType: 'GENERAL',
+      templateCode: 'recruitment-participant-school-custom-2',
+    })
+    expect(saved?.draft?.paragraphs.length).toBeGreaterThan(0)
+    expect(saved?.overlay?.['recruit.notes']).toBe('복사본 안내')
+    expect(saved?.overlay?.['recruit.detailInfo.programDescription']).toBe(
+      '템플릿 프로그램 설명'
+    )
+    expect(peekWizardContentResetPending()).toBe(true)
+    expect(getRecruitDetailContentResetGeneration()).toBe(generationBefore)
   })
 
   it('replaces previously written values with the loaded template overlay', async () => {
@@ -194,7 +226,8 @@ describe('applyRegistrationStepTemplateChange', () => {
 
     expect(loadFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
       'recruitment-participant-school-custom-2',
-      22
+      22,
+      { invalidateCache: false }
     )
     expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('버전에서 온 안내')
     expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.programDescription']).toBe(
@@ -275,10 +308,14 @@ describe('applyRegistrationStepTemplateChange', () => {
       defaultCode: 'recruitment-instructor',
     })
 
-    expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('기관 안내')
-    expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.programDescription']).toBe(
-      '기관 상세'
-    )
+    expect(
+      peekApplicantRecruitInstitutionOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)['recruit.notes']
+    ).toBe('기관 안내')
+    expect(
+      peekGeneralRecruitOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)[
+        'recruit.detailInfo.programDescription'
+      ]
+    ).toBe('기관 상세')
     expect(getGeneralRecruitOverlayRecord()['recruit.instructor.inquiryContact']).toBe('새 강사')
   })
 
@@ -308,9 +345,11 @@ describe('applyRegistrationStepTemplateChange', () => {
     })
 
     expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('1사1교 안내')
-    expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.programDescription']).toBe(
-      '일반 기관 상세'
-    )
+    expect(
+      peekGeneralRecruitOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)[
+        'recruit.detailInfo.programDescription'
+      ]
+    ).toBe('일반 기관 상세')
     expect(getGeneralRecruitOverlayRecord()['economyRecruit.detailInfo.programDescription']).toBe(
       '새 1사1교'
     )
@@ -353,9 +392,11 @@ describe('applyRegistrationStepTemplateChange', () => {
     expect(
       saved?.draft.paragraphs.some(paragraph => paragraph.id === 'trained-teachers-custom-field')
     ).toBe(true)
-    expect(getGeneralApplicationOverlayRecord()['application.institution.memo']).toBe(
-      '기관 신청 유지'
-    )
+    expect(
+      peekGeneralApplicationOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)[
+        'application.institution.memo'
+      ]
+    ).toBe('기관 신청 유지')
     expect(getGeneralApplicationOverlayRecord()['application.trainedTeachers.memo']).toBe(
       '새 연수교사'
     )
@@ -387,10 +428,16 @@ describe('applyRegistrationStepTemplateChange', () => {
       baseTemplateCode: 'recruitment-ujat-school',
     })
 
-    expect(getUjatRecruitVolunteerOverlayRecord()['recruit.volunteer.notes']).toBe('봉사자 안내')
-    expect(getGeneralRecruitOverlayRecord()['recruitVolunteer.detailInfo.programDescription']).toBe(
-      '봉사자 상세'
-    )
+    expect(
+      peekUjatRecruitVolunteerOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)[
+        'recruit.volunteer.notes'
+      ]
+    ).toBe('봉사자 안내')
+    expect(
+      peekGeneralRecruitOverlayRecord(DEFAULT_OPERATIONAL_OVERLAY_SCOPE)[
+        'recruitVolunteer.detailInfo.programDescription'
+      ]
+    ).toBe('봉사자 상세')
     expect(getUjatRecruitInstitutionOverlayRecord()['recruit.notes']).toBe('UJAT 기관 안내')
     expect(getGeneralRecruitOverlayRecord()['ujatRecruit.detailInfo.programDescription']).toBe(
       '새 기관 상세'
@@ -476,9 +523,9 @@ describe('applyRegistrationStepTemplateChange', () => {
         'general-recruit',
         getGeneralRecruitOverlayRecord(),
         'recruit.instructor.recruitTargets',
-        ['성인']
+        ['adult']
       )
-    ).toEqual(['성인'])
+    ).toEqual(['adult'])
   })
 
   it('clears volunteer, instructor, and gemini seed defaults on their own template change', async () => {
@@ -505,9 +552,9 @@ describe('applyRegistrationStepTemplateChange', () => {
         'general-recruit',
         getGeneralRecruitOverlayRecord(),
         'recruit.instructor.recruitTargets',
-        ['성인']
+        ['adult']
       )
-    ).toEqual(['성인'])
+    ).toEqual(['adult'])
 
     clearOperationalSeedDefaultSuppression()
     await applyRegistrationStepTemplateChange({
@@ -523,7 +570,7 @@ describe('applyRegistrationStepTemplateChange', () => {
         'general-recruit',
         getGeneralRecruitOverlayRecord(),
         'recruit.instructor.recruitTargets',
-        ['성인']
+        ['adult']
       )
     ).toEqual([])
 
@@ -556,7 +603,16 @@ describe('applyRegistrationStepTemplateChange', () => {
     ).toBe('')
   })
 
-  it('is a no-op when the same template is selected again', async () => {
+  it('reloads from remote when the same template is selected again', async () => {
+    const draft = createApplicantRecruitFormInstitutionDraft()
+    loadFormTemplateVersionDraft.mockResolvedValue({
+      version: 2,
+      templateId: 'recruitment-participant-school',
+      savedAt: '2026-10-09T00:00:00.000Z',
+      draft,
+      overlay: { 'recruit.notes': '양식 관리에서 수정된 안내' },
+    })
+
     const result = await applyRegistrationStepTemplateChange({
       programType: 'GENERAL',
       stepKey: 'recruit-participant-school',
@@ -564,7 +620,10 @@ describe('applyRegistrationStepTemplateChange', () => {
       nextCode: 'recruitment-participant-school',
       defaultCode: 'recruitment-participant-school',
     })
-    expect(result).toBe('unchanged')
-    expect(loadFormTemplateVersionDraft).not.toHaveBeenCalled()
+    expect(result).toBe('applied')
+    expect(loadFormTemplateVersionDraft).toHaveBeenCalledWith('recruitment-participant-school')
+    expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.notes']).toBe(
+      '양식 관리에서 수정된 안내'
+    )
   })
 })

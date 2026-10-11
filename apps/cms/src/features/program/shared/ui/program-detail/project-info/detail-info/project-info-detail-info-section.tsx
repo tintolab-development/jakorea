@@ -21,6 +21,7 @@ import {
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
 import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
+import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import {
   fetchProgramMediaAttachments,
   fetchProgramMediaThumbnail,
@@ -439,11 +440,19 @@ function useDetailInfoEditorBlock(
   const displayThumbnailUrl = rowMedia
     ? thumbnailPreviewBlobUrl || linkedThumbnail?.url
     : thumbnailPreviewBlobUrl || linkedThumbnail?.url || legacyThumbnailUrl
-  const thumbnailFilename = rowMedia
-    ? linkedThumbnail?.fileName ||
-      (thumbnailPreviewBlobUrl ? getThumbnailFilename(thumbnailPreviewBlobUrl) : '')
-    : linkedThumbnail?.fileName ||
-      (legacyThumbnailUrl ? getThumbnailFilename(legacyThumbnailUrl) : '')
+  const overlayThumbnailName = readRecruitDetailMediaFromOverlay(
+    program.registrationOverlay ?? {}
+  ).thumbFileName
+  const thumbnailFilename =
+    linkedThumbnail?.fileName ||
+    overlayThumbnailName ||
+    (rowMedia
+      ? displayThumbnailUrl
+        ? '썸네일.jpg'
+        : ''
+      : legacyThumbnailUrl
+        ? getThumbnailFilename(legacyThumbnailUrl)
+        : '')
 
   return {
     editorOpen,

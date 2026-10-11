@@ -5,6 +5,7 @@
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { countInterviewAvailabilitySlots } from '@/features/program/general/lib/interview-availability-utils'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 
 function maskContact(contact: string): string {
   const trimmed = contact.trim()
@@ -58,7 +59,7 @@ export function mapParticipantToVolunteerScreeningRow(
     programId: row.programId ?? '',
     memberId: Number.isFinite(memberIdNum) ? memberIdNum : undefined,
     englishName: row.applicantName,
-    gender: row.detail?.gender ?? '-',
+    gender: toDisplayGender(row.detail?.gender),
     birthDate: row.detail?.birthDate ?? '-',
     age: row.detail?.age ?? 0,
     universityName: row.affiliation,

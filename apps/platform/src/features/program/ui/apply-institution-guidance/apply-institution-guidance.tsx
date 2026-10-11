@@ -1,45 +1,30 @@
-import { PFText, PFTextarea } from '@/shared/ui'
+import {
+  INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH,
+  INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER,
+  INSTITUTION_GUIDANCE_FIELDS,
+  type InstitutionGuidanceFieldId,
+} from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
+import {
+  PFFormField,
+  PFFormFieldHintText,
+  PFFormFieldRow,
+  PFFormFieldTable,
+  PFTextarea,
+} from '@/shared/ui'
+import hostStyles from '../apply-form-field-host.module.css'
 import styles from './apply-institution-guidance.module.css'
 
-const GUIDANCE_FIELDS = [
-  {
-    id: 'computer-in-room',
-    title: '강의 공간 내 컴퓨터 여부',
-    description:
-      '강의 공간 내 사용 가능한 컴퓨터가 있다면 몇대 있는지, USB 사용 가능 여부 등의 안내사항을 작성해 주세요.',
-  },
-  {
-    id: 'waiting-place',
-    title: '대기 장소 안내',
-    description:
-      '강사님들이 대기할 수 있는 장소를 상세히 작성해 주세요. (ex. 본관 2층 3학년 연구실)',
-  },
-  {
-    id: 'meal',
-    title: '식사 가능 여부 및 안내',
-    description:
-      '강사님들의 식사 방법과 관련하여 안내사항을 작성해 주세요. (ex. 식사 불가, 인당 4500원 지불 후 급식실에서 식사 가능 등)',
-  },
-  {
-    id: 'other-notes',
-    title: '기타 특이사항(주차, 전달사항 등)',
-    description: '주차 안내나 기타 전달사항이 있다면 작성해 주세요.',
-  },
-] as const
-
-const ANSWER_MAX_LENGTH = 1000
-
-export type ApplyInstitutionGuidanceAnswers = Record<string, string>
+export type ApplyInstitutionGuidanceAnswers = Record<InstitutionGuidanceFieldId, string>
 
 export function emptyInstitutionGuidanceAnswers(): ApplyInstitutionGuidanceAnswers {
-  return Object.fromEntries(GUIDANCE_FIELDS.map(field => [field.id, '']))
+  return Object.fromEntries(INSTITUTION_GUIDANCE_FIELDS.map(field => [field.id, ''])) as ApplyInstitutionGuidanceAnswers
 }
 
 export function guidanceAnswerFromValues(
   values: ApplyInstitutionGuidanceAnswers,
 ): Record<string, string> {
   return Object.fromEntries(
-    GUIDANCE_FIELDS.map(field => [field.id, (values[field.id] ?? '').trim()]),
+    INSTITUTION_GUIDANCE_FIELDS.map(field => [field.id, (values[field.id] ?? '').trim()]),
   )
 }
 
@@ -50,7 +35,7 @@ export function guidanceValuesFromDraftAnswer(
   const row = answer as Record<string, unknown>
   const next = emptyInstitutionGuidanceAnswers()
   let hasValue = false
-  for (const field of GUIDANCE_FIELDS) {
+  for (const field of INSTITUTION_GUIDANCE_FIELDS) {
     const raw = row[field.id]
     if (typeof raw === 'string') {
       next[field.id] = raw
@@ -65,30 +50,30 @@ type ApplyInstitutionGuidanceProps = {
   onChange: (next: ApplyInstitutionGuidanceAnswers) => void
 }
 
-/** CMS 안내 사항 카드와 동일 항목·문구 */
+/** CMS 안내 사항 카드와 동일 항목·문구 — 자유 작성 단락과 같은 PFFormField 세로형 표 */
 export function ApplyInstitutionGuidance({ value, onChange }: ApplyInstitutionGuidanceProps) {
   return (
-    <div className={styles.list}>
-      {GUIDANCE_FIELDS.map(field => (
-        <div key={field.id} className={styles.card}>
-          <div className={styles.header}>
-            <PFText as="p" typo="bd-md-bd" color="black" className={styles.title}>
-              {field.title}
-            </PFText>
-            <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600" className={styles.description}>
-              {field.description}
-            </PFText>
-          </div>
-          <PFTextarea
-            variant="formPage"
-            size="large"
-            rows={2}
-            maxLength={ANSWER_MAX_LENGTH}
-            placeholder="답변을 입력해 주세요"
-            value={value[field.id] ?? ''}
-            onValueChange={next => onChange({ ...value, [field.id]: next })}
-          />
-        </div>
+    <div className={[styles.root, hostStyles.root, hostStyles.vertical].join(' ')}>
+      {INSTITUTION_GUIDANCE_FIELDS.map(field => (
+        <PFFormFieldTable key={field.id}>
+          <PFFormFieldRow type="single">
+            <PFFormField label={field.title} layout="vertical">
+              <div className={styles.answer}>
+                <PFFormFieldHintText as="p">{field.description}</PFFormFieldHintText>
+                <PFTextarea
+                  variant="formPage"
+                  width="100%"
+                  aria-label={field.title}
+                  maxLength={INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH}
+                  placeholder={INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER}
+                  value={value[field.id] ?? ''}
+                  message={`${(value[field.id] ?? '').length}/${INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH}`}
+                  onValueChange={next => onChange({ ...value, [field.id]: next })}
+                />
+              </div>
+            </PFFormField>
+          </PFFormFieldRow>
+        </PFFormFieldTable>
       ))}
     </div>
   )

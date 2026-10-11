@@ -18,7 +18,7 @@
  * remote ON 시 `onPersist` → `PATCH …/trained-teacher/detail` (+ `onBeforePersist`).
  */
 
-import { Fragment, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Controller } from 'react-hook-form'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -36,6 +36,7 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { BasicInfoSection } from '@/features/program/shared/ui/program-detail/project-info/common-info/basic-info-section'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { useEducationScheduleModeLineStash } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import {
   detailEditValuesToProgramPatch,
@@ -289,21 +290,9 @@ function TrainedTeachersDetailSection({
   )
 }
 
-/** `A | B | C` 문자열을 세로 디바이더로 구분해 렌더 (일반 뷰 PipeSeparatedInlineView 복제) */
+/** `A | B | C` 문자열을 세로 디바이더로 구분해 렌더 (일반 공통정보 뷰와 동일) */
 function PipeSeparatedInlineView({ text }: { text: string | undefined | null }) {
-  const trimmed = text?.trim()
-  if (!trimmed || trimmed === '-') return <>-</>
-  const parts = trimmed.split(/\s*\|\s*/)
-  return (
-    <>
-      {parts.map((part, index) => (
-        <Fragment key={`${part}-${index}`}>
-          {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
-          {part}
-        </Fragment>
-      ))}
-    </>
-  )
+  return renderDetailInfoPipeSeparated(text)
 }
 
 /** 프로그램 유형 설정 — 수정 모드: 라디오·IPS 후속 셀렉트 / 조회: 라벨 */

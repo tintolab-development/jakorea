@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsPhoneInput, useCmsAlert } from '@/shared/ui'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { normalizeSmsSendPhone } from '@/features/notifications/model/sms-send/recipients'
 import '@/features/notifications/ui/mail-send/recipient-manual-modal.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 const PICKER_Z_INDEX = 1100
 const TABLE_MAX_HEIGHT = 400
@@ -244,7 +244,7 @@ export function RecipientManualModal({
         </>
       }
     >
-      <Table
+      <CmsDataTable
         className="cms-data-table cms-data-table--skip-auto-no-col mail-send-recipient-manual-modal__table"
         columns={columns}
         dataSource={rows}

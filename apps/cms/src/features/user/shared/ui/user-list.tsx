@@ -4,12 +4,12 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import '@/features/program/general/ui/program-list.css'
 import './admin-permission-tag.css'
 import './user-list.css'
 import type { User } from '@/types/user'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   ADMIN_PERMISSION_TAG_LABEL,
   type AdminPermissionTagVariant,
@@ -427,7 +427,7 @@ export function UserList({
   )
 
   return (
-    <Table
+    <CmsDataTable
       className="cms-data-table user-list-table"
       columns={columns}
       dataSource={data}

@@ -9,11 +9,13 @@ import {
   migrateProgramApplicationFormEconomyParagraphs,
   PROGRAM_APPLICATION_FORM_ECONOMY_IDS,
 } from '@/features/template/model/program-application-form-economy-draft'
-import { INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION } from '@/features/template/lib/institution-sex-offense-consent-field-definitions'
+import {
+  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION,
+  LEGACY_INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_DESCRIPTIONS,
+} from '@/features/template/lib/institution-sex-offense-consent-field-definitions'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 
-const LEGACY_DESCRIPTION =
-  '성범죄 경력 조회 동의서의 조회 방식을 선택해 주세요. 범죄경력회보서의 온라인 제출을 희망하는 경우, 기관 ID와 검증번호를 함께 전달해 주세요.'
+const LEGACY_DESCRIPTION = LEGACY_INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_DESCRIPTIONS[0]
 
 function withDescription(draft: WritingFormDraft, id: string, description: string) {
   return {
@@ -46,5 +48,63 @@ describe('성범죄 경력 조회 동의서 조회 방식 단락 설명 migratio
   it('현재 설명이면 draft 참조를 유지', () => {
     const draft = createProgramApplicationFormInstitutionDraft()
     expect(migrateProgramApplicationFormInstitutionParagraphs(draft).paragraphs).toEqual(draft.paragraphs)
+  })
+
+  it('1사1교 — 안내 사항 단락이 없으면 기본 정보 다음에 placeholder를 삽입한다', () => {
+    const draft = createProgramApplicationFormEconomyDraft()
+    const withoutGuidance = {
+      ...draft,
+      paragraphs: draft.paragraphs.filter(
+        p => p.id !== PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance
+      ),
+    }
+    const migrated = migrateProgramApplicationFormEconomyParagraphs(withoutGuidance)
+    const guidanceIndex = migrated.paragraphs.findIndex(
+      p => p.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance
+    )
+    const basicInfoIndex = migrated.paragraphs.findIndex(
+      p => p.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo
+    )
+    expect(guidanceIndex).toBe(basicInfoIndex + 1)
+  })
+
+  it('일반 기관 — 안내 사항 단락이 없으면 기본 정보 다음에 시드 단락을 삽입한다', () => {
+    const draft = createProgramApplicationFormInstitutionDraft()
+    const withoutGuidance = {
+      ...draft,
+      paragraphs: draft.paragraphs.filter(
+        p => p.id !== PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
+      ),
+    }
+    const migrated = migrateProgramApplicationFormInstitutionParagraphs(withoutGuidance)
+    const guidanceIndex = migrated.paragraphs.findIndex(
+      p => p.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
+    )
+    const basicInfoIndex = migrated.paragraphs.findIndex(
+      p => p.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo
+    )
+    expect(guidanceIndex).toBe(basicInfoIndex + 1)
+    expect(migrated.paragraphs[guidanceIndex]?.paragraphTitle).toBe('안내 사항')
+  })
+
+  it('사용자가 수정한 설명·제목은 유지', () => {
+    const id = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod
+    const draft = createProgramApplicationFormInstitutionDraft()
+    const customized = {
+      ...draft,
+      paragraphs: draft.paragraphs.map(p =>
+        p.id === id
+          ? {
+              ...p,
+              paragraphTitle: '맞춤 조회 방식 안내',
+              paragraphDescription: '기관 운영 정책에 맞는 설명',
+            }
+          : p
+      ),
+    }
+    const migrated = migrateProgramApplicationFormInstitutionParagraphs(customized)
+    const paragraph = migrated.paragraphs.find(p => p.id === id)
+    expect(paragraph?.paragraphTitle).toBe('맞춤 조회 방식 안내')
+    expect(paragraph?.paragraphDescription).toBe('기관 운영 정책에 맞는 설명')
   })
 })

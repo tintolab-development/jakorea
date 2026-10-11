@@ -2,11 +2,14 @@
  * 주소 검색: CmsInput 클릭 시 ContentModal + 행안부/주소기반산업지원 도로명주소 검색 API
  * @see useJusoAddressSearch — `VITE_ADDRESS_API_KEY` 또는 `VITE_JUSO_CONFM_KEY`, 선택 `VITE_JUSO_ADDRESS_API_URL`
  * 결과 목록은 [검색] / Enter 시에만 갱신 (입력 중 실시간 검색 없음)
+ *
+ * BE 거리 geocoding: roadAddr + 상세(addressDetail), 우편번호 제외 — `@jakorea/location/juso` `BE_MEMBER_ADDRESS_GEOCODING_QA_ONE_LINER`
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Flex, Pagination } from 'antd'
+import { pickJusoRoadAddressLine } from '@jakorea/location/juso'
 import {
   getCmsJusoMissingKeyMessage,
   readJusoApiUrlFromEnv,
@@ -125,7 +128,7 @@ export function AddressSearch({
   }
 
   const handleSelect = (item: JusoAddressItem) => {
-    const line = (item.roadAddr || item.jibunAddr).trim()
+    const line = pickJusoRoadAddressLine(item.roadAddr, item.jibunAddr)
     onChange(line)
     onSelect?.(item)
     closeModal()

@@ -6,7 +6,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { DOWNLOAD_LIMITS } from '@/shared/constants/download-policy'
-import { getCurrentUserDownloadQuota, updateMockDownloadQuota } from '@/data/mock/download-quota'
+import {
+  getCurrentUserDownloadQuota,
+  updateSessionDownloadQuota,
+} from '@/features/download/lib/download-quota-session'
 import type { DownloadQuota, DownloadCheckResult } from '@/types/download'
 
 interface UseDownloadQuotaResult {
@@ -91,7 +94,7 @@ export function useDownloadQuota(): UseDownloadQuotaResult {
       const { user } = useAuthStore.getState()
       if (!user) return
 
-      updateMockDownloadQuota(user.id, rowCount)
+      updateSessionDownloadQuota(user.id, rowCount)
       refreshQuota()
     },
     [refreshQuota]

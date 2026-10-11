@@ -12,22 +12,20 @@ vi.mock('@/features/sponsor/api/sponsor-logo-upload', () => ({
   uploadSponsorLogoFile: vi.fn(),
 }))
 
-vi.mock('@/features/sponsor/api/sponsors-api-client', async importOriginal => {
-  const actual = await importOriginal<typeof import('@/features/sponsor/api/sponsors-api-client')>()
-  return {
-    ...actual,
-    createSponsorRemote: vi.fn(),
-    fetchSponsorRemote: vi.fn(),
-    fetchSponsorContactsRemote: vi.fn(),
-    fetchYearlyBusinessesRemote: vi.fn(),
-    addYearlyBusinessRemote: vi.fn(),
-    bulkDeleteSponsorContactsRemote: vi.fn(),
-    bulkDeleteSponsorProgramHistoriesRemote: vi.fn(),
-    updateYearlyBusinessRemote: vi.fn(),
-    updateSponsorContactRemote: vi.fn(),
-    updateSponsorRemote: vi.fn(),
-  }
-})
+const sponsorsApiMocks = vi.hoisted(() => ({
+  createSponsorRemote: vi.fn(),
+  fetchSponsorRemote: vi.fn(),
+  fetchSponsorContactsRemote: vi.fn(),
+  fetchYearlyBusinessesRemote: vi.fn(),
+  addYearlyBusinessRemote: vi.fn(),
+  bulkDeleteSponsorContactsRemote: vi.fn(),
+  bulkDeleteSponsorProgramHistoriesRemote: vi.fn(),
+  updateYearlyBusinessRemote: vi.fn(),
+  updateSponsorContactRemote: vi.fn(),
+  updateSponsorRemote: vi.fn(),
+}))
+
+vi.mock('@/features/sponsor/api/sponsors-api-client', () => sponsorsApiMocks)
 
 import { uploadSponsorLogoFile } from '@/features/sponsor/api/sponsor-logo-upload'
 import {

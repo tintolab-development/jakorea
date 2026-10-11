@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   formatAttendanceRemarks,
   maskAttendanceContact,
@@ -101,7 +101,7 @@ export function UjatAttendanceTable({
   )
 
   return (
-    <Table<UjatAttendanceVolunteerRow & { no: number }>
+    <CmsDataTable<UjatAttendanceVolunteerRow & { no: number }>
       rowKey="id"
       className="cms-data-table ujat-attendance-table"
       columns={columns}

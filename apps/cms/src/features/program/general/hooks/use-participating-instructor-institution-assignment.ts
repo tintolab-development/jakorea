@@ -5,17 +5,9 @@ import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
-  isGeneralProgramTempMockIndividualProgramId,
-  isGeneralProgramTempMockOrgProgramId,
-} from '@/features/program/general/api/temp-mock-capabilities'
-import {
   useIsCompanySchoolProgramsSurface,
   useProgramProgressRemoteEnabledForSurface,
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import {
-  buildInitialAssignedSchoolRows,
-  buildWaitingSchoolRows,
-} from '@/features/program/general/lib/instructor-institution-assignment'
 import {
   buildEmptyParticipatingInstructorAssignmentRows,
   buildParticipatingInstructorAssignedSchoolRowsFromBoard,
@@ -55,8 +47,6 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
   const useCompanySchoolBoard = isCompanySchoolSurface || input.isCompanySchool
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(input.programId)
-  const isOrgTempMockProgram = isGeneralProgramTempMockOrgProgramId(input.programId)
-  const isIndividualTempMockProgram = isGeneralProgramTempMockIndividualProgramId(input.programId)
   const instructorMemberId = input.instructor.memberId?.trim() ?? ''
   const queryEnabled = Boolean(
     input.enabled !== false && remoteEnabled && input.programId && instructorMemberId
@@ -66,12 +56,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     : generalProgramProgressQueryKeys.instructorAssignments(input.programId)
 
   useNotifyProgramApiUnavailableOnce(
-    Boolean(
-      input.enabled !== false &&
-        !isOrgTempMockProgram &&
-        !isIndividualTempMockProgram &&
-        (!remoteEnabled || !instructorMemberId)
-    ),
+    Boolean(input.enabled !== false && (!remoteEnabled || !instructorMemberId)),
     'general-participating-instructor-assignment',
     '참여 강사 · 교육 배정 현황'
   )
@@ -90,36 +75,6 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   const queryClient = useQueryClient()
 
   const rows = useMemo(() => {
-    if (isIndividualTempMockProgram && input.enabled !== false) {
-      return {
-        assignedSchools: [] as InstructorAssignedSchoolRow[],
-        waitingSchools: [] as InstructorWaitingSchoolRow[],
-        assignedSchedules: [] as ParticipatingIndividualInstructorAssignedScheduleRow[],
-        waitingSchedules: [] as ParticipatingIndividualInstructorWaitingScheduleRow[],
-      }
-    }
-
-    if (isOrgTempMockProgram && input.enabled !== false) {
-      const assignedSchools = buildInitialAssignedSchoolRows(
-        input.instructor,
-        input.schoolRows,
-        input.instructorList
-      )
-      const assignedSchoolIds = new Set(assignedSchools.map(row => row.id))
-      const waitingSchools = buildWaitingSchoolRows(
-        input.instructor,
-        input.schoolRows,
-        input.instructorList,
-        assignedSchoolIds
-      )
-      return {
-        assignedSchools,
-        waitingSchools,
-        assignedSchedules: [] as ParticipatingIndividualInstructorAssignedScheduleRow[],
-        waitingSchedules: [] as ParticipatingIndividualInstructorWaitingScheduleRow[],
-      }
-    }
-
     if (!remoteEnabled || !instructorMemberId) {
       return {
         ...buildEmptyParticipatingInstructorAssignmentRows(),
@@ -180,8 +135,6 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     input.isCompanySchool,
     input.schoolRows,
     instructorMemberId,
-    isIndividualTempMockProgram,
-    isOrgTempMockProgram,
     remoteEnabled,
   ])
 
@@ -193,13 +146,8 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
 
   return {
     remoteEnabled: remoteEnabled && Boolean(instructorMemberId),
-    isTempMockDataSource: isOrgTempMockProgram && input.enabled !== false,
-    isLoading:
-      !isOrgTempMockProgram &&
-      !isIndividualTempMockProgram &&
-      queryEnabled &&
-      boardQuery.isFetching &&
-      boardQuery.data === undefined,
+    isTempMockDataSource: false,
+    isLoading: queryEnabled && boardQuery.isFetching && boardQuery.data === undefined,
     assignedSchools: rows.assignedSchools,
     waitingSchools: rows.waitingSchools,
     assignedSchedules: rows.assignedSchedules,

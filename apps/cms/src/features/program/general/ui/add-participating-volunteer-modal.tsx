@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsSelect } from '@/shared/ui'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import type { ParticipatingVolunteerMemberCandidate } from '@/features/program/general/lib/participating-volunteer-member-candidates'
 import './add-participating-volunteer-modal.css'
 
@@ -73,7 +74,7 @@ export function AddParticipatingVolunteerModal({
       footer={footer}
       className="add-participating-volunteer-modal"
       description={
-        '추가할 회원을 선택해 주세요.\n등록된 회원 정보가 없는 경우, **[회원 관리]**에서 회원 정보를 먼저 등록해 주세요.'
+        '프로그램에 추가할 봉사자를 선택해 주세요.\n등록된 회원 정보가 없는 경우, **[전체 회원]**에서 회원 정보를 먼저 등록해 주세요.'
       }
     >
       <div className="add-participating-volunteer-modal__body">
@@ -85,14 +86,28 @@ export function AddParticipatingVolunteerModal({
         >
           <Form.Item
             name="memberId"
-            label="봉사자 추가"
+            label={
+              <span>
+                봉사자 추가
+                <span className="add-participating-volunteer-modal__required" aria-hidden>
+                  *
+                </span>
+              </span>
+            }
             className="add-participating-volunteer-modal__field"
           >
             <CmsSelect
               inputSize="large"
               width="100%"
               withAllOption={false}
+              showSearch
+              optionFilterProp="label"
               placeholder="추가 등록할 봉사자를 선택해 주세요"
+              suffixIcon={
+                <span className="cms-field__icon" aria-hidden>
+                  <FieldSearchIcon />
+                </span>
+              }
               options={memberOptions.map(member => ({
                 value: member.memberId,
                 label: member.volunteerName,

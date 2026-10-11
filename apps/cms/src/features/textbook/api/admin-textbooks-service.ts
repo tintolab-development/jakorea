@@ -4,11 +4,12 @@ import {
   type TextbookListFilters,
 } from '@/features/textbook/api/textbook-filter-params'
 import {
-  mapTextbookListResponse,
   mapTextbookMatchResponse,
   mapTextbookResponse,
   toTextbookRequest,
 } from '@/features/textbook/api/adapters/textbook-adapters'
+import type { DataManagementListPage } from '@/features/data-management/api/data-management-list-page'
+import { mapTextbookListPage } from '@/features/textbook/api/map-textbook-list-page'
 import {
   createTextbookRemote,
   bulkDeleteTextbooksRemote,
@@ -42,10 +43,18 @@ export function shouldUseTextbooksRemoteApi(): boolean {
   return isRealApiModuleEnabled('textbooks') && hasRemoteAdminJwt()
 }
 
-export async function getTextbookList(filters: TextbookListFilters): Promise<TextbookRow[]> {
+export async function getTextbookListPage(
+  filters: TextbookListFilters,
+  page: number
+): Promise<DataManagementListPage<TextbookRow>> {
   assertTextbooksRemoteReady()
-  const dto = await fetchTextbooksRemote(textbooksParamsFromFilters(filters))
-  return mapTextbookListResponse(dto)
+  const dto = await fetchTextbooksRemote(textbooksParamsFromFilters(filters, page))
+  return mapTextbookListPage(dto)
+}
+
+export async function getTextbookList(filters: TextbookListFilters): Promise<TextbookRow[]> {
+  const page = await getTextbookListPage(filters, 0)
+  return page.items
 }
 
 export function getTextbookListFilterKey(filters: TextbookListFilters): string {

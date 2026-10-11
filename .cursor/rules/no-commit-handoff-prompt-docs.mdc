@@ -1,0 +1,52 @@
+---
+description: Do not commit BE/FE handoff or Cursor prompt delivery docs; delete them if still present at commit time
+alwaysApply: true
+---
+
+# No commit — handoff / Cursor prompt delivery docs
+
+## Rule
+
+**Do not commit** backend/frontend handoff notes or Cursor prompt delivery documents into this monorepo.
+
+These files are temporary delivery artifacts for BE/FE agents. They are not durable frontend SSOT.
+
+## Filename patterns (non-exhaustive)
+
+Treat paths matching any of the following (case-insensitive) as delivery docs:
+
+- `*backend-request*`
+- `*backend-prompt*`
+- `*backend-cursor-prompt*`
+- `*backend-handoff*`
+- `*frontend-handoff*`
+- `*cursor-prompt*`
+- `*handoff*` when the file is a one-off API/seed delivery note under `**/docs/api/**`
+
+Typical locations:
+
+- `apps/cms/docs/api/**`
+- `apps/admin/docs/api/**`
+- `apps/platform/docs/api/**`
+
+## Exceptions (keep)
+
+Do **not** delete or block these:
+
+- `*.json` seed / payload assets (e.g. `*.payload.json`, `*.db-rows.json`)
+- Durable FE contracts and guides: `*-api-integration.md`, `*-api-migration-guide.md`, `*-fe-adapter*`, `*-fe-acceptance*`, `orval-codegen.md`, `api-routes-and-client.md`, form-template contract/SSOT docs
+- Cursor rules / skills under `.cursor/rules/**` and `**/.cursor/rules/**` (this policy applies to delivery markdown under `docs/`, not rules themselves)
+- Audit extracts under `docs/audit/**` only when the user explicitly asks to keep an audit report
+
+## At commit time
+
+Before creating a git commit:
+
+1. Scan the staging area and working tree for delivery docs matching the patterns above.
+2. If any remain, **delete them** (or unstage and delete) instead of committing them.
+3. Do not use `--no-verify` to bypass this cleanup.
+4. Prefer regenerating a prompt in chat or leaving it only in the BE repo / external handoff channel—not in the frontend git history.
+
+## Intent
+
+Frontend git should keep integration guides, seed **JSON**, and living FE contracts—not piles of “Cursor prompt — tell JABACK to …” markdown once the work is delivered.

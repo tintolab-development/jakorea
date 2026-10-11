@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
@@ -20,18 +20,17 @@ import {
   filterAttendanceStudentsForDisplay,
 } from '../lib/school-detail-attendance-display'
 import {
-  buildTemporarySchoolDetailAttendanceSessionGroups,
   getSchoolDetailAttendanceEducationScheduleOptions,
   mergeSchoolDetailAttendanceRemoteData,
   resolveAttendanceSessions,
 } from '../lib/school-detail-attendance'
-import { isTempMockOrgSchoolRowId } from '../lib/temp-mock-org-program'
 import {
   SCHOOL_ATTENDANCE_FILTER_ALL,
   type SchoolDetailAttendanceFilters,
   type SchoolDetailAttendanceSessionGroup,
   type SchoolDetailAttendanceStudentRow,
 } from '../model/school-detail-types'
+import { getProgressAttendanceViewState } from './use-participating-individual-progress-attendance'
 
 export const EMPTY_SCHOOL_DETAIL_ATTENDANCE_FILTERS: SchoolDetailAttendanceFilters = {
   educationSchedule: SCHOOL_ATTENDANCE_FILTER_ALL,
@@ -81,17 +80,15 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       : ''
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId || undefined)
   const applicationsRemoteEnabled = shouldUseOrganizationApplicationRemoteApi()
-  const isTempMockSchool = isTempMockOrgSchoolRowId(row.id)
   const remoteEnabled = Boolean(
     progressRemoteEnabled &&
       applicationsRemoteEnabled &&
       programId &&
-      organizationApplicationId &&
-      !isTempMockSchool
+      organizationApplicationId
   )
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled && !isTempMockSchool,
+    !remoteEnabled,
     'general-institution-attendance',
     '참여 기관 · 출석 관리'
   )
@@ -127,12 +124,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     retry: false,
   })
 
-  useEffect(() => {
-    if (remoteQuery.isError && remoteQuery.error) {
-      handleError(remoteQuery.error, { context: 'useSchoolDetailAttendance.load' })
-    }
-  }, [remoteQuery.error, remoteQuery.isError])
-
   const [pendingFilters, setPendingFilters] = useState<SchoolDetailAttendanceFilters>(
     () => ({ ...EMPTY_SCHOOL_DETAIL_ATTENDANCE_FILTERS })
   )
@@ -150,14 +141,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     [educationScheduleOptions]
   )
 
-  const [mockSessionStudentsPatch, setMockSessionStudentsPatch] = useState<
-    Record<string, SchoolDetailAttendanceStudentRow[]>
-  >({})
-
-  useEffect(() => {
-    setMockSessionStudentsPatch({})
-  }, [row.id])
-
   const remoteSessionGroups = useMemo(() => {
     if (!remoteEnabled || remoteQuery.data == null) return []
     return mergeSchoolDetailAttendanceRemoteData({
@@ -168,28 +151,10 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     })
   }, [program, remoteEnabled, remoteQuery.data, row])
 
-  const mockSessionGroups = useMemo(() => {
-    if (!isTempMockSchool) return []
-    const base = buildTemporarySchoolDetailAttendanceSessionGroups(row, program)
-    return base.map(session => ({
-      ...session,
-      students: mockSessionStudentsPatch[session.id] ?? session.students,
-    }))
-  }, [isTempMockSchool, mockSessionStudentsPatch, program, row])
-
   const sessionGroups = useMemo(() => {
-    if (isTempMockSchool) {
-      return filterSessionGroups(mockSessionGroups, appliedFilters)
-    }
     if (!remoteEnabled) return []
     return filterSessionGroups(remoteSessionGroups, appliedFilters)
-  }, [
-    appliedFilters,
-    isTempMockSchool,
-    mockSessionGroups,
-    remoteEnabled,
-    remoteSessionGroups,
-  ])
+  }, [appliedFilters, remoteEnabled, remoteSessionGroups])
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -204,13 +169,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       sessionId: string
       students: SchoolDetailAttendanceStudentRow[]
     }) => {
-      if (isTempMockSchool) {
-        setMockSessionStudentsPatch(prev => ({
-          ...prev,
-          [payload.sessionId]: cloneAttendanceStudentRows(payload.students),
-        }))
-        return
-      }
       if (!remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-institution-attendance-save',
@@ -243,6 +201,9 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
         ],
       })
       await queryClient.invalidateQueries({
+        queryKey: [...generalProgramProgressQueryKeys.all, 'program-attendances-bulk', programId],
+      })
+      await queryClient.invalidateQueries({
         queryKey: generalProgramProgressQueryKeys.studentRoster(organizationApplicationId),
       })
     },
@@ -260,12 +221,33 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
 
   const getSessionStudents = useCallback(
     (sessionId: string): SchoolDetailAttendanceStudentRow[] => {
-      const sourceGroups = isTempMockSchool ? mockSessionGroups : remoteSessionGroups
-      const session = sourceGroups.find(item => item.id === sessionId)
+      const session = remoteSessionGroups.find(item => item.id === sessionId)
       return cloneAttendanceStudentRows(session?.students ?? [])
     },
-    [isTempMockSchool, mockSessionGroups, remoteSessionGroups]
+    [remoteSessionGroups]
   )
+
+  const viewState = useMemo(
+    () =>
+      getProgressAttendanceViewState({
+        remoteEnabled,
+        isLoading: remoteQuery.isLoading,
+        isError: remoteQuery.isError,
+        hasQueryData: remoteQuery.data != null,
+        sessionGroupCount: sessionGroups.length,
+      }),
+    [
+      remoteEnabled,
+      remoteQuery.data,
+      remoteQuery.isError,
+      remoteQuery.isLoading,
+      sessionGroups.length,
+    ]
+  )
+
+  const refetchAttendance = useCallback(() => {
+    void remoteQuery.refetch()
+  }, [remoteQuery])
 
   return {
     pendingFilters,
@@ -276,7 +258,13 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     sessionGroups,
     saveSessionStudents,
     getSessionStudents,
-    loading: remoteEnabled && remoteQuery.isFetching && remoteQuery.data == null,
+    loading: viewState.kind === 'loading',
+    loadError: viewState.kind === 'load_error',
+    backgroundRefetchError:
+      viewState.kind === 'content' ? viewState.backgroundRefetchError : false,
+    isEmptyResult: viewState.kind === 'empty',
+    refetchAttendance,
+    isRefetching: remoteQuery.isRefetching,
     isSaving: saveMutation.isPending,
     remoteEnabled,
   }

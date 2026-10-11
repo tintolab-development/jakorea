@@ -6,13 +6,16 @@
 import { useCallback, useMemo, useState, useEffect, useRef, type CSSProperties } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { Table, Spin } from 'antd'
+import { Spin } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui'
 import { participatingInstructorsFilterFields } from '@/features/program/general/lib/participating-instructors-filter-fields'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
@@ -40,7 +43,6 @@ import {
 } from '@/features/program/shared/lib/program-pii-display'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import {
   useParticipatingInstructorsParams,
   type ParticipatingInstructorsFilters,
@@ -689,45 +691,38 @@ export function ParticipatingInstructorsSection({
         description={`${filteredInstructors.length}건`}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="secondary"
-              size="large"
               style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
               활동인증서 발급
-            </CmsButton>
+            </FilterTableToolbarButton>
             {viewMode === 'list' ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={handleCalendarView}
               >
                 캘린더 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={handleListView}
               >
                 리스트 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             )}
-            <CmsButton
+            <FilterTableToolbarButton
               variant="primary"
-              size="large"
               width={160}
               onClick={() => {
-                if (
-                  !isRemoteDataSource &&
-                  !(programId != null && isGeneralProgramTempMockProgramId(programId))
-                ) {
+                if (!isRemoteDataSource) {
                   notifyProgramApiUnavailable(
                     'general-progress-instructor-register',
                     '참여 강사 등록'
@@ -739,7 +734,7 @@ export function ParticipatingInstructorsSection({
               className="participating-instructors-section__btn-add-instructor"
             >
               강사 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -759,7 +754,7 @@ export function ParticipatingInstructorsSection({
                 : undefined
             }
           >
-            <Table<ParticipatingInstructorRow>
+            <CmsDataTable<ParticipatingInstructorRow>
               className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"

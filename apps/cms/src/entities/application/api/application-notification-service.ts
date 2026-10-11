@@ -8,9 +8,6 @@
 import type { UUID } from '@/types'
 import { getReviewMessage } from '@/shared/constants/application-notification'
 import type { Application } from '@/types/domain'
-import { mockUsers } from '@/data/mock/users'
-import { mockSchoolsMap } from '@/data/mock'
-import { mockInstructorsMap } from '@/data/mock'
 import {
   smsProvider,
   emailProvider,
@@ -56,20 +53,7 @@ interface Recipient {
  * 신청 주체( subjectId )로 수신자 연락처/이메일 조회
  * User → School → Instructor 순으로 매칭
  */
-function resolveRecipient(application: Application): Recipient {
-  const sid = application.subjectId
-  const user = mockUsers.find(u => u.id === sid)
-  if (user) {
-    return { phone: user.phone, email: user.email }
-  }
-  const school = mockSchoolsMap.get(sid)
-  if (school) {
-    return { phone: school.contactPhone, email: school.contactEmail }
-  }
-  const instructor = mockInstructorsMap.get(sid)
-  if (instructor) {
-    return { phone: instructor.contactPhone, email: instructor.contactEmail }
-  }
+function resolveRecipient(_application: Application): Recipient {
   return {}
 }
 

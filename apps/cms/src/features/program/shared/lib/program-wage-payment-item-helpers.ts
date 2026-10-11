@@ -1,9 +1,10 @@
 import { useEffect, useMemo } from 'react'
-import type { SettlementItemSettingSection } from '@/data/mock/settlement-item-settings'
+import type { SettlementItemSettingSection } from '@/features/settlement-management/model/settlement-item-settings'
 import {
   ensurePaymentItemCatalog,
   getActivePaymentItemCatalogOptions,
   getTemplateRegistrationPaymentItemOptions,
+  LEGACY_LOCAL_PAYMENT_ITEM_OPTIONS,
   isPaymentItemCatalogReady,
   isPaymentItemCatalogRemote,
   usePaymentItemCatalogState,
@@ -21,6 +22,7 @@ const PAYMENT_ITEM_CODE_RE = /^(p|w|d)-\d+$/i
 const PAYMENT_ITEM_LABEL_ALIASES: Record<string, string> = {
   교통비: '강사 교통비',
   식비: '식사비',
+  활동비: '참여자 활동비',
   '교통비(일사일교)': '강사 교통비',
   '숙박비(일사일교)': '숙박비 (1사1교)',
 }
@@ -29,7 +31,7 @@ const SETTLEMENT_ITEM_TYPE_LABEL: Record<string, string> = {
   TRANSPORTATION: '교통비',
   LONG_DISTANCE_TRANSPORTATION: '장거리 교통비',
   LODGING: '숙박비',
-  ACTIVITY: '활동비',
+  ACTIVITY: '참여자 활동비',
   MEAL: '식비',
 }
 
@@ -97,7 +99,7 @@ function pickBetterPaymentOption(
 export function mergeProgramWagePaymentItemOptions(
   preferred: readonly CmsSelectMultipleOption[] = []
 ): CmsSelectMultipleOption[] {
-  const base = isPaymentItemCatalogRemote() ? [] : getTemplateRegistrationPaymentItemOptions()
+  const base = isPaymentItemCatalogRemote() ? [] : getActivePaymentItemCatalogOptions()
   const byValue = new Map<string, CmsSelectMultipleOption>()
   for (const option of base) {
     byValue.set(option.value, pickBetterPaymentOption(byValue.get(option.value), option))
@@ -135,9 +137,19 @@ export function useProgramWagePaymentItemOptions(): CmsSelectMultipleOption[] {
   return useProgramWagePaymentItemOptionsState().options
 }
 
+/** 예전 FE mock id → 항목명 (실 API 카탈로그 교정용). */
+const LEGACY_MOCK_PAYMENT_ITEM_ID_TO_LABEL: Record<string, string> = {
+  'p-1': '강사 교통비',
+  'p-3': '숙박비',
+  'p-6': '참여자 활동비',
+  'p-7': '숙박비 (1사1교)',
+}
+
 /** 예전 mock 지급 항목 id(`p-1` 등) → mock 항목명. 실제 항목으로 교정할 때 라벨 키로만 쓴다. */
 function legacyMockPaymentItemLabel(id: string): string | undefined {
-  return getTemplateRegistrationPaymentItemOptions().find(option => option.value === id)?.label
+  const legacy = LEGACY_MOCK_PAYMENT_ITEM_ID_TO_LABEL[id]
+  if (legacy) return legacy
+  return getActivePaymentItemCatalogOptions().find(option => option.value === id)?.label
 }
 
 function compactPaymentLabel(label: string | undefined): string {
@@ -289,7 +301,11 @@ export function resolveProgramPaymentItemIdsFromLabels(
   const options =
     sections || isPaymentItemCatalogReady()
       ? getProgramWagePaymentItemOptions(sections)
-      : mergeProgramWagePaymentItemOptions(getTemplateRegistrationPaymentItemOptions())
+      : mergeProgramWagePaymentItemOptions(
+          isPaymentItemCatalogRemote()
+            ? LEGACY_LOCAL_PAYMENT_ITEM_OPTIONS
+            : getTemplateRegistrationPaymentItemOptions()
+        )
   return text
     .split(',')
     .map(s => s.trim())

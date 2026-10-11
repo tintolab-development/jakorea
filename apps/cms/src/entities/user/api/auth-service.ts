@@ -7,19 +7,14 @@ import type { LoginRequest, LoginResponse, User } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
 import { fetchAdminLogin } from '@/features/auth/api/admin-login-fetcher'
 import type { AdminMfaChallengeResponse } from '@/features/auth/model/admin-login-api.types'
-import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
-/** 로그인 화면에서 명시적으로 선택하는 경로 (미지정 시 remote URL 있으면 실 API) */
-export type LoginMode = 'mock' | 'api'
+export type LoginMode = 'api'
 
 export interface LoginOptions {
   mode?: LoginMode
 }
-import { validateLogin, getUserByPhone, mockUsers } from '@/data/mock/users'
-import { createTotpMfaState } from '@/data/mock/mfa'
 import { SocialAccountNotLinkedError } from '@/features/auth/errors/social-account-not-linked-error'
-import { AdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 
 /** 실 API 세션 토큰 접두사 — `validateToken`·auth-store 갱신 시 mock JWT 와 구분 */
 export const CMS_REMOTE_SESSION_PREFIX = 'cms-remote-'
@@ -100,75 +95,15 @@ async function loginWithRemoteApi(
   }
 }
 
-async function loginWithMock(
-  request: LoginRequest
-): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
-  if (import.meta.env.DEV) {
-    console.info('[CMS auth] Mock 로그인 — 브라우저 Network 에는 요청이 없습니다.')
-  }
-
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  const user = validateLogin(request.email, request.password)
-
-  if (!user) {
-    throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.')
-  }
-
-  if (user.role === 'ADMIN' && user.permissionApprovalStatus === 'PENDING') {
-    throw new AdminLoginApprovalPendingError()
-  }
-
-  const requiresMfa = user.role === 'ADMIN'
-  let mfaState: MfaState | undefined
-
-  if (requiresMfa) {
-    mfaState = createTotpMfaState(user.id, user.email)
-  }
-
-  const token = `mock-jwt-token-${user.id}-${Date.now()}`
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...userWithoutPassword } = user
-
-  return {
-    user: {
-      ...userWithoutPassword,
-      lastLoginAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    token,
-    expiresAt,
-    requiresMfa,
-    mfaState,
-  }
-}
-
 /**
- * 로그인 API
- * Phase 0.5.1: MFA 지원 추가
- * - `options.mode === 'api'`: 실 `fetchAdminLogin` (원격 URL 필요)
- * - `options.mode === 'mock'`: mock(`validateLogin` + MFA)
- * - 미지정: remote URL이 있으면 실 API (`isRealApiModuleEnabled('adminAuth')`)
+ * 로그인 API — adminAuth remote only
  */
 export async function login(
   request: LoginRequest,
-  options?: LoginOptions
+  _options?: LoginOptions
 ): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
-  if (options?.mode === 'api') {
-    return loginWithRemoteApi(request)
-  }
-
-  if (options?.mode === 'mock') {
-    return loginWithMock(request)
-  }
-
-  if (isRealApiModuleEnabled('adminAuth')) {
-    return loginWithRemoteApi(request)
-  }
-
-  return loginWithMock(request)
+  void _options
+  return loginWithRemoteApi(request)
 }
 
 /**
@@ -199,21 +134,11 @@ export async function validateToken(token: string): Promise<Omit<User, 'password
     return user
   }
 
-  const match = token.match(/mock-jwt-token-(.+?)-/)
-  if (!match) {
-    return null
+  if (token.startsWith('mock-jwt-token-')) {
+    return user
   }
 
-  const userId = match[1]
-  const mockUser = mockUsers.find(u => u.id === userId)
-
-  if (!mockUser || !mockUser.isActive) {
-    return null
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...userWithoutPassword } = mockUser
-  return userWithoutPassword
+  return null
 }
 
 /**
@@ -250,7 +175,7 @@ export const SOCIAL_PROVIDER_LABEL: Record<SocialProvider, string> = {
  * 소셜 로그인용 Mock 매핑 테이블 (소셜 ID → User ID)
  * Phase 0.1.3: 간편인증 로그인
  */
-const socialUserMap = new Map<string, string>()
+void new Map<string, string>()
 
 /**
  * 휴대폰 본인인증 로그인
@@ -259,49 +184,12 @@ const socialUserMap = new Map<string, string>()
  * @param _otpCode OTP 인증번호 (검증은 이미 완료된 상태)
  */
 export async function loginWithPhone(
-  phoneNumber: string,
-  _otpCode: string // eslint-disable-line @typescript-eslint/no-unused-vars
+  _phoneNumber: string,
+  _otpCode: string
 ): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
-  // Mock: 실제 API 호출 대신 지연 시간 시뮬레이션
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  // 전화번호로 사용자 찾기
-  const user = getUserByPhone(phoneNumber)
-
-  if (!user) {
-    throw new Error('등록된 전화번호가 아닙니다.')
-  }
-
-  // OTP 검증은 이미 완료된 상태로 가정 (실제로는 별도 검증 필요)
-  // 여기서는 전화번호로 사용자를 찾았으면 OTP 검증이 완료된 것으로 간주
-
-  // 관리자는 MFA 필요
-  const requiresMfa = user.role === 'ADMIN'
-  let mfaState: MfaState | undefined
-
-  if (requiresMfa) {
-    mfaState = createTotpMfaState(user.id, user.email)
-  }
-
-  // Mock JWT 토큰 생성
-  const token = `mock-jwt-token-${user.id}-${Date.now()}`
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
-
-  // password를 제외한 전체 user 객체 반환 (adminLevel 포함)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...userWithoutPassword } = user
-
-  return {
-    user: {
-      ...userWithoutPassword,
-      lastLoginAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    token,
-    expiresAt,
-    requiresMfa,
-    mfaState,
-  }
+  void _phoneNumber
+  void _otpCode
+  throw new Error('휴대폰 로그인 API가 연동되지 않았습니다.')
 }
 
 /**
@@ -311,54 +199,10 @@ export async function loginWithPhone(
  * @param socialToken 소셜 토큰 (Mock)
  */
 export async function loginWithSocial(
-  provider: SocialProvider,
-  socialToken: string
+  _provider: SocialProvider,
+  _socialToken: string
 ): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
-  // Mock: 실제 API 호출 대신 지연 시간 시뮬레이션
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  // Mock: 소셜 토큰에서 사용자 ID 추출 (실제로는 백엔드에서 처리)
-  // 여기서는 소셜 ID를 기반으로 기존 사용자 매칭 또는 새 사용자 생성
-  const socialId = `${provider}-${socialToken}`
-
-  // 기존 매핑 확인
-  const userId = socialUserMap.get(socialId)
-
-  if (!userId) {
-    throw new SocialAccountNotLinkedError()
-  }
-
-  const user = mockUsers.find(u => u.id === userId)
-
-  if (!user || !user.isActive) {
-    throw new Error('소셜 로그인에 실패했습니다.')
-  }
-
-  // 관리자는 MFA 필요
-  const requiresMfa = user.role === 'ADMIN'
-  let mfaState: MfaState | undefined
-
-  if (requiresMfa) {
-    mfaState = createTotpMfaState(user.id, user.email)
-  }
-
-  // Mock JWT 토큰 생성
-  const token = `mock-jwt-token-${user.id}-${Date.now()}`
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
-
-  // password를 제외한 전체 user 객체 반환 (adminLevel 포함)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...userWithoutPassword } = user
-
-  return {
-    user: {
-      ...userWithoutPassword,
-      lastLoginAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    token,
-    expiresAt,
-    requiresMfa,
-    mfaState,
-  }
+  void _provider
+  void _socialToken
+  throw new SocialAccountNotLinkedError()
 }

@@ -5,27 +5,11 @@ import { parseUjatInterviewDateLabel } from '../shared/interview-calendar-events
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
-/** TODO(api): 공휴일 API 연동 */
-const MOCK_HOLIDAY_DATE_KEYS_2026 = [
-  '2026-01-01',
-  '2026-01-28',
-  '2026-01-29',
-  '2026-01-30',
-  '2026-03-01',
-  '2026-05-05',
-  '2026-05-24',
-  '2026-06-06',
-  '2026-08-15',
-  '2026-09-24',
-  '2026-09-25',
-  '2026-09-26',
-  '2026-10-03',
-  '2026-10-09',
-  '2026-12-25',
-] as const
+import { getKoreanPublicHolidayDateKeysSync } from '@/features/program/ujat/api/korean-public-holidays'
 
+/** @deprecated `getKoreanPublicHolidayDateKeysSync` / `useKoreanPublicHolidayDateKeys` — mock 상수 제거 */
 export function getMockHolidayDateKeys(): Set<string> {
-  return new Set(MOCK_HOLIDAY_DATE_KEYS_2026)
+  return getKoreanPublicHolidayDateKeysSync()
 }
 
 /** 목록·배정 저장용 — `26. 03. 23(월)` */

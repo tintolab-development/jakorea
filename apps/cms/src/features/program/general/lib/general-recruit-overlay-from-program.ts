@@ -11,6 +11,8 @@ import {
   resolveProgramVolunteerTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { pickRecruitmentCopyRow } from '@/features/program/shared/lib/recruitment-row-copy'
+import { resolveAnnouncement } from '@/features/program/shared/lib/announcement-label'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 
 const inst = {
   targetLevels: 'recruit.targetLevels',
@@ -32,8 +34,15 @@ const keys = {
   individual: {
     recruitRangeSeal: 'recruit.individual.recruitRangeSeal',
     programRangeSeal: 'recruit.individual.programRangeSeal',
+    announcementPublished: 'recruit.individual.announcementPublished',
     targetLevels: 'recruit.individual.targetLevels',
     targetLevelDetail: 'recruit.individual.targetLevelDetail',
+    docDeadlineIso: 'recruit.individual.docDeadlineIso',
+    docAnnounceMethod: 'recruit.individual.docAnnounceMethod',
+    interviewRangeSeal: 'recruit.individual.interviewRangeSeal',
+    interviewMethod: 'recruit.individual.interviewMethod',
+    finalAnnounceIso: 'recruit.individual.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.individual.finalAnnounceMethod',
     inquiryContact: 'recruit.individual.inquiryContact',
     inquiryTel: 'recruit.individual.inquiryTel',
     inquiryEmail: 'recruit.individual.inquiryEmail',
@@ -50,6 +59,8 @@ const keys = {
     inquiryTel: 'recruit.instructor.inquiryTel',
     inquiryEmail: 'recruit.instructor.inquiryEmail',
     notes: 'recruit.instructor.notes',
+    finalAnnounceIso: 'recruit.instructor.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.instructor.finalAnnounceMethod',
   },
   volunteer: {
     recruitRangeSeal: 'recruit.volunteer.recruitRangeSeal',
@@ -63,7 +74,12 @@ const keys = {
     notes: 'recruit.volunteer.notes',
     notesNotApplicable: 'recruit.volunteer.notesNotApplicable',
     interviewRequired: 'recruit.volunteer.interviewRequired',
+    docDeadlineIso: 'recruit.volunteer.docDeadlineIso',
+    docAnnounceMethod: 'recruit.volunteer.docAnnounceMethod',
     interviewRangeSeal: 'recruit.volunteer.interviewRangeSeal',
+    interviewMethod: 'recruit.volunteer.interviewMethod',
+    finalAnnounceIso: 'recruit.volunteer.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.volunteer.finalAnnounceMethod',
   },
   detailInfo: {
     participantDescription: 'recruit.detailInfo.programDescription',
@@ -183,8 +199,8 @@ export function buildGeneralRecruitOverlayFromProgram(
     volunteer?.recruitmentPeriodLabel
   )
   const volunteerInterviewRange = rangeSeal(
-    program.interviewStartDate ?? volunteer?.interviewStartDate,
-    program.interviewEndDate ?? volunteer?.interviewEndDate
+    volunteer?.interviewStartDate ?? program.interviewStartDate,
+    volunteer?.interviewEndDate ?? program.interviewEndDate
   )
   const inquiryContact =
     participant?.contactOrganizationName?.trim() ||
@@ -256,7 +272,10 @@ export function buildGeneralRecruitOverlayFromProgram(
   }
 
   const published = publishedOverlay(participant?.announcementPublished)
-  if (published) overlay[inst.announcementPublished] = published
+  if (published) {
+    overlay[inst.announcementPublished] = published
+    overlay[keys.individual.announcementPublished] = published
+  }
   const instructorPublished = publishedOverlay(instructor?.announcementPublished)
   if (instructorPublished) overlay[keys.instructor.announcementPublished] = instructorPublished
   const volunteerPublished = publishedOverlay(volunteer?.announcementPublished)
@@ -289,14 +308,91 @@ export function buildGeneralRecruitOverlayFromProgram(
   if (participantProgram) overlay[keys.volunteer.programRangeSeal] = participantProgram
   if (volunteerInterviewRange) overlay[keys.volunteer.interviewRangeSeal] = volunteerInterviewRange
 
-  if (program.resultAnnouncementDate) {
-    overlay[inst.finalAnnounceIso] = isoOrUndefined(program.resultAnnouncementDate)
+  const volunteerDocDeadline = isoOrUndefined(
+    volunteer?.documentPassAnnouncementDate ?? program.documentPassAnnouncementDate
+  )
+  if (volunteerDocDeadline) overlay[keys.volunteer.docDeadlineIso] = volunteerDocDeadline
+  const volunteerDocMethod =
+    volunteer?.documentPassAnnouncementMethod?.trim() ||
+    program.documentPassAnnouncementMethod?.trim()
+  if (volunteerDocMethod) overlay[keys.volunteer.docAnnounceMethod] = volunteerDocMethod
+  const volunteerInterviewMethod =
+    volunteer?.interviewMethod?.trim() || program.interviewMethod?.trim()
+  if (volunteerInterviewMethod) overlay[keys.volunteer.interviewMethod] = volunteerInterviewMethod
+  const volunteerFinalIso = isoOrUndefined(
+    volunteer?.finalPassAnnouncementDate ?? program.finalPassAnnouncementDate
+  )
+  if (volunteerFinalIso) overlay[keys.volunteer.finalAnnounceIso] = volunteerFinalIso
+  const volunteerFinalMethod =
+    volunteer?.finalPassAnnouncementMethod?.trim() ||
+    program.finalPassAnnouncementMethod?.trim()
+  if (volunteerFinalMethod) overlay[keys.volunteer.finalAnnounceMethod] = volunteerFinalMethod
+
+  const participantFinalResolved = resolveAnnouncement({
+    labels: [participant?.finalAnnouncementLabel, participant?.resultAnnouncementLabel],
+    column: {
+      date: program.resultAnnouncementDate,
+      method: program.resultAnnouncementMethod,
+    },
+  })
+  if (participantFinalResolved.date) {
+    const iso = isoOrUndefined(participantFinalResolved.date)
+    overlay[inst.finalAnnounceIso] = iso
+    overlay[keys.individual.finalAnnounceIso] = iso
   }
-  if (program.resultAnnouncementMethod?.trim()) {
-    overlay[inst.finalAnnounceMethod] = program.resultAnnouncementMethod.trim()
+  if (participantFinalResolved.method?.trim()) {
+    const method = participantFinalResolved.method.trim()
+    overlay[inst.finalAnnounceMethod] = method
+    overlay[keys.individual.finalAnnounceMethod] = method
+  }
+
+  if (program.documentPassAnnouncementDate) {
+    overlay[keys.individual.docDeadlineIso] = isoOrUndefined(
+      program.documentPassAnnouncementDate
+    )
+  }
+  if (program.documentPassAnnouncementMethod?.trim()) {
+    overlay[keys.individual.docAnnounceMethod] = program.documentPassAnnouncementMethod.trim()
+  }
+  if (program.interviewStartDate && program.interviewEndDate) {
+    overlay[keys.individual.interviewRangeSeal] = {
+      start: isoOrUndefined(program.interviewStartDate) ?? '',
+      end: isoOrUndefined(program.interviewEndDate) ?? '',
+    }
+  }
+  if (program.interviewMethod?.trim()) {
+    overlay[keys.individual.interviewMethod] = program.interviewMethod.trim()
+  }
+
+  const instructorFinalResolved = resolveAnnouncement({
+    labels: [instructor?.finalAnnouncementLabel, instructor?.resultAnnouncementLabel],
+    column: {
+      date: program.finalPassAnnouncementDate,
+      method: program.finalPassAnnouncementMethod,
+    },
+  })
+  if (instructorFinalResolved.date) {
+    overlay[keys.instructor.finalAnnounceIso] = isoOrUndefined(instructorFinalResolved.date)
+  }
+  if (instructorFinalResolved.method?.trim()) {
+    overlay[keys.instructor.finalAnnounceMethod] = instructorFinalResolved.method.trim()
   }
 
   return overlay
+}
+
+/** 상세 모집 폼(RHF) → in-memory overlay. 등록 위저드 KV와 달리 편집 UI는 overlay에 안 쓴다 */
+export function volunteerRecruitOverlayPatchFromDetailEditValues(
+  values: Pick<ProgramDetailEditFormValues, 'volunteerTargets' | 'volunteerTargetDetail'>
+): Record<string, unknown> {
+  const patch: Record<string, unknown> = {}
+  if (values.volunteerTargets != null) {
+    patch[keys.volunteer.volunteerTargets] = values.volunteerTargets
+  }
+  if (values.volunteerTargetDetail != null) {
+    patch[keys.volunteer.volunteerTargetDetail] = values.volunteerTargetDetail.trim()
+  }
+  return patch
 }
 
 export function resyncGeneralRecruitOverlayFromProgram(

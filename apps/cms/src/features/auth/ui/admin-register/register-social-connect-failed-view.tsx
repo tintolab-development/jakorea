@@ -1,4 +1,4 @@
-import bubbleIconImage from '@/assets/images/logo/bubble.png'
+import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
 import { CmsButton } from '@/shared/ui'
 
 interface RegisterSocialConnectFailedViewProps {
@@ -13,14 +13,15 @@ export function RegisterSocialConnectFailedView({
   return (
     <div className="register-social-connect-failed">
       <img
-        src={bubbleIconImage}
+        src={illustExclamationUrl}
         alt=""
         className="register-social-connect-failed__icon"
-        width={70}
-        height={70}
+        width={84}
+        height={84}
+        aria-hidden="true"
       />
 
-      <h1 className="register-social-connect-failed__title">소셜 계정을 연결하지 못했어요</h1>
+      <h1 className="register-social-connect-failed__title">소셜 계정을 연결하지 못했습니다.</h1>
 
       <p className="register-social-connect-failed__description">잠시후 다시 시도해 주세요.</p>
 

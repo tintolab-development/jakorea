@@ -2,7 +2,7 @@ import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProcessingStatus,
   PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type { SettlementAggregateResponse } from '@/shared/api/generated/settlement/schemas'
 import { mapStatementStatusToProcessingStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 

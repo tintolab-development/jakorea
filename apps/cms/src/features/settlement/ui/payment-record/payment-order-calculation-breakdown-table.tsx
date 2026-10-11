@@ -3,15 +3,15 @@
  */
 
 import { useMemo, type ReactNode } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsButton, type CmsButtonSize } from '@/shared/ui/cms-button'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   PaymentOrderAdminLineProcessingStatus,
   PaymentOrderCalculationLineKind,
   PaymentOrderCalculationStatementSessionBlock,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderCalculationBasisDetail } from './payment-order-calculation-basis-detail'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './payment-order-program-calculation-statement-modal.css'
@@ -70,10 +70,7 @@ export function formatPaymentOrderCalculationWonPlain(n: number): string {
   return `${n.toLocaleString('ko-KR')}원`
 }
 
-function formatLectureSessionSegment(
-  raw: string,
-  mode: 'session' | 'round' | undefined
-): string {
+function formatLectureSessionSegment(raw: string, mode: 'session' | 'round' | undefined): string {
   if (mode === 'round') {
     return raw.replace(/차시/g, '회차')
   }
@@ -86,6 +83,9 @@ export function getPaymentOrderCalculationColumns(options?: {
   onDetailClick?: () => void
   /** 강의 진행 일자 열의 세션 구간: `round`이면 차시 → 회차 (계좌 지급 현황 상세 등) */
   lectureSessionSegmentLabel?: 'session' | 'round'
+  /** 산정 기준 상세 · 지급조서 발급 버튼 (기본 large / 160px) */
+  actionButtonSize?: CmsButtonSize
+  actionButtonWidth?: number
 }): ColumnsType<PaymentOrderCalculationTableRow> {
   const handleBasisDetailClick = (row: PaymentOrderCalculationTableRow) => {
     if (options?.onBasisDetailClick) {
@@ -97,6 +97,8 @@ export function getPaymentOrderCalculationColumns(options?: {
   }
 
   const sessionLabelMode = options?.lectureSessionSegmentLabel ?? 'session'
+  const actionButtonSize = options?.actionButtonSize ?? 'large'
+  const actionButtonWidth = options?.actionButtonWidth ?? 160
 
   return [
     {
@@ -173,8 +175,8 @@ export function getPaymentOrderCalculationColumns(options?: {
         <div className="payment-order-calc-statement-modal__detail-btn-wrap">
           <CmsButton
             variant="default"
-            style={{ width: '160px' }}
-            size="large"
+            size={actionButtonSize}
+            width={actionButtonWidth}
             onClick={() => handleBasisDetailClick(row)}
           >
             상세 보기
@@ -206,6 +208,14 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   lectureSessionSegmentLabel?: 'session' | 'round'
   /** 산정 기준 상세 모달 열기 */
   onBasisDetailClick?: (row: PaymentOrderCalculationTableRow) => void
+  /** 산정 기준 상세 · 지급조서 발급 버튼 (기본 large / 160px) */
+  actionButtonSize?: CmsButtonSize
+  actionButtonWidth?: number
+  /**
+   * `cms-data-table`: 공유 테이블 패딩·타이포(8×12, 14px/150%).
+   * `statement-modal`: 산출 내역서 모달 전용 오버라이드(기본).
+   */
+  tableCellSpec?: 'statement-modal' | 'cms-data-table'
 }
 
 export function PaymentOrderCalculationBreakdownTable({
@@ -218,11 +228,24 @@ export function PaymentOrderCalculationBreakdownTable({
   paymentStatementIssueDisabled = false,
   lectureSessionSegmentLabel = 'session',
   onBasisDetailClick,
+  actionButtonSize = 'large',
+  actionButtonWidth = 160,
+  tableCellSpec = 'statement-modal',
 }: PaymentOrderCalculationBreakdownTableProps) {
+  const tableClassName =
+    tableCellSpec === 'cms-data-table'
+      ? 'cms-data-table cms-data-table--skip-auto-no-col account-payment-status-detail__calc-table'
+      : 'payment-order-calc-statement-modal__table cms-data-table cms-data-table--skip-auto-no-col'
   const tableRows = useMemo(() => buildPaymentOrderCalculationTableRows(blocks), [blocks])
   const columns = useMemo(
-    () => getPaymentOrderCalculationColumns({ lectureSessionSegmentLabel, onBasisDetailClick }),
-    [lectureSessionSegmentLabel, onBasisDetailClick]
+    () =>
+      getPaymentOrderCalculationColumns({
+        lectureSessionSegmentLabel,
+        onBasisDetailClick,
+        actionButtonSize,
+        actionButtonWidth,
+      }),
+    [lectureSessionSegmentLabel, onBasisDetailClick, actionButtonSize, actionButtonWidth]
   )
   const hideHeaderActionsStatuses: PaymentOrderAdminLineProcessingStatus[] = [
     'confirmed',
@@ -252,9 +275,6 @@ export function PaymentOrderCalculationBreakdownTable({
         <div className="payment-order-calc-statement-modal__detail-header-left">
           <div>
             <span className="info-section-title">산출 내역 상세</span>
-            <span className="info-section-desc">
-              교통비 및 숙소비는 강사가 지급 신청한 경우에만 항목 노출됩니다.
-            </span>
           </div>
         </div>
         {showHeaderActions ? (
@@ -262,8 +282,8 @@ export function PaymentOrderCalculationBreakdownTable({
         ) : null}
       </div>
 
-      <Table<PaymentOrderCalculationTableRow>
-        className="payment-order-calc-statement-modal__table cms-data-table cms-data-table--skip-auto-no-col"
+      <CmsDataTable<PaymentOrderCalculationTableRow>
+        className={tableClassName}
         rowKey="key"
         columns={columns}
         dataSource={tableRows}
@@ -273,26 +293,26 @@ export function PaymentOrderCalculationBreakdownTable({
         rowHoverable={false}
         scroll={{ x: PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH }}
         summary={() => (
-          <Table.Summary fixed="bottom">
-            <Table.Summary.Row className="payment-order-calc-statement-modal__summary-row">
-              <Table.Summary.Cell index={0} colSpan={2} align="center">
+          <CmsDataTable.Summary fixed="bottom">
+            <CmsDataTable.Summary.Row className="payment-order-calc-statement-modal__summary-row">
+              <CmsDataTable.Summary.Cell index={0} colSpan={2} align="center">
                 <span className="payment-order-calc-statement-modal__summary-label">합계</span>
-              </Table.Summary.Cell>
-              <Table.Summary.Cell index={2} colSpan={2} align="center">
+              </CmsDataTable.Summary.Cell>
+              <CmsDataTable.Summary.Cell index={2} colSpan={2} align="center">
                 <span className="payment-order-calc-statement-modal__summary-formula">
                   {formulaLabel}
                 </span>
-              </Table.Summary.Cell>
-              <Table.Summary.Cell index={4} align="center">
+              </CmsDataTable.Summary.Cell>
+              <CmsDataTable.Summary.Cell index={4} align="center">
                 <span className="payment-order-calc-statement-modal__summary-total">
                   {formatPaymentOrderCalculationWonPlain(totalAmount)}
                 </span>
-              </Table.Summary.Cell>
-              <Table.Summary.Cell index={5} align="center">
+              </CmsDataTable.Summary.Cell>
+              <CmsDataTable.Summary.Cell index={5} align="center">
                 <CmsButton
                   variant="primary"
-                  size="large"
-                  style={{ width: '160px' }}
+                  size={actionButtonSize}
+                  width={actionButtonWidth}
                   icon={<ButtonDownloadIcon />}
                   disabled={paymentStatementIssueDisabled}
                   title={
@@ -304,9 +324,9 @@ export function PaymentOrderCalculationBreakdownTable({
                 >
                   지급조서 발급
                 </CmsButton>
-              </Table.Summary.Cell>
-            </Table.Summary.Row>
-          </Table.Summary>
+              </CmsDataTable.Summary.Cell>
+            </CmsDataTable.Summary.Row>
+          </CmsDataTable.Summary>
         )}
       />
     </div>

@@ -1,17 +1,21 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { collectOperationalOverlayForCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
 import {
   getProgramRegistrationOverlayRecord,
   getProgramRegistrationOverlayVersion,
   patchProgramRegistrationOverlay,
   patchRegistrationOverlayProgramTitleKo,
+  peekProgramRegistrationOverlayRecord,
   readRegistrationOverlayProgramTitleKo,
-  resetProgramRegistrationOverlay,
+  readStoredRegistrationProgramTitleKo,
+  resetProgramRegistrationOverlayStoreForTests,
+  setProgramRegistrationOverlayScope,
   subscribeProgramRegistrationOverlayKey,
   updateProgramRegistrationOverlayKey,
 } from './program-registration-overlay-sync'
 
 afterEach(() => {
-  resetProgramRegistrationOverlay()
+  resetProgramRegistrationOverlayStoreForTests()
 })
 
 describe('program-registration-overlay-sync', () => {
@@ -48,6 +52,30 @@ describe('program-registration-overlay-sync', () => {
     unsubTitle()
     unsubOther()
   })
+
+  it('isolates values by templateCode and keeps persist keys unprefixed', () => {
+    setProgramRegistrationOverlayScope('registration-general-custom-01')
+    patchProgramRegistrationOverlay({
+      'generalRegistration.basicInfo.localProgramTitleKo': 'A 등록',
+    })
+
+    setProgramRegistrationOverlayScope('registration-general-custom-02')
+    expect(
+      getProgramRegistrationOverlayRecord()['generalRegistration.basicInfo.localProgramTitleKo']
+    ).toBeUndefined()
+
+    setProgramRegistrationOverlayScope('registration-general-custom-01')
+    expect(
+      getProgramRegistrationOverlayRecord()['generalRegistration.basicInfo.localProgramTitleKo']
+    ).toBe('A 등록')
+
+    const overlay = collectOperationalOverlayForCatalogId('registration-general-custom-01')
+    expect(overlay).toEqual({
+      'generalRegistration.basicInfo.localProgramTitleKo': 'A 등록',
+    })
+    expect(Object.keys(overlay ?? {}).some(key => key.includes('custom-01'))).toBe(false)
+    expect(peekProgramRegistrationOverlayRecord('registration-general-custom-02')).toEqual({})
+  })
 })
 
 describe('readRegistrationOverlayProgramTitleKo', () => {
@@ -61,6 +89,23 @@ describe('readRegistrationOverlayProgramTitleKo', () => {
 
   it('1사1교에서 제목을 아직 안 바꿨으면 화면 기본 대표명을 쓴다', () => {
     expect(readRegistrationOverlayProgramTitleKo('economy')).toBe('1사1교 경제금융교육')
+  })
+
+  it('키가 있으면 빈 국문명도 React state fallback보다 우선한다', () => {
+    patchProgramRegistrationOverlay({
+      'generalRegistration.basicInfo.localProgramTitleKo': '',
+    })
+    expect(readStoredRegistrationProgramTitleKo('general', '이전 제목')).toBe('')
+  })
+
+  it('키가 없으면 React state fallback을 쓴다', () => {
+    expect(readStoredRegistrationProgramTitleKo('general', '이전 제목')).toBe('이전 제목')
+  })
+
+  it('continue hydrate payload programTitleKo를 overlay에 반영한다', () => {
+    patchRegistrationOverlayProgramTitleKo('general', '이어서 작성 프로그램명')
+    expect(readRegistrationOverlayProgramTitleKo('general')).toBe('이어서 작성 프로그램명')
+    expect(readStoredRegistrationProgramTitleKo('general')).toBe('이어서 작성 프로그램명')
   })
 
   it('1사1교 제목은 미사용 programTitleKo state로 덮지 않는다', () => {

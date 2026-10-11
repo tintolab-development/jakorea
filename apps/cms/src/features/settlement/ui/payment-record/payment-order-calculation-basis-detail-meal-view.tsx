@@ -1,10 +1,11 @@
 /**
- * 식사비 — 산정 기준 상세 read-only 표
+ * 식사비 — 산정 기준 상세 read-only
  */
 
-import { ModalSpecTable, ModalSpecTableRow } from '@/shared/ui/modal-spec-table'
 import type { PaymentOrderCalculationBasisDetailMeal } from './payment-order-calculation-basis-detail'
 import {
+  BasisDetailInfoForm,
+  BasisDetailInfoFormRow,
   BasisDetailLodgingFeeValue,
   BasisDetailReadOnlyValue,
 } from './payment-order-calculation-basis-detail-shared'
@@ -16,18 +17,18 @@ export function PaymentOrderCalculationBasisDetailMealView({
   detail: PaymentOrderCalculationBasisDetailMeal
 }) {
   return (
-    <ModalSpecTable aria-label="식사비 산정 기준">
-      <ModalSpecTableRow label="구분" labelVariant="basis">
+    <BasisDetailInfoForm title="식사비 산정 기준">
+      <BasisDetailInfoFormRow label="구분">
         <BasisDetailReadOnlyValue>{detail.categoryLabel}</BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="식사비" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="식사비">
         <BasisDetailLodgingFeeValue fee={detail.mealFee} />
-      </ModalSpecTableRow>
-      <ModalSpecTableRow label="합계" labelVariant="basis">
+      </BasisDetailInfoFormRow>
+      <BasisDetailInfoFormRow label="합계">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(detail.totalWon)}
         </BasisDetailReadOnlyValue>
-      </ModalSpecTableRow>
-    </ModalSpecTable>
+      </BasisDetailInfoFormRow>
+    </BasisDetailInfoForm>
   )
 }

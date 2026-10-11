@@ -1,66 +1,78 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
+import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 
 /**
- * 지원 폼(기관 지원, 개인 지원 등)의 공유 오버레이 스토어
- * 각 폼이 독립적으로 입력값을 지속하도록 함
+ * 지원 폼(기관 지원, 개인 지원 등) overlay.
+ * templateCode 버킷으로 양식 인스턴스를 가른다.
  */
 
-let overlayState: Record<string, unknown> = {}
-let overlayVersion = 0
-const overlayListeners = new Set<() => void>()
+const store = createScopedOverlayStore()
 
-function emitOverlay() {
-  overlayVersion += 1
-  overlayListeners.forEach(l => l())
+export function setGeneralApplicationOverlayScope(templateCode: string | undefined | null): void {
+  store.setScope(templateCode)
+}
+
+export function getGeneralApplicationOverlayScope(): string {
+  return store.getScope()
 }
 
 export function subscribeGeneralApplicationOverlay(listener: () => void): () => void {
-  overlayListeners.add(listener)
-  return () => overlayListeners.delete(listener)
+  return store.subscribe(listener)
 }
 
 export function getGeneralApplicationOverlayVersion(): number {
-  return overlayVersion
+  return store.getVersion()
 }
 
 export function getGeneralApplicationOverlayRecord(): Record<string, unknown> {
-  return overlayState
+  return store.getRecord()
+}
+
+export function peekGeneralApplicationOverlayRecord(
+  templateCode: string | undefined | null
+): Record<string, unknown> {
+  return store.peekRecord(templateCode)
+}
+
+export function replaceGeneralApplicationOverlayForScope(
+  templateCode: string | undefined | null,
+  next: Record<string, unknown>
+): void {
+  store.replaceFor(templateCode, next)
+}
+
+export function resetGeneralApplicationOverlayForScope(
+  templateCode: string | undefined | null
+): void {
+  store.resetFor(templateCode)
 }
 
 export function patchGeneralApplicationOverlay(partial: Record<string, unknown>): void {
-  let changed = false
-  for (const [key, next] of Object.entries(partial)) {
-    if (!Object.is(overlayState[key], next)) {
-      changed = true
-      break
-    }
-  }
-  if (!changed) return
-  overlayState = { ...overlayState, ...partial }
-  emitOverlay()
+  store.patch(partial)
 }
 
 export function updateGeneralApplicationOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T
 ): void {
-  const prev = overlayState[key] as T | undefined
-  const next = updater(prev)
-  if (Object.is(prev, next)) return
-  overlayState = { ...overlayState, [key]: next }
-  emitOverlay()
+  store.updateKey(key, updater)
 }
 
 export function replaceGeneralApplicationOverlay(next: Record<string, unknown>): void {
-  overlayState = { ...next }
-  emitOverlay()
+  store.replace(next)
 }
 
 export function resetGeneralApplicationOverlay(): void {
-  if (Object.keys(overlayState).length === 0) return
-  overlayState = {}
-  emitOverlay()
+  store.reset()
+}
+
+export function resetAllGeneralApplicationOverlay(): void {
+  store.resetAll()
+}
+
+export function resetGeneralApplicationOverlayStoreForTests(): void {
+  store.resetAll()
 }
 
 /** `useSyncExternalStore`용 — 버전만 구독하고 렌더 시 record로 값을 읽는다. */
@@ -68,8 +80,6 @@ export function useGeneralApplicationOverlayKv<T>(
   key: string,
   defaultValue: T
 ): [T, (next: T) => void] {
-  // 인라인 default(`[]` / `createDefault…()`)가 렌더마다 새 참조가 되어
-  // effect 의존·제어 컴포넌트 sync가 무한 루프 나지 않도록 최초 값만 고정
   const defaultRef = useRef(defaultValue)
   const version = useSyncExternalStore(
     subscribeGeneralApplicationOverlay,

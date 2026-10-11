@@ -47,14 +47,16 @@ export function resolveGeneralApplicationFormHiddenParagraphIds(
       isTemplateAuthoringMode: params.isTemplateAuthoringMode === true,
     })
   }
-  if (variant === 'individual' && params.program) {
+  if (variant === 'individual') {
     const bridge =
-      params.institutionBridge ?? resolveInstitutionApplicationProgramBridge(params.program)
+      params.institutionBridge ??
+      (params.program ? resolveInstitutionApplicationProgramBridge(params.program) : undefined)
+    if (!bridge) return undefined
     const hidden = new Set<string>()
     if (!shouldShowInstitutionApplicationScheduleParagraph(bridge)) {
       hidden.add(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
     }
-    if (!isGeneralIndividualTeamParticipationProgram(params.program)) {
+    if (params.program && !isGeneralIndividualTeamParticipationProgram(params.program)) {
       hidden.add(PROGRAM_PARTICIPANT_APPLICATION_IDS.teamInfo)
     }
     return hidden.size > 0 ? hidden : undefined

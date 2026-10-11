@@ -130,7 +130,9 @@ export function InstructorListPage() {
 
   const instructorListTablePageConfig = useMemo(() => createInstructorListTablePageConfig(), [])
 
-  const { pendingFilters, handleFilterChange, applySearch } = useTablePage(
+  const { pendingFilters, handleFilterChange, applySearch,
+    hasActiveFilters,
+  } = useTablePage(
     instructorListTablePageConfig,
     {
       data: filteredInstructors,
@@ -260,6 +262,7 @@ export function InstructorListPage() {
   return (
     <div>
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
         filters={pendingFilters}

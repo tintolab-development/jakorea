@@ -8,7 +8,7 @@ import { useMemo } from 'react'
 import type {
   PaymentOrderCalculationLineKind,
   PaymentOrderCalculationStatementSessionBlock,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { formatPaymentOrderCalculationWonPlain } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 import './payment-statement-issuance-calculation-lines-table.css'

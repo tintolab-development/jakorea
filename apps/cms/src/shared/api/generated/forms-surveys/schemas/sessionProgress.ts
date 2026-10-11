@@ -5,16 +5,65 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SessionProgressScheduleStatus } from './sessionProgressScheduleStatus';
 
+/**
+ * 참여 일정. 기관 참여자는 배정·출석이 붙은 프로그램 일정과 신청 희망 일정(GET .../requested-schedules 와 같은 program_application_requested_schedule)을 함께 반환한다. 희망 시각이 있으면 startAt/endAt은 Asia/Seoul 기준 ISO-8601이고 scheduleName은 신청 표기(dateText)다. 프로그램 일정과 시각이 맞지 않으면 scheduleId·resolvedScheduleId는 null, scheduleUnresolved는 true. 신청 답이 없는 고정 1일 프로그램은 일정을 만들지 않고 빈 배열이다. null은 반환하지 않는다.
+ */
 export interface SessionProgress {
-  scheduleId?: number;
-  requestedScheduleId?: number;
-  resolvedScheduleId?: number;
-  scheduleUnresolved?: boolean;
-  sessionNo?: number;
-  scheduleName?: string;
-  startAt?: string;
-  endAt?: string;
-  attendanceStatus?: string;
-  assignmentStatus?: string;
+  /**
+     * 시각이 일치하는 program_schedule id. 희망 일정만 있으면 null
+     * @nullable
+     */
+  scheduleId?: number | null;
+  /**
+     * program_application_requested_schedule id. 배정 일정만 있으면 null
+     * @nullable
+     */
+  requestedScheduleId?: number | null;
+  /**
+     * 출석/배정 mutation에 쓰는 program_schedule id. 미해결이면 null
+     * @nullable
+     */
+  resolvedScheduleId?: number | null;
+  /**
+     * 희망 일정은 있으나 같은 시각의 프로그램 일정이 없으면 true
+     * @nullable
+     */
+  scheduleUnresolved?: boolean | null;
+  /**
+     * 프로그램 일정 회차. 희망 일정은 preference_order
+     * @nullable
+     */
+  sessionNo?: number | null;
+  /**
+     * 일정명. 희망 일정은 dateText, 없으면 YYYY-MM-DD
+     * @nullable
+     */
+  scheduleName?: string | null;
+  /**
+     * 시작 시각. 희망 일정은 신청일+시작시각(Asia/Seoul). 시각이 없으면 null
+     * @nullable
+     */
+  startAt?: string | null;
+  /**
+     * 종료 시각. 희망 일정은 신청일+종료시각(Asia/Seoul). 시각이 없으면 null
+     * @nullable
+     */
+  endAt?: string | null;
+  /**
+     * 교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus 와 동일 규칙. 출석과 별개.
+     * @nullable
+     */
+  scheduleStatus?: SessionProgressScheduleStatus;
+  /**
+     * PRESENT|LATE|ABSENT|EXCUSED. 없으면 null
+     * @nullable
+     */
+  attendanceStatus?: string | null;
+  /**
+     * 배정 상태. 없으면 null이며 화면은 대기 처리
+     * @nullable
+     */
+  assignmentStatus?: string | null;
 }

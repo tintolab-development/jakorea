@@ -120,13 +120,13 @@ function createJaVolunteerExperienceMultipleChoiceParagraph(): MultipleChoicePar
     variant: 'multiple_choice',
     requiredMark: true,
     paragraphTitle: 'JA 봉사 프로그램 진행 경험 여부',
-    paragraphDescription: 'JA 봉사 프로그램 진행 이력 여부를 선택해 주세요.',
+    paragraphDescription: '',
     participatesInTitleNumbering: false,
     answerRequired: true,
     allowMultiple: false,
     items: [
-      { id: JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.yes, label: '있음' },
-      { id: JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.no, label: '없음' },
+      { id: JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.yes, label: '동의서 제출 요청' },
+      { id: JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.no, label: '동의서 미제출' },
     ],
     selectedPreviewSingleId: null,
     selectedPreviewMultipleIds: [],
@@ -190,12 +190,12 @@ export function createParticipatingVolunteerAddRegistrationDraft(): WritingFormD
     createSeedHorizontalTable(
       PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.previousJaProgram,
       '이전 참여 JA 봉사 프로그램',
-      ''
+      '이전에 참여한 JA 봉사 프로그램명과 진행년도 및 해당 프로그램의 활동인증서 또는 수료증 파일을 첨부해 주세요.'
     ),
     createSeedHorizontalTable(
       PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.freeTextItems,
       '자유 작성 항목',
-      '1~3번 문항은 자유롭게 작성 가능합니다.'
+      '1~4번 문항은 자유롭게 작성 가능합니다.'
     ),
   ]
   return normalizeWritingFormDraft({

@@ -1,5 +1,6 @@
-import { LoginUtilityLinks } from './login-utility-links'
+import { FindEmailSearchIcon } from '@/features/auth/ui/find-email/find-email-search-icon'
 import { CmsButton } from '@/shared/ui'
+import { LoginUtilityLinks } from './login-utility-links'
 
 interface LoginSocialNotLinkedViewProps {
   registerPath: string
@@ -12,10 +13,13 @@ export function LoginSocialNotLinkedView({
 }: LoginSocialNotLinkedViewProps) {
   return (
     <div className="login-social-not-linked">
+      <div className="login-social-not-linked__icon" aria-hidden>
+        <FindEmailSearchIcon />
+      </div>
       <div className="login-social-not-linked__heading">
-        <h2 className="login-social-not-linked__title">연결된 소셜 계정이 없어요</h2>
+        <h2 className="login-social-not-linked__title">연결된 소셜 계정이 없습니다.</h2>
         <p className="login-social-not-linked__subtitle">
-          이 소셜 계정과 연결된 JA Korea 계정을 찾을 수 없어요.
+          이 소셜 계정과 연결된 JA Korea 계정을 찾을 수 없습니다.
         </p>
       </div>
 
@@ -23,7 +27,7 @@ export function LoginSocialNotLinkedView({
         <p className="login-social-not-linked__body-text">
           먼저 이메일로 로그인한 뒤, [내 정보 수정]에서 소셜 계정을 연결해 주세요.
           <br />
-          회원가입이 처음이라면 이메일로 가입한 뒤 소셜 계정을 연결할 수 있어요.
+          회원가입이 처음이라면 이메일로 가입한 뒤 소셜 계정을 연결할 수 있습니다.
         </p>
       </div>
 
@@ -34,7 +38,7 @@ export function LoginSocialNotLinkedView({
         className="login-submit-btn"
         onClick={onEmailLogin}
       >
-        이메일로 로그인하기
+        로그인하기
       </CmsButton>
 
       <LoginUtilityLinks registerPath={registerPath} />

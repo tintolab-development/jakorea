@@ -21,13 +21,11 @@ import {
 } from '@/shared/components/table-system/model/use-table-page'
 import type { ViewModeToggleOption } from '@/shared/components/view-mode'
 import {
-  mockPaymentOrderAdminInstructorList,
-  mockPaymentOrderAdminProgramList,
   PAYMENT_ORDER_STATUS_LABELS_LIST,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   PAYMENT_ORDER_PENDING_ITEM_BUCKET_LABELS,
   PAYMENT_ORDER_PENDING_ITEM_BUCKETS,
@@ -198,14 +196,14 @@ export function usePaymentOrdersListPage() {
     if (paymentOrdersRemote) {
       return remoteListQuery.data?.programRows ?? []
     }
-    return mockPaymentOrderAdminProgramList
+    return []
   }, [paymentOrdersRemote, remoteListQuery.data?.programRows])
 
   const sourceInstructorRows = useMemo(() => {
     if (paymentOrdersRemote) {
       return remoteListQuery.data?.instructorRows ?? []
     }
-    return mockPaymentOrderAdminInstructorList
+    return []
   }, [paymentOrdersRemote, remoteListQuery.data?.instructorRows])
 
   const listProgram = useMemo(

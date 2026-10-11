@@ -2,7 +2,7 @@
  * 지급 현황 상세 — 프로그램 기본 정보 블록
  */
 
-import type { PaymentOrderAdminProgramDetail } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminProgramDetail } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import { formatKoreanDateWithWeekday } from './payment-order-detail-fullpage-shared'
 import { renderAggregateStatus } from './payment-order-detail-aggregate-status'

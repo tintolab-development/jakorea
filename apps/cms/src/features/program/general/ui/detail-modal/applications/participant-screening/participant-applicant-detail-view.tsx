@@ -58,7 +58,11 @@ import {
   updateIndividualApplication,
   updateIndividualDocumentEvaluationRemote,
 } from '@/features/program/general/api/applications-api-client'
-import { mapIndividualApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  mapIndividualApplicationDetailToApplicantRow,
+  type IndividualApplicationDetailEnriched,
+} from '@/features/program/general/api/adapters/general-applications-adapters'
+import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
@@ -82,15 +86,7 @@ function mergeApplicationUpdateResponse(
       }
     | null
     | undefined
-  const team = response.team as
-    | {
-        name?: string
-        teamName?: string
-        memberCount?: number
-        role?: string
-      }
-    | undefined
-  const role = team?.role?.toUpperCase()
+  const teamDetail = resolveIndividualApplicationTeamDetail({ team: response.team })
 
   return {
     ...row,
@@ -106,16 +102,10 @@ function mergeApplicationUpdateResponse(
     textbookStatus: textbook?.status?.toLowerCase() as GeneralIndividualApplicantRow['textbookStatus'],
     detail: {
       ...row.detail,
-      teamName: team?.name ?? team?.teamName ?? row.detail?.teamName,
-      teamMemberCount: team?.memberCount ?? row.detail?.teamMemberCount,
-      teamMemberCountSelect:
-        team?.memberCount != null && team.memberCount >= 1 && team.memberCount <= 5
-          ? (String(team.memberCount) as '1' | '2' | '3' | '4' | '5')
-          : team?.memberCount != null
-            ? 'custom'
-            : row.detail?.teamMemberCountSelect,
-      teamRole:
-        role === 'LEADER' ? 'leader' : role === 'MEMBER' ? 'member' : row.detail?.teamRole,
+      teamName: teamDetail.teamName ?? row.detail?.teamName,
+      teamMemberCount: teamDetail.teamMemberCount ?? row.detail?.teamMemberCount,
+      teamMemberCountSelect: teamDetail.teamMemberCountSelect ?? row.detail?.teamMemberCountSelect,
+      teamRole: teamDetail.teamRole ?? row.detail?.teamRole,
     },
   }
 }
@@ -226,7 +216,10 @@ export function GeneralParticipantApplicantDetailView({
           homeAddress: '',
           approvalStatus: 'pending',
         }
-      return mapIndividualApplicationDetailToApplicantRow(detailQuery.data, base)
+      return mapIndividualApplicationDetailToApplicantRow(
+        detailQuery.data as IndividualApplicationDetailEnriched,
+        base
+      )
     })
   }, [applicantId, applicantProp, detailQuery.data, usesApplicationMock])
 
@@ -461,7 +454,10 @@ export function GeneralParticipantApplicantDetailView({
     async (reason: string): Promise<GeneralIndividualApplicantRow> => {
       if (!applicant) throw new Error('신청 상세가 없습니다.')
       const response = await unmaskIndividualApplicationPrivacyRemote(applicant.id, reason)
-      return mapIndividualApplicationDetailToApplicantRow(response, applicant)
+      return mapIndividualApplicationDetailToApplicantRow(
+        response as IndividualApplicationDetailEnriched,
+        applicant
+      )
     },
     [applicant]
   )

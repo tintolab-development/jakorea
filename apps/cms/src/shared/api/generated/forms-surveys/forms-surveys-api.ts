@@ -13,7 +13,6 @@ import type {
   FormResponseDocumentSnapshotResponse,
   FormResponseFeedbackCreateRequest,
   FormResponseFeedbackResponse,
-  FormResponseProjectionResponse,
   FormResponseResponse,
   FormResponseUpdateRequest,
   FormSubmissionBulkDownloadRequest,
@@ -34,6 +33,7 @@ import type {
   ListBusinessProjectionsParams,
   ListResponsesParams,
   ListTemplatesParams,
+  PageResponseFormResponseProjectionResponse,
   PageResponseFormResponseResponse,
   PageResponseFormTemplateListItemResponse,
   ProgramFormBindingRequest,
@@ -1744,8 +1744,8 @@ const getDocumentSnapshot = (
  */
 const listBusinessProjections = (
     params?: ListBusinessProjectionsParams,
- options?: SecondParameter<typeof customInstance<FormResponseProjectionResponse[]>>,) => {
-      return customInstance<FormResponseProjectionResponse[]>(
+ options?: SecondParameter<typeof customInstance<PageResponseFormResponseProjectionResponse>>,) => {
+      return customInstance<PageResponseFormResponseProjectionResponse>(
       {url: `/api/admin/form-responses/business-projections`, method: 'GET',
         params
     },

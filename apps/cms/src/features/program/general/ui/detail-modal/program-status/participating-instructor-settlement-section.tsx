@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
@@ -14,6 +14,7 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { handleError } from '@/shared/utils/error-handler'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   BusinessIncomeView,
   LectureFeeBasisView,
@@ -280,7 +281,7 @@ export function ParticipatingInstructorSettlementSection({
 
       <div className="participating-institutions-section__table-wrap">
         <Spin spinning={isLoading}>
-          <Table<ParticipatingInstructorSettlementApiRow>
+          <CmsDataTable<ParticipatingInstructorSettlementApiRow>
             className="participating-institutions-section__table cms-data-table"
             rowKey="id"
             size="middle"

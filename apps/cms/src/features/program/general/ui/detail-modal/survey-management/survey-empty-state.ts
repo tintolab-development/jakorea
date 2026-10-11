@@ -4,7 +4,6 @@ import type {
   SurveyPollRawResponse,
 } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import type { GeneralSatisfactionAudienceKey } from '@/features/program/general/lib/survey-audience'
-import { buildTempMockOrgSurveyState } from '@/features/program/general/lib/temp-mock-org-surveys'
 import type { LectureEvalTabKey } from '@/features/program/shared/lib/survey-management/lecture-eval-survey'
 
 export type GeneralSurveyEmptyState = {
@@ -29,7 +28,7 @@ const EMPTY_SURVEY_STATE: GeneralSurveyEmptyState = {
   responses: [],
 }
 
-/** 설문 API 연동 전 — 빈 상태. TODO(temp-mock): 열여라 참깨만 사전 등록 시드 */
-export function buildGeneralSurveyEmptyState(program: Program): GeneralSurveyEmptyState {
-  return buildTempMockOrgSurveyState(program) ?? EMPTY_SURVEY_STATE
+/** 설문 API 연동 전 — 빈 상태 */
+export function buildGeneralSurveyEmptyState(_program: Program): GeneralSurveyEmptyState {
+  return EMPTY_SURVEY_STATE
 }

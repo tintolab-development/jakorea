@@ -79,6 +79,15 @@ describe('mapSponsorDetailResponse', () => {
     expect(detail.homepageUrl).toBe('https://www.samsung.com')
     expect(detail.logos).toEqual([{ id: 'samsung_logo.ai', fileName: 'samsung_logo.ai' }])
   })
+
+  it('maps numeric logoFileId without placeholder label', () => {
+    const detail = mapSponsorDetailResponse({
+      id: 'sp-1',
+      name: '로고',
+      logoFileId: '2055855',
+    })
+    expect(detail.logos).toEqual([{ id: '2055855', fileName: '' }])
+  })
 })
 
 describe('toSponsorRequestFromBasicInfo', () => {

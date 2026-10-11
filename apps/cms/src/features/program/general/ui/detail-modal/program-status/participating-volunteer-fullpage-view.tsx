@@ -8,7 +8,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
-import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { MESSAGES } from '@/shared/constants/messages'
@@ -86,7 +85,6 @@ export function ParticipatingVolunteerFullpageView({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
-  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   /**
    * URL(`volunteerTab`)이 source of truth이지만, setSearchParams 반영 전·props 지연 시
    * 탭 UI/본문이 안 바뀌는 문제가 있어 로컬 탭을 먼저 갱신한 뒤 URL과 동기화한다.
@@ -264,17 +262,15 @@ export function ParticipatingVolunteerFullpageView({
       const stopScheduleIdNum =
         stopSession?.resolvedScheduleId != null ? Number(stopSession.resolvedScheduleId) : Number.NaN
 
-      if (progressRemoteEnabled || isTempMockProgram) {
+      if (progressRemoteEnabled) {
         setActivityWithdrawSubmitting(true)
         try {
-          if (progressRemoteEnabled) {
-            await giveUpGeneralParticipatingInstitution(program.id, mergedVolunteer.id, reason, {
-              stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
-            })
-            await queryClient.invalidateQueries({
-              queryKey: generalProgramProgressQueryKeys.volunteers(program.id),
-            })
-          }
+          await giveUpGeneralParticipatingInstitution(program.id, mergedVolunteer.id, reason, {
+            stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
+          })
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.volunteers(program.id),
+          })
           const patch = applyParticipatingVolunteerActivityWithdraw(mergedVolunteer, payload)
           if (Object.keys(patch).length > 0) {
             setVolunteerPatches(prev => ({ ...prev, ...patch }))
@@ -308,7 +304,6 @@ export function ParticipatingVolunteerFullpageView({
       activityWithdrawScheduleOptions,
       mergedVolunteer,
       program.id,
-      isTempMockProgram,
       progressRemoteEnabled,
       queryClient,
       showAlert,
@@ -349,13 +344,6 @@ export function ParticipatingVolunteerFullpageView({
         return
       }
     }
-    if (isTempMockProgram) {
-      setSavedAdminComment(trimmed)
-      setVolunteerPatches(prev => ({ ...prev, adminComment: trimmed || undefined }))
-      setAdminCommentModalOpen(false)
-      setAdminCommentError(undefined)
-      return
-    }
     void showAlert({
       title: PROGRAM_API_UNAVAILABLE_TITLE,
       content: hasVolunteerApplicationId
@@ -365,7 +353,6 @@ export function ParticipatingVolunteerFullpageView({
   }, [
     adminCommentDraft,
     hasVolunteerApplicationId,
-    isTempMockProgram,
     showAlert,
     volunteerApplicationId,
   ])

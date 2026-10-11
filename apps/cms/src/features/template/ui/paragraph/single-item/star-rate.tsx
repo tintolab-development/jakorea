@@ -69,7 +69,16 @@ export function StarRate({
   }
 
   return (
-    <div className="star-rate-body" role="group" aria-label="별점">
+    <div
+      className={[
+        'star-rate-body',
+        !isBodyInteractive ? 'star-rate-body--non-interactive' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      role="group"
+      aria-label="별점"
+    >
       {Array.from({ length: STAR_COUNT }, (_, i) => {
         const starIndex = i + 1
         const filled = starIndex <= displayRating
@@ -78,7 +87,6 @@ export function StarRate({
             key={starIndex}
             type="button"
             className="star-rate-body__star"
-            disabled={!isBodyInteractive}
             aria-label={`${starIndex}점`}
             aria-pressed={filled}
             onClick={() => {

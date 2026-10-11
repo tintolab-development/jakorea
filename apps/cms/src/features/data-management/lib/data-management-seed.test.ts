@@ -25,17 +25,18 @@ describe('data-management seed payloads', () => {
     expect(detailedProgramMockIdToSeedPk('dp-119')).toBe(900119)
   })
 
-  it('sponsors payload matches LNB management-list mock', () => {
+  it('sponsors seed builder is remote-export placeholder; committed JSON is BE reference', () => {
     const built = buildSponsorsSeedPayload()
     if (process.env.WRITE_DATA_MANAGEMENT_SEED === '1') {
       mkdirSync(docsApiDir, { recursive: true })
       writeFileSync(payloadPath('sponsors-seed.payload.json'), `${JSON.stringify(built, null, 2)}\n`)
     }
+    expect(built.rows).toEqual([])
+    expect(built.detailSamples).toEqual([])
+    expect(built.meta.domain).toBe('sponsors')
+
     const file = readJson('sponsors-seed.payload.json')
-    expect(file.rows).toHaveLength(built.rows.length)
-    expect(file.rows.map((r: { nameKo: string }) => r.nameKo)).toEqual(
-      built.rows.map(r => r.nameKo)
-    )
+    expect(file.rows.length).toBeGreaterThan(0)
     expect(file.rows[0].seedKey).toBe('sponsor-list-001')
     expect(new Set(file.rows.map((r: { nameKo: string }) => r.nameKo)).size).toBe(file.rows.length)
     expect(file.detailSamples).toHaveLength(1)

@@ -1,4 +1,5 @@
 import type { AdminPostsPendingDateRange } from '@/features/posts/lib/url-date-range-pending-sync'
+import type { PostsCategoryRow } from '@/features/posts/model/posts-category-row'
 
 /** 공지사항 관리 목록 — 필터 카드·URL 동기화용 */
 export type AdminNoticeVisibilityFilter = 'public' | 'private'
@@ -16,10 +17,7 @@ export interface AdminNoticePendingFilters extends Record<string, unknown> {
 }
 
 /** 카테고리 관리 모달 행 */
-export type NoticeCategoryRow = {
-  id: string
-  name: string
-}
+export type NoticeCategoryRow = PostsCategoryRow
 
 /** useTablePage context — 허용 카테고리 라벨(필터·URL 파싱) */
 export type AdminNoticeTableContext = {

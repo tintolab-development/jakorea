@@ -7,7 +7,7 @@ import type {
   TeacherDetailData,
   TeacherResumeCareer,
   TeacherResumeEducation,
-} from '@/data/mock/school-detail'
+} from '@/features/school/model/school-detail-types'
 import {
   ProgramDetailTdDivider,
   withProgramDetailTdDivider,
@@ -74,11 +74,11 @@ export interface TeacherResumeTabProps {
 
 export function TeacherResumeTab({ detail }: TeacherResumeTabProps) {
   const NO_DATA = '데이터 없음'
-  const totalCareerYears = getTotalCareerYears(detail.careerDetails)
-  const educationBadge = detail.educations?.[0]?.schoolType != null
-    ? getEducationLevelBadge(undefined, detail.educations[0].schoolType)
+  const totalCareerYears = getTotalCareerYears(detail.resumeCareers)
+  const educationBadge = detail.resumeEducations?.[0]?.schoolType != null
+    ? getEducationLevelBadge(undefined, detail.resumeEducations[0].schoolType)
     : getEducationLevelBadge(detail.education)
-  const hasEducation = (detail.educations?.length ?? 0) > 0 || detail.education
+  const hasEducation = (detail.resumeEducations?.length ?? 0) > 0 || detail.education
 
   return (
     <div className="applicant-instructor-detail-modal__resume applicant-instructor-detail-modal__resume--has-content">
@@ -91,8 +91,8 @@ export function TeacherResumeTab({ detail }: TeacherResumeTabProps) {
           </span>
         </h3>
         <div className="applicant-instructor-detail-modal__resume-card">
-          {(detail.educations?.length ?? 0) > 0 ? (
-            detail.educations?.map((item, idx) => {
+          {(detail.resumeEducations?.length ?? 0) > 0 ? (
+            detail.resumeEducations?.map((item, idx) => {
               const period = formatEducationPeriod(item)
               const schoolLabel = item.schoolName
                 ? [item.schoolName, item.schoolType ? `(${getEducationLevelBadge(undefined, item.schoolType)})` : ''].filter(Boolean).join(' ')
@@ -119,7 +119,7 @@ export function TeacherResumeTab({ detail }: TeacherResumeTabProps) {
               <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--with-divider">
                 <span className="applicant-instructor-detail-modal__resume-emphasis applicant-instructor-detail-modal__resume-emphasis--left">
                   {withProgramDetailTdDivider(
-                    [detail.education, detail.university].filter(Boolean) as string[]
+                    [detail.education].filter(Boolean) as string[]
                   ) || NO_DATA}
                 </span>
               </span>
@@ -135,12 +135,12 @@ export function TeacherResumeTab({ detail }: TeacherResumeTabProps) {
         <h3 className="applicant-instructor-detail-modal__resume-section-title">
           경력사항
           <span className="applicant-instructor-detail-modal__resume-section-count">
-            {(detail.careerDetails?.length ?? 0) > 0 ? `${totalCareerYears}년` : NO_DATA}
+            {(detail.resumeCareers?.length ?? 0) > 0 ? `${totalCareerYears}년` : NO_DATA}
           </span>
         </h3>
         <div className="applicant-instructor-detail-modal__resume-card">
-          {(detail.careerDetails?.length ?? 0) > 0 ? (
-            detail.careerDetails?.map((item, idx) => {
+          {(detail.resumeCareers?.length ?? 0) > 0 ? (
+            detail.resumeCareers?.map((item, idx) => {
               const period = formatCareerPeriod(item)
               const isSingleYear = !period.includes(' ~ ')
               return (
@@ -177,12 +177,12 @@ export function TeacherResumeTab({ detail }: TeacherResumeTabProps) {
         <h3 className="applicant-instructor-detail-modal__resume-section-title">
           자격 및 면허
           <span className="applicant-instructor-detail-modal__resume-section-count">
-            {(detail.qualifications?.length ?? 0) > 0 ? `${detail.qualifications?.length}개` : NO_DATA}
+            {(detail.resumeQualifications?.length ?? 0) > 0 ? `${detail.resumeQualifications?.length}개` : NO_DATA}
           </span>
         </h3>
         <div className="applicant-instructor-detail-modal__resume-card">
-          {(detail.qualifications?.length ?? 0) > 0 ? (
-            detail.qualifications?.map((item, idx) => (
+          {(detail.resumeQualifications?.length ?? 0) > 0 ? (
+            detail.resumeQualifications?.map((item, idx) => (
               <div key={idx} className="applicant-instructor-detail-modal__resume-row">
                 <span className="applicant-instructor-detail-modal__resume-row-left">{item.year ?? NO_DATA}</span>
                 <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--black">
@@ -201,12 +201,12 @@ export function TeacherResumeTab({ detail }: TeacherResumeTabProps) {
         <h3 className="applicant-instructor-detail-modal__resume-section-title">
           수상 및 수료 내역
           <span className="applicant-instructor-detail-modal__resume-section-count">
-            {(detail.awards?.length ?? 0) > 0 ? `${detail.awards?.length}개` : NO_DATA}
+            {(detail.resumeAwards?.length ?? 0) > 0 ? `${detail.resumeAwards?.length}개` : NO_DATA}
           </span>
         </h3>
         <div className="applicant-instructor-detail-modal__resume-card">
-          {(detail.awards?.length ?? 0) > 0 ? (
-            detail.awards?.map((item, idx) => (
+          {(detail.resumeAwards?.length ?? 0) > 0 ? (
+            detail.resumeAwards?.map((item, idx) => (
               <div key={idx} className="applicant-instructor-detail-modal__resume-row">
                 <span className="applicant-instructor-detail-modal__resume-row-left">{item.year ?? NO_DATA}</span>
                 <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--black">

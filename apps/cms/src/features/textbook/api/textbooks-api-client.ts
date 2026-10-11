@@ -4,7 +4,7 @@ import {
   forEachBulkIdChunk,
   toBulkNumericIds,
 } from '@/features/data-management/api/bulk-delete'
-import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
+import { getDataManagementSubsetApi } from '@/features/data-management/api/data-management-subset-api'
 import type {
   BulkActionResponse,
   MatchesParams,
@@ -15,38 +15,36 @@ import type {
   TextbooksParams,
 } from '@/shared/api/generated/data-management/schemas'
 
-const dmApi = getJAKoreaCMSBackendAPIDataManagementSubset()
-
 export async function fetchTextbooksRemote(
   params: TextbooksParams
 ): Promise<PageResponseTextbookResponse> {
-  return unwrapApiBody(await dmApi.textbooks(params))
+  return unwrapApiBody(await getDataManagementSubsetApi().textbooks(params))
 }
 
 export async function fetchTextbookRemote(id: string): Promise<TextbookResponse> {
-  return unwrapApiBody(await dmApi.textbook(id))
+  return unwrapApiBody(await getDataManagementSubsetApi().textbook(id))
 }
 
 export async function createTextbookRemote(body: TextbookRequest): Promise<TextbookResponse> {
   // POST /api/admin/textbooks (Orval create1)
-  return unwrapApiBody(await dmApi.create1(body))
+  return unwrapApiBody(await getDataManagementSubsetApi().create1(body))
 }
 
 export async function updateTextbookRemote(
   id: string,
   body: TextbookRequest
 ): Promise<TextbookResponse> {
-  return unwrapApiBody(await dmApi.update1(id, body))
+  return unwrapApiBody(await getDataManagementSubsetApi().update1(id, body))
 }
 
 export async function deleteTextbookRemote(id: string): Promise<void> {
-  await dmApi._delete(id)
+  await getDataManagementSubsetApi()._delete(id)
 }
 
 export async function bulkDeleteTextbooksRemote(ids: string[]): Promise<void> {
   await forEachBulkIdChunk(ids, async chunk => {
     const result = unwrapApiBody<BulkActionResponse>(
-      await dmApi.bulkDelete({ ids: toBulkNumericIds(chunk) })
+      await getDataManagementSubsetApi().bulkDelete({ ids: toBulkNumericIds(chunk) })
     )
     assertBulkDeleteSucceeded(result, '교재 일괄 삭제에 실패했습니다.')
   })
@@ -55,7 +53,7 @@ export async function bulkDeleteTextbooksRemote(ids: string[]): Promise<void> {
 export async function fetchTextbookMatchesRemote(
   params?: MatchesParams
 ): Promise<TextbookMatchResponse[]> {
-  const payload = await dmApi.matches(params)
+  const payload = await getDataManagementSubsetApi().matches(params)
   const body = unwrapApiBody<TextbookMatchResponse[] | { items?: TextbookMatchResponse[] }>(
     payload
   )

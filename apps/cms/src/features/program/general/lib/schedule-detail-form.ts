@@ -357,6 +357,43 @@ export function isPreEducationCurriculumSession(session: { sessionLabel?: string
   return (session.sessionLabel ?? '').includes(PRE_EDUCATION_SCHEDULE_LABEL)
 }
 
+/** 사전 교육 제외 — 단원명·교육 내용이 모두 비어 있으면 true */
+export function isBlankRegularCurriculumSession(session: {
+  sessionLabel?: string
+  title?: string
+  description?: string
+}): boolean {
+  if (isPreEducationCurriculumSession(session)) return false
+  const title = session.title?.trim() ?? ''
+  const description = session.description?.trim() ?? ''
+  return title === '' && description === ''
+}
+
+/**
+ * 중첩 `curriculumSessions` 맨 끝의 빈 차시/회차 행은 편집·검증·차시 수에 넣지 않는다.
+ * (백엔드에 placeholder 2차시만 남은 경우 1차시만 수정해도 저장 가능)
+ */
+export function trimTrailingBlankRegularCurriculumSessions<
+  T extends GeneralProgramCurriculumSessionRow,
+>(sessions: T[]): T[] {
+  const result = [...sessions]
+  while (result.length > 0) {
+    let lastRegularIndex = -1
+    for (let i = result.length - 1; i >= 0; i -= 1) {
+      if (!isPreEducationCurriculumSession(result[i])) {
+        lastRegularIndex = i
+        break
+      }
+    }
+    if (lastRegularIndex < 0) break
+    const regularCount = result.filter(session => !isPreEducationCurriculumSession(session)).length
+    if (regularCount <= 1) break
+    if (!isBlankRegularCurriculumSession(result[lastRegularIndex])) break
+    result.splice(lastRegularIndex, 1)
+  }
+  return result
+}
+
 export function padCurriculumSessionLabel(
   index: number,
   sessionRound: GeneralProgramSessionRoundKind

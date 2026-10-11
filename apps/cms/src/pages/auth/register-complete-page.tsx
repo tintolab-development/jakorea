@@ -6,10 +6,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isSocialConnectAuthFlowPath } from '@/features/auth/lib/register-social-connect-state'
-import {
-  clearPasswordChangeRequiredComplete,
-  clearPasswordChangeRequiredSocialOnboarding,
-} from '@/features/auth/password-change-required'
+import { clearPasswordChangeRequiredComplete } from '@/features/auth/password-change-required'
 import { RegisterCompleteView } from '@/features/auth/ui/admin-register/register-complete-view'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -50,7 +47,6 @@ export function RegisterCompletePage() {
       <RegisterCompleteView
         onGoLogin={() => {
           clearPasswordChangeRequiredComplete()
-          clearPasswordChangeRequiredSocialOnboarding()
           clearPasswordChangeRequired()
           logout()
           navigate(loginPath, { replace: true })

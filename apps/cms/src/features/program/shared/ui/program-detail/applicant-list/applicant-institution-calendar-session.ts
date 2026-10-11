@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import { parseEducationScheduleLineToRange } from '@/features/template/lib/format-education-schedule-line'
 
 function parseSessionDate(dateStr: string): dayjs.Dayjs {
   const normalized = dateStr.replace(/\s/g, '').replace(/\./g, '-')
@@ -10,12 +11,14 @@ function padHourMinute(hour: string, minute: string): string {
   return `${String(Number.parseInt(hour, 10)).padStart(2, '0')}:${minute}`
 }
 
-function parseSessionTimeRange(timeRange: string): {
+function parseSessionTimeRange(timeRange: string | undefined | null): {
   startMinutes: number
   endMinutes: number
   display: string
 } | null {
-  const compact = timeRange.replace(/\s/g, '')
+  const raw = timeRange?.trim()
+  if (!raw || raw === '-') return null
+  const compact = raw.replace(/\s/g, '')
   const match = /^(\d{1,2}):(\d{2})[~\-–—]+(\d{1,2}):(\d{2})$/.exec(compact)
   if (!match) return null
   const startHour = Number.parseInt(match[1], 10)
@@ -43,14 +46,98 @@ function tryResolveInstitutionSessionRound(session: ParticipatingSchoolSession):
   if (session.round != null && session.round > 0) {
     return `${session.round}차시`
   }
-  const classRoundMatch = session.classNum.match(/(\d+)\s*차시/)
+  const classNum = session.classNum?.trim()
+  if (!classNum) return null
+  const classRoundMatch = classNum.match(/(\d+)\s*차시/)
   if (classRoundMatch) {
     return `${classRoundMatch[1]}차시`
   }
-  if (session.classNum.trim().endsWith('차시')) {
-    return session.classNum.trim().replace(/\s+/g, '')
+  if (classNum.endsWith('차시')) {
+    return classNum.replace(/\s+/g, '')
   }
   return null
+}
+
+function parseTimeRangeToIso(
+  datePart: string,
+  timeRange: string
+): { startDate: string; endDate: string } {
+  const match = timeRange.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
+  if (match) {
+    return {
+      startDate: `${datePart}T${match[1]}:00`,
+      endDate: `${datePart}T${match[2]}:00`,
+    }
+  }
+  return {
+    startDate: `${datePart}T00:00:00`,
+    endDate: `${datePart}T23:59:59`,
+  }
+}
+
+/** 세션 `date` 또는 `scheduleLabel`(label-only API)에서 캘린더용 YYYY-MM-DD */
+export function resolveSessionCalendarDateKey(
+  session: ParticipatingSchoolSession
+): string | null {
+  const trimmedDate = session.date?.trim()
+  if (trimmedDate && trimmedDate !== '-') {
+    const parsed = parseSessionDate(trimmedDate)
+    if (parsed.isValid()) return parsed.format('YYYY-MM-DD')
+    const fromDateLine = parseEducationScheduleLineToRange(trimmedDate)
+    if (fromDateLine) return fromDateLine[0].format('YYYY-MM-DD')
+  }
+  const label = session.scheduleLabel?.trim()
+  if (!label) return null
+  const range = parseEducationScheduleLineToRange(label)
+  if (!range) return null
+  return range[0].format('YYYY-MM-DD')
+}
+
+export function resolveSessionCalendarIsoRange(
+  session: ParticipatingSchoolSession
+): { dateKey: string; startDate: string; endDate: string } | null {
+  const dateKey = resolveSessionCalendarDateKey(session)
+  if (!dateKey) return null
+
+  const trimmedDate = session.date?.trim()
+  if (trimmedDate && trimmedDate !== '-') {
+    const parsed = parseSessionDate(trimmedDate)
+    if (parsed.isValid()) {
+      const datePart = parsed.format('YYYY-MM-DD')
+      const timeRange = session.timeRange?.trim()
+      if (timeRange && timeRange !== '-') {
+        return { dateKey, ...parseTimeRangeToIso(datePart, timeRange) }
+      }
+    }
+    const fromDateLine = parseEducationScheduleLineToRange(trimmedDate)
+    if (fromDateLine) {
+      const [start, end] = fromDateLine
+      return {
+        dateKey,
+        startDate: start.format('YYYY-MM-DDTHH:mm:ss'),
+        endDate: end.format('YYYY-MM-DDTHH:mm:ss'),
+      }
+    }
+  }
+
+  const label = session.scheduleLabel?.trim()
+  if (label) {
+    const range = parseEducationScheduleLineToRange(label)
+    if (range) {
+      const [start, end] = range
+      return {
+        dateKey,
+        startDate: start.format('YYYY-MM-DDTHH:mm:ss'),
+        endDate: end.format('YYYY-MM-DDTHH:mm:ss'),
+      }
+    }
+  }
+
+  return {
+    dateKey,
+    startDate: `${dateKey}T00:00:00`,
+    endDate: `${dateKey}T23:59:59`,
+  }
 }
 
 /** 캘린더 카드 2행 — 지역 짧은 표기 (첫 토큰) */
@@ -72,10 +159,7 @@ export function findInstitutionSessionsForDate(
   dateKey: string
 ): ParticipatingSchoolSession[] {
   const sessions = row.sessions?.filter(s => s.status !== 'not_planned') ?? []
-  return sessions.filter(session => {
-    const date = parseSessionDate(session.date)
-    return date.isValid() && date.format('YYYY-MM-DD') === dateKey
-  })
+  return sessions.filter(session => resolveSessionCalendarDateKey(session) === dateKey)
 }
 
 /**
@@ -88,6 +172,8 @@ export function formatInstitutionCalendarSessionTimeDisplay(
   fallbackPeriod?: string
 ): string {
   if (session) {
+    const label = session.scheduleLabel?.trim()
+    if (label) return label
     const timeDisplay = parseSessionTimeDisplay(session.timeRange)
     const roundLabel = tryResolveInstitutionSessionRound(session)
     if (roundLabel && timeDisplay) return `${roundLabel} (${timeDisplay})`

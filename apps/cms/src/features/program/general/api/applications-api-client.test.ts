@@ -11,6 +11,7 @@ vi.mock('@/shared/api/orval-mutator', () => ({
 
 import customInstance from '@/shared/api/orval-mutator'
 import {
+  normalizeApplicationsPageDto,
   approveOrganizationApplicationRemote,
   bulkApproveInstructorApplicationsRemote,
   bulkIndividualDocumentResultsRemote,
@@ -504,5 +505,26 @@ describe('updateInstructorApplication', () => {
         businessIncomeEarnerStatus: '해당 없음',
       },
     })
+  })
+})
+
+describe('normalizeApplicationsPageDto', () => {
+  it('uses items when present', () => {
+    const page = normalizeApplicationsPageDto({
+      items: [{ id: 1 }],
+      page: 0,
+      totalElements: 1,
+    })
+    expect(page.items).toHaveLength(1)
+  })
+
+  it('falls back to Spring content array', () => {
+    const page = normalizeApplicationsPageDto({
+      content: [{ id: 2 }],
+      page: 0,
+      totalElements: 1,
+    })
+    expect(page.items).toHaveLength(1)
+    expect(page.items?.[0]).toEqual({ id: 2 })
   })
 })

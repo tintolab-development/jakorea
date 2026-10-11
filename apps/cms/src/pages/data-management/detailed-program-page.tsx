@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -7,9 +6,13 @@ import { getDataManagementApiErrorMessage } from '@/features/data-management/api
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useDetailedProgramListQuery } from '@/features/detailed-program/hooks/use-detailed-program-list-query'
 import { useDetailedProgramMutations } from '@/features/detailed-program/hooks/use-detailed-program-mutations'
+import { DETAILED_PROGRAM_DELETE_BLOCKED_REASON } from '@/features/detailed-program/lib/detailed-program-delete-blocked-copy'
 import { isDetailedProgramInUseDeleteError } from '@/features/detailed-program/lib/is-detailed-program-in-use-delete-error'
+import { resolveDeleteBlockedGuideCopy } from '@/shared/lib/delete-blocked-guide-copy'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { detailedProgramManagementFilterFields } from '@/features/detailed-program/model/detailed-program-management-filter-fields'
 import { detailedProgramManagementTablePageConfig } from '@/features/detailed-program/model/detailed-program-management-table.config'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   DetailedProgramDraft,
   DetailedProgramManagementRow,
@@ -24,15 +27,14 @@ import {
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
-  CmsButton,
   CmsInput,
   CmsRadio,
   CmsRadioGroup,
-  ContentModal,
   DeleteGuideModal,
   cmsAlertModal,
   showRegisterCompletedAlert,
   useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import '@/pages/programs/program-list-page.css'
@@ -118,6 +120,16 @@ export default function DetailedProgramPage() {
   const viewDeletePendingIdsRef = useRef<string[]>([])
   const [deleteBlockedModalOpen, setDeleteBlockedModalOpen] = useState(false)
   const [deleteBlockedSelectedCount, setDeleteBlockedSelectedCount] = useState(1)
+
+  const deleteBlockedCopy = useMemo(
+    () =>
+      resolveDeleteBlockedGuideCopy({
+        entityLabel: '세부 프로그램',
+        reasonLine: DETAILED_PROGRAM_DELETE_BLOCKED_REASON,
+        selectedCount: deleteBlockedSelectedCount,
+      }),
+    [deleteBlockedSelectedCount]
+  )
 
   const { pendingFilters, applySearch, handleFilterChange, displayedCount, tableData } =
     useTablePage(detailedProgramManagementTablePageConfig, {
@@ -375,15 +387,15 @@ export default function DetailedProgramPage() {
         contentLoading={isInitialListLoading}
         actions={
           <>
-            <CmsButton variant="delete" onClick={handleBulkDelete}>
+            <FilterTableToolbarButton variant="delete" onClick={handleBulkDelete}>
               항목 삭제
-            </CmsButton>
-            <CmsButton variant="secondary" onClick={isEditMode ? handleSave : enterEditMode}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={isEditMode ? handleSave : enterEditMode}>
               {isEditMode ? '수정 완료' : '정보 수정'}
-            </CmsButton>
-            <CmsButton variant="primary" onClick={handleAddClick} disabled={isEditMode}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="primary" onClick={handleAddClick} disabled={isEditMode}>
               신규 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -391,7 +403,7 @@ export default function DetailedProgramPage() {
           data: tableDisplayData,
         }}
       >
-        <Table<DetailedProgramManagementRow>
+        <CmsDataTable<DetailedProgramManagementRow>
           rowKey="id"
           className={
             isEditMode
@@ -422,29 +434,12 @@ export default function DetailedProgramPage() {
         onSubmit={handleAddItemSubmit}
       />
 
-      <ContentModal
+      <DeleteBlockedGuideModal
         open={deleteBlockedModalOpen}
-        onCancel={() => setDeleteBlockedModalOpen(false)}
-        title="세부 프로그램 삭제 불가 안내"
-        width={600}
-        description={
-          deleteBlockedSelectedCount <= 1
-            ? '해당 세부 프로그램은 프로그램에서 사용 중입니다.\n사용 중인 세부 프로그램은 삭제가 불가합니다.'
-            : `선택한 **${deleteBlockedSelectedCount}**개의 세부 프로그램 중 프로그램에서 사용 중인 항목이 있습니다.\n사용 중인 세부 프로그램은 삭제할 수 없습니다.`
-        }
-        footer={
-          <CmsButton
-            variant="secondary"
-            size="medium"
-            type="button"
-            onClick={() => setDeleteBlockedModalOpen(false)}
-          >
-            확인
-          </CmsButton>
-        }
-      >
-        {null}
-      </ContentModal>
+        onClose={() => setDeleteBlockedModalOpen(false)}
+        title={deleteBlockedCopy.title}
+        description={deleteBlockedCopy.description}
+      />
 
       <DeleteGuideModal
         open={viewDeleteModalOpen}

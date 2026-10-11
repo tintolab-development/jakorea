@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CMS_ACTION_BUTTON_WIDTH,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
@@ -14,6 +16,7 @@ import { UjatInstitutionApplicationActionModal } from './action-modal'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './list.css'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export function UjatInstitutionApplicationList({
   onOpenDetail,
@@ -87,58 +90,53 @@ export function UjatInstitutionApplicationList({
         description={`${tableData.length}건`}
         actions={
           <div className="ujat-institution-application-list__actions">
-            <CmsButton
+            <FilterTableToolbarButton
               type="button"
               variant="delete"
-              size="large"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkApplicationReject}
             >
               선택 신청 반려
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               type="button"
               variant="delete"
-              size="large"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkTempReject}
             >
               선택 임시 반려
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              size="large"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkTempAssign}
             >
               선택 임시 배정
-            </CmsButton>
+            </FilterTableToolbarButton>
             {viewMode === 'table' ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : (
-              <CmsButton
+              <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                size="large"
                 style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={() => setViewMode('table')}
               >
                 리스트 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             )}
           </div>
         }
@@ -149,7 +147,7 @@ export function UjatInstitutionApplicationList({
       >
         {viewMode === 'table' ? (
           <div className="ujat-institution-application-list__table-wrap">
-            <Table<UjatInstitutionApplicationRow>
+            <CmsDataTable<UjatInstitutionApplicationRow>
               rowKey="id"
               className="cms-data-table ujat-institution-application-list__table"
               columns={columns}

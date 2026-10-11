@@ -36,4 +36,12 @@ sponsorshipStartDateFrom?: string;
  * 조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
  */
 sponsorshipStartDateTo?: string;
+/**
+ * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
+ */
+page?: number;
+/**
+ * 페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.
+ */
+size?: number;
 };

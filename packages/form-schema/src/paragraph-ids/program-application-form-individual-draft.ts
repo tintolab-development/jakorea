@@ -191,11 +191,12 @@ export function createProgramParticipantApplicationDraft(): WritingFormDraft {
     createTeamInfoPlaceholderTable(),
     createScheduleMultipleChoice(),
   ]
-  return normalizeWritingFormDraft({
+  // BE FORM_SCHEMA_IMMUTABLE 카탈로그와 동일 shape — maxLength 등 normalize 주입은 편집·표시층에서만
+  return {
     schemaVersion: 1,
     formSettings: { titleNumbering: 'none' },
     paragraphs,
-  })
+  }
 }
 
 const VOLUNTEER_INTERVIEW_SCHEDULE_PARAGRAPH_IDS = new Set([

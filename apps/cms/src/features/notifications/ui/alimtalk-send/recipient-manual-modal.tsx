@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   formatKoreanPhoneNumber,
   isValidKoreanPhoneNumber,
@@ -253,7 +253,7 @@ export function RecipientManualModal({
         </>
       }
     >
-      <Table
+      <CmsDataTable
         className="cms-data-table cms-data-table--skip-auto-no-col mail-send-recipient-manual-modal__table"
         columns={columns}
         dataSource={rows}

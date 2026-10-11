@@ -48,12 +48,12 @@
   max-width: 100%;
   box-sizing: border-box;
   margin: 0;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  color: var(--Netural-black, #3d3d3d);
+  font-family: Pretendard;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 150%; /* 24px */
   white-space: pre-wrap;
 }
 

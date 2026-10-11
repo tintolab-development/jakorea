@@ -47,5 +47,20 @@ export function useKoreanPublicHolidayDateKeys(input: {
     staleTime: 24 * 60 * 60 * 1000,
     retry: false,
   })
-  return useMemo(() => new Set(query.data ?? []), [query.data])
+  return useMemo(() => {
+    const dates = query.data ?? []
+    setKoreanPublicHolidayDateKeysSync(dates)
+    return new Set(dates)
+  }, [query.data])
+}
+
+let koreanPublicHolidayDateKeysSync = new Set<string>()
+
+/** 비-React 경로(일정 유틸)용 — API 조회 전이면 빈 집합 */
+export function getKoreanPublicHolidayDateKeysSync(): Set<string> {
+  return koreanPublicHolidayDateKeysSync
+}
+
+export function setKoreanPublicHolidayDateKeysSync(dates: readonly string[]): void {
+  koreanPublicHolidayDateKeysSync = new Set(dates)
 }

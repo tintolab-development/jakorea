@@ -90,13 +90,15 @@ export function RegistrationStepTemplateChrome({
         />
       </div>
       <RegistrationStepTemplateFollowHint />
-      <WritingTemplateSelectModal
-        open={pickerOpen}
-        category={category}
-        currentTemplateName={templateName}
-        onClose={onClosePicker}
-        onUse={onUseTemplate}
-      />
+      {pickerOpen ? (
+        <WritingTemplateSelectModal
+          open
+          category={category}
+          currentTemplateName={templateName}
+          onClose={onClosePicker}
+          onUse={onUseTemplate}
+        />
+      ) : null}
     </>
   )
 }

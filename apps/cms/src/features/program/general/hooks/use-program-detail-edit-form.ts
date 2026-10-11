@@ -12,7 +12,7 @@
  * - 풀페이지 모달은 탭별로 이 훅을 **여러 번** 호출하되, 모두 동일 스키마를 공유 (인스턴스만 분리).
  */
 
-import { useEffect, useLayoutEffect, useMemo } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useForm, type UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { z } from 'zod'
@@ -36,6 +36,11 @@ export interface UseProgramDetailEditFormOptions {
    * 템플릿 작성처럼 입력 → overlay → program 재계산 루프가 있으면 false.
    */
   resetOnProgramChange?: boolean
+  /**
+   * true면 수정 모드 중 program 참조가 바뀌어도 reset하지 않는다(진입 시 1회만).
+   * 재조회로 입력 중 값(지운 칸 포함)이 이전 값으로 덮이는 것을 막는다. 기본 false.
+   */
+  holdValuesWhileEditing?: boolean
   /** 기본값 매핑. 없으면 `programToDetailEditValues` */
   mapToValues?: (program: Program) => ProgramDetailEditFormValues
 }
@@ -45,8 +50,10 @@ export function useProgramDetailEditForm({
   isEditMode,
   schema = programDetailEditSchema,
   resetOnProgramChange = true,
+  holdValuesWhileEditing = false,
   mapToValues,
 }: UseProgramDetailEditFormOptions): UseFormReturn<ProgramDetailEditFormValues> {
+  const editEnteredRef = useRef(false)
   const defaultValues = useMemo<ProgramDetailEditFormValues>(() => {
     if (program) return (mapToValues ?? programToDetailEditValues)(program)
     return {
@@ -78,18 +85,24 @@ export function useProgramDetailEditForm({
 
   useEffect(() => {
     if (!resetOnProgramChange) return
+    if (holdValuesWhileEditing && isEditMode) return
     if (program) {
       reset(mapValues(program), { keepDefaultValues: false })
     }
-  }, [program, reset, resetOnProgramChange, mapValues])
+  }, [program, reset, resetOnProgramChange, mapValues, holdValuesWhileEditing, isEditMode])
 
   // 수정 모드 진입 시 폼을 최신 program 값으로 채움 (useLayoutEffect로 페인트 전 실행)
   useLayoutEffect(() => {
     if (!resetOnProgramChange) return
-    if (isEditMode && program) {
-      reset(mapValues(program), { keepDefaultValues: false })
+    if (!isEditMode) {
+      editEnteredRef.current = false
+      return
     }
-  }, [isEditMode, program, reset, resetOnProgramChange, mapValues])
+    if (!program) return
+    if (holdValuesWhileEditing && editEnteredRef.current) return
+    editEnteredRef.current = true
+    reset(mapValues(program), { keepDefaultValues: false })
+  }, [isEditMode, program, reset, resetOnProgramChange, mapValues, holdValuesWhileEditing])
 
   return form
 }

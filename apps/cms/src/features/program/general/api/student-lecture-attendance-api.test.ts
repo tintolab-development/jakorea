@@ -2,17 +2,17 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 const {
   fetchProgramSchedulesViaDashboardRemoteMock,
-  fetchScheduleAttendancesRemoteMock,
+  fetchAttendancesByScheduleIdsRemoteMock,
   bulkUpsertProgramAttendancesRemoteMock,
 } = vi.hoisted(() => ({
   fetchProgramSchedulesViaDashboardRemoteMock: vi.fn(),
-  fetchScheduleAttendancesRemoteMock: vi.fn(),
+  fetchAttendancesByScheduleIdsRemoteMock: vi.fn(),
   bulkUpsertProgramAttendancesRemoteMock: vi.fn(),
 }))
 
 vi.mock('@/features/program/general/api/program-progress-api-client', () => ({
   fetchProgramSchedulesViaDashboardRemote: fetchProgramSchedulesViaDashboardRemoteMock,
-  fetchScheduleAttendancesRemote: fetchScheduleAttendancesRemoteMock,
+  fetchAttendancesByScheduleIdsRemote: fetchAttendancesByScheduleIdsRemoteMock,
   bulkUpsertProgramAttendancesRemote: bulkUpsertProgramAttendancesRemoteMock,
 }))
 
@@ -24,7 +24,7 @@ import {
 describe('student-lecture-attendance-api', () => {
   beforeEach(() => {
     fetchProgramSchedulesViaDashboardRemoteMock.mockReset()
-    fetchScheduleAttendancesRemoteMock.mockReset()
+    fetchAttendancesByScheduleIdsRemoteMock.mockReset()
     bulkUpsertProgramAttendancesRemoteMock.mockReset()
   })
 
@@ -33,9 +33,10 @@ describe('student-lecture-attendance-api', () => {
       { scheduleId: 10, sessionNo: 1 },
       { scheduleId: 11, sessionNo: 2 },
     ])
-    fetchScheduleAttendancesRemoteMock
-      .mockResolvedValueOnce([{ participantId: 77, status: 'PRESENT' }])
-      .mockResolvedValueOnce([{ participantId: 77, status: 'LATE' }])
+    fetchAttendancesByScheduleIdsRemoteMock.mockResolvedValue({
+      '10': [{ participantId: 77, status: 'PRESENT' }],
+      '11': [{ participantId: 77, status: 'LATE' }],
+    })
 
     const detail = await fetchStudentLectureAttendanceByParticipantRemote({
       programId: 'p1',
@@ -49,6 +50,23 @@ describe('student-lecture-attendance-api', () => {
       { roundNumber: 2, scheduleId: 11, status: 'late' },
     ])
     expect(detail.attendanceRatePercent).toBe(100)
+    expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledTimes(1)
+    expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledWith('p1', [10, 11])
+  })
+
+  it('bulk 출석 조회 실패 시 오류를 전파한다', async () => {
+    fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
+      { scheduleId: 10, sessionNo: 1 },
+    ])
+    fetchAttendancesByScheduleIdsRemoteMock.mockRejectedValue(new Error('500'))
+
+    await expect(
+      fetchStudentLectureAttendanceByParticipantRemote({
+        programId: 'p1',
+        participantId: 77,
+        studentName: '김학생',
+      })
+    ).rejects.toThrow('500')
   })
 
   it('upserts only editable sessions with scheduleId', async () => {

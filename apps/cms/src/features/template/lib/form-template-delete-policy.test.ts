@@ -18,7 +18,7 @@ import {
 } from '@/features/template/model/template-registry/agreement-template-config-registry'
 
 describe('form-template-delete-policy', () => {
-  it('omits schemaJson for registration and recruitment PUT', () => {
+  it('uses immutable schema path for registration and recruitment PUT', () => {
     expect(shouldOmitImmutableFormSchemaJson('registration-trained-teachers')).toBe(true)
     expect(shouldOmitImmutableFormSchemaJson('registration-trained-teachers-copy-1')).toBe(true)
     expect(shouldOmitImmutableFormSchemaJson('recruitment-participant-school')).toBe(true)
@@ -26,6 +26,10 @@ describe('form-template-delete-policy', () => {
       true
     )
     expect(shouldOmitImmutableFormSchemaJson('application-participant-school')).toBe(false)
+    expect(shouldOmitImmutableFormSchemaJson('application-participant-individual')).toBe(true)
+    expect(shouldOmitImmutableFormSchemaJson('application-participant-individual-copy-99')).toBe(
+      true
+    )
     expect(shouldOmitImmutableFormSchemaJson('agreement-portrait')).toBe(false)
   })
 
@@ -234,7 +238,7 @@ describe('resolveAgreementWritingFormConfig', () => {
     expect(config?.initialDraft).toBeDefined()
     expect(config?.structureLockedParagraphIds).toBeUndefined()
     expect(config?.hideDragHandleForParagraphIds).toBeUndefined()
-    expect(config?.paragraphBodyOptions).toBeUndefined()
+    expect(config?.paragraphBodyOptions?.agreementAdminProxyConfirm).toBe(true)
   })
 
   it('strips structure locks for agreement-portrait-copy without numeric suffix', () => {
@@ -254,6 +258,6 @@ describe('resolveAgreementWritingFormConfig', () => {
     expect(catalog?.structureLockedParagraphIds).toBeDefined()
     const editable = stripAgreementWritingFormStructureLocks(catalog!)
     expect(editable.structureLockedParagraphIds).toBeUndefined()
-    expect(editable.paragraphBodyOptions).toBeUndefined()
+    expect(editable.paragraphBodyOptions?.agreementAdminProxyConfirm).toBe(true)
   })
 })

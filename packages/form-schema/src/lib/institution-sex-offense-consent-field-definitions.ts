@@ -11,6 +11,20 @@ export const INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION = {
   description: '성범죄경력 조회 동의서의 조회 방식을 선택해 주세요.',
 } as const
 
+/** 2026-10 reseed 이전 — 이 설명만 현행 짧은 설명으로 교체 */
+export const LEGACY_INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_DESCRIPTIONS = [
+  '성범죄 경력 조회 동의서의 조회 방식을 선택해 주세요. 범죄경력회보서의 온라인 제출을 희망하는 경우, 기관 ID와 검증번호를 함께 전달해 주세요.',
+  '성범죄 경력 조회 동의서의 조회 방식을 선택해 주세요. 범죄경력회보서의 온라인 제출을 희망하는 경우, 기관 ID와 검증번호를 함께 전달해 주세요.\nJA 시스템 내에서 확인 선택 시, 프로그램 및 배정 정보와 함께 JA 홈페이지 상세에서 동의서 확인이 가능합니다. (조회 동의서만 제공하며, 실제 조회는 별도로 진행해 주셔야 합니다.)',
+] as const
+
+export function isLegacyInstitutionSexOffenseConsentInquiryDescription(
+  description: string
+): boolean {
+  return LEGACY_INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_DESCRIPTIONS.some(
+    legacy => legacy === description
+  )
+}
+
 export const INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_OPTIONS = [
   { value: 'request', label: '동의서 제출 요청' },
   { value: 'no_submit', label: '동의서 미제출' },

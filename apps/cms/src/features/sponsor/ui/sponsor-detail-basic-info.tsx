@@ -1,7 +1,8 @@
 import { useState, type Key } from 'react'
-import { Flex, Space, Table } from 'antd'
+import { Flex, Space } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
   SponsorContactRow,
   SponsorLogoFile,
@@ -25,7 +26,8 @@ import {
   FileSelectField,
 } from '@/shared/ui'
 import { FileDownloadRowIcon } from '@/shared/ui/icons/FileDownloadRowIcon'
-import { downloadFile } from '@/shared/lib/file-download'
+import { downloadSponsorLogos } from '@/features/sponsor/lib/download-sponsor-logos'
+import { sponsorLogoFallbackFileName } from '@/features/sponsor/lib/sponsor-logo-files'
 import type { SponsorOrganizationKind } from '@/types/domain'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { formatKoreanBusinessNumber } from '@jakorea/domain/shared/korean-business-number'
@@ -79,23 +81,26 @@ function SponsorLogoViewList({ files }: { files: SponsorLogoFile[] }) {
   if (files.length === 0) return <span>-</span>
   return (
     <ul className="sponsor-detail-basic-info__logos">
-      {files.map(file => (
+      {files.map(file => {
+        const displayName = file.fileName.trim() || sponsorLogoFallbackFileName(file.id)
+        return (
         <li key={file.id} className="sponsor-detail-basic-info__logo-item">
           <button
             type="button"
             className="sponsor-detail-basic-info__logo-download-btn"
             onClick={() => {
-              void downloadFile(file.fileName.trim() || `sponsor-logo-${file.id}`)
+              void downloadSponsorLogos([{ ...file, fileName: displayName }])
             }}
-            aria-label={`${file.fileName} 다운로드`}
+            aria-label={`${displayName} 다운로드`}
           >
-            <span className="sponsor-detail-basic-info__logo-name">{file.fileName}</span>
             <span className="sponsor-detail-basic-info__logo-download" aria-hidden>
               <FileDownloadRowIcon />
             </span>
+            <span className="sponsor-detail-basic-info__logo-name">{displayName}</span>
           </button>
         </li>
-      ))}
+        )
+      })}
     </ul>
   )
 }
@@ -418,7 +423,7 @@ export function SponsorContactsSection({
           </CmsButton>
         </div>
       </div>
-      <Table<SponsorContactRow>
+      <CmsDataTable<SponsorContactRow>
         rowKey="id"
         className="cms-data-table"
         columns={columns}

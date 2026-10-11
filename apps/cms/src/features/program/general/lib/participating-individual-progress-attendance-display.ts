@@ -1,18 +1,18 @@
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { ProgramAttendanceStatusTextKind } from '@/features/program/shared/ui/program-attendance-status-text'
 import {
   PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL,
   PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_STATUS_LABELS,
   type ParticipatingIndividualProgressAttendanceFilters,
   type ParticipatingIndividualProgressAttendanceParticipantRow,
-  type ParticipatingIndividualProgressAttendanceStatus,
 } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
 
 export function formatIndividualProgressAttendanceGenderBirthLabel(
   gender?: string,
   birthDate?: string
 ): string {
-  const genderLabel = gender?.trim() || '-'
+  const genderLabel = toDisplayGender(gender)
   const birthLabel = birthDate?.trim() || '-'
   return `${genderLabel} | ${birthLabel}`
 }
@@ -35,20 +35,25 @@ export function maskProgressAttendanceEmail(email?: string): string {
 }
 
 export function toProgressAttendanceStatusTextKind(
-  status: ParticipatingIndividualProgressAttendanceStatus
+  row: Pick<
+    ParticipatingIndividualProgressAttendanceParticipantRow,
+    'attendanceRecorded' | 'attendanceStatus'
+  >
 ): ProgramAttendanceStatusTextKind {
-  if (status === 'absent') return 'absent'
-  if (status === 'late') return 'late'
-  if (status === 'excused_absence') return 'excused_absence'
+  if (!row.attendanceRecorded || row.attendanceStatus == null) return 'pending'
+  if (row.attendanceStatus === 'absent') return 'absent'
+  if (row.attendanceStatus === 'late') return 'late'
+  if (row.attendanceStatus === 'excused_absence') return 'excused_absence'
   return 'present'
 }
 
 export function resolveProgressAttendanceStatusLabel(
   row: Pick<
     ParticipatingIndividualProgressAttendanceParticipantRow,
-    'attendanceStatus' | 'lateTime'
+    'attendanceRecorded' | 'attendanceStatus' | 'lateTime'
   >
 ): string {
+  if (!row.attendanceRecorded || row.attendanceStatus == null) return '-'
   if (row.attendanceStatus === 'late' && row.lateTime?.trim()) {
     return `지각 (${row.lateTime.trim()})`
   }
@@ -56,9 +61,12 @@ export function resolveProgressAttendanceStatusLabel(
 }
 
 export function resolveProgressAttendanceRemark(
-  row: Pick<ParticipatingIndividualProgressAttendanceParticipantRow, 'attendanceStatus' | 'remark'>
+  row: Pick<
+    ParticipatingIndividualProgressAttendanceParticipantRow,
+    'attendanceRecorded' | 'attendanceStatus' | 'remark'
+  >
 ): string {
-  if (row.attendanceStatus === 'excused_absence') {
+  if (row.attendanceRecorded && row.attendanceStatus === 'excused_absence') {
     return row.remark?.trim() || '-'
   }
   return '-'
@@ -81,11 +89,10 @@ export function participantMatchesProgressAttendanceFilters(
     return false
   }
 
-  if (
-    filters.attendanceStatus !== PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL &&
-    row.attendanceStatus !== filters.attendanceStatus
-  ) {
-    return false
+  if (filters.attendanceStatus !== PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL) {
+    if (!row.attendanceRecorded || row.attendanceStatus !== filters.attendanceStatus) {
+      return false
+    }
   }
 
   return true

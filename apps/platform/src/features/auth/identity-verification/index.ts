@@ -9,6 +9,7 @@ export {
   buildIdentityCallbackKey,
   isIdentityCallbackHandled,
   markIdentityCallbackHandled,
+  getIdentityApiErrorMessage,
   clearMypagePhoneIdentityConfirmPending,
   isMypagePhoneIdentityConfirmPending,
   markMypagePhoneIdentityConfirmPending,

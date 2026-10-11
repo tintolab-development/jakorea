@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
@@ -8,6 +7,7 @@ import { handleError } from '@/shared/utils/error-handler'
 import { resolveProgressAssignmentRemark } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
 import type { ParticipatingIndividualProgressAssignmentParticipantRow } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export const PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_TABLE_SCROLL_X = 1100
 
@@ -143,7 +143,7 @@ export function ParticipatingIndividualProgressAssignmentTable({
   )
 
   return (
-    <Table<ParticipatingIndividualProgressAssignmentParticipantRow & { no: number }>
+    <CmsDataTable<ParticipatingIndividualProgressAssignmentParticipantRow & { no: number }>
       rowKey="id"
       className="cms-data-table participating-individual-progress-assignment-table"
       columns={columns}

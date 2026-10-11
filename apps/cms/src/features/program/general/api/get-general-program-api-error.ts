@@ -35,6 +35,32 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
     '강사 활동에 필요한 동의가 부족합니다. 해당 동의를 다시 받은 뒤 처리해 주세요.',
   UJAT_VOLUNTEER_PARTICIPATION_CONSENT_REQUIRED:
     'UJAT 봉사 활동에 필요한 동의가 부족합니다. 해당 동의를 다시 받은 뒤 처리해 주세요.',
+  VOLUNTEER_APPLICATION_ALREADY_EXISTS: '이미 이 프로그램에 봉사 신청이 있습니다.',
+  VOLUNTEER_1365_ID_REQUIRED: '1365 ID를 입력해 주세요.',
+  VOLUNTEER_PERSONAL_INFO_CONSENT_REQUIRED: '개인정보 수집·이용에 동의해 주세요.',
+  VOLUNTEER_THIRD_PARTY_CONSENT_REQUIRED: '개인정보 제3자 정보 제공·이용에 동의해 주세요.',
+  VOLUNTEER_PREVIOUS_JA_REQUIRED:
+    '동의서 제출 요청 시 이전 참여 JA 봉사 프로그램 정보와 증빙서류가 필요합니다.',
+  VOLUNTEER_FREE_TEXT_REQUIRED: '자유 작성 항목을 모두 작성해 주세요.',
+  VOLUNTEER_FREE_TEXT_INVALID: '자유 작성 항목 글자 수를 확인해 주세요.',
+  VOLUNTEER_RECRUITMENT_NOT_CONFIGURED:
+    '이 프로그램에 봉사 모집·신청 양식이 설정되지 않았습니다. 프로그램 모집 설정을 확인해 주세요.',
+  CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY:
+    '진행 현황 봉사자 추가 등록은 일반 봉사자만 지원합니다.',
+  EMPLOYEE_VOLUNTEER_ORGANIZATION_SCOPE_REQUIRED:
+    '기관을 선택한 뒤 임직원 자원봉사자 수를 저장해 주세요.',
+  EMPLOYEE_VOLUNTEER_ORGANIZATION_NOT_APPROVED:
+    '승인된 기관만 임직원 자원봉사자 수를 등록할 수 있습니다.',
+  EMPLOYEE_VOLUNTEER_ORGANIZATION_SCOPE_NOT_ALLOWED:
+    '개인 프로그램에는 기관 정보를 함께 저장할 수 없습니다.',
+  EMPLOYEE_VOLUNTEER_SCHEDULE_SET_MISMATCH:
+    '교육 일정 구성이 변경되어 저장할 수 없습니다. 화면을 닫은 뒤 다시 열어 최신 일정을 확인해 주세요.',
+  EMPLOYEE_VOLUNTEER_REVISION_CONFLICT:
+    '다른 관리자가 먼저 저장했습니다. 화면을 닫은 뒤 다시 열어 최신 값을 확인해 주세요.',
+  EMPLOYEE_VOLUNTEER_PERFORMANCE_ALREADY_REBUILT:
+    '실적이 이미 생성되어 임직원 자원봉사자 수를 수정할 수 없습니다. 정산·실적 정책에 따라 정정해 주세요.',
+  EMPLOYEE_VOLUNTEER_NOT_APPLICABLE:
+    '이 프로그램에서는 임직원 자원봉사자 수 등록을 사용할 수 없습니다.',
 }
 
 const PARTICIPATION_CONSENT_REQUIRED_CODES = new Set([
@@ -95,6 +121,13 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
     return raw.replace(/^CONFLICT:\s*/i, '').trim() || fallback
   }
   return fallback
+}
+
+/** 후보 API 등 hand-wrap endpoint 미배포(404) 판별 */
+export function isHttpNotFoundError(error: unknown): boolean {
+  if (!error || typeof error !== 'object' || !('response' in error)) return false
+  const status = (error as { response?: { status?: number } }).response?.status
+  return status === 404
 }
 
 function extractApiErrorPayload(error: unknown): Record<string, unknown> | undefined {

@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Spin, Table } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, EmptyState, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { downloadFile } from '@/shared/lib/file-download'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   formatTrainedTeachersEducationJournalScheduleLabel,
   formatTrainedTeachersEducationJournalSubmittedDate,
@@ -301,7 +302,7 @@ export function TrainedTeachersEducationJournalSection({
       ) : entries.length === 0 ? (
         <EmptyState description="제출된 교육일지가 없습니다." />
       ) : (
-        <Table
+        <CmsDataTable
           rowKey="id"
           className="cms-data-table trained-teachers-education-journal-section__table"
           columns={columns}

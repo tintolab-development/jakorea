@@ -3,8 +3,11 @@ import type {
   WritingFormDraft,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { isAgreementLockedSystemParagraph, writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
-import { paragraphKindLabel } from '@/features/template/model/writing-form/paragraph-labels'
+import { isAgreementLockedSystemParagraph } from '@/features/template/model/writing-form-draft.schema'
+import {
+  formEditorRightPanelSectionTitle,
+  paragraphKindLabel,
+} from '@/features/template/model/writing-form/paragraph-labels'
 import { paragraphVariantLabel } from '@/features/template/ui/form-editor/right-panel/config/paragraph-editor.registry'
 import {
   paragraphDetailSelectValue,
@@ -38,7 +41,7 @@ export function useActiveParagraphState({
       active && active.kind === 'description' && active.variant === 'closing'
         ? `${paragraphKindLabel(active)}_${paragraphVariantLabel(active)}`
         : active
-          ? writingOutlineLabel(active)
+          ? formEditorRightPanelSectionTitle(active)
           : ''
 
     const activeKindValue = active ? paragraphKindSelectValue(active) : null

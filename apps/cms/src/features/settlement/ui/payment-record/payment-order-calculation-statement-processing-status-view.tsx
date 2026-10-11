@@ -4,7 +4,7 @@
 
 import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
-import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
 
 export type PaymentOrderCalculationStatementProcessingStatusFields = {
   processingStatusDisplay: string

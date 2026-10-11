@@ -4,10 +4,7 @@ import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import {
-  formatEducationScheduleLineFromRange,
-  parseEducationScheduleLineToRange,
-} from '@/features/template/lib/format-education-schedule-line'
+import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { applyEducationScheduleModeLineSwap } from '@/features/program/shared/lib/education-schedule-mode-lines'
@@ -17,7 +14,8 @@ import {
   toEducationOperationDayjs,
   type EducationOperationRangeSeal,
 } from '@/features/program/shared/lib/education-schedule-change'
-import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { getInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { syncInstitutionApplicationBridgeForRegistrationWizard } from '@/features/program/general/lib/registration-institution-bridge-sync'
 import {
   updateProgramRegistrationOverlayKey,
   useProgramRegistrationOverlayKv,
@@ -31,23 +29,6 @@ type TrainedTeachersRegistrationEducationScheduleSettingsParagraphProps = {
   onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
   /** Overlay key prefix (default: 'trainedTeachersRegistration.educationScheduleSettings') */
   overlayKeyPrefix?: string
-}
-
-function resolvePeriodRangeFromLines(
-  lines: readonly string[]
-): { start: string; end: string } | undefined {
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
-    const range = parseEducationScheduleLineToRange(lines[i])
-    if (!range) continue
-    const [start, end] = range
-    if (!start.isSame(end, 'day')) {
-      return {
-        start: start.startOf('day').toISOString(),
-        end: end.endOf('day').toISOString(),
-      }
-    }
-  }
-  return undefined
 }
 
 export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
@@ -98,13 +79,14 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
   )
 
   const syncBridgeFromLines = useCallback(
-    (lines: string[], mode: ProgramRegistrationEducationScheduleMode) => {
-      const trimmedLines = lines.map(line => line.trim()).filter(Boolean)
-      patchInstitutionApplicationProgramBridge({
+    (_lines: string[], mode: ProgramRegistrationEducationScheduleMode) => {
+      const bridge = getInstitutionApplicationProgramBridge()
+      syncInstitutionApplicationBridgeForRegistrationWizard({
+        registrationFormVariant: 'trainedTeachers',
+        programType: bridge.educationStructure ?? 'curriculum',
+        sessionRound: bridge.sessionRound ?? 'single',
         educationScheduleMode: mode,
-        educationScheduleLines: trimmedLines,
-        educationScheduleRange:
-          mode === 'period' ? resolvePeriodRangeFromLines(trimmedLines) : undefined,
+        recruitTemplateCode: 'recruitment-trained-teachers',
       })
     },
     []
@@ -112,20 +94,15 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
 
   const handleScheduleRangeApply = useCallback(
     (range: [Dayjs, Dayjs]) => {
-      appendLineIfNew(formatEducationScheduleLineFromRange(range))
+      const line = formatEducationScheduleLineFromRange(range).trim()
+      appendLineIfNew(line)
       setSingleDate(null)
       setPeriodDate(null)
-      if (educationScheduleMode === 'period') {
-        patchInstitutionApplicationProgramBridge({
-          educationScheduleMode: 'period',
-          educationScheduleRange: {
-            start: range[0].startOf('day').toISOString(),
-            end: range[1].endOf('day').toISOString(),
-          },
-        })
-      }
+      const nextLines =
+        line && !scheduleLines.includes(line) ? [...scheduleLines, line] : scheduleLines
+      syncBridgeFromLines(nextLines, educationScheduleMode)
     },
-    [appendLineIfNew, educationScheduleMode]
+    [appendLineIfNew, educationScheduleMode, scheduleLines, syncBridgeFromLines]
   )
 
   const removeLine = useCallback(

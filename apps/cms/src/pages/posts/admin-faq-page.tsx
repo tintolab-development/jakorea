@@ -3,6 +3,7 @@
  * 공지사항 관리(admin-notice-list-page)와 동일: FilterTableLayout + useTablePage + CmsButton
  */
 
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useCallback,
   useEffect,
@@ -12,10 +13,9 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import type { AdminFaq } from '@/data/mock/admin-faqs'
+import type { AdminFaq } from '@/features/posts/model/admin-faq'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminFaqCategories } from '@/features/posts/hooks/use-admin-faq-categories'
 import { useFaqListQuery } from '@/features/posts/hooks/use-faq-list-query'
@@ -25,12 +25,18 @@ import { adminFaqManagementTablePageConfig } from '@/features/posts/model/admin-
 import type { AdminFaqTableContext } from '@/features/posts/model/admin-faq-management.types'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { ActionResultModal, CmsButton, useCmsAlert } from '@/shared/ui'
+import {
+  ActionResultModal,
+  useCmsAlert,
+  FilterTableToolbarButton,
+} from '@/shared/ui'
+import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
-import { FaqCategoryManagementModal } from '@/features/posts/ui/faq-category-management-modal'
+import { CategoryManagementModal } from '@/features/posts/ui/category-management-modal'
 import { FaqFormModal } from '@/features/posts/ui/faq-form-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -57,13 +63,28 @@ function AdminFAQPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const listQuery = useFaqListQuery(searchParams, true)
+  const searchParamsKey = searchParams.toString()
+  const {
+    rows,
+    totalElements,
+    isLoading: contentLoading,
+    isError: listIsError,
+    error: listError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useFaqListQuery(searchParams, true)
   const { bulkDeleteMutation } = useFaqMutations()
-  const rows = listQuery.data ?? []
-  const contentLoading = listQuery.isLoading
-  const contentError = listQuery.isError
-    ? getPostsApiErrorMessage(listQuery.error, 'FAQ 목록을 불러오지 못했습니다.')
+  const contentError = listIsError
+    ? getPostsApiErrorMessage(listError, 'FAQ 목록을 불러오지 못했습니다.')
     : null
+
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: searchParamsKey,
+  })
 
   const {
     categoryRows,
@@ -93,8 +114,8 @@ function AdminFAQPage() {
     setPendingFilters,
     applySearch: handleSearch,
     handleFilterChange,
-    displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(adminFaqManagementTablePageConfig, {
     data: rows,
     searchParams,
@@ -157,7 +178,7 @@ function AdminFAQPage() {
         width: FAQ_LIST_COL_WIDTH.no,
         align: 'center',
         render: (_: unknown, __: AdminFaq, index: number) =>
-          tableData.length === 0 ? '—' : tableData.length - index,
+          totalElements === 0 ? '—' : totalElements - index,
       },
       {
         title: '공개 여부',
@@ -229,13 +250,13 @@ function AdminFAQPage() {
           dayjs(row.updatedAt ?? row.createdAt).format('YYYY.MM.DD HH:mm:ss'),
       },
     ],
-    [tableData.length]
+    [totalElements]
   )
 
-  const bulkDeleteLine1 =
-    selectedRowKeys.length > 0
-      ? `선택한 ${selectedRowKeys.length}건의 FAQ를 삭제하시겠습니까?`
-      : '선택한 FAQ를 삭제하시겠습니까?'
+  const bulkDeleteCopy = useMemo(
+    () => resolvePostsDeleteConfirmCopy('faq', 'bulk', selectedRowKeys.length),
+    [selectedRowKeys.length]
+  )
 
   return (
     <div className="admin-faq-list-page">
@@ -244,16 +265,15 @@ function AdminFAQPage() {
         onCancel={() => setBulkDeleteConfirmOpen(false)}
         onConfirm={handleConfirmBulkDelete}
         preset="faq"
-        title="FAQ 삭제"
-        line1={bulkDeleteLine1}
-        line2="삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?"
+        {...bulkDeleteCopy}
       />
-      <FaqCategoryManagementModal
+      <CategoryManagementModal
+        kind="faq"
         open={categoryModalOpen}
         onCancel={() => setCategoryModalOpen(false)}
         categories={categoryRows}
         onCategoriesChange={() => {}}
-        faqs={rows}
+        posts={rows}
         remoteActions={faqCategoryRemoteActions}
       />
       <FaqFormModal
@@ -270,6 +290,7 @@ function AdminFAQPage() {
         onClose={() => setActionResultOpen(false)}
       />
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
         filters={{
@@ -282,23 +303,19 @@ function AdminFAQPage() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="FAQ 목록"
-        description={`총 ${displayedCount.toLocaleString()}건`}
+        description={`총 ${totalElements.toLocaleString()}건`}
         contentLoading={contentLoading}
         actions={
           <>
-            <CmsButton
-              variant="delete"
-              className="admin-faq-delete-btn"
-              onClick={handleBulkDelete}
-            >
+            <FilterTableToolbarButton variant="delete" className="admin-faq-delete-btn" onClick={handleBulkDelete}>
               FAQ 삭제
-            </CmsButton>
-            <CmsButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
               카테고리 관리
-            </CmsButton>
-            <CmsButton variant="primary" onClick={handleRegister}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="primary" onClick={handleRegister}>
               FAQ 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -311,38 +328,41 @@ function AdminFAQPage() {
             {contentError}
           </div>
         ) : (
-          <Table<AdminFaq>
-            rowKey="id"
-            className="cms-data-table admin-faq-list-page__table"
-            tableLayout="fixed"
-            scroll={{ x: FAQ_LIST_TABLE_SCROLL_X }}
-            columns={columns}
-            dataSource={tableData}
-            pagination={false}
-            onRow={record => ({
-              className: 'admin-faq-list-page__row--clickable',
-              onClick: (e: ReactMouseEvent) => {
-                const el = e.target as HTMLElement
-                if (
-                  el.closest('.ant-checkbox-wrapper') ||
-                  el.closest('.ant-table-selection-column')
-                ) {
-                  return
-                }
-                navigate(`/admin/posts/faq/${record.id}`)
-              },
-            })}
-            rowSelection={
-              canWrite
-                ? {
-                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                    selectedRowKeys,
-                    onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                    preserveSelectedRowKeys: false,
+          <>
+            <CmsDataTable<AdminFaq>
+              rowKey="id"
+              className="cms-data-table admin-faq-list-page__table"
+              tableLayout="fixed"
+              scroll={{ x: FAQ_LIST_TABLE_SCROLL_X }}
+              columns={columns}
+              dataSource={tableData}
+              pagination={false}
+              onRow={record => ({
+                className: 'admin-faq-list-page__row--clickable',
+                onClick: (e: ReactMouseEvent) => {
+                  const el = e.target as HTMLElement
+                  if (
+                    el.closest('.ant-checkbox-wrapper') ||
+                    el.closest('.ant-table-selection-column')
+                  ) {
+                    return
                   }
-                : undefined
-            }
-          />
+                  navigate(`/admin/posts/faq/${record.id}`)
+                },
+              })}
+              rowSelection={
+                canWrite
+                  ? {
+                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                      selectedRowKeys,
+                      onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                      preserveSelectedRowKeys: false,
+                    }
+                  : undefined
+              }
+            />
+            <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+          </>
         )}
       </FilterTableLayout>
     </div>

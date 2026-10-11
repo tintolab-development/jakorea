@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { RequestedScheduleWithResolved } from '@/features/program/general/api/instructor-assignment-types'
+import { parseEducationScheduleLineToRange } from '@/features/template/lib/format-education-schedule-line'
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'] as const
 
@@ -41,20 +42,50 @@ function isClockTimeRequestedSchedule(
   return schedule.startPeriod == null
 }
 
+function hasClockSessionTimes(
+  schedule: Pick<RequestedScheduleResponse, 'sessionTimes'>
+): boolean {
+  const first = schedule.sessionTimes?.[0]
+  return Boolean(toClockLabel(first?.startTime) && toClockLabel(first?.endTime))
+}
+
+function hasParsableScheduleLabel(
+  schedule: Pick<RequestedScheduleResponse, 'label'>
+): boolean {
+  const label = schedule.label?.trim()
+  if (!label) return false
+  return parseEducationScheduleLineToRange(label) != null
+}
+
+/** 행 단위 — 시각·label 지정형 vs 교시(1사1교) 분기 */
+function shouldMapRequestedScheduleAsClockTime(
+  schedule: RequestedScheduleResponse | RequestedScheduleWithResolved
+): boolean {
+  if (isClockTimeRequestedSchedule(schedule)) return true
+  if (hasClockSessionTimes(schedule)) return true
+  if (hasParsableScheduleLabel(schedule)) return true
+  return false
+}
+
+type RequestedScheduleRow = RequestedScheduleWithResolved &
+  Pick<RequestedScheduleResponse, 'label' | 'periodStartDate' | 'periodEndDate'>
+
 function mapClockTimeRequestedScheduleToSession(
-  schedule: RequestedScheduleWithResolved,
+  schedule: RequestedScheduleRow,
   order: number
 ): ParticipatingSchoolSession {
+  const periodLabel = schedule.label?.trim()
   const { date, dayOfWeek } = formatRequestedDate(schedule.requestedDate)
   const firstTime = schedule.sessionTimes?.[0]
   const start = toClockLabel(firstTime?.startTime)
   const end = toClockLabel(firstTime?.endTime)
-  const timeRange = start && end ? `${start} ~ ${end}` : start ?? '종일'
+  const timeRange =
+    start && end ? `${start} ~ ${end}` : start ?? (periodLabel ? '' : '종일')
   const scheduleUnresolved =
     hasResolvedScheduleField(schedule) && schedule.resolvedScheduleId == null
   return {
     round: order,
-    date,
+    date: periodLabel || date,
     dayOfWeek,
     duration: '1차시',
     format: schedule.combinedClassYn ? '합반' : '단독',
@@ -66,6 +97,7 @@ function mapClockTimeRequestedScheduleToSession(
       ? (schedule.resolvedScheduleId ?? null)
       : undefined,
     scheduleUnresolved: scheduleUnresolved || undefined,
+    ...(periodLabel ? { scheduleLabel: periodLabel } : {}),
   }
 }
 
@@ -82,16 +114,17 @@ export function mapRequestedSchedulesToSessions(
     (a, b) => (a.preferenceOrder ?? 99) - (b.preferenceOrder ?? 99)
   )
 
-  if (sorted.every(schedule => isClockTimeRequestedSchedule(schedule))) {
-    return sorted.map((raw, index) =>
-      mapClockTimeRequestedScheduleToSession(
-        raw as RequestedScheduleWithResolved,
-        raw.preferenceOrder ?? index + 1
-      )
-    )
-  }
+  const clockTimeRows = sorted.filter(shouldMapRequestedScheduleAsClockTime)
+  const periodRows = sorted.filter(row => !shouldMapRequestedScheduleAsClockTime(row))
 
-  return sorted.slice(0, 2).map((raw, index) => {
+  const clockSessions = clockTimeRows.map((raw, index) =>
+    mapClockTimeRequestedScheduleToSession(
+      raw as RequestedScheduleRow,
+      raw.preferenceOrder ?? index + 1
+    )
+  )
+
+  const periodSessions = periodRows.slice(0, 2).map((raw, index) => {
     const schedule = raw as RequestedScheduleWithResolved
     const order = schedule.preferenceOrder ?? index + 1
     const startPeriod = schedule.startPeriod ?? 1
@@ -120,6 +153,10 @@ export function mapRequestedSchedulesToSessions(
       scheduleUnresolved: scheduleUnresolved || undefined,
     }
   })
+
+  return [...clockSessions, ...periodSessions].sort(
+    (a, b) => (a.round ?? 99) - (b.round ?? 99)
+  )
 }
 
 export function formatRequestedSchedulesPeriodLabel(
@@ -130,7 +167,7 @@ export function formatRequestedSchedulesPeriodLabel(
   const first = sessions[0]
   const last = sessions[sessions.length - 1]
   if (sessions.length === 1) {
-    const suffix = schedules?.every(schedule => isClockTimeRequestedSchedule(schedule))
+    const suffix = schedules?.every(schedule => shouldMapRequestedScheduleAsClockTime(schedule))
       ? first.timeRange
       : first.classNum
     return `${first.date}(${first.dayOfWeek}) ${suffix}`

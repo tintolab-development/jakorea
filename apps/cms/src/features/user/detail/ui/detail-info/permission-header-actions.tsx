@@ -5,6 +5,7 @@ import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   canAccessAdminCommentInAdminDetail,
+  shouldShowAdminCommentForAdminPermissionApplicationDetail,
   shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
@@ -72,8 +73,11 @@ export function PermissionHeaderActions({
 
   const showCommentEditStart =
     !isCommentEditing &&
-    approvalStatus !== 'PENDING' &&
+    (permissionRole === 'admin'
+      ? approvalStatus === 'APPROVED'
+      : approvalStatus !== 'PENDING') &&
     shouldShowAdminCommentSectionForViewer(currentUser, displayUser) &&
+    shouldShowAdminCommentForAdminPermissionApplicationDetail('permission', displayUser) &&
     canEditCommentBody
 
   return (

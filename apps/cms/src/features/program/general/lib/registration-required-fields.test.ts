@@ -640,6 +640,69 @@ it('개인·복수회차·일정 공통 — 참여 방식 overlay가 비어도 �
   ).toBe(false)
 })
 
+it('일정형·IPS 일정별 — 행별 overlay 없어도 Prepare 기본값으로 IPS 미완료 아님', () => {
+  expect(
+    hasIncompleteGeneralProgramRegistrationRequiredFields(
+      filledOverlay({
+        'generalRegistration.basicInfo.detailedProgramId': undefined,
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '행사 1',
+          2: '행사 2',
+        },
+        'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
+          1: '2026-10-16 10:00-12:00',
+          2: '2026-10-11 01:47-2026-10-22 02:47',
+        },
+      }),
+      ctx({
+        programType: 'schedule',
+        sessionRoundType: 'multi',
+        educationFormScheduleDetail: 'perSchedule',
+        ipsScheduleDetail: 'perSchedule',
+        scheduleCurriculumDetailCount: 2,
+      })
+    )
+  ).toBe(false)
+})
+
+it('일정형·복수 회차·교육 형태 일정 공통 — 진행 일정(date)만 채우면 groupTimes 없이 완료이다', () => {
+  expect(
+    hasIncompleteGeneralProgramRegistrationRequiredFields(
+      filledOverlay({
+        'generalRegistration.basicInfo.detailedProgramId': undefined,
+        'generalRegistration.kpi.dispatchedSchool': 10,
+        'generalRegistration.kpi.dispatchedClass': 5,
+        'generalRegistration.typeSettings.ipsType': { category: 'prepare', detail: 'none' },
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '행사 1',
+          2: '행사 2',
+          3: '행사 3',
+        },
+        'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
+          1: '2026-10-16 10:00-12:00',
+          2: '2026-10-11 01:47-2026-10-22 02:47',
+          3: '2026-10-01 00:00-2026-10-21 01:00',
+        },
+      }),
+      ctx({
+        participant: {
+          individual: true,
+          organization: false,
+          teacherInstructor: false,
+          volunteer: false,
+        },
+        programType: 'schedule',
+        sessionRoundType: 'multi',
+        educationFormScheduleDetail: 'common',
+        participationScheduleDetail: 'common',
+        ipsScheduleDetail: 'common',
+        scheduleCurriculumDetailCount: 3,
+        scheduleCurriculumGroupCount: 1,
+      })
+    )
+  ).toBe(false)
+})
+
 it('일정형·교육형태 일정별 — overlay 미기록이면 UI 기본 온라인으로 완료이다', () => {
   expect(
     hasIncompleteGeneralProgramRegistrationRequiredFields(
@@ -744,14 +807,23 @@ describe('유형 매트릭스 — UI 기본값 overlay 미기록은 typeSettings
                 }
               : {}),
             ...(programType === 'schedule'
-              ? {
-                  'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
-                    1: '세부 일정',
-                  },
-                  'generalRegistration.educationScheduleCurriculum.groupTimesByDetail': {
-                    1: [{ startTime: '08:00', endTime: '09:00' }],
-                  },
-                }
+              ? sessionRoundType === 'multi'
+                ? {
+                    'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+                      1: '세부 일정',
+                    },
+                    'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
+                      1: '2026-10-16 10:00-12:00',
+                    },
+                  }
+                : {
+                    'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+                      1: '세부 일정',
+                    },
+                    'generalRegistration.educationScheduleCurriculum.groupTimesByDetail': {
+                      1: [{ startTime: '08:00', endTime: '09:00' }],
+                    },
+                  }
               : {}),
           })
           const reason = describeIncompleteGeneralProgramRegistrationRequiredFields(

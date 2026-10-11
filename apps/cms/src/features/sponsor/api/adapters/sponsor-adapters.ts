@@ -273,7 +273,8 @@ export function mergeYearlyBusinessRows(
 function mapSponsorLogos(dto: Pick<SponsorDetailResponse, 'logoFileId'>): SponsorLogoFile[] {
   const id = dto.logoFileId?.trim()
   if (!id) return []
-  return [{ id, fileName: id.includes('.') ? id : '후원사 로고' }]
+  // 숫자 fileObjectId는 상세 조회 시 enrichSponsorLogoFiles로 originalFileName을 채운다.
+  return [{ id, fileName: id.includes('.') ? id : '' }]
 }
 
 export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorManagementDetailView {

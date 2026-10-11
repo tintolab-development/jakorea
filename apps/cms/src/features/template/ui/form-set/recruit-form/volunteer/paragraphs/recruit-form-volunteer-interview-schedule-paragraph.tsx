@@ -1,7 +1,10 @@
+import { useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
 import { VolunteerInterviewAvailableScheduleParagraph } from '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-interview-available-schedule-paragraph'
 import type { VolunteerInterviewScheduleEditSeed } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { normalizeRangeSealToLocalDayBounds } from '@/features/template/ui/form-set/shared/unavailable-dates-calendar-range'
 
 /** 봉사자 모집 폼 — 면접 진행 가능 일정(신청 폼 템플릿 UI 재사용) */
 export function RecruitFormVolunteerInterviewScheduleParagraph({
@@ -14,7 +17,7 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   freezeUnavailableCalendar = false,
   overlayNamespace,
   interviewRangeSealKey,
-  interviewPeriodRange,
+  interviewPeriodRange: interviewPeriodRangeProp,
 }: {
   exceptionScheduleCount?: number
   exceptionBlockKeys?: number[]
@@ -27,6 +30,16 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   interviewRangeSealKey?: string
   interviewPeriodRange?: [Dayjs, Dayjs] | null
 }) {
+  const [interviewRangeSeal] = useGeneralRecruitOverlayKv<{ start: string; end: string } | null>(
+    interviewRangeSealKey ?? 'recruit.volunteer.interviewRangeSeal',
+    null
+  )
+  const interviewPeriodRangeFromOverlay = useMemo(
+    () => normalizeRangeSealToLocalDayBounds(interviewRangeSeal),
+    [interviewRangeSeal]
+  )
+  const interviewPeriodRange = interviewPeriodRangeProp ?? interviewPeriodRangeFromOverlay
+
   return (
     <VolunteerInterviewAvailableScheduleParagraph
       isTemplateAuthoringMode

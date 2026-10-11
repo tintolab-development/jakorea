@@ -35,8 +35,8 @@
   transform: translate(-50%, -50%) !important;
   margin: 0 !important;
   padding-bottom: 0 !important;
-  width: min(800px, calc(100vw - 32px)) !important;
-  max-width: min(800px, calc(100vw - 32px)) !important;
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
   flex: none !important;
   box-sizing: border-box !important;
 }

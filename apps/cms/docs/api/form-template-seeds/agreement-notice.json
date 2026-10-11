@@ -183,7 +183,8 @@
           }
         ],
         "bodyPlaceholder": "답변을 입력해 주세요",
-        "bodyText": ""
+        "bodyText": "",
+        "maxLength": 2000
       },
       {
         "id": "agreement-notice-confirmation-closing",

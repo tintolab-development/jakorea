@@ -32,9 +32,10 @@ import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/que
 import { useGeminiRecruitmentInfoEdit } from '../../hooks/use-gemini-recruitment-info-edit'
 import {
   geminiRecruitmentDeleteBlocked,
-  resolveGeminiDeleteBlockedAlert,
+  resolveGeminiDeleteBlockedModalCopy,
   resolveGeminiDeleteGuideModalCopy,
 } from '../../lib/delete-guide'
+import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { useToday } from '../../hooks/use-today'
 import { GEMINI_RECRUITMENT_ADD_PARAM } from '../../lib/recruitment/add-url'
 import {
@@ -96,6 +97,8 @@ export function GeminiRecruitmentDetailFullPageModal({
   const activeLnb = parseGeminiRecruitmentDetailLnb(searchParams.get(GEMINI_RECRUITMENT_LNB_PARAM))
   const [previewOpen, setPreviewOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
+  const [deleteBlockedCopy, setDeleteBlockedCopy] = useState({ title: '', description: '' })
   const queryClient = useQueryClient()
   const activeLnbItem =
     SIDEBAR_ITEMS.find(item => item.key === activeLnb) ?? SIDEBAR_ITEMS[0]
@@ -226,11 +229,12 @@ export function GeminiRecruitmentDetailFullPageModal({
   const handleDeleteClick = useCallback(() => {
     if (detail == null) return
     if (geminiRecruitmentDeleteBlocked(detail)) {
-      showAlert(resolveGeminiDeleteBlockedAlert('공고', 1))
+      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('공고', 1))
+      setDeleteBlockedOpen(true)
       return
     }
     setDeleteModalOpen(true)
-  }, [detail, showAlert])
+  }, [detail])
 
   const handleConfirmDelete = useCallback(async () => {
     try {
@@ -343,6 +347,12 @@ export function GeminiRecruitmentDetailFullPageModal({
           void handleConfirmDelete()
         }}
         onCancel={() => setDeleteModalOpen(false)}
+      />
+      <DeleteBlockedGuideModal
+        open={deleteBlockedOpen}
+        onClose={() => setDeleteBlockedOpen(false)}
+        title={deleteBlockedCopy.title}
+        description={deleteBlockedCopy.description}
       />
     </>
   )

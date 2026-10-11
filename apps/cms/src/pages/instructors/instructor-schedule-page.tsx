@@ -17,9 +17,6 @@ import dayjs from 'dayjs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
 import { useProgramService } from '@/features/program/general/hooks/use-program-service'
-import { schoolService } from '@/entities/school/api/school-service'
-import { mockMatchings } from '@/data/mock'
-import { mockApplications } from '@/data/mock'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import type { Schedule } from '@/types/domain'
 
@@ -54,56 +51,16 @@ export function InstructorSchedulePage() {
     const program = getProgramByIdSync(schedule.programId)
     const programName = program?.title
 
-    // 매칭 정보에서 학교 정보 찾기 (scheduleId로 정확히 매칭)
-    const matching = mockMatchings.find(
-      m => m.scheduleId === schedule.id && m.instructorId === schedule.instructorId
-    )
-
-    // 매칭이 있으면 해당 매칭의 프로그램/신청 정보 사용
-    // 없으면 프로그램의 첫 번째 승인된 학교 신청 사용
-    let application = null
-    if (matching) {
-      // 매칭된 신청 찾기
-      application = mockApplications.find(
-        app =>
-          app.programId === matching.programId &&
-          app.subjectType === 'school' &&
-          app.status === 'approved'
-      )
-    } else {
-      // 매칭이 없으면 프로그램의 첫 번째 승인된 학교 신청 사용
-      application = mockApplications.find(
-        app =>
-          app.programId === schedule.programId &&
-          app.subjectType === 'school' &&
-          app.status === 'approved'
-      )
-    }
-
-    const school = application
-      ? schoolService.getByIdSync(application.subjectId)
-      : null
-
-    // 학교 사용자 정보 찾기 (대기실, 급식 정보 등)
-    // Mock: 학교 정보에서 추출 또는 기본값
-    const schoolUser = application
-      ? {
-          waitingRoom: school?.address ? `${school.address} 1층 교무실` : '1층 교무실',
-          mealInfo: '급식 가능',
-        }
-      : null
-
     return {
       ...schedule,
       programName,
-      schoolName: school?.name,
-      region: school?.region,
-      grade: program?.targetLevel ? (program.targetLevel === 'elementary' ? '초' : program.targetLevel === 'middle' ? '중' : '고') : undefined,
-      address: school?.address,
-      contactPerson: school?.contactPerson,
-      contactPhone: school?.contactPhone,
-      waitingRoom: schoolUser?.waitingRoom,
-      mealInfo: schoolUser?.mealInfo,
+      grade: program?.targetLevel
+        ? program.targetLevel === 'elementary'
+          ? '초'
+          : program.targetLevel === 'middle'
+            ? '중'
+            : '고'
+        : undefined,
     }
   }, [])
 

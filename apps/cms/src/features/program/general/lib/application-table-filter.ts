@@ -146,3 +146,22 @@ export function filterGeneralInstructorCalendarApplications(
     return true
   })
 }
+
+const GENERAL_INSTRUCTOR_LIST_ONLY_FILTER_KEYS = ['experienceYears', 'evaluationGrade'] as const
+const GENERAL_INSTRUCTOR_CALENDAR_ONLY_FILTER_KEYS = ['organizationName', 'grade'] as const
+
+/** 강사 신청 리스트↔캘린더 전환 시 뷰에 없는 필터 키만 제거 (승인·주소·강사명 등 공통 키 유지) */
+export function mergeGeneralInstructorFiltersOnViewModeChange(
+  filters: Record<string, unknown>,
+  targetViewMode: 'table' | 'calendar'
+): Record<string, unknown> {
+  const dropKeys =
+    targetViewMode === 'calendar'
+      ? GENERAL_INSTRUCTOR_LIST_ONLY_FILTER_KEYS
+      : GENERAL_INSTRUCTOR_CALENDAR_ONLY_FILTER_KEYS
+  const next = { ...filters }
+  for (const key of dropKeys) {
+    delete next[key]
+  }
+  return next
+}

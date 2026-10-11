@@ -11,8 +11,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { applicationSchema, type ApplicationFormData } from '@/entities/application/model/schema'
 import type { Application } from '@/types/domain'
-import { mockPrograms, mockSchools, mockInstructors } from '@/data/mock'
-import { mockUsers } from '@/data/mock/users'
 import type { ApplicationSubjectType } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
@@ -20,6 +18,9 @@ import { fieldValidationHelp } from '@/shared/utils/error-handler'
 import {
   isApplicationAvailable,
   getApplicationUnavailableReason } from '@/features/program/general/lib/program-helpers'
+import { programService } from '@/entities/program/api/program-service'
+import { schoolService } from '@/entities/school/api/school-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
 
 const { Option } = Select
 const { Text } = Typography
@@ -108,7 +109,8 @@ export function ApplicationForm({
 
   const selectedProgramId = watch('programId')
   const selectedSubjectType = watch('subjectType')
-  const selectedProgram = mockPrograms.find(p => p.id === selectedProgramId)
+  const allPrograms = programService.getAllSync()
+  const selectedProgram = allPrograms.find(p => p.id === selectedProgramId)
 
   // 선택된 프로그램의 신청 경로 정보 (V3 Phase 7)
   const applicationPath = selectedProgramId
@@ -119,16 +121,16 @@ export function ApplicationForm({
   const availablePrograms = useMemo(() => {
     if (isAdmin) {
       // 관리자는 모든 프로그램 선택 가능
-      return mockPrograms
+      return allPrograms
     }
     // 일반 사용자는 신청 가능한 프로그램만 선택 가능 (로그인한 사용자의 역할에 따라)
     if (fixedSubject) {
-      return mockPrograms.filter(program =>
+      return allPrograms.filter(program =>
         isApplicationAvailable(program, fixedSubject.eligibilitySubjectType)
       )
     }
-    return mockPrograms.filter(program => isApplicationAvailable(program))
-  }, [isAdmin, fixedSubject])
+    return allPrograms.filter(program => isApplicationAvailable(program))
+  }, [isAdmin, fixedSubject, allPrograms])
 
   // 선택된 프로그램이 신청 불가능한 경우 경고 표시
   const selectedProgramUnavailable = useMemo(() => {
@@ -168,7 +170,7 @@ export function ApplicationForm({
     try {
       // 신청 제출 시 프로그램 상태 검증 (신규 신청만)
       if (!application && data.programId && data.subjectType) {
-        const program = mockPrograms.find(p => p.id === data.programId)
+        const program = allPrograms.find(p => p.id === data.programId)
         const eligibilityType = data.subjectType === 'volunteer' ? 'instructor' : data.subjectType
         if (program && !isApplicationAvailable(program, eligibilityType)) {
           const _reason = getApplicationUnavailableReason(program, eligibilityType)
@@ -189,19 +191,15 @@ export function ApplicationForm({
 
     switch (selectedSubjectType) {
       case 'school':
-        return mockSchools.map(school => ({
+        return schoolService.getAllSync().map(school => ({
           value: school.id,
           label: school.name }))
       case 'instructor':
-        return mockInstructors.map(instructor => ({
+        return instructorService.getAllSync().map(instructor => ({
           value: instructor.id,
           label: instructor.name }))
       case 'volunteer':
-        return mockUsers
-          .filter(u => u.role === 'INDIVIDUAL')
-          .map(volunteer => ({
-            value: volunteer.id,
-            label: volunteer.name }))
+        return []
       case 'student':
         // 학생은 별도 목록이 없으므로 빈 배열 (실제로는 학생 목록이 필요)
         return []

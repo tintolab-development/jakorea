@@ -7,10 +7,7 @@ import {
   upsertFormTemplateVersionCacheEntry,
 } from '@/features/template/api/form-template-version-cache'
 import { stripWritingTemplateCopySuffix } from '@/features/template/lib/form-template-delete-policy'
-import {
-  beginRecruitDetailContentReset,
-  commitRecruitDetailContentReset,
-} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import { beginRecruitDetailContentReset } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   clearRegistrationWizardFormDraft,
   persistRegistrationWizardFormDraft,
@@ -20,6 +17,7 @@ import {
   createSeedDraftForOperationalCatalogId,
   resetOperationalOverlayForCatalogId,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import { setRegistrationStepTemplateSelection } from '@/features/program/shared/lib/step-template-selection'
 
 function resolveSeedCatalogId(templateCode: string): string {
@@ -31,12 +29,15 @@ function resolveSeedCatalogId(templateCode: string): string {
 async function loadSelectedTemplateDraft(args: {
   templateCode: string
   latestVersionId?: number
+  /** 동일 템플릿 재선택 시 React Query 캐시를 무시하고 최신 본문을 받는다 */
+  forceRefresh?: boolean
 }): Promise<Awaited<ReturnType<typeof loadFormTemplateVersionDraft>>> {
   if (args.latestVersionId != null) {
     try {
       const byVersion = await loadFormTemplateVersionDraftByVersionId(
         args.templateCode,
-        args.latestVersionId
+        args.latestVersionId,
+        { invalidateCache: args.forceRefresh === true }
       )
       if (byVersion != null) return byVersion
     } catch {
@@ -64,7 +65,7 @@ export async function applyRegistrationStepTemplateChange(args: {
   baseTemplateCode?: string
   apiTemplateId?: number
 }): Promise<'unchanged' | 'applied'> {
-  if (args.nextCode === args.previousCode) return 'unchanged'
+  const isSameTemplateReselect = args.nextCode === args.previousCode
 
   const cached = getFormTemplateVersionCacheEntry(args.nextCode)
   if (args.baseTemplateCode != null || args.latestVersionId != null || args.apiTemplateId != null) {
@@ -93,6 +94,7 @@ export async function applyRegistrationStepTemplateChange(args: {
     templateCode: args.nextCode,
     latestVersionId:
       args.latestVersionId ?? cached?.latestVersionId ?? cached?.templateVersionId,
+    forceRefresh: isSameTemplateReselect,
   })
   const seed = resolveLoadedDraft(saved, args.nextCode)
   if (seed != null) {
@@ -104,9 +106,9 @@ export async function applyRegistrationStepTemplateChange(args: {
       editorState: saved?.editorState,
       settingsJson: saved?.settingsJson,
     })
+    setOperationalOverlayScope(args.nextCode)
     applyOperationalOverlayForCatalogId(args.nextCode, saved?.overlay)
   }
-  commitRecruitDetailContentReset()
 
   return 'applied'
 }

@@ -40,26 +40,16 @@ const SOCIAL_CONNECT_AUTH_FLOW_PREFIXES = [
   '/auth/password-change-required',
 ] as const
 
-/** 비밀번호 변경 완료 → 소셜 연결 진입 시 `?flow=` 값 */
-export const SOCIAL_CONNECT_FLOW_PASSWORD_CHANGE_REQUIRED = 'password-change-required' as const
-
-export function isPasswordChangeRequiredSocialConnectFlow(flow?: string): boolean {
-  return flow === SOCIAL_CONNECT_FLOW_PASSWORD_CHANGE_REQUIRED
-}
-
 /**
- * 가입 직후 public handoff도, 로그인 세션도, 최초 로그인 소셜 온보딩도 없으면
- * `POST /api/admin/me/sso/accounts`를 호출하지 않는다.
- * 관리자 등록 회원 최초 로그인은 signupSocialLinkToken이 없다. 그 화면에서는 세션으로 연결을 시작한다.
+ * 로그인 세션·가입 handoff 토큰 없이는 `POST /api/admin/me/sso/accounts`를 호출하지 않는다.
  */
 export function shouldSkipUnauthenticatedSocialConnectStart(input: {
   remoteEnabled: boolean
   hasAccessToken: boolean
   hasSignupSocialLinkToken: boolean
-  firstLoginOnboarding: boolean
 }): boolean {
   if (!input.remoteEnabled) return false
-  if (input.hasAccessToken || input.hasSignupSocialLinkToken || input.firstLoginOnboarding) {
+  if (input.hasAccessToken || input.hasSignupSocialLinkToken) {
     return false
   }
   return true
@@ -109,19 +99,11 @@ export function resolveSocialConnectFinishPath(options: {
   return normalizeSocialConnectRedirectPath(redirectPath, fallbackPath) ?? fallbackPath
 }
 
-export function buildRegisterSocialConnectPath(
-  redirectPath?: string,
-  options?: { flow?: string }
-) {
-  const params = new URLSearchParams()
-  if (redirectPath) {
-    params.set('redirect', redirectPath)
+export function buildRegisterSocialConnectPath(redirectPath?: string) {
+  if (!redirectPath) {
+    return '/register/social-connect'
   }
-  if (options?.flow) {
-    params.set('flow', options.flow)
-  }
-  const query = params.toString()
-  return query ? `/register/social-connect?${query}` : '/register/social-connect'
+  return `/register/social-connect?redirect=${encodeURIComponent(redirectPath)}`
 }
 
 export function buildRegisterCompletePath(redirectPath?: string) {
@@ -129,21 +111,6 @@ export function buildRegisterCompletePath(redirectPath?: string) {
     return '/register/complete'
   }
   return `/register/complete?redirect=${encodeURIComponent(redirectPath)}`
-}
-
-export function buildRegisterSocialConnectCompletePath(
-  redirectPath?: string,
-  options?: { flow?: string }
-) {
-  const params = new URLSearchParams()
-  if (redirectPath) {
-    params.set('redirect', redirectPath)
-  }
-  if (options?.flow) {
-    params.set('flow', options.flow)
-  }
-  const query = params.toString()
-  return query ? `/register/social-connect/complete?${query}` : '/register/social-connect/complete'
 }
 
 /** 로그인 후 소셜 연결 완료 (내 정보 수정 등) */

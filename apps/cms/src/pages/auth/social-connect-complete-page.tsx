@@ -12,9 +12,16 @@ import { SocialConnectCompleteView } from '@/features/auth/ui/social-connect-com
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 
 import './register-complete-page.css'
+
+function resolveMaskedAccountEmail(email?: string | null): string {
+  const trimmed = email?.trim()
+  if (!trimmed) return '-'
+  return MASKING_POLICY.email(trimmed)
+}
 
 export function SocialConnectCompletePage() {
   const navigate = useNavigate()
@@ -23,11 +30,13 @@ export function SocialConnectCompletePage() {
   const fallbackPath = getRedirectPathByRole(user)
   const homePath = normalizeSocialConnectRedirectPath(params.redirect, fallbackPath) ?? fallbackPath
   const socialConnectPath = buildRegisterSocialConnectPath(homePath)
+  const maskedEmail = resolveMaskedAccountEmail(user?.email)
 
   return (
     <AuthPageShell showLogo={false} cardClassName="auth-card--register-complete">
       <SocialConnectCompleteView
-        onGoHome={() => navigate(homePath, { replace: true })}
+        maskedEmail={maskedEmail}
+        onGoLogin={() => navigate(homePath, { replace: true })}
         onConnectMore={() => navigate(socialConnectPath, { replace: true })}
       />
     </AuthPageShell>

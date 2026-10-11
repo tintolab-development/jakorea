@@ -4,7 +4,7 @@ import {
   getCatalogSettlementItemSettingDetailForDeduction,
   parseEditableLines,
   type SettlementItemSettingDetail,
-} from '@/data/mock/settlement-item-setting-detail.mock'
+} from '@/features/settlement-management/model/settlement-item-setting-detail'
 import type {
   DeductionItemResponse,
   PaymentItemResponse,

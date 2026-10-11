@@ -64,7 +64,10 @@ import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-p
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { handleError } from '@/shared/utils/error-handler'
-import { DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert,
+  FilterTableToolbarButton
+} from '@/shared/ui'
 import '@/shared/ui/detail-fullpage-modal.css'
 import {
   memberListKindToBasicInfoEntrySource,
@@ -76,7 +79,6 @@ import {
 import '@/pages/programs/program-list-page.css'
 import './user-list-page.css'
 import { getUserListFilterFields } from './user-list-filter-fields'
-import { CmsButton } from '@/shared/ui/cms-button'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
 import { InstitutionDeleteBlockedModal } from '@/features/user/shared/ui/institution-delete-blocked-modal'
 import {
@@ -120,7 +122,7 @@ function memberDeleteGuideDomain(kind: MemberListKind) {
         domainLabel: '학교',
         singleTitle: '학교 삭제 안내',
         bulkTitle: '학교 일괄 삭제 안내',
-        confirmText: '학교 삭제',
+        confirmText: '삭제',
       }
     case 'instructors':
       return {
@@ -209,7 +211,9 @@ export function UserListPage() {
     []
   )
 
-  const { pendingFilters, handleFilterChange, applySearch } = useTablePage(
+  const { pendingFilters, handleFilterChange, applySearch,
+    hasActiveFilters,
+  } = useTablePage(
     userListTablePageConfig,
     {
       data: listUsers,
@@ -1193,6 +1197,7 @@ export function UserListPage() {
   return (
     <div>
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={userListFilterFields}
         filters={
@@ -1229,7 +1234,7 @@ export function UserListPage() {
         description={`총 ${listTotal.toLocaleString()}건`}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               onClick={() => {
                 const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
@@ -1265,8 +1270,8 @@ export function UserListPage() {
                   : resolvedMemberListKind === 'admins'
                     ? '관리자 삭제'
                     : '회원 삭제'}
-            </CmsButton>
-            <CmsButton
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
               onClick={() => {
                 if (resolvedMemberListKind === 'all') {
                   openCreateModal()
@@ -1294,7 +1299,7 @@ export function UserListPage() {
                   : resolvedMemberListKind === 'admins'
                     ? '관리자 등록'
                     : '회원 등록'}
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{

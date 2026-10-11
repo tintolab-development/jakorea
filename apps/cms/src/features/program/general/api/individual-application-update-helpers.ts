@@ -1,4 +1,5 @@
 import { updateIndividualApplication } from '@/features/program/general/api/applications-api-client'
+import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import type {
   GeneralIndividualApplicantDetailSavePayload,
@@ -20,15 +21,7 @@ export function mergeIndividualApplicationUpdateResponse(
       }
     | null
     | undefined
-  const team = response.team as
-    | {
-        name?: string
-        teamName?: string
-        memberCount?: number
-        role?: string
-      }
-    | undefined
-  const role = team?.role?.toUpperCase()
+  const teamDetail = resolveIndividualApplicationTeamDetail({ team: response.team })
 
   return {
     ...row,
@@ -47,18 +40,10 @@ export function mergeIndividualApplicationUpdateResponse(
         : (textbook?.status?.toLowerCase() as GeneralIndividualApplicantRow['textbookStatus']),
     detail: {
       ...row.detail,
-      teamName: team?.name ?? team?.teamName ?? row.detail?.teamName,
-      teamMemberCount: team?.memberCount ?? row.detail?.teamMemberCount,
-      teamMemberCountSelect:
-        team?.memberCount != null && team.memberCount >= 1 && team.memberCount <= 5
-          ? (String(team.memberCount) as '1' | '2' | '3' | '4' | '5')
-          : team?.memberCount != null
-            ? 'custom'
-            : row.detail?.teamMemberCountSelect,
-      teamRole:
-        role === 'LEADER' || role === 'MEMBER'
-          ? (role.toLowerCase() as 'leader' | 'member')
-          : row.detail?.teamRole,
+      teamName: teamDetail.teamName ?? row.detail?.teamName,
+      teamMemberCount: teamDetail.teamMemberCount ?? row.detail?.teamMemberCount,
+      teamMemberCountSelect: teamDetail.teamMemberCountSelect ?? row.detail?.teamMemberCountSelect,
+      teamRole: teamDetail.teamRole ?? row.detail?.teamRole,
     },
   }
 }

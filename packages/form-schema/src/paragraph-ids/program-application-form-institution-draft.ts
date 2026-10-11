@@ -6,6 +6,7 @@ import {
 import {
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION,
   INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION,
+  isLegacyInstitutionSexOffenseConsentInquiryDescription,
 } from '../lib/institution-sex-offense-consent-field-definitions.js'
 import {
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
@@ -215,6 +216,16 @@ function createInstitutionScheduleMultipleChoice(): MultipleChoiceParagraph {
   }
 }
 
+/** Platform 신청 작성·CMS와 동일 안내 사항 필드 정의 */
+export {
+  INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH,
+  INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER,
+  INSTITUTION_GUIDANCE_FIELDS,
+  INSTITUTION_GUIDANCE_SECTION_DESCRIPTION,
+  type InstitutionGuidanceFieldDefinition,
+  type InstitutionGuidanceFieldId,
+} from '../lib/institution-guidance-field-definitions.js'
+
 export function createProgramApplicationFormInstitutionDraft(): WritingFormDraft {
   const paragraphs: WritingFormParagraph[] = [
     createInstitutionPersonalInfoHorizontalTable(),
@@ -287,17 +298,8 @@ export function migrateProgramApplicationFormInstitutionParagraphs(
       return next
     }
     if (
-      paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice &&
-      paragraph.kind === 'single_item' &&
-      paragraph.variant === 'multiple_choice' &&
-      paragraph.paragraphDescription !== SCHEDULE_PARAGRAPH_DESCRIPTION
-    ) {
-      changed = true
-      return { ...paragraph, paragraphDescription: SCHEDULE_PARAGRAPH_DESCRIPTION }
-    }
-    if (
       paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod &&
-      paragraph.paragraphDescription !== INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description
+      isLegacyInstitutionSexOffenseConsentInquiryDescription(paragraph.paragraphDescription)
     ) {
       changed = true
       return {
@@ -307,6 +309,22 @@ export function migrateProgramApplicationFormInstitutionParagraphs(
     }
     return paragraph
   })
+  if (
+    !paragraphs.some(
+      paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
+    )
+  ) {
+    changed = true
+    const guidance = createInstitutionGuidanceHorizontalTable()
+    const basicInfoIndex = paragraphs.findIndex(
+      paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo
+    )
+    if (basicInfoIndex >= 0) {
+      paragraphs.splice(basicInfoIndex + 1, 0, guidance)
+    } else {
+      paragraphs.push(guidance)
+    }
+  }
   if (
     !paragraphs.some(
       paragraph => paragraph.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice

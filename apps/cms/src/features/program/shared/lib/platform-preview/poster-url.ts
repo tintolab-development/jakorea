@@ -43,9 +43,8 @@ export function resolvePreviewPosterSeed(input: {
   overlayKeyVisualImage?: string
   programKeyVisualImage?: string
 }): PreviewPosterSeed {
-  // blob 은 즉시 placeholder 용. revoke 됐을 수 있으므로 fileObjectId 로드가 SSOT.
-  const displayUrl =
-    readablePosterUrl(input.thumbObjectUrl) ?? readablePosterUrl(input.programKeyVisualImage)
+  // overlay blob은 재진입 후 무효. fileObjectId 로드가 SSOT.
+  const displayUrl = readablePosterUrl(input.programKeyVisualImage)
   const fileObjectId =
     input.thumbFileObjectId ??
     fileObjectIdFromAdminFileUrl(input.overlayKeyVisualImage) ??

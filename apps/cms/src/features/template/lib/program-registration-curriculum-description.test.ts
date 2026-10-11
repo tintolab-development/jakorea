@@ -25,7 +25,7 @@ describe('resolveProgramRegistrationScheduleCurriculumEditDescription', () => {
         participantOrganization: true,
         ...COMMON,
       })
-    ).toBe('회차 별 정보를 입력해 주세요')
+    ).toBe('행사 일정 별 정보를 입력해 주세요')
   })
 
   it('단일 회차이면 세부 일정 설명을 반환한다', () => {

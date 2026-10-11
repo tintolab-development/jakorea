@@ -214,7 +214,11 @@ export function UserInfo({
 
   return (
     <div
-      className={['user-info-grid', isEditMode ? 'user-info-grid--edit' : '']
+      className={[
+        'user-info-grid',
+        isEditMode ? 'user-info-grid--edit' : '',
+        !isEditMode ? 'user-info-grid--non-interactive' : '',
+      ]
         .filter(Boolean)
         .join(' ')}
     >
@@ -223,8 +227,10 @@ export function UserInfo({
           key={field.key}
           className="user-info-grid__item"
           selected={selected.has(field.key)}
-          onClick={() => onToggle(field.key)}
-          disabled={!isEditMode}
+          onClick={() => {
+            if (!isEditMode) return
+            onToggle(field.key)
+          }}
         >
           {field.label}
         </ParagraphChip>

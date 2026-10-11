@@ -1,10 +1,14 @@
+import { POSTS_LIST_PAGE_SIZE } from '@/features/posts/api/posts-list-page'
 import type { Inquiries1Params } from '@/shared/api/generated/posts/schemas'
 
-export const INQUIRY_LIST_PAGE_SIZE = 500
+export const INQUIRY_LIST_PAGE_SIZE = POSTS_LIST_PAGE_SIZE
 
-export function inquiriesParamsFromSearchParams(searchParams: URLSearchParams): Inquiries1Params {
+export function inquiriesParamsFromSearchParams(
+  searchParams: URLSearchParams,
+  page = 0
+): Inquiries1Params {
   const params: Inquiries1Params = {
-    page: 0,
+    page,
     size: INQUIRY_LIST_PAGE_SIZE,
   }
 

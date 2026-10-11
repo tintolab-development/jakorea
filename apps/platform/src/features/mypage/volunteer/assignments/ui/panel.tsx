@@ -1,8 +1,17 @@
 import { useMemo } from 'react'
+import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
+import { VolunteerAssignmentPanelSkeleton } from '@/features/mypage/shared/ui'
+import { PFText } from '@/shared/ui'
+import { useVolunteerAssignmentsQuery } from '../api/use-assignments-query'
 import {
   getMockVolunteerIndividualAssignment,
   getMockVolunteerInstitutionAssignment,
 } from '../lib/mock-assignments'
+import { VOLUNTEER_DISTANCE_UNAVAILABLE_TOOLTIP } from '../lib/format-distance'
+import type {
+  VolunteerIndividualAssignment,
+  VolunteerInstitutionAssignment,
+} from '../model/types'
 import {
   VolunteerAssignmentStatusText,
   VolunteerAssignmentTable,
@@ -11,109 +20,109 @@ import {
 } from './assignment-table'
 import styles from './panel.module.css'
 
+function DistanceCell({ value }: { value: string }) {
+  if (value === '-') {
+    return (
+      <span title={VOLUNTEER_DISTANCE_UNAVAILABLE_TOOLTIP}>
+        <VolunteerCellText>{value}</VolunteerCellText>
+      </span>
+    )
+  }
+  return <VolunteerCellText>{value}</VolunteerCellText>
+}
+
 type VolunteerAssignmentPanelProps = {
   programAudience: 'organization' | 'individual'
   lastParticipatedSession?: number
+  /** remote 시 배정 API 조회. 없으면 mock */
+  applicationType?: ProgramApplicationType | null
+  applicationId?: string | null
 }
 
-export function VolunteerAssignmentPanel({
-  programAudience,
-  lastParticipatedSession,
-}: VolunteerAssignmentPanelProps) {
-  const institution = useMemo(
-    () => getMockVolunteerInstitutionAssignment(lastParticipatedSession),
-    [lastParticipatedSession]
-  )
-  const individual = useMemo(
-    () => getMockVolunteerIndividualAssignment(lastParticipatedSession),
-    [lastParticipatedSession]
-  )
-
-  if (programAudience === 'individual') {
-    return (
-      <div className={styles.shell}>
-        <VolunteerAssignmentTable
-          title="배정된 봉사 일정"
-          count={individual.assigned.length}
-          rows={individual.assigned}
-          rowKey={row => row.id}
-          emptyMessage="배정된 봉사 일정이 없어요."
-          columns={[
-            {
-              key: 'no',
-              label: 'No.',
-              width: '72px',
-              render: row => <VolunteerCellText>{row.no}</VolunteerCellText>,
-            },
-            {
-              key: 'location',
-              label: '봉사 지역',
-              align: 'left',
-              render: row => <VolunteerCellText>{row.location}</VolunteerCellText>,
-            },
-            {
-              key: 'distance',
-              label: '자택과의 거리',
-              width: '120px',
-              render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
-            },
-            {
-              key: 'schedule',
-              label: '담당 봉사 진행 일정',
-
-              render: row => <VolunteerScheduleLines lines={[row.scheduleLine]} />,
-            },
-          ]}
-        />
-        <VolunteerAssignmentTable
-          title="배정된 봉사 일정 목록"
-          count={individual.waiting.length}
-          rows={individual.waiting}
-          rowKey={row => row.id}
-          emptyMessage="배정 대기 중인 봉사 일정이 없어요."
-          columns={[
-            {
-              key: 'no',
-              label: 'No.',
-              width: '72px',
-              render: row => <VolunteerCellText>{row.no}</VolunteerCellText>,
-            },
-            {
-              key: 'location',
-              label: '기관 소재지',
-              align: 'left',
-              render: row => <VolunteerCellText>{row.location}</VolunteerCellText>,
-            },
-            {
-              key: 'distance',
-              label: '자택과의 거리',
-              width: '120px',
-              render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
-            },
-            {
-              key: 'schedule',
-              label: '담당 봉사 진행 일정',
-
-              render: row => <VolunteerScheduleLines lines={[row.scheduleLine]} />,
-            },
-            {
-              key: 'status',
-              label: '배정 상태',
-              width: '112px',
-              render: row => <VolunteerAssignmentStatusText status={row.assignmentStatus} />,
-            },
-          ]}
-        />
-      </div>
-    )
-  }
-
+function IndividualTables({ data }: { data: VolunteerIndividualAssignment }) {
   return (
-    <div className={styles.shell}>
+    <>
+      <VolunteerAssignmentTable
+        title="배정된 봉사 일정"
+        count={data.assigned.length}
+        rows={data.assigned}
+        rowKey={row => row.id}
+        emptyMessage="배정된 봉사 일정이 없어요."
+        columns={[
+          {
+            key: 'no',
+            label: 'No.',
+            width: '72px',
+            render: row => <VolunteerCellText>{row.no}</VolunteerCellText>,
+          },
+          {
+            key: 'location',
+            label: '봉사 지역',
+            align: 'left',
+            render: row => <VolunteerCellText>{row.location}</VolunteerCellText>,
+          },
+          {
+            key: 'distance',
+            label: '자택과의 거리',
+            width: '120px',
+            render: row => <DistanceCell value={row.distanceFromHome} />,
+          },
+          {
+            key: 'schedule',
+            label: '담당 봉사 진행 일정',
+            render: row => <VolunteerScheduleLines lines={row.scheduleLines} />,
+          },
+        ]}
+      />
+      <VolunteerAssignmentTable
+        title="배정된 봉사 일정 목록"
+        count={data.waiting.length}
+        rows={data.waiting}
+        rowKey={row => row.id}
+        emptyMessage="배정 대기 중인 봉사 일정이 없어요."
+        columns={[
+          {
+            key: 'no',
+            label: 'No.',
+            width: '72px',
+            render: row => <VolunteerCellText>{row.no}</VolunteerCellText>,
+          },
+          {
+            key: 'location',
+            label: '기관 소재지',
+            align: 'left',
+            render: row => <VolunteerCellText>{row.location}</VolunteerCellText>,
+          },
+          {
+            key: 'distance',
+            label: '자택과의 거리',
+            width: '120px',
+            render: row => <DistanceCell value={row.distanceFromHome} />,
+          },
+          {
+            key: 'schedule',
+            label: '담당 봉사 진행 일정',
+            render: row => <VolunteerScheduleLines lines={[row.scheduleLine]} />,
+          },
+          {
+            key: 'status',
+            label: '배정 상태',
+            width: '112px',
+            render: row => <VolunteerAssignmentStatusText status={row.assignmentStatus} />,
+          },
+        ]}
+      />
+    </>
+  )
+}
+
+function InstitutionTables({ data }: { data: VolunteerInstitutionAssignment }) {
+  return (
+    <>
       <VolunteerAssignmentTable
         title="배정된 기관 목록"
-        count={institution.assigned.length}
-        rows={institution.assigned}
+        count={data.assigned.length}
+        rows={data.assigned}
         rowKey={row => row.id}
         emptyMessage="배정된 기관이 없어요."
         columns={[
@@ -143,20 +152,19 @@ export function VolunteerAssignmentPanel({
             key: 'distance',
             label: '자택과의 거리',
             width: '120px',
-            render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
+            render: row => <DistanceCell value={row.distanceFromHome} />,
           },
           {
             key: 'schedule',
             label: '담당 봉사 진행 일정',
-
             render: row => <VolunteerScheduleLines lines={row.scheduleLines} />,
           },
         ]}
       />
       <VolunteerAssignmentTable
         title="배정된 대기 기관 목록"
-        count={institution.waiting.length}
-        rows={institution.waiting}
+        count={data.waiting.length}
+        rows={data.waiting}
         rowKey={row => row.id}
         emptyMessage="배정 대기 중인 기관이 없어요."
         columns={[
@@ -186,7 +194,7 @@ export function VolunteerAssignmentPanel({
             key: 'distance',
             label: '자택과의 거리',
             width: '120px',
-            render: row => <VolunteerCellText>{row.distanceFromHome}</VolunteerCellText>,
+            render: row => <DistanceCell value={row.distanceFromHome} />,
           },
           {
             key: 'schedule',
@@ -201,6 +209,61 @@ export function VolunteerAssignmentPanel({
           },
         ]}
       />
+    </>
+  )
+}
+
+export function VolunteerAssignmentPanel({
+  programAudience,
+  lastParticipatedSession,
+  applicationType,
+  applicationId,
+}: VolunteerAssignmentPanelProps) {
+  const remoteQuery = useVolunteerAssignmentsQuery({
+    applicationType,
+    applicationId,
+    programAudience,
+    lastParticipatedSession,
+  })
+
+  const mockIndividual = useMemo(
+    () => getMockVolunteerIndividualAssignment(lastParticipatedSession),
+    [lastParticipatedSession],
+  )
+  const mockInstitution = useMemo(
+    () => getMockVolunteerInstitutionAssignment(lastParticipatedSession),
+    [lastParticipatedSession],
+  )
+
+  if (remoteQuery.enabled) {
+    if (remoteQuery.isLoading) {
+      return <VolunteerAssignmentPanelSkeleton />
+    }
+    if (remoteQuery.isError || !remoteQuery.bundle) {
+      return (
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          배정현황을 불러오지 못했습니다.
+        </PFText>
+      )
+    }
+    return (
+      <div className={styles.shell}>
+        {remoteQuery.bundle.audience === 'individual' ? (
+          <IndividualTables data={remoteQuery.bundle.data} />
+        ) : (
+          <InstitutionTables data={remoteQuery.bundle.data} />
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.shell}>
+      {programAudience === 'individual' ? (
+        <IndividualTables data={mockIndividual} />
+      ) : (
+        <InstitutionTables data={mockInstitution} />
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@
  * 데이터 관리 > 후원사 관리(sponsor-page)와 동일: FilterTableLayout + useTablePage + CmsButton + 목록용 CSS 체인
  */
 
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useCallback,
   useEffect,
@@ -12,10 +13,9 @@ import {
   type MouseEvent,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import type { Notice } from '@/data/mock/notices'
+import type { Notice } from '@/features/posts/model/notice'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminNoticeCategories } from '@/features/posts/hooks/use-admin-notice-categories'
 import { useNoticeListQuery } from '@/features/posts/hooks/use-notice-list-query'
@@ -25,16 +25,18 @@ import { adminNoticeManagementTablePageConfig } from '@/features/posts/model/adm
 import type { AdminNoticeTableContext } from '@/features/posts/model/admin-notice-management.types'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   ActionResultModal,
-  CmsButton,
   useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { NoticePinnedIcon } from '@/features/posts/ui/notice-pinned-icon'
-import { NoticeCategoryManagementModal } from '@/features/posts/ui/notice-category-management-modal'
+import { CategoryManagementModal } from '@/features/posts/ui/category-management-modal'
+import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import '@/pages/programs/program-list-page.css'
@@ -63,13 +65,28 @@ export function AdminNoticeListPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const listQuery = useNoticeListQuery(searchParams, true)
+  const searchParamsKey = searchParams.toString()
+  const {
+    rows,
+    totalElements,
+    isLoading: contentLoading,
+    isError: listIsError,
+    error: listError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useNoticeListQuery(searchParams, true)
   const { bulkDeleteMutation } = useNoticeMutations()
-  const rows = listQuery.data ?? []
-  const contentLoading = listQuery.isLoading
-  const contentError = listQuery.isError
-    ? getPostsApiErrorMessage(listQuery.error, '공지사항 목록을 불러오지 못했습니다.')
+  const contentError = listIsError
+    ? getPostsApiErrorMessage(listError, '공지사항 목록을 불러오지 못했습니다.')
     : null
+
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: searchParamsKey,
+  })
 
   const {
     categoryRows,
@@ -99,8 +116,8 @@ export function AdminNoticeListPage() {
     setPendingFilters,
     applySearch: handleSearch,
     handleFilterChange,
-    displayedCount,
     tableData,
+    hasActiveFilters,
   } = useTablePage(adminNoticeManagementTablePageConfig, {
     data: rows,
     searchParams,
@@ -163,7 +180,7 @@ export function AdminNoticeListPage() {
         width: NOTICE_LIST_COL_WIDTH.no,
         align: 'center',
         render: (_: unknown, __: Notice, index: number) =>
-          tableData.length === 0 ? '—' : tableData.length - index,
+          totalElements === 0 ? '—' : totalElements - index,
       },
       {
         title: '공개 여부',
@@ -248,13 +265,13 @@ export function AdminNoticeListPage() {
         render: (n: number) => n.toLocaleString('ko-KR'),
       },
     ],
-    [tableData.length]
+    [totalElements]
   )
 
-  const bulkDeleteLine1 =
-    selectedRowKeys.length > 0
-      ? `선택한 ${selectedRowKeys.length}건의 공지사항을 삭제하시겠습니까?`
-      : '선택한 공지사항을 삭제하시겠습니까?'
+  const bulkDeleteCopy = useMemo(
+    () => resolvePostsDeleteConfirmCopy('notice', 'bulk', selectedRowKeys.length),
+    [selectedRowKeys.length]
+  )
 
   return (
     <div className="admin-notice-list-page">
@@ -263,14 +280,15 @@ export function AdminNoticeListPage() {
         onCancel={() => setBulkDeleteConfirmOpen(false)}
         onConfirm={handleConfirmBulkDelete}
         preset="notice"
-        line1={bulkDeleteLine1}
+        {...bulkDeleteCopy}
       />
-      <NoticeCategoryManagementModal
+      <CategoryManagementModal
+        kind="notice"
         open={categoryModalOpen}
         onCancel={() => setCategoryModalOpen(false)}
         categories={categoryRows}
         onCategoriesChange={() => {}}
-        notices={rows}
+        posts={rows}
         remoteActions={noticeCategoryRemoteActions}
       />
       <NoticeFormModal
@@ -288,6 +306,7 @@ export function AdminNoticeListPage() {
         onClose={() => setActionResultOpen(false)}
       />
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         bordered={false}
         fields={filterFields}
         filters={{
@@ -300,22 +319,22 @@ export function AdminNoticeListPage() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="공지사항 목록"
-        description={`총 ${displayedCount.toLocaleString()}건`}
+        description={`총 ${totalElements.toLocaleString()}건`}
         contentLoading={contentLoading}
         actions={
           <>
-            <CmsButton
+            <FilterTableToolbarButton
               variant="delete"
               onClick={handleBulkDelete}
             >
               공지사항 삭제
-            </CmsButton>
-            <CmsButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
               카테고리 관리
-            </CmsButton>
-            <CmsButton variant="primary" onClick={handleRegister}>
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="primary" onClick={handleRegister}>
               공지사항 등록
-            </CmsButton>
+            </FilterTableToolbarButton>
           </>
         }
         excelExport={{
@@ -328,38 +347,41 @@ export function AdminNoticeListPage() {
             {contentError}
           </div>
         ) : (
-          <Table<Notice>
-            rowKey="id"
-            className="cms-data-table admin-notice-list-page__table"
-            tableLayout="fixed"
-            scroll={{ x: NOTICE_LIST_TABLE_SCROLL_X }}
-            columns={columns}
-            dataSource={tableData}
-            pagination={false}
-            onRow={record => ({
-              className: 'admin-notice-list-page__row--clickable',
-              onClick: (e: MouseEvent) => {
-                const el = e.target as HTMLElement
-                if (
-                  el.closest('.ant-checkbox-wrapper') ||
-                  el.closest('.ant-table-selection-column')
-                ) {
-                  return
-                }
-                navigate(`/admin/posts/notices/${record.id}`)
-              },
-            })}
-            rowSelection={
-              canWrite
-                ? {
-                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                    selectedRowKeys,
-                    onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                    preserveSelectedRowKeys: false,
+          <>
+            <CmsDataTable<Notice>
+              rowKey="id"
+              className="cms-data-table admin-notice-list-page__table"
+              tableLayout="fixed"
+              scroll={{ x: NOTICE_LIST_TABLE_SCROLL_X }}
+              columns={columns}
+              dataSource={tableData}
+              pagination={false}
+              onRow={record => ({
+                className: 'admin-notice-list-page__row--clickable',
+                onClick: (e: MouseEvent) => {
+                  const el = e.target as HTMLElement
+                  if (
+                    el.closest('.ant-checkbox-wrapper') ||
+                    el.closest('.ant-table-selection-column')
+                  ) {
+                    return
                   }
-                : undefined
-            }
-          />
+                  navigate(`/admin/posts/notices/${record.id}`)
+                },
+              })}
+              rowSelection={
+                canWrite
+                  ? {
+                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                      selectedRowKeys,
+                      onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                      preserveSelectedRowKeys: false,
+                    }
+                  : undefined
+              }
+            />
+            <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+          </>
         )}
       </FilterTableLayout>
     </div>

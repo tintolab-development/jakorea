@@ -10,6 +10,7 @@ import { programToDetailEditValues } from '@/features/program/shared/model/progr
 import { parseAnnouncementLabel } from '@/features/program/shared/lib/announcement-label'
 import {
   parseTargetLevelsFromDisplayLabel,
+  normalizeInstructorTargetList,
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
   normalizeVolunteerTargetList,
@@ -55,17 +56,13 @@ export function parseDisplayPeriodLabelToIsoRange(
   }
 }
 
-function parseMultiSelectFromDisplayLabel(
-  label: string | undefined,
-  allowed: ReadonlySet<string>
-): string[] {
+function instructorTargetsFromRecruitmentTargetLabel(label: string | undefined): string[] {
   if (!label?.trim() || label.trim() === '-') return []
   const parts = label
     .split(/[,，·]/)
     .map(part => part.trim())
     .filter(Boolean)
-  const valid = parts.filter(part => allowed.has(part))
-  return valid.length > 0 ? valid : parts
+  return normalizeInstructorTargetList(parts)
 }
 
 function coalesceIso(
@@ -137,7 +134,7 @@ function enrichInstructorRecruitmentScalars(program: Program): Program {
   if (resolveProgramInstructorTargets(next).length === 0 && info.recruitmentTarget?.trim()) {
     next = {
       ...next,
-      instructorTargets: parseMultiSelectFromDisplayLabel(info.recruitmentTarget, new Set(['성인', '대학생', '기타'])),
+      instructorTargets: instructorTargetsFromRecruitmentTargetLabel(info.recruitmentTarget),
       instructorTarget: info.recruitmentTarget.trim(),
     }
   }
@@ -234,7 +231,18 @@ export function programToRecruitmentTabEditValues(
   const recruitmentRow = pickRecruitmentCopyRow(merged, audience)
   const recruitmentCopy = recruitmentRow != null && hasRecruitmentCopy(recruitmentRow)
   const participantInfo = merged.generalCommonInfo?.participantRecruitmentInfo
-  const volunteerInfo = merged.generalCommonInfo?.volunteerRecruitmentInfo
+  const volunteerInfo = merged.generalCommonInfo?.volunteerRecruitmentInfo as
+    | {
+        notesNotApplicable?: boolean
+        documentPassAnnouncementDate?: string
+        documentPassAnnouncementMethod?: string
+        interviewStartDate?: string
+        interviewEndDate?: string
+        interviewMethod?: string
+        finalPassAnnouncementDate?: string
+        finalPassAnnouncementMethod?: string
+      }
+    | undefined
   return {
     ...base,
     description: recruitmentCopy ? (detail.description ?? '') : (detail.description ?? base.description),
@@ -267,6 +275,41 @@ export function programToRecruitmentTabEditValues(
           ? ''
           : (resolveRecruitmentRemarks(merged, 'volunteer') || base.oneLineIntroduction)
         : base.oneLineIntroduction,
+    // 봉사자 표시 SSOT는 nested volunteerRecruitmentInfo — 공용 컬럼(강사와 공유)보다 우선 시드
+    ...(audience === 'volunteer'
+      ? {
+          ...(hasIsoDate(volunteerInfo?.documentPassAnnouncementDate)
+            ? {
+                documentPassAnnouncementDate: String(volunteerInfo!.documentPassAnnouncementDate),
+              }
+            : {}),
+          ...(volunteerInfo?.documentPassAnnouncementMethod?.trim()
+            ? {
+                documentPassAnnouncementMethod:
+                  volunteerInfo.documentPassAnnouncementMethod.trim(),
+              }
+            : {}),
+          ...(hasIsoDate(volunteerInfo?.interviewStartDate)
+            ? { interviewStartDate: String(volunteerInfo!.interviewStartDate) }
+            : {}),
+          ...(hasIsoDate(volunteerInfo?.interviewEndDate)
+            ? { interviewEndDate: String(volunteerInfo!.interviewEndDate) }
+            : {}),
+          ...(volunteerInfo?.interviewMethod?.trim()
+            ? { interviewMethod: volunteerInfo.interviewMethod.trim() }
+            : {}),
+          ...(hasIsoDate(volunteerInfo?.finalPassAnnouncementDate)
+            ? {
+                finalPassAnnouncementDate: String(volunteerInfo!.finalPassAnnouncementDate),
+              }
+            : {}),
+          ...(volunteerInfo?.finalPassAnnouncementMethod?.trim()
+            ? {
+                finalPassAnnouncementMethod: volunteerInfo.finalPassAnnouncementMethod.trim(),
+              }
+            : {}),
+        }
+      : {}),
     ...(isGeneralRowCopyProgram(merged)
       ? generalRecruitmentRowFormSeed(recruitmentRow, audience)
       : {}),

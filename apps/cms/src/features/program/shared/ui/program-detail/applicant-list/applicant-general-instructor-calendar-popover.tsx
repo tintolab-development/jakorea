@@ -11,6 +11,7 @@ import type {
   ApplicantCalendarEvent,
   ApplicantInstructorCalendarEventItem,
 } from './applicant-calendar-events'
+import { resolveInstructorCalendarInstitutionName } from './applicant-calendar-events'
 import { getInstructorCalendarSessionCardLabel } from './applicant-instructor-calendar-session'
 
 function resolveInstructorInstitutionFromCalendarItem(item: CalendarItem): {
@@ -37,8 +38,10 @@ function resolveInstructorInstitutionFromCalendarItem(item: CalendarItem): {
   const summary = row.calendarInstitutionSummary
   if (summary == null) return null
 
+  const schoolName = resolveInstructorCalendarInstitutionName(row)
+
   return {
-    schoolName: row.schoolName.trim() || '-',
+    schoolName,
     regionDisplay: summary.regionDisplay?.trim() || '-',
     applicantCount: summary.applicantCount,
     instructor: row,

@@ -135,6 +135,7 @@ export function useSponsorMutations() {
         rowId,
         sponsorMatchesListFilter
       )
+      void queryClient.invalidateQueries({ queryKey: listsKey })
       patchSponsorOptionsList(queryClient, old =>
         old.some(row => row.id === created.id) ? old : [created, ...old]
       )
@@ -146,6 +147,7 @@ export function useSponsorMutations() {
     onSuccess: (_data, id) => {
       queryClient.removeQueries({ queryKey: dataManagementQueryKeys.sponsors.detail(id) })
       applyDeletedToArrayLists(queryClient, listsKey, id, rowId)
+      void queryClient.invalidateQueries({ queryKey: listsKey })
       patchSponsorOptionsList(queryClient, old => old.filter(row => row.id !== id))
     },
   })
@@ -158,6 +160,7 @@ export function useSponsorMutations() {
         queryClient.removeQueries({ queryKey: dataManagementQueryKeys.sponsors.detail(id) })
         applyDeletedToArrayLists(queryClient, listsKey, id, rowId)
       }
+      void queryClient.invalidateQueries({ queryKey: listsKey })
       patchSponsorOptionsList(queryClient, old => old.filter(row => !idSet.has(row.id)))
     },
   })

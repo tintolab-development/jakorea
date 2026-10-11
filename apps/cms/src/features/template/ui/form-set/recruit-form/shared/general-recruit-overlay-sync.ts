@@ -1,95 +1,96 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
+import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 
 /**
- * 모집 폼(개인 모집, 강사 모집, 봉사자 모집)의 공유 오버레이 스토어
- * 각 폼이 독립적으로 입력값을 지속하도록 함
+ * 모집 폼(개인 모집, 강사 모집, 봉사자 모집) overlay.
+ * templateCode 버킷으로 양식 인스턴스를 가른다. persist 키는 그대로다.
  */
 
-let overlayState: Record<string, unknown> = {}
-let overlayVersion = 0
-const overlayListeners = new Set<() => void>()
-const overlayKeyListeners = new Map<string, Set<() => void>>()
+const store = createScopedOverlayStore()
 
-function notifyOverlayListeners(changedKeys?: Iterable<string>) {
-  overlayVersion += 1
-  const notified = new Set<() => void>()
-  if (changedKeys != null) {
-    for (const key of changedKeys) {
-      overlayKeyListeners.get(key)?.forEach(listener => notified.add(listener))
-    }
-  } else {
-    overlayKeyListeners.forEach(listeners => listeners.forEach(listener => notified.add(listener)))
-  }
-  overlayListeners.forEach(listener => notified.add(listener))
-  notified.forEach(listener => listener())
+export function setGeneralRecruitOverlayScope(templateCode: string | undefined | null): void {
+  store.setScope(templateCode)
+}
+
+export function getGeneralRecruitOverlayScope(): string {
+  return store.getScope()
 }
 
 export function subscribeGeneralRecruitOverlay(listener: () => void): () => void {
-  overlayListeners.add(listener)
-  return () => overlayListeners.delete(listener)
+  return store.subscribe(listener)
 }
 
 export function subscribeGeneralRecruitOverlayKey(key: string, listener: () => void): () => void {
-  let listeners = overlayKeyListeners.get(key)
-  if (listeners == null) {
-    listeners = new Set()
-    overlayKeyListeners.set(key, listeners)
-  }
-  listeners.add(listener)
-  return () => {
-    listeners?.delete(listener)
-    if (listeners != null && listeners.size === 0) {
-      overlayKeyListeners.delete(key)
-    }
-  }
+  return store.subscribeKey(key, listener)
 }
 
 export function getGeneralRecruitOverlayVersion(): number {
-  return overlayVersion
+  return store.getVersion()
 }
 
+/** UI·활성 스코프 전용. persist/create 스냅샷에는 `collectSelectedRecruitOverlaysForProgram` / `collectOperationalOverlayForCatalogId`를 쓴다. */
 export function getGeneralRecruitOverlayRecord(): Record<string, unknown> {
-  return overlayState
+  return store.getRecord()
+}
+
+export function peekGeneralRecruitOverlayRecord(
+  templateCode: string | undefined | null
+): Record<string, unknown> {
+  return store.peekRecord(templateCode)
+}
+
+export function replaceGeneralRecruitOverlayForScope(
+  templateCode: string | undefined | null,
+  next: Record<string, unknown>
+): void {
+  store.replaceFor(templateCode, next)
+}
+
+export function resetGeneralRecruitOverlayForScope(
+  templateCode: string | undefined | null
+): void {
+  store.resetFor(templateCode)
 }
 
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
-  return readOperationalOverlayKvValue('general-recruit', overlayState, key, defaultValue)
+  return readOperationalOverlayKvValue('general-recruit', store.getRecord(), key, defaultValue)
 }
 
 export function patchGeneralRecruitOverlay(partial: Record<string, unknown>): void {
-  const changedKeys: string[] = []
-  const next: Record<string, unknown> = { ...overlayState }
-  for (const [key, value] of Object.entries(partial)) {
-    if (Object.is(overlayState[key], value)) continue
-    next[key] = value
-    changedKeys.push(key)
-  }
-  if (changedKeys.length === 0) return
-  overlayState = next
-  notifyOverlayListeners(changedKeys)
+  store.patch(partial)
+}
+
+export function patchGeneralRecruitOverlayForScope(
+  templateCode: string | undefined | null,
+  partial: Record<string, unknown>
+): void {
+  const current = store.peekRecord(templateCode)
+  store.replaceFor(templateCode, { ...current, ...partial })
 }
 
 export function updateGeneralRecruitOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T
 ): void {
-  const prev = overlayState[key] as T | undefined
-  const next = updater(prev)
-  if (Object.is(prev, next)) return
-  overlayState = { ...overlayState, [key]: next }
-  notifyOverlayListeners([key])
+  store.updateKey(key, updater)
 }
 
 export function replaceGeneralRecruitOverlay(next: Record<string, unknown>): void {
-  overlayState = { ...next }
-  notifyOverlayListeners()
+  store.replace(next)
 }
 
 export function resetGeneralRecruitOverlay(): void {
-  if (Object.keys(overlayState).length === 0) return
-  overlayState = {}
-  notifyOverlayListeners()
+  store.reset()
+}
+
+/** 모든 templateCode 버킷 — 위저드 종료·신규 시작 */
+export function resetAllGeneralRecruitOverlay(): void {
+  store.resetAll()
+}
+
+export function resetGeneralRecruitOverlayStoreForTests(): void {
+  store.resetAll()
 }
 
 /**

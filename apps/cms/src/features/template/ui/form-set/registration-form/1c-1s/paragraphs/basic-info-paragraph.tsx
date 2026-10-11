@@ -82,6 +82,38 @@ const educationCourseSelectOptions = [
   ...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
 ]
 
+function EconomyOverlayTextField({
+  label,
+  validationKey,
+  overlayKey,
+  placeholder,
+  defaultValue = '',
+}: {
+  label: string
+  validationKey: string
+  overlayKey: string
+  placeholder: string
+  defaultValue?: string
+}) {
+  const [value, setValue] = useProgramRegistrationOverlayKv(overlayKey, defaultValue)
+  return (
+    <DetailInfoForm.Field
+      label={label}
+      validationKey={validationKey}
+      edit={
+        <CmsInput
+          inputSize="medium"
+          placeholder={placeholder}
+          width="100%"
+          value={value}
+          onChange={event => setValue(event.target.value)}
+        />
+      }
+      view="-"
+    />
+  )
+}
+
 export type OneCOneSRegistrationBasicInfoParagraphProps = {
   participant: ProgramRegistrationParticipantState
   onIndividualChange: (checked: boolean) => void
@@ -95,11 +127,6 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   onOrganizationChange: _onOrganizationChange,
   onTeacherInstructorChange: _onTeacherInstructorChange,
 }: OneCOneSRegistrationBasicInfoParagraphProps) {
-  const [repKo, setRepKo] = useProgramRegistrationOverlayKv(
-    ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
-    REP_KO
-  )
-  const [repEn, setRepEn] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.repEn', REP_EN)
   const [businessField, setBusinessField] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.businessField',
     BUSINESS_FIELD_DEFAULT
@@ -173,11 +200,6 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     'economyRegistration.basicInfo.detailedProgramName',
     ''
   )
-  const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
-    'economyRegistration.basicInfo.publicProgramTitle',
-    ''
-  )
-
   const [surveyItems] = useProgramRegistrationOverlayKv<
     Record<ProgramRegistrationSurveyItemId, boolean>
   >('economyRegistration.basicInfo.surveyItems', ECONOMY_SURVEY_ITEMS_DEFAULT)
@@ -300,49 +322,27 @@ export function OneCOneSRegistrationBasicInfoParagraph({
       >
         {/* ── 상단: 일반 프로그램 정보 ── */}
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
+          <EconomyOverlayTextField
             label="대표 프로그램명 (국문)"
             validationKey="basicInfo.repKo"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                value={repKo}
-                onChange={e => setRepKo(e.target.value)}
-                placeholder="대표 프로그램명을 입력하세요"
-                width="100%"
-              />
-            }
-            view="-"
+            overlayKey={ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY}
+            placeholder="대표 프로그램명을 입력하세요"
+            defaultValue={REP_KO}
           />
-          <DetailInfoForm.Field
+          <EconomyOverlayTextField
             label="대표 프로그램명 (영문)"
             validationKey="basicInfo.repEn"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                value={repEn}
-                onChange={e => setRepEn(e.target.value)}
-                placeholder="대표 프로그램명을 입력하세요"
-                width="100%"
-              />
-            }
-            view="-"
+            overlayKey="economyRegistration.basicInfo.repEn"
+            placeholder="대표 프로그램명을 입력하세요"
+            defaultValue={REP_EN}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
+          <EconomyOverlayTextField
             label="공고용 프로그램명"
             validationKey="basicInfo.publicProgramTitle"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                placeholder="모집 시 노출될 프로그램명을 입력하세요"
-                width="100%"
-                value={publicProgramTitle}
-                onChange={e => setPublicProgramTitle(e.target.value)}
-              />
-            }
-            view="-"
+            overlayKey="economyRegistration.basicInfo.publicProgramTitle"
+            placeholder="모집 시 노출될 프로그램명을 입력하세요"
           />
           <DetailInfoForm.Field
             label="세부 프로그램명"

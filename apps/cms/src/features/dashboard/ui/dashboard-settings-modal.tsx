@@ -17,7 +17,6 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useQueries } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   getDashboardWidgetsForUser,
@@ -32,9 +31,9 @@ import {
   normalizeShortcutEnabled,
 } from '../model/dashboard-settings-store'
 import { useSaveDashboardPreferences } from '../hooks/use-dashboard-preferences'
-import { getDashboardProgramOptions } from '../api/admin-dashboard-service'
+import { getDashboardProgramOptionsFromRecruitmentList } from '../api/admin-dashboard-service'
+import { useDashboardRecruitmentsCatalog } from '@/features/dashboard/hooks/use-dashboard-recruitments-catalog'
 import { useDashboardQueryScope } from '../hooks/use-dashboard-query-scope'
-import { dashboardQueryKeys } from '../api/dashboard-query-keys'
 import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
 import {
   buildUnifiedProgramRows,
@@ -129,21 +128,13 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     []
   )
 
-  const programOptionQueries = useQueries({
-    queries: visibleWidgetKeys.map(widgetKey => ({
-      queryKey: dashboardQueryKeys.programOptions(queryScope, widgetKey),
-      queryFn: () => getDashboardProgramOptions(widgetKey),
-      enabled: open && useRemote,
-      staleTime: 60_000,
-      retry: false,
-    })),
-  })
+  const recruitmentsCatalogQuery = useDashboardRecruitmentsCatalog(open && useRemote)
 
   const programsCatalogLoading =
     useRemote &&
     visibleWidgetKeys.length > 0 &&
-    (programOptionQueries.length < visibleWidgetKeys.length ||
-      programOptionQueries.some(q => q.isPending || q.isFetching))
+    (recruitmentsCatalogQuery.isPending ||
+      (recruitmentsCatalogQuery.isFetching && recruitmentsCatalogQuery.data === undefined))
 
   const programCatalog = useMemo(() => {
     if (!useRemote) {
@@ -154,17 +145,22 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
       return catalog
     }
 
-    if (programsCatalogLoading) {
+    if (programsCatalogLoading || recruitmentsCatalogQuery.data === undefined) {
       return null
     }
 
     const catalog: Record<string, { id: string; title: string }[]> = {}
-    visibleWidgetKeys.forEach((widgetKey, index) => {
-      const query = programOptionQueries[index]
-      catalog[widgetKey] = query?.isSuccess && query.data ? query.data : []
+    const dto = recruitmentsCatalogQuery.data
+    visibleWidgetKeys.forEach(widgetKey => {
+      catalog[widgetKey] = getDashboardProgramOptionsFromRecruitmentList(widgetKey, dto)
     })
     return catalog
-  }, [visibleWidgetKeys, useRemote, programsCatalogLoading, programOptionQueries])
+  }, [
+    visibleWidgetKeys,
+    useRemote,
+    programsCatalogLoading,
+    recruitmentsCatalogQuery.data,
+  ])
 
   const shortcutCatalogItems = useMemo(() => {
     if (!useRemote || !apiShortcuts?.length) {

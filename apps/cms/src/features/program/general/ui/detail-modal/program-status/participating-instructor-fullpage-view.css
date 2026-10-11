@@ -135,7 +135,11 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--table-header-bg, #fafafa);
+  background: var(
+    --Background-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  ) !important;
 }
 
 .participating-instructor-fullpage-view__waiting-table-empty {

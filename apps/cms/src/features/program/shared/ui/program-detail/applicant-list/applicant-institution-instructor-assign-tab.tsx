@@ -19,7 +19,7 @@ import {
   type CompanySchoolAssignedInstructorRow,
   type CompanySchoolWaitingInstructorRow,
 } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
-import { fetchOrganizationApplicationRequestedSchedulesRemote } from '@/features/program/general/api/applications-api-client'
+import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
 import { mapRequestedSchedulesToSessions } from '@/features/program/1c-1s/lib/map-requested-schedules'
 import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-role-tag.css'
 import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-status-text.css'
@@ -50,10 +50,8 @@ export function ApplicantInstitutionInstructorAssignTab({
   })
 
   const schedulesQuery = useQuery({
-    queryKey: [...companySchoolQueryKeys.all, 'org-requested-schedules', organizationApplicationId],
-    queryFn: () => fetchOrganizationApplicationRequestedSchedulesRemote(organizationApplicationId),
+    ...organizationRequestedSchedulesQueryOptions(organizationApplicationId),
     enabled: remoteEnabled && Boolean(organizationApplicationId),
-    staleTime: 30_000,
   })
 
   const sessions = useMemo(

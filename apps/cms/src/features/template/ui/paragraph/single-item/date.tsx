@@ -3,8 +3,10 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import type { DateParagraph } from '@/features/template/model/writing-form-draft.schema'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import { ParagraphBodyStaticText } from '@/features/template/ui/shared/paragraph-body-static-text'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
+import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import './date.css'
 
 const PICKER_WIDTH = 240
@@ -67,6 +69,33 @@ export function DateField({
     return dateRangeUsesClockTime(appliedSurfaceRange[0], appliedSurfaceRange[1])
   }, [appliedSurfaceRange])
 
+  const staticDisplayText = useMemo((): string | null => {
+    if (!periodEnabled) {
+      if (singleDate != null && singleDate.isValid()) {
+        return formatAppDatepickerDisplay(singleDate)
+      }
+      return null
+    }
+    if (appliedSurfaceRange != null) {
+      const [a, b] = appliedSurfaceRange
+      if (appliedSurfaceWithTime) {
+        return `${formatAppDatepickerDisplay(a)} ${a.format('HH:mm')} ~ ${b.format('HH:mm')}`
+      }
+      return `${formatAppDatepickerDisplay(a)} ~ ${formatAppDatepickerDisplay(b)}`
+    }
+    return null
+  }, [appliedSurfaceRange, appliedSurfaceWithTime, periodEnabled, singleDate])
+
+  const staticPlaceholder = periodEnabled ? '기간을 선택하세요' : '날짜를 선택하세요'
+
+  if (!isBodyInteractive) {
+    return (
+      <div key={layoutKey} className="date-field-paragraph-body">
+        <ParagraphBodyStaticText value={staticDisplayText} placeholder={staticPlaceholder} />
+      </div>
+    )
+  }
+
   return (
     <div key={layoutKey} className="date-field-paragraph-body">
       {!periodEnabled ? (
@@ -77,7 +106,6 @@ export function DateField({
           value={singleDate}
           onChange={setSingleDate}
           width={PICKER_WIDTH}
-          disabled={!isBodyInteractive}
         />
       ) : (
         <ParagraphDatePicker
@@ -96,7 +124,6 @@ export function DateField({
             setSingleDate(d)
             setRange([d.startOf('day'), d.endOf('day')])
           }}
-          disabled={!isBodyInteractive}
         />
       )}
     </div>

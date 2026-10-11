@@ -10,15 +10,16 @@ import {
   shouldSkipUnauthenticatedSocialConnectStart,
 } from '@/features/auth/lib/register-social-connect-state'
 import { getSignupSocialLinkToken } from '@/features/auth/lib/signup-social-link-handoff'
+import { showSocialConnectUnlinkCompletedAlert } from '@/features/auth/lib/show-social-connect-unlink-completed-alert'
 import { getSocialConnectUnlinkConfirmContent } from '@/features/auth/lib/social-connect-unlink-copy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { hasPasswordChangeRequiredSocialOnboarding } from '@/features/auth/password-change-required/wizard-state'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
-import { isPasswordChangeRequiredSocialConnectPath } from '@/shared/utils/post-auth-redirect'
 import { handleError } from '@/shared/utils/error-handler'
+
+import { SocialConnectConsentModal } from '@/features/auth/ui/social-connect-consent-modal'
 
 import { SocialConnectProviderIcon } from './admin-register/social-connect-provider-icon'
 import './social-connect-provider-list.css'
@@ -29,14 +30,6 @@ const SOCIAL_CONNECT_DISPLAY_NAME: Record<SocialProvider, string> = {
   google: 'Google',
   naver: '네이버',
   kakao: '카카오',
-}
-
-function isFirstLoginSocialConnectContext(): boolean {
-  if (typeof window === 'undefined') return false
-  return (
-    hasPasswordChangeRequiredSocialOnboarding() ||
-    isPasswordChangeRequiredSocialConnectPath(window.location.pathname, window.location.search)
-  )
 }
 
 function hasCmsAccessToken(): boolean {
@@ -64,27 +57,25 @@ interface SocialConnectProviderListProps {
   redirectPath?: string
   onConnectSuccess?: (provider: SocialProvider) => void
   className?: string
-  /** true면 원격 연결 목록 조회를 생략 (비번변경 온보딩 등 세션 불안정 구간) */
-  skipRemoteSync?: boolean
 }
 
 export function SocialConnectProviderList({
   redirectPath,
   onConnectSuccess: _onConnectSuccess,
   className,
-  skipRemoteSync = false,
 }: SocialConnectProviderListProps) {
   const remoteEnabled = isSocialAdminSocialApiRemoteEnabled()
   const [connectedProviders, setConnectedProviders] = useState<Set<SocialProvider>>(() =>
-    remoteEnabled && !skipRemoteSync ? new Set() : getConnectedProviders()
+    remoteEnabled ? new Set() : getConnectedProviders()
   )
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
   const [loadingAccounts, setLoadingAccounts] = useState(false)
   const [unlinkTarget, setUnlinkTarget] = useState<SocialProvider | null>(null)
   const [unlinkLoading, setUnlinkLoading] = useState(false)
+  const [connectConsentTarget, setConnectConsentTarget] = useState<SocialProvider | null>(null)
 
   const syncConnectedProviders = useCallback(async () => {
-    if (skipRemoteSync || !remoteEnabled || !cmsSocialAuthClient.hasAccessToken()) {
+    if (!remoteEnabled || !cmsSocialAuthClient.hasAccessToken()) {
       setConnectedProviders(getConnectedProviders())
       return
     }
@@ -104,19 +95,27 @@ export function SocialConnectProviderList({
     } finally {
       setLoadingAccounts(false)
     }
-  }, [remoteEnabled, skipRemoteSync])
+  }, [remoteEnabled])
 
   useEffect(() => {
     void syncConnectedProviders()
   }, [syncConnectedProviders])
 
-  const handleConnect = (provider: SocialProvider) => {
+  const handleConnectRequest = (provider: SocialProvider) => {
+    setConnectConsentTarget(provider)
+  }
+
+  const handleConnectConfirm = () => {
+    if (!connectConsentTarget) return
+    performConnect(connectConsentTarget)
+  }
+
+  const performConnect = (provider: SocialProvider) => {
     setLoadingProvider(provider)
     setRegisterSocialLinkIntent(redirectPath)
 
     const signupSocialLinkToken = getSignupSocialLinkToken()
     const hasAccessToken = hasCmsAccessToken()
-    const firstLoginOnboarding = isFirstLoginSocialConnectContext()
     const startInput =
       remoteEnabled && !hasAccessToken && signupSocialLinkToken
         ? { provider, intent: 'link' as const, returnUrl: redirectPath, signupSocialLinkToken }
@@ -127,7 +126,6 @@ export function SocialConnectProviderList({
         remoteEnabled,
         hasAccessToken,
         hasSignupSocialLinkToken: Boolean(signupSocialLinkToken),
-        firstLoginOnboarding,
       })
     ) {
       cmsAlertModal.show({
@@ -136,6 +134,7 @@ export function SocialConnectProviderList({
           '가입 직후 소셜 연결 세션이 없거나 만료되었습니다. 로그인 후 [내 정보 수정]에서 연결해 주세요.',
       })
       setLoadingProvider(null)
+      setConnectConsentTarget(null)
       return
     }
 
@@ -151,6 +150,7 @@ export function SocialConnectProviderList({
           content: socialConnectFailureMessage(error),
         })
         setLoadingProvider(null)
+        setConnectConsentTarget(null)
       })
   }
 
@@ -190,6 +190,7 @@ export function SocialConnectProviderList({
       .then(success => {
         if (success) {
           setUnlinkTarget(null)
+          showSocialConnectUnlinkCompletedAlert()
         }
       })
       .finally(() => {
@@ -249,7 +250,7 @@ export function SocialConnectProviderList({
                 loading={isLoading}
                 disabled={loadingProvider !== null && !isLoading}
                 onClick={() =>
-                  isConnected ? handleDisconnectRequest(provider) : handleConnect(provider)
+                  isConnected ? handleDisconnectRequest(provider) : handleConnectRequest(provider)
                 }
               >
                 {isConnected ? '해제하기' : '연결하기'}
@@ -258,6 +259,17 @@ export function SocialConnectProviderList({
           )
         })}
       </ul>
+
+      <SocialConnectConsentModal
+        open={connectConsentTarget !== null}
+        confirmLoading={connectConsentTarget !== null && loadingProvider === connectConsentTarget}
+        onCancel={() => {
+          if (loadingProvider !== connectConsentTarget) {
+            setConnectConsentTarget(null)
+          }
+        }}
+        onConfirm={handleConnectConfirm}
+      />
 
       <ConfirmModal
         open={unlinkTarget !== null}

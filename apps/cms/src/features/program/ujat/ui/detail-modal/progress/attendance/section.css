@@ -1,3 +1,11 @@
+.ujat-education-progress-attendance__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
+}
+
 .ujat-attendance-session-group {
   display: flex;
   flex-direction: column;
@@ -5,10 +13,9 @@
   min-width: 0;
 }
 
-.ujat-attendance-session-group__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.ujat-attendance-session-group__header {
+  width: 100%;
+  min-width: 0;
 }
 
 .ujat-attendance-session-group__table-wrap {

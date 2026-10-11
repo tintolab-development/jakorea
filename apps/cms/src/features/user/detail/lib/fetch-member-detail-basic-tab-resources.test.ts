@@ -186,14 +186,19 @@ describe('fetchMemberDetailBasicTabResources', () => {
     )
   })
 
-  it('관리자 신청 상세(permission) — admin-accounts comments fetch', async () => {
+  it('관리자 신청 상세(permission) · 승인 완료 — admin-accounts comments fetch', async () => {
     vi.mocked(fetchMemberCommentsQuery).mockClear()
     const queryClient = {} as QueryClient
 
     await fetchMemberDetailBasicTabResources(queryClient, {
       detailTabActive: true,
       membersRemote: true,
-      displayUser: { role: 'ADMIN', adminAccountId: 7, id: 'admin-account-7' },
+      displayUser: {
+        role: 'ADMIN',
+        adminAccountId: 7,
+        id: 'admin-account-7',
+        permissionApprovalStatus: 'APPROVED',
+      },
       mode: 'permission',
       showConsentAgreement: false,
       showSchoolAffiliatedTeachers: false,
@@ -206,5 +211,27 @@ describe('fetchMemberDetailBasicTabResources', () => {
       MEMBER_DETAIL_SCREEN_CODE,
       'adminAccount'
     )
+  })
+
+  it('관리자 신청 상세(permission) · 승인 대기 — comments fetch 생략', async () => {
+    vi.mocked(fetchMemberCommentsQuery).mockClear()
+    const queryClient = {} as QueryClient
+
+    await fetchMemberDetailBasicTabResources(queryClient, {
+      detailTabActive: true,
+      membersRemote: true,
+      displayUser: {
+        role: 'ADMIN',
+        adminAccountId: 7,
+        id: 'admin-account-7',
+        permissionApprovalStatus: 'PENDING',
+      },
+      mode: 'permission',
+      showConsentAgreement: false,
+      showSchoolAffiliatedTeachers: false,
+      currentUser: { role: 'ADMIN' },
+    })
+
+    expect(fetchMemberCommentsQuery).not.toHaveBeenCalled()
   })
 })

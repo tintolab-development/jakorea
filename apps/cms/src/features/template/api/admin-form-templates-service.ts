@@ -8,10 +8,13 @@ import {
   schemaJsonToWritingFormDraft,
   settingsJsonToSettingsPayload,
   settingsPayloadToSettingsJson,
+  parseCatalogSchemaJson,
+  writingFormDraftToCatalogSchemaJson,
   writingFormDraftToSchemaJson,
 } from '@/features/template/api/adapters/form-template-draft-adapters'
 import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/form-template-catalog'
 import { shouldOmitImmutableFormSchemaJson } from '@/features/template/lib/form-template-delete-policy'
+import { buildOperationalImmutableFormSchemaDraft } from '@/features/template/lib/operational-form-schema-copy-merge'
 import {
   getFormTemplateVersionCacheEntry,
   removeFormTemplateVersionCacheEntry,
@@ -252,7 +255,11 @@ export function buildSaveRecordFromVersionResponse(args: {
   } else if (args.skipSeedMigration) {
     draft = normalizeWritingFormDraft(draft)
   } else {
-    draft = normalizeWritingFormDraftFromApi(args.templateCode, draft)
+    draft = normalizeWritingFormDraftFromApi(
+      args.templateCode,
+      draft,
+      getFormTemplateVersionCacheEntry(args.templateCode)?.baseTemplateCode
+    )
   }
 
   return {
@@ -320,9 +327,15 @@ export async function loadFormTemplateVersionDraft(
 
 export async function loadFormTemplateVersionDraftByVersionId(
   templateCode: string,
-  versionId: number
+  versionId: number,
+  options?: { invalidateCache?: boolean }
 ): Promise<WritingFormTemplateSaveRecord | null> {
   assertFormsSurveysRemoteReady()
+  if (options?.invalidateCache === true) {
+    await queryClient.invalidateQueries({
+      queryKey: formTemplateQueryKeys.versionById(versionId),
+    })
+  }
   const version = await queryClient.fetchQuery({
     queryKey: formTemplateQueryKeys.versionById(versionId),
     queryFn: () => fetchFormTemplateVersionRemote(versionId),
@@ -339,12 +352,14 @@ export async function loadFormTemplateVersionDraftByVersionId(
 }
 
 function buildVersionUpdateBody(args: {
+  templateCode?: string
   draft: WritingFormDraft
   overlay?: Record<string, unknown>
   editorState?: Record<string, unknown>
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
   omitSchemaJson?: boolean
+  catalogBaseline?: WritingFormDraft | null
 }): {
   schemaJson?: string
   extensionJson?: string
@@ -358,6 +373,16 @@ function buildVersionUpdateBody(args: {
 
   if (args.omitSchemaJson !== true) {
     body.schemaJson = writingFormDraftToSchemaJson(args.draft)
+  } else if (args.templateCode != null && args.templateCode.trim() !== '') {
+    const immutableSchemaDraft = buildOperationalImmutableFormSchemaDraft({
+      templateCode: args.templateCode,
+      editorDraft: args.draft,
+      baseTemplateCode: getFormTemplateVersionCacheEntry(args.templateCode)?.baseTemplateCode,
+      catalogBaseline: args.catalogBaseline,
+    })
+    if (immutableSchemaDraft != null) {
+      body.schemaJson = writingFormDraftToCatalogSchemaJson(immutableSchemaDraft)
+    }
   }
 
   if (
@@ -380,6 +405,17 @@ function buildVersionUpdateBody(args: {
   return body
 }
 
+async function loadCatalogBaselineForImmutablePut(
+  versionId: number
+): Promise<WritingFormDraft | null> {
+  try {
+    const current = await fetchFormTemplateVersionRemote(versionId)
+    return parseCatalogSchemaJson(current.schemaJson)
+  } catch {
+    return null
+  }
+}
+
 export async function saveFormTemplateVersionDraftByVersionId(args: {
   versionId: number
   draft: WritingFormDraft
@@ -391,12 +427,17 @@ export async function saveFormTemplateVersionDraftByVersionId(args: {
   omitSchemaJson?: boolean
 }): Promise<void> {
   assertFormsSurveysRemoteReady()
+  const omitSchemaJson =
+    args.omitSchemaJson === true || shouldOmitImmutableFormSchemaJson(args.templateCode)
+  const catalogBaseline = omitSchemaJson
+    ? await loadCatalogBaselineForImmutablePut(args.versionId)
+    : null
   await updateFormTemplateVersionRemote(
     args.versionId,
     buildVersionUpdateBody({
       ...args,
-      omitSchemaJson:
-        args.omitSchemaJson === true || shouldOmitImmutableFormSchemaJson(args.templateCode),
+      omitSchemaJson,
+      catalogBaseline,
     })
   )
   await queryClient.invalidateQueries({
@@ -427,9 +468,14 @@ export async function saveFormTemplateVersionDraft(args: {
     throw new Error('저장할 템플릿 버전 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
   }
 
+  const omitSchemaJson = shouldOmitImmutableFormSchemaJson(args.templateCode)
+  const catalogBaseline = omitSchemaJson
+    ? await loadCatalogBaselineForImmutablePut(versionId)
+    : null
   const body = buildVersionUpdateBody({
     ...args,
-    omitSchemaJson: shouldOmitImmutableFormSchemaJson(args.templateCode),
+    omitSchemaJson,
+    catalogBaseline,
   })
 
   try {

@@ -66,24 +66,44 @@ function InterviewAssignCalendarMiniCore({
     onMonthChange(currentMonth.add(1, 'month'))
   }
 
+  const handleDateCellActivate = (date: Dayjs) => {
+    if (!date.isSame(currentMonth, 'month')) return
+    if (disabledDate?.(date)) return
+    onSelectDate(date)
+  }
+
   const dateFullCellRender = (date: Dayjs) => {
     if (!date.isSame(currentMonth, 'month')) return null
     const dateKey = date.format('YYYY-MM-DD')
     const hasSchedule = programDates.has(dateKey)
     const hasAssignmentComplete = assignedDateKeys?.has(dateKey) ?? false
     const isSelected = date.isSame(selectedDate, 'day')
+    const isDisabled = disabledDate?.(date) ?? false
 
     return (
       <div
+        role="button"
+        tabIndex={isDisabled ? -1 : 0}
         className={[
           'calendar-mini-cell',
           hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
           hasAssignmentComplete ? 'calendar-mini-cell--assignment-complete' : '',
           isSelected ? 'calendar-mini-cell--selected' : '',
+          isDisabled ? 'calendar-mini-cell--disabled' : '',
           ...buildInterviewAssignCellWeekendClasses(date, holidayDateKeys),
         ]
           .filter(Boolean)
           .join(' ')}
+        onMouseDown={event => {
+          event.preventDefault()
+          event.stopPropagation()
+          handleDateCellActivate(date)
+        }}
+        onKeyDown={event => {
+          if (event.key !== 'Enter' && event.key !== ' ') return
+          event.preventDefault()
+          handleDateCellActivate(date)
+        }}
       >
         <span className="calendar-mini-date">{date.date()}</span>
       </div>
@@ -107,12 +127,8 @@ function InterviewAssignCalendarMiniCore({
         locale={enUS}
         fullCellRender={dateFullCellRender}
         headerRender={() => null}
-        disabledDate={disabledDate}
-        onSelect={(date, { source }) => {
-          if (source === 'date') {
-            if (disabledDate?.(date)) return
-            onSelectDate(date)
-          }
+        onSelect={() => {
+          /* fullCellRender 셀 onMouseDown에서만 선택 */
         }}
       />
     </div>

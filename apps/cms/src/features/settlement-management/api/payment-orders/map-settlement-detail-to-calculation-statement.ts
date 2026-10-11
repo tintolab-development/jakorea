@@ -5,11 +5,11 @@ import type {
   PaymentOrderProgramCalculationStatement,
   PaymentOrderCalculationStatementLine,
   PaymentOrderCalculationStatementSessionBlock,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS,
   addressDisplayForStatementBlur,
-} from '@/data/mock/payment-order-admin-list'
+} from '@/features/settlement-management/model/payment-order-admin-list'
 import type { SettlementFrontendItemResponse, SettlementFrontendResponse } from '@/shared/api/generated/settlement/schemas'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'

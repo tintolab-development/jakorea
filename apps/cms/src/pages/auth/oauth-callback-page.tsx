@@ -16,12 +16,13 @@ import {
 } from '@/features/auth/api/social-auth-remote-capabilities'
 import { ADMIN_REGISTER_TERMS_VERSION } from '@/features/auth/lib/admin-register.constants'
 import {
-  buildRegisterSocialConnectCompletePath,
   buildRegisterSocialConnectFailedPath,
+  buildRegisterSocialConnectPath,
   buildSocialConnectCompletePath,
   clearOAuthIntent,
   getOAuthIntent,
   getRegisterSocialRedirect,
+  resolveSocialConnectFinishPath,
 } from '@/features/auth/lib/register-social-connect-state'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -44,7 +45,11 @@ function buildLinkSuccessPath(registerRedirect?: string, isAuthenticated = false
   if (isAuthenticated) {
     return buildSocialConnectCompletePath(registerRedirect)
   }
-  return buildRegisterSocialConnectCompletePath(registerRedirect)
+  return resolveSocialConnectFinishPath({
+    isAuthenticated: false,
+    redirectPath: buildRegisterSocialConnectPath(registerRedirect),
+    fallbackPath: '/login',
+  })
 }
 
 interface OAuthCallbackPageProps {
