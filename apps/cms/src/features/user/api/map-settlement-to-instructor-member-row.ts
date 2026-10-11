@@ -123,10 +123,14 @@ export function mapSettlementDetailToInstructorInvoice(
 export function mapSettlementItemToInstructorMemberRow(
   item: SettlementListItemResponse,
   index: number,
-  statementId?: number
+  statementIdBySettlementId?: ReadonlyMap<number, number>
 ): InstructorSettlementListRow | null {
   const settlementId = item.settlementId
   if (settlementId == null) return null
+
+  const statementId =
+    item.statementId ??
+    (statementIdBySettlementId != null ? statementIdBySettlementId.get(settlementId) : undefined)
 
   const status = resolveSettlementUiStatus(item)
   const programName = item.programNameKo?.trim() || `프로그램 ${item.programId ?? ''}`
@@ -169,11 +173,7 @@ export function mapSettlementsToInstructorMemberRows(
 ): InstructorSettlementListRow[] {
   return items
     .map((item, index) =>
-      mapSettlementItemToInstructorMemberRow(
-        item,
-        index,
-        item.settlementId != null ? statementIdBySettlementId?.get(item.settlementId) : undefined
-      )
+      mapSettlementItemToInstructorMemberRow(item, index, statementIdBySettlementId)
     )
     .filter((row): row is InstructorSettlementListRow => row != null)
 }
