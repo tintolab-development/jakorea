@@ -1,0 +1,39 @@
+/**
+ * 면접 평가 인라인 — DetailInfoForm edit 슬롯 폭 보정
+ * 공통 `.detail-info-form__field-content--edit > * { display:flex }` 가 입력 폭을 깨뜨림
+ */
+
+.general-volunteer-applicant-interview-evaluation__form .detail-info-form__row--double {
+  align-items: stretch;
+}
+
+.general-volunteer-applicant-interview-evaluation__form
+  .detail-info-form__field-content--edit
+  > .cms-input {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  margin-block: 0 !important;
+  box-sizing: border-box;
+}
+
+.general-volunteer-applicant-interview-evaluation__form
+  .detail-info-form__field-content--edit
+  > .cms-input
+  .cms-input__control {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.general-volunteer-applicant-interview-evaluation__form
+  .detail-info-form__field:not(.detail-info-form__field--edit)
+  .detail-info-form__field-label {
+  align-items: center;
+}
+
+.general-volunteer-applicant-interview-evaluation__form
+  .detail-info-form__field:not(.detail-info-form__field--edit)
+  .detail-info-form__field-content {
+  align-items: center;
+}

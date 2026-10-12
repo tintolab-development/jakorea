@@ -80,9 +80,13 @@ export interface GeneralVolunteerApplicantRow {
   interviewAvailability: GeneralVolunteerInterviewAvailabilityDay[]
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
+  /** 활성 면접 슬롯 종료 시각(ISO-8601, BE `interview_slot.end_at`) */
+  assignedInterviewEndAt?: string
   /** BE 면접 배정 ID — 면접 평가 API path용 */
   interviewAssignmentId?: number
   secondInterviewScreeningStatus?: GeneralSecondInterviewScreeningStatus
+  /** 2차 면접 합격/불합격 알림 발송 방식 — 취소 모달 분기용 (세션 내) */
+  finalResultNotifyTiming?: PermissionModalNotifyTiming
   totalScore?: number | null
   managerAScore?: number | null
   managerBScore?: number | null
@@ -158,11 +162,18 @@ export function patchGeneralVolunteerDocumentScreeningCancel(
 export function patchGeneralVolunteerSecondInterviewScreeningStatus(
   rows: GeneralVolunteerApplicantRow[],
   ids: string[],
-  status: GeneralSecondInterviewScreeningStatus
+  status: GeneralSecondInterviewScreeningStatus,
+  notifyTiming?: PermissionModalNotifyTiming
 ): GeneralVolunteerApplicantRow[] {
   const idSet = new Set(ids)
   return rows.map(row =>
-    idSet.has(row.id) ? { ...row, secondInterviewScreeningStatus: status } : row
+    idSet.has(row.id)
+      ? {
+          ...row,
+          secondInterviewScreeningStatus: status,
+          ...(notifyTiming ? { finalResultNotifyTiming: notifyTiming } : {}),
+        }
+      : row
   )
 }
 
