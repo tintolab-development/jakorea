@@ -1313,6 +1313,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     interviewAvailability: mapInterviewAvailabilitySlots(dto.interviewAvailability),
     interviewAssignmentId:
       enriched.interviewAssignmentId != null ? Number(enriched.interviewAssignmentId) : undefined,
+    assignedInterviewEndAt: enriched.assignedInterviewEndAt?.trim() || undefined,
     ...interviewSlots,
     ...assigned,
     secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
@@ -1335,6 +1336,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
   const canEditEvaluation = dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
   return {
     ...base,
+    assignedInterviewEndAt: dto.assignedInterviewEndAt?.trim() || base.assignedInterviewEndAt,
     ...readGeneralVolunteerProjection(dto.application, base),
     id: toId(dto.id) || base.id,
     memberId: dto.memberId ?? base.memberId,

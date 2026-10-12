@@ -16,14 +16,10 @@ import {
   submitGeneralIndividualDocumentResult,
   cancelGeneralIndividualApplicationApproval,
   cancelGeneralIndividualApplicationRejection,
+  submitGeneralIndividualFinalResult,
 } from '@/features/program/general/api/admin-applications-service'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { patchParticipantForCancelApproval } from '@/features/program/general/lib/participant-cancel-approval'
-import {
-  patchParticipantForCancelRejection,
-  toParticipantCancelRejectionNotifyOptions,
-  type ParticipantCancelRejectionConfirmPayload,
-} from '@/features/program/general/lib/participant-cancel-rejection'
+import type { ParticipantCancelRejectionConfirmPayload } from '@/features/program/general/lib/participant-cancel-rejection'
 import {
   resolveApplicantNotificationResendSentAt,
   toApplicantNotificationResendNotifyOptions,
@@ -68,6 +64,14 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
+import { formatApplicationDecisionCancelConflictMessage } from '@/features/program/shared/lib/application-decision-cancel-conflict'
+import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
+import { toNestedDecisionNotification, toScreeningNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
+import type { VolunteerInterview2CancelFailConfirmPayload } from '@/features/program/general/lib/volunteer-interview2-cancel-fail'
+import { GeneralVolunteerInterview2CancelPassModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-cancel-pass-modal'
+import { GeneralVolunteerInterview2CancelFailModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-cancel-fail-modal'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import { MESSAGES } from '@/shared/constants/messages'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateResponse'
 import type { IndividualDocumentEvaluationResponse } from '@/shared/api/generated/dashboard/schemas/individualDocumentEvaluationResponse'
@@ -269,7 +273,18 @@ export function GeneralParticipantApplicantDetailView({
         title: '처리 실패',
         content:
           formatApplicationEligibilityConflictMessage(error) ??
-          '참여자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+          formatApplicationDecisionCancelConflictMessage(error) ??
+          formatApplicationStatusConflictMessage(error) ??
+          extractApiErrorMessage(
+            error && typeof error === 'object' && 'response' in error
+              ? (error as { response?: { data?: unknown } }).response?.data
+              : undefined,
+            {
+              httpStatus: getApiErrorHttpStatus(error),
+              fallback:
+                '참여자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+            }
+          ),
       })
     },
     [showAlert]
@@ -287,6 +302,8 @@ export function GeneralParticipantApplicantDetailView({
     id: string
     name: string
   } | null>(null)
+  const [cancelFinalPassOpen, setCancelFinalPassOpen] = useState(false)
+  const [cancelFinalFailOpen, setCancelFinalFailOpen] = useState(false)
   const [cancelApprovalComplete, setCancelApprovalComplete] = useState<{
     participantName: string
     cancellationReason: string
@@ -505,6 +522,18 @@ export function GeneralParticipantApplicantDetailView({
     return applicant
   }, [applicant, cancelApprovalTarget])
 
+  const volunteerModalRow = useMemo((): GeneralVolunteerApplicantRow | null => {
+    if (!applicant) return null
+    return {
+      id: applicant.id,
+      no: applicant.no,
+      name: applicant.applicantName,
+      contact: '',
+      email: '',
+      availableActions: applicant.availableActions ?? [],
+    } as GeneralVolunteerApplicantRow
+  }, [applicant])
+
   const handleOpenNotificationResend = useCallback(() => {
     if (!applicant) return
     if (applicant.approvalStatus !== 'approved' && applicant.approvalStatus !== 'rejected') return
@@ -542,6 +571,20 @@ export function GeneralParticipantApplicantDetailView({
         onCancelReject={id => {
           setCancelRejectTarget({ id, name: applicant.applicantName })
         }}
+        onCancelFinalPass={
+          usesApplicationMock
+            ? undefined
+            : () => {
+                setCancelFinalPassOpen(true)
+              }
+        }
+        onCancelFinalFail={
+          usesApplicationMock
+            ? undefined
+            : () => {
+                setCancelFinalFailOpen(true)
+              }
+        }
         onResendNotification={
           usesApplicationMock ||
           applicant.availableActions?.includes('RESEND_NOTIFICATION')
@@ -762,25 +805,13 @@ export function GeneralParticipantApplicantDetailView({
         }}
         onConfirm={payload => {
           if (!cancelApprovalTarget || !applicant || decisionBusy) return
-          const notifyOptions = {
-            notifyTiming: payload.notifyTiming,
-            manualNotifyAt: payload.manualNotifyAt,
-            rejectionReason: payload.reason,
-          }
           const run = async () => {
             if (useRemote) {
               setDecisionBusy(true)
               try {
-                const response = await cancelGeneralIndividualApplicationApproval(
-                  applicant.id,
-                  payload.reason
-                )
+                await cancelGeneralIndividualApplicationApproval(applicant.id, payload.reason)
                 await invalidateIndividualApplications()
-                const patched = patchParticipantForCancelApproval(applicant, notifyOptions)
-                syncApplicant({
-                  ...patched,
-                  availableActions: response.availableActions ?? patched.availableActions,
-                })
+                await detailQuery.refetch()
               } catch (error) {
                 const responseData =
                   error && typeof error === 'object' && 'response' in error
@@ -825,19 +856,28 @@ export function GeneralParticipantApplicantDetailView({
         onCancel={() => setCancelRejectTarget(null)}
         onConfirm={(payload: ParticipantCancelRejectionConfirmPayload) => {
           if (!cancelRejectTarget || !applicant || decisionBusy) return
-          const notifyOptions =
-            payload.variant === 'alreadySent'
-              ? toParticipantCancelRejectionNotifyOptions(payload)
-              : undefined
           const run = async () => {
             if (useRemote) {
               setDecisionBusy(true)
               try {
+                const rejectionReason =
+                  payload.variant === 'alreadySent'
+                    ? payload.reason
+                    : '반려 취소'
+                const notification =
+                  payload.variant === 'alreadySent'
+                    ? toNestedDecisionNotification(
+                        payload.notifyTiming,
+                        payload.manualNotifyAt
+                      )?.notification
+                    : undefined
                 await cancelGeneralIndividualApplicationRejection(
                   applicant.id,
-                  payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
+                  rejectionReason,
+                  notification
                 )
                 await invalidateIndividualApplications()
+                await detailQuery.refetch()
               } catch (error) {
                 notifyDecisionFailure(error)
                 return
@@ -851,8 +891,6 @@ export function GeneralParticipantApplicantDetailView({
               )
               return
             }
-            const patched = patchParticipantForCancelRejection(applicant, notifyOptions)
-            syncApplicant(patched)
             setCancelRejectTarget(null)
             setCancelRejectComplete({ participantName: cancelRejectTarget.name })
           }
@@ -863,6 +901,102 @@ export function GeneralParticipantApplicantDetailView({
         open={cancelRejectComplete != null}
         participantName={cancelRejectComplete?.participantName ?? ''}
         onClose={() => setCancelRejectComplete(null)}
+      />
+      <GeneralVolunteerInterview2CancelPassModal
+        open={cancelFinalPassOpen}
+        volunteer={volunteerModalRow}
+        onCancel={() => {
+          if (decisionBusy) return
+          setCancelFinalPassOpen(false)
+        }}
+        onConfirm={payload => {
+          if (!applicant || decisionBusy) return
+          const run = async () => {
+            if (!useRemote) {
+              notifyProgramApiUnavailable(
+                'general-individual-cancel-final-pass',
+                '참여자 신청 · 합격 취소'
+              )
+              return
+            }
+            setDecisionBusy(true)
+            try {
+              const notify = toScreeningNotifyFields(
+                payload.notifyTiming,
+                payload.manualNotifyAt
+              )
+              await submitGeneralIndividualFinalResult(applicant.id, {
+                result: 'FAIL',
+                reason: payload.reason.trim() || '합격 취소',
+                notifyTiming: notify.notifyTiming,
+                scheduledAt: notify.scheduledAt,
+              })
+              await invalidateIndividualApplications()
+              await detailQuery.refetch()
+              setCancelFinalPassOpen(false)
+              void showAlert({
+                title: '취소 완료',
+                content: MESSAGES.success.cancelled,
+              })
+            } catch (error) {
+              notifyDecisionFailure(error)
+            } finally {
+              setDecisionBusy(false)
+            }
+          }
+          void run()
+        }}
+      />
+      <GeneralVolunteerInterview2CancelFailModal
+        open={cancelFinalFailOpen}
+        volunteer={volunteerModalRow}
+        onCancel={() => {
+          if (decisionBusy) return
+          setCancelFinalFailOpen(false)
+        }}
+        onConfirm={(payload: VolunteerInterview2CancelFailConfirmPayload) => {
+          if (!applicant || decisionBusy) return
+          const run = async () => {
+            if (!useRemote) {
+              notifyProgramApiUnavailable(
+                'general-individual-cancel-final-fail',
+                '참여자 신청 · 불합격 취소'
+              )
+              return
+            }
+            setDecisionBusy(true)
+            try {
+              const reason =
+                payload.variant === 'alreadySent'
+                  ? payload.reason
+                  : payload.reason.trim() || '불합격 취소'
+              const notification =
+                payload.variant === 'alreadySent'
+                  ? toNestedDecisionNotification(
+                      payload.notifyTiming,
+                      payload.manualNotifyAt
+                    )?.notification
+                  : undefined
+              await cancelGeneralIndividualApplicationRejection(
+                applicant.id,
+                reason,
+                notification
+              )
+              await invalidateIndividualApplications()
+              await detailQuery.refetch()
+              setCancelFinalFailOpen(false)
+              void showAlert({
+                title: '취소 완료',
+                content: MESSAGES.success.cancelled,
+              })
+            } catch (error) {
+              notifyDecisionFailure(error)
+            } finally {
+              setDecisionBusy(false)
+            }
+          }
+          void run()
+        }}
       />
     </>
   )
