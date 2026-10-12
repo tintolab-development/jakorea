@@ -1,4 +1,5 @@
 import { createAgreementNoticeDraft } from '../writing-form/draft-schema.js'
+import { createAgreementPortraitDraft } from '../writing-form/draft-schema.js'
 import { createEducatorFacilitatorPledgeDraft } from '../writing-form/draft-schema.js'
 import { createPaymentStatementPreConsentDraft } from '../paragraph-ids/payment-statement-pre-consent-draft.js'
 import type { WritingFormDraft } from '../writing-form/draft-schema.js'
@@ -70,6 +71,7 @@ export function isCrimeConsentTemplate(templateId: string): boolean {
 }
 
 const SEED_FACTORIES: Record<string, () => WritingFormDraft> = {
+  'agreement-portrait': createAgreementPortraitDraft,
   'agreement-third-party': createPaymentStatementPreConsentDraft,
   'agreement-expense': createEducatorFacilitatorPledgeDraft,
   'agreement-notice': createAgreementNoticeDraft,
