@@ -5,12 +5,17 @@
 .form-template-host {
   --detail-info-form-body-radius: 8px;
 
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-self: stretch;
   font-family: Pretendard, system-ui, sans-serif;
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
   color: var(--default-BK);
-  min-width: 0;
 }
 
 .form-template-host[data-surface='cmsAdmin'] {
