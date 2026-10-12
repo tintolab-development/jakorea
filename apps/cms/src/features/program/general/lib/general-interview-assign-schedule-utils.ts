@@ -57,17 +57,56 @@ function parseUnavailableDateLabels(specificUnavailableDates: string): Set<strin
   return keys
 }
 
+function resolveUnavailableDateKeys(source: {
+  specificUnavailableDates?: string
+  specificUnavailableDateIsos?: string[]
+}): Set<string> {
+  const keys = parseUnavailableDateLabels(source.specificUnavailableDates ?? '')
+  for (const iso of source.specificUnavailableDateIsos ?? []) {
+    const parsed = dayjs(iso)
+    if (parsed.isValid()) keys.add(parsed.format('YYYY-MM-DD'))
+  }
+  return keys
+}
+
+function resolveInterviewScheduleRange(program: Program): { start: Dayjs; end: Dayjs } {
+  const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+  const recruit = program.generalCommonInfo?.volunteerRecruitmentInfo as
+    | { interviewStartDate?: string; interviewEndDate?: string }
+    | undefined
+
+  const startCandidates = [
+    info?.periodStartDate,
+    recruit?.interviewStartDate,
+    program.interviewStartDate,
+  ]
+  const endCandidates = [info?.periodEndDate, recruit?.interviewEndDate, program.interviewEndDate]
+
+  const start =
+    startCandidates.map(value => (value ? dayjs(value) : null)).find(d => d?.isValid()) ??
+    dayjs(GENERAL_INTERVIEW_MOCK_RANGE.startIso)
+  const endRaw =
+    endCandidates.map(value => (value ? dayjs(value) : null)).find(d => d?.isValid()) ??
+    dayjs(GENERAL_INTERVIEW_MOCK_RANGE.endIso)
+  const end = endRaw.isBefore(start, 'day') ? start : endRaw
+  return { start: start.startOf('day'), end: end.startOf('day') }
+}
+
 function buildParsedInterviewSchedule(
-  source: GeneralInterviewScheduleSource,
+  source: GeneralInterviewScheduleSource & { specificUnavailableDateIsos?: string[] },
   rangeStart: Dayjs,
-  rangeEnd: Dayjs
+  rangeEnd: Dayjs,
+  publicHolidayDateKeys?: ReadonlySet<string>
 ): ParsedInterviewSchedule {
   const commonSlots = parseTimeSlotsString(source.availableTimeSlots)
-  const unavailableKeys = parseUnavailableDateLabels(source.specificUnavailableDates)
+  const unavailableKeys = resolveUnavailableDateKeys(source)
   const blockSaturday = source.recurringUnavailable.includes('토요일')
   const blockSunday = source.recurringUnavailable.includes('일요일')
   const includeHolidays = source.recurringUnavailable.includes('공휴일')
-  const holidayDateKeys = includeHolidays ? getMockHolidayDateKeys() : new Set<string>()
+  /** 호출부에서 조회한 공휴일 우선 — sync 캐시는 React 조회 전엔 비어 있을 수 있음 */
+  const holidayDateKeys = includeHolidays
+    ? new Set<string>(publicHolidayDateKeys ?? getMockHolidayDateKeys())
+    : new Set<string>()
 
   const slotsByDateKey = new Map<string, InterviewAssignSlot[]>()
   const clickableDateKeys = new Set<string>()
@@ -77,7 +116,8 @@ function buildParsedInterviewSchedule(
     const dateKey = cursor.format('YYYY-MM-DD')
     const isSaturday = blockSaturday && cursor.day() === 6
     const isSunday = blockSunday && cursor.day() === 0
-    const isUnavailable = unavailableKeys.has(dateKey)
+    const isUnavailable =
+      unavailableKeys.has(dateKey) || (includeHolidays && holidayDateKeys.has(dateKey))
 
     if (!isSaturday && !isSunday && !isUnavailable && commonSlots.length > 0) {
       const slots: InterviewAssignSlot[] = commonSlots.map(timeRange => ({
@@ -103,6 +143,30 @@ function buildParsedInterviewSchedule(
     rangeStart,
     rangeEnd,
     scheduleMonth: rangeStart.startOf('month'),
+  }
+}
+
+/** remote interview-slots 를 프로그램 스케줄에 합친다(가능일·불가일 SSOT는 프로그램 유지). */
+export function mergeRemoteSlotsIntoProgramSchedule(
+  programSchedule: ParsedInterviewSchedule,
+  remoteSchedule: ParsedInterviewSchedule
+): ParsedInterviewSchedule {
+  if (remoteSchedule.clickableDateKeys.size === 0) return programSchedule
+
+  const slotsByDateKey = new Map(programSchedule.slotsByDateKey)
+  for (const [dateKey, remoteSlots] of remoteSchedule.slotsByDateKey) {
+    if (!programSchedule.clickableDateKeys.has(dateKey)) continue
+    const daySlots = [...(slotsByDateKey.get(dateKey) ?? [])]
+    for (const slot of remoteSlots) {
+      if (daySlots.some(existing => existing.key === slot.key)) continue
+      daySlots.push(slot)
+    }
+    slotsByDateKey.set(dateKey, daySlots)
+  }
+
+  return {
+    ...programSchedule,
+    slotsByDateKey,
   }
 }
 
@@ -170,9 +234,9 @@ export function parseGeneralInterviewScheduleFromRemoteSlots(
 }
 
 /**
- * remote 스케줄에 봉사자가 신청한 면접 가능 일정을 배정 후보로 합친다.
- * `program_interview_slot`은 배정 시점에 생성되므로(`resolveInterviewSlotId`) 슬롯이 0건이어도
- * 신청 일정으로 배정할 수 있어야 한다.
+ * 봉사자가 신청한 면접 시간대를 프로그램 가능일 슬롯에 합친다.
+ * 프로그램 불가일·기간 밖 신청일은 clickable에 넣지 않는다(가능/불가 SSOT = 프로그램).
+ * `program_interview_slot`이 비어도 가능일 위 신청 시간대로 배정할 수 있다.
  */
 export function mergeApplicantAvailabilityIntoSchedule(
   schedule: ParsedInterviewSchedule,
@@ -182,13 +246,15 @@ export function mergeApplicantAvailabilityIntoSchedule(
 
   const today = dayjs().startOf('day')
   const slotsByDateKey = new Map(schedule.slotsByDateKey)
-  const clickableDateKeys = new Set(schedule.clickableDateKeys)
-  const availabilityKeys: string[] = []
+  let touched = false
+  let firstAvailabilityKey: string | null = null
 
   for (const day of interviewAvailability) {
     const date = parseInterviewDisplayDateLabel(day.dateLabel)
     if (!date || date.isBefore(today, 'day')) continue
     const dateKey = date.format('YYYY-MM-DD')
+    if (!schedule.clickableDateKeys.has(dateKey)) continue
+
     const daySlots = [...(slotsByDateKey.get(dateKey) ?? [])]
     for (const raw of day.slots) {
       if (!/\d{2}:\d{2}/.test(raw)) continue
@@ -196,28 +262,19 @@ export function mergeApplicantAvailabilityIntoSchedule(
       const key = `${dateKey}|${timeRange}`
       if (daySlots.some(slot => slot.key === key)) continue
       daySlots.push({ key, timeRange, displayTimeRange: formatDisplayTimeRange(timeRange) })
+      touched = true
     }
     if (daySlots.length === 0) continue
     slotsByDateKey.set(dateKey, daySlots)
-    clickableDateKeys.add(dateKey)
-    availabilityKeys.push(dateKey)
+    if (!firstAvailabilityKey || dateKey < firstAvailabilityKey) firstAvailabilityKey = dateKey
   }
 
-  if (availabilityKeys.length === 0) return schedule
-
-  const sortedKeys = [...clickableDateKeys].sort()
-  const firstKey = [...availabilityKeys].sort()[0] ?? sortedKeys[0]
-  const rangeStart = dayjs(sortedKeys[0]).startOf('month')
-  const rangeEnd = dayjs(sortedKeys[sortedKeys.length - 1]).endOf('month')
+  if (!touched) return schedule
 
   return {
     ...schedule,
     slotsByDateKey,
-    clickableDateKeys,
-    disabledDate: (date: Dayjs) => !clickableDateKeys.has(date.format('YYYY-MM-DD')),
-    rangeStart,
-    rangeEnd,
-    scheduleMonth: dayjs(firstKey).startOf('month'),
+    scheduleMonth: dayjs(firstAvailabilityKey ?? schedule.scheduleMonth).startOf('month'),
   }
 }
 
@@ -231,11 +288,15 @@ export function parseGeneralInterviewScheduleFromDefaultMock(): ParsedInterviewS
 }
 
 /**
- * mock 프로그램 면접 캘린더 — 프로그램에 등록된 면접 일정, 없으면 DEFAULT mock(2026.09~10).
- * remote 프로그램은 `parseGeneralInterviewScheduleFromRemoteSlots`만 사용(빈 배열도 그대로).
+ * 프로그램에 등록된 면접 가능/불가 일정으로 배정 캘린더를 만든다.
+ * 기간·불가일·시간대 SSOT = `volunteerInterviewScheduleInfo`(없으면 모집 면접 기간·DEFAULT mock).
  */
-export function parseGeneralInterviewScheduleFromProgram(program: Program): ParsedInterviewSchedule {
+export function parseGeneralInterviewScheduleFromProgram(
+  program: Program,
+  publicHolidayDateKeys?: ReadonlySet<string>
+): ParsedInterviewSchedule {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
+  const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
   const parsedSlots = parseTimeSlotsString(
     display.availableTimeSlots === '-' ? '' : display.availableTimeSlots
   )
@@ -243,6 +304,7 @@ export function parseGeneralInterviewScheduleFromProgram(program: Program): Pars
   if (parsedSlots.length === 0) {
     return parseGeneralInterviewScheduleFromDefaultMock()
   }
+  const { start, end } = resolveInterviewScheduleRange(program)
   return buildParsedInterviewSchedule(
     {
       recurringUnavailable:
@@ -250,12 +312,12 @@ export function parseGeneralInterviewScheduleFromProgram(program: Program): Pars
           ? DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.recurringUnavailable
           : display.recurringUnavailable,
       specificUnavailableDates:
-        display.specificUnavailableDates === '-'
-          ? DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.specificUnavailableDates
-          : display.specificUnavailableDates,
+        display.specificUnavailableDates === '-' ? '' : display.specificUnavailableDates,
+      specificUnavailableDateIsos: info?.specificUnavailableDateIsos,
       availableTimeSlots: display.availableTimeSlots,
     },
-    dayjs(GENERAL_INTERVIEW_MOCK_RANGE.startIso),
-    dayjs(GENERAL_INTERVIEW_MOCK_RANGE.endIso)
+    start,
+    end,
+    publicHolidayDateKeys
   )
 }
