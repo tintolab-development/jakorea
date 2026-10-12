@@ -9,6 +9,7 @@ import type {
 } from '../model/sign-up.types'
 import { SIGN_UP_PATH } from './wizard-location'
 import { clearSignupMemberVerifiedIdentity } from './signup-verified-identity-storage'
+import { clearMinorMemberBirthDate } from './signup-minor-birth-storage'
 import { clearSignupWizardFields } from './signup-wizard-field-storage'
 
 export const SIGN_UP_PORTRAIT_CONSENT_PATH = '/auth/sign-up/portrait-consent'
@@ -171,6 +172,7 @@ export function dismissPortraitConsentRestore(): void {
 export function clearPortraitConsentSession(): void {
   pendingRestore = null
   clearSignupMemberVerifiedIdentity()
+  clearMinorMemberBirthDate()
   clearSignupWizardFields()
   if (!canUseSessionStorage()) return
   try {

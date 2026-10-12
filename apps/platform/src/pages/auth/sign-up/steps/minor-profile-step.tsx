@@ -1,5 +1,6 @@
 import {
   AddressSearchModal,
+  SchoolSearchModal,
   schoolGradeOptions,
   type UseSignUpReturn,
 } from '@/features/auth/sign-up'
@@ -82,14 +83,37 @@ export function MinorProfileStep({ signUp }: MinorProfileStepProps) {
 
           {profile.schoolStatus === 'enrolled' ? (
             <>
-              <PFTextInput
-                size="xlarge"
-                label="소속/학교명"
-                placeholder="소속 또는 학교명을 입력해 주세요"
-                required
-                value={profile.schoolName}
-                onValueChange={profile.setSchoolName}
-              />
+              <div className={styles.addressField}>
+                <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+                  소속/학교명 <span className={styles.inlineRequiredMark}>*</span>
+                </PFText>
+                <div className={styles.addressSearchRow}>
+                  <PFTextInput
+                    size="xlarge"
+                    placeholder={
+                      profile.requiresSchoolSearch
+                        ? '검색으로 학교를 선택해 주세요'
+                        : '소속 또는 학교명을 입력해 주세요'
+                    }
+                    required
+                    value={profile.schoolName}
+                    readOnly={profile.requiresSchoolSearch}
+                    onValueChange={profile.setSchoolName}
+                    onClick={
+                      profile.requiresSchoolSearch ? profile.openSchoolSearchModal : undefined
+                    }
+                  />
+                  {profile.requiresSchoolSearch ? (
+                    <PFButton
+                      size="xlarge"
+                      variant="secondary"
+                      onClick={profile.openSchoolSearchModal}
+                    >
+                      검색
+                    </PFButton>
+                  ) : null}
+                </div>
+              </div>
               <PFSelect
                 size="xlarge"
                 label="학년"
@@ -152,6 +176,11 @@ export function MinorProfileStep({ signUp }: MinorProfileStepProps) {
         open={profile.isAddressModalOpen}
         onClose={profile.closeAddressModal}
         onSelect={profile.selectAddress}
+      />
+      <SchoolSearchModal
+        open={profile.isSchoolSearchModalOpen}
+        onClose={profile.closeSchoolSearchModal}
+        onSelect={profile.selectSchool}
       />
     </SignUpLayout>
   )

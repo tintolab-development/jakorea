@@ -8,6 +8,8 @@ export type SignupWizardFieldSnapshot = {
   selectedType: MemberType | null
   /** step 4~8에서 URL phase 없어도 미성년 8단계 유지 */
   under14Flow?: boolean
+  /** step 2 확정 — `birthDate`가 보호자 NICE 등으로 바뀌어도 가입·약관 SSOT */
+  minorMemberBirthDate?: string
 }
 
 function hasSessionStorage(): boolean {
@@ -29,6 +31,7 @@ function isValidSnapshot(value: unknown): value is SignupWizardFieldSnapshot {
   if (o.gender != null && !isGenderType(o.gender)) return false
   if (o.selectedType != null && !isMemberType(o.selectedType)) return false
   if (o.under14Flow != null && typeof o.under14Flow !== 'boolean') return false
+  if (o.minorMemberBirthDate != null && typeof o.minorMemberBirthDate !== 'string') return false
   return true
 }
 
@@ -55,6 +58,12 @@ export function writeSignupWizardFields(partial: Partial<SignupWizardFieldSnapsh
         partial.selectedType !== undefined ? partial.selectedType : (current?.selectedType ?? null),
       under14Flow:
         partial.under14Flow !== undefined ? partial.under14Flow : (current?.under14Flow ?? false),
+      minorMemberBirthDate:
+        partial.under14Flow === false
+          ? undefined
+          : partial.minorMemberBirthDate !== undefined
+            ? partial.minorMemberBirthDate
+            : current?.minorMemberBirthDate,
     }
     window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   } catch {

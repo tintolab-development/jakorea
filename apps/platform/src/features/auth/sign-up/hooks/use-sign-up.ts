@@ -30,6 +30,7 @@ import {
   writeSignupWizardFields,
 } from '../lib/signup-wizard-field-storage'
 import {
+  signupIdentityVerificationClient,
   useSignupIdentityVerification,
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
@@ -93,6 +94,16 @@ import {
   hasRequiredVerificationSessions,
   SIGNUP_IDENTITY_REQUIRED_MESSAGE,
 } from '../model/validation'
+import {
+  resolveMinorMemberBirthDateForSignup,
+  resolveSignupMemberBirthDate,
+  validateUnderAgeSignupBeforeSubmit,
+} from '../model/validation/signup-underage-submit'
+import {
+  clearMinorMemberBirthDate,
+  readMinorMemberBirthDate,
+  writeMinorMemberBirthDate,
+} from '../lib/signup-minor-birth-storage'
 import { getSignupApiErrorMessage } from '../lib/helpers'
 import {
   buildSignUpSearch,
@@ -227,6 +238,11 @@ export function useSignUp() {
 
   const totalSteps = isUnderAgeSignup ? SIGN_UP_UNDER_AGE_TOTAL_STEPS : SIGN_UP_TOTAL_STEPS
 
+  const signupMemberBirthDate = resolveSignupMemberBirthDate({
+    isUnderAgeSignup,
+    birthDate,
+  })
+
   const signupMemberName = isUnderAgeSignup ? memberProfileName : verifiedName
   const signupMemberPhone = isUnderAgeSignup ? '' : verifiedPhone
 
@@ -350,8 +366,29 @@ export function useSignUp() {
   }, [identityVerificationSessionId, isIdentityVerified, isUnderAgeSignup])
 
   useEffect(() => {
-    writeSignupWizardFields({ birthDate, gender, selectedType })
-  }, [birthDate, gender, selectedType])
+    const minorBirth = isUnderAgeSignup
+      ? resolveMinorMemberBirthDateForSignup(birthDate)
+      : null
+    const birthForStorage = minorBirth ?? birthDate
+    writeSignupWizardFields({
+      birthDate: birthForStorage,
+      gender,
+      selectedType,
+      ...(minorBirth ? { minorMemberBirthDate: minorBirth, under14Flow: true } : {}),
+    })
+  }, [birthDate, gender, selectedType, isUnderAgeSignup])
+
+  useEffect(() => {
+    if (!isUnderAgeSignup) return
+    const minorBirth = resolveMinorMemberBirthDateForSignup(birthDate)
+    if (!minorBirth) return
+    if (!readMinorMemberBirthDate()) {
+      writeMinorMemberBirthDate(minorBirth)
+    }
+    if (birthDate.trim() !== minorBirth.trim()) {
+      setBirthDate(minorBirth)
+    }
+  }, [birthDate, isUnderAgeSignup])
 
   useEffect(() => {
     if (isUnderAgeSignup) {
@@ -406,7 +443,14 @@ export function useSignUp() {
     }
 
     const wizardFields = readSignupWizardFields()
-    if (wizardFields?.birthDate.trim()) {
+    const minorBirth =
+      readMinorMemberBirthDate()?.trim() ||
+      wizardFields?.minorMemberBirthDate?.trim() ||
+      null
+    if (minorBirth) {
+      writeMinorMemberBirthDate(minorBirth)
+      setBirthDate(minorBirth)
+    } else if (wizardFields?.birthDate.trim()) {
       setBirthDate(wizardFields.birthDate)
     }
     if (wizardFields?.gender) {
@@ -430,7 +474,7 @@ export function useSignUp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync intentionally driven by searchParams
   }, [searchParams])
 
-  const birthDateIso = toApiBirthDate(birthDate) ?? null
+  const birthDateIso = toApiBirthDate(signupMemberBirthDate) ?? null
   const apiMemberType = selectedType ? toApiMemberType(selectedType) : null
 
   const termsQuery = useSignupTermsQuery({
@@ -479,13 +523,20 @@ export function useSignUp() {
       setStepTwoMessage('')
       setRequiresGuardianConsent(true)
       setSchoolStatus('enrolled')
-      writeSignupWizardFields({ under14Flow: true })
+      signupIdentityVerificationClient.state.clearPendingChallenge()
+      writeMinorMemberBirthDate(birthDate)
+      writeSignupWizardFields({
+        under14Flow: true,
+        minorMemberBirthDate: birthDate,
+        birthDate,
+      })
       pushWizard(2, 'guardian-consent')
       return
     }
 
     setStepTwoMessage('')
     setRequiresGuardianConsent(false)
+    clearMinorMemberBirthDate()
     writeSignupWizardFields({ under14Flow: false })
     pushWizard(3, 'identity')
   }
@@ -578,7 +629,7 @@ export function useSignUp() {
       returnSearch,
       agreements: nextAgreements,
       guardianAgreements: nextGuardianAgreements,
-      verifiedName: isUnderAgeSignup ? guardianVerifiedName : verifiedName,
+      verifiedName: isUnderAgeSignup ? memberProfileName : verifiedName,
       portraitCompleted: false,
     })
     navigate(buildPortraitConsentPath(returnSearch))
@@ -673,17 +724,22 @@ export function useSignUp() {
     verifiedGender?: string
     syncGender?: boolean
   }) => {
+    const skipMemberDemographics =
+      isUnderAgeSignupRef.current || readMinorMemberBirthDate() != null
+
     if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
     if (result.verifiedPhone?.trim()) {
       setVerifiedPhone(toApiSignupPhone(result.verifiedPhone) ?? result.verifiedPhone.trim())
     }
-    const fromVerifiedBirth = signupBirthDateFromVerified(result.verifiedBirthDate)
-    if (fromVerifiedBirth) {
-      setBirthDate(fromVerifiedBirth)
-    }
-    if (result.syncGender) {
-      const fromVerification = signupGenderFromVerifiedIdentity(result.verifiedGender)
-      if (fromVerification) setGender(fromVerification)
+    if (!skipMemberDemographics) {
+      const fromVerifiedBirth = signupBirthDateFromVerified(result.verifiedBirthDate)
+      if (fromVerifiedBirth) {
+        setBirthDate(fromVerifiedBirth)
+      }
+      if (result.syncGender) {
+        const fromVerification = signupGenderFromVerifiedIdentity(result.verifiedGender)
+        if (fromVerification) setGender(fromVerification)
+      }
     }
   }
 
@@ -704,6 +760,9 @@ export function useSignUp() {
 
   const handleIdentitySuccess = useCallback(
     (result: IdentityChallengeCompleteResult) => {
+      if (isUnderAgeSignupRef.current || readMinorMemberBirthDate() != null) {
+        return
+      }
       setIdentityVerificationSessionId(result.sessionId)
       applyVerifiedIdentityFields({ ...result, syncGender: true })
       persistMemberVerifiedIdentity(result)
@@ -740,6 +799,10 @@ export function useSignUp() {
       )
     }
     setIsGuardianIdentityVerified(true)
+    const minorBirth = readMinorMemberBirthDate()
+    if (minorBirth) {
+      setBirthDate(minorBirth)
+    }
     pushWizard(4)
   }
 
@@ -873,6 +936,7 @@ export function useSignUp() {
 
   const handleBirthDateChange = (value: string) => {
     setBirthDate(formatBirthDateInput(value))
+    clearMinorMemberBirthDate()
     writeSignupWizardFields({ under14Flow: false })
     setStepTwoMessage('')
     setRequiresGuardianConsent(false)
@@ -950,11 +1014,24 @@ export function useSignUp() {
       }
     }
 
+    if (isUnderAgeSignup) {
+      const underAgeValidation = validateUnderAgeSignupBeforeSubmit({
+        birthDate: signupMemberBirthDate,
+        guardianAgreements,
+        agreements,
+        termsCatalog: termsQuery.data ?? null,
+      })
+      if (underAgeValidation) {
+        setSubmitMessage(underAgeValidation)
+        return
+      }
+    }
+
     const mapInput = {
       selectedType,
       email,
       password,
-      birthDate,
+      birthDate: signupMemberBirthDate,
       gender,
       isUnderAgeSignup,
       isIdentityVerified,
@@ -1014,7 +1091,7 @@ export function useSignUp() {
 
   const confirmationRows = isUnderAgeSignup
     ? buildUnderAgeConfirmationRows({
-        birthDate,
+        birthDate: signupMemberBirthDate,
         gender,
         schoolStatus,
         address,
@@ -1169,8 +1246,8 @@ export function useSignUp() {
       schoolName,
       setSchoolName: handleSchoolNameChange,
       schoolOrganizationId,
-      /** remote API일 때 성인 가입만 학교 검색 선택 강제 (미성년은 스펙상 직접 입력) */
-      requiresSchoolSearch: remoteApi && !isUnderAgeSignup,
+      /** remote API일 때 학교는 검색 모달로 선택 */
+      requiresSchoolSearch: remoteApi,
       selectSchool: handleSchoolSelect,
       grade,
       setGrade,
