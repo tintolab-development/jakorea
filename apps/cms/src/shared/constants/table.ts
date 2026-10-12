@@ -6,7 +6,7 @@
 /** Ant Design Table `columns`의 No. 열 — `className`으로 th/td 폭을 CSS와 맞출 때 사용 */
 export const CMS_TABLE_NO_COL_CLASS = 'cms-table-col--no'
 
-/** 사용 여부 열 — `className`으로 th/td 폭을 100px 고정 (`cms-data-table.css`) */
+/** 사용 여부 열 — `className`으로 th/td 폭을 80px 고정 (`cms-data-table.css`) */
 export const CMS_TABLE_USAGE_COL_CLASS = 'cms-table-col--usage'
 
 /**
@@ -19,11 +19,11 @@ export const TABLE_COLUMN_WIDTHS = {
   status: 110,
   date: 120,
   action: 72,
-  checkbox: 68,
-  /** No. 열 — Figma 80×54 · flex-shrink 0 */
+  checkbox: 80,
+  /** No. 열 — 고정 80px · flex-shrink 0 */
   index: 80,
-  /** 사용 여부 열 — Figma 100px */
-  usage: 100,
+  /** 사용 여부 열 — 고정 80px */
+  usage: 80,
   name: 120,
   email: 200,
   phone: 130,

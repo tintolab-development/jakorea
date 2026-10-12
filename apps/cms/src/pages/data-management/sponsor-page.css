@@ -14,8 +14,8 @@
 
 /* 후원사 목록 전용 강제 고정: 체크 68px(좌 8px 포함) / No. 80px / 행 높이 52px */
 .filter-table-layout.sponsor-page .filter-table-layout__table .sponsor-page__table.cms-data-table col.ant-table-selection-col {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 80px) !important;
+  min-width: var(--table-selection-column-width, 80px) !important;
 }
 
 .filter-table-layout.sponsor-page
@@ -40,9 +40,9 @@
   .ant-table-tbody
   > tr
   > td.ant-table-cell.ant-table-selection-column {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
-  max-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 80px) !important;
+  min-width: var(--table-selection-column-width, 80px) !important;
+  max-width: var(--table-selection-column-width, 80px) !important;
   padding: 12px 4px 12px 8px !important;
   box-sizing: border-box !important;
 }
