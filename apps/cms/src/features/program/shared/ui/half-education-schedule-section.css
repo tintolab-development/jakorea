@@ -61,3 +61,11 @@
 .half-education-schedule__add-row-button svg {
   display: block;
 }
+
+/* field-content 가 flex row 이므로 직계는 단일 자식만 — \n 은 pre-line 으로 줄바꿈 */
+.half-education-schedule__schedule-text {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  white-space: pre-line;
+}
