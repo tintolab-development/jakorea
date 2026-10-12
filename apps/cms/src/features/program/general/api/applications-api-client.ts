@@ -41,8 +41,12 @@ export type ApplicationsListQuery = {
   keyword?: string
   /** 서류 상태. PASS/FAIL 별칭 허용 */
   documentStatus?: string
-  /** 면접 상태 */
+  /** 면접 상태 (`interviewStage`와 동시 전송 불가) */
   interviewStatus?: string
+  /** 2차 면접 stage 프리셋 (예: SECOND_ROUND). `interviewStatus`와 동시 전송 불가 */
+  interviewStage?: string
+  /** 2차 면접 유효 심사 현황(자동) — WAITING | COMPLETED */
+  effectiveSecondInterviewStatus?: string
   /** 최종 결과 상태. APPROVED/REJECTED 별칭 허용 */
   finalResultStatus?: string
   /** JA 봉사 재참여 여부 */
@@ -55,6 +59,14 @@ export type ApplicationsListQuery = {
   recruitHalf?: string
   /** 모집 ID 직접 지정 (선택) */
   recruitmentId?: number | string
+  /** 배정 면접일 YYYY-MM-DD (KST) */
+  assignedInterviewDate?: string
+  /** 활성 면접 슬롯 start_at 시각 (ISO LocalTime, 예: 10:00:00, KST) */
+  assignedInterviewTime?: string
+  /** 현재 면접 배정 score 합 정확 일치 (`totalScoreUnevaluated`와 동시 전송 불가) */
+  totalScore?: number
+  /** 총점 미평가 — 유효 score_total 제출 평가자 2명 미만 (`totalScore`와 동시 전송 불가) */
+  totalScoreUnevaluated?: boolean
 }
 
 const generalApplicationsDashboardApi = getJAKoreaCMSBackendAPIDashboardSubset()
@@ -666,7 +678,7 @@ export async function rejectIndividualApplicationRemote(
 
 export async function cancelIndividualApplicationRejectionRemote(
   applicationId: string,
-  payload: ApplicationDecisionCancelRequest
+  payload: ApplicationDecisionCancelRequestWithNotification
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({

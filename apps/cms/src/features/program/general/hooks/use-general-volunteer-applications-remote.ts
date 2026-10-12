@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, type Dispatch, type SetStateAction } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import {
   fetchGeneralIndividualScreeningApplicationsPage,
@@ -16,6 +16,7 @@ import {
   updateGeneralVolunteerDocumentEvaluation,
   cancelGeneralVolunteerApplicationApproval,
   cancelGeneralVolunteerApplicationRejection,
+  cancelGeneralIndividualApplicationRejection,
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
@@ -27,6 +28,8 @@ import type {
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
+import { formatApplicationDecisionCancelConflictMessage } from '@/features/program/shared/lib/application-decision-cancel-conflict'
+import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
 import {
   extractApiErrorMessage,
   getApiErrorHttpStatus,
@@ -37,6 +40,8 @@ import {
   type InterviewAssignmentEvaluationPayload,
   type InstructorApplicationNotificationRequest,
 } from '@/features/program/general/api/applications-api-client'
+import { validateApplicationGiveUpReason } from '@/features/program/shared/lib/application-give-up'
+import { mergeGeneralVolunteerApplicantListRows } from '@/features/program/general/lib/general-volunteer-applications-list-merge'
 
 export type GeneralVolunteerApplicationsStage = 'doc1' | 'docPassed' | 'interview2'
 
@@ -49,7 +54,7 @@ type UseGeneralVolunteerApplicationsRemoteOptions = {
   enabled?: boolean
   /** 서버 필터 (volunteer 전용). 지정 시 query key에 포함 */
   listQuery?: ApplicationsListQuery
-  setList: (rows: GeneralVolunteerApplicantRow[]) => void
+  setList: Dispatch<SetStateAction<GeneralVolunteerApplicantRow[]>>
 }
 
 function getDocumentEvaluationErrorMessage(error: unknown): string {
@@ -125,8 +130,12 @@ export function useGeneralVolunteerApplicationsRemote({
   })
 
   useEffect(() => {
-    if (query.data) setList(query.data.pages.flatMap(page => page.rows))
+    if (!query.data) return
+    const fetched = query.data.pages.flatMap(page => page.rows)
+    setList(previous => mergeGeneralVolunteerApplicantListRows(previous, fetched))
   }, [query.data, setList])
+
+  const listTotalElements = query.data?.pages[0]?.totalElements
 
   const invalidateApplications = useCallback(async () => {
     if (subjectKind === 'participant') {
@@ -158,6 +167,8 @@ export function useGeneralVolunteerApplicationsRemote({
         title: '처리 실패',
         content:
           formatApplicationEligibilityConflictMessage(error) ??
+          formatApplicationDecisionCancelConflictMessage(error) ??
+          formatApplicationStatusConflictMessage(error) ??
           extractApiErrorMessage(data, {
             httpStatus: getApiErrorHttpStatus(error),
             fallback:
@@ -346,12 +357,19 @@ export function useGeneralVolunteerApplicationsRemote({
       reason: string,
       notification?: InstructorApplicationNotificationRequest
     ) => {
-      if (!remoteEnabled || subjectKind !== 'volunteer') return false
+      if (!remoteEnabled) return false
       try {
-        await cancelGeneralVolunteerApplicationRejection(applicationId, reason, notification)
-        await queryClient.invalidateQueries({
-          queryKey: generalApplicationsQueryKeys.volunteerDetail(applicationId),
-        })
+        if (subjectKind === 'participant') {
+          await cancelGeneralIndividualApplicationRejection(applicationId, reason, notification)
+          await queryClient.invalidateQueries({
+            queryKey: generalApplicationsQueryKeys.individualDetail(applicationId),
+          })
+        } else {
+          await cancelGeneralVolunteerApplicationRejection(applicationId, reason, notification)
+          await queryClient.invalidateQueries({
+            queryKey: generalApplicationsQueryKeys.volunteerDetail(applicationId),
+          })
+        }
         await invalidateApplications()
         return true
       } catch (error) {
@@ -366,12 +384,16 @@ export function useGeneralVolunteerApplicationsRemote({
     async (applicationId: string, reason: string) => {
       if (!remoteEnabled) return false
       const trimmed = reason.trim()
-      const giveUpReason = trimmed.length >= 2 ? trimmed : '활동 포기'
+      const validation = validateApplicationGiveUpReason(trimmed)
+      if (validation) {
+        showAlert({ title: '활동 포기', content: validation })
+        return false
+      }
       try {
         if (subjectKind === 'participant') {
-          await giveUpIndividualApplicationRemote(applicationId, { reason: giveUpReason })
+          await giveUpIndividualApplicationRemote(applicationId, { reason: trimmed })
         } else {
-          await giveUpGeneralVolunteerApplication(applicationId, giveUpReason)
+          await giveUpGeneralVolunteerApplication(applicationId, { reason: trimmed })
         }
         await invalidateApplications()
         return true
@@ -380,12 +402,19 @@ export function useGeneralVolunteerApplicationsRemote({
         return false
       }
     },
-    [invalidateApplications, notifyRemoteFailure, remoteEnabled, subjectKind]
+    [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert, subjectKind]
   )
+
+  const refetchVolunteerList = useCallback(async () => {
+    if (!remoteEnabled) return
+    await query.refetch()
+  }, [query, remoteEnabled])
 
   return {
     remoteEnabled,
     subjectKind,
+    listTotalElements,
+    refetchVolunteerList,
     applicationsLoading: remoteEnabled ? query.isFetching && query.data === undefined : false,
     hasNextPage: query.hasNextPage ?? false,
     isFetchingNextPage: query.isFetchingNextPage,
