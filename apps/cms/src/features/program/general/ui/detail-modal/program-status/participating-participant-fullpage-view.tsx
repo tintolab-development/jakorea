@@ -56,7 +56,10 @@ import { screeningWithdrawCompleteContent } from '@/features/program/general/lib
 import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
-import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import {
+  ActivityWithdrawScheduleModal,
+  type ActivityWithdrawScheduleModalPayload,
+} from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
@@ -328,11 +331,7 @@ export function ParticipatingParticipantFullpageView({
   ])
 
   const handleConfirmActivityWithdraw = useCallback(
-    async (payload: { stopSessionKey: string; stopScheduleLabel: string }) => {
-      const reason =
-        [mergedParticipant.applicantName, payload.stopScheduleLabel].filter(Boolean).join(' · ') ||
-        payload.stopScheduleLabel ||
-        '활동 포기'
+    async (payload: ActivityWithdrawScheduleModalPayload) => {
       const matched = sessions
         .map((session, index) => ({
           session,
@@ -346,7 +345,9 @@ export function ParticipatingParticipantFullpageView({
       if (progressRemoteEnabled) {
         setActivityWithdrawSubmitting(true)
         try {
-          await giveUpGeneralParticipatingInstitution(program.id, mergedParticipant.id, reason, {
+          await giveUpGeneralParticipatingInstitution(program.id, mergedParticipant.id, {
+            reason: payload.reason,
+            faultParty: payload.faultParty,
             stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
           })
           await queryClient.invalidateQueries({
@@ -729,6 +730,7 @@ export function ParticipatingParticipantFullpageView({
         scheduleOptions={activityWithdrawScheduleOptions}
         onCancel={() => setActivityWithdrawModalOpen(false)}
         onConfirm={handleConfirmActivityWithdraw}
+        confirming={activityWithdrawSubmitting}
       />
       <CertificateBulkIssueReasonModal
         open={certificateIssueModalOpen}

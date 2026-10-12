@@ -1085,7 +1085,9 @@ export function ParticipatingInstructorFullpageView({
           const stopScheduleIdNum = payload.stopScheduleId
             ? Number(payload.stopScheduleId)
             : undefined
-          await giveUpGeneralParticipatingInstitution(program.id, mergedInstructor.id, reason, {
+          await giveUpGeneralParticipatingInstitution(program.id, mergedInstructor.id, {
+            reason,
+            faultParty: 'ADMIN',
             stopScheduleId:
               stopScheduleIdNum != null && Number.isFinite(stopScheduleIdNum)
                 ? stopScheduleIdNum

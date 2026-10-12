@@ -869,11 +869,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       )
       if (!patch) return
 
-      const reason =
-        [mergedDetail.schoolName, payload.stopScheduleLabel].filter(Boolean).join(' · ') ||
-        payload.stopScheduleLabel ||
-        '활동 포기'
-
       if (progressRemoteEnabled) {
         setActivityWithdrawSubmitting(true)
         try {
@@ -882,7 +877,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               sessions,
               payload.stopSessionKey
             )
-            await giveUpGeneralParticipatingInstitution(programId, detail.id, reason, {
+            await giveUpGeneralParticipatingInstitution(programId, detail.id, {
+              reason: payload.reason,
+              faultParty: payload.faultParty,
               stopScheduleId,
             })
             await queryClient.invalidateQueries({
