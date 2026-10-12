@@ -1,6 +1,6 @@
 import { createIdentityVerificationClient } from '@jakorea/identity-verification'
 import { axiosClient } from '@/shared/api/axios-instance'
-import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { isIdentityVerificationRemoteEnabled } from '@/shared/config/identity-verification-remote-capabilities'
 import { identityVerificationPaths } from '@/shared/config/identity-verification-paths'
 
 /** 홈페이지 회원가입(본인) NICE 본인인증 */
@@ -15,6 +15,7 @@ export const signupIdentityVerificationClient = createIdentityVerificationClient
     mockPath: '/auth/sign-up/identity/mock',
   },
   flow: 'MEMBER_SIGNUP',
-  isRemoteEnabled: isRemoteApiConfigured,
+  isRemoteEnabled: isIdentityVerificationRemoteEnabled,
+  remoteOnly: true,
   storagePrefix: 'platform_signup_identity',
 })

@@ -1,6 +1,6 @@
 import { createIdentityVerificationClient } from '@jakorea/identity-verification'
 import { axiosClient } from '@/shared/api/axios-instance'
-import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { isIdentityVerificationRemoteEnabled } from '@/shared/config/identity-verification-remote-capabilities'
 import { identityVerificationPaths } from '@/shared/config/identity-verification-paths'
 
 /**
@@ -18,6 +18,7 @@ export const guardianIdentityVerificationClient = createIdentityVerificationClie
     mockPath: '/auth/sign-up/guardian-identity/mock',
   },
   flow: 'MEMBER_SIGNUP',
-  isRemoteEnabled: isRemoteApiConfigured,
+  isRemoteEnabled: isIdentityVerificationRemoteEnabled,
+  remoteOnly: true,
   storagePrefix: 'platform_signup_guardian_identity',
 })
