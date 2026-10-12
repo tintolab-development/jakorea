@@ -6,6 +6,8 @@ type MediaListRowProps = {
   content: ReactNode
   aside: ReactNode
   className?: string
+  thumbnailWrapClassName?: string
+  contentClassName?: string
   asideClassName?: string
   muted?: boolean
   interactive?: boolean
@@ -17,6 +19,8 @@ export function MediaListRow({
   content,
   aside,
   className,
+  thumbnailWrapClassName,
+  contentClassName,
   asideClassName,
   muted = false,
   interactive = false,
@@ -56,14 +60,17 @@ export function MediaListRow({
         className={[
           styles.thumbnailWrap,
           hasThumbnailImage ? styles.thumbnailWrapHasImage : styles.thumbnailWrapNoImage,
-        ].join(' ')}
+          thumbnailWrapClassName,
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         {hasThumbnailImage ? (
           <img className={styles.thumbnail} src={thumbnailUrl} alt="" />
         ) : null}
       </div>
 
-      <div className={styles.content}>{content}</div>
+      <div className={[styles.content, contentClassName].filter(Boolean).join(' ')}>{content}</div>
 
       <div className={[styles.aside, asideClassName].filter(Boolean).join(' ')}>{aside}</div>
     </div>

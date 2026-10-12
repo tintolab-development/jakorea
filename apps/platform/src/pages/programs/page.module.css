@@ -81,7 +81,7 @@
   }
 
   .list {
-    gap: var(--spacing-32);
+    gap: var(--spacing-24);
   }
 }
 
