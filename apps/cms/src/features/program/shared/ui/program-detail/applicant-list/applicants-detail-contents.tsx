@@ -28,7 +28,14 @@ import {
   buildProgramApiUnavailableSaveContent,
   PROGRAM_API_UNAVAILABLE_TITLE,
 } from '@/features/program/shared/lib/program-api-unavailable'
-import { canPerformApplicationAction } from '@/features/program/shared/lib/application-available-actions'
+import {
+  APPLICATION_ACTION_CANCEL_FINAL_FAIL,
+  APPLICATION_ACTION_CANCEL_FINAL_PASS,
+  canPerformApplicationAction,
+  hasExplicitApplicationAction,
+} from '@/features/program/shared/lib/application-available-actions'
+import { resolveVolunteerInterview2CancelPassButtonLabel } from '@/features/program/general/lib/volunteer-interview2-cancel-pass'
+import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
@@ -265,6 +272,35 @@ function headerBtnCancelReject(
   }
 }
 
+function headerBtnCancelFinalPass(
+  applicantId: string,
+  onCancelFinalPass?: (id: string) => void,
+  label = '합격 취소'
+): ApplicantHeaderActionItem {
+  return {
+    key: 'cancel-final-pass',
+    variant: 'delete',
+    label,
+    width: CMS_ACTION_BUTTON_WIDTH,
+    disabled: !onCancelFinalPass,
+    onClick: () => onCancelFinalPass?.(applicantId),
+  }
+}
+
+function headerBtnCancelFinalFail(
+  applicantId: string,
+  onCancelFinalFail?: (id: string) => void
+): ApplicantHeaderActionItem {
+  return {
+    key: 'cancel-final-fail',
+    variant: 'delete',
+    label: '불합격 취소',
+    width: CMS_ACTION_BUTTON_WIDTH,
+    disabled: !onCancelFinalFail,
+    onClick: () => onCancelFinalFail?.(applicantId),
+  }
+}
+
 function headerBtnsPendingParticipation(
   applicantId: string,
   onApprove: (id: string) => void,
@@ -311,6 +347,8 @@ function resolveApplicantHeaderItems(params: {
   onReject: (id: string) => void
   onCancelApproval?: (id: string) => void
   onCancelReject?: (id: string) => void
+  onCancelFinalPass?: (id: string) => void
+  onCancelFinalFail?: (id: string) => void
   cancelApprovalState: { disabled: boolean; reason: string | null }
   isGeneralInstitutionEditEnabled?: boolean
   isEditingInstitutionDetail?: boolean
@@ -327,6 +365,7 @@ function resolveApplicantHeaderItems(params: {
   isAdminCommentWriteEnabled?: boolean
   onEnterAdminCommentEdit?: () => void
   individualAvailableActions?: string[]
+  individualSecondInterviewScreeningStatus?: GeneralSecondInterviewScreeningStatus
   institutionAvailableActions?: string[]
   instructorAvailableActions?: string[]
   isCancelledInstitution?: boolean
@@ -348,6 +387,8 @@ function resolveApplicantHeaderItems(params: {
     onReject,
     onCancelApproval,
     onCancelReject,
+    onCancelFinalPass,
+    onCancelFinalFail,
     cancelApprovalState,
     isGeneralInstitutionEditEnabled = false,
     isEditingInstitutionDetail = false,
@@ -364,6 +405,7 @@ function resolveApplicantHeaderItems(params: {
     isAdminCommentWriteEnabled = false,
     onEnterAdminCommentEdit,
     individualAvailableActions,
+    individualSecondInterviewScreeningStatus,
     institutionAvailableActions,
     instructorAvailableActions,
     isCancelledInstitution = false,
@@ -407,6 +449,21 @@ function resolveApplicantHeaderItems(params: {
 
     if (onCancelApproval && individualAvailableActions?.includes('CANCEL_APPROVAL')) {
       items.push(headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState))
+    }
+    if (
+      onCancelFinalPass &&
+      hasExplicitApplicationAction(
+        individualAvailableActions,
+        APPLICATION_ACTION_CANCEL_FINAL_PASS
+      )
+    ) {
+      items.push(
+        headerBtnCancelFinalPass(
+          applicantId,
+          onCancelFinalPass,
+          resolveVolunteerInterview2CancelPassButtonLabel(individualSecondInterviewScreeningStatus)
+        )
+      )
     }
 
     if (isGeneralIndividualEditEnabled && onEnterIndividualEdit && onSaveIndividualEdit) {
@@ -465,6 +522,15 @@ function resolveApplicantHeaderItems(params: {
   }
   if (isRejectedIndividual) {
     const items: ApplicantHeaderActionItem[] = []
+    if (
+      onCancelFinalFail &&
+      hasExplicitApplicationAction(
+        individualAvailableActions,
+        APPLICATION_ACTION_CANCEL_FINAL_FAIL
+      )
+    ) {
+      items.push(headerBtnCancelFinalFail(applicantId, onCancelFinalFail))
+    }
     if (
       onCancelReject &&
       canPerformApplicationAction(individualAvailableActions, 'CANCEL_REJECTION')
@@ -533,6 +599,10 @@ interface ApplicantsDetailContentsProps {
   onCancelApproval?: (id: string) => void
   /** 신청 강사 반려 시 반려 취소 클릭 시 호출 (대기로 복원) */
   onCancelReject?: (id: string) => void
+  /** 최종 합격·예비 취소 — `final-result` FAIL overwrite */
+  onCancelFinalPass?: (id: string) => void
+  /** 최종 불합격 취소 — `cancel-rejection` (서류 PASS 유지) */
+  onCancelFinalFail?: (id: string) => void
   /** 승인·반려 상태에서 알림 재발송 클릭 시 호출 */
   onResendNotification?: () => void
   /** 개인 면접 심사 탭 — 상세 섹션 분기 */
@@ -562,6 +632,8 @@ export function ApplicantsDetailContents({
   onReject,
   onCancelApproval,
   onCancelReject,
+  onCancelFinalPass,
+  onCancelFinalFail,
   onResendNotification,
   individualScreeningStage = 'main',
 }: ApplicantsDetailContentsProps) {
@@ -1268,6 +1340,8 @@ export function ApplicantsDetailContents({
       onReject,
       onCancelApproval,
       onCancelReject,
+      onCancelFinalPass,
+      onCancelFinalFail,
       cancelApprovalState,
       isGeneralInstitutionEditEnabled,
       isEditingInstitutionDetail: institutionDetailEdit.isEditing,
@@ -1297,6 +1371,7 @@ export function ApplicantsDetailContents({
           ? handleInstructorAdminCommentEditEnter
           : handleAdminCommentEditEnter,
       individualAvailableActions: individualData?.availableActions,
+      individualSecondInterviewScreeningStatus: individualData?.secondInterviewScreeningStatus,
       institutionAvailableActions: institutionData?.availableActions,
       instructorAvailableActions: instructorData?.availableActions,
     })
@@ -1343,6 +1418,8 @@ export function ApplicantsDetailContents({
     onReject,
     onCancelApproval,
     onCancelReject,
+    onCancelFinalPass,
+    onCancelFinalFail,
     personalInfoRevealed,
     individualData,
     institutionData,
