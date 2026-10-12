@@ -6,11 +6,12 @@ import {
 } from '@jakorea/form-schema/consent'
 import type { TableBottomConsent, VerticalTableParagraph } from '@jakorea/form-schema/writing-form'
 import {
+  FormTemplateHost,
   type FormUpdateParagraph,
   patchVerticalTableBottomConsent,
   patchVerticalTableCell,
 } from '@jakorea/form-template-runtime'
-import { PFCheckbox, PFTextInput } from '@/shared/ui'
+import { PFCheckbox, PFFormControlCluster, PFTextInput } from '@/shared/ui'
 import { ConsentWriteRadioGroup } from './consent-radio'
 import styles from './consent-form.module.css'
 
@@ -52,9 +53,16 @@ export function PlatformPortraitPersonalConsentTable({
 
   return (
     <div className={styles.tableBlock}>
-      <div className="form-template-vertical-table-wrap">
-        <div className="form-template-vertical-table" role="grid">
-          <div className="form-template-vertical-table__row" role="row">
+      <FormTemplateHost surface="platformUser">
+        <div className={styles.portraitPersonalVerticalTableWrap}>
+          <div
+            className={`form-template-vertical-table ${styles.portraitPersonalVerticalTable}`}
+            role="grid"
+          >
+          <div
+            className="form-template-vertical-table__row form-template-vertical-table__row--portrait-name-affiliation"
+            role="row"
+          >
             <div className="form-template-vertical-table__stage">
               <div className="form-template-vertical-table__th" role="columnheader">
                 성명
@@ -75,7 +83,7 @@ export function PlatformPortraitPersonalConsentTable({
                 소속
               </div>
               <div className="form-template-vertical-table__td" role="gridcell">
-                <div className={styles.portraitAffiliationRow}>
+                <PFFormControlCluster className={styles.portraitAffiliationRow}>
                   <PFTextInput
                     variant="formPage"
                     size="large"
@@ -97,7 +105,7 @@ export function PlatformPortraitPersonalConsentTable({
                   >
                     {PORTRAIT_NO_AFFILIATION}
                   </PFCheckbox>
-                </div>
+                </PFFormControlCluster>
               </div>
             </div>
           </div>
@@ -123,8 +131,9 @@ export function PlatformPortraitPersonalConsentTable({
               ))}
             </div>
           ))}
+          </div>
         </div>
-      </div>
+      </FormTemplateHost>
 
       {paragraph.showBottomText || paragraph.showBottomConsent ? (
         <div className={styles.tableAfter}>

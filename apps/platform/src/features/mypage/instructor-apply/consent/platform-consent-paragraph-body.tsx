@@ -36,6 +36,7 @@ import { ConsentInfoTable } from './info-table'
 import { PlatformIdTypeWithInputFields } from './id-type-with-input-fields'
 import { PlatformPortraitPersonalConsentTable } from './portrait-personal-consent-table'
 import { resolveHorizontalTablePlatformView } from './horizontal-table-from-schema'
+import previewTypography from '@/features/mypage/settings/ui/consent-document-preview-typography.module.css'
 import styles from './consent-form.module.css'
 
 function tableBottomConsentToChoice(value?: TableBottomConsent): ConsentValue | '' {
@@ -122,10 +123,12 @@ export function PlatformConsentParagraphBody({
   paragraph,
   onUpdateParagraph,
   fillOptions,
+  documentPreview = false,
 }: {
   paragraph: WritingFormParagraph
   onUpdateParagraph: FormUpdateParagraph
   fillOptions?: PlatformConsentFillOptions
+  documentPreview?: boolean
 }) {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     return (
@@ -148,59 +151,61 @@ export function PlatformConsentParagraphBody({
       paragraph.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable
 
     return (
-      <FormTemplateHost surface="platformUser">
-        <VerticalTablePreviewBody
-          paragraph={paragraph}
-          interactionMode="user"
-          onBottomConsentChange={value =>
-            onUpdateParagraph(paragraph.id, current =>
-              current.kind === 'single_item' && current.variant === 'vertical_table'
-                ? patchVerticalTableBottomConsent(current, value)
-                : current
-            )
-          }
-          onCellChange={
-            isPortraitLockedBodyTable
-              ? undefined
-              : (rowIndex, stageIndex, value) =>
-                  onUpdateParagraph(paragraph.id, current =>
-                    current.kind === 'single_item' && current.variant === 'vertical_table'
-                      ? patchVerticalTableCell(current, rowIndex, stageIndex, value)
-                      : current
-                  )
-          }
-          onCompositeTimeChange={
-            isPortraitLockedBodyTable
-              ? undefined
-              : (rowIndex, stageIndex, value) =>
-                  onUpdateParagraph(paragraph.id, current =>
-                    current.kind === 'single_item' && current.variant === 'vertical_table'
-                      ? patchVerticalTableCompositeTime(current, rowIndex, stageIndex, value)
-                      : current
-                  )
-          }
-          onMultipleChoiceChange={
-            isPortraitLockedBodyTable
-              ? undefined
-              : (rowIndex, stageIndex, values) =>
-                  onUpdateParagraph(paragraph.id, current =>
-                    current.kind === 'single_item' && current.variant === 'vertical_table'
-                      ? patchVerticalTableMultipleChoice(current, rowIndex, stageIndex, values)
-                      : current
-                  )
-          }
-          onFileNamesChange={
-            isPortraitLockedBodyTable
-              ? undefined
-              : (rowIndex, stageIndex, fileNames) =>
-                  onUpdateParagraph(paragraph.id, current =>
-                    current.kind === 'single_item' && current.variant === 'vertical_table'
-                      ? patchVerticalTableFileNames(current, rowIndex, stageIndex, fileNames)
-                      : current
-                  )
-          }
-        />
-      </FormTemplateHost>
+      <div className={styles.tableBlock}>
+        <FormTemplateHost surface="platformUser">
+          <VerticalTablePreviewBody
+            paragraph={paragraph}
+            interactionMode="user"
+            onBottomConsentChange={value =>
+              onUpdateParagraph(paragraph.id, current =>
+                current.kind === 'single_item' && current.variant === 'vertical_table'
+                  ? patchVerticalTableBottomConsent(current, value)
+                  : current
+              )
+            }
+            onCellChange={
+              isPortraitLockedBodyTable
+                ? undefined
+                : (rowIndex, stageIndex, value) =>
+                    onUpdateParagraph(paragraph.id, current =>
+                      current.kind === 'single_item' && current.variant === 'vertical_table'
+                        ? patchVerticalTableCell(current, rowIndex, stageIndex, value)
+                        : current
+                    )
+            }
+            onCompositeTimeChange={
+              isPortraitLockedBodyTable
+                ? undefined
+                : (rowIndex, stageIndex, value) =>
+                    onUpdateParagraph(paragraph.id, current =>
+                      current.kind === 'single_item' && current.variant === 'vertical_table'
+                        ? patchVerticalTableCompositeTime(current, rowIndex, stageIndex, value)
+                        : current
+                    )
+            }
+            onMultipleChoiceChange={
+              isPortraitLockedBodyTable
+                ? undefined
+                : (rowIndex, stageIndex, values) =>
+                    onUpdateParagraph(paragraph.id, current =>
+                      current.kind === 'single_item' && current.variant === 'vertical_table'
+                        ? patchVerticalTableMultipleChoice(current, rowIndex, stageIndex, values)
+                        : current
+                    )
+            }
+            onFileNamesChange={
+              isPortraitLockedBodyTable
+                ? undefined
+                : (rowIndex, stageIndex, fileNames) =>
+                    onUpdateParagraph(paragraph.id, current =>
+                      current.kind === 'single_item' && current.variant === 'vertical_table'
+                        ? patchVerticalTableFileNames(current, rowIndex, stageIndex, fileNames)
+                        : current
+                    )
+            }
+          />
+        </FormTemplateHost>
+      </div>
     )
   }
 
@@ -264,6 +269,9 @@ export function PlatformConsentParagraphBody({
           }
         />
       )
+    }
+    if (documentPreview) {
+      return <p className={previewTypography.explanationText}>{paragraph.bodyText}</p>
     }
     return (
       <PFText as="p" typo="bd-md-rg" color="black" className={styles.prose}>
@@ -372,6 +380,9 @@ export function PlatformConsentParagraphBody({
   }
 
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
+    if (documentPreview) {
+      return <p className={previewTypography.closingText}>{paragraph.body}</p>
+    }
     return (
       <div className={styles.closingRecipient}>
         <p className={styles.closingRecipientText}>{paragraph.body}</p>

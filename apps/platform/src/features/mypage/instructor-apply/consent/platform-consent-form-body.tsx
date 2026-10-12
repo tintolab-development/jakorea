@@ -9,6 +9,7 @@ import {
   resolvePlatformConsentSectionRequired,
   resolvePlatformConsentSectionTitle,
 } from './platform-consent-paragraph-body'
+import previewTypography from '@/features/mypage/settings/ui/consent-document-preview-typography.module.css'
 import styles from './consent-form.module.css'
 
 export type PlatformConsentFormBodyProps = {
@@ -17,16 +18,20 @@ export type PlatformConsentFormBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   fillOptions?: PlatformConsentFillOptions
   renderParagraphSlot?: (paragraph: WritingFormParagraph) => ReactNode | null | undefined
+  /** A4 동의서 미리보기 — CMS `form-document-preview-body` 타이포 */
+  documentPreview?: boolean
+  documentPreviewTemplateId?: string
 }
 
 function shouldHideParagraph(
   paragraph: WritingFormParagraph,
-  hiddenParagraphIds: ReadonlySet<string>
+  hiddenParagraphIds: ReadonlySet<string>,
+  documentPreview?: boolean,
 ): boolean {
   if (hiddenParagraphIds.has(paragraph.id)) return true
   if (paragraph.kind === 'description' && paragraph.variant === 'system') {
-    /* 전자서명 sidecar — renderParagraphSlot에서 처리 */
     if (paragraph.systemPreset === 'agreement_signature') return false
+    if (documentPreview && paragraph.systemPreset === 'agreement_date') return false
     return true
   }
   if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {
@@ -35,6 +40,7 @@ function shouldHideParagraph(
   return false
 }
 
+/** 제목·카드 셸 없이 본문만 (마무리글, 전자서명 슬롯, 지급조서 중간 안내 등) */
 function isBodyOnlyParagraph(paragraph: WritingFormParagraph): boolean {
   if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine) return true
   if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) return true
@@ -45,15 +51,47 @@ function isBodyOnlyParagraph(paragraph: WritingFormParagraph): boolean {
   ) {
     return true
   }
-  if (
-    paragraph.kind === 'single_item' &&
-    paragraph.variant === 'agreement_explanation_text' &&
-    !paragraph.paragraphTitle?.trim()
-  ) {
-    return true
-  }
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') return true
   return false
+}
+
+function wrapConsentParagraph(
+  paragraph: WritingFormParagraph,
+  title: string,
+  content: ReactNode,
+  documentPreview?: boolean,
+): ReactNode {
+  if (isBodyOnlyParagraph(paragraph)) {
+    return (
+      <div key={paragraph.id} className={styles.bodyOnlyWrap}>
+        {content}
+      </div>
+    )
+  }
+
+  if (documentPreview) {
+    return (
+      <div
+        key={paragraph.id}
+        className={previewTypography.paragraph}
+        data-paragraph-id={paragraph.id}
+      >
+        {title ? <p className={previewTypography.sectionTitle}>{title}</p> : null}
+        {content}
+      </div>
+    )
+  }
+
+  return (
+    <PFFormSection
+      key={paragraph.id}
+      id={paragraph.id}
+      title={title}
+      required={resolvePlatformConsentSectionRequired(paragraph)}
+    >
+      {content}
+    </PFFormSection>
+  )
 }
 
 /** schema draft + Platform `PFFormSection` / `ConsentInfoTable` shell */
@@ -63,71 +101,47 @@ export function PlatformConsentFormBody({
   onUpdateParagraph,
   fillOptions,
   renderParagraphSlot,
+  documentPreview = false,
+  documentPreviewTemplateId,
 }: PlatformConsentFormBodyProps) {
   let numberedIndex = 0
 
+  const rootClassName = documentPreview
+    ? [
+        previewTypography.body,
+        documentPreviewTemplateId === 'agreement-portrait' ? previewTypography.bodyPortrait : undefined,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : styles.paragraphStack
+
   return (
-    <>
+    <div className={rootClassName}>
       {draft.paragraphs.map(paragraph => {
-        if (shouldHideParagraph(paragraph, hiddenParagraphIds)) {
+        if (shouldHideParagraph(paragraph, hiddenParagraphIds, documentPreview)) {
           return null
         }
 
         const usesNumber = paragraph.participatesInTitleNumbering
         const titleIndex = usesNumber ? numberedIndex++ : numberedIndex
+        const title = resolvePlatformConsentSectionTitle(paragraph, titleIndex)
 
         const slot = renderParagraphSlot?.(paragraph)
         if (slot != null) {
-          const title = isBodyOnlyParagraph(paragraph)
-            ? ''
-            : resolvePlatformConsentSectionTitle(paragraph, titleIndex)
-          if (title) {
-            return (
-              <PFFormSection
-                key={paragraph.id}
-                id={paragraph.id}
-                title={title}
-                required={resolvePlatformConsentSectionRequired(paragraph)}
-              >
-                {slot}
-              </PFFormSection>
-            )
-          }
-          return (
-            <div key={paragraph.id} className={styles.bodyOnlyWrap}>
-              {slot}
-            </div>
-          )
+          return wrapConsentParagraph(paragraph, title, slot, documentPreview)
         }
 
-        const title = resolvePlatformConsentSectionTitle(paragraph, titleIndex)
         const body = (
           <PlatformConsentParagraphBody
             paragraph={paragraph}
             onUpdateParagraph={onUpdateParagraph}
             fillOptions={fillOptions}
+            documentPreview={documentPreview}
           />
         )
 
-        if (isBodyOnlyParagraph(paragraph) || !title) {
-          return (
-            <div key={paragraph.id} className={styles.bodyOnlyWrap}>
-              {body}
-            </div>
-          )
-        }
-
-        return (
-          <PFFormSection
-            key={paragraph.id}
-            id={paragraph.id}
-            title={title}
-            required={resolvePlatformConsentSectionRequired(paragraph)}
-          >
-            {body}
-          </PFFormSection>
-        )
+        return wrapConsentParagraph(paragraph, title, body, documentPreview)
       })}
-    </>
+    </div>
   )
 }

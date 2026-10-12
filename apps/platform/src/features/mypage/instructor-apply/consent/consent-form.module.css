@@ -26,6 +26,23 @@
   }
 }
 
+/* PlatformConsentFormBody — 단락(PFFormSection·bodyOnly) 스택 */
+.paragraphStack {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-32);
+}
+
+@media (--bp-below-pc) {
+  .paragraphStack {
+    gap: var(--spacing-16);
+  }
+}
+
 .bodyOnlyWrap {
   box-sizing: border-box;
   width: 100%;
@@ -110,6 +127,58 @@
 .portraitAffiliationRow > :first-child {
   flex: 1 1 160px;
   min-width: 0;
+}
+
+/* 초상권 1번 표 — 1행(성명·소속) 4열 그리드, 2행~ 라벨 200px + 본문 (runtime 세로표와 동일) */
+.portraitPersonalVerticalTableWrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.portraitPersonalVerticalTable:global(.form-template-vertical-table) {
+  width: 100%;
+  align-self: stretch;
+}
+
+.portraitPersonalVerticalTable
+  :global(> .form-template-vertical-table__row--portrait-name-affiliation) {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 200px minmax(0, 1fr);
+}
+
+.portraitPersonalVerticalTable
+  :global(> .form-template-vertical-table__row--portrait-name-affiliation)
+  :global(> .form-template-vertical-table__stage) {
+  display: contents;
+}
+
+.portraitPersonalVerticalTable
+  :global(> .form-template-vertical-table__row:not(.form-template-vertical-table__row--portrait-name-affiliation))
+  :global(> .form-template-vertical-table__stage) {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.portraitPersonalVerticalTable :global(.form-template-vertical-table__td) {
+  align-items: flex-start;
+}
+
+.portraitPersonalVerticalTable
+  :global(.form-template-vertical-table__row--portrait-name-affiliation)
+  :global(.form-template-vertical-table__td) {
+  align-items: center;
+}
+
+.portraitPersonalVerticalTable :global(.form-template-vertical-table__td) > * {
+  width: 100%;
+  min-width: 0;
+}
+
+.portraitPersonalVerticalTable .cellText {
+  text-align: left;
+  font-weight: 400;
+  line-height: 160%;
 }
 
 .tableBlock {
@@ -213,6 +282,65 @@
 .cellTextEmphasized {
   font-size: 20px;
   font-weight: 700;
+}
+
+/* 모바일 — 초상권 1번 세로표: 성명·소속 필드 스택 (pf-form fieldTable 리듬) */
+@media (--bp-below-pc) {
+  .portraitPersonalVerticalTable
+    :global(> .form-template-vertical-table__row--portrait-name-affiliation) {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .portraitPersonalVerticalTable
+    :global(> .form-template-vertical-table__row--portrait-name-affiliation)
+    :global(> .form-template-vertical-table__stage) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .portraitPersonalVerticalTable
+    :global(> .form-template-vertical-table__row--portrait-name-affiliation)
+    :global(.form-template-vertical-table__th) {
+    justify-content: flex-start;
+    color: var(--color-neutral-cool-600, #667278);
+    font-family: Pretendard, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 140%;
+    text-align: left;
+  }
+
+  .portraitPersonalVerticalTable
+    :global(> .form-template-vertical-table__row--portrait-name-affiliation)
+    :global(.form-template-vertical-table__td) {
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .portraitAffiliationRow {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--spacing-12);
+  }
+
+  .portraitAffiliationRow > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto !important;
+    max-width: 100%;
+  }
+
+  .portraitAffiliationRow > :last-child {
+    flex-shrink: 0;
+    width: auto !important;
+    max-width: none;
+  }
 }
 
 /* 모바일 — 표 그리드 대신 cool-50 카드 + 항목 라벨 / 값 리스트 */
