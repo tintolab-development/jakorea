@@ -30,19 +30,14 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './half-education-schedule-section.css'
 
+/**
+ * 진행 일정 조회 텍스트.
+ * `\n` 다중 행을 fragment+span으로 나누면 `.detail-info-form__field-content`(display:flex)
+ * 직계 자식이 가로로 나열되어 일정이 옆으로 붙는다 → 단일 래퍼 + pre-line 로 세로 유지.
+ */
 function ScheduleTextView({ text }: { text: string }) {
   if (!text || text === '-') return <>-</>
-  const lines = text.split('\n')
-  return (
-    <>
-      {lines.map((line, i) => (
-        <span key={i}>
-          {i > 0 ? <br /> : null}
-          {line}
-        </span>
-      ))}
-    </>
-  )
+  return <span className="half-education-schedule__schedule-text">{text}</span>
 }
 
 function HalfEducationScheduleSubheading({ children }: { children: string }) {

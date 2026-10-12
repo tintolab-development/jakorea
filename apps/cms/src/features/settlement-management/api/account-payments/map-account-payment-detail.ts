@@ -7,6 +7,8 @@ import type {
   PaymentOrderCalculationStatementLine,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
+import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type {
   AccountPaymentDetailResponse,
   SettlementFrontendItemResponse,
@@ -134,6 +136,123 @@ function sumFrontendItemsAmount(items: SettlementFrontendItemResponse[] | undefi
   return (items ?? []).reduce((sum, item) => sum + (item.amount ?? 0), 0)
 }
 
+/** 빈 값만 `-`. 마스킹(`*`, `****`, `마스킹` 등)은 유효 표시로 유지 */
+function displayOrDash(value: string | null | undefined): string {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : '-'
+}
+
+function formatBirthDisplay(
+  birthDate: string | null | undefined,
+  birthYear: number | null | undefined
+): string {
+  const dateRaw = birthDate?.trim()
+  if (dateRaw) {
+    const api = toApiBirthDate(dateRaw)
+    if (api) {
+      const [y, m, d] = api.split('-')
+      if (y && m && d) return `${y}. ${m}. ${d}`
+    }
+    return dateRaw
+  }
+  if (birthYear != null && Number.isFinite(birthYear)) {
+    return `${birthYear}. **. **`
+  }
+  return '-'
+}
+
+function formatGenderBirthDisplay(
+  gender: string | null | undefined,
+  birthDate: string | null | undefined,
+  birthYear: number | null | undefined
+): string {
+  const genderPart = toDisplayGender(gender)
+  const birthPart = formatBirthDisplay(birthDate, birthYear)
+  if (genderPart === '-' && birthPart === '-') return '-'
+  return `${genderPart} | ${birthPart}`
+}
+
+function formatHomeAddressDisplay(
+  homeAddress: { line?: string; detail?: string } | null | undefined
+): string {
+  if (!homeAddress) return '-'
+  const line = homeAddress.line?.trim()
+  const detail = homeAddress.detail?.trim()
+  const parts = [line, detail].filter((part): part is string => Boolean(part))
+  return parts.length > 0 ? parts.join(' ') : '-'
+}
+
+/**
+ * 지급 상세에 PII가 없으므로 instructor privacy unmask 응답으로 채운다.
+ * (상세 화면은 마스킹 UI 없음 — 진입 시 원문 + 고정 목적 감사 로그)
+ * memberId 없음·2차 API 실패 시에만 `-` 유지.
+ */
+export function applyInstructorMemberPiiToAccountPaymentDetail(
+  detail: AccountPaymentStatusDetail,
+  instructor: InstructorMemberDetailResponse | null | undefined
+): AccountPaymentStatusDetail {
+  if (!instructor) return detail
+
+  const member = instructor.member
+  const hasMemberPii = member != null
+  const hasAddress = instructor.profile?.homeAddress != null
+  if (!hasMemberPii && !hasAddress) return detail
+
+  return {
+    ...detail,
+    basic: {
+      ...detail.basic,
+      genderBirthDisplay: hasMemberPii
+        ? formatGenderBirthDisplay(member?.gender, member?.birthDate, member?.birthYear)
+        : detail.basic.genderBirthDisplay,
+      phoneDisplay: hasMemberPii ? displayOrDash(member?.phone) : detail.basic.phoneDisplay,
+      emailDisplay: hasMemberPii ? displayOrDash(member?.email) : detail.basic.emailDisplay,
+      addressDisplay: hasAddress
+        ? formatHomeAddressDisplay(instructor.profile?.homeAddress)
+        : detail.basic.addressDisplay,
+      scheduleChangeCancelCount:
+        member?.scheduleChangeCancelCount ?? detail.basic.scheduleChangeCancelCount,
+    },
+  }
+}
+
+/** instructor unmask 응답의 정산 계좌 원문 (sensitiveAccount 보완용) */
+function resolveInstructorSettlementAccount(
+  instructor: InstructorMemberDetailResponse | null | undefined
+): { bankName?: string; accountNumber?: string; accountHolder?: string } | null {
+  const settlement = instructor?.settlement
+  if (!settlement) return null
+  const bankName = settlement.bankName?.trim()
+  const accountNumber = settlement.accountNumber?.trim()
+  const accountHolder = settlement.accountHolder?.trim()
+  if (!bankName && !accountNumber && !accountHolder) return null
+  return { bankName, accountNumber, accountHolder }
+}
+
+/** `payment.memberId` → `settlement.instructorId` → 목록 row 순 */
+export function resolveAccountPaymentMemberId(
+  detail: AccountPaymentDetailResponse,
+  row: AccountPaymentRow
+): number | undefined {
+  const fromPayment = detail.payment?.memberId
+  if (typeof fromPayment === 'number' && Number.isFinite(fromPayment) && fromPayment > 0) {
+    return fromPayment
+  }
+
+  const fromSettlement = detail.settlement?.instructorId
+  if (fromSettlement != null && String(fromSettlement).trim() !== '') {
+    const parsed = Number(fromSettlement)
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  }
+
+  const fromRow = row.instructorMemberId
+  if (typeof fromRow === 'number' && Number.isFinite(fromRow) && fromRow > 0) {
+    return fromRow
+  }
+
+  return undefined
+}
+
 function buildAccountPaymentStatusDetail(
   row: AccountPaymentRow,
   blocks: PaymentOrderCalculationStatementSessionBlock[],
@@ -156,6 +275,7 @@ function buildAccountPaymentStatusDetail(
     basic: {
       nameKo: row.instructorName,
       nameEn: '-',
+      // PII는 AccountPaymentDetailResponse에 없음 — instructor 2차 조회로 채움
       genderBirthDisplay: '-',
       scheduleChangeCancelCount: undefined,
       phoneDisplay: '-',
@@ -215,16 +335,20 @@ export function mapAccountPaymentDetailRemote(
 }
 
 /**
- * `GET /api/admin/account-payments/{id}` 1회 응답만으로 상세 구성.
- * `settlement` embed = SettlementFrontendResponse (Gemini 등은 null).
+ * `GET /api/admin/account-payments/{id}` + (선택) instructor privacy unmask로 구성.
+ * PII(성별·연락처·이메일·자택)는 지급 상세에 없음 → instructor 원문 응답에서 compose.
+ * 계좌번호는 sensitiveAccount 우선, 없으면 instructor settlement/bankAccounts 원문으로 보완.
+ * settlement embed가 없어도(memberId만 있으면) PII 조회는 스킵하지 않는다.
  */
 export function mapAccountPaymentDetailFromGetApi(
   row: AccountPaymentRow,
-  detail: AccountPaymentDetailResponse
+  detail: AccountPaymentDetailResponse,
+  instructorDetail?: InstructorMemberDetailResponse | null
 ): AccountPaymentStatusDetail {
   const payment = detail.payment
   const settlement = detail.settlement ?? undefined
   const sensitiveAccount = detail.sensitiveAccount
+  const instructorBank = resolveInstructorSettlementAccount(instructorDetail)
 
   const mergedRow: AccountPaymentRow = {
     ...row,
@@ -248,26 +372,38 @@ export function mapAccountPaymentDetailFromGetApi(
     amount: payment?.netPaymentAmount ?? row.amount,
     transferScheduledDate:
       payment?.scheduledPaymentDate ?? settlement?.expectedTransferDate ?? row.transferScheduledDate,
-    bankName: sensitiveAccount?.bankName?.trim() || payment?.bankName || row.bankName,
+    bankName:
+      sensitiveAccount?.bankName?.trim() ||
+      payment?.bankName ||
+      instructorBank?.bankName ||
+      row.bankName,
     maskedAccountNo:
-      sensitiveAccount?.accountNo?.trim() || payment?.maskedAccountNo || row.maskedAccountNo,
+      sensitiveAccount?.accountNo?.trim() ||
+      payment?.maskedAccountNo ||
+      instructorBank?.accountNumber ||
+      row.maskedAccountNo,
     accountHolder:
-      sensitiveAccount?.accountHolder?.trim() || payment?.accountHolder || row.accountHolder,
+      sensitiveAccount?.accountHolder?.trim() ||
+      payment?.accountHolder ||
+      instructorBank?.accountHolder ||
+      row.accountHolder,
     accountPaymentStatus: mapPaymentStatusToAccountPaymentStatus(payment?.paymentStatus),
+    instructorMemberId:
+      resolveAccountPaymentMemberId(detail, row) ?? row.instructorMemberId,
   }
 
-  if (settlement) {
-    return mapAccountPaymentDetailRemote(mergedRow, settlement)
-  }
+  const base = settlement
+    ? mapAccountPaymentDetailRemote(mergedRow, settlement)
+    : buildAccountPaymentStatusDetail(
+        mergedRow,
+        buildFallbackBlocks(mergedRow),
+        mergedRow.amount,
+        {
+          programName: mergedRow.programName,
+          accountPaymentStatus: mergedRow.accountPaymentStatus,
+          transferScheduledDate: mergedRow.transferScheduledDate,
+        }
+      )
 
-  return buildAccountPaymentStatusDetail(
-    mergedRow,
-    buildFallbackBlocks(mergedRow),
-    mergedRow.amount,
-    {
-      programName: mergedRow.programName,
-      accountPaymentStatus: mergedRow.accountPaymentStatus,
-      transferScheduledDate: mergedRow.transferScheduledDate,
-    }
-  )
+  return applyInstructorMemberPiiToAccountPaymentDetail(base, instructorDetail)
 }
