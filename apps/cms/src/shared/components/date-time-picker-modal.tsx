@@ -200,7 +200,7 @@ export function DateTimePickerPopover({
               <CmsInput
                 className="date-time-picker-popover__input date-time-picker-popover__input--active"
                 width="100%"
-                inputSize="large"
+                inputSize="medium"
                 readOnly
                 allowClear={false}
                 tabIndex={-1}

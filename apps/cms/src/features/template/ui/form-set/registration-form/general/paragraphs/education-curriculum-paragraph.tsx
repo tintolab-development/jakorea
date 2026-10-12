@@ -18,6 +18,7 @@ import { getProgramRegistrationEducationFormOptions } from './program-registrati
 import { GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
   PRE_EDUCATION_SCHEDULE_LABEL,
+  shouldLockProgressSchedulePeriodToggle,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
 import { IndividualPerScheduleExtraRows } from './individual-per-schedule-extra-rows'
@@ -306,6 +307,10 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   ipsScheduleDetail,
   scheduleCurriculumPreEducation = false,
 }: ProgramRegistrationEducationCurriculumParagraphProps) {
+  const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
+    programType: 'curriculum',
+    sessionRound: sessionRoundType,
+  })
   const [ipsBySession] = useProgramRegistrationOverlayKv<
     Record<number, ProgramRegistrationIpsTypeValue>
   >('generalRegistration.educationCurriculum.ipsBySession', {})
@@ -526,6 +531,8 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                         mode="single"
                         presetMode="schedule"
                         customizable={false}
+                        lockTimeToggleOn
+                        lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
                         suppressAutoTodayWhenEmpty
                         value={scheduleRange?.[0] ?? null}
                         appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}

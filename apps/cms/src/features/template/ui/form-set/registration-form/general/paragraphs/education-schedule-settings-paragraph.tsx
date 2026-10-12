@@ -44,6 +44,8 @@ type EducationScheduleSettingsProps = {
   disablePeriodMode?: boolean
   /** 일반 커리큘럼형 — 날짜 지정 시 시간 ON 고정, 기간 지정 시 기간 ON 고정 */
   lockCalendarTogglesToScheduleMode?: boolean
+  /** 등록·공통정보 — 진행 일정과 동일, 기간 토글 ON·비활성 (일정형·복수 회차 제외) */
+  lockProgressSchedulePeriodToggle?: boolean
 }
 
 export function ProgramRegistrationEducationScheduleSettingsParagraph({
@@ -53,6 +55,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   autoFillFromScheduleGroupTimes = false,
   disablePeriodMode = false,
   lockCalendarTogglesToScheduleMode = false,
+  lockProgressSchedulePeriodToggle = false,
 }: EducationScheduleSettingsProps) {
   const scheduleMode = educationScheduleMode
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
@@ -217,9 +220,10 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 mode="single"
                 presetMode={autoFillDatePicker ? 'date' : 'schedule'}
                 customizable={false}
-                showPeriodToggle={false}
+                showPeriodToggle={!autoFillDatePicker}
                 showTimeToggle={!autoFillDatePicker}
                 lockTimeToggleOn={lockTimeOnDateMode && !autoFillDatePicker}
+                lockPeriodToggleOn={lockProgressSchedulePeriodToggle && !autoFillDatePicker}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={handleDateApply}

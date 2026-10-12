@@ -19,6 +19,7 @@ import {
   getScheduleEventPerScheduleExtraPlan,
   isScheduleEducationAndIpsBothPerSchedule,
   PRE_EDUCATION_SCHEDULE_LABEL,
+  shouldLockProgressSchedulePeriodToggle,
   shouldUseScheduleEventBlockLayout,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
@@ -291,6 +292,10 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   preEducationDisplayMode = 'prepend',
   hideAssignmentSettings = false,
 }: ProgramRegistrationEducationScheduleCurriculumParagraphProps) {
+  const lockProgressSchedulePeriodToggle = shouldLockProgressSchedulePeriodToggle({
+    programType: 'schedule',
+    sessionRound: sessionRoundType,
+  })
   const replaceFirstTraining =
     scheduleCurriculumPreEducation && preEducationDisplayMode === 'replaceFirst'
   const prependTraining =
@@ -927,6 +932,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           mode="single"
           presetMode="schedule"
           customizable={false}
+          lockTimeToggleOn
+          lockPeriodToggleOn={lockProgressSchedulePeriodToggle}
           suppressAutoTodayWhenEmpty
           value={scheduleRange?.[0] ?? null}
           appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}

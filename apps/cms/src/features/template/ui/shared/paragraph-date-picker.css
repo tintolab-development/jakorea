@@ -416,7 +416,7 @@
   flex-shrink: 0;
   font-size: 15px;
   font-weight: 500;
-  line-height: 44px;
+  line-height: 40px;
   color: rgba(61, 61, 61, 0.35);
   user-select: none;
 }
@@ -429,13 +429,13 @@
 }
 
 /* `paragraph-time-picker` 셀렉트 — 날짜 팝오버 내 동일 정렬 */
-.paragraph-date-picker__popover .paragraph-time-picker__select-wrap.cms-select--large {
+.paragraph-date-picker__popover .paragraph-time-picker__select-wrap.cms-select--medium {
   gap: 0;
   padding: 0;
 }
 
 .paragraph-date-picker__popover
-  .paragraph-time-picker__select-wrap.cms-select--large
+  .paragraph-time-picker__select-wrap.cms-select--medium
   .ant-select
   .ant-select-selector {
   padding-left: 10px !important;
