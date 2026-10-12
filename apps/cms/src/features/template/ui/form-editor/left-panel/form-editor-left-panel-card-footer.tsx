@@ -18,6 +18,7 @@ import { VerticalTableDimensionActions } from '@/features/template/ui/paragraph/
 import { getLastMiddleParagraphId } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
+import { isSurveyEditorParagraphDupDeleteLocked } from '@/features/template/lib/survey-paragraph-editor-locks'
 import { isTitleWithPeriodParagraph } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
 import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
 
@@ -280,10 +281,16 @@ export function modalCardFooterActions(
 ): ReactNode {
   const structureLocked = structureLockedParagraphIds?.has(paragraph.id) ?? false
   const surveyFreeForm = editorKind === 'survey'
-  const titleActionsLocked = !surveyFreeForm && isTitleWithPeriodParagraph(paragraph)
+  const lockDupDel = structureLocked
+  const surveyDupDelLocked =
+    surveyFreeForm && isSurveyEditorParagraphDupDeleteLocked(paragraph)
+  const titleDupDelLocked = isTitleWithPeriodParagraph(paragraph)
+  /** 제목형 복제·삭제 잠금 (과거 `titleActionsLocked` 참조 호환) */
+  const titleActionsLocked = titleDupDelLocked
+  const paragraphDupDelLocked =
+    lockDupDel || titleActionsLocked || surveyDupDelLocked
   const addDisabled =
     structureLocked && !allowAddAfterStructureLockedParagraphs
-  const lockDupDel = structureLocked
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     if (!isSelected) return undefined
@@ -448,8 +455,8 @@ export function modalCardFooterActions(
     return middleParagraphActions ? (
       <FormParagraphCardActions
         addDisabled={addDisabled}
-        duplicateDisabled={lockDupDel}
-        deleteDisabled={lockDupDel}
+        duplicateDisabled={paragraphDupDelLocked}
+        deleteDisabled={paragraphDupDelLocked}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
@@ -463,8 +470,8 @@ export function modalCardFooterActions(
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
         addDisabled={addDisabled}
-        duplicateDisabled={lockDupDel || titleActionsLocked}
-        deleteDisabled={lockDupDel || titleActionsLocked}
+        duplicateDisabled={paragraphDupDelLocked}
+        deleteDisabled={paragraphDupDelLocked}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}

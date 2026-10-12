@@ -218,6 +218,7 @@ export function renderProgramRegistrationParagraphBody(
               onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
               ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
               sessionRoundType={options.sessionRoundType}
+              participantIndividual={options.participant.individual}
               participantOrganization={options.participant.organization}
               educationFormScheduleDetail={options.educationFormScheduleDetail}
               participationScheduleDetail={options.participationScheduleDetail}
@@ -246,6 +247,7 @@ export function renderProgramRegistrationParagraphBody(
           onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
           ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
           sessionRoundType={options.sessionRoundType}
+          participantIndividual={options.participant.individual}
           participantOrganization={options.participant.organization}
           educationFormScheduleDetail={options.educationFormScheduleDetail}
           participationScheduleDetail={options.participationScheduleDetail}
@@ -256,6 +258,7 @@ export function renderProgramRegistrationParagraphBody(
         <ProgramRegistrationEducationCurriculumParagraph
           key={`pr-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.participationScheduleDetail}-${options.ipsScheduleDetail}-${options.participant.organization ? 'org' : 'ind'}`}
           sessionRoundType={options.sessionRoundType}
+          participantIndividual={options.participant.individual}
           participantOrganization={options.participant.organization}
           curriculumSessionCount={options.curriculumSessionCount}
           onDeleteCurriculumSession={options.onDeleteCurriculumSession}

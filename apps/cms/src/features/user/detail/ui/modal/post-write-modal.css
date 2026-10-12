@@ -9,16 +9,6 @@
   overflow: hidden;
 }
 
-/* 헤더 타이틀: 24px Bold, line-height 150% */
-.post-write-modal.ant-modal .ant-modal-title {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 24px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-}
-
 .post-write-modal.ant-modal .ant-modal-body {
   display: flex;
   flex-direction: column;
@@ -30,36 +20,19 @@
   background: var(--color-bg-base);
 }
 
-/* 푸터: 본문과 간격 24px, 좌우·하단 24px */
-.post-write-modal.ant-modal .ant-modal-footer {
-  padding: 24px 24px 24px;
-  border-top: none;
-}
-
 .post-write-modal__footer-actions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 10px;
-}
-
-.post-write-modal__footer-actions .cms-button--h44 {
-  width: 120px;
-  min-width: 120px;
-  height: 40px;
+  gap: 8px;
 }
 
 .post-write-modal__body {
   width: 100%;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
-}
-
-/* 섹션 간격: 공개 범위 ↔ 내용 ↔ 첨부파일 동일 24px */
-.post-write-modal__field + .post-write-modal__field {
-  margin-top: 24px;
+  gap: 24px;
+  margin-top: 12px;
 }
 
 .post-write-modal__field {
@@ -107,53 +80,41 @@
   cursor: text;
 }
 
-/* 첨부 파일 — file-attachment 패턴: 내용 높이 auto, 좌측 라벨 + 우측 본문 */
-.post-write-modal__attachment {
+/* 첨부 — DetailInfoForm 단일 행 (공지 등록 모달과 동일 패턴) */
+.post-write-modal__attachment-form.detail-info-form {
   width: 100%;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 12px;
-  box-sizing: border-box;
-  overflow: hidden;
-  background: var(--main-WT, #fff);
-}
-
-.post-write-modal__attachment-row {
-  display: flex;
-  align-items: stretch;
-  min-height: 0;
-}
-
-.post-write-modal__attachment-label {
   flex-shrink: 0;
-  width: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 16px;
-  border-right: 1px solid var(--table-line, #e0e0e0);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 150%;
-  color: var(--main-BK, #3d3d3d);
-  background: var(
-    --BG-header,
-    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
-    #fff
-  );
 }
 
-.post-write-modal__attachment-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px;
-  box-sizing: border-box;
-}
-
-.post-write-modal__file-select.file-select-field {
+.post-write-modal__attachment-form .detail-info-form__body {
   width: 100%;
 }
 
+.post-write-modal .detail-info-form__field-content--edit > * {
+  display: block;
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.post-write-modal .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.post-write-modal
+  .detail-info-form__field:has(.post-write-modal__file-field)
+  .detail-info-form__field-content {
+  align-items: flex-start;
+  min-height: 88px;
+}
+
+.post-write-modal .file-select-field__actions {
+  flex-wrap: wrap;
+}
+
+.post-write-modal__file-field .file-select-field__guide {
+  flex: 1 1 200px;
+  min-width: 0;
+}

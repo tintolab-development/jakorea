@@ -8,13 +8,11 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
-import {
-  FILE_SELECT_MAX_TOTAL_BYTES,
-  sumFileBytes,
-} from '@/shared/ui/file-select-field-limits'
+import { FILE_SELECT_MAX_TOTAL_BYTES, sumFileBytes } from '@/shared/ui/file-select-field-limits'
 import type { Program, ProgramPost } from '@/types/domain'
 import {
   addProgramFiles,
@@ -43,7 +41,8 @@ import {
   buildPostWriteAudienceOptions,
   buildPostWriteVisibilityType,
   defaultPostWriteAudience,
-  resolveParticipantAudienceApiKey,
+  postWriteAudienceFromStored,
+  reconcilePostWriteAudienceSelection,
   type PostWriteAudienceApiKey,
 } from '../../lib/post-write-audience'
 import './post-write-modal.css'
@@ -72,27 +71,6 @@ export interface PostWriteModalProps {
   editingPost?: ProgramPost | null
   /** 등록·수정 성공 시 콜백. 수정 시 postId·content 전달 */
   onSuccess?: (updated?: { postId: string; content: string }) => void
-}
-
-function audienceFromPost(
-  post: ProgramPost | null | undefined,
-  program?: Program
-): PostWriteAudienceApiKey[] {
-  if (!post?.audience?.length) return defaultPostWriteAudience(program)
-  const participantKey = resolveParticipantAudienceApiKey(program)
-  const mapped = post.audience
-    .map(key => {
-      const lower = key.toLowerCase()
-      if (lower === 'all') return 'all' as const
-      if (lower === 'participant' || lower === 'teacher' || lower === 'student') {
-        return participantKey
-      }
-      if (lower === 'instructor') return 'instructor' as const
-      if (lower === 'volunteer') return 'volunteer' as const
-      return null
-    })
-    .filter((key): key is PostWriteAudienceApiKey => key != null)
-  return mapped.length > 0 ? [...new Set(mapped)] : defaultPostWriteAudience(program)
 }
 
 export function PostWriteModal({
@@ -153,7 +131,7 @@ export function PostWriteModal({
       setFieldError(null)
       return
     }
-    setAudience(audienceFromPost(editingPost, program))
+    setAudience(postWriteAudienceFromStored(editingPost?.audience, program))
     setFiles([])
     if (!editingPost || editingPost.id.startsWith('temp-')) {
       setExistingAttachments([])
@@ -257,8 +235,7 @@ export function PostWriteModal({
       const audienceForSave = audience.includes('all')
         ? (['all'] as string[])
         : audience.filter(key => key !== 'all')
-      const title =
-        trimmed.replace(/[#*_`>\-[\]()]/g, '').slice(0, 40) || '게시글'
+      const title = trimmed.replace(/[#*_`>\-[\]()]/g, '').slice(0, 40) || '게시글'
       const inlineImageIds = collectFileObjectIdsFromHtml(trimmed)
 
       if (isEditMode && editingPost) {
@@ -361,10 +338,10 @@ export function PostWriteModal({
       className="post-write-modal"
       footer={
         <div className="post-write-modal__footer-actions">
-          <CmsButton variant="secondary" size="medium" onClick={onCancel} disabled={loading}>
+          <CmsButton variant="secondary" size="h40" onClick={onCancel} disabled={loading}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="medium" onClick={handleRegister} loading={loading}>
+          <CmsButton variant="primary" size="h40" onClick={handleRegister} loading={loading}>
             {isEditMode ? '수정' : '등록'}
           </CmsButton>
         </div>
@@ -378,7 +355,11 @@ export function PostWriteModal({
             checkboxSize="medium"
             options={audienceOptions}
             value={audience}
-            onChange={vals => setAudience(vals as PostWriteAudienceApiKey[])}
+            onChange={vals =>
+              setAudience(
+                reconcilePostWriteAudienceSelection(vals as PostWriteAudienceApiKey[], program)
+              )
+            }
           />
         </div>
 
@@ -389,7 +370,8 @@ export function PostWriteModal({
               minHeight={editorMinHeight}
               fileUploadOwner={inlineImageOwner}
             />
-            {fieldError && (fieldError.field === 'content' || fieldError.field === 'inlineImages') ? (
+            {fieldError &&
+            (fieldError.field === 'content' || fieldError.field === 'inlineImages') ? (
               <p className="text-area-field-row__field-error" role="alert">
                 {fieldError.message}
               </p>
@@ -397,34 +379,43 @@ export function PostWriteModal({
           </div>
         </div>
 
-        <div className="post-write-modal__field">
-          <div className="post-write-modal__attachment">
-            <div className="post-write-modal__attachment-row">
-              <span className="post-write-modal__attachment-label">첨부 파일</span>
-              <div className="post-write-modal__attachment-body">
-                <FileSelectField
-                  accept=".jpg,.jpeg,.png"
-                  fileNames={fileNames}
-                  currentTotalBytes={existingAttachmentBytes + sumFileBytes(files)}
-                  maxTotalBytes={FILE_SELECT_MAX_TOTAL_BYTES}
-                  onFilesChange={handleFilesChange}
-                  onRemoveFile={handleRemoveFile}
-                  uploading={loading}
-                  guideLines={[
-                    `- 파일은 총 최대 15MB까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
-                    '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-                  ]}
-                  className="post-write-modal__file-select file-select-field--edit"
-                />
-                {fieldError?.field === 'attachments' ? (
-                  <p className="text-area-field-row__field-error" role="alert">
-                    {fieldError.message}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
+        <DetailInfoForm
+          title="첨부 파일"
+          hideHeader
+          mode="edit"
+          className="post-write-modal__attachment-form"
+        >
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="첨부 파일"
+              colSpan={2}
+              view=""
+              edit={
+                <>
+                  <FileSelectField
+                    accept=".jpg,.jpeg,.png"
+                    fileNames={fileNames}
+                    currentTotalBytes={existingAttachmentBytes + sumFileBytes(files)}
+                    maxTotalBytes={FILE_SELECT_MAX_TOTAL_BYTES}
+                    onFilesChange={handleFilesChange}
+                    onRemoveFile={handleRemoveFile}
+                    uploading={loading}
+                    guideLines={[
+                      `- 파일은 총 최대 15MB까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
+                      '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+                    ]}
+                    className="post-write-modal__file-field file-select-field--edit"
+                  />
+                  {fieldError?.field === 'attachments' ? (
+                    <p className="text-area-field-row__field-error" role="alert">
+                      {fieldError.message}
+                    </p>
+                  ) : null}
+                </>
+              }
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
       </div>
     </ContentModal>
   )
